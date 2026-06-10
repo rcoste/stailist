@@ -1,22 +1,40 @@
 # stailist
 
 ## La idea
-Herramienta que arma outfits con tu ropa existente y sugiere piezas nuevas basándose en tus gustos y colorimetría
+Stylist personal con IA: arma outfits con tu ropa existente, personalizado por tus gustos y colorimetría. Existió un alfa previo en Replit que validó interés real pero murió por fricción de uso — este proyecto es la reconstrucción desde cero con esos aprendizajes (documentados en `docs/designs/mvp-onboarding-90s.md`).
 
 ## Para quién
-Roberto, para uso personal con visión de escalar a startup
+Usuaria objetivo: Tatiana (hermana de Roberto) y perfiles como ella — gente con crisis frente al clóset, compras que no combinan y pánico de eventos. Roberto es el builder y usuario secundario; Toño Tena es el power-tester. Visión de escalar a startup.
 
-## Cómo lo hacen hoy (status quo)
-De cabeza / intuición
+## El enemigo a vencer
+NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existentes (Whering, Stylebook, etc.) mueren porque catalogar el clóset toma horas. El alfa de Replit murió por lo mismo.
 
-## Qué duele del proceso (pain point superficial)
-Tarda mucho tiempo decidiendo qué ponerse
+## MVP (cerrado en planning, 2026-06-10)
+**La promesa: primer outfit en <2 minutos desde que abres el link.**
 
-## Qué cuesta eso al usuario (pain impact — la causa raíz, lo que importa al final)
-Tiempo desperdiciado que se podría ahorrar, outfits menos buenos de lo que podría lograr, y compras de ropa poco estratégicas
+- Onboarding ~90s: objetivo ("¿qué necesitas hoy?") → swipes de ~15 looks (gustos) → quiz de colorimetría de 5-6 preguntas (4 estaciones, sin selfie) → checklist de ~15 prendas básicas. Cada paso se persiste (interrumpir y retomar).
+- Motor de outfits: 2-3 outfits con justificación de una línea, generados en <30s con progreso por fases, voto 👍/👎 persistente.
+- "Tu look de hoy": al regresar, la app te recibe con un outfit generado para tu día (1 por día, considera el clima).
+- Clóset: 15 básicos con imágenes de arquetipo (generadas con IA una vez); fotos propias opcionales con confirmación editable del análisis.
+- PWA instalable (prompt tras el primer 👍), botón "me lo puse", historial persistente.
+- Beta cerrada: allowlist de correos + magic link. Solo español.
 
-## MVP (punto de partida)
-Subir fotos de piezas de ropa, definir gustos y colorimetría, y recibir sugerencias de outfits combinados
+**Fuera del MVP (no recuperar por accidente):** avatar/renders de persona, análisis de colorimetría por selfie, compras sugeridas, modo maleta, scraping de catálogos, multi-prenda en una foto (diferida — ver TODOS.md), compartir outfits, pagos.
+
+## Stack y arquitectura (cerrada en eng review)
+- Next.js en Vercel (Hobby: límite 60s por función — generación con streaming, retry siempre client-side).
+- Supabase: Postgres (RLS en todo), Storage privado con URLs firmadas, Auth magic link + allowlist server-side.
+- IA: `claude-opus-4-8` con structured outputs (motor de outfits + análisis de prendas por visión). Prompt versionado en cada outfit.
+- Clima: Open-Meteo (sin API key). Geolocalización del navegador con fallback sin-clima.
+- Spec completa: `docs/designs/mvp-onboarding-90s.md` (scope, UX, errores, tests, arquitectura). Backlog: `TODOS.md`.
+
+## Voz del producto
+**"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual (colores/tipografía/logo) pendiente: milestone de diseño de raicode — hasta entonces, neutros.
+
+## Criterios de éxito del experimento
+- TTV: primer outfit en <2 min (medido automático).
+- ≥1 de cada 3 outfits con 👍 de Tatiana/Toño en una semana de uso real.
+- Señal de oro: alguien se pone un outfit sugerido en la vida real la primera semana.
 
 ## Guarda información
 Sí — usamos Supabase
@@ -177,213 +195,8 @@ técnica que se acumula y rompe la coherencia visual del producto.
 
 ## Reglas del wizard de raicode
 
-Este proyecto vive dentro del workshop de raicode.ai. Yo (el usuario) tengo
-una pestaña abierta en `https://raicode.ai
-/wizard/bb08ac64-2d50-4496-b076-d53a2add4404/review` que
-actúa como mi tablero del proyecto. Tú (Claude) puedes notificar a esa
-pestaña vía API en momentos clave para guiarme con interfaces dedicadas.
-
-### Cuándo notificar al wizard
-
-Hay 3 puntos del flujo donde tienes que avisarle al wizard ANTES de
-pedirme una acción manual. Sin estos avisos yo no puedo ver la interfaz
-que me deja capturar credenciales / URLs. No son opcionales.
-
-**0. Al recibir el Prompt #2 — antes de cualquier otra acción**:
-
-Esto le avisa a raicode que arrancaste la build. Sin este evento, mi
-tablero de raicode se queda mostrando "Prompt #2 — construcción" en
-loop, sin reflejar que ya empezaste. Dispáralo PRIMERO, antes de leer
-o editar archivos, antes de `gh repo create`, antes de todo.
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"build-started"}'
-```
-
-La respuesta es JSON `{"eventId":"evt_xxx","ok":true}`. Pégame el eventId
-en el chat como prueba:
-
-> 📡 Le avisé a raicode que arrancamos. Evento: `evt_xxx`. Ahora sí, manos a la obra.
-
-Si falla (status != 200), no es bloqueante — sigue con el resto del flujo
-y avísame al final: "no pude avisarle a raicode del build-started, pero
-el resto funcionó".
-
-**1. Antes de empezar a configurar Supabase para este proyecto**:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"needs-supabase-setup"}'
-```
-
-La respuesta es JSON `{"eventId":"evt_xxx","ok":true}`. Pégame el eventId
-en el chat como prueba:
-
-> 📡 Le avisé al wizard. Evento: `evt_xxx`. Ahora ve a la pestaña de
-> raicode.ai — te abre el sub-flow de Supabase.
-
-Si falla (status != 200), dime:
-
-> 📡 No pude avisarle al wizard. Ve manualmente a
-> https://raicode.ai
-/wizard/bb08ac64-2d50-4496-b076-d53a2add4404/setup-supabase. Luego regresa y
-> dime "ya conecté Supabase".
-
-**2. Antes de deployar a Vercel** (típicamente después de `gh repo create`
-y de que el código compile localmente):
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"needs-vercel-setup"}'
-```
-
-Mismo handshake: pégame el eventId como prueba y dime que vaya a la
-pestaña de raicode.ai. El sub-flow lo guía por account creation (si no
-tiene cuenta), import del repo, env vars (auto-rellenados desde lo que
-capturé en Supabase), deploy, y captura del URL final.
-
-Si falla (status != 200), dime:
-
-> 📡 No pude avisarle al wizard. Ve manualmente a
-> https://raicode.ai
-/wizard/bb08ac64-2d50-4496-b076-d53a2add4404/setup-vercel. Luego regresa y dime
-> "ya deployé a Vercel" + el URL.
-
-### Cómo retomar después de cada sub-flow
-
-Cuando yo regrese del sub-flow del wizard, te voy a decir:
-- Tras Supabase: "ya conecté Supabase" + credenciales (URL, key, conn string)
-- Tras Vercel: "ya deployé a Vercel" + el URL de producción
-
-Cada uno es tu signal para continuar la build.
-
-**3. Durante el sub-flow de Diseño + Logo** (`/wizard/bb08ac64-2d50-4496-b076-d53a2add4404/setup-design`),
-disparas dos eventos en momentos distintos. NO los dispares en el flujo de
-Prompt #1 — solo cuando el user te pegue los prompts específicos desde el
-sub-flow (cada slide del sub-flow te da el prompt con la instrucción exacta).
-
-**3a. `logo-variants-ready`** — cuando el user te pidió generar 3 variantes
-de logo (Path B del sub-flow). Generas 3 SVGs hand-crafted, los escribes a
-`public/logos/v1.svg`, `v2.svg`, `v3.svg`, y POSTeas:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"logo-variants-ready","payload":{"variants":[{"id":"v1","label":"Monograma","svg":"<svg ...>...</svg>"},{"id":"v2","label":"Wordmark","svg":"<svg ...>...</svg>"},{"id":"v3","label":"Mark + wordmark","svg":"<svg ...>...</svg>"}]}}'
-```
-
-El payload puede ser pesado (3 SVGs como strings) — está OK, el endpoint lo
-soporta. Pégame el eventId como prueba.
-
-**3b. `design-consultation-done`** — cuando termines `/design-consultation`
-(último step del sub-flow). Lees el `DESIGN.md` que generó la skill, armas
-el JSON estructurado, y POSTeas:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"design-consultation-done","payload":{"designMd":"<contenido completo de DESIGN.md>","structured":{"palette":[{"name":"primary","hex":"#0D9488","on":"#FFFFFF","role":"CTAs, acentos"},{"name":"bg","hex":"#FAFAF9","on":"#1F2937","role":"Fondo de app"}],"typography":[{"role":"display","family":"Cabinet Grotesk","weight":700,"sample":"Tu título principal"},{"role":"body","family":"Inter","weight":400,"sample":"Texto del contenido"}]}}}'
-```
-
-`structured.palette` y `structured.typography` deben tener al menos 2
-items cada uno. Si `DESIGN.md` define más colores/fuentes, incluye todos.
-Raicode renderiza estos como swatches y samples — sin ellos no ve nada.
-
-**4a. `supabase-setup-complete`** — al terminar el setup de Supabase para
-el proyecto (después de que el user te pegó las credenciales del sub-flow,
-tú escribiste los clients en `lib/supabase/*`, corriste las migrations
-iniciales, y verificaste que `npm run dev` arranca sin errores de DB).
-POSTea:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"supabase-setup-complete","payload":{"status":"ok","clientsWritten":2,"migrationsRun":1}}'
-```
-
-Campos:
-- `status`: `"ok"` | `"partial"` | `"error"`.
-- `clientsWritten`: número de archivos client que creaste (típicamente 2: client.ts + server.ts, o 1 si el proyecto solo usa server).
-- `migrationsRun`: número de migrations que aplicaste con éxito. 0 si el schema inicial es vacío.
-- `errorMessage`: solo si `status != "ok"`.
-
-**4b. `vercel-setup-complete`** — al terminar TODOS los pasos post-deploy del
-handoff de Vercel (instalar CLI + login + link + push env vars + redeploy
-+ env pull + verify gh + README). Es la confirmación de que el proyecto
-está realmente live con credenciales correctas. POSTea:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"vercel-setup-complete","payload":{"status":"ok","productionUrl":"https://<final-url>.vercel.app","envVarsPushed":2}}'
-```
-
-Campos del payload:
-- `status`: `"ok"` si todos los 8 pasos del handoff corrieron sin error, `"partial"` si alguno falló pero el deploy sirve, `"error"` si el deploy quedó roto.
-- `productionUrl`: el URL real obtenido de `vercel ls` (puede diferir del que el user pegó si Vercel le agregó un sufijo).
-- `envVarsPushed`: número de env vars que pushaste a Vercel desde `.env.local`. 0 si el proyecto no tiene env vars.
-- `errorMessage`: solo si `status != "ok"` — string corto en español plain del problema (ej. `"vercel login falló: token inválido"`).
-
-Si `status` es `"error"`, raicode le muestra al user un warning con tu `errorMessage` para que sepa qué decir/hacer.
-
-**4c. `anthropic-setup-complete`** — al terminar la integración opcional
-de Anthropic (después de que el user te pegó la API key del sub-flow,
-la guardaste en `.env.local`, hiciste `vercel env add ANTHROPIC_API_KEY
-production --sensitive`, validaste con una llamada de prueba, y
-redeployaste). POSTea:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"anthropic-setup-complete","payload":{"status":"ok"}}'
-```
-
-Campos:
-- `status`: `"ok"` | `"partial"` | `"error"`.
-- `errorMessage`: solo si `status != "ok"` (ej. `"key inválida"`, `"sin créditos en billing"`).
-
-Sin este evento, raicode deja la card de Anthropic en estado "⏳ Esperando"
-hasta que llegue — el user no la ve como conectada.
-
-**4d. `gemini-setup-complete`** — equivalente para la integración opcional
-de Google AI (Gemini / Nano Banana). Mismo shape de payload. La key se
-guarda como `GOOGLE_GENERATIVE_AI_API_KEY`. POSTea:
-
-```
-curl -sS -X POST https://raicode.ai
-/api/wizard/events \
-  -H "Content-Type: application/json" \
-  -H "X-Wizard-Token: e24126c65ed1f7f3" \
-  -d '{"projectId":"bb08ac64-2d50-4496-b076-d53a2add4404","eventName":"gemini-setup-complete","payload":{"status":"ok"}}'
-```
-
-### Otros eventos disponibles
-
-(`needs-supabase-setup`, `needs-vercel-setup`, `logo-variants-ready`,
-`design-consultation-done`, `supabase-setup-complete`,
-`vercel-setup-complete`, `anthropic-setup-complete`,
-`gemini-setup-complete`. Si en el futuro hay más, este bloque se
-actualiza.)
+Las reglas del wizard (eventos, curls y token) viven en `CLAUDE.local.md` —
+archivo local NO versionado (contiene un token; el repo es público).
 
 ## Skill routing
 
