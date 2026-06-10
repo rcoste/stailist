@@ -15,3 +15,4 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 - [ ] Compartir outfit como imagen/link (E3 — descartada en ceremonia CEO 2026-06-10; reconsiderar solo si la calidad de outfits valida y hay demanda orgánica de compartir).
 - [ ] Interfaz híbrida conversacional (chat + botones, sugerencia de Toño) — candidata para v2 del flujo de generación.
 - [ ] Monetización freemium / referidos e-commerce (hipótesis de Toño: referidos > suscripción). Validar willingness-to-pay primero.
+- [ ] **Panel admin de métricas**: hoy las métricas (TTV, ratio de votos, tiempos de generación) se consultan en el dashboard de Supabase. Un panel propio tiene sentido con 20+ usuarios. *Trigger*: la beta crece más allá del círculo cercano.
