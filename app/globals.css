@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
+/*
+ * Tokens de stailist — implementación de DESIGN.md (la fuente de verdad).
+ * Cero hex fuera de este archivo: en componentes siempre bg-bg, text-ink,
+ * bg-accent, border-line, etc. Dark mode: diferido (ver DESIGN.md).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Color */
+  --c-bg: #f5f3f0;          /* papel hueso */
+  --c-surface: #ffffff;     /* cards */
+  --c-ink: #1a1718;         /* texto principal */
+  --c-muted: #79716b;       /* texto secundario */
+  --c-line: #e5e1dd;        /* hairlines */
+  --c-accent: #722f37;      /* burdeos oxblood — CTAs, el "ai", énfasis */
+  --c-accent-deep: #5c252c; /* hover/pressed del acento */
+  --c-accent-soft: #f2e8e8; /* tinte para chips/fondos suaves */
+  --c-on-accent: #ffffff;
+  --c-success: #4c7a5e;
+  --c-error: #b3261e;
+  --c-warning: #8a6d1f;
+
+  /* Motion */
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --dur-micro: 100ms;
+  --dur-short: 200ms;
+  --dur-medium: 300ms;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Colores → utilidades Tailwind: bg-bg, bg-surface, text-ink, text-muted,
+     border-line, bg-accent, text-accent, bg-accent-soft, etc. */
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-accent: var(--c-accent);
+  --color-accent-deep: var(--c-accent-deep);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-on-accent: var(--c-on-accent);
+  --color-success: var(--c-success);
+  --color-error: var(--c-error);
+  --color-warning: var(--c-warning);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Tipografía (variables inyectadas por next/font en layout.tsx):
+     font-sans = Outfit (display + body + UI), font-editorial = Fraunces */
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-editorial: var(--font-fraunces), Georgia, serif;
+
+  /* Escala tipográfica de DESIGN.md */
+  --text-display: 2rem;          /* 32px */
+  --text-display--line-height: 2.5rem;
+  --text-h1: 1.75rem;            /* 28px */
+  --text-h1--line-height: 2.25rem;
+  --text-h2: 1.375rem;           /* 22px */
+  --text-h2--line-height: 1.875rem;
+  --text-h3: 1.125rem;           /* 18px */
+  --text-h3--line-height: 1.625rem;
+
+  /* Radius jerárquico: rounded-sm-token… mapeados a la escala del DS */
+  --radius-ds-sm: 8px;   /* inputs, chips */
+  --radius-ds-md: 12px;  /* tiles de prenda */
+  --radius-ds-lg: 16px;  /* cards de outfit */
+
+  /* Sombra única permitida */
+  --shadow-hairline: 0 1px 2px rgb(26 23 24 / 0.05);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+}
+
+/* La justificación del outfit y micro-acentos editoriales */
+.editorial {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+}
+
+/* Números tabulares para métricas y datos */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

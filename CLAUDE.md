@@ -163,11 +163,14 @@ shadow, animación, motion):
 
 1. Lee `DESIGN.md` y `globals.css` PRIMERO.
 2. Usa solo los tokens que ya están definidos ahí.
-3. Si `DESIGN.md` todavía no existe: NO inventes UI definitiva. Usa
-   neutros (stone / gray) y avísame que tengo que correr el sub-flow
-   de diseño (`https://raicode.ai
-/wizard/bb08ac64-2d50-4496-b076-d53a2add4404/setup-design`)
-   antes de que armemos pantallas reales.
+3. ✅ `DESIGN.md` YA EXISTE (creado 2026-06-10 vía /design-consultation).
+   **Tokens actuales** (definidos en `app/globals.css`, usables como
+   utilidades Tailwind): `bg-bg` papel hueso · `bg-surface` cards ·
+   `text-ink` texto · `text-muted` secundario · `border-line` hairlines ·
+   `bg-accent` burdeos #722F37 (CTAs, énfasis) · `bg-accent-soft` ·
+   `text-on-accent` · `text-success` / `text-error` / `text-warning`.
+   Fuentes: Outfit (sans, todo) + Fraunces itálica (clase `.editorial`,
+   solo micro-acentos). **Vetado por Roberto: ámbar/terracota/naranja.**
 
 **Prohibiciones absolutas** (esto es lo que blinda contra el Frankenstein):
 
