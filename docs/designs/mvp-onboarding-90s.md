@@ -92,16 +92,26 @@ Nota: esta sección define ESTRUCTURA y comportamiento, no identidad visual. Col
 ### Voz del producto (P7b)
 - **"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica. "Los tonos tierra te encienden la cara", no "perteneces a la estación otoño profundo". Aplica a justificaciones de outfits, estados vacíos, errores y onboarding. Toda string visible pasa por este filtro.
 
+## Arquitectura técnica (plan-eng-review, 2026-06-10)
+
+- **Generación**: ruta Next.js con streaming (progreso por fases), `maxDuration` dentro del límite de 60s de Vercel Hobby; retry SIEMPRE client-side como petición nueva.
+- **Modelos IA**: `claude-opus-4-8` para motor de outfits y análisis de prendas (visión), con **structured outputs** (JSON schema garantizado — elimina la clase de error "JSON malformado"; el retry queda de respaldo). ~$0.04/generación.
+- **Clima**: Open-Meteo (gratuita, sin API key).
+- **Datos** (Supabase, RLS en todo): `profiles`, `archetypes` (catálogo canónico), `items`, `outfits` (con `prompt_version`), `events` (votos, me-lo-puse, métricas TTV/tiempos). Índices: `items.user_id`, `outfits(user_id, created_at)`, `events.outfit_id`.
+- **Módulos**: `app/` (pantallas), `lib/engine/` (prompt builder + schema + cliente IA, único lugar), `lib/supabase/`, `lib/weather/`, `components/`.
+- **Tests**: suite "mínimo real" + E2E de onboarding interrumpido→retoma (gap cerrado en eng review). Test plan para /qa en `~/.gstack/projects/stailist/robertocoste-main-eng-review-test-plan-20260610.md`.
+- **Paralelización de la build**: Lane A (schema DB + clients) ∥ Lane B (assets IA: swipes + arquetipos) → luego Lane C (engine + generación) ∥ Lane D (pantallas onboarding) → integración + E2E.
+
 ## GSTACK REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAN | 6 proposals, 4 accepted, 1 deferred |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | PENDING | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAN | 4 issues, 0 critical gaps |
 | Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAN | score: 5/10 → 9/10, 6 decisions |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
 
-**VERDICT:** CEO + DESIGN CLEARED — eng review required antes de construir.
+**VERDICT:** CEO + DESIGN + ENG CLEARED — ready to implement.
 
 NO UNRESOLVED DECISIONS
