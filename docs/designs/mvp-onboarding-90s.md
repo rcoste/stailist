@@ -59,3 +59,49 @@ El 10x de stailist ya está mapeado en el design doc como fases futuras: compras
 ## Estimación total
 
 CC + gstack: ~5-7 días (baseline 4-6 + ~1-1.5 de expansiones E1/E4/E5/E6). Humano equivalente: ~4-5 semanas. (Con E2 incluida habría sido ~7-9 días — diferida.)
+
+## Especificación de diseño UX (plan-design-review, 2026-06-10)
+
+Nota: esta sección define ESTRUCTURA y comportamiento, no identidad visual. Colores, tipografía y logo los define el milestone de diseño de raicode (DESIGN.md). Hasta entonces: neutros (stone/gray), cero hex hardcodeados.
+
+### Navegación e información (P1)
+- **3 tabs fijos abajo**: Hoy / Clóset / Historial. Nada en menú hamburguesa.
+- Jerarquía por pantalla — **Hoy**: 1º el outfit del día, 2º la justificación, 3º voto 👍/👎 + "otro look". **Clóset**: 1º grid de prendas, 2º botón agregar foto, 3º básicos genéricos. **Historial**: lista de outfits con voto y "me lo puse".
+
+### Estados de interacción (P2)
+- **Progreso de generación con mensajes por fase**: "leyendo tu clóset… combinando colores… afinando para tu paleta" (la espera de 20-30s como teatro útil — patrón sugerido por Toño).
+- **Estados vacíos con calidez + CTA**: Clóset → "Tu clóset arranca con 15 básicos. Súmale una foto real →" (CTA cámara). Historial → "Tu primer look te espera" (CTA generar). Resultados con 0 outfits válidos → "El stylist se quedó sin ideas con esa ocasión — prueba otra" (CTA cambiar ocasión).
+- Loading de listas: skeletons, no spinners genéricos.
+
+### Journey post-wow (P3)
+- El prompt de instalación PWA ("agrégame a tu pantalla de inicio") aparece UNA vez, inmediatamente después del **primer voto 👍** — el pico emocional. No banner permanente, no al entrar.
+
+### Anti-slop (P4) — vetos duros
+- Clasificación: APP UI → jerarquía calmada, el outfit es el protagonista, chrome mínimo.
+- Cards SOLO donde la card ES la interacción (card de outfit, tile de prenda). Cero grids decorativos de íconos-en-círculos, cero "todo centrado", cero gradientes morados default.
+- Texto de cuerpo ≥16px. Etiquetas de formulario siempre visibles (nunca solo placeholder).
+
+### Responsive + accesibilidad (P6)
+- Móvil 375px = diseño primario. Desktop = misma columna centrada (máx ~430px).
+- **Swipes con botones equivalentes** (❤️/✕ bajo cada imagen): el gesto es atajo, el botón es el camino garantizado (desktop + accesibilidad).
+- Touch targets ≥44px, contraste ≥4.5:1, estados de foco visibles para teclado.
+
+### Visualización de prendas sin foto (P7a)
+- **15 imágenes de arquetipo generadas con IA una sola vez** durante la build (mismo paquete one-off que las imágenes de swipes). Estilo consistente entre sí. Cuando la usuaria sube su foto real, reemplaza al arquetipo.
+
+### Voz del producto (P7b)
+- **"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica. "Los tonos tierra te encienden la cara", no "perteneces a la estación otoño profundo". Aplica a justificaciones de outfits, estados vacíos, errores y onboarding. Toda string visible pasa por este filtro.
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAN | 6 proposals, 4 accepted, 1 deferred |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | PENDING | — |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAN | score: 5/10 → 9/10, 6 decisions |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
+
+**VERDICT:** CEO + DESIGN CLEARED — eng review required antes de construir.
+
+NO UNRESOLVED DECISIONS
