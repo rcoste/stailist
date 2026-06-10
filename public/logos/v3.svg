@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 110" role="img" aria-label="stailist mark y wordmark">
+  <!-- Mark: gancho de ropa geométrico (hook terracota + hombros) + wordmark -->
+  <g fill="none" stroke="#1C1917" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M55 44 L20 80 H90 Z"/>
+    <path d="M55 44 V36"/>
+  </g>
+  <circle cx="55" cy="27" r="9" fill="none" stroke="#C2703D" stroke-width="7"/>
+  <text x="118" y="76" font-family="'Avenir Next','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="50" font-weight="600" letter-spacing="-0.5" fill="#1C1917">stailist</text>
+</svg>

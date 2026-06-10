@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 110" role="img" aria-label="stailist wordmark">
+  <!-- Wordmark: el "ai" escondido en st-ai-list, acentuado en terracota -->
+  <text x="28" y="74" font-family="'Avenir Next','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="58" font-weight="600" letter-spacing="-1" fill="#1C1917">st<tspan fill="#C2703D">ai</tspan>list</text>
+  <rect x="119" y="86" width="62" height="6" rx="3" fill="#C2703D" opacity="0.35"/>
+</svg>
