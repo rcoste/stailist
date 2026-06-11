@@ -30,7 +30,7 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 - Spec completa: `docs/designs/mvp-onboarding-90s.md` (scope, UX, errores, tests, arquitectura). Backlog: `TODOS.md`.
 
 ## Voz del producto
-**"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual (colores/tipografía/logo) pendiente: milestone de diseño de raicode — hasta entonces, neutros.
+**"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual: ✅ definida — DESIGN.md + tokens en app/globals.css (burdeos #722F37 + neutros cálidos; ámbar/terracota VETADO).
 
 ## Criterios de éxito del experimento
 - TTV: primer outfit en <2 min (medido automático).

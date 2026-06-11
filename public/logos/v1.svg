@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="stailist monograma">
-  <!-- Monograma: "s" trazada como un hilo, con el nudo del hilo en terracota -->
-  <circle cx="60" cy="60" r="54" fill="#1C1917"/>
-  <path d="M78 41 a17 17 0 1 0 -18 21 a17 17 0 1 1 -18 21"
-        fill="none" stroke="#FAFAF9" stroke-width="9" stroke-linecap="round"/>
-  <circle cx="78" cy="41" r="6.5" fill="#C2703D"/>
-</svg>
