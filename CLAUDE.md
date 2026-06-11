@@ -10,6 +10,7 @@ Usuaria objetivo: Tatiana (hermana de Roberto) y perfiles como ella — gente co
 NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existentes (Whering, Stylebook, etc.) mueren porque catalogar el clóset toma horas. El alfa de Replit murió por lo mismo.
 
 ## MVP (cerrado en planning, 2026-06-10)
+**→ Flujo de valor paso a paso + estado actual de la build: `docs/USER-JOURNEY.md` (leer al retomar).**
 **La promesa: primer outfit en <2 minutos desde que abres el link.**
 
 - Onboarding ~90s: objetivo ("¿qué necesitas hoy?") → swipes de ~15 looks (gustos) → quiz de colorimetría de 5-6 preguntas (4 estaciones, sin selfie) → checklist de ~15 prendas básicas. Cada paso se persiste (interrumpir y retomar).
