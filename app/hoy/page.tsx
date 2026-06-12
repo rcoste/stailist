@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { OutfitCard } from "@/components/outfit-card";
+import { requireOnboarded } from "@/lib/auth";
 
 // Datos de muestra mientras conectamos el motor de IA (ANTHROPIC_API_KEY pendiente).
 const DEMO_OUTFIT = {
@@ -11,7 +12,8 @@ const DEMO_OUTFIT = {
   justificacion: "un look equilibrado que combina estructura y simplicidad",
 };
 
-export default function HoyPage() {
+export default async function HoyPage() {
+  await requireOnboarded();
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">

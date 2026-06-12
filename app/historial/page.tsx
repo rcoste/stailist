@@ -1,7 +1,9 @@
 import { AppShell } from "@/components/app-shell";
 import Link from "next/link";
+import { requireOnboarded } from "@/lib/auth";
 
-export default function HistorialPage() {
+export default async function HistorialPage() {
+  await requireOnboarded();
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">

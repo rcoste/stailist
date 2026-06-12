@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { requireOnboarded } from "@/lib/auth";
 
 // Mismo catálogo sembrado en supabase/migrations/0002 (se leerá de la DB con auth).
 const BASICOS = [
@@ -19,7 +20,8 @@ const BASICOS = [
   { nombre: "Botas negras", swatch: "#1A1A1A" },
 ];
 
-export default function ClosetPage() {
+export default async function ClosetPage() {
+  await requireOnboarded();
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">
