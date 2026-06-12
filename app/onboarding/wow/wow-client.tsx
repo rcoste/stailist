@@ -5,7 +5,7 @@ import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
 import { voteOutfit } from "./actions";
 
-type WowOutfit = {
+export type WowOutfit = {
   id: string;
   nombre: string;
   explicacion: string;
@@ -47,11 +47,16 @@ function getPosition(): Promise<{ lat: number; lon: number } | null> {
   });
 }
 
-export function WowClient() {
-  const [state, setState] = useState<State>({
-    kind: "generating",
-    phase: "preparando al stylist…",
-  });
+export function WowClient({
+  initialOutfits,
+}: {
+  initialOutfits: WowOutfit[] | null;
+}) {
+  const [state, setState] = useState<State>(
+    initialOutfits
+      ? { kind: "ready", outfits: initialOutfits }
+      : { kind: "generating", phase: "preparando al stylist…" }
+  );
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
   const started = useRef(false);
 
@@ -99,10 +104,11 @@ export function WowClient() {
   }, []);
 
   useEffect(() => {
+    if (initialOutfits) return; // ya hay looks guardados: no quemar otra generación
     if (started.current) return; // doble mount de dev/StrictMode: una sola generación
     started.current = true;
     generate();
-  }, [generate]);
+  }, [generate, initialOutfits]);
 
   async function vote(outfitId: string, up: boolean) {
     setVotes((v) => ({ ...v, [outfitId]: up ? "up" : "down" }));

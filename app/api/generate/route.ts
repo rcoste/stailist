@@ -93,11 +93,12 @@ export async function POST(request: NextRequest) {
               item_ids: o.item_ids,
               occasion: profile.last_objective ?? "diario",
               weather,
+              title: o.nombre,
               explanation: o.explicacion,
               prompt_version: PROMPT_VERSION,
             }))
           )
-          .select("id, item_ids, explanation");
+          .select("id, item_ids, title, explanation");
         if (saveError || !saved) {
           send({ error: "no_pude_guardar" });
           controller.close();
@@ -145,9 +146,9 @@ export async function POST(request: NextRequest) {
         const itemById = new Map(items.map((i) => [i.id, i.attrs]));
         send({
           done: true,
-          outfits: saved.map((o, idx) => ({
+          outfits: saved.map((o) => ({
             id: o.id,
-            nombre: outfits[idx]?.nombre ?? "Tu look",
+            nombre: o.title ?? "Tu look",
             explicacion: o.explanation,
             prendas: (o.item_ids as string[]).map((id) => ({
               nombre: itemById.get(id)?.nombre ?? "Prenda",
