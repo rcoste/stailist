@@ -12,6 +12,7 @@ export type EngineItem = {
     nombre?: string;
     color?: string;
     color_hex?: string;
+    image_path?: string | null;
     formalidad?: string;
     temporada?: string;
     tipo?: string;

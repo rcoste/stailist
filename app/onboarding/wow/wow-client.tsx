@@ -9,7 +9,7 @@ export type WowOutfit = {
   id: string;
   nombre: string;
   explicacion: string;
-  prendas: { nombre: string; swatch: string }[];
+  prendas: { nombre: string; swatch: string; imagen?: string | null }[];
 };
 
 type State =

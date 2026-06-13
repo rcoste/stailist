@@ -25,7 +25,7 @@ export async function saveCloset(
   // Valida contra el catálogo real y hereda sus atributos.
   const { data: archetypes, error: catError } = await supabase
     .from("archetypes")
-    .select("id, name, attrs")
+    .select("id, name, attrs, image_path")
     .in("id", ids);
   if (catError || !archetypes || archetypes.length === 0) {
     return { error: "No pude leer el catálogo — inténtalo otra vez." };
@@ -49,7 +49,13 @@ export async function saveCloset(
         user_id: user.id,
         source: "archetype",
         archetype_id: a.id,
-        attrs: { nombre: a.name, ...(a.attrs as Record<string, unknown>) },
+        // image_path entra a attrs para mostrar la prenda en los outfits sin
+        // join. Cuando suba foto propia, este campo apuntará a su foto.
+        attrs: {
+          nombre: a.name,
+          image_path: a.image_path,
+          ...(a.attrs as Record<string, unknown>),
+        },
       }))
     );
     if (itemsError) {

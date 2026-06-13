@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
             prendas: (o.item_ids as string[]).map((id) => ({
               nombre: itemById.get(id)?.nombre ?? "Prenda",
               swatch: itemById.get(id)?.color_hex ?? "#E5E1DD",
+              imagen: itemById.get(id)?.image_path ?? null,
             })),
           })),
         });

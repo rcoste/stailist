@@ -1,8 +1,12 @@
+import Image from "next/image";
+
 type Prenda = {
   nombre: string;
-  detalle: string;
-  /** color de muestra mientras no hay imagen (token o hex del attrs de la prenda) */
+  detalle?: string;
+  /** color de muestra (token o hex del attrs) — respaldo si no hay imagen */
   swatch: string;
+  /** foto de la prenda (arquetipo o foto propia); si falta, se usa el swatch */
+  imagen?: string | null;
 };
 
 export function OutfitCard({
@@ -17,16 +21,30 @@ export function OutfitCard({
       <div className="grid grid-cols-3 gap-3">
         {prendas.map((p) => (
           <figure key={p.nombre} className="flex flex-col gap-2">
-            <div
-              className="flex aspect-[3/4] items-end justify-center rounded-xl border border-line p-2"
-              style={{ backgroundColor: p.swatch }}
-              aria-hidden
-            />
+            <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-line bg-bg">
+              {p.imagen ? (
+                <Image
+                  src={p.imagen}
+                  alt={p.nombre}
+                  fill
+                  sizes="(max-width: 430px) 33vw, 130px"
+                  className="object-cover"
+                />
+              ) : (
+                <span
+                  className="absolute inset-0"
+                  style={{ backgroundColor: p.swatch }}
+                  aria-hidden
+                />
+              )}
+            </div>
             <figcaption>
               <p className="text-xs font-medium uppercase tracking-wide text-ink">
                 {p.nombre}
               </p>
-              <p className="editorial text-xs text-muted">{p.detalle}</p>
+              {p.detalle ? (
+                <p className="editorial text-xs text-muted">{p.detalle}</p>
+              ) : null}
             </figcaption>
           </figure>
         ))}

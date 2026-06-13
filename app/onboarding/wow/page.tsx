@@ -35,7 +35,11 @@ export default async function WowPage() {
       const attrsById = new Map(
         (items ?? []).map((i) => [
           i.id,
-          i.attrs as { nombre?: string; color_hex?: string },
+          i.attrs as {
+            nombre?: string;
+            color_hex?: string;
+            image_path?: string | null;
+          },
         ])
       );
       initialOutfits = saved.reverse().map((o) => ({
@@ -45,6 +49,7 @@ export default async function WowPage() {
         prendas: (o.item_ids as string[]).map((id) => ({
           nombre: attrsById.get(id)?.nombre ?? "Prenda",
           swatch: attrsById.get(id)?.color_hex ?? "#E5E1DD",
+          imagen: attrsById.get(id)?.image_path ?? null,
         })),
       }));
     }
