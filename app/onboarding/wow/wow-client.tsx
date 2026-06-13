@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
-import { voteOutfit } from "./actions";
+import { voteOutfit } from "@/lib/outfit-actions";
 
 export type WowOutfit = {
   id: string;

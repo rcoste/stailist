@@ -1,57 +1,119 @@
+import Image from "next/image";
 import { AppShell } from "@/components/app-shell";
+import { AddPhotoHint } from "@/components/add-photo-hint";
 import { requireOnboarded } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
-// Mismo catálogo sembrado en supabase/migrations/0002 (se leerá de la DB con auth).
-const BASICOS = [
-  { nombre: "Camiseta blanca", swatch: "#F5F5F0" },
-  { nombre: "Camiseta negra", swatch: "#1A1A1A" },
-  { nombre: "Camisa blanca", swatch: "#FAFAF7" },
-  { nombre: "Camisa azul claro", swatch: "#AEC6E8" },
-  { nombre: "Suéter gris", swatch: "#8A8784" },
-  { nombre: "Blazer azul marino", swatch: "#27425F" },
-  { nombre: "Chamarra de mezclilla", swatch: "#4A6B8A" },
-  { nombre: "Abrigo camel", swatch: "#B08D57" },
-  { nombre: "Jeans azul oscuro", swatch: "#2C3E50" },
-  { nombre: "Pantalón negro", swatch: "#1A1A1A" },
-  { nombre: "Chinos beige", swatch: "#C8B89A" },
-  { nombre: "Vestido negro", swatch: "#1A1A1A" },
-  { nombre: "Tenis blancos", swatch: "#F5F5F0" },
-  { nombre: "Zapato formal negro", swatch: "#1A1A1A" },
-  { nombre: "Botas negras", swatch: "#1A1A1A" },
+// Orden y etiqueta de cada categoría para agrupar el clóset.
+const CATEGORIAS: { key: string; label: string }[] = [
+  { key: "top", label: "Tops" },
+  { key: "abrigo", label: "Abrigos" },
+  { key: "bottom", label: "Pantalones" },
+  { key: "vestido", label: "Vestidos" },
+  { key: "calzado", label: "Calzado" },
+  { key: "accesorio", label: "Accesorios" },
 ];
 
+type ClosetItem = {
+  id: string;
+  nombre: string;
+  imagen: string | null;
+  swatch: string;
+  category: string;
+};
+
 export default async function ClosetPage() {
-  await requireOnboarded();
+  const profile = await requireOnboarded();
+
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("items")
+    .select("id, attrs, archetypes(name, category, image_path)")
+    .eq("user_id", profile.id)
+    .is("deleted_at", null);
+
+  // Resuelve nombre/imagen/categoría: del arquetipo si lo hay, si no de attrs
+  // (preparado para fotos propias futuras, que no tendrán arquetipo).
+  const items: ClosetItem[] = (rows ?? []).map((r) => {
+    const arch = r.archetypes as {
+      name?: string;
+      category?: string;
+      image_path?: string | null;
+    } | null;
+    const attrs = r.attrs as {
+      nombre?: string;
+      image_path?: string | null;
+      color_hex?: string;
+      tipo?: string;
+    };
+    return {
+      id: r.id as string,
+      nombre: arch?.name ?? attrs.nombre ?? "Prenda",
+      imagen: arch?.image_path ?? attrs.image_path ?? null,
+      swatch: attrs.color_hex ?? "#E5E1DD",
+      category: arch?.category ?? attrs.tipo ?? "accesorio",
+    };
+  });
+
+  const grupos = CATEGORIAS.map((c) => ({
+    ...c,
+    prendas: items.filter((i) => i.category === c.key),
+  })).filter((g) => g.prendas.length > 0);
+
   return (
     <AppShell>
-      <section className="flex flex-col gap-4 pt-4">
-        <div className="flex items-end justify-between">
+      <section className="flex flex-col gap-6 pt-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-h1 font-semibold text-ink">Clóset</h1>
             <p className="text-sm text-muted">
-              Tu clóset arranca con 15 básicos.
+              {items.length}{" "}
+              {items.length === 1 ? "prenda" : "prendas"} en tu clóset.
             </p>
           </div>
-          <button
-            type="button"
-            className="flex min-h-12 items-center rounded-full bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-          >
-            + Foto
-          </button>
+          <AddPhotoHint />
         </div>
 
-        <ul className="grid grid-cols-3 gap-3">
-          {BASICOS.map((b) => (
-            <li key={b.nombre} className="flex flex-col gap-1.5">
-              <div
-                className="aspect-[3/4] rounded-xl border border-line"
-                style={{ backgroundColor: b.swatch }}
-                aria-hidden
-              />
-              <p className="text-xs font-medium text-ink">{b.nombre}</p>
-            </li>
-          ))}
-        </ul>
+        {grupos.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-14 text-center">
+            <p className="editorial text-lg text-ink">tu clóset está vacío</p>
+            <p className="text-sm text-muted">
+              Vuelve al inicio y marca los básicos que tienes.
+            </p>
+          </div>
+        ) : (
+          grupos.map((g) => (
+            <div key={g.key} className="flex flex-col gap-3">
+              <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
+                {g.label}
+              </h2>
+              <ul className="grid grid-cols-3 gap-3">
+                {g.prendas.map((p) => (
+                  <li key={p.id} className="flex flex-col gap-1.5">
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-line bg-bg">
+                      {p.imagen ? (
+                        <Image
+                          src={p.imagen}
+                          alt={p.nombre}
+                          fill
+                          sizes="(max-width: 430px) 33vw, 130px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="absolute inset-0"
+                          style={{ backgroundColor: p.swatch }}
+                          aria-hidden
+                        />
+                      )}
+                    </div>
+                    <p className="text-xs font-medium text-ink">{p.nombre}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
       </section>
     </AppShell>
   );
