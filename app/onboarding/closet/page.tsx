@@ -4,15 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { Checklist, type CatalogItem } from "./checklist";
 
 export default async function ClosetOnboardingPage() {
-  await requireStep(3);
+  const profile = await requireStep(3);
 
   const supabase = await createClient();
-  // Solo hombre por ahora (Roberto es el primer usuario). La lista de mujer se
-  // activa cambiando este filtro + un tap en el onboarding cuando entre Tatiana.
+  // Básicos del género elegido + los unisex.
   const { data: catalog } = await supabase
     .from("archetypes")
     .select("id, name, category, attrs, image_path")
-    .in("segment", ["unisex", "hombre"])
+    .in("segment", ["unisex", profile.gender ?? "hombre"])
     .order("sort_order");
 
   return (

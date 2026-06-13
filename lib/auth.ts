@@ -2,9 +2,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
 
+export type Gender = "hombre" | "mujer";
+
 export type Profile = {
   id: string;
   email: string;
+  gender: Gender | null;
   taste_tags: string[];
   palette_season: "primavera" | "verano" | "otono" | "invierno" | null;
   palette_quiz: Record<string, string> | null;
@@ -34,6 +37,7 @@ export async function getProfile(): Promise<Profile> {
 // Para Hoy/Clóset/Historial: exige onboarding completo; si no, retoma donde iba.
 export async function requireOnboarded(): Promise<Profile> {
   const profile = await getProfile();
+  if (!profile.gender) redirect("/onboarding/genero");
   if (profile.onboarding_step < ONBOARDING_COMPLETE) {
     redirect(routeForStep(profile.onboarding_step));
   }
@@ -41,9 +45,11 @@ export async function requireOnboarded(): Promise<Profile> {
 }
 
 // Para cada pantalla de onboarding: si no es tu paso actual, te manda al tuyo
-// (cubre retomar tras interrupción y evita saltarse pasos por URL).
+// (cubre retomar tras interrupción y evita saltarse pasos por URL). El género
+// es lo primero: sin él, a la pantalla de género antes que nada.
 export async function requireStep(step: number): Promise<Profile> {
   const profile = await getProfile();
+  if (!profile.gender) redirect("/onboarding/genero");
   if (profile.onboarding_step !== step) {
     redirect(routeForStep(profile.onboarding_step));
   }

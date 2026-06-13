@@ -11,6 +11,7 @@ export type Look = {
   nombre: string;
   vibe: string; // una línea en voz amiga cool
   tags: string[];
+  segment: "hombre" | "mujer" | "unisex";
   prendas: { nombre: string; swatch: string }[];
   image: string | null;
 };
@@ -21,6 +22,7 @@ export const LOOKS: Look[] = [
     nombre: "Blanco + mezclilla",
     vibe: "fresco y sin esfuerzo",
     tags: ["casual", "minimalista", "fresco"],
+    segment: "unisex",
     prendas: [
       { nombre: "Camiseta blanca", swatch: "#F5F5F0" },
       { nombre: "Jeans claros", swatch: "#7A95B0" },
@@ -33,6 +35,7 @@ export const LOOKS: Look[] = [
     nombre: "Total black",
     vibe: "afilado, cero dudas",
     tags: ["minimalista", "atrevido", "urbano"],
+    segment: "unisex",
     prendas: [
       { nombre: "Playera negra", swatch: "#1A1A1A" },
       { nombre: "Pantalón negro", swatch: "#242424" },
@@ -45,6 +48,7 @@ export const LOOKS: Look[] = [
     nombre: "Oficina relajada",
     vibe: "pro, sin acartonarte",
     tags: ["clasico", "pulido", "versatil"],
+    segment: "hombre",
     prendas: [
       { nombre: "Camisa azul claro", swatch: "#AEC6E8" },
       { nombre: "Pantalón negro", swatch: "#1F1F1F" },
@@ -57,6 +61,7 @@ export const LOOKS: Look[] = [
     nombre: "Clásico parisino",
     vibe: "elegancia que no grita",
     tags: ["clasico", "elegante", "minimalista"],
+    segment: "mujer",
     prendas: [
       { nombre: "Trench beige", swatch: "#C8B89A" },
       { nombre: "Blusa blanca", swatch: "#FAFAF7" },
@@ -69,6 +74,7 @@ export const LOOKS: Look[] = [
     nombre: "Boho de domingo",
     vibe: "suelto, relajado, con textura",
     tags: ["boho", "relajado", "romantico"],
+    segment: "mujer",
     prendas: [
       { nombre: "Vestido oliva", swatch: "#6B7A4C" },
       { nombre: "Cardigan crema", swatch: "#EFE9DC" },
@@ -81,6 +87,7 @@ export const LOOKS: Look[] = [
     nombre: "Street urbano",
     vibe: "cómodo, con actitud",
     tags: ["urbano", "deportivo", "atrevido"],
+    segment: "unisex",
     prendas: [
       { nombre: "Hoodie gris", swatch: "#8A8784" },
       { nombre: "Cargo negro", swatch: "#242424" },
@@ -93,6 +100,7 @@ export const LOOKS: Look[] = [
     nombre: "Romántico suave",
     vibe: "delicado y ligero",
     tags: ["romantico", "suave", "fresco"],
+    segment: "mujer",
     prendas: [
       { nombre: "Blusa rosa pálido", swatch: "#E8C9CE" },
       { nombre: "Falda crema", swatch: "#EFE9DC" },
@@ -105,6 +113,7 @@ export const LOOKS: Look[] = [
     nombre: "Deportivo limpio",
     vibe: "athleisure bien hecho",
     tags: ["deportivo", "casual", "fresco"],
+    segment: "unisex",
     prendas: [
       { nombre: "Top blanco", swatch: "#FAFAF7" },
       { nombre: "Joggers marino", swatch: "#27425F" },
@@ -117,6 +126,7 @@ export const LOOKS: Look[] = [
     nombre: "Elegante de noche",
     vibe: "para cuando hay que brillar",
     tags: ["elegante", "atrevido", "glam"],
+    segment: "mujer",
     prendas: [
       { nombre: "Vestido negro", swatch: "#1A1A1A" },
       { nombre: "Bolso vino", swatch: "#722F37" },
@@ -129,6 +139,7 @@ export const LOOKS: Look[] = [
     nombre: "Color block",
     vibe: "el color es el protagonista",
     tags: ["colorido", "atrevido", "creativo"],
+    segment: "unisex",
     prendas: [
       { nombre: "Suéter azul royal", swatch: "#2E4FA3" },
       { nombre: "Pantalón verde", swatch: "#4C7A5E" },
@@ -141,6 +152,7 @@ export const LOOKS: Look[] = [
     nombre: "Tonos tierra",
     vibe: "calidez natural",
     tags: ["calido", "natural", "relajado"],
+    segment: "unisex",
     prendas: [
       { nombre: "Suéter camel", swatch: "#B08D57" },
       { nombre: "Pantalón café", swatch: "#6B4A33" },
@@ -153,6 +165,7 @@ export const LOOKS: Look[] = [
     nombre: "Monocromo gris",
     vibe: "calma y estructura",
     tags: ["minimalista", "estructurado", "sobrio"],
+    segment: "unisex",
     prendas: [
       { nombre: "Suéter gris claro", swatch: "#B5B1AC" },
       { nombre: "Pantalón gris", swatch: "#8A8784" },
@@ -165,6 +178,7 @@ export const LOOKS: Look[] = [
     nombre: "Estampado atrevido",
     vibe: "que se note que llegaste",
     tags: ["creativo", "atrevido", "colorido"],
+    segment: "hombre",
     prendas: [
       { nombre: "Camisa estampada", swatch: "#3D6B5E" },
       { nombre: "Pantalón negro", swatch: "#1F1F1F" },
@@ -177,6 +191,7 @@ export const LOOKS: Look[] = [
     nombre: "Marinero casual",
     vibe: "rayas, azul y brisa",
     tags: ["clasico", "fresco", "casual"],
+    segment: "unisex",
     prendas: [
       { nombre: "Suéter de rayas", swatch: "#27425F" },
       { nombre: "Pantalón blanco", swatch: "#FAFAF7" },
@@ -189,6 +204,7 @@ export const LOOKS: Look[] = [
     nombre: "Tailoring moderno",
     vibe: "sastrería con aire nuevo",
     tags: ["estructurado", "elegante", "pulido"],
+    segment: "hombre",
     prendas: [
       { nombre: "Blazer gris topo", swatch: "#7A7268" },
       { nombre: "Pantalón crema", swatch: "#EFE9DC" },
@@ -199,6 +215,11 @@ export const LOOKS: Look[] = [
 ];
 
 export const LOOK_IDS = new Set(LOOKS.map((l) => l.id));
+
+// Looks del género elegido + los unisex (sirven a ambos).
+export function looksForGender(gender: "hombre" | "mujer"): Look[] {
+  return LOOKS.filter((l) => l.segment === "unisex" || l.segment === gender);
+}
 
 // Taste vector: tags de looks con ❤️ suman, los de ✕ restan. Se quedan los
 // positivos, ordenados por score, máximo 8 — suficiente contexto de prompt.

@@ -37,6 +37,13 @@ const ITEMS = [
   { slug: "mocasines-cafe", desc: "a pair of brown leather penny loafer shoes", type: "shoes" },
   { slug: "sandalias-cuero", desc: "a pair of brown leather slide sandals", type: "shoes" },
   { slug: "bomber", desc: "a classic black bomber jacket (MA-1 style)", type: "flat" },
+  // Lista mujer + zapato negro (2026-06-13)
+  { slug: "cardigan-crema", desc: "a cream knit open-front cardigan", type: "flat" },
+  { slug: "abrigo-camel", desc: "a camel wool long overcoat", type: "flat" },
+  { slug: "falda-midi-negra", desc: "a black midi A-line skirt", type: "flat" },
+  { slug: "vestido-negro", desc: "a little black sleeveless dress", type: "flat" },
+  { slug: "flats-nude", desc: "a pair of nude ballet flat shoes", type: "shoes" },
+  { slug: "zapato-formal-negro", desc: "a pair of black leather oxford dress shoes", type: "shoes" },
 ];
 
 function buildPrompt({ desc, type }) {
