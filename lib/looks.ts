@@ -2,9 +2,8 @@
 // se convierten en el taste vector (profiles.taste_tags) que alimenta el
 // contexto del motor — sin ML, puro conteo.
 //
-// `image`: ruta a la foto generada one-off (pendiente — requiere la API key
-// de Gemini vía el sub-flow de raicode). Mientras es null, la card se dibuja
-// con los swatches de las prendas (mismo patrón que OutfitCard).
+// `image`: flat-lay del outfit completo (generado one-off con Gemini en
+// public/looks/<id>.png). Si fuera null, la card cae a los swatches.
 // Los hex de aquí son COLORES DE ROPA (datos), no tokens de UI.
 
 export type Look = {
@@ -27,7 +26,7 @@ export const LOOKS: Look[] = [
       { nombre: "Jeans claros", swatch: "#7A95B0" },
       { nombre: "Tenis blancos", swatch: "#FAFAF7" },
     ],
-    image: null,
+    image: "/looks/blanco-mezclilla.png",
   },
   {
     id: "total-black",
@@ -39,7 +38,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón negro", swatch: "#242424" },
       { nombre: "Botas negras", swatch: "#111111" },
     ],
-    image: null,
+    image: "/looks/total-black.png",
   },
   {
     id: "oficina-relajada",
@@ -51,7 +50,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón negro", swatch: "#1F1F1F" },
       { nombre: "Mocasines café", swatch: "#6B4A33" },
     ],
-    image: null,
+    image: "/looks/oficina-relajada.png",
   },
   {
     id: "parisino",
@@ -63,7 +62,7 @@ export const LOOKS: Look[] = [
       { nombre: "Blusa blanca", swatch: "#FAFAF7" },
       { nombre: "Pantalón negro", swatch: "#1F1F1F" },
     ],
-    image: null,
+    image: "/looks/parisino.png",
   },
   {
     id: "boho-domingo",
@@ -75,7 +74,7 @@ export const LOOKS: Look[] = [
       { nombre: "Cardigan crema", swatch: "#EFE9DC" },
       { nombre: "Sandalias café", swatch: "#6B4A33" },
     ],
-    image: null,
+    image: "/looks/boho-domingo.png",
   },
   {
     id: "street-urbano",
@@ -87,7 +86,7 @@ export const LOOKS: Look[] = [
       { nombre: "Cargo negro", swatch: "#242424" },
       { nombre: "Tenis blancos", swatch: "#FAFAF7" },
     ],
-    image: null,
+    image: "/looks/street-urbano.png",
   },
   {
     id: "romantico-suave",
@@ -99,7 +98,7 @@ export const LOOKS: Look[] = [
       { nombre: "Falda crema", swatch: "#EFE9DC" },
       { nombre: "Flats nude", swatch: "#D9BFA8" },
     ],
-    image: null,
+    image: "/looks/romantico-suave.png",
   },
   {
     id: "deportivo-limpio",
@@ -111,7 +110,7 @@ export const LOOKS: Look[] = [
       { nombre: "Joggers marino", swatch: "#27425F" },
       { nombre: "Tenis blancos", swatch: "#F5F5F0" },
     ],
-    image: null,
+    image: "/looks/deportivo-limpio.png",
   },
   {
     id: "elegante-noche",
@@ -123,7 +122,7 @@ export const LOOKS: Look[] = [
       { nombre: "Bolso vino", swatch: "#722F37" },
       { nombre: "Tacones negros", swatch: "#111111" },
     ],
-    image: null,
+    image: "/looks/elegante-noche.png",
   },
   {
     id: "color-block",
@@ -135,7 +134,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón verde", swatch: "#4C7A5E" },
       { nombre: "Tenis blancos", swatch: "#FAFAF7" },
     ],
-    image: null,
+    image: "/looks/color-block.png",
   },
   {
     id: "tonos-tierra",
@@ -147,7 +146,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón café", swatch: "#6B4A33" },
       { nombre: "Botas crema", swatch: "#EFE9DC" },
     ],
-    image: null,
+    image: "/looks/tonos-tierra.png",
   },
   {
     id: "monocromo-gris",
@@ -159,7 +158,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón gris", swatch: "#8A8784" },
       { nombre: "Tenis grises", swatch: "#5E5A56" },
     ],
-    image: null,
+    image: "/looks/monocromo-gris.png",
   },
   {
     id: "estampado-atrevido",
@@ -171,7 +170,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón negro", swatch: "#1F1F1F" },
       { nombre: "Botines negros", swatch: "#111111" },
     ],
-    image: null,
+    image: "/looks/estampado-atrevido.png",
   },
   {
     id: "marinero-casual",
@@ -183,7 +182,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón blanco", swatch: "#FAFAF7" },
       { nombre: "Alpargatas", swatch: "#C8B89A" },
     ],
-    image: null,
+    image: "/looks/marinero-casual.png",
   },
   {
     id: "tailoring-moderno",
@@ -195,7 +194,7 @@ export const LOOKS: Look[] = [
       { nombre: "Pantalón crema", swatch: "#EFE9DC" },
       { nombre: "Camiseta blanca", swatch: "#FAFAF7" },
     ],
-    image: null,
+    image: "/looks/tailoring-moderno.png",
   },
 ];
 

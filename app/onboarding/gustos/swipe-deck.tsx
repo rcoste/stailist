@@ -107,13 +107,15 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
           onPointerCancel={onPointerUp}
         >
           {look.image ? (
-            <Image
-              src={look.image}
-              alt={look.nombre}
-              fill
-              sizes="320px"
-              className="object-cover"
-            />
+            <div className="relative flex-1">
+              <Image
+                src={look.image}
+                alt={look.nombre}
+                fill
+                sizes="320px"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div className="flex flex-1 flex-col">
               {look.prendas.map((p) => (
