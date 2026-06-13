@@ -4,7 +4,9 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 
 // Cada outfit guarda la versión del prompt que lo generó (medir si los
 // cambios mejoran el ratio de 👍). Súbela cuando cambies el prompt.
-export const PROMPT_VERSION = "v1";
+// v2 (2026-06-13): reforzadas las reglas de colorimetría (near-face) y de
+// gustos (el vibe decide entre combinaciones válidas).
+export const PROMPT_VERSION = "v2";
 
 export type EngineItem = {
   id: string;
@@ -34,8 +36,16 @@ Reglas duras:
 - Usa ÚNICAMENTE prendas de la lista del clóset (vienen con id). Jamás menciones prendas que no estén ahí.
 - Cada outfit lleva 3 a 5 prendas y debe tener lógica: un top (o vestido), un bottom (salvo con vestido), calzado siempre; abrigo solo si el clima o la ocasión lo piden.
 - Devuelve 2 o 3 outfits DISTINTOS entre sí.
-- Considera la paleta de colorimetría: prioriza que los colores cerca de la cara (tops, abrigos) estén en su paleta o combinen con ella.
 - Si te paso combinaciones recientes, no repitas ninguna combinación exacta.
+
+Colorimetría (regla near-face — IMPORTANTE):
+- Lo que toca la cara manda: el top y el abrigo deben estar en su paleta o ser un neutro que la favorezca (blanco, marino, gris según su estación). Ahí es donde el color le ilumina o le apaga la cara.
+- El bottom y el calzado tienen más libertad: no necesitan estar en su paleta.
+- Si su clóset no tiene un top en su paleta, elige el neutro más favorecedor y compénsalo: arma el resto del look alrededor de sus colores.
+
+Gustos (su vibe, de los swipes):
+- Cuando haya varias combinaciones válidas, ELIGE la que más empate con su vibe (ej. si es minimalista, evita mezclar demasiados elementos; si es clásico, prioriza siluetas atemporales).
+- El vibe define el balance y la actitud del look, no qué prenda es válida.
 
 La explicación (una línea por outfit):
 - Voz cálida, directa, de tuteo. Cero jerga técnica de moda.
