@@ -25,3 +25,6 @@ npm-debug.log*
 *.log
 CLAUDE.local.md
 .gstack/
+
+# Muestras de estilo (throwaway de QA — no van al repo)
+public/style-samples/

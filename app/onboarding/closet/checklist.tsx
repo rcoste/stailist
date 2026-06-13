@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { saveCloset } from "./actions";
 
 export type CatalogItem = {
@@ -8,6 +9,7 @@ export type CatalogItem = {
   name: string;
   category: string;
   attrs: { color_hex?: string };
+  image_path: string | null;
 };
 
 export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
@@ -32,6 +34,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
 
   return (
     <div className="flex flex-1 flex-col gap-4">
+      {/* Galería de prendas: clic, clic, clic. La imagen es el protagonista. */}
       <div className="grid grid-cols-2 gap-3">
         {catalog.map((item) => {
           const on = selected.has(item.id);
@@ -41,18 +44,43 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
               type="button"
               onClick={() => toggle(item.id)}
               aria-pressed={on}
-              className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors duration-200 focus-visible:outline-none ${
-                on
-                  ? "border-accent bg-accent-soft"
-                  : "border-line bg-surface hover:border-ink"
+              className={`group relative flex flex-col overflow-hidden rounded-md border bg-surface text-left transition-colors duration-200 focus-visible:outline-none ${
+                on ? "border-accent" : "border-line hover:border-ink"
               }`}
             >
-              <span
-                className="h-8 w-8 shrink-0 rounded-lg border border-line"
-                style={{ backgroundColor: item.attrs.color_hex ?? "#E5E1DD" }}
-                aria-hidden
-              />
-              <span className="text-sm font-medium text-ink">{item.name}</span>
+              <div className="relative aspect-square w-full bg-bg">
+                {item.image_path ? (
+                  <Image
+                    src={item.image_path}
+                    alt={item.name}
+                    fill
+                    sizes="(max-width: 430px) 50vw, 215px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span
+                    className="absolute inset-0"
+                    style={{ backgroundColor: item.attrs.color_hex ?? "#E5E1DD" }}
+                    aria-hidden
+                  />
+                )}
+                {/* Check de selección en el pico emocional del tap */}
+                <span
+                  className={`absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-on-accent transition-all duration-200 ${
+                    on ? "scale-100 bg-accent" : "scale-0 bg-transparent"
+                  }`}
+                  aria-hidden
+                >
+                  ✓
+                </span>
+                {/* Velo sutil sobre lo no seleccionado para que resalte lo elegido */}
+                {!on && (
+                  <span className="absolute inset-0 bg-bg/20 transition-opacity duration-200 group-hover:opacity-0" />
+                )}
+              </div>
+              <span className="px-3 py-2 text-sm font-medium text-ink">
+                {item.name}
+              </span>
             </button>
           );
         })}

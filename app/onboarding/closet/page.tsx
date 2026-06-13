@@ -7,9 +7,12 @@ export default async function ClosetOnboardingPage() {
   await requireStep(3);
 
   const supabase = await createClient();
+  // Solo hombre por ahora (Roberto es el primer usuario). La lista de mujer se
+  // activa cambiando este filtro + un tap en el onboarding cuando entre Tatiana.
   const { data: catalog } = await supabase
     .from("archetypes")
-    .select("id, name, category, attrs")
+    .select("id, name, category, attrs, image_path")
+    .in("segment", ["unisex", "hombre"])
     .order("sort_order");
 
   return (
