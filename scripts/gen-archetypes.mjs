@@ -27,6 +27,16 @@ const ITEMS = [
   { slug: "tenis-blancos", desc: "a pair of clean white leather sneakers", type: "shoes" },
   { slug: "zapato-formal-cafe", desc: "a pair of brown leather formal derby shoes", type: "shoes" },
   { slug: "botas-negras", desc: "a pair of black leather ankle boots", type: "shoes" },
+  // Ampliación clóset hombre (2026-06-13)
+  { slug: "camiseta-gris", desc: "a plain heather grey crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camisa-lino", desc: "a light beige linen button-up shirt, relaxed fit", type: "flat" },
+  { slug: "camisa-mezclilla", desc: "a light blue chambray button-up shirt", type: "flat" },
+  { slug: "short-caqui", desc: "a pair of khaki chino shorts, neatly laid flat", type: "flat" },
+  { slug: "jeans-negros", desc: "a pair of black jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "chinos-marino", desc: "a pair of navy blue chino trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "mocasines-cafe", desc: "a pair of brown leather penny loafer shoes", type: "shoes" },
+  { slug: "sandalias-cuero", desc: "a pair of brown leather slide sandals", type: "shoes" },
+  { slug: "bomber", desc: "a classic black bomber jacket (MA-1 style)", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
