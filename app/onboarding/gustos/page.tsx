@@ -4,12 +4,12 @@ import { looksForGender } from "@/lib/looks";
 import { SwipeDeck } from "./swipe-deck";
 
 export default async function GustosPage() {
-  const profile = await requireStep(1);
+  const profile = await requireStep(0);
   const looks = looksForGender(profile.gender ?? "hombre");
 
   return (
     <section className="flex flex-1 flex-col gap-6 pt-4">
-      <OnboardingProgress step={2} />
+      <OnboardingProgress step={1} />
 
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">

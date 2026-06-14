@@ -35,9 +35,9 @@ export async function saveCloset(
   // pasó por aquí (doble tap) y no hay que duplicar prendas.
   const { data: updated, error: stepError } = await supabase
     .from("profiles")
-    .update({ onboarding_step: 4, updated_at: new Date().toISOString() })
+    .update({ onboarding_step: 3, updated_at: new Date().toISOString() })
     .eq("id", user.id)
-    .eq("onboarding_step", 3)
+    .eq("onboarding_step", 2)
     .select("id");
   if (stepError) {
     return { error: "No pude guardar tu clóset — dale otra vez." };
@@ -62,18 +62,18 @@ export async function saveCloset(
       // Revertir el paso para que pueda reintentar sin quedarse atorada.
       await supabase
         .from("profiles")
-        .update({ onboarding_step: 3 })
+        .update({ onboarding_step: 2 })
         .eq("id", user.id)
-        .eq("onboarding_step", 4);
+        .eq("onboarding_step", 3);
       return { error: "No pude guardar tus prendas — inténtalo otra vez." };
     }
 
     await supabase.from("events").insert({
       user_id: user.id,
       type: "onboarding_step",
-      data: { step: 4, items: archetypes.length },
+      data: { step: 3, items: archetypes.length },
     });
   }
 
-  redirect("/onboarding/wow");
+  redirect("/onboarding/objetivo");
 }

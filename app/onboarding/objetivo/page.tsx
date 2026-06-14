@@ -16,19 +16,19 @@ export default async function ObjetivoPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireStep(0);
+  await requireStep(3);
   const { error } = await searchParams;
 
   return (
     <section className="flex flex-1 flex-col gap-6 pt-4">
-      <OnboardingProgress step={1} />
+      <OnboardingProgress step={4} />
 
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">
           ¿Qué necesitas hoy?
         </h1>
         <p className="text-base text-muted">
-          Empecemos por lo que te trae aquí.
+          Ya casi — dime para qué es y te armo tus looks.
         </p>
       </div>
 

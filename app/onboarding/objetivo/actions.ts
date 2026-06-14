@@ -19,11 +19,11 @@ export async function saveObjective(formData: FormData) {
     .from("profiles")
     .update({
       last_objective: objective,
-      onboarding_step: 1,
+      onboarding_step: 4,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id)
-    .eq("onboarding_step", 0); // no retrocede a quien ya iba más adelante
+    .eq("onboarding_step", 3); // no retrocede a quien ya iba más adelante
 
   if (error) redirect("/onboarding/objetivo?error=guardar");
 
@@ -31,8 +31,8 @@ export async function saveObjective(formData: FormData) {
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 1, objective },
+    data: { step: 4, objective },
   });
 
-  redirect("/onboarding/gustos");
+  redirect("/onboarding/wow");
 }

@@ -47,11 +47,11 @@ export async function saveTastes(
     .update({
       taste_tags: tasteTags,
       style_archetype: archetype,
-      onboarding_step: 2,
+      onboarding_step: 1,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id)
-    .eq("onboarding_step", 1); // no retrocede a quien ya iba más adelante
+    .eq("onboarding_step", 0); // no retrocede a quien ya iba más adelante
 
   if (error) {
     return { error: "No pude guardar tus gustos — dale otra vez." };
@@ -61,7 +61,7 @@ export async function saveTastes(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 2, swipes: clean, taste_tags: tasteTags, archetype },
+    data: { step: 1, swipes: clean, taste_tags: tasteTags, archetype },
   });
 
   return { archetype };

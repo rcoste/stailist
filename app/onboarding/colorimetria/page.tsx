@@ -3,11 +3,11 @@ import { requireStep } from "@/lib/auth";
 import { ColorimetriaClient } from "./colorimetria-client";
 
 export default async function ColorimetriaPage() {
-  await requireStep(2);
+  await requireStep(1);
 
   return (
     <section className="flex flex-1 flex-col gap-6 pt-4">
-      <OnboardingProgress step={3} />
+      <OnboardingProgress step={2} />
 
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">

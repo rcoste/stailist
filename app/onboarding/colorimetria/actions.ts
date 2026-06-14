@@ -28,11 +28,11 @@ export async function savePalette(
     .update({
       palette_season: season,
       palette_quiz: answers,
-      onboarding_step: 3,
+      onboarding_step: 2,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id)
-    .eq("onboarding_step", 2); // no retrocede a quien ya iba más adelante
+    .eq("onboarding_step", 1); // no retrocede a quien ya iba más adelante
 
   if (error) {
     return { error: "No pude guardar tu paleta — inténtalo otra vez." };
@@ -41,7 +41,7 @@ export async function savePalette(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 3, season, answers, source: "quiz" },
+    data: { step: 2, season, answers, source: "quiz" },
   });
 
   return { season };
@@ -64,18 +64,18 @@ export async function savePaletteFromPhoto(
     .update({
       palette_season: season,
       palette_quiz: { source: "foto", ...meta },
-      onboarding_step: 3,
+      onboarding_step: 2,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id)
-    .eq("onboarding_step", 2);
+    .eq("onboarding_step", 1);
 
   if (error) return { ok: false };
 
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 3, season, source: "foto", ...meta },
+    data: { step: 2, season, source: "foto", ...meta },
   });
 
   return { ok: true };

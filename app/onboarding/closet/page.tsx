@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Checklist, type CatalogItem } from "./checklist";
 
 export default async function ClosetOnboardingPage() {
-  const profile = await requireStep(3);
+  const profile = await requireStep(2);
 
   const supabase = await createClient();
   // Básicos del género elegido + los unisex.
@@ -16,7 +16,7 @@ export default async function ClosetOnboardingPage() {
 
   return (
     <section className="flex flex-1 flex-col gap-6 pt-4">
-      <OnboardingProgress step={4} />
+      <OnboardingProgress step={3} />
 
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">
