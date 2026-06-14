@@ -68,7 +68,7 @@ export default async function WowPage() {
         </p>
       </div>
 
-      <WowClient initialOutfits={initialOutfits} />
+      <WowClient initialOutfits={initialOutfits} userId={profile.id} />
     </section>
   );
 }

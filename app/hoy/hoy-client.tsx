@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
+import { TryonButton } from "@/components/tryon-button";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 
 export type HoyOutfit = {
@@ -46,10 +47,12 @@ export function HoyClient({
   lookInicial,
   votoInicial,
   wornInicial,
+  userId,
 }: {
   lookInicial: HoyOutfit | null;
   votoInicial: "up" | "down" | null;
   wornInicial: boolean;
+  userId: string;
 }) {
   const [state, setState] = useState<State>(
     lookInicial
@@ -213,6 +216,7 @@ export function HoyClient({
       >
         {worn ? "✓ Me lo puse hoy" : "Me lo puse"}
       </button>
+      <TryonButton outfitId={state.outfit.id} userId={userId} />
     </div>
   );
 }

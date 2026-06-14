@@ -81,6 +81,7 @@ export default async function HoyPage() {
           lookInicial={lookInicial}
           votoInicial={votoInicial}
           wornInicial={wornInicial}
+          userId={profile.id}
         />
       </section>
     </AppShell>

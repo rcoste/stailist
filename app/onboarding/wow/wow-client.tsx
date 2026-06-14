@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
+import { TryonButton } from "@/components/tryon-button";
 import { voteOutfit } from "@/lib/outfit-actions";
 
 export type WowOutfit = {
@@ -49,8 +50,10 @@ function getPosition(): Promise<{ lat: number; lon: number } | null> {
 
 export function WowClient({
   initialOutfits,
+  userId,
 }: {
   initialOutfits: WowOutfit[] | null;
+  userId: string;
 }) {
   const [state, setState] = useState<State>(
     initialOutfits
@@ -195,6 +198,7 @@ export function WowClient({
                 👎 No va
               </button>
             </div>
+            <TryonButton outfitId={outfit.id} userId={userId} />
           </div>
         );
       })}
