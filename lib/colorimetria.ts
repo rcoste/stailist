@@ -262,3 +262,49 @@ export function computeSeasonWithFlow(answers: Record<string, string>): {
   if (flow === season) flow = null;
   return { season, flow };
 }
+
+// Lectura del ensemble de foto, en la forma mínima que necesita la fusión.
+export type AnalysisRead =
+  | { kind: "confident"; season: Season }
+  | { kind: "border"; season: Season; flow: Season }
+  | { kind: "baja" };
+
+// Fusiona las TRES señales: el ensemble de la foto (Claude+Gemini) + el quiz
+// que la persona contestó MIENTRAS se analizaba. El quiz es el desempate:
+// cuando los dos modelos discrepan (frontera), el que coincide con el quiz se
+// vuelve la base. Devuelve null solo si no hay ninguna señal útil.
+export function mergeColorimetria(
+  analysis: AnalysisRead | null,
+  quiz: { season: Season; flow: Season | null } | null
+): { season: Season; flow: Season | null } | null {
+  const analysisUseful = analysis && analysis.kind !== "baja";
+
+  // Foto inservible (mala luz o falló) → manda el quiz.
+  if (!analysisUseful) {
+    return quiz ? { season: quiz.season, flow: quiz.flow } : null;
+  }
+
+  // Sin quiz (lo saltó) → manda la foto tal cual.
+  if (!quiz) {
+    return analysis.kind === "confident"
+      ? { season: analysis.season, flow: null }
+      : { season: analysis.season, flow: analysis.flow };
+  }
+
+  // Ambos presentes.
+  if (analysis.kind === "confident") {
+    // Coinciden → confianza; el quiz puede aportar un flow.
+    if (quiz.season === analysis.season) {
+      return { season: analysis.season, flow: quiz.flow };
+    }
+    // Discrepan: los 2 modelos coincidieron (señal fuerte) = base; el quiz
+    // aporta la dirección del flow.
+    return { season: analysis.season, flow: quiz.season };
+  }
+
+  // Frontera: el quiz desempata entre las dos candidatas.
+  const { season: base, flow } = analysis;
+  if (quiz.season === flow) return { season: flow, flow: base }; // quiz = Gemini
+  if (quiz.season === base) return { season: base, flow }; // quiz = Claude
+  return { season: base, flow }; // quiz nombró otra: conserva la frontera
+}

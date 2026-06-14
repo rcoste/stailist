@@ -2,8 +2,13 @@
 
 import { useRef, useState } from "react";
 import { SeasonReveal } from "@/components/season-reveal";
+import { QuizQuestions } from "./quiz-questions";
 import { savePaletteFromPhoto } from "./actions";
-import type { Season } from "@/lib/colorimetria";
+import {
+  computeSeasonWithFlow,
+  mergeColorimetria,
+  type Season,
+} from "@/lib/colorimetria";
 
 // Resultado reconciliado del ensemble (Claude + Gemini) que devuelve la API.
 type FotoResult =
@@ -13,7 +18,8 @@ type FotoResult =
 
 type State =
   | { kind: "idle" }
-  | { kind: "analizando" }
+  | { kind: "quiz" } // el quiz ES la pantalla de carga; el análisis corre por debajo
+  | { kind: "juntando" } // quiz listo, esperando a que el análisis resuelva
   | { kind: "reveal"; season: Season; flow: Season | null; nota: string }
   | { kind: "baja"; por_que: string }
   | { kind: "error" };
@@ -22,7 +28,7 @@ type State =
 // pesan 5-10MB). Redimensiona a 1024px y JPEG: suficiente para leer color.
 function comprimir(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const max = 1024;
       let { width, height } = img;
@@ -45,58 +51,81 @@ function comprimir(file: File): Promise<string> {
   });
 }
 
+async function fetchAnalysis(image: string): Promise<FotoResult | null> {
+  try {
+    const res = await fetch("/api/colorimetria-foto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image }),
+    });
+    if (!res.ok) return null;
+    const { result } = (await res.json()) as { result: FotoResult };
+    return result;
+  } catch {
+    return null;
+  }
+}
+
 export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
+  // El análisis arranca al subir la foto y corre en segundo plano mientras la
+  // persona contesta el quiz. Lo guardamos como promesa para esperarlo al final.
+  const analysisRef = useRef<Promise<FotoResult | null> | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (inputRef.current) inputRef.current.value = "";
     if (!file) return;
-    setState({ kind: "analizando" });
     try {
       const image = await comprimir(file);
-      const res = await fetch("/api/colorimetria-foto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image }),
-      });
-      if (!res.ok) {
-        setState({ kind: "error" });
-        return;
-      }
-      const { result } = (await res.json()) as { result: FotoResult };
-
-      if (result.kind === "baja") {
-        setState({ kind: "baja", por_que: result.por_que });
-        return;
-      }
-
-      const isBorder = result.kind === "border";
-      const flow = isBorder ? result.flow : null;
-      const saved = await savePaletteFromPhoto(result.season, flow, {
-        confianza: isBorder ? "media" : result.confianza,
-        por_que: result.por_que,
-        border: isBorder,
-      });
-      if (!saved.ok) {
-        setState({ kind: "error" });
-        return;
-      }
-      setState({
-        kind: "reveal",
-        season: result.season,
-        flow,
-        nota: isBorder
-          ? "Lo leí de tu selfie — y como estás en la frontera, te muestro tus dos lados. Ajústalo si quieres."
-          : result.confianza === "media"
-            ? "Lo leí de tu selfie. La luz no estaba perfecta — ajústalo si no te suena."
-            : "Lo leí de tu selfie.",
-      });
+      analysisRef.current = fetchAnalysis(image); // arranca, no esperamos
+      setState({ kind: "quiz" }); // el quiz es la pantalla de carga
     } catch {
       setState({ kind: "error" });
-    } finally {
-      if (inputRef.current) inputRef.current.value = "";
     }
+  }
+
+  // Cierra el flujo: junta el análisis (ya corriendo) con el quiz (o sin él).
+  async function finalize(quiz: { season: Season; flow: Season | null } | null) {
+    setState({ kind: "juntando" });
+    const analysis = await (analysisRef.current ?? Promise.resolve(null));
+    const merged = mergeColorimetria(analysis, quiz);
+
+    if (!merged) {
+      if (analysis && analysis.kind === "baja") {
+        setState({ kind: "baja", por_que: analysis.por_que });
+      } else {
+        setState({ kind: "error" });
+      }
+      return;
+    }
+
+    const usableFoto = analysis && analysis.kind !== "baja";
+    const source = quiz ? (usableFoto ? "foto+quiz" : "quiz") : "foto";
+    const por_que =
+      analysis && analysis.kind !== "baja" ? analysis.por_que : "";
+    const confianza =
+      analysis && analysis.kind === "confident" ? analysis.confianza : "media";
+
+    const saved = await savePaletteFromPhoto(merged.season, merged.flow, {
+      confianza,
+      por_que,
+      border: !!merged.flow,
+      source,
+    });
+    if (!saved.ok) {
+      setState({ kind: "error" });
+      return;
+    }
+
+    const nota = !usableFoto
+      ? "Lo saqué de tus respuestas — la luz de la foto no ayudó. Ajústalo si quieres."
+      : merged.flow
+        ? "Lo leí de tu selfie y tus respuestas — estás en la frontera, así que te muestro tus dos lados. Ajústalo si quieres."
+        : "Lo leí de tu selfie y tus respuestas.";
+
+    setState({ kind: "reveal", season: merged.season, flow: merged.flow, nota });
   }
 
   if (state.kind === "reveal") {
@@ -105,10 +134,33 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
     );
   }
 
-  if (state.kind === "analizando") {
+  if (state.kind === "quiz") {
+    return (
+      <div className="flex flex-col gap-4">
+        <QuizQuestions
+          onComplete={(a) => finalize(computeSeasonWithFlow(a))}
+          header={
+            <p className="rounded-xl bg-accent-soft px-4 py-2 text-sm text-ink">
+              ✨ Leyendo tus colores en segundo plano… mientras, afina con estas
+              preguntas.
+            </p>
+          }
+        />
+        <button
+          type="button"
+          onClick={() => finalize(null)}
+          className="text-center text-sm text-muted underline"
+        >
+          Saltar — usa solo mi selfie
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "juntando") {
     return (
       <p className="editorial pt-8 text-center text-lg text-ink">
-        leyendo tus colores…
+        juntando todo…
       </p>
     );
   }

@@ -54,7 +54,7 @@ export async function savePalette(
 export async function savePaletteFromPhoto(
   season: Season,
   flow: Season | null,
-  meta: { confianza: string; por_que: string; border: boolean }
+  meta: { confianza: string; por_que: string; border: boolean; source?: string }
 ): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
@@ -62,12 +62,14 @@ export async function savePaletteFromPhoto(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const source = meta.source ?? "foto";
+
   const { error } = await supabase
     .from("profiles")
     .update({
       palette_season: season,
       palette_flow: flow,
-      palette_quiz: { source: "foto", ...meta },
+      palette_quiz: { ...meta, source },
       onboarding_step: 2,
       updated_at: new Date().toISOString(),
     })
@@ -79,7 +81,7 @@ export async function savePaletteFromPhoto(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 2, season, flow, source: "foto", ...meta },
+    data: { step: 2, season, flow, ...meta, source },
   });
 
   return { ok: true };
