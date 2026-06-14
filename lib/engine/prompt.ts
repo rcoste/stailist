@@ -24,6 +24,7 @@ export type EngineItem = {
 export type EngineContext = {
   objective: string | null;
   tasteTags: string[];
+  archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
   items: EngineItem[];
   weather: Weather | null;
@@ -70,8 +71,13 @@ export function buildUserMessage(ctx: EngineContext): string {
     );
   }
 
+  if (ctx.archetype) {
+    lines.push(
+      `Su estilo: "${ctx.archetype.nombre}" — ${ctx.archetype.descripcion}`
+    );
+  }
   if (ctx.tasteTags.length > 0) {
-    lines.push(`Su estilo (de sus swipes): ${ctx.tasteTags.join(", ")}.`);
+    lines.push(`Tags de gusto: ${ctx.tasteTags.join(", ")}.`);
   }
 
   if (ctx.weather) {

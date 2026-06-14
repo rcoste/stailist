@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
         const outfits = await generateOutfits({
           objective: profile.last_objective,
           tasteTags: (profile.taste_tags ?? []) as string[],
+          archetype: (profile.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
           season: profile.palette_season as Season | null,
           items,
           weather,

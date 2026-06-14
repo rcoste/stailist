@@ -2,8 +2,10 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Look } from "@/lib/looks";
 import { saveTastes, type SwipeResult } from "./actions";
+import type { StyleArchetype } from "@/lib/engine/archetype";
 
 // Deck de swipes: el gesto (arrastrar) es el atajo, los botones ❤️/✕ son el
 // camino garantizado (desktop + accesibilidad — spec P6). Sin librerías de
@@ -14,8 +16,18 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
   const [drag, setDrag] = useState({ x: 0, active: false });
   const [error, setError] = useState<string | null>(null);
+  const [archetype, setArchetype] = useState<StyleArchetype | null>(null);
   const [pending, startTransition] = useTransition();
   const startX = useRef(0);
+
+  function finalizar(all: SwipeResult[]) {
+    startTransition(async () => {
+      setError(null);
+      const res = await saveTastes(all);
+      if ("error" in res) setError(res.error);
+      else setArchetype(res.archetype);
+    });
+  }
 
   const look = looks[index];
   const done = index >= looks.length;
@@ -29,12 +41,7 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
       setDrag({ x: 0, active: false });
       setResults(next);
       setIndex(index + 1);
-      if (next.length === looks.length) {
-        startTransition(async () => {
-          const res = await saveTastes(next);
-          if (res?.error) setError(res.error);
-        });
-      }
+      if (next.length === looks.length) finalizar(next);
     }, 200);
   }
 
@@ -56,30 +63,46 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
   }
 
   if (done) {
+    if (error) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+          <p className="text-base text-error">{error}</p>
+          <button
+            type="button"
+            onClick={() => finalizar(results)}
+            disabled={pending}
+            className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          >
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+
+    // Reveal del arquetipo de estilo: el momento "me veo reflejada".
+    if (archetype) {
+      return (
+        <div className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
+          <div className="flex flex-col gap-2 text-center">
+            <p className="text-sm text-muted">Tu estilo es</p>
+            <h2 className="text-h1 font-semibold text-ink">{archetype.nombre}</h2>
+            <p className="editorial text-base text-muted">
+              {archetype.descripcion}
+            </p>
+          </div>
+          <Link
+            href="/onboarding/colorimetria"
+            className="flex min-h-12 items-center justify-center rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            Sigamos con tus colores
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        {error ? (
-          <>
-            <p className="text-base text-error">{error}</p>
-            <button
-              type="button"
-              onClick={() =>
-                startTransition(async () => {
-                  setError(null);
-                  const res = await saveTastes(results);
-                  if (res?.error) setError(res.error);
-                })
-              }
-              className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-            >
-              Reintentar
-            </button>
-          </>
-        ) : (
-          <p className="editorial text-lg text-ink">
-            ya te voy conociendo…
-          </p>
-        )}
+        <p className="editorial text-lg text-ink">leyendo tu estilo…</p>
       </div>
     );
   }

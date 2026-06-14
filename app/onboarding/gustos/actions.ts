@@ -2,13 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { computeTasteTags, LOOK_IDS } from "@/lib/looks";
+import { computeTasteTags, LOOKS, LOOK_IDS } from "@/lib/looks";
+import { generateArchetype, type StyleArchetype } from "@/lib/engine/archetype";
 
 export type SwipeResult = { id: string; liked: boolean };
 
+// Devuelve el arquetipo para revelarlo en pantalla (no redirige: el reveal
+// vive en el paso de gustos, como el de colorimetría). Error → string.
 export async function saveTastes(
   results: SwipeResult[]
-): Promise<{ error: string } | never> {
+): Promise<{ archetype: StyleArchetype } | { error: string }> {
   const clean = results.filter(
     (r) => LOOK_IDS.has(r.id) && typeof r.liked === "boolean"
   );
@@ -24,10 +27,26 @@ export async function saveTastes(
 
   const tasteTags = computeTasteTags(clean);
 
+  // Arquetipo a partir de los looks con ❤️. Si la IA falla, seguimos sin
+  // arquetipo (no bloquea el onboarding) con un fallback neutro.
+  const likedLooks = LOOKS.filter(
+    (l) => clean.find((r) => r.id === l.id)?.liked
+  );
+  let archetype: StyleArchetype;
+  try {
+    archetype = await generateArchetype(likedLooks);
+  } catch {
+    archetype = {
+      nombre: "Tu estilo",
+      descripcion: "te gustan las cosas que se sienten tuyas.",
+    };
+  }
+
   const { error } = await supabase
     .from("profiles")
     .update({
       taste_tags: tasteTags,
+      style_archetype: archetype,
       onboarding_step: 2,
       updated_at: new Date().toISOString(),
     })
@@ -42,8 +61,8 @@ export async function saveTastes(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 2, swipes: clean, taste_tags: tasteTags },
+    data: { step: 2, swipes: clean, taste_tags: tasteTags, archetype },
   });
 
-  redirect("/onboarding/colorimetria");
+  return { archetype };
 }

@@ -216,9 +216,17 @@ export const LOOKS: Look[] = [
 
 export const LOOK_IDS = new Set(LOOKS.map((l) => l.id));
 
-// Looks del género elegido + los unisex (sirven a ambos).
+// Looks del género elegido + los unisex, con la imagen de gente resuelta para
+// ese género: los unisex tienen una versión por género (<id>-<genero>.png);
+// los específicos una sola (<id>.png).
 export function looksForGender(gender: "hombre" | "mujer"): Look[] {
-  return LOOKS.filter((l) => l.segment === "unisex" || l.segment === gender);
+  return LOOKS.filter(
+    (l) => l.segment === "unisex" || l.segment === gender
+  ).map((l) => ({
+    ...l,
+    image:
+      l.segment === "unisex" ? `/looks/${l.id}-${gender}.png` : `/looks/${l.id}.png`,
+  }));
 }
 
 // Taste vector: tags de looks con ❤️ suman, los de ✕ restan. Se quedan los
