@@ -28,6 +28,15 @@ const LOOKS = [
   { id: "estampado-atrevido", seg: "hombre", outfit: "a bold patterned shirt, black trousers and black ankle boots" },
   { id: "marinero-casual", seg: "unisex", outfit: "a navy and white striped sweater, white trousers and tan espadrilles" },
   { id: "tailoring-moderno", seg: "hombre", outfit: "a taupe grey blazer over a white t-shirt with cream trousers" },
+  // Ampliación de estilos (2026-06-14)
+  { id: "preppy", seg: "unisex", outfit: "a white button-up shirt with a navy sweater tied over the shoulders, beige chinos and brown loafers" },
+  { id: "vintage-retro", seg: "unisex", outfit: "a denim jacket over a vintage-style graphic t-shirt, blue jeans and white sneakers" },
+  { id: "monocromatico-color", seg: "unisex", outfit: "a head-to-toe olive green outfit: an olive shirt and matching olive trousers with white sneakers" },
+  { id: "sastre-relajado", seg: "hombre", outfit: "an unstructured beige blazer over a white t-shirt with navy trousers and loafers" },
+  { id: "edgy-urbano", seg: "hombre", outfit: "a black leather jacket over a black t-shirt, black jeans and black boots" },
+  { id: "sporty-chic", seg: "mujer", outfit: "black leggings, an oversized grey blazer and white chunky sneakers" },
+  { id: "romantico-fresco", seg: "mujer", outfit: "a floral print summer midi dress with delicate strappy sandals" },
+  { id: "business-casual", seg: "mujer", outfit: "a silk blouse tucked into tailored trousers with low block heels" },
 ];
 
 const HOMBRES = [
