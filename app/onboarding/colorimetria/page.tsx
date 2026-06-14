@@ -1,6 +1,6 @@
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
-import { Quiz } from "./quiz";
+import { ColorimetriaClient } from "./colorimetria-client";
 
 export default async function ColorimetriaPage() {
   await requireStep(2);
@@ -14,11 +14,11 @@ export default async function ColorimetriaPage() {
           Hablemos de tus colores
         </h1>
         <p className="text-base text-muted">
-          Seis preguntas rápidas — sin selfie, sin drama.
+          Para que cada look te favorezca de verdad.
         </p>
       </div>
 
-      <Quiz />
+      <ColorimetriaClient />
     </section>
   );
 }

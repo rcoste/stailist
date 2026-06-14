@@ -41,8 +41,42 @@ export async function savePalette(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 3, season, answers },
+    data: { step: 3, season, answers, source: "quiz" },
   });
 
   return { season };
+}
+
+// Guarda la estación detectada por la selfie. La confianza y el porqué se
+// guardan como metadata (origen 'foto') para medir después qué tan bien jala.
+export async function savePaletteFromPhoto(
+  season: Season,
+  meta: { confianza: string; por_que: string }
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      palette_season: season,
+      palette_quiz: { source: "foto", ...meta },
+      onboarding_step: 3,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id)
+    .eq("onboarding_step", 2);
+
+  if (error) return { ok: false };
+
+  await supabase.from("events").insert({
+    user_id: user.id,
+    type: "onboarding_step",
+    data: { step: 3, season, source: "foto", ...meta },
+  });
+
+  return { ok: true };
 }
