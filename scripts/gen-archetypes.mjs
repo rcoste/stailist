@@ -44,6 +44,28 @@ const ITEMS = [
   { slug: "vestido-negro", desc: "a little black sleeveless dress", type: "flat" },
   { slug: "flats-nude", desc: "a pair of nude ballet flat shoes", type: "shoes" },
   { slug: "zapato-formal-negro", desc: "a pair of black leather oxford dress shoes", type: "shoes" },
+  // Ampliación clóset hombre — perfil minimalista refinado (2026-06-14)
+  // Uniqlo + Massimo Dutti + Meermin + Lululemon + Hugo Boss.
+  { slug: "camisa-negra", desc: "a black button-up dress shirt", type: "flat" },
+  { slug: "sueter-cuello-alto", desc: "a charcoal grey fine-knit turtleneck sweater", type: "flat" },
+  { slug: "sueter-marino", desc: "a navy blue crew-neck knit sweater", type: "flat" },
+  { slug: "cardigan-marino", desc: "a navy blue button-up knit cardigan", type: "flat" },
+  { slug: "polo-punto-oliva", desc: "an olive green knit short-sleeve polo shirt", type: "flat" },
+  { slug: "camiseta-manga-larga", desc: "a plain white long-sleeve cotton t-shirt", type: "flat" },
+  { slug: "sudadera-crema", desc: "a cream ecru crew-neck sweatshirt, no hood", type: "flat" },
+  { slug: "pantalon-vestir-gris", desc: "a pair of grey wool dress trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "chinos-oliva", desc: "a pair of olive green chino trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "jeans-claros", desc: "a pair of light wash blue jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-tecnico", desc: "a pair of charcoal grey slim technical commuter trousers, tapered, neatly laid flat lengthwise", type: "flat" },
+  { slug: "overshirt-oliva", desc: "an olive green overshirt shacket (shirt-jacket), neatly laid flat", type: "flat" },
+  { slug: "abrigo-lana-marino", desc: "a navy blue structured wool long overcoat", type: "flat" },
+  { slug: "gabardina-beige", desc: "a beige trench coat, neatly laid flat", type: "flat" },
+  { slug: "parka-negra", desc: "a black quilted puffer jacket", type: "flat" },
+  { slug: "chaqueta-campo", desc: "an olive green military field jacket (M-65 style)", type: "flat" },
+  { slug: "botines-chelsea", desc: "a pair of brown leather Chelsea boots", type: "shoes" },
+  { slug: "botines-ante", desc: "a pair of tan suede chukka desert boots", type: "shoes" },
+  { slug: "mocasines-negro", desc: "a pair of black leather penny loafers", type: "shoes" },
+  { slug: "mocasines-burdeos", desc: "a pair of oxblood burgundy leather penny loafers", type: "shoes" },
 ];
 
 function buildPrompt({ desc, type }) {
