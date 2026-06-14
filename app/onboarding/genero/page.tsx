@@ -20,10 +20,11 @@ export default async function GeneroPage() {
     <section className="flex flex-1 flex-col gap-6 pt-4">
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">
-          ¿Cómo te vistes?
+          ¿Qué ropa usas?
         </h1>
         <p className="text-base text-muted">
-          Con esto te mostramos las prendas y looks que van contigo.
+          Solo para mostrarte las prendas correctas. Tu estilo lo descubrimos
+          enseguida.
         </p>
       </div>
 

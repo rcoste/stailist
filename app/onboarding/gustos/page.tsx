@@ -13,10 +13,11 @@ export default async function GustosPage() {
 
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">
-          ¿Cuál va contigo?
+          ¿Qué estilo te late?
         </h1>
         <p className="text-base text-muted">
-          Desliza o usa los botones — ❤️ si te lo pondrías, ✕ si ni de chiste.
+          No pienses si lo tienes — desliza por puro gusto. ❤️ si te encanta, ✕
+          si no es lo tuyo.
         </p>
       </div>
 
