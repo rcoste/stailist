@@ -3,14 +3,14 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
-  computeSeason,
+  computeSeasonWithFlow,
   isQuizComplete,
   type Season,
 } from "@/lib/colorimetria";
 
 export async function savePalette(
   answers: Record<string, string>
-): Promise<{ season: Season } | { error: string }> {
+): Promise<{ season: Season; flow: Season | null } | { error: string }> {
   if (!isQuizComplete(answers)) {
     return { error: "Te faltó alguna pregunta — revisa y va de nuevo." };
   }
@@ -21,12 +21,13 @@ export async function savePalette(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const season = computeSeason(answers);
+  const { season, flow } = computeSeasonWithFlow(answers);
 
   const { error } = await supabase
     .from("profiles")
     .update({
       palette_season: season,
+      palette_flow: flow,
       palette_quiz: answers,
       onboarding_step: 2,
       updated_at: new Date().toISOString(),
@@ -41,17 +42,19 @@ export async function savePalette(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 2, season, answers, source: "quiz" },
+    data: { step: 2, season, flow, answers, source: "quiz" },
   });
 
-  return { season };
+  return { season, flow };
 }
 
-// Guarda la estación detectada por la selfie. La confianza y el porqué se
-// guardan como metadata (origen 'foto') para medir después qué tan bien jala.
+// Guarda la estación detectada por la selfie (base + flow opcional del
+// ensemble). La confianza y el porqué van como metadata (origen 'foto') para
+// medir después qué tan bien jala.
 export async function savePaletteFromPhoto(
   season: Season,
-  meta: { confianza: string; por_que: string }
+  flow: Season | null,
+  meta: { confianza: string; por_que: string; border: boolean }
 ): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
@@ -63,6 +66,7 @@ export async function savePaletteFromPhoto(
     .from("profiles")
     .update({
       palette_season: season,
+      palette_flow: flow,
       palette_quiz: { source: "foto", ...meta },
       onboarding_step: 2,
       updated_at: new Date().toISOString(),
@@ -75,7 +79,40 @@ export async function savePaletteFromPhoto(
   await supabase.from("events").insert({
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 2, season, source: "foto", ...meta },
+    data: { step: 2, season, flow, source: "foto", ...meta },
+  });
+
+  return { ok: true };
+}
+
+// Edición manual del resultado: la usuaria corrige su estación. Actualiza la
+// paleta sin tocar el onboarding_step (ya avanzó) y registra el evento como
+// métrica de aciertos del análisis automático.
+export async function updateColorimetria(
+  season: Season,
+  flow: Season | null
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      palette_season: season,
+      palette_flow: flow,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) return { ok: false };
+
+  await supabase.from("events").insert({
+    user_id: user.id,
+    type: "colorimetria_edit",
+    data: { season, flow },
   });
 
   return { ok: true };

@@ -5,17 +5,16 @@ import { SeasonReveal } from "@/components/season-reveal";
 import { savePaletteFromPhoto } from "./actions";
 import type { Season } from "@/lib/colorimetria";
 
-type Analisis = {
-  estacion: Season;
-  confianza: "alta" | "media" | "baja";
-  por_que: string;
-  calidad_foto: string;
-};
+// Resultado reconciliado del ensemble (Claude + Gemini) que devuelve la API.
+type FotoResult =
+  | { kind: "confident"; season: Season; confianza: "alta" | "media"; por_que: string }
+  | { kind: "border"; season: Season; flow: Season; por_que: string }
+  | { kind: "baja"; por_que: string };
 
 type State =
   | { kind: "idle" }
   | { kind: "analizando" }
-  | { kind: "reveal"; season: Season; confianza: string }
+  | { kind: "reveal"; season: Season; flow: Season | null; nota: string }
   | { kind: "baja"; por_que: string }
   | { kind: "error" };
 
@@ -65,15 +64,19 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
         setState({ kind: "error" });
         return;
       }
-      const { analisis } = (await res.json()) as { analisis: Analisis };
-      if (analisis.confianza === "baja") {
-        setState({ kind: "baja", por_que: analisis.por_que });
+      const { result } = (await res.json()) as { result: FotoResult };
+
+      if (result.kind === "baja") {
+        setState({ kind: "baja", por_que: result.por_que });
         return;
       }
-      // Confianza alta/media: guardamos y revelamos.
-      const saved = await savePaletteFromPhoto(analisis.estacion, {
-        confianza: analisis.confianza,
-        por_que: analisis.por_que,
+
+      const isBorder = result.kind === "border";
+      const flow = isBorder ? result.flow : null;
+      const saved = await savePaletteFromPhoto(result.season, flow, {
+        confianza: isBorder ? "media" : result.confianza,
+        por_que: result.por_que,
+        border: isBorder,
       });
       if (!saved.ok) {
         setState({ kind: "error" });
@@ -81,8 +84,13 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
       }
       setState({
         kind: "reveal",
-        season: analisis.estacion,
-        confianza: analisis.confianza,
+        season: result.season,
+        flow,
+        nota: isBorder
+          ? "Lo leí de tu selfie — y como estás en la frontera, te muestro tus dos lados. Ajústalo si quieres."
+          : result.confianza === "media"
+            ? "Lo leí de tu selfie. La luz no estaba perfecta — ajústalo si no te suena."
+            : "Lo leí de tu selfie.",
       });
     } catch {
       setState({ kind: "error" });
@@ -93,14 +101,7 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
 
   if (state.kind === "reveal") {
     return (
-      <SeasonReveal
-        season={state.season}
-        nota={
-          state.confianza === "media"
-            ? "Lo leí de tu selfie. La luz no estaba perfecta — si quieres afinar, puedes hacer el quiz."
-            : "Lo leí de tu selfie."
-        }
-      />
+      <SeasonReveal season={state.season} flow={state.flow} nota={state.nota} />
     );
   }
 

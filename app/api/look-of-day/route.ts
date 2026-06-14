@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
           tasteTags: (profile.taste_tags ?? []) as string[],
           archetype: (profile.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
           season: profile.palette_season as Season | null,
+          flow: profile.palette_flow as Season | null,
           items,
           weather,
           recentCombos: (recentRes.data ?? []).map(

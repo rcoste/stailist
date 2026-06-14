@@ -1,12 +1,14 @@
 import type { Weather } from "@/lib/weather";
-import { SEASONS, type Season } from "@/lib/colorimetria";
+import { SEASONS, seasonPalette, type Season } from "@/lib/colorimetria";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 
 // Cada outfit guarda la versión del prompt que lo generó (medir si los
 // cambios mejoran el ratio de 👍). Súbela cuando cambies el prompt.
 // v2 (2026-06-13): reforzadas las reglas de colorimetría (near-face) y de
 // gustos (el vibe decide entre combinaciones válidas).
-export const PROMPT_VERSION = "v2";
+// v3 (2026-06-14): paleta no binaria (base + prestados del flow) y lista EVITA
+// como regla dura near-face.
+export const PROMPT_VERSION = "v3";
 
 export type EngineItem = {
   id: string;
@@ -26,6 +28,7 @@ export type EngineContext = {
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
+  flow: Season | null;
   items: EngineItem[];
   weather: Weather | null;
   recentCombos: string[][]; // item_ids de outfits de los últimos 14 días
@@ -40,7 +43,8 @@ Reglas duras:
 - Si te paso combinaciones recientes, no repitas ninguna combinación exacta.
 
 Colorimetría (regla near-face — IMPORTANTE):
-- Lo que toca la cara manda: el top y el abrigo deben estar en su paleta o ser un neutro que la favorezca (blanco, marino, gris según su estación). Ahí es donde el color le ilumina o le apaga la cara.
+- Lo que toca la cara manda: el top y el abrigo deben estar en su paleta (sus mejores o sus prestados) o ser un neutro que la favorezca. Ahí es donde el color le ilumina o le apaga la cara.
+- REGLA DURA: jamás pongas cerca de la cara (top o abrigo) un color de su lista de EVITA — esos la apagan. En bottom o calzado no importan.
 - El bottom y el calzado tienen más libertad: no necesitan estar en su paleta.
 - Si su clóset no tiene un top en su paleta, elige el neutro más favorecedor y compénsalo: arma el resto del look alrededor de sus colores.
 
@@ -65,9 +69,12 @@ export function buildUserMessage(ctx: EngineContext): string {
 
   if (ctx.season) {
     const s = SEASONS[ctx.season];
-    const colores = s.colores.map((c) => c.nombre).join(", ");
+    const { mejores, prestados, evita } = seasonPalette(ctx.season, ctx.flow);
+    const favs = [...mejores, ...prestados].map((c) => c.nombre).join(", ");
+    const avoid = evita.map((c) => c.nombre).join(", ");
+    const flowLabel = ctx.flow ? ` (con flow a ${SEASONS[ctx.flow].label})` : "";
     lines.push(
-      `Su colorimetría: paleta tipo ${s.label}. Colores que le favorecen cerca de la cara: ${colores}. (${s.reveal})`
+      `Su colorimetría: paleta tipo ${s.label}${flowLabel}. Le favorecen cerca de la cara: ${favs}. EVITA cerca de la cara (la apagan): ${avoid}.`
     );
   }
 

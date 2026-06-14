@@ -110,12 +110,29 @@ export function isQuizComplete(answers: Record<string, string>): boolean {
   return QUIZ.every((q) => q.options.some((o) => o.id === answers[q.id]));
 }
 
+export type PaletteColor = {
+  nombre: string;
+  hex: string;
+  // false = color tan propio de esta estación que NO "presta" a una vecina
+  // (ej. el blanco puro de invierno no le sirve a un otoño de base). Sin la
+  // flag, el color sí cruza la frontera y aparece como "prestado".
+  transfiere?: boolean;
+};
+
 // Paleta near-face por estación. Los hex son COLORES DE ROPA (datos para
 // chips y contexto del motor), no tokens de UI. La línea `reveal` lidera en
 // voz amiga cool — la estación es vocabulario interno, no jerga hacia ella.
+// `evita`: lo que APAGA a esa estación (el extremo claro/lavado para las
+// profundas, lo pesado/terroso para las claras). Se muestra con voz que cuida,
+// y el motor lo respeta como regla dura.
 export const SEASONS: Record<
   Season,
-  { label: string; reveal: string; colores: { nombre: string; hex: string }[] }
+  {
+    label: string;
+    reveal: string;
+    colores: PaletteColor[];
+    evita: { nombre: string; hex: string }[];
+  }
 > = {
   primavera: {
     label: "primavera",
@@ -125,7 +142,13 @@ export const SEASONS: Record<
       { nombre: "Turquesa", hex: "#62B6CB" },
       { nombre: "Verde fresco", hex: "#7FB069" },
       { nombre: "Dorado suave", hex: "#F2C14E" },
-      { nombre: "Crema", hex: "#F5E6CC" },
+      { nombre: "Crema", hex: "#F5E6CC", transfiere: false },
+    ],
+    evita: [
+      { nombre: "Negro", hex: "#1A1A1A" },
+      { nombre: "Gris pizarra", hex: "#4A4E54" },
+      { nombre: "Ciruela apagado", hex: "#4B3B52" },
+      { nombre: "Malva grisáceo", hex: "#9E8FA0" },
     ],
   },
   verano: {
@@ -136,7 +159,13 @@ export const SEASONS: Record<
       { nombre: "Rosa empolvado", hex: "#D4A5B5" },
       { nombre: "Azul grisáceo", hex: "#8FA8C8" },
       { nombre: "Salvia", hex: "#B8C8C0" },
-      { nombre: "Gris perla", hex: "#E8E2DA" },
+      { nombre: "Gris perla", hex: "#E8E2DA", transfiere: false },
+    ],
+    evita: [
+      { nombre: "Naranja", hex: "#E5712B" },
+      { nombre: "Mostaza", hex: "#C8973D" },
+      { nombre: "Camel", hex: "#B08D57" },
+      { nombre: "Negro duro", hex: "#1A1A1A" },
     ],
   },
   otono: {
@@ -144,10 +173,16 @@ export const SEASONS: Record<
     reveal: "Los tonos tierra te encienden la cara.",
     colores: [
       { nombre: "Oliva", hex: "#6B7A4C" },
-      { nombre: "Camel", hex: "#B08D57" },
+      { nombre: "Camel", hex: "#B08D57", transfiere: false },
       { nombre: "Vino", hex: "#722F37" },
-      { nombre: "Mostaza", hex: "#C8973D" },
+      { nombre: "Mostaza", hex: "#C8973D", transfiere: false },
       { nombre: "Chocolate", hex: "#5C4A38" },
+    ],
+    evita: [
+      { nombre: "Rosa bebé", hex: "#F3C6D2" },
+      { nombre: "Lavanda", hex: "#C9BEE0" },
+      { nombre: "Menta", hex: "#B8E0CC" },
+      { nombre: "Blanco óptico", hex: "#FCFCFA" },
     ],
   },
   invierno: {
@@ -155,10 +190,75 @@ export const SEASONS: Record<
     reveal: "Lo intenso te queda: contrastes fuertes y colores joya.",
     colores: [
       { nombre: "Negro", hex: "#1A1A1A" },
-      { nombre: "Blanco puro", hex: "#FAFAF7" },
+      { nombre: "Blanco puro", hex: "#FAFAF7", transfiere: false },
       { nombre: "Azul rey", hex: "#2E4FA3" },
       { nombre: "Rubí", hex: "#8E2438" },
       { nombre: "Esmeralda", hex: "#3D6B5E" },
     ],
+    evita: [
+      { nombre: "Camel", hex: "#B08D57" },
+      { nombre: "Mostaza", hex: "#C8973D" },
+      { nombre: "Oliva apagado", hex: "#6B7A4C" },
+      { nombre: "Beige amarillento", hex: "#D8C6A0" },
+    ],
   },
 };
+
+// La paleta resuelta de una persona: sus mejores (estación base), los tonos
+// PRESTADOS de su flow que sí cruzan, y lo que debe evitar. `flow` null = caso
+// claro, sin prestados.
+export function seasonPalette(primary: Season, flow: Season | null) {
+  return {
+    mejores: SEASONS[primary].colores,
+    prestados: flow
+      ? SEASONS[flow].colores.filter((c) => c.transfiere !== false)
+      : [],
+    evita: SEASONS[primary].evita,
+  };
+}
+
+// El quiz no es binario: si un eje queda en la frontera (|valor| <= 1), la
+// persona "fluye" a la estación vecina al cruzar ESE eje. Devuelve base + flow
+// (flow null si está claramente dentro de una estación).
+export function computeSeasonWithFlow(answers: Record<string, string>): {
+  season: Season;
+  flow: Season | null;
+} {
+  let warm = 0;
+  let deep = 0;
+  for (const q of QUIZ) {
+    const opt = q.options.find((o) => o.id === answers[q.id]);
+    if (!opt) continue;
+    warm += opt.w ?? 0;
+    deep += opt.d ?? 0;
+  }
+  const season: Season =
+    warm >= 0 ? (deep > 0 ? "otono" : "primavera") : deep > 0 ? "invierno" : "verano";
+
+  const warmBorder = Math.abs(warm) <= 1;
+  const deepBorder = Math.abs(deep) <= 1;
+  let flow: Season | null = null;
+  if (warmBorder && (Math.abs(warm) <= Math.abs(deep) || !deepBorder)) {
+    // cruza calidez: misma profundidad, calidez opuesta
+    flow =
+      deep > 0
+        ? warm >= 0
+          ? "invierno"
+          : "otono"
+        : warm >= 0
+          ? "verano"
+          : "primavera";
+  } else if (deepBorder) {
+    // cruza profundidad: misma calidez, profundidad opuesta
+    flow =
+      warm >= 0
+        ? deep > 0
+          ? "primavera"
+          : "otono"
+        : deep > 0
+          ? "verano"
+          : "invierno";
+  }
+  if (flow === season) flow = null;
+  return { season, flow };
+}
