@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { AppShell } from "@/components/app-shell";
-import { AddPhotoHint } from "@/components/add-photo-hint";
+import { AddPhotoFlow } from "@/components/add-photo-flow";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,12 +28,26 @@ export default async function ClosetPage() {
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("items")
-    .select("id, attrs, archetypes(name, category, image_path)")
+    .select("id, source, photo_path, attrs, archetypes(name, category, image_path)")
     .eq("user_id", profile.id)
     .is("deleted_at", null);
 
+  // Las fotos propias viven en el bucket privado → URL firmada para mostrarlas.
+  const photoPaths = (rows ?? [])
+    .map((r) => r.photo_path as string | null)
+    .filter((p): p is string => !!p);
+  const signed = new Map<string, string>();
+  if (photoPaths.length > 0) {
+    const { data } = await supabase.storage
+      .from("prendas")
+      .createSignedUrls(photoPaths, 3600);
+    data?.forEach((s) => {
+      if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
+    });
+  }
+
   // Resuelve nombre/imagen/categoría: del arquetipo si lo hay, si no de attrs
-  // (preparado para fotos propias futuras, que no tendrán arquetipo).
+  // (las fotos propias usan la URL firmada y la categoría que confirmó la usuaria).
   const items: ClosetItem[] = (rows ?? []).map((r) => {
     const arch = r.archetypes as {
       name?: string;
@@ -44,14 +58,16 @@ export default async function ClosetPage() {
       nombre?: string;
       image_path?: string | null;
       color_hex?: string;
+      categoria?: string;
       tipo?: string;
     };
+    const photoUrl = r.photo_path ? signed.get(r.photo_path as string) : null;
     return {
       id: r.id as string,
       nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-      imagen: arch?.image_path ?? attrs.image_path ?? null,
+      imagen: arch?.image_path ?? photoUrl ?? attrs.image_path ?? null,
       swatch: attrs.color_hex ?? "#E5E1DD",
-      category: arch?.category ?? attrs.tipo ?? "accesorio",
+      category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
     };
   });
 
@@ -71,7 +87,7 @@ export default async function ClosetPage() {
               {items.length === 1 ? "prenda" : "prendas"} en tu clóset.
             </p>
           </div>
-          <AddPhotoHint />
+          <AddPhotoFlow userId={profile.id} />
         </div>
 
         {grupos.length === 0 ? (
