@@ -67,12 +67,13 @@ export function buildUserMessage(ctx: EngineContext): string {
       : "Día a día";
   lines.push(`Ocasión: ${objectiveLabel}.`);
 
-  if (ctx.season) {
-    const s = SEASONS[ctx.season];
-    const { mejores, prestados, evita } = seasonPalette(ctx.season, ctx.flow);
+  const s = ctx.season ? SEASONS[ctx.season] : null;
+  if (s) {
+    const { mejores, prestados, evita } = seasonPalette(ctx.season!, ctx.flow);
     const favs = [...mejores, ...prestados].map((c) => c.nombre).join(", ");
     const avoid = evita.map((c) => c.nombre).join(", ");
-    const flowLabel = ctx.flow ? ` (con flow a ${SEASONS[ctx.flow].label})` : "";
+    const flowSeason = ctx.flow ? SEASONS[ctx.flow] : null;
+    const flowLabel = flowSeason ? ` (con flow a ${flowSeason.label})` : "";
     lines.push(
       `Su colorimetría: paleta tipo ${s.label}${flowLabel}. Le favorecen cerca de la cara: ${favs}. EVITA cerca de la cara (la apagan): ${avoid}.`
     );

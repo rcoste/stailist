@@ -208,12 +208,14 @@ export const SEASONS: Record<
 // PRESTADOS de su flow que sí cruzan, y lo que debe evitar. `flow` null = caso
 // claro, sin prestados.
 export function seasonPalette(primary: Season, flow: Season | null) {
+  // Defensivo: si llega una estación inválida (dato corrupto), no reventar el
+  // motor — devolver vacío y seguir. Mejor un look sin paleta que cero looks.
+  const base = SEASONS[primary];
+  const flw = flow ? SEASONS[flow] : null;
   return {
-    mejores: SEASONS[primary].colores,
-    prestados: flow
-      ? SEASONS[flow].colores.filter((c) => c.transfiere !== false)
-      : [],
-    evita: SEASONS[primary].evita,
+    mejores: base ? base.colores : [],
+    prestados: flw ? flw.colores.filter((c) => c.transfiere !== false) : [],
+    evita: base ? base.evita : [],
   };
 }
 
