@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { LOOKS } from "@/lib/looks";
 
 type Arch = {
   id: number;
@@ -24,6 +23,31 @@ const SEG_LABEL: Record<string, string> = {
   unisex: "Unisex",
 };
 
+// Orden y etiqueta de las categorías para los sub-grupos dentro de cada
+// segmento. Categorías nuevas que no estén aquí caen al final bajo su slug.
+const CATEGORY_ORDER = ["top", "bottom", "vestido", "abrigo", "calzado", "accesorio"];
+const CATEGORY_LABEL: Record<string, string> = {
+  top: "Tops",
+  bottom: "Pantalones y faldas",
+  vestido: "Vestidos",
+  abrigo: "Abrigos",
+  calzado: "Calzado",
+  accesorio: "Accesorios",
+};
+
+function byCategory(items: Arch[]) {
+  const cats = Array.from(new Set(items.map((a) => a.category)));
+  cats.sort((a, b) => {
+    const ia = CATEGORY_ORDER.indexOf(a);
+    const ib = CATEGORY_ORDER.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
+  return cats.map((cat) => ({
+    cat,
+    items: items.filter((a) => a.category === cat),
+  }));
+}
+
 export default async function AdminCatalogo() {
   const supabase = await createClient();
   const { data } = await supabase
@@ -42,106 +66,63 @@ export default async function AdminCatalogo() {
       <div className="flex flex-col gap-1">
         <h1 className="text-h2 font-semibold text-ink">Catálogo</h1>
         <p className="text-sm text-muted">
-          {archs.length} básicos · {LOOKS.length} looks. Toca un básico para
-          editarlo.
+          {archs.length} básicos. Toca un básico para editarlo.
         </p>
       </div>
 
-      {/* Básicos */}
+      {/* Básicos: agrupados por segmento y, dentro, por categoría */}
       {bySegment.map(({ seg, items }) => (
-        <section key={seg} className="flex flex-col gap-3">
+        <section key={seg} className="flex flex-col gap-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
             Básicos · {SEG_LABEL[seg] ?? seg} ({items.length})
           </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {items.map((a) => (
-              <Link
-                key={a.id}
-                href={`/admin/catalogo/${a.id}`}
-                className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface transition-colors duration-200 hover:border-accent"
-              >
-                <div className="relative aspect-square w-full bg-bg">
-                  {a.image_path ? (
-                    <Image
-                      src={a.image_path}
-                      alt={a.name}
-                      fill
-                      sizes="180px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span
-                      className="absolute inset-0"
-                      style={{ backgroundColor: a.attrs.color_hex ?? "#E5E1DD" }}
-                    />
-                  )}
-                </div>
-                <div className="flex flex-col gap-0.5 p-2">
-                  <span className="text-sm font-medium text-ink">{a.name}</span>
-                  <span className="text-xs text-muted">
-                    {[a.category, a.attrs.formalidad, a.attrs.temporada]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
-
-      {/* Looks (swipes) — código, no editable */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-          Looks de swipes ({LOOKS.length})
-        </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {LOOKS.map((l) => (
-            <div
-              key={l.id}
-              className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface"
-            >
-              <div className="relative aspect-[3/4] w-full bg-bg">
-                {l.image ? (
-                  <Image
-                    src={l.image}
-                    alt={l.nombre}
-                    fill
-                    sizes="180px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full flex-col">
-                    {l.prendas.map((p) => (
-                      <span
-                        key={p.nombre}
-                        className="flex-1"
-                        style={{ backgroundColor: p.swatch }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-1 p-2">
-                <span className="text-sm font-medium text-ink">{l.nombre}</span>
-                <span className="text-xs text-muted">
-                  {SEG_LABEL[l.segment] ?? l.segment} · {l.vibe}
-                </span>
-                <div className="flex flex-wrap gap-1">
-                  {l.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-bg px-2 py-0.5 text-[10px] text-muted"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
+          {byCategory(items).map(({ cat, items: catItems }) => (
+            <div key={cat} className="flex flex-col gap-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-muted/80">
+                {CATEGORY_LABEL[cat] ?? cat} ({catItems.length})
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {catItems.map((a) => (
+                  <Link
+                    key={a.id}
+                    href={`/admin/catalogo/${a.id}`}
+                    className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface transition-colors duration-200 hover:border-accent"
+                  >
+                    <div className="relative aspect-square w-full bg-bg">
+                      {a.image_path ? (
+                        <Image
+                          src={a.image_path}
+                          alt={a.name}
+                          fill
+                          sizes="180px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="absolute inset-0"
+                          style={{
+                            backgroundColor: a.attrs.color_hex ?? "#E5E1DD",
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-0.5 p-2">
+                      <span className="text-sm font-medium text-ink">
+                        {a.name}
+                      </span>
+                      <span className="text-xs text-muted">
+                        {[a.attrs.formalidad, a.attrs.temporada]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
+      ))}
     </div>
   );
 }
