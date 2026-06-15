@@ -62,7 +62,7 @@ const ITEMS = [
   { slug: "gabardina-beige", desc: "a beige trench coat, neatly laid flat", type: "flat" },
   { slug: "parka-negra", desc: "a black quilted puffer jacket", type: "flat" },
   { slug: "chaqueta-campo", desc: "an olive green military field jacket (M-65 style)", type: "flat" },
-  { slug: "botines-chelsea", desc: "a pair of brown leather Chelsea boots", type: "shoes" },
+  { slug: "botines-chelsea", desc: "a pair of dark brown smooth calf leather Chelsea boots, sleek almond toe, brown elastic side gore panel, slim leather sole, elegant dress boots", type: "boots" },
   { slug: "botines-ante", desc: "a pair of tan suede chukka desert boots", type: "shoes" },
   { slug: "mocasines-negro", desc: "a pair of black leather penny loafers", type: "shoes" },
   { slug: "mocasines-burdeos", desc: "a pair of oxblood burgundy leather penny loafers", type: "shoes" },
@@ -108,7 +108,7 @@ const ITEMS = [
   { slug: "chamarra-ultraligera", desc: "a black lightweight packable down puffer jacket, slim, neatly laid flat", type: "flat" },
   { slug: "pantalon-vestir-marino", desc: "a pair of navy blue men's wool dress trousers, neatly laid flat lengthwise", type: "flat" },
   { slug: "abrigo-charcoal", desc: "a charcoal grey structured wool long overcoat, men's, neatly laid flat", type: "flat" },
-  { slug: "botines-chelsea-negros", desc: "a pair of black leather Chelsea boots", type: "shoes" },
+  { slug: "botines-chelsea-negros", desc: "a pair of black smooth calf leather Chelsea boots, sleek almond toe, black elastic side gore panel, slim leather sole, elegant dress boots", type: "boots" },
   { slug: "tenis-blancos-urbanos", desc: "a pair of all-white leather low-top basketball sneakers, thick chunky white rubber sole, perforated toe box, clean iconic silhouette, no logos", type: "shoes" },
   { slug: "tenis-deportivos", desc: "a pair of grey athletic running sneakers, knit mesh upper, distinctive sculpted sole made of hollow cushioning pods, white sole, performance style, no logos", type: "shoes" },
   { slug: "cinturon-cafe", desc: "a brown leather belt with a simple metal buckle, coiled neatly into a spiral", type: "accesorio" },
@@ -121,6 +121,9 @@ const ITEMS = [
   { slug: "tenis-piel-negros", desc: "a pair of black smooth leather minimalist low-top sneakers with a cream off-white rubber sole, clean simple design, no logos", type: "shoes" },
   { slug: "tenis-retro-blanco", desc: "a pair of white leather retro low-top sneakers with a navy blue side panel detail and a beige cream sole, vintage tennis style, no logos", type: "shoes" },
   { slug: "chamarra-piel-negra-clasica", desc: "a black leather men's jacket, classic simple style, soft supple leather, not a heavy moto or biker jacket, neatly laid flat", type: "flat" },
+  // Chelsea boots estilo Meermin (2026-06-15): regenera negro/café feos +
+  // agrega café gamuza. Encuadre 3/4 de frente, punta de almendra, elegantes.
+  { slug: "botines-chelsea-ante", desc: "a pair of dark brown suede Chelsea boots, sleek almond toe, brown elastic side gore panel, slim leather sole, elegant dress boots", type: "boots" },
 ];
 
 function buildPrompt({ desc, type }) {
@@ -129,6 +132,9 @@ function buildPrompt({ desc, type }) {
   }
   if (type === "accesorio") {
     return `Professional e-commerce product photograph of ${desc}, shot from directly above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The item fills about 55% of the frame, centered. No people, no props, no text, no labels.`;
+  }
+  if (type === "boots") {
+    return `Professional e-commerce photograph of ${desc}. The pair is positioned at a three-quarter front angle with the toes pointing forward toward the left, one boot slightly in front of the other, upright and standing, elegant and sharp. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist dress-shoe catalog style like Meermin or COS. The boots fill about 65% of the frame, centered. No people, no props, no text, no labels.`;
   }
   return `Professional e-commerce flat lay photograph of ${desc}, neatly laid flat and slightly styled, shot directly from above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The garment fills about 70% of the frame, centered. No people, no props, no text, no labels.`;
 }
