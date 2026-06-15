@@ -115,7 +115,6 @@ export function TryonButton({
       ref={inputRef}
       type="file"
       accept="image/*"
-      capture="environment"
       onChange={onAvatarFile}
       className="hidden"
     />

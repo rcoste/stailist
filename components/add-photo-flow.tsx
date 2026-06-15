@@ -138,7 +138,6 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
       ref={inputRef}
       type="file"
       accept="image/*"
-      capture="environment"
       onChange={onFile}
       className="hidden"
     />

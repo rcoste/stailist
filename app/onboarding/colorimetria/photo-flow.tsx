@@ -170,7 +170,6 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
       ref={inputRef}
       type="file"
       accept="image/*"
-      capture="user"
       onChange={onFile}
       className="hidden"
     />
