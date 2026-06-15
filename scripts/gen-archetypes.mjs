@@ -66,6 +66,25 @@ const ITEMS = [
   { slug: "botines-ante", desc: "a pair of tan suede chukka desert boots", type: "shoes" },
   { slug: "mocasines-negro", desc: "a pair of black leather penny loafers", type: "shoes" },
   { slug: "mocasines-burdeos", desc: "a pair of oxblood burgundy leather penny loafers", type: "shoes" },
+  // Ampliación clóset mujer — capsule wardrobe + clima de México (2026-06-15)
+  { slug: "blusa-blanca", desc: "a white silk satin women's blouse, elegant drape, neatly laid flat", type: "flat" },
+  { slug: "blusa-lino", desc: "a natural beige linen women's blouse, relaxed fit, neatly laid flat", type: "flat" },
+  { slug: "top-tirantes", desc: "a white ribbed women's tank top camisole, neatly laid flat", type: "flat" },
+  { slug: "sueter-cuello-alto-mujer", desc: "a cream fine-knit women's turtleneck sweater, neatly laid flat", type: "flat" },
+  { slug: "camiseta-rayas", desc: "a navy and white striped Breton long-sleeve t-shirt, women's cut, neatly laid flat", type: "flat" },
+  { slug: "pantalon-vestir-camel", desc: "a pair of camel beige women's tailored dress trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-wide-leg", desc: "a pair of cream high-waisted wide-leg women's trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "jeans-claros-mujer", desc: "a pair of light wash high-waisted women's straight jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "falda-midi-camel", desc: "a camel beige midi A-line skirt, neatly laid flat", type: "flat" },
+  { slug: "vestido-camisero", desc: "a chambray denim women's shirt dress, knee length, neatly laid flat", type: "flat" },
+  { slug: "vestido-floral", desc: "a floral print women's midi summer dress, soft pink and green tones, neatly laid flat", type: "flat" },
+  { slug: "vestido-midi-burdeos", desc: "a burgundy fitted women's midi dress, elegant, neatly laid flat", type: "flat" },
+  { slug: "tacon-nude", desc: "a pair of nude pointed-toe high-heel pumps", type: "shoes" },
+  { slug: "sandalias-tiras", desc: "a pair of tan leather strappy flat sandals", type: "shoes" },
+  { slug: "botines-mujer", desc: "a pair of black leather women's ankle boots with a block heel", type: "shoes" },
+  { slug: "mocasines-mujer", desc: "a pair of brown leather women's loafers", type: "shoes" },
+  { slug: "gabardina-mujer", desc: "a beige women's belted trench coat, neatly laid flat", type: "flat" },
+  { slug: "chaqueta-piel", desc: "a black leather women's biker jacket, neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
