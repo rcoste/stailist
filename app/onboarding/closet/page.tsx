@@ -7,11 +7,13 @@ export default async function ClosetOnboardingPage() {
   const profile = await requireStep(2);
 
   const supabase = await createClient();
-  // Básicos del género elegido + los unisex.
+  // Solo el subset curado del wow-moment (onboarding_subset). El resto de la
+  // biblioteca se agrega después desde el clóset, para no alargar el TTV.
   const { data: catalog } = await supabase
     .from("archetypes")
     .select("id, name, category, attrs, image_path")
     .in("segment", ["unisex", profile.gender ?? "hombre"])
+    .eq("onboarding_subset", true)
     .order("sort_order");
 
   return (
@@ -24,7 +26,7 @@ export default async function ClosetOnboardingPage() {
         </h1>
         <p className="text-base text-muted">
           Marca los básicos que ya tienes — sin fotos, eso viene después si
-          quieres.
+          quieres. Esto es una muestra; luego podrás agregar más desde tu clóset.
         </p>
       </div>
 

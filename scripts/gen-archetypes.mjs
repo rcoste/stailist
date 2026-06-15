@@ -95,11 +95,36 @@ const ITEMS = [
   { slug: "sueter-gris-mujer", desc: "a grey women's crew-neck knit sweater, fitted", type: "flat" },
   { slug: "chamarra-mezclilla-mujer", desc: "a classic medium-wash women's denim jacket, cropped fitted cut", type: "flat" },
   { slug: "botas-negras-mujer", desc: "a pair of black leather women's ankle boots, sleek", type: "shoes" },
+  // Ampliación biblioteca — lista de Roberto (2026-06-15). Tees de color unisex,
+  // prendas y accesorios de hombre. Nombres genéricos (sin marca).
+  { slug: "camiseta-marino", desc: "a plain navy blue crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camiseta-olivo", desc: "a plain olive green crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camiseta-arena", desc: "a plain sand beige crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camiseta-vino", desc: "a plain burgundy wine crew-neck cotton t-shirt", type: "flat" },
+  { slug: "chamarra-piel-negra", desc: "a black leather men's jacket, classic moto biker style, neatly laid flat", type: "flat" },
+  { slug: "chamarra-piel-cafe", desc: "a brown leather men's jacket, classic style, neatly laid flat", type: "flat" },
+  { slug: "sueter-cuello-v-marino", desc: "a navy blue men's v-neck fine merino knit sweater, neatly laid flat", type: "flat" },
+  { slug: "sueter-merino-camel", desc: "a camel beige men's crew-neck merino knit sweater, neatly laid flat", type: "flat" },
+  { slug: "chamarra-ultraligera", desc: "a black lightweight packable down puffer jacket, slim, neatly laid flat", type: "flat" },
+  { slug: "pantalon-vestir-marino", desc: "a pair of navy blue men's wool dress trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "abrigo-charcoal", desc: "a charcoal grey structured wool long overcoat, men's, neatly laid flat", type: "flat" },
+  { slug: "botines-chelsea-negros", desc: "a pair of black leather Chelsea boots", type: "shoes" },
+  { slug: "tenis-blancos-urbanos", desc: "a pair of white chunky leather street sneakers, basketball style", type: "shoes" },
+  { slug: "tenis-deportivos", desc: "a pair of modern running sneakers with a chunky cushioned sole, light grey and white", type: "shoes" },
+  { slug: "cinturon-cafe", desc: "a brown leather belt with a simple metal buckle, coiled neatly into a spiral", type: "accesorio" },
+  { slug: "cinturon-negro", desc: "a black leather belt with a simple metal buckle, coiled neatly into a spiral", type: "accesorio" },
+  { slug: "gorra-negra", desc: "a plain black baseball cap, structured front", type: "accesorio" },
+  { slug: "gorra-marino", desc: "a plain navy blue baseball cap, structured front", type: "accesorio" },
+  { slug: "lentes-wayfarer", desc: "a pair of black wayfarer style sunglasses, folded", type: "accesorio" },
+  { slug: "lentes-aviador", desc: "a pair of classic aviator sunglasses with thin gold metal frame, folded", type: "accesorio" },
 ];
 
 function buildPrompt({ desc, type }) {
   if (type === "shoes") {
     return `Professional e-commerce flat lay photograph of ${desc}, placed neatly side by side, shot from a slight top-down angle. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The shoes fill about 65% of the frame, centered. No people, no props, no text, no labels.`;
+  }
+  if (type === "accesorio") {
+    return `Professional e-commerce product photograph of ${desc}, shot from directly above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The item fills about 55% of the frame, centered. No people, no props, no text, no labels.`;
   }
   return `Professional e-commerce flat lay photograph of ${desc}, neatly laid flat and slightly styled, shot directly from above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The garment fills about 70% of the frame, centered. No people, no props, no text, no labels.`;
 }

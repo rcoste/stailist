@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AddPhotoFlow } from "@/components/add-photo-flow";
 import { requireOnboarded } from "@/lib/auth";
@@ -87,7 +88,15 @@ export default async function ClosetPage() {
               {items.length === 1 ? "prenda" : "prendas"} en tu clóset.
             </p>
           </div>
-          <AddPhotoFlow userId={profile.id} />
+          <div className="flex flex-col items-end gap-2">
+            <AddPhotoFlow userId={profile.id} />
+            <Link
+              href="/closet/biblioteca"
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              + Biblioteca
+            </Link>
+          </div>
         </div>
 
         {grupos.length === 0 ? (
