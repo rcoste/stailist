@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         hostname: "owmvdpdczznygbuctnpv.supabase.co",
         pathname: "/storage/v1/object/sign/**",
       },
+      // Imágenes de básicos regeneradas desde el admin (bucket público).
+      {
+        protocol: "https",
+        hostname: "owmvdpdczznygbuctnpv.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
 };

@@ -10,10 +10,12 @@ export type Profile = {
   gender: Gender | null;
   taste_tags: string[];
   palette_season: "primavera" | "verano" | "otono" | "invierno" | null;
+  palette_flow: "primavera" | "verano" | "otono" | "invierno" | null;
   palette_quiz: Record<string, string> | null;
   last_objective: string | null;
   onboarding_step: number;
   city: string | null;
+  is_admin: boolean;
 };
 
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;
@@ -53,5 +55,12 @@ export async function requireStep(step: number): Promise<Profile> {
   if (profile.onboarding_step !== step) {
     redirect(routeForStep(profile.onboarding_step));
   }
+  return profile;
+}
+
+// Para /admin: solo Roberto (is_admin). El resto, fuera a la app normal.
+export async function requireAdmin(): Promise<Profile> {
+  const profile = await getProfile();
+  if (!profile.is_admin) redirect("/");
   return profile;
 }
