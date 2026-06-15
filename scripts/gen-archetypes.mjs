@@ -109,14 +109,18 @@ const ITEMS = [
   { slug: "pantalon-vestir-marino", desc: "a pair of navy blue men's wool dress trousers, neatly laid flat lengthwise", type: "flat" },
   { slug: "abrigo-charcoal", desc: "a charcoal grey structured wool long overcoat, men's, neatly laid flat", type: "flat" },
   { slug: "botines-chelsea-negros", desc: "a pair of black leather Chelsea boots", type: "shoes" },
-  { slug: "tenis-blancos-urbanos", desc: "a pair of white chunky leather street sneakers, basketball style", type: "shoes" },
-  { slug: "tenis-deportivos", desc: "a pair of modern running sneakers with a chunky cushioned sole, light grey and white", type: "shoes" },
+  { slug: "tenis-blancos-urbanos", desc: "a pair of all-white leather low-top basketball sneakers, thick chunky white rubber sole, perforated toe box, clean iconic silhouette, no logos", type: "shoes" },
+  { slug: "tenis-deportivos", desc: "a pair of grey athletic running sneakers, knit mesh upper, distinctive sculpted sole made of hollow cushioning pods, white sole, performance style, no logos", type: "shoes" },
   { slug: "cinturon-cafe", desc: "a brown leather belt with a simple metal buckle, coiled neatly into a spiral", type: "accesorio" },
   { slug: "cinturon-negro", desc: "a black leather belt with a simple metal buckle, coiled neatly into a spiral", type: "accesorio" },
   { slug: "gorra-negra", desc: "a plain black baseball cap, structured front", type: "accesorio" },
   { slug: "gorra-marino", desc: "a plain navy blue baseball cap, structured front", type: "accesorio" },
   { slug: "lentes-wayfarer", desc: "a pair of black wayfarer style sunglasses, folded", type: "accesorio" },
   { slug: "lentes-aviador", desc: "a pair of classic aviator sunglasses with thin gold metal frame, folded", type: "accesorio" },
+  // Ajuste tenis a estilos reales de referencia + chamarra negra clásica (2026-06-15).
+  { slug: "tenis-piel-negros", desc: "a pair of black smooth leather minimalist low-top sneakers with a cream off-white rubber sole, clean simple design, no logos", type: "shoes" },
+  { slug: "tenis-retro-blanco", desc: "a pair of white leather retro low-top sneakers with a navy blue side panel detail and a beige cream sole, vintage tennis style, no logos", type: "shoes" },
+  { slug: "chamarra-piel-negra-clasica", desc: "a black leather men's jacket, classic simple style, soft supple leather, not a heavy moto or biker jacket, neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
