@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { AddPhotoFlow } from "@/components/add-photo-flow";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { archetypeImageForGender, type Gender } from "@/lib/archetypes";
 
 // Orden y etiqueta de cada categoría para agrupar el clóset.
 const CATEGORIAS: { key: string; label: string }[] = [
@@ -28,9 +29,12 @@ export default async function ClosetPage() {
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("items")
-    .select("id, source, photo_path, attrs, archetypes(name, category, image_path)")
+    .select(
+      "id, source, photo_path, attrs, archetypes(name, category, image_path, segment)"
+    )
     .eq("user_id", profile.id)
     .is("deleted_at", null);
+  const gender = profile.gender as Gender;
 
   // Las fotos propias viven en el bucket privado → URL firmada para mostrarlas.
   const photoPaths = (rows ?? [])
@@ -53,6 +57,7 @@ export default async function ClosetPage() {
       name?: string;
       category?: string;
       image_path?: string | null;
+      segment?: string | null;
     } | null;
     const attrs = r.attrs as {
       nombre?: string;
@@ -65,7 +70,11 @@ export default async function ClosetPage() {
     return {
       id: r.id as string,
       nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-      imagen: arch?.image_path ?? photoUrl ?? attrs.image_path ?? null,
+      imagen:
+        archetypeImageForGender(arch?.segment, arch?.image_path, gender) ??
+        photoUrl ??
+        attrs.image_path ??
+        null,
       swatch: attrs.color_hex ?? "#E5E1DD",
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
     };

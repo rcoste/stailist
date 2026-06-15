@@ -85,6 +85,23 @@ const ITEMS = [
   { slug: "mocasines-mujer", desc: "a pair of brown leather women's loafers", type: "shoes" },
   { slug: "gabardina-mujer", desc: "a beige women's belted trench coat, neatly laid flat", type: "flat" },
   { slug: "chaqueta-piel", desc: "a black leather women's biker jacket, neatly laid flat", type: "flat" },
+  // Variantes femeninas de los básicos UNISEX (2026-06-15). El path base
+  // <slug>.png es el corte de hombre; la mujer ve <slug>-mujer.png vía
+  // archetypeImageForGender(). Mismas prendas, corte femenino.
+  { slug: "camiseta-blanca-mujer", desc: "a plain white fitted women's crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camiseta-negra-mujer", desc: "a plain black fitted women's crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camisa-blanca-mujer", desc: "a crisp white women's button-up shirt, tailored slim fit", type: "flat" },
+  { slug: "sueter-gris-mujer", desc: "a grey women's crew-neck knit sweater, fitted", type: "flat" },
+  { slug: "blazer-azul-marino-mujer", desc: "a navy blue women's tailored blazer, fitted waist", type: "flat" },
+  { slug: "chamarra-mezclilla-mujer", desc: "a classic medium-wash women's denim jacket, cropped fitted cut", type: "flat" },
+  { slug: "jeans-azul-oscuro-mujer", desc: "a pair of dark indigo women's high-waisted skinny jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-negro-mujer", desc: "a pair of black women's tailored trousers, slim fit, neatly laid flat lengthwise", type: "flat" },
+  { slug: "tenis-blancos-mujer", desc: "a pair of clean white women's leather sneakers, slim silhouette", type: "shoes" },
+  { slug: "botas-negras-mujer", desc: "a pair of black leather women's ankle boots, sleek", type: "shoes" },
+  { slug: "camiseta-gris-mujer", desc: "a plain heather grey fitted women's crew-neck cotton t-shirt", type: "flat" },
+  { slug: "camisa-mezclilla-mujer", desc: "a light blue women's chambray button-up shirt, relaxed feminine fit", type: "flat" },
+  { slug: "jeans-negros-mujer", desc: "a pair of black women's high-waisted skinny jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "bomber-mujer", desc: "a classic black women's bomber jacket, cropped fitted cut", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
