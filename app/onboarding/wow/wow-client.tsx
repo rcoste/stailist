@@ -11,6 +11,7 @@ export type WowOutfit = {
   id: string;
   nombre: string;
   explicacion: string;
+  tryon?: string | null;
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
 };
 
@@ -200,7 +201,11 @@ export function WowClient({
                 👎 No va
               </button>
             </div>
-            <TryonButton outfitId={outfit.id} userId={userId} />
+            <TryonButton
+              outfitId={outfit.id}
+              userId={userId}
+              initialImage={outfit.tryon ?? null}
+            />
           </div>
         );
       })}

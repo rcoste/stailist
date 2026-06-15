@@ -10,6 +10,7 @@ export type HoyOutfit = {
   id: string;
   nombre: string;
   explicacion: string;
+  tryon?: string | null;
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
 };
 
@@ -218,7 +219,11 @@ export function HoyClient({
       >
         {worn ? "✓ Me lo puse hoy" : "Me lo puse"}
       </button>
-      <TryonButton outfitId={state.outfit.id} userId={userId} />
+      <TryonButton
+        outfitId={state.outfit.id}
+        userId={userId}
+        initialImage={state.outfit.tryon ?? null}
+      />
     </div>
   );
 }

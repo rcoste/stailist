@@ -11,7 +11,7 @@ export default async function HoyPage() {
   // ¿Ya hay look de hoy? Si sí, lo pasamos listo (no se regenera al abrir).
   const { data: look } = await supabase
     .from("outfits")
-    .select("id, item_ids, title, explanation")
+    .select("id, item_ids, title, explanation, tryon_path")
     .eq("user_id", profile.id)
     .eq("is_look_of_day", true)
     .eq("look_date", today)
@@ -45,10 +45,20 @@ export default async function HoyPage() {
         },
       ])
     );
+
+    let tryon: string | null = null;
+    if (look.tryon_path) {
+      const { data: signed } = await supabase.storage
+        .from("prendas")
+        .createSignedUrl(look.tryon_path as string, 3600);
+      tryon = signed?.signedUrl ?? null;
+    }
+
     lookInicial = {
       id: look.id,
       nombre: look.title ?? "Tu look",
       explicacion: look.explanation,
+      tryon,
       prendas: (look.item_ids as string[]).map((id) => ({
         nombre: byId.get(id)?.nombre ?? "Prenda",
         swatch: byId.get(id)?.color_hex ?? "#E5E1DD",

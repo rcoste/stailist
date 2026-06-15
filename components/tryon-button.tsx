@@ -6,13 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { saveAvatar } from "@/lib/avatar-actions";
 import { Spinner } from "@/components/spinner";
 
-type State =
-  | { kind: "idle" }
-  | { kind: "generando" }
-  | { kind: "sin_avatar" }
-  | { kind: "subiendo" }
-  | { kind: "ver"; image: string }
-  | { kind: "error"; msg: string };
+type Mode = "idle" | "gen" | "up" | "sin_avatar" | "full" | "error";
 
 function comprimir(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -45,18 +39,24 @@ function comprimir(file: File): Promise<Blob> {
   });
 }
 
+// `initialImage`: si el outfit ya tiene un try-on generado (URL firmada), se
+// muestra el thumbnail directo, sin tener que regenerarlo.
 export function TryonButton({
   outfitId,
   userId,
+  initialImage = null,
 }: {
   outfitId: string;
   userId: string;
+  initialImage?: string | null;
 }) {
-  const [state, setState] = useState<State>({ kind: "idle" });
+  const [mode, setMode] = useState<Mode>("idle");
+  const [image, setImage] = useState<string | null>(initialImage);
+  const [errMsg, setErrMsg] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function generar() {
-    setState({ kind: "generando" });
+    setMode("gen");
     try {
       const res = await fetch("/api/tryon", {
         method: "POST",
@@ -65,22 +65,23 @@ export function TryonButton({
       });
       const data = await res.json();
       if (data.error === "sin_avatar") {
-        setState({ kind: "sin_avatar" });
+        setMode("sin_avatar");
         return;
       }
       if (!res.ok || !data.image) {
-        setState({
-          kind: "error",
-          msg:
-            data.error === "sin_api_key"
-              ? "El try-on aún no está conectado."
-              : "No pude crear tu look. Inténtalo de nuevo.",
-        });
+        setErrMsg(
+          data.error === "sin_api_key"
+            ? "El try-on aún no está conectado."
+            : "No pude crear tu look. Inténtalo de nuevo."
+        );
+        setMode("error");
         return;
       }
-      setState({ kind: "ver", image: data.image });
+      setImage(data.image);
+      setMode("full"); // recién generado: ábrelo en grande (el wow)
     } catch {
-      setState({ kind: "error", msg: "Se cortó la conexión." });
+      setErrMsg("Se cortó la conexión.");
+      setMode("error");
     }
   }
 
@@ -88,7 +89,7 @@ export function TryonButton({
     const file = e.target.files?.[0];
     if (inputRef.current) inputRef.current.value = "";
     if (!file) return;
-    setState({ kind: "subiendo" });
+    setMode("up");
     try {
       const blob = await comprimir(file);
       const supabase = createClient();
@@ -97,17 +98,20 @@ export function TryonButton({
         .from("prendas")
         .upload(path, blob, { contentType: "image/jpeg", upsert: true });
       if (up.error) {
-        setState({ kind: "error", msg: "No pude guardar tu foto." });
+        setErrMsg("No pude guardar tu foto.");
+        setMode("error");
         return;
       }
       const saved = await saveAvatar(path);
       if (!saved.ok) {
-        setState({ kind: "error", msg: "No pude guardar tu foto." });
+        setErrMsg("No pude guardar tu foto.");
+        setMode("error");
         return;
       }
       await generar(); // ya con avatar, genera el try-on
     } catch {
-      setState({ kind: "error", msg: "No pude procesar tu foto." });
+      setErrMsg("No pude procesar tu foto.");
+      setMode("error");
     }
   }
 
@@ -121,16 +125,16 @@ export function TryonButton({
     />
   );
 
-  // Modal con el resultado
-  if (state.kind === "ver") {
+  // Vista grande (modal). Cierra → vuelve al thumbnail (no a la nada).
+  if (mode === "full" && image) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/70 px-4 py-6">
         <div className="relative aspect-[3/4] w-full max-w-80 overflow-hidden rounded-2xl border border-line bg-surface">
-          <Image src={state.image} alt="Tú con este look" fill className="object-cover" />
+          <Image src={image} alt="Tú con este look" fill className="object-cover" />
         </div>
         <button
           type="button"
-          onClick={() => setState({ kind: "idle" })}
+          onClick={() => setMode("idle")}
           className="min-h-12 rounded-full bg-surface px-8 text-base font-medium text-ink"
         >
           Cerrar
@@ -139,7 +143,7 @@ export function TryonButton({
     );
   }
 
-  if (state.kind === "sin_avatar") {
+  if (mode === "sin_avatar") {
     return (
       <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-surface p-4">
         <p className="text-sm font-medium text-ink">
@@ -161,24 +165,67 @@ export function TryonButton({
     );
   }
 
-  const cargando = state.kind === "generando" || state.kind === "subiendo";
+  const cargando = mode === "gen" || mode === "up";
+
+  // Cargando: botón con spinner.
+  if (cargando) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <button
+          type="button"
+          disabled
+          className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent bg-accent-soft text-sm font-medium text-ink disabled:opacity-60"
+        >
+          <Spinner className="h-4 w-4" />
+          {mode === "up" ? "Guardando tu foto…" : "Creando tu look… (~20s)"}
+        </button>
+        {input}
+      </div>
+    );
+  }
+
+  // Ya hay try-on: thumbnail persistente, tappable para ver en grande.
+  if (image) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={() => setMode("full")}
+          className="flex items-center gap-3 rounded-2xl border border-accent bg-accent-soft p-2 text-left transition-colors duration-200 hover:bg-accent/10"
+        >
+          <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-line bg-surface">
+            <Image
+              src={image}
+              alt="Tú con este look"
+              fill
+              sizes="48px"
+              className="object-cover"
+            />
+          </span>
+          <span className="flex flex-col">
+            <span className="text-sm font-medium text-ink">
+              Tú con este look ✨
+            </span>
+            <span className="text-xs text-muted">Toca para verlo en grande</span>
+          </span>
+        </button>
+        {input}
+      </div>
+    );
+  }
+
+  // Sin try-on aún: botón para generarlo.
   return (
     <div className="flex flex-col gap-1.5">
       <button
         type="button"
         onClick={generar}
-        disabled={cargando}
-        className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent bg-accent-soft text-sm font-medium text-ink transition-colors duration-200 hover:bg-accent hover:text-on-accent disabled:opacity-60"
+        className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent bg-accent-soft text-sm font-medium text-ink transition-colors duration-200 hover:bg-accent hover:text-on-accent"
       >
-        {cargando ? <Spinner className="h-4 w-4" /> : null}
-        {state.kind === "subiendo"
-          ? "Guardando tu foto…"
-          : state.kind === "generando"
-            ? "Creando tu look… (~20s)"
-            : "✨ Verme con este look"}
+        ✨ Verme con este look
       </button>
-      {state.kind === "error" && (
-        <p className="text-center text-xs text-error">{state.msg}</p>
+      {mode === "error" && (
+        <p className="text-center text-xs text-error">{errMsg}</p>
       )}
       {input}
     </div>

@@ -22,7 +22,7 @@ export default async function WowPage() {
     const supabase = await createClient();
     const { data: saved } = await supabase
       .from("outfits")
-      .select("id, item_ids, title, explanation")
+      .select("id, item_ids, title, explanation, tryon_path")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(3);
@@ -42,16 +42,28 @@ export default async function WowPage() {
           },
         ])
       );
-      initialOutfits = saved.reverse().map((o) => ({
-        id: o.id,
-        nombre: o.title ?? "Tu look",
-        explicacion: o.explanation,
-        prendas: (o.item_ids as string[]).map((id) => ({
-          nombre: attrsById.get(id)?.nombre ?? "Prenda",
-          swatch: attrsById.get(id)?.color_hex ?? "#E5E1DD",
-          imagen: attrsById.get(id)?.image_path ?? null,
-        })),
-      }));
+      initialOutfits = await Promise.all(
+        saved.reverse().map(async (o) => {
+          let tryon: string | null = null;
+          if (o.tryon_path) {
+            const { data: signed } = await supabase.storage
+              .from("prendas")
+              .createSignedUrl(o.tryon_path as string, 3600);
+            tryon = signed?.signedUrl ?? null;
+          }
+          return {
+            id: o.id,
+            nombre: o.title ?? "Tu look",
+            explicacion: o.explanation,
+            tryon,
+            prendas: (o.item_ids as string[]).map((id) => ({
+              nombre: attrsById.get(id)?.nombre ?? "Prenda",
+              swatch: attrsById.get(id)?.color_hex ?? "#E5E1DD",
+              imagen: attrsById.get(id)?.image_path ?? null,
+            })),
+          };
+        })
+      );
     }
   }
 
