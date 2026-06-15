@@ -85,11 +85,10 @@ const ITEMS = [
   { slug: "mocasines-mujer", desc: "a pair of brown leather women's loafers", type: "shoes" },
   { slug: "gabardina-mujer", desc: "a beige women's belted trench coat, neatly laid flat", type: "flat" },
   { slug: "chaqueta-piel", desc: "a black leather women's biker jacket, neatly laid flat", type: "flat" },
-  // Variantes femeninas de los básicos UNISEX — SOLO las estructuradas donde el
-  // corte se nota en flat-lay (2026-06-15). Las playeras/jeans/tenis lisos son
-  // andróginos y comparten la base de hombre (no se duplican). El path base
-  // <slug>.png es el corte de hombre; la mujer ve <slug>-mujer.png vía
-  // archetypeImageForGender() (ver FEMININE_VARIANT_SLUGS en lib/archetypes.ts).
+  // Versiones femeninas de las prendas que tienen corte de género distinto
+  // (2026-06-15). NO son unisex: cada una es una prenda de mujer propia en el
+  // catálogo (segment 'mujer', slug <slug>-mujer) — ver migración 0019. Las
+  // playeras/jeans/tenis lisos sí son unisex de verdad y comparten una imagen.
   { slug: "camisa-blanca-mujer", desc: "a crisp white women's button-up shirt, tailored slim fit", type: "flat" },
   { slug: "camisa-mezclilla-mujer", desc: "a light blue women's chambray button-up shirt, relaxed feminine fit", type: "flat" },
   { slug: "blazer-azul-marino-mujer", desc: "a navy blue women's tailored blazer, fitted waist", type: "flat" },

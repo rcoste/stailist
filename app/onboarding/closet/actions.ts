@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { archetypeImageForGender, type Gender } from "@/lib/archetypes";
 
 export async function saveCloset(
   archetypeIds: number[]
@@ -26,7 +25,7 @@ export async function saveCloset(
   // Valida contra el catálogo real y hereda sus atributos.
   const { data: archetypes, error: catError } = await supabase
     .from("archetypes")
-    .select("id, name, attrs, image_path, segment")
+    .select("id, name, attrs, image_path")
     .in("id", ids);
   if (catError || !archetypes || archetypes.length === 0) {
     return { error: "No pude leer el catálogo — inténtalo otra vez." };
@@ -39,24 +38,22 @@ export async function saveCloset(
     .update({ onboarding_step: 3, updated_at: new Date().toISOString() })
     .eq("id", user.id)
     .eq("onboarding_step", 2)
-    .select("id, gender");
+    .select("id");
   if (stepError) {
     return { error: "No pude guardar tu clóset — dale otra vez." };
   }
 
   if (updated && updated.length > 0) {
-    const gender = updated[0].gender as Gender;
     const { error: itemsError } = await supabase.from("items").insert(
       archetypes.map((a) => ({
         user_id: user.id,
         source: "archetype",
         archetype_id: a.id,
         // image_path entra a attrs para mostrar la prenda en los outfits sin
-        // join. Se congela ya resuelto por género (la mujer ve el corte
-        // femenino de los unisex). Cuando suba foto propia, apuntará a su foto.
+        // join. Cuando suba foto propia, este campo apuntará a su foto.
         attrs: {
           nombre: a.name,
-          image_path: archetypeImageForGender(a.segment, a.image_path, gender),
+          image_path: a.image_path,
           ...(a.attrs as Record<string, unknown>),
         },
       }))

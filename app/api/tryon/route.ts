@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { archetypeImageForGender, type Gender } from "@/lib/archetypes";
 
 export const maxDuration = 60;
 
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
   // Avatar de la usuaria
   const { data: profile } = await supabase
     .from("profiles")
-    .select("avatar_path, gender")
+    .select("avatar_path")
     .eq("id", user.id)
     .single();
   if (!profile?.avatar_path) {
@@ -79,7 +78,7 @@ export async function POST(request: NextRequest) {
   // foto propia privada).
   const { data: items } = await supabase
     .from("items")
-    .select("id, photo_path, archetypes(image_path, segment)")
+    .select("id, photo_path, archetypes(image_path)")
     .in("id", outfit.item_ids as string[]);
 
   const origin = request.nextUrl.origin;
@@ -88,16 +87,8 @@ export async function POST(request: NextRequest) {
 
   const prendaUrls: string[] = [];
   for (const it of items ?? []) {
-    const arch = it.archetypes as {
-      image_path?: string | null;
-      segment?: string | null;
-    } | null;
-    const archImg = archetypeImageForGender(
-      arch?.segment,
-      arch?.image_path,
-      profile.gender as Gender
-    );
-    if (archImg) prendaUrls.push(origin + archImg);
+    const arch = it.archetypes as { image_path?: string | null } | null;
+    if (arch?.image_path) prendaUrls.push(origin + arch.image_path);
     else if (it.photo_path) {
       const u = await signFresh(it.photo_path as string);
       if (u) prendaUrls.push(u);
