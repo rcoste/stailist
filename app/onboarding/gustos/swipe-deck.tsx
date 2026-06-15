@@ -57,8 +57,8 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
   }
   function onPointerUp() {
     if (!drag.active || leaving) return;
-    if (drag.x > 80) decide(true);
-    else if (drag.x < -80) decide(false);
+    if (drag.x > 55) decide(true);
+    else if (drag.x < -55) decide(false);
     else setDrag({ x: 0, active: false });
   }
 
@@ -118,10 +118,13 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
 
       <div className="relative flex-1">
         <div
+          key={look.id}
           className="mx-auto flex aspect-[3/4] max-h-[60dvh] w-full max-w-80 touch-none select-none flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-hairline)]"
           style={{
             transform: `translateX(${x}px) rotate(${rotate}deg)`,
-            transition: drag.active ? "none" : "transform 200ms ease-in-out",
+            transition: drag.active
+              ? "none"
+              : "transform 200ms ease-in-out, opacity 200ms ease-in-out",
             opacity: leaving ? 0 : 1,
           }}
           onPointerDown={onPointerDown}

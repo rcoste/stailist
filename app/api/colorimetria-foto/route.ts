@@ -74,7 +74,8 @@ async function readClaude(
     });
     const text = res.content.find((b) => b.type === "text")?.text;
     return text ? (JSON.parse(text) as ModelRead) : null;
-  } catch {
+  } catch (err) {
+    console.error("[colorimetria] Claude falló:", err);
     return null;
   }
 }
@@ -107,14 +108,18 @@ async function readGemini(
         }),
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[colorimetria] Gemini HTTP", res.status, (await res.text()).slice(0, 200));
+      return null;
+    }
     const data = await res.json();
     const txt = data?.candidates?.[0]?.content?.parts
       ?.map((p: { text?: string }) => p.text)
       .filter(Boolean)
       .join("");
     return txt ? (JSON.parse(txt) as ModelRead) : null;
-  } catch {
+  } catch (err) {
+    console.error("[colorimetria] Gemini falló:", err);
     return null;
   }
 }

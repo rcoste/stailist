@@ -160,6 +160,7 @@ export async function POST(request: NextRequest) {
           })),
         });
       } catch (err) {
+        console.error("[generate] fallo:", err);
         const message = err instanceof Error ? err.message : "desconocido";
         send({
           error:
