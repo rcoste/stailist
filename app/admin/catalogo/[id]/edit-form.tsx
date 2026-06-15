@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { updateArchetypeAttrs, regenerateArchetypeImage } from "./actions";
+import { Spinner } from "@/components/spinner";
 import type { ImageType } from "@/lib/archetype-image";
 
 export type ArchetypeRow = {
@@ -104,9 +105,16 @@ export function EditArchetype({ archetype: a }: { archetype: ArchetypeRow }) {
           type="button"
           onClick={doRegen}
           disabled={regen.loading}
-          className="min-h-10 rounded-full bg-accent text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
+          className="flex min-h-10 items-center justify-center gap-2 rounded-full bg-accent text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
         >
-          {regen.loading ? "Generando… (~10s)" : "Regenerar imagen"}
+          {regen.loading ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Generando… (~10s)
+            </>
+          ) : (
+            "Regenerar imagen"
+          )}
         </button>
         {regen.error ? (
           <p className="text-xs text-error">{regen.error}</p>

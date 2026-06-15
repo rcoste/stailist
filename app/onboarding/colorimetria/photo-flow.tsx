@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { SeasonReveal } from "@/components/season-reveal";
+import { Spinner } from "@/components/spinner";
 import { QuizQuestions } from "./quiz-questions";
 import { savePaletteFromPhoto } from "./actions";
 import {
@@ -140,10 +141,13 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
         <QuizQuestions
           onComplete={(a) => finalize(computeSeasonWithFlow(a))}
           header={
-            <p className="rounded-xl bg-accent-soft px-4 py-2 text-sm text-ink">
-              ✨ Leyendo tus colores en segundo plano… mientras, afina con estas
-              preguntas.
-            </p>
+            <div className="flex items-center gap-2 rounded-xl bg-accent-soft px-4 py-2 text-sm text-ink">
+              <Spinner className="h-4 w-4" />
+              <span>
+                Leyendo tus colores en segundo plano… mientras, afina con estas
+                preguntas.
+              </span>
+            </div>
           }
         />
         <button
@@ -159,9 +163,10 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
 
   if (state.kind === "juntando") {
     return (
-      <p className="editorial pt-8 text-center text-lg text-ink">
-        juntando todo…
-      </p>
+      <div className="flex flex-col items-center gap-4 pt-8 text-center">
+        <Spinner className="h-8 w-8 text-accent" />
+        <p className="editorial text-lg text-ink">juntando todo…</p>
+      </div>
     );
   }
 

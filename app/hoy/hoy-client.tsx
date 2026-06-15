@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
+import { Spinner } from "@/components/spinner";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 
 export type HoyOutfit = {
@@ -131,6 +132,7 @@ export function HoyClient({
   if (state.kind === "generating") {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+        <Spinner className="h-8 w-8 text-accent" />
         <p
           key={state.phase}
           className="editorial animate-[fadein_400ms_ease-out] text-lg text-ink"

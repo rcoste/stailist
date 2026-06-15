@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { type Season } from "@/lib/colorimetria";
 import { SeasonReveal } from "@/components/season-reveal";
+import { Spinner } from "@/components/spinner";
 import { QuizQuestions } from "./quiz-questions";
 import { savePalette } from "./actions";
 
@@ -31,9 +32,10 @@ export function Quiz() {
 
   if (pending) {
     return (
-      <p className="editorial pt-8 text-center text-lg text-ink">
-        leyendo tus colores…
-      </p>
+      <div className="flex flex-col items-center gap-4 pt-8 text-center">
+        <Spinner className="h-8 w-8 text-accent" />
+        <p className="editorial text-lg text-ink">leyendo tus colores…</p>
+      </div>
     );
   }
 

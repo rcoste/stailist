@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
+import { Spinner } from "@/components/spinner";
 import { voteOutfit } from "@/lib/outfit-actions";
 
 export type WowOutfit = {
@@ -128,6 +129,7 @@ export function WowClient({
   if (state.kind === "generating") {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">
+        <Spinner className="h-8 w-8 text-accent" />
         <p
           key={state.phase}
           className="editorial animate-[fadein_400ms_ease-out] text-lg text-ink"

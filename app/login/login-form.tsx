@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { sendMagicLink, type LoginState } from "./actions";
+import { Spinner } from "@/components/spinner";
 
 const INITIAL: LoginState = { status: "idle" };
 
@@ -69,9 +70,16 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
       <button
         type="submit"
         disabled={pending}
-        className="min-h-12 w-full rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
       >
-        {pending ? "Mandando…" : "Mándame el link"}
+        {pending ? (
+          <>
+            <Spinner className="h-4 w-4" />
+            Mandando…
+          </>
+        ) : (
+          "Mándame el link"
+        )}
       </button>
     </form>
   );

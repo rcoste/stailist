@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
+import { Spinner } from "@/components/spinner";
 import { saveCloset } from "./actions";
 
 export type CatalogItem = {
@@ -130,13 +131,18 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
           type="button"
           onClick={submit}
           disabled={pending || selected.size === 0}
-          className="min-h-12 w-full rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
         >
-          {pending
-            ? "Guardando tu clóset…"
-            : selected.size === 0
-              ? "Marca lo que tienes"
-              : `Listo, ese es mi clóset (${selected.size})`}
+          {pending ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Guardando tu clóset…
+            </>
+          ) : selected.size === 0 ? (
+            "Marca lo que tienes"
+          ) : (
+            `Listo, ese es mi clóset (${selected.size})`
+          )}
         </button>
       </div>
     </div>

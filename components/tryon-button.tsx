@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { saveAvatar } from "@/lib/avatar-actions";
+import { Spinner } from "@/components/spinner";
 
 type State =
   | { kind: "idle" }
@@ -169,6 +170,7 @@ export function TryonButton({
         disabled={cargando}
         className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent bg-accent-soft text-sm font-medium text-ink transition-colors duration-200 hover:bg-accent hover:text-on-accent disabled:opacity-60"
       >
+        {cargando ? <Spinner className="h-4 w-4" /> : null}
         {state.kind === "subiendo"
           ? "Guardando tu foto…"
           : state.kind === "generando"

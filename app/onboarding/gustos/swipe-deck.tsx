@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Look } from "@/lib/looks";
+import { Spinner } from "@/components/spinner";
 import { saveTastes, type SwipeResult } from "./actions";
 import type { StyleArchetype } from "@/lib/engine/archetype";
 
@@ -102,6 +103,7 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
 
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <Spinner className="h-8 w-8 text-accent" />
         <p className="editorial text-lg text-ink">leyendo tu estilo…</p>
       </div>
     );

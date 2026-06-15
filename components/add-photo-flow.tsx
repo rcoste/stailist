@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { addPhotoItem } from "@/app/closet/actions";
+import { Spinner } from "@/components/spinner";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
@@ -252,9 +253,16 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={state.kind === "analizando"}
-        className="flex min-h-12 items-center rounded-full bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+        className="flex min-h-12 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
       >
-        {state.kind === "analizando" ? "Leyendo…" : "+ Foto"}
+        {state.kind === "analizando" ? (
+          <>
+            <Spinner className="h-4 w-4" />
+            Leyendo…
+          </>
+        ) : (
+          "+ Foto"
+        )}
       </button>
       {state.kind === "error" && (
         <p className="max-w-[12rem] text-right text-xs text-error">
