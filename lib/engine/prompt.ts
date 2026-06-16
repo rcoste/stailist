@@ -4,11 +4,11 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 
 // Cada outfit guarda la versión del prompt que lo generó (medir si los
 // cambios mejoran el ratio de 👍). Súbela cuando cambies el prompt.
-// v2 (2026-06-13): reforzadas las reglas de colorimetría (near-face) y de
-// gustos (el vibe decide entre combinaciones válidas).
-// v3 (2026-06-14): paleta no binaria (base + prestados del flow) y lista EVITA
-// como regla dura near-face.
-export const PROMPT_VERSION = "v3";
+// v2 (2026-06-13): reglas de colorimetría (near-face) y de gustos.
+// v3 (2026-06-14): paleta no binaria (base + prestados) + lista EVITA dura.
+// v4 (2026-06-16): hex de cada prenda + sección de armonía de color/proporción
+// en la 1ª pasada, y crítico de styling gender-aware como 2ª pasada.
+export const PROMPT_VERSION = "v4";
 
 export type EngineItem = {
   id: string;
@@ -48,6 +48,12 @@ Colorimetría (regla near-face — IMPORTANTE):
 - El bottom y el calzado tienen más libertad: no necesitan estar en su paleta.
 - Si su clóset no tiene un top en su paleta, elige el neutro más favorecedor y compénsalo: arma el resto del look alrededor de sus colores.
 
+Armonía del outfit (cómo combinan las prendas entre sí):
+- Ancla en neutros: máximo 1-2 colores protagonistas por look; el resto neutros (negro, blanco, gris, beige, marino, camel). Tres saturados juntos casi nunca funcionan.
+- Usa los hex para juzgar el color real: si hay un color fuerte, acompáñalo de neutros; evita dos saturados que compitan o tonos que se enloden juntos.
+- Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
+- Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
+
 Gustos (su vibe, de los swipes):
 - Cuando haya varias combinaciones válidas, ELIGE la que más empate con su vibe (ej. si es minimalista, evita mezclar demasiados elementos; si es clásico, prioriza siluetas atemporales).
 - El vibe define el balance y la actitud del look, no qué prenda es válida.
@@ -58,7 +64,21 @@ La explicación (una línea por outfit):
 - Ejemplos del tono: "los tonos tierra te encienden la cara", "cómodo pero con intención — nadie sabrá que te tomó 2 minutos".
 - PROHIBIDO: "estación otoño profundo", "paleta cromática", "silueta versátil" y cualquier frase de revista técnica.`;
 
-export function buildUserMessage(ctx: EngineContext): string {
+// Una prenda como línea: incluye el hex para que el modelo juzgue el color real.
+export function describeItem(item: EngineItem): string {
+  const a = item.attrs;
+  const color =
+    a.color && a.color_hex
+      ? `${a.color} ${a.color_hex}`
+      : a.color_hex ?? a.color;
+  return [a.nombre ?? a.tipo, color, a.formalidad, a.temporada]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+// Contexto de la clienta (ocasión, colorimetría, estilo, gustos, clima).
+// Compartido por el generador (1ª pasada) y el crítico (2ª pasada).
+export function contextBlock(ctx: EngineContext): string[] {
   const lines: string[] = [];
 
   const objectiveLabel =
@@ -87,21 +107,24 @@ export function buildUserMessage(ctx: EngineContext): string {
   if (ctx.tasteTags.length > 0) {
     lines.push(`Tags de gusto: ${ctx.tasteTags.join(", ")}.`);
   }
-
   if (ctx.weather) {
-    lines.push(
-      `Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}.`
-    );
+    lines.push(`Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}.`);
   }
 
-  lines.push("", "Su clóset (usa SOLO estos ids):");
-  for (const item of ctx.items) {
-    const a = item.attrs;
-    const desc = [a.nombre ?? a.tipo, a.color, a.formalidad, a.temporada]
-      .filter(Boolean)
-      .join(" · ");
-    lines.push(`- ${item.id}: ${desc}`);
+  return lines;
+}
+
+// El clóset como bloque (ids + descripción con hex).
+export function closetBlock(items: EngineItem[]): string[] {
+  const lines = ["Su clóset (usa SOLO estos ids):"];
+  for (const item of items) {
+    lines.push(`- ${item.id}: ${describeItem(item)}`);
   }
+  return lines;
+}
+
+export function buildUserMessage(ctx: EngineContext): string {
+  const lines: string[] = [...contextBlock(ctx), "", ...closetBlock(ctx.items)];
 
   if (ctx.recentCombos.length > 0) {
     lines.push("", "Combinaciones recientes (NO las repitas exactas):");

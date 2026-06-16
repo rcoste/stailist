@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
-import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
+import { reviewOutfits } from "@/lib/engine/critic";
+import {
+  PROMPT_VERSION,
+  type EngineItem,
+  type EngineContext,
+} from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
 
@@ -71,10 +76,14 @@ export async function POST(request: NextRequest) {
         const weather: Weather | null = await resolveWeather(body);
 
         send({ phase: "afinando para tu paleta…" });
-        const outfits = await generateOutfits({
+        const ctx: EngineContext = {
           objective: profile.last_objective,
           tasteTags: (profile.taste_tags ?? []) as string[],
-          archetype: (profile.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
+          archetype:
+            (profile.style_archetype as {
+              nombre: string;
+              descripcion: string;
+            } | null) ?? null,
           season: profile.palette_season as Season | null,
           flow: profile.palette_flow as Season | null,
           items,
@@ -82,9 +91,18 @@ export async function POST(request: NextRequest) {
           recentCombos: (recentRes.data ?? []).map(
             (o) => o.item_ids as string[]
           ),
-        });
+        };
+        const candidates = await generateOutfits(ctx);
 
-        send({ phase: "dándole los últimos toques…" });
+        // 2ª pasada: el crítico de stylist arregla color/styling (gender-aware).
+        send({ phase: "afinando el styling…" });
+        const gender = profile.gender as "hombre" | "mujer" | null;
+        const outfits = await reviewOutfits(ctx, candidates, gender);
+        const repaired = outfits.filter(
+          (o, i) =>
+            !candidates[i] ||
+            o.item_ids.join(",") !== candidates[i].item_ids.join(",")
+        ).length;
 
         // Persistir outfits (el historial guarda todo lo generado).
         const { data: saved, error: saveError } = await supabase
@@ -115,6 +133,11 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             type: "generation_timing",
             data: { ms: elapsedMs, prompt_version: PROMPT_VERSION },
+          },
+          {
+            user_id: user.id,
+            type: "critic_review",
+            data: { repaired, total: outfits.length, gender },
           },
         ];
         if (profile.onboarding_step === 4) {

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
+import { reviewOutfits } from "@/lib/engine/critic";
+import { type EngineContext } from "@/lib/engine/prompt";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
@@ -91,10 +93,14 @@ export async function POST(request: NextRequest) {
         const weather: Weather | null = await resolveWeather(body);
 
         send({ phase: "afinando para tu paleta…" });
-        const outfits = await generateOutfits({
+        const ctx: EngineContext = {
           objective: profile.last_objective,
           tasteTags: (profile.taste_tags ?? []) as string[],
-          archetype: (profile.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
+          archetype:
+            (profile.style_archetype as {
+              nombre: string;
+              descripcion: string;
+            } | null) ?? null,
           season: profile.palette_season as Season | null,
           flow: profile.palette_flow as Season | null,
           items,
@@ -102,7 +108,15 @@ export async function POST(request: NextRequest) {
           recentCombos: (recentRes.data ?? []).map(
             (o) => o.item_ids as string[]
           ),
-        });
+        };
+        const candidates = await generateOutfits(ctx);
+
+        send({ phase: "afinando el styling…" });
+        const outfits = await reviewOutfits(
+          ctx,
+          candidates,
+          profile.gender as "hombre" | "mujer" | null
+        );
         const elegido = outfits[0]; // el look del día es uno solo
 
         // "Otro look": el look de hoy anterior pierde el flag (sigue en
