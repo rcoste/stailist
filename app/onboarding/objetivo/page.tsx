@@ -28,7 +28,8 @@ export default async function ObjetivoPage({
           ¿Qué necesitas hoy?
         </h1>
         <p className="text-base text-muted">
-          Ya casi — dime para qué es y te armo tus looks.
+          Último paso. Dime tu plan y te armo looks con la ropa que ya tienes —
+          listos para hoy.
         </p>
       </div>
 
