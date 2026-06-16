@@ -162,15 +162,33 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        await supabase.from("events").insert({
-          user_id: user.id,
-          type: "generation_timing",
-          data: {
-            ms: Date.now() - startedAt,
-            prompt_version: PROMPT_VERSION,
-            look_of_day: true,
+        await supabase.from("events").insert([
+          {
+            user_id: user.id,
+            type: "generation_timing",
+            data: {
+              ms: Date.now() - startedAt,
+              prompt_version: PROMPT_VERSION,
+              look_of_day: true,
+            },
           },
-        });
+          {
+            user_id: user.id,
+            type: "critic_review",
+            data: {
+              gender: profile.gender,
+              prompt_version: PROMPT_VERSION,
+              look_of_day: true,
+              changes: outfits.map((o, i) => ({
+                before: candidates[i]?.item_ids ?? null,
+                after: o.item_ids,
+                changed: candidates[i]
+                  ? o.item_ids.join(",") !== candidates[i].item_ids.join(",")
+                  : true,
+              })),
+            },
+          },
+        ]);
 
         send({ done: true, outfit: shape(saved, items) });
       } catch (err) {

@@ -151,7 +151,20 @@ export async function POST(request: NextRequest) {
           {
             user_id: user.id,
             type: "critic_review",
-            data: { repaired, total: outfits.length, gender },
+            data: {
+              gender,
+              repaired,
+              prompt_version: PROMPT_VERSION,
+              // Antes/después por outfit: qué combinación tocó el juez. Cruzado
+              // con las razones del 👎, es el dato para optimizar el prompt.
+              changes: outfits.map((o, i) => ({
+                before: candidates[i]?.item_ids ?? null,
+                after: o.item_ids,
+                changed: candidates[i]
+                  ? o.item_ids.join(",") !== candidates[i].item_ids.join(",")
+                  : true,
+              })),
+            },
           },
         ];
         if (profile.onboarding_step === 4) {
