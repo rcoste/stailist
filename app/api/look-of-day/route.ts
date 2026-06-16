@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
-import { getWeather, type Weather } from "@/lib/weather";
+import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
 
 export const maxDuration = 60;
@@ -17,13 +17,18 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
-  let body: { lat?: number; lon?: number; force?: boolean } = {};
+  let body: {
+    lat?: number;
+    lon?: number;
+    weather?: { temp_c?: number; condition?: string };
+    force?: boolean;
+  } = {};
   try {
     body = await request.json();
   } catch {
     // sin body = sin clima
   }
-  const { lat, lon, force } = body;
+  const { force } = body;
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
 
   const encoder = new TextEncoder();
@@ -83,10 +88,7 @@ export async function POST(request: NextRequest) {
         }
 
         send({ phase: "viendo el clima de tu día…" });
-        let weather: Weather | null = null;
-        if (typeof lat === "number" && typeof lon === "number") {
-          weather = await getWeather(lat, lon);
-        }
+        const weather: Weather | null = await resolveWeather(body);
 
         send({ phase: "afinando para tu paleta…" });
         const outfits = await generateOutfits({

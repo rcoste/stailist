@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
 import { Spinner } from "@/components/spinner";
+import { WeatherPicker, type WeatherInput } from "@/components/weather-picker";
 import { voteOutfit } from "@/lib/outfit-actions";
 
 export type WowOutfit = {
@@ -16,6 +17,7 @@ export type WowOutfit = {
 };
 
 type State =
+  | { kind: "ask" }
   | { kind: "generating"; phase: string }
   | { kind: "ready"; outfits: WowOutfit[] }
   | { kind: "error"; code: string };
@@ -31,25 +33,6 @@ const ERROR_COPY: Record<string, string> = {
   red: "Se cortó la conexión — inténtalo de nuevo.",
 };
 
-// Pide ubicación con timeout corto; si la niega o tarda, generamos sin clima.
-function getPosition(): Promise<{ lat: number; lon: number } | null> {
-  return new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve(null);
-    const timer = setTimeout(() => resolve(null), 5000);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        clearTimeout(timer);
-        resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-      },
-      () => {
-        clearTimeout(timer);
-        resolve(null);
-      },
-      { timeout: 4500, maximumAge: 600000 }
-    );
-  });
-}
-
 export function WowClient({
   initialOutfits,
   userId,
@@ -58,21 +41,19 @@ export function WowClient({
   userId: string;
 }) {
   const [state, setState] = useState<State>(
-    initialOutfits
-      ? { kind: "ready", outfits: initialOutfits }
-      : { kind: "generating", phase: "preparando al stylist…" }
+    initialOutfits ? { kind: "ready", outfits: initialOutfits } : { kind: "ask" }
   );
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
-  const started = useRef(false);
+  const lastInput = useRef<WeatherInput | null>(null);
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(async (input: WeatherInput) => {
+    lastInput.current = input;
     setState({ kind: "generating", phase: "preparando al stylist…" });
     try {
-      const coords = await getPosition();
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(coords ?? {}),
+        body: JSON.stringify(input),
       });
       if (!res.ok || !res.body) {
         setState({ kind: "error", code: "generacion" });
@@ -108,13 +89,6 @@ export function WowClient({
     }
   }, []);
 
-  useEffect(() => {
-    if (initialOutfits) return; // ya hay looks guardados: no quemar otra generación
-    if (started.current) return; // doble mount de dev/StrictMode: una sola generación
-    started.current = true;
-    generate();
-  }, [generate, initialOutfits]);
-
   async function vote(outfitId: string, up: boolean) {
     setVotes((v) => ({ ...v, [outfitId]: up ? "up" : "down" }));
     const res = await voteOutfit(outfitId, up);
@@ -125,6 +99,12 @@ export function WowClient({
         return next;
       });
     }
+  }
+
+  if (state.kind === "ask") {
+    return (
+      <WeatherPicker title="Antes de armar tu primer look…" onPick={generate} />
+    );
   }
 
   if (state.kind === "generating") {
@@ -154,7 +134,11 @@ export function WowClient({
         {state.code !== "sin_api_key" && (
           <button
             type="button"
-            onClick={generate}
+            onClick={() =>
+              lastInput.current
+                ? generate(lastInput.current)
+                : setState({ kind: "ask" })
+            }
             className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             Reintentar

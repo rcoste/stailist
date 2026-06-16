@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
 import { Spinner } from "@/components/spinner";
+import { WeatherPicker, type WeatherInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 
 export type HoyOutfit = {
@@ -15,6 +16,7 @@ export type HoyOutfit = {
 };
 
 type State =
+  | { kind: "ask" }
   | { kind: "generating"; phase: string }
   | { kind: "ready"; outfit: HoyOutfit }
   | { kind: "error"; code: string };
@@ -26,24 +28,6 @@ const ERROR_COPY: Record<string, string> = {
   no_pude_guardar: "Armé tu look pero no pude guardarlo — inténtalo de nuevo.",
   red: "Se cortó la conexión — inténtalo de nuevo.",
 };
-
-function getPosition(): Promise<{ lat: number; lon: number } | null> {
-  return new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve(null);
-    const timer = setTimeout(() => resolve(null), 5000);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        clearTimeout(timer);
-        resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-      },
-      () => {
-        clearTimeout(timer);
-        resolve(null);
-      },
-      { timeout: 4500, maximumAge: 600000 }
-    );
-  });
-}
 
 export function HoyClient({
   lookInicial,
@@ -57,24 +41,23 @@ export function HoyClient({
   userId: string;
 }) {
   const [state, setState] = useState<State>(
-    lookInicial
-      ? { kind: "ready", outfit: lookInicial }
-      : { kind: "generating", phase: "preparando tu look…" }
+    lookInicial ? { kind: "ready", outfit: lookInicial } : { kind: "ask" }
   );
   const [voto, setVoto] = useState(votoInicial);
   const [worn, setWorn] = useState(wornInicial);
-  const started = useRef(false);
+  const lastInput = useRef<WeatherInput | null>(null);
+  const pendingForce = useRef(false);
 
-  const generar = useCallback(async (force: boolean) => {
+  const generar = useCallback(async (input: WeatherInput, force: boolean) => {
+    lastInput.current = input;
     setState({ kind: "generating", phase: "preparando tu look…" });
     setVoto(null);
     setWorn(false);
     try {
-      const coords = await getPosition();
       const res = await fetch("/api/look-of-day", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...(coords ?? {}), force }),
+        body: JSON.stringify({ ...input, force }),
       });
       if (!res.ok || !res.body) {
         setState({ kind: "error", code: "generacion" });
@@ -108,12 +91,12 @@ export function HoyClient({
     }
   }, []);
 
-  useEffect(() => {
-    if (lookInicial) return; // ya hay look de hoy: no generes
-    if (started.current) return;
-    started.current = true;
-    generar(false);
-  }, [generar, lookInicial]);
+  // Pide clima (ubicación o manual) y luego genera. force = "Otro look".
+  function startGen(force: boolean) {
+    pendingForce.current = force;
+    if (lastInput.current) generar(lastInput.current, force);
+    else setState({ kind: "ask" });
+  }
 
   async function vote(up: boolean) {
     if (state.kind !== "ready") return;
@@ -128,6 +111,15 @@ export function HoyClient({
     setWorn(true);
     const res = await markWorn(state.outfit.id);
     if (!res.ok) setWorn(false);
+  }
+
+  if (state.kind === "ask") {
+    return (
+      <WeatherPicker
+        title="Tu look de hoy"
+        onPick={(input) => generar(input, pendingForce.current)}
+      />
+    );
   }
 
   if (state.kind === "generating") {
@@ -155,7 +147,11 @@ export function HoyClient({
         {state.code !== "sin_api_key" && (
           <button
             type="button"
-            onClick={() => generar(false)}
+            onClick={() =>
+              lastInput.current
+                ? generar(lastInput.current, false)
+                : setState({ kind: "ask" })
+            }
             className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             Reintentar
@@ -201,7 +197,7 @@ export function HoyClient({
         </button>
         <button
           type="button"
-          onClick={() => generar(true)}
+          onClick={() => startGen(true)}
           className="flex min-h-12 flex-1 items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
         >
           Otro look

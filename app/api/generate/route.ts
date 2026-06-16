@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
-import { getWeather, type Weather } from "@/lib/weather";
+import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
@@ -21,13 +21,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "no_auth" }, { status: 401 });
   }
 
-  let body: { lat?: number; lon?: number } = {};
+  let body: {
+    lat?: number;
+    lon?: number;
+    weather?: { temp_c?: number; condition?: string };
+  } = {};
   try {
     body = await request.json();
   } catch {
     // sin body = sin clima, no pasa nada
   }
-  const { lat, lon } = body;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -65,10 +68,7 @@ export async function POST(request: NextRequest) {
         }
 
         send({ phase: "combinando colores…" });
-        let weather: Weather | null = null;
-        if (typeof lat === "number" && typeof lon === "number") {
-          weather = await getWeather(lat, lon);
-        }
+        const weather: Weather | null = await resolveWeather(body);
 
         send({ phase: "afinando para tu paleta…" });
         const outfits = await generateOutfits({

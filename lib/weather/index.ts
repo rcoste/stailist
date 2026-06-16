@@ -16,6 +16,31 @@ function describe(code: number): string {
   return "tormenta";
 }
 
+// Resuelve el clima desde el body del request: si viene clima manual (el
+// usuario lo eligió con referencias), se usa tal cual; si vienen coords, se
+// consulta Open-Meteo; si no, null (el motor genera sin clima).
+export async function resolveWeather(body: {
+  lat?: number;
+  lon?: number;
+  weather?: { temp_c?: number; condition?: string };
+}): Promise<Weather | null> {
+  const m = body.weather;
+  if (
+    m &&
+    typeof m.temp_c === "number" &&
+    Number.isFinite(m.temp_c) &&
+    m.temp_c >= -30 &&
+    m.temp_c <= 55 &&
+    typeof m.condition === "string"
+  ) {
+    return { temp_c: Math.round(m.temp_c), condition: m.condition.slice(0, 40) };
+  }
+  if (typeof body.lat === "number" && typeof body.lon === "number") {
+    return getWeather(body.lat, body.lon);
+  }
+  return null;
+}
+
 export async function getWeather(
   lat: number,
   lon: number
