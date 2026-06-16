@@ -6,7 +6,7 @@ import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { Spinner } from "@/components/spinner";
-import { WeatherPicker, type WeatherInput } from "@/components/weather-picker";
+import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit } from "@/lib/outfit-actions";
 
 export type WowOutfit = {
@@ -37,17 +37,19 @@ const ERROR_COPY: Record<string, string> = {
 export function WowClient({
   initialOutfits,
   userId,
+  defaultObjective,
 }: {
   initialOutfits: WowOutfit[] | null;
   userId: string;
+  defaultObjective: string | null;
 }) {
   const [state, setState] = useState<State>(
     initialOutfits ? { kind: "ready", outfits: initialOutfits } : { kind: "ask" }
   );
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
-  const lastInput = useRef<WeatherInput | null>(null);
+  const lastInput = useRef<LookInput | null>(null);
 
-  const generate = useCallback(async (input: WeatherInput) => {
+  const generate = useCallback(async (input: LookInput) => {
     lastInput.current = input;
     setState({ kind: "generating", phase: "preparando al stylist…" });
     try {
@@ -104,7 +106,11 @@ export function WowClient({
 
   if (state.kind === "ask") {
     return (
-      <WeatherPicker title="Antes de armar tu primer look…" onPick={generate} />
+      <LookRequest
+        title="Antes de armar tu primer look…"
+        defaultObjective={defaultObjective}
+        onPick={generate}
+      />
     );
   }
 

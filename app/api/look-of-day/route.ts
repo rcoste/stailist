@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
 import { reviewOutfits } from "@/lib/engine/critic";
 import { type EngineContext } from "@/lib/engine/prompt";
+import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
     lat?: number;
     lon?: number;
     weather?: { temp_c?: number; condition?: string };
+    objective?: string;
     force?: boolean;
   } = {};
   try {
@@ -92,9 +94,20 @@ export async function POST(request: NextRequest) {
         send({ phase: "viendo el clima de tu día…" });
         const weather: Weather | null = await resolveWeather(body);
 
+        const objective =
+          typeof body.objective === "string" && body.objective in OBJECTIVES
+            ? body.objective
+            : profile.last_objective;
+        if (objective && objective !== profile.last_objective) {
+          await supabase
+            .from("profiles")
+            .update({ last_objective: objective })
+            .eq("id", user.id);
+        }
+
         send({ phase: "afinando para tu paleta…" });
         const ctx: EngineContext = {
-          objective: profile.last_objective,
+          objective,
           tasteTags: (profile.taste_tags ?? []) as string[],
           archetype:
             (profile.style_archetype as {
@@ -133,7 +146,7 @@ export async function POST(request: NextRequest) {
           .insert({
             user_id: user.id,
             item_ids: elegido.item_ids,
-            occasion: profile.last_objective ?? "diario",
+            occasion: objective ?? "diario",
             weather,
             title: elegido.nombre,
             explanation: elegido.explicacion,

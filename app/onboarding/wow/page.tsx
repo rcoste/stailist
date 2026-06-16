@@ -80,7 +80,11 @@ export default async function WowPage() {
         </p>
       </div>
 
-      <WowClient initialOutfits={initialOutfits} userId={profile.id} />
+      <WowClient
+        initialOutfits={initialOutfits}
+        userId={profile.id}
+        defaultObjective={profile.last_objective}
+      />
     </section>
   );
 }

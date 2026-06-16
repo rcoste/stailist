@@ -5,7 +5,7 @@ import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
 import { FavoriteButton } from "@/components/favorite-button";
 import { Spinner } from "@/components/spinner";
-import { WeatherPicker, type WeatherInput } from "@/components/weather-picker";
+import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 
 export type HoyOutfit = {
@@ -36,21 +36,23 @@ export function HoyClient({
   votoInicial,
   wornInicial,
   userId,
+  defaultObjective,
 }: {
   lookInicial: HoyOutfit | null;
   votoInicial: "up" | "down" | null;
   wornInicial: boolean;
   userId: string;
+  defaultObjective: string | null;
 }) {
   const [state, setState] = useState<State>(
     lookInicial ? { kind: "ready", outfit: lookInicial } : { kind: "ask" }
   );
   const [voto, setVoto] = useState(votoInicial);
   const [worn, setWorn] = useState(wornInicial);
-  const lastInput = useRef<WeatherInput | null>(null);
+  const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(false);
 
-  const generar = useCallback(async (input: WeatherInput, force: boolean) => {
+  const generar = useCallback(async (input: LookInput, force: boolean) => {
     lastInput.current = input;
     setState({ kind: "generating", phase: "preparando tu look…" });
     setVoto(null);
@@ -93,11 +95,11 @@ export function HoyClient({
     }
   }, []);
 
-  // Pide clima (ubicación o manual) y luego genera. force = "Otro look".
+  // Abre la pantalla de ocasión+clima y luego genera. Siempre la muestra (para
+  // poder cambiar la ocasión cada vez). force = "Otro look".
   function startGen(force: boolean) {
     pendingForce.current = force;
-    if (lastInput.current) generar(lastInput.current, force);
-    else setState({ kind: "ask" });
+    setState({ kind: "ask" });
   }
 
   async function vote(up: boolean) {
@@ -117,8 +119,9 @@ export function HoyClient({
 
   if (state.kind === "ask") {
     return (
-      <WeatherPicker
+      <LookRequest
         title="Tu look de hoy"
+        defaultObjective={defaultObjective}
         onPick={(input) => generar(input, pendingForce.current)}
       />
     );

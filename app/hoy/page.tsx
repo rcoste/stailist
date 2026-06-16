@@ -93,6 +93,7 @@ export default async function HoyPage() {
           votoInicial={votoInicial}
           wornInicial={wornInicial}
           userId={profile.id}
+          defaultObjective={profile.last_objective}
         />
       </section>
     </AppShell>

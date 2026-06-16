@@ -9,6 +9,7 @@ import {
 } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
+import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
 // (petición nueva) — nunca reintentamos aquí adentro.
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
     lat?: number;
     lon?: number;
     weather?: { temp_c?: number; condition?: string };
+    objective?: string;
   } = {};
   try {
     body = await request.json();
@@ -75,9 +77,21 @@ export async function POST(request: NextRequest) {
         send({ phase: "combinando colores…" });
         const weather: Weather | null = await resolveWeather(body);
 
+        // Ocasión: la del request si es válida, si no la última guardada.
+        const objective =
+          typeof body.objective === "string" && body.objective in OBJECTIVES
+            ? body.objective
+            : profile.last_objective;
+        if (objective && objective !== profile.last_objective) {
+          await supabase
+            .from("profiles")
+            .update({ last_objective: objective })
+            .eq("id", user.id);
+        }
+
         send({ phase: "afinando para tu paleta…" });
         const ctx: EngineContext = {
-          objective: profile.last_objective,
+          objective,
           tasteTags: (profile.taste_tags ?? []) as string[],
           archetype:
             (profile.style_archetype as {
@@ -111,7 +125,7 @@ export async function POST(request: NextRequest) {
             outfits.map((o) => ({
               user_id: user.id,
               item_ids: o.item_ids,
-              occasion: profile.last_objective ?? "diario",
+              occasion: objective ?? "diario",
               weather,
               title: o.nombre,
               explanation: o.explicacion,

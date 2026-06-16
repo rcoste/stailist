@@ -20,6 +20,7 @@ Reglas duras:
 - Usa ÚNICAMENTE prendas del clóset (por id). Jamás inventes.
 - Devuelve 2 o 3 looks, DISTINTOS entre sí. Conserva la variedad y el vibe de la clienta — no los vuelvas todos iguales ni aburridos.
 - Cambia SOLO cuando de verdad mejora. Si dudas, deja el look como está.
+- MARINO + NEGRO en formal: si ves un blazer, saco o pantalón de vestir marino combinado con negro, ARRÉGLALO (se ve como traje desparejado). En casual (jeans, tenis) sí puede ir.
 - La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.`;
 
 const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (aquí hay muchos grados de libertad, sé exigente):
