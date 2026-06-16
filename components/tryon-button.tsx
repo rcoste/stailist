@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { saveAvatar } from "@/lib/avatar-actions";
+import { toUsableImage } from "@/lib/image-file";
 import { Spinner } from "@/components/spinner";
 
 type Mode = "idle" | "gen" | "up" | "sin_avatar" | "full" | "error";
 
-function comprimir(file: File): Promise<Blob> {
+function comprimir(file: Blob): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
@@ -91,7 +92,7 @@ export function TryonButton({
     if (!file) return;
     setMode("up");
     try {
-      const blob = await comprimir(file);
+      const blob = await comprimir(await toUsableImage(file));
       const supabase = createClient();
       const path = `${userId}/avatar.jpg`;
       const up = await supabase.storage
@@ -119,7 +120,7 @@ export function TryonButton({
     <input
       ref={inputRef}
       type="file"
-      accept="image/*"
+      accept="image/*,.heic,.heif"
       onChange={onAvatarFile}
       className="hidden"
     />
@@ -132,13 +133,23 @@ export function TryonButton({
         <div className="relative aspect-[3/4] w-full max-w-80 overflow-hidden rounded-2xl border border-line bg-surface">
           <Image src={image} alt="Tú con este look" fill className="object-cover" />
         </div>
-        <button
-          type="button"
-          onClick={() => setMode("idle")}
-          className="min-h-12 rounded-full bg-surface px-8 text-base font-medium text-ink"
-        >
-          Cerrar
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMode("idle")}
+            className="min-h-12 rounded-full bg-surface px-8 text-base font-medium text-ink"
+          >
+            Cerrar
+          </button>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="min-h-11 text-sm font-medium text-surface underline underline-offset-4 decoration-surface/50"
+          >
+            ¿No te pareces? Cambia tu foto
+          </button>
+        </div>
+        {input}
       </div>
     );
   }
@@ -208,6 +219,13 @@ export function TryonButton({
             </span>
             <span className="text-xs text-muted">Toca para verlo en grande</span>
           </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="self-start text-xs font-medium text-muted underline underline-offset-4 hover:text-ink"
+        >
+          ¿No te pareces? Cambia tu foto
         </button>
         {input}
       </div>

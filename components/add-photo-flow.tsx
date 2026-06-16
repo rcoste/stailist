@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { addPhotoItem } from "@/app/closet/actions";
+import { toUsableImage } from "@/lib/image-file";
 import { Spinner } from "@/components/spinner";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
@@ -36,7 +37,7 @@ type State =
   | { kind: "error" };
 
 // Comprime y devuelve dataURL (para análisis + preview) y Blob (para subir).
-function comprimir(file: File): Promise<{ dataUrl: string; blob: Blob }> {
+function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
@@ -80,7 +81,7 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
     if (!file) return;
     setState({ kind: "analizando" });
     try {
-      const { dataUrl, blob } = await comprimir(file);
+      const { dataUrl, blob } = await comprimir(await toUsableImage(file));
       const res = await fetch("/api/analizar-prenda", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,7 +139,7 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
     <input
       ref={inputRef}
       type="file"
-      accept="image/*"
+      accept="image/*,.heic,.heif"
       onChange={onFile}
       className="hidden"
     />

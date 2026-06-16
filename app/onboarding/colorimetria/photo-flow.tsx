@@ -5,6 +5,7 @@ import { SeasonReveal } from "@/components/season-reveal";
 import { Spinner } from "@/components/spinner";
 import { QuizQuestions } from "./quiz-questions";
 import { savePaletteFromPhoto } from "./actions";
+import { toUsableImage } from "@/lib/image-file";
 import {
   computeSeasonWithFlow,
   mergeColorimetria,
@@ -27,7 +28,7 @@ type State =
 
 // Comprime la selfie en el navegador antes de subir (las fotos de teléfono
 // pesan 5-10MB). Redimensiona a 1024px y JPEG: suficiente para leer color.
-function comprimir(file: File): Promise<string> {
+function comprimir(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
@@ -79,7 +80,7 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
     if (inputRef.current) inputRef.current.value = "";
     if (!file) return;
     try {
-      const image = await comprimir(file);
+      const image = await comprimir(await toUsableImage(file));
       analysisRef.current = fetchAnalysis(image); // arranca, no esperamos
       setState({ kind: "quiz" }); // el quiz es la pantalla de carga
     } catch {
@@ -174,7 +175,7 @@ export function PhotoFlow({ onUseQuiz }: { onUseQuiz: () => void }) {
     <input
       ref={inputRef}
       type="file"
-      accept="image/*"
+      accept="image/*,.heic,.heif"
       onChange={onFile}
       className="hidden"
     />
