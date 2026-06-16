@@ -14,7 +14,11 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // v7 (2026-06-16): regla anti "traje desparejado" (saco + pantalón del mismo tono
 // que no son un traje real) en generador y juez. Justificada por el único 👎 del
 // flywheel ("Blanco que ilumina": blazer marino + chinos marino idéntico #27425F).
-export const PROMPT_VERSION = "v7";
+// v8 (2026-06-16): el juez emite veredicto (ok/reparado/rechazado + razón). En
+// rechazo (irreparable con el clóset) el wow descarta el look si quedan ≥2; el
+// evento critic_review loggea verdict/razon/rejected — instrumentación para
+// decidir si #4b (regenerar) vale. NO regenera todavía (regenerated:0).
+export const PROMPT_VERSION = "v8";
 
 export type EngineItem = {
   id: string;

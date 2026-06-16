@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateOutfits } from "@/lib/engine/generate";
-import { reviewOutfit } from "@/lib/engine/critic";
+import { generateOutfits, type GeneratedOutfit } from "@/lib/engine/generate";
+import { reviewOutfit, type CriticVerdict } from "@/lib/engine/critic";
 import {
   PROMPT_VERSION,
   type EngineItem,
@@ -114,41 +114,41 @@ export async function POST(request: NextRequest) {
         const gender = profile.gender as "hombre" | "mujer" | null;
         const itemById = new Map(items.map((i) => [i.id, i.attrs]));
         const finalized: typeof candidates = [];
-        const changes: { before: string[]; after: string[]; changed: boolean }[] =
-          [];
 
-        // 2ª pasada POR OUTFIT: el juez (Sonnet) revisa y se va mostrando cada
-        // uno apenas está, para esconder la latencia detrás del reveal.
-        for (let i = 0; i < candidates.length; i++) {
-          send({
-            phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
-          });
-          const reviewed = await reviewOutfit(ctx, candidates[i], finalized, gender);
+        // Registro por outfit para el flywheel: qué pasó con cada candidato.
+        type Review = {
+          before: string[];
+          after: string[];
+          changed: boolean;
+          verdict: CriticVerdict;
+          razon: string | null;
+          shown: boolean;
+        };
+        const reviews: Review[] = [];
+        // Rechazados retenidos: solo se muestran si caemos por debajo de 2.
+        const held: { outfit: GeneratedOutfit; review: Review }[] = [];
+        let slot = 0; // el cliente APPENDea cada outfit; el index es informativo.
 
+        // Guarda en DB + streamea un outfit ya aprobado. Devuelve true si se mostró.
+        const saveAndStream = async (outfit: GeneratedOutfit): Promise<boolean> => {
           const { data: row, error: saveError } = await supabase
             .from("outfits")
             .insert({
               user_id: user.id,
-              item_ids: reviewed.item_ids,
+              item_ids: outfit.item_ids,
               occasion: objective ?? "diario",
               weather,
-              title: reviewed.nombre,
-              explanation: reviewed.explicacion,
+              title: outfit.nombre,
+              explanation: outfit.explicacion,
               prompt_version: PROMPT_VERSION,
             })
             .select("id, item_ids, title, explanation")
             .single();
-          if (saveError || !row) continue; // si uno falla, seguimos con los demás
+          if (saveError || !row) return false;
 
-          finalized.push(reviewed);
-          changes.push({
-            before: candidates[i].item_ids,
-            after: reviewed.item_ids,
-            changed:
-              reviewed.item_ids.join(",") !== candidates[i].item_ids.join(","),
-          });
+          finalized.push(outfit);
           send({
-            index: i,
+            index: slot++,
             outfit: {
               id: row.id,
               nombre: row.title ?? "Tu look",
@@ -160,6 +160,44 @@ export async function POST(request: NextRequest) {
               })),
             },
           });
+          return true;
+        };
+
+        // 2ª pasada POR OUTFIT: el juez (Sonnet) revisa y se va mostrando cada
+        // uno apenas se aprueba, para esconder la latencia detrás del reveal.
+        // Si el juez RECHAZA (irreparable con este clóset), lo retenemos: solo
+        // lo mostramos al final si nos quedaríamos con menos de 2 looks.
+        for (let i = 0; i < candidates.length; i++) {
+          send({
+            phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
+          });
+          const result = await reviewOutfit(ctx, candidates[i], finalized, gender);
+          const review: Review = {
+            before: candidates[i].item_ids,
+            after: result.outfit.item_ids,
+            changed:
+              result.outfit.item_ids.join(",") !== candidates[i].item_ids.join(","),
+            verdict: result.verdict,
+            razon: result.razon,
+            shown: false,
+          };
+
+          if (result.verdict === "rechazado") {
+            held.push({ outfit: result.outfit, review });
+            reviews.push(review);
+            continue;
+          }
+
+          if (await saveAndStream(result.outfit)) review.shown = true;
+          reviews.push(review);
+        }
+
+        // Piso de 2 looks: si descartar rechazados nos dejó cortos, rellenamos
+        // con los retenidos (mejor un look mediocre que menos de 2). #4b: aquí
+        // iría una regeneración dirigida en vez de rescatar el rechazado.
+        for (const h of held) {
+          if (finalized.length >= 2) break;
+          if (await saveAndStream(h.outfit)) h.review.shown = true;
         }
 
         if (finalized.length === 0) {
@@ -167,7 +205,11 @@ export async function POST(request: NextRequest) {
           controller.close();
           return;
         }
-        const repaired = changes.filter((c) => c.changed).length;
+        const repaired = reviews.filter((r) => r.changed).length;
+        const rejected = reviews.filter((r) => r.verdict === "rechazado").length;
+        const backfilled = reviews.filter(
+          (r) => r.verdict === "rechazado" && r.shown
+        ).length;
 
         const elapsedMs = Date.now() - startedAt;
 
@@ -183,11 +225,14 @@ export async function POST(request: NextRequest) {
             type: "critic_review",
             data: {
               gender,
-              repaired,
               prompt_version: PROMPT_VERSION,
-              // Antes/después por outfit: qué combinación tocó el juez. Cruzado
-              // con las razones del 👎, es el dato para optimizar el prompt.
-              changes,
+              repaired, // cuántos reparó el juez (diff de prendas)
+              rejected, // cuántos rechazó por irreparables con este clóset
+              backfilled, // rechazados que igual mostramos para no bajar de 2
+              regenerated: 0, // A no regenera; placeholder para #4b
+              // Antes/después + veredicto + razón por outfit. Cruzado con las
+              // razones del 👎, es el dato para decidir si #4b (regenerar) vale.
+              changes: reviews,
             },
           },
         ];

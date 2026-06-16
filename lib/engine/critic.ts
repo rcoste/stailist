@@ -1,25 +1,39 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { buildSingleOutfitSchema } from "./schema";
+import { buildCriticSchema } from "./schema";
 import { contextBlock, closetBlock, type EngineContext } from "./prompt";
 import type { GeneratedOutfit } from "./generate";
 
 // Juez de styling, UNO POR OUTFIT (para poder ir mostrándolos conforme se
 // aprueban). Caza color que choca y problemas de styling y los ARREGLA
-// intercambiando prendas del mismo clóset. Corre en Sonnet (rápido/barato, ya
-// que se llama por cada outfit). Si falla, devuelve el outfit original — nunca
-// rompe la generación. Rúbrica más exigente para mujer que para hombre.
+// intercambiando prendas del mismo clóset. Si el look está mal y NO se puede
+// arreglar con este clóset, lo RECHAZA (con razón) en vez de maquillarlo.
+// Corre en Sonnet (rápido/barato, ya que se llama por cada outfit). Si falla,
+// devuelve el outfit original con veredicto "ok" — nunca rompe la generación.
+// Rúbrica más exigente para mujer que para hombre.
 
 const CRITIC_MODEL = "claude-sonnet-4-6";
 
+export type CriticVerdict = "ok" | "reparado" | "rechazado";
+
+// Resultado del juez: el look final + su veredicto y razón (para el flywheel).
+// En "rechazado" el outfit que devolvemos es el original (sin tocar) — quien
+// llama decide si lo descarta o lo muestra como último recurso.
+export type CriticResult = {
+  outfit: GeneratedOutfit;
+  verdict: CriticVerdict;
+  razon: string | null;
+};
+
 const CRITIC_SYSTEM = `Eres el director de estilo de stailist: revisas UN look que armó la stylist antes de enseñárselo a la clienta. Subes el nivel, no rehaces.
 
-Qué haces:
-- Si está bien armado y los colores combinan, DÉJALO IGUAL (mismas prendas).
-- Si tiene un problema (color que choca, proporción rara, formalidades que pelean, le falta algo para cerrar), ARRÉGLALO intercambiando UNA prenda por otra del MISMO clóset (vienen con id y hex). Reescribe su explicación si cambió.
+Qué haces (elige UN veredicto):
+- "ok": está bien armado y los colores combinan → DÉJALO IGUAL (mismas prendas).
+- "reparado": tiene un problema (color que choca, proporción rara, formalidades que pelean, le falta algo para cerrar) que SÍ puedes resolver intercambiando UNA prenda por otra del MISMO clóset (vienen con id y hex) → arréglalo y reescribe su explicación.
+- "rechazado": está mal Y NO se puede arreglar con este clóset (no hay una prenda alternativa que funcione). Es la EXCEPCIÓN, no la norma: primero intenta reparar; rechaza solo si de verdad no hay arreglo. Di la razón concreta.
 
 Reglas duras:
 - Usa ÚNICAMENTE prendas del clóset (por id). Jamás inventes.
-- Cambia SOLO cuando de verdad mejora. Si dudas, déjalo como está.
+- Cambia SOLO cuando de verdad mejora. Si dudas, déjalo como está (ok).
 - Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.
 - Marino + negro combinan bien (incluso formal); NO los separes por eso. Concéntrate en color que de verdad choca, proporción y coherencia.
 - Caza el "traje desparejado": un saco/blazer + pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) que NO son un traje real se ve como un conjunto roto. Si lo ves, REPÁRALO cambiando el bottom por otro neutro del clóset (gris, beige, caqui, denim) para que el saco se lea como pieza intencional. (No aplica si de verdad son un traje de la misma tela.)
@@ -53,7 +67,10 @@ function buildCriticMessage(
   }
 
   lines.push("", gender === "mujer" ? RUBRICA_MUJER : RUBRICA_HOMBRE);
-  lines.push("", "Devuelve el look final (arreglado o tal cual).");
+  lines.push(
+    "",
+    "Devuelve tu veredicto (ok / reparado / rechazado), la razón, y el look final (arreglado o tal cual)."
+  );
   return lines.join("\n");
 }
 
@@ -62,8 +79,11 @@ export async function reviewOutfit(
   outfit: GeneratedOutfit,
   priorOutfits: GeneratedOutfit[],
   gender: "hombre" | "mujer" | null
-): Promise<GeneratedOutfit> {
-  if (!process.env.ANTHROPIC_API_KEY) return outfit;
+): Promise<CriticResult> {
+  // Sin juez (no hay API key): pasa el outfit tal cual, veredicto neutro.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { outfit, verdict: "ok", razon: null };
+  }
 
   try {
     const client = new Anthropic();
@@ -81,15 +101,31 @@ export async function reviewOutfit(
       output_config: {
         format: {
           type: "json_schema",
-          schema: buildSingleOutfitSchema(itemIds),
+          schema: buildCriticSchema(itemIds),
         },
       },
     });
 
     const text = response.content.find((b) => b.type === "text")?.text;
-    if (!text) return outfit;
+    if (!text) return { outfit, verdict: "ok", razon: null };
 
-    const parsed = JSON.parse(text) as GeneratedOutfit;
+    const parsed = JSON.parse(text) as GeneratedOutfit & {
+      veredicto?: CriticVerdict;
+      razon?: string;
+    };
+    const verdict: CriticVerdict =
+      parsed.veredicto === "reparado" || parsed.veredicto === "rechazado"
+        ? parsed.veredicto
+        : "ok";
+    const razon = parsed.razon?.trim() ? parsed.razon.trim() : null;
+
+    // Rechazado: devolvemos el outfit ORIGINAL (sin la "reparación" fallida);
+    // quien llama decide descartarlo o mostrarlo como último recurso.
+    if (verdict === "rechazado") {
+      return { outfit, verdict, razon };
+    }
+
+    // ok / reparado: usamos el look del juez solo si es válido; si no, el original.
     const valid = new Set(itemIds);
     if (
       parsed.nombre &&
@@ -98,10 +134,18 @@ export async function reviewOutfit(
       parsed.item_ids.length >= 2 &&
       parsed.item_ids.every((id) => valid.has(id))
     ) {
-      return parsed;
+      return {
+        outfit: {
+          nombre: parsed.nombre,
+          item_ids: parsed.item_ids,
+          explicacion: parsed.explicacion,
+        },
+        verdict,
+        razon,
+      };
     }
-    return outfit;
+    return { outfit, verdict: "ok", razon: null };
   } catch {
-    return outfit;
+    return { outfit, verdict: "ok", razon: null };
   }
 }

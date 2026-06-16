@@ -124,14 +124,17 @@ export async function POST(request: NextRequest) {
         };
         const candidates = await generateOutfits(ctx);
 
-        // El look del día es uno solo: revisamos el primer candidato.
+        // El look del día es uno solo: revisamos el primer candidato. Si el
+        // juez lo rechaza, lo mostramos igual (no hay alternativa sin #4b);
+        // el veredicto queda en el flywheel para medir cuán seguido pasa.
         send({ phase: "afinando el styling…" });
-        const elegido = await reviewOutfit(
+        const result = await reviewOutfit(
           ctx,
           candidates[0],
           [],
           profile.gender as "hombre" | "mujer" | null
         );
+        const elegido = result.outfit;
 
         // "Otro look": el look de hoy anterior pierde el flag (sigue en
         // historial), para respetar el índice único (user, look_date).
@@ -180,6 +183,8 @@ export async function POST(request: NextRequest) {
               gender: profile.gender,
               prompt_version: PROMPT_VERSION,
               look_of_day: true,
+              rejected: result.verdict === "rechazado" ? 1 : 0,
+              regenerated: 0, // A no regenera; placeholder para #4b
               changes: [
                 {
                   before: candidates[0].item_ids,
@@ -187,6 +192,9 @@ export async function POST(request: NextRequest) {
                   changed:
                     elegido.item_ids.join(",") !==
                     candidates[0].item_ids.join(","),
+                  verdict: result.verdict,
+                  razon: result.razon,
+                  shown: true,
                 },
               ],
             },
