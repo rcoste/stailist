@@ -64,20 +64,38 @@ export function looksForGender(gender: "hombre" | "mujer"): Look[] {
   }));
 }
 
+// Cuántos de los 20 estilos llevan cada tag. Tags raros (edgy, grunge, glam…)
+// salen en 1; tags genéricos (pulido, atrevido, relajado…) en varios.
+const TAG_DF: Map<string, number> = (() => {
+  const df = new Map<string, number>();
+  for (const l of LOOKS) for (const t of l.tags) df.set(t, (df.get(t) ?? 0) + 1);
+  return df;
+})();
+
+// Deriva los tags de gusto de los swipes. NO es conteo crudo: normaliza por
+// frecuencia para que la preferencia distintiva no la entierren los tags
+// genéricos. Si amas el único look "edgy", `edgy` (rate 1.0) vence a un `pulido`
+// que salió +3 solo por aparecer en 4 estilos.
+//
+// rate(tag) = (likes − dislikes con ese tag) / (estilos que llevan ese tag)
+//   = qué tan CONSISTENTEMENTE te gustó ese tag, en −1..1.
+// Empate de rate → desempata por evidencia cruda (likes netos): un tag que te
+// gustó en varios estilos vence a uno que solo viste una vez.
 export function computeTasteTags(
   results: { id: string; liked: boolean }[]
 ): string[] {
-  const score = new Map<string, number>();
+  const net = new Map<string, number>(); // likes − dislikes
   for (const r of results) {
     const look = LOOKS.find((l) => l.id === r.id);
     if (!look) continue;
     for (const tag of look.tags) {
-      score.set(tag, (score.get(tag) ?? 0) + (r.liked ? 1 : -1));
+      net.set(tag, (net.get(tag) ?? 0) + (r.liked ? 1 : -1));
     }
   }
-  return [...score.entries()]
-    .filter(([, s]) => s > 0)
-    .sort((a, b) => b[1] - a[1])
+  return [...net.entries()]
+    .map(([tag, n]) => ({ tag, n, rate: n / (TAG_DF.get(tag) ?? 1) }))
+    .filter((x) => x.rate > 0)
+    .sort((a, b) => b.rate - a.rate || b.n - a.n)
     .slice(0, 8)
-    .map(([tag]) => tag);
+    .map((x) => x.tag);
 }
