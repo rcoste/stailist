@@ -3,6 +3,30 @@
 // NO PUEDE inventar prendas (la falla #1 del alfa de Replit) — el API rechaza
 // cualquier id fuera del enum antes de que nos llegue.
 
+// Schema de UN solo outfit (para el juez que revisa de uno en uno y stremea).
+export function buildSingleOutfitSchema(itemIds: string[]) {
+  return {
+    type: "object" as const,
+    properties: {
+      nombre: {
+        type: "string",
+        description: "Nombre corto y con personalidad para el look, en español.",
+      },
+      item_ids: {
+        type: "array",
+        description: "IDs de las prendas del clóset que componen el outfit (3 a 5).",
+        items: { type: "string", enum: itemIds },
+      },
+      explicacion: {
+        type: "string",
+        description: "UNA línea: por qué este look le favorece, en voz de amiga cool.",
+      },
+    },
+    required: ["nombre", "item_ids", "explicacion"],
+    additionalProperties: false,
+  };
+}
+
 export function buildOutfitSchema(itemIds: string[]) {
   return {
     type: "object" as const,

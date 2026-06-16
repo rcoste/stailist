@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
-import { reviewOutfits } from "@/lib/engine/critic";
+import { reviewOutfit } from "@/lib/engine/critic";
 import {
   PROMPT_VERSION,
   type EngineItem,
@@ -108,36 +108,66 @@ export async function POST(request: NextRequest) {
         };
         const candidates = await generateOutfits(ctx);
 
-        // 2ª pasada: el crítico de stylist arregla color/styling (gender-aware).
-        send({ phase: "afinando el styling…" });
-        const gender = profile.gender as "hombre" | "mujer" | null;
-        const outfits = await reviewOutfits(ctx, candidates, gender);
-        const repaired = outfits.filter(
-          (o, i) =>
-            !candidates[i] ||
-            o.item_ids.join(",") !== candidates[i].item_ids.join(",")
-        ).length;
+        // El cliente mostrará N outfits con placeholders mientras llegan.
+        send({ total: candidates.length });
 
-        // Persistir outfits (el historial guarda todo lo generado).
-        const { data: saved, error: saveError } = await supabase
-          .from("outfits")
-          .insert(
-            outfits.map((o) => ({
+        const gender = profile.gender as "hombre" | "mujer" | null;
+        const itemById = new Map(items.map((i) => [i.id, i.attrs]));
+        const finalized: typeof candidates = [];
+        const changes: { before: string[]; after: string[]; changed: boolean }[] =
+          [];
+
+        // 2ª pasada POR OUTFIT: el juez (Sonnet) revisa y se va mostrando cada
+        // uno apenas está, para esconder la latencia detrás del reveal.
+        for (let i = 0; i < candidates.length; i++) {
+          send({
+            phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
+          });
+          const reviewed = await reviewOutfit(ctx, candidates[i], finalized, gender);
+
+          const { data: row, error: saveError } = await supabase
+            .from("outfits")
+            .insert({
               user_id: user.id,
-              item_ids: o.item_ids,
+              item_ids: reviewed.item_ids,
               occasion: objective ?? "diario",
               weather,
-              title: o.nombre,
-              explanation: o.explicacion,
+              title: reviewed.nombre,
+              explanation: reviewed.explicacion,
               prompt_version: PROMPT_VERSION,
-            }))
-          )
-          .select("id, item_ids, title, explanation");
-        if (saveError || !saved) {
+            })
+            .select("id, item_ids, title, explanation")
+            .single();
+          if (saveError || !row) continue; // si uno falla, seguimos con los demás
+
+          finalized.push(reviewed);
+          changes.push({
+            before: candidates[i].item_ids,
+            after: reviewed.item_ids,
+            changed:
+              reviewed.item_ids.join(",") !== candidates[i].item_ids.join(","),
+          });
+          send({
+            index: i,
+            outfit: {
+              id: row.id,
+              nombre: row.title ?? "Tu look",
+              explicacion: row.explanation,
+              prendas: (row.item_ids as string[]).map((id) => ({
+                nombre: itemById.get(id)?.nombre ?? "Prenda",
+                swatch: itemById.get(id)?.color_hex ?? "#E5E1DD",
+                imagen: itemById.get(id)?.image_path ?? null,
+              })),
+            },
+          });
+        }
+
+        if (finalized.length === 0) {
           send({ error: "no_pude_guardar" });
           controller.close();
           return;
         }
+        const repaired = changes.filter((c) => c.changed).length;
 
         const elapsedMs = Date.now() - startedAt;
 
@@ -157,13 +187,7 @@ export async function POST(request: NextRequest) {
               prompt_version: PROMPT_VERSION,
               // Antes/después por outfit: qué combinación tocó el juez. Cruzado
               // con las razones del 👎, es el dato para optimizar el prompt.
-              changes: outfits.map((o, i) => ({
-                before: candidates[i]?.item_ids ?? null,
-                after: o.item_ids,
-                changed: candidates[i]
-                  ? o.item_ids.join(",") !== candidates[i].item_ids.join(",")
-                  : true,
-              })),
+              changes,
             },
           },
         ];
@@ -194,21 +218,8 @@ export async function POST(request: NextRequest) {
         }
         await supabase.from("events").insert(events);
 
-        // Resolver prendas para pintar las cards sin otra vuelta a la DB.
-        const itemById = new Map(items.map((i) => [i.id, i.attrs]));
-        send({
-          done: true,
-          outfits: saved.map((o) => ({
-            id: o.id,
-            nombre: o.title ?? "Tu look",
-            explicacion: o.explanation,
-            prendas: (o.item_ids as string[]).map((id) => ({
-              nombre: itemById.get(id)?.nombre ?? "Prenda",
-              swatch: itemById.get(id)?.color_hex ?? "#E5E1DD",
-              imagen: itemById.get(id)?.image_path ?? null,
-            })),
-          })),
-        });
+        // Los outfits ya se streamearon uno por uno; solo cerramos.
+        send({ done: true });
       } catch (err) {
         console.error("[generate] fallo:", err);
         const message = err instanceof Error ? err.message : "desconocido";

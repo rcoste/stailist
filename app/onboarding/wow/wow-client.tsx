@@ -21,6 +21,7 @@ export type WowOutfit = {
 type State =
   | { kind: "ask" }
   | { kind: "generating"; phase: string }
+  | { kind: "streaming"; outfits: WowOutfit[]; total: number; phase: string }
   | { kind: "ready"; outfits: WowOutfit[] }
   | { kind: "error"; code: string };
 
@@ -76,18 +77,42 @@ export function WowClient({
         for (const line of lines) {
           if (!line.trim()) continue;
           const evt = JSON.parse(line);
-          if (evt.phase) {
-            setState({ kind: "generating", phase: evt.phase });
+          if (typeof evt.total === "number") {
+            setState({
+              kind: "streaming",
+              outfits: [],
+              total: evt.total,
+              phase: "afinando el styling…",
+            });
+          } else if (evt.outfit) {
+            setState((s) =>
+              s.kind === "streaming"
+                ? { ...s, outfits: [...s.outfits, evt.outfit as WowOutfit] }
+                : s
+            );
+          } else if (evt.phase) {
+            setState((s) =>
+              s.kind === "streaming"
+                ? { ...s, phase: evt.phase }
+                : { kind: "generating", phase: evt.phase }
+            );
           } else if (evt.error) {
             setState({ kind: "error", code: evt.error });
             return;
           } else if (evt.done) {
-            setState({ kind: "ready", outfits: evt.outfits });
+            setState((s) => ({
+              kind: "ready",
+              outfits: s.kind === "streaming" || s.kind === "ready" ? s.outfits : [],
+            }));
             return;
           }
         }
       }
-      setState({ kind: "error", code: "red" });
+      setState((s) =>
+        s.kind === "streaming" && s.outfits.length > 0
+          ? { kind: "ready", outfits: s.outfits }
+          : { kind: "error", code: "red" }
+      );
     } catch {
       setState({ kind: "error", code: "red" });
     }
@@ -103,6 +128,52 @@ export function WowClient({
         return next;
       });
     }
+  }
+
+  function outfitBlock(outfit: WowOutfit) {
+    const v = votes[outfit.id];
+    return (
+      <div key={outfit.id} className="flex flex-col gap-3">
+        <h2 className="text-h3 font-semibold text-ink">{outfit.nombre}</h2>
+        <OutfitCard
+          prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
+          justificacion={outfit.explicacion}
+          corner={<FavoriteButton outfitId={outfit.id} initialFavorited={false} />}
+        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => vote(outfit.id, true)}
+            aria-pressed={v === "up"}
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors duration-200 ${
+              v === "up"
+                ? "border-accent bg-accent-soft text-ink"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
+          >
+            👍 Me gusta
+          </button>
+          <button
+            type="button"
+            onClick={() => vote(outfit.id, false)}
+            aria-pressed={v === "down"}
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors duration-200 ${
+              v === "down"
+                ? "border-accent bg-accent-soft text-ink"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
+          >
+            👎 No va
+          </button>
+        </div>
+        {v === "down" ? <DownReason outfitId={outfit.id} /> : null}
+        <TryonButton
+          outfitId={outfit.id}
+          userId={userId}
+          initialImage={outfit.tryon ?? null}
+        />
+      </div>
+    );
   }
 
   if (state.kind === "ask") {
@@ -126,9 +197,7 @@ export function WowClient({
           {state.phase}
         </p>
         <style>{`@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
-        <p className="text-sm text-muted">
-          Tu primer look está a unos segundos.
-        </p>
+        <p className="text-sm text-muted">Tu primer look está a unos segundos.</p>
       </div>
     );
   }
@@ -156,62 +225,35 @@ export function WowClient({
     );
   }
 
+  // streaming | ready
+  const outfits = state.outfits;
+  const pending =
+    state.kind === "streaming" ? Math.max(0, state.total - outfits.length) : 0;
+
   return (
     <div className="flex flex-col gap-6 pb-8">
-      {state.outfits.map((outfit) => {
-        const v = votes[outfit.id];
-        return (
-          <div key={outfit.id} className="flex flex-col gap-3">
-            <h2 className="text-h3 font-semibold text-ink">{outfit.nombre}</h2>
-            <OutfitCard
-              prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
-              justificacion={outfit.explicacion}
-              corner={
-                <FavoriteButton outfitId={outfit.id} initialFavorited={false} />
-              }
-            />
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => vote(outfit.id, true)}
-                aria-pressed={v === "up"}
-                className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors duration-200 ${
-                  v === "up"
-                    ? "border-accent bg-accent-soft text-ink"
-                    : "border-line bg-surface text-ink hover:border-ink"
-                }`}
-              >
-                👍 Me gusta
-              </button>
-              <button
-                type="button"
-                onClick={() => vote(outfit.id, false)}
-                aria-pressed={v === "down"}
-                className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors duration-200 ${
-                  v === "down"
-                    ? "border-accent bg-accent-soft text-ink"
-                    : "border-line bg-surface text-ink hover:border-ink"
-                }`}
-              >
-                👎 No va
-              </button>
-            </div>
-            {v === "down" ? <DownReason outfitId={outfit.id} /> : null}
-            <TryonButton
-              outfitId={outfit.id}
-              userId={userId}
-              initialImage={outfit.tryon ?? null}
-            />
-          </div>
-        );
-      })}
+      {outfits.map(outfitBlock)}
 
-      <Link
-        href="/hoy"
-        className="flex min-h-12 items-center justify-center rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-      >
-        Listo, llévame a mi día
-      </Link>
+      {Array.from({ length: pending }).map((_, i) => (
+        <div
+          key={`pending-${i}`}
+          className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-line bg-surface py-16 text-center"
+        >
+          <Spinner className="h-6 w-6 text-accent" />
+          <p className="text-sm text-muted">
+            {state.kind === "streaming" ? state.phase : "armando el siguiente…"}
+          </p>
+        </div>
+      ))}
+
+      {state.kind === "ready" && (
+        <Link
+          href="/hoy"
+          className="flex min-h-12 items-center justify-center rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+        >
+          Listo, llévame a mi día
+        </Link>
+      )}
     </div>
   );
 }

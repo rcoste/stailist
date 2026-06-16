@@ -1,99 +1,106 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { buildOutfitSchema } from "./schema";
+import { buildSingleOutfitSchema } from "./schema";
 import { contextBlock, closetBlock, type EngineContext } from "./prompt";
 import type { GeneratedOutfit } from "./generate";
 
-// Segunda pasada: un director de estilo revisa los looks que armó el generador,
-// caza color que choca y problemas de styling, y los ARREGLA intercambiando
-// prendas del mismo clóset (no inventa). Rúbrica más exigente para mujer (más
-// grados de libertad) que para hombre (más formulaico). Si falla, devuelve los
-// looks originales — nunca rompe la generación.
+// Juez de styling, UNO POR OUTFIT (para poder ir mostrándolos conforme se
+// aprueban). Caza color que choca y problemas de styling y los ARREGLA
+// intercambiando prendas del mismo clóset. Corre en Sonnet (rápido/barato, ya
+// que se llama por cada outfit). Si falla, devuelve el outfit original — nunca
+// rompe la generación. Rúbrica más exigente para mujer que para hombre.
 
-const CRITIC_SYSTEM = `Eres el director de estilo de stailist: revisas los looks que armó la stylist ANTES de enseñárselos a la clienta. Tu trabajo es subir el nivel, no rehacerlo todo.
+const CRITIC_MODEL = "claude-sonnet-4-6";
 
-Qué haces con cada look:
+const CRITIC_SYSTEM = `Eres el director de estilo de stailist: revisas UN look que armó la stylist antes de enseñárselo a la clienta. Subes el nivel, no rehaces.
+
+Qué haces:
 - Si está bien armado y los colores combinan, DÉJALO IGUAL (mismas prendas).
 - Si tiene un problema (color que choca, proporción rara, formalidades que pelean, le falta algo para cerrar), ARRÉGLALO intercambiando UNA prenda por otra del MISMO clóset (vienen con id y hex). Reescribe su explicación si cambió.
-- Solo descarta un look si es irreparable con lo que hay en el clóset.
 
 Reglas duras:
 - Usa ÚNICAMENTE prendas del clóset (por id). Jamás inventes.
-- Devuelve 2 o 3 looks, DISTINTOS entre sí. Conserva la variedad y el vibe de la clienta — no los vuelvas todos iguales ni aburridos.
-- Cambia SOLO cuando de verdad mejora. Si dudas, deja el look como está.
+- Cambia SOLO cuando de verdad mejora. Si dudas, déjalo como está.
+- Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.
 - Marino + negro combinan bien (incluso formal); NO los separes por eso. Concéntrate en color que de verdad choca, proporción y coherencia.
 - La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.`;
 
-const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (aquí hay muchos grados de libertad, sé exigente):
+const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (muchos grados de libertad, sé exigente):
 - Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Lo near-face (top/abrigo) debe favorecerla y NUNCA ser un color de su EVITA.
 - Proporción y silueta: equilibra volumen (oversize arriba ↔ entallado abajo); evita "todo holgado" o "todo pegado".
 - Cintura y largos: define la cintura cuando ayude; cuida el largo de falda/vestido contra el calzado.
 - Capas y coherencia: vestido O dos piezas con lógica; saco/capa que sume; no mezcles deportivo con formal salvo intención.
-- Completitud: si un look se siente incompleto, intercambia por una pieza que lo cierre.`;
+- Completitud: si se siente incompleto, intercambia por una pieza que lo cierre.`;
 
-const RUBRICA_HOMBRE = `Revisa con criterio masculino (más formulaico, enfócate en lo esencial):
+const RUBRICA_HOMBRE = `Revisa con criterio masculino (más formulaico, lo esencial):
 - Color: máx 1-2 protagonistas + neutros; nada que choque (juzga por el hex). Near-face en su paleta, nunca un EVITA.
 - Coherencia de formalidad: no mezcles sastre formal con deportivo salvo intención.
 - Proporción básica: que no sea todo holgado ni todo pegado.`;
 
 function buildCriticMessage(
   ctx: EngineContext,
-  outfits: GeneratedOutfit[],
+  outfit: GeneratedOutfit,
+  priorOutfits: GeneratedOutfit[],
   gender: "hombre" | "mujer" | null
 ): string {
   const lines: string[] = [...contextBlock(ctx), "", ...closetBlock(ctx.items)];
 
-  lines.push("", "Looks que armó la stylist (revísalos uno por uno):");
-  outfits.forEach((o, i) => {
-    lines.push(`Look ${i + 1} "${o.nombre}": ${o.item_ids.join(" + ")}`);
-  });
+  lines.push("", `Look a revisar — "${outfit.nombre}": ${outfit.item_ids.join(" + ")}`);
+
+  if (priorOutfits.length > 0) {
+    lines.push("", "Looks ya aprobados (mantén éste DISTINTO de ellos):");
+    priorOutfits.forEach((o) => lines.push(`- ${o.item_ids.join(" + ")}`));
+  }
 
   lines.push("", gender === "mujer" ? RUBRICA_MUJER : RUBRICA_HOMBRE);
-  lines.push("", "Devuelve los looks finales (arreglados o tal cual).");
+  lines.push("", "Devuelve el look final (arreglado o tal cual).");
   return lines.join("\n");
 }
 
-export async function reviewOutfits(
+export async function reviewOutfit(
   ctx: EngineContext,
-  outfits: GeneratedOutfit[],
+  outfit: GeneratedOutfit,
+  priorOutfits: GeneratedOutfit[],
   gender: "hombre" | "mujer" | null
-): Promise<GeneratedOutfit[]> {
-  // Sin key o sin nada que revisar → no toca nada.
-  if (!process.env.ANTHROPIC_API_KEY || outfits.length === 0) return outfits;
+): Promise<GeneratedOutfit> {
+  if (!process.env.ANTHROPIC_API_KEY) return outfit;
 
   try {
     const client = new Anthropic();
     const itemIds = ctx.items.map((i) => i.id);
     const response = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 2048,
+      model: CRITIC_MODEL,
+      max_tokens: 1024,
       system: CRITIC_SYSTEM,
       messages: [
-        { role: "user", content: buildCriticMessage(ctx, outfits, gender) },
+        {
+          role: "user",
+          content: buildCriticMessage(ctx, outfit, priorOutfits, gender),
+        },
       ],
       output_config: {
-        format: { type: "json_schema", schema: buildOutfitSchema(itemIds) },
+        format: {
+          type: "json_schema",
+          schema: buildSingleOutfitSchema(itemIds),
+        },
       },
     });
 
     const text = response.content.find((b) => b.type === "text")?.text;
-    if (!text) return outfits;
+    if (!text) return outfit;
 
-    const parsed = JSON.parse(text) as { outfits: GeneratedOutfit[] };
+    const parsed = JSON.parse(text) as GeneratedOutfit;
     const valid = new Set(itemIds);
-    const reviewed = (parsed.outfits ?? [])
-      .filter(
-        (o) =>
-          o.nombre &&
-          o.explicacion &&
-          Array.isArray(o.item_ids) &&
-          o.item_ids.length >= 2 &&
-          o.item_ids.every((id) => valid.has(id))
-      )
-      .slice(0, 3);
-
-    // Si el crítico devolvió algo coherente lo usamos; si no, los originales.
-    return reviewed.length >= 2 ? reviewed : outfits;
+    if (
+      parsed.nombre &&
+      parsed.explicacion &&
+      Array.isArray(parsed.item_ids) &&
+      parsed.item_ids.length >= 2 &&
+      parsed.item_ids.every((id) => valid.has(id))
+    ) {
+      return parsed;
+    }
+    return outfit;
   } catch {
-    return outfits;
+    return outfit;
   }
 }

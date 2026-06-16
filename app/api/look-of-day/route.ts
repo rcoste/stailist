@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
-import { reviewOutfits } from "@/lib/engine/critic";
+import { reviewOutfit } from "@/lib/engine/critic";
 import { type EngineContext } from "@/lib/engine/prompt";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
@@ -124,13 +124,14 @@ export async function POST(request: NextRequest) {
         };
         const candidates = await generateOutfits(ctx);
 
+        // El look del día es uno solo: revisamos el primer candidato.
         send({ phase: "afinando el styling…" });
-        const outfits = await reviewOutfits(
+        const elegido = await reviewOutfit(
           ctx,
-          candidates,
+          candidates[0],
+          [],
           profile.gender as "hombre" | "mujer" | null
         );
-        const elegido = outfits[0]; // el look del día es uno solo
 
         // "Otro look": el look de hoy anterior pierde el flag (sigue en
         // historial), para respetar el índice único (user, look_date).
@@ -179,13 +180,15 @@ export async function POST(request: NextRequest) {
               gender: profile.gender,
               prompt_version: PROMPT_VERSION,
               look_of_day: true,
-              changes: outfits.map((o, i) => ({
-                before: candidates[i]?.item_ids ?? null,
-                after: o.item_ids,
-                changed: candidates[i]
-                  ? o.item_ids.join(",") !== candidates[i].item_ids.join(",")
-                  : true,
-              })),
+              changes: [
+                {
+                  before: candidates[0].item_ids,
+                  after: elegido.item_ids,
+                  changed:
+                    elegido.item_ids.join(",") !==
+                    candidates[0].item_ids.join(","),
+                },
+              ],
             },
           },
         ]);
