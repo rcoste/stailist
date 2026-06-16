@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
+import { FavoriteButton } from "@/components/favorite-button";
 import { Spinner } from "@/components/spinner";
 import { WeatherPicker, type WeatherInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
@@ -12,6 +13,7 @@ export type HoyOutfit = {
   nombre: string;
   explicacion: string;
   tryon?: string | null;
+  favorited?: boolean;
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
 };
 
@@ -167,6 +169,12 @@ export function HoyClient({
       <OutfitCard
         prendas={state.outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
         justificacion={state.outfit.explicacion}
+        corner={
+          <FavoriteButton
+            outfitId={state.outfit.id}
+            initialFavorited={state.outfit.favorited ?? false}
+          />
+        }
       />
       <div className="flex items-center gap-3">
         <button

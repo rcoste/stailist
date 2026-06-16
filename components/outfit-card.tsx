@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 type Prenda = {
   nombre: string;
@@ -12,12 +13,16 @@ type Prenda = {
 export function OutfitCard({
   prendas,
   justificacion,
+  corner,
 }: {
   prendas: Prenda[];
   justificacion: string;
+  /** Slot opcional en la esquina superior derecha (ej. el bookmark). */
+  corner?: ReactNode;
 }) {
   return (
-    <article className="rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-hairline)]">
+    <article className="relative rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-hairline)]">
+      {corner ? <div className="absolute right-3 top-3 z-10">{corner}</div> : null}
       <div className="grid grid-cols-3 gap-3">
         {prendas.map((p) => (
           <figure key={p.nombre} className="flex flex-col gap-2">

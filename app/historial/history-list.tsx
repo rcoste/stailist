@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
+import { FavoriteButton } from "@/components/favorite-button";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 
 export type HistoryOutfit = {
@@ -12,16 +13,25 @@ export type HistoryOutfit = {
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
   voto: "up" | "down" | null;
   worn: boolean;
+  favorited: boolean;
 };
 
-type Estado = Record<string, { voto: "up" | "down" | null; worn: boolean }>;
+type Estado = Record<
+  string,
+  { voto: "up" | "down" | null; worn: boolean; fav: boolean }
+>;
 
 export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
   const [estado, setEstado] = useState<Estado>(() =>
     Object.fromEntries(
-      outfits.map((o) => [o.id, { voto: o.voto, worn: o.worn }])
+      outfits.map((o) => [o.id, { voto: o.voto, worn: o.worn, fav: o.favorited }])
     )
   );
+  const [soloFav, setSoloFav] = useState(false);
+
+  const visibles = soloFav
+    ? outfits.filter((o) => estado[o.id]?.fav)
+    : outfits;
 
   async function vote(id: string, up: boolean) {
     const prev = estado[id];
@@ -39,9 +49,30 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
       setEstado((s) => ({ ...s, [id]: { ...s[id], worn: false } }));
   }
 
+  const favCount = outfits.filter((o) => estado[o.id]?.fav).length;
+
   return (
-    <div className="flex flex-col gap-8">
-      {outfits.map((o) => {
+    <div className="flex flex-col gap-6">
+      <button
+        type="button"
+        onClick={() => setSoloFav((v) => !v)}
+        aria-pressed={soloFav}
+        className={`self-start rounded-full border px-4 py-1.5 text-sm font-medium transition-colors duration-200 ${
+          soloFav
+            ? "border-accent bg-accent-soft text-ink"
+            : "border-line bg-surface text-muted hover:text-ink"
+        }`}
+      >
+        🔖 Solo favoritos{favCount > 0 ? ` (${favCount})` : ""}
+      </button>
+
+      {visibles.length === 0 ? (
+        <p className="rounded-2xl border border-line bg-surface px-6 py-10 text-center text-sm text-muted">
+          Aún no guardas favoritos. Toca el 🔖 de un look para guardarlo aquí.
+        </p>
+      ) : null}
+
+      {visibles.map((o) => {
         const e = estado[o.id];
         return (
           <div key={o.id} className="flex flex-col gap-3">
@@ -52,6 +83,15 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
             <OutfitCard
               prendas={o.prendas.map((p) => ({ ...p, detalle: "" }))}
               justificacion={o.explicacion}
+              corner={
+                <FavoriteButton
+                  outfitId={o.id}
+                  initialFavorited={o.favorited}
+                  onChange={(f) =>
+                    setEstado((s) => ({ ...s, [o.id]: { ...s[o.id], fav: f } }))
+                  }
+                />
+              }
             />
             <div className="flex items-center gap-3">
               <button

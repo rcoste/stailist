@@ -59,3 +59,24 @@ export async function markWorn(
   if (error && error.code !== "23505") return { ok: false };
   return { ok: true };
 }
+
+// Bookmark: guarda/quita un look de favoritos (distinto del 👍). Sella o limpia
+// outfits.favorited_at del look del propio usuario (RLS).
+export async function toggleFavorite(
+  outfitId: string,
+  favorite: boolean
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("outfits")
+    .update({ favorited_at: favorite ? new Date().toISOString() : null })
+    .eq("id", outfitId)
+    .eq("user_id", user.id);
+
+  return { ok: !error };
+}

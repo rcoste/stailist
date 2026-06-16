@@ -10,7 +10,7 @@ export default async function HistorialPage() {
 
   const { data: outfits } = await supabase
     .from("outfits")
-    .select("id, title, explanation, item_ids, created_at")
+    .select("id, title, explanation, item_ids, created_at, favorited_at")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
@@ -63,6 +63,7 @@ export default async function HistorialPage() {
     })),
     voto: votoByOutfit.get(o.id) ?? null,
     worn: wornOutfits.has(o.id),
+    favorited: !!o.favorited_at,
   }));
 
   return (

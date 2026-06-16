@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
+import { FavoriteButton } from "@/components/favorite-button";
 import { Spinner } from "@/components/spinner";
 import { WeatherPicker, type WeatherInput } from "@/components/weather-picker";
 import { voteOutfit } from "@/lib/outfit-actions";
@@ -158,6 +159,9 @@ export function WowClient({
             <OutfitCard
               prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
               justificacion={outfit.explicacion}
+              corner={
+                <FavoriteButton outfitId={outfit.id} initialFavorited={false} />
+              }
             />
             <div className="flex items-center gap-3">
               <button
