@@ -4,7 +4,17 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 
 ## Diferido del planning (2026-06-10)
 
-- [ ] **E2 — Detección multi-prenda en una foto**: subir una foto con varias prendas (outfit puesto, ropa sobre la cama) → la IA segmenta y propone N altas, cada una con confirmación editable. *Por qué ahora no*: el alfa de Replit ya alucinaba analizando UNA prenda; multi-prenda es estrictamente más difícil, y el experimento no la necesita. *Trigger*: Tatiana sube ≥10 fotos en su primera semana sin abandonar. *Decisión pendiente al reabrir*: recorte por prenda (frágil) vs foto compartida entre prendas (clóset menos visual).
+- [ ] **E2 — Detección multi-prenda en una foto** ("sube una foto tipo Instagram → saco tus prendas"): subir una foto con varias prendas (outfit puesto, ropa sobre la cama) → la IA propone N altas, cada una con confirmación editable. *Por qué ahora no*: el alfa de Replit ya alucinaba analizando UNA prenda; multi-prenda es estrictamente más difícil (errores que se acumulan envenenan el motor), y el experimento no la necesita — el checklist de 15 básicos ya mató la fricción de catalogar. *Trigger*: hay usuarios reales Y señal de que el flujo actual de una-prenda-por-foto (`/closet`) se siente lento o quieren meter más ropa. Candidata #1 para el primer feature post-validación (es el upgrade natural del paso 8 del USER-JOURNEY, "el clóset crece").
+
+  **Diseño acordado (2026-06-16):**
+  - **Principio que lo salva:** el clóset necesita ATRIBUTOS precisos (color hex, formalidad, tipo), no fotos bonitas — el motor combina por atributos, la imagen es secundaria.
+  - **Visual de cada prenda:** NO recortar por prenda (bounding boxes poco confiables + recortes de ropa puesta se ven feos). Usar **swatch de color** (como el fallback de arquetipos) o foto compartida. Esto resuelve la vieja "decisión pendiente" (recorte vs foto compartida): se elige NO recortar.
+  - **Pipeline:** foto → Claude visión con structured output → **array** de prendas `{tipo, color, color_hex, formalidad, temporada, nombre}`. Reusa la infra de `/api/analizar-prenda`, solo cambia el schema de 1 a N.
+  - **Confirmación editable en lote (no negociable):** N tarjetas; cada una se puede apagar/editar/borrar. Nunca auto-agregar — el humano es el filtro contra la alucinación. Reusa el modal de confirmación actual vuelto lista.
+  - **Fallback:** 0 prendas o baja confianza → cae al flujo de una-prenda-a-la-vez. Nunca bloquea.
+  - **Tope:** ~6 prendas por foto. **Métrica:** % de prendas que el usuario deja sin editar (proxy de precisión) + abandono.
+  - **Nota sobre la variante "outfit puesto":** es la MÁS difícil de leer (oclusión, perspectiva) aunque la más fácil de dar. El flat-lay extrae más limpio. Si se construye con foto de persona, comprometerse a atributos-only (sin recorte).
+  - **Dónde vive:** segundo modo en `/closet` junto a "+ Foto"; opcional en onboarding DESPUÉS del checklist de 15 básicos (no en lugar de — el checklist es el piso de cero fricción).
 
 ## Diferido del build (sesión 2, 2026-06-14)
 
