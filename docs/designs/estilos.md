@@ -113,3 +113,18 @@ un solo outfit).
 **20. Glam / noche** — _para cuando hay que brillar_ · `glam, elegante, atrevido`
 - M: **vestido de noche** (slip satinado o cocktail negro), tacón, clutch. Brillo, escote o espalda descubierta.
 - H: **esmoquin / black-tie** (traje negro, camisa fina sin corbata), mocasines pulidos. (subido a black-tie para distinguir de Sastre.)
+
+## Tech / corporate (nuevos, 2026-06-16)
+
+> Avatares hombre = **Roberto** (`docs_para_claude/avatars-hombre/m0-roberto.png`).
+> Mujer = avatar morena existente. Sin logos (On Cloud → "runner de suela
+> acolchada"; Patagonia → "chaleco gilet acolchado"). Generados con
+> `scripts/gen-new-styles.mjs`.
+
+**21. Startup** — _cómodo, listo para construir_ · `startup, casual, deportivo`
+- H: **hoodie con zipper abierto** sobre playera lisa, jeans rectos, **runners de suela acolchada** (estilo On Cloud). El uniforme del fundador.
+- M: hoodie con zipper abierto sobre playera, jeans rectos, runners de suela acolchada.
+
+**22. Finance bro** — _chaleco y a cerrar el trato_ · `finance, preppy, pulido`
+- H: **chaleco gilet acolchado** sobre camisa azul claro, chinos beige, cinturón de piel café, tenis blancos de piel.
+- M: chaleco gilet acolchado sobre camisa azul claro, pantalón sastre beige, mocasines de piel.

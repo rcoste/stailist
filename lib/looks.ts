@@ -39,6 +39,10 @@ const ESTILOS: [string, string, string, string[]][] = [
   ["romantico", "Romántico", "delicado y ligero", ["romantico", "suave", "fresco"]],
   ["boho", "Boho", "suelto, con textura y alma", ["boho", "relajado", "romantico"]],
   ["glam-noche", "Glam de noche", "para cuando hay que brillar", ["glam", "elegante", "atrevido"]],
+  // Nuevos (2026-06-16): tags distintivos (startup/finance) para que la señal
+  // de gusto pese fuerte. Imágenes hombre usan a Roberto como avatar.
+  ["startup", "Startup", "cómodo, listo para construir", ["startup", "casual", "deportivo"]],
+  ["finance-bro", "Finance bro", "chaleco y a cerrar el trato", ["finance", "preppy", "pulido"]],
 ];
 
 export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags]) => ({
