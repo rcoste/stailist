@@ -11,7 +11,10 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // v5 (2026-06-16): regla dura marino+negro en formal; ocasión por generación.
 // v6 (2026-06-16): se revierte la regla marino+negro (era mito; ver research) —
 // marino y negro SÍ combinan, incluso formal. Solo queda como nota de ejecución.
-export const PROMPT_VERSION = "v6";
+// v7 (2026-06-16): regla anti "traje desparejado" (saco + pantalón del mismo tono
+// que no son un traje real) en generador y juez. Justificada por el único 👎 del
+// flywheel ("Blanco que ilumina": blazer marino + chinos marino idéntico #27425F).
+export const PROMPT_VERSION = "v7";
 
 export type EngineItem = {
   id: string;
@@ -57,6 +60,7 @@ Armonía del outfit (cómo combinan las prendas entre sí):
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
 - Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
 - Marino + negro SÍ combinan (dos fríos que contrastan sin chocar), incluso en formal — un traje marino con zapatos o cinturón negros es clásico. Solo cuida que se vea intencional (mismo peso de tela, calzado oscuro), no como traje desparejado.
+- Cuidado con el "traje desparejado": un saco/blazer junto a un pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) parece un traje que no combina entre sí — el ojo espera que sean un conjunto y nota que no lo son. Solo úsalos juntos si DE VERDAD son un traje (misma tela). Si no, rompe el match: pon el bottom en otro neutro (gris, beige, caqui, denim) para que el saco se lea como pieza intencional, no como mitad de un traje suelto.
 
 Gustos (su vibe, de los swipes):
 - Cuando haya varias combinaciones válidas, ELIGE la que más empate con su vibe (ej. si es minimalista, evita mezclar demasiados elementos; si es clásico, prioriza siluetas atemporales).

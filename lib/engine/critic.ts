@@ -22,6 +22,7 @@ Reglas duras:
 - Cambia SOLO cuando de verdad mejora. Si dudas, déjalo como está.
 - Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.
 - Marino + negro combinan bien (incluso formal); NO los separes por eso. Concéntrate en color que de verdad choca, proporción y coherencia.
+- Caza el "traje desparejado": un saco/blazer + pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) que NO son un traje real se ve como un conjunto roto. Si lo ves, REPÁRALO cambiando el bottom por otro neutro del clóset (gris, beige, caqui, denim) para que el saco se lea como pieza intencional. (No aplica si de verdad son un traje de la misma tela.)
 - La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.`;
 
 const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (muchos grados de libertad, sé exigente):
