@@ -60,6 +60,29 @@ export async function markWorn(
   return { ok: true };
 }
 
+// Guarda la razón del 👎 (pill o texto abierto) en el evento del voto. Es el
+// ground truth para calibrar el juez de styling — etiqueta humana de por qué un
+// look no va, en vez de adivinar con reglas.
+export async function saveDownReason(
+  outfitId: string,
+  reason: string
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("events")
+    .update({ data: { reason: reason.slice(0, 200) } })
+    .eq("user_id", user.id)
+    .eq("outfit_id", outfitId)
+    .eq("type", "vote_down");
+
+  return { ok: !error };
+}
+
 // Bookmark: guarda/quita un look de favoritos (distinto del 👍). Sella o limpia
 // outfits.favorited_at del look del propio usuario (RLS).
 export async function toggleFavorite(

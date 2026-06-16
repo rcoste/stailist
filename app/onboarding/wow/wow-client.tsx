@@ -5,6 +5,7 @@ import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
 import { FavoriteButton } from "@/components/favorite-button";
+import { DownReason } from "@/components/down-reason";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit } from "@/lib/outfit-actions";
@@ -195,6 +196,7 @@ export function WowClient({
                 👎 No va
               </button>
             </div>
+            {v === "down" ? <DownReason outfitId={outfit.id} /> : null}
             <TryonButton
               outfitId={outfit.id}
               userId={userId}

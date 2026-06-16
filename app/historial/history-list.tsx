@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
 import { FavoriteButton } from "@/components/favorite-button";
+import { DownReason } from "@/components/down-reason";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 
 export type HistoryOutfit = {
@@ -133,6 +134,7 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
                 {e.worn ? "✓ Me lo puse" : "Me lo puse"}
               </button>
             </div>
+            {e.voto === "down" ? <DownReason outfitId={o.id} /> : null}
           </div>
         );
       })}

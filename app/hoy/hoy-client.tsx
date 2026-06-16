@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonButton } from "@/components/tryon-button";
 import { FavoriteButton } from "@/components/favorite-button";
+import { DownReason } from "@/components/down-reason";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
@@ -214,6 +215,7 @@ export function HoyClient({
           Otro look
         </button>
       </div>
+      {voto === "down" ? <DownReason outfitId={state.outfit.id} /> : null}
       <button
         type="button"
         onClick={meLoPuse}
