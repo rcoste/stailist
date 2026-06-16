@@ -5,6 +5,7 @@ import { OutfitCard } from "@/components/outfit-card";
 import { FavoriteButton } from "@/components/favorite-button";
 import { DownReason } from "@/components/down-reason";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
+import { notifyFirstLike } from "@/lib/pwa";
 
 export type HistoryOutfit = {
   id: string;
@@ -40,6 +41,7 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
     setEstado((s) => ({ ...s, [id]: { ...s[id], voto: nuevo } }));
     const res = await voteOutfit(id, up);
     if (!res.ok) setEstado((s) => ({ ...s, [id]: prev })); // revertir
+    else if (up) notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
   }
 
   async function worn(id: string) {

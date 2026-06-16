@@ -8,6 +8,7 @@ import { DownReason } from "@/components/down-reason";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
+import { notifyFirstLike } from "@/lib/pwa";
 
 export type HoyOutfit = {
   id: string;
@@ -109,6 +110,7 @@ export function HoyClient({
     setVoto(up ? "up" : "down");
     const res = await voteOutfit(state.outfit.id, up);
     if (!res.ok) setVoto(prev);
+    else if (up) notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
   }
 
   async function meLoPuse() {

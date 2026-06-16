@@ -9,6 +9,7 @@ import { DownReason } from "@/components/down-reason";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit } from "@/lib/outfit-actions";
+import { notifyFirstLike } from "@/lib/pwa";
 
 export type WowOutfit = {
   id: string;
@@ -127,6 +128,8 @@ export function WowClient({
         delete next[outfitId];
         return next;
       });
+    } else if (up) {
+      notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
     }
   }
 

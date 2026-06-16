@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Fraunces } from "next/font/google";
 import "./globals.css";
+import { PwaInstall } from "@/components/pwa-install";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
   title: "stailist",
   description:
     "Tu stylist personal — un look listo para tu día en menos de 2 minutos.",
+  appleWebApp: { capable: true, title: "stailist", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -34,6 +36,7 @@ export default function RootLayout({
         className={`${outfit.variable} ${fraunces.variable} min-h-full antialiased`}
       >
         {children}
+        <PwaInstall />
       </body>
     </html>
   );
