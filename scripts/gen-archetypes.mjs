@@ -124,6 +124,63 @@ const ITEMS = [
   // Chelsea boots estilo Meermin (2026-06-15): regenera negro/café feos +
   // agrega café gamuza. Encuadre 3/4 de frente, punta de almendra, elegantes.
   { slug: "botines-chelsea-ante", desc: "a pair of dark brown suede Chelsea boots, sleek almond toe, brown elastic side gore panel, slim leather sole, elegant dress boots", type: "boots" },
+  // === Biblioteca MUJER curada (2026-06-15) — ~50 piezas visualmente distintas.
+  // Abrigos / outerwear
+  { slug: "abrigo-largo-lana-gris", desc: "a long grey wool women's overcoat, straight clean cut, neatly laid flat", type: "flat" },
+  { slug: "abrigo-cruzado-negro", desc: "a black double-breasted women's wool coat, neatly laid flat", type: "flat" },
+  { slug: "trench-corto-beige", desc: "a short beige women's trench coat, belted, neatly laid flat", type: "flat" },
+  { slug: "blazer-oversize-negro", desc: "a black oversized women's blazer, relaxed boyfriend fit, neatly laid flat", type: "flat" },
+  { slug: "blazer-cropped-crema", desc: "a cream cropped women's blazer, short fitted, neatly laid flat", type: "flat" },
+  { slug: "chaqueta-utility-olivo", desc: "an olive green women's utility field jacket with flap pockets, neatly laid flat", type: "flat" },
+  { slug: "harrington-marino", desc: "a navy blue women's harrington jacket, elastic hem blouson with ribbed collar, neatly laid flat", type: "flat" },
+  { slug: "cardigan-largo-gris", desc: "a long grey women's duster cardigan, open front, neatly laid flat", type: "flat" },
+  { slug: "chaleco-tejido-crema", desc: "a cream knit women's sweater vest, sleeveless v-neck, neatly laid flat", type: "flat" },
+  // Tops
+  { slug: "camisa-oxford-azul", desc: "a light blue women's oxford button-up shirt, neatly laid flat", type: "flat" },
+  { slug: "camisa-satinada-marfil", desc: "an ivory satin women's blouse shirt, soft sheen, neatly laid flat", type: "flat" },
+  { slug: "blusa-cuello-v-negra", desc: "a black women's v-neck blouse, soft draped, neatly laid flat", type: "flat" },
+  { slug: "blusa-lazo-blanca", desc: "a white women's pussy-bow blouse with a tie neck bow, neatly laid flat", type: "flat" },
+  { slug: "blusa-wrap-estampado", desc: "a floral print women's wrap blouse, surplice neckline, neatly laid flat", type: "flat" },
+  { slug: "playera-cuello-v-blanca", desc: "a plain white fitted women's v-neck t-shirt, neatly laid flat", type: "flat" },
+  { slug: "playera-manga-larga-negra", desc: "a plain black long-sleeve fitted women's t-shirt, neatly laid flat", type: "flat" },
+  { slug: "sueter-crewneck-verde", desc: "a bottle green women's crew-neck knit sweater, neatly laid flat", type: "flat" },
+  { slug: "sueter-cuello-v-camel", desc: "a camel beige women's v-neck knit sweater, neatly laid flat", type: "flat" },
+  { slug: "top-satinado-champagne", desc: "a champagne satin women's camisole tank top with thin straps, neatly laid flat", type: "flat" },
+  { slug: "top-halter-negro", desc: "a black women's halter neck top, neatly laid flat", type: "flat" },
+  { slug: "top-corset-negro", desc: "a black women's structured corset bustier top, neatly laid flat", type: "flat" },
+  // Bottoms
+  { slug: "pantalon-sastre-recto-negro", desc: "a pair of black women's straight-leg tailored trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-plisado-gris", desc: "a pair of grey women's pleated wide trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "jeans-skinny-mujer", desc: "a pair of dark indigo women's skinny jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "jeans-wide-mujer", desc: "a pair of medium wash women's wide-leg jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "jeans-mom-mujer", desc: "a pair of light wash women's high-waisted mom jeans, relaxed, neatly laid flat lengthwise", type: "flat" },
+  { slug: "jeans-flare-mujer", desc: "a pair of dark wash women's flare bootcut jeans, neatly laid flat lengthwise", type: "flat" },
+  { slug: "chino-beige-mujer", desc: "a pair of beige women's chino trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "cargo-verde-mujer", desc: "a pair of olive green women's cargo trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "shorts-mezclilla-mujer", desc: "a pair of blue denim women's shorts, neatly laid flat", type: "flat" },
+  { slug: "shorts-lino-mujer", desc: "a pair of beige linen women's shorts, neatly laid flat", type: "flat" },
+  // Faldas
+  { slug: "falda-mini-negra", desc: "a black women's A-line mini skirt, neatly laid flat", type: "flat" },
+  { slug: "falda-slip-champagne", desc: "a champagne satin bias-cut slip midi skirt, neatly laid flat", type: "flat" },
+  { slug: "falda-plisada-marino", desc: "a navy blue pleated midi skirt, neatly laid flat", type: "flat" },
+  { slug: "falda-larga-columna-negra", desc: "a black long straight column maxi skirt, neatly laid flat", type: "flat" },
+  { slug: "falda-mezclilla-mujer", desc: "a blue denim women's A-line skirt, neatly laid flat", type: "flat" },
+  // Vestidos
+  { slug: "vestido-punto-camel", desc: "a camel knit women's sweater dress, neatly laid flat", type: "flat" },
+  { slug: "vestido-tshirt-gris", desc: "a grey jersey casual t-shirt dress, neatly laid flat", type: "flat" },
+  { slug: "vestido-slip-champagne", desc: "a champagne satin bias-cut slip dress, neatly laid flat", type: "flat" },
+  { slug: "vestido-wrap-negro", desc: "a black women's wrap dress, surplice neckline, neatly laid flat", type: "flat" },
+  { slug: "vestido-cocktail-negro", desc: "a black women's elegant fitted cocktail dress, neatly laid flat", type: "flat" },
+  { slug: "vestido-noche-marino", desc: "a navy blue long elegant evening gown, neatly laid flat", type: "flat" },
+  // Calzado
+  { slug: "tenis-minimalistas-negros-mujer", desc: "a pair of black minimalist leather women's low-top sneakers, clean, no logos", type: "shoes" },
+  { slug: "tenis-retro-mujer", desc: "a pair of off-white leather retro sneakers in the German Army Trainer style, plain smooth sides with small perforated dots, beige suede toe cap and heel, gum rubber sole, clean minimalist, completely unbranded plain sides", type: "shoes" },
+  { slug: "slingbacks-negros", desc: "a pair of black women's slingback pointed-toe low heels", type: "shoes" },
+  { slug: "kitten-heels-nude", desc: "a pair of nude women's kitten heel pumps, low heel", type: "shoes" },
+  { slug: "botines-punta-afilada", desc: "a pair of black women's pointed-toe ankle boots with a stiletto heel", type: "boots" },
+  { slug: "botas-rodilla-negras", desc: "a pair of black women's sleek knee-high boots, low heel", type: "boots" },
+  { slug: "botas-ecuestres-cafe", desc: "a pair of brown women's flat equestrian knee-high riding boots", type: "boots" },
+  { slug: "mules-camel", desc: "a pair of camel women's backless mules, low heel", type: "shoes" },
 ];
 
 function buildPrompt({ desc, type }) {
