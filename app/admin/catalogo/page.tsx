@@ -73,12 +73,12 @@ export default async function AdminCatalogo() {
       {/* Básicos: agrupados por segmento y, dentro, por categoría */}
       {bySegment.map(({ seg, items }) => (
         <section key={seg} className="flex flex-col gap-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
             Básicos · {SEG_LABEL[seg] ?? seg} ({items.length})
           </h2>
           {byCategory(items).map(({ cat, items: catItems }) => (
             <div key={cat} className="flex flex-col gap-3">
-              <h3 className="text-xs font-medium uppercase tracking-wide text-muted/80">
+              <h3 className="text-xs font-medium font-sans uppercase tracking-wide text-muted/80">
                 {CATEGORY_LABEL[cat] ?? cat} ({catItems.length})
               </h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

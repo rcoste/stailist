@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/spinner";
+import { Icon } from "@/components/icon";
 import { saveCloset } from "./actions";
 
 export type CatalogItem = {
@@ -66,10 +67,15 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   return (
     <div className="flex flex-1 flex-col gap-4">
       {/* Galería de prendas por categoría: clic, clic, clic. La imagen manda. */}
-      {groups.map(({ cat, items }) => (
+      {groups.map(({ cat, items }) => {
+        const selCount = items.filter((i) => selected.has(i.id)).length;
+        return (
         <div key={cat} className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-            {CATEGORY_LABELS[cat] ?? cat}
+          <h2 className="flex items-baseline justify-between font-sans text-sm font-semibold uppercase tracking-wide text-muted">
+            <span>{CATEGORY_LABELS[cat] ?? cat}</span>
+            <span className={selCount > 0 ? "text-accent" : "text-muted"}>
+              {selCount > 0 ? `${selCount} de ${items.length}` : `${items.length} prendas`}
+            </span>
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {items.map((item) => {
@@ -102,12 +108,12 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
                     )}
                     {/* Check de selección en el pico emocional del tap */}
                     <span
-                      className={`absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-on-accent transition-all duration-200 ${
+                      className={`absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-sm text-on-accent transition-all duration-200 ${
                         on ? "scale-100 bg-accent" : "scale-0 bg-transparent"
                       }`}
                       aria-hidden
                     >
-                      ✓
+                      <Icon name="check" size={16} strokeWidth={2.4} />
                     </span>
                     {/* Velo sutil sobre lo no seleccionado para que resalte lo elegido */}
                     {!on && (
@@ -122,7 +128,8 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {error && <p className="text-sm text-error">{error}</p>}
 
@@ -131,7 +138,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
           type="button"
           onClick={submit}
           disabled={pending || selected.size === 0}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
         >
           {pending ? (
             <>

@@ -82,7 +82,7 @@ export default async function AdminUserDetail({
 
       {/* Clóset */}
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+        <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
           Clóset ({items?.length ?? 0})
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -110,7 +110,7 @@ export default async function AdminUserDetail({
 
       {/* Outfits */}
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+        <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
           Outfits ({outfits?.length ?? 0})
         </h2>
         <div className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">

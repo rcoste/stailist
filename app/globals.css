@@ -83,12 +83,15 @@ body {
   font-family: var(--font-hanken), system-ui, sans-serif;
 }
 
-/* Titulares = Bodoni Moda (serif display). Un h1–h3 que deba ir en grotesca
-   (ej. label uppercase pequeño) lleva inline font-family: var(--font-hanken). */
-h1,
-h2,
-h3 {
-  font-family: var(--font-bodoni), "Times New Roman", Georgia, serif;
+/* Titulares = Bodoni Moda (serif display). En @layer base para que la utilidad
+   font-sans pueda devolver un h1–h3 a la grotesca (labels uppercase pequeños) —
+   las utilidades de Tailwind ganan a base, pero NO a reglas sin capa. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-bodoni), "Times New Roman", Georgia, serif;
+  }
 }
 
 /* La justificación del outfit y micro-acentos editoriales: Bodoni 500 REDONDA

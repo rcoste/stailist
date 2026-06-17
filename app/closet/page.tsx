@@ -100,7 +100,7 @@ export default async function ClosetPage() {
         </div>
 
         {grupos.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-14 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface px-6 py-14 text-center">
             <p className="editorial text-lg text-ink">tu clóset está vacío</p>
             <p className="text-sm text-muted">
               Vuelve al inicio y marca los básicos que tienes.
@@ -109,7 +109,7 @@ export default async function ClosetPage() {
         ) : (
           grupos.map((g) => (
             <div key={g.key} className="flex flex-col gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
+              <h2 className="text-sm font-medium font-sans uppercase tracking-wide text-muted">
                 {g.label}
               </h2>
               <ul className="grid grid-cols-3 gap-3">
