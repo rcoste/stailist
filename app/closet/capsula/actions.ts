@@ -41,12 +41,13 @@ export async function saveLifestyle(
     .select("gender, taste_tags, style_archetype, palette_season, palette_flow")
     .eq("id", user.id)
     .single();
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
   let target: CapsuleTarget;
   try {
     target = await generateCapsuleTarget({
       answers,
-      gender: (profile?.gender as "hombre" | "mujer" | null) ?? null,
+      gender,
       tasteTags: (profile?.taste_tags ?? []) as string[],
       archetype:
         (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
@@ -69,7 +70,7 @@ export async function saveLifestyle(
   const closet = await loadClosetLite(supabase, user.id);
   let match = null;
   try {
-    match = await matchCapsule(target, closet);
+    match = await matchCapsule(target, closet, gender);
   } catch {
     match = null;
   }
@@ -101,14 +102,21 @@ export async function recalcularMatch(): Promise<void> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("capsule_target")
+    .select("capsule_target, gender")
     .eq("id", user.id)
     .single();
   const target = profile?.capsule_target as CapsuleTarget | null;
   if (!target) return;
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
-  const closet = await loadClosetLite(supabase, user.id);
-  const match = await matchCapsule(target, closet);
-  await supabase.from("profiles").update({ capsule_match: match }).eq("id", user.id);
+  // Si el match falla (timeout/red), no tiramos la acción: dejamos el match como
+  // estaba y revalidamos. El card seguirá mostrando "recalcular" para reintentar.
+  try {
+    const closet = await loadClosetLite(supabase, user.id);
+    const match = await matchCapsule(target, closet, gender);
+    await supabase.from("profiles").update({ capsule_match: match }).eq("id", user.id);
+  } catch {
+    // swallow — el usuario puede reintentar con el botón.
+  }
   revalidatePath("/closet");
 }

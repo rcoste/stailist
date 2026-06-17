@@ -154,10 +154,15 @@ function normalizeEntry(e: unknown): MatchEntry {
   return { status, by: o.by ?? null };
 }
 
-// Firma del clóset: ids ordenados. Cambia si agregas/quitas prendas → recalcular.
-export function closetSignature(items: { id: string }[]): string {
+// Firma del clóset: id + categoría + formalidad por prenda, ordenado. Cambia si
+// agregas/quitas prendas O si editas su categoría/formalidad → "recalcular".
+// Ambos lados (clóset y match) la calculan con estos mismos campos, que se
+// derivan idéntico (categoría del arquetipo/attrs, formalidad de attrs).
+export function closetSignature(
+  items: { id: string; category: string; formalidad: string }[]
+): string {
   return items
-    .map((i) => i.id)
+    .map((i) => `${i.id}:${i.category}:${i.formalidad}`)
     .sort()
     .join(",");
 }

@@ -14,7 +14,8 @@ import {
 // número no baile entre cargas: solo se recalcula si cambia el clóset.
 export async function matchCapsule(
   target: CapsuleTarget,
-  closet: ClosetItemLite[]
+  closet: ClosetItemLite[],
+  gender: "hombre" | "mujer" | null = null
 ): Promise<CapsuleMatch> {
   const signature = closetSignature(closet);
   const blank: MatchEntry[] = target.items.map(() => ({ status: "falta", by: null }));
@@ -33,10 +34,17 @@ export async function matchCapsule(
     .map((c) => `- ${c.nombre} (${c.category}, ${c.formalidad}, ${c.color})`)
     .join("\n");
 
+  const generoTxt =
+    gender === "hombre"
+      ? " La persona es hombre (su clóset es ropa de hombre)."
+      : gender === "mujer"
+        ? " La persona es mujer (su clóset es ropa de mujer)."
+        : "";
+
   const response = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 2048,
-    system: `Eres la stylist de stailist. Te doy la CÁPSULA IDEAL de alguien (prendas que debería tener) y su CLÓSET REAL. Por CADA prenda ideal, clasifícala en uno de TRES estados según lo que ya tiene:
+    system: `Eres la stylist de stailist.${generoTxt} Te doy la CÁPSULA IDEAL de alguien (prendas que debería tener) y su CLÓSET REAL. Por CADA prenda ideal, clasifícala en uno de TRES estados según lo que ya tiene:
 
 - "tienes": el clóset ya tiene esa prenda en forma usable — mismo tipo y uso, color compatible, misma formalidad. Cuenta equivalencias reales de tipo (una desert boot vale por una chukka; una camisa azul claro vale por "camisa celeste").
 - "parecido": el clóset tiene la prenda CORRECTA (mismo tipo y uso) pero con un matiz que vale notar — otro neutro, o un casi-equivalente. NO es hueco, es refinamiento. Ej: tiene blazer marino y el ideal es negro; tiene mocasín y el ideal es Oxford.

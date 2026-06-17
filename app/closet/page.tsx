@@ -31,6 +31,10 @@ type ClosetItem = {
   formalidad: string;
 };
 
+// La acción recalcularMatch (del card) llama a Opus con el clóset completo;
+// le damos el presupuesto de 60s para que no se corte en clósets grandes.
+export const maxDuration = 60;
+
 export default async function ClosetPage() {
   const profile = await requireOnboarded();
 

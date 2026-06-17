@@ -35,7 +35,10 @@ function comprimir(file: Blob): Promise<Blob> {
         0.88
       );
     };
-    img.onerror = reject;
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("img_decode"));
+    };
     img.src = URL.createObjectURL(file);
   });
 }

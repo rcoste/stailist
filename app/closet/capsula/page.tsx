@@ -4,6 +4,11 @@ import { requireOnboarded } from "@/lib/auth";
 import { CapsulaForm } from "./capsula-form";
 import type { LifestyleAnswers } from "@/lib/capsule";
 
+// La acción saveLifestyle hace 2 llamadas a Opus (generar + match): medido ~27s
+// con clóset de 57. Le damos el presupuesto de 60s de Vercel (sin esto, una
+// server action puede cortarse mucho antes y la cápsula falla en silencio).
+export const maxDuration = 60;
+
 export default async function CapsulaPage() {
   const profile = await requireOnboarded();
   const initial = (profile.lifestyle as LifestyleAnswers | null) ?? {};
