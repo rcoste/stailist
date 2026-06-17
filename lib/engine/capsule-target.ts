@@ -11,6 +11,7 @@ import { SEASONS, seasonPalette, type Season } from "@/lib/colorimetria";
 
 export type CapsuleInputs = {
   answers: LifestyleAnswers;
+  gender: "hombre" | "mujer" | null;
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
@@ -47,11 +48,19 @@ export async function generateCapsuleTarget(
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
+  const generoTxt =
+    inputs.gender === "hombre"
+      ? "La persona es HOMBRE: TODA la cápsula es ropa de hombre. Jamás propongas prendas de mujer (faldas, vestidos, blusas, tacones, etc.)."
+      : inputs.gender === "mujer"
+        ? "La persona es MUJER: TODA la cápsula es ropa de mujer. Jamás propongas prendas pensadas solo para hombre."
+        : "Género no definido: usa prendas neutras/unisex.";
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 2048,
     system: `Eres la stylist de stailist. Defines el CLÓSET CÁPSULA IDEAL de una persona: la lista de prendas concretas que debería tener para vivir bien vestida, partiendo de cero (sin mirar lo que ya tiene).
+
+REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
 Combina tres cosas:
 1. Su VIDA: qué exige su día a día (ej. abogado en despacho → necesita trajes/formal entre semana) y sus eventos.

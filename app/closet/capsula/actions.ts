@@ -38,7 +38,7 @@ export async function saveLifestyle(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("taste_tags, style_archetype, palette_season, palette_flow")
+    .select("gender, taste_tags, style_archetype, palette_season, palette_flow")
     .eq("id", user.id)
     .single();
 
@@ -46,6 +46,7 @@ export async function saveLifestyle(
   try {
     target = await generateCapsuleTarget({
       answers,
+      gender: (profile?.gender as "hombre" | "mujer" | null) ?? null,
       tasteTags: (profile?.taste_tags ?? []) as string[],
       archetype:
         (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
