@@ -7,10 +7,10 @@ export function Logo({ className = "h-7" }: { className?: string }) {
       aria-label="stailist"
     >
       <text
-        x="28"
-        y="74"
-        fontFamily="var(--font-outfit), sans-serif"
-        fontSize="58"
+        x="4"
+        y="80"
+        fontFamily="var(--font-bodoni), 'Times New Roman', serif"
+        fontSize="82"
         fontWeight="600"
         letterSpacing="-1"
         fill="var(--c-ink)"
