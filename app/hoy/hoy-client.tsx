@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
-import { TryonButton } from "@/components/tryon-button";
+import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
 import { DownReason } from "@/components/down-reason";
 import { Spinner } from "@/components/spinner";
@@ -10,6 +10,7 @@ import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
+import { useTryon } from "@/lib/use-tryon";
 
 export type HoyOutfit = {
   id: string;
@@ -173,15 +174,10 @@ export function HoyClient({
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-h3 font-semibold text-ink">{state.outfit.nombre}</h2>
-      <OutfitCard
-        prendas={state.outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
-        justificacion={state.outfit.explicacion}
-        corner={
-          <FavoriteButton
-            outfitId={state.outfit.id}
-            initialFavorited={state.outfit.favorited ?? false}
-          />
-        }
+      <TryonOutfitCard
+        key={state.outfit.id}
+        outfit={state.outfit}
+        userId={userId}
       />
       <div className="flex items-center gap-3">
         <button
@@ -237,11 +233,66 @@ export function HoyClient({
           "Me lo puse"
         )}
       </button>
-      <TryonButton
-        outfitId={state.outfit.id}
-        userId={userId}
-        initialImage={state.outfit.tryon ?? null}
-      />
     </div>
+  );
+}
+
+// Card del outfit con el try-on integrado (3 estados). Va keyed por outfit.id
+// en el padre para que, al generar otro look, el try-on arranque limpio con la
+// imagen (o no) del nuevo outfit.
+function TryonOutfitCard({
+  outfit,
+  userId,
+}: {
+  outfit: HoyOutfit;
+  userId: string;
+}) {
+  const t = useTryon({
+    outfitId: outfit.id,
+    userId,
+    initialImage: outfit.tryon ?? null,
+    revealMode: "inline",
+  });
+
+  return (
+    <>
+      <OutfitCard
+        prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
+        justificacion={outfit.explicacion}
+        corner={
+          <FavoriteButton
+            outfitId={outfit.id}
+            initialFavorited={outfit.favorited ?? false}
+          />
+        }
+        tryon={{
+          status: t.mode,
+          image: t.image,
+          errMsg: t.errMsg,
+          lookName: outfit.nombre,
+          onGenerate: t.generar,
+          onExpand: t.openFull,
+          onChangePhoto: t.pickPhoto,
+        }}
+      />
+      {t.image ? (
+        <button
+          type="button"
+          onClick={t.pickPhoto}
+          className="self-start text-xs font-medium text-muted underline underline-offset-4 hover:text-ink"
+        >
+          ¿No te pareces? Cambia tu foto
+        </button>
+      ) : null}
+      {t.fileInput}
+      {t.mode === "full" && t.image ? (
+        <TryonModal
+          image={t.image}
+          lookName={outfit.nombre}
+          onClose={t.closeFull}
+          onChangePhoto={t.pickPhoto}
+        />
+      ) : null}
+    </>
   );
 }

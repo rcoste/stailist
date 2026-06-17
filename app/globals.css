@@ -111,3 +111,37 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Shimmer de texto: barrido muted→ink→muted para estados de carga ("Creando
+   tu look…"). Único uso de animación de gradiente del DS. Respeta
+   prefers-reduced-motion (cae a color sólido sin movimiento). */
+.shimmer-txt {
+  background: linear-gradient(
+    90deg,
+    var(--c-muted) 25%,
+    var(--c-ink) 50%,
+    var(--c-muted) 75%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-txt 1.6s linear infinite;
+}
+@keyframes shimmer-txt {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -20% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-txt {
+    animation: none;
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    color: var(--c-ink);
+  }
+}

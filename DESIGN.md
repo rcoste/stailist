@@ -46,7 +46,9 @@
 - **Approach:** intencional
 - **Easing:** enter `ease-out` · exit `ease-in` · move `ease-in-out`
 - **Duration:** micro 100ms · short 200ms · medium 300ms
-- **Firmas:** entradas fade + rise 8px; progreso de generación = frases que se funden lentamente (crossfade ~400ms), nunca spinner genérico.
+- **Firmas:** entradas fade + rise 8px; progreso de generación de outfits = frases que se funden lentamente (crossfade ~400ms), nunca spinner genérico.
+- **Shimmer de texto** (`.shimmer-txt` en globals.css): barrido muted→ink→muted (1.6s) para etiquetas de carga cortas dentro de una fila (try-on "Creando tu look…"). Respeta `prefers-reduced-motion`.
+- **Excepción try-on:** el estado "generando" del try-on dentro de la `OutfitCard` sí usa spinner + shimmer en la fila al pie (no frases). Es carga local de ~20s con la card visible, no la generación full-screen del look. Decisión del handoff `design_handoff_tryon_protagonista`.
 
 ## Decisions Log
 | Date | Decision | Rationale |
@@ -57,3 +59,4 @@
 | 2026-06-10 | Logo: wordmark st-ai-list con "ai" en burdeos, sin sufijo "ai" | Decisión explícita de Roberto |
 | 2026-06-10 | Dark mode diferido | MVP es light editorial; revisar post-validación |
 | 2026-06-16 | Rebrand v2 "Atelier": Outfit+Fraunces → **Bodoni Moda + Hanken Grotesk**; radios pill → crispados 3/4/6; emoji → íconos de línea; logo a Bodoni con isotipo "gancho" | Handoff de diseño v2 (`claude-design-handoffs-stailist/design_handoff_stailist_v2`). Paleta sin cambios (burdeos). Migración por etapas: fundamentos → primitivas → pantallas |
+| 2026-06-17 | Try-on protagonista en `OutfitCard` (Hoy): 3 estados (fila al pie → spinner+shimmer → foto hero 360px + tira "Lleva puesto"). Nuevo `.shimmer-txt` + ícono `expandir`. Overlays sobre foto con opacidad de tokens (`bg-surface/90`, `bg-ink/55`), sin tokens nuevos | Handoff `design_handoff_tryon_protagonista`. Solo en Hoy; wow del onboarding queda con el try-on previo |
