@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { saveAvatar } from "@/lib/avatar-actions";
 import { toUsableImage } from "@/lib/image-file";
 import { Spinner } from "@/components/spinner";
+import { Icon } from "@/components/icon";
 
 type Mode = "idle" | "gen" | "up" | "sin_avatar" | "full" | "error";
 
@@ -130,14 +131,14 @@ export function TryonButton({
   if (mode === "full" && image) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/70 px-4 py-6">
-        <div className="relative aspect-[3/4] w-full max-w-80 overflow-hidden rounded-2xl border border-line bg-surface">
+        <div className="relative aspect-[3/4] w-full max-w-80 overflow-hidden rounded-lg border border-line bg-surface">
           <Image src={image} alt="Tú con este look" fill className="object-cover" />
         </div>
         <div className="flex flex-col items-center gap-3">
           <button
             type="button"
             onClick={() => setMode("idle")}
-            className="min-h-12 rounded-full bg-surface px-8 text-base font-medium text-ink"
+            className="min-h-12 rounded-sm bg-surface px-8 text-base font-medium text-ink"
           >
             Cerrar
           </button>
@@ -156,7 +157,7 @@ export function TryonButton({
 
   if (mode === "sin_avatar") {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-dashed border-line bg-surface p-4">
         <p className="text-sm font-medium text-ink">
           Para verte con el look, sube una foto tuya de cuerpo completo
         </p>
@@ -167,7 +168,7 @@ export function TryonButton({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="min-h-11 rounded-full bg-accent text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
+          className="min-h-11 rounded-sm bg-accent text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
         >
           Subir mi foto
         </button>
@@ -185,7 +186,7 @@ export function TryonButton({
         <button
           type="button"
           disabled
-          className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent bg-accent-soft text-sm font-medium text-ink disabled:opacity-60"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft text-sm font-medium text-ink disabled:opacity-60"
         >
           <Spinner className="h-4 w-4" />
           {mode === "up" ? "Guardando tu foto…" : "Creando tu look… (~20s)"}
@@ -202,7 +203,7 @@ export function TryonButton({
         <button
           type="button"
           onClick={() => setMode("full")}
-          className="flex items-center gap-3 rounded-2xl border border-accent bg-accent-soft p-2 text-left transition-colors duration-200 hover:bg-accent/10"
+          className="flex items-center gap-3 rounded-lg border border-accent bg-accent-soft p-2 text-left transition-colors duration-200 hover:bg-accent/10"
         >
           <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-line bg-surface">
             <Image
@@ -214,8 +215,8 @@ export function TryonButton({
             />
           </span>
           <span className="flex flex-col">
-            <span className="text-sm font-medium text-ink">
-              Tú con este look ✨
+            <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
+              Tú con este look <Icon name="destello" size={15} className="text-accent" />
             </span>
             <span className="text-xs text-muted">Toca para verlo en grande</span>
           </span>
@@ -238,9 +239,9 @@ export function TryonButton({
       <button
         type="button"
         onClick={generar}
-        className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent bg-accent-soft text-sm font-medium text-ink transition-colors duration-200 hover:bg-accent hover:text-on-accent"
+        className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft text-sm font-medium text-ink transition-colors duration-200 hover:bg-accent hover:text-on-accent"
       >
-        ✨ Verme con este look
+        <Icon name="destello" size={18} /> Verme con este look
       </button>
       {mode === "error" && (
         <p className="text-center text-xs text-error">{errMsg}</p>

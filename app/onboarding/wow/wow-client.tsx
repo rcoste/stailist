@@ -10,6 +10,7 @@ import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
+import { Icon } from "@/components/icon";
 
 export type WowOutfit = {
   id: string;
@@ -148,25 +149,25 @@ export function WowClient({
             type="button"
             onClick={() => vote(outfit.id, true)}
             aria-pressed={v === "up"}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors duration-200 ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm border text-sm font-medium transition-colors duration-200 ${
               v === "up"
                 ? "border-accent bg-accent-soft text-ink"
                 : "border-line bg-surface text-ink hover:border-ink"
             }`}
           >
-            👍 Me gusta
+            <Icon name="pulgar" size={18} active={v === "up"} /> Me gusta
           </button>
           <button
             type="button"
             onClick={() => vote(outfit.id, false)}
             aria-pressed={v === "down"}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors duration-200 ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm border text-sm font-medium transition-colors duration-200 ${
               v === "down"
                 ? "border-accent bg-accent-soft text-ink"
                 : "border-line bg-surface text-ink hover:border-ink"
             }`}
           >
-            👎 No va
+            <Icon name="pulgar" size={18} rotate={180} active={v === "down"} /> No va
           </button>
         </div>
         {v === "down" ? <DownReason outfitId={outfit.id} /> : null}
@@ -219,7 +220,7 @@ export function WowClient({
                 ? generate(lastInput.current)
                 : setState({ kind: "ask" })
             }
-            className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            className="min-h-12 rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             Reintentar
           </button>
@@ -240,7 +241,7 @@ export function WowClient({
       {Array.from({ length: pending }).map((_, i) => (
         <div
           key={`pending-${i}`}
-          className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-line bg-surface py-16 text-center"
+          className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-line bg-surface py-16 text-center"
         >
           <Spinner className="h-6 w-6 text-accent" />
           <p className="text-sm text-muted">
@@ -252,7 +253,7 @@ export function WowClient({
       {state.kind === "ready" && (
         <Link
           href="/hoy"
-          className="flex min-h-12 items-center justify-center rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          className="flex min-h-12 items-center justify-center rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
         >
           Listo, llévame a mi día
         </Link>

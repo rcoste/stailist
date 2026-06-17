@@ -25,12 +25,12 @@ export function DownReason({ outfitId }: { outfitId: string }) {
 
   if (picked) {
     return (
-      <p className="text-xs text-muted">Gracias — lo tomo en cuenta. 🙏</p>
+      <p className="text-xs text-muted">Gracias — lo tomo en cuenta.</p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-line bg-bg px-3 py-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-line bg-bg px-3 py-3">
       <p className="text-xs font-medium text-muted">¿Qué no te latió?</p>
       <div className="flex flex-wrap gap-2">
         {REASONS.map((r) => (
@@ -38,7 +38,7 @@ export function DownReason({ outfitId }: { outfitId: string }) {
             key={r}
             type="button"
             onClick={() => save(r)}
-            className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-ink transition-colors duration-200 hover:border-accent"
+            className="rounded-sm border border-line bg-surface px-3 py-1 text-xs font-medium text-ink transition-colors duration-200 hover:border-accent"
           >
             {r}
           </button>
@@ -47,7 +47,7 @@ export function DownReason({ outfitId }: { outfitId: string }) {
           type="button"
           onClick={() => setOther((v) => !v)}
           aria-pressed={other}
-          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-200 ${
+          className={`rounded-sm border px-3 py-1 text-xs font-medium transition-colors duration-200 ${
             other
               ? "border-accent bg-accent-soft text-ink"
               : "border-line bg-surface text-ink hover:border-accent"
@@ -62,13 +62,13 @@ export function DownReason({ outfitId }: { outfitId: string }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="cuéntame…"
-            className="min-h-9 flex-1 rounded-full border border-line bg-surface px-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+            className="min-h-9 flex-1 rounded-sm border border-line bg-surface px-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
           />
           <button
             type="button"
             onClick={() => text.trim() && save(text.trim())}
             disabled={!text.trim()}
-            className="min-h-9 rounded-full bg-accent px-4 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+            className="min-h-9 rounded-sm bg-accent px-4 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
           >
             Enviar
           </button>

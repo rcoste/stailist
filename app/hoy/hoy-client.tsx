@@ -9,6 +9,7 @@ import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { voteOutfit, markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
+import { Icon } from "@/components/icon";
 
 export type HoyOutfit = {
   id: string;
@@ -160,7 +161,7 @@ export function HoyClient({
                 ? generar(lastInput.current, false)
                 : setState({ kind: "ask" })
             }
-            className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            className="min-h-12 rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             Reintentar
           </button>
@@ -188,31 +189,31 @@ export function HoyClient({
           onClick={() => vote(true)}
           aria-pressed={voto === "up"}
           aria-label="Me gusta"
-          className={`flex min-h-12 flex-1 items-center justify-center rounded-full border text-sm font-medium transition-colors duration-200 ${
+          className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
             voto === "up"
               ? "border-accent bg-accent-soft text-ink"
               : "border-line bg-surface text-ink hover:border-ink"
           }`}
         >
-          👍
+          <Icon name="pulgar" size={20} active={voto === "up"} />
         </button>
         <button
           type="button"
           onClick={() => vote(false)}
           aria-pressed={voto === "down"}
           aria-label="No me gusta"
-          className={`flex min-h-12 flex-1 items-center justify-center rounded-full border text-sm font-medium transition-colors duration-200 ${
+          className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
             voto === "down"
               ? "border-accent bg-accent-soft text-ink"
               : "border-line bg-surface text-ink hover:border-ink"
           }`}
         >
-          👎
+          <Icon name="pulgar" size={20} rotate={180} active={voto === "down"} />
         </button>
         <button
           type="button"
           onClick={() => startGen(true)}
-          className="flex min-h-12 flex-1 items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
+          className="flex min-h-12 flex-1 items-center justify-center rounded-sm border border-line bg-surface text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
         >
           Otro look
         </button>
@@ -222,13 +223,19 @@ export function HoyClient({
         type="button"
         onClick={meLoPuse}
         disabled={worn}
-        className={`min-h-12 w-full rounded-full text-base font-medium transition-colors duration-200 ${
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-sm text-base font-medium transition-colors duration-200 ${
           worn
             ? "bg-success/15 text-success"
             : "bg-accent text-on-accent hover:bg-accent-deep"
         }`}
       >
-        {worn ? "✓ Me lo puse hoy" : "Me lo puse"}
+        {worn ? (
+          <>
+            <Icon name="check" size={18} /> Me lo puse hoy
+          </>
+        ) : (
+          "Me lo puse"
+        )}
       </button>
       <TryonButton
         outfitId={state.outfit.id}

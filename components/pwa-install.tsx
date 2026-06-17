@@ -90,7 +90,7 @@ export function PwaInstall() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-4">
-      <div className="animate-[pwaup_300ms_ease-out] w-full max-w-md rounded-2xl border border-line bg-surface p-5 shadow-xl">
+      <div className="animate-[pwaup_300ms_ease-out] w-full max-w-md rounded-lg border border-line bg-surface p-5 shadow-xl">
         <h2 className="text-h3 font-semibold text-ink">
           Llévame en tu bolsillo
         </h2>
@@ -104,14 +104,14 @@ export function PwaInstall() {
               <button
                 type="button"
                 onClick={install}
-                className="min-h-12 flex-1 rounded-full bg-accent px-6 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+                className="min-h-12 flex-1 rounded-sm bg-accent px-6 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
               >
                 Agregar a mi pantalla
               </button>
               <button
                 type="button"
                 onClick={dismiss}
-                className="min-h-12 rounded-full px-4 text-sm font-medium text-muted hover:text-ink"
+                className="min-h-12 rounded-sm px-4 text-sm font-medium text-muted hover:text-ink"
               >
                 Ahora no
               </button>
@@ -132,7 +132,7 @@ export function PwaInstall() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="min-h-12 rounded-full bg-accent px-6 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+                className="min-h-12 rounded-sm bg-accent px-6 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
               >
                 Entendido
               </button>
