@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     lon?: number;
     weather?: { temp_c?: number; condition?: string };
     objective?: string;
+    plan?: string;
   } = {};
   try {
     body = await request.json();
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
         send({ phase: "afinando para tu paleta…" });
         const ctx: EngineContext = {
           objective,
+          plan: typeof body.plan === "string" ? body.plan.slice(0, 200) : null,
           tasteTags: (profile.taste_tags ?? []) as string[],
           archetype:
             (profile.style_archetype as {

@@ -18,7 +18,9 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // rechazo (irreparable con el clóset) el wow descarta el look si quedan ≥2; el
 // evento critic_review loggea verdict/razon/rejected — instrumentación para
 // decidir si #4b (regenerar) vale. NO regenera todavía (regenerated:0).
-export const PROMPT_VERSION = "v8";
+// v9 (2026-06-16): el compositor de Hoy pasa un "plan" de texto libre opcional
+// ("¿algo en mente?") que entra al contexto para afinar el look a ese plan.
+export const PROMPT_VERSION = "v9";
 
 export type EngineItem = {
   id: string;
@@ -35,6 +37,7 @@ export type EngineItem = {
 
 export type EngineContext = {
   objective: string | null;
+  plan: string | null; // texto libre opcional del compositor ("¿algo en mente?")
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
@@ -98,6 +101,9 @@ export function contextBlock(ctx: EngineContext): string[] {
       ? OBJECTIVES[ctx.objective as Objective]
       : "Día a día";
   lines.push(`Ocasión: ${objectiveLabel}.`);
+  if (ctx.plan?.trim()) {
+    lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
+  }
 
   const s = ctx.season ? SEASONS[ctx.season] : null;
   if (s) {
