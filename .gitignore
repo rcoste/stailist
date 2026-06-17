@@ -28,3 +28,6 @@ CLAUDE.local.md
 
 # Muestras de estilo (throwaway de QA — no van al repo)
 public/style-samples/
+
+# Handoffs de diseño (material de referencia: prototipos + assets, no código)
+claude-design-handoffs-stailist/
