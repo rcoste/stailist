@@ -20,6 +20,11 @@
   --c-error: #b3261e;
   --c-warning: #8a6d1f;
 
+  /* Metal de colorimetría (reveal): oro para paletas cálidas, plata para frías.
+     Gradiente radial = brillo metálico. Único lugar donde vive este color. */
+  --metal-oro: radial-gradient(circle at 35% 30%, #e7c977, #b8932f);
+  --metal-plata: radial-gradient(circle at 35% 30%, #e2e5e8, #aeb3b8);
+
   /* Motion */
   --ease-enter: cubic-bezier(0, 0, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);

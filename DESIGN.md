@@ -28,6 +28,7 @@
 - **On-accent:** `#FFFFFF`.
 - **Neutrals (cálidos):** bg `#F5F3F0` (papel hueso) · surface `#FFFFFF` (cards) · ink `#1A1718` (texto) · muted `#79716B` (secundario) · line `#E5E1DD` (hairlines).
 - **Semantic:** success `#4C7A5E` (salvia discreta) · error `#B3261E` (rojo claro de alarma — deliberadamente distinto del burdeos para que el acento nunca parezca error) · warning `#8A6D1F` (uso excepcional).
+- **Metal (reveal de colorimetría):** oro `#E7C977→#B8932F` (paletas cálidas) · plata `#E2E5E8→#AEB3B8` (paletas frías). Gradiente radial. Tokens `--metal-oro` / `--metal-plata`. Único uso: el chip de metal en el reveal.
 - **Dark mode:** DIFERIDO post-MVP (decisión registrada — la elegancia editorial de stailist es de papel; revisar cuando haya demanda real).
 
 ## Spacing
