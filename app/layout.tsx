@@ -1,19 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Fraunces } from "next/font/google";
+import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+// Dirección "Atelier" (rebrand v2): Bodoni Moda (display serif, alto contraste)
+// solo en titulares + justificación del outfit; Hanken Grotesk en TODO el UI.
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const bodoni = Bodoni_Moda({
+  variable: "--font-bodoni",
   subsets: ["latin"],
-  weight: ["400"],
-  style: ["italic"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full">
       <body
-        className={`${outfit.variable} ${fraunces.variable} min-h-full antialiased`}
+        className={`${hanken.variable} ${bodoni.variable} min-h-full antialiased`}
       >
         {children}
         <PwaInstall />
