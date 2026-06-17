@@ -5,21 +5,28 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Look } from "@/lib/looks";
 import { Spinner } from "@/components/spinner";
+import { Icon } from "@/components/icon";
 import { saveTastes, type SwipeResult } from "./actions";
 import type { StyleArchetype } from "@/lib/engine/archetype";
 
-// Deck de swipes: el gesto (arrastrar) es el atajo, los botones ❤️/✕ son el
-// camino garantizado (desktop + accesibilidad — spec P6). Sin librerías de
-// animación: pointer events + transform, suficiente para el MVP.
+// Deck de swipes estilo Tinder (rebrand v2): pila con profundidad, foto a
+// sangre con nombre/vibe sobre degradado, sellos ME GUSTA / NO VA al arrastrar,
+// tinte direccional, y lanzamiento por velocidad (flick). El gesto es el atajo;
+// los botones corazón/equis son el camino garantizado (desktop + accesibilidad).
+// Sin librerías: pointer events + transform.
+const THRESHOLD = 90; // px para contar como decisión
+const FLICK = 0.6; // px/ms — un flick rápido decide aunque no cruce el umbral
+
 export function SwipeDeck({ looks }: { looks: Look[] }) {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<SwipeResult[]>([]);
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
-  const [drag, setDrag] = useState({ x: 0, active: false });
+  const [drag, setDrag] = useState({ x: 0, y: 0, active: false });
   const [error, setError] = useState<string | null>(null);
   const [archetype, setArchetype] = useState<StyleArchetype | null>(null);
   const [pending, startTransition] = useTransition();
-  const startX = useRef(0);
+  const start = useRef({ x: 0, y: 0 });
+  const vel = useRef({ x: 0, t: 0, vx: 0 });
 
   function finalizar(all: SwipeResult[]) {
     startTransition(async () => {
@@ -39,28 +46,37 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
     setLeaving(liked ? "right" : "left");
     setTimeout(() => {
       setLeaving(null);
-      setDrag({ x: 0, active: false });
+      setDrag({ x: 0, y: 0, active: false });
       setResults(next);
       setIndex(index + 1);
       if (next.length === looks.length) finalizar(next);
-    }, 200);
+    }, 220);
   }
 
   function onPointerDown(e: React.PointerEvent) {
     if (leaving) return;
-    startX.current = e.clientX;
-    setDrag({ x: 0, active: true });
+    start.current = { x: e.clientX, y: e.clientY };
+    vel.current = { x: e.clientX, t: e.timeStamp, vx: 0 };
+    setDrag({ x: 0, y: 0, active: true });
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   }
   function onPointerMove(e: React.PointerEvent) {
     if (!drag.active || leaving) return;
-    setDrag({ x: e.clientX - startX.current, active: true });
+    const dt = e.timeStamp - vel.current.t;
+    if (dt > 0) vel.current.vx = (e.clientX - vel.current.x) / dt;
+    vel.current = { x: e.clientX, t: e.timeStamp, vx: vel.current.vx };
+    setDrag({
+      x: e.clientX - start.current.x,
+      y: (e.clientY - start.current.y) * 0.4,
+      active: true,
+    });
   }
   function onPointerUp() {
     if (!drag.active || leaving) return;
-    if (drag.x > 55) decide(true);
-    else if (drag.x < -55) decide(false);
-    else setDrag({ x: 0, active: false });
+    const flick = Math.abs(vel.current.vx) > FLICK && Math.abs(drag.x) > 24;
+    if (drag.x > THRESHOLD || (flick && vel.current.vx > 0)) decide(true);
+    else if (drag.x < -THRESHOLD || (flick && vel.current.vx < 0)) decide(false);
+    else setDrag({ x: 0, y: 0, active: false });
   }
 
   if (done) {
@@ -72,7 +88,7 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
             type="button"
             onClick={() => finalizar(results)}
             disabled={pending}
-            className="min-h-12 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+            className="min-h-12 rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
           >
             Reintentar
           </button>
@@ -83,9 +99,11 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
     // Reveal del arquetipo de estilo: el momento "me veo reflejada".
     if (archetype) {
       return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
+        <div className="flex flex-col gap-6 rounded-lg border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
           <div className="flex flex-col gap-2 text-center">
-            <p className="text-sm text-muted">Tu estilo es</p>
+            <span className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">
+              Tu estilo es
+            </span>
             <h2 className="text-h1 font-semibold text-ink">{archetype.nombre}</h2>
             <p className="editorial text-base text-muted">
               {archetype.descripcion}
@@ -93,7 +111,7 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
           </div>
           <Link
             href="/onboarding/colorimetria"
-            className="flex min-h-12 items-center justify-center rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            className="flex min-h-12 items-center justify-center rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             Sigamos con tus colores
           </Link>
@@ -109,8 +127,12 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
     );
   }
 
-  const x = leaving === "right" ? 480 : leaving === "left" ? -480 : drag.x;
-  const rotate = x / 20;
+  const x = leaving === "right" ? 520 : leaving === "left" ? -520 : drag.x;
+  const y = leaving ? 0 : drag.y;
+  const rotate = x / 18;
+  const likeOp = Math.max(0, Math.min(1, x / THRESHOLD));
+  const nopeOp = Math.max(0, Math.min(1, -x / THRESHOLD));
+  const behind = [looks[index + 2], looks[index + 1]].filter(Boolean);
 
   return (
     <div className="flex flex-1 flex-col gap-4">
@@ -118,15 +140,40 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
         {index + 1} de {looks.length}
       </p>
 
-      <div className="relative flex-1">
+      <div className="relative mx-auto aspect-[3/4] max-h-[60dvh] w-full max-w-80">
+        {/* Cartas de atrás (profundidad) */}
+        {behind.map((b, i) => {
+          // i=0 es la más atrás (index+2), i=1 la siguiente (index+1)
+          const depth = behind.length - i; // 2 o 1
+          return (
+            <div
+              key={b.id}
+              className="absolute inset-0 overflow-hidden rounded-lg border border-line bg-surface"
+              style={{
+                transform: `scale(${1 - depth * 0.04}) translateY(${depth * 10}px)`,
+                opacity: 1 - depth * 0.15,
+                zIndex: i,
+              }}
+              aria-hidden
+            >
+              {b.image ? (
+                <Image src={b.image} alt="" fill sizes="320px" className="object-cover" />
+              ) : (
+                <span className="absolute inset-0 bg-bg" />
+              )}
+            </div>
+          );
+        })}
+
+        {/* Carta de arriba (interactiva) */}
         <div
           key={look.id}
-          className="mx-auto flex aspect-[3/4] max-h-[60dvh] w-full max-w-80 touch-none select-none flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-hairline)]"
+          className="absolute inset-0 z-10 touch-none select-none overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-hairline)]"
           style={{
-            transform: `translateX(${x}px) rotate(${rotate}deg)`,
+            transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
             transition: drag.active
               ? "none"
-              : "transform 200ms ease-in-out, opacity 200ms ease-in-out",
+              : "transform 220ms var(--ease-move), opacity 220ms var(--ease-move)",
             opacity: leaving ? 0 : 1,
           }}
           onPointerDown={onPointerDown}
@@ -135,33 +182,54 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
           onPointerCancel={onPointerUp}
         >
           {look.image ? (
-            <div className="relative flex-1">
-              <Image
-                src={look.image}
-                alt={look.nombre}
-                fill
-                sizes="320px"
-                className="object-cover"
-              />
-            </div>
+            <Image
+              src={look.image}
+              alt={look.nombre}
+              fill
+              sizes="320px"
+              className="object-cover"
+              priority
+            />
           ) : (
-            <div className="flex flex-1 flex-col">
+            <div className="flex h-full flex-col">
               {look.prendas.map((p) => (
-                <div
-                  key={p.nombre}
-                  className="flex flex-1 items-end p-3"
-                  style={{ backgroundColor: p.swatch }}
-                >
-                  <span className="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-ink">
-                    {p.nombre}
-                  </span>
-                </div>
+                <div key={p.nombre} className="flex-1" style={{ backgroundColor: p.swatch }} />
               ))}
             </div>
           )}
-          <div className="flex flex-col gap-0.5 border-t border-line bg-surface px-4 py-3">
-            <p className="text-base font-medium text-ink">{look.nombre}</p>
-            <p className="editorial text-sm text-muted">{look.vibe}</p>
+
+          {/* Tinte direccional */}
+          <span
+            className="pointer-events-none absolute inset-0 bg-accent"
+            style={{ opacity: likeOp * 0.22 }}
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute inset-0 bg-ink"
+            style={{ opacity: nopeOp * 0.22 }}
+            aria-hidden
+          />
+
+          {/* Sellos */}
+          <span
+            className="pointer-events-none absolute left-4 top-4 -rotate-12 rounded-sm border-2 border-accent bg-surface/90 px-3 py-1 text-sm font-bold uppercase tracking-wide text-accent"
+            style={{ opacity: likeOp }}
+            aria-hidden
+          >
+            Me gusta
+          </span>
+          <span
+            className="pointer-events-none absolute right-4 top-4 rotate-12 rounded-sm border-2 border-ink bg-surface/90 px-3 py-1 text-sm font-bold uppercase tracking-wide text-ink"
+            style={{ opacity: nopeOp }}
+            aria-hidden
+          >
+            No va
+          </span>
+
+          {/* Nombre + vibe sobre degradado de protección */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 via-ink/40 to-transparent px-4 pb-4 pt-12">
+            <p className="text-lg font-semibold text-surface">{look.nombre}</p>
+            <p className="editorial text-sm text-surface/85">{look.vibe}</p>
           </div>
         </div>
       </div>
@@ -172,18 +240,18 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
           onClick={() => decide(false)}
           disabled={pending}
           aria-label={`No me gusta ${look.nombre}`}
-          className="flex min-h-14 flex-1 items-center justify-center rounded-full border border-line bg-surface text-xl transition-colors duration-200 hover:border-ink disabled:opacity-50"
+          className="flex min-h-14 flex-1 items-center justify-center rounded-sm border border-line bg-surface text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
         >
-          ✕
+          <Icon name="equis" size={24} />
         </button>
         <button
           type="button"
           onClick={() => decide(true)}
           disabled={pending}
           aria-label={`Me gusta ${look.nombre}`}
-          className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-accent text-xl text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          className="flex min-h-14 flex-1 items-center justify-center rounded-sm bg-accent text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
         >
-          ❤️
+          <Icon name="corazon" size={24} />
         </button>
       </div>
     </div>
