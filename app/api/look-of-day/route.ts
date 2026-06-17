@@ -7,6 +7,7 @@ import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
+import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 
 export const maxDuration = 60;
 
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
         const ctx: EngineContext = {
           objective,
           plan: typeof body.plan === "string" ? body.plan.slice(0, 200) : null,
+          lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
           tasteTags: (profile.taste_tags ?? []) as string[],
           archetype:
             (profile.style_archetype as {

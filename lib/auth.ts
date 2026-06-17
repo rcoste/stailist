@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
+import type { CapsuleMatch, CapsuleTarget, LifestyleAnswers } from "@/lib/capsule";
 
 export type Gender = "hombre" | "mujer";
 
@@ -16,6 +17,9 @@ export type Profile = {
   onboarding_step: number;
   city: string | null;
   is_admin: boolean;
+  lifestyle: LifestyleAnswers | null;
+  capsule_target: CapsuleTarget | null;
+  capsule_match: CapsuleMatch | null;
 };
 
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;

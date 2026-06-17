@@ -1,0 +1,171 @@
+// Clóset cápsula v2 — lógica de dominio (pura, sin IA ni DB; segura para cliente).
+//
+// Modelo de dos capas:
+//   Capa 1 (capsule_target): la cápsula IDEAL = lista de prendas concretas y
+//     nombradas, generada de gustos + colorimetría + vida. Libre del catálogo.
+//   Capa 2 (capsule_match): por cada prenda ideal, si el clóset real ya la cubre.
+//     El match fino lo hace la IA (ver lib/engine/capsule-match) y se CACHEA con
+//     una firma del clóset; aquí solo viven los tipos y los derivados puros.
+
+export const CATEGORIES = [
+  "top",
+  "bottom",
+  "calzado",
+  "abrigo",
+  "vestido",
+  "accesorio",
+] as const;
+export type Category = (typeof CATEGORIES)[number];
+
+export const FORMALIDADES = ["casual", "formal-casual", "formal"] as const;
+export type Formalidad = (typeof FORMALIDADES)[number];
+
+// --- Assessment de vida ---------------------------------------------------
+
+export type AssessmentQuestion = {
+  id: string;
+  label: string;
+  help?: string;
+  options: { value: string; label: string }[];
+};
+
+// 5 preguntas de botón. Junto con gustos y colorimetría, definen la cápsula ideal.
+export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
+  {
+    id: "trabajo",
+    label: "¿Cómo es tu día entre semana?",
+    options: [
+      { value: "oficina_formal", label: "Oficina formal" },
+      { value: "oficina_casual", label: "Oficina creativa o casual" },
+      { value: "remoto", label: "Trabajo desde casa" },
+      { value: "fisico", label: "De pie o con uniforme" },
+      { value: "estudio", label: "Estudio" },
+    ],
+  },
+  {
+    id: "eventos",
+    label: "¿Qué tan seguido tienes planes de “arréglate”?",
+    help: "Cenas, bodas, presentaciones.",
+    options: [
+      { value: "nunca", label: "Casi nunca" },
+      { value: "aveces", label: "De vez en cuando" },
+      { value: "seguido", label: "Seguido" },
+    ],
+  },
+  {
+    id: "actividades",
+    label: "Fuera del trabajo, ¿qué pide ropa especial?",
+    options: [
+      { value: "gym", label: "Gym o deporte" },
+      { value: "noche", label: "Salir de noche" },
+      { value: "aire", label: "Aire libre" },
+      { value: "ninguna", label: "Nada en particular" },
+    ],
+  },
+  {
+    id: "clima",
+    label: "¿Cómo es el clima donde vives?",
+    options: [
+      { value: "frio", label: "Frío buena parte del año" },
+      { value: "templado", label: "Templado" },
+      { value: "calor", label: "Calor casi siempre" },
+    ],
+  },
+  {
+    id: "estilo",
+    label: "Cuando puedes elegir, ¿cómo te gusta vestir?",
+    options: [
+      { value: "comodo", label: "Cómodo y mínimo" },
+      { value: "arreglado", label: "Siempre arreglado" },
+      { value: "varia", label: "Depende mucho del día" },
+    ],
+  },
+];
+
+export type LifestyleAnswers = Record<string, string>;
+
+// Resumen en lenguaje natural (voz amiga) para el contexto del motor.
+export function lifestyleSummary(answers: LifestyleAnswers | null): string | null {
+  if (!answers || Object.keys(answers).length === 0) return null;
+  const label = (qid: string) => {
+    const q = ASSESSMENT_QUESTIONS.find((x) => x.id === qid);
+    const opt = q?.options.find((o) => o.value === answers[qid]);
+    return opt?.label.toLowerCase() ?? null;
+  };
+  const parts: string[] = [];
+  const trabajo = label("trabajo");
+  if (trabajo) parts.push(`su día es ${trabajo}`);
+  const eventos = answers["eventos"];
+  if (eventos === "seguido") parts.push("tiene eventos de arreglarse seguido");
+  else if (eventos === "aveces") parts.push("a veces tiene eventos de arreglarse");
+  const actividades = label("actividades");
+  if (actividades && answers["actividades"] !== "ninguna")
+    parts.push(`fuera del trabajo: ${actividades}`);
+  const estilo = label("estilo");
+  if (estilo) parts.push(`le gusta vestir ${estilo}`);
+  if (parts.length === 0) return null;
+  return `Su vida: ${parts.join("; ")}.`;
+}
+
+// --- Capa 1: la cápsula ideal (prendas concretas) -------------------------
+
+export type CapsuleItem = {
+  nombre: string; // etiqueta humana: "Cuello tortuga azul marino"
+  tipo: string; // clave de prenda para el match: "cuello-tortuga"
+  category: Category;
+  colorFamilia: string; // "marino", "neutro claro", etc. (dentro de su paleta)
+  formalidad: Formalidad;
+  temporada: string; // "todo-el-año" | "calor" | "frio"
+  prioridad: number; // 1 = más importante
+  porque: string; // una línea: por qué la necesita
+};
+
+export type CapsuleTarget = { version: 2; items: CapsuleItem[] };
+
+// --- Capa 2: el match contra el clóset ------------------------------------
+
+// Una prenda del clóset, aplanada para el prompt del match.
+export type ClosetItemLite = {
+  id: string;
+  nombre: string;
+  category: string;
+  color: string;
+  formalidad: string;
+};
+
+// Resultado por prenda ideal (alineado por índice con target.items).
+export type MatchEntry = { covered: boolean; by: string | null };
+
+export type CapsuleMatch = {
+  signature: string; // firma del clóset con el que se calculó
+  entries: MatchEntry[];
+};
+
+// Firma del clóset: ids ordenados. Cambia si agregas/quitas prendas → recalcular.
+export function closetSignature(items: { id: string }[]): string {
+  return items
+    .map((i) => i.id)
+    .sort()
+    .join(",");
+}
+
+// --- Derivados puros para la tarjeta --------------------------------------
+
+export type CapsuleView = {
+  haveCount: number;
+  totalCount: number;
+  coveragePct: number;
+  faltan: CapsuleItem[]; // las que faltan, ordenadas por prioridad (asc)
+};
+
+export function capsuleView(target: CapsuleTarget, match: CapsuleMatch): CapsuleView {
+  const items = target.items;
+  const entries = match.entries;
+  const totalCount = items.length;
+  const haveCount = entries.filter((e) => e?.covered).length;
+  const coveragePct = totalCount === 0 ? 0 : Math.round((100 * haveCount) / totalCount);
+  const faltan = items
+    .filter((_, i) => !entries[i]?.covered)
+    .sort((a, b) => a.prioridad - b.prioridad);
+  return { haveCount, totalCount, coveragePct, faltan };
+}

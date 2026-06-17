@@ -2,8 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AddPhotoFlow } from "@/components/add-photo-flow";
+import { CapsuleCard } from "@/components/capsule-card";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import {
+  capsuleView,
+  closetSignature,
+  type CapsuleMatch,
+  type CapsuleTarget,
+} from "@/lib/capsule";
 
 // Orden y etiqueta de cada categoría para agrupar el clóset.
 const CATEGORIAS: { key: string; label: string }[] = [
@@ -21,6 +28,7 @@ type ClosetItem = {
   imagen: string | null;
   swatch: string;
   category: string;
+  formalidad: string;
 };
 
 export default async function ClosetPage() {
@@ -61,6 +69,7 @@ export default async function ClosetPage() {
       color_hex?: string;
       categoria?: string;
       tipo?: string;
+      formalidad?: string;
     };
     const photoUrl = r.photo_path ? signed.get(r.photo_path as string) : null;
     return {
@@ -69,8 +78,17 @@ export default async function ClosetPage() {
       imagen: arch?.image_path ?? photoUrl ?? attrs.image_path ?? null,
       swatch: attrs.color_hex ?? "#E5E1DD",
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
+      formalidad: attrs.formalidad ?? "casual",
     };
   });
+
+  // Cápsula: la meta (capa 1) y el match (capa 2) viven cacheados en el profile.
+  // El match se recalcula solo si el clóset cambió (firma distinta) vía "recalcular".
+  const target = profile.capsule_target as CapsuleTarget | null;
+  const match = profile.capsule_match as CapsuleMatch | null;
+  const currentSig = closetSignature(items);
+  const stale = !!target && (!match || match.signature !== currentSig);
+  const view = target && match ? capsuleView(target, match) : null;
 
   const grupos = CATEGORIAS.map((c) => ({
     ...c,
@@ -98,6 +116,8 @@ export default async function ClosetPage() {
             </Link>
           </div>
         </div>
+
+        <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
 
         {grupos.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface px-6 py-14 text-center">

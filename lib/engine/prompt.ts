@@ -20,7 +20,9 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // decidir si #4b (regenerar) vale. NO regenera todavía (regenerated:0).
 // v9 (2026-06-16): el compositor de Hoy pasa un "plan" de texto libre opcional
 // ("¿algo en mente?") que entra al contexto para afinar el look a ese plan.
-export const PROMPT_VERSION = "v9";
+// v10 (2026-06-17): contexto de vida (assessment de cápsula) — el motor sabe en
+// qué trabaja, qué hace y cómo le gusta vestir, para aterrizar el look a su vida.
+export const PROMPT_VERSION = "v10";
 
 export type EngineItem = {
   id: string;
@@ -38,6 +40,7 @@ export type EngineItem = {
 export type EngineContext = {
   objective: string | null;
   plan: string | null; // texto libre opcional del compositor ("¿algo en mente?")
+  lifestyle: string | null; // resumen de vida del assessment de cápsula
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
@@ -101,6 +104,9 @@ export function contextBlock(ctx: EngineContext): string[] {
       ? OBJECTIVES[ctx.objective as Objective]
       : "Día a día";
   lines.push(`Ocasión: ${objectiveLabel}.`);
+  if (ctx.lifestyle) {
+    lines.push(ctx.lifestyle);
+  }
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
   }
