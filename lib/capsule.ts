@@ -133,13 +133,26 @@ export type ClosetItemLite = {
   formalidad: string;
 };
 
-// Resultado por prenda ideal (alineado por índice con target.items).
-export type MatchEntry = { covered: boolean; by: string | null };
+// Resultado por prenda ideal (alineado por índice con target.items). Tres estados:
+//   "tienes"   — ya la tienes en forma usable (tipo + color compatible + uso).
+//   "parecido" — tienes la prenda correcta pero con un matiz (otro neutro, casi-
+//                equivalente). No es hueco; es refinamiento. Cuenta como cubierta.
+//   "falta"    — no la tienes en ninguna forma usable. Hueco real.
+export type MatchStatus = "tienes" | "parecido" | "falta";
+export type MatchEntry = { status: MatchStatus; by: string | null };
 
 export type CapsuleMatch = {
   signature: string; // firma del clóset con el que se calculó
   entries: MatchEntry[];
 };
+
+// Normaliza una entrada (tolera el formato binario viejo {covered} por si quedó
+// algún match cacheado de la versión anterior).
+function normalizeEntry(e: unknown): MatchEntry {
+  const o = (e ?? {}) as { status?: MatchStatus; covered?: boolean; by?: string | null };
+  const status: MatchStatus = o.status ?? (o.covered ? "tienes" : "falta");
+  return { status, by: o.by ?? null };
+}
 
 // Firma del clóset: ids ordenados. Cambia si agregas/quitas prendas → recalcular.
 export function closetSignature(items: { id: string }[]): string {
@@ -152,20 +165,29 @@ export function closetSignature(items: { id: string }[]): string {
 // --- Derivados puros para la tarjeta --------------------------------------
 
 export type CapsuleView = {
-  haveCount: number;
+  haveCount: number; // "tienes" + "parecido" (lo que NO necesitas comprar)
   totalCount: number;
   coveragePct: number;
-  faltan: CapsuleItem[]; // las que faltan, ordenadas por prioridad (asc)
+  faltan: CapsuleItem[]; // huecos reales (status "falta"), por prioridad
+  parecidos: { item: CapsuleItem; by: string | null }[]; // refinamientos, por prioridad
 };
 
 export function capsuleView(target: CapsuleTarget, match: CapsuleMatch): CapsuleView {
   const items = target.items;
-  const entries = match.entries;
+  const entries = items.map((_, i) => normalizeEntry(match.entries[i]));
   const totalCount = items.length;
-  const haveCount = entries.filter((e) => e?.covered).length;
+  const haveCount = entries.filter((e) => e.status !== "falta").length;
   const coveragePct = totalCount === 0 ? 0 : Math.round((100 * haveCount) / totalCount);
-  const faltan = items
-    .filter((_, i) => !entries[i]?.covered)
+
+  const idx = items.map((item, i) => ({ item, e: entries[i] }));
+  const faltan = idx
+    .filter((x) => x.e.status === "falta")
+    .map((x) => x.item)
     .sort((a, b) => a.prioridad - b.prioridad);
-  return { haveCount, totalCount, coveragePct, faltan };
+  const parecidos = idx
+    .filter((x) => x.e.status === "parecido")
+    .map((x) => ({ item: x.item, by: x.e.by }))
+    .sort((a, b) => a.item.prioridad - b.item.prioridad);
+
+  return { haveCount, totalCount, coveragePct, faltan, parecidos };
 }

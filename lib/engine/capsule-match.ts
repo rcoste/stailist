@@ -17,9 +17,9 @@ export async function matchCapsule(
   closet: ClosetItemLite[]
 ): Promise<CapsuleMatch> {
   const signature = closetSignature(closet);
-  const blank: MatchEntry[] = target.items.map(() => ({ covered: false, by: null }));
+  const blank: MatchEntry[] = target.items.map(() => ({ status: "falta", by: null }));
 
-  // Sin clóset (o sin API) → nada cubierto, sin gastar una llamada.
+  // Sin clóset (o sin API) → todo falta, sin gastar una llamada.
   if (closet.length === 0 || !process.env.ANTHROPIC_API_KEY) {
     return { signature, entries: blank };
   }
@@ -36,13 +36,20 @@ export async function matchCapsule(
   const response = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 2048,
-    system: `Eres la stylist de stailist. Te doy la CÁPSULA IDEAL de alguien (prendas que debería tener) y su CLÓSET REAL. Por CADA prenda ideal, decide si el clóset ya tiene algo que la CUBRE de verdad.
+    system: `Eres la stylist de stailist. Te doy la CÁPSULA IDEAL de alguien (prendas que debería tener) y su CLÓSET REAL. Por CADA prenda ideal, clasifícala en uno de TRES estados según lo que ya tiene:
 
-"Cubre" = misma clase de prenda y uso, color y formalidad compatibles. Sé sensato con equivalencias reales: una desert boot cubre una chukka; un crewneck NO cubre un cuello tortuga (cuello distinto); una camisa azul claro cubre "camisa celeste"; unos chinos beige NO cubren "jeans". No fuerces matches por que sí: si dudas y la prenda real es claramente otra cosa, NO la cubre.
+- "tienes": el clóset ya tiene esa prenda en forma usable — mismo tipo y uso, color compatible, misma formalidad. Cuenta equivalencias reales de tipo (una desert boot vale por una chukka; una camisa azul claro vale por "camisa celeste").
+- "parecido": el clóset tiene la prenda CORRECTA (mismo tipo y uso) pero con un matiz que vale notar — otro neutro, o un casi-equivalente. NO es hueco, es refinamiento. Ej: tiene blazer marino y el ideal es negro; tiene mocasín y el ideal es Oxford.
+- "falta": el clóset NO tiene esa prenda en ninguna forma usable. Hueco real. Ej: no hay ningún cuello tortuga; o el ideal pide un color statement que cambia el papel y no lo tiene.
+
+REGLAS:
+- El TIPO manda y es estricto: distinto tipo de prenda = "falta" aunque el color empate. Un crewneck NO cubre un cuello tortuga (cuello distinto) → "falta".
+- COLOR de neutros oscuros (negro, marino, gris, carbón, azul oscuro) = intercambiables: nunca marques "falta" solo por el neutro. Mismo neutro → "tienes"; neutro distinto → "parecido".
+- COLORES statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) SÍ importan: si el ideal pide uno y el clóset no lo tiene, es "falta".
 
 Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN (1..N). Cada entrada:
-- covered: true/false.
-- by: el nombre exacto de la prenda del clóset que la cubre, o "" si ninguna.`,
+- status: "tienes" | "parecido" | "falta".
+- by: el nombre exacto de la prenda del clóset que la cumple o se le parece, o "" si falta.`,
     messages: [
       {
         role: "user",
@@ -60,10 +67,10 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
               items: {
                 type: "object",
                 properties: {
-                  covered: { type: "boolean" },
+                  status: { type: "string", enum: ["tienes", "parecido", "falta"] },
                   by: { type: "string" },
                 },
-                required: ["covered", "by"],
+                required: ["status", "by"],
                 additionalProperties: false,
               },
             },
@@ -77,13 +84,16 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
-  const parsed = JSON.parse(text) as { entries: { covered: boolean; by: string }[] };
+  const parsed = JSON.parse(text) as {
+    entries: { status: MatchEntry["status"]; by: string }[];
+  };
 
   // Alinea por índice; si el modelo devolvió de más/menos, ajusta sin romper.
   const entries: MatchEntry[] = target.items.map((_, i) => {
     const e = parsed.entries?.[i];
-    if (!e) return { covered: false, by: null };
-    return { covered: !!e.covered, by: e.by && e.by.trim() ? e.by.trim() : null };
+    if (!e) return { status: "falta", by: null };
+    const status = e.status === "tienes" || e.status === "parecido" ? e.status : "falta";
+    return { status, by: e.by && e.by.trim() ? e.by.trim() : null };
   });
 
   return { signature, entries };

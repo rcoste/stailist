@@ -4,6 +4,7 @@ import { recalcularMatch } from "@/app/closet/capsula/actions";
 import type { CapsuleView } from "@/lib/capsule";
 
 const MAX_FALTAN = 6;
+const MAX_PARECIDOS = 4;
 
 // Tarjeta de cápsula en el clóset. Sin assessment → CTA. Con cápsula → cuántas
 // prendas tienes de tu ideal y cuáles te faltan (concretas, por prioridad).
@@ -57,6 +58,7 @@ export function CapsuleCard({
 
   const faltan = view.faltan.slice(0, MAX_FALTAN);
   const restantes = view.faltan.length - faltan.length;
+  const parecidos = view.parecidos.slice(0, MAX_PARECIDOS);
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 shadow-[var(--shadow-hairline)]">
@@ -119,9 +121,30 @@ export function CapsuleCard({
         </div>
       ) : (
         <p className="text-sm text-success">
-          Tienes toda tu cápsula ideal. Bien ahí.
+          No te falta nada esencial. Bien ahí.
         </p>
       )}
+
+      {parecidos.length > 0 ? (
+        <div className="flex flex-col gap-2 border-t border-line pt-3">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted">
+            Ya tienes algo que funciona
+          </span>
+          <ul className="flex flex-col gap-1.5">
+            {parecidos.map(({ item, by }) => (
+              <li
+                key={`${item.tipo}-${item.nombre}`}
+                className="flex flex-col text-sm"
+              >
+                <span className="text-ink">{item.nombre}</span>
+                {by ? (
+                  <span className="text-xs text-muted">tienes: {by} — podrías refinar</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
