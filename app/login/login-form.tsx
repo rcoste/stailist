@@ -1,40 +1,29 @@
 "use client";
 
 import { useActionState } from "react";
-import { sendMagicLink, type LoginState } from "./actions";
+import {
+  sendCode,
+  verifyCode,
+  type LoginState,
+  type VerifyState,
+} from "./actions";
 import { Spinner } from "@/components/spinner";
 
-const INITIAL: LoginState = { status: "idle" };
+const SEND_INITIAL: LoginState = { status: "idle" };
 
-export function LoginForm({ linkError = false }: { linkError?: boolean }) {
-  const [state, formAction, pending] = useActionState(sendMagicLink, INITIAL);
+export function LoginForm() {
+  const [state, sendAction, sending] = useActionState(sendCode, SEND_INITIAL);
 
   if (state.status === "sent") {
     return (
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
-        <h2 className="text-h3 font-semibold text-ink">Revisa tu correo ✉️</h2>
-        <p className="text-base text-ink">
-          Te mandé un link a <span className="font-medium">{state.email}</span>.
-          Un tap y estás dentro — sin contraseñas.
-        </p>
-        <form action={formAction}>
-          <input type="hidden" name="email" value={state.email} />
-          <button
-            type="submit"
-            disabled={pending}
-            className="min-h-12 w-full rounded-full border border-line bg-surface text-base font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
-          >
-            {pending ? "Reenviando…" : "¿No llegó? Reenviar"}
-          </button>
-        </form>
-      </div>
+      <CodeForm email={state.email} resendAction={sendAction} resending={sending} />
     );
   }
 
   return (
     <form
-      action={formAction}
-      className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]"
+      action={sendAction}
+      className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]"
     >
       <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-ink">
@@ -48,15 +37,10 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
           autoComplete="email"
           inputMode="email"
           placeholder="tu@correo.com"
-          className="min-h-12 rounded-lg border border-line bg-surface px-4 text-base text-ink outline-none transition-colors duration-200 placeholder:text-muted focus:border-accent"
+          className="min-h-12 rounded-sm border border-line bg-surface px-4 text-base text-ink outline-none transition-colors duration-200 placeholder:text-muted focus:border-accent"
         />
       </div>
 
-      {linkError && state.status === "idle" && (
-        <p className="text-sm text-error">
-          Ese link ya caducó o no funcionó. Pide uno nuevo aquí abajo.
-        </p>
-      )}
       {state.status === "error" && (
         <p className="text-sm text-error">{state.message}</p>
       )}
@@ -69,18 +53,96 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
 
       <button
         type="submit"
-        disabled={pending}
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+        disabled={sending}
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
       >
-        {pending ? (
+        {sending ? (
           <>
             <Spinner className="h-4 w-4" />
             Mandando…
           </>
         ) : (
-          "Mándame el link"
+          "Mándame el código"
         )}
       </button>
     </form>
+  );
+}
+
+const VERIFY_INITIAL = (email: string): VerifyState => ({
+  status: "idle",
+  email,
+});
+
+function CodeForm({
+  email,
+  resendAction,
+  resending,
+}: {
+  email: string;
+  resendAction: (formData: FormData) => void;
+  resending: boolean;
+}) {
+  const [state, verifyAction, verifying] = useActionState(
+    verifyCode,
+    VERIFY_INITIAL(email)
+  );
+
+  return (
+    <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-h3 font-semibold text-ink">Revisa tu correo</h2>
+        <p className="text-base text-muted">
+          Te mandé un código de 6 dígitos a{" "}
+          <span className="font-medium text-ink">{email}</span>. Tecléalo aquí.
+        </p>
+      </div>
+
+      <form action={verifyAction} className="flex flex-col gap-4">
+        <input type="hidden" name="email" value={email} />
+        <input
+          name="code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          pattern="[0-9]*"
+          required
+          autoFocus
+          placeholder="••••••"
+          aria-label="Código de 6 dígitos"
+          className="min-h-14 rounded-sm border border-line bg-surface text-center text-2xl font-semibold tracking-[0.4em] text-ink tabular outline-none transition-colors duration-200 placeholder:tracking-[0.3em] placeholder:text-muted focus:border-accent"
+        />
+
+        {state.status === "error" && (
+          <p className="text-sm text-error">{state.message}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={verifying}
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+        >
+          {verifying ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Validando…
+            </>
+          ) : (
+            "Entrar"
+          )}
+        </button>
+      </form>
+
+      <form action={resendAction}>
+        <input type="hidden" name="email" value={email} />
+        <button
+          type="submit"
+          disabled={resending}
+          className="min-h-12 w-full rounded-sm border border-line bg-surface text-base font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
+        >
+          {resending ? "Reenviando…" : "¿No llegó? Reenviar"}
+        </button>
+      </form>
+    </div>
   );
 }

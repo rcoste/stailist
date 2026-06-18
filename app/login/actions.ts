@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState =
@@ -9,9 +9,16 @@ export type LoginState =
   | { status: "not_allowed" }
   | { status: "error"; message: string };
 
+export type VerifyState =
+  | { status: "idle"; email: string }
+  | { status: "error"; email: string; message: string };
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function sendMagicLink(
+// Paso 1: valida correo + allowlist y dispara el código de 6 dígitos.
+// signInWithOtp genera el OTP; el template del correo lo muestra ({{ .Token }}).
+// Sin emailRedirectTo: ya no hay link, solo código.
+export async function sendCode(
   _prev: LoginState,
   formData: FormData
 ): Promise<LoginState> {
@@ -42,19 +49,48 @@ export async function sendMagicLink(
   }
   if (!allowed) return { status: "not_allowed" };
 
-  const h = await headers();
-  const origin = h.get("origin") ?? `http://${h.get("host")}`;
-
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${origin}/auth/confirm` },
+    options: { shouldCreateUser: true },
   });
   if (error) {
     return {
       status: "error",
-      message: "No pude mandar el link. Dale a reenviar en unos segundos.",
+      message: "No pude mandar el código. Dale a reenviar en unos segundos.",
     };
   }
 
   return { status: "sent", email };
+}
+
+// Paso 2: valida el código tecleado. verifyOtp deja la sesión en cookies y
+// "/" decide a qué paso del onboarding mandarte.
+export async function verifyCode(
+  _prev: VerifyState,
+  formData: FormData
+): Promise<VerifyState> {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const token = String(formData.get("code") ?? "").replace(/\D/g, "");
+
+  if (token.length !== 6) {
+    return { status: "error", email, message: "El código son 6 dígitos." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
+  if (error) {
+    return {
+      status: "error",
+      email,
+      message: "Código incorrecto o caducado. Pide uno nuevo.",
+    };
+  }
+
+  redirect("/");
 }

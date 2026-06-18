@@ -25,7 +25,7 @@ export default async function LoginPage({
         </div>
       </header>
 
-      <LoginForm linkError={error === "link"} />
+      <LoginForm />
 
       {isDev && (
         <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-surface/50 p-4">
