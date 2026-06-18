@@ -92,7 +92,7 @@ export default async function ClosetPage() {
   const match = profile.capsule_match as CapsuleMatch | null;
   const currentSig = closetSignature(items);
   const stale = !!target && (!match || match.signature !== currentSig);
-  const view = target && match ? capsuleView(target, match) : null;
+  const view = target && match ? capsuleView(target, match, profile.capsule_overrides) : null;
 
   const grupos = CATEGORIAS.map((c) => ({
     ...c,

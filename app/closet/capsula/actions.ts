@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   ASSESSMENT_QUESTIONS,
+  type CapsuleDecision,
+  type CapsuleOverrides,
   type CapsuleTarget,
   type LifestyleAnswers,
 } from "@/lib/capsule";
@@ -81,6 +83,7 @@ export async function saveLifestyle(
       lifestyle: answers,
       capsule_target: target,
       capsule_match: match,
+      capsule_overrides: null, // cápsula nueva → se borran las decisiones viejas
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
@@ -89,6 +92,34 @@ export async function saveLifestyle(
   }
 
   redirect("/closet/capsula");
+}
+
+// Decisión del usuario sobre una prenda "parecido": aceptar (cuenta como cubierta)
+// o rechazar (quiere la ideal → te falta). Toggle: re-elegir lo mismo lo deshace.
+export async function setCapsuleOverride(formData: FormData): Promise<void> {
+  const index = String(formData.get("index") ?? "");
+  const decision = String(formData.get("decision") ?? "");
+  if (!index || (decision !== "accept" && decision !== "reject")) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("capsule_overrides")
+    .eq("id", user.id)
+    .single();
+  const current = ((profile?.capsule_overrides as CapsuleOverrides | null) ?? {}) as CapsuleOverrides;
+
+  if (current[index] === decision) delete current[index];
+  else current[index] = decision as CapsuleDecision;
+
+  await supabase.from("profiles").update({ capsule_overrides: current }).eq("id", user.id);
+  revalidatePath("/closet/capsula");
+  revalidatePath("/closet");
 }
 
 // Recalcula SOLO el match contra el clóset actual (cuando agregaste/quitaste

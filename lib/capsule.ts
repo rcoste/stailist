@@ -177,41 +177,60 @@ export type CapsuleView = {
   parecidos: { item: CapsuleItem; by: string | null }[]; // refinamientos, por prioridad
 };
 
+// Decisión del usuario sobre una prenda "parecido": la acepta como sustituto
+// (cuenta como cubierta) o la rechaza (quiere la ideal → te falta).
+export type CapsuleDecision = "accept" | "reject";
+export type CapsuleOverrides = Record<string, CapsuleDecision>; // clave = índice
+
+// ¿Cuenta como cubierta? "tienes" siempre; "parecido" salvo que la rechaces.
+function isCovered(base: MatchStatus | "pendiente", decision: CapsuleDecision | null): boolean {
+  if (base === "tienes") return true;
+  if (base === "parecido") return decision !== "reject";
+  return false;
+}
+
 // Lista COMPLETA de la cápsula, en orden de prioridad, cada prenda con su estado
 // (para la pantalla dedicada). Si aún no hay match, todas quedan "pendiente".
 export type CapsuleRow = {
   item: CapsuleItem;
-  status: MatchStatus | "pendiente";
+  index: number; // posición en target.items (para guardar la decisión)
+  base: MatchStatus | "pendiente"; // lo que dijo el match
+  decision: CapsuleDecision | null; // lo que decidió el usuario (solo en "parecido")
+  covered: boolean; // si cuenta como cubierta (considerando la decisión)
   by: string | null;
 };
 
 export function capsuleRows(
   target: CapsuleTarget,
-  match: CapsuleMatch | null
+  match: CapsuleMatch | null,
+  overrides: CapsuleOverrides | null = null
 ): CapsuleRow[] {
   return target.items.map((item, i) => {
-    if (!match) return { item, status: "pendiente", by: null };
-    const e = normalizeEntry(match.entries[i]);
-    return { item, status: e.status, by: e.by };
+    const e = match ? normalizeEntry(match.entries[i]) : { status: "pendiente" as const, by: null };
+    const decision = e.status === "parecido" ? overrides?.[String(i)] ?? null : null;
+    return { item, index: i, base: e.status, decision, covered: isCovered(e.status, decision), by: e.by };
   });
 }
 
-export function capsuleView(target: CapsuleTarget, match: CapsuleMatch): CapsuleView {
-  const items = target.items;
-  const entries = items.map((_, i) => normalizeEntry(match.entries[i]));
-  const totalCount = items.length;
-  const haveCount = entries.filter((e) => e.status !== "falta").length;
+export function capsuleView(
+  target: CapsuleTarget,
+  match: CapsuleMatch,
+  overrides: CapsuleOverrides | null = null
+): CapsuleView {
+  const rows = capsuleRows(target, match, overrides);
+  const totalCount = rows.length;
+  const haveCount = rows.filter((r) => r.covered).length;
   const coveragePct = totalCount === 0 ? 0 : Math.round((100 * haveCount) / totalCount);
 
-  const idx = items.map((item, i) => ({ item, e: entries[i] }));
-  const faltan = idx
-    .filter((x) => x.e.status === "falta")
-    .map((x) => x.item)
-    .sort((a, b) => a.prioridad - b.prioridad);
-  const parecidos = idx
-    .filter((x) => x.e.status === "parecido")
-    .map((x) => ({ item: x.item, by: x.e.by }))
-    .sort((a, b) => a.item.prioridad - b.item.prioridad);
+  const byPrio = (a: { prioridad: number }, b: { prioridad: number }) => a.prioridad - b.prioridad;
+  const faltan = rows
+    .filter((r) => r.base === "falta")
+    .map((r) => r.item)
+    .sort(byPrio);
+  const parecidos = rows
+    .filter((r) => r.base === "parecido")
+    .map((r) => ({ item: r.item, by: r.by }))
+    .sort((a, b) => byPrio(a.item, b.item));
 
   return { haveCount, totalCount, coveragePct, faltan, parecidos };
 }

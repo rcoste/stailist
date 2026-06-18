@@ -6,7 +6,7 @@ import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { closetSignature } from "@/lib/capsule";
-import { loadClosetLite } from "@/lib/capsule-data";
+import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
 import { recalcularMatch } from "./actions";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
@@ -20,7 +20,10 @@ export default async function CapsulaPage() {
 
   const match = profile.capsule_match;
   const supabase = await createClient();
-  const closet = await loadClosetLite(supabase, profile.id);
+  const [closet, images] = await Promise.all([
+    loadClosetLite(supabase, profile.id),
+    loadClosetImageMap(supabase, profile.id),
+  ]);
   const stale = !match || match.signature !== closetSignature(closet);
 
   return (
@@ -55,7 +58,12 @@ export default async function CapsulaPage() {
           </form>
         ) : null}
 
-        <CapsuleList target={target} match={match} />
+        <CapsuleList
+          target={target}
+          match={match}
+          overrides={profile.capsule_overrides}
+          images={images}
+        />
       </section>
     </AppShell>
   );
