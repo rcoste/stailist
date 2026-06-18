@@ -4,50 +4,13 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { NudgeShell } from "@/components/nudge-shell";
-import { createClient } from "@/lib/supabase/client";
-import { toUsableImage } from "@/lib/image-file";
-import { saveAvatar } from "@/lib/avatar-actions";
+import { uploadAvatar } from "@/lib/avatar-upload";
 import { markNudge } from "@/lib/journey-actions";
 
 // Pieza 2 del motor de nudges: tras enganchar (≥1 👍) y sin avatar todavía,
 // invitamos a subir la foto para el try-on. Es auto-contenido — sube y guarda
 // el avatar una vez; de ahí el botón "verme con este look" de cada outfit ya
 // funciona al instante. Al subir o descartar, el resolvedor deja de mostrarlo.
-
-// Reduce a ≤1280px y JPEG, mismo criterio que el try-on (lib/use-tryon).
-function comprimir(file: Blob): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const max = 1280;
-      let { width, height } = img;
-      if (width > height && width > max) {
-        height = (height * max) / width;
-        width = max;
-      } else if (height > max) {
-        width = (width * max) / height;
-        height = max;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (b) => {
-          URL.revokeObjectURL(img.src);
-          b ? resolve(b) : reject(new Error("no_blob"));
-        },
-        "image/jpeg",
-        0.88
-      );
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      reject(new Error("img_decode"));
-    };
-    img.src = URL.createObjectURL(file);
-  });
-}
 
 export function TryonNudge({ userId }: { userId: string }) {
   const router = useRouter();
@@ -63,18 +26,8 @@ export function TryonNudge({ userId }: { userId: string }) {
     if (!file) return;
     setStatus("up"); // se pinta ANTES del bloqueo de conversión (ver lib/image-file)
     try {
-      const blob = await comprimir(await toUsableImage(file));
-      const supabase = createClient();
-      const path = `${userId}/avatar.jpg`;
-      const up = await supabase.storage
-        .from("prendas")
-        .upload(path, blob, { contentType: "image/jpeg", upsert: true });
-      if (up.error) {
-        setStatus("error");
-        return;
-      }
-      const saved = await saveAvatar(path);
-      if (!saved.ok) {
+      const res = await uploadAvatar(file, userId);
+      if (!res.ok) {
         setStatus("error");
         return;
       }

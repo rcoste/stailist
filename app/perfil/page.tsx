@@ -1,19 +1,55 @@
+import Image from "next/image";
 import { AppShell } from "@/components/app-shell";
 import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { ChangeAvatar } from "@/components/change-avatar";
 import { signOut } from "./actions";
 
-// Perfil: tu cuenta y tus ajustes. Se construye por partes — esta es la base
-// (cuenta + opinión + cerrar sesión). Avatar, colorimetría y estilo se suman
-// como secciones encima (ver docs/designs/post-onboarding-nudges.md no aplica;
-// es feature aparte). Voz de marca: cálida y directa.
+// Perfil: tu cuenta y tus ajustes. Se construye por secciones — base (cuenta +
+// opinión + sign out) + tu foto (avatar). Colorimetría y estilo se suman después.
 export default async function PerfilPage() {
   const profile = await requireOnboarded();
+
+  // La foto de avatar vive en el bucket privado → URL firmada para mostrarla.
+  let avatarUrl: string | null = null;
+  if (profile.avatar_path) {
+    const supabase = await createClient();
+    const { data } = await supabase.storage
+      .from("prendas")
+      .createSignedUrl(profile.avatar_path, 3600);
+    avatarUrl = data?.signedUrl ?? null;
+  }
 
   return (
     <AppShell>
       <section className="flex flex-col gap-6 pt-4">
         <h1 className="text-h1 font-semibold text-ink">Perfil</h1>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted">
+            Tu foto
+          </span>
+          <div className="flex items-center gap-4 rounded-lg border border-line bg-surface p-4">
+            {avatarUrl ? (
+              <div className="relative h-24 w-[72px] shrink-0 overflow-hidden rounded-lg border border-line bg-bg">
+                <Image src={avatarUrl} alt="Tu foto" fill sizes="72px" className="object-cover" />
+              </div>
+            ) : (
+              <span className="flex h-24 w-[72px] shrink-0 items-center justify-center rounded-lg border border-dashed border-line bg-bg text-muted">
+                <Icon name="camara" size={22} />
+              </span>
+            )}
+            <div className="flex flex-1 flex-col gap-2">
+              <span className="text-xs text-muted">
+                {avatarUrl
+                  ? "La uso para ponerte los looks encima en el try-on."
+                  : "Súbela y podrás verte con tus looks puestos."}
+              </span>
+              <ChangeAvatar userId={profile.id} hasAvatar={!!avatarUrl} />
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
