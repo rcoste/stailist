@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { Icon } from "@/components/icon";
-import { recalcularMatch } from "@/app/closet/capsula/actions";
 import type { CapsuleView } from "@/lib/capsule";
 
-const MAX_FALTAN = 6;
-const MAX_PARECIDOS = 4;
+const MAX_FALTAN = 4;
 
-// Tarjeta de cápsula en el clóset. Sin assessment → CTA. Con cápsula → cuántas
-// prendas tienes de tu ideal y cuáles te faltan (concretas, por prioridad).
+// Teaser de la cápsula en el clóset. Resume (Tienes N de M + qué te falta) y
+// lleva a la pantalla completa (/closet/capsula). El cuestionario vive en /editar.
 export function CapsuleCard({
   hasTarget,
   view,
@@ -17,19 +15,18 @@ export function CapsuleCard({
   view: CapsuleView | null;
   stale: boolean;
 }) {
+  // Sin cápsula todavía → al cuestionario.
   if (!hasTarget) {
     return (
       <Link
-        href="/closet/capsula"
+        href="/closet/capsula/editar"
         className="flex items-center gap-3 rounded-lg border border-line bg-accent-soft p-4 transition-colors duration-200 hover:border-accent"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
           <Icon name="destello" size={16} />
         </span>
         <span className="flex flex-col">
-          <span className="text-sm font-semibold text-ink">
-            Descubre tu clóset cápsula
-          </span>
+          <span className="text-sm font-semibold text-ink">Descubre tu clóset cápsula</span>
           <span className="text-xs text-muted">
             Cuéntame de tu vida y te armo el clóset ideal para ti.
           </span>
@@ -39,26 +36,24 @@ export function CapsuleCard({
     );
   }
 
-  // Hay cápsula pero el match no se pudo calcular todavía → invita a recalcular.
+  // Hay cápsula pero falta calcular el match → a la vista (ahí está "calcular").
   if (!view) {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 shadow-[var(--shadow-hairline)]">
-        <p className="text-sm font-medium text-ink">Tu cápsula está lista.</p>
-        <form action={recalcularMatch}>
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
-          >
-            <Icon name="repetir" size={15} /> Calcular qué tienes y qué te falta
-          </button>
-        </form>
-      </div>
+      <Link
+        href="/closet/capsula"
+        className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 shadow-[var(--shadow-hairline)] transition-colors hover:border-accent"
+      >
+        <span className="flex flex-col">
+          <span className="text-sm font-semibold text-ink">Tu cápsula está lista</span>
+          <span className="text-xs text-muted">Ve qué prendas ya tienes y cuáles te faltan.</span>
+        </span>
+        <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
+      </Link>
     );
   }
 
   const faltan = view.faltan.slice(0, MAX_FALTAN);
   const restantes = view.faltan.length - faltan.length;
-  const parecidos = view.parecidos.slice(0, MAX_PARECIDOS);
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 shadow-[var(--shadow-hairline)]">
@@ -72,7 +67,7 @@ export function CapsuleCard({
           </span>
         </div>
         <Link
-          href="/closet/capsula"
+          href="/closet/capsula/editar"
           className="text-sm font-medium text-accent hover:underline"
         >
           Editar
@@ -87,14 +82,9 @@ export function CapsuleCard({
       </div>
 
       {stale ? (
-        <form action={recalcularMatch}>
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
-          >
-            <Icon name="repetir" size={14} /> Tu clóset cambió — recalcular
-          </button>
-        </form>
+        <p className="text-xs text-muted">
+          Tu clóset cambió — abre tu cápsula para recalcular.
+        </p>
       ) : null}
 
       {faltan.length > 0 ? (
@@ -113,38 +103,21 @@ export function CapsuleCard({
               </li>
             ))}
           </ul>
-          {restantes > 0 ? (
-            <span className="text-xs text-muted">
-              +{restantes} {restantes === 1 ? "prenda más" : "prendas más"} en tu lista.
-            </span>
-          ) : null}
         </div>
       ) : (
-        <p className="text-sm text-success">
-          No te falta nada esencial. Bien ahí.
-        </p>
+        <p className="text-sm text-success">No te falta nada esencial. Bien ahí.</p>
       )}
 
-      {parecidos.length > 0 ? (
-        <div className="flex flex-col gap-2 border-t border-line pt-3">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            Ya tienes algo que funciona
-          </span>
-          <ul className="flex flex-col gap-1.5">
-            {parecidos.map(({ item, by }) => (
-              <li
-                key={`${item.tipo}-${item.nombre}`}
-                className="flex flex-col text-sm"
-              >
-                <span className="text-ink">{item.nombre}</span>
-                {by ? (
-                  <span className="text-xs text-muted">tienes: {by} — podrías refinar</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <Link
+        href="/closet/capsula"
+        className="flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+      >
+        Ver mi cápsula completa
+        {restantes > 0 ? (
+          <span className="text-muted">({restantes} más + lo que ya tienes)</span>
+        ) : null}
+        <Icon name="chevron" size={15} />
+      </Link>
     </div>
   );
 }

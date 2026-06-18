@@ -88,7 +88,7 @@ export async function saveLifestyle(
     return { status: "error", message: "No pude guardar tu cápsula — dale otra vez." };
   }
 
-  redirect("/closet");
+  redirect("/closet/capsula");
 }
 
 // Recalcula SOLO el match contra el clóset actual (cuando agregaste/quitaste

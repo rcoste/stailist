@@ -1,32 +1,61 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { CapsuleList } from "@/components/capsule-list";
+import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
-import { CapsulaForm } from "./capsula-form";
-import type { LifestyleAnswers } from "@/lib/capsule";
+import { createClient } from "@/lib/supabase/server";
+import { closetSignature } from "@/lib/capsule";
+import { loadClosetLite } from "@/lib/capsule-data";
+import { recalcularMatch } from "./actions";
 
-// La acción saveLifestyle hace 2 llamadas a Opus (generar + match): medido ~27s
-// con clóset de 57. Le damos el presupuesto de 60s de Vercel (sin esto, una
-// server action puede cortarse mucho antes y la cápsula falla en silencio).
+// recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
 
 export default async function CapsulaPage() {
   const profile = await requireOnboarded();
-  const initial = (profile.lifestyle as LifestyleAnswers | null) ?? {};
+  const target = profile.capsule_target;
+  // Sin cápsula todavía → al cuestionario.
+  if (!target) redirect("/closet/capsula/editar");
+
+  const match = profile.capsule_match;
+  const supabase = await createClient();
+  const closet = await loadClosetLite(supabase, profile.id);
+  const stale = !match || match.signature !== closetSignature(closet);
 
   return (
     <AppShell>
       <section className="flex flex-col gap-6 pt-4">
-        <div className="flex flex-col gap-2">
-          <Link href="/closet" className="text-sm font-medium text-muted hover:text-ink">
-            ← Clóset
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <Link href="/closet" className="text-sm font-medium text-muted hover:text-ink">
+              ← Clóset
+            </Link>
+            <h1 className="text-h1 font-semibold text-ink">Tu clóset cápsula</h1>
+          </div>
+          <Link
+            href="/closet/capsula/editar"
+            className="mt-6 shrink-0 text-sm font-medium text-accent hover:underline"
+          >
+            Editar
           </Link>
-          <h1 className="text-h1 font-semibold text-ink">Tu cápsula</h1>
-          <p className="text-sm text-muted">
-            Cuéntame de tu vida y te digo qué tan bien te cubre tu clóset — y qué piezas te
-            faltan de verdad. Nada de comprar; solo claridad.
-          </p>
         </div>
-        <CapsulaForm initial={initial} />
+
+        {stale ? (
+          <form action={recalcularMatch}>
+            <button
+              type="submit"
+              className="flex w-full items-center gap-2 rounded-lg border border-line bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
+            >
+              <Icon name="repetir" size={16} />
+              {match
+                ? "Tu clóset cambió — recalcular qué tienes"
+                : "Calcular qué ya tienes y qué te falta"}
+            </button>
+          </form>
+        ) : null}
+
+        <CapsuleList target={target} match={match} />
       </section>
     </AppShell>
   );

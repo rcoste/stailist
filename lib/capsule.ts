@@ -177,6 +177,25 @@ export type CapsuleView = {
   parecidos: { item: CapsuleItem; by: string | null }[]; // refinamientos, por prioridad
 };
 
+// Lista COMPLETA de la cápsula, en orden de prioridad, cada prenda con su estado
+// (para la pantalla dedicada). Si aún no hay match, todas quedan "pendiente".
+export type CapsuleRow = {
+  item: CapsuleItem;
+  status: MatchStatus | "pendiente";
+  by: string | null;
+};
+
+export function capsuleRows(
+  target: CapsuleTarget,
+  match: CapsuleMatch | null
+): CapsuleRow[] {
+  return target.items.map((item, i) => {
+    if (!match) return { item, status: "pendiente", by: null };
+    const e = normalizeEntry(match.entries[i]);
+    return { item, status: e.status, by: e.by };
+  });
+}
+
 export function capsuleView(target: CapsuleTarget, match: CapsuleMatch): CapsuleView {
   const items = target.items;
   const entries = items.map((_, i) => normalizeEntry(match.entries[i]));
