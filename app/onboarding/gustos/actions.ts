@@ -66,3 +66,52 @@ export async function saveTastes(
 
   return { archetype };
 }
+
+// Re-edición de gustos DESPUÉS del onboarding (desde el Perfil): recalcula tags y
+// arquetipo y los guarda SIN tocar el onboarding_step (ya avanzó). Misma firma que
+// saveTastes para que el SwipeDeck la trate igual.
+export async function updateTastes(
+  results: SwipeResult[]
+): Promise<{ archetype: StyleArchetype } | { error: string }> {
+  const clean = results.filter(
+    (r) => LOOK_IDS.has(r.id) && typeof r.liked === "boolean"
+  );
+  if (clean.length === 0) {
+    return { error: "No me llegó ningún swipe — inténtalo de nuevo." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const tasteTags = computeTasteTags(clean);
+  const likedLooks = LOOKS.filter(
+    (l) => clean.find((r) => r.id === l.id)?.liked
+  );
+  let archetype: StyleArchetype;
+  try {
+    archetype = await generateArchetype(likedLooks);
+  } catch {
+    archetype = {
+      nombre: "Tu estilo",
+      descripcion: "te gustan las cosas que se sienten tuyas.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      taste_tags: tasteTags,
+      style_archetype: archetype,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id); // sin guard de onboarding_step: ya está onboardeado
+
+  if (error) {
+    return { error: "No pude guardar tus gustos — dale otra vez." };
+  }
+
+  return { archetype };
+}

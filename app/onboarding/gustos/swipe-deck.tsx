@@ -17,7 +17,20 @@ import type { StyleArchetype } from "@/lib/engine/archetype";
 const THRESHOLD = 90; // px para contar como decisión
 const FLICK = 0.6; // px/ms — un flick rápido decide aunque no cruce el umbral
 
-export function SwipeDeck({ looks }: { looks: Look[] }) {
+export function SwipeDeck({
+  looks,
+  save = saveTastes,
+  doneHref = "/onboarding/colorimetria",
+  doneLabel = "Sigamos con tus colores",
+}: {
+  looks: Look[];
+  // Acción al terminar (default = onboarding). El Perfil pasa updateTastes.
+  save?: (
+    results: SwipeResult[]
+  ) => Promise<{ archetype: StyleArchetype } | { error: string }>;
+  doneHref?: string;
+  doneLabel?: string;
+}) {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<SwipeResult[]>([]);
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
@@ -31,7 +44,7 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
   function finalizar(all: SwipeResult[]) {
     startTransition(async () => {
       setError(null);
-      const res = await saveTastes(all);
+      const res = await save(all);
       if ("error" in res) setError(res.error);
       else setArchetype(res.archetype);
     });
@@ -110,10 +123,10 @@ export function SwipeDeck({ looks }: { looks: Look[] }) {
             </p>
           </div>
           <Link
-            href="/onboarding/colorimetria"
+            href={doneHref}
             className="flex min-h-12 items-center justify-center rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
-            Sigamos con tus colores
+            {doneLabel}
           </Link>
         </div>
       );

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
@@ -81,6 +82,12 @@ export default async function PerfilPage() {
             ) : (
               <span className="text-sm text-muted">Aún no tenemos tu estilo.</span>
             )}
+            <Link
+              href="/perfil/estilo"
+              className="self-start text-xs font-medium text-accent underline underline-offset-2"
+            >
+              {profile.style_archetype ? "¿Cambió tu estilo? Rehazlo" : "Descubre tu estilo"}
+            </Link>
           </div>
         </div>
 
