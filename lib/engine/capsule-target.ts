@@ -7,7 +7,7 @@ import {
   type CapsuleTarget,
   type LifestyleAnswers,
 } from "@/lib/capsule";
-import { SEASONS, seasonPalette, type Season } from "@/lib/colorimetria";
+import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
 
 export type CapsuleInputs = {
   answers: LifestyleAnswers;
@@ -43,6 +43,8 @@ export async function generateCapsuleTarget(
     const avoid = evita.map((c) => c.nombre).join(", ");
     paletaTxt = `Paleta ${SEASONS[inputs.season].label}. Le favorecen: ${favs}. EVITA: ${avoid}.`;
   }
+  const metal = seasonMetal(inputs.season, inputs.flow);
+  const metalTxt = `Su metal es ${metal.toUpperCase()}: en accesorios metálicos (reloj, hebilla, joyería) usa SIEMPRE ${metal}, nunca ${metal === "oro" ? "plata" : "oro"}.`;
 
   const estilo = inputs.archetype
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
@@ -81,11 +83,13 @@ Reglas:
 - Piezas reales y combinables, no aspiracionales raras. Una cápsula que de verdad rinde.
 - Incluye abrigos SOLO si su clima es frío o templado.
 - No incluyas ropa deportiva/gym (la cápsula es ropa de vestir).
-- Prioriza lo versátil y los básicos primero; los caprichos al final.`,
+- Prioriza lo versátil y los básicos primero; los caprichos al final.
+- METAL: ${metalTxt}
+- MATERIAL: cuando aporte, di el tejido/material a buscar — métele al nombre o al porqué (ej. "Cuello tortuga de lana merino", "Camisa de popelina", "Abrigo de paño", "Suéter de cashmere"). Es consejo de QUÉ buscar, no de dónde comprar.`,
     messages: [
       {
         role: "user",
-        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto: ${tags}\nCOLORIMETRÍA: ${paletaTxt}\n\nDefine su cápsula ideal (items).`,
+        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n\nDefine su cápsula ideal (items).`,
       },
     ],
     output_config: {

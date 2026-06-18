@@ -207,6 +207,21 @@ export const SEASONS: Record<
 // La paleta resuelta de una persona: sus mejores (estación base), los tonos
 // PRESTADOS de su flow que sí cruzan, y lo que debe evitar. `flow` null = caso
 // claro, sin prestados.
+// Metal de la persona: oro (cálido) o plata (frío). Las estaciones cálidas
+// (otoño, primavera) van con oro; las frías (invierno, verano) con plata. En la
+// frontera, si la base es fría pero el flow es cálido (o al revés), gana la
+// calidez: el oro favorece y suele ser lo que prefiere la persona cálida-frontera.
+const WARM_SEASONS: Season[] = ["otono", "primavera"];
+export function seasonMetal(
+  primary: Season | null,
+  flow: Season | null
+): "oro" | "plata" {
+  const warm =
+    (primary !== null && WARM_SEASONS.includes(primary)) ||
+    (flow !== null && WARM_SEASONS.includes(flow));
+  return warm ? "oro" : "plata";
+}
+
 export function seasonPalette(primary: Season, flow: Season | null) {
   // Defensivo: si llega una estación inválida (dato corrupto), no reventar el
   // motor — devolver vacío y seguir. Mejor un look sin paleta que cero looks.
