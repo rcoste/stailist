@@ -62,8 +62,8 @@ export function CapsuleList({
 
       {parecido.length > 0 ? (
         <Section
-          title={`Tienes algo que funciona (${parecido.length})`}
-          explanation="Prendas que ya tienes y que pueden sustituir a la ideal, aunque no al 100%. Dime cuáles te sirven: las que digas que sí se dan por cumplidas; las que no, se cuentan como que te faltan."
+          title={`Decide: ¿lo que tienes te sirve? (${parecido.length})`}
+          explanation="Para cada prenda ideal ya tienes algo parecido. Si te sirve, cuenta como cumplida; si prefieres la ideal, se cuenta como que te falta."
           rows={parecido}
           images={images}
         />
@@ -103,14 +103,45 @@ function Section({
 }
 
 function Row({ row, images }: { row: CapsuleRow; images: Record<string, string> }) {
-  const { item, base, effective, by } = row;
+  const { item, effective, by } = row;
   const src = by ? images[by] : null;
-  const hasToggle = base === "parecido"; // solo las "parecido" se deciden
 
+  // Card de decisión (solo las "parecido" sin decidir): la prenda IDEAL y lo que
+  // TÚ YA TIENES van etiquetadas por separado, para que se distinga de un vistazo
+  // cuál es cuál. Antes la foto (tuya) y el título (la ideal) iban juntos sin
+  // etiqueta y costaba entender qué era qué.
+  if (effective === "parecido") {
+    return (
+      <li className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3.5">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-accent">
+            La ideal
+          </span>
+          <span className="text-sm font-semibold text-ink">{item.nombre}</span>
+          <span className="text-xs text-muted">{item.porque}</span>
+        </div>
+        {by ? (
+          <div className="flex items-center gap-2.5 rounded-md bg-bg p-2">
+            {src ? <Thumb src={src} /> : <Chip tone="parecido" />}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Tú ya tienes algo parecido
+              </span>
+              <span className="text-sm font-medium text-ink">{by}</span>
+            </div>
+          </div>
+        ) : null}
+        <Toggle index={row.index} decision={row.decision} />
+      </li>
+    );
+  }
+
+  // Filas simples: pendiente · te falta · ya lo tienes. Las "parecido" ya
+  // decididas conservan su control (por ahora) hasta el rediseño de interacción.
+  const hasToggle = row.base === "parecido";
   let sub: string | null = null;
   if (effective === "tienes" && by) sub = `tienes: ${by}`;
   else if (effective === "falta" && hasToggle) sub = "preferiste la ideal — te falta";
-  else if (effective === "parecido" && by) sub = `tienes algo parecido: ${by}`;
 
   return (
     <li className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3">
