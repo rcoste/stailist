@@ -92,8 +92,8 @@ export function LookRequest({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-6">
-      <h2 className="text-center text-h2 font-semibold text-ink">{title}</h2>
+    <div className="flex flex-1 flex-col gap-6 pt-2 pb-6">
+      <h2 className="text-h2 font-semibold text-ink">{title}</h2>
 
       {/* Ocasión */}
       <div className="flex flex-col gap-2">

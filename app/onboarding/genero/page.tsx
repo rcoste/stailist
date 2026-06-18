@@ -17,7 +17,7 @@ export default async function GeneroPage() {
     ];
 
   return (
-    <section className="flex flex-1 flex-col gap-6 pt-4">
+    <section className="flex flex-1 flex-col justify-center gap-6 pb-12">
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">
           ¿Qué ropa usas?

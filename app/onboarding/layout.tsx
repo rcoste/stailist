@@ -9,8 +9,8 @@ export default function OnboardingLayout({
 }) {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg">
-      <header className="flex items-center justify-center px-4 pt-6 pb-2">
-        <Logo className="h-8" />
+      <header className="flex items-center justify-center px-4 pt-4 pb-2">
+        <Logo className="h-7" />
       </header>
       <main className="flex flex-1 flex-col px-4 pb-8">{children}</main>
     </div>
