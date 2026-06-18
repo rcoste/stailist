@@ -29,6 +29,7 @@ export type Profile = {
   capsule_overrides: CapsuleOverrides | null;
   avatar_path: string | null;
   journey_state: JourneyState;
+  style_archetype: { nombre: string; descripcion: string } | null;
 };
 
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;

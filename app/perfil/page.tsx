@@ -56,6 +56,40 @@ export default async function PerfilPage() {
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
+            Tu estilo
+          </span>
+          <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
+            {profile.style_archetype ? (
+              <>
+                <div className="flex flex-col gap-0.5">
+                  <span className="editorial text-xl text-ink">
+                    {profile.style_archetype.nombre}
+                  </span>
+                  <span className="text-xs text-muted">
+                    {profile.style_archetype.descripcion}
+                  </span>
+                </div>
+                {profile.taste_tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.taste_tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full border border-line bg-bg px-2.5 py-1 text-xs capitalize text-muted"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <span className="text-sm text-muted">Aún no tenemos tu estilo.</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted">
             Tu cuenta
           </span>
           <div className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4">
