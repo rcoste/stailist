@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AddPhotoFlow } from "@/components/add-photo-flow";
 import { CapsuleCard } from "@/components/capsule-card";
+import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -94,6 +95,10 @@ export default async function ClosetPage() {
   const stale = !!target && (!match || match.signature !== currentSig);
   const view = target && match ? capsuleView(target, match, profile.capsule_overrides) : null;
 
+  // ¿Ya sumó ropa propia (foto)? Si no, el clóset son puros básicos asumidos →
+  // aclaramos que es un punto de arranque. Si ya personalizó, no lo regañamos.
+  const hasOwnPhotos = (rows ?? []).some((r) => r.source === "photo");
+
   const grupos = CATEGORIAS.map((c) => ({
     ...c,
     prendas: items.filter((i) => i.category === c.key),
@@ -102,23 +107,29 @@ export default async function ClosetPage() {
   return (
     <AppShell>
       <section className="flex flex-col gap-6 pt-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-h1 font-semibold text-ink">Clóset</h1>
-            <p className="text-sm text-muted">
-              {items.length}{" "}
-              {items.length === 1 ? "prenda" : "prendas"} en tu clóset.
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-h1 font-semibold text-ink">Clóset</h1>
+              <p className="text-sm text-muted">
+                {hasOwnPhotos
+                  ? `${items.length} ${items.length === 1 ? "prenda" : "prendas"} en tu clóset.`
+                  : "Estos son tus básicos para arrancar. Súmale tu ropa real y tus looks se vuelven 100% tuyos."}
+              </p>
+            </div>
             <AddPhotoFlow userId={profile.id} />
-            <Link
-              href="/closet/biblioteca"
-              className="text-sm font-medium text-accent hover:underline"
-            >
-              + Biblioteca
-            </Link>
           </div>
+
+          <Link
+            href="/closet/biblioteca"
+            className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-accent"
+          >
+            <span className="flex flex-col">
+              <span className="text-sm font-medium text-ink">Explora la Biblioteca</span>
+              <span className="text-xs text-muted">Agrega más básicos que ya tienes</span>
+            </span>
+            <Icon name="chevron" size={16} className="shrink-0 text-muted" />
+          </Link>
         </div>
 
         <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
