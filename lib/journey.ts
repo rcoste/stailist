@@ -6,8 +6,8 @@
 // completa. Las SEÑALES se derivan de datos que ya existen (events, outfits,
 // items, capsule_target) — aquí solo decidimos QUÉ mostrar, dado el estado.
 
-// Orden = prioridad. (Hoy solo "tryon" está activo; closet_real y capsula
-// quedan definidos para cuando se construyan P3 y P4.)
+// Orden = prioridad: tryon (P2) → closet_real (P3) → capsula (P4). El resolvedor
+// devuelve UNO solo, así nunca se encima más de un nudge a la vez.
 export type NudgeId = "tryon" | "closet_real" | "capsula";
 
 export type NudgeLifecycle = {
@@ -44,14 +44,18 @@ export function nextBestAction(
   }
 
   // P3 — "haz tu clóset real": usó Hoy ≥2 veces y aún no editó su clóset.
-  //   (se activa al construir P3)
-  // if (signals.lookDays >= 2 && !signals.editedCloset && isOpen(state.closet_real))
-  //   return "closet_real";
+  if (signals.lookDays >= 2 && !signals.editedCloset && isOpen(state.closet_real)) {
+    return "closet_real";
+  }
 
   // P4 — descubre la cápsula: ya enganchó con outfits y aún no la abrió.
-  //   (se activa al construir P4)
-  // if ((signals.lookDays >= 2 || signals.likes >= 2) && !signals.hasCapsule && isOpen(state.capsula))
-  //   return "capsula";
+  if (
+    (signals.lookDays >= 2 || signals.likes >= 2) &&
+    !signals.hasCapsule &&
+    isOpen(state.capsula)
+  ) {
+    return "capsula";
+  }
 
   return null;
 }

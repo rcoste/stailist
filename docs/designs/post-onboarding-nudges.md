@@ -1,7 +1,8 @@
 # Plan: Sistema de "siguiente mejor paso" post-onboarding
 
-> Estado: plan aprobado 2026-06-18. Se construye incremental, una pieza por
-> commit, empezando por la Pieza 1. Voz de marca: "tu amiga cool" (ver CLAUDE.md).
+> Estado: plan aprobado 2026-06-18. **Piezas 1-4 + motor construidas y en prod
+> (2026-06-18).** Falta validar el flujo vivo en cuentas reales y afinar copy/
+> umbrales con Tatiana/Toño. Voz de marca: "tu amiga cool" (ver CLAUDE.md).
 
 ## Contexto
 Tras el onboarding (~90s) el usuario cae en `/hoy` sin orientación. Tres

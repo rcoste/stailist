@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadJourneySignals } from "@/lib/journey-data";
 import { nextBestAction } from "@/lib/journey";
 import { TryonNudge } from "@/components/tryon-nudge";
+import { LinkNudge } from "@/components/link-nudge";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 
 export default async function HoyPage() {
@@ -88,6 +89,24 @@ export default async function HoyPage() {
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">
         {nudge === "tryon" ? <TryonNudge userId={profile.id} /> : null}
+        {nudge === "closet_real" ? (
+          <LinkNudge
+            id="closet_real"
+            icon="gancho"
+            title="Haz tuyo tu clóset"
+            body="Súmale tu ropa real y tus looks se vuelven 100% tuyos."
+            href="/closet"
+          />
+        ) : null}
+        {nudge === "capsula" ? (
+          <LinkNudge
+            id="capsula"
+            icon="destello"
+            title="Arma tu clóset cápsula"
+            body="Te digo qué prendas ya tienes y cuáles te faltan."
+            href="/closet/capsula/editar"
+          />
+        ) : null}
         <HoyClient
           key={nombre}
           lookInicial={lookInicial}
