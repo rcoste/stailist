@@ -95,11 +95,15 @@ export async function saveLifestyle(
 }
 
 // Decisión del usuario sobre una prenda "parecido": aceptar (cuenta como cubierta)
-// o rechazar (quiere la ideal → te falta). Toggle: re-elegir lo mismo lo deshace.
-export async function setCapsuleOverride(formData: FormData): Promise<void> {
-  const index = String(formData.get("index") ?? "");
-  const decision = String(formData.get("decision") ?? "");
-  if (!index || (decision !== "accept" && decision !== "reject")) return;
+// o rechazar (quiere la ideal → te falta). Toggle: re-elegir lo mismo lo deshace
+// (eso también es el "cambiar" de la UI). Se llama directo desde el cliente con
+// estado optimista, por eso recibe args planos en vez de FormData.
+export async function setCapsuleOverride(
+  index: number,
+  decision: CapsuleDecision
+): Promise<void> {
+  if (!Number.isInteger(index) || (decision !== "accept" && decision !== "reject")) return;
+  const key = String(index);
 
   const supabase = await createClient();
   const {
@@ -114,8 +118,8 @@ export async function setCapsuleOverride(formData: FormData): Promise<void> {
     .single();
   const current = ((profile?.capsule_overrides as CapsuleOverrides | null) ?? {}) as CapsuleOverrides;
 
-  if (current[index] === decision) delete current[index];
-  else current[index] = decision as CapsuleDecision;
+  if (current[key] === decision) delete current[key];
+  else current[key] = decision;
 
   await supabase.from("profiles").update({ capsule_overrides: current }).eq("id", user.id);
   revalidatePath("/closet/capsula");
