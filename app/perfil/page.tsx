@@ -4,6 +4,7 @@ import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ChangeAvatar } from "@/components/change-avatar";
+import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { signOut } from "./actions";
 
 // Perfil: tu cuenta y tus ajustes. Se construye por secciones — base (cuenta +
@@ -50,6 +51,8 @@ export default async function PerfilPage() {
             </div>
           </div>
         </div>
+
+        <ColorimetriaSection season={profile.palette_season} />
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
