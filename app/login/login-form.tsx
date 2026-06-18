@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   sendCode,
   verifyCode,
@@ -88,6 +88,25 @@ function CodeForm({
     VERIFY_INITIAL(email)
   );
 
+  // Cooldown de 60s para reenviar — espeja el límite del server (1 envío por
+  // correo cada 60s) para que el usuario no tape el botón y choque con el error.
+  const [secondsLeft, setSecondsLeft] = useState(60);
+  const wasResending = useRef(resending);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [secondsLeft]);
+
+  // Cuando un reenvío termina (resending true → false), reinicia el cooldown.
+  useEffect(() => {
+    if (wasResending.current && !resending) setSecondsLeft(60);
+    wasResending.current = resending;
+  }, [resending]);
+
+  const canResend = !resending && secondsLeft <= 0;
+
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
       <div className="flex flex-col gap-1">
@@ -133,14 +152,22 @@ function CodeForm({
         </button>
       </form>
 
+      <p className="text-center text-sm text-muted">
+        ¿No lo ves? Revisa tu carpeta de correo no deseado (spam).
+      </p>
+
       <form action={resendAction}>
         <input type="hidden" name="email" value={email} />
         <button
           type="submit"
-          disabled={resending}
-          className="min-h-12 w-full rounded-sm border border-line bg-surface text-base font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
+          disabled={!canResend}
+          className="min-h-12 w-full rounded-sm border border-line bg-surface text-base font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50 disabled:hover:border-line"
         >
-          {resending ? "Reenviando…" : "¿No llegó? Reenviar"}
+          {resending
+            ? "Reenviando…"
+            : secondsLeft > 0
+              ? `Reenviar en ${secondsLeft}s`
+              : "¿No llegó? Reenviar"}
         </button>
       </form>
     </div>
