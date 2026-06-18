@@ -182,11 +182,20 @@ export type CapsuleView = {
 export type CapsuleDecision = "accept" | "reject";
 export type CapsuleOverrides = Record<string, CapsuleDecision>; // clave = índice
 
-// ¿Cuenta como cubierta? "tienes" siempre; "parecido" salvo que la rechaces.
-function isCovered(base: MatchStatus | "pendiente", decision: CapsuleDecision | null): boolean {
-  if (base === "tienes") return true;
-  if (base === "parecido") return decision !== "reject";
-  return false;
+// Estado EFECTIVO = lo que dijo el match + la decisión del usuario:
+//   parecido + "Sí" → cumplida (cuenta como "tienes", se va a Ya lo tienes).
+//   parecido + "No" → hueco real (cuenta como "falta", se va a Te falta).
+//   parecido sin decidir → sigue "parecido" (pendiente). NO cuenta hasta el Sí.
+function effectiveStatus(
+  base: MatchStatus | "pendiente",
+  decision: CapsuleDecision | null
+): MatchStatus | "pendiente" {
+  if (base === "parecido") {
+    if (decision === "accept") return "tienes";
+    if (decision === "reject") return "falta";
+    return "parecido";
+  }
+  return base;
 }
 
 // Lista COMPLETA de la cápsula, en orden de prioridad, cada prenda con su estado
@@ -195,8 +204,9 @@ export type CapsuleRow = {
   item: CapsuleItem;
   index: number; // posición en target.items (para guardar la decisión)
   base: MatchStatus | "pendiente"; // lo que dijo el match
+  effective: MatchStatus | "pendiente"; // base + tu decisión (para agrupar)
   decision: CapsuleDecision | null; // lo que decidió el usuario (solo en "parecido")
-  covered: boolean; // si cuenta como cubierta (considerando la decisión)
+  covered: boolean; // cuenta como cubierta (= efectivo "tienes")
   by: string | null;
 };
 
@@ -208,7 +218,8 @@ export function capsuleRows(
   return target.items.map((item, i) => {
     const e = match ? normalizeEntry(match.entries[i]) : { status: "pendiente" as const, by: null };
     const decision = e.status === "parecido" ? overrides?.[String(i)] ?? null : null;
-    return { item, index: i, base: e.status, decision, covered: isCovered(e.status, decision), by: e.by };
+    const effective = effectiveStatus(e.status, decision);
+    return { item, index: i, base: e.status, effective, decision, covered: effective === "tienes", by: e.by };
   });
 }
 
@@ -224,11 +235,11 @@ export function capsuleView(
 
   const byPrio = (a: { prioridad: number }, b: { prioridad: number }) => a.prioridad - b.prioridad;
   const faltan = rows
-    .filter((r) => r.base === "falta")
+    .filter((r) => r.effective === "falta")
     .map((r) => r.item)
     .sort(byPrio);
   const parecidos = rows
-    .filter((r) => r.base === "parecido")
+    .filter((r) => r.effective === "parecido")
     .map((r) => ({ item: r.item, by: r.by }))
     .sort((a, b) => byPrio(a.item, b.item));
 

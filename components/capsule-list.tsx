@@ -9,9 +9,10 @@ import {
   type CapsuleTarget,
 } from "@/lib/capsule";
 
-// Pantalla completa de la cápsula: TODAS las prendas ideales agrupadas por estado
-// (te falta / algo parecido / ya lo tienes), con resumen, imágenes de lo que ya
-// tienes, y un Sí/No en las "parecido" para que el usuario decida si cuentan.
+// Pantalla completa de la cápsula. Agrupa por estado EFECTIVO (tu decisión
+// incluida): los "Sí, me funciona" pasan a "Ya lo tienes"; los "No, quiero la
+// ideal" pasan a "Te falta"; los sin decidir se quedan en "Tienes algo que
+// funciona" esperando tu Sí/No. El conteo solo cuenta lo confirmado.
 export function CapsuleList({
   target,
   match,
@@ -28,10 +29,10 @@ export function CapsuleList({
   const have = rows.filter((r) => r.covered).length;
   const pct = total ? Math.round((100 * have) / total) : 0;
 
-  const falta = rows.filter((r) => r.base === "falta");
-  const parecido = rows.filter((r) => r.base === "parecido");
-  const tienes = rows.filter((r) => r.base === "tienes");
-  const pendiente = rows.filter((r) => r.base === "pendiente");
+  const pendiente = rows.filter((r) => r.effective === "pendiente");
+  const falta = rows.filter((r) => r.effective === "falta");
+  const parecido = rows.filter((r) => r.effective === "parecido");
+  const tienes = rows.filter((r) => r.effective === "tienes");
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,37 +57,109 @@ export function CapsuleList({
       ) : null}
 
       {falta.length > 0 ? (
-        <Section title={`Te falta (${falta.length})`} rows={falta} images={images} tone="falta" />
+        <Section title={`Te falta (${falta.length})`} rows={falta} images={images} />
       ) : null}
 
       {parecido.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted">
-              Tienes algo que funciona ({parecido.length})
-            </span>
-            <span className="text-xs text-muted">
-              Prendas que ya tienes y que pueden sustituir a la ideal, aunque no al 100%. Dime
-              cuáles te sirven: las que digas que no, se cuentan como que te faltan.
-            </span>
-          </div>
-          <ul className="flex flex-col gap-3">
-            {parecido.map((r) => (
-              <ParecidoRow key={`${r.item.tipo}-${r.item.nombre}`} row={r} images={images} />
-            ))}
-          </ul>
-        </div>
+        <Section
+          title={`Tienes algo que funciona (${parecido.length})`}
+          explanation="Prendas que ya tienes y que pueden sustituir a la ideal, aunque no al 100%. Dime cuáles te sirven: las que digas que sí se dan por cumplidas; las que no, se cuentan como que te faltan."
+          rows={parecido}
+          images={images}
+        />
       ) : null}
 
       {tienes.length > 0 ? (
-        <Section title={`Ya lo tienes (${tienes.length})`} rows={tienes} images={images} tone="tienes" />
+        <Section title={`Ya lo tienes (${tienes.length})`} rows={tienes} images={images} />
       ) : null}
     </div>
   );
 }
 
-function Thumb({ src }: { src: string | null | undefined }) {
-  if (!src) return null;
+function Section({
+  title,
+  explanation,
+  rows,
+  images,
+}: {
+  title: string;
+  explanation?: string;
+  rows: CapsuleRow[];
+  images: Record<string, string>;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted">{title}</span>
+        {explanation ? <span className="text-xs text-muted">{explanation}</span> : null}
+      </div>
+      <ul className="flex flex-col gap-3">
+        {rows.map((r) => (
+          <Row key={`${r.item.tipo}-${r.item.nombre}`} row={r} images={images} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Row({ row, images }: { row: CapsuleRow; images: Record<string, string> }) {
+  const { item, base, effective, by } = row;
+  const src = by ? images[by] : null;
+  const hasToggle = base === "parecido"; // solo las "parecido" se deciden
+
+  let sub: string | null = null;
+  if (effective === "tienes" && by) sub = `tienes: ${by}`;
+  else if (effective === "falta" && hasToggle) sub = "preferiste la ideal — te falta";
+  else if (effective === "parecido" && by) sub = `tienes algo parecido: ${by}`;
+
+  return (
+    <li className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3">
+      <div className="flex items-start gap-3">
+        {src ? <Thumb src={src} /> : <Chip tone={effective} />}
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-ink">{item.nombre}</span>
+          {sub ? <span className="text-xs text-muted">{sub}</span> : null}
+          <span className="mt-0.5 text-xs text-muted">{item.porque}</span>
+        </div>
+      </div>
+      {hasToggle ? <Toggle index={row.index} decision={row.decision} /> : null}
+    </li>
+  );
+}
+
+function Toggle({ index, decision }: { index: number; decision: "accept" | "reject" | null }) {
+  return (
+    <form action={setCapsuleOverride} className="flex gap-2">
+      <input type="hidden" name="index" value={index} />
+      <button
+        type="submit"
+        name="decision"
+        value="accept"
+        className={`min-h-9 flex-1 rounded-sm border text-xs font-medium transition-colors ${
+          decision === "accept"
+            ? "border-accent bg-accent text-on-accent"
+            : "border-line bg-surface text-ink hover:border-ink"
+        }`}
+      >
+        Sí, me funciona
+      </button>
+      <button
+        type="submit"
+        name="decision"
+        value="reject"
+        className={`min-h-9 flex-1 rounded-sm border text-xs font-medium transition-colors ${
+          decision === "reject"
+            ? "border-accent bg-accent-soft text-accent"
+            : "border-line bg-surface text-ink hover:border-ink"
+        }`}
+      >
+        No, quiero la ideal
+      </button>
+    </form>
+  );
+}
+
+function Thumb({ src }: { src: string }) {
   return (
     <span className="relative h-14 w-11 shrink-0 overflow-hidden rounded-md border border-line bg-bg">
       <Image src={src} alt="" fill sizes="44px" className="object-cover" />
@@ -94,92 +167,8 @@ function Thumb({ src }: { src: string | null | undefined }) {
   );
 }
 
-function Section({
-  title,
-  rows,
-  images,
-  tone,
-}: {
-  title: string;
-  rows: CapsuleRow[];
-  images: Record<string, string>;
-  tone?: "falta" | "tienes";
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted">{title}</span>
-      <ul className="flex flex-col gap-3">
-        {rows.map(({ item, by }) => {
-          const src = by ? images[by] : null;
-          return (
-            <li
-              key={`${item.tipo}-${item.nombre}`}
-              className="flex items-start gap-3 rounded-lg border border-line bg-surface p-3"
-            >
-              {src ? <Thumb src={src} /> : <Chip tone={tone} />}
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-ink">{item.nombre}</span>
-                <span className="text-xs text-muted">{item.porque}</span>
-                {by ? <span className="mt-0.5 text-xs text-muted">tienes: {by}</span> : null}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function ParecidoRow({ row, images }: { row: CapsuleRow; images: Record<string, string> }) {
-  const src = row.by ? images[row.by] : null;
-  const rejected = row.decision === "reject";
-  return (
-    <li className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3">
-      <div className="flex items-start gap-3">
-        <Thumb src={src} />
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-ink">{row.item.nombre}</span>
-          {row.by ? (
-            <span className="text-xs text-muted">
-              {rejected ? "te falta — preferiste la ideal" : `tienes: ${row.by}`}
-            </span>
-          ) : null}
-          <span className="mt-0.5 text-xs text-muted">{row.item.porque}</span>
-        </div>
-      </div>
-      <form action={setCapsuleOverride} className="flex gap-2">
-        <input type="hidden" name="index" value={row.index} />
-        <button
-          type="submit"
-          name="decision"
-          value="accept"
-          className={`min-h-9 flex-1 rounded-sm border text-xs font-medium transition-colors ${
-            row.decision === "accept"
-              ? "border-accent bg-accent text-on-accent"
-              : "border-line bg-surface text-ink hover:border-ink"
-          }`}
-        >
-          Sí, me funciona
-        </button>
-        <button
-          type="submit"
-          name="decision"
-          value="reject"
-          className={`min-h-9 flex-1 rounded-sm border text-xs font-medium transition-colors ${
-            rejected
-              ? "border-accent bg-accent-soft text-accent"
-              : "border-line bg-surface text-ink hover:border-ink"
-          }`}
-        >
-          No, quiero la ideal
-        </button>
-      </form>
-    </li>
-  );
-}
-
-// Indicador de estado cuando no hay imagen: ✓ tienes · ○ falta · — pendiente.
-function Chip({ tone }: { tone?: "falta" | "tienes" }) {
+// Indicador cuando no hay imagen: ✓ tienes · ○ falta · — pendiente/parecido.
+function Chip({ tone }: { tone: "tienes" | "falta" | "parecido" | "pendiente" }) {
   if (tone === "tienes") {
     return (
       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">

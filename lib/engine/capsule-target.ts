@@ -59,7 +59,8 @@ export async function generateCapsuleTarget(
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 2048,
+    // ~16-18 prendas con material + por qué cada una: 2048 truncaba el JSON.
+    max_tokens: 4096,
     system: `Eres la stylist de stailist. Defines el CLÓSET CÁPSULA IDEAL de una persona: la lista de prendas concretas que debería tener para vivir bien vestida, partiendo de cero (sin mirar lo que ya tiene).
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
