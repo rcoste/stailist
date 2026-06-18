@@ -5,6 +5,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
+import { InstallAppRow } from "@/components/install-app-row";
 import { signOut } from "./actions";
 
 // Perfil: tu cuenta y tus ajustes. Se construye por secciones — base (cuenta +
@@ -104,6 +105,8 @@ export default async function PerfilPage() {
         </div>
 
         <div className="flex flex-col gap-2">
+          <InstallAppRow />
+
           <a
             href="mailto:hola@stailist.co?subject=Mi%20opini%C3%B3n%20de%20stailist"
             className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 transition-colors hover:border-accent"
