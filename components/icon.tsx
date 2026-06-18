@@ -27,7 +27,8 @@ export type IconName =
   | "copo"
   | "lluvia"
   | "chevron"
-  | "expandir";
+  | "expandir"
+  | "persona";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -113,6 +114,12 @@ const GLYPHS: Record<IconName, JSX.Element> = {
   ),
   chevron: <path d="M9 6l6 6-6 6" />,
   expandir: <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />,
+  persona: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+    </>
+  ),
 };
 
 export function Icon({
