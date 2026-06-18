@@ -7,6 +7,7 @@ import type {
   CapsuleTarget,
   LifestyleAnswers,
 } from "@/lib/capsule";
+import type { JourneyState } from "@/lib/journey";
 
 export type Gender = "hombre" | "mujer";
 
@@ -26,6 +27,8 @@ export type Profile = {
   capsule_target: CapsuleTarget | null;
   capsule_match: CapsuleMatch | null;
   capsule_overrides: CapsuleOverrides | null;
+  avatar_path: string | null;
+  journey_state: JourneyState;
 };
 
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;

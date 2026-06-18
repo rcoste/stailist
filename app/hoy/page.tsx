@@ -1,6 +1,9 @@
 import { AppShell } from "@/components/app-shell";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { loadJourneySignals } from "@/lib/journey-data";
+import { nextBestAction } from "@/lib/journey";
+import { TryonNudge } from "@/components/tryon-nudge";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 
 export default async function HoyPage() {
@@ -75,9 +78,16 @@ export default async function HoyPage() {
 
   const nombre = (profile.email ?? "").split("@")[0];
 
+  // Motor de nudges: solo cuando ya hay look listo (contexto para el try-on).
+  const signals = await loadJourneySignals(supabase, profile);
+  const nudge = lookInicial
+    ? nextBestAction(profile.journey_state, signals)
+    : null;
+
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">
+        {nudge === "tryon" ? <TryonNudge userId={profile.id} /> : null}
         <HoyClient
           key={nombre}
           lookInicial={lookInicial}
