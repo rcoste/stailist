@@ -83,6 +83,30 @@ export async function saveDownReason(
   return { ok: !error };
 }
 
+// "Otro look": guarda por qué este no convenció (chip opcional). Es señal
+// negativa con etiqueta — donde el motor falló — para calibrar el juez. No
+// bloquea: si el usuario no elige nada, no se guarda y el look se regenera igual.
+export async function saveSkipReason(
+  outfitId: string,
+  reason: string
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase.from("events").insert({
+    user_id: user.id,
+    outfit_id: outfitId,
+    type: "another_look",
+    data: { reason: reason.slice(0, 200) },
+  });
+
+  if (error && error.code !== "23505") return { ok: false };
+  return { ok: true };
+}
+
 // Bookmark: guarda/quita un look de favoritos (distinto del 👍). Sella o limpia
 // outfits.favorited_at del look del propio usuario (RLS).
 export async function toggleFavorite(

@@ -154,7 +154,21 @@ export function OutfitCard({
             ))}
           </div>
           <hr className="my-4 border-line" />
-          {justif}
+          {/* Con la foto de protagonista, el "por qué" va colapsado para no
+              competir con la imagen; se abre con un tap. */}
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 text-sm font-medium text-accent [&::-webkit-details-marker]:hidden">
+              ¿Por qué este look?
+              <Icon
+                name="chevron"
+                size={15}
+                className="transition-transform duration-200 group-open:rotate-90"
+              />
+            </summary>
+            <p className="editorial mt-3 text-center text-sm text-ink">
+              {justificacion}
+            </p>
+          </details>
         </div>
       </article>
     );

@@ -4,10 +4,10 @@ import { useCallback, useRef, useState } from "react";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
-import { DownReason } from "@/components/down-reason";
+import { SkipReasons } from "@/components/skip-reasons";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
-import { voteOutfit, markWorn } from "@/lib/outfit-actions";
+import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
@@ -37,13 +37,13 @@ const ERROR_COPY: Record<string, string> = {
 
 export function HoyClient({
   lookInicial,
-  votoInicial,
   wornInicial,
   userId,
   defaultObjective,
 }: {
   lookInicial: HoyOutfit | null;
-  votoInicial: "up" | "down" | null;
+  /** ya no se usa: el feedback de Hoy es comportamiento (otro look / me lo pongo). */
+  votoInicial?: "up" | "down" | null;
   wornInicial: boolean;
   userId: string;
   defaultObjective: string | null;
@@ -51,16 +51,16 @@ export function HoyClient({
   const [state, setState] = useState<State>(
     lookInicial ? { kind: "ready", outfit: lookInicial } : { kind: "ask" }
   );
-  const [voto, setVoto] = useState(votoInicial);
   const [worn, setWorn] = useState(wornInicial);
+  const [skipOpen, setSkipOpen] = useState(false);
   const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(false);
 
   const generar = useCallback(async (input: LookInput, force: boolean) => {
     lastInput.current = input;
     setState({ kind: "generating", phase: "preparando tu look…" });
-    setVoto(null);
     setWorn(false);
+    setSkipOpen(false);
     try {
       const res = await fetch("/api/look-of-day", {
         method: "POST",
@@ -106,20 +106,20 @@ export function HoyClient({
     setState({ kind: "ask" });
   }
 
-  async function vote(up: boolean) {
-    if (state.kind !== "ready") return;
-    const prev = voto;
-    setVoto(up ? "up" : "down");
-    const res = await voteOutfit(state.outfit.id, up);
-    if (!res.ok) setVoto(prev);
-    else if (up) notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
+  // "Otro look": regenera con la MISMA ocasión (no es cambiar de ocasión, es
+  // "este no, otro"). Cierra los chips de razón.
+  function otroLook() {
+    setSkipOpen(false);
+    if (lastInput.current) generar(lastInput.current, true);
+    else startGen(true);
   }
 
-  async function meLoPuse() {
+  async function meLoPongo() {
     if (state.kind !== "ready" || worn) return;
     setWorn(true);
     const res = await markWorn(state.outfit.id);
     if (!res.ok) setWorn(false);
+    else notifyFirstLike(); // ahora el pico emocional es el "me lo voy a poner"
   }
 
   if (state.kind === "ask") {
@@ -182,57 +182,38 @@ export function HoyClient({
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => vote(true)}
-          aria-pressed={voto === "up"}
-          aria-label="Me gusta"
+          onClick={() => setSkipOpen((v) => !v)}
+          aria-pressed={skipOpen}
           className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
-            voto === "up"
+            skipOpen
               ? "border-accent bg-accent-soft text-ink"
               : "border-line bg-surface text-ink hover:border-ink"
           }`}
-        >
-          <Icon name="pulgar" size={20} active={voto === "up"} />
-        </button>
-        <button
-          type="button"
-          onClick={() => vote(false)}
-          aria-pressed={voto === "down"}
-          aria-label="No me gusta"
-          className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
-            voto === "down"
-              ? "border-accent bg-accent-soft text-ink"
-              : "border-line bg-surface text-ink hover:border-ink"
-          }`}
-        >
-          <Icon name="pulgar" size={20} rotate={180} active={voto === "down"} />
-        </button>
-        <button
-          type="button"
-          onClick={() => startGen(true)}
-          className="flex min-h-12 flex-1 items-center justify-center rounded-sm border border-line bg-surface text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
         >
           Otro look
         </button>
+        <button
+          type="button"
+          onClick={meLoPongo}
+          disabled={worn}
+          className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-medium transition-colors duration-200 ${
+            worn
+              ? "bg-success/15 text-success"
+              : "bg-accent text-on-accent hover:bg-accent-deep"
+          }`}
+        >
+          {worn ? (
+            <>
+              <Icon name="check" size={18} /> Es tu look de hoy
+            </>
+          ) : (
+            "Me lo voy a poner"
+          )}
+        </button>
       </div>
-      {voto === "down" ? <DownReason outfitId={state.outfit.id} /> : null}
-      <button
-        type="button"
-        onClick={meLoPuse}
-        disabled={worn}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-sm text-base font-medium transition-colors duration-200 ${
-          worn
-            ? "bg-success/15 text-success"
-            : "bg-accent text-on-accent hover:bg-accent-deep"
-        }`}
-      >
-        {worn ? (
-          <>
-            <Icon name="check" size={18} /> Me lo puse hoy
-          </>
-        ) : (
-          "Me lo puse"
-        )}
-      </button>
+      {skipOpen && !worn ? (
+        <SkipReasons outfitId={state.outfit.id} onProceed={otroLook} />
+      ) : null}
     </div>
   );
 }
