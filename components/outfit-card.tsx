@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
@@ -22,7 +23,8 @@ export type OutfitCardTryon = {
   lookName?: string;
   onGenerate: () => void;
   onExpand: () => void;
-  onChangePhoto: () => void;
+  /** Link al wizard de avatar (crear/cambiar). */
+  changeHref: string;
 };
 
 export function OutfitCard({
@@ -193,12 +195,12 @@ function TryonRow({ tryon }: { tryon: OutfitCardTryon }) {
   const rowBase =
     "flex w-full items-center gap-2.5 border-t border-line p-3.5 text-left";
 
-  if (tryon.status === "gen" || tryon.status === "up") {
+  if (tryon.status === "gen") {
     return (
       <div className={rowBase} aria-live="polite">
         <Spinner className="h-[15px] w-[15px] text-accent" />
         <span className="shimmer-txt whitespace-nowrap text-sm font-semibold">
-          {tryon.status === "up" ? "Guardando tu foto…" : "Creando tu look…"}
+          Creando tu look…
         </span>
         <span className="ml-auto whitespace-nowrap text-xs font-medium text-muted">
           ~20&nbsp;s
@@ -209,15 +211,15 @@ function TryonRow({ tryon }: { tryon: OutfitCardTryon }) {
 
   if (tryon.status === "sin_avatar") {
     return (
-      <button type="button" onClick={tryon.onChangePhoto} className={rowBase}>
+      <Link href={tryon.changeHref} className={rowBase}>
         <Dot />
         <span className="whitespace-nowrap text-sm font-semibold text-ink">
-          Sube una foto para verte
+          Crea tu avatar para verte
         </span>
         <span className="ml-auto flex items-center text-muted">
           <Icon name="chevron" size={15} />
         </span>
-      </button>
+      </Link>
     );
   }
 

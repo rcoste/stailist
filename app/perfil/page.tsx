@@ -45,7 +45,7 @@ export default async function PerfilPage() {
               <span className="text-xs text-muted">Tu cuenta</span>
               <span className="truncate text-sm font-medium text-ink">{profile.email}</span>
             </div>
-            <ChangeAvatar userId={profile.id} hasAvatar={!!avatarUrl} />
+            <ChangeAvatar hasAvatar={!!avatarUrl} />
           </div>
         </div>
 

@@ -1,18 +1,20 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 // Vista grande del try-on (overlay). Compartida por Hoy y el wow del onboarding.
+// "¿No te pareces?" lleva al wizard de avatar (changeHref).
 export function TryonModal({
   image,
   lookName,
   onClose,
-  onChangePhoto,
+  changeHref,
 }: {
   image: string;
   lookName?: string;
   onClose: () => void;
-  onChangePhoto: () => void;
+  changeHref: string;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/70 px-4 py-6">
@@ -32,13 +34,12 @@ export function TryonModal({
         >
           Cerrar
         </button>
-        <button
-          type="button"
-          onClick={onChangePhoto}
+        <Link
+          href={changeHref}
           className="min-h-11 text-sm font-medium text-surface underline decoration-surface/50 underline-offset-4"
         >
-          ¿No te pareces? Cambia tu foto
-        </button>
+          ¿No te pareces? Cambia tu avatar
+        </Link>
       </div>
     </div>
   );

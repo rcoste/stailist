@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { TryonModal } from "@/components/tryon-modal";
@@ -8,29 +9,24 @@ import { useTryon } from "@/lib/use-tryon";
 
 // Try-on en presentación "suelta" (thumbnail + botón). La usa el wow del
 // onboarding. En Hoy el try-on vive dentro de la OutfitCard (ver use-tryon +
-// outfit-card). La lógica es compartida vía useTryon.
+// outfit-card). La lógica es compartida vía useTryon. Sin avatar → wizard.
 export function TryonButton({
   outfitId,
   userId,
   initialImage = null,
+  returnTo = "/onboarding/wow",
 }: {
   outfitId: string;
   userId: string;
   initialImage?: string | null;
+  returnTo?: string;
 }) {
-  const t = useTryon({ outfitId, userId, initialImage, revealMode: "modal" });
+  const t = useTryon({ outfitId, userId, initialImage, revealMode: "modal", returnTo });
 
   // Vista grande (modal). Cierra → vuelve al thumbnail (no a la nada).
   if (t.mode === "full" && t.image) {
     return (
-      <>
-        <TryonModal
-          image={t.image}
-          onClose={t.closeFull}
-          onChangePhoto={t.pickPhoto}
-        />
-        {t.fileInput}
-      </>
+      <TryonModal image={t.image} onClose={t.closeFull} changeHref={t.avatarHref} />
     );
   }
 
@@ -38,38 +34,33 @@ export function TryonButton({
     return (
       <div className="flex flex-col gap-3 rounded-lg border border-dashed border-line bg-surface p-4">
         <p className="text-sm font-medium text-ink">
-          Para verte con el look, sube una foto tuya de cuerpo completo
+          Para verte con el look, crea tu avatar
         </p>
         <p className="text-xs text-muted">
-          De pie, buena luz, fondo simple. Solo una vez — la reusamos para todos
-          tus looks.
+          Subes un par de fotos y armo un avatar tuyo. Solo una vez — lo reuso
+          para todos tus looks.
         </p>
-        <button
-          type="button"
-          onClick={t.pickPhoto}
-          className="min-h-11 rounded-sm bg-accent text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
+        <Link
+          href={t.avatarHref}
+          className="flex min-h-11 items-center justify-center rounded-sm bg-accent text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
         >
-          Subir mi foto
-        </button>
-        {t.fileInput}
+          Crear mi avatar
+        </Link>
       </div>
     );
   }
 
   // Cargando: botón con spinner.
-  if (t.mode === "gen" || t.mode === "up") {
+  if (t.mode === "gen") {
     return (
-      <div className="flex flex-col gap-1.5">
-        <button
-          type="button"
-          disabled
-          className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft text-sm font-medium text-ink disabled:opacity-60"
-        >
-          <Spinner className="h-4 w-4" />
-          {t.mode === "up" ? "Guardando tu foto…" : "Creando tu look… (~20s)"}
-        </button>
-        {t.fileInput}
-      </div>
+      <button
+        type="button"
+        disabled
+        className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft text-sm font-medium text-ink disabled:opacity-60"
+      >
+        <Spinner className="h-4 w-4" />
+        Creando tu look… (~20s)
+      </button>
     );
   }
 
@@ -99,14 +90,12 @@ export function TryonButton({
             <span className="text-xs text-muted">Toca para verlo en grande</span>
           </span>
         </button>
-        <button
-          type="button"
-          onClick={t.pickPhoto}
+        <Link
+          href={t.avatarHref}
           className="self-start text-xs font-medium text-muted underline underline-offset-4 hover:text-ink"
         >
-          ¿No te pareces? Cambia tu foto
-        </button>
-        {t.fileInput}
+          ¿No te pareces? Cambia tu avatar
+        </Link>
       </div>
     );
   }
@@ -124,7 +113,6 @@ export function TryonButton({
       {t.mode === "error" && (
         <p className="text-center text-xs text-error">{t.errMsg}</p>
       )}
-      {t.fileInput}
     </div>
   );
 }

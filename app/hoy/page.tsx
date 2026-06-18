@@ -88,7 +88,7 @@ export default async function HoyPage() {
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">
-        {nudge === "tryon" ? <TryonNudge userId={profile.id} /> : null}
+        {nudge === "tryon" ? <TryonNudge /> : null}
         {nudge === "closet_real" ? (
           <LinkNudge
             id="closet_real"

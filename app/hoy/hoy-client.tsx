@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -237,6 +238,7 @@ function TryonOutfitCard({
     userId,
     initialImage: outfit.tryon ?? null,
     revealMode: "inline",
+    returnTo: "/hoy",
   });
 
   return (
@@ -257,25 +259,23 @@ function TryonOutfitCard({
           lookName: outfit.nombre,
           onGenerate: t.generar,
           onExpand: t.openFull,
-          onChangePhoto: t.pickPhoto,
+          changeHref: t.avatarHref,
         }}
       />
       {t.image ? (
-        <button
-          type="button"
-          onClick={t.pickPhoto}
+        <Link
+          href={t.avatarHref}
           className="self-start text-xs font-medium text-muted underline underline-offset-4 hover:text-ink"
         >
-          ¿No te pareces? Cambia tu foto
-        </button>
+          ¿No te pareces? Cambia tu avatar
+        </Link>
       ) : null}
-      {t.fileInput}
       {t.mode === "full" && t.image ? (
         <TryonModal
           image={t.image}
           lookName={outfit.nombre}
           onClose={t.closeFull}
-          onChangePhoto={t.pickPhoto}
+          changeHref={t.avatarHref}
         />
       ) : null}
     </>
