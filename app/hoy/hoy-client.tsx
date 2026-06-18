@@ -173,7 +173,11 @@ export function HoyClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-h3 font-semibold text-ink">{state.outfit.nombre}</h2>
+      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0">
+        <span className="text-h2 font-semibold text-ink">Hoy</span>
+        <span className="text-sm font-normal text-muted">·</span>
+        <span className="editorial text-h3 text-accent">{state.outfit.nombre}</span>
+      </h1>
       <TryonOutfitCard
         key={state.outfit.id}
         outfit={state.outfit}

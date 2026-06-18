@@ -78,15 +78,6 @@ export default async function HoyPage() {
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">
-        <div>
-          <h1 className="text-h1 font-semibold text-ink">Hoy</h1>
-          <p className="text-sm text-muted">
-            {lookInicial
-              ? "Tu look, listo para tu día."
-              : "Te estamos armando un look para hoy."}
-          </p>
-        </div>
-
         <HoyClient
           key={nombre}
           lookInicial={lookInicial}
