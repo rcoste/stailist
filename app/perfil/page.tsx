@@ -6,6 +6,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
+import { StyleVetoesSection } from "@/components/style-vetoes-section";
 import { InstallAppRow } from "@/components/install-app-row";
 import { signOut } from "./actions";
 
@@ -90,6 +91,8 @@ export default async function PerfilPage() {
             </Link>
           </div>
         </div>
+
+        <StyleVetoesSection gender={profile.gender} initial={profile.style_vetoes} />
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">

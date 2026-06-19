@@ -32,6 +32,7 @@ Qué haces (elige UN veredicto):
 - "rechazado": está mal Y NO se puede arreglar con este clóset (no hay una prenda alternativa que funcione). Es la EXCEPCIÓN, no la norma: primero intenta reparar; rechaza solo si de verdad no hay arreglo. Di la razón concreta.
 
 Reglas duras:
+- VETOS: si el contexto trae una lista de VETOS y el look incluye algo vetado, NO pasa. Repáralo cambiando esa prenda por otra del clóset que no esté vetada; si no hay alternativa limpia, RECHÁZALO (razón: "veto"). Es absoluto, por encima de todo lo demás.
 - Usa ÚNICAMENTE prendas del clóset (por id). Jamás inventes.
 - Cambia SOLO cuando de verdad mejora. Si dudas, déjalo como está (ok).
 - Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.

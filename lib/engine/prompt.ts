@@ -22,7 +22,11 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // ("¿algo en mente?") que entra al contexto para afinar el look a ese plan.
 // v10 (2026-06-17): contexto de vida (assessment de cápsula) — el motor sabe en
 // qué trabaja, qué hace y cómo le gusta vestir, para aterrizar el look a su vida.
-export const PROMPT_VERSION = "v10";
+// v11 (2026-06-18): vetos de estilo (issue #2) — la persona declara hard NOs
+// (prendas/colores/detalles que jamás quiere). Entran como REGLA DURA; las
+// prendas/colores ya vienen pre-filtradas del clóset (applyVetoes), esto cubre
+// los detalles y el texto libre. El juez también los rechaza.
+export const PROMPT_VERSION = "v11";
 
 export type EngineItem = {
   id: string;
@@ -48,6 +52,7 @@ export type EngineContext = {
   items: EngineItem[];
   weather: Weather | null;
   recentCombos: string[][]; // item_ids de outfits de los últimos 14 días
+  vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -133,6 +138,14 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.weather) {
     lines.push(`Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}.`);
+  }
+
+  if (ctx.vetoes.length > 0) {
+    lines.push(
+      `REGLA DURA — VETOS: la persona NUNCA quiere y jamás debes incluir ni sugerir: ${ctx.vetoes.join(
+        ", "
+      )}. En ninguna prenda, ni cerca de la cara ni en ningún lado, en ningún look. Es una regla absoluta.`
+    );
   }
 
   return lines;

@@ -11,6 +11,7 @@ import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
+import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
 // (petición nueva) — nunca reintentamos aquí adentro.
@@ -69,8 +70,19 @@ export async function POST(request: NextRequest) {
         ]);
 
         const profile = profileRes.data;
-        const items = (itemsRes.data ?? []) as EngineItem[];
-        if (!profile || items.length < 3) {
+        if (!profile) {
+          send({ error: "closet_vacio" });
+          controller.close();
+          return;
+        }
+        // Vetos (issue #2): quita las prendas vetadas ANTES del check de mínimo,
+        // para que vetar hacia un clóset corto caiga al estado de "insuficiente".
+        const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
+        const { items } = applyVetoes(
+          (itemsRes.data ?? []) as EngineItem[],
+          vetoes
+        );
+        if (items.length < 3) {
           send({ error: "closet_vacio" });
           controller.close();
           return;
@@ -109,6 +121,7 @@ export async function POST(request: NextRequest) {
           recentCombos: (recentRes.data ?? []).map(
             (o) => o.item_ids as string[]
           ),
+          vetoes: vetoLabels(vetoes),
         };
         const candidates = await generateOutfits(ctx);
 
