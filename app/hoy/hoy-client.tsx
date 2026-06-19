@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
+import { GenerateMenu } from "@/components/generate-menu";
 import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
@@ -54,6 +55,7 @@ export function HoyClient({
   );
   const [worn, setWorn] = useState(wornInicial);
   const [skipOpen, setSkipOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(false);
 
@@ -218,6 +220,24 @@ export function HoyClient({
       </div>
       {skipOpen && !worn ? (
         <SkipReasons outfitId={state.outfit.id} onProceed={otroLook} />
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setMenuOpen(true)}
+        className="flex min-h-12 items-center justify-center gap-2 rounded-sm border-2 border-accent text-sm font-medium text-accent transition-colors duration-200 hover:bg-accent-soft"
+      >
+        <Icon name="mas" size={18} /> Generar outfit
+      </button>
+
+      {menuOpen ? (
+        <GenerateMenu
+          onClose={() => setMenuOpen(false)}
+          onUnOutfit={() => {
+            setMenuOpen(false);
+            startGen(true);
+          }}
+        />
       ) : null}
     </div>
   );
