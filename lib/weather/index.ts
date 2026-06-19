@@ -58,3 +58,72 @@ export async function getWeather(
     return null;
   }
 }
+
+// Modo viaje: ciudad → coords vía Open-Meteo geocoding (gratis, sin key).
+export async function geocodePlace(
+  name: string
+): Promise<{ lat: number; lon: number; label: string } | null> {
+  const q = name.trim();
+  if (!q) return null;
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+      q
+    )}&count=1&language=es&format=json`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const r = data?.results?.[0];
+    if (!r || typeof r.latitude !== "number" || typeof r.longitude !== "number") return null;
+    const label = [r.name, r.admin1, r.country].filter(Boolean).join(", ");
+    return { lat: r.latitude, lon: r.longitude, label };
+  } catch {
+    return null;
+  }
+}
+
+// Modo viaje: pronóstico agregado para el rango de fechas (resumen único del
+// viaje). Open-Meteo da pronóstico ~16 días; fuera de eso devuelve null y el
+// caller cae a preguntar el clima esperado.
+export async function getWeatherForDates(
+  lat: number,
+  lon: number,
+  startDate: string,
+  endDate: string
+): Promise<Weather | null> {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weather_code&start_date=${startDate}&end_date=${endDate}&timezone=auto`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const maxes = data?.daily?.temperature_2m_max;
+    const mins = data?.daily?.temperature_2m_min;
+    const codes = data?.daily?.weather_code;
+    if (!Array.isArray(maxes) || maxes.length === 0) return null;
+
+    let sum = 0;
+    let n = 0;
+    for (let i = 0; i < maxes.length; i++) {
+      const mx = maxes[i];
+      const mn = Array.isArray(mins) ? mins[i] : undefined;
+      if (typeof mx === "number" && typeof mn === "number") {
+        sum += (mx + mn) / 2;
+        n++;
+      } else if (typeof mx === "number") {
+        sum += mx;
+        n++;
+      }
+    }
+    if (n === 0) return null;
+
+    const valid = (Array.isArray(codes) ? codes : []).filter(
+      (c): c is number => typeof c === "number"
+    );
+    const rainy = valid.some((c) => c >= 51 && c <= 82);
+    const condition = rainy
+      ? "lluvia"
+      : describe(valid[Math.floor(valid.length / 2)] ?? 0);
+    return { temp_c: Math.round(sum / n), condition };
+  } catch {
+    return null;
+  }
+}
