@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { SEASONS, seasonPalette, type Season } from "@/lib/colorimetria";
+import { SEASONS, seasonPalette, seasonDisplayLabel, type Season } from "@/lib/colorimetria";
 import { updateColorimetria } from "@/app/onboarding/colorimetria/actions";
 import { Icon, type IconName } from "@/components/icon";
 
@@ -146,7 +146,9 @@ export function SeasonReveal({
         <span className="text-xs font-semibold uppercase tracking-wide text-muted">
           Tu estación
         </span>
-        <h2 className="text-display font-semibold text-ink">{DISPLAY[base]}</h2>
+        <h2 className="text-display font-semibold text-ink">
+          {seasonDisplayLabel(base, flw)}
+        </h2>
         <p className="editorial mt-1 text-base text-ink">{phrase}</p>
       </div>
 

@@ -222,6 +222,38 @@ export function seasonMetal(
   return warm ? "oro" : "plata";
 }
 
+// Nombre de sub-estación (sistema de 12): estación + hacia qué vecina se
+// inclina (el `flow`). "Invierno profundo" = invierno con un pie en otoño.
+// Sin flow = la estación a secas. Es solo presentación: el dato (season+flow)
+// ya lo calcula el quiz; aquí solo le ponemos el nombre rico.
+const BASE_LABEL: Record<Season, string> = {
+  primavera: "Primavera",
+  verano: "Verano",
+  otono: "Otoño",
+  invierno: "Invierno",
+};
+
+const SUBSEASON: Record<Season, Partial<Record<Season, string>>> = {
+  invierno: { otono: "Invierno profundo", verano: "Invierno suave" },
+  verano: { primavera: "Verano claro", invierno: "Verano profundo" },
+  otono: { invierno: "Otoño profundo", primavera: "Otoño suave" },
+  primavera: { verano: "Primavera clara", otono: "Primavera cálida" },
+};
+
+export function seasonDisplayLabel(season: Season, flow: Season | null): string {
+  if (flow) {
+    const sub = SUBSEASON[season]?.[flow];
+    if (sub) return sub;
+  }
+  return BASE_LABEL[season];
+}
+
+// Las dos vecinas a las que una estación puede inclinarse (para el selector
+// manual de "con un pie en…"). Coincide con los flows que produce el quiz.
+export function seasonNeighbors(season: Season): Season[] {
+  return Object.keys(SUBSEASON[season]) as Season[];
+}
+
 export function seasonPalette(primary: Season, flow: Season | null) {
   // Defensivo: si llega una estación inválida (dato corrupto), no reventar el
   // motor — devolver vacío y seguir. Mejor un look sin paleta que cero looks.

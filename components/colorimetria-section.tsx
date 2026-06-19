@@ -6,8 +6,17 @@ import {
   SEASONS,
   seasonPalette,
   seasonMetal,
+  seasonDisplayLabel,
+  seasonNeighbors,
   type Season,
 } from "@/lib/colorimetria";
+
+const DISPLAY: Record<Season, string> = {
+  primavera: "Primavera",
+  verano: "Verano",
+  otono: "Otoño",
+  invierno: "Invierno",
+};
 import { updateColorimetria } from "@/app/onboarding/colorimetria/actions";
 
 const ORDEN: Season[] = ["primavera", "verano", "otono", "invierno"];
@@ -44,13 +53,29 @@ export function ColorimetriaSection({
   const [current, setCurrent] = useState<Season | null>(season);
   const [curFlow, setCurFlow] = useState<Season | null>(flow);
   const [pending, startTransition] = useTransition();
+  // Edición en dos pasos: primero la estación, luego (opcional) hacia qué vecina
+  // se inclina — así editar a mano NO borra la sub-estación.
+  const [editStep, setEditStep] = useState<"season" | "flow">("season");
+  const [draftSeason, setDraftSeason] = useState<Season | null>(null);
 
-  function pick(s: Season) {
+  function startEdit() {
+    setDraftSeason(current);
+    setEditStep("season");
+    setEditing(true);
+  }
+
+  function pickSeason(s: Season) {
+    setDraftSeason(s);
+    setEditStep("flow");
+  }
+
+  function pickFlow(f: Season | null) {
+    const s = draftSeason as Season;
     setCurrent(s);
-    setCurFlow(null); // declarar la estación a mano = caso claro, sin frontera
+    setCurFlow(f);
     setEditing(false);
     startTransition(async () => {
-      await updateColorimetria(s, null);
+      await updateColorimetria(s, f);
       router.refresh();
     });
   }
@@ -69,7 +94,9 @@ export function ColorimetriaSection({
           <>
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-0.5">
-                <span className="editorial text-xl capitalize text-ink">{data.label}</span>
+                <span className="editorial text-xl text-ink">
+                  {seasonDisplayLabel(current as Season, curFlow)}
+                </span>
                 <span className="text-xs text-muted">{data.reveal}</span>
               </div>
               {metal ? (
@@ -113,29 +140,67 @@ export function ColorimetriaSection({
 
         {editing ? (
           <div className="flex flex-col gap-2 border-t border-line pt-3">
-            <span className="text-xs text-muted">¿Cuál te suena más?</span>
-            <div className="grid grid-cols-2 gap-2">
-              {ORDEN.map((s) => (
+            {editStep === "season" ? (
+              <>
+                <span className="text-xs text-muted">¿Cuál te suena más?</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {ORDEN.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => pickSeason(s)}
+                      disabled={pending}
+                      className={`min-h-10 rounded-sm border text-sm font-medium transition-colors duration-200 disabled:opacity-60 ${
+                        s === draftSeason
+                          ? "border-accent bg-accent-soft text-ink"
+                          : "border-line bg-surface text-ink hover:border-ink"
+                      }`}
+                    >
+                      {DISPLAY[s]}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-xs text-muted">
+                  ¿Con un pie en otra? (opcional)
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {seasonNeighbors(draftSeason as Season).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => pickFlow(n)}
+                      disabled={pending}
+                      className="min-h-10 rounded-sm border border-line bg-surface text-sm font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-60"
+                    >
+                      {DISPLAY[n]}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => pickFlow(null)}
+                    disabled={pending}
+                    className="min-h-10 rounded-sm border border-line bg-surface text-sm font-medium text-muted transition-colors duration-200 hover:border-ink disabled:opacity-60"
+                  >
+                    Ninguna
+                  </button>
+                </div>
                 <button
-                  key={s}
                   type="button"
-                  onClick={() => pick(s)}
-                  disabled={pending}
-                  className={`min-h-10 rounded-sm border text-sm font-medium capitalize transition-colors duration-200 disabled:opacity-60 ${
-                    s === current
-                      ? "border-accent bg-accent-soft text-ink"
-                      : "border-line bg-surface text-ink hover:border-ink"
-                  }`}
+                  onClick={() => setEditStep("season")}
+                  className="self-start text-xs font-medium text-muted hover:text-ink"
                 >
-                  {SEASONS[s].label}
+                  ← Cambiar estación
                 </button>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         ) : (
           <button
             type="button"
-            onClick={() => setEditing(true)}
+            onClick={startEdit}
             className="self-start text-xs font-medium text-accent underline underline-offset-2"
           >
             ¿No te suena? Ajústala
