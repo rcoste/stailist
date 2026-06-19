@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
-import { OCCASIONS } from "@/lib/trip";
+import { setTripLookVote } from "@/lib/trip-actions";
+import { OCCASIONS, type Occasion } from "@/lib/trip";
 
 // Un look del viaje ya resuelto contra el clóset (la página servidor mapea cada
 // nombre de prenda a su imagen antes de pasarlo).
@@ -13,6 +14,7 @@ export type ResolvedOutfit = {
   ocasion: string;
   titulo: string;
   porque: string;
+  voto: "up" | "down" | null;
   prendas: { nombre: string; image: string | null }[];
 };
 
@@ -37,13 +39,21 @@ function Thumb({ src }: { src: string | null }) {
 export function TripOutfits({
   tripId,
   outfits,
+  ocasiones,
+  stale,
 }: {
   tripId: string;
   outfits: ResolvedOutfit[] | null;
+  ocasiones: Occasion[];
+  stale: boolean;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  // Voto optimista por índice (arranca de lo que llegó del server).
+  const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
+    Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
+  );
 
   async function generar() {
     setLoading(true);
@@ -63,6 +73,12 @@ export function TripOutfits({
       setError(true);
       setLoading(false);
     }
+  }
+
+  function votar(index: number, up: boolean) {
+    const next = up ? "up" : "down";
+    setVotos((v) => ({ ...v, [index]: v[index] === next ? null : next }));
+    setTripLookVote(tripId, index, up);
   }
 
   if (loading) {
@@ -121,7 +137,10 @@ export function TripOutfits({
     );
   }
 
-  // Hay looks.
+  // Ocasiones que elegiste pero que ningún look cubrió (no las omitimos en silencio).
+  const cubiertas = new Set(outfits.map((o) => o.ocasion));
+  const sinCubrir = ocasiones.filter((o) => !cubiertas.has(o));
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -136,6 +155,22 @@ export function TripOutfits({
           Armar otros
         </button>
       </div>
+
+      {/* #3 — los looks quedaron viejos tras un cambio de empaque. */}
+      {stale ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent-soft p-3">
+          <span className="text-sm text-ink">
+            Cambiaste tu empaque — estos looks pueden estar desactualizados.
+          </span>
+          <button
+            type="button"
+            onClick={generar}
+            className="flex min-h-10 w-fit items-center justify-center rounded-sm bg-accent px-3 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            Actualizar mis looks
+          </button>
+        </div>
+      ) : null}
 
       {error ? (
         <p className="text-sm text-error">No pude armar otros looks — inténtalo otra vez.</p>
@@ -159,9 +194,48 @@ export function TripOutfits({
               ))}
             </div>
             <p className="text-sm text-muted">{o.porque}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => votar(i, true)}
+                aria-pressed={votos[i] === "up"}
+                aria-label="Me gusta este look"
+                className={`flex min-h-10 flex-1 items-center justify-center rounded-sm border transition-colors duration-200 ${
+                  votos[i] === "up"
+                    ? "border-accent bg-accent-soft text-ink"
+                    : "border-line bg-surface text-ink hover:border-ink"
+                }`}
+              >
+                <Icon name="pulgar" size={18} active={votos[i] === "up"} />
+              </button>
+              <button
+                type="button"
+                onClick={() => votar(i, false)}
+                aria-pressed={votos[i] === "down"}
+                aria-label="No me gusta este look"
+                className={`flex min-h-10 flex-1 items-center justify-center rounded-sm border transition-colors duration-200 ${
+                  votos[i] === "down"
+                    ? "border-accent bg-accent-soft text-ink"
+                    : "border-line bg-surface text-ink hover:border-ink"
+                }`}
+              >
+                <Icon name="pulgar" size={18} rotate={180} active={votos[i] === "down"} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* #2 — ocasiones elegidas que no se pudieron armar (no se omiten calladas). */}
+      {sinCubrir.length > 0 ? (
+        <p className="text-sm text-muted">
+          No armamos look para{" "}
+          <span className="text-ink">
+            {sinCubrir.map((o) => (OCC_LABEL.get(o) ?? o).toLowerCase()).join(", ")}
+          </span>{" "}
+          — te falta algo para esa ocasión. Revisa &quot;Te falta&quot; arriba.
+        </p>
+      ) : null}
     </div>
   );
 }

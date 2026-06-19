@@ -23,7 +23,7 @@ export default async function AdminOverview() {
     supabase
       .from("events")
       .select("type, data")
-      .in("type", ["vote_up", "vote_down", "worn", "first_outfit_ttv"]),
+      .in("type", ["vote_up", "vote_down", "worn", "first_outfit_ttv", "trip_look_vote"]),
   ]);
 
   const events = eventsRes.data ?? [];
@@ -34,6 +34,12 @@ export default async function AdminOverview() {
     .filter((e) => e.type === "first_outfit_ttv")
     .map((e) => (e.data as { seconds?: number })?.seconds)
     .filter((s): s is number => typeof s === "number");
+
+  // Votos sobre looks de viaje (señal aparte del ratio del motor diario).
+  const tripVotes = events.filter((e) => e.type === "trip_look_vote");
+  const tripUps = tripVotes.filter((e) => (e.data as { vote?: string })?.vote === "up").length;
+  const tripRatio =
+    tripVotes.length > 0 ? Math.round((tripUps / tripVotes.length) * 100) : null;
 
   const votos = ups + downs;
   const ratio = votos > 0 ? Math.round((ups / votos) * 100) : null;
@@ -64,6 +70,11 @@ export default async function AdminOverview() {
                 ? "✓ bajo 2 min"
                 : "⚠ sobre 2 min"
           }
+        />
+        <Stat
+          label="Looks de viaje 👍"
+          value={tripRatio === null ? "—" : `${tripRatio}%`}
+          hint={tripVotes.length > 0 ? `${tripUps}/${tripVotes.length} votos` : "sin votos aún"}
         />
       </div>
 

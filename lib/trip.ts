@@ -48,6 +48,7 @@ export type TripOutfit = {
   titulo: string; // "Cena junto al mar"
   porque: string; // una línea cálida de por qué funciona
   prendas: string[]; // nombres de prendas del clóset (lo empacable)
+  voto?: "up" | "down" | null; // 👍/👎 del usuario sobre el look (se regenera con ellos)
 };
 
 // Días del viaje (inclusivo). Fechas en YYYY-MM-DD, comparadas en UTC.

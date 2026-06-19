@@ -5,7 +5,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
 import { loadClosetImageMap } from "@/lib/capsule-data";
-import { tripDays, luggageMeta, type Luggage, type TripOutfit } from "@/lib/trip";
+import { tripDays, luggageMeta, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 
@@ -27,7 +27,7 @@ export default async function ViajeDetallePage({
   const { data: trip } = await supabase
     .from("trips")
     .select(
-      "id, lugar, fecha_inicio, fecha_fin, maleta, weather, capsule_target, capsule_match, overrides, empacado, outfits"
+      "id, lugar, fecha_inicio, fecha_fin, ocasiones, maleta, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale"
     )
     .eq("id", id)
     .eq("user_id", profile.id)
@@ -79,6 +79,7 @@ export default async function ViajeDetallePage({
         ocasion: o.ocasion,
         titulo: o.titulo,
         porque: o.porque,
+        voto: o.voto ?? null,
         prendas: o.prendas.map((nombre) => ({ nombre, image: imageMap[nombre] ?? null })),
       }))
     : null;
@@ -102,7 +103,12 @@ export default async function ViajeDetallePage({
 
         <div className="h-px bg-line" />
 
-        <TripOutfits tripId={trip.id} outfits={resolvedOutfits} />
+        <TripOutfits
+          tripId={trip.id}
+          outfits={resolvedOutfits}
+          ocasiones={(trip.ocasiones as Occasion[]) ?? []}
+          stale={Boolean(trip.outfits_stale)}
+        />
       </section>
     </AppShell>
   );

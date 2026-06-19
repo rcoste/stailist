@@ -52,7 +52,11 @@ export async function POST(
     }));
 
   if (packable.length < 2) {
-    await supabase.from("trips").update({ outfits: [] }).eq("id", id).eq("user_id", user.id);
+    await supabase
+      .from("trips")
+      .update({ outfits: [], outfits_stale: false })
+      .eq("id", id)
+      .eq("user_id", user.id);
     return NextResponse.json({ ok: true, count: 0, reason: "pocas_prendas" });
   }
 
@@ -79,7 +83,7 @@ export async function POST(
 
   const { error } = await supabase
     .from("trips")
-    .update({ outfits })
+    .update({ outfits, outfits_stale: false })
     .eq("id", id)
     .eq("user_id", user.id);
   if (error) return NextResponse.json({ error: "guardar" }, { status: 500 });
