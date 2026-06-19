@@ -7,7 +7,7 @@ export type TripCapsuleInputs = {
   days: number;
   ocasiones: Occasion[];
   maleta: Luggage | null;
-  weather: { temp_c: number; condition: string } | null;
+  weather: { temp_c: number; condition: string; estimated?: boolean } | null;
   gender: "hombre" | "mujer" | null;
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
@@ -50,7 +50,9 @@ export async function generateTripCapsuleTarget(
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
 
   const climaTxt = inputs.weather
-    ? `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
+    ? inputs.weather.estimated
+      ? `~${inputs.weather.temp_c}°C (clima TÍPICO de la temporada, no pronóstico exacto — prioriza versatilidad y capas que aguanten variación)`
+      : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
     : "desconocido (usa prendas versátiles, evita extremos)";
   const ocas = inputs.ocasiones.length ? occasionLabels(inputs.ocasiones) : "general";
   const lug = luggageMeta(inputs.maleta);

@@ -1,7 +1,10 @@
 // Clima vía Open-Meteo (gratuita, sin API key). Si algo falla, regresamos
 // null y el motor genera sin clima — el clima nunca bloquea (spec E6).
 
-export type Weather = { temp_c: number; condition: string };
+// `estimated` = no es pronóstico real (el viaje cae fuera del horizonte de
+// Open-Meteo, ~16 días). Es el clima TÍPICO de la temporada, sacado del histórico
+// del año pasado en esas mismas fechas. La UI lo etiqueta distinto ("clima típico").
+export type Weather = { temp_c: number; condition: string; estimated?: boolean };
 
 // Grupos de weather_code de Open-Meteo → descripción corta en español.
 function describe(code: number): string {
@@ -81,49 +84,104 @@ export async function geocodePlace(
   }
 }
 
-// Modo viaje: pronóstico agregado para el rango de fechas (resumen único del
-// viaje). Open-Meteo da pronóstico ~16 días; fuera de eso devuelve null y el
-// caller cae a preguntar el clima esperado.
+// Agrega el bloque `daily` de Open-Meteo (forecast o archive — mismo shape) a un
+// solo resumen: temperatura media del rango y condición predominante.
+function aggregateDaily(daily: unknown): { temp_c: number; condition: string } | null {
+  const d = (daily ?? {}) as {
+    temperature_2m_max?: unknown;
+    temperature_2m_min?: unknown;
+    weather_code?: unknown;
+  };
+  const maxes = d.temperature_2m_max;
+  const mins = d.temperature_2m_min;
+  const codes = d.weather_code;
+  if (!Array.isArray(maxes) || maxes.length === 0) return null;
+
+  let sum = 0;
+  let n = 0;
+  for (let i = 0; i < maxes.length; i++) {
+    const mx = maxes[i];
+    const mn = Array.isArray(mins) ? mins[i] : undefined;
+    if (typeof mx === "number" && typeof mn === "number") {
+      sum += (mx + mn) / 2;
+      n++;
+    } else if (typeof mx === "number") {
+      sum += mx;
+      n++;
+    }
+  }
+  if (n === 0) return null;
+
+  const valid = (Array.isArray(codes) ? codes : []).filter(
+    (c): c is number => typeof c === "number"
+  );
+  const rainy = valid.some((c) => c >= 51 && c <= 82);
+  const condition = rainy
+    ? "lluvia"
+    : describe(valid[Math.floor(valid.length / 2)] ?? 0);
+  return { temp_c: Math.round(sum / n), condition };
+}
+
+// Modo viaje: clima agregado para el rango de fechas (resumen único del viaje).
+// Primero intenta el PRONÓSTICO de Open-Meteo (~16 días). Si el viaje está más
+// lejos (no hay pronóstico), cae al HISTÓRICO: el mismo rango de fechas del año
+// pasado vía archive-api. "Nueva York en agosto = caluroso" — sentido común
+// estacional en vez de un genérico sin clima. Marca ese clima como `estimated`.
 export async function getWeatherForDates(
   lat: number,
   lon: number,
   startDate: string,
   endDate: string
 ): Promise<Weather | null> {
+  const forecast = await fetchDailyWeather(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weather_code&start_date=${startDate}&end_date=${endDate}&timezone=auto`
+  );
+  if (forecast) return forecast;
+
+  // Fuera del horizonte de pronóstico → histórico del año pasado en esas fechas.
+  return getHistoricalWeatherForDates(lat, lon, startDate, endDate);
+}
+
+// Llama a Open-Meteo (forecast o archive) y agrega el resultado. null si falla.
+async function fetchDailyWeather(url: string): Promise<{ temp_c: number; condition: string } | null> {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weather_code&start_date=${startDate}&end_date=${endDate}&timezone=auto`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const data = await res.json();
-    const maxes = data?.daily?.temperature_2m_max;
-    const mins = data?.daily?.temperature_2m_min;
-    const codes = data?.daily?.weather_code;
-    if (!Array.isArray(maxes) || maxes.length === 0) return null;
-
-    let sum = 0;
-    let n = 0;
-    for (let i = 0; i < maxes.length; i++) {
-      const mx = maxes[i];
-      const mn = Array.isArray(mins) ? mins[i] : undefined;
-      if (typeof mx === "number" && typeof mn === "number") {
-        sum += (mx + mn) / 2;
-        n++;
-      } else if (typeof mx === "number") {
-        sum += mx;
-        n++;
-      }
-    }
-    if (n === 0) return null;
-
-    const valid = (Array.isArray(codes) ? codes : []).filter(
-      (c): c is number => typeof c === "number"
-    );
-    const rainy = valid.some((c) => c >= 51 && c <= 82);
-    const condition = rainy
-      ? "lluvia"
-      : describe(valid[Math.floor(valid.length / 2)] ?? 0);
-    return { temp_c: Math.round(sum / n), condition };
+    return aggregateDaily(data?.daily);
   } catch {
     return null;
   }
+}
+
+// Histórico: el mismo rango de fechas (mismos mes-día, mismos días de duración)
+// del AÑO PASADO relativo a hoy — siempre tiene datos en el archive (que va con
+// pocos días de retraso). Sirve para viajes a meses vista, donde no hay pronóstico
+// pero el clima típico de la temporada sí informa qué empacar.
+export async function getHistoricalWeatherForDates(
+  lat: number,
+  lon: number,
+  startDate: string,
+  endDate: string
+): Promise<Weather | null> {
+  // Duración del viaje (días inclusivos), para reconstruir el rango histórico.
+  const a = new Date(startDate + "T00:00:00Z").getTime();
+  const b = new Date(endDate + "T00:00:00Z").getTime();
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  const days = Math.max(1, Math.round((b - a) / 86_400_000) + 1);
+
+  // Año pasado relativo a HOY (no al viaje): garantiza datos aunque el viaje sea
+  // a 2027. Conserva mes-día del inicio; el fin se recalcula sumando los días.
+  const histYear = new Date().getUTCFullYear() - 1;
+  const histStart = `${histYear}-${startDate.slice(5)}`;
+  const sd = new Date(histStart + "T00:00:00Z");
+  if (!Number.isFinite(sd.getTime())) return null;
+  sd.setUTCDate(sd.getUTCDate() + (days - 1));
+  const histEnd = sd.toISOString().slice(0, 10);
+
+  const agg = await fetchDailyWeather(
+    `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weather_code&start_date=${histStart}&end_date=${histEnd}&timezone=auto`
+  );
+  if (!agg) return null;
+  return { ...agg, estimated: true };
 }

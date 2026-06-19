@@ -5,8 +5,9 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
 import { loadClosetImageMap } from "@/lib/capsule-data";
-import { tripDays, luggageMeta, type Luggage } from "@/lib/trip";
+import { tripDays, luggageMeta, type Luggage, type TripOutfit } from "@/lib/trip";
 import { TripResult, type TripRow } from "@/components/trip-result";
+import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 
 function fmt(d: string): string {
   const [, m, day] = d.split("-");
@@ -26,7 +27,7 @@ export default async function ViajeDetallePage({
   const { data: trip } = await supabase
     .from("trips")
     .select(
-      "id, lugar, fecha_inicio, fecha_fin, maleta, weather, capsule_target, capsule_match, overrides, empacado"
+      "id, lugar, fecha_inicio, fecha_fin, maleta, weather, capsule_target, capsule_match, overrides, empacado, outfits"
     )
     .eq("id", id)
     .eq("user_id", profile.id)
@@ -63,8 +64,24 @@ export default async function ViajeDetallePage({
   }));
 
   const days = tripDays(trip.fecha_inicio, trip.fecha_fin);
-  const weather = trip.weather as { temp_c: number; condition: string } | null;
+  const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null;
   const lug = luggageMeta(trip.maleta as Luggage | null);
+  const weatherTxt = weather
+    ? weather.estimated
+      ? ` · ~${weather.temp_c}°C, clima típico de la temporada`
+      : ` · ${weather.temp_c}°C, ${weather.condition}`
+    : "";
+
+  // Outfits del viaje (v1.1): resueltos contra el clóset (cada nombre → su imagen).
+  const rawOutfits = trip.outfits as TripOutfit[] | null;
+  const resolvedOutfits: ResolvedOutfit[] | null = rawOutfits
+    ? rawOutfits.map((o) => ({
+        ocasion: o.ocasion,
+        titulo: o.titulo,
+        porque: o.porque,
+        prendas: o.prendas.map((nombre) => ({ nombre, image: imageMap[nombre] ?? null })),
+      }))
+    : null;
 
   return (
     <AppShell>
@@ -76,12 +93,16 @@ export default async function ViajeDetallePage({
           <h1 className="text-h1 font-semibold text-ink">Tu maleta para {trip.lugar}</h1>
           <p className="text-sm text-muted">
             {fmt(trip.fecha_inicio)} – {fmt(trip.fecha_fin)} · {days} días
-            {weather ? ` · ${weather.temp_c}°C, ${weather.condition}` : ""}
+            {weatherTxt}
             {lug ? ` · ${lug.label.toLowerCase()}` : ""}
           </p>
         </div>
 
         <TripResult tripId={trip.id} rows={rows} empacado={empacado} />
+
+        <div className="h-px bg-line" />
+
+        <TripOutfits tripId={trip.id} outfits={resolvedOutfits} />
       </section>
     </AppShell>
   );

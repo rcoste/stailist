@@ -32,11 +32,22 @@ export type Trip = {
   fecha_fin: string;
   ocasiones: Occasion[];
   maleta: Luggage | null;
-  weather: { temp_c: number; condition: string } | null;
+  weather: { temp_c: number; condition: string; estimated?: boolean } | null;
   capsule_target: CapsuleTarget | null;
   capsule_match: CapsuleMatch | null;
   overrides: CapsuleOverrides | null;
   empacado: Record<string, boolean>;
+  outfits: TripOutfit[] | null;
+};
+
+// Un look del viaje: prendas concretas (por NOMBRE de prenda del clóset, ya
+// denormalizado al guardar) que combinan para una ocasión. Armado solo con lo
+// que de verdad empacas. La página resuelve cada nombre a su imagen.
+export type TripOutfit = {
+  ocasion: Occasion;
+  titulo: string; // "Cena junto al mar"
+  porque: string; // una línea cálida de por qué funciona
+  prendas: string[]; // nombres de prendas del clóset (lo empacable)
 };
 
 // Días del viaje (inclusivo). Fechas en YYYY-MM-DD, comparadas en UTC.
