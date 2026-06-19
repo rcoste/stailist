@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     weather?: { temp_c?: number; condition?: string };
     objective?: string;
     plan?: string;
+    momento?: string;
     force?: boolean;
   } = {};
   try {
@@ -137,6 +138,8 @@ export async function POST(request: NextRequest) {
             (o) => o.item_ids as string[]
           ),
           vetoes: vetoLabels(vetoes),
+          timeOfDay:
+            body.momento === "noche" ? "noche" : body.momento === "dia" ? "dia" : null,
         };
         const candidates = await generateOutfits(ctx);
 

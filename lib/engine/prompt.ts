@@ -26,7 +26,10 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // (prendas/colores/detalles que jamás quiere). Entran como REGLA DURA; las
 // prendas/colores ya vienen pre-filtradas del clóset (applyVetoes), esto cubre
 // los detalles y el texto libre. El juez también los rechaza.
-export const PROMPT_VERSION = "v11";
+// v12 (2026-06-18): momento del día (día/noche) — señal del compositor para
+// afinar el look (de noche, más oscuro y arreglado). Se cortó el selector de
+// fecha: el clima manual ya abstrae lugar/día, no hace falta calendario.
+export const PROMPT_VERSION = "v12";
 
 export type EngineItem = {
   id: string;
@@ -53,6 +56,7 @@ export type EngineContext = {
   weather: Weather | null;
   recentCombos: string[][]; // item_ids de outfits de los últimos 14 días
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
+  timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -114,6 +118,13 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
+  }
+  if (ctx.timeOfDay === "noche") {
+    lines.push(
+      "Momento: de noche — favorece tonos más oscuros y un punto más arreglado."
+    );
+  } else if (ctx.timeOfDay === "dia") {
+    lines.push("Momento: de día.");
   }
 
   const s = ctx.season ? SEASONS[ctx.season] : null;

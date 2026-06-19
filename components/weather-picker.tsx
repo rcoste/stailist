@@ -9,10 +9,11 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // opcional + clima (ubicación o termómetro de 5 puntos) → arma el look. El
 // "plan" viaja al motor para afinar el look a lo que la usuaria tiene en mente.
 
-export type LookInput = { objective: string; plan?: string } & (
-  | { lat: number; lon: number }
-  | { weather: { temp_c: number; condition: string } }
-);
+export type LookInput = {
+  objective: string;
+  plan?: string;
+  momento: "dia" | "noche";
+} & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
 
 const OBJ_ICON: Record<Objective, IconName> = {
   diario: "sol",
@@ -64,6 +65,7 @@ export function LookRequest({
   const [objective, setObjective] = useState<string>(
     defaultObjective && defaultObjective in OBJECTIVES ? defaultObjective : "diario"
   );
+  const [momento, setMomento] = useState<"dia" | "noche">("dia");
   const [plan, setPlan] = useState("");
   const [climaIdx, setClimaIdx] = useState<number | null>(null);
   const [rain, setRain] = useState(false);
@@ -77,7 +79,7 @@ export function LookRequest({
     setLocFailed(false);
     const coords = await getPosition();
     setLocating(false);
-    if (coords) onPick({ objective, ...planOpt, ...coords });
+    if (coords) onPick({ objective, momento, ...planOpt, ...coords });
     else setLocFailed(true);
   }
 
@@ -86,6 +88,7 @@ export function LookRequest({
     const b = BUCKETS[climaIdx];
     onPick({
       objective,
+      momento,
       ...planOpt,
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
     });
@@ -118,6 +121,35 @@ export function LookRequest({
               >
                 <Icon name={OBJ_ICON[o.key as Objective]} size={18} active={on} />
                 {o.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Día / noche */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-medium text-ink">¿De día o de noche?</p>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { key: "dia", label: "De día", icon: "sol" },
+            { key: "noche", label: "De noche", icon: "estrella" },
+          ] as const).map((m) => {
+            const on = momento === m.key;
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setMomento(m.key)}
+                aria-pressed={on}
+                className={`flex min-h-12 items-center justify-center gap-2 rounded-sm border px-4 text-sm font-medium transition-colors duration-200 ${
+                  on
+                    ? "border-accent bg-accent-soft text-ink"
+                    : "border-line bg-surface text-ink hover:border-ink"
+                }`}
+              >
+                <Icon name={m.icon} size={18} active={on} />
+                {m.label}
               </button>
             );
           })}
@@ -162,7 +194,7 @@ export function LookRequest({
         <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-line" />
           <span className="text-xs text-muted">
-            {locFailed ? "no pude leerla — dime tú" : "o ajústalo a mano"}
+            {locFailed ? "no pude leerla — dime tú" : "o dime tú (otro día o lugar)"}
           </span>
           <span className="h-px flex-1 bg-line" />
         </div>
