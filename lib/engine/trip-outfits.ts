@@ -26,12 +26,25 @@ const MAX_CELLS = 40;
 // Tope de looks que mostramos (la rejilla puede dar muchos; curamos los distintos).
 const MAX_LOOKS = 16;
 
+// Reduce balanceadamente los slots para que el producto T×B×S no pase el tope SIN
+// dejar piezas fuera de manera sesgada: recorta el slot más grande primero (las
+// prendas vienen en orden de prioridad de la cápsula, así que conserva las top).
+function capProduct(t: number, b: number, s: number, max: number): [number, number, number] {
+  while (t * b * s > max && (t > 1 || b > 1 || s > 1)) {
+    if (t >= b && t >= s && t > 1) t--;
+    else if (b >= s && b > 1) b--;
+    else if (s > 1) s--;
+    else break;
+  }
+  return [t, b, s];
+}
+
 // SISTEMA SUDOKU: en vez de pedirle a la IA "arma unos looks" (que capaba en 8),
 // enumeramos en CÓDIGO la rejilla de combinaciones de lo empacable
 // (top×bottom×calzado + vestido×calzado). La IA solo VALIDA cada celda (¿combina
-// de color/formalidad/clima?), la etiqueta por ocasión y le pone una capa si
-// ayuda. Garantiza cobertura (no se le olvida ninguna combinación) y maximiza
-// los looks por prenda — el premio de empacar ligero.
+// de color/formalidad/clima?), la etiqueta por ocasión y le suma una capa si
+// ayuda. Garantiza cobertura (no se le olvida ninguna combinación) y maximiza los
+// looks por prenda — el premio de empacar ligero.
 export async function generateTripOutfits(
   inputs: TripOutfitInputs
 ): Promise<TripOutfit[]> {
@@ -47,21 +60,36 @@ export async function generateTripOutfits(
   const capas = bySlot("abrigo");
   const accesorios = bySlot("accesorio");
 
-  // --- 2. Enumera las celdas (combinaciones base) ---
-  // Si no hay calzado empacado, la celda igual vale (top+bottom / vestido).
-  const shoeSlots: (PackableItem | null)[] = calzado.length ? calzado : [null];
-  type Cell = { base: number[] };
-  const cells: Cell[] = [];
-  for (const t of tops)
-    for (const b of bottoms)
-      for (const s of shoeSlots)
-        cells.push({ base: [t.n, b.n, ...(s ? [s.n] : [])] });
-  for (const v of vestidos)
-    for (const s of shoeSlots) cells.push({ base: [v.n, ...(s ? [s.n] : [])] });
+  // Solo capas y accesorios pueden sumarse como "extra" a un look base.
+  const extraOk = new Set([...capas, ...accesorios].map((p) => p.n));
 
-  // Sin separables ni vestidos completos → no hay rejilla que armar.
+  // --- 2. Enumera las celdas (combinaciones base), balanceadas y bajo tope ---
+  type Cell = { base: number[]; kind: "sep" | "vestido" };
+  const cells: Cell[] = [];
+
+  // Presupuesto: separables comparten tope con los vestidos. Damos a vestidos un
+  // techo chico (cada vestido × calzados) y el resto a separables.
+  const shoeN = Math.max(1, calzado.length);
+  const dressCells = vestidos.length * shoeN;
+  const sepBudget = Math.max(0, MAX_CELLS - Math.min(dressCells, 12));
+
+  if (tops.length && bottoms.length && sepBudget > 0) {
+    const [nt, nb, ns] = capProduct(tops.length, bottoms.length, shoeN, sepBudget);
+    const Tops = tops.slice(0, nt);
+    const Bottoms = bottoms.slice(0, nb);
+    const Shoes: (PackableItem | null)[] = calzado.length ? calzado.slice(0, ns) : [null];
+    for (const t of Tops)
+      for (const b of Bottoms)
+        for (const s of Shoes) cells.push({ base: [t.n, b.n, ...(s ? [s.n] : [])], kind: "sep" });
+  }
+
+  const dressShoes: (PackableItem | null)[] = calzado.length ? calzado.slice(0, 3) : [null];
+  for (const v of vestidos.slice(0, 6))
+    for (const s of dressShoes) cells.push({ base: [v.n, ...(s ? [s.n] : [])], kind: "vestido" });
+
+  // Sin separables completos ni vestidos → no hay rejilla que armar.
   if (cells.length === 0) return [];
-  const grid = cells.slice(0, MAX_CELLS);
+  const grid = cells.slice(0, MAX_CELLS); // backstop duro
 
   const client = new Anthropic();
 
@@ -92,10 +120,10 @@ export async function generateTripOutfits(
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 3072,
+    max_tokens: 4096,
     system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
 
-REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. ${generoTxt}
+REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. En "extra" SOLO puedes poner números de capas (${capasTxt}) o accesorios (${accTxt}); nada más. ${generoTxt}
 
 Por cada celda decide si es un OUTFIT real:
 - Coherencia de color: los tonos combinan (no choca).
@@ -105,13 +133,12 @@ Por cada celda decide si es un OUTFIT real:
 
 Para las celdas que SÍ funcionan:
 - Asígnale UNA ocasión del viaje (clave exacta).
-- Opcional: súmale UNA capa (de: ${capasTxt}) y/o UN accesorio (de: ${accTxt}) si la mejora.
+- Opcional: súmale en "extra" UNA capa y/o UN accesorio si la mejora (solo de las listas de arriba).
 - titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
 - Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
 - Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
-
-Devuelve los looks válidos (los que pasen el filtro), del mejor al menos bueno.`,
+- Devuelve A LO MÁS ${MAX_LOOKS} looks, los mejores y más variados.`,
     messages: [
       {
         role: "user",
@@ -150,28 +177,33 @@ Devuelve los looks válidos (los que pasen el filtro), del mejor al menos bueno.
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
   const parsed = JSON.parse(text) as {
-    looks: { celda: number; ocasion: string; titulo: string; porque: string; extra: number[] }[];
+    looks?: { celda: number; ocasion: string; titulo: string; porque: string; extra?: number[] }[];
   };
 
   const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
   const validOcc = new Set(OCCASIONS.map((o) => o.value as string));
+  const seen = new Set<string>(); // dedup de looks por su conjunto de prendas
 
-  return (parsed.looks ?? [])
-    .map((l) => {
-      const cell = grid[l.celda];
-      if (!cell) return null;
-      // Reconstruye: piezas base de la celda + capa/accesorio que sumó la IA.
-      const nums = [...cell.base, ...(l.extra ?? [])];
-      const prendas = Array.from(
-        new Set(nums.map((n) => byN.get(n)).filter((v): v is string => !!v))
-      );
-      return {
-        ocasion: l.ocasion as Occasion,
-        titulo: (l.titulo ?? "").trim(),
-        porque: (l.porque ?? "").trim(),
-        prendas,
-      };
-    })
-    .filter((o): o is TripOutfit => !!o && validOcc.has(o.ocasion) && !!o.titulo && o.prendas.length >= 2)
-    .slice(0, MAX_LOOKS);
+  const out: TripOutfit[] = [];
+  for (const l of parsed.looks ?? []) {
+    const cell = grid[l.celda];
+    if (!cell) continue;
+    // Reconstruye: piezas base + SOLO capas/accesorios válidos del "extra".
+    const extra = (l.extra ?? []).filter((n) => extraOk.has(n));
+    const nums = [...cell.base, ...extra];
+    const prendas = Array.from(
+      new Set(nums.map((n) => byN.get(n)).filter((v): v is string => !!v))
+    );
+    // Un vestido es look completo solo (1 pieza); los separables necesitan ≥2.
+    const minOk = cell.kind === "vestido" ? prendas.length >= 1 : prendas.length >= 2;
+    const ocasion = l.ocasion as Occasion;
+    if (!minOk || !validOcc.has(ocasion) || !(l.titulo ?? "").trim()) continue;
+    // Dedup: mismo conjunto exacto de prendas = mismo look, no se repite.
+    const key = [...prendas].sort().join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ ocasion, titulo: l.titulo.trim(), porque: (l.porque ?? "").trim(), prendas });
+    if (out.length >= MAX_LOOKS) break;
+  }
+  return out;
 }
