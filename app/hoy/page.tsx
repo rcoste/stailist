@@ -13,7 +13,8 @@ export default async function HoyPage({
   searchParams: Promise<{ generar?: string }>;
 }) {
   const { generar } = await searchParams;
-  const autoAsk = generar === "1"; // llegó por el botón ✨ → abre el form directo
+  // El botón ✨ manda ?generar=<timestamp> (cualquier valor presente cuenta).
+  const autoAsk = generar != null;
   const profile = await requireOnboarded();
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -114,7 +115,7 @@ export default async function HoyPage({
           />
         ) : null}
         <HoyClient
-          key={`${nombre}:${autoAsk ? "gen" : "view"}`}
+          key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}
           votoInicial={votoInicial}
           wornInicial={wornInicial}

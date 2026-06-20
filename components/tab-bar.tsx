@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 
 // Cuatro destinos + un botón central de ACCIÓN (Generar). El centro no es una
@@ -17,6 +17,7 @@ const TABS: { href: string; label: string; icon: IconName }[] = [
 
 export function TabBar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   // Dos pestañas a cada lado del botón central.
   const left = TABS.slice(0, 2);
@@ -43,15 +44,18 @@ export function TabBar() {
       <div className="flex items-stretch">
         {left.map((t) => tab(t.href, t.label, t.icon))}
 
-        {/* Botón central: la acción estrella (Generar). Elevado sobre la barra. */}
+        {/* Botón central: la acción estrella (Generar). Elevado sobre la barra.
+            Es un botón (no Link) con timestamp para que SIEMPRE re-dispare el
+            form, aun si ya estás en /hoy?generar (la URL cambia → remonta). */}
         <div className="flex w-16 shrink-0 items-start justify-center">
-          <Link
-            href="/hoy?generar=1"
+          <button
+            type="button"
+            onClick={() => router.push(`/hoy?generar=${Date.now()}`)}
             aria-label="Generar un outfit"
             className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-on-accent shadow-[0_6px_16px_rgba(114,47,55,0.35)] ring-4 ring-bg transition-colors duration-200 hover:bg-accent-deep"
           >
             <Icon name="destello" size={24} />
-          </Link>
+          </button>
         </div>
 
         {right.map((t) => tab(t.href, t.label, t.icon))}
