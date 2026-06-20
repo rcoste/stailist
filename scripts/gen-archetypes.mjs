@@ -232,6 +232,24 @@ const ITEMS = [
   { slug: "camisa-oxford-azul-hombre", desc: "a light blue men's oxford cloth button-down shirt, slightly textured casual weave, neatly laid flat", type: "flat" },
   { slug: "camisa-lino-blanca", desc: "a white linen-cotton men's button-up shirt, relaxed summer fit, neatly laid flat", type: "flat" },
   { slug: "camisa-lino-azul", desc: "a light blue linen-cotton men's button-up shirt, relaxed summer fit, neatly laid flat", type: "flat" },
+  // === Ampliación biblioteca MUJER (2026-06-19) — huecos del catálogo. Ver
+  // migración 0039. ===
+  { slug: "cuello-tortuga-negro-mujer", desc: "a black women's fine-knit turtleneck sweater, fitted", type: "flat" },
+  { slug: "sueter-crewneck-marino-mujer", desc: "a navy blue women's fine-knit crew-neck sweater", type: "flat" },
+  { slug: "sueter-half-zip-gris-mujer", desc: "a grey women's half-zip pullover sweater, fine knit, with a short metal zipper at the stand collar", type: "flat" },
+  { slug: "cardigan-corto-negro-mujer", desc: "a black short fitted women's button-up knit cardigan", type: "flat" },
+  { slug: "blazer-camel-mujer", desc: "a camel beige women's tailored blazer, fitted waist", type: "flat" },
+  { slug: "abrigo-acolchado-largo-mujer", desc: "a black long quilted puffer down coat, women's", type: "flat" },
+  { slug: "leggings-negros", desc: "a pair of black women's leggings, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-cuero-negro-mujer", desc: "a pair of black leather women's slim trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "ballerinas-negras", desc: "a pair of black women's ballet flat shoes", type: "shoes" },
+  { slug: "vestido-blanco-verano", desc: "a white cotton women's summer midi dress, light and flowy", type: "flat" },
+  { slug: "reloj-plateado-mujer", desc: "a women's elegant wristwatch with a slim silver case and a thin silver mesh band, laid flat from above; the watch dial is plain white and completely blank with no brand name, no logo, no text and no writing of any kind, only thin minimalist hour markers", type: "accesorio" },
+  { slug: "bolso-estructurado-negro", desc: "a black structured leather women's top-handle handbag, laid flat from directly above", type: "accesorio" },
+  { slug: "cinturon-camel-mujer", desc: "a tan camel leather women's belt with a gold buckle, coiled neatly into a spiral", type: "accesorio" },
+  { slug: "collar-dorado", desc: "a delicate thin gold chain women's necklace, laid flat in a loose circle from above", type: "accesorio" },
+  { slug: "bufanda-lana-mujer", desc: "a folded soft grey wool women's scarf, large, neatly arranged from above", type: "accesorio" },
+  { slug: "guantes-piel-negros-mujer", desc: "a pair of slim black leather women's gloves, laid flat side by side from above", type: "accesorio" },
 ];
 
 function buildPrompt({ desc, type }) {
