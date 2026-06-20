@@ -25,13 +25,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "sin_gemini" }, { status: 503 });
   }
 
-  let body: { image?: string; attrs?: Partial<PrendaAnalisis> & { descripcion?: string } } = {};
+  type AttrsBody = Partial<PrendaAnalisis> & { descripcion?: string };
+  let body: { image?: string; attrs?: AttrsBody } & AttrsBody = {};
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const attrs = body.attrs ?? {};
+  // Robusto a ambos formatos: {image, attrs:{...}} (nuevo) o los atributos al
+  // nivel raíz (cliente viejo). Así un desfase de versiones no rompe el render.
+  const attrs: AttrsBody = body.attrs ?? body;
   const nombre = (attrs.nombre ?? "").trim();
   if (!nombre) return NextResponse.json({ error: "sin_nombre" }, { status: 400 });
 
