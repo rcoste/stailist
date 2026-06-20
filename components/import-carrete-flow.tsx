@@ -280,27 +280,17 @@ export function ImportCarreteFlow() {
 
   if (state.kind === "texto") {
     const activos = state.items.filter((it) => it.on);
-    // Marca posibles duplicados (mismo tipo+color que otra prenda activa anterior).
-    const seen = new Set<string>();
-    const dupId = new Set<string>();
-    for (const it of state.items) {
-      if (!it.on) continue;
-      const key = `${it.attrs.categoria}|${norm(it.attrs.color)}`;
-      if (seen.has(key)) dupId.add(it.id);
-      else seen.add(key);
-    }
     return (
       <Overlay>
         <Header
           title="¿Detecté bien tus prendas?"
-          sub="Confirma o corrige antes de generarlas. Apaga lo que no quieras."
+          sub="Confirma o corrige cada una. Apaga con la ✓ las que no quieras sumar."
         />
         <div className="flex flex-col gap-3">
           {state.items.map((it) => (
             <DraftCard
               key={it.id}
               item={it}
-              dup={dupId.has(it.id)}
               onToggle={() => toggleItem(it.id)}
               onPatch={(p) => patchItem(it.id, p)}
             />
@@ -436,19 +426,27 @@ function Footer({
   );
 }
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-muted">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 function DraftCard({
   item,
-  dup,
   onToggle,
   onPatch,
 }: {
   item: DraftItem;
-  dup: boolean;
   onToggle: () => void;
   onPatch: (patch: Partial<PrendaDetectada>) => void;
 }) {
   const a = item.attrs;
   const baja = a.confianza === "baja";
+  const colorName = PALETTE.find((p) => norm(p.name) === norm(a.color))?.name ?? a.color;
   return (
     <div
       className={`flex flex-col gap-3 rounded-xl border p-3 transition-opacity ${
@@ -456,38 +454,23 @@ function DraftCard({
       }`}
     >
       <div className="flex items-start gap-3">
-        {/* Foto de origen + swatch del color detectado */}
-        <div className="flex shrink-0 flex-col items-center gap-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={item.photoPreview}
-            alt=""
-            className="h-16 w-12 rounded-md border border-line object-cover"
-          />
-          <span
-            className="h-4 w-12 rounded-full border border-line"
-            style={{ backgroundColor: a.color_hex }}
-            aria-hidden
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.photoPreview}
+          alt=""
+          className="h-16 w-12 shrink-0 rounded-md border border-line object-cover"
+        />
         <div className="flex flex-1 flex-col gap-1.5">
           <input
             value={a.nombre}
             onChange={(e) => onPatch({ nombre: e.target.value })}
             className="min-h-9 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
           />
-          <div className="flex flex-wrap items-center gap-1.5">
-            {baja && (
-              <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
-                Revisa esto
-              </span>
-            )}
-            {dup && (
-              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
-                ¿Repetida?
-              </span>
-            )}
-          </div>
+          {baja && (
+            <span className="w-fit rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
+              No la vi bien — confírmala
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -504,55 +487,62 @@ function DraftCard({
 
       {item.on && (
         <>
-          {/* Tipo */}
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORIAS.map((c) => (
-              <button
-                key={c.v}
-                type="button"
-                onClick={() => onPatch({ categoria: c.v })}
-                className={`min-h-8 rounded-full border px-2.5 text-xs transition-colors ${
-                  a.categoria === c.v
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface text-muted"
-                }`}
-              >
-                {c.l}
-              </button>
-            ))}
-          </div>
-          {/* Color (swatch + alternativas) */}
-          <div className="flex flex-wrap gap-1.5">
-            {PALETTE.map((p) => (
-              <button
-                key={p.hex}
-                type="button"
-                onClick={() => onPatch({ color: p.name, color_hex: p.hex })}
-                aria-label={p.name}
-                className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                  norm(a.color) === norm(p.name) ? "border-accent scale-110" : "border-line"
-                }`}
-                style={{ backgroundColor: p.hex }}
-              />
-            ))}
-          </div>
-          {/* Formalidad */}
-          <div className="flex flex-wrap gap-1.5">
-            {FORMALIDADES.map((f) => (
-              <button
-                key={f.v}
-                type="button"
-                onClick={() => onPatch({ formalidad: f.v })}
-                className={`min-h-8 rounded-full border px-2.5 text-xs transition-colors ${
-                  a.formalidad === f.v
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface text-muted"
-                }`}
-              >
-                {f.l}
-              </button>
-            ))}
-          </div>
+          <Field label="Tipo">
+            <div className="flex flex-wrap gap-1.5">
+              {CATEGORIAS.map((c) => (
+                <button
+                  key={c.v}
+                  type="button"
+                  onClick={() => onPatch({ categoria: c.v })}
+                  className={`min-h-8 rounded-full border px-2.5 text-xs transition-colors ${
+                    a.categoria === c.v
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line bg-surface text-muted"
+                  }`}
+                >
+                  {c.l}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={`Color · ${colorName}`}>
+            <div className="flex flex-wrap gap-2">
+              {PALETTE.map((p) => (
+                <button
+                  key={p.hex}
+                  type="button"
+                  onClick={() => onPatch({ color: p.name, color_hex: p.hex })}
+                  aria-label={p.name}
+                  className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                    norm(a.color) === norm(p.name)
+                      ? "scale-110 border-accent"
+                      : "border-line"
+                  }`}
+                  style={{ backgroundColor: p.hex }}
+                />
+              ))}
+            </div>
+          </Field>
+
+          <Field label="Formalidad">
+            <div className="flex flex-wrap gap-1.5">
+              {FORMALIDADES.map((f) => (
+                <button
+                  key={f.v}
+                  type="button"
+                  onClick={() => onPatch({ formalidad: f.v })}
+                  className={`min-h-8 rounded-full border px-2.5 text-xs transition-colors ${
+                    a.formalidad === f.v
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line bg-surface text-muted"
+                  }`}
+                >
+                  {f.l}
+                </button>
+              ))}
+            </div>
+          </Field>
         </>
       )}
     </div>

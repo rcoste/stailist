@@ -21,18 +21,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "sin_gemini" }, { status: 503 });
   }
 
-  let attrs: Partial<PrendaAnalisis> = {};
+  let attrs: Partial<PrendaAnalisis> & { descripcion?: string } = {};
   try {
-    attrs = (await request.json()) as Partial<PrendaAnalisis>;
+    attrs = (await request.json()) as Partial<PrendaAnalisis> & { descripcion?: string };
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
   const nombre = (attrs.nombre ?? "").trim();
   if (!nombre) return NextResponse.json({ error: "sin_nombre" }, { status: 400 });
 
-  // El nombre ya es descriptivo ("Camisa de lino beige"); reforzamos con el
-  // color para que el render respete el tono confirmado.
-  const desc = attrs.color ? `${nombre}, color ${attrs.color}` : nombre;
+  // Usamos la descripción VISUAL detallada (no el nombre corto) para que el
+  // render sea fiel. El color confirmado va al final como autoridad: si el
+  // usuario lo corrigió con el swatch, manda sobre lo que diga la descripción.
+  const base = (attrs.descripcion ?? "").trim() || nombre;
+  const desc = attrs.color ? `${base}, en color ${attrs.color}` : base;
   const type = attrs.categoria === "calzado" ? "shoes" : "flat";
 
   const bytes = await generateArchetypeImage(desc, type);

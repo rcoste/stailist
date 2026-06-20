@@ -10,6 +10,10 @@ export const maxDuration = 60;
 // perspectiva), lo dice en vez de inventar — la UI la marca "revisa esto".
 export type PrendaDetectada = PrendaAnalisis & {
   confianza: "alta" | "media" | "baja";
+  // Descripción visual detallada (estilo, corte, material, detalles) para que
+  // Gemini regenere una imagen fiel. El `nombre` es corto para mostrar; ESTA es
+  // la que alimenta el render.
+  descripcion: string;
 };
 
 // Versión multi-prenda de /api/analizar-prenda: mira UNA foto de una persona
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
       model: "claude-opus-4-8",
       max_tokens: 1500,
       system:
-        "Eres experta en moda. Miras la foto de UNA PERSONA VESTIDA y listas CADA prenda visible que lleva puesta (top, pantalón, calzado, abrigo, vestido, accesorio), para un clóset digital. Reglas: (1) una entrada por prenda real; no inventes prendas que no se ven. (2) Si una prenda está tapada, en perspectiva difícil, o el color es dudoso por la luz, márcala confianza 'baja' (NO la omitas, pero avisa). (3) El nombre es corto y natural en español ('Camisa de lino beige', 'Tenis blancos'). (4) color_hex es el color dominante real de la prenda. Máximo 6 prendas.",
+        "Eres experta en moda. Miras la foto de UNA PERSONA VESTIDA y listas CADA prenda visible que lleva puesta (top, pantalón, calzado, abrigo, vestido, accesorio), para un clóset digital. Reglas: (1) una entrada por prenda real; no inventes prendas que no se ven. (2) Si una prenda está tapada, en perspectiva difícil, o el color es dudoso por la luz, márcala confianza 'baja' (NO la omitas, pero avisa). (3) El nombre es corto y natural en español ('Camisa de lino beige', 'Tenis blancos'). (4) color_hex es el color dominante real de la prenda. (5) descripcion: una descripción VISUAL detallada en español, pensada para que un generador de imágenes recree la prenda fielmente — incluye tipo de prenda, corte/silueta, material/textura aparente, color exacto, y detalles distintivos (cuello, mangas, botones, estampado, cierre, suela, montura, etc.). Ej: 'chaqueta tipo bomber de nylon negro mate, cierre metálico frontal, puños y cintura elásticos acanalados, sin capucha'. Máximo 6 prendas.",
       messages: [
         {
           role: "user",
@@ -93,6 +97,7 @@ export async function POST(request: NextRequest) {
                       type: "string",
                       enum: ["alta", "media", "baja"],
                     },
+                    descripcion: { type: "string" },
                   },
                   required: [
                     "nombre",
@@ -102,6 +107,7 @@ export async function POST(request: NextRequest) {
                     "formalidad",
                     "temporada",
                     "confianza",
+                    "descripcion",
                   ],
                   additionalProperties: false,
                 },
