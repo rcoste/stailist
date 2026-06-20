@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Icon } from "@/components/icon";
+import { faltaImage } from "@/lib/capsule-images";
 import type { CapsuleView } from "@/lib/capsule";
 
 const MAX_FALTAN = 4;
@@ -93,15 +95,24 @@ export function CapsuleCard({
             Te falta, por prioridad
           </span>
           <ul className="flex flex-col gap-2.5">
-            {faltan.map((it) => (
-              <li key={`${it.tipo}-${it.nombre}`} className="flex gap-2.5">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                <span className="flex flex-col">
-                  <span className="text-sm font-medium text-ink">{it.nombre}</span>
-                  <span className="text-xs text-muted">{it.porque}</span>
-                </span>
-              </li>
-            ))}
+            {faltan.map((it) => {
+              const img = faltaImage(it);
+              return (
+                <li key={`${it.tipo}-${it.nombre}`} className="flex items-center gap-2.5">
+                  {img ? (
+                    <span className="relative h-11 w-9 shrink-0 overflow-hidden rounded-md border border-line bg-bg">
+                      <Image src={img} alt="" fill sizes="36px" className="object-cover" />
+                    </span>
+                  ) : (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  )}
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-medium text-ink">{it.nombre}</span>
+                    <span className="truncate text-xs text-muted">{it.porque}</span>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : (

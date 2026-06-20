@@ -3,6 +3,7 @@
 import { useOptimistic, useTransition } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
+import { faltaImage } from "@/lib/capsule-images";
 import { setCapsuleOverride } from "@/app/closet/capsula/actions";
 import {
   capsuleRows,
@@ -234,7 +235,9 @@ function DecideRow({
 // Filas simples sin decisión: pendiente · te falta · ya lo tienes.
 function SimpleRow({ row, images }: { row: CapsuleRow; images: Record<string, string> }) {
   const { item, base, by } = row;
-  const src = by ? images[by] : null;
+  // Lo que tienes → su foto del clóset. Lo que falta → imagen curada (si la hay)
+  // para visualizar la prenda; si no, cae al indicador (Chip).
+  const src = (by ? images[by] : null) ?? (base === "falta" ? faltaImage(item) : null);
   const sub = base === "tienes" && by ? `tienes: ${by}` : null;
 
   return (
