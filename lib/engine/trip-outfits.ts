@@ -20,15 +20,48 @@ export type TripOutfitInputs = {
   archetype: { nombre: string; descripcion: string } | null;
 };
 
-// Los LOOKS del viaje: combinaciones reales de lo que la persona EMPACA, una o
-// dos por ocasión. La cápsula ya garantizó que las piezas combinan y están en su
-// paleta; aquí solo las componemos en outfits concretos. Una sola llamada (segura
-// en 60s). Devuelve outfits denormalizados a nombres de prenda.
+// Tope de celdas de la rejilla que mandamos a validar (una maleta real cae muy
+// por debajo; este es el cinturón para clósets-empacables grandes).
+const MAX_CELLS = 40;
+// Tope de looks que mostramos (la rejilla puede dar muchos; curamos los distintos).
+const MAX_LOOKS = 16;
+
+// SISTEMA SUDOKU: en vez de pedirle a la IA "arma unos looks" (que capaba en 8),
+// enumeramos en CÓDIGO la rejilla de combinaciones de lo empacable
+// (top×bottom×calzado + vestido×calzado). La IA solo VALIDA cada celda (¿combina
+// de color/formalidad/clima?), la etiqueta por ocasión y le pone una capa si
+// ayuda. Garantiza cobertura (no se le olvida ninguna combinación) y maximiza
+// los looks por prenda — el premio de empacar ligero.
 export async function generateTripOutfits(
   inputs: TripOutfitInputs
 ): Promise<TripOutfit[]> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
   if (inputs.packable.length < 2) return [];
+
+  // --- 1. Slots de la rejilla ---
+  const bySlot = (cat: string) => inputs.packable.filter((p) => p.category === cat);
+  const tops = bySlot("top");
+  const bottoms = bySlot("bottom");
+  const calzado = bySlot("calzado");
+  const vestidos = bySlot("vestido");
+  const capas = bySlot("abrigo");
+  const accesorios = bySlot("accesorio");
+
+  // --- 2. Enumera las celdas (combinaciones base) ---
+  // Si no hay calzado empacado, la celda igual vale (top+bottom / vestido).
+  const shoeSlots: (PackableItem | null)[] = calzado.length ? calzado : [null];
+  type Cell = { base: number[] };
+  const cells: Cell[] = [];
+  for (const t of tops)
+    for (const b of bottoms)
+      for (const s of shoeSlots)
+        cells.push({ base: [t.n, b.n, ...(s ? [s.n] : [])] });
+  for (const v of vestidos)
+    for (const s of shoeSlots) cells.push({ base: [v.n, ...(s ? [s.n] : [])] });
+
+  // Sin separables ni vestidos completos → no hay rejilla que armar.
+  if (cells.length === 0) return [];
+  const grid = cells.slice(0, MAX_CELLS);
 
   const client = new Anthropic();
 
@@ -41,45 +74,48 @@ export async function generateTripOutfits(
 
   const ocasiones = inputs.ocasiones.length ? inputs.ocasiones : (["ciudad"] as Occasion[]);
   const ocasTxt = occasionLabels(ocasiones);
-
   const climaTxt = inputs.weather
     ? inputs.weather.estimated
       ? `~${inputs.weather.temp_c}°C (clima típico de la temporada)`
       : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
     : "desconocido";
-
   const estilo = inputs.archetype
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
 
-  const prendasTxt = inputs.packable
-    .map((p) => `${p.n}. ${p.nombre} (${p.category}, ${p.formalidad}, ${p.color})`)
-    .join("\n");
+  const fmt = (p: PackableItem) => `${p.n}. ${p.nombre} (${p.formalidad}, ${p.color})`;
+  const prendasTxt = inputs.packable.map(fmt).join("\n");
+  const capasTxt = capas.length ? capas.map((p) => p.n).join(", ") : "ninguna";
+  const accTxt = accesorios.length ? accesorios.map((p) => p.n).join(", ") : "ninguno";
+  const celdasTxt = grid.map((c, i) => `C${i}: prendas [${c.base.join(", ")}]`).join("\n");
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 2048,
-    system: `Eres la stylist de stailist. La MALETA ya está hecha: la persona va a llevar exactamente estas prendas. Tu trabajo es armar los LOOKS que puede ponerse — combinaciones reales de ESAS prendas, listas para usar en el viaje.
+    max_tokens: 3072,
+    system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
 
-REGLA INNEGOCIABLE: usa SOLO las prendas de la lista, referenciadas por su número. Jamás inventes una prenda que no esté. ${generoTxt}
+REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. ${generoTxt}
 
-Cómo armar los looks:
-- Uno o dos looks por ocasión que te pasen. Máximo 8 looks en total.
-- Cada look es un outfit COMPLETO y poible: al menos top + bottom + calzado (o un vestido/enterizo + calzado). Suma una capa o accesorio de la lista si ayuda.
-- Coherencia: colores que combinen y formalidad pareja con la ocasión (no tenis a una cena formal).
-- Respeta el CLIMA al elegir piezas.
-- Cubre las ocasiones que puedas con lo que hay. Si una ocasión NO se puede armar con estas prendas, OMÍTELA (no la fuerces, no inventes).
+Por cada celda decide si es un OUTFIT real:
+- Coherencia de color: los tonos combinan (no choca).
+- Formalidad pareja y apropiada para alguna ocasión del viaje.
+- Respeta el CLIMA (no lana en calor, no lino fresco en frío).
+- Si la celda no funciona (colores que pelean, formalidad incompatible), DESCÁRTALA.
 
-Cada look:
-- ocasion: una de las ocasiones dadas (clave exacta).
-- titulo: nombre corto y evocador del look (tuteo, cálido). Ej "Cena junto al mar".
+Para las celdas que SÍ funcionan:
+- Asígnale UNA ocasión del viaje (clave exacta).
+- Opcional: súmale UNA capa (de: ${capasTxt}) y/o UN accesorio (de: ${accTxt}) si la mejora.
+- titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
-- prendas: lista de NÚMEROS de las prendas de la lista (2 o más).`,
+- Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
+- Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
+
+Devuelve los looks válidos (los que pasen el filtro), del mejor al menos bueno.`,
     messages: [
       {
         role: "user",
-        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.\n\nPRENDAS QUE EMPACA (usa solo estos números):\n${prendasTxt}\n\nArma sus looks del viaje (outfits).`,
+        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.\n\nPRENDAS (número. nombre (formalidad, color)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
       },
     ],
     output_config: {
@@ -88,22 +124,23 @@ Cada look:
         schema: {
           type: "object",
           properties: {
-            outfits: {
+            looks: {
               type: "array",
               items: {
                 type: "object",
                 properties: {
+                  celda: { type: "integer" }, // índice C# de la celda base
                   ocasion: { type: "string", enum: [...ocasiones] },
                   titulo: { type: "string" },
                   porque: { type: "string" },
-                  prendas: { type: "array", items: { type: "integer" } },
+                  extra: { type: "array", items: { type: "integer" } }, // capa/accesorio opcional
                 },
-                required: ["ocasion", "titulo", "porque", "prendas"],
+                required: ["celda", "ocasion", "titulo", "porque", "extra"],
                 additionalProperties: false,
               },
             },
           },
-          required: ["outfits"],
+          required: ["looks"],
           additionalProperties: false,
         },
       },
@@ -113,25 +150,28 @@ Cada look:
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
   const parsed = JSON.parse(text) as {
-    outfits: { ocasion: string; titulo: string; porque: string; prendas: number[] }[];
+    looks: { celda: number; ocasion: string; titulo: string; porque: string; extra: number[] }[];
   };
 
   const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
   const validOcc = new Set(OCCASIONS.map((o) => o.value as string));
 
-  return (parsed.outfits ?? [])
-    .map((o) => {
-      // Mapea números → nombres reales; descarta referencias inválidas y duplicados.
+  return (parsed.looks ?? [])
+    .map((l) => {
+      const cell = grid[l.celda];
+      if (!cell) return null;
+      // Reconstruye: piezas base de la celda + capa/accesorio que sumó la IA.
+      const nums = [...cell.base, ...(l.extra ?? [])];
       const prendas = Array.from(
-        new Set((o.prendas ?? []).map((n) => byN.get(n)).filter((v): v is string => !!v))
+        new Set(nums.map((n) => byN.get(n)).filter((v): v is string => !!v))
       );
       return {
-        ocasion: o.ocasion as Occasion,
-        titulo: (o.titulo ?? "").trim(),
-        porque: (o.porque ?? "").trim(),
+        ocasion: l.ocasion as Occasion,
+        titulo: (l.titulo ?? "").trim(),
+        porque: (l.porque ?? "").trim(),
         prendas,
       };
     })
-    .filter((o) => validOcc.has(o.ocasion) && o.titulo && o.prendas.length >= 2)
-    .slice(0, 8);
+    .filter((o): o is TripOutfit => !!o && validOcc.has(o.ocasion) && !!o.titulo && o.prendas.length >= 2)
+    .slice(0, MAX_LOOKS);
 }

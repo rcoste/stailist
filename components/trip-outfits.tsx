@@ -140,17 +140,27 @@ export function TripOutfits({
   // Ocasiones que elegiste pero que ningún look cubrió (no las omitimos en silencio).
   const cubiertas = new Set(outfits.map((o) => o.ocasion));
   const sinCubrir = ocasiones.filter((o) => !cubiertas.has(o));
+  // Premio combinatorio: cuántas prendas distintas se cruzan en cuántos looks.
+  const piezas = new Set(outfits.flatMap((o) => o.prendas.map((p) => p.nombre))).size;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted">
-          Tus looks · {outfits.length}
-        </span>
+      <div className="flex items-end justify-between">
+        <div className="flex flex-col">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted">
+            Tus looks · {outfits.length}
+          </span>
+          {piezas > 0 ? (
+            <span className="text-xs text-muted">
+              {piezas} {piezas === 1 ? "pieza" : "piezas"} que se combinan en {outfits.length}{" "}
+              {outfits.length === 1 ? "look" : "looks"}
+            </span>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={generar}
-          className="text-xs font-medium text-muted transition-colors hover:text-ink"
+          className="shrink-0 text-xs font-medium text-muted transition-colors hover:text-ink"
         >
           Armar otros
         </button>
