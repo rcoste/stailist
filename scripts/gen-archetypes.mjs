@@ -217,6 +217,21 @@ const ITEMS = [
   { slug: "bufanda-lana-negra", desc: "a folded black wool men's scarf, neatly arranged from above", type: "accesorio" },
   { slug: "guantes-piel-negros", desc: "a pair of black leather men's gloves, laid flat side by side from above", type: "accesorio" },
   { slug: "camiseta-termica", desc: "a black men's thermal base layer long-sleeve top, slim fitted, fine smooth technical fabric, neatly laid flat, no text, no logos, no brand", type: "flat" },
+  // === Ampliación biblioteca v4 (2026-06-19) — lista completa de Roberto, las
+  // que faltaban (el resto ya estaba). Todas hombre. Ver migración 0038. ===
+  { slug: "chinos-carbon", desc: "a pair of charcoal grey men's cotton chino trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-tecnico-marino", desc: "a pair of navy blue men's slim technical commuter trousers, tapered, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-lino-verano", desc: "a pair of light beige lightweight linen-cotton men's summer trousers, relaxed, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-vestir-carbon", desc: "a pair of charcoal grey men's wool dress trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "camiseta-carbon", desc: "a plain charcoal grey men's crew-neck cotton t-shirt", type: "flat" },
+  { slug: "polo-blanco", desc: "a white men's short-sleeve pique cotton polo shirt", type: "flat" },
+  { slug: "polo-gris", desc: "a grey men's short-sleeve pique cotton polo shirt", type: "flat" },
+  { slug: "sueter-half-zip-gris", desc: "a grey men's half-zip pullover sweater, fine merino knit, with a short metal zipper at the stand collar", type: "flat" },
+  { slug: "sueter-crewneck-carbon", desc: "a charcoal grey men's fine cashmere crew-neck knit sweater", type: "flat" },
+  { slug: "camisa-oxford-blanca", desc: "a white men's oxford cloth button-down shirt, slightly textured casual weave, neatly laid flat", type: "flat" },
+  { slug: "camisa-oxford-azul-hombre", desc: "a light blue men's oxford cloth button-down shirt, slightly textured casual weave, neatly laid flat", type: "flat" },
+  { slug: "camisa-lino-blanca", desc: "a white linen-cotton men's button-up shirt, relaxed summer fit, neatly laid flat", type: "flat" },
+  { slug: "camisa-lino-azul", desc: "a light blue linen-cotton men's button-up shirt, relaxed summer fit, neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
