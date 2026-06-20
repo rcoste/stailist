@@ -81,7 +81,8 @@ type DraftItem = {
 // Prenda ya renderizada, en la curación visual.
 type RenderItem = {
   id: string;
-  attrs: PrendaAnalisis;
+  attrs: PrendaDetectada;
+  photo: string; // dataURL de la foto original (para el render imagen→imagen)
   status: "pending" | "done" | "failed";
   path: string | null;
   url: string | null;
@@ -175,6 +176,7 @@ export function ImportCarreteFlow() {
     const base: RenderItem[] = activos.map((it) => ({
       id: it.id,
       attrs: it.attrs,
+      photo: it.photoPreview,
       status: "pending",
       path: null,
       url: null,
@@ -190,7 +192,7 @@ export function ImportCarreteFlow() {
         const res = await fetch("/api/render-prenda", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(it.attrs),
+          body: JSON.stringify({ image: it.photo, attrs: it.attrs }),
         });
         if (res.ok) {
           const { path, url } = (await res.json()) as { path: string; url: string | null };
