@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AddPhotoFlow } from "@/components/add-photo-flow";
 import { CapsuleCard } from "@/components/capsule-card";
+import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -12,25 +12,6 @@ import {
   type CapsuleMatch,
   type CapsuleTarget,
 } from "@/lib/capsule";
-
-// Orden y etiqueta de cada categoría para agrupar el clóset.
-const CATEGORIAS: { key: string; label: string }[] = [
-  { key: "top", label: "Tops" },
-  { key: "abrigo", label: "Abrigos" },
-  { key: "bottom", label: "Pantalones" },
-  { key: "vestido", label: "Vestidos" },
-  { key: "calzado", label: "Calzado" },
-  { key: "accesorio", label: "Accesorios" },
-];
-
-type ClosetItem = {
-  id: string;
-  nombre: string;
-  imagen: string | null;
-  swatch: string;
-  category: string;
-  formalidad: string;
-};
 
 // La acción recalcularMatch (del card) llama a Opus con el clóset completo;
 // le damos el presupuesto de 60s para que no se corte en clósets grandes.
@@ -75,6 +56,7 @@ export default async function ClosetPage() {
       categoria?: string;
       tipo?: string;
       formalidad?: string;
+      temporada?: string;
     };
     const photoUrl = r.photo_path ? signed.get(r.photo_path as string) : null;
     return {
@@ -84,6 +66,8 @@ export default async function ClosetPage() {
       swatch: attrs.color_hex ?? "#E5E1DD",
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",
+      temporada: attrs.temporada ?? "todo-el-año",
+      source: (r.source as string) ?? "archetype",
     };
   });
 
@@ -98,11 +82,6 @@ export default async function ClosetPage() {
   // ¿Ya sumó ropa propia (foto)? Si no, el clóset son puros básicos asumidos →
   // aclaramos que es un punto de arranque. Si ya personalizó, no lo regañamos.
   const hasOwnPhotos = (rows ?? []).some((r) => r.source === "photo");
-
-  const grupos = CATEGORIAS.map((c) => ({
-    ...c,
-    prendas: items.filter((i) => i.category === c.key),
-  })).filter((g) => g.prendas.length > 0);
 
   return (
     <AppShell>
@@ -134,46 +113,7 @@ export default async function ClosetPage() {
 
         <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
 
-        {grupos.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface px-6 py-14 text-center">
-            <p className="editorial text-lg text-ink">tu clóset está vacío</p>
-            <p className="text-sm text-muted">
-              Vuelve al inicio y marca los básicos que tienes.
-            </p>
-          </div>
-        ) : (
-          grupos.map((g) => (
-            <div key={g.key} className="flex flex-col gap-3">
-              <h2 className="text-sm font-medium font-sans uppercase tracking-wide text-muted">
-                {g.label}
-              </h2>
-              <ul className="grid grid-cols-3 gap-3">
-                {g.prendas.map((p) => (
-                  <li key={p.id} className="flex flex-col gap-1.5">
-                    <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-line bg-bg">
-                      {p.imagen ? (
-                        <Image
-                          src={p.imagen}
-                          alt={p.nombre}
-                          fill
-                          sizes="(max-width: 430px) 33vw, 130px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <span
-                          className="absolute inset-0"
-                          style={{ backgroundColor: p.swatch }}
-                          aria-hidden
-                        />
-                      )}
-                    </div>
-                    <p className="text-xs font-medium text-ink">{p.nombre}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-        )}
+        <ClosetGrid items={items} />
       </section>
     </AppShell>
   );

@@ -40,6 +40,74 @@ export async function addPhotoItem(
   return { ok: true };
 }
 
+// Quita una prenda del clóset (soft delete — deja rastro para señales del
+// journey). Sirve para podar básicos asumidos que la usuaria no tiene. Verifica
+// propiedad por user_id además de la RLS.
+export async function removeItem(id: string): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("items")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  if (error) return { ok: false };
+
+  revalidatePath("/closet");
+  return { ok: true };
+}
+
+// Edita los atributos de una prenda FOTOGRAFIADA (corrige lo que la IA leyó mal).
+// Solo aplica a source='photo': los arquetipos derivan su display del catálogo,
+// así que editarlos no tendría efecto (se podan, no se editan).
+export async function updateItemAttrs(
+  id: string,
+  patch: {
+    nombre?: string;
+    categoria?: string;
+    formalidad?: string;
+    temporada?: string;
+  }
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: item } = await supabase
+    .from("items")
+    .select("attrs, source")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .single();
+  if (!item || item.source !== "photo") return { ok: false };
+
+  const attrs = (item.attrs ?? {}) as Record<string, unknown>;
+  const clean: Record<string, unknown> = { ...attrs };
+  if (typeof patch.nombre === "string" && patch.nombre.trim())
+    clean.nombre = patch.nombre.trim().slice(0, 60);
+  if (patch.categoria) clean.categoria = patch.categoria;
+  if (patch.formalidad) clean.formalidad = patch.formalidad;
+  if (patch.temporada) clean.temporada = patch.temporada;
+
+  const { error } = await supabase
+    .from("items")
+    .update({ attrs: clean })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { ok: false };
+
+  revalidatePath("/closet");
+  return { ok: true };
+}
+
 // Agrega básicos del catálogo (arquetipos) al clóset DESPUÉS del onboarding —
 // la "biblioteca completa". A diferencia de saveCloset (onboarding), no avanza
 // pasos ni exige mínimo; valida contra el catálogo, respeta el género y no
