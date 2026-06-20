@@ -181,6 +181,34 @@ const ITEMS = [
   { slug: "botas-rodilla-negras", desc: "a pair of black women's sleek knee-high boots, low heel", type: "boots" },
   { slug: "botas-ecuestres-cafe", desc: "a pair of brown women's flat equestrian knee-high riding boots", type: "boots" },
   { slug: "mules-camel", desc: "a pair of camel women's backless mules, low heel", type: "shoes" },
+  // === Ampliación biblioteca v2 (2026-06-19) — accesorios de mujer (de cero),
+  // accesorios de hombre, y staples. Ver migración 0036. ===
+  // Mujer — accesorios
+  { slug: "bolso-tote-camel", desc: "a camel tan leather women's tote bag with two top handles, laid flat from directly above", type: "accesorio" },
+  { slug: "bolso-crossbody-negro", desc: "a small black leather women's crossbody bag with a long thin shoulder strap, laid flat from directly above", type: "accesorio" },
+  { slug: "clutch-negro", desc: "a black satin women's rectangular evening clutch bag, laid flat from directly above", type: "accesorio" },
+  { slug: "cinturon-negro-mujer", desc: "a slim black leather women's belt with a small delicate gold buckle, coiled neatly into a spiral", type: "accesorio" },
+  { slug: "mascada-seda", desc: "a folded silk women's scarf with a subtle neutral beige and ivory geometric print", type: "accesorio" },
+  { slug: "lentes-carey-mujer", desc: "a pair of women's oversized sunglasses with a tortoiseshell brown acetate frame, folded", type: "accesorio" },
+  { slug: "reloj-dorado-mujer", desc: "a women's elegant wristwatch with a slim gold case and a thin gold mesh band, laid flat from above; the watch dial is plain white and completely blank with no brand name, no logo, no text and no writing of any kind, only thin minimalist hour markers", type: "accesorio" },
+  { slug: "arracadas-oro", desc: "a pair of small simple gold hoop earrings, laid flat side by side from above", type: "accesorio" },
+  // Hombre — accesorios
+  { slug: "reloj-plateado-hombre", desc: "a men's classic wristwatch with a silver stainless steel case and a silver link bracelet band, laid flat from above; the watch dial is plain white and completely blank with no brand name, no logo, no text and no writing of any kind, only thin minimalist hour markers", type: "accesorio" },
+  { slug: "reloj-piel-cafe-hombre", desc: "a men's classic round wristwatch with a brown leather strap, laid flat from above; the watch dial is plain white and completely blank with no brand name, no logo, no text and no writing of any kind, only thin minimalist hour markers", type: "accesorio" },
+  { slug: "bufanda-lana-gris", desc: "a folded grey wool men's scarf, neatly arranged from above", type: "accesorio" },
+  { slug: "corbata-punto-marino", desc: "a navy blue knit men's necktie with a flat square bottom, laid straight vertically", type: "accesorio" },
+  { slug: "beanie-gris", desc: "a grey ribbed knit men's beanie hat, laid flat from above", type: "accesorio" },
+  { slug: "portafolio-piel-cafe", desc: "a brown leather men's slim briefcase document bag, laid flat from directly above", type: "accesorio" },
+  // Hombre — staples
+  { slug: "cuello-tortuga-negro", desc: "a black men's fine merino wool turtleneck sweater", type: "flat" },
+  { slug: "chino-chocolate", desc: "a pair of chocolate brown men's cotton chino trousers, neatly laid flat lengthwise", type: "flat" },
+  { slug: "henley-negro", desc: "a black men's long-sleeve henley shirt with a three-button placket", type: "flat" },
+  { slug: "camisa-cuadros", desc: "a men's checked flannel button-up shirt in a navy and forest green plaid pattern", type: "flat" },
+  { slug: "chaleco-acolchado-marino", desc: "a navy blue men's quilted gilet body warmer vest, sleeveless, neatly laid flat", type: "flat" },
+  // Mujer — staples
+  { slug: "sueter-esmeralda", desc: "an emerald green women's fine-knit crew-neck sweater", type: "flat" },
+  { slug: "tenis-blancos-mujer", desc: "a pair of clean white minimalist leather women's low-top sneakers, no logos", type: "shoes" },
+  { slug: "bodysuit-negro", desc: "a black women's long-sleeve bodysuit top, fitted, neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
