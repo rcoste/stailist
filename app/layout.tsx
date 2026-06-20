@@ -26,6 +26,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#F5F3F0",
+  // Necesario para que env(safe-area-inset-*) funcione en PWA standalone (iOS):
+  // sin esto, la barra inferior queda bajo el indicador de inicio ("muy abajo").
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

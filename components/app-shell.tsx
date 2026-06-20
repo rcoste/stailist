@@ -7,7 +7,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto min-h-dvh w-full max-w-[430px] bg-bg">
       {/* Logo centrado; Perfil salió de la barra inferior a este ícono. */}
-      <header className="relative flex items-center justify-center px-4 pt-4 pb-2">
+      <header className="relative flex items-center justify-center px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
         <Logo className="h-7" />
         <Link
           href="/perfil"
