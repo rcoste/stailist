@@ -250,6 +250,20 @@ const ITEMS = [
   { slug: "collar-dorado", desc: "a delicate thin gold chain women's necklace, laid flat in a loose circle from above", type: "accesorio" },
   { slug: "bufanda-lana-mujer", desc: "a folded soft grey wool women's scarf, large, neatly arranged from above", type: "accesorio" },
   { slug: "guantes-piel-negros-mujer", desc: "a pair of slim black leather women's gloves, laid flat side by side from above", type: "accesorio" },
+  // === Ampliación biblioteca MUJER — prendas (2026-06-19). Ver migración 0040. ===
+  { slug: "camisa-oxford-blanca-mujer", desc: "a white women's oxford cloth button-up shirt, slightly textured weave, tailored fit, neatly laid flat", type: "flat" },
+  { slug: "sueter-crewneck-camel-mujer", desc: "a camel beige women's fine-knit crew-neck sweater, neatly laid flat", type: "flat" },
+  { slug: "sueter-vino-mujer", desc: "a burgundy wine women's fine-knit crew-neck sweater, neatly laid flat", type: "flat" },
+  { slug: "blusa-seda-negra", desc: "a black silk women's blouse, soft draped, long sleeves, neatly laid flat", type: "flat" },
+  { slug: "falda-lapiz-negra", desc: "a black women's pencil skirt, knee length, neatly laid flat", type: "flat" },
+  { slug: "pantalon-culotte-negro", desc: "a pair of black women's culotte trousers, wide cropped leg, neatly laid flat lengthwise", type: "flat" },
+  { slug: "enterizo-negro", desc: "a black women's wide-leg jumpsuit, sleeveless, neatly laid flat", type: "flat" },
+  { slug: "vestido-camisero-blanco", desc: "a white cotton women's shirt dress, knee length, neatly laid flat", type: "flat" },
+  { slug: "vestido-rojo", desc: "a deep red women's elegant fitted midi dress, neatly laid flat", type: "flat" },
+  { slug: "vestido-lapiz-negro", desc: "a black women's sheath pencil dress, fitted, knee length, neatly laid flat", type: "flat" },
+  { slug: "trench-negro-mujer", desc: "a black women's belted trench coat, neatly laid flat", type: "flat" },
+  { slug: "chaleco-acolchado-mujer", desc: "a black women's quilted puffer gilet vest, sleeveless, neatly laid flat", type: "flat" },
+  { slug: "sandalias-tacon-nude", desc: "a pair of nude women's strappy heeled sandals with a block heel", type: "shoes" },
 ];
 
 function buildPrompt({ desc, type }) {
