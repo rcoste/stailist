@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AddPhotoFlow } from "@/components/add-photo-flow";
+import { ImportCarreteFlow } from "@/components/import-carrete-flow";
 import { CapsuleCard } from "@/components/capsule-card";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { Icon } from "@/components/icon";
@@ -23,14 +24,21 @@ export default async function ClosetPage() {
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("items")
-    .select("id, source, photo_path, attrs, archetypes(name, category, image_path)")
+    .select(
+      "id, source, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
+    )
     .eq("user_id", profile.id)
     .is("deleted_at", null);
 
-  // Las fotos propias viven en el bucket privado → URL firmada para mostrarlas.
-  const photoPaths = (rows ?? [])
-    .map((r) => r.photo_path as string | null)
-    .filter((p): p is string => !!p);
+  // Las fotos propias y los renders viven en el bucket privado → URL firmada para
+  // mostrarlas. Juntamos ambos paths en una sola petición de firmas.
+  const photoPaths = Array.from(
+    new Set(
+      (rows ?? [])
+        .flatMap((r) => [r.photo_path as string | null, r.render_path as string | null])
+        .filter((p): p is string => !!p)
+    )
+  );
   const signed = new Map<string, string>();
   if (photoPaths.length > 0) {
     const { data } = await supabase.storage
@@ -59,10 +67,15 @@ export default async function ClosetPage() {
       temporada?: string;
     };
     const photoUrl = r.photo_path ? signed.get(r.photo_path as string) : null;
+    // Render limpio del carrete: si ya se generó, manda sobre la foto cruda.
+    const renderUrl =
+      r.render_status === "done" && r.render_path
+        ? signed.get(r.render_path as string)
+        : null;
     return {
       id: r.id as string,
       nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-      imagen: arch?.image_path ?? photoUrl ?? attrs.image_path ?? null,
+      imagen: arch?.image_path ?? renderUrl ?? photoUrl ?? attrs.image_path ?? null,
       swatch: attrs.color_hex ?? "#E5E1DD",
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",
@@ -96,7 +109,10 @@ export default async function ClosetPage() {
                   : "Estos son tus básicos para arrancar. Súmale tu ropa real y tus looks se vuelven 100% tuyos."}
               </p>
             </div>
-            <AddPhotoFlow userId={profile.id} />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <AddPhotoFlow userId={profile.id} />
+              <ImportCarreteFlow />
+            </div>
           </div>
 
           <Link

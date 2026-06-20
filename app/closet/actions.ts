@@ -171,3 +171,92 @@ export async function addArchetypes(
   revalidatePath("/closet");
   return { ok: true, added: toInsert.length };
 }
+
+// Importar del carrete: inserta en lote las prendas que el usuario CONFIRMÓ
+// (texto + render visual). Se llama una sola vez al final del flujo, así las
+// prendas no aparecen/desaparecen del clóset mientras se curan. `renderPath` ya
+// viene del render de Gemini; si el render falló, renderStatus='failed' y el
+// clóset cae al swatch de color. Spec: docs/designs/import-carrete-multiprenda.md
+export async function addPhotoItems(
+  items: {
+    attrs: PrendaAnalisis;
+    renderPath: string | null;
+    renderStatus: "done" | "failed";
+  }[]
+): Promise<{ ok: boolean; added: number }> {
+  const clean = items.slice(0, 30); // tope de seguridad por lote
+  if (clean.length === 0) return { ok: true, added: 0 };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, added: 0 };
+
+  // render_path debe estar dentro de la carpeta del usuario (defensa además de RLS).
+  for (const it of clean) {
+    if (it.renderPath && !it.renderPath.startsWith(`${user.id}/`)) {
+      return { ok: false, added: 0 };
+    }
+  }
+
+  const { error } = await supabase.from("items").insert(
+    clean.map((it) => ({
+      user_id: user.id,
+      source: "photo",
+      attrs: {
+        nombre: it.attrs.nombre,
+        categoria: it.attrs.categoria,
+        color: it.attrs.color,
+        color_hex: it.attrs.color_hex,
+        formalidad: it.attrs.formalidad,
+        temporada: it.attrs.temporada,
+      },
+      render_status: it.renderStatus,
+      render_path: it.renderPath,
+    }))
+  );
+  if (error) return { ok: false, added: 0 };
+
+  revalidatePath("/closet");
+  return { ok: true, added: clean.length };
+}
+
+// Render rechazado en la confirmación visual ("no es mi prenda" pero la imagen
+// es válida): no se borra, va a staging para que el admin decida si entra a la
+// biblioteca compartida. Nunca se publica solo.
+export async function addLibraryCandidates(
+  candidates: { attrs: PrendaAnalisis; imagePath: string }[]
+): Promise<{ ok: boolean; added: number }> {
+  const clean = candidates.slice(0, 30);
+  if (clean.length === 0) return { ok: true, added: 0 };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, added: 0 };
+
+  for (const c of clean) {
+    if (!c.imagePath.startsWith(`${user.id}/`)) return { ok: false, added: 0 };
+  }
+
+  const { error } = await supabase.from("library_candidates").insert(
+    clean.map((c) => ({
+      user_id: user.id,
+      attrs: {
+        nombre: c.attrs.nombre,
+        categoria: c.attrs.categoria,
+        color: c.attrs.color,
+        color_hex: c.attrs.color_hex,
+        formalidad: c.attrs.formalidad,
+        temporada: c.attrs.temporada,
+      },
+      image_path: c.imagePath,
+      source_kind: "rejected_render",
+    }))
+  );
+  if (error) return { ok: false, added: 0 };
+
+  return { ok: true, added: clean.length };
+}
