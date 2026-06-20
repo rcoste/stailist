@@ -309,6 +309,11 @@ const ITEMS = [
   { slug: "sueter-rosa-polvo-mujer", desc: "a women's modern fine knit sweater in a soft dusty rose pink color", type: "flat" },
   { slug: "camisa-azul-empolvado-hombre", desc: "a men's relaxed linen button-up shirt in a soft dusty powder blue color", type: "flat" },
   { slug: "polo-salvia-hombre", desc: "a men's short-sleeve pique polo shirt in a soft sage green color", type: "flat" },
+  // Paridad de color hombre — 3a pieza por estación (2026-06-19). Ver migración 0044.
+  { slug: "sueter-esmeralda-hombre", desc: "a men's crew-neck fine knit sweater in a rich emerald green color", type: "flat" },
+  { slug: "sueter-mostaza-hombre", desc: "a men's crew-neck fine knit sweater in a rich mustard golden yellow color", type: "flat" },
+  { slug: "polo-amarillo-hombre", desc: "a men's short-sleeve pique polo shirt in a warm golden yellow color", type: "flat" },
+  { slug: "camisa-lavanda-hombre", desc: "a men's relaxed linen button-up shirt in a soft lavender color", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
