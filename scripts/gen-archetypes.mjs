@@ -280,6 +280,13 @@ const ITEMS = [
   { slug: "maxi-vestido-negro", desc: "a black women's long flowy maxi dress, relaxed, full length", type: "flat" },
   { slug: "pantalon-palazzo-crema", desc: "a pair of cream high-waisted wide palazzo trousers, flowy, neatly laid flat lengthwise", type: "flat" },
   { slug: "sueter-oversize-crema", desc: "an oversized cream chunky knit women's sweater, cozy relaxed", type: "flat" },
+  // === Ampliación biblioteca HOMBRE verano (2026-06-19). Ver migración 0042. ===
+  { slug: "pantalon-lino-gris", desc: "a pair of light grey linen-cotton men's summer trousers, relaxed, neatly laid flat lengthwise", type: "flat" },
+  { slug: "pantalon-lino-marino", desc: "a pair of navy blue linen-cotton men's summer trousers, relaxed, neatly laid flat lengthwise", type: "flat" },
+  { slug: "bermuda-sastre-marino", desc: "a pair of navy blue men's tailored chino shorts, neatly laid flat", type: "flat" },
+  { slug: "bermuda-sastre-carbon", desc: "a pair of charcoal grey men's tailored chino shorts, neatly laid flat", type: "flat" },
+  { slug: "short-bano-marino", desc: "a pair of navy blue men's swim trunks shorts, neatly laid flat", type: "flat" },
+  { slug: "camisa-lino-marino", desc: "a navy blue linen-cotton men's button-up shirt, relaxed summer fit, neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
