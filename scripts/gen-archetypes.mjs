@@ -265,6 +265,21 @@ const ITEMS = [
   { slug: "trench-negro-mujer", desc: "a black women's modern belted trench coat, relaxed contemporary cut", type: "flat" },
   { slug: "chaleco-acolchado-mujer", desc: "a black women's modern cropped quilted puffer vest, sleeveless", type: "flat" },
   { slug: "sandalias-tacon-nude", desc: "a pair of nude women's modern strappy heeled sandals, sleek thin straps, block heel", type: "shoes" },
+  // === Variedad mujer (2026-06-19) — rango de estilos. Ver migración 0041. Las
+  // 3 clásicas (vestido-rojo-gala, blusa-seda-drapeada, falda-lapiz-clasica) NO
+  // van aquí: son imágenes recuperadas de git, no prompts. ===
+  { slug: "blusa-holanes-blanca", desc: "a white women's romantic ruffle blouse with delicate frills, feminine", type: "flat" },
+  { slug: "top-encaje-negro", desc: "a black women's delicate lace camisole top, romantic going-out style", type: "flat" },
+  { slug: "falda-gasa-floral", desc: "a flowy floral print chiffon midi skirt, soft romantic, pink and green tones", type: "flat" },
+  { slug: "hoodie-oversize-gris-mujer", desc: "an oversized heather grey women's pullover hoodie, relaxed streetwear", type: "flat" },
+  { slug: "sudadera-crema-mujer", desc: "a cream ecru women's relaxed crew-neck sweatshirt, no hood", type: "flat" },
+  { slug: "chamarra-acolchada-cropped-mujer", desc: "a black women's cropped quilted puffer jacket with a zipper, casual", type: "flat" },
+  { slug: "falda-cuero-mini-negra", desc: "a black leather women's A-line mini skirt, edgy", type: "flat" },
+  { slug: "blazer-estructurado-negro-mujer", desc: "a sharp black women's structured single-breasted tailored blazer, strong shoulders", type: "flat" },
+  { slug: "vestido-lentejuelas-negro", desc: "a black sequin women's party mini dress, sparkly, evening", type: "flat" },
+  { slug: "maxi-vestido-negro", desc: "a black women's long flowy maxi dress, relaxed, full length", type: "flat" },
+  { slug: "pantalon-palazzo-crema", desc: "a pair of cream high-waisted wide palazzo trousers, flowy, neatly laid flat lengthwise", type: "flat" },
+  { slug: "sueter-oversize-crema", desc: "an oversized cream chunky knit women's sweater, cozy relaxed", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
