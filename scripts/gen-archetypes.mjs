@@ -287,6 +287,28 @@ const ITEMS = [
   { slug: "bermuda-sastre-carbon", desc: "a pair of charcoal grey men's tailored chino shorts, neatly laid flat", type: "flat" },
   { slug: "short-bano-marino", desc: "a pair of navy blue men's swim trunks shorts, neatly laid flat", type: "flat" },
   { slug: "camisa-lino-marino", desc: "a navy blue linen-cotton men's button-up shirt, relaxed summer fit, neatly laid flat", type: "flat" },
+  // === Batch de COLOR por estación de colorimetría (2026-06-19). El color exacto
+  // es lo importante. Ver migración 0043. ===
+  { slug: "sueter-rojo-mujer", desc: "a women's modern crew-neck knit sweater in a true vivid red color", type: "flat" },
+  { slug: "blusa-cobalto-mujer", desc: "a women's modern silk blouse in a vivid cobalt blue color", type: "flat" },
+  { slug: "vestido-esmeralda-mujer", desc: "a women's modern fitted midi dress in a rich emerald green color", type: "flat" },
+  { slug: "sueter-cobalto-hombre", desc: "a men's crew-neck fine knit sweater in a vivid cobalt blue color", type: "flat" },
+  { slug: "polo-rojo-hombre", desc: "a men's short-sleeve pique polo shirt in a true vivid red color", type: "flat" },
+  { slug: "sueter-mostaza-mujer", desc: "a women's modern crew-neck knit sweater in a rich mustard golden yellow color", type: "flat" },
+  { slug: "blusa-oxido-mujer", desc: "a women's modern blouse in a warm rust terracotta color", type: "flat" },
+  { slug: "vestido-oliva-mujer", desc: "a women's modern midi dress in a muted olive green color", type: "flat" },
+  { slug: "sueter-teal-hombre", desc: "a men's crew-neck fine knit sweater in a deep teal green color", type: "flat" },
+  { slug: "camisa-oxido-hombre", desc: "a men's relaxed linen button-up shirt in a warm rust terracotta color", type: "flat" },
+  { slug: "blusa-coral-mujer", desc: "a women's modern blouse in a fresh warm coral color", type: "flat" },
+  { slug: "sueter-durazno-mujer", desc: "a women's modern fine knit sweater in a soft warm peach color", type: "flat" },
+  { slug: "vestido-amarillo-mujer", desc: "a women's modern summer midi dress in a warm golden yellow color", type: "flat" },
+  { slug: "polo-coral-hombre", desc: "a men's short-sleeve pique polo shirt in a fresh warm coral color", type: "flat" },
+  { slug: "camisa-turquesa-hombre", desc: "a men's relaxed linen button-up shirt in a fresh turquoise color", type: "flat" },
+  { slug: "blusa-azul-empolvado-mujer", desc: "a women's modern blouse in a soft dusty powder blue color", type: "flat" },
+  { slug: "vestido-lavanda-mujer", desc: "a women's modern summer midi dress in a soft lavender color", type: "flat" },
+  { slug: "sueter-rosa-polvo-mujer", desc: "a women's modern fine knit sweater in a soft dusty rose pink color", type: "flat" },
+  { slug: "camisa-azul-empolvado-hombre", desc: "a men's relaxed linen button-up shirt in a soft dusty powder blue color", type: "flat" },
+  { slug: "polo-salvia-hombre", desc: "a men's short-sleeve pique polo shirt in a soft sage green color", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
