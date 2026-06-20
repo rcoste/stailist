@@ -209,6 +209,14 @@ const ITEMS = [
   { slug: "sueter-esmeralda", desc: "an emerald green women's fine-knit crew-neck sweater", type: "flat" },
   { slug: "tenis-blancos-mujer", desc: "a pair of clean white minimalist leather women's low-top sneakers, no logos", type: "shoes" },
   { slug: "bodysuit-negro", desc: "a black women's long-sleeve bodysuit top, fitted, neatly laid flat", type: "flat" },
+  // === Ampliación biblioteca v3 (2026-06-19) — lista de Roberto, las que faltaban
+  // (turtleneck/charcoal/cinturón/blazer/overshirt ya estaban). Ver migración 0037. ===
+  { slug: "sueter-half-zip-marino", desc: "a navy blue men's half-zip pullover sweater, fine merino knit, with a short metal zipper at the stand collar", type: "flat" },
+  { slug: "sueter-crewneck-verde-bosque", desc: "a forest green men's fine cashmere crew-neck knit sweater", type: "flat" },
+  { slug: "chamarra-impermeable-ligera", desc: "a charcoal grey men's lightweight waterproof technical shell rain jacket with a hood and a full zipper, matte finish, no text, no logos, no brand", type: "flat" },
+  { slug: "bufanda-lana-negra", desc: "a folded black wool men's scarf, neatly arranged from above", type: "accesorio" },
+  { slug: "guantes-piel-negros", desc: "a pair of black leather men's gloves, laid flat side by side from above", type: "accesorio" },
+  { slug: "camiseta-termica", desc: "a black men's thermal base layer long-sleeve top, slim fitted, fine smooth technical fabric, neatly laid flat, no text, no logos, no brand", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
