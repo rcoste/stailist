@@ -7,7 +7,13 @@ import { TryonNudge } from "@/components/tryon-nudge";
 import { LinkNudge } from "@/components/link-nudge";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 
-export default async function HoyPage() {
+export default async function HoyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ generar?: string }>;
+}) {
+  const { generar } = await searchParams;
+  const autoAsk = generar === "1"; // llegó por el botón ✨ → abre el form directo
   const profile = await requireOnboarded();
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -108,12 +114,13 @@ export default async function HoyPage() {
           />
         ) : null}
         <HoyClient
-          key={nombre}
+          key={`${nombre}:${autoAsk ? "gen" : "view"}`}
           lookInicial={lookInicial}
           votoInicial={votoInicial}
           wornInicial={wornInicial}
           userId={profile.id}
           defaultObjective={profile.last_objective}
+          autoAsk={autoAsk}
         />
       </section>
     </AppShell>

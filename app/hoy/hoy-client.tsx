@@ -8,7 +8,6 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
 import { Spinner } from "@/components/spinner";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
-import { GenerateMenu } from "@/components/generate-menu";
 import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
@@ -42,6 +41,7 @@ export function HoyClient({
   wornInicial,
   userId,
   defaultObjective,
+  autoAsk = false,
 }: {
   lookInicial: HoyOutfit | null;
   /** ya no se usa: el feedback de Hoy es comportamiento (otro look / me lo pongo). */
@@ -49,15 +49,17 @@ export function HoyClient({
   wornInicial: boolean;
   userId: string;
   defaultObjective: string | null;
+  /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
+  autoAsk?: boolean;
 }) {
   const [state, setState] = useState<State>(
-    lookInicial ? { kind: "ready", outfit: lookInicial } : { kind: "ask" }
+    autoAsk || !lookInicial ? { kind: "ask" } : { kind: "ready", outfit: lookInicial }
   );
   const [worn, setWorn] = useState(wornInicial);
   const [skipOpen, setSkipOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  // El botón ✨ pide un look NUEVO → fuerza (si no, look-of-day devuelve el cacheado).
   const lastInput = useRef<LookInput | null>(null);
-  const pendingForce = useRef(false);
+  const pendingForce = useRef(autoAsk);
 
   const generar = useCallback(async (input: LookInput, force: boolean) => {
     lastInput.current = input;
@@ -220,24 +222,6 @@ export function HoyClient({
       </div>
       {skipOpen && !worn ? (
         <SkipReasons outfitId={state.outfit.id} onProceed={otroLook} />
-      ) : null}
-
-      <button
-        type="button"
-        onClick={() => setMenuOpen(true)}
-        className="flex min-h-12 items-center justify-center gap-2 rounded-sm border-2 border-accent text-sm font-medium text-accent transition-colors duration-200 hover:bg-accent-soft"
-      >
-        <Icon name="mas" size={18} /> Generar outfit
-      </button>
-
-      {menuOpen ? (
-        <GenerateMenu
-          onClose={() => setMenuOpen(false)}
-          onUnOutfit={() => {
-            setMenuOpen(false);
-            startGen(true);
-          }}
-        />
       ) : null}
     </div>
   );
