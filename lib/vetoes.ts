@@ -24,7 +24,7 @@ export const EMPTY_VETOES: StyleVetoes = { chips: [], free: [] };
 
 export const VETO_CATALOG: VetoChip[] = [
   // Prendas
-  { id: "tacones", label: "Tacones", kind: "garment", match: ["tacon", "heel"] },
+  { id: "tacones", label: "Tacones", kind: "garment", genders: ["mujer"], match: ["tacon", "heel"] },
   { id: "shorts", label: "Shorts", kind: "garment", match: ["short", "bermuda"] },
   { id: "faldas", label: "Faldas", kind: "garment", genders: ["mujer"], match: ["falda"] },
   { id: "vestidos", label: "Vestidos", kind: "garment", genders: ["mujer"], match: ["vestido"] },
@@ -35,7 +35,7 @@ export const VETO_CATALOG: VetoChip[] = [
   { id: "estampados", label: "Estampados", kind: "feature" },
   { id: "animal_print", label: "Animal print", kind: "feature" },
   { id: "transparencias", label: "Transparencias", kind: "feature" },
-  { id: "escotes", label: "Escotes pronunciados", kind: "feature" },
+  { id: "escotes", label: "Escotes pronunciados", kind: "feature", genders: ["mujer"] },
   { id: "sin_mangas", label: "Sin mangas", kind: "feature" },
   // Colores
   { id: "amarillo", label: "Amarillo", kind: "color", match: ["amarillo", "yellow"] },
