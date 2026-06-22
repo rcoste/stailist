@@ -16,6 +16,7 @@ export type PasaporteData = {
   powerColors: { nombre: string; hex: string }[]; // los que le encienden la cara
   siluetaLine: string | null; // "Con más curvas · En el medio"
   favorece: string | null; // lo que la equilibra (de su silueta)
+  formula: { nombre: string; image: string | null }[]; // un look real (la página lo llena)
 };
 
 // Nombre para mostrar: parte local del correo, capitalizada (no tenemos campo
@@ -60,5 +61,6 @@ export function buildPasaporte(profile: {
     powerColors: (pal?.mejores ?? []).slice(0, 3).map((c) => ({ nombre: c.nombre, hex: c.hex })),
     siluetaLine,
     favorece: profile.body_volume ? siluetaConsejo(profile.body_volume).equilibra : null,
+    formula: [],
   };
 }

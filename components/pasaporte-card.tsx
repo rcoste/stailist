@@ -58,14 +58,9 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
 
           {data.swatches.length > 0 ? (
             <div className="flex flex-col gap-2.5 rounded-xl border border-line bg-surface p-3.5">
-              <div className="flex items-baseline justify-between">
-                <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                  Tu paleta{data.seasonLabel ? ` · ${data.seasonLabel}` : ""}
-                </span>
-                {data.metal ? (
-                  <span className="text-[11px] text-muted">metal: {data.metal}</span>
-                ) : null}
-              </div>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Tu paleta{data.seasonLabel ? ` · ${data.seasonLabel}` : ""}
+              </span>
               <div className="flex gap-1.5">
                 {data.swatches.map((hex, i) => (
                   <span
@@ -97,6 +92,19 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
             </div>
           ) : null}
 
+          {data.metal ? (
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Tu metal · {data.metal}
+              </span>
+              <span className="text-sm text-ink">
+                {data.metal === "oro"
+                  ? "El dorado te ilumina; la plata te apaga."
+                  : "La plata te ilumina; el dorado te apaga."}
+              </span>
+            </div>
+          ) : null}
+
           {data.siluetaLine || data.favorece ? (
             <div className="flex flex-col gap-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
@@ -105,6 +113,29 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
               {data.favorece ? (
                 <span className="text-sm text-ink">{data.favorece}</span>
               ) : null}
+            </div>
+          ) : null}
+
+          {data.formula.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Tu fórmula que siempre jala
+              </span>
+              <div className="flex gap-2">
+                {data.formula.map((p, i) => (
+                  <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                    <div className="aspect-[3/4] w-full overflow-hidden rounded-md border border-line bg-surface">
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.image} alt="" className="h-full w-full object-cover" />
+                      ) : null}
+                    </div>
+                    <span className="w-full truncate text-center text-[10px] text-muted">
+                      {p.nombre}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 
