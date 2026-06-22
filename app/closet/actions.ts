@@ -32,6 +32,9 @@ export async function addPhotoItem(
       color_hex: attrs.color_hex,
       formalidad: attrs.formalidad,
       temporada: attrs.temporada,
+      largo: attrs.largo,
+      corte: attrs.corte,
+      manga: attrs.manga,
     },
   });
   if (error) return { ok: false };
@@ -211,6 +214,9 @@ export async function addPhotoItems(
         color_hex: it.attrs.color_hex,
         formalidad: it.attrs.formalidad,
         temporada: it.attrs.temporada,
+        largo: it.attrs.largo,
+        corte: it.attrs.corte,
+        manga: it.attrs.manga,
       },
       render_status: it.renderStatus,
       render_path: it.renderPath,

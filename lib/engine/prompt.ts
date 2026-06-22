@@ -47,6 +47,9 @@ export type EngineItem = {
     formalidad?: string;
     temporada?: string;
     tipo?: string;
+    largo?: string; // crop/regular/largo — habilita tips de fajar
+    corte?: string; // entallado/recto/holgado — habilita tips de proporción
+    manga?: string; // sin/corta/larga — habilita tips de arremangar
   };
 };
 
@@ -105,7 +108,13 @@ export function describeItem(item: EngineItem): string {
     a.color && a.color_hex
       ? `${a.color} ${a.color_hex}`
       : a.color_hex ?? a.color;
-  return [a.nombre ?? a.tipo, color, a.formalidad, a.temporada]
+  // Atributos de styling (si los hay): habilitan tips de "cómo llevarlo".
+  const extras = [
+    a.corte ? `corte ${a.corte}` : null,
+    a.largo ? `largo ${a.largo}` : null,
+    a.manga ? `manga ${a.manga}` : null,
+  ].filter(Boolean);
+  return [a.nombre ?? a.tipo, color, a.formalidad, a.temporada, ...extras]
     .filter(Boolean)
     .join(" · ");
 }

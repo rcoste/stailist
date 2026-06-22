@@ -11,6 +11,11 @@ export type PrendaAnalisis = {
   color_hex: string;
   formalidad: "casual" | "formal-casual" | "formal";
   temporada: "calor" | "templado" | "frio" | "todo-el-año";
+  // Atributos de styling (opcionales): habilitan tips de "cómo llevarlo"
+  // (fajar/arremangar/proporción). El modelo los llena cuando aplican.
+  largo?: "crop" | "regular" | "largo";
+  corte?: "entallado" | "recto" | "holgado";
+  manga?: "sin" | "corta" | "larga";
 };
 
 // Claude vision mira la foto de UNA prenda y devuelve sus atributos. El
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
       model: "claude-opus-4-8",
       max_tokens: 500,
       system:
-        "Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Camisa de lino beige', 'Tenis blancos'). El color_hex es el color dominante real de la prenda. Si hay varias prendas o ninguna clara, elige la prenda principal.",
+        "Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Camisa de lino beige', 'Tenis blancos'). El color_hex es el color dominante real de la prenda. Si hay varias prendas o ninguna clara, elige la prenda principal. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla.",
       messages: [
         {
           role: "user",
@@ -85,6 +90,9 @@ export async function POST(request: NextRequest) {
                 type: "string",
                 enum: ["calor", "templado", "frio", "todo-el-año"],
               },
+              largo: { type: "string", enum: ["crop", "regular", "largo"] },
+              corte: { type: "string", enum: ["entallado", "recto", "holgado"] },
+              manga: { type: "string", enum: ["sin", "corta", "larga"] },
             },
             required: [
               "nombre",

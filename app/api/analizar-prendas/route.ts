@@ -93,6 +93,9 @@ export async function POST(request: NextRequest) {
                       type: "string",
                       enum: ["calor", "templado", "frio", "todo-el-año"],
                     },
+                    largo: { type: "string", enum: ["crop", "regular", "largo"] },
+                    corte: { type: "string", enum: ["entallado", "recto", "holgado"] },
+                    manga: { type: "string", enum: ["sin", "corta", "larga"] },
                     confianza: {
                       type: "string",
                       enum: ["alta", "media", "baja"],
