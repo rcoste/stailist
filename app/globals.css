@@ -112,6 +112,22 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Entrada de bottom sheets (hoja "Agregar"): sube desde abajo. Usa los tokens
+   de motion del DS. Se anula con prefers-reduced-motion. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="sheet-up"] {
+    animation: none !important;
+  }
+}
+
 /* Shimmer de texto: barrido muted→ink→muted para estados de carga ("Creando
    tu look…"). Único uso de animación de gradiente del DS. Respeta
    prefers-reduced-motion (cae a color sólido sin movimiento). */

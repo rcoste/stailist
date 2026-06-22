@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
@@ -50,6 +50,10 @@ const TEMPORADAS: { v: string; l: string }[] = [
   { v: "todo-el-año", l: "Todo el año" },
 ];
 
+const norm = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+// Chip de categoría: cantos crispados (radius-sm, NO pill). Activo = acento.
 function Chip({
   label,
   count,
@@ -65,20 +69,53 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border px-3 py-2 text-[12.5px] font-medium transition-colors duration-200 ${
         on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted hover:text-ink"
       }`}
     >
       {label}
-      <span className={`text-xs ${on ? "text-accent/70" : "text-muted"}`}>{count}</span>
+      <span className={`tabular text-[11px] ${on ? "text-accent/70" : "text-muted/70"}`}>{count}</span>
+    </button>
+  );
+}
+
+// Chip-ícono (lupa / sliders): mismo lenguaje, solo el ícono. Hit target ≥44px.
+function IconChip({
+  name,
+  on,
+  badge,
+  onClick,
+  label,
+}: {
+  name: "lupa" | "sliders";
+  on?: boolean;
+  badge?: number;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={`relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-sm border transition-colors ${
+        on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink hover:border-accent"
+      }`}
+    >
+      <Icon name={name} size={18} />
+      {badge ? (
+        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-on-accent">
+          {badge}
+        </span>
+      ) : null}
     </button>
   );
 }
 
 function Tile({ item, onTap }: { item: ClosetItem; onTap: () => void }) {
   return (
-    <button type="button" onClick={onTap} className="flex flex-col gap-1.5 text-left">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-line bg-bg">
+    <button type="button" onClick={onTap} className="flex w-full flex-col gap-1.5 text-left">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
         {item.imagen ? (
           <Image
             src={item.imagen}
@@ -90,47 +127,66 @@ function Tile({ item, onTap }: { item: ClosetItem; onTap: () => void }) {
         ) : (
           <span className="absolute inset-0" style={{ backgroundColor: item.swatch }} aria-hidden />
         )}
+        {/* Badge "Tuya": cinta inferior con degradado — solo en fotos propias. */}
         {item.source === "photo" ? (
-          <span className="absolute left-1.5 top-1.5 rounded-full bg-accent/90 px-1.5 py-0.5 text-[10px] font-medium text-on-accent">
-            tuya
+          <span className="absolute inset-x-0 bottom-0 flex items-center gap-[5px] bg-gradient-to-t from-ink/55 to-transparent px-[9px] py-1.5 text-[9.5px] font-semibold tracking-[0.04em] text-on-accent">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-on-accent" />
+            Tuya
           </span>
         ) : null}
       </div>
-      <p className="truncate text-xs font-medium text-ink">{item.nombre}</p>
+      <p className="truncate text-[11.5px] font-medium text-ink">{item.nombre}</p>
     </button>
   );
 }
 
-// Grid del clóset con filtro por categoría (chips sticky con conteo) y detalle
-// tappable por prenda (ver en grande, podar lo que no tienes, y corregir lo que
-// la IA leyó mal en tus fotos).
+// Grid del clóset (handoff "índice editorial"): tu ropa agrupada por categoría,
+// con búsqueda (lupa) y filtros (sliders) en la misma fila de chips. Detalle
+// tappable por prenda (ver en grande, podar lo asumido, corregir lo que la IA leyó).
 export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   const router = useRouter();
   const [filter, setFilter] = useState<string | null>(null); // null = Todos
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ClosetItem | null>(null);
 
-  const visibles = items.filter((i) => !removed.has(i.id));
+  // Búsqueda inline (la lupa expande el campo) + filtros de atributos (sliders).
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fFormalidad, setFFormalidad] = useState<Set<string>>(new Set());
+  const [fTemporada, setFTemporada] = useState<Set<string>>(new Set());
+  const [fSoloTuyas, setFSoloTuyas] = useState(false);
 
-  // Categorías presentes (con conteo), en el orden canónico.
+  const activeFilterCount = fFormalidad.size + fTemporada.size + (fSoloTuyas ? 1 : 0);
+
+  const visibles = useMemo(() => items.filter((i) => !removed.has(i.id)), [items, removed]);
+
+  // Pre-filtro por búsqueda + atributos (NO por categoría): la base sobre la que
+  // se cuentan los chips de categoría y se arman los grupos.
+  const base = useMemo(() => {
+    const q = norm(query.trim());
+    return visibles.filter((i) => {
+      if (q && !norm(i.nombre).includes(q)) return false;
+      if (fFormalidad.size && !fFormalidad.has(i.formalidad)) return false;
+      if (fTemporada.size && !fTemporada.has(i.temporada)) return false;
+      if (fSoloTuyas && i.source !== "photo") return false;
+      return true;
+    });
+  }, [visibles, query, fFormalidad, fTemporada, fSoloTuyas]);
+
+  // Conteo por categoría sobre la base.
   const counts = new Map<string, number>();
-  for (const i of visibles) counts.set(i.category, (counts.get(i.category) ?? 0) + 1);
+  for (const i of base) counts.set(i.category, (counts.get(i.category) ?? 0) + 1);
   const presentes = CAT.filter((c) => (counts.get(c.key) ?? 0) > 0);
 
-  // Si la categoría filtrada se queda sin prendas (borraste la última), vuelve a Todos.
+  // Si la categoría filtrada se queda sin prendas, vuelve a Todos.
   const activeFilter = filter && (counts.get(filter) ?? 0) > 0 ? filter : null;
 
-  const mostrados = activeFilter
-    ? visibles.filter((i) => i.category === activeFilter)
-    : visibles;
-
-  // Agrupado por categoría (solo en "Todos"); filtrado = un grid plano.
   const grupos = activeFilter
-    ? [{ key: activeFilter, label: CAT_LABEL.get(activeFilter) ?? "", prendas: mostrados }]
-    : CAT.map((c) => ({
-        ...c,
-        prendas: visibles.filter((i) => i.category === c.key),
-      })).filter((g) => g.prendas.length > 0);
+    ? [{ key: activeFilter, label: CAT_LABEL.get(activeFilter) ?? "", prendas: base.filter((i) => i.category === activeFilter) }]
+    : CAT.map((c) => ({ ...c, prendas: base.filter((i) => i.category === c.key) })).filter(
+        (g) => g.prendas.length > 0
+      );
 
   async function quitar(id: string) {
     setRemoved((s) => new Set(s).add(id));
@@ -147,36 +203,89 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
     }
   }
 
+  function toggleSet(set: Set<string>, setter: (s: Set<string>) => void, value: string) {
+    const n = new Set(set);
+    if (n.has(value)) n.delete(value);
+    else n.add(value);
+    setter(n);
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Filtro por categoría: chips con conteo, scroll horizontal, sticky. */}
+      {/* Fila de búsqueda + filtros (sticky). La lupa expande un campo inline. */}
       <div className="sticky top-0 z-10 -mx-4 bg-bg px-4 py-1">
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Chip label="Todos" count={visibles.length} on={!activeFilter} onClick={() => setFilter(null)} />
-          {presentes.map((c) => (
-            <Chip
-              key={c.key}
-              label={c.label}
-              count={counts.get(c.key) ?? 0}
-              on={activeFilter === c.key}
-              onClick={() => setFilter(c.key)}
+        {searchOpen ? (
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 items-center gap-2 rounded-sm border border-accent bg-surface px-3 py-2">
+              <Icon name="lupa" size={18} className="shrink-0 text-muted" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Busca por nombre…"
+                className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchOpen(false);
+                setQuery("");
+              }}
+              className="shrink-0 px-1 text-sm font-medium text-muted hover:text-ink"
+            >
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <IconChip name="lupa" label="Buscar" onClick={() => setSearchOpen(true)} />
+            <div className="flex flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <Chip label="Todos" count={base.length} on={!activeFilter} onClick={() => setFilter(null)} />
+              {presentes.map((c) => (
+                <Chip
+                  key={c.key}
+                  label={c.label}
+                  count={counts.get(c.key) ?? 0}
+                  on={activeFilter === c.key}
+                  onClick={() => setFilter(c.key)}
+                />
+              ))}
+            </div>
+            <IconChip
+              name="sliders"
+              label="Filtros"
+              on={activeFilterCount > 0}
+              badge={activeFilterCount || undefined}
+              onClick={() => setFilterOpen(true)}
             />
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {grupos.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface px-6 py-14 text-center">
-          <p className="editorial text-lg text-ink">tu clóset está vacío</p>
-          <p className="text-sm text-muted">Vuelve al inicio y marca los básicos que tienes.</p>
+          <p className="display text-lg text-ink">
+            {query || activeFilterCount > 0 ? "nada coincide" : "tu clóset está vacío"}
+          </p>
+          <p className="text-sm text-muted">
+            {query || activeFilterCount > 0
+              ? "Ajusta la búsqueda o los filtros."
+              : "Vuelve al inicio y marca los básicos que tienes."}
+          </p>
         </div>
       ) : (
         grupos.map((g) => (
           <div key={g.key} className="flex flex-col gap-3">
             {!activeFilter ? (
-              <h2 className="text-sm font-medium font-sans uppercase tracking-wide text-muted">{g.label}</h2>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                  {g.label}
+                </h2>
+                <span className="tabular text-[11px] text-muted">{g.prendas.length}</span>
+              </div>
             ) : null}
-            <ul className="grid grid-cols-3 gap-3">
+            <ul className="grid grid-cols-3 gap-[11px]">
               {g.prendas.map((p) => (
                 <li key={p.id}>
                   <Tile item={p} onTap={() => setSelected(p)} />
@@ -186,6 +295,23 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
           </div>
         ))
       )}
+
+      {filterOpen ? (
+        <FilterSheet
+          formalidad={fFormalidad}
+          temporada={fTemporada}
+          soloTuyas={fSoloTuyas}
+          onToggleFormalidad={(v) => toggleSet(fFormalidad, setFFormalidad, v)}
+          onToggleTemporada={(v) => toggleSet(fTemporada, setFTemporada, v)}
+          onToggleSoloTuyas={() => setFSoloTuyas((v) => !v)}
+          onClear={() => {
+            setFFormalidad(new Set());
+            setFTemporada(new Set());
+            setFSoloTuyas(false);
+          }}
+          onClose={() => setFilterOpen(false)}
+        />
+      ) : null}
 
       {selected ? (
         <ItemSheet
@@ -198,6 +324,102 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
           }}
         />
       ) : null}
+    </div>
+  );
+}
+
+// Panel de filtros (sliders): formalidad, temporada, solo tuyas. Usa los
+// atributos que ya viven en cada prenda; no inventa datos nuevos.
+function FilterSheet({
+  formalidad,
+  temporada,
+  soloTuyas,
+  onToggleFormalidad,
+  onToggleTemporada,
+  onToggleSoloTuyas,
+  onClear,
+  onClose,
+}: {
+  formalidad: Set<string>;
+  temporada: Set<string>;
+  soloTuyas: boolean;
+  onToggleFormalidad: (v: string) => void;
+  onToggleTemporada: (v: string) => void;
+  onToggleSoloTuyas: () => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  const pill = (on: boolean) =>
+    `min-h-9 rounded-sm border px-3 text-sm font-medium transition-colors ${
+      on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink hover:border-accent"
+    }`;
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-ink/40" />
+      <div
+        className="relative z-10 flex w-full max-w-[430px] flex-col gap-5 rounded-t-[18px] bg-surface px-4 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-2"
+        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mt-1.5 h-1 w-9 rounded-full bg-line" />
+        <div className="flex items-center justify-between">
+          <h3 className="text-[19px] font-semibold text-ink display">Filtros</h3>
+          <button type="button" onClick={onClear} className="text-sm font-medium text-accent">
+            Limpiar
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+            Formalidad
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {FORMALIDADES.map((f) => (
+              <button key={f.v} type="button" onClick={() => onToggleFormalidad(f.v)} className={pill(formalidad.has(f.v))}>
+                {f.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+            Temporada
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {TEMPORADAS.map((t) => (
+              <button key={t.v} type="button" onClick={() => onToggleTemporada(t.v)} className={pill(temporada.has(t.v))}>
+                {t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onToggleSoloTuyas}
+          className={`flex items-center justify-between rounded-md border px-3.5 py-3 text-left text-sm font-medium transition-colors ${
+            soloTuyas ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink"
+          }`}
+        >
+          Solo mis fotos (Tuyas)
+          <span
+            className={`flex h-5 w-5 items-center justify-center rounded-sm border ${
+              soloTuyas ? "border-accent bg-accent text-on-accent" : "border-line"
+            }`}
+          >
+            {soloTuyas ? <Icon name="check" size={13} strokeWidth={2.4} /> : null}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+        >
+          Ver resultados
+        </button>
+      </div>
     </div>
   );
 }
@@ -242,7 +464,7 @@ function ItemSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3">
-          <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-lg border border-line bg-bg">
+          <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-md border border-line bg-bg">
             {item.imagen ? (
               <Image src={item.imagen} alt={item.nombre} fill sizes="88px" className="object-cover" />
             ) : (
@@ -256,7 +478,7 @@ function ItemSheet({
                 <input
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  className="min-h-10 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                 />
               </>
             ) : (
@@ -283,8 +505,8 @@ function ItemSheet({
                     key={c.v}
                     type="button"
                     onClick={() => setCategoria(c.v)}
-                    className={`min-h-9 rounded-full border px-3 text-sm transition-colors ${
-                      categoria === c.v ? "border-accent bg-accent-soft text-ink" : "border-line bg-surface text-ink"
+                    className={`min-h-9 rounded-sm border px-3 text-sm transition-colors ${
+                      categoria === c.v ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink"
                     }`}
                   >
                     {c.l}
@@ -299,7 +521,7 @@ function ItemSheet({
                 <select
                   value={formalidad}
                   onChange={(e) => setFormalidad(e.target.value)}
-                  className="min-h-10 rounded-lg border border-line bg-surface px-2 text-sm text-ink"
+                  className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
                 >
                   {FORMALIDADES.map((f) => (
                     <option key={f.v} value={f.v}>
@@ -313,7 +535,7 @@ function ItemSheet({
                 <select
                   value={temporada}
                   onChange={(e) => setTemporada(e.target.value)}
-                  className="min-h-10 rounded-lg border border-line bg-surface px-2 text-sm text-ink"
+                  className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
                 >
                   {TEMPORADAS.map((t) => (
                     <option key={t.v} value={t.v}>

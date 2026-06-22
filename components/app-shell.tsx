@@ -3,7 +3,16 @@ import { Logo } from "./logo";
 import { TabBar } from "./tab-bar";
 import { Icon } from "./icon";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+// hideTabBar: pantallas con una barra fija de acción abajo (Biblioteca,
+// cuestionario). La nota crítica del handoff es que el CTA inferior y la tab bar
+// NO deben coexistir — ahí se oculta la tab bar y la página pone su propia barra.
+export function AppShell({
+  children,
+  hideTabBar = false,
+}: {
+  children: React.ReactNode;
+  hideTabBar?: boolean;
+}) {
   return (
     <div className="mx-auto min-h-dvh w-full max-w-[430px] bg-bg">
       {/* Logo centrado; Perfil salió de la barra inferior a este ícono. */}
@@ -17,8 +26,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Icon name="persona" size={18} />
         </Link>
       </header>
-      <main className="px-4 pb-28">{children}</main>
-      <TabBar />
+      <main className={hideTabBar ? "px-4 pb-32" : "px-4 pb-28"}>{children}</main>
+      {hideTabBar ? null : <TabBar />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { BibliotecaPicker } from "./biblioteca-picker";
@@ -31,24 +32,30 @@ export default async function BibliotecaPage() {
     (a) => !have.has(a.id)
   );
 
+  // Sin tab bar: esta pantalla tiene una barra de acción fija abajo (Agregar) y
+  // el handoff prohíbe que CTA y tab bar coexistan.
   return (
-    <AppShell>
-      <section className="flex flex-col gap-6 pt-4">
-        <div className="flex flex-col gap-2">
-          <Link href="/closet" className="text-sm text-muted hover:text-ink">
-            ← Clóset
+    <AppShell hideTabBar>
+      <section className="flex flex-col gap-4 pt-1">
+        <div className="flex flex-col gap-1.5">
+          <Link
+            href="/closet"
+            className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
+          >
+            <Icon name="chevron" size={15} rotate={180} />
+            Clóset
           </Link>
-          <h1 className="text-h1 font-semibold text-ink">Biblioteca</h1>
+          <h1 className="text-[30px] font-semibold leading-none tracking-[-0.01em] text-ink">
+            Biblioteca
+          </h1>
           <p className="text-sm text-muted">
-            Agrega más básicos a tu clóset. Marca los que también tengas.
+            Agrega más básicos. Marca los que también tengas.
           </p>
         </div>
 
         {available.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-14 text-center">
-            <p className="editorial text-lg text-ink">
-              ya tienes todos los básicos
-            </p>
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface px-6 py-14 text-center">
+            <p className="display text-lg text-ink">ya tienes todos los básicos</p>
             <p className="text-sm text-muted">
               Si te falta algo específico, súbelo como foto desde tu clóset.
             </p>

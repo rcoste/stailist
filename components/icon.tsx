@@ -28,7 +28,11 @@ export type IconName =
   | "lluvia"
   | "chevron"
   | "expandir"
-  | "persona";
+  | "persona"
+  | "lupa"
+  | "sliders"
+  | "libro"
+  | "hoja";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -118,6 +122,31 @@ const GLYPHS: Record<IconName, JSX.Element> = {
     <>
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+    </>
+  ),
+  lupa: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M20 20l-3.6-3.6" />
+    </>
+  ),
+  sliders: (
+    <>
+      <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+      <circle cx="16" cy="7" r="2" />
+      <circle cx="8" cy="17" r="2" />
+    </>
+  ),
+  libro: (
+    <>
+      <path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v14H6.5A1.5 1.5 0 0 0 5 19.5z" />
+      <path d="M5 19.5A1.5 1.5 0 0 1 6.5 18H19v2H6.5A1.5 1.5 0 0 1 5 19.5z" />
+    </>
+  ),
+  hoja: (
+    <>
+      <path d="M5 19c0-8 6-13 14-13 0 8-5 14-14 14z" />
+      <path d="M5 19c2-5 5-7 9-9" />
     </>
   ),
 };

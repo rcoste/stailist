@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
 import { addPhotoItems, addLibraryCandidates } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
+import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 
@@ -101,10 +102,19 @@ type State =
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
-export function ImportCarreteFlow() {
+// headless: sin botón propio — lo dispara la hoja "Agregar" vía ref.start().
+export function ImportCarreteFlow({
+  headless = false,
+  ref,
+}: {
+  headless?: boolean;
+  ref?: Ref<AddFlowHandle>;
+} = {}) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useImperativeHandle(ref, () => ({ start: () => inputRef.current?.click() }), []);
 
   // --- 1) Selección + extracción ---
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
@@ -356,13 +366,42 @@ export function ImportCarreteFlow() {
     );
   }
 
+  // Modo headless: la hoja "Agregar" es el trigger. Solo input + error flotante.
+  if (headless) {
+    return (
+      <>
+        {input}
+        {state.kind === "error" ? (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4"
+            onClick={() => setState({ kind: "idle" })}
+          >
+            <div
+              className="flex w-full max-w-[430px] flex-col gap-3 rounded-2xl bg-surface p-5 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-sm text-error">{state.msg}</p>
+              <button
+                type="button"
+                onClick={() => setState({ kind: "idle" })}
+                className="min-h-11 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
   // idle / error
   return (
     <div className="flex flex-col items-end gap-2">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="flex min-h-12 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-medium text-ink transition-colors duration-200 hover:border-accent"
+        className="flex min-h-12 items-center gap-2 rounded-sm border border-line bg-surface px-5 text-sm font-medium text-ink transition-colors duration-200 hover:border-accent"
       >
         <Icon name="destello" size={16} className="text-accent" />
         Importar del carrete
@@ -412,7 +451,7 @@ function Footer({
       <button
         type="button"
         onClick={cancel}
-        className="min-h-12 flex-1 rounded-full border border-line bg-surface text-sm font-medium text-ink"
+        className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
       >
         Cancelar
       </button>
@@ -420,7 +459,7 @@ function Footer({
         type="button"
         onClick={onConfirm}
         disabled={confirmDisabled}
-        className="min-h-12 flex-[2] rounded-full bg-accent text-sm font-medium text-on-accent disabled:opacity-50"
+        className="min-h-12 flex-[2] rounded-sm bg-accent text-sm font-medium text-on-accent disabled:opacity-50"
       >
         {confirmLabel}
       </button>
@@ -469,7 +508,7 @@ function DraftCard({
             className="min-h-9 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
           />
           {baja && (
-            <span className="w-fit rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
+            <span className="w-fit rounded-sm bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
               No la vi bien — confírmala
             </span>
           )}
@@ -496,7 +535,7 @@ function DraftCard({
                   key={c.v}
                   type="button"
                   onClick={() => onPatch({ categoria: c.v })}
-                  className={`min-h-8 rounded-full border px-2.5 text-xs transition-colors ${
+                  className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
                     a.categoria === c.v
                       ? "border-accent bg-accent-soft text-accent"
                       : "border-line bg-surface text-muted"
@@ -534,7 +573,7 @@ function DraftCard({
                   key={f.v}
                   type="button"
                   onClick={() => onPatch({ formalidad: f.v })}
-                  className={`min-h-8 rounded-full border px-2.5 text-xs transition-colors ${
+                  className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
                     a.formalidad === f.v
                       ? "border-accent bg-accent-soft text-accent"
                       : "border-line bg-surface text-muted"
@@ -593,7 +632,7 @@ function VerdictBtn({ label, on, onClick }: { label: string; on: boolean; onClic
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-8 flex-1 rounded-full border px-1 text-[11px] font-medium transition-colors ${
+      className={`min-h-8 flex-1 rounded-sm border px-1 text-[11px] font-medium transition-colors ${
         on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
       }`}
     >

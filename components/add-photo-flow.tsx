@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -8,6 +8,9 @@ import { addPhotoItem } from "@/app/closet/actions";
 import { toUsableImage } from "@/lib/image-file";
 import { Spinner } from "@/components/spinner";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
+
+// Mango imperativo para disparar el flujo desde fuera (la hoja "Agregar").
+export type AddFlowHandle = { start: () => void };
 
 const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
   { v: "top", l: "Top" },
@@ -70,10 +73,23 @@ function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
   });
 }
 
-export function AddPhotoFlow({ userId }: { userId: string }) {
+// headless: sin botón propio — lo dispara la hoja "Agregar" vía ref.start().
+// En ese modo se muestran overlays de "leyendo" y error porque no hay botón
+// donde reflejar el estado.
+export function AddPhotoFlow({
+  userId,
+  headless = false,
+  ref,
+}: {
+  userId: string;
+  headless?: boolean;
+  ref?: Ref<AddFlowHandle>;
+}) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useImperativeHandle(ref, () => ({ start: () => inputRef.current?.click() }), []);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -230,7 +246,7 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
               type="button"
               disabled={!editable}
               onClick={() => setState({ kind: "idle" })}
-              className="min-h-12 flex-1 rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
+              className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -238,7 +254,7 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
               type="button"
               disabled={!editable}
               onClick={guardar}
-              className="min-h-12 flex-[2] rounded-full bg-accent text-sm font-medium text-on-accent disabled:opacity-50"
+              className="min-h-12 flex-[2] rounded-sm bg-accent text-sm font-medium text-on-accent disabled:opacity-50"
             >
               {state.kind === "guardando" ? "Guardando…" : "Sumar al clóset"}
             </button>
@@ -248,13 +264,52 @@ export function AddPhotoFlow({ userId }: { userId: string }) {
     );
   }
 
+  // Modo headless: la hoja "Agregar" es el trigger. Solo input + feedback flotante.
+  if (headless) {
+    return (
+      <>
+        {input}
+        {state.kind === "analizando" ? (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4">
+            <div className="flex w-full max-w-[430px] flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
+              <Spinner className="h-7 w-7 text-accent" />
+              <p className="editorial text-base text-ink">Leyendo tu prenda…</p>
+            </div>
+          </div>
+        ) : null}
+        {state.kind === "error" ? (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4"
+            onClick={() => setState({ kind: "idle" })}
+          >
+            <div
+              className="flex w-full max-w-[430px] flex-col gap-3 rounded-2xl bg-surface p-5 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-sm text-error">
+                No pude leer la prenda. Inténtalo con otra foto.
+              </p>
+              <button
+                type="button"
+                onClick={() => setState({ kind: "idle" })}
+                className="min-h-11 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col items-end gap-2">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={state.kind === "analizando"}
-        className="flex min-h-12 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+        className="flex min-h-12 items-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
       >
         {state.kind === "analizando" ? (
           <>

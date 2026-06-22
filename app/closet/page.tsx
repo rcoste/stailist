@@ -1,10 +1,7 @@
-import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { AddPhotoFlow } from "@/components/add-photo-flow";
-import { ImportCarreteFlow } from "@/components/import-carrete-flow";
+import { AddSheet } from "@/components/add-sheet";
 import { CapsuleCard } from "@/components/capsule-card";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
-import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -98,35 +95,24 @@ export default async function ClosetPage() {
 
   return (
     <AppShell>
-      <section className="flex flex-col gap-6 pt-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-h1 font-semibold text-ink">Clóset</h1>
-              <p className="text-sm text-muted">
-                {hasOwnPhotos
-                  ? `${items.length} ${items.length === 1 ? "prenda" : "prendas"} en tu clóset.`
-                  : "Estos son tus básicos para arrancar. Súmale tu ropa real y tus looks se vuelven 100% tuyos."}
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              <AddPhotoFlow userId={profile.id} />
-              <ImportCarreteFlow />
-            </div>
+      <section className="flex flex-col gap-4 pt-1">
+        {/* Header: tu ropa primero — título + conteo a la izquierda, un solo
+            botón "Agregar" a la derecha (abre la hoja con las 3 formas). */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[30px] font-semibold leading-none tracking-[-0.01em] text-ink">
+              Clóset
+            </h1>
+            <p className="mt-2 text-sm text-muted">
+              {hasOwnPhotos
+                ? `${items.length} ${items.length === 1 ? "prenda" : "prendas"}`
+                : `${items.length} básicos para arrancar`}
+            </p>
           </div>
-
-          <Link
-            href="/closet/biblioteca"
-            className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-accent"
-          >
-            <span className="flex flex-col">
-              <span className="text-sm font-medium text-ink">Explora la Biblioteca</span>
-              <span className="text-xs text-muted">Agrega más básicos que ya tienes</span>
-            </span>
-            <Icon name="chevron" size={16} className="shrink-0 text-muted" />
-          </Link>
+          <AddSheet userId={profile.id} />
         </div>
 
+        {/* La cápsula reducida a una franja-resumen (no protagonista). */}
         <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
 
         <ClosetGrid items={items} />
