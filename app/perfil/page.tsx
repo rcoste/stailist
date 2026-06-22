@@ -51,6 +51,17 @@ export default async function PerfilPage() {
           </div>
         </div>
 
+        <Link
+          href="/perfil/pasaporte"
+          className="flex items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent-soft p-4 transition-colors hover:border-accent"
+        >
+          <span className="flex flex-col">
+            <span className="text-sm font-medium text-ink">Tu pasaporte de estilo</span>
+            <span className="text-xs text-muted">Tu identidad en una tarjeta — compártela</span>
+          </span>
+          <Icon name="compartir" size={16} className="shrink-0 text-accent" />
+        </Link>
+
         <ColorimetriaSection season={profile.palette_season} flow={profile.palette_flow} />
 
         {profile.gender === "mujer" || profile.gender === "hombre" ? (
