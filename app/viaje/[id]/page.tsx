@@ -79,6 +79,7 @@ export default async function ViajeDetallePage({
         ocasion: o.ocasion,
         titulo: o.titulo,
         porque: o.porque,
+        tip: o.tip ?? null,
         voto: o.voto ?? null,
         prendas: o.prendas.map((nombre) => ({ nombre, image: imageMap[nombre] ?? null })),
       }))

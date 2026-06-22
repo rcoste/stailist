@@ -47,6 +47,7 @@ export type TripOutfit = {
   ocasion: Occasion;
   titulo: string; // "Cena junto al mar"
   porque: string; // una línea cálida de por qué funciona
+  tip?: string | null; // "el toque" — cómo llevarlo (opcional)
   prendas: string[]; // nombres de prendas del clóset (lo empacable)
   voto?: "up" | "down" | null; // 👍/👎 del usuario sobre el look (se regenera con ellos)
 };

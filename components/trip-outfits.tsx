@@ -14,6 +14,7 @@ export type ResolvedOutfit = {
   ocasion: string;
   titulo: string;
   porque: string;
+  tip: string | null;
   voto: "up" | "down" | null;
   prendas: { nombre: string; image: string | null }[];
 };
@@ -204,6 +205,12 @@ export function TripOutfits({
               ))}
             </div>
             <p className="text-sm text-muted">{o.porque}</p>
+            {o.tip ? (
+              <p className="flex items-start gap-1.5 text-sm text-accent">
+                <Icon name="destello" size={14} className="mt-0.5 shrink-0" />
+                <span>{o.tip}</span>
+              </p>
+            ) : null}
             <div className="flex items-center gap-2">
               <button
                 type="button"

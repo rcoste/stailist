@@ -140,6 +140,7 @@ Para las celdas que SÍ funcionan:
 - Opcional: súmale en "extra" UNA capa y/o UN accesorio si la mejora (solo de las listas de arriba).
 - titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
+- tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
 - Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
 - Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
 - Devuelve A LO MÁS ${MAX_LOOKS} looks, los mejores y más variados.`,
@@ -164,9 +165,10 @@ Para las celdas que SÍ funcionan:
                   ocasion: { type: "string", enum: [...ocasiones] },
                   titulo: { type: "string" },
                   porque: { type: "string" },
+                  tip: { type: "string" }, // "el toque": cómo llevarlo (cadena vacía si no aplica)
                   extra: { type: "array", items: { type: "integer" } }, // capa/accesorio opcional
                 },
-                required: ["celda", "ocasion", "titulo", "porque", "extra"],
+                required: ["celda", "ocasion", "titulo", "porque", "tip", "extra"],
                 additionalProperties: false,
               },
             },
@@ -181,7 +183,14 @@ Para las celdas que SÍ funcionan:
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
   const parsed = JSON.parse(text) as {
-    looks?: { celda: number; ocasion: string; titulo: string; porque: string; extra?: number[] }[];
+    looks?: {
+      celda: number;
+      ocasion: string;
+      titulo: string;
+      porque: string;
+      tip?: string;
+      extra?: number[];
+    }[];
   };
 
   const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
@@ -206,7 +215,13 @@ Para las celdas que SÍ funcionan:
     const key = [...prendas].sort().join("|");
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ ocasion, titulo: l.titulo.trim(), porque: (l.porque ?? "").trim(), prendas });
+    out.push({
+      ocasion,
+      titulo: l.titulo.trim(),
+      porque: (l.porque ?? "").trim(),
+      tip: l.tip?.trim() ? l.tip.trim() : null,
+      prendas,
+    });
     if (out.length >= MAX_LOOKS) break;
   }
   return out;
