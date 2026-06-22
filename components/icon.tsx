@@ -32,7 +32,9 @@ export type IconName =
   | "lupa"
   | "sliders"
   | "libro"
-  | "hoja";
+  | "hoja"
+  | "luna"
+  | "lapiz";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -147,6 +149,13 @@ const GLYPHS: Record<IconName, JSX.Element> = {
     <>
       <path d="M5 19c0-8 6-13 14-13 0 8-5 14-14 14z" />
       <path d="M5 19c2-5 5-7 9-9" />
+    </>
+  ),
+  luna: <path d="M20 14.3A8 8 0 1 1 9.7 4a6.3 6.3 0 0 0 10.3 10.3z" />,
+  lapiz: (
+    <>
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="M14 6l4 4" />
     </>
   ),
 };

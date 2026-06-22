@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -53,6 +54,7 @@ export function HoyClient({
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
   autoAsk?: boolean;
 }) {
+  const router = useRouter();
   const [state, setState] = useState<State>(
     autoAsk || !lookInicial ? { kind: "ask" } : { kind: "ready", outfit: lookInicial }
   );
@@ -134,6 +136,12 @@ export function HoyClient({
         title="Tu look de hoy"
         defaultObjective={defaultObjective}
         onPick={(input) => generar(input, pendingForce.current)}
+        // Salir del wizard (paso 1): vuelve a Hoy — muestra el look del día si lo
+        // hay, o reinicia el wizard si aún no hay look.
+        onExit={() => {
+          if (lookInicial) setState({ kind: "ready", outfit: lookInicial });
+          else router.push("/hoy");
+        }}
       />
     );
   }
