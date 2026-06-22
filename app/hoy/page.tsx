@@ -114,6 +114,15 @@ export default async function HoyPage({
             href="/closet/capsula/editar"
           />
         ) : null}
+        {nudge === "silueta" ? (
+          <LinkNudge
+            id="silueta"
+            icon="persona"
+            title="Cuéntame de tu cuerpo"
+            body="Marca tu silueta y afino tus looks a tu medida."
+            href="/perfil/silueta"
+          />
+        ) : null}
         <HoyClient
           key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}

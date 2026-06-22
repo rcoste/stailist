@@ -7,7 +7,14 @@ import type { JourneySignals } from "@/lib/journey";
 // propios: la fuente de verdad sigue siendo el evento/dato original.
 export async function loadJourneySignals(
   supabase: SupabaseClient,
-  profile: { id: string; avatar_path: string | null; capsule_target: unknown }
+  profile: {
+    id: string;
+    avatar_path: string | null;
+    capsule_target: unknown;
+    gender: string | null;
+    body_build: string | null;
+    body_volume: string | null;
+  }
 ): Promise<JourneySignals> {
   const userId = profile.id;
 
@@ -36,5 +43,7 @@ export async function loadJourneySignals(
     hasAvatar: !!profile.avatar_path,
     editedCloset,
     hasCapsule: profile.capsule_target != null,
+    hasSilueta: !!(profile.body_build || profile.body_volume),
+    siluetaApplies: profile.gender === "mujer" || profile.gender === "hombre",
   };
 }

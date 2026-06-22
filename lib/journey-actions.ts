@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { JourneyState, NudgeId, NudgeLifecycle } from "@/lib/journey";
 
-const VALID: NudgeId[] = ["tryon", "closet_real", "capsula"];
+const VALID: NudgeId[] = ["tryon", "closet_real", "capsula", "silueta"];
 
 // Marca el ciclo de vida de un nudge en profiles.journey_state. "dismissed" y
 // "done" lo apagan (el resolvedor deja de mostrarlo); "shown" solo registra que

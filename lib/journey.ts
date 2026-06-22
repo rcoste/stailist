@@ -6,9 +6,9 @@
 // completa. Las SEÑALES se derivan de datos que ya existen (events, outfits,
 // items, capsule_target) — aquí solo decidimos QUÉ mostrar, dado el estado.
 
-// Orden = prioridad: tryon (P2) → closet_real (P3) → capsula (P4). El resolvedor
-// devuelve UNO solo, así nunca se encima más de un nudge a la vez.
-export type NudgeId = "tryon" | "closet_real" | "capsula";
+// Orden = prioridad: tryon (P2) → closet_real (P3) → capsula (P4) → silueta (P5).
+// El resolvedor devuelve UNO solo, así nunca se encima más de un nudge a la vez.
+export type NudgeId = "tryon" | "closet_real" | "capsula" | "silueta";
 
 export type NudgeLifecycle = {
   shown_at?: string;
@@ -26,6 +26,8 @@ export type JourneySignals = {
   hasAvatar: boolean; // ya subió foto para el try-on
   editedCloset: boolean; // agregó foto propia o borró un básico
   hasCapsule: boolean; // capsule_target no nulo
+  hasSilueta: boolean; // ya eligió complexión o dónde carga volumen
+  siluetaApplies: boolean; // género mujer/hombre (la silueta tiene contenido propio)
 };
 
 // ¿Sigue "vivo"? (ni descartado ni completado → se puede volver a mostrar).
@@ -55,6 +57,17 @@ export function nextBestAction(
     isOpen(state.capsula)
   ) {
     return "capsula";
+  }
+
+  // P5 — silueta: ya enganchó (≥1 👍 o ≥1 día) y aún no nos cuenta de su cuerpo;
+  // afina sus looks a su medida. Solo si su género tiene silueta propia.
+  if (
+    signals.siluetaApplies &&
+    (signals.likes >= 1 || signals.lookDays >= 1) &&
+    !signals.hasSilueta &&
+    isOpen(state.silueta)
+  ) {
+    return "silueta";
   }
 
   return null;
