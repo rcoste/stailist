@@ -1,10 +1,11 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
+import { Spinner } from "@/components/spinner";
 import { faltaImage } from "@/lib/capsule-images";
-import { setCapsuleOverride } from "@/app/closet/capsula/actions";
+import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
 import {
   capsuleRows,
   type CapsuleDecision,
@@ -41,10 +42,31 @@ export function CapsuleList({
   );
   const [, startTransition] = useTransition();
 
+  // "Ya la tengo" sobre una prenda que te falta: el server la suma al clóset y la
+  // marca cubierta; al resolver, Next refresca la página y la prenda se reubica
+  // sola en "Ya lo tienes" con el progreso al día. Solo llevamos un spinner por
+  // botón mientras tanto (la fuente de verdad es el server, sin doble conteo).
+  const [ownBusy, setOwnBusy] = useState<Set<number>>(new Set());
+
   const decide = (index: number, decision: CapsuleDecision) =>
     startTransition(async () => {
       applyOpt({ index, decision });
       await setCapsuleOverride(index, decision);
+    });
+
+  const setBusy = (index: number, on: boolean) =>
+    setOwnBusy((s) => {
+      const n = new Set(s);
+      if (on) n.add(index);
+      else n.delete(index);
+      return n;
+    });
+
+  const markOwned = (index: number) =>
+    startTransition(async () => {
+      setBusy(index, true);
+      await markFaltaOwned(index);
+      setBusy(index, false);
     });
 
   const rows = capsuleRows(target, match, optOverrides);
@@ -94,7 +116,7 @@ export function CapsuleList({
         <Section title="Tu cápsula ideal" count={pendiente.length}>
           <ul className="flex flex-col gap-2.5">
             {pendiente.map((r) => (
-              <BigCard key={rowKey(r)} row={r} images={images} ring={false} />
+              <BigCard key={rowKey(r)} row={r} images={images} />
             ))}
           </ul>
         </Section>
@@ -104,7 +126,14 @@ export function CapsuleList({
         <Section title="Te falta — por prioridad" count={falta.length}>
           <ul className="flex flex-col gap-2.5">
             {falta.map((r) => (
-              <BigCard key={rowKey(r)} row={r} images={images} ring />
+              <BigCard
+                key={rowKey(r)}
+                row={r}
+                images={images}
+                right={
+                  <OwnControl busy={ownBusy.has(r.index)} onOwn={() => markOwned(r.index)} />
+                }
+              />
             ))}
           </ul>
         </Section>
@@ -159,15 +188,15 @@ function Section({
 }
 
 // Tarjeta grande para lo que falta / la cápsula ideal: miniatura 56×72 + nombre
-// (Bodoni) + porqué + anillo vacío.
+// (Bodoni) + porqué + control a la derecha (p. ej. "ya la tengo").
 function BigCard({
   row,
   images,
-  ring,
+  right,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
-  ring: boolean;
+  right?: React.ReactNode;
 }) {
   const src = rowImage(row, images);
   return (
@@ -181,10 +210,24 @@ function BigCard({
         </span>
         <span className="mt-1 text-[11.5px] leading-snug text-muted">{row.item.porque}</span>
       </div>
-      {ring ? (
-        <span className="h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-accent" />
-      ) : null}
+      {right ? <span className="shrink-0">{right}</span> : null}
     </li>
+  );
+}
+
+// Control "Ya la tengo" para una prenda faltante: la suma al clóset y la cuenta
+// como cubierta. Al resolver, la prenda se reubica en "Ya lo tienes".
+function OwnControl({ busy, onOwn }: { busy: boolean; onOwn: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOwn}
+      disabled={busy}
+      className="flex min-h-9 items-center gap-1.5 rounded-sm border border-line bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50"
+    >
+      {busy ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="mas" size={14} strokeWidth={2} />}
+      Ya la tengo
+    </button>
   );
 }
 

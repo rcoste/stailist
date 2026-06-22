@@ -5,15 +5,19 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   ASSESSMENT_QUESTIONS,
+  closetSignature,
   type CapsuleDecision,
+  type CapsuleMatch,
   type CapsuleOverrides,
   type CapsuleTarget,
-  type LifestyleAnswers,
+  type MatchEntry,
 } from "@/lib/capsule";
 import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
 import { matchCapsule } from "@/lib/engine/capsule-match";
 import { loadClosetLite } from "@/lib/capsule-data";
+import { familiaToHex } from "@/lib/capsule-images";
 import type { Season } from "@/lib/colorimetria";
+import type { LifestyleAnswers } from "@/lib/capsule";
 
 export type CapsuleState = { status: "idle" } | { status: "error"; message: string };
 
@@ -154,4 +158,65 @@ export async function recalcularMatch(): Promise<void> {
     // swallow — el usuario puede reintentar con el botón.
   }
   revalidatePath("/closet");
+}
+
+// "Ya tengo esta" sobre una prenda que te FALTA: la suma al clóset (como prenda
+// propia sin foto, con sus atributos de la cápsula ideal) Y la marca cubierta en
+// el match — sin disparar un recálculo completo (caro). Para que no salte el
+// banner de "tu clóset cambió", actualizamos la firma del match a la del clóset
+// nuevo: agregar una prenda solo puede sumar cobertura, nunca quitarla, así que
+// las demás entries siguen válidas. Devuelve el id del item para poder deshacer.
+export async function markFaltaOwned(
+  index: number
+): Promise<{ ok: boolean; itemId: string | null }> {
+  if (!Number.isInteger(index) || index < 0) return { ok: false, itemId: null };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, itemId: null };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("capsule_target, capsule_match")
+    .eq("id", user.id)
+    .single();
+  const target = profile?.capsule_target as CapsuleTarget | null;
+  const match = profile?.capsule_match as CapsuleMatch | null;
+  const item = target?.items[index];
+  if (!target || !match || !item) return { ok: false, itemId: null };
+
+  // Inserta la prenda en el clóset (source=photo sin photo_path → el clóset la
+  // muestra con su swatch de color; el motor la usa por sus attrs).
+  const { data: inserted, error: insErr } = await supabase
+    .from("items")
+    .insert({
+      user_id: user.id,
+      source: "photo",
+      attrs: {
+        nombre: item.nombre,
+        categoria: item.category,
+        color: item.colorFamilia,
+        color_hex: familiaToHex(item.colorFamilia),
+        formalidad: item.formalidad,
+        temporada: item.temporada,
+      },
+    })
+    .select("id")
+    .single();
+  if (insErr || !inserted) return { ok: false, itemId: null };
+
+  // Marca esa prenda ideal como cubierta y refresca la firma al clóset nuevo.
+  const closet = await loadClosetLite(supabase, user.id);
+  const entries: MatchEntry[] = target.items.map((_, i) =>
+    i === index
+      ? { status: "tienes", by: item.nombre }
+      : match.entries[i] ?? { status: "falta", by: null }
+  );
+  const newMatch: CapsuleMatch = { signature: closetSignature(closet), entries };
+  await supabase.from("profiles").update({ capsule_match: newMatch }).eq("id", user.id);
+
+  revalidatePath("/closet");
+  return { ok: true, itemId: inserted.id as string };
 }

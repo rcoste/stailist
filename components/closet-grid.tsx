@@ -127,8 +127,10 @@ function Tile({ item, onTap }: { item: ClosetItem; onTap: () => void }) {
         ) : (
           <span className="absolute inset-0" style={{ backgroundColor: item.swatch }} aria-hidden />
         )}
-        {/* Badge "Tuya": cinta inferior con degradado — solo en fotos propias. */}
-        {item.source === "photo" ? (
+        {/* Badge "Tuya": cinta inferior con degradado — solo en fotos propias
+            reales (no en prendas sumadas a mano desde la cápsula, que no tienen
+            imagen y caen al swatch). */}
+        {item.source === "photo" && item.imagen ? (
           <span className="absolute inset-x-0 bottom-0 flex items-center gap-[5px] bg-gradient-to-t from-ink/55 to-transparent px-[9px] py-1.5 text-[9.5px] font-semibold tracking-[0.04em] text-on-accent">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-on-accent" />
             Tuya
