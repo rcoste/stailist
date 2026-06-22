@@ -53,6 +53,7 @@ export default async function PerfilPage() {
 
         <ColorimetriaSection season={profile.palette_season} flow={profile.palette_flow} />
 
+        {profile.gender === "mujer" ? (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
             Tu silueta
@@ -80,6 +81,7 @@ export default async function PerfilPage() {
             <Icon name="chevron" size={16} className="shrink-0 text-muted" />
           </Link>
         </div>
+        ) : null}
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
