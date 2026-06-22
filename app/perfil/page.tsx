@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
-import { BUILD_LABEL, VOLUME_LABEL } from "@/lib/silueta";
+import { buildLabel, volumeLabel } from "@/lib/silueta";
 import { InstallAppRow } from "@/components/install-app-row";
 import { signOut } from "./actions";
 
@@ -53,7 +53,7 @@ export default async function PerfilPage() {
 
         <ColorimetriaSection season={profile.palette_season} flow={profile.palette_flow} />
 
-        {profile.gender === "mujer" ? (
+        {profile.gender === "mujer" || profile.gender === "hombre" ? (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
             Tu silueta
@@ -66,8 +66,8 @@ export default async function PerfilPage() {
               {profile.body_build || profile.body_volume ? (
                 <>
                   <span className="text-sm font-medium text-ink">
-                    {profile.body_build ? BUILD_LABEL.get(profile.body_build) : "—"}
-                    {profile.body_volume ? ` · ${VOLUME_LABEL.get(profile.body_volume)}` : ""}
+                    {profile.body_build ? buildLabel(profile.body_build) : "—"}
+                    {profile.body_volume ? ` · ${volumeLabel(profile.body_volume)}` : ""}
                   </span>
                   <span className="text-xs text-muted">Lo que te equilibra, a tu medida</span>
                 </>

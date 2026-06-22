@@ -5,9 +5,9 @@ import { SiluetaFlow } from "@/components/silueta-flow";
 
 export default async function PerfilSiluetaPage() {
   const profile = await requireOnboarded();
-  // Hoy la silueta es solo de mujer (cuerpos y consejos femeninos). Para hombre,
-  // versión propia a futuro. Bloquea el acceso directo por URL.
-  if (profile.gender !== "mujer") redirect("/perfil");
+  // Mujer y hombre tienen su propia silueta (cuerpos/opciones/consejos distintos).
+  // Sin género definido no aplica: bloquea el acceso directo por URL.
+  if (profile.gender !== "mujer" && profile.gender !== "hombre") redirect("/perfil");
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
@@ -15,7 +15,11 @@ export default async function PerfilSiluetaPage() {
         ← Perfil
       </Link>
       <div className="mt-4">
-        <SiluetaFlow initialBuild={profile.body_build} initialVolume={profile.body_volume} />
+        <SiluetaFlow
+          gender={profile.gender}
+          initialBuild={profile.body_build}
+          initialVolume={profile.body_volume}
+        />
       </div>
     </div>
   );

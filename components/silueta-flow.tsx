@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/spinner";
 import { saveSilueta } from "@/app/perfil/silueta/actions";
 import {
-  BUILDS,
-  VOLUMES,
+  builds,
+  volumes,
   buildImg,
+  volumeOpt,
+  volumeLabel,
   siluetaConsejo,
-  VOLUME_LABEL,
+  type Gender,
   type Build,
   type Volume,
   type Zone,
@@ -49,9 +51,11 @@ function ZoneBody({
 }
 
 export function SiluetaFlow({
+  gender,
   initialBuild,
   initialVolume,
 }: {
+  gender: Gender;
   initialBuild: Build | null;
   initialVolume: Volume | null;
 }) {
@@ -61,6 +65,10 @@ export function SiluetaFlow({
   const [build, setBuild] = useState<Build | null>(initialBuild);
   const [volume, setVolume] = useState<Volume | null>(initialVolume);
   const [saving, setSaving] = useState(false);
+
+  const bList = builds(gender);
+  const vList = volumes(gender);
+  const buildCols = bList.length === 4 ? "grid-cols-2" : "grid-cols-3";
 
   async function pickVolume(v: Volume) {
     setVolume(v);
@@ -81,8 +89,8 @@ export function SiluetaFlow({
             Para mostrarte con un cuerpo como el tuyo, no una modelo. Es opcional.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          {BUILDS.map((b) => (
+        <div className={`grid ${buildCols} gap-3`}>
+          {bList.map((b) => (
             <button
               key={b.id}
               type="button"
@@ -94,7 +102,7 @@ export function SiluetaFlow({
                 build === b.id ? "border-accent bg-accent-soft" : "border-line bg-surface hover:border-ink"
               }`}
             >
-              <ZoneBody img={b.img} sizes="(max-width: 430px) 30vw, 120px" />
+              <ZoneBody img={b.img} sizes="(max-width: 430px) 45vw, 180px" />
               <span className="text-xs font-medium text-ink">{b.label}</span>
             </button>
           ))}
@@ -110,14 +118,14 @@ export function SiluetaFlow({
     );
   }
 
-  // --- Paso 2: dónde carga volumen (sobre la complexión elegida) ---
+  // --- Paso 2: dónde carga volumen/forma (sobre la complexión elegida) ---
   if (step === "volume" && build) {
     const img = buildImg(build)!;
     return (
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">Paso 2 de 2</span>
-          <h2 className="editorial text-2xl text-ink">¿Dónde sientes que cargas más volumen?</h2>
+          <h2 className="editorial text-2xl text-ink">¿Dónde sientes que cargas más?</h2>
           <p className="text-sm text-muted">Sobre tu cuerpo, marca dónde notas más.</p>
         </div>
         {saving ? (
@@ -127,7 +135,7 @@ export function SiluetaFlow({
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3">
-            {VOLUMES.map((v) => (
+            {vList.map((v) => (
               <button
                 key={v.id}
                 type="button"
@@ -157,6 +165,7 @@ export function SiluetaFlow({
   // --- Premio: lo que te equilibra + el efecto contrario (agencia) ---
   const consejo = volume ? siluetaConsejo(volume) : null;
   const img = buildImg(build);
+  const vOpt = volumeOpt(volume);
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
@@ -166,17 +175,12 @@ export function SiluetaFlow({
       <div className="flex gap-4 rounded-xl border border-line bg-surface p-4">
         {img ? (
           <div className="w-24 shrink-0">
-            <ZoneBody
-              img={img}
-              zones={VOLUMES.find((v) => v.id === volume)?.zones}
-              band={VOLUMES.find((v) => v.id === volume)?.band}
-              sizes="96px"
-            />
+            <ZoneBody img={img} zones={vOpt?.zones} band={vOpt?.band} sizes="96px" />
           </div>
         ) : null}
         <div className="flex flex-col gap-2">
           <span className="w-fit rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent">
-            {volume ? VOLUME_LABEL.get(volume) : ""}
+            {volumeLabel(volume)}
           </span>
           {consejo ? (
             <>
