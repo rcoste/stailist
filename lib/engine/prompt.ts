@@ -29,7 +29,10 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // v12 (2026-06-18): momento del día (día/noche) — señal del compositor para
 // afinar el look (de noche, más oscuro y arreglado). Se cortó el selector de
 // fecha: el clima manual ya abstrae lugar/día, no hace falta calendario.
-export const PROMPT_VERSION = "v12";
+// v13 (2026-06-22): silueta (complexión + dónde carga volumen). Señal SUAVE:
+// orientación para desempatar entre looks parejos y enriquecer el porqué, NO
+// filtro ni motivo de rechazo. null si la persona no la definió.
+export const PROMPT_VERSION = "v13";
 
 export type EngineItem = {
   id: string;
@@ -57,6 +60,7 @@ export type EngineContext = {
   recentCombos: string[][]; // item_ids de outfits de los últimos 14 días
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
+  silueta: string | null; // orientación de cuerpo (complexión + dónde carga); señal suave
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -146,6 +150,11 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.tasteTags.length > 0) {
     lines.push(`Tags de gusto: ${ctx.tasteTags.join(", ")}.`);
+  }
+  if (ctx.silueta) {
+    lines.push(
+      `Su cuerpo (orientación de styling, NO regla ni motivo de rechazo): ${ctx.silueta}. Úsalo solo para desempatar entre looks parejos y para enriquecer el porqué cuando el look de verdad la equilibre — sin que domine sobre el clima, su colorimetría, la ocasión o sus gustos, y sin forzarlo en cada explicación.`
+    );
   }
   if (ctx.weather) {
     lines.push(`Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}.`);

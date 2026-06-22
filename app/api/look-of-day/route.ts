@@ -9,6 +9,7 @@ import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
+import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 
 export const maxDuration = 60;
 
@@ -140,6 +141,10 @@ export async function POST(request: NextRequest) {
           vetoes: vetoLabels(vetoes),
           timeOfDay:
             body.momento === "noche" ? "noche" : body.momento === "dia" ? "dia" : null,
+          silueta: siluetaPromptLine(
+            profile.body_build as Build | null,
+            profile.body_volume as Volume | null
+          ),
         };
         const candidates = await generateOutfits(ctx);
 

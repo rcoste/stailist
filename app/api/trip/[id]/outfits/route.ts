@@ -7,6 +7,7 @@ import {
   type CapsuleOverrides,
 } from "@/lib/capsule";
 import { generateTripOutfits, type PackableItem } from "@/lib/engine/trip-outfits";
+import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import type { Occasion } from "@/lib/trip";
 
 export const maxDuration = 60;
@@ -62,7 +63,7 @@ export async function POST(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("gender, taste_tags, style_archetype")
+    .select("gender, taste_tags, style_archetype, body_build, body_volume")
     .eq("id", user.id)
     .single();
 
@@ -76,6 +77,10 @@ export async function POST(
       tasteTags: (profile?.taste_tags ?? []) as string[],
       archetype:
         (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
+      silueta: siluetaPromptLine(
+        (profile?.body_build as Build | null) ?? null,
+        (profile?.body_volume as Volume | null) ?? null
+      ),
     });
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 500 });

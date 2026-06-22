@@ -12,6 +12,7 @@ import type { Season } from "@/lib/colorimetria";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
+import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
 // (petición nueva) — nunca reintentamos aquí adentro.
@@ -125,6 +126,10 @@ export async function POST(request: NextRequest) {
           vetoes: vetoLabels(vetoes),
           timeOfDay:
             body.momento === "noche" ? "noche" : body.momento === "dia" ? "dia" : null,
+          silueta: siluetaPromptLine(
+            profile.body_build as Build | null,
+            profile.body_volume as Volume | null
+          ),
         };
         const candidates = await generateOutfits(ctx);
 

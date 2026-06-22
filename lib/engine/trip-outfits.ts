@@ -18,6 +18,7 @@ export type TripOutfitInputs = {
   gender: "hombre" | "mujer" | null;
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
+  silueta?: string | null; // orientación de cuerpo; señal suave, no regla
 };
 
 // Tope de celdas de la rejilla que mandamos a validar (una maleta real cae muy
@@ -111,6 +112,9 @@ export async function generateTripOutfits(
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
+  const cuerpoTxt = inputs.silueta
+    ? `\nCUERPO (orientación suave, no regla): ${inputs.silueta}. Úsalo solo para desempatar entre looks parejos y enriquecer el porqué cuando aplique.`
+    : "";
 
   const fmt = (p: PackableItem) => `${p.n}. ${p.nombre} (${p.formalidad}, ${p.color})`;
   const prendasTxt = inputs.packable.map(fmt).join("\n");
@@ -142,7 +146,7 @@ Para las celdas que SÍ funcionan:
     messages: [
       {
         role: "user",
-        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.\n\nPRENDAS (número. nombre (formalidad, color)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
+        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.${cuerpoTxt}\n\nPRENDAS (número. nombre (formalidad, color)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
       },
     ],
     output_config: {

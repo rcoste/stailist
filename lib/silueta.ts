@@ -54,6 +54,19 @@ export const volumeOpt = (v: Volume | null) => ALL_VOLUMES.find((x) => x.id === 
 export const isBuild = (v: unknown): v is Build => ALL_BUILDS.some((x) => x.id === v);
 export const isVolume = (v: unknown): v is Volume => ALL_VOLUMES.some((x) => x.id === v);
 
+// Línea de orientación para el motor de outfits (Hoy + Viaje). Señal suave: el
+// motor la usa para desempatar y enriquecer el porqué, NO como filtro ni regla.
+// null si no hay silueta → el motor se comporta como hoy.
+export function siluetaPromptLine(build: Build | null, volume: Volume | null): string | null {
+  if (!build && !volume) return null;
+  const parts: string[] = [];
+  if (build) parts.push(`complexión ${buildLabel(build)}`);
+  if (volume) {
+    parts.push(`carga más en "${volumeLabel(volume)}" — para equilibrar: ${siluetaConsejo(volume).equilibra}`);
+  }
+  return parts.join("; ");
+}
+
 // El "premio" cálido al elegir: qué te equilibra + el efecto contrario (agencia).
 // Sin juicio: nunca "disimula tu X", siempre "tú decides el efecto".
 export function siluetaConsejo(v: Volume): { equilibra: string; acentua: string } {
