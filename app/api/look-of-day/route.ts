@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         if (!force) {
           const { data: existing } = await supabase
             .from("outfits")
-            .select("id, item_ids, title, explanation")
+            .select("id, item_ids, title, explanation, tip")
             .eq("user_id", user.id)
             .eq("is_look_of_day", true)
             .eq("look_date", today)
@@ -178,11 +178,12 @@ export async function POST(request: NextRequest) {
             weather,
             title: elegido.nombre,
             explanation: elegido.explicacion,
+            tip: elegido.tip ?? null,
             prompt_version: PROMPT_VERSION,
             is_look_of_day: true,
             look_date: today,
           })
-          .select("id, item_ids, title, explanation")
+          .select("id, item_ids, title, explanation, tip")
           .single();
         if (saveError || !saved) {
           send({ error: "no_pude_guardar" });
@@ -248,7 +249,13 @@ export async function POST(request: NextRequest) {
 
 // Da forma a un outfit + sus prendas (con foto) para el cliente.
 function shape(
-  o: { id: string; item_ids: unknown; title: string | null; explanation: string },
+  o: {
+    id: string;
+    item_ids: unknown;
+    title: string | null;
+    explanation: string;
+    tip?: string | null;
+  },
   items: { id: string; attrs: unknown }[]
 ) {
   const byId = new Map(
@@ -265,6 +272,7 @@ function shape(
     id: o.id,
     nombre: o.title ?? "Tu look",
     explicacion: o.explanation,
+    tip: o.tip ?? null,
     prendas: (o.item_ids as string[]).map((id) => ({
       nombre: byId.get(id)?.nombre ?? "Prenda",
       swatch: byId.get(id)?.color_hex ?? "#E5E1DD",

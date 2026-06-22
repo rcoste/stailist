@@ -38,7 +38,17 @@ Reglas duras:
 - Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.
 - Marino + negro combinan bien (incluso formal); NO los separes por eso. Concéntrate en color que de verdad choca, proporción y coherencia.
 - Caza el "traje desparejado": un saco/blazer + pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) que NO son un traje real se ve como un conjunto roto. Si lo ves, REPÁRALO cambiando el bottom por otro neutro del clóset (gris, beige, caqui, denim) para que el saco se lea como pieza intencional. (No aplica si de verdad son un traje de la misma tela.)
-- La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.`;
+- La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.
+
+EL TOQUE (cómo llevarlo) — campo "tip", OPCIONAL:
+Puedes sumar UN tip de styling: un solo movimiento concreto para llevar ESTE look mejor. Reglas (síguelas o deja "tip" en cadena vacía):
+- UNO solo, o NINGUNO. Si el look ya está completo y no hay un movimiento que de verdad lo eleve, deja "tip" en cadena vacía. Mejor sin tip que uno forzado. NO pongas tip en todos los looks.
+- Concreto a la prenda real ("fájate la camisa de lino al frente"), nunca genérico ("acomoda tu top").
+- NO ves la prenda (solo tipo/color/formalidad), así que prioriza movimientos SEGUROS que no dependen del largo/corte exacto: dejar una capa/blazer/chamarra abierta, jugar la proporción (si algo es holgado, equilibra con algo entallado), abrir un botón o el cuello, arremangar (solo si es manga larga).
+- Movimientos de RIESGO (fajar — depende del largo del top; cuffear el pantalón — depende del tipo y del zapato): úsalos SOLO si la prenda claramente lo permite; si dudas, frasea condicional ("si te da el largo, medio fájala al frente") o no lo pongas.
+- Respeta formalidad (formal: fajar sí, medio-fajar/cuffear casual no), el vibe (minimalista = menos es más) y el género.
+- Si el contexto trae su cuerpo, conecta el efecto cuando aplique ("fájala al frente — te marca la cintura, que te equilibra").
+- Voz de amiga cool, una frase corta, sin jerga.`;
 
 const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (muchos grados de libertad, sé exigente):
 - Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Lo near-face (top/abrigo) debe favorecerla y NUNCA ser un color de su EVITA.
@@ -119,6 +129,7 @@ export async function reviewOutfit(
         ? parsed.veredicto
         : "ok";
     const razon = parsed.razon?.trim() ? parsed.razon.trim() : null;
+    const tip = parsed.tip?.trim() ? parsed.tip.trim() : null;
 
     // Rechazado: devolvemos el outfit ORIGINAL (sin la "reparación" fallida);
     // quien llama decide descartarlo o mostrarlo como último recurso.
@@ -140,6 +151,7 @@ export async function reviewOutfit(
           nombre: parsed.nombre,
           item_ids: parsed.item_ids,
           explicacion: parsed.explicacion,
+          tip,
         },
         verdict,
         razon,

@@ -58,8 +58,13 @@ export function buildCriticSchema(itemIds: string[]) {
         type: "string",
         description: "UNA línea: por qué este look le favorece, en voz de amiga cool.",
       },
+      tip: {
+        type: "string",
+        description:
+          "El toque (cómo llevarlo): UN movimiento de styling concreto para llevar ESTE look mejor, o cadena vacía si el look ya está completo y no hay un toque que de verdad lo eleve. Ver reglas del sistema.",
+      },
     },
-    required: ["veredicto", "razon", "nombre", "item_ids", "explicacion"],
+    required: ["veredicto", "razon", "nombre", "item_ids", "explicacion", "tip"],
     additionalProperties: false,
   };
 }

@@ -10,6 +10,7 @@ export type GeneratedOutfit = {
   nombre: string;
   item_ids: string[];
   explicacion: string;
+  tip?: string | null; // "el toque" — lo produce el juez; null/ausente = sin tip
 };
 
 // Una llamada al modelo → 2-3 outfits validados. El schema con enum de ids

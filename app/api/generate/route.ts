@@ -165,9 +165,10 @@ export async function POST(request: NextRequest) {
               weather,
               title: outfit.nombre,
               explanation: outfit.explicacion,
+              tip: outfit.tip ?? null,
               prompt_version: PROMPT_VERSION,
             })
-            .select("id, item_ids, title, explanation")
+            .select("id, item_ids, title, explanation, tip")
             .single();
           if (saveError || !row) return false;
 
@@ -178,6 +179,7 @@ export async function POST(request: NextRequest) {
               id: row.id,
               nombre: row.title ?? "Tu look",
               explicacion: row.explanation,
+              tip: row.tip ?? null,
               prendas: (row.item_ids as string[]).map((id) => ({
                 nombre: itemById.get(id)?.nombre ?? "Prenda",
                 swatch: itemById.get(id)?.color_hex ?? "#E5E1DD",

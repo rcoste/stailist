@@ -32,7 +32,10 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // v13 (2026-06-22): silueta (complexión + dónde carga volumen). Señal SUAVE:
 // orientación para desempatar entre looks parejos y enriquecer el porqué, NO
 // filtro ni motivo de rechazo. null si la persona no la definió.
-export const PROMPT_VERSION = "v13";
+// v14 (2026-06-22): "el toque" — el juez suma un tip de styling OPCIONAL por
+// outfit (cómo llevarlo: medio-fajado, arremangar, capa abierta…). Restricción
+// como principio: movimientos seguros por default, condicional o null si duda.
+export const PROMPT_VERSION = "v14";
 
 export type EngineItem = {
   id: string;

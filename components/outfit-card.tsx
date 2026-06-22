@@ -30,11 +30,14 @@ export type OutfitCardTryon = {
 export function OutfitCard({
   prendas,
   justificacion,
+  tip,
   corner,
   tryon,
 }: {
   prendas: Prenda[];
   justificacion: string;
+  /** "El toque": cómo llevarlo (opcional). */
+  tip?: string | null;
   /** Slot opcional en la esquina superior derecha (ej. el bookmark). */
   corner?: ReactNode;
   /** Estado del try-on; si viene, la card adopta el layout de 3 estados. */
@@ -78,6 +81,14 @@ export function OutfitCard({
     <p className="editorial text-center text-sm text-ink">{justificacion}</p>
   );
 
+  // "El toque": cómo llevarlo. Solo si el juez lo sumó (puede no haber).
+  const tipLine = tip ? (
+    <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-sm text-accent">
+      <Icon name="destello" size={14} className="shrink-0" />
+      <span>{tip}</span>
+    </p>
+  ) : null;
+
   const cornerSlot = corner ? (
     <div className="absolute right-3 top-3 z-10">{corner}</div>
   ) : null;
@@ -90,6 +101,7 @@ export function OutfitCard({
         {grid}
         <hr className="my-4 border-line" />
         {justif}
+        {tipLine}
       </article>
     );
   }
@@ -171,6 +183,7 @@ export function OutfitCard({
               {justificacion}
             </p>
           </details>
+          {tipLine}
         </div>
       </article>
     );
@@ -184,6 +197,7 @@ export function OutfitCard({
         {grid}
         <hr className="my-4 border-line" />
         {justif}
+        {tipLine}
       </div>
       <TryonRow tryon={tryon} />
     </article>

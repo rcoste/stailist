@@ -17,6 +17,7 @@ export type HoyOutfit = {
   id: string;
   nombre: string;
   explicacion: string;
+  tip?: string | null; // "el toque" — cómo llevarlo (opcional)
   tryon?: string | null;
   favorited?: boolean;
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
@@ -250,6 +251,7 @@ function TryonOutfitCard({
       <OutfitCard
         prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
         justificacion={outfit.explicacion}
+        tip={outfit.tip ?? null}
         corner={
           <FavoriteButton
             outfitId={outfit.id}
