@@ -29,6 +29,8 @@ export type Profile = {
   capsule_overrides: CapsuleOverrides | null;
   avatar_path: string | null;
   body_type: "slim" | "athletic" | "average" | "full" | null;
+  body_build: "delgada" | "media" | "curvas" | null;
+  body_volume: "arriba" | "cintura" | "abajo" | "medio" | "pareja" | null;
   style_vetoes: { chips: string[]; free: string[] };
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;

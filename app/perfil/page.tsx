@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
+import { BUILD_LABEL, VOLUME_LABEL } from "@/lib/silueta";
 import { InstallAppRow } from "@/components/install-app-row";
 import { signOut } from "./actions";
 
@@ -51,6 +52,34 @@ export default async function PerfilPage() {
         </div>
 
         <ColorimetriaSection season={profile.palette_season} flow={profile.palette_flow} />
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted">
+            Tu silueta
+          </span>
+          <Link
+            href="/perfil/silueta"
+            className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-4 transition-colors hover:border-accent"
+          >
+            <span className="flex flex-col">
+              {profile.body_build || profile.body_volume ? (
+                <>
+                  <span className="text-sm font-medium text-ink">
+                    {profile.body_build ? BUILD_LABEL.get(profile.body_build) : "—"}
+                    {profile.body_volume ? ` · ${VOLUME_LABEL.get(profile.body_volume)}` : ""}
+                  </span>
+                  <span className="text-xs text-muted">Lo que te equilibra, a tu medida</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-medium text-ink">Cuéntame de tu cuerpo</span>
+                  <span className="text-xs text-muted">Para decirte qué te equilibra — opcional</span>
+                </>
+              )}
+            </span>
+            <Icon name="chevron" size={16} className="shrink-0 text-muted" />
+          </Link>
+        </div>
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
