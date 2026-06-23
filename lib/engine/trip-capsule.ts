@@ -95,6 +95,7 @@ REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 Cómo dimensionarla:
 - Es una cápsula de mezcla-y-combina: pocas piezas que dan muchos looks. NO una prenda por día.
 - Dimensiona a los DÍAS y a la MEZCLA DE OCASIONES (ej. playa pide trajes de baño y shorts; una noche de arreglarse pide una pieza más formal). Cubre todas las ocasiones que te pasen.
+- Prendas que se mojan/sudan y necesitan secar entre usos: si el viaje es de PLAYA/ALBERCA/AGUA y dura varios días, lleva 2 trajes de baño (uno se seca mientras usas el otro); para deporte intenso de varios días, 2 piezas técnicas. No apliques esto a prendas normales (ahí manda mezcla-y-combina).
 - Respeta el CLIMA: calor → ligero, fresco; frío → capas y abrigo. No metas abrigo si hace calor ni shorts si hace frío.
 - ${techoTxt}
 - Incluye SIEMPRE la base: tops, bottoms y calzado suficientes para combinar; ropa interior/calcetines NO se listan (se asumen).
