@@ -12,7 +12,9 @@ export async function matchSubstitutes(
 ): Promise<{ nombre: string; porque: string }[]> {
   if (closet.length === 0 || !process.env.ANTHROPIC_API_KEY) return [];
 
-  const client = new Anthropic();
+  // maxRetries alto: la búsqueda es a-demanda y el usuario espera, así que vale
+  // la pena aguantar un saturón breve de la API (529) con backoff antes de fallar.
+  const client = new Anthropic({ maxRetries: 4 });
   const closetTxt = closet
     .map((c) => `- ${c.nombre} (${c.category}, ${c.formalidad}, ${c.color})`)
     .join("\n");

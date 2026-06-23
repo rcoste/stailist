@@ -298,7 +298,9 @@ export function TripResult({
 
             {subFlow.status === "error" ? (
               <div className="flex flex-col items-center gap-3 py-6 text-center">
-                <p className="text-sm text-error">No pude buscar — inténtalo otra vez.</p>
+                <p className="text-sm text-error">
+                  El servicio está ocupado un momento — espera unos segundos y reintenta.
+                </p>
                 <button
                   type="button"
                   onClick={() => buscarSustituto({ ...rows[subFlow.index] })}
