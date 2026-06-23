@@ -45,6 +45,7 @@ export type IconName =
   | "descargar"
   | "enlace"
   | "filtro"
+  | "flecha"
   | "menos";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
@@ -231,6 +232,8 @@ const GLYPHS: Record<IconName, JSX.Element> = {
   ),
   // Embudo de filtros (fila de filtros del Historial).
   filtro: <path d="M3 5h18l-7 8v5l-4 2v-7z" />,
+  // Flecha a la derecha (ruta del viaje: Tokio → Kioto → Osaka).
+  flecha: <path d="M5 12h14M13 6l6 6-6 6" />,
 };
 
 export function Icon({
