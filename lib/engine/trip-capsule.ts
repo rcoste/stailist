@@ -1,13 +1,21 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
-import { occasionLabels, luggageMeta, type Luggage, type Occasion } from "@/lib/trip";
+import {
+  occasionLabels,
+  luggageMeta,
+  type Luggage,
+  type Occasion,
+  type TripWeather,
+} from "@/lib/trip";
 
 export type TripCapsuleInputs = {
   days: number;
   ocasiones: Occasion[];
   maleta: Luggage | null;
-  weather: { temp_c: number; condition: string; estimated?: boolean } | null;
+  weather: TripWeather | null;
+  // Multidestino: clima por parada. Si hay 2+, el motor empaca para todo el rango.
+  paradas?: { lugar: string; weather: TripWeather | null }[];
   gender: "hombre" | "mujer" | null;
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
@@ -49,11 +57,25 @@ export async function generateTripCapsuleTarget(
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
 
-  const climaTxt = inputs.weather
-    ? inputs.weather.estimated
-      ? `~${inputs.weather.temp_c}°C (clima TÍPICO de la temporada, no pronóstico exacto — prioriza versatilidad y capas que aguanten variación)`
-      : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
-    : "desconocido (usa prendas versátiles, evita extremos)";
+  const multiParada = (inputs.paradas?.length ?? 0) > 1;
+  const climaTxt = multiParada
+    ? `Varias paradas con climas distintos — ${inputs
+        .paradas!.map(
+          (p) =>
+            `${p.lugar}: ${
+              p.weather
+                ? `~${p.weather.temp_c}°C ${p.weather.condition}${p.weather.estimated ? " (típico)" : ""}`
+                : "clima desconocido"
+            }`
+        )
+        .join(
+          "; "
+        )}. Empaca UNA sola cápsula que funcione para TODAS las paradas: prioriza CAPAS y piezas versátiles que cubran el rango completo (de la más fría a la más calurosa), sin duplicar por parada.`
+    : inputs.weather
+      ? inputs.weather.estimated
+        ? `~${inputs.weather.temp_c}°C (clima TÍPICO de la temporada, no pronóstico exacto — prioriza versatilidad y capas que aguanten variación)`
+        : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
+      : "desconocido (usa prendas versátiles, evita extremos)";
   const ocas = inputs.ocasiones.length ? occasionLabels(inputs.ocasiones) : "general";
   const lug = luggageMeta(inputs.maleta);
   const techoTxt = lug

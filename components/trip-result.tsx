@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
-import { setTripOverride, setTripPacked } from "@/lib/trip-actions";
+import { setTripPacked } from "@/lib/trip-actions";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
 // que arma la página servidor a partir de capsuleRows + el mapa de imágenes).
@@ -17,18 +17,17 @@ export type TripRow = {
   byImage: string | null;
 };
 
-function Thumb({ src }: { src: string | null }) {
-  return (
-    <span className="relative flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line bg-bg text-muted">
-      {src ? (
-        <Image src={src} alt="" fill sizes="40px" className="object-cover" />
-      ) : (
-        <Icon name="gancho" size={16} />
-      )}
-    </span>
-  );
+// Estado efectivo (base + decisión guardada de un "parecido").
+function eff(r: TripRow): TripRow["base"] {
+  if (r.base === "parecido") {
+    return r.decision === "accept" ? "tienes" : r.decision === "reject" ? "falta" : "parecido";
+  }
+  return r.base;
 }
 
+// Tab "La maleta" (handoff): barra de progreso + grid de "empaca esto" con check
+// tappable + "te falta" con "ya lo tengo". Un faltante marcado como "ya lo tengo"
+// pasa a empaca palomeado (persiste en empacado, sin acción nueva).
 export function TripResult({
   tripId,
   rows,
@@ -39,144 +38,119 @@ export function TripResult({
   empacado: Record<string, boolean>;
 }) {
   const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
-  const [decisions, setDecisions] = useState<Record<number, "accept" | "reject" | null>>(
-    Object.fromEntries(rows.map((r) => [r.index, r.decision]))
-  );
+  const isPacked = (i: number) => !!packed[String(i)];
 
-  // Estado efectivo: base + la decisión local (optimista).
-  function eff(r: TripRow): TripRow["base"] {
-    if (r.base === "parecido") {
-      const d = decisions[r.index];
-      return d === "accept" ? "tienes" : d === "reject" ? "falta" : "parecido";
-    }
-    return r.base;
-  }
+  // Empaca: lo que tienes/parecido + cualquier faltante ya marcado "ya lo tengo".
+  // Te falta: lo que falta y aún no marcas.
+  const empaca = rows.filter((r) => eff(r) !== "falta" || isPacked(r.index));
+  const falta = rows.filter((r) => eff(r) === "falta" && !isPacked(r.index));
+  const packedCount = empaca.filter((r) => isPacked(r.index)).length;
 
-  const empaca = rows.filter((r) => {
-    const e = eff(r);
-    return e === "tienes" || e === "pendiente";
-  });
-  const casi = rows.filter((r) => eff(r) === "parecido");
-  const falta = rows.filter((r) => eff(r) === "falta");
-
-  function togglePacked(index: number) {
-    const next = !packed[String(index)];
+  function togglePacked(index: number, value?: boolean) {
+    const next = value ?? !isPacked(index);
     setPacked((p) => ({ ...p, [String(index)]: next }));
     setTripPacked(tripId, index, next);
   }
 
-  function decide(index: number, decision: "accept" | "reject") {
-    setDecisions((d) => ({ ...d, [index]: d[index] === decision ? null : decision }));
-    setTripOverride(tripId, index, decision);
-  }
-
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
+      {/* Progreso de empacado */}
+      <div className="flex items-center gap-2.5">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full rounded-full bg-success"
+            style={{ width: `${empaca.length ? (packedCount / empaca.length) * 100 : 0}%` }}
+          />
+        </div>
+        <span className="tabular whitespace-nowrap text-xs font-semibold text-ink">
+          {packedCount} / {empaca.length} empacadas
+        </span>
+      </div>
+
       {empaca.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            Empaca esto · {empaca.length}
-          </span>
-          <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+              Empaca esto
+            </span>
+            <span className="tabular text-[11px] text-muted">{empaca.length}</span>
+          </div>
+          <ul className="grid grid-cols-4 gap-2">
             {empaca.map((r) => {
-              const on = !!packed[String(r.index)];
+              const on = isPacked(r.index);
               return (
-                <button
-                  key={r.index}
-                  type="button"
-                  onClick={() => togglePacked(r.index)}
-                  className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-left transition-colors hover:border-ink"
-                >
-                  <Thumb src={r.byImage} />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span
-                      className={`text-sm font-medium ${
-                        on ? "text-muted line-through" : "text-ink"
-                      }`}
-                    >
-                      {r.by ?? r.nombre}
-                    </span>
-                    <span className="truncate text-xs text-muted">{r.porque}</span>
-                  </span>
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                      on
-                        ? "border-accent bg-accent text-on-accent"
-                        : "border-line bg-bg text-muted"
-                    }`}
+                <li key={r.index}>
+                  <button
+                    type="button"
+                    onClick={() => togglePacked(r.index)}
+                    title={r.by ?? r.nombre}
+                    className="block w-full"
                   >
-                    {on ? <Icon name="check" size={14} /> : null}
-                  </span>
-                </button>
+                    <span className="relative block aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
+                      {r.byImage ? (
+                        <Image
+                          src={r.byImage}
+                          alt={r.by ?? r.nombre}
+                          fill
+                          sizes="(max-width:430px) 25vw, 100px"
+                          className={`object-cover ${on ? "" : "opacity-[0.62]"}`}
+                        />
+                      ) : (
+                        <span
+                          className={`flex h-full w-full items-center justify-center text-muted ${
+                            on ? "" : "opacity-[0.62]"
+                          }`}
+                        >
+                          <Icon name="gancho" size={20} />
+                        </span>
+                      )}
+                      <span
+                        className={`absolute right-1 top-1 flex h-[19px] w-[19px] items-center justify-center rounded-full ${
+                          on ? "bg-success text-on-accent" : "border-[1.5px] border-line bg-bg/85"
+                        }`}
+                      >
+                        {on ? <Icon name="check" size={12} strokeWidth={2.4} /> : null}
+                      </span>
+                    </span>
+                  </button>
+                </li>
               );
             })}
-          </div>
-        </div>
-      ) : null}
-
-      {casi.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            Tienes algo parecido
-          </span>
-          <div className="flex flex-col gap-2">
-            {casi.map((r) => (
-              <div
-                key={r.index}
-                className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <Thumb src={r.byImage} />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-sm font-medium text-ink">{r.nombre}</span>
-                    <span className="truncate text-xs text-muted">
-                      Tienes: {r.by} — ¿te sirve?
-                    </span>
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => decide(r.index, "accept")}
-                    className="min-h-9 flex-1 rounded-sm border border-line bg-bg text-sm font-medium text-ink transition-colors hover:border-accent"
-                  >
-                    Sí, me sirve
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => decide(r.index, "reject")}
-                    className="min-h-9 flex-1 rounded-sm border border-line bg-bg text-sm font-medium text-muted transition-colors hover:border-accent"
-                  >
-                    No, mejor la llevo
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          </ul>
         </div>
       ) : null}
 
       {falta.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            Te falta · {falta.length}
-          </span>
-          <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+              Te falta
+            </span>
+            <span className="tabular text-[11px] text-muted">{falta.length}</span>
+          </div>
+          <ul className="flex flex-col gap-2.5">
             {falta.map((r) => (
-              <div
+              <li
                 key={r.index}
-                className="flex items-center gap-3 rounded-lg border border-dashed border-line bg-bg p-3"
+                className="flex items-center gap-2.5 rounded-md border border-dashed border-accent/40 bg-accent-soft px-[13px] py-[11px]"
               >
-                <span className="flex h-12 w-10 shrink-0 items-center justify-center rounded-md border border-dashed border-line text-muted">
+                <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-sm border border-accent/30 bg-surface text-accent">
                   <Icon name="mas" size={16} />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-sm font-medium text-ink">{r.nombre}</span>
-                  <span className="truncate text-xs text-muted">{r.porque}</span>
+                  <b className="text-[13px] font-semibold leading-tight text-ink">{r.nombre}</b>
+                  <span className="text-[11.5px] leading-snug text-muted">{r.porque}</span>
                 </span>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => togglePacked(r.index, true)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-sm border border-accent bg-accent-soft px-[11px] py-2 text-xs font-semibold text-accent transition-colors hover:bg-accent-soft/60"
+                >
+                  <Icon name="check" size={13} /> Ya lo tengo
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       ) : null}
     </div>

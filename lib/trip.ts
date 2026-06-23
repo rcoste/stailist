@@ -25,14 +25,28 @@ export const LUGGAGE = [
 ] as const;
 export type Luggage = (typeof LUGGAGE)[number]["value"];
 
+export type TripWeather = { temp_c: number; condition: string; estimated?: boolean };
+
+// Una parada del viaje (multidestino). `noches` solo aparece en el modo "por
+// lugar"; las fechas por parada se derivan del rango + noches. `weather` es el
+// clima resuelto en esa parada (para que el motor empaque para el rango).
+export type Parada = {
+  lugar: string;
+  lat?: number | null;
+  lon?: number | null;
+  noches?: number;
+  weather?: TripWeather | null;
+};
+
 export type Trip = {
   id: string;
   lugar: string;
+  paradas: Parada[] | null;
   fecha_inicio: string; // YYYY-MM-DD
   fecha_fin: string;
   ocasiones: Occasion[];
   maleta: Luggage | null;
-  weather: { temp_c: number; condition: string; estimated?: boolean } | null;
+  weather: TripWeather | null;
   capsule_target: CapsuleTarget | null;
   capsule_match: CapsuleMatch | null;
   overrides: CapsuleOverrides | null;
@@ -69,4 +83,39 @@ export function occasionLabels(values: Occasion[]): string {
 
 export function luggageMeta(maleta: Luggage | null) {
   return LUGGAGE.find((l) => l.value === maleta) ?? null;
+}
+
+// Noches del viaje = días − 1 (un viaje de 8 días tiene 7 noches).
+export function tripNights(inicio: string, fin: string): number {
+  return Math.max(0, tripDays(inicio, fin) - 1);
+}
+
+// Reparte `total` noches entre `count` paradas lo más parejo posible; el sobrante
+// va a las primeras. Ej: 7 noches, 3 paradas → [3, 2, 2]. Es el default del modo
+// "por lugar" antes de que el usuario ajuste los steppers.
+export function splitNights(total: number, count: number): number[] {
+  if (count <= 0) return [];
+  const base = Math.floor(total / count);
+  const extra = total - base * count;
+  return Array.from({ length: count }, (_, i) => base + (i < extra ? 1 : 0));
+}
+
+// Deriva las fechas (YYYY-MM-DD) de cada parada desde el inicio del viaje y las
+// noches por parada: la parada i ocupa `noches[i]` días consecutivos. Aproximado
+// (sirve para afinar clima/cantidades por parada, no es un itinerario exacto).
+export function paradaRanges(
+  inicio: string,
+  noches: number[]
+): { inicio: string; fin: string }[] {
+  const out: { inicio: string; fin: string }[] = [];
+  const cursor = new Date(inicio + "T00:00:00Z");
+  if (!Number.isFinite(cursor.getTime())) return out;
+  for (const n of noches) {
+    const start = cursor.toISOString().slice(0, 10);
+    const dias = Math.max(1, n);
+    cursor.setUTCDate(cursor.getUTCDate() + (dias - 1));
+    out.push({ inicio: start, fin: cursor.toISOString().slice(0, 10) });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return out;
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
+import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
 import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
@@ -146,7 +147,7 @@ export function HoyClient({
   }
 
   if (state.kind === "generating") {
-    return <GeneratingScreen />;
+    return <GeneratingScreen phrases={HOY_PHRASES} />;
   }
 
   if (state.kind === "error") {
@@ -223,60 +224,14 @@ export function HoyClient({
   );
 }
 
-// Pantalla de "generando" (handoff): el progreso es lenguaje. Frases en Bodoni
-// que se funden — la activa grande con su palabra clave en acento, las vecinas
-// tenues arriba y abajo — + tres puntos de avance. Nunca un spinner. Overlay
-// full-screen (la tab bar vuelve con el resultado).
-const GEN_PHRASES: { a: string; k: string; b: string }[] = [
+// Frases de "generando" para Hoy (lenguaje como progreso, palabra clave en acento).
+const HOY_PHRASES: GenPhrase[] = [
   { a: "leyendo tu ", k: "clóset", b: "…" },
   { a: "combinando tus ", k: "colores", b: "…" },
   { a: "cuidando el ", k: "clima", b: "…" },
   { a: "afinando los ", k: "detalles", b: "…" },
   { a: "puliendo tu ", k: "look", b: "…" },
 ];
-const genPhrase = (p: { a: string; k: string; b: string }) => `${p.a}${p.k}${p.b}`;
-
-function GeneratingScreen() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setI((n) => (n + 1) % GEN_PHRASES.length), 1900);
-    return () => clearInterval(id);
-  }, []);
-  const len = GEN_PHRASES.length;
-  const prev = GEN_PHRASES[(i - 1 + len) % len];
-  const cur = GEN_PHRASES[i];
-  const next = GEN_PHRASES[(i + 1) % len];
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-bg px-8 text-center">
-      <div
-        key={i}
-        style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-        className="flex flex-col items-center gap-5"
-      >
-        <p className="display text-base font-medium text-muted opacity-40">{genPhrase(prev)}</p>
-        <p className="display text-[21px] font-medium text-ink">
-          {cur.a}
-          <b className="font-medium text-accent">{cur.k}</b>
-          {cur.b}
-        </p>
-        <p className="display text-base font-medium text-muted opacity-40">{genPhrase(next)}</p>
-      </div>
-      <div className="mt-1.5 flex gap-[7px]" aria-hidden>
-        {[0, 1, 2].map((j) => (
-          <span
-            key={j}
-            className={`h-[7px] w-[7px] rounded-full transition-colors duration-300 ${
-              j <= i % 3 ? "bg-accent" : "bg-line"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="sr-only" aria-live="polite">
-        Creando tu look…
-      </span>
-    </div>
-  );
-}
 
 // Card del outfit con el try-on integrado (3 estados). Va keyed por outfit.id
 // en el padre para que, al generar otro look, el try-on arranque limpio con la

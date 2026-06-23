@@ -21,18 +21,6 @@ export type ResolvedOutfit = {
 
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
 
-function Thumb({ src }: { src: string | null }) {
-  return (
-    <span className="relative flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line bg-bg text-muted">
-      {src ? (
-        <Image src={src} alt="" fill sizes="44px" className="object-cover" />
-      ) : (
-        <Icon name="gancho" size={16} />
-      )}
-    </span>
-  );
-}
-
 // Sección "Tus looks": los outfits que la maleta hace. Si aún no se generan,
 // un botón los pide (POST al endpoint → router.refresh para re-renderear con
 // ellos). `outfits === null` = nunca generados; `[]` = generados pero ninguno
@@ -146,18 +134,15 @@ export function TripOutfits({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-end justify-between">
-        <div className="flex flex-col">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            Tus looks · {outfits.length}
+      <div className="flex items-center justify-between">
+        {piezas > 0 ? (
+          <span className="text-xs text-muted">
+            {piezas} {piezas === 1 ? "pieza" : "piezas"} en {outfits.length}{" "}
+            {outfits.length === 1 ? "look" : "looks"}
           </span>
-          {piezas > 0 ? (
-            <span className="text-xs text-muted">
-              {piezas} {piezas === 1 ? "pieza" : "piezas"} que se combinan en {outfits.length}{" "}
-              {outfits.length === 1 ? "look" : "looks"}
-            </span>
-          ) : null}
-        </div>
+        ) : (
+          <span />
+        )}
         <button
           type="button"
           onClick={generar}
@@ -189,55 +174,70 @@ export function TripOutfits({
 
       <div className="flex flex-col gap-3">
         {outfits.map((o, i) => (
-          <div key={i} className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-            <div className="flex flex-col gap-1">
-              <span className="w-fit rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent">
-                {OCC_LABEL.get(o.ocasion) ?? o.ocasion}
-              </span>
-              <h3 className="editorial text-lg text-ink">{o.titulo}</h3>
+          <div
+            key={i}
+            className="rounded-lg border border-line bg-surface p-3.5 shadow-[var(--shadow-hairline)]"
+          >
+            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-accent">
+              {OCC_LABEL.get(o.ocasion) ?? o.ocasion}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="display mt-1 text-[18px] font-semibold leading-tight text-ink">
+              {o.titulo}
+            </h3>
+            <div className="my-3 flex gap-[7px]">
               {o.prendas.map((p, j) => (
-                <span key={j} className="flex flex-col items-center gap-1" title={p.nombre}>
-                  <Thumb src={p.image} />
-                  <span className="max-w-[4.5rem] truncate text-[11px] text-muted">{p.nombre}</span>
+                <span
+                  key={j}
+                  title={p.nombre}
+                  className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
+                >
+                  {p.image ? (
+                    <Image src={p.image} alt={p.nombre} fill sizes="120px" className="object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-muted">
+                      <Icon name="gancho" size={18} />
+                    </span>
+                  )}
                 </span>
               ))}
             </div>
-            <p className="text-sm text-muted">{o.porque}</p>
+            <p className="display text-[13.5px] font-medium leading-relaxed text-ink">{o.porque}</p>
             {o.tip ? (
-              <p className="flex items-start gap-1.5 text-sm text-accent">
+              <p className="mt-2 flex items-start gap-1.5 text-[13px] text-accent">
                 <Icon name="destello" size={14} className="mt-0.5 shrink-0" />
                 <span>{o.tip}</span>
               </p>
             ) : null}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => votar(i, true)}
-                aria-pressed={votos[i] === "up"}
-                aria-label="Me gusta este look"
-                className={`flex min-h-10 flex-1 items-center justify-center rounded-sm border transition-colors duration-200 ${
-                  votos[i] === "up"
-                    ? "border-accent bg-accent-soft text-ink"
-                    : "border-line bg-surface text-ink hover:border-ink"
-                }`}
-              >
-                <Icon name="pulgar" size={18} active={votos[i] === "up"} />
-              </button>
-              <button
-                type="button"
-                onClick={() => votar(i, false)}
-                aria-pressed={votos[i] === "down"}
-                aria-label="No me gusta este look"
-                className={`flex min-h-10 flex-1 items-center justify-center rounded-sm border transition-colors duration-200 ${
-                  votos[i] === "down"
-                    ? "border-accent bg-accent-soft text-ink"
-                    : "border-line bg-surface text-ink hover:border-ink"
-                }`}
-              >
-                <Icon name="pulgar" size={18} rotate={180} active={votos[i] === "down"} />
-              </button>
+            <div className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
+              <span className="text-[11.5px] text-muted">¿Te late?</span>
+              <div className="ml-auto flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => votar(i, true)}
+                  aria-pressed={votos[i] === "up"}
+                  aria-label="Me gusta este look"
+                  className={`flex h-[34px] w-[34px] items-center justify-center rounded-sm border transition-colors ${
+                    votos[i] === "up"
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line bg-surface text-muted hover:border-ink"
+                  }`}
+                >
+                  <Icon name="pulgar" size={17} active={votos[i] === "up"} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => votar(i, false)}
+                  aria-pressed={votos[i] === "down"}
+                  aria-label="No me gusta este look"
+                  className={`flex h-[34px] w-[34px] items-center justify-center rounded-sm border transition-colors ${
+                    votos[i] === "down"
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line bg-surface text-muted hover:border-ink"
+                  }`}
+                >
+                  <Icon name="pulgar" size={17} rotate={180} active={votos[i] === "down"} />
+                </button>
+              </div>
             </div>
           </div>
         ))}

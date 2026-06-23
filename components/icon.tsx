@@ -34,7 +34,15 @@ export type IconName =
   | "libro"
   | "hoja"
   | "luna"
-  | "lapiz";
+  | "lapiz"
+  | "globo"
+  | "calendario"
+  | "termo"
+  | "ciudad"
+  | "mochila"
+  | "maleta"
+  | "playa"
+  | "menos";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -156,6 +164,50 @@ const GLYPHS: Record<IconName, JSX.Element> = {
     <>
       <path d="M4 20h4L19 9l-4-4L4 16z" />
       <path d="M14 6l4 4" />
+    </>
+  ),
+  menos: <path d="M5 12h14" />,
+  globo: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17" />
+      <path d="M12 3.5c2.4 2.3 2.4 14.7 0 17M12 3.5c-2.4 2.3-2.4 14.7 0 17" />
+    </>
+  ),
+  calendario: (
+    <>
+      <rect x="4" y="5.5" width="16" height="15" rx="1.5" />
+      <path d="M4 10h16M8 3.5v4M16 3.5v4" />
+    </>
+  ),
+  termo: <path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z" />,
+  ciudad: (
+    <>
+      <path d="M3 20h18" />
+      <path d="M5 20V9l5-2.5V20" />
+      <path d="M10 20V11l6 2V20" />
+      <path d="M7 12h0M7 15.5h0M13 15h0" />
+    </>
+  ),
+  mochila: (
+    <>
+      <path d="M7 9a5 5 0 0 1 10 0v8a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z" />
+      <path d="M9.5 9V7.5a2.5 2.5 0 0 1 5 0V9" />
+      <path d="M9 13h6" />
+    </>
+  ),
+  maleta: (
+    <>
+      <rect x="5.5" y="8" width="13" height="12" rx="1.5" />
+      <path d="M9.5 8V6.5A1.5 1.5 0 0 1 11 5h2a1.5 1.5 0 0 1 1.5 1.5V8" />
+      <path d="M9.5 11.5v5M14.5 11.5v5" />
+    </>
+  ),
+  playa: (
+    <>
+      <path d="M12 4a8 8 0 0 1 8 8H4a8 8 0 0 1 8-8z" />
+      <path d="M12 12v7" />
+      <path d="M12 19a2.2 2.2 0 0 0 3.2 0" />
     </>
   ),
 };
