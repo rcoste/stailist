@@ -218,7 +218,11 @@ export function HoyClient({
         </button>
       </div>
       {skipOpen && !worn ? (
-        <SkipReasons outfitId={state.outfit.id} onProceed={otroLook} />
+        <SkipReasons
+          outfitId={state.outfit.id}
+          onProceed={otroLook}
+          onClose={() => setSkipOpen(false)}
+        />
       ) : null}
     </div>
   );

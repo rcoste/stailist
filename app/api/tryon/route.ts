@@ -8,6 +8,15 @@ const GEMINI_MODEL = "gemini-3-pro-image";
 const PROMPT =
   "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images. Keep the person's face, body type, skin tone and hair identical. Replace only their outfit with the provided garments. Plain warm off-white background, soft natural light, editorial street-style look, standing naturally. No text.";
 
+// Construye el prompt final inyectando el TIP de styling del outfit (cómo se lleva
+// el look: arremangar, fajar, abrir un botón…) para que la imagen lo refleje. El
+// tip viene en español; Gemini lo entiende. Sin tip, el prompt base tal cual.
+function buildPrompt(tip: string | null): string {
+  const t = (tip ?? "").trim();
+  if (!t) return PROMPT;
+  return `${PROMPT} IMPORTANT styling detail — wear the garments following this note (written in Spanish), reflecting it visibly in how the clothes are styled on the body: "${t}".`;
+}
+
 async function fetchAsBase64(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
@@ -52,7 +61,7 @@ export async function POST(request: NextRequest) {
   // Outfit (y cache si ya se generó antes)
   const { data: outfit } = await supabase
     .from("outfits")
-    .select("id, item_ids, tryon_path")
+    .select("id, item_ids, tryon_path, tip")
     .eq("id", outfitId)
     .eq("user_id", user.id)
     .single();
@@ -108,7 +117,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const parts = [
-      { text: PROMPT },
+      { text: buildPrompt((outfit.tip as string | null) ?? null) },
       { inlineData: { mimeType: "image/jpeg", data: avatarB64 } },
       ...prendasB64.map((d) => ({ inlineData: { mimeType: "image/jpeg", data: d } })),
     ];
