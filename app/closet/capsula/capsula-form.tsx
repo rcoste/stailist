@@ -6,6 +6,7 @@ import { ASSESSMENT_QUESTIONS, type LifestyleAnswers } from "@/lib/capsule";
 import { saveLifestyle, type CapsuleState } from "./actions";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { useWakeLock } from "@/lib/use-wake-lock";
 
 const INITIAL: CapsuleState = { status: "idle" };
 
@@ -15,6 +16,8 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
   const [state, formAction, pending] = useActionState(saveLifestyle, INITIAL);
   const [answers, setAnswers] = useState<LifestyleAnswers>(initial);
   const [step, setStep] = useState(0);
+  // Pantalla despierta mientras se arma la cápsula (~27s).
+  useWakeLock(pending);
 
   const total = ASSESSMENT_QUESTIONS.length;
   const q = ASSESSMENT_QUESTIONS[step];

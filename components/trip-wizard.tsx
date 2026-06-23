@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
+import { useWakeLock } from "@/lib/use-wake-lock";
 import {
   OCCASIONS,
   LUGGAGE,
@@ -52,6 +53,8 @@ export function TripWizard() {
   const [ocasiones, setOcasiones] = useState<Set<Occasion>>(new Set());
   const [maleta, setMaleta] = useState<Luggage | null>(null);
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
+  // Pantalla despierta mientras se arma la maleta (~30s).
+  useWakeLock(phase === "gen");
 
   const totalNoches = inicio && fin ? tripNights(inicio, fin) : 0;
   const multi = lugares.length >= 2;

@@ -9,6 +9,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { LookRequest, type LookInput } from "@/components/weather-picker";
+import { useWakeLock } from "@/lib/use-wake-lock";
 import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
@@ -58,6 +59,8 @@ export function HoyClient({
   const [state, setState] = useState<State>(
     autoAsk || !lookInicial ? { kind: "ask" } : { kind: "ready", outfit: lookInicial }
   );
+  // Pantalla despierta mientras se genera el look (no se auto-bloquea a media carga).
+  useWakeLock(state.kind === "generating");
   const [worn, setWorn] = useState(wornInicial);
   const [skipOpen, setSkipOpen] = useState(false);
   // El botón ✨ pide un look NUEVO → fuerza (si no, look-of-day devuelve el cacheado).
@@ -254,6 +257,8 @@ function TryonOutfitCard({
     revealMode: "inline",
     returnTo: "/hoy",
   });
+  // Pantalla despierta mientras se genera el try-on (~30s con Gemini).
+  useWakeLock(t.mode === "gen");
 
   return (
     <>
