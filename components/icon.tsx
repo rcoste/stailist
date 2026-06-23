@@ -42,6 +42,9 @@ export type IconName =
   | "mochila"
   | "maleta"
   | "playa"
+  | "descargar"
+  | "enlace"
+  | "filtro"
   | "menos";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
@@ -210,6 +213,24 @@ const GLYPHS: Record<IconName, JSX.Element> = {
       <path d="M12 19a2.2 2.2 0 0 0 3.2 0" />
     </>
   ),
+  // "Guardar imagen" del Pasaporte: disquete con lente (no confundir con
+  // `guardar`, que es el marcador de favoritos del historial).
+  descargar: (
+    <>
+      <path d="M5 3h11l3 3v15H5z" />
+      <path d="M8 3v6h7" />
+      <circle cx="12" cy="15" r="2.5" />
+    </>
+  ),
+  // "Copiar link": eslabones de cadena.
+  enlace: (
+    <>
+      <path d="M10 13a4 4 0 0 0 5.7.4l2.3-2.3a4 4 0 0 0-5.7-5.7L11 6.5" />
+      <path d="M14 11a4 4 0 0 0-5.7-.4L6 12.9a4 4 0 0 0 5.7 5.7L13 17.5" />
+    </>
+  ),
+  // Embudo de filtros (fila de filtros del Historial).
+  filtro: <path d="M3 5h18l-7 8v5l-4 2v-7z" />,
 };
 
 export function Icon({

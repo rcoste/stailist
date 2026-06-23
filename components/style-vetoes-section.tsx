@@ -90,12 +90,13 @@ export function StyleVetoesSection({
                       onClick={() => toggleChip(c.id)}
                       disabled={pending}
                       aria-pressed={on}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-200 disabled:opacity-60 ${
+                      className={`flex items-center gap-1 rounded-sm border px-3 py-1 text-xs font-medium transition-colors duration-200 disabled:opacity-60 ${
                         on
-                          ? "border-accent bg-accent-soft text-accent"
+                          ? "border-accent bg-accent-soft text-accent ring-1 ring-inset ring-accent"
                           : "border-line bg-bg text-muted hover:border-ink hover:text-ink"
                       }`}
                     >
+                      {on ? <Icon name="check" size={12} /> : null}
                       {c.label}
                     </button>
                   );
@@ -112,7 +113,7 @@ export function StyleVetoesSection({
               {free.map((f) => (
                 <span
                   key={f}
-                  className="flex items-center gap-1 rounded-full border border-accent bg-accent-soft px-3 py-1 text-xs font-medium text-accent"
+                  className="flex items-center gap-1 rounded-sm border border-accent bg-accent-soft px-3 py-1 text-xs font-medium text-accent ring-1 ring-inset ring-accent"
                 >
                   {f}
                   <button

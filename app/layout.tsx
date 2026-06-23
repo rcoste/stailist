@@ -15,6 +15,9 @@ const bodoni = Bodoni_Moda({
   variable: "--font-bodoni",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  // Itálica real para el wordmark de la cubierta del Pasaporte (la "portada"):
+  // sin esto el navegador sintetiza una itálica falsa (oblicua, no caligráfica).
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {

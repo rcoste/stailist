@@ -211,6 +211,14 @@ export const SEASONS: Record<
 // (otoño, primavera) van con oro; las frías (invierno, verano) con plata. En la
 // frontera, si la base es fría pero el flow es cálido (o al revés), gana la
 // calidez: el oro favorece y suele ser lo que prefiere la persona cálida-frontera.
+// Hex plano del punto de metal (oro/plata) — DATO de colorimetría (como los
+// swatches), no un token de UI. Único lugar donde vive; los componentes lo
+// referencian en vez de hardcodear el hex.
+export const METAL_HEX: Record<"oro" | "plata", string> = {
+  oro: "#C8973D",
+  plata: "#C2C2CC",
+};
+
 const WARM_SEASONS: Season[] = ["otono", "primavera"];
 export function seasonMetal(
   primary: Season | null,

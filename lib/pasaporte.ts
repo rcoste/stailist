@@ -21,7 +21,7 @@ export type PasaporteData = {
 
 // Nombre para mostrar: parte local del correo, capitalizada (no tenemos campo
 // de nombre). "roberto@kublau.com" → "Roberto".
-function nameFromEmail(email: string): string {
+export function nameFromEmail(email: string): string {
   const local = (email.split("@")[0] || "tú").replace(/[._-]+/g, " ").trim();
   return local.charAt(0).toUpperCase() + local.slice(1);
 }

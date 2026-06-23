@@ -60,6 +60,41 @@ export async function markWorn(
   return { ok: true };
 }
 
+// "Ponérmelo" (re-wear): vuelve a poner un look pasado como el look del día de
+// HOY. Limpia el flag del look de hoy anterior (respeta el índice único parcial
+// (user, look_date) where is_look_of_day) y marca este outfit como el de hoy.
+// NO marca "worn" — esa sigue siendo la señal de oro real ("Me lo puse"), que el
+// usuario confirma en Hoy si de verdad lo usa. Tras esto, el cliente navega a /hoy.
+export async function wearToday(
+  outfitId: string
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 1) El look de hoy actual deja de serlo (sigue en historial por su created_at).
+  await supabase
+    .from("outfits")
+    .update({ is_look_of_day: false })
+    .eq("user_id", user.id)
+    .eq("is_look_of_day", true)
+    .eq("look_date", today);
+
+  // 2) Este look pasa a ser el de hoy. created_at no cambia → en el historial
+  // sigue agrupado en su mes original; solo lo "revivimos" en Hoy.
+  const { error } = await supabase
+    .from("outfits")
+    .update({ is_look_of_day: true, look_date: today })
+    .eq("id", outfitId)
+    .eq("user_id", user.id);
+
+  return { ok: !error };
+}
+
 // Guarda la razón del 👎 (pill o texto abierto) en el evento del voto. Es el
 // ground truth para calibrar el juez de styling — etiqueta humana de por qué un
 // look no va, en vez de adivinar con reglas.

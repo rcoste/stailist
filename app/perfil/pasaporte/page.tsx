@@ -71,7 +71,7 @@ export default async function PerfilPasaportePage() {
       </Link>
       <div className="mb-5 mt-4 flex flex-col gap-1">
         <h1 className="text-h1 font-semibold text-ink">Tu pasaporte de estilo</h1>
-        <p className="text-sm text-muted">Tu identidad en una tarjeta. Compártela 🤍</p>
+        <p className="text-sm text-muted">Tu identidad en una tarjeta. Compártela.</p>
       </div>
       <PasaporteShare data={data} />
     </div>

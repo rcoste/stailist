@@ -1,14 +1,17 @@
 import Link from "next/link";
+import { Icon } from "@/components/icon";
 
-// Acceso al wizard de avatar desde el Perfil. Si ya hay avatar, es una
-// invitación opcional a mejorarlo (siempre disponible, ignorable); si no, a
-// crearlo. La subida real vive en el wizard (/perfil/avatar).
+// Acceso al wizard de avatar desde el Perfil (hero de la pestaña Cuenta). Si ya
+// hay avatar, es una invitación opcional a mejorarlo; si no, a crearlo. Estilo
+// linkrow: link de acento con destello, no botón. La subida real vive en el
+// wizard (/perfil/avatar).
 export function ChangeAvatar({ hasAvatar }: { hasAvatar: boolean }) {
   return (
     <Link
       href="/perfil/avatar"
-      className="flex min-h-10 items-center justify-center self-start rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
+      className="mt-2 inline-flex items-center gap-1.5 self-start text-xs font-medium text-accent transition-colors duration-200 hover:text-accent-deep"
     >
+      <Icon name="destello" size={13} />
       {hasAvatar ? "Mejorar mi avatar" : "Crear mi avatar"}
     </Link>
   );

@@ -1,71 +1,77 @@
 import { forwardRef } from "react";
+import { METAL_HEX } from "@/lib/colorimetria";
 import type { PasaporteData } from "@/lib/pasaporte";
 
-// La tarjeta del Pasaporte de estilo: plantilla de marca rellenada con los datos
-// del usuario. Sin imágenes externas (el avatar entra como data URL) → se captura
-// limpio como PNG con html-to-image. forwardRef para que el botón lo tome.
+const SECLBL = "text-[10px] font-bold uppercase tracking-[0.07em] text-muted";
+
+// La tarjeta del Pasaporte de estilo: la pieza de identidad compartible. Cubierta
+// burdeos (la "portada" del pasaporte) sobre cuerpo papel — se lee como un objeto
+// físico, por eso diverge a propósito al radius-artifact (~10px). Sin imágenes
+// externas (el avatar entra como data URL) → se captura limpio como PNG con
+// html-to-image. forwardRef para que el botón de compartir tome el nodo.
 export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>(
   function PasaporteCard({ data }, ref) {
     return (
       <div
         ref={ref}
-        className="w-[360px] overflow-hidden rounded-2xl border border-line border-t-[3px] border-t-accent bg-bg"
+        className="w-[360px] overflow-hidden rounded-artifact border border-line bg-bg shadow-[0_14px_36px_rgba(26,23,24,.14)]"
       >
+        {/* Cubierta: la portada del pasaporte */}
+        <div className="flex items-center justify-between bg-accent px-[18px] py-3.5 text-on-accent">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-on-accent/70">
+            Pasaporte de estilo
+          </span>
+          <span className="display text-base font-medium italic">stailist</span>
+        </div>
+
+        {/* Hero: el avatar a todo lo ancho */}
         {data.heroImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={data.heroImage}
-            alt=""
-            className="h-[208px] w-full object-cover object-[50%_12%]"
-          />
+          <div className="h-[200px] bg-surface">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={data.heroImage}
+              alt=""
+              className="h-full w-full object-cover object-[50%_10%]"
+            />
+          </div>
         ) : null}
 
-        <div className="flex flex-col gap-5 p-6">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-[1.5px] text-muted">
-              Pasaporte de estilo
-            </span>
-            <span className="editorial text-base italic text-accent">stailist</span>
-          </div>
-
-          <div className="flex flex-col">
-            <span className="text-xs text-muted">{data.name}</span>
-            <span className="editorial text-[28px] leading-tight text-ink">
+        <div className="flex flex-col gap-[18px] p-5">
+          {/* Identidad */}
+          <div>
+            <div className="text-[11.5px] text-muted">{data.name}</div>
+            <div className="editorial text-[26px] leading-[1.08] text-ink">
               {data.archetypeNombre ?? "Tu estilo"}
-            </span>
+            </div>
             {data.archetypeDesc ? (
-              <span className="mt-1 text-xs text-muted">{data.archetypeDesc}</span>
+              <div className="mt-1.5 text-[11.5px] leading-[1.4] text-muted">
+                {data.archetypeDesc}
+              </div>
             ) : null}
           </div>
 
-          {data.vibe.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Tu vibe
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {data.vibe.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs capitalize text-ink"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
+          {/* Tu paleta */}
           {data.swatches.length > 0 ? (
-            <div className="flex flex-col gap-2.5 rounded-xl border border-line bg-surface p-3.5">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Tu paleta{data.seasonLabel ? ` · ${data.seasonLabel}` : ""}
-              </span>
+            <div className="flex flex-col gap-[11px] rounded-md border border-line bg-surface p-3.5">
+              <div className="flex items-center justify-between">
+                <span className={SECLBL}>
+                  Tu paleta{data.seasonLabel ? ` · ${data.seasonLabel}` : ""}
+                </span>
+                {data.metal ? (
+                  <span className="flex items-center gap-1.5 rounded-sm border border-line bg-bg px-2.5 py-1 text-[11px] text-muted">
+                    <span
+                      className="h-[11px] w-[11px] rounded-full"
+                      style={{ backgroundColor: METAL_HEX[data.metal] }}
+                    />
+                    {data.metal === "oro" ? "Oro" : "Plata"}
+                  </span>
+                ) : null}
+              </div>
               <div className="flex gap-1.5">
                 {data.swatches.map((hex, i) => (
                   <span
                     key={i}
-                    className="h-10 flex-1 rounded-md border border-line"
+                    className="h-[38px] flex-1 rounded-sm border border-line"
                     style={{ backgroundColor: hex }}
                   />
                 ))}
@@ -73,9 +79,10 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
             </div>
           ) : null}
 
+          {/* Colores que te encienden la cara */}
           {data.powerColors.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-sm text-ink">
+            <div className="flex flex-col gap-[9px]">
+              <span className="text-[13px] leading-[1.4] text-ink">
                 Tus colores que te <span className="text-accent">encienden la cara</span>
               </span>
               <div className="flex flex-wrap gap-3.5">
@@ -85,19 +92,18 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
                       className="h-[18px] w-[18px] rounded-full border border-line"
                       style={{ backgroundColor: c.hex }}
                     />
-                    <span className="text-xs text-muted">{c.nombre}</span>
+                    <span className="text-[11.5px] text-muted">{c.nombre}</span>
                   </span>
                 ))}
               </div>
             </div>
           ) : null}
 
+          {/* Tu metal */}
           {data.metal ? (
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Tu metal · {data.metal}
-              </span>
-              <span className="text-sm text-ink">
+            <div className="flex flex-col gap-1.5">
+              <span className={SECLBL}>Tu metal · {data.metal}</span>
+              <span className="text-[13px] leading-[1.4] text-ink">
                 {data.metal === "oro"
                   ? "El dorado te ilumina; la plata te apaga."
                   : "La plata te ilumina; el dorado te apaga."}
@@ -105,32 +111,49 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
             </div>
           ) : null}
 
+          {/* Tu vibe */}
+          {data.vibe.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <span className={SECLBL}>Tu vibe</span>
+              <div className="flex flex-wrap gap-1.5">
+                {data.vibe.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-sm border border-line bg-surface px-2.5 py-1.5 text-xs capitalize text-ink"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Tu silueta */}
           {data.siluetaLine || data.favorece ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+              <span className={SECLBL}>
                 Tu silueta{data.siluetaLine ? ` · ${data.siluetaLine}` : ""}
               </span>
               {data.favorece ? (
-                <span className="text-sm text-ink">{data.favorece}</span>
+                <span className="text-[13px] leading-[1.4] text-ink">{data.favorece}</span>
               ) : null}
             </div>
           ) : null}
 
+          {/* Tu fórmula que siempre jala */}
           {data.formula.length > 0 ? (
             <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                Tu fórmula que siempre jala
-              </span>
+              <span className={SECLBL}>Tu fórmula que siempre jala</span>
               <div className="flex gap-2">
                 {data.formula.map((p, i) => (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                    <div className="aspect-[3/4] w-full overflow-hidden rounded-md border border-line bg-surface">
+                  <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                    <div className="aspect-[3/4] w-full overflow-hidden rounded-sm border border-line bg-surface">
                       {p.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.image} alt="" className="h-full w-full object-cover" />
                       ) : null}
                     </div>
-                    <span className="w-full truncate text-center text-[10px] text-muted">
+                    <span className="w-full truncate text-center text-[9.5px] text-muted">
                       {p.nombre}
                     </span>
                   </div>
@@ -139,9 +162,10 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
             </div>
           ) : null}
 
+          {/* Footer */}
           <div className="flex items-center justify-between border-t border-line pt-3">
-            <span className="text-[11px] text-muted">Hecho con stailist</span>
-            <span className="text-xs text-accent">Haz el tuyo en stailist.co</span>
+            <span className="text-[10.5px] text-muted">Hecho con stailist</span>
+            <span className="text-[11px] font-medium text-accent">stailist.co</span>
           </div>
         </div>
       </div>
