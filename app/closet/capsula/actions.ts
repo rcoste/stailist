@@ -16,6 +16,7 @@ import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
 import { matchCapsule } from "@/lib/engine/capsule-match";
 import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
+import { renderItemImage } from "@/lib/render-item";
 import type { Season } from "@/lib/colorimetria";
 import type { LifestyleAnswers } from "@/lib/capsule";
 
@@ -219,6 +220,13 @@ export async function markFaltaOwned(
     .select("id")
     .single();
   if (insErr || !inserted) return { ok: false, itemId: null };
+
+  // Si no hubo imagen prestada (no había arquetipo cercano — p.ej. un suéter
+  // negro), le generamos su render limpio AHORA (inline) para que no quede como
+  // un swatch. El cliente muestra un spinner mientras tanto.
+  if (!imagePath) {
+    await renderItemImage(supabase, user.id, inserted.id as string);
+  }
 
   // Marca esa prenda ideal como cubierta y refresca la firma al clóset nuevo.
   const closet = await loadClosetLite(supabase, user.id);

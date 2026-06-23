@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
@@ -9,6 +10,7 @@ import {
   setTripPacked,
   setTripSubstitute,
   suggestTripSubstitutes,
+  markTripFaltaOwned,
   type SubstituteCandidate,
 } from "@/lib/trip-actions";
 
@@ -67,6 +69,9 @@ export function TripResult({
     candidates: SubstituteCandidate[];
   } | null>(null);
   const isPacked = (i: number) => !!packed[String(i)];
+  const router = useRouter();
+  // "Ya lo tengo" en curso por índice (agrega al clóset + genera imagen, ~unos seg).
+  const [ownBusy, setOwnBusy] = useState<Set<number>>(new Set());
 
   // by/byImage efectivos: el sustituto elegido esta sesión gana sobre lo del server.
   const ov = (r: TripRow) => localSub[r.index] ?? { by: r.by, byImage: r.byImage };
@@ -81,6 +86,20 @@ export function TripResult({
     const next = value ?? !isPacked(index);
     setPacked((p) => ({ ...p, [String(index)]: next }));
     setTripPacked(tripId, index, next);
+  }
+
+  // "Ya lo tengo" sobre un faltante: lo suma a tu clóset de verdad + le genera
+  // imagen (server, inline) y lo marca cubierto en el viaje. Spinner mientras;
+  // al terminar, refresca y la prenda se reubica en "Empaca esto" con su imagen.
+  async function marcarYaLoTengo(index: number) {
+    setOwnBusy((s) => new Set(s).add(index));
+    const res = await markTripFaltaOwned(tripId, index);
+    if (res.ok) router.refresh();
+    setOwnBusy((s) => {
+      const n = new Set(s);
+      n.delete(index);
+      return n;
+    });
   }
 
   async function buscarSustituto(r: TripRow) {
@@ -223,10 +242,19 @@ export function TripResult({
                   </button>
                   <button
                     type="button"
-                    onClick={() => togglePacked(r.index, true)}
-                    className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface px-[11px] text-xs font-semibold text-ink transition-colors hover:border-ink"
+                    onClick={() => marcarYaLoTengo(r.index)}
+                    disabled={ownBusy.has(r.index)}
+                    className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface px-[11px] text-xs font-semibold text-ink transition-colors hover:border-ink disabled:opacity-50"
                   >
-                    <Icon name="check" size={13} /> Ya lo tengo
+                    {ownBusy.has(r.index) ? (
+                      <>
+                        <Spinner className="h-3.5 w-3.5" /> Agregando…
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="check" size={13} /> Ya lo tengo
+                      </>
+                    )}
                   </button>
                 </div>
               </li>

@@ -2,14 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
+import {
+  loadClosetLite,
+  loadClosetImageMap,
+  borrowArchetypeImage,
+} from "@/lib/capsule-data";
 import { matchSubstitutes } from "@/lib/engine/trip-substitutes";
-import { capsuleRows } from "@/lib/capsule";
+import { capsuleRows, closetSignature } from "@/lib/capsule";
+import { familiaToHex } from "@/lib/capsule-images";
+import { renderItemImage } from "@/lib/render-item";
 import type {
   CapsuleDecision,
   CapsuleMatch,
   CapsuleOverrides,
   CapsuleTarget,
+  MatchEntry,
 } from "@/lib/capsule";
 import type { TripOutfit } from "@/lib/trip";
 
@@ -70,6 +77,94 @@ export async function suggestTripSubstitutes(
     (profile?.gender as "hombre" | "mujer" | null) ?? null
   );
   return matches.map((m) => ({ ...m, image: imageMap[m.nombre] ?? null }));
+}
+
+// "Ya lo tengo" sobre una prenda que te FALTA en el viaje: la suma a tu clóset
+// de verdad (es tuya, sirve para todos tus outfits) con sus atributos de la
+// cápsula ideal, le genera imagen (prestada del catálogo o, si no hay, su render
+// limpio) Y la marca cubierta en el match DEL VIAJE. Antes esto solo marcaba
+// "empacado" sin agregar nada — por eso no se confirmaba. Inline: cuando resuelve,
+// la prenda ya está agregada + con imagen (el botón muestra spinner mientras).
+export async function markTripFaltaOwned(
+  tripId: string,
+  index: number
+): Promise<{ ok: boolean; itemId: string | null }> {
+  if (!Number.isInteger(index) || index < 0) return { ok: false, itemId: null };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, itemId: null };
+
+  const [{ data: trip }, { data: profile }] = await Promise.all([
+    supabase
+      .from("trips")
+      .select("capsule_target, capsule_match, empacado")
+      .eq("id", tripId)
+      .eq("user_id", user.id)
+      .single(),
+    supabase.from("profiles").select("gender").eq("id", user.id).single(),
+  ]);
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  const match = trip?.capsule_match as CapsuleMatch | null;
+  const item = target?.items[index];
+  if (!target || !match || !item) return { ok: false, itemId: null };
+
+  // Imagen prestada de un arquetipo de la misma categoría/color parecido.
+  const imagePath = await borrowArchetypeImage(
+    supabase,
+    item.category,
+    familiaToHex(item.colorFamilia),
+    (profile?.gender as "hombre" | "mujer" | null) ?? null,
+    `${item.tipo} ${item.nombre}`
+  );
+
+  // Suma la prenda al clóset (global; es tuya, no solo de este viaje).
+  const { data: inserted, error: insErr } = await supabase
+    .from("items")
+    .insert({
+      user_id: user.id,
+      source: "photo",
+      attrs: {
+        nombre: item.nombre,
+        categoria: item.category,
+        color: item.colorFamilia,
+        color_hex: familiaToHex(item.colorFamilia),
+        formalidad: item.formalidad,
+        temporada: item.temporada,
+        ...(imagePath ? { image_path: imagePath } : {}),
+      },
+    })
+    .select("id")
+    .single();
+  if (insErr || !inserted) return { ok: false, itemId: null };
+
+  // Sin imagen prestada → genera su render limpio ahora (inline).
+  if (!imagePath) {
+    await renderItemImage(supabase, user.id, inserted.id as string);
+  }
+
+  // Marca esa prenda ideal como cubierta en el match DEL VIAJE + refresca firma.
+  const closet = await loadClosetLite(supabase, user.id);
+  const entries: MatchEntry[] = target.items.map((_, i) =>
+    i === index
+      ? { status: "tienes", by: item.nombre }
+      : match.entries[i] ?? { status: "falta", by: null }
+  );
+  const newMatch: CapsuleMatch = { signature: closetSignature(closet), entries };
+  // Y la deja palomeada (empacada) — "ya lo tengo" = la tienes y la empacas.
+  const empacado = {
+    ...((trip?.empacado as Record<string, boolean> | null) ?? {}),
+    [String(index)]: true,
+  };
+  await supabase
+    .from("trips")
+    .update({ capsule_match: newMatch, empacado })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+
+  revalidatePath(`/viaje/${tripId}`);
+  return { ok: true, itemId: inserted.id as string };
 }
 
 // Fija una prenda del clóset como sustituto de una que falta: la guarda en
