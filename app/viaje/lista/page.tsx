@@ -25,19 +25,10 @@ export default async function TusViajesPage() {
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-1">
-        <div className="flex flex-col gap-1.5">
-          <Link
-            href="/hoy"
-            className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
-          >
-            <Icon name="chevron" size={15} rotate={180} />
-            Hoy
-          </Link>
-          <h1 className="text-[30px] font-semibold leading-none tracking-[-0.01em] text-ink">
-            Tus viajes
-          </h1>
+        <div className="flex flex-col gap-1.5 pt-3">
+          <h1 className="text-h1 font-semibold text-ink">Modo viaje</h1>
           <p className="text-sm text-muted">
-            Tus maletas guardadas. Ábrelas para ver qué empacar.
+            Arma una maleta para tu próximo viaje, o abre una guardada.
           </p>
         </div>
 

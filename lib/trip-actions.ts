@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
 import { matchSubstitutes } from "@/lib/engine/trip-substitutes";
-import type { CapsuleDecision, CapsuleOverrides, CapsuleTarget } from "@/lib/capsule";
+import { capsuleRows } from "@/lib/capsule";
+import type {
+  CapsuleDecision,
+  CapsuleMatch,
+  CapsuleOverrides,
+  CapsuleTarget,
+} from "@/lib/capsule";
 import type { TripOutfit } from "@/lib/trip";
 
 // Clave namespaced para guardar un sustituto dentro de overrides (jsonb) sin una
@@ -30,7 +36,7 @@ export async function suggestTripSubstitutes(
   const [{ data: trip }, { data: profile }] = await Promise.all([
     supabase
       .from("trips")
-      .select("capsule_target")
+      .select("capsule_target, capsule_match, overrides")
       .eq("id", tripId)
       .eq("user_id", user.id)
       .single(),
@@ -40,10 +46,24 @@ export async function suggestTripSubstitutes(
   const missing = target?.items?.[index];
   if (!missing) return [];
 
-  const [closet, imageMap] = await Promise.all([
+  // Prendas del clóset que YA están en la maleta (cubren otro hueco o ya son
+  // sustituto): no tiene sentido proponerlas otra vez — no puedes empacar la
+  // misma prenda dos veces. Se excluyen del clóset que ve la IA.
+  const match = (trip?.capsule_match as CapsuleMatch | null) ?? null;
+  const overrides = (trip?.overrides as CapsuleOverrides | null) ?? null;
+  const used = new Set<string>();
+  for (const r of capsuleRows(target, match, overrides)) {
+    if (r.covered && r.by) used.add(r.by);
+  }
+  for (const [k, v] of Object.entries(overrides ?? {})) {
+    if (k.startsWith("sub:") && typeof v === "string") used.add(v);
+  }
+
+  const [closetAll, imageMap] = await Promise.all([
     loadClosetLite(supabase, user.id),
     loadClosetImageMap(supabase, user.id),
   ]);
+  const closet = closetAll.filter((c) => !used.has(c.nombre));
   const matches = await matchSubstitutes(
     missing,
     closet,

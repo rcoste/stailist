@@ -8,10 +8,13 @@ import { Icon, type IconName } from "@/components/icon";
 // pestaña: es el botón estrella que dispara la generación de outfit (hoy/ocasión).
 // Perfil salió de aquí a un ícono en el header. "Hoy" es tu home (lugar), el
 // botón central es la acción — no se pisan.
-const TABS: { href: string; label: string; icon: IconName }[] = [
+// `match` (opcional) = prefijo para marcar la pestaña activa, cuando difiere del
+// destino. Viaje aterriza en el home (/viaje/lista: nueva maleta + historial),
+// pero sigue activa en todo /viaje* (wizard, detalle).
+const TABS: { href: string; label: string; icon: IconName; match?: string }[] = [
   { href: "/hoy", label: "Hoy", icon: "sol" },
   { href: "/closet", label: "Clóset", icon: "gancho" },
-  { href: "/viaje", label: "Viaje", icon: "maletin" },
+  { href: "/viaje/lista", label: "Viaje", icon: "maletin", match: "/viaje" },
   { href: "/historial", label: "Historial", icon: "reloj" },
 ];
 
@@ -23,8 +26,8 @@ export function TabBar() {
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 
-  const tab = (href: string, label: string, icon: IconName) => {
-    const active = pathname.startsWith(href);
+  const tab = (href: string, label: string, icon: IconName, match?: string) => {
+    const active = pathname.startsWith(match ?? href);
     return (
       <Link
         key={href}
@@ -42,7 +45,7 @@ export function TabBar() {
   return (
     <nav className="fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-stretch">
-        {left.map((t) => tab(t.href, t.label, t.icon))}
+        {left.map((t) => tab(t.href, t.label, t.icon, t.match))}
 
         {/* Botón central: la acción estrella (Generar). Elevado sobre la barra.
             Es un botón (no Link) con timestamp para que SIEMPRE re-dispare el
@@ -58,7 +61,7 @@ export function TabBar() {
           </button>
         </div>
 
-        {right.map((t) => tab(t.href, t.label, t.icon))}
+        {right.map((t) => tab(t.href, t.label, t.icon, t.match))}
       </div>
     </nav>
   );
