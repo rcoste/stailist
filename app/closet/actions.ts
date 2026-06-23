@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { borrowArchetypeImage } from "@/lib/capsule-data";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 // Guarda una prenda fotografiada por la usuaria. La foto ya está en el bucket
@@ -41,6 +42,65 @@ export async function addPhotoItem(
 
   revalidatePath("/closet");
   return { ok: true };
+}
+
+// Backfill: a las prendas que agregaste con "ya la tengo" ANTES de que el préstamo
+// de imagen existiera (sin foto, sin arquetipo, sin image_path) les presta ahora el
+// flat-lay de un arquetipo de su misma categoría y color, para que no salgan como
+// un bloque de color. Idempotente: re-correrlo no toca lo que ya tiene imagen.
+// Opera solo sobre las prendas propias (RLS); el botón vive gateado a admin.
+export async function backfillBorrowedImages(): Promise<{ ok: boolean; updated: number }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, updated: 0 };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("gender")
+    .eq("id", user.id)
+    .single();
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+
+  // Candidatas: sin arquetipo y sin foto propia (las de "ya la tengo").
+  const { data: items } = await supabase
+    .from("items")
+    .select("id, attrs, render_path, render_status")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .is("archetype_id", null)
+    .is("photo_path", null);
+
+  let updated = 0;
+  for (const it of items ?? []) {
+    const attrs = (it.attrs ?? {}) as {
+      nombre?: string;
+      categoria?: string;
+      color_hex?: string;
+      image_path?: string;
+    };
+    const hasRender = it.render_status === "done" && !!it.render_path;
+    // Ya tiene de dónde sacar imagen, o le faltan datos para emparejar → salta.
+    if (hasRender || attrs.image_path || !attrs.categoria || !attrs.color_hex) continue;
+    const img = await borrowArchetypeImage(
+      supabase,
+      attrs.categoria,
+      attrs.color_hex,
+      gender,
+      attrs.nombre ?? ""
+    );
+    if (!img) continue;
+    const { error } = await supabase
+      .from("items")
+      .update({ attrs: { ...attrs, image_path: img } })
+      .eq("id", it.id)
+      .eq("user_id", user.id);
+    if (!error) updated++;
+  }
+
+  revalidatePath("/closet");
+  return { ok: true, updated };
 }
 
 // Quita una prenda del clóset (soft delete — deja rastro para señales del

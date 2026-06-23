@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { AddSheet } from "@/components/add-sheet";
+import { BackfillImagesButton } from "@/components/backfill-images-button";
 import { CapsuleCard } from "@/components/capsule-card";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { requireOnboarded } from "@/lib/auth";
@@ -116,6 +117,8 @@ export default async function ClosetPage() {
         <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
 
         <ClosetGrid items={items} />
+
+        {profile.is_admin ? <BackfillImagesButton /> : null}
       </section>
     </AppShell>
   );

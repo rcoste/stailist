@@ -14,7 +14,7 @@ import {
 } from "@/lib/capsule";
 import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
 import { matchCapsule } from "@/lib/engine/capsule-match";
-import { loadClosetLite } from "@/lib/capsule-data";
+import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
 import type { Season } from "@/lib/colorimetria";
 import type { LifestyleAnswers } from "@/lib/capsule";
@@ -194,7 +194,8 @@ export async function markFaltaOwned(
     supabase,
     item.category,
     familiaToHex(item.colorFamilia),
-    (profile?.gender as "hombre" | "mujer" | null) ?? null
+    (profile?.gender as "hombre" | "mujer" | null) ?? null,
+    `${item.tipo} ${item.nombre}`
   );
 
   // Inserta la prenda en el clóset (source=photo; sin photo propia → usa la imagen
@@ -231,49 +232,4 @@ export async function markFaltaOwned(
 
   revalidatePath("/closet");
   return { ok: true, itemId: inserted.id as string };
-}
-
-// Distancia RGB entre dos hex (#rrggbb o #rgb). Infinito si alguno no parsea.
-function hexDistance(a: string, b: string): number {
-  const parse = (h: string): [number, number, number] | null => {
-    let s = h.replace("#", "").trim();
-    if (s.length === 3) s = s.split("").map((c) => c + c).join("");
-    if (s.length !== 6) return null;
-    const n = parseInt(s, 16);
-    return Number.isNaN(n) ? null : [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  };
-  const x = parse(a);
-  const y = parse(b);
-  if (!x || !y) return Infinity;
-  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
-}
-
-// Presta el flat-lay de un arquetipo del catálogo: misma categoría y el color más
-// cercano (umbral estricto para no usar un color equivocado). Devuelve image_path
-// o null si no hay uno suficientemente parecido.
-async function borrowArchetypeImage(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  category: string,
-  targetHex: string,
-  gender: "hombre" | "mujer" | null
-): Promise<string | null> {
-  const { data } = await supabase
-    .from("archetypes")
-    .select("image_path, attrs, segment")
-    .eq("category", category)
-    .in("segment", ["unisex", gender ?? "hombre"]);
-  if (!data?.length) return null;
-  let best: string | null = null;
-  let bestDist = 40; // umbral: solo si el color es razonablemente parecido
-  for (const a of data) {
-    const img = a.image_path as string | null;
-    const hex = (a.attrs as { color_hex?: string } | null)?.color_hex;
-    if (!img || !hex) continue;
-    const d = hexDistance(targetHex, hex);
-    if (d < bestDist) {
-      bestDist = d;
-      best = img;
-    }
-  }
-  return best;
 }
