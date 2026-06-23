@@ -39,10 +39,17 @@ export function TripResult({
   tripId,
   rows,
   empacado: empacadoInicial,
+  onGenerateLooks,
+  onViewLooks,
+  looksExist = false,
 }: {
   tripId: string;
   rows: TripRow[];
   empacado: Record<string, boolean>;
+  // Inyectados por TripTabs para el flujo maleta→looks (opcionales).
+  onGenerateLooks?: () => void;
+  onViewLooks?: () => void;
+  looksExist?: boolean;
 }) {
   const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
   const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
@@ -223,6 +230,35 @@ export function TripResult({
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {/* Cierre del paso "maleta": de aquí se pasa a generar los looks. */}
+      {(onGenerateLooks || onViewLooks) && empaca.length > 0 ? (
+        <div className="flex flex-col gap-1.5 pt-1">
+          {looksExist ? (
+            <button
+              type="button"
+              onClick={onViewLooks}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
+            >
+              Ver mis looks
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onGenerateLooks}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            >
+              <Icon name="destello" size={18} /> Generar mis looks
+            </button>
+          )}
+          {!looksExist && falta.length > 0 ? (
+            <p className="text-center text-[11.5px] text-muted">
+              Los armo con lo que ya empacas — te {falta.length === 1 ? "falta" : "faltan"}{" "}
+              {falta.length} {falta.length === 1 ? "prenda" : "prendas"}.
+            </p>
+          ) : null}
         </div>
       ) : null}
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
@@ -31,40 +30,28 @@ export function TripOutfits({
   outfits,
   ocasiones,
   stale,
+  generating = false,
+  genError = false,
+  onGenerate,
 }: {
   tripId: string;
   outfits: ResolvedOutfit[] | null;
   ocasiones: Occasion[];
   stale: boolean;
+  // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
+  // botones); aquí solo la consumimos.
+  generating?: boolean;
+  genError?: boolean;
+  onGenerate?: () => void;
 }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
   // Voto optimista por índice (arranca de lo que llegó del server).
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
-
-  async function generar() {
-    setLoading(true);
-    setError(false);
-    try {
-      const res = await fetch(`/api/trip/${tripId}/outfits`, { method: "POST" });
-      if (!res.ok) {
-        setError(true);
-        setLoading(false);
-        return;
-      }
-      router.refresh();
-      // El refresh reemplaza estos props (outfits deja de ser null); soltamos el
-      // loading tras un respiro para que no parpadee antes de llegar el render.
-      setTimeout(() => setLoading(false), 600);
-    } catch {
-      setError(true);
-      setLoading(false);
-    }
-  }
+  const loading = generating;
+  const error = genError;
+  const generar = () => onGenerate?.();
 
   function votar(index: number, up: boolean) {
     const next = up ? "up" : "down";

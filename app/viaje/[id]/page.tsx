@@ -167,8 +167,10 @@ export default async function ViajeDetallePage({
         </div>
 
         <TripTabs
+          tripId={trip.id}
           maletaCount={maletaCount}
           looksCount={looksCount}
+          looksStale={Boolean(trip.outfits_stale)}
           maleta={<TripResult tripId={trip.id} rows={rows} empacado={empacado} />}
           looks={
             <TripOutfits
