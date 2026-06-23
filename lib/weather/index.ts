@@ -115,10 +115,20 @@ function aggregateDaily(daily: unknown): { temp_c: number; condition: string } |
   const valid = (Array.isArray(codes) ? codes : []).filter(
     (c): c is number => typeof c === "number"
   );
-  const rainy = valid.some((c) => c >= 51 && c <= 82);
-  const condition = rainy
-    ? "lluvia"
-    : describe(valid[Math.floor(valid.length / 2)] ?? 0);
+  // Precipitación: lluvia/llovizna/chubascos vs nieve. Solo etiquetamos el rango
+  // como lluvioso/nevado si la precipitación DOMINA (más de la mitad de los días)
+  // — antes un solo día con llovizna marcaba "lluvia" todo el viaje. Y la nieve
+  // (códigos 71-77, 85-86) ya no se confunde con lluvia.
+  const isRain = (c: number) => (c >= 51 && c <= 67) || (c >= 80 && c <= 82);
+  const isSnow = (c: number) => (c >= 71 && c <= 77) || (c >= 85 && c <= 86);
+  const rainN = valid.filter(isRain).length;
+  const snowN = valid.filter(isSnow).length;
+  let condition: string;
+  if (valid.length > 0 && rainN + snowN > valid.length / 2) {
+    condition = snowN >= rainN ? "nieve" : "lluvia";
+  } else {
+    condition = describe(valid[Math.floor(valid.length / 2)] ?? 0);
+  }
   return { temp_c: Math.round(sum / n), condition };
 }
 

@@ -6,7 +6,13 @@ import {
   type CapsuleMatch,
   type CapsuleOverrides,
 } from "@/lib/capsule";
-import { generateTripOutfits, type PackableItem } from "@/lib/engine/trip-outfits";
+import {
+  generateTripOutfits,
+  reviewTripOutfits,
+  type PackableItem,
+  type TripOutfitInputs,
+  type TripWeatherInput,
+} from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import type { Occasion } from "@/lib/trip";
 
@@ -41,7 +47,7 @@ export async function POST(
 
   const { data: trip } = await supabase
     .from("trips")
-    .select("capsule_target, capsule_match, overrides, ocasiones, weather, outfits")
+    .select("capsule_target, capsule_match, overrides, ocasiones, weather, outfits, paradas")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -87,23 +93,37 @@ export async function POST(
     .eq("id", user.id)
     .single();
 
+  // Clima para el motor: enriquece el resumen del viaje con el RANGO de
+  // temperaturas entre paradas (cada parada trae su clima). Un viaje Tokio 9° /
+  // Seúl 1° debe empacar para la MÁS FRÍA, no para el promedio (que sub-abrigaba
+  // la ciudad fría).
+  const weatherInput = tripWeatherWithRange(
+    trip.weather as TripWeatherInput | null,
+    trip.paradas
+  );
+
+  const genInputs: TripOutfitInputs = {
+    packable,
+    ocasiones: (trip.ocasiones as Occasion[]) ?? [],
+    weather: weatherInput,
+    gender: (profile?.gender as "hombre" | "mujer" | null) ?? null,
+    tasteTags: (profile?.taste_tags ?? []) as string[],
+    archetype:
+      (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
+    silueta: siluetaPromptLine(
+      (profile?.body_build as Build | null) ?? null,
+      (profile?.body_volume as Volume | null) ?? null
+    ),
+    // "Generar más": evita repetir los looks que ya existen.
+    exclude: existing.map((o) => o.prendas),
+  };
+
   let outfits;
   try {
-    outfits = await generateTripOutfits({
-      packable,
-      ocasiones: (trip.ocasiones as Occasion[]) ?? [],
-      weather: trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null,
-      gender: (profile?.gender as "hombre" | "mujer" | null) ?? null,
-      tasteTags: (profile?.taste_tags ?? []) as string[],
-      archetype:
-        (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
-      silueta: siluetaPromptLine(
-        (profile?.body_build as Build | null) ?? null,
-        (profile?.body_volume as Volume | null) ?? null
-      ),
-      // "Generar más": evita repetir los looks que ya existen.
-      exclude: existing.map((o) => o.prendas),
-    });
+    outfits = await generateTripOutfits(genInputs);
+    // 2ª pasada (juez): repara los looks sub-abrigados para el frío y descarta
+    // los que no combinan. Best-effort: si el juez falla, deja los looks tal cual.
+    outfits = (await reviewTripOutfits(genInputs, outfits)).outfits;
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 500 });
   }
@@ -127,4 +147,32 @@ export async function POST(
   if (error) return NextResponse.json({ error: "guardar" }, { status: 500 });
 
   return NextResponse.json({ ok: true, count: finalOutfits.length, added });
+}
+
+// Enriquece el clima del viaje con el rango entre paradas (cada parada trae su
+// propio clima). Devuelve la temp más fría/cálida y la ciudad más fría para que
+// el motor empaque para la más fría en viajes multi-destino. Sin ≥2 paradas con
+// clima o sin spread relevante, devuelve el resumen tal cual.
+function tripWeatherWithRange(
+  base: TripWeatherInput | null,
+  paradas: unknown
+): TripWeatherInput | null {
+  if (!base) return base;
+  const arr = Array.isArray(paradas)
+    ? (paradas as { lugar?: string; weather?: { temp_c?: number } | null }[])
+    : [];
+  const temps = arr
+    .map((p) => ({ lugar: p.lugar, t: p.weather?.temp_c }))
+    .filter((x): x is { lugar: string | undefined; t: number } => typeof x.t === "number");
+  if (temps.length < 2) return base;
+  const sorted = [...temps].sort((a, b) => a.t - b.t);
+  const min = sorted[0].t;
+  const max = sorted[sorted.length - 1].t;
+  if (max - min < 4) return base; // sin spread relevante, el resumen basta
+  return {
+    ...base,
+    temp_min: min,
+    temp_max: max,
+    coldest: sorted[0].lugar?.split(",")[0]?.trim(),
+  };
 }

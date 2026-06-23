@@ -11,10 +11,22 @@ export type PackableItem = {
   formalidad: string;
 };
 
+// Clima del viaje para el motor. Además del resumen, lleva el RANGO entre
+// ciudades: un viaje multi-destino (Tokio 9° / Seúl 1°) debe empacar para la
+// más fría, no para el promedio (que dejaba a la ciudad fría sub-abrigada).
+export type TripWeatherInput = {
+  temp_c: number;
+  condition: string;
+  estimated?: boolean;
+  temp_min?: number; // ciudad más fría del viaje
+  temp_max?: number; // ciudad más cálida
+  coldest?: string; // nombre de la ciudad más fría (para el porqué)
+};
+
 export type TripOutfitInputs = {
   packable: PackableItem[];
   ocasiones: Occasion[];
-  weather: { temp_c: number; condition: string; estimated?: boolean } | null;
+  weather: TripWeatherInput | null;
   gender: "hombre" | "mujer" | null;
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
@@ -41,6 +53,25 @@ function capProduct(t: number, b: number, s: number, max: number): [number, numb
     else break;
   }
   return [t, b, s];
+}
+
+// Clima como texto para el prompt. Si el viaje cruza ciudades con temperaturas
+// muy distintas (spread ≥ 4°), pide EMPACAR PARA LA MÁS FRÍA — cada look debe
+// aguantar la temp mínima, con capas que se quiten en los destinos cálidos. Así
+// no quedan looks de una sola capa para una ciudad a 1°.
+export function climaText(w: TripWeatherInput | null): string {
+  if (!w) return "desconocido";
+  const cond = w.condition && w.condition !== "despejado" ? `, ${w.condition}` : "";
+  const est = w.estimated ? " (clima típico de la temporada)" : "";
+  const spread =
+    typeof w.temp_min === "number" &&
+    typeof w.temp_max === "number" &&
+    w.temp_max - w.temp_min >= 4;
+  if (spread) {
+    const fria = w.coldest ? ` (la más fría: ${w.coldest})` : "";
+    return `de ${w.temp_min}°C a ${w.temp_max}°C entre ciudades${fria}${cond}${est}. EMPACA PARA LA MÁS FRÍA: cada look debe aguantar ${w.temp_min}°C — nada de una sola capa ligera; suma abrigo/suéter. En los destinos más cálidos se quitan capas.`;
+  }
+  return `${w.temp_c}°C${cond}${est}`;
 }
 
 // SISTEMA SUDOKU: en vez de pedirle a la IA "arma unos looks" (que capaba en 8),
@@ -108,11 +139,7 @@ export async function generateTripOutfits(
 
   const ocasiones = inputs.ocasiones.length ? inputs.ocasiones : (["ciudad"] as Occasion[]);
   const ocasTxt = occasionLabels(ocasiones);
-  const climaTxt = inputs.weather
-    ? inputs.weather.estimated
-      ? `~${inputs.weather.temp_c}°C (clima típico de la temporada)`
-      : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
-    : "desconocido";
+  const climaTxt = climaText(inputs.weather);
   const estilo = inputs.archetype
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
     : "sin definir";
@@ -146,7 +173,7 @@ REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. J
 Por cada celda decide si es un OUTFIT real:
 - Coherencia de color: los tonos combinan (no choca).
 - Formalidad pareja y apropiada para alguna ocasión del viaje.
-- Respeta el CLIMA (no lana en calor, no lino fresco en frío).
+- Respeta el CLIMA (no lana en calor, no lino fresco en frío). Si el clima es FRÍO (≤12°C), cada look debe llevar abrigo o capa de verdad — descarta los que queden en una sola capa ligera (camiseta sola, camisa sola sin abrigo). Si hay rango de temperaturas, cada look debe aguantar la MÁS FRÍA.
 - Si la celda no funciona (colores que pelean, formalidad incompatible), DESCÁRTALA.
 
 Para las celdas que SÍ funcionan:
@@ -242,4 +269,175 @@ Para las celdas que SÍ funcionan:
     if (out.length >= MAX_LOOKS) break;
   }
   return out;
+}
+
+// JUEZ DE VIAJE (2ª pasada, en lote): el generador valida la rejilla dentro de su
+// propio prompt, pero deja pasar looks sub-abrigados para el frío (camiseta sola
+// a 1°C) y combinaciones flojas. Esta pasada los caza: por cada look decide
+// ok / reparado (sumar o cambiar UNA prenda de la maleta, por número — el caso
+// típico es sumar una capa para el frío) / rechazado (descartar). UNA llamada
+// para todos (barato, ve el set completo). Si falla, devuelve los looks tal cual
+// — nunca rompe la generación.
+export type TripReviewResult = {
+  outfits: TripOutfit[];
+  repaired: number;
+  dropped: number;
+};
+
+export async function reviewTripOutfits(
+  inputs: TripOutfitInputs,
+  outfits: TripOutfit[]
+): Promise<TripReviewResult> {
+  if (!process.env.ANTHROPIC_API_KEY || outfits.length === 0) {
+    return { outfits, repaired: 0, dropped: 0 };
+  }
+
+  const nByNombre = new Map(inputs.packable.map((p) => [p.nombre, p.n]));
+  const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
+  const capas = inputs.packable.filter((p) => p.category === "abrigo");
+  const accesorios = inputs.packable.filter((p) => p.category === "accesorio");
+
+  // Cada look como su lista de números (lo que el juez puede manipular).
+  const looksTxt = outfits
+    .map((o, i) => {
+      const ns = o.prendas
+        .map((nm) => nByNombre.get(nm))
+        .filter((n): n is number => n != null);
+      return `L${i} [${o.ocasion}] "${o.titulo}": prendas [${ns.join(", ")}]`;
+    })
+    .join("\n");
+
+  const prendasTxt = inputs.packable
+    .map((p) => `${p.n}. ${p.nombre} (${p.category}, ${p.formalidad}, ${p.color})`)
+    .join("\n");
+  const capasTxt = capas.length ? capas.map((p) => p.n).join(", ") : "ninguna";
+  const accTxt = accesorios.length ? accesorios.map((p) => p.n).join(", ") : "ninguno";
+  const climaTxt = climaText(inputs.weather);
+  const generoTxt =
+    inputs.gender === "hombre"
+      ? "HOMBRE"
+      : inputs.gender === "mujer"
+        ? "MUJER"
+        : "neutro";
+
+  const system = `Eres el director de estilo de stailist revisando los looks de un VIAJE antes de enseñárselos. La maleta ya está hecha; cada look usa SOLO prendas de la lista, por NÚMERO. Tu trabajo: cazar los que NO funcionan y arreglarlos o descartarlos. Persona: ${generoTxt}.
+
+Por cada look, UN veredicto:
+- "ok": funciona (clima, color, formalidad, ocasión) → déjalo igual.
+- "reparado": tiene un problema que SÍ se arregla sumando o cambiando UNA prenda de la maleta (por número). Devuelve en "prendas" la lista COMPLETA de números del look ya arreglado.
+- "rechazado": está mal y NO se puede arreglar con esta maleta → se descarta. Di la razón.
+
+CLIMA — lo más importante (es donde más falla el generador):
+- Cada look debe aguantar la temperatura MÁS FRÍA del viaje. En frío (≤12°C) un look de UNA sola capa ligera (camiseta sola, camisa/oxford solo, sin abrigo ni suéter) NO sirve. Tampoco tenis de lona en frío con lluvia/nieve.
+- Si ves un look sub-abrigado: REPÁRALO sumando una capa de la maleta (capas disponibles: ${capasTxt}) o cambiando una prenda ligera por una más caliente. Solo recházalo si no hay ninguna capa/prenda en la maleta que lo salve.
+- En calor: nada de lana ni abrigos pesados.
+
+COMBINACIÓN: color coherente (máx 1-2 protagonistas + neutros, el resto neutros), formalidad pareja, apropiado para su ocasión. Marino + negro SÍ combinan.
+
+REGLAS:
+- Trabaja SOLO con números de la lista de prendas. Jamás inventes.
+- "extra"/capas/accesorios válidos para sumar: capas ${capasTxt}; accesorios ${accTxt}.
+- Prefiere REPARAR sobre rechazar. Rechaza solo si de verdad no hay arreglo.
+- En "prendas" de cada revisión, devuelve SIEMPRE la lista de números del look final (para "ok" repite la original; para "reparado" la nueva; para "rechazado" puede ir vacía).`;
+
+  const userMsg = `CLIMA: ${climaTxt}.
+
+PRENDAS DE LA MALETA (número. nombre (categoría, formalidad, color)):
+${prendasTxt}
+
+LOOKS A REVISAR:
+${looksTxt}
+
+Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
+
+  try {
+    const client = new Anthropic({ maxRetries: 3 });
+    const response = await client.messages.create({
+      // Sonnet: rápido y barato para la 2ª pasada (el caso principal, sub-abrigo,
+      // no necesita Opus) y deja holgura bajo el límite de 60s de la función.
+      model: "claude-sonnet-4-6",
+      max_tokens: 3072,
+      system,
+      messages: [{ role: "user", content: userMsg }],
+      output_config: {
+        format: {
+          type: "json_schema",
+          schema: {
+            type: "object",
+            properties: {
+              revisiones: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    index: { type: "integer" }, // L# del look
+                    veredicto: { type: "string", enum: ["ok", "reparado", "rechazado"] },
+                    razon: { type: "string" },
+                    prendas: { type: "array", items: { type: "integer" } },
+                  },
+                  required: ["index", "veredicto", "razon", "prendas"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["revisiones"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+
+    const text = response.content.find((b) => b.type === "text")?.text;
+    if (!text) return { outfits, repaired: 0, dropped: 0 };
+    const parsed = JSON.parse(text) as {
+      revisiones?: {
+        index: number;
+        veredicto: "ok" | "reparado" | "rechazado";
+        razon?: string;
+        prendas?: number[];
+      }[];
+    };
+    const byIndex = new Map(
+      (parsed.revisiones ?? []).map((r) => [r.index, r])
+    );
+
+    const result: TripOutfit[] = [];
+    let repaired = 0;
+    let dropped = 0;
+    for (let i = 0; i < outfits.length; i++) {
+      const rev = byIndex.get(i);
+      const original = outfits[i];
+      if (!rev || rev.veredicto === "ok") {
+        result.push(original);
+        continue;
+      }
+      if (rev.veredicto === "rechazado") {
+        dropped++;
+        continue;
+      }
+      // reparado: reconstruye prendas desde los números válidos de la maleta.
+      const nombres = Array.from(
+        new Set(
+          (rev.prendas ?? [])
+            .map((n) => byN.get(n))
+            .filter((v): v is string => !!v)
+        )
+      );
+      if (nombres.length >= 2) {
+        result.push({ ...original, prendas: nombres });
+        repaired++;
+      } else {
+        // Reparación inválida (devolvió basura): conserva el original, no lo pierdas.
+        result.push(original);
+      }
+    }
+
+    // Piso de seguridad: si el juez dejó el viaje vacío (todo rechazado), es más
+    // probable un error del juez que un viaje sin un solo look válido → conserva
+    // los originales antes que mostrar cero.
+    if (result.length === 0) return { outfits, repaired: 0, dropped: 0 };
+    return { outfits: result, repaired, dropped };
+  } catch {
+    return { outfits, repaired: 0, dropped: 0 };
+  }
 }
