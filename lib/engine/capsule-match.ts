@@ -50,10 +50,10 @@ export async function matchCapsule(
 - "parecido": el clóset tiene la prenda CORRECTA (mismo tipo y uso) pero con un matiz que vale notar — otro neutro, o un casi-equivalente. NO es hueco, es refinamiento. Ej: tiene blazer marino y el ideal es negro; tiene mocasín y el ideal es Oxford.
 - "falta": el clóset NO tiene esa prenda en ninguna forma usable. Hueco real. Ej: no hay ningún cuello tortuga; o el ideal pide un color statement que cambia el papel y no lo tiene.
 
-REGLAS:
-- El TIPO manda y es estricto: distinto tipo de prenda = "falta" aunque el color empate. Un crewneck NO cubre un cuello tortuga (cuello distinto) → "falta".
-- COLOR de neutros oscuros (negro, marino, gris, carbón, azul oscuro) = intercambiables: nunca marques "falta" solo por el neutro. Mismo neutro → "tienes"; neutro distinto → "parecido".
-- COLORES statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) SÍ importan: si el ideal pide uno y el clóset no lo tiene, es "falta".
+REGLAS (en orden de prioridad):
+1. La CLASE de prenda manda por encima de TODO. "by" DEBE ser de la MISMA clase que la prenda ideal: un pantalón solo lo cubre otro pantalón; un zapato, otro zapato; un reloj, otro reloj. NUNCA cruces clases por color o material parecido — un chino NO lo cubren unos mocasines; un reloj NO lo cubren unos lentes; un cinturón NO lo cubre una cartera. Entre accesorios distingue la clase fina (reloj ≠ lentes ≠ cinturón ≠ bufanda ≠ gorra). Si NINGUNA prenda del clóset es de la misma clase, es "falta" con by="". Prohibido emparejar prendas de categorías distintas (top, bottom, calzado, abrigo, vestido, accesorio).
+2. Dentro de la misma clase, el cuello/corte importa: un crewneck NO cubre un cuello tortuga (cuello distinto) → "falta".
+3. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
 
 Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN (1..N). Cada entrada:
 - status: "tienes" | "parecido" | "falta".
@@ -96,12 +96,45 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     entries: { status: MatchEntry["status"]; by: string }[];
   };
 
+  // Zonas del cuerpo: dentro de una zona el match es válido; cruzar zonas no.
+  // top y abrigo van juntos a propósito — la cápsula ideal a veces categoriza un
+  // blazer/cárdigan como "top" y el clóset como "abrigo" (o al revés); son la
+  // misma zona, así que no deben chocar. Lo que NUNCA se cruza: torso ↔ pierna ↔
+  // zapato ↔ accesorio ↔ vestido (un pantalón no lo cubre un zapato).
+  const zoneOf = (cat: string): string =>
+    cat === "top" || cat === "abrigo" ? "torso" : cat;
+
+  // Resuelve un `by` (texto libre del modelo) a la categoría de la prenda real del
+  // clóset. Normaliza (minúsculas, sin acentos) y cae a coincidencia por inclusión
+  // si el modelo parafraseó el nombre. null = no apunta a ninguna prenda real.
+  const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  const closetByName = new Map(closet.map((c) => [norm(c.nombre), c.category]));
+  const resolveCategory = (by: string): string | null => {
+    const n = norm(by);
+    if (closetByName.has(n)) return closetByName.get(n) ?? null;
+    for (const c of closet) {
+      const cn = norm(c.nombre);
+      if (cn && n && (cn.includes(n) || n.includes(cn))) return c.category;
+    }
+    return null;
+  };
+
   // Alinea por índice; si el modelo devolvió de más/menos, ajusta sin romper.
-  const entries: MatchEntry[] = target.items.map((_, i) => {
+  // GUARDIA: un match (tienes/parecido) DEBE apuntar a una prenda real de la MISMA
+  // ZONA que la ideal. Si cruza zonas (chino↔mocasines) o el `by` no resuelve a
+  // ninguna prenda real, lo degradamos a "falta" — la IA a veces empareja por
+  // color/material a través de categorías, y eso no tiene sentido.
+  const entries: MatchEntry[] = target.items.map((ideal, i) => {
     const e = parsed.entries?.[i];
     if (!e) return { status: "falta", by: null };
-    const status = e.status === "tienes" || e.status === "parecido" ? e.status : "falta";
-    return { status, by: e.by && e.by.trim() ? e.by.trim() : null };
+    const claimed = e.status === "tienes" || e.status === "parecido" ? e.status : "falta";
+    const by = e.by && e.by.trim() ? e.by.trim() : null;
+    if (claimed === "falta") return { status: "falta", by: null };
+    const cat = by ? resolveCategory(by) : null;
+    if (!cat || zoneOf(cat) !== zoneOf(ideal.category)) {
+      return { status: "falta", by: null };
+    }
+    return { status: claimed, by };
   });
 
   return { signature, entries };
