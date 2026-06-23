@@ -35,7 +35,10 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // v14 (2026-06-22): "el toque" — el juez suma un tip de styling OPCIONAL por
 // outfit (cómo llevarlo: medio-fajado, arremangar, capa abierta…). Restricción
 // como principio: movimientos seguros por default, condicional o null si duda.
-export const PROMPT_VERSION = "v14";
+// v15 (2026-06-23): el tip SOLO puede hablar de prendas que están en el look;
+// prohibido inventar/sugerir prendas ausentes (causaba tips tipo "deja la camisa
+// de lino abierta" cuando no había camisa). Aplica a Hoy (critic) y Viaje.
+export const PROMPT_VERSION = "v15";
 
 export type EngineItem = {
   id: string;

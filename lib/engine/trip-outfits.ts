@@ -140,7 +140,7 @@ Para las celdas que SÍ funcionan:
 - Opcional: súmale en "extra" UNA capa y/o UN accesorio si la mejora (solo de las listas de arriba).
 - titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
-- tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
+- tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. SOLO sobre prendas que están en ESE look; NUNCA menciones ni sugieras añadir una prenda que no está en él. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
 - Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
 - Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
 - Devuelve A LO MÁS ${MAX_LOOKS} looks, los mejores y más variados.`,
