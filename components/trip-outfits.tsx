@@ -157,6 +157,11 @@ export function TripOutfits({
       </div>
 
       {genNote ? <p className="text-xs text-muted">{genNote}</p> : null}
+      {error ? (
+        <p className="text-xs text-error">
+          No pude generar — el servicio está ocupado, espera unos segundos y reintenta.
+        </p>
+      ) : null}
 
       {/* #3 — los looks quedaron viejos tras un cambio de empaque. */}
       {stale ? (

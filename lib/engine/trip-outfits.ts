@@ -95,7 +95,9 @@ export async function generateTripOutfits(
   if (cells.length === 0) return [];
   const grid = cells.slice(0, MAX_CELLS); // backstop duro
 
-  const client = new Anthropic();
+  // maxRetries alto: aguanta un saturón breve de la API (529) con backoff antes
+  // de fallar — el usuario espera la generación a-demanda.
+  const client = new Anthropic({ maxRetries: 4 });
 
   const generoTxt =
     inputs.gender === "hombre"
