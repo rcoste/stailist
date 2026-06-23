@@ -56,10 +56,14 @@ export async function POST(
   const overrides = (trip.overrides as CapsuleOverrides | null) ?? null;
   if (!target) return NextResponse.json({ error: "sin_capsula" }, { status: 400 });
 
-  // Empacable = lo que cuenta como cubierto (tienes + parecido aceptado). Cada
-  // pieza se referencia por NOMBRE de la prenda del clóset que la cubre.
+  // Empacable = lo que de verdad tienes en la maleta para combinar: "tienes",
+  // sustitutos, Y los "parecido" (ropa real tuya que la app encontró cercana —
+  // si está en tu maleta, debe contar para los looks aunque no la hayas
+  // "aceptado" formalmente). Solo se excluye lo realmente faltante (effective
+  // "falta") y lo pendiente sin match. Cada pieza se referencia por el NOMBRE de
+  // la prenda del clóset que la cubre.
   const packable: PackableItem[] = capsuleRows(target, match, overrides)
-    .filter((r) => r.covered)
+    .filter((r) => (r.covered || r.effective === "parecido") && !!r.by)
     .map((r, i) => ({
       n: i,
       nombre: r.by ?? r.item.nombre,
