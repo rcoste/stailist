@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
+import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { setTripLookVote } from "@/lib/trip-actions";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
 
@@ -43,6 +44,7 @@ export function TripOutfits({
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
+  const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
 
   async function generar() {
     setLoading(true);
@@ -186,9 +188,12 @@ export function TripOutfits({
             </h3>
             <div className="my-3 flex gap-[7px]">
               {o.prendas.map((p, j) => (
-                <span
+                <button
                   key={j}
+                  type="button"
+                  onClick={() => setZoom({ image: p.image, nombre: p.nombre })}
                   title={p.nombre}
+                  aria-label={`Ver ${p.nombre}`}
                   className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
                 >
                   {p.image ? (
@@ -198,7 +203,7 @@ export function TripOutfits({
                       <Icon name="gancho" size={18} />
                     </span>
                   )}
-                </span>
+                </button>
               ))}
             </div>
             <p className="display text-[13.5px] font-medium leading-relaxed text-ink">{o.porque}</p>
@@ -253,6 +258,8 @@ export function TripOutfits({
           — te falta algo para esa ocasión. Revisa &quot;Te falta&quot; arriba.
         </p>
       ) : null}
+
+      <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
     </div>
   );
 }

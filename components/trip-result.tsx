@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
+import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { setTripPacked } from "@/lib/trip-actions";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
@@ -38,6 +39,7 @@ export function TripResult({
   empacado: Record<string, boolean>;
 }) {
   const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
+  const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
   const isPacked = (i: number) => !!packed[String(i)];
 
   // Empaca: lo que tienes/parecido + cualquier faltante ya marcado "ya lo tengo".
@@ -79,11 +81,19 @@ export function TripResult({
             {empaca.map((r) => {
               const on = isPacked(r.index);
               return (
-                <li key={r.index}>
+                <li key={r.index} className="relative">
                   <button
                     type="button"
-                    onClick={() => togglePacked(r.index)}
+                    onClick={() =>
+                      setZoom({
+                        index: r.index,
+                        image: r.byImage,
+                        nombre: r.by ?? r.nombre,
+                        sub: r.porque,
+                      })
+                    }
                     title={r.by ?? r.nombre}
+                    aria-label={`Ver ${r.by ?? r.nombre}`}
                     className="block w-full"
                   >
                     <span className="relative block aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
@@ -104,13 +114,21 @@ export function TripResult({
                           <Icon name="gancho" size={20} />
                         </span>
                       )}
-                      <span
-                        className={`absolute right-1 top-1 flex h-[19px] w-[19px] items-center justify-center rounded-full ${
-                          on ? "bg-success text-on-accent" : "border-[1.5px] border-line bg-bg/85"
-                        }`}
-                      >
-                        {on ? <Icon name="check" size={12} strokeWidth={2.4} /> : null}
-                      </span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePacked(r.index)}
+                    aria-label={on ? "Quitar de la maleta" : "Empacar"}
+                    aria-pressed={on}
+                    className="absolute right-0 top-0 flex h-7 w-7 items-center justify-center"
+                  >
+                    <span
+                      className={`flex h-[19px] w-[19px] items-center justify-center rounded-full ${
+                        on ? "bg-success text-on-accent" : "border-[1.5px] border-line bg-bg/85"
+                      }`}
+                    >
+                      {on ? <Icon name="check" size={12} strokeWidth={2.4} /> : null}
                     </span>
                   </button>
                 </li>
@@ -153,6 +171,35 @@ export function TripResult({
           </ul>
         </div>
       ) : null}
+
+      <PrendaZoom
+        data={zoom}
+        onClose={() => setZoom(null)}
+        action={
+          zoom ? (
+            <button
+              type="button"
+              onClick={() => {
+                togglePacked(zoom.index);
+                setZoom(null);
+              }}
+              className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors duration-200 ${
+                isPacked(zoom.index)
+                  ? "border border-line bg-surface text-muted hover:border-ink hover:text-ink"
+                  : "bg-accent text-on-accent hover:bg-accent-deep"
+              }`}
+            >
+              {isPacked(zoom.index) ? (
+                "Quitar de la maleta"
+              ) : (
+                <>
+                  <Icon name="check" size={16} /> Empacar
+                </>
+              )}
+            </button>
+          ) : null
+        }
+      />
     </div>
   );
 }

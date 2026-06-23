@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import type { TryonMode } from "@/lib/use-tryon";
 
 type Prenda = {
@@ -43,6 +47,9 @@ export function OutfitCard({
   /** Estado del try-on; si viene, la card adopta el layout de 3 estados. */
   tryon?: OutfitCardTryon;
 }) {
+  const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
+  const zoomViewer = <PrendaZoom data={zoom} onClose={() => setZoom(null)} />;
+
   const grid = (
     <div className="grid grid-cols-3 gap-3">
       {prendas.map((p) => (
@@ -145,8 +152,11 @@ export function OutfitCard({
           </p>
           <div className="flex gap-2">
             {prendas.map((p) => (
-              <div
+              <button
                 key={p.nombre}
+                type="button"
+                onClick={() => setZoom({ image: p.imagen ?? null, nombre: p.nombre })}
+                aria-label={`Ver ${p.nombre}`}
                 className="relative aspect-square flex-1 overflow-hidden rounded-md border border-line bg-bg"
               >
                 {p.imagen ? (
@@ -164,7 +174,7 @@ export function OutfitCard({
                     aria-hidden
                   />
                 )}
-              </div>
+              </button>
             ))}
           </div>
           <hr className="my-4 border-line" />
@@ -185,6 +195,7 @@ export function OutfitCard({
           </details>
           {tipLine}
         </div>
+        {zoomViewer}
       </article>
     );
   }
