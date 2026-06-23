@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { toggleFavorite } from "@/lib/outfit-actions";
 
-// Bookmark de un look (guardar como favorito). Optimista; si falla, revierte.
-// onChange avisa al padre (el filtro "solo favoritos" del historial lo usa).
+// Corazón de favorito de un look (metáfora unificada en toda la app: Hoy, wow,
+// Historial). Optimista; si falla, revierte. onChange avisa al padre.
 export function FavoriteButton({
   outfitId,
   initialFavorited,
@@ -42,10 +42,11 @@ export function FavoriteButton({
         fill={fav ? "currentColor" : "none"}
         stroke="currentColor"
         strokeWidth="1.8"
+        strokeLinecap="round"
         strokeLinejoin="round"
         className={fav ? "text-accent" : "text-ink"}
       >
-        <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
+        <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />
       </svg>
     </button>
   );
