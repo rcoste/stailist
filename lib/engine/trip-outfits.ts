@@ -19,6 +19,9 @@ export type TripOutfitInputs = {
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
   silueta?: string | null; // orientación de cuerpo; señal suave, no regla
+  // "Generar más": conjuntos de prendas (por nombre) que YA se mostraron. El
+  // motor los salta y le pide a la IA combinaciones DISTINTAS — más con lo mismo.
+  exclude?: string[][];
 };
 
 // Tope de celdas de la rejilla que mandamos a validar (una maleta real cae muy
@@ -121,6 +124,15 @@ export async function generateTripOutfits(
   const capasTxt = capas.length ? capas.map((p) => p.n).join(", ") : "ninguna";
   const accTxt = accesorios.length ? accesorios.map((p) => p.n).join(", ") : "ninguno";
   const celdasTxt = grid.map((c, i) => `C${i}: prendas [${c.base.join(", ")}]`).join("\n");
+  // "Generar más": lista los looks ya mostrados para que la IA dé combos DISTINTOS.
+  const excludeSets = (inputs.exclude ?? []).map((s) => [...s].sort());
+  const excludeTxt = excludeSets.length
+    ? `\n\nYA SE MOSTRARON estos looks — NO los repitas; quiero combinaciones DISTINTAS con las mismas prendas:\n${excludeSets
+        .map((s) => `- ${s.join(" + ")}`)
+        .join(
+          "\n"
+        )}\nPrioriza celdas que mezclen las prendas de formas nuevas. AQUÍ SÍ puedes dar VARIOS looks para la MISMA ocasión si son combinaciones realmente distintas — el usuario pidió MÁS opciones, no más variedad de ocasión. Devuelve todas las que de verdad funcionen (color coherente, clima y formalidad ok), aunque repitan ocasión.`
+    : "";
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
@@ -147,7 +159,7 @@ Para las celdas que SÍ funcionan:
     messages: [
       {
         role: "user",
-        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.${cuerpoTxt}\n\nPRENDAS (número. nombre (formalidad, color)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
+        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.${cuerpoTxt}\n\nPRENDAS (número. nombre (formalidad, color)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
       },
     ],
     output_config: {
@@ -195,7 +207,10 @@ Para las celdas que SÍ funcionan:
 
   const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
   const validOcc = new Set(OCCASIONS.map((o) => o.value as string));
-  const seen = new Set<string>(); // dedup de looks por su conjunto de prendas
+  // Siembra el dedup con lo ya mostrado ("generar más") → solo salen combos nuevos.
+  const seen = new Set<string>(
+    (inputs.exclude ?? []).map((s) => [...s].sort().join("|"))
+  );
 
   const out: TripOutfit[] = [];
   for (const l of parsed.looks ?? []) {

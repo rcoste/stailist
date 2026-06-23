@@ -33,6 +33,8 @@ export function TripOutfits({
   generating = false,
   genError = false,
   onGenerate,
+  onGenerateMore,
+  genNote = null,
 }: {
   tripId: string;
   outfits: ResolvedOutfit[] | null;
@@ -42,7 +44,9 @@ export function TripOutfits({
   // botones); aquí solo la consumimos.
   generating?: boolean;
   genError?: boolean;
-  onGenerate?: () => void;
+  onGenerate?: () => void; // rehacer (reemplaza)
+  onGenerateMore?: () => void; // generar más (acumula)
+  genNote?: string | null;
 }) {
   // Voto optimista por índice (arranca de lo que llegó del server).
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
@@ -123,7 +127,7 @@ export function TripOutfits({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         {piezas > 0 ? (
           <span className="text-xs text-muted">
             {piezas} {piezas === 1 ? "pieza" : "piezas"} en {outfits.length}{" "}
@@ -132,14 +136,27 @@ export function TripOutfits({
         ) : (
           <span />
         )}
-        <button
-          type="button"
-          onClick={generar}
-          className="shrink-0 text-xs font-medium text-muted transition-colors hover:text-ink"
-        >
-          Armar otros
-        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          {onGenerateMore ? (
+            <button
+              type="button"
+              onClick={onGenerateMore}
+              className="flex items-center gap-1 text-xs font-semibold text-accent transition-colors hover:text-accent-deep"
+            >
+              <Icon name="mas" size={13} strokeWidth={2} /> Generar más
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={generar}
+            className="text-xs font-medium text-muted transition-colors hover:text-ink"
+          >
+            Rehacer
+          </button>
+        </div>
       </div>
+
+      {genNote ? <p className="text-xs text-muted">{genNote}</p> : null}
 
       {/* #3 — los looks quedaron viejos tras un cambio de empaque. */}
       {stale ? (

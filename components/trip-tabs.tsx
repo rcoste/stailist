@@ -19,7 +19,9 @@ export type MaletaInjected = {
 export type LooksInjected = {
   generating?: boolean;
   genError?: boolean;
-  onGenerate?: () => void; // generar/regenerar (los botones del panel de looks)
+  onGenerate?: () => void; // generar/rehacer (reemplaza el set)
+  onGenerateMore?: () => void; // "generar más": acumula combinaciones nuevas
+  genNote?: string | null; // aviso tras generar (ej. "ya no hay más combos")
 };
 
 // Tabs del resultado del viaje: "La maleta" / "Tus looks". Flujo secuencial-suave:
@@ -45,21 +47,33 @@ export function TripTabs({
   const [tab, setTab] = useState<"maleta" | "looks">("maleta");
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState(false);
+  const [genNote, setGenNote] = useState<string | null>(null);
   const looksExist = looksCount > 0;
 
-  async function generar() {
+  // append=false: reemplaza el set (primera vez / "Rehacer"). append=true:
+  // "Generar más" — suma combinaciones nuevas a las que ya hay.
+  async function generar(append = false) {
     setGenerating(true);
     setGenError(false);
+    setGenNote(null);
     try {
-      const res = await fetch(`/api/trip/${tripId}/outfits`, { method: "POST" });
+      const res = await fetch(`/api/trip/${tripId}/outfits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ append }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { added?: number };
       if (!res.ok) {
         setGenError(true);
         setGenerating(false);
         return;
       }
+      if (append && data?.added === 0) {
+        setGenNote("Ya no hay más combinaciones nuevas con esta maleta — agrega o sustituye prendas para más.");
+      }
       router.refresh();
-      // El refresh reemplaza los props (outfits deja de ser null); soltamos el
-      // loading tras un respiro para que no parpadee antes de llegar el render.
+      // El refresh reemplaza los props; soltamos el loading tras un respiro para
+      // que no parpadee antes de llegar el render.
       setTimeout(() => setGenerating(false), 600);
     } catch {
       setGenError(true);
@@ -71,7 +85,7 @@ export function TripTabs({
     ? cloneElement(maleta as ReactElement<MaletaInjected>, {
         onGenerateLooks: () => {
           setTab("looks");
-          generar();
+          generar(false);
         },
         onViewLooks: () => setTab("looks"),
         looksExist,
@@ -81,7 +95,9 @@ export function TripTabs({
     ? cloneElement(looks as ReactElement<LooksInjected>, {
         generating,
         genError,
-        onGenerate: generar,
+        onGenerate: () => generar(false),
+        onGenerateMore: () => generar(true),
+        genNote,
       })
     : looks;
 
