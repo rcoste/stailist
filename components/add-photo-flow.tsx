@@ -166,10 +166,13 @@ export function AddPhotoFlow({
     const editable = state.kind === "confirmar";
     const a = state.attrs;
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4">
-        <div className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-2xl bg-surface p-5">
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40">
+        <div
+          className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
+          style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+        >
           <div className="flex items-center gap-3">
-            <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-lg border border-line">
+            <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-md border border-line">
               <Image src={state.preview} alt={a.nombre} fill className="object-cover" />
             </div>
             <div className="flex flex-1 flex-col gap-1">
@@ -178,7 +181,7 @@ export function AddPhotoFlow({
                 value={a.nombre}
                 disabled={!editable}
                 onChange={(e) => setAttr("nombre", e.target.value)}
-                className="min-h-10 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
               />
             </div>
           </div>
@@ -192,9 +195,9 @@ export function AddPhotoFlow({
                   type="button"
                   disabled={!editable}
                   onClick={() => setAttr("categoria", c.v)}
-                  className={`min-h-9 rounded-full border px-3 text-sm transition-colors ${
+                  className={`min-h-9 rounded-sm border px-3 text-sm transition-colors ${
                     a.categoria === c.v
-                      ? "border-accent bg-accent-soft text-ink"
+                      ? "border-accent bg-accent-soft text-ink ring-1 ring-inset ring-accent"
                       : "border-line bg-surface text-ink"
                   }`}
                 >
@@ -213,7 +216,7 @@ export function AddPhotoFlow({
                 onChange={(e) =>
                   setAttr("formalidad", e.target.value as typeof a.formalidad)
                 }
-                className="min-h-10 rounded-lg border border-line bg-surface px-2 text-sm text-ink"
+                className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
               >
                 {FORMALIDADES.map((f) => (
                   <option key={f} value={f}>
@@ -230,7 +233,7 @@ export function AddPhotoFlow({
                 onChange={(e) =>
                   setAttr("temporada", e.target.value as typeof a.temporada)
                 }
-                className="min-h-10 rounded-lg border border-line bg-surface px-2 text-sm text-ink"
+                className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
               >
                 {TEMPORADAS.map((t) => (
                   <option key={t} value={t}>
@@ -270,8 +273,11 @@ export function AddPhotoFlow({
       <>
         {input}
         {state.kind === "analizando" ? (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4">
-            <div className="flex w-full max-w-[430px] flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-10 text-center">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40">
+            <div
+              className="flex w-full max-w-[430px] flex-col items-center gap-3 rounded-t-[18px] bg-surface px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-10 text-center"
+              style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+            >
               <Spinner className="h-7 w-7 text-accent" />
               <p className="editorial text-base text-ink">Leyendo tu prenda…</p>
             </div>
@@ -279,11 +285,12 @@ export function AddPhotoFlow({
         ) : null}
         {state.kind === "error" ? (
           <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
             onClick={() => setState({ kind: "idle" })}
           >
             <div
-              className="flex w-full max-w-[430px] flex-col gap-3 rounded-2xl bg-surface p-5 text-center"
+              className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"
+              style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
               onClick={(e) => e.stopPropagation()}
             >
               <p className="text-sm text-error">

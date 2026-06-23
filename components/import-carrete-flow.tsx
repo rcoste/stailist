@@ -373,11 +373,12 @@ export function ImportCarreteFlow({
         {input}
         {state.kind === "error" ? (
           <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
             onClick={() => setState({ kind: "idle" })}
           >
             <div
-              className="flex w-full max-w-[430px] flex-col gap-3 rounded-2xl bg-surface p-5 text-center"
+              className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"
+              style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
               onClick={(e) => e.stopPropagation()}
             >
               <p className="text-sm text-error">{state.msg}</p>
@@ -418,8 +419,11 @@ export function ImportCarreteFlow({
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4">
-      <div className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-2xl bg-surface p-5">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40">
+      <div
+        className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
+        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+      >
         {children}
       </div>
     </div>
@@ -505,7 +509,7 @@ function DraftCard({
           <input
             value={a.nombre}
             onChange={(e) => onPatch({ nombre: e.target.value })}
-            className="min-h-9 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+            className="min-h-9 rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
           />
           {baja && (
             <span className="w-fit rounded-sm bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
