@@ -14,8 +14,10 @@ import { Icon, type IconName } from "@/components/icon";
 const TABS: { href: string; label: string; icon: IconName; match?: string }[] = [
   { href: "/hoy", label: "Hoy", icon: "sol" },
   { href: "/closet", label: "Clóset", icon: "gancho" },
-  { href: "/viaje/lista", label: "Viaje", icon: "maletin", match: "/viaje" },
+  // Orden por frecuencia de uso: Historial (revisar/re-usar looks) va antes que
+  // Viaje (episódico, solo al viajar) → Historial en el slot interior, Viaje en la esquina.
   { href: "/historial", label: "Historial", icon: "reloj" },
+  { href: "/viaje/lista", label: "Viaje", icon: "maletin", match: "/viaje" },
 ];
 
 export function TabBar() {
