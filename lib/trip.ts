@@ -19,11 +19,66 @@ export type Occasion = (typeof OCCASIONS)[number]["value"];
 // El tamaño de maleta es un TECHO, no una meta: la cápsula se dimensiona al
 // viaje (días × ocasiones × clima) y la maleta la recorta solo si se pasaría.
 export const LUGGAGE = [
-  { value: "mochila", label: "Mochila o bolsa", hint: "lo mínimo", maxPiezas: 7 },
-  { value: "mano", label: "Equipaje de mano", hint: "carry-on", maxPiezas: 11 },
-  { value: "documentada", label: "Documentada", hint: "con espacio", maxPiezas: 16 },
+  { value: "mochila", label: "Mochila o bolsa", short: "mochila", hint: "lo mínimo", maxPiezas: 7 },
+  { value: "mano", label: "Equipaje de mano", short: "carry-on", hint: "carry-on", maxPiezas: 11 },
+  { value: "documentada", label: "Documentada", short: "maleta", hint: "con espacio", maxPiezas: 16 },
 ] as const;
 export type Luggage = (typeof LUGGAGE)[number]["value"];
+
+// Multi-maleta (modelo aerolínea): cuántas piezas de equipaje de cada tipo lleva
+// — puedes combinar mochila + carry-on + N documentadas. La capacidad total
+// (techo de prendas) es la SUMA de (cantidad × maxPiezas) de cada tipo.
+export type Bolsas = Partial<Record<Luggage, number>>;
+
+// Normaliza el equipaje a un mapa de cantidades: usa `bolsas` si trae algo; si no,
+// deriva del `maleta` legacy (1 de ese tipo); null si no hay nada.
+export function normalizeBolsas(
+  bolsas: Bolsas | null | undefined,
+  maleta?: Luggage | null
+): Bolsas | null {
+  if (bolsas && LUGGAGE.some((l) => (bolsas[l.value] ?? 0) > 0)) return bolsas;
+  if (maleta) return { [maleta]: 1 };
+  return null;
+}
+
+// Techo total de prendas = suma de (cantidad × maxPiezas) por tipo de bolsa.
+export function luggageCapacity(
+  bolsas: Bolsas | null | undefined,
+  maleta?: Luggage | null
+): number {
+  const b = normalizeBolsas(bolsas, maleta);
+  if (!b) return 0;
+  return LUGGAGE.reduce((sum, l) => sum + (b[l.value] ?? 0) * l.maxPiezas, 0);
+}
+
+// Total de piezas de equipaje (cuántas bolsas en total).
+export function bolsasCount(bolsas: Bolsas | null | undefined): number {
+  if (!bolsas) return 0;
+  return LUGGAGE.reduce((s, l) => s + (bolsas[l.value] ?? 0), 0);
+}
+
+// Resumen legible para UI: "1 carry-on · 2 maletas". Vacío si no hay equipaje.
+export function luggageSummary(
+  bolsas: Bolsas | null | undefined,
+  maleta?: Luggage | null
+): string {
+  const b = normalizeBolsas(bolsas, maleta);
+  if (!b) return "";
+  return LUGGAGE.filter((l) => (b[l.value] ?? 0) > 0)
+    .map((l) => {
+      const n = b[l.value] ?? 0;
+      return `${n} ${l.short}${n > 1 ? "s" : ""}`;
+    })
+    .join(" · ");
+}
+
+// La bolsa "dominante" (la de mayor capacidad presente) — para back-compat con el
+// campo `maleta` (texto) y con lecturas legacy. null si no hay ninguna.
+export function dominantLuggage(bolsas: Bolsas | null | undefined): Luggage | null {
+  const present = LUGGAGE.filter((l) => (bolsas?.[l.value] ?? 0) > 0);
+  if (present.length === 0) return null;
+  return present.reduce((a, b) => (b.maxPiezas > a.maxPiezas ? b : a)).value;
+}
 
 export type TripWeather = { temp_c: number; condition: string; estimated?: boolean };
 
@@ -45,7 +100,8 @@ export type Trip = {
   fecha_inicio: string; // YYYY-MM-DD
   fecha_fin: string;
   ocasiones: Occasion[];
-  maleta: Luggage | null;
+  maleta: Luggage | null; // legacy: la bolsa dominante (back-compat); ver `bolsas`
+  bolsas: Bolsas | null; // multi-maleta: cantidades por tipo
   weather: TripWeather | null;
   capsule_target: CapsuleTarget | null;
   capsule_match: CapsuleMatch | null;

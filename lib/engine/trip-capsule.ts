@@ -3,7 +3,9 @@ import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
 import {
   occasionLabels,
-  luggageMeta,
+  luggageCapacity,
+  luggageSummary,
+  type Bolsas,
   type Luggage,
   type Occasion,
   type TripWeather,
@@ -12,7 +14,8 @@ import {
 export type TripCapsuleInputs = {
   days: number;
   ocasiones: Occasion[];
-  maleta: Luggage | null;
+  maleta: Luggage | null; // legacy / back-compat
+  bolsas: Bolsas | null; // multi-maleta: cantidades por tipo
   weather: TripWeather | null;
   // Multidestino: clima por parada. Si hay 2+, el motor empaca para todo el rango.
   paradas?: { lugar: string; weather: TripWeather | null }[];
@@ -77,10 +80,12 @@ export async function generateTripCapsuleTarget(
         : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
       : "desconocido (usa prendas versátiles, evita extremos)";
   const ocas = inputs.ocasiones.length ? occasionLabels(inputs.ocasiones) : "general";
-  const lug = luggageMeta(inputs.maleta);
-  const techoTxt = lug
-    ? `Maleta: ${lug.label} (${lug.hint}). TECHO de ~${lug.maxPiezas} prendas — no lo pases. Si el viaje pediría más, prioriza lo más versátil y recorta lo opcional.`
-    : "Maleta no definida: mantén la cápsula mínima y versátil.";
+  const capacidad = luggageCapacity(inputs.bolsas, inputs.maleta);
+  const resumen = luggageSummary(inputs.bolsas, inputs.maleta);
+  const techoTxt =
+    capacidad > 0
+      ? `Equipaje: ${resumen}. TECHO de ~${capacidad} prendas — no lo pases. Si el viaje pediría más, prioriza lo más versátil y recorta lo opcional.`
+      : "Maleta no definida: mantén la cápsula mínima y versátil.";
   const vetoTxt = inputs.vetoes.length
     ? `VETOS — jamás incluyas: ${inputs.vetoes.join(", ")}.`
     : "";

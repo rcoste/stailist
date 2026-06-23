@@ -9,6 +9,8 @@ import {
   tripDays,
   OCCASIONS,
   LUGGAGE,
+  dominantLuggage,
+  type Bolsas,
   type Occasion,
   type Luggage,
   type Parada,
@@ -20,24 +22,46 @@ export const maxDuration = 60;
 
 const VALID_OCC = new Set(OCCASIONS.map((o) => o.value));
 const VALID_LUG = new Set(LUGGAGE.map((l) => l.value));
+
+// Limpia el `bolsas` del body: solo tipos válidos, enteros 0..4 (tope sano).
+// Devuelve null si no hay ninguna bolsa (cae al maleta legacy en el caller).
+function parseBolsas(raw: unknown): Bolsas | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  const out: Bolsas = {};
+  let any = false;
+  for (const l of LUGGAGE) {
+    const v = obj[l.value];
+    const n = typeof v === "number" && Number.isInteger(v) ? Math.max(0, Math.min(v, 4)) : 0;
+    if (n > 0) {
+      out[l.value] = n;
+      any = true;
+    }
+  }
+  return any ? out : null;
+}
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_PARADAS = 6;
 
 // Agrega los climas de las paradas a un resumen único (para el header del viaje):
-// temperatura promedio, lluvia si cualquier parada llueve, estimado si alguna lo es.
+// temperatura promedio; precipitación SOLO si domina (más de la mitad de las
+// ciudades), distinguiendo nieve de lluvia; estimado si alguna parada lo es.
 function aggregateWeather(paradas: Parada[]): TripWeather | null {
   const withW = paradas.filter((p) => p.weather);
   if (withW.length === 0) return null;
   const avg = Math.round(
     withW.reduce((s, p) => s + (p.weather as TripWeather).temp_c, 0) / withW.length
   );
-  const rainy = withW.some((p) =>
-    /lluvia|tormenta|chubasco|llovizna|nieve/.test((p.weather as TripWeather).condition)
-  );
+  const conds = withW.map((p) => (p.weather as TripWeather).condition);
+  const snowN = conds.filter((c) => /nieve/.test(c)).length;
+  const rainN = conds.filter((c) => /lluvia|tormenta|chubasco|llovizna/.test(c)).length;
   const estimated = withW.some((p) => (p.weather as TripWeather).estimated);
+  // Solo precipitación dominante (mayoría de ciudades) marca el viaje.
+  const condition =
+    snowN + rainN > withW.length / 2 ? (snowN >= rainN ? "nieve" : "lluvia") : conds[0];
   return {
     temp_c: avg,
-    condition: rainy ? "lluvia" : (withW[0].weather as TripWeather).condition,
+    condition,
     ...(estimated ? { estimated: true } : {}),
   };
 }
@@ -58,7 +82,8 @@ export async function POST(request: NextRequest) {
     fechaInicio?: string;
     fechaFin?: string;
     ocasiones?: string[];
-    maleta?: string;
+    maleta?: string; // legacy (cliente viejo single-select)
+    bolsas?: Record<string, unknown>; // multi-maleta: cantidades por tipo
   } = {};
   try {
     body = await request.json();
@@ -101,7 +126,12 @@ export async function POST(request: NextRequest) {
   const ocasiones = (body.ocasiones ?? []).filter((o): o is Occasion =>
     VALID_OCC.has(o as Occasion)
   );
-  const maleta = VALID_LUG.has(body.maleta as Luggage) ? (body.maleta as Luggage) : null;
+  // Multi-maleta: cantidades por tipo (modelo aerolínea). `maleta` (texto) se
+  // conserva como la bolsa dominante para back-compat; si un cliente viejo manda
+  // solo `maleta`, se deriva `bolsas` = 1 de ese tipo.
+  const maletaLegacy = VALID_LUG.has(body.maleta as Luggage) ? (body.maleta as Luggage) : null;
+  const bolsas: Bolsas | null = parseBolsas(body.bolsas) ?? (maletaLegacy ? { [maletaLegacy]: 1 } : null);
+  const maleta = dominantLuggage(bolsas) ?? maletaLegacy;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -150,6 +180,7 @@ export async function POST(request: NextRequest) {
           days,
           ocasiones,
           maleta,
+          bolsas,
           weather: aggWeather,
           paradas: paradas.map((p) => ({ lugar: p.lugar.split(",")[0].trim(), weather: p.weather ?? null })),
           gender,
@@ -183,6 +214,7 @@ export async function POST(request: NextRequest) {
             fecha_fin: fechaFin,
             ocasiones,
             maleta,
+            bolsas,
             weather: aggWeather,
             capsule_target: target,
             capsule_match: match,

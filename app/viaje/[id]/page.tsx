@@ -6,7 +6,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
 import { loadClosetImageMap } from "@/lib/capsule-data";
-import { tripDays, luggageMeta, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
+import { tripDays, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
@@ -36,7 +36,7 @@ export default async function ViajeDetallePage({
   const { data: trip } = await supabase
     .from("trips")
     .select(
-      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale"
+      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale"
     )
     .eq("id", id)
     .eq("user_id", profile.id)
@@ -82,7 +82,10 @@ export default async function ViajeDetallePage({
 
   const days = tripDays(trip.fecha_inicio, trip.fecha_fin);
   const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null;
-  const lug = luggageMeta(trip.maleta as Luggage | null);
+  const equipaje = luggageSummary(
+    trip.bolsas as Bolsas | null,
+    trip.maleta as Luggage | null
+  );
   const paradas = Array.isArray(trip.paradas) ? (trip.paradas as { lugar?: string }[]) : [];
   const nParadas = paradas.length || 1;
 
@@ -154,12 +157,12 @@ export default async function ViajeDetallePage({
                 </span>
               </>
             ) : null}
-            {lug ? (
+            {equipaje ? (
               <>
                 <span className="text-line">·</span>
                 <span className="flex items-center gap-1.5">
                   <Icon name="maleta" size={13} />
-                  {lug.hint}
+                  {equipaje}
                 </span>
               </>
             ) : null}

@@ -9,6 +9,9 @@ import {
   OCCASIONS,
   LUGGAGE,
   tripDays,
+  bolsasCount,
+  luggageCapacity,
+  type Bolsas,
   type Occasion,
   type Luggage,
 } from "@/lib/trip";
@@ -126,7 +129,8 @@ export function TripWizard() {
   const [paradas, setParadas] = useState<Parada[]>([]);
   const [inicio, setInicio] = useState("");
   const [ocasiones, setOcasiones] = useState<Set<Occasion>>(new Set());
-  const [maleta, setMaleta] = useState<Luggage | null>(null);
+  // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
+  const [bolsas, setBolsas] = useState<Bolsas>({ mano: 1 });
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
   // sheet: índice de la parada a capturar (== paradas.length = nueva).
   const [sheet, setSheet] = useState<number | null>(null);
@@ -164,7 +168,7 @@ export function TripWizard() {
   }
 
   async function armar() {
-    if (!maleta || !inicio || !fin || paradas.length === 0) return;
+    if (bolsasCount(bolsas) === 0 || !inicio || !fin || paradas.length === 0) return;
     setPhase("gen");
     try {
       const res = await fetch("/api/trip", {
@@ -176,7 +180,7 @@ export function TripWizard() {
           fechaInicio: inicio,
           fechaFin: fin,
           ocasiones: [...ocasiones],
-          maleta,
+          bolsas,
         }),
       });
       if (!res.ok || !res.body) {
@@ -292,7 +296,7 @@ export function TripWizard() {
                 }
               />
             ) : (
-              <StepMaleta value={maleta} onPick={setMaleta} />
+              <StepMaleta bolsas={bolsas} onChange={setBolsas} />
             )}
           </div>
         </div>
@@ -323,7 +327,7 @@ export function TripWizard() {
             <button
               type="button"
               onClick={armar}
-              disabled={!maleta}
+              disabled={bolsasCount(bolsas) === 0}
               className="flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               <Icon name="destello" size={18} />
@@ -810,26 +814,35 @@ function StepActividades({
   );
 }
 
-// ---- Paso 3: Maleta (single-select, una por renglón + capacidad) ----
+// ---- Paso 3: Maleta (multi-maleta: cantidades por tipo + capacidad total) ----
+// Modelo aerolínea: puedes combinar varias piezas (mochila + carry-on + N
+// documentadas). La capacidad total (techo) es la suma de las capacidades.
 function StepMaleta({
-  value,
-  onPick,
+  bolsas,
+  onChange,
 }: {
-  value: Luggage | null;
-  onPick: (l: Luggage) => void;
+  bolsas: Bolsas;
+  onChange: (b: Bolsas) => void;
 }) {
+  const setN = (tipo: Luggage, n: number) => {
+    const clamped = Math.max(0, Math.min(n, 4));
+    const next: Bolsas = { ...bolsas, [tipo]: clamped };
+    if (clamped === 0) delete next[tipo];
+    onChange(next);
+  };
+  const total = bolsasCount(bolsas);
+  const capacidad = luggageCapacity(bolsas);
+
   return (
     <div className="flex flex-col gap-2.5">
       {LUGGAGE.map((l) => {
-        const on = value === l.value;
+        const n = bolsas[l.value] ?? 0;
+        const on = n > 0;
         return (
-          <button
+          <div
             key={l.value}
-            type="button"
-            onClick={() => onPick(l.value)}
-            aria-pressed={on}
-            className={`flex items-center gap-3.5 rounded-md border bg-surface p-4 text-left transition-colors ${
-              on ? ON_CARD : "border-line hover:border-ink"
+            className={`flex items-center gap-3.5 rounded-md border bg-surface p-4 transition-colors ${
+              on ? ON_CARD : "border-line"
             }`}
           >
             <span
@@ -843,17 +856,46 @@ function StepMaleta({
               <b className={`block text-[15px] font-semibold ${on ? "text-accent" : "text-ink"}`}>
                 {l.label}
               </b>
-              <span className="text-xs text-muted">{l.hint}</span>
+              <span className="text-xs text-muted">
+                {l.hint} · ~{l.maxPiezas} piezas
+              </span>
             </span>
-            <span className="shrink-0 text-right">
-              <b className={`tabular block text-[13px] font-semibold ${on ? "text-accent" : "text-ink"}`}>
-                ~{l.maxPiezas}
+            <div className="flex shrink-0 items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setN(l.value, n - 1)}
+                disabled={n === 0}
+                aria-label={`Quitar ${l.short}`}
+                className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-bg text-ink transition-colors hover:border-ink disabled:opacity-30"
+              >
+                <Icon name="menos" size={16} strokeWidth={2} />
+              </button>
+              <b className="tabular w-4 text-center text-[15px] font-semibold text-ink" aria-live="polite">
+                {n}
               </b>
-              <span className="text-[10.5px] text-muted">piezas</span>
-            </span>
-          </button>
+              <button
+                type="button"
+                onClick={() => setN(l.value, n + 1)}
+                disabled={n >= 4}
+                aria-label={`Agregar ${l.short}`}
+                className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-bg text-ink transition-colors hover:border-ink disabled:opacity-30"
+              >
+                <Icon name="mas" size={16} strokeWidth={2} />
+              </button>
+            </div>
+          </div>
         );
       })}
+      <div className="flex items-center justify-between rounded-md bg-accent-soft px-4 py-3">
+        <span className="text-[13px] font-medium text-ink">
+          {total === 0
+            ? "Elige al menos una pieza de equipaje"
+            : `${total} ${total === 1 ? "pieza" : "piezas"} de equipaje`}
+        </span>
+        {total > 0 ? (
+          <span className="tabular text-[13px] font-semibold text-accent">~{capacidad} prendas</span>
+        ) : null}
+      </div>
       <div className="flex items-start gap-2 text-xs leading-snug text-muted">
         <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
         <span>Es un techo, no una meta: armo lo mínimo que combina. Si cabe menos, mejor.</span>
