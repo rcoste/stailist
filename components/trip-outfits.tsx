@@ -31,6 +31,7 @@ export function TripOutfits({
   ocasiones,
   stale,
   generating = false,
+  appending = false,
   genError = false,
   onGenerate,
   onGenerateMore,
@@ -43,6 +44,7 @@ export function TripOutfits({
   // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
   // botones); aquí solo la consumimos.
   generating?: boolean;
+  appending?: boolean; // "generar más" en curso: conserva los looks + indicador inline
   genError?: boolean;
   onGenerate?: () => void; // rehacer (reemplaza)
   onGenerateMore?: () => void; // generar más (acumula)
@@ -53,7 +55,6 @@ export function TripOutfits({
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
-  const loading = generating;
   const error = genError;
   const generar = () => onGenerate?.();
 
@@ -63,15 +64,9 @@ export function TripOutfits({
     setTripLookVote(tripId, index, up);
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-        <Spinner className="h-7 w-7 text-accent" />
-        <p className="editorial text-base text-ink">armando tus looks…</p>
-        <p className="text-sm text-muted">Combino lo que llevas — tarda unos segundos.</p>
-      </div>
-    );
-  }
+  // La generación completa (primera vez / Rehacer) la cubre el overlay animado de
+  // TripTabs; aquí no mostramos spinner de pantalla. "Generar más" (appending) SÍ
+  // se queda en esta vista: conserva los looks y suma un indicador inline abajo.
 
   // Nunca generados: invitación.
   if (outfits === null) {
@@ -136,12 +131,13 @@ export function TripOutfits({
         ) : (
           <span />
         )}
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2.5">
           {onGenerateMore ? (
             <button
               type="button"
               onClick={onGenerateMore}
-              className="flex items-center gap-1 text-xs font-semibold text-accent transition-colors hover:text-accent-deep"
+              disabled={generating}
+              className="flex items-center gap-1 rounded-sm border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
             >
               <Icon name="mas" size={13} strokeWidth={2} /> Generar más
             </button>
@@ -149,12 +145,19 @@ export function TripOutfits({
           <button
             type="button"
             onClick={generar}
-            className="text-xs font-medium text-muted transition-colors hover:text-ink"
+            disabled={generating}
+            className="text-xs font-medium text-muted transition-colors hover:text-ink disabled:opacity-50"
           >
             Rehacer
           </button>
         </div>
       </div>
+
+      {appending ? (
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent-soft py-2.5 text-sm text-ink">
+          <Spinner className="h-4 w-4 text-accent" /> sumando más looks…
+        </div>
+      ) : null}
 
       {genNote ? <p className="text-xs text-muted">{genNote}</p> : null}
       {error ? (

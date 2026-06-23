@@ -8,6 +8,15 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
+
+// Frases de "armando" del viaje (lenguaje como progreso, palabra clave en acento).
+const TRIP_PHRASES: GenPhrase[] = [
+  { a: "abriendo tu ", k: "maleta", b: "…" },
+  { a: "cruzando tus ", k: "colores", b: "…" },
+  { a: "cuidando el ", k: "clima", b: "…" },
+  { a: "armando tus ", k: "looks", b: "…" },
+];
 
 // Props que TripTabs inyecta a sus paneles para coordinar el flujo
 // "maleta primero → genera looks" sin levantar TODO a la página.
@@ -15,9 +24,11 @@ export type MaletaInjected = {
   onGenerateLooks?: () => void; // arma los looks (cambia a la pestaña + dispara)
   onViewLooks?: () => void; // solo ir a los looks (ya existen)
   looksExist?: boolean;
+  generating?: boolean; // deshabilita el CTA mientras se genera (anti doble-tap)
 };
 export type LooksInjected = {
   generating?: boolean;
+  appending?: boolean; // "generar más" en curso: conserva los looks, indicador inline
   genError?: boolean;
   onGenerate?: () => void; // generar/rehacer (reemplaza el set)
   onGenerateMore?: () => void; // "generar más": acumula combinaciones nuevas
@@ -46,14 +57,17 @@ export function TripTabs({
   const router = useRouter();
   const [tab, setTab] = useState<"maleta" | "looks">("maleta");
   const [generating, setGenerating] = useState(false);
+  const [appending, setAppending] = useState(false);
   const [genError, setGenError] = useState(false);
   const [genNote, setGenNote] = useState<string | null>(null);
   const looksExist = looksCount > 0;
 
-  // append=false: reemplaza el set (primera vez / "Rehacer"). append=true:
-  // "Generar más" — suma combinaciones nuevas a las que ya hay.
+  // append=false: reemplaza el set (primera vez / "Rehacer") → overlay animado de
+  // pantalla completa. append=true: "Generar más" → conserva los looks visibles y
+  // suma un indicador inline (no los borra).
   async function generar(append = false) {
     setGenerating(true);
+    setAppending(append);
     setGenError(false);
     setGenNote(null);
     try {
@@ -66,6 +80,7 @@ export function TripTabs({
       if (!res.ok) {
         setGenError(true);
         setGenerating(false);
+        setAppending(false);
         return;
       }
       if (append && data?.added === 0) {
@@ -74,10 +89,14 @@ export function TripTabs({
       router.refresh();
       // El refresh reemplaza los props; soltamos el loading tras un respiro para
       // que no parpadee antes de llegar el render.
-      setTimeout(() => setGenerating(false), 600);
+      setTimeout(() => {
+        setGenerating(false);
+        setAppending(false);
+      }, 600);
     } catch {
       setGenError(true);
       setGenerating(false);
+      setAppending(false);
     }
   }
 
@@ -89,11 +108,13 @@ export function TripTabs({
         },
         onViewLooks: () => setTab("looks"),
         looksExist,
+        generating,
       })
     : maleta;
   const looksEl = isValidElement(looks)
     ? cloneElement(looks as ReactElement<LooksInjected>, {
         generating,
+        appending,
         genError,
         onGenerate: () => generar(false),
         onGenerateMore: () => generar(true),
@@ -102,19 +123,25 @@ export function TripTabs({
     : looks;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="-mt-1 flex gap-6 border-b border-line">
-        <Tab label="La maleta" count={maletaCount} on={tab === "maleta"} onClick={() => setTab("maleta")} />
-        <Tab
-          label="Tus looks"
-          count={looksCount}
-          on={tab === "looks"}
-          dot={looksStale && looksExist}
-          onClick={() => setTab("looks")}
-        />
+    <>
+      {/* Generación completa (primera vez / Rehacer): overlay animado de pantalla
+          completa — da feedback claro y bloquea el doble-tap. "Generar más" NO usa
+          el overlay (conserva los looks visibles). */}
+      {generating && !appending ? <GeneratingScreen phrases={TRIP_PHRASES} /> : null}
+      <div className="flex flex-col gap-4">
+        <div className="-mt-1 flex gap-6 border-b border-line">
+          <Tab label="La maleta" count={maletaCount} on={tab === "maleta"} onClick={() => setTab("maleta")} />
+          <Tab
+            label="Tus looks"
+            count={looksCount}
+            on={tab === "looks"}
+            dot={looksStale && looksExist}
+            onClick={() => setTab("looks")}
+          />
+        </div>
+        {tab === "maleta" ? maletaEl : looksEl}
       </div>
-      {tab === "maleta" ? maletaEl : looksEl}
-    </div>
+    </>
   );
 }
 

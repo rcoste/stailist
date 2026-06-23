@@ -42,6 +42,7 @@ export function TripResult({
   onGenerateLooks,
   onViewLooks,
   looksExist = false,
+  generating = false,
 }: {
   tripId: string;
   rows: TripRow[];
@@ -50,6 +51,7 @@ export function TripResult({
   onGenerateLooks?: () => void;
   onViewLooks?: () => void;
   looksExist?: boolean;
+  generating?: boolean; // deshabilita el CTA mientras se genera (anti doble-tap)
 }) {
   const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
   const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
@@ -248,7 +250,8 @@ export function TripResult({
             <button
               type="button"
               onClick={onGenerateLooks}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+              disabled={generating}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
             >
               <Icon name="destello" size={18} /> Generar mis looks
             </button>
