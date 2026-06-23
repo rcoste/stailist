@@ -179,7 +179,7 @@ export async function markFaltaOwned(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("capsule_target, capsule_match")
+    .select("capsule_target, capsule_match, gender")
     .eq("id", user.id)
     .single();
   const target = profile?.capsule_target as CapsuleTarget | null;
@@ -187,8 +187,19 @@ export async function markFaltaOwned(
   const item = target?.items[index];
   if (!target || !match || !item) return { ok: false, itemId: null };
 
-  // Inserta la prenda en el clóset (source=photo sin photo_path → el clóset la
-  // muestra con su swatch de color; el motor la usa por sus attrs).
+  // La prenda no tiene foto propia, pero le prestamos el flat-lay de un arquetipo
+  // del catálogo de su MISMA categoría y color parecido, para que no salga como un
+  // bloque de color en clóset/outfits. Si no hay uno cercano, cae al swatch.
+  const imagePath = await borrowArchetypeImage(
+    supabase,
+    item.category,
+    familiaToHex(item.colorFamilia),
+    (profile?.gender as "hombre" | "mujer" | null) ?? null
+  );
+
+  // Inserta la prenda en el clóset (source=photo; sin photo propia → usa la imagen
+  // prestada del arquetipo o, si no hay, el swatch de color; el motor la usa por
+  // sus attrs).
   const { data: inserted, error: insErr } = await supabase
     .from("items")
     .insert({
@@ -201,6 +212,7 @@ export async function markFaltaOwned(
         color_hex: familiaToHex(item.colorFamilia),
         formalidad: item.formalidad,
         temporada: item.temporada,
+        ...(imagePath ? { image_path: imagePath } : {}),
       },
     })
     .select("id")
@@ -219,4 +231,49 @@ export async function markFaltaOwned(
 
   revalidatePath("/closet");
   return { ok: true, itemId: inserted.id as string };
+}
+
+// Distancia RGB entre dos hex (#rrggbb o #rgb). Infinito si alguno no parsea.
+function hexDistance(a: string, b: string): number {
+  const parse = (h: string): [number, number, number] | null => {
+    let s = h.replace("#", "").trim();
+    if (s.length === 3) s = s.split("").map((c) => c + c).join("");
+    if (s.length !== 6) return null;
+    const n = parseInt(s, 16);
+    return Number.isNaN(n) ? null : [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const x = parse(a);
+  const y = parse(b);
+  if (!x || !y) return Infinity;
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+}
+
+// Presta el flat-lay de un arquetipo del catálogo: misma categoría y el color más
+// cercano (umbral estricto para no usar un color equivocado). Devuelve image_path
+// o null si no hay uno suficientemente parecido.
+async function borrowArchetypeImage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  category: string,
+  targetHex: string,
+  gender: "hombre" | "mujer" | null
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("archetypes")
+    .select("image_path, attrs, segment")
+    .eq("category", category)
+    .in("segment", ["unisex", gender ?? "hombre"]);
+  if (!data?.length) return null;
+  let best: string | null = null;
+  let bestDist = 40; // umbral: solo si el color es razonablemente parecido
+  for (const a of data) {
+    const img = a.image_path as string | null;
+    const hex = (a.attrs as { color_hex?: string } | null)?.color_hex;
+    if (!img || !hex) continue;
+    const d = hexDistance(targetHex, hex);
+    if (d < bestDist) {
+      bestDist = d;
+      best = img;
+    }
+  }
+  return best;
 }
