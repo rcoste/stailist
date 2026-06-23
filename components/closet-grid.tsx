@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
@@ -16,6 +16,7 @@ export type ClosetItem = {
   formalidad: string;
   temporada: string;
   source: string; // "archetype" | "photo"
+  renderStatus?: string; // "none" | "pending" | "done" | "failed"
 };
 
 // Orden + label de categoría (espeja el de la página).
@@ -112,7 +113,15 @@ function IconChip({
   );
 }
 
-function Tile({ item, onTap }: { item: ClosetItem; onTap: () => void }) {
+function Tile({
+  item,
+  rendering = false,
+  onTap,
+}: {
+  item: ClosetItem;
+  rendering?: boolean;
+  onTap: () => void;
+}) {
   return (
     <button type="button" onClick={onTap} className="flex w-full flex-col gap-1.5 text-left">
       <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
@@ -127,6 +136,12 @@ function Tile({ item, onTap }: { item: ClosetItem; onTap: () => void }) {
         ) : (
           <span className="absolute inset-0" style={{ backgroundColor: item.swatch }} aria-hidden />
         )}
+        {/* Generando su imagen (prenda sin foto): spinner sobre el swatch. */}
+        {rendering && !item.imagen ? (
+          <span className="absolute inset-0 flex items-center justify-center bg-ink/15">
+            <Spinner className="h-5 w-5 text-on-accent" />
+          </span>
+        ) : null}
         {/* Badge "Tuya": cinta inferior con degradado — solo en fotos propias
             reales (no en prendas sumadas a mano desde la cápsula, que no tienen
             imagen y caen al swatch). */}
@@ -150,6 +165,11 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   const [filter, setFilter] = useState<string | null>(null); // null = Todos
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ClosetItem | null>(null);
+  // Auto-sanado: prendas que el usuario agregó por descripción y nunca tuvieron
+  // imagen se renderizan UNA vez (texto→imagen, cacheado en el item). El tile
+  // muestra el resultado en cuanto llega, sin recargar la página.
+  const [rendered, setRendered] = useState<Record<string, string>>({}); // id → url
+  const [rendering, setRendering] = useState<Set<string>>(new Set());
 
   // Búsqueda inline (la lupa expande el campo) + filtros de atributos (sliders).
   const [searchOpen, setSearchOpen] = useState(false);
@@ -161,7 +181,67 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
 
   const activeFilterCount = fFormalidad.size + fTemporada.size + (fSoloTuyas ? 1 : 0);
 
-  const visibles = useMemo(() => items.filter((i) => !removed.has(i.id)), [items, removed]);
+  // Dispara los renders de las prendas sin imagen al montar (y tras un refresh,
+  // cuando lleguen prendas nuevas sin imagen). Una sola vez por prenda: en cuanto
+  // se rinde, queda con render_status='done' y deja de ser candidata.
+  useEffect(() => {
+    const pendientes = items.filter(
+      (i) => !i.imagen && i.source === "photo" && (i.renderStatus ?? "none") === "none"
+    );
+    if (pendientes.length === 0) return;
+    let cancelled = false;
+
+    const renderOne = async (id: string) => {
+      setRendering((s) => new Set(s).add(id));
+      try {
+        const res = await fetch("/api/render-item", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemId: id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok && data?.url) {
+          setRendered((m) => ({ ...m, [id]: data.url as string }));
+        }
+      } catch {
+        // un fallo deja el swatch; no se reintenta solo (evita loop de costo)
+      } finally {
+        if (!cancelled) {
+          setRendering((s) => {
+            const n = new Set(s);
+            n.delete(id);
+            return n;
+          });
+        }
+      }
+    };
+
+    // Concurrencia limitada (2) para no saturar Gemini ni el rate-limit.
+    const queue = pendientes.map((p) => p.id);
+    const worker = async () => {
+      while (queue.length && !cancelled) {
+        const id = queue.shift();
+        if (id) await renderOne(id);
+      }
+    };
+    void Promise.all([worker(), worker()]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
+
+  // Mete los renders recién generados (estado local) sobre los items del server,
+  // para que tile, badge "Tuya" y la hoja de detalle vean la imagen al instante.
+  const itemsWithRenders = useMemo(
+    () => items.map((i) => (rendered[i.id] ? { ...i, imagen: rendered[i.id] } : i)),
+    [items, rendered]
+  );
+
+  const visibles = useMemo(
+    () => itemsWithRenders.filter((i) => !removed.has(i.id)),
+    [itemsWithRenders, removed]
+  );
 
   // Pre-filtro por búsqueda + atributos (NO por categoría): la base sobre la que
   // se cuentan los chips de categoría y se arman los grupos.
@@ -290,7 +370,11 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
             <ul className="grid grid-cols-3 gap-[11px]">
               {g.prendas.map((p) => (
                 <li key={p.id}>
-                  <Tile item={p} onTap={() => setSelected(p)} />
+                  <Tile
+                    item={p}
+                    rendering={rendering.has(p.id)}
+                    onTap={() => setSelected(p)}
+                  />
                 </li>
               ))}
             </ul>

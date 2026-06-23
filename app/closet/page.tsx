@@ -79,6 +79,7 @@ export default async function ClosetPage() {
       formalidad: attrs.formalidad ?? "casual",
       temporada: attrs.temporada ?? "todo-el-año",
       source: (r.source as string) ?? "archetype",
+      renderStatus: (r.render_status as string) ?? "none",
     };
   });
 
