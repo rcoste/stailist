@@ -117,19 +117,26 @@ export async function loadClosetImageMap(
 ): Promise<Record<string, string>> {
   const { data: rows } = await supabase
     .from("items")
-    .select("photo_path, attrs, archetypes(name, image_path)")
+    .select("photo_path, render_status, render_path, attrs, archetypes(name, image_path)")
     .eq("user_id", userId)
     .is("deleted_at", null);
 
   const list = rows ?? [];
-  const photoPaths = list
-    .map((r) => r.photo_path as string | null)
-    .filter((p): p is string => !!p);
+  // Firma fotos crudas Y renders limpios (ambos en el bucket privado 'prendas').
+  // Sin el render, las prendas que el usuario describió (sin foto) salían vacías
+  // en el viaje aunque ya tuvieran su imagen generada.
+  const privatePaths = Array.from(
+    new Set(
+      list
+        .flatMap((r) => [r.photo_path as string | null, r.render_path as string | null])
+        .filter((p): p is string => !!p)
+    )
+  );
   const signed = new Map<string, string>();
-  if (photoPaths.length > 0) {
+  if (privatePaths.length > 0) {
     const { data } = await supabase.storage
       .from("prendas")
-      .createSignedUrls(photoPaths, 3600);
+      .createSignedUrls(privatePaths, 3600);
     data?.forEach((s) => {
       if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
     });
@@ -140,8 +147,14 @@ export async function loadClosetImageMap(
     const arch = r.archetypes as { name?: string; image_path?: string | null } | null;
     const attrs = (r.attrs ?? {}) as { nombre?: string; image_path?: string | null };
     const name = arch?.name ?? attrs.nombre ?? "Prenda";
+    // Mismo orden que el clóset y Hoy: arquetipo → render limpio → foto cruda → prestada.
+    const renderUrl =
+      r.render_status === "done" && r.render_path
+        ? signed.get(r.render_path as string)
+        : null;
     const img =
       arch?.image_path ??
+      renderUrl ??
       (r.photo_path ? signed.get(r.photo_path as string) : null) ??
       attrs.image_path ??
       null;
