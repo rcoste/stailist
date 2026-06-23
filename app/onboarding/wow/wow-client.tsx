@@ -186,6 +186,9 @@ export function WowClient({
         title="Antes de armar tu primer look…"
         defaultObjective={defaultObjective}
         onPick={generate}
+        // La ocasión ya se eligió en el paso anterior del onboarding → no la
+        // vuelvas a preguntar; arranca en "momento".
+        skipObjective
       />
     );
   }

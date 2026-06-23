@@ -55,15 +55,25 @@ export function LookRequest({
   defaultObjective,
   onPick,
   onExit,
+  skipObjective,
 }: {
   title?: string;
   defaultObjective: string | null;
   onPick: (input: LookInput) => void;
   onExit?: () => void;
+  // Wow (primer outfit): la ocasión ya se eligió en el paso de onboarding →
+  // arranca en "momento" y muestra 2 pasos en vez de 3 (no re-pregunta ocasión).
+  skipObjective?: boolean;
 }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const hasDefaultObj = !!(
+    defaultObjective && OCASION_KEYS.has(defaultObjective)
+  );
+  const skip = !!skipObjective && hasDefaultObj;
+  const firstStep: 1 | 2 = skip ? 2 : 1;
+  const totalSteps = skip ? 2 : 3;
+  const [step, setStep] = useState<1 | 2 | 3>(firstStep);
   const [objective, setObjective] = useState<string | null>(
-    defaultObjective && OCASION_KEYS.has(defaultObjective) ? defaultObjective : null
+    hasDefaultObj ? defaultObjective : null
   );
   const [openText, setOpenText] = useState("");
   const [momento, setMomento] = useState<"dia" | "noche">("dia");
@@ -84,7 +94,7 @@ export function LookRequest({
     setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
   }
   function back() {
-    if (step === 1) onExit?.();
+    if (step === firstStep) onExit?.();
     else setStep((s) => (s - 1) as 1 | 2 | 3);
   }
 
@@ -117,7 +127,11 @@ export function LookRequest({
     if (v.trim()) setObjective(null);
   }
 
-  const meta = step === 3 ? "Paso 3 de 3 · último" : `Paso ${step} de 3`;
+  const displayStep = skip ? step - 1 : step;
+  const meta =
+    step === 3
+      ? `Paso ${totalSteps} de ${totalSteps} · último`
+      : `Paso ${displayStep} de ${totalSteps}`;
   const question =
     step === 1 ? "¿a dónde vas hoy?" : step === 2 ? "¿de día o de noche?" : "¿qué clima hace?";
 
@@ -127,17 +141,21 @@ export function LookRequest({
         {/* Header del paso */}
         <div className="px-[18px] pt-[max(0.75rem,env(safe-area-inset-top))]">
           <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={back}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink"
-            >
-              <Icon name="chevron" size={15} rotate={180} />
-              {step === 1 ? "Hoy" : "Atrás"}
-            </button>
+            {step !== firstStep || onExit ? (
+              <button
+                type="button"
+                onClick={back}
+                className="flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink"
+              >
+                <Icon name="chevron" size={15} rotate={180} />
+                {step === firstStep ? "Hoy" : "Atrás"}
+              </button>
+            ) : (
+              <span />
+            )}
             <div className="flex items-center gap-1.5">
-              {[0, 1, 2].map((i) => {
-                const idx = step - 1;
+              {Array.from({ length: totalSteps }).map((_, i) => {
+                const idx = displayStep - 1;
                 const active = i === idx;
                 const done = i < idx;
                 return (
@@ -190,16 +208,26 @@ export function LookRequest({
 
         {/* Footer fijo con CTA(s) */}
         <div className="flex flex-none gap-2.5 border-t border-line bg-surface px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-          {step === 1 ? (
+          {step === 3 ? (
+            <button
+              type="button"
+              onClick={armar}
+              disabled={locating}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+            >
+              <Icon name="destello" size={18} />
+              Armar mi look
+            </button>
+          ) : step === firstStep ? (
             <button
               type="button"
               onClick={next}
-              disabled={!step1Ready}
+              disabled={step === 1 && !step1Ready}
               className="flex min-h-12 w-full items-center justify-center rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               Siguiente
             </button>
-          ) : step === 2 ? (
+          ) : (
             <>
               <button
                 type="button"
@@ -216,16 +244,6 @@ export function LookRequest({
                 Siguiente
               </button>
             </>
-          ) : (
-            <button
-              type="button"
-              onClick={armar}
-              disabled={locating}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
-            >
-              <Icon name="destello" size={18} />
-              Armar mi look
-            </button>
           )}
         </div>
       </div>

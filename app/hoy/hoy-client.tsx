@@ -232,18 +232,20 @@ export function HoyClient({
         userId={userId}
       />
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setSkipOpen((v) => !v)}
-          aria-pressed={skipOpen}
-          className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
-            skipOpen
-              ? "border-accent bg-accent-soft text-ink"
-              : "border-line bg-surface text-ink hover:border-ink"
-          }`}
-        >
-          Otro look
-        </button>
+        {!worn && (
+          <button
+            type="button"
+            onClick={() => setSkipOpen((v) => !v)}
+            aria-pressed={skipOpen}
+            className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
+              skipOpen
+                ? "border-accent bg-accent-soft text-ink"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
+          >
+            Otro look
+          </button>
+        )}
         <button
           type="button"
           onClick={meLoPongo}

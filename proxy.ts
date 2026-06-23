@@ -54,7 +54,10 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   // Todo menos estáticos: el portero no necesita revisar imágenes ni íconos.
+  // sw.js y manifest.webmanifest van EXCLUIDOS: el navegador los pide sin
+  // sesión (incluso en /login), y si el proxy los redirige a /login el service
+  // worker no registra ("script behind a redirect") y la PWA no es instalable.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)",
   ],
 };
