@@ -13,6 +13,7 @@ import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { loadTasteSignal } from "@/lib/engine/taste-signal";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
 // (petición nueva) — nunca reintentamos aquí adentro.
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
         const startedAt = Date.now();
         send({ phase: "leyendo tu clóset…" });
 
-        const [profileRes, itemsRes, recentRes] = await Promise.all([
+        const [profileRes, itemsRes, recentRes, tasteSignal] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase
             .from("items")
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
               "created_at",
               new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()
             ),
+          loadTasteSignal(supabase, user.id),
         ]);
 
         const profile = profileRes.data;
@@ -130,6 +132,7 @@ export async function POST(request: NextRequest) {
             profile.body_build as Build | null,
             profile.body_volume as Volume | null
           ),
+          tasteSignal,
         };
         const candidates = await generateOutfits(ctx);
 

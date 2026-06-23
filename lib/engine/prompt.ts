@@ -1,6 +1,11 @@
 import type { Weather } from "@/lib/weather";
 import { SEASONS, seasonPalette, type Season } from "@/lib/colorimetria";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
+import {
+  type TasteSignal,
+  type RememberedOutfit,
+  hasTasteSignal,
+} from "@/lib/engine/taste-signal";
 
 // Cada outfit guarda la versión del prompt que lo generó (medir si los
 // cambios mejoran el ratio de 👍). Súbela cuando cambies el prompt.
@@ -38,7 +43,11 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 // v15 (2026-06-23): el tip SOLO puede hablar de prendas que están en el look;
 // prohibido inventar/sugerir prendas ausentes (causaba tips tipo "deja la camisa
 // de lino abierta" cuando no había camisa). Aplica a Hoy (critic) y Viaje.
-export const PROMPT_VERSION = "v15";
+// v16 (2026-06-23): "la app aprende" (paso 9) — el feedback real entra al
+// contexto: lo que se PUSO (worn), votó 👍/👎 (con su razón) y de qué pidió otro.
+// El motor se inclina hacia lo que le gustó y se aleja de lo que rechazó,
+// generalizando el patrón (no copia looks). Lo ve el generador y el juez.
+export const PROMPT_VERSION = "v16";
 
 export type EngineItem = {
   id: string;
@@ -70,6 +79,7 @@ export type EngineContext = {
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
   silueta: string | null; // orientación de cuerpo (complexión + dónde carga); señal suave
+  tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -183,6 +193,37 @@ export function contextBlock(ctx: EngineContext): string[] {
     );
   }
 
+  lines.push(...tasteSignalLines(ctx.tasteSignal));
+
+  return lines;
+}
+
+// "La app aprende": traduce el feedback real a guía para el motor. Señal SUAVE
+// (orienta, no es regla dura ni motivo de rechazo): inclínate hacia lo que se
+// puso y le gustó, aléjate de lo que rechazó, aprendiendo el patrón sin copiar.
+function tasteSignalLines(s: TasteSignal): string[] {
+  if (!hasTasteSignal(s)) return [];
+  const fmt = (o: RememberedOutfit): string => {
+    const prendas = o.items.length > 0 ? o.items.join(", ") : o.title ?? "un look";
+    const name = o.title && o.items.length > 0 ? `"${o.title}": ` : "";
+    const oc = o.occasion ? ` (ocasión: ${o.occasion})` : "";
+    const why = o.reason ? ` — dijo: "${o.reason}"` : "";
+    return `${name}${prendas}${oc}${why}`;
+  };
+  const lines: string[] = [
+    "Lo que ya aprendiste de su gusto (de looks que le mostraste antes — orienta el estilo, NO es regla dura ni para copiar exacto):",
+  ];
+  for (const o of s.worn) {
+    lines.push(`- SE LO PUSO de verdad (lo que MÁS le gusta — busca este tipo de combinación): ${fmt(o)}`);
+  }
+  for (const o of s.liked) lines.push(`- Le gustó (👍): ${fmt(o)}`);
+  for (const o of s.disliked) {
+    lines.push(`- Lo RECHAZÓ (no repitas este patrón): ${fmt(o)}`);
+  }
+  for (const o of s.skipped) lines.push(`- Pidió otro en vez de este: ${fmt(o)}`);
+  lines.push(
+    "Inclínate hacia lo que se puso y le gustó; aléjate de lo que rechazó. Aprende el patrón (colores, formalidad, siluetas, qué combina con qué) — NO copies un look exacto."
+  );
   return lines;
 }
 

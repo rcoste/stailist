@@ -12,6 +12,7 @@ import type { Season } from "@/lib/colorimetria";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { loadTasteSignal } from "@/lib/engine/taste-signal";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -191,7 +192,7 @@ async function generateInto(
   body: Body
 ) {
   try {
-    const [profileRes, itemsRes, recentRes] = await Promise.all([
+    const [profileRes, itemsRes, recentRes, tasteSignal] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", userId).single(),
       supabase.from("items").select("id, attrs").eq("user_id", userId).is("deleted_at", null),
       supabase
@@ -201,6 +202,7 @@ async function generateInto(
         // Solo combos COMPLETOS (legacy null o 'ready'); nunca placeholders.
         .or("gen_status.is.null,gen_status.eq.ready")
         .gte("created_at", new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()),
+      loadTasteSignal(supabase, userId),
     ]);
 
     const profile = profileRes.data;
@@ -237,6 +239,7 @@ async function generateInto(
         profile.body_build as Build | null,
         profile.body_volume as Volume | null
       ),
+      tasteSignal,
     };
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
