@@ -19,20 +19,29 @@ export default async function HoyPage({
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  // ¿Ya hay look de hoy? Si sí, lo pasamos listo (no se regenera al abrir).
+  // ¿Ya hay look de hoy? Si está listo, lo pasamos. Si se está generando en
+  // background, pasamos su id para que el cliente retome el polling (resiliente a
+  // que bloquees/cambies de app a media carga).
   const { data: look } = await supabase
     .from("outfits")
-    .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at")
+    .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at")
     .eq("user_id", profile.id)
     .eq("is_look_of_day", true)
     .eq("look_date", today)
     .maybeSingle();
 
+  const lookStatus = look ? ((look.gen_status as string | null) ?? "ready") : null;
+  const stale =
+    !!look && new Date().getTime() - new Date(look.created_at as string).getTime() > 150_000;
+  // El look del día sigue generándose (y no murió) → retomar polling en el cliente.
+  const pendingOutfitId =
+    look && lookStatus === "generating" && !stale ? (look.id as string) : null;
+
   let lookInicial: HoyOutfit | null = null;
   let votoInicial: "up" | "down" | null = null;
   let wornInicial = false;
 
-  if (look) {
+  if (look && lookStatus === "ready") {
     const [{ data: items }, { data: events }] = await Promise.all([
       // Misma resolución de imagen que el clóset: arquetipo, render o foto propia.
       // Antes solo leía attrs.image_path → las prendas fotografiadas (o arquetipos
@@ -160,6 +169,7 @@ export default async function HoyPage({
         <HoyClient
           key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}
+          pendingOutfitId={pendingOutfitId}
           votoInicial={votoInicial}
           wornInicial={wornInicial}
           userId={profile.id}

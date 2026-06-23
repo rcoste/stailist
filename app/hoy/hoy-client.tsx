@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { OutfitCard } from "@/components/outfit-card";
@@ -27,7 +27,7 @@ export type HoyOutfit = {
 
 type State =
   | { kind: "ask" }
-  | { kind: "generating"; phase: string }
+  | { kind: "generating"; outfitId: string } // outfitId "" = aún sin id (POST en vuelo)
   | { kind: "ready"; outfit: HoyOutfit }
   | { kind: "error"; code: string };
 
@@ -41,12 +41,15 @@ const ERROR_COPY: Record<string, string> = {
 
 export function HoyClient({
   lookInicial,
+  pendingOutfitId,
   wornInicial,
   userId,
   defaultObjective,
   autoAsk = false,
 }: {
   lookInicial: HoyOutfit | null;
+  /** Look del día que está generándose en background (del server) → retomar polling. */
+  pendingOutfitId?: string | null;
   /** ya no se usa: el feedback de Hoy es comportamiento (otro look / me lo pongo). */
   votoInicial?: "up" | "down" | null;
   wornInicial: boolean;
@@ -57,7 +60,11 @@ export function HoyClient({
 }) {
   const router = useRouter();
   const [state, setState] = useState<State>(
-    autoAsk || !lookInicial ? { kind: "ask" } : { kind: "ready", outfit: lookInicial }
+    pendingOutfitId && !autoAsk
+      ? { kind: "generating", outfitId: pendingOutfitId }
+      : autoAsk || !lookInicial
+        ? { kind: "ask" }
+        : { kind: "ready", outfit: lookInicial }
   );
   // Pantalla despierta mientras se genera el look (no se auto-bloquea a media carga).
   useWakeLock(state.kind === "generating");
@@ -66,49 +73,85 @@ export function HoyClient({
   // El botón ✨ pide un look NUEVO → fuerza (si no, look-of-day devuelve el cacheado).
   const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(autoAsk);
+  // Cancela el polling en curso (al desmontar o al arrancar otro).
+  const cancelPoll = useRef<(() => void) | null>(null);
 
-  const generar = useCallback(async (input: LookInput, force: boolean) => {
-    lastInput.current = input;
-    setState({ kind: "generating", phase: "preparando tu look…" });
-    setWorn(false);
-    setSkipOpen(false);
-    try {
-      const res = await fetch("/api/look-of-day", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...input, force }),
-      });
-      if (!res.ok || !res.body) {
-        setState({ kind: "error", code: "generacion" });
-        return;
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const evt = JSON.parse(line);
-          if (evt.phase) setState({ kind: "generating", phase: evt.phase });
-          else if (evt.error) {
-            setState({ kind: "error", code: evt.error });
+  // Polling del estado del look hasta que esté listo o falle. Sobrevive el
+  // backgrounding: cuando vuelves a la app (o iOS la recarga), reanuda y encuentra
+  // el resultado que el server siguió cocinando.
+  const poll = useCallback((outfitId: string) => {
+    cancelPoll.current?.();
+    let stopped = false;
+    cancelPoll.current = () => {
+      stopped = true;
+    };
+    const tick = async () => {
+      if (stopped) return;
+      try {
+        const res = await fetch(`/api/look-of-day?id=${outfitId}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (stopped) return;
+          if (data.status === "ready" && data.outfit) {
+            setState({ kind: "ready", outfit: data.outfit });
             return;
-          } else if (evt.done) {
-            setState({ kind: "ready", outfit: evt.outfit });
+          }
+          if (data.status === "error") {
+            setState({ kind: "error", code: data.error ?? "generacion" });
             return;
           }
         }
+      } catch {
+        /* red intermitente — reintenta en el próximo tick */
       }
-      setState({ kind: "error", code: "red" });
-    } catch {
-      setState({ kind: "error", code: "red" });
-    }
+      if (!stopped) setTimeout(tick, 2200);
+    };
+    setTimeout(tick, 1800);
   }, []);
+
+  // Retoma el polling si arrancamos en "generating" (look del día en background).
+  useEffect(() => {
+    if (state.kind === "generating" && state.outfitId) poll(state.outfitId);
+    return () => cancelPoll.current?.();
+    // Solo al montar: los cambios posteriores los maneja generar().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const generar = useCallback(
+    async (input: LookInput, force: boolean) => {
+      lastInput.current = input;
+      cancelPoll.current?.();
+      setState({ kind: "generating", outfitId: "" });
+      setWorn(false);
+      setSkipOpen(false);
+      try {
+        const res = await fetch("/api/look-of-day", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...input, force }),
+        });
+        if (!res.ok) {
+          setState({ kind: "error", code: "generacion" });
+          return;
+        }
+        const data = await res.json();
+        if (data.error) {
+          setState({ kind: "error", code: data.error });
+          return;
+        }
+        if (data.status === "ready" && data.outfit) {
+          setState({ kind: "ready", outfit: data.outfit });
+          return;
+        }
+        // En background → seguimos por polling.
+        setState({ kind: "generating", outfitId: data.outfitId });
+        poll(data.outfitId);
+      } catch {
+        setState({ kind: "error", code: "red" });
+      }
+    },
+    [poll]
+  );
 
   // Abre la pantalla de ocasión+clima y luego genera. Siempre la muestra (para
   // poder cambiar la ocasión cada vez). force = "Otro look".
