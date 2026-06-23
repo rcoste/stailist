@@ -62,15 +62,23 @@ export default async function ViajeDetallePage({
   const empacado = (trip.empacado as Record<string, boolean> | null) ?? {};
   const imageMap = await loadClosetImageMap(supabase, profile.id);
 
-  const rows: TripRow[] = capsuleRows(target, match, overrides).map((r) => ({
-    index: r.index,
-    nombre: r.item.nombre,
-    porque: r.item.porque,
-    base: r.base,
-    decision: r.decision,
-    by: r.by,
-    byImage: r.by ? imageMap[r.by] ?? null : null,
-  }));
+  // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):
+  // cubren una prenda que faltaba con una real del clóset.
+  const subAt = (i: number) =>
+    (overrides as Record<string, unknown> | null)?.[`sub:${i}`] as string | undefined;
+
+  const rows: TripRow[] = capsuleRows(target, match, overrides).map((r) => {
+    const by = subAt(r.index) ?? r.by;
+    return {
+      index: r.index,
+      nombre: r.item.nombre,
+      porque: r.item.porque,
+      base: r.base,
+      decision: r.decision,
+      by,
+      byImage: by ? imageMap[by] ?? null : null,
+    };
+  });
 
   const days = tripDays(trip.fecha_inicio, trip.fecha_fin);
   const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null;

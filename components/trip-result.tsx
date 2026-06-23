@@ -3,8 +3,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
+import { Spinner } from "@/components/spinner";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
-import { setTripPacked } from "@/lib/trip-actions";
+import {
+  setTripPacked,
+  setTripSubstitute,
+  suggestTripSubstitutes,
+  type SubstituteCandidate,
+} from "@/lib/trip-actions";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
 // que arma la página servidor a partir de capsuleRows + el mapa de imágenes).
@@ -40,7 +46,21 @@ export function TripResult({
 }) {
   const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
   const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
+  // Sustitutos elegidos en esta sesión (optimista; el server los persiste).
+  const [localSub, setLocalSub] = useState<
+    Record<number, { by: string; byImage: string | null }>
+  >({});
+  // Flujo "Buscar en mi clóset": hoja con candidatos de la IA.
+  const [subFlow, setSubFlow] = useState<{
+    index: number;
+    nombre: string;
+    status: "loading" | "done" | "empty" | "error";
+    candidates: SubstituteCandidate[];
+  } | null>(null);
   const isPacked = (i: number) => !!packed[String(i)];
+
+  // by/byImage efectivos: el sustituto elegido esta sesión gana sobre lo del server.
+  const ov = (r: TripRow) => localSub[r.index] ?? { by: r.by, byImage: r.byImage };
 
   // Empaca: lo que tienes/parecido + cualquier faltante ya marcado "ya lo tengo".
   // Te falta: lo que falta y aún no marcas.
@@ -52,6 +72,28 @@ export function TripResult({
     const next = value ?? !isPacked(index);
     setPacked((p) => ({ ...p, [String(index)]: next }));
     setTripPacked(tripId, index, next);
+  }
+
+  async function buscarSustituto(r: TripRow) {
+    setSubFlow({ index: r.index, nombre: r.nombre, status: "loading", candidates: [] });
+    try {
+      const cands = await suggestTripSubstitutes(tripId, r.index);
+      setSubFlow({
+        index: r.index,
+        nombre: r.nombre,
+        status: cands.length ? "done" : "empty",
+        candidates: cands,
+      });
+    } catch {
+      setSubFlow({ index: r.index, nombre: r.nombre, status: "error", candidates: [] });
+    }
+  }
+
+  function elegirSustituto(index: number, c: SubstituteCandidate) {
+    setLocalSub((s) => ({ ...s, [index]: { by: c.nombre, byImage: c.image } }));
+    setPacked((p) => ({ ...p, [String(index)]: true }));
+    setSubFlow(null);
+    setTripSubstitute(tripId, index, c.nombre);
   }
 
   return (
@@ -80,6 +122,7 @@ export function TripResult({
           <ul className="grid grid-cols-4 gap-2">
             {empaca.map((r) => {
               const on = isPacked(r.index);
+              const { by, byImage } = ov(r);
               return (
                 <li key={r.index} className="relative">
                   <button
@@ -87,20 +130,20 @@ export function TripResult({
                     onClick={() =>
                       setZoom({
                         index: r.index,
-                        image: r.byImage,
-                        nombre: r.by ?? r.nombre,
+                        image: byImage,
+                        nombre: by ?? r.nombre,
                         sub: r.porque,
                       })
                     }
-                    title={r.by ?? r.nombre}
-                    aria-label={`Ver ${r.by ?? r.nombre}`}
+                    title={by ?? r.nombre}
+                    aria-label={`Ver ${by ?? r.nombre}`}
                     className="block w-full"
                   >
                     <span className="relative block aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
-                      {r.byImage ? (
+                      {byImage ? (
                         <Image
-                          src={r.byImage}
-                          alt={r.by ?? r.nombre}
+                          src={byImage}
+                          alt={by ?? r.nombre}
                           fill
                           sizes="(max-width:430px) 25vw, 100px"
                           className={`object-cover ${on ? "" : "opacity-[0.62]"}`}
@@ -150,22 +193,33 @@ export function TripResult({
             {falta.map((r) => (
               <li
                 key={r.index}
-                className="flex items-center gap-2.5 rounded-md border border-dashed border-accent/40 bg-accent-soft px-[13px] py-[11px]"
+                className="flex flex-col gap-2.5 rounded-md border border-dashed border-accent/40 bg-accent-soft px-[13px] py-[11px]"
               >
-                <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-sm border border-accent/30 bg-surface text-accent">
-                  <Icon name="mas" size={16} />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <b className="text-[13px] font-semibold leading-tight text-ink">{r.nombre}</b>
-                  <span className="text-[11.5px] leading-snug text-muted">{r.porque}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => togglePacked(r.index, true)}
-                  className="flex shrink-0 items-center gap-1.5 rounded-sm border border-accent bg-accent-soft px-[11px] py-2 text-xs font-semibold text-accent transition-colors hover:bg-accent-soft/60"
-                >
-                  <Icon name="check" size={13} /> Ya lo tengo
-                </button>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-sm border border-accent/30 bg-surface text-accent">
+                    <Icon name="mas" size={16} />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <b className="text-[13px] font-semibold leading-tight text-ink">{r.nombre}</b>
+                    <span className="text-[11.5px] leading-snug text-muted">{r.porque}</span>
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => buscarSustituto(r)}
+                    className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+                  >
+                    <Icon name="lupa" size={13} /> Buscar en mi clóset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePacked(r.index, true)}
+                    className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface px-[11px] text-xs font-semibold text-ink transition-colors hover:border-ink"
+                  >
+                    <Icon name="check" size={13} /> Ya lo tengo
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -200,6 +254,100 @@ export function TripResult({
           ) : null
         }
       />
+
+      {subFlow ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50"
+          onClick={() => setSubFlow(null)}
+        >
+          <div
+            className="flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <span className="h-1 w-9 rounded-full bg-line" aria-hidden />
+              <button
+                type="button"
+                onClick={() => setSubFlow(null)}
+                aria-label="Cerrar"
+                className="-mr-1 flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
+              >
+                <Icon name="equis" size={20} />
+              </button>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+                Sustituir
+              </span>
+              <span className="editorial text-h3 leading-tight text-ink">{subFlow.nombre}</span>
+            </div>
+
+            {subFlow.status === "loading" ? (
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <Spinner className="h-7 w-7 text-accent" />
+                <p className="editorial text-base text-ink">Buscando en tu clóset…</p>
+              </div>
+            ) : null}
+
+            {subFlow.status === "empty" ? (
+              <p className="rounded-md border border-line bg-bg px-4 py-6 text-center text-sm text-muted">
+                Nada de tu clóset lo cubre bien — para esta tendrías que conseguirla.
+              </p>
+            ) : null}
+
+            {subFlow.status === "error" ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <p className="text-sm text-error">No pude buscar — inténtalo otra vez.</p>
+                <button
+                  type="button"
+                  onClick={() => buscarSustituto({ ...rows[subFlow.index] })}
+                  className="min-h-10 rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink"
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : null}
+
+            {subFlow.status === "done" ? (
+              <ul className="flex flex-col gap-2 pb-1">
+                {subFlow.candidates.map((c) => (
+                  <li key={c.nombre}>
+                    <button
+                      type="button"
+                      onClick={() => elegirSustituto(subFlow.index, c)}
+                      className="flex w-full items-center gap-3 rounded-md border border-line bg-surface p-2.5 text-left transition-colors hover:border-accent"
+                    >
+                      <span className="h-16 w-12 shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
+                        {c.image ? (
+                          <Image
+                            src={c.image}
+                            alt={c.nombre}
+                            width={48}
+                            height={64}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center text-muted">
+                            <Icon name="gancho" size={18} />
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <b className="text-sm font-semibold leading-tight text-ink">{c.nombre}</b>
+                        {c.porque ? (
+                          <span className="text-[11.5px] leading-snug text-muted">{c.porque}</span>
+                        ) : null}
+                      </span>
+                      <Icon name="chevron" size={16} className="shrink-0 text-muted" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
