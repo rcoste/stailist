@@ -458,8 +458,16 @@ function LookSheet({
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
         onClick={(ev) => ev.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 bg-surface pb-2 pt-2">
-          <div className="mx-auto h-1 w-9 rounded-full bg-line" />
+        <div className="sticky top-0 z-10 flex items-center justify-center bg-surface pb-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="absolute right-2.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-bg hover:text-ink"
+          >
+            <Icon name="equis" size={18} />
+          </button>
+          <div className="h-1 w-9 rounded-full bg-line" />
         </div>
 
         <div className="relative mx-4 overflow-hidden rounded-lg border border-line bg-bg">
