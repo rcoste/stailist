@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { OutfitCard } from "@/components/outfit-card";
 import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -27,6 +26,8 @@ export type HoyOutfit = {
 
 type State =
   | { kind: "ask" }
+  | { kind: "idle" } // aún sin look del día: home (saludo + CTA) DENTRO del AppShell,
+  // con la tab bar visible — no fuerza el wizard ni atrapa al usuario.
   | { kind: "generating"; outfitId: string } // outfitId "" = aún sin id (POST en vuelo)
   | { kind: "ready"; outfit: HoyOutfit }
   | { kind: "error"; code: string };
@@ -58,13 +59,14 @@ export function HoyClient({
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
   autoAsk?: boolean;
 }) {
-  const router = useRouter();
   const [state, setState] = useState<State>(
     pendingOutfitId && !autoAsk
       ? { kind: "generating", outfitId: pendingOutfitId }
-      : autoAsk || !lookInicial
-        ? { kind: "ask" }
-        : { kind: "ready", outfit: lookInicial }
+      : autoAsk
+        ? { kind: "ask" } // el botón ✨ sí abre el wizard de una
+        : lookInicial
+          ? { kind: "ready", outfit: lookInicial }
+          : { kind: "idle" } // sin look del día → home, NO el wizard a la fuerza
   );
   // Pantalla despierta mientras se genera el look (no se auto-bloquea a media carga).
   useWakeLock(state.kind === "generating");
@@ -176,17 +178,39 @@ export function HoyClient({
     else notifyFirstLike(); // ahora el pico emocional es el "me lo voy a poner"
   }
 
+  // Sin look del día (y no llegaste por el ✨): home dentro del AppShell, con la
+  // tab bar visible. Saludo + CTA — no te fuerza el wizard ni te atrapa.
+  if (state.kind === "idle") {
+    return (
+      <div className="flex flex-col items-center gap-5 py-14 text-center">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-h2 font-semibold text-ink">Tu look de hoy</h1>
+          <p className="max-w-xs text-sm text-muted">
+            Aún no lo armamos. Dime tu plan y te lo dejo listo en segundos.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => startGen(false)}
+          className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+        >
+          <Icon name="destello" size={18} /> Armar mi look de hoy
+        </button>
+      </div>
+    );
+  }
+
   if (state.kind === "ask") {
     return (
       <LookRequest
         title="Tu look de hoy"
         defaultObjective={defaultObjective}
         onPick={(input) => generar(input, pendingForce.current)}
-        // Salir del wizard (paso 1): vuelve a Hoy — muestra el look del día si lo
-        // hay, o reinicia el wizard si aún no hay look.
+        // Salir del wizard (paso 1): vuelve al look del día si lo hay, o al home
+        // (estado idle, con la tab bar) — NUNCA a un loop que re-abra el wizard.
         onExit={() => {
           if (lookInicial) setState({ kind: "ready", outfit: lookInicial });
-          else router.push("/hoy");
+          else setState({ kind: "idle" });
         }}
       />
     );
