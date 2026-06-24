@@ -2,6 +2,7 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { faltaImage } from "@/lib/capsule-images";
@@ -125,7 +126,15 @@ export function CapsuleList({
           <p className="mt-2.5 text-[12.5px] leading-snug text-muted">
             {looks > 0 ? (
               <>
-                Con lo que ya tienes armas <span className="font-semibold text-ink">~{looks} looks</span>.
+                Con lo que ya tienes armas{" "}
+                <Link
+                  href="/closet/capsula/looks"
+                  className="inline-flex items-center gap-0.5 font-semibold text-accent underline decoration-accent/30 underline-offset-2"
+                >
+                  ~{looks} looks
+                  <Icon name="chevron" size={12} />
+                </Link>
+                .
                 {maxUnlock > 0
                   ? " Completa tu base para desbloquear muchos más."
                   : falta.length > 0

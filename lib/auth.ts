@@ -27,6 +27,8 @@ export type Profile = {
   capsule_target: CapsuleTarget | null;
   capsule_match: CapsuleMatch | null;
   capsule_overrides: CapsuleOverrides | null;
+  capsule_outfits: unknown[] | null; // looks armados con lo que tienes de la cápsula
+  capsule_outfits_sig: string | null; // firma del clóset cuando se generaron
   avatar_path: string | null;
   body_type: "slim" | "athletic" | "average" | "full" | null;
   body_build: "delgada" | "media" | "curvas" | null;
