@@ -6,9 +6,19 @@ import { ASSESSMENT_QUESTIONS, type LifestyleAnswers } from "@/lib/capsule";
 import { saveLifestyle, type CapsuleState } from "./actions";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { useWakeLock } from "@/lib/use-wake-lock";
 
 const INITIAL: CapsuleState = { status: "idle" };
+
+// Frases de "armando" de la cápsula (mismo lenguaje-como-progreso que Hoy/Viaje):
+// reflejan que considera tu vida, tus colores y tu cuerpo — no solo un spinner.
+const CAPSULE_PHRASES: GenPhrase[] = [
+  { a: "leyendo tu ", k: "vida", b: "…" },
+  { a: "cruzando tus ", k: "colores", b: "…" },
+  { a: "afinando tu ", k: "silueta", b: "…" },
+  { a: "armando tu ", k: "cápsula", b: "…" },
+];
 
 // Cuestionario paso a paso (handoff Screen 5): una pregunta a la vez, opciones
 // grandes, progreso claro. El último paso envía las respuestas a saveLifestyle.
@@ -52,7 +62,11 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
   };
 
   return (
-    <form action={formAction} className="flex min-h-[calc(100dvh-7rem)] flex-col">
+    <>
+      {/* Generando: overlay full-screen con frases que rotan (mismo que Hoy/Viaje),
+          en vez del spinner del botón — el progreso es lenguaje. */}
+      {pending ? <GeneratingScreen phrases={CAPSULE_PHRASES} /> : null}
+      <form action={formAction} className="flex min-h-[calc(100dvh-7rem)] flex-col">
       {/* Respuestas de todos los pasos viajan como hidden inputs. */}
       {ASSESSMENT_QUESTIONS.map((qq) => (
         <input key={qq.id} type="hidden" name={qq.id} value={answers[qq.id] ?? ""} />
@@ -193,6 +207,7 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
           )}
         </div>
       </div>
-    </form>
+      </form>
+    </>
   );
 }
