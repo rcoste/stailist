@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClosetItemLite } from "@/lib/capsule";
+import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 
 // Distancia RGB entre dos hex (#rrggbb o #rgb). Infinito si alguno no parsea.
 export function hexDistance(a: string, b: string): number {
@@ -148,19 +149,10 @@ export async function loadClosetImageMap(
   const map: Record<string, string> = {};
   for (const r of list) {
     const arch = r.archetypes as { name?: string; image_path?: string | null } | null;
-    const attrs = (r.attrs ?? {}) as { nombre?: string; image_path?: string | null };
+    const attrs = (r.attrs ?? {}) as { nombre?: string };
     const name = arch?.name ?? attrs.nombre ?? "Prenda";
-    // Mismo orden que el clóset y Hoy: arquetipo → render limpio → foto cruda → prestada.
-    const renderUrl =
-      r.render_status === "done" && r.render_path
-        ? signed.get(r.render_path as string)
-        : null;
-    const img =
-      arch?.image_path ??
-      renderUrl ??
-      (r.photo_path ? signed.get(r.photo_path as string) : null) ??
-      attrs.image_path ??
-      null;
+    // Resolver único (arquetipo → render limpio → foto cruda → prestada).
+    const img = itemImageUrlSync(r as ItemImageRow, (p) => signed.get(p));
     if (img && !map[name]) map[name] = img;
   }
   return map;

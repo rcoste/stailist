@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
 
 export const maxDuration = 60;
 
@@ -11,10 +12,19 @@ const PROMPT =
 // Construye el prompt final inyectando el TIP de styling del outfit (cómo se lleva
 // el look: arremangar, fajar, abrir un botón…) para que la imagen lo refleje. El
 // tip viene en español; Gemini lo entiende. Sin tip, el prompt base tal cual.
-function buildPrompt(tip: string | null): string {
+function buildPrompt(tip: string | null, garments: string[]): string {
+  let p = PROMPT;
+  // Ancla de texto (red de seguridad): nombra las prendas (en español; Gemini las
+  // entiende). Si por lo que sea una imagen no llega, el modelo no inventa una
+  // prenda genérica — sabe que es "un suéter esmeralda", no una t-shirt blanca.
+  if (garments.length > 0) {
+    p += ` The garments are (described in Spanish): ${garments.join("; ")}.`;
+  }
   const t = (tip ?? "").trim();
-  if (!t) return PROMPT;
-  return `${PROMPT} IMPORTANT styling detail — wear the garments following this note (written in Spanish), reflecting it visibly in how the clothes are styled on the body: "${t}".`;
+  if (t) {
+    p += ` IMPORTANT styling detail — wear the garments following this note (written in Spanish), reflecting it visibly in how the clothes are styled on the body: "${t}".`;
+  }
+  return p;
 }
 
 async function fetchAsBase64(url: string): Promise<string | null> {
@@ -87,33 +97,32 @@ export async function POST(request: NextRequest) {
   // foto propia privada).
   const { data: items } = await supabase
     .from("items")
-    .select("id, photo_path, render_path, render_status, attrs, archetypes(image_path)")
+    .select(`id, ${ITEM_IMAGE_SELECT}`)
     .in("id", outfit.item_ids as string[]);
 
   const origin = request.nextUrl.origin;
   const avatarUrl = await signFresh(profile.avatar_path);
   if (!avatarUrl) return NextResponse.json({ error: "avatar" }, { status: 502 });
 
-  // Mismo orden que el resto de la app (loadClosetImageMap): arquetipo → render
-  // limpio → foto cruda → prestada. Antes solo leía arquetipo + foto, así que las
-  // prendas de "ya lo tengo" (sin archetype_id ni foto: su imagen vive en
-  // render_path o attrs.image_path) NO aportaban imagen → Gemini inventaba una
-  // prenda genérica (una t-shirt blanca por un suéter esmeralda).
+  // Imagen de cada prenda vía el resolver único (pickItemImage): arquetipo → render
+  // limpio → foto → prestada. Pública = origin + ruta; privada = URL firmada.
   const prendaUrls: string[] = [];
+  const prendaNames: string[] = [];
   for (const it of items ?? []) {
-    const arch = it.archetypes as { image_path?: string | null } | null;
-    const attrs = (it.attrs ?? {}) as { image_path?: string | null };
-    const renderDone = it.render_status === "done" && it.render_path;
-    if (arch?.image_path) {
-      prendaUrls.push(origin + arch.image_path);
-    } else if (renderDone) {
-      const u = await signFresh(it.render_path as string);
+    const pick = pickItemImage(it as ItemImageRow);
+    if (pick) {
+      const u = pick.kind === "public" ? origin + pick.path : await signFresh(pick.path);
       if (u) prendaUrls.push(u);
-    } else if (it.photo_path) {
-      const u = await signFresh(it.photo_path as string);
-      if (u) prendaUrls.push(u);
-    } else if (attrs.image_path) {
-      prendaUrls.push(origin + attrs.image_path);
+    }
+    const archName = (it.archetypes as { name?: string | null } | null)?.name;
+    const attrs = (it.attrs ?? {}) as { nombre?: string; color?: string };
+    const nm = (archName ?? attrs.nombre ?? "").trim();
+    if (nm) {
+      prendaNames.push(
+        attrs.color && !nm.toLowerCase().includes(attrs.color.toLowerCase())
+          ? `${nm} (color ${attrs.color})`
+          : nm
+      );
     }
   }
   if (prendaUrls.length === 0) {
@@ -130,7 +139,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const parts = [
-      { text: buildPrompt((outfit.tip as string | null) ?? null) },
+      { text: buildPrompt((outfit.tip as string | null) ?? null, prendaNames) },
       { inlineData: { mimeType: "image/jpeg", data: avatarB64 } },
       ...prendasB64.map((d) => ({ inlineData: { mimeType: "image/jpeg", data: d } })),
     ];

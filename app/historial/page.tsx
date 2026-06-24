@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import Link from "next/link";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { HistoryList, type HistoryOutfit } from "./history-list";
 
 export default async function HistorialPage() {
@@ -65,17 +66,12 @@ export default async function HistorialPage() {
         color_hex?: string;
         image_path?: string | null;
       };
-      const renderUrl =
-        i.render_status === "done" && i.render_path
-          ? signed.get(i.render_path as string)
-          : null;
-      const photoUrl = i.photo_path ? signed.get(i.photo_path as string) : null;
       return [
         i.id as string,
         {
           nombre: arch?.name ?? attrs.nombre ?? "Prenda",
           swatch: attrs.color_hex ?? "#E5E1DD",
-          imagen: arch?.image_path ?? renderUrl ?? photoUrl ?? attrs.image_path ?? null,
+          imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
         },
       ];
     })

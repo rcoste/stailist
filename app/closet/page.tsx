@@ -5,6 +5,7 @@ import { CapsuleCard } from "@/components/capsule-card";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import {
   capsuleView,
   closetSignature,
@@ -64,16 +65,10 @@ export default async function ClosetPage() {
       formalidad?: string;
       temporada?: string;
     };
-    const photoUrl = r.photo_path ? signed.get(r.photo_path as string) : null;
-    // Render limpio del carrete: si ya se generó, manda sobre la foto cruda.
-    const renderUrl =
-      r.render_status === "done" && r.render_path
-        ? signed.get(r.render_path as string)
-        : null;
     return {
       id: r.id as string,
       nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-      imagen: arch?.image_path ?? renderUrl ?? photoUrl ?? attrs.image_path ?? null,
+      imagen: itemImageUrlSync(r as ItemImageRow, (p) => signed.get(p)),
       swatch: attrs.color_hex ?? "#E5E1DD",
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",

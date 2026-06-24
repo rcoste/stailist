@@ -4,6 +4,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { buildPasaporte } from "@/lib/pasaporte";
 import { PasaporteShare } from "@/components/pasaporte-share";
+import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
 
 // Inlinea una imagen del bucket privado como data URL (para que html-to-image la
 // capture limpia: una URL firmada cross-origin ensuciaría el canvas).
@@ -44,7 +45,7 @@ export default async function PerfilPasaportePage() {
   if (ids.length > 0) {
     const { data: rows } = await supabase
       .from("items")
-      .select("id, render_status, render_path, photo_path, attrs, archetypes(name, image_path)")
+      .select(`id, ${ITEM_IMAGE_SELECT}`)
       .in("id", ids);
     const byId = new Map((rows ?? []).map((r) => [r.id as string, r]));
     const formula: { nombre: string; image: string | null }[] = [];
@@ -53,12 +54,15 @@ export default async function PerfilPasaportePage() {
       if (!r) continue;
       const arch = r.archetypes as { name?: string; image_path?: string | null } | null;
       const attrs = r.attrs as { nombre?: string };
-      let image: string | null = arch?.image_path ?? null; // arquetipo: directo
-      if (!image && r.render_status === "done" && r.render_path) {
-        image = await inlineSigned(supabase, r.render_path as string);
-      } else if (!image && r.photo_path) {
-        image = await inlineSigned(supabase, r.photo_path as string);
-      }
+      // Resolver único. Pública (arquetipo/prestada): ruta directa (mismo origin,
+      // captura limpia). Privada (render/foto): inline a base64 (cross-origin
+      // ensuciaría el canvas de html-to-image).
+      const pick = pickItemImage(r as ItemImageRow);
+      const image = !pick
+        ? null
+        : pick.kind === "public"
+          ? pick.path
+          : await inlineSigned(supabase, pick.path);
       formula.push({ nombre: arch?.name ?? attrs.nombre ?? "Prenda", image });
     }
     data.formula = formula;
