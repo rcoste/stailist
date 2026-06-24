@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { ASSESSMENT_QUESTIONS, type LifestyleAnswers } from "@/lib/capsule";
 import { saveLifestyle, type CapsuleState } from "./actions";
@@ -23,6 +23,21 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
   const q = ASSESSMENT_QUESTIONS[step];
   const last = step === total - 1;
   const answered = !!answers[q.id];
+
+  // Guard anti-tap-reflejo: al LLEGAR al último paso, el botón de armar (que ocupa
+  // el mismo lugar que "Siguiente" y se transforma bajo el dedo) queda inhabilitado
+  // ~½s. Así un doble-tap o tap de inercia que cruza del paso 4 al 5 no dispara la
+  // generación de ~30s sin querer — hay que taparlo a propósito.
+  const [armReady, setArmReady] = useState(false);
+  useEffect(() => {
+    if (!last) {
+      setArmReady(true);
+      return;
+    }
+    setArmReady(false);
+    const t = setTimeout(() => setArmReady(true), 500);
+    return () => clearTimeout(t);
+  }, [last]);
 
   return (
     <form action={formAction} className="flex min-h-[calc(100dvh-7rem)] flex-col">
@@ -106,40 +121,51 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
         ) : null}
       </div>
 
-      {/* Barra fija: Atrás (ghost) + Siguiente / Ver mi cápsula (primario). */}
-      <div className="fixed bottom-0 left-1/2 flex w-full max-w-[430px] -translate-x-1/2 gap-2.5 border-t border-line bg-surface px-[18px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[11px]">
-        <button
-          type="button"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          disabled={step === 0 || pending}
-          className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors disabled:opacity-40"
-        >
-          Atrás
-        </button>
+      {/* Barra fija: Atrás (ghost) + Siguiente / Armar mi cápsula (primario). En el
+          último paso, un micro-texto avisa que esto ARMA la cápsula y tarda — para
+          que no se confunda con "Siguiente" ni se dispare de un tap de inercia. */}
+      <div className="fixed bottom-0 left-1/2 flex w-full max-w-[430px] -translate-x-1/2 flex-col gap-2 border-t border-line bg-surface px-[18px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[11px]">
         {last ? (
-          <button
-            type="submit"
-            disabled={!answered || pending}
-            className="flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
-          >
-            {pending ? (
-              <>
-                <Spinner className="h-4 w-4" /> Armando tu cápsula…
-              </>
-            ) : (
-              "Ver mi cápsula"
-            )}
-          </button>
-        ) : (
+          <p className="text-center text-[11.5px] text-muted">
+            Último paso — esto <span className="font-semibold text-ink">arma tu cápsula</span> (~30s)
+          </p>
+        ) : null}
+        <div className="flex gap-2.5">
           <button
             type="button"
-            onClick={() => setStep((s) => Math.min(total - 1, s + 1))}
-            disabled={!answered}
-            className="min-h-12 flex-[2] rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={step === 0 || pending}
+            className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors disabled:opacity-40"
           >
-            Siguiente
+            Atrás
           </button>
-        )}
+          {last ? (
+            <button
+              type="submit"
+              disabled={!answered || pending || !armReady}
+              className="flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+            >
+              {pending ? (
+                <>
+                  <Spinner className="h-4 w-4" /> Armando tu cápsula…
+                </>
+              ) : (
+                <>
+                  <Icon name="destello" size={16} /> Armar mi cápsula
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setStep((s) => Math.min(total - 1, s + 1))}
+              disabled={!answered}
+              className="min-h-12 flex-[2] rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          )}
+        </div>
       </div>
     </form>
   );
