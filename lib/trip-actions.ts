@@ -337,3 +337,140 @@ export async function setTripLookVote(
 
   revalidatePath(`/viaje/${tripId}`);
 }
+
+// Razón del 👎 a un look de viaje (paralelo al "¿qué no te latió?" del Modo Hoy).
+// Se guarda en el propio look (trips.outfits[index].downReason): persiste, sirve
+// como señal real y se usará para afinar la regeneración. No re-emite voto — el
+// 👎 ya dejó su evento trip_look_vote.
+export async function saveTripDownReason(
+  tripId: string,
+  index: number,
+  reason: string
+): Promise<void> {
+  if (!Number.isInteger(index) || !reason.trim()) return;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("outfits")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return;
+
+  const outfits = (trip.outfits as TripOutfit[] | null) ?? [];
+  if (index < 0 || index >= outfits.length) return;
+
+  outfits[index] = { ...outfits[index], downReason: reason.slice(0, 200) };
+  await supabase
+    .from("trips")
+    .update({ outfits })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+
+  revalidatePath(`/viaje/${tripId}`);
+}
+
+// Favoritea (o quita) un look del viaje. Favoritear lo PROMUEVE a una fila real en
+// outfits (source='viaje', con trip_id + trip_look_index) para que aparezca en el
+// Historial con badge "Viaje" — reusando el detalle/voto/"Ponérmelo" del diario.
+// Quitar el favorito borra esa fila (entró al historial porque lo favoriteaste).
+// La existencia de la fila es la fuente única de verdad del corazón.
+export async function favoriteTripLook(
+  tripId: string,
+  index: number,
+  favorite: boolean
+): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(index) || index < 0) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  // Verdad del favorito en TODOS lados = favorited_at no nulo. Quitar (desde el
+  // viaje o desde el corazón del Historial) solo lo pone null; el Historial filtra
+  // los de viaje por favorited_at, así que desaparece de ahí. No borramos la fila
+  // (re-favoritear la reutiliza).
+  if (!favorite) {
+    await supabase
+      .from("outfits")
+      .update({ favorited_at: null })
+      .eq("user_id", user.id)
+      .eq("trip_id", tripId)
+      .eq("trip_look_index", index)
+      .eq("source", "viaje");
+    revalidatePath(`/viaje/${tripId}`);
+    return { ok: true };
+  }
+
+  // ¿Ya existe la fila (favoriteada antes y quitada)? Solo re-séllala.
+  const { data: prevRow } = await supabase
+    .from("outfits")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("trip_id", tripId)
+    .eq("trip_look_index", index)
+    .eq("source", "viaje")
+    .maybeSingle();
+  if (prevRow) {
+    await supabase
+      .from("outfits")
+      .update({ favorited_at: new Date().toISOString() })
+      .eq("id", prevRow.id as string);
+    revalidatePath(`/viaje/${tripId}`);
+    return { ok: true };
+  }
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("outfits")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return { ok: false };
+  const outfits = (trip.outfits as TripOutfit[] | null) ?? [];
+  const look = outfits[index];
+  if (!look) return { ok: false };
+
+  // Resuelve nombre de prenda → id del clóset (best-effort, mismo criterio que el
+  // clóset: nombre = arquetipo o attrs.nombre). Lo que no resuelva se omite.
+  const { data: items } = await supabase
+    .from("items")
+    .select("id, attrs, archetypes(name)")
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  const byName = new Map<string, string>();
+  for (const it of items ?? []) {
+    const arch = it.archetypes as { name?: string } | null;
+    const attrs = (it.attrs ?? {}) as { nombre?: string };
+    const name = arch?.name ?? attrs.nombre;
+    if (name && !byName.has(name)) byName.set(name, it.id as string);
+  }
+  const itemIds = look.prendas
+    .map((n) => byName.get(n))
+    .filter((id): id is string => !!id);
+
+  const explanation = look.tip ? `${look.porque} ${look.tip}` : look.porque;
+  const { error } = await supabase.from("outfits").insert({
+    user_id: user.id,
+    item_ids: itemIds,
+    occasion: look.ocasion,
+    explanation,
+    prompt_version: "viaje-v1",
+    title: look.titulo,
+    source: "viaje",
+    trip_id: tripId,
+    trip_look_index: index,
+    favorited_at: new Date().toISOString(),
+  });
+  // Choque con el índice único = ya estaba favoriteado → lo tratamos como ok.
+  if (error && !/duplicate|unique/i.test(error.message)) return { ok: false };
+
+  revalidatePath(`/viaje/${tripId}`);
+  return { ok: true };
+}

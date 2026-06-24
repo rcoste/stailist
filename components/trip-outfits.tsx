@@ -5,7 +5,8 @@ import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
-import { setTripLookVote } from "@/lib/trip-actions";
+import { setTripLookVote, saveTripDownReason, favoriteTripLook } from "@/lib/trip-actions";
+import { DownReason } from "@/components/down-reason";
 import { useTripGen } from "@/components/trip-gen-context";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
 
@@ -22,6 +23,26 @@ export type ResolvedOutfit = {
 
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
 
+// Corazón de favorito (relleno cuando on). Inline porque necesita fill; el Icon
+// del set es siempre stroke. Guardar un look de viaje lo manda al Historial.
+function Heart({ on }: { on: boolean }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill={on ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      className={on ? "text-accent" : "text-muted"}
+      aria-hidden="true"
+    >
+      <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />
+    </svg>
+  );
+}
+
 // Sección "Tus looks": los outfits que la maleta hace. Si aún no se generan,
 // un botón los pide (POST al endpoint → router.refresh para re-renderear con
 // ellos). `outfits === null` = nunca generados; `[]` = generados pero ninguno
@@ -31,11 +52,13 @@ export function TripOutfits({
   outfits,
   ocasiones,
   stale,
+  favoritos = [],
 }: {
   tripId: string;
   outfits: ResolvedOutfit[] | null;
   ocasiones: Occasion[];
   stale: boolean;
+  favoritos?: number[]; // índices de looks favoriteados (promovidos a outfits)
 }) {
   // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
   // botones); aquí solo la consumimos vía context (no por props: cruzan la
@@ -47,6 +70,9 @@ export function TripOutfits({
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
+  // Favorito optimista por índice. La verdad vive en outfits (fila promovida);
+  // aquí guardamos el set para el corazón y revertimos si el server falla.
+  const [favs, setFavs] = useState<Set<number>>(() => new Set(favoritos));
   const error = genError;
   const generar = () => onGenerate?.();
 
@@ -54,6 +80,25 @@ export function TripOutfits({
     const next = up ? "up" : "down";
     setVotos((v) => ({ ...v, [index]: v[index] === next ? null : next }));
     setTripLookVote(tripId, index, up);
+  }
+
+  async function toggleFav(index: number) {
+    const on = favs.has(index);
+    setFavs((s) => {
+      const n = new Set(s);
+      if (on) n.delete(index);
+      else n.add(index);
+      return n;
+    });
+    const res = await favoriteTripLook(tripId, index, !on);
+    if (!res.ok) {
+      setFavs((s) => {
+        const n = new Set(s);
+        if (on) n.add(index);
+        else n.delete(index);
+        return n;
+      });
+    }
   }
 
   // La generación completa (primera vez / Rehacer) la cubre el overlay animado de
@@ -182,8 +227,19 @@ export function TripOutfits({
             key={i}
             className="rounded-lg border border-line bg-surface p-3.5 shadow-[var(--shadow-hairline)]"
           >
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-accent">
-              {OCC_LABEL.get(o.ocasion) ?? o.ocasion}
+            <div className="flex items-start justify-between gap-2">
+              <div className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-accent">
+                {OCC_LABEL.get(o.ocasion) ?? o.ocasion}
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleFav(i)}
+                aria-pressed={favs.has(i)}
+                aria-label={favs.has(i) ? "Quitar de favoritos" : "Guardar en favoritos"}
+                className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center"
+              >
+                <Heart on={favs.has(i)} />
+              </button>
             </div>
             <h3 className="display mt-1 text-[18px] font-semibold leading-tight text-ink">
               {o.titulo}
@@ -246,6 +302,11 @@ export function TripOutfits({
                 </button>
               </div>
             </div>
+            {votos[i] === "down" ? (
+              <div className="mt-3">
+                <DownReason onSave={(r) => saveTripDownReason(tripId, i, r)} />
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

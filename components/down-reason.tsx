@@ -12,7 +12,16 @@ const REASONS = [
   "No me queda bien",
 ];
 
-export function DownReason({ outfitId }: { outfitId: string }) {
+// Reusable entre Modo Hoy y Modo Viaje. Por defecto guarda contra un outfit
+// (outfits.id) vía saveDownReason; si recibe onSave, delega ahí (el viaje guarda
+// la razón en trips.outfits[index], que no tiene id de fila).
+export function DownReason({
+  outfitId,
+  onSave,
+}: {
+  outfitId?: string;
+  onSave?: (reason: string) => void;
+}) {
   const [picked, setPicked] = useState<string | null>(null);
   const [other, setOther] = useState(false);
   const [text, setText] = useState("");
@@ -20,7 +29,8 @@ export function DownReason({ outfitId }: { outfitId: string }) {
   function save(reason: string) {
     setPicked(reason);
     setOther(false);
-    saveDownReason(outfitId, reason);
+    if (onSave) onSave(reason);
+    else if (outfitId) saveDownReason(outfitId, reason);
   }
 
   if (picked) {

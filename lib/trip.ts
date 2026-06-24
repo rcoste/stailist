@@ -120,6 +120,7 @@ export type TripOutfit = {
   tip?: string | null; // "el toque" — cómo llevarlo (opcional)
   prendas: string[]; // nombres de prendas del clóset (lo empacable)
   voto?: "up" | "down" | null; // 👍/👎 del usuario sobre el look (se regenera con ellos)
+  downReason?: string | null; // por qué no le gustó (tras 👎) — señal para afinar
 };
 
 // Días del viaje (inclusivo). Fechas en YYYY-MM-DD, comparadas en UTC.

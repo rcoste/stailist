@@ -14,7 +14,7 @@ import {
   type TripWeatherInput,
 } from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
-import type { Occasion } from "@/lib/trip";
+import type { Occasion, TripOutfit } from "@/lib/trip";
 
 export const maxDuration = 60;
 
@@ -53,9 +53,12 @@ export async function POST(
     .maybeSingle();
   if (!trip) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  const existing = append
-    ? ((trip.outfits as { prendas: string[] }[] | null) ?? [])
-    : [];
+  const allCurrent = (trip.outfits as TripOutfit[] | null) ?? [];
+  const existing = append ? allCurrent : [];
+  // Los looks que rechazaste (👎) NO se regeneran: en "rehacer" se excluyen
+  // explícitamente (el set se reemplaza), y en "generar más" ya van dentro de
+  // existing. Así el feedback negativo cierra el loop — no te devuelve lo mismo.
+  const rejected = allCurrent.filter((o) => o.voto === "down");
 
   const target = trip.capsule_target as CapsuleTarget | null;
   const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
@@ -114,8 +117,9 @@ export async function POST(
       (profile?.body_build as Build | null) ?? null,
       (profile?.body_volume as Volume | null) ?? null
     ),
-    // "Generar más": evita repetir los looks que ya existen.
-    exclude: existing.map((o) => o.prendas),
+    // "Generar más": evita repetir los looks que ya existen. "Rehacer": evita
+    // los que rechazaste (👎). En ambos casos pasamos sus prendas como exclusión.
+    exclude: (append ? existing : rejected).map((o) => o.prendas),
   };
 
   let outfits;

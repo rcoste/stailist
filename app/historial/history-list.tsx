@@ -14,6 +14,7 @@ export type HistoryOutfit = {
   createdAt: string; // ISO — para agrupar por mes
   fecha: string; // "18 jun"
   occasion: string | null; // clave cruda: diario/oficina/evento/viaje/refrescar
+  origen: "daily" | "viaje"; // de dónde salió el look (badge "Viaje" si viaje)
   tryonImage: string | null; // foto "cómo se me ve" (URL firmada) o null → collage
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
   voto: "up" | "down" | null;
@@ -360,7 +361,11 @@ function Featured({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent px-3.5 pb-3.5 pt-9">
           <p className="editorial text-[21px] leading-[1.08] text-white">{o.nombre}</p>
           <p className="mt-1 flex items-center gap-2 text-[11.5px] text-white/85">
-            {o.occasion ? (
+            {o.origen === "viaje" ? (
+              <span className="inline-flex items-center gap-1 rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
+                <Icon name="maleta" size={11} /> Viaje
+              </span>
+            ) : o.occasion ? (
               <span className="rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
                 {ocasionLabel(o.occasion)}
               </span>
@@ -404,7 +409,12 @@ function GridTile({
       </div>
       <div className="px-0.5 pt-2">
         <p className="editorial text-[15px] leading-tight text-ink">{o.nombre}</p>
-        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
+          {o.origen === "viaje" ? (
+            <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-px text-[10px] font-semibold text-accent">
+              <Icon name="maleta" size={10} /> Viaje
+            </span>
+          ) : null}
           <span className="tabular">{o.fecha}</span>
           {o.occasion ? <span>· {ocasionLabel(o.occasion)}</span> : null}
           {e.voto === "up" ? (
@@ -463,6 +473,11 @@ function LookSheet({
           <div className="min-w-0 flex-1">
             <p className="editorial text-[19px] leading-tight text-ink">{o.nombre}</p>
             <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
+              {o.origen === "viaje" ? (
+                <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-[7px] py-0.5 font-semibold text-accent">
+                  <Icon name="maleta" size={11} /> Viaje
+                </span>
+              ) : null}
               {o.occasion ? (
                 <span className="rounded-sm border border-line bg-bg px-[7px] py-0.5 font-semibold">
                   {ocasionLabel(o.occasion)}

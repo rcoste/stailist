@@ -10,8 +10,11 @@ export default async function HistorialPage() {
 
   const { data: outfits } = await supabase
     .from("outfits")
-    .select("id, title, explanation, occasion, item_ids, created_at, favorited_at, tryon_path")
+    .select("id, title, explanation, occasion, item_ids, created_at, favorited_at, tryon_path, source")
     .eq("user_id", profile.id)
+    // Diarios siempre; los promovidos del viaje solo mientras sigan favoriteados
+    // (quitar el favorito los saca del historial sin borrar la fila).
+    .or("source.eq.daily,favorited_at.not.is.null")
     .order("created_at", { ascending: false });
 
   // Resolver prendas (una sola lectura de items) y votos/worn (una de events).
@@ -97,6 +100,7 @@ export default async function HistorialPage() {
       month: "short",
     }),
     occasion: (o.occasion as string | null) ?? null,
+    origen: (o.source as string | null) === "viaje" ? "viaje" : "daily",
     tryonImage: o.tryon_path ? signed.get(o.tryon_path as string) ?? null : null,
     prendas: (o.item_ids as string[]).map(
       (id) => imgById.get(id) ?? { nombre: "Prenda", swatch: "#E5E1DD", imagen: null }

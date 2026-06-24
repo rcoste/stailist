@@ -108,6 +108,19 @@ export default async function ViajeDetallePage({
       }))
     : null;
 
+  // Favoritos del viaje: los looks que promoviste a outfits reales (source=viaje)
+  // viven en el Historial; aquí solo necesitamos los índices para pintar el corazón.
+  const { data: favRows } = await supabase
+    .from("outfits")
+    .select("trip_look_index")
+    .eq("user_id", profile.id)
+    .eq("trip_id", trip.id)
+    .eq("source", "viaje")
+    .not("favorited_at", "is", null);
+  const favoritos: number[] = (favRows ?? [])
+    .map((r) => r.trip_look_index as number | null)
+    .filter((i): i is number => i !== null);
+
   // Conteos de las pestañas (estado inicial del server).
   const effInit = (r: TripRow) =>
     r.base === "parecido"
@@ -181,6 +194,7 @@ export default async function ViajeDetallePage({
               outfits={resolvedOutfits}
               ocasiones={(trip.ocasiones as Occasion[]) ?? []}
               stale={Boolean(trip.outfits_stale)}
+              favoritos={favoritos}
             />
           }
         />
