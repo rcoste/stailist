@@ -8,6 +8,7 @@ import {
   type LifestyleAnswers,
 } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
+import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 
 export type CapsuleInputs = {
   answers: LifestyleAnswers;
@@ -16,6 +17,8 @@ export type CapsuleInputs = {
   archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
   flow: Season | null;
+  build: Build | null;
+  volume: Volume | null;
 };
 
 // CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
@@ -39,12 +42,21 @@ export async function generateCapsuleTarget(
   let paletaTxt = "No definida (usa neutros versátiles).";
   if (inputs.season) {
     const { mejores, prestados, evita } = seasonPalette(inputs.season, inputs.flow);
-    const favs = [...mejores, ...prestados].map((c) => c.nombre).join(", ");
-    const avoid = evita.map((c) => c.nombre).join(", ");
-    paletaTxt = `Paleta ${SEASONS[inputs.season].label}. Le favorecen: ${favs}. EVITA: ${avoid}.`;
+    const favs = [...mejores, ...prestados];
+    // El flow puede "rescatar" un color que la base EVITA (ej. invierno evita
+    // oliva, pero su flow otoño lo ama). No lo prohíbas si ya es favorable: si no,
+    // el prompt se contradice ("le favorece oliva" + "evita oliva") y el modelo
+    // duda. Match por familia = primer token del nombre ("Oliva apagado" → oliva).
+    const fam = (n: string) => n.toLowerCase().split(/\s+/)[0];
+    const favFams = new Set(favs.map((c) => fam(c.nombre)));
+    const avoid = evita.filter((c) => !favFams.has(fam(c.nombre)));
+    const favsTxt = favs.map((c) => c.nombre).join(", ");
+    const avoidTxt = avoid.map((c) => c.nombre).join(", ");
+    paletaTxt = `Paleta ${SEASONS[inputs.season].label}. Le favorecen: ${favsTxt}. EVITA: ${avoidTxt}.`;
   }
   const metal = seasonMetal(inputs.season, inputs.flow);
   const metalTxt = `Su metal es ${metal.toUpperCase()}: en accesorios metálicos (reloj, hebilla, joyería) usa SIEMPRE ${metal}, nunca ${metal === "oro" ? "plata" : "oro"}.`;
+  const siluetaLine = siluetaPromptLine(inputs.build, inputs.volume);
 
   const estilo = inputs.archetype
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
@@ -59,34 +71,45 @@ export async function generateCapsuleTarget(
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    // ~16-18 prendas con material + por qué cada una: 2048 truncaba el JSON.
-    max_tokens: 4096,
-    system: `Eres la stylist de stailist. Defines el CLÓSET CÁPSULA IDEAL de una persona: la lista de prendas concretas que debería tener para vivir bien vestida, partiendo de cero (sin mirar lo que ya tiene).
+    // ~25-40 prendas con material + por qué cada una: la cápsula nueva es grande.
+    max_tokens: 8000,
+    system: `Eres la stylist senior de stailist — del nivel de una asesora de imagen que cobra una fortuna, pero mejor y más honesta. Defines el CLÓSET CÁPSULA IDEAL de una persona: las prendas concretas que DEBERÍA tener para vivir bien vestida según su vida real, su cuerpo y su color. Partes de cero (no miras lo que ya tiene); después la app le dirá qué ya tiene y qué le falta, así que tu trabajo es definir el deber-ser, completo y honesto.
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
-Combina tres cosas:
-1. Su VIDA: qué exige su día a día (ej. abogado en despacho → necesita trajes/formal entre semana) y sus eventos.
-2. Su ESTILO cuando elige (ej. le va lo hipster el finde) — la cápsula cubre AMBOS lados de la persona.
-3. Su COLORIMETRÍA: nombra colores de su paleta; nunca pongas un color de su lista de EVITA.
+El objetivo NO es una lista larga: es un SISTEMA que se combina solo. Una cápsula bien hecha rinde 100+ outfits porque cada prenda se MULTIPLICA con las demás. Optimiza por COMBINABILIDAD, no por cantidad.
 
-Devuelve "items": ~12 a 18 prendas concretas. Cada una:
-- nombre: etiqueta humana y específica, con color. Ej: "Cuello tortuga azul marino", "Chukka de ante café", "Blazer gris Oxford".
-- tipo: la prenda en clave corta y normalizada, sin color. Ej: "cuello-tortuga", "chukka", "blazer", "jeans", "camisa-oxford".
+== CUÁNTAS PRENDAS ==
+No hay número fijo. Dimensiona la cápsula al ideal REAL de ESTA persona: típicamente 25-40 piezas (incluyendo calzado y accesorios clave). Flexa con honestidad: menos para una vida simple/minimalista o clima de una sola estación; más si tiene varios códigos de vestimenta (oficina formal + salidas + eventos) o clima de varias estaciones. Da el número que de verdad necesita — ni inflado ni recortado por miedo a que "le falte mucho".
+
+== ESTRUCTURA POR CATEGORÍA ==
+Los tops son la categoría más grande y el principal multiplicador (se ven más, se lavan más, varían barato): apunta a ~2 tops por cada bottom. Reparte el resto en capas, calzado, abrigos (solo si el clima lo pide) y accesorios. En mujer, los vestidos cuentan como multiplicador; en hombre, ese presupuesto va a más camisas/pantalones/sastrería.
+
+== PALETA (restricción dura, no sugerencia) ==
+- 2-4 NEUTROS como espina dorsal (la mayoría del clóset, ~70%) + 2-3 ACENTOS de su paleta (~30%).
+- Cada acento debe combinar con AL MENOS 3 de los neutros; si un color no pega con sus neutros, fuera.
+- NUNCA uses un color de su lista de EVITA.
+- Apunta a que un outfit típico use ≤3 colores.
+
+== COHESIÓN (regla de 3) ==
+Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo pega con 1-2, no se ganó su lugar: cámbiala por algo más versátil. Ancla todo en los neutros para que casi cada top funcione con casi cada bottom. Básicos primero; permite 2-3 piezas "héroe" con carácter, pero cada una debe seguir entrando en ≥3 outfits.
+
+== ATERRIZAJE EN SU VIDA Y SU CUERPO ==
+- VIDA: refleja cómo pasa su tiempo DE VERDAD (sus respuestas). El peso de la cápsula sigue su vida real, no una aspiracional. Cubre AMBOS lados: lo que su día exige Y cómo le gusta vestir cuando elige.
+- CUERPO: ${siluetaLine ?? "sin datos de silueta; usa cortes versátiles y favorecedores en general"}. Esto cambia QUÉ cortes eliges (no las cantidades). Marco de agencia: "este corte te luce", nunca "esconde tu X".
+- COLOR/METAL: nombra colores de su paleta; ${metalTxt}
+
+Devuelve "items". Cada prenda:
+- nombre: etiqueta humana y específica, con color y material cuando aporte. Ej: "Cuello tortuga de lana merino azul marino", "Chukka de ante café".
+- tipo: clave corta normalizada, sin color. Ej: "cuello-tortuga", "chukka", "blazer", "jeans".
 - category ∈ {${CATEGORIES.join(", ")}}
-- colorFamilia: el color en familia simple ("marino", "gris", "café", "blanco", "camel"…), dentro de su paleta.
+- colorFamilia: familia simple ("marino", "gris", "camel", "blanco"…), dentro de su paleta.
 - formalidad ∈ {${FORMALIDADES.join(", ")}}
 - temporada: "todo-el-año" | "calor" | "frio".
-- prioridad: 1 = imprescindible (la usaría casi diario), subiendo a menos esenciales. Ordena con criterio.
-- porque: UNA línea cálida de por qué la necesita (tuteo, voz amiga).
+- prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
+- porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
 
-Reglas:
-- Piezas reales y combinables, no aspiracionales raras. Una cápsula que de verdad rinde.
-- Incluye abrigos SOLO si su clima es frío o templado.
-- No incluyas ropa deportiva/gym (la cápsula es ropa de vestir).
-- Prioriza lo versátil y los básicos primero; los caprichos al final.
-- METAL: ${metalTxt}
-- MATERIAL: cuando aporte, di el tejido/material a buscar — métele al nombre o al porqué (ej. "Cuello tortuga de lana merino", "Camisa de popelina", "Abrigo de paño", "Suéter de cashmere"). Es consejo de QUÉ buscar, no de dónde comprar.`,
+Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.`,
     messages: [
       {
         role: "user",

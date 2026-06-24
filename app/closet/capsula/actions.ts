@@ -18,6 +18,7 @@ import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
 import type { Season } from "@/lib/colorimetria";
+import type { Build, Volume } from "@/lib/silueta";
 import type { LifestyleAnswers } from "@/lib/capsule";
 
 export type CapsuleState = { status: "idle" } | { status: "error"; message: string };
@@ -45,7 +46,7 @@ export async function saveLifestyle(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("gender, taste_tags, style_archetype, palette_season, palette_flow")
+    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume")
     .eq("id", user.id)
     .single();
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
@@ -60,6 +61,8 @@ export async function saveLifestyle(
         (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
       season: (profile?.palette_season as Season | null) ?? null,
       flow: (profile?.palette_flow as Season | null) ?? null,
+      build: (profile?.body_build as Build | null) ?? null,
+      volume: (profile?.body_volume as Volume | null) ?? null,
     });
   } catch {
     await supabase
