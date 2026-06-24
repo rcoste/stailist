@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  cloneElement,
-  isValidElement,
-  useState,
-  type ReactElement,
-  type ReactNode,
-} from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
+import { TripGenContext, type TripGen } from "@/components/trip-gen-context";
 
 // Frases de "armando" del viaje (lenguaje como progreso, palabra clave en acento).
 const TRIP_PHRASES: GenPhrase[] = [
@@ -17,23 +12,6 @@ const TRIP_PHRASES: GenPhrase[] = [
   { a: "cuidando el ", k: "clima", b: "…" },
   { a: "armando tus ", k: "looks", b: "…" },
 ];
-
-// Props que TripTabs inyecta a sus paneles para coordinar el flujo
-// "maleta primero → genera looks" sin levantar TODO a la página.
-export type MaletaInjected = {
-  onGenerateLooks?: () => void; // arma los looks (cambia a la pestaña + dispara)
-  onViewLooks?: () => void; // solo ir a los looks (ya existen)
-  looksExist?: boolean;
-  generating?: boolean; // deshabilita el CTA mientras se genera (anti doble-tap)
-};
-export type LooksInjected = {
-  generating?: boolean;
-  appending?: boolean; // "generar más" en curso: conserva los looks, indicador inline
-  genError?: boolean;
-  onGenerate?: () => void; // generar/rehacer (reemplaza el set)
-  onGenerateMore?: () => void; // "generar más": acumula combinaciones nuevas
-  genNote?: string | null; // aviso tras generar (ej. "ya no hay más combos")
-};
 
 // Tabs del resultado del viaje: "La maleta" / "Tus looks". Flujo secuencial-suave:
 // armas la maleta y desde ahí generas los looks (sin candado). La GENERACIÓN vive
@@ -100,27 +78,24 @@ export function TripTabs({
     }
   }
 
-  const maletaEl = isValidElement(maleta)
-    ? cloneElement(maleta as ReactElement<MaletaInjected>, {
-        onGenerateLooks: () => {
-          setTab("looks");
-          generar(false);
-        },
-        onViewLooks: () => setTab("looks"),
-        looksExist,
-        generating,
-      })
-    : maleta;
-  const looksEl = isValidElement(looks)
-    ? cloneElement(looks as ReactElement<LooksInjected>, {
-        generating,
-        appending,
-        genError,
-        onGenerate: () => generar(false),
-        onGenerateMore: () => generar(true),
-        genNote,
-      })
-    : looks;
+  // El estado/callbacks de generación se reparten por CONTEXT, no por cloneElement:
+  // <TripResult/> y <TripOutfits/> llegan como props desde un server component y al
+  // cruzar la frontera RSC isValidElement los daba como inválidos → cloneElement no
+  // inyectaba nada (botones muertos). El context fluye por el árbol y sí los alcanza.
+  const genValue: TripGen = {
+    generating,
+    appending,
+    genError,
+    genNote,
+    onGenerate: () => generar(false),
+    onGenerateMore: () => generar(true),
+    onGenerateLooks: () => {
+      setTab("looks");
+      generar(false);
+    },
+    onViewLooks: () => setTab("looks"),
+    looksExist,
+  };
 
   return (
     <>
@@ -139,7 +114,9 @@ export function TripTabs({
             onClick={() => setTab("looks")}
           />
         </div>
-        {tab === "maleta" ? maletaEl : looksEl}
+        <TripGenContext.Provider value={genValue}>
+          {tab === "maleta" ? maleta : looks}
+        </TripGenContext.Provider>
       </div>
     </>
   );

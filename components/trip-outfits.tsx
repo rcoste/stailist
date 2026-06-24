@@ -6,6 +6,7 @@ import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { setTripLookVote } from "@/lib/trip-actions";
+import { useTripGen } from "@/components/trip-gen-context";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
 
 // Un look del viaje ya resuelto contra el clóset (la página servidor mapea cada
@@ -30,26 +31,17 @@ export function TripOutfits({
   outfits,
   ocasiones,
   stale,
-  generating = false,
-  appending = false,
-  genError = false,
-  onGenerate,
-  onGenerateMore,
-  genNote = null,
 }: {
   tripId: string;
   outfits: ResolvedOutfit[] | null;
   ocasiones: Occasion[];
   stale: boolean;
-  // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
-  // botones); aquí solo la consumimos.
-  generating?: boolean;
-  appending?: boolean; // "generar más" en curso: conserva los looks + indicador inline
-  genError?: boolean;
-  onGenerate?: () => void; // rehacer (reemplaza)
-  onGenerateMore?: () => void; // generar más (acumula)
-  genNote?: string | null;
 }) {
+  // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
+  // botones); aquí solo la consumimos vía context (no por props: cruzan la
+  // frontera RSC y la inyección por cloneElement no llegaba — ver trip-gen-context).
+  const { generating, appending, genError, genNote, onGenerate, onGenerateMore } =
+    useTripGen();
   // Voto optimista por índice (arranca de lo que llegó del server).
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
@@ -132,23 +124,21 @@ export function TripOutfits({
           <span />
         )}
         <div className="flex shrink-0 items-center gap-2.5">
-          {onGenerateMore ? (
-            <button
-              type="button"
-              onClick={onGenerateMore}
-              disabled={generating}
-              className="flex items-center gap-1 rounded-sm border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
-            >
-              <Icon name="mas" size={13} strokeWidth={2} /> Generar más
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={onGenerateMore}
+            disabled={generating}
+            className="flex items-center gap-1 rounded-sm border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
+          >
+            <Icon name="mas" size={13} strokeWidth={2} /> Generar más
+          </button>
           <button
             type="button"
             onClick={generar}
             disabled={generating}
-            className="text-xs font-medium text-muted transition-colors hover:text-ink disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted transition-colors hover:text-ink disabled:opacity-50"
           >
-            Rehacer
+            <Icon name="repetir" size={13} /> Rehacer
           </button>
         </div>
       </div>

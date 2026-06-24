@@ -13,6 +13,7 @@ import {
   markTripFaltaOwned,
   type SubstituteCandidate,
 } from "@/lib/trip-actions";
+import { useTripGen } from "@/components/trip-gen-context";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
 // que arma la página servidor a partir de capsuleRows + el mapa de imágenes).
@@ -41,20 +42,15 @@ export function TripResult({
   tripId,
   rows,
   empacado: empacadoInicial,
-  onGenerateLooks,
-  onViewLooks,
-  looksExist = false,
-  generating = false,
 }: {
   tripId: string;
   rows: TripRow[];
   empacado: Record<string, boolean>;
-  // Inyectados por TripTabs para el flujo maleta→looks (opcionales).
-  onGenerateLooks?: () => void;
-  onViewLooks?: () => void;
-  looksExist?: boolean;
-  generating?: boolean; // deshabilita el CTA mientras se genera (anti doble-tap)
 }) {
+  // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
+  // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
+  // (botón muerto). Ver components/trip-gen-context.
+  const { onGenerateLooks, onViewLooks, looksExist, generating } = useTripGen();
   const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
   const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
   // Sustitutos elegidos en esta sesión (optimista; el server los persiste).
@@ -264,7 +260,7 @@ export function TripResult({
       ) : null}
 
       {/* Cierre del paso "maleta": de aquí se pasa a generar los looks. */}
-      {(onGenerateLooks || onViewLooks) && empaca.length > 0 ? (
+      {empaca.length > 0 ? (
         <div className="flex flex-col gap-1.5 pt-1">
           {looksExist ? (
             <button
