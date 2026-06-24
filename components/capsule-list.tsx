@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { faltaImage } from "@/lib/capsule-images";
+import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
 import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
 import {
   capsuleRows,
@@ -74,12 +75,24 @@ export function CapsuleList({
   const have = rows.filter((r) => r.covered).length;
   const pct = total ? Math.round((100 * have) / total) : 0;
 
+  // El gancho: cuántos looks armas hoy + cuántos desbloquea cada prenda que falta.
+  // (Optimista: aceptar un "parecido" sube el conteo al instante.)
+  const looks = outfitsNow(rows);
+  const unlocks = unlocksByIndex(rows);
+  const unlockOf = (r: CapsuleRow) => unlocks.get(r.index) ?? 0;
+  // ¿Hay alguna prenda que falta que de verdad desbloquee looks? (vs solo accesorios,
+  // que rematan pero no multiplican). Evita prometer "desbloquea más" cuando no aplica.
+  const maxUnlock = rows.reduce((m, r) => (r.base === "falta" ? Math.max(m, unlockOf(r)) : m), 0);
+
   // Agrupamos por estado BASE (lo que dijo el match) para que una "parecido" ya
   // decidida no salte de sección. Sin match → todo "pendiente".
   const byPrio = (a: CapsuleRow, b: CapsuleRow) => a.item.prioridad - b.item.prioridad;
   const pendiente = rows.filter((r) => r.base === "pendiente").sort(byPrio);
   const tienes = rows.filter((r) => r.base === "tienes").sort(byPrio);
-  const falta = rows.filter((r) => r.base === "falta").sort(byPrio);
+  // Lo que falta, ordenado por lo que MÁS te suma (desbloquea más looks); a igualdad, prioridad.
+  const falta = rows
+    .filter((r) => r.base === "falta")
+    .sort((a, b) => unlockOf(b) - unlockOf(a) || byPrio(a, b));
   const decidir = rows.filter((r) => r.base === "parecido").sort(byPrio);
 
   return (
@@ -108,6 +121,22 @@ export function CapsuleList({
             <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
           </div>
         ) : null}
+        {match ? (
+          <p className="mt-2.5 text-[12.5px] leading-snug text-muted">
+            {looks > 0 ? (
+              <>
+                Con lo que ya tienes armas <span className="font-semibold text-ink">~{looks} looks</span>.
+                {maxUnlock > 0
+                  ? " Completa tu base para desbloquear muchos más."
+                  : falta.length > 0
+                    ? " Lo de abajo le da el remate."
+                    : ""}
+              </>
+            ) : (
+              "Estás a unas piezas de tus primeros looks completos — abajo, las que más suman."
+            )}
+          </p>
+        ) : null}
       </div>
 
       {/* Sin match: la cápsula ideal como lista simple (el botón "calcular" vive
@@ -123,13 +152,14 @@ export function CapsuleList({
       ) : null}
 
       {falta.length > 0 ? (
-        <Section title="Te falta — por prioridad" count={falta.length}>
+        <Section title="Lo que más te suma" count={falta.length}>
           <ul className="flex flex-col gap-2.5">
             {falta.map((r) => (
               <BigCard
                 key={rowKey(r)}
                 row={r}
                 images={images}
+                unlock={unlockOf(r)}
                 right={
                   <OwnControl busy={ownBusy.has(r.index)} onOwn={() => markOwned(r.index)} />
                 }
@@ -193,10 +223,12 @@ function BigCard({
   row,
   images,
   right,
+  unlock,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
   right?: React.ReactNode;
+  unlock?: number;
 }) {
   const src = rowImage(row, images);
   return (
@@ -208,6 +240,11 @@ function BigCard({
         <span className="display text-[16px] font-semibold leading-tight text-ink">
           {row.item.nombre}
         </span>
+        {unlock && unlock > 0 ? (
+          <span className="mt-1 flex w-fit items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-[2px] text-[10.5px] font-semibold text-accent">
+            <Icon name="destello" size={11} /> desbloquea ~{unlock} looks
+          </span>
+        ) : null}
         <span className="mt-1 text-[11.5px] leading-snug text-muted">{row.item.porque}</span>
       </div>
       {right ? <span className="shrink-0">{right}</span> : null}
