@@ -108,12 +108,8 @@ export async function POST(request: NextRequest) {
   // limpio → foto → prestada. Pública = origin + ruta; privada = URL firmada.
   const prendaUrls: string[] = [];
   const prendaNames: string[] = [];
+  const sinImagen: string[] = [];
   for (const it of items ?? []) {
-    const pick = pickItemImage(it as ItemImageRow);
-    if (pick) {
-      const u = pick.kind === "public" ? origin + pick.path : await signFresh(pick.path);
-      if (u) prendaUrls.push(u);
-    }
     const archName = (it.archetypes as { name?: string | null } | null)?.name;
     const attrs = (it.attrs ?? {}) as { nombre?: string; color?: string };
     const nm = (archName ?? attrs.nombre ?? "").trim();
@@ -124,6 +120,23 @@ export async function POST(request: NextRequest) {
           : nm
       );
     }
+    const pick = pickItemImage(it as ItemImageRow);
+    const u = pick
+      ? pick.kind === "public"
+        ? origin + pick.path
+        : await signFresh(pick.path)
+      : null;
+    if (u) prendaUrls.push(u);
+    else sinImagen.push(nm || (it.id as string));
+  }
+  // Guard: si una prenda no aportó imagen, el avatar podría inventarla. Lo dejamos
+  // en los logs (con outfit/usuario/prenda) para enterarnos al instante si esto
+  // regresa, en vez de esperar a que un usuario lo note. El ancla de texto del
+  // prompt mitiga, pero esto avisa que algo quedó corto.
+  if (sinImagen.length > 0) {
+    console.warn(
+      `[tryon] outfit=${outfitId} user=${user.id}: ${sinImagen.length}/${(items ?? []).length} prendas sin imagen → ${sinImagen.join(", ")}`
+    );
   }
   if (prendaUrls.length === 0) {
     return NextResponse.json({ error: "sin_prendas" }, { status: 400 });
