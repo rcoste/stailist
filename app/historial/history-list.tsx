@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DownReason } from "@/components/down-reason";
 import { voteOutfit, toggleFavorite, wearToday } from "@/lib/outfit-actions";
@@ -21,10 +21,8 @@ export type HistoryOutfit = {
   favorited: boolean;
 };
 
-type Estado = Record<
-  string,
-  { voto: "up" | "down" | null; worn: boolean; fav: boolean }
->;
+type EstadoItem = { voto: "up" | "down" | null; worn: boolean; fav: boolean };
+type Estado = Record<string, EstadoItem>;
 
 // Etiqueta corta de ocasión (de objectives.ts, pero compacta para chips).
 const OCASION_LABEL: Record<string, string> = {
@@ -49,18 +47,19 @@ function monthLabel(iso: string) {
 }
 
 // Corazón de favorito (relleno cuando on). Inline porque necesita fill; el Icon
-// del set es siempre stroke. Vacío→hairline, activo→accent relleno.
-function Heart({ on }: { on: boolean }) {
+// del set es siempre stroke. Off → muted (legible sobre círculo claro y dentro
+// de chip), on → accent relleno.
+function Heart({ on, size = 18 }: { on: boolean; size?: number }) {
   return (
     <svg
-      width="18"
-      height="18"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill={on ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinejoin="round"
-      className={on ? "text-accent" : "text-line"}
+      className={on ? "text-accent" : "text-muted"}
       aria-hidden="true"
     >
       <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />
@@ -68,13 +67,20 @@ function Heart({ on }: { on: boolean }) {
   );
 }
 
-// Miniatura: la foto "cómo se me ve" si existe; si no, collage 2×2 de los
-// flat-lays de las prendas (3 prendas → 4ª celda en blanco, lienzo limpio).
-function Thumb({ o }: { o: HistoryOutfit }) {
+// Imagen del look a tamaño grande: la foto "cómo se me ve" (object-cover) o, si
+// no se generó avatar, el collage 2×2 de los flat-lays de sus prendas (3 prendas
+// → 4ª celda lienzo limpio). Se usa en destacado, tile y detalle, siempre grande.
+function LookImage({ o }: { o: HistoryOutfit }) {
   if (o.tryonImage) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={o.tryonImage} alt="" loading="lazy" className="h-full w-full object-cover" />
+      <img
+        src={o.tryonImage}
+        alt=""
+        loading="lazy"
+        className="h-full w-full object-cover"
+        style={{ objectPosition: "50% 10%" }}
+      />
     );
   }
   return (
@@ -82,15 +88,42 @@ function Thumb({ o }: { o: HistoryOutfit }) {
       {[0, 1, 2, 3].map((i) => {
         const p = o.prendas[i];
         return (
-          <span key={i} className="flex items-center justify-center bg-surface">
-            {p?.imagen ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.imagen} alt="" loading="lazy" className="h-full w-full object-contain p-0.5" />
-            ) : null}
-          </span>
+          <span
+            key={i}
+            className="bg-surface bg-center bg-no-repeat"
+            style={
+              p?.imagen
+                ? { backgroundImage: `url(${p.imagen})`, backgroundSize: "78%" }
+                : undefined
+            }
+          />
         );
       })}
     </div>
+  );
+}
+
+// Sello "✓ Puesto" sobre la imagen (arriba-izquierda).
+function WornSeal() {
+  return (
+    <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-sm bg-success/90 px-2 py-1 text-[10px] font-bold text-white">
+      <Icon name="check" size={11} /> Puesto
+    </span>
+  );
+}
+
+// Corazón de favorito sobre la imagen (arriba-derecha), botón circular claro.
+function ImgHeart({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      aria-label={on ? "Quitar de favoritos" : "Guardar en favoritos"}
+      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-[var(--shadow-hairline)] transition-colors hover:bg-surface"
+    >
+      <Heart on={on} size={16} />
+    </button>
   );
 }
 
@@ -130,7 +163,25 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
       map.get(k)!.items.push(o);
     }
     return [...map.values()];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibles]);
+
+  const lookAbierto = abierto ? outfits.find((o) => o.id === abierto) ?? null : null;
+
+  // Bloquea el scroll del fondo y cierra con Escape mientras el detalle está abierto.
+  useEffect(() => {
+    if (!lookAbierto) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") setAbierto(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [lookAbierto]);
 
   async function vote(id: string, up: boolean) {
     const prev = estado[id];
@@ -172,7 +223,7 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
             Todos
           </FilterChip>
           <FilterChip on={filtro === "fav"} onClick={() => setFiltro("fav")}>
-            <Heart on={filtro === "fav"} />
+            <Heart on={filtro === "fav"} size={13} />
             Favoritos
           </FilterChip>
           <FilterChip on={filtro === "liked"} onClick={() => setFiltro("liked")} icon="pulgar">
@@ -225,100 +276,292 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
         </p>
       ) : null}
 
-      {grupos.map((g) => (
-        <div key={g.label} className="flex flex-col gap-2.5">
-          <div className="flex items-baseline gap-2.5">
-            <span className="editorial text-h3 text-ink">{g.label}</span>
-            <span className="tabular text-[11.5px] text-muted">
-              {g.items.length} {g.items.length === 1 ? "look" : "looks"}
-            </span>
-            <span className="h-px flex-1 bg-line" />
-          </div>
+      {/* Diario por meses: destacado (el más reciente del mes) + cuadrícula 2-up. */}
+      {grupos.map((g) => {
+        const [destacado, ...resto] = g.items;
+        return (
+          <div key={g.label} className="flex flex-col gap-3.5">
+            <div className="flex items-baseline gap-2.5">
+              <span className="editorial text-h3 text-ink">{g.label}</span>
+              <span className="tabular text-[11.5px] text-muted">
+                {g.items.length} {g.items.length === 1 ? "look" : "looks"}
+              </span>
+              <span className="h-px flex-1 bg-line" />
+            </div>
 
-          {g.items.map((o) => {
-            const e = estado[o.id];
-            const open = abierto === o.id;
-            return (
-              <div key={o.id} className="flex flex-col">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setAbierto(open ? null : o.id)}
-                    aria-expanded={open}
-                    className={`flex w-full gap-3 border border-line bg-surface p-[11px] text-left transition-colors hover:border-ink/30 ${
-                      open ? "rounded-t-md" : "rounded-md"
-                    }`}
-                  >
-                    <span className="h-[84px] w-16 shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
-                      <Thumb o={o} />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col gap-1.5 pr-6">
-                      <span className="editorial text-base leading-tight text-ink">
-                        {o.nombre}
-                      </span>
-                      <span className="tabular text-[11.5px] text-muted">{o.fecha}</span>
-                      <span className="flex flex-wrap items-center gap-1.5">
-                        {o.occasion ? (
-                          <span className="inline-flex items-center rounded-sm border border-line bg-bg px-[7px] py-[3px] text-[10.5px] font-semibold text-muted">
-                            {ocasionLabel(o.occasion)}
-                          </span>
-                        ) : null}
-                        {e.voto === "up" ? (
-                          <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-accent">
-                            <Icon name="pulgar" size={12} active />
-                          </span>
-                        ) : null}
-                        {e.worn ? (
-                          <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-success">
-                            <Icon name="check" size={12} /> Puesto
-                          </span>
-                        ) : null}
-                      </span>
-                    </span>
-                  </button>
+            {destacado ? (
+              <Featured
+                o={destacado}
+                e={estado[destacado.id]}
+                onOpen={() => setAbierto(destacado.id)}
+                onFav={() => fav(destacado.id)}
+              />
+            ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() => fav(o.id)}
-                    aria-pressed={e.fav}
-                    aria-label={e.fav ? "Quitar de favoritos" : "Guardar en favoritos"}
-                    className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center"
-                  >
-                    <Heart on={e.fav} />
-                  </button>
-                </div>
-
-                {open ? (
-                  <div className="flex flex-col gap-2.5 rounded-b-md border border-t-0 border-line bg-surface p-[11px]">
-                    <div className="flex gap-2">
-                      <ActionBtn on={e.voto === "up"} onClick={() => vote(o.id, true)} aria-label="Me gusta">
-                        <Icon name="pulgar" size={16} active={e.voto === "up"} />
-                      </ActionBtn>
-                      <ActionBtn
-                        on={e.voto === "down"}
-                        onClick={() => vote(o.id, false)}
-                        aria-label="No me gusta"
-                      >
-                        <Icon name="pulgar" size={16} rotate={180} active={e.voto === "down"} />
-                      </ActionBtn>
-                      <button
-                        type="button"
-                        onClick={() => rewear(o.id)}
-                        disabled={rewearing === o.id}
-                        className="flex min-h-10 flex-[1.6] items-center justify-center gap-1.5 rounded-sm bg-accent text-[12.5px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
-                      >
-                        <Icon name="repetir" size={16} />
-                        {rewearing === o.id ? "Poniéndolo…" : "Ponérmelo"}
-                      </button>
-                    </div>
-                    {e.voto === "down" ? <DownReason outfitId={o.id} /> : null}
-                  </div>
-                ) : null}
+            {resto.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {resto.map((o) => (
+                  <GridTile
+                    key={o.id}
+                    o={o}
+                    e={estado[o.id]}
+                    onOpen={() => setAbierto(o.id)}
+                    onFav={() => fav(o.id)}
+                  />
+                ))}
               </div>
-            );
-          })}
+            ) : null}
+          </div>
+        );
+      })}
+
+      {/* Detalle del look (bottom sheet): foto/collage grande, "lo que llevabas"
+          y las acciones (votar / Ponérmelo). Las acciones viven aquí, no en cada
+          tarjeta, para que el diario se mantenga limpio. */}
+      {lookAbierto ? (
+        <LookSheet
+          o={lookAbierto}
+          e={estado[lookAbierto.id]}
+          rewearing={rewearing === lookAbierto.id}
+          onClose={() => setAbierto(null)}
+          onVote={(up) => vote(lookAbierto.id, up)}
+          onFav={() => fav(lookAbierto.id)}
+          onRewear={() => rewear(lookAbierto.id)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+// Look destacado del mes: tarjeta full-width, imagen 4/5 con overlay inferior
+// (nombre blanco + chip de ocasión + fecha), corazón y sello "Puesto" encima.
+function Featured({
+  o,
+  e,
+  onOpen,
+  onFav,
+}: {
+  o: HistoryOutfit;
+  e: EstadoItem;
+  onOpen: () => void;
+  onFav: () => void;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-line bg-bg">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Abrir ${o.nombre}`}
+        className="relative block w-full text-left"
+      >
+        <div className="aspect-[4/5] w-full">
+          <LookImage o={o} />
         </div>
-      ))}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent px-3.5 pb-3.5 pt-9">
+          <p className="editorial text-[21px] leading-[1.08] text-white">{o.nombre}</p>
+          <p className="mt-1 flex items-center gap-2 text-[11.5px] text-white/85">
+            {o.occasion ? (
+              <span className="rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
+                {ocasionLabel(o.occasion)}
+              </span>
+            ) : null}
+            <span className="tabular">{o.fecha}</span>
+          </p>
+        </div>
+      </button>
+      {e.worn ? <WornSeal /> : null}
+      <ImgHeart on={e.fav} onClick={onFav} />
+    </div>
+  );
+}
+
+// Tile de la cuadrícula 2-up: imagen 3/4 con corazón + sello encima, y nombre +
+// "fecha · ocasión" DEBAJO (legibilidad), 👍 junto a la meta si gustó.
+function GridTile({
+  o,
+  e,
+  onOpen,
+  onFav,
+}: {
+  o: HistoryOutfit;
+  e: EstadoItem;
+  onOpen: () => void;
+  onFav: () => void;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={`Abrir ${o.nombre}`}
+          className="block aspect-[3/4] w-full overflow-hidden rounded-md border border-line bg-bg"
+        >
+          <LookImage o={o} />
+        </button>
+        {e.worn ? <WornSeal /> : null}
+        <ImgHeart on={e.fav} onClick={onFav} />
+      </div>
+      <div className="px-0.5 pt-2">
+        <p className="editorial text-[15px] leading-tight text-ink">{o.nombre}</p>
+        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+          <span className="tabular">{o.fecha}</span>
+          {o.occasion ? <span>· {ocasionLabel(o.occasion)}</span> : null}
+          {e.voto === "up" ? (
+            <span className="inline-flex text-accent">
+              <Icon name="pulgar" size={12} active />
+            </span>
+          ) : null}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Detalle del look en bottom sheet (mismo patrón que la hoja "Agregar"): imagen
+// grande, "Lo que llevabas" con las prendas a buen tamaño, y las acciones.
+function LookSheet({
+  o,
+  e,
+  rewearing,
+  onClose,
+  onVote,
+  onFav,
+  onRewear,
+}: {
+  o: HistoryOutfit;
+  e: EstadoItem;
+  rewearing: boolean;
+  onClose: () => void;
+  onVote: (up: boolean) => void;
+  onFav: () => void;
+  onRewear: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-ink/40" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={o.nombre}
+        className="relative z-10 flex max-h-[92vh] w-full max-w-[430px] flex-col overflow-y-auto rounded-t-[18px] bg-surface pb-[max(1.125rem,env(safe-area-inset-bottom))]"
+        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 bg-surface pb-2 pt-2">
+          <div className="mx-auto h-1 w-9 rounded-full bg-line" />
+        </div>
+
+        <div className="relative mx-4 overflow-hidden rounded-lg border border-line bg-bg">
+          <div className="aspect-[4/5] w-full">
+            <LookImage o={o} />
+          </div>
+          {e.worn ? <WornSeal /> : null}
+        </div>
+
+        <div className="flex items-start gap-3 px-4 pt-3.5">
+          <div className="min-w-0 flex-1">
+            <p className="editorial text-[19px] leading-tight text-ink">{o.nombre}</p>
+            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
+              {o.occasion ? (
+                <span className="rounded-sm border border-line bg-bg px-[7px] py-0.5 font-semibold">
+                  {ocasionLabel(o.occasion)}
+                </span>
+              ) : null}
+              <span className="tabular">{o.fecha}</span>
+              {e.worn ? (
+                <span className="inline-flex items-center gap-1 font-semibold text-success">
+                  <Icon name="check" size={12} /> Puesto
+                </span>
+              ) : null}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onFav}
+            aria-pressed={e.fav}
+            aria-label={e.fav ? "Quitar de favoritos" : "Guardar en favoritos"}
+            className="flex h-9 w-9 shrink-0 items-center justify-center"
+          >
+            <Heart on={e.fav} size={22} />
+          </button>
+        </div>
+
+        {o.explicacion ? (
+          <p className="px-4 pt-2 text-[12.5px] leading-relaxed text-muted">{o.explicacion}</p>
+        ) : null}
+
+        <div className="px-4 pt-4">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.07em] text-muted">
+            Lo que llevabas
+          </p>
+          <div className="flex gap-2">
+            {o.prendas.map((p, i) => (
+              <div
+                key={i}
+                className="aspect-[3/4] flex-1 overflow-hidden rounded-sm border border-line bg-bg"
+                title={p.nombre}
+              >
+                {p.imagen ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.imagen}
+                    alt={p.nombre}
+                    loading="lazy"
+                    className="h-full w-full object-contain p-1"
+                  />
+                ) : (
+                  <span className="block h-full w-full" style={{ background: p.swatch }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2 px-4 pt-4">
+          <button
+            type="button"
+            onClick={() => onVote(true)}
+            aria-pressed={e.voto === "up"}
+            aria-label="Me gusta"
+            className={`flex min-h-11 w-12 flex-none items-center justify-center rounded-sm border transition-colors duration-200 ${
+              e.voto === "up"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
+          >
+            <Icon name="pulgar" size={16} active={e.voto === "up"} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onVote(false)}
+            aria-pressed={e.voto === "down"}
+            aria-label="No me gusta"
+            className={`flex min-h-11 w-12 flex-none items-center justify-center rounded-sm border transition-colors duration-200 ${
+              e.voto === "down"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
+          >
+            <Icon name="pulgar" size={16} rotate={180} active={e.voto === "down"} />
+          </button>
+          <button
+            type="button"
+            onClick={onRewear}
+            disabled={rewearing}
+            className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
+          >
+            <Icon name="repetir" size={16} />
+            {rewearing ? "Poniéndolo…" : "Ponérmelo"}
+          </button>
+        </div>
+
+        {e.voto === "down" ? (
+          <div className="px-4 pt-3">
+            <DownReason outfitId={o.id} />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -346,33 +589,6 @@ function FilterChip({
       }`}
     >
       {icon ? <Icon name={icon} size={13} active={on} /> : null}
-      {children}
-    </button>
-  );
-}
-
-function ActionBtn({
-  on,
-  onClick,
-  children,
-  ...rest
-}: {
-  on: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-} & React.ComponentProps<"button">) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={on}
-      className={`flex min-h-10 flex-1 items-center justify-center rounded-sm border text-[12.5px] font-semibold transition-colors duration-200 ${
-        on
-          ? "border-accent bg-accent-soft text-accent"
-          : "border-line bg-surface text-ink hover:border-ink"
-      }`}
-      {...rest}
-    >
       {children}
     </button>
   );
