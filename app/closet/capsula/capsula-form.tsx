@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ASSESSMENT_QUESTIONS, type LifestyleAnswers } from "@/lib/capsule";
 import { saveLifestyle, type CapsuleState } from "./actions";
@@ -24,20 +24,32 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
   const last = step === total - 1;
   const answered = !!answers[q.id];
 
-  // Guard anti-tap-reflejo: al LLEGAR al último paso, el botón de armar (que ocupa
-  // el mismo lugar que "Siguiente" y se transforma bajo el dedo) queda inhabilitado
-  // ~½s. Así un doble-tap o tap de inercia que cruza del paso 4 al 5 no dispara la
-  // generación de ~30s sin querer — hay que taparlo a propósito.
-  const [armReady, setArmReady] = useState(false);
+  // Guard anti-tap-reflejo: el botón de armar ocupa el MISMO lugar que "Siguiente"
+  // y se transforma bajo el dedo al llegar al paso 5; un tap de inercia/doble-tap lo
+  // dispararía sin querer. Lo bloqueamos ~700ms al LLEGAR. CLAVE: el candado se pone
+  // de forma SÍNCRONA en el mismo batch que el cambio de paso (no en un useEffect,
+  // que corre DESPUÉS del render y dejaba al botón nacer habilitado un instante —
+  // esa ventana de carrera era el bug). El ref es el cinturón: aunque el `disabled`
+  // tardara, el onClick lo lee síncrono y cancela el submit.
+  const [armReady, setArmReady] = useState(true);
+  const armReadyRef = useRef(true);
+  const setArm = (v: boolean) => {
+    armReadyRef.current = v;
+    setArmReady(v);
+  };
   useEffect(() => {
-    if (!last) {
-      setArmReady(true);
-      return;
-    }
-    setArmReady(false);
-    const t = setTimeout(() => setArmReady(true), 500);
+    if (!last) return;
+    const t = setTimeout(() => setArm(true), 700);
     return () => clearTimeout(t);
   }, [last]);
+
+  // Avanza un paso; si aterriza en el último, echa el candado YA (mismo batch que
+  // setStep → el paso 5 nace con el botón deshabilitado, sin ventana de carrera).
+  const goNext = () => {
+    const n = Math.min(total - 1, step + 1);
+    if (n === total - 1) setArm(false);
+    setStep(n);
+  };
 
   return (
     <form action={formAction} className="flex min-h-[calc(100dvh-7rem)] flex-col">
@@ -148,8 +160,14 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
           </button>
           {last ? (
             <button
+              key="armar"
               type="submit"
               disabled={!answered || pending || !armReady}
+              onClick={(e) => {
+                // Cinturón síncrono: aunque el `disabled` tardara un frame, el ref
+                // ya está actualizado → cancela el submit en la ventana de carrera.
+                if (!armReadyRef.current || !answered || pending) e.preventDefault();
+              }}
               className="flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               {pending ? (
@@ -164,8 +182,9 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
             </button>
           ) : (
             <button
+              key="siguiente"
               type="button"
-              onClick={() => setStep((s) => Math.min(total - 1, s + 1))}
+              onClick={goNext}
               disabled={!answered}
               className="min-h-12 flex-[2] rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
