@@ -116,10 +116,12 @@ function IconChip({
 function Tile({
   item,
   rendering = false,
+  priority = false,
   onTap,
 }: {
   item: ClosetItem;
   rendering?: boolean;
+  priority?: boolean;
   onTap: () => void;
 }) {
   return (
@@ -130,6 +132,7 @@ function Tile({
             src={item.imagen}
             alt={item.nombre}
             fill
+            priority={priority}
             sizes="(max-width: 430px) 33vw, 130px"
             className="object-cover"
           />
@@ -270,6 +273,12 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
         (g) => g.prendas.length > 0
       );
 
+  // Las primeras prendas del grid (primer pliegue) cargan con `priority` para que
+  // Next no las marque como LCP sin optimizar y mejore la carga percibida.
+  const eagerIds = new Set(
+    grupos.flatMap((g) => g.prendas).slice(0, 4).map((p) => p.id)
+  );
+
   async function quitar(id: string) {
     setRemoved((s) => new Set(s).add(id));
     setSelected(null);
@@ -373,6 +382,7 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
                   <Tile
                     item={p}
                     rendering={rendering.has(p.id)}
+                    priority={eagerIds.has(p.id)}
                     onTap={() => setSelected(p)}
                   />
                 </li>
