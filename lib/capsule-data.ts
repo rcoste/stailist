@@ -34,9 +34,11 @@ const typeTokens = (s: string) =>
 
 // Presta el flat-lay de un arquetipo del catálogo para una prenda sin foto propia
 // (las de "ya la tengo"), para que no salga como un bloque de color. Exige misma
-// categoría y color cercano (umbral RGB estricto), y prefiere que el TIPO coincida
-// por nombre (jeans→jeans). En accesorios el tipo es OBLIGATORIO: sin coincidencia
-// no presta nada (evita poner un cinturón por un reloj). null si no hay buen match.
+// categoría, color cercano (umbral RGB estricto) Y que el TIPO coincida por nombre
+// (jeans→jeans). El tipo es OBLIGATORIO en TODAS las categorías: sin coincidencia
+// no presta nada y el caller cae al render limpio de la prenda real (evita poner
+// una t-shirt negra por un suéter negro, o un cinturón por un reloj). null si no
+// hay buen match.
 export async function borrowArchetypeImage(
   supabase: SupabaseClient,
   category: string,
@@ -64,8 +66,9 @@ export async function borrowArchetypeImage(
     const at = new Set(typeTokens(String(a.name ?? "")));
     let overlap = 0;
     for (const t of want) if (at.has(t)) overlap++;
-    // Accesorios: sin coincidencia de tipo NO se presta (cinturón ≠ reloj ≠ lentes).
-    if (category === "accesorio" && overlap === 0) continue;
+    // Tipo OBLIGATORIO: sin coincidencia de nombre NO se presta — ni en tops
+    // (suéter ≠ t-shirt) ni en accesorios (cinturón ≠ reloj). Mejor render limpio.
+    if (overlap === 0) continue;
     // Prefiere mayor coincidencia de tipo; a igualdad, el color más cercano.
     if (overlap > bestOverlap || (overlap === bestOverlap && d < bestDist)) {
       bestOverlap = overlap;
