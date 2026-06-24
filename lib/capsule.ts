@@ -26,7 +26,7 @@ export type AssessmentQuestion = {
   id: string;
   label: string;
   help?: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; hint?: string }[];
 };
 
 // 5 preguntas de botón. Junto con gustos y colorimetría, definen la cápsula ideal.
@@ -66,9 +66,21 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     id: "clima",
     label: "¿Cómo es el clima donde vives?",
     options: [
-      { value: "frio", label: "Frío buena parte del año" },
-      { value: "templado", label: "Templado" },
-      { value: "calor", label: "Calor casi siempre" },
+      {
+        value: "frio",
+        label: "Frío buena parte del año",
+        hint: "Usas abrigo o varias capas varios meses (inviernos de ~0–12°C).",
+      },
+      {
+        value: "templado",
+        label: "Templado, sin extremos",
+        hint: "Con una chamarra ligera basta casi siempre (~15–24°C la mayor parte del año).",
+      },
+      {
+        value: "calor",
+        label: "Calor casi siempre",
+        hint: "Casi nunca necesitas abrigo; el calor domina (~26°C o más gran parte del año).",
+      },
     ],
   },
   {

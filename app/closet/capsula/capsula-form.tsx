@@ -101,7 +101,14 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
                   selected ? "border-accent bg-accent-soft text-ink" : "border-line bg-surface text-ink hover:border-ink"
                 }`}
               >
-                <span className="min-w-0 flex-1">{o.label}</span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span>{o.label}</span>
+                  {o.hint ? (
+                    <span className="mt-0.5 text-[12px] font-normal leading-snug text-muted">
+                      {o.hint}
+                    </span>
+                  ) : null}
+                </span>
                 <span
                   className={`relative h-[18px] w-[18px] shrink-0 rounded-full border-[1.5px] ${
                     selected ? "border-accent" : "border-line"
