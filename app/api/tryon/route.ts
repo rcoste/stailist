@@ -87,20 +87,33 @@ export async function POST(request: NextRequest) {
   // foto propia privada).
   const { data: items } = await supabase
     .from("items")
-    .select("id, photo_path, archetypes(image_path)")
+    .select("id, photo_path, render_path, render_status, attrs, archetypes(image_path)")
     .in("id", outfit.item_ids as string[]);
 
   const origin = request.nextUrl.origin;
   const avatarUrl = await signFresh(profile.avatar_path);
   if (!avatarUrl) return NextResponse.json({ error: "avatar" }, { status: 502 });
 
+  // Mismo orden que el resto de la app (loadClosetImageMap): arquetipo → render
+  // limpio → foto cruda → prestada. Antes solo leía arquetipo + foto, así que las
+  // prendas de "ya lo tengo" (sin archetype_id ni foto: su imagen vive en
+  // render_path o attrs.image_path) NO aportaban imagen → Gemini inventaba una
+  // prenda genérica (una t-shirt blanca por un suéter esmeralda).
   const prendaUrls: string[] = [];
   for (const it of items ?? []) {
     const arch = it.archetypes as { image_path?: string | null } | null;
-    if (arch?.image_path) prendaUrls.push(origin + arch.image_path);
-    else if (it.photo_path) {
+    const attrs = (it.attrs ?? {}) as { image_path?: string | null };
+    const renderDone = it.render_status === "done" && it.render_path;
+    if (arch?.image_path) {
+      prendaUrls.push(origin + arch.image_path);
+    } else if (renderDone) {
+      const u = await signFresh(it.render_path as string);
+      if (u) prendaUrls.push(u);
+    } else if (it.photo_path) {
       const u = await signFresh(it.photo_path as string);
       if (u) prendaUrls.push(u);
+    } else if (attrs.image_path) {
+      prendaUrls.push(origin + attrs.image_path);
     }
   }
   if (prendaUrls.length === 0) {
