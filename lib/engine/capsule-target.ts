@@ -109,6 +109,8 @@ Devuelve "items". Cada prenda:
 - prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
 - porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
 
+Y un "resumen": 2-3 frases en voz de amiga cool (tuteo) que expliquen POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones. Conecta su PALETA, su VIDA real y su CUERPO con lo que armaste (ej. "armé tu base sobre tus tonos invierno…", "como tu semana es de oficina pero el finde relajas…", "los cortes con estructura van con tu silueta"). Específico y aterrizado a SUS datos: nombra su estación de color, su trabajo/estilo, su silueta. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada frase nombra algo real suyo o no va. No resumas la lista — explica el pensamiento.
+
 Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.`,
     messages: [
       {
@@ -150,8 +152,9 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
                 additionalProperties: false,
               },
             },
+            resumen: { type: "string" },
           },
-          required: ["items"],
+          required: ["items", "resumen"],
           additionalProperties: false,
         },
       },
@@ -160,7 +163,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
-  const parsed = JSON.parse(text) as { items: CapsuleItem[] };
+  const parsed = JSON.parse(text) as { items: CapsuleItem[]; resumen?: string };
   if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
     throw new Error("BAD_CAPSULE_TARGET");
   }
@@ -169,5 +172,5 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));
-  return { version: 2, items };
+  return { version: 2, items, resumen: parsed.resumen?.trim() || undefined };
 }

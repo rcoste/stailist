@@ -132,7 +132,11 @@ export type CapsuleItem = {
   porque: string; // una línea: por qué la necesita
 };
 
-export type CapsuleTarget = { version: 2; items: CapsuleItem[] };
+export type CapsuleTarget = {
+  version: 2;
+  items: CapsuleItem[];
+  resumen?: string; // "la carnita": por qué esta cápsula es tuya (paleta/vida/cuerpo)
+};
 
 // --- Capa 2: el match contra el clóset ------------------------------------
 

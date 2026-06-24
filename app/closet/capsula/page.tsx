@@ -53,6 +53,19 @@ export default async function CapsulaPage() {
           </div>
         </div>
 
+        {/* La carnita: por qué esta cápsula es tuya (la asesora explica su pensamiento). */}
+        {target.resumen ? (
+          <div className="rounded-xl border border-accent/30 bg-accent-soft p-4">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-accent">
+              <Icon name="destello" size={13} />
+              Por qué esta cápsula es tuya
+            </div>
+            <p className="display mt-2 text-[14px] font-medium leading-relaxed text-ink">
+              {target.resumen}
+            </p>
+          </div>
+        ) : null}
+
         {done && view ? (
           <DoneState have={view.haveCount} total={view.totalCount} />
         ) : (
