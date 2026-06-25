@@ -198,26 +198,42 @@ export function ImportCarreteFlow({
     // Antes era un for secuencial (tiempo ≈ N × un render); con el pool baja a
     // ≈ N/CONCURRENCY. El tope evita bombardear Gemini con N a la vez (429s) y
     // mantiene el progreso claro (el contador sube conforme cada uno termina).
-    const CONCURRENCY = 3;
+    // Pool de 4 con red de seguridad (reintento en 429/red). Sin el reintento, 4
+    // concurrentes podrían pegar el rate-limit de Gemini y fallar la prenda; con
+    // backoff, reintenta en vez de rendirse.
+    const CONCURRENCY = 4;
     const results: RenderItem[] = base.map((it) => ({ ...it })); // por índice, ordenado
     let done = 0;
 
     const renderOne = async (idx: number) => {
       const it = base[idx];
-      try {
-        const res = await fetch("/api/render-prenda", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: it.photo, attrs: it.attrs }),
-        });
-        if (res.ok) {
-          const { path, url } = (await res.json()) as { path: string; url: string | null };
-          results[idx] = { ...it, status: "done", path, url };
-        } else {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const res = await fetch("/api/render-prenda", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: it.photo, attrs: it.attrs }),
+          });
+          if (res.ok) {
+            const { path, url } = (await res.json()) as { path: string; url: string | null };
+            results[idx] = { ...it, status: "done", path, url };
+            break;
+          }
+          // 429 = rate-limit de Gemini → backoff y reintenta (hasta 2 veces).
+          if (res.status === 429 && attempt < 2) {
+            await new Promise((r) => setTimeout(r, 900 * (attempt + 1)));
+            continue;
+          }
           results[idx] = { ...it, status: "failed" };
+          break;
+        } catch {
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 900 * (attempt + 1)));
+            continue;
+          }
+          results[idx] = { ...it, status: "failed" };
+          break;
         }
-      } catch {
-        results[idx] = { ...it, status: "failed" };
       }
       done += 1;
       setState({ kind: "render", items: [...results], done, total: base.length });
@@ -339,12 +355,42 @@ export function ImportCarreteFlow({
   if (state.kind === "render") {
     return (
       <Overlay>
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <Spinner className="h-7 w-7 text-accent" />
+        <div className="flex flex-col items-center gap-1 pb-2 text-center">
           <p className="editorial text-base text-ink">Generando tus prendas…</p>
           <p className="text-sm text-muted">
             {state.done}/{state.total}
           </p>
+        </div>
+        {/* Grid que se LLENA: cada prenda con spinner hasta que su render llega
+            (en vez de un spinner global) — se siente mucho más rápido. */}
+        <div className="grid grid-cols-2 gap-3">
+          {state.items.map((it) => (
+            <div
+              key={it.id}
+              className="flex flex-col gap-2 rounded-xl border border-line bg-bg p-2"
+            >
+              <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
+                {it.status === "done" && it.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={it.url}
+                    alt={it.attrs.nombre}
+                    className="h-full w-full object-cover"
+                    style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
+                  />
+                ) : it.status === "failed" ? (
+                  <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] text-muted">
+                    No se pudo generar
+                  </div>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-5 w-5 text-accent" />
+                  </div>
+                )}
+              </div>
+              <p className="truncate text-xs font-medium text-ink">{it.attrs.nombre}</p>
+            </div>
+          ))}
         </div>
       </Overlay>
     );
