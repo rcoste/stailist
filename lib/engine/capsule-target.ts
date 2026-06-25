@@ -4,6 +4,7 @@ import {
   CATEGORIES,
   FORMALIDADES,
   type CapsuleItem,
+  type CapsulePilar,
   type CapsuleTarget,
   type LifestyleAnswers,
 } from "@/lib/capsule";
@@ -109,7 +110,10 @@ Devuelve "items". Cada prenda:
 - prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
 - porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
 
-Y un "resumen": 2-3 frases en voz de amiga cool (tuteo) que expliquen POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones. Conecta su PALETA, su VIDA real y su CUERPO con lo que armaste (ej. "armé tu base sobre tus tonos invierno…", "como tu semana es de oficina pero el finde relajas…", "los cortes con estructura van con tu silueta"). Específico y aterrizado a SUS datos: nombra su estación de color, su trabajo/estilo, su silueta. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada frase nombra algo real suyo o no va. No resumas la lista — explica el pensamiento.
+Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones, aterrizada a SUS datos reales. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada cosa nombra algo concreto suyo (su estación, su trabajo, su silueta, su metal) o NO va.
+- "firma": UNA frase corta (voz de amiga, tuteo) que nombre su SELLO de estilo — un titular, no una oración larga. Envuelve la frase CLAVE (2-3 palabras) entre *asteriscos*. Ej: "Vas por un pulido versátil, con un *guiño edgy*."
+- "subline": UNA línea (≤ ~95 chars) que conecte la firma con cómo armaste la cápsula. Ej: "Así armé tu cápsula para que ese sea tu default, sin pensarlo."
+- "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").
 
 Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.`,
     messages: [
@@ -152,9 +156,26 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
                 additionalProperties: false,
               },
             },
-            resumen: { type: "string" },
+            firma: { type: "string" },
+            subline: { type: "string" },
+            pilares: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  titulo: { type: "string" },
+                  detalle: { type: "string" },
+                  icono: {
+                    type: "string",
+                    enum: ["paleta", "versatilidad", "estructura", "metal", "color", "vida"],
+                  },
+                },
+                required: ["titulo", "detalle", "icono"],
+                additionalProperties: false,
+              },
+            },
           },
-          required: ["items", "resumen"],
+          required: ["items", "firma", "subline", "pilares"],
           additionalProperties: false,
         },
       },
@@ -163,7 +184,12 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
-  const parsed = JSON.parse(text) as { items: CapsuleItem[]; resumen?: string };
+  const parsed = JSON.parse(text) as {
+    items: CapsuleItem[];
+    firma?: string;
+    subline?: string;
+    pilares?: CapsulePilar[];
+  };
   if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
     throw new Error("BAD_CAPSULE_TARGET");
   }
@@ -172,5 +198,11 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));
-  return { version: 2, items, resumen: parsed.resumen?.trim() || undefined };
+  return {
+    version: 2,
+    items,
+    firma: parsed.firma?.trim() || undefined,
+    subline: parsed.subline?.trim() || undefined,
+    pilares: parsed.pilares?.filter((p) => p.titulo && p.detalle) || undefined,
+  };
 }

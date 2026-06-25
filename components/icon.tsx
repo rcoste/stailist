@@ -46,7 +46,8 @@ export type IconName =
   | "enlace"
   | "filtro"
   | "flecha"
-  | "menos";
+  | "menos"
+  | "paleta";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -66,6 +67,14 @@ const GLYPHS: Record<IconName, JSX.Element> = {
   corazon: <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />,
   check: <path d="M5 12.5l4.5 4.5L19 7" />,
   destello: <path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z" />,
+  paleta: (
+    <>
+      <circle cx="9" cy="9" r="1.9" />
+      <circle cx="15" cy="9" r="1.9" />
+      <circle cx="9" cy="15" r="1.9" />
+      <circle cx="15" cy="15" r="1.9" />
+    </>
+  ),
   sobre: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="1.5" />

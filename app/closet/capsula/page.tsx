@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { CapsuleList } from "@/components/capsule-list";
+import { PorQueEsTuya } from "@/components/por-que-es-tuya";
 import { Icon, type IconName } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -53,17 +54,14 @@ export default async function CapsulaPage() {
           </div>
         </div>
 
-        {/* La carnita: por qué esta cápsula es tuya (la asesora explica su pensamiento). */}
-        {target.resumen ? (
-          <div className="rounded-xl border border-accent/30 bg-accent-soft p-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-accent">
-              <Icon name="destello" size={13} />
-              Por qué esta cápsula es tuya
-            </div>
-            <p className="display mt-2 text-[14px] font-medium leading-relaxed text-ink">
-              {target.resumen}
-            </p>
-          </div>
+        {/* Por qué esta cápsula es tuya: sello en serif + pilares cortos (sin caja). */}
+        {target.firma || target.pilares?.length || target.resumen ? (
+          <PorQueEsTuya
+            firma={target.firma}
+            subline={target.subline}
+            pilares={target.pilares}
+            resumen={target.resumen}
+          />
         ) : null}
 
         {done && view ? (

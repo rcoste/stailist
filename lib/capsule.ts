@@ -132,10 +132,22 @@ export type CapsuleItem = {
   porque: string; // una línea: por qué la necesita
 };
 
+// Un "pilar" del por qué: una razón corta con ícono (paleta, vida, cuerpo, metal).
+export type CapsulePilar = {
+  titulo: string; // 2-3 palabras ("Paleta de invierno")
+  detalle: string; // una línea (≤ ~90 chars)
+  icono?: "paleta" | "versatilidad" | "estructura" | "metal" | "color" | "vida";
+};
+
 export type CapsuleTarget = {
   version: 2;
   items: CapsuleItem[];
-  resumen?: string; // "la carnita": por qué esta cápsula es tuya (paleta/vida/cuerpo)
+  // "La carnita": por qué esta cápsula es tuya. Firma (sello de estilo en serif,
+  // con la frase clave entre *asteriscos* → acento) + sublínea conectora + pilares.
+  firma?: string;
+  subline?: string;
+  pilares?: CapsulePilar[];
+  resumen?: string; // legado: párrafo de cápsulas viejas (fallback de render)
 };
 
 // --- Capa 2: el match contra el clóset ------------------------------------
