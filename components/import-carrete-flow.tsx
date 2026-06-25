@@ -194,10 +194,16 @@ export function ImportCarreteFlow({
     }));
     setState({ kind: "render", items: base, done: 0, total: base.length });
 
-    // Render secuencial para no saturar y dar progreso claro.
-    const results: RenderItem[] = [];
+    // Render con POOL ACOTADO (no secuencial): hasta CONCURRENCY renders a la vez.
+    // Antes era un for secuencial (tiempo ≈ N × un render); con el pool baja a
+    // ≈ N/CONCURRENCY. El tope evita bombardear Gemini con N a la vez (429s) y
+    // mantiene el progreso claro (el contador sube conforme cada uno termina).
+    const CONCURRENCY = 3;
+    const results: RenderItem[] = base.map((it) => ({ ...it })); // por índice, ordenado
     let done = 0;
-    for (const it of base) {
+
+    const renderOne = async (idx: number) => {
+      const it = base[idx];
       try {
         const res = await fetch("/api/render-prenda", {
           method: "POST",
@@ -206,16 +212,28 @@ export function ImportCarreteFlow({
         });
         if (res.ok) {
           const { path, url } = (await res.json()) as { path: string; url: string | null };
-          results.push({ ...it, status: "done", path, url });
+          results[idx] = { ...it, status: "done", path, url };
         } else {
-          results.push({ ...it, status: "failed" });
+          results[idx] = { ...it, status: "failed" };
         }
       } catch {
-        results.push({ ...it, status: "failed" });
+        results[idx] = { ...it, status: "failed" };
       }
       done += 1;
-      setState({ kind: "render", items: [...results, ...base.slice(done)], done, total: base.length });
-    }
+      setState({ kind: "render", items: [...results], done, total: base.length });
+    };
+
+    // Worker pool: CONCURRENCY "trabajadores" jalan índices de una cola compartida.
+    const queue = base.map((_, i) => i);
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+        let idx = queue.shift();
+        while (idx !== undefined) {
+          await renderOne(idx);
+          idx = queue.shift();
+        }
+      })
+    );
     setState({ kind: "visual", items: results });
   }
 
