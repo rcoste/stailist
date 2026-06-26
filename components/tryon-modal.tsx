@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// Vista grande del try-on (overlay). Compartida por Hoy y el wow del onboarding.
+// Vista grande del try-on (overlay claro). Usada por el wow del onboarding.
+// Hoy usa el try-on inmersivo oscuro (components/tryon-immersive.tsx).
 // "¿No te pareces?" lleva al wizard de avatar (changeHref).
 export function TryonModal({
   image,
