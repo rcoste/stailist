@@ -6,8 +6,13 @@ import { OutfitCard } from "@/components/outfit-card";
 import { TryonModal } from "@/components/tryon-modal";
 import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
-import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
-import { LookRequest, type LookInput } from "@/components/weather-picker";
+import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
+import {
+  LookRequest,
+  type LookInput,
+  ocasionLabel,
+  bucketLabel,
+} from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
@@ -241,7 +246,20 @@ export function HoyClient({
   }
 
   if (state.kind === "generating") {
-    return <GeneratingScreen phrases={HOY_PHRASES} />;
+    const li = lastInput.current;
+    let frase = "armando algo a tu medida para hoy…";
+    let plan: GenPlan | null = null;
+    if (li) {
+      frase = li.plan
+        ? `algo a tu medida para "${li.plan}"…`
+        : (FRASES_ESTILISTA[li.objective] ?? frase);
+      plan = {
+        ocasion: ocasionLabel(li.objective),
+        momento: li.momento,
+        clima: "weather" in li ? bucketLabel(li.weather.temp_c) : null,
+      };
+    }
+    return <StylistGenerating frase={frase} plan={plan} />;
   }
 
   if (state.kind === "error") {
@@ -324,14 +342,13 @@ export function HoyClient({
   );
 }
 
-// Frases de "generando" para Hoy (lenguaje como progreso, palabra clave en acento).
-const HOY_PHRASES: GenPhrase[] = [
-  { a: "leyendo tu ", k: "clóset", b: "…" },
-  { a: "combinando tus ", k: "colores", b: "…" },
-  { a: "cuidando el ", k: "clima", b: "…" },
-  { a: "afinando los ", k: "detalles", b: "…" },
-  { a: "puliendo tu ", k: "look", b: "…" },
-];
+// Frase de estilista del "generando", por ocasión (se escribe sola, typewriter).
+const FRASES_ESTILISTA: Record<string, string> = {
+  diario: "algo cómodo y resuelto para tu día, sin complicarte…",
+  oficina: "algo pulido para tu oficina, sin que pierdas comodidad…",
+  evento: "algo con presencia para tu evento, que se sienta muy tú…",
+  refrescar: "una combinación distinta a la de siempre, bien fresca…",
+};
 
 // Card del outfit con el try-on integrado (3 estados). Va keyed por outfit.id
 // en el padre para que, al generar otro look, el try-on arranque limpio con la

@@ -33,6 +33,18 @@ const BUCKETS = [
   { label: "Caluroso", ref: "lo más fresco", temp_c: 33 },
 ];
 
+// Etiquetas legibles del plan, reusadas por el "generando" (chips + frase).
+export function ocasionLabel(key: string): string {
+  return OCASIONES.find((o) => o.key === key)?.label ?? key;
+}
+export function bucketLabel(temp_c: number): string {
+  let best = BUCKETS[0];
+  for (const b of BUCKETS) {
+    if (Math.abs(b.temp_c - temp_c) < Math.abs(best.temp_c - temp_c)) best = b;
+  }
+  return best.label;
+}
+
 function getPosition(): Promise<{ lat: number; lon: number } | null> {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) return resolve(null);
