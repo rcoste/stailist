@@ -6,15 +6,15 @@
  * bg-accent, border-line, etc. Dark mode: diferido (ver DESIGN.md).
  */
 :root {
-  /* Color */
-  --c-bg: #f5f3f0;          /* papel hueso */
+  /* Color — v3 "Gen-Z monocromo" (B&N): de-warmed, acento = tinta casi negra */
+  --c-bg: #f4f3f1;          /* papel neutro */
   --c-surface: #ffffff;     /* cards */
-  --c-ink: #1a1718;         /* texto principal */
-  --c-muted: #79716b;       /* texto secundario */
-  --c-line: #e5e1dd;        /* hairlines */
-  --c-accent: #722f37;      /* burdeos oxblood — CTAs, el "ai", énfasis */
-  --c-accent-deep: #5c252c; /* hover/pressed del acento */
-  --c-accent-soft: #f2e8e8; /* tinte para chips/fondos suaves */
+  --c-ink: #141414;         /* texto principal */
+  --c-muted: #6f6f6f;       /* texto secundario */
+  --c-line: #e4e3e0;        /* hairlines */
+  --c-accent: #0a0a0a;      /* tinta (casi negro) — CTAs, el "ai", énfasis */
+  --c-accent-deep: #000000; /* hover/pressed del acento — negro puro */
+  --c-accent-soft: #f1f0ee; /* gris neutro para chips/fondos suaves */
   --c-on-accent: #ffffff;
   --c-success: #4c7a5e;
   --c-error: #b3261e;
@@ -49,12 +49,12 @@
   --color-error: var(--c-error);
   --color-warning: var(--c-warning);
 
-  /* Tipografía v2 "Atelier" (variables inyectadas por next/font en layout.tsx):
-     font-sans = Hanken Grotesk (TODO el UI/body), font-display/editorial = Bodoni
-     Moda (titulares + justificación del outfit; NUNCA en UI ni texto <18px). */
-  --font-sans: var(--font-hanken), system-ui, sans-serif;
-  --font-display: var(--font-bodoni), "Times New Roman", Georgia, serif;
-  --font-editorial: var(--font-bodoni), Georgia, serif;
+  /* Tipografía v3 "Gen-Z monocromo" (variables inyectadas por next/font en
+     layout.tsx): font-sans = Arimo (TODO el UI/body + titulares), font-display/
+     editorial = Instrument Serif (acento mínimo ≥18px, itálica; NUNCA en UI). */
+  --font-sans: var(--font-arimo), system-ui, sans-serif;
+  --font-display: var(--font-instrument), "Times New Roman", Georgia, serif;
+  --font-editorial: var(--font-instrument), Georgia, serif;
 
   /* Escala tipográfica de DESIGN.md */
   --text-display: 2rem;          /* 32px */
@@ -83,31 +83,33 @@
 body {
   background: var(--c-bg);
   color: var(--c-ink);
-  font-family: var(--font-hanken), system-ui, sans-serif;
+  font-family: var(--font-arimo), system-ui, sans-serif;
 }
 
-/* Titulares = Bodoni Moda (serif display). En @layer base para que la utilidad
-   font-sans pueda devolver un h1–h3 a la grotesca (labels uppercase pequeños) —
-   las utilidades de Tailwind ganan a base, pero NO a reglas sin capa. */
+/* Titulares = Arimo 700 (sans grande, estilo Mango). Inversión de jerarquía v3:
+   antes los h1–h3 forzaban serif; ahora la serif baja a acento mínimo (.editorial
+   / .display). En @layer base para que la utilidad font-sans siga ganando. */
 @layer base {
   h1,
   h2,
   h3 {
-    font-family: var(--font-bodoni), "Times New Roman", Georgia, serif;
+    font-family: var(--font-arimo), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 }
 
-/* La justificación del outfit y micro-acentos editoriales: Bodoni 500 REDONDA
-   (no itálica) — alto contraste, no caligráfica. */
+/* Acento editorial mínimo (justificación del outfit, micro-acentos): Instrument
+   Serif. Solo ≥18px, nunca en UI/labels/párrafos. */
 .editorial {
-  font-family: var(--font-bodoni), Georgia, serif;
+  font-family: var(--font-instrument), Georgia, serif;
   font-style: normal;
   font-weight: 500;
 }
 
-/* Aplica la serif display a cualquier elemento que no sea h1–h3. */
+/* Aplica la serif de acento a cualquier elemento que no sea h1–h3. */
 .display {
-  font-family: var(--font-bodoni), "Times New Roman", Georgia, serif;
+  font-family: var(--font-instrument), "Times New Roman", Georgia, serif;
 }
 
 /* Números tabulares para métricas y datos */

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 // Manifest de la PWA. Next.js auto-inyecta <link rel="manifest"> al existir
-// este archivo. Colores y nombre alineados al DS (burdeos + papel hueso).
+// este archivo. Colores y nombre alineados al DS v3 (monocromo + papel neutro).
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "stailist — tu stylist personal",
@@ -12,8 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f5f3f0",
-    theme_color: "#f5f3f0",
+    background_color: "#f4f3f1",
+    theme_color: "#f4f3f1",
     lang: "es",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
