@@ -13,7 +13,7 @@ export default async function GustosPage() {
 
       <div className="flex flex-col gap-2">
         <h1 className="text-display font-semibold text-ink">
-          ¿Qué estilo te late?
+          ¿Qué estilo te gusta?
         </h1>
         <p className="text-base text-muted">
           No pienses si lo tienes — desliza por puro gusto. ❤️ si te encanta, ✕

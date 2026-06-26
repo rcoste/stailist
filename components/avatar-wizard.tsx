@@ -269,7 +269,7 @@ export function AvatarWizard({
           <div className="flex flex-col gap-1">
             <h1 className="text-h1 font-semibold text-ink">¿Quedó?</h1>
             <p className="text-sm text-muted">
-              Si no se te parece, rehazlo. Si te late, lo guardo como tu avatar.
+              Si no se te parece, rehazlo. Si te gusta, lo guardo como tu avatar.
             </p>
           </div>
           <div className="relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-lg border border-line bg-surface">

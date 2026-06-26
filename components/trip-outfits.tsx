@@ -272,7 +272,7 @@ export function TripOutfits({
               </p>
             ) : null}
             <div className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
-              <span className="text-[11.5px] text-muted">¿Te late?</span>
+              <span className="text-[11.5px] text-muted">¿Te gusta?</span>
               <div className="ml-auto flex gap-2">
                 <button
                   type="button"
