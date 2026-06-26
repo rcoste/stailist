@@ -9,11 +9,11 @@ import { Icon } from "@/components/icon";
 import { saveTastes, type SwipeResult } from "./actions";
 import type { StyleArchetype } from "@/lib/engine/archetype";
 
-// Deck de swipes estilo Tinder (rebrand v2): pila con profundidad, foto a
-// sangre con nombre/vibe sobre degradado, sellos ME GUSTA / NO VA al arrastrar,
-// tinte direccional, y lanzamiento por velocidad (flick). El gesto es el atajo;
-// los botones corazón/equis son el camino garantizado (desktop + accesibilidad).
-// Sin librerías: pointer events + transform.
+// Deck de swipes estilo Tinder (rebrand v3): pila con profundidad, carta activa
+// A COLOR (la ropa es el contenido), las de atrás en B&N. Sellos ME GUSTA / NO VA
+// al arrastrar, lanzamiento por velocidad (flick). El gesto es el atajo; los
+// botones redondos son el camino garantizado. Al final, el reveal de estilo es
+// un tríptico de los looks que amaste. Sin librerías: pointer events + transform.
 const THRESHOLD = 90; // px para contar como decisión
 const FLICK = 0.6; // px/ms — un flick rápido decide aunque no cruce el umbral
 
@@ -109,24 +109,58 @@ export function SwipeDeck({
       );
     }
 
-    // Reveal del arquetipo de estilo: el momento "me veo reflejada".
+    // Reveal del arquetipo: tríptico de los looks que amaste ("me veo reflejada").
     if (archetype) {
+      const liked = looks.filter(
+        (l) => l.image && results.some((r) => r.id === l.id && r.liked)
+      );
+      const words = archetype.nombre.trim().split(" ");
+      const last = words.length > 1 ? words.pop() : null;
+      const head = words.join(" ");
       return (
-        <div className="flex flex-col gap-6 rounded-lg border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
-          <div className="flex flex-col gap-2 text-center">
-            <span className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">
-              Tu estilo es
-            </span>
-            <h2 className="text-h1 font-semibold text-ink">{archetype.nombre}</h2>
-            <p className="editorial text-base text-muted">
-              {archetype.descripcion}
-            </p>
-          </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 pb-4 text-center">
+          {liked.length > 0 ? (
+            <div className="relative mx-auto mb-2 h-[230px] w-[262px]">
+              {liked[1] ? (
+                <FanFig
+                  image={liked[1].image as string}
+                  className="left-0 top-[34px] h-[154px] w-[116px] origin-bottom -rotate-[5deg] shadow-[var(--shadow-hairline)]"
+                />
+              ) : null}
+              {liked[2] ? (
+                <FanFig
+                  image={liked[2].image as string}
+                  className="right-0 top-[34px] h-[154px] w-[116px] origin-bottom rotate-[5deg] shadow-[var(--shadow-hairline)]"
+                />
+              ) : null}
+              <FanFig
+                image={liked[0].image as string}
+                className="left-1/2 top-3 z-[2] h-[202px] w-[152px] -translate-x-1/2 shadow-[0_16px_38px_-20px_rgba(0,0,0,0.4)]"
+              />
+            </div>
+          ) : null}
+          <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+            tu estilo
+          </p>
+          <h2 className="text-[40px] font-bold leading-[1.02] tracking-[-0.03em] text-ink">
+            {head}
+            {last ? (
+              <>
+                {" "}
+                <em className="font-display font-normal italic tracking-normal">
+                  {last}
+                </em>
+              </>
+            ) : null}
+          </h2>
+          <p className="mt-3 max-w-[300px] font-display text-[18px] leading-snug text-muted">
+            {archetype.descripcion}
+          </p>
           <Link
             href={doneHref}
-            className="flex min-h-12 items-center justify-center rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            className="mt-7 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
-            {doneLabel}
+            {doneLabel} <Icon name="flecha" size={19} />
           </Link>
         </div>
       );
@@ -149,12 +183,8 @@ export function SwipeDeck({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <p className="tabular text-center text-sm text-muted">
-        {index + 1} de {looks.length}
-      </p>
-
       <div className="relative mx-auto aspect-[3/4] max-h-[60dvh] w-full max-w-80">
-        {/* Cartas de atrás (profundidad) */}
+        {/* Cartas de atrás (profundidad) — en B&N */}
         {behind.map((b, i) => {
           // i=0 es la más atrás (index+2), i=1 la siguiente (index+1)
           const depth = behind.length - i; // 2 o 1
@@ -170,7 +200,13 @@ export function SwipeDeck({
               aria-hidden
             >
               {b.image ? (
-                <Image src={b.image} alt="" fill sizes="320px" className="object-cover" />
+                <Image
+                  src={b.image}
+                  alt=""
+                  fill
+                  sizes="320px"
+                  className="object-cover grayscale"
+                />
               ) : (
                 <span className="absolute inset-0 bg-bg" />
               )}
@@ -178,7 +214,7 @@ export function SwipeDeck({
           );
         })}
 
-        {/* Carta de arriba (interactiva) */}
+        {/* Carta de arriba (interactiva) — a color */}
         <div
           key={look.id}
           className="absolute inset-0 z-10 touch-none select-none overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-hairline)]"
@@ -225,35 +261,35 @@ export function SwipeDeck({
 
           {/* Sellos */}
           <span
-            className="pointer-events-none absolute left-4 top-4 -rotate-12 rounded-sm border-2 border-accent bg-surface/90 px-3 py-1 text-sm font-bold uppercase tracking-wide text-accent"
+            className="pointer-events-none absolute right-4 top-4 rotate-[8deg] border-2 border-ink bg-surface/90 px-3 py-1.5 text-[13px] font-extrabold uppercase tracking-wide text-ink"
             style={{ opacity: likeOp }}
             aria-hidden
           >
             Me gusta
           </span>
           <span
-            className="pointer-events-none absolute right-4 top-4 rotate-12 rounded-sm border-2 border-ink bg-surface/90 px-3 py-1 text-sm font-bold uppercase tracking-wide text-ink"
+            className="pointer-events-none absolute left-4 top-4 -rotate-[8deg] border-2 border-ink bg-surface/90 px-3 py-1.5 text-[13px] font-extrabold uppercase tracking-wide text-ink"
             style={{ opacity: nopeOp }}
             aria-hidden
           >
             No va
           </span>
 
-          {/* Nombre + vibe sobre degradado de protección */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 via-ink/40 to-transparent px-4 pb-4 pt-12">
-            <p className="text-lg font-semibold text-surface">{look.nombre}</p>
-            <p className="editorial text-sm text-surface/85">{look.vibe}</p>
+          {/* Nombre sobre degradado de protección */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 via-ink/35 to-transparent px-4 pb-5 pt-12">
+            <p className="font-display text-[22px] italic text-surface">{look.nombre}</p>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-80 items-center gap-3 pb-2">
+      {/* Botones redondos: el sí relleno tinta */}
+      <div className="flex items-center justify-center gap-10 pt-2">
         <button
           type="button"
           onClick={() => decide(false)}
           disabled={pending}
           aria-label={`No me gusta ${look.nombre}`}
-          className="flex min-h-14 flex-1 items-center justify-center rounded-sm border border-line bg-surface text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
+          className="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
         >
           <Icon name="equis" size={24} />
         </button>
@@ -262,11 +298,24 @@ export function SwipeDeck({
           onClick={() => decide(true)}
           disabled={pending}
           aria-label={`Me gusta ${look.nombre}`}
-          className="flex min-h-14 flex-1 items-center justify-center rounded-sm bg-accent text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-accent text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
         >
           <Icon name="corazon" size={24} />
         </button>
       </div>
+
+      <p className="tabular pb-2 text-center text-[12px] text-muted">
+        {index + 1} de {looks.length}
+      </p>
     </div>
+  );
+}
+
+// Una lámina del tríptico del reveal (foto a color, recorte vertical).
+function FanFig({ image, className }: { image: string; className: string }) {
+  return (
+    <figure className={`absolute overflow-hidden border border-line bg-surface ${className}`}>
+      <Image src={image} alt="" fill sizes="160px" className="object-cover" />
+    </figure>
   );
 }

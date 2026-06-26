@@ -12,13 +12,13 @@ export default async function GustosPage() {
       <OnboardingProgress step={1} />
 
       <div className="flex flex-col gap-2">
-        <h1 className="text-display font-semibold text-ink">
-          ¿Qué estilo te late?
-        </h1>
-        <p className="text-base text-muted">
-          No pienses si lo tienes — desliza por puro gusto. ❤️ si te encanta, ✕
-          si no es lo tuyo.
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+          paso 1 de 5
         </p>
+        <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
+          ¿te gusta o{" "}
+          <em className="font-display font-normal italic tracking-normal">no</em>?
+        </h1>
       </div>
 
       <SwipeDeck looks={looks} />

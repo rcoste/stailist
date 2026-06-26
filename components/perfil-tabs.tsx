@@ -126,7 +126,7 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
         </span>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-ink">Danos tu opinión</span>
-          <span className="text-xs text-muted">Qué te late, qué no, qué falta.</span>
+          <span className="text-xs text-muted">Qué te gusta, qué no, qué falta.</span>
         </div>
         <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
       </a>

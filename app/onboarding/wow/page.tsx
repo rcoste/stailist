@@ -1,4 +1,3 @@
-import { OnboardingProgress } from "@/components/onboarding-progress";
 import { getProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { routeForStep } from "@/lib/onboarding";
@@ -68,22 +67,15 @@ export default async function WowPage() {
   }
 
   return (
-    <section className="flex flex-1 flex-col gap-6 pt-4">
-      <OnboardingProgress step={5} />
-
-      <div className="flex flex-col gap-2">
-        <h1 className="text-display font-semibold text-ink">
-          Tus primeros looks
-        </h1>
-        <p className="text-base text-muted">
-          Armados con tu clóset, tus gustos y tus colores.
-        </p>
-      </div>
-
+    <section className="flex flex-1 flex-col pt-4">
+      {/* El chrome (barra de progreso + encabezados) lo controla el cliente por
+          estado: en "choosing" muestra "Tus primeros looks", y al elegir uno
+          conmuta a "hoy · nombre" (modo Hoy) — sin doble encabezado. */}
       <WowClient
         initialOutfits={initialOutfits}
         userId={profile.id}
         defaultObjective={profile.last_objective}
+        hasAvatar={!!profile.avatar_path}
       />
     </section>
   );

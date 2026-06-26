@@ -47,7 +47,9 @@ export type IconName =
   | "filtro"
   | "flecha"
   | "menos"
-  | "paleta";
+  | "paleta"
+  | "vestido"
+  | "camisa";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -243,6 +245,14 @@ const GLYPHS: Record<IconName, JSX.Element> = {
   filtro: <path d="M3 5h18l-7 8v5l-4 2v-7z" />,
   // Flecha a la derecha (ruta del viaje: Tokio → Kioto → Osaka).
   flecha: <path d="M5 12h14M13 6l6 6-6 6" />,
+  // Género (onboarding): vestido (mujer) y camisa (hombre).
+  vestido: <path d="M12 3a3 3 0 0 1 3 3c0 1.5-1 2.5-1.5 4l3.5 8H7l3.5-8C10 8.5 9 7.5 9 6a3 3 0 0 1 3-3z" />,
+  camisa: (
+    <>
+      <path d="M8 4h8v6l-1 11H9L8 10z" />
+      <path d="M8 4l-1 4M16 4l1 4" />
+    </>
+  ),
 };
 
 export function Icon({

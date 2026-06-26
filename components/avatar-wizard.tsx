@@ -44,10 +44,14 @@ export function AvatarWizard({
   userId,
   gender,
   returnTo,
+  skipHref,
 }: {
   userId: string;
   gender: Gender;
   returnTo: string;
+  /** Si se pasa, muestra "ahora no, seguir sin avatar" en el primer paso y lleva
+   *  ahí (el avatar es opcional — en el onboarding no debe atrapar a nadie). */
+  skipHref?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("fotos");
@@ -187,6 +191,14 @@ export function AvatarWizard({
           >
             Siguiente
           </button>
+          {skipHref ? (
+            <Link
+              href={skipHref}
+              className="flex min-h-11 items-center justify-center rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-ink"
+            >
+              Ahora no, seguir sin avatar
+            </Link>
+          ) : null}
         </div>
       )}
 
@@ -269,7 +281,7 @@ export function AvatarWizard({
           <div className="flex flex-col gap-1">
             <h1 className="text-h1 font-semibold text-ink">¿Quedó?</h1>
             <p className="text-sm text-muted">
-              Si no se te parece, rehazlo. Si te late, lo guardo como tu avatar.
+              Si no se te parece, rehazlo. Si te gusta, lo guardo como tu avatar.
             </p>
           </div>
           <div className="relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-lg border border-line bg-surface">

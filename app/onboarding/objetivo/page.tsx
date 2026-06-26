@@ -1,16 +1,10 @@
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
-import { saveObjective } from "./actions";
-import { OBJECTIVES, type Objective } from "./objectives";
+import { ObjetivoPicker } from "./objetivo-picker";
 
-const DESCRIPTIONS: Record<Objective, string> = {
-  diario: "Looks para tu rutina, sin pensarle tanto",
-  oficina: "Verte pro aunque el día esté pesado",
-  evento: "Boda, cena, algo que importa",
-  viaje: "Vestir bien con lo que cabe en la maleta",
-  refrescar: "Salir del mismo look de siempre",
-};
-
+// Objetivo del momento — va casi al final (paso 4 de 5), justo antes de generar,
+// para que la petición quede fresca. (El diseño lo dibuja como "paso 1" pero el
+// orden de navegación se mantiene; ver lib/onboarding.ts.)
 export default async function ObjetivoPage({
   searchParams,
 }: {
@@ -24,13 +18,13 @@ export default async function ObjetivoPage({
       <OnboardingProgress step={4} />
 
       <div className="flex flex-col gap-2">
-        <h1 className="text-display font-semibold text-ink">
-          ¿Qué necesitas hoy?
-        </h1>
-        <p className="text-base text-muted">
-          Último paso. Dime tu plan y te armo looks con la ropa que ya tienes —
-          listos para hoy.
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+          paso 4 de 5
         </p>
+        <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
+          ¿qué necesitas{" "}
+          <em className="font-display font-normal italic tracking-normal">hoy</em>?
+        </h1>
       </div>
 
       {error === "guardar" && (
@@ -39,22 +33,7 @@ export default async function ObjetivoPage({
         </p>
       )}
 
-      <form action={saveObjective} className="flex flex-col gap-3">
-        {(Object.keys(OBJECTIVES) as Objective[]).map((key) => (
-          <button
-            key={key}
-            type="submit"
-            name="objective"
-            value={key}
-            className="flex min-h-16 flex-col items-start justify-center gap-0.5 rounded-2xl border border-line bg-surface px-5 py-3 text-left transition-colors duration-200 hover:border-accent focus-visible:border-accent focus-visible:outline-none"
-          >
-            <span className="text-base font-medium text-ink">
-              {OBJECTIVES[key]}
-            </span>
-            <span className="text-sm text-muted">{DESCRIPTIONS[key]}</span>
-          </button>
-        ))}
-      </form>
+      <ObjetivoPicker />
     </section>
   );
 }
