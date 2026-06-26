@@ -57,7 +57,7 @@ export function TabBar() {
             type="button"
             onClick={() => router.push(`/hoy?generar=${Date.now()}`)}
             aria-label="Generar un outfit"
-            className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-on-accent shadow-[0_6px_16px_rgba(114,47,55,0.35)] ring-4 ring-bg transition-colors duration-200 hover:bg-accent-deep"
+            className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-on-accent shadow-[0_6px_18px_-6px_rgba(10,10,10,0.5)] ring-4 ring-bg transition-colors duration-200 hover:bg-accent-deep"
           >
             <Icon name="destello" size={24} />
           </button>

@@ -150,6 +150,15 @@ body {
   }
 }
 
+/* Cursor del typewriter de "generando" (Hoy): parpadeo duro. La frase de
+   estilista que se escribe sola lleva este cursor al final. Se desactiva con
+   motion-safe en el componente, pero el keyframe vive aquí (token de motion). */
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 /* Shimmer de texto: barrido muted→ink→muted para estados de carga ("Creando
    tu look…"). Único uso de animación de gradiente del DS. Respeta
    prefers-reduced-motion (cae a color sólido sin movimiento). */

@@ -3,11 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { OutfitCard } from "@/components/outfit-card";
-import { TryonModal } from "@/components/tryon-modal";
+import { TryonImmersive } from "@/components/tryon-immersive";
 import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
-import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
-import { LookRequest, type LookInput } from "@/components/weather-picker";
+import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
+import {
+  LookRequest,
+  type LookInput,
+  ocasionLabel,
+  bucketLabel,
+} from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
@@ -71,7 +76,15 @@ export function HoyClient({
   // Pantalla despierta mientras se genera el look (no se auto-bloquea a media carga).
   useWakeLock(state.kind === "generating");
   const [worn, setWorn] = useState(wornInicial);
-  const [skipOpen, setSkipOpen] = useState(false);
+  // Fecha como eyebrow del empty state. Se calcula en cliente para evitar
+  // desajuste de hidratación (la zona horaria del server puede diferir).
+  const [fechaLabel, setFechaLabel] = useState("");
+  useEffect(() => {
+    const d = new Date();
+    const wd = d.toLocaleDateString("es-MX", { weekday: "long" });
+    const mo = d.toLocaleDateString("es-MX", { month: "short" }).replace(".", "");
+    setFechaLabel(`${wd} · ${d.getDate()} ${mo}`.toUpperCase());
+  }, []);
   // El botón ✨ pide un look NUEVO → fuerza (si no, look-of-day devuelve el cacheado).
   const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(autoAsk);
@@ -125,7 +138,6 @@ export function HoyClient({
       cancelPoll.current?.();
       setState({ kind: "generating", outfitId: "" });
       setWorn(false);
-      setSkipOpen(false);
       try {
         const res = await fetch("/api/look-of-day", {
           method: "POST",
@@ -165,7 +177,6 @@ export function HoyClient({
   // "Otro look": regenera con la MISMA ocasión (no es cambiar de ocasión, es
   // "este no, otro"). Cierra los chips de razón.
   function otroLook() {
-    setSkipOpen(false);
     if (lastInput.current) generar(lastInput.current, true);
     else startGen(true);
   }
@@ -182,20 +193,35 @@ export function HoyClient({
   // tab bar visible. Saludo + CTA — no te fuerza el wizard ni te atrapa.
   if (state.kind === "idle") {
     return (
-      <div className="flex flex-col items-center gap-5 py-14 text-center">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="text-h2 font-semibold text-ink">Tu look de hoy</h1>
-          <p className="max-w-xs text-sm text-muted">
-            Aún no lo armamos. Dime tu plan y te lo dejo listo en segundos.
+      <div className="flex min-h-[calc(100dvh-13rem)] flex-col">
+        {/* Editorial y tipográfico — SIN foto de fondo (no confundir con un
+            outfit). El cuerpo va centrado vertical; el CTA al pie. */}
+        <div className="flex flex-1 flex-col justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
+            {fechaLabel || " "}
+          </p>
+          <h1 className="mt-4 text-[52px] font-bold leading-[0.96] tracking-[-0.035em] text-ink">
+            tu look
+            <br />
+            de hoy,{" "}
+            <em className="font-display font-normal italic tracking-normal">
+              aún no
+            </em>
+          </h1>
+          <p className="mt-5 max-w-[280px] font-display text-[20px] leading-snug text-muted">
+            dime tu plan y te lo dejo listo en segundos.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => startGen(false)}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-        >
-          <Icon name="destello" size={18} /> Armar mi look de hoy
-        </button>
+        <div className="pb-2">
+          <button
+            type="button"
+            onClick={() => startGen(false)}
+            className="flex min-h-[60px] w-full items-center justify-center gap-2.5 rounded-sm bg-accent text-base font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            armar mi look de hoy
+            <Icon name="flecha" size={19} />
+          </button>
+        </div>
       </div>
     );
   }
@@ -217,7 +243,20 @@ export function HoyClient({
   }
 
   if (state.kind === "generating") {
-    return <GeneratingScreen phrases={HOY_PHRASES} />;
+    const li = lastInput.current;
+    let frase = "armando algo a tu medida para hoy…";
+    let plan: GenPlan | null = null;
+    if (li) {
+      frase = li.plan
+        ? `algo a tu medida para "${li.plan}"…`
+        : (FRASES_ESTILISTA[li.objective] ?? frase);
+      plan = {
+        ocasion: ocasionLabel(li.objective),
+        momento: li.momento,
+        clima: "weather" in li ? bucketLabel(li.weather.temp_c) : null,
+      };
+    }
+    return <StylistGenerating frase={frase} plan={plan} />;
   }
 
   if (state.kind === "error") {
@@ -244,93 +283,71 @@ export function HoyClient({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0">
-        <span className="text-h2 font-semibold text-ink">Hoy</span>
-        <span className="text-sm font-normal text-muted">·</span>
-        <span className="editorial text-h3 text-accent">{state.outfit.nombre}</span>
-      </h1>
-      <TryonOutfitCard
-        key={state.outfit.id}
-        outfit={state.outfit}
-        userId={userId}
-      />
-      <div className="flex items-center gap-3">
-        {!worn && (
-          <button
-            type="button"
-            onClick={() => setSkipOpen((v) => !v)}
-            aria-pressed={skipOpen}
-            className={`flex min-h-12 flex-1 items-center justify-center rounded-sm border text-sm font-medium transition-colors duration-200 ${
-              skipOpen
-                ? "border-accent bg-accent-soft text-ink"
-                : "border-line bg-surface text-ink hover:border-ink"
-            }`}
-          >
-            Otro look
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={meLoPongo}
-          disabled={worn}
-          className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-medium transition-colors duration-200 ${
-            worn
-              ? "bg-success/15 text-success"
-              : "bg-accent text-on-accent hover:bg-accent-deep"
-          }`}
-        >
-          {worn ? (
-            <>
-              <Icon name="check" size={18} /> Es tu look de hoy
-            </>
-          ) : (
-            "Me lo voy a poner"
-          )}
-        </button>
-      </div>
-      {skipOpen && !worn ? (
-        <SkipReasons
-          outfitId={state.outfit.id}
-          onProceed={otroLook}
-          onClose={() => setSkipOpen(false)}
-        />
-      ) : null}
-    </div>
+    <ReadyView
+      key={state.outfit.id}
+      outfit={state.outfit}
+      userId={userId}
+      worn={worn}
+      onMeLoPongo={meLoPongo}
+      onOtroLook={otroLook}
+    />
   );
 }
 
-// Frases de "generando" para Hoy (lenguaje como progreso, palabra clave en acento).
-const HOY_PHRASES: GenPhrase[] = [
-  { a: "leyendo tu ", k: "clóset", b: "…" },
-  { a: "combinando tus ", k: "colores", b: "…" },
-  { a: "cuidando el ", k: "clima", b: "…" },
-  { a: "afinando los ", k: "detalles", b: "…" },
-  { a: "puliendo tu ", k: "look", b: "…" },
-];
+// Frase de estilista del "generando", por ocasión (se escribe sola, typewriter).
+const FRASES_ESTILISTA: Record<string, string> = {
+  diario: "algo cómodo y resuelto para tu día, sin complicarte…",
+  oficina: "algo pulido para tu oficina, sin que pierdas comodidad…",
+  evento: "algo con presencia para tu evento, que se sienta muy tú…",
+  refrescar: "una combinación distinta a la de siempre, bien fresca…",
+};
 
-// Card del outfit con el try-on integrado (3 estados). Va keyed por outfit.id
-// en el padre para que, al generar otro look, el try-on arranque limpio con la
-// imagen (o no) del nuevo outfit.
-function TryonOutfitCard({
+// Vista del look listo (estado 6 + try-on oscuro 7/8). Va keyed por outfit.id
+// en el padre para que, al generar otro look, el try-on arranque limpio.
+// El try-on YA NO se muestra inline: la foto vive solo en el modal oscuro
+// (revealMode "modal"), que es el único momento oscuro de la app.
+function ReadyView({
   outfit,
   userId,
+  worn,
+  onMeLoPongo,
+  onOtroLook,
 }: {
   outfit: HoyOutfit;
   userId: string;
+  worn: boolean;
+  onMeLoPongo: () => void;
+  onOtroLook: () => void;
 }) {
+  const [skipOpen, setSkipOpen] = useState(false);
   const t = useTryon({
     outfitId: outfit.id,
     userId,
     initialImage: outfit.tryon ?? null,
-    revealMode: "inline",
+    revealMode: "modal",
     returnTo: "/hoy",
   });
   // Pantalla despierta mientras se genera el try-on (~30s con Gemini).
   useWakeLock(t.mode === "gen");
 
+  // El modal oscuro está abierto durante la generación, con la foto, o en error.
+  const modalOpen = t.mode === "gen" || t.mode === "full" || t.mode === "error";
+
+  // "Verte con este look": si ya hay foto, ábrela; si no, genérala (revealMode
+  // "modal" abre el modal al terminar). Sin avatar → el CTA lleva al wizard.
+  function verte() {
+    if (t.image) t.openFull();
+    else t.generar();
+  }
+
   return (
-    <>
+    <div className="flex flex-col gap-4">
+      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0">
+        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</span>
+        <span className="text-sm text-muted">·</span>
+        <span className="font-display text-[22px] italic text-muted">{outfit.nombre}</span>
+      </h1>
+
       <OutfitCard
         prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
         justificacion={outfit.explicacion}
@@ -341,32 +358,87 @@ function TryonOutfitCard({
             initialFavorited={outfit.favorited ?? false}
           />
         }
-        tryon={{
-          status: t.mode,
-          image: t.image,
-          errMsg: t.errMsg,
-          lookName: outfit.nombre,
-          onGenerate: t.generar,
-          onExpand: t.openFull,
-          changeHref: t.avatarHref,
-        }}
       />
-      {t.image ? (
-        <Link
-          href={t.avatarHref}
-          className="self-start text-xs font-medium text-muted underline underline-offset-4 hover:text-ink"
-        >
-          ¿No te pareces? Cambia tu avatar
-        </Link>
+
+      {/* Footer: "verte con este look" protagonista + dos fantasma */}
+      <div className="flex flex-col gap-2.5">
+        {t.mode === "sin_avatar" ? (
+          <Link
+            href={t.avatarHref}
+            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            <Icon name="destello" size={18} /> crea tu avatar para verte
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={verte}
+            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            <Icon name="destello" size={18} /> verte con este look
+            <span className="text-[12px] font-semibold opacity-70">~20 s</span>
+          </button>
+        )}
+        <div className="flex gap-2.5">
+          {!worn && (
+            <button
+              type="button"
+              onClick={() => setSkipOpen((v) => !v)}
+              aria-pressed={skipOpen}
+              className={`min-h-12 flex-1 rounded-sm border bg-surface text-sm font-semibold text-ink transition-colors ${
+                skipOpen ? "border-ink" : "border-line hover:border-ink"
+              }`}
+            >
+              otro look
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onMeLoPongo}
+            disabled={worn}
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors ${
+              worn
+                ? "bg-success/15 text-success"
+                : "border border-line bg-surface text-ink hover:border-ink"
+            }`}
+          >
+            {worn ? (
+              <>
+                <Icon name="check" size={18} /> es tu look
+              </>
+            ) : (
+              "me lo pongo"
+            )}
+          </button>
+        </div>
+      </div>
+
+      {skipOpen && !worn ? (
+        <SkipReasons
+          outfitId={outfit.id}
+          onProceed={onOtroLook}
+          onClose={() => setSkipOpen(false)}
+        />
       ) : null}
-      {t.mode === "full" && t.image ? (
-        <TryonModal
+
+      {modalOpen ? (
+        <TryonImmersive
+          mode={t.mode === "full" ? "full" : t.mode === "error" ? "error" : "gen"}
           image={t.image}
           lookName={outfit.nombre}
+          prendas={outfit.prendas}
+          errMsg={t.errMsg}
+          worn={worn}
           onClose={t.closeFull}
+          onRetry={t.generar}
+          onOtro={() => {
+            t.closeFull();
+            onOtroLook();
+          }}
+          onMeLoPongo={onMeLoPongo}
           changeHref={t.avatarHref}
         />
       ) : null}
-    </>
+    </div>
   );
 }
