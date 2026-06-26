@@ -14,8 +14,6 @@ export type CatalogItem = {
   image_path: string | null;
 };
 
-// Con ~45 básicos, agrupar por categoría hace que escanear sea rápido (en vez
-// de un scroll plano interminable). Orden de arriba a abajo del clóset real.
 const CATEGORY_ORDER = ["top", "vestido", "bottom", "abrigo", "calzado"];
 const CATEGORY_LABELS: Record<string, string> = {
   top: "Arriba",
@@ -25,29 +23,24 @@ const CATEGORY_LABELS: Record<string, string> = {
   calzado: "Zapatos",
 };
 
+// Clóset v3 · tratamiento "iluminar" (B1): chips de categoría como filtro + grid
+// 2-col. Lo seleccionado va a TODO COLOR con check tinta; lo no seleccionado se
+// apaga (grayscale + opacidad). La pantalla se lee de un vistazo: lo encendido
+// es lo que tienes. (Sin borde negro — se probó y se ve mal.)
 export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
+  // Categorías presentes, en orden; las no contempladas van al final.
+  const known = new Set(CATEGORY_ORDER);
+  const cats = [
+    ...CATEGORY_ORDER.filter((c) => catalog.some((i) => i.category === c)),
+    ...[...new Set(catalog.filter((i) => !known.has(i.category)).map((i) => i.category))],
+  ];
+
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [activeCat, setActiveCat] = useState<string>(cats[0] ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Agrupa por categoría conservando el sort_order que ya trae el catálogo.
-  const groups = CATEGORY_ORDER.map((cat) => ({
-    cat,
-    items: catalog.filter((i) => i.category === cat),
-  }))
-    .filter((g) => g.items.length > 0)
-    // Cualquier categoría no contemplada arriba va al final, no se pierde.
-    .concat(
-      (() => {
-        const known = new Set(CATEGORY_ORDER);
-        const rest = catalog.filter((i) => !known.has(i.category));
-        const cats = [...new Set(rest.map((i) => i.category))];
-        return cats.map((cat) => ({
-          cat,
-          items: rest.filter((i) => i.category === cat),
-        }));
-      })()
-    );
+  const visible = catalog.filter((i) => i.category === activeCat);
 
   function toggle(id: number) {
     const next = new Set(selected);
@@ -66,89 +59,111 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      {/* Galería de prendas por categoría: clic, clic, clic. La imagen manda. */}
-      {groups.map(({ cat, items }) => {
-        const selCount = items.filter((i) => selected.has(i.id)).length;
-        return (
-        <div key={cat} className="flex flex-col gap-3">
-          <h2 className="flex items-baseline justify-between font-sans text-sm font-semibold uppercase tracking-wide text-muted">
-            <span>{CATEGORY_LABELS[cat] ?? cat}</span>
-            <span className={selCount > 0 ? "text-accent" : "text-muted"}>
-              {selCount > 0 ? `${selCount} de ${items.length}` : `${items.length} prendas`}
-            </span>
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {items.map((item) => {
-              const on = selected.has(item.id);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => toggle(item.id)}
-                  aria-pressed={on}
-                  className={`group relative flex flex-col overflow-hidden rounded-md border bg-surface text-left transition-colors duration-200 focus-visible:outline-none ${
-                    on ? "border-accent" : "border-line hover:border-ink"
+      {/* Chips de categoría (scroll-x); el número = cuántas marcaste ahí */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {cats.map((cat) => {
+          const on = cat === activeCat;
+          const selCount = catalog.filter(
+            (i) => i.category === cat && selected.has(i.id)
+          ).length;
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCat(cat)}
+              aria-pressed={on}
+              className={`flex shrink-0 items-center rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                on
+                  ? "border-accent bg-accent text-on-accent"
+                  : "border-line bg-surface text-ink hover:border-ink"
+              }`}
+            >
+              {CATEGORY_LABELS[cat] ?? cat}
+              {selCount > 0 ? (
+                <span className="ml-1.5 font-bold opacity-60">{selCount}</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grid de la categoría activa */}
+      <div className="grid grid-cols-2 gap-3">
+        {visible.map((item) => {
+          const on = selected.has(item.id);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => toggle(item.id)}
+              aria-pressed={on}
+              className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg text-left focus-visible:outline-none"
+            >
+              {item.image_path ? (
+                <Image
+                  src={item.image_path}
+                  alt={item.name}
+                  fill
+                  sizes="(max-width: 430px) 50vw, 215px"
+                  className={`object-cover transition-[filter] duration-200 ${
+                    on ? "" : "[filter:grayscale(0.85)_opacity(0.55)]"
                   }`}
-                >
-                  <div className="relative aspect-square w-full bg-bg">
-                    {item.image_path ? (
-                      <Image
-                        src={item.image_path}
-                        alt={item.name}
-                        fill
-                        sizes="(max-width: 430px) 50vw, 215px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span
-                        className="absolute inset-0"
-                        style={{ backgroundColor: item.attrs.color_hex ?? "#E5E1DD" }}
-                        aria-hidden
-                      />
-                    )}
-                    {/* Check de selección en el pico emocional del tap */}
-                    <span
-                      className={`absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-sm text-on-accent transition-all duration-200 ${
-                        on ? "scale-100 bg-accent" : "scale-0 bg-transparent"
-                      }`}
-                      aria-hidden
-                    >
-                      <Icon name="check" size={16} strokeWidth={2.4} />
-                    </span>
-                    {/* Velo sutil sobre lo no seleccionado para que resalte lo elegido */}
-                    {!on && (
-                      <span className="absolute inset-0 bg-bg/20 transition-opacity duration-200 group-hover:opacity-0" />
-                    )}
-                  </div>
-                  <span className="px-3 py-2 text-sm font-medium text-ink">
-                    {item.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        );
-      })}
+                />
+              ) : (
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: item.attrs.color_hex ?? "#E5E1DD",
+                    filter: on ? undefined : "grayscale(0.85) opacity(0.55)",
+                  }}
+                  aria-hidden
+                />
+              )}
+
+              {/* Check de selección */}
+              <span
+                className={`absolute right-2 top-2 flex h-[25px] w-[25px] items-center justify-center rounded-full border transition-colors ${
+                  on
+                    ? "border-accent bg-accent text-on-accent"
+                    : "border-line bg-surface/85 text-transparent"
+                }`}
+                aria-hidden
+              >
+                <Icon name="check" size={14} strokeWidth={2.6} />
+              </span>
+
+              {/* Nombre sobre degradado: gris si está apagado, tinta si está on */}
+              <span
+                className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-surface/95 via-surface/80 to-transparent px-2.5 pb-2 pt-6 text-[11px] font-semibold ${
+                  on ? "text-ink" : "text-muted"
+                }`}
+              >
+                {item.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
 
-      <div className="sticky bottom-0 bg-bg pt-2 pb-4">
+      {/* CTA sticky */}
+      <div className="sticky bottom-0 mt-auto bg-bg pb-4 pt-2">
         <button
           type="button"
           onClick={submit}
           disabled={pending || selected.size === 0}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-40"
         >
           {pending ? (
             <>
               <Spinner className="h-4 w-4" />
-              Guardando tu clóset…
+              guardando tu clóset…
             </>
-          ) : selected.size === 0 ? (
-            "Marca lo que tienes"
           ) : (
-            `Listo, ese es mi clóset (${selected.size})`
+            <>
+              armar mi primer look <Icon name="destello" size={18} />
+            </>
           )}
         </button>
       </div>

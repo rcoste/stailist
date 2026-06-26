@@ -21,13 +21,13 @@ export default async function ClosetOnboardingPage() {
       <OnboardingProgress step={3} />
 
       <div className="flex flex-col gap-2">
-        <h1 className="text-display font-semibold text-ink">
-          ¿Qué tienes en tu clóset?
-        </h1>
-        <p className="text-base text-muted">
-          Marca los básicos que ya tienes — sin fotos, eso viene después si
-          quieres. Esto es una muestra; luego podrás agregar más desde tu clóset.
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+          paso 3 de 5
         </p>
+        <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
+          ¿qué{" "}
+          <em className="font-display font-normal italic tracking-normal">ya tienes</em>?
+        </h1>
       </div>
 
       <Checklist catalog={(catalog ?? []) as CatalogItem[]} />
