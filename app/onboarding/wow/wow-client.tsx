@@ -138,17 +138,16 @@ export function WowClient({
   }, []);
 
   // ─── ask: ocasión/clima (la ocasión ya se eligió antes → skipObjective) ───
+  // Sin OnboardingProgress aquí: LookRequest trae su propio progreso de 2 pasos
+  // (momento → clima) y su propio chrome; superponer la barra 5/5 era redundante.
   if (state.kind === "ask") {
     return (
-      <div className="flex flex-1 flex-col gap-6">
-        <OnboardingProgress step={5} />
-        <LookRequest
-          title="Antes de armar tu primer look…"
-          defaultObjective={defaultObjective}
-          onPick={generate}
-          skipObjective
-        />
-      </div>
+      <LookRequest
+        title="Antes de armar tu primer look…"
+        defaultObjective={defaultObjective}
+        onPick={generate}
+        skipObjective
+      />
     );
   }
 
