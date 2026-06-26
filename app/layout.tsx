@@ -1,23 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
+import { Arimo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
 
-// Dirección "Atelier" (rebrand v2): Bodoni Moda (display serif, alto contraste)
-// solo en titulares + justificación del outfit; Hanken Grotesk en TODO el UI.
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
+// Dirección "Gen-Z monocromo" (rebrand v3): Arimo (sans variable, estilo Mango)
+// en TODO el UI + titulares; Instrument Serif solo de acento mínimo (itálica).
+const arimo = Arimo({
+  variable: "--font-arimo",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
-const bodoni = Bodoni_Moda({
-  variable: "--font-bodoni",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  // Itálica real para el wordmark de la cubierta del Pasaporte (la "portada"):
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
+  weight: "400",
+  // Itálica real para los micro-acentos editoriales (wordmark, una palabra suelta):
   // sin esto el navegador sintetiza una itálica falsa (oblicua, no caligráfica).
   style: ["normal", "italic"],
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F5F3F0",
+  themeColor: "#f4f3f1",
   // Necesario para que env(safe-area-inset-*) funcione en PWA standalone (iOS):
   // sin esto, la barra inferior queda bajo el indicador de inicio ("muy abajo").
   viewportFit: "cover",
@@ -40,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full">
       <body
-        className={`${hanken.variable} ${bodoni.variable} min-h-full antialiased`}
+        className={`${arimo.variable} ${instrument.variable} min-h-full antialiased`}
       >
         {children}
         <PwaInstall />

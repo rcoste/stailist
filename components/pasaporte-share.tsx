@@ -20,7 +20,7 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
   // papel evita transparencias raras al compartir.
   async function capture(): Promise<Blob> {
     if (!ref.current) throw new Error("no_ref");
-    const blob = await toBlob(ref.current, { pixelRatio: 3, backgroundColor: "#F5F3F0" });
+    const blob = await toBlob(ref.current, { pixelRatio: 3, backgroundColor: "#f4f3f1" });
     if (!blob) throw new Error("no_blob");
     return blob;
   }

@@ -9,7 +9,7 @@ export function Logo({ className = "h-7" }: { className?: string }) {
       <text
         x="4"
         y="80"
-        fontFamily="var(--font-bodoni), 'Times New Roman', serif"
+        fontFamily="var(--font-instrument), 'Times New Roman', serif"
         fontSize="82"
         fontWeight="600"
         letterSpacing="-1"
