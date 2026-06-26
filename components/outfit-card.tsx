@@ -27,11 +27,14 @@ export function OutfitCard({
   /** Slot opcional en la esquina superior derecha (ej. el bookmark). */
   corner?: ReactNode;
 }) {
+  // Regla de densidad (v3, global): 2 por fila con 3-4 prendas (más grandes, más
+  // protagonismo), 3 por fila con 5-6.
+  const cols = prendas.length <= 4 ? "grid-cols-2" : "grid-cols-3";
   return (
     <article className="relative rounded-lg border border-line bg-surface p-4 shadow-[var(--shadow-hairline)]">
       {corner ? <div className="absolute right-3 top-3 z-10">{corner}</div> : null}
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className={`grid ${cols} gap-3`}>
         {prendas.map((p) => (
           <figure key={p.nombre} className="flex flex-col gap-2">
             <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
