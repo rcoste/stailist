@@ -37,7 +37,7 @@
 - **Neutrals (de-warmed):** bg `#F4F3F1` (papel neutro) · surface `#FFFFFF` (cards) · ink `#141414` (texto) · muted `#6F6F6F` (secundario) · line `#E4E3E0` (hairlines).
 - **Semantic (sin cambio — son funcionales, no de marca):** success `#4C7A5E` (salvia discreta) · error `#B3261E` (rojo de alarma) · warning `#8A6D1F` (uso excepcional).
 - **Superficie oscura (try-on, aplicada inline en el flujo Hoy):** fondo `#0A0A0A` · vidrio `rgb(255 255 255 / .12)` · borde claro `rgb(255 255 255 / .2)`. No son tokens globales (solo viven en el modal de try-on).
-- **Metal (reveal de colorimetría, sin cambio):** oro `#E7C977→#B8932F` (paletas cálidas) · plata `#E2E5E8→#AEB3B8` (paletas frías). Gradiente radial. Tokens `--metal-oro` / `--metal-plata`. Único uso: el chip de metal en el reveal.
+- **Metal (reveal de colorimetría):** oro `linear-gradient(135deg,#E7C977,#C79B3A,#9C7522)` (paletas cálidas) · plata `linear-gradient(135deg,#E6E8EA,#B9BDC1,#8F9398)` (frías). Gradiente **diagonal** (placa metálica; v3 — antes radial "tipo sol"). Tokens `--metal-oro` / `--metal-plata`. Único uso: el selector de metal en el reveal.
 - **Dark mode:** DIFERIDO post-MVP (decisión registrada). El try-on es la única superficie oscura intencional.
 
 ## Spacing

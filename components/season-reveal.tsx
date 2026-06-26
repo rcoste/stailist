@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { SEASONS, seasonPalette, seasonDisplayLabel, type Season } from "@/lib/colorimetria";
 import { updateColorimetria } from "@/app/onboarding/colorimetria/actions";
-import { Icon, type IconName } from "@/components/icon";
+import { Icon } from "@/components/icon";
 
 const ALL: Season[] = ["primavera", "verano", "otono", "invierno"];
 const DISPLAY: Record<Season, string> = {
@@ -15,6 +15,14 @@ const DISPLAY: Record<Season, string> = {
 };
 // Calidez → metal: paletas cálidas van con oro, frías con plata.
 const isWarm = (s: Season) => s === "primavera" || s === "otono";
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-muted">
+      {children}
+    </span>
+  );
+}
 
 function Swatches({
   items,
@@ -28,81 +36,25 @@ function Swatches({
       {items.map((c) => (
         <div key={c.nombre} className="flex flex-1 flex-col gap-1">
           <span
-            className="relative block h-12 overflow-hidden rounded-sm border border-line"
+            className="relative block h-[50px] overflow-hidden rounded-[4px] border border-line"
             style={{ backgroundColor: c.hex }}
             title={c.nombre}
           >
             {avoid ? (
-              <span className="absolute left-[-8%] top-1/2 w-[116%] -rotate-[20deg] border-t-2 border-ink/55" />
+              <span className="absolute left-[-8%] top-1/2 w-[116%] -rotate-[20deg] border-t-2 border-ink/50" />
             ) : null}
           </span>
-          <span className="text-center text-xs text-muted">{c.nombre}</span>
+          <span className="text-center text-[9px] text-muted">{c.nombre}</span>
         </div>
       ))}
     </div>
   );
 }
 
-function SectionLabel({
-  icon,
-  children,
-}: {
-  icon: IconName;
-  children: React.ReactNode;
-}) {
-  return (
-    <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-      <Icon name={icon} size={15} /> {children}
-    </span>
-  );
-}
-
-// Chip del metal: el que va (dorado/plata real, acento) o el que apaga (atenuado
-// + tachado, bajo los colores a evitar). Color desde var(--metal-*), no hex.
-function MetalChip({
-  caption,
-  metal,
-  ok,
-}: {
-  caption: string;
-  metal: "oro" | "plata";
-  ok: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-        {caption}
-      </span>
-      <span
-        className={`inline-flex items-center gap-2 self-start rounded-sm border px-3 py-1.5 text-sm font-medium ${
-          ok
-            ? "border-accent bg-accent-soft text-ink"
-            : "border-line bg-surface text-muted"
-        }`}
-      >
-        <span
-          className="relative block h-4 w-4 overflow-hidden rounded-full"
-          style={{
-            background:
-              metal === "oro" ? "var(--metal-oro)" : "var(--metal-plata)",
-            opacity: ok ? 1 : 0.75,
-          }}
-        >
-          {!ok ? (
-            <span className="absolute left-[-10%] top-1/2 w-[120%] -rotate-[20deg] border-t-2 border-ink/50" />
-          ) : null}
-        </span>
-        <span className={ok ? "" : "line-through decoration-ink/40"}>
-          {metal === "oro" ? "Oro" : "Plata"}
-        </span>
-      </span>
-    </div>
-  );
-}
-
-// Reveal de colorimetría (rebrand v2): estación en Bodoni, metal oro/plata, y
-// los colores que apagan tachados. Orden: mejores → metal que va → evita →
-// metal que apaga. Deja CAMBIAR la estación — la usuaria es la autoridad final.
+// Reveal de colorimetría v3: la paleta del usuario va a TODO COLOR sobre chrome
+// monocromo (es la única función literalmente sobre color). Dos estaciones:
+// base + prestada. Metal como selector de placas diagonales. Deja editar la
+// estación — la usuaria es la autoridad final.
 export function SeasonReveal({
   season,
   flow = null,
@@ -120,8 +72,7 @@ export function SeasonReveal({
   const { mejores, prestados, evita } = seasonPalette(base, flw);
   const sBase = SEASONS[base];
   const sFlow = flw ? SEASONS[flw] : null;
-  const metalVa = isWarm(base) ? "oro" : "plata";
-  const metalApaga = isWarm(base) ? "plata" : "oro";
+  const metalVa: "oro" | "plata" = isWarm(base) ? "oro" : "plata";
 
   async function pick(next: Season) {
     if (next === base && !flw) {
@@ -136,86 +87,142 @@ export function SeasonReveal({
     setSaving(false);
   }
 
+  // Nombre: "otoño profundo" con la última palabra en serif itálica.
+  const label = seasonDisplayLabel(base, flw);
+  const words = label.trim().split(" ");
+  const last = words.length > 1 ? words.pop() : null;
+  const head = words.join(" ");
+
   const phrase = sFlow
-    ? `Estás entre ${DISPLAY[base]} y ${DISPLAY[flw!]} — y eso juega a tu favor. El stylist usa toda tu paleta.`
+    ? `Estás entre ${DISPLAY[base]} y ${DISPLAY[flw!]} — y eso juega a tu favor: el stylist usa toda tu paleta.`
     : sBase.reveal;
 
   return (
-    <div className="flex flex-col gap-6 rounded-lg border border-line bg-surface p-6 shadow-[var(--shadow-hairline)]">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Tu estación
-        </span>
-        <h2 className="text-display font-semibold text-ink">
-          {seasonDisplayLabel(base, flw)}
+        <Label>tu estación</Label>
+        <h2 className="text-[36px] font-bold leading-[0.98] tracking-[-0.03em] text-ink">
+          {head.toLowerCase()}
+          {last ? (
+            <>
+              {" "}
+              <em className="font-display font-normal italic tracking-normal">
+                {last.toLowerCase()}
+              </em>
+            </>
+          ) : null}
+          {sFlow ? (
+            <span className="mt-1 block font-display text-[21px] italic text-muted">
+              con guiños de {DISPLAY[flw!].toLowerCase()}
+            </span>
+          ) : null}
         </h2>
-        <p className="editorial mt-1 text-base text-ink">{phrase}</p>
+        <p className="editorial mt-2 text-[16px] leading-snug text-ink">{phrase}</p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <SectionLabel icon="estrella">Tus mejores</SectionLabel>
+      <div className="flex flex-col gap-2.5">
+        <Label>tu paleta</Label>
         <Swatches items={mejores} />
       </div>
 
-      {prestados.length > 0 && sFlow && (
-        <div className="flex flex-col gap-2">
-          <SectionLabel icon="check">
-            También te van · de {DISPLAY[flw!]}
-          </SectionLabel>
-          <Swatches items={prestados} />
+      {prestados.length > 0 && sFlow ? (
+        <div className="flex flex-col gap-2.5">
+          <Label>
+            te prestan{" "}
+            <span className="font-medium normal-case tracking-normal text-muted">
+              · de {DISPLAY[flw!].toLowerCase()}
+            </span>
+          </Label>
+          <div className="flex items-end gap-2">
+            {prestados.slice(0, 3).map((c) => (
+              <div key={c.nombre} className="flex w-[58px] flex-col gap-1">
+                <span
+                  className="block h-[42px] overflow-hidden rounded-[4px] border border-line"
+                  style={{ backgroundColor: c.hex }}
+                  title={c.nombre}
+                />
+                <span className="text-center text-[9px] text-muted">{c.nombre}</span>
+              </div>
+            ))}
+            <span className="editorial pb-3 text-[13px] italic text-muted">
+              úsalos como acento
+            </span>
+          </div>
         </div>
-      )}
+      ) : null}
 
-      <MetalChip caption="Tu metal" metal={metalVa} ok />
-
-      <div className="flex flex-col gap-2">
-        <SectionLabel icon="prohibido">
-          Mejor sáltate estos · te apagan
-        </SectionLabel>
+      <div className="flex flex-col gap-2.5">
+        <Label>mejor evita</Label>
         <Swatches items={evita} avoid />
       </div>
 
-      <MetalChip caption="El metal que te apaga" metal={metalApaga} ok={false} />
+      <div className="flex items-center gap-3">
+        <Label>tu metal</Label>
+        <div className="flex gap-2">
+          {(["oro", "plata"] as const).map((m) => {
+            const on = m === metalVa;
+            return (
+              <span
+                key={m}
+                className={`inline-flex items-center gap-2 rounded-sm border px-2.5 py-1.5 text-[13px] font-semibold ${
+                  on ? "border-ink text-ink" : "border-line text-muted opacity-50"
+                }`}
+              >
+                <span
+                  className="block h-[14px] w-[22px] rounded-[2px]"
+                  style={{
+                    background: m === "oro" ? "var(--metal-oro)" : "var(--metal-plata)",
+                    boxShadow: "inset 0 0 0 1px rgb(0 0 0 / 0.08)",
+                  }}
+                />
+                {m === "oro" ? "oro" : "plata"}
+              </span>
+            );
+          })}
+        </div>
+      </div>
 
       {nota ? <p className="text-center text-xs text-muted">{nota}</p> : null}
 
-      {editing ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs text-muted">¿Cuál te suena más como tú?</span>
-          <div className="flex flex-wrap gap-2">
-            {ALL.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => pick(s)}
-                disabled={saving}
-                className={`min-h-10 rounded-sm border px-4 text-sm transition-colors duration-200 disabled:opacity-60 ${
-                  s === base
-                    ? "border-accent bg-accent-soft text-ink"
-                    : "border-line bg-surface text-ink hover:border-ink"
-                }`}
-              >
-                {DISPLAY[s]}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="text-center text-xs text-muted underline"
+      <div className="mt-1 flex flex-col gap-3">
+        <Link
+          href="/onboarding/closet"
+          className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
         >
-          Esta no es mi paleta · ajustar
-        </button>
-      )}
+          guardar mi paleta <Icon name="flecha" size={19} />
+        </Link>
 
-      <Link
-        href="/onboarding/closet"
-        className="flex min-h-12 items-center justify-center rounded-sm bg-accent text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-      >
-        Vamos con tu clóset
-      </Link>
+        {editing ? (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs text-muted">¿Cuál te suena más como tú?</span>
+            <div className="flex flex-wrap gap-2">
+              {ALL.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => pick(s)}
+                  disabled={saving}
+                  className={`min-h-10 rounded-sm border px-4 text-sm transition-colors duration-200 disabled:opacity-60 ${
+                    s === base
+                      ? "border-ink text-ink"
+                      : "border-line bg-surface text-ink hover:border-ink"
+                  }`}
+                >
+                  {DISPLAY[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center justify-center gap-1.5 self-center text-[13px] font-semibold text-muted underline underline-offset-[3px]"
+          >
+            <Icon name="lapiz" size={14} /> esta no es mi colorimetría
+          </button>
+        )}
+      </div>
     </div>
   );
 }
