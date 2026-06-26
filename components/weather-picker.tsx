@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Spinner } from "@/components/spinner";
 import { Icon, type IconName } from "@/components/icon";
 
-// Compositor de "crear outfit" como WIZARD de 3 pasos (handoff home-crear-outfit):
-// 1) ocasión (grid 2×2 + campo abierto) · 2) día/noche · 3) clima (slider).
-// Vive dentro del estado `ask` de hoy-client y, al terminar, llama onPick(input)
-// con el MISMO contrato LookInput — sin tocar backend ni la máquina de estados.
+// Compositor de "crear outfit" como WIZARD de 3 pasos (rebrand v3):
+// 1) ocasión (grid 2×2 + campo abierto) · 2) día/noche · 3) clima (lista de
+// bandas + ubicación). Vive dentro del estado `ask` de hoy-client y, al terminar,
+// llama onPick(input) con el MISMO contrato LookInput — sin tocar backend.
 
 export type LookInput = {
   objective: string;
@@ -17,20 +17,20 @@ export type LookInput = {
 
 // 4 ocasiones del wizard (sin "viaje": ya hay un Modo viaje propio).
 const OCASIONES: { key: string; label: string; help: string; icon: IconName }[] = [
-  { key: "diario", label: "El día a día", help: "lo de siempre, bien resuelto", icon: "sol" },
-  { key: "oficina", label: "Oficina", help: "verte pro sin pensarlo", icon: "maletin" },
-  { key: "evento", label: "Un evento", help: "algo que importa", icon: "destello" },
-  { key: "refrescar", label: "Solo refrescar", help: "algo distinto a lo de ayer", icon: "repetir" },
+  { key: "diario", label: "el día a día", help: "lo de siempre, resuelto", icon: "sol" },
+  { key: "oficina", label: "oficina", help: "verte pro sin pensarlo", icon: "maletin" },
+  { key: "evento", label: "un evento", help: "algo que importa", icon: "destello" },
+  { key: "refrescar", label: "refrescar", help: "distinto a ayer", icon: "repetir" },
 ];
 const OCASION_KEYS = new Set(OCASIONES.map((o) => o.key));
 
-// 5 paradas del slider de temperatura (idéntico a los BUCKETS de siempre).
+// 5 bandas de temperatura (mismas de modo Viaje — set canónico, no inventar).
 const BUCKETS = [
   { label: "Helado", ref: "para abrigo grueso", temp_c: 5 },
   { label: "Frío", ref: "suéter o chamarra", temp_c: 12 },
   { label: "Templado", ref: "manga larga ligera", temp_c: 19 },
   { label: "Cálido", ref: "playera, a gusto", temp_c: 25 },
-  { label: "Caluroso", ref: "lo más fresco posible", temp_c: 33 },
+  { label: "Caluroso", ref: "lo más fresco", temp_c: 33 },
 ];
 
 function getPosition(): Promise<{ lat: number; lon: number } | null> {
@@ -128,60 +128,67 @@ export function LookRequest({
   }
 
   const displayStep = skip ? step - 1 : step;
-  const meta =
-    step === 3
-      ? `Paso ${totalSteps} de ${totalSteps} · último`
-      : `Paso ${displayStep} de ${totalSteps}`;
+  const meta = `PASO ${displayStep} DE ${totalSteps}`;
+  // Titular con una palabra en serif itálica de acento (Instrument Serif).
   const question =
-    step === 1 ? "¿a dónde vas hoy?" : step === 2 ? "¿de día o de noche?" : "¿qué clima hace?";
+    step === 1 ? (
+      <>
+        ¿a dónde <em className={EM}>vas</em> hoy?
+      </>
+    ) : step === 2 ? (
+      <>
+        ¿de día o <em className={EM}>de noche</em>?
+      </>
+    ) : (
+      <>
+        ¿cómo está <em className={EM}>el clima</em>?
+      </>
+    );
+  const showBack = step !== firstStep || !!onExit;
 
   return (
     <div className="fixed inset-0 z-50 bg-bg">
       <div className="mx-auto flex h-full max-w-[430px] flex-col">
-        {/* Header del paso */}
-        <div className="px-[18px] pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <div className="flex items-center justify-between">
-            {step !== firstStep || onExit ? (
+        {/* Header del paso: cuadro atrás + barra de progreso de 3 segmentos */}
+        <div className="px-[18px] pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <div className="flex items-center gap-3.5">
+            {showBack ? (
               <button
                 type="button"
                 onClick={back}
-                className="flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink"
+                aria-label={step === firstStep ? "Salir" : "Atrás"}
+                className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-line text-ink transition-colors hover:border-ink"
               >
-                <Icon name="chevron" size={15} rotate={180} />
-                {step === firstStep ? "Hoy" : "Atrás"}
+                <Icon
+                  name={step === firstStep ? "equis" : "chevron"}
+                  size={16}
+                  rotate={step === firstStep ? 0 : 180}
+                />
               </button>
             ) : (
-              <span />
+              <span className="h-[34px] w-[34px]" />
             )}
-            <div className="flex items-center gap-1.5">
-              {Array.from({ length: totalSteps }).map((_, i) => {
-                const idx = displayStep - 1;
-                const active = i === idx;
-                const done = i < idx;
-                return (
-                  <span
-                    key={i}
-                    className={`h-[7px] rounded-full transition-all duration-200 ${
-                      active ? "w-5 bg-accent" : done ? "w-[7px] bg-accent" : "w-[7px] bg-line"
-                    }`}
-                  />
-                );
-              })}
+            <div className="flex flex-1 gap-1.5">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-[3px] flex-1 rounded-full transition-colors duration-200 ${
+                    i <= displayStep - 1 ? "bg-ink" : "bg-line"
+                  }`}
+                />
+              ))}
             </div>
           </div>
-          <p className="mt-[18px] text-[11.5px] font-medium text-muted">{meta}</p>
-          <h1 className="mt-[7px] display text-[27px] font-semibold leading-[1.12] tracking-[-0.01em] text-ink">
+          <p className="mt-[26px] text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+            {meta}
+          </p>
+          <h1 className="mt-2 text-[30px] font-bold leading-[1.04] tracking-[-0.025em] text-ink">
             {question}
           </h1>
-          {step === 2 ? (
-            <p className="mt-2.5 text-[13px] leading-relaxed text-muted">
-              Cambia el tono del look — más relajado de día, más arreglado de noche.
-            </p>
-          ) : null}
         </div>
 
         {/* Cuerpo scrollable (animado por paso) */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4 pt-[18px]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4 pt-[26px]">
           <div key={step} style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
             {step === 1 ? (
               <StepOcasion
@@ -206,54 +213,35 @@ export function LookRequest({
           </div>
         </div>
 
-        {/* Footer fijo con CTA(s) */}
-        <div className="flex flex-none gap-2.5 border-t border-line bg-surface px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-          {step === 3 ? (
-            <button
-              type="button"
-              onClick={armar}
-              disabled={locating}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
-            >
-              <Icon name="destello" size={18} />
-              Armar mi look
-            </button>
-          ) : step === firstStep ? (
-            <button
-              type="button"
-              onClick={next}
-              disabled={step === 1 && !step1Ready}
-              className="flex min-h-12 w-full items-center justify-center rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
-            >
-              Siguiente
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={back}
-                className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
-              >
-                Atrás
-              </button>
-              <button
-                type="button"
-                onClick={next}
-                className="min-h-12 flex-[2] rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep"
-              >
-                Siguiente
-              </button>
-            </>
-          )}
+        {/* Footer fijo: un solo CTA full-width (el atrás vive en el header) */}
+        <div className="flex flex-none border-t border-line bg-surface px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <button
+            type="button"
+            onClick={step === 3 ? armar : next}
+            disabled={(step === 1 && !step1Ready) || (step === 3 && locating)}
+            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+          >
+            {step === 3 ? (
+              <>
+                <Icon name="destello" size={18} /> armar mi look
+              </>
+            ) : (
+              <>
+                siguiente <Icon name="flecha" size={18} />
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// Patrón de "elegido" del handoff: borde + inset acento + fondo soft + caja de
-// icono en acento + texto en acento. Sin palomita ni radio (selección única).
-const ON = "border-accent bg-accent-soft shadow-[inset_0_0_0_1px_var(--c-accent)]";
+// Acento serif itálico para los titulares del wizard (Instrument Serif).
+const EM = "font-display font-normal italic tracking-normal";
+// Selección v3 monocroma: borde tinta (inset, sin reflow) — el ícono se rellena
+// de tinta. Sin fondo de color (el v2 usaba tinte rosado/soft).
+const ON = "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]";
 const ICON_ON = "bg-accent border-accent text-on-accent";
 
 function StepOcasion({
@@ -278,25 +266,23 @@ function StepOcasion({
               type="button"
               onClick={() => onPick(o.key)}
               aria-pressed={on}
-              className={`flex min-h-[120px] flex-col gap-2.5 rounded-md border bg-surface p-4 text-left transition-colors ${
+              className={`flex min-h-[120px] flex-col gap-2.5 border bg-surface p-4 text-left transition-colors ${
                 on ? ON : "border-line hover:border-ink"
               }`}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
+                className={`flex h-[34px] w-[34px] items-center justify-center border transition-colors ${
                   on ? ICON_ON : "border-line bg-bg text-ink"
                 }`}
               >
-                <Icon name={o.icon} size={20} />
+                <Icon name={o.icon} size={18} />
               </span>
-              <b
-                className={`mt-auto text-[14.5px] font-semibold leading-tight ${
-                  on ? "text-accent" : "text-ink"
-                }`}
-              >
+              <b className="mt-auto text-[16px] font-semibold leading-tight text-ink">
                 {o.label}
               </b>
-              <span className="text-[11.5px] leading-snug text-muted">{o.help}</span>
+              <span className="font-display text-[15px] leading-tight text-muted">
+                {o.help}
+              </span>
             </button>
           );
         })}
@@ -306,20 +292,20 @@ function StepOcasion({
       <div className="flex flex-col">
         <div className="my-0.5 mb-2 flex items-center gap-2.5">
           <span className="h-px flex-1 bg-line" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-muted">
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
             o algo más específico
           </span>
           <span className="h-px flex-1 bg-line" />
         </div>
         <label
-          className={`flex items-center gap-2.5 rounded-md border bg-surface px-3.5 py-3.5 transition-colors focus-within:border-accent ${
-            openText ? "border-accent" : "border-line"
+          className={`flex items-center gap-2.5 border bg-surface px-3.5 py-3.5 transition-colors focus-within:border-ink ${
+            openText ? "border-ink" : "border-line"
           }`}
         >
           <Icon
             name="lapiz"
             size={18}
-            className={`shrink-0 ${openText ? "text-accent" : "text-muted"}`}
+            className={`shrink-0 ${openText ? "text-ink" : "text-muted"}`}
           />
           <input
             value={openText}
@@ -342,8 +328,8 @@ function StepMomento({
   onPick: (m: "dia" | "noche") => void;
 }) {
   const cards: { key: "dia" | "noche"; icon: IconName; title: string; sub: string }[] = [
-    { key: "dia", icon: "sol", title: "De día", sub: "luz natural, todo más relajado" },
-    { key: "noche", icon: "luna", title: "De noche", sub: "para subirle un punto al arreglo" },
+    { key: "dia", icon: "sol", title: "de día", sub: "junta, lunch, oficina" },
+    { key: "noche", icon: "luna", title: "de noche", sub: "cena, drinks, salida" },
   ];
   return (
     <div className="flex flex-col gap-3">
@@ -355,22 +341,20 @@ function StepMomento({
             type="button"
             onClick={() => onPick(c.key)}
             aria-pressed={on}
-            className={`flex items-center gap-[15px] rounded-md border bg-surface px-[18px] py-5 text-left transition-colors ${
+            className={`flex items-center gap-4 border bg-surface px-5 py-[22px] text-left transition-colors ${
               on ? ON : "border-line hover:border-ink"
             }`}
           >
             <span
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+              className={`flex h-11 w-11 shrink-0 items-center justify-center border transition-colors ${
                 on ? ICON_ON : "border-line bg-bg text-ink"
               }`}
             >
               <Icon name={c.icon} size={22} />
             </span>
             <span className="flex flex-col">
-              <b className={`text-[16.5px] font-semibold ${on ? "text-accent" : "text-ink"}`}>
-                {c.title}
-              </b>
-              <span className="text-[12.5px] text-muted">{c.sub}</span>
+              <b className="text-[20px] font-semibold text-ink">{c.title}</b>
+              <span className="font-display text-[16px] text-muted">{c.sub}</span>
             </span>
           </button>
         );
@@ -397,113 +381,97 @@ function StepClima({
   onLocate: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col">
+      {/* Píldora de ubicación: si la usa, se leen temp Y lluvia automáticamente. */}
       <button
         type="button"
         onClick={onLocate}
         disabled={locating}
-        className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-sm border border-line bg-surface text-[13.5px] font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60"
+        className="flex items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink disabled:opacity-60"
       >
-        {locating ? (
-          <>
-            <Spinner className="h-4 w-4" /> Leyendo el clima…
-          </>
-        ) : (
-          <>
-            <Icon name="ubicacion" size={18} /> Usar mi ubicación
-          </>
-        )}
+        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+          {locating ? <Spinner className="h-4 w-4" /> : <Icon name="ubicacion" size={17} />}
+        </span>
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[15px] font-semibold text-ink">
+            {locating ? "leyendo el clima…" : "usar mi ubicación"}
+          </span>
+          <span className="font-display text-[15px] text-muted">
+            {locFailed ? "no pude leerla — dime tú abajo" : "leo temp y lluvia por ti"}
+          </span>
+        </span>
+        <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
       </button>
 
-      <div className="flex items-center gap-2.5">
+      {/* Divisor */}
+      <div className="my-[18px] flex items-center gap-3">
         <span className="h-px flex-1 bg-line" />
-        <span className="text-[11.5px] text-muted">
-          {locFailed ? "no pude leerla — dime tú" : "o dímelo tú"}
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+          o dime tú
         </span>
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <TempSlider idx={idx} onIdx={onIdx} />
+      {/* Lista de 5 bandas (bordes colapsados con -mt-px) */}
+      <div className="flex flex-col">
+        {BUCKETS.map((b, i) => {
+          const on = i === idx;
+          return (
+            <button
+              key={b.label}
+              type="button"
+              onClick={() => onIdx(i)}
+              aria-pressed={on}
+              className={`-mt-px flex items-center gap-3.5 border p-3.5 text-left transition-colors ${
+                on
+                  ? "relative z-[2] border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]"
+                  : "border-line hover:border-ink"
+              }`}
+            >
+              <span
+                className={`h-2.5 w-2.5 shrink-0 rounded-full border transition-colors ${
+                  on ? "border-ink bg-ink" : "border-muted"
+                }`}
+              />
+              <span className="w-[84px] shrink-0 text-[16px] font-semibold text-ink">
+                {b.label}
+              </span>
+              <span className="font-display text-[16px] text-muted">{b.ref}</span>
+              <span className="tabular ml-auto text-[14px] font-bold text-ink">
+                {b.temp_c}°
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      <div className="flex items-center justify-between gap-2.5">
-        <span className="text-[13px] font-medium text-ink">¿Va a llover?</span>
-        <div className="inline-flex overflow-hidden rounded-sm border border-line">
+      {/* Fila de lluvia (solo el camino manual) */}
+      <div className="mt-[18px] flex items-center gap-3">
+        <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+          <Icon name="lluvia" size={17} className="text-muted" /> ¿va a llover?
+        </span>
+        <div className="ml-auto inline-flex overflow-hidden rounded-sm border border-line">
           <button
             type="button"
             onClick={() => onRain(false)}
-            className={`min-h-[38px] px-[22px] text-[13px] font-semibold transition-colors ${
-              !rain ? "bg-accent-soft text-accent" : "bg-surface text-ink"
+            aria-pressed={!rain}
+            className={`min-h-[38px] px-5 text-[14px] font-semibold transition-colors ${
+              !rain ? "bg-accent text-on-accent" : "bg-surface text-ink"
             }`}
           >
-            No
+            no
           </button>
           <button
             type="button"
             onClick={() => onRain(true)}
-            className={`min-h-[38px] border-l border-line px-[22px] text-[13px] font-semibold transition-colors ${
-              rain ? "bg-accent-soft text-accent" : "bg-surface text-ink"
+            aria-pressed={rain}
+            className={`min-h-[38px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
+              rain ? "bg-accent text-on-accent" : "bg-surface text-ink"
             }`}
           >
-            Sí
+            sí
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// Slider de temperatura: copo · track con thumb · sol. 5 paradas con snap. Un
-// <input range> transparente encima maneja arrastre, tap y teclado (accesible);
-// los visuales (fill, thumb, ticks) siguen el valor.
-function TempSlider({ idx, onIdx }: { idx: number; onIdx: (i: number) => void }) {
-  const b = BUCKETS[idx];
-  const pct = (idx / (BUCKETS.length - 1)) * 100;
-  return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-3">
-        <Icon name="copo" size={18} className="shrink-0 text-muted" />
-        <div className="relative flex-1 py-2">
-          <div className="relative h-[7px] rounded-full bg-line">
-            <div
-              className="absolute inset-y-0 left-0 rounded-full bg-accent transition-[width] duration-200"
-              style={{ width: `${pct}%` }}
-            />
-            <span
-              className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[2.5px] border-accent bg-surface shadow-[0_2px_6px_rgb(26_23_24/0.16)] transition-[left] duration-200"
-              style={{ left: `${pct}%` }}
-            >
-              <span className="h-[9px] w-[9px] rounded-full bg-accent" />
-            </span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={BUCKETS.length - 1}
-            step={1}
-            value={idx}
-            onChange={(e) => onIdx(Number(e.target.value))}
-            aria-label="Temperatura"
-            aria-valuetext={`${b.label} — ${b.ref}`}
-            className="absolute inset-x-0 top-0 h-full w-full cursor-pointer opacity-0"
-          />
-          <div className="mt-[11px] flex justify-between">
-            {BUCKETS.map((bk, i) => (
-              <span
-                key={bk.label}
-                className={`h-[7px] w-[2px] rounded-[1px] ${i === idx ? "bg-accent" : "bg-line"}`}
-              />
-            ))}
-          </div>
-        </div>
-        <Icon name="sol" size={18} className="shrink-0 text-muted" />
-      </div>
-      <div className="mt-3.5 text-center" aria-live="polite">
-        <b className="text-[18px] font-semibold text-ink">{b.label}</b>
-        <span className="mt-0.5 block text-[13px] text-muted">{b.ref}</span>
-      </div>
-      <div className="mt-2.5 flex justify-between px-0.5 text-[11px] text-muted">
-        <span>más frío</span>
-        <span>más calor</span>
       </div>
     </div>
   );
