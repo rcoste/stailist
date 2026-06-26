@@ -72,6 +72,15 @@ export function HoyClient({
   useWakeLock(state.kind === "generating");
   const [worn, setWorn] = useState(wornInicial);
   const [skipOpen, setSkipOpen] = useState(false);
+  // Fecha como eyebrow del empty state. Se calcula en cliente para evitar
+  // desajuste de hidratación (la zona horaria del server puede diferir).
+  const [fechaLabel, setFechaLabel] = useState("");
+  useEffect(() => {
+    const d = new Date();
+    const wd = d.toLocaleDateString("es-MX", { weekday: "long" });
+    const mo = d.toLocaleDateString("es-MX", { month: "short" }).replace(".", "");
+    setFechaLabel(`${wd} · ${d.getDate()} ${mo}`.toUpperCase());
+  }, []);
   // El botón ✨ pide un look NUEVO → fuerza (si no, look-of-day devuelve el cacheado).
   const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(autoAsk);
@@ -182,20 +191,35 @@ export function HoyClient({
   // tab bar visible. Saludo + CTA — no te fuerza el wizard ni te atrapa.
   if (state.kind === "idle") {
     return (
-      <div className="flex flex-col items-center gap-5 py-14 text-center">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="text-h2 font-semibold text-ink">Tu look de hoy</h1>
-          <p className="max-w-xs text-sm text-muted">
-            Aún no lo armamos. Dime tu plan y te lo dejo listo en segundos.
+      <div className="flex min-h-[calc(100dvh-13rem)] flex-col">
+        {/* Editorial y tipográfico — SIN foto de fondo (no confundir con un
+            outfit). El cuerpo va centrado vertical; el CTA al pie. */}
+        <div className="flex flex-1 flex-col justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
+            {fechaLabel || " "}
+          </p>
+          <h1 className="mt-4 text-[52px] font-bold leading-[0.96] tracking-[-0.035em] text-ink">
+            tu look
+            <br />
+            de hoy,{" "}
+            <em className="font-display font-normal italic tracking-normal">
+              aún no
+            </em>
+          </h1>
+          <p className="mt-5 max-w-[280px] font-display text-[20px] leading-snug text-muted">
+            dime tu plan y te lo dejo listo en segundos.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => startGen(false)}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-        >
-          <Icon name="destello" size={18} /> Armar mi look de hoy
-        </button>
+        <div className="pb-2">
+          <button
+            type="button"
+            onClick={() => startGen(false)}
+            className="flex min-h-[60px] w-full items-center justify-center gap-2.5 rounded-sm bg-accent text-base font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            armar mi look de hoy
+            <Icon name="flecha" size={19} />
+          </button>
+        </div>
       </div>
     );
   }
