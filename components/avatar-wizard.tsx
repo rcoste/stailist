@@ -44,10 +44,14 @@ export function AvatarWizard({
   userId,
   gender,
   returnTo,
+  skipHref,
 }: {
   userId: string;
   gender: Gender;
   returnTo: string;
+  /** Si se pasa, muestra "ahora no, seguir sin avatar" en el primer paso y lleva
+   *  ahí (el avatar es opcional — en el onboarding no debe atrapar a nadie). */
+  skipHref?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("fotos");
@@ -187,6 +191,14 @@ export function AvatarWizard({
           >
             Siguiente
           </button>
+          {skipHref ? (
+            <Link
+              href={skipHref}
+              className="flex min-h-11 items-center justify-center rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-ink"
+            >
+              Ahora no, seguir sin avatar
+            </Link>
+          ) : null}
         </div>
       )}
 

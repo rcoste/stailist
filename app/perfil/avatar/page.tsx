@@ -24,7 +24,17 @@ export default async function PerfilAvatarPage({
   const { return: ret } = await searchParams;
   const returnTo = ret && RETURNS.has(ret) ? ret : "/perfil";
 
+  // En el onboarding el avatar es opcional y no debe atrapar: "seguir sin avatar"
+  // entra directo a la app (/hoy). En perfil/hoy no se ofrece skip (se llega aquí
+  // a propósito; el "← Volver" ya existe).
+  const skipHref = returnTo === "/onboarding/wow" ? "/hoy" : undefined;
+
   return (
-    <AvatarWizard userId={profile.id} gender={profile.gender} returnTo={returnTo} />
+    <AvatarWizard
+      userId={profile.id}
+      gender={profile.gender}
+      returnTo={returnTo}
+      skipHref={skipHref}
+    />
   );
 }
