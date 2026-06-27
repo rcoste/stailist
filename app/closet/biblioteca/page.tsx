@@ -43,13 +43,13 @@ export default async function BibliotecaPage() {
             className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
           >
             <Icon name="chevron" size={15} rotate={180} />
-            Clóset
+            clóset
           </Link>
-          <h1 className="text-[30px] font-semibold leading-none tracking-[-0.01em] text-ink">
-            Biblioteca
+          <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
+            la biblioteca
           </h1>
           <p className="text-sm text-muted">
-            Agrega más básicos. Marca los que también tengas.
+            agrega más básicos. marca los que también tengas.
           </p>
         </div>
 

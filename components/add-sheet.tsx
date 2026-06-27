@@ -30,7 +30,7 @@ export function AddSheet({ userId }: { userId: string }) {
         className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-sm bg-accent px-4 text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
       >
         <Icon name="mas" size={18} strokeWidth={2} />
-        Agregar
+        agregar
       </button>
 
       {/* Flujos en modo headless: sin botón propio, los dispara la hoja. */}
@@ -49,25 +49,25 @@ export function AddSheet({ userId }: { userId: string }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3.5 mt-1.5 h-1 w-9 rounded-full bg-line" />
-            <h3 className="mx-1 mb-3 text-[19px] font-semibold text-ink display">
-              Agregar al clóset
+            <h3 className="mx-1 mb-3 text-[19px] italic text-ink display">
+              agregar al clóset
             </h3>
             <Option
               icon="camara"
-              title="Tomar o subir foto"
-              sub="Una prenda — la IA lee sus datos"
+              title="tomar una foto"
+              sub="una prenda, la leo y la subo"
               onClick={() => choose(() => photoRef.current?.start())}
             />
             <Option
               icon="destello"
-              title="Importar del carrete"
-              sub="Varias fotos a la vez"
+              title="importar del carrete"
+              sub="sube fotos de tu ropa y las leo todas"
               onClick={() => choose(() => carreteRef.current?.start())}
             />
             <Option
               icon="libro"
-              title="Explorar la biblioteca"
-              sub="Marca los básicos que ya tienes"
+              title="explorar la biblioteca"
+              sub="marca las básicas que ya tienes"
               onClick={() => choose(() => router.push("/closet/biblioteca"))}
             />
           </div>
@@ -92,14 +92,14 @@ function Option({
     <button
       type="button"
       onClick={onClick}
-      className="mb-2.5 flex w-full items-center gap-3 rounded-md border border-line bg-surface px-3 py-3 text-left transition-colors hover:border-accent"
+      className="mb-2.5 flex w-full items-center gap-3.5 rounded-sm border border-line bg-surface px-3.5 py-3.5 text-left transition-colors hover:border-accent"
     >
-      <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent">
+      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-sm border border-line text-ink">
         <Icon name={icon} size={20} />
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className="text-sm font-semibold text-ink">{title}</span>
-        <span className="text-xs text-muted">{sub}</span>
+        <span className="text-[15px] font-semibold text-ink">{title}</span>
+        <span className="display text-[13.5px] text-muted">{sub}</span>
       </span>
       <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
     </button>

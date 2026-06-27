@@ -272,7 +272,7 @@ function OwnControl({ busy, onOwn }: { busy: boolean; onOwn: () => void }) {
       className="flex min-h-9 items-center gap-1.5 rounded-sm border border-line bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50"
     >
       {busy ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="mas" size={14} strokeWidth={2} />}
-      Ya la tengo
+      ya la tengo
     </button>
   );
 }
@@ -322,9 +322,9 @@ function DecideRow({
 
   if (decision === "accept") {
     return (
-      <li className="flex items-center gap-2.5 rounded-md border border-success/30 bg-success/5 p-3.5">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-          <Icon name="check" size={13} />
+      <li className="flex items-center gap-2.5 rounded-md border border-line bg-accent-soft p-3.5">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+          <Icon name="check" size={13} strokeWidth={2.4} />
         </span>
         <div className="flex min-w-0 flex-col">
           <span className="text-sm font-medium text-ink">{item.nombre}</span>
@@ -360,40 +360,52 @@ function DecideRow({
     );
   }
 
+  // Lado a lado (handoff inc4): la ideal (catálogo) vs la tuya (tu foto), veredicto,
+  // y decides "me sirve" (tu parecido cuenta) / "quiero la ideal" (queda como falta).
+  const idealSrc = faltaImage(item);
   return (
-    <li className="flex flex-col gap-0 rounded-md border border-line bg-surface p-[13px]">
-      <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">La ideal</span>
-      <span className="mt-1 text-sm font-semibold text-ink">{item.nombre}</span>
-      <span className="mt-0.5 text-[11.5px] leading-snug text-muted">{item.porque}</span>
-      {by ? (
-        <div className="my-2.5 flex items-center gap-2.5 rounded-sm bg-bg p-2.5">
-          {src ? (
-            <span className="relative h-[42px] w-[34px] shrink-0 overflow-hidden rounded-sm border border-line">
-              <Image src={src} alt="" fill sizes="34px" className="object-cover" />
-            </span>
-          ) : null}
-          <div className="flex min-w-0 flex-col">
-            <span className="text-[9.5px] font-bold uppercase tracking-[0.05em] text-muted">
-              Ya tienes algo parecido
-            </span>
-            <span className="truncate text-[13px] font-semibold text-ink">{by}</span>
-          </div>
+    <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-[13px]">
+      <div className="flex flex-col">
+        <span className="text-[15px] font-semibold leading-tight text-ink">{item.nombre}</span>
+        <span className="mt-0.5 text-[11.5px] leading-snug text-muted">{item.porque}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">la ideal</span>
+          <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border border-line bg-bg text-muted">
+            {idealSrc ? (
+              <Image src={idealSrc} alt="" fill sizes="120px" className="object-cover" />
+            ) : (
+              <Icon name="gancho" size={20} />
+            )}
+          </span>
         </div>
-      ) : null}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-muted">la tuya</span>
+          <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border border-line bg-bg text-muted">
+            {src ? (
+              <Image src={src} alt={by ?? ""} fill sizes="120px" className="object-cover" />
+            ) : (
+              <Icon name="gancho" size={20} />
+            )}
+          </span>
+          {by ? <span className="truncate text-[11px] font-medium text-ink">{by}</span> : null}
+        </div>
+      </div>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => onDecide(index, "accept")}
-          className="min-h-9 flex-1 rounded-sm border border-line bg-surface text-xs font-semibold text-ink transition-colors hover:border-ink"
+          className="min-h-10 flex-1 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
         >
-          Sí, me sirve
+          me sirve
         </button>
         <button
           type="button"
           onClick={() => onDecide(index, "reject")}
-          className="min-h-9 flex-1 rounded-sm border border-line bg-surface text-xs font-semibold text-ink transition-colors hover:border-ink"
+          className="min-h-10 flex-1 rounded-sm border border-line bg-surface text-xs font-semibold text-ink transition-colors hover:border-ink"
         >
-          Prefiero la ideal
+          quiero la ideal
         </button>
       </div>
     </li>

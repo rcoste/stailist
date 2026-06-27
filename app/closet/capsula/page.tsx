@@ -39,17 +39,17 @@ export default async function CapsulaPage() {
             className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
           >
             <Icon name="chevron" size={15} rotate={180} />
-            Clóset
+            clóset
           </Link>
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-[30px] font-semibold leading-none tracking-[-0.01em] text-ink">
-              Tu cápsula
+            <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
+              tu cápsula
             </h1>
             <Link
               href="/closet/capsula/editar"
               className="shrink-0 text-sm font-semibold text-accent hover:underline"
             >
-              Editar
+              editar
             </Link>
           </div>
         </div>

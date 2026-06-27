@@ -77,7 +77,7 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Busca un básico…"
+          placeholder="busca un básico…"
           className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
         />
       </div>
@@ -96,7 +96,7 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
       </div>
 
       {shown.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted">Nada coincide con tu búsqueda.</p>
+        <p className="py-10 text-center text-sm text-muted">nada coincide con tu búsqueda.</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {shown.map((item) => {
@@ -107,10 +107,10 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                 type="button"
                 onClick={() => toggle(item.id)}
                 aria-pressed={on}
-                className={`group relative flex flex-col overflow-hidden rounded-md border bg-surface text-left transition-colors duration-200 focus-visible:outline-none ${
-                  on ? "border-accent" : "border-line hover:border-ink"
-                }`}
+                className="group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface text-left transition-colors duration-200 hover:border-ink focus-visible:outline-none"
               >
+                {/* B1 "iluminar": lo seleccionado va a todo color + check negro;
+                    lo no seleccionado se apaga (grayscale .85 / opacity .55). */}
                 <div className="relative aspect-square w-full bg-bg">
                   {item.image_path ? (
                     <Image
@@ -118,11 +118,15 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                       alt={item.name}
                       fill
                       sizes="(max-width: 430px) 50vw, 215px"
-                      className="object-cover"
+                      className={`object-cover transition-all duration-200 ${
+                        on ? "" : "opacity-[0.55] grayscale-[0.85]"
+                      }`}
                     />
                   ) : (
                     <span
-                      className="absolute inset-0"
+                      className={`absolute inset-0 transition-all duration-200 ${
+                        on ? "" : "opacity-[0.55] grayscale-[0.85]"
+                      }`}
                       style={{ backgroundColor: item.attrs.color_hex ?? "#E5E1DD" }}
                       aria-hidden
                     />
@@ -135,11 +139,14 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                   >
                     <Icon name="check" size={15} strokeWidth={2.4} />
                   </span>
-                  {!on && (
-                    <span className="absolute inset-0 bg-bg/20 transition-opacity duration-200 group-hover:opacity-0" />
-                  )}
                 </div>
-                <span className="px-2.5 py-2 text-[12.5px] font-medium text-ink">{item.name}</span>
+                <span
+                  className={`px-2.5 py-2 text-[12.5px] font-medium transition-colors duration-200 ${
+                    on ? "text-ink" : "text-muted"
+                  }`}
+                >
+                  {item.name}
+                </span>
               </button>
             );
           })}
@@ -159,12 +166,12 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
           {pending ? (
             <>
               <Spinner className="h-4 w-4" />
-              Agregando…
+              agregando…
             </>
           ) : selected.size === 0 ? (
-            "Marca lo que quieras agregar"
+            "marca lo que quieras agregar"
           ) : (
-            `Agregar a mi clóset (${selected.size})`
+            `agregar a mi clóset (${selected.size})`
           )}
         </button>
       </div>
@@ -188,11 +195,11 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border px-3 py-2 text-[12.5px] font-medium transition-colors duration-200 ${
-        on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted hover:text-ink"
+        on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-muted hover:text-ink"
       }`}
     >
       {label}
-      <span className={`tabular text-[11px] ${on ? "text-accent/70" : "text-muted/70"}`}>{count}</span>
+      <span className={`tabular text-[11px] ${on ? "text-on-accent/70" : "text-muted/70"}`}>{count}</span>
     </button>
   );
 }

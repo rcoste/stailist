@@ -32,23 +32,23 @@ const CAT_LABEL = new Map(CAT.map((c) => [c.key, c.label]));
 
 // Opciones para editar una prenda fotografiada (labels humanas, no el enum crudo).
 const EDIT_CAT: { v: string; l: string }[] = [
-  { v: "top", l: "Top" },
-  { v: "bottom", l: "Pantalón" },
-  { v: "abrigo", l: "Abrigo" },
-  { v: "vestido", l: "Vestido" },
-  { v: "calzado", l: "Calzado" },
-  { v: "accesorio", l: "Accesorio" },
+  { v: "top", l: "top" },
+  { v: "bottom", l: "pantalón" },
+  { v: "abrigo", l: "abrigo" },
+  { v: "vestido", l: "vestido" },
+  { v: "calzado", l: "calzado" },
+  { v: "accesorio", l: "accesorio" },
 ];
 const FORMALIDADES: { v: string; l: string }[] = [
-  { v: "casual", l: "Casual" },
-  { v: "formal-casual", l: "Casual-formal" },
-  { v: "formal", l: "Formal" },
+  { v: "casual", l: "casual" },
+  { v: "formal-casual", l: "casual-formal" },
+  { v: "formal", l: "formal" },
 ];
 const TEMPORADAS: { v: string; l: string }[] = [
-  { v: "calor", l: "Calor" },
-  { v: "templado", l: "Templado" },
-  { v: "frio", l: "Frío" },
-  { v: "todo-el-año", l: "Todo el año" },
+  { v: "calor", l: "calor" },
+  { v: "templado", l: "templado" },
+  { v: "frio", l: "frío" },
+  { v: "todo-el-año", l: "todo el año" },
 ];
 
 const norm = (s: string) =>
@@ -70,12 +70,12 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border px-3 py-2 text-[12.5px] font-medium transition-colors duration-200 ${
-        on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted hover:text-ink"
+      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border px-[13px] py-2 text-[12.5px] font-semibold transition-colors duration-200 ${
+        on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-muted hover:text-ink"
       }`}
     >
       {label}
-      <span className={`tabular text-[11px] ${on ? "text-accent/70" : "text-muted/70"}`}>{count}</span>
+      <span className={`tabular text-[11px] ${on ? "text-on-accent/60" : "text-muted/60"}`}>{count}</span>
     </button>
   );
 }
@@ -149,9 +149,9 @@ function Tile({
             reales (no en prendas sumadas a mano desde la cápsula, que no tienen
             imagen y caen al swatch). */}
         {item.source === "photo" && item.imagen ? (
-          <span className="absolute inset-x-0 bottom-0 flex items-center gap-[5px] bg-gradient-to-t from-ink/55 to-transparent px-[9px] py-1.5 text-[9.5px] font-semibold tracking-[0.04em] text-on-accent">
+          <span className="absolute inset-x-0 bottom-0 flex items-center gap-[5px] bg-gradient-to-t from-ink/55 to-transparent px-[9px] py-1.5 text-[9.5px] font-semibold uppercase tracking-[0.04em] text-on-accent">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-on-accent" />
-            Tuya
+            tuya
           </span>
         ) : null}
       </div>
@@ -447,7 +447,7 @@ function FilterSheet({
 }) {
   const pill = (on: boolean) =>
     `min-h-9 rounded-sm border px-3 text-sm font-medium transition-colors ${
-      on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink hover:border-accent"
+      on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-ink hover:border-accent"
     }`;
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center" onClick={onClose}>
@@ -459,9 +459,9 @@ function FilterSheet({
       >
         <div className="mx-auto mt-1.5 h-1 w-9 rounded-full bg-line" />
         <div className="flex items-center justify-between">
-          <h3 className="text-[19px] font-semibold text-ink display">Filtros</h3>
-          <button type="button" onClick={onClear} className="text-sm font-medium text-accent">
-            Limpiar
+          <h3 className="text-[19px] italic text-ink display">filtros</h3>
+          <button type="button" onClick={onClear} className="text-sm font-medium text-accent underline underline-offset-[3px]">
+            limpiar
           </button>
         </div>
 
@@ -498,7 +498,7 @@ function FilterSheet({
             soloTuyas ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink"
           }`}
         >
-          Solo mis fotos (Tuyas)
+          solo mis fotos (tuyas)
           <span
             className={`flex h-5 w-5 items-center justify-center rounded-sm border ${
               soloTuyas ? "border-accent bg-accent text-on-accent" : "border-line"
@@ -513,7 +513,7 @@ function FilterSheet({
           onClick={onClose}
           className="min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep"
         >
-          Ver resultados
+          ver resultados
         </button>
       </div>
     </div>
@@ -602,7 +602,7 @@ function ItemSheet({
                     type="button"
                     onClick={() => setCategoria(c.v)}
                     className={`min-h-9 rounded-sm border px-3 text-sm transition-colors ${
-                      categoria === c.v ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink"
+                      categoria === c.v ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-ink"
                     }`}
                   >
                     {c.l}
@@ -650,7 +650,7 @@ function ItemSheet({
                 className="flex min-h-11 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
               >
                 {saving ? <Spinner className="h-4 w-4" /> : null}
-                Guardar cambios
+                guardar cambios
               </button>
             ) : null}
           </>
@@ -661,7 +661,7 @@ function ItemSheet({
           onClick={onRemove}
           className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-line bg-bg text-sm font-medium text-error transition-colors hover:border-error"
         >
-          <Icon name="equis" size={16} /> No tengo esta — quitar del clóset
+          <Icon name="equis" size={16} /> no tengo esta — quitar del clóset
         </button>
       </div>
     </div>

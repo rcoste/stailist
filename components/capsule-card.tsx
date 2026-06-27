@@ -75,35 +75,58 @@ export function CapsuleCard({
     );
   }
 
-  // Estado normal: progreso "Tienes N de M" + barra.
+  // Estado normal (v3 "capbig"): bloque con borde negro, "tu cápsula N/M" grande,
+  // barra de progreso, y los esenciales que faltan como huecos punteados (que
+  // llevan a la pantalla de la cápsula).
+  const faltan = view.faltan.slice(0, 3);
+  const nFaltan = view.faltan.length;
   return (
     <Link
       href="/closet/capsula"
-      className="flex items-center gap-[13px] rounded-lg border border-line bg-surface px-[15px] py-[13px] transition-colors hover:border-accent"
+      className="flex flex-col border border-accent px-[15px] py-[15px] transition-colors hover:border-accent-deep"
     >
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="flex items-baseline justify-between gap-2.5">
-          <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-            Tu cápsula
-          </span>
-          <span className="display whitespace-nowrap text-[15px] font-semibold text-ink">
-            Tienes <b className="tabular font-semibold text-accent">{view.haveCount}</b> de{" "}
-            <span className="tabular">{view.totalCount}</span>
-          </span>
+      <div className="flex items-baseline justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
+          tu cápsula
         </span>
-        <span className="mt-2 h-[5px] w-full overflow-hidden rounded-full bg-line">
-          <span
-            className="block h-full rounded-full bg-accent"
-            style={{ width: `${view.coveragePct}%` }}
-          />
+        <span className="text-[26px] font-bold leading-none tracking-[-0.02em] text-ink">
+          <span className="tabular">{view.haveCount}</span>
+          <b className="tabular font-normal text-muted"> / {view.totalCount}</b>
         </span>
-        {stale ? (
-          <span className="mt-1.5 text-[11px] text-muted">
-            Tu clóset cambió — ábrela para recalcular.
-          </span>
-        ) : null}
+      </div>
+      <span className="mt-[11px] h-1.5 w-full overflow-hidden rounded-full bg-line">
+        <span
+          className="block h-full rounded-full bg-accent"
+          style={{ width: `${view.coveragePct}%` }}
+        />
       </span>
-      <Icon name="chevron" size={16} className="shrink-0 text-muted" />
+      {stale ? (
+        <span className="mt-2.5 text-[11px] text-muted">
+          tu clóset cambió — ábrela para recalcular.
+        </span>
+      ) : faltan.length > 0 ? (
+        <>
+          <p className="display mt-3 text-sm text-muted">
+            te {nFaltan === 1 ? "falta" : "faltan"} {nFaltan}{" "}
+            {nFaltan === 1 ? "esencial" : "esenciales"}:
+          </p>
+          <div className="mt-[11px] flex gap-2">
+            {faltan.map((it, i) => (
+              <span
+                key={i}
+                className="flex aspect-[3/4] flex-1 flex-col items-center justify-center gap-[7px] border border-dashed border-line px-1 text-muted"
+              >
+                <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-line">
+                  <Icon name="mas" size={14} />
+                </span>
+                <span className="text-center text-[9px] font-bold uppercase leading-[1.2] tracking-[0.04em]">
+                  {it.nombre}
+                </span>
+              </span>
+            ))}
+          </div>
+        </>
+      ) : null}
     </Link>
   );
 }

@@ -92,6 +92,7 @@ type RenderItem = {
 
 type State =
   | { kind: "idle" }
+  | { kind: "explainer" } // así funciona (timeline de 3 pasos) ANTES de elegir fotos
   | { kind: "analizando"; done: number; total: number }
   | { kind: "texto"; items: DraftItem[] }
   | { kind: "render"; items: RenderItem[]; done: number; total: number }
@@ -114,7 +115,9 @@ export function ImportCarreteFlow({
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  useImperativeHandle(ref, () => ({ start: () => inputRef.current?.click() }), []);
+  // El explainer va ANTES del picker: el valor del carrete (1 foto → la IA separa
+  // cada prenda) hay que contarlo primero. "elegir fotos" abre el picker nativo.
+  useImperativeHandle(ref, () => ({ start: () => setState({ kind: "explainer" }) }), []);
 
   // --- 1) Selección + extracción ---
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
@@ -310,16 +313,55 @@ export function ImportCarreteFlow({
 
   // ====== RENDER POR ESTADO ======
 
+  if (state.kind === "explainer") {
+    const pasos = [
+      { icon: "camara" as const, t: "subes una foto", s: "con tu outfit completo puesto." },
+      { icon: "destello" as const, t: "la IA separa cada prenda", s: "saco, pantalón, zapatos… una por una." },
+      { icon: "gancho" as const, t: "las carga limpias", s: "listas en tu clóset, como de catálogo." },
+    ];
+    return (
+      <Overlay>
+        {input}
+        <div className="flex flex-col gap-1">
+          <h2 className="display text-[24px] font-semibold leading-tight text-ink">
+            así <em className="font-normal italic">funciona</em>
+          </h2>
+          <p className="text-sm text-muted">
+            una foto con tu outfit y te separo cada prenda.
+          </p>
+        </div>
+        <ol className="flex flex-col">
+          {pasos.map((p, i) => (
+            <li key={p.t} className="flex gap-3.5">
+              <div className="flex flex-col items-center">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-accent text-on-accent">
+                  <Icon name={p.icon} size={19} />
+                </span>
+                {i < pasos.length - 1 ? (
+                  <span className="my-1 w-px flex-1 bg-line" aria-hidden />
+                ) : null}
+              </div>
+              <div className="flex flex-col pb-5 pt-1.5">
+                <span className="text-[15px] font-semibold leading-tight text-ink">{p.t}</span>
+                <span className="editorial text-sm text-muted">{p.s}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <Footer
+          cancel={() => setState({ kind: "idle" })}
+          confirmLabel="elegir fotos"
+          confirmDisabled={false}
+          onConfirm={() => inputRef.current?.click()}
+        />
+      </Overlay>
+    );
+  }
+
   if (state.kind === "analizando") {
     return (
       <Overlay>
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <Spinner className="h-7 w-7 text-accent" />
-          <p className="editorial text-base text-ink">Leyendo tus prendas…</p>
-          <p className="text-sm text-muted">
-            {state.done}/{state.total} fotos
-          </p>
-        </div>
+        <CarreteLoading frase="leyendo tus prendas…" count={`${state.done}/${state.total} fotos`} />
       </Overlay>
     );
   }
@@ -344,7 +386,7 @@ export function ImportCarreteFlow({
         </div>
         <Footer
           cancel={() => setState({ kind: "idle" })}
-          confirmLabel={`Generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
+          confirmLabel={`generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
           confirmDisabled={activos.length === 0}
           onConfirm={generarRenders}
         />
@@ -355,11 +397,16 @@ export function ImportCarreteFlow({
   if (state.kind === "render") {
     return (
       <Overlay>
-        <div className="flex flex-col items-center gap-1 pb-2 text-center">
-          <p className="editorial text-base text-ink">Generando tus prendas…</p>
-          <p className="text-sm text-muted">
-            {state.done}/{state.total}
-          </p>
+        <div className="flex flex-col items-center gap-3 pb-1 text-center">
+          <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full border border-line text-ink motion-safe:animate-[spin_6s_linear_infinite]">
+            <Icon name="destello" size={18} />
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <p className="editorial text-lg text-ink">generando tus prendas…</p>
+            <p className="tabular text-sm text-muted">
+              {state.done}/{state.total}
+            </p>
+          </div>
         </div>
         {/* Grid que se LLENA: cada prenda con spinner hasta que su render llega
             (en vez de un spinner global) — se siente mucho más rápido. */}
@@ -411,7 +458,7 @@ export function ImportCarreteFlow({
         </div>
         <Footer
           cancel={() => setState({ kind: "idle" })}
-          confirmLabel={`Sumar ${keep} al clóset`}
+          confirmLabel={`sumar ${keep} al clóset`}
           confirmDisabled={false}
           onConfirm={guardar}
         />
@@ -422,10 +469,7 @@ export function ImportCarreteFlow({
   if (state.kind === "guardando") {
     return (
       <Overlay>
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <Spinner className="h-7 w-7 text-accent" />
-          <p className="editorial text-base text-ink">Guardando tu clóset…</p>
-        </div>
+        <CarreteLoading frase="guardando tu clóset…" />
       </Overlay>
     );
   }
@@ -451,7 +495,7 @@ export function ImportCarreteFlow({
                 onClick={() => setState({ kind: "idle" })}
                 className="min-h-11 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
               >
-                Entendido
+                entendido
               </button>
             </div>
           </div>
@@ -465,11 +509,11 @@ export function ImportCarreteFlow({
     <div className="flex flex-col items-end gap-2">
       <button
         type="button"
-        onClick={() => inputRef.current?.click()}
+        onClick={() => setState({ kind: "explainer" })}
         className="flex min-h-12 items-center gap-2 rounded-sm border border-line bg-surface px-5 text-sm font-medium text-ink transition-colors duration-200 hover:border-accent"
       >
         <Icon name="destello" size={16} className="text-accent" />
-        Importar del carrete
+        importar del carrete
       </button>
       {state.kind === "error" && (
         <p className="max-w-[14rem] text-right text-xs text-error">{state.msg}</p>
@@ -521,7 +565,7 @@ function Footer({
         onClick={cancel}
         className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
       >
-        Cancelar
+        cancelar
       </button>
       <button
         type="button"
@@ -679,14 +723,14 @@ function RenderCard({
       </div>
       <p className="truncate text-xs font-medium text-ink">{item.attrs.nombre}</p>
       <div className="flex gap-1">
-        <VerdictBtn label="Es mía" on={item.verdict === "keep"} onClick={() => onVerdict("keep")} />
+        <VerdictBtn label="es mía" on={item.verdict === "keep"} onClick={() => onVerdict("keep")} />
         <VerdictBtn
-          label="No es"
+          label="no es"
           on={item.verdict === "notmine"}
           onClick={() => onVerdict("notmine")}
         />
         <VerdictBtn
-          label="Mala"
+          label="mala"
           on={item.verdict === "trash"}
           onClick={() => onVerdict("trash")}
         />
@@ -701,10 +745,23 @@ function VerdictBtn({ label, on, onClick }: { label: string; on: boolean; onClic
       type="button"
       onClick={onClick}
       className={`min-h-8 flex-1 rounded-sm border px-1 text-[11px] font-medium transition-colors ${
-        on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
+        on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-muted"
       }`}
     >
       {label}
     </button>
+  );
+}
+
+// Loading canónico del carrete (v3): spark girando lento + frase serif + conteo.
+function CarreteLoading({ frase, count }: { frase: string; count?: string }) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-8 text-center">
+      <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-line text-ink motion-safe:animate-[spin_6s_linear_infinite]">
+        <Icon name="destello" size={20} />
+      </span>
+      <p className="editorial text-lg text-ink">{frase}</p>
+      {count ? <p className="tabular text-sm text-muted">{count}</p> : null}
+    </div>
   );
 }
