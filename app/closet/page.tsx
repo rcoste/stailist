@@ -97,10 +97,10 @@ export default async function ClosetPage() {
             botón "Agregar" a la derecha (abre la hoja con las 3 formas). */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[30px] font-semibold leading-none tracking-[-0.01em] text-ink">
-              Clóset
+            <h1 className="text-[30px] font-bold leading-none tracking-[-0.025em] text-ink">
+              clóset
             </h1>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-1.5 text-[13px] text-muted">
               {hasOwnPhotos
                 ? `${items.length} ${items.length === 1 ? "prenda" : "prendas"}`
                 : `${items.length} básicos para arrancar`}

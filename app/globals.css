@@ -87,6 +87,13 @@ body {
   font-family: var(--font-arimo), system-ui, sans-serif;
 }
 
+/* Reset del focus-ring (rebrand v3): cero contorno azul del navegador. La
+   afordancia de foco se da con `focus:border-accent` (negro) en los controles. */
+*:focus,
+*:focus-visible {
+  outline: none;
+}
+
 /* Titulares = Arimo 700 (sans grande, estilo Mango). Inversión de jerarquía v3:
    antes los h1–h3 forzaban serif; ahora la serif baja a acento mínimo (.editorial
    / .display). En @layer base para que la utilidad font-sans siga ganando. */
