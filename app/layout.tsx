@@ -28,6 +28,13 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#f4f3f1",
+  // Bloquea el zoom accidental (doble-tap / pinch / al enfocar inputs) que
+  // descuadra la vista en la PWA. Tradeoff conocido: también quita el zoom a
+  // propósito; aceptable en una app controlada (no es contenido de lectura larga).
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   // Necesario para que env(safe-area-inset-*) funcione en PWA standalone (iOS):
   // sin esto, la barra inferior queda bajo el indicador de inicio ("muy abajo").
   viewportFit: "cover",
