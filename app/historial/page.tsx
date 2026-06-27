@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import Link from "next/link";
+import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
@@ -110,22 +111,27 @@ export default async function HistorialPage() {
     <AppShell>
       <section className="flex flex-col gap-5 pt-4">
         <div>
-          <h1 className="text-h1 font-semibold text-ink">Historial</h1>
-          <p className="text-sm text-muted">Tus looks pasados viven aquí.</p>
+          <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
+            historial
+          </h1>
+          <p className="mt-1.5 text-sm text-muted">tus looks pasados viven aquí.</p>
         </div>
 
         {list.length === 0 ? (
           <div className="flex flex-col items-center gap-4 rounded-lg border border-line bg-surface px-6 py-14 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-line text-muted">
+              <Icon name="reloj" size={26} />
+            </span>
             <p className="editorial text-lg text-ink">tu primer look te espera</p>
             <p className="text-sm text-muted">
-              Cuando generes outfits, aquí podrás volver a verlos, votarlos y
+              cuando generes outfits, aquí podrás volver a verlos, votarlos y
               volvértelos a poner.
             </p>
             <Link
               href="/hoy"
               className="flex min-h-12 items-center rounded-sm bg-accent px-6 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
             >
-              Genera tu look de hoy
+              genera tu look de hoy
             </Link>
           </div>
         ) : (
