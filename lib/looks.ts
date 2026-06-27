@@ -1,5 +1,7 @@
-// Los 20 estilos del swipe de gustos (overhaul 2026-06-16, ver
-// docs/designs/estilos.md). Los tags de los looks con ❤️ se convierten en el
+// Los estilos del swipe de gustos (25 mujer / 24 hombre — coquette es women-only;
+// rebrand v3 Gen-Z 2026-06-27, ver docs/designs/estilos.md). Imágenes recasteadas
+// a modelos europeo-latinos jóvenes, foto candid limpia. Los tags de los looks con
+// ❤️ se convierten en el
 // taste vector (profiles.taste_tags) que alimenta el motor — sin ML, puro conteo.
 //
 // Cada estilo tiene imagen propia para hombre y mujer (un avatar fijo vistiendo
@@ -17,8 +19,11 @@ export type Look = {
   image: string | null;
 };
 
-// [id, nombre, vibe, tags]
-const ESTILOS: [string, string, string, string[]][] = [
+// [id, nombre, vibe, tags, segment?] — segment default "unisex". Coquette es
+// "mujer" (no hay versión masculina que tenga sentido); su imagen vive en
+// /looks/coquette.png (los unisex usan /looks/<id>-<genero>.png).
+type EstiloRow = [string, string, string, string[], ("hombre" | "mujer" | "unisex")?];
+const ESTILOS: EstiloRow[] = [
   ["minimalista", "Minimalista", "menos es más, todo encaja", ["minimalista", "sobrio", "pulido"]],
   ["casual-effortless", "Casual sin esfuerzo", "fresco y sin pensarlo", ["casual", "fresco", "versatil"]],
   ["clasico-elegante", "Clásico elegante", "elegancia que no grita", ["clasico", "elegante", "minimalista"]],
@@ -43,16 +48,22 @@ const ESTILOS: [string, string, string, string[]][] = [
   // de gusto pese fuerte. Imágenes hombre usan a Roberto como avatar.
   ["startup", "Startup", "cómodo, listo para construir", ["startup", "casual", "deportivo"]],
   ["finance-bro", "Finance bro", "chaleco y a cerrar el trato", ["finance", "preppy", "pulido"]],
+  // Nuevos (2026-06-27, rebrand v3 swipes Gen-Z):
+  ["y2k", "Y2K", "los 2000 sin pena: baggy y con actitud", ["y2k", "atrevido", "retro"]],
+  ["coquette", "Coquette", "moños, suave y muy femenino", ["coquette", "romantico", "suave"], "mujer"],
+  ["gorpcore", "Gorpcore", "técnico de montaña, pero para la ciudad", ["gorpcore", "utility", "deportivo"]],
 ];
 
-export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags]) => ({
+export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "unisex"]) => ({
   id,
   nombre,
   vibe,
   tags,
-  segment: "unisex",
+  segment,
   prendas: [],
-  image: `/looks/${id}-hombre.png`,
+  // Imagen por defecto: unisex usa el archivo de hombre; los específicos (p. ej.
+  // coquette/mujer) usan /looks/<id>.png. looksForGender() resuelve por género.
+  image: segment === "unisex" ? `/looks/${id}-hombre.png` : `/looks/${id}.png`,
 }));
 
 export const LOOK_IDS = new Set(LOOKS.map((l) => l.id));

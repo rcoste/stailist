@@ -1,3 +1,16 @@
+> ⚠️ **SUPERSEDED por el rebrand v3 Gen-Z (2026-06-27).** La fuente de verdad de
+> las imágenes del swipe es ahora **`scripts/gen-looks-genz.mjs`** + el catálogo en
+> **`lib/looks.ts`** (25 estilos mujer / 24 hombre — coquette es women-only; se
+> agregaron **Y2K, coquette, gorpcore**, no se retiró ninguno). Cambios de dirección
+> vs. esta spec v2: casting **europeo-latino joven** (no avatares de Roberto, no
+> autóctono, no afro — ver memoria de modelos); foto **limpia** (luz fría neutra,
+> pared gris lisa; ya **no** papel cálido/golden/Pinterest); pose **candid** (tres
+> cuartos, fuera de centro, mirando aparte) y expresión **sin dientes**; match
+> **edad↔estilo** (jóvenes en Y2K/coquette/streetwear, mayores en clásico/glam/boho).
+> Lo de abajo (v2) se conserva como referencia histórica de los outfits por estilo.
+
+---
+
 # Estilos / looks — spec v2 (Fase 1)
 
 Fuente de verdad para regenerar las imágenes de los swipes de gustos. Cada
