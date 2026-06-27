@@ -105,9 +105,9 @@ export function TripTabs({
       {generating && !appending ? <GeneratingScreen phrases={TRIP_PHRASES} /> : null}
       <div className="flex flex-col gap-4">
         <div className="-mt-1 flex gap-6 border-b border-line">
-          <Tab label="La maleta" count={maletaCount} on={tab === "maleta"} onClick={() => setTab("maleta")} />
+          <Tab label="la maleta" count={maletaCount} on={tab === "maleta"} onClick={() => setTab("maleta")} />
           <Tab
-            label="Tus looks"
+            label="tus looks"
             count={looksCount}
             on={tab === "looks"}
             dot={looksStale && looksExist}

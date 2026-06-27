@@ -143,10 +143,11 @@ export default async function ViajeDetallePage({
             className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
           >
             <Icon name="chevron" size={15} rotate={180} />
-            Modo viaje
+            modo viaje
           </Link>
-          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
-            Tu maleta para {destino}
+          <h1 className="text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink">
+            tu maleta para{" "}
+            <em className="display font-normal italic">{destino}</em>
           </h1>
           <div className="mt-1 flex items-center gap-2 text-[15px] font-semibold text-ink">
             <Icon name="calendario" size={16} className="text-accent" />

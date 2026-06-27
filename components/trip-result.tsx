@@ -126,7 +126,7 @@ export function TripResult({
       <div className="flex items-center gap-2.5">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
           <div
-            className="h-full rounded-full bg-success"
+            className="h-full rounded-full bg-accent"
             style={{ width: `${empaca.length ? (packedCount / empaca.length) * 100 : 0}%` }}
           />
         </div>
@@ -192,7 +192,7 @@ export function TripResult({
                   >
                     <span
                       className={`flex h-[19px] w-[19px] items-center justify-center rounded-full ${
-                        on ? "bg-success text-on-accent" : "border-[1.5px] border-line bg-bg/85"
+                        on ? "bg-accent text-on-accent" : "border-[1.5px] border-line bg-bg/85"
                       }`}
                     >
                       {on ? <Icon name="check" size={12} strokeWidth={2.4} /> : null}
@@ -234,7 +234,7 @@ export function TripResult({
                     onClick={() => buscarSustituto(r)}
                     className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
                   >
-                    <Icon name="lupa" size={13} /> Buscar en mi clóset
+                    <Icon name="lupa" size={13} /> buscar en mi clóset
                   </button>
                   <button
                     type="button"
@@ -244,11 +244,11 @@ export function TripResult({
                   >
                     {ownBusy.has(r.index) ? (
                       <>
-                        <Spinner className="h-3.5 w-3.5" /> Agregando…
+                        <Spinner className="h-3.5 w-3.5" /> agregando…
                       </>
                     ) : (
                       <>
-                        <Icon name="check" size={13} /> Ya lo tengo
+                        <Icon name="check" size={13} /> ya lo tengo
                       </>
                     )}
                   </button>
@@ -268,7 +268,7 @@ export function TripResult({
               onClick={onViewLooks}
               className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
             >
-              Ver mis looks
+              ver mis looks
             </button>
           ) : (
             <button
@@ -277,7 +277,7 @@ export function TripResult({
               disabled={generating}
               className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
             >
-              <Icon name="destello" size={18} /> Generar mis looks
+              <Icon name="destello" size={18} /> generar mis looks
             </button>
           )}
           {!looksExist && falta.length > 0 ? (
@@ -307,10 +307,10 @@ export function TripResult({
               }`}
             >
               {isPacked(zoom.index) ? (
-                "Quitar de la maleta"
+                "quitar de la maleta"
               ) : (
                 <>
-                  <Icon name="check" size={16} /> Empacar
+                  <Icon name="check" size={16} /> empacar
                 </>
               )}
             </button>
@@ -349,7 +349,7 @@ export function TripResult({
             {subFlow.status === "loading" ? (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <Spinner className="h-7 w-7 text-accent" />
-                <p className="editorial text-base text-ink">Buscando en tu clóset…</p>
+                <p className="editorial text-base text-ink">buscando en tu clóset…</p>
               </div>
             ) : null}
 
