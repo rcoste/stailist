@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DownReason } from "@/components/down-reason";
 import { voteOutfit, toggleFavorite, wearToday } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
+import { Heart } from "@/components/heart";
+import { LookDetail } from "./look-detail";
 
 export type HistoryOutfit = {
   id: string;
@@ -22,7 +23,7 @@ export type HistoryOutfit = {
   favorited: boolean;
 };
 
-type EstadoItem = { voto: "up" | "down" | null; worn: boolean; fav: boolean };
+export type EstadoItem = { voto: "up" | "down" | null; worn: boolean; fav: boolean };
 type Estado = Record<string, EstadoItem>;
 
 // Etiqueta corta de ocasión (de objectives.ts, pero compacta para chips).
@@ -33,7 +34,7 @@ const OCASION_LABEL: Record<string, string> = {
   viaje: "Aeropuerto",
   refrescar: "Refrescar",
 };
-const ocasionLabel = (k: string) =>
+export const ocasionLabel = (k: string) =>
   OCASION_LABEL[k] ?? k.charAt(0).toUpperCase() + k.slice(1);
 
 type Filtro = "todos" | "fav" | "liked" | `occ:${string}`;
@@ -45,35 +46,6 @@ function monthKey(iso: string) {
 function monthLabel(iso: string) {
   const m = new Date(iso).toLocaleDateString("es-MX", { month: "long" });
   return m.charAt(0).toUpperCase() + m.slice(1);
-}
-
-// Corazón de favorito (relleno cuando on). Inline porque necesita fill; el Icon
-// del set es siempre stroke. Off → muted (legible sobre círculo claro y dentro
-// de chip), on → accent relleno.
-function Heart({
-  on,
-  size = 18,
-  className,
-}: {
-  on: boolean;
-  size?: number;
-  className?: string;
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill={on ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-      className={className ?? (on ? "text-accent" : "text-muted")}
-      aria-hidden="true"
-    >
-      <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />
-    </svg>
-  );
 }
 
 // Imagen del look a tamaño grande: la foto "cómo se me ve" (object-cover) o, si
@@ -328,11 +300,12 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
         );
       })}
 
-      {/* Detalle del look (bottom sheet): foto/collage grande, "lo que llevabas"
-          y las acciones (votar / Ponérmelo). Las acciones viven aquí, no en cada
-          tarjeta, para que el diario se mantenga limpio. */}
+      {/* Detalle del look: vista con back real (no bottom-sheet). Sin try-on →
+          3a claro (grid de prendas + "verme con este look"); con try-on → 3b
+          oscuro inmersivo. Las acciones viven aquí, no en cada tarjeta, para que
+          el diario se mantenga limpio. */}
       {lookAbierto ? (
-        <LookSheet
+        <LookDetail
           o={lookAbierto}
           e={estado[lookAbierto.id]}
           rewearing={rewearing === lookAbierto.id}
@@ -435,167 +408,6 @@ function GridTile({
             </span>
           ) : null}
         </p>
-      </div>
-    </div>
-  );
-}
-
-// Detalle del look en bottom sheet (mismo patrón que la hoja "Agregar"): imagen
-// grande, "Lo que llevabas" con las prendas a buen tamaño, y las acciones.
-function LookSheet({
-  o,
-  e,
-  rewearing,
-  onClose,
-  onVote,
-  onFav,
-  onRewear,
-}: {
-  o: HistoryOutfit;
-  e: EstadoItem;
-  rewearing: boolean;
-  onClose: () => void;
-  onVote: (up: boolean) => void;
-  onFav: () => void;
-  onRewear: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-ink/40" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={o.nombre}
-        className="relative z-10 flex max-h-[92vh] w-full max-w-[430px] flex-col overflow-y-auto rounded-t-[18px] bg-surface pb-[max(1.125rem,env(safe-area-inset-bottom))]"
-        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-        onClick={(ev) => ev.stopPropagation()}
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-center bg-surface pb-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="absolute right-2.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-bg hover:text-ink"
-          >
-            <Icon name="equis" size={18} />
-          </button>
-          <div className="h-1 w-9 rounded-full bg-line" />
-        </div>
-
-        <div className="relative mx-4 overflow-hidden rounded-lg border border-line bg-bg">
-          <div className="aspect-[4/5] w-full">
-            <LookImage o={o} />
-          </div>
-          {e.worn ? <WornSeal /> : null}
-        </div>
-
-        <div className="flex items-start gap-3 px-4 pt-3.5">
-          <div className="min-w-0 flex-1">
-            <p className="editorial text-[19px] leading-tight text-ink">{o.nombre}</p>
-            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
-              {o.origen === "viaje" ? (
-                <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-[7px] py-0.5 font-semibold text-accent">
-                  <Icon name="maleta" size={11} /> Viaje
-                </span>
-              ) : null}
-              {o.occasion ? (
-                <span className="rounded-sm border border-line bg-bg px-[7px] py-0.5 font-semibold">
-                  {ocasionLabel(o.occasion)}
-                </span>
-              ) : null}
-              <span className="tabular">{o.fecha}</span>
-              {e.worn ? (
-                <span className="inline-flex items-center gap-1 font-semibold text-success">
-                  <Icon name="check" size={12} /> Puesto
-                </span>
-              ) : null}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onFav}
-            aria-pressed={e.fav}
-            aria-label={e.fav ? "Quitar de favoritos" : "Guardar en favoritos"}
-            className="flex h-9 w-9 shrink-0 items-center justify-center"
-          >
-            <Heart on={e.fav} size={22} />
-          </button>
-        </div>
-
-        {o.explicacion ? (
-          <p className="px-4 pt-2 text-[12.5px] leading-relaxed text-muted">{o.explicacion}</p>
-        ) : null}
-
-        <div className="px-4 pt-4">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.07em] text-muted">
-            el outfit · {o.prendas.length} prendas
-          </p>
-          <div className="flex gap-2">
-            {o.prendas.map((p, i) => (
-              <div
-                key={i}
-                className="aspect-[3/4] flex-1 overflow-hidden rounded-sm border border-line bg-bg"
-                title={p.nombre}
-              >
-                {p.imagen ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.imagen}
-                    alt={p.nombre}
-                    loading="lazy"
-                    className="h-full w-full object-contain p-1"
-                  />
-                ) : (
-                  <span className="block h-full w-full" style={{ background: p.swatch }} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex gap-2 px-4 pt-4">
-          <button
-            type="button"
-            onClick={() => onVote(true)}
-            aria-pressed={e.voto === "up"}
-            aria-label="Me gusta"
-            className={`flex min-h-11 w-12 flex-none items-center justify-center rounded-sm border transition-colors duration-200 ${
-              e.voto === "up"
-                ? "border-accent bg-accent text-on-accent"
-                : "border-line bg-surface text-ink hover:border-ink"
-            }`}
-          >
-            <Icon name="pulgar" size={16} active={e.voto === "up"} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onVote(false)}
-            aria-pressed={e.voto === "down"}
-            aria-label="No me gusta"
-            className={`flex min-h-11 w-12 flex-none items-center justify-center rounded-sm border transition-colors duration-200 ${
-              e.voto === "down"
-                ? "border-accent bg-accent text-on-accent"
-                : "border-line bg-surface text-ink hover:border-ink"
-            }`}
-          >
-            <Icon name="pulgar" size={16} rotate={180} active={e.voto === "down"} />
-          </button>
-          <button
-            type="button"
-            onClick={onRewear}
-            disabled={rewearing}
-            className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
-          >
-            <Icon name="repetir" size={16} />
-            {rewearing ? "poniéndomelo…" : "me lo vuelvo a poner"}
-          </button>
-        </div>
-
-        {e.voto === "down" ? (
-          <div className="px-4 pt-3">
-            <DownReason outfitId={o.id} />
-          </div>
-        ) : null}
       </div>
     </div>
   );
