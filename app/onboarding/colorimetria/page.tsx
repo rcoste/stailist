@@ -1,6 +1,6 @@
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
-import { ColorimetriaClient } from "./colorimetria-client";
+import { Quiz } from "./quiz";
 
 export default async function ColorimetriaPage() {
   await requireStep(1);
@@ -18,7 +18,9 @@ export default async function ColorimetriaPage() {
         </p>
       </div>
 
-      <ColorimetriaClient />
+      {/* Colorimetría = quiz sin cámara (4 estaciones). El análisis por selfie
+          quedó fuera del MVP, así que ya no se ofrece la elección. */}
+      <Quiz />
     </section>
   );
 }
