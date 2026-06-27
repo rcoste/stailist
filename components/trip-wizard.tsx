@@ -583,7 +583,7 @@ function ParadaSheet({
         <div className="mb-3.5 flex items-start justify-between gap-2.5">
           <div className="min-w-0">
             <h2 className="display text-[21px] font-semibold leading-tight text-ink">
-              {isFirst ? "Tu primera parada" : `Parada ${index + 1}`}
+              {isFirst ? "tu primera parada" : `parada ${index + 1}`}
             </h2>
             <p className="text-xs text-muted">
               {isFirst ? "¿dónde empieza tu viaje?" : `sigues después de ${prevLugar}`}
@@ -829,7 +829,7 @@ function StopDatePicker({
       {/* Calendario grande */}
       <div className="rounded-sm border border-line bg-surface p-3.5">
         <div className="mb-3 flex items-center justify-between">
-          <b className="text-sm font-semibold capitalize text-ink">{monthLabel}</b>
+          <b className="text-sm font-semibold lowercase text-ink">{monthLabel}</b>
           <span className="flex gap-3.5 text-muted">
             <button type="button" aria-label="Mes anterior" onClick={() => setView(new Date(Date.UTC(y, m - 1, 1)))}>
               <Icon name="chevron" size={18} rotate={180} />
