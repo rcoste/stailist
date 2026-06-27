@@ -89,7 +89,7 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
           className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
         >
           <Icon name="compartir" size={18} />
-          {busy === "compartir" ? "Preparando tu imagen…" : "Compartir mi pasaporte"}
+          {busy === "compartir" ? "preparando tu imagen…" : "compartir mi pasaporte"}
         </button>
 
         <div className="flex gap-2.5">
@@ -100,7 +100,7 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
             className="flex min-h-[42px] flex-1 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-60"
           >
             <Icon name="descargar" size={15} className="text-muted" />
-            {busy === "guardar" ? "Guardando…" : "Guardar imagen"}
+            {busy === "guardar" ? "guardando…" : "guardar imagen"}
           </button>
           <button
             type="button"
@@ -108,7 +108,7 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
             className="flex min-h-[42px] flex-1 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-ink transition-colors duration-200 hover:border-ink"
           >
             <Icon name="enlace" size={15} className="text-muted" />
-            {copied ? "¡Copiado!" : "Copiar link"}
+            {copied ? "¡copiado!" : "copiar link"}
           </button>
         </div>
       </div>
