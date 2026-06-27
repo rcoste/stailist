@@ -247,7 +247,7 @@ export function TripWizard() {
               className="flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink"
             >
               <Icon name="chevron" size={15} rotate={180} />
-              {step === 1 ? "Tus viajes" : "Atrás"}
+              {step === 1 ? "tus viajes" : "atrás"}
             </button>
             <div className="flex items-center gap-1.5">
               {[0, 1, 2].map((i) => {
@@ -263,7 +263,7 @@ export function TripWizard() {
               })}
             </div>
           </div>
-          <p className="mt-[18px] text-[11.5px] font-medium text-muted">{meta}</p>
+          <p className="mt-[18px] text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{meta}</p>
           <h1 className="mt-[7px] display text-[26px] font-semibold leading-[1.12] tracking-[-0.01em] text-ink">
             {question}
           </h1>
@@ -309,7 +309,7 @@ export function TripWizard() {
               onClick={back}
               className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
             >
-              Atrás
+              atrás
             </button>
           ) : null}
           {step < 3 ? (
@@ -321,7 +321,7 @@ export function TripWizard() {
                 step > 1 ? "flex-[2]" : "w-full"
               }`}
             >
-              {step === 1 ? "Siguiente · actividades" : "Siguiente"}
+              {step === 1 ? "siguiente · actividades" : "siguiente"}
             </button>
           ) : (
             <button
@@ -331,7 +331,7 @@ export function TripWizard() {
               className="flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               <Icon name="destello" size={18} />
-              Armar mi maleta
+              armar mi maleta
             </button>
           )}
         </div>
@@ -396,10 +396,10 @@ function StepItinerario({
   const vacio = paradas.length === 0;
   const addLabel =
     paradas.length === 0
-      ? "Añade tu primera parada"
+      ? "añade tu primera parada"
       : paradas.length === 1
-        ? "¿Vas a más ciudades? Añádelas"
-        : "Añadir otra parada";
+        ? "¿vas a más ciudades? añádelas"
+        : "añadir otra parada";
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -419,7 +419,7 @@ function StepItinerario({
         {vacio ? (
           <div className="min-w-0">
             <b className="block text-[13.5px] font-semibold leading-tight text-muted">
-              Tu viaje, paso a paso
+              tu viaje, paso a paso
             </b>
             <span className="text-[11.5px] text-muted">añade tu primera parada para empezar</span>
           </div>
@@ -805,7 +805,7 @@ function StepActividades({
               <Icon name={ACT_ICON[o.value]} size={24} />
             </span>
             <b className={`text-[14.5px] font-semibold leading-tight ${on ? "text-accent" : "text-ink"}`}>
-              {o.label}
+              {o.label.toLowerCase()}
             </b>
           </button>
         );
@@ -854,7 +854,7 @@ function StepMaleta({
             </span>
             <span className="min-w-0 flex-1">
               <b className={`block text-[15px] font-semibold ${on ? "text-accent" : "text-ink"}`}>
-                {l.label}
+                {l.label.toLowerCase()}
               </b>
               <span className="text-xs text-muted">
                 {l.hint} · ~{l.maxPiezas} piezas
@@ -889,7 +889,7 @@ function StepMaleta({
       <div className="flex items-center justify-between rounded-md bg-accent-soft px-4 py-3">
         <span className="text-[13px] font-medium text-ink">
           {total === 0
-            ? "Elige al menos una pieza de equipaje"
+            ? "elige al menos una pieza de equipaje"
             : `${total} ${total === 1 ? "pieza" : "piezas"} de equipaje`}
         </span>
         {total > 0 ? (
@@ -898,7 +898,7 @@ function StepMaleta({
       </div>
       <div className="flex items-start gap-2 text-xs leading-snug text-muted">
         <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
-        <span>Es un techo, no una meta: armo lo mínimo que combina. Si cabe menos, mejor.</span>
+        <span>es un techo, no una meta: armo lo mínimo que combina. si cabe menos, mejor.</span>
       </div>
     </div>
   );

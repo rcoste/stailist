@@ -26,24 +26,26 @@ export default async function TusViajesPage() {
     <AppShell>
       <section className="flex flex-col gap-4 pt-1">
         <div className="flex flex-col gap-1.5 pt-3">
-          <h1 className="text-h1 font-semibold text-ink">Modo viaje</h1>
-          <p className="text-sm text-muted">
-            Arma una maleta para tu próximo viaje, o abre una guardada.
+          <h1 className="text-[30px] font-bold leading-none tracking-[-0.025em] text-ink">
+            modo viaje
+          </h1>
+          <p className="text-[13px] text-muted">
+            arma una maleta para tu próximo viaje, o abre una guardada.
           </p>
         </div>
 
         <Link
           href="/viaje"
-          className="flex items-center gap-3 rounded-md border border-accent bg-accent-soft p-[13px] transition-colors hover:bg-accent-soft/70"
+          className="flex items-center gap-3 rounded-sm border border-accent bg-surface p-[13px] transition-colors hover:bg-accent-soft"
         >
-          <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+          <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-sm bg-accent text-on-accent">
             <Icon name="mas" size={18} strokeWidth={2} />
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="text-sm font-semibold text-accent">Armar una maleta nueva</span>
-            <span className="text-xs text-muted">dime a dónde y para cuándo</span>
+            <span className="text-sm font-semibold text-ink">armar una maleta nueva</span>
+            <span className="display text-[13px] text-muted">dime a dónde y para cuándo</span>
           </span>
-          <Icon name="chevron" size={16} className="ml-auto shrink-0 text-accent" />
+          <Icon name="chevron" size={16} className="ml-auto shrink-0 text-ink" />
         </Link>
 
         {trips && trips.length > 0 ? (
