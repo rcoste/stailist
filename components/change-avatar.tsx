@@ -12,7 +12,7 @@ export function ChangeAvatar({ hasAvatar }: { hasAvatar: boolean }) {
       className="mt-2 inline-flex items-center gap-1.5 self-start text-xs font-medium text-accent transition-colors duration-200 hover:text-accent-deep"
     >
       <Icon name="destello" size={13} />
-      {hasAvatar ? "Mejorar mi avatar" : "Crear mi avatar"}
+      {hasAvatar ? "cambiar mi foto" : "crear mi avatar"}
     </Link>
   );
 }
