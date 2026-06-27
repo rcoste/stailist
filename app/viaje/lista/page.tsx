@@ -76,7 +76,7 @@ export default async function TusViajesPage() {
           </div>
         ) : (
           <p className="py-6 text-center text-sm text-muted">
-            Aún no tienes viajes guardados.
+            aún no tienes viajes guardados.
           </p>
         )}
       </section>

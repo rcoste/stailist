@@ -175,7 +175,7 @@ export function TripOutfits({
             disabled={generating}
             className="flex items-center gap-1 rounded-sm border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
           >
-            <Icon name="mas" size={13} strokeWidth={2} /> Generar más
+            <Icon name="mas" size={13} strokeWidth={2} /> generar más
           </button>
           <button
             type="button"
@@ -183,7 +183,7 @@ export function TripOutfits({
             disabled={generating}
             className="inline-flex items-center gap-1 text-xs font-medium text-muted transition-colors hover:text-ink disabled:opacity-50"
           >
-            <Icon name="repetir" size={13} /> Rehacer
+            <Icon name="repetir" size={13} /> rehacer
           </button>
         </div>
       </div>
@@ -212,7 +212,7 @@ export function TripOutfits({
             onClick={generar}
             className="flex min-h-10 w-fit items-center justify-center rounded-sm bg-accent px-3 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
-            Actualizar mis looks
+            actualizar mis looks
           </button>
         </div>
       ) : null}
