@@ -50,7 +50,15 @@ function monthLabel(iso: string) {
 // Corazón de favorito (relleno cuando on). Inline porque necesita fill; el Icon
 // del set es siempre stroke. Off → muted (legible sobre círculo claro y dentro
 // de chip), on → accent relleno.
-function Heart({ on, size = 18 }: { on: boolean; size?: number }) {
+function Heart({
+  on,
+  size = 18,
+  className,
+}: {
+  on: boolean;
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       width={size}
@@ -60,7 +68,7 @@ function Heart({ on, size = 18 }: { on: boolean; size?: number }) {
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinejoin="round"
-      className={on ? "text-accent" : "text-muted"}
+      className={className ?? (on ? "text-accent" : "text-muted")}
       aria-hidden="true"
     >
       <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />
@@ -221,21 +229,25 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
       <div className="relative">
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <FilterChip on={filtro === "todos"} onClick={() => setFiltro("todos")} icon="filtro">
-            Todos
+            todos
           </FilterChip>
           <FilterChip on={filtro === "fav"} onClick={() => setFiltro("fav")}>
-            <Heart on={filtro === "fav"} size={13} />
-            Favoritos
+            <Heart
+              on={filtro === "fav"}
+              size={13}
+              className={filtro === "fav" ? "text-on-accent" : "text-muted"}
+            />
+            favoritos
           </FilterChip>
           <FilterChip on={filtro === "liked"} onClick={() => setFiltro("liked")} icon="pulgar">
-            Que gustaron
+            que gustaron
           </FilterChip>
           {ocasiones.length > 1 ? (
             <FilterChip
               on={filtro.startsWith("occ:")}
               onClick={() => setOccMenu((v) => !v)}
             >
-              {filtro.startsWith("occ:") ? ocasionLabel(filtro.slice(4)) : "Ocasión"}
+              {filtro.startsWith("occ:") ? ocasionLabel(filtro.slice(4)) : "ocasión"}
               <Icon name="chevron" size={13} rotate={occMenu ? -90 : 90} />
             </FilterChip>
           ) : null}
@@ -262,7 +274,7 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
                 }}
                 className="border-t border-line px-3 py-2 text-left text-sm font-medium text-muted transition-colors hover:bg-bg"
               >
-                Quitar filtro
+                quitar filtro
               </button>
             ) : null}
           </div>
@@ -272,8 +284,8 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
       {visibles.length === 0 ? (
         <p className="rounded-md border border-line bg-surface px-6 py-10 text-center text-sm text-muted">
           {filtro === "fav"
-            ? "Aún no guardas favoritos. Toca el corazón de un look para guardarlo aquí."
-            : "Nada por aquí con este filtro."}
+            ? "aún no guardas favoritos. toca el corazón de un look para guardarlo aquí."
+            : "nada por aquí con este filtro."}
         </p>
       ) : null}
 
@@ -516,7 +528,7 @@ function LookSheet({
 
         <div className="px-4 pt-4">
           <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.07em] text-muted">
-            Lo que llevabas
+            el outfit · {o.prendas.length} prendas
           </p>
           <div className="flex gap-2">
             {o.prendas.map((p, i) => (
@@ -549,7 +561,7 @@ function LookSheet({
             aria-label="Me gusta"
             className={`flex min-h-11 w-12 flex-none items-center justify-center rounded-sm border transition-colors duration-200 ${
               e.voto === "up"
-                ? "border-accent bg-accent-soft text-accent"
+                ? "border-accent bg-accent text-on-accent"
                 : "border-line bg-surface text-ink hover:border-ink"
             }`}
           >
@@ -562,7 +574,7 @@ function LookSheet({
             aria-label="No me gusta"
             className={`flex min-h-11 w-12 flex-none items-center justify-center rounded-sm border transition-colors duration-200 ${
               e.voto === "down"
-                ? "border-accent bg-accent-soft text-accent"
+                ? "border-accent bg-accent text-on-accent"
                 : "border-line bg-surface text-ink hover:border-ink"
             }`}
           >
@@ -575,7 +587,7 @@ function LookSheet({
             className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-60"
           >
             <Icon name="repetir" size={16} />
-            {rewearing ? "Poniéndolo…" : "Ponérmelo"}
+            {rewearing ? "poniéndomelo…" : "me lo vuelvo a poner"}
           </button>
         </div>
 
@@ -607,7 +619,7 @@ function FilterChip({
       aria-pressed={on}
       className={`inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-sm border px-3 py-[7px] text-xs font-semibold transition-colors duration-200 ${
         on
-          ? "border-accent bg-accent-soft text-accent"
+          ? "border-accent bg-accent text-on-accent"
           : "border-line bg-surface text-muted hover:text-ink"
       }`}
     >
