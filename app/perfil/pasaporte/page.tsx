@@ -71,11 +71,13 @@ export default async function PerfilPasaportePage() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
       <Link href="/perfil" className="text-sm font-medium text-muted hover:text-ink">
-        ← Perfil
+        ← perfil
       </Link>
       <div className="mb-5 mt-4 flex flex-col gap-1">
-        <h1 className="text-h1 font-semibold text-ink">Tu pasaporte de estilo</h1>
-        <p className="text-sm text-muted">Tu identidad en una tarjeta. Compártela.</p>
+        <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
+          tu pasaporte de estilo
+        </h1>
+        <p className="text-sm text-muted">tu identidad en una tarjeta. compártela.</p>
       </div>
       <PasaporteShare data={data} />
     </div>

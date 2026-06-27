@@ -176,7 +176,7 @@ export function ColorimetriaSection({
           onClick={startEdit}
           className="self-start text-xs font-medium text-accent underline underline-offset-2"
         >
-          ¿No te suena? Ajústala
+          ¿no te suena? ajústala
         </button>
       )}
     </div>

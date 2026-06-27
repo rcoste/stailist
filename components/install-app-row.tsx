@@ -41,9 +41,9 @@ export function InstallAppRow() {
           <Icon name="mas" size={16} />
         </span>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-ink">Instalar la app</span>
+          <span className="text-sm font-medium text-ink">instalar la app</span>
           <span className="text-xs text-muted">
-            Tenla en tu pantalla de inicio, de un toque.
+            tenla en tu pantalla de inicio, de un toque.
           </span>
         </div>
         <Icon

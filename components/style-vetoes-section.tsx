@@ -14,9 +14,9 @@ import { updateVetoes } from "@/lib/veto-actions";
 // Sección "Lo que nunca te pones" (issue #2): chips curados (gender-aware) por
 // grupo + texto libre. Lo que se marca aquí, el motor JAMÁS lo sugiere. Opcional.
 const GROUPS: { kind: VetoKind; title: string }[] = [
-  { kind: "garment", title: "Prendas" },
-  { kind: "feature", title: "Detalles" },
-  { kind: "color", title: "Colores" },
+  { kind: "garment", title: "prendas" },
+  { kind: "feature", title: "detalles" },
+  { kind: "color", title: "colores" },
 ];
 
 export function StyleVetoesSection({
@@ -67,11 +67,12 @@ export function StyleVetoesSection({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs font-medium uppercase tracking-wide text-muted">
-        Lo que nunca te pones
+        lo que nunca te pones
       </span>
       <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
-        <p className="text-xs text-muted">
-          Marca lo que jamás usas y nunca te lo voy a sugerir.
+        <p className="text-sm leading-snug text-muted">
+          lo que <em className="editorial text-ink">nunca</em> te pondría — apágalo y no
+          aparece en tus looks.
         </p>
 
         {GROUPS.map((g) => {
@@ -92,7 +93,7 @@ export function StyleVetoesSection({
                       aria-pressed={on}
                       className={`flex items-center gap-1 rounded-sm border px-3 py-1 text-xs font-medium transition-colors duration-200 disabled:opacity-60 ${
                         on
-                          ? "border-accent bg-accent-soft text-accent ring-1 ring-inset ring-accent"
+                          ? "border-accent bg-accent text-on-accent"
                           : "border-line bg-bg text-muted hover:border-ink hover:text-ink"
                       }`}
                     >
@@ -107,13 +108,13 @@ export function StyleVetoesSection({
         })}
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-ink">Otra cosa</span>
+          <span className="text-xs font-medium text-ink">otra cosa</span>
           {free.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {free.map((f) => (
                 <span
                   key={f}
-                  className="flex items-center gap-1 rounded-sm border border-accent bg-accent-soft px-3 py-1 text-xs font-medium text-accent ring-1 ring-inset ring-accent"
+                  className="flex items-center gap-1 rounded-sm border border-accent bg-accent px-3 py-1 text-xs font-medium text-on-accent"
                 >
                   {f}
                   <button
@@ -149,7 +150,7 @@ export function StyleVetoesSection({
               disabled={pending || !text.trim()}
               className="min-h-9 rounded-sm bg-accent px-4 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
             >
-              Agregar
+              agregar
             </button>
           </div>
         </div>

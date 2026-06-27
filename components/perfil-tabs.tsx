@@ -51,14 +51,14 @@ export function PerfilTabs(props: PerfilTabsProps) {
   const [tab, setTab] = useState<Tab>("cuenta");
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: "cuenta", label: "Cuenta" },
-    { id: "estilo", label: "Estilo" },
-    { id: "prefs", label: "Preferencias" },
+    { id: "cuenta", label: "cuenta" },
+    { id: "estilo", label: "estilo" },
+    { id: "prefs", label: "preferencias" },
   ];
 
   return (
     <section className="flex flex-col gap-5 pt-4">
-      <h1 className="text-h1 font-semibold text-ink">Perfil</h1>
+      <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">perfil</h1>
 
       {/* Segmented control de página */}
       <div
@@ -125,8 +125,8 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
           <Icon name="corazon" size={16} />
         </span>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-ink">Danos tu opinión</span>
-          <span className="text-xs text-muted">Qué te gusta, qué no, qué falta.</span>
+          <span className="text-sm font-medium text-ink">danos tu opinión</span>
+          <span className="text-xs text-muted">qué te gusta, qué no, qué falta.</span>
         </div>
         <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
       </a>
@@ -136,7 +136,7 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
           type="submit"
           className="flex min-h-12 w-full items-center justify-center rounded-md border border-line bg-surface text-sm font-medium text-muted transition-colors hover:border-ink hover:text-ink"
         >
-          Cerrar sesión
+          cerrar sesión
         </button>
       </form>
     </div>
@@ -155,10 +155,11 @@ function EstiloTab({
   const showSilueta = gender === "mujer" || gender === "hombre";
   return (
     <div className="flex flex-col gap-4">
-      {/* Banner del pasaporte: tarjeta burdeos (asoma identidad, su acción es VER) */}
+      {/* Banner del pasaporte: tarjeta NEGRA con la paleta como único color
+          (asoma identidad, su acción es VER). */}
       <Link
         href="/perfil/pasaporte"
-        className="block overflow-hidden rounded-lg bg-accent text-on-accent shadow-[0_6px_20px_rgba(114,47,55,.22)]"
+        className="block overflow-hidden rounded-lg bg-accent text-on-accent shadow-[0_6px_20px_rgba(20,20,20,.16)]"
       >
         <div className="flex items-center justify-between px-4 pt-3.5">
           <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-on-accent/70">
@@ -185,7 +186,7 @@ function EstiloTab({
             <div className="h-2" />
           )}
           <span className="flex min-h-[42px] items-center justify-center gap-2 rounded-sm bg-surface text-sm font-medium text-accent">
-            Ver mi pasaporte
+            ver mi pasaporte
             <Icon name="chevron" size={16} />
           </span>
         </div>
@@ -206,7 +207,7 @@ function EstiloTab({
               href="/perfil/estilo"
               className="shrink-0 text-[11.5px] font-medium text-accent hover:text-accent-deep"
             >
-              {archetype ? "¿Cambió? Rehazlo" : "Descúbrelo"}
+              {archetype ? "¿cambió? rehazlo" : "descúbrelo"}
             </Link>
           </div>
           {archetype ? (
@@ -242,7 +243,7 @@ function EstiloTab({
                 Silueta
               </span>
               <span className="text-sm font-medium text-ink">
-                {siluetaLabel ?? "Cuéntame de tu cuerpo"}
+                {siluetaLabel ?? "cuéntame de tu cuerpo"}
               </span>
             </div>
             <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
