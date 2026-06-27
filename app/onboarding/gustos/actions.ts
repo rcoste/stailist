@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeTasteTags, LOOKS, LOOK_IDS } from "@/lib/looks";
 import { generateArchetype, type StyleArchetype } from "@/lib/engine/archetype";
+import type { Gender } from "@/lib/auth";
 
 export type SwipeResult = { id: string; liked: boolean };
 
@@ -27,6 +28,15 @@ export async function saveTastes(
 
   const tasteTags = computeTasteTags(clean);
 
+  // Género para concordancia gramatical del arquetipo (ya se eligió en la
+  // antesala de género, antes de los gustos).
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("gender")
+    .eq("id", user.id)
+    .single();
+  const gender = (prof?.gender ?? null) as Gender | null;
+
   // Arquetipo a partir de los looks con ❤️. Si la IA falla, seguimos sin
   // arquetipo (no bloquea el onboarding) con un fallback neutro.
   const likedLooks = LOOKS.filter(
@@ -34,7 +44,7 @@ export async function saveTastes(
   );
   let archetype: StyleArchetype;
   try {
-    archetype = await generateArchetype(likedLooks);
+    archetype = await generateArchetype(likedLooks, gender);
   } catch {
     archetype = {
       nombre: "Tu estilo",
@@ -87,12 +97,22 @@ export async function updateTastes(
   if (!user) redirect("/login");
 
   const tasteTags = computeTasteTags(clean);
+
+  // Género para concordancia gramatical del arquetipo (re-edición desde Perfil:
+  // el usuario ya está onboardeado, así que el género existe).
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("gender")
+    .eq("id", user.id)
+    .single();
+  const gender = (prof?.gender ?? null) as Gender | null;
+
   const likedLooks = LOOKS.filter(
     (l) => clean.find((r) => r.id === l.id)?.liked
   );
   let archetype: StyleArchetype;
   try {
-    archetype = await generateArchetype(likedLooks);
+    archetype = await generateArchetype(likedLooks, gender);
   } catch {
     archetype = {
       nombre: "Tu estilo",
