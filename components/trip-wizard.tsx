@@ -44,6 +44,12 @@ const todayDate = () => {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 };
 const firstOfMonth = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+// Noches entre dos fechas ymd (fin − inicio, en días).
+function diffDays(a: string, b: string): number {
+  return Math.round(
+    (Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400000
+  );
+}
 function addDaysYmd(ds: string, n: number): string {
   const d = new Date(ds + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
@@ -530,12 +536,34 @@ function ParadaSheet({
   const [hideSugs, setHideSugs] = useState(true);
   const [noches, setNoches] = useState(existing?.noches ?? (isFirst ? 3 : 2));
   const [startDate, setStartDate] = useState(isFirst ? inicio || "" : "");
+  // Solo la 1ª parada elige fecha: con 2 formas (toggle). En "rango" se setea
+  // inicio+fin (noches = diff); en "días" se setea inicio + stepper de noches.
+  const [modo, setModo] = useState<"rango" | "dias">("rango");
+  const [endDate, setEndDate] = useState(
+    isFirst && existing?.noches && (inicio || "")
+      ? addDaysYmd(inicio, existing.noches)
+      : ""
+  );
 
   const sugs = usePlaceSuggestions(q);
   // Llegada encadenada (no primera): salida de la parada anterior.
   const arrival = isFirst ? startDate : arrivalOf(inicio, paradas, index);
   const lugarOk = q.trim().length >= 2;
-  const canSave = lugarOk && (isFirst ? !!startDate : true);
+  // Noches efectivas: en la 1ª parada salen del calendario (rango = diff, días =
+  // stepper); en las encadenadas, del stepper de noches.
+  const rangoOk = !!startDate && !!endDate && endDate > startDate;
+  const effNoches = !isFirst
+    ? noches
+    : modo === "rango"
+      ? (rangoOk ? diffDays(startDate, endDate) : 0)
+      : noches;
+  const canSave =
+    lugarOk &&
+    (!isFirst
+      ? true
+      : modo === "rango"
+        ? rangoOk
+        : !!startDate && effNoches >= 1);
 
   function pick(nombre: string) {
     setQ(nombre);
@@ -618,49 +646,62 @@ function ParadaSheet({
             ) : null}
           </div>
 
-          {/* Fecha: calendario (primera) o llegada encadenada (siguientes) */}
+          {/* Fecha: calendario de 2 formas (1ª parada) o llegada encadenada */}
           {isFirst ? (
-            <div>
-              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink">
-                <Icon name="calendario" size={14} />
-                ¿Cuándo llegas?
-              </div>
-              <SingleDateCalendar value={startDate} onPick={setStartDate} />
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5 rounded-sm border border-line bg-bg px-[13px] py-3">
-              <Icon name="calendario" size={17} className="shrink-0 text-muted" />
-              <span className="text-[13.5px] font-semibold text-ink">
-                Llegas el {dmEs(arrival)}
-              </span>
-              <span className="ml-auto rounded-sm border border-line bg-surface px-[7px] py-0.5 text-[10.5px] font-semibold text-muted">
-                se encadena
-              </span>
-            </div>
-          )}
-
-          {/* Noches */}
-          <div className="flex items-center justify-between gap-2.5">
-            <div>
-              <b className="block text-[13.5px] font-semibold text-ink">¿Cuántas noches?</b>
-              <span className="text-[11.5px] text-muted">{q.trim() ? `en ${q.trim()}` : "aquí"}</span>
-            </div>
-            <Stepper
-              value={noches}
-              min={1}
-              onMinus={() => setNoches((n) => Math.max(1, n - 1))}
-              onPlus={() => setNoches((n) => n + 1)}
+            <StopDatePicker
+              modo={modo}
+              onModo={(m) => {
+                if (m === modo) return;
+                if (m === "dias") {
+                  if (rangoOk) setNoches(Math.max(1, diffDays(startDate, endDate)));
+                } else if (startDate) {
+                  setEndDate(addDaysYmd(startDate, Math.max(1, noches)));
+                }
+                setModo(m);
+              }}
+              start={startDate}
+              setStart={setStartDate}
+              end={endDate}
+              setEnd={setEndDate}
+              noches={noches}
+              setNoches={setNoches}
             />
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2.5 rounded-sm border border-line bg-bg px-[13px] py-3">
+                <Icon name="calendario" size={17} className="shrink-0 text-muted" />
+                <span className="text-[13.5px] font-semibold text-ink">
+                  Llegas el {dmEs(arrival)}
+                </span>
+                <span className="ml-auto rounded-sm border border-line bg-surface px-[7px] py-0.5 text-[10.5px] font-semibold text-muted">
+                  se encadena
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2.5">
+                <div>
+                  <b className="block text-[13.5px] font-semibold text-ink">¿cuántas noches?</b>
+                  <span className="text-[11.5px] text-muted">
+                    {q.trim() ? `en ${q.trim()}` : "aquí"}
+                  </span>
+                </div>
+                <Stepper
+                  value={noches}
+                  min={1}
+                  onMinus={() => setNoches((n) => Math.max(1, n - 1))}
+                  onPlus={() => setNoches((n) => n + 1)}
+                />
+              </div>
+            </>
+          )}
 
           <button
             type="button"
             disabled={!canSave}
-            onClick={() => onSave(index, q.trim(), noches, isFirst ? startDate : undefined)}
+            onClick={() => onSave(index, q.trim(), effNoches, isFirst ? startDate : undefined)}
             className="mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
           >
             <Icon name="check" size={17} />
-            {editing ? "Guardar cambios" : "Añadir a mi ruta"}
+            {editing ? "guardar cambios" : "añadir a mi ruta"}
           </button>
         </div>
       </div>
@@ -668,11 +709,32 @@ function ParadaSheet({
   );
 }
 
-// Calendario de fecha única (≥ hoy) — para la salida del viaje (primera parada).
-function SingleDateCalendar({ value, onPick }: { value: string; onPick: (ds: string) => void }) {
+// Calendario de la 1ª parada con 2 FORMAS (rediseño v3): toggle "inicio y fin"
+// (rango: dos toques) vs "inicio + días" (un toque + stepper). Pinta el rango
+// (extremos en círculo negro, intermedios en paper2) y deriva las noches. Ambos
+// modos producen el mismo {startDate, noches} que ya consume saveParada.
+function StopDatePicker({
+  modo,
+  onModo,
+  start,
+  setStart,
+  end,
+  setEnd,
+  noches,
+  setNoches,
+}: {
+  modo: "rango" | "dias";
+  onModo: (m: "rango" | "dias") => void;
+  start: string;
+  setStart: (ds: string) => void;
+  end: string;
+  setEnd: (ds: string) => void;
+  noches: number;
+  setNoches: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const today = todayDate();
   const [view, setView] = useState(() =>
-    firstOfMonth(value ? new Date(value + "T00:00:00Z") : today)
+    firstOfMonth(start ? new Date(start + "T00:00:00Z") : today)
   );
   const y = view.getUTCFullYear();
   const m = view.getUTCMonth();
@@ -680,23 +742,54 @@ function SingleDateCalendar({ value, onPick }: { value: string; onPick: (ds: str
   const firstDow = (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7;
   const monthLabel = view.toLocaleDateString("es", { month: "long", year: "numeric", timeZone: "UTC" });
 
+  // Fin pintado: en "días" se deriva del stepper (inicio + noches).
+  const paintEnd = modo === "dias" ? (start ? addDaysYmd(start, Math.max(1, noches)) : "") : end;
+  const hasRange = !!start && !!paintEnd && paintEnd > start;
+  const todayY = ymd(today);
+
+  function tapDay(ds: string) {
+    if (modo === "dias") {
+      setStart(ds);
+      return;
+    }
+    // rango: 1er toque = salida; 2º = regreso (o reinicia si es anterior/igual).
+    if (!start || (start && end)) {
+      setStart(ds);
+      setEnd("");
+    } else if (ds <= start) {
+      setStart(ds);
+    } else {
+      setEnd(ds);
+    }
+  }
+
   const cells: React.ReactNode[] = [];
   for (let i = 0; i < firstDow; i++) cells.push(<span key={`b${i}`} />);
   for (let day = 1; day <= daysInMonth; day++) {
     const ds = ymd(new Date(Date.UTC(y, m, day)));
-    const past = ds < ymd(today);
-    const on = ds === value;
+    const past = ds < todayY;
+    const isStart = ds === start;
+    const isEnd = hasRange && ds === paintEnd;
+    const isEnds = isStart || isEnd;
+    const between = hasRange && ds > start && ds < paintEnd;
+    const band = between
+      ? "bg-accent-soft"
+      : hasRange && isStart
+        ? "rounded-l-full bg-accent-soft"
+        : hasRange && isEnd
+          ? "rounded-r-full bg-accent-soft"
+          : "";
     cells.push(
       <button
         key={ds}
         type="button"
         disabled={past}
-        onClick={() => onPick(ds)}
-        className="flex aspect-square items-center justify-center disabled:cursor-default"
+        onClick={() => tapDay(ds)}
+        className={`flex aspect-square items-center justify-center disabled:cursor-default ${band}`}
       >
         <span
-          className={`tabular flex h-[30px] w-[30px] items-center justify-center rounded-full text-[13px] ${
-            on ? "bg-accent font-semibold text-on-accent" : past ? "text-muted/40" : "text-ink"
+          className={`tabular flex h-9 w-9 items-center justify-center rounded-full text-[13.5px] ${
+            isEnds ? "bg-accent font-semibold text-on-accent" : past ? "text-muted/40" : "text-ink"
           }`}
         >
           {day}
@@ -706,26 +799,83 @@ function SingleDateCalendar({ value, onPick }: { value: string; onPick: (ds: str
   }
 
   return (
-    <div className="rounded-sm border border-line bg-surface p-3.5">
-      <div className="mb-3 flex items-center justify-between">
-        <b className="text-sm font-semibold capitalize text-ink">{monthLabel}</b>
-        <span className="flex gap-3.5 text-muted">
-          <button type="button" aria-label="Mes anterior" onClick={() => setView(new Date(Date.UTC(y, m - 1, 1)))}>
-            <Icon name="chevron" size={18} rotate={180} />
-          </button>
-          <button type="button" aria-label="Mes siguiente" onClick={() => setView(new Date(Date.UTC(y, m + 1, 1)))}>
-            <Icon name="chevron" size={18} />
-          </button>
-        </span>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+        <Icon name="calendario" size={14} />
+        ¿cuándo viajas?
       </div>
-      <div className="grid grid-cols-7">
-        {["L", "M", "M", "J", "V", "S", "D"].map((w, i) => (
-          <span key={i} className="pb-2 text-center text-[10.5px] font-semibold text-muted">
-            {w}
-          </span>
+
+      {/* Toggle de 2 formas (activo = relleno negro) */}
+      <div className="flex overflow-hidden rounded-[7px] border border-line">
+        {(
+          [
+            ["rango", "inicio y fin"],
+            ["dias", "inicio + días"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => onModo(k)}
+            className={`flex-1 py-2 text-[12.5px] font-semibold transition-colors ${
+              modo === k ? "bg-accent text-on-accent" : "bg-surface text-muted"
+            }`}
+          >
+            {label}
+          </button>
         ))}
       </div>
-      <div className="grid grid-cols-7">{cells}</div>
+
+      {/* Calendario grande */}
+      <div className="rounded-sm border border-line bg-surface p-3.5">
+        <div className="mb-3 flex items-center justify-between">
+          <b className="text-sm font-semibold capitalize text-ink">{monthLabel}</b>
+          <span className="flex gap-3.5 text-muted">
+            <button type="button" aria-label="Mes anterior" onClick={() => setView(new Date(Date.UTC(y, m - 1, 1)))}>
+              <Icon name="chevron" size={18} rotate={180} />
+            </button>
+            <button type="button" aria-label="Mes siguiente" onClick={() => setView(new Date(Date.UTC(y, m + 1, 1)))}>
+              <Icon name="chevron" size={18} />
+            </button>
+          </span>
+        </div>
+        <div className="grid grid-cols-7">
+          {["L", "M", "M", "J", "V", "S", "D"].map((w, i) => (
+            <span key={i} className="pb-2 text-center text-[10.5px] font-semibold text-muted">
+              {w}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">{cells}</div>
+      </div>
+
+      {/* Modo días: stepper de noches grande */}
+      {modo === "dias" && start ? (
+        <div className="flex items-center justify-between gap-2.5">
+          <b className="text-[13.5px] font-semibold text-ink">¿cuántas noches?</b>
+          <Stepper
+            value={Math.max(1, noches)}
+            min={1}
+            onMinus={() => setNoches((n) => Math.max(1, n - 1))}
+            onPlus={() => setNoches((n) => n + 1)}
+          />
+        </div>
+      ) : null}
+
+      {/* Resumen (acento serif itálico) o instrucción */}
+      {hasRange ? (
+        <p className="display text-[15px] italic text-ink">
+          {modo === "rango"
+            ? `${dmEs(start)} – ${dmEs(paintEnd)} · ${diffDays(start, paintEnd)} noches`
+            : `vuelves el ${dmEs(paintEnd)} · ${Math.max(1, noches)} noches`}
+        </p>
+      ) : modo === "rango" && start ? (
+        <p className="text-[12.5px] text-muted">toca el día en que regresas</p>
+      ) : (
+        <p className="text-[12.5px] text-muted">
+          {modo === "rango" ? "toca tu día de salida y el de regreso" : "toca tu día de salida"}
+        </p>
+      )}
     </div>
   );
 }
