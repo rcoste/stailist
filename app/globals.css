@@ -85,6 +85,8 @@ body {
   background: var(--c-bg);
   color: var(--c-ink);
   font-family: var(--font-arimo), system-ui, sans-serif;
+  /* Mata el doble-tap-to-zoom (refuerzo del viewport) sin romper scroll/pan. */
+  touch-action: manipulation;
 }
 
 /* Reset del focus-ring (rebrand v3): cero contorno azul del navegador. La
