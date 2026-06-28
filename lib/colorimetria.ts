@@ -256,6 +256,41 @@ export function seasonDisplayLabel(season: Season, flow: Season | null): string 
   return BASE_LABEL[season];
 }
 
+// --- Sistema de 12 sub-estaciones por PROFUNDIDAD (para la Cartera) ---
+// Tatiana pidió Light/Medium/Dark × estación. El quiz ya mide profundidad en el
+// eje `d`; lo bucketizamos en 3 tiers. Esto convive con `flow` (que usa el motor
+// de outfits): aquí mandan (season, depth). No requiere columna nueva — se deriva
+// de palette_quiz al vuelo; si no hay quiz, cae a "medium".
+export type Depth = "light" | "medium" | "dark";
+export type SubSeason = `${Season}-${Depth}`;
+
+const DEPTH_LABEL: Record<Depth, string> = {
+  light: "claro",
+  medium: "medio",
+  dark: "oscuro",
+};
+
+export function computeDepth(answers: Record<string, string> | null): Depth {
+  if (!answers) return "medium";
+  let deep = 0;
+  for (const q of QUIZ) {
+    const opt = q.options.find((o) => o.id === answers[q.id]);
+    deep += opt?.d ?? 0;
+  }
+  if (deep <= -2) return "light";
+  if (deep >= 2) return "dark";
+  return "medium";
+}
+
+// "Otoño oscuro", "Verano claro" — nombre de la sub-estación de 12.
+export function subSeasonLabel(season: Season, depth: Depth): string {
+  return `${BASE_LABEL[season]} ${DEPTH_LABEL[depth]}`;
+}
+
+export function subSeasonKey(season: Season, depth: Depth): SubSeason {
+  return `${season}-${depth}`;
+}
+
 // Las dos vecinas a las que una estación puede inclinarse (para el selector
 // manual de "con un pie en…"). Coincide con los flows que produce el quiz.
 export function seasonNeighbors(season: Season): Season[] {
