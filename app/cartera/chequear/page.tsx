@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { requireOnboarded } from "@/lib/auth";
 import { computeDepth } from "@/lib/colorimetria";
-import { subPalette } from "@/lib/palette-data";
+import { goSwatches, subPalette } from "@/lib/palette-data";
 import { ChequearClient } from "@/components/cartera/chequear-client";
 
 // Cartera · Fase 2: chequea un color. Sube la foto de una prenda → el cliente
@@ -14,14 +14,8 @@ export default async function ChequearPage() {
   if (!season) redirect("/cartera");
 
   const depth = computeDepth(profile.palette_quiz);
-  const p = subPalette(season, depth);
-  const va = [
-    ...p.familias.neutros,
-    ...p.familias.base,
-    ...p.familias.acentos,
-    ...p.familias.joya,
-  ];
-  const evita = p.familias.evita;
+  const va = goSwatches(season, depth);
+  const evita = subPalette(season, depth).evita;
 
   return (
     <AppShell>
