@@ -65,6 +65,7 @@ export default async function CarteraPage() {
         metal={metal}
         metalHex={METAL_HEX[metal]}
         familias={palette.familias}
+        evita={palette.evita}
       />
     </AppShell>
   );
