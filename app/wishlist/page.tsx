@@ -3,7 +3,12 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { computeDepth } from "@/lib/colorimetria";
 import { goSwatches, subPalette } from "@/lib/palette-data";
-import { WishlistClient, type WishlistItem } from "@/components/wishlist/wishlist-client";
+import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
+import {
+  WishlistClient,
+  type WishlistItem,
+  type ClosetPick,
+} from "@/components/wishlist/wishlist-client";
 
 // Cartera · Fase 3a — el Wishlist: candidatos que evalúas comprar, con su
 // veredicto de color. Server resuelve items (URLs firmadas) + la paleta del
@@ -35,6 +40,38 @@ export default async function WishlistPage() {
     name: (r.name as string | null) ?? null,
   }));
 
+  // Prendas del clóset (para combinar en 3c). Resuelve imagen como el clóset.
+  const { data: itemRows } = await supabase
+    .from("items")
+    .select(
+      "id, source, photo_path, render_status, render_path, attrs, archetypes(name, image_path)"
+    )
+    .eq("user_id", profile.id)
+    .is("deleted_at", null);
+  const itemPriv = Array.from(
+    new Set(
+      (itemRows ?? [])
+        .flatMap((r) => [r.photo_path as string | null, r.render_path as string | null])
+        .filter((p): p is string => !!p)
+    )
+  );
+  const itemSigned = new Map<string, string>();
+  if (itemPriv.length) {
+    const { data } = await supabase.storage.from("prendas").createSignedUrls(itemPriv, 3600);
+    data?.forEach((s) => {
+      if (s.path && s.signedUrl) itemSigned.set(s.path, s.signedUrl);
+    });
+  }
+  const closet: ClosetPick[] = (itemRows ?? []).map((r) => {
+    const arch = r.archetypes as { name?: string } | null;
+    const attrs = (r.attrs ?? {}) as { nombre?: string };
+    return {
+      id: r.id as string,
+      nombre: arch?.name ?? attrs.nombre ?? "Prenda",
+      image: itemImageUrlSync(r as ItemImageRow, (p) => itemSigned.get(p)),
+    };
+  });
+
   // Paleta del usuario para chequear lo que agregue aquí (puede no tenerla aún).
   const season = profile.palette_season;
   const depth = season ? computeDepth(profile.palette_quiz) : null;
@@ -43,7 +80,7 @@ export default async function WishlistPage() {
 
   return (
     <AppShell>
-      <WishlistClient items={items} va={va} evita={evita} />
+      <WishlistClient items={items} closet={closet} va={va} evita={evita} />
     </AppShell>
   );
 }

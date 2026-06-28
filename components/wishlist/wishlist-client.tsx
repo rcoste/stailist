@@ -9,6 +9,7 @@ import { checkColor, type Verdict } from "@/lib/color/match";
 import { saveToWishlist } from "@/lib/wishlist-add";
 import { removeWishlistItem } from "@/lib/wishlist-actions";
 import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
+import { ComboBuilder } from "@/components/wishlist/combo-builder";
 
 export type WishlistItem = {
   id: string;
@@ -18,6 +19,8 @@ export type WishlistItem = {
   name: string | null;
 };
 
+export type ClosetPick = { id: string; nombre: string; image: string | null };
+
 const BADGE: Record<Verdict, { label: string; tone: string; cls: string }> = {
   va: { label: "va contigo", tone: "✓", cls: "bg-success/10 text-success" },
   "no-ideal": { label: "no ideal", tone: "!", cls: "bg-warning/10 text-warning" },
@@ -26,10 +29,12 @@ const BADGE: Record<Verdict, { label: string; tone: string; cls: string }> = {
 
 export function WishlistClient({
   items,
+  closet,
   va,
   evita,
 }: {
   items: WishlistItem[];
+  closet: ClosetPick[];
   va: Swatch[];
   evita: Swatch[];
 }) {
@@ -37,6 +42,7 @@ export function WishlistClient({
   const [busy, setBusy] = useState(false);
   const [pending, start] = useTransition();
   const [tryonId, setTryonId] = useState<string | null>(null);
+  const [combo, setCombo] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -103,6 +109,16 @@ export function WishlistClient({
         <Icon name="destello" size={18} /> {busy ? "agregando…" : "agregar una prenda"}
       </button>
 
+      {items.length > 0 || closet.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setCombo(true)}
+          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+        >
+          <Icon name="repetir" size={16} /> armar un look (wishlist + clóset)
+        </button>
+      ) : null}
+
       {items.length === 0 ? (
         <p className="rounded-md border border-line bg-surface px-6 py-10 text-center text-sm text-muted">
           aún no agregas nada. cuando veas algo en tienda o en línea, tómale foto y
@@ -165,6 +181,10 @@ export function WishlistClient({
 
       {tryonId ? (
         <WishlistTryon itemId={tryonId} onClose={() => setTryonId(null)} />
+      ) : null}
+
+      {combo ? (
+        <ComboBuilder wishlist={items} closet={closet} onClose={() => setCombo(false)} />
       ) : null}
     </section>
   );

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { Icon } from "@/components/icon";
 import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
 import { CapsuleCard } from "@/components/capsule-card";
@@ -111,6 +113,25 @@ export default async function ClosetPage() {
 
         {/* La cápsula reducida a una franja-resumen (no protagonista). */}
         <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
+
+        {/* Entrada a la Cartera de Colorimetría (antes enterrada en Perfil). */}
+        <Link
+          href="/cartera"
+          className="flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-ink"
+        >
+          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-accent-soft text-ink">
+            <Icon name="destello" size={18} />
+          </span>
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold text-ink">tu cartera de colores</span>
+            <span className="text-[12px] text-muted">
+              checa y pruébate lo que quieres comprar
+            </span>
+          </span>
+          <span className="ml-auto text-muted">
+            <Icon name="chevron" size={18} />
+          </span>
+        </Link>
 
         <ClosetGrid items={items} />
 
