@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/icon";
 import {
   FAMILY_ORDER,
@@ -64,14 +65,22 @@ export function CarteraClient({
         </span>
       </div>
 
-      {/* CTA modo tienda */}
-      <button
-        type="button"
-        onClick={() => setStore(true)}
-        className="flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-      >
-        <Icon name="destello" size={18} /> modo tienda
-      </button>
+      {/* CTAs: modo tienda + chequear un color */}
+      <div className="flex flex-col gap-2.5">
+        <button
+          type="button"
+          onClick={() => setStore(true)}
+          className="flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+        >
+          <Icon name="destello" size={18} /> modo tienda
+        </button>
+        <Link
+          href="/cartera/chequear"
+          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+        >
+          <Icon name="destello" size={16} /> chequea un color (compras online)
+        </Link>
+      </div>
 
       {/* Familias */}
       <div className="flex flex-col gap-7">
