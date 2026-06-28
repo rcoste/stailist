@@ -19,6 +19,9 @@ export async function uploadGeneratedAvatar(
   const up = await supabase.storage
     .from("prendas")
     .upload(path, blob, { contentType: "image/jpeg", upsert: true });
-  if (up.error) return { ok: false };
+  if (up.error) {
+    console.error("[avatar] storage upload falló:", up.error.message);
+    return { ok: false };
+  }
   return saveGeneratedAvatar(path, bodyType);
 }
