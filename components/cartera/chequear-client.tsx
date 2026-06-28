@@ -6,6 +6,7 @@ import { Icon } from "@/components/icon";
 import type { Swatch } from "@/lib/palette-data";
 import { dominantColor } from "@/lib/color/extract";
 import { checkColor, type CheckResult } from "@/lib/color/match";
+import { saveToWishlist } from "@/lib/wishlist-add";
 
 const VERDICT: Record<
   CheckResult["verdict"],
@@ -27,6 +28,7 @@ const VERDICT: Record<
 export function ChequearClient({ va, evita }: { va: Swatch[]; evita: Swatch[] }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<CheckResult | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +55,7 @@ export function ChequearClient({ va, evita }: { va: Swatch[]; evita: Swatch[] })
       const hex = dominantColor(ctx.getImageData(0, 0, w, h).data, w, h);
       setResult(checkColor(hex, va, evita));
       setPreview(url);
+      setFile(file);
       setBusy(false);
     };
     img.onerror = () => setBusy(false);
@@ -62,6 +65,7 @@ export function ChequearClient({ va, evita }: { va: Swatch[]; evita: Swatch[] })
   function reset() {
     setResult(null);
     setPreview(null);
+    setFile(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -109,7 +113,7 @@ export function ChequearClient({ va, evita }: { va: Swatch[]; evita: Swatch[] })
           <span className="text-xs text-muted">desde tu galería o cámara</span>
         </button>
       ) : (
-        <Result result={result} preview={preview} onReset={reset} />
+        <Result result={result} preview={preview} file={file} onReset={reset} />
       )}
 
       <p className="rounded-md border border-line bg-surface px-4 py-3 text-[12px] leading-relaxed text-muted">
@@ -123,13 +127,25 @@ export function ChequearClient({ va, evita }: { va: Swatch[]; evita: Swatch[] })
 function Result({
   result,
   preview,
+  file,
   onReset,
 }: {
   result: CheckResult;
   preview: string | null;
+  file: File | null;
   onReset: () => void;
 }) {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const v = VERDICT[result.verdict];
+
+  async function guardar() {
+    if (!file) return;
+    setSaving(true);
+    const res = await saveToWishlist(file, result.garmentHex, result.verdict, "upload");
+    setSaving(false);
+    if (res.ok) setSaved(true);
+  }
   const explanation =
     result.verdict === "va"
       ? `Se parece a ${result.nearestVa.nombre}. Adelante, te va.`
@@ -186,6 +202,26 @@ function Result({
             ))}
           </div>
         </div>
+      ) : null}
+
+      {file ? (
+        saved ? (
+          <Link
+            href="/wishlist"
+            className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            <Icon name="check" size={16} /> guardado · ver wishlist
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={guardar}
+            disabled={saving}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-60"
+          >
+            <Icon name="destello" size={16} /> {saving ? "guardando…" : "guardar en wishlist"}
+          </button>
+        )
       ) : null}
 
       <button
