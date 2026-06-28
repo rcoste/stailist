@@ -147,3 +147,55 @@ organizados por familia (neutros, claros, medios, acento, joya, a-evitar).
 Correr el experimento con Tatiana y Toño esta semana: que generen un outfit, midan
 si vuelven solos, y si alguien se pone uno en la vida real. Es la señal que define
 qué de este módulo vale la pena pulir. ~15 min de logística.
+
+---
+
+# Fase 3 — replanteada: Wishlist + try-on combinado (2026-06-27, idea de Roberto)
+
+La Fase 3 deja de ser "pruébate una foto suelta" y pasa a ser una **herramienta de
+decisión de compra** con casa propia: el **Wishlist**.
+
+## Concepto
+Estás en tienda (o viendo algo online), te late algo pero quieres ver cómo te queda.
+Le tomas/subes foto → entra al **Wishlist** (cosas que consideras comprar). Al
+Wishlist también llegan las **sugerencias de "te falta"** de clóset/cápsula. Desde
+ahí eliges items y te los pruebas en tu **avatar** (requisito), solos o **combinados
+con prendas de tu clóset** ("estas 2 del wishlist + esta de mi clóset, ¿combinan?")
+→ mejor decisión de compra.
+
+## Riesgo central (define el diseño)
+Combinar varias fotos de prendas ARBITRARIAS (ángulos/fondos/luz distintos) + prendas
+del clóset en un try-on es lo más frágil del módulo en calidad. `/api/tryon` ya acepta
+avatar + varias prendas, pero la calidad con fotos "de la calle" es apuesta.
+**Decisión de diseño:** el ancla de decisión es el **chequeo de color** (Fase 2, alta
+confianza); el try-on es **bonus visual**, no el cerebro. Así el Wishlist ayuda a
+decidir aunque el render salga mediocre.
+
+## Modelo de datos
+Tabla nueva `wishlist_items` (separada de `items`=clóset propio): `user_id`,
+`image_path` (Storage privado, URL firmada), `color_hex`, `verdict` (va/no-ideal/
+parecido, calculado con `checkColor` al agregar), `source` (`upload`|`capsule`|`gap`),
+`name?`, `created_at`. Al comprar → opción de moverlo a `items` (clóset).
+
+## Entradas al Wishlist
+- Desde `/cartera/chequear`: "guardar en wishlist" tras el veredicto.
+- Subir foto directo en el Wishlist.
+- Desde sugerencias de "te falta" (cápsula/viaje): "agregar al wishlist".
+
+## Pantallas
+- **`/wishlist`**: grid de candidatos, cada uno con foto + badge de veredicto de
+  color. Tap → detalle (veredicto + alternativas + "pruébatela").
+- **Try-on combinado** (gated en avatar): seleccionar 1+ items del wishlist (+ opc.
+  prendas del clóset) → `/api/tryon` → `tryon-immersive`. Sin avatar → CTA crear avatar.
+
+## Fases (dentro de Fase 3, de-riesgado)
+- **3a — el tablero:** Wishlist + agregar + veredicto de color por item. SIN try-on.
+  Útil desde el día 1; barato. (Reusa Fase 2.)
+- **3b — try-on de 1 item** del wishlist sobre el avatar (reusa `/api/tryon` + `use-tryon`).
+- **3c — combinar** wishlist + clóset en un try-on (lo más caro/riesgoso, al final).
+
+## Preguntas abiertas
+1. ¿v1 necesita el combinar-con-clóset (3c), o basta 3a+3b primero?
+2. ¿Las sugerencias de "te falta" entran al wishlist auto o solo manual?
+3. Ciclo de vida: al comprar, ¿el item pasa del Wishlist al Clóset?
+4. ¿El wishlist es solo pre-compra, o también "guardados" en general? (scope)
