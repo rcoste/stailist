@@ -8,6 +8,7 @@ import { dominantColor } from "@/lib/color/extract";
 import { checkColor, type Verdict } from "@/lib/color/match";
 import { saveToWishlist } from "@/lib/wishlist-add";
 import { removeWishlistItem } from "@/lib/wishlist-actions";
+import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
 
 export type WishlistItem = {
   id: string;
@@ -35,6 +36,7 @@ export function WishlistClient({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [pending, start] = useTransition();
+  const [tryonId, setTryonId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -129,28 +131,41 @@ export function WishlistClient({
                   ✕
                 </button>
               </div>
-              <div className="flex items-center gap-2 p-2">
-                {it.colorHex ? (
-                  <span
-                    className="h-4 w-4 flex-none rounded-full border border-line"
-                    style={{ backgroundColor: it.colorHex }}
-                    aria-hidden
-                  />
-                ) : null}
-                {it.verdict ? (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${BADGE[it.verdict].cls}`}
-                  >
-                    {BADGE[it.verdict].tone} {BADGE[it.verdict].label}
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-muted">sin colorimetría</span>
-                )}
+              <div className="flex flex-col gap-2 p-2">
+                <div className="flex items-center gap-2">
+                  {it.colorHex ? (
+                    <span
+                      className="h-4 w-4 flex-none rounded-full border border-line"
+                      style={{ backgroundColor: it.colorHex }}
+                      aria-hidden
+                    />
+                  ) : null}
+                  {it.verdict ? (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${BADGE[it.verdict].cls}`}
+                    >
+                      {BADGE[it.verdict].tone} {BADGE[it.verdict].label}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted">sin colorimetría</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTryonId(it.id)}
+                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-sm border border-line bg-bg text-[12px] font-semibold text-ink transition-colors hover:border-ink"
+                >
+                  <Icon name="destello" size={14} /> pruébatela
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {tryonId ? (
+        <WishlistTryon itemId={tryonId} onClose={() => setTryonId(null)} />
+      ) : null}
     </section>
   );
 }
