@@ -15,9 +15,18 @@ export async function saveGeneratedAvatar(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
-  if (!avatarPath.startsWith(`${user.id}/`)) return { ok: false };
-  if (!["slim", "athletic", "average", "full"].includes(bodyType)) return { ok: false };
+  if (!user) {
+    console.error("[avatar] save sin sesión");
+    return { ok: false };
+  }
+  if (!avatarPath.startsWith(`${user.id}/`)) {
+    console.error("[avatar] path fuera de la carpeta del usuario:", avatarPath);
+    return { ok: false };
+  }
+  if (!["slim", "athletic", "average", "full"].includes(bodyType)) {
+    console.error("[avatar] body_type inválido:", bodyType);
+    return { ok: false };
+  }
 
   const { error } = await supabase
     .from("profiles")
@@ -27,7 +36,10 @@ export async function saveGeneratedAvatar(
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
-  if (error) return { ok: false };
+  if (error) {
+    console.error("[avatar] update de profiles falló:", error.message);
+    return { ok: false };
+  }
 
   await invalidateTryons(supabase, user.id);
   await supabase

@@ -26,8 +26,9 @@ function buildPrompt(build: string): string {
     "feet: the head and the feet (with shoes) must be fully visible and NOT " +
     "cropped, leaving a little empty space above the head and below the feet. " +
     "The person stands centered and full-length in the frame, facing forward in " +
-    "a natural relaxed posture. Plain warm off-white background, soft natural " +
-    "flattering light. Editorial, clean. No text, no props, no extra people."
+    "a natural relaxed posture. Plain flat light-grey studio background, cool " +
+    "neutral lighting (NO warm or golden tones). Editorial, clean. No text, no " +
+    "props, no extra people."
   );
 }
 
