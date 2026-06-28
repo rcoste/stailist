@@ -45,6 +45,15 @@ export async function removeWishlistItem(id: string): Promise<{ ok: boolean }> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
+
+  // Recupera las rutas para limpiar storage y no dejar huérfanos (foto + try-on).
+  const { data: row } = await supabase
+    .from("wishlist_items")
+    .select("image_path, tryon_path")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
   const { error } = await supabase
     .from("wishlist_items")
     .delete()
@@ -54,5 +63,10 @@ export async function removeWishlistItem(id: string): Promise<{ ok: boolean }> {
     console.error("[wishlist] delete falló:", error.message);
     return { ok: false };
   }
+
+  const paths = [row?.image_path, row?.tryon_path].filter(
+    (p): p is string => !!p
+  );
+  if (paths.length) await supabase.storage.from("prendas").remove(paths);
   return { ok: true };
 }
