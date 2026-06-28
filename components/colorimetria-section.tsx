@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Icon } from "@/components/icon";
 import {
   seasonPalette,
   seasonMetal,
@@ -106,6 +108,12 @@ export function ColorimetriaSection({
             {seasonDisplayLabel(current, curFlow)}
           </span>
           {palette.mejores.length > 0 ? <Swatches items={palette.mejores} /> : null}
+          <Link
+            href="/cartera"
+            className="flex min-h-10 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+          >
+            <Icon name="destello" size={16} /> abrir mi cartera de colores
+          </Link>
         </>
       ) : (
         <span className="text-sm text-muted">Aún no tienes colorimetría definida.</span>
