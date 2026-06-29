@@ -14,6 +14,7 @@ export type LookInput = {
   plan?: string;
   momento: "dia" | "noche";
   seedItemId?: string | null; // ancla opcional: prenda fijada para hoy
+  formality?: string | null; // solo en "evento": casual | semiformal | formal | gala
 } & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
 
 // Prenda del clóset para el picker de ancla (foto resuelta en el server).
@@ -48,6 +49,15 @@ const OCASIONES: { key: string; label: string; help: string; icon: IconName }[] 
   { key: "refrescar", label: "refrescar", help: "distinto a ayer", icon: "repetir" },
 ];
 const OCASION_KEYS = new Set(OCASIONES.map((o) => o.key));
+
+// "Un evento" es ambiguo (de un coctel casual a una boda de etiqueta) y el motor
+// adivinaba mal. Al elegir evento pedimos el nivel de formalidad para acertar.
+const FORMALIDAD: { key: string; label: string }[] = [
+  { key: "casual", label: "casual" },
+  { key: "semiformal", label: "semiformal" },
+  { key: "formal", label: "formal" },
+  { key: "gala", label: "de gala" },
+];
 
 // 5 bandas de temperatura (mismas de modo Viaje — set canónico, no inventar).
 const BUCKETS = [
@@ -121,6 +131,7 @@ export function LookRequest({
   const [rain, setRain] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(null); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
+  const [formality, setFormality] = useState<string | null>(null); // solo "evento"
   const [locating, setLocating] = useState(false);
   const [locFailed, setLocFailed] = useState(false);
 
@@ -130,7 +141,11 @@ export function LookRequest({
     ? { objective: "diario", plan: openText.trim() }
     : { objective: objective ?? "diario" };
 
-  const step1Ready = !!objective || hasOpen;
+  // "Evento" exige elegir formalidad para avanzar (es justo el dato que faltaba).
+  const step1Ready = hasOpen || (objective === "evento" ? !!formality : !!objective);
+  // La formalidad solo viaja cuando la ocasión final es "evento".
+  const formalityOut =
+    objectivePart.objective === "evento" && !hasOpen ? formality : null;
 
   function next() {
     setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
@@ -145,7 +160,8 @@ export function LookRequest({
     setLocFailed(false);
     const coords = await getPosition();
     setLocating(false);
-    if (coords) onPick({ ...objectivePart, momento, seedItemId, ...coords });
+    if (coords)
+      onPick({ ...objectivePart, momento, seedItemId, formality: formalityOut, ...coords });
     else setLocFailed(true);
   }
 
@@ -155,6 +171,7 @@ export function LookRequest({
       ...objectivePart,
       momento,
       seedItemId,
+      formality: formalityOut,
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
     });
   }
@@ -164,6 +181,7 @@ export function LookRequest({
   function pickObjective(key: string) {
     setObjective((o) => (o === key ? null : key));
     setOpenText("");
+    if (key !== "evento") setFormality(null); // formalidad solo aplica a evento
   }
   function changeOpenText(v: string) {
     setOpenText(v);
@@ -238,8 +256,10 @@ export function LookRequest({
                 <StepOcasion
                   objective={objective}
                   openText={openText}
+                  formality={formality}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
+                  onFormality={setFormality}
                 />
                 {closet.length > 0 ? (
                   <AnchorTrigger
@@ -311,13 +331,17 @@ const ICON_ON = "bg-accent border-accent text-on-accent";
 function StepOcasion({
   objective,
   openText,
+  formality,
   onPick,
   onOpenText,
+  onFormality,
 }: {
   objective: string | null;
   openText: string;
+  formality: string | null;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
+  onFormality: (f: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-3.5">
@@ -351,6 +375,39 @@ function StepOcasion({
           );
         })}
       </div>
+
+      {/* Formalidad: solo al elegir "evento" (lo ambiguo). Hay que elegir una
+          para poder avanzar — es el dato que faltaba para acertar la boda. */}
+      {objective === "evento" ? (
+        <div
+          className="flex flex-col gap-2.5"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <span className="text-[13px] font-semibold text-ink">
+            ¿qué tan formal?
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {FORMALIDAD.map((f) => {
+              const on = formality === f.key;
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => onFormality(f.key)}
+                  aria-pressed={on}
+                  className={`rounded-sm border px-3.5 py-2 text-[14px] font-semibold transition-colors ${
+                    on
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface text-ink hover:border-ink"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {/* Campo abierto (alternativa) */}
       <div className="flex flex-col">
