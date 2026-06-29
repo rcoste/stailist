@@ -5,7 +5,7 @@ import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
-import { loadClosetImageMap } from "@/lib/capsule-data";
+import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
 import { tripDays, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
@@ -60,7 +60,10 @@ export default async function ViajeDetallePage({
   const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
   const overrides = (trip.overrides as CapsuleOverrides | null) ?? null;
   const empacado = (trip.empacado as Record<string, boolean> | null) ?? {};
-  const imageMap = await loadClosetImageMap(supabase, profile.id);
+  const [imageMap, nameToId] = await Promise.all([
+    loadClosetImageMap(supabase, profile.id),
+    loadClosetNameToId(supabase, profile.id),
+  ]);
 
   // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):
   // cubren una prenda que faltaba con una real del clóset.
@@ -104,7 +107,11 @@ export default async function ViajeDetallePage({
         porque: o.porque,
         tip: o.tip ?? null,
         voto: o.voto ?? null,
-        prendas: o.prendas.map((nombre) => ({ nombre, image: imageMap[nombre] ?? null })),
+        prendas: o.prendas.map((nombre) => ({
+          nombre,
+          image: imageMap[nombre] ?? null,
+          id: nameToId[nombre] ?? null,
+        })),
       }))
     : null;
 

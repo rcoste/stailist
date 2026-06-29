@@ -111,6 +111,7 @@ export default async function HoyPage({
       prendas: (look.item_ids as string[]).map((id) => {
         const p = byId.get(id);
         return {
+          id,
           nombre: p?.nombre ?? "Prenda",
           swatch: p?.swatch ?? "#E5E1DD",
           imagen: p?.imagen ?? null,

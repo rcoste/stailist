@@ -27,7 +27,7 @@ export type HoyOutfit = {
   tip?: string | null; // "el toque" — cómo llevarlo (opcional)
   tryon?: string | null;
   favorited?: boolean;
-  prendas: { nombre: string; swatch: string; imagen?: string | null }[];
+  prendas: { id?: string | null; nombre: string; swatch: string; imagen?: string | null }[];
 };
 
 type State =
@@ -421,6 +421,7 @@ function ReadyView({
         prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
         justificacion={outfit.explicacion}
         tip={outfit.tip ?? null}
+        renderMode="auto"
         corner={
           <FavoriteButton
             outfitId={outfit.id}

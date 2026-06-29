@@ -8,6 +8,7 @@ import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { setTripLookVote, saveTripDownReason, favoriteTripLook } from "@/lib/trip-actions";
 import { DownReason } from "@/components/down-reason";
 import { useTripGen } from "@/components/trip-gen-context";
+import { requestItemRender } from "@/lib/render-on-demand";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
 
 // Un look del viaje ya resuelto contra el clóset (la página servidor mapea cada
@@ -18,7 +19,7 @@ export type ResolvedOutfit = {
   porque: string;
   tip: string | null;
   voto: "up" | "down" | null;
-  prendas: { nombre: string; image: string | null }[];
+  prendas: { nombre: string; image: string | null; id?: string | null }[];
 };
 
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
@@ -70,6 +71,22 @@ export function TripOutfits({
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
+  // Render bajo demanda (tap): prendas sugeridas sin imagen → se generan al
+  // tocarlas. Cacheamos la url por id; `rendering` evita doble disparo.
+  const [rendered, setRendered] = useState<Record<string, string>>({});
+  const [rendering, setRendering] = useState<Set<string>>(new Set());
+
+  async function renderPrenda(id: string) {
+    if (rendering.has(id) || rendered[id]) return;
+    setRendering((s) => new Set(s).add(id));
+    const res = await requestItemRender(id);
+    setRendering((s) => {
+      const n = new Set(s);
+      n.delete(id);
+      return n;
+    });
+    if (res.url) setRendered((m) => ({ ...m, [id]: res.url as string }));
+  }
   // Favorito optimista por índice. La verdad vive en outfits (fila promovida);
   // aquí guardamos el set para el corazón y revertimos si el server falla.
   const [favs, setFavs] = useState<Set<number>>(() => new Set(favoritos));
@@ -245,24 +262,43 @@ export function TripOutfits({
               {o.titulo}
             </h3>
             <div className="my-3 flex gap-[7px]">
-              {o.prendas.map((p, j) => (
-                <button
-                  key={j}
-                  type="button"
-                  onClick={() => setZoom({ image: p.image, nombre: p.nombre })}
-                  title={p.nombre}
-                  aria-label={`Ver ${p.nombre}`}
-                  className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
-                >
-                  {p.image ? (
-                    <Image src={p.image} alt={p.nombre} fill sizes="120px" className="object-cover" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center text-muted">
-                      <Icon name="gancho" size={18} />
-                    </span>
-                  )}
-                </button>
-              ))}
+              {o.prendas.map((p, j) => {
+                const img = (p.id ? rendered[p.id] : null) ?? p.image;
+                const isRendering = p.id ? rendering.has(p.id) : false;
+                const canRender = !img && !!p.id && !isRendering;
+                return (
+                  <button
+                    key={j}
+                    type="button"
+                    onClick={() => {
+                      if (img) setZoom({ image: img, nombre: p.nombre });
+                      else if (canRender) renderPrenda(p.id as string);
+                    }}
+                    title={p.nombre}
+                    aria-label={
+                      img ? `Ver ${p.nombre}` : canRender ? `Generar ${p.nombre}` : p.nombre
+                    }
+                    className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
+                  >
+                    {img ? (
+                      <Image src={img} alt={p.nombre} fill sizes="120px" className="object-cover" />
+                    ) : isRendering ? (
+                      <span className="flex h-full w-full items-center justify-center">
+                        <Spinner className="h-4 w-4 text-accent" />
+                      </span>
+                    ) : canRender ? (
+                      <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-accent">
+                        <Icon name="destello" size={16} />
+                        <span className="text-[8px] font-bold uppercase tracking-wide">ver</span>
+                      </span>
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-muted">
+                        <Icon name="gancho" size={18} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <p className="display text-[13.5px] font-medium leading-relaxed text-ink">{o.porque}</p>
             {o.tip ? (

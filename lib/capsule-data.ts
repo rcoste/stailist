@@ -157,3 +157,27 @@ export async function loadClosetImageMap(
   }
   return map;
 }
+
+// Mapa nombre → id del clóset, incluyendo prendas SIN imagen (al revés de
+// loadClosetImageMap, que solo lista las que ya tienen imagen). Lo usa la maleta
+// para el render bajo demanda: cuando un look sugiere una prenda sin imagen,
+// necesitamos su id para pedir el render al tocarla.
+export async function loadClosetNameToId(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Record<string, string>> {
+  const { data: rows } = await supabase
+    .from("items")
+    .select("id, attrs, archetypes(name)")
+    .eq("user_id", userId)
+    .is("deleted_at", null);
+
+  const map: Record<string, string> = {};
+  for (const r of rows ?? []) {
+    const arch = r.archetypes as { name?: string } | null;
+    const attrs = (r.attrs ?? {}) as { nombre?: string };
+    const name = arch?.name ?? attrs.nombre ?? "Prenda";
+    if (!map[name]) map[name] = r.id as string;
+  }
+  return map;
+}
