@@ -3,9 +3,10 @@ import { AppShell } from "@/components/app-shell";
 import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import {
-  computeDepth,
+  carteraDepth,
   subSeasonLabel,
   seasonMetal,
+  normSeason,
   METAL_HEX,
 } from "@/lib/colorimetria";
 import { subPalette } from "@/lib/palette-data";
@@ -17,7 +18,7 @@ import { CarteraClient } from "@/components/cartera/cartera-client";
 // empty state que manda a hacerla.
 export default async function CarteraPage() {
   const profile = await requireOnboarded();
-  const season = profile.palette_season;
+  const season = normSeason(profile.palette_season);
 
   if (!season) {
     return (
@@ -52,7 +53,7 @@ export default async function CarteraPage() {
     );
   }
 
-  const depth = computeDepth(profile.palette_quiz);
+  const depth = carteraDepth(profile.palette_quiz, season, profile.palette_flow);
   const subLabel = subSeasonLabel(season, depth);
   const metal = seasonMetal(season, profile.palette_flow);
   const palette = subPalette(season, depth);

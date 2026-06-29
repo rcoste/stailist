@@ -6,6 +6,18 @@
 
 export type Season = "primavera" | "verano" | "otono" | "invierno";
 
+const SEASON_KEYS: Season[] = ["primavera", "verano", "otono", "invierno"];
+
+// Normaliza una estación/guiño a la clave canónica en minúsculas. Data legacy de
+// la colorimetría por foto guardó valores con mayúscula ("Invierno"), que no
+// matcheaban SEASONS → el motor descartaba los colores prestados del guiño.
+// Tolera eso (y acentos en "otoño") al leer; null si no es una estación válida.
+export function normSeason(s: string | null | undefined): Season | null {
+  if (!s) return null;
+  const k = s.toLowerCase().replace("ñ", "n") as Season;
+  return SEASON_KEYS.includes(k) ? k : null;
+}
+
 export type QuizOption = {
   id: string;
   label: string;
@@ -224,9 +236,11 @@ export function seasonMetal(
   primary: Season | null,
   flow: Season | null
 ): "oro" | "plata" {
+  const p = normSeason(primary);
+  const f = normSeason(flow);
   const warm =
-    (primary !== null && WARM_SEASONS.includes(primary)) ||
-    (flow !== null && WARM_SEASONS.includes(flow));
+    (p !== null && WARM_SEASONS.includes(p)) ||
+    (f !== null && WARM_SEASONS.includes(f));
   return warm ? "oro" : "plata";
 }
 
@@ -249,11 +263,13 @@ const SUBSEASON: Record<Season, Partial<Record<Season, string>>> = {
 };
 
 export function seasonDisplayLabel(season: Season, flow: Season | null): string {
-  if (flow) {
-    const sub = SUBSEASON[season]?.[flow];
+  const s = normSeason(season) ?? season;
+  const f = normSeason(flow);
+  if (f) {
+    const sub = SUBSEASON[s]?.[f];
     if (sub) return sub;
   }
-  return BASE_LABEL[season];
+  return BASE_LABEL[s];
 }
 
 // --- Sistema de 12 sub-estaciones por PROFUNDIDAD (para la Cartera) ---
@@ -282,6 +298,36 @@ export function computeDepth(answers: Record<string, string> | null): Depth {
   return "medium";
 }
 
+// Puente guiño→profundidad: cuando no hay quiz MC (p.ej. colorimetría por foto),
+// derivamos la profundidad del flow oficial para que la Cartera quede coherente
+// con el pasaporte/motor (en vez de caer siempre a "medio"). Se apoya en las
+// etiquetas de SUBSEASON: "profundo" → oscuro, "suave/claro" → claro, resto medio.
+export function flowToDepth(season: Season, flow: Season | null): Depth {
+  const s = normSeason(season) ?? season;
+  const f = normSeason(flow);
+  if (!f) return "medium";
+  const label = (SUBSEASON[s]?.[f] ?? "").toLowerCase();
+  if (label.includes("profund")) return "dark";
+  if (label.includes("suave") || label.includes("clar")) return "light";
+  return "medium";
+}
+
+// ¿palette_quiz son respuestas reales del quiz MC, o un objeto de otra fuente
+// (la colorimetría por foto guardó {source, por_que, confianza}, sin claves del
+// quiz)? Solo cuenta como quiz si trae al menos una respuesta de QUIZ.
+function isMcQuiz(quiz: Record<string, string> | null): boolean {
+  return !!quiz && QUIZ.some((q) => typeof quiz[q.id] === "string");
+}
+
+// Profundidad para la Cartera: del quiz MC si lo hizo; si no, del guiño oficial.
+export function carteraDepth(
+  quiz: Record<string, string> | null,
+  season: Season,
+  flow: Season | null
+): Depth {
+  return isMcQuiz(quiz) ? computeDepth(quiz) : flowToDepth(season, flow);
+}
+
 // "Otoño oscuro", "Verano claro" — nombre de la sub-estación de 12.
 export function subSeasonLabel(season: Season, depth: Depth): string {
   return `${BASE_LABEL[season]} ${DEPTH_LABEL[depth]}`;
@@ -300,8 +346,11 @@ export function seasonNeighbors(season: Season): Season[] {
 export function seasonPalette(primary: Season, flow: Season | null) {
   // Defensivo: si llega una estación inválida (dato corrupto), no reventar el
   // motor — devolver vacío y seguir. Mejor un look sin paleta que cero looks.
-  const base = SEASONS[primary];
-  const flw = flow ? SEASONS[flow] : null;
+  // normSeason rescata data legacy con mayúscula ("Invierno") que si no, dejaba
+  // los colores prestados del guiño vacíos en la generación de outfits.
+  const base = SEASONS[normSeason(primary) ?? primary];
+  const flwKey = normSeason(flow);
+  const flw = flwKey ? SEASONS[flwKey] : null;
   return {
     mejores: base ? base.colores : [],
     prestados: flw ? flw.colores.filter((c) => c.transfiere !== false) : [],
