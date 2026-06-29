@@ -14,13 +14,17 @@ if (!envLine) {
 }
 const key = envLine.split("=").slice(1).join("=").trim();
 
-const [src, prompt, outPath, model = "gemini-3.1-flash-image"] = process.argv.slice(2);
+const [src, prompt, outPath, aspect = "1:1", model = "gemini-3.1-flash-image"] =
+  process.argv.slice(2);
 if (!src || !prompt || !outPath) {
-  console.error('Uso: node scripts/gen-extract.mjs <fuente.png> "<prompt>" <salida.png> [modelo]');
+  console.error('Uso: node scripts/gen-extract.mjs <fuente.png> "<prompt>" <salida.png> [aspect] [modelo]');
   process.exit(1);
 }
 
-const b64 = readFileSync(src).toString("base64");
+// `src` puede ser varias imágenes separadas por coma (modelo + prendas de ref).
+const imgParts = src.split(",").map((p) => ({
+  inlineData: { mimeType: "image/png", data: readFileSync(p.trim()).toString("base64") },
+}));
 
 const res = await fetch(
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
@@ -30,15 +34,12 @@ const res = await fetch(
     body: JSON.stringify({
       contents: [
         {
-          parts: [
-            { inlineData: { mimeType: "image/png", data: b64 } },
-            { text: prompt },
-          ],
+          parts: [...imgParts, { text: prompt }],
         },
       ],
       generationConfig: {
         responseModalities: ["IMAGE"],
-        imageConfig: { aspectRatio: "1:1" },
+        imageConfig: { aspectRatio: aspect },
       },
     }),
   }
