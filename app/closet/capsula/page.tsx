@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { ClosetNav } from "@/components/closet-nav";
 import { CapsuleList } from "@/components/capsule-list";
 import { PorQueEsTuya } from "@/components/por-que-es-tuya";
 import { Icon, type IconName } from "@/components/icon";
@@ -33,25 +34,17 @@ export default async function CapsulaPage() {
   return (
     <AppShell>
       <section className="flex flex-col gap-6 pt-1">
-        <div className="flex flex-col gap-1.5">
+        <ClosetNav />
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
+            tu cápsula
+          </h1>
           <Link
-            href="/closet"
-            className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
+            href="/closet/capsula/editar"
+            className="shrink-0 text-sm font-semibold text-accent hover:underline"
           >
-            <Icon name="chevron" size={15} rotate={180} />
-            clóset
+            editar
           </Link>
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
-              tu cápsula
-            </h1>
-            <Link
-              href="/closet/capsula/editar"
-              className="shrink-0 text-sm font-semibold text-accent hover:underline"
-            >
-              editar
-            </Link>
-          </div>
         </div>
 
         {/* Por qué esta cápsula es tuya: sello en serif + pilares cortos (sin caja). */}

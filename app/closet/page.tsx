@@ -1,23 +1,11 @@
-import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Icon } from "@/components/icon";
 import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
-import { CapsuleCard } from "@/components/capsule-card";
+import { ClosetNav } from "@/components/closet-nav";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
-import {
-  capsuleView,
-  closetSignature,
-  type CapsuleMatch,
-  type CapsuleTarget,
-} from "@/lib/capsule";
-
-// La acción recalcularMatch (del card) llama a Opus con el clóset completo;
-// le damos el presupuesto de 60s para que no se corte en clósets grandes.
-export const maxDuration = 60;
 
 export default async function ClosetPage() {
   const profile = await requireOnboarded();
@@ -80,14 +68,6 @@ export default async function ClosetPage() {
     };
   });
 
-  // Cápsula: la meta (capa 1) y el match (capa 2) viven cacheados en el profile.
-  // El match se recalcula solo si el clóset cambió (firma distinta) vía "recalcular".
-  const target = profile.capsule_target as CapsuleTarget | null;
-  const match = profile.capsule_match as CapsuleMatch | null;
-  const currentSig = closetSignature(items);
-  const stale = !!target && (!match || match.signature !== currentSig);
-  const view = target && match ? capsuleView(target, match, profile.capsule_overrides) : null;
-
   // ¿Ya sumó ropa propia (foto)? Si no, el clóset son puros básicos asumidos →
   // aclaramos que es un punto de arranque. Si ya personalizó, no lo regañamos.
   const hasOwnPhotos = (rows ?? []).some((r) => r.source === "photo");
@@ -111,27 +91,7 @@ export default async function ClosetPage() {
           <AddSheet userId={profile.id} />
         </div>
 
-        {/* La cápsula reducida a una franja-resumen (no protagonista). */}
-        <CapsuleCard hasTarget={!!target} view={view} stale={stale} />
-
-        {/* Entrada a la Cartera de Colorimetría (antes enterrada en Perfil). */}
-        <Link
-          href="/cartera"
-          className="flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-ink"
-        >
-          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-accent-soft text-ink">
-            <Icon name="destello" size={18} />
-          </span>
-          <span className="flex flex-col">
-            <span className="text-sm font-semibold text-ink">tu cartera de colores</span>
-            <span className="text-[12px] text-muted">
-              checa y pruébate lo que quieres comprar
-            </span>
-          </span>
-          <span className="ml-auto text-muted">
-            <Icon name="chevron" size={18} />
-          </span>
-        </Link>
+        <ClosetNav />
 
         <ClosetGrid items={items} />
 
