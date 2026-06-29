@@ -50,7 +50,10 @@ import {
 // v17 (2026-06-28): ancla opcional en Hoy — la usuaria fija UNA prenda que quiere
 // usar hoy (seedItemId). Entra como REGLA DURA: el look DEBE incluirla, el motor
 // arma alrededor y el juez nunca la quita (con red de seguridad en código).
-export const PROMPT_VERSION = "v17";
+// v18 (2026-06-29): formalidad explícita para "evento" (el wizard la pregunta) +
+// default mexicano formal en eventos (las bodas mexicanas son más formales que
+// el default del modelo; antes sugería looks subvestidos).
+export const PROMPT_VERSION = "v18";
 
 export type EngineItem = {
   id: string;
@@ -84,6 +87,7 @@ export type EngineContext = {
   silueta: string | null; // orientación de cuerpo (complexión + dónde carga); señal suave
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
   seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
+  formality?: string | null; // solo "evento": casual | semiformal | formal | gala
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -166,6 +170,25 @@ export function contextBlock(ctx: EngineContext): string[] {
     );
   } else if (ctx.timeOfDay === "dia") {
     lines.push("Momento: de día.");
+  }
+
+  // Formalidad del evento (el wizard la pregunta para "evento") + default
+  // mexicano: las bodas/eventos formales en México son más arreglados que el
+  // default del modelo; ante la duda, subir nivel, no bajarlo.
+  const FORMALITY_LABELS: Record<string, string> = {
+    casual: "casual (relajado pero cuidado)",
+    semiformal: "semiformal (coctel / business elevado)",
+    formal: "formal",
+    gala: "de gala / etiqueta (lo más arreglado)",
+  };
+  if (ctx.formality && FORMALITY_LABELS[ctx.formality]) {
+    lines.push(
+      `Formalidad del evento: ${FORMALITY_LABELS[ctx.formality]} — RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.`
+    );
+  } else if (ctx.objective === "evento") {
+    lines.push(
+      "Es un evento: en México tienden a ser más formales que el promedio (sobre todo bodas). Ante la duda, arréglalo más, no menos."
+    );
   }
 
   const s = ctx.season ? SEASONS[ctx.season] : null;

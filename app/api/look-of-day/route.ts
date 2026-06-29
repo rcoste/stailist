@@ -33,6 +33,7 @@ type Body = {
   force?: boolean;
   seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
   forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
+  formality?: string; // solo en "evento": casual | semiformal | formal | gala
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -309,6 +310,7 @@ async function generateInto(
       ),
       tasteSignal,
       seedItemId,
+      formality: typeof body.formality === "string" ? body.formality : null,
     };
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
