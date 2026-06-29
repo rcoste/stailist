@@ -13,7 +13,16 @@ export type LookInput = {
   objective: string;
   plan?: string;
   momento: "dia" | "noche";
+  seedItemId?: string | null; // ancla opcional: prenda fijada para hoy
 } & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
+
+// Prenda del clóset para el picker de ancla (foto resuelta en el server).
+export type ClosetPick = {
+  id: string;
+  nombre: string;
+  swatch: string;
+  imagen: string | null;
+};
 
 // 4 ocasiones del wizard (sin "viaje": ya hay un Modo viaje propio).
 const OCASIONES: { key: string; label: string; help: string; icon: IconName }[] = [
@@ -68,6 +77,7 @@ export function LookRequest({
   onPick,
   onExit,
   skipObjective,
+  closet = [],
 }: {
   title?: string;
   defaultObjective: string | null;
@@ -76,6 +86,8 @@ export function LookRequest({
   // Wow (primer outfit): la ocasión ya se eligió en el paso de onboarding →
   // arranca en "momento" y muestra 2 pasos en vez de 3 (no re-pregunta ocasión).
   skipObjective?: boolean;
+  // Clóset para el picker de ancla (paso clima). Vacío = no se muestra el picker.
+  closet?: ClosetPick[];
 }) {
   const hasDefaultObj = !!(
     defaultObjective && OCASION_KEYS.has(defaultObjective)
@@ -91,6 +103,7 @@ export function LookRequest({
   const [momento, setMomento] = useState<"dia" | "noche">("dia");
   const [climaIdx, setClimaIdx] = useState(2); // Templado por defecto
   const [rain, setRain] = useState(false);
+  const [seedItemId, setSeedItemId] = useState<string | null>(null); // ancla opcional
   const [locating, setLocating] = useState(false);
   const [locFailed, setLocFailed] = useState(false);
 
@@ -115,7 +128,7 @@ export function LookRequest({
     setLocFailed(false);
     const coords = await getPosition();
     setLocating(false);
-    if (coords) onPick({ ...objectivePart, momento, ...coords });
+    if (coords) onPick({ ...objectivePart, momento, seedItemId, ...coords });
     else setLocFailed(true);
   }
 
@@ -124,6 +137,7 @@ export function LookRequest({
     onPick({
       ...objectivePart,
       momento,
+      seedItemId,
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
     });
   }
@@ -212,15 +226,24 @@ export function LookRequest({
             ) : step === 2 ? (
               <StepMomento momento={momento} onPick={setMomento} />
             ) : (
-              <StepClima
-                idx={climaIdx}
-                rain={rain}
-                locating={locating}
-                locFailed={locFailed}
-                onIdx={setClimaIdx}
-                onRain={setRain}
-                onLocate={useLocation}
-              />
+              <>
+                <StepClima
+                  idx={climaIdx}
+                  rain={rain}
+                  locating={locating}
+                  locFailed={locFailed}
+                  onIdx={setClimaIdx}
+                  onRain={setRain}
+                  onLocate={useLocation}
+                />
+                {closet.length > 0 ? (
+                  <AnchorPicker
+                    closet={closet}
+                    selected={seedItemId}
+                    onSelect={setSeedItemId}
+                  />
+                ) : null}
+              </>
             )}
           </div>
         </div>
@@ -458,7 +481,7 @@ function StepClima({
       </div>
 
       {/* Fila de lluvia (solo el camino manual) */}
-      <div className="mt-[18px] flex items-center gap-3">
+      <div className="mt-[18px] mb-1 flex items-center gap-3">
         <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
           <Icon name="lluvia" size={17} className="text-muted" /> ¿va a llover?
         </span>
@@ -485,6 +508,94 @@ function StepClima({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Ancla opcional: la usuaria fija UNA prenda que quiere usar hoy; el motor arma
+// alrededor. Colapsado por default (no estorba el TTV); al abrir, tira horizontal
+// de miniaturas del clóset. Tocar de nuevo la deselecciona.
+function AnchorPicker({
+  closet,
+  selected,
+  onSelect,
+}: {
+  closet: ClosetPick[];
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const [open, setOpen] = useState(selected != null);
+  const sel = closet.find((c) => c.id === selected) ?? null;
+  return (
+    <div className="mt-[22px] border-t border-line pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 text-left"
+      >
+        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-line bg-bg text-ink">
+          <Icon name="gancho" size={18} />
+        </span>
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[15px] font-semibold text-ink">
+            ¿algo que te quieras poner hoy?
+          </span>
+          <span className="truncate font-display text-[15px] text-muted">
+            {sel ? sel.nombre : "opcional — lo armo alrededor de esa prenda"}
+          </span>
+        </span>
+        <Icon
+          name="chevron"
+          size={17}
+          rotate={open ? 270 : 90}
+          className="ml-auto shrink-0 text-muted"
+        />
+      </button>
+
+      {open ? (
+        <div className="-mx-[18px] mt-3 flex gap-2.5 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {closet.map((c) => {
+            const on = c.id === selected;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onSelect(on ? null : c.id)}
+                aria-pressed={on}
+                title={c.nombre}
+                className={`relative aspect-[3/4] w-[72px] shrink-0 overflow-hidden rounded-md border transition-colors ${
+                  on ? "border-ink" : "border-line"
+                }`}
+              >
+                {c.imagen ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.imagen}
+                    alt={c.nombre}
+                    className={`h-full w-full object-cover transition-[filter] duration-200 ${
+                      on ? "" : "[filter:grayscale(0.7)_opacity(0.7)]"
+                    }`}
+                  />
+                ) : (
+                  <span
+                    className="block h-full w-full"
+                    style={{
+                      backgroundColor: c.swatch,
+                      filter: on ? undefined : "grayscale(0.7) opacity(0.7)",
+                    }}
+                  />
+                )}
+                {on ? (
+                  <span className="absolute right-1 top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-accent text-on-accent">
+                    <Icon name="check" size={11} strokeWidth={2.6} />
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

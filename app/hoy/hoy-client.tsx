@@ -10,6 +10,7 @@ import { StylistGenerating, type GenPlan } from "@/components/stylist-generating
 import {
   LookRequest,
   type LookInput,
+  type ClosetPick,
   ocasionLabel,
   bucketLabel,
 } from "@/components/weather-picker";
@@ -51,6 +52,7 @@ export function HoyClient({
   wornInicial,
   userId,
   defaultObjective,
+  closet = [],
   autoAsk = false,
 }: {
   lookInicial: HoyOutfit | null;
@@ -61,6 +63,8 @@ export function HoyClient({
   wornInicial: boolean;
   userId: string;
   defaultObjective: string | null;
+  /** Clóset para el picker de ancla del wizard ("¿algo que te quieras poner hoy?"). */
+  closet?: ClosetPick[];
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
   autoAsk?: boolean;
 }) {
@@ -231,6 +235,7 @@ export function HoyClient({
       <LookRequest
         title="Tu look de hoy"
         defaultObjective={defaultObjective}
+        closet={closet}
         onPick={(input) => generar(input, pendingForce.current)}
         // Salir del wizard (paso 1): vuelve al look del día si lo hay, o al home
         // (estado idle, con la tab bar) — NUNCA a un loop que re-abra el wizard.

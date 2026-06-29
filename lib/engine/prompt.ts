@@ -47,7 +47,10 @@ import {
 // contexto: lo que se PUSO (worn), votó 👍/👎 (con su razón) y de qué pidió otro.
 // El motor se inclina hacia lo que le gustó y se aleja de lo que rechazó,
 // generalizando el patrón (no copia looks). Lo ve el generador y el juez.
-export const PROMPT_VERSION = "v16";
+// v17 (2026-06-28): ancla opcional en Hoy — la usuaria fija UNA prenda que quiere
+// usar hoy (seedItemId). Entra como REGLA DURA: el look DEBE incluirla, el motor
+// arma alrededor y el juez nunca la quita (con red de seguridad en código).
+export const PROMPT_VERSION = "v17";
 
 export type EngineItem = {
   id: string;
@@ -80,6 +83,7 @@ export type EngineContext = {
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
   silueta: string | null; // orientación de cuerpo (complexión + dónde carga); señal suave
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
+  seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -147,6 +151,14 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
+  }
+  if (ctx.seedItemId) {
+    const seed = ctx.items.find((i) => i.id === ctx.seedItemId);
+    if (seed) {
+      lines.push(
+        `ANCLA (REGLA DURA): hoy QUIERE usar esta prenda → ${seed.id}: ${describeItem(seed)}. El look DEBE incluirla; arma el resto alrededor respetando clima, colorimetría y ocasión. Si choca con el clima, inclúyela igual y compénsala con el resto. Jamás la quites ni la sustituyas.`
+      );
+    }
   }
   if (ctx.timeOfDay === "noche") {
     lines.push(
