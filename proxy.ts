@@ -35,7 +35,12 @@ export default async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth");
+  // La raíz "/" es pública: muestra la landing a deslogueados (la propia page
+  // redirige a la app si SÍ hay sesión). Login/auth también públicos.
+  const isPublic =
+    pathname === "/" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
