@@ -14,6 +14,7 @@ import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/v
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
+import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -81,14 +82,10 @@ export async function POST(request: NextRequest) {
     if (existing) {
       const status = (existing.gen_status as string | null) ?? "ready";
       if (status === "ready") {
-        const { data: items } = await supabase
-          .from("items")
-          .select("id, attrs")
-          .in("id", existing.item_ids as string[]);
         return NextResponse.json({
           outfitId: existing.id,
           status: "ready",
-          outfit: shape(existing, items ?? []),
+          outfit: await shape(supabase, existing),
         });
       }
       if (status === "generating" && !isStale(existing.created_at as string)) {
@@ -179,11 +176,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ status: "generating" });
   }
-  const { data: items } = await supabase
-    .from("items")
-    .select("id, attrs")
-    .in("id", o.item_ids as string[]);
-  return NextResponse.json({ status: "ready", outfit: shape(o, items ?? []) });
+  return NextResponse.json({ status: "ready", outfit: await shape(supabase, o) });
 }
 
 function isStale(createdAt: string): boolean {
@@ -387,32 +380,65 @@ async function generateInto(
   }
 }
 
-// Da forma a un outfit + sus prendas (con foto) para el cliente.
-function shape(
+// Da forma a un outfit + sus prendas (con imagen resuelta y firmada) para el
+// cliente. Resuelve igual que la carga inicial (arquetipo → render → foto →
+// swatch), así el polling no deja prendas con foto/render como swatch. El `id`
+// va para el render bajo demanda (RenderableTile) cuando aún falta imagen.
+async function shape(
+  supabase: SupabaseClient,
   o: {
     id: string;
     item_ids: unknown;
     title: string | null;
     explanation: string;
     tip?: string | null;
-  },
-  items: { id: string; attrs: unknown }[]
+  }
 ) {
+  const itemIds = (o.item_ids as string[]) ?? [];
+  const { data: items } = await supabase
+    .from("items")
+    .select("id, photo_path, render_status, render_path, attrs, archetypes(name, image_path)")
+    .in("id", itemIds);
+  const list = items ?? [];
+
+  const paths = list
+    .flatMap((i) => [i.photo_path as string | null, i.render_path as string | null])
+    .filter((p): p is string => !!p);
+  const signed = new Map<string, string>();
+  if (paths.length > 0) {
+    const { data } = await supabase.storage
+      .from("prendas")
+      .createSignedUrls(Array.from(new Set(paths)), 3600);
+    data?.forEach((s) => {
+      if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
+    });
+  }
+
   const byId = new Map(
-    items.map((i) => [
-      i.id,
-      i.attrs as { nombre?: string; color_hex?: string; image_path?: string | null },
-    ])
+    list.map((i) => {
+      const arch = i.archetypes as { name?: string; image_path?: string | null } | null;
+      const attrs = (i.attrs ?? {}) as { nombre?: string; color_hex?: string };
+      return [
+        i.id as string,
+        {
+          nombre: arch?.name ?? attrs.nombre ?? "Prenda",
+          swatch: attrs.color_hex ?? "#E5E1DD",
+          imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
+        },
+      ];
+    })
   );
+
   return {
     id: o.id,
     nombre: o.title ?? "Tu look",
     explicacion: o.explanation,
     tip: o.tip ?? null,
-    prendas: (o.item_ids as string[]).map((id) => ({
+    prendas: itemIds.map((id) => ({
+      id,
       nombre: byId.get(id)?.nombre ?? "Prenda",
-      swatch: byId.get(id)?.color_hex ?? "#E5E1DD",
-      imagen: byId.get(id)?.image_path ?? null,
+      swatch: byId.get(id)?.swatch ?? "#E5E1DD",
+      imagen: byId.get(id)?.imagen ?? null,
     })),
   };
 }

@@ -1,6 +1,6 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
+import { RenderableTile } from "@/components/renderable-tile";
 
 type Prenda = {
   nombre: string;
@@ -9,6 +9,8 @@ type Prenda = {
   swatch: string;
   /** foto de la prenda (arquetipo o foto propia); si falta, se usa el swatch */
   imagen?: string | null;
+  /** id del item — habilita el render bajo demanda cuando falta imagen */
+  id?: string | null;
 };
 
 // Tarjeta de outfit: grid de prendas + justificación. Usada por Hoy, Historial
@@ -19,6 +21,7 @@ export function OutfitCard({
   justificacion,
   tip,
   corner,
+  renderMode = "none",
 }: {
   prendas: Prenda[];
   justificacion: string;
@@ -26,6 +29,8 @@ export function OutfitCard({
   tip?: string | null;
   /** Slot opcional en la esquina superior derecha (ej. el bookmark). */
   corner?: ReactNode;
+  /** Render bajo demanda de prendas sin imagen: "auto" en Hoy, "none" por defecto. */
+  renderMode?: "auto" | "tap" | "none";
 }) {
   // Regla de densidad (v3, global): 2 por fila con 3-4 prendas (más grandes, más
   // protagonismo), 3 por fila con 5-6.
@@ -37,23 +42,13 @@ export function OutfitCard({
       <div className={`grid ${cols} gap-3`}>
         {prendas.map((p) => (
           <figure key={p.nombre} className="flex flex-col gap-2">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
-              {p.imagen ? (
-                <Image
-                  src={p.imagen}
-                  alt={p.nombre}
-                  fill
-                  sizes="(max-width: 430px) 33vw, 130px"
-                  className="object-cover"
-                />
-              ) : (
-                <span
-                  className="absolute inset-0"
-                  style={{ backgroundColor: p.swatch }}
-                  aria-hidden
-                />
-              )}
-            </div>
+            <RenderableTile
+              itemId={p.id}
+              imagen={p.imagen}
+              swatch={p.swatch}
+              nombre={p.nombre}
+              mode={renderMode}
+            />
             <figcaption>
               <p className="text-xs font-medium uppercase tracking-wide text-ink">
                 {p.nombre}
