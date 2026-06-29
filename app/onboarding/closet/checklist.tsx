@@ -15,6 +15,9 @@ export type CatalogItem = {
 };
 
 const CATEGORY_ORDER = ["top", "vestido", "bottom", "abrigo", "calzado"];
+// Mínimo para armar un outfit: algo de arriba, algo de abajo y zapatos.
+// Un vestido cuenta como arriba+abajo; abrigos es opcional.
+const REQUIRED = ["top", "bottom", "calzado"];
 const CATEGORY_LABELS: Record<string, string> = {
   top: "Arriba",
   vestido: "Vestidos",
@@ -42,6 +45,37 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
 
   const visible = catalog.filter((i) => i.category === activeCat);
 
+  // Cobertura de categorías esenciales (para guiar el botón y los chips).
+  const countIn = (cat: string) =>
+    catalog.filter((i) => i.category === cat && selected.has(i.id)).length;
+  const hasDress = countIn("vestido") > 0;
+  const isSatisfied = (cat: string) =>
+    cat === "top" || cat === "bottom"
+      ? countIn(cat) > 0 || hasDress // un vestido cubre arriba y abajo
+      : countIn(cat) > 0;
+  const requiredPresent = REQUIRED.filter((c) => cats.includes(c));
+  const missing = requiredPresent.filter((c) => !isSatisfied(c));
+  const complete = missing.length === 0;
+  const target = missing[0]; // primera categoría esencial sin cubrir
+  const targetLabel = target ? (CATEGORY_LABELS[target] ?? target) : "";
+  // El botón: si ya está completo → enviar; si la categoría pendiente NO es la
+  // activa → llevar ahí; si SÍ es la activa (vacía) → pedir que marque algo.
+  const ctaMode: "submit" | "go" | "fill" = complete
+    ? "submit"
+    : target === activeCat
+      ? "fill"
+      : "go";
+
+  function handleCta() {
+    if (ctaMode === "submit") return submit();
+    if (ctaMode === "go" && target) {
+      setActiveCat(target);
+      // Vuelve arriba: tras avanzar, que vean la categoría nueva desde el inicio
+      // (y no quede el dedo sobre el botón por inercia).
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
   function toggle(id: number) {
     const next = new Set(selected);
     if (next.has(id)) next.delete(id);
@@ -63,9 +97,9 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {cats.map((cat) => {
           const on = cat === activeCat;
-          const selCount = catalog.filter(
-            (i) => i.category === cat && selected.has(i.id)
-          ).length;
+          const selCount = countIn(cat);
+          // Punto recordatorio: categoría esencial que aún no marcas.
+          const pending = REQUIRED.includes(cat) && !isSatisfied(cat);
           return (
             <button
               key={cat}
@@ -81,11 +115,21 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
               {CATEGORY_LABELS[cat] ?? cat}
               {selCount > 0 ? (
                 <span className="ml-1.5 font-bold opacity-60">{selCount}</span>
+              ) : pending ? (
+                <span
+                  className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current opacity-40"
+                  aria-hidden
+                />
               ) : null}
             </button>
           );
         })}
       </div>
+
+      {/* Recordatorio de que hay que cubrir varias categorías */}
+      <p className="-mt-1 text-[12.5px] text-muted">
+        Marca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.
+      </p>
 
       {/* Grid de la categoría activa */}
       <div className="grid grid-cols-2 gap-3">
@@ -151,8 +195,8 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
       <div className="sticky bottom-0 mt-auto bg-bg pb-4 pt-2">
         <button
           type="button"
-          onClick={submit}
-          disabled={pending || selected.size === 0}
+          onClick={handleCta}
+          disabled={pending || ctaMode === "fill"}
           className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-40"
         >
           {pending ? (
@@ -160,10 +204,17 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
               <Spinner className="h-4 w-4" />
               guardando tu clóset…
             </>
-          ) : (
+          ) : ctaMode === "submit" ? (
             <>
               armar mi primer look <Icon name="destello" size={18} />
             </>
+          ) : ctaMode === "go" ? (
+            <>
+              sigue con {targetLabel.toLowerCase()}{" "}
+              <Icon name="flecha" size={18} />
+            </>
+          ) : (
+            <>marca lo que tengas de {targetLabel.toLowerCase()}</>
           )}
         </button>
       </div>
