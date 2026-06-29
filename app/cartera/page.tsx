@@ -9,7 +9,7 @@ import {
   normSeason,
   METAL_HEX,
 } from "@/lib/colorimetria";
-import { subPalette } from "@/lib/palette-data";
+import { carteraPalette } from "@/lib/palette-data";
 import { CarteraClient } from "@/components/cartera/cartera-client";
 
 // Cartera de Colorimetría (Fase 1): la mega-paleta del usuario según su
@@ -56,7 +56,16 @@ export default async function CarteraPage() {
   const depth = carteraDepth(profile.palette_quiz, season, profile.palette_flow);
   const subLabel = subSeasonLabel(season, depth);
   const metal = seasonMetal(season, profile.palette_flow);
-  const palette = subPalette(season, depth);
+  const palette = carteraPalette(season, depth, profile.palette_flow);
+
+  // Palabra del guiño para la fila ("tus guiños de otoño").
+  const GUINO_WORD: Record<string, string> = {
+    primavera: "primavera",
+    verano: "verano",
+    otono: "otoño",
+    invierno: "invierno",
+  };
+  const guinoLabel = palette.guinoSeason ? GUINO_WORD[palette.guinoSeason] : "";
 
   return (
     <AppShell>
@@ -66,6 +75,8 @@ export default async function CarteraPage() {
         metal={metal}
         metalHex={METAL_HEX[metal]}
         familias={palette.familias}
+        guinos={palette.guinos}
+        guinoLabel={guinoLabel}
         evita={palette.evita}
       />
     </AppShell>

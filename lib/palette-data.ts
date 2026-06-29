@@ -7,7 +7,8 @@
 // (light = más claro/suave, dark = más profundo). Da amplitud consistente sin
 // curar 400 hex a mano; v1, tuneable. La sub-estación se conserva en cada color
 // vía subPalette(season, depth).
-import type { Season, Depth } from "./colorimetria";
+import { seasonPalette, normSeason, type Season, type Depth } from "./colorimetria";
+import { deltaE2000, hexToRgb, rgbToLab } from "./color/match";
 
 // Familias por TONO (Roberto: verdes, azules, rosas, rojos, cafés, morados,
 // amarillos, naranjas, grises, blancos, cremas). "evita" es aparte.
@@ -52,6 +53,10 @@ export type SubPalette = {
   reveal: string;
   familias: Hues;
   evita: Swatch[];
+  // Guiños: los colores prestados de la estación vecina (el flow). Vacío si no
+  // hay flow. La estación del guiño viaja aparte para etiquetar la fila.
+  guinos: Swatch[];
+  guinoSeason: Season | null;
 };
 
 // ───────────── HSL helpers (para el shift de profundidad) ─────────────
@@ -315,7 +320,45 @@ export function subPalette(season: Season, depth: Depth): SubPalette {
     const items = lib.hues[fam];
     if (items && items.length) familias[fam] = shiftAll(items, depth);
   }
-  return { reveal: lib.reveal, familias, evita: shiftAll(lib.evita, depth) };
+  return {
+    reveal: lib.reveal,
+    familias,
+    evita: shiftAll(lib.evita, depth),
+    guinos: [],
+    guinoSeason: null,
+  };
+}
+
+// Umbral deltaE2000 para considerar que un color del "evita" es en realidad un
+// guiño (misma familia cálida). VA_THRESHOLD del chequeo es 12 (mismo color);
+// 18 captura "misma familia" sin barrer evitas legítimos de otro tono.
+const GUINO_EVITA_THRESHOLD = 18;
+
+// Cartera con el guiño incorporado: la paleta por profundidad + una fila de
+// "guiños" (los prestados de la estación vecina) + el evita YA filtrado para no
+// vetar lo que en realidad es tu guiño. Resuelve la contradicción donde una
+// invierno-con-guiño-a-otoño veía sus cálidos terrosos en "evita".
+export function carteraPalette(
+  season: Season,
+  depth: Depth,
+  flow: Season | null
+): SubPalette {
+  const base = subPalette(season, depth);
+  if (!flow) return base;
+
+  const guinos: Swatch[] = seasonPalette(season, flow).prestados.map((c) => ({
+    nombre: c.nombre,
+    hex: c.hex,
+  }));
+  if (guinos.length === 0) return base;
+
+  const guinoLabs = guinos.map((g) => rgbToLab(hexToRgb(g.hex)));
+  const evita = base.evita.filter((e) => {
+    const el = rgbToLab(hexToRgb(e.hex));
+    return !guinoLabs.some((gl) => deltaE2000(el, gl) <= GUINO_EVITA_THRESHOLD);
+  });
+
+  return { ...base, guinos, guinoSeason: normSeason(flow), evita };
 }
 
 // Lista plana de los colores que SÍ van, en orden de familia (para el swipe
@@ -328,4 +371,15 @@ export function goSwatches(season: Season, depth: Depth): Swatch[] {
 // Solo los hex que SÍ van (para el chequeo de color de Fase 2).
 export function paletteHexes(season: Season, depth: Depth): string[] {
   return goSwatches(season, depth).map((s) => s.hex);
+}
+
+// "Colores que van" incluyendo los guiños del flow (para el chequeo de color):
+// así un cálido prestado da "va", no "no-ideal".
+export function carteraGoSwatches(
+  season: Season,
+  depth: Depth,
+  flow: Season | null
+): Swatch[] {
+  const p = carteraPalette(season, depth, flow);
+  return [...FAMILY_ORDER.flatMap((f) => p.familias[f] ?? []), ...p.guinos];
 }
