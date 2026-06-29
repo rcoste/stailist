@@ -63,7 +63,16 @@ export async function renderItemImage(
       : nombre;
   const type = categoria === "calzado" ? "shoes" : "flat";
 
-  const bytes = await generateArchetypeImage(conColor, type);
+  // Género del usuario: sin esto, prendas ambiguas (traje de baño, sandalias)
+  // se renderizan de mujer por default. Lo pasamos al prompt para desambiguar.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("gender")
+    .eq("id", userId)
+    .single();
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+
+  const bytes = await generateArchetypeImage(conColor, type, gender);
   if (!bytes) {
     await supabase
       .from("items")
