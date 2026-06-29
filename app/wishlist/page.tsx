@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/app-shell";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { computeDepth } from "@/lib/colorimetria";
-import { goSwatches, subPalette } from "@/lib/palette-data";
+import { carteraDepth, normSeason } from "@/lib/colorimetria";
+import { carteraGoSwatches, carteraPalette } from "@/lib/palette-data";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import {
   WishlistClient,
@@ -73,10 +73,12 @@ export default async function WishlistPage() {
   });
 
   // Paleta del usuario para chequear lo que agregue aquí (puede no tenerla aún).
-  const season = profile.palette_season;
-  const depth = season ? computeDepth(profile.palette_quiz) : null;
-  const va = season && depth ? goSwatches(season, depth) : [];
-  const evita = season && depth ? subPalette(season, depth).evita : [];
+  // Coherente con la Cartera: profundidad del guiño + guiños cuentan como "va".
+  const season = normSeason(profile.palette_season);
+  const flow = profile.palette_flow;
+  const depth = season ? carteraDepth(profile.palette_quiz, season, flow) : null;
+  const va = season && depth ? carteraGoSwatches(season, depth, flow) : [];
+  const evita = season && depth ? carteraPalette(season, depth, flow).evita : [];
 
   return (
     <AppShell>

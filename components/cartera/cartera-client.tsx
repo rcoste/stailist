@@ -23,6 +23,8 @@ export function CarteraClient({
   metal,
   metalHex,
   familias,
+  guinos,
+  guinoLabel,
   evita,
 }: {
   subLabel: string;
@@ -30,6 +32,8 @@ export function CarteraClient({
   metal: "oro" | "plata";
   metalHex: string;
   familias: SubPalette["familias"];
+  guinos: Swatch[];
+  guinoLabel: string;
   evita: Swatch[];
 }) {
   // Color abierto en fullscreen (índice dentro de la lista plana `go`), o null.
@@ -47,7 +51,10 @@ export function CarteraClient({
       offset += items.length;
     }
   }
-  const go: Swatch[] = groups.flatMap((g) => g.items);
+  // Los guiños también "van" → entran a la lista plana (modo tienda) después de
+  // las familias, con su propio offset para abrir en fullscreen.
+  const guinoBase = offset;
+  const go: Swatch[] = [...groups.flatMap((g) => g.items), ...guinos];
 
   return (
     <section className="flex flex-col gap-6 pt-4">
@@ -121,6 +128,39 @@ export function CarteraClient({
             </div>
           </div>
         ))}
+
+        {/* Tus guiños: los prestados de tu estación vecina. Van como acento —
+            por eso ya no aparecen en "evita". Abren fullscreen como los demás. */}
+        {guinos.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
+                Tus guiños de {guinoLabel}
+              </p>
+              <p className="text-[12px] leading-relaxed text-muted">
+                cálidos prestados de tu vecino — úsalos como acento, te van.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {guinos.map((s, i) => (
+                <button
+                  key={`guino-${i}`}
+                  type="button"
+                  onClick={() => setFsIndex(guinoBase + i)}
+                  className="flex flex-col gap-1.5 text-left"
+                >
+                  <span
+                    className="aspect-square w-full rounded-md border border-line"
+                    style={{ backgroundColor: s.hex }}
+                  />
+                  <span className="text-[10.5px] font-medium leading-tight text-ink">
+                    {s.nombre}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {/* Evita (informativo, no abre fullscreen) */}
         {evita.length > 0 ? (
