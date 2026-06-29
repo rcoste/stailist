@@ -275,12 +275,15 @@ export function Landing() {
                       <div className={styles.tryHd}>te propongo</div>
                       <div className={styles.tryMini}>
                         <span className={styles.tCell}>
+                          <img src="/landing/clasico-abrigo.png" alt="" />
                           <span className={styles.tn}>01</span>
                         </span>
                         <span className={styles.tCell}>
+                          <img src="/landing/clasico-pantalon.png" alt="" />
                           <span className={styles.tn}>02</span>
                         </span>
                         <span className={styles.tCell}>
+                          <img src="/landing/clasico-loafers.png" alt="" />
                           <span className={styles.tn}>03</span>
                         </span>
                         <span className={`${styles.tCell} ${styles.metaCell}`} />
@@ -289,7 +292,7 @@ export function Landing() {
                     <div className={styles.tryCard}>
                       <div className={styles.tryShot}>
                         <span className={styles.tryTag}>en ti</span>
-                        <img src="/landing/look-casual.png" alt="" />
+                        <img src="/landing/en-ti-clasico.png" alt="" />
                       </div>
                     </div>
                   </div>
