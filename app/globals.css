@@ -10,8 +10,12 @@
   --c-bg: #f4f3f1;          /* papel neutro */
   --c-surface: #ffffff;     /* cards */
   --c-ink: #141414;         /* texto principal */
+  --c-ink2: #363636;        /* cuerpo / leads (un punto más claro que ink) */
   --c-muted: #6f6f6f;       /* texto secundario */
+  --c-faint: #9a9a9a;       /* numerales serif, placeholders, marcas terciarias */
   --c-line: #e4e3e0;        /* hairlines */
+  --c-line2: #efeeec;       /* hairlines internas más sutiles */
+  --c-tile: #f7f6f4;        /* fondo de celdas de prenda (editorial) */
   --c-accent: #0a0a0a;      /* tinta (casi negro) — CTAs, el "ai", énfasis */
   --c-accent-deep: #000000; /* hover/pressed del acento — negro puro */
   --c-accent-soft: #f1f0ee; /* gris neutro para chips/fondos suaves */
@@ -40,8 +44,12 @@
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
   --color-ink: var(--c-ink);
+  --color-ink2: var(--c-ink2);
   --color-muted: var(--c-muted);
+  --color-faint: var(--c-faint);
   --color-line: var(--c-line);
+  --color-line2: var(--c-line2);
+  --color-tile: var(--c-tile);
   --color-accent: var(--c-accent);
   --color-accent-deep: var(--c-accent-deep);
   --color-accent-soft: var(--c-accent-soft);
