@@ -286,7 +286,10 @@ export function Landing() {
                           <img src="/landing/clasico-loafers.png" alt="" />
                           <span className={styles.tn}>03</span>
                         </span>
-                        <span className={`${styles.tCell} ${styles.metaCell}`} />
+                        <span className={styles.tCell}>
+                          <img src="/landing/clasico-bolsa.png" alt="" />
+                          <span className={styles.tn}>04</span>
+                        </span>
                       </div>
                     </div>
                     <div className={styles.tryCard}>
