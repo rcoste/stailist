@@ -13,9 +13,12 @@ const text = (p: GenPhrase) => `${p.a}${p.k}${p.b}`;
 export function GeneratingScreen({
   phrases,
   intervalMs = 1900,
+  tone = "light",
 }: {
   phrases: GenPhrase[];
   intervalMs?: number;
+  /** "dark" para el takeover oscuro del try-on (mismo lenguaje, sobre #0a0a0a). */
+  tone?: "light" | "dark";
 }) {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -29,27 +32,40 @@ export function GeneratingScreen({
   const cur = phrases[i];
   const next = phrases[(i + 1) % len];
 
+  const dark = tone === "dark";
+  const neighbor = dark ? "text-on-accent opacity-30" : "text-muted opacity-40";
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-bg px-8 text-center">
+    <div
+      className={`fixed inset-0 flex flex-col items-center justify-center gap-5 px-8 text-center ${
+        dark ? "z-[60] bg-accent" : "z-50 bg-bg"
+      }`}
+    >
       <div
         key={i}
         style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
         className="flex flex-col items-center gap-5"
       >
-        <p className="display text-base font-medium text-muted opacity-40">{text(prev)}</p>
-        <p className="display text-[21px] font-medium text-ink">
+        <p className={`display text-base font-medium ${neighbor}`}>{text(prev)}</p>
+        <p className={`display text-[21px] font-medium ${dark ? "text-on-accent" : "text-ink"}`}>
           {cur.a}
-          <b className="font-medium text-accent">{cur.k}</b>
+          <b className={`font-medium ${dark ? "italic text-on-accent" : "text-accent"}`}>{cur.k}</b>
           {cur.b}
         </p>
-        <p className="display text-base font-medium text-muted opacity-40">{text(next)}</p>
+        <p className={`display text-base font-medium ${neighbor}`}>{text(next)}</p>
       </div>
       <div className="mt-1.5 flex gap-[7px]" aria-hidden>
         {[0, 1, 2].map((j) => (
           <span
             key={j}
             className={`h-[7px] w-[7px] rounded-full transition-colors duration-300 ${
-              j <= i % 3 ? "bg-accent" : "bg-line"
+              j <= i % 3
+                ? dark
+                  ? "bg-on-accent"
+                  : "bg-accent"
+                : dark
+                  ? "bg-on-accent/25"
+                  : "bg-line"
             }`}
           />
         ))}

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Spinner } from "@/components/spinner";
+import { GeneratingScreen } from "@/components/generating-screen";
+import { TRYON_PHRASES } from "@/components/tryon-immersive";
 
 type State = "gen" | "full" | "sin_avatar" | "error";
 
@@ -55,13 +56,7 @@ export function WishlistTryon({ itemId, onClose }: { itemId: string; onClose: ()
   }, [itemId]);
 
   if (state === "gen") {
-    return (
-      <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-4 bg-accent px-8 text-center">
-        <Spinner className="h-10 w-10 text-on-accent" />
-        <p className="text-sm font-semibold text-on-accent">Creando tu look…</p>
-        <p className="text-xs text-on-accent/60">Tarda unos segundos.</p>
-      </div>
-    );
+    return <GeneratingScreen phrases={TRYON_PHRASES} tone="dark" />;
   }
 
   if (state === "sin_avatar") {

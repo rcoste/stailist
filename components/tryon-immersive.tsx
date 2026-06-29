@@ -4,9 +4,19 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
-import { Spinner } from "@/components/spinner";
+import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 
 type Prenda = { nombre: string; swatch: string; imagen?: string | null };
+
+// Loading del try-on: mismo lenguaje que el resto (frases que se funden, nunca un
+// spinner), pero en tono oscuro porque el try-on es el único momento negro.
+// Exportado para reusarlo en el try-on del Wishlist.
+export const TRYON_PHRASES: GenPhrase[] = [
+  { a: "poniéndote el ", k: "look", b: "…" },
+  { a: "ajustando cada ", k: "prenda", b: "…" },
+  { a: "buscando tu mejor ", k: "ángulo", b: "…" },
+  { a: "revelando tu ", k: "foto", b: "…" },
+];
 
 // Try-on inmersivo (rebrand v3): el ÚNICO momento oscuro de la app. Takeover a
 // sangre sobre #0a0a0a (= bg-accent, token). Tres modos: gen (loading), full
@@ -48,13 +58,7 @@ export function TryonImmersive({
 
   // --- Loading: el modal abre oscuro de inmediato y revela la foto al llegar ---
   if (mode === "gen") {
-    return (
-      <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-accent px-8 text-center">
-        <Spinner className="h-10 w-10 text-on-accent" />
-        <p className="text-sm font-semibold text-on-accent">Creando tu look…</p>
-        <p className="text-xs text-on-accent/60">Tarda unos segundos.</p>
-      </div>
-    );
+    return <GeneratingScreen phrases={TRYON_PHRASES} tone="dark" />;
   }
 
   // --- Error ---
