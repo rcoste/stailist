@@ -86,6 +86,12 @@ function buildCriticMessage(
   return lines.join("\n");
 }
 
+// El juez nunca puede tirar el ancla: si su reescritura la perdió, la re-inyecta.
+function keepAnchor(o: GeneratedOutfit, seed: string | null): GeneratedOutfit {
+  if (!seed || o.item_ids.includes(seed)) return o;
+  return { ...o, item_ids: [seed, ...o.item_ids].slice(0, 5) };
+}
+
 export async function reviewOutfit(
   ctx: EngineContext,
   outfit: GeneratedOutfit,
@@ -133,7 +139,8 @@ export async function reviewOutfit(
     const tip = parsed.tip?.trim() ? parsed.tip.trim() : null;
 
     // Rechazado: devolvemos el outfit ORIGINAL (sin la "reparación" fallida);
-    // quien llama decide descartarlo o mostrarlo como último recurso.
+    // quien llama decide descartarlo o mostrarlo como último recurso. El original
+    // ya trae el ancla (los candidatos vienen anclados del generador).
     if (verdict === "rechazado") {
       return { outfit, verdict, razon };
     }
@@ -148,12 +155,15 @@ export async function reviewOutfit(
       parsed.item_ids.every((id) => valid.has(id))
     ) {
       return {
-        outfit: {
-          nombre: parsed.nombre,
-          item_ids: parsed.item_ids,
-          explicacion: parsed.explicacion,
-          tip,
-        },
+        outfit: keepAnchor(
+          {
+            nombre: parsed.nombre,
+            item_ids: parsed.item_ids,
+            explicacion: parsed.explicacion,
+            tip,
+          },
+          ctx.seedItemId ?? null
+        ),
         verdict,
         razon,
       };

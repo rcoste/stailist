@@ -30,6 +30,7 @@ type Body = {
   plan?: string;
   momento?: string;
   force?: boolean;
+  seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -208,8 +209,20 @@ async function generateInto(
     const profile = profileRes.data;
     if (!profile) throw new GenError("closet_vacio");
     const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
-    const { items } = applyVetoes((itemsRes.data ?? []) as EngineItem[], vetoes);
+    const allItems = (itemsRes.data ?? []) as EngineItem[];
+    const { items } = applyVetoes(allItems, vetoes);
     if (items.length < 3) throw new GenError("closet_vacio");
+
+    // Ancla (Hoy): la prenda fijada debe estar disponible para el motor aunque
+    // esté vetada o de otra temporada — es elección explícita de la usuaria. Si
+    // la prenda ya no existe (borrada), cae a sin-ancla.
+    let seedItemId: string | null =
+      typeof body.seedItemId === "string" ? body.seedItemId : null;
+    if (seedItemId && !items.some((i) => i.id === seedItemId)) {
+      const original = allItems.find((i) => i.id === seedItemId);
+      if (original) items.push(original);
+      else seedItemId = null;
+    }
 
     const weather: Weather | null = await resolveWeather(body);
 
@@ -240,6 +253,7 @@ async function generateInto(
         profile.body_volume as Volume | null
       ),
       tasteSignal,
+      seedItemId,
     };
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
@@ -271,7 +285,12 @@ async function generateInto(
       {
         user_id: userId,
         type: "generation_timing",
-        data: { ms: Date.now() - startedAt, prompt_version: PROMPT_VERSION, look_of_day: true },
+        data: {
+          ms: Date.now() - startedAt,
+          prompt_version: PROMPT_VERSION,
+          look_of_day: true,
+          anchored: !!seedItemId, // ¿usó ancla? (medir adopción de la feature)
+        },
       },
       {
         user_id: userId,

@@ -55,5 +55,16 @@ export async function generateOutfits(
     .slice(0, 3);
 
   if (outfits.length < 2) throw new Error("TOO_FEW_OUTFITS");
+
+  // Ancla: si la usuaria fijó una prenda, garantízala en cada candidato (el
+  // prompt ya la pide; esto es la red de seguridad por si el modelo la omite).
+  const seed = ctx.seedItemId;
+  if (seed && valid.has(seed)) {
+    return outfits.map((o) =>
+      o.item_ids.includes(seed)
+        ? o
+        : { ...o, item_ids: [seed, ...o.item_ids].slice(0, 5) }
+    );
+  }
   return outfits;
 }
