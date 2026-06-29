@@ -128,7 +128,7 @@ export default async function HoyPage({
   // Misma resolución de imagen que el clóset (arquetipo / render / foto propia).
   const { data: closetRows } = await supabase
     .from("items")
-    .select("id, photo_path, render_status, render_path, attrs, archetypes(name, image_path)")
+    .select("id, photo_path, render_status, render_path, attrs, archetypes(name, image_path, category)")
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
@@ -146,17 +146,23 @@ export default async function HoyPage({
     });
   }
   const closet: ClosetPick[] = (closetRows ?? []).map((i) => {
-    const arch = i.archetypes as { name?: string; image_path?: string | null } | null;
+    const arch = i.archetypes as {
+      name?: string;
+      image_path?: string | null;
+      category?: string | null;
+    } | null;
     const attrs = (i.attrs ?? {}) as {
       nombre?: string;
       color_hex?: string;
       image_path?: string | null;
+      category?: string | null;
     };
     return {
       id: i.id as string,
       nombre: arch?.name ?? attrs.nombre ?? "Prenda",
       swatch: attrs.color_hex ?? "#E5E1DD",
       imagen: itemImageUrlSync(i as ItemImageRow, (p) => closetSigned.get(p)),
+      category: arch?.category ?? attrs.category ?? "otros",
     };
   });
 

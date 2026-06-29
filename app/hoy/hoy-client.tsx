@@ -36,6 +36,8 @@ type State =
   // con la tab bar visible — no fuerza el wizard ni atrapa al usuario.
   | { kind: "generating"; outfitId: string } // outfitId "" = aún sin id (POST en vuelo)
   | { kind: "ready"; outfit: HoyOutfit }
+  // El ancla no va con la ocasión: el stylist avisa y la usuaria decide.
+  | { kind: "anchor_warning"; note: string; seedItemName: string; input: LookInput }
   | { kind: "error"; code: string };
 
 const ERROR_COPY: Record<string, string> = {
@@ -92,6 +94,9 @@ export function HoyClient({
   // El botón ✨ pide un look NUEVO → fuerza (si no, look-of-day devuelve el cacheado).
   const lastInput = useRef<LookInput | null>(null);
   const pendingForce = useRef(autoAsk);
+  // Recuerda si la usuaria ya aceptó usar el ancla pese al aviso de ocasión, para
+  // no volver a avisarle en "otro look".
+  const lastForceAnchor = useRef(false);
   // Cancela el polling en curso (al desmontar o al arrancar otro).
   const cancelPoll = useRef<(() => void) | null>(null);
 
@@ -137,8 +142,9 @@ export function HoyClient({
   }, []);
 
   const generar = useCallback(
-    async (input: LookInput, force: boolean) => {
+    async (input: LookInput, force: boolean, forceAnchor = false) => {
       lastInput.current = input;
+      lastForceAnchor.current = forceAnchor;
       cancelPoll.current?.();
       setState({ kind: "generating", outfitId: "" });
       setWorn(false);
@@ -146,7 +152,7 @@ export function HoyClient({
         const res = await fetch("/api/look-of-day", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...input, force }),
+          body: JSON.stringify({ ...input, force, forceAnchor }),
         });
         if (!res.ok) {
           setState({ kind: "error", code: "generacion" });
@@ -155,6 +161,16 @@ export function HoyClient({
         const data = await res.json();
         if (data.error) {
           setState({ kind: "error", code: data.error });
+          return;
+        }
+        // El ancla no va con la ocasión: muestra el aviso y deja decidir.
+        if (data.status === "anchor_warning") {
+          setState({
+            kind: "anchor_warning",
+            note: data.note,
+            seedItemName: data.seedItemName,
+            input,
+          });
           return;
         }
         if (data.status === "ready" && data.outfit) {
@@ -181,7 +197,7 @@ export function HoyClient({
   // "Otro look": regenera con la MISMA ocasión (no es cambiar de ocasión, es
   // "este no, otro"). Cierra los chips de razón.
   function otroLook() {
-    if (lastInput.current) generar(lastInput.current, true);
+    if (lastInput.current) generar(lastInput.current, true, lastForceAnchor.current);
     else startGen(true);
   }
 
@@ -283,6 +299,54 @@ export function HoyClient({
             Reintentar
           </button>
         )}
+      </div>
+    );
+  }
+
+  if (state.kind === "anchor_warning") {
+    return (
+      <div className="flex min-h-[calc(100dvh-13rem)] flex-col">
+        <div className="flex flex-1 flex-col justify-center gap-5">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-muted">
+            <Icon name="gancho" size={22} />
+          </span>
+          <div className="flex flex-col gap-2.5">
+            <h1 className="text-[28px] font-bold leading-[1.05] tracking-[-0.03em] text-ink">
+              una cosa…
+            </h1>
+            <p className="max-w-[320px] font-display text-[20px] leading-snug text-muted">
+              {state.note}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2.5 pb-2">
+          <button
+            type="button"
+            onClick={() => generar(state.input, false, true)}
+            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            armar igual <Icon name="flecha" size={18} />
+          </button>
+          <div className="flex gap-2.5">
+            <button
+              type="button"
+              onClick={() => generar({ ...state.input, seedItemId: null }, false, false)}
+              className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+            >
+              mejor sin ella
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                pendingForce.current = false;
+                setState({ kind: "ask" });
+              }}
+              className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+            >
+              elegir otra
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

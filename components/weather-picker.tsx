@@ -22,7 +22,23 @@ export type ClosetPick = {
   nombre: string;
   swatch: string;
   imagen: string | null;
+  category: string; // top | vestido | bottom | abrigo | calzado | accesorio | otros
 };
+
+// Categorías del picker (mismo orden/labels que el clóset del onboarding).
+const CAT_ORDER = ["top", "vestido", "bottom", "abrigo", "calzado", "accesorio", "otros"];
+const CAT_LABELS: Record<string, string> = {
+  top: "Arriba",
+  vestido: "Vestidos",
+  bottom: "Abajo",
+  abrigo: "Abrigos",
+  calzado: "Zapatos",
+  accesorio: "Accesorios",
+  otros: "Otros",
+};
+// Quita acentos + minúsculas para buscar sin que estorben las tildes.
+const norm = (s: string) =>
+  s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 // 4 ocasiones del wizard (sin "viaje": ya hay un Modo viaje propio).
 const OCASIONES: { key: string; label: string; help: string; icon: IconName }[] = [
@@ -104,6 +120,7 @@ export function LookRequest({
   const [climaIdx, setClimaIdx] = useState(2); // Templado por defecto
   const [rain, setRain] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(null); // ancla opcional
+  const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
   const [locating, setLocating] = useState(false);
   const [locFailed, setLocFailed] = useState(false);
 
@@ -217,33 +234,33 @@ export function LookRequest({
         <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4 pt-[26px]">
           <div key={step} style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
             {step === 1 ? (
-              <StepOcasion
-                objective={objective}
-                openText={openText}
-                onPick={pickObjective}
-                onOpenText={changeOpenText}
-              />
+              <div className="flex flex-col gap-5">
+                <StepOcasion
+                  objective={objective}
+                  openText={openText}
+                  onPick={pickObjective}
+                  onOpenText={changeOpenText}
+                />
+                {closet.length > 0 ? (
+                  <AnchorTrigger
+                    selected={closet.find((c) => c.id === seedItemId) ?? null}
+                    onOpen={() => setSheetOpen(true)}
+                    onClear={() => setSeedItemId(null)}
+                  />
+                ) : null}
+              </div>
             ) : step === 2 ? (
               <StepMomento momento={momento} onPick={setMomento} />
             ) : (
-              <>
-                <StepClima
-                  idx={climaIdx}
-                  rain={rain}
-                  locating={locating}
-                  locFailed={locFailed}
-                  onIdx={setClimaIdx}
-                  onRain={setRain}
-                  onLocate={useLocation}
-                />
-                {closet.length > 0 ? (
-                  <AnchorPicker
-                    closet={closet}
-                    selected={seedItemId}
-                    onSelect={setSeedItemId}
-                  />
-                ) : null}
-              </>
+              <StepClima
+                idx={climaIdx}
+                rain={rain}
+                locating={locating}
+                locFailed={locFailed}
+                onIdx={setClimaIdx}
+                onRain={setRain}
+                onLocate={useLocation}
+              />
             )}
           </div>
         </div>
@@ -268,6 +285,18 @@ export function LookRequest({
           </button>
         </div>
       </div>
+
+      {sheetOpen ? (
+        <AnchorSheet
+          closet={closet}
+          selected={seedItemId}
+          onSelect={(id) => {
+            setSeedItemId(id);
+            setSheetOpen(false);
+          }}
+          onClose={() => setSheetOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -512,90 +541,229 @@ function StepClima({
   );
 }
 
-// Ancla opcional: la usuaria fija UNA prenda que quiere usar hoy; el motor arma
-// alrededor. Colapsado por default (no estorba el TTV); al abrir, tira horizontal
-// de miniaturas del clóset. Tocar de nuevo la deselecciona.
-function AnchorPicker({
+// Disparador del ancla (paso 1): fila opcional que muestra la prenda elegida o
+// invita a abrir la hoja. Vive con la ocasión (intención), no con el clima.
+function AnchorTrigger({
+  selected,
+  onOpen,
+  onClear,
+}: {
+  selected: ClosetPick | null;
+  onOpen: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="border-t border-line pt-4">
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+        opcional
+      </p>
+      {selected ? (
+        <div className="flex items-center gap-3 border border-ink bg-surface p-2.5">
+          <span className="flex h-[44px] w-[36px] shrink-0 items-center justify-center overflow-hidden rounded-sm border border-line bg-tile">
+            {selected.imagen ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={selected.imagen}
+                alt={selected.nombre}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span
+                className="block h-full w-full"
+                style={{ backgroundColor: selected.swatch }}
+              />
+            )}
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+              vas a usar
+            </span>
+            <span className="truncate text-[15px] font-semibold text-ink">
+              {selected.nombre}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="ml-auto shrink-0 text-[13px] font-semibold text-ink underline underline-offset-2"
+          >
+            cambiar
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Quitar prenda"
+            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border border-line text-muted transition-colors hover:border-ink hover:text-ink"
+          >
+            <Icon name="equis" size={14} />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex w-full items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink"
+        >
+          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-line bg-bg text-ink">
+            <Icon name="gancho" size={18} />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[15px] font-semibold text-ink">
+              ¿algo que te quieras poner hoy?
+            </span>
+            <span className="font-display text-[15px] text-muted">
+              lo armo alrededor de esa prenda
+            </span>
+          </span>
+          <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Hoja del picker: chips de categoría + búsqueda + grid vertical 2-col. Escala a
+// clósets grandes (vs. el scroll lateral infinito). Tocar una prenda la elige y
+// cierra; tocar la elegida la quita.
+function AnchorSheet({
   closet,
   selected,
   onSelect,
+  onClose,
 }: {
   closet: ClosetPick[];
   selected: string | null;
   onSelect: (id: string | null) => void;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(selected != null);
-  const sel = closet.find((c) => c.id === selected) ?? null;
+  const cats = CAT_ORDER.filter((c) => closet.some((i) => i.category === c));
+  const [cat, setCat] = useState<string>("todos");
+  const [q, setQ] = useState("");
+  const query = norm(q.trim());
+  const filtered = closet.filter(
+    (c) =>
+      (cat === "todos" || c.category === cat) &&
+      (query === "" || norm(c.nombre).includes(query))
+  );
   return (
-    <div className="mt-[22px] border-t border-line pt-4">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 text-left"
+    <div
+      className="fixed inset-0 z-[60] flex flex-col justify-end bg-[rgb(10_10_10/0.45)]"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Elegir una prenda"
+    >
+      <div
+        className="flex max-h-[88dvh] flex-col rounded-t-[16px] bg-bg"
+        style={{ animation: "var(--dur-medium) var(--ease-enter) sheet-up" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-line bg-bg text-ink">
-          <Icon name="gancho" size={18} />
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="text-[15px] font-semibold text-ink">
-            ¿algo que te quieras poner hoy?
-          </span>
-          <span className="truncate font-display text-[15px] text-muted">
-            {sel ? sel.nombre : "opcional — lo armo alrededor de esa prenda"}
-          </span>
-        </span>
-        <Icon
-          name="chevron"
-          size={17}
-          rotate={open ? 270 : 90}
-          className="ml-auto shrink-0 text-muted"
-        />
-      </button>
-
-      {open ? (
-        <div className="-mx-[18px] mt-3 flex gap-2.5 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {closet.map((c) => {
-            const on = c.id === selected;
-            return (
+        <div className="flex-none px-[18px] pt-3">
+          <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-line" />
+          <div className="flex items-center gap-3">
+            <h2 className="text-[18px] font-bold tracking-[-0.02em] text-ink">
+              ¿algo que te quieras poner hoy?
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="ml-auto flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-line text-ink transition-colors hover:border-ink"
+            >
+              <Icon name="equis" size={16} />
+            </button>
+          </div>
+          <label className="mt-3 flex items-center gap-2.5 border border-line bg-surface px-3.5 py-2.5 transition-colors focus-within:border-ink">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="busca una prenda"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-ink caret-accent outline-none placeholder:text-muted"
+            />
+            {q ? (
               <button
-                key={c.id}
                 type="button"
-                onClick={() => onSelect(on ? null : c.id)}
-                aria-pressed={on}
-                title={c.nombre}
-                className={`relative aspect-[3/4] w-[72px] shrink-0 overflow-hidden rounded-md border transition-colors ${
-                  on ? "border-ink" : "border-line"
-                }`}
+                onClick={() => setQ("")}
+                aria-label="Limpiar búsqueda"
+                className="shrink-0 text-muted hover:text-ink"
               >
-                {c.imagen ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={c.imagen}
-                    alt={c.nombre}
-                    className={`h-full w-full object-cover transition-[filter] duration-200 ${
-                      on ? "" : "[filter:grayscale(0.7)_opacity(0.7)]"
-                    }`}
-                  />
-                ) : (
-                  <span
-                    className="block h-full w-full"
-                    style={{
-                      backgroundColor: c.swatch,
-                      filter: on ? undefined : "grayscale(0.7) opacity(0.7)",
-                    }}
-                  />
-                )}
-                {on ? (
-                  <span className="absolute right-1 top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-accent text-on-accent">
-                    <Icon name="check" size={11} strokeWidth={2.6} />
-                  </span>
-                ) : null}
+                <Icon name="equis" size={14} />
               </button>
-            );
-          })}
+            ) : null}
+          </label>
+          <div className="-mx-[18px] mt-3 flex gap-2 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {["todos", ...cats].map((c) => {
+              const on = c === cat;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCat(c)}
+                  aria-pressed={on}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                    on
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface text-ink hover:border-ink"
+                  }`}
+                >
+                  {c === "todos" ? "Todos" : (CAT_LABELS[c] ?? c)}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      ) : null}
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          {filtered.length === 0 ? (
+            <p className="py-10 text-center text-[14px] text-muted">
+              nada por aquí — prueba otra categoría o búsqueda.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filtered.map((c) => {
+                const on = c.id === selected;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => onSelect(on ? null : c.id)}
+                    aria-pressed={on}
+                    className={`relative aspect-[3/4] overflow-hidden rounded-md border text-left transition-colors ${
+                      on ? "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]" : "border-line"
+                    }`}
+                  >
+                    {c.imagen ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.imagen}
+                        alt={c.nombre}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="block h-full w-full"
+                        style={{ backgroundColor: c.swatch }}
+                      />
+                    )}
+                    <span
+                      className={`absolute right-2 top-2 flex h-[25px] w-[25px] items-center justify-center rounded-full border transition-colors ${
+                        on
+                          ? "border-accent bg-accent text-on-accent"
+                          : "border-line bg-surface/85 text-transparent"
+                      }`}
+                    >
+                      <Icon name="check" size={14} strokeWidth={2.6} />
+                    </span>
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-surface/95 via-surface/80 to-transparent px-2.5 pb-2 pt-6 text-[11px] font-semibold text-ink">
+                      {c.nombre}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
