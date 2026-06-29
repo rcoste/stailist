@@ -10,6 +10,7 @@ import { saveToWishlist } from "@/lib/wishlist-add";
 import { removeWishlistItem } from "@/lib/wishlist-actions";
 import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
 import { ComboBuilder } from "@/components/wishlist/combo-builder";
+import { ClosetNav } from "@/components/closet-nav";
 
 export type WishlistItem = {
   id: string;
@@ -88,7 +89,8 @@ export function WishlistClient({
   }
 
   return (
-    <section className="flex flex-col gap-5 pt-4">
+    <section className="flex flex-col gap-5 pt-1">
+      <ClosetNav />
       <div className="flex flex-col gap-1.5">
         <h1 className="text-[28px] font-bold leading-none tracking-[-0.02em] text-ink">
           tu wishlist

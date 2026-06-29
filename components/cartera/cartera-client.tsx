@@ -88,12 +88,6 @@ export function CarteraClient({
         >
           <Icon name="destello" size={16} /> chequea un color (compras online)
         </Link>
-        <Link
-          href="/wishlist"
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
-        >
-          <Icon name="repetir" size={16} /> tu wishlist
-        </Link>
       </div>
 
       <p className="text-[12px] leading-relaxed text-muted">
