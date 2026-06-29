@@ -1,5 +1,5 @@
 import type { Weather } from "@/lib/weather";
-import { SEASONS, seasonPalette, type Season } from "@/lib/colorimetria";
+import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import {
   type TasteSignal,
@@ -191,12 +191,16 @@ export function contextBlock(ctx: EngineContext): string[] {
     );
   }
 
-  const s = ctx.season ? SEASONS[ctx.season] : null;
-  if (s) {
-    const { mejores, prestados, evita } = seasonPalette(ctx.season!, ctx.flow);
+  // normSeason rescata data legacy con mayúscula ("Invierno"): así el guiño no se
+  // pierde ni en los colores prestados ni en el label.
+  const seasonKey = normSeason(ctx.season);
+  const s = seasonKey ? SEASONS[seasonKey] : null;
+  if (s && seasonKey) {
+    const { mejores, prestados, evita } = seasonPalette(seasonKey, ctx.flow);
     const favs = [...mejores, ...prestados].map((c) => c.nombre).join(", ");
     const avoid = evita.map((c) => c.nombre).join(", ");
-    const flowSeason = ctx.flow ? SEASONS[ctx.flow] : null;
+    const flowKey = normSeason(ctx.flow);
+    const flowSeason = flowKey ? SEASONS[flowKey] : null;
     const flowLabel = flowSeason ? ` (con flow a ${flowSeason.label})` : "";
     lines.push(
       `Su colorimetría: paleta tipo ${s.label}${flowLabel}. Le favorecen cerca de la cara: ${favs}. EVITA cerca de la cara (la apagan): ${avoid}.`
