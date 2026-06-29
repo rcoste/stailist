@@ -670,23 +670,28 @@
   padding: 9px 10px 0;
 }
 .tryMini {
+  flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--c-line2);
-  margin: 8px;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  margin: 10px;
 }
 .tCell {
   position: relative;
-  aspect-ratio: 1/1;
-  background: var(--c-tile);
+  background: var(--c-bg);
+  border: 1px solid var(--c-line);
+  border-radius: 4px;
+  overflow: hidden;
 }
 .tCell img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* contain: la prenda completa se ve aunque la celda sea más alta que ancha
+     (cover recortaría el cinturón / las flats a lo ancho). */
+  object-fit: contain;
 }
 .tCell .tn {
   position: absolute;
@@ -703,14 +708,15 @@
 }
 .tryShot {
   position: relative;
-  flex: 1;
-  min-height: 104px;
+  /* Retrato 3:4 = misma proporción que las fotos de la modelo → cuerpo completo
+     sin recorte, y arrastra la altura del grid de "te propongo" hacia arriba. */
+  aspect-ratio: 3 / 4;
 }
 .tryShot img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 12%;
+  object-position: 50% 50%;
 }
 /* Demo try-on: dos fotos apiladas que se funden + botón */
 .tdImg {
@@ -719,7 +725,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 8%;
+  object-position: 50% 50%;
   transition: opacity 0.55s ease;
 }
 .tdBtn {
@@ -738,15 +744,29 @@
   letter-spacing: 0.01em;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(10, 10, 10, 0.32);
-  transition:
-    background 0.2s ease,
-    transform 0.12s ease;
+  transition: background 0.2s ease;
+  /* Punza para llamar la atención y que la gente quiera tocarlo. */
+  animation: tdPulse 1.6s ease-in-out infinite;
+}
+@keyframes tdPulse {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 6px 18px rgba(10, 10, 10, 0.32);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.07);
+    box-shadow: 0 10px 28px rgba(10, 10, 10, 0.45);
+  }
 }
 .tdBtn:hover {
   background: var(--c-accent-deep);
+  animation-play-state: paused;
 }
-.tdBtn:active {
-  transform: translateX(-50%) scale(0.96);
+@media (prefers-reduced-motion: reduce) {
+  .tdBtn {
+    animation: none;
+  }
 }
 .tryTag {
   position: absolute;
