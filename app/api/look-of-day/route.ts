@@ -13,6 +13,7 @@ import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
+import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -31,6 +32,7 @@ type Body = {
   momento?: string;
   force?: boolean;
   seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
+  forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -52,11 +54,22 @@ export async function POST(request: NextRequest) {
     // sin body = sin clima
   }
   const force = !!body.force;
+  const seedItemId = typeof body.seedItemId === "string" ? body.seedItemId : null;
+  const forceAnchor = !!body.forceAnchor;
   const today = todayStr();
+
+  // Gate de ocasión: si ancló una prenda y aún no confirmó, checa que vaya con la
+  // ocasión. Si es un mismatch obvio (traje de baño + boda), devuelve un aviso
+  // (sin generar) para que decida armar igual o cambiar de prenda.
+  if (seedItemId && !forceAnchor) {
+    const warning = await anchorWarningIfUnfit(supabase, user.id, seedItemId, body);
+    if (warning) return NextResponse.json(warning);
+  }
 
   // ¿Ya hay look de hoy? Si está listo y no es "otro look", devuélvelo. Si está
   // generándose (y no muerto), devuelve su id para que el cliente siga el polling.
-  if (!force) {
+  // No aplica cuando está anclando una prenda: ahí siempre arma un look nuevo.
+  if (!force && !seedItemId) {
     const { data: existing } = await supabase
       .from("outfits")
       .select("id, item_ids, title, explanation, tip, gen_status, created_at")
@@ -175,6 +188,48 @@ export async function GET(request: NextRequest) {
 function isStale(createdAt: string): boolean {
   const t = new Date(createdAt).getTime();
   return Number.isFinite(t) && Date.now() - t > STALE_MS;
+}
+
+// Chequeo de ocasión del ancla. Devuelve el payload de aviso si la prenda NO va
+// con la ocasión, o null si va (o no hay con qué decidir → no estorbar). Usa el
+// clima manual si lo hay (no resuelve geo aquí, para no meter latencia al gate).
+async function anchorWarningIfUnfit(
+  supabase: SupabaseClient,
+  userId: string,
+  seedItemId: string,
+  body: Body
+): Promise<{ status: "anchor_warning"; note: string; seedItemName: string } | null> {
+  const { data: item } = await supabase
+    .from("items")
+    .select("attrs")
+    .eq("id", seedItemId)
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!item) return null; // prenda borrada → que generateInto haga el fallback
+
+  const attrs = (item.attrs ?? {}) as { nombre?: string };
+  const occasion =
+    (typeof body.plan === "string" && body.plan.trim()) ||
+    (typeof body.objective === "string" && body.objective in OBJECTIVES
+      ? OBJECTIVES[body.objective as keyof typeof OBJECTIVES]
+      : "el día a día");
+  const weatherLine =
+    typeof body.weather?.temp_c === "number"
+      ? `${body.weather.temp_c}°C, ${body.weather.condition ?? "despejado"}`
+      : null;
+
+  const fit = await checkAnchorFit(
+    { id: seedItemId, attrs: item.attrs as EngineItem["attrs"] },
+    occasion,
+    weatherLine
+  );
+  if (fit.fits) return null;
+  return {
+    status: "anchor_warning",
+    note: fit.note || "Esa prenda no es la mejor para esta ocasión.",
+    seedItemName: attrs.nombre ?? "esa prenda",
+  };
 }
 
 // Error de generación con código para mostrar al usuario.
