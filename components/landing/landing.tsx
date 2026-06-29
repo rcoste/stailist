@@ -4,6 +4,7 @@
 // vive en <WaitlistForm/>. Las imágenes son placeholders representativos
 // (public/landing) — sustituir por assets finales de producción.
 import { WaitlistForm } from "./waitlist-form";
+import { TryDemo } from "./try-demo";
 import styles from "./landing.module.css";
 
 // Isotipo "gancho-destello": percha que se vuelve destello. Color por
@@ -270,34 +271,29 @@ export function Landing() {
                   </p>
                 </div>
                 <div className={styles.stepVisual}>
-                  <div className={styles.stepTry} aria-hidden="true">
+                  <div className={styles.stepTry}>
                     <div className={styles.tryCard}>
                       <div className={styles.tryHd}>te propongo</div>
-                      <div className={styles.tryMini}>
+                      <div className={styles.tryMini} aria-hidden="true">
                         <span className={styles.tCell}>
-                          <img src="/landing/clasico-abrigo.png" alt="" />
+                          <img src="/landing/prop-tee.png" alt="" />
                           <span className={styles.tn}>01</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src="/landing/clasico-pantalon.png" alt="" />
+                          <img src="/landing/prop-jeans.png" alt="" />
                           <span className={styles.tn}>02</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src="/landing/clasico-loafers.png" alt="" />
+                          <img src="/landing/prop-cinturon.png" alt="" />
                           <span className={styles.tn}>03</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src="/landing/clasico-bolsa.png" alt="" />
+                          <img src="/landing/prop-flats.png" alt="" />
                           <span className={styles.tn}>04</span>
                         </span>
                       </div>
                     </div>
-                    <div className={styles.tryCard}>
-                      <div className={styles.tryShot}>
-                        <span className={styles.tryTag}>en ti</span>
-                        <img src="/landing/en-ti-clasico.png" alt="" />
-                      </div>
-                    </div>
+                    <TryDemo />
                   </div>
                 </div>
               </div>
