@@ -459,13 +459,11 @@ export function Landing() {
               {[
                 "gal-1",
                 "gal-6",
-                "gal-2",
-                "gal-9",
                 "gal-3",
+                "gal-9",
+                "gal-2",
                 "gal-10",
-                "gal-4",
                 "gal-7",
-                "gal-5",
                 "gal-8",
               ].map((g) => (
                 <div key={g} className={styles.galItem}>
