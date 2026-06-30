@@ -23,18 +23,29 @@ export default async function PerfilPage() {
     avatarUrl = data?.signedUrl ?? null;
   }
 
-  // Estilo de referencia: firma su foto (bucket privado) para mostrar la miniatura.
+  // Estilo de referencia: firma sus fotos (bucket privado) para las miniaturas.
   const sr = profile.style_reference;
-  let styleReference: { summary: string; tags: string[]; image: string | null } | null = null;
+  let styleReference: {
+    summary: string;
+    tags: string[];
+    fit?: { verdict: string; note: string } | null;
+    images: string[];
+  } | null = null;
   if (sr) {
+    const paths = Array.isArray(sr.image_paths)
+      ? sr.image_paths
+      : sr.image_path
+        ? [sr.image_path]
+        : [];
     const supabase = await createClient();
-    const { data } = await supabase.storage
-      .from("prendas")
-      .createSignedUrl(sr.image_path, 3600);
+    const { data } = paths.length
+      ? await supabase.storage.from("prendas").createSignedUrls(paths, 3600)
+      : { data: [] };
     styleReference = {
       summary: sr.summary,
       tags: sr.tags ?? [],
-      image: data?.signedUrl ?? null,
+      fit: sr.fit ?? null,
+      images: (data ?? []).map((s) => s.signedUrl).filter((u): u is string => !!u),
     };
   }
 

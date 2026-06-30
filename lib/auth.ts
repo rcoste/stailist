@@ -36,9 +36,16 @@ export type Profile = {
   style_vetoes: { chips: string[]; free: string[] };
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;
-  // Estilo de referencia (foto de alguien cuyo estilo le gusta): resumen + tags
-  // para inspirar el vibe de la generación; image_path en bucket privado.
-  style_reference: { summary: string; tags: string[]; image_path: string } | null;
+  // Estilo de referencia (1-3 fotos de un estilo que le gusta): resumen + tags
+  // (inspiran el vibe de la generación), veredicto de fit (pushback) e imágenes en
+  // bucket privado. `image_path` es el shape viejo (una sola foto).
+  style_reference: {
+    summary: string;
+    tags: string[];
+    fit?: { verdict: string; note: string } | null;
+    image_paths?: string[];
+    image_path?: string;
+  } | null;
 };
 
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;
