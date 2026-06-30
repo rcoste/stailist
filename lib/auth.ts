@@ -36,6 +36,9 @@ export type Profile = {
   style_vetoes: { chips: string[]; free: string[] };
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;
+  // Estilo de referencia (foto de alguien cuyo estilo le gusta): resumen + tags
+  // para inspirar el vibe de la generación; image_path en bucket privado.
+  style_reference: { summary: string; tags: string[]; image_path: string } | null;
 };
 
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;

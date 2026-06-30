@@ -23,6 +23,21 @@ export default async function PerfilPage() {
     avatarUrl = data?.signedUrl ?? null;
   }
 
+  // Estilo de referencia: firma su foto (bucket privado) para mostrar la miniatura.
+  const sr = profile.style_reference;
+  let styleReference: { summary: string; tags: string[]; image: string | null } | null = null;
+  if (sr) {
+    const supabase = await createClient();
+    const { data } = await supabase.storage
+      .from("prendas")
+      .createSignedUrl(sr.image_path, 3600);
+    styleReference = {
+      summary: sr.summary,
+      tags: sr.tags ?? [],
+      image: data?.signedUrl ?? null,
+    };
+  }
+
   // Banner del pasaporte (pestaña Estilo): estación + (arquetipo · metal) + tus
   // mejores colores. Degrada con gracia si aún no hay colorimetría/estilo.
   const season = profile.palette_season;
@@ -66,6 +81,7 @@ export default async function PerfilPage() {
         styleVetoes={profile.style_vetoes}
         siluetaLabel={siluetaLabel}
         banner={banner}
+        styleReference={styleReference}
         signOut={signOut}
       />
     </AppShell>

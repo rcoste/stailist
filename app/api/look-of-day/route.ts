@@ -304,6 +304,8 @@ async function generateInto(
       tasteSignal,
       seedItemId,
       formality: typeof body.formality === "string" ? body.formality : null,
+      styleReference:
+        (profile.style_reference as { summary?: string } | null)?.summary ?? null,
     };
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
