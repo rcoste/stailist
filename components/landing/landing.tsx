@@ -459,12 +459,17 @@ export function Landing() {
               {[
                 "gal-1",
                 "gal-6",
+                "gal-11",
                 "gal-3",
                 "gal-9",
+                "gal-12",
                 "gal-2",
+                "gal-14",
                 "gal-10",
                 "gal-7",
+                "gal-13",
                 "gal-8",
+                "gal-15",
               ].map((g) => (
                 <div key={g} className={styles.galItem}>
                   <img src={`/landing/${g}.png`} alt="" />
