@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
-import { faltaImage } from "@/lib/capsule-images";
+import { faltaImage, familiaToHex } from "@/lib/capsule-images";
 import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
 import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
 import {
@@ -207,6 +207,38 @@ function rowImage(r: CapsuleRow, images: Record<string, string>): string | null 
   return (r.by ? images[r.by] : null) ?? (r.base === "falta" ? faltaImage(r.item) : null);
 }
 
+// ¿El color es claro? (para elegir icono oscuro/claro encima del swatch).
+function isLightHex(hex: string): boolean {
+  const h = hex.replace("#", "");
+  if (h.length < 6) return true;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150;
+}
+
+// Miniatura de prenda con fallback DIGNO: si no hay imagen, un swatch del color de
+// la prenda + un gancho (nunca un hueco vacío). `colorFamilia` viene del item ideal.
+function Thumb({
+  src,
+  colorFamilia,
+  sizes,
+  icon = 18,
+}: {
+  src: string | null;
+  colorFamilia: string;
+  sizes: string;
+  icon?: number;
+}) {
+  if (src) return <Image src={src} alt="" fill sizes={sizes} className="object-cover" />;
+  const hex = familiaToHex(colorFamilia);
+  return (
+    <span className="flex h-full w-full items-center justify-center" style={{ background: hex }}>
+      <Icon name="gancho" size={icon} className={isLightHex(hex) ? "text-ink/35" : "text-white/55"} />
+    </span>
+  );
+}
+
 function Section({
   title,
   count,
@@ -246,7 +278,7 @@ function BigCard({
   return (
     <li className="flex items-center gap-[13px] rounded-lg border border-line bg-surface p-[13px]">
       <span className="relative h-[72px] w-[56px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
-        {src ? <Image src={src} alt="" fill sizes="56px" className="object-cover" /> : null}
+        <Thumb src={src} colorFamilia={row.item.colorFamilia} sizes="56px" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="text-[16px] font-semibold leading-tight text-ink">
@@ -296,7 +328,7 @@ function Rail({ rows, images }: { rows: CapsuleRow[]; images: Record<string, str
             className="relative aspect-[3/4] w-[46px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg"
             title={r.item.nombre}
           >
-            {src ? <Image src={src} alt="" fill sizes="46px" className="object-cover" /> : null}
+            <Thumb src={src} colorFamilia={r.item.colorFamilia} sizes="46px" icon={15} />
           </span>
         );
       })}
@@ -376,11 +408,7 @@ function DecideRow({
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">la ideal</span>
           <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border border-line bg-bg text-muted">
-            {idealSrc ? (
-              <Image src={idealSrc} alt="" fill sizes="120px" className="object-cover" />
-            ) : (
-              <Icon name="gancho" size={20} />
-            )}
+            <Thumb src={idealSrc} colorFamilia={item.colorFamilia} sizes="120px" icon={22} />
           </span>
         </div>
         <div className="flex flex-col gap-1.5">
