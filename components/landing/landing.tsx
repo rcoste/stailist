@@ -1,8 +1,11 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
-// Landing pública (deslogueados) — v3 "Gen-Z monocromo". Markup fiel al
-// prototipo hi-fi del handoff; el único punto interactivo (captura de correo)
-// vive en <WaitlistForm/>. Las imágenes son placeholders representativos
-// (public/landing) — sustituir por assets finales de producción.
+// Landing pública (deslogueados) — v3 "Gen-Z monocromo". Toggle Mujer/Hombre:
+// las imágenes de hombre viven en public/landing/h/ con los mismos nombres; el
+// helper img() escoge la carpeta según el género. Fase 1: hero + paso 4 + galería
+// tienen set de hombre; las secciones con foto de persona de mujer (swipes,
+// sección 04, cápsula) se ocultan en modo hombre hasta tener su set (Fase 2).
+import { useEffect, useState } from "react";
 import { WaitlistForm } from "./waitlist-form";
 import { TryDemo } from "./try-demo";
 import styles from "./landing.module.css";
@@ -41,8 +44,45 @@ function Wordmark() {
 }
 
 export function Landing() {
+  const [gender, setGender] = useState<"mujer" | "hombre">("mujer");
+  useEffect(() => {
+    // Lectura única de la preferencia guardada al montar (no es cascada real).
+    const g = localStorage.getItem("landing-gender");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (g === "hombre" || g === "mujer") setGender(g);
+  }, []);
+  const choose = (g: "mujer" | "hombre") => {
+    setGender(g);
+    localStorage.setItem("landing-gender", g);
+  };
+  const men = gender === "hombre";
+  // Imágenes gender-aware: hombre → /landing/h/<name>.png (Fase 1: solo los names
+  // con set de hombre — hero, prop, gal-*; el resto vive en secciones ocultas).
+  const img = (n: string) => (men ? `/landing/h/${n}.png` : `/landing/${n}.png`);
+
   return (
     <div className={styles.page}>
+      {/* Toggle Mujer/Hombre: el contenido se adapta al género. */}
+      <div className={styles.genderToggle}>
+        <div role="tablist" aria-label="Ver contenido para">
+          <button
+            type="button"
+            role="tab"
+            aria-pressed={!men}
+            onClick={() => choose("mujer")}
+          >
+            mujer
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-pressed={men}
+            onClick={() => choose("hombre")}
+          >
+            hombre
+          </button>
+        </div>
+      </div>
       {/* HEADER */}
       <header className={styles.header}>
         <div className={`${styles.wrap} ${styles.hrow}`}>
@@ -91,18 +131,15 @@ export function Landing() {
               <div className={styles.tiles}>
                 <div className={styles.tile}>
                   <span className={styles.tnum}>01</span>
-                  <img src="/landing/hero-top.png" alt="Blazer gris" />
+                  <img src={img("hero-top")} alt="Saco" />
                 </div>
                 <div className={styles.tile}>
                   <span className={styles.tnum}>02</span>
-                  <img src="/landing/hero-bottom.png" alt="Pantalón ancho gris" />
+                  <img src={img("hero-bottom")} alt="Pantalón" />
                 </div>
                 <div className={styles.tile}>
                   <span className={styles.tnum}>03</span>
-                  <img
-                    src="/landing/hero-shoe.png"
-                    alt="Zapatos en punta negros"
-                  />
+                  <img src={img("hero-shoe")} alt="Zapatos" />
                 </div>
               </div>
               <div className={styles.demoWhy}>
@@ -164,32 +201,34 @@ export function Landing() {
                   </p>
                   <span className={styles.once}>Una sola vez · ~90 s</span>
                 </div>
-                <div className={styles.stepVisual}>
-                  <div className={styles.swipes} aria-hidden="true">
-                    <div className={styles.swipe}>
-                      <img src="/landing/swipe-si-1.png" alt="" />
-                      <span className={`${styles.mk} ${styles.y}`}>sí</span>
+                {!men ? (
+                  <div className={styles.stepVisual}>
+                    <div className={styles.swipes} aria-hidden="true">
+                      <div className={styles.swipe}>
+                        <img src="/landing/swipe-si-1.png" alt="" />
+                        <span className={`${styles.mk} ${styles.y}`}>sí</span>
+                      </div>
+                      <div className={styles.swipe}>
+                        <img src="/landing/swipe-si-2.png" alt="" />
+                        <span className={`${styles.mk} ${styles.y}`}>sí</span>
+                      </div>
+                      <div className={styles.swipe}>
+                        <img src="/landing/swipe-no.png" alt="" />
+                        <span className={`${styles.mk} ${styles.n}`}>no</span>
+                      </div>
                     </div>
-                    <div className={styles.swipe}>
-                      <img src="/landing/swipe-si-2.png" alt="" />
-                      <span className={`${styles.mk} ${styles.y}`}>sí</span>
-                    </div>
-                    <div className={styles.swipe}>
-                      <img src="/landing/swipe-no.png" alt="" />
-                      <span className={`${styles.mk} ${styles.n}`}>no</span>
+                    <div className={styles.palette} aria-hidden="true">
+                      <span className={`${styles.sw} ${styles.sw1}`} />
+                      <span className={`${styles.sw} ${styles.sw2}`} />
+                      <span className={`${styles.sw} ${styles.sw3}`} />
+                      <span className={`${styles.sw} ${styles.sw4}`} />
+                      <span className={`${styles.sw} ${styles.sw5}`} />
+                      <span className={styles.cap}>
+                        <b>Tu paleta</b> · los tonos que te encienden la cara
+                      </span>
                     </div>
                   </div>
-                  <div className={styles.palette} aria-hidden="true">
-                    <span className={`${styles.sw} ${styles.sw1}`} />
-                    <span className={`${styles.sw} ${styles.sw2}`} />
-                    <span className={`${styles.sw} ${styles.sw3}`} />
-                    <span className={`${styles.sw} ${styles.sw4}`} />
-                    <span className={`${styles.sw} ${styles.sw5}`} />
-                    <span className={styles.cap}>
-                      <b>Tu paleta</b> · los tonos que te encienden la cara
-                    </span>
-                  </div>
-                </div>
+                ) : null}
               </div>
 
               {/* 2 · Tu clóset: marcas lo que ya tienes */}
@@ -203,39 +242,41 @@ export function Landing() {
                     prenda especial.
                   </p>
                 </div>
-                <div className={styles.stepVisual}>
-                  <div className={styles.closet} aria-hidden="true">
-                    <div className={styles.closetItem}>
-                      <img src="/landing/camiseta-blanca.png" alt="" />
-                      <span className={styles.closetCheck}>&#10003;</span>
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/hero-top.png" alt="" />
-                      <span className={styles.closetCheck}>&#10003;</span>
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/cap-top.png" alt="" />
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/maleta-flat-1.png" alt="" />
-                      <span className={styles.closetCheck}>&#10003;</span>
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/jeans-claros.png" alt="" />
-                      <span className={styles.closetCheck}>&#10003;</span>
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/cap-bottom.png" alt="" />
-                      <span className={styles.closetCheck}>&#10003;</span>
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/tenis-blancos-urbanos.png" alt="" />
-                    </div>
-                    <div className={styles.closetItem}>
-                      <img src="/landing/cap-shoe.png" alt="" />
+                {!men ? (
+                  <div className={styles.stepVisual}>
+                    <div className={styles.closet} aria-hidden="true">
+                      <div className={styles.closetItem}>
+                        <img src="/landing/camiseta-blanca.png" alt="" />
+                        <span className={styles.closetCheck}>&#10003;</span>
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/hero-top.png" alt="" />
+                        <span className={styles.closetCheck}>&#10003;</span>
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/cap-top.png" alt="" />
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/maleta-flat-1.png" alt="" />
+                        <span className={styles.closetCheck}>&#10003;</span>
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/jeans-claros.png" alt="" />
+                        <span className={styles.closetCheck}>&#10003;</span>
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/cap-bottom.png" alt="" />
+                        <span className={styles.closetCheck}>&#10003;</span>
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/tenis-blancos-urbanos.png" alt="" />
+                      </div>
+                      <div className={styles.closetItem}>
+                        <img src="/landing/cap-shoe.png" alt="" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : null}
               </div>
 
               {/* 3 · Qué necesitas hoy: chips de ocasión */}
@@ -276,24 +317,24 @@ export function Landing() {
                       <div className={styles.tryHd}>te propongo</div>
                       <div className={styles.tryMini} aria-hidden="true">
                         <span className={styles.tCell}>
-                          <img src="/landing/prop-tee.png" alt="" />
+                          <img src={img("prop-tee")} alt="" />
                           <span className={styles.tn}>01</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src="/landing/prop-jeans.png" alt="" />
+                          <img src={img("prop-jeans")} alt="" />
                           <span className={styles.tn}>02</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src="/landing/prop-cinturon.png" alt="" />
+                          <img src={img("prop-cinturon")} alt="" />
                           <span className={styles.tn}>03</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src="/landing/prop-flats.png" alt="" />
+                          <img src={img("prop-flats")} alt="" />
                           <span className={styles.tn}>04</span>
                         </span>
                       </div>
                     </div>
-                    <TryDemo />
+                    <TryDemo gender={gender} />
                   </div>
                 </div>
               </div>
@@ -353,7 +394,8 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 04 · TRY-ON */}
+        {/* 04 · TRY-ON — oculto en modo hombre hasta tener su set (Fase 2) */}
+        {!men ? (
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
@@ -444,6 +486,7 @@ export function Landing() {
             </div>
           </div>
         </section>
+        ) : null}
 
         {/* GALERÍA DE ESTILOS */}
         <section className={styles.blk}>
@@ -471,7 +514,7 @@ export function Landing() {
                 "gal-8",
               ].map((g) => (
                 <div key={g} className={styles.galItem}>
-                  <img src={`/landing/${g}.png`} alt="" />
+                  <img src={img(g)} alt="" />
                 </div>
               ))}
             </div>
@@ -495,6 +538,9 @@ export function Landing() {
           </div>
         </section>
 
+        {/* 05 + 06 — ocultas en modo hombre hasta tener su set (Fase 2) */}
+        {!men ? (
+          <>
         {/* 05 · CÁPSULA */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
@@ -672,6 +718,8 @@ export function Landing() {
             </div>
           </div>
         </section>
+          </>
+        ) : null}
 
         {/* 07 · Y SE QUEDA CONTIGO */}
         <section className={styles.blk}>

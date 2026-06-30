@@ -729,6 +729,38 @@
   transition: opacity 0.55s ease;
 }
 /* Galería de estilos: strip horizontal de looks full-body (swipe en móvil). */
+/* Toggle Mujer/Hombre del landing */
+.genderToggle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+.genderToggle > div {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: var(--c-surface);
+}
+.genderToggle button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-muted);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.genderToggle button[aria-pressed="true"] {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+}
+
 .gallery {
   display: flex;
   gap: 12px;
