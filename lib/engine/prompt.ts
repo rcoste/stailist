@@ -53,7 +53,7 @@ import {
 // v18 (2026-06-29): formalidad explícita para "evento" (el wizard la pregunta) +
 // default mexicano formal en eventos (las bodas mexicanas son más formales que
 // el default del modelo; antes sugería looks subvestidos).
-export const PROMPT_VERSION = "v18";
+export const PROMPT_VERSION = "v19";
 
 export type EngineItem = {
   id: string;
@@ -88,6 +88,7 @@ export type EngineContext = {
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
   seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
   formality?: string | null; // solo "evento": casual | semiformal | formal | gala
+  styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -214,6 +215,11 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.tasteTags.length > 0) {
     lines.push(`Tags de gusto: ${ctx.tasteTags.join(", ")}.`);
+  }
+  if (ctx.styleReference) {
+    lines.push(
+      `Estilo de referencia que le encanta (inspira el VIBE y las siluetas, NO los colores — la colorimetría de arriba manda el color): ${ctx.styleReference}. Empuja los looks hacia ese aire sin copiarlo al pie de la letra.`
+    );
   }
   if (ctx.silueta) {
     lines.push(
