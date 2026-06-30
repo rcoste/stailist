@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
 import type {
+  AssessmentQuestion,
   CapsuleMatch,
   CapsuleOverrides,
   CapsuleTarget,
@@ -36,6 +37,9 @@ export type Profile = {
   style_vetoes: { chips: string[]; free: string[] };
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;
+  // Preguntas de estilo personalizadas (IA) cacheadas: { sig, questions }. sig = firma
+  // del estilo; si cambia, se regeneran. Afinan el assessment de la cápsula.
+  style_questions: { sig: string; questions: AssessmentQuestion[] } | null;
   // Estilo de referencia (1-3 fotos de un estilo que le gusta): resumen + tags
   // (inspiran el vibe de la generación), veredicto de fit (pushback) e imágenes en
   // bucket privado. `image_path` es el shape viejo (una sola foto).

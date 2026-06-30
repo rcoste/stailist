@@ -3,6 +3,7 @@ import {
   ASSESSMENT_QUESTIONS,
   CATEGORIES,
   FORMALIDADES,
+  type AssessmentQuestion,
   type CapsuleItem,
   type CapsulePilar,
   type CapsuleTarget,
@@ -21,6 +22,9 @@ export type CapsuleInputs = {
   build: Build | null;
   volume: Volume | null;
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
+  // Preguntas del assessment (fijas + las personalizadas de su estilo). Si no se
+  // pasan, usa solo las fijas. Define qué se renderiza en el bloque "vida".
+  questions?: AssessmentQuestion[];
 };
 
 // CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
@@ -34,7 +38,7 @@ export async function generateCapsuleTarget(
 
   const client = new Anthropic();
 
-  const vida = ASSESSMENT_QUESTIONS.map((q) => {
+  const vida = (inputs.questions ?? ASSESSMENT_QUESTIONS).map((q) => {
     const raw = inputs.answers[q.id];
     if (!raw) return null;
     const vals = q.multi ? raw.split(",").filter(Boolean) : [raw];
