@@ -64,21 +64,11 @@ export function Landing() {
     <div className={styles.page}>
       {/* Toggle Mujer/Hombre: el contenido se adapta al género. */}
       <div className={styles.genderToggle}>
-        <div role="tablist" aria-label="Ver contenido para">
-          <button
-            type="button"
-            role="tab"
-            aria-pressed={!men}
-            onClick={() => choose("mujer")}
-          >
+        <div aria-label="Ver contenido para">
+          <button type="button" aria-pressed={!men} onClick={() => choose("mujer")}>
             mujer
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-pressed={men}
-            onClick={() => choose("hombre")}
-          >
+          <button type="button" aria-pressed={men} onClick={() => choose("hombre")}>
             hombre
           </button>
         </div>
