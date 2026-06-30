@@ -19,13 +19,16 @@ export async function POST(request: NextRequest) {
     colorFamilia?: string;
     nombre?: string;
     categoria?: string;
+    formalidad?: string;
+    temporada?: string;
+    visual?: string;
   };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const { tipo, colorFamilia, nombre, categoria } = body ?? {};
+  const { tipo, colorFamilia, nombre, categoria, formalidad, temporada, visual } = body ?? {};
   if (!tipo || !colorFamilia || !nombre) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
@@ -43,6 +46,9 @@ export async function POST(request: NextRequest) {
     nombre,
     categoria: categoria ?? "",
     gender,
+    formalidad: formalidad ?? null,
+    temporada: temporada ?? null,
+    visual: visual ?? null,
   });
   if (!r.ok) {
     return NextResponse.json({ error: r.error ?? "render_fallo" }, { status: 502 });

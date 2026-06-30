@@ -130,6 +130,10 @@ export type CapsuleItem = {
   temporada: string; // "todo-el-año" | "calor" | "frio"
   prioridad: number; // 1 = más importante
   porque: string; // una línea: por qué la necesita
+  // Descripción visual precisa para renderizar la imagen fiel (material, silueta,
+  // largo, corte, detalles). NO se muestra en la UI; solo alimenta el generador.
+  // Opcional: las cápsulas viejas no la traen → el render cae a los atributos.
+  visual?: string | null;
 };
 
 // Un "pilar" del por qué: una razón corta con ícono (paleta, vida, cuerpo, metal).

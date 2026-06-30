@@ -279,6 +279,7 @@ export async function markFaltaOwned(
         color_hex: familiaToHex(item.colorFamilia),
         formalidad: item.formalidad,
         temporada: item.temporada,
+        ...(item.visual ? { visual: item.visual } : {}),
         ...(imagePath ? { image_path: imagePath } : {}),
       },
     })

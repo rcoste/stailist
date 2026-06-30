@@ -257,7 +257,15 @@ function isLightHex(hex: string): boolean {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150;
 }
 
-type RenderArgs = { tipo: string; colorFamilia: string; nombre: string; categoria: string };
+type RenderArgs = {
+  tipo: string;
+  colorFamilia: string;
+  nombre: string;
+  categoria: string;
+  formalidad?: string | null;
+  temporada?: string | null;
+  visual?: string | null;
+};
 
 // Miniatura de prenda con fallback DIGNO: si no hay imagen, un swatch del color de
 // la prenda + un gancho (nunca un hueco vacío). Si recibe `renderArgs` (prenda
@@ -380,6 +388,9 @@ function BigCard({
             colorFamilia: row.item.colorFamilia,
             nombre: row.item.nombre,
             categoria: row.item.category,
+            formalidad: row.item.formalidad,
+            temporada: row.item.temporada,
+            visual: row.item.visual,
           }}
         />
       </span>
@@ -531,6 +542,9 @@ function DecideRow({
                 colorFamilia: item.colorFamilia,
                 nombre: item.nombre,
                 categoria: item.category,
+                formalidad: item.formalidad,
+                temporada: item.temporada,
+                visual: item.visual,
               }}
             />
           </span>

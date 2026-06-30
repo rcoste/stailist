@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
+import { garmentRenderDesc } from "@/lib/garment-desc";
 
 // Render limpio (tipo catálogo) de una prenda del clóset SIN imagen, desde sus
 // atributos (texto→imagen con Gemini), subido a Storage y cacheado en el item
@@ -33,6 +34,12 @@ export async function renderItemImage(
     categoria?: string;
     tipo?: string;
     image_path?: string;
+    formalidad?: string;
+    temporada?: string;
+    largo?: string;
+    corte?: string;
+    manga?: string;
+    visual?: string;
   };
 
   // Idempotencia: ya tiene imagen (arquetipo, render previo, foto, o prestada) o
@@ -57,10 +64,19 @@ export async function renderItemImage(
     .eq("id", itemId)
     .eq("user_id", userId);
 
-  const conColor =
-    attrs.color && !nombre.toLowerCase().includes(attrs.color.toLowerCase())
-      ? `${nombre} en color ${attrs.color}`
-      : nombre;
+  // Descripción rica: detalle visual del estilista si lo hay, o los atributos que
+  // la prenda ya carga (categoría, formalidad, largo/corte/manga de la visión).
+  const conColor = garmentRenderDesc({
+    nombre,
+    color: attrs.color,
+    categoria: attrs.categoria,
+    formalidad: attrs.formalidad,
+    temporada: attrs.temporada,
+    largo: attrs.largo,
+    corte: attrs.corte,
+    manga: attrs.manga,
+    visual: attrs.visual,
+  });
   const type = categoria === "calzado" ? "shoes" : "flat";
 
   // Género del usuario: sin esto, prendas ambiguas (traje de baño, sandalias)
