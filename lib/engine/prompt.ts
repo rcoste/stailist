@@ -53,7 +53,9 @@ import {
 // v18 (2026-06-29): formalidad explícita para "evento" (el wizard la pregunta) +
 // default mexicano formal en eventos (las bodas mexicanas son más formales que
 // el default del modelo; antes sugería looks subvestidos).
-export const PROMPT_VERSION = "v19";
+// v20: el motor principal (generate) ahora también alimenta el estilo de
+// referencia al prompt (antes solo look-of-day lo hacía).
+export const PROMPT_VERSION = "v20";
 
 export type EngineItem = {
   id: string;
