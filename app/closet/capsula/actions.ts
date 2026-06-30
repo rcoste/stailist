@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   ASSESSMENT_QUESTIONS,
+  type AssessmentQuestion,
   closetSignature,
   type CapsuleDecision,
   type CapsuleMatch,
@@ -29,8 +30,27 @@ export async function saveLifestyle(
   _prev: CapsuleState,
   formData: FormData
 ): Promise<CapsuleState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions")
+    .eq("id", user.id)
+    .single();
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  const styleRef =
+    (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
+  // Preguntas fijas + las personalizadas de SU estilo (validamos contra ambas).
+  const dynamicQ =
+    (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
+  const allQ = [...ASSESSMENT_QUESTIONS, ...dynamicQ];
+
   const answers: LifestyleAnswers = {};
-  for (const q of ASSESSMENT_QUESTIONS) {
+  for (const q of allQ) {
     const raw = String(formData.get(q.id) ?? "");
     if (q.multi) {
       const vals = raw.split(",").filter(Boolean);
@@ -46,25 +66,11 @@ export async function saveLifestyle(
     }
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference")
-    .eq("id", user.id)
-    .single();
-  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
-  const styleRef =
-    (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
-
   let target: CapsuleTarget;
   try {
     target = await generateCapsuleTarget({
       answers,
+      questions: allQ,
       gender,
       tasteTags: (profile?.taste_tags ?? []) as string[],
       archetype:
@@ -189,7 +195,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference"
+      "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions"
     )
     .eq("id", user.id)
     .single();
@@ -198,11 +204,14 @@ export async function regenerateCapsuleTarget(): Promise<void> {
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
   const styleRef =
     (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
+  const dynamicQ =
+    (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
 
   let target: CapsuleTarget;
   try {
     target = await generateCapsuleTarget({
       answers,
+      questions: [...ASSESSMENT_QUESTIONS, ...dynamicQ],
       gender,
       tasteTags: (profile?.taste_tags ?? []) as string[],
       archetype:

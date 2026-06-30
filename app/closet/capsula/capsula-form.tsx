@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ASSESSMENT_QUESTIONS, type LifestyleAnswers } from "@/lib/capsule";
+import type { AssessmentQuestion, LifestyleAnswers } from "@/lib/capsule";
 import { saveLifestyle, type CapsuleState } from "./actions";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
@@ -22,15 +22,21 @@ const CAPSULE_PHRASES: GenPhrase[] = [
 
 // Cuestionario paso a paso (handoff Screen 5): una pregunta a la vez, opciones
 // grandes, progreso claro. El último paso envía las respuestas a saveLifestyle.
-export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
+export function CapsulaForm({
+  initial,
+  questions,
+}: {
+  initial: LifestyleAnswers;
+  questions: AssessmentQuestion[];
+}) {
   const [state, formAction, pending] = useActionState(saveLifestyle, INITIAL);
   const [answers, setAnswers] = useState<LifestyleAnswers>(initial);
   const [step, setStep] = useState(0);
   // Pantalla despierta mientras se arma la cápsula (~27s).
   useWakeLock(pending);
 
-  const total = ASSESSMENT_QUESTIONS.length;
-  const q = ASSESSMENT_QUESTIONS[step];
+  const total = questions.length;
+  const q = questions[step];
   const last = step === total - 1;
   const answered = !!answers[q.id];
 
@@ -89,7 +95,7 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
       {pending ? <GeneratingScreen phrases={CAPSULE_PHRASES} /> : null}
       <form action={formAction} className="flex min-h-[calc(100dvh-7rem)] flex-col">
       {/* Respuestas de todos los pasos viajan como hidden inputs. */}
-      {ASSESSMENT_QUESTIONS.map((qq) => (
+      {questions.map((qq) => (
         <input key={qq.id} type="hidden" name={qq.id} value={answers[qq.id] ?? ""} />
       ))}
 
