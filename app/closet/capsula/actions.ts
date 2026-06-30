@@ -31,11 +31,19 @@ export async function saveLifestyle(
 ): Promise<CapsuleState> {
   const answers: LifestyleAnswers = {};
   for (const q of ASSESSMENT_QUESTIONS) {
-    const val = String(formData.get(q.id) ?? "");
-    if (!q.options.some((o) => o.value === val)) {
-      return { status: "error", message: "Te faltó responder una — complétalas y va de nuevo." };
+    const raw = String(formData.get(q.id) ?? "");
+    if (q.multi) {
+      const vals = raw.split(",").filter(Boolean);
+      if (vals.length === 0 || !vals.every((v) => q.options.some((o) => o.value === v))) {
+        return { status: "error", message: "Te faltó responder una — complétalas y va de nuevo." };
+      }
+      answers[q.id] = vals.join(",");
+    } else {
+      if (!q.options.some((o) => o.value === raw)) {
+        return { status: "error", message: "Te faltó responder una — complétalas y va de nuevo." };
+      }
+      answers[q.id] = raw;
     }
-    answers[q.id] = val;
   }
 
   const supabase = await createClient();
