@@ -23,6 +23,28 @@ export function faltaImage(item: { tipo: string; colorFamilia: string }): string
   return FALTA_IMAGES[`${slug(item.tipo)}|${slug(item.colorFamilia)}`] ?? null;
 }
 
+// Clave estable de un combo tipo|color para buscar su imagen en mapas del cliente
+// (mismo formato que FALTA_IMAGES). La cápsula es de un solo género, así que aquí
+// no se incluye el género.
+export function faltaKey(item: { tipo: string; colorFamilia: string }): string {
+  return `${slug(item.tipo)}|${slug(item.colorFamilia)}`;
+}
+
+// Clave/segmento de ruta para la biblioteca compartida (storage + tabla registro).
+// Incluye género (un blazer de hombre ≠ uno de mujer) y es segura para path
+// (solo a-z0-9 y guiones).
+export function catalogStorageKey(
+  tipo: string,
+  colorFamilia: string,
+  gender: string | null
+): string {
+  const safe = (s: string) =>
+    slug(s)
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  return `${safe(tipo)}__${safe(colorFamilia)}__${gender ?? "u"}`;
+}
+
 // Familia de color (texto de la cápsula ideal, p. ej. "marino", "neutro claro")
 // → hex aproximado para el swatch del clóset cuando sumas una prenda que no tiene
 // foto. Matching por subcadena sobre el slug; cae a un neutro cálido si no acierta.
