@@ -9,6 +9,8 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleView, closetSignature } from "@/lib/capsule";
 import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
+import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
+import { catalogPublicUrl } from "@/lib/catalog-render";
 import { recalcularMatch, regenerateCapsuleTarget } from "./actions";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
@@ -26,6 +28,27 @@ export default async function CapsulaPage() {
     loadClosetLite(supabase, profile.id),
     loadClosetImageMap(supabase, profile.id),
   ]);
+  // Biblioteca compartida: para los combos ideales (tipo+color+género) que ya tienen
+  // un render generado, los mostramos al instante. Una sola query por todos los items.
+  const gender = profile.gender;
+  const skByItem = target.items.map((it) => ({
+    fk: faltaKey(it),
+    sk: catalogStorageKey(it.tipo, it.colorFamilia, gender),
+  }));
+  const { data: crows } = await supabase
+    .from("catalog_renders")
+    .select("key, path")
+    .in(
+      "key",
+      skByItem.map((s) => s.sk)
+    );
+  const pathBySk = new Map((crows ?? []).map((r) => [r.key as string, r.path as string]));
+  const catalogImages: Record<string, string> = {};
+  for (const { fk, sk } of skByItem) {
+    const path = pathBySk.get(sk);
+    if (path) catalogImages[fk] = catalogPublicUrl(supabase, path);
+  }
+
   const stale = !match || match.signature !== closetSignature(closet);
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
@@ -95,6 +118,7 @@ export default async function CapsulaPage() {
               match={match}
               overrides={profile.capsule_overrides}
               images={images}
+              catalogImages={catalogImages}
             />
           </>
         )}

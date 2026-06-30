@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
-import { faltaImage, familiaToHex } from "@/lib/capsule-images";
+import { faltaImage, familiaToHex, faltaKey } from "@/lib/capsule-images";
 import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
 import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
 import {
@@ -26,11 +26,14 @@ export function CapsuleList({
   match,
   overrides,
   images,
+  catalogImages = {},
 }: {
   target: CapsuleTarget;
   match: CapsuleMatch | null;
   overrides: CapsuleOverrides | null;
   images: Record<string, string>;
+  // Imágenes de la biblioteca compartida (combos ideales ya rendereados), por faltaKey.
+  catalogImages?: Record<string, string>;
 }) {
   const [optOverrides, applyOpt] = useOptimistic(
     overrides ?? {},
@@ -157,7 +160,7 @@ export function CapsuleList({
         <Section title="Tu cápsula ideal" count={pendiente.length}>
           <ul className="flex flex-col gap-2.5">
             {pendiente.map((r) => (
-              <BigCard key={rowKey(r)} row={r} images={images} />
+              <BigCard key={rowKey(r)} row={r} images={images} catalogImages={catalogImages} />
             ))}
           </ul>
         </Section>
@@ -171,6 +174,7 @@ export function CapsuleList({
                 key={rowKey(r)}
                 row={r}
                 images={images}
+                catalogImages={catalogImages}
                 unlock={unlockOf(r)}
                 right={
                   <OwnControl busy={ownBusy.has(r.index)} onOwn={() => markOwned(r.index)} />
@@ -185,7 +189,13 @@ export function CapsuleList({
         <Section title="Decide si te sirve" count={decidir.length}>
           <ul className="flex flex-col gap-2.5">
             {decidir.map((r) => (
-              <DecideRow key={rowKey(r)} row={r} images={images} onDecide={decide} />
+              <DecideRow
+                key={rowKey(r)}
+                row={r}
+                images={images}
+                catalogImages={catalogImages}
+                onDecide={decide}
+              />
             ))}
           </ul>
         </Section>
@@ -193,7 +203,7 @@ export function CapsuleList({
 
       {tienes.length > 0 ? (
         <Section title="Ya lo tienes" count={tienes.length}>
-          <Rail rows={tienes} images={images} />
+          <Rail rows={tienes} images={images} catalogImages={catalogImages} />
         </Section>
       ) : null}
     </div>
@@ -202,9 +212,19 @@ export function CapsuleList({
 
 const rowKey = (r: CapsuleRow) => `${r.item.tipo}-${r.item.nombre}`;
 
-// Imagen para una fila: la del clóset (por `by`) o, si falta, la curada del catálogo.
-function rowImage(r: CapsuleRow, images: Record<string, string>): string | null {
-  return (r.by ? images[r.by] : null) ?? (r.base === "falta" ? faltaImage(r.item) : null);
+// Imagen para una fila: la del clóset (por `by`) o, si es ideal (falta/pendiente),
+// la de la biblioteca compartida y luego la curada estática del catálogo.
+function rowImage(
+  r: CapsuleRow,
+  images: Record<string, string>,
+  catalogImages: Record<string, string>
+): string | null {
+  const own = r.by ? images[r.by] : null;
+  if (own) return own;
+  if (r.base === "falta" || r.base === "pendiente") {
+    return catalogImages[faltaKey(r.item)] ?? faltaImage(r.item);
+  }
+  return null;
 }
 
 // ¿El color es claro? (para elegir icono oscuro/claro encima del swatch).
@@ -217,25 +237,76 @@ function isLightHex(hex: string): boolean {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150;
 }
 
+type RenderArgs = { tipo: string; colorFamilia: string; nombre: string; categoria: string };
+
 // Miniatura de prenda con fallback DIGNO: si no hay imagen, un swatch del color de
-// la prenda + un gancho (nunca un hueco vacío). `colorFamilia` viene del item ideal.
+// la prenda + un gancho (nunca un hueco vacío). Si recibe `renderArgs` (prenda
+// sugerida ideal), el placeholder es un botón "ver" → genera la imagen bajo demanda
+// (biblioteca compartida) y la muestra. `colorFamilia` viene del item ideal.
 function Thumb({
   src,
   colorFamilia,
   sizes,
   icon = 18,
+  renderArgs,
 }: {
   src: string | null;
   colorFamilia: string;
   sizes: string;
   icon?: number;
+  renderArgs?: RenderArgs;
 }) {
-  if (src) return <Image src={src} alt="" fill sizes={sizes} className="object-cover" />;
+  const [generated, setGenerated] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const shown = src ?? generated;
+  if (shown) return <Image src={shown} alt="" fill sizes={sizes} className="object-cover" />;
+
   const hex = familiaToHex(colorFamilia);
+  const light = isLightHex(hex);
+  const tone = light ? "text-ink/45" : "text-white/65";
+
+  if (!renderArgs) {
+    return (
+      <span className="flex h-full w-full items-center justify-center" style={{ background: hex }}>
+        <Icon name="gancho" size={icon} className={light ? "text-ink/35" : "text-white/55"} />
+      </span>
+    );
+  }
+
+  const onRender = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/render-ideal", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(renderArgs),
+      });
+      const j = (await res.json().catch(() => null)) as { url?: string } | null;
+      if (j?.url) setGenerated(j.url);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <span className="flex h-full w-full items-center justify-center" style={{ background: hex }}>
-      <Icon name="gancho" size={icon} className={isLightHex(hex) ? "text-ink/35" : "text-white/55"} />
-    </span>
+    <button
+      type="button"
+      onClick={onRender}
+      disabled={busy}
+      className="flex h-full w-full flex-col items-center justify-center gap-1 disabled:opacity-80"
+      style={{ background: hex }}
+      title="Ver cómo se ve"
+    >
+      {busy ? (
+        <Spinner className={`h-4 w-4 ${tone}`} />
+      ) : (
+        <>
+          <Icon name="destello" size={icon} className={tone} />
+          <span className={`text-[9px] font-semibold leading-none ${tone}`}>ver</span>
+        </>
+      )}
+    </button>
   );
 }
 
@@ -266,19 +337,31 @@ function Section({
 function BigCard({
   row,
   images,
+  catalogImages,
   right,
   unlock,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
+  catalogImages: Record<string, string>;
   right?: React.ReactNode;
   unlock?: number;
 }) {
-  const src = rowImage(row, images);
+  const src = rowImage(row, images, catalogImages);
   return (
     <li className="flex items-center gap-[13px] rounded-lg border border-line bg-surface p-[13px]">
       <span className="relative h-[72px] w-[56px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
-        <Thumb src={src} colorFamilia={row.item.colorFamilia} sizes="56px" />
+        <Thumb
+          src={src}
+          colorFamilia={row.item.colorFamilia}
+          sizes="56px"
+          renderArgs={{
+            tipo: row.item.tipo,
+            colorFamilia: row.item.colorFamilia,
+            nombre: row.item.nombre,
+            categoria: row.item.category,
+          }}
+        />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="text-[16px] font-semibold leading-tight text-ink">
@@ -314,14 +397,22 @@ function OwnControl({ busy, onOwn }: { busy: boolean; onOwn: () => void }) {
 
 // "Ya lo tienes": fila horizontal de miniaturas (46px, 3:4) + celda "+N" si hay
 // más de las que se muestran.
-function Rail({ rows, images }: { rows: CapsuleRow[]; images: Record<string, string> }) {
+function Rail({
+  rows,
+  images,
+  catalogImages,
+}: {
+  rows: CapsuleRow[];
+  images: Record<string, string>;
+  catalogImages: Record<string, string>;
+}) {
   const MAX = 7;
   const shown = rows.slice(0, MAX);
   const extra = rows.length - shown.length;
   return (
     <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {shown.map((r) => {
-        const src = rowImage(r, images);
+        const src = rowImage(r, images, catalogImages);
         return (
           <span
             key={rowKey(r)}
@@ -346,10 +437,12 @@ function Rail({ rows, images }: { rows: CapsuleRow[]; images: Record<string, str
 function DecideRow({
   row,
   images,
+  catalogImages,
   onDecide,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
+  catalogImages: Record<string, string>;
   onDecide: (index: number, decision: CapsuleDecision) => void;
 }) {
   const { item, by, decision, index } = row;
@@ -397,7 +490,7 @@ function DecideRow({
 
   // Lado a lado (handoff inc4): la ideal (catálogo) vs la tuya (tu foto), veredicto,
   // y decides "me sirve" (tu parecido cuenta) / "quiero la ideal" (queda como falta).
-  const idealSrc = faltaImage(item);
+  const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
   return (
     <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-[13px]">
       <div className="flex flex-col">
@@ -408,7 +501,18 @@ function DecideRow({
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">la ideal</span>
           <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border border-line bg-bg text-muted">
-            <Thumb src={idealSrc} colorFamilia={item.colorFamilia} sizes="120px" icon={22} />
+            <Thumb
+              src={idealSrc}
+              colorFamilia={item.colorFamilia}
+              sizes="120px"
+              icon={22}
+              renderArgs={{
+                tipo: item.tipo,
+                colorFamilia: item.colorFamilia,
+                nombre: item.nombre,
+                categoria: item.category,
+              }}
+            />
           </span>
         </div>
         <div className="flex flex-col gap-1.5">
