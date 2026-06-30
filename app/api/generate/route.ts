@@ -133,6 +133,8 @@ export async function POST(request: NextRequest) {
             profile.body_volume as Volume | null
           ),
           tasteSignal,
+          styleReference:
+            (profile.style_reference as { summary?: string } | null)?.summary ?? null,
         };
         const candidates = await generateOutfits(ctx);
 
