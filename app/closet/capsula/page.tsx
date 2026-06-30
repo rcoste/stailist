@@ -119,6 +119,7 @@ export default async function CapsulaPage() {
               overrides={profile.capsule_overrides}
               images={images}
               catalogImages={catalogImages}
+              userId={profile.id}
             />
           </>
         )}

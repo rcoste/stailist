@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { OwnedPhotoBanner } from "@/components/owned-photo-banner";
 import { faltaImage, familiaToHex, faltaKey } from "@/lib/capsule-images";
 import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
 import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
@@ -27,6 +28,7 @@ export function CapsuleList({
   overrides,
   images,
   catalogImages = {},
+  userId,
 }: {
   target: CapsuleTarget;
   match: CapsuleMatch | null;
@@ -34,6 +36,7 @@ export function CapsuleList({
   images: Record<string, string>;
   // Imágenes de la biblioteca compartida (combos ideales ya rendereados), por faltaKey.
   catalogImages?: Record<string, string>;
+  userId: string;
 }) {
   const [optOverrides, applyOpt] = useOptimistic(
     overrides ?? {},
@@ -52,6 +55,9 @@ export function CapsuleList({
   // sola en "Ya lo tienes" con el progreso al día. Solo llevamos un spinner por
   // botón mientras tanto (la fuente de verdad es el server, sin doble conteo).
   const [ownBusy, setOwnBusy] = useState<Set<number>>(new Set());
+  // Tras "ya la tengo": la prenda recién agregada, para ofrecer subir su foto real
+  // (no bloqueante). La fila ya se movió a "Ya lo tienes"; el banner vive aparte.
+  const [lastOwned, setLastOwned] = useState<{ itemId: string; nombre: string } | null>(null);
 
   const decide = (index: number, decision: CapsuleDecision) =>
     startTransition(async () => {
@@ -67,13 +73,15 @@ export function CapsuleList({
       return n;
     });
 
-  const markOwned = (index: number) => {
+  const markOwned = (index: number, nombre: string) => {
     // setBusy FUERA del transition → update urgente: el spinner aparece al
     // instante. Dentro del transition era baja prioridad y se sentía muerto.
     setBusy(index, true);
     startTransition(async () => {
-      await markFaltaOwned(index);
+      const res = await markFaltaOwned(index);
       setBusy(index, false);
+      // Ofrece subir la foto real (opcional) de la prenda recién agregada.
+      if (res.ok && res.itemId) setLastOwned({ itemId: res.itemId, nombre });
     });
   };
 
@@ -104,6 +112,15 @@ export function CapsuleList({
 
   return (
     <div className="flex flex-col gap-7">
+      {lastOwned ? (
+        <OwnedPhotoBanner
+          itemId={lastOwned.itemId}
+          nombre={lastOwned.nombre}
+          userId={userId}
+          onDismiss={() => setLastOwned(null)}
+        />
+      ) : null}
+
       {/* Resumen: eyebrow + "N de M" + barra. */}
       <div className="flex flex-col">
         <div className="flex items-baseline justify-between gap-2.5">
@@ -177,7 +194,10 @@ export function CapsuleList({
                 catalogImages={catalogImages}
                 unlock={unlockOf(r)}
                 right={
-                  <OwnControl busy={ownBusy.has(r.index)} onOwn={() => markOwned(r.index)} />
+                  <OwnControl
+                    busy={ownBusy.has(r.index)}
+                    onOwn={() => markOwned(r.index, r.item.nombre)}
+                  />
                 }
               />
             ))}
