@@ -64,12 +64,15 @@ export function CapsuleList({
       return n;
     });
 
-  const markOwned = (index: number) =>
+  const markOwned = (index: number) => {
+    // setBusy FUERA del transition → update urgente: el spinner aparece al
+    // instante. Dentro del transition era baja prioridad y se sentía muerto.
+    setBusy(index, true);
     startTransition(async () => {
-      setBusy(index, true);
       await markFaltaOwned(index);
       setBusy(index, false);
     });
+  };
 
   const rows = capsuleRows(target, match, optOverrides);
   const total = rows.length;
@@ -246,7 +249,7 @@ function BigCard({
         {src ? <Image src={src} alt="" fill sizes="56px" className="object-cover" /> : null}
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="display text-[16px] font-semibold leading-tight text-ink">
+        <span className="text-[16px] font-semibold leading-tight text-ink">
           {row.item.nombre}
         </span>
         {unlock && unlock > 0 ? (
@@ -272,7 +275,7 @@ function OwnControl({ busy, onOwn }: { busy: boolean; onOwn: () => void }) {
       className="flex min-h-9 items-center gap-1.5 rounded-sm border border-line bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50"
     >
       {busy ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="mas" size={14} strokeWidth={2} />}
-      ya la tengo
+      {busy ? "agregando…" : "ya la tengo"}
     </button>
   );
 }

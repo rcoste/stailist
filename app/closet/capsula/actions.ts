@@ -241,6 +241,10 @@ export async function markFaltaOwned(
   const newMatch: CapsuleMatch = { signature: closetSignature(closet), entries };
   await supabase.from("profiles").update({ capsule_match: newMatch }).eq("id", user.id);
 
+  // OJO: revalidar la ruta DONDE estás (/closet/capsula), no solo /closet —
+  // si no, la fila no se reubica a "Ya lo tienes" y el botón "ya la tengo" se
+  // siente muerto aunque la prenda sí se agregó.
+  revalidatePath("/closet/capsula");
   revalidatePath("/closet");
   return { ok: true, itemId: inserted.id as string };
 }
