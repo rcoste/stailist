@@ -310,3 +310,33 @@ export async function markFaltaOwned(
   revalidatePath("/closet");
   return { ok: true, itemId: inserted.id as string };
 }
+
+// Foto real OPCIONAL para una prenda que acabas de marcar "ya la tengo": el cliente
+// ya subió la foto a su carpeta del bucket; aquí la fijamos como photo_path y
+// limpiamos el render generado para que la foto real mande (prioridad: render >
+// photo, así que sin limpiar el render no se vería). No bloqueante: si nunca la
+// sube, la prenda se queda con su imagen auto.
+export async function attachOwnPhoto(
+  itemId: string,
+  photoPath: string
+): Promise<{ ok: boolean }> {
+  if (!itemId || !photoPath) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  // La foto debe estar dentro de la carpeta del usuario (defensa además de RLS).
+  if (!photoPath.startsWith(`${user.id}/`)) return { ok: false };
+
+  const { error } = await supabase
+    .from("items")
+    .update({ photo_path: photoPath, render_status: null, render_path: null })
+    .eq("id", itemId)
+    .eq("user_id", user.id);
+  if (error) return { ok: false };
+
+  revalidatePath("/closet/capsula");
+  revalidatePath("/closet");
+  return { ok: true };
+}
