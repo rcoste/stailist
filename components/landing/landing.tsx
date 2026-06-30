@@ -456,7 +456,18 @@ export function Landing() {
               imaginártelo.
             </p>
             <div className={styles.gallery}>
-              {["gal-1", "gal-2", "gal-3", "gal-4", "gal-5"].map((g) => (
+              {[
+                "gal-1",
+                "gal-6",
+                "gal-2",
+                "gal-9",
+                "gal-3",
+                "gal-10",
+                "gal-4",
+                "gal-7",
+                "gal-5",
+                "gal-8",
+              ].map((g) => (
                 <div key={g} className={styles.galItem}>
                   <img src={`/landing/${g}.png`} alt="" />
                 </div>
