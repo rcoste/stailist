@@ -35,8 +35,13 @@ export async function generateCapsuleTarget(
   const client = new Anthropic();
 
   const vida = ASSESSMENT_QUESTIONS.map((q) => {
-    const opt = q.options.find((o) => o.value === inputs.answers[q.id]);
-    return opt ? `- ${q.label} → ${opt.label}` : null;
+    const raw = inputs.answers[q.id];
+    if (!raw) return null;
+    const vals = q.multi ? raw.split(",").filter(Boolean) : [raw];
+    const labels = vals
+      .map((v) => q.options.find((o) => o.value === v)?.label)
+      .filter(Boolean);
+    return labels.length ? `- ${q.label} → ${labels.join(", ")}` : null;
   })
     .filter(Boolean)
     .join("\n");

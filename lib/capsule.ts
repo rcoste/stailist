@@ -26,14 +26,22 @@ export type AssessmentQuestion = {
   id: string;
   label: string;
   help?: string;
-  options: { value: string; label: string; hint?: string }[];
+  multi?: boolean; // opción múltiple (respuesta = valores separados por coma)
+  options: {
+    value: string;
+    label: string;
+    hint?: string;
+    exclusive?: boolean; // en multi: al elegirla, deselecciona las demás (ej. "nada")
+  }[];
 };
 
 // 5 preguntas de botón. Junto con gustos y colorimetría, definen la cápsula ideal.
 export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: "trabajo",
-    label: "¿Cómo es tu día entre semana?",
+    label: "¿Cómo son tus días entre semana?",
+    help: "Marca todo lo que aplique.",
+    multi: true,
     options: [
       { value: "oficina_formal", label: "Oficina formal" },
       { value: "oficina_casual", label: "Oficina creativa o casual" },
@@ -55,11 +63,15 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: "actividades",
     label: "Fuera del trabajo, ¿qué pide ropa especial?",
+    help: "Marca todo lo que aplique.",
+    multi: true,
     options: [
       { value: "gym", label: "Gym o deporte" },
       { value: "noche", label: "Salir de noche" },
       { value: "aire", label: "Aire libre" },
-      { value: "ninguna", label: "Nada en particular" },
+      { value: "eventos_cult", label: "Cenas o eventos sociales" },
+      { value: "viajo", label: "Viajo seguido" },
+      { value: "ninguna", label: "Nada en particular", exclusive: true },
     ],
   },
   {
@@ -81,15 +93,44 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
         label: "Calor casi siempre",
         hint: "Casi nunca necesitas abrigo; el calor domina (~26°C o más gran parte del año).",
       },
+      {
+        value: "dos_estaciones",
+        label: "Dos estaciones marcadas",
+        hint: "Inviernos fríos de verdad Y veranos calurosos — necesitas para ambos.",
+      },
     ],
   },
   {
-    id: "estilo",
-    label: "Cuando puedes elegir, ¿cómo te gusta vestir?",
+    id: "formalidad_techo",
+    label: "Cuando te arreglas al máximo, ¿hasta dónde llegas?",
+    help: "Tu evento más formal típico.",
     options: [
-      { value: "comodo", label: "Cómodo y mínimo" },
-      { value: "arreglado", label: "Siempre arreglado" },
-      { value: "varia", label: "Depende mucho del día" },
+      { value: "smart", label: "Smart-casual", hint: "Una camisa o un saco y vas bien." },
+      { value: "coctel", label: "Coctel", hint: "Vestido o traje elegante." },
+      { value: "formal", label: "Muy formal o gala", hint: "Bodas de etiqueta, eventos de gala." },
+      { value: "rara", label: "Casi nunca me arreglo tanto" },
+    ],
+  },
+  {
+    id: "fit",
+    label: "¿Cómo te gusta que te quede la ropa?",
+    options: [
+      { value: "entallado", label: "Entallado", hint: "Marca la figura, silueta definida." },
+      { value: "holgado", label: "Holgado y cómodo", hint: "Relajado, sin pegarse." },
+      { value: "mezcla", label: "Depende de la prenda", hint: "Arriba de un modo, abajo de otro." },
+    ],
+  },
+  {
+    id: "dolor",
+    label: "¿Cuándo te quedas sin saber qué ponerte?",
+    help: "Marca todo lo que aplique — ahí pongo el foco.",
+    multi: true,
+    options: [
+      { value: "trabajo", label: "Para el trabajo" },
+      { value: "salir", label: "Para salir" },
+      { value: "eventos", label: "Para eventos" },
+      { value: "finde", label: "Para el finde o el diario" },
+      { value: "ninguno", label: "Casi siempre sé qué ponerme", exclusive: true },
     ],
   },
 ];
@@ -99,22 +140,26 @@ export type LifestyleAnswers = Record<string, string>;
 // Resumen en lenguaje natural (voz amiga) para el contexto del motor.
 export function lifestyleSummary(answers: LifestyleAnswers | null): string | null {
   if (!answers || Object.keys(answers).length === 0) return null;
-  const label = (qid: string) => {
+  // Etiquetas (minúsculas) de una pregunta, multi o única, descartando valores `drop`.
+  const labels = (qid: string, drop: string[] = []): string[] => {
     const q = ASSESSMENT_QUESTIONS.find((x) => x.id === qid);
-    const opt = q?.options.find((o) => o.value === answers[qid]);
-    return opt?.label.toLowerCase() ?? null;
+    if (!q) return [];
+    const raw = answers[qid] ?? "";
+    const vals = (q.multi ? raw.split(",") : [raw]).filter((v) => v && !drop.includes(v));
+    return vals
+      .map((v) => q.options.find((o) => o.value === v)?.label.toLowerCase())
+      .filter((l): l is string => !!l);
   };
   const parts: string[] = [];
-  const trabajo = label("trabajo");
-  if (trabajo) parts.push(`su día es ${trabajo}`);
+  const trabajo = labels("trabajo");
+  if (trabajo.length) parts.push(`su día es ${trabajo.join(" / ")}`);
   const eventos = answers["eventos"];
   if (eventos === "seguido") parts.push("tiene eventos de arreglarse seguido");
   else if (eventos === "aveces") parts.push("a veces tiene eventos de arreglarse");
-  const actividades = label("actividades");
-  if (actividades && answers["actividades"] !== "ninguna")
-    parts.push(`fuera del trabajo: ${actividades}`);
-  const estilo = label("estilo");
-  if (estilo) parts.push(`le gusta vestir ${estilo}`);
+  const actividades = labels("actividades", ["ninguna"]);
+  if (actividades.length) parts.push(`fuera del trabajo: ${actividades.join(", ")}`);
+  const fit = labels("fit");
+  if (fit.length) parts.push(`prefiere la ropa ${fit[0]}`);
   if (parts.length === 0) return null;
   return `Su vida: ${parts.join("; ")}.`;
 }

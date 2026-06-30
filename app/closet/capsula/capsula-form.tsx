@@ -61,6 +61,27 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
     setStep(n);
   };
 
+  // Elegir una opción. Única → reemplaza. Múltiple → alterna; una opción "exclusiva"
+  // (ej. "Nada en particular") limpia las demás, y elegir otra limpia la exclusiva.
+  const choose = (o: { value: string; exclusive?: boolean }) => {
+    if (!q.multi) {
+      setAnswers((a) => ({ ...a, [q.id]: o.value }));
+      return;
+    }
+    setAnswers((a) => {
+      const cur = (a[q.id] ?? "").split(",").filter(Boolean);
+      let next: string[];
+      if (o.exclusive) {
+        next = cur.includes(o.value) ? [] : [o.value];
+      } else {
+        const exclusivos = q.options.filter((x) => x.exclusive).map((x) => x.value);
+        const base = cur.filter((v) => !exclusivos.includes(v));
+        next = base.includes(o.value) ? base.filter((v) => v !== o.value) : [...base, o.value];
+      }
+      return { ...a, [q.id]: next.join(",") };
+    });
+  };
+
   return (
     <>
       {/* Generando: overlay full-screen con frases que rotan (mismo que Hoy/Viaje),
@@ -116,13 +137,15 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
 
         <div className="mt-5 flex flex-col gap-2.5">
           {q.options.map((o) => {
-            const selected = answers[q.id] === o.value;
+            const selected = q.multi
+              ? (answers[q.id] ?? "").split(",").includes(o.value)
+              : answers[q.id] === o.value;
             return (
               <button
                 key={o.value}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.value }))}
+                onClick={() => choose(o)}
                 className={`flex items-center gap-3 rounded-md border px-4 py-[15px] text-left text-[14.5px] font-medium transition-colors duration-200 ${
                   selected ? "border-accent bg-accent-soft text-ink" : "border-line bg-surface text-ink hover:border-ink"
                 }`}
@@ -135,15 +158,25 @@ export function CapsulaForm({ initial }: { initial: LifestyleAnswers }) {
                     </span>
                   ) : null}
                 </span>
-                <span
-                  className={`relative h-[18px] w-[18px] shrink-0 rounded-full border-[1.5px] ${
-                    selected ? "border-accent" : "border-line"
-                  }`}
-                >
-                  {selected ? (
-                    <span className="absolute inset-[3px] rounded-full bg-accent" />
-                  ) : null}
-                </span>
+                {q.multi ? (
+                  <span
+                    className={`relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] ${
+                      selected ? "border-accent bg-accent text-on-accent" : "border-line"
+                    }`}
+                  >
+                    {selected ? <Icon name="check" size={12} strokeWidth={2.6} /> : null}
+                  </span>
+                ) : (
+                  <span
+                    className={`relative h-[18px] w-[18px] shrink-0 rounded-full border-[1.5px] ${
+                      selected ? "border-accent" : "border-line"
+                    }`}
+                  >
+                    {selected ? (
+                      <span className="absolute inset-[3px] rounded-full bg-accent" />
+                    ) : null}
+                  </span>
+                )}
               </button>
             );
           })}
