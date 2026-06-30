@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import { catalogStorageKey } from "@/lib/capsule-images";
+import { garmentRenderDesc } from "@/lib/garment-desc";
 
 const BUCKET = "catalog";
 
@@ -20,6 +21,9 @@ export async function ensureCatalogRender(
     nombre: string;
     categoria: string;
     gender: "hombre" | "mujer" | null;
+    formalidad?: string | null;
+    temporada?: string | null;
+    visual?: string | null;
   }
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
   const key = catalogStorageKey(args.tipo, args.colorFamilia, args.gender);
@@ -31,12 +35,16 @@ export async function ensureCatalogRender(
     .maybeSingle();
   if (existing?.path) return { ok: true, url: catalogPublicUrl(supabase, existing.path) };
 
-  // Descripción para el generador (mismo patrón que el render del clóset).
-  const lower = args.nombre.toLowerCase();
-  const desc =
-    args.colorFamilia && !lower.includes(args.colorFamilia.toLowerCase())
-      ? `${args.nombre} en color ${args.colorFamilia}`
-      : args.nombre;
+  // Descripción rica para el generador: usa el detalle visual del estilista si
+  // existe, o lo arma con los atributos estructurados de la prenda.
+  const desc = garmentRenderDesc({
+    nombre: args.nombre,
+    color: args.colorFamilia,
+    categoria: args.categoria,
+    formalidad: args.formalidad,
+    temporada: args.temporada,
+    visual: args.visual,
+  });
   const type = args.categoria === "calzado" ? "shoes" : "flat";
   const bytes = await generateArchetypeImage(desc, type, args.gender ?? undefined);
   if (!bytes) return { ok: false, error: "render_fallo" };

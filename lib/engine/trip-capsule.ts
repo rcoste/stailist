@@ -119,7 +119,8 @@ Devuelve "items" (la cápsula). Cada prenda:
 - formalidad ∈ {${FORMALIDADES.join(", ")}}
 - temporada: "todo-el-año" | "calor" | "frio".
 - prioridad: 1 = imprescindible para el viaje, subiendo a lo opcional.
-- porque: UNA línea cálida (tuteo) de por qué la lleva.`,
+- porque: UNA línea cálida (tuteo) de por qué la lleva.
+- visual: descripción VISUAL precisa para renderizar su flat-lay (NO se le muestra al usuario; es para el generador de imagen). Material/tejido, silueta/corte, largo, detalles (cuello, manga, pretina) y color. Inequívoca para no confundir prendas: un "Short de lino beige" → "short chino de lino beige, corte recto, a la rodilla, pretina con botón y trabillas"; distinto de un "Traje de baño". Una frase en español, sin marcas.`,
     messages: [
       {
         role: "user",
@@ -145,6 +146,7 @@ Devuelve "items" (la cápsula). Cada prenda:
                   temporada: { type: "string" },
                   prioridad: { type: "integer" },
                   porque: { type: "string" },
+                  visual: { type: "string" },
                 },
                 required: [
                   "nombre",
@@ -155,6 +157,7 @@ Devuelve "items" (la cápsula). Cada prenda:
                   "temporada",
                   "prioridad",
                   "porque",
+                  "visual",
                 ],
                 additionalProperties: false,
               },

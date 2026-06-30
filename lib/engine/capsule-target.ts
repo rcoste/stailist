@@ -113,6 +113,7 @@ Devuelve "items". Cada prenda:
 - temporada: "todo-el-año" | "calor" | "frio".
 - prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
 - porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
+- visual: descripción VISUAL precisa para renderizar su imagen flat-lay (NO se le muestra al usuario; es para el generador de imagen). Nombra material/tejido, silueta/corte, largo, detalles concretos (cuello, manga, pretina, botones) y color. Sé inequívoco para que no se confunda con otra prenda: ej. un short de calle vs uno de baño. Ej: "Short chino de lino azul marino, corte recto, largo a la rodilla, pretina con botón y trabillas, dos bolsillos laterales". Una frase, en español, sin marcas.
 
 Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones, aterrizada a SUS datos reales. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada cosa nombra algo concreto suyo (su estación, su trabajo, su silueta, su metal) o NO va.
 - "firma": UNA frase corta (voz de amiga, tuteo) que nombre su SELLO de estilo — un titular, no una oración larga. Envuelve la frase CLAVE (2-3 palabras) entre *asteriscos*. Ej: "Vas por un pulido versátil, con un *guiño edgy*."
@@ -146,6 +147,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
                   // sin minimum/maximum: el structured output no los soporta.
                   prioridad: { type: "integer" },
                   porque: { type: "string" },
+                  visual: { type: "string" },
                 },
                 required: [
                   "nombre",
@@ -156,6 +158,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
                   "temporada",
                   "prioridad",
                   "porque",
+                  "visual",
                 ],
                 additionalProperties: false,
               },
