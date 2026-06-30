@@ -413,7 +413,7 @@ export function Landing() {
                         <img src="/landing/clasico-loafers.png" alt="Loafers café" />
                       </div>
                       <div className={`${styles.t} ${styles.meta}`}>
-                        <b>Tu sábado, resuelto</b>
+                        <b>Tu día, resuelto</b>
                         <span>3 prendas</span>
                       </div>
                     </div>
