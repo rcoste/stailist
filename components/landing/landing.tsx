@@ -60,6 +60,22 @@ export function Landing() {
   // con set de hombre — hero, prop, gal-*; el resto vive en secciones ocultas).
   const img = (n: string) => (men ? `/landing/h/${n}.png` : `/landing/${n}.png`);
 
+  // Look "wow" del hero (ejemplo real), por género. La foto puesta vive en
+  // hero-worn y las 4 prendas en hero-p1..p4 (ambas gender-aware vía img()).
+  const heroLook = men
+    ? {
+        name: "Saco, pero ",
+        em: "sin esfuerzo",
+        why: "El saco sobre playera sube el look sin que parezca que te esforzaste. Jeans oscuros y loafers café lo aterrizan — para el día en que quieres verte puesto sin pensarlo de más.",
+        pieces: ["Saco azul marino", "Playera gris", "Jeans", "Loafers café"],
+      }
+    : {
+        name: "Print, ",
+        em: "con cabeza",
+        why: "El animal print manda, pero lo aterrizas con oliva y cafés: se ve atrevido sin gritar. Botas altas que alargan y una bolsa que amarra todo — para el día en que quieres que volteen a verte.",
+        pieces: ["Cardigan animal print", "Jeans oliva", "Botas", "Bolsa"],
+      };
+
   return (
     <div className={styles.page}>
       {/* Toggle Mujer/Hombre: el contenido se adapta al género. */}
@@ -118,33 +134,36 @@ export function Landing() {
                 <span className={styles.lbl}>Un ejemplo real</span>
                 <span className={styles.pill}>tu lunes, resuelto</span>
               </div>
+              <div className={styles.demoShot}>
+                <img src={img("hero-worn")} alt="El outfit puesto" />
+              </div>
               <div className={styles.tiles}>
                 <div className={styles.tile}>
                   <span className={styles.tnum}>01</span>
-                  <img src={img("hero-top")} alt="Saco" />
+                  <img src={img("hero-p1")} alt={heroLook.pieces[0]} />
                 </div>
                 <div className={styles.tile}>
                   <span className={styles.tnum}>02</span>
-                  <img src={img("hero-bottom")} alt="Pantalón" />
+                  <img src={img("hero-p2")} alt={heroLook.pieces[1]} />
                 </div>
                 <div className={styles.tile}>
                   <span className={styles.tnum}>03</span>
-                  <img src={img("hero-shoe")} alt="Zapatos" />
+                  <img src={img("hero-p3")} alt={heroLook.pieces[2]} />
+                </div>
+                <div className={styles.tile}>
+                  <span className={styles.tnum}>04</span>
+                  <img src={img("hero-p4")} alt={heroLook.pieces[3]} />
                 </div>
               </div>
               <div className={styles.demoWhy}>
                 <div className={styles.name}>
-                  Suelto y con <em>presencia</em>
+                  {heroLook.name}
+                  <em>{heroLook.em}</em>
                 </div>
-                <p>
-                  Gris sobre gris, todo en la misma familia: se ve pensadísimo
-                  sin esfuerzo. El pantalón ancho estiliza y unos zapatos en
-                  punta lo afilan sin tacón — para un lunes en el que quieres que
-                  te tomen en serio.
-                </p>
+                <p>{heroLook.why}</p>
               </div>
               <div className={styles.demoFoot}>
-                <span>Armado en 1 min 50 s · con 3 prendas que ya tenías</span>
+                <span>Armado en 1 min 50 s · con 4 prendas que ya tenías</span>
               </div>
             </div>
           </div>
