@@ -728,6 +728,35 @@
   object-position: 50% 50%;
   transition: opacity 0.55s ease;
 }
+/* Galería de estilos: strip horizontal de looks full-body (swipe en móvil). */
+.gallery {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.gallery::-webkit-scrollbar {
+  display: none;
+}
+.galItem {
+  flex: 0 0 auto;
+  width: 240px;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  border-radius: 8px;
+  background: var(--c-bg);
+  scroll-snap-align: start;
+}
+.galItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+}
 .tdBtn {
   position: absolute;
   left: 50%;

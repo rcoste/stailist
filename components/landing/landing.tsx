@@ -445,6 +445,26 @@ export function Landing() {
           </div>
         </section>
 
+        {/* GALERÍA DE ESTILOS */}
+        <section className={styles.blk}>
+          <div className={styles.wrap}>
+            <h2 className={styles.h2}>
+              Los looks que te armo, <em className={styles.s}>puestos en ti</em>.
+            </h2>
+            <p className={styles.lead}>
+              Una probadita: tu ropa y tu estilo, sin que tengas que
+              imaginártelo.
+            </p>
+            <div className={styles.gallery}>
+              {["gal-1", "gal-2", "gal-3", "gal-4", "gal-5"].map((g) => (
+                <div key={g} className={styles.galItem}>
+                  <img src={`/landing/${g}.png`} alt="" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* OBJECIÓN */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
