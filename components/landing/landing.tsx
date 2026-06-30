@@ -2,9 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 // Landing pública (deslogueados) — v3 "Gen-Z monocromo". Toggle Mujer/Hombre:
 // las imágenes de hombre viven en public/landing/h/ con los mismos nombres; el
-// helper img() escoge la carpeta según el género. Fase 1: hero + paso 4 + galería
-// tienen set de hombre; las secciones con foto de persona de mujer (swipes,
-// sección 04, cápsula) se ocultan en modo hombre hasta tener su set (Fase 2).
+// helper img() escoge la carpeta según el género. Set completo para ambos géneros
+// (hero, pasos, paso 4, galería, sección 04, cápsula, viaje). Modelo de hombre M-1
+// = el modelo consistente de public/looks/*-hombre.
 import { useEffect, useState } from "react";
 import { WaitlistForm } from "./waitlist-form";
 import { TryDemo } from "./try-demo";
@@ -191,34 +191,32 @@ export function Landing() {
                   </p>
                   <span className={styles.once}>Una sola vez · ~90 s</span>
                 </div>
-                {!men ? (
-                  <div className={styles.stepVisual}>
-                    <div className={styles.swipes} aria-hidden="true">
-                      <div className={styles.swipe}>
-                        <img src="/landing/swipe-si-1.png" alt="" />
-                        <span className={`${styles.mk} ${styles.y}`}>sí</span>
-                      </div>
-                      <div className={styles.swipe}>
-                        <img src="/landing/swipe-si-2.png" alt="" />
-                        <span className={`${styles.mk} ${styles.y}`}>sí</span>
-                      </div>
-                      <div className={styles.swipe}>
-                        <img src="/landing/swipe-no.png" alt="" />
-                        <span className={`${styles.mk} ${styles.n}`}>no</span>
-                      </div>
+                <div className={styles.stepVisual}>
+                  <div className={styles.swipes} aria-hidden="true">
+                    <div className={styles.swipe}>
+                      <img src={img("swipe-si-1")} alt="" />
+                      <span className={`${styles.mk} ${styles.y}`}>sí</span>
                     </div>
-                    <div className={styles.palette} aria-hidden="true">
-                      <span className={`${styles.sw} ${styles.sw1}`} />
-                      <span className={`${styles.sw} ${styles.sw2}`} />
-                      <span className={`${styles.sw} ${styles.sw3}`} />
-                      <span className={`${styles.sw} ${styles.sw4}`} />
-                      <span className={`${styles.sw} ${styles.sw5}`} />
-                      <span className={styles.cap}>
-                        <b>Tu paleta</b> · los tonos que te encienden la cara
-                      </span>
+                    <div className={styles.swipe}>
+                      <img src={img("swipe-si-2")} alt="" />
+                      <span className={`${styles.mk} ${styles.y}`}>sí</span>
+                    </div>
+                    <div className={styles.swipe}>
+                      <img src={img("swipe-no")} alt="" />
+                      <span className={`${styles.mk} ${styles.n}`}>no</span>
                     </div>
                   </div>
-                ) : null}
+                  <div className={styles.palette} aria-hidden="true">
+                    <span className={`${styles.sw} ${styles.sw1}`} />
+                    <span className={`${styles.sw} ${styles.sw2}`} />
+                    <span className={`${styles.sw} ${styles.sw3}`} />
+                    <span className={`${styles.sw} ${styles.sw4}`} />
+                    <span className={`${styles.sw} ${styles.sw5}`} />
+                    <span className={styles.cap}>
+                      <b>Tu paleta</b> · los tonos que te encienden la cara
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* 2 · Tu clóset: marcas lo que ya tienes */}
@@ -232,41 +230,39 @@ export function Landing() {
                     prenda especial.
                   </p>
                 </div>
-                {!men ? (
-                  <div className={styles.stepVisual}>
-                    <div className={styles.closet} aria-hidden="true">
-                      <div className={styles.closetItem}>
-                        <img src="/landing/camiseta-blanca.png" alt="" />
-                        <span className={styles.closetCheck}>&#10003;</span>
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/hero-top.png" alt="" />
-                        <span className={styles.closetCheck}>&#10003;</span>
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/cap-top.png" alt="" />
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/maleta-flat-1.png" alt="" />
-                        <span className={styles.closetCheck}>&#10003;</span>
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/jeans-claros.png" alt="" />
-                        <span className={styles.closetCheck}>&#10003;</span>
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/cap-bottom.png" alt="" />
-                        <span className={styles.closetCheck}>&#10003;</span>
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/tenis-blancos-urbanos.png" alt="" />
-                      </div>
-                      <div className={styles.closetItem}>
-                        <img src="/landing/cap-shoe.png" alt="" />
-                      </div>
+                <div className={styles.stepVisual}>
+                  <div className={styles.closet} aria-hidden="true">
+                    <div className={styles.closetItem}>
+                      <img src={img("camiseta-blanca")} alt="" />
+                      <span className={styles.closetCheck}>&#10003;</span>
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("hero-top")} alt="" />
+                      <span className={styles.closetCheck}>&#10003;</span>
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("cap-top")} alt="" />
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("maleta-flat-1")} alt="" />
+                      <span className={styles.closetCheck}>&#10003;</span>
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("jeans-claros")} alt="" />
+                      <span className={styles.closetCheck}>&#10003;</span>
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("cap-bottom")} alt="" />
+                      <span className={styles.closetCheck}>&#10003;</span>
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("tenis-blancos-urbanos")} alt="" />
+                    </div>
+                    <div className={styles.closetItem}>
+                      <img src={img("cap-shoe")} alt="" />
                     </div>
                   </div>
-                ) : null}
+                </div>
               </div>
 
               {/* 3 · Qué necesitas hoy: chips de ocasión */}
@@ -384,8 +380,7 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 04 · TRY-ON — oculto en modo hombre hasta tener su set (Fase 2) */}
-        {!men ? (
+        {/* 04 · TRY-ON */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
@@ -431,18 +426,15 @@ export function Landing() {
                     <div className={styles.grid2}>
                       <div className={styles.t}>
                         <span className={styles.n}>01</span>
-                        <img src="/landing/clasico-abrigo.png" alt="Abrigo camel" />
+                        <img src={img("clasico-abrigo")} alt="Abrigo" />
                       </div>
                       <div className={styles.t}>
                         <span className={styles.n}>02</span>
-                        <img
-                          src="/landing/clasico-pantalon.png"
-                          alt="Pantalón crema"
-                        />
+                        <img src={img("clasico-pantalon")} alt="Pantalón" />
                       </div>
                       <div className={styles.t}>
                         <span className={styles.n}>03</span>
-                        <img src="/landing/clasico-loafers.png" alt="Loafers café" />
+                        <img src={img("clasico-loafers")} alt="Zapatos" />
                       </div>
                       <div className={`${styles.t} ${styles.meta}`}>
                         <b>Tu día, resuelto</b>
@@ -461,10 +453,7 @@ export function Landing() {
                   <div className={`${styles.s2card} ${styles.p2card}`}>
                     <span className={styles.tag}>probado en ti</span>
                     <div className={styles.p2fill}>
-                      <img
-                        src="/landing/en-ti-clasico.png"
-                        alt="El outfit puesto en ti"
-                      />
+                      <img src={img("en-ti-clasico")} alt="El outfit puesto en ti" />
                     </div>
                     <div className={styles.p2foot}>
                       <b>Así te queda</b>
@@ -476,7 +465,6 @@ export function Landing() {
             </div>
           </div>
         </section>
-        ) : null}
 
         {/* GALERÍA DE ESTILOS */}
         <section className={styles.blk}>
@@ -528,9 +516,6 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 05 + 06 — ocultas en modo hombre hasta tener su set (Fase 2) */}
-        {!men ? (
-          <>
         {/* 05 · CÁPSULA */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
@@ -584,13 +569,13 @@ export function Landing() {
                 <div className={styles.capsuleVis} aria-hidden="true">
                   <div className={styles.grid}>
                     <div className={styles.cell}>
-                      <img src="/landing/cap-top.png" alt="" />
+                      <img src={img("cap-top")} alt="" />
                     </div>
                     <div className={styles.cell}>
-                      <img src="/landing/cap-bottom.png" alt="" />
+                      <img src={img("cap-bottom")} alt="" />
                     </div>
                     <div className={styles.cell}>
-                      <img src="/landing/cap-shoe.png" alt="" />
+                      <img src={img("cap-shoe")} alt="" />
                     </div>
                     <div className={`${styles.cell} ${styles.count}`}>
                       <span className={styles.num}>12</span>
@@ -669,27 +654,19 @@ export function Landing() {
                     </div>
                     <div className={styles.caseGrid}>
                       <div className={styles.pk}>
-                        <img src="/landing/maleta-flat-1.png" alt="" />
+                        <img src={img("maleta-flat-1")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img src="/landing/maleta-flat-2.png" alt="" />
+                        <img src={img("maleta-flat-2")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img src="/landing/maleta-flat-3.png" alt="" />
+                        <img src={img("maleta-flat-3")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img
-                          className={styles.worn}
-                          src="/landing/maleta-look-1.png"
-                          alt=""
-                        />
+                        <img className={styles.worn} src={img("maleta-look-1")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img
-                          className={styles.worn}
-                          src="/landing/maleta-look-2.png"
-                          alt=""
-                        />
+                        <img className={styles.worn} src={img("maleta-look-2")} alt="" />
                       </div>
                       <div className={`${styles.pk} ${styles.cnt}`}>
                         <span className={styles.num}>6</span>
@@ -708,8 +685,6 @@ export function Landing() {
             </div>
           </div>
         </section>
-          </>
-        ) : null}
 
         {/* 07 · Y SE QUEDA CONTIGO */}
         <section className={styles.blk}>
