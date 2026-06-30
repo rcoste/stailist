@@ -46,10 +46,12 @@ export async function saveLifestyle(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume")
+    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference")
     .eq("id", user.id)
     .single();
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  const styleRef =
+    (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
 
   let target: CapsuleTarget;
   try {
@@ -63,7 +65,9 @@ export async function saveLifestyle(
       flow: (profile?.palette_flow as Season | null) ?? null,
       build: (profile?.body_build as Build | null) ?? null,
       volume: (profile?.body_volume as Volume | null) ?? null,
+      styleReference: styleRef,
     });
+    target.styleSig = styleRef; // firma del estilo con el que se generó
   } catch {
     await supabase
       .from("profiles")
@@ -161,6 +165,64 @@ export async function recalcularMatch(): Promise<void> {
   } catch {
     // swallow — el usuario puede reintentar con el botón.
   }
+  revalidatePath("/closet");
+}
+
+// Regenera la cápsula IDEAL con el perfil actual (p.ej. tras cambiar el estilo de
+// referencia). Reusa las respuestas de vida guardadas; vuelve a calcular el match.
+// Lo dispara el banner "tu estilo cambió" — el usuario decide (no es automático).
+export async function regenerateCapsuleTarget(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select(
+      "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference"
+    )
+    .eq("id", user.id)
+    .single();
+  const answers = (profile?.lifestyle as LifestyleAnswers | null) ?? null;
+  if (!answers) return; // sin assessment no hay cápsula que regenerar
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  const styleRef =
+    (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
+
+  let target: CapsuleTarget;
+  try {
+    target = await generateCapsuleTarget({
+      answers,
+      gender,
+      tasteTags: (profile?.taste_tags ?? []) as string[],
+      archetype:
+        (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
+      season: (profile?.palette_season as Season | null) ?? null,
+      flow: (profile?.palette_flow as Season | null) ?? null,
+      build: (profile?.body_build as Build | null) ?? null,
+      volume: (profile?.body_volume as Volume | null) ?? null,
+      styleReference: styleRef,
+    });
+    target.styleSig = styleRef;
+  } catch {
+    return;
+  }
+
+  let match = null;
+  try {
+    match = await matchCapsule(target, await loadClosetLite(supabase, user.id), gender);
+  } catch {
+    match = null;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ capsule_target: target, capsule_match: match, capsule_overrides: null })
+    .eq("id", user.id);
+  if (error) return;
+  revalidatePath("/closet/capsula");
   revalidatePath("/closet");
 }
 
