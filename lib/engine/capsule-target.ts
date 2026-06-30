@@ -20,6 +20,7 @@ export type CapsuleInputs = {
   flow: Season | null;
   build: Build | null;
   volume: Volume | null;
+  styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
 };
 
 // CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
@@ -63,6 +64,9 @@ export async function generateCapsuleTarget(
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
+  const refTxt = inputs.styleReference
+    ? `\nESTILO DE REFERENCIA que le encanta (inspira el VIBE y las siluetas de la cápsula, NO los colores — la colorimetría de abajo manda el color): ${inputs.styleReference}. Empuja la cápsula hacia ese aire sin copiarlo literal.`
+    : "";
   const generoTxt =
     inputs.gender === "hombre"
       ? "La persona es HOMBRE: TODA la cápsula es ropa de hombre. Jamás propongas prendas de mujer (faldas, vestidos, blusas, tacones, etc.)."
@@ -119,7 +123,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
     messages: [
       {
         role: "user",
-        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n\nDefine su cápsula ideal (items).`,
+        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto: ${tags}${refTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}\n\nDefine su cápsula ideal (items).`,
       },
     ],
     output_config: {

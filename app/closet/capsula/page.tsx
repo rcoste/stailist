@@ -9,7 +9,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleView, closetSignature } from "@/lib/capsule";
 import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
-import { recalcularMatch } from "./actions";
+import { recalcularMatch, regenerateCapsuleTarget } from "./actions";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
@@ -27,6 +27,9 @@ export default async function CapsulaPage() {
     loadClosetImageMap(supabase, profile.id),
   ]);
   const stale = !match || match.signature !== closetSignature(closet);
+  // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
+  const styleStale =
+    (profile.style_reference?.summary ?? null) !== ((target.styleSig as string | null) ?? null);
   const view = match ? capsuleView(target, match, profile.capsule_overrides) : null;
   // Estado completo: match al día y 17/17 cubiertas → pantalla de mantenimiento.
   const done = !!view && !stale && view.coveragePct >= 100;
@@ -55,6 +58,18 @@ export default async function CapsulaPage() {
             pilares={target.pilares}
             resumen={target.resumen}
           />
+        ) : null}
+
+        {styleStale ? (
+          <form action={regenerateCapsuleTarget}>
+            <button
+              type="submit"
+              className="flex w-full items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
+            >
+              <Icon name="destello" size={16} />
+              Cambiaste tu estilo de referencia — actualiza tu cápsula
+            </button>
+          </form>
         ) : null}
 
         {done && view ? (

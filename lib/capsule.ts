@@ -148,6 +148,9 @@ export type CapsuleTarget = {
   subline?: string;
   pilares?: CapsulePilar[];
   resumen?: string; // legado: párrafo de cápsulas viejas (fallback de render)
+  // Resumen del estilo de referencia con el que se generó (o null si ninguno).
+  // Si el del perfil difiere → la cápsula quedó "outdated" y se ofrece regenerar.
+  styleSig?: string | null;
 };
 
 // --- Capa 2: el match contra el clóset ------------------------------------
