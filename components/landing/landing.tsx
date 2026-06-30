@@ -399,21 +399,18 @@ export function Landing() {
                     <div className={styles.grid2}>
                       <div className={styles.t}>
                         <span className={styles.n}>01</span>
-                        <img
-                          src="/landing/camiseta-blanca.png"
-                          alt="Camiseta blanca"
-                        />
+                        <img src="/landing/clasico-abrigo.png" alt="Abrigo camel" />
                       </div>
                       <div className={styles.t}>
                         <span className={styles.n}>02</span>
-                        <img src="/landing/jeans-claros.png" alt="Jeans claros" />
+                        <img
+                          src="/landing/clasico-pantalon.png"
+                          alt="Pantalón crema"
+                        />
                       </div>
                       <div className={styles.t}>
                         <span className={styles.n}>03</span>
-                        <img
-                          src="/landing/tenis-blancos-urbanos.png"
-                          alt="Tenis blancos"
-                        />
+                        <img src="/landing/clasico-loafers.png" alt="Loafers café" />
                       </div>
                       <div className={`${styles.t} ${styles.meta}`}>
                         <b>Tu sábado, resuelto</b>
@@ -433,7 +430,7 @@ export function Landing() {
                     <span className={styles.tag}>probado en ti</span>
                     <div className={styles.p2fill}>
                       <img
-                        src="/landing/look-casual.png"
+                        src="/landing/en-ti-clasico.png"
                         alt="El outfit puesto en ti"
                       />
                     </div>
