@@ -56,6 +56,42 @@ const TEMPORADAS: { v: string; l: string }[] = [
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+// Sub-agrupación VISUAL dentro de una categoría (solo la vista del clóset; no toca
+// el motor). "Abrigo" mete cosas de uso distinto (chamarra, sobrecamisa, chaleco,
+// abrigo) — al filtrar la categoría, las separamos por tipo leyendo el nombre. Lo
+// que no encaja cae al catch-all (la etiqueta de la propia categoría). Ampliable a
+// otras categorías agregando entradas aquí.
+const SUBGROUPS: Record<string, { label: string; test: (n: string) => boolean }[]> = {
+  abrigo: [
+    { label: "Chamarras", test: (n) => /mezclilla|denim|bomber|chamarra|cazadora|biker|moto/.test(n) },
+    { label: "Sobrecamisas", test: (n) => /sobrecamisa|overshirt|shacket|camisola/.test(n) },
+    { label: "Chalecos", test: (n) => /chaleco|gilet/.test(n) },
+  ],
+};
+
+// Parte las prendas de una categoría en subgrupos (en orden; catch-all al final con
+// la etiqueta de la categoría). Devuelve null si la categoría no sub-agrupa o si al
+// final todo cayó en un solo grupo (no vale la pena partir).
+function subgroupsFor(
+  cat: string,
+  prendas: ClosetItem[],
+  catLabel: string
+): { label: string; prendas: ClosetItem[] }[] | null {
+  const defs = SUBGROUPS[cat];
+  if (!defs) return null;
+  const rest = [...prendas];
+  const out: { label: string; prendas: ClosetItem[] }[] = [];
+  for (const d of defs) {
+    const hit = rest.filter((p) => d.test(norm(p.nombre)));
+    if (hit.length) {
+      out.push({ label: d.label, prendas: hit });
+      for (const p of hit) rest.splice(rest.indexOf(p), 1);
+    }
+  }
+  if (rest.length) out.push({ label: catLabel, prendas: rest });
+  return out.length > 1 ? out : null;
+}
+
 // Chip de categoría: cantos crispados (radius-sm, NO pill). Activo = acento.
 function Chip({
   label,
@@ -368,18 +404,10 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
           </p>
         </div>
       ) : (
-        grupos.map((g) => (
-          <div key={g.key} className="flex flex-col gap-3">
-            {!activeFilter ? (
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                  {g.label}
-                </h2>
-                <span className="tabular text-[11px] text-muted">{g.prendas.length}</span>
-              </div>
-            ) : null}
+        grupos.map((g) => {
+          const tiles = (prendas: ClosetItem[]) => (
             <ul className="grid grid-cols-3 gap-[11px]">
-              {g.prendas.map((p) => (
+              {prendas.map((p) => (
                 <li key={p.id}>
                   <Tile
                     item={p}
@@ -390,8 +418,36 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
                 </li>
               ))}
             </ul>
-          </div>
-        ))
+          );
+          // Al filtrar una categoría con subgrupos (p. ej. Abrigos), la partimos por
+          // tipo. En "Todos" se mantiene el grid plano por categoría.
+          const subs = activeFilter ? subgroupsFor(g.key, g.prendas, g.label) : null;
+          return (
+            <div key={g.key} className="flex flex-col gap-3">
+              {!activeFilter ? (
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                    {g.label}
+                  </h2>
+                  <span className="tabular text-[11px] text-muted">{g.prendas.length}</span>
+                </div>
+              ) : null}
+              {subs
+                ? subs.map((s) => (
+                    <div key={s.label} className="flex flex-col gap-2.5">
+                      <div className="flex items-baseline justify-between">
+                        <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted">
+                          {s.label}
+                        </h3>
+                        <span className="tabular text-[10.5px] text-muted">{s.prendas.length}</span>
+                      </div>
+                      {tiles(s.prendas)}
+                    </div>
+                  ))
+                : tiles(g.prendas)}
+            </div>
+          );
+        })
       )}
 
       {filterOpen ? (
