@@ -115,15 +115,17 @@ export function LookRequest({
   // Clóset para el picker de ancla (paso clima). Vacío = no se muestra el picker.
   closet?: ClosetPick[];
 }) {
-  const hasDefaultObj = !!(
-    defaultObjective && OCASION_KEYS.has(defaultObjective)
-  );
+  // "viaje" (la opción "Aeropuerto" del onboarding) NO es una ocasión del wizard; se
+  // trata como "diario" (look cómodo del día) para NO re-preguntar la ocasión al armar
+  // el primer look — si no, el skip fallaba y volvía a pedir la ocasión ya elegida.
+  const normObjective = defaultObjective === "viaje" ? "diario" : defaultObjective;
+  const hasDefaultObj = !!(normObjective && OCASION_KEYS.has(normObjective));
   const skip = !!skipObjective && hasDefaultObj;
   const firstStep: 1 | 2 = skip ? 2 : 1;
   const totalSteps = skip ? 2 : 3;
   const [step, setStep] = useState<1 | 2 | 3>(firstStep);
   const [objective, setObjective] = useState<string | null>(
-    hasDefaultObj ? defaultObjective : null
+    hasDefaultObj ? normObjective : null
   );
   const [openText, setOpenText] = useState("");
   const [momento, setMomento] = useState<"dia" | "noche">("dia");
