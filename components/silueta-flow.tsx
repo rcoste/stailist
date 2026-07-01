@@ -84,7 +84,7 @@ export function SiluetaFlow({
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">Paso 1 de 2</span>
-          <h2 className="editorial text-2xl text-ink">¿Cuál se parece a tu cuerpo?</h2>
+          <h2 className="text-2xl font-semibold text-ink">¿Cuál se parece a tu cuerpo?</h2>
           <p className="text-sm text-muted">
             Para mostrarte con un cuerpo como el tuyo, no una modelo. Es opcional.
           </p>
@@ -125,7 +125,7 @@ export function SiluetaFlow({
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">Paso 2 de 2</span>
-          <h2 className="editorial text-2xl text-ink">¿Dónde sientes que cargas más?</h2>
+          <h2 className="text-2xl font-semibold text-ink">¿Dónde sientes que cargas más?</h2>
           <p className="text-sm text-muted">Sobre tu cuerpo, marca dónde notas más.</p>
         </div>
         {saving ? (
@@ -170,7 +170,7 @@ export function SiluetaFlow({
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
         <span className="text-xs font-medium uppercase tracking-wide text-muted">Tu silueta</span>
-        <h2 className="editorial text-2xl text-ink">Lo que te equilibra</h2>
+        <h2 className="text-2xl font-semibold text-ink">Lo que te equilibra</h2>
       </div>
       <div className="flex gap-4 rounded-xl border border-line bg-surface p-4">
         {img ? (

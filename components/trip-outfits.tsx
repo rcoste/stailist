@@ -258,7 +258,7 @@ export function TripOutfits({
                 <Heart on={favs.has(i)} />
               </button>
             </div>
-            <h3 className="display mt-1 text-[18px] font-semibold leading-tight text-ink">
+            <h3 className="mt-1 text-[18px] font-semibold leading-tight text-ink">
               {o.titulo}
             </h3>
             <div className="my-3 flex gap-[7px]">

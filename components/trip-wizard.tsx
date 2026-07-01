@@ -270,7 +270,7 @@ export function TripWizard() {
             </div>
           </div>
           <p className="mt-[18px] text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{meta}</p>
-          <h1 className="mt-[7px] display text-[26px] font-semibold leading-[1.12] tracking-[-0.01em] text-ink">
+          <h1 className="mt-[7px] text-[26px] font-semibold leading-[1.12] tracking-[-0.01em] text-ink">
             {question}
           </h1>
           {help ? <p className="mt-2 text-[12.5px] leading-snug text-muted">{help}</p> : null}
@@ -582,7 +582,7 @@ function ParadaSheet({
 
         <div className="mb-3.5 flex items-start justify-between gap-2.5">
           <div className="min-w-0">
-            <h2 className="display text-[21px] font-semibold leading-tight text-ink">
+            <h2 className="text-[21px] font-semibold leading-tight text-ink">
               {isFirst ? "tu primera parada" : `parada ${index + 1}`}
             </h2>
             <p className="text-xs text-muted">

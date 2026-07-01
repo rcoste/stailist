@@ -32,7 +32,7 @@ export function SkipReasons({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-3.5 mt-1.5 h-1 w-9 rounded-full bg-line" />
-        <h3 className="mx-1 text-[19px] font-semibold text-ink display">¿Qué ajusto?</h3>
+        <h3 className="mx-1 text-[19px] font-semibold text-ink">¿Qué ajusto?</h3>
         <p className="mx-1 mb-3.5 text-sm text-muted">Opcional — me ayuda a darte uno mejor.</p>
         <div className="flex flex-wrap gap-2">
           {REASONS.map((r) => (
