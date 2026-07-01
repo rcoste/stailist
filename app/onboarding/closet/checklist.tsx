@@ -26,10 +26,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   calzado: "Zapatos",
 };
 
-// Clóset v3 · tratamiento "iluminar" (B1): chips de categoría como filtro + grid
-// 2-col. Lo seleccionado va a TODO COLOR con check tinta; lo no seleccionado se
-// apaga (grayscale + opacidad). La pantalla se lee de un vistazo: lo encendido
-// es lo que tienes. (Sin borde negro — se probó y se ve mal.)
+// Clóset v3: chips de categoría como filtro + grid 2-col. Las prendas se ven
+// SIEMPRE a todo color para poder evaluar imagen y color antes de elegir; la
+// selección se marca con el check tinta + un marco fino (ring interior) para
+// que la distinción sea obvia sin apagar las no seleccionadas.
 export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   // Categorías presentes, en orden; las no contempladas van al final.
   const known = new Set(CATEGORY_ORDER);
@@ -141,7 +141,9 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
               type="button"
               onClick={() => toggle(item.id)}
               aria-pressed={on}
-              className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg text-left focus-visible:outline-none"
+              className={`relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg text-left transition-shadow duration-200 focus-visible:outline-none ${
+                on ? "ring-2 ring-inset ring-accent" : ""
+              }`}
             >
               {item.image_path ? (
                 <Image
@@ -149,17 +151,12 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
                   alt={item.name}
                   fill
                   sizes="(max-width: 430px) 50vw, 215px"
-                  className={`object-cover transition-[filter] duration-200 ${
-                    on ? "" : "[filter:grayscale(0.85)_opacity(0.55)]"
-                  }`}
+                  className="object-cover"
                 />
               ) : (
                 <span
                   className="absolute inset-0"
-                  style={{
-                    backgroundColor: item.attrs.color_hex ?? "#E5E1DD",
-                    filter: on ? undefined : "grayscale(0.85) opacity(0.55)",
-                  }}
+                  style={{ backgroundColor: item.attrs.color_hex ?? "#E5E1DD" }}
                   aria-hidden
                 />
               )}

@@ -50,6 +50,16 @@ export default async function CapsulaPage() {
     if (path) catalogImages[fk] = catalogPublicUrl(supabase, path);
   }
 
+  // Prendas de la cápsula ya guardadas en la wishlist (para el estado del botón).
+  const { data: wishRows } = await supabase
+    .from("wishlist_items")
+    .select("capsule_key")
+    .eq("user_id", profile.id)
+    .eq("source", "capsule");
+  const savedWishKeys = (wishRows ?? [])
+    .map((r) => r.capsule_key as string | null)
+    .filter((k): k is string => !!k);
+
   const stale = !match || match.signature !== closetSignature(closet);
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
@@ -117,6 +127,7 @@ export default async function CapsulaPage() {
               overrides={profile.capsule_overrides}
               images={images}
               catalogImages={catalogImages}
+              savedWishKeys={savedWishKeys}
               userId={profile.id}
             />
           </>

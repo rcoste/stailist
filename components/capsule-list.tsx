@@ -9,6 +9,15 @@ import { OwnedPhotoBanner } from "@/components/owned-photo-banner";
 import { faltaImage, familiaToHex, faltaKey } from "@/lib/capsule-images";
 import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
 import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
+import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
+import {
+  IdealTileInner,
+  SelCheck,
+  idealArgs,
+  isLightHex,
+  useIdealRender,
+  type RenderArgs,
+} from "@/components/ideal-tile";
 import {
   capsuleRows,
   type CapsuleDecision,
@@ -28,6 +37,7 @@ export function CapsuleList({
   overrides,
   images,
   catalogImages = {},
+  savedWishKeys = [],
   userId,
 }: {
   target: CapsuleTarget;
@@ -36,6 +46,8 @@ export function CapsuleList({
   images: Record<string, string>;
   // Imágenes de la biblioteca compartida (combos ideales ya rendereados), por faltaKey.
   catalogImages?: Record<string, string>;
+  // faltaKeys de prendas de cápsula ya guardadas en la wishlist (para el estado del botón).
+  savedWishKeys?: string[];
   userId: string;
 }) {
   const [optOverrides, applyOpt] = useOptimistic(
@@ -85,6 +97,36 @@ export function CapsuleList({
     });
   };
 
+  // Wishlist in-situ: mandar/quitar una prenda que te falta de "lo que deberías
+  // comprar", sin sacarla de su sección. Optimista + toast al guardar. La verdad
+  // vive en el server (dedup por faltaKey); al recargar, savedWishKeys se refresca.
+  const [wishSaved, setWishSaved] = useState<Set<string>>(() => new Set(savedWishKeys));
+  const [toast, setToast] = useState<string | null>(null);
+
+  const toggleWish = (row: CapsuleRow) => {
+    const key = faltaKey(row.item);
+    const willSave = !wishSaved.has(key);
+    setWishSaved((s) => {
+      const n = new Set(s);
+      if (willSave) n.add(key);
+      else n.delete(key);
+      return n;
+    });
+    if (willSave) {
+      setToast("Guardada en tu wishlist");
+      setTimeout(() => setToast(null), 2200);
+    }
+    startTransition(async () => {
+      await toggleWishlistFromCapsule({
+        capsuleKey: key,
+        name: row.item.nombre,
+        colorHex: familiaToHex(row.item.colorFamilia),
+        imageUrl: rowImage(row, images, catalogImages),
+        porque: row.item.porque,
+      });
+    });
+  };
+
   const rows = capsuleRows(target, match, optOverrides);
   const total = rows.length;
   const have = rows.filter((r) => r.covered).length;
@@ -112,6 +154,15 @@ export function CapsuleList({
 
   return (
     <div className="flex flex-col gap-7">
+      {toast ? (
+        <div
+          role="status"
+          className="fixed bottom-[86px] left-1/2 z-50 -translate-x-1/2 rounded-sm bg-ink px-3.5 py-2 text-[12.5px] font-medium text-on-accent shadow-[var(--shadow-hairline)]"
+        >
+          {toast}
+        </div>
+      ) : null}
+
       {lastOwned ? (
         <OwnedPhotoBanner
           itemId={lastOwned.itemId}
@@ -187,18 +238,16 @@ export function CapsuleList({
         <Section title="Lo que más te suma" count={falta.length}>
           <ul className="flex flex-col gap-2.5">
             {falta.map((r) => (
-              <BigCard
+              <SumaCard
                 key={rowKey(r)}
                 row={r}
                 images={images}
                 catalogImages={catalogImages}
                 unlock={unlockOf(r)}
-                right={
-                  <OwnControl
-                    busy={ownBusy.has(r.index)}
-                    onOwn={() => markOwned(r.index, r.item.nombre)}
-                  />
-                }
+                ownBusy={ownBusy.has(r.index)}
+                onOwn={() => markOwned(r.index, r.item.nombre)}
+                wishSaved={wishSaved.has(faltaKey(r.item))}
+                onToggleWish={() => toggleWish(r)}
               />
             ))}
           </ul>
@@ -215,6 +264,10 @@ export function CapsuleList({
                 images={images}
                 catalogImages={catalogImages}
                 onDecide={decide}
+                ownBusy={ownBusy.has(r.index)}
+                onOwn={() => markOwned(r.index, r.item.nombre)}
+                wishSaved={wishSaved.has(faltaKey(r.item))}
+                onToggleWish={() => toggleWish(r)}
               />
             ))}
           </ul>
@@ -246,26 +299,6 @@ function rowImage(
   }
   return null;
 }
-
-// ¿El color es claro? (para elegir icono oscuro/claro encima del swatch).
-function isLightHex(hex: string): boolean {
-  const h = hex.replace("#", "");
-  if (h.length < 6) return true;
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return 0.299 * r + 0.587 * g + 0.114 * b > 150;
-}
-
-type RenderArgs = {
-  tipo: string;
-  colorFamilia: string;
-  nombre: string;
-  categoria: string;
-  formalidad?: string | null;
-  temporada?: string | null;
-  visual?: string | null;
-};
 
 // Miniatura de prenda con fallback DIGNO: si no hay imagen, un swatch del color de
 // la prenda + un gancho (nunca un hueco vacío). Si recibe `renderArgs` (prenda
@@ -410,19 +443,108 @@ function BigCard({
   );
 }
 
-// Control "Ya la tengo" para una prenda faltante: la suma al clóset y la cuenta
-// como cubierta. Al resolver, la prenda se reubica en "Ya lo tienes".
-function OwnControl({ busy, onOwn }: { busy: boolean; onOwn: () => void }) {
+// Tarjeta grande para "lo que más te suma" (y para el estado "quiero la sugerida"
+// de Decide): tile grande tappable que GENERA la imagen enfrente + cuerpo con
+// nombre/porqué y la fila de acciones "ya la tengo" · "wishlist".
+function SumaCard({
+  row,
+  images,
+  catalogImages,
+  unlock,
+  ownBusy,
+  onOwn,
+  wishSaved,
+  onToggleWish,
+  reject,
+  onChange,
+}: {
+  row: CapsuleRow;
+  images: Record<string, string>;
+  catalogImages: Record<string, string>;
+  unlock?: number;
+  ownBusy: boolean;
+  onOwn: () => void;
+  wishSaved: boolean;
+  onToggleWish: () => void;
+  reject?: boolean;
+  onChange?: () => void;
+}) {
+  const { item } = row;
+  const render = useIdealRender(idealArgs(item), rowImage(row, images, catalogImages));
+  const onTapTile = () => {
+    if (render.state === "idle") void render.start();
+  };
   return (
-    <button
-      type="button"
-      onClick={onOwn}
-      disabled={busy}
-      className="flex min-h-9 items-center gap-1.5 rounded-sm border border-line bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50"
-    >
-      {busy ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="mas" size={14} strokeWidth={2} />}
-      {busy ? "agregando…" : "ya la tengo"}
-    </button>
+    <li className="relative flex overflow-hidden rounded-lg border border-line bg-surface">
+      <button
+        type="button"
+        onClick={onTapTile}
+        className="relative flex min-h-[148px] w-[118px] shrink-0 items-center justify-center self-stretch overflow-hidden border-r border-line"
+      >
+        <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="118px" />
+        {render.generated ? (
+          <span className="absolute left-1.5 top-1.5 z-30 rounded-sm bg-white/90 px-1.5 py-[2px] text-[8.5px] font-bold uppercase tracking-wide text-ink">
+            generada
+          </span>
+        ) : null}
+      </button>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-[15px] pb-[13px] pt-[14px]">
+        {reject ? (
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-[10.5px] leading-snug text-muted">
+              preferiste la sugerida — sigue en lo que falta
+            </span>
+            {onChange ? (
+              <button
+                type="button"
+                onClick={onChange}
+                className="shrink-0 text-[11px] font-medium text-accent underline underline-offset-2"
+              >
+                cambiar
+              </button>
+            ) : null}
+          </div>
+        ) : unlock && unlock > 0 ? (
+          <span className="flex w-fit items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-[2px] text-[10.5px] font-semibold text-accent">
+            <Icon name="destello" size={11} /> desbloquea ~{unlock} looks
+          </span>
+        ) : null}
+        <span className="text-[15px] font-semibold leading-tight text-ink">{item.nombre}</span>
+        <span className="text-[11.5px] leading-snug text-muted">{item.porque}</span>
+
+        <div className="mt-auto flex items-center gap-[9px]">
+          <button
+            type="button"
+            onClick={onOwn}
+            disabled={ownBusy}
+            className={`flex min-h-[38px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border bg-surface px-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50 ${
+              render.state === "ready" ? "border-accent" : "border-line"
+            }`}
+          >
+            {ownBusy ? (
+              <Spinner className="h-3.5 w-3.5" />
+            ) : (
+              <Icon name="mas" size={14} strokeWidth={2} />
+            )}
+            {ownBusy ? "agregando…" : "ya la tengo"}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleWish}
+            aria-pressed={wishSaved}
+            className={`flex min-h-[38px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2.5 text-[13px] font-semibold transition-colors ${
+              wishSaved
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-line bg-surface text-ink hover:border-accent"
+            }`}
+          >
+            <Icon name={wishSaved ? "bookmarkFill" : "bookmark"} size={14} />
+            {wishSaved ? "en wishlist" : "wishlist"}
+          </button>
+        </div>
+      </div>
+    </li>
   );
 }
 
@@ -463,21 +585,44 @@ function Rail({
   );
 }
 
-// Las "parecido": se deciden en su lugar. Sin decidir → la card con la ideal vs lo
-// tuyo y los botones Sí/No. Decidida → estado marcado con "cambiar" para reabrir.
+// Las "parecido": se deciden en su lugar con "elige tocando" (adiós al cruce de
+// botones Sí/No). Sin decidir → tocas la prenda que prefieres → se marca → barra
+// que NOMBRA el veredicto → Confirmar. Aceptada → estado marcado con "cambiar";
+// rechazada ("quiero la sugerida") → adopta la SumaCard (tile + acciones).
 function DecideRow({
   row,
   images,
   catalogImages,
   onDecide,
+  ownBusy,
+  onOwn,
+  wishSaved,
+  onToggleWish,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
   catalogImages: Record<string, string>;
   onDecide: (index: number, decision: CapsuleDecision) => void;
+  ownBusy: boolean;
+  onOwn: () => void;
+  wishSaved: boolean;
+  onToggleWish: () => void;
 }) {
   const { item, by, decision, index } = row;
   const src = by ? images[by] : null;
+  const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
+  const render = useIdealRender(idealArgs(item), idealSrc);
+  const [sel, setSel] = useState<null | "ideal" | "tuya">(null);
+
+  const onTapIdeal = async () => {
+    if (render.state === "ready") {
+      setSel("ideal");
+      return;
+    }
+    if (render.state === "generating") return;
+    const ok = await render.start();
+    if (ok) setSel("ideal");
+  };
 
   if (decision === "accept") {
     return (
@@ -502,81 +647,107 @@ function DecideRow({
 
   if (decision === "reject") {
     return (
-      <li className="flex items-center gap-2.5 rounded-md border border-line bg-surface p-3.5">
-        <span className="h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-accent" />
-        <div className="flex min-w-0 flex-col">
-          <span className="text-sm font-medium text-ink">{item.nombre}</span>
-          <span className="text-xs text-muted">preferiste la ideal — te falta</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => onDecide(index, "reject")}
-          className="ml-auto shrink-0 text-xs font-medium text-accent underline underline-offset-2"
-        >
-          cambiar
-        </button>
-      </li>
+      <SumaCard
+        row={row}
+        images={images}
+        catalogImages={catalogImages}
+        ownBusy={ownBusy}
+        onOwn={onOwn}
+        wishSaved={wishSaved}
+        onToggleWish={onToggleWish}
+        reject
+        onChange={() => onDecide(index, "reject")}
+      />
     );
   }
 
-  // Lado a lado (handoff inc4): la ideal (catálogo) vs la tuya (tu foto), veredicto,
-  // y decides "me sirve" (tu parecido cuenta) / "quiero la ideal" (queda como falta).
-  const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
+  // Sin decidir — "elige tocando": la sugerida (la que falta) vs la tuya. Tocar la
+  // sugerida sin imagen la GENERA antes de poder elegirla (nunca eliges un vacío).
   return (
     <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-[13px]">
       <div className="flex flex-col">
         <span className="text-[15px] font-semibold leading-tight text-ink">{item.nombre}</span>
         <span className="mt-0.5 text-[11.5px] leading-snug text-muted">{item.porque}</span>
       </div>
+
       <div className="grid grid-cols-2 gap-2.5">
+        {/* LA SUGERIDA (la que falta) */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">la ideal</span>
-          <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border border-line bg-bg text-muted">
-            <Thumb
-              src={idealSrc}
-              colorFamilia={item.colorFamilia}
-              sizes="120px"
-              icon={22}
-              renderArgs={{
-                tipo: item.tipo,
-                colorFamilia: item.colorFamilia,
-                nombre: item.nombre,
-                categoria: item.category,
-                formalidad: item.formalidad,
-                temporada: item.temporada,
-                visual: item.visual,
-              }}
-            />
+          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">
+            la sugerida
+          </span>
+          <button
+            type="button"
+            onClick={onTapIdeal}
+            className={`relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border bg-tile ${
+              sel === "ideal" ? "border-accent shadow-[0_0_0_2px] shadow-accent" : "border-line"
+            }`}
+          >
+            <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="120px" />
+            {sel === "ideal" ? <SelCheck /> : null}
+          </button>
+          <span className="truncate text-[11px] font-medium text-ink">
+            {item.nombre} <span className="font-normal text-muted">· la que falta</span>
           </span>
         </div>
+
+        {/* YA LA TIENES (tu prenda) */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-muted">la tuya</span>
-          <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border border-line bg-bg text-muted">
+          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-muted">
+            ya la tienes
+          </span>
+          <button
+            type="button"
+            onClick={() => setSel("tuya")}
+            className={`relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border bg-tile ${
+              sel === "tuya" ? "border-accent shadow-[0_0_0_2px] shadow-accent" : "border-line"
+            }`}
+          >
             {src ? (
               <Image src={src} alt={by ?? ""} fill sizes="120px" className="object-cover" />
             ) : (
-              <Icon name="gancho" size={20} />
+              <Icon name="gancho" size={20} className="text-muted" />
             )}
+            {sel === "tuya" ? <SelCheck /> : null}
+          </button>
+          <span className="truncate text-[11px] font-medium text-ink">
+            {by} <span className="font-normal text-muted">· en tu clóset</span>
           </span>
-          {by ? <span className="truncate text-[11px] font-medium text-ink">{by}</span> : null}
         </div>
       </div>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onDecide(index, "accept")}
-          className="min-h-10 flex-1 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
-        >
-          me sirve
-        </button>
-        <button
-          type="button"
-          onClick={() => onDecide(index, "reject")}
-          className="min-h-10 flex-1 rounded-sm border border-line bg-surface text-xs font-semibold text-ink transition-colors hover:border-ink"
-        >
-          quiero la ideal
-        </button>
-      </div>
+
+      {sel === null ? (
+        <p className="text-center text-[11.5px] text-muted">
+          Toca la prenda que prefieras para este hueco
+        </p>
+      ) : (
+        <div className="flex items-center gap-2.5">
+          <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-ink">
+            {sel === "tuya" ? (
+              <>
+                Te quedas con tus <b>{by}</b>
+                <span className="block text-[10.5px] text-muted">
+                  cubren el hueco de “{item.nombre}”
+                </span>
+              </>
+            ) : (
+              <>
+                Quieres los <b>{item.nombre}</b>
+                <span className="block text-[10.5px] text-muted">
+                  siguen en tu lista de lo que falta
+                </span>
+              </>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => onDecide(index, sel === "tuya" ? "accept" : "reject")}
+            className="min-h-10 shrink-0 rounded-sm bg-accent px-4 text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            Confirmar
+          </button>
+        </div>
+      )}
     </li>
   );
 }
