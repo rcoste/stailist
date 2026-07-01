@@ -19,11 +19,15 @@ export default async function WishlistPage() {
 
   const { data: rows } = await supabase
     .from("wishlist_items")
-    .select("id, image_path, color_hex, verdict, name, created_at")
+    .select("id, image_path, image_url, color_hex, verdict, name, created_at")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
-  const paths = (rows ?? []).map((r) => r.image_path as string);
+  // Solo las que tienen foto propia (privada) se firman; las de cápsula usan su
+  // referencia pública (image_url), sin firmar.
+  const paths = (rows ?? [])
+    .map((r) => r.image_path as string | null)
+    .filter((p): p is string => !!p);
   const signed = new Map<string, string>();
   if (paths.length) {
     const { data } = await supabase.storage.from("prendas").createSignedUrls(paths, 3600);
@@ -34,7 +38,10 @@ export default async function WishlistPage() {
 
   const items: WishlistItem[] = (rows ?? []).map((r) => ({
     id: r.id as string,
-    image: signed.get(r.image_path as string) ?? null,
+    image:
+      (r.image_path ? signed.get(r.image_path as string) : null) ??
+      (r.image_url as string | null) ??
+      null,
     colorHex: (r.color_hex as string | null) ?? null,
     verdict: (r.verdict as WishlistItem["verdict"]) ?? null,
     name: (r.name as string | null) ?? null,

@@ -49,7 +49,9 @@ export type IconName =
   | "menos"
   | "paleta"
   | "vestido"
-  | "camisa";
+  | "camisa"
+  | "bookmark"
+  | "bookmarkFill";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -253,6 +255,8 @@ const GLYPHS: Record<IconName, JSX.Element> = {
       <path d="M8 4l-1 4M16 4l1 4" />
     </>
   ),
+  bookmark: <path d="M6 4h12v16l-6-4-6 4z" />,
+  bookmarkFill: <path d="M6 4h12v16l-6-4-6 4z" fill="currentColor" />,
 };
 
 export function Icon({
