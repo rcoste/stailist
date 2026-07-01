@@ -14,6 +14,8 @@ import {
   type TripWeatherInput,
 } from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { enrichPackable, type RealAttrs } from "@/lib/engine/enrich-packable";
+import type { Season } from "@/lib/colorimetria";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 
 export const maxDuration = 60;
@@ -90,11 +92,26 @@ export async function POST(
     return NextResponse.json({ ok: true, count: 0, reason: "pocas_prendas" });
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("gender, taste_tags, style_archetype, body_build, body_volume")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: closetItems }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "gender, taste_tags, style_archetype, body_build, body_volume, palette_season, palette_flow"
+      )
+      .eq("id", user.id)
+      .single(),
+    supabase.from("items").select("attrs").eq("user_id", user.id).is("deleted_at", null),
+  ]);
+
+  // Enriquece lo empacable con la prenda REAL del clóset (resuelta por nombre):
+  // color/hex/temporada/material/patrón de TU prenda, no el colorFamilia de la
+  // prenda ideal (tu blazer real puede ser negro aunque el ideal era marino).
+  // Tolerante: si el nombre no resuelve (o es ambiguo), la pieza queda como
+  // estaba. Lógica pura en lib/engine/enrich-packable (testeada).
+  enrichPackable(
+    packable,
+    (closetItems ?? []).map((it) => (it.attrs ?? {}) as RealAttrs)
+  );
 
   // Clima para el motor: enriquece el resumen del viaje con el RANGO de
   // temperaturas entre paradas (cada parada trae su clima). Un viaje Tokio 9° /
@@ -117,6 +134,8 @@ export async function POST(
       (profile?.body_build as Build | null) ?? null,
       (profile?.body_volume as Volume | null) ?? null
     ),
+    season: (profile?.palette_season as Season | null) ?? null,
+    flow: (profile?.palette_flow as Season | null) ?? null,
     // "Generar más": evita repetir los looks que ya existen. "Rehacer": evita
     // los que rechazaste (👎). En ambos casos pasamos sus prendas como exclusión.
     exclude: (append ? existing : rejected).map((o) => o.prendas),
