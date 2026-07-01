@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
+import { IdealTileInner, useIdealRender, type RenderArgs } from "@/components/ideal-tile";
 import {
   setTripPacked,
   setTripSubstitute,
@@ -13,6 +14,8 @@ import {
   markTripFaltaOwned,
   type SubstituteCandidate,
 } from "@/lib/trip-actions";
+import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
+import { familiaToHex } from "@/lib/capsule-images";
 import { useTripGen } from "@/components/trip-gen-context";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
@@ -25,6 +28,10 @@ export type TripRow = {
   decision: "accept" | "reject" | null; // decisión guardada (solo en "parecido")
   by: string | null; // prenda del clóset que la cubre / se le parece
   byImage: string | null;
+  // Para las faltantes: generar/ver la prenda sugerida y mandarla a wishlist.
+  faltaKey: string; // dedup de wishlist (tipo|color)
+  idealImage: string | null; // render de catálogo ya existente (instantáneo), si hay
+  renderArgs: RenderArgs; // para generar la imagen bajo demanda
 };
 
 // Estado efectivo (base + decisión guardada de un "parecido").
@@ -35,6 +42,88 @@ function eff(r: TripRow): TripRow["base"] {
   return r.base;
 }
 
+// Tarjeta de una prenda que TE FALTA en el viaje: tile grande que GENERA la imagen
+// al tocar (verla antes de decidir) + acciones. Layout Opción 1: "buscar en mi
+// clóset" prominente (la jugada del viaje: cúbrelo con lo que ya tienes) y debajo
+// la fila "ya lo tengo" · "wishlist", igual que la cápsula del clóset (coherencia).
+function FaltaCard({
+  row,
+  ownBusy,
+  onBuscar,
+  onYaLoTengo,
+  wishSaved,
+  onToggleWish,
+}: {
+  row: TripRow;
+  ownBusy: boolean;
+  onBuscar: () => void;
+  onYaLoTengo: () => void;
+  wishSaved: boolean;
+  onToggleWish: () => void;
+}) {
+  const render = useIdealRender(row.renderArgs, row.idealImage);
+  const onTapTile = () => {
+    if (render.state === "idle") void render.start();
+  };
+  return (
+    <li className="relative flex overflow-hidden rounded-md border border-line bg-surface">
+      <button
+        type="button"
+        onClick={onTapTile}
+        className="relative flex min-h-[136px] w-[104px] shrink-0 items-center justify-center self-stretch overflow-hidden border-r border-line"
+      >
+        <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="104px" />
+        {render.generated ? (
+          <span className="absolute left-1.5 top-1.5 z-30 rounded-sm bg-white/90 px-1.5 py-[2px] text-[8.5px] font-bold uppercase tracking-wide text-ink">
+            generada
+          </span>
+        ) : null}
+      </button>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-[14px] pb-[12px] pt-[13px]">
+        <div className="flex flex-col">
+          <b className="text-[14px] font-semibold leading-tight text-ink">{row.nombre}</b>
+          <span className="text-[11.5px] leading-snug text-muted">{row.porque}</span>
+        </div>
+
+        <div className="mt-auto flex flex-col gap-[9px]">
+          <button
+            type="button"
+            onClick={onBuscar}
+            className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            <Icon name="lupa" size={13} /> buscar en mi clóset
+          </button>
+          <div className="flex items-center gap-[9px]">
+            <button
+              type="button"
+              onClick={onYaLoTengo}
+              disabled={ownBusy}
+              className="flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface px-2 text-xs font-semibold text-ink transition-colors hover:border-ink disabled:opacity-50"
+            >
+              {ownBusy ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="check" size={13} />}
+              {ownBusy ? "agregando…" : "ya lo tengo"}
+            </button>
+            <button
+              type="button"
+              onClick={onToggleWish}
+              aria-pressed={wishSaved}
+              className={`flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2 text-xs font-semibold transition-colors ${
+                wishSaved
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line bg-surface text-ink hover:border-accent"
+              }`}
+            >
+              <Icon name={wishSaved ? "bookmarkFill" : "bookmark"} size={14} />
+              {wishSaved ? "en wishlist" : "wishlist"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 // Tab "La maleta" (handoff): barra de progreso + grid de "empaca esto" con check
 // tappable + "te falta" con "ya lo tengo". Un faltante marcado como "ya lo tengo"
 // pasa a empaca palomeado (persiste en empacado, sin acción nueva).
@@ -42,10 +131,12 @@ export function TripResult({
   tripId,
   rows,
   empacado: empacadoInicial,
+  savedWishKeys = [],
 }: {
   tripId: string;
   rows: TripRow[];
   empacado: Record<string, boolean>;
+  savedWishKeys?: string[];
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
@@ -68,6 +159,32 @@ export function TripResult({
   const router = useRouter();
   // "Ya lo tengo" en curso por índice (agrega al clóset + genera imagen, ~unos seg).
   const [ownBusy, setOwnBusy] = useState<Set<number>>(new Set());
+  // Wishlist in-situ (coherente con la cápsula del clóset): manda/quita una
+  // faltante de "lo que deberías comprar" sin sacarla de la maleta. Optimista + toast.
+  const [wishSaved, setWishSaved] = useState<Set<string>>(() => new Set(savedWishKeys));
+  const [toast, setToast] = useState<string | null>(null);
+
+  function toggleWish(r: TripRow) {
+    const key = r.faltaKey;
+    const willSave = !wishSaved.has(key);
+    setWishSaved((s) => {
+      const n = new Set(s);
+      if (willSave) n.add(key);
+      else n.delete(key);
+      return n;
+    });
+    if (willSave) {
+      setToast("Guardada en tu wishlist");
+      setTimeout(() => setToast(null), 2200);
+    }
+    void toggleWishlistFromCapsule({
+      capsuleKey: key,
+      name: r.nombre,
+      colorHex: familiaToHex(r.renderArgs.colorFamilia),
+      imageUrl: r.idealImage,
+      porque: r.porque,
+    });
+  }
 
   // by/byImage efectivos: el sustituto elegido esta sesión gana sobre lo del server.
   const ov = (r: TripRow) => localSub[r.index] ?? { by: r.by, byImage: r.byImage };
@@ -122,6 +239,15 @@ export function TripResult({
 
   return (
     <div className="flex flex-col gap-4">
+      {toast ? (
+        <div
+          role="status"
+          className="fixed bottom-[86px] left-1/2 z-50 -translate-x-1/2 rounded-sm bg-ink px-3.5 py-2 text-[12.5px] font-medium text-on-accent shadow-[var(--shadow-hairline)]"
+        >
+          {toast}
+        </div>
+      ) : null}
+
       {/* Progreso de empacado */}
       <div className="flex items-center gap-2.5">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
@@ -215,45 +341,15 @@ export function TripResult({
           </div>
           <ul className="flex flex-col gap-2.5">
             {falta.map((r) => (
-              <li
+              <FaltaCard
                 key={r.index}
-                className="flex flex-col gap-2.5 rounded-md border border-dashed border-accent/40 bg-accent-soft px-[13px] py-[11px]"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-sm border border-accent/30 bg-surface text-accent">
-                    <Icon name="mas" size={16} />
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <b className="text-[13px] font-semibold leading-tight text-ink">{r.nombre}</b>
-                    <span className="text-[11.5px] leading-snug text-muted">{r.porque}</span>
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => buscarSustituto(r)}
-                    className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
-                  >
-                    <Icon name="lupa" size={13} /> buscar en mi clóset
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => marcarYaLoTengo(r.index)}
-                    disabled={ownBusy.has(r.index)}
-                    className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface px-[11px] text-xs font-semibold text-ink transition-colors hover:border-ink disabled:opacity-50"
-                  >
-                    {ownBusy.has(r.index) ? (
-                      <>
-                        <Spinner className="h-3.5 w-3.5" /> agregando…
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="check" size={13} /> ya lo tengo
-                      </>
-                    )}
-                  </button>
-                </div>
-              </li>
+                row={r}
+                ownBusy={ownBusy.has(r.index)}
+                onBuscar={() => buscarSustituto(r)}
+                onYaLoTengo={() => marcarYaLoTengo(r.index)}
+                wishSaved={wishSaved.has(r.faltaKey)}
+                onToggleWish={() => toggleWish(r)}
+              />
             ))}
           </ul>
         </div>

@@ -6,6 +6,8 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
 import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
+import { faltaKey, catalogStorageKey } from "@/lib/capsule-images";
+import { catalogPublicUrl } from "@/lib/catalog-render";
 import { tripDays, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
@@ -65,6 +67,38 @@ export default async function ViajeDetallePage({
     loadClosetNameToId(supabase, profile.id),
   ]);
 
+  // Biblioteca compartida: renders de catálogo ya generados (tipo+color+género),
+  // para mostrar al instante la prenda sugerida sin tener que regenerarla. Misma
+  // lógica que la cápsula del clóset.
+  const gender = profile.gender;
+  const skByItem = target.items.map((it) => ({
+    fk: faltaKey(it),
+    sk: catalogStorageKey(it.tipo, it.colorFamilia, gender),
+  }));
+  const { data: crows } = await supabase
+    .from("catalog_renders")
+    .select("key, path")
+    .in(
+      "key",
+      skByItem.map((s) => s.sk)
+    );
+  const pathBySk = new Map((crows ?? []).map((r) => [r.key as string, r.path as string]));
+  const catalogImages: Record<string, string> = {};
+  for (const { fk, sk } of skByItem) {
+    const path = pathBySk.get(sk);
+    if (path) catalogImages[fk] = catalogPublicUrl(supabase, path);
+  }
+
+  // Prendas ya guardadas en la wishlist (para el estado del botón de cada faltante).
+  const { data: wishRows } = await supabase
+    .from("wishlist_items")
+    .select("capsule_key")
+    .eq("user_id", profile.id)
+    .eq("source", "capsule");
+  const savedWishKeys = (wishRows ?? [])
+    .map((r) => r.capsule_key as string | null)
+    .filter((k): k is string => !!k);
+
   // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):
   // cubren una prenda que faltaba con una real del clóset.
   const subAt = (i: number) =>
@@ -72,6 +106,7 @@ export default async function ViajeDetallePage({
 
   const rows: TripRow[] = capsuleRows(target, match, overrides).map((r) => {
     const by = subAt(r.index) ?? r.by;
+    const fk = faltaKey(r.item);
     return {
       index: r.index,
       nombre: r.item.nombre,
@@ -80,6 +115,17 @@ export default async function ViajeDetallePage({
       decision: r.decision,
       by,
       byImage: by ? imageMap[by] ?? null : null,
+      faltaKey: fk,
+      idealImage: catalogImages[fk] ?? null,
+      renderArgs: {
+        tipo: r.item.tipo,
+        colorFamilia: r.item.colorFamilia,
+        nombre: r.item.nombre,
+        categoria: r.item.category,
+        formalidad: r.item.formalidad,
+        temporada: r.item.temporada,
+        visual: r.item.visual,
+      },
     };
   });
 
@@ -195,7 +241,14 @@ export default async function ViajeDetallePage({
           maletaCount={maletaCount}
           looksCount={looksCount}
           looksStale={Boolean(trip.outfits_stale)}
-          maleta={<TripResult tripId={trip.id} rows={rows} empacado={empacado} />}
+          maleta={
+            <TripResult
+              tripId={trip.id}
+              rows={rows}
+              empacado={empacado}
+              savedWishKeys={savedWishKeys}
+            />
+          }
           looks={
             <TripOutfits
               tripId={trip.id}
