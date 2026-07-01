@@ -1,0 +1,36 @@
+-- Ampliación biblioteca formal/evento (2026-06-30). 29 prendas: tailoring de hombre
+-- (el hueco real — solo había 1 blazer) + set de mujer. Trajes COMPLETOS (saco +
+-- pantalón mismo tono/hex para que se armen como conjunto, no parchados), smoking,
+-- sacos desestructurados, corbatas + moño, chaleco, oxford; mujer: le smoking, sacos,
+-- jumpsuit, tacón, coctel. onboarding_subset=false. Idempotente.
+insert into public.archetypes (slug, name, category, segment, attrs, image_path, sort_order, onboarding_subset) values
+  ('saco-traje-marino', 'Saco de traje azul marino', 'abrigo', 'hombre', '{"color":"azul marino","color_hex":"#26344F","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/saco-traje-marino.png', 304, false),
+  ('pantalon-traje-marino', 'Pantalón de traje azul marino', 'bottom', 'hombre', '{"color":"azul marino","color_hex":"#26344F","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/pantalon-traje-marino.png', 305, false),
+  ('saco-traje-carbon', 'Saco de traje gris carbón', 'abrigo', 'hombre', '{"color":"gris carbón","color_hex":"#3A3C42","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/saco-traje-carbon.png', 306, false),
+  ('pantalon-traje-carbon', 'Pantalón de traje gris carbón', 'bottom', 'hombre', '{"color":"gris carbón","color_hex":"#3A3C42","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/pantalon-traje-carbon.png', 307, false),
+  ('saco-traje-gris-claro', 'Saco de traje gris claro', 'abrigo', 'hombre', '{"color":"gris","color_hex":"#9C9EA1","temporada":"templado","formalidad":"formal"}', '/archetypes/saco-traje-gris-claro.png', 308, false),
+  ('pantalon-traje-gris-claro', 'Pantalón de traje gris claro', 'bottom', 'hombre', '{"color":"gris","color_hex":"#9C9EA1","temporada":"templado","formalidad":"formal"}', '/archetypes/pantalon-traje-gris-claro.png', 309, false),
+  ('saco-traje-arena', 'Saco de traje arena', 'abrigo', 'hombre', '{"color":"arena","color_hex":"#BFA98A","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/saco-traje-arena.png', 310, false),
+  ('pantalon-traje-arena', 'Pantalón de traje arena', 'bottom', 'hombre', '{"color":"arena","color_hex":"#BFA98A","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/pantalon-traje-arena.png', 311, false),
+  ('saco-traje-azul-claro', 'Saco de traje azul claro', 'abrigo', 'hombre', '{"color":"azul claro","color_hex":"#8FA8C9","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/saco-traje-azul-claro.png', 312, false),
+  ('pantalon-traje-azul-claro', 'Pantalón de traje azul claro', 'bottom', 'hombre', '{"color":"azul claro","color_hex":"#8FA8C9","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/pantalon-traje-azul-claro.png', 313, false),
+  ('saco-smoking-negro', 'Saco de smoking negro', 'abrigo', 'hombre', '{"color":"negro","color_hex":"#1A1A1E","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/saco-smoking-negro.png', 314, false),
+  ('pantalon-smoking-negro', 'Pantalón de smoking negro', 'bottom', 'hombre', '{"color":"negro","color_hex":"#1A1A1E","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/pantalon-smoking-negro.png', 315, false),
+  ('saco-desestructurado-oliva', 'Saco desestructurado oliva', 'abrigo', 'hombre', '{"color":"oliva","color_hex":"#5B5A3E","temporada":"templado","formalidad":"formal-casual"}', '/archetypes/saco-desestructurado-oliva.png', 316, false),
+  ('saco-desestructurado-lino-crema-h', 'Saco desestructurado de lino crema', 'abrigo', 'hombre', '{"color":"crema","color_hex":"#E1D8C4","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/saco-desestructurado-lino-crema-h.png', 317, false),
+  ('saco-desestructurado-cafe', 'Saco desestructurado café', 'abrigo', 'hombre', '{"color":"café","color_hex":"#6B5642","temporada":"templado","formalidad":"formal-casual"}', '/archetypes/saco-desestructurado-cafe.png', 318, false),
+  ('saco-cruzado-marino', 'Saco cruzado marino', 'abrigo', 'hombre', '{"color":"azul marino","color_hex":"#29354D","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/saco-cruzado-marino.png', 319, false),
+  ('corbata-seda-marino', 'Corbata de seda marino', 'accesorio', 'hombre', '{"color":"azul marino","color_hex":"#26344F","temporada":"todo-el-año","formalidad":"formal-casual"}', '/archetypes/corbata-seda-marino.png', 320, false),
+  ('corbata-burdeos', 'Corbata burdeos', 'accesorio', 'hombre', '{"color":"burdeos","color_hex":"#6E2B34","temporada":"todo-el-año","formalidad":"formal-casual"}', '/archetypes/corbata-burdeos.png', 321, false),
+  ('corbata-gris-plata', 'Corbata gris plata', 'accesorio', 'hombre', '{"color":"gris","color_hex":"#A9AAAE","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/corbata-gris-plata.png', 322, false),
+  ('mono-negro', 'Moño negro', 'accesorio', 'hombre', '{"color":"negro","color_hex":"#1A1A1E","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/mono-negro.png', 323, false),
+  ('chaleco-traje-gris', 'Chaleco de traje gris', 'top', 'hombre', '{"color":"gris","color_hex":"#55575C","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/chaleco-traje-gris.png', 324, false),
+  ('oxford-charol-negro', 'Oxford negro de charol', 'calzado', 'hombre', '{"color":"negro","color_hex":"#17171A","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/oxford-charol-negro.png', 325, false),
+  ('le-smoking-negro-m', 'Le smoking negro', 'abrigo', 'mujer', '{"color":"negro","color_hex":"#1D1D21","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/le-smoking-negro-m.png', 326, false),
+  ('saco-desestructurado-lino-crema-m', 'Saco desestructurado lino crema', 'abrigo', 'mujer', '{"color":"crema","color_hex":"#E3DAC7","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/saco-desestructurado-lino-crema-m.png', 327, false),
+  ('saco-desestructurado-marino-m', 'Saco desestructurado marino', 'abrigo', 'mujer', '{"color":"azul marino","color_hex":"#2A374F","temporada":"templado","formalidad":"formal-casual"}', '/archetypes/saco-desestructurado-marino-m.png', 328, false),
+  ('saco-boda-beige-m', 'Saco de boda beige', 'abrigo', 'mujer', '{"color":"beige","color_hex":"#C6B291","temporada":"calor","formalidad":"formal-casual"}', '/archetypes/saco-boda-beige-m.png', 329, false),
+  ('jumpsuit-elegante-negro-m', 'Jumpsuit elegante negro', 'vestido', 'mujer', '{"color":"negro","color_hex":"#1E1D21","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/jumpsuit-elegante-negro-m.png', 330, false),
+  ('tacon-negro-vestir-m', 'Tacón negro de vestir', 'calzado', 'mujer', '{"color":"negro","color_hex":"#1C1C20","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/tacon-negro-vestir-m.png', 331, false),
+  ('vestido-coctel-azul-noche-m', 'Vestido coctel azul noche', 'vestido', 'mujer', '{"color":"azul noche","color_hex":"#1F2B45","temporada":"todo-el-año","formalidad":"formal"}', '/archetypes/vestido-coctel-azul-noche-m.png', 332, false)
+on conflict (slug) do nothing;
