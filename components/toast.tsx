@@ -1,16 +1,18 @@
 "use client";
 
 // Toast transitorio compartido (cápsula + viaje): confirma una acción sin robar
-// foco. Se posiciona despejado del FAB/tab bar y entra con fade + subida. El
-// caller controla su vida (mostrar el mensaje ~2.2s y luego limpiarlo).
+// foco. Va al CENTRO de la pantalla para que no se pierda ni choque con el FAB;
+// entra con fade + escala. El caller controla su vida (~2.2s y luego lo limpia).
 export function Toast({ message }: { message: string | null }) {
   if (!message) return null;
   return (
     <div
       role="status"
-      className="toast-in pointer-events-none fixed bottom-[calc(120px+env(safe-area-inset-bottom))] left-1/2 z-50 -translate-x-1/2 rounded-sm bg-ink px-3.5 py-2 text-[12.5px] font-medium text-on-accent shadow-[var(--shadow-hairline)]"
+      className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-10"
     >
-      {message}
+      <div className="toast-pop rounded-md bg-ink px-5 py-3 text-center text-sm font-medium text-on-accent shadow-[0_10px_30px_rgba(20,20,20,.25)]">
+        {message}
+      </div>
     </div>
   );
 }
