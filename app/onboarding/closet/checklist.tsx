@@ -28,8 +28,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // Clóset v3: chips de categoría como filtro + grid 2-col. Las prendas se ven
 // SIEMPRE a todo color para poder evaluar imagen y color antes de elegir; la
-// selección se marca con el check tinta (sin apagar las no seleccionadas ni
-// borde negro — ambos se probaron y estorban).
+// selección se marca con el check tinta + un marco fino (ring interior) para
+// que la distinción sea obvia sin apagar las no seleccionadas.
 export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   // Categorías presentes, en orden; las no contempladas van al final.
   const known = new Set(CATEGORY_ORDER);
@@ -141,7 +141,9 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
               type="button"
               onClick={() => toggle(item.id)}
               aria-pressed={on}
-              className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg text-left focus-visible:outline-none"
+              className={`relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg text-left transition-shadow duration-200 focus-visible:outline-none ${
+                on ? "ring-2 ring-inset ring-accent" : ""
+              }`}
             >
               {item.image_path ? (
                 <Image

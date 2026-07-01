@@ -107,7 +107,9 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                 type="button"
                 onClick={() => toggle(item.id)}
                 aria-pressed={on}
-                className="group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface text-left transition-colors duration-200 hover:border-ink focus-visible:outline-none"
+                className={`group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface text-left transition-[border-color,box-shadow] duration-200 hover:border-ink focus-visible:outline-none ${
+                  on ? "ring-2 ring-inset ring-accent" : ""
+                }`}
               >
                 {/* Las prendas se ven siempre a todo color para poder evaluarlas
                     antes de elegir; lo seleccionado se marca con marco + check. */}
