@@ -45,6 +45,7 @@ export function AvatarWizard({
   gender,
   returnTo,
   skipHref,
+  siluetaBodyType,
 }: {
   userId: string;
   gender: Gender;
@@ -52,6 +53,10 @@ export function AvatarWizard({
   /** Si se pasa, muestra "ahora no, seguir sin avatar" en el primer paso y lleva
    *  ahí (el avatar es opcional — en el onboarding no debe atrapar a nadie). */
   skipHref?: string;
+  /** Complexión derivada de la silueta del perfil (body_build). Si viene, el
+   *  wizard NO re-pregunta el tipo de cuerpo (la morfología se define UNA vez,
+   *  en Perfil → Mi silueta) y genera directo desde las fotos. */
+  siluetaBodyType?: BodyType | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("fotos");
@@ -65,7 +70,7 @@ export function AvatarWizard({
     body1: null,
     body2: null,
   });
-  const [bodyType, setBodyType] = useState<BodyType | null>(null);
+  const [bodyType, setBodyType] = useState<BodyType | null>(siluetaBodyType ?? null);
   const [generated, setGenerated] = useState<string | null>(null);
   const [fails, setFails] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -183,14 +188,32 @@ export function AvatarWizard({
               onPick={(f) => setSlot("body2", f)}
             />
           </div>
-          <button
-            type="button"
-            disabled={!canContinue}
-            onClick={() => setStep("cuerpo")}
-            className="flex min-h-12 items-center justify-center rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
-          >
-            Siguiente
-          </button>
+          {siluetaBodyType ? (
+            <>
+              <p className="text-xs text-muted">
+                Usaré la complexión de tu silueta ({LABELS[gender][siluetaBodyType]}).
+                La cambias en Perfil → Mi silueta.
+              </p>
+              <button
+                type="button"
+                disabled={!canContinue}
+                onClick={generate}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+              >
+                <Icon name="destello" size={16} />
+                Generar mi avatar
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={!canContinue}
+              onClick={() => setStep("cuerpo")}
+              className="flex min-h-12 items-center justify-center rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          )}
           {skipHref ? (
             <Link
               href={skipHref}

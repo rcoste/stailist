@@ -115,3 +115,32 @@ export function siluetaConsejo(v: Volume): { equilibra: string; acentua: string 
       };
   }
 }
+
+// --- Puente silueta ↔ avatar -------------------------------------------------
+// La complexión del perfil (body_build) es la ÚNICA fuente de verdad de
+// morfología. El wizard de avatar la deriva de aquí en vez de re-preguntarla
+// (antes se preguntaba dos veces: avatar body_type + silueta body_build), y si
+// la silueta aún no existe, la respuesta del wizard la siembra de vuelta.
+
+export type AvatarBodyType = "slim" | "athletic" | "average" | "full";
+
+const BUILD_TO_BODY: Record<Build, AvatarBodyType> = {
+  delgada: "slim",
+  media: "average",
+  curvas: "full",
+  delgado: "slim",
+  atletico: "athletic",
+  promedio: "average",
+  robusto: "full",
+};
+
+export const buildToBodyType = (b: Build | null): AvatarBodyType | null =>
+  b ? BUILD_TO_BODY[b] ?? null : null;
+
+// Inversa gender-aware (los ids de Build son distintos por género). "athletic"
+// en mujer cae a "media": la silueta femenina no tiene eje atlético.
+export function bodyTypeToBuild(t: AvatarBodyType, g: Gender): Build {
+  return g === "hombre"
+    ? ({ slim: "delgado", athletic: "atletico", average: "promedio", full: "robusto" } as const)[t]
+    : ({ slim: "delgada", athletic: "media", average: "media", full: "curvas" } as const)[t];
+}
