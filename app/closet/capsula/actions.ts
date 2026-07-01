@@ -93,22 +93,16 @@ export async function saveLifestyle(
     };
   }
 
-  // Match contra el clóset (capa 2). Si falla, guardamos la cápsula sin match;
-  // la tarjeta ofrecerá recalcular.
-  const closet = await loadClosetLite(supabase, user.id);
-  let match = null;
-  try {
-    match = await matchCapsule(target, closet, gender);
-  } catch {
-    match = null;
-  }
-
+  // El match (otra llamada a Opus contra el clóset) se hace APARTE, no aquí: armar la
+  // cápsula ya toma ~40s y sumar el match arriesga el límite de 60s de Vercel — la
+  // función se mataba y salía "no pude armar tu cápsula". Guardamos SIN match; la
+  // página muestra "calcular qué ya tienes" (recalcularMatch, con su propio budget).
   const { error } = await supabase
     .from("profiles")
     .update({
       lifestyle: answers,
       capsule_target: target,
-      capsule_match: match,
+      capsule_match: null,
       capsule_overrides: null, // cápsula nueva → se borran las decisiones viejas
       updated_at: new Date().toISOString(),
     })
@@ -227,16 +221,11 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     return;
   }
 
-  let match = null;
-  try {
-    match = await matchCapsule(target, await loadClosetLite(supabase, user.id), gender);
-  } catch {
-    match = null;
-  }
-
+  // Match aparte (evita el límite de 60s de Vercel — ver saveLifestyle). Se guarda
+  // sin match; la página ofrece "calcular qué ya tienes".
   const { error } = await supabase
     .from("profiles")
-    .update({ capsule_target: target, capsule_match: match, capsule_overrides: null })
+    .update({ capsule_target: target, capsule_match: null, capsule_overrides: null })
     .eq("id", user.id);
   if (error) return;
   revalidatePath("/closet/capsula");
