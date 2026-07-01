@@ -11,7 +11,11 @@ import type { GeneratedOutfit } from "./generate";
 // devuelve el outfit original con veredicto "ok" — nunca rompe la generación.
 // Rúbrica más exigente para mujer que para hombre.
 
-const CRITIC_MODEL = "claude-sonnet-4-6";
+// Modelo COMPARTIDO de los jueces (Hoy y Viaje). Sonnet 5: mejor juicio que
+// 4.6 a mismo costo por token. OJO: en Sonnet 5 el thinking adaptativo viene
+// ON por default — cada llamada de juez lo apaga explícito para mantener la
+// latencia (corren dentro del límite de 60s de Vercel).
+export const JUDGE_MODEL = "claude-sonnet-5";
 
 export type CriticVerdict = "ok" | "reparado" | "rechazado";
 
@@ -107,8 +111,12 @@ export async function reviewOutfit(
     const client = new Anthropic();
     const itemIds = ctx.items.map((i) => i.id);
     const response = await client.messages.create({
-      model: CRITIC_MODEL,
-      max_tokens: 1024,
+      model: JUDGE_MODEL,
+      // 1536: el tokenizer de Sonnet 5 emite ~30% más tokens que 4.6 para el
+      // mismo texto — con 1024 un veredicto largo truncaba y el catch devolvía
+      // "ok" en silencio (juez deshabilitado sin señal).
+      max_tokens: 1536,
+      thinking: { type: "disabled" },
       system: CRITIC_SYSTEM,
       messages: [
         {

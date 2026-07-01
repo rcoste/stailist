@@ -73,6 +73,14 @@ export function buildOutfitSchema(itemIds: string[]) {
   return {
     type: "object" as const,
     properties: {
+      // PRIMERO en el schema a propósito: el modelo lo genera antes que los
+      // outfits, así que funciona como espacio de razonamiento (borrador).
+      // El caller lo ignora al parsear; nunca se muestra.
+      analisis: {
+        type: "string",
+        description:
+          "Tu borrador de trabajo (la clienta NO lo ve; 3-6 líneas, MÁXIMO 6 — cada token de más retrasa el look): neutros y colores fuertes del clóset, qué mandan clima/ocasión, qué descartas (colorimetría, vetos, estampados que pelean) y las combinaciones más fuertes que ves. Piensa aquí ANTES de armar los outfits.",
+      },
       outfits: {
         type: "array",
         description: "Exactamente 2 o 3 outfits.",
@@ -101,7 +109,7 @@ export function buildOutfitSchema(itemIds: string[]) {
         },
       },
     },
-    required: ["outfits"],
+    required: ["analisis", "outfits"],
     additionalProperties: false,
   };
 }

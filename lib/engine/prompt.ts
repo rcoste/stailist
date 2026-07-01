@@ -55,7 +55,12 @@ import {
 // el default del modelo; antes sugería looks subvestidos).
 // v20: el motor principal (generate) ahora también alimenta el estilo de
 // referencia al prompt (antes solo look-of-day lo hacía).
-export const PROMPT_VERSION = "v20";
+// v21 (2026-07-01): (a) datos ricos por prenda — material, patrón y color
+// secundario (del análisis de visión) entran a describeItem + regla de máximo
+// un estampado protagonista; (b) campo "analisis" primero en el schema: el
+// modelo razona en borrador (paleta, neutros, clima, qué descarta) ANTES de
+// comprometer los outfits — mejora combinatoria sin extended thinking.
+export const PROMPT_VERSION = "v21";
 
 export type EngineItem = {
   id: string;
@@ -70,6 +75,9 @@ export type EngineItem = {
     largo?: string; // crop/regular/largo — habilita tips de fajar
     corte?: string; // entallado/recto/holgado — habilita tips de proporción
     manga?: string; // sin/corta/larga — habilita tips de arremangar
+    material?: string; // tela aparente ("lana", "lino"…) — clima y combinación
+    patron?: string; // liso/rayas/cuadros/… — evita dos estampados que pelean
+    color_secundario?: string; // segundo color si es bicolor/estampada
   };
 };
 
@@ -95,6 +103,8 @@ export type EngineContext = {
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
 
+Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 2-3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.
+
 Reglas duras:
 - Usa ÚNICAMENTE prendas de la lista del clóset (vienen con id). Jamás menciones prendas que no estén ahí.
 - Cada outfit lleva 3 a 5 prendas y debe tener lógica: un top (o vestido), un bottom (salvo con vestido), calzado siempre; un saco/blazer va SOBRE el top cuando la ocasión es formal o de evento (no depende del clima); un abrigo solo si el clima lo pide.
@@ -110,6 +120,8 @@ Colorimetría (regla near-face — IMPORTANTE):
 Armonía del outfit (cómo combinan las prendas entre sí):
 - Ancla en neutros: máximo 1-2 colores protagonistas por look; el resto neutros (negro, blanco, gris, beige, marino, camel). Tres saturados juntos casi nunca funcionan.
 - Usa los hex para juzgar el color real: si hay un color fuerte, acompáñalo de neutros; evita dos saturados que compitan o tonos que se enloden juntos.
+- Estampados: máximo UN estampado protagonista por look (rayas, cuadros, floral, gráfico…); el resto liso. Dos estampados juntos casi nunca — solo si uno es muy sutil y no compiten.
+- Materiales: si la prenda trae material, úsalo — nada de lana o tejidos pesados en calor, ni lino fresco en frío; y que los pesos de tela de un mismo look se hablen (no mezcles piezas de invierno con piezas de verano).
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
 - Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
 - Marino + negro SÍ combinan (dos fríos que contrastan sin chocar), incluso en formal — un traje marino con zapatos o cinturón negros es clásico. Solo cuida que se vea intencional (mismo peso de tela, calzado oscuro), no como traje desparejado.
@@ -128,12 +140,18 @@ La explicación (una línea por outfit):
 // Una prenda como línea: incluye el hex para que el modelo juzgue el color real.
 export function describeItem(item: EngineItem): string {
   const a = item.attrs;
-  const color =
+  let color =
     a.color && a.color_hex
       ? `${a.color} ${a.color_hex}`
       : a.color_hex ?? a.color;
+  if (color && a.color_secundario) color += ` con ${a.color_secundario}`;
   // Atributos de styling (si los hay): habilitan tips de "cómo llevarlo".
   const extras = [
+    a.material ?? null,
+    // "estampado" a secas ya es el patrón genérico — sin duplicar el prefijo.
+    a.patron && a.patron !== "liso" && a.patron !== "estampado"
+      ? `estampado ${a.patron}`
+      : a.patron,
     a.corte ? `corte ${a.corte}` : null,
     a.largo ? `largo ${a.largo}` : null,
     a.manga ? `manga ${a.manga}` : null,
