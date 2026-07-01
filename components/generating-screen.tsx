@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-// Pantalla de "generando" del handoff: el progreso es lenguaje. Frases en Bodoni
-// que se funden — la activa grande con su palabra clave en acento, las vecinas
-// tenues arriba y abajo — + tres puntos de avance. Nunca un spinner. Overlay
-// full-screen. Parametrizada por frases para reusarse (Home, Viaje, …).
+// Pantalla de "generando": el progreso es lenguaje. Frases en Arimo (sans, DS v3 —
+// la serif es solo acento en itálica, nunca en UI) que se funden — la activa grande
+// con su palabra clave en acento, las vecinas tenues arriba y abajo — + tres puntos
+// de avance. Nunca un spinner. Overlay full-screen. Parametrizada por frases para
+// reusarse (Home, Viaje, cápsula, …).
 export type GenPhrase = { a: string; k: string; b: string };
 
 const text = (p: GenPhrase) => `${p.a}${p.k}${p.b}`;
@@ -46,13 +47,13 @@ export function GeneratingScreen({
         style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
         className="flex flex-col items-center gap-5"
       >
-        <p className={`display text-base font-medium ${neighbor}`}>{text(prev)}</p>
-        <p className={`display text-[21px] font-medium ${dark ? "text-on-accent" : "text-ink"}`}>
+        <p className={`text-base font-medium ${neighbor}`}>{text(prev)}</p>
+        <p className={`text-[21px] font-semibold ${dark ? "text-on-accent" : "text-ink"}`}>
           {cur.a}
-          <b className={`font-medium ${dark ? "italic text-on-accent" : "text-accent"}`}>{cur.k}</b>
+          <b className={`font-semibold ${dark ? "text-on-accent" : "text-accent"}`}>{cur.k}</b>
           {cur.b}
         </p>
-        <p className={`display text-base font-medium ${neighbor}`}>{text(next)}</p>
+        <p className={`text-base font-medium ${neighbor}`}>{text(next)}</p>
       </div>
       <div className="mt-1.5 flex gap-[7px]" aria-hidden>
         {[0, 1, 2].map((j) => (
