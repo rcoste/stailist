@@ -15,6 +15,7 @@ import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -304,8 +305,7 @@ async function generateInto(
       tasteSignal,
       seedItemId,
       formality: typeof body.formality === "string" ? body.formality : null,
-      styleReference:
-        (profile.style_reference as { summary?: string } | null)?.summary ?? null,
+      styleReference: styleReferenceForEngine(profile.style_reference),
     };
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);

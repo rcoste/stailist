@@ -21,6 +21,7 @@ import { renderItemImage } from "@/lib/render-item";
 import type { Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
 import type { LifestyleAnswers } from "@/lib/capsule";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
 export type CapsuleState = { status: "idle" } | { status: "error"; message: string };
 
@@ -43,7 +44,7 @@ export async function saveLifestyle(
     .single();
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
   const styleRef =
-    (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
+    styleReferenceForEngine(profile?.style_reference);
   // Preguntas fijas + las personalizadas de SU estilo (validamos contra ambas).
   const dynamicQ =
     (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
@@ -200,7 +201,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
   if (!answers) return; // sin assessment no hay cápsula que regenerar
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
   const styleRef =
-    (profile?.style_reference as { summary?: string } | null)?.summary ?? null;
+    styleReferenceForEngine(profile?.style_reference);
   const dynamicQ =
     (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
 

@@ -14,6 +14,7 @@ import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
 // (petición nueva) — nunca reintentamos aquí adentro.
@@ -133,8 +134,7 @@ export async function POST(request: NextRequest) {
             profile.body_volume as Volume | null
           ),
           tasteSignal,
-          styleReference:
-            (profile.style_reference as { summary?: string } | null)?.summary ?? null,
+          styleReference: styleReferenceForEngine(profile.style_reference),
         };
         const candidates = await generateOutfits(ctx);
 

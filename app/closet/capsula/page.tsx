@@ -13,6 +13,7 @@ import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { regenerateCapsuleTarget } from "./actions";
 import { MatchRecalc } from "@/components/match-recalc";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
@@ -63,7 +64,7 @@ export default async function CapsulaPage() {
   const stale = !match || match.signature !== closetSignature(closet);
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
-    (profile.style_reference?.summary ?? null) !== ((target.styleSig as string | null) ?? null);
+    styleReferenceForEngine(profile.style_reference) !== ((target.styleSig as string | null) ?? null);
   const view = match ? capsuleView(target, match, profile.capsule_overrides) : null;
   // Estado completo: match al día y 17/17 cubiertas → pantalla de mantenimiento.
   const done = !!view && !stale && view.coveragePct >= 100;
