@@ -25,9 +25,9 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 ## Stack y arquitectura (cerrada en eng review)
 - Next.js en Vercel (Hobby: límite 60s por función — generación con streaming, retry siempre client-side).
 - Supabase: Postgres (RLS en todo), Storage privado con URLs firmadas, Auth magic link + allowlist server-side.
-- IA: `claude-opus-4-8` con structured outputs (motor de outfits + análisis de prendas por visión). Prompt versionado en cada outfit.
+- IA: `claude-opus-4-8` con structured outputs (motor de outfits + análisis de prendas por visión); los jueces de styling (Hoy y Viaje) corren en `claude-sonnet-5` (constante compartida `JUDGE_MODEL` en `lib/engine/critic.ts`). Prompt versionado en cada outfit.
 - Clima: Open-Meteo (sin API key). Geolocalización del navegador con fallback sin-clima.
-- Spec completa: `docs/designs/mvp-onboarding-90s.md` (scope, UX, errores, tests, arquitectura). Backlog: `TODOS.md`.
+- Spec completa: `docs/designs/mvp-onboarding-90s.md` (scope, UX, errores, tests, arquitectura). Backlog: `TODOS.md`. Historial de versiones: `CHANGELOG.md` (versión vigente en `VERSION`).
 
 ## Voz del producto
 **"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual: ✅ definida — DESIGN.md + tokens en app/globals.css (burdeos #722F37 + neutros cálidos; ámbar/terracota VETADO).
