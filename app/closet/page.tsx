@@ -54,6 +54,9 @@ export default async function ClosetPage() {
       tipo?: string;
       formalidad?: string;
       temporada?: string;
+      material?: string;
+      patron?: string;
+      color_secundario?: string;
     };
     return {
       id: r.id as string,
@@ -63,6 +66,9 @@ export default async function ClosetPage() {
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",
       temporada: attrs.temporada ?? "todo-el-año",
+      material: attrs.material ?? "",
+      patron: attrs.patron ?? "",
+      colorSecundario: attrs.color_secundario ?? "",
       source: (r.source as string) ?? "archetype",
       renderStatus: (r.render_status as string) ?? "none",
     };

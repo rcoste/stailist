@@ -148,6 +148,9 @@ export async function removeItem(id: string): Promise<{ ok: boolean }> {
 // Edita los atributos de una prenda FOTOGRAFIADA (corrige lo que la IA leyó mal).
 // Solo aplica a source='photo': los arquetipos derivan su display del catálogo,
 // así que editarlos no tendría efecto (se podan, no se editan).
+// material/patron/color_secundario son corregibles porque una mala lectura de
+// visión (o del backfill) es señal DURA para el motor ("lana" excluye la prenda
+// de looks de calor) — write-once sería incorregible.
 export async function updateItemAttrs(
   id: string,
   patch: {
@@ -155,6 +158,9 @@ export async function updateItemAttrs(
     categoria?: string;
     formalidad?: string;
     temporada?: string;
+    material?: string;
+    patron?: string;
+    color_secundario?: string;
   }
 ): Promise<{ ok: boolean }> {
   const supabase = await createClient();
@@ -182,6 +188,23 @@ export async function updateItemAttrs(
   if (patch.categoria) clean.categoria = patch.categoria.slice(0, 30);
   if (patch.formalidad) clean.formalidad = patch.formalidad.slice(0, 30);
   if (patch.temporada) clean.temporada = patch.temporada.slice(0, 30);
+  // Atributos ricos: mandar el campo con string vacío = "quitar el dato"
+  // (una lectura equivocada se borra, no solo se reemplaza).
+  if (patch.material !== undefined) {
+    const v = cleanTextAttr(patch.material, MAX_MATERIAL_LEN);
+    if (v) clean.material = v;
+    else delete clean.material;
+  }
+  if (patch.patron !== undefined) {
+    const v = cleanPatron(patch.patron);
+    if (v) clean.patron = v;
+    else delete clean.patron;
+  }
+  if (patch.color_secundario !== undefined) {
+    const v = cleanTextAttr(patch.color_secundario, MAX_COLOR_LEN);
+    if (v) clean.color_secundario = v;
+    else delete clean.color_secundario;
+  }
 
   const { error } = await supabase
     .from("items")

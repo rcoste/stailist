@@ -15,6 +15,9 @@ export type ClosetItem = {
   category: string;
   formalidad: string;
   temporada: string;
+  material: string; // "" = sin dato
+  patron: string; // "" = sin dato; valores de PATRONES
+  colorSecundario: string; // "" = sin dato
   source: string; // "archetype" | "photo"
   renderStatus?: string; // "none" | "pending" | "done" | "failed"
 };
@@ -51,6 +54,17 @@ const TEMPORADAS: { v: string; l: string }[] = [
   { v: "templado", l: "templado" },
   { v: "frio", l: "frío" },
   { v: "todo-el-año", l: "todo el año" },
+];
+// Patrones (espeja PATRONES de lib/prenda-atributos; "" = sin dato).
+const PATRONES_EDIT: { v: string; l: string }[] = [
+  { v: "", l: "—" },
+  { v: "liso", l: "liso" },
+  { v: "rayas", l: "rayas" },
+  { v: "cuadros", l: "cuadros" },
+  { v: "floral", l: "floral" },
+  { v: "animal-print", l: "animal print" },
+  { v: "grafico", l: "gráfico" },
+  { v: "estampado", l: "estampado" },
 ];
 
 const norm = (s: string) =>
@@ -595,6 +609,9 @@ function ItemSheet({
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
+  const [material, setMaterial] = useState(item.material);
+  const [patron, setPatron] = useState(item.patron);
+  const [colorSecundario, setColorSecundario] = useState(item.colorSecundario);
   const [saving, setSaving] = useState(false);
 
   const dirty =
@@ -602,11 +619,22 @@ function ItemSheet({
     (nombre.trim() !== item.nombre ||
       categoria !== item.category ||
       formalidad !== item.formalidad ||
-      temporada !== item.temporada);
+      temporada !== item.temporada ||
+      material.trim() !== item.material ||
+      patron !== item.patron ||
+      colorSecundario.trim() !== item.colorSecundario);
 
   async function guardar() {
     setSaving(true);
-    const res = await updateItemAttrs(item.id, { nombre, categoria, formalidad, temporada });
+    const res = await updateItemAttrs(item.id, {
+      nombre,
+      categoria,
+      formalidad,
+      temporada,
+      material,
+      patron,
+      color_secundario: colorSecundario,
+    });
     setSaving(false);
     if (res.ok) onSaved();
   }
@@ -698,6 +726,46 @@ function ItemSheet({
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Atributos ricos (v21): el motor los usa como señal dura (lana ≠
+                calor, máx. un estampado) — por eso son corregibles aquí. */}
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <label className="text-xs font-medium text-muted">Material</label>
+                <input
+                  value={material}
+                  onChange={(e) => setMaterial(e.target.value)}
+                  placeholder="algodón, lana, mezclilla…"
+                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-1">
+                <label className="text-xs font-medium text-muted">Patrón</label>
+                <select
+                  value={patron}
+                  onChange={(e) => setPatron(e.target.value)}
+                  className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
+                >
+                  {PATRONES_EDIT.map((p) => (
+                    <option key={p.v} value={p.v}>
+                      {p.l}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted">
+                Segundo color (si es bicolor)
+              </label>
+              <input
+                value={colorSecundario}
+                onChange={(e) => setColorSecundario(e.target.value)}
+                placeholder="blanco, beige…"
+                className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+              />
             </div>
 
             {dirty ? (
