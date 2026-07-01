@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { PATRONES, type Patron } from "@/lib/prenda-atributos";
 
 export const maxDuration = 60;
 
@@ -16,6 +17,11 @@ export type PrendaAnalisis = {
   largo?: "crop" | "regular" | "largo";
   corte?: "entallado" | "recto" | "holgado";
   manga?: "sin" | "corta" | "larga";
+  // Atributos de combinación (opcionales): el motor los usa para juzgar mejor
+  // (no lana en calor, no dos estampados que pelean, color real de bicolores).
+  material?: string; // tela/material aparente: "algodón", "lana", "mezclilla", "piel"…
+  patron?: Patron; // vocabulario compartido en lib/prenda-atributos
+  color_secundario?: string; // segundo color visible si la prenda es claramente bicolor; ausente si no
 };
 
 // Claude vision mira la foto de UNA prenda y devuelve sus atributos. El
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
       model: "claude-opus-4-8",
       max_tokens: 500,
       system:
-        "Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos de piel'). Identifica con cuidado el TIPO exacto de prenda, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones, sin abertura completa) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta (sin botones ni cuello rígido) tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate en si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). CATEGORÍA — distingue con cuidado: 'saco' = saco, blazer, saco de traje o smoking (prenda estructurada de torso que se usa por FORMALIDAD, no por frío); 'abrigo' = SOLO capas por clima (abrigo, gabardina, parka, cárdigan, suéter grueso de capa). Un traje se registra como dos prendas: el saco (categoría 'saco') y su pantalón (categoría 'bottom'), por separado. El color_hex es el color dominante real de la prenda. Si hay varias prendas o ninguna clara, elige la prenda principal. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla.",
+        "Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos de piel'). Identifica con cuidado el TIPO exacto de prenda, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones, sin abertura completa) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta (sin botones ni cuello rígido) tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate en si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). CATEGORÍA — distingue con cuidado: 'saco' = saco, blazer, saco de traje o smoking (prenda estructurada de torso que se usa por FORMALIDAD, no por frío); 'abrigo' = SOLO capas por clima (abrigo, gabardina, parka, cárdigan, suéter grueso de capa). Un traje se registra como dos prendas: el saco (categoría 'saco') y su pantalón (categoría 'bottom'), por separado. El color_hex es el color dominante real de la prenda (el de la TELA, ignorando sombras y luz de la foto). Si la prenda es claramente bicolor o estampada con un segundo color protagonista (rayas azul/blanco, colorblock), da también color_secundario (nombre del segundo color); si es de un solo color, omítelo. Da el material aparente de la tela ('algodón', 'lana', 'mezclilla', 'lino', 'piel', 'ante', 'punto', 'sintético', 'seda'…) — importa para clima y combinación; si no se distingue, omítelo en vez de adivinar. Da el patron: 'liso' si no tiene estampado, o el que tenga (rayas/cuadros/floral/animal-print/grafico/estampado). Si hay varias prendas o ninguna clara, elige la prenda principal. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla.",
       messages: [
         {
           role: "user",
@@ -93,6 +99,9 @@ export async function POST(request: NextRequest) {
               largo: { type: "string", enum: ["crop", "regular", "largo"] },
               corte: { type: "string", enum: ["entallado", "recto", "holgado"] },
               manga: { type: "string", enum: ["sin", "corta", "larga"] },
+              material: { type: "string" },
+              patron: { type: "string", enum: [...PATRONES] },
+              color_secundario: { type: "string" },
             },
             required: [
               "nombre",
@@ -101,6 +110,7 @@ export async function POST(request: NextRequest) {
               "color_hex",
               "formalidad",
               "temporada",
+              "patron",
             ],
             additionalProperties: false,
           },

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { PATRONES } from "@/lib/prenda-atributos";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 export const maxDuration = 60;
@@ -45,9 +46,11 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic();
     const res = await client.messages.create({
       model: "claude-opus-4-8",
-      max_tokens: 1500,
+      // 2048: hasta 6 prendas con descripcion larga + los campos nuevos
+      // (material/patron/color_secundario); 1500 arriesgaba truncar el JSON.
+      max_tokens: 2048,
       system:
-        "Eres experta en moda. Miras la foto de UNA PERSONA VESTIDA y listas CADA prenda visible que lleva puesta (top, pantalón, calzado, abrigo, vestido, accesorio), para un clóset digital. Reglas: (1) una entrada por prenda real; no inventes prendas que no se ven. (2) Si una prenda está tapada, en perspectiva difícil, o el color es dudoso por la luz, márcala confianza 'baja' (NO la omitas, pero avisa). (3) El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos'). Identifica con cuidado el TIPO exacto, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). CATEGORÍA: 'saco' = saco/blazer/saco de traje/smoking (torso estructurado por FORMALIDAD, no por frío); 'abrigo' = solo capas por clima (abrigo/gabardina/parka/cárdigan/suéter grueso). Un traje = saco (categoría 'saco') + su pantalón (categoría 'bottom') por separado. (4) color_hex es el color dominante real de la prenda. (5) descripcion: una descripción VISUAL detallada en español, pensada para que un generador de imágenes recree la prenda fielmente — incluye tipo de prenda, corte/silueta, material/textura aparente, color exacto, y detalles distintivos (cuello, mangas, botones, estampado, cierre, suela, montura, etc.). Ej: 'chaqueta tipo bomber de nylon negro mate, cierre metálico frontal, puños y cintura elásticos acanalados, sin capucha'. Máximo 6 prendas.",
+        "Eres experta en moda. Miras la foto de UNA PERSONA VESTIDA y listas CADA prenda visible que lleva puesta (top, pantalón, calzado, abrigo, vestido, accesorio), para un clóset digital. Reglas: (1) una entrada por prenda real; no inventes prendas que no se ven. (2) Si una prenda está tapada, en perspectiva difícil, o el color es dudoso por la luz, márcala confianza 'baja' (NO la omitas, pero avisa). (3) El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos'). Identifica con cuidado el TIPO exacto, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). CATEGORÍA: 'saco' = saco/blazer/saco de traje/smoking (torso estructurado por FORMALIDAD, no por frío); 'abrigo' = solo capas por clima (abrigo/gabardina/parka/cárdigan/suéter grueso). Un traje = saco (categoría 'saco') + su pantalón (categoría 'bottom') por separado. (4) color_hex es el color dominante real de la prenda (el de la TELA, ignorando sombras y luz). Si es claramente bicolor o estampada con un segundo color protagonista, da color_secundario (nombre); si no, omítelo. Da el material aparente ('algodón', 'lana', 'mezclilla', 'lino', 'piel', 'punto', 'sintético'…); si no se distingue, omítelo en vez de adivinar. Da el patron: 'liso' o el que tenga (rayas/cuadros/floral/animal-print/grafico/estampado). (5) descripcion: una descripción VISUAL detallada en español, pensada para que un generador de imágenes recree la prenda fielmente — incluye tipo de prenda, corte/silueta, material/textura aparente, color exacto, y detalles distintivos (cuello, mangas, botones, estampado, cierre, suela, montura, etc.). Ej: 'chaqueta tipo bomber de nylon negro mate, cierre metálico frontal, puños y cintura elásticos acanalados, sin capucha'. Máximo 6 prendas.",
       messages: [
         {
           role: "user",
@@ -96,6 +99,9 @@ export async function POST(request: NextRequest) {
                     largo: { type: "string", enum: ["crop", "regular", "largo"] },
                     corte: { type: "string", enum: ["entallado", "recto", "holgado"] },
                     manga: { type: "string", enum: ["sin", "corta", "larga"] },
+                    material: { type: "string" },
+                    patron: { type: "string", enum: [...PATRONES] },
+                    color_secundario: { type: "string" },
                     confianza: {
                       type: "string",
                       enum: ["alta", "media", "baja"],
@@ -109,6 +115,7 @@ export async function POST(request: NextRequest) {
                     "color_hex",
                     "formalidad",
                     "temporada",
+                    "patron",
                     "confianza",
                     "descripcion",
                   ],

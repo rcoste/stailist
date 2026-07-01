@@ -3,7 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { borrowArchetypeImage } from "@/lib/capsule-data";
+import {
+  cleanPatron,
+  cleanTextAttr,
+  MAX_COLOR_LEN,
+  MAX_MATERIAL_LEN,
+} from "@/lib/prenda-atributos";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
+
+// Frontera de confianza LLM→DB: los campos de texto libre del análisis de
+// visión se normalizan/validan server-side antes de persistir (las server
+// actions son endpoints públicos para usuarios autenticados — un cliente
+// manipulado no debe poder meter strings arbitrarios que luego entran a los
+// prompts del motor). patron se valida contra el vocabulario cerrado.
+function cleanAtributosRicos(attrs: PrendaAnalisis) {
+  return {
+    material: cleanTextAttr(attrs.material, MAX_MATERIAL_LEN),
+    patron: cleanPatron(attrs.patron),
+    color_secundario: cleanTextAttr(attrs.color_secundario, MAX_COLOR_LEN),
+  };
+}
 
 // Guarda una prenda fotografiada por la usuaria. La foto ya está en el bucket
 // privado 'prendas' (la subió el cliente con su RLS). attrs lleva los atributos
@@ -36,6 +55,7 @@ export async function addPhotoItem(
       largo: attrs.largo,
       corte: attrs.corte,
       manga: attrs.manga,
+      ...cleanAtributosRicos(attrs),
     },
   });
   if (error) return { ok: false };
@@ -156,9 +176,12 @@ export async function updateItemAttrs(
   const clean: Record<string, unknown> = { ...attrs };
   if (typeof patch.nombre === "string" && patch.nombre.trim())
     clean.nombre = patch.nombre.trim().slice(0, 60);
-  if (patch.categoria) clean.categoria = patch.categoria;
-  if (patch.formalidad) clean.formalidad = patch.formalidad;
-  if (patch.temporada) clean.temporada = patch.temporada;
+  // La UI manda valores de selects fijos; el tope es la frontera de confianza
+  // (estos attrs entran a prompts del motor — sin tope, un cliente manipulado
+  // mete párrafos por esta puerta).
+  if (patch.categoria) clean.categoria = patch.categoria.slice(0, 30);
+  if (patch.formalidad) clean.formalidad = patch.formalidad.slice(0, 30);
+  if (patch.temporada) clean.temporada = patch.temporada.slice(0, 30);
 
   const { error } = await supabase
     .from("items")
@@ -277,6 +300,7 @@ export async function addPhotoItems(
         largo: it.attrs.largo,
         corte: it.attrs.corte,
         manga: it.attrs.manga,
+        ...cleanAtributosRicos(it.attrs),
       },
       render_status: it.renderStatus,
       render_path: it.renderPath,
