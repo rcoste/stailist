@@ -81,7 +81,7 @@ export function StylistGenerating({
       <p className="mt-[26px] text-[11px] font-bold uppercase tracking-[0.2em] text-muted">
         Tu estilista está pensando
       </p>
-      <p className="mt-3 min-h-[108px] font-display text-[26px] leading-[1.32] text-ink">
+      <p className="mt-3 min-h-[108px] text-[26px] font-medium leading-[1.32] text-ink">
         {typed}
         <span
           aria-hidden
