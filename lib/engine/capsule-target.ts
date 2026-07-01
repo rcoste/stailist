@@ -85,13 +85,17 @@ export async function generateCapsuleTarget(
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    // ~25-40 prendas con material + por qué cada una: la cápsula nueva es grande.
-    max_tokens: 8000,
+    // ~25-40 prendas con material + por qué cada una, más el "plan" (borrador
+    // de razonamiento del schema): la cápsula nueva es grande y ya corría cerca
+    // del tope viejo (8000) — margen holgado; solo se paga lo que se emite.
+    max_tokens: 10000,
     system: `Eres la stylist senior de stailist — del nivel de una asesora de imagen que cobra una fortuna, pero mejor y más honesta. Defines el CLÓSET CÁPSULA IDEAL de una persona: las prendas concretas que DEBERÍA tener para vivir bien vestida según su vida real, su cuerpo y su color. Partes de cero (no miras lo que ya tiene); después la app le dirá qué ya tiene y qué le falta, así que tu trabajo es definir el deber-ser, completo y honesto.
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
 El objetivo NO es una lista larga: es un SISTEMA que se combina solo. Una cápsula bien hecha rinde 100+ outfits porque cada prenda se MULTIPLICA con las demás. Optimiza por COMBINABILIDAD, no por cantidad.
+
+Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador de trabajo, la persona no lo ve. Ahí decide el esqueleto ANTES de listar prendas: qué 2-4 neutros serán la espina dorsal, qué 2-3 acentos de su paleta los acompañan, cuántas piezas por categoría le tocan a SU vida (y por qué), y qué códigos de vestimenta tiene que cubrir. DESPUÉS genera los items ejecutando ese plan — cada prenda debe caber en él.
 
 == CUÁNTAS PRENDAS ==
 No hay número fijo. Dimensiona la cápsula al ideal REAL de ESTA persona: típicamente 25-40 piezas (incluyendo calzado y accesorios clave). Flexa con honestidad: menos para una vida simple/minimalista o clima de una sola estación; más si tiene varios códigos de vestimenta (oficina formal + salidas + eventos) o clima de varias estaciones. Da el número que de verdad necesita — ni inflado ni recortado por miedo a que "le falte mucho".
@@ -141,6 +145,13 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
         schema: {
           type: "object",
           properties: {
+            // PRIMERO en el schema a propósito: el modelo genera el plan antes
+            // que los items → espacio de razonamiento. El caller lo ignora.
+            plan: {
+              type: "string",
+              description:
+                "Tu borrador de trabajo (la persona NO lo ve; 4-8 líneas, MÁXIMO 8): los 2-4 neutros espina dorsal, los 2-3 acentos de su paleta, cuántas piezas por categoría le tocan a SU vida y por qué, y qué códigos de vestimenta cubres. Decide esto ANTES de listar prendas.",
+            },
             items: {
               type: "array",
               items: {
@@ -188,7 +199,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
               },
             },
           },
-          required: ["items", "firma", "subline", "pilares"],
+          required: ["plan", "items", "firma", "subline", "pilares"],
           additionalProperties: false,
         },
       },
@@ -197,6 +208,8 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
+  // Truncado por tope de tokens = JSON incompleto; error distinguible.
+  if (response.stop_reason === "max_tokens") throw new Error("TRUNCATED_RESPONSE");
   const parsed = JSON.parse(text) as {
     items: CapsuleItem[];
     firma?: string;

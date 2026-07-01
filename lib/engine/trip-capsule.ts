@@ -92,8 +92,12 @@ export async function generateTripCapsuleTarget(
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 3072,
+    // 3584: el "plan" (borrador de razonamiento del schema) consume tokens
+    // antes de los items; 3072 quedaba justo en cápsulas grandes.
+    max_tokens: 3584,
     system: `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar.
+
+Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo ve. Ahí decide antes de listar: cuántas piezas pide este viaje (días × ocasiones × clima), qué 2-3 neutros anclan la maleta, qué acentos van, y qué pieza cubre cada ocasión. DESPUÉS genera los items ejecutando ese plan.
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
@@ -132,6 +136,13 @@ Devuelve "items" (la cápsula). Cada prenda:
         schema: {
           type: "object",
           properties: {
+            // PRIMERO en el schema a propósito: el modelo genera el plan antes
+            // que los items → espacio de razonamiento. El caller lo ignora.
+            plan: {
+              type: "string",
+              description:
+                "Tu borrador de trabajo (la persona NO lo ve; 3-6 líneas, MÁXIMO 6): cuántas piezas pide el viaje (días × ocasiones × clima), los 2-3 neutros ancla, los acentos, y qué pieza cubre cada ocasión. Decide esto ANTES de listar prendas.",
+            },
             items: {
               type: "array",
               items: {
@@ -160,7 +171,7 @@ Devuelve "items" (la cápsula). Cada prenda:
               },
             },
           },
-          required: ["items"],
+          required: ["plan", "items"],
           additionalProperties: false,
         },
       },
@@ -169,6 +180,8 @@ Devuelve "items" (la cápsula). Cada prenda:
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
+  // Truncado por tope de tokens = JSON incompleto; error distinguible.
+  if (response.stop_reason === "max_tokens") throw new Error("TRUNCATED_RESPONSE");
   const parsed = JSON.parse(text) as { items: CapsuleItem[] };
   if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
     throw new Error("BAD_TRIP_CAPSULE");

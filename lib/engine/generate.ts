@@ -27,7 +27,9 @@ export async function generateOutfits(
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 2048,
+    // 3072: el campo "analisis" (borrador de razonamiento del schema) consume
+    // tokens antes de los outfits; 2048 quedaba justo.
+    max_tokens: 3072,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildUserMessage(ctx) }],
     output_config: {
@@ -40,6 +42,10 @@ export async function generateOutfits(
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
+  // Truncado por tope de tokens = JSON incompleto. Error distinguible (no un
+  // JSON.parse opaco): el schema no puede acotar el "analisis" (maxLength no
+  // está soportado en structured outputs), así que este es el backstop.
+  if (response.stop_reason === "max_tokens") throw new Error("TRUNCATED_RESPONSE");
 
   const parsed = JSON.parse(text) as { outfits: GeneratedOutfit[] };
   const valid = new Set(itemIds);
