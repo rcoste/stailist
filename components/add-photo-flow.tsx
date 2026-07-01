@@ -20,16 +20,17 @@ const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
   { v: "calzado", l: "Calzado" },
   { v: "accesorio", l: "Accesorio" },
 ];
-const FORMALIDADES: PrendaAnalisis["formalidad"][] = [
-  "casual",
-  "formal-casual",
-  "formal",
+// Valor (enum) + label humana — cero jerga en la UI (mismo criterio que closet-grid).
+const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
+  { v: "casual", l: "casual" },
+  { v: "formal-casual", l: "casual-formal" },
+  { v: "formal", l: "formal" },
 ];
-const TEMPORADAS: PrendaAnalisis["temporada"][] = [
-  "calor",
-  "templado",
-  "frio",
-  "todo-el-año",
+const TEMPORADAS: { v: PrendaAnalisis["temporada"]; l: string }[] = [
+  { v: "calor", l: "calor" },
+  { v: "templado", l: "templado" },
+  { v: "frio", l: "frío" },
+  { v: "todo-el-año", l: "todo el año" },
 ];
 
 type State =
@@ -219,8 +220,8 @@ export function AddPhotoFlow({
                 className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
               >
                 {FORMALIDADES.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
+                  <option key={f.v} value={f.v}>
+                    {f.l}
                   </option>
                 ))}
               </select>
@@ -236,8 +237,8 @@ export function AddPhotoFlow({
                 className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
               >
                 {TEMPORADAS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                  <option key={t.v} value={t.v}>
+                    {t.l}
                   </option>
                 ))}
               </select>

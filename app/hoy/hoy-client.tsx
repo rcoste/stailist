@@ -286,7 +286,16 @@ export function HoyClient({
         <p className="text-base text-ink">
           {ERROR_COPY[state.code] ?? ERROR_COPY.generacion}
         </p>
-        {state.code !== "sin_api_key" && (
+        {state.code === "closet_vacio" ? (
+          // Reintentar con el mismo clóset vacío daría el mismo error → mándala a
+          // agregar ropa, que es el camino de salida real.
+          <Link
+            href="/closet"
+            className="flex min-h-12 items-center rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            agregar ropa a tu clóset
+          </Link>
+        ) : state.code !== "sin_api_key" ? (
           <button
             type="button"
             onClick={() =>
@@ -298,7 +307,7 @@ export function HoyClient({
           >
             Reintentar
           </button>
-        )}
+        ) : null}
       </div>
     );
   }
@@ -410,7 +419,11 @@ function ReadyView({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // Reveal: el look ENTRA (fade + subida) tras la espera, no aparece de golpe.
+    <div
+      className="flex flex-col gap-4"
+      style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+    >
       <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0">
         <span className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</span>
         <span className="text-sm text-muted">·</span>
