@@ -142,7 +142,7 @@ function DoneState({ have, total }: { have: number; total: number }) {
               Completa · {have} de {total}
             </span>
           </span>
-          <h2 className="display text-[18px] font-semibold leading-tight text-ink">
+          <h2 className="text-[18px] font-semibold leading-tight text-ink">
             Tu guardarropa esencial está completo
           </h2>
         </div>

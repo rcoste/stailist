@@ -136,7 +136,7 @@ export function CapsulaForm({
 
       {/* Pregunta + opciones. */}
       <div className="mt-5 flex flex-1 flex-col">
-        <h1 className="display text-[25px] font-semibold leading-[1.15] tracking-[-0.01em] text-ink">
+        <h1 className="text-[25px] font-bold leading-[1.15] tracking-[-0.01em] text-ink">
           {q.label}
         </h1>
         {q.help ? <p className="mt-2 text-sm text-muted">{q.help}</p> : null}

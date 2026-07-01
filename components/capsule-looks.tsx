@@ -129,7 +129,7 @@ export function CapsuleLooks({ outfits, stale }: { outfits: Look[] | null; stale
             <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-accent">
               {OCC_LABEL.get(o.ocasion) ?? o.ocasion}
             </div>
-            <h3 className="display mt-1 text-[18px] font-semibold leading-tight text-ink">
+            <h3 className="mt-1 text-[18px] font-semibold leading-tight text-ink">
               {o.titulo}
             </h3>
             <div className="my-3 flex gap-[7px]">
