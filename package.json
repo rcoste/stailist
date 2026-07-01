@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-serif-headings.mjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:type": "node scripts/check-serif-headings.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

@@ -6,12 +6,17 @@ import { seasonDisplayLabel } from "@/lib/colorimetria";
 import { buildLabel, volumeLabel } from "@/lib/silueta";
 
 // Firma del estilo: si cambia el arquetipo o los gustos, las preguntas se regeneran.
+// v-prefix: súbelo cuando cambie el prompt/formato del generador para invalidar las
+// preguntas cacheadas y regenerarlas. v2 = reencuadre "lo que te atrae" + opción
+// "Aún no lo sé".
+const QUESTIONS_VERSION = "v2";
+
 export function styleQuestionsSig(p: {
   style_archetype: { nombre: string } | null;
   taste_tags: string[] | null;
 }): string {
   const arch = p.style_archetype?.nombre ?? "none";
-  return `${arch}|${[...(p.taste_tags ?? [])].sort().join(",")}`;
+  return `${QUESTIONS_VERSION}|${arch}|${[...(p.taste_tags ?? [])].sort().join(",")}`;
 }
 
 // Devuelve las preguntas de estilo personalizadas (cacheadas en el perfil); las

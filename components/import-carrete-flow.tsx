@@ -323,7 +323,7 @@ export function ImportCarreteFlow({
       <Overlay>
         {input}
         <div className="flex flex-col gap-1">
-          <h2 className="display text-[24px] font-semibold leading-tight text-ink">
+          <h2 className="text-[24px] font-semibold leading-tight text-ink">
             así <em className="font-normal italic">funciona</em>
           </h2>
           <p className="text-sm text-muted">
@@ -541,7 +541,7 @@ function Overlay({ children }: { children: React.ReactNode }) {
 function Header({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="editorial text-xl text-ink">{title}</h2>
+      <h2 className="text-xl font-semibold text-ink">{title}</h2>
       <p className="text-sm text-muted">{sub}</p>
     </div>
   );

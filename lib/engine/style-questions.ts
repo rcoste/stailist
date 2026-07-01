@@ -41,6 +41,8 @@ REGLAS:
 - Voz amiga cool, tuteo, cero jerga técnica de moda. Opciones cortas y concretas (3-4 por pregunta).
 - "multi": true solo si de verdad puede aplicar más de una; si no, false.
 - NO repitas lo que ya se pregunta aparte: vida/trabajo, clima, formalidad de eventos, fit general, colorimetría base. Aquí SOLO matiz fino de estilo.
+- CLAVE: la persona quizá NO sepa vestirse o no tenga claro su estilo (por eso usa la app). Pregunta por lo que le ATRAE / le gustaría, NO por lo que "ya hace" o "cómo se viste" — no asumas experiencia. Opciones concretas y visuales (que se imagine la prenda). Distingue: el estilo que le GUSTA ≠ cómo se viste hoy.
+- La app añade sola una opción "Aún no lo sé — sorpréndeme" a cada pregunta; NO la incluyas tú.
 - Concordancia de género correcta.
 
 Devuelve "questions": cada una con "label" (la pregunta), "help" (≤1 línea; "" si no aplica), "multi" (bool) y "options" (cada una con "label" corto y "hint" ≤1 línea; "" si no aplica).`,
@@ -106,10 +108,14 @@ Devuelve "questions": cada una con "label" (la pregunta), "help" (≤1 línea; "
       label: q.label.trim(),
       help: q.help?.trim() || undefined,
       multi: !!q.multi,
-      options: q.options.slice(0, 5).map((o, j) => ({
-        value: `o${j + 1}`,
-        label: o.label.trim(),
-        hint: o.hint?.trim() || undefined,
-      })),
+      options: [
+        ...q.options.slice(0, 5).map((o, j) => ({
+          value: `o${j + 1}`,
+          label: o.label.trim(),
+          hint: o.hint?.trim() || undefined,
+        })),
+        // Escape para quien aún no sabe su estilo / cómo se viste: siempre presente.
+        { value: "ns", label: "Aún no lo sé — sorpréndeme", exclusive: true },
+      ],
     }));
 }
