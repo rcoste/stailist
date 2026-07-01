@@ -402,7 +402,7 @@ export function ImportCarreteFlow({
             <Icon name="destello" size={18} />
           </span>
           <div className="flex flex-col gap-0.5">
-            <p className="editorial text-lg text-ink">generando tus prendas…</p>
+            <p className="text-lg font-medium text-ink">generando tus prendas…</p>
             <p className="tabular text-sm text-muted">
               {state.done}/{state.total}
             </p>
@@ -760,7 +760,7 @@ function CarreteLoading({ frase, count }: { frase: string; count?: string }) {
       <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-line text-ink motion-safe:animate-[spin_6s_linear_infinite]">
         <Icon name="destello" size={20} />
       </span>
-      <p className="editorial text-lg text-ink">{frase}</p>
+      <p className="text-lg font-medium text-ink">{frase}</p>
       {count ? <p className="tabular text-sm text-muted">{count}</p> : null}
     </div>
   );

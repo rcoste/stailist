@@ -349,7 +349,7 @@ export function TripResult({
             {subFlow.status === "loading" ? (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <Spinner className="h-7 w-7 text-accent" />
-                <p className="editorial text-base text-ink">buscando en tu clóset…</p>
+                <p className="text-base font-medium text-ink">buscando en tu clóset…</p>
               </div>
             ) : null}
 

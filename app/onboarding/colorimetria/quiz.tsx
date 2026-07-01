@@ -34,7 +34,7 @@ export function Quiz() {
     return (
       <div className="flex flex-col items-center gap-4 pt-8 text-center">
         <Spinner className="h-8 w-8 text-accent" />
-        <p className="editorial text-lg text-ink">leyendo tus colores…</p>
+        <p className="text-lg font-medium text-ink">leyendo tus colores…</p>
       </div>
     );
   }
