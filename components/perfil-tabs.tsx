@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { ChangeAvatar } from "@/components/change-avatar";
+import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
@@ -97,17 +98,27 @@ export function PerfilTabs(props: PerfilTabsProps) {
 }
 
 function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
+  const [zoom, setZoom] = useState(false);
   return (
     <div className="flex flex-col gap-3">
       {/* Hero de identidad */}
       <div className="flex items-center gap-4 rounded-lg border border-line bg-surface p-4">
         {avatarUrl ? (
-          <div className="relative h-[72px] w-[58px] shrink-0 overflow-hidden rounded-md border border-line bg-bg">
-            <Image src={avatarUrl} alt="Tu foto" fill sizes="58px" className="object-cover" />
-          </div>
+          <button
+            type="button"
+            onClick={() => setZoom(true)}
+            aria-label="Ver mi foto en grande"
+            className="group relative h-[122px] w-[98px] shrink-0 overflow-hidden rounded-md border border-line bg-bg focus-visible:outline-none"
+          >
+            <Image src={avatarUrl} alt="Tu foto" fill sizes="98px" className="object-cover" />
+            {/* Afordancia de "tocar para ampliar" */}
+            <span className="absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/55 text-on-accent transition-colors group-hover:bg-ink/75">
+              <Icon name="expandir" size={13} />
+            </span>
+          </button>
         ) : (
-          <span className="flex h-[72px] w-[58px] shrink-0 items-center justify-center rounded-md border border-dashed border-line bg-bg text-muted">
-            <Icon name="persona" size={24} />
+          <span className="flex h-[122px] w-[98px] shrink-0 items-center justify-center rounded-md border border-dashed border-line bg-bg text-muted">
+            <Icon name="persona" size={32} />
           </span>
         )}
         <div className="flex min-w-0 flex-col">
@@ -116,6 +127,11 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
           <ChangeAvatar hasAvatar={!!avatarUrl} />
         </div>
       </div>
+
+      <PrendaZoom
+        data={zoom && avatarUrl ? { image: avatarUrl, nombre: name } : null}
+        onClose={() => setZoom(false)}
+      />
 
       <InstallAppRow />
 
