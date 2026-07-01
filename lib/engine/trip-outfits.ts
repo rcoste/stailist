@@ -93,10 +93,12 @@ export async function generateTripOutfits(
   const calzado = bySlot("calzado");
   const vestidos = bySlot("vestido");
   const capas = bySlot("abrigo");
+  const sacos = bySlot("saco");
   const accesorios = bySlot("accesorio");
 
-  // Solo capas y accesorios pueden sumarse como "extra" a un look base.
-  const extraOk = new Set([...capas, ...accesorios].map((p) => p.n));
+  // Sacos (formal por ocasión), capas (clima) y accesorios pueden sumarse como
+  // "extra" a un look base — así los combos formales sí reciben su saco.
+  const extraOk = new Set([...sacos, ...capas, ...accesorios].map((p) => p.n));
 
   // --- 2. Enumera las celdas (combinaciones base), balanceadas y bajo tope ---
   type Cell = { base: number[]; kind: "sep" | "vestido" };

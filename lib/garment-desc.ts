@@ -11,7 +11,7 @@
 export type GarmentAttrs = {
   nombre: string;
   color?: string | null;
-  categoria?: string | null; // top | bottom | calzado | abrigo | vestido | accesorio
+  categoria?: string | null; // top | saco | bottom | calzado | abrigo | vestido | accesorio
   formalidad?: string | null;
   temporada?: string | null;
   largo?: string | null;

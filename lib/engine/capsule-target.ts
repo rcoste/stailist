@@ -97,7 +97,7 @@ El objetivo NO es una lista larga: es un SISTEMA que se combina solo. Una cápsu
 No hay número fijo. Dimensiona la cápsula al ideal REAL de ESTA persona: típicamente 25-40 piezas (incluyendo calzado y accesorios clave). Flexa con honestidad: menos para una vida simple/minimalista o clima de una sola estación; más si tiene varios códigos de vestimenta (oficina formal + salidas + eventos) o clima de varias estaciones. Da el número que de verdad necesita — ni inflado ni recortado por miedo a que "le falte mucho".
 
 == ESTRUCTURA POR CATEGORÍA ==
-Los tops son la categoría más grande y el principal multiplicador (se ven más, se lavan más, varían barato): apunta a ~2 tops por cada bottom. Reparte el resto en capas, calzado, abrigos (solo si el clima lo pide) y accesorios. En mujer, los vestidos cuentan como multiplicador; en hombre, ese presupuesto va a más camisas/pantalones/sastrería.
+Los tops son la categoría más grande y el principal multiplicador (se ven más, se lavan más, varían barato): apunta a ~2 tops por cada bottom. Reparte el resto en calzado, sacos/sastrería (si su vida tiene códigos formales o eventos), abrigos (solo si el clima lo pide) y accesorios. En mujer, los vestidos cuentan como multiplicador; en hombre, ese presupuesto va a más camisas/pantalones/sastrería.
 
 == PALETA (restricción dura, no sugerencia) ==
 - 2-4 NEUTROS como espina dorsal (la mayoría del clóset, ~70%) + 2-3 ACENTOS de su paleta (~30%).
@@ -116,7 +116,7 @@ Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo
 Devuelve "items". Cada prenda:
 - nombre: etiqueta humana y específica, con color y material cuando aporte. Ej: "Cuello tortuga de lana merino azul marino", "Chukka de ante café".
 - tipo: clave corta normalizada, sin color. Ej: "cuello-tortuga", "chukka", "blazer", "jeans".
-- category ∈ {${CATEGORIES.join(", ")}}
+- category ∈ {${CATEGORIES.join(", ")}} — 'saco' para sacos/blazers/sastrería (pieza formal por ocasión); 'abrigo' SOLO para capas por clima (abrigo, cárdigan, parka). Un traje va como 'saco' + su pantalón 'bottom' aparte.
 - colorFamilia: familia simple ("marino", "gris", "camel", "blanco"…), dentro de su paleta.
 - formalidad ∈ {${FORMALIDADES.join(", ")}}
 - temporada: "todo-el-año" | "calor" | "frio".

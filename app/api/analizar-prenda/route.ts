@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 export type PrendaAnalisis = {
   nombre: string;
-  categoria: "top" | "bottom" | "calzado" | "abrigo" | "vestido" | "accesorio";
+  categoria: "top" | "saco" | "bottom" | "calzado" | "abrigo" | "vestido" | "accesorio";
   color: string;
   color_hex: string;
   formalidad: "casual" | "formal-casual" | "formal";
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       model: "claude-opus-4-8",
       max_tokens: 500,
       system:
-        "Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos de piel'). Identifica con cuidado el TIPO exacto de prenda, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones, sin abertura completa) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta (sin botones ni cuello rígido) tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate en si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). El color_hex es el color dominante real de la prenda. Si hay varias prendas o ninguna clara, elige la prenda principal. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla.",
+        "Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos de piel'). Identifica con cuidado el TIPO exacto de prenda, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones, sin abertura completa) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta (sin botones ni cuello rígido) tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate en si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). CATEGORÍA — distingue con cuidado: 'saco' = saco, blazer, saco de traje o smoking (prenda estructurada de torso que se usa por FORMALIDAD, no por frío); 'abrigo' = SOLO capas por clima (abrigo, gabardina, parka, cárdigan, suéter grueso de capa). Un traje se registra como dos prendas: el saco (categoría 'saco') y su pantalón (categoría 'bottom'), por separado. El color_hex es el color dominante real de la prenda. Si hay varias prendas o ninguna clara, elige la prenda principal. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla.",
       messages: [
         {
           role: "user",
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
               nombre: { type: "string" },
               categoria: {
                 type: "string",
-                enum: ["top", "bottom", "calzado", "abrigo", "vestido", "accesorio"],
+                enum: ["top", "saco", "bottom", "calzado", "abrigo", "vestido", "accesorio"],
               },
               color: { type: "string" },
               color_hex: { type: "string" },

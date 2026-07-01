@@ -9,6 +9,7 @@
 
 export const CATEGORIES = [
   "top",
+  "saco", // sacos/blazers/trajes: pieza formal por OCASIÓN (distinta de abrigo, que es capa por CLIMA)
   "bottom",
   "calzado",
   "abrigo",

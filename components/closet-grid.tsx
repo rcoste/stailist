@@ -22,6 +22,7 @@ export type ClosetItem = {
 // Orden + label de categoría (espeja el de la página).
 const CAT: { key: string; label: string }[] = [
   { key: "top", label: "Tops" },
+  { key: "saco", label: "Sacos" },
   { key: "abrigo", label: "Abrigos" },
   { key: "bottom", label: "Pantalones" },
   { key: "vestido", label: "Vestidos" },
@@ -33,6 +34,7 @@ const CAT_LABEL = new Map(CAT.map((c) => [c.key, c.label]));
 // Opciones para editar una prenda fotografiada (labels humanas, no el enum crudo).
 const EDIT_CAT: { v: string; l: string }[] = [
   { v: "top", l: "top" },
+  { v: "saco", l: "saco" },
   { v: "bottom", l: "pantalón" },
   { v: "abrigo", l: "abrigo" },
   { v: "vestido", l: "vestido" },

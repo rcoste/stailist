@@ -98,10 +98,10 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
   };
 
   // Zonas del cuerpo: dentro de una zona el match es válido; cruzar zonas no.
-  // top y abrigo van juntos a propósito — la cápsula ideal a veces categoriza un
-  // blazer/cárdigan como "top" y el clóset como "abrigo" (o al revés); son la
-  // misma zona, así que no deben chocar. Lo que NUNCA se cruza: torso ↔ pierna ↔
-  // zapato ↔ accesorio ↔ vestido (un pantalón no lo cubre un zapato).
+  // 'saco' es su PROPIA zona (cae al `: cat`): un saco solo lo cubre otro saco —
+  // un cárdigan o un abrigo NO cubren un saco. top y abrigo siguen juntos ('torso')
+  // porque una capa ligera a veces se etiqueta top o abrigo indistintamente. Lo que
+  // NUNCA se cruza: torso ↔ saco ↔ pierna ↔ zapato ↔ accesorio ↔ vestido.
   const zoneOf = (cat: string): string =>
     cat === "top" || cat === "abrigo" ? "torso" : cat;
 

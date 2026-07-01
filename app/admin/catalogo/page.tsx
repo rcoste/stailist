@@ -25,9 +25,10 @@ const SEG_LABEL: Record<string, string> = {
 
 // Orden y etiqueta de las categorías para los sub-grupos dentro de cada
 // segmento. Categorías nuevas que no estén aquí caen al final bajo su slug.
-const CATEGORY_ORDER = ["top", "bottom", "vestido", "abrigo", "calzado", "accesorio"];
+const CATEGORY_ORDER = ["top", "saco", "bottom", "vestido", "abrigo", "calzado", "accesorio"];
 const CATEGORY_LABEL: Record<string, string> = {
   top: "Tops",
+  saco: "Sacos",
   bottom: "Pantalones y faldas",
   vestido: "Vestidos",
   abrigo: "Abrigos",
