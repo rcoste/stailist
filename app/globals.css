@@ -59,8 +59,11 @@
   --color-warning: var(--c-warning);
 
   /* Tipografía v3 "Gen-Z monocromo" (variables inyectadas por next/font en
-     layout.tsx): font-sans = Arimo (TODO el UI/body + titulares), font-display/
-     editorial = Instrument Serif (acento mínimo ≥18px, itálica; NUNCA en UI). */
+     layout.tsx). Regla real (respétala; hay un guardrail: scripts/check-serif-headings):
+       · font-sans = Arimo → TITULARES PRIMARIOS (h1–h3), body, UI y LOADERS. Nunca serif.
+       · font-display/editorial = Instrument Serif → SOLO acento editorial: texto
+         SECUNDARIO/descripciones, y énfasis en ITÁLICA (ej. una palabra clave).
+         NUNCA en un titular primario, botón, label de UI, ni pantalla de loading. */
   --font-sans: var(--font-arimo), system-ui, sans-serif;
   --font-display: var(--font-instrument), "Times New Roman", Georgia, serif;
   --font-editorial: var(--font-instrument), Georgia, serif;
