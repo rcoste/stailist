@@ -49,7 +49,7 @@ export function AddSheet({ userId }: { userId: string }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3.5 mt-1.5 h-1 w-9 rounded-full bg-line" />
-            <h3 className="mx-1 mb-3 text-[19px] italic text-ink display">
+            <h3 className="mx-1 mb-3 text-[19px] font-semibold text-ink">
               agregar al clóset
             </h3>
             <Option

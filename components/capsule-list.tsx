@@ -361,7 +361,7 @@ function Section({
 }
 
 // Tarjeta grande para lo que falta / la cápsula ideal: miniatura 56×72 + nombre
-// (Bodoni) + porqué + control a la derecha (p. ej. "ya la tengo").
+// (Instrument Serif) + porqué + control a la derecha (p. ej. "ya la tengo").
 function BigCard({
   row,
   images,

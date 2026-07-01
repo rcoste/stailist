@@ -25,7 +25,7 @@ function renderFirma(firma: string) {
 
 // "Por qué esta cápsula es tuya": abre con el SELLO de estilo en serif (masthead,
 // no párrafo) y baja el razonamiento a pilares cortos con ícono, sobre el papel
-// (sin caja). Antes era ~90 palabras de Bodoni a 14px en una caja rosa — bulky y
+// (sin caja). Antes era ~90 palabras de Instrument Serif a 14px en una caja rosa — bulky y
 // contra el DS (la serif no es para párrafos a tamaño de cuerpo).
 export function PorQueEsTuya({
   firma,
