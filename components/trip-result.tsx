@@ -16,6 +16,7 @@ import {
 } from "@/lib/trip-actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import { familiaToHex } from "@/lib/capsule-images";
+import { Toast } from "@/components/toast";
 import { useTripGen } from "@/components/trip-gen-context";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
@@ -73,11 +74,6 @@ function FaltaCard({
         className="relative flex min-h-[136px] w-[104px] shrink-0 items-center justify-center self-stretch overflow-hidden border-r border-line"
       >
         <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="104px" />
-        {render.generated ? (
-          <span className="absolute left-1.5 top-1.5 z-30 rounded-sm bg-white/90 px-1.5 py-[2px] text-[8.5px] font-bold uppercase tracking-wide text-ink">
-            generada
-          </span>
-        ) : null}
       </button>
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 px-[14px] pb-[12px] pt-[13px]">
@@ -239,14 +235,7 @@ export function TripResult({
 
   return (
     <div className="flex flex-col gap-4">
-      {toast ? (
-        <div
-          role="status"
-          className="fixed bottom-[86px] left-1/2 z-50 -translate-x-1/2 rounded-sm bg-ink px-3.5 py-2 text-[12.5px] font-medium text-on-accent shadow-[var(--shadow-hairline)]"
-        >
-          {toast}
-        </div>
-      ) : null}
+      <Toast message={toast} />
 
       {/* Progreso de empacado */}
       <div className="flex items-center gap-2.5">

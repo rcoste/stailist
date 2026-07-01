@@ -263,6 +263,27 @@ body {
   }
 }
 
+/* Toast (cápsula + viaje): entra con fade + subida. El X mantiene el centrado
+   (-50%) durante y después de la animación (both). */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.toast-in {
+  animation: toast-in var(--dur-short) var(--ease-enter) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-in {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .shimmer-txt {
     animation: none;
