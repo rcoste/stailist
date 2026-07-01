@@ -109,8 +109,8 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                 aria-pressed={on}
                 className="group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface text-left transition-colors duration-200 hover:border-ink focus-visible:outline-none"
               >
-                {/* B1 "iluminar": lo seleccionado va a todo color + check negro;
-                    lo no seleccionado se apaga (grayscale .85 / opacity .55). */}
+                {/* Las prendas se ven siempre a todo color para poder evaluarlas
+                    antes de elegir; lo seleccionado se marca con marco + check. */}
                 <div className="relative aspect-square w-full bg-bg">
                   {item.image_path ? (
                     <Image
@@ -118,15 +118,11 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                       alt={item.name}
                       fill
                       sizes="(max-width: 430px) 50vw, 215px"
-                      className={`object-cover transition-all duration-200 ${
-                        on ? "" : "opacity-[0.55] grayscale-[0.85]"
-                      }`}
+                      className="object-cover"
                     />
                   ) : (
                     <span
-                      className={`absolute inset-0 transition-all duration-200 ${
-                        on ? "" : "opacity-[0.55] grayscale-[0.85]"
-                      }`}
+                      className="absolute inset-0"
                       style={{ backgroundColor: item.attrs.color_hex ?? "#E5E1DD" }}
                       aria-hidden
                     />
