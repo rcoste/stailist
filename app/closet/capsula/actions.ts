@@ -146,14 +146,15 @@ export async function setCapsuleOverride(
   revalidatePath("/closet");
 }
 
-// Recalcula SOLO el match contra el clóset actual (cuando agregaste/quitaste
-// prendas). No regenera la cápsula ideal.
-export async function recalcularMatch(): Promise<void> {
+// Calcula el match contra el clóset actual (tras armar la cápsula o cambiar el
+// clóset). No regenera la cápsula ideal. Devuelve {ok} para que el cliente sepa si
+// mostrar el resultado o el botón de reintentar.
+export async function recalcularMatch(): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) return { ok: false };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -161,19 +162,21 @@ export async function recalcularMatch(): Promise<void> {
     .eq("id", user.id)
     .single();
   const target = profile?.capsule_target as CapsuleTarget | null;
-  if (!target) return;
+  if (!target) return { ok: false };
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
-  // Si el match falla (timeout/red), no tiramos la acción: dejamos el match como
-  // estaba y revalidamos. El card seguirá mostrando "recalcular" para reintentar.
   try {
     const closet = await loadClosetLite(supabase, user.id);
     const match = await matchCapsule(target, closet, gender);
     await supabase.from("profiles").update({ capsule_match: match }).eq("id", user.id);
   } catch {
-    // swallow — el usuario puede reintentar con el botón.
+    return { ok: false }; // el cliente ofrece reintentar
   }
+  // CLAVE: revalidar la ruta DONDE estás (/closet/capsula), no solo /closet — si no,
+  // el match se guarda pero la página NO se actualiza y el botón "se siente muerto".
+  revalidatePath("/closet/capsula");
   revalidatePath("/closet");
+  return { ok: true };
 }
 
 // Regenera la cápsula IDEAL con el perfil actual (p.ej. tras cambiar el estilo de

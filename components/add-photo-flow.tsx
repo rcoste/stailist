@@ -279,7 +279,7 @@ export function AddPhotoFlow({
               style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
             >
               <Spinner className="h-7 w-7 text-accent" />
-              <p className="editorial text-base text-ink">Leyendo tu prenda…</p>
+              <p className="text-base font-medium text-ink">Leyendo tu prenda…</p>
             </div>
           </div>
         ) : null}

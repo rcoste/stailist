@@ -169,7 +169,7 @@ export function SwipeDeck({
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <Spinner className="h-8 w-8 text-accent" />
-        <p className="editorial text-lg text-ink">leyendo tu estilo…</p>
+        <p className="text-lg font-medium text-ink">leyendo tu estilo…</p>
       </div>
     );
   }

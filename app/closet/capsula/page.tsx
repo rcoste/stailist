@@ -11,7 +11,8 @@ import { capsuleView, closetSignature } from "@/lib/capsule";
 import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
 import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
-import { recalcularMatch, regenerateCapsuleTarget } from "./actions";
+import { regenerateCapsuleTarget } from "./actions";
+import { MatchRecalc } from "@/components/match-recalc";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
@@ -100,17 +101,14 @@ export default async function CapsulaPage() {
         ) : (
           <>
             {stale ? (
-              <form action={recalcularMatch}>
-                <button
-                  type="submit"
-                  className="flex w-full items-center gap-2 rounded-lg border border-line bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
-                >
-                  <Icon name="repetir" size={16} />
-                  {match
+              <MatchRecalc
+                auto={!match}
+                label={
+                  match
                     ? "Tu clóset cambió — recalcular qué tienes"
-                    : "Calcular qué ya tienes y qué te falta"}
-                </button>
-              </form>
+                    : "Calcular qué ya tienes y qué te falta"
+                }
+              />
             ) : null}
 
             <CapsuleList
