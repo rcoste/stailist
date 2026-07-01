@@ -35,7 +35,7 @@ export type PerfilTabsProps = {
 };
 
 // Wordmark "stailist" con el "ai" tintado (sobre fondo burdeos: blanco translúcido).
-// `.display` (Bodoni) sin forzar weight → lo fija font-semibold (la itálica del
+// `.display` (Instrument Serif) sin forzar weight → lo fija font-semibold (la itálica del
 // .editorial no aplica aquí: el banner lo quiere recto, peso 600).
 function Wordmark() {
   return (

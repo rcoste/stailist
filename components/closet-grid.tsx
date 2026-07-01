@@ -459,7 +459,7 @@ function FilterSheet({
       >
         <div className="mx-auto mt-1.5 h-1 w-9 rounded-full bg-line" />
         <div className="flex items-center justify-between">
-          <h3 className="text-[19px] italic text-ink display">filtros</h3>
+          <h3 className="text-[19px] font-semibold text-ink">filtros</h3>
           <button type="button" onClick={onClear} className="text-sm font-medium text-accent underline underline-offset-[3px]">
             limpiar
           </button>
