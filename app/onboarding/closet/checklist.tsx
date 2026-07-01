@@ -14,12 +14,13 @@ export type CatalogItem = {
   image_path: string | null;
 };
 
-const CATEGORY_ORDER = ["top", "vestido", "bottom", "abrigo", "calzado"];
+const CATEGORY_ORDER = ["top", "saco", "vestido", "bottom", "abrigo", "calzado"];
 // Mínimo para armar un outfit: algo de arriba, algo de abajo y zapatos.
-// Un vestido cuenta como arriba+abajo; abrigos es opcional.
+// Un vestido cuenta como arriba+abajo; sacos y abrigos son opcionales.
 const REQUIRED = ["top", "bottom", "calzado"];
 const CATEGORY_LABELS: Record<string, string> = {
   top: "Arriba",
+  saco: "Sacos",
   vestido: "Vestidos",
   bottom: "Abajo",
   abrigo: "Abrigos",

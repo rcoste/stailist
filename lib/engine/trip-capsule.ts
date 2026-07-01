@@ -114,7 +114,7 @@ Aterriza a la persona:
 Devuelve "items" (la cápsula). Cada prenda:
 - nombre: etiqueta humana y específica con color. Ej "Traje de baño negro", "Short de lino beige".
 - tipo: clave corta normalizada sin color. Ej "traje-de-bano", "short", "playera", "sandalias".
-- category ∈ {${CATEGORIES.join(", ")}}
+- category ∈ {${CATEGORIES.join(", ")}} — 'saco' para sacos/blazers/sastrería (formal por ocasión); 'abrigo' SOLO capas por clima. Un traje = 'saco' + pantalón 'bottom' aparte.
 - colorFamilia: color en familia simple, dentro de su paleta.
 - formalidad ∈ {${FORMALIDADES.join(", ")}}
 - temporada: "todo-el-año" | "calor" | "frio".
