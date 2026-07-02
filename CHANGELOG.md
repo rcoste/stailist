@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.1.3.1] - 2026-07-02
+
+### Fixed
+
+- En el Clóset Cápsula, si generabas la imagen de una prenda sugerida y luego elegías "la sugerida" (o marcabas "ya la tengo"), el recuadro volvía a salir vacío con "ver cómo queda" en vez de mostrar la imagen que acababas de generar. Ahora la imagen se conserva mientras estés en la pantalla.
+
 ## [0.1.3.0] - 2026-07-02
 
 ### Added

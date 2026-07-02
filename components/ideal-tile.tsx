@@ -47,7 +47,15 @@ export function isLightHex(hex: string): boolean {
 // Estado de la imagen de una prenda sugerida: reposo (idle) → generando → listo.
 // Expone `start()` explícito con estado de carga para poder mostrar la capa de
 // "creando imagen…" (en vez del render auto-silencioso del viejo Thumb).
-export function useIdealRender(renderArgs: RenderArgs, initialSrc: string | null) {
+// `onReady`: al generar, la URL se reporta hacia arriba para cachearla a nivel
+// de sesión — así no se pierde cuando la fila cambia de estado y se monta un
+// componente nuevo (bug: al elegir "la sugerida" o marcar "ya la tengo", el
+// tile volvía a "ver cómo queda" en vez de mostrar la imagen ya rendereada).
+export function useIdealRender(
+  renderArgs: RenderArgs,
+  initialSrc: string | null,
+  onReady?: (url: string) => void
+) {
   const [src, setSrc] = useState<string | null>(initialSrc);
   const [generated, setGenerated] = useState(false);
   const [state, setState] = useState<"idle" | "generating" | "ready">(
@@ -67,6 +75,7 @@ export function useIdealRender(renderArgs: RenderArgs, initialSrc: string | null
         setSrc(j.url);
         setGenerated(true);
         setState("ready");
+        onReady?.(j.url);
         return true;
       }
       setState("idle");

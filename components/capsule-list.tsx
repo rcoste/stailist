@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useCallback, useMemo, useOptimistic, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
@@ -63,6 +63,22 @@ export function CapsuleList({
   );
   const [, startTransition] = useTransition();
 
+  // Caché de sesión de renders bajo demanda (por faltaKey). Sin esto, la URL
+  // rendereada vive solo en el estado local del tile que la generó y se pierde
+  // al remontar (elegir "la sugerida" → SumaCard, o "ya la tengo" → re-render):
+  // el tile volvía a "ver cómo queda". Se fusiona sobre catalogImages para que
+  // cualquier instancia nueva arranque ya con la imagen.
+  const [rendered, setRendered] = useState<Record<string, string>>({});
+  const onRendered = useCallback(
+    (key: string, url: string) =>
+      setRendered((m) => (m[key] === url ? m : { ...m, [key]: url })),
+    []
+  );
+  const catImgs = useMemo(
+    () => ({ ...catalogImages, ...rendered }),
+    [catalogImages, rendered]
+  );
+
   // "Ya la tengo" sobre una prenda que te falta: el server la suma al clóset y la
   // marca cubierta; al resolver, Next refresca la página y la prenda se reubica
   // sola en "Ya lo tienes" con el progreso al día. Solo llevamos un spinner por
@@ -122,7 +138,7 @@ export function CapsuleList({
         capsuleKey: key,
         name: row.item.nombre,
         colorHex: familiaToHex(row.item.colorFamilia),
-        imageUrl: rowImage(row, images, catalogImages),
+        imageUrl: rowImage(row, images, catImgs),
         porque: row.item.porque,
       });
     });
@@ -222,7 +238,13 @@ export function CapsuleList({
         <Section title="Tu cápsula ideal" count={pendiente.length}>
           <ul className="flex flex-col gap-2.5">
             {pendiente.map((r) => (
-              <BigCard key={rowKey(r)} row={r} images={images} catalogImages={catalogImages} />
+              <BigCard
+                key={rowKey(r)}
+                row={r}
+                images={images}
+                catalogImages={catImgs}
+                onRendered={(url) => onRendered(faltaKey(r.item), url)}
+              />
             ))}
           </ul>
         </Section>
@@ -235,7 +257,8 @@ export function CapsuleList({
               <SumaCard
                 key={rowKey(r)}
                 row={r}
-                catalogImages={catalogImages}
+                catalogImages={catImgs}
+                onRendered={(url) => onRendered(faltaKey(r.item), url)}
                 unlock={unlockOf(r)}
                 ownBusy={ownBusy.has(r.index)}
                 onOwn={() => markOwned(r.index, r.item.nombre)}
@@ -255,7 +278,8 @@ export function CapsuleList({
                 key={rowKey(r)}
                 row={r}
                 images={images}
-                catalogImages={catalogImages}
+                catalogImages={catImgs}
+                onRendered={(url) => onRendered(faltaKey(r.item), url)}
                 onDecide={decide}
                 ownBusy={ownBusy.has(r.index)}
                 onOwn={() => markOwned(r.index, r.item.nombre)}
@@ -269,7 +293,7 @@ export function CapsuleList({
 
       {tienes.length > 0 ? (
         <Section title="Ya lo tienes" count={tienes.length}>
-          <Rail rows={tienes} images={images} catalogImages={catalogImages} />
+          <Rail rows={tienes} images={images} catalogImages={catImgs} />
         </Section>
       ) : null}
     </div>
@@ -303,12 +327,15 @@ function Thumb({
   sizes,
   icon = 18,
   renderArgs,
+  onRendered,
 }: {
   src: string | null;
   colorFamilia: string;
   sizes: string;
   icon?: number;
   renderArgs?: RenderArgs;
+  // Reporta la URL rendereada al caché de sesión (ver useIdealRender.onReady).
+  onRendered?: (url: string) => void;
 }) {
   const [generated, setGenerated] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -337,7 +364,10 @@ function Thumb({
         body: JSON.stringify(renderArgs),
       });
       const j = (await res.json().catch(() => null)) as { url?: string } | null;
-      if (j?.url) setGenerated(j.url);
+      if (j?.url) {
+        setGenerated(j.url);
+        onRendered?.(j.url);
+      }
     } finally {
       setBusy(false);
     }
@@ -392,12 +422,14 @@ function BigCard({
   row,
   images,
   catalogImages,
+  onRendered,
   right,
   unlock,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
   catalogImages: Record<string, string>;
+  onRendered?: (url: string) => void;
   right?: React.ReactNode;
   unlock?: number;
 }) {
@@ -409,6 +441,7 @@ function BigCard({
           src={src}
           colorFamilia={row.item.colorFamilia}
           sizes="56px"
+          onRendered={onRendered}
           renderArgs={{
             tipo: row.item.tipo,
             colorFamilia: row.item.colorFamilia,
@@ -442,6 +475,7 @@ function BigCard({
 function SumaCard({
   row,
   catalogImages,
+  onRendered,
   unlock,
   ownBusy,
   onOwn,
@@ -452,6 +486,7 @@ function SumaCard({
 }: {
   row: CapsuleRow;
   catalogImages: Record<string, string>;
+  onRendered?: (url: string) => void;
   unlock?: number;
   ownBusy: boolean;
   onOwn: () => void;
@@ -465,7 +500,7 @@ function SumaCard({
   // esta tarjeta representa "la sugerida" (en falta y al rechazar un parecido).
   // Usar rowImage aquí mostraba la prenda que ya tienes al elegir la sugerida.
   const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
-  const render = useIdealRender(idealArgs(item), idealSrc);
+  const render = useIdealRender(idealArgs(item), idealSrc, onRendered);
   const onTapTile = () => {
     if (render.state === "idle") void render.start();
   };
@@ -583,6 +618,7 @@ function DecideRow({
   row,
   images,
   catalogImages,
+  onRendered,
   onDecide,
   ownBusy,
   onOwn,
@@ -592,6 +628,7 @@ function DecideRow({
   row: CapsuleRow;
   images: Record<string, string>;
   catalogImages: Record<string, string>;
+  onRendered?: (url: string) => void;
   onDecide: (index: number, decision: CapsuleDecision) => void;
   ownBusy: boolean;
   onOwn: () => void;
@@ -601,7 +638,7 @@ function DecideRow({
   const { item, by, decision, index } = row;
   const src = by ? images[by] : null;
   const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
-  const render = useIdealRender(idealArgs(item), idealSrc);
+  const render = useIdealRender(idealArgs(item), idealSrc, onRendered);
   const [sel, setSel] = useState<null | "ideal" | "tuya">(null);
 
   const onTapIdeal = async () => {
@@ -649,6 +686,7 @@ function DecideRow({
       <SumaCard
         row={row}
         catalogImages={catalogImages}
+        onRendered={onRendered}
         ownBusy={ownBusy}
         onOwn={onOwn}
         wishSaved={wishSaved}
