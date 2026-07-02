@@ -14,6 +14,9 @@ export async function addToAllowlist(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("allowlist").upsert({ email }, { onConflict: "email" });
   revalidatePath("/admin/allowlist");
+  // La vista de waitlist muestra un badge "ya invitado" derivado de la
+  // allowlist — al invitar desde ahí, refréscala también.
+  revalidatePath("/admin/waitlist");
 }
 
 export async function removeFromAllowlist(formData: FormData) {
