@@ -60,7 +60,11 @@ import {
 // un estampado protagonista; (b) campo "analisis" primero en el schema: el
 // modelo razona en borrador (paleta, neutros, clima, qué descarta) ANTES de
 // comprometer los outfits — mejora combinatoria sin extended thinking.
-export const PROMPT_VERSION = "v21";
+// v22 (2026-07-01): el estilo de referencia ahora incluye la evaluación honesta
+// de fit ("es muy cálido para ti — llévalo a tus tonos") cuando el veredicto es
+// ajustes/ojo (styleReferenceForEngine). Antes esa advertencia se mostraba una
+// vez en el modal y el motor nunca la veía.
+export const PROMPT_VERSION = "v22";
 
 export type EngineItem = {
   id: string;

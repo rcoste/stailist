@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { bodyTypeToBuild, type Gender } from "@/lib/silueta";
 
 type BodyType = "slim" | "athletic" | "average" | "full";
 
@@ -28,11 +29,25 @@ export async function saveGeneratedAvatar(
     return { ok: false };
   }
 
+  // Morfología unificada: si la silueta del perfil aún no tiene complexión,
+  // la respuesta del wizard la siembra (una sola pregunta, dos usos). Nunca
+  // pisa una silueta ya definida — esa es la fuente de verdad.
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("gender, body_build")
+    .eq("id", user.id)
+    .single();
+  const seedBuild =
+    prof && !prof.body_build && (prof.gender === "mujer" || prof.gender === "hombre")
+      ? bodyTypeToBuild(bodyType, prof.gender as Gender)
+      : null;
+
   const { error } = await supabase
     .from("profiles")
     .update({
       avatar_path: avatarPath,
       body_type: bodyType,
+      ...(seedBuild ? { body_build: seedBuild } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
