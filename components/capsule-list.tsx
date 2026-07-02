@@ -235,7 +235,6 @@ export function CapsuleList({
               <SumaCard
                 key={rowKey(r)}
                 row={r}
-                images={images}
                 catalogImages={catalogImages}
                 unlock={unlockOf(r)}
                 ownBusy={ownBusy.has(r.index)}
@@ -442,7 +441,6 @@ function BigCard({
 // nombre/porqué y la fila de acciones "ya la tengo" · "wishlist".
 function SumaCard({
   row,
-  images,
   catalogImages,
   unlock,
   ownBusy,
@@ -453,7 +451,6 @@ function SumaCard({
   onChange,
 }: {
   row: CapsuleRow;
-  images: Record<string, string>;
   catalogImages: Record<string, string>;
   unlock?: number;
   ownBusy: boolean;
@@ -464,7 +461,11 @@ function SumaCard({
   onChange?: () => void;
 }) {
   const { item } = row;
-  const render = useIdealRender(idealArgs(item), rowImage(row, images, catalogImages));
+  // SIEMPRE la imagen ideal/sugerida — nunca la de la prenda del clóset (`by`):
+  // esta tarjeta representa "la sugerida" (en falta y al rechazar un parecido).
+  // Usar rowImage aquí mostraba la prenda que ya tienes al elegir la sugerida.
+  const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
+  const render = useIdealRender(idealArgs(item), idealSrc);
   const onTapTile = () => {
     if (render.state === "idle") void render.start();
   };
@@ -619,9 +620,18 @@ function DecideRow({
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
           <Icon name="check" size={13} strokeWidth={2.4} />
         </span>
+        {/* Lidera con TU prenda (lo que elegiste), no con la ideal: la palomita
+            + el nombre ideal se leían como "elegí la ideal" cuando en realidad
+            optaste por la tuya. */}
         <div className="flex min-w-0 flex-col">
-          <span className="text-sm font-medium text-ink">{item.nombre}</span>
-          {by ? <span className="truncate text-xs text-muted">lo cubres con tu {by}</span> : null}
+          <span className="text-sm font-medium text-ink">
+            {by ? `Tu ${by}` : item.nombre}
+          </span>
+          {by ? (
+            <span className="truncate text-xs text-muted">
+              cubre el hueco de “{item.nombre}”
+            </span>
+          ) : null}
         </div>
         <button
           type="button"
@@ -638,7 +648,6 @@ function DecideRow({
     return (
       <SumaCard
         row={row}
-        images={images}
         catalogImages={catalogImages}
         ownBusy={ownBusy}
         onOwn={onOwn}
