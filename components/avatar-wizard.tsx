@@ -16,7 +16,9 @@ import type { Gender } from "@/lib/auth";
 // persisten — solo viajan en la request de generación.
 
 type BodyType = "slim" | "athletic" | "average" | "full";
-type Slot = "face" | "body1" | "body2";
+// Hasta 2 caras + 3 cuerpos: más ángulos = identidad más fiel (Gemini 3 Pro
+// Image acepta muchas referencias; antes solo mandábamos 3 fotos).
+type Slot = "face" | "face2" | "body1" | "body2" | "body3";
 type Step = "fotos" | "cuerpo" | "generando" | "preview" | "error";
 
 const TYPES: BodyType[] = ["slim", "athletic", "average", "full"];
@@ -62,13 +64,17 @@ export function AvatarWizard({
   const [step, setStep] = useState<Step>("fotos");
   const [photos, setPhotos] = useState<Record<Slot, File | null>>({
     face: null,
+    face2: null,
     body1: null,
     body2: null,
+    body3: null,
   });
   const [previews, setPreviews] = useState<Record<Slot, string | null>>({
     face: null,
+    face2: null,
     body1: null,
     body2: null,
+    body3: null,
   });
   const [bodyType, setBodyType] = useState<BodyType | null>(siluetaBodyType ?? null);
   const [generated, setGenerated] = useState<string | null>(null);
@@ -112,18 +118,16 @@ export function AvatarWizard({
     setGenMsg(GEN_MSGS[0]);
     setStep("generando");
     try {
-      const faceBlob = await comprimir(await toUsableImage(photos.face as File));
-      const bodyFiles = [photos.body1, photos.body2].filter(Boolean) as File[];
-      const bodyBlobs = await Promise.all(
-        bodyFiles.map(async (f) => comprimir(await toUsableImage(f)))
-      );
-      const faceB64 = await blobToB64(faceBlob);
-      const bodyB64 = await Promise.all(bodyBlobs.map(blobToB64));
+      const aB64 = async (f: File) => blobToB64(await comprimir(await toUsableImage(f)));
+      const faceB64 = await aB64(photos.face as File);
+      const faceExtraB64 = photos.face2 ? [await aB64(photos.face2)] : [];
+      const bodyFiles = [photos.body1, photos.body2, photos.body3].filter(Boolean) as File[];
+      const bodyB64 = await Promise.all(bodyFiles.map(aB64));
 
       const res = await fetch("/api/avatar/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ faceB64, bodyB64, bodyType }),
+        body: JSON.stringify({ faceB64, faceExtraB64, bodyB64, bodyType }),
       });
       if (!res.ok) throw new Error("gen");
       const data = (await res.json()) as { image?: string };
@@ -167,25 +171,43 @@ export function AvatarWizard({
               Con tus fotos armo un avatar tuyo para probarte los looks encima. Tus
               fotos no se guardan, solo las uso para generarlo.
             </p>
+            {/* Guía de captura: gran parte de los avatares inconsistentes vienen
+                de fotos con lentes/gorra, mala luz o cuerpo recortado. */}
+            <p className="mt-1 rounded-sm border border-line bg-surface px-3 py-2 text-xs text-muted">
+              El secreto de un avatar fiel: luz natural, fondo despejado, sin
+              lentes ni gorra — y entre más fotos me des, más se parece a ti.
+            </p>
           </div>
           <div className="flex flex-col gap-3">
             <UploadTile
               label="Tu cara"
-              hint="Una foto clara de frente"
+              hint="De frente, con luz de día, sin lentes ni gorra"
               preview={previews.face}
               onPick={(f) => setSlot("face", f)}
             />
             <UploadTile
+              label="Tu cara desde otro ángulo"
+              hint="Opcional — de lado o 3/4; ayuda mucho al parecido"
+              preview={previews.face2}
+              onPick={(f) => setSlot("face2", f)}
+            />
+            <UploadTile
               label="Cuerpo completo"
-              hint="De pie, de frente"
+              hint="De pie y de frente, de la cabeza a los pies"
               preview={previews.body1}
               onPick={(f) => setSlot("body1", f)}
             />
             <UploadTile
               label="Otra de cuerpo"
-              hint="Opcional — ayuda a que salga mejor"
+              hint="Opcional — de lado o 3/4"
               preview={previews.body2}
               onPick={(f) => setSlot("body2", f)}
+            />
+            <UploadTile
+              label="Una más de cuerpo"
+              hint="Opcional — otro ángulo o con otra ropa"
+              preview={previews.body3}
+              onPick={(f) => setSlot("body3", f)}
             />
           </div>
           {siluetaBodyType ? (
