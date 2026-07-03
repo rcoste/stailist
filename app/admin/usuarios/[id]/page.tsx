@@ -2,6 +2,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+// "Cuándo" en lenguaje humano (mismo criterio que la lista de usuarios).
+function hace(iso: string | null | undefined): string {
+  if (!iso) return "nunca";
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return "ahora";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `hace ${d} ${d === 1 ? "día" : "días"}`;
+  const mo = Math.floor(d / 30);
+  return `hace ${mo} ${mo === 1 ? "mes" : "meses"}`;
+}
+
+// Devuelve el ISO más reciente entre dos (o null si ambos faltan).
+function masReciente(a?: string | null, b?: string | null): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
+}
+
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -26,7 +47,8 @@ export default async function AdminUserDetail({
     .single();
   if (!profile) notFound();
 
-  const [{ data: items }, { data: outfits }, { data: events }] = await Promise.all([
+  const [{ data: items }, { data: outfits }, { data: events }, { data: lastEvent }] =
+    await Promise.all([
     supabase.from("items").select("id, source, attrs").eq("user_id", id),
     supabase
       .from("outfits")
@@ -39,6 +61,14 @@ export default async function AdminUserDetail({
       .select("type, outfit_id")
       .eq("user_id", id)
       .in("type", ["vote_up", "vote_down", "worn"]),
+    // Último uso: evento más reciente de cualquier tipo.
+    supabase
+      .from("events")
+      .select("created_at")
+      .eq("user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const voteOf = new Map<string, string>();
@@ -48,6 +78,9 @@ export default async function AdminUserDetail({
     if (e.type === "worn") wornSet.add(e.outfit_id);
     else voteOf.set(e.outfit_id, e.type === "vote_up" ? "👍" : "👎");
   }
+
+  // Último uso = lo más reciente entre su último evento y su último outfit.
+  const lastActive = masReciente(lastEvent?.created_at, outfits?.[0]?.created_at);
 
   const arch = profile.style_archetype as { nombre?: string; descripcion?: string } | null;
   const paleta = [profile.palette_season, profile.palette_flow]
@@ -74,6 +107,7 @@ export default async function AdminUserDetail({
         <Field label="Estilo" value={arch?.nombre ?? "—"} />
         <Field label="Gustos" value={(profile.taste_tags ?? []).slice(0, 6).join(", ") || "—"} />
         <Field label="Avatar" value={profile.avatar_path ? "sí" : "no"} />
+        <Field label="Último uso" value={hace(lastActive)} />
       </div>
 
       {arch?.descripcion ? (
