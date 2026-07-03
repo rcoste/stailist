@@ -11,6 +11,13 @@ import type { CapsuleItem } from "@/lib/capsule";
 // maleta del viaje (trip-result), para que el "tocar → generar → ver" se vea y se
 // comporte igual en ambos. Fuente única: no dupliques esto en cada módulo.
 
+// Texto ÚNICO del CTA de "generar/ver la imagen de esta prenda" (render bajo
+// demanda). Compartido por todas las superficies (cápsula sugerida/decide,
+// miniatura del clóset, prendas empacadas del viaje) para ser consistentes.
+// "ver la prenda" describe lo que hace de verdad — genera la imagen del
+// producto — sin sonar a try-on como el viejo "ver cómo queda".
+export const VER_PRENDA_LABEL = "ver la prenda";
+
 export type RenderArgs = {
   tipo: string;
   colorFamilia: string;
@@ -128,7 +135,7 @@ export function IdealTileInner({
   render,
   colorFamilia,
   sizes,
-  restLabel = "ver cómo queda",
+  restLabel = VER_PRENDA_LABEL,
 }: {
   render: IdealRender;
   colorFamilia: string;

@@ -9,6 +9,7 @@ import { setTripLookVote, saveTripDownReason, favoriteTripLook } from "@/lib/tri
 import { DownReason } from "@/components/down-reason";
 import { useTripGen } from "@/components/trip-gen-context";
 import { requestItemRender } from "@/lib/render-on-demand";
+import { VER_PRENDA_LABEL } from "@/components/ideal-tile";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
 
 // Un look del viaje ya resuelto contra el clóset (la página servidor mapea cada
@@ -287,9 +288,11 @@ export function TripOutfits({
                         <Spinner className="h-4 w-4 text-accent" />
                       </span>
                     ) : canRender ? (
-                      <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-accent">
+                      <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1 text-accent">
                         <Icon name="destello" size={16} />
-                        <span className="text-[8px] font-bold uppercase tracking-wide">ver</span>
+                        <span className="text-center text-[8px] font-bold uppercase leading-tight tracking-wide">
+                          {VER_PRENDA_LABEL}
+                        </span>
                       </span>
                     ) : (
                       <span className="flex h-full w-full items-center justify-center text-muted">
