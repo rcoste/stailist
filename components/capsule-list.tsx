@@ -14,6 +14,7 @@ import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import {
   IdealTileInner,
   SelCheck,
+  VER_PRENDA_LABEL,
   idealArgs,
   isLightHex,
   useIdealRender,
@@ -378,16 +379,18 @@ function Thumb({
       type="button"
       onClick={onRender}
       disabled={busy}
-      className="flex h-full w-full flex-col items-center justify-center gap-1 disabled:opacity-80"
+      className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 disabled:opacity-80"
       style={{ background: hex }}
-      title="Ver cómo se ve"
+      title={VER_PRENDA_LABEL}
     >
       {busy ? (
         <Spinner className={`h-4 w-4 ${tone}`} />
       ) : (
         <>
           <Icon name="destello" size={icon} className={tone} />
-          <span className={`text-[9px] font-semibold leading-none ${tone}`}>ver</span>
+          <span className={`text-center text-[9px] font-semibold leading-tight ${tone}`}>
+            {VER_PRENDA_LABEL}
+          </span>
         </>
       )}
     </button>
