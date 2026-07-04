@@ -7,7 +7,7 @@ export const maxDuration = 60;
 const GEMINI_MODEL = "gemini-3-pro-image";
 
 const PROMPT =
-  "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images. Keep the person's face, body type, skin tone and hair identical. Replace only their outfit with the provided garments. Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Calm neutral expression with a closed mouth (no big toothy smile). Full body head to feet. No text.";
+  "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images. Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments. Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text.";
 
 // Construye el prompt final inyectando el TIP de styling del outfit (cómo se lleva
 // el look: arremangar, fajar, abrir un botón…) para que la imagen lo refleje. El

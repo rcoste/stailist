@@ -29,7 +29,11 @@ function buildPrompt(build: string, nFaces: number): string {
     "Generate a photorealistic full-body portrait of the SAME person shown in " +
     `the provided photos (${faceRef}; the others show their ` +
     "body). Keep their face, skin tone, hair and identity identical and clearly " +
-    `recognizable. The person has a ${build} build — render realistic body ` +
+    "recognizable, INCLUDING their natural facial expression from the photos — if " +
+    "they are smiling, keep the smile; if they are serious or neutral, keep that; " +
+    "do NOT change or neutralize their expression. Also keep their apparent age " +
+    "from the photos — do NOT make them look younger or older than they are. " +
+    `The person has a ${build} build — render realistic body ` +
     "proportions that match them; DO NOT slim them down or alter their body " +
     "shape. Dress them in a plain white crew-neck t-shirt and classic mid-blue " +
     "jeans (the same base outfit every time). Show the ENTIRE body from head to " +

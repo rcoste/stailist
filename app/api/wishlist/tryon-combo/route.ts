@@ -10,11 +10,11 @@ const MAX_GARMENTS = 4;
 const PROMPT =
   "Generate a photorealistic full-body image of the PERSON in the first image " +
   "wearing an outfit made of the exact clothing items shown in the following " +
-  "images, combined into one coherent look. Keep the person's face, body type, " +
-  "skin tone and hair identical. Use only the provided garments (fill obvious " +
+  "images, combined into one coherent look. Keep the person's face, facial " +
+  "expression, apparent age, body type, skin tone and hair identical. Use only the provided garments (fill obvious " +
   "gaps with simple neutral basics). Plain flat light-grey wall, cool neutral " +
-  "daylight (no warm golden tones), crisp and clear. Calm neutral expression, " +
-  "closed mouth, relaxed natural posture. Full body head to feet. No text.";
+  "daylight (no warm golden tones), crisp and clear. Relaxed natural posture, and " +
+  "keep the person's natural facial expression from the first image — do NOT change or neutralize it. Full body head to feet. No text.";
 
 async function fetchAsBase64(url: string): Promise<string | null> {
   try {

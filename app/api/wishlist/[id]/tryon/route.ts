@@ -8,12 +8,12 @@ const GEMINI_MODEL = "gemini-3-pro-image";
 // Mismo lenguaje v3 que /api/tryon: viste el avatar con la prenda, foto limpia.
 const PROMPT =
   "Generate a photorealistic full-body image of the PERSON in the first image " +
-  "wearing the garment shown in the second image. Keep the person's face, body " +
-  "type, skin tone and hair identical. Replace only their top/relevant clothing " +
+  "wearing the garment shown in the second image. Keep the person's face, facial " +
+  "expression, apparent age, body type, skin tone and hair identical. Replace only their top/relevant clothing " +
   "with the provided garment, keeping the rest of a simple neutral base outfit. " +
   "Plain flat light-grey wall, cool neutral daylight (no warm golden tones), " +
-  "crisp and clear. Calm neutral expression, closed mouth, relaxed natural " +
-  "posture. Full body head to feet. No text.";
+  "crisp and clear. Relaxed natural posture, and keep the person's natural facial " +
+  "expression from the first image — do NOT change or neutralize it. Full body head to feet. No text.";
 
 async function fetchAsBase64(url: string): Promise<string | null> {
   try {
