@@ -54,20 +54,20 @@ export function AddSheet({ userId }: { userId: string }) {
             </h3>
             <Option
               icon="camara"
-              title="tomar una foto"
-              sub="una prenda, la leo y la subo"
+              title="sube una prenda"
+              sub="una foto de algo suelto, tipo unos tenis"
               onClick={() => choose(() => photoRef.current?.start())}
             />
             <Option
               icon="destello"
-              title="importar del carrete"
-              sub="sube fotos de tu ropa y las leo todas"
+              title="sube varias de golpe"
+              sub="fotos de tu ropa o con la ropa puesta; saco cada prenda"
               onClick={() => choose(() => carreteRef.current?.start())}
             />
             <Option
               icon="libro"
-              title="explorar la biblioteca"
-              sub="marca las básicas que ya tienes"
+              title="explora la biblioteca"
+              sub="marca los básicos que ya tienes"
               onClick={() => choose(() => router.push("/closet/biblioteca"))}
             />
           </div>
