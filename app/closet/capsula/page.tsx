@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ClosetNav } from "@/components/closet-nav";
 import { CapsuleList } from "@/components/capsule-list";
+import { CapsuleLooks } from "@/components/capsule-looks";
+import { CapsuleTabs } from "@/components/capsule-tabs";
 import { PorQueEsTuya } from "@/components/por-que-es-tuya";
+import type { TripOutfit } from "@/lib/trip";
 import { Icon, type IconName } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -18,11 +21,18 @@ import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
 
-export default async function CapsulaPage() {
+export default async function CapsulaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const profile = await requireOnboarded();
   const target = profile.capsule_target;
   // Sin cápsula todavía → al cuestionario.
   if (!target) redirect("/closet/capsula/editar");
+
+  const { tab } = await searchParams;
+  const initialTab = tab === "looks" ? "looks" : "capsula";
 
   const match = profile.capsule_match;
   const supabase = await createClient();
@@ -61,13 +71,28 @@ export default async function CapsulaPage() {
     .map((r) => r.capsule_key as string | null)
     .filter((k): k is string => !!k);
 
-  const stale = !match || match.signature !== closetSignature(closet);
+  const sig = closetSignature(closet);
+  const stale = !match || match.signature !== sig;
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
     styleReferenceForEngine(profile.style_reference) !== ((target.styleSig as string | null) ?? null);
   const view = match ? capsuleView(target, match, profile.capsule_overrides) : null;
   // Estado completo: match al día y 17/17 cubiertas → pantalla de mantenimiento.
   const done = !!view && !stale && view.coveragePct >= 100;
+
+  // Pestaña "tus looks": outfits ya generados con lo que tienes de la cápsula.
+  // (Misma resolución nombre→imagen que usaba la ruta /capsula/looks.)
+  const rawLooks = (profile.capsule_outfits as TripOutfit[] | null) ?? null;
+  const looksStale = !!rawLooks && profile.capsule_outfits_sig !== sig;
+  const resolvedLooks = rawLooks
+    ? rawLooks.map((o) => ({
+        ocasion: o.ocasion as string,
+        titulo: o.titulo,
+        porque: o.porque,
+        tip: o.tip ?? null,
+        prendas: o.prendas.map((nombre) => ({ nombre, image: images[nombre] ?? null })),
+      }))
+    : null;
 
   return (
     <AppShell>
@@ -85,54 +110,65 @@ export default async function CapsulaPage() {
           </Link>
         </div>
 
-        {/* Por qué esta cápsula es tuya: sello en serif + pilares cortos (sin caja). */}
-        {target.firma || target.pilares?.length || target.resumen ? (
-          <PorQueEsTuya
-            firma={target.firma}
-            subline={target.subline}
-            pilares={target.pilares}
-            resumen={target.resumen}
-          />
-        ) : null}
+        <CapsuleTabs
+          capsulaCount={target.items.length}
+          looksCount={resolvedLooks?.length ?? 0}
+          looksStale={looksStale}
+          initialTab={initialTab}
+          capsula={
+            <div className="flex flex-col gap-6">
+              {/* Por qué esta cápsula es tuya: sello en serif + pilares cortos (sin caja). */}
+              {target.firma || target.pilares?.length || target.resumen ? (
+                <PorQueEsTuya
+                  firma={target.firma}
+                  subline={target.subline}
+                  pilares={target.pilares}
+                  resumen={target.resumen}
+                />
+              ) : null}
 
-        {styleStale ? (
-          <form action={regenerateCapsuleTarget}>
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
-            >
-              <Icon name="destello" size={16} />
-              Cambiaste tu estilo de referencia — actualiza tu cápsula
-            </button>
-          </form>
-        ) : null}
+              {styleStale ? (
+                <form action={regenerateCapsuleTarget}>
+                  <button
+                    type="submit"
+                    className="flex w-full items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
+                  >
+                    <Icon name="destello" size={16} />
+                    Cambiaste tu estilo de referencia — actualiza tu cápsula
+                  </button>
+                </form>
+              ) : null}
 
-        {done && view ? (
-          <DoneState have={view.haveCount} total={view.totalCount} />
-        ) : (
-          <>
-            {stale ? (
-              <MatchRecalc
-                auto={!match}
-                label={
-                  match
-                    ? "Tu clóset cambió — recalcular qué tienes"
-                    : "Calcular qué ya tienes y qué te falta"
-                }
-              />
-            ) : null}
+              {done && view ? (
+                <DoneState have={view.haveCount} total={view.totalCount} />
+              ) : (
+                <>
+                  {stale ? (
+                    <MatchRecalc
+                      auto={!match}
+                      label={
+                        match
+                          ? "Tu clóset cambió — recalcular qué tienes"
+                          : "Calcular qué ya tienes y qué te falta"
+                      }
+                    />
+                  ) : null}
 
-            <CapsuleList
-              target={target}
-              match={match}
-              overrides={profile.capsule_overrides}
-              images={images}
-              catalogImages={catalogImages}
-              savedWishKeys={savedWishKeys}
-              userId={profile.id}
-            />
-          </>
-        )}
+                  <CapsuleList
+                    target={target}
+                    match={match}
+                    overrides={profile.capsule_overrides}
+                    images={images}
+                    catalogImages={catalogImages}
+                    savedWishKeys={savedWishKeys}
+                    userId={profile.id}
+                  />
+                </>
+              )}
+            </div>
+          }
+          looks={<CapsuleLooks outfits={resolvedLooks} stale={looksStale} />}
+        />
       </section>
     </AppShell>
   );

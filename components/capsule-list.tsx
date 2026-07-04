@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useOptimistic, useState, useTransition } from "react";
+import { useCallback, useContext, useMemo, useOptimistic, useState, useTransition } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Icon } from "@/components/icon";
+import { CapsuleTabsContext } from "@/components/capsule-tabs-context";
 import { Spinner } from "@/components/spinner";
 import { OwnedPhotoBanner } from "@/components/owned-photo-banner";
 import { Toast } from "@/components/toast";
@@ -63,6 +63,8 @@ export function CapsuleList({
     }
   );
   const [, startTransition] = useTransition();
+  // Cambiar a la pestaña "tus looks" desde el CTA "~N looks" (sin navegar).
+  const { onViewLooks } = useContext(CapsuleTabsContext);
 
   // Caché de sesión de renders bajo demanda (por faltaKey). Sin esto, la URL
   // rendereada vive solo en el estado local del tile que la generó y se pierde
@@ -212,13 +214,14 @@ export function CapsuleList({
             {looks > 0 ? (
               <>
                 Con lo que ya tienes armas{" "}
-                <Link
-                  href="/closet/capsula/looks"
+                <button
+                  type="button"
+                  onClick={onViewLooks}
                   className="inline-flex items-center gap-0.5 font-semibold text-accent underline decoration-accent/30 underline-offset-2"
                 >
                   ~{looks} looks
                   <Icon name="chevron" size={12} />
-                </Link>
+                </button>
                 .
                 {maxUnlock > 0
                   ? " Completa tu base para desbloquear muchos más."
