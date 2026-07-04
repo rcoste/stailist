@@ -56,6 +56,10 @@ export function Landing() {
     localStorage.setItem("landing-gender", g);
   };
   const men = gender === "hombre";
+  // Try-on de la card "ejemplo real": arranca con la modelo en básicos
+  // (hero-normal) y al tocar el botón funde a la misma modelo con el look armado
+  // (hero-worn). Mismo efecto que TryDemo, aquí sobre el ejemplo del hero.
+  const [heroTried, setHeroTried] = useState(false);
   // Imágenes gender-aware: hombre → /landing/h/<name>.png (Fase 1: solo los names
   // con set de hombre — hero, prop, gal-*; el resto vive en secciones ocultas).
   const img = (n: string) => (men ? `/landing/h/${n}.png` : `/landing/${n}.png`);
@@ -136,7 +140,26 @@ export function Landing() {
               </div>
               <div className={styles.demoStage}>
                 <div className={styles.demoShot}>
-                  <img src={img("hero-worn")} alt="El outfit puesto" />
+                  <img
+                    src={img("hero-normal")}
+                    alt="La modelo con su ropa de siempre"
+                    className={styles.tdImg}
+                    style={{ opacity: heroTried ? 0 : 1 }}
+                  />
+                  <img
+                    src={img("hero-worn")}
+                    alt="El look que le armó stailist"
+                    className={styles.tdImg}
+                    style={{ opacity: heroTried ? 1 : 0 }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.tdBtn}
+                    onClick={() => setHeroTried((t) => !t)}
+                    aria-pressed={heroTried}
+                  >
+                    {heroTried ? "ver original" : "ver el look ✨"}
+                  </button>
                 </div>
                 <div className={styles.demoCol}>
                   <div className={styles.tiles}>

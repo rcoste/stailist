@@ -338,6 +338,7 @@
   min-width: 0;
 }
 .demoShot {
+  position: relative;
   aspect-ratio: 3 / 4;
   background: var(--c-tile);
   border-right: 1px solid var(--c-line);
