@@ -6,6 +6,7 @@ import { toUsableImage } from "@/lib/image-file";
 import { addPhotoItems, addLibraryCandidates } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
+import { ImageCrop } from "@/components/image-crop";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
@@ -90,9 +91,14 @@ type RenderItem = {
   verdict: "keep" | "notmine" | "trash";
 };
 
+// Foto elegida, ya comprimida (y opcionalmente recortada) antes de analizarla.
+type Foto = { id: string; dataUrl: string };
+
 type State =
   | { kind: "idle" }
   | { kind: "explainer" } // así funciona (timeline de 3 pasos) ANTES de elegir fotos
+  | { kind: "preparando" } // convirtiendo/comprimiendo las fotos elegidas
+  | { kind: "revisar"; fotos: Foto[] } // recorte opcional por foto antes de leer
   | { kind: "analizando"; done: number; total: number }
   | { kind: "texto"; items: DraftItem[] }
   | { kind: "render"; items: RenderItem[]; done: number; total: number }
@@ -112,6 +118,7 @@ export function ImportCarreteFlow({
   ref?: Ref<AddFlowHandle>;
 } = {}) {
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [cropId, setCropId] = useState<string | null>(null); // foto en recorte
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -119,28 +126,52 @@ export function ImportCarreteFlow({
   // cada prenda) hay que contarlo primero. "elegir fotos" abre el picker nativo.
   useImperativeHandle(ref, () => ({ start: () => setState({ kind: "explainer" }) }), []);
 
-  // --- 1) Selección + extracción ---
+  // --- 1) Selección → comprime y pasa a "revisar" (recorte opcional) ---
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).slice(0, MAX_FOTOS);
     if (inputRef.current) inputRef.current.value = "";
     if (files.length === 0) return;
 
-    setState({ kind: "analizando", done: 0, total: files.length });
+    setState({ kind: "preparando" });
+    try {
+      const fotos = await Promise.all(
+        files.map(async (file) => ({ id: uid(), dataUrl: await comprimir(await toUsableImage(file)) }))
+      );
+      setState({ kind: "revisar", fotos });
+    } catch {
+      setState({ kind: "error", msg: "No pude leer las fotos. Inténtalo otra vez." });
+    }
+  }
+
+  function removeFoto(id: string) {
+    setState((s) => (s.kind === "revisar" ? { ...s, fotos: s.fotos.filter((f) => f.id !== id) } : s));
+  }
+  function applyCrop(id: string, dataUrl: string) {
+    setState((s) =>
+      s.kind === "revisar" ? { ...s, fotos: s.fotos.map((f) => (f.id === id ? { ...f, dataUrl } : f)) } : s
+    );
+  }
+
+  // --- 2) Revisadas → extracción de prendas (IA por foto) ---
+  async function analizarFotos() {
+    if (state.kind !== "revisar") return;
+    const fotos = state.fotos;
+    if (fotos.length === 0) return;
+    setState({ kind: "analizando", done: 0, total: fotos.length });
     let done = 0;
     try {
       const perPhoto = await Promise.all(
-        files.map(async (file) => {
-          const dataUrl = await comprimir(await toUsableImage(file));
+        fotos.map(async (f) => {
           const res = await fetch("/api/analizar-prendas", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: dataUrl }),
+            body: JSON.stringify({ image: f.dataUrl }),
           });
           done += 1;
-          setState({ kind: "analizando", done, total: files.length });
+          setState({ kind: "analizando", done, total: fotos.length });
           if (!res.ok) return [] as DraftItem[];
           const { prendas } = (await res.json()) as { prendas: PrendaDetectada[] };
-          return prendas.map((p) => ({ id: uid(), attrs: p, on: true, photoPreview: dataUrl }));
+          return prendas.map((p) => ({ id: uid(), attrs: p, on: true, photoPreview: f.dataUrl }));
         })
       );
       const items = perPhoto.flat();
@@ -354,6 +385,69 @@ export function ImportCarreteFlow({
           confirmDisabled={false}
           onConfirm={() => inputRef.current?.click()}
         />
+      </Overlay>
+    );
+  }
+
+  if (state.kind === "preparando") {
+    return (
+      <Overlay>
+        <CarreteLoading frase="preparando tus fotos…" />
+      </Overlay>
+    );
+  }
+
+  if (state.kind === "revisar") {
+    const cropFoto = state.fotos.find((f) => f.id === cropId) ?? null;
+    return (
+      <Overlay>
+        {input}
+        <Header
+          title="revisa tus fotos"
+          sub="¿Sale alguien más en alguna? Recórtala para dejarte solo a ti. Es opcional."
+        />
+        <div className="grid grid-cols-3 gap-2">
+          {state.fotos.map((f) => (
+            <div
+              key={f.id}
+              className="relative aspect-[3/4] overflow-hidden rounded-sm border border-line bg-bg"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={f.dataUrl} alt="" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setCropId(f.id)}
+                className="absolute bottom-1 left-1 rounded-sm bg-ink/70 px-1.5 py-1 text-[11px] font-semibold text-on-accent"
+              >
+                recortar
+              </button>
+              <button
+                type="button"
+                onClick={() => removeFoto(f.id)}
+                aria-label="quitar foto"
+                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink/70 text-[13px] font-bold text-on-accent"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+        <Footer
+          cancel={() => setState({ kind: "idle" })}
+          confirmLabel={`leer ${state.fotos.length} ${state.fotos.length === 1 ? "foto" : "fotos"}`}
+          confirmDisabled={state.fotos.length === 0}
+          onConfirm={analizarFotos}
+        />
+        {cropFoto ? (
+          <ImageCrop
+            src={cropFoto.dataUrl}
+            onCancel={() => setCropId(null)}
+            onDone={(url) => {
+              applyCrop(cropFoto.id, url);
+              setCropId(null);
+            }}
+          />
+        ) : null}
       </Overlay>
     );
   }
