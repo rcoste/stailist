@@ -132,8 +132,13 @@ REGLAS DURAS (si un look no las cumple, fallaste):
 - PROHIBIDO el patrón "una prenda de color + todo lo demás neutro". Ese es el look genérico que hay que evitar.
 - PROHIBIDO todo lo que está en anti_safe.
 - Un look que podría confundirse con The Row / minimalista genérico está MAL. Empújalo hasta que sea inconfundiblemente tuyo.
-- Varía la ocasión.`,
-  messages: [{ role: "user", content: `MOVIMIENTOS DE FIRMA:\n${dna.signature_moves.map((m) => `- ${m.nombre}: ${m.regla}`).join("\n")}\n\nPALETA: ${dna.paleta_dna}\n\nANTI-SAFE (prohibido): ${dna.anti_safe.join(" | ")}\n\nCLÓSET (id · nombre · desc):\n${dna.closet.map((c) => `${c.id} · ${c.nombre} · ${c.desc}`).join("\n")}\n\nArma ${N} looks inconfundiblemente tuyos.` }],
+- Varía la ocasión.
+
+REPARTO Y NOVEDAD (Camino A — esto evita la copia y la muleta):
+- REPARTE los movimientos: entre TODOS los looks, ningún movimiento de firma debe aparecer en más de UN look. Cada look usa una combinación DISTINTA de movimientos. Cúbrelos en variedad, no repitas el más llamativo.
+- VARÍA el calzado: cada look lleva un calzado distinto. NO uses el mismo zapato (ej. el botín vaquero) en más de un look — tu vocabulario incluye también sandalia dorada, tacón blanco, mule de color.
+- NOVEDAD (no copies tus propias fotos): aplica el MOVIMIENTO, pero NO recrees un outfit que ya usaste. En cada look cambia al menos el color O una prenda respecto a la combinación obvia. Si el tonal drench 'mostaza knit + falda satén mostaza' es idéntico a una foto tuya, cámbialo a otra familia de color o mete un elemento inesperado. El movimiento se conserva; la ejecución es fresca.`,
+  messages: [{ role: "user", content: `MOVIMIENTOS DE FIRMA:\n${dna.signature_moves.map((m) => `- ${m.nombre}: ${m.regla}`).join("\n")}\n\nPALETA: ${dna.paleta_dna}\n\nANTI-SAFE (prohibido): ${dna.anti_safe.join(" | ")}\n\nCLÓSET (id · nombre · desc):\n${dna.closet.map((c) => `${c.id} · ${c.nombre} · ${c.desc}`).join("\n")}\n\nArma ${N} looks inconfundiblemente tuyos, cada uno con movimientos y calzado distintos.` }],
   output_config: { format: { type: "json_schema", schema: LOOKS_SCHEMA } },
 });
 const { looks } = JSON.parse(r2.content.find((b) => b.type === "text").text);
@@ -147,9 +152,10 @@ let i = 0;
 for (const look of looks) {
   i++;
   const pieces = look.items.map((id) => byId[id]).filter(Boolean);
-  const desc = pieces.map((p) => p.desc).join(", ");
+  // Lista numerada y ordenada por capa para que Gemini NO tire prendas.
+  const desc = pieces.map((p, k) => `${k + 1}) ${p.desc}`).join("; ");
   console.log(`\n[${i}] ${look.titulo} · ${look.ocasion}\n   ${pieces.map((p) => p.nombre).join(" + ")}\n   movimientos: ${look.movimientos_usados.join(", ")}\n   ↳ ${look.porque}`);
-  const text = `Candid full-body street-style fashion photograph of the SAME woman shown in the reference image. Keep her exact face, long wavy brown hair, skin tone, body and natural expression identical to the reference. She is wearing an outfit made of: ${desc}. ${VIBE}`;
+  const text = `Candid full-body street-style fashion photograph of the SAME woman shown in the reference image. Keep her exact face, long wavy brown hair, skin tone, body and natural expression identical to the reference. She is wearing a complete outfit — EVERY one of these ${pieces.length} items must be clearly visible and worn together: ${desc}. Do not omit or simplify any item; show all of them layered correctly. ${VIBE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image:generateContent?key=${GKEY}`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contents: [{ parts: [{ text }, { inlineData: { mimeType: "image/png", data: avatar } }] }], generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: "3:4" } } }),

@@ -36,3 +36,15 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 - [ ] Interfaz híbrida conversacional (chat + botones, sugerencia de Toño) — candidata para v2 del flujo de generación.
 - [ ] Monetización freemium / referidos e-commerce (hipótesis de Toño: referidos > suscripción). Validar willingness-to-pay primero.
 - [ ] **Panel admin de métricas**: hoy las métricas (TTV, ratio de votos, tiempos de generación) se consultan en el dashboard de Supabase. Un panel propio tiene sentido con 20+ usuarios. *Trigger*: la beta crece más allá del círculo cercano.
+
+## Diferido del build (2026-07-04) — "Estílame como [referencia]"
+
+- [ ] **Feature "estílame como [stylist/referencia]"**: dado el estilo de una referencia (Carla Figliozzi, María Zimmer, o en el futuro fotos que suba el usuario), generar looks NUEVOS en ese estilo y renderizarlos en el avatar del usuario. **CONCEPTO YA PROBADO** en R&D (script `scripts/gen-style-v2.mjs`, renders `docs_para_claude/outfit-inspo/CFZ/v2-look-*.png`). *Por qué ahora no*: es un feature nuevo grande con cero usuarios reales validando el flujo core; el aprendizaje ya se extrajo. *Trigger*: hay usuarios reales usando el motor de outfits Y piden inspiración más allá de su clóset.
+
+  **Arquitectura validada (mapea a motores que la app ya tiene):**
+  1. **Extraer estilo POR VISIÓN** (el 80% del resultado): el modelo VE las fotos reales de la referencia y extrae su *gramática de styling* (movimientos de firma + anti-reglas + clóset atrevido), NO un brief de texto sanitizado. Un brief escrito a mano ("neutros + un protagonista") es una mentira segura que produce looks genéricos. Reusa el patrón de `/api/analizar-prenda` pero multi-imagen.
+  2. **Definir el CLÓSET** = motor de cápsula (`generateCapsuleTarget`).
+  3. **Armar LOOKS** = motor de outfits, con restricciones Camino A (implementadas en el script): cada look usa ≥2 movimientos de firma, reparte los movimientos (ninguno se repite entre looks), varía el calzado, y mete novedad (aplica el movimiento sin copiar un outfit real de la referencia).
+  4. Render en el avatar del usuario con el vibe v3 (grey-wall Gen-Z).
+
+  **→ Camino B (el paso que falta para producción-calidad): JUEZ DE VISIÓN + NOVEDAD.** Un paso 4 que mira cada render y regenera si: (a) copió una foto real casi literal, (b) repitió el mismo movimiento/zapato entre looks, (c) el render tiró un elemento que el look pedía. Patrón de "crítico de completitud" (correr en `JUDGE_MODEL` = sonnet, no opus, para abaratar). *Por qué se difirió*: cuesta 2-3× llamadas por look y es pulido de calidad, no cambia la conclusión del experimento. Camino A (restricciones en el prompt de looks, sin llamadas extra) ya sube la calidad notablemente y fue lo que se implementó. Detalle operacional: las 17 fotos crudas dan 413 (request too large) — reducir con `sips -Z 900 -s format jpeg -s formatOptions 60` antes de mandarlas a visión.
