@@ -85,6 +85,18 @@ export function ColorimetriaSection({
   const palette = current ? seasonPalette(current, curFlow) : null;
   const metal = current ? seasonMetal(current, curFlow) : null;
 
+  // Sub-estaciones seleccionables del borrador: la pura + sus dos vecinas, cada
+  // una con su nombre real ("Invierno profundo") — no el genérico de la vecina.
+  const flowOptions = draftSeason
+    ? [
+        { flow: null as Season | null, label: seasonDisplayLabel(draftSeason, null) },
+        ...seasonNeighbors(draftSeason).map((n) => ({
+          flow: n as Season | null,
+          label: seasonDisplayLabel(draftSeason, n),
+        })),
+      ]
+    : [];
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-3">
@@ -144,29 +156,26 @@ export function ColorimetriaSection({
             </>
           ) : (
             <>
-              <span className="text-xs text-muted">
-                ¿Con un pie en otra? (opcional)
-              </span>
-              <div className="grid grid-cols-3 gap-2">
-                {seasonNeighbors(draftSeason as Season).map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => pickFlow(n)}
-                    disabled={pending}
-                    className="min-h-10 rounded-sm border border-line bg-surface text-sm font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-60"
-                  >
-                    {DISPLAY[n]}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => pickFlow(null)}
-                  disabled={pending}
-                  className="min-h-10 rounded-sm border border-line bg-surface text-sm font-medium text-muted transition-colors duration-200 hover:border-ink disabled:opacity-60"
-                >
-                  Ninguna
-                </button>
+              <span className="text-xs text-muted">Afina tu tono (opcional)</span>
+              <div className="flex flex-col gap-2">
+                {flowOptions.map((o) => {
+                  const active = draftSeason === current && o.flow === curFlow;
+                  return (
+                    <button
+                      key={o.flow ?? "pura"}
+                      type="button"
+                      onClick={() => pickFlow(o.flow)}
+                      disabled={pending}
+                      className={`min-h-10 rounded-sm border text-sm font-medium transition-colors duration-200 disabled:opacity-60 ${
+                        active
+                          ? "border-accent bg-accent-soft text-ink ring-1 ring-inset ring-accent"
+                          : "border-line bg-surface text-ink hover:border-ink"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
               </div>
               <button
                 type="button"

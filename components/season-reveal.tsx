@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { SEASONS, seasonPalette, seasonDisplayLabel, type Season } from "@/lib/colorimetria";
+import {
+  SEASONS,
+  seasonPalette,
+  seasonDisplayLabel,
+  seasonNeighbors,
+  type Season,
+} from "@/lib/colorimetria";
 import { updateColorimetria } from "@/app/onboarding/colorimetria/actions";
 import { Icon } from "@/components/icon";
 
@@ -68,24 +74,43 @@ export function SeasonReveal({
   const [flw, setFlw] = useState<Season | null>(flow);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Edición en dos pasos: estación → sub-estación (opcional), como en el perfil.
+  const [editStep, setEditStep] = useState<"season" | "flow">("season");
+  const [draft, setDraft] = useState<Season>(season);
 
   const { mejores, prestados, evita } = seasonPalette(base, flw);
   const sBase = SEASONS[base];
   const sFlow = flw ? SEASONS[flw] : null;
   const metalVa: "oro" | "plata" = isWarm(base) ? "oro" : "plata";
 
-  async function pick(next: Season) {
-    if (next === base && !flw) {
-      setEditing(false);
-      return;
-    }
-    setBase(next);
-    setFlw(null); // editar = afirmar una estación definida
+  function startEdit() {
+    setDraft(base);
+    setEditStep("season");
+    setEditing(true);
+  }
+
+  function pickSeason(s: Season) {
+    setDraft(s);
+    setEditStep("flow");
+  }
+
+  async function pickFlow(f: Season | null) {
+    setBase(draft);
+    setFlw(f);
     setEditing(false);
     setSaving(true);
-    await updateColorimetria(next, null);
+    await updateColorimetria(draft, f);
     setSaving(false);
   }
+
+  // Sub-estaciones del borrador: la pura + sus dos vecinas, con su nombre real.
+  const flowOptions = [
+    { flow: null as Season | null, label: seasonDisplayLabel(draft, null) },
+    ...seasonNeighbors(draft).map((n) => ({
+      flow: n as Season | null,
+      label: seasonDisplayLabel(draft, n),
+    })),
+  ];
 
   // Nombre: "otoño profundo" con la última palabra en serif itálica.
   const label = seasonDisplayLabel(base, flw);
@@ -193,30 +218,63 @@ export function SeasonReveal({
         </Link>
 
         {editing ? (
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted">¿Cuál te suena más como tú?</span>
-            <div className="flex flex-wrap gap-2">
-              {ALL.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => pick(s)}
-                  disabled={saving}
-                  className={`min-h-10 rounded-sm border px-4 text-sm transition-colors duration-200 disabled:opacity-60 ${
-                    s === base
-                      ? "border-ink text-ink"
-                      : "border-line bg-surface text-ink hover:border-ink"
-                  }`}
-                >
-                  {DISPLAY[s]}
-                </button>
-              ))}
+          editStep === "season" ? (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs text-muted">¿Cuál te suena más como tú?</span>
+              <div className="flex flex-wrap gap-2">
+                {ALL.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => pickSeason(s)}
+                    disabled={saving}
+                    className={`min-h-10 rounded-sm border px-4 text-sm transition-colors duration-200 disabled:opacity-60 ${
+                      s === draft
+                        ? "border-ink text-ink"
+                        : "border-line bg-surface text-ink hover:border-ink"
+                    }`}
+                  >
+                    {DISPLAY[s]}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs text-muted">Afina tu tono (opcional)</span>
+              <div className="flex flex-wrap gap-2">
+                {flowOptions.map((o) => {
+                  const active = draft === base && o.flow === flw;
+                  return (
+                    <button
+                      key={o.flow ?? "pura"}
+                      type="button"
+                      onClick={() => pickFlow(o.flow)}
+                      disabled={saving}
+                      className={`min-h-10 rounded-sm border px-4 text-sm transition-colors duration-200 disabled:opacity-60 ${
+                        active
+                          ? "border-ink text-ink"
+                          : "border-line bg-surface text-ink hover:border-ink"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditStep("season")}
+                className="self-start text-xs font-medium text-muted hover:text-ink"
+              >
+                ← Cambiar estación
+              </button>
+            </div>
+          )
         ) : (
           <button
             type="button"
-            onClick={() => setEditing(true)}
+            onClick={startEdit}
             className="inline-flex items-center justify-center gap-1.5 self-center text-[13px] font-semibold text-muted underline underline-offset-[3px]"
           >
             <Icon name="lapiz" size={14} /> esta no es mi colorimetría
