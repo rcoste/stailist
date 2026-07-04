@@ -8,12 +8,18 @@ import {
   type AssessmentQuestion,
   closetSignature,
   type CapsuleDecision,
+  type CapsuleItem,
   type CapsuleMatch,
   type CapsuleOverrides,
+  type CapsuleSwaps,
   type CapsuleTarget,
   type MatchEntry,
+  SWAP_CAP,
+  type VetoReason,
 } from "@/lib/capsule";
+import { EMPTY_VETOES, type StyleVetoes, vetoLabels } from "@/lib/vetoes";
 import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
+import { generateCapsuleSwap } from "@/lib/engine/capsule-swap";
 import { matchCapsule } from "@/lib/engine/capsule-match";
 import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
@@ -39,7 +45,7 @@ export async function saveLifestyle(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions")
+    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes")
     .eq("id", user.id)
     .single();
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
@@ -81,6 +87,7 @@ export async function saveLifestyle(
       build: (profile?.body_build as Build | null) ?? null,
       volume: (profile?.body_volume as Volume | null) ?? null,
       styleReference: styleRef,
+      vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES),
     });
     target.styleSig = styleRef; // firma del estilo con el que se generó
   } catch {
@@ -147,6 +154,173 @@ export async function setCapsuleOverride(
   revalidatePath("/closet");
 }
 
+// Persiste el rechazo: guarda los swaps, marca ese slot como hueco en el match,
+// suma un veto global si la señal es clara, y deja los looks de la cápsula viejos.
+async function persistCapsuleReject(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  index: number,
+  nextSwaps: CapsuleSwaps,
+  match: CapsuleMatch | null,
+  vetoes: StyleVetoes,
+  vetoTerm: string | null
+): Promise<void> {
+  const update: Record<string, unknown> = {
+    capsule_swaps: nextSwaps,
+    capsule_outfits_sig: null, // la cápsula cambió → los looks quedan viejos
+  };
+  if (match) {
+    // La alternativa es una sugerencia nueva que (por defecto) no tiene: hueco real.
+    update.capsule_match = {
+      signature: match.signature,
+      entries: match.entries.map((e, i) =>
+        i === index ? { status: "falta" as const, by: null } : e
+      ),
+    };
+  }
+  if (vetoTerm) {
+    const t = vetoTerm.trim().slice(0, 40).toLowerCase();
+    const free = vetoes.free ?? [];
+    if (t && !free.some((f) => f.toLowerCase() === t)) {
+      update.style_vetoes = { chips: vetoes.chips ?? [], free: [...free, t].slice(0, 10) };
+    }
+  }
+  await supabase.from("profiles").update(update).eq("id", userId);
+  revalidatePath("/closet/capsula");
+  revalidatePath("/closet");
+}
+
+// Camino A (issue #89): rechazar una prenda ideal de la cápsula. Genera al instante
+// una alternativa del mismo rol (swap), hasta SWAP_CAP intentos; al tope retira el
+// slot. La razón (opcional) afina el swap y puede sumar un veto global. Sirve tanto
+// para el rechazo inicial como para "otra" (razón null). Client-side con retry.
+export async function rejectCapsuleItem(
+  index: number,
+  reason: VetoReason | null = null
+): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(index) || index < 0) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("capsule_target, capsule_match, capsule_swaps, gender, palette_season, palette_flow, style_vetoes")
+    .eq("id", user.id)
+    .single();
+  const target = profile?.capsule_target as CapsuleTarget | null;
+  const slot = target?.items[index];
+  if (!target || !slot) return { ok: false };
+
+  const swaps = ((profile?.capsule_swaps as CapsuleSwaps | null) ?? {}) as CapsuleSwaps;
+  const key = String(index);
+  const existing = swaps[key] ?? null;
+  const newCount = (existing?.rejectedCount ?? 0) + 1;
+  const shownItem = existing?.item ?? slot; // lo que ve ahora (ideal o alternativa)
+  const rejectedNames = existing ? [slot.nombre, existing.item.nombre] : [slot.nombre];
+
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  const season = (profile?.palette_season as Season | null) ?? null;
+  const flow = (profile?.palette_flow as Season | null) ?? null;
+  const vetoes = (profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
+
+  const nextSwaps: CapsuleSwaps = { ...swaps };
+  if (newCount < SWAP_CAP) {
+    let alt: CapsuleItem;
+    try {
+      alt = await generateCapsuleSwap({
+        target,
+        index,
+        rejectedNames,
+        reason,
+        gender,
+        season,
+        flow,
+        vetoes: vetoLabels(vetoes),
+      });
+    } catch {
+      return { ok: false };
+    }
+    nextSwaps[key] = { item: alt, rejectedCount: newCount, reason: reason ?? null };
+  } else {
+    // Tope de swaps: no gastamos más IA; el slot se retira de la cápsula.
+    nextSwaps[key] = {
+      item: shownItem,
+      rejectedCount: newCount,
+      reason: reason ?? null,
+      dismissed: true,
+    };
+  }
+
+  // Veto global SOLO con señal clara: color rechazado, tipo que no usa, o al retirar.
+  const vetoTerm =
+    reason === "color-no"
+      ? shownItem.colorFamilia
+      : reason === "no-lo-uso" || newCount >= SWAP_CAP
+        ? shownItem.tipo?.replace(/-/g, " ") ?? null
+        : null;
+
+  await persistCapsuleReject(
+    supabase,
+    user.id,
+    index,
+    nextSwaps,
+    (profile?.capsule_match as CapsuleMatch | null) ?? null,
+    vetoes,
+    vetoTerm
+  );
+  return { ok: true };
+}
+
+// "Quitar": retira el slot de la cápsula sin generar más alternativas (decisión
+// explícita de la usuaria). Suma el tipo como veto.
+export async function dismissCapsuleSlot(index: number): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(index) || index < 0) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("capsule_target, capsule_match, capsule_swaps, style_vetoes")
+    .eq("id", user.id)
+    .single();
+  const target = profile?.capsule_target as CapsuleTarget | null;
+  const slot = target?.items[index];
+  if (!target || !slot) return { ok: false };
+
+  const swaps = ((profile?.capsule_swaps as CapsuleSwaps | null) ?? {}) as CapsuleSwaps;
+  const key = String(index);
+  const existing = swaps[key] ?? null;
+  const shownItem = existing?.item ?? slot;
+  const nextSwaps: CapsuleSwaps = {
+    ...swaps,
+    [key]: {
+      item: shownItem,
+      rejectedCount: Math.max(existing?.rejectedCount ?? 0, 1),
+      reason: existing?.reason ?? null,
+      dismissed: true,
+    },
+  };
+  const vetoes = (profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
+  const vetoTerm = shownItem.tipo?.replace(/-/g, " ") ?? null;
+
+  await persistCapsuleReject(
+    supabase,
+    user.id,
+    index,
+    nextSwaps,
+    (profile?.capsule_match as CapsuleMatch | null) ?? null,
+    vetoes,
+    vetoTerm
+  );
+  return { ok: true };
+}
+
 // Calcula el match contra el clóset actual (tras armar la cápsula o cambiar el
 // clóset). No regenera la cápsula ideal. Devuelve {ok} para que el cliente sepa si
 // mostrar el resultado o el botón de reintentar.
@@ -193,7 +367,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions"
+      "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes"
     )
     .eq("id", user.id)
     .single();
@@ -219,6 +393,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
       build: (profile?.body_build as Build | null) ?? null,
       volume: (profile?.body_volume as Volume | null) ?? null,
       styleReference: styleRef,
+      vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES),
     });
     target.styleSig = styleRef;
   } catch {

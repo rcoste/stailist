@@ -5,6 +5,7 @@ import type {
   AssessmentQuestion,
   CapsuleMatch,
   CapsuleOverrides,
+  CapsuleSwaps,
   CapsuleTarget,
   LifestyleAnswers,
 } from "@/lib/capsule";
@@ -28,6 +29,7 @@ export type Profile = {
   capsule_target: CapsuleTarget | null;
   capsule_match: CapsuleMatch | null;
   capsule_overrides: CapsuleOverrides | null;
+  capsule_swaps: CapsuleSwaps | null; // overlay de rechazos/alternativas (issue #89)
   capsule_outfits: unknown[] | null; // looks armados con lo que tienes de la cápsula
   capsule_outfits_sig: string | null; // firma del clóset cuando se generaron
   avatar_path: string | null;

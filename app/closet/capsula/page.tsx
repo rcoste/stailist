@@ -10,7 +10,7 @@ import type { TripOutfit } from "@/lib/trip";
 import { Icon, type IconName } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { capsuleView, closetSignature } from "@/lib/capsule";
+import { capsuleEscalated, capsuleView, closetSignature } from "@/lib/capsule";
 import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
 import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
@@ -76,9 +76,13 @@ export default async function CapsulaPage({
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
     styleReferenceForEngine(profile.style_reference) !== ((target.styleSig as string | null) ?? null);
-  const view = match ? capsuleView(target, match, profile.capsule_overrides) : null;
+  const view = match
+    ? capsuleView(target, match, profile.capsule_overrides, profile.capsule_swaps)
+    : null;
   // Estado completo: match al día y 17/17 cubiertas → pantalla de mantenimiento.
   const done = !!view && !stale && view.coveragePct >= 100;
+  // Escalada (issue #89): descartó ≥ 1/3 → afinar el estilo en vez de dejarla coja.
+  const escalated = capsuleEscalated(target, profile.capsule_swaps);
 
   // Pestaña "tus looks": outfits ya generados con lo que tienes de la cápsula.
   // (Misma resolución nombre→imagen que usaba la ruta /capsula/looks.)
@@ -111,7 +115,7 @@ export default async function CapsulaPage({
         </div>
 
         <CapsuleTabs
-          capsulaCount={target.items.length}
+          capsulaCount={view ? view.totalCount : target.items.length}
           looksCount={resolvedLooks?.length ?? 0}
           looksStale={looksStale}
           initialTab={initialTab}
@@ -139,6 +143,34 @@ export default async function CapsulaPage({
                 </form>
               ) : null}
 
+              {escalated ? (
+                <div className="flex flex-col gap-2.5 rounded-lg border border-accent/40 bg-accent-soft p-3.5">
+                  <span className="text-sm font-semibold text-ink">
+                    Descartaste varias piezas
+                  </span>
+                  <span className="text-[12.5px] leading-snug text-muted">
+                    Cuando varias no te laten, casi siempre es que hay que afinar tu
+                    estilo, no la prenda. Ajusta lo que no va y te rearmo la cápsula.
+                  </span>
+                  <div className="flex flex-wrap gap-2 pt-0.5">
+                    <Link
+                      href="/perfil"
+                      className="flex min-h-9 items-center rounded-sm border border-line bg-surface px-3 text-sm font-medium text-ink transition-colors hover:border-ink"
+                    >
+                      Afinar mi estilo
+                    </Link>
+                    <form action={regenerateCapsuleTarget}>
+                      <button
+                        type="submit"
+                        className="flex min-h-9 items-center gap-1.5 rounded-sm bg-accent px-3 text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
+                      >
+                        <Icon name="destello" size={15} /> Rearmar mi cápsula
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+
               {done && view ? (
                 <DoneState have={view.haveCount} total={view.totalCount} />
               ) : (
@@ -158,6 +190,7 @@ export default async function CapsulaPage({
                     target={target}
                     match={match}
                     overrides={profile.capsule_overrides}
+                    swaps={profile.capsule_swaps}
                     images={images}
                     catalogImages={catalogImages}
                     savedWishKeys={savedWishKeys}

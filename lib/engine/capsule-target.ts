@@ -22,6 +22,9 @@ export type CapsuleInputs = {
   build: Build | null;
   volume: Volume | null;
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
+  // Vetos duros (labels): prendas/colores/detalles que NUNCA debe proponer. Vienen
+  // de style_vetoes (incluye lo que la usuaria descartó de su cápsula, issue #89).
+  vetoes?: string[];
   // Preguntas del assessment (fijas + las personalizadas de su estilo). Si no se
   // pasan, usa solo las fijas. Define qué se renderiza en el bloque "vida".
   questions?: AssessmentQuestion[];
@@ -68,6 +71,9 @@ export async function generateCapsuleTarget(
   const metal = seasonMetal(inputs.season, inputs.flow);
   const metalTxt = `Su metal es ${metal.toUpperCase()}: en accesorios metálicos (reloj, hebilla, joyería) usa SIEMPRE ${metal}, nunca ${metal === "oro" ? "plata" : "oro"}.`;
   const siluetaLine = siluetaPromptLine(inputs.build, inputs.volume);
+  const vetosTxt = inputs.vetoes && inputs.vetoes.length
+    ? `\n\nVETOS DUROS (regla innegociable): la persona NO quiere estas prendas/colores/detalles — JAMÁS los propongas ni una variante cercana: ${inputs.vetoes.join(", ")}.`
+    : "";
 
   const estilo = inputs.archetype
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
@@ -132,7 +138,7 @@ Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sust
 - "subline": UNA línea (≤ ~95 chars) que conecte la firma con cómo armaste la cápsula. Ej: "Así armé tu cápsula para que ese sea tu default, sin pensarlo."
 - "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").
 
-Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.`,
+Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`,
     messages: [
       {
         role: "user",

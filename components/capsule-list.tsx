@@ -2,6 +2,7 @@
 
 import { useCallback, useContext, useMemo, useOptimistic, useState, useTransition } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { CapsuleTabsContext } from "@/components/capsule-tabs-context";
 import { Spinner } from "@/components/spinner";
@@ -9,7 +10,12 @@ import { OwnedPhotoBanner } from "@/components/owned-photo-banner";
 import { Toast } from "@/components/toast";
 import { faltaImage, familiaToHex, faltaKey } from "@/lib/capsule-images";
 import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
-import { markFaltaOwned, setCapsuleOverride } from "@/app/closet/capsula/actions";
+import {
+  dismissCapsuleSlot,
+  markFaltaOwned,
+  rejectCapsuleItem,
+  setCapsuleOverride,
+} from "@/app/closet/capsula/actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import {
   IdealTileInner,
@@ -26,7 +32,9 @@ import {
   type CapsuleMatch,
   type CapsuleOverrides,
   type CapsuleRow,
+  type CapsuleSwaps,
   type CapsuleTarget,
+  type VetoReason,
 } from "@/lib/capsule";
 
 // Pantalla completa de la cápsula, "enfocada en lo que falta" (handoff Screen 4):
@@ -37,6 +45,7 @@ export function CapsuleList({
   target,
   match,
   overrides,
+  swaps = null,
   images,
   catalogImages = {},
   savedWishKeys = [],
@@ -45,6 +54,7 @@ export function CapsuleList({
   target: CapsuleTarget;
   match: CapsuleMatch | null;
   overrides: CapsuleOverrides | null;
+  swaps?: CapsuleSwaps | null;
   images: Record<string, string>;
   // Imágenes de la biblioteca compartida (combos ideales ya rendereados), por faltaKey.
   catalogImages?: Record<string, string>;
@@ -52,6 +62,7 @@ export function CapsuleList({
   savedWishKeys?: string[];
   userId: string;
 }) {
+  const router = useRouter();
   const [optOverrides, applyOpt] = useOptimistic(
     overrides ?? {},
     (state: CapsuleOverrides, action: { index: number; decision: CapsuleDecision }) => {
@@ -117,6 +128,43 @@ export function CapsuleList({
     });
   };
 
+  // Camino A (issue #89): "no me gusta" sobre una prenda ideal. La generación de la
+  // alternativa vive en el server (~4-6s) → mostramos "buscando…" en esa card y al
+  // volver refrescamos para que aparezca la alternativa. "otra" reusa el mismo flujo.
+  const [swapBusy, setSwapBusy] = useState<Set<number>>(new Set());
+  const setSwap = (index: number, on: boolean) =>
+    setSwapBusy((s) => {
+      const n = new Set(s);
+      if (on) n.add(index);
+      else n.delete(index);
+      return n;
+    });
+  const [swapError, setSwapError] = useState<Set<number>>(new Set());
+
+  const rejectItem = (index: number, reason: VetoReason | null) => {
+    setSwap(index, true);
+    setSwapError((s) => {
+      const n = new Set(s);
+      n.delete(index);
+      return n;
+    });
+    startTransition(async () => {
+      const res = await rejectCapsuleItem(index, reason);
+      setSwap(index, false);
+      if (!res.ok) setSwapError((s) => new Set(s).add(index));
+      else router.refresh();
+    });
+  };
+
+  const quitarItem = (index: number) => {
+    setSwap(index, true);
+    startTransition(async () => {
+      await dismissCapsuleSlot(index);
+      setSwap(index, false);
+      router.refresh();
+    });
+  };
+
   // Wishlist in-situ: mandar/quitar una prenda que te falta de "lo que deberías
   // comprar", sin sacarla de su sección. Optimista + toast al guardar. La verdad
   // vive en el server (dedup por faltaKey); al recargar, savedWishKeys se refresca.
@@ -147,7 +195,8 @@ export function CapsuleList({
     });
   };
 
-  const rows = capsuleRows(target, match, optOverrides);
+  // Los slots retirados ("quitar"/tope) salen de la lista y de los conteos.
+  const rows = capsuleRows(target, match, optOverrides, swaps).filter((r) => !r.dismissed);
   const total = rows.length;
   const have = rows.filter((r) => r.covered).length;
   const pct = total ? Math.round((100 * have) / total) : 0;
@@ -268,6 +317,11 @@ export function CapsuleList({
                 onOwn={() => markOwned(r.index, r.item.nombre)}
                 wishSaved={wishSaved.has(faltaKey(r.item))}
                 onToggleWish={() => toggleWish(r)}
+                swapBusy={swapBusy.has(r.index)}
+                swapErrored={swapError.has(r.index)}
+                onReject={(reason) => rejectItem(r.index, reason)}
+                onOtra={() => rejectItem(r.index, null)}
+                onQuitar={() => quitarItem(r.index)}
               />
             ))}
           </ul>
@@ -475,6 +529,15 @@ function BigCard({
   );
 }
 
+// Razones opcionales del rechazo (issue #89): un tap que afina el swap y puede
+// sumar un veto. "solo cámbiala" = sin razón.
+const REJECT_REASONS: { id: VetoReason; label: string }[] = [
+  { id: "no-lo-uso", label: "no lo uso" },
+  { id: "muy-formal", label: "muy formal" },
+  { id: "muy-casual", label: "muy casual" },
+  { id: "color-no", label: "ese color no" },
+];
+
 // Tarjeta grande para "lo que más te suma" (y para el estado "quiero la sugerida"
 // de Decide): tile grande tappable que GENERA la imagen enfrente + cuerpo con
 // nombre/porqué y la fila de acciones "ya la tengo" · "wishlist".
@@ -489,6 +552,11 @@ function SumaCard({
   onToggleWish,
   reject,
   onChange,
+  swapBusy = false,
+  swapErrored = false,
+  onReject,
+  onOtra,
+  onQuitar,
 }: {
   row: CapsuleRow;
   catalogImages: Record<string, string>;
@@ -500,8 +568,16 @@ function SumaCard({
   onToggleWish: () => void;
   reject?: boolean;
   onChange?: () => void;
+  // Camino A: "no me late" → swap. Solo se pasan en la sección de huecos.
+  swapBusy?: boolean;
+  swapErrored?: boolean;
+  onReject?: (reason: VetoReason | null) => void;
+  onOtra?: () => void;
+  onQuitar?: () => void;
 }) {
   const { item } = row;
+  const [showReasons, setShowReasons] = useState(false);
+  const swapped = row.swapCount > 0;
   // SIEMPRE la imagen ideal/sugerida — nunca la de la prenda del clóset (`by`):
   // esta tarjeta representa "la sugerida" (en falta y al rechazar un parecido).
   // Usar rowImage aquí mostraba la prenda que ya tienes al elegir la sugerida.
@@ -574,6 +650,76 @@ function SumaCard({
             {wishSaved ? "en wishlist" : "wishlist"}
           </button>
         </div>
+
+        {/* Camino A: "no me late" → alternativa (swap). Solo en la sección de huecos. */}
+        {onReject ? (
+          swapBusy ? (
+            <div className="flex items-center gap-2 text-[12px] text-muted">
+              <Spinner className="h-3.5 w-3.5" /> buscando una alternativa…
+            </div>
+          ) : showReasons ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">¿por qué? (opcional)</span>
+              <div className="flex flex-wrap gap-1.5">
+                {REJECT_REASONS.map((rr) => (
+                  <button
+                    key={rr.id}
+                    type="button"
+                    onClick={() => onReject(rr.id)}
+                    className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11.5px] text-ink transition-colors hover:border-accent"
+                  >
+                    {rr.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => onReject(null)}
+                  className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11.5px] font-medium text-accent transition-colors hover:border-accent"
+                >
+                  solo cámbiala
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReasons(false)}
+                className="self-start text-[11px] text-muted hover:text-ink"
+              >
+                cancelar
+              </button>
+            </div>
+          ) : swapped ? (
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-accent">
+                <Icon name="destello" size={11} /> te la cambié
+              </span>
+              <button
+                type="button"
+                onClick={onOtra}
+                className="text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
+              >
+                otra
+              </button>
+              <button
+                type="button"
+                onClick={onQuitar}
+                className="text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
+              >
+                quitar
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowReasons(true)}
+              className="self-start text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
+            >
+              no me late
+            </button>
+          )
+        ) : null}
+        {swapErrored ? (
+          <span className="text-[11px] text-error">No pude buscar otra — inténtalo de nuevo.</span>
+        ) : null}
       </div>
     </li>
   );

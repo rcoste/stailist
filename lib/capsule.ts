@@ -268,6 +268,41 @@ export type CapsuleView = {
 export type CapsuleDecision = "accept" | "reject";
 export type CapsuleOverrides = Record<string, CapsuleDecision>; // clave = índice
 
+// --- Camino A: rechazar/afinar una prenda ideal (issue #89) ----------------
+
+// Razón opcional del rechazo (tap rápido). Alimenta los vetos y el prompt del swap.
+export type VetoReason = "no-lo-uso" | "muy-formal" | "muy-casual" | "color-no";
+
+// Overlay por slot: la alternativa vigente + cuántas ideales se han rechazado en
+// ese slot (tope SWAP_CAP) + la razón del último rechazo. capsule_target NO se muta;
+// esto se sobrepone al leer.
+export type CapsuleSwapEntry = {
+  item: CapsuleItem;
+  rejectedCount: number;
+  reason?: VetoReason | null;
+  dismissed?: boolean; // slot retirado de la cápsula (por tope de swaps o por "quitar")
+};
+export type CapsuleSwaps = Record<string, CapsuleSwapEntry>; // clave = índice
+
+// Tope de swaps por slot: al 2º rechazo dejamos de gastar IA y el slot se abandona.
+export const SWAP_CAP = 2;
+
+// Cuántas piezas ha descartado (slots con al menos un rechazo).
+export function capsuleRejectCount(swaps: CapsuleSwaps | null): number {
+  return swaps ? Object.keys(swaps).length : 0;
+}
+
+// Umbral de escalada: al descartar ≥ 1/3 de las piezas, paramos los swaps y
+// llevamos a afinar el estilo (regenerar), en vez de dejar la cápsula coja.
+export function capsuleEscalated(
+  target: CapsuleTarget,
+  swaps: CapsuleSwaps | null
+): boolean {
+  const total = target.items.length;
+  if (total === 0) return false;
+  return capsuleRejectCount(swaps) >= Math.ceil(total / 3);
+}
+
 // Estado EFECTIVO = lo que dijo el match + la decisión del usuario:
 //   parecido + "Sí" → cumplida (cuenta como "tienes", se va a Ya lo tienes).
 //   parecido + "No" → hueco real (cuenta como "falta", se va a Te falta).
@@ -287,34 +322,56 @@ function effectiveStatus(
 // Lista COMPLETA de la cápsula, en orden de prioridad, cada prenda con su estado
 // (para la pantalla dedicada). Si aún no hay match, todas quedan "pendiente".
 export type CapsuleRow = {
-  item: CapsuleItem;
+  item: CapsuleItem; // la prenda a mostrar (la alternativa del swap si hay una)
   index: number; // posición en target.items (para guardar la decisión)
   base: MatchStatus | "pendiente"; // lo que dijo el match
   effective: MatchStatus | "pendiente"; // base + tu decisión (para agrupar)
   decision: CapsuleDecision | null; // lo que decidió el usuario (solo en "parecido")
   covered: boolean; // cuenta como cubierta (= efectivo "tienes")
   by: string | null;
+  // Camino A: si este slot tiene una alternativa activa (swap) y si llegó al tope.
+  swapCount: number; // ideales rechazadas en este slot (0 = sin swap)
+  atSwapCap: boolean; // swapCount >= SWAP_CAP → ya no se ofrecen más swaps
+  dismissed: boolean; // slot retirado de la cápsula (no se muestra en las secciones)
 };
 
 export function capsuleRows(
   target: CapsuleTarget,
   match: CapsuleMatch | null,
-  overrides: CapsuleOverrides | null = null
+  overrides: CapsuleOverrides | null = null,
+  swaps: CapsuleSwaps | null = null
 ): CapsuleRow[] {
   return target.items.map((item, i) => {
+    const swap = swaps?.[String(i)] ?? null;
+    // Overlay: si el slot tiene alternativa, se muestra esa (el ideal no se muta).
+    const shown = swap ? swap.item : item;
     const e = match ? normalizeEntry(match.entries[i]) : { status: "pendiente" as const, by: null };
     const decision = e.status === "parecido" ? overrides?.[String(i)] ?? null : null;
     const effective = effectiveStatus(e.status, decision);
-    return { item, index: i, base: e.status, effective, decision, covered: effective === "tienes", by: e.by };
+    const swapCount = swap?.rejectedCount ?? 0;
+    return {
+      item: shown,
+      index: i,
+      base: e.status,
+      effective,
+      decision,
+      covered: effective === "tienes",
+      by: e.by,
+      swapCount,
+      atSwapCap: swapCount >= SWAP_CAP,
+      dismissed: swap?.dismissed ?? false,
+    };
   });
 }
 
 export function capsuleView(
   target: CapsuleTarget,
   match: CapsuleMatch,
-  overrides: CapsuleOverrides | null = null
+  overrides: CapsuleOverrides | null = null,
+  swaps: CapsuleSwaps | null = null
 ): CapsuleView {
-  const rows = capsuleRows(target, match, overrides);
+  // Los slots retirados ("quitar"/tope) salen de la cápsula: no cuentan ni se listan.
+  const rows = capsuleRows(target, match, overrides, swaps).filter((r) => !r.dismissed);
   const totalCount = rows.length;
   const haveCount = rows.filter((r) => r.covered).length;
   const coveragePct = totalCount === 0 ? 0 : Math.round((100 * haveCount) / totalCount);
