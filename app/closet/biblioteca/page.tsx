@@ -12,7 +12,7 @@ export default async function BibliotecaPage() {
   const profile = await requireOnboarded();
 
   const supabase = await createClient();
-  const [{ data: catalog }, { data: items }] = await Promise.all([
+  const [{ data: catalog }, { data: items }, { data: wishRows }] = await Promise.all([
     supabase
       .from("archetypes")
       .select("id, name, category, attrs, image_path")
@@ -23,6 +23,11 @@ export default async function BibliotecaPage() {
       .select("archetype_id")
       .eq("user_id", profile.id)
       .is("deleted_at", null),
+    supabase
+      .from("wishlist_items")
+      .select("capsule_key")
+      .eq("user_id", profile.id)
+      .eq("source", "biblioteca"),
   ]);
 
   const have = new Set(
@@ -31,6 +36,12 @@ export default async function BibliotecaPage() {
   const available = ((catalog ?? []) as CatalogItem[]).filter(
     (a) => !have.has(a.id)
   );
+  // Arquetipos que ya están en la wishlist (para el estado del bookmark).
+  const savedWishIds = (wishRows ?? [])
+    .map((r) => r.capsule_key as string | null)
+    .filter((k): k is string => !!k && k.startsWith("biblio-"))
+    .map((k) => Number(k.slice("biblio-".length)))
+    .filter((n) => Number.isFinite(n));
 
   // Sin tab bar: esta pantalla tiene una barra de acción fija abajo (Agregar) y
   // el handoff prohíbe que CTA y tab bar coexistan.
@@ -49,7 +60,7 @@ export default async function BibliotecaPage() {
             la biblioteca
           </h1>
           <p className="text-sm text-muted">
-            agrega más básicos. marca los que también tengas.
+            marca los básicos que ya tienes, o guárdalos en tu wishlist.
           </p>
         </div>
 
@@ -61,7 +72,7 @@ export default async function BibliotecaPage() {
             </p>
           </div>
         ) : (
-          <BibliotecaPicker catalog={available} />
+          <BibliotecaPicker catalog={available} savedWishIds={savedWishIds} />
         )}
       </section>
     </AppShell>

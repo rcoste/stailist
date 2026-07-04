@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { addArchetypes } from "@/app/closet/actions";
+import { toggleWishlistArchetype } from "@/lib/wishlist-actions";
 import type { CatalogItem } from "@/app/onboarding/closet/checklist";
 
 // Mismo orden y etiquetas que el checklist del onboarding, + accesorios.
@@ -22,13 +23,44 @@ const CATEGORY_LABELS: Record<string, string> = {
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
+export function BibliotecaPicker({
+  catalog,
+  savedWishIds = [],
+}: {
+  catalog: CatalogItem[];
+  savedWishIds?: number[];
+}) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [cat, setCat] = useState<string | null>(null); // null = Todos
   const [query, setQuery] = useState("");
+  // Wishlist: arquetipos marcados (optimista) + toast al guardar.
+  const [wished, setWished] = useState<Set<number>>(() => new Set(savedWishIds));
+  const [toast, setToast] = useState<string | null>(null);
+
+  function toggleWish(item: CatalogItem) {
+    const willSave = !wished.has(item.id);
+    setWished((s) => {
+      const n = new Set(s);
+      if (willSave) n.add(item.id);
+      else n.delete(item.id);
+      return n;
+    });
+    if (willSave) {
+      setToast("Guardada en tu wishlist");
+      setTimeout(() => setToast(null), 2000);
+    }
+    startTransition(async () => {
+      await toggleWishlistArchetype({
+        archetypeId: item.id,
+        name: item.name,
+        imageUrl: item.image_path,
+        colorHex: item.attrs.color_hex ?? null,
+      });
+    });
+  }
 
   // Categorías presentes (orden canónico + cualquier extra), con conteo.
   const cats = useMemo(() => {
@@ -101,16 +133,17 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
         <div className="grid grid-cols-2 gap-3">
           {shown.map((item) => {
             const on = selected.has(item.id);
+            const wish = wished.has(item.id);
             return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => toggle(item.id)}
-                aria-pressed={on}
-                className={`group relative flex flex-col overflow-hidden rounded-md border border-line bg-surface text-left transition-[border-color,box-shadow] duration-200 hover:border-ink focus-visible:outline-none ${
-                  on ? "ring-2 ring-inset ring-accent" : ""
-                }`}
-              >
+              <div key={item.id} className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggle(item.id)}
+                  aria-pressed={on}
+                  className={`group relative flex w-full flex-col overflow-hidden rounded-md border border-line bg-surface text-left transition-[border-color,box-shadow] duration-200 hover:border-ink focus-visible:outline-none ${
+                    on ? "ring-2 ring-inset ring-accent" : ""
+                  }`}
+                >
                 {/* Las prendas se ven siempre a todo color para poder evaluarlas
                     antes de elegir; lo seleccionado se marca con marco + check. */}
                 <div className="relative aspect-square w-full bg-bg">
@@ -138,20 +171,40 @@ export function BibliotecaPicker({ catalog }: { catalog: CatalogItem[] }) {
                     <Icon name="check" size={15} strokeWidth={2.4} />
                   </span>
                 </div>
-                <span
-                  className={`px-2.5 py-2 text-[12.5px] font-medium transition-colors duration-200 ${
-                    on ? "text-ink" : "text-muted"
+                  <span
+                    className={`px-2.5 py-2 text-[12.5px] font-medium transition-colors duration-200 ${
+                      on ? "text-ink" : "text-muted"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleWish(item)}
+                  aria-pressed={wish}
+                  aria-label={wish ? "quitar de wishlist" : "agregar a wishlist"}
+                  className={`absolute left-2 top-2 z-10 flex h-[26px] w-[26px] items-center justify-center rounded-sm border transition-colors duration-200 ${
+                    wish
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface/90 text-ink hover:border-accent"
                   }`}
                 >
-                  {item.name}
-                </span>
-              </button>
+                  <Icon name={wish ? "bookmarkFill" : "bookmark"} size={13} />
+                </button>
+              </div>
             );
           })}
         </div>
       )}
 
       {error && <p className="text-sm text-error">{error}</p>}
+
+      {toast ? (
+        <div className="pointer-events-none fixed bottom-[86px] left-1/2 z-20 -translate-x-1/2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-on-accent shadow-[var(--shadow-lg,0_8px_24px_rgba(10,10,10,0.25))]">
+          {toast}
+        </div>
+      ) : null}
 
       {/* Barra de acción fija (única barra abajo; sin tab bar en esta pantalla). */}
       <div className="fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface px-[18px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[11px]">

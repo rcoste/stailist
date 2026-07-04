@@ -96,6 +96,63 @@ export async function toggleWishlistFromCapsule(input: {
   return { ok: true, saved: true };
 }
 
+// Toggle desde la biblioteca (#3): manda/quita un básico del catálogo a la
+// wishlist. Sin foto propia — guarda la referencia pública del arquetipo
+// (image_path público). Deduplica por `capsule_key` = "biblio-<archetypeId>".
+export async function toggleWishlistArchetype(input: {
+  archetypeId: number;
+  name: string;
+  imageUrl: string | null;
+  colorHex: string | null;
+}): Promise<{ ok: boolean; saved: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, saved: false };
+
+  const key = `biblio-${input.archetypeId}`;
+  const { data: existing } = await supabase
+    .from("wishlist_items")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("source", "biblioteca")
+    .eq("capsule_key", key)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("wishlist_items")
+      .delete()
+      .eq("id", existing.id as string)
+      .eq("user_id", user.id);
+    if (error) {
+      console.error("[wishlist] biblio delete falló:", error.message);
+      return { ok: false, saved: true };
+    }
+    revalidatePath("/wishlist");
+    revalidatePath("/closet/biblioteca");
+    return { ok: true, saved: false };
+  }
+
+  const { error } = await supabase.from("wishlist_items").insert({
+    user_id: user.id,
+    image_path: null,
+    image_url: input.imageUrl,
+    color_hex: input.colorHex,
+    capsule_key: key,
+    source: "biblioteca",
+    name: input.name,
+  });
+  if (error) {
+    console.error("[wishlist] biblio insert falló:", error.message);
+    return { ok: false, saved: false };
+  }
+  revalidatePath("/wishlist");
+  revalidatePath("/closet/biblioteca");
+  return { ok: true, saved: true };
+}
+
 export async function removeWishlistItem(id: string): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
