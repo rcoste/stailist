@@ -12,6 +12,7 @@ import { removeWishlistItem } from "@/lib/wishlist-actions";
 import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
 import { ComboBuilder } from "@/components/wishlist/combo-builder";
 import { ClosetNav } from "@/components/closet-nav";
+import { Hint } from "@/components/hint";
 
 export type WishlistItem = {
   id: string;
@@ -34,11 +35,13 @@ export function WishlistClient({
   closet,
   va,
   evita,
+  showCarteraHint = false,
 }: {
   items: WishlistItem[];
   closet: ClosetPick[];
   va: Swatch[];
   evita: Swatch[];
+  showCarteraHint?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -108,6 +111,14 @@ export function WishlistClient({
           🎨 ¿de compras? abre tu cartera de colores
         </Link>
       </div>
+
+      {/* Hint contextual (una vez): señala la cartera la primera visita. */}
+      {showCarteraHint ? (
+        <Hint id="wishlist-cartera">
+          antes de comprar algo, tu <strong>cartera de colores</strong> (aquí
+          arriba) te dice si ese tono te enciende la cara o te apaga
+        </Hint>
+      ) : null}
 
       <input ref={inputRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
 

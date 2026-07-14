@@ -34,6 +34,9 @@ export type Profile = {
   capsule_outfits: unknown[] | null; // looks armados con lo que tienes de la cápsula
   capsule_outfits_sig: string | null; // firma del clóset cuando se generaron
   avatar_path: string | null;
+  created_at: string;
+  // Hints contextuales ya vistos: { "<hint_id>": "<iso>" } (ver lib/hints.ts).
+  hints_seen: Record<string, string>;
   body_type: "slim" | "athletic" | "average" | "full" | null;
   body_build: "delgada" | "media" | "curvas" | null;
   body_volume: "arriba" | "cintura" | "abajo" | "medio" | "pareja" | null;

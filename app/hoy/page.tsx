@@ -6,6 +6,7 @@ import { loadJourneySignals } from "@/lib/journey-data";
 import { nextBestAction } from "@/lib/journey";
 import { TryonNudge } from "@/components/tryon-nudge";
 import { LinkNudge } from "@/components/link-nudge";
+import { Hint } from "@/components/hint";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 import type { ClosetPick } from "@/components/weather-picker";
 
@@ -175,9 +176,41 @@ export default async function HoyPage({
     ? nextBestAction(profile.journey_state, signals)
     : null;
 
+  // Hints contextuales (walkthrough just-in-time). UNA burbuja por pantalla:
+  // los nudges del journey (acción) ganan sobre los hints (orientación).
+  const seen = profile.hints_seen ?? {};
+  const accountDays =
+    (new Date().getTime() - new Date(profile.created_at).getTime()) / 86_400_000;
+  const hint = nudge
+    ? null
+    : !seen["hoy-casa"]
+      ? "hoy-casa"
+      : lookInicial && !seen["fab-generar"]
+        ? "fab-generar"
+        : accountDays >= 3 && !seen["viaje"]
+          ? "viaje"
+          : null;
+
   return (
     <AppShell>
       <section className="flex flex-col gap-4 pt-4">
+        {hint === "hoy-casa" ? (
+          <Hint id="hoy-casa">
+            esta es tu casa — cada día te espera un look nuevo aquí, pensado
+            para tu plan y tu clima ☀️
+          </Hint>
+        ) : null}
+        {hint === "fab-generar" ? (
+          <Hint id="fab-generar">
+            ¿otro plan hoy? el ✨ de abajo te genera un look nuevo desde
+            cualquier pantalla
+          </Hint>
+        ) : null}
+        {hint === "viaje" ? (
+          <Hint id="viaje">
+            ¿viaje pronto? en la pestaña Viaje te armo la maleta completa 🧳
+          </Hint>
+        ) : null}
         {nudge === "tryon" ? <TryonNudge /> : null}
         {nudge === "closet_real" ? (
           <LinkNudge

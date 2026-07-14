@@ -4,6 +4,7 @@ import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
 import { ClosetNav } from "@/components/closet-nav";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
+import { Hint } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
@@ -99,6 +100,15 @@ export default async function ClosetPage() {
         </div>
 
         <ClosetNav />
+
+        {/* Hint contextual (una vez): las pestañas de arriba no se explican solas. */}
+        {!profile.hints_seen?.["closet-tabs"] ? (
+          <Hint id="closet-tabs">
+            aquí también viven tu <strong>cápsula</strong> (el clóset ideal para
+            tu vida) y tu <strong>wishlist</strong> — cámbiate con las pestañas
+            de arriba
+          </Hint>
+        ) : null}
 
         <ClosetGrid items={items} />
 

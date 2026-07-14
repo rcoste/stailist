@@ -5,6 +5,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { HistoryList, type HistoryOutfit } from "./history-list";
+import { Hint } from "@/components/hint";
 
 export default async function HistorialPage() {
   const profile = await requireOnboarded();
@@ -135,7 +136,18 @@ export default async function HistorialPage() {
             </Link>
           </div>
         ) : (
-          <HistoryList outfits={list} />
+          <>
+            {/* Hint contextual (una vez): "me lo puse" es la señal que más
+                enseña al motor — pedirla donde viven los looks pasados. */}
+            {!profile.hints_seen?.["historial-worn"] ? (
+              <Hint id="historial-worn">
+                cuando uses un look en la vida real, márcale{" "}
+                <strong>“me lo puse”</strong> — así aprendo qué te queda y qué
+                no
+              </Hint>
+            ) : null}
+            <HistoryList outfits={list} />
+          </>
         )}
       </section>
     </AppShell>

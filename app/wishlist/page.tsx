@@ -89,7 +89,13 @@ export default async function WishlistPage() {
 
   return (
     <AppShell>
-      <WishlistClient items={items} closet={closet} va={va} evita={evita} />
+      <WishlistClient
+        items={items}
+        closet={closet}
+        va={va}
+        evita={evita}
+        showCarteraHint={!profile.hints_seen?.["wishlist-cartera"]}
+      />
     </AppShell>
   );
 }
