@@ -166,18 +166,34 @@ export function AddPhotoFlow({
   if (state.kind === "confirmar" || state.kind === "guardando") {
     const editable = state.kind === "confirmar";
     const a = state.attrs;
+    // "Prefiere marcar inseguridad antes que inventar": el modelo dice de qué
+    // campos dudó → los resaltamos para que el usuario confirme justo eso, en
+    // vez de tener que revisar todo. Banner solo si hay duda real.
+    const dudas = new Set<string>(a.inseguro ?? []);
+    const mostrarAviso = a.confianza === "baja" || dudas.size > 0;
+    const dudaCls = (campo: string) =>
+      dudas.has(campo) ? "text-warning" : "text-muted";
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40">
         <div
           className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
           style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
         >
+          {mostrarAviso ? (
+            <p className="rounded-sm bg-warning/10 px-3 py-2 text-xs text-warning">
+              Le eché ojo pero de un par de cosas no estoy segura — revisa lo
+              marcado antes de sumarla. 👇
+            </p>
+          ) : null}
+
           <div className="flex items-center gap-3">
             <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-md border border-line">
               <Image src={state.preview} alt={a.nombre} fill className="object-cover" />
             </div>
             <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs font-medium text-muted">Nombre</label>
+              <label className={`text-xs font-medium ${dudaCls("nombre")}`}>
+                Nombre{dudas.has("nombre") ? " ⚠️" : ""}
+              </label>
               <input
                 value={a.nombre}
                 disabled={!editable}
@@ -188,7 +204,9 @@ export function AddPhotoFlow({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-medium text-muted">Tipo</label>
+            <label className={`text-xs font-medium ${dudaCls("categoria")}`}>
+              Tipo{dudas.has("categoria") ? " ⚠️" : ""}
+            </label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIAS.map((c) => (
                 <button
@@ -210,7 +228,9 @@ export function AddPhotoFlow({
 
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs font-medium text-muted">Formalidad</label>
+              <label className={`text-xs font-medium ${dudaCls("formalidad")}`}>
+                Formalidad{dudas.has("formalidad") ? " ⚠️" : ""}
+              </label>
               <select
                 value={a.formalidad}
                 disabled={!editable}
@@ -227,7 +247,9 @@ export function AddPhotoFlow({
               </select>
             </div>
             <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs font-medium text-muted">Temporada</label>
+              <label className={`text-xs font-medium ${dudaCls("temporada")}`}>
+                Temporada{dudas.has("temporada") ? " ⚠️" : ""}
+              </label>
               <select
                 value={a.temporada}
                 disabled={!editable}
