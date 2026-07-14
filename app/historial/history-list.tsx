@@ -284,7 +284,7 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
             ) : null}
 
             {resto.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
                 {resto.map((o) => (
                   <GridTile
                     key={o.id}

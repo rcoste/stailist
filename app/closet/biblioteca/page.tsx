@@ -46,7 +46,7 @@ export default async function BibliotecaPage() {
   // Sin tab bar: esta pantalla tiene una barra de acción fija abajo (Agregar) y
   // el handoff prohíbe que CTA y tab bar coexistan.
   return (
-    <AppShell hideTabBar>
+    <AppShell hideTabBar desktop="wide">
       <section className="flex flex-col gap-4 pt-1">
         <div className="flex flex-col gap-1.5">
           <Link

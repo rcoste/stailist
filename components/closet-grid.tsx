@@ -420,7 +420,7 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
       ) : (
         grupos.map((g) => {
           const tiles = (prendas: ClosetItem[]) => (
-            <ul className="grid grid-cols-3 gap-[11px]">
+            <ul className="grid grid-cols-3 gap-[11px] lg:grid-cols-5 lg:gap-4">
               {prendas.map((p) => (
                 <li key={p.id}>
                   <Tile

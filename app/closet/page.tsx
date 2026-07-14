@@ -81,7 +81,7 @@ export default async function ClosetPage() {
   const hasOwnPhotos = (rows ?? []).some((r) => r.source === "photo");
 
   return (
-    <AppShell>
+    <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-1">
         {/* Header: tu ropa primero — título + conteo a la izquierda, un solo
             botón "Agregar" a la derecha (abre la hoja con las 3 formas). */}

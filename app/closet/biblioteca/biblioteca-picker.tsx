@@ -130,7 +130,7 @@ export function BibliotecaPicker({
       {shown.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted">nada coincide con tu búsqueda.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6 lg:gap-4">
           {shown.map((item) => {
             const on = selected.has(item.id);
             const wish = wished.has(item.id);
@@ -207,7 +207,7 @@ export function BibliotecaPicker({
       ) : null}
 
       {/* Barra de acción fija (única barra abajo; sin tab bar en esta pantalla). */}
-      <div className="fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface px-[18px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[11px]">
+      <div className="fixed bottom-0 left-1/2 w-full max-w-[430px] lg:max-w-5xl -translate-x-1/2 border-t border-line bg-surface px-[18px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[11px]">
         <button
           type="button"
           onClick={submit}

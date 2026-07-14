@@ -88,7 +88,7 @@ export default async function WishlistPage() {
   const evita = season && depth ? carteraPalette(season, depth, flow).evita : [];
 
   return (
-    <AppShell>
+    <AppShell desktop="wide">
       <WishlistClient
         items={items}
         closet={closet}

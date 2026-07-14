@@ -126,7 +126,7 @@ export function WishlistClient({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy}
-        className="flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-60"
+        className="flex h-[54px] w-full lg:max-w-md items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-60"
       >
         <Icon name="destello" size={18} /> {busy ? "agregando…" : "agregar una prenda"}
       </button>
@@ -135,7 +135,7 @@ export function WishlistClient({
         <button
           type="button"
           onClick={() => setCombo(true)}
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+          className="flex h-[50px] w-full lg:max-w-md items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
         >
           <Icon name="repetir" size={16} /> armar un look (wishlist + clóset)
         </button>
@@ -157,7 +157,7 @@ export function WishlistClient({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {items.map((it) => (
             <div
               key={it.id}

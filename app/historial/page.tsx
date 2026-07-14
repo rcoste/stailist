@@ -109,7 +109,7 @@ export default async function HistorialPage() {
   }));
 
   return (
-    <AppShell>
+    <AppShell desktop="wide">
       <section className="flex flex-col gap-5 pt-4">
         <div>
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
