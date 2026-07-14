@@ -92,6 +92,12 @@ día") que dispare ambas actualizaciones en orden.
 - Profundidad máxima 3 taps; sin callejones sin salida detectados.
 - Try-on contextual dentro del look (donde debe estar).
 
+## Estado (2026-07-14)
+- ✅ **#1, #2, #4 HECHOS** (commit del mismo día, en `main`, suben con el próximo
+  deploy). #4: nudge unificado en la cápsula. #2: card "Descubre" al pie del
+  clóset + link en empty de wishlist. #1: entrada a cartera en la wishlist.
+- ⬜ **#3** ("cápsula" jerga): pendiente de validar con Tatiana antes de tocar.
+
 ## Cómo decidir qué arreglar (recomendación)
 Los 4 hallazgos son hipótesis mías leyendo la UI — el juez real es ver a
 Tatiana/Toño usarla. Con el "ver como" del admin ya se puede observar qué
