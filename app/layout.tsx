@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Arimo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
+import { EmailOptIn } from "@/components/email-optin";
 import { ViewAsBanner } from "@/components/view-as-banner";
 
 // Dirección "Gen-Z monocromo" (rebrand v3): Arimo (sans variable, estilo Mango)
@@ -52,6 +53,7 @@ export default function RootLayout({
         <ViewAsBanner />
         {children}
         <PwaInstall />
+        <EmailOptIn />
       </body>
     </html>
   );

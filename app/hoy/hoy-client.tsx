@@ -16,7 +16,7 @@ import {
 } from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { markWorn } from "@/lib/outfit-actions";
-import { notifyFirstLike } from "@/lib/pwa";
+import { notifyFirstLike, notifyWorn } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
 
@@ -206,7 +206,7 @@ export function HoyClient({
     setWorn(true);
     const res = await markWorn(state.outfit.id);
     if (!res.ok) setWorn(false);
-    else notifyFirstLike(); // ahora el pico emocional es el "me lo voy a poner"
+    else notifyWorn(); // pico máximo de compromiso → ofrecer el correo semanal
   }
 
   // Sin look del día (y no llegaste por el ✨): home dentro del AppShell, con la

@@ -56,7 +56,11 @@ export default async function proxy(request: NextRequest) {
   const isPublic =
     pathname === "/" ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/auth");
+    pathname.startsWith("/auth") ||
+    // Cron (auth por CRON_SECRET) y baja de correo (auth por token) llegan SIN
+    // sesión — no deben redirigir a /login.
+    pathname.startsWith("/api/cron") ||
+    pathname.startsWith("/api/email/baja");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

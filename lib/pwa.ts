@@ -6,3 +6,13 @@ export function notifyFirstLike() {
     window.dispatchEvent(new Event("stailist:first-like"));
   }
 }
+
+// Avisa que la usuaria acaba de marcar "me lo puse" — el momento más
+// comprometido (usó un look en la vida real). <EmailOptIn/> lo escucha para
+// ofrecer el correo semanal (una sola vez). Distinto del 👍 (que ofrece la PWA)
+// para que nunca aparezcan dos prompts a la vez.
+export function notifyWorn() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("stailist:worn"));
+  }
+}
