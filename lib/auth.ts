@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
@@ -54,9 +55,14 @@ export type Profile = {
   } | null;
 };
 
+// Cookie del modo "ver como" (admin ve la app con los datos de otro usuario,
+// solo lectura). La pone/quita /admin/ver-como/*; el proxy bloquea todo POST
+// mientras exista, así que ninguna pantalla puede mutar datos en este modo.
+export const VIEW_AS_COOKIE = "admin_view_as";
+
 // Usuario autenticado + su profile. El proxy ya filtra a los no autenticados;
 // esto es el cinturón además de los tirantes (y nos da el profile tipado).
-export async function getProfile(): Promise<Profile> {
+export async function getProfile(opts?: { real?: boolean }): Promise<Profile> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -69,6 +75,22 @@ export async function getProfile(): Promise<Profile> {
     .eq("id", user.id)
     .single();
   if (!profile) redirect("/login");
+
+  // "Ver como": si un admin trae la cookie, las pantallas de la app cargan el
+  // perfil del usuario objetivo en vez del propio (las lecturas pasan por las
+  // policies "admin reads *"). /admin usa { real: true } para seguir operando
+  // como el admin real aunque la cookie exista.
+  if (!opts?.real && profile.is_admin) {
+    const viewAs = (await cookies()).get(VIEW_AS_COOKIE)?.value;
+    if (viewAs && viewAs !== user.id) {
+      const { data: target } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", viewAs)
+        .single();
+      if (target) return target as Profile;
+    }
+  }
   return profile as Profile;
 }
 
@@ -95,8 +117,10 @@ export async function requireStep(step: number): Promise<Profile> {
 }
 
 // Para /admin: solo Roberto (is_admin). El resto, fuera a la app normal.
+// { real: true }: /admin siempre opera como el admin real, aunque el modo
+// "ver como" esté activo (si no, la cookie te sacaría de tu propio admin).
 export async function requireAdmin(): Promise<Profile> {
-  const profile = await getProfile();
+  const profile = await getProfile({ real: true });
   if (!profile.is_admin) redirect("/");
   return profile;
 }

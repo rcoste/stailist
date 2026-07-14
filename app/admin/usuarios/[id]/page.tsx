@@ -209,13 +209,25 @@ export default async function AdminUserDetail({
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-h2 font-semibold text-ink">{profile.email}</h1>
-            <p className="text-sm text-muted">
-              {profile.onboarding_step >= 5
-                ? "Onboarding completo"
-                : `En el paso ${profile.onboarding_step}`}
-            </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+              <h1 className="text-h2 font-semibold text-ink">{profile.email}</h1>
+              <p className="text-sm text-muted">
+                {profile.onboarding_step >= 5
+                  ? "Onboarding completo"
+                  : `En el paso ${profile.onboarding_step}`}
+              </p>
+            </div>
+            {/* Solo con onboarding completo: si no, sus pantallas redirigen a
+                su paso pendiente y el modo no tiene nada útil que mostrar. */}
+            {profile.onboarding_step >= 5 ? (
+              <a
+                href={`/admin/ver-como/${profile.id}`}
+                className="flex min-h-9 shrink-0 items-center rounded-sm bg-ink px-4 text-xs font-medium text-bg transition-opacity duration-200 hover:opacity-80"
+              >
+                👁 Ver su app
+              </a>
+            ) : null}
           </div>
           <div className="grid grid-cols-2 gap-4 rounded-xl border border-line bg-surface p-4 sm:grid-cols-3">
             <Field label="Género" value={profile.gender ?? "—"} />

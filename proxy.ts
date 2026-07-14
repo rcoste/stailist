@@ -34,6 +34,22 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Modo "ver como" (admin viendo la app de otro usuario) es SOLO LECTURA:
+  // con la cookie puesta se rechaza toda mutación — los server actions y las
+  // APIs de la app viajan como POST. Entrar/salir del modo son GETs
+  // (/admin/ver-como/*), así que no necesitan excepción. Esto garantiza que
+  // mirar la cuenta de una usuaria jamás le contamina sus datos.
+  if (
+    request.cookies.get("admin_view_as") &&
+    request.method !== "GET" &&
+    request.method !== "HEAD"
+  ) {
+    return NextResponse.json(
+      { error: "solo_lectura", message: "Estás en modo 'ver como' (solo lectura). Sal del modo para hacer cambios." },
+      { status: 403 }
+    );
+  }
+
   const { pathname } = request.nextUrl;
   // La raíz "/" es pública: muestra la landing a deslogueados (la propia page
   // redirige a la app si SÍ hay sesión). Login/auth también públicos.
