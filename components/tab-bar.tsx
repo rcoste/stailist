@@ -61,7 +61,7 @@ export function TabBar() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="flex items-stretch">
         {left.map((t) => tab(t.href, t.label, t.icon, t.match, t.extra))}
 

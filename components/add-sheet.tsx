@@ -39,12 +39,12 @@ export function AddSheet({ userId }: { userId: string }) {
 
       {open ? (
         <div
-          className="fixed inset-0 z-40 flex items-end justify-center"
+          className="fixed inset-0 z-40 flex items-end justify-center lg:items-center"
           onClick={() => setOpen(false)}
         >
           <div className="absolute inset-0 bg-ink/40" />
           <div
-            className="relative z-10 w-full max-w-[430px] rounded-t-[18px] bg-surface px-4 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-2"
+            className="relative z-10 w-full max-w-[430px] rounded-t-[18px] lg:rounded-[18px] bg-surface px-4 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-2"
             style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
             onClick={(e) => e.stopPropagation()}
           >

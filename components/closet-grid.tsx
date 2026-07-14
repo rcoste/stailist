@@ -522,10 +522,10 @@ function FilterSheet({
       on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-ink hover:border-accent"
     }`;
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center lg:items-center" onClick={onClose}>
       <div className="absolute inset-0 bg-ink/40" />
       <div
-        className="relative z-10 flex w-full max-w-[430px] flex-col gap-5 rounded-t-[18px] bg-surface px-4 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-2"
+        className="relative z-10 flex w-full max-w-[430px] flex-col gap-5 rounded-t-[18px] lg:rounded-[18px] bg-surface px-4 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-2"
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -640,7 +640,7 @@ function ItemSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40 px-4 pb-4" onClick={onClose}>
       <div
         className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-2xl bg-surface p-5"
         onClick={(e) => e.stopPropagation()}

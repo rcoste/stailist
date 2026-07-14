@@ -405,11 +405,11 @@ export function TripResult({
 
       {subFlow ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50"
+          className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/50"
           onClick={() => setSubFlow(null)}
         >
           <div
-            className="flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+            className="flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
             style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
             onClick={(e) => e.stopPropagation()}
           >

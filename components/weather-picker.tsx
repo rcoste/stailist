@@ -706,14 +706,14 @@ function AnchorSheet({
   );
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col justify-end bg-[rgb(10_10_10/0.45)]"
+      className="fixed inset-0 z-[60] flex flex-col justify-end lg:items-center lg:justify-center bg-[rgb(10_10_10/0.45)]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Elegir una prenda"
     >
       <div
-        className="flex max-h-[88dvh] flex-col rounded-t-[16px] bg-bg"
+        className="flex max-h-[88dvh] flex-col rounded-t-[16px] bg-bg lg:w-full lg:max-w-[430px] lg:rounded-[16px]"
         style={{ animation: "var(--dur-medium) var(--ease-enter) sheet-up" }}
         onClick={(e) => e.stopPropagation()}
       >

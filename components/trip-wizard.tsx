@@ -355,11 +355,11 @@ export function TripWizard() {
 
       {phase === "error" ? (
         <div
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-ink/40"
+          className="fixed inset-0 z-[70] flex items-end justify-center lg:items-center bg-ink/40"
           onClick={() => setPhase("form")}
         >
           <div
-            className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"
+            className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"
             style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -571,7 +571,7 @@ function ParadaSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center lg:items-center" onClick={onClose}>
       <div className="absolute inset-0 bg-ink/25" aria-hidden />
       <div
         className="relative z-[1] flex max-h-[88dvh] w-full max-w-[430px] flex-col overflow-y-auto rounded-t-[20px] bg-surface px-[18px] pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2"

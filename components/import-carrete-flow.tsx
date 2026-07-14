@@ -575,11 +575,11 @@ export function ImportCarreteFlow({
         {input}
         {state.kind === "error" ? (
           <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
+            className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40"
             onClick={() => setState({ kind: "idle" })}
           >
             <div
-              className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"
+              className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"
               style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -621,9 +621,9 @@ export function ImportCarreteFlow({
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40">
+    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40">
       <div
-        className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
+        className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
       >
         {children}

@@ -26,14 +26,14 @@ export function PrendaZoom({
   if (!data) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50"
+      className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/50"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={data.nombre}
     >
       <div
-        className="flex w-full max-w-[430px] flex-col gap-4 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+        className="flex w-full max-w-[430px] flex-col gap-4 rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
         onClick={(e) => e.stopPropagation()}
       >

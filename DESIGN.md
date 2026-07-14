@@ -46,10 +46,16 @@
 
 ## Layout
 - **Approach:** grid-disciplinado, columna única móvil-first
-- **Max content width:** 430px centrada en desktop
+- **Max content width:** 430px centrada (móvil y páginas `desktop="column"`)
 - **Border radius (crispado, NO pill — sin cambio vs. v2):** sm 3px (inputs, chips, botones, badges) · md 4px (tiles de prenda) · lg 6px (cards de outfit) · full 9999px **reservado solo** para puntos/indicadores circulares. Los CTAs son rectángulos crispados, NO pastillas.
 - **Sombras:** casi nulas — `0 1px 2px rgb(26 23 24 / 0.05)` máximo; las hairlines hacen la separación.
 - **Navegación:** tabs fijos abajo + FAB central de "armar look". Nada en hamburguesa.
+
+### Desktop (plan desktop-full, 2026-07-14 — spec: docs/designs/desktop-full.md)
+- **Breakpoint único de app:** `lg` (1024px). `<1024` = móvil intacto; sin layout tablet intermedio.
+- **Navegación desktop:** la tab bar se oculta (`lg:hidden`) y aparece `DesktopHeader` sticky: logo | tabs de texto (activo = subrayado fino `underline-offset-8`, mismo lenguaje que la landing) | botón ✨ Generar (accent pill — excepción consciente al no-pill: es el gemelo del FAB circular) + perfil. Header h-14, contenido interior max-w-5xl.
+- **Contenido por página (`AppShell desktop=`):** `"column"` (default) = "escaparate": columna 430 centrada + `lg:border-x border-line`, laterales `bg-surface`. `"wide"` = `lg:max-w-5xl`, la página controla su layout con `lg:`. Migración opt-in página por página (F2-F3).
+- **Sheets → diálogos:** todo bottom-sheet gana `lg:items-center` en el wrapper y `lg:rounded-[18px]` en el panel (ancho se mantiene ~430). Misma animación `sheet-up` (en el centro se lee como pop-in). Los prompts sin backdrop (PWA, correo semanal) se quedan abajo-centrados, como toast.
 
 ## Motion
 - **Approach:** intencional
@@ -69,4 +75,5 @@
 | 2026-06-10 | Dark mode diferido | MVP es light editorial; revisar post-validación |
 | 2026-06-16 | Rebrand v2 "Atelier": Outfit+Fraunces → Bodoni Moda + Hanken Grotesk; radios pill → crispados 3/4/6; emoji → íconos de línea | Handoff de diseño v2. Paleta sin cambios (burdeos) |
 | 2026-06-17 | Try-on protagonista en `OutfitCard` (Hoy): 3 estados, nuevo `.shimmer-txt` + ícono `expandir` | Handoff `design_handoff_tryon_protagonista`. Solo en Hoy |
+| 2026-07-14 | **Desktop F1**: breakpoint `lg`, DesktopHeader (tabs texto + ✨ Generar), escaparate default en AppShell, sheets→diálogos centrados | Decisión de Roberto: app full desktop. Spec completo en docs/designs/desktop-full.md; F2-F4 pendientes (grids, héroes, barrido) |
 | **2026-06-26** | **Rebrand v3 "Gen-Z monocromo" — SUPERSEDE v2.** Acento burdeos #722F37 → tinta #0A0A0A; neutros cálidos → de-warmed; Bodoni Moda + Hanken Grotesk → **Instrument Serif (acento mínimo) + Arimo (todo)**; **inversión de jerarquía**: h1–h3 serif → sans Arimo 700; icon/manifest/theme-color a v3. El try-on es la única superficie oscura. | Primer feedback de usuaria real del target (Mariana/Yensi): "muy millennial, nada Gen Z". Ataca la piel (estética), no el motor — barato y de bajo riesgo. Handoff `design_handoff_hoy_rebrand_v3`. Migración por capas: **Capa 1 fundamentos/tokens (aplicada)** → Capa 3 flujo Hoy → resto de pantallas, cada una su PR |
