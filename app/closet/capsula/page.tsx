@@ -131,6 +131,9 @@ export default async function CapsulaPage({
                 />
               ) : null}
 
+              {/* Un solo nudge "está vieja" cuando cambió el estilo: regenerar ya
+                  pone capsule_match=null, así que el recálculo del clóset (abajo)
+                  se encadena solo. Por eso ese banner se oculta si styleStale. */}
               {styleStale ? (
                 <form action={regenerateCapsuleTarget}>
                   <button
@@ -138,7 +141,7 @@ export default async function CapsulaPage({
                     className="flex w-full items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
                   >
                     <Icon name="destello" size={16} />
-                    Cambiaste tu estilo de referencia — actualiza tu cápsula
+                    Tu cápsula se quedó atrás de ti — ponla al día
                   </button>
                 </form>
               ) : null}
@@ -175,7 +178,9 @@ export default async function CapsulaPage({
                 <DoneState have={view.haveCount} total={view.totalCount} />
               ) : (
                 <>
-                  {stale ? (
+                  {/* Si styleStale, el nudge de arriba ya cubre esto (regenerar
+                      encadena el recálculo) — no dupliques el aviso. */}
+                  {stale && !styleStale ? (
                     <MatchRecalc
                       auto={!match}
                       label={

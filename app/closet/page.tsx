@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
@@ -100,6 +101,24 @@ export default async function ClosetPage() {
         <ClosetNav />
 
         <ClosetGrid items={items} />
+
+        {/* Descubrimiento evergreen: la biblioteca no es solo "dar de alta" —
+            también es catálogo (guardarropas de stylists). Entrada explícita
+            para que se explore, no solo se use desde "agregar". */}
+        <Link
+          href="/closet/biblioteca"
+          className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3.5 transition-colors hover:border-ink"
+        >
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold text-ink">
+              Descubre — guardarropas de stylists
+            </span>
+            <span className="text-[12.5px] text-muted">
+              chismea clósets curados y guarda lo que te late
+            </span>
+          </span>
+          <span className="shrink-0 text-muted">→</span>
+        </Link>
 
         {profile.is_admin ? <BackfillImagesButton /> : null}
       </section>

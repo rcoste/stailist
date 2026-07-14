@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Icon } from "@/components/icon";
 import type { Swatch } from "@/lib/palette-data";
 import { dominantColor } from "@/lib/color/extract";
@@ -98,6 +99,14 @@ export function WishlistClient({
         <p className="text-sm text-muted">
           cosas que te laten para comprar. te digo si el color va contigo.
         </p>
+        {/* Entrada contextual a la cartera de colores: la wishlist es la
+            superficie de "modo compras", justo donde quieres checar colores. */}
+        <Link
+          href="/cartera"
+          className="mt-1 flex w-fit items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+        >
+          🎨 ¿de compras? abre tu cartera de colores
+        </Link>
       </div>
 
       <input ref={inputRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
@@ -122,10 +131,20 @@ export function WishlistClient({
       ) : null}
 
       {items.length === 0 ? (
-        <p className="rounded-md border border-line bg-surface px-6 py-10 text-center text-sm text-muted">
-          aún no agregas nada. cuando veas algo en tienda o en línea, tómale foto y
-          guárdalo aquí para decidir mejor.
-        </p>
+        <div className="flex flex-col items-center gap-3 rounded-md border border-line bg-surface px-6 py-10 text-center">
+          <p className="text-sm text-muted">
+            aún no agregas nada. cuando veas algo en tienda o en línea, tómale foto
+            y guárdalo aquí para decidir mejor.
+          </p>
+          {/* Descubrimiento: si no tienes nada guardado, chismea un guardarropa
+              de stylist en la biblioteca (donde viven Carla y las que vengan). */}
+          <Link
+            href="/closet/biblioteca"
+            className="flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+          >
+            …o chismea el clóset de una stylist y guarda lo que te late →
+          </Link>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {items.map((it) => (
