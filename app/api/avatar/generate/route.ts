@@ -82,6 +82,26 @@ function buildBodyPrompt(build: string, nBodies: number): string {
   );
 }
 
+// Etapa 3 (A2) — character sheet: UNA generación con las TRES vistas (frente /
+// perfil / espalda) a partir del retrato y el cuerpo APROBADOS. Una sola imagen
+// = consistente por construcción (3 generaciones separadas re-interpretan la
+// identidad 3 veces). El sheet alimenta el try-on como referencia de identidad.
+function buildSheetPrompt(): string {
+  return (
+    "Generate a photorealistic character reference sheet of the SAME person " +
+    "shown in the provided images (their approved portrait and full-body view). " +
+    "ONE single image containing THREE full-body views of that person standing " +
+    "side by side, evenly spaced on one row: (1) facing the camera front-on, " +
+    "(2) exact left profile side view, (3) seen fully from the back. " +
+    IDENTITY_RULES +
+    "Identical hairstyle, identical white crew-neck t-shirt, classic mid-blue " +
+    "jeans and the same shoes in ALL three views. Same height and body " +
+    "proportions in all views, full body head to feet visible in each. Plain " +
+    "flat light-grey studio background, cool neutral lighting (NO warm or " +
+    "golden tones). No text, no labels, no props, no extra people."
+  );
+}
+
 // Legacy (clientes con JS viejo cacheado): una sola pasada fotos → cuerpo entero.
 function buildPrompt(build: string, nFaces: number): string {
   const faceRef =
@@ -107,7 +127,8 @@ function buildPrompt(build: string, nFaces: number): string {
 }
 
 // Una generación con Gemini. Devuelve el base64 de la imagen o null.
-async function generarAvatar(parts: unknown[]): Promise<string | null> {
+// `aspect`: 3:4 para retrato/cuerpo; 16:9 para el character sheet (3 vistas).
+async function generarAvatar(parts: unknown[], aspect: "3:4" | "16:9" = "3:4"): Promise<string | null> {
   const gemRes = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
     {
@@ -117,7 +138,7 @@ async function generarAvatar(parts: unknown[]): Promise<string | null> {
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: "3:4" },
+          imageConfig: { aspectRatio: aspect },
         },
       }),
     }
@@ -205,14 +226,15 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
   let body: {
-    stage?: string; // "face" | "body" | ausente (legacy: una sola pasada)
+    stage?: string; // "face" | "body" | "sheet" | ausente (legacy: una pasada)
     faceB64?: string;
     faceExtraB64?: string[];
     bodyB64?: string[];
     bodyType?: string;
     ajuste?: string; // etapa face: corrección dirigida ("pelo más corto"…)
     prevFaceB64?: string; // etapa face: retrato previo (base del ajuste)
-    headshotB64?: string; // etapa body: retrato APROBADO (ancla de identidad)
+    headshotB64?: string; // etapas body/sheet: retrato APROBADO (ancla)
+    avatarB64?: string; // etapa sheet: cuerpo completo APROBADO
   } = {};
   try {
     body = await request.json();
@@ -220,7 +242,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
   const { faceB64, faceExtraB64, bodyB64, bodyType } = body;
-  const stage = body.stage === "face" || body.stage === "body" ? body.stage : null;
+  const stage =
+    body.stage === "face" || body.stage === "body" || body.stage === "sheet"
+      ? body.stage
+      : null;
+
+  // El sheet no usa las fotos crudas: parte del retrato + cuerpo APROBADOS.
+  if (stage === "sheet") {
+    if (!body.headshotB64 || !body.avatarB64) {
+      return NextResponse.json({ error: "bad_request" }, { status: 400 });
+    }
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      return NextResponse.json({ error: "sin_api_key" }, { status: 503 });
+    }
+    try {
+      const img = (d: string) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } });
+      const image = await generarAvatar(
+        [{ text: buildSheetPrompt() }, img(body.headshotB64), img(body.avatarB64)],
+        "16:9"
+      );
+      if (!image) return NextResponse.json({ error: "generacion" }, { status: 502 });
+      return NextResponse.json({ image });
+    } catch {
+      return NextResponse.json({ error: "generacion" }, { status: 502 });
+    }
+  }
 
   if (!faceB64) return NextResponse.json({ error: "bad_request" }, { status: 400 });
   // Cuerpo (etapa 2 o legacy) exige bodyType; las fotos de cuerpo son opcionales

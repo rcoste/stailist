@@ -107,6 +107,36 @@ export function AvatarWizard({
   const [genKind, setGenKind] = useState<"cara" | "cuerpo">("cara");
   // Las caras comprimidas se cachean: los ajustes regeneran sin recomprimir.
   const facesRef = useRef<{ face: string; extra: string[] } | null>(null);
+  // Character sheet (A2): 3 vistas en una imagen. Se genera EN PARALELO mientras
+  // la persona contempla el avatar en el preview; confirm() lo espera si sigue
+  // en vuelo. Best-effort: si falla, el avatar se guarda sin sheet.
+  const [sheetState, setSheetState] = useState<"idle" | "gen" | "done" | "fail">("idle");
+  const [sheetGen, setSheetGen] = useState<string | null>(null);
+  const sheetPromiseRef = useRef<Promise<string | null> | null>(null);
+
+  function startSheet(bodyImage: string, headshot: string) {
+    setSheetGen(null);
+    setSheetState("gen");
+    const p = (async (): Promise<string | null> => {
+      try {
+        const res = await fetch("/api/avatar/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage: "sheet", headshotB64: headshot, avatarB64: bodyImage }),
+        });
+        if (!res.ok) throw new Error("sheet");
+        const data = (await res.json()) as { image?: string };
+        if (!data.image) throw new Error("sheet");
+        setSheetGen(data.image);
+        setSheetState("done");
+        return data.image;
+      } catch {
+        setSheetState("fail");
+        return null;
+      }
+    })();
+    sheetPromiseRef.current = p;
+  }
 
   // Limpia los object URLs al desmontar.
   useEffect(() => {
@@ -219,6 +249,8 @@ export function AvatarWizard({
       setGenerated(data.image);
       setFails(0);
       setStep("preview");
+      // Las 3 vistas se generan en paralelo mientras contempla el avatar.
+      if (faceGen) startSheet(data.image, faceGen);
     } catch {
       setFails((n) => n + 1);
       setStep("error");
@@ -228,8 +260,16 @@ export function AvatarWizard({
   async function confirm() {
     if (!generated || !bodyType) return;
     setSaving(true);
-    // El retrato aprobado se guarda como ancla de identidad (avatar-face.jpg).
-    const res = await uploadGeneratedAvatar(generated, userId, bodyType, faceGen);
+    // Si el sheet sigue en vuelo, se espera (con tope — jamás bloquea el guardar).
+    const sheet = sheetPromiseRef.current
+      ? await Promise.race([
+          sheetPromiseRef.current,
+          new Promise<null>((r) => setTimeout(() => r(null), 45000)),
+        ]).catch(() => null)
+      : null;
+    // El retrato aprobado se guarda como ancla de identidad (avatar-face.jpg)
+    // y el sheet de 3 vistas como referencia multi-ángulo (avatar-sheet.jpg).
+    const res = await uploadGeneratedAvatar(generated, userId, bodyType, faceGen, sheet);
     if (!res.ok) {
       setSaving(false);
       setFails((n) => n + 1);
@@ -515,6 +555,30 @@ export function AvatarWizard({
               className="h-full w-full object-cover"
             />
           </div>
+
+          {/* Las 3 vistas (A2): se generan en paralelo y aparecen cuando están. */}
+          {sheetState === "gen" ? (
+            <p className="flex items-center justify-center gap-2 text-xs text-muted">
+              <span className="h-3 w-3 animate-spin rounded-full border border-line border-t-accent" />
+              Generando tus vistas de perfil y espalda…
+            </p>
+          ) : null}
+          {sheetState === "done" && sheetGen ? (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                Tus vistas — frente · perfil · espalda
+              </p>
+              <div className="overflow-hidden rounded-lg border border-line bg-surface">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`data:image/jpeg;base64,${sheetGen}`}
+                  alt="Tus tres vistas: frente, perfil y espalda"
+                  className="w-full object-cover"
+                />
+              </div>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-2">
             <button
               type="button"

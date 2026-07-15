@@ -6,14 +6,49 @@ export const maxDuration = 60;
 
 const GEMINI_MODEL = "gemini-3-pro-image";
 
+const PROMPT_TAIL =
+  " Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments. Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text.";
+
 const PROMPT =
-  "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images. Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments. Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text.";
+  "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images." +
+  PROMPT_TAIL;
+
+// Variante multi-vista (A2): cuando existen el retrato aprobado y/o el sheet de
+// 3 vistas del avatar, van como referencias de identidad ANTES de las prendas —
+// la identidad se copia (consistente entre try-ons) en vez de re-interpretarse.
+function promptMultiVista(nIdentity: number, hasFace: boolean, hasSheet: boolean): string {
+  const refs = [
+    "their full-body reference",
+    ...(hasFace ? ["a close-up approved portrait"] : []),
+    ...(hasSheet ? ["a reference sheet showing them from the front, profile and back"] : []),
+  ].join(", ");
+  return (
+    `Generate a photorealistic full-body image of the PERSON shown in the first ${nIdentity} images (${refs} — all the SAME person; use them to keep the face, hair and identity perfectly consistent) wearing the exact clothing items shown in the remaining images. ` +
+    "The plain white t-shirt and blue jeans worn in the person references are just their base clothing — do NOT include them in the outfit unless they appear among the garment images." +
+    PROMPT_TAIL
+  );
+}
+
+// El media_type debe coincidir con los bytes (Gemini es laxo, pero el retrato y
+// el sheet salen de Gemini y pueden ser PNG aunque se guarden como .jpg).
+function mediaTypeOf(b64: string): string {
+  if (b64.startsWith("iVBOR")) return "image/png";
+  if (b64.startsWith("UklGR")) return "image/webp";
+  return "image/jpeg";
+}
 
 // Construye el prompt final inyectando el TIP de styling del outfit (cómo se lleva
 // el look: arremangar, fajar, abrir un botón…) para que la imagen lo refleje. El
 // tip viene en español; Gemini lo entiende. Sin tip, el prompt base tal cual.
-function buildPrompt(tip: string | null, garments: string[]): string {
-  let p = PROMPT;
+function buildPrompt(
+  tip: string | null,
+  garments: string[],
+  identity?: { n: number; hasFace: boolean; hasSheet: boolean }
+): string {
+  let p =
+    identity && identity.n > 1
+      ? promptMultiVista(identity.n, identity.hasFace, identity.hasSheet)
+      : PROMPT;
   // Ancla de texto (red de seguridad): nombra las prendas (en español; Gemini las
   // entiende). Si por lo que sea una imagen no llega, el modelo no inventa una
   // prenda genérica — sabe que es "un suéter esmeralda", no una t-shirt blanca.
@@ -150,11 +185,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "descarga" }, { status: 502 });
   }
 
+  // Referencias de identidad extra (A2, best-effort): el retrato aprobado y el
+  // sheet de 3 vistas, si el avatar se creó con el wizard nuevo. Sin ellos, el
+  // flujo queda EXACTAMENTE como antes (gating: cero riesgo para avatares viejos).
+  const signAndFetch = async (path: string) => {
+    const url = await signFresh(path);
+    return url ? fetchAsBase64(url) : null;
+  };
+  const [faceRefB64, sheetRefB64] = await Promise.all([
+    signAndFetch(`${user.id}/avatar-face.jpg`),
+    signAndFetch(`${user.id}/avatar-sheet.jpg`),
+  ]);
+  const identityB64 = [avatarB64, faceRefB64, sheetRefB64].filter(
+    (b): b is string => !!b
+  );
+
   try {
     const parts = [
-      { text: buildPrompt((outfit.tip as string | null) ?? null, prendaNames) },
-      { inlineData: { mimeType: "image/jpeg", data: avatarB64 } },
-      ...prendasB64.map((d) => ({ inlineData: { mimeType: "image/jpeg", data: d } })),
+      {
+        text: buildPrompt((outfit.tip as string | null) ?? null, prendaNames, {
+          n: identityB64.length,
+          hasFace: !!faceRefB64,
+          hasSheet: !!sheetRefB64,
+        }),
+      },
+      ...identityB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
+      ...prendasB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
     ];
     const gemRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
