@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         `select id, email, email_unsub_token
          from profiles
          where email_semanal = 'semanal'
+           and onboarding_step >= 5
            and (email_semanal_last_sent is null
                 or email_semanal_last_sent < now() - interval '6 days')`
       )

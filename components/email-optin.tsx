@@ -37,9 +37,12 @@ export function EmailOptIn() {
     await setEmailSemanal("semanal");
   }
 
-  function rechazar() {
+  async function rechazar() {
     close();
-    // No hace falta escribir 'off' en DB: ya es el default. Solo no volver a preguntar.
+    // Los usuarios nuevos se auto-enrolan (default de la columna = 'semanal'),
+    // así que "No, gracias" DEBE escribir 'off' explícitamente — si no, seguiría
+    // enrolado a pesar de decir que no.
+    await setEmailSemanal("off");
   }
 
   if (!open) return null;
