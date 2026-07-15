@@ -95,9 +95,9 @@ export async function generateTripCapsuleTarget(
     // 3584: el "plan" (borrador de razonamiento del schema) consume tokens
     // antes de los items; 3072 quedaba justo en cápsulas grandes.
     max_tokens: 3584,
-    system: `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar.
+    system: `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar. Al final explicas tu lógica en una "firma" que la persona SÍ lee.
 
-Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo ve. Ahí decide antes de listar: cuántas piezas pide este viaje (días × ocasiones × clima), qué 2-3 neutros anclan la maleta, qué acentos van, y qué pieza cubre cada ocasión. DESPUÉS genera los items ejecutando ese plan.
+Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo ve. Ahí decide antes de listar: cuántas piezas pide este viaje (días × ocasiones × clima), qué 2-3 neutros anclan la maleta, qué acentos van, y qué pieza cubre cada ocasión. Verifica ahí la interoperabilidad: cada top debe funcionar con (casi) todos los bottoms — si una pieza solo arma UN look, gana su lugar por ocasión única o sale. DESPUÉS genera los items ejecutando ese plan.
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
@@ -106,7 +106,9 @@ Cómo dimensionarla:
 - EL TAMAÑO LO MANDAN LOS DÍAS, no el techo de la maleta. Viaje corto (≤5 días) = cápsula CHICA aunque quepa más (orientación: ~3-4 tops, 2-3 bottoms, 1-2 calzado, más capas según el clima). Crece solo en viajes largos. El techo de la maleta solo RECORTA si te pasarías — JAMÁS rellenes hasta el techo "porque cabe": de más prendas que de menos es el error a evitar.
 - Dimensiona también a la MEZCLA DE OCASIONES (ej. playa pide trajes de baño y shorts; una noche de arreglarse pide una pieza más formal). Cubre todas las ocasiones que te pasen, pero comparte piezas entre ellas siempre que se pueda.
 - Prendas que se mojan/sudan y necesitan secar entre usos: si el viaje es de PLAYA/ALBERCA/AGUA y dura varios días, lleva 2 trajes de baño (uno se seca mientras usas el otro); para deporte intenso de varios días, 2 piezas técnicas. No apliques esto a prendas normales (ahí manda mezcla-y-combina).
-- Respeta el CLIMA: calor → ligero y fresco; frío → capas y abrigo. No metas abrigo si hace calor ni shorts si hace frío. LLUVIA/HÚMEDO → incluye una capa que repela el agua y evita materiales que se arruinan mojados (gamuza, lino delicado). AIRE LIBRE o clima rudo → prioriza prendas resistentes y calzado práctico (nada de zapato de vestir ni gamuza para caminar o mojarse).
+- Respeta el CLIMA: calor → ligero y fresco; frío → capas y abrigo. No metas abrigo si hace calor ni shorts si hace frío. LLUVIA/HÚMEDO → incluye una capa que repela el agua y evita materiales que se arruinan mojados (gamuza, lino delicado). AIRE LIBRE o clima rudo → prioriza prendas resistentes y calzado práctico (nada de zapato de vestir ni gamuza para caminar o mojarse). Piensa en el RANGO del día, no solo el promedio: mañanas/noches más frescas e interiores con clima artificial piden una capa ligera aunque el día sea cálido.
+- CALZADO es lo que más pesa y abulta: máximo 2 pares en viajes cortos (3 solo si una ocasión lo exige de verdad), y el segundo par debe cubrir algo que el primero no.
+- La capa más voluminosa (abrigo, chamarra gruesa) se VIAJA PUESTA, no empacada — cuenta para el look del traslado, no para el espacio de la maleta.
 - ${techoTxt}
 - Incluye SIEMPRE la base: tops, bottoms y calzado suficientes para combinar; ropa interior/calcetines NO se listan (se asumen).
 
@@ -123,7 +125,9 @@ Devuelve "items" (la cápsula). Cada prenda:
 - formalidad ∈ {${FORMALIDADES.join(", ")}}
 - temporada: "todo-el-año" | "calor" | "frio".
 - prioridad: 1 = imprescindible para el viaje, subiendo a lo opcional.
-- porque: UNA línea cálida (tuteo) de por qué la lleva.`,
+- porque: UNA línea cálida (tuteo) de por qué la lleva — específica a ESTE viaje (su ocasión, su clima, con qué se mezcla), no genérica.
+
+Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA de la maleta completa — la estrategia (los neutros que anclan, los acentos), cómo todo se mezcla entre sí, y cómo cubre las ocasiones y el clima. Es lo primero que la persona lee arriba de su maleta. No listes prendas una por una ni repitas números que ya ve (días, conteo).`,
     messages: [
       {
         role: "user",
@@ -170,8 +174,15 @@ Devuelve "items" (la cápsula). Cada prenda:
                 additionalProperties: false,
               },
             },
+            // DESPUÉS de items a propósito: la firma se escribe con la lista ya
+            // decidida (resume la estrategia real, no una intención).
+            firma: {
+              type: "string",
+              description:
+                "1-2 líneas cálidas (tuteo) con la lógica de la maleta: estrategia de mezcla, ocasiones y clima. La persona la lee arriba de su maleta.",
+            },
           },
-          required: ["plan", "items"],
+          required: ["plan", "items", "firma"],
           additionalProperties: false,
         },
       },
@@ -182,7 +193,7 @@ Devuelve "items" (la cápsula). Cada prenda:
   if (!text) throw new Error("EMPTY_RESPONSE");
   // Truncado por tope de tokens = JSON incompleto; error distinguible.
   if (response.stop_reason === "max_tokens") throw new Error("TRUNCATED_RESPONSE");
-  const parsed = JSON.parse(text) as { items: CapsuleItem[] };
+  const parsed = JSON.parse(text) as { items: CapsuleItem[]; firma?: string };
   if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
     throw new Error("BAD_TRIP_CAPSULE");
   }
@@ -190,5 +201,6 @@ Devuelve "items" (la cápsula). Cada prenda:
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));
-  return { version: 2, items };
+  const firma = parsed.firma?.trim();
+  return firma ? { version: 2, items, firma } : { version: 2, items };
 }

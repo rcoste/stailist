@@ -131,7 +131,11 @@ export default async function ViajeDetallePage({
 
   const days = tripDays(trip.fecha_inicio, trip.fecha_fin);
   const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null;
-  const logica = tripLogicLine(days, rows.length, (trip.ocasiones as Occasion[]) ?? [], weather);
+  // La firma del motor (viajes nuevos) gana; la plantilla determinística es el
+  // fallback para maletas generadas antes de que el motor explicara su lógica.
+  const logica =
+    target.firma?.trim() ||
+    tripLogicLine(days, rows.length, (trip.ocasiones as Occasion[]) ?? [], weather);
   const equipaje = luggageSummary(
     trip.bolsas as Bolsas | null,
     trip.maleta as Luggage | null
