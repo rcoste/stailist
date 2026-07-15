@@ -8,18 +8,22 @@ import { Hint } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
+import { loadLovedCounts, sortLovedFirst } from "@/lib/loved-items";
 
 export default async function ClosetPage() {
   const profile = await requireOnboarded();
 
   const supabase = await createClient();
-  const { data: rows } = await supabase
-    .from("items")
-    .select(
-      "id, source, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
-    )
-    .eq("user_id", profile.id)
-    .is("deleted_at", null);
+  const [{ data: rows }, loved] = await Promise.all([
+    supabase
+      .from("items")
+      .select(
+        "id, source, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
+      )
+      .eq("user_id", profile.id)
+      .is("deleted_at", null),
+    loadLovedCounts(supabase, profile.id),
+  ]);
 
   // Las fotos propias y los renders viven en el bucket privado → URL firmada para
   // mostrarlas. Juntamos ambos paths en una sola petición de firmas.
@@ -42,7 +46,11 @@ export default async function ClosetPage() {
 
   // Resuelve nombre/imagen/categoría: del arquetipo si lo hay, si no de attrs
   // (las fotos propias usan la URL firmada y la categoría que confirmó la usuaria).
-  const items: ClosetItem[] = (rows ?? []).map((r) => {
+  // Orden: tus queridas primero (las de outfits favoritos/usados) — solo visual.
+  const items: ClosetItem[] = sortLovedFirst(
+    rows ?? [],
+    loved
+  ).map((r) => {
     const arch = r.archetypes as {
       name?: string;
       category?: string;

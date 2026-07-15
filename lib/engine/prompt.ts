@@ -296,6 +296,34 @@ function tasteSignalLines(s: TasteSignal): string[] {
   return lines;
 }
 
+// El clóset llega del DB en orden pseudo-estable (el query no tiene ORDER BY) y
+// los modelos tienen sesgo posicional: sobre-eligen lo de arriba de la lista →
+// SIEMPRE las mismas prendas. Neutralizado aquí: agrupar por categoría (la
+// estructura además ayuda al modelo a armar looks) y BARAJAR dentro de cada
+// grupo en cada llamada. `rand` inyectable para tests deterministas.
+export function orderClosetForEngine(
+  items: EngineItem[],
+  rand: () => number = Math.random
+): EngineItem[] {
+  const groups = new Map<string, EngineItem[]>();
+  for (const it of items) {
+    const a = it.attrs as Record<string, unknown>;
+    const cat = String(a.categoria ?? a.category ?? it.attrs.tipo ?? "otros");
+    const g = groups.get(cat);
+    if (g) g.push(it);
+    else groups.set(cat, [it]);
+  }
+  const out: EngineItem[] = [];
+  for (const g of groups.values()) {
+    for (let i = g.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [g[i], g[j]] = [g[j], g[i]];
+    }
+    out.push(...g);
+  }
+  return out;
+}
+
 // El clóset como bloque (ids + descripción con hex).
 export function closetBlock(items: EngineItem[]): string[] {
   const lines = ["Su clóset (usa SOLO estos ids):"];

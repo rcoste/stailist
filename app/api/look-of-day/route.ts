@@ -6,7 +6,7 @@ import { generateOutfits } from "@/lib/engine/generate";
 import { reviewOutfit } from "@/lib/engine/critic";
 import { type EngineContext } from "@/lib/engine/prompt";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
-import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
+import { PROMPT_VERSION, orderClosetForEngine, type EngineItem } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
 import type { Season } from "@/lib/colorimetria";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
@@ -293,7 +293,8 @@ async function generateInto(
         (profile.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
       season: profile.palette_season as Season | null,
       flow: profile.palette_flow as Season | null,
-      items,
+      // Agrupado por categoría + barajado por llamada (anti sesgo posicional).
+      items: orderClosetForEngine(items),
       weather,
       recentCombos: (recentRes.data ?? []).map((o) => o.item_ids as string[]),
       vetoes: vetoLabels(vetoes),

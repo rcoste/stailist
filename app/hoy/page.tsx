@@ -9,6 +9,7 @@ import { LinkNudge } from "@/components/link-nudge";
 import { Hint } from "@/components/hint";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 import type { ClosetPick } from "@/components/weather-picker";
+import { loadClosetPicks } from "@/lib/closet-picks";
 
 export default async function HoyPage({
   searchParams,
@@ -126,47 +127,9 @@ export default async function HoyPage({
     }
   }
 
-  // Clóset para el picker de ancla del wizard ("¿algo que te quieras poner hoy?").
-  // Misma resolución de imagen que el clóset (arquetipo / render / foto propia).
-  const { data: closetRows } = await supabase
-    .from("items")
-    .select("id, photo_path, render_status, render_path, attrs, archetypes(name, image_path, category)")
-    .eq("user_id", profile.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
-
-  const closetPaths = (closetRows ?? [])
-    .flatMap((i) => [i.photo_path as string | null, i.render_path as string | null])
-    .filter((p): p is string => !!p);
-  const closetSigned = new Map<string, string>();
-  if (closetPaths.length > 0) {
-    const { data } = await supabase.storage
-      .from("prendas")
-      .createSignedUrls(Array.from(new Set(closetPaths)), 3600);
-    data?.forEach((s) => {
-      if (s.path && s.signedUrl) closetSigned.set(s.path, s.signedUrl);
-    });
-  }
-  const closet: ClosetPick[] = (closetRows ?? []).map((i) => {
-    const arch = i.archetypes as {
-      name?: string;
-      image_path?: string | null;
-      category?: string | null;
-    } | null;
-    const attrs = (i.attrs ?? {}) as {
-      nombre?: string;
-      color_hex?: string;
-      image_path?: string | null;
-      category?: string | null;
-    };
-    return {
-      id: i.id as string,
-      nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-      swatch: attrs.color_hex ?? "#E5E1DD",
-      imagen: itemImageUrlSync(i as ItemImageRow, (p) => closetSigned.get(p)),
-      category: arch?.category ?? attrs.category ?? "otros",
-    };
-  });
+  // Clóset para el picker de ancla del wizard ("¿algo que te quieras poner hoy?"),
+  // con las queridas primero (solo orden visual). Compartido con el modo viaje.
+  const closet: ClosetPick[] = await loadClosetPicks(supabase, profile.id);
 
   const nombre = (profile.email ?? "").split("@")[0];
 

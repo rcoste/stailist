@@ -96,3 +96,42 @@ describe("describeItem — datos ricos v21", () => {
     );
   });
 });
+
+import { orderClosetForEngine } from "./prompt";
+
+describe("orderClosetForEngine — anti sesgo posicional", () => {
+  const it2 = (id: string, categoria: string): EngineItem => ({
+    id,
+    attrs: { nombre: id, categoria } as EngineItem["attrs"],
+  });
+  const closet = [
+    it2("t1", "top"), it2("b1", "bottom"), it2("t2", "top"),
+    it2("c1", "calzado"), it2("b2", "bottom"), it2("t3", "top"),
+  ];
+
+  it("conserva todas las prendas (mismo multiset)", () => {
+    const out = orderClosetForEngine(closet, () => 0.5);
+    expect(out.map((i) => i.id).sort()).toEqual(["b1", "b2", "c1", "t1", "t2", "t3"]);
+  });
+
+  it("agrupa por categoría (grupos contiguos)", () => {
+    const out = orderClosetForEngine(closet, () => 0.5);
+    const cats = out.map((i) => (i.attrs as { categoria?: string }).categoria);
+    // Cada categoría aparece en un solo tramo contiguo.
+    const seen = new Set<string>();
+    let prev: string | undefined;
+    for (const c of cats) {
+      if (c !== prev && seen.has(c!)) throw new Error(`categoría partida: ${c}`);
+      if (c !== prev) seen.add(c!);
+      prev = c;
+    }
+    expect(seen.size).toBe(3);
+  });
+
+  it("baraja dentro del grupo según rand (determinista con seed)", () => {
+    // rand=0 → Fisher-Yates siempre intercambia con el índice 0 (rota el grupo).
+    const a = orderClosetForEngine(closet, () => 0).map((i) => i.id);
+    const b = orderClosetForEngine(closet, () => 0.999).map((i) => i.id);
+    expect(a).not.toEqual(b); // dos seeds distintas → órdenes distintos
+  });
+});

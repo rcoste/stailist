@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { geocodePlace, getWeatherForDates } from "@/lib/weather";
-import { generateTripCapsuleTarget } from "@/lib/engine/trip-capsule";
+import { generateTripCapsuleTarget, type TripAncla } from "@/lib/engine/trip-capsule";
 import { matchCapsule } from "@/lib/engine/capsule-match";
 import { loadClosetLite } from "@/lib/capsule-data";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
+import { CATEGORIES, FORMALIDADES, type CapsuleItem, type Category, type Formalidad, type MatchEntry } from "@/lib/capsule";
 import {
   tripDays,
   OCCASIONS,
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
     ocasiones?: string[];
     maleta?: string; // legacy (cliente viejo single-select)
     bolsas?: Record<string, unknown>; // multi-maleta: cantidades por tipo
+    anclas?: unknown; // ids de prendas que quiere llevar sí o sí (máx 4)
   } = {};
   try {
     body = await request.json();
@@ -133,6 +135,13 @@ export async function POST(request: NextRequest) {
   const bolsas: Bolsas | null = parseBolsas(body.bolsas) ?? (maletaLegacy ? { [maletaLegacy]: 1 } : null);
   const maleta = dominantLuggage(bolsas) ?? maletaLegacy;
 
+  // Anclas: ids de prendas que la persona quiere llevar sí o sí (máx 4).
+  const anclaIds = Array.isArray(body.anclas)
+    ? Array.from(
+        new Set(body.anclas.filter((x): x is string => typeof x === "string" && x.length > 0))
+      ).slice(0, 4)
+    : [];
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -175,6 +184,36 @@ export async function POST(request: NextRequest) {
           .single();
         const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
+        // Resuelve las anclas contra el clóset real (propiedad + no borradas).
+        let anclas: TripAncla[] = [];
+        if (anclaIds.length > 0) {
+          const { data: anclaRows } = await supabase
+            .from("items")
+            .select("id, attrs, archetypes(name, category)")
+            .in("id", anclaIds)
+            .eq("user_id", user.id)
+            .is("deleted_at", null);
+          anclas = (anclaRows ?? []).map((r) => {
+            const arch = r.archetypes as { name?: string; category?: string } | null;
+            const a = (r.attrs ?? {}) as {
+              nombre?: string;
+              tipo?: string;
+              categoria?: string;
+              color?: string;
+              formalidad?: string;
+              temporada?: string;
+            };
+            return {
+              nombre: arch?.name ?? a.nombre ?? "Prenda",
+              tipo: a.tipo ?? null,
+              category: arch?.category ?? a.categoria ?? null,
+              color: a.color ?? null,
+              formalidad: a.formalidad ?? null,
+              temporada: a.temporada ?? null,
+            };
+          });
+        }
+
         send({ phase: "armando tu cápsula de viaje…" });
         const target = await generateTripCapsuleTarget({
           days,
@@ -191,7 +230,35 @@ export async function POST(request: NextRequest) {
           season: (profile?.palette_season as Season | null) ?? null,
           flow: (profile?.palette_flow as Season | null) ?? null,
           vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
+          anclas,
         });
+
+        // Las anclas entran al target COMO ITEMS deterministas (el motor recibió
+        // la instrucción de NO listarlas — aquí van al frente, y por si acaso se
+        // dedupe cualquier eco suyo en la lista del motor).
+        if (anclas.length > 0) {
+          const anclaNames = new Set(anclas.map((a) => a.nombre.toLowerCase()));
+          const anclaItems: CapsuleItem[] = anclas.map((a) => ({
+            nombre: a.nombre,
+            tipo:
+              a.tipo ??
+              a.nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-").slice(0, 28),
+            category: (CATEGORIES as readonly string[]).includes(a.category ?? "")
+              ? (a.category as Category)
+              : "top",
+            colorFamilia: a.color ?? "neutro",
+            formalidad: (FORMALIDADES as readonly string[]).includes(a.formalidad ?? "")
+              ? (a.formalidad as Formalidad)
+              : "casual",
+            temporada: a.temporada ?? "todo-el-año",
+            prioridad: 1,
+            porque: "Va porque tú la pediste — armé el resto para combinar con ella.",
+          }));
+          target.items = [
+            ...anclaItems,
+            ...target.items.filter((it) => !anclaNames.has(it.nombre.toLowerCase())),
+          ];
+        }
 
         send({ phase: "viendo qué ya tienes…" });
         const closet = await loadClosetLite(supabase, user.id);
@@ -200,6 +267,14 @@ export async function POST(request: NextRequest) {
           match = await matchCapsule(target, closet, gender);
         } catch {
           match = null;
+        }
+        // Garantía: las anclas SON del clóset → siempre "tienes" (aunque el
+        // matcher tropiece). Van al frente del target, índices 0..n-1.
+        if (match && anclas.length > 0) {
+          const entries = match.entries as MatchEntry[];
+          anclas.forEach((a, i) => {
+            entries[i] = { status: "tienes", by: a.nombre };
+          });
         }
 
         const { data: inserted, error } = await supabase

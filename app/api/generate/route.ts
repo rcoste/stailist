@@ -4,6 +4,7 @@ import { generateOutfits, type GeneratedOutfit } from "@/lib/engine/generate";
 import { reviewOutfit, type CriticVerdict } from "@/lib/engine/critic";
 import {
   PROMPT_VERSION,
+  orderClosetForEngine,
   type EngineItem,
   type EngineContext,
 } from "@/lib/engine/prompt";
@@ -121,7 +122,8 @@ export async function POST(request: NextRequest) {
             } | null) ?? null,
           season: profile.palette_season as Season | null,
           flow: profile.palette_flow as Season | null,
-          items,
+          // Agrupado por categoría + barajado por llamada (anti sesgo posicional).
+          items: orderClosetForEngine(items),
           weather,
           recentCombos: (recentRes.data ?? []).map(
             (o) => o.item_ids as string[]

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Icon, type IconName } from "@/components/icon";
+import type { ClosetPick } from "@/components/weather-picker";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import {
@@ -129,12 +131,19 @@ function usePlaceSuggestions(draft: string): Sugerencia[] {
   return sugs;
 }
 
-export function TripWizard() {
+// Tope de anclas: el valor es que el motor complete ALREDEDOR de tus elegidas.
+// Con más, ya no empaca el stylist — empacas tú y el motor decora.
+const MAX_ANCLAS = 4;
+
+export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [paradas, setParadas] = useState<Parada[]>([]);
   const [inicio, setInicio] = useState("");
   const [ocasiones, setOcasiones] = useState<Set<Occasion>>(new Set());
+  // Anclas: prendas del clóset que la persona QUIERE llevar sí o sí (opcional).
+  const [anclas, setAnclas] = useState<ClosetPick[]>([]);
+  const [anclasOpen, setAnclasOpen] = useState(false);
   // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
   const [bolsas, setBolsas] = useState<Bolsas>({ mano: 1 });
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
@@ -187,6 +196,7 @@ export function TripWizard() {
           fechaFin: fin,
           ocasiones: [...ocasiones],
           bolsas,
+          anclas: anclas.map((a) => a.id),
         }),
       });
       if (!res.ok || !res.body) {
@@ -290,17 +300,26 @@ export function TripWizard() {
                 onRemove={removeParada}
               />
             ) : step === 2 ? (
-              <StepActividades
-                value={ocasiones}
-                onToggle={(o) =>
-                  setOcasiones((prev) => {
-                    const n = new Set(prev);
-                    if (n.has(o)) n.delete(o);
-                    else n.add(o);
-                    return n;
-                  })
-                }
-              />
+              <>
+                <StepActividades
+                  value={ocasiones}
+                  onToggle={(o) =>
+                    setOcasiones((prev) => {
+                      const n = new Set(prev);
+                      if (n.has(o)) n.delete(o);
+                      else n.add(o);
+                      return n;
+                    })
+                  }
+                />
+                {closet.length > 0 ? (
+                  <AnclasSection
+                    anclas={anclas}
+                    onOpen={() => setAnclasOpen(true)}
+                    onRemove={(id) => setAnclas((prev) => prev.filter((a) => a.id !== id))}
+                  />
+                ) : null}
+              </>
             ) : (
               <StepMaleta bolsas={bolsas} onChange={setBolsas} />
             )}
@@ -350,6 +369,21 @@ export function TripWizard() {
           inicio={inicio}
           onSave={saveParada}
           onClose={() => setSheet(null)}
+        />
+      ) : null}
+
+      {anclasOpen ? (
+        <AnclasSheet
+          closet={closet}
+          selected={anclas}
+          onToggle={(p) =>
+            setAnclas((prev) => {
+              if (prev.some((a) => a.id === p.id)) return prev.filter((a) => a.id !== p.id);
+              if (prev.length >= MAX_ANCLAS) return prev;
+              return [...prev, p];
+            })
+          }
+          onClose={() => setAnclasOpen(false)}
         />
       ) : null}
 
@@ -1049,6 +1083,171 @@ function StepMaleta({
       <div className="flex items-start gap-2 text-xs leading-snug text-muted">
         <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
         <span>es un techo, no una meta: armo lo mínimo que combina. si cabe menos, mejor.</span>
+      </div>
+    </div>
+  );
+}
+
+// ---- Anclas: "¿algo que quieras llevar sí o sí?" (opcional, hasta 4) ----
+// El mismo espíritu que el ancla de Hoy: eliges prendas de tu clóset y el motor
+// arma la maleta ALREDEDOR de ellas (van seguras, salen como "tienes").
+function AnclasSection({
+  anclas,
+  onOpen,
+  onRemove,
+}: {
+  anclas: ClosetPick[];
+  onOpen: () => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="mt-6 flex flex-col gap-2.5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+        Opcional
+      </p>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex items-center gap-3 rounded-md border border-line bg-surface p-[13px] text-left transition-colors hover:border-ink"
+      >
+        <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-sm bg-accent-soft text-ink">
+          <Icon name="gancho" size={18} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <b className="text-sm font-semibold text-ink">
+            ¿algo que quieras llevar sí o sí?
+          </b>
+          <span className="text-[12px] text-muted">
+            {anclas.length > 0
+              ? `${anclas.length} de ${MAX_ANCLAS} elegidas — armo la maleta alrededor`
+              : `elige hasta ${MAX_ANCLAS} prendas y armo la maleta alrededor`}
+          </span>
+        </span>
+        <Icon name="chevron" size={16} className="shrink-0 text-muted" />
+      </button>
+
+      {anclas.length > 0 ? (
+        <ul className="flex flex-wrap gap-2">
+          {anclas.map((a) => (
+            <li
+              key={a.id}
+              className="flex items-center gap-2 rounded-sm border border-line bg-surface py-1 pl-1 pr-2"
+            >
+              <span className="relative block h-9 w-7 overflow-hidden rounded-[3px] bg-bg">
+                {a.imagen ? (
+                  <Image src={a.imagen} alt="" fill sizes="28px" className="object-cover" />
+                ) : (
+                  <span className="block h-full w-full" style={{ backgroundColor: a.swatch }} />
+                )}
+              </span>
+              <span className="max-w-[130px] truncate text-[12px] font-medium text-ink">
+                {a.nombre}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRemove(a.id)}
+                aria-label={`Quitar ${a.nombre}`}
+                className="-mr-0.5 flex h-5 w-5 items-center justify-center text-muted hover:text-ink"
+              >
+                <Icon name="equis" size={12} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function AnclasSheet({
+  closet,
+  selected,
+  onToggle,
+  onClose,
+}: {
+  closet: ClosetPick[];
+  selected: ClosetPick[];
+  onToggle: (p: ClosetPick) => void;
+  onClose: () => void;
+}) {
+  const ids = new Set(selected.map((a) => a.id));
+  const atCap = selected.length >= MAX_ANCLAS;
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-end justify-center lg:items-center bg-ink/50"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-hidden rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <span className="h-1 w-9 rounded-full bg-line" aria-hidden />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="-mr-1 flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
+          >
+            <Icon name="equis" size={20} />
+          </button>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+            Llevar sí o sí
+          </span>
+          <span className="text-[15px] font-semibold text-ink">
+            {selected.length} de {MAX_ANCLAS} — tus queridas van primero
+          </span>
+        </div>
+
+        <ul className="grid min-h-0 flex-1 grid-cols-4 gap-2 overflow-y-auto pb-1">
+          {closet.map((p) => {
+            const on = ids.has(p.id);
+            const blocked = !on && atCap;
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => onToggle(p)}
+                  disabled={blocked}
+                  aria-pressed={on}
+                  title={p.nombre}
+                  className={`relative block w-full overflow-hidden rounded-md border transition-colors ${
+                    on ? "border-accent" : "border-line hover:border-ink"
+                  } ${blocked ? "opacity-40" : ""}`}
+                >
+                  <span className="relative block aspect-[3/4] bg-bg">
+                    {p.imagen ? (
+                      <Image src={p.imagen} alt={p.nombre} fill sizes="100px" className="object-cover" />
+                    ) : (
+                      <span
+                        className="block h-full w-full"
+                        style={{ backgroundColor: p.swatch }}
+                      />
+                    )}
+                  </span>
+                  <span
+                    className={`absolute right-1 top-1 flex h-[19px] w-[19px] items-center justify-center rounded-full ${
+                      on ? "bg-accent text-on-accent" : "border-[1.5px] border-line bg-bg/85"
+                    }`}
+                  >
+                    {on ? <Icon name="check" size={12} strokeWidth={2.4} /> : null}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex min-h-12 w-full items-center justify-center rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+        >
+          listo
+        </button>
       </div>
     </div>
   );

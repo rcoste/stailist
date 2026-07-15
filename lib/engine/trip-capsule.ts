@@ -11,6 +11,17 @@ import {
   type TripWeather,
 } from "@/lib/trip";
 
+// Ancla: prenda del clóset que la persona YA decidió llevar. El motor NO la
+// lista (el caller la agrega al target); solo arma el resto alrededor.
+export type TripAncla = {
+  nombre: string;
+  tipo?: string | null;
+  category?: string | null;
+  color?: string | null;
+  formalidad?: string | null;
+  temporada?: string | null;
+};
+
 export type TripCapsuleInputs = {
   days: number;
   ocasiones: Occasion[];
@@ -25,6 +36,7 @@ export type TripCapsuleInputs = {
   season: Season | null;
   flow: Season | null;
   vetoes: string[];
+  anclas?: TripAncla[];
 };
 
 // La cápsula IDEAL del viaje: una lista mínima de prendas concretas que combinan
@@ -89,6 +101,14 @@ export async function generateTripCapsuleTarget(
   const vetoTxt = inputs.vetoes.length
     ? `VETOS — jamás incluyas: ${inputs.vetoes.join(", ")}.`
     : "";
+  const anclasTxt = inputs.anclas?.length
+    ? `ANCLAS — la persona YA decidió llevar estas prendas suyas (van seguras en la maleta): ${inputs.anclas
+        .map(
+          (a) =>
+            `${a.nombre}${[a.category, a.color, a.formalidad].filter(Boolean).length ? ` (${[a.category, a.color, a.formalidad].filter(Boolean).join(", ")})` : ""}`
+        )
+        .join("; ")}. NO las repitas en tus items (el sistema las agrega aparte), pero CUENTAN para el tamaño total. Arma el RESTO alrededor: que combine con ellas, sin duplicar su función. La firma puede mencionarlas.`
+    : "";
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
@@ -131,7 +151,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}\n\nArma su cápsula de viaje (items).`,
+        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${anclasTxt ? `\n${anclasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
       },
     ],
     output_config: {
