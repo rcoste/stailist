@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { saveGeneratedAvatar } from "@/lib/avatar-actions";
+import type { Build } from "@/lib/silueta";
 
 type BodyType = "slim" | "athletic" | "average" | "full";
 
@@ -17,7 +18,9 @@ export async function uploadGeneratedAvatar(
   userId: string,
   bodyType: BodyType,
   faceB64?: string | null,
-  sheetB64?: string | null
+  sheetB64?: string | null,
+  build?: Build | null,
+  heightCm?: number | null
 ): Promise<{ ok: boolean }> {
   const toBlob = (b64: string) =>
     new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: "image/jpeg" });
@@ -48,5 +51,5 @@ export async function uploadGeneratedAvatar(
       });
     if (upSheet.error) console.error("[avatar] sheet upload falló:", upSheet.error.message);
   }
-  return saveGeneratedAvatar(path, bodyType);
+  return saveGeneratedAvatar(path, bodyType, build ?? null, heightCm ?? null);
 }

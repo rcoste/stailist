@@ -9,6 +9,7 @@ import { comprimir } from "@/lib/image-compress";
 import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
 import { markNudge } from "@/lib/journey-actions";
 import type { Gender } from "@/lib/auth";
+import { builds, buildLabel, buildToBodyType, type Build } from "@/lib/silueta";
 
 // Wizard de avatar digital, en DOS etapas (A1, 2026-07-15): primero el RETRATO
 // (la identidad se aprueba barata y enfocada — con juez visible y ajustes
@@ -22,11 +23,6 @@ type BodyType = "slim" | "athletic" | "average" | "full";
 type Slot = "face" | "face2" | "body1" | "body2" | "body3";
 type Step = "fotos" | "cara" | "cuerpo" | "generando" | "preview" | "error";
 
-const TYPES: BodyType[] = ["slim", "athletic", "average", "full"];
-const LABELS: Record<Gender, Record<BodyType, string>> = {
-  hombre: { slim: "Delgado", athletic: "Atlético", average: "Promedio", full: "Robusto" },
-  mujer: { slim: "Delgada", athletic: "Atlética", average: "Promedio", full: "Con curvas" },
-};
 const GEN_MSGS_CARA = [
   "Estudiando tus fotos…",
   "Dibujando tu retrato…",
@@ -65,7 +61,7 @@ export function AvatarWizard({
   gender,
   returnTo,
   skipHref,
-  siluetaBodyType,
+  siluetaBuild,
 }: {
   userId: string;
   gender: Gender;
@@ -73,10 +69,10 @@ export function AvatarWizard({
   /** Si se pasa, muestra "ahora no, seguir sin avatar" en el primer paso y lleva
    *  ahí (el avatar es opcional — en el onboarding no debe atrapar a nadie). */
   skipHref?: string;
-  /** Complexión derivada de la silueta del perfil (body_build). Si viene, el
-   *  wizard NO re-pregunta el tipo de cuerpo (la morfología se define UNA vez,
-   *  en Perfil → Mi silueta) y genera directo desde las fotos. */
-  siluetaBodyType?: BodyType | null;
+  /** Complexión de la silueta del perfil (body_build). Si viene, el wizard NO
+   *  re-pregunta la morfología (se define UNA vez; taxonomía de silueta) — solo
+   *  ofrece las fotos de cuerpo opcionales. */
+  siluetaBuild?: Build | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("fotos");
@@ -94,7 +90,11 @@ export function AvatarWizard({
     body2: null,
     body3: null,
   });
-  const [bodyType, setBodyType] = useState<BodyType | null>(siluetaBodyType ?? null);
+  // Morfología en la taxonomía de SILUETA (única fuente); el bodyType del
+  // prompt se deriva. Altura opcional (A3) para las proporciones.
+  const [build, setBuild] = useState<Build | null>(siluetaBuild ?? null);
+  const [alturaTxt, setAlturaTxt] = useState("");
+  const bodyType: BodyType | null = buildToBodyType(build);
   const [generated, setGenerated] = useState<string | null>(null);
   const [fails, setFails] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -177,6 +177,12 @@ export function AvatarWizard({
   // La etapa cara solo pide la cara; el cuerpo (fotos opcionales) va después.
   const canContinue = !!photos.face;
 
+  // Altura opcional: entero 100-230 cm o null (se ignora en silencio si no).
+  const alturaCm = (() => {
+    const n = parseInt(alturaTxt, 10);
+    return Number.isInteger(n) && n >= 100 && n <= 230 ? n : null;
+  })();
+
   const aB64 = async (f: File) => blobToB64(await comprimir(await toUsableImage(f)));
 
   async function facesB64(): Promise<{ face: string; extra: string[] }> {
@@ -241,6 +247,7 @@ export function AvatarWizard({
           headshotB64: faceGen,
           bodyB64,
           bodyType,
+          ...(alturaCm ? { heightCm: alturaCm } : {}),
         }),
       });
       if (!res.ok) throw new Error("gen");
@@ -269,7 +276,15 @@ export function AvatarWizard({
       : null;
     // El retrato aprobado se guarda como ancla de identidad (avatar-face.jpg)
     // y el sheet de 3 vistas como referencia multi-ángulo (avatar-sheet.jpg).
-    const res = await uploadGeneratedAvatar(generated, userId, bodyType, faceGen, sheet);
+    const res = await uploadGeneratedAvatar(
+      generated,
+      userId,
+      bodyType,
+      faceGen,
+      sheet,
+      build,
+      alturaCm
+    );
     if (!res.ok) {
       setSaving(false);
       setFails((n) => n + 1);
@@ -437,11 +452,11 @@ export function AvatarWizard({
           >
             ← Tu retrato
           </button>
-          {siluetaBodyType ? (
+          {siluetaBuild ? (
             <div className="flex flex-col gap-1">
               <h1 className="text-h1 font-semibold text-ink">Ahora, tu cuerpo</h1>
               <p className="text-sm text-muted">
-                Usaré la complexión de tu silueta ({LABELS[gender][siluetaBodyType]} — la
+                Usaré la complexión de tu silueta ({buildLabel(siluetaBuild)} — la
                 cambias en Perfil → Mi silueta). Si quieres máxima fidelidad, súmame
                 fotos de tu cuerpo; si no, con tu retrato basta.
               </p>
@@ -454,41 +469,37 @@ export function AvatarWizard({
               <p className="text-sm text-muted">Es para que la ropa te quede fiel.</p>
             </div>
           )}
-          {!siluetaBodyType ? (
-            <div className="grid grid-cols-2 gap-3">
-              {TYPES.map((t) => {
-                const selected = bodyType === t;
+          {!siluetaBuild ? (
+            // Galería VISUAL de complexiones (A3): las MISMAS imágenes y
+            // taxonomía que Perfil → Mi silueta — una sola pregunta de
+            // morfología en todo el producto, con ejemplos reales.
+            <div
+              className={`grid gap-3 ${
+                builds(gender).length === 3 ? "grid-cols-3" : "grid-cols-2"
+              }`}
+            >
+              {builds(gender).map((b) => {
+                const selected = build === b.id;
                 return (
                   <button
-                    key={t}
+                    key={b.id}
                     type="button"
-                    onClick={() => setBodyType(t)}
-                    className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors ${
+                    onClick={() => setBuild(b.id)}
+                    aria-pressed={selected}
+                    className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors ${
                       selected
                         ? "border-accent bg-accent-soft"
                         : "border-line bg-surface hover:border-ink"
                     }`}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={b.img} alt="" className="h-28 w-auto" />
                     <span
-                      aria-hidden
-                      className={selected ? "bg-accent" : "bg-muted"}
-                      style={{
-                        width: 40,
-                        height: 80,
-                        maskImage: `url(/avatar-shapes/${gender}-${t}.svg)`,
-                        WebkitMaskImage: `url(/avatar-shapes/${gender}-${t}.svg)`,
-                        maskRepeat: "no-repeat",
-                        WebkitMaskRepeat: "no-repeat",
-                        maskPosition: "center",
-                        WebkitMaskPosition: "center",
-                        maskSize: "contain",
-                        WebkitMaskSize: "contain",
-                      }}
-                    />
-                    <span
-                      className={`text-sm font-medium ${selected ? "text-accent" : "text-ink"}`}
+                      className={`text-center text-sm font-medium leading-tight ${
+                        selected ? "text-accent" : "text-ink"
+                      }`}
                     >
-                      {LABELS[gender][t]}
+                      {b.label}
                     </span>
                   </button>
                 );
@@ -517,6 +528,27 @@ export function AvatarWizard({
               preview={previews.body3}
               onPick={(f) => setSlot("body3", f)}
             />
+          </div>
+
+          {/* Altura opcional (A3): un dato chico que mejora mucho proporciones. */}
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3">
+            <span className="flex min-w-0 flex-col">
+              <span className="text-sm font-medium text-ink">¿Cuánto mides?</span>
+              <span className="text-xs text-muted">Opcional — afina tus proporciones</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={100}
+                max={230}
+                value={alturaTxt}
+                onChange={(e) => setAlturaTxt(e.target.value)}
+                placeholder="170"
+                className="min-h-10 w-20 rounded-sm border border-line bg-bg px-2 text-center text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
+              />
+              <span className="text-xs text-muted">cm</span>
+            </span>
           </div>
 
           <button

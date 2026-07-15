@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
-import { buildToBodyType } from "@/lib/silueta";
+import { isBuild } from "@/lib/silueta";
 import { AvatarWizard } from "@/components/avatar-wizard";
 
 // Wizard de creación de avatar digital (issue #1). Llega aquí desde el nudge de
@@ -37,8 +37,8 @@ export default async function PerfilAvatarPage({
       returnTo={returnTo}
       skipHref={skipHref}
       // Morfología unificada: si ya definió su silueta, el wizard no re-pregunta
-      // el tipo de cuerpo — lo deriva de la complexión del perfil.
-      siluetaBodyType={buildToBodyType(profile.body_build)}
+      // la complexión — la recibe tal cual (misma taxonomía, sin traducción).
+      siluetaBuild={isBuild(profile.body_build) ? profile.body_build : null}
     />
   );
 }

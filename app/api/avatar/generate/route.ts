@@ -58,7 +58,7 @@ function buildFacePrompt(nFaces: number, ajuste: string | null, hasPrev: boolean
 
 // Etapa 2 — cuerpo completo anclado al retrato APROBADO (primera imagen): la
 // identidad ya no se re-interpreta, se copia. Las fotos de cuerpo son opcionales.
-function buildBodyPrompt(build: string, nBodies: number): string {
+function buildBodyPrompt(build: string, nBodies: number, heightCm: number | null): string {
   return (
     "Generate a photorealistic full-body portrait of the SAME person shown in " +
     "the FIRST image — an approved studio portrait of them. Match their face, " +
@@ -67,6 +67,9 @@ function buildBodyPrompt(build: string, nBodies: number): string {
     (nBodies > 0
       ? `The last ${nBodies} image(s) show their real body — use them for body ` +
         "proportions and posture. "
+      : "") +
+    (heightCm
+      ? `The person is approximately ${heightCm} cm tall — render realistic overall proportions for that height. `
       : "") +
     IDENTITY_RULES +
     `The person has a ${build} build — render realistic body ` +
@@ -235,6 +238,7 @@ export async function POST(request: NextRequest) {
     prevFaceB64?: string; // etapa face: retrato previo (base del ajuste)
     headshotB64?: string; // etapas body/sheet: retrato APROBADO (ancla)
     avatarB64?: string; // etapa sheet: cuerpo completo APROBADO
+    heightCm?: number; // etapa body: altura opcional (proporciones)
   } = {};
   try {
     body = await request.json();
@@ -303,8 +307,15 @@ export async function POST(request: NextRequest) {
         ...(hasPrev ? [img(body.prevFaceB64 as string)] : []),
       ];
     } else if (stage === "body") {
+      const heightCm =
+        typeof body.heightCm === "number" &&
+        Number.isInteger(body.heightCm) &&
+        body.heightCm >= 100 &&
+        body.heightCm <= 230
+          ? body.heightCm
+          : null;
       parts = [
-        { text: buildBodyPrompt(BUILD[bodyType as string], bodies.length) },
+        { text: buildBodyPrompt(BUILD[bodyType as string], bodies.length, heightCm) },
         img(body.headshotB64 as string),
         ...bodies.map(img),
       ];
