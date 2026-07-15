@@ -214,6 +214,34 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        // Memoria de rechazos: prendas que la persona ya cambió con "no me late"
+        // en maletas anteriores (eventos trip_item_swap). El motor evita armar
+        // ideales para ellas y el match las usa como último recurso. Sin esto,
+        // cada maleta nueva re-proponía la misma prenda rechazada (bug real,
+        // 2026-07-15). Máx 8 recientes para no inflar el prompt.
+        let rechazadas: string[] = [];
+        try {
+          const { data: swapRows } = await supabase
+            .from("events")
+            .select("data")
+            .eq("user_id", user.id)
+            .eq("type", "trip_item_swap")
+            .order("created_at", { ascending: false })
+            .limit(30);
+          const anclaSet = new Set(anclas.map((a) => a.nombre.toLowerCase()));
+          rechazadas = Array.from(
+            new Set(
+              (swapRows ?? [])
+                .map((r) => ((r.data as { from?: string } | null)?.from ?? "").trim())
+                .filter((n) => n.length > 0)
+                // Un ancla gana sobre un rechazo viejo: si hoy la pidió, no es rechazada.
+                .filter((n) => !anclaSet.has(n.toLowerCase()))
+            )
+          ).slice(0, 8);
+        } catch {
+          rechazadas = [];
+        }
+
         send({ phase: "armando tu cápsula de viaje…" });
         const target = await generateTripCapsuleTarget({
           days,
@@ -231,6 +259,7 @@ export async function POST(request: NextRequest) {
           flow: (profile?.palette_flow as Season | null) ?? null,
           vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
           anclas,
+          rechazadas,
         });
 
         // Las anclas entran al target COMO ITEMS deterministas (el motor recibió
@@ -264,7 +293,7 @@ export async function POST(request: NextRequest) {
         const closet = await loadClosetLite(supabase, user.id);
         let match = null;
         try {
-          match = await matchCapsule(target, closet, gender);
+          match = await matchCapsule(target, closet, gender, rechazadas);
         } catch {
           match = null;
         }

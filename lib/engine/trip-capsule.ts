@@ -37,6 +37,9 @@ export type TripCapsuleInputs = {
   flow: Season | null;
   vetoes: string[];
   anclas?: TripAncla[];
+  // Prendas del clóset que la persona ya rechazó en maletas anteriores (eventos
+  // trip_item_swap). El motor evita armar ideales pensados para ellas.
+  rechazadas?: string[];
 };
 
 // La cápsula IDEAL del viaje: una lista mínima de prendas concretas que combinan
@@ -101,13 +104,23 @@ export async function generateTripCapsuleTarget(
   const vetoTxt = inputs.vetoes.length
     ? `VETOS — jamás incluyas: ${inputs.vetoes.join(", ")}.`
     : "";
+  // Contabilidad por FUNCIÓN, no por conteo: un ancla solo descuenta una pieza
+  // de su misma función (un top ancla = un top menos del motor). Accesorios
+  // anclados NO reducen nada — no ocupan maleta ni cubren días. Sin esto, 4
+  // anclas (2 accesorios) recortaban bottoms y el viajero quedaba con 1 pantalón
+  // (bug real: maleta NY de Roberto, 2026-07-15).
   const anclasTxt = inputs.anclas?.length
     ? `ANCLAS — la persona YA decidió llevar estas prendas suyas (van seguras en la maleta): ${inputs.anclas
         .map(
           (a) =>
             `${a.nombre}${[a.category, a.color, a.formalidad].filter(Boolean).length ? ` (${[a.category, a.color, a.formalidad].filter(Boolean).join(", ")})` : ""}`
         )
-        .join("; ")}. NO las repitas en tus items (el sistema las agrega aparte), pero CUENTAN para el tamaño total. Arma el RESTO alrededor: que combine con ellas, sin duplicar su función. La firma puede mencionarlas.`
+        .join("; ")}. NO las repitas en tus items (el sistema las agrega aparte). Cómo cuentan: un ancla SOLO descuenta una pieza de su MISMA función (un top ancla = un top menos tuyo; un calzado ancla = un par menos). Las anclas de ACCESORIO (gorra, lentes, cinturón, joyería) NO descuentan nada: no ocupan maleta ni visten un día. JAMÁS recortes la base de tops/bottoms/calzado que los días piden por "hacer espacio" a las anclas. Arma el RESTO alrededor: que combine con ellas, sin duplicar su función. La firma puede mencionarlas.`
+    : "";
+  const rechazadasTxt = inputs.rechazadas?.length
+    ? `YA RECHAZÓ ANTES — en maletas anteriores la persona pidió cambiar estas prendas suyas: ${inputs.rechazadas.join(
+        "; "
+      )}. No armes ideales cuyo cumplimiento natural sea una de ellas; propone otra dirección (otro color, otro corte u otra pieza) que cubra la misma función.`
     : "";
 
   const response = await client.messages.create({
@@ -124,6 +137,8 @@ REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 Cómo dimensionarla:
 - Es una cápsula de mezcla-y-combina: pocas piezas que dan muchos looks. NO una prenda por día.
 - EL TAMAÑO LO MANDAN LOS DÍAS, no el techo de la maleta. Viaje corto (≤5 días) = cápsula CHICA aunque quepa más (orientación: ~3-4 tops, 2-3 bottoms, 1-2 calzado, más capas según el clima). Crece solo en viajes largos. El techo de la maleta solo RECORTA si te pasarías — JAMÁS rellenes hasta el techo "porque cabe": de más prendas que de menos es el error a evitar.
+- PISO DE BOTTOMS (innegociable): JAMÁS un solo bottom para un viaje de 3+ días. Mínimo 2 bottoms en viajes de 3-4 días, 3 en viajes de 5-7 días. Si las ocasiones mezclan día relajado y noche/arreglarse, al menos UN bottom cómodo de día Y uno que suba de noche — el mismo bottom no carga solo con turistear, la noche y el traslado.
+- PIENSA EN JORNADAS, no solo en prendas: el día de TRASLADO (avión/carretera: cómodo, capas), los días DE DÍA (caminar, turistear: pies y bottoms cómodos), y las NOCHES (subir el look). Cada jornada del viaje debe tener con qué vestirse sin forzar una pieza a todo.
 - Dimensiona también a la MEZCLA DE OCASIONES (ej. playa pide trajes de baño y shorts; una noche de arreglarse pide una pieza más formal). Cubre todas las ocasiones que te pasen, pero comparte piezas entre ellas siempre que se pueda.
 - Prendas que se mojan/sudan y necesitan secar entre usos: si el viaje es de PLAYA/ALBERCA/AGUA y dura varios días, lleva 2 trajes de baño (uno se seca mientras usas el otro); para deporte intenso de varios días, 2 piezas técnicas. No apliques esto a prendas normales (ahí manda mezcla-y-combina).
 - Respeta el CLIMA: calor → ligero y fresco; frío → capas y abrigo. No metas abrigo si hace calor ni shorts si hace frío. LLUVIA/HÚMEDO → incluye una capa que repela el agua y evita materiales que se arruinan mojados (gamuza, lino delicado). AIRE LIBRE o clima rudo → prioriza prendas resistentes y calzado práctico (nada de zapato de vestir ni gamuza para caminar o mojarse). Piensa en el RANGO del día, no solo el promedio: mañanas/noches más frescas e interiores con clima artificial piden una capa ligera aunque el día sea cálido.
@@ -151,7 +166,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${anclasTxt ? `\n${anclasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
+        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
       },
     ],
     output_config: {

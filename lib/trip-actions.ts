@@ -243,6 +243,8 @@ export async function setTripSubstitute(
         ideal: target?.items?.[index]?.nombre ?? null,
         from: prevBy,
         to: nombre.trim(),
+        // Para análisis por viaje (los eventos viejos no lo traen).
+        trip_id: tripId,
       },
     });
   }

@@ -15,7 +15,10 @@ import {
 export async function matchCapsule(
   target: CapsuleTarget,
   closet: ClosetItemLite[],
-  gender: "hombre" | "mujer" | null = null
+  gender: "hombre" | "mujer" | null = null,
+  // Prendas que la persona ya rechazó (swaps de maletas anteriores): el match
+  // las usa como ÚLTIMO recurso — solo si ninguna otra prenda cubre la ideal.
+  evita: string[] = []
 ): Promise<CapsuleMatch> {
   const signature = closetSignature(closet);
   const blank: MatchEntry[] = target.items.map(() => ({ status: "falta", by: null }));
@@ -41,6 +44,12 @@ export async function matchCapsule(
         ? " La persona es mujer (su clóset es ropa de mujer)."
         : "";
 
+  const evitaTxt = evita.length
+    ? `\n\nPRENDAS QUE YA RECHAZÓ: la persona pidió cambiar estas prendas en maletas anteriores: ${evita.join(
+        "; "
+      )}. Prefiérelas como ÚLTIMA opción de "by": si otra prenda del clóset también cubre la ideal (aunque sea "parecido"), usa esa otra. Solo usa una rechazada si es la ÚNICA de su clase que cubre la ideal.`
+    : "";
+
   const response = await client.messages.create({
     model: "claude-opus-4-8",
     // Una entrada por prenda ideal; la cápsula nueva llega a 30-40 → 2048 truncaba.
@@ -62,7 +71,7 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     messages: [
       {
         role: "user",
-        content: `CÁPSULA IDEAL (${target.items.length} prendas):\n${idealTxt}\n\nCLÓSET REAL:\n${closetTxt}\n\nMarca cada prenda ideal.`,
+        content: `CÁPSULA IDEAL (${target.items.length} prendas):\n${idealTxt}\n\nCLÓSET REAL:\n${closetTxt}${evitaTxt}\n\nMarca cada prenda ideal.`,
       },
     ],
     output_config: {
