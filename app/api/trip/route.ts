@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     maleta?: string; // legacy (cliente viejo single-select)
     bolsas?: Record<string, unknown>; // multi-maleta: cantidades por tipo
     anclas?: unknown; // ids de prendas que quiere llevar sí o sí (máx 4)
+    contexto?: string; // texto libre: qué va a hacer en el viaje (afina cápsula + looks)
   } = {};
   try {
     body = await request.json();
@@ -134,6 +135,13 @@ export async function POST(request: NextRequest) {
   const maletaLegacy = VALID_LUG.has(body.maleta as Luggage) ? (body.maleta as Luggage) : null;
   const bolsas: Bolsas | null = parseBolsas(body.bolsas) ?? (maletaLegacy ? { [maletaLegacy]: 1 } : null);
   const maleta = dominantLuggage(bolsas) ?? maletaLegacy;
+
+  // Contexto libre: qué va a hacer en el viaje (un partido, una boda, hiking…).
+  // Afina la cápsula y los looks. Tope de 200 chars (igual que el plan de Hoy).
+  const contexto =
+    typeof body.contexto === "string" && body.contexto.trim()
+      ? body.contexto.trim().slice(0, 200)
+      : null;
 
   // Anclas: ids de prendas que la persona quiere llevar sí o sí (máx 4).
   const anclaIds = Array.isArray(body.anclas)
@@ -260,6 +268,7 @@ export async function POST(request: NextRequest) {
           vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
           anclas,
           rechazadas,
+          contexto,
         });
 
         // Las anclas entran al target COMO ITEMS deterministas (el motor recibió
@@ -319,6 +328,7 @@ export async function POST(request: NextRequest) {
             ocasiones,
             maleta,
             bolsas,
+            contexto,
             weather: aggWeather,
             capsule_target: target,
             capsule_match: match,

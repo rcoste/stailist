@@ -144,6 +144,9 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
   // Anclas: prendas del clóset que la persona QUIERE llevar sí o sí (opcional).
   const [anclas, setAnclas] = useState<ClosetPick[]>([]);
   const [anclasOpen, setAnclasOpen] = useState(false);
+  // Texto libre "¿algo especial de este viaje?" (mismo espíritu que el "¿algo en
+  // mente?" de Hoy). Afina la cápsula y los looks a lo que la persona va a hacer.
+  const [contexto, setContexto] = useState("");
   // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
   const [bolsas, setBolsas] = useState<Bolsas>({ mano: 1 });
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
@@ -197,6 +200,7 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
           ocasiones: [...ocasiones],
           bolsas,
           anclas: anclas.map((a) => a.id),
+          contexto: contexto.trim() || undefined,
         }),
       });
       if (!res.ok || !res.body) {
@@ -319,6 +323,7 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
                     onRemove={(id) => setAnclas((prev) => prev.filter((a) => a.id !== id))}
                   />
                 ) : null}
+                <ContextoField value={contexto} onChange={setContexto} />
               </>
             ) : (
               <StepMaleta bolsas={bolsas} onChange={setBolsas} />
@@ -1083,6 +1088,38 @@ function StepMaleta({
       <div className="flex items-start gap-2 text-xs leading-snug text-muted">
         <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
         <span>es un techo, no una meta: armo lo mínimo que combina. si cabe menos, mejor.</span>
+      </div>
+    </div>
+  );
+}
+
+// ---- Contexto libre: "¿algo especial de este viaje?" (opcional) ----
+// Mismo lever que el "¿algo en mente?" de Hoy: una frase de lo que la persona
+// va a hacer (un partido, una boda, hiking, "me gusta viajar cómodo") afina la
+// cápsula y los looks mejor que cualquier chip rígido.
+const CONTEXTO_MAX = 200;
+function ContextoField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="mt-6 flex flex-col gap-2.5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+        ¿algo especial? · opcional
+      </p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value.slice(0, CONTEXTO_MAX))}
+        rows={3}
+        placeholder="Ej: voy a un partido del Mundial, una boda, un día de hiking, me gusta viajar cómodo…"
+        className="w-full resize-none rounded-md border border-line bg-surface p-[13px] text-[14px] leading-snug text-ink transition-colors placeholder:text-muted focus:border-ink focus:outline-none"
+      />
+      <div className="flex items-start gap-2 text-xs leading-snug text-muted">
+        <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
+        <span>lo uso para afinar qué empacas y cómo combino tus looks.</span>
       </div>
     </div>
   );

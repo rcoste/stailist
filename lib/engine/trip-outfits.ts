@@ -81,6 +81,8 @@ export type TripOutfitInputs = {
   // "Generar más": conjuntos de prendas (por nombre) que YA se mostraron. El
   // motor los salta y le pide a la IA combinaciones DISTINTAS — más con lo mismo.
   exclude?: string[][];
+  // Texto libre del viaje (qué va a hacer): afina qué looks destacar y su porqué.
+  contexto?: string | null;
 };
 
 // Tope de celdas de la rejilla que mandamos a validar (una maleta real cae muy
@@ -239,6 +241,9 @@ export async function generateTripOutfits(
     : "";
   const paleta = paletaText(inputs.season, inputs.flow);
   const paletaTxt = paleta ? `\nCOLORIMETRÍA: ${paleta}` : "";
+  const contextoTxt = inputs.contexto
+    ? `\nCONTEXTO DEL VIAJE (lo que va a hacer, en sus palabras): "${inputs.contexto}". Prioriza y titula looks que sirvan para ese plan; si una prenda es clave para eso (un jersey para un partido, algo pulido para una boda), procura que aparezca en al menos un look y dilo en el porqué.`
+    : "";
 
   const prendasTxt = inputs.packable.map((p) => packableDesc(p)).join("\n");
   const capasTxt = capas.length ? capas.map((p) => p.n).join(", ") : "ninguna";
@@ -280,7 +285,7 @@ Para las celdas que SÍ funcionan:
     messages: [
       {
         role: "user",
-        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.${cuerpoTxt}${paletaTxt}\n\nPRENDAS (número. nombre (atributos)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
+        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.${cuerpoTxt}${paletaTxt}${contextoTxt}\n\nPRENDAS (número. nombre (atributos)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
       },
     ],
     output_config: {

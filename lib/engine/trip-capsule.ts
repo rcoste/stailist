@@ -40,6 +40,9 @@ export type TripCapsuleInputs = {
   // Prendas del clóset que la persona ya rechazó en maletas anteriores (eventos
   // trip_item_swap). El motor evita armar ideales pensados para ellas.
   rechazadas?: string[];
+  // Texto libre: qué va a hacer en el viaje, en sus palabras (un partido, una
+  // boda, hiking, "me gusta viajar cómodo"). La señal más específica del viaje.
+  contexto?: string | null;
 };
 
 // La cápsula IDEAL del viaje: una lista mínima de prendas concretas que combinan
@@ -122,6 +125,9 @@ export async function generateTripCapsuleTarget(
         "; "
       )}. No armes ideales cuyo cumplimiento natural sea una de ellas; propone otra dirección (otro color, otro corte u otra pieza) que cubra la misma función.`
     : "";
+  const contextoTxt = inputs.contexto
+    ? `CONTEXTO DEL VIAJE (lo que la persona va a hacer, EN SUS PALABRAS): "${inputs.contexto}". Es la señal MÁS específica del viaje — tenla muy en cuenta: ajusta qué prendas empacas, el nivel de arreglo y el porqué de cada una a esto. Si pide una prenda o pieza concreta para un plan (un jersey para un partido, algo formal para una boda, calzado para caminar), inclúyela o déjale espacio. No la ignores por dimensionar.`
+    : "";
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
@@ -166,7 +172,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
+        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
       },
     ],
     output_config: {
