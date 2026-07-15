@@ -6,9 +6,15 @@ import { withDb } from "@/lib/db";
 // mínima en HTML (el usuario llega aquí desde su cliente de correo, no la app).
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
+  // Estilo alineado a la landing v3: papel hueso, tinta negra, wordmark con el
+  // "ai" en serif itálica (Georgia, web-safe). Sin fuentes propias — es una
+  // página que se abre desde el cliente de correo.
+  const sans =
+    "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif";
+  const serif = "Georgia,'Times New Roman',serif";
   const page = (msg: string) =>
     new NextResponse(
-      `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>stailist</title></head><body style="margin:0;background:#f4f3f1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1a1a1a;"><div style="max-width:420px;margin:80px auto;padding:0 24px;text-align:center;"><div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#8a857e;font-weight:700;">stailist</div><p style="margin-top:20px;font-size:17px;line-height:1.5;">${msg}</p><a href="https://stailist.co/hoy" style="display:inline-block;margin-top:24px;color:#1a1a1a;">Ir a la app →</a></div></body></html>`,
+      `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>stailist</title></head><body style="margin:0;background:#f4f3f1;font-family:${sans};color:#141414;"><div style="max-width:440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;text-align:center;"><div style="font-size:26px;font-weight:700;letter-spacing:-0.045em;line-height:1;">st<span style="font-family:${serif};font-style:italic;font-weight:400;letter-spacing:0;">ai</span>list</div><p style="margin:26px 0 0;font-size:18px;line-height:1.5;color:#363636;max-width:34ch;">${msg}</p><a href="https://stailist.co/hoy" style="display:inline-block;margin-top:26px;font-size:14px;font-weight:700;letter-spacing:-0.01em;color:#141414;text-decoration:none;border-bottom:1.5px solid #141414;padding-bottom:1px;">Ir a la app &rarr;</a></div></body></html>`,
       { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
 
