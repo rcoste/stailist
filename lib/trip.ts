@@ -138,6 +138,31 @@ export function occasionLabels(values: Occasion[]): string {
     .join(", ");
 }
 
+// "La lógica de esta maleta": una línea cálida armada con los DATOS del viaje
+// (piezas, días, ocasiones, clima) — sin IA, así que existe también para viajes
+// ya generados. Responde el "¿por qué me propones esto?" antes de la lista.
+export function tripLogicLine(
+  days: number,
+  nPrendas: number,
+  ocasiones: Occasion[],
+  weather: TripWeather | null
+): string {
+  if (nPrendas <= 0) return "";
+  const ocas = occasionLabels(ocasiones);
+  let s = `${nPrendas} piezas para ${days} ${days === 1 ? "día" : "días"}, elegidas para mezclarse entre sí`;
+  if (ocas) s += ` y cubrir ${ocas}`;
+  if (weather) {
+    if (/lluv|torment|chubasc/i.test(weather.condition ?? "")) {
+      s += " — con una capa lista para la lluvia";
+    } else if (weather.temp_c <= 12) {
+      s += " — en capas para el frío";
+    } else if (weather.temp_c >= 26) {
+      s += " — todo ligero para el calor";
+    }
+  }
+  return s + ".";
+}
+
 export function luggageMeta(maleta: Luggage | null) {
   return LUGGAGE.find((l) => l.value === maleta) ?? null;
 }

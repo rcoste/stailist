@@ -8,7 +8,7 @@ import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarg
 import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
 import { faltaKey, catalogStorageKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
-import { tripDays, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
+import { tripDays, tripLogicLine, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
@@ -131,6 +131,7 @@ export default async function ViajeDetallePage({
 
   const days = tripDays(trip.fecha_inicio, trip.fecha_fin);
   const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null;
+  const logica = tripLogicLine(days, rows.length, (trip.ocasiones as Occasion[]) ?? [], weather);
   const equipaje = luggageSummary(
     trip.bolsas as Bolsas | null,
     trip.maleta as Luggage | null
@@ -236,6 +237,14 @@ export default async function ViajeDetallePage({
               </>
             ) : null}
           </div>
+
+          {/* La lógica de la maleta: por qué esto y no otra cosa, en una línea.
+              Armada con datos del viaje (sin IA) — existe para viajes viejos. */}
+          {logica ? (
+            <p className="editorial mt-2.5 max-w-[340px] text-[14.5px] leading-relaxed text-muted">
+              {logica}
+            </p>
+          ) : null}
         </div>
 
         <div className="lg:min-w-0 lg:flex-1">

@@ -59,22 +59,32 @@ export async function suggestTripSubstitutes(
   const match = (trip?.capsule_match as CapsuleMatch | null) ?? null;
   const overrides = (trip?.overrides as CapsuleOverrides | null) ?? null;
   const used = new Set<string>();
+  // Lo que HOY se muestra en ESTE hueco: el `by` del match aunque sea un
+  // "parecido" sin decidir — es la prenda que la usuaria está viendo/rechazando.
+  let currentBy: string | null = null;
   for (const r of capsuleRows(target, match, overrides)) {
     if (r.covered && r.by) used.add(r.by);
+    if (r.index === index && r.by) currentBy = r.by;
   }
   for (const [k, v] of Object.entries(overrides ?? {})) {
     if (k.startsWith("sub:") && typeof v === "string") used.add(v);
   }
+  // El sustituto ya elegido gana sobre el match como cover actual.
+  const subNow = (overrides as Record<string, unknown> | null)?.[`sub:${index}`];
+  if (typeof subNow === "string") currentBy = subNow;
 
   const [closetAll, imageMap] = await Promise.all([
     loadClosetLite(supabase, user.id),
     loadClosetImageMap(supabase, user.id),
   ]);
   const closet = closetAll.filter((c) => !used.has(c.nombre));
+  // Si el hueco YA está cubierto, esto es un swap ("no me late"): el motor recibe
+  // la rechazada para proponer alternativas con otro aire, no más de lo mismo.
   const matches = await matchSubstitutes(
     missing,
     closet,
-    (profile?.gender as "hombre" | "mujer" | null) ?? null
+    (profile?.gender as "hombre" | "mujer" | null) ?? null,
+    currentBy
   );
   return matches.map((m) => ({ ...m, image: imageMap[m.nombre] ?? null }));
 }
@@ -184,7 +194,7 @@ export async function setTripSubstitute(
 
   const { data: trip } = await supabase
     .from("trips")
-    .select("overrides, empacado, outfits")
+    .select("overrides, empacado, outfits, capsule_target, capsule_match")
     .eq("id", tripId)
     .eq("user_id", user.id)
     .single();
@@ -194,6 +204,22 @@ export async function setTripSubstitute(
     string,
     unknown
   >;
+  // ¿Qué cubría este hueco ANTES? (sub previo, o lo que dijo el match). Si había
+  // algo y eligió otra cosa, es un swap "no me late" → señal real de rechazo.
+  const target = trip.capsule_target as CapsuleTarget | null;
+  const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
+  let prevBy = typeof overrides[subKey(index)] === "string"
+    ? (overrides[subKey(index)] as string)
+    : null;
+  if (!prevBy && target) {
+    // El `by` del match aunque sea "parecido" sin decidir: es la prenda que la
+    // usuaria estaba viendo en ese hueco (y por tanto la que rechazó).
+    const row = capsuleRows(target, match, overrides as CapsuleOverrides).find(
+      (r) => r.index === index
+    );
+    if (row?.by) prevBy = row.by;
+  }
+
   overrides[subKey(index)] = nombre.trim();
 
   const empacado = ((trip.empacado as Record<string, boolean> | null) ?? {}) as Record<
@@ -208,6 +234,19 @@ export async function setTripSubstitute(
     .update(hasOutfits ? { overrides, empacado, outfits_stale: true } : { overrides, empacado })
     .eq("id", tripId)
     .eq("user_id", user.id);
+
+  if (prevBy && prevBy !== nombre.trim()) {
+    await supabase.from("events").insert({
+      user_id: user.id,
+      type: "trip_item_swap",
+      data: {
+        ideal: target?.items?.[index]?.nombre ?? null,
+        from: prevBy,
+        to: nombre.trim(),
+      },
+    });
+  }
+
   revalidatePath(`/viaje/${tripId}`);
 }
 

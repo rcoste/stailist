@@ -144,10 +144,13 @@ export function TripResult({
   const [localSub, setLocalSub] = useState<
     Record<number, { by: string; byImage: string | null }>
   >({});
-  // Flujo "Buscar en mi clóset": hoja con candidatos de la IA.
+  // Flujo "Buscar en mi clóset": hoja con candidatos de la IA. Dos modos:
+  // "falta" (cubrir un hueco sin comprar) y "swap" ("no me late" sobre una prenda
+  // ya cubierta — cámbiala por otra del clóset).
   const [subFlow, setSubFlow] = useState<{
     index: number;
     nombre: string;
+    mode: "falta" | "swap";
     status: "loading" | "done" | "empty" | "error";
     candidates: SubstituteCandidate[];
   } | null>(null);
@@ -211,18 +214,19 @@ export function TripResult({
     });
   }
 
-  async function buscarSustituto(r: TripRow) {
-    setSubFlow({ index: r.index, nombre: r.nombre, status: "loading", candidates: [] });
+  async function buscarSustituto(r: TripRow, mode: "falta" | "swap" = "falta") {
+    setSubFlow({ index: r.index, nombre: r.nombre, mode, status: "loading", candidates: [] });
     try {
       const cands = await suggestTripSubstitutes(tripId, r.index);
       setSubFlow({
         index: r.index,
         nombre: r.nombre,
+        mode,
         status: cands.length ? "done" : "empty",
         candidates: cands,
       });
     } catch {
-      setSubFlow({ index: r.index, nombre: r.nombre, status: "error", candidates: [] });
+      setSubFlow({ index: r.index, nombre: r.nombre, mode, status: "error", candidates: [] });
     }
   }
 
@@ -258,6 +262,11 @@ export function TripResult({
             </span>
             <span className="tabular text-[11px] text-muted">{empaca.length}</span>
           </div>
+          {/* El porqué de cada prenda vive tras el tap (y ahí también se cambia) —
+              sin esta línea nadie lo descubre. */}
+          <p className="-mt-1 text-[11.5px] leading-snug text-muted">
+            toca una prenda para ver por qué va — y si no te late, ahí la cambias
+          </p>
           <ul className="grid grid-cols-4 gap-2">
             {empaca.map((r) => {
               const on = isPacked(r.index);
@@ -379,26 +388,41 @@ export function TripResult({
         onClose={() => setZoom(null)}
         action={
           zoom ? (
-            <button
-              type="button"
-              onClick={() => {
-                togglePacked(zoom.index);
-                setZoom(null);
-              }}
-              className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors duration-200 ${
-                isPacked(zoom.index)
-                  ? "border border-line bg-surface text-muted hover:border-ink hover:text-ink"
-                  : "bg-accent text-on-accent hover:bg-accent-deep"
-              }`}
-            >
-              {isPacked(zoom.index) ? (
-                "quitar de la maleta"
-              ) : (
-                <>
-                  <Icon name="check" size={16} /> empacar
-                </>
-              )}
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  togglePacked(zoom.index);
+                  setZoom(null);
+                }}
+                className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors duration-200 ${
+                  isPacked(zoom.index)
+                    ? "border border-line bg-surface text-muted hover:border-ink hover:text-ink"
+                    : "bg-accent text-on-accent hover:bg-accent-deep"
+                }`}
+              >
+                {isPacked(zoom.index) ? (
+                  "quitar de la maleta"
+                ) : (
+                  <>
+                    <Icon name="check" size={16} /> empacar
+                  </>
+                )}
+              </button>
+              {/* Swap "no me late": busca en el clóset otra prenda que cubra este
+                  hueco (mismo flujo que "buscar en mi clóset" de las faltantes). */}
+              <button
+                type="button"
+                onClick={() => {
+                  const r = rows.find((x) => x.index === zoom.index);
+                  setZoom(null);
+                  if (r) void buscarSustituto(r, "swap");
+                }}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
+              >
+                <Icon name="repetir" size={15} /> no me late — cámbiala
+              </button>
+            </div>
           ) : null
         }
       />
@@ -426,7 +450,7 @@ export function TripResult({
             </div>
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
-                Sustituir
+                {subFlow.mode === "swap" ? "Cambiar" : "Sustituir"}
               </span>
               <span className="editorial text-h3 leading-tight text-ink">{subFlow.nombre}</span>
             </div>
@@ -440,7 +464,9 @@ export function TripResult({
 
             {subFlow.status === "empty" ? (
               <p className="rounded-md border border-line bg-bg px-4 py-6 text-center text-sm text-muted">
-                Nada de tu clóset lo cubre bien — para esta tendrías que conseguirla.
+                {subFlow.mode === "swap"
+                  ? "No tengo nada más en tu clóset que cubra esto igual de bien — si no te late, quítala de la maleta y listo."
+                  : "Nada de tu clóset lo cubre bien — para esta tendrías que conseguirla."}
               </p>
             ) : null}
 
@@ -451,7 +477,10 @@ export function TripResult({
                 </p>
                 <button
                   type="button"
-                  onClick={() => buscarSustituto({ ...rows[subFlow.index] })}
+                  onClick={() => {
+                    const r = rows.find((x) => x.index === subFlow.index);
+                    if (r) void buscarSustituto(r, subFlow.mode);
+                  }}
                   className="min-h-10 rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink"
                 >
                   Reintentar

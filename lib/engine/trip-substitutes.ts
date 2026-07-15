@@ -5,10 +5,13 @@ import type { CapsuleItem, ClosetItemLite } from "@/lib/capsule";
 // prendas del clóset real que pueden SUSTITUIRLA (misma clase, uso compatible) —
 // para no tener que comprar. Mismo criterio de clase que el match de cápsula: la
 // CLASE manda; el color/formalidad solo desempata. Vacío si nada sirve de verdad.
+// `rejected`: la prenda del clóset que HOY cubre el hueco pero no le late (swap
+// "no me late") — el motor propone alternativas con otro aire, no más de lo mismo.
 export async function matchSubstitutes(
   missing: CapsuleItem,
   closet: ClosetItemLite[],
-  gender: "hombre" | "mujer" | null = null
+  gender: "hombre" | "mujer" | null = null,
+  rejected: string | null = null
 ): Promise<{ nombre: string; porque: string }[]> {
   if (closet.length === 0 || !process.env.ANTHROPIC_API_KEY) return [];
 
@@ -39,7 +42,11 @@ REGLAS:
     messages: [
       {
         role: "user",
-        content: `FALTA: ${missing.nombre} (tipo: ${missing.tipo}, ${missing.category}, ${missing.formalidad}, ${missing.colorFamilia}). Para: ${missing.porque}\n\nCLÓSET REAL:\n${closetTxt}\n\n¿Con qué del clóset lo resuelvo?`,
+        content: `FALTA: ${missing.nombre} (tipo: ${missing.tipo}, ${missing.category}, ${missing.formalidad}, ${missing.colorFamilia}). Para: ${missing.porque}${
+          rejected
+            ? `\n\nOJO: para este hueco tenía "${rejected}" pero NO le late — proponle opciones distintas, con otro aire (no la incluyas ni propongas casi lo mismo).`
+            : ""
+        }\n\nCLÓSET REAL:\n${closetTxt}\n\n¿Con qué del clóset lo resuelvo?`,
       },
     ],
     output_config: {
