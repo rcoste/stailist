@@ -239,7 +239,8 @@ export function TripOutfits({
         <p className="text-sm text-error">No pude armar otros looks — inténtalo otra vez.</p>
       ) : null}
 
-      <div className="flex flex-col gap-3">
+      {/* Desktop (handoff desktop_f3): cards de look a 2 columnas. */}
+      <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
         {outfits.map((o, i) => (
           <div
             key={i}

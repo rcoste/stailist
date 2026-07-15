@@ -15,6 +15,7 @@ import {
   type SubstituteCandidate,
 } from "@/lib/trip-actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
+import { useTripPacked } from "@/components/trip-packed-context";
 import { familiaToHex } from "@/lib/capsule-images";
 import { Toast } from "@/components/toast";
 import { useTripGen } from "@/components/trip-gen-context";
@@ -126,19 +127,18 @@ function FaltaCard({
 export function TripResult({
   tripId,
   rows,
-  empacado: empacadoInicial,
   savedWishKeys = [],
 }: {
   tripId: string;
   rows: TripRow[];
-  empacado: Record<string, boolean>;
   savedWishKeys?: string[];
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
   // (botón muerto). Ver components/trip-gen-context.
   const { onGenerateLooks, onViewLooks, looksExist, generating } = useTripGen();
-  const [packed, setPacked] = useState<Record<string, boolean>>(empacadoInicial);
+  // El estado de empacado vive en el context (lo comparte el rail de desktop).
+  const { packed, setPackedFor } = useTripPacked();
   const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
   // Sustitutos elegidos en esta sesión (optimista; el server los persiste).
   const [localSub, setLocalSub] = useState<
@@ -196,7 +196,7 @@ export function TripResult({
 
   function togglePacked(index: number, value?: boolean) {
     const next = value ?? !isPacked(index);
-    setPacked((p) => ({ ...p, [String(index)]: next }));
+    setPackedFor(index, next);
     setTripPacked(tripId, index, next);
   }
 
@@ -232,7 +232,7 @@ export function TripResult({
 
   function elegirSustituto(index: number, c: SubstituteCandidate) {
     setLocalSub((s) => ({ ...s, [index]: { by: c.nombre, byImage: c.image } }));
-    setPacked((p) => ({ ...p, [String(index)]: true }));
+    setPackedFor(index, true);
     setSubFlow(null);
     setTripSubstitute(tripId, index, c.nombre);
   }
@@ -241,8 +241,8 @@ export function TripResult({
     <div className="flex flex-col gap-4">
       <Toast message={toast} />
 
-      {/* Progreso de empacado */}
-      <div className="flex items-center gap-2.5">
+      {/* Progreso de empacado (móvil — en desktop vive en el rail izquierdo) */}
+      <div className="flex items-center gap-2.5 lg:hidden">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
           <div
             className="h-full rounded-full bg-accent"
@@ -258,16 +258,84 @@ export function TripResult({
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
-              Empaca esto
+              <span className="lg:hidden">Empaca esto</span>
+              <span className="hidden lg:inline">Por empacar — palomea al meterla</span>
             </span>
             <span className="tabular text-[11px] text-muted">{empaca.length}</span>
           </div>
           {/* El porqué de cada prenda vive tras el tap (y ahí también se cambia) —
-              sin esta línea nadie lo descubre. */}
-          <p className="-mt-1 text-[11.5px] leading-snug text-muted">
+              sin esta línea nadie lo descubre. En desktop el porqué ya es visible. */}
+          <p className="-mt-1 text-[11.5px] leading-snug text-muted lg:hidden">
             toca una prenda para ver por qué va — y si no te late, ahí la cambias
           </p>
-          <ul className="grid grid-cols-4 gap-2">
+
+          {/* Desktop (handoff desktop_f3): filas compactas con el PORQUÉ visible.
+              Tap en la fila → zoom (ahí vive el swap); check a la derecha. */}
+          <ul className="hidden lg:grid lg:grid-cols-2 lg:gap-x-6 lg:gap-y-2.5">
+            {empaca.map((r) => {
+              const on = isPacked(r.index);
+              const { by, byImage } = ov(r);
+              return (
+                <li key={r.index} className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setZoom({
+                        index: r.index,
+                        image: byImage,
+                        nombre: by ?? r.nombre,
+                        sub: r.porque,
+                      })
+                    }
+                    className="group flex min-w-0 flex-1 items-center gap-3 rounded-md py-1 text-left"
+                  >
+                    <span
+                      className={`relative block h-[64px] w-[52px] shrink-0 overflow-hidden rounded-sm border border-line bg-surface ${
+                        on ? "opacity-55" : ""
+                      }`}
+                    >
+                      {byImage ? (
+                        <Image src={byImage} alt="" fill sizes="52px" className="object-cover" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-muted">
+                          <Icon name="gancho" size={16} />
+                        </span>
+                      )}
+                    </span>
+                    <span className="flex min-w-0 flex-col">
+                      <span
+                        className={`truncate text-[13.5px] font-semibold ${
+                          on ? "text-muted line-through" : "text-ink group-hover:underline"
+                        }`}
+                      >
+                        {by ?? r.nombre}
+                      </span>
+                      <span className="line-clamp-2 text-[11.5px] leading-snug text-muted">
+                        {r.porque}
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePacked(r.index)}
+                    aria-label={on ? "Quitar de la maleta" : "Empacar"}
+                    aria-pressed={on}
+                    className="shrink-0 p-1"
+                  >
+                    <span
+                      className={`flex h-[22px] w-[22px] items-center justify-center rounded-full transition-colors ${
+                        on ? "bg-accent text-on-accent" : "border-[1.5px] border-line hover:border-ink"
+                      }`}
+                    >
+                      {on ? <Icon name="check" size={13} strokeWidth={2.4} /> : null}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <ul className="grid grid-cols-4 gap-2 lg:hidden">
             {empaca.map((r) => {
               const on = isPacked(r.index);
               const { by, byImage } = ov(r);
@@ -333,11 +401,12 @@ export function TripResult({
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
-              Te falta
+              <span className="lg:hidden">Te falta</span>
+              <span className="hidden lg:inline">Te falta conseguir</span>
             </span>
             <span className="tabular text-[11px] text-muted">{falta.length}</span>
           </div>
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {falta.map((r) => (
               <FaltaCard
                 key={r.index}

@@ -12,6 +12,7 @@ import { tripDays, tripLogicLine, luggageSummary, type Bolsas, type Luggage, typ
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
+import { TripPackedProvider, TripPackedBar } from "@/components/trip-packed-context";
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 function fmt(d: string): string {
@@ -190,11 +191,17 @@ export default async function ViajeDetallePage({
       : r.base;
   const maletaCount = rows.filter((r) => effInit(r) !== "falta" || empacado[String(r.index)]).length;
   const looksCount = resolvedOutfits?.length ?? 0;
+  // Índices de lo empacable (para la barra del rail de desktop — el estado vivo
+  // de los checks lo pone el TripPackedProvider).
+  const empacaIndices = rows
+    .filter((r) => effInit(r) !== "falta" || empacado[String(r.index)])
+    .map((r) => r.index);
 
   return (
     <AppShell desktop="wide">
-      {/* Desktop (F3): 2 columnas — resumen del viaje/clima sticky a la izquierda,
-          maleta/looks a la derecha. Móvil: columna (resumen arriba, tabs abajo). */}
+      <TripPackedProvider initial={empacado}>
+      {/* Desktop (F3 + handoff): 2 columnas — rail del viaje sticky a la izquierda
+          (resumen/clima/progreso), maleta/looks a la derecha. Móvil: columna. */}
       <section className="flex flex-col gap-4 pt-1 lg:flex-row lg:items-start lg:gap-10">
         {/* Encabezado compartido (no cambia entre tabs). */}
         <div className="flex flex-col gap-1.5 lg:sticky lg:top-20 lg:w-[34%] lg:shrink-0">
@@ -243,12 +250,17 @@ export default async function ViajeDetallePage({
           </div>
 
           {/* La lógica de la maleta: por qué esto y no otra cosa, en una línea.
-              Armada con datos del viaje (sin IA) — existe para viajes viejos. */}
+              Firma del motor si existe; plantilla con datos si el viaje es viejo. */}
           {logica ? (
             <p className="editorial mt-2.5 max-w-[340px] text-[14.5px] leading-relaxed text-muted">
               {logica}
             </p>
           ) : null}
+
+          {/* Progreso de empacado en el rail (solo desktop; en móvil vive en el tab) */}
+          <div className="lg:mt-6">
+            <TripPackedBar empacaIndices={empacaIndices} />
+          </div>
         </div>
 
         <div className="lg:min-w-0 lg:flex-1">
@@ -261,7 +273,6 @@ export default async function ViajeDetallePage({
             <TripResult
               tripId={trip.id}
               rows={rows}
-              empacado={empacado}
               savedWishKeys={savedWishKeys}
             />
           }
@@ -277,6 +288,7 @@ export default async function ViajeDetallePage({
         />
         </div>
       </section>
+      </TripPackedProvider>
     </AppShell>
   );
 }
