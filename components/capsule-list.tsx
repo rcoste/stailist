@@ -289,7 +289,7 @@ export function CapsuleList({
           en la página). */}
       {pendiente.length > 0 ? (
         <Section title="Tu cápsula ideal" count={pendiente.length}>
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {pendiente.map((r) => (
               <BigCard
                 key={rowKey(r)}
@@ -305,7 +305,7 @@ export function CapsuleList({
 
       {falta.length > 0 ? (
         <Section title="Lo que más te suma" count={falta.length}>
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {falta.map((r) => (
               <SumaCard
                 key={rowKey(r)}
@@ -330,7 +330,7 @@ export function CapsuleList({
 
       {decidir.length > 0 ? (
         <Section title="Decide si te sirve" count={decidir.length}>
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {decidir.map((r) => (
               <DecideRow
                 key={rowKey(r)}

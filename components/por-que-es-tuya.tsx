@@ -46,7 +46,7 @@ export function PorQueEsTuya({
       </span>
 
       {firma ? (
-        <p className="display mt-3 text-[22px] font-medium leading-[1.28] tracking-[-0.006em] text-ink">
+        <p className="display mt-3 text-[22px] font-medium leading-[1.28] tracking-[-0.006em] text-ink lg:text-[26px] lg:before:content-['“'] lg:after:content-['”']">
           {renderFirma(firma)}
         </p>
       ) : null}
@@ -62,8 +62,12 @@ export function PorQueEsTuya({
               key={i}
               className="flex items-start gap-3 border-t border-line py-3 first:border-t-0 first:pt-1"
             >
-              <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent">
+              {/* Móvil: ícono en caja. Desktop (handoff desktop_f3): numeral en serif. */}
+              <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent lg:hidden">
                 <Icon name={PILAR_ICON[p.icono ?? ""] ?? "destello"} size={16} />
+              </span>
+              <span className="display hidden w-[30px] shrink-0 pt-px text-[20px] leading-none text-faint lg:block">
+                {i + 1}
               </span>
               <div className="pt-px">
                 <p className="text-[13.5px] font-semibold leading-snug text-ink">{p.titulo}</p>

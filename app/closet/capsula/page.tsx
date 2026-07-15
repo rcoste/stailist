@@ -108,7 +108,7 @@ export default async function CapsulaPage({
           </h1>
           <Link
             href="/closet/capsula/editar"
-            className="shrink-0 text-sm font-semibold text-accent hover:underline"
+            className="shrink-0 text-sm font-semibold text-accent hover:underline lg:hidden"
           >
             editar
           </Link>
@@ -176,6 +176,15 @@ export default async function CapsulaPage({
                   </div>
                 </div>
               ) : null}
+
+              {/* Editar: en desktop vive al pie del rail (handoff); en móvil el
+                  link sigue junto al título. */}
+              <Link
+                href="/closet/capsula/editar"
+                className="hidden w-fit items-center gap-1 text-sm font-semibold text-ink hover:underline lg:flex"
+              >
+                editar mi cápsula <Icon name="chevron" size={14} />
+              </Link>
             </div>
 
             <div className="flex flex-col gap-6 lg:min-w-0 lg:flex-1">
