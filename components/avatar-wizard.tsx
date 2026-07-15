@@ -10,28 +10,46 @@ import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
 import { markNudge } from "@/lib/journey-actions";
 import type { Gender } from "@/lib/auth";
 
-// Wizard de avatar digital (issue #1): subir fotos → tipo de cuerpo → generar →
-// confirmar/rehacer. La generación es obligatoria (sin foto cruda); si falla,
-// sale limpio sin guardar nada (el avatar es opcional). Las fotos fuente no se
-// persisten — solo viajan en la request de generación.
+// Wizard de avatar digital, en DOS etapas (A1, 2026-07-15): primero el RETRATO
+// (la identidad se aprueba barata y enfocada — con juez visible y ajustes
+// dirigidos), después el cuerpo completo ANCLADO a ese retrato aprobado. Si
+// falla, sale limpio sin guardar nada (el avatar es opcional). Las fotos fuente
+// no se persisten — solo viajan en la request de generación.
 
 type BodyType = "slim" | "athletic" | "average" | "full";
 // Hasta 2 caras + 3 cuerpos: más ángulos = identidad más fiel (Gemini 3 Pro
 // Image acepta muchas referencias; antes solo mandábamos 3 fotos).
 type Slot = "face" | "face2" | "body1" | "body2" | "body3";
-type Step = "fotos" | "cuerpo" | "generando" | "preview" | "error";
+type Step = "fotos" | "cara" | "cuerpo" | "generando" | "preview" | "error";
 
 const TYPES: BodyType[] = ["slim", "athletic", "average", "full"];
 const LABELS: Record<Gender, Record<BodyType, string>> = {
   hombre: { slim: "Delgado", athletic: "Atlético", average: "Promedio", full: "Robusto" },
   mujer: { slim: "Delgada", athletic: "Atlética", average: "Promedio", full: "Con curvas" },
 };
-const GEN_MSGS = [
-  "Preparando tus fotos…",
+const GEN_MSGS_CARA = [
+  "Estudiando tus fotos…",
+  "Dibujando tu retrato…",
+  "Afinando el parecido…",
+];
+const GEN_MSGS_CUERPO = [
+  "Retrato aprobado — ahora el cuerpo…",
   "Generando tu avatar…",
   "Afinando los detalles…",
   "Casi listo…",
 ];
+
+// Ajustes dirigidos del retrato: un tap = una corrección regenerada, en vez de
+// "rehacer" a ciegas. La barba solo aplica a hombre.
+const AJUSTES_BASE = [
+  "pelo más corto",
+  "pelo más largo",
+  "más edad",
+  "más joven",
+  "piel más clara",
+  "piel más oscura",
+];
+const AJUSTES_HOMBRE = ["sin barba", "más barba"];
 
 function blobToB64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -80,7 +98,15 @@ export function AvatarWizard({
   const [generated, setGenerated] = useState<string | null>(null);
   const [fails, setFails] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [genMsg, setGenMsg] = useState(GEN_MSGS[0]);
+  const [genMsg, setGenMsg] = useState(GEN_MSGS_CARA[0]);
+  // Etapa cara: retrato generado + veredicto del juez (visible) + ajuste libre.
+  const [faceGen, setFaceGen] = useState<string | null>(null);
+  const [faceVeredicto, setFaceVeredicto] = useState<{ score: number | null; problema: string } | null>(null);
+  const [ajusteLibre, setAjusteLibre] = useState("");
+  // Qué etapa está generando/falló (para los mensajes y el retry del error).
+  const [genKind, setGenKind] = useState<"cara" | "cuerpo">("cara");
+  // Las caras comprimidas se cachean: los ajustes regeneran sin recomprimir.
+  const facesRef = useRef<{ face: string; extra: string[] } | null>(null);
 
   // Limpia los object URLs al desmontar.
   useEffect(() => {
@@ -90,20 +116,27 @@ export function AvatarWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mensajes rotativos durante la generación. El reset a GEN_MSGS[0] se hace al
-  // entrar a "generando" (en generate()), no aquí, para no llamar setState
-  // sincrónicamente dentro del effect.
+  // Mensajes rotativos durante la generación. El reset al primer mensaje se hace
+  // al entrar a "generando" (en generateFace/generateBody), no aquí, para no
+  // llamar setState sincrónicamente dentro del effect.
   useEffect(() => {
     if (step !== "generando") return;
+    const msgs = genKind === "cara" ? GEN_MSGS_CARA : GEN_MSGS_CUERPO;
     let i = 0;
     const t = setInterval(() => {
-      i = (i + 1) % GEN_MSGS.length;
-      setGenMsg(GEN_MSGS[i]);
+      i = (i + 1) % msgs.length;
+      setGenMsg(msgs[i]);
     }, 2500);
     return () => clearInterval(t);
-  }, [step]);
+  }, [step, genKind]);
 
   function setSlot(slot: Slot, file: File | null) {
+    // Cambió una foto de cara → el caché comprimido y el retrato dejan de valer.
+    if (slot === "face" || slot === "face2") {
+      facesRef.current = null;
+      setFaceGen(null);
+      setFaceVeredicto(null);
+    }
     setPhotos((p) => ({ ...p, [slot]: file }));
     setPreviews((prev) => {
       if (prev[slot]) URL.revokeObjectURL(prev[slot] as string);
@@ -111,28 +144,78 @@ export function AvatarWizard({
     });
   }
 
-  const canContinue = !!photos.face && !!photos.body1;
+  // La etapa cara solo pide la cara; el cuerpo (fotos opcionales) va después.
+  const canContinue = !!photos.face;
 
-  async function generate() {
-    if (!bodyType) return;
-    setGenMsg(GEN_MSGS[0]);
+  const aB64 = async (f: File) => blobToB64(await comprimir(await toUsableImage(f)));
+
+  async function facesB64(): Promise<{ face: string; extra: string[] }> {
+    if (facesRef.current) return facesRef.current;
+    const face = await aB64(photos.face as File);
+    const extra = photos.face2 ? [await aB64(photos.face2)] : [];
+    facesRef.current = { face, extra };
+    return facesRef.current;
+  }
+
+  // Etapa 1: retrato. `ajuste` = corrección dirigida sobre el retrato previo.
+  async function generateFace(ajuste?: string) {
+    setGenKind("cara");
+    setGenMsg(GEN_MSGS_CARA[0]);
     setStep("generando");
     try {
-      const aB64 = async (f: File) => blobToB64(await comprimir(await toUsableImage(f)));
-      const faceB64 = await aB64(photos.face as File);
-      const faceExtraB64 = photos.face2 ? [await aB64(photos.face2)] : [];
-      const bodyFiles = [photos.body1, photos.body2, photos.body3].filter(Boolean) as File[];
-      const bodyB64 = await Promise.all(bodyFiles.map(aB64));
-
+      const { face, extra } = await facesB64();
       const res = await fetch("/api/avatar/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ faceB64, faceExtraB64, bodyB64, bodyType }),
+        body: JSON.stringify({
+          stage: "face",
+          faceB64: face,
+          faceExtraB64: extra,
+          ...(ajuste ? { ajuste, prevFaceB64: faceGen } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error("gen");
+      const data = (await res.json()) as {
+        image?: string;
+        score?: number | null;
+        problema?: string | null;
+      };
+      if (!data.image) throw new Error("gen");
+      setFaceGen(data.image);
+      setFaceVeredicto({ score: data.score ?? null, problema: data.problema ?? "" });
+      setAjusteLibre("");
+      setFails(0);
+      setStep("cara");
+    } catch {
+      setFails((n) => n + 1);
+      setStep("error");
+    }
+  }
+
+  // Etapa 2: cuerpo completo anclado al retrato aprobado.
+  async function generateBody() {
+    if (!bodyType || !faceGen) return;
+    setGenKind("cuerpo");
+    setGenMsg(GEN_MSGS_CUERPO[0]);
+    setStep("generando");
+    try {
+      const { face } = await facesB64();
+      const bodyFiles = [photos.body1, photos.body2, photos.body3].filter(Boolean) as File[];
+      const bodyB64 = await Promise.all(bodyFiles.map(aB64));
+      const res = await fetch("/api/avatar/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stage: "body",
+          faceB64: face,
+          headshotB64: faceGen,
+          bodyB64,
+          bodyType,
+        }),
       });
       if (!res.ok) throw new Error("gen");
       const data = (await res.json()) as { image?: string };
       if (!data.image) throw new Error("gen");
-
       setGenerated(data.image);
       setFails(0);
       setStep("preview");
@@ -145,7 +228,8 @@ export function AvatarWizard({
   async function confirm() {
     if (!generated || !bodyType) return;
     setSaving(true);
-    const res = await uploadGeneratedAvatar(generated, userId, bodyType);
+    // El retrato aprobado se guarda como ancla de identidad (avatar-face.jpg).
+    const res = await uploadGeneratedAvatar(generated, userId, bodyType, faceGen);
     if (!res.ok) {
       setSaving(false);
       setFails((n) => n + 1);
@@ -191,9 +275,193 @@ export function AvatarWizard({
               preview={previews.face2}
               onPick={(f) => setSlot("face2", f)}
             />
+          </div>
+          <button
+            type="button"
+            disabled={!canContinue}
+            onClick={() => generateFace()}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          >
+            <Icon name="destello" size={16} />
+            Ver mi retrato
+          </button>
+          {skipHref ? (
+            <Link
+              href={skipHref}
+              className="flex min-h-11 items-center justify-center rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-ink"
+            >
+              Ahora no, seguir sin avatar
+            </Link>
+          ) : null}
+        </div>
+      )}
+
+      {step === "cara" && faceGen && (
+        <div className="mt-2 flex flex-col gap-4">
+          <button
+            type="button"
+            onClick={() => setStep("fotos")}
+            className="self-start text-sm font-medium text-muted hover:text-ink"
+          >
+            ← Fotos
+          </button>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-h1 font-semibold text-ink">¿Te reconoces?</h1>
+            <p className="text-sm text-muted">
+              Primero clavamos tu cara — el cuerpo se arma sobre este retrato.
+            </p>
+          </div>
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[240px] overflow-hidden rounded-lg border border-line bg-surface">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`data:image/jpeg;base64,${faceGen}`}
+              alt="Tu retrato generado"
+              className="h-full w-full object-cover"
+            />
+          </div>
+
+          {/* Juez de parecido, VISIBLE: antes puntuaba en silencio y se tiraba. */}
+          {faceVeredicto?.score != null ? (
+            faceVeredicto.score >= 7 ? (
+              <p className="text-center text-xs text-muted">
+                Mi juez de parecido te reconoce ({faceVeredicto.score}/10).
+              </p>
+            ) : (
+              <p className="text-center text-xs leading-snug text-warning">
+                A mi juez no le convence ({faceVeredicto.score}/10)
+                {faceVeredicto.problema ? `: ${faceVeredicto.problema}` : ""}. Prueba un
+                ajuste abajo o cambia la foto.
+              </p>
+            )
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setStep("cuerpo")}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            <Icon name="check" size={16} />
+            Sí, soy yo — sigamos
+          </button>
+
+          {/* Ajustes dirigidos: un tap = una corrección, sin rehacer a ciegas. */}
+          <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
+            <p className="text-xs font-semibold text-ink">¿Algo no cuadra? Corrígelo:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {[...AJUSTES_BASE, ...(gender === "hombre" ? AJUSTES_HOMBRE : [])].map((a) => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => generateFace(a)}
+                  className="rounded-sm border border-line bg-bg px-2.5 py-1.5 text-xs font-medium text-ink transition-colors hover:border-ink"
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={ajusteLibre}
+                onChange={(e) => setAjusteLibre(e.target.value)}
+                placeholder="o dime tú — “sin lentes”, “pelo rizado”…"
+                maxLength={140}
+                className="min-h-10 min-w-0 flex-1 rounded-sm border border-line bg-bg px-3 text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
+              />
+              <button
+                type="button"
+                disabled={!ajusteLibre.trim()}
+                onClick={() => generateFace(ajusteLibre.trim())}
+                className="min-h-10 shrink-0 rounded-sm border border-line bg-surface px-3 text-sm font-medium text-ink transition-colors hover:border-ink disabled:opacity-50"
+              >
+                Corregir
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => generateFace()}
+              className="flex items-center justify-center gap-1.5 self-center text-xs font-medium text-muted hover:text-ink"
+            >
+              <Icon name="repetir" size={13} /> Rehacer desde tus fotos
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "cuerpo" && (
+        <div className="mt-2 flex flex-col gap-5">
+          <button
+            type="button"
+            onClick={() => setStep("cara")}
+            className="self-start text-sm font-medium text-muted hover:text-ink"
+          >
+            ← Tu retrato
+          </button>
+          {siluetaBodyType ? (
+            <div className="flex flex-col gap-1">
+              <h1 className="text-h1 font-semibold text-ink">Ahora, tu cuerpo</h1>
+              <p className="text-sm text-muted">
+                Usaré la complexión de tu silueta ({LABELS[gender][siluetaBodyType]} — la
+                cambias en Perfil → Mi silueta). Si quieres máxima fidelidad, súmame
+                fotos de tu cuerpo; si no, con tu retrato basta.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <h1 className="text-h1 font-semibold text-ink">
+                ¿Cuál se parece más a tu cuerpo?
+              </h1>
+              <p className="text-sm text-muted">Es para que la ropa te quede fiel.</p>
+            </div>
+          )}
+          {!siluetaBodyType ? (
+            <div className="grid grid-cols-2 gap-3">
+              {TYPES.map((t) => {
+                const selected = bodyType === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setBodyType(t)}
+                    className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors ${
+                      selected
+                        ? "border-accent bg-accent-soft"
+                        : "border-line bg-surface hover:border-ink"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={selected ? "bg-accent" : "bg-muted"}
+                      style={{
+                        width: 40,
+                        height: 80,
+                        maskImage: `url(/avatar-shapes/${gender}-${t}.svg)`,
+                        WebkitMaskImage: `url(/avatar-shapes/${gender}-${t}.svg)`,
+                        maskRepeat: "no-repeat",
+                        WebkitMaskRepeat: "no-repeat",
+                        maskPosition: "center",
+                        WebkitMaskPosition: "center",
+                        maskSize: "contain",
+                        WebkitMaskSize: "contain",
+                      }}
+                    />
+                    <span
+                      className={`text-sm font-medium ${selected ? "text-accent" : "text-ink"}`}
+                    >
+                      {LABELS[gender][t]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {/* Fotos de cuerpo: ahora OPCIONALES — el retrato aprobado + la
+              complexión bastan; las fotos suman fidelidad de proporciones. */}
+          <div className="flex flex-col gap-3">
             <UploadTile
-              label="Cuerpo completo"
-              hint="De pie y de frente, de la cabeza a los pies"
+              label="Foto de tu cuerpo"
+              hint="Opcional — de pie y de frente, suma fidelidad"
               preview={previews.body1}
               onPick={(f) => setSlot("body1", f)}
             />
@@ -210,101 +478,11 @@ export function AvatarWizard({
               onPick={(f) => setSlot("body3", f)}
             />
           </div>
-          {siluetaBodyType ? (
-            <>
-              <p className="text-xs text-muted">
-                Usaré la complexión de tu silueta ({LABELS[gender][siluetaBodyType]}).
-                La cambias en Perfil → Mi silueta.
-              </p>
-              <button
-                type="button"
-                disabled={!canContinue}
-                onClick={generate}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
-              >
-                <Icon name="destello" size={16} />
-                Generar mi avatar
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              disabled={!canContinue}
-              onClick={() => setStep("cuerpo")}
-              className="flex min-h-12 items-center justify-center rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
-            >
-              Siguiente
-            </button>
-          )}
-          {skipHref ? (
-            <Link
-              href={skipHref}
-              className="flex min-h-11 items-center justify-center rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-ink"
-            >
-              Ahora no, seguir sin avatar
-            </Link>
-          ) : null}
-        </div>
-      )}
 
-      {step === "cuerpo" && (
-        <div className="mt-2 flex flex-col gap-5">
-          <button
-            type="button"
-            onClick={() => setStep("fotos")}
-            className="self-start text-sm font-medium text-muted hover:text-ink"
-          >
-            ← Fotos
-          </button>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-h1 font-semibold text-ink">
-              ¿Cuál se parece más a tu cuerpo?
-            </h1>
-            <p className="text-sm text-muted">Es para que la ropa te quede fiel.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {TYPES.map((t) => {
-              const selected = bodyType === t;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setBodyType(t)}
-                  className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors ${
-                    selected
-                      ? "border-accent bg-accent-soft"
-                      : "border-line bg-surface hover:border-ink"
-                  }`}
-                >
-                  <span
-                    aria-hidden
-                    className={selected ? "bg-accent" : "bg-muted"}
-                    style={{
-                      width: 40,
-                      height: 80,
-                      maskImage: `url(/avatar-shapes/${gender}-${t}.svg)`,
-                      WebkitMaskImage: `url(/avatar-shapes/${gender}-${t}.svg)`,
-                      maskRepeat: "no-repeat",
-                      WebkitMaskRepeat: "no-repeat",
-                      maskPosition: "center",
-                      WebkitMaskPosition: "center",
-                      maskSize: "contain",
-                      WebkitMaskSize: "contain",
-                    }}
-                  />
-                  <span
-                    className={`text-sm font-medium ${selected ? "text-accent" : "text-ink"}`}
-                  >
-                    {LABELS[gender][t]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
           <button
             type="button"
             disabled={!bodyType}
-            onClick={generate}
+            onClick={generateBody}
             className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
           >
             <Icon name="destello" size={16} />
@@ -349,11 +527,19 @@ export function AvatarWizard({
             <button
               type="button"
               disabled={saving}
-              onClick={generate}
+              onClick={generateBody}
               className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-line bg-surface px-5 text-sm font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-60"
             >
               <Icon name="repetir" size={16} />
-              Rehacer
+              Rehacer el cuerpo
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setStep("cara")}
+              className="flex min-h-10 items-center justify-center text-xs font-medium text-muted transition-colors hover:text-ink"
+            >
+              La cara no quedó — volver a ajustarla
             </button>
           </div>
         </div>
@@ -372,7 +558,7 @@ export function AvatarWizard({
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              onClick={generate}
+              onClick={() => (genKind === "cara" ? generateFace() : generateBody())}
               className="flex min-h-11 items-center justify-center rounded-sm bg-accent px-6 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
             >
               Reintentar

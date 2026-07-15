@@ -20,6 +20,69 @@ const BUILD: Record<string, string> = {
   full: "fuller, heavier-set",
 };
 
+// Reglas de identidad compartidas por las dos etapas (retrato y cuerpo).
+const IDENTITY_RULES =
+  "Keep their face, skin tone, hair and identity identical and clearly " +
+  "recognizable, INCLUDING their natural facial expression from the photos — if " +
+  "they are smiling, keep the smile; if they are serious or neutral, keep that; " +
+  "do NOT change or neutralize their expression. Also keep their apparent age " +
+  "from the photos — do NOT make them look younger or older than they are, and " +
+  "do NOT beautify or idealize them. ";
+
+// Etapa 1 — retrato (cara primero): la identidad se aprueba barata y enfocada
+// antes de gastar en el cuerpo. `ajuste` = corrección dirigida de la persona
+// ("pelo más corto", "sin lentes"…) aplicada sobre el retrato previo.
+function buildFacePrompt(nFaces: number, ajuste: string | null, hasPrev: boolean): string {
+  const faceRef =
+    nFaces > 1
+      ? `the first ${nFaces} images show their face from different angles`
+      : "the first image is their face";
+  let p =
+    "Generate a photorealistic head-and-shoulders studio portrait of the SAME " +
+    `person shown in the provided photos (${faceRef}). ` +
+    IDENTITY_RULES +
+    "They wear a plain white crew-neck t-shirt. They face the camera directly, " +
+    "head and shoulders centered. Plain flat light-grey studio background, cool " +
+    "neutral lighting (NO warm or golden tones). Editorial, clean. No text, no " +
+    "props, no extra people.";
+  if (ajuste && hasPrev) {
+    p +=
+      " The LAST image is the previous attempt. The person asked for exactly ONE " +
+      `correction (given in Spanish): "${ajuste}". Apply ONLY that correction and ` +
+      "keep everything else from the previous attempt unchanged.";
+  } else if (ajuste) {
+    p += ` The person asked for one correction (given in Spanish): "${ajuste}". Apply it.`;
+  }
+  return p;
+}
+
+// Etapa 2 — cuerpo completo anclado al retrato APROBADO (primera imagen): la
+// identidad ya no se re-interpreta, se copia. Las fotos de cuerpo son opcionales.
+function buildBodyPrompt(build: string, nBodies: number): string {
+  return (
+    "Generate a photorealistic full-body portrait of the SAME person shown in " +
+    "the FIRST image — an approved studio portrait of them. Match their face, " +
+    "hair, skin tone and facial expression from that portrait EXACTLY; it is " +
+    "the source of truth for their identity. " +
+    (nBodies > 0
+      ? `The last ${nBodies} image(s) show their real body — use them for body ` +
+        "proportions and posture. "
+      : "") +
+    IDENTITY_RULES +
+    `The person has a ${build} build — render realistic body ` +
+    "proportions that match them; DO NOT slim them down or alter their body " +
+    "shape. Dress them in a plain white crew-neck t-shirt and classic mid-blue " +
+    "jeans (the same base outfit every time). Show the ENTIRE body from head to " +
+    "feet: the head and the feet (with shoes) must be fully visible and NOT " +
+    "cropped, leaving a little empty space above the head and below the feet. " +
+    "The person stands centered and full-length in the frame, facing forward in " +
+    "a natural relaxed posture. Plain flat light-grey studio background, cool " +
+    "neutral lighting (NO warm or golden tones). Editorial, clean. No text, no " +
+    "props, no extra people."
+  );
+}
+
+// Legacy (clientes con JS viejo cacheado): una sola pasada fotos → cuerpo entero.
 function buildPrompt(build: string, nFaces: number): string {
   const faceRef =
     nFaces > 1
@@ -28,11 +91,8 @@ function buildPrompt(build: string, nFaces: number): string {
   return (
     "Generate a photorealistic full-body portrait of the SAME person shown in " +
     `the provided photos (${faceRef}; the others show their ` +
-    "body). Keep their face, skin tone, hair and identity identical and clearly " +
-    "recognizable, INCLUDING their natural facial expression from the photos — if " +
-    "they are smiling, keep the smile; if they are serious or neutral, keep that; " +
-    "do NOT change or neutralize their expression. Also keep their apparent age " +
-    "from the photos — do NOT make them look younger or older than they are. " +
+    "body). " +
+    IDENTITY_RULES +
     `The person has a ${build} build — render realistic body ` +
     "proportions that match them; DO NOT slim them down or alter their body " +
     "shape. Dress them in a plain white crew-neck t-shirt and classic mid-blue " +
@@ -70,6 +130,16 @@ async function generarAvatar(parts: unknown[]): Promise<string | null> {
   return (img?.inlineData?.data as string | undefined) ?? null;
 }
 
+// El media_type DEBE coincidir con los bytes reales (la API lo valida y truena
+// con 400 si no) — Gemini devuelve JPEG o PNG según le da. Detectamos por los
+// magic bytes del base64. Este mismatch tuvo al juez roto en silencio desde su
+// estreno (declaraba png fijo): score null en todos los eventos.
+function mediaTypeOf(b64: string): "image/png" | "image/jpeg" | "image/webp" {
+  if (b64.startsWith("iVBOR")) return "image/png";
+  if (b64.startsWith("UklGR")) return "image/webp";
+  return "image/jpeg";
+}
+
 // Juez de parecido (best-effort): compara la selfie con el avatar generado y
 // puntúa la identidad facial 1-10. Si no hay API key o falla, devuelve null y
 // el avatar pasa sin juez (nunca rompe la generación).
@@ -90,8 +160,8 @@ async function juzgarParecido(
         {
           role: "user",
           content: [
-            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: faceB64 } },
-            { type: "image", source: { type: "base64", media_type: "image/png", data: avatarB64 } },
+            { type: "image", source: { type: "base64", media_type: mediaTypeOf(faceB64), data: faceB64 } },
+            { type: "image", source: { type: "base64", media_type: mediaTypeOf(avatarB64), data: avatarB64 } },
             { type: "text", text: "¿Qué tan parecido es el avatar a la persona de la selfie?" },
           ],
         },
@@ -135,10 +205,14 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
   let body: {
+    stage?: string; // "face" | "body" | ausente (legacy: una sola pasada)
     faceB64?: string;
     faceExtraB64?: string[];
     bodyB64?: string[];
     bodyType?: string;
+    ajuste?: string; // etapa face: corrección dirigida ("pelo más corto"…)
+    prevFaceB64?: string; // etapa face: retrato previo (base del ajuste)
+    headshotB64?: string; // etapa body: retrato APROBADO (ancla de identidad)
   } = {};
   try {
     body = await request.json();
@@ -146,29 +220,55 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
   const { faceB64, faceExtraB64, bodyB64, bodyType } = body;
-  if (
-    !faceB64 ||
-    !Array.isArray(bodyB64) ||
-    bodyB64.length === 0 ||
-    !bodyType ||
-    !BUILD[bodyType]
-  ) {
-    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  const stage = body.stage === "face" || body.stage === "body" ? body.stage : null;
+
+  if (!faceB64) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  // Cuerpo (etapa 2 o legacy) exige bodyType; las fotos de cuerpo son opcionales
+  // en la etapa 2 (el retrato aprobado + la complexión bastan) y obligatorias
+  // solo en el flujo legacy.
+  const bodies = (Array.isArray(bodyB64) ? bodyB64 : []).slice(0, 3);
+  if (stage !== "face") {
+    if (!bodyType || !BUILD[bodyType]) {
+      return NextResponse.json({ error: "bad_request" }, { status: 400 });
+    }
+    if (stage === "body" && !body.headshotB64) {
+      return NextResponse.json({ error: "bad_request" }, { status: 400 });
+    }
+    if (stage === null && bodies.length === 0) {
+      return NextResponse.json({ error: "bad_request" }, { status: 400 });
+    }
   }
   // Topes de referencias (defensa; el wizard manda máx 2 caras + 3 cuerpos).
   const faces = [faceB64, ...(Array.isArray(faceExtraB64) ? faceExtraB64 : [])].slice(0, 2);
-  const bodies = bodyB64.slice(0, 3);
+  const ajuste = typeof body.ajuste === "string" ? body.ajuste.trim().slice(0, 140) : "";
 
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return NextResponse.json({ error: "sin_api_key" }, { status: 503 });
   }
 
   try {
-    const parts = [
-      { text: buildPrompt(BUILD[bodyType], faces.length) },
-      ...faces.map((d) => ({ inlineData: { mimeType: "image/jpeg", data: d } })),
-      ...bodies.map((d) => ({ inlineData: { mimeType: "image/jpeg", data: d } })),
-    ];
+    const img = (d: string) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } });
+    let parts: unknown[];
+    if (stage === "face") {
+      const hasPrev = !!body.prevFaceB64 && !!ajuste;
+      parts = [
+        { text: buildFacePrompt(faces.length, ajuste || null, hasPrev) },
+        ...faces.map(img),
+        ...(hasPrev ? [img(body.prevFaceB64 as string)] : []),
+      ];
+    } else if (stage === "body") {
+      parts = [
+        { text: buildBodyPrompt(BUILD[bodyType as string], bodies.length) },
+        img(body.headshotB64 as string),
+        ...bodies.map(img),
+      ];
+    } else {
+      parts = [
+        { text: buildPrompt(BUILD[bodyType as string], faces.length) },
+        ...faces.map(img),
+        ...bodies.map(img),
+      ];
+    }
 
     let image = await generarAvatar(parts);
     if (!image) return NextResponse.json({ error: "generacion" }, { status: 502 });
@@ -197,12 +297,20 @@ export async function POST(request: NextRequest) {
         score: veredicto?.score ?? null,
         problema: veredicto?.problema || null,
         reintento,
+        stage: stage ?? "legacy",
+        ajuste: ajuste || null,
         n_caras: faces.length,
         n_cuerpos: bodies.length,
       },
     });
 
-    return NextResponse.json({ image });
+    // El veredicto ya no se tira: el wizard lo muestra ("ojo: {problema}") y
+    // ofrece ajustes dirigidos cuando sale bajo.
+    return NextResponse.json({
+      image,
+      score: veredicto?.score ?? null,
+      problema: veredicto?.problema || null,
+    });
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 502 });
   }
