@@ -13,6 +13,9 @@ export const OCCASIONS = [
   { value: "trabajo", label: "Trabajo o formal" },
   { value: "noche", label: "Salir de noche" },
   { value: "aire", label: "Aire libre" },
+  // Día de traslado: concreto y recurrente (casi todo viaje tiene avión), por eso
+  // es un chip y no texto libre. Marca = un look cómodo y por capas para el avión.
+  { value: "traslado", label: "Avión y traslado" },
 ] as const;
 export type Occasion = (typeof OCCASIONS)[number]["value"];
 

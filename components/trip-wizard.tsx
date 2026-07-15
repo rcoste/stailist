@@ -31,6 +31,7 @@ const ACT_ICON: Record<Occasion, IconName> = {
   trabajo: "maletin",
   noche: "luna",
   aire: "hoja",
+  traslado: "avion",
 };
 const LUG_ICON: Record<Luggage, IconName> = {
   mochila: "mochila",
@@ -968,7 +969,9 @@ function StepActividades({
     <div className="grid grid-cols-2 gap-[11px]">
       {OCCASIONS.map((o, i) => {
         const on = value.has(o.value);
-        const full = i === OCCASIONS.length - 1;
+        // El último ocupa fila completa SOLO si el total es impar (para no dejar
+        // un hueco). Con total par, todos van a 2 columnas.
+        const full = i === OCCASIONS.length - 1 && OCCASIONS.length % 2 === 1;
         return (
           <button
             key={o.value}
