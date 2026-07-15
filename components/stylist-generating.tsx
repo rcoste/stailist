@@ -75,6 +75,9 @@ export function StylistGenerating({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-center bg-bg px-[30px]">
+      {/* En desktop el contenido va acotado a la columna del wizard (~430px),
+          no estirado a toda la pantalla. En móvil el wrapper es transparente. */}
+      <div className="w-full lg:mx-auto lg:max-w-[430px]">
       <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-line text-ink motion-safe:animate-[spin_6s_linear_infinite]">
         <Icon name="destello" size={20} />
       </span>
@@ -112,6 +115,7 @@ export function StylistGenerating({
       <span className="sr-only" aria-live="polite">
         Creando tu look…
       </span>
+      </div>
     </div>
   );
 }

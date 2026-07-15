@@ -366,6 +366,7 @@ export function HoyClient({
       outfit={state.outfit}
       userId={userId}
       worn={worn}
+      fechaLabel={fechaLabel}
       onMeLoPongo={meLoPongo}
       onOtroLook={otroLook}
     />
@@ -388,12 +389,15 @@ function ReadyView({
   outfit,
   userId,
   worn,
+  fechaLabel,
   onMeLoPongo,
   onOtroLook,
 }: {
   outfit: HoyOutfit;
   userId: string;
   worn: boolean;
+  /** "MARTES · 15 JUL" — para el eyebrow del spread de desktop. */
+  fechaLabel: string;
   onMeLoPongo: () => void;
   onOtroLook: () => void;
 }) {
@@ -418,28 +422,28 @@ function ReadyView({
     else t.generar();
   }
 
+  // El nombre del look en desktop: primera palabra en sans bold, el resto en
+  // display italic (patrón del handoff desktop_f3 — "gris *de noche*").
+  const [nombrePrimera, ...nombreResto] = outfit.nombre.split(" ");
+
   return (
     // Reveal: el look ENTRA (fade + subida) tras la espera, no aparece de golpe.
-    // Móvil: columna (h1 → card → acciones). Desktop (lg, plan desktop-full F3):
-    // "página de revista" a 2 columnas — card sticky a la izquierda, título +
-    // justificación + acciones a la derecha. El orden del DOM lo dicta móvil; en
-    // desktop el grid recoloca con placement explícito. La última fila 1fr absorbe
-    // el sobrante para que la columna derecha quede pegada arriba, junto a la card.
+    // Móvil: columna (h1 → card → acciones), intacta. Desktop (handoff desktop_f3):
+    // "spread" editorial — card 440px a la izquierda, columna de texto a la derecha,
+    // AMBAS centradas verticalmente en el viewport (sin sticky: todo cabe en una
+    // pantalla). El h1 móvil y el encabezado desktop son elementos distintos
+    // (display:none no crea celda de grid, así que no estorban al placement).
     <div
-      className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_auto_auto_1fr] lg:items-start lg:gap-x-10 lg:gap-y-4"
+      className="flex flex-col gap-4 lg:grid lg:min-h-[calc(100dvh-9rem)] lg:grid-cols-[440px_minmax(0,1fr)] lg:items-center lg:gap-16"
       style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
     >
-      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0 lg:col-start-2 lg:row-start-1">
-        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink lg:text-[42px] lg:tracking-[-0.03em]">
-          hoy
-        </span>
-        <span className="text-sm text-muted lg:text-xl">·</span>
-        <span className="font-display text-[22px] italic text-muted lg:text-[30px]">
-          {outfit.nombre}
-        </span>
+      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0 lg:hidden">
+        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</span>
+        <span className="text-sm text-muted">·</span>
+        <span className="font-display text-[22px] italic text-muted">{outfit.nombre}</span>
       </h1>
 
-      <div className="lg:col-start-1 lg:row-start-1 lg:row-span-4 lg:self-start lg:sticky lg:top-20">
+      <div>
         <OutfitCard
           prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
           justificacion={outfit.explicacion}
@@ -455,22 +459,35 @@ function ReadyView({
         />
       </div>
 
-      {/* Justificación + tip: dentro de la card en móvil (lg:hidden arriba); aquí,
-          a la derecha, solo en desktop. */}
-      <div className="hidden lg:col-start-2 lg:row-start-2 lg:block">
-        <p className="editorial text-[15px] leading-relaxed text-ink">
+      {/* Columna derecha del spread. En móvil solo se ven las acciones (todo lo
+          editorial de desktop va hidden) → misma columna de siempre. */}
+      <div className="flex flex-col gap-4 lg:gap-0">
+        <p className="hidden text-[11px] font-bold uppercase tracking-[0.22em] text-muted lg:block">
+          tu look de hoy{fechaLabel ? ` · ${fechaLabel.replace(" · ", " ")}` : ""}
+        </p>
+        <h2 className="hidden text-[56px] font-bold leading-[1.02] tracking-[-0.035em] text-ink lg:mt-4 lg:block">
+          {nombrePrimera}
+          {nombreResto.length > 0 ? (
+            <>
+              {" "}
+              <em className="font-display font-normal italic">{nombreResto.join(" ")}</em>
+            </>
+          ) : null}
+        </h2>
+        <hr className="hidden w-full max-w-[520px] border-line lg:my-7 lg:block" />
+        <p className="hidden max-w-[52ch] font-display text-[21px] italic leading-[1.55] text-ink2 lg:block">
           {outfit.explicacion}
         </p>
         {outfit.tip ? (
-          <p className="mt-2.5 flex items-start gap-1.5 text-[15px] leading-relaxed text-accent">
+          <p className="hidden items-start gap-1.5 text-[15px] leading-relaxed text-accent lg:mt-3.5 lg:flex">
             <Icon name="destello" size={15} className="mt-0.5 shrink-0" />
             <span>{outfit.tip}</span>
           </p>
         ) : null}
-      </div>
 
-      {/* Footer: "verte con este look" protagonista + dos fantasma */}
-      <div className="flex flex-col gap-2.5 lg:col-start-2 lg:row-start-3">
+      {/* Acciones: "verte con este look" protagonista + dos fantasma. En desktop
+          (handoff): me lo pongo = secundario con borde ink, otro look = link. */}
+      <div className="flex flex-col gap-2.5 lg:mt-9 lg:max-w-[400px] lg:gap-3">
         {t.mode === "sin_avatar" ? (
           <Link
             href={t.avatarHref}
@@ -488,14 +505,16 @@ function ReadyView({
             <span className="text-[12px] font-semibold opacity-70">~20 s</span>
           </button>
         )}
-        <div className="flex gap-2.5">
+        <div className="flex gap-2.5 lg:flex-col lg:gap-3">
           {!worn && (
             <button
               type="button"
               onClick={() => setSkipOpen((v) => !v)}
               aria-pressed={skipOpen}
-              className={`min-h-12 flex-1 rounded-sm border bg-surface text-sm font-semibold text-ink transition-colors ${
-                skipOpen ? "border-ink" : "border-line hover:border-ink"
+              className={`min-h-12 flex-1 rounded-sm border bg-surface text-sm font-semibold text-ink transition-colors lg:order-2 lg:min-h-0 lg:flex-none lg:self-center lg:border-0 lg:bg-transparent lg:px-2 lg:py-1 lg:font-medium ${
+                skipOpen
+                  ? "border-ink lg:text-ink lg:underline"
+                  : "border-line hover:border-ink lg:text-muted lg:no-underline lg:hover:text-ink lg:hover:underline"
               }`}
             >
               otro look
@@ -505,10 +524,10 @@ function ReadyView({
             type="button"
             onClick={onMeLoPongo}
             disabled={worn}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors lg:order-1 lg:w-full lg:flex-none ${
               worn
                 ? "bg-success/15 text-success"
-                : "border border-line bg-surface text-ink hover:border-ink"
+                : "border border-line bg-surface text-ink hover:border-ink lg:border-ink"
             }`}
           >
             {worn ? (
@@ -523,14 +542,13 @@ function ReadyView({
       </div>
 
       {skipOpen && !worn ? (
-        <div className="lg:col-start-2 lg:row-start-4 lg:self-start">
-          <SkipReasons
-            outfitId={outfit.id}
-            onProceed={onOtroLook}
-            onClose={() => setSkipOpen(false)}
-          />
-        </div>
+        <SkipReasons
+          outfitId={outfit.id}
+          onProceed={onOtroLook}
+          onClose={() => setSkipOpen(false)}
+        />
       ) : null}
+      </div>
 
       {modalOpen ? (
         <TryonImmersive
