@@ -22,6 +22,7 @@ export function OutfitCard({
   tip,
   corner,
   renderMode = "none",
+  rationaleClassName,
 }: {
   prendas: Prenda[];
   justificacion: string;
@@ -31,6 +32,9 @@ export function OutfitCard({
   corner?: ReactNode;
   /** Render bajo demanda de prendas sin imagen: "auto" en Hoy, "none" por defecto. */
   renderMode?: "auto" | "tap" | "none";
+  /** Clases extra para el bloque de justificación+tip (ej. "lg:hidden" cuando la
+   *  justificación se muestra fuera de la card en el layout 2-col de desktop). */
+  rationaleClassName?: string;
 }) {
   // Regla de densidad (v3, global): 2 por fila con 3-4 prendas (más grandes, más
   // protagonismo), 3 por fila con 5-6.
@@ -61,17 +65,19 @@ export function OutfitCard({
         ))}
       </div>
 
-      <hr className="my-4 border-line" />
+      <div className={rationaleClassName}>
+        <hr className="my-4 border-line" />
 
-      <p className="editorial text-center text-sm text-ink">{justificacion}</p>
+        <p className="editorial text-center text-sm text-ink">{justificacion}</p>
 
-      {/* "El toque": cómo llevarlo. Solo si el juez lo sumó (puede no haber). */}
-      {tip ? (
-        <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-sm text-accent">
-          <Icon name="destello" size={14} className="shrink-0" />
-          <span>{tip}</span>
-        </p>
-      ) : null}
+        {/* "El toque": cómo llevarlo. Solo si el juez lo sumó (puede no haber). */}
+        {tip ? (
+          <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-sm text-accent">
+            <Icon name="destello" size={14} className="shrink-0" />
+            <span>{tip}</span>
+          </p>
+        ) : null}
+      </div>
     </article>
   );
 }

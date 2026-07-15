@@ -213,7 +213,7 @@ export function HoyClient({
   // tab bar visible. Saludo + CTA — no te fuerza el wizard ni te atrapa.
   if (state.kind === "idle") {
     return (
-      <div className="flex min-h-[calc(100dvh-13rem)] flex-col">
+      <div className="flex min-h-[calc(100dvh-13rem)] flex-col lg:mx-auto lg:min-h-[calc(100dvh-16rem)] lg:max-w-md">
         {/* Editorial y tipográfico — SIN foto de fondo (no confundir con un
             outfit). El cuerpo va centrado vertical; el CTA al pie. */}
         <div className="flex flex-1 flex-col justify-center">
@@ -282,7 +282,7 @@ export function HoyClient({
 
   if (state.kind === "error") {
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <div className="flex flex-col items-center gap-4 py-16 text-center lg:mx-auto lg:max-w-md">
         <p className="text-base text-ink">
           {ERROR_COPY[state.code] ?? ERROR_COPY.generacion}
         </p>
@@ -314,7 +314,7 @@ export function HoyClient({
 
   if (state.kind === "anchor_warning") {
     return (
-      <div className="flex min-h-[calc(100dvh-13rem)] flex-col">
+      <div className="flex min-h-[calc(100dvh-13rem)] flex-col lg:mx-auto lg:min-h-[calc(100dvh-16rem)] lg:max-w-md">
         <div className="flex flex-1 flex-col justify-center gap-5">
           <span className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-muted">
             <Icon name="gancho" size={22} />
@@ -420,31 +420,57 @@ function ReadyView({
 
   return (
     // Reveal: el look ENTRA (fade + subida) tras la espera, no aparece de golpe.
+    // Móvil: columna (h1 → card → acciones). Desktop (lg, plan desktop-full F3):
+    // "página de revista" a 2 columnas — card sticky a la izquierda, título +
+    // justificación + acciones a la derecha. El orden del DOM lo dicta móvil; en
+    // desktop el grid recoloca con placement explícito. La última fila 1fr absorbe
+    // el sobrante para que la columna derecha quede pegada arriba, junto a la card.
     <div
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_auto_auto_1fr] lg:items-start lg:gap-x-10 lg:gap-y-4"
       style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
     >
-      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0">
-        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</span>
-        <span className="text-sm text-muted">·</span>
-        <span className="font-display text-[22px] italic text-muted">{outfit.nombre}</span>
+      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0 lg:col-start-2 lg:row-start-1">
+        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink lg:text-[42px] lg:tracking-[-0.03em]">
+          hoy
+        </span>
+        <span className="text-sm text-muted lg:text-xl">·</span>
+        <span className="font-display text-[22px] italic text-muted lg:text-[30px]">
+          {outfit.nombre}
+        </span>
       </h1>
 
-      <OutfitCard
-        prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
-        justificacion={outfit.explicacion}
-        tip={outfit.tip ?? null}
-        renderMode="auto"
-        corner={
-          <FavoriteButton
-            outfitId={outfit.id}
-            initialFavorited={outfit.favorited ?? false}
-          />
-        }
-      />
+      <div className="lg:col-start-1 lg:row-start-1 lg:row-span-4 lg:self-start lg:sticky lg:top-20">
+        <OutfitCard
+          prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
+          justificacion={outfit.explicacion}
+          tip={outfit.tip ?? null}
+          renderMode="auto"
+          rationaleClassName="lg:hidden"
+          corner={
+            <FavoriteButton
+              outfitId={outfit.id}
+              initialFavorited={outfit.favorited ?? false}
+            />
+          }
+        />
+      </div>
+
+      {/* Justificación + tip: dentro de la card en móvil (lg:hidden arriba); aquí,
+          a la derecha, solo en desktop. */}
+      <div className="hidden lg:col-start-2 lg:row-start-2 lg:block">
+        <p className="editorial text-[15px] leading-relaxed text-ink">
+          {outfit.explicacion}
+        </p>
+        {outfit.tip ? (
+          <p className="mt-2.5 flex items-start gap-1.5 text-[15px] leading-relaxed text-accent">
+            <Icon name="destello" size={15} className="mt-0.5 shrink-0" />
+            <span>{outfit.tip}</span>
+          </p>
+        ) : null}
+      </div>
 
       {/* Footer: "verte con este look" protagonista + dos fantasma */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2.5 lg:col-start-2 lg:row-start-3">
         {t.mode === "sin_avatar" ? (
           <Link
             href={t.avatarHref}
@@ -497,11 +523,13 @@ function ReadyView({
       </div>
 
       {skipOpen && !worn ? (
-        <SkipReasons
-          outfitId={outfit.id}
-          onProceed={onOtroLook}
-          onClose={() => setSkipOpen(false)}
-        />
+        <div className="lg:col-start-2 lg:row-start-4 lg:self-start">
+          <SkipReasons
+            outfitId={outfit.id}
+            onProceed={onOtroLook}
+            onClose={() => setSkipOpen(false)}
+          />
+        </div>
       ) : null}
 
       {modalOpen ? (

@@ -23,20 +23,20 @@ export default async function TusViajesPage() {
     .limit(20);
 
   return (
-    <AppShell>
+    <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-1">
         <div className="flex flex-col gap-1.5 pt-3">
-          <h1 className="text-[30px] font-bold leading-none tracking-[-0.025em] text-ink">
+          <h1 className="text-[30px] font-bold leading-none tracking-[-0.025em] text-ink lg:text-[40px]">
             modo viaje
           </h1>
-          <p className="text-[13px] text-muted">
+          <p className="text-[13px] text-muted lg:text-sm">
             arma una maleta para tu próximo viaje, o abre una guardada.
           </p>
         </div>
 
         <Link
           href="/viaje"
-          className="flex items-center gap-3 rounded-sm border border-accent bg-surface p-[13px] transition-colors hover:bg-accent-soft"
+          className="flex items-center gap-3 rounded-sm border border-accent bg-surface p-[13px] transition-colors hover:bg-accent-soft lg:max-w-md"
         >
           <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-sm bg-accent text-on-accent">
             <Icon name="mas" size={18} strokeWidth={2} />
@@ -49,7 +49,7 @@ export default async function TusViajesPage() {
         </Link>
 
         {trips && trips.length > 0 ? (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3">
             {trips.map((t) => {
               const paradas = Array.isArray(t.paradas) ? (t.paradas as unknown[]) : [];
               return (

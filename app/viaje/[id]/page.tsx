@@ -187,10 +187,12 @@ export default async function ViajeDetallePage({
   const looksCount = resolvedOutfits?.length ?? 0;
 
   return (
-    <AppShell>
-      <section className="flex flex-col gap-4 pt-1">
+    <AppShell desktop="wide">
+      {/* Desktop (F3): 2 columnas — resumen del viaje/clima sticky a la izquierda,
+          maleta/looks a la derecha. Móvil: columna (resumen arriba, tabs abajo). */}
+      <section className="flex flex-col gap-4 pt-1 lg:flex-row lg:items-start lg:gap-10">
         {/* Encabezado compartido (no cambia entre tabs). */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 lg:sticky lg:top-20 lg:w-[34%] lg:shrink-0">
           <Link
             href="/viaje/lista"
             className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
@@ -198,7 +200,7 @@ export default async function ViajeDetallePage({
             <Icon name="chevron" size={15} rotate={180} />
             modo viaje
           </Link>
-          <h1 className="text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink">
+          <h1 className="text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink lg:text-[32px]">
             tu maleta para{" "}
             <em className="display font-normal italic">{destino}</em>
           </h1>
@@ -236,6 +238,7 @@ export default async function ViajeDetallePage({
           </div>
         </div>
 
+        <div className="lg:min-w-0 lg:flex-1">
         <TripTabs
           tripId={trip.id}
           maletaCount={maletaCount}
@@ -259,6 +262,7 @@ export default async function ViajeDetallePage({
             />
           }
         />
+        </div>
       </section>
     </AppShell>
   );

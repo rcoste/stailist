@@ -99,11 +99,11 @@ export default async function CapsulaPage({
     : null;
 
   return (
-    <AppShell>
+    <AppShell desktop="wide">
       <section className="flex flex-col gap-6 pt-1">
         <ClosetNav />
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
+          <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink lg:text-[38px]">
             tu cápsula
           </h1>
           <Link
@@ -120,7 +120,10 @@ export default async function CapsulaPage({
           looksStale={looksStale}
           initialTab={initialTab}
           capsula={
-            <div className="flex flex-col gap-6">
+            // Desktop (F3): 2 columnas — "por qué es tuya" + avisos sticky a la
+            // izquierda, la lista de prendas a la derecha. Móvil: una columna.
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+            <div className="flex flex-col gap-6 lg:sticky lg:top-20 lg:w-[38%] lg:shrink-0">
               {/* Por qué esta cápsula es tuya: sello en serif + pilares cortos (sin caja). */}
               {target.firma || target.pilares?.length || target.resumen ? (
                 <PorQueEsTuya
@@ -173,7 +176,9 @@ export default async function CapsulaPage({
                   </div>
                 </div>
               ) : null}
+            </div>
 
+            <div className="flex flex-col gap-6 lg:min-w-0 lg:flex-1">
               {done && view ? (
                 <DoneState have={view.haveCount} total={view.totalCount} />
               ) : (
@@ -203,6 +208,7 @@ export default async function CapsulaPage({
                   />
                 </>
               )}
+            </div>
             </div>
           }
           looks={<CapsuleLooks outfits={resolvedLooks} stale={looksStale} />}

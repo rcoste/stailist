@@ -191,53 +191,61 @@ export default async function HoyPage({
           ? "viaje"
           : null;
 
+  // El stack de banners (hint/nudge) va centrado y angosto en desktop para no
+  // estirarse a lo ancho de la columna wide del héroe (F3, plan desktop-full).
+  const hasBanner = !!(hint || nudge);
+
   return (
-    <AppShell>
+    <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-4">
-        {hint === "hoy-casa" ? (
-          <Hint id="hoy-casa">
-            esta es tu casa — cada día te espera un look nuevo aquí, pensado
-            para tu plan y tu clima ☀️
-          </Hint>
-        ) : null}
-        {hint === "fab-generar" ? (
-          <Hint id="fab-generar">
-            ¿otro plan hoy? el ✨ de abajo te genera un look nuevo desde
-            cualquier pantalla
-          </Hint>
-        ) : null}
-        {hint === "viaje" ? (
-          <Hint id="viaje">
-            ¿viaje pronto? en la pestaña Viaje te armo la maleta completa 🧳
-          </Hint>
-        ) : null}
-        {nudge === "tryon" ? <TryonNudge /> : null}
-        {nudge === "closet_real" ? (
-          <LinkNudge
-            id="closet_real"
-            icon="gancho"
-            title="Haz tuyo tu clóset"
-            body="Súmale tu ropa real y tus looks se vuelven 100% tuyos."
-            href="/closet"
-          />
-        ) : null}
-        {nudge === "capsula" ? (
-          <LinkNudge
-            id="capsula"
-            icon="destello"
-            title="Arma tu clóset cápsula"
-            body="Te digo qué prendas ya tienes y cuáles te faltan."
-            href="/closet/capsula/editar"
-          />
-        ) : null}
-        {nudge === "silueta" ? (
-          <LinkNudge
-            id="silueta"
-            icon="persona"
-            title="Cuéntame de tu cuerpo"
-            body="Marca tu silueta y afino tus looks a tu medida."
-            href="/perfil/silueta"
-          />
+        {hasBanner ? (
+          <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
+            {hint === "hoy-casa" ? (
+              <Hint id="hoy-casa">
+                esta es tu casa — cada día te espera un look nuevo aquí, pensado
+                para tu plan y tu clima ☀️
+              </Hint>
+            ) : null}
+            {hint === "fab-generar" ? (
+              <Hint id="fab-generar">
+                ¿otro plan hoy? el ✨ de abajo te genera un look nuevo desde
+                cualquier pantalla
+              </Hint>
+            ) : null}
+            {hint === "viaje" ? (
+              <Hint id="viaje">
+                ¿viaje pronto? en la pestaña Viaje te armo la maleta completa 🧳
+              </Hint>
+            ) : null}
+            {nudge === "tryon" ? <TryonNudge /> : null}
+            {nudge === "closet_real" ? (
+              <LinkNudge
+                id="closet_real"
+                icon="gancho"
+                title="Haz tuyo tu clóset"
+                body="Súmale tu ropa real y tus looks se vuelven 100% tuyos."
+                href="/closet"
+              />
+            ) : null}
+            {nudge === "capsula" ? (
+              <LinkNudge
+                id="capsula"
+                icon="destello"
+                title="Arma tu clóset cápsula"
+                body="Te digo qué prendas ya tienes y cuáles te faltan."
+                href="/closet/capsula/editar"
+              />
+            ) : null}
+            {nudge === "silueta" ? (
+              <LinkNudge
+                id="silueta"
+                icon="persona"
+                title="Cuéntame de tu cuerpo"
+                body="Marca tu silueta y afino tus looks a tu medida."
+                href="/perfil/silueta"
+              />
+            ) : null}
+          </div>
         ) : null}
         <HoyClient
           key={`${nombre}:${generar ?? "view"}`}
