@@ -203,18 +203,18 @@ export default async function HoyPage({
             {hint === "hoy-casa" ? (
               <Hint id="hoy-casa">
                 esta es tu casa — cada día te espera un look nuevo aquí, pensado
-                para tu plan y tu clima ☀️
+                para tu plan y tu clima
               </Hint>
             ) : null}
             {hint === "fab-generar" ? (
               <Hint id="fab-generar">
-                ¿otro plan hoy? el ✨ de abajo te genera un look nuevo desde
+                ¿otro plan hoy? el botón de generar te arma un look nuevo desde
                 cualquier pantalla
               </Hint>
             ) : null}
             {hint === "viaje" ? (
               <Hint id="viaje">
-                ¿viaje pronto? en la pestaña Viaje te armo la maleta completa 🧳
+                ¿viaje pronto? en la pestaña Viaje te armo la maleta completa
               </Hint>
             ) : null}
             {nudge === "tryon" ? <TryonNudge /> : null}
