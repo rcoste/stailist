@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon, type IconName } from "@/components/icon";
 import type { ClosetPick } from "@/components/weather-picker";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { useWakeLock } from "@/lib/use-wake-lock";
+import { comprimir } from "@/lib/image-compress";
+import { toUsableImage } from "@/lib/image-file";
 import {
   OCCASIONS,
   LUGGAGE,
@@ -148,6 +150,50 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
   // Texto libre "¿algo especial de este viaje?" (mismo espíritu que el "¿algo en
   // mente?" de Hoy). Afina la cápsula y los looks a lo que la persona va a hacer.
   const [contexto, setContexto] = useState("");
+  // Itinerario por screenshot: la visión PRE-LLENA la ruta; el wizard es la
+  // pantalla de confirmación (nada se genera hasta que la persona sigue).
+  const itinRef = useRef<HTMLInputElement>(null);
+  const [itinBusy, setItinBusy] = useState(false);
+  const [itinError, setItinError] = useState<string | null>(null);
+  const [itinInfo, setItinInfo] = useState<{
+    descartadas: { lugar: string; razon: string }[];
+    confianza: string;
+  } | null>(null);
+
+  async function leerItinerario(file: File) {
+    setItinBusy(true);
+    setItinError(null);
+    setItinInfo(null);
+    try {
+      // toUsableImage: si fotografió el itinerario con un iPhone viene en HEIC.
+      const blob = await comprimir(await toUsableImage(file), 1600, 0.92);
+      const dataUrl = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result as string);
+        r.onerror = () => rej(new Error("read"));
+        r.readAsDataURL(blob);
+      });
+      const res = await fetch("/api/trip/itinerario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.ok || !d.paradas?.length) {
+        setItinError(
+          d?.problema || "no alcancé a leer esa captura — ¿tienes una más nítida?"
+        );
+        return;
+      }
+      setParadas(d.paradas);
+      if (d.fechaInicio) setInicio(d.fechaInicio);
+      setItinInfo({ descartadas: d.descartadas ?? [], confianza: d.confianza });
+    } catch {
+      setItinError("no alcancé a leer esa captura — ¿tienes una más nítida?");
+    } finally {
+      setItinBusy(false);
+    }
+  }
   // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
   const [bolsas, setBolsas] = useState<Bolsas>({ mano: 1 });
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
@@ -303,6 +349,10 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
                 onAdd={() => setSheet(paradas.length)}
                 onEdit={(i) => setSheet(i)}
                 onRemove={removeParada}
+                onSubirItinerario={() => itinRef.current?.click()}
+                itinBusy={itinBusy}
+                itinError={itinError}
+                itinInfo={itinInfo}
               />
             ) : step === 2 ? (
               <>
@@ -368,6 +418,19 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
         </div>
       </div>
 
+      {/* Input oculto del itinerario (lo dispara el botón del paso 1). */}
+      <input
+        ref={itinRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = ""; // permite re-elegir la misma captura
+          if (f) void leerItinerario(f);
+        }}
+      />
+
       {sheet !== null ? (
         <ParadaSheet
           index={sheet}
@@ -430,6 +493,10 @@ function StepItinerario({
   onAdd,
   onEdit,
   onRemove,
+  onSubirItinerario,
+  itinBusy,
+  itinError,
+  itinInfo,
 }: {
   paradas: Parada[];
   inicio: string;
@@ -438,6 +505,10 @@ function StepItinerario({
   onAdd: () => void;
   onEdit: (i: number) => void;
   onRemove: (i: number) => void;
+  onSubirItinerario: () => void;
+  itinBusy: boolean;
+  itinError: string | null;
+  itinInfo: { descartadas: { lugar: string; razon: string }[]; confianza: string } | null;
 }) {
   const vacio = paradas.length === 0;
   const addLabel =
@@ -449,6 +520,38 @@ function StepItinerario({
 
   return (
     <div className="flex flex-col gap-3.5">
+      {/* Confirmación de lo leído del itinerario: la ruta ya quedó pre-llenada
+          abajo, esto solo avisa que es una LECTURA y hay que revisarla. */}
+      {itinInfo ? (
+        <div className="flex flex-col gap-1.5 rounded-md border border-accent bg-accent-soft px-[13px] py-3">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-accent">
+            <Icon name="check" size={13} strokeWidth={2.2} />
+            esto entendí de tu itinerario
+          </span>
+          <p className="text-[12.5px] leading-snug text-ink">
+            revísalo antes de seguir — puedes editar o quitar cualquier parada.
+          </p>
+          {itinInfo.descartadas.length > 0 ? (
+            <p className="text-[11.5px] leading-snug text-muted">
+              no conté{" "}
+              {itinInfo.descartadas.map((d, i) => (
+                <span key={i}>
+                  {i > 0 ? " ni " : ""}
+                  <b className="font-semibold text-ink">{d.lugar}</b>
+                  {d.razon ? ` (${d.razon.toLowerCase()})` : ""}
+                </span>
+              ))}
+              .
+            </p>
+          ) : null}
+          {itinInfo.confianza === "baja" ? (
+            <p className="text-[11.5px] leading-snug text-warning">
+              la captura no estaba muy clara — revisa bien las fechas.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Total derivado */}
       <div
         className={`flex items-center gap-2.5 rounded-md border bg-surface px-[13px] py-3 ${
@@ -549,6 +652,31 @@ function StepItinerario({
           </button>
         </div>
       </div>
+
+      {/* Atajo: leer el itinerario de una captura y pre-llenar la ruta. Solo en
+          vacío — una vez que hay paradas, el camino es editarlas a mano. */}
+      {vacio ? (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onSubirItinerario}
+            disabled={itinBusy}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-[13px] font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60"
+          >
+            <Icon name="camara" size={16} />
+            <span className={itinBusy ? "shimmer-txt" : undefined}>
+              {itinBusy ? "leyendo tu itinerario…" : "o sube tu itinerario y lo leo"}
+            </span>
+          </button>
+          <p className="text-center text-[11px] leading-snug text-muted">
+            {itinError ? (
+              <span className="text-error">{itinError}</span>
+            ) : (
+              "una captura de tu vuelo y te lleno la ruta — tú la confirmas"
+            )}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
