@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon, type IconName } from "@/components/icon";
+import { Spinner } from "@/components/spinner";
 import type { ClosetPick } from "@/components/weather-picker";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -657,19 +658,32 @@ function StepItinerario({
           vacío — una vez que hay paradas, el camino es editarlas a mano. */}
       {vacio ? (
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={onSubirItinerario}
-            disabled={itinBusy}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-[13px] font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60"
-          >
-            <Icon name="camara" size={16} />
-            <span className={itinBusy ? "shimmer-txt" : undefined}>
-              {itinBusy ? "leyendo tu itinerario…" : "o sube tu itinerario y lo leo"}
-            </span>
-          </button>
+          {itinBusy ? (
+            /* Carga de ~15s con el wizard visible: mismo patrón que el try-on
+               dentro de la card (spinner + accent-soft + el tiempo esperado),
+               no la pantalla full-screen de generación. */
+            <button
+              type="button"
+              disabled
+              className="flex min-h-12 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft text-[13px] font-semibold text-ink disabled:opacity-100"
+            >
+              <Spinner className="h-4 w-4 text-accent" />
+              <span className="shimmer-txt">leyendo tu itinerario… (~15s)</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onSubirItinerario}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-[13px] font-semibold text-ink transition-colors hover:border-ink"
+            >
+              <Icon name="camara" size={16} />
+              o sube tu itinerario y lo leo
+            </button>
+          )}
           <p className="text-center text-[11px] leading-snug text-muted">
-            {itinError ? (
+            {itinBusy ? (
+              "estoy sacando tus paradas y fechas — no cierres esto"
+            ) : itinError ? (
               <span className="text-error">{itinError}</span>
             ) : (
               "una captura de tu vuelo y te lleno la ruta — tú la confirmas"
