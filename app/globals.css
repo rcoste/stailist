@@ -120,17 +120,30 @@ body {
   }
 }
 
-/* Acento editorial mínimo (justificación del outfit, micro-acentos): Instrument
-   Serif. Solo ≥18px, nunca en UI/labels/párrafos. */
-.editorial {
-  font-family: var(--font-instrument), Georgia, serif;
-  font-style: normal;
-  font-weight: 500;
-}
+/* Acento editorial: Instrument Serif, SIEMPRE ITÁLICA (DESIGN.md: "usar a
+   tamaño grande e itálica"). Solo ≥18px, nunca en UI/labels/párrafos.
+ *
+ * Van en @layer components a propósito (igual que los h1–h3 en @layer base):
+ * así las utilidades de Tailwind SIEMPRE pueden ganarles (`not-italic` si
+ * alguna superficie necesitara redonda). Antes vivían fuera de toda layer, y
+ * en CSS lo no-layered gana sobre lo layered: `.editorial` fijaba
+ * font-style:normal y era IMPOSIBLE ponerla en itálica desde el componente
+ * (season-reveal y pasaporte-card lo intentaban y fallaban en silencio). El
+ * síntoma: la serif salía en REDONDA — Instrument upright es una Didone de
+ * alto contraste que se lee como la Bodoni del rebrand v2, ya abandonada.
+ * El peso 500 tampoco existía: Instrument Serif solo trae 400. */
+@layer components {
+  .editorial {
+    font-family: var(--font-instrument), Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+  }
 
-/* Aplica la serif de acento a cualquier elemento que no sea h1–h3. */
-.display {
-  font-family: var(--font-instrument), "Times New Roman", Georgia, serif;
+  /* La serif de acento en cualquier elemento que no sea h1–h3. */
+  .display {
+    font-family: var(--font-instrument), "Times New Roman", Georgia, serif;
+    font-style: italic;
+  }
 }
 
 /* Números tabulares para métricas y datos */
