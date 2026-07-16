@@ -249,7 +249,11 @@ function CoachMark({
         style={noteStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="editorial text-[21px] italic leading-[1.4] text-on-accent">
+        {/* `.display` (no `.editorial`): .editorial fuerza font-style:normal
+            fuera de las cascade layers → gana sobre la utilidad `italic` y la
+            serif sale en redonda (se lee como la Bodoni del v2, ya abandonada).
+            .display solo fija la familia, así que aquí sí manda la itálica. */}
+        <p className="display text-[22px] font-normal italic leading-[1.4] text-on-accent">
           <Icon
             name="destello"
             size={16}
