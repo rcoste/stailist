@@ -711,6 +711,7 @@ function SumaCard({
             <button
               type="button"
               onClick={() => setShowReasons(true)}
+              data-hint-target="capsula-swap"
               className="self-start text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
             >
               no me late

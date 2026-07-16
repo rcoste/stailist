@@ -88,6 +88,15 @@ export default async function ClosetPage() {
   // aclaramos que es un punto de arranque. Si ya personalizó, no lo regañamos.
   const hasOwnPhotos = (rows ?? []).some((r) => r.source === "photo");
 
+  // Progressive: orientación (las pestañas) primero; luego la función de agregar
+  // ropa real, solo si aún no ha subido fotos (a quien ya lo hizo no lo regañamos).
+  const seenH = profile.hints_seen ?? {};
+  const closetHint = !seenH["closet-tabs"]
+    ? "closet-tabs"
+    : !hasOwnPhotos && !seenH["closet-agregar"]
+      ? "closet-agregar"
+      : null;
+
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-1">
@@ -109,12 +118,17 @@ export default async function ClosetPage() {
 
         <ClosetNav />
 
-        {/* Hint contextual (una vez): las pestañas de arriba no se explican solas. */}
-        {!profile.hints_seen?.["closet-tabs"] ? (
+        {/* Hints contextuales (una por visita): orientación de pestañas, luego
+            la función de sumar tu ropa real. */}
+        {closetHint === "closet-tabs" ? (
           <Hint id="closet-tabs">
             aquí también viven tu <strong>cápsula</strong> (el clóset ideal para
-            tu vida) y tu <strong>wishlist</strong> — cámbiate con las pestañas
-            de arriba
+            tu vida) y tu <strong>wishlist</strong> — toca para cambiarte
+          </Hint>
+        ) : null}
+        {closetHint === "closet-agregar" ? (
+          <Hint id="closet-agregar">
+            súmale tu ropa real con una foto — tus looks se vuelven 100% tuyos
           </Hint>
         ) : null}
 

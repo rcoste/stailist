@@ -24,6 +24,7 @@ export function ClosetNav() {
     <div
       role="tablist"
       aria-label="Secciones del clóset"
+      data-hint-target="closet-tabs"
       className="flex gap-1.5 rounded-sm border border-line bg-bg p-1"
     >
       {TABS.map((t) => {

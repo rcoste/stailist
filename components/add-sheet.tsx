@@ -27,6 +27,7 @@ export function AddSheet({ userId }: { userId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-hint-target="closet-agregar"
         className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-sm bg-accent px-4 text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
       >
         <Icon name="mas" size={18} strokeWidth={2} />

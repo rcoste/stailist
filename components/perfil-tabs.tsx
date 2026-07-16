@@ -150,14 +150,14 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
         <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
       </a>
 
-      {/* Re-lanzar el walkthrough: resetea los hints contextuales (💡). */}
+      {/* Re-lanzar el walkthrough: resetea los hints contextuales. */}
       <form action={resetHints}>
         <button
           type="submit"
           className="flex w-full items-center gap-3 rounded-md border border-line bg-surface p-4 text-left transition-colors hover:border-accent"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-            💡
+            <Icon name="destello" size={18} />
           </span>
           <div className="flex flex-col">
             <span className="text-sm font-medium text-ink">volver a ver los tips</span>

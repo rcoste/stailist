@@ -144,15 +144,19 @@ export default async function HoyPage({
   const seen = profile.hints_seen ?? {};
   const accountDays =
     (new Date().getTime() - new Date(profile.created_at).getTime()) / 86_400_000;
+  // Progressive: orientación primero (hoy-casa), luego función de valor
+  // (fab-generar → hoy-tryon) cuando ya hay look, y viaje al final. UNA por visita.
   const hint = nudge
     ? null
     : !seen["hoy-casa"]
       ? "hoy-casa"
       : lookInicial && !seen["fab-generar"]
         ? "fab-generar"
-        : accountDays >= 3 && !seen["viaje"]
-          ? "viaje"
-          : null;
+        : lookInicial && !seen["hoy-tryon"]
+          ? "hoy-tryon"
+          : accountDays >= 3 && !seen["viaje"]
+            ? "viaje"
+            : null;
 
   // El stack de banners (hint/nudge) va centrado y angosto en desktop para no
   // estirarse a lo ancho de la columna wide del héroe (F3, plan desktop-full).
@@ -164,20 +168,27 @@ export default async function HoyPage({
         {hasBanner ? (
           <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
             {hint === "hoy-casa" ? (
-              <Hint id="hoy-casa">
+              <Hint id="hoy-casa" center>
                 esta es tu casa — cada día te espera un look nuevo aquí, pensado
                 para tu plan y tu clima
               </Hint>
             ) : null}
             {hint === "fab-generar" ? (
               <Hint id="fab-generar">
-                ¿otro plan hoy? el botón de generar te arma un look nuevo desde
-                cualquier pantalla
+                ¿otro plan hoy? tócalo y te armo un look nuevo desde cualquier
+                pantalla
+              </Hint>
+            ) : null}
+            {hint === "hoy-tryon" ? (
+              <Hint id="hoy-tryon">
+                ¿cómo te va a quedar? aquí te lo pruebo puesto en ti, no en una
+                modelo
               </Hint>
             ) : null}
             {hint === "viaje" ? (
               <Hint id="viaje">
-                ¿viaje pronto? en la pestaña Viaje te armo la maleta completa
+                ¿viaje pronto? aquí te armo la maleta completa, con el clima de
+                cada parada
               </Hint>
             ) : null}
             {nudge === "tryon" ? <TryonNudge /> : null}

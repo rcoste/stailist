@@ -8,12 +8,17 @@ import { createClient } from "@/lib/supabase/server";
 // se persiste en profiles.hints_seen — cross-device, no por navegador.
 
 export type HintId =
-  | "hoy-casa" // Hoy: "esta es tu casa"
-  | "fab-generar" // el ✨ genera desde cualquier pantalla
+  // Orientación (dónde estás / para qué sirve la sección)
+  | "hoy-casa" // Hoy: "esta es tu casa" (centrado)
+  | "fab-generar" // el botón central genera desde cualquier pantalla
   | "closet-tabs" // el clóset también tiene cápsula y wishlist
-  | "historial-worn" // di "me lo puse" para que aprenda
+  | "historial-worn" // di "me lo puse" para que aprenda (centrado)
   | "wishlist-cartera" // la cartera de colores antes de comprar
-  | "viaje"; // te armo la maleta
+  | "viaje" // te armo la maleta
+  // Función de valor (qué puedes HACER dentro de la sección)
+  | "hoy-tryon" // verte el look puesto en ti (try-on)
+  | "closet-agregar" // súmale tu ropa real con una foto
+  | "capsula-swap"; // cambia una prenda de la cápsula que no te late
 
 // Marca el hint como visto (lo llama la burbuja al cerrarse) + evento para
 // medir en el admin si los tips llevan gente a los módulos.

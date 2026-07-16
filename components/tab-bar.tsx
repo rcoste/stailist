@@ -50,6 +50,8 @@ export function TabBar() {
       <Link
         key={href}
         href={href}
+        // Target del hint "viaje" (coach-mark señala esta pestaña).
+        data-hint-target={href === "/viaje/lista" ? "viaje" : undefined}
         className={`flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors duration-200 ${
           active ? "text-accent" : "text-muted hover:text-ink"
         }`}
@@ -73,6 +75,7 @@ export function TabBar() {
             type="button"
             onClick={() => router.push(`/hoy?generar=${Date.now()}`)}
             aria-label="Generar un outfit"
+            data-hint-target="fab-generar"
             className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-on-accent shadow-[0_6px_18px_-6px_rgba(10,10,10,0.5)] ring-4 ring-bg transition-colors duration-200 hover:bg-accent-deep"
           >
             <Icon name="destello" size={24} />

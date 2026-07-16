@@ -491,6 +491,7 @@ function ReadyView({
         {t.mode === "sin_avatar" ? (
           <Link
             href={t.avatarHref}
+            data-hint-target="hoy-tryon"
             className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
           >
             <Icon name="destello" size={18} /> crea tu avatar para verte
@@ -499,6 +500,7 @@ function ReadyView({
           <button
             type="button"
             onClick={verte}
+            data-hint-target="hoy-tryon"
             className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
           >
             <Icon name="destello" size={18} /> verte con este look

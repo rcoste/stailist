@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ClosetNav } from "@/components/closet-nav";
 import { CapsuleList } from "@/components/capsule-list";
+import { Hint } from "@/components/hint";
 import { CapsuleLooks } from "@/components/capsule-looks";
 import { CapsuleTabs } from "@/components/capsule-tabs";
 import { PorQueEsTuya } from "@/components/por-que-es-tuya";
@@ -203,6 +204,16 @@ export default async function CapsulaPage({
                           : "Calcular qué ya tienes y qué te falta"
                       }
                     />
+                  ) : null}
+
+                  {/* Hint de función (una vez): el swap "no me late". El
+                      coach-mark apunta al botón; si no hay ningún hueco en
+                      pantalla, no se muestra ni se marca visto (espera). */}
+                  {!profile.hints_seen?.["capsula-swap"] ? (
+                    <Hint id="capsula-swap">
+                      ¿algo no te convence? tócalo y te lo cambio por otra opción
+                      tuya
+                    </Hint>
                   ) : null}
 
                   <CapsuleList

@@ -106,17 +106,18 @@ export function WishlistClient({
             superficie de "modo compras", justo donde quieres checar colores. */}
         <Link
           href="/cartera"
+          data-hint-target="wishlist-cartera"
           className="mt-1 flex w-fit items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
         >
-          🎨 ¿de compras? abre tu cartera de colores
+          ¿de compras? abre tu cartera de colores
         </Link>
       </div>
 
-      {/* Hint contextual (una vez): señala la cartera la primera visita. */}
+      {/* Hint contextual (una vez): coach-mark que señala la cartera. */}
       {showCarteraHint ? (
         <Hint id="wishlist-cartera">
-          antes de comprar algo, tu <strong>cartera de colores</strong> (aquí
-          arriba) te dice si ese tono te enciende la cara o te apaga
+          antes de comprar, tu <strong>cartera de colores</strong> te dice si ese
+          tono te enciende la cara o te apaga
         </Hint>
       ) : null}
 
