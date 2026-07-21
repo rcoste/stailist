@@ -7,6 +7,8 @@ import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { Heart } from "@/components/heart";
 import { LookDetail } from "./look-detail";
+import { ConfirmDelete } from "@/components/confirm-delete";
+import { deleteOutfit } from "@/lib/delete-actions";
 
 export type HistoryOutfit = {
   id: string;
@@ -119,6 +121,8 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
   const [occMenu, setOccMenu] = useState(false);
   const [abierto, setAbierto] = useState<string | null>(null);
   const [rewearing, setRewearing] = useState<string | null>(null);
+  // Look pendiente de confirmar borrado (se pregunta antes de quitarlo).
+  const [porBorrar, setPorBorrar] = useState<HistoryOutfit | null>(null);
 
   // Ocasiones presentes en el historial (para el dropdown de filtro).
   const ocasiones = useMemo(() => {
@@ -313,8 +317,26 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
           onVote={(up) => vote(lookAbierto.id, up)}
           onFav={() => fav(lookAbierto.id)}
           onRewear={() => rewear(lookAbierto.id)}
+          onDelete={() => setPorBorrar(lookAbierto)}
         />
       ) : null}
+
+      <ConfirmDelete
+        open={!!porBorrar}
+        titulo={`¿borrar «${(porBorrar?.nombre ?? "este look").toLowerCase()}»?`}
+        detalle="sale de tu historial. tus prendas se quedan tal cual en el clóset."
+        confirmar="sí, bórralo"
+        onCancel={() => setPorBorrar(null)}
+        onConfirm={async () => {
+          const id = porBorrar?.id;
+          setPorBorrar(null);
+          if (!id) return;
+          // Cierra el detalle primero: si no, queda abierto sobre un look que ya no existe.
+          setAbierto(null);
+          const res = await deleteOutfit(id);
+          if (res.ok) router.refresh();
+        }}
+      />
     </div>
   );
 }

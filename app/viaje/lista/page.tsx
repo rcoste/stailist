@@ -141,6 +141,7 @@ export default async function TusViajesPage() {
       "id, lugar, fecha_inicio, fecha_fin, paradas, weather, bolsas, maleta, capsule_target, capsule_match, overrides, empacado, outfits"
     )
     .eq("user_id", profile.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(20);
 

@@ -52,6 +52,7 @@ export async function POST(
     .select("capsule_target, capsule_match, overrides, ocasiones, weather, outfits, paradas, contexto")
     .eq("id", id)
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (!trip) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

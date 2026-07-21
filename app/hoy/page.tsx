@@ -31,6 +31,7 @@ export default async function HoyPage({
     .from("outfits")
     .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at")
     .eq("user_id", profile.id)
+    .is("deleted_at", null)
     .eq("is_look_of_day", true)
     .eq("look_date", today)
     .maybeSingle();

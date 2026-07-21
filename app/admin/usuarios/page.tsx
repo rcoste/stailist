@@ -27,8 +27,8 @@ export default async function AdminUsuarios() {
           "id, email, is_admin, onboarding_step, palette_season, avatar_path, capsule_target, created_at"
         ),
       supabase.from("items").select("user_id, source, created_at, deleted_at"),
-      supabase.from("outfits").select("user_id, created_at"),
-      supabase.from("trips").select("user_id, created_at"),
+      supabase.from("outfits").select("user_id, created_at").is("deleted_at", null),
+      supabase.from("trips").select("user_id, created_at").is("deleted_at", null),
       supabase.from("wishlist_items").select("user_id, created_at"),
       supabase.from("events").select("user_id, type, created_at"),
     ]);

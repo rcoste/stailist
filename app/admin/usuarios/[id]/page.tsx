@@ -100,6 +100,7 @@ export default async function AdminUserDetail({
       .from("outfits")
       .select("id, title, explanation, occasion, item_ids, created_at, tryon_path, source")
       .eq("user_id", id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(20),
     supabase

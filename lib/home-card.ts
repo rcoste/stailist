@@ -114,6 +114,7 @@ export async function loadHomeCard(
     .from("outfits")
     .select("id, title")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .eq("is_look_of_day", true)
     .eq("look_date", ayer)
     .maybeSingle();

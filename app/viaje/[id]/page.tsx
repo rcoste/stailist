@@ -13,6 +13,7 @@ import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
 import { TripPackedProvider, TripPackedBar } from "@/components/trip-packed-context";
+import { DeleteTripButton } from "@/components/delete-trip-button";
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 function fmt(d: string): string {
@@ -43,6 +44,7 @@ export default async function ViajeDetallePage({
     )
     .eq("id", id)
     .eq("user_id", profile.id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (!trip) notFound();
 
@@ -173,6 +175,7 @@ export default async function ViajeDetallePage({
     .from("outfits")
     .select("trip_look_index")
     .eq("user_id", profile.id)
+    .is("deleted_at", null)
     .eq("trip_id", trip.id)
     .eq("source", "viaje")
     .not("favorited_at", "is", null);
@@ -261,6 +264,8 @@ export default async function ViajeDetallePage({
           <div className="lg:mt-6">
             <TripPackedBar empacaIndices={empacaIndices} />
           </div>
+
+          <DeleteTripButton tripId={trip.id as string} lugar={destino} />
         </div>
 
         <div className="lg:min-w-0 lg:flex-1">

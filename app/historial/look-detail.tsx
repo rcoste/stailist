@@ -41,6 +41,7 @@ export function LookDetail({
   onVote,
   onFav,
   onRewear,
+  onDelete,
 }: {
   o: HistoryOutfit;
   e: EstadoItem;
@@ -49,6 +50,8 @@ export function LookDetail({
   onVote: (up: boolean) => void;
   onFav: () => void;
   onRewear: () => void;
+  /** Borrar el look. Vive aquí (no en la tarjeta) para no ensuciar el diario. */
+  onDelete: () => void;
 }) {
   const t = useTryon({
     outfitId: o.id,
@@ -88,6 +91,7 @@ export function LookDetail({
         onVote={onVote}
         onFav={onFav}
         onRewear={onRewear}
+        onDelete={onDelete}
         onRetry={t.generar}
       />
     );
@@ -229,6 +233,15 @@ export function LookDetail({
               <DownReason outfitId={o.id} />
             </div>
           ) : null}
+
+          {/* Borrar: discreto y al final — es la salida, no una acción del día. */}
+          <button
+            type="button"
+            onClick={onDelete}
+            className="mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-error"
+          >
+            <Icon name="equis" size={14} /> borrar este look
+          </button>
         </div>
       </div>
     </div>
@@ -297,6 +310,7 @@ function DarkDetail({
   onVote,
   onFav,
   onRewear,
+  onDelete,
   onRetry,
 }: {
   o: HistoryOutfit;
@@ -309,6 +323,7 @@ function DarkDetail({
   onVote: (up: boolean) => void;
   onFav: () => void;
   onRewear: () => void;
+  onDelete: () => void;
   onRetry: () => void;
 }) {
   // Generando: el modal abre oscuro de inmediato y revela la foto al llegar.
@@ -454,6 +469,15 @@ function DarkDetail({
             {rewearing ? "poniéndomelo…" : "me lo vuelvo a poner"}
           </button>
         </div>
+
+        {/* Borrar: discreto y al final — es la salida, no una acción del día. */}
+        <button
+          type="button"
+          onClick={onDelete}
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 text-[13px] font-semibold text-on-accent/60 transition-colors hover:text-on-accent"
+        >
+          <Icon name="equis" size={14} /> borrar este look
+        </button>
       </div>
     </div>
   );

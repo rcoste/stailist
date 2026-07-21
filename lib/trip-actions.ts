@@ -461,7 +461,9 @@ export async function favoriteTripLook(
   if (prevRow) {
     await supabase
       .from("outfits")
-      .update({ favorited_at: new Date().toISOString() })
+      // Si esa fila la habías borrado del historial, volver a guardarla desde el
+      // viaje la revive: si no, quedaría "favorita" aquí e invisible allá.
+      .update({ favorited_at: new Date().toISOString(), deleted_at: null })
       .eq("id", prevRow.id as string);
     revalidatePath(`/viaje/${tripId}`);
     return { ok: true };

@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
             .from("outfits")
             .select("item_ids")
             .eq("user_id", user.id)
+            // Un look borrado no debe seguir restringiendo lo que te armo.
+            .is("deleted_at", null)
             .gte(
               "created_at",
               new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()

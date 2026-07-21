@@ -34,6 +34,7 @@ export async function loadTripContext(
     .from("trips")
     .select("id, lugar, fecha_inicio, fecha_fin, capsule_match")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("fecha_fin", hoy)
     .order("fecha_inicio", { ascending: true })
     .limit(1);

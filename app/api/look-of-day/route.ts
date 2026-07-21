@@ -77,6 +77,8 @@ export async function POST(request: NextRequest) {
       .from("outfits")
       .select("id, item_ids, title, explanation, tip, gen_status, created_at")
       .eq("user_id", user.id)
+      // Si borraste el look de hoy, no cuenta como cacheado: te armamos otro.
+      .is("deleted_at", null)
       .eq("is_look_of_day", true)
       .eq("look_date", today)
       .maybeSingle();
@@ -250,6 +252,8 @@ async function generateInto(
         .from("outfits")
         .select("item_ids")
         .eq("user_id", userId)
+        // Un look borrado no debe seguir restringiendo lo que te armo hoy.
+        .is("deleted_at", null)
         // Solo combos COMPLETOS (legacy null o 'ready'); nunca placeholders.
         .or("gen_status.is.null,gen_status.eq.ready")
         .gte("created_at", new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()),

@@ -68,7 +68,10 @@ export default async function AdminOverview() {
       .from("profiles")
       .select("onboarding_step, avatar_path, capsule_target"),
     supabase.from("archetypes").select("*", { count: "exact", head: true }),
-    supabase.from("outfits").select("*", { count: "exact", head: true }),
+    supabase
+      .from("outfits")
+      .select("*", { count: "exact", head: true })
+      .is("deleted_at", null),
     supabase
       .from("events")
       .select("type, data")

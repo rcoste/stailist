@@ -13,7 +13,8 @@ export async function loadLovedCounts(
     supabase
       .from("outfits")
       .select("id, item_ids, favorited_at")
-      .eq("user_id", userId),
+      .eq("user_id", userId)
+      .is("deleted_at", null),
     supabase
       .from("events")
       .select("outfit_id")

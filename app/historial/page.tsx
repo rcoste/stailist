@@ -15,6 +15,7 @@ export default async function HistorialPage() {
     .from("outfits")
     .select("id, title, explanation, occasion, item_ids, created_at, favorited_at, tryon_path, source")
     .eq("user_id", profile.id)
+    .is("deleted_at", null)
     // Diarios siempre; los promovidos del viaje solo mientras sigan favoriteados
     // (quitar el favorito los saca del historial sin borrar la fila).
     .or("source.eq.daily,favorited_at.not.is.null")

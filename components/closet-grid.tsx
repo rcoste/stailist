@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { removeItem, updateItemAttrs } from "@/app/closet/actions";
+import { ConfirmDelete } from "@/components/confirm-delete";
 
 export type ClosetItem = {
   id: string;
@@ -220,6 +221,8 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   const [filter, setFilter] = useState<string | null>(null); // null = Todos
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ClosetItem | null>(null);
+  // Prenda pendiente de confirmar antes de quitarla del clóset.
+  const [porQuitar, setPorQuitar] = useState<ClosetItem | null>(null);
   // Auto-sanado: prendas que el usuario agregó por descripción y nunca tuvieron
   // imagen se renderizan UNA vez (texto→imagen, cacheado en el item). El tile
   // muestra el resultado en cuanto llega, sin recargar la página.
@@ -485,13 +488,26 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
         <ItemSheet
           item={selected}
           onClose={() => setSelected(null)}
-          onRemove={() => quitar(selected.id)}
+          onRemove={() => setPorQuitar(selected)}
           onSaved={() => {
             setSelected(null);
             router.refresh();
           }}
         />
       ) : null}
+
+      <ConfirmDelete
+        open={!!porQuitar}
+        titulo={`¿quitar ${(porQuitar?.nombre ?? "esta prenda").toLowerCase()} del clóset?`}
+        detalle="deja de contar para tus looks. si te arrepientes, vuelve a agregarla."
+        confirmar="sí, quítala"
+        onCancel={() => setPorQuitar(null)}
+        onConfirm={() => {
+          const id = porQuitar?.id;
+          setPorQuitar(null);
+          if (id) void quitar(id);
+        }}
+      />
     </div>
   );
 }

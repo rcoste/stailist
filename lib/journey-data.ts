@@ -28,6 +28,7 @@ export async function loadJourneySignals(
       .from("outfits")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .eq("is_look_of_day", true),
     // Todas las prendas (incluidas borradas) para detectar personalización:
     // una foto propia (source=photo) o un básico eliminado (deleted_at).

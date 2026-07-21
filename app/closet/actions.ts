@@ -133,13 +133,19 @@ export async function removeItem(id: string): Promise<{ ok: boolean }> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("items")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", user.id)
-    .is("deleted_at", null);
-  if (error) return { ok: false };
+    .is("deleted_at", null)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false };
+
+  // Deja rastro: qué prendas se van y cuándo es señal de qué le sobra al clóset.
+  await supabase
+    .from("events")
+    .insert({ user_id: user.id, type: "item_deleted", data: { item_id: id } });
 
   revalidatePath("/closet");
   return { ok: true };

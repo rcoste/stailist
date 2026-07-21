@@ -23,6 +23,7 @@ export default async function WowPage() {
       .from("outfits")
       .select("id, item_ids, title, explanation, tryon_path")
       .eq("user_id", profile.id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(3);
     if (saved && saved.length > 0) {
