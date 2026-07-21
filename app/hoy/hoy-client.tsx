@@ -19,6 +19,9 @@ import { markWorn } from "@/lib/outfit-actions";
 import { notifyFirstLike, notifyWorn } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
+import { AddSheet } from "@/components/add-sheet";
+import { HomeCard } from "@/components/home-card";
+import type { HomeCard as HomeCardData } from "@/lib/home-card";
 
 export type HoyOutfit = {
   id: string;
@@ -56,6 +59,7 @@ export function HoyClient({
   defaultObjective,
   closet = [],
   autoAsk = false,
+  homeCard = null,
 }: {
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
@@ -69,6 +73,8 @@ export function HoyClient({
   closet?: ClosetPick[];
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
   autoAsk?: boolean;
+  /** Card contextual del home idle (viaje / prenda sin estrenar / ayer). UNA o ninguna. */
+  homeCard?: HomeCardData | null;
 }) {
   const [state, setState] = useState<State>(
     pendingOutfitId && !autoAsk
@@ -97,6 +103,9 @@ export function HoyClient({
   // Recuerda si la usuaria ya aceptó usar el ancla pese al aviso de ocasión, para
   // no volver a avisarle en "otro look".
   const lastForceAnchor = useRef(false);
+  // Ancla que viene de la card "aún no estrenas X": abre el wizard con esa
+  // prenda ya seleccionada. Es estado (no ref) porque el wizard la renderiza.
+  const [seedFromCard, setSeedFromCard] = useState<string | null>(null);
   // Cancela el polling en curso (al desmontar o al arrancar otro).
   const cancelPoll = useRef<(() => void) | null>(null);
 
@@ -189,8 +198,9 @@ export function HoyClient({
 
   // Abre la pantalla de ocasión+clima y luego genera. Siempre la muestra (para
   // poder cambiar la ocasión cada vez). force = "Otro look".
-  function startGen(force: boolean) {
+  function startGen(force: boolean, seedItemId: string | null = null) {
     pendingForce.current = force;
+    setSeedFromCard(seedItemId);
     setState({ kind: "ask" });
   }
 
@@ -232,7 +242,16 @@ export function HoyClient({
             dime tu plan y te lo dejo listo en segundos.
           </p>
         </div>
-        <div className="pb-2">
+        {/* Pie de la pantalla: contexto → acción principal → acción secundaria.
+            La card contextual (si la hay) informa; el CTA manda; añadir prendas
+            es la acción #2 por frecuencia y va en jerarquía fantasma. */}
+        <div className="flex flex-col gap-3 pb-2">
+          {homeCard ? (
+            <HomeCard
+              card={homeCard}
+              onEstrena={(itemId) => startGen(true, itemId)}
+            />
+          ) : null}
           <button
             type="button"
             onClick={() => startGen(false)}
@@ -241,6 +260,7 @@ export function HoyClient({
             armar mi look de hoy
             <Icon name="flecha" size={19} />
           </button>
+          <AddSheet userId={userId} variant="ghost" />
         </div>
       </div>
     );
@@ -252,10 +272,15 @@ export function HoyClient({
         title="Tu look de hoy"
         defaultObjective={defaultObjective}
         closet={closet}
-        onPick={(input) => generar(input, pendingForce.current)}
+        defaultSeedItemId={seedFromCard}
+        onPick={(input) => {
+          setSeedFromCard(null);
+          generar(input, pendingForce.current);
+        }}
         // Salir del wizard (paso 1): vuelve al look del día si lo hay, o al home
         // (estado idle, con la tab bar) — NUNCA a un loop que re-abra el wizard.
         onExit={() => {
+          setSeedFromCard(null);
           if (lookInicial) setState({ kind: "ready", outfit: lookInicial });
           else setState({ kind: "idle" });
         }}

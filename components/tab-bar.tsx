@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
+import { MoreSheet } from "@/components/more-sheet";
+import type { TripContext } from "@/lib/trip-context";
 
-// Cuatro destinos + un botón central de ACCIÓN (Generar). El centro no es una
-// pestaña: es el botón estrella que dispara la generación de outfit (hoy/ocasión).
+// Tres destinos + "Más" + un botón central de ACCIÓN (Generar). El centro no es
+// una pestaña: es el botón estrella que dispara la generación de outfit.
 // Perfil salió de aquí a un ícono en el header. "Hoy" es tu home (lugar), el
 // botón central es la acción — no se pisan.
+//
+// El 4º slot dejó de ser Viaje y pasó a "Más" (hoja de acciones + lugares): la
+// medición mostró que modo tienda estaba a 4 taps y Cartera a 3, detrás de una
+// pestaña de Perfil llamada "estilo" que no las nombra. Viaje se mudó adentro
+// de la hoja, con estado vivo y aviso en el botón cuando hay viaje cerca.
 // `match` (opcional) = prefijo para marcar la pestaña activa, cuando difiere del
-// destino. Viaje aterriza en el home (/viaje/lista: nueva maleta + historial),
-// pero sigue activa en todo /viaje* (wizard, detalle).
+// destino.
 const TABS: {
   href: string;
   label: string;
@@ -22,19 +28,21 @@ const TABS: {
   // Wishlist es una sub-sección del clóset (tab), así que la pestaña Clóset se
   // queda activa también en /wishlist.
   { href: "/closet", label: "Clóset", icon: "gancho", extra: ["/wishlist"] },
-  // Orden por frecuencia de uso: Historial (revisar/re-usar looks) va antes que
-  // Viaje (episódico, solo al viajar) → Historial en el slot interior, Viaje en la esquina.
   { href: "/historial", label: "Historial", icon: "reloj" },
-  { href: "/viaje/lista", label: "Viaje", icon: "maletin", match: "/viaje" },
 ];
 
-export function TabBar() {
+// Rutas que viven dentro de la hoja "Más": estando en ellas, el slot se pinta
+// activo (si no, la barra no marcaría nada y se siente fuera de lugar).
+const EN_MAS = ["/viaje", "/cartera"];
+
+export function TabBar({ userId, trip }: { userId: string; trip: TripContext | null }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Dos pestañas a cada lado del botón central.
+  // Dos pestañas a la izquierda; una + "Más" a la derecha del botón central.
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
+  const masActivo = EN_MAS.some((p) => pathname.startsWith(p));
 
   const tab = (
     href: string,
@@ -50,8 +58,6 @@ export function TabBar() {
       <Link
         key={href}
         href={href}
-        // Target del hint "viaje" (coach-mark señala esta pestaña).
-        data-hint-target={href === "/viaje/lista" ? "viaje" : undefined}
         className={`flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors duration-200 ${
           active ? "text-accent" : "text-muted hover:text-ink"
         }`}
@@ -83,6 +89,7 @@ export function TabBar() {
         </div>
 
         {right.map((t) => tab(t.href, t.label, t.icon, t.match, t.extra))}
+        <MoreSheet userId={userId} trip={trip} active={masActivo} />
       </div>
     </nav>
   );

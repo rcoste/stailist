@@ -51,7 +51,8 @@ export type IconName =
   | "vestido"
   | "camisa"
   | "bookmark"
-  | "bookmarkFill";
+  | "bookmarkFill"
+  | "puntos";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
   sol: (
@@ -86,6 +87,15 @@ const GLYPHS: Record<IconName, JSX.Element> = {
     </>
   ),
   mas: <path d="M12 5v14M5 12h14" />,
+  // "Más opciones" del 4º slot de la tab bar. Puntos rellenos (no aro) para que
+  // se lean a 24px; mismo tamaño que los círculos de `paleta`.
+  puntos: (
+    <>
+      <circle cx="5.5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="18.5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </>
+  ),
   camara: (
     <>
       <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" />

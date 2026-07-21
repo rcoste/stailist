@@ -104,11 +104,15 @@ export function LookRequest({
   onExit,
   skipObjective,
   closet = [],
+  defaultSeedItemId = null,
 }: {
   title?: string;
   defaultObjective: string | null;
   onPick: (input: LookInput) => void;
   onExit?: () => void;
+  // Ancla pre-seleccionada: la usa la card "aún no estrenas X" del home, que
+  // abre el wizard con esa prenda ya puesta como ancla.
+  defaultSeedItemId?: string | null;
   // Wow (primer outfit): la ocasión ya se eligió en el paso de onboarding →
   // arranca en "momento" y muestra 2 pasos en vez de 3 (no re-pregunta ocasión).
   skipObjective?: boolean;
@@ -131,7 +135,7 @@ export function LookRequest({
   const [momento, setMomento] = useState<"dia" | "noche">("dia");
   const [climaIdx, setClimaIdx] = useState(2); // Templado por defecto
   const [rain, setRain] = useState(false);
-  const [seedItemId, setSeedItemId] = useState<string | null>(null); // ancla opcional
+  const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
   const [formality, setFormality] = useState<string | null>(null); // solo "evento"
   const [locating, setLocating] = useState(false);

@@ -3,6 +3,7 @@ import { Logo } from "./logo";
 import { TabBar } from "./tab-bar";
 import { DesktopHeader } from "./desktop-header";
 import { Icon } from "./icon";
+import { loadNavState } from "@/lib/trip-context";
 
 // hideTabBar: pantallas con una barra fija de acción abajo (Biblioteca,
 // cuestionario). La nota crítica del handoff es que el CTA inferior y la tab bar
@@ -14,7 +15,7 @@ import { Icon } from "./icon";
 //    laterales bg-surface) — el "escaparate". Toda página se ve intencional
 //    sin migrarse.
 //  - "wide": contenedor ancho (max-w-5xl); la página controla su layout con lg:.
-export function AppShell({
+export async function AppShell({
   children,
   hideTabBar = false,
   desktop = "column",
@@ -23,6 +24,9 @@ export function AppShell({
   hideTabBar?: boolean;
   desktop?: "column" | "wide";
 }) {
+  // La tab bar necesita saber quién eres (hoja de añadir) y si traes viaje vivo
+  // (aviso en "Más"). Solo se pide cuando la barra se va a pintar.
+  const nav = hideTabBar ? null : await loadNavState();
   return (
     <div className="min-h-dvh bg-bg lg:bg-surface">
       <DesktopHeader />
@@ -50,7 +54,7 @@ export function AppShell({
         >
           {children}
         </main>
-        {hideTabBar ? null : <TabBar />}
+        {hideTabBar || !nav ? null : <TabBar userId={nav.userId} trip={nav.trip} />}
       </div>
     </div>
   );

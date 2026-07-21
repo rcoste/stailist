@@ -10,6 +10,7 @@ import { Hint } from "@/components/hint";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 import type { ClosetPick } from "@/components/weather-picker";
 import { loadClosetPicks } from "@/lib/closet-picks";
+import { loadHomeCard } from "@/lib/home-card";
 
 export default async function HoyPage({
   searchParams,
@@ -131,6 +132,10 @@ export default async function HoyPage({
   // con las queridas primero (solo orden visual). Compartido con el modo viaje.
   const closet: ClosetPick[] = await loadClosetPicks(supabase, profile.id);
 
+  // Card contextual del home idle. Solo se calcula cuando NO hay look listo:
+  // con look en pantalla el home tiene otro trabajo y la card no se muestra.
+  const homeCard = lookInicial ? null : await loadHomeCard(supabase, profile.id);
+
   const nombre = (profile.email ?? "").split("@")[0];
 
   // Motor de nudges: solo cuando ya hay look listo (contexto para el try-on).
@@ -187,8 +192,8 @@ export default async function HoyPage({
             ) : null}
             {hint === "viaje" ? (
               <Hint id="viaje">
-                ¿viaje pronto? aquí te armo la maleta completa, con el clima de
-                cada parada
+                ¿viaje pronto? aquí dentro te armo la maleta completa, con el
+                clima de cada parada
               </Hint>
             ) : null}
             {nudge === "tryon" ? <TryonNudge /> : null}
@@ -231,6 +236,7 @@ export default async function HoyPage({
           defaultObjective={profile.last_objective}
           closet={closet}
           autoAsk={autoAsk}
+          homeCard={homeCard}
         />
       </section>
     </AppShell>
