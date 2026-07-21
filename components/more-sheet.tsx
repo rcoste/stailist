@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 import { AddSheet, type AddSheetHandle } from "@/components/add-sheet";
+import { Sheet } from "@/components/sheet";
 import type { TripContext } from "@/lib/trip-context";
 
 // El 4º slot de la tab bar. No es un destino: levanta una hoja con las acciones
@@ -76,71 +77,57 @@ export function MoreSheet({
       {/* La hoja de añadir, sin botón propio: la abre la fila "añadir prendas". */}
       <AddSheet userId={userId} variant="headless" ref={addRef} />
 
-      {open ? (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center lg:items-center"
-          onClick={() => setOpen(false)}
-        >
-          <div className="absolute inset-0 bg-ink/40" />
-          <div
-            className="relative z-10 max-h-[85dvh] w-full max-w-[430px] overflow-y-auto rounded-t-[18px] bg-surface px-4 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-2 lg:rounded-[18px]"
-            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-3.5 mt-1.5 h-1 w-9 rounded-full bg-line" />
+      <Sheet open={open} onClose={() => setOpen(false)}>
+        {/* Viaje vivo primero: si estás de viaje, la maleta es lo que buscas. */}
+        {trip ? (
+          <>
+            <Rotulo>tu viaje</Rotulo>
+            <Fila
+              icon="maletin"
+              title="tu maleta"
+              sub={viajeSub}
+              onClick={() => choose(() => router.push(trip.href))}
+            />
+          </>
+        ) : null}
 
-            {/* Viaje vivo primero: si estás de viaje, la maleta es lo que buscas. */}
-            {trip ? (
-              <>
-                <Rotulo>tu viaje</Rotulo>
-                <Fila
-                  icon="maletin"
-                  title="tu maleta"
-                  sub={viajeSub}
-                  onClick={() => choose(() => router.push(trip.href))}
-                />
-              </>
-            ) : null}
+        <Rotulo>acciones</Rotulo>
+        <Fila
+          icon="camara"
+          title="añadir prendas"
+          sub="foto, carrete o la biblioteca de básicos"
+          onClick={() => choose(() => addRef.current?.open())}
+        />
+        <Fila
+          icon="maleta"
+          title="armar maleta"
+          sub="dime a dónde vas y te la preparo"
+          onClick={() => choose(() => router.push("/viaje"))}
+        />
+        <Fila
+          icon="lupa"
+          title="modo tienda"
+          sub="¿este color me va? súbelo y te digo"
+          onClick={() => choose(() => router.push("/cartera/chequear"))}
+        />
 
-            <Rotulo>acciones</Rotulo>
-            <Fila
-              icon="camara"
-              title="añadir prendas"
-              sub="foto, carrete o la biblioteca de básicos"
-              onClick={() => choose(() => addRef.current?.open())}
-            />
-            <Fila
-              icon="maleta"
-              title="armar maleta"
-              sub="dime a dónde vas y te la preparo"
-              onClick={() => choose(() => router.push("/viaje"))}
-            />
-            <Fila
-              icon="lupa"
-              title="modo tienda"
-              sub="¿este color me va? súbelo y te digo"
-              onClick={() => choose(() => router.push("/cartera/chequear"))}
-            />
-
-            <Rotulo>tus cosas</Rotulo>
-            {/* Con viaje vivo ya encabeza la hoja: no se repite aquí. */}
-            {trip ? null : (
-              <Fila
-                icon="maletin"
-                title="viaje"
-                sub={viajeSub}
-                onClick={() => choose(() => router.push("/viaje/lista"))}
-              />
-            )}
-            <Fila
-              icon="paleta"
-              title="tu cartera de colores"
-              sub="los tonos que te encienden la cara"
-              onClick={() => choose(() => router.push("/cartera"))}
-            />
-          </div>
-        </div>
-      ) : null}
+        <Rotulo>tus cosas</Rotulo>
+        {/* Con viaje vivo ya encabeza la hoja: no se repite aquí. */}
+        {trip ? null : (
+          <Fila
+            icon="maletin"
+            title="viaje"
+            sub={viajeSub}
+            onClick={() => choose(() => router.push("/viaje/lista"))}
+          />
+        )}
+        <Fila
+          icon="paleta"
+          title="tu cartera de colores"
+          sub="los tonos que te encienden la cara"
+          onClick={() => choose(() => router.push("/cartera"))}
+        />
+      </Sheet>
     </>
   );
 }
