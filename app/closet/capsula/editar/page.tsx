@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { requireOnboarded } from "@/lib/auth";
 import { CapsulaForm } from "@/app/closet/capsula/capsula-form";
-import { ASSESSMENT_QUESTIONS, type LifestyleAnswers } from "@/lib/capsule";
+import { assessmentQuestions, type LifestyleAnswers } from "@/lib/capsule";
 import { createClient } from "@/lib/supabase/server";
 import { ensureStyleQuestions } from "@/lib/style-questions-cache";
 
@@ -16,7 +16,7 @@ export default async function EditarCapsulaPage() {
   // Preguntas personalizadas (IA, cacheadas): fijas + las de SU estilo.
   const supabase = await createClient();
   const extra = await ensureStyleQuestions(supabase, profile);
-  const questions = [...ASSESSMENT_QUESTIONS, ...extra];
+  const questions = [...assessmentQuestions(profile.gender), ...extra];
 
   // Sin tab bar: el cuestionario tiene su propia barra de acción fija (Atrás /
   // Siguiente) — CTA y tab bar no coexisten.

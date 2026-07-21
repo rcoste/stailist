@@ -56,6 +56,8 @@ export type Profile = {
     image_paths?: string[];
     image_path?: string;
   } | null;
+  // Su estilo EN SUS PALABRAS (texto libre opcional del perfil, ≤280 chars).
+  style_words: string | null;
 };
 
 // Cookie del modo "ver como" (admin ve la app con los datos de otro usuario,

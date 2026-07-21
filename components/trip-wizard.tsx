@@ -1232,7 +1232,7 @@ function StepMaleta({
       </div>
       <div className="flex items-start gap-2 text-xs leading-snug text-muted">
         <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
-        <span>es un techo, no una meta: armo lo mínimo que combina. si cabe menos, mejor.</span>
+        <span>es un techo, no una meta: empaco lo que tus días y planes piden — que combine todo, sin sobrar ni faltar.</span>
       </div>
     </div>
   );

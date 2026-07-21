@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { STYLE_WORDS_MAX } from "@/lib/style-words";
 
 type StyleRefPayload = {
   summary: string;
@@ -89,6 +90,25 @@ export async function removeStyleReference(): Promise<{ ok: boolean }> {
   const { error } = await supabase
     .from("profiles")
     .update({ style_reference: null })
+    .eq("id", user.id);
+  if (error) return { ok: false };
+  revalidatePath("/perfil");
+  return { ok: true };
+}
+
+// "Tu estilo en tus palabras": texto libre opcional que entra a todos los
+// motores. Cadena vacía = quitarlo (guarda null).
+export async function saveStyleWords(words: string): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const clean = (words ?? "").trim().slice(0, STYLE_WORDS_MAX);
+  const { error } = await supabase
+    .from("profiles")
+    .update({ style_words: clean.length ? clean : null })
     .eq("id", user.id);
   if (error) return { ok: false };
   revalidatePath("/perfil");
