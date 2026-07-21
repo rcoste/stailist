@@ -15,16 +15,32 @@ export type StyleReferenceStored = {
   image_paths?: string[];
 } | null;
 
+// Firma del ESTILO completo con el que se generó una cápsula: referencia +
+// "sus palabras". Si cualquiera de las dos cambia, la cápsula quedó vieja y
+// se ofrece regenerar (antes solo la referencia contaba — editar tus palabras
+// jamás invalidaba la cápsula, en silencio). null si no hay ninguna señal.
+export function styleSignature(sr: unknown, styleWords: string | null): string | null {
+  const ref = styleReferenceForEngine(sr);
+  const words = styleWords?.trim() || null;
+  if (!ref && !words) return null;
+  return `${ref ?? ""}|${words ?? ""}`;
+}
+
 export function styleReferenceForEngine(sr: unknown): string | null {
   const ref = (sr ?? null) as StyleReferenceStored;
   const summary = ref?.summary?.trim();
   if (!summary) return null;
+  // Los tags que la visión extrajo de las fotos (4-6 claves del estilo) se
+  // guardaban pero jamás llegaban al motor — señal tirada. Van pegados al
+  // summary como claves concretas.
+  const tags = (ref?.tags ?? []).map((t) => t?.trim()).filter(Boolean).slice(0, 6);
+  const base = tags.length ? `${summary} (claves: ${tags.join(", ")})` : summary;
   const note = ref?.fit?.note?.trim();
   const verdict = ref?.fit?.verdict;
   // Solo cuando la evaluación pide adaptar ("ajustes"/"ojo"): con "va" la nota
   // es un elogio y no cambia cómo generar.
   if (note && (verdict === "ajustes" || verdict === "ojo")) {
-    return `${summary} (OJO — evaluación honesta de ese estilo para esta persona, adáptalo así: ${note})`;
+    return `${base} (OJO — evaluación honesta de ese estilo para esta persona, adáptalo así: ${note})`;
   }
-  return summary;
+  return base;
 }

@@ -1,10 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
+import { tasteSignalLines } from "@/lib/engine/prompt";
+import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 import {
   occasionLabels,
   luggageCapacity,
   luggageSummary,
+  capsuleFloor,
+  CAPACIDAD_HOLGADA,
   type Bolsas,
   type Luggage,
   type Occasion,
@@ -43,6 +47,11 @@ export type TripCapsuleInputs = {
   // Texto libre: qué va a hacer en el viaje, en sus palabras (un partido, una
   // boda, hiking, "me gusta viajar cómodo"). La señal más específica del viaje.
   contexto?: string | null;
+  // v24 — señales de estilo que antes NO llegaban al empacar:
+  styleReference?: string | null; // estilo de referencia (vibe/siluetas, no color)
+  styleWords?: string | null; // su estilo en sus palabras (perfil)
+  silueta?: string | null; // orientación de cuerpo — señal suave
+  tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
 };
 
 // La cápsula IDEAL del viaje: una lista mínima de prendas concretas que combinan
@@ -102,8 +111,11 @@ export async function generateTripCapsuleTarget(
   const resumen = luggageSummary(inputs.bolsas, inputs.maleta);
   const techoTxt =
     capacidad > 0
-      ? `Equipaje: ${resumen}. TECHO de ~${capacidad} prendas — no lo pases. Si el viaje pediría más, prioriza lo más versátil y recorta lo opcional.`
+      ? `Equipaje: ${resumen}. TECHO de ~${capacidad} prendas — no lo pases. Si el viaje pediría más, prioriza lo más versátil y recorta lo opcional.${capacidad >= CAPACIDAD_HOLGADA ? " Hay espacio de sobra: NUNCA recortes por espacio — recorta solo lo que no gane su lugar por versatilidad." : ""}`
       : "Maleta no definida: mantén la cápsula mínima y versátil.";
+  // Piso de suficiencia calculado en código (v24): entra como REGLA DURA.
+  const floor = capsuleFloor(inputs.days, inputs.ocasiones, capacidad);
+  const pisoTxt = `PISO DE SUFICIENCIA (REGLA DURA, calculado para ESTE viaje): al menos ${floor.tops} tops, ${floor.bottoms} bottoms y ${floor.calzado} par(es) de calzado. Un VESTIDO cuenta como top Y como bottom a la vez (cubre el día entero). Las ANCLAS cuentan para el piso: tus items + las anclas JUNTOS deben cumplirlo (no lo dupliques por encima de ellas). Este piso YA asume mezcla-y-combina — cumplirlo NO es sobre-empacar; quedarse debajo deja días sin qué ponerse.`;
   const vetoTxt = inputs.vetoes.length
     ? `VETOS — jamás incluyas: ${inputs.vetoes.join(", ")}.`
     : "";
@@ -128,12 +140,27 @@ export async function generateTripCapsuleTarget(
   const contextoTxt = inputs.contexto
     ? `CONTEXTO DEL VIAJE (lo que la persona va a hacer, EN SUS PALABRAS): "${inputs.contexto}". Es la señal MÁS específica del viaje — tenla muy en cuenta: ajusta qué prendas empacas, el nivel de arreglo y el porqué de cada una a esto. Si pide una prenda o pieza concreta para un plan (un jersey para un partido, algo formal para una boda, calzado para caminar), inclúyela o déjale espacio. No la ignores por dimensionar.`
     : "";
+  const refTxt = inputs.styleReference
+    ? `ESTILO DE REFERENCIA que le encanta (inspira el vibe y las siluetas de lo que empacas, NO los colores — la colorimetría manda el color): ${inputs.styleReference}.`
+    : "";
+  const palabrasTxt = inputs.styleWords?.trim()
+    ? `SU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género, piso, clima — siempre están por encima).`
+    : "";
+  const cuerpoTxt = inputs.silueta
+    ? `SU CUERPO (orientación suave para elegir cortes, no regla): ${inputs.silueta}.`
+    : "";
+  const feedbackTxt =
+    inputs.tasteSignal && hasTasteSignal(inputs.tasteSignal)
+      ? tasteSignalLines(inputs.tasteSignal).join("\n")
+      : "";
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    // 3584: el "plan" (borrador de razonamiento del schema) consume tokens
-    // antes de los items; 3072 quedaba justo en cápsulas grandes.
-    max_tokens: 3584,
+    // 4608: el "plan" (borrador de razonamiento) consume tokens antes de los
+    // items, y el piso de suficiencia (v24) empuja cápsulas más grandes —
+    // 3584 quedaba justo y un truncado tira TODA la creación del viaje. El
+    // tope solo se paga si se emite.
+    max_tokens: 4608,
     system: `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar. Al final explicas tu lógica en una "firma" que la persona SÍ lee.
 
 Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo ve. Ahí decide antes de listar: cuántas piezas pide este viaje (días × ocasiones × clima), qué 2-3 neutros anclan la maleta, qué acentos van, y qué pieza cubre cada ocasión. Verifica ahí la interoperabilidad: cada top debe funcionar con (casi) todos los bottoms — si una pieza solo arma UN look, gana su lugar por ocasión única o sale. DESPUÉS genera los items ejecutando ese plan.
@@ -141,9 +168,10 @@ Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
 Cómo dimensionarla:
-- Es una cápsula de mezcla-y-combina: pocas piezas que dan muchos looks. NO una prenda por día.
-- EL TAMAÑO LO MANDAN LOS DÍAS, no el techo de la maleta. Viaje corto (≤5 días) = cápsula CHICA aunque quepa más (orientación: ~3-4 tops, 2-3 bottoms, 1-2 calzado, más capas según el clima). Crece solo en viajes largos. El techo de la maleta solo RECORTA si te pasarías — JAMÁS rellenes hasta el techo "porque cabe": de más prendas que de menos es el error a evitar.
-- PISO DE BOTTOMS (innegociable): JAMÁS un solo bottom para un viaje de 3+ días. Mínimo 2 bottoms en viajes de 3-4 días, 3 en viajes de 5-7 días. Si las ocasiones mezclan día relajado y noche/arreglarse, al menos UN bottom cómodo de día Y uno que suba de noche — el mismo bottom no carga solo con turistear, la noche y el traslado.
+- Es una cápsula de mezcla-y-combina: pocas piezas que dan muchos looks. NO una prenda por día — pero tampoco una maleta corta: quedarse debajo del piso deja días sin qué ponerse, y ESE es el peor error (peor que una pieza de más).
+- ${pisoTxt}
+- EL TAMAÑO LO MANDAN LOS DÍAS Y LAS OCASIONES, no el techo de la maleta: arranca del piso y agrega solo lo que gane su lugar (una ocasión que ninguna pieza cubre, el clima, una capa). El techo de la maleta solo RECORTA si te pasarías — no rellenes hasta el techo "porque cabe".
+- Si las ocasiones mezclan día relajado y noche/arreglarse, al menos UN bottom cómodo de día Y uno que suba de noche — el mismo bottom no carga solo con turistear, la noche y el traslado. Y de los tops, al menos 2 deben poder subir de noche si hay noches.
 - PIENSA EN JORNADAS, no solo en prendas: el día de TRASLADO (avión/carretera: cómodo, capas), los días DE DÍA (caminar, turistear: pies y bottoms cómodos), y las NOCHES (subir el look). Cada jornada del viaje debe tener con qué vestirse sin forzar una pieza a todo.
 - Dimensiona también a la MEZCLA DE OCASIONES (ej. playa pide trajes de baño y shorts; una noche de arreglarse pide una pieza más formal). Cubre todas las ocasiones que te pasen, pero comparte piezas entre ellas siempre que se pueda.
 - Prendas que se mojan/sudan y necesitan secar entre usos: si el viaje es de PLAYA/ALBERCA/AGUA y dura varios días, lleva 2 trajes de baño (uno se seca mientras usas el otro); para deporte intenso de varios días, 2 piezas técnicas. No apliques esto a prendas normales (ahí manda mezcla-y-combina).
@@ -172,7 +200,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags: ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
+        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
       },
     ],
     output_config: {

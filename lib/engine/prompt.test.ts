@@ -135,3 +135,87 @@ describe("orderClosetForEngine — anti sesgo posicional", () => {
     expect(a).not.toEqual(b); // dos seeds distintas → órdenes distintos
   });
 });
+
+import { contextBlock, type EngineContext } from "./prompt";
+import { EMPTY_TASTE_SIGNAL } from "./taste-signal";
+
+// Contexto mínimo: todo apagado, para probar cada línea nueva por separado.
+const baseCtx: EngineContext = {
+  gender: null,
+  objective: null,
+  plan: null,
+  lifestyle: null,
+  tasteTags: [],
+  archetype: null,
+  season: null,
+  flow: null,
+  items: [],
+  weather: null,
+  recentCombos: [],
+  vetoes: [],
+  timeOfDay: null,
+  silueta: null,
+  tasteSignal: EMPTY_TASTE_SIGNAL,
+};
+
+describe("contextBlock — género en el generador (v23)", () => {
+  it("mujer: pide concordancia femenina y ojo de moda femenina", () => {
+    const lines = contextBlock({ ...baseCtx, gender: "mujer" });
+    expect(lines[0]).toContain("EN FEMENINO");
+    expect(lines[0]).toContain("moda femenina");
+  });
+
+  it("hombre: pide concordancia masculina y criterio masculino", () => {
+    const lines = contextBlock({ ...baseCtx, gender: "hombre" });
+    expect(lines[0]).toContain("EN MASCULINO");
+    expect(lines[0]).toContain("moda masculina");
+  });
+
+  it("sin género: pide frases neutras (no cae al masculino)", () => {
+    const lines = contextBlock({ ...baseCtx, gender: null });
+    expect(lines[0]).toContain("Género no definido");
+    expect(lines[0]).toContain("frases neutras");
+  });
+});
+
+describe("contextBlock — señales de estilo (v24)", () => {
+  it("los tags se anuncian en orden de fuerza", () => {
+    const lines = contextBlock({ ...baseCtx, tasteTags: ["pulido", "edgy"] });
+    expect(lines).toContain("Tags de gusto (en orden de fuerza): pulido, edgy.");
+  });
+
+  it("sus palabras entran citadas y mandan sobre los tags", () => {
+    const lines = contextBlock({ ...baseCtx, styleWords: "  básicos neutros  " });
+    const line = lines.find((l) => l.includes("EN SUS PALABRAS"));
+    expect(line).toContain('"básicos neutros"'); // trim aplicado
+    expect(line).toContain("sus palabras mandan");
+  });
+
+  it("styleWords vacío o en blanco no agrega línea", () => {
+    for (const words of [null, undefined, "", "   "]) {
+      const lines = contextBlock({ ...baseCtx, styleWords: words });
+      expect(lines.some((l) => l.includes("EN SUS PALABRAS"))).toBe(false);
+    }
+  });
+});
+
+import { tasteSignalLines } from "./prompt";
+
+describe("tasteSignalLines — compartida por 4 motores (v24)", () => {
+  it("señal vacía → sin líneas (no estorba el prompt)", () => {
+    expect(tasteSignalLines(EMPTY_TASTE_SIGNAL)).toEqual([]);
+  });
+
+  it("worn/liked/disliked producen sus marcadores", () => {
+    const lines = tasteSignalLines({
+      worn: [{ title: "Look A", items: ["camisa", "jeans"], occasion: "oficina", reason: null }],
+      liked: [{ title: null, items: ["polo"], occasion: null, reason: null }],
+      disliked: [{ title: "Look B", items: ["saco"], occasion: null, reason: "muy formal" }],
+      skipped: [],
+    }).join("\n");
+    expect(lines).toContain("SE LO PUSO");
+    expect(lines).toContain("👍");
+    expect(lines).toContain("RECHAZÓ");
+    expect(lines).toContain("muy formal");
+  });
+});

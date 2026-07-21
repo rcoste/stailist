@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
 
         send({ phase: "afinando para tu paleta…" });
         const ctx: EngineContext = {
+          gender: profile.gender as "hombre" | "mujer" | null,
           objective,
           plan: typeof body.plan === "string" ? body.plan.slice(0, 200) : null,
           lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
           ),
           tasteSignal,
           styleReference: styleReferenceForEngine(profile.style_reference),
+          styleWords: (profile.style_words as string | null) ?? null,
         };
         const candidates = await generateOutfits(ctx);
 
@@ -207,7 +209,7 @@ export async function POST(request: NextRequest) {
           send({
             phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
           });
-          const result = await reviewOutfit(ctx, candidates[i], finalized, gender);
+          const result = await reviewOutfit(ctx, candidates[i], finalized);
           const review: Review = {
             before: candidates[i].item_ids,
             after: result.outfit.item_ids,

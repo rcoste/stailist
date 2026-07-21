@@ -69,7 +69,20 @@ type EventRow = {
 // Lee el feedback reciente y lo arma en señal estructurada. Self-contained:
 // resuelve los nombres de prenda por su cuenta (no depende del clóset ya
 // filtrado del caller, para nombrar también prendas vetadas que sí se usaron).
+// Blindada: la señal es un EXTRA — un throw aquí jamás debe tumbar la
+// generación que la pidió (v24 la metió en el camino crítico de 4 flujos).
 export async function loadTasteSignal(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<TasteSignal> {
+  try {
+    return await loadTasteSignalUnsafe(supabase, userId);
+  } catch {
+    return EMPTY_TASTE_SIGNAL;
+  }
+}
+
+async function loadTasteSignalUnsafe(
   supabase: SupabaseClient,
   userId: string
 ): Promise<TasteSignal> {

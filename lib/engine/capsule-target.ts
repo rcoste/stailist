@@ -11,6 +11,8 @@ import {
 } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { tasteSignalLines } from "@/lib/engine/prompt";
+import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 
 export type CapsuleInputs = {
   answers: LifestyleAnswers;
@@ -28,6 +30,9 @@ export type CapsuleInputs = {
   // Preguntas del assessment (fijas + las personalizadas de su estilo). Si no se
   // pasan, usa solo las fijas. Define qué se renderiza en el bloque "vida".
   questions?: AssessmentQuestion[];
+  // v24 — señales que antes NO llegaban a la cápsula:
+  styleWords?: string | null; // su estilo en sus palabras (perfil)
+  tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
 };
 
 // CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
@@ -82,6 +87,13 @@ export async function generateCapsuleTarget(
   const refTxt = inputs.styleReference
     ? `\nESTILO DE REFERENCIA que le encanta (inspira el VIBE y las siluetas de la cápsula, NO los colores — la colorimetría de abajo manda el color): ${inputs.styleReference}. Empuja la cápsula hacia ese aire sin copiarlo literal.`
     : "";
+  const palabrasTxt = inputs.styleWords?.trim()
+    ? `\nSU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — la señal más directa de quién es; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género — siempre están por encima).`
+    : "";
+  const feedbackTxt =
+    inputs.tasteSignal && hasTasteSignal(inputs.tasteSignal)
+      ? `\n${tasteSignalLines(inputs.tasteSignal).join("\n")}`
+      : "";
   const generoTxt =
     inputs.gender === "hombre"
       ? "La persona es HOMBRE: TODA la cápsula es ropa de hombre. Jamás propongas prendas de mujer (faldas, vestidos, blusas, tacones, etc.)."
@@ -142,7 +154,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
     messages: [
       {
         role: "user",
-        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto: ${tags}${refTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}\n\nDefine su cápsula ideal (items).`,
+        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto (en orden de fuerza): ${tags}${refTxt}${palabrasTxt}${feedbackTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}\n\nDefine su cápsula ideal (items).`,
       },
     ],
     output_config: {

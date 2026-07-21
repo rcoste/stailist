@@ -15,6 +15,9 @@ import {
 } from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { enrichPackable, type RealAttrs } from "@/lib/engine/enrich-packable";
+import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import type { Season } from "@/lib/colorimetria";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 
@@ -93,16 +96,19 @@ export async function POST(
     return NextResponse.json({ ok: true, count: 0, reason: "pocas_prendas" });
   }
 
-  const [{ data: profile }, { data: closetItems }] = await Promise.all([
+  const [{ data: profile, error: profileErr }, { data: closetItems }, tasteSignal] = await Promise.all([
     supabase
       .from("profiles")
       .select(
-        "gender, taste_tags, style_archetype, body_build, body_volume, palette_season, palette_flow"
+        "gender, taste_tags, style_archetype, body_build, body_volume, palette_season, palette_flow, style_vetoes, style_reference, style_words"
       )
       .eq("id", user.id)
       .single(),
     supabase.from("items").select("attrs").eq("user_id", user.id).is("deleted_at", null),
+    loadTasteSignal(supabase, user.id),
   ]);
+  // Sin perfil los looks degradan en silencio (sin vetos ni paleta) — logea.
+  if (profileErr) console.error(`trip_outfits_profile_select_failed: ${profileErr.message}`);
 
   // Enriquece lo empacable con la prenda REAL del clóset (resuelta por nombre):
   // color/hex/temporada/material/patrón de TU prenda, no el colorFamilia de la
@@ -140,7 +146,14 @@ export async function POST(
     // "Generar más": evita repetir los looks que ya existen. "Rehacer": evita
     // los que rechazaste (👎). En ambos casos pasamos sus prendas como exclusión.
     exclude: (append ? existing : rejected).map((o) => o.prendas),
-    contexto: (trip.contexto as string | null) ?? null,
+    // slice defensivo: el tope de 200 vive en el write path, no en la DB.
+    contexto: ((trip.contexto as string | null) ?? null)?.slice(0, 200) ?? null,
+    // v24: los looks del viaje ahora respetan vetos, referencia, sus palabras
+    // y el feedback real (antes viaje generaba a ciegas de estas señales).
+    vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
+    styleReference: styleReferenceForEngine(profile?.style_reference),
+    styleWords: (profile?.style_words as string | null) ?? null,
+    tasteSignal,
   };
 
   let outfits;

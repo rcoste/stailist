@@ -93,6 +93,7 @@ export default async function PerfilPage() {
         siluetaLabel={siluetaLabel}
         banner={banner}
         styleReference={styleReference}
+        styleWords={profile.style_words}
         signOut={signOut}
       />
     </AppShell>

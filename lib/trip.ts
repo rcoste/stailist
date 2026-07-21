@@ -44,6 +44,11 @@ export function normalizeBolsas(
   return null;
 }
 
+// Capacidad desde la cual el techo deja de ser restricción real (documentada o
+// más): el prompt cambia a "nunca recortes por espacio". Vive junto a los demás
+// umbrales de capacidad para que no queden literales sueltos.
+export const CAPACIDAD_HOLGADA = 14;
+
 // Techo total de prendas = suma de (cantidad × maxPiezas) por tipo de bolsa.
 export function luggageCapacity(
   bolsas: Bolsas | null | undefined,
@@ -73,6 +78,57 @@ export function luggageSummary(
       return `${n} ${l.short}${n > 1 ? "s" : ""}`;
     })
     .join(" · ");
+}
+
+// --- Piso de suficiencia (v24, paquete B) ----------------------------------
+// El motor empacaba "de menos" (caso real: NY 5 días/maleta documentada → 4
+// tops): el prompt empujaba a "cápsula chica" y NADIE validaba que alcanzara.
+// Este piso se calcula en código (determinista, testeable) y entra al prompt
+// como REGLA DURA. Es un MÍNIMO de suficiencia, no una meta: por encima del
+// piso sigue mandando mezcla-y-combina.
+export type CapsuleFloor = { tops: number; bottoms: number; calzado: number };
+
+export function capsuleFloor(
+  days: number,
+  ocasiones: Occasion[],
+  capacidad: number // techo de prendas del equipaje (0 = sin definir)
+): CapsuleFloor {
+  // Más de ~7 días se asume re-uso/lavado: el piso no crece infinito.
+  const d = Math.max(1, Math.min(days, 7));
+  const noche = ocasiones.includes("noche");
+  // Tops: ~0.8 por día (+1 si hay noches — el look de día no sube solo), entre
+  // 3 y 8. Un vestido cuenta como top al validar (cubre el slot del día).
+  let tops = Math.min(8, Math.max(3, Math.ceil(d * 0.8) + (noche ? 1 : 0)));
+  // Bottoms: 1 por cada 2 días, entre 2 y 4 (el piso viejo del prompt, ahora
+  // en código): jamás un solo bottom para 3+ días.
+  let bottoms = Math.min(4, Math.max(d >= 3 ? 2 : 1, Math.ceil(d / 2)));
+  // Calzado: 2 pares como base (1 solo en escapadas de 1-2 días con mochila).
+  let calzado = d <= 2 && capacidad > 0 && capacidad <= 7 ? 1 : 2;
+  // El techo del equipaje MANDA sobre el piso: si no cabe, se comprime en orden
+  // tops → bottoms (el calzado ya está al mínimo útil).
+  if (capacidad > 0) {
+    while (tops + bottoms + calzado > capacidad && tops > 3) tops--;
+    while (tops + bottoms + calzado > capacidad && bottoms > 2) bottoms--;
+  }
+  return { tops, bottoms, calzado };
+}
+
+// ¿La cápsula generada cumple el piso? Un vestido cuenta como top Y como
+// bottom (cubre el día entero — sin esto, una cápsula liderada por vestidos
+// forzaría bottoms de sobra en mujer). Devuelve las categorías cortas, o []
+// si cumple — instrumentación, no bloqueo.
+export function capsuleFloorGaps(
+  items: { category: string }[],
+  floor: CapsuleFloor
+): string[] {
+  const n = (cat: string) => items.filter((i) => i.category === cat).length;
+  const tops = n("top") + n("vestido");
+  const bottoms = n("bottom") + n("vestido");
+  const gaps: string[] = [];
+  if (tops < floor.tops) gaps.push(`tops ${tops}/${floor.tops}`);
+  if (bottoms < floor.bottoms) gaps.push(`bottoms ${bottoms}/${floor.bottoms}`);
+  if (n("calzado") < floor.calzado) gaps.push(`calzado ${n("calzado")}/${floor.calzado}`);
+  return gaps;
 }
 
 // La bolsa "dominante" (la de mayor capacidad presente) — para back-compat con el

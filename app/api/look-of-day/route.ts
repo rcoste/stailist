@@ -289,6 +289,7 @@ async function generateInto(
     }
 
     const ctx: EngineContext = {
+      gender: profile.gender as "hombre" | "mujer" | null,
       objective,
       plan: typeof body.plan === "string" ? body.plan.slice(0, 200) : null,
       lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
@@ -311,15 +312,11 @@ async function generateInto(
       seedItemId,
       formality: typeof body.formality === "string" ? body.formality : null,
       styleReference: styleReferenceForEngine(profile.style_reference),
+      styleWords: (profile.style_words as string | null) ?? null,
     };
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
-    const result = await reviewOutfit(
-      ctx,
-      candidates[0],
-      [],
-      profile.gender as "hombre" | "mujer" | null
-    );
+    const result = await reviewOutfit(ctx, candidates[0], []);
     const elegido = result.outfit;
 
     const { error: upErr } = await supabase

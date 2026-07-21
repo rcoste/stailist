@@ -11,6 +11,7 @@ import { resetHints } from "@/lib/hints";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
 import { StyleReferenceCard, type StyleRef } from "@/components/style-reference-card";
+import { StyleWordsCard } from "@/components/style-words-card";
 import type { Season } from "@/lib/colorimetria";
 import type { Gender, StyleVetoes } from "@/lib/vetoes";
 
@@ -28,6 +29,7 @@ export type PerfilTabsProps = {
   styleVetoes: StyleVetoes;
   siluetaLabel: string | null; // "Promedio · Parejo" o null si no hay
   styleReference: StyleRef | null; // estilo de referencia (foto de inspiración)
+  styleWords: string | null; // su estilo en sus palabras (texto libre)
   banner: {
     title: string; // estación o fallback
     sub: string | null; // "Pulido versátil · metal oro"
@@ -189,6 +191,7 @@ function EstiloTab({
   siluetaLabel,
   banner,
   styleReference,
+  styleWords,
 }: PerfilTabsProps) {
   const showSilueta = gender === "mujer" || gender === "hombre";
   return (
@@ -290,6 +293,7 @@ function EstiloTab({
       </div>
 
       <StyleReferenceCard initial={styleReference} />
+      <StyleWordsCard initial={styleWords} />
     </div>
   );
 }

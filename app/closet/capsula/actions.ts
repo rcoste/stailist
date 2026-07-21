@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
-  ASSESSMENT_QUESTIONS,
+  assessmentQuestions,
   type AssessmentQuestion,
   closetSignature,
   type CapsuleDecision,
@@ -27,7 +27,8 @@ import { renderItemImage } from "@/lib/render-item";
 import type { Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
 import type { LifestyleAnswers } from "@/lib/capsule";
-import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { styleReferenceForEngine, styleSignature } from "@/lib/estilo-referencia";
+import { loadTasteSignal } from "@/lib/engine/taste-signal";
 
 export type CapsuleState = { status: "idle" } | { status: "error"; message: string };
 
@@ -43,18 +44,24 @@ export async function saveLifestyle(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes")
-    .eq("id", user.id)
-    .single();
+  // Perfil y feedback en paralelo: loadTasteSignal no depende del perfil y esta
+  // action ya carga con ~40s de Opus — cada round-trip serial cuenta.
+  const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words")
+      .eq("id", user.id)
+      .single(),
+    loadTasteSignal(supabase, user.id),
+  ]);
+  if (profileErr) console.error(`capsula_profile_select_failed: ${profileErr.message}`);
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
   const styleRef =
     styleReferenceForEngine(profile?.style_reference);
   // Preguntas fijas + las personalizadas de SU estilo (validamos contra ambas).
   const dynamicQ =
     (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
-  const allQ = [...ASSESSMENT_QUESTIONS, ...dynamicQ];
+  const allQ = [...assessmentQuestions(gender), ...dynamicQ];
 
   const answers: LifestyleAnswers = {};
   for (const q of allQ) {
@@ -88,8 +95,12 @@ export async function saveLifestyle(
       volume: (profile?.body_volume as Volume | null) ?? null,
       styleReference: styleRef,
       vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES),
+      styleWords: (profile?.style_words as string | null) ?? null,
+      tasteSignal,
     });
-    target.styleSig = styleRef; // firma del estilo con el que se generó
+    // Firma del estilo COMPLETO (referencia + sus palabras): si cualquiera
+    // cambia después, la cápsula se ofrece a regenerar.
+    target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
   } catch {
     await supabase
       .from("profiles")
@@ -364,13 +375,17 @@ export async function regenerateCapsuleTarget(): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes"
-    )
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words"
+      )
+      .eq("id", user.id)
+      .single(),
+    loadTasteSignal(supabase, user.id),
+  ]);
+  if (profileErr) console.error(`capsula_regen_profile_select_failed: ${profileErr.message}`);
   const answers = (profile?.lifestyle as LifestyleAnswers | null) ?? null;
   if (!answers) return; // sin assessment no hay cápsula que regenerar
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
@@ -383,7 +398,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
   try {
     target = await generateCapsuleTarget({
       answers,
-      questions: [...ASSESSMENT_QUESTIONS, ...dynamicQ],
+      questions: [...assessmentQuestions(gender), ...dynamicQ],
       gender,
       tasteTags: (profile?.taste_tags ?? []) as string[],
       archetype:
@@ -394,8 +409,10 @@ export async function regenerateCapsuleTarget(): Promise<void> {
       volume: (profile?.body_volume as Volume | null) ?? null,
       styleReference: styleRef,
       vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES),
+      styleWords: (profile?.style_words as string | null) ?? null,
+      tasteSignal,
     });
-    target.styleSig = styleRef;
+    target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
   } catch {
     return;
   }

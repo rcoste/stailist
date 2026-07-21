@@ -18,6 +18,9 @@ import {
   type TripWeatherInput,
 } from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 
 const MAX_LOOKS = 16;
@@ -57,13 +60,19 @@ export async function generateCapsuleOutfits(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, count: 0, added: 0 };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "capsule_target, capsule_match, capsule_overrides, lifestyle, gender, taste_tags, style_archetype, body_build, body_volume, capsule_outfits"
-    )
-    .eq("id", user.id)
-    .single();
+  // Perfil y feedback en paralelo (independientes): menos latencia serial antes
+  // de la llamada al motor.
+  const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "capsule_target, capsule_match, capsule_overrides, lifestyle, gender, taste_tags, style_archetype, body_build, body_volume, capsule_outfits, style_vetoes, style_reference, style_words"
+      )
+      .eq("id", user.id)
+      .single(),
+    loadTasteSignal(supabase, user.id),
+  ]);
+  if (profileErr) console.error(`capsula_looks_profile_select_failed: ${profileErr.message}`);
   const target = profile?.capsule_target as CapsuleTarget | null;
   if (!target) return { ok: false, count: 0, added: 0 };
   const match = (profile?.capsule_match as CapsuleMatch | null) ?? null;
@@ -107,6 +116,12 @@ export async function generateCapsuleOutfits(
       (profile?.body_volume as Volume | null) ?? null
     ),
     exclude: existing.map((o) => o.prendas),
+    // v24: los looks de la cápsula también respetan vetos, referencia, sus
+    // palabras y el feedback real.
+    vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
+    styleReference: styleReferenceForEngine(profile?.style_reference),
+    styleWords: (profile?.style_words as string | null) ?? null,
+    tasteSignal,
   };
 
   let outfits: TripOutfit[];

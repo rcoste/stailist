@@ -67,11 +67,27 @@ const RUBRICA_HOMBRE = `Revisa con criterio masculino (más formulaico, lo esenc
 - Coherencia de formalidad: no mezcles sastre formal con deportivo salvo intención.
 - Proporción básica: que no sea todo holgado ni todo pegado.`;
 
+// Sin género definido: lo esencial sin asumir tipo de guardarropa.
+const RUBRICA_NEUTRA = `Revisa lo esencial (sin asumir género):
+- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Near-face en su paleta, nunca un EVITA.
+- Proporción: equilibra volumen (holgado arriba ↔ entallado abajo); evita "todo holgado" o "todo pegado".
+- Coherencia de formalidad: no mezcles formal con deportivo salvo intención.
+- Completitud: si se siente incompleto, intercambia por una pieza que lo cierre.`;
+
+// Pura y exportada para test: v23 arregló que null caía a la rúbrica de hombre
+// (la menos exigente) — este selector fija ese contrato.
+export function rubricFor(gender: "hombre" | "mujer" | null): string {
+  return gender === "mujer"
+    ? RUBRICA_MUJER
+    : gender === "hombre"
+      ? RUBRICA_HOMBRE
+      : RUBRICA_NEUTRA;
+}
+
 function buildCriticMessage(
   ctx: EngineContext,
   outfit: GeneratedOutfit,
-  priorOutfits: GeneratedOutfit[],
-  gender: "hombre" | "mujer" | null
+  priorOutfits: GeneratedOutfit[]
 ): string {
   const lines: string[] = [...contextBlock(ctx), "", ...closetBlock(ctx.items)];
 
@@ -82,7 +98,7 @@ function buildCriticMessage(
     priorOutfits.forEach((o) => lines.push(`- ${o.item_ids.join(" + ")}`));
   }
 
-  lines.push("", gender === "mujer" ? RUBRICA_MUJER : RUBRICA_HOMBRE);
+  lines.push("", rubricFor(ctx.gender));
   lines.push(
     "",
     "Devuelve tu veredicto (ok / reparado / rechazado), la razón, y el look final (arreglado o tal cual)."
@@ -99,8 +115,7 @@ function keepAnchor(o: GeneratedOutfit, seed: string | null): GeneratedOutfit {
 export async function reviewOutfit(
   ctx: EngineContext,
   outfit: GeneratedOutfit,
-  priorOutfits: GeneratedOutfit[],
-  gender: "hombre" | "mujer" | null
+  priorOutfits: GeneratedOutfit[]
 ): Promise<CriticResult> {
   // Sin juez (no hay API key): pasa el outfit tal cual, veredicto neutro.
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -121,7 +136,7 @@ export async function reviewOutfit(
       messages: [
         {
           role: "user",
-          content: buildCriticMessage(ctx, outfit, priorOutfits, gender),
+          content: buildCriticMessage(ctx, outfit, priorOutfits),
         },
       ],
       output_config: {

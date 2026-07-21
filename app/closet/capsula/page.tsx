@@ -17,7 +17,7 @@ import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { regenerateCapsuleTarget } from "./actions";
 import { MatchRecalc } from "@/components/match-recalc";
-import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { styleSignature } from "@/lib/estilo-referencia";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
@@ -76,7 +76,8 @@ export default async function CapsulaPage({
   const stale = !match || match.signature !== sig;
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
-    styleReferenceForEngine(profile.style_reference) !== ((target.styleSig as string | null) ?? null);
+    styleSignature(profile.style_reference, profile.style_words) !==
+    ((target.styleSig as string | null) ?? null);
   const view = match
     ? capsuleView(target, match, profile.capsule_overrides, profile.capsule_swaps)
     : null;
