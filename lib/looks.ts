@@ -89,13 +89,16 @@ const TAG_DF: Map<string, number> = (() => {
 
 // Deriva los tags de gusto de los swipes. NO es conteo crudo: normaliza por
 // frecuencia para que la preferencia distintiva no la entierren los tags
-// genéricos. Si amas el único look "edgy", `edgy` (rate 1.0) vence a un `pulido`
-// que salió +3 solo por aparecer en 4 estilos.
+// genéricos — pero con amortiguación (√DF), no división plena. La división
+// plena (n/DF) tenía un bug de calibración: un ÚNICO ❤️ al look "edgy" (DF=1,
+// rate 1.0) le ganaba a "pulido" con +3 netos (3/5 = 0.6) — un like suelto
+// pesaba más que una preferencia consistente.
 //
-// rate(tag) = (likes − dislikes con ese tag) / (estilos que llevan ese tag)
-//   = qué tan CONSISTENTEMENTE te gustó ese tag, en −1..1.
-// Empate de rate → desempata por evidencia cruda (likes netos): un tag que te
-// gustó en varios estilos vence a uno que solo viste una vez.
+// score(tag) = (likes − dislikes) / √(estilos que llevan ese tag)
+//   → edgy con 1 ❤️ = 1.0; pulido con +3 = 3/√5 ≈ 1.34: la consistencia gana,
+//   y el tag raro sigue rankeando arriba de señales débiles.
+// Empate → desempata por evidencia cruda (likes netos).
+// El array devuelto queda EN ORDEN DE FUERZA (los motores lo aprovechan).
 export function computeTasteTags(
   results: { id: string; liked: boolean }[]
 ): string[] {
@@ -108,9 +111,9 @@ export function computeTasteTags(
     }
   }
   return [...net.entries()]
-    .map(([tag, n]) => ({ tag, n, rate: n / (TAG_DF.get(tag) ?? 1) }))
-    .filter((x) => x.rate > 0)
-    .sort((a, b) => b.rate - a.rate || b.n - a.n)
+    .map(([tag, n]) => ({ tag, n, score: n / Math.sqrt(TAG_DF.get(tag) ?? 1) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || b.n - a.n)
     .slice(0, 8)
     .map((x) => x.tag);
 }

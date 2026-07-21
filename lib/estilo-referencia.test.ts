@@ -34,4 +34,28 @@ describe("styleReferenceForEngine", () => {
       styleReferenceForEngine({ summary: "Clásico", fit: { verdict: "otro", note: "x" } })
     ).toBe("Clásico");
   });
+
+  it("los tags de visión se anexan como claves (v24 — antes se tiraban)", () => {
+    expect(
+      styleReferenceForEngine({
+        summary: "Minimal con estructura",
+        tags: ["monocromo", "oversize", "sastrería"],
+      })
+    ).toBe("Minimal con estructura (claves: monocromo, oversize, sastrería)");
+  });
+
+  it("tags + nota de fit conviven en la misma línea", () => {
+    const r = styleReferenceForEngine({
+      summary: "Boho relajado",
+      tags: ["fluido", "capas"],
+      fit: { verdict: "ojo", note: "llévalo a tus tonos fríos" },
+    });
+    expect(r).toContain("(claves: fluido, capas)");
+    expect(r).toContain("llévalo a tus tonos fríos");
+  });
+
+  it("tags vacíos o en blanco no anexan claves", () => {
+    expect(styleReferenceForEngine({ summary: "Clásico", tags: [] })).toBe("Clásico");
+    expect(styleReferenceForEngine({ summary: "Clásico", tags: ["  "] })).toBe("Clásico");
+  });
 });

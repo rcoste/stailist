@@ -36,7 +36,10 @@ export type AssessmentQuestion = {
   }[];
 };
 
-// 5 preguntas de botón. Junto con gustos y colorimetría, definen la cápsula ideal.
+// Preguntas fijas de botón. Junto con gustos y colorimetría, definen la cápsula
+// ideal. Esta es la versión NEUTRA (strings sin género gramatical ni ejemplos de
+// ropa de un solo género) — sirve para lookups por value y como fallback. Para
+// mostrar al usuario, usa assessmentQuestions(gender), que ajusta los strings.
 export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: "trabajo",
@@ -106,7 +109,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     label: "Cuando te arreglas al máximo, ¿hasta dónde llegas?",
     help: "Tu evento más formal típico.",
     options: [
-      { value: "smart", label: "Smart-casual", hint: "Una camisa o un saco y vas bien." },
+      { value: "smart", label: "Smart-casual", hint: "Un blazer o tu prenda más arreglada y vas bien." },
       { value: "coctel", label: "Coctel", hint: "Vestido o traje elegante." },
       { value: "formal", label: "Muy formal o gala", hint: "Bodas de etiqueta, eventos de gala." },
       { value: "rara", label: "Casi nunca me arreglo tanto" },
@@ -119,7 +122,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
       { value: "entallado", label: "Entallado", hint: "Marca la figura, silueta definida." },
       { value: "holgado", label: "Holgado y cómodo", hint: "Relajado, sin pegarse." },
       { value: "mezcla", label: "Depende de la prenda", hint: "Arriba de un modo, abajo de otro." },
-      { value: "nose", label: "No estoy seguro", hint: "Elige lo que más me favorezca." },
+      { value: "nose", label: "Aún no lo sé", hint: "Elige lo que más me favorezca." },
     ],
   },
   {
@@ -140,6 +143,29 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     ],
   },
 ];
+
+// Las preguntas fijas COMO LAS VE el usuario: mismos ids y values que la versión
+// neutra (las respuestas guardadas nunca cambian de significado), pero con los
+// strings ajustados a su género — concordancia gramatical y ejemplos de ropa que
+// sí son de su clóset. Con género null devuelve la versión neutra tal cual.
+export function assessmentQuestions(
+  gender: "hombre" | "mujer" | null
+): AssessmentQuestion[] {
+  if (!gender) return ASSESSMENT_QUESTIONS;
+  const smartHint =
+    gender === "mujer"
+      ? "Una blusa linda o un blazer y vas bien."
+      : "Una camisa o un saco y vas bien.";
+  const noseLabel = gender === "mujer" ? "No estoy segura" : "No estoy seguro";
+  return ASSESSMENT_QUESTIONS.map((q) => ({
+    ...q,
+    options: q.options.map((o) => {
+      if (q.id === "formalidad_techo" && o.value === "smart") return { ...o, hint: smartHint };
+      if (q.id === "fit" && o.value === "nose") return { ...o, label: noseLabel };
+      return o;
+    }),
+  }));
+}
 
 export type LifestyleAnswers = Record<string, string>;
 
@@ -164,7 +190,8 @@ export function lifestyleSummary(answers: LifestyleAnswers | null): string | nul
   else if (eventos === "aveces") parts.push("a veces tiene eventos de arreglarse");
   const actividades = labels("actividades", ["ninguna"]);
   if (actividades.length) parts.push(`fuera del trabajo: ${actividades.join(", ")}`);
-  const fit = labels("fit");
+  // "nose" se descarta: "prefiere la ropa aún no lo sé" no es una frase.
+  const fit = labels("fit", ["nose"]);
   if (fit.length) parts.push(`prefiere la ropa ${fit[0]}`);
   if (parts.length === 0) return null;
   return `Su vida: ${parts.join("; ")}.`;
