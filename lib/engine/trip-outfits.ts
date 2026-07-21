@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { OCCASIONS, occasionLabels, type Occasion, type TripOutfit } from "@/lib/trip";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
 import { JUDGE_MODEL } from "@/lib/engine/critic";
+import { tasteSignalLines } from "@/lib/engine/prompt";
+import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 
 // Una prenda empacable, numerada para el prompt. El LLM referencia prendas por
 // `n` (nunca inventa nombres ni IDs); el motor mapea de vuelta a `nombre`.
@@ -83,6 +85,11 @@ export type TripOutfitInputs = {
   exclude?: string[][];
   // Texto libre del viaje (qué va a hacer): afina qué looks destacar y su porqué.
   contexto?: string | null;
+  // v24 — señales de estilo que antes NO llegaban a viaje:
+  vetoes?: string[]; // hard NOs: jamás en un look (regla dura, generador Y juez)
+  styleReference?: string | null; // estilo de referencia (vibe/siluetas, no color)
+  styleWords?: string | null; // su estilo en sus palabras (perfil)
+  tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
 };
 
 // Tope de celdas de la rejilla que mandamos a validar (una maleta real cae muy
@@ -244,6 +251,19 @@ export async function generateTripOutfits(
   const contextoTxt = inputs.contexto
     ? `\nCONTEXTO DEL VIAJE (lo que va a hacer, en sus palabras): "${inputs.contexto}". Prioriza y titula looks que sirvan para ese plan; si una prenda es clave para eso (un jersey para un partido, algo pulido para una boda), procura que aparezca en al menos un look y dilo en el porqué.`
     : "";
+  const refTxt = inputs.styleReference
+    ? `\nESTILO DE REFERENCIA que le encanta (inspira el vibe y las siluetas, NO los colores): ${inputs.styleReference}.`
+    : "";
+  const palabrasTxt = inputs.styleWords?.trim()
+    ? `\nSU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo al elegir y titular looks (las REGLAS DURAS — vetos, rejilla, clima — siempre están por encima).`
+    : "";
+  const feedbackTxt =
+    inputs.tasteSignal && hasTasteSignal(inputs.tasteSignal)
+      ? `\n${tasteSignalLines(inputs.tasteSignal).join("\n")}`
+      : "";
+  const vetoSystemTxt = inputs.vetoes?.length
+    ? ` REGLA DURA — VETOS: la persona NUNCA quiere: ${inputs.vetoes.join(", ")}. Descarta cualquier celda que los incluya; jamás los pongas en "extra".`
+    : "";
 
   const prendasTxt = inputs.packable.map((p) => packableDesc(p)).join("\n");
   const capasTxt = capas.length ? capas.map((p) => p.n).join(", ") : "ninguna";
@@ -264,7 +284,7 @@ export async function generateTripOutfits(
     max_tokens: 4096,
     system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
 
-REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. En "extra" SOLO puedes poner números de capas (${capasTxt}) o accesorios (${accTxt}); nada más. ${generoTxt}
+REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. En "extra" SOLO puedes poner números de capas (${capasTxt}) o accesorios (${accTxt}); nada más. ${generoTxt}${vetoSystemTxt}
 
 Por cada celda decide si es un OUTFIT real:
 - Coherencia de color: los tonos combinan (no choca) — juzga por el hex cuando la prenda lo traiga, es su color real. Máximo UN estampado protagonista por look; dos estampados juntos casi nunca funcionan.
@@ -281,11 +301,12 @@ Para las celdas que SÍ funcionan:
 - tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. SOLO sobre prendas que están en ESE look; NUNCA menciones ni sugieras añadir una prenda que no está en él. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
 - Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
 - Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
+- COBERTURA (regla dura): CADA ocasión del viaje debe recibir AL MENOS un look si existe alguna celda que funcione para ella. Jamás dejes una ocasión vacía por darle más variedad a otra — un día del viaje sin propuesta es el peor resultado.
 - Devuelve A LO MÁS ${MAX_LOOKS} looks, los mejores y más variados.`,
     messages: [
       {
         role: "user",
-        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags: ${tags}.${cuerpoTxt}${paletaTxt}${contextoTxt}\n\nPRENDAS (número. nombre (atributos)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
+        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags (en orden de fuerza): ${tags}.${cuerpoTxt}${paletaTxt}${refTxt}${palabrasTxt}${contextoTxt}${feedbackTxt}\n\nPRENDAS (número. nombre (atributos)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
       },
     ],
     output_config: {
@@ -438,6 +459,7 @@ COMBINACIÓN: color coherente (máx 1-2 protagonistas + neutros, el resto neutro
 REGLAS:
 - Trabaja SOLO con números de la lista de prendas. Jamás inventes.
 - "extra"/capas/accesorios válidos para sumar: capas ${capasTxt}; accesorios ${accTxt}.
+${inputs.vetoes?.length ? `- VETOS (regla absoluta, por encima de todo): la persona NUNCA quiere ${inputs.vetoes.join(", ")}. Si un look incluye algo vetado, repáralo cambiando esa prenda; si no hay arreglo, recházalo y marca "veto": true en esa revisión.\n` : ""}- En cada revisión, "veto" es true SOLO si el rechazo es por un veto de la persona; en cualquier otro caso (incluidos "ok" y "reparado"), false.
 - Prefiere REPARAR sobre rechazar. Rechaza solo si de verdad no hay arreglo.
 - En "prendas" de cada revisión, devuelve SIEMPRE la lista de números del look final (para "ok" repite la original; para "reparado" la nueva; para "rechazado" puede ir vacía).`;
 
@@ -479,9 +501,12 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
                     index: { type: "integer" }, // L# del look
                     veredicto: { type: "string", enum: ["ok", "reparado", "rechazado"] },
                     razon: { type: "string" },
+                    // true SOLO en rechazos por veto: campo estructurado para que
+                    // la restauración de cobertura no dependa de parsear prosa.
+                    veto: { type: "boolean" },
                     prendas: { type: "array", items: { type: "integer" } },
                   },
-                  required: ["index", "veredicto", "razon", "prendas"],
+                  required: ["index", "veredicto", "razon", "veto", "prendas"],
                   additionalProperties: false,
                 },
               },
@@ -500,6 +525,7 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
         index: number;
         veredicto: "ok" | "reparado" | "rechazado";
         razon?: string;
+        veto?: boolean;
         prendas?: number[];
       }[];
     };
@@ -542,8 +568,50 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
     // probable un error del juez que un viaje sin un solo look válido → conserva
     // los originales antes que mostrar cero.
     if (result.length === 0) return { outfits, repaired: 0, dropped: 0 };
-    return { outfits: result, repaired, dropped };
+    // v24: el juez no puede dejar una ocasión huérfana — si una ocasión tenía
+    // looks y sus rechazos la vaciaron, se restaura el mejor original de esa
+    // ocasión (mejor un look imperfecto que un día del viaje sin propuesta).
+    // EXCEPTO los rechazados por VETO: el veto es regla absoluta y gana a la
+    // cobertura — un look vetado jamás se resucita. Señal primaria: el campo
+    // estructurado `veto` del schema; el regex sobre la razón queda solo como
+    // red por si el modelo lo dejara en false y aun así nombrara el veto.
+    const vetoedIdx = new Set(
+      (parsed.revisiones ?? [])
+        .filter(
+          (r) =>
+            r.veredicto === "rechazado" &&
+            (r.veto === true || /veto/i.test(r.razon ?? ""))
+        )
+        .map((r) => r.index)
+    );
+    const restored = keepOccasionCoverage(outfits, result, vetoedIdx);
+    return {
+      outfits: restored,
+      repaired,
+      dropped: dropped - (restored.length - result.length),
+    };
   } catch {
     return { outfits, repaired: 0, dropped: 0 };
   }
+}
+
+// Pura y testeable: garantiza que ninguna ocasión cubierta ANTES del juez quede
+// sin looks DESPUÉS. Por cada ocasión huérfana, restaura el primer look original
+// de esa ocasión (los originales vienen en orden de calidad del generador). El
+// orden relativo del resto no cambia. `excludeIdx` (índices en `before`) marca
+// looks NO restaurables — los rechazados por veto: el veto gana a la cobertura.
+export function keepOccasionCoverage(
+  before: TripOutfit[],
+  after: TripOutfit[],
+  excludeIdx: Set<number> = new Set()
+): TripOutfit[] {
+  const covered = new Set(after.map((o) => o.ocasion));
+  const restored = [...after];
+  before.forEach((o, i) => {
+    if (!covered.has(o.ocasion) && !excludeIdx.has(i)) {
+      restored.push(o);
+      covered.add(o.ocasion);
+    }
+  });
+  return restored;
 }

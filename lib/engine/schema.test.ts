@@ -19,3 +19,17 @@ describe("buildOutfitSchema — campo analisis (borrador de razonamiento v21)", 
     ]);
   });
 });
+
+import { rubricFor } from "./critic";
+
+describe("rubricFor — rúbrica del juez por género (v23)", () => {
+  it("mujer → rúbrica femenina exigente", () => {
+    expect(rubricFor("mujer")).toContain("moda femenina");
+  });
+  it("hombre → rúbrica masculina", () => {
+    expect(rubricFor("hombre")).toContain("criterio masculino");
+  });
+  it("null → rúbrica NEUTRA (antes caía a la de hombre)", () => {
+    expect(rubricFor(null)).toContain("sin asumir género");
+  });
+});

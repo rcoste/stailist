@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { buildTripGrid, packableDesc, type PackableItem } from "./trip-outfits";
+import {
+  buildTripGrid,
+  keepOccasionCoverage,
+  packableDesc,
+  type PackableItem,
+} from "./trip-outfits";
+import type { TripOutfit } from "@/lib/trip";
 
 // Helpers: prendas empacables mínimas, numeradas secuencialmente.
 let seq = 0;
@@ -209,5 +215,56 @@ describe("packableDesc — línea de prompt con datos ricos", () => {
       formalidad: "casual",
     };
     expect(packableDesc(item, true)).toBe("4. Tenis blancos (calzado, casual, blanco)");
+  });
+});
+
+describe("keepOccasionCoverage — el juez no deja ocasiones huérfanas (v24)", () => {
+  const look = (ocasion: TripOutfit["ocasion"], titulo: string): TripOutfit => ({
+    ocasion,
+    titulo,
+    porque: "x",
+    prendas: ["a", "b"],
+  });
+
+  it("restaura el primer look original de una ocasión vaciada por el juez", () => {
+    const before = [look("ciudad", "C1"), look("noche", "N1"), look("noche", "N2")];
+    const after = [look("ciudad", "C1")]; // el juez tiró las dos noches
+    const out = keepOccasionCoverage(before, after);
+    expect(out.map((o) => o.titulo)).toEqual(["C1", "N1"]);
+  });
+
+  it("no toca nada si todas las ocasiones siguen cubiertas", () => {
+    const before = [look("ciudad", "C1"), look("noche", "N1")];
+    const after = [look("ciudad", "C2"), look("noche", "N1")];
+    expect(keepOccasionCoverage(before, after)).toEqual(after);
+  });
+
+  it("una ocasión que nunca tuvo looks no inventa nada", () => {
+    const before = [look("ciudad", "C1")];
+    const after: TripOutfit[] = [look("ciudad", "C1")];
+    expect(keepOccasionCoverage(before, after).length).toBe(1);
+  });
+});
+
+describe("keepOccasionCoverage — el veto gana a la cobertura (fix de review)", () => {
+  const look = (ocasion: TripOutfit["ocasion"], titulo: string): TripOutfit => ({
+    ocasion,
+    titulo,
+    porque: "x",
+    prendas: ["a", "b"],
+  });
+
+  it("un look rechazado por veto NO se restaura aunque deje la ocasión huérfana", () => {
+    const before = [look("ciudad", "C1"), look("noche", "N1-vetado")];
+    const after = [look("ciudad", "C1")]; // el juez tiró N1 por veto
+    const out = keepOccasionCoverage(before, after, new Set([1]));
+    expect(out.map((o) => o.titulo)).toEqual(["C1"]);
+  });
+
+  it("con dos looks de la ocasión, se restaura el no-vetado", () => {
+    const before = [look("ciudad", "C1"), look("noche", "N1-vetado"), look("noche", "N2")];
+    const after = [look("ciudad", "C1")];
+    const out = keepOccasionCoverage(before, after, new Set([1]));
+    expect(out.map((o) => o.titulo)).toEqual(["C1", "N2"]);
   });
 });

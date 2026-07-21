@@ -64,7 +64,20 @@ import {
 // de fit ("es muy cálido para ti — llévalo a tus tonos") cuando el veredicto es
 // ajustes/ojo (styleReferenceForEngine). Antes esa advertencia se mostraba una
 // vez en el modal y el motor nunca la veía.
-export const PROMPT_VERSION = "v22";
+// v23 (2026-07-21): el GENERADOR ahora recibe el género (antes solo el juez lo
+// veía): concordancia gramatical en la explicación/tip + criterio de styling
+// del género correcto desde la 1ª pasada. Además: reglas de armonía para
+// vestido/falda (largo vs calzado, cintura) — el bloque solo tenía reglas de
+// sastrería masculina — y rúbrica NEUTRA en el juez cuando no hay género
+// (antes caía a la de hombre, la menos exigente).
+// v24 (2026-07-21): coherencia de señal de estilo. (a) taste_tags recalibrados
+// (√DF en vez de /DF: un ❤️ suelto ya no le gana a la preferencia consistente)
+// y anunciados "en orden de fuerza"; (b) el estilo de referencia incluye sus
+// tags de visión (se guardaban y se tiraban); (c) vetos + referencia + feedback
+// (tasteSignal) cableados a los motores de viaje y cápsula que no los recibían;
+// (d) "tu estilo en tus palabras" (profiles.style_words) entra a todos los
+// motores como señal directa de la persona.
+export const PROMPT_VERSION = "v24";
 
 export type EngineItem = {
   id: string;
@@ -86,6 +99,7 @@ export type EngineItem = {
 };
 
 export type EngineContext = {
+  gender: "hombre" | "mujer" | null; // concordancia gramatical + criterio de styling
   objective: string | null;
   plan: string | null; // texto libre opcional del compositor ("¿algo en mente?")
   lifestyle: string | null; // resumen de vida del assessment de cápsula
@@ -103,6 +117,7 @@ export type EngineContext = {
   seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
   formality?: string | null; // solo "evento": casual | semiformal | formal | gala
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
+  styleWords?: string | null; // su estilo EN SUS PALABRAS (texto libre del perfil)
 };
 
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
@@ -127,6 +142,7 @@ Armonía del outfit (cómo combinan las prendas entre sí):
 - Estampados: máximo UN estampado protagonista por look (rayas, cuadros, floral, gráfico…); el resto liso. Dos estampados juntos casi nunca — solo si uno es muy sutil y no compiten.
 - Materiales: si la prenda trae material, úsalo — nada de lana o tejidos pesados en calor, ni lino fresco en frío; y que los pesos de tela de un mismo look se hablen (no mezcles piezas de invierno con piezas de verano).
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
+- Vestido o falda en el look: cuida el largo contra el calzado (un midi pide calzado que estilice — algo de altura o silueta limpia; largo + calzado muy plano acortan la figura) y define la cintura cuando ayude (cinturón, top entallado o fajado).
 - Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
 - Marino + negro SÍ combinan (dos fríos que contrastan sin chocar), incluso en formal — un traje marino con zapatos o cinturón negros es clásico. Solo cuida que se vea intencional (mismo peso de tela, calzado oscuro), no como traje desparejado.
 - Cuidado con el "traje desparejado": un saco/blazer junto a un pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) parece un traje que no combina entre sí — el ojo espera que sean un conjunto y nota que no lo son. Solo úsalos juntos si DE VERDAD son un traje (misma tela). Si no, rompe el match: pon el bottom en otro neutro (gris, beige, caqui, denim) para que el saco se lea como pieza intencional, no como mitad de un traje suelto.
@@ -169,6 +185,22 @@ export function describeItem(item: EngineItem): string {
 // Compartido por el generador (1ª pasada) y el crítico (2ª pasada).
 export function contextBlock(ctx: EngineContext): string[] {
   const lines: string[] = [];
+
+  // Género: concordancia gramatical de lo que la persona LEE (explicación/tip)
+  // + con qué ojo de stylist juzgar. Sin género, frases neutras.
+  if (ctx.gender === "mujer") {
+    lines.push(
+      "Es mujer: escribe la explicación y el tip EN FEMENINO (concordancia gramatical femenina) y juzga con ojo de moda femenina."
+    );
+  } else if (ctx.gender === "hombre") {
+    lines.push(
+      "Es hombre: escribe la explicación y el tip EN MASCULINO (concordancia gramatical masculina) y juzga con criterio de moda masculina."
+    );
+  } else {
+    lines.push(
+      "Género no definido: evita adjetivos con género gramatical dirigidos a la persona; usa frases neutras."
+    );
+  }
 
   const objectiveLabel =
     ctx.objective && ctx.objective in OBJECTIVES
@@ -238,7 +270,14 @@ export function contextBlock(ctx: EngineContext): string[] {
     );
   }
   if (ctx.tasteTags.length > 0) {
-    lines.push(`Tags de gusto: ${ctx.tasteTags.join(", ")}.`);
+    lines.push(`Tags de gusto (en orden de fuerza): ${ctx.tasteTags.join(", ")}.`);
+  }
+  if (ctx.styleWords?.trim()) {
+    // slice defensivo: el tope de 280 vive en la app, no en la DB — un valor
+    // gigante escrito por otra vía no debe inflar el prompt.
+    lines.push(
+      `Su estilo EN SUS PALABRAS: "${ctx.styleWords.trim().slice(0, 280)}". Es la señal más directa de quién es — respétala; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género, clima — siempre están por encima).`
+    );
   }
   if (ctx.styleReference) {
     lines.push(
@@ -270,7 +309,8 @@ export function contextBlock(ctx: EngineContext): string[] {
 // "La app aprende": traduce el feedback real a guía para el motor. Señal SUAVE
 // (orienta, no es regla dura ni motivo de rechazo): inclínate hacia lo que se
 // puso y le gustó, aléjate de lo que rechazó, aprendiendo el patrón sin copiar.
-function tasteSignalLines(s: TasteSignal): string[] {
+// Exportada: también la usan los motores de cápsula y viaje (v24).
+export function tasteSignalLines(s: TasteSignal): string[] {
   if (!hasTasteSignal(s)) return [];
   const fmt = (o: RememberedOutfit): string => {
     const prendas = o.items.length > 0 ? o.items.join(", ") : o.title ?? "un look";

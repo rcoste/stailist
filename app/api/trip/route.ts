@@ -5,12 +5,18 @@ import { generateTripCapsuleTarget, type TripAncla } from "@/lib/engine/trip-cap
 import { matchCapsule } from "@/lib/engine/capsule-match";
 import { loadClosetLite } from "@/lib/capsule-data";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
+import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type Category, type Formalidad, type MatchEntry } from "@/lib/capsule";
 import {
   tripDays,
   OCCASIONS,
   LUGGAGE,
   dominantLuggage,
+  capsuleFloor,
+  capsuleFloorGaps,
+  luggageCapacity,
   type Bolsas,
   type Occasion,
   type Luggage,
@@ -183,13 +189,22 @@ export async function POST(request: NextRequest) {
         const aggWeather = aggregateWeather(paradas);
         const lugarDisplay = paradas.map((p) => p.lugar.split(",")[0].trim()).join(" · ");
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select(
-            "gender, taste_tags, style_archetype, palette_season, palette_flow, style_vetoes"
-          )
-          .eq("id", user.id)
-          .single();
+        // Perfil y feedback en paralelo (ambos solo dependen de user.id): evita
+        // sumar round-trips en serie a una ruta que ya corre contra los 60s.
+        const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select(
+              "gender, taste_tags, style_archetype, palette_season, palette_flow, style_vetoes, style_reference, style_words, body_build, body_volume"
+            )
+            .eq("id", user.id)
+            .single(),
+          // v24: el feedback real también orienta qué se empaca (señal suave).
+          loadTasteSignal(supabase, user.id),
+        ]);
+        // Sin perfil la generación degrada en silencio (género neutro, sin vetos,
+        // sin paleta) — que al menos quede ruido en los logs.
+        if (profileErr) console.error(`trip_profile_select_failed: ${profileErr.message}`);
         const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
         // Resuelve las anclas contra el clóset real (propiedad + no borradas).
@@ -266,6 +281,13 @@ export async function POST(request: NextRequest) {
           season: (profile?.palette_season as Season | null) ?? null,
           flow: (profile?.palette_flow as Season | null) ?? null,
           vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
+          styleReference: styleReferenceForEngine(profile?.style_reference),
+          styleWords: (profile?.style_words as string | null) ?? null,
+          silueta: siluetaPromptLine(
+            (profile?.body_build as Build | null) ?? null,
+            (profile?.body_volume as Volume | null) ?? null
+          ),
+          tasteSignal,
           anclas,
           rechazadas,
           contexto,
@@ -296,6 +318,17 @@ export async function POST(request: NextRequest) {
             ...anclaItems,
             ...target.items.filter((it) => !anclaNames.has(it.nombre.toLowerCase())),
           ];
+        }
+
+        // Instrumentación del piso de suficiencia (v24): si el motor quedó
+        // debajo del piso pese a la regla dura, que quede en los logs — es la
+        // señal para endurecer el prompt o agregar retry.
+        const gaps = capsuleFloorGaps(
+          target.items,
+          capsuleFloor(days, ocasiones, luggageCapacity(bolsas, maleta))
+        );
+        if (gaps.length > 0) {
+          console.warn(`trip_capsule_underfloor user=${user.id} gaps=${gaps.join(",")}`);
         }
 
         send({ phase: "viendo qué ya tienes…" });
