@@ -79,7 +79,7 @@ export function looksForGender(gender: "hombre" | "mujer"): Look[] {
   }));
 }
 
-// Cuántos de los 20 estilos llevan cada tag. Tags raros (edgy, grunge, glam…)
+// Cuántos de los estilos llevan cada tag. Tags raros (edgy, grunge, glam…)
 // salen en 1; tags genéricos (pulido, atrevido, relajado…) en varios.
 const TAG_DF: Map<string, number> = (() => {
   const df = new Map<string, number>();
