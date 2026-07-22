@@ -9,6 +9,7 @@ import { TryonImmersive } from "@/components/tryon-immersive";
 import { FavoriteButton } from "@/components/favorite-button";
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
+import { buildGenFrases } from "@/lib/gen-frases";
 import {
   LookRequest,
   type LookInput,
@@ -69,11 +70,14 @@ export function WowClient({
   userId,
   defaultObjective,
   hasAvatar,
+  closetCount,
 }: {
   initialOutfits: WowOutfit[] | null;
   userId: string;
   defaultObjective: string | null;
   hasAvatar: boolean;
+  /** Nº de prendas del clóset — para la frase "revisando tus N prendas…". */
+  closetCount: number;
 }) {
   const router = useRouter();
   const [state, setState] = useState<State>(
@@ -160,7 +164,7 @@ export function WowClient({
   // ─── loading: "tu estilista está pensando" (reciclado de Hoy) ───
   if (state.kind === "loading") {
     const li = state.input;
-    const frase = li.plan
+    const ocasionFrase = li.plan
       ? `algo a tu medida para "${li.plan}"…`
       : (FRASES_ESTILISTA[li.objective] ?? "armando tus primeros looks con lo que ya tienes…");
     const plan: GenPlan = {
@@ -168,7 +172,8 @@ export function WowClient({
       momento: li.momento,
       clima: "weather" in li ? bucketLabel(li.weather.temp_c) : null,
     };
-    return <StylistGenerating frase={frase} plan={plan} />;
+    const frases = buildGenFrases(li, closetCount, ocasionFrase);
+    return <StylistGenerating frases={frases} plan={plan} />;
   }
 
   // ─── error ───

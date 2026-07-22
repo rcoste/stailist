@@ -4,36 +4,47 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 
 // Estado "generando" del flujo Hoy (rebrand v3): el progreso es lenguaje, no un
-// spinner. Spark girando lento + "tu estilista está pensando" + una frase de
-// estilista que se escribe sola (typewriter, loop) + barra de progreso con % +
-// los chips del plan. Reduced-motion: frase completa estática, sin giro ni barra.
+// spinner. Spark girando lento + "tu estilista está pensando" + frases reales de
+// lo que el motor está haciendo (revisar tu clóset, el clima, descartar
+// combinaciones…) que se escriben solas una tras otra (typewriter, loop) +
+// barra de progreso con % + los chips del plan. La rotación de varias frases —en
+// vez de repetir una— hace que la espera cuente qué pasa, no que se sienta
+// colgada. Reduced-motion: primera frase estática, sin giro ni barra.
 export type GenPlan = { ocasion: string; momento: "dia" | "noche"; clima: string | null };
 
 export function StylistGenerating({
-  frase,
+  frases,
   plan,
 }: {
-  frase: string;
+  /** Frases en orden (pasos reales del motor); rotan en loop con typewriter. */
+  frases: string[];
   plan: GenPlan | null;
 }) {
   const [typed, setTyped] = useState("");
   const [pct, setPct] = useState(0);
   const reduced = useRef(false);
+  // Clave estable: la identidad del array cambia en cada render del padre, pero
+  // su contenido no — depender del contenido evita reiniciar el typewriter.
+  const key = frases.join("|");
 
-  // Typewriter en loop (escribir → pausa → borrar → pausa).
+  // Typewriter en loop: escribe frase[idx] → pausa → borra → avanza a la
+  // siguiente frase → repite, dando la vuelta al llegar al final.
   useEffect(() => {
     reduced.current =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const lista = frases.length ? frases : ["armando algo a tu medida…"];
     if (reduced.current) {
-      setTyped(frase);
+      setTyped(lista[0]);
       setPct(62);
       return;
     }
+    let idx = 0;
     let i = 0;
     let dir = 1;
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
+      const frase = lista[idx];
       setTyped(frase.slice(0, i));
       if (dir > 0) {
         i++;
@@ -47,6 +58,7 @@ export function StylistGenerating({
         if (i <= 0) {
           i = 0;
           dir = 1;
+          idx = (idx + 1) % lista.length; // siguiente frase (loop)
           timer = setTimeout(tick, 500);
           return;
         }
@@ -55,7 +67,9 @@ export function StylistGenerating({
     };
     tick();
     return () => clearTimeout(timer);
-  }, [frase]);
+    // Depende del contenido, no de la identidad del array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   // Contador de % (cosmético: la generación no reporta progreso real). Sube
   // hacia ~92 y se queda — la transición de width da la sensación de avance.

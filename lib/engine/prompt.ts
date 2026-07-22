@@ -113,6 +113,7 @@ export type EngineContext = {
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
   silueta: string | null; // orientación de cuerpo (complexión + dónde carga); señal suave
+  ageStyling?: string | null; // orientación por edad (life-stage); señal suave, solo extremos
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
   seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
   formality?: string | null; // solo "evento": casual | semiformal | formal | gala
@@ -288,6 +289,9 @@ export function contextBlock(ctx: EngineContext): string[] {
     lines.push(
       `Su cuerpo (orientación de styling, NO regla ni motivo de rechazo): ${ctx.silueta}. Úsalo solo para desempatar entre looks parejos y para enriquecer el porqué cuando el look de verdad la equilibre — sin que domine sobre el clima, su colorimetría, la ocasión o sus gustos, y sin forzarlo en cada explicación.`
     );
+  }
+  if (ctx.ageStyling) {
+    lines.push(ctx.ageStyling);
   }
   if (ctx.weather) {
     lines.push(`Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}.`);

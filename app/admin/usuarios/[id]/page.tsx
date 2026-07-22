@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { isMinor } from "@/lib/edad";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -232,6 +233,22 @@ export default async function AdminUserDetail({
           </div>
           <div className="grid grid-cols-2 gap-4 rounded-xl border border-line bg-surface p-4 sm:grid-cols-3">
             <Field label="Género" value={profile.gender ?? "—"} />
+            <Field
+              label="Edad"
+              value={
+                profile.age_range
+                  ? `${profile.age_range}${
+                      isMinor(profile.age_range)
+                        ? profile.minor_consent_verified_at
+                          ? " · menor (permiso confirmado vía link ✓)"
+                          : profile.minor_ack_at
+                            ? " · menor (declarado, tutor SIN confirmar)"
+                            : " · menor (sin permiso)"
+                        : ""
+                    }`
+                  : "—"
+              }
+            />
             <Field label="Colorimetría" value={paleta || "—"} />
             <Field label="Objetivo" value={profile.last_objective ?? "—"} />
             <Field label="Estilo" value={arch?.nombre ?? "—"} />

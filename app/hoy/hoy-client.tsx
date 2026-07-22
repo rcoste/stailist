@@ -7,6 +7,7 @@ import { TryonImmersive } from "@/components/tryon-immersive";
 import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
 import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
+import { buildGenFrases } from "@/lib/gen-frases";
 import {
   LookRequest,
   type LookInput,
@@ -292,19 +293,20 @@ export function HoyClient({
 
   if (state.kind === "generating") {
     const li = lastInput.current;
-    let frase = "armando algo a tu medida para hoy…";
+    let ocasionFrase = "armando algo a tu medida para hoy…";
     let plan: GenPlan | null = null;
     if (li) {
-      frase = li.plan
+      ocasionFrase = li.plan
         ? `algo a tu medida para "${li.plan}"…`
-        : (FRASES_ESTILISTA[li.objective] ?? frase);
+        : (FRASES_ESTILISTA[li.objective] ?? ocasionFrase);
       plan = {
         ocasion: ocasionLabel(li.objective),
         momento: li.momento,
         clima: "weather" in li ? bucketLabel(li.weather.temp_c) : null,
       };
     }
-    return <StylistGenerating frase={frase} plan={plan} />;
+    const frases = buildGenFrases(li, closet.length, ocasionFrase);
+    return <StylistGenerating frases={frases} plan={plan} />;
   }
 
   if (state.kind === "error") {

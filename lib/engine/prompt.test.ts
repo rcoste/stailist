@@ -199,6 +199,29 @@ describe("contextBlock — señales de estilo (v24)", () => {
   });
 });
 
+import { ageStylingLine } from "@/lib/edad";
+
+describe("contextBlock — edad como señal suave (feedback Nuri)", () => {
+  it("con ageStyling la línea entra tal cual al contexto", () => {
+    const linea = ageStylingLine("13-17");
+    const lines = contextBlock({ ...baseCtx, ageStyling: linea });
+    expect(lines).toContain(linea);
+  });
+
+  it("55+ también entra (el otro extremo con señal)", () => {
+    const linea = ageStylingLine("55+");
+    const lines = contextBlock({ ...baseCtx, ageStyling: linea });
+    expect(lines).toContain(linea);
+  });
+
+  it("sin ageStyling (null/undefined/rangos medios) no agrega línea", () => {
+    for (const v of [null, undefined, ageStylingLine("25-34")]) {
+      const lines = contextBlock({ ...baseCtx, ageStyling: v });
+      expect(lines.some((l) => l.includes("SUAVE"))).toBe(false);
+    }
+  });
+});
+
 import { tasteSignalLines } from "./prompt";
 
 describe("tasteSignalLines — compartida por 4 motores (v24)", () => {

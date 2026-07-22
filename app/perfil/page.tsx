@@ -6,6 +6,9 @@ import { nameFromEmail } from "@/lib/pasaporte";
 import { buildLabel, volumeLabel } from "@/lib/silueta";
 import { seasonPalette, seasonDisplayLabel, seasonMetal } from "@/lib/colorimetria";
 import { signOut } from "./actions";
+import { resendParentConsent } from "./consentimiento-actions";
+import { isMinor } from "@/lib/edad";
+import { permisoUrl } from "@/lib/consentimiento";
 
 // Perfil en mini-tabs: Cuenta (default) · Estilo · Preferencias. Este server
 // component resuelve los datos (avatar firmado, paleta, silueta, banner del
@@ -78,8 +81,71 @@ export default async function PerfilPage() {
           .join(" · ")
       : null;
 
+  // Card de permiso parental (solo menores 13-17): estado + reenviar + WhatsApp.
+  const menor = isMinor(profile.age_range);
+  const permisoPendiente = menor && !profile.minor_consent_verified_at;
+  const linkPermiso = profile.minor_consent_token
+    ? permisoUrl(profile.minor_consent_token)
+    : null;
+  // "hace X" del último correo enviado (feedback del botón reenviar; el server
+  // aplica un cooldown de 10 min entre envíos).
+  const sentAt = profile.minor_consent_last_sent_at
+    ? new Date(profile.minor_consent_last_sent_at).getTime()
+    : null;
+  const ultimoEnvio = sentAt
+    ? (() => {
+        const min = Math.max(0, Math.floor((Date.now() - sentAt) / 60000));
+        if (min < 1) return "hace un momento";
+        if (min < 60) return `hace ${min} min`;
+        const h = Math.floor(min / 60);
+        return h < 24 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} día(s)`;
+      })()
+    : null;
+  const waHref = linkPermiso
+    ? `https://wa.me/?text=${encodeURIComponent(
+        `Hola 👋 quiero usar Stailist (una app que arma outfits con mi ropa). Como soy menor, necesitan tu permiso — confírmalo aquí porfa: ${linkPermiso}`
+      )}`
+    : null;
+
   return (
     <AppShell>
+      {permisoPendiente ? (
+        <div className="mb-4 flex flex-col gap-3 border border-line bg-surface px-4 py-4">
+          <p className="text-[15px] leading-snug text-ink">
+            <b>Falta el permiso de tus papás o tutores.</b> Les mandamos un
+            correo{profile.minor_parent_email ? ` a ${profile.minor_parent_email}` : ""} —
+            cuando lo confirmen podrás subir fotos.
+          </p>
+          {ultimoEnvio ? (
+            <p className="text-[13px] text-muted">último correo enviado {ultimoEnvio}</p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <form action={resendParentConsent}>
+              <button
+                type="submit"
+                className="min-h-[42px] rounded-sm border border-ink px-4 text-[13px] font-bold text-ink transition-colors hover:bg-ink hover:text-bg"
+              >
+                reenviar correo
+              </button>
+            </form>
+            {waHref ? (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[42px] items-center rounded-sm border border-line px-4 text-[13px] font-bold text-ink transition-colors hover:border-ink"
+              >
+                mandar por WhatsApp
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+      {menor && profile.minor_consent_verified_at ? (
+        <p className="mb-4 border border-line bg-surface px-4 py-3 text-[13px] text-muted">
+          Permiso de tus papás o tutores: confirmado ✓
+        </p>
+      ) : null}
       <PerfilTabs
         name={nameFromEmail(profile.email)}
         email={profile.email}

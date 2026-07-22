@@ -73,6 +73,10 @@ function uid() {
 }
 
 // Prenda detectada en la curación de texto.
+// Error tipado del 403 de permiso parental: corta el análisis con el mensaje
+// del server (no es un problema de las fotos).
+class PermisoError extends Error {}
+
 type DraftItem = {
   id: string;
   attrs: PrendaDetectada;
@@ -138,8 +142,11 @@ export function ImportCarreteFlow({
         files.map(async (file) => ({ id: uid(), dataUrl: await comprimir(await toUsableImage(file)) }))
       );
       setState({ kind: "revisar", fotos });
-    } catch {
-      setState({ kind: "error", msg: "No pude leer las fotos. Inténtalo otra vez." });
+    } catch (e) {
+      setState({
+        kind: "error",
+        msg: e instanceof PermisoError ? e.message : "No pude leer las fotos. Inténtalo otra vez.",
+      });
     }
   }
 
@@ -169,6 +176,13 @@ export function ImportCarreteFlow({
           });
           done += 1;
           setState({ kind: "analizando", done, total: fotos.length });
+          if (res.status === 403) {
+            // Permiso parental pendiente: no es un problema de la foto — corta
+            // el flujo con el mensaje real en vez de "no detecté prendas".
+            const err = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+            if (err.error === "permiso_pendiente" && err.message) throw new PermisoError(err.message);
+            return [] as DraftItem[];
+          }
           if (!res.ok) return [] as DraftItem[];
           const { prendas } = (await res.json()) as { prendas: PrendaDetectada[] };
           return prendas.map((p) => ({ id: uid(), attrs: p, on: true, photoPreview: f.dataUrl }));
@@ -183,8 +197,11 @@ export function ImportCarreteFlow({
         return;
       }
       setState({ kind: "texto", items });
-    } catch {
-      setState({ kind: "error", msg: "No pude leer las fotos. Inténtalo otra vez." });
+    } catch (e) {
+      setState({
+        kind: "error",
+        msg: e instanceof PermisoError ? e.message : "No pude leer las fotos. Inténtalo otra vez.",
+      });
     }
   }
 

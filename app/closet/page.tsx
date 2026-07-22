@@ -6,6 +6,7 @@ import { ClosetNav } from "@/components/closet-nav";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { Hint } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
+import { fotosBloqueadas } from "@/lib/edad";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { loadLovedCounts, sortLovedFirst } from "@/lib/loved-items";
@@ -100,6 +101,17 @@ export default async function ClosetPage() {
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-1">
+        {fotosBloqueadas(profile) ? (
+          <p className="border border-line bg-surface px-4 py-3 text-[13px] leading-snug text-muted">
+            Puedes armar tu clóset con las prendas del catálogo. Subir{" "}
+            <b className="text-ink">fotos de tu ropa</b> se desbloquea cuando tus
+            papás o tutores confirmen el permiso —{" "}
+            <Link href="/perfil" className="font-bold text-ink underline">
+              reenvíales el link desde tu Perfil
+            </Link>
+            .
+          </p>
+        ) : null}
         {/* Header: tu ropa primero — título + conteo a la izquierda, un solo
             botón "Agregar" a la derecha (abre la hoja con las 3 formas). */}
         <div className="flex items-start justify-between gap-3">

@@ -51,6 +51,7 @@ export type TripCapsuleInputs = {
   styleReference?: string | null; // estilo de referencia (vibe/siluetas, no color)
   styleWords?: string | null; // su estilo en sus palabras (perfil)
   silueta?: string | null; // orientación de cuerpo — señal suave
+  ageStyling?: string | null; // orientación por edad (life-stage) — señal suave, solo extremos
   tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
 };
 
@@ -146,6 +147,7 @@ export async function generateTripCapsuleTarget(
   const palabrasTxt = inputs.styleWords?.trim()
     ? `SU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género, piso, clima — siempre están por encima).`
     : "";
+  const edadTxt = inputs.ageStyling ?? "";
   const cuerpoTxt = inputs.silueta
     ? `SU CUERPO (orientación suave para elegir cortes, no regla): ${inputs.silueta}.`
     : "";
@@ -200,7 +202,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
+        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${edadTxt ? `\n${edadTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
       },
     ],
     output_config: {

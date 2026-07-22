@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { EMAIL_RE } from "@/lib/valid-email";
 
 export type LoginState =
   | { status: "idle" }
@@ -13,7 +14,6 @@ export type VerifyState =
   | { status: "idle"; email: string }
   | { status: "error"; email: string; message: string };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Paso 1: valida correo + allowlist y dispara el código de 6 dígitos.
 // signInWithOtp genera el OTP; el template del correo lo muestra ({{ .Token }}).

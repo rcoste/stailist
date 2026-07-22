@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { photosGate } from "@/lib/consentimiento";
 import { createClient } from "@/lib/supabase/server";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
@@ -20,6 +21,11 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Recibe la foto de la persona (aísla la prenda que trae puesta) → mismo
+  // gate de menores que analizar-prenda/s: sin permiso del tutor, no procesa.
+  const blocked = await photosGate(supabase, user.id);
+  if (blocked) return blocked;
 
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return NextResponse.json({ error: "sin_gemini" }, { status: 503 });

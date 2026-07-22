@@ -97,6 +97,18 @@ export function AvatarWizard({
   const bodyType: BodyType | null = buildToBodyType(build);
   const [generated, setGenerated] = useState<string | null>(null);
   const [fails, setFails] = useState(0);
+  // Mensaje del 403 de permiso parental (solo alcanzable desde una pestaña
+  // vieja: la página ya gatea server-side). Si está, el paso error lo muestra
+  // en vez del genérico con retry inútil.
+  const [permisoMsg, setPermisoMsg] = useState<string | null>(null);
+
+  async function failGen(res: Response): Promise<never> {
+    if (res.status === 403) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (err.error === "permiso_pendiente" && err.message) setPermisoMsg(err.message);
+    }
+    throw new Error("gen");
+  }
   const [saving, setSaving] = useState(false);
   const [genMsg, setGenMsg] = useState(GEN_MSGS_CARA[0]);
   // Etapa cara: retrato generado + veredicto del juez (visible) + ajuste libre.
@@ -124,7 +136,7 @@ export function AvatarWizard({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ stage: "sheet", headshotB64: headshot, avatarB64: bodyImage }),
         });
-        if (!res.ok) throw new Error("sheet");
+        if (!res.ok) await failGen(res);
         const data = (await res.json()) as { image?: string };
         if (!data.image) throw new Error("sheet");
         setSheetGen(data.image);
@@ -210,7 +222,7 @@ export function AvatarWizard({
           ...(ajuste ? { ajuste, prevFaceB64: faceGen } : {}),
         }),
       });
-      if (!res.ok) throw new Error("gen");
+      if (!res.ok) await failGen(res);
       const data = (await res.json()) as {
         image?: string;
         score?: number | null;
@@ -250,7 +262,7 @@ export function AvatarWizard({
           ...(alturaCm ? { heightCm: alturaCm } : {}),
         }),
       });
-      if (!res.ok) throw new Error("gen");
+      if (!res.ok) await failGen(res);
       const data = (await res.json()) as { image?: string };
       if (!data.image) throw new Error("gen");
       setGenerated(data.image);
@@ -647,9 +659,10 @@ export function AvatarWizard({
             <Icon name="prohibido" size={22} />
           </span>
           <p className="text-sm font-medium text-ink">
-            {fails >= 2
-              ? "No está saliendo ahorita. Inténtalo más tarde."
-              : "No pude generar tu avatar."}
+            {permisoMsg ??
+              (fails >= 2
+                ? "No está saliendo ahorita. Inténtalo más tarde."
+                : "No pude generar tu avatar.")}
           </p>
           <div className="flex flex-col gap-2">
             <button

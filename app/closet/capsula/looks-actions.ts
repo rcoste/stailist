@@ -18,6 +18,7 @@ import {
   type TripWeatherInput,
 } from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
@@ -66,7 +67,7 @@ export async function generateCapsuleOutfits(
     supabase
       .from("profiles")
       .select(
-        "capsule_target, capsule_match, capsule_overrides, lifestyle, gender, taste_tags, style_archetype, body_build, body_volume, capsule_outfits, style_vetoes, style_reference, style_words"
+        "capsule_target, capsule_match, capsule_overrides, lifestyle, gender, taste_tags, style_archetype, body_build, body_volume, capsule_outfits, style_vetoes, style_reference, style_words, age_range"
       )
       .eq("id", user.id)
       .single(),
@@ -115,6 +116,7 @@ export async function generateCapsuleOutfits(
       (profile?.body_build as Build | null) ?? null,
       (profile?.body_volume as Volume | null) ?? null
     ),
+    ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
     exclude: existing.map((o) => o.prendas),
     // v24: los looks de la cápsula también respetan vetos, referencia, sus
     // palabras y el feedback real.

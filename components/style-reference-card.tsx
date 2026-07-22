@@ -67,8 +67,16 @@ export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
         body: JSON.stringify({ images }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) setErr("No pude leer el estilo. Prueba con otra(s) foto(s) de cuerpo completo.");
-      else setPreview(data as Preview);
+      if (!res.ok) {
+        const e = data as { error?: string; message?: string };
+        // El 403 de permiso parental trae el mensaje real — mostrarlo en vez
+        // del genérico que invita a reintentar con otra foto.
+        setErr(
+          e.error === "permiso_pendiente" && e.message
+            ? e.message
+            : "No pude leer el estilo. Prueba con otra(s) foto(s) de cuerpo completo."
+        );
+      } else setPreview(data as Preview);
     } catch {
       setErr("Algo falló. Inténtalo de nuevo.");
     }
