@@ -12,7 +12,9 @@
 //   mujer-01..05.png, hombre-01..04.png
 // Salida: public/looks/<id>-<genero>.png  (coquette es women-only → coquette.png)
 //
-// Uso:  node scripts/gen-looks-genz.mjs [--skip-existing]
+// Uso:  node scripts/gen-looks-genz.mjs [--skip-existing] [--only=<id>[,<id>...]]
+//   --only=minimalista        regenera solo esa carta (ambos géneros si existen)
+//   --only=minimalista-mujer  regenera solo esa variante (id-genero)
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const key = readFileSync(".env.local", "utf8")
@@ -20,14 +22,26 @@ const key = readFileSync(".env.local", "utf8")
   .split("=").slice(1).join("=").trim().replace(/^"|"$/g, "");
 const MODEL = "gemini-3-pro-image";
 const skip = process.argv.includes("--skip-existing");
+// --only=<id|id-genero>[,...]: regenera solo esas cartas (re-roll puntual de
+// una imagen con artefacto, sin re-generar las 49). Vacío = todas.
+const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+const ONLY = onlyArg ? onlyArg.slice("--only=".length).split(",").map((s) => s.trim()).filter(Boolean) : null;
+// Casa "minimalista" (el id) o "minimalista-mujer" (id-genero, sin .png).
+const wanted = (id, genero) => !ONLY || ONLY.includes(id) || ONLY.includes(`${id}-${genero}`);
 const ref = (f) => readFileSync(`docs_para_claude/genz-roster/${f}`).toString("base64");
 
-const W = { m1: "mujer-01.png", m2: "mujer-02.png", m3: "mujer-03.png", m4: "mujer-04.png", m5: "mujer-05.png" };
+// m6 = la modelo de la landing (public/landing/b1-normal.png): joven, cara de
+// la marca. Reemplaza a m4/m5 en los estilos clásicos — la crítica de stylist
+// (2026-07-22) encontró que modelo mayor + styling recatado apilaban señales
+// de edad y esas cartas leían "señora/monja".
+const W = { m1: "mujer-01.png", m2: "mujer-02.png", m3: "mujer-03.png", m4: "mujer-04.png", m5: "mujer-05.png", m6: "mujer-06.png" };
 const M = { h1: "hombre-01.png", h2: "hombre-02.png", h3: "hombre-03.png", h4: "hombre-04.png" };
 
 const EXPRESSION = "EXPRESSION: calm neutral face with a relaxed CLOSED mouth or a very subtle smirk — absolutely NO smiling, NO teeth showing, NOT angry; a cool aloof editorial model expression. Usually NOT eye contact, looking away to the side or down.";
 const ANTIPOSE = "FRAMING: candid and un-posed, caught between moments, NOT a stiff straight-on centered catalog pose, NOT symmetric, slightly off-axis three-quarter, off-center. Full outfit clearly visible head to feet.";
 const SCENE = "Clean Gen-Z aesthetic: cool neutral daylight, plain flat light-grey concrete wall, NO warm golden tones, NO stucco, NO cobblestone, neutral white balance, crisp.";
+// Ancla física: Gemini deja bolsas/accesorios flotando en el aire (artefacto).
+const ANCHOR = "Any bag or accessory is physically anchored to the body — held in a hand or worn with a visible strap over the shoulder resting against the body — NEVER floating in mid-air detached from the body.";
 const POSES_W = [
   "Looking off to the side, one hand tucking hair, weight on one leg.",
   "Hands in pockets, looking down and away, leaning slightly.",
@@ -45,31 +59,31 @@ const POSES_M = [
 
 // [id, modelKey, outfit]
 const WOMEN = [
-  ["y2k","m1","a cropped baby tee, low-rise baggy cargo jeans, a hoodie tied at the waist, chunky sneakers and tiny sunglasses, 2000s Y2K revival"],
-  ["coquette","m1","a pastel bow-detail blouse, a pleated mini skirt, sheer tights, ballet flats and a hair bow, coquette balletcore"],
-  ["color-protagonista","m1","a bold cobalt-blue oversized shirt with matching wide-leg trousers and white sneakers, a single vivid color as the star"],
-  ["streetwear","m2","an oversized graphic hoodie, baggy wide-leg jeans, chunky sneakers, a cap, a crossbody bag and layered chains, urban streetwear"],
-  ["grunge","m2","an oversized plaid flannel over a vintage band tee, ripped baggy jeans, chunky combat boots and layered silver necklaces, 90s grunge revival"],
-  ["edgy","m2","a black leather moto jacket, a black baby tee, black baggy trousers and chunky boots, sleek all-black with attitude"],
-  ["vintage","m2","a thrifted oversized denim jacket, a vintage graphic tee, high-waist mom jeans, retro low sneakers and small sunglasses, thrifted vintage mix"],
-  ["hipster","m2","a thrifted printed blouse, a knit cardigan, high-waist mom jeans, ankle boots, acetate glasses and statement earrings, indie thrift mix"],
-  ["casual-effortless","m3","a white tee tucked into straight-leg jeans, an oversized shirt-jacket layered on top, white sneakers and a tote bag, effortless everyday"],
-  ["athleisure","m3","a fitted sports set (sports bra and high-waist leggings) under an oversized zip hoodie, chunky sneakers, hair up, sporty athleisure"],
-  ["minimalista","m3","a ribbed tank, straight-leg tailored trousers, sleek pointed mules and a small structured bag, strict minimal neutral palette"],
-  ["gorpcore","m3","a shell jacket over a zip fleece, cargo hiking trousers, a crossbody sling and trail running sneakers, outdoorsy gorpcore neutral tones"],
-  ["utility","m3","a belted olive utility jacket over a white tee, cargo trousers and lace-up boots, functional utility workwear"],
-  ["academia","m4","a brown tweed blazer over a white collared shirt and a fine-knit sweater-vest, a pleated checked midi skirt and leather loafers, intellectual dark-academia"],
-  ["monocromatico","m3","a head-to-toe tonal grey outfit — a grey knit and matching grey trousers with grey sneakers, single-tone column"],
-  ["smart-casual","m4","a relaxed blazer over a fitted tee, straight dark-wash jeans and heeled ankle boots, polished smart casual"],
-  ["sastre","m4","an oversized tailored suit — a relaxed blazer and wide-leg trousers over a tank, with pointed shoes, modern power tailoring"],
-  ["preppy","m4","a knit vest over a collared shirt, a tailored pleated mini skirt, knee socks and loafers, a shoulder bag, polished preppy"],
-  ["romantico","m4","a soft floral-print midi dress with a fine knit cardigan and ballet flats, gentle romantic feminine"],
-  ["coastal","m5","a crisp loose white linen shirt, wide-leg beige linen trousers, delicate thin gold jewelry and flat leather sandals, relaxed coastal clean-girl"],
-  ["clasico-elegante","m5","a camel wool coat over an ivory silk blouse, straight cream trousers, leather loafers and a structured handbag, quiet-luxury old money"],
-  ["glam-noche","m5","a satin slip evening dress, strappy heels and a small clutch, evening glam"],
-  ["tonos-tierra","m5","a camel knit sweater, a brown midi skirt, tan suede boots and a brown bag, warm earth tones"],
-  ["nautico","m5","a navy-and-white breton striped top, high-waist white wide trousers, a navy blazer and ballet flats, nautical breton"],
-  ["boho","m5","a flowy printed maxi dress, a crochet fringed vest, leather boots and layered jewelry, modern coastal boho"],
+  ["y2k","m1","a cropped baby tee, low-rise baggy cargo jeans, a hoodie tied at the waist, chunky sneakers and tiny sunglasses, 2000s Y2K revival","a high ponytail with two face-framing front strands, 2000s style"],
+  ["coquette","m1","a pastel bow-detail blouse, a pleated mini skirt, sheer tights, ballet flats and a hair bow, coquette balletcore","a half-up hairstyle tied with the hair bow, soft and girly"],
+  ["color-protagonista","m1","a bold cobalt-blue oversized shirt with matching wide-leg trousers and white sneakers, a single vivid color as the star","loose and straight, sleek and polished"],
+  ["streetwear","m2","an oversized graphic hoodie, baggy wide-leg jeans, chunky sneakers, a cap, a crossbody bag and layered chains, urban streetwear","loose natural waves under the cap"],
+  ["grunge","m2","an oversized plaid flannel over a vintage band tee, ripped baggy jeans, chunky combat boots and layered silver necklaces, 90s grunge revival","messy undone loose hair, effortlessly grungy"],
+  ["edgy","m2","a black leather moto jacket, a black baby tee, black baggy jeans and chunky boots, sleek all-black with attitude","sleek straight loose hair, sharp and polished"],
+  ["vintage","m2","a thrifted oversized denim jacket, a vintage graphic tee, high-waist mom jeans, retro low sneakers and small sunglasses, thrifted vintage mix","loose natural waves, effortless retro"],
+  ["hipster","m2","a thrifted printed blouse, a knit cardigan, high-waist mom jeans, ankle boots, acetate glasses and statement earrings, indie thrift mix","a loose messy low bun with face-framing strands and a claw clip"],
+  ["casual-effortless","m3","a white tee tucked into straight-leg jeans, an oversized shirt-jacket layered on top, white sneakers and a tote bag, effortless everyday","a relaxed low ponytail with loose front strands"],
+  ["athleisure","m3","a fitted sports set (sports bra and high-waist leggings) under an oversized zip hoodie, chunky sneakers, hair up, sporty athleisure","a high sleek bun, sporty and clean"],
+  ["minimalista","m3","a ribbed tank, straight-leg tailored trousers, sleek pointed mules and a small structured top-handle bag carried in her free hand, strict minimal neutral palette","a sleek low bun, modern and polished with clean edges"],
+  ["gorpcore","m6","an oversized technical shell jacket with drawstrings worn open over a fitted top, baggy nylon cargo track pants, a crossbody sling worn tight across the chest and chunky trail-running sneakers, fashion-forward gorpcore with streetwear proportions","a messy low bun, sporty and undone"],
+  ["utility","m6","a cropped boxy olive utility jacket with big patch pockets over a fitted white tank, high-waist wide-leg olive cargo trousers and chunky black boots, utility workwear with modern fashion proportions","a slicked-back low ponytail, clean and functional"],
+  ["academia","m6","a brown tweed blazer over a white collared shirt and a fine-knit sweater-vest, a pleated checked MINI skirt with sheer black tights and chunky leather loafers, hair loose, youthful intellectual dark-academia","loose hair with the front strands tucked behind the ears"],
+  ["monocromatico","m3","a head-to-toe tonal grey outfit — a grey knit and matching grey trousers with grey sneakers, single-tone column","sleek straight loose hair, minimal and polished"],
+  ["smart-casual","m4","a relaxed blazer over a fitted tee, straight dark-wash jeans and heeled ankle boots, polished smart casual","loose soft waves, polished but relaxed"],
+  ["sastre","m4","an oversized tailored suit — a relaxed blazer and wide-leg trousers over a tank, with pointed shoes, modern power tailoring, confident poised energy","a slicked-back low bun, sharp editorial power look"],
+  ["preppy","m4","a knit vest over a collared shirt, a tailored pleated mini skirt, knee socks and loafers, a shoulder bag, polished preppy","a half-up hairstyle with a thin ribbon, neat and collegiate"],
+  ["romantico","m6","a bias-cut floral-print midi slip dress with thin straps and a fitted waist, a cropped open knit cardigan, delicate gold jewelry and ballet flats, hair loose, gentle romantic feminine — youthful, with shape","soft loose waves with a small front twist pinned back, romantic"],
+  ["coastal","m5","a crisp loose white linen shirt, wide-leg beige linen trousers, delicate thin gold jewelry and flat leather sandals, relaxed coastal clean-girl","effortless beachy waves loosely clipped with a claw clip"],
+  ["clasico-elegante","m6","an oversized relaxed camel wool coat draped over an ivory fine-knit top, wide-leg cream trousers, sleek loafers and a structured handbag, youthful quiet-luxury old money","a low sleek chignon, elegant with clean edges"],
+  ["glam-noche","m5","a satin slip evening dress, strappy heels and a small clutch, evening glam","sleek hair pulled back behind the shoulders, evening polish"],
+  ["tonos-tierra","m6","a fitted ribbed camel knit top tucked into high-waist wide-leg chocolate-brown trousers, a suede shoulder bag and suede sneakers, warm earth tones, modern and youthful","a relaxed low ponytail with face-framing strands"],
+  ["nautico","m6","a navy-and-white breton striped top, high-waist white wide-leg trousers, an OVERSIZED relaxed navy blazer and white sneakers, fresh modern nautical breton","a low loose ponytail, fresh and breezy"],
+  ["boho","m6","a flowy V-neck printed maxi dress with a rich contrasting print, a cropped crochet vest, western boots and layered gold jewelry, modern coastal boho with energy","loose bohemian waves with two thin front braids"],
 ];
 const MEN = [
   ["y2k","h4","baggy low-rise carpenter jeans, a graphic baby tee, an open zip hoodie, a trucker cap and chunky sneakers, 2000s Y2K revival"],
@@ -98,9 +112,15 @@ const MEN = [
   ["romantico","h3","a soft pastel linen shirt, light-tone relaxed trousers and clean loafers, soft romantic light palette"],
 ];
 
-function prompt(subj, poss, outfit, pose) {
+// `hair` (opcional, por carta): el peinado es parte del styling — sin él, el
+// img2img clona la melena de la referencia y todo el deck sale peinado igual.
+// Con hair, se conserva cara y COLOR de pelo pero el peinado lo pone el estilo.
+function prompt(subj, poss, outfit, pose, hair) {
   const Cap = subj === "man" ? "He" : "She";
-  return `Candid full-body street-style fashion photograph of the SAME ${subj} shown in the reference image. Keep ${poss} exact face, hairstyle, hair color, skin tone and overall look identical to the reference. ${Cap} is now wearing ${outfit}. ${pose} ${EXPRESSION} ${ANTIPOSE} ${SCENE} Full body head to feet, photorealistic, high quality. No text, no logos.`;
+  const identity = hair
+    ? `Keep ${poss} exact face, hair color, skin tone and overall look identical to the reference, but style ${poss} hair differently: ${hair}.`
+    : `Keep ${poss} exact face, hairstyle, hair color, skin tone and overall look identical to the reference.`;
+  return `Candid full-body street-style fashion photograph of the SAME ${subj} shown in the reference image. ${identity} ${Cap} is now wearing ${outfit}. ${pose} ${EXPRESSION} ${ANTIPOSE} ${ANCHOR} ${SCENE} Full body head to feet, photorealistic, high quality. No text, no logos.`;
 }
 
 async function gen(file, avatarFile, text) {
@@ -120,13 +140,18 @@ async function gen(file, avatarFile, text) {
   console.log(`OK → ${file}`);
 }
 
+// El índice de pose NO depende del filtro (se avanza siempre) para que cada
+// carta conserve la MISMA pose que en la generación completa — regenerar una
+// sola con --only reproduce su pose canónica, no una corrida.
 let i = 0;
-for (const [id, mk, outfit] of WOMEN) {
+for (const [id, mk, outfit, hair] of WOMEN) {
   const file = id === "coquette" ? "coquette.png" : `${id}-mujer.png`;
-  await gen(file, W[mk], prompt("woman", "her", outfit, POSES_W[i % POSES_W.length])); i++;
+  if (wanted(id, "mujer")) await gen(file, W[mk], prompt("woman", "her", outfit, POSES_W[i % POSES_W.length], hair));
+  i++;
 }
 i = 0;
 for (const [id, mk, outfit] of MEN) {
-  await gen(`${id}-hombre.png`, M[mk], prompt("man", "his", outfit, POSES_M[i % POSES_M.length])); i++;
+  if (wanted(id, "hombre")) await gen(`${id}-hombre.png`, M[mk], prompt("man", "his", outfit, POSES_M[i % POSES_M.length]));
+  i++;
 }
 console.log("LISTO");
