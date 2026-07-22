@@ -61,7 +61,7 @@ const POSES_M = [
 const WOMEN = [
   ["y2k","m1","a cropped baby tee, low-rise baggy cargo jeans, a hoodie tied at the waist, chunky sneakers and tiny sunglasses, 2000s Y2K revival","a high ponytail with two face-framing front strands, 2000s style"],
   ["coquette","m1","a pastel bow-detail blouse, a pleated mini skirt, sheer tights, ballet flats and a hair bow, coquette balletcore","a half-up hairstyle tied with the hair bow, soft and girly"],
-  ["color-protagonista","m1","a bold cobalt-blue oversized shirt with matching wide-leg trousers and white sneakers, a single vivid color as the star","loose and straight, sleek and polished"],
+  ["color-protagonista","m1","a bold cobalt-blue oversized button-up shirt worn open-collared and loosely tucked into relaxed straight-leg off-white jeans, with white sneakers — ONE single vivid-color piece as the star against a neutral base (NOT a monochrome set)","loose and straight, sleek and polished","Standing facing the camera in a relaxed three-quarter stance, weight on one leg, one hand in a pocket, looking aside."],
   ["streetwear","m2","an oversized graphic hoodie, baggy wide-leg jeans, chunky sneakers, a cap, a crossbody bag and layered chains, urban streetwear","loose natural waves under the cap"],
   ["grunge","m2","an oversized plaid flannel over a vintage band tee, ripped baggy jeans, chunky combat boots and layered silver necklaces, 90s grunge revival","messy undone loose hair, effortlessly grungy"],
   ["edgy","m2","a black leather moto jacket, a black baby tee, black baggy jeans and chunky boots, sleek all-black with attitude","sleek straight loose hair, sharp and polished"],
@@ -144,9 +144,9 @@ async function gen(file, avatarFile, text) {
 // carta conserve la MISMA pose que en la generación completa — regenerar una
 // sola con --only reproduce su pose canónica, no una corrida.
 let i = 0;
-for (const [id, mk, outfit, hair] of WOMEN) {
+for (const [id, mk, outfit, hair, poseOv] of WOMEN) {
   const file = id === "coquette" ? "coquette.png" : `${id}-mujer.png`;
-  if (wanted(id, "mujer")) await gen(file, W[mk], prompt("woman", "her", outfit, POSES_W[i % POSES_W.length], hair));
+  if (wanted(id, "mujer")) await gen(file, W[mk], prompt("woman", "her", outfit, poseOv ?? POSES_W[i % POSES_W.length], hair));
   i++;
 }
 i = 0;
