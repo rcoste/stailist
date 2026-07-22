@@ -7,6 +7,34 @@ import {
   type MatchEntry,
 } from "@/lib/capsule";
 
+// Una prenda del clóset como línea del prompt del match: color real (con hex),
+// más los atributos ricos que distinguen prendas antes idénticas en texto
+// (material, patrón, corte, temporada). Omite los vacíos. Pura y testeable;
+// espejo de packableDesc del motor de viaje.
+export function closetItemLine(c: ClosetItemLite): string {
+  let color = c.color_hex ? `${c.color} ${c.color_hex}`.trim() : c.color;
+  if (c.color_secundario) color += ` con ${c.color_secundario}`;
+  // Solo se muestra un estampado REAL: "liso" es el default asumido y en el
+  // match sería ruido en casi toda prenda. "estampado" a secas ya es el patrón
+  // genérico — no dupliques el prefijo.
+  const patron =
+    c.patron && c.patron !== "liso"
+      ? c.patron === "estampado"
+        ? "estampado"
+        : `estampado ${c.patron}`
+      : null;
+  const detalle = [
+    c.category,
+    c.formalidad,
+    color || null,
+    c.material ?? null,
+    patron,
+    c.corte ? `corte ${c.corte}` : null,
+    c.temporada && c.temporada !== "todo-el-año" ? `para ${c.temporada}` : null,
+  ].filter(Boolean);
+  return `- ${c.nombre} (${detalle.join(", ")})`;
+}
+
 // CAPA 2 — el match: por cada prenda de la cápsula ideal, ¿el clóset real ya la
 // cubre? El juicio fino (¿una desert boot cubre una chukka? ¿un crewneck cubre
 // un cuello tortuga?) lo hace la IA, porque el clóset no guarda un "tipo" fino.
@@ -31,11 +59,14 @@ export async function matchCapsule(
   const client = new Anthropic();
 
   const idealTxt = target.items
-    .map((it, i) => `${i + 1}. ${it.nombre} (tipo: ${it.tipo}, ${it.category}, ${it.formalidad}, ${it.colorFamilia})`)
+    .map(
+      (it, i) =>
+        `${i + 1}. ${it.nombre} (tipo: ${it.tipo}, ${it.category}, ${it.formalidad}, ${it.colorFamilia}${
+          it.temporada && it.temporada !== "todo-el-año" ? `, para ${it.temporada}` : ""
+        })`
+    )
     .join("\n");
-  const closetTxt = closet
-    .map((c) => `- ${c.nombre} (${c.category}, ${c.formalidad}, ${c.color})`)
-    .join("\n");
+  const closetTxt = closet.map(closetItemLine).join("\n");
 
   const generoTxt =
     gender === "hombre"
@@ -64,6 +95,7 @@ REGLAS (en orden de prioridad):
 1. La CLASE de prenda manda por encima de TODO. "by" DEBE ser de la MISMA clase que la prenda ideal: un pantalón solo lo cubre otro pantalón; un zapato, otro zapato; un reloj, otro reloj. NUNCA cruces clases por color o material parecido — un chino NO lo cubren unos mocasines; un reloj NO lo cubren unos lentes; un cinturón NO lo cubre una cartera. Entre accesorios distingue la clase fina (reloj ≠ lentes ≠ cinturón ≠ bufanda ≠ gorra). Si NINGUNA prenda del clóset es de la misma clase, es "falta" con by="". Prohibido emparejar prendas de categorías distintas (top, bottom, calzado, abrigo, vestido, accesorio).
 2. Dentro de la misma clase, el cuello/corte importa: un crewneck NO cubre un cuello tortuga (cuello distinto) → "falta".
 3. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
+4. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
 
 Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN (1..N). Cada entrada:
 - status: "tienes" | "parecido" | "falta".
