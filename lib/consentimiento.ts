@@ -10,7 +10,8 @@ export const isConsentToken = (t: string | null): t is string =>
   !!t && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t);
 
 // Enforcement server-side del bloqueo de fotos de menores: lo llaman los
-// endpoints que RECIBEN fotos (analizar-prenda/s, avatar, estilo-referencia).
+// endpoints que RECIBEN o RENDEREAN fotos (analizar-prenda/s, avatar,
+// estilo-referencia, render-prenda).
 // true = bloqueado (menor 13-17 sin permiso parental confirmado).
 // Fail-CLOSED ante error de DB: para un gate de consentimiento, un error
 // transitorio no debe desactivar el bloqueo. Solo "fila no encontrada"
@@ -37,7 +38,7 @@ export async function photosBlockedForUser(
 export const PERMISO_PENDIENTE_MSG =
   "Falta el permiso de tus papás o tutores para subir fotos — pídeles que confirmen el correo que les mandamos (puedes reenviarlo desde tu Perfil).";
 
-// Gate único de las 4 rutas de fotos: null = pasa; NextResponse = 403 listo
+// Gate único de las 5 rutas de fotos: null = pasa; NextResponse = 403 listo
 // para devolver. Un endpoint de fotos futuro solo llama esto.
 export async function photosGate(
   supabase: SupabaseClient,
