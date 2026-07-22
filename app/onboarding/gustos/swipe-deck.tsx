@@ -1,12 +1,19 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { Look } from "@/lib/looks";
+import type { AssessmentQuestion } from "@/lib/capsule";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
-import { saveTastes, type SwipeResult } from "./actions";
+import {
+  saveTastes,
+  getCalibrationQuestions,
+  saveCalibration,
+  type SwipeResult,
+} from "./actions";
 import type { StyleArchetype } from "@/lib/engine/archetype";
 
 // Deck de swipes estilo Tinder (rebrand v3): pila con profundidad, carta activa
@@ -22,6 +29,7 @@ export function SwipeDeck({
   save = saveTastes,
   doneHref = "/onboarding/colorimetria",
   doneLabel = "Sigamos con tus colores",
+  calibracion = false,
 }: {
   looks: Look[];
   // Acción al terminar (default = onboarding). El Perfil pasa updateTastes.
@@ -30,16 +38,64 @@ export function SwipeDeck({
   ) => Promise<{ archetype: StyleArchetype } | { error: string }>;
   doneHref?: string;
   doneLabel?: string;
+  /** Onboarding: tras el reveal, 2-3 preguntas de calibración generadas a la
+   *  medida de los swipes (si la IA ya las tiene listas; si no, sigue directo). */
+  calibracion?: boolean;
 }) {
+  const router = useRouter();
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<SwipeResult[]>([]);
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
   const [drag, setDrag] = useState({ x: 0, y: 0, active: false });
   const [error, setError] = useState<string | null>(null);
   const [archetype, setArchetype] = useState<StyleArchetype | null>(null);
+  // Calibración post-reveal: preguntas generadas a la medida de los swipes.
+  const [calib, setCalib] = useState<AssessmentQuestion[] | null>(null);
+  const [calibIdx, setCalibIdx] = useState(0);
+  const [multiSel, setMultiSel] = useState<string[]>([]); // selección de una pregunta multi
+  const calibAnswers = useRef<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
   const start = useRef({ x: 0, y: 0 });
   const vel = useRef({ x: 0, t: 0, vx: 0 });
+
+  // Del reveal a la calibración: si las preguntas ya están calientes (se generan
+  // en background desde que terminó el swipe), se muestran; si no, directo a
+  // colores — jamás se espera a la IA.
+  function continuar() {
+    startTransition(async () => {
+      const qs = await getCalibrationQuestions().catch(() => null);
+      if (qs && qs.length > 0) setCalib(qs);
+      else router.push(doneHref);
+    });
+  }
+
+  // Guarda la respuesta y avanza (o cierra guardando todo). value = un valor
+  // (single) o varios separados por coma (multi).
+  function avanzar(qid: string, value: string) {
+    calibAnswers.current[qid] = value;
+    setMultiSel([]);
+    if (calib && calibIdx < calib.length - 1) {
+      setCalibIdx(calibIdx + 1);
+    } else {
+      startTransition(async () => {
+        await saveCalibration(calibAnswers.current).catch(() => null);
+        router.push(doneHref);
+      });
+    }
+  }
+
+  // Toggle de una opción en una pregunta MULTI. La opción exclusiva ("sorpréndeme")
+  // limpia las demás y viceversa — mismo criterio que el quiz de la cápsula.
+  function toggleMulti(q: AssessmentQuestion, value: string) {
+    const isExclusive = q.options.find((o) => o.value === value)?.exclusive;
+    setMultiSel((prev) => {
+      if (isExclusive) return prev.includes(value) ? [] : [value];
+      const base = prev.filter(
+        (v) => !q.options.find((o) => o.value === v)?.exclusive
+      );
+      return base.includes(value) ? base.filter((v) => v !== value) : [...base, value];
+    });
+  }
 
   function finalizar(all: SwipeResult[]) {
     startTransition(async () => {
@@ -109,6 +165,74 @@ export function SwipeDeck({
       );
     }
 
+    // Calibración post-reveal: 2-3 preguntas hechas a la medida de TUS swipes.
+    // Single = un tap avanza; multi = toggle + "continuar". Es el momento
+    // "me está escuchando".
+    if (calib) {
+      const q = calib[calibIdx];
+      return (
+        <div
+          key={q.id}
+          className="flex flex-1 flex-col items-center justify-center gap-2 pb-4 text-center"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+            afinemos tu estilo · {calibIdx + 1} de {calib.length}
+          </p>
+          <h2 className="mt-2 max-w-[320px] text-[26px] font-bold leading-[1.1] tracking-[-0.02em] text-ink">
+            {q.label}
+          </h2>
+          {q.help ? (
+            <p className="text-sm text-muted">{q.help}</p>
+          ) : q.multi ? (
+            <p className="text-sm text-muted">Puedes elegir varias.</p>
+          ) : null}
+          <div className="mt-5 flex w-full max-w-[340px] flex-col gap-2.5">
+            {q.options.map((o) => {
+              const sel = q.multi && multiSel.includes(o.value);
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    q.multi ? toggleMulti(q, o.value) : avanzar(q.id, o.value)
+                  }
+                  aria-pressed={q.multi ? sel : undefined}
+                  className={`flex min-h-12 flex-col items-center justify-center rounded-sm border px-4 py-2.5 text-[15px] font-medium transition-colors duration-200 disabled:opacity-50 ${
+                    sel
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line bg-surface text-ink hover:border-accent"
+                  }`}
+                >
+                  {o.label}
+                  {o.hint ? <span className="text-xs text-muted">{o.hint}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          {q.multi ? (
+            <button
+              type="button"
+              disabled={pending || multiSel.length === 0}
+              onClick={() => avanzar(q.id, multiSel.join(","))}
+              className="mt-4 flex min-h-12 w-full max-w-[340px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-40"
+            >
+              continuar <Icon name="flecha" size={17} />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => router.push(doneHref)}
+            className="mt-4 text-sm font-medium text-muted underline-offset-2 hover:text-ink hover:underline disabled:opacity-50"
+          >
+            luego
+          </button>
+        </div>
+      );
+    }
+
     // Reveal del arquetipo: tríptico de los looks que amaste ("me veo reflejada").
     if (archetype) {
       const liked = looks.filter(
@@ -156,12 +280,26 @@ export function SwipeDeck({
           <p className="mt-3 max-w-[300px] font-display text-[18px] leading-snug text-muted">
             {archetype.descripcion}
           </p>
-          <Link
-            href={doneHref}
-            className="mt-7 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-          >
-            {doneLabel} <Icon name="flecha" size={19} />
-          </Link>
+          {calibracion ? (
+            // Con calibración: el botón consulta si las preguntas ya están
+            // calientes (sin esperar a la IA) — si no, navega directo.
+            <button
+              type="button"
+              disabled={pending}
+              onClick={continuar}
+              className="mt-7 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-70"
+            >
+              {pending ? <Spinner className="h-5 w-5" /> : null}
+              {doneLabel} <Icon name="flecha" size={19} />
+            </button>
+          ) : (
+            <Link
+              href={doneHref}
+              className="mt-7 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            >
+              {doneLabel} <Icon name="flecha" size={19} />
+            </Link>
+          )}
         </div>
       );
     }
