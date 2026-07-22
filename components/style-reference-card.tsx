@@ -8,7 +8,9 @@ import {
   saveStyleReference,
   discardStyleReference,
   removeStyleReference,
+  applyReferencePreset,
 } from "@/app/perfil/actions";
+import { REFERENCIAS_PRECARGADAS } from "@/lib/referencias";
 
 type Fit = { verdict: string; note: string };
 export type StyleRef = { summary: string; tags: string[]; fit?: Fit | null; images: string[] };
@@ -111,6 +113,21 @@ export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
     setPreview(null);
     start(async () => {
       await discardStyleReference(paths);
+    });
+  }
+
+  function usarPreset(id: string) {
+    setErr(null);
+    start(async () => {
+      const r = await applyReferencePreset(id);
+      if (r.ok) {
+        const preset = REFERENCIAS_PRECARGADAS.find((p) => p.id === id);
+        if (preset) {
+          setSaved({ summary: preset.summary, tags: preset.tags, fit: null, images: [] });
+        }
+      } else {
+        setErr("No pude guardar la referencia. Inténtalo de nuevo.");
+      }
     });
   }
 
@@ -253,6 +270,26 @@ export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
           >
             <Icon name="destello" size={16} /> subir fotos
           </button>
+
+          {/* Referencias precargadas: el atajo sin fotos — estilos de nuestras
+              stylists, aplicables con un tap. */}
+          <p className="mt-1 text-[12px] text-muted">
+            ¿O prefieres el estilo de una de nuestras stylists?
+          </p>
+          <div className="flex flex-col gap-2">
+            {REFERENCIAS_PRECARGADAS.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => usarPreset(r.id)}
+                disabled={pending}
+                className="flex flex-col items-start gap-0.5 rounded-sm border border-line bg-bg px-3 py-2.5 text-left transition-colors hover:border-ink disabled:opacity-50"
+              >
+                <span className="text-[13.5px] font-semibold text-ink">{r.nombre}</span>
+                <span className="text-[12px] leading-snug text-muted">{r.desc}</span>
+              </button>
+            ))}
+          </div>
         </>
       )}
 

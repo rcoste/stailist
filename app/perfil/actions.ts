@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { STYLE_WORDS_MAX } from "@/lib/style-words";
+import { referenciaPreset } from "@/lib/referencias";
 
 type StyleRefPayload = {
   summary: string;
@@ -47,6 +48,43 @@ export async function saveStyleReference(
     tags: data.tags ?? [],
     fit: data.fit ?? null,
     image_paths: data.image_paths,
+  };
+  const { error } = await supabase
+    .from("profiles")
+    .update({ style_reference })
+    .eq("id", user.id);
+  if (error) return { ok: false };
+  revalidatePath("/perfil");
+  return { ok: true };
+}
+
+// Aplica una referencia PRECARGADA (Carla/María) con un tap — sin fotos. El id
+// se valida contra el catálogo server-side (el cliente no puede inyectar un
+// summary arbitrario por esta vía). Borra las fotos de la referencia anterior.
+export async function applyReferencePreset(id: string): Promise<{ ok: boolean }> {
+  const preset = referenciaPreset(id);
+  if (!preset) return { ok: false };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("style_reference")
+    .eq("id", user.id)
+    .single();
+  const old = refPaths(prof?.style_reference);
+  if (old.length) await supabase.storage.from("prendas").remove(old);
+
+  const style_reference = {
+    summary: preset.summary,
+    tags: preset.tags,
+    fit: null,
+    image_paths: [],
+    preset: preset.id,
   };
   const { error } = await supabase
     .from("profiles")
