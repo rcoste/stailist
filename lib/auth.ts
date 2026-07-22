@@ -11,6 +11,7 @@ import type {
   LifestyleAnswers,
 } from "@/lib/capsule";
 import type { JourneyState } from "@/lib/journey";
+import type { AgeRange } from "@/lib/edad";
 
 export type Gender = "hombre" | "mujer";
 
@@ -18,6 +19,18 @@ export type Profile = {
   id: string;
   email: string;
   gender: Gender | null;
+  // Rango de edad declarado (tras el género). Contexto de life-stage para el
+  // motor + gate del aviso de menores. Ver lib/edad.ts.
+  age_range: AgeRange | null;
+  // Sello de que el menor DECLARÓ tener permiso (check del onboarding).
+  minor_ack_at: string | null;
+  // Consentimiento parental VERIFICADO: correo del tutor + token del link +
+  // cuándo confirmó. Sin verified, las fotos del menor quedan bloqueadas.
+  minor_parent_email: string | null;
+  minor_consent_token: string | null;
+  minor_consent_verified_at: string | null;
+  // Último envío del correo al tutor (cooldown de reenvío + feedback en la card).
+  minor_consent_last_sent_at: string | null;
   taste_tags: string[];
   palette_season: "primavera" | "verano" | "otono" | "invierno" | null;
   palette_flow: "primavera" | "verano" | "otono" | "invierno" | null;
@@ -100,9 +113,22 @@ export async function getProfile(opts?: { real?: boolean }): Promise<Profile> {
 }
 
 // Para Hoy/Clóset/Historial: exige onboarding completo; si no, retoma donde iba.
+// ¿Modo "ver como" activo? El gate de edad no aplica ahí: es solo-lectura (el
+// proxy bloquea todo POST, saveAge incluido) y los perfiles pre-migración
+// tienen edad vacía — sin la exención el admin quedaría atrapado en /edad.
+// La cookie sola NO basta: un usuario podría ponérsela a mano para saltarse la
+// pantalla de edad — se exige que el usuario REAL sea admin (query extra solo
+// cuando la cookie existe, i.e. sesiones de admin).
+async function enVerComo(): Promise<boolean> {
+  if (!(await cookies()).get(VIEW_AS_COOKIE)?.value) return false;
+  const real = await getProfile({ real: true });
+  return real.is_admin;
+}
+
 export async function requireOnboarded(): Promise<Profile> {
   const profile = await getProfile();
   if (!profile.gender) redirect("/onboarding/genero");
+  if (!profile.age_range && !(await enVerComo())) redirect("/onboarding/edad");
   if (profile.onboarding_step < ONBOARDING_COMPLETE) {
     redirect(routeForStep(profile.onboarding_step));
   }
@@ -115,6 +141,7 @@ export async function requireOnboarded(): Promise<Profile> {
 export async function requireStep(step: number): Promise<Profile> {
   const profile = await getProfile();
   if (!profile.gender) redirect("/onboarding/genero");
+  if (!profile.age_range && !(await enVerComo())) redirect("/onboarding/edad");
   if (profile.onboarding_step !== step) {
     redirect(routeForStep(profile.onboarding_step));
   }

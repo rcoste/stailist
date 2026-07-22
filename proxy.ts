@@ -60,7 +60,9 @@ export default async function proxy(request: NextRequest) {
     // Cron (auth por CRON_SECRET) y baja de correo (auth por token) llegan SIN
     // sesión — no deben redirigir a /login.
     pathname.startsWith("/api/cron") ||
-    pathname.startsWith("/api/email/baja");
+    pathname.startsWith("/api/email/baja") ||
+    // Permiso parental (menores): el tutor llega desde su correo, sin cuenta.
+    pathname.startsWith("/api/permiso");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

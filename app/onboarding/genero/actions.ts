@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { routeForStep } from "@/lib/onboarding";
 
 // El género filtra los básicos y los looks que verás. Es ortogonal al paso
 // del onboarding: no avanza onboarding_step, solo desbloquea el flujo.
@@ -16,12 +15,12 @@ export async function saveGender(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
+  await supabase
     .from("profiles")
     .update({ gender, updated_at: new Date().toISOString() })
-    .eq("id", user.id)
-    .select("onboarding_step")
-    .single();
+    .eq("id", user.id);
 
-  redirect(routeForStep(profile?.onboarding_step ?? 0));
+  // La edad va justo después del género (antesala del onboarding). El gate de
+  // requireStep vuelve a validarla; si ya está puesta, /edad reenvía al paso real.
+  redirect("/onboarding/edad");
 }
