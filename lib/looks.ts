@@ -44,10 +44,12 @@ const ESTILOS: EstiloRow[] = [
   ["romantico", "Romántico", "delicado y ligero", ["romantico", "suave", "fresco"]],
   ["boho", "Boho", "suelto, con textura y alma", ["boho", "relajado", "romantico"]],
   ["glam-noche", "Glam de noche", "para cuando hay que brillar", ["glam", "elegante", "atrevido"]],
-  // Nuevos (2026-06-16): tags distintivos (startup/finance) para que la señal
-  // de gusto pese fuerte. Imágenes hombre usan a Roberto como avatar.
-  ["startup", "Startup", "cómodo, listo para construir", ["startup", "casual", "deportivo"]],
-  ["finance-bro", "Finance bro", "chaleco y a cerrar el trato", ["finance", "preppy", "pulido"]],
+  // Canje 2026-07-22: academia + coastal reemplazan a finance-bro y startup
+  // (dos cartas muy masculinas y redundantes con preppy/athleisure) por dos
+  // ejes que faltaban — intelectual y resort/clean-girl —, con más balance
+  // femenino/andrógino. Imágenes: hombre = Roberto, mujer = morena.
+  ["academia", "Academia", "tweed, libros y aire intelectual", ["academia", "clasico", "vintage"]],
+  ["coastal", "Coastal", "lino, blancos y brisa de mar", ["coastal", "natural", "fresco"]],
   // Nuevos (2026-06-27, rebrand v3 swipes Gen-Z):
   ["y2k", "Y2K", "los 2000 sin pena: baggy y con actitud", ["y2k", "atrevido", "retro"]],
   ["coquette", "Coquette", "moños, suave y muy femenino", ["coquette", "romantico", "suave"], "mujer"],
