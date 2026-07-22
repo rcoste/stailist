@@ -16,9 +16,19 @@ export default async function WowPage() {
     redirect(routeForStep(profile.onboarding_step));
   }
 
+  const supabase = await createClient();
+
+  // Nº real de prendas del clóset — alimenta las frases del "generando"
+  // ("revisando tus N prendas…"). head:true → solo cuenta, no trae filas.
+  // En paralelo con los outfits guardados (son independientes; sin waterfall).
+  const countPromise = supabase
+    .from("items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", profile.id)
+    .is("deleted_at", null);
+
   let initialOutfits: WowOutfit[] | null = null;
   if (profile.onboarding_step >= 5) {
-    const supabase = await createClient();
     const { data: saved } = await supabase
       .from("outfits")
       .select("id, item_ids, title, explanation, tryon_path")
@@ -77,6 +87,7 @@ export default async function WowPage() {
         userId={profile.id}
         defaultObjective={profile.last_objective}
         hasAvatar={!!profile.avatar_path}
+        closetCount={(await countPromise).count ?? 0}
       />
     </section>
   );
