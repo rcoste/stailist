@@ -28,6 +28,10 @@ export async function sendEmail(input: SendEmailInput): Promise<SendResult> {
   const token = process.env.POSTMARK_SERVER_TOKEN;
   if (!token) return { ok: false, error: "POSTMARK_SERVER_TOKEN ausente" };
 
+  // El contrato es best-effort: un fallo de RED (fetch reject) también debe
+  // volver como { ok: false }, nunca reventar al caller (el onboarding no se
+  // bloquea por Postmark).
+  try {
   const res = await fetch(POSTMARK_URL, {
     method: "POST",
     headers: {
@@ -54,4 +58,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendResult> {
     return { ok: false, error: `${res.status} · ${data.Message ?? "error"}` };
   }
   return { ok: true, id: data.MessageID ?? "" };
+  } catch (e) {
+    return { ok: false, error: `red: ${e instanceof Error ? e.message : "fetch falló"}` };
+  }
 }
