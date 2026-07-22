@@ -108,8 +108,8 @@ const MEN = [
   ["nautico","h3","a navy-and-white breton striped top under an OVERSIZED relaxed navy blazer, straight-leg ecru trousers and clean white sneakers, fresh modern nautical breton"],
   ["preppy","h3","a navy knit sweater over an oxford shirt, relaxed-fit pleated beige chinos and chunky penny loafers, polished modern preppy campus"],
   ["glam-noche","h3","a sharp black silk shirt, slim tailored black trousers and polished shoes, evening going-out glam"],
-  ["boho","h3","an open linen shirt over a tee, loose linen trousers, layered necklaces and leather sandals, relaxed boho"],
-  ["romantico","h3","a soft washed-pink linen shirt worn open over a white tee, relaxed off-white linen trousers and clean white sneakers, soft romantic light palette, modern relaxed fit"],
+  ["boho","h3","an open warm-toned PATTERNED textured camp shirt over a white tee, layered pendant necklaces, relaxed earthy brown trousers and leather sandals, free-spirited modern boho — the print and jewelry are the statement"],
+  ["romantico","h3","a soft blush-pink lightweight crew-neck knit sweater, relaxed off-white trousers and clean white sneakers, soft romantic light palette — gentle, tidy, NO open overshirt, NO linen shirt"],
 ];
 
 // `hair` (opcional, por carta): el peinado es parte del styling — sin él, el
