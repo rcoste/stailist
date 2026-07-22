@@ -12,6 +12,7 @@ import type { Season } from "@/lib/colorimetria";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
@@ -308,6 +309,7 @@ async function generateInto(
         profile.body_build as Build | null,
         profile.body_volume as Volume | null
       ),
+      ageStyling: ageStylingLine(profile.age_range as AgeRange | null),
       tasteSignal,
       seedItemId,
       formality: typeof body.formality === "string" ? body.formality : null,

@@ -26,6 +26,7 @@ import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
 import type { Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
+import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import type { LifestyleAnswers } from "@/lib/capsule";
 import { styleReferenceForEngine, styleSignature } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
@@ -49,7 +50,7 @@ export async function saveLifestyle(
   const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
     supabase
       .from("profiles")
-      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words")
+      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range")
       .eq("id", user.id)
       .single(),
     loadTasteSignal(supabase, user.id),
@@ -97,6 +98,7 @@ export async function saveLifestyle(
       vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES),
       styleWords: (profile?.style_words as string | null) ?? null,
       tasteSignal,
+      ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
     });
     // Firma del estilo COMPLETO (referencia + sus palabras): si cualquiera
     // cambia después, la cápsula se ofrece a regenerar.
@@ -379,7 +381,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     supabase
       .from("profiles")
       .select(
-        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words"
+        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range"
       )
       .eq("id", user.id)
       .single(),
@@ -411,6 +413,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
       vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES),
       styleWords: (profile?.style_words as string | null) ?? null,
       tasteSignal,
+      ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
     });
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
   } catch {

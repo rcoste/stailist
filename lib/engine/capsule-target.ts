@@ -33,6 +33,7 @@ export type CapsuleInputs = {
   // v24 — señales que antes NO llegaban a la cápsula:
   styleWords?: string | null; // su estilo en sus palabras (perfil)
   tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
+  ageStyling?: string | null; // orientación por edad (life-stage) — señal suave, solo extremos
 };
 
 // CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
@@ -154,7 +155,7 @@ Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte
     messages: [
       {
         role: "user",
-        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto (en orden de fuerza): ${tags}${refTxt}${palabrasTxt}${feedbackTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}\n\nDefine su cápsula ideal (items).`,
+        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto (en orden de fuerza): ${tags}${refTxt}${palabrasTxt}${feedbackTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}${inputs.ageStyling ? `\n${inputs.ageStyling}` : ""}\n\nDefine su cápsula ideal (items).`,
       },
     ],
     output_config: {

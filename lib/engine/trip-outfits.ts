@@ -76,6 +76,7 @@ export type TripOutfitInputs = {
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
   silueta?: string | null; // orientación de cuerpo; señal suave, no regla
+  ageStyling?: string | null; // orientación por edad (life-stage); señal suave, solo extremos
   // Colorimetría (regla near-face, como en el motor de Hoy). Opcional: sin
   // estación definida los looks salen sin esa regla, como antes.
   season?: Season | null;
@@ -246,6 +247,7 @@ export async function generateTripOutfits(
   const cuerpoTxt = inputs.silueta
     ? `\nCUERPO (orientación suave, no regla): ${inputs.silueta}. Úsalo solo para desempatar entre looks parejos y enriquecer el porqué cuando aplique.`
     : "";
+  const edadTxt = inputs.ageStyling ? `\n${inputs.ageStyling}` : "";
   const paleta = paletaText(inputs.season, inputs.flow);
   const paletaTxt = paleta ? `\nCOLORIMETRÍA: ${paleta}` : "";
   const contextoTxt = inputs.contexto
@@ -306,7 +308,7 @@ Para las celdas que SÍ funcionan:
     messages: [
       {
         role: "user",
-        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags (en orden de fuerza): ${tags}.${cuerpoTxt}${paletaTxt}${refTxt}${palabrasTxt}${contextoTxt}${feedbackTxt}\n\nPRENDAS (número. nombre (atributos)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
+        content: `OCASIONES: ${ocasTxt}.\nCLIMA: ${climaTxt}.\nESTILO: ${estilo}. Tags (en orden de fuerza): ${tags}.${cuerpoTxt}${edadTxt}${paletaTxt}${refTxt}${palabrasTxt}${contextoTxt}${feedbackTxt}\n\nPRENDAS (número. nombre (atributos)):\n${prendasTxt}\n\nREJILLA DE CELDAS A VALIDAR:\n${celdasTxt}${excludeTxt}\n\nValida la rejilla y devuelve los looks que funcionan.`,
       },
     ],
     output_config: {

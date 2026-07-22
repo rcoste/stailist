@@ -8,6 +8,7 @@ export type StyleQuestionsInput = {
   gender: Gender | null;
   paletaLabel: string | null; // ej. "Invierno profundo"
   siluetaLabel: string | null; // ej. "media · carga arriba"
+  edadLabel?: string | null; // ej. "13 a 17" — contexto de life-stage para preguntar mejor
 };
 
 // Genera 2-3 preguntas de opción múltiple PERSONALIZADAS al estilo ya conocido del
@@ -25,6 +26,7 @@ export async function generateStyleQuestions(
     input.tasteTags.length ? `Gustos: ${input.tasteTags.join(", ")}` : null,
     input.paletaLabel ? `Colorimetría: ${input.paletaLabel}` : null,
     input.siluetaLabel ? `Silueta: ${input.siluetaLabel}` : null,
+    input.edadLabel ? `Edad: ${input.edadLabel} años` : null,
     `Género: ${input.gender ?? "no definido"}`,
   ]
     .filter(Boolean)

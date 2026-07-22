@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { createClient, createTokenClient } from "@/lib/supabase/server";
 import { computeTasteTags, LOOKS, LOOK_IDS } from "@/lib/looks";
 import { generateArchetype, type StyleArchetype } from "@/lib/engine/archetype";
+import { ageStylingLine, ageLabel, type AgeRange } from "@/lib/edad";
 import { generateStyleQuestions } from "@/lib/engine/style-questions";
 import { styleQuestionsSig } from "@/lib/style-questions-cache";
 import type { AssessmentQuestion, LifestyleAnswers } from "@/lib/capsule";
@@ -36,10 +37,11 @@ export async function saveTastes(
   // antesala de género, antes de los gustos).
   const { data: prof } = await supabase
     .from("profiles")
-    .select("gender")
+    .select("gender, age_range")
     .eq("id", user.id)
     .single();
   const gender = (prof?.gender ?? null) as Gender | null;
+  const ageRange = (prof?.age_range ?? null) as AgeRange | null;
 
   // Arquetipo a partir de los looks con ❤️. Si la IA falla, seguimos sin
   // arquetipo (no bloquea el onboarding) con un fallback neutro.
@@ -48,7 +50,7 @@ export async function saveTastes(
   );
   let archetype: StyleArchetype;
   try {
-    archetype = await generateArchetype(likedLooks, gender);
+    archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange));
   } catch {
     archetype = {
       nombre: "Tu estilo",
@@ -96,6 +98,7 @@ export async function saveTastes(
           gender,
           paletaLabel: null, // la colorimetría aún no existe en este punto
           siluetaLabel: null,
+          edadLabel: ageLabel(ageRange),
         });
         if (questions.length) {
           await createTokenClient(accessToken)
@@ -208,17 +211,18 @@ export async function updateTastes(
   // el usuario ya está onboardeado, así que el género existe).
   const { data: prof } = await supabase
     .from("profiles")
-    .select("gender")
+    .select("gender, age_range")
     .eq("id", user.id)
     .single();
   const gender = (prof?.gender ?? null) as Gender | null;
+  const ageRange = (prof?.age_range ?? null) as AgeRange | null;
 
   const likedLooks = LOOKS.filter(
     (l) => clean.find((r) => r.id === l.id)?.liked
   );
   let archetype: StyleArchetype;
   try {
-    archetype = await generateArchetype(likedLooks, gender);
+    archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange));
   } catch {
     archetype = {
       nombre: "Tu estilo",

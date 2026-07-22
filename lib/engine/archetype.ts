@@ -27,7 +27,10 @@ function genderGuidance(gender: Gender | null): string {
 // concordancia gramatical del nombre y la descripción.
 export async function generateArchetype(
   likedLooks: Look[],
-  gender: Gender | null = null
+  gender: Gender | null = null,
+  // Orientación por edad (life-stage), señal suave — evita bautizar a una
+  // adolescente con un arquetipo "de oficina" o a una señora con slang teen.
+  ageNote: string | null = null
 ): Promise<StyleArchetype> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
 
@@ -44,7 +47,7 @@ export async function generateArchetype(
 - nombre: 2-3 palabras con personalidad.
 - descripcion: UNA línea cálida que lo/la haga sentirse visto/a. Tuteo, cero jerga técnica de moda. Ej: "te van las cosas simples pero con un twist que se nota".
 
-CONCORDANCIA DE GÉNERO (crítico, respétalo en nombre Y descripción): ${genderGuidance(gender)}`,
+CONCORDANCIA DE GÉNERO (crítico, respétalo en nombre Y descripción): ${genderGuidance(gender)}${ageNote ? `\n\n${ageNote} Que el nombre y la descripción le hablen a alguien de su etapa de vida.` : ""}`,
     messages: [
       {
         role: "user",

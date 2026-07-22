@@ -7,6 +7,7 @@ import { loadClosetLite } from "@/lib/capsule-data";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type Category, type Formalidad, type MatchEntry } from "@/lib/capsule";
 import {
@@ -195,7 +196,7 @@ export async function POST(request: NextRequest) {
           supabase
             .from("profiles")
             .select(
-              "gender, taste_tags, style_archetype, palette_season, palette_flow, style_vetoes, style_reference, style_words, body_build, body_volume"
+              "gender, taste_tags, style_archetype, palette_season, palette_flow, style_vetoes, style_reference, style_words, body_build, body_volume, age_range"
             )
             .eq("id", user.id)
             .single(),
@@ -287,6 +288,7 @@ export async function POST(request: NextRequest) {
             (profile?.body_build as Build | null) ?? null,
             (profile?.body_volume as Volume | null) ?? null
           ),
+          ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
           tasteSignal,
           anclas,
           rechazadas,

@@ -14,6 +14,7 @@ import {
   type TripWeatherInput,
 } from "@/lib/engine/trip-outfits";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { enrichPackable, type RealAttrs } from "@/lib/engine/enrich-packable";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
@@ -100,7 +101,7 @@ export async function POST(
     supabase
       .from("profiles")
       .select(
-        "gender, taste_tags, style_archetype, body_build, body_volume, palette_season, palette_flow, style_vetoes, style_reference, style_words"
+        "gender, taste_tags, style_archetype, body_build, body_volume, palette_season, palette_flow, style_vetoes, style_reference, style_words, age_range"
       )
       .eq("id", user.id)
       .single(),
@@ -141,6 +142,7 @@ export async function POST(
       (profile?.body_build as Build | null) ?? null,
       (profile?.body_volume as Volume | null) ?? null
     ),
+    ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
     season: (profile?.palette_season as Season | null) ?? null,
     flow: (profile?.palette_flow as Season | null) ?? null,
     // "Generar más": evita repetir los looks que ya existen. "Rehacer": evita

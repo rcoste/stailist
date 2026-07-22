@@ -14,6 +14,7 @@ import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
+import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
@@ -138,6 +139,7 @@ export async function POST(request: NextRequest) {
             profile.body_build as Build | null,
             profile.body_volume as Volume | null
           ),
+          ageStyling: ageStylingLine(profile.age_range as AgeRange | null),
           tasteSignal,
           styleReference: styleReferenceForEngine(profile.style_reference),
           styleWords: (profile.style_words as string | null) ?? null,
