@@ -21,7 +21,7 @@ export default async function GustosPage() {
         </h1>
       </div>
 
-      <SwipeDeck looks={looks} />
+      <SwipeDeck looks={looks} calibracion />
     </section>
   );
 }
