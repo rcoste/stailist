@@ -20,6 +20,7 @@ import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { Icon } from "@/components/icon";
+import { StyleReferenceCard } from "@/components/style-reference-card";
 
 export type WowOutfit = {
   id: string;
@@ -38,6 +39,10 @@ type State =
   | { kind: "loading"; outfits: WowOutfit[]; phase: string; input: LookInput }
   | { kind: "choosing"; outfits: WowOutfit[]; chosenId: string }
   | { kind: "viewing"; outfits: WowOutfit[]; chosenId: string }
+  // Post-primer-outfit: beat OPCIONAL de estilo de referencia (subir fotos de un
+  // look que te encanta). Va DESPUÉS de "me lo pongo" — ya probaste valor, así
+  // que pedir una foto ahora es engagement, no fricción antes del valor.
+  | { kind: "referencia" }
   | { kind: "error"; code: string };
 
 const ERROR_COPY: Record<string, string> = {
@@ -70,6 +75,7 @@ export function WowClient({
   defaultObjective: string | null;
   hasAvatar: boolean;
 }) {
+  const router = useRouter();
   const [state, setState] = useState<State>(
     initialOutfits && initialOutfits.length > 0
       ? { kind: "choosing", outfits: initialOutfits, chosenId: initialOutfits[0].id }
@@ -189,6 +195,11 @@ export function WowClient({
     );
   }
 
+  // ─── referencia: beat opcional de estilo de referencia, ya entrando a la app ───
+  if (state.kind === "referencia") {
+    return <ReferenceBeat onEnter={() => router.push("/hoy")} />;
+  }
+
   // ─── viewing: el elegido, en modo Hoy ───
   if (state.kind === "viewing") {
     const outfit = state.outfits.find((o) => o.id === state.chosenId) ?? state.outfits[0];
@@ -201,6 +212,8 @@ export function WowClient({
         onOtroLook={() =>
           setState({ kind: "choosing", outfits: state.outfits, chosenId: state.chosenId })
         }
+        // "me lo pongo" ya no salta directo a /hoy: pasa por el beat opcional.
+        onCommitted={() => setState({ kind: "referencia" })}
       />
     );
   }
@@ -333,13 +346,14 @@ function ModoHoyView({
   userId,
   hasAvatar,
   onOtroLook,
+  onCommitted,
 }: {
   outfit: WowOutfit;
   userId: string;
   hasAvatar: boolean;
   onOtroLook: () => void;
+  onCommitted: () => void;
 }) {
-  const router = useRouter();
   const [worn, setWorn] = useState(false);
   const t = useTryon({
     outfitId: outfit.id,
@@ -368,7 +382,7 @@ function ModoHoyView({
       return;
     }
     notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
-    router.push("/hoy"); // commit → entra a la app con su look listo
+    onCommitted(); // beat opcional de estilo de referencia antes de entrar a /hoy
   }
 
   return (
@@ -453,6 +467,39 @@ function ModoHoyView({
           changeHref={t.avatarHref}
         />
       ) : null}
+    </div>
+  );
+}
+
+// Beat opcional post-primer-outfit: promueve el estilo de referencia (subir
+// fotos de un look que te encanta) en el momento de mayor engagement — justo
+// después de que la persona se "puso" su primer look. Reusa StyleReferenceCard
+// (upload → preview → guardar, con veredicto honesto de si le va). "entrar a la
+// app" está SIEMPRE disponible: suba o no, el paso es 100% opcional y no
+// bloquea. Antes esta feature vivía enterrada en Perfil y nadie la encontraba.
+function ReferenceBeat({ onEnter }: { onEnter: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col gap-5 pb-4 pt-2">
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+          una cosa más · opcional
+        </p>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink">
+          afina tu estilo aún <em className="font-display font-normal italic">más</em>
+        </h1>
+      </div>
+
+      <StyleReferenceCard initial={null} />
+
+      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3">
+        <button
+          type="button"
+          onClick={onEnter}
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+        >
+          entrar a la app <Icon name="flecha" size={18} />
+        </button>
+      </div>
     </div>
   );
 }
