@@ -15,7 +15,7 @@ import {
   bucketLabel,
 } from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
-import { markWorn } from "@/lib/outfit-actions";
+import { markWorn, voteOutfit } from "@/lib/outfit-actions";
 import { notifyFirstLike, notifyWorn } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
@@ -54,6 +54,7 @@ const ERROR_COPY: Record<string, string> = {
 export function HoyClient({
   lookInicial,
   pendingOutfitId,
+  votoInicial = null,
   wornInicial,
   userId,
   defaultObjective,
@@ -64,7 +65,8 @@ export function HoyClient({
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
   pendingOutfitId?: string | null;
-  /** ya no se usa: el feedback de Hoy es comportamiento (otro look / me lo pongo). */
+  /** Voto ligero del look del día (revivido: la apuesta de solo-comportamiento
+   *  dejó el feedback en <10% — el 👍/👎 de un tap es la capa barata del embudo). */
   votoInicial?: "up" | "down" | null;
   wornInicial: boolean;
   userId: string;
@@ -392,6 +394,9 @@ export function HoyClient({
       userId={userId}
       worn={worn}
       fechaLabel={fechaLabel}
+      // El voto persistido solo aplica al look con el que cargó la página; un
+      // look recién generado arranca sin voto (el key resetea el estado).
+      votoInicial={state.outfit.id === lookInicial?.id ? votoInicial : null}
       onMeLoPongo={meLoPongo}
       onOtroLook={otroLook}
     />
@@ -415,6 +420,7 @@ function ReadyView({
   userId,
   worn,
   fechaLabel,
+  votoInicial = null,
   onMeLoPongo,
   onOtroLook,
 }: {
@@ -423,10 +429,36 @@ function ReadyView({
   worn: boolean;
   /** "MARTES · 15 JUL" — para el eyebrow del spread de desktop. */
   fechaLabel: string;
+  votoInicial?: "up" | "down" | null;
   onMeLoPongo: () => void;
   onOtroLook: () => void;
 }) {
   const [skipOpen, setSkipOpen] = useState(false);
+  // Hoja de razones: "skip" (desde "otro look") o "down" (desde el 👎). Misma
+  // hoja, dos entradas — el 👎 captura el disgusto aunque no regenere.
+  const [sheetMode, setSheetMode] = useState<"skip" | "down">("skip");
+  // Voto ligero (etapa 1 del embudo): un tap, sin compromiso de ponérselo.
+  const [voto, setVoto] = useState<"up" | "down" | null>(votoInicial);
+
+  async function votar(up: boolean) {
+    const prev = voto;
+    const next = up ? "up" : "down";
+    if (voto === next) return; // mismo voto = no-op (la action es idempotente)
+    setVoto(next);
+    // El voto se persiste ANTES de abrir la hoja del 👎: saveDownReason etiqueta
+    // el evento del voto, así que el evento debe existir cuando elija la razón.
+    const res = await voteOutfit(outfit.id, up);
+    if (!res.ok) {
+      setVoto(prev);
+      return;
+    }
+    if (up) {
+      notifyFirstLike(); // MVP: el prompt de instalar la PWA vive tras el primer 👍
+    } else {
+      setSheetMode("down");
+      setSkipOpen(true);
+    }
+  }
   const t = useTryon({
     outfitId: outfit.id,
     userId,
@@ -536,7 +568,10 @@ function ReadyView({
           {!worn && (
             <button
               type="button"
-              onClick={() => setSkipOpen((v) => !v)}
+              onClick={() => {
+                setSheetMode("skip");
+                setSkipOpen((v) => !v);
+              }}
               aria-pressed={skipOpen}
               className={`min-h-12 flex-1 rounded-sm border bg-surface text-sm font-semibold text-ink transition-colors lg:order-2 lg:min-h-0 lg:flex-none lg:self-center lg:border-0 lg:bg-transparent lg:px-2 lg:py-1 lg:font-medium ${
                 skipOpen
@@ -566,11 +601,46 @@ function ReadyView({
             )}
           </button>
         </div>
+
+        {/* Etapa 1 del embudo: voto ligero de un tap. Si ya dijo "me lo pongo",
+            la señal fuerte manda y la pregunta sobra. */}
+        {!worn && (
+          <div className="mt-1 flex items-center justify-center gap-4 lg:justify-start">
+            <span className="text-[13px] text-muted">¿te late?</span>
+            <button
+              type="button"
+              onClick={() => votar(true)}
+              aria-pressed={voto === "up"}
+              aria-label="me gusta este look"
+              className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
+                voto === "up"
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line text-muted hover:border-ink hover:text-ink"
+              }`}
+            >
+              <Icon name="pulgar" size={17} />
+            </button>
+            <button
+              type="button"
+              onClick={() => votar(false)}
+              aria-pressed={voto === "down"}
+              aria-label="no me gusta este look"
+              className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
+                voto === "down"
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line text-muted hover:border-ink hover:text-ink"
+              }`}
+            >
+              <Icon name="pulgar" size={17} className="rotate-180" />
+            </button>
+          </div>
+        )}
       </div>
 
       {skipOpen && !worn ? (
         <SkipReasons
           outfitId={outfit.id}
+          mode={sheetMode}
           onProceed={onOtroLook}
           onClose={() => setSkipOpen(false)}
         />

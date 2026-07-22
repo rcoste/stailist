@@ -1,26 +1,35 @@
 "use client";
 
 import { Icon } from "@/components/icon";
-import { saveSkipReason } from "@/lib/outfit-actions";
+import { saveDownReason, saveSkipReason } from "@/lib/outfit-actions";
 
-// Bottom sheet al tocar "Otro look": pregunta opcional "¿qué ajusto?" con chips.
+// Bottom sheet de razones, con dos entradas:
+//   "skip" — al tocar "Otro look": la razón es opcional y al elegir regenera.
+//   "down" — al tocar 👎 (voto ligero): la razón etiqueta el voto (saveDownReason)
+//            y NO regenera sola; "ver otro look" queda como CTA por si quiere.
 // Antes vivía inline debajo de los botones y se perdía sin scroll; como hoja
-// overlay es imposible de no ver. Elegir una razón guarda la señal y regenera;
-// "Solo ver otro" regenera sin razón. NUNCA bloquea — la tesis es matar fricción.
+// overlay es imposible de no ver. NUNCA bloquea — la tesis es matar fricción.
 const REASONS = ["No es mi estilo", "No es la ocasión", "Los colores", "No me queda"];
 
 export function SkipReasons({
   outfitId,
+  mode = "skip",
   onProceed,
   onClose,
 }: {
   outfitId: string;
+  mode?: "skip" | "down";
   onProceed: () => void;
   onClose: () => void;
 }) {
   function pick(reason: string) {
-    saveSkipReason(outfitId, reason); // fire-and-forget, no bloquea
-    onProceed();
+    if (mode === "down") {
+      saveDownReason(outfitId, reason); // etiqueta el 👎; fire-and-forget
+      onClose(); // el voto ya quedó — no regenera salvo que lo pida
+    } else {
+      saveSkipReason(outfitId, reason); // fire-and-forget, no bloquea
+      onProceed();
+    }
   }
 
   return (
@@ -32,8 +41,14 @@ export function SkipReasons({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-3.5 mt-1.5 h-1 w-9 rounded-full bg-line" />
-        <h3 className="mx-1 text-[19px] font-semibold text-ink">¿Qué ajusto?</h3>
-        <p className="mx-1 mb-3.5 text-sm text-muted">Opcional — me ayuda a darte uno mejor.</p>
+        <h3 className="mx-1 text-[19px] font-semibold text-ink">
+          {mode === "down" ? "¿Qué no te lató?" : "¿Qué ajusto?"}
+        </h3>
+        <p className="mx-1 mb-3.5 text-sm text-muted">
+          {mode === "down"
+            ? "Opcional — así afino tu estilo de verdad."
+            : "Opcional — me ayuda a darte uno mejor."}
+        </p>
         <div className="flex flex-wrap gap-2">
           {REASONS.map((r) => (
             <button
@@ -51,7 +66,7 @@ export function SkipReasons({
           onClick={onProceed}
           className="mt-4 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
         >
-          Solo ver otro look
+          {mode === "down" ? "Ver otro look" : "Solo ver otro look"}
           <Icon name="chevron" size={15} />
         </button>
       </div>

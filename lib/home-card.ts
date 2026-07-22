@@ -25,6 +25,7 @@ export type HomeCard =
     }
   | {
       kind: "ayer";
+      outfitId: string; // para el one-tap "¿te lo pusiste?" (etapa 2 del embudo)
       nombre: string;
       worn: boolean; // "te pusiste" vs "armaste" — worn es opt-in
       href: string;
@@ -129,6 +130,7 @@ export async function loadHomeCard(
       .limit(1);
     return {
       kind: "ayer",
+      outfitId: lookAyer.id as string,
       nombre: (lookAyer.title as string | null) ?? "tu look",
       worn: (worn ?? []).length > 0,
       href: "/historial",
