@@ -244,6 +244,18 @@ export type ClosetItemLite = {
   category: string;
   color: string;
   formalidad: string;
+  // Atributos ricos (v25): el match los usa para distinguir prendas que en el
+  // texto viejo (nombre + categoría + formalidad + color) eran idénticas — un
+  // suéter de lana grueso de invierno vs uno fino de algodón, mismo color y
+  // clase. Opcionales: prendas sin el dato caen a null y el match las trata como
+  // antes. Los llena loadClosetLite desde item.attrs (100% traen hex/temporada;
+  // ~85% material/patrón, ~74% corte — verificado en prod 2026-07-21).
+  color_hex?: string | null;
+  temporada?: string | null;
+  material?: string | null;
+  patron?: string | null;
+  corte?: string | null;
+  color_secundario?: string | null;
 };
 
 // Resultado por prenda ideal (alineado por índice con target.items). Tres estados:
@@ -267,15 +279,42 @@ function normalizeEntry(e: unknown): MatchEntry {
   return { status, by: o.by ?? null };
 }
 
-// Firma del clóset: id + categoría + formalidad por prenda, ordenado. Cambia si
-// agregas/quitas prendas O si editas su categoría/formalidad → "recalcular".
-// Ambos lados (clóset y match) la calculan con estos mismos campos, que se
-// derivan idéntico (categoría del arquetipo/attrs, formalidad de attrs).
+// Firma del clóset: incluye TODO lo que el match lee, para que corregir
+// cualquier atributo (color, material, patrón, temporada, corte) invalide el
+// match cacheado y se ofrezca recalcular. Antes solo miraba id+categoría+
+// formalidad → corregir el color de una prenda dejaba el match viejo en
+// silencio, justo el campo que desempata "tienes" vs "parecido" (v25). Ambos
+// lados (el match y la detección de staleness en la página) la derivan de
+// loadClosetLite, así que producen la misma firma. Los campos ricos son
+// opcionales (caen a "") — la firma sigue siendo consistente para prendas sin
+// el dato. Separador "|": ninguno de estos campos lo contiene.
 export function closetSignature(
-  items: { id: string; category: string; formalidad: string }[]
+  items: {
+    id: string;
+    category: string;
+    formalidad: string;
+    color?: string;
+    color_hex?: string | null;
+    material?: string | null;
+    patron?: string | null;
+    temporada?: string | null;
+    corte?: string | null;
+  }[]
 ): string {
   return items
-    .map((i) => `${i.id}:${i.category}:${i.formalidad}`)
+    .map((i) =>
+      [
+        i.id,
+        i.category,
+        i.formalidad,
+        i.color ?? "",
+        i.color_hex ?? "",
+        i.material ?? "",
+        i.patron ?? "",
+        i.temporada ?? "",
+        i.corte ?? "",
+      ].join("|")
+    )
     .sort()
     .join(",");
 }

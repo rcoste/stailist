@@ -80,9 +80,12 @@ export async function borrowArchetypeImage(
   return best;
 }
 
-// Carga el clóset del usuario aplanado a {id, nombre, category, color, formalidad}
-// para el matching de la cápsula. Resuelve categoría/nombre del arquetipo si lo
-// hay, o de attrs (fotos propias). Mismo criterio que la pantalla del clóset.
+// Carga el clóset del usuario aplanado para el matching de la cápsula: nombre,
+// categoría, color y formalidad + los atributos ricos (v25: hex, temporada,
+// material, patrón, corte, 2º color) que el match usa para distinguir prendas
+// idénticas en el texto viejo. Resuelve categoría/nombre del arquetipo si lo
+// hay; los ricos siempre salen de item.attrs (ahí los escribió el backfill v21
+// y el análisis de visión, no el arquetipo). Mismo criterio que la pantalla.
 export async function loadClosetLite(
   supabase: SupabaseClient,
   userId: string
@@ -101,6 +104,12 @@ export async function loadClosetLite(
       categoria?: string;
       tipo?: string;
       formalidad?: string;
+      color_hex?: string;
+      temporada?: string;
+      material?: string;
+      patron?: string;
+      corte?: string;
+      color_secundario?: string;
     };
     return {
       id: r.id as string,
@@ -108,6 +117,12 @@ export async function loadClosetLite(
       category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
       color: attrs.color ?? "",
       formalidad: attrs.formalidad ?? "casual",
+      color_hex: attrs.color_hex ?? null,
+      temporada: attrs.temporada ?? null,
+      material: attrs.material ?? null,
+      patron: attrs.patron ?? null,
+      corte: attrs.corte ?? null,
+      color_secundario: attrs.color_secundario ?? null,
     };
   });
 }
