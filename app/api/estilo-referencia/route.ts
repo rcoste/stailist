@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { PERMISO_PENDIENTE_MSG } from "@/lib/consentimiento";
+import { fotosBloqueadas, type AgeRange } from "@/lib/edad";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { seasonDisplayLabel, type Season } from "@/lib/colorimetria";
@@ -19,6 +21,35 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Un solo fetch de perfil sirve al gate de menores Y a la evaluación de FIT
+  // de más abajo (antes eran dos selects a la misma fila por request).
+  const { data: prof, error: profErr } = await supabase
+    .from("profiles")
+    .select(
+      "palette_season, palette_flow, body_build, body_volume, style_vetoes, gender, age_range, minor_consent_verified_at"
+    )
+    .eq("id", user.id)
+    .single();
+  // Menor (13-17) sin permiso parental confirmado: las fotos quedan bloqueadas.
+  // Fail-closed: si el select falló, no dejes pasar la subida.
+  // Sin fila (PGRST116) = sin señal de menor → no bloquea (misma semántica
+  // que photosBlockedForUser); cualquier otro error → fail-closed.
+  const blockedMinor = profErr
+    ? profErr.code !== "PGRST116"
+    : prof
+      ? fotosBloqueadas({
+          age_range: (prof.age_range as AgeRange | null) ?? null,
+          minor_consent_verified_at:
+            (prof.minor_consent_verified_at as string | null) ?? null,
+        })
+      : false;
+  if (blockedMinor) {
+    return NextResponse.json(
+      { error: "permiso_pendiente", message: PERMISO_PENDIENTE_MSG },
+      { status: 403 }
+    );
+  }
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "sin_api_key" }, { status: 503 });
   }
@@ -49,12 +80,7 @@ export async function POST(request: NextRequest) {
   }
   if (image_paths.length === 0) return NextResponse.json({ error: "upload" }, { status: 502 });
 
-  // Perfil del usuario para evaluar el FIT.
-  const { data: prof } = await supabase
-    .from("profiles")
-    .select("palette_season, palette_flow, body_build, body_volume, style_vetoes, gender")
-    .eq("id", user.id)
-    .single();
+  // El perfil para el FIT ya se cargó arriba (mismo fetch que el gate).
   const season = (prof?.palette_season as Season | null) ?? null;
   const flow = (prof?.palette_flow as Season | null) ?? null;
   const colorim = season ? seasonDisplayLabel(season, flow) : "sin definir";

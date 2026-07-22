@@ -38,7 +38,7 @@ type State =
   | { kind: "analizando" }
   | { kind: "confirmar"; preview: string; blob: Blob; attrs: PrendaAnalisis }
   | { kind: "guardando"; preview: string; blob: Blob; attrs: PrendaAnalisis }
-  | { kind: "error" };
+  | { kind: "error"; msg?: string };
 
 // Comprime y devuelve dataURL (para análisis + preview) y Blob (para subir).
 function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
@@ -105,7 +105,10 @@ export function AddPhotoFlow({
         body: JSON.stringify({ image: dataUrl }),
       });
       if (!res.ok) {
-        setState({ kind: "error" });
+        // El 403 de permiso parental trae un mensaje que sí hay que mostrar —
+        // el genérico "prueba con otra foto" invitaría a reintentar en vano.
+        const err = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+        setState({ kind: "error", msg: err.error === "permiso_pendiente" ? err.message : undefined });
         return;
       }
       const { analisis } = (await res.json()) as { analisis: PrendaAnalisis };
@@ -317,7 +320,7 @@ export function AddPhotoFlow({
               onClick={(e) => e.stopPropagation()}
             >
               <p className="text-sm text-error">
-                No pude leer la prenda. Inténtalo con otra foto.
+                {state.msg ?? "No pude leer la prenda. Inténtalo con otra foto."}
               </p>
               <button
                 type="button"
@@ -352,7 +355,7 @@ export function AddPhotoFlow({
       </button>
       {state.kind === "error" && (
         <p className="max-w-[12rem] text-right text-xs text-error">
-          No pude leer la prenda. Inténtalo con otra foto.
+          {state.msg ?? "No pude leer la prenda. Inténtalo con otra foto."}
         </p>
       )}
       {input}

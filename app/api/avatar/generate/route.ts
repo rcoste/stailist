@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 
@@ -227,6 +228,10 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Menor (13-17) sin permiso parental confirmado: las fotos quedan bloqueadas.
+  const blocked = await photosGate(supabase, user.id);
+  if (blocked) return blocked;
 
   let body: {
     stage?: string; // "face" | "body" | "sheet" | ausente (legacy: una pasada)

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { isBuild } from "@/lib/silueta";
+import { fotosBloqueadas } from "@/lib/edad";
 import { AvatarWizard } from "@/components/avatar-wizard";
 
 // Wizard de creación de avatar digital (issue #1). Llega aquí desde el nudge de
@@ -24,6 +26,30 @@ export default async function PerfilAvatarPage({
   // Solo rutas internas conocidas (sin open-redirect).
   const { return: ret } = await searchParams;
   const returnTo = ret && RETURNS.has(ret) ? ret : "/perfil";
+
+  // Menor sin permiso parental: el avatar ES fotos de su cara/cuerpo — mejor
+  // avisarle aquí (con salida a Perfil para reenviar el link) que dejarla
+  // estrellarse con el 403 del endpoint al final del wizard.
+  if (fotosBloqueadas(profile)) {
+    return (
+      <section className="flex flex-1 flex-col justify-center gap-5 px-[30px] pb-10 lg:mx-auto lg:max-w-[430px]">
+        <h1 className="text-[26px] font-bold leading-[1.1] tracking-[-0.02em] text-ink">
+          Casi — falta el permiso de tus papás
+        </h1>
+        <p className="text-[16px] leading-snug text-muted">
+          Tu avatar se crea con fotos tuyas, y para eso necesitamos que tus
+          papás o tutores confirmen el correo que les mandamos. En tu Perfil
+          puedes reenviárselo o mandárselo por WhatsApp.
+        </p>
+        <Link
+          href="/perfil"
+          className="flex min-h-[54px] w-full items-center justify-center rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+        >
+          ir a mi perfil
+        </Link>
+      </section>
+    );
+  }
 
   // En el onboarding el avatar es opcional y no debe atrapar: "seguir sin avatar"
   // entra directo a la app (/hoy). En perfil/hoy no se ofrece skip (se llega aquí
