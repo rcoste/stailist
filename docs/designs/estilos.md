@@ -127,17 +127,21 @@ un solo outfit).
 - M: **vestido de noche** (slip satinado o cocktail negro), tacón, clutch. Brillo, escote o espalda descubierta.
 - H: **esmoquin / black-tie** (traje negro, camisa fina sin corbata), mocasines pulidos. (subido a black-tie para distinguir de Sastre.)
 
-## Tech / corporate (nuevos, 2026-06-16)
+## Nuevos ejes (canje 2026-07-22)
 
-> Avatares hombre = **Roberto** (`docs_para_claude/avatars-hombre/m0-roberto.png`).
-> Mujer = avatar morena existente. Sin logos (On Cloud → "runner de suela
-> acolchada"; Patagonia → "chaleco gilet acolchado"). Generados con
-> `scripts/gen-new-styles.mjs`.
+> Academia + coastal reemplazan a los viejos "Startup" y "Finance bro" (muy
+> masculinos y redundantes con athleisure/preppy). Generados con el pipeline
+> canónico v3 **`scripts/gen-looks-genz.mjs`** (reparto genz, concreto gris
+> frío, sin logos) — NO con los scripts viejos (superseded).
 
-**21. Startup** — _cómodo, listo para construir_ · `startup, casual, deportivo`
-- H: **hoodie con zipper abierto** sobre playera lisa, jeans rectos, **runners de suela acolchada** (estilo On Cloud). El uniforme del fundador.
-- M: hoodie con zipper abierto sobre playera, jeans rectos, runners de suela acolchada.
+**21. Academia** — _tweed, libros y aire intelectual_ · `academia, clasico, vintage`
+- (Canje 2026-07-22: reemplaza a "Startup" — muy masculina y redundante con athleisure.)
+- H: **blazer de tweed café** sobre camisa oxford blanca y **chaleco de punto fino**, pantalón de lana sastre, mocasines de piel. Aire dark-academia, tonos cálidos.
+- M: blazer de tweed café sobre camisa blanca y chaleco de punto, **falda midi plisada de cuadros**, mocasines de piel.
+- Generada con `scripts/gen-looks-genz.mjs` (reparto genz, escenario v3).
 
-**22. Finance bro** — _chaleco y a cerrar el trato_ · `finance, preppy, pulido`
-- H: **chaleco gilet acolchado** sobre camisa azul claro, chinos beige, cinturón de piel café, tenis blancos de piel.
-- M: chaleco gilet acolchado sobre camisa azul claro, pantalón sastre beige, mocasines de piel.
+**22. Coastal** — _lino, blancos y brisa de mar_ · `coastal, natural, fresco`
+- (Canje 2026-07-22: reemplaza a "Finance bro" — muy masculina y redundante con preppy/smart-casual.)
+- H: **overshirt de lino crema** abierta sobre playera blanca, pantalón de lino beige, **sandalias de piel** minimalistas. Aire coastal relajado.
+- M: **camisa de lino blanca** suelta con pantalón de lino beige de pierna ancha, joyería fina dorada, sandalias planas. Aire "clean girl".
+- Generada con `scripts/gen-looks-genz.mjs` (reparto genz, escenario v3).
