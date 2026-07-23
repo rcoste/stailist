@@ -77,7 +77,16 @@ import {
 // (tasteSignal) cableados a los motores de viaje y cápsula que no los recibían;
 // (d) "tu estilo en tus palabras" (profiles.style_words) entra a todos los
 // motores como señal directa de la persona.
-export const PROMPT_VERSION = "v24";
+// v25 (2026-07-22): learnings de la crítica de stylist del deck del swipe,
+// llevados al motor: (a) capas con lógica de VIDA REAL — orden natural y
+// prohibición de combos que nadie usa (chaleco sastre sobre suéter, saco bajo
+// sudadera…), en generador, juez (razón de rechazo "capas") y la capa "extra"
+// de viaje; (b) "mano de stylist": una decisión visible por look (capa con
+// intención / contraste de textura / color sobre neutros) sin forzar piezas —
+// lo simple bien hecho también cuenta. Origen: el deck generado tenía combos
+// inexistentes y looks-plantilla que Roberto cachó a ojo; misma falla posible
+// en generación.
+export const PROMPT_VERSION = "v25";
 
 export type EngineItem = {
   id: string;
@@ -143,6 +152,8 @@ Armonía del outfit (cómo combinan las prendas entre sí):
 - Estampados: máximo UN estampado protagonista por look (rayas, cuadros, floral, gráfico…); el resto liso. Dos estampados juntos casi nunca — solo si uno es muy sutil y no compiten.
 - Materiales: si la prenda trae material, úsalo — nada de lana o tejidos pesados en calor, ni lino fresco en frío; y que los pesos de tela de un mismo look se hablen (no mezcles piezas de invierno con piezas de verano).
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
+- Capas con lógica de vida real: cada capa en su orden natural — camisa o playera debajo, suéter/knit encima, saco/blazer/abrigo al final. JAMÁS combos que nadie usa en la calle: chaleco sastre sobre suéter, saco debajo de una sudadera, camisa sobre suéter, dos abrigos juntos. La prueba: si no te imaginas a una persona real saliendo así a la calle, no lo armes.
+- Que se note la mano de stylist: cuando el clóset lo permita, el look lleva UNA decisión visible — una capa con intención, un contraste de textura (punto + piel, lana + mezclilla, tejido + satén), o un color que remata sobre base neutra. Y si el clóset solo da para lo simple, lo simple BIEN HECHO es la decisión (fit + color); jamás fuerces una pieza solo para "vestir" el look.
 - Vestido o falda en el look: cuida el largo contra el calzado (un midi pide calzado que estilice — algo de altura o silueta limpia; largo + calzado muy plano acortan la figura) y define la cintura cuando ayude (cinturón, top entallado o fajado).
 - Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
 - Marino + negro SÍ combinan (dos fríos que contrastan sin chocar), incluso en formal — un traje marino con zapatos o cinturón negros es clásico. Solo cuida que se vea intencional (mismo peso de tela, calzado oscuro), no como traje desparejado.

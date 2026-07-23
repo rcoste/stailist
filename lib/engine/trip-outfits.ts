@@ -297,7 +297,7 @@ Por cada celda decide si es un OUTFIT real:
 
 Para las celdas que SÍ funcionan:
 - Asígnale UNA ocasión del viaje (clave exacta).
-- Opcional: súmale en "extra" UNA capa y/o UN accesorio si la mejora (solo de las listas de arriba).
+- Opcional: súmale en "extra" UNA capa y/o UN accesorio si la mejora (solo de las listas de arriba) — y solo si la capa cae con lógica de vida real sobre ese look (saco sobre camisa o playera, sí; capa gruesa sobre suéter grueso o chaleco sastre sobre suéter, NO: nadie sale así).
 - titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
 - tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. SOLO sobre prendas que están en ESE look; NUNCA menciones ni sugieras añadir una prenda que no está en él. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
