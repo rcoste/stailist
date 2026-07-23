@@ -314,11 +314,21 @@ const ITEMS = [
   { slug: "sueter-mostaza-hombre", desc: "a men's crew-neck fine knit sweater in a rich mustard golden yellow color", type: "flat" },
   { slug: "polo-amarillo-hombre", desc: "a men's short-sleeve pique polo shirt in a warm golden yellow color", type: "flat" },
   { slug: "camisa-lavanda-hombre", desc: "a men's relaxed linen button-up shirt in a soft lavender color", type: "flat" },
+  // === Prendas juveniles MUJER (2026-07-22) — huecos del look Gen-Z que no
+  // existían ni en la biblioteca. El clóset precargado de mujer era muy
+  // señorial; estas cierran lo muy joven. Ver migración 0085. ===
+  { slug: "crop-top-blanco-mujer", desc: "a white fitted cropped baby tee, short-sleeve ribbed cotton women's t-shirt, cropped length, neatly laid flat", type: "flat" },
+  { slug: "jeans-baggy-mujer", desc: "a pair of light wash women's baggy loose-fit jeans, oversized relaxed streetwear fit, neatly laid flat lengthwise", type: "flat" },
+  { slug: "mary-janes-negras", desc: "a pair of black leather women's Mary Jane shoes with a strap across the top and a low block heel, rounded toe", type: "shoes" },
+  { slug: "botas-combat-mujer", desc: "a pair of black leather women's chunky combat lace-up boots, military style with a thick lug sole", type: "shoes" },
+  { slug: "vestido-babydoll-mujer", desc: "a black women's short babydoll mini dress, flowy A-line, youthful casual, neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
   if (type === "shoes") {
-    return `Professional e-commerce flat lay photograph of ${desc}, placed neatly side by side, shot from a slight top-down angle. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The shoes fill about 65% of the frame, centered. No people, no props, no text, no labels.`;
+    // No nombrar marcas (COS/Arket): Gemini las estampa en la plantilla del
+    // zapato. El insole va explícitamente en blanco, sin marca ni texto.
+    return `Professional e-commerce flat lay photograph of ${desc}, placed neatly side by side, shot from a slight top-down angle. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style. The insole and footbed are completely plain and empty with no brand name, no logo, no text and no writing of any kind. The shoes fill about 65% of the frame, centered. No people, no props, no text, no labels.`;
   }
   if (type === "accesorio") {
     return `Professional e-commerce product photograph of ${desc}, shot from directly above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The item fills about 55% of the frame, centered. No people, no props, no text, no labels.`;
