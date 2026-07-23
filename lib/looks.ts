@@ -1,4 +1,4 @@
-// Los estilos del swipe de gustos (25 mujer / 24 hombre — coquette es women-only;
+// Los estilos del swipe de gustos (26 mujer / 25 hombre — coquette es women-only;
 // rebrand v3 Gen-Z 2026-06-27, ver docs/designs/estilos.md). Imágenes recasteadas
 // a modelos europeo-latinos jóvenes, foto candid limpia. Los tags de los looks con
 // ❤️ se convierten en el
@@ -54,6 +54,10 @@ const ESTILOS: EstiloRow[] = [
   ["y2k", "Y2K", "los 2000 sin pena: baggy y con actitud", ["y2k", "atrevido", "retro"]],
   ["coquette", "Coquette", "moños, suave y muy femenino", ["coquette", "romantico", "suave"], "mujer"],
   ["gorpcore", "Gorpcore", "técnico de montaña, pero para la ciudad", ["gorpcore", "utility", "deportivo"]],
+  // 2026-07-22: K-fashion / minimalismo coreano — el fit oversized drapeado de
+  // los K-dramas está muy fuerte. Se diferencia de Monocromático por la
+  // SILUETA (abrigo largo + wide-leg fluido, no el tono único ceñido).
+  ["coreano", "Coreano", "holgado, fluido y monocromo — muy K-drama", ["fluido", "oversize", "sobrio"]],
 ];
 
 export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "unisex"]) => ({

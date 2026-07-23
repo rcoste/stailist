@@ -84,6 +84,7 @@ const WOMEN = [
   ["tonos-tierra","m6","a fitted ribbed camel knit top tucked into high-waist wide-leg chocolate-brown trousers, a suede shoulder bag and suede sneakers, warm earth tones, modern and youthful","a relaxed low ponytail with face-framing strands"],
   ["nautico","m6","a navy-and-white breton striped top, high-waist white wide-leg trousers, an OVERSIZED relaxed navy blazer and white sneakers, fresh modern nautical breton","a low loose ponytail, fresh and breezy"],
   ["boho","m6","a flowy V-neck printed maxi dress with a rich contrasting print, a cropped crochet vest, western boots and layered gold jewelry, modern coastal boho with energy","loose bohemian waves with two thin front braids"],
+  ["coreano","m3","an oversized drapey K-fashion look — a slim black fine knit under an oversized unstructured long grey blazer, VERY wide-leg high-waisted fluid drapey black trousers with a soft drape, and minimal white sneakers, soft monochrome neutral palette, Korean minimalist soft tailoring — oversized but intentional, the wide fluid trousers are the statement","sleek straight centre-parted hair, minimal and polished","Standing facing the camera in a relaxed three-quarter stance, weight on one leg, one hand loose at her side, looking aside — full drapey silhouette visible."],
 ];
 const MEN = [
   ["y2k","h4","baggy low-rise carpenter jeans, a graphic baby tee, an open zip hoodie, a trucker cap and chunky sneakers, 2000s Y2K revival"],
@@ -110,6 +111,7 @@ const MEN = [
   ["glam-noche","h3","a sharp black silk shirt, slim tailored black trousers and polished shoes, evening going-out glam"],
   ["boho","h3","an open warm-toned PATTERNED textured camp shirt over a white tee, layered pendant necklaces, relaxed earthy brown trousers and leather sandals, free-spirited modern boho — the print and jewelry are the statement"],
   ["romantico","h3","a soft blush-pink lightweight crew-neck knit sweater, relaxed off-white trousers and clean white sneakers, soft romantic light palette — gentle, tidy, NO open overshirt, NO linen shirt"],
+  ["coreano","h2","an oversized drapey K-fashion look — a fine-gauge black knit under an unstructured long grey overcoat, VERY wide-leg high-waisted fluid drapey black trousers with a soft drape, and clean minimal white leather sneakers, soft monochrome neutral palette, Korean minimalist soft tailoring — oversized but intentional, the wide fluid trousers are the statement"],
 ];
 
 // `hair` (opcional, por carta): el peinado es parte del styling — sin él, el
