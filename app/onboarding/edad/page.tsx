@@ -20,7 +20,7 @@ export default async function EdadPage() {
           <em className="font-display font-normal italic tracking-normal">años</em>{" "}
           tienes?
         </h1>
-        <p className="font-display text-[18px] leading-snug text-muted">
+        <p className="text-[18px] leading-snug text-muted">
           nos ayuda a acertarle mejor a tu estilo. nada de fechas exactas, solo
           el rango.
         </p>

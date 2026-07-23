@@ -241,7 +241,7 @@ export function HoyClient({
               aún no
             </em>
           </h1>
-          <p className="mt-5 max-w-[280px] font-display text-[20px] leading-snug text-muted">
+          <p className="mt-5 max-w-[280px] text-[20px] leading-snug text-muted">
             dime tu plan y te lo dejo listo en segundos.
           </p>
         </div>
@@ -352,7 +352,7 @@ export function HoyClient({
             <h1 className="text-[28px] font-bold leading-[1.05] tracking-[-0.03em] text-ink">
               una cosa…
             </h1>
-            <p className="max-w-[320px] font-display text-[20px] leading-snug text-muted">
+            <p className="max-w-[320px] text-[20px] leading-snug text-muted">
               {state.note}
             </p>
           </div>
