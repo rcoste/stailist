@@ -11,7 +11,7 @@ import { Spinner } from "@/components/spinner";
 
 const SEND_INITIAL: LoginState = { status: "idle" };
 
-export function LoginForm() {
+export function LoginForm({ prefillEmail }: { prefillEmail?: string | null }) {
   const [state, sendAction, sending] = useActionState(sendCode, SEND_INITIAL);
 
   if (state.status === "sent") {
@@ -34,6 +34,7 @@ export function LoginForm() {
           name="email"
           type="email"
           required
+          defaultValue={prefillEmail ?? undefined}
           autoComplete="email"
           inputMode="email"
           placeholder="tu@correo.com"
