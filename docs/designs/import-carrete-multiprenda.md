@@ -187,7 +187,13 @@ render → guardar). Los renders rechazados se **guardan** en `library_candidate
 
 ## Fuera de alcance
 
-- Foto plana (flat-lay) de prendas sueltas — esto es solo on-body del carrete.
+- ~~Foto plana (flat-lay) de prendas sueltas — esto es solo on-body del carrete.~~
+  **INCORPORADO (2026-07-23):** el endpoint acepta ambos tipos de foto — persona
+  vestida O prendas extendidas (cama/piso/ganchos/apiladas, el caso "vacía tu
+  clóset sobre la cama"). Tope por foto subió de 6 a 8. Motivado por el análisis
+  competitivo (aesty + repo `tandpfun/wardrobe` prueban que el bulk import
+  flat-lay es EL matador de fricción de setup); el copy del sheet ya lo
+  prometía ("fotos de tu ropa") sin que el prompt lo soportara.
 - Integración con Instagram/Facebook API (muro de compliance).
 - Recortar la prenda de la foto original (descartado: se ve feo; se genera
   limpia en su lugar).

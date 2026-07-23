@@ -192,7 +192,7 @@ export function ImportCarreteFlow({
       if (items.length === 0) {
         setState({
           kind: "error",
-          msg: "No detecté prendas en esas fotos. Prueba con fotos donde se te vea la ropa de cuerpo.",
+          msg: "No detecté prendas en esas fotos. Prueba con fotos donde la ropa se vea bien — puesta, o extendida sobre la cama.",
         });
         return;
       }
@@ -363,7 +363,7 @@ export function ImportCarreteFlow({
 
   if (state.kind === "explainer") {
     const pasos = [
-      { icon: "camara" as const, t: "subes una foto", s: "con tu outfit completo puesto." },
+      { icon: "camara" as const, t: "subes fotos", s: "con tu outfit puesto, o tu ropa extendida en la cama." },
       { icon: "destello" as const, t: "la IA separa cada prenda", s: "saco, pantalón, zapatos… una por una." },
       { icon: "gancho" as const, t: "las carga limpias", s: "listas en tu clóset, como de catálogo." },
     ];
