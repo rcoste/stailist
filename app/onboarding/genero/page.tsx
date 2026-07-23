@@ -17,7 +17,7 @@ export default async function GeneroPage() {
           ¿qué ropa{" "}
           <em className="font-display font-normal italic tracking-normal">usas</em>?
         </h1>
-        <p className="font-display text-[18px] leading-snug text-muted">
+        <p className="text-[18px] leading-snug text-muted">
           solo para mostrarte las prendas correctas. tu estilo lo descubrimos
           enseguida.
         </p>

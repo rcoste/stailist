@@ -237,7 +237,7 @@ export function WowClient({
         <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink">
           ¿con cuál <em className="font-display font-normal italic">empezamos</em>?
         </h1>
-        <p className="font-display text-[15px] text-muted">
+        <p className="text-[15px] text-muted">
           guarda tus favoritos · elige uno para verlo hoy.
         </p>
       </div>

@@ -41,7 +41,7 @@ export function GeneroPicker() {
               </span>
               <span className="flex flex-col">
                 <b className="text-[20px] font-semibold text-ink">{o.label}</b>
-                <span className="font-display text-[15px] text-muted">{o.desc}</span>
+                <span className="text-[15px] text-muted">{o.desc}</span>
               </span>
             </button>
           );

@@ -277,7 +277,7 @@ export function SwipeDeck({
               </>
             ) : null}
           </h2>
-          <p className="mt-3 max-w-[300px] font-display text-[18px] leading-snug text-muted">
+          <p className="mt-3 max-w-[300px] text-[18px] leading-snug text-muted">
             {archetype.descripcion}
           </p>
           {calibracion ? (

@@ -374,7 +374,7 @@ function StepOcasion({
               <b className="mt-auto text-[16px] font-semibold leading-tight text-ink">
                 {o.label}
               </b>
-              <span className="font-display text-[15px] leading-tight text-muted">
+              <span className="text-[15px] leading-tight text-muted">
                 {o.help}
               </span>
             </button>
@@ -481,7 +481,7 @@ function StepMomento({
             </span>
             <span className="flex flex-col">
               <b className="text-[20px] font-semibold text-ink">{c.title}</b>
-              <span className="font-display text-[16px] text-muted">{c.sub}</span>
+              <span className="text-[16px] text-muted">{c.sub}</span>
             </span>
           </button>
         );
@@ -523,7 +523,7 @@ function StepClima({
           <span className="text-[15px] font-semibold text-ink">
             {locating ? "leyendo el clima…" : "usar mi ubicación"}
           </span>
-          <span className="font-display text-[15px] text-muted">
+          <span className="text-[15px] text-muted">
             {locFailed ? "no pude leerla — dime tú abajo" : "leo temp y lluvia por ti"}
           </span>
         </span>
@@ -563,7 +563,7 @@ function StepClima({
               <span className="w-[84px] shrink-0 text-[16px] font-semibold text-ink">
                 {b.label}
               </span>
-              <span className="font-display text-[16px] text-muted">{b.ref}</span>
+              <span className="text-[16px] text-muted">{b.ref}</span>
               <span className="tabular ml-auto text-[14px] font-bold text-ink">
                 {b.temp_c}°
               </span>
@@ -674,7 +674,7 @@ function AnchorTrigger({
             <span className="text-[15px] font-semibold text-ink">
               ¿algo que te quieras poner hoy?
             </span>
-            <span className="font-display text-[15px] text-muted">
+            <span className="text-[15px] text-muted">
               lo armo alrededor de esa prenda
             </span>
           </span>
