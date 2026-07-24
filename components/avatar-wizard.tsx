@@ -363,9 +363,15 @@ export function AvatarWizard({
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
-      <Link href={returnTo} className="text-sm font-medium text-muted hover:text-ink">
-        ← Volver
-      </Link>
+      {/* Salida del wizard. SOLO en los pasos que no tienen su propio "atrás":
+          en cara/cuerpo/preview quedaban dos flechas idénticas apiladas que
+          iban a lugares distintos (salir vs. paso anterior). Una sola flecha
+          arriba, siempre. */}
+      {step === "cara" || step === "cuerpo" || step === "preview" ? null : (
+        <Link href={returnTo} className="text-sm font-medium text-muted hover:text-ink">
+          ← Volver
+        </Link>
+      )}
 
       {step === "fotos" && (
         <div className="mt-2 flex flex-col gap-5">
