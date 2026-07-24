@@ -5,8 +5,8 @@
 
 export type Gender = "mujer" | "hombre";
 export type Build =
-  | "delgada" | "media" | "curvas"
-  | "delgado" | "atletico" | "promedio" | "robusto";
+  | "delgada" | "atletica" | "media" | "curvas" | "grande"
+  | "delgado" | "atletico" | "musculoso" | "promedio" | "robusto" | "corpulento";
 export type Volume =
   | "arriba" | "cintura" | "abajo" | "medio" | "pareja"
   | "pecho" | "parejo" | "panza";
@@ -15,16 +15,22 @@ export type Zone = [number, number, number, number]; // [left%, top%, w%, h%]
 type BuildOpt = { id: Build; label: string; img: string };
 type VolumeOpt = { id: Volume; label: string; desc: string; zones: Zone[]; band?: boolean };
 
+// Orden = progresión visual de complexión (no de "mejor a peor"): el grid las
+// muestra en este orden para que la usuaria se ubique de un vistazo.
 const BUILDS_F: BuildOpt[] = [
   { id: "delgada", label: "Delgada", img: "/siluetas/complexion/1-delgada.png" },
+  { id: "atletica", label: "Atlética", img: "/siluetas/complexion/4-atletica.png" },
   { id: "media", label: "Media", img: "/siluetas/complexion/2-media.png" },
   { id: "curvas", label: "Con más curvas", img: "/siluetas/complexion/3-curvas.png" },
+  { id: "grande", label: "Talla grande", img: "/siluetas/complexion/5-grande.png" },
 ];
 const BUILDS_M: BuildOpt[] = [
   { id: "delgado", label: "Delgado", img: "/siluetas/complexion-hombre/1-delgado.png" },
   { id: "atletico", label: "Atlético", img: "/siluetas/complexion-hombre/2-atletico.png" },
+  { id: "musculoso", label: "Musculoso", img: "/siluetas/complexion-hombre/5-musculoso.png" },
   { id: "promedio", label: "Promedio", img: "/siluetas/complexion-hombre/3-promedio.png" },
   { id: "robusto", label: "Robusto", img: "/siluetas/complexion-hombre/4-robusto.png" },
+  { id: "corpulento", label: "Corpulento", img: "/siluetas/complexion-hombre/6-corpulento.png" },
 ];
 
 const VOLUMES_F: VolumeOpt[] = [
@@ -126,21 +132,28 @@ export type AvatarBodyType = "slim" | "athletic" | "average" | "full";
 
 const BUILD_TO_BODY: Record<Build, AvatarBodyType> = {
   delgada: "slim",
+  atletica: "athletic",
   media: "average",
   curvas: "full",
+  grande: "full",
   delgado: "slim",
   atletico: "athletic",
+  musculoso: "athletic",
   promedio: "average",
   robusto: "full",
+  corpulento: "full",
 };
 
 export const buildToBodyType = (b: Build | null): AvatarBodyType | null =>
   b ? BUILD_TO_BODY[b] ?? null : null;
 
-// Inversa gender-aware (los ids de Build son distintos por género). "athletic"
-// en mujer cae a "media": la silueta femenina no tiene eje atlético.
+// Inversa gender-aware (los ids de Build son distintos por género). Desde que
+// mujer tiene eje atlético propio (2026-07-23), "athletic" ya no cae a "media".
+// Nota: es 4→N, así que las complexiones más grandes (grande/corpulento) no son
+// alcanzables por esta vía; el avatar solo distingue 4 tipos y la elección fina
+// vive en la galería de complexión.
 export function bodyTypeToBuild(t: AvatarBodyType, g: Gender): Build {
   return g === "hombre"
     ? ({ slim: "delgado", athletic: "atletico", average: "promedio", full: "robusto" } as const)[t]
-    : ({ slim: "delgada", athletic: "media", average: "media", full: "curvas" } as const)[t];
+    : ({ slim: "delgada", athletic: "atletica", average: "media", full: "curvas" } as const)[t];
 }

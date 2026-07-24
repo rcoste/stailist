@@ -59,7 +59,14 @@ function buildFacePrompt(nFaces: number, ajuste: string | null, hasPrev: boolean
 
 // Etapa 2 — cuerpo completo anclado al retrato APROBADO (primera imagen): la
 // identidad ya no se re-interpreta, se copia. Las fotos de cuerpo son opcionales.
-function buildBodyPrompt(build: string, nBodies: number, heightCm: number | null): string {
+// `build` es null cuando la usuaria eligió representarse con FOTOS de su cuerpo
+// en vez de con una silueta de referencia: ahí las fotos mandan y no hay
+// categoría que imponer. La regla anti-adelgazar se mantiene en ambos casos.
+function buildBodyPrompt(
+  build: string | null,
+  nBodies: number,
+  heightCm: number | null
+): string {
   return (
     "Generate a photorealistic full-body portrait of the SAME person shown in " +
     "the FIRST image — an approved studio portrait of them. Match their face, " +
@@ -73,7 +80,9 @@ function buildBodyPrompt(build: string, nBodies: number, heightCm: number | null
       ? `The person is approximately ${heightCm} cm tall — render realistic overall proportions for that height. `
       : "") +
     IDENTITY_RULES +
-    `The person has a ${build} build — render realistic body ` +
+    (build
+      ? `The person has a ${build} build — render realistic body `
+      : "Render realistic body ") +
     "proportions that match them; DO NOT slim them down or alter their body " +
     "shape. Dress them in a plain white crew-neck t-shirt and classic mid-blue " +
     "jeans (the same base outfit every time). Show the ENTIRE body from head to " +
@@ -283,7 +292,15 @@ export async function POST(request: NextRequest) {
   // solo en el flujo legacy.
   const bodies = (Array.isArray(bodyB64) ? bodyB64 : []).slice(0, 3);
   if (stage !== "face") {
-    if (!bodyType || !BUILD[bodyType]) {
+    // La complexión es OPCIONAL cuando vienen fotos reales del cuerpo (etapa 2):
+    // esas fotos SON la morfología, y encasillarlas además en una categoría
+    // puede contradecir lo que se ve. Sin fotos, la complexión es obligatoria
+    // (es la única señal de proporciones que tendría el modelo).
+    const buildOpcional = stage === "body" && bodies.length > 0;
+    if (!buildOpcional && (!bodyType || !BUILD[bodyType])) {
+      return NextResponse.json({ error: "bad_request" }, { status: 400 });
+    }
+    if (bodyType && !BUILD[bodyType]) {
       return NextResponse.json({ error: "bad_request" }, { status: 400 });
     }
     if (stage === "body" && !body.headshotB64) {
@@ -320,7 +337,13 @@ export async function POST(request: NextRequest) {
           ? body.heightCm
           : null;
       parts = [
-        { text: buildBodyPrompt(BUILD[bodyType as string], bodies.length, heightCm) },
+        {
+          text: buildBodyPrompt(
+            bodyType ? BUILD[bodyType] : null,
+            bodies.length,
+            heightCm
+          ),
+        },
         img(body.headshotB64 as string),
         ...bodies.map(img),
       ];
