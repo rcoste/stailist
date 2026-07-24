@@ -12,6 +12,7 @@ import type {
 } from "@/lib/capsule";
 import type { JourneyState } from "@/lib/journey";
 import type { AgeRange } from "@/lib/edad";
+import type { Build, Volume } from "@/lib/silueta";
 
 export type Gender = "hombre" | "mujer";
 
@@ -51,8 +52,11 @@ export type Profile = {
   // Hints contextuales ya vistos: { "<hint_id>": "<iso>" } (ver lib/hints.ts).
   hints_seen: Record<string, string>;
   body_type: "slim" | "athletic" | "average" | "full" | null;
-  body_build: "delgada" | "media" | "curvas" | null;
-  body_volume: "arriba" | "cintura" | "abajo" | "medio" | "pareja" | null;
+  // Atados a lib/silueta (única fuente): antes eran uniones literales copiadas
+  // que solo listaban los ids de MUJER — los de hombre ya se guardaban en la DB
+  // pero el tipo los desconocía. Al derivarlos, no se pueden volver a desfasar.
+  body_build: Build | null;
+  body_volume: Volume | null;
   style_vetoes: { chips: string[]; free: string[] };
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;
