@@ -16,7 +16,7 @@ import {
   ocasionLabel,
   bucketLabel,
 } from "@/components/weather-picker";
-import { markWorn } from "@/lib/outfit-actions";
+import { markWorn, voteOutfit } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -360,6 +360,9 @@ function ModoHoyView({
   onCommitted: () => void;
 }) {
   const [worn, setWorn] = useState(false);
+  // Voto ligero de un tap (etapa 1 del embudo, igual que en Hoy): captura la
+  // señal de gusto SIN exigir el compromiso de "me lo pongo".
+  const [voto, setVoto] = useState<"up" | "down" | null>(null);
   const t = useTryon({
     outfitId: outfit.id,
     userId,
@@ -368,6 +371,19 @@ function ModoHoyView({
     returnTo: "/onboarding/wow",
   });
   useWakeLock(t.mode === "gen");
+
+  async function votar(up: boolean) {
+    const prev = voto;
+    const next = up ? "up" : "down";
+    if (voto === next) return; // mismo voto = no-op (la action es idempotente)
+    setVoto(next);
+    const res = await voteOutfit(outfit.id, up);
+    if (!res.ok) {
+      setVoto(prev);
+      return;
+    }
+    if (up) notifyFirstLike(); // spec: el prompt de instalar la PWA vive tras el primer 👍
+  }
 
   const modalOpen = t.mode === "gen" || t.mode === "full" || t.mode === "error";
   // Sin avatar todavía (caso normal del onboarding) → el "verme" lleva al wizard.
@@ -423,35 +439,75 @@ function ModoHoyView({
             <span className="text-[12px] font-semibold opacity-70">~20 s</span>
           </button>
         )}
-        <div className="flex gap-2.5">
-          {!worn && (
-            <button
-              type="button"
-              onClick={onOtroLook}
-              className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
-            >
-              otro look
-            </button>
-          )}
+        {/* Voto ligero de un tap (igual que en Hoy): "me gustó" sin el
+            compromiso de "me lo pongo". El 👍 dispara el prompt de la PWA. */}
+        <div className="flex items-center justify-center gap-4 py-0.5">
+          <span className="text-[13px] text-muted">¿te late?</span>
           <button
             type="button"
-            onClick={meLoPongo}
-            disabled={worn}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors ${
-              worn
-                ? "bg-success/15 text-success"
-                : "border border-line bg-surface text-ink hover:border-ink"
+            onClick={() => votar(true)}
+            aria-pressed={voto === "up"}
+            aria-label="me gusta este look"
+            className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
+              voto === "up"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-line text-muted hover:border-ink hover:text-ink"
             }`}
           >
-            {worn ? (
-              <>
-                <Icon name="check" size={18} /> es tu look
-              </>
-            ) : (
-              "me lo pongo"
-            )}
+            <Icon name="pulgar" size={17} />
+          </button>
+          <button
+            type="button"
+            onClick={() => votar(false)}
+            aria-pressed={voto === "down"}
+            aria-label="no me gusta este look"
+            className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
+              voto === "down"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-line text-muted hover:border-ink hover:text-ink"
+            }`}
+          >
+            <Icon name="pulgar" size={17} className="rotate-180" />
           </button>
         </div>
+
+        {/* Entrar a la app NO exige "me lo pongo": "seguir" avanza sin marcar
+            worn (antes la única puerta era "me lo pongo", que falseaba la señal
+            de oro del experimento). "me lo pongo hoy" queda abajo como señal
+            honesta y opcional, no como peaje. */}
+        <div className="flex gap-2.5">
+          <button
+            type="button"
+            onClick={onOtroLook}
+            className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
+          >
+            otro look
+          </button>
+          <button
+            type="button"
+            onClick={onCommitted}
+            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm border border-ink bg-surface text-sm font-bold text-ink transition-colors hover:bg-ink hover:text-on-accent"
+          >
+            seguir <Icon name="flecha" size={16} />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={meLoPongo}
+          disabled={worn}
+          className={`mx-auto flex min-h-11 items-center justify-center gap-2 rounded-sm px-4 text-sm font-semibold transition-colors ${
+            worn ? "text-success" : "text-muted hover:text-ink"
+          }`}
+        >
+          {worn ? (
+            <>
+              <Icon name="check" size={16} /> es tu look
+            </>
+          ) : (
+            "ya me lo puse hoy"
+          )}
+        </button>
       </div>
 
       {modalOpen ? (

@@ -41,7 +41,7 @@ Reglas duras:
 - Cambia SOLO cuando de verdad mejora. Si dudas, déjalo como está (ok).
 - Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.
 - Marino + negro combinan bien (incluso formal); NO los separes por eso. Concéntrate en color que de verdad choca, proporción y coherencia.
-- Caza el combo que NO existe: capas apiladas en un orden que nadie usa en la calle (chaleco sastre sobre suéter, saco debajo de sudadera, camisa sobre suéter, doble abrigo). REPÁRALO cambiando la capa ofensora por otra del clóset que sí caiga natural; si no hay arreglo, RECHÁZALO (razón: "capas").
+- Caza el combo que NO existe: capas apiladas en un orden que nadie usa en la calle (chaleco sastre sobre suéter, saco debajo de sudadera, doble abrigo; una camisa de vestir fina va DEBAJO del punto, no encima — pero una sobrecamisa/overshirt gruesa abierta SÍ es capa exterior válida sobre un suéter ligero, no la marques como error). REPÁRALO cambiando la capa ofensora por otra del clóset que sí caiga natural; si no hay arreglo, RECHÁZALO (razón: "capas").
 - Caza el "traje desparejado": un saco/blazer + pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) que NO son un traje real se ve como un conjunto roto. Si lo ves, REPÁRALO cambiando el bottom por otro neutro del clóset (gris, beige, caqui, denim) para que el saco se lea como pieza intencional. (No aplica si de verdad son un traje de la misma tela.)
 - La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.
 
@@ -57,20 +57,20 @@ Puedes sumar UN tip de styling: un solo movimiento concreto para llevar mejor la
 - Voz de amiga cool, una frase corta, sin jerga.`;
 
 const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (muchos grados de libertad, sé exigente):
-- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Lo near-face (top/abrigo) debe favorecerla y NUNCA ser un color de su EVITA.
+- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Lo near-face (top/abrigo) idealmente la favorece; un color de su EVITA near-face es preferencia, no veto — cámbialo SOLO si hay una mejor opción en el clóset, nunca rechaces el look solo por eso.
 - Proporción y silueta: equilibra volumen (oversize arriba ↔ entallado abajo); evita "todo holgado" o "todo pegado".
 - Cintura y largos: define la cintura cuando ayude; cuida el largo de falda/vestido contra el calzado.
 - Capas y coherencia: vestido O dos piezas con lógica; saco/capa que sume; no mezcles deportivo con formal salvo intención.
 - Completitud: si se siente incompleto, intercambia por una pieza que lo cierre.`;
 
 const RUBRICA_HOMBRE = `Revisa con criterio masculino (más formulaico, lo esencial):
-- Color: máx 1-2 protagonistas + neutros; nada que choque (juzga por el hex). Near-face en su paleta, nunca un EVITA.
+- Color: máx 1-2 protagonistas + neutros; nada que choque (juzga por el hex). Near-face en su paleta; un EVITA near-face es preferencia (cámbialo solo si hay mejor opción en el clóset), no motivo de rechazo.
 - Coherencia de formalidad: no mezcles sastre formal con deportivo salvo intención.
 - Proporción básica: que no sea todo holgado ni todo pegado.`;
 
 // Sin género definido: lo esencial sin asumir tipo de guardarropa.
 const RUBRICA_NEUTRA = `Revisa lo esencial (sin asumir género):
-- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Near-face en su paleta, nunca un EVITA.
+- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Near-face en su paleta; un EVITA near-face es preferencia (cámbialo solo si hay mejor opción en el clóset), no motivo de rechazo.
 - Proporción: equilibra volumen (holgado arriba ↔ entallado abajo); evita "todo holgado" o "todo pegado".
 - Coherencia de formalidad: no mezcles formal con deportivo salvo intención.
 - Completitud: si se siente incompleto, intercambia por una pieza que lo cierre.`;
