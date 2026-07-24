@@ -36,6 +36,7 @@ export function TryonImmersive({
   onOtro,
   onMeLoPongo,
   changeHref,
+  minimal = false,
 }: {
   mode: "gen" | "full" | "error";
   image: string | null;
@@ -48,6 +49,8 @@ export function TryonImmersive({
   onOtro: () => void;
   onMeLoPongo: () => void;
   changeHref: string;
+  /** Primer uso: oculta "me lo pongo" (esa acción vive en /hoy). */
+  minimal?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -267,24 +270,30 @@ export function TryonImmersive({
           <button
             type="button"
             onClick={onOtro}
-            className="h-[52px] flex-1 rounded-sm border border-on-accent/55 text-[15px] font-semibold text-on-accent lg:order-2 lg:h-auto lg:flex-none lg:self-center lg:border-0 lg:px-2 lg:py-1 lg:text-sm lg:font-medium lg:text-on-accent/65 lg:underline-offset-4 lg:hover:text-on-accent lg:hover:underline"
+            className={`h-[52px] rounded-sm border border-on-accent/55 text-[15px] font-semibold text-on-accent lg:order-2 lg:h-auto lg:self-center lg:border-0 lg:px-2 lg:py-1 lg:text-sm lg:font-medium lg:text-on-accent/65 lg:underline-offset-4 lg:hover:text-on-accent lg:hover:underline ${
+              minimal ? "w-full lg:w-auto lg:flex-none" : "flex-1 lg:flex-none"
+            }`}
           >
             otro look
           </button>
-          <button
-            type="button"
-            onClick={onMeLoPongo}
-            disabled={worn}
-            className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-sm bg-on-accent text-[15px] font-bold text-accent disabled:opacity-70 lg:order-1 lg:w-full lg:flex-none"
-          >
-            {worn ? (
-              <>
-                <Icon name="check" size={17} /> es tu look
-              </>
-            ) : (
-              "me lo pongo"
-            )}
-          </button>
+          {/* "me lo pongo" solo en usos posteriores (/hoy); en el primer uso
+              (minimal) la decisión es el 👍/👎 de abajo, no un compromiso. */}
+          {!minimal && (
+            <button
+              type="button"
+              onClick={onMeLoPongo}
+              disabled={worn}
+              className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-sm bg-on-accent text-[15px] font-bold text-accent disabled:opacity-70 lg:order-1 lg:w-full lg:flex-none"
+            >
+              {worn ? (
+                <>
+                  <Icon name="check" size={17} /> es tu look
+                </>
+              ) : (
+                "me lo pongo"
+              )}
+            </button>
+          )}
         </div>
 
         <Link

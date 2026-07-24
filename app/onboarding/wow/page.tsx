@@ -10,7 +10,14 @@ import { WowClient, type WowOutfit } from "./wow-client";
 // a /hoy a media votación, pero pasos anteriores sí redirigen.
 // Con step 5 NO se regenera: se muestran los outfits ya guardados (cada
 // generación cuesta dinero; recargar la página no debe disparar otra).
-export default async function WowPage() {
+export default async function WowPage({
+  searchParams,
+}: {
+  // `look`: al volver del wizard de avatar, retomamos ESTE outfit (no el
+  // selector). Cierra el bug de "construí mi avatar y me mandó a re-elegir".
+  searchParams: Promise<{ look?: string }>;
+}) {
+  const { look: resumeLookId } = await searchParams;
   const profile = await getProfile();
   if (profile.onboarding_step < 4) {
     redirect(routeForStep(profile.onboarding_step));
@@ -88,6 +95,7 @@ export default async function WowPage() {
         defaultObjective={profile.last_objective}
         hasAvatar={!!profile.avatar_path}
         closetCount={(await countPromise).count ?? 0}
+        resumeLookId={resumeLookId ?? null}
       />
     </section>
   );

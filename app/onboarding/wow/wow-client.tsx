@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,7 +39,9 @@ type State =
   // elegir entre 1; los 3 se revelan juntos en "choosing").
   | { kind: "loading"; outfits: WowOutfit[]; phase: string; input: LookInput }
   | { kind: "choosing"; outfits: WowOutfit[]; chosenId: string }
-  | { kind: "viewing"; outfits: WowOutfit[]; chosenId: string }
+  // autoTryon: true solo al RETOMAR tras construir el avatar → abre el try-on
+  // solo, para que "ya te lo ve puesto" en vez de pedir otro tap.
+  | { kind: "viewing"; outfits: WowOutfit[]; chosenId: string; autoTryon?: boolean }
   // Post-primer-outfit: beat OPCIONAL de estilo de referencia (subir fotos de un
   // look que te encanta). Va DESPUÉS de "me lo pongo" — ya probaste valor, así
   // que pedir una foto ahora es engagement, no fricción antes del valor.
@@ -71,6 +73,7 @@ export function WowClient({
   defaultObjective,
   hasAvatar,
   closetCount,
+  resumeLookId,
 }: {
   initialOutfits: WowOutfit[] | null;
   userId: string;
@@ -78,13 +81,22 @@ export function WowClient({
   hasAvatar: boolean;
   /** Nº de prendas del clóset — para la frase "revisando tus N prendas…". */
   closetCount: number;
+  /** Al volver del wizard de avatar: retomar ESTE look, no el selector. */
+  resumeLookId?: string | null;
 }) {
   const router = useRouter();
-  const [state, setState] = useState<State>(
-    initialOutfits && initialOutfits.length > 0
-      ? { kind: "choosing", outfits: initialOutfits, chosenId: initialOutfits[0].id }
-      : { kind: "ask" }
-  );
+  const [state, setState] = useState<State>(() => {
+    if (!initialOutfits || initialOutfits.length === 0) return { kind: "ask" };
+    // Retomo tras el avatar: caigo en el look que ya había elegido (con try-on
+    // automático), no en "elige 1 de 3" otra vez.
+    const resumed = resumeLookId
+      ? initialOutfits.find((o) => o.id === resumeLookId)
+      : null;
+    if (resumed) {
+      return { kind: "viewing", outfits: initialOutfits, chosenId: resumed.id, autoTryon: true };
+    }
+    return { kind: "choosing", outfits: initialOutfits, chosenId: initialOutfits[0].id };
+  });
   const lastInput = useRef<LookInput | null>(null);
 
   const generate = useCallback(async (input: LookInput) => {
@@ -214,10 +226,11 @@ export function WowClient({
         outfit={outfit}
         userId={userId}
         hasAvatar={hasAvatar}
+        autoTryon={state.autoTryon ?? false}
         onOtroLook={() =>
           setState({ kind: "choosing", outfits: state.outfits, chosenId: state.chosenId })
         }
-        // "me lo pongo" ya no salta directo a /hoy: pasa por el beat opcional.
+        // El 👍/👎 avanza al beat opcional; nadie queda atrapado en el look.
         onCommitted={() => setState({ kind: "referencia" })}
       />
     );
@@ -350,40 +363,34 @@ function ModoHoyView({
   outfit,
   userId,
   hasAvatar,
+  autoTryon,
   onOtroLook,
   onCommitted,
 }: {
   outfit: WowOutfit;
   userId: string;
   hasAvatar: boolean;
+  /** Al retomar tras el avatar: abrir el try-on solo (sin pedir otro tap). */
+  autoTryon: boolean;
   onOtroLook: () => void;
   onCommitted: () => void;
 }) {
   const [worn, setWorn] = useState(false);
-  // Voto ligero de un tap (etapa 1 del embudo, igual que en Hoy): captura la
-  // señal de gusto SIN exigir el compromiso de "me lo pongo".
+  // Voto de un tap. En el PRIMER uso es la decisión primaria: 👍 o 👎 registran
+  // y avanzan (Roberto: "me gusta / no me gustó → siguiente"). Las acciones
+  // pesadas (me lo pongo, cambia avatar) se difieren a /hoy.
   const [voto, setVoto] = useState<"up" | "down" | null>(null);
+  const [voting, setVoting] = useState(false);
   const t = useTryon({
     outfitId: outfit.id,
     userId,
     initialImage: outfit.tryon ?? null,
     revealMode: "modal",
-    returnTo: "/onboarding/wow",
+    // Llevo el look elegido en la URL de regreso: al volver del wizard de avatar
+    // retomo ESTE look, no el selector (cierra el bug del flujo no-secuencial).
+    returnTo: `/onboarding/wow?look=${outfit.id}`,
   });
   useWakeLock(t.mode === "gen");
-
-  async function votar(up: boolean) {
-    const prev = voto;
-    const next = up ? "up" : "down";
-    if (voto === next) return; // mismo voto = no-op (la action es idempotente)
-    setVoto(next);
-    const res = await voteOutfit(outfit.id, up);
-    if (!res.ok) {
-      setVoto(prev);
-      return;
-    }
-    if (up) notifyFirstLike(); // spec: el prompt de instalar la PWA vive tras el primer 👍
-  }
 
   const modalOpen = t.mode === "gen" || t.mode === "full" || t.mode === "error";
   // Sin avatar todavía (caso normal del onboarding) → el "verme" lleva al wizard.
@@ -392,6 +399,32 @@ function ModoHoyView({
   function verte() {
     if (t.image) t.openFull();
     else t.generar();
+  }
+
+  // Retomo tras construir el avatar: disparo el try-on solo para que "ya te lo
+  // ve puesto". Guard con ref para no re-disparar en el doble-montaje de dev.
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (autoTryon && !autoRan.current && !goAvatar && !t.image && t.mode === "idle") {
+      autoRan.current = true;
+      void t.generar();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoTryon, goAvatar]);
+
+  // 👍/👎: registra el voto Y avanza al siguiente paso (el beat opcional).
+  async function decidir(up: boolean) {
+    if (voting) return;
+    setVoting(true);
+    setVoto(up ? "up" : "down");
+    const res = await voteOutfit(outfit.id, up);
+    if (!res.ok) {
+      setVoting(false);
+      setVoto(null);
+      return;
+    }
+    if (up) notifyFirstLike(); // spec: el prompt de instalar la PWA vive tras el primer 👍
+    onCommitted(); // avanza — nadie queda atrapado en el look
   }
 
   async function meLoPongo() {
@@ -422,6 +455,7 @@ function ModoHoyView({
       />
 
       <div className="flex flex-col gap-2.5">
+        {/* El wow: verte con el look puesto. Hero del primer uso. */}
         {goAvatar ? (
           <Link
             href={t.avatarHref}
@@ -439,74 +473,40 @@ function ModoHoyView({
             <span className="text-[12px] font-semibold opacity-70">~20 s</span>
           </button>
         )}
-        {/* Voto ligero de un tap (igual que en Hoy): "me gustó" sin el
-            compromiso de "me lo pongo". El 👍 dispara el prompt de la PWA. */}
-        <div className="flex items-center justify-center gap-4 py-0.5">
-          <span className="text-[13px] text-muted">¿te late?</span>
+
+        {/* Decisión primaria del primer uso: 👍/👎 registran el voto Y avanzan.
+            Nada de "me lo pongo" ni "cambia avatar" aquí — eso vive en /hoy. */}
+        <div className="mt-1 flex gap-2.5">
           <button
             type="button"
-            onClick={() => votar(true)}
-            aria-pressed={voto === "up"}
-            aria-label="me gusta este look"
-            className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
-              voto === "up"
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-line text-muted hover:border-ink hover:text-ink"
-            }`}
-          >
-            <Icon name="pulgar" size={17} />
-          </button>
-          <button
-            type="button"
-            onClick={() => votar(false)}
-            aria-pressed={voto === "down"}
+            onClick={() => decidir(false)}
+            disabled={voting}
             aria-label="no me gusta este look"
-            className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
-              voto === "down"
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-line text-muted hover:border-ink hover:text-ink"
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60 ${
+              voto === "down" ? "border-ink" : ""
             }`}
           >
-            <Icon name="pulgar" size={17} className="rotate-180" />
-          </button>
-        </div>
-
-        {/* Entrar a la app NO exige "me lo pongo": "seguir" avanza sin marcar
-            worn (antes la única puerta era "me lo pongo", que falseaba la señal
-            de oro del experimento). "me lo pongo hoy" queda abajo como señal
-            honesta y opcional, no como peaje. */}
-        <div className="flex gap-2.5">
-          <button
-            type="button"
-            onClick={onOtroLook}
-            className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
-          >
-            otro look
+            <Icon name="pulgar" size={17} className="rotate-180" /> no me gusta
           </button>
           <button
             type="button"
-            onClick={onCommitted}
-            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm border border-ink bg-surface text-sm font-bold text-ink transition-colors hover:bg-ink hover:text-on-accent"
+            onClick={() => decidir(true)}
+            disabled={voting}
+            aria-label="me gusta este look"
+            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm bg-ink text-sm font-bold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            seguir <Icon name="flecha" size={16} />
+            <Icon name="pulgar" size={17} /> me gusta
           </button>
         </div>
 
+        {/* Ver otro de los 3 antes de decidir — secundario y discreto. */}
         <button
           type="button"
-          onClick={meLoPongo}
-          disabled={worn}
-          className={`mx-auto flex min-h-11 items-center justify-center gap-2 rounded-sm px-4 text-sm font-semibold transition-colors ${
-            worn ? "text-success" : "text-muted hover:text-ink"
-          }`}
+          onClick={onOtroLook}
+          disabled={voting}
+          className="mx-auto min-h-9 px-4 text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-60"
         >
-          {worn ? (
-            <>
-              <Icon name="check" size={16} /> es tu look
-            </>
-          ) : (
-            "ya me lo puse hoy"
-          )}
+          otro look
         </button>
       </div>
 
@@ -518,6 +518,9 @@ function ModoHoyView({
           prendas={outfit.prendas}
           errMsg={t.errMsg}
           worn={worn}
+          // Primer uso: modal minimal — sin "me lo pongo" (esa acción vive en
+          // /hoy). Solo verte, "otro look" y afinar el avatar.
+          minimal
           onClose={t.closeFull}
           onRetry={t.generar}
           onOtro={() => {
