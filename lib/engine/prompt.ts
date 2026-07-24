@@ -86,7 +86,16 @@ import {
 // lo simple bien hecho también cuenta. Origen: el deck generado tenía combos
 // inexistentes y looks-plantilla que Roberto cachó a ojo; misma falla posible
 // en generación.
-export const PROMPT_VERSION = "v25";
+// v26 (2026-07-24): calibración por el deep research de prior art. (a) EVITA
+// near-face degradado de VETO DURO a PREFERENCIA FUERTE (generador + 3 rúbricas
+// del juez): el principio cálido/frío tiene base perceptual real (Perrett &
+// Sprengelmeyer 2021) pero la etiqueta de "estación" es folclore comercial de
+// fiabilidad inter-analista pobre — un color de EVITA cerca de la cara ahora se
+// desprefiere, no se prohíbe (los VETOS del usuario siguen absolutos). (b) "camisa
+// sobre suéter" acotada: era demasiado amplia y producía falsos negativos — una
+// sobrecamisa/overshirt gruesa abierta SÍ es capa exterior válida; solo la camisa
+// de vestir fina va debajo del punto.
+export const PROMPT_VERSION = "v26";
 
 export type EngineItem = {
   id: string;
@@ -141,8 +150,8 @@ Reglas duras:
 - Si te paso combinaciones recientes, no repitas ninguna combinación exacta.
 
 Colorimetría (regla near-face — IMPORTANTE):
-- Lo que toca la cara manda: el top y el abrigo deben estar en su paleta (sus mejores o sus prestados) o ser un neutro que la favorezca. Ahí es donde el color le ilumina o le apaga la cara.
-- REGLA DURA: jamás pongas cerca de la cara (top o abrigo) un color de su lista de EVITA — esos la apagan. En bottom o calzado no importan.
+- Lo que toca la cara manda: idealmente el top y el abrigo están en su paleta (sus mejores o sus prestados) o son un neutro que la favorezca. Ahí es donde el color le ilumina o le apaga la cara. El principio cálido/frío es real; la etiqueta de "estación" es orientación, no ley.
+- PREFERENCIA FUERTE (no veto): evita cerca de la cara (top o abrigo) los colores de su lista de EVITA — tienden a apagarla. Pero si su clóset no da una mejor opción near-face, úsalo igual antes que romper el look o dejarlo incompleto: es una preferencia probabilística, no una prohibición. (Los VETOS del contexto, en cambio, SÍ son absolutos.) En bottom o calzado los EVITA no importan nunca.
 - El bottom y el calzado tienen más libertad: no necesitan estar en su paleta.
 - Si su clóset no tiene un top en su paleta, elige el neutro más favorecedor y compénsalo: arma el resto del look alrededor de sus colores.
 
@@ -152,7 +161,7 @@ Armonía del outfit (cómo combinan las prendas entre sí):
 - Estampados: máximo UN estampado protagonista por look (rayas, cuadros, floral, gráfico…); el resto liso. Dos estampados juntos casi nunca — solo si uno es muy sutil y no compiten.
 - Materiales: si la prenda trae material, úsalo — nada de lana o tejidos pesados en calor, ni lino fresco en frío; y que los pesos de tela de un mismo look se hablen (no mezcles piezas de invierno con piezas de verano).
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
-- Capas con lógica de vida real: cada capa en su orden natural — camisa o playera debajo, suéter/knit encima, saco/blazer/abrigo al final. JAMÁS combos que nadie usa en la calle: chaleco sastre sobre suéter, saco debajo de una sudadera, camisa sobre suéter, dos abrigos juntos. La prueba: si no te imaginas a una persona real saliendo así a la calle, no lo armes.
+- Capas con lógica de vida real: cada capa en su orden natural — camisa o playera debajo, suéter/knit encima, saco/blazer/abrigo al final. JAMÁS combos que nadie usa en la calle: chaleco sastre sobre suéter, saco debajo de una sudadera, dos abrigos juntos. Matiz de la camisa: una camisa de vestir fina va DEBAJO del punto, no encima; PERO una sobrecamisa/overshirt gruesa abierta SÍ vale como capa exterior sobre un suéter ligero — no la trates como error. La prueba: si no te imaginas a una persona real saliendo así a la calle, no lo armes.
 - Que se note la mano de stylist: cuando el clóset lo permita, el look lleva UNA decisión visible — una capa con intención, un contraste de textura (punto + piel, lana + mezclilla, tejido + satén), o un color que remata sobre base neutra. Y si el clóset solo da para lo simple, lo simple BIEN HECHO es la decisión (fit + color); jamás fuerces una pieza solo para "vestir" el look.
 - Vestido o falda en el look: cuida el largo contra el calzado (un midi pide calzado que estilice — algo de altura o silueta limpia; largo + calzado muy plano acortan la figura) y define la cintura cuando ayude (cinturón, top entallado o fajado).
 - Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
