@@ -13,10 +13,12 @@ type BodyType = "slim" | "athletic" | "average" | "full";
 // `sheetB64` (opcional, A2): el character sheet de 3 vistas (frente/perfil/
 // espalda) → {userId}/avatar-sheet.jpg, misma convención. Ambos best-effort:
 // si fallan, el avatar se guarda igual.
+// `bodyType` null = se representó con fotos propias (método por foto): no hay
+// categoría de complexión que persistir. Ver saveGeneratedAvatar.
 export async function uploadGeneratedAvatar(
   base64: string,
   userId: string,
-  bodyType: BodyType,
+  bodyType: BodyType | null,
   faceB64?: string | null,
   sheetB64?: string | null,
   build?: Build | null,

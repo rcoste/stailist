@@ -95,6 +95,17 @@ export function AvatarWizard({
   const [build, setBuild] = useState<Build | null>(siluetaBuild ?? null);
   const [alturaTxt, setAlturaTxt] = useState("");
   const bodyType: BodyType | null = buildToBodyType(build);
+  // Cómo se representa el cuerpo: elegir una silueta de referencia, o subir
+  // fotos propias. Son EXCLUYENTES — antes se mostraban las dos cosas en la
+  // misma pantalla y no quedaba claro qué hacer. `null` = aún no elige.
+  // Si ya definió su silueta en Perfil, arranca en "referencia" (ya la tiene;
+  // igual puede cambiarse a foto desde el paso).
+  const [metodo, setMetodo] = useState<"referencia" | "foto" | null>(
+    siluetaBuild ? "referencia" : null
+  );
+  const fotosCuerpo = [photos.body1, photos.body2, photos.body3].filter(Boolean).length;
+  // Se puede generar si: eligió referencia (hay complexión) o subió ≥1 foto.
+  const puedeGenerar = metodo === "foto" ? fotosCuerpo > 0 : !!bodyType;
   const [generated, setGenerated] = useState<string | null>(null);
   const [fails, setFails] = useState(0);
   // Mensaje del 403 de permiso parental (solo alcanzable desde una pestaña
@@ -242,7 +253,7 @@ export function AvatarWizard({
 
   // Etapa 2: cuerpo completo anclado al retrato aprobado.
   async function generateBody() {
-    if (!bodyType || !faceGen) return;
+    if (!puedeGenerar || !faceGen) return;
     setGenKind("cuerpo");
     setGenMsg(GEN_MSGS_CUERPO[0]);
     setStep("generando");
@@ -258,7 +269,9 @@ export function AvatarWizard({
           faceB64: face,
           headshotB64: faceGen,
           bodyB64,
-          bodyType,
+          // Con el método por foto sin complexión, se omite: el API lo acepta
+          // porque las fotos de cuerpo ya son la morfología.
+          ...(bodyType ? { bodyType } : {}),
           ...(alturaCm ? { heightCm: alturaCm } : {}),
         }),
       });
@@ -277,7 +290,7 @@ export function AvatarWizard({
   }
 
   async function confirm() {
-    if (!generated || !bodyType) return;
+    if (!generated) return;
     setSaving(true);
     // Si el sheet sigue en vuelo, se espera (con tope — jamás bloquea el guardar).
     const sheet = sheetPromiseRef.current
@@ -464,24 +477,73 @@ export function AvatarWizard({
           >
             ← Tu retrato
           </button>
-          {siluetaBuild ? (
-            <div className="flex flex-col gap-1">
-              <h1 className="text-h1 font-semibold text-ink">Ahora, tu cuerpo</h1>
-              <p className="text-sm text-muted">
-                Usaré la complexión de tu silueta ({buildLabel(siluetaBuild)} — la
-                cambias en Perfil → Mi silueta). Si quieres máxima fidelidad, súmame
-                fotos de tu cuerpo; si no, con tu retrato basta.
-              </p>
-            </div>
-          ) : (
+          {/* Elección de MÉTODO: excluyente. Antes se mostraban la galería y
+              los slots de foto juntos y no quedaba claro qué hacer. */}
+          {metodo === null ? (
+            <>
+              <div className="flex flex-col gap-1">
+                <h1 className="text-h1 font-semibold text-ink">Ahora, tu cuerpo</h1>
+                <p className="text-sm text-muted">
+                  Para que la ropa te quede fiel. Elige cómo prefieres:
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMetodo("referencia")}
+                  className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 text-left transition-colors hover:border-ink"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+                    <Icon name="gancho" size={20} />
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-medium text-ink">
+                      Elegir un cuerpo parecido
+                    </span>
+                    <span className="text-xs text-muted">
+                      Escoges de {builds(gender).length} siluetas. Rápido y sin fotos.
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMetodo("foto")}
+                  className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 text-left transition-colors hover:border-ink"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+                    <Icon name="camara" size={20} />
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-medium text-ink">
+                      Usar una foto mía
+                    </span>
+                    <span className="text-xs text-muted">
+                      Súbeme fotos de tu cuerpo. Más fiel a tus proporciones.
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </>
+          ) : metodo === "referencia" ? (
             <div className="flex flex-col gap-1">
               <h1 className="text-h1 font-semibold text-ink">
                 ¿Cuál se parece más a tu cuerpo?
               </h1>
-              <p className="text-sm text-muted">Es para que la ropa te quede fiel.</p>
+              <p className="text-sm text-muted">
+                {siluetaBuild
+                  ? `Ya tenías ${buildLabel(siluetaBuild)} en tu silueta — cámbiala aquí si quieres.`
+                  : "Es para que la ropa te quede fiel."}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <h1 className="text-h1 font-semibold text-ink">Súbeme tu cuerpo</h1>
+              <p className="text-sm text-muted">
+                De pie y de frente. Con una basta; más ángulos, más fiel.
+              </p>
             </div>
           )}
-          {!siluetaBuild ? (
+          {metodo === "referencia" ? (
             // Galería VISUAL de complexiones (A3): las MISMAS imágenes y
             // taxonomía que Perfil → Mi silueta — una sola pregunta de
             // morfología en todo el producto, con ejemplos reales.
@@ -519,59 +581,75 @@ export function AvatarWizard({
             </div>
           ) : null}
 
-          {/* Fotos de cuerpo: ahora OPCIONALES — el retrato aprobado + la
-              complexión bastan; las fotos suman fidelidad de proporciones. */}
-          <div className="flex flex-col gap-3">
-            <UploadTile
-              label="Foto de tu cuerpo"
-              hint="Opcional — de pie y de frente, suma fidelidad"
-              preview={previews.body1}
-              onPick={(f) => setSlot("body1", f)}
-            />
-            <UploadTile
-              label="Otra de cuerpo"
-              hint="Opcional — de lado o 3/4"
-              preview={previews.body2}
-              onPick={(f) => setSlot("body2", f)}
-            />
-            <UploadTile
-              label="Una más de cuerpo"
-              hint="Opcional — otro ángulo o con otra ropa"
-              preview={previews.body3}
-              onPick={(f) => setSlot("body3", f)}
-            />
-          </div>
-
-          {/* Altura opcional (A3): un dato chico que mejora mucho proporciones. */}
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3">
-            <span className="flex min-w-0 flex-col">
-              <span className="text-sm font-medium text-ink">¿Cuánto mides?</span>
-              <span className="text-xs text-muted">Opcional — afina tus proporciones</span>
-            </span>
-            <span className="flex shrink-0 items-center gap-1.5">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={100}
-                max={230}
-                value={alturaTxt}
-                onChange={(e) => setAlturaTxt(e.target.value)}
-                placeholder="170"
-                className="min-h-10 w-20 rounded-sm border border-line bg-bg px-2 text-center text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
+          {/* Fotos de cuerpo: SOLO en el método por foto (antes salían siempre,
+              junto a la galería). La primera es la que importa; las otras dos
+              suman ángulos. */}
+          {metodo === "foto" ? (
+            <div className="flex flex-col gap-3">
+              <UploadTile
+                label="Foto de tu cuerpo"
+                hint="De pie y de frente"
+                preview={previews.body1}
+                onPick={(f) => setSlot("body1", f)}
               />
-              <span className="text-xs text-muted">cm</span>
-            </span>
-          </div>
+              <UploadTile
+                label="Otra de cuerpo"
+                hint="Opcional — de lado o 3/4"
+                preview={previews.body2}
+                onPick={(f) => setSlot("body2", f)}
+              />
+              <UploadTile
+                label="Una más de cuerpo"
+                hint="Opcional — otro ángulo o con otra ropa"
+                preview={previews.body3}
+                onPick={(f) => setSlot("body3", f)}
+              />
+            </div>
+          ) : null}
 
-          <button
-            type="button"
-            disabled={!bodyType}
-            onClick={generateBody}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
-          >
-            <Icon name="destello" size={16} />
-            Generar mi avatar
-          </button>
+          {/* Altura + CTA: solo una vez elegido el método (en la pantalla de
+              elección estorbarían). La altura aplica a los dos caminos. */}
+          {metodo !== null ? (
+            <>
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3">
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-medium text-ink">¿Cuánto mides?</span>
+                  <span className="text-xs text-muted">Opcional — afina tus proporciones</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={100}
+                    max={230}
+                    value={alturaTxt}
+                    onChange={(e) => setAlturaTxt(e.target.value)}
+                    placeholder="170"
+                    className="min-h-10 w-20 rounded-sm border border-line bg-bg px-2 text-center text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
+                  />
+                  <span className="text-xs text-muted">cm</span>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                disabled={!puedeGenerar}
+                onClick={generateBody}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent px-5 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+              >
+                <Icon name="destello" size={16} />
+                Generar mi avatar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMetodo(null)}
+                className="self-center text-sm font-medium text-muted hover:text-ink"
+              >
+                ← Cambiar forma
+              </button>
+            </>
+          ) : null}
         </div>
       )}
 

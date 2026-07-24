@@ -11,9 +11,13 @@ type BodyType = "slim" | "athletic" | "average" | "full";
 // `build` (A3): la complexión EXACTA que eligió en el picker visual (taxonomía
 // de silueta) — siembra body_build sin el redondeo de bodyTypeToBuild.
 // `heightCm` (A3): altura opcional → profiles.height_cm.
+// `bodyType` es null cuando se representó con FOTOS de su cuerpo en vez de una
+// silueta de referencia: ahí no hay categoría que guardar (las fotos ya
+// hicieron su trabajo en la generación) y body_type/body_build quedan como
+// estaban, sin inventar un valor.
 export async function saveGeneratedAvatar(
   avatarPath: string,
-  bodyType: BodyType,
+  bodyType: BodyType | null,
   build?: Build | null,
   heightCm?: number | null
 ): Promise<{ ok: boolean }> {
@@ -29,7 +33,7 @@ export async function saveGeneratedAvatar(
     console.error("[avatar] path fuera de la carpeta del usuario:", avatarPath);
     return { ok: false };
   }
-  if (!["slim", "athletic", "average", "full"].includes(bodyType)) {
+  if (bodyType !== null && !["slim", "athletic", "average", "full"].includes(bodyType)) {
     console.error("[avatar] body_type inválido:", bodyType);
     return { ok: false };
   }
@@ -48,7 +52,11 @@ export async function saveGeneratedAvatar(
     prof && !prof.body_build && (prof.gender === "mujer" || prof.gender === "hombre")
       ? build && isBuild(build)
         ? build
-        : bodyTypeToBuild(bodyType, prof.gender as Gender)
+        : // Sin bodyType (método por foto) no hay de dónde derivar complexión:
+          // se queda null en vez de sembrar una inventada.
+          bodyType
+          ? bodyTypeToBuild(bodyType, prof.gender as Gender)
+          : null
       : null;
   const alturaOk =
     typeof heightCm === "number" && Number.isInteger(heightCm) && heightCm >= 100 && heightCm <= 230;
@@ -57,7 +65,9 @@ export async function saveGeneratedAvatar(
     .from("profiles")
     .update({
       avatar_path: avatarPath,
-      body_type: bodyType,
+      // Solo se escribe si hay valor: con el método por foto (bodyType null)
+      // NO se pisa con null lo que la usuaria ya tenía guardado.
+      ...(bodyType ? { body_type: bodyType } : {}),
       ...(seedBuild ? { body_build: seedBuild } : {}),
       ...(alturaOk ? { height_cm: heightCm } : {}),
       updated_at: new Date().toISOString(),
