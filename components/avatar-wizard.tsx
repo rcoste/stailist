@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
+import { Spinner } from "@/components/spinner";
 import { toUsableImage } from "@/lib/image-file";
 import { comprimir } from "@/lib/image-compress";
 import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
@@ -103,6 +104,12 @@ export function AvatarWizard({
   const [metodo, setMetodo] = useState<"referencia" | "foto" | null>(
     siluetaBuild ? "referencia" : null
   );
+  // Complexión deducida de la foto de cuerpo (método por foto): así el motor no
+  // se queda sin señal de morfología por haber subido foto en vez de elegir
+  // silueta. Se muestra corregible; nunca se guarda a ciegas.
+  const [deteccion, setDeteccion] = useState<
+    { estado: "cargando" } | { estado: "listo"; confianza: string } | null
+  >(null);
   const fotosCuerpo = [photos.body1, photos.body2, photos.body3].filter(Boolean).length;
   // Se puede generar si: eligió referencia (hay complexión) o subió ≥1 foto.
   const puedeGenerar = metodo === "foto" ? fotosCuerpo > 0 : !!bodyType;
@@ -195,6 +202,39 @@ export function AvatarWizard({
       if (prev[slot]) URL.revokeObjectURL(prev[slot] as string);
       return { ...prev, [slot]: file ? URL.createObjectURL(file) : null };
     });
+    // La foto principal de cuerpo dispara la detección de complexión (en
+    // segundo plano, no bloquea nada). Solo si ella no eligió ya una silueta:
+    // una elección explícita SIEMPRE manda sobre lo que deduzca la IA.
+    if (slot === "body1") {
+      if (!file) {
+        setDeteccion(null);
+      } else if (!siluetaBuild) {
+        detectarComplexion(file);
+      }
+    }
+  }
+
+  // Best-effort: si falla, simplemente no hay sugerencia (el avatar se genera
+  // igual con las fotos; solo se pierde la señal de morfología para el motor).
+  async function detectarComplexion(file: File) {
+    setDeteccion({ estado: "cargando" });
+    try {
+      const dataUrl = `data:image/jpeg;base64,${await aB64(file)}`;
+      const res = await fetch("/api/analizar-cuerpo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl, gender }),
+      });
+      if (!res.ok) {
+        setDeteccion(null);
+        return;
+      }
+      const d = (await res.json()) as { build: Build; confianza: string };
+      setBuild(d.build);
+      setDeteccion({ estado: "listo", confianza: d.confianza });
+    } catch {
+      setDeteccion(null);
+    }
   }
 
   // La etapa cara solo pide la cara; el cuerpo (fotos opcionales) va después.
@@ -604,6 +644,31 @@ export function AvatarWizard({
                 preview={previews.body3}
                 onPick={(f) => setSlot("body3", f)}
               />
+
+              {/* Complexión deducida de la foto: se muestra para que la pueda
+                  corregir (nunca se guarda a ciegas). Si la IA dudó, el copy
+                  lo dice en vez de afirmarlo con seguridad falsa. */}
+              {deteccion?.estado === "cargando" ? (
+                <p className="flex items-center gap-2 px-1 text-xs text-muted">
+                  <Spinner className="h-3 w-3" />
+                  Viendo tu complexión…
+                </p>
+              ) : deteccion?.estado === "listo" && build ? (
+                <p className="px-1 text-xs text-muted">
+                  {deteccion.confianza === "baja"
+                    ? "No la vi del todo bien; puse "
+                    : "Por tu foto diría que tu complexión es "}
+                  <span className="font-medium text-ink">{buildLabel(build)}</span>. Así
+                  afino los consejos de estilo.{" "}
+                  <button
+                    type="button"
+                    onClick={() => setMetodo("referencia")}
+                    className="font-medium text-ink underline underline-offset-2"
+                  >
+                    Cambiar
+                  </button>
+                </p>
+              ) : null}
             </div>
           ) : null}
 

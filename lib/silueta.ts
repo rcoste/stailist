@@ -12,25 +12,40 @@ export type Volume =
   | "pecho" | "parejo" | "panza";
 
 export type Zone = [number, number, number, number]; // [left%, top%, w%, h%]
-type BuildOpt = { id: Build; label: string; img: string };
+// `hint`: descripción de la complexión EN INGLÉS, alineada con el prompt que
+// generó su silueta (scripts/gen-builds*.mjs). La usa la detección por visión
+// (/api/analizar-cuerpo) para mapear una foto real a una de estas opciones —
+// vive aquí para que imagen, etiqueta y descripción no se despeguen.
+type BuildOpt = { id: Build; label: string; img: string; hint: string };
 type VolumeOpt = { id: Volume; label: string; desc: string; zones: Zone[]; band?: boolean };
 
 // Orden = progresión visual de complexión (no de "mejor a peor"): el grid las
 // muestra en este orden para que la usuaria se ubique de un vistazo.
 const BUILDS_F: BuildOpt[] = [
-  { id: "delgada", label: "Delgada", img: "/siluetas/complexion/1-delgada.png" },
-  { id: "atletica", label: "Atlética", img: "/siluetas/complexion/4-atletica.png" },
-  { id: "media", label: "Media", img: "/siluetas/complexion/2-media.png" },
-  { id: "curvas", label: "Con más curvas", img: "/siluetas/complexion/3-curvas.png" },
-  { id: "grande", label: "Talla grande", img: "/siluetas/complexion/5-grande.png" },
+  { id: "delgada", label: "Delgada", img: "/siluetas/complexion/1-delgada.png",
+    hint: "slim, lean, narrow frame, low body volume" },
+  { id: "atletica", label: "Atlética", img: "/siluetas/complexion/4-atletica.png",
+    hint: "toned athletic build: shoulders as wide as or wider than hips, visibly muscular arms and legs, lean and low body fat" },
+  { id: "media", label: "Media", img: "/siluetas/complexion/2-media.png",
+    hint: "average everyday medium build, neither thin nor heavy" },
+  { id: "curvas", label: "Con más curvas", img: "/siluetas/complexion/3-curvas.png",
+    hint: "fuller build with more body volume all over, soft and rounded" },
+  { id: "grande", label: "Talla grande", img: "/siluetas/complexion/5-grande.png",
+    hint: "notably fuller and wider build with generous body volume throughout, clearly larger than a merely curvy build" },
 ];
 const BUILDS_M: BuildOpt[] = [
-  { id: "delgado", label: "Delgado", img: "/siluetas/complexion-hombre/1-delgado.png" },
-  { id: "atletico", label: "Atlético", img: "/siluetas/complexion-hombre/2-atletico.png" },
-  { id: "musculoso", label: "Musculoso", img: "/siluetas/complexion-hombre/5-musculoso.png" },
-  { id: "promedio", label: "Promedio", img: "/siluetas/complexion-hombre/3-promedio.png" },
-  { id: "robusto", label: "Robusto", img: "/siluetas/complexion-hombre/4-robusto.png" },
-  { id: "corpulento", label: "Corpulento", img: "/siluetas/complexion-hombre/6-corpulento.png" },
+  { id: "delgado", label: "Delgado", img: "/siluetas/complexion-hombre/1-delgado.png",
+    hint: "slim, lean, narrow frame, low body volume" },
+  { id: "atletico", label: "Atlético", img: "/siluetas/complexion-hombre/2-atletico.png",
+    hint: "athletic V-taper: broad shoulders and chest narrowing to a trim waist, fit" },
+  { id: "musculoso", label: "Musculoso", img: "/siluetas/complexion-hombre/5-musculoso.png",
+    hint: "heavily muscular bodybuilt frame, very broad shoulders and thick chest and arms, clearly more muscle mass than merely athletic" },
+  { id: "promedio", label: "Promedio", img: "/siluetas/complexion-hombre/3-promedio.png",
+    hint: "average everyday medium build, neither thin nor heavy" },
+  { id: "robusto", label: "Robusto", img: "/siluetas/complexion-hombre/4-robusto.png",
+    hint: "larger, broader, heavyset build with more body volume all over, fuller midsection" },
+  { id: "corpulento", label: "Corpulento", img: "/siluetas/complexion-hombre/6-corpulento.png",
+    hint: "very large and wide heavyset build, broad and round throughout, clearly bulkier than merely stocky" },
 ];
 
 const VOLUMES_F: VolumeOpt[] = [
