@@ -390,8 +390,9 @@ export function AvatarWizard({
               onPick={(f) => setSlot("face", f)}
             />
             <UploadTile
-              label="Tu cara desde otro ángulo"
-              hint="Opcional — de lado o 3/4; ayuda mucho al parecido"
+              variant="sutil"
+              label="Sumar otro ángulo de tu cara"
+              hint="De lado o 3/4 — ayuda al parecido"
               preview={previews.face2}
               onPick={(f) => setSlot("face2", f)}
             />
@@ -633,14 +634,16 @@ export function AvatarWizard({
                 onPick={(f) => setSlot("body1", f)}
               />
               <UploadTile
-                label="Otra de cuerpo"
-                hint="Opcional — de lado o 3/4"
+                variant="sutil"
+                label="Sumar otro ángulo"
+                hint="De lado o 3/4"
                 preview={previews.body2}
                 onPick={(f) => setSlot("body2", f)}
               />
               <UploadTile
-                label="Una más de cuerpo"
-                hint="Opcional — otro ángulo o con otra ropa"
+                variant="sutil"
+                label="Sumar una más"
+                hint="Otro ángulo o con otra ropa"
                 preview={previews.body3}
                 onPick={(f) => setSlot("body3", f)}
               />
@@ -828,18 +831,58 @@ export function AvatarWizard({
   );
 }
 
+// variant "card" = acción principal (tarjeta completa). "sutil" = extra
+// opcional: fila discreta SIN tarjeta, para que la jerarquía visual diga lo que
+// el copy quiere decir. Dos tarjetas idénticas se leen como "dos pasos
+// obligatorios" por más que una diga "Opcional" — el diseño le gana al texto.
 function UploadTile({
   label,
   hint,
   preview,
   onPick,
+  variant = "card",
 }: {
   label: string;
   hint: string;
   preview: string | null;
   onPick: (file: File | null) => void;
+  variant?: "card" | "sutil";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  if (variant === "sutil") {
+    return (
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="group flex items-center gap-2.5 px-1 py-1 text-left"
+      >
+        <span className="relative flex h-9 w-8 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-dashed border-line text-muted">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Icon name="mas" size={14} />
+          )}
+        </span>
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[13px] font-medium text-muted underline decoration-line underline-offset-2 group-hover:text-ink">
+            {preview ? "Tocar para cambiar" : label}
+          </span>
+          <span className="text-[11px] leading-tight text-faint">{hint}</span>
+        </span>
+        {preview ? (
+          <Icon name="check" size={15} className="ml-auto shrink-0 text-success" />
+        ) : null}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => onPick(e.target.files?.[0] ?? null)}
+        />
+      </button>
+    );
+  }
   return (
     <button
       type="button"
