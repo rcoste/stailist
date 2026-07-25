@@ -72,12 +72,16 @@ export const QUIZ: QuizQuestion[] = [
     ],
   },
   {
+    // Señal cálido/frío Y el "guiño" de frontera: el oro empuja a otoño/primavera,
+    // así que responder oro puede dar "invierno con guiños de otoño" (más fino que
+    // invierno a secas). "No sé" pesa 0 (para quien no lo tiene claro). Ya no
+    // contradice: el resultado muestra "ambos" en la frontera (metalForSeason).
     id: "metal",
-    question: "¿Qué joyería te enciende más la cara?",
+    question: "¿Qué te queda mejor: el oro o la plata?",
     options: [
       { id: "plata", label: "Plata", w: -2 },
       { id: "oro", label: "Oro", w: 2 },
-      { id: "ambos", label: "Las dos me quedan igual" },
+      { id: "ambos", label: "No sé / me quedan igual" },
     ],
   },
   {
@@ -242,6 +246,22 @@ export function seasonMetal(
     (p !== null && WARM_SEASONS.includes(p)) ||
     (f !== null && WARM_SEASONS.includes(f));
   return warm ? "oro" : "plata";
+}
+
+// Metal con matiz de frontera: si la base y el flow caen en lados OPUESTOS del
+// eje cálido/frío (p. ej. invierno base + otoño flow), los DOS metales le van —
+// es exactamente el caso de la persona-frontera, que suele preferir el oro pero
+// la plata tampoco la traiciona. Fuera de la frontera, el metal es uno solo.
+export function metalForSeason(
+  primary: Season | null,
+  flow: Season | null
+): "oro" | "plata" | "ambos" {
+  const p = normSeason(primary);
+  const f = normSeason(flow);
+  const warmP = p !== null && WARM_SEASONS.includes(p);
+  const warmF = f !== null ? WARM_SEASONS.includes(f) : warmP;
+  if (warmP !== warmF) return "ambos";
+  return warmP ? "oro" : "plata";
 }
 
 // Nombre de sub-estación (sistema de 12): estación + hacia qué vecina se

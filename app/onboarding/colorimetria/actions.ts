@@ -48,6 +48,32 @@ export async function savePalette(
   return { season, flow };
 }
 
+// Saltar la colorimetría (opcional, NO gatekeep): avanza al clóset sin paleta.
+// El motor degrada bien sin estación (se salta el bloque de colorimetría). El
+// evento con source "skip" mide cuánta gente la salta vs la hace — señal de
+// cuánto le importa. Se puede llenar después desde Perfil.
+export async function skipColorimetria(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  await supabase
+    .from("profiles")
+    .update({ onboarding_step: 2, updated_at: new Date().toISOString() })
+    .eq("id", user.id)
+    .eq("onboarding_step", 1); // no retrocede a quien ya iba más adelante
+
+  await supabase.from("events").insert({
+    user_id: user.id,
+    type: "onboarding_step",
+    data: { step: 2, source: "skip_colorimetria" },
+  });
+
+  redirect("/onboarding/closet");
+}
+
 // Edición manual del resultado: la usuaria corrige su estación. Actualiza la
 // paleta sin tocar el onboarding_step (ya avanzó) y registra el evento como
 // métrica de aciertos del análisis automático.

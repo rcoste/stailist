@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PerfilTabs } from "@/components/perfil-tabs";
 import { nameFromEmail } from "@/lib/pasaporte";
 import { buildLabel, volumeLabel } from "@/lib/silueta";
-import { seasonPalette, seasonDisplayLabel, seasonMetal } from "@/lib/colorimetria";
+import { seasonPalette, seasonDisplayLabel, metalForSeason } from "@/lib/colorimetria";
 import { signOut } from "./actions";
 import { resendParentConsent } from "./consentimiento-actions";
 import { isMinor } from "@/lib/edad";
@@ -57,12 +57,12 @@ export default async function PerfilPage() {
   const season = profile.palette_season;
   const pal = season ? seasonPalette(season, profile.palette_flow) : null;
   const seasonLabel = season ? seasonDisplayLabel(season, profile.palette_flow) : null;
-  const metal = season ? seasonMetal(season, profile.palette_flow) : null;
+  const metal = season ? metalForSeason(season, profile.palette_flow) : null;
   const archetypeNombre = profile.style_archetype?.nombre ?? null;
 
   const subParts = [
     archetypeNombre,
-    metal ? `metal ${metal}` : null,
+    metal ? `metal ${metal === "ambos" ? "oro y plata" : metal}` : null,
   ].filter(Boolean) as string[];
 
   const banner = {
