@@ -304,10 +304,29 @@ function NivelAgregar({
   onAddCarrete: () => void;
   onAddBiblioteca: () => void;
 }) {
-  const tiles: { icon: IconName; label: string; onClick: () => void }[] = [
-    { icon: "camara", label: "una prenda", onClick: onAddPhoto },
-    { icon: "destello", label: "varias de golpe", onClick: onAddCarrete },
-    { icon: "libro", label: "la biblioteca", onClick: onAddBiblioteca },
+  // Filas (no tiles): las 3 formas se parecen y la diferencia (foto suelta vs.
+  // carrete múltiple vs. set preestablecido) no se entiende solo con el nombre.
+  // El handoff marca este trade-off: con descripción se pierde la gramática de
+  // tiles, pero gana el contexto — que es lo que aquí hace falta.
+  const filas: { icon: IconName; title: string; sub: string; onClick: () => void }[] = [
+    {
+      icon: "camara",
+      title: "una prenda",
+      sub: "una foto de algo suelto, tipo unos tenis",
+      onClick: onAddPhoto,
+    },
+    {
+      icon: "destello",
+      title: "varias de golpe",
+      sub: "sube varias fotos del carrete y saco cada prenda",
+      onClick: onAddCarrete,
+    },
+    {
+      icon: "libro",
+      title: "la biblioteca",
+      sub: "elige de un set de básicos ya listo",
+      onClick: onAddBiblioteca,
+    },
   ];
   return (
     <div style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
@@ -322,12 +341,40 @@ function NivelAgregar({
         </button>
         <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">agregar al clóset</h3>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {tiles.map((t) => (
-          <TileAtajo key={t.label} icon={t.icon} label={t.label} onClick={t.onClick} minH={92} />
+      <div className="flex flex-col gap-2">
+        {filas.map((f) => (
+          <FilaAgregar key={f.title} icon={f.icon} title={f.title} sub={f.sub} onClick={f.onClick} />
         ))}
       </div>
     </div>
+  );
+}
+
+function FilaAgregar({
+  icon,
+  title,
+  sub,
+  onClick,
+}: {
+  icon: IconName;
+  title: string;
+  sub: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3.5 rounded-sm border border-line bg-surface px-3.5 py-3 text-left transition-colors hover:border-accent"
+    >
+      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-sm border border-line text-ink">
+        <Icon name={icon} size={20} />
+      </span>
+      <span className="flex min-w-0 flex-col">
+        <span className="text-[15px] font-semibold text-ink">{title}</span>
+        <span className="text-[13px] leading-snug text-muted">{sub}</span>
+      </span>
+    </button>
   );
 }
 
