@@ -1,0 +1,54 @@
+import Link from "next/link";
+import { requireOnboarded } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { StyleReferenceCard, type StyleRef } from "@/components/style-reference-card";
+
+// "Afina tu estilo" con ruta propia. Antes esta feature vivía enterrada en un tab
+// de Perfil (y en un beat del onboarding que sacaba de contexto). Ahora es un
+// destino de primera clase: el checklist de Home linkea aquí. Reusa la misma
+// StyleReferenceCard (subir 1-3 fotos → veredicto honesto → guardar).
+export const maxDuration = 60;
+
+export default async function PerfilReferenciaPage() {
+  const profile = await requireOnboarded();
+
+  // Firma las fotos de referencia (bucket privado) para las miniaturas — mismo
+  // patrón que app/perfil/page.tsx.
+  const sr = profile.style_reference;
+  let styleReference: StyleRef | null = null;
+  if (sr) {
+    const paths = Array.isArray(sr.image_paths)
+      ? sr.image_paths
+      : sr.image_path
+        ? [sr.image_path]
+        : [];
+    const supabase = await createClient();
+    const { data } = paths.length
+      ? await supabase.storage.from("prendas").createSignedUrls(paths, 3600)
+      : { data: [] };
+    styleReference = {
+      summary: sr.summary,
+      tags: sr.tags ?? [],
+      fit: sr.fit ?? null,
+      images: (data ?? []).map((s) => s.signedUrl).filter((u): u is string => !!u),
+    };
+  }
+
+  return (
+    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
+      <Link href="/perfil" className="text-sm font-medium text-muted hover:text-ink">
+        ← Perfil
+      </Link>
+      <div className="mb-5 mt-2 flex flex-col gap-1.5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+          tu estilo de referencia
+        </p>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink">
+          afina tu <em className="font-display font-normal italic">estilo</em>
+        </h1>
+      </div>
+
+      <StyleReferenceCard initial={styleReference} />
+    </div>
+  );
+}

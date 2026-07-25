@@ -126,6 +126,7 @@ export function LookDetail({
   voto,
   onVote,
   onOtroLook,
+  enterApp,
   disabled,
 }: {
   nombre: string;
@@ -138,6 +139,9 @@ export function LookDetail({
   voto: "up" | "down" | null;
   onVote: (up: boolean) => void;
   onOtroLook: () => void;
+  /** Solo el wow del onboarding: salida explícita a la app. El voto ahí registra
+   *  en el lugar (no navega); esta es la puerta clara para entrar cuando quieras. */
+  enterApp?: () => void;
   disabled?: boolean;
 }) {
   // Un solo slot de texto: porqué (default) ⇄ cómo llevarlo (tip). Sin hoja.
@@ -239,6 +243,16 @@ export function LookDetail({
             <VoteButton up={true} active={voto === "up"} onClick={() => onVote(true)} disabled={disabled} />
           </div>
         </div>
+
+        {enterApp ? (
+          <button
+            type="button"
+            onClick={enterApp}
+            className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 text-[14px] font-semibold text-muted transition-colors hover:text-ink"
+          >
+            entrar a la app <Icon name="flecha" size={15} />
+          </button>
+        ) : null}
       </div>
     </div>
   );
