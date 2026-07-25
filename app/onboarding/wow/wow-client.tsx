@@ -20,7 +20,6 @@ import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { Icon } from "@/components/icon";
-import { StyleReferenceCard } from "@/components/style-reference-card";
 
 export type WowOutfit = {
   id: string;
@@ -41,10 +40,6 @@ type State =
   // autoTryon: true solo al RETOMAR tras construir el avatar → abre el try-on
   // solo, para que "ya te lo ve puesto" en vez de pedir otro tap.
   | { kind: "viewing"; outfits: WowOutfit[]; chosenId: string; autoTryon?: boolean }
-  // Post-primer-outfit: beat OPCIONAL de estilo de referencia (subir fotos de un
-  // look que te encanta). Va DESPUÉS de "me lo pongo" — ya probaste valor, así
-  // que pedir una foto ahora es engagement, no fricción antes del valor.
-  | { kind: "referencia" }
   | { kind: "error"; code: string };
 
 const ERROR_COPY: Record<string, string> = {
@@ -211,11 +206,6 @@ export function WowClient({
     );
   }
 
-  // ─── referencia: beat opcional de estilo de referencia, ya entrando a la app ───
-  if (state.kind === "referencia") {
-    return <ReferenceBeat onEnter={() => router.push("/hoy")} />;
-  }
-
   // ─── viewing: el elegido, en modo Hoy ───
   if (state.kind === "viewing") {
     const outfit = state.outfits.find((o) => o.id === state.chosenId) ?? state.outfits[0];
@@ -229,8 +219,11 @@ export function WowClient({
         onOtroLook={() =>
           setState({ kind: "choosing", outfits: state.outfits, chosenId: state.chosenId })
         }
-        // El 👍/👎 avanza al beat opcional; nadie queda atrapado en el look.
-        onCommitted={() => setState({ kind: "referencia" })}
+        // Fin del onboarding: la puerta a la app es explícita ("entrar a la app").
+        // El 👍/👎 ya no navega — registra en el lugar y nadie se lleva la sorpresa
+        // de que un voto lo saque de la pantalla. "afinar tu estilo" ahora vive en
+        // el checklist de Home, no como un paso más aquí.
+        onEnter={() => router.push("/hoy")}
       />
     );
   }
@@ -364,7 +357,7 @@ function ModoHoyView({
   hasAvatar,
   autoTryon,
   onOtroLook,
-  onCommitted,
+  onEnter,
 }: {
   outfit: WowOutfit;
   userId: string;
@@ -372,7 +365,8 @@ function ModoHoyView({
   /** Al retomar tras el avatar: abrir el try-on solo (sin pedir otro tap). */
   autoTryon: boolean;
   onOtroLook: () => void;
-  onCommitted: () => void;
+  /** Salida explícita a la app (/hoy). El voto NO navega — esta es la puerta. */
+  onEnter: () => void;
 }) {
   const [worn, setWorn] = useState(false);
   // Voto de un tap. En el PRIMER uso es la decisión primaria: 👍 o 👎 registran
@@ -411,19 +405,21 @@ function ModoHoyView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoTryon, goAvatar]);
 
-  // 👍/👎: registra el voto Y avanza al siguiente paso (el beat opcional).
+  // 👍/👎: registra el voto EN EL LUGAR. No navega (antes un voto te sacaba de la
+  // pantalla, lo cual sorprendía). Para entrar a la app está el botón explícito.
   async function decidir(up: boolean) {
     if (voting) return;
+    const next = up ? "up" : "down";
+    if (voto === next) return; // mismo voto = no-op (la action es idempotente)
     setVoting(true);
-    setVoto(up ? "up" : "down");
+    setVoto(next);
     const res = await voteOutfit(outfit.id, up);
+    setVoting(false);
     if (!res.ok) {
-      setVoting(false);
       setVoto(null);
       return;
     }
     if (up) notifyFirstLike(); // spec: el prompt de instalar la PWA vive tras el primer 👍
-    onCommitted(); // avanza — nadie queda atrapado en el look
   }
 
   async function meLoPongo() {
@@ -435,7 +431,7 @@ function ModoHoyView({
       return;
     }
     notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
-    onCommitted(); // beat opcional de estilo de referencia antes de entrar a /hoy
+    onEnter(); // "me lo pongo" es un cierre fuerte → entra a la app
   }
 
   return (
@@ -451,6 +447,7 @@ function ModoHoyView({
         voto={voto}
         onVote={decidir}
         onOtroLook={onOtroLook}
+        enterApp={onEnter}
         disabled={voting}
       />
 
@@ -479,35 +476,3 @@ function ModoHoyView({
   );
 }
 
-// Beat opcional post-primer-outfit: promueve el estilo de referencia (subir
-// fotos de un look que te encanta) en el momento de mayor engagement — justo
-// después de que la persona se "puso" su primer look. Reusa StyleReferenceCard
-// (upload → preview → guardar, con veredicto honesto de si le va). "entrar a la
-// app" está SIEMPRE disponible: suba o no, el paso es 100% opcional y no
-// bloquea. Antes esta feature vivía enterrada en Perfil y nadie la encontraba.
-function ReferenceBeat({ onEnter }: { onEnter: () => void }) {
-  return (
-    <div className="flex flex-1 flex-col gap-5 pb-4 pt-2">
-      <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
-          una cosa más · opcional
-        </p>
-        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink">
-          afina tu estilo aún <em className="font-display font-normal italic">más</em>
-        </h1>
-      </div>
-
-      <StyleReferenceCard initial={null} />
-
-      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3">
-        <button
-          type="button"
-          onClick={onEnter}
-          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-        >
-          entrar a la app <Icon name="flecha" size={18} />
-        </button>
-      </div>
-    </div>
-  );
-}

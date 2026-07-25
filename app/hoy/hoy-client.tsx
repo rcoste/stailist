@@ -22,6 +22,8 @@ import { useTryon } from "@/lib/use-tryon";
 import { AddSheet } from "@/components/add-sheet";
 import { HomeCard } from "@/components/home-card";
 import type { HomeCard as HomeCardData } from "@/lib/home-card";
+import { HomeChecklist } from "@/components/home-checklist";
+import type { HomeChecklist as HomeChecklistData } from "@/lib/home-checklist";
 
 export type HoyOutfit = {
   id: string;
@@ -61,6 +63,7 @@ export function HoyClient({
   closet = [],
   autoAsk = false,
   homeCard = null,
+  checklist = null,
 }: {
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
@@ -77,6 +80,9 @@ export function HoyClient({
   autoAsk?: boolean;
   /** Card contextual del home idle (viaje / prenda sin estrenar / ayer). UNA o ninguna. */
   homeCard?: HomeCardData | null;
+  /** Checklist de activación (home idle): avatar → prendas → estilo → silueta →
+   *  cápsula. null = todo hecho (se autodestruye). */
+  checklist?: HomeChecklistData | null;
 }) {
   const [state, setState] = useState<State>(
     pendingOutfitId && !autoAsk
@@ -248,6 +254,10 @@ export function HoyClient({
             La card contextual (si la hay) informa; el CTA manda; añadir prendas
             es la acción #2 por frecuencia y va en jerarquía fantasma. */}
         <div className="flex flex-col gap-3 pb-2">
+          {/* Checklist de activación: la superficie única para "qué sigue". Mientras
+              esté presente, cubre "añade prendas" — por eso el AddSheet suelto de
+              abajo se oculta (no duplicar la acción en la misma pantalla). */}
+          {checklist ? <HomeChecklist checklist={checklist} /> : null}
           {homeCard ? (
             <HomeCard
               card={homeCard}
@@ -262,7 +272,9 @@ export function HoyClient({
             armar mi look de hoy
             <Icon name="flecha" size={19} />
           </button>
-          <AddSheet userId={userId} variant="ghost" />
+          {/* Ya activado (checklist completo): el AddSheet vuelve como el atajo de
+              agregado rápido. Durante la activación vive dentro del checklist. */}
+          {checklist ? null : <AddSheet userId={userId} variant="ghost" />}
         </div>
       </div>
     );

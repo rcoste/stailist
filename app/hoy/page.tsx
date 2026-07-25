@@ -3,14 +3,13 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { loadJourneySignals } from "@/lib/journey-data";
-import { nextBestAction } from "@/lib/journey";
-import { TryonNudge } from "@/components/tryon-nudge";
-import { LinkNudge } from "@/components/link-nudge";
 import { Hint } from "@/components/hint";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 import type { ClosetPick } from "@/components/weather-picker";
 import { loadClosetPicks } from "@/lib/closet-picks";
 import { loadHomeCard } from "@/lib/home-card";
+import { buildHomeChecklist } from "@/lib/home-checklist";
+import { HomeChecklist } from "@/components/home-checklist";
 
 export default async function HoyPage({
   searchParams,
@@ -139,20 +138,31 @@ export default async function HoyPage({
 
   const nombre = (profile.email ?? "").split("@")[0];
 
-  // Motor de nudges: solo cuando ya hay look listo (contexto para el try-on).
+  // Checklist de activación: la superficie ÚNICA de "qué sigue" tras el primer
+  // outfit (reemplazó los nudges de uno en uno). Las acciones de inversión que
+  // predicen retención, con estado visible; se autodestruye al completarlas todas.
   const signals = await loadJourneySignals(supabase, profile);
-  const nudge = lookInicial
-    ? nextBestAction(profile.journey_state, signals)
-    : null;
+  const checklist = buildHomeChecklist({
+    hasAvatar: signals.hasAvatar,
+    editedCloset: signals.editedCloset,
+    hasStyleReference: profile.style_reference != null,
+    hasCapsule: signals.hasCapsule,
+    siluetaApplies: signals.siluetaApplies,
+    hasSilueta: signals.hasSilueta,
+  });
+  // En la vista CON look, el checklist va en el banner (arriba del look) como la
+  // card única que lo acompaña. En idle lo renderiza HoyClient en su pie.
+  const checklistBanner = lookInicial ? checklist : null;
 
   // Hints contextuales (walkthrough just-in-time). UNA burbuja por pantalla:
-  // los nudges del journey (acción) ganan sobre los hints (orientación).
+  // el checklist (acción) gana sobre los hints (orientación) — cuando ocupa el
+  // banner, los hints esperan.
   const seen = profile.hints_seen ?? {};
   const accountDays =
     (new Date().getTime() - new Date(profile.created_at).getTime()) / 86_400_000;
   // Progressive: orientación primero (hoy-casa), luego función de valor
   // (fab-generar → hoy-tryon) cuando ya hay look, y viaje al final. UNA por visita.
-  const hint = nudge
+  const hint = checklistBanner
     ? null
     : !seen["hoy-casa"]
       ? "hoy-casa"
@@ -164,15 +174,16 @@ export default async function HoyPage({
             ? "viaje"
             : null;
 
-  // El stack de banners (hint/nudge) va centrado y angosto en desktop para no
+  // El stack de banners (checklist/hint) va centrado y angosto en desktop para no
   // estirarse a lo ancho de la columna wide del héroe (F3, plan desktop-full).
-  const hasBanner = !!(hint || nudge);
+  const hasBanner = !!(hint || checklistBanner);
 
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-4">
         {hasBanner ? (
           <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
+            {checklistBanner ? <HomeChecklist checklist={checklistBanner} /> : null}
             {hint === "hoy-casa" ? (
               <Hint id="hoy-casa" center>
                 esta es tu casa — cada día te espera un look nuevo aquí, pensado
@@ -197,34 +208,6 @@ export default async function HoyPage({
                 clima de cada parada
               </Hint>
             ) : null}
-            {nudge === "tryon" ? <TryonNudge /> : null}
-            {nudge === "closet_real" ? (
-              <LinkNudge
-                id="closet_real"
-                icon="gancho"
-                title="Haz tuyo tu clóset"
-                body="Súmale tu ropa real y tus looks se vuelven 100% tuyos."
-                href="/closet"
-              />
-            ) : null}
-            {nudge === "capsula" ? (
-              <LinkNudge
-                id="capsula"
-                icon="destello"
-                title="Arma tu clóset cápsula"
-                body="Te digo qué prendas ya tienes y cuáles te faltan."
-                href="/closet/capsula/editar"
-              />
-            ) : null}
-            {nudge === "silueta" ? (
-              <LinkNudge
-                id="silueta"
-                icon="persona"
-                title="Cuéntame de tu cuerpo"
-                body="Marca tu silueta y afino tus looks a tu medida."
-                href="/perfil/silueta"
-              />
-            ) : null}
           </div>
         ) : null}
         <HoyClient
@@ -238,6 +221,7 @@ export default async function HoyPage({
           closet={closet}
           autoAsk={autoAsk}
           homeCard={homeCard}
+          checklist={checklist}
         />
       </section>
     </AppShell>
