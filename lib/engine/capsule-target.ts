@@ -146,7 +146,8 @@ Devuelve "items". Cada prenda:
 - prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
 - porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
 
-Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones, aterrizada a SUS datos reales. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada cosa nombra algo concreto suyo (su estación, su trabajo, su silueta, su metal) o NO va.
+Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones, aterrizada a SUS datos reales. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada cosa nombra algo concreto suyo (su estación, su trabajo, su cuerpo, su metal) o NO va.
+LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda. En el texto que LEE la persona, nada de "silueta", "cortes", "proporción", "estructura", "statement", "monocromía", "textura"; dilo cotidiano (en vez de "corte que estiliza tu silueta" → "que te quede bien y te alargue"). Los conceptos piénsalos tú; las palabras van llanas.
 - "firma": UNA frase corta (voz de amiga, tuteo) que nombre su SELLO de estilo — un titular, no una oración larga. Envuelve la frase CLAVE (2-3 palabras) entre *asteriscos*. Ej: "Vas por un pulido versátil, con un *guiño edgy*."
 - "subline": UNA línea (≤ ~95 chars) que conecte la firma con cómo armaste la cápsula. Ej: "Así armé tu cápsula para que ese sea tu default, sin pensarlo."
 - "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").

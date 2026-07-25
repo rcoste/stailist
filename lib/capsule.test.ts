@@ -90,6 +90,6 @@ describe("lifestyleSummary — el fit 'nose' no entra al resumen", () => {
   });
 
   it("un fit real sí entra", () => {
-    expect(lifestyleSummary({ fit: "entallado" })).toContain("prefiere la ropa entallado");
+    expect(lifestyleSummary({ fit: "entallado" })).toContain("prefiere la ropa ajustado");
   });
 });
