@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { OutfitCard } from "@/components/outfit-card";
+import { LookDetail } from "@/components/look-detail";
 import { TryonImmersive } from "@/components/tryon-immersive";
-import { FavoriteButton } from "@/components/favorite-button";
 import { SkipReasons } from "@/components/skip-reasons";
 import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
 import { buildGenFrases } from "@/lib/gen-frases";
@@ -481,165 +480,34 @@ function ReadyView({
     else t.generar();
   }
 
-  // El nombre del look en desktop: primera palabra en sans bold, el resto en
-  // display italic (patrón del handoff desktop_f3 — "gris *de noche*").
-  const [nombrePrimera, ...nombreResto] = outfit.nombre.split(" ");
-
   return (
-    // Reveal: el look ENTRA (fade + subida) tras la espera, no aparece de golpe.
-    // Móvil: columna (h1 → card → acciones), intacta. Desktop (handoff desktop_f3):
-    // "spread" editorial — card 440px a la izquierda, columna de texto a la derecha,
-    // AMBAS centradas verticalmente en el viewport (sin sticky: todo cabe en una
-    // pantalla). El h1 móvil y el encabezado desktop son elementos distintos
-    // (display:none no crea celda de grid, así que no estorban al placement).
-    <div
-      className="flex flex-col gap-4 lg:grid lg:min-h-[calc(100dvh-9rem)] lg:grid-cols-[440px_minmax(0,1fr)] lg:items-center lg:gap-16"
-      style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-    >
-      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0 lg:hidden">
-        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</span>
-        <span className="text-sm text-muted">·</span>
-        <span className="font-display text-[22px] italic text-muted">{outfit.nombre}</span>
-      </h1>
-
-      <div>
-        <OutfitCard
-          prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
+    <>
+      <div
+        className="mx-auto flex min-h-[calc(100dvh-9rem)] w-full max-w-[440px] flex-1 flex-col"
+        style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+      >
+        <LookDetail
+          nombre={outfit.nombre}
+          prendas={outfit.prendas}
           justificacion={outfit.explicacion}
           tip={outfit.tip ?? null}
-          renderMode="auto"
-          rationaleClassName="lg:hidden"
-          corner={
-            <FavoriteButton
-              outfitId={outfit.id}
-              initialFavorited={outfit.favorited ?? false}
-            />
+          outfitId={outfit.id}
+          initialFavorited={outfit.favorited ?? false}
+          verme={
+            t.mode === "sin_avatar"
+              ? { href: t.avatarHref }
+              : { onClick: verte, sub: "~20 s" }
           }
+          voto={voto}
+          onVote={votar}
+          onOtroLook={() => {
+            setSheetMode("skip");
+            setSkipOpen(true);
+          }}
         />
       </div>
 
-      {/* Columna derecha del spread. En móvil solo se ven las acciones (todo lo
-          editorial de desktop va hidden) → misma columna de siempre. */}
-      <div className="flex flex-col gap-4 lg:gap-0">
-        <p className="hidden text-[11px] font-bold uppercase tracking-[0.22em] text-muted lg:block">
-          tu look de hoy{fechaLabel ? ` · ${fechaLabel.replace(" · ", " ")}` : ""}
-        </p>
-        <h2 className="hidden text-[56px] font-bold leading-[1.02] tracking-[-0.035em] text-ink lg:mt-4 lg:block">
-          {nombrePrimera}
-          {nombreResto.length > 0 ? (
-            <>
-              {" "}
-              <em className="font-display font-normal italic">{nombreResto.join(" ")}</em>
-            </>
-          ) : null}
-        </h2>
-        <hr className="hidden w-full max-w-[520px] border-line lg:my-7 lg:block" />
-        <p className="hidden max-w-[52ch] font-display text-[21px] italic leading-[1.55] text-ink2 lg:block">
-          {outfit.explicacion}
-        </p>
-        {outfit.tip ? (
-          <p className="hidden items-start gap-1.5 text-[15px] leading-relaxed text-accent lg:mt-3.5 lg:flex">
-            <Icon name="destello" size={15} className="mt-0.5 shrink-0" />
-            <span>{outfit.tip}</span>
-          </p>
-        ) : null}
-
-      {/* Acciones: "verte con este look" protagonista + dos fantasma. En desktop
-          (handoff): me lo pongo = secundario con borde ink, otro look = link. */}
-      <div className="flex flex-col gap-2.5 lg:mt-9 lg:max-w-[400px] lg:gap-3">
-        {t.mode === "sin_avatar" ? (
-          <Link
-            href={t.avatarHref}
-            data-hint-target="hoy-tryon"
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-          >
-            <Icon name="destello" size={18} /> crea tu avatar para verte
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={verte}
-            data-hint-target="hoy-tryon"
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-          >
-            <Icon name="destello" size={18} /> verte con este look
-            <span className="text-[12px] font-semibold opacity-70">~20 s</span>
-          </button>
-        )}
-        <div className="flex gap-2.5 lg:flex-col lg:gap-3">
-          {!worn && (
-            <button
-              type="button"
-              onClick={() => {
-                setSheetMode("skip");
-                setSkipOpen((v) => !v);
-              }}
-              aria-pressed={skipOpen}
-              className={`min-h-12 flex-1 rounded-sm border bg-surface text-sm font-semibold text-ink transition-colors lg:order-2 lg:min-h-0 lg:flex-none lg:self-center lg:border-0 lg:bg-transparent lg:px-2 lg:py-1 lg:font-medium ${
-                skipOpen
-                  ? "border-ink lg:text-ink lg:underline"
-                  : "border-line hover:border-ink lg:text-muted lg:no-underline lg:hover:text-ink lg:hover:underline"
-              }`}
-            >
-              otro look
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onMeLoPongo}
-            disabled={worn}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-colors lg:order-1 lg:w-full lg:flex-none ${
-              worn
-                ? "bg-success/15 text-success"
-                : "border border-line bg-surface text-ink hover:border-ink lg:border-ink"
-            }`}
-          >
-            {worn ? (
-              <>
-                <Icon name="check" size={18} /> es tu look
-              </>
-            ) : (
-              "me lo pongo"
-            )}
-          </button>
-        </div>
-
-        {/* Etapa 1 del embudo: voto ligero de un tap. Si ya dijo "me lo pongo",
-            la señal fuerte manda y la pregunta sobra. */}
-        {!worn && (
-          <div className="mt-1 flex items-center justify-center gap-4 lg:justify-start">
-            <span className="text-[13px] text-muted">¿te late?</span>
-            <button
-              type="button"
-              onClick={() => votar(true)}
-              aria-pressed={voto === "up"}
-              aria-label="me gusta este look"
-              className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
-                voto === "up"
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-line text-muted hover:border-ink hover:text-ink"
-              }`}
-            >
-              <Icon name="pulgar" size={17} />
-            </button>
-            <button
-              type="button"
-              onClick={() => votar(false)}
-              aria-pressed={voto === "down"}
-              aria-label="no me gusta este look"
-              className={`flex h-10 w-10 items-center justify-center rounded-sm border transition-colors ${
-                voto === "down"
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-line text-muted hover:border-ink hover:text-ink"
-              }`}
-            >
-              <Icon name="pulgar" size={17} className="rotate-180" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {skipOpen && !worn ? (
+      {skipOpen ? (
         <SkipReasons
           outfitId={outfit.id}
           mode={sheetMode}
@@ -647,7 +515,6 @@ function ReadyView({
           onClose={() => setSkipOpen(false)}
         />
       ) : null}
-      </div>
 
       {modalOpen ? (
         <TryonImmersive
@@ -657,6 +524,7 @@ function ReadyView({
           prendas={outfit.prendas}
           errMsg={t.errMsg}
           worn={worn}
+          minimal
           onClose={t.closeFull}
           onRetry={t.generar}
           onOtro={() => {
@@ -667,6 +535,6 @@ function ReadyView({
           changeHref={t.avatarHref}
         />
       ) : null}
-    </div>
+    </>
   );
 }

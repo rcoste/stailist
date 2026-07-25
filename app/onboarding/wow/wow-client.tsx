@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
-import { OutfitCard } from "@/components/outfit-card";
+import { LookDetail } from "@/components/look-detail";
 import { TryonImmersive } from "@/components/tryon-immersive";
 import { FavoriteButton } from "@/components/favorite-button";
 import { OnboardingProgress } from "@/components/onboarding-progress";
@@ -440,75 +439,20 @@ function ModoHoyView({
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      <h1 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0">
-        <span className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</span>
-        <span className="text-sm text-muted">·</span>
-        <span className="font-display text-[22px] italic text-muted">{outfit.nombre}</span>
-      </h1>
-
-      <OutfitCard
-        prendas={outfit.prendas.map((p) => ({ ...p, detalle: "" }))}
+    <div className="flex flex-1 flex-col">
+      <LookDetail
+        nombre={outfit.nombre}
+        prendas={outfit.prendas}
         justificacion={outfit.explicacion}
         tip={outfit.tip ?? null}
-        corner={<FavoriteButton outfitId={outfit.id} initialFavorited={false} />}
+        outfitId={outfit.id}
+        initialFavorited={false}
+        verme={goAvatar ? { href: t.avatarHref } : { onClick: verte, sub: "~20 s" }}
+        voto={voto}
+        onVote={decidir}
+        onOtroLook={onOtroLook}
+        disabled={voting}
       />
-
-      <div className="flex flex-col gap-2.5">
-        {/* El wow: verte con el look puesto. Hero del primer uso. */}
-        {goAvatar ? (
-          <Link
-            href={t.avatarHref}
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-          >
-            <Icon name="destello" size={18} /> verme con este look
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={verte}
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-          >
-            <Icon name="destello" size={18} /> verme con este look
-            <span className="text-[12px] font-semibold opacity-70">~20 s</span>
-          </button>
-        )}
-
-        {/* Decisión primaria del primer uso: 👍/👎 registran el voto Y avanzan.
-            Nada de "me lo pongo" ni "cambia avatar" aquí — eso vive en /hoy. */}
-        <div className="mt-1 flex gap-2.5">
-          <button
-            type="button"
-            onClick={() => decidir(false)}
-            disabled={voting}
-            aria-label="no me gusta este look"
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60 ${
-              voto === "down" ? "border-ink" : ""
-            }`}
-          >
-            <Icon name="pulgar" size={17} className="rotate-180" /> no me gusta
-          </button>
-          <button
-            type="button"
-            onClick={() => decidir(true)}
-            disabled={voting}
-            aria-label="me gusta este look"
-            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-sm bg-ink text-sm font-bold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            <Icon name="pulgar" size={17} /> me gusta
-          </button>
-        </div>
-
-        {/* Ver otro de los 3 antes de decidir — secundario y discreto. */}
-        <button
-          type="button"
-          onClick={onOtroLook}
-          disabled={voting}
-          className="mx-auto min-h-9 px-4 text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-60"
-        >
-          otro look
-        </button>
-      </div>
 
       {modalOpen ? (
         <TryonImmersive
