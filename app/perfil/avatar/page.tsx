@@ -15,6 +15,18 @@ export const maxDuration = 60;
 
 const RETURNS = new Set(["/hoy", "/perfil", "/onboarding/wow"]);
 
+// Valida el destino de regreso SIN romper la query. El wow manda
+// `/onboarding/wow?look=<id>` para retomar ESE look al volver; comparar el string
+// completo contra el allowlist nunca hacía match y caía a /perfil (flujo roto:
+// tras crear el avatar en el onboarding te dejaba en Perfil en vez del try-on).
+// Validamos solo el pathname y conservamos la query. Guard anti open-redirect:
+// interno (empieza con "/") y no protocol-relative ("//host").
+function safeReturn(ret: string | undefined): string {
+  if (!ret || !ret.startsWith("/") || ret.startsWith("//")) return "/perfil";
+  const path = ret.split(/[?#]/)[0];
+  return RETURNS.has(path) ? ret : "/perfil";
+}
+
 export default async function PerfilAvatarPage({
   searchParams,
 }: {
@@ -23,9 +35,9 @@ export default async function PerfilAvatarPage({
   const profile = await getProfile();
   if (!profile.gender) redirect("/onboarding/genero");
 
-  // Solo rutas internas conocidas (sin open-redirect).
+  // Solo rutas internas conocidas (sin open-redirect); conserva la query del wow.
   const { return: ret } = await searchParams;
-  const returnTo = ret && RETURNS.has(ret) ? ret : "/perfil";
+  const returnTo = safeReturn(ret);
 
   // Menor sin permiso parental: el avatar ES fotos de su cara/cuerpo — mejor
   // avisarle aquí (con salida a Perfil para reenviar el link) que dejarla
@@ -54,7 +66,8 @@ export default async function PerfilAvatarPage({
   // En el onboarding el avatar es opcional y no debe atrapar: "seguir sin avatar"
   // entra directo a la app (/hoy). En perfil/hoy no se ofrece skip (se llega aquí
   // a propósito; el "← Volver" ya existe).
-  const skipHref = returnTo === "/onboarding/wow" ? "/hoy" : undefined;
+  const skipHref =
+    returnTo.split(/[?#]/)[0] === "/onboarding/wow" ? "/hoy" : undefined;
 
   return (
     <AvatarWizard

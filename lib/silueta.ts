@@ -33,18 +33,23 @@ const BUILDS_F: BuildOpt[] = [
   { id: "grande", label: "Talla grande", img: "/siluetas/complexion/5-grande.png",
     hint: "notably fuller and wider build with generous body volume throughout, clearly larger than a merely curvy build" },
 ];
+// Orden thin→large y labels NEUTROS. Antes "Musculoso/Robusto/Corpulento"
+// juzgaban; ahora "Fuerte/Amplio/Grande". Los `id` NO cambian (el body_build
+// guardado sigue válido) ni el `img`/`hint` (el hint en inglés alimenta la
+// generación del avatar). El label sí llega al prompt de styling vía buildLabel,
+// pero el drift es menor ("complexión amplio" ≈ "complexión robusto").
 const BUILDS_M: BuildOpt[] = [
   { id: "delgado", label: "Delgado", img: "/siluetas/complexion-hombre/1-delgado.png",
     hint: "slim, lean, narrow frame, low body volume" },
   { id: "atletico", label: "Atlético", img: "/siluetas/complexion-hombre/2-atletico.png",
     hint: "athletic V-taper: broad shoulders and chest narrowing to a trim waist, fit" },
-  { id: "musculoso", label: "Musculoso", img: "/siluetas/complexion-hombre/5-musculoso.png",
-    hint: "heavily muscular bodybuilt frame, very broad shoulders and thick chest and arms, clearly more muscle mass than merely athletic" },
   { id: "promedio", label: "Promedio", img: "/siluetas/complexion-hombre/3-promedio.png",
     hint: "average everyday medium build, neither thin nor heavy" },
-  { id: "robusto", label: "Robusto", img: "/siluetas/complexion-hombre/4-robusto.png",
+  { id: "musculoso", label: "Fuerte", img: "/siluetas/complexion-hombre/5-musculoso.png",
+    hint: "heavily muscular bodybuilt frame, very broad shoulders and thick chest and arms, clearly more muscle mass than merely athletic" },
+  { id: "robusto", label: "Amplio", img: "/siluetas/complexion-hombre/4-robusto.png",
     hint: "larger, broader, heavyset build with more body volume all over, fuller midsection" },
-  { id: "corpulento", label: "Corpulento", img: "/siluetas/complexion-hombre/6-corpulento.png",
+  { id: "corpulento", label: "Grande", img: "/siluetas/complexion-hombre/6-corpulento.png",
     hint: "very large and wide heavyset build, broad and round throughout, clearly bulkier than merely stocky" },
 ];
 
