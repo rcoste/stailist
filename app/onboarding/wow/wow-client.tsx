@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { LookDetail } from "@/components/look-detail";
-import { TryonImmersive } from "@/components/tryon-immersive";
 import { FavoriteButton } from "@/components/favorite-button";
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
@@ -15,7 +14,7 @@ import {
   ocasionLabel,
   bucketLabel,
 } from "@/components/weather-picker";
-import { markWorn, voteOutfit } from "@/lib/outfit-actions";
+import { voteOutfit } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -368,7 +367,6 @@ function ModoHoyView({
   /** Salida explícita a la app (/hoy). El voto NO navega — esta es la puerta. */
   onEnter: () => void;
 }) {
-  const [worn, setWorn] = useState(false);
   // Voto de un tap. En el PRIMER uso es la decisión primaria: 👍 o 👎 registran
   // y avanzan (Roberto: "me gusta / no me gustó → siguiente"). Las acciones
   // pesadas (me lo pongo, cambia avatar) se difieren a /hoy.
@@ -378,21 +376,15 @@ function ModoHoyView({
     outfitId: outfit.id,
     userId,
     initialImage: outfit.tryon ?? null,
-    revealMode: "modal",
+    revealMode: "inline",
     // Llevo el look elegido en la URL de regreso: al volver del wizard de avatar
     // retomo ESTE look, no el selector (cierra el bug del flujo no-secuencial).
     returnTo: `/onboarding/wow?look=${outfit.id}`,
   });
   useWakeLock(t.mode === "gen");
 
-  const modalOpen = t.mode === "gen" || t.mode === "full" || t.mode === "error";
   // Sin avatar todavía (caso normal del onboarding) → el "verme" lleva al wizard.
   const goAvatar = !hasAvatar || t.mode === "sin_avatar";
-
-  function verte() {
-    if (t.image) t.openFull();
-    else t.generar();
-  }
 
   // Retomo tras construir el avatar: disparo el try-on solo para que "ya te lo
   // ve puesto". Guard con ref para no re-disparar en el doble-montaje de dev.
@@ -422,18 +414,6 @@ function ModoHoyView({
     if (up) notifyFirstLike(); // spec: el prompt de instalar la PWA vive tras el primer 👍
   }
 
-  async function meLoPongo() {
-    if (worn) return;
-    setWorn(true);
-    const res = await markWorn(outfit.id);
-    if (!res.ok) {
-      setWorn(false);
-      return;
-    }
-    notifyFirstLike(); // pico emocional → ofrecer instalar la PWA
-    onEnter(); // "me lo pongo" es un cierre fuerte → entra a la app
-  }
-
   return (
     <div className="flex flex-1 flex-col">
       <LookDetail
@@ -443,35 +423,19 @@ function ModoHoyView({
         tip={outfit.tip ?? null}
         outfitId={outfit.id}
         initialFavorited={false}
-        verme={goAvatar ? { href: t.avatarHref } : { onClick: verte, sub: "~20 s" }}
         voto={voto}
         onVote={decidir}
         onOtroLook={onOtroLook}
         enterApp={onEnter}
         disabled={voting}
+        tryonImage={t.image}
+        generating={t.mode === "gen"}
+        tryonError={t.mode === "error" ? t.errMsg : null}
+        onGenerar={t.generar}
+        // Sin avatar (caso normal del onboarding) → la primaria lleva al wizard.
+        avatarHref={goAvatar ? t.avatarHref : null}
+        vermeSub="~20 s"
       />
-
-      {modalOpen ? (
-        <TryonImmersive
-          mode={t.mode === "full" ? "full" : t.mode === "error" ? "error" : "gen"}
-          image={t.image}
-          lookName={outfit.nombre}
-          prendas={outfit.prendas}
-          errMsg={t.errMsg}
-          worn={worn}
-          // Primer uso: modal minimal — sin "me lo pongo" (esa acción vive en
-          // /hoy). Solo verte, "otro look" y afinar el avatar.
-          minimal
-          onClose={t.closeFull}
-          onRetry={t.generar}
-          onOtro={() => {
-            t.closeFull();
-            onOtroLook();
-          }}
-          onMeLoPongo={meLoPongo}
-          changeHref={t.avatarHref}
-        />
-      ) : null}
     </div>
   );
 }

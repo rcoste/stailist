@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LookDetail } from "@/components/look-detail";
-import { TryonImmersive } from "@/components/tryon-immersive";
 import { SkipReasons } from "@/components/skip-reasons";
 import { StylistGenerating, type GenPlan } from "@/components/stylist-generating";
 import { buildGenFrases } from "@/lib/gen-frases";
@@ -15,8 +14,8 @@ import {
   bucketLabel,
 } from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
-import { markWorn, voteOutfit } from "@/lib/outfit-actions";
-import { notifyFirstLike, notifyWorn } from "@/lib/pwa";
+import { voteOutfit } from "@/lib/outfit-actions";
+import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
 import { AddSheet } from "@/components/add-sheet";
@@ -57,7 +56,6 @@ export function HoyClient({
   lookInicial,
   pendingOutfitId,
   votoInicial = null,
-  wornInicial,
   userId,
   defaultObjective,
   closet = [],
@@ -95,7 +93,6 @@ export function HoyClient({
   );
   // Pantalla despierta mientras se genera el look (no se auto-bloquea a media carga).
   useWakeLock(state.kind === "generating");
-  const [worn, setWorn] = useState(wornInicial);
   // Fecha como eyebrow del empty state. Se calcula en cliente para evitar
   // desajuste de hidratación (la zona horaria del server puede diferir).
   const [fechaLabel, setFechaLabel] = useState("");
@@ -164,7 +161,6 @@ export function HoyClient({
       lastForceAnchor.current = forceAnchor;
       cancelPoll.current?.();
       setState({ kind: "generating", outfitId: "" });
-      setWorn(false);
       try {
         const res = await fetch("/api/look-of-day", {
           method: "POST",
@@ -217,14 +213,6 @@ export function HoyClient({
   function otroLook() {
     if (lastInput.current) generar(lastInput.current, true, lastForceAnchor.current);
     else startGen(true);
-  }
-
-  async function meLoPongo() {
-    if (state.kind !== "ready" || worn) return;
-    setWorn(true);
-    const res = await markWorn(state.outfit.id);
-    if (!res.ok) setWorn(false);
-    else notifyWorn(); // pico máximo de compromiso → ofrecer el correo semanal
   }
 
   // Sin look del día (y no llegaste por el ✨): home dentro del AppShell, con la
@@ -405,12 +393,10 @@ export function HoyClient({
       key={state.outfit.id}
       outfit={state.outfit}
       userId={userId}
-      worn={worn}
       fechaLabel={fechaLabel}
       // El voto persistido solo aplica al look con el que cargó la página; un
       // look recién generado arranca sin voto (el key resetea el estado).
       votoInicial={state.outfit.id === lookInicial?.id ? votoInicial : null}
-      onMeLoPongo={meLoPongo}
       onOtroLook={otroLook}
     />
   );
@@ -424,26 +410,21 @@ const FRASES_ESTILISTA: Record<string, string> = {
   refrescar: "una combinación distinta a la de siempre, bien fresca…",
 };
 
-// Vista del look listo (estado 6 + try-on oscuro 7/8). Va keyed por outfit.id
-// en el padre para que, al generar otro look, el try-on arranque limpio.
-// El try-on YA NO se muestra inline: la foto vive solo en el modal oscuro
-// (revealMode "modal"), que es el único momento oscuro de la app.
+// Vista del look listo. Va keyed por outfit.id en el padre para que, al generar
+// otro look, el try-on arranque limpio. El render vive DENTRO del detalle (vista
+// "así te queda"), no en un modal aparte: revealMode "inline".
 function ReadyView({
   outfit,
   userId,
-  worn,
   fechaLabel,
   votoInicial = null,
-  onMeLoPongo,
   onOtroLook,
 }: {
   outfit: HoyOutfit;
   userId: string;
-  worn: boolean;
   /** "MARTES · 15 JUL" — para el eyebrow del spread de desktop. */
   fechaLabel: string;
   votoInicial?: "up" | "down" | null;
-  onMeLoPongo: () => void;
   onOtroLook: () => void;
 }) {
   const [skipOpen, setSkipOpen] = useState(false);
@@ -476,21 +457,11 @@ function ReadyView({
     outfitId: outfit.id,
     userId,
     initialImage: outfit.tryon ?? null,
-    revealMode: "modal",
+    revealMode: "inline",
     returnTo: "/hoy",
   });
   // Pantalla despierta mientras se genera el try-on (~30s con Gemini).
   useWakeLock(t.mode === "gen");
-
-  // El modal oscuro está abierto durante la generación, con la foto, o en error.
-  const modalOpen = t.mode === "gen" || t.mode === "full" || t.mode === "error";
-
-  // "Verte con este look": si ya hay foto, ábrela; si no, genérala (revealMode
-  // "modal" abre el modal al terminar). Sin avatar → el CTA lleva al wizard.
-  function verte() {
-    if (t.image) t.openFull();
-    else t.generar();
-  }
 
   return (
     <>
@@ -505,17 +476,18 @@ function ReadyView({
           tip={outfit.tip ?? null}
           outfitId={outfit.id}
           initialFavorited={outfit.favorited ?? false}
-          verme={
-            t.mode === "sin_avatar"
-              ? { href: t.avatarHref }
-              : { onClick: verte, sub: "~20 s" }
-          }
           voto={voto}
           onVote={votar}
           onOtroLook={() => {
             setSheetMode("skip");
             setSkipOpen(true);
           }}
+          tryonImage={t.image}
+          generating={t.mode === "gen"}
+          tryonError={t.mode === "error" ? t.errMsg : null}
+          onGenerar={t.generar}
+          avatarHref={t.mode === "sin_avatar" ? t.avatarHref : null}
+          vermeSub="~20 s"
         />
       </div>
 
@@ -525,26 +497,6 @@ function ReadyView({
           mode={sheetMode}
           onProceed={onOtroLook}
           onClose={() => setSkipOpen(false)}
-        />
-      ) : null}
-
-      {modalOpen ? (
-        <TryonImmersive
-          mode={t.mode === "full" ? "full" : t.mode === "error" ? "error" : "gen"}
-          image={t.image}
-          lookName={outfit.nombre}
-          prendas={outfit.prendas}
-          errMsg={t.errMsg}
-          worn={worn}
-          minimal
-          onClose={t.closeFull}
-          onRetry={t.generar}
-          onOtro={() => {
-            t.closeFull();
-            onOtroLook();
-          }}
-          onMeLoPongo={onMeLoPongo}
-          changeHref={t.avatarHref}
         />
       ) : null}
     </>
