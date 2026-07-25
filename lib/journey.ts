@@ -1,13 +1,13 @@
-// Motor de "siguiente mejor paso" post-onboarding — lógica de dominio PURA
-// (sin DB ni IA; segura para cliente). Ver docs/designs/post-onboarding-nudges.md.
+// Tipos del estado de nudges (profiles.journey_state) — lógica de dominio PURA
+// (sin DB ni IA; segura para cliente).
 //
-// Idea: tras el aha del primer outfit, guiamos al usuario UNO a la vez y por
-// comportamiento. Cada nudge se muestra hasta que el usuario lo descarta o lo
-// completa. Las SEÑALES se derivan de datos que ya existen (events, outfits,
-// items, capsule_target) — aquí solo decidimos QUÉ mostrar, dado el estado.
+// El RESOLVEDOR de "siguiente mejor paso" (nextBestAction) se retiró cuando el
+// checklist de activación de Home (lib/home-checklist) reemplazó los nudges de
+// uno-en-uno. Estos tipos siguen vivos porque `lib/journey-actions.ts` (markNudge)
+// aún marca el ciclo de vida de un nudge — p. ej. el avatar-wizard registra
+// "tryon" como done al crear el avatar — y `lib/auth.ts` tipa `profile.journey_state`.
 
-// Orden = prioridad: tryon (P2) → closet_real (P3) → capsula (P4) → silueta (P5).
-// El resolvedor devuelve UNO solo, así nunca se encima más de un nudge a la vez.
+// Los nudges que journey_state puede llevar registrados.
 export type NudgeId = "tryon" | "closet_real" | "capsula" | "silueta";
 
 export type NudgeLifecycle = {
@@ -19,7 +19,8 @@ export type NudgeLifecycle = {
 // Guardado en profiles.journey_state (jsonb). Parcial: una entrada por nudge tocado.
 export type JourneyState = Partial<Record<NudgeId, NudgeLifecycle>>;
 
-// Derivadas server-side de datos existentes antes de llamar al resolvedor.
+// Señales de comportamiento derivadas server-side de datos existentes (events,
+// outfits, items, capsule_target). Las consume el checklist de Home.
 export type JourneySignals = {
   likes: number; // # de vote_up (events)
   lookDays: number; // # de días con look-of-day (outfits)
@@ -29,46 +30,3 @@ export type JourneySignals = {
   hasSilueta: boolean; // ya eligió complexión o dónde carga volumen
   siluetaApplies: boolean; // género mujer/hombre (la silueta tiene contenido propio)
 };
-
-// ¿Sigue "vivo"? (ni descartado ni completado → se puede volver a mostrar).
-export function isOpen(l: NudgeLifecycle | undefined): boolean {
-  return !l?.dismissed_at && !l?.done_at;
-}
-
-// El ÚNICO nudge a mostrar ahora, o null. Uno a la vez, por prioridad.
-export function nextBestAction(
-  state: JourneyState,
-  signals: JourneySignals
-): NudgeId | null {
-  // P2 — try-on: ya enganchó (≥1 👍) y aún no tiene avatar para verse el look.
-  if (signals.likes >= 1 && !signals.hasAvatar && isOpen(state.tryon)) {
-    return "tryon";
-  }
-
-  // P3 — "haz tu clóset real": usó Hoy ≥2 veces y aún no editó su clóset.
-  if (signals.lookDays >= 2 && !signals.editedCloset && isOpen(state.closet_real)) {
-    return "closet_real";
-  }
-
-  // P4 — descubre la cápsula: ya enganchó con outfits y aún no la abrió.
-  if (
-    (signals.lookDays >= 2 || signals.likes >= 2) &&
-    !signals.hasCapsule &&
-    isOpen(state.capsula)
-  ) {
-    return "capsula";
-  }
-
-  // P5 — silueta: ya enganchó (≥1 👍 o ≥1 día) y aún no nos cuenta de su cuerpo;
-  // afina sus looks a su medida. Solo si su género tiene silueta propia.
-  if (
-    signals.siluetaApplies &&
-    (signals.likes >= 1 || signals.lookDays >= 1) &&
-    !signals.hasSilueta &&
-    isOpen(state.silueta)
-  ) {
-    return "silueta";
-  }
-
-  return null;
-}
