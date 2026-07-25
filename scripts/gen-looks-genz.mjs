@@ -105,12 +105,12 @@ const MEN = [
   ["monocromatico","h2","a striking all-BLACK tonal monochrome look, tone-on-tone — a black fine-gauge merino turtleneck tucked into relaxed black pleated trousers, sleek black leather Chelsea boots and a slim black leather crossbody bag; matte wool, fine knit and polished leather textures all in black — minimal, high-impact and intentional, the discipline of ONE single colour is the whole statement, NO waistcoat over a sweater"],
   ["clasico-elegante","h3","an oversized relaxed camel wool overcoat over a fine ivory knit, wide-leg grey wool trousers and sleek leather loafers, youthful quiet-luxury old money"],
   ["coastal","h3","an open cream linen overshirt over a white tee, relaxed beige linen trousers and minimalist tan leather sandals, relaxed coastal"],
-  ["tonos-tierra","h3","a layered warm earth-tone look mixing textures — a cream ribbed tee under an open chocolate-brown corduroy overshirt, relaxed camel pleated trousers, tan suede loafers and a brown leather crossbody bag; tonal browns and camels in corduroy, suede and knit, styled with layers — NOT a plain crew and chino"],
+  ["tonos-tierra","h3","a layered warm earth-tone look mixing textures — a cream ribbed tee under an open chocolate-brown corduroy overshirt, relaxed camel pleated trousers and tan suede loafers; tonal browns and camels in corduroy, suede and knit, styled with layers — NOT a plain crew and chino, NO bag"],
   ["nautico","h3","a navy-and-white breton striped top under an OVERSIZED relaxed navy blazer, straight-leg ecru trousers and clean white sneakers, fresh modern nautical breton"],
   ["preppy","h3","a navy knit sweater over an oxford shirt, relaxed-fit pleated beige chinos and chunky penny loafers, polished modern preppy campus"],
-  ["glam-noche","h3","a sharp black silk shirt, slim tailored black trousers and polished shoes, evening going-out glam"],
+  ["glam-noche","h3","a black silk shirt with a soft sheen worn with the top two buttons open over a fine silver chain, slim tailored black trousers and polished black Chelsea boots — sharp dressed-up evening going-out energy, refined and intentional"],
   ["boho","h3","an open warm-toned PATTERNED textured camp shirt over a white tee, layered pendant necklaces, relaxed earthy brown trousers and leather sandals, free-spirited modern boho — the print and jewelry are the statement"],
-  ["romantico","h3","a soft blush-pink lightweight crew-neck knit sweater, relaxed off-white trousers and clean white sneakers, soft romantic light palette — gentle, tidy, NO open overshirt, NO linen shirt"],
+  ["romantico","h3","a soft blush-pink lightweight crew-neck knit sweater, relaxed off-white trousers and clean white sneakers, soft romantic light palette — gentle, tidy, NO open overshirt, NO linen shirt, NO jacket, NO bag, hands empty","Standing three-quarter, weight on one leg, one hand loosely in a trouser pocket and the other relaxed at his side, chin slightly down, looking aside — nothing in his hands, no jacket."],
   ["coreano","h2","an oversized drapey K-fashion look — a fine-gauge black knit under an unstructured long grey overcoat, VERY wide-leg high-waisted fluid drapey black trousers with a soft drape, and clean minimal white leather sneakers, soft monochrome neutral palette, Korean minimalist soft tailoring — oversized but intentional, the wide fluid trousers are the statement"],
 ];
 
@@ -152,8 +152,8 @@ for (const [id, mk, outfit, hair, poseOv] of WOMEN) {
   i++;
 }
 i = 0;
-for (const [id, mk, outfit] of MEN) {
-  if (wanted(id, "hombre")) await gen(`${id}-hombre.png`, M[mk], prompt("man", "his", outfit, POSES_M[i % POSES_M.length]));
+for (const [id, mk, outfit, poseOv] of MEN) {
+  if (wanted(id, "hombre")) await gen(`${id}-hombre.png`, M[mk], prompt("man", "his", outfit, poseOv ?? POSES_M[i % POSES_M.length]));
   i++;
 }
 console.log("LISTO");
