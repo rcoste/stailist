@@ -1,4 +1,4 @@
-import { seasonPalette, seasonDisplayLabel, seasonMetal, type Season } from "@/lib/colorimetria";
+import { seasonPalette, seasonDisplayLabel, metalForSeason, type Season } from "@/lib/colorimetria";
 import { buildLabel, volumeLabel, siluetaConsejo, type Build, type Volume } from "@/lib/silueta";
 
 // Datos del Pasaporte de estilo: identidad estilística compartible (arquetipo +
@@ -11,7 +11,7 @@ export type PasaporteData = {
   archetypeDesc: string | null;
   vibe: string[]; // taste tags ("minimalista, refinado…")
   seasonLabel: string | null; // "Otoño profundo"
-  metal: "oro" | "plata" | null; // metal que le va
+  metal: "oro" | "plata" | "ambos" | null; // metal que le va ("ambos" en frontera)
   swatches: string[]; // hex de la paleta (sus mejores + prestados)
   powerColors: { nombre: string; hex: string }[]; // los que le encienden la cara
   siluetaLine: string | null; // "Con más curvas · En el medio"
@@ -56,7 +56,7 @@ export function buildPasaporte(profile: {
     archetypeDesc: profile.style_archetype?.descripcion ?? null,
     vibe: (profile.taste_tags ?? []).slice(0, 5),
     seasonLabel: season ? seasonDisplayLabel(season, profile.palette_flow) : null,
-    metal: season ? seasonMetal(season, profile.palette_flow) : null,
+    metal: season ? metalForSeason(season, profile.palette_flow) : null,
     swatches: all.slice(0, 7).map((c) => c.hex),
     powerColors: (pal?.mejores ?? []).slice(0, 3).map((c) => ({ nombre: c.nombre, hex: c.hex })),
     siluetaLine,

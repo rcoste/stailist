@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
@@ -18,6 +18,11 @@ const CATEGORY_ORDER = ["top", "saco", "vestido", "bottom", "abrigo", "calzado"]
 // Mínimo para armar un outfit: algo de arriba, algo de abajo y zapatos.
 // Un vestido cuenta como arriba+abajo; sacos y abrigos son opcionales.
 const REQUIRED = ["top", "bottom", "calzado"];
+// Opcionales que el flujo guiado ANTES saltaba (el botón iba directo a enviar
+// tras los 3 obligatorios): así el motor se enteraba de la ropa de abrigo solo
+// si la persona tocaba el chip a mano. Ahora el CTA pasa por estas si están
+// presentes y no las ha visto — con opción de saltar (no todos las tienen).
+const OPTIONAL = ["saco", "abrigo", "vestido"];
 const CATEGORY_LABELS: Record<string, string> = {
   top: "Arriba",
   saco: "Sacos",
@@ -56,25 +61,45 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
       : countIn(cat) > 0;
   const requiredPresent = REQUIRED.filter((c) => cats.includes(c));
   const missing = requiredPresent.filter((c) => !isSatisfied(c));
-  const complete = missing.length === 0;
-  const target = missing[0]; // primera categoría esencial sin cubrir
+  const requiredDone = missing.length === 0;
+
+  // Categorías vistas (para que el CTA guíe por las opcionales tras los 3
+  // obligatorios, en vez de saltar directo a enviar). La activa inicial ya
+  // cuenta como vista.
+  const [visited, setVisited] = useState<Set<string>>(() => new Set([cats[0] ?? ""]));
+  useEffect(() => {
+    setVisited((v) => (v.has(activeCat) ? v : new Set(v).add(activeCat)));
+  }, [activeCat]);
+
+  const optionalPresent = OPTIONAL.filter((c) => cats.includes(c));
+  // Tras cubrir lo obligatorio, guía a la primera opcional que aún no vio.
+  const optionalTarget = requiredDone
+    ? optionalPresent.find((c) => !visited.has(c))
+    : undefined;
+  const canSubmit = requiredDone && !optionalTarget;
+  const target = missing[0] ?? optionalTarget; // a dónde lleva el "go"
   const targetLabel = target ? (CATEGORY_LABELS[target] ?? target) : "";
-  // El botón: si ya está completo → enviar; si la categoría pendiente NO es la
-  // activa → llevar ahí; si SÍ es la activa (vacía) → pedir que marque algo.
-  const ctaMode: "submit" | "go" | "fill" = complete
+  const targetIsOptional = !!target && OPTIONAL.includes(target);
+
+  // El botón: completo → enviar; pendiente-obligatoria que ES la activa (vacía)
+  // → pedir que marque; si no, llevar a la categoría objetivo (obligatoria u
+  // opcional). Cuando solo quedan opcionales, hay un "ya, ármalo" para saltar.
+  const ctaMode: "submit" | "go" | "fill" = canSubmit
     ? "submit"
-    : target === activeCat
+    : !requiredDone && target === activeCat
       ? "fill"
       : "go";
 
+  function goToCat(cat: string) {
+    setActiveCat(cat);
+    // Vuelve arriba: tras avanzar, que vean la categoría nueva desde el inicio
+    // (y no quede el dedo sobre el botón por inercia).
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function handleCta() {
     if (ctaMode === "submit") return submit();
-    if (ctaMode === "go" && target) {
-      setActiveCat(target);
-      // Vuelve arriba: tras avanzar, que vean la categoría nueva desde el inicio
-      // (y no quede el dedo sobre el botón por inercia).
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (ctaMode === "go" && target) goToCat(target);
   }
 
   function toggle(id: number) {
@@ -208,13 +233,26 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
             </>
           ) : ctaMode === "go" ? (
             <>
-              sigue con {targetLabel.toLowerCase()}{" "}
+              {targetIsOptional
+                ? `¿tienes ${targetLabel.toLowerCase()}?`
+                : `sigue con ${targetLabel.toLowerCase()}`}{" "}
               <Icon name="flecha" size={18} />
             </>
           ) : (
             <>marca lo que tengas de {targetLabel.toLowerCase()}</>
           )}
         </button>
+        {/* Escape: cubrió lo obligatorio y solo quedan opcionales (saco/abrigo)
+            — que pueda saltarlas si no tiene, sin quedar atrapado. */}
+        {requiredDone && !canSubmit && !pending ? (
+          <button
+            type="button"
+            onClick={submit}
+            className="mx-auto mt-2 block min-h-9 px-4 text-sm font-semibold text-muted transition-colors hover:text-ink"
+          >
+            ya, ármalo
+          </button>
+        ) : null}
       </div>
     </div>
   );

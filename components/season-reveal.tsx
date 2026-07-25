@@ -7,6 +7,7 @@ import {
   seasonPalette,
   seasonDisplayLabel,
   seasonNeighbors,
+  metalForSeason,
   type Season,
 } from "@/lib/colorimetria";
 import { updateColorimetria } from "@/app/onboarding/colorimetria/actions";
@@ -20,7 +21,6 @@ const DISPLAY: Record<Season, string> = {
   invierno: "Invierno",
 };
 // Calidez → metal: paletas cálidas van con oro, frías con plata.
-const isWarm = (s: Season) => s === "primavera" || s === "otono";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -81,7 +81,10 @@ export function SeasonReveal({
   const { mejores, prestados, evita } = seasonPalette(base, flw);
   const sBase = SEASONS[base];
   const sFlow = flw ? SEASONS[flw] : null;
-  const metalVa: "oro" | "plata" = isWarm(base) ? "oro" : "plata";
+  // Considera base Y flow: en la frontera cálido↔frío devuelve "ambos" (los dos
+  // metales le van) — antes usaba solo la base e ignoraba el guiño (bug: a la
+  // persona invierno-con-otoño le salía plata cuando el oro también le va).
+  const metalVa = metalForSeason(base, flw);
 
   function startEdit() {
     setDraft(base);
@@ -185,7 +188,8 @@ export function SeasonReveal({
         <Label>tu metal</Label>
         <div className="flex gap-2">
           {(["oro", "plata"] as const).map((m) => {
-            const on = m === metalVa;
+            // En la frontera ("ambos") los DOS metales quedan encendidos.
+            const on = metalVa === "ambos" || m === metalVa;
             return (
               <span
                 key={m}
@@ -205,6 +209,9 @@ export function SeasonReveal({
             );
           })}
         </div>
+        {metalVa === "ambos" ? (
+          <span className="editorial text-xs text-muted">los dos te van</span>
+        ) : null}
       </div>
 
       {nota ? <p className="text-center text-xs text-muted">{nota}</p> : null}

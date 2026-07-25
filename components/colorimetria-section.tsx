@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import {
   seasonPalette,
-  seasonMetal,
+  metalForSeason,
   seasonDisplayLabel,
   seasonNeighbors,
   METAL_HEX,
@@ -83,7 +83,7 @@ export function ColorimetriaSection({
   }
 
   const palette = current ? seasonPalette(current, curFlow) : null;
-  const metal = current ? seasonMetal(current, curFlow) : null;
+  const metal = current ? metalForSeason(current, curFlow) : null;
 
   // Sub-estaciones seleccionables del borrador: la pura + sus dos vecinas, cada
   // una con su nombre real ("Invierno profundo") — no el genérico de la vecina.
@@ -105,11 +105,29 @@ export function ColorimetriaSection({
         </span>
         {metal ? (
           <span className="flex shrink-0 items-center gap-1.5 rounded-sm border border-line bg-bg px-2.5 py-1 text-xs text-muted">
-            <span
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: METAL_HEX[metal] }}
-            />
-            {metal === "oro" ? "Oro" : "Plata"}
+            {metal === "ambos" ? (
+              <>
+                <span className="flex -space-x-1">
+                  <span
+                    className="h-3 w-3 rounded-full ring-1 ring-bg"
+                    style={{ backgroundColor: METAL_HEX.oro }}
+                  />
+                  <span
+                    className="h-3 w-3 rounded-full ring-1 ring-bg"
+                    style={{ backgroundColor: METAL_HEX.plata }}
+                  />
+                </span>
+                Oro y plata
+              </>
+            ) : (
+              <>
+                <span
+                  className="h-3 w-3 rounded-full"
+                  style={{ backgroundColor: METAL_HEX[metal] }}
+                />
+                {metal === "oro" ? "Oro" : "Plata"}
+              </>
+            )}
           </span>
         ) : null}
       </div>

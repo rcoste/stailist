@@ -119,7 +119,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     id: "fit",
     label: "¿Cómo te gusta que te quede la ropa?",
     options: [
-      { value: "entallado", label: "Entallado", hint: "Marca la figura, silueta definida." },
+      { value: "entallado", label: "Ajustado", hint: "Pegado al cuerpo, que marque la figura." },
       { value: "holgado", label: "Holgado y cómodo", hint: "Relajado, sin pegarse." },
       { value: "mezcla", label: "Depende de la prenda", hint: "Arriba de un modo, abajo de otro." },
       { value: "nose", label: "Aún no lo sé", hint: "Elige lo que más me favorezca." },

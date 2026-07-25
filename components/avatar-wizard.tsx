@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { ImageCrop } from "@/components/image-crop";
 import { toUsableImage } from "@/lib/image-file";
 import { comprimir } from "@/lib/image-compress";
 import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
@@ -55,6 +56,12 @@ function blobToB64(blob: Blob): Promise<string> {
     r.onerror = () => reject(new Error("b64"));
     r.readAsDataURL(blob);
   });
+}
+
+// El recortador (ImageCrop) devuelve un dataURL; el wizard trabaja con File.
+async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
+  const blob = await (await fetch(dataUrl)).blob();
+  return new File([blob], name, { type: blob.type || "image/jpeg" });
 }
 
 export function AvatarWizard({
@@ -133,6 +140,9 @@ export function AvatarWizard({
   const [faceGen, setFaceGen] = useState<string | null>(null);
   const [faceVeredicto, setFaceVeredicto] = useState<{ score: number | null; problema: string } | null>(null);
   const [ajusteLibre, setAjusteLibre] = useState("");
+  // Foto de cara en recorte (dataURL). Reusa ImageCrop (mismo del carrete de
+  // prendas): sirve para aislarte si la foto trae más de una persona.
+  const [cropFaceSrc, setCropFaceSrc] = useState<string | null>(null);
   // Qué etapa está generando/falló (para los mensajes y el retry del error).
   const [genKind, setGenKind] = useState<"cara" | "cuerpo">("cara");
   // Las caras comprimidas se cachean: los ajustes regeneran sin recomprimir.
@@ -385,16 +395,33 @@ export function AvatarWizard({
                 de fotos con lentes/gorra, mala luz o cuerpo recortado. */}
             <p className="mt-1 rounded-sm border border-line bg-surface px-3 py-2 text-xs text-muted">
               El secreto de un avatar fiel: luz natural, fondo despejado, sin
-              lentes ni gorra — y entre más fotos me des, más se parece a ti.
+              lentes ni gorra, y que salgas solo tú (si sale alguien más,
+              recórtala) — y entre más fotos me des, más se parece a ti.
             </p>
           </div>
           <div className="flex flex-col gap-3">
             <UploadTile
-              label="Tu cara"
+              label="Tómate una foto de tu cara"
               hint="De frente, con luz de día, sin lentes ni gorra"
               preview={previews.face}
               onPick={(f) => setSlot("face", f)}
+              capture="user"
             />
+            {/* Carrete como secundario (no como default: buscar "la foto
+                perfecta" en la galería es la trampa de tiempo). Y recorte para
+                aislarte si en la foto sale más de una persona. */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
+              <PickLink label="o elígela del carrete" onPick={(f) => setSlot("face", f)} />
+              {previews.face ? (
+                <button
+                  type="button"
+                  onClick={() => setCropFaceSrc(previews.face)}
+                  className="text-[13px] font-medium text-muted underline decoration-line underline-offset-2 hover:text-ink"
+                >
+                  recortar (déjate solo a ti)
+                </button>
+              ) : null}
+            </div>
             <UploadTile
               variant="sutil"
               label="Sumar otro ángulo de tu cara"
@@ -833,7 +860,54 @@ export function AvatarWizard({
           </div>
         </div>
       )}
+      {/* Recorte de la foto de cara (mismo ImageCrop del carrete de prendas):
+          aislarte si en la foto sale más de una persona. */}
+      {cropFaceSrc ? (
+        <ImageCrop
+          src={cropFaceSrc}
+          title="recorta tu cara — déjate solo a ti"
+          onCancel={() => setCropFaceSrc(null)}
+          onDone={async (dataUrl) => {
+            setCropFaceSrc(null);
+            setSlot("face", await dataUrlToFile(dataUrl, "cara-recortada.jpg"));
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+// Enlace discreto para elegir del carrete (sin `capture`, o sea SÍ abre la
+// galería) — el secundario del "tómate una foto" cámara-primero.
+function PickLink({
+  label,
+  onPick,
+}: {
+  label: string;
+  onPick: (file: File | null) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => ref.current?.click()}
+        className="text-[13px] font-medium text-muted underline decoration-line underline-offset-2 hover:text-ink"
+      >
+        {label}
+      </button>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*,.heic,.heif"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null;
+          if (ref.current) ref.current.value = "";
+          onPick(f);
+        }}
+      />
+    </>
   );
 }
 
@@ -847,12 +921,15 @@ function UploadTile({
   preview,
   onPick,
   variant = "card",
+  capture,
 }: {
   label: string;
   hint: string;
   preview: string | null;
   onPick: (file: File | null) => void;
   variant?: "card" | "sutil";
+  /** "user" → en móvil abre la cámara frontal directo (selfie), sin galería. */
+  capture?: "user" | "environment";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   if (variant === "sutil") {
@@ -916,6 +993,7 @@ function UploadTile({
         ref={inputRef}
         type="file"
         accept="image/*,.heic,.heif"
+        capture={capture}
         onChange={(e) => {
           const f = e.target.files?.[0] ?? null;
           if (inputRef.current) inputRef.current.value = "";

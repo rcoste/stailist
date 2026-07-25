@@ -51,6 +51,9 @@ export function SwipeDeck({
   const [archetype, setArchetype] = useState<StyleArchetype | null>(null);
   // Calibración post-reveal: preguntas generadas a la medida de los swipes.
   const [calib, setCalib] = useState<AssessmentQuestion[] | null>(null);
+  // Antes de las preguntas, un intro OPCIONAL: la persona decide si las hace o
+  // sigue directo (son 2-3 y pueden sentirse tediosas — no imponerlas).
+  const [calibIntro, setCalibIntro] = useState<AssessmentQuestion[] | null>(null);
   const [calibIdx, setCalibIdx] = useState(0);
   const [multiSel, setMultiSel] = useState<string[]>([]); // selección de una pregunta multi
   const calibAnswers = useRef<Record<string, string>>({});
@@ -64,7 +67,9 @@ export function SwipeDeck({
   function continuar() {
     startTransition(async () => {
       const qs = await getCalibrationQuestions().catch(() => null);
-      if (qs && qs.length > 0) setCalib(qs);
+      // Si hay preguntas, primero el intro opcional (la persona decide); si no
+      // hay, directo a colores — jamás se espera a la IA.
+      if (qs && qs.length > 0) setCalibIntro(qs);
       else router.push(doneHref);
     });
   }
@@ -161,6 +166,51 @@ export function SwipeDeck({
           >
             Reintentar
           </button>
+        </div>
+      );
+    }
+
+    // Gate opcional: antes de las preguntas, la persona decide si las hace. Así
+    // sabe de una que son opcionales, en vez de caer en la pregunta 1 y tener
+    // que notar el "luego".
+    if (calibIntro && !calib) {
+      return (
+        <div
+          className="flex flex-1 flex-col items-center justify-center gap-3 pb-4 text-center"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+            una más · opcional
+          </p>
+          <h2 className="mt-2 max-w-[320px] text-[26px] font-bold leading-[1.1] tracking-[-0.02em] text-ink">
+            ¿afinamos tu estilo con {calibIntro.length}{" "}
+            {calibIntro.length === 1 ? "pregunta" : "preguntas"} rápidas?
+          </h2>
+          <p className="max-w-[300px] text-[15px] text-muted">
+            Salieron de tus swipes y suben la puntería de tus looks — pero puedes
+            seguir sin ellas.
+          </p>
+          <div className="mt-5 flex w-full max-w-[340px] flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setCalib(calibIntro);
+                setCalibIntro(null);
+                setCalibIdx(0);
+              }}
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            >
+              sí, afinémoslo <Icon name="flecha" size={19} />
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => router.push(doneHref)}
+              className="min-h-12 text-sm font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+            >
+              seguir así
+            </button>
+          </div>
         </div>
       );
     }

@@ -63,11 +63,29 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
                 </span>
                 {data.metal ? (
                   <span className="flex items-center gap-1.5 rounded-sm border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] text-white/70">
-                    <span
-                      className="h-[11px] w-[11px] rounded-full"
-                      style={{ backgroundColor: METAL_HEX[data.metal] }}
-                    />
-                    {data.metal === "oro" ? "oro" : "plata"}
+                    {data.metal === "ambos" ? (
+                      <>
+                        <span className="flex -space-x-1">
+                          <span
+                            className="h-[11px] w-[11px] rounded-full ring-1 ring-black/30"
+                            style={{ backgroundColor: METAL_HEX.oro }}
+                          />
+                          <span
+                            className="h-[11px] w-[11px] rounded-full ring-1 ring-black/30"
+                            style={{ backgroundColor: METAL_HEX.plata }}
+                          />
+                        </span>
+                        oro y plata
+                      </>
+                    ) : (
+                      <>
+                        <span
+                          className="h-[11px] w-[11px] rounded-full"
+                          style={{ backgroundColor: METAL_HEX[data.metal] }}
+                        />
+                        {data.metal === "oro" ? "oro" : "plata"}
+                      </>
+                    )}
                   </span>
                 ) : null}
               </div>
@@ -107,11 +125,15 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
           {/* Tu metal */}
           {data.metal ? (
             <div className="flex flex-col gap-1.5">
-              <span className={SECLBL}>tu metal · {data.metal}</span>
+              <span className={SECLBL}>
+                tu metal · {data.metal === "ambos" ? "oro y plata" : data.metal}
+              </span>
               <span className="text-[13px] leading-[1.4] text-white/85">
                 {data.metal === "oro"
                   ? "el dorado te ilumina; la plata te apaga."
-                  : "la plata te ilumina; el dorado te apaga."}
+                  : data.metal === "plata"
+                    ? "la plata te ilumina; el dorado te apaga."
+                    : "estás en la frontera — el oro y la plata te van a los dos."}
               </span>
             </div>
           ) : null}
