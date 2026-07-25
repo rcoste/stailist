@@ -760,15 +760,17 @@ export function AvatarWizard({
             </p>
           </div>
 
-          {/* Una sola vista: el cuerpo completo de frente, ocupando el aire libre.
-              La tira de 3 vistas se fue; el sheet multi-ángulo se sigue generando
-              en silencio (lo usa el try-on), solo que ya no se muestra aquí. */}
-          <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-line bg-surface">
+          {/* Una sola vista: el cuerpo completo de frente, centrado en el aire
+              libre. La imagen se ACOTA al espacio (max-h/max-w) y el borde va
+              pegado a ella — nada de una caja blanca fija que deja un vacío debajo
+              cuando la imagen no la llena. La tira de 3 vistas se fue; el sheet
+              multi-ángulo se sigue generando en silencio (lo usa el try-on). */}
+          <div className="flex min-h-0 flex-1 items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`data:image/jpeg;base64,${generated}`}
               alt="Tu avatar generado, cuerpo completo de frente"
-              className="h-full w-full object-contain"
+              className="max-h-full max-w-full rounded-lg border border-line object-contain"
             />
           </div>
 
