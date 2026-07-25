@@ -67,8 +67,14 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   // obligatorios, en vez de saltar directo a enviar). La activa inicial ya
   // cuenta como vista.
   const [visited, setVisited] = useState<Set<string>>(() => new Set([cats[0] ?? ""]));
+  // Al cambiar de categoría: márcala vista Y sube al inicio. El scroll va AQUÍ
+  // (efecto, tras el render de la categoría nueva) y no en el handler: llamarlo
+  // antes del re-render, con la altura cambiando, dejaba la página abajo.
   useEffect(() => {
     setVisited((v) => (v.has(activeCat) ? v : new Set(v).add(activeCat)));
+    // Instantáneo, no smooth: la categoría nueva puede ser más corta y el cambio
+    // de altura cancela la animación smooth a media subida (quedaba a medias).
+    window.scrollTo(0, 0);
   }, [activeCat]);
 
   const optionalPresent = OPTIONAL.filter((c) => cats.includes(c));
@@ -91,10 +97,8 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
       : "go";
 
   function goToCat(cat: string) {
+    // El scroll al inicio lo hace el efecto de arriba (tras el render).
     setActiveCat(cat);
-    // Vuelve arriba: tras avanzar, que vean la categoría nueva desde el inicio
-    // (y no quede el dedo sobre el botón por inercia).
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleCta() {
