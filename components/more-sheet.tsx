@@ -1,51 +1,73 @@
 "use client";
 
-import { useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
-import { AddSheet, type AddSheetHandle } from "@/components/add-sheet";
-import { Sheet } from "@/components/sheet";
+import { AddPhotoFlow, type AddFlowHandle } from "@/components/add-photo-flow";
+import { ImportCarreteFlow } from "@/components/import-carrete-flow";
 import type { TripContext } from "@/lib/trip-context";
 
-// El 4º slot de la tab bar. No es un destino: levanta una hoja con las acciones
-// y lugares que NO alcanzan pestaña propia pero estaban demasiado enterrados
-// (modo tienda vivía a 4 taps: Perfil → estilo → cartera → chequear).
-//
-// CINCO elementos, tope duro. Wishlist y Cápsula NO están aquí a propósito: ya
-// viven a 2 taps con etiqueta visible en el nav del Clóset, y repetirlas
-// convertiría la hoja en cajón de sastre. "Añadir prendas" abre la hoja que ya
-// existe (foto · carrete · biblioteca) en vez de repetir sus tres formas aquí.
-//
-// Viaje perdió su pestaña al ceder este slot; la compensación es que con viaje
-// vivo encabeza la hoja con lugar y días, y el botón lleva un punto de aviso.
+// El 4º slot de la tab bar. No es un destino: levanta una PALETA DE ATAJOS.
+// Antes era un menú de filas con chevron (leía como ajustes, ~2/3 de pantalla);
+// ahora es un atajo estrella + retícula de tiles, con un 2º nivel (agregar al
+// clóset) al que la hoja MORFA sin bajar y volver a subir. La hoja vive por
+// DEBAJO de la tab bar/FAB (z), reserva su alto abajo, y mide lo que pesa su
+// contenido (sin scroll, sin alto en %).
+
+const DUR_ENTER = 300; // --dur-medium
+const DUR_EXIT = 200; // --dur-short
+
+function useReduceMotion() {
+  // Valor inicial lazy (client-only): la hoja jamás está montada en SSR, así que
+  // no hay contenido que dependa de esto en el HTML del servidor. El effect solo
+  // se suscribe a CAMBIOS (no vuelve a setear en el cuerpo del effect).
+  const [reduce, setReduce] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+  useEffect(() => {
+    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setReduce(m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, []);
+  return reduce;
+}
+
 export function MoreSheet({
   userId,
   trip,
   active,
 }: {
   userId: string;
-  /** Viaje en curso o a ≤7 días: sube al tope de la hoja y prende el aviso. */
+  /** Viaje en curso o a ≤7 días: "armar maleta" va directo a TU maleta y el
+   *  slot lleva un punto de aviso. */
   trip: TripContext | null;
   /** La ruta actual vive dentro de la hoja → el slot se pinta como activo. */
   active: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const addRef = useRef<AddSheetHandle>(null);
+  // Nivel 2 (agregar al clóset) reusa estos flujos headless (foto · carrete).
+  const photoRef = useRef<AddFlowHandle>(null);
+  const carreteRef = useRef<AddFlowHandle>(null);
 
+  // Cierra la hoja antes de navegar o de disparar un flujo (nadie queda con la
+  // hoja abierta detrás).
   function choose(action: () => void) {
     setOpen(false);
-    // Deja cerrar esta hoja antes de navegar o de abrir la de añadir.
     requestAnimationFrame(action);
   }
+  const go = (href: string) => choose(() => router.push(href));
 
-  const viajeSub = trip
-    ? trip.dias === 0
-      ? `estás en ${trip.lugar}`
-      : trip.dias === 1
-        ? `${trip.lugar} es mañana`
-        : `${trip.lugar} en ${trip.dias} días`
-    : "tus maletas y sus looks";
+  const maletaHref = trip ? trip.href : "/viaje";
 
   return (
     <>
@@ -55,7 +77,6 @@ export function MoreSheet({
           onClick={() => setOpen(true)}
           aria-label="Más"
           aria-expanded={open}
-          // El coach-mark de viaje apunta aquí desde que Viaje dejó la barra.
           data-hint-target="viaje"
           className={`flex w-full flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors duration-200 ${
             active || open ? "text-accent" : "text-muted hover:text-ink"
@@ -74,97 +95,262 @@ export function MoreSheet({
         </button>
       </div>
 
-      {/* La hoja de añadir, sin botón propio: la abre la fila "añadir prendas". */}
-      <AddSheet userId={userId} variant="headless" ref={addRef} />
+      {/* Flujos de añadir en modo headless: los dispara el nivel 2. */}
+      <AddPhotoFlow userId={userId} headless ref={photoRef} />
+      <ImportCarreteFlow headless ref={carreteRef} />
 
-      <Sheet open={open} onClose={() => setOpen(false)}>
-        {/* Viaje vivo primero: si estás de viaje, la maleta es lo que buscas. */}
-        {trip ? (
-          <>
-            <Rotulo>tu viaje</Rotulo>
-            <Fila
-              icon="maletin"
-              title="tu maleta"
-              sub={viajeSub}
-              onClick={() => choose(() => router.push(trip.href))}
-            />
-          </>
-        ) : null}
-
-        <Rotulo>acciones</Rotulo>
-        <Fila
-          icon="camara"
-          title="añadir prendas"
-          sub="foto, carrete o la biblioteca de básicos"
-          onClick={() => choose(() => addRef.current?.open())}
-        />
-        <Fila
-          icon="maleta"
-          title="armar maleta"
-          sub="dime a dónde vas y te la preparo"
-          onClick={() => choose(() => router.push("/viaje"))}
-        />
-        <Fila
-          icon="lupa"
-          title="modo tienda"
-          sub="¿este color me va? súbelo y te digo"
-          onClick={() => choose(() => router.push("/cartera/chequear"))}
-        />
-
-        <Rotulo>tus cosas</Rotulo>
-        {/* Con viaje vivo ya encabeza la hoja: no se repite aquí. */}
-        {trip ? null : (
-          <Fila
-            icon="maletin"
-            title="viaje"
-            sub={viajeSub}
-            onClick={() => choose(() => router.push("/viaje/lista"))}
-          />
-        )}
-        <Fila
-          icon="paleta"
-          title="tu cartera de colores"
-          sub="los tonos que te encienden la cara"
-          onClick={() => choose(() => router.push("/cartera"))}
-        />
-      </Sheet>
+      <AtajosSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        maletaHref={maletaHref}
+        go={go}
+        onAddPhoto={() => choose(() => photoRef.current?.start())}
+        onAddCarrete={() => choose(() => carreteRef.current?.start())}
+        onAddBiblioteca={() => go("/closet/biblioteca")}
+      />
     </>
   );
 }
 
-function Rotulo({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="mx-1 mb-2 mt-3 text-[10px] font-bold uppercase tracking-[0.22em] text-muted first:mt-0">
-      {children}
-    </h3>
+// Hoja de atajos con 2 niveles y morfo de alto. Va por portal a <body> (la tab
+// bar usa translate y confinaría los `fixed` de sus hijos).
+function AtajosSheet({
+  open,
+  onClose,
+  maletaHref,
+  go,
+  onAddPhoto,
+  onAddCarrete,
+  onAddBiblioteca,
+}: {
+  open: boolean;
+  onClose: () => void;
+  maletaHref: string;
+  go: (href: string) => void;
+  onAddPhoto: () => void;
+  onAddCarrete: () => void;
+  onAddBiblioteca: () => void;
+}) {
+  const reduce = useReduceMotion();
+  const [mounted, setMounted] = useState(false);
+  const [shown, setShown] = useState(false);
+  const [nivel, setNivel] = useState<"atajos" | "agregar">("atajos");
+
+  // Montaje/desmontaje con animación de salida (la base Sheet solo desmonta).
+  // El patrón mount-on-open + desmontaje diferido NECESITA setState aquí (montar
+  // al abrir, esperar la animación de salida antes de desmontar); la regla
+  // set-state-in-effect es un falso positivo para esta orquestación.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      const r = requestAnimationFrame(() => setShown(true));
+      return () => cancelAnimationFrame(r);
+    }
+    if (mounted) {
+      setShown(false);
+      const t = setTimeout(() => {
+        setMounted(false);
+        setNivel("atajos"); // la próxima apertura arranca en el nivel 1
+      }, reduce ? 0 : DUR_EXIT);
+      return () => clearTimeout(t);
+    }
+  }, [open, mounted, reduce]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Bloquea el scroll del fondo + Escape mientras vive.
+  useEffect(() => {
+    if (!mounted) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mounted, onClose]);
+
+  // Morfo de alto entre niveles: mide el destino con `height:auto` (si no, el
+  // alto fijo + overflow deja scrollHeight clampado y salta en un frame).
+  const contentRef = useRef<HTMLDivElement>(null);
+  const h0Ref = useRef<number | null>(null);
+  function cambiaNivel(next: "atajos" | "agregar") {
+    h0Ref.current = contentRef.current?.offsetHeight ?? null;
+    setNivel(next);
+  }
+  useLayoutEffect(() => {
+    const el = contentRef.current;
+    if (!el || h0Ref.current == null) return;
+    const h0 = h0Ref.current;
+    h0Ref.current = null;
+    const h1 = el.offsetHeight; // React ya renderizó el nuevo nivel
+    if (reduce || h0 === h1) return;
+    el.style.height = `${h0}px`;
+    void el.getBoundingClientRect(); // reflow
+    el.style.transition = `height ${DUR_ENTER}ms var(--ease-enter)`;
+    el.style.height = `${h1}px`;
+    const done = () => {
+      el.style.height = "";
+      el.style.transition = "";
+      el.removeEventListener("transitionend", done);
+    };
+    el.addEventListener("transitionend", done);
+  }, [nivel, reduce]);
+
+  if (!mounted || typeof document === "undefined") return null;
+
+  const dur = shown ? DUR_ENTER : DUR_EXIT;
+
+  return createPortal(
+    // z-30: por DEBAJO de la tab bar (z-40), así el ✦ sigue tocable y se ve de
+    // dónde salió la hoja.
+    <div className="fixed inset-0 z-30 flex items-end justify-center lg:items-center">
+      <button
+        type="button"
+        aria-label="Cerrar"
+        onClick={onClose}
+        className="absolute inset-0 bg-ink/40"
+        style={{ opacity: shown ? 1 : 0, transition: reduce ? "none" : `opacity ${dur}ms` }}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-[430px] rounded-t-[14px] bg-surface px-5 pt-2.5 shadow-[0_-20px_50px_-26px_rgb(0_0_0/0.45)] lg:rounded-[14px]"
+        style={{
+          // Reserva: tab bar (57) + voladizo del FAB (22) + aire (16).
+          paddingBottom: "calc(57px + 22px + 16px)",
+          transform: shown ? "translateY(0)" : "translateY(24px)",
+          opacity: shown ? 1 : 0,
+          transition: reduce ? "none" : `transform ${dur}ms var(--ease-enter), opacity ${dur}ms`,
+        }}
+      >
+        <span aria-hidden className="mx-auto mb-3 mt-1 block h-1 w-9 rounded-full bg-line" />
+
+        {/* El contenido morfa; el asa de arriba queda fija como ancla. */}
+        <div ref={contentRef} className="overflow-hidden">
+          {nivel === "atajos" ? (
+            <NivelAtajos
+              key="atajos"
+              maletaHref={maletaHref}
+              go={go}
+              onAgregar={() => cambiaNivel("agregar")}
+            />
+          ) : (
+            <NivelAgregar
+              key="agregar"
+              onBack={() => cambiaNivel("atajos")}
+              onAddPhoto={onAddPhoto}
+              onAddCarrete={onAddCarrete}
+              onAddBiblioteca={onAddBiblioteca}
+            />
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
-function Fila({
+function NivelAtajos({
+  maletaHref,
+  go,
+  onAgregar,
+}: {
+  maletaHref: string;
+  go: (href: string) => void;
+  onAgregar: () => void;
+}) {
+  const tiles: { icon: IconName; label: string; onClick: () => void }[] = [
+    { icon: "maleta", label: "armar maleta", onClick: () => go(maletaHref) },
+    { icon: "lupa", label: "modo tienda", onClick: () => go("/cartera/chequear") },
+    { icon: "paleta", label: "tus colores", onClick: () => go("/cartera") },
+    { icon: "maletin", label: "viajes", onClick: () => go("/viaje/lista") },
+    { icon: "corazon", label: "favoritos", onClick: () => go("/historial?filtro=fav") },
+    { icon: "bookmark", label: "wishlist", onClick: () => go("/wishlist") },
+  ];
+  return (
+    <div style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
+      {/* Atajo estrella: lo que más se usa, en negro y a lo ancho. */}
+      <button
+        type="button"
+        onClick={onAgregar}
+        className="flex min-h-16 w-full items-center gap-3.5 rounded-sm bg-accent px-4 py-3 text-left text-on-accent transition-colors hover:bg-accent-deep"
+      >
+        <Icon name="camara" size={22} className="shrink-0" />
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[15px] font-bold">añadir prendas</span>
+          <span className="text-[12.5px] font-medium opacity-70">foto, carrete o básicos</span>
+        </span>
+      </button>
+
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {tiles.map((t) => (
+          <TileAtajo key={t.label} icon={t.icon} label={t.label} onClick={t.onClick} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NivelAgregar({
+  onBack,
+  onAddPhoto,
+  onAddCarrete,
+  onAddBiblioteca,
+}: {
+  onBack: () => void;
+  onAddPhoto: () => void;
+  onAddCarrete: () => void;
+  onAddBiblioteca: () => void;
+}) {
+  const tiles: { icon: IconName; label: string; onClick: () => void }[] = [
+    { icon: "camara", label: "una prenda", onClick: onAddPhoto },
+    { icon: "destello", label: "varias de golpe", onClick: onAddCarrete },
+    { icon: "libro", label: "la biblioteca", onClick: onAddBiblioteca },
+  ];
+  return (
+    <div style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
+      <div className="mb-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Volver a los atajos"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-accent"
+        >
+          <Icon name="chevron" size={16} className="rotate-180" />
+        </button>
+        <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">agregar al clóset</h3>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {tiles.map((t) => (
+          <TileAtajo key={t.label} icon={t.icon} label={t.label} onClick={t.onClick} minH={92} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TileAtajo({
   icon,
-  title,
-  sub,
+  label,
   onClick,
+  minH = 91,
 }: {
   icon: IconName;
-  title: string;
-  sub: string;
+  label: string;
   onClick: () => void;
+  minH?: number;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="mb-2.5 flex w-full items-center gap-3.5 rounded-sm border border-line bg-surface px-3.5 py-3.5 text-left transition-colors hover:border-accent"
+      style={{ minHeight: minH }}
+      className="flex flex-col items-center justify-center gap-2 rounded-sm border border-line bg-surface px-1 text-center transition-colors hover:border-accent"
     >
-      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-sm border border-line text-ink">
-        <Icon name={icon} size={20} />
-      </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-[15px] font-semibold text-ink">{title}</span>
-        <span className="display text-[13.5px] text-muted">{sub}</span>
-      </span>
-      <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
+      <Icon name={icon} size={22} className="text-ink" />
+      <span className="text-[13px] font-medium leading-tight text-ink">{label}</span>
     </button>
   );
 }
