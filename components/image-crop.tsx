@@ -18,10 +18,13 @@ export function ImageCrop({
   src,
   onDone,
   onCancel,
+  title = "recorta a tu prenda",
 }: {
   src: string;
   onDone: (dataUrl: string) => void;
   onCancel: () => void;
+  /** Copy del encabezado (prendas vs cara). */
+  title?: string;
 }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
@@ -121,7 +124,7 @@ export function ImageCrop({
         >
           cancelar
         </button>
-        <span className="text-sm font-semibold text-on-accent">recorta a tu prenda</span>
+        <span className="text-sm font-semibold text-on-accent">{title}</span>
         <button
           type="button"
           onClick={usar}
