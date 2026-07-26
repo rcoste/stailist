@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { describeItem, type EngineItem } from "./prompt";
+import { describeItem, SYSTEM_PROMPT, type EngineItem } from "./prompt";
 
 // Helper: prenda del motor con attrs mínimos + overrides.
 const item = (attrs: EngineItem["attrs"]): EngineItem => ({ id: "x", attrs });
@@ -240,5 +240,25 @@ describe("tasteSignalLines — compartida por 4 motores (v24)", () => {
     expect(lines).toContain("👍");
     expect(lines).toContain("RECHAZÓ");
     expect(lines).toContain("muy formal");
+  });
+});
+
+// v27 · Ropa de baño y de entrenar fuera de los looks de calle. El catálogo no
+// marca contexto en ninguna prenda (todas "casual"), y bikini/traje de baño están
+// como categoría "vestido" — o sea, el motor los podía servir como look COMPLETO.
+// La única defensa es esta regla, así que se blinda con test.
+describe("SYSTEM_PROMPT — ropa de baño y de entrenar (v27)", () => {
+  it("prohíbe traje de baño / bikini / short de baño en looks de calle", () => {
+    expect(SYSTEM_PROMPT).toContain("Ropa de baño y de entrenar NO es ropa de calle");
+    expect(SYSTEM_PROMPT).toContain("bikini");
+    expect(SYSTEM_PROMPT).toContain("short de baño");
+    // Nombra el hueco del catálogo: vienen categorizados como "vestido".
+    expect(SYSTEM_PROMPT).toContain('"vestido"');
+  });
+
+  it("al top deportivo tipo bra le pide una capa, no lo prohíbe", () => {
+    expect(SYSTEM_PROMPT).toContain("bra");
+    expect(SYSTEM_PROMPT).toContain("ÚNICO top");
+    expect(SYSTEM_PROMPT).toMatch(/capa encima/);
   });
 });

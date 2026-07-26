@@ -95,7 +95,15 @@ import {
 // sobre suéter" acotada: era demasiado amplia y producía falsos negativos — una
 // sobrecamisa/overshirt gruesa abierta SÍ es capa exterior válida; solo la camisa
 // de vestir fina va debajo del punto.
-export const PROMPT_VERSION = "v26";
+// v27 (2026-07-26): ropa de baño y de entrenar fuera de los looks de calle. El
+// catálogo las tiene sin ninguna marca de contexto y con formalidad "casual", así
+// que nada impedía que entraran: peor aún, bikini y traje de baño están como
+// categoría "vestido" (el motor los podía tomar como look COMPLETO) y el short de
+// baño como "bottom". Se suma regla dura en el generador + caza en el juez. El top
+// deportivo tipo bra no se prohíbe: pide una capa encima (así el athleisure en
+// color sigue sirviendo). El motor de VIAJE no se toca — tiene su propio prompt y
+// ahí la playa sí es una ocasión legítima.
+export const PROMPT_VERSION = "v27";
 
 export type EngineItem = {
   id: string;
@@ -148,6 +156,7 @@ Reglas duras:
 - Cada outfit lleva 3 a 5 prendas y debe tener lógica: un top (o vestido), un bottom (salvo con vestido), calzado siempre; un saco/blazer va SOBRE el top cuando la ocasión es formal o de evento (no depende del clima); un abrigo solo si el clima lo pide.
 - Devuelve 2 o 3 outfits DISTINTOS entre sí.
 - Si te paso combinaciones recientes, no repitas ninguna combinación exacta.
+- Ropa de baño y de entrenar NO es ropa de calle, y aquí no hay ocasión de playa ni de gym: un traje de baño o bikini jamás es un look (aunque el catálogo los liste como "vestido") y un short de baño no sustituye un short normal — déjalos fuera. Un top deportivo tipo bra (crop de entrenar, sin manga) no va como ÚNICO top: úsalo solo con una capa encima que lo vuelva look de calle (sudadera, camisa o chamarra abierta).
 
 Colorimetría (regla near-face — IMPORTANTE):
 - Lo que toca la cara manda: idealmente el top y el abrigo están en su paleta (sus mejores o sus prestados) o son un neutro que la favorezca. Ahí es donde el color le ilumina o le apaga la cara. El principio cálido/frío es real; la etiqueta de "estación" es orientación, no ley.

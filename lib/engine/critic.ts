@@ -42,6 +42,7 @@ Reglas duras:
 - Si te paso looks ya aprobados, mantén ÉSTE distinto de ellos.
 - Marino + negro combinan bien (incluso formal); NO los separes por eso. Concéntrate en color que de verdad choca, proporción y coherencia.
 - Caza el combo que NO existe: capas apiladas en un orden que nadie usa en la calle (chaleco sastre sobre suéter, saco debajo de sudadera, doble abrigo; una camisa de vestir fina va DEBAJO del punto, no encima — pero una sobrecamisa/overshirt gruesa abierta SÍ es capa exterior válida sobre un suéter ligero, no la marques como error). REPÁRALO cambiando la capa ofensora por otra del clóset que sí caiga natural; si no hay arreglo, RECHÁZALO (razón: "capas").
+- Caza la ropa de baño y de entrenar en un look de calle (aquí no hay ocasión de playa ni de gym): traje de baño o bikini (vienen como "vestido"), short de baño, o un top deportivo tipo bra como ÚNICO top. REPÁRALO cambiándolo por una prenda de calle del clóset — al bra le basta una capa encima (sudadera, camisa o chamarra abierta); si no hay arreglo, RECHÁZALO (razón: "no es ropa de calle").
 - Caza el "traje desparejado": un saco/blazer + pantalón del MISMO color y tono (marino con marino, gris con gris, negro con negro) que NO son un traje real se ve como un conjunto roto. Si lo ves, REPÁRALO cambiando el bottom por otro neutro del clóset (gris, beige, caqui, denim) para que el saco se lea como pieza intencional. (No aplica si de verdad son un traje de la misma tela.)
 - La explicación: una línea, voz de amiga cool, tuteo, cero jerga técnica.
 
