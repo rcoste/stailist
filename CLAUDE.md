@@ -20,7 +20,7 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 - PWA instalable (prompt tras el primer 👍), botón "me lo puse", historial persistente.
 - Beta cerrada: allowlist de correos + magic link. Solo español.
 
-**Fuera del MVP (no recuperar por accidente):** avatar/renders de persona, análisis de colorimetría por selfie, compras sugeridas, modo maleta, scraping de catálogos, multi-prenda en una foto (diferida — ver TODOS.md), compartir outfits, pagos.
+**Fuera del MVP (no recuperar por accidente):** análisis de colorimetría por selfie, compras sugeridas, scraping de catálogos, multi-prenda en una foto (diferida — ver TODOS.md), pagos. (Ya entraron por decisión posterior de Roberto: avatar/try-on, modo maleta/viaje, y compartir el render del look — 2026-07-26.)
 
 ## Stack y arquitectura (cerrada en eng review)
 - Next.js en Vercel (Hobby: límite 60s por función — generación con streaming, retry siempre client-side).

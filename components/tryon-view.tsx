@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icon";
+import { Spinner } from "@/components/spinner";
 
 // Vista "así te queda": el render del try-on DENTRO del lienzo de papel (no un
 // modal oscuro). Marco 3:4 con la imagen o la animación de generación, la voz
@@ -187,6 +188,34 @@ function Lupa({
   prendas: TryonPrenda[];
   onClose: () => void;
 }) {
+  // Compartir la foto del render (pedido de Roberto 2026-07-26 — sale de la
+  // lista fuera-del-MVP). Mismo patrón que el pasaporte: share con archivo si
+  // el dispositivo puede; si no (desktop), descarga. Cancelar no es error.
+  const [sharing, setSharing] = useState(false);
+  async function compartir() {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      const blob = await (await fetch(image)).blob();
+      const file = new File([blob], "stailist-look.jpg", {
+        type: blob.type || "image/jpeg",
+      });
+      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: nombre });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "stailist-look.jpg";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // AbortError (canceló el diálogo) o fetch fallido: sin drama.
+    }
+    setSharing(false);
+  }
+
   // Paleta del look: colores dominantes de las prendas (dedup por hex), máx 5.
   const seen = new Set<string>();
   const paleta = prendas
@@ -246,7 +275,8 @@ function Lupa({
         </div>
 
         {/* Tira más grande (56px): abajo sobraba aire muerto bajo los thumbs de
-            38px (feedback de Roberto) — mejor que lo ocupe la prenda. */}
+            38px (feedback de Roberto) — mejor que lo ocupe la prenda. Compartir
+            al final de la fila, como el mock del handoff. */}
         <div className="mt-4 flex items-center gap-2 border-t border-line pt-3.5">
           {prendas.map((p, i) =>
             p.imagen ? (
@@ -259,6 +289,19 @@ function Lupa({
               />
             ) : null
           )}
+          <button
+            type="button"
+            onClick={compartir}
+            disabled={sharing}
+            aria-label="compartir el look"
+            className="relative ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink disabled:opacity-50 after:absolute after:-inset-1 after:content-['']"
+          >
+            {sharing ? (
+              <Spinner className="h-4 w-4 text-ink" />
+            ) : (
+              <Icon name="compartir" size={17} />
+            )}
+          </button>
         </div>
       </div>
     </div>,
