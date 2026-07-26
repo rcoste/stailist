@@ -110,14 +110,21 @@ function ImgHeart({ on, onClick }: { on: boolean; onClick: () => void }) {
   );
 }
 
-export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
+export function HistoryList({
+  outfits,
+  initialFiltro = "todos",
+}: {
+  outfits: HistoryOutfit[];
+  /** Filtro de arranque (ej. el atajo "favoritos" del drawer entra con "fav"). */
+  initialFiltro?: Filtro;
+}) {
   const router = useRouter();
   const [estado, setEstado] = useState<Estado>(() =>
     Object.fromEntries(
       outfits.map((o) => [o.id, { voto: o.voto, worn: o.worn, fav: o.favorited }])
     )
   );
-  const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [filtro, setFiltro] = useState<Filtro>(initialFiltro);
   const [occMenu, setOccMenu] = useState(false);
   const [abierto, setAbierto] = useState<string | null>(null);
   const [rewearing, setRewearing] = useState<string | null>(null);
@@ -148,7 +155,6 @@ export function HistoryList({ outfits }: { outfits: HistoryOutfit[] }) {
       map.get(k)!.items.push(o);
     }
     return [...map.values()];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibles]);
 
   const lookAbierto = abierto ? outfits.find((o) => o.id === abierto) ?? null : null;

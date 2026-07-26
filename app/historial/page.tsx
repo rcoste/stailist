@@ -7,7 +7,14 @@ import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { HistoryList, type HistoryOutfit } from "./history-list";
 import { Hint } from "@/components/hint";
 
-export default async function HistorialPage() {
+export default async function HistorialPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filtro?: string }>;
+}) {
+  // El atajo "favoritos" del drawer entra con ?filtro=fav para abrir ya filtrado.
+  const { filtro } = await searchParams;
+  const initialFiltro = filtro === "fav" ? "fav" : "todos";
   const profile = await requireOnboarded();
   const supabase = await createClient();
 
@@ -147,7 +154,7 @@ export default async function HistorialPage() {
                 no
               </Hint>
             ) : null}
-            <HistoryList outfits={list} />
+            <HistoryList outfits={list} initialFiltro={initialFiltro} />
           </>
         )}
       </section>
