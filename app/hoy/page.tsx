@@ -9,7 +9,6 @@ import type { ClosetPick } from "@/components/weather-picker";
 import { loadClosetPicks } from "@/lib/closet-picks";
 import { loadHomeCard } from "@/lib/home-card";
 import { buildHomeChecklist } from "@/lib/home-checklist";
-import { HomeChecklist } from "@/components/home-checklist";
 
 export default async function HoyPage({
   searchParams,
@@ -150,40 +149,35 @@ export default async function HoyPage({
     siluetaApplies: signals.siluetaApplies,
     hasSilueta: signals.hasSilueta,
   });
-  // En la vista CON look, el checklist va en el banner (arriba del look) como la
-  // card única que lo acompaña. En idle lo renderiza HoyClient en su pie.
-  const checklistBanner = lookInicial ? checklist : null;
+  // El checklist ("qué sigue") es la home de ANTES del look: vive sólo cuando no
+  // hay look del día — HoyClient lo pone en su pie (estado idle). Sobre el look ya
+  // generado se sentía fuera de lugar (Roberto), así que aquí NO se muestra como
+  // banner encima del look.
 
-  // Hints contextuales (walkthrough just-in-time). UNA burbuja por pantalla:
-  // el checklist (acción) gana sobre los hints (orientación) — cuando ocupa el
-  // banner, los hints esperan.
+  // Hints contextuales (walkthrough just-in-time). UNA burbuja por pantalla.
   const seen = profile.hints_seen ?? {};
   const accountDays =
     (new Date().getTime() - new Date(profile.created_at).getTime()) / 86_400_000;
   // Progressive: orientación primero (hoy-casa), luego función de valor
   // (fab-generar → hoy-tryon) cuando ya hay look, y viaje al final. UNA por visita.
-  const hint = checklistBanner
-    ? null
-    : !seen["hoy-casa"]
-      ? "hoy-casa"
-      : lookInicial && !seen["fab-generar"]
-        ? "fab-generar"
-        : lookInicial && !seen["hoy-tryon"]
-          ? "hoy-tryon"
-          : accountDays >= 3 && !seen["viaje"]
-            ? "viaje"
-            : null;
+  const hint = !seen["hoy-casa"]
+    ? "hoy-casa"
+    : lookInicial && !seen["fab-generar"]
+      ? "fab-generar"
+      : lookInicial && !seen["hoy-tryon"]
+        ? "hoy-tryon"
+        : accountDays >= 3 && !seen["viaje"]
+          ? "viaje"
+          : null;
 
-  // El stack de banners (checklist/hint) va centrado y angosto en desktop para no
-  // estirarse a lo ancho de la columna wide del héroe (F3, plan desktop-full).
-  const hasBanner = !!(hint || checklistBanner);
+  // El banner (sólo hints ahora) va centrado y angosto en desktop.
+  const hasBanner = !!hint;
 
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-4">
         {hasBanner ? (
           <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
-            {checklistBanner ? <HomeChecklist checklist={checklistBanner} /> : null}
             {hint === "hoy-casa" ? (
               <Hint id="hoy-casa" center>
                 esta es tu casa — cada día te espera un look nuevo aquí, pensado
