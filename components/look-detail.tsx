@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { FavoriteButton } from "@/components/favorite-button";
 import { CoachPie } from "@/components/coach-pie";
+import { PrendasGrid } from "@/components/prendas-grid";
 import { TryonView, type TryonPrenda } from "@/components/tryon-view";
 
 // Detalle del look (handoff design_handoff_look_detalle + design_handoff_try_on).
@@ -25,48 +25,6 @@ import { TryonView, type TryonPrenda } from "@/components/tryon-view";
 // "¿te lo pusiste?". Por eso, con render, la primaria negra simplemente
 // desaparece: el render es el premio y el voto es lo que capturamos.
 export type LookDetailPrenda = TryonPrenda;
-
-function Tile({ prenda }: { prenda: LookDetailPrenda }) {
-  return (
-    <div className="relative h-full w-full overflow-hidden rounded-sm border border-line bg-tile">
-      {prenda.imagen ? (
-        <Image
-          src={prenda.imagen}
-          alt={prenda.nombre}
-          fill
-          sizes="(max-width: 430px) 50vw, 200px"
-          className="object-cover"
-        />
-      ) : (
-        <span
-          className="absolute inset-0"
-          style={{ backgroundColor: prenda.swatch }}
-          aria-hidden
-        />
-      )}
-      <span
-        title={prenda.nombre}
-        className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/[0.62] via-black/[0.34] to-transparent px-2.5 pb-[7px] pt-4 text-[10.5px] font-semibold uppercase tracking-[0.07em] text-white"
-      >
-        {prenda.nombre}
-      </span>
-    </div>
-  );
-}
-
-// Retícula de 2 columnas que LLENA el alto disponible (filas de igual fracción):
-// las prendas escalan para que todo el detalle quepa sin scroll, más chicas en
-// pantallas cortas y grandes en las altas. object-cover recorta sólo el aire de
-// los flat-lays, así que la prenda se mantiene centrada.
-function Grid({ prendas }: { prendas: LookDetailPrenda[] }) {
-  return (
-    <div className="grid h-full min-h-0 grid-cols-2 gap-2 [grid-auto-rows:minmax(0,1fr)]">
-      {prendas.map((p, i) => (
-        <Tile key={i} prenda={p} />
-      ))}
-    </div>
-  );
-}
 
 function VoteButton({
   up,
@@ -227,7 +185,7 @@ export function LookDetail({
         {tab === "look" ? (
           <div className="mt-2.5 min-h-0 flex-1">
             {/* La retícula toma el alto flexible y se ajusta para que quepa. */}
-            <Grid prendas={prendas} />
+            <PrendasGrid prendas={prendas} />
           </div>
         ) : (
           <div className="mt-3 flex min-h-0 flex-1 flex-col">

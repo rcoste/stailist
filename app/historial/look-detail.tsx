@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Heart } from "@/components/heart";
 import { DownReason } from "@/components/down-reason";
 import { CoachPie } from "@/components/coach-pie";
+import { PrendasGrid } from "@/components/prendas-grid";
 import { TryonView } from "@/components/tryon-view";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -17,7 +17,7 @@ import { ocasionLabel, type HistoryOutfit, type EstadoItem } from "./history-lis
 // serif + sub de fecha, pestañas con corazón y ⋯ a la derecha, pie del coach, y
 // la TAB BAR VISIBLE (el overlay termina arriba de ella — antes la tapaba).
 // Lo propio del historial: "me lo vuelvo a poner" y borrar (en el menú ⋯).
-// "Compartir" del handoff se omite: está fuera del MVP.
+// Compartir vive en la lupa (arriba a la derecha), no en este menú.
 
 export function LookDetail({
   o,
@@ -152,7 +152,6 @@ export function LookDetail({
                 className="absolute right-0 top-[calc(100%+7px)] z-[9] min-w-[186px] border border-line bg-surface shadow-[0_14px_34px_-14px_rgba(0,0,0,0.28)]"
                 style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
               >
-                {/* "Compartir" del handoff NO va: fuera del MVP. */}
                 <button
                   type="button"
                   onClick={() => {
@@ -171,7 +170,7 @@ export function LookDetail({
         {/* Cuerpo: retícula flexible o render + columna (mismas piezas que Hoy). */}
         {tab === "look" ? (
           <div className="mt-2.5 min-h-0 flex-1">
-            <Grid prendas={o.prendas} />
+            <PrendasGrid prendas={o.prendas} />
           </div>
         ) : (
           <div className="mt-3 flex min-h-0 flex-1 flex-col">
@@ -241,47 +240,6 @@ export function LookDetail({
           ) : null}
         </div>
       </div>
-    </div>
-  );
-}
-
-type Prenda = HistoryOutfit["prendas"][number];
-
-function Tile({ prenda }: { prenda: Prenda }) {
-  return (
-    <div className="relative h-full w-full overflow-hidden rounded-sm border border-line bg-tile">
-      {prenda.imagen ? (
-        <Image
-          src={prenda.imagen}
-          alt={prenda.nombre}
-          fill
-          sizes="(max-width: 430px) 50vw, 200px"
-          className="object-cover"
-        />
-      ) : (
-        <span
-          className="absolute inset-0"
-          style={{ backgroundColor: prenda.swatch }}
-          aria-hidden
-        />
-      )}
-      <span
-        title={prenda.nombre}
-        className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/[0.62] via-black/[0.34] to-transparent px-2.5 pb-[7px] pt-4 text-[10.5px] font-semibold uppercase tracking-[0.07em] text-white"
-      >
-        {prenda.nombre}
-      </span>
-    </div>
-  );
-}
-
-// Retícula de 2 columnas que llena el alto disponible (igual que en Hoy).
-function Grid({ prendas }: { prendas: Prenda[] }) {
-  return (
-    <div className="grid h-full min-h-0 grid-cols-2 gap-2 [grid-auto-rows:minmax(0,1fr)]">
-      {prendas.map((p, i) => (
-        <Tile key={i} prenda={p} />
-      ))}
     </div>
   );
 }
