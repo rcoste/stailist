@@ -254,6 +254,21 @@ function Lupa({
         <Icon name="equis" size={20} />
       </button>
 
+      {/* Compartir arriba a la derecha (espejo de la X), sobre la foto. */}
+      <button
+        type="button"
+        onClick={compartir}
+        disabled={sharing}
+        aria-label="compartir el look"
+        className="absolute right-3.5 top-[max(3.5rem,calc(env(safe-area-inset-top)+1rem))] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition-colors hover:bg-white/30 disabled:opacity-60"
+      >
+        {sharing ? (
+          <Spinner className="h-4 w-4 text-white" />
+        ) : (
+          <Icon name="compartir" size={18} />
+        )}
+      </button>
+
       {/* Bloque de papel (no puede quedar vacío): nombre + paleta + tira. */}
       <div className="absolute inset-x-0 bottom-0 top-[64%] flex flex-col px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-5">
         <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
@@ -275,8 +290,8 @@ function Lupa({
         </div>
 
         {/* Tira más grande (56px): abajo sobraba aire muerto bajo los thumbs de
-            38px (feedback de Roberto) — mejor que lo ocupe la prenda. Compartir
-            al final de la fila, como el mock del handoff. */}
+            38px (feedback de Roberto) — mejor que lo ocupe la prenda. El botón
+            de compartir vive arriba a la derecha (espejo de la X), no aquí. */}
         <div className="mt-4 flex items-center gap-2 border-t border-line pt-3.5">
           {prendas.map((p, i) =>
             p.imagen ? (
@@ -289,19 +304,6 @@ function Lupa({
               />
             ) : null
           )}
-          <button
-            type="button"
-            onClick={compartir}
-            disabled={sharing}
-            aria-label="compartir el look"
-            className="relative ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink disabled:opacity-50 after:absolute after:-inset-1 after:content-['']"
-          >
-            {sharing ? (
-              <Spinner className="h-4 w-4 text-ink" />
-            ) : (
-              <Icon name="compartir" size={17} />
-            )}
-          </button>
         </div>
       </div>
     </div>,
