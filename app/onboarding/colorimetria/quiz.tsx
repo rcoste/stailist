@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { type Season } from "@/lib/colorimetria";
+import { type Season, SEASONS } from "@/lib/colorimetria";
 import { SeasonReveal } from "@/components/season-reveal";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
@@ -9,12 +9,19 @@ import { QuizQuestions } from "./quiz-questions";
 import { savePalette, skipColorimetria } from "./actions";
 
 // CONTENIDO (no tokens): la intro DEMUESTRA qué es la colorimetría con muestras
-// de ropa. Dos tonos claramente distintos, uno cálido y uno frío; abajo la
-// paleta que el test anticipa. Son datos ilustrativos —como una imagen—, por eso
-// van hardcodeados y NO como tokens del design system.
+// de ropa. Dos tonos claramente distintos, uno cálido y uno frío. Son datos
+// ilustrativos —como una imagen—, por eso van hardcodeados y NO como tokens.
 const TONO_CALIDO = "#c9563f"; // terracota
 const TONO_FRIO = "#8e9b6b"; // olivo
-const PALETA_DEMO = ["#c9563f", "#e0a33e", "#7d4a2e", "#2f4858", "#d8cbb4", "#1b1b1b"];
+
+// Las FAMILIAS de color: las paletas REALES del test (SEASONS), SIN nombrar
+// estación. Mostrar varias —no una— es lo honesto: una sola se leería como "estos
+// son TUS colores" antes de responder nada; varias dicen "el color viene en
+// familias, la tuya sale del test". Orden cálido/frío alternado para que se lean
+// distintas. El reveal sí nombra la estación; aquí es vocabulario interno.
+const FAMILIAS: string[][] = (["primavera", "otono", "verano", "invierno"] as const).map(
+  (s) => SEASONS[s].colores.map((c) => c.hex)
+);
 
 // Un "campo" de la demostración: el tono como fondo, una silueta (la cara sin
 // dibujarla) y la etiqueta. El que apaga baja a saturate(.28) — no opacidad ni
@@ -135,20 +142,26 @@ export function Quiz() {
             />
           </div>
 
-          {/* La paleta que produce el test — sin gap ni bordes, a lo ancho. */}
-          <div className="mt-5 flex h-[52px]">
-            {PALETA_DEMO.map((hex) => (
-              <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
-            ))}
+          {/* Las familias de color (SIN nombrar estación). La etiqueta deja claro
+              que son ejemplos, no un veredicto — la tuya sale del test. Así no se
+              lee como "estos son TUS colores" antes de responder. */}
+          <div className="mt-5 flex flex-col gap-2">
+            <p className="text-[11px] font-semibold leading-snug text-muted">
+              el color viene en familias — el test encuentra la tuya
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {FAMILIAS.map((fam, i) => (
+                <div key={i} className="flex h-5 overflow-hidden rounded-sm">
+                  {fam.map((hex) => (
+                    <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Costo declarado + la placa metálica (la firma de colorimetría). */}
-          <div className="mt-3.5 flex items-center gap-2.5 text-xs font-semibold text-muted">
-            <span
-              aria-hidden
-              className="h-[22px] w-[22px] shrink-0"
-              style={{ background: "var(--metal-oro)" }}
-            />
+          {/* Costo declarado, sobre hairline (se fue la placa dorada suelta). */}
+          <div className="mt-3.5 border-t border-line pt-3 text-center text-xs font-semibold text-muted">
             cinco preguntas · cuarenta segundos · sin foto
           </div>
         </div>
