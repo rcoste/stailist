@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { FavoriteButton } from "@/components/favorite-button";
+import { CoachPie } from "@/components/coach-pie";
 import { TryonView, type TryonPrenda } from "@/components/tryon-view";
 
 // Detalle del look (handoff design_handoff_look_detalle + design_handoff_try_on).
@@ -172,10 +173,6 @@ export function LookDetail({
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
-  // Slot de texto de "las prendas": justificación (default) ⇄ tip.
-  const [swapped, setSwapped] = useState(false);
-  // Bloque "por qué y cómo" bajo el render (vista "así te queda").
-  const [whyOpen, setWhyOpen] = useState(false);
 
   const hasRender = !!tryonImage && !generating;
   const canMe = generating || hasRender;
@@ -187,25 +184,24 @@ export function LookDetail({
       ? manual ?? "me"
       : "look";
 
-  const hasTip = !!tip?.trim();
-  const showTip = swapped && hasTip;
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header: hoy · nombre + corazón */}
-      <div className="flex items-baseline gap-2.5 pb-3">
-        <h1 className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</h1>
-        <span className="text-faint">·</span>
-        <span className="font-display text-[22px] italic text-muted">{nombre}</span>
-        <div className="ml-auto self-center">
-          <FavoriteButton outfitId={outfitId} initialFavorited={initialFavorited} />
-        </div>
+      {/* Título (v2): "hoy" + nombre lado a lado, sin punto y a todo el ancho —
+          el corazón se mudó a la fila de pestañas, que tenía hueco muerto. */}
+      <div className="flex items-start gap-3 pb-1">
+        <h1 className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink">
+          hoy
+        </h1>
+        <span className="font-display text-[27px] italic leading-[29px] text-ink">
+          {nombre}
+        </span>
       </div>
 
       {/* Cuerpo */}
       <div className="flex min-h-0 flex-1 flex-col">
-        {/* Segmento: pestañas + enlace de texto a la derecha */}
-        <div className="flex items-center border-b border-line">
+        {/* Pestañas (vistas del look) + corazón a la derecha. El coach ya NO vive
+            aquí: es una voz, no una vista — se fue al pie (CoachPie). */}
+        <div className="mt-2 flex items-center gap-1 border-b border-line">
           <SegTab
             label="las prendas"
             active={tab === "look"}
@@ -219,59 +215,22 @@ export function LookDetail({
               onClick={() => setManual("me")}
             />
           ) : null}
-
-          {tab === "look" && hasTip ? (
-            <button
-              type="button"
-              onClick={() => setSwapped((s) => !s)}
-              className="ml-auto flex min-h-10 items-center gap-1.5 pb-2.5 pt-1 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
-            >
-              {showTip ? "por qué este look" : "cómo llevarlo"}
-              <Icon name="flecha" size={14} />
-            </button>
-          ) : null}
-          {tab === "me" ? (
-            <button
-              type="button"
-              onClick={() => setWhyOpen((v) => !v)}
-              className="ml-auto flex min-h-10 items-center gap-1.5 pb-2.5 pt-1 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
-            >
-              por qué y cómo
-              <Icon name="chevron" size={14} className={whyOpen ? "rotate-90" : ""} />
-            </button>
-          ) : null}
+          <div className="ml-auto self-center pb-1.5">
+            <FavoriteButton
+              outfitId={outfitId}
+              initialFavorited={initialFavorited}
+              variant="ring"
+            />
+          </div>
         </div>
 
         {tab === "look" ? (
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="mt-2.5 min-h-0 flex-1">
             {/* La retícula toma el alto flexible y se ajusta para que quepa. */}
-            <div className="mt-2.5 min-h-0 flex-1">
-              <Grid prendas={prendas} />
-            </div>
-            {/* Justificación / cómo llevarlo: alto natural, no empuja al footer. */}
-            <div className="flex shrink-0 flex-col justify-start pt-3">
-              {showTip ? (
-                <div
-                  key="tip"
-                  className="flex gap-2.5 text-[14px] leading-[20px] text-ink"
-                  style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-                >
-                  <Icon name="destello" size={16} className="mt-0.5 shrink-0" />
-                  <span className="line-clamp-2">{tip}</span>
-                </div>
-              ) : (
-                <p
-                  key="just"
-                  className="font-display text-[17px] italic leading-[23px] text-muted line-clamp-2"
-                  style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-                >
-                  {justificacion}
-                </p>
-              )}
-            </div>
+            <Grid prendas={prendas} />
           </div>
         ) : (
-          <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="mt-3 flex min-h-0 flex-1 flex-col">
             <TryonView
               image={tryonImage}
               generating={generating}
@@ -280,26 +239,12 @@ export function LookDetail({
               nombre={nombre}
               onGenerar={onGenerar}
             />
-
-            {/* "por qué y cómo": justificación + tip, colapsable (evita desbordar). */}
-            {hasRender && whyOpen ? (
-              <div
-                className="mt-3 shrink-0 border-t border-line pt-3"
-                style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-              >
-                <p className="font-display text-[16px] italic leading-[23px] text-muted">
-                  {justificacion}
-                </p>
-                {hasTip ? (
-                  <div className="mt-2.5 flex gap-2.5 text-[13.5px] leading-[20px] text-ink">
-                    <Icon name="destello" size={15} className="mt-0.5 shrink-0" />
-                    <span>{tip}</span>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
           </div>
         )}
+
+        {/* El pie del coach: por qué ⇄ cómo llevarlo, compartido por las dos
+            vistas. Slot fijo — el texto nunca le cobra espacio a la foto. */}
+        <CoachPie porQue={justificacion} como={tip} />
       </div>
 
       {/* Footer fijo. La primaria negra "verme…" sólo mientras NO hay render;

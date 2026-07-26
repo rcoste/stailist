@@ -55,16 +55,15 @@ export function TryonView({
 
   const hasRender = !!image && !generating;
 
-  // Contenedor flexible: el marco 3:4 se ajusta al alto disponible (más chico en
-  // pantallas cortas) para que todo quepa sin scroll; el consumidor puede meter
-  // su bloque de "por qué y cómo" debajo.
+  // Layout v2 (handoff design_handoff_look_detalle_v2 §5): el render MANDA la
+  // altura — llena el alto disponible y de ahí sale su ancho (3:4); las
+  // miniaturas van en una COLUMNA de 56px al lado (la tira horizontal de abajo
+  // gastaba ~79px de alto que ahora son render). Sigue siendo flexible: en
+  // pantallas cortas el marco se encoge (decisión de Roberto: nada de scroll).
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Marco 3:4: el render, la animación de generación, o el error. Toma el
-          alto flexible y lo respeta con max-h-full (se encoge en pantallas
-          cortas manteniendo el ancho ≤300). */}
-      <div className="flex min-h-0 flex-1 items-center justify-center">
-        <div className="relative aspect-[3/4] max-h-full w-full max-w-[300px] overflow-hidden rounded-sm border border-line bg-tile">
+      <div className="flex min-h-0 flex-1 items-stretch justify-center gap-2">
+        <div className="relative aspect-[3/4] h-full min-h-0 max-w-[calc(100%-3.5rem-0.5rem)] overflow-hidden rounded-sm border border-line bg-tile">
         {hasRender ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -117,6 +116,36 @@ export function TryonView({
           </div>
         ) : null}
         </div>
+
+        {/* Columna de prendas al lado del render (nunca encima — se probó
+            superpuesta y se ve pegoteada). Las miniaturas se estiran para igualar
+            el alto; con 6+ la columna hace scroll interno (con dos columnas de 3
+            el render ya no cabe a lo ancho — está medido). */}
+        {hasRender ? (
+          <div className="flex w-14 shrink-0 flex-col gap-1.5 overflow-y-auto">
+            {prendas.map((p, i) => (
+              <div
+                key={i}
+                className="relative min-h-[52px] w-full flex-1 overflow-hidden rounded-sm border border-line bg-tile"
+              >
+                {p.imagen ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.imagen}
+                    alt={p.nombre}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="absolute inset-0"
+                    style={{ backgroundColor: p.swatch }}
+                    aria-hidden
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {/* La voz del coach mientras genera (serif itálica, primera persona). */}
@@ -125,33 +154,6 @@ export function TryonView({
           <Icon name="destello" size={16} className="mt-1 shrink-0 text-ink" />
           <span>{FASES_COACH[fase]}</span>
         </p>
-      ) : null}
-
-      {/* Tira de prendas (sin nombres: ya se leyeron en la otra vista). */}
-      {hasRender ? (
-        <div className="mt-3 flex shrink-0 gap-1.5">
-          {prendas.map((p, i) => (
-            <div
-              key={i}
-              className="relative aspect-[4/5] w-11 shrink-0 overflow-hidden rounded-sm border border-line bg-tile"
-            >
-              {p.imagen ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.imagen}
-                  alt={p.nombre}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span
-                  className="absolute inset-0"
-                  style={{ backgroundColor: p.swatch }}
-                  aria-hidden
-                />
-              )}
-            </div>
-          ))}
-        </div>
       ) : null}
 
       {full && hasRender && typeof document !== "undefined" ? (

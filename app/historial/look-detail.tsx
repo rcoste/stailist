@@ -6,31 +6,18 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Heart } from "@/components/heart";
 import { DownReason } from "@/components/down-reason";
+import { CoachPie } from "@/components/coach-pie";
 import { TryonView } from "@/components/tryon-view";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { ocasionLabel, type HistoryOutfit, type EstadoItem } from "./history-list";
 
-// Detalle del look en Historial — pantalla completa con back real. Mismo lenguaje
-// "así te queda" que Hoy/wow (handoff design_handoff_try_on): el try-on ya NO abre
-// un modal oscuro, vive DENTRO del detalle como una segunda vista (componente
-// TryonView compartido). Lo propio del historial se conserva: back "‹ historial",
-// "me lo vuelvo a poner" (re-usar un look pasado) y borrar.
-//
-// Vista por defecto: si el look ya trae render, abre en "así te queda" (el avatar
-// vestido ES la imagen del outfit); si no, en "las prendas" con "verme con este
-// look" (que genera el render).
-
-// Parte el nombre en "cabeza" (sans) + "cola" (serif itálica), como Hoy/try-on.
-function splitName(nombre: string) {
-  const words = nombre.trim().split(" ");
-  const tail = words.length > 1 ? words.pop()! : null;
-  return { head: words.join(" "), tail };
-}
-
-function metaLine(o: HistoryOutfit) {
-  return o.occasion ? `${o.fecha} · ${ocasionLabel(o.occasion)}` : o.fecha;
-}
+// Detalle del look en Historial — misma anatomía v2 que el detalle de Hoy
+// (handoff design_handoff_look_detalle_v2): back en vez de wordmark, nombre en
+// serif + sub de fecha, pestañas con corazón y ⋯ a la derecha, pie del coach, y
+// la TAB BAR VISIBLE (el overlay termina arriba de ella — antes la tapaba).
+// Lo propio del historial: "me lo vuelvo a poner" y borrar (en el menú ⋯).
+// "Compartir" del handoff se omite: está fuera del MVP.
 
 export function LookDetail({
   o,
@@ -49,7 +36,7 @@ export function LookDetail({
   onVote: (up: boolean) => void;
   onFav: () => void;
   onRewear: () => void;
-  /** Borrar el look. Vive aquí (no en la tarjeta) para no ensuciar el diario. */
+  /** Borrar el look (vive en el menú ⋯; la confirmación la pone el padre). */
   onDelete: () => void;
 }) {
   const t = useTryon({
@@ -62,7 +49,7 @@ export function LookDetail({
   useWakeLock(t.mode === "gen");
 
   const [manual, setManual] = useState<"look" | "me" | null>(null);
-  const [whyOpen, setWhyOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const generating = t.mode === "gen";
   const hasRender = !!t.image && !generating;
@@ -73,63 +60,51 @@ export function LookDetail({
       ? manual ?? "me"
       : "look";
 
-  const { head, tail } = splitName(o.nombre);
+  const sub = o.occasion
+    ? `${o.fecha} · ${ocasionLabel(o.occasion).toLowerCase()}`
+    : o.fecha;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg">
-      {/* Back bar: ‹ historial + corazón */}
-      <div className="flex flex-none items-center justify-between px-3 pb-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
+    // El overlay termina ARRIBA de la tab bar (z-30 < z-40 de la barra): el
+    // detalle convive con la navegación, como en Hoy. En desktop (lg) la barra
+    // no existe → el overlay vuelve a llegar al fondo.
+    <div className="fixed inset-x-0 top-0 z-30 flex flex-col bg-bg bottom-[calc(57px+env(safe-area-inset-bottom))] lg:bottom-0">
+      {/* Back: ‹ historial (sustituye al wordmark; el corazón vive abajo). */}
+      <div className="flex flex-none items-center px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-1.5 px-1 py-1 text-[15px] font-semibold text-ink"
+          className="flex min-h-11 items-center gap-1.5 px-1 text-[15px] font-semibold text-ink"
         >
           <Icon name="chevron" size={19} rotate={180} /> historial
         </button>
-        <button
-          type="button"
-          onClick={onFav}
-          aria-pressed={e.fav}
-          aria-label={e.fav ? "Quitar de favoritos" : "Guardar en favoritos"}
-          className="flex h-9 w-9 items-center justify-center"
-        >
-          <Heart on={e.fav} size={20} />
-        </button>
       </div>
 
-      {/* Header: nombre del look (sans + serif) */}
-      <div className="flex flex-none flex-wrap items-baseline gap-x-2.5 px-5 pb-2 pt-0.5">
-        <h1 className="text-[25px] font-bold leading-none tracking-[-0.02em] text-ink">
-          {head}
+      {/* Nombre en serif + sub de fecha (+ sellos que el mock no cubre pero no
+          se pierden: Puesto y Viaje). */}
+      <div className="flex-none px-4 pt-1">
+        <h1 className="font-display text-[27px] italic leading-[29px] text-ink">
+          {o.nombre}
         </h1>
-        {tail ? (
-          <>
-            <span className="text-sm text-muted">·</span>
-            <span className="font-display text-[23px] italic leading-none text-muted">
-              {tail}
-            </span>
-          </>
-        ) : null}
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col px-5">
-        {/* Meta: sello "Puesto" (si se puso) + fecha · ocasión */}
-        <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
           {o.origen === "viaje" ? (
             <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-[7px] py-0.5 text-[10px] font-semibold text-ink">
               <Icon name="maleta" size={11} /> Viaje
             </span>
           ) : null}
           {e.worn ? (
-            <span className="inline-flex items-center gap-1 rounded-sm bg-success/10 px-2 py-1 text-[10px] font-bold text-success">
+            <span className="inline-flex items-center gap-1 rounded-sm bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
               <Icon name="check" size={11} /> Puesto
             </span>
           ) : null}
-          <span className="tabular">{metaLine(o)}</span>
+          <span className="tabular">{sub}</span>
         </div>
+      </div>
 
-        {/* Segmento: pestañas + "por qué" a la derecha */}
-        <div className="flex items-center border-b border-line">
+      <div className="flex min-h-0 flex-1 flex-col px-4">
+        {/* Pestañas + corazón + ⋯ (el menú cuelga del contenedor relativo de la
+            fila — nunca un top absoluto medido a ojo). */}
+        <div className="relative mt-2 flex items-center gap-1 border-b border-line">
           <SegTab
             label="las prendas"
             active={tab === "look"}
@@ -143,54 +118,84 @@ export function LookDetail({
               onClick={() => setManual("me")}
             />
           ) : null}
-          {o.explicacion ? (
+          <div className="ml-auto flex gap-2 self-center pb-1.5">
             <button
               type="button"
-              onClick={() => setWhyOpen((v) => !v)}
-              className="ml-auto flex min-h-10 items-center gap-1.5 pb-2.5 pt-1 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+              onClick={onFav}
+              aria-pressed={e.fav}
+              aria-label={e.fav ? "Quitar de favoritos" : "Guardar en favoritos"}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface transition-colors hover:border-ink after:absolute after:-inset-1 after:content-['']"
             >
-              por qué
-              <Icon name="chevron" size={14} className={whyOpen ? "rotate-90" : ""} />
+              <Heart on={e.fav} size={17} />
             </button>
-          ) : null}
-        </div>
-
-        <div className="mt-3 flex min-h-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 flex-col">
-            {tab === "look" ? (
-              <Grid prendas={o.prendas} />
-            ) : (
-              <TryonView
-                image={t.image}
-                generating={generating}
-                error={t.mode === "error" ? t.errMsg : null}
-                prendas={o.prendas}
-                nombre={o.nombre}
-                onGenerar={t.generar}
-              />
-            )}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-label="más opciones"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink after:absolute after:-inset-1 after:content-['']"
+            >
+              <Icon name="puntos" size={18} />
+            </button>
           </div>
 
-          {/* "por qué este look": la justificación, colapsable. */}
-          {whyOpen && o.explicacion ? (
-            <div
-              className="mt-3 shrink-0 border-t border-line pt-3"
-              style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-            >
-              <p className="font-display text-[16px] italic leading-[23px] text-muted">
-                {o.explicacion}
-              </p>
-            </div>
+          {menuOpen ? (
+            <>
+              {/* Cierra al tocar fuera. */}
+              <button
+                type="button"
+                aria-label="cerrar menú"
+                onClick={() => setMenuOpen(false)}
+                className="fixed inset-0 z-[8] cursor-default"
+              />
+              <div
+                className="absolute right-0 top-[calc(100%+7px)] z-[9] min-w-[186px] border border-line bg-surface shadow-[0_14px_34px_-14px_rgba(0,0,0,0.28)]"
+                style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
+              >
+                {/* "Compartir" del handoff NO va: fuera del MVP. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDelete();
+                  }}
+                  className="flex min-h-[46px] w-full items-center gap-2.5 px-3.5 text-left text-sm font-medium text-error transition-colors hover:bg-bg"
+                >
+                  <Icon name="equis" size={16} /> borrar este look
+                </button>
+              </div>
+            </>
           ) : null}
         </div>
 
-        {/* Footer: verme (si no hay render) + votar / me lo vuelvo a poner + borrar */}
-        <div className="-mx-5 mt-2 flex-none border-t border-line bg-surface px-5 pb-[max(1.125rem,env(safe-area-inset-bottom))] pt-3">
+        {/* Cuerpo: retícula flexible o render + columna (mismas piezas que Hoy). */}
+        {tab === "look" ? (
+          <div className="mt-2.5 min-h-0 flex-1">
+            <Grid prendas={o.prendas} />
+          </div>
+        ) : (
+          <div className="mt-3 flex min-h-0 flex-1 flex-col">
+            <TryonView
+              image={t.image}
+              generating={generating}
+              error={t.mode === "error" ? t.errMsg : null}
+              prendas={o.prendas}
+              nombre={o.nombre}
+              onGenerar={t.generar}
+            />
+          </div>
+        )}
+
+        {/* El pie del coach (por qué ⇄ cómo llevarlo). */}
+        {o.explicacion ? <CoachPie porQue={o.explicacion} como={o.tip} /> : null}
+
+        {/* Botonera: verme (si no hay render) + me lo vuelvo a poner + votos. */}
+        <div className="-mx-4 mt-2 flex-none border-t border-line bg-surface px-4 pb-4 pt-2.5">
           {!hasRender ? (
             t.mode === "sin_avatar" ? (
               <Link
                 href={t.avatarHref}
-                className="mb-2.5 flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+                className="mb-2 flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
               >
                 <Icon name="destello" size={18} /> crea tu avatar para verte
               </Link>
@@ -199,7 +204,7 @@ export function LookDetail({
                 type="button"
                 onClick={t.generar}
                 disabled={generating}
-                className="mb-2.5 flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
+                className="mb-2 flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
               >
                 <Icon name="destello" size={18} />
                 {generating ? "te estoy vistiendo…" : "verme con este look"}
@@ -210,36 +215,30 @@ export function LookDetail({
             )
           ) : null}
 
-          <div className="flex gap-2.5">
-            <div className="flex flex-none gap-2">
-              <VoteButton up active={e.voto === "up"} onClick={() => onVote(true)} />
-              <VoteButton up={false} active={e.voto === "down"} onClick={() => onVote(false)} />
-            </div>
+          <div className="flex min-h-11 items-center justify-between">
             <button
               type="button"
               onClick={onRewear}
               disabled={rewearing}
-              className="flex h-[50px] flex-1 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60"
+              className="flex min-h-11 items-center gap-2 text-[14px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
             >
               <Icon name="repetir" size={16} />
               {rewearing ? "poniéndomelo…" : "me lo vuelvo a poner"}
             </button>
+            <div className="flex items-center gap-2">
+              <span className="mr-0.5 text-[13px] font-semibold text-muted">
+                ¿te gustó?
+              </span>
+              <VoteButton up={false} active={e.voto === "down"} onClick={() => onVote(false)} />
+              <VoteButton up active={e.voto === "up"} onClick={() => onVote(true)} />
+            </div>
           </div>
 
           {e.voto === "down" ? (
-            <div className="mt-3">
+            <div className="mt-2.5">
               <DownReason outfitId={o.id} />
             </div>
           ) : null}
-
-          {/* Borrar: discreto y al final — es la salida, no una acción del día. */}
-          <button
-            type="button"
-            onClick={onDelete}
-            className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-error"
-          >
-            <Icon name="equis" size={14} /> borrar este look
-          </button>
         </div>
       </div>
     </div>
@@ -332,13 +331,13 @@ function VoteButton({
       onClick={onClick}
       aria-pressed={active}
       aria-label={up ? "Me gusta" : "No me gusta"}
-      className={`relative flex h-[50px] w-[50px] items-center justify-center rounded-sm border transition-colors ${
+      className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition-colors after:absolute after:-inset-0.5 after:content-[''] ${
         active
           ? "border-ink bg-tile text-ink"
           : "border-line text-muted hover:border-ink hover:text-ink"
       }`}
     >
-      <Icon name="pulgar" size={18} rotate={up ? 0 : 180} active={active} />
+      <Icon name="pulgar" size={17} className={up ? "" : "rotate-180"} />
     </button>
   );
 }

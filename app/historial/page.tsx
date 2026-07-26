@@ -20,7 +20,7 @@ export default async function HistorialPage({
 
   const { data: outfits } = await supabase
     .from("outfits")
-    .select("id, title, explanation, occasion, item_ids, created_at, favorited_at, tryon_path, source")
+    .select("id, title, explanation, tip, occasion, item_ids, created_at, favorited_at, tryon_path, source")
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     // Diarios siempre; los promovidos del viaje solo mientras sigan favoriteados
@@ -100,6 +100,7 @@ export default async function HistorialPage({
     id: o.id,
     nombre: o.title ?? "Tu look",
     explicacion: o.explanation,
+    tip: (o.tip as string | null) ?? null,
     createdAt: o.created_at as string,
     fecha: new Date(o.created_at).toLocaleDateString("es-MX", {
       day: "numeric",

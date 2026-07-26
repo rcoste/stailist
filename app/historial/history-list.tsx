@@ -14,6 +14,7 @@ export type HistoryOutfit = {
   id: string;
   nombre: string;
   explicacion: string;
+  tip?: string | null; // "cómo llevarlo" del juez — pie del coach en el detalle
   createdAt: string; // ISO — para agrupar por mes
   fecha: string; // "18 jun"
   occasion: string | null; // clave cruda: diario/oficina/evento/viaje/refrescar

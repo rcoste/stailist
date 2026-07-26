@@ -5,14 +5,18 @@ import { toggleFavorite } from "@/lib/outfit-actions";
 
 // Corazón de favorito de un look (metáfora unificada en toda la app: Hoy, wow,
 // Historial). Optimista; si falla, revierte. onChange avisa al padre.
+// variant: "overlay" (default) va SOBRE fotos (blur + sombra); "ring" es el
+// círculo hairline de la fila de pestañas del detalle (handoff v2 §3).
 export function FavoriteButton({
   outfitId,
   initialFavorited,
   onChange,
+  variant = "overlay",
 }: {
   outfitId: string;
   initialFavorited: boolean;
   onChange?: (favorited: boolean) => void;
+  variant?: "overlay" | "ring";
 }) {
   const [fav, setFav] = useState(initialFavorited);
 
@@ -33,7 +37,11 @@ export function FavoriteButton({
       onClick={toggle}
       aria-pressed={fav}
       aria-label={fav ? "Quitar de favoritos" : "Guardar en favoritos"}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-surface/90 shadow-[var(--shadow-hairline)] backdrop-blur transition-colors duration-200 hover:bg-surface"
+      className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200 after:absolute after:-inset-1 after:content-[''] ${
+        variant === "ring"
+          ? "border border-line bg-surface hover:border-ink"
+          : "bg-surface/90 shadow-[var(--shadow-hairline)] backdrop-blur hover:bg-surface"
+      }`}
     >
       <svg
         width="18"
