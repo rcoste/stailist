@@ -118,15 +118,17 @@ export function TryonView({
         </div>
 
         {/* Columna de prendas al lado del render (nunca encima — se probó
-            superpuesta y se ve pegoteada). Las miniaturas se estiran para igualar
-            el alto; con 6+ la columna hace scroll interno (con dos columnas de 3
-            el render ya no cabe a lo ancho — está medido). */}
+            superpuesta y se ve pegoteada). Las miniaturas van en proporción FIJA
+            4/5 (la de todos los tiles de la app), NO estiradas a igualar el alto
+            del render: estiradas (handoff) el cover recortaba la prenda misma
+            (feedback de Roberto en el teléfono real). Con muchas prendas la
+            columna hace scroll interno. */}
         {hasRender ? (
           <div className="flex w-14 shrink-0 flex-col gap-1.5 overflow-y-auto">
             {prendas.map((p, i) => (
               <div
                 key={i}
-                className="relative min-h-[52px] w-full flex-1 overflow-hidden rounded-sm border border-line bg-tile"
+                className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-sm border border-line bg-tile"
               >
                 {p.imagen ? (
                   // eslint-disable-next-line @next/next/no-img-element
