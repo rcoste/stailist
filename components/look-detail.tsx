@@ -27,7 +27,7 @@ export type LookDetailPrenda = TryonPrenda;
 
 function Tile({ prenda }: { prenda: LookDetailPrenda }) {
   return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-line bg-tile">
+    <div className="relative h-full w-full overflow-hidden rounded-sm border border-line bg-tile">
       {prenda.imagen ? (
         <Image
           src={prenda.imagen}
@@ -53,36 +53,16 @@ function Tile({ prenda }: { prenda: LookDetailPrenda }) {
   );
 }
 
-// Grid por conteo: ≤4 → 2 columnas; 5+ → 2 protagonistas + fila de apoyo.
+// Retícula de 2 columnas que LLENA el alto disponible (filas de igual fracción):
+// las prendas escalan para que todo el detalle quepa sin scroll, más chicas en
+// pantallas cortas y grandes en las altas. object-cover recorta sólo el aire de
+// los flat-lays, así que la prenda se mantiene centrada.
 function Grid({ prendas }: { prendas: LookDetailPrenda[] }) {
-  const n = prendas.length;
-  if (n <= 4) {
-    return (
-      <div className="grid grid-cols-2 gap-2">
-        {prendas.map((p, i) => (
-          <Tile key={i} prenda={p} />
-        ))}
-      </div>
-    );
-  }
-  const protag = prendas.slice(0, 2);
-  const support = prendas.slice(2);
-  const cols = Math.min(support.length, 4);
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-2 gap-2">
-        {protag.map((p, i) => (
-          <Tile key={i} prenda={p} />
-        ))}
-      </div>
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
-      >
-        {support.map((p, i) => (
-          <Tile key={i} prenda={p} />
-        ))}
-      </div>
+    <div className="grid h-full min-h-0 grid-cols-2 gap-2 [grid-auto-rows:minmax(0,1fr)]">
+      {prendas.map((p, i) => (
+        <Tile key={i} prenda={p} />
+      ))}
     </div>
   );
 }
@@ -211,7 +191,7 @@ export function LookDetail({
   const showTip = swapped && hasTip;
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Header: hoy · nombre + corazón */}
       <div className="flex items-baseline gap-2.5 pb-3">
         <h1 className="text-[25px] font-bold tracking-[-0.02em] text-ink">hoy</h1>
@@ -263,32 +243,33 @@ export function LookDetail({
         </div>
 
         {tab === "look" ? (
-          <>
-            <div className="mt-2.5">
+          <div className="flex min-h-0 flex-1 flex-col">
+            {/* La retícula toma el alto flexible y se ajusta para que quepa. */}
+            <div className="mt-2.5 min-h-0 flex-1">
               <Grid prendas={prendas} />
             </div>
-            {/* Slot: 92px reservados para que intercambiar no mueva el footer. */}
-            <div className="mt-auto flex min-h-[92px] flex-col justify-start pt-3">
+            {/* Justificación / cómo llevarlo: alto natural, no empuja al footer. */}
+            <div className="flex shrink-0 flex-col justify-start pt-3">
               {showTip ? (
                 <div
                   key="tip"
-                  className="flex gap-2.5 text-[14px] leading-[21px] text-ink"
+                  className="flex gap-2.5 text-[14px] leading-[20px] text-ink"
                   style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
                 >
                   <Icon name="destello" size={16} className="mt-0.5 shrink-0" />
-                  <span className="line-clamp-3">{tip}</span>
+                  <span className="line-clamp-2">{tip}</span>
                 </div>
               ) : (
                 <p
                   key="just"
-                  className="font-display text-[18px] italic leading-[25px] text-muted line-clamp-3"
+                  className="font-display text-[17px] italic leading-[23px] text-muted line-clamp-2"
                   style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
                 >
                   {justificacion}
                 </p>
               )}
             </div>
-          </>
+          </div>
         ) : (
           <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
             <TryonView

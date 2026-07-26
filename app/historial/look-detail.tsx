@@ -155,19 +155,21 @@ export function LookDetail({
           ) : null}
         </div>
 
-        <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
-          {tab === "look" ? (
-            <Grid prendas={o.prendas} />
-          ) : (
-            <TryonView
-              image={t.image}
-              generating={generating}
-              error={t.mode === "error" ? t.errMsg : null}
-              prendas={o.prendas}
-              nombre={o.nombre}
-              onGenerar={t.generar}
-            />
-          )}
+        <div className="mt-3 flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
+            {tab === "look" ? (
+              <Grid prendas={o.prendas} />
+            ) : (
+              <TryonView
+                image={t.image}
+                generating={generating}
+                error={t.mode === "error" ? t.errMsg : null}
+                prendas={o.prendas}
+                nombre={o.nombre}
+                onGenerar={t.generar}
+              />
+            )}
+          </div>
 
           {/* "por qué este look": la justificación, colapsable. */}
           {whyOpen && o.explicacion ? (
@@ -248,7 +250,7 @@ type Prenda = HistoryOutfit["prendas"][number];
 
 function Tile({ prenda }: { prenda: Prenda }) {
   return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-line bg-tile">
+    <div className="relative h-full w-full overflow-hidden rounded-sm border border-line bg-tile">
       {prenda.imagen ? (
         <Image
           src={prenda.imagen}
@@ -274,11 +276,10 @@ function Tile({ prenda }: { prenda: Prenda }) {
   );
 }
 
+// Retícula de 2 columnas que llena el alto disponible (igual que en Hoy).
 function Grid({ prendas }: { prendas: Prenda[] }) {
-  const n = prendas.length;
-  const cols = n <= 4 ? "grid-cols-2" : "grid-cols-3";
   return (
-    <div className={`grid gap-2 ${cols}`}>
+    <div className="grid h-full min-h-0 grid-cols-2 gap-2 [grid-auto-rows:minmax(0,1fr)]">
       {prendas.map((p, i) => (
         <Tile key={i} prenda={p} />
       ))}

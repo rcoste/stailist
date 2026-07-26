@@ -415,7 +415,10 @@ function ModoHoyView({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    // Acotado al alto visible para que el primer look quepa sin scroll (la fila
+    // de acciones nunca escondida). -mb-8 cancela el pb-8 del <main> del
+    // onboarding; sin tab bar fija, sólo se descuenta el header.
+    <div className="-mb-8 flex h-[calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-0 flex-col">
       <LookDetail
         nombre={outfit.nombre}
         prendas={outfit.prendas}

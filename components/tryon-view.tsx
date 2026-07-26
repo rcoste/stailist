@@ -55,12 +55,16 @@ export function TryonView({
 
   const hasRender = !!image && !generating;
 
-  // Contenedor sin scroll propio: el consumidor decide el scroll (para poder
-  // meter debajo su bloque de "por qué y cómo" en el mismo área).
+  // Contenedor flexible: el marco 3:4 se ajusta al alto disponible (más chico en
+  // pantallas cortas) para que todo quepa sin scroll; el consumidor puede meter
+  // su bloque de "por qué y cómo" debajo.
   return (
-    <div className="flex flex-col">
-      {/* Marco 3:4: el render, la animación de generación, o el error. */}
-      <div className="relative mx-auto aspect-[3/4] w-full max-w-[300px] shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Marco 3:4: el render, la animación de generación, o el error. Toma el
+          alto flexible y lo respeta con max-h-full (se encoge en pantallas
+          cortas manteniendo el ancho ≤300). */}
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div className="relative aspect-[3/4] max-h-full w-full max-w-[300px] overflow-hidden rounded-sm border border-line bg-tile">
         {hasRender ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -112,6 +116,7 @@ export function TryonView({
             ) : null}
           </div>
         ) : null}
+        </div>
       </div>
 
       {/* La voz del coach mientras genera (serif itálica, primera persona). */}

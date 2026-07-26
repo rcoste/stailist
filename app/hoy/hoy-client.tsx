@@ -465,8 +465,12 @@ function ReadyView({
 
   return (
     <>
+      {/* Acotado al alto visible (entre el header y la tab bar fija) para que el
+          detalle QUEPA sin scroll y la fila de acciones nunca quede escondida
+          detrás de la barra. -mb-28 cancela el pb-28 del <main> (reserva de la
+          tab bar); en desktop (lg) se libera al layout normal. */}
       <div
-        className="mx-auto flex min-h-[calc(100dvh-9rem)] w-full max-w-[440px] flex-1 flex-col"
+        className="mx-auto -mb-28 flex h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[440px] flex-col lg:mb-0 lg:h-auto lg:min-h-[calc(100dvh-9rem)]"
         style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
       >
         <LookDetail
