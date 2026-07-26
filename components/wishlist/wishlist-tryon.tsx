@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import Link from "next/link";
 import Image from "next/image";
 import { GeneratingScreen } from "@/components/generating-screen";
@@ -47,10 +48,9 @@ export function WishlistTryon({ itemId, onClose }: { itemId: string; onClose: ()
     // no en cascada síncrona. La regla da falso positivo aquí.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     doTryon();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId]);

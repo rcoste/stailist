@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.29.3] - 2026-07-26
+
+### Fixed
+
+- **La biblioteca (y cualquier página) ya no puede quedarse sin scroll.** Había 8 hojas/overlays que bloqueaban el scroll del fondo cada uno por su cuenta ("guardo el estado anterior y lo restauro al cerrar"); si dos se traslapaban en el tiempo — p. ej. la hoja "más" → "añadir prendas" → navegar a la biblioteca — la segunda guardaba "bloqueado" como estado anterior y al cerrarse dejaba la página trabada hasta recargar. Ahora todos comparten un solo candado con conteo: el scroll vuelve exactamente cuando la última hoja se cierra. Verificado reproduciendo la secuencia exacta del bug.
+
 ## [0.2.29.2] - 2026-07-26
 
 ### Fixed

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 
 // Bottom sheet del sistema: scrim a pantalla completa, cierre por tap fuera y
@@ -31,14 +32,13 @@ export function Sheet({
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);

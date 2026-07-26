@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icon";
 import { dismissHint, type HintId } from "@/lib/hints";
@@ -163,15 +164,14 @@ function CoachMark({
   // Bloquea el scroll del body + Escape para cerrar + foco inicial en "entendido".
   useEffect(() => {
     if (!ready) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     okRef.current?.focus();
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [ready, onClose]);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { useRouter } from "next/navigation";
 import { voteOutfit, toggleFavorite, wearToday } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
@@ -163,14 +164,13 @@ export function HistoryList({
   // Bloquea el scroll del fondo y cierra con Escape mientras el detalle está abierto.
   useEffect(() => {
     if (!lookAbierto) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key === "Escape") setAbierto(null);
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [lookAbierto]);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import {
@@ -225,14 +226,13 @@ function ColorFullscreen({
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollLeft = start * el.clientWidth;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [start, onClose]);

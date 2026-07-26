@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
@@ -161,12 +162,11 @@ function AtajosSheet({
   // Bloquea el scroll del fondo + Escape mientras vive.
   useEffect(() => {
     if (!mounted) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [mounted, onClose]);

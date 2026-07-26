@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 
 // Confirmación de borrado. Una sola para toda la app: prendas, viajes y outfits
@@ -34,8 +35,7 @@ export function ConfirmDelete({
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancelRef.current();
     };
@@ -43,7 +43,7 @@ export function ConfirmDelete({
     // El foco arranca en cancelar, no en borrar: el default seguro es no borrar.
     okRef.current?.focus();
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);

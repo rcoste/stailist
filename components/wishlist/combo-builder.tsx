@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import Link from "next/link";
 import { Spinner } from "@/components/spinner";
 import type { WishlistItem, ClosetPick } from "@/components/wishlist/wishlist-client";
@@ -25,10 +26,9 @@ export function ComboBuilder({
   const [image, setImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     return () => {
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
     };
   }, []);
 
