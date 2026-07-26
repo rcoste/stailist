@@ -880,10 +880,13 @@ function DecideRow({
           </span>
         </div>
 
-        {/* YA LA TIENES (tu prenda) */}
+        {/* LO MÁS PARECIDO (tu prenda). El rótulo decía "ya la tienes", pero esta
+            card solo sale cuando el match fue "parecido" — afirmar que ya la
+            tienes hacía que cualquier match imperfecto se leyera como error
+            (feedback de Roberto: henley sugerido vs térmica "que ya tienes"). */}
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-muted">
-            ya la tienes
+            lo más parecido
           </span>
           <button
             type="button"

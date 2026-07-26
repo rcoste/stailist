@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.30.0] - 2026-07-26
+
+### Fixed
+
+- **La cápsula ya no empareja prendas que no son comparables.** El match sugería un henley gris y decía que "ya lo tenías" con una camiseta térmica negra (feedback de Roberto). Dos arreglos:
+  - **El juez del match aprieta el "tipo fino"**: si el rasgo que define a la prenda ideal (la botonadura de un henley/polo, el cuello alto, los botones de una camisa) no existe en la tuya, es hueco — una camiseta lisa no cubre un henley. Las capas térmicas/base tampoco cubren camisetas de diario (uso distinto), y la manga corta vs larga ya cuenta.
+  - **El rótulo de la comparación dice la verdad**: "lo más parecido" en vez de "ya la tienes" — esa card solo aparece cuando el match fue apenas parecido, no un match exacto.
+  - Los matches ya calculados se recalculan solos en la siguiente visita a la cápsula (la versión del juez ahora es parte del caché; los looks de la cápsula NO se regeneran).
+
 ## [0.2.29.3] - 2026-07-26
 
 ### Fixed

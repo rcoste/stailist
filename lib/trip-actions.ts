@@ -8,7 +8,8 @@ import {
   borrowArchetypeImage,
 } from "@/lib/capsule-data";
 import { matchSubstitutes } from "@/lib/engine/trip-substitutes";
-import { capsuleRows, closetSignature } from "@/lib/capsule";
+import { capsuleRows } from "@/lib/capsule";
+import { matchSignature } from "@/lib/engine/capsule-match";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
 import type {
@@ -161,7 +162,7 @@ export async function markTripFaltaOwned(
       ? { status: "tienes", by: item.nombre }
       : match.entries[i] ?? { status: "falta", by: null }
   );
-  const newMatch: CapsuleMatch = { signature: closetSignature(closet), entries };
+  const newMatch: CapsuleMatch = { signature: matchSignature(closet), entries };
   // Y la deja palomeada (empacada) — "ya lo tengo" = la tienes y la empacas.
   const empacado = {
     ...((trip?.empacado as Record<string, boolean> | null) ?? {}),

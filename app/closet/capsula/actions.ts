@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   assessmentQuestions,
   type AssessmentQuestion,
-  closetSignature,
   type CapsuleDecision,
   type CapsuleItem,
   type CapsuleMatch,
@@ -20,7 +19,7 @@ import {
 import { EMPTY_VETOES, type StyleVetoes, vetoLabels } from "@/lib/vetoes";
 import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
 import { generateCapsuleSwap } from "@/lib/engine/capsule-swap";
-import { matchCapsule } from "@/lib/engine/capsule-match";
+import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
 import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
@@ -506,7 +505,7 @@ export async function markFaltaOwned(
       ? { status: "tienes", by: item.nombre }
       : match.entries[i] ?? { status: "falta", by: null }
   );
-  const newMatch: CapsuleMatch = { signature: closetSignature(closet), entries };
+  const newMatch: CapsuleMatch = { signature: matchSignature(closet), entries };
   await supabase.from("profiles").update({ capsule_match: newMatch }).eq("id", user.id);
 
   // OJO: revalidar la ruta DONDE estás (/closet/capsula), no solo /closet —

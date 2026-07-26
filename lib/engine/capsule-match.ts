@@ -35,6 +35,17 @@ export function closetItemLine(c: ClosetItemLite): string {
   return `- ${c.nombre} (${detalle.join(", ")})`;
 }
 
+// Versión del prompt del match, PARTE de la firma del caché: al afinar las
+// reglas, los matches viejos quedan stale y se recalculan en la siguiente
+// visita (sin esto, el fix solo llegaría a quien cambie su clóset). OJO: no
+// tocar closetSignature — la comparten los looks de la cápsula y regenerarlos
+// cuesta llamadas.
+const MATCH_PROMPT_VERSION = "m2";
+
+export function matchSignature(closet: Parameters<typeof closetSignature>[0]): string {
+  return `${MATCH_PROMPT_VERSION}|${closetSignature(closet)}`;
+}
+
 // CAPA 2 — el match: por cada prenda de la cápsula ideal, ¿el clóset real ya la
 // cubre? El juicio fino (¿una desert boot cubre una chukka? ¿un crewneck cubre
 // un cuello tortuga?) lo hace la IA, porque el clóset no guarda un "tipo" fino.
@@ -48,7 +59,7 @@ export async function matchCapsule(
   // las usa como ÚLTIMO recurso — solo si ninguna otra prenda cubre la ideal.
   evita: string[] = []
 ): Promise<CapsuleMatch> {
-  const signature = closetSignature(closet);
+  const signature = matchSignature(closet);
   const blank: MatchEntry[] = target.items.map(() => ({ status: "falta", by: null }));
 
   // Sin clóset (o sin API) → todo falta, sin gastar una llamada.
@@ -93,7 +104,7 @@ export async function matchCapsule(
 
 REGLAS (en orden de prioridad):
 1. La CLASE de prenda manda por encima de TODO. "by" DEBE ser de la MISMA clase que la prenda ideal: un pantalón solo lo cubre otro pantalón; un zapato, otro zapato; un reloj, otro reloj. NUNCA cruces clases por color o material parecido — un chino NO lo cubren unos mocasines; un reloj NO lo cubren unos lentes; un cinturón NO lo cubre una cartera. Entre accesorios distingue la clase fina (reloj ≠ lentes ≠ cinturón ≠ bufanda ≠ gorra). Si NINGUNA prenda del clóset es de la misma clase, es "falta" con by="". Prohibido emparejar prendas de categorías distintas (top, bottom, calzado, abrigo, vestido, accesorio).
-2. Dentro de la misma clase, el cuello/corte importa: un crewneck NO cubre un cuello tortuga (cuello distinto) → "falta".
+2. Dentro de la misma clase, el TIPO FINO manda: si el rasgo que DEFINE a la prenda ideal (la botonadura de un henley o un polo, el cuello de un cuello tortuga, los botones de una camisa) no existe en la prenda real, es "falta" — una camiseta lisa NO cubre un henley ni un polo; un crewneck NO cubre un cuello tortuga. El USO también manda: una capa térmica/base de invierno no cubre una camiseta de diario (ni al revés). La manga (corta vs larga) baja a "parecido" si TODO lo demás coincide; sumada a otro rasgo distinto, es "falta".
 3. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
 4. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
 

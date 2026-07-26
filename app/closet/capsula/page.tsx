@@ -11,7 +11,8 @@ import type { TripOutfit } from "@/lib/trip";
 import { Icon, type IconName } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { capsuleEscalated, capsuleView, closetSignature } from "@/lib/capsule";
+import { capsuleEscalated, capsuleView } from "@/lib/capsule";
+import { matchSignature } from "@/lib/engine/capsule-match";
 import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
 import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
@@ -72,7 +73,7 @@ export default async function CapsulaPage({
     .map((r) => r.capsule_key as string | null)
     .filter((k): k is string => !!k);
 
-  const sig = closetSignature(closet);
+  const sig = matchSignature(closet);
   const stale = !match || match.signature !== sig;
   // ¿La cápsula se generó con un estilo de referencia distinto al actual? → outdated.
   const styleStale =
