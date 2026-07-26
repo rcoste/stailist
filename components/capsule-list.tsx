@@ -343,6 +343,9 @@ export function CapsuleList({
                 onOwn={() => markOwned(r.index, r.item.nombre)}
                 wishSaved={wishSaved.has(faltaKey(r.item))}
                 onToggleWish={() => toggleWish(r)}
+                swapBusy={swapBusy.has(r.index)}
+                swapErrored={swapError.has(r.index)}
+                onNinguna={() => rejectItem(r.index, null)}
               />
             ))}
           </ul>
@@ -777,6 +780,9 @@ function DecideRow({
   onOwn,
   wishSaved,
   onToggleWish,
+  swapBusy = false,
+  swapErrored = false,
+  onNinguna,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
@@ -787,6 +793,11 @@ function DecideRow({
   onOwn: () => void;
   wishSaved: boolean;
   onToggleWish: () => void;
+  /** Tercer camino (feedback de Roberto): no te gusta NI la tuya NI la sugerida
+   *  → pide otra alternativa (mismo swap del camino A, sin razón). */
+  swapBusy?: boolean;
+  swapErrored?: boolean;
+  onNinguna?: () => void;
 }) {
   const { item, by, decision, index } = row;
   const src = by ? images[by] : null;
@@ -909,9 +920,33 @@ function DecideRow({
       </div>
 
       {sel === null ? (
-        <p className="text-center text-[11.5px] text-muted">
-          Toca la prenda que prefieras para este hueco
-        </p>
+        <div className="flex flex-col items-center gap-0.5">
+          <p className="text-center text-[11.5px] text-muted">
+            Toca la prenda que prefieras para este hueco
+          </p>
+          {/* Tercer camino: ninguna de las dos. Reusa el swap del camino A —
+              la IA trae otra sugerencia para el mismo hueco (tope 2). */}
+          {onNinguna && !row.atSwapCap ? (
+            swapBusy ? (
+              <span className="flex min-h-9 items-center gap-1.5 text-[11.5px] text-muted">
+                <Spinner className="h-3 w-3" /> buscando otra sugerencia…
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={onNinguna}
+                className="min-h-9 text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                ¿ninguna te late? te sugiero otra
+              </button>
+            )
+          ) : null}
+          {swapErrored ? (
+            <span className="text-[10.5px] text-error">
+              no pude traer otra — inténtalo de nuevo
+            </span>
+          ) : null}
+        </div>
       ) : (
         <div className="flex items-center gap-2.5">
           <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-ink">

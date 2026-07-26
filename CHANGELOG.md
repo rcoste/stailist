@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.31.0] - 2026-07-26
+
+### Added
+
+- **La comparación de la cápsula tiene tercer camino: "¿ninguna te late? te sugiero otra".** Antes solo podías elegir entre la sugerida y la tuya — si no te gustaba ninguna, no había salida (pregunta de Roberto). El enlace pide otra alternativa a la IA para el mismo hueco (el swap que ya existía en "lo que te falta", ahora conectado aquí): hasta 2 intentos, y al segundo rechazo el hueco se retira solo de la cápsula.
+
 ## [0.2.30.0] - 2026-07-26
 
 ### Fixed
