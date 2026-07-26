@@ -72,14 +72,18 @@ export function TryonView({
               alt={`tú con ${nombre}`}
               className="tryon-reveal absolute inset-0 h-full w-full object-cover object-[50%_6%]"
             />
-            <button
-              type="button"
-              onClick={() => setFull(true)}
-              aria-label="ver a pantalla completa"
-              className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 text-ink backdrop-blur transition-colors hover:bg-surface"
-            >
-              <Icon name="expandir" size={16} />
-            </button>
+            {/* La lupa del marco se oculta mientras la pantalla completa está
+                abierta (como el mock del handoff: evita que se asome encima). */}
+            {!full ? (
+              <button
+                type="button"
+                onClick={() => setFull(true)}
+                aria-label="ver a pantalla completa"
+                className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 text-ink backdrop-blur transition-colors hover:bg-surface"
+              >
+                <Icon name="expandir" size={16} />
+              </button>
+            ) : null}
           </>
         ) : null}
 
@@ -199,21 +203,16 @@ function Lupa({
       className="fixed inset-0 z-[70] bg-bg"
       style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
     >
-      {/* Foto a sangre arriba, con velo para el contraste de la barra de estado. */}
+      {/* Foto a sangre arriba. SIN velo: el gradiente del handoff era para darle
+          contraste a la barra de estado cuando la foto sangra hasta el borde
+          superior — en el teléfono real la foto NO llega ahí, y el velo solo se
+          veía como una mancha gris (feedback de Roberto). */}
       <div className="absolute inset-x-0 top-0 h-[64%] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image}
           alt={`tú con ${nombre}`}
           className="h-full w-full object-cover object-[50%_15%]"
-        />
-        <span
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-[150px]"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgb(12 12 12/.42), rgb(12 12 12/0))",
-          }}
         />
       </div>
 
@@ -246,7 +245,9 @@ function Lupa({
           ))}
         </div>
 
-        <div className="mt-4 flex items-center gap-1.5 border-t border-line pt-3.5">
+        {/* Tira más grande (56px): abajo sobraba aire muerto bajo los thumbs de
+            38px (feedback de Roberto) — mejor que lo ocupe la prenda. */}
+        <div className="mt-4 flex items-center gap-2 border-t border-line pt-3.5">
           {prendas.map((p, i) =>
             p.imagen ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -254,7 +255,7 @@ function Lupa({
                 key={i}
                 src={p.imagen}
                 alt={p.nombre}
-                className="aspect-[4/5] w-[38px] shrink-0 rounded-sm border border-line object-cover"
+                className="aspect-[4/5] w-14 shrink-0 rounded-sm border border-line object-cover"
               />
             ) : null
           )}
