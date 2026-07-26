@@ -17,6 +17,10 @@ import type { Gender, StyleVetoes } from "@/lib/vetoes";
 
 type Tab = "cuenta" | "estilo" | "prefs";
 
+// Pasaporte de estilo oculto por ahora (Roberto): mucho de su contenido ya vive
+// en las otras secciones de Estilo. Poner en true para revivir el banner.
+const MOSTRAR_PASAPORTE = false;
+
 export type PerfilTabsProps = {
   name: string;
   email: string;
@@ -197,41 +201,45 @@ function EstiloTab({
   return (
     <div className="flex flex-col gap-4">
       {/* Banner del pasaporte: tarjeta NEGRA con la paleta como único color
-          (asoma identidad, su acción es VER). */}
-      <Link
-        href="/perfil/pasaporte"
-        className="block overflow-hidden rounded-lg bg-accent text-on-accent shadow-[0_6px_20px_rgba(20,20,20,.16)]"
-      >
-        <div className="flex items-center justify-between px-4 pt-3.5">
-          <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-on-accent/70">
-            Pasaporte de estilo
-          </span>
-          <Wordmark />
-        </div>
-        <div className="px-4 pb-4 pt-2.5">
-          <div className="editorial text-[23px] leading-[1.05]">{banner.title}</div>
-          {banner.sub ? (
-            <div className="text-xs text-on-accent/80">{banner.sub}</div>
-          ) : null}
-          {banner.swatches.length > 0 ? (
-            <div className="my-3 flex flex-wrap gap-1.5">
-              {banner.swatches.map((hex, i) => (
-                <span
-                  key={i}
-                  className="h-7 w-7 rounded-full border border-on-accent/40"
-                  style={{ backgroundColor: hex }}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="h-2" />
-          )}
-          <span className="flex min-h-[42px] items-center justify-center gap-2 rounded-sm bg-surface text-sm font-medium text-accent">
-            ver mi pasaporte
-            <Icon name="chevron" size={16} />
-          </span>
-        </div>
-      </Link>
+          (asoma identidad, su acción es VER). Oculto por ahora (Roberto): mucho
+          de su contenido ya vive en las otras secciones. Para revivirlo, poner
+          MOSTRAR_PASAPORTE en true (arriba). */}
+      {MOSTRAR_PASAPORTE ? (
+        <Link
+          href="/perfil/pasaporte"
+          className="block overflow-hidden rounded-lg bg-accent text-on-accent shadow-[0_6px_20px_rgba(20,20,20,.16)]"
+        >
+          <div className="flex items-center justify-between px-4 pt-3.5">
+            <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-on-accent/70">
+              Pasaporte de estilo
+            </span>
+            <Wordmark />
+          </div>
+          <div className="px-4 pb-4 pt-2.5">
+            <div className="editorial text-[23px] leading-[1.05]">{banner.title}</div>
+            {banner.sub ? (
+              <div className="text-xs text-on-accent/80">{banner.sub}</div>
+            ) : null}
+            {banner.swatches.length > 0 ? (
+              <div className="my-3 flex flex-wrap gap-1.5">
+                {banner.swatches.map((hex, i) => (
+                  <span
+                    key={i}
+                    className="h-7 w-7 rounded-full border border-on-accent/40"
+                    style={{ backgroundColor: hex }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="h-2" />
+            )}
+            <span className="flex min-h-[42px] items-center justify-center gap-2 rounded-sm bg-surface text-sm font-medium text-accent">
+              ver mi pasaporte
+              <Icon name="chevron" size={16} />
+            </span>
+          </div>
+        </Link>
+      ) : null}
 
       {/* Tu ADN de estilo: una sola card, segmentos separados por hairline */}
       <div className="rounded-lg border border-line bg-surface">
