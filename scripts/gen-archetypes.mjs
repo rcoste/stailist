@@ -322,6 +322,16 @@ const ITEMS = [
   { slug: "mary-janes-negras", desc: "a pair of black leather women's Mary Jane shoes with a strap across the top and a low block heel, rounded toe", type: "shoes" },
   { slug: "botas-combat-mujer", desc: "a pair of black leather women's chunky combat lace-up boots, military style with a thick lug sole", type: "shoes" },
   { slug: "vestido-babydoll-mujer", desc: "a black women's short babydoll mini dress, flowy A-line, youthful casual, neatly laid flat", type: "flat" },
+  // === Athleisure mujer en color (2026-07-26) — el set athleisure existía sólo en
+  // negro/gris. Tres colores (olivo · lavanda · crema) sobre las dos piezas héroe
+  // (legging + top), para que se puedan armar conjuntos del mismo tono. Usan
+  // "flat-sombra" (prompt validado): el crema es prenda clara y se lavaba. ===
+  { slug: "leggings-deportivos-olivo-m", desc: "a pair of sage olive green women's high-waisted athletic yoga leggings, buttery matte performance fabric, smooth seamless finish, neatly laid flat lengthwise", type: "flat-sombra" },
+  { slug: "leggings-deportivos-lavanda-m", desc: "a pair of soft lavender lilac women's high-waisted athletic yoga leggings, buttery matte performance fabric, smooth seamless finish, neatly laid flat lengthwise", type: "flat-sombra" },
+  { slug: "leggings-deportivos-crema-m", desc: "a pair of warm cream ivory women's high-waisted athletic yoga leggings, buttery matte performance fabric, smooth seamless finish, neatly laid flat lengthwise", type: "flat-sombra" },
+  { slug: "top-deportivo-olivo-m", desc: "a sage olive green women's athletic sports bra top, wide supportive straps, scoop neckline, buttery matte performance fabric, neatly laid flat", type: "flat-sombra" },
+  { slug: "top-deportivo-lavanda-m", desc: "a soft lavender lilac women's athletic sports bra top, wide supportive straps, scoop neckline, buttery matte performance fabric, neatly laid flat", type: "flat-sombra" },
+  { slug: "top-deportivo-crema-m", desc: "a warm cream ivory women's athletic sports bra top, wide supportive straps, scoop neckline, buttery matte performance fabric, neatly laid flat", type: "flat-sombra" },
 ];
 
 function buildPrompt({ desc, type }) {
@@ -335,6 +345,14 @@ function buildPrompt({ desc, type }) {
   }
   if (type === "boots") {
     return `Professional e-commerce photograph of ${desc}. The pair is positioned at a three-quarter front angle with the toes pointing forward toward the left, one boot slightly in front of the other, upright and standing, elegant and sharp. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist dress-shoe catalog style like Meermin or COS. The boots fill about 65% of the frame, centered. No people, no props, no text, no labels.`;
+  }
+  if (type === "flat-sombra") {
+    // Prompt AFINADO Y VALIDADO (2026-06-26): sombra de contacto definida + fondo
+    // de-warmed F4F3F1 + luz neutral. Arregla que las prendas CLARAS (crema,
+    // blanco, nude) se vieran lavadas sobre el fondo papel casi-blanco.
+    // Es un tipo APARTE a propósito: las 265 imágenes ya curadas NO se regeneran
+    // (Gemini no es determinista, algunas saldrían peor). Sólo lo usan las nuevas.
+    return `Professional e-commerce flat lay photograph of ${desc}, neatly laid flat and slightly styled, shot directly from above. Soft, even, neutral diffused lighting. The garment casts a soft but clearly defined contact shadow that gently separates its silhouette from the background. Plain de-warmed off-white paper background, exact hex F4F3F1, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The garment fills about 70% of the frame, centered. No people, no props, no text, no labels.`;
   }
   return `Professional e-commerce flat lay photograph of ${desc}, neatly laid flat and slightly styled, shot directly from above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The garment fills about 70% of the frame, centered. No people, no props, no text, no labels.`;
 }
