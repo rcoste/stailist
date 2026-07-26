@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.32.0] - 2026-07-26
+
+### Added
+
+- **La comparación te dice EN QUÉ difiere tu prenda de la sugerida** ("cambia: manga corta vs larga"). Antes tenías que adivinarlo de las fotos — con dos camisas azul rey casi idénticas era imposible. Los matches viejos se recalculan solos en la siguiente visita.
+
+### Fixed
+
+- **Si rechazas la comparación, esa pieza pasa a "lo que más te suma" con todas sus opciones.** Antes se quedaba en "decide si te sirve" (aunque ya habías decidido) y perdía el "no me late", el "quitar" y el conteo de looks que desbloquea. Sigue teniendo "cambiar" por si te arrepientes.
+- **El aviso de la cápsula ya no promete algo que no hace**: decía que te cambiaba la pieza "por otra opción tuya" cuando en realidad sugiere otra prenda ideal.
+
 ## [0.2.31.0] - 2026-07-26
 
 ### Added

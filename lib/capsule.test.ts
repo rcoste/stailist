@@ -2,8 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   ASSESSMENT_QUESTIONS,
   assessmentQuestions,
+  capsuleRows,
   closetSignature,
   lifestyleSummary,
+  type CapsuleItem,
+  type CapsuleMatch,
+  type CapsuleTarget,
   type ClosetItemLite,
 } from "./capsule";
 
@@ -91,5 +95,63 @@ describe("lifestyleSummary — el fit 'nose' no entra al resumen", () => {
 
   it("un fit real sí entra", () => {
     expect(lifestyleSummary({ fit: "entallado" })).toContain("prefiere la ropa ajustado");
+  });
+});
+
+
+// El estado "parecido que ya rechazaste" ES un hueco real. Se rompió una vez
+// (quedaba en "decide" con menos puertas que un hueco normal) — queda blindado.
+const ideal = (over: Partial<CapsuleItem> = {}): CapsuleItem => ({
+  nombre: "Camisa de vestir azul rey",
+  tipo: "camisa-vestir",
+  category: "top",
+  colorFamilia: "azul",
+  formalidad: "formal-casual",
+  temporada: "todo-el-año",
+  prioridad: 1,
+  porque: "tu acento en las cenas",
+  ...over,
+});
+const target = (items: CapsuleItem[]): CapsuleTarget =>
+  ({ items } as CapsuleTarget);
+
+describe("capsuleRows — el parecido rechazado cuenta como hueco", () => {
+  const t = target([ideal()]);
+  const match: CapsuleMatch = {
+    signature: "s",
+    entries: [{ status: "parecido", by: "Camisa azul rey de manga corta", difiere: "manga corta vs larga" }],
+  };
+
+  it("sin decidir: sigue pendiente y NO cuenta como cubierta", () => {
+    const [r] = capsuleRows(t, match);
+    expect(r.base).toBe("parecido");
+    expect(r.decision).toBeNull();
+    expect(r.covered).toBe(false);
+  });
+
+  it("aceptado: cuenta como cubierto por TU prenda", () => {
+    const [r] = capsuleRows(t, match, { "0": "accept" });
+    expect(r.covered).toBe(true);
+    expect(r.by).toBe("Camisa azul rey de manga corta");
+  });
+
+  it("rechazado: NO cuenta como cubierta (es hueco real)", () => {
+    const [r] = capsuleRows(t, match, { "0": "reject" });
+    expect(r.decision).toBe("reject");
+    expect(r.covered).toBe(false);
+    expect(r.effective).toBe("falta");
+  });
+
+  it("difiere viaja hasta la fila (es lo que explica la comparación)", () => {
+    const [r] = capsuleRows(t, match);
+    expect(r.difiere).toBe("manga corta vs larga");
+  });
+
+  it("un match viejo sin difiere no rompe (queda en null)", () => {
+    const viejo: CapsuleMatch = {
+      signature: "s",
+      entries: [{ status: "parecido", by: "Camisa azul rey de manga corta" }],
+    };
+    expect(capsuleRows(t, viejo)[0].difiere).toBeNull();
   });
 });

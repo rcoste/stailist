@@ -40,7 +40,7 @@ export function closetItemLine(c: ClosetItemLite): string {
 // visita (sin esto, el fix solo llegaría a quien cambie su clóset). OJO: no
 // tocar closetSignature — la comparten los looks de la cápsula y regenerarlos
 // cuesta llamadas.
-const MATCH_PROMPT_VERSION = "m2";
+const MATCH_PROMPT_VERSION = "m3";
 
 export function matchSignature(closet: Parameters<typeof closetSignature>[0]): string {
   return `${MATCH_PROMPT_VERSION}|${closetSignature(closet)}`;
@@ -110,7 +110,8 @@ REGLAS (en orden de prioridad):
 
 Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN (1..N). Cada entrada:
 - status: "tienes" | "parecido" | "falta".
-- by: el nombre exacto de la prenda del clóset que la cumple o se le parece, o "" si falta.`,
+- by: el nombre exacto de la prenda del clóset que la cumple o se le parece, o "" si falta.
+- difiere: SOLO si status es "parecido", EN QUÉ difiere la suya de la ideal, en 2 a 5 palabras, minúsculas, nombrando el rasgo concreto ("manga corta vs larga", "negro en vez de marino", "gamuza en vez de piel"). En "tienes" y "falta" va "".`,
     messages: [
       {
         role: "user",
@@ -130,8 +131,9 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
                 properties: {
                   status: { type: "string", enum: ["tienes", "parecido", "falta"] },
                   by: { type: "string" },
+                  difiere: { type: "string" },
                 },
-                required: ["status", "by"],
+                required: ["status", "by", "difiere"],
                 additionalProperties: false,
               },
             },
@@ -146,7 +148,7 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
   const parsed = JSON.parse(text) as {
-    entries: { status: MatchEntry["status"]; by: string }[];
+    entries: { status: MatchEntry["status"]; by: string; difiere?: string }[];
   };
 
   // Zonas del cuerpo: dentro de una zona el match es válido; cruzar zonas no.
@@ -179,15 +181,21 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
   // color/material a través de categorías, y eso no tiene sentido.
   const entries: MatchEntry[] = target.items.map((ideal, i) => {
     const e = parsed.entries?.[i];
-    if (!e) return { status: "falta", by: null };
+    if (!e) return { status: "falta", by: null, difiere: null };
     const claimed = e.status === "tienes" || e.status === "parecido" ? e.status : "falta";
     const by = e.by && e.by.trim() ? e.by.trim() : null;
-    if (claimed === "falta") return { status: "falta", by: null };
+    if (claimed === "falta") return { status: "falta", by: null, difiere: null };
     const cat = by ? resolveCategory(by) : null;
     if (!cat || zoneOf(cat) !== zoneOf(ideal.category)) {
-      return { status: "falta", by: null };
+      return { status: "falta", by: null, difiere: null };
     }
-    return { status: claimed, by };
+    // "difiere" sólo tiene sentido en "parecido" (en "tienes" no hay diferencia
+    // que contar). Se acota para que no desborde la línea de la card.
+    const difiere =
+      claimed === "parecido" && e.difiere && e.difiere.trim()
+        ? e.difiere.trim().slice(0, 48)
+        : null;
+    return { status: claimed, by, difiere };
   });
 
   return { signature, entries };

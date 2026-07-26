@@ -264,7 +264,14 @@ export type ClosetItemLite = {
 //                equivalente). No es hueco; es refinamiento. Cuenta como cubierta.
 //   "falta"    — no la tienes en ninguna forma usable. Hueco real.
 export type MatchStatus = "tienes" | "parecido" | "falta";
-export type MatchEntry = { status: MatchStatus; by: string | null };
+export type MatchEntry = {
+  status: MatchStatus;
+  by: string | null;
+  /** Solo en "parecido": EN QUÉ difiere tu prenda de la ideal, en 2-5 palabras
+   *  ("manga corta vs larga"). Sin esto la comparación te deja adivinando de las
+   *  fotos cuál es la diferencia. Opcional: los matches viejos no lo traen. */
+  difiere?: string | null;
+};
 
 export type CapsuleMatch = {
   signature: string; // firma del clóset con el que se calculó
@@ -274,9 +281,14 @@ export type CapsuleMatch = {
 // Normaliza una entrada (tolera el formato binario viejo {covered} por si quedó
 // algún match cacheado de la versión anterior).
 function normalizeEntry(e: unknown): MatchEntry {
-  const o = (e ?? {}) as { status?: MatchStatus; covered?: boolean; by?: string | null };
+  const o = (e ?? {}) as {
+    status?: MatchStatus;
+    covered?: boolean;
+    by?: string | null;
+    difiere?: string | null;
+  };
   const status: MatchStatus = o.status ?? (o.covered ? "tienes" : "falta");
-  return { status, by: o.by ?? null };
+  return { status, by: o.by ?? null, difiere: o.difiere ?? null };
 }
 
 // Firma del clóset: incluye TODO lo que el match lee, para que corregir
@@ -395,6 +407,7 @@ export type CapsuleRow = {
   decision: CapsuleDecision | null; // lo que decidió el usuario (solo en "parecido")
   covered: boolean; // cuenta como cubierta (= efectivo "tienes")
   by: string | null;
+  difiere: string | null; // "parecido": en qué difiere tu prenda de la ideal
   // Camino A: si este slot tiene una alternativa activa (swap) y si llegó al tope.
   swapCount: number; // ideales rechazadas en este slot (0 = sin swap)
   atSwapCap: boolean; // swapCount >= SWAP_CAP → ya no se ofrecen más swaps
@@ -411,7 +424,9 @@ export function capsuleRows(
     const swap = swaps?.[String(i)] ?? null;
     // Overlay: si el slot tiene alternativa, se muestra esa (el ideal no se muta).
     const shown = swap ? swap.item : item;
-    const e = match ? normalizeEntry(match.entries[i]) : { status: "pendiente" as const, by: null };
+    const e = match
+      ? normalizeEntry(match.entries[i])
+      : { status: "pendiente" as const, by: null, difiere: null };
     const decision = e.status === "parecido" ? overrides?.[String(i)] ?? null : null;
     const effective = effectiveStatus(e.status, decision);
     const swapCount = swap?.rejectedCount ?? 0;
@@ -423,6 +438,7 @@ export function capsuleRows(
       decision,
       covered: effective === "tienes",
       by: e.by,
+      difiere: e.difiere ?? null,
       swapCount,
       atSwapCap: swapCount >= SWAP_CAP,
       dismissed: swap?.dismissed ?? false,

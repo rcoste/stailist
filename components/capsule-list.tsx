@@ -216,10 +216,14 @@ export function CapsuleList({
   const pendiente = rows.filter((r) => r.base === "pendiente").sort(byPrio);
   const tienes = rows.filter((r) => r.base === "tienes").sort(byPrio);
   // Lo que falta, ordenado por lo que MÁS te suma (desbloquea más looks); a igualdad, prioridad.
+  // Un "parecido" que ya rechazaste ES un hueco real: se muda a "lo que más te
+  // suma" en vez de quedarse en "decide" (ya decidiste) con menos puertas.
   const falta = rows
-    .filter((r) => r.base === "falta")
+    .filter((r) => r.base === "falta" || (r.base === "parecido" && r.decision === "reject"))
     .sort((a, b) => unlockOf(b) - unlockOf(a) || byPrio(a, b));
-  const decidir = rows.filter((r) => r.base === "parecido").sort(byPrio);
+  const decidir = rows
+    .filter((r) => r.base === "parecido" && r.decision !== "reject")
+    .sort(byPrio);
 
   return (
     <div className="flex flex-col gap-7">
@@ -306,24 +310,47 @@ export function CapsuleList({
       {falta.length > 0 ? (
         <Section title="Lo que más te suma" count={falta.length}>
           <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
-            {falta.map((r) => (
-              <SumaCard
-                key={rowKey(r)}
-                row={r}
-                catalogImages={catImgs}
-                onRendered={(url) => onRendered(faltaKey(r.item), url)}
-                unlock={unlockOf(r)}
-                ownBusy={ownBusy.has(r.index)}
-                onOwn={() => markOwned(r.index, r.item.nombre)}
-                wishSaved={wishSaved.has(faltaKey(r.item))}
-                onToggleWish={() => toggleWish(r)}
-                swapBusy={swapBusy.has(r.index)}
-                swapErrored={swapError.has(r.index)}
-                onReject={(reason) => rejectItem(r.index, reason)}
-                onOtra={() => rejectItem(r.index, null)}
-                onQuitar={() => quitarItem(r.index)}
-              />
-            ))}
+            {falta.map((r) =>
+              // Un "parecido" rechazado va por DecideRow: misma SumaCard, pero
+              // conserva el "cambiar" para volver a tu prenda si te arrepientes.
+              r.base === "parecido" ? (
+                <DecideRow
+                  key={rowKey(r)}
+                  row={r}
+                  images={images}
+                  catalogImages={catImgs}
+                  onRendered={(url) => onRendered(faltaKey(r.item), url)}
+                  onDecide={decide}
+                  unlock={unlockOf(r)}
+                  ownBusy={ownBusy.has(r.index)}
+                  onOwn={() => markOwned(r.index, r.item.nombre)}
+                  wishSaved={wishSaved.has(faltaKey(r.item))}
+                  onToggleWish={() => toggleWish(r)}
+                  swapBusy={swapBusy.has(r.index)}
+                  swapErrored={swapError.has(r.index)}
+                  onNinguna={() => rejectItem(r.index, null)}
+                  onReject={(reason) => rejectItem(r.index, reason)}
+                  onQuitar={() => quitarItem(r.index)}
+                />
+              ) : (
+                <SumaCard
+                  key={rowKey(r)}
+                  row={r}
+                  catalogImages={catImgs}
+                  onRendered={(url) => onRendered(faltaKey(r.item), url)}
+                  unlock={unlockOf(r)}
+                  ownBusy={ownBusy.has(r.index)}
+                  onOwn={() => markOwned(r.index, r.item.nombre)}
+                  wishSaved={wishSaved.has(faltaKey(r.item))}
+                  onToggleWish={() => toggleWish(r)}
+                  swapBusy={swapBusy.has(r.index)}
+                  swapErrored={swapError.has(r.index)}
+                  onReject={(reason) => rejectItem(r.index, reason)}
+                  onOtra={() => rejectItem(r.index, null)}
+                  onQuitar={() => quitarItem(r.index)}
+                />
+              )
+            )}
           </ul>
         </Section>
       ) : null}
@@ -343,9 +370,12 @@ export function CapsuleList({
                 onOwn={() => markOwned(r.index, r.item.nombre)}
                 wishSaved={wishSaved.has(faltaKey(r.item))}
                 onToggleWish={() => toggleWish(r)}
+                unlock={unlockOf(r)}
                 swapBusy={swapBusy.has(r.index)}
                 swapErrored={swapError.has(r.index)}
                 onNinguna={() => rejectItem(r.index, null)}
+                onReject={(reason) => rejectItem(r.index, reason)}
+                onQuitar={() => quitarItem(r.index)}
               />
             ))}
           </ul>
@@ -780,9 +810,12 @@ function DecideRow({
   onOwn,
   wishSaved,
   onToggleWish,
+  unlock,
   swapBusy = false,
   swapErrored = false,
   onNinguna,
+  onReject,
+  onQuitar,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
@@ -793,11 +826,16 @@ function DecideRow({
   onOwn: () => void;
   wishSaved: boolean;
   onToggleWish: () => void;
+  /** Cuántos looks desbloquea (para la card de hueco tras rechazar el parecido). */
+  unlock?: number;
   /** Tercer camino (feedback de Roberto): no te gusta NI la tuya NI la sugerida
    *  → pide otra alternativa (mismo swap del camino A, sin razón). */
   swapBusy?: boolean;
   swapErrored?: boolean;
   onNinguna?: () => void;
+  /** Swap con razón y "quitar": solo aplican ya rechazado (= hueco real). */
+  onReject?: (reason: VetoReason | null) => void;
+  onQuitar?: () => void;
 }) {
   const { item, by, decision, index } = row;
   const src = by ? images[by] : null;
@@ -846,17 +884,26 @@ function DecideRow({
   }
 
   if (decision === "reject") {
+    // Rechazar el "parecido" lo vuelve un hueco REAL: debe tener las mismas
+    // puertas que un hueco de "lo que más te suma" (swap, quitar, desbloqueo).
+    // Antes solo traía "ya la tengo"/wishlist y quedaba huérfano.
     return (
       <SumaCard
         row={row}
         catalogImages={catalogImages}
         onRendered={onRendered}
+        unlock={unlock}
         ownBusy={ownBusy}
         onOwn={onOwn}
         wishSaved={wishSaved}
         onToggleWish={onToggleWish}
         reject
         onChange={() => onDecide(index, "reject")}
+        swapBusy={swapBusy}
+        swapErrored={swapErrored}
+        onReject={onReject}
+        onOtra={onNinguna}
+        onQuitar={onQuitar}
       />
     );
   }
@@ -868,6 +915,14 @@ function DecideRow({
       <div className="flex flex-col">
         <span className="text-[15px] font-semibold leading-tight text-ink">{item.nombre}</span>
         <span className="mt-0.5 text-[11.5px] leading-snug text-muted">{item.porque}</span>
+        {/* EN QUÉ difiere la tuya de la ideal: sin esto la comparación te deja
+            adivinando de las fotos (dos camisas azul rey que solo cambian de
+            manga). Los matches viejos no lo traen → simplemente no se muestra. */}
+        {row.difiere ? (
+          <span className="mt-1.5 flex w-fit items-center gap-1 rounded-sm bg-tile px-1.5 py-[3px] text-[10.5px] font-medium text-muted">
+            <Icon name="sliders" size={11} /> cambia: {row.difiere}
+          </span>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">
