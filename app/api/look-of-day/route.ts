@@ -255,6 +255,10 @@ async function generateInto(
         .eq("user_id", userId)
         // Un look borrado no debe seguir restringiendo lo que te armo hoy.
         .is("deleted_at", null)
+        // Solo los looks DIARIOS restringen al motor diario. Los del viaje y los
+        // de la cápsula viven en outfits para el try-on/favorito, pero son otro
+        // contexto: 15 looks de cápsula dejarían al motor de Hoy sin qué armar.
+        .eq("source", "daily")
         // Solo combos COMPLETOS (legacy null o 'ready'); nunca placeholders.
         .or("gen_status.is.null,gen_status.eq.ready")
         .gte("created_at", new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()),

@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
-import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
-import { setTripLookVote, saveTripDownReason, favoriteTripLook } from "@/lib/trip-actions";
-import { DownReason } from "@/components/down-reason";
+import { LookCard } from "@/components/look-card";
+import {
+  setTripLookVote,
+  saveTripDownReason,
+  favoriteTripLook,
+  ensureTripLookOutfit,
+} from "@/lib/trip-actions";
 import { useTripGen } from "@/components/trip-gen-context";
 import { requestItemRender } from "@/lib/render-on-demand";
-import { VER_PRENDA_LABEL } from "@/components/ideal-tile";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
 
 // Un look del viaje ya resuelto contra el clóset (la página servidor mapea cada
@@ -20,30 +22,12 @@ export type ResolvedOutfit = {
   porque: string;
   tip: string | null;
   voto: "up" | "down" | null;
+  /** Try-on ya generado para este look (URL firmada), si existe. */
+  tryonImage?: string | null;
   prendas: { nombre: string; image: string | null; id?: string | null }[];
 };
 
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
-
-// Corazón de favorito (relleno cuando on). Inline porque necesita fill; el Icon
-// del set es siempre stroke. Guardar un look de viaje lo manda al Historial.
-function Heart({ on }: { on: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill={on ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-      className={on ? "text-accent" : "text-muted"}
-      aria-hidden="true"
-    >
-      <path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6c0 5-7 9.4-7 9.4z" />
-    </svg>
-  );
-}
 
 // Sección "Tus looks": los outfits que la maleta hace. Si aún no se generan,
 // un botón los pide (POST al endpoint → router.refresh para re-renderear con
@@ -71,7 +55,6 @@ export function TripOutfits({
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
-  const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
   // Render bajo demanda (tap): prendas sugeridas sin imagen → se generan al
   // tocarlas. Cacheamos la url por id; `rendering` evita doble disparo.
   const [rendered, setRendered] = useState<Record<string, string>>({});
@@ -242,112 +225,24 @@ export function TripOutfits({
       {/* Desktop (handoff desktop_f3): cards de look a 2 columnas. */}
       <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
         {outfits.map((o, i) => (
-          <div
+          <LookCard
             key={i}
-            className="rounded-lg border border-line bg-surface p-3.5 shadow-[var(--shadow-hairline)]"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-accent">
-                {OCC_LABEL.get(o.ocasion) ?? o.ocasion}
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleFav(i)}
-                aria-pressed={favs.has(i)}
-                aria-label={favs.has(i) ? "Quitar de favoritos" : "Guardar en favoritos"}
-                className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center"
-              >
-                <Heart on={favs.has(i)} />
-              </button>
-            </div>
-            <h3 className="mt-1 text-[18px] font-semibold leading-tight text-ink">
-              {o.titulo}
-            </h3>
-            <div className="my-3 flex gap-[7px]">
-              {o.prendas.map((p, j) => {
-                const img = (p.id ? rendered[p.id] : null) ?? p.image;
-                const isRendering = p.id ? rendering.has(p.id) : false;
-                const canRender = !img && !!p.id && !isRendering;
-                return (
-                  <button
-                    key={j}
-                    type="button"
-                    onClick={() => {
-                      if (img) setZoom({ image: img, nombre: p.nombre });
-                      else if (canRender) renderPrenda(p.id as string);
-                    }}
-                    title={p.nombre}
-                    aria-label={
-                      img ? `Ver ${p.nombre}` : canRender ? `Generar ${p.nombre}` : p.nombre
-                    }
-                    className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
-                  >
-                    {img ? (
-                      <Image src={img} alt={p.nombre} fill sizes="120px" className="object-cover" />
-                    ) : isRendering ? (
-                      <span className="flex h-full w-full items-center justify-center">
-                        <Spinner className="h-4 w-4 text-accent" />
-                      </span>
-                    ) : canRender ? (
-                      <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1 text-accent">
-                        <Icon name="destello" size={16} />
-                        <span className="text-center text-[8px] font-bold uppercase leading-tight tracking-wide">
-                          {VER_PRENDA_LABEL}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-muted">
-                        <Icon name="gancho" size={18} />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="display text-[13.5px] font-medium leading-relaxed text-ink">{o.porque}</p>
-            {o.tip ? (
-              <p className="mt-2 flex items-start gap-1.5 text-[13px] text-accent">
-                <Icon name="destello" size={14} className="mt-0.5 shrink-0" />
-                <span>{o.tip}</span>
-              </p>
-            ) : null}
-            <div className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
-              <span className="text-[11.5px] text-muted">¿Te gusta?</span>
-              <div className="ml-auto flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => votar(i, true)}
-                  aria-pressed={votos[i] === "up"}
-                  aria-label="Me gusta este look"
-                  className={`flex h-[34px] w-[34px] items-center justify-center rounded-sm border transition-colors ${
-                    votos[i] === "up"
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-surface text-muted hover:border-ink"
-                  }`}
-                >
-                  <Icon name="pulgar" size={17} active={votos[i] === "up"} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => votar(i, false)}
-                  aria-pressed={votos[i] === "down"}
-                  aria-label="No me gusta este look"
-                  className={`flex h-[34px] w-[34px] items-center justify-center rounded-sm border transition-colors ${
-                    votos[i] === "down"
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-surface text-muted hover:border-ink"
-                  }`}
-                >
-                  <Icon name="pulgar" size={17} rotate={180} active={votos[i] === "down"} />
-                </button>
-              </div>
-            </div>
-            {votos[i] === "down" ? (
-              <div className="mt-3">
-                <DownReason onSave={(r) => saveTripDownReason(tripId, i, r)} />
-              </div>
-            ) : null}
-          </div>
+            look={o}
+            voto={votos[i] ?? null}
+            favorito={favs.has(i)}
+            onVote={(up) => votar(i, up)}
+            onDownReason={(r) => void saveTripDownReason(tripId, i, r)}
+            onFavorite={() => void toggleFav(i)}
+            onRenderPrenda={renderPrenda}
+            rendered={rendered}
+            rendering={rendering}
+            tryonImage={o.tryonImage ?? null}
+            ensureOutfitId={async () => {
+              const res = await ensureTripLookOutfit(tripId, i);
+              return res.outfitId ?? null;
+            }}
+            returnTo={`/viaje/${tripId}?tab=looks`}
+          />
         ))}
       </div>
 
@@ -362,7 +257,6 @@ export function TripOutfits({
         </p>
       ) : null}
 
-      <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
     </div>
   );
 }

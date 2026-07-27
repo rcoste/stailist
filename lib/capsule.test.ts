@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   ASSESSMENT_QUESTIONS,
   assessmentQuestions,
+  capsuleLookKey,
   capsuleRows,
   closetSignature,
+  occasionsFromLifestyle,
   visibleQuestions,
   lifestyleSummary,
   type CapsuleItem,
@@ -242,5 +244,55 @@ describe("lifestyleSummary — el clima de viaje llega al motor", () => {
   it('"nada distinto a mi clima" no agrega ruido al prompt', () => {
     const s = lifestyleSummary({ actividades: "viajo", viaje_clima: "similar" }) ?? "";
     expect(s).not.toContain("viaja a:");
+  });
+});
+
+describe("capsuleLookKey — identidad de un look de cápsula", () => {
+  it("no depende del orden de las prendas", () => {
+    const a = capsuleLookKey(["Camisa blanca", "Jeans negros", "Tenis retro"]);
+    const b = capsuleLookKey(["Tenis retro", "Camisa blanca", "Jeans negros"]);
+    expect(a).toBe(b);
+  });
+
+  it("dos looks distintos no comparten llave", () => {
+    expect(capsuleLookKey(["Camisa blanca", "Jeans negros"])).not.toBe(
+      capsuleLookKey(["Camisa blanca", "Chinos marino"])
+    );
+  });
+
+  it("sobrevive a 'rehacer': el mismo look reencuentra su fila", () => {
+    // Es justo por esto que la llave NO es el índice: al regenerar, el look que
+    // estaba en la posición 3 puede aparecer en la 7 — por índice, el corazón y
+    // el try-on quedarían pegados a OTRO look.
+    const antes = ["Suéter marino", "Pantalón de vestir carbón", "Mocasines burdeos"];
+    const despues = ["Mocasines burdeos", "Suéter marino", "Pantalón de vestir carbón"];
+    expect(capsuleLookKey(despues)).toBe(capsuleLookKey(antes));
+  });
+});
+
+describe("occasionsFromLifestyle — qué ocasiones debe cubrir su cápsula", () => {
+  it("siempre incluye ciudad", () => {
+    expect(occasionsFromLifestyle(null)).toEqual(["ciudad"]);
+  });
+
+  it("suma trabajo si va a oficina y noche si sale", () => {
+    const occ = occasionsFromLifestyle({
+      trabajo: "oficina_casual",
+      eventos: "seguido",
+      actividades: "viajo",
+    });
+    expect(occ).toContain("trabajo");
+    expect(occ).toContain("noche");
+    expect(occ).not.toContain("aire");
+  });
+
+  it("no suma noche si nunca tiene eventos ni sale de noche", () => {
+    const occ = occasionsFromLifestyle({
+      trabajo: "remoto",
+      eventos: "nunca",
+      actividades: "aire",
+    });
+    expect(occ).not.toContain("noche");
+    expect(occ).toContain("aire");
   });
 });

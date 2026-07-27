@@ -27,11 +27,19 @@ export type UseTryon = {
 // `returnTo`: a dónde vuelve el wizard de avatar (/hoy o /onboarding/wow).
 export function useTryon({
   outfitId,
+  ensureOutfitId,
   initialImage = null,
   revealMode = "inline",
   returnTo = "/hoy",
 }: {
-  outfitId: string;
+  /** Id de la fila de outfits. Null si aún no existe → ver ensureOutfitId. */
+  outfitId?: string | null;
+  /**
+   * Para looks que todavía NO son una fila de `outfits` (los de la cápsula y los
+   * del viaje): crea la fila al vuelo y devuelve su id. Sin esto, probarte un
+   * look exigía favoritearlo primero e irte al Historial.
+   */
+  ensureOutfitId?: () => Promise<string | null>;
   /** @deprecated ya no se usa (la subida vive en el wizard); se acepta por compat. */
   userId?: string;
   initialImage?: string | null;
@@ -41,14 +49,25 @@ export function useTryon({
   const [mode, setMode] = useState<TryonMode>("idle");
   const [image, setImage] = useState<string | null>(initialImage);
   const [errMsg, setErrMsg] = useState("");
+  const [lazyId, setLazyId] = useState<string | null>(null);
 
   async function generar() {
     setMode("gen");
+    let id = outfitId ?? lazyId;
+    if (!id && ensureOutfitId) {
+      id = await ensureOutfitId();
+      if (id) setLazyId(id);
+    }
+    if (!id) {
+      setErrMsg("No pude preparar este look. Inténtalo de nuevo.");
+      setMode("error");
+      return;
+    }
     try {
       const res = await fetch("/api/tryon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outfitId }),
+        body: JSON.stringify({ outfitId: id }),
       });
       const data = await res.json();
       if (data.error === "sin_avatar") {

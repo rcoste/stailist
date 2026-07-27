@@ -71,6 +71,11 @@ export async function POST(request: NextRequest) {
             .eq("user_id", user.id)
             // Un look borrado no debe seguir restringiendo lo que te armo.
             .is("deleted_at", null)
+            // Solo los looks DIARIOS restringen al motor diario. Los del viaje
+            // y los de la cápsula viven en outfits para el try-on/favorito, pero
+            // son otro contexto: 15 looks de cápsula dejarían al motor de Hoy
+            // sin combinaciones que proponer.
+            .eq("source", "daily")
             .gte(
               "created_at",
               new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()

@@ -169,19 +169,44 @@ export default async function ViajeDetallePage({
       }))
     : null;
 
-  // Favoritos del viaje: los looks que promoviste a outfits reales (source=viaje)
-  // viven en el Historial; aquí solo necesitamos los índices para pintar el corazón.
-  const { data: favRows } = await supabase
+  // Filas de outfits de este viaje: el corazón (favorited_at) y el try-on ya
+  // generado (tryon_path). Ahora hay filas SIN favorito — las crea "verme con
+  // este look" solo para poder generar y cachear el render, y no entran al
+  // Historial (que filtra por favorited_at).
+  const { data: lookRows } = await supabase
     .from("outfits")
-    .select("trip_look_index")
+    .select("trip_look_index, favorited_at, tryon_path")
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     .eq("trip_id", trip.id)
-    .eq("source", "viaje")
-    .not("favorited_at", "is", null);
-  const favoritos: number[] = (favRows ?? [])
+    .eq("source", "viaje");
+  const favoritos: number[] = (lookRows ?? [])
+    .filter((r) => !!r.favorited_at)
     .map((r) => r.trip_look_index as number | null)
     .filter((i): i is number => i !== null);
+  const tryonPaths = (lookRows ?? [])
+    .map((r) => r.tryon_path as string | null)
+    .filter((p): p is string => !!p);
+  const signedTryon = new Map<string, string>();
+  if (tryonPaths.length > 0) {
+    const { data } = await supabase.storage.from("prendas").createSignedUrls(tryonPaths, 3600);
+    data?.forEach((s) => {
+      if (s.path && s.signedUrl) signedTryon.set(s.path, s.signedUrl);
+    });
+  }
+  const tryonByIndex = new Map<number, string>(
+    (lookRows ?? []).flatMap((r) => {
+      const i = r.trip_look_index as number | null;
+      const url = r.tryon_path ? signedTryon.get(r.tryon_path as string) : null;
+      return i !== null && url ? [[i, url] as [number, string]] : [];
+    })
+  );
+  if (resolvedOutfits) {
+    for (let i = 0; i < resolvedOutfits.length; i++) {
+      const url = tryonByIndex.get(i);
+      if (url) resolvedOutfits[i] = { ...resolvedOutfits[i], tryonImage: url };
+    }
+  }
 
   // Conteos de las pestañas (estado inicial del server).
   const effInit = (r: TripRow) =>

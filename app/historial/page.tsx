@@ -107,7 +107,12 @@ export default async function HistorialPage({
       month: "short",
     }),
     occasion: (o.occasion as string | null) ?? null,
-    origen: (o.source as string | null) === "viaje" ? "viaje" : "daily",
+    origen:
+      (o.source as string | null) === "viaje"
+        ? "viaje"
+        : (o.source as string | null) === "capsula"
+          ? "capsula"
+          : "daily",
     tryonImage: o.tryon_path ? signed.get(o.tryon_path as string) ?? null : null,
     prendas: (o.item_ids as string[]).map(
       (id) => imgById.get(id) ?? { nombre: "Prenda", swatch: "#E5E1DD", imagen: null }

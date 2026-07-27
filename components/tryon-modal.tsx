@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 
 // Vista grande del try-on (overlay claro). Usada por el wow del onboarding.
 // Hoy usa el try-on inmersivo oscuro (components/tryon-immersive.tsx).
@@ -17,6 +19,14 @@ export function TryonModal({
   onClose: () => void;
   changeHref: string;
 }) {
+  // Sin esto, el fondo sigue haciendo scroll detrás del overlay — se nota mucho
+  // desde que este modal se abre desde una lista larga de looks. Contador
+  // compartido (lib/scroll-lock): dos capas encimadas no se pisan al cerrar.
+  useEffect(() => {
+    lockBodyScroll();
+    return unlockBodyScroll;
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/70 px-4 py-6">
       <div className="relative aspect-[3/4] w-full max-w-80 overflow-hidden rounded-lg border border-line bg-surface">

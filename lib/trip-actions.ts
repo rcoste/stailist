@@ -518,3 +518,107 @@ export async function favoriteTripLook(
   revalidatePath(`/viaje/${tripId}`);
   return { ok: true };
 }
+
+/**
+ * "Verme con este look" en un look de viaje: asegura su fila en `outfits` sin
+ * favoritearlo y devuelve el id, que es lo que el try-on necesita para generar
+ * y cachear el render. Antes, probarte un look de viaje exigía marcarlo como
+ * favorito, irte al Historial y probártelo allá.
+ *
+ * Si la fila ya existe pero el look cambió (un "rehacer" regenera trips.outfits
+ * y el índice pasa a ser otro look), se reescribe y se tira el try-on viejo —
+ * si no, verías el render de un look que ya no existe.
+ */
+export async function ensureTripLookOutfit(
+  tripId: string,
+  index: number
+): Promise<{ ok: boolean; outfitId?: string }> {
+  if (!Number.isInteger(index) || index < 0) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("outfits")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return { ok: false };
+  const look = ((trip.outfits as TripOutfit[] | null) ?? [])[index];
+  if (!look) return { ok: false };
+
+  const itemIds = await resolveTripItemIds(supabase, user.id, look.prendas);
+  if (itemIds.length === 0) return { ok: false };
+
+  const explanation = look.tip ? `${look.porque} ${look.tip}` : look.porque;
+  const { data: prev } = await supabase
+    .from("outfits")
+    .select("id, item_ids")
+    .eq("user_id", user.id)
+    .eq("trip_id", tripId)
+    .eq("trip_look_index", index)
+    .eq("source", "viaje")
+    .maybeSingle();
+
+  if (prev) {
+    const same =
+      JSON.stringify([...((prev.item_ids as string[]) ?? [])].sort()) ===
+      JSON.stringify([...itemIds].sort());
+    if (!same) {
+      await supabase
+        .from("outfits")
+        .update({
+          item_ids: itemIds,
+          title: look.titulo,
+          explanation,
+          occasion: look.ocasion,
+          tryon_path: null, // el render viejo era de OTRO look
+        })
+        .eq("id", prev.id as string);
+    }
+    return { ok: true, outfitId: prev.id as string };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("outfits")
+    .insert({
+      user_id: user.id,
+      item_ids: itemIds,
+      occasion: look.ocasion,
+      explanation,
+      prompt_version: "viaje-v1",
+      title: look.titulo,
+      source: "viaje",
+      trip_id: tripId,
+      trip_look_index: index,
+      favorited_at: null, // solo para el try-on: NO entra al Historial
+    })
+    .select("id")
+    .single();
+  if (error || !inserted) return { ok: false };
+  return { ok: true, outfitId: inserted.id as string };
+}
+
+// Nombre de prenda → id del clóset (mismo criterio que el resto de la app).
+async function resolveTripItemIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  prendas: string[]
+): Promise<string[]> {
+  const { data: items } = await supabase
+    .from("items")
+    .select("id, attrs, archetypes(name)")
+    .eq("user_id", userId)
+    .is("deleted_at", null);
+  const byName = new Map<string, string>();
+  for (const it of items ?? []) {
+    const arch = it.archetypes as { name?: string } | null;
+    const attrs = (it.attrs ?? {}) as { nombre?: string };
+    const name = arch?.name ?? attrs.nombre;
+    if (name && !byName.has(name)) byName.set(name, it.id as string);
+  }
+  return prendas.map((n) => byName.get(n)).filter((id): id is string => !!id);
+}

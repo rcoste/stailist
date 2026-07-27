@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.39.0] - 2026-07-27
+
+### Added
+
+- **Ahora te puedes probar un look sin dar vueltas.** Para verte con un look de tu cápsula (o de un viaje) había que marcarlo favorito, irse al Historial y probárselo allá. Ya no: cada look tiene su "verme con este look" ahí mismo, y la foto queda guardada — no se vuelve a generar cada vez que entras.
+- **Los looks de tu cápsula ya tienen corazón y 👍/👎.** Guardar uno lo manda a tu Historial con su etiqueta "Cápsula". Y el voto de la cápsula por fin cuenta: alimenta lo que la app aprende de tus gustos, cosa que el voto de los looks de viaje nunca hizo.
+- **"Generar más" en los looks de la cápsula**, y si alguna ocasión de tu vida no se pudo armar (trabajo, salir de noche), ahora se dice en vez de omitirla en silencio.
+- **Toca la foto de una prenda dentro de un look para verla en grande**, y si aún no tiene foto, para generarla. Antes eso solo existía en los looks de viaje.
+
+### Changed
+
+- **Los looks del viaje y los de la cápsula ahora son la MISMA pieza.** Eran dos, y la de la cápsula se había quedado atrás sin que nadie lo notara: sin corazón, sin voto, sin zoom. Ahora lo que se le agregue a una llega a las dos.
+- **Los looks de la cápsula y del viaje ya no le quitan ideas al look de Hoy.** El motor diario evita repetir lo que te propuso las últimas dos semanas; ahora que estos looks viven en la misma tabla, 15 de cápsula lo habrían dejado casi sin combinaciones. Solo los diarios cuentan para eso.
+
 ## [0.2.38.0] - 2026-07-27
 
 ### Fixed

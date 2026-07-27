@@ -345,6 +345,33 @@ function normalizeEntry(e: unknown): MatchEntry {
 // Firma del clóset: incluye TODO lo que el match lee, para que corregir
 // cualquier atributo (color, material, patrón, temporada, corte) invalide el
 // match cacheado y se ofrezca recalcular. Antes solo miraba id+categoría+
+// Ocasiones de la VIDA (no de un viaje) que la cápsula debe cubrir, derivadas
+// del cuestionario. Base ciudad (todos tienen día a día); + trabajo si va a
+// oficina; + noche si sale o tiene eventos; + aire si hace actividades al aire
+// libre. Vive aquí (módulo puro) porque la usan tanto la generación de looks
+// como la página, para poder decir qué ocasión NO se pudo cubrir.
+export function occasionsFromLifestyle(
+  life: Record<string, string> | null
+): string[] {
+  const set = new Set<string>(["ciudad"]);
+  if (life) {
+    if (["oficina_formal", "oficina_casual", "fisico"].includes(life.trabajo))
+      set.add("trabajo");
+    if (life.eventos !== "nunca" || life.actividades === "noche") set.add("noche");
+    if (life.actividades === "aire") set.add("aire");
+  }
+  return [...set];
+}
+
+// Identidad estable de un look de la cápsula: sus prendas ordenadas y unidas.
+// Es la llave de su fila en `outfits` (migración 0088) para el corazón y el
+// try-on. A propósito NO es el índice del look: "rehacer" regenera la lista y
+// los índices se recorren, así que un favorito guardado por índice acabaría
+// apuntando a otro look. Por contenido, un look idéntico reencuentra su fila.
+export function capsuleLookKey(prendas: string[]): string {
+  return [...prendas].sort().join("|").slice(0, 400);
+}
+
 // formalidad → corregir el color de una prenda dejaba el match viejo en
 // silencio, justo el campo que desempata "tienes" vs "parecido" (v25). Ambos
 // lados (el match y la detección de staleness en la página) la derivan de

@@ -7,13 +7,22 @@ import { Hint } from "@/components/hint";
 import { CapsuleLooks } from "@/components/capsule-looks";
 import { CapsuleTabs } from "@/components/capsule-tabs";
 import { PorQueEsTuya } from "@/components/por-que-es-tuya";
-import type { TripOutfit } from "@/lib/trip";
+import type { Occasion, TripOutfit } from "@/lib/trip";
 import { Icon, type IconName } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { capsuleEscalated, capsuleView } from "@/lib/capsule";
+import {
+  capsuleEscalated,
+  capsuleLookKey,
+  capsuleView,
+  occasionsFromLifestyle,
+} from "@/lib/capsule";
 import { matchSignature } from "@/lib/engine/capsule-match";
-import { loadClosetLite, loadClosetImageMap } from "@/lib/capsule-data";
+import {
+  loadClosetLite,
+  loadClosetImageMap,
+  loadClosetNameToId,
+} from "@/lib/capsule-data";
 import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { regenerateCapsuleTarget } from "./actions";
@@ -88,17 +97,65 @@ export default async function CapsulaPage({
   const escalated = capsuleEscalated(target, profile.capsule_swaps);
 
   // Pestaña "tus looks": outfits ya generados con lo que tienes de la cápsula.
-  // (Misma resolución nombre→imagen que usaba la ruta /capsula/looks.)
   const rawLooks = (profile.capsule_outfits as TripOutfit[] | null) ?? null;
   const looksStale = !!rawLooks && profile.capsule_outfits_sig !== sig;
+
+  // Estado que vive FUERA del jsonb del look: el corazón y el try-on ya generado
+  // viven en su fila de `outfits` (source='capsula', llave = las prendas del
+  // look — ver migración 0088). Sin esto, el corazón se apagaba al recargar y el
+  // try-on se volvía a generar (y a cobrar) cada vez.
+  let lookRowByKey = new Map<string, { favorito: boolean; tryon: string | null }>();
+  let nameToId: Record<string, string> = {};
+  if (rawLooks?.length) {
+    const [{ data: lookRows }, ids] = await Promise.all([
+      supabase
+        .from("outfits")
+        .select("capsule_look_key, favorited_at, tryon_path")
+        .eq("user_id", profile.id)
+        .eq("source", "capsula")
+        .is("deleted_at", null),
+      loadClosetNameToId(supabase, profile.id),
+    ]);
+    nameToId = ids;
+    const paths = (lookRows ?? [])
+      .map((r) => r.tryon_path as string | null)
+      .filter((p): p is string => !!p);
+    const signedTryon = new Map<string, string>();
+    if (paths.length > 0) {
+      const { data } = await supabase.storage.from("prendas").createSignedUrls(paths, 3600);
+      data?.forEach((s) => {
+        if (s.path && s.signedUrl) signedTryon.set(s.path, s.signedUrl);
+      });
+    }
+    lookRowByKey = new Map(
+      (lookRows ?? []).map((r) => [
+        r.capsule_look_key as string,
+        {
+          favorito: !!r.favorited_at,
+          tryon: r.tryon_path ? (signedTryon.get(r.tryon_path as string) ?? null) : null,
+        },
+      ])
+    );
+  }
+
   const resolvedLooks = rawLooks
-    ? rawLooks.map((o) => ({
-        ocasion: o.ocasion as string,
-        titulo: o.titulo,
-        porque: o.porque,
-        tip: o.tip ?? null,
-        prendas: o.prendas.map((nombre) => ({ nombre, image: images[nombre] ?? null })),
-      }))
+    ? rawLooks.map((o) => {
+        const row = lookRowByKey.get(capsuleLookKey(o.prendas));
+        return {
+          ocasion: o.ocasion as string,
+          titulo: o.titulo,
+          porque: o.porque,
+          tip: o.tip ?? null,
+          voto: (o.voto ?? null) as "up" | "down" | null,
+          favorito: row?.favorito ?? false,
+          tryonImage: row?.tryon ?? null,
+          prendas: o.prendas.map((nombre) => ({
+            nombre,
+            image: images[nombre] ?? null,
+            id: nameToId[nombre] ?? null,
+          })),
+        };
+      })
     : null;
 
   return (
@@ -233,7 +290,13 @@ export default async function CapsulaPage({
             </div>
             </div>
           }
-          looks={<CapsuleLooks outfits={resolvedLooks} stale={looksStale} />}
+          looks={
+            <CapsuleLooks
+              outfits={resolvedLooks}
+              stale={looksStale}
+              ocasiones={occasionsFromLifestyle(profile.lifestyle) as Occasion[]}
+            />
+          }
         />
       </section>
     </AppShell>
