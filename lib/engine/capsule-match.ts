@@ -49,6 +49,10 @@ const MATCH_PROMPT_VERSION = "m5";
 // marino" de su cápsula — y su conclusión fue "de shorts solo me puso un traje
 // de baño". El catálogo no marca contexto (bikini y traje de baño viven como
 // categoría 'vestido'), así que esto va por texto y en código, no en el prompt.
+// (La biblioteca ya no llama "Short de baño X" a nada — migración 0089 los
+// renombró a "Traje de baño X" para no arrancar con la palabra de otra prenda —
+// pero el guard sigue reconociendo el nombre viejo: hay prendas descritas a mano
+// por usuarios y no las controlamos.)
 // Términos INEQUÍVOCOS a propósito: "deportivo" solo no entra (hay relojes
 // deportivos y sacos sport), porque un falso hueco es tan malo como un falso
 // "ya lo tienes". Exportada para test.

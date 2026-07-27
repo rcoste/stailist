@@ -87,6 +87,15 @@ describe("contextoUso — lo que no es ropa de calle no cubre ropa de calle", ()
     );
   });
 
+  it("reconoce el nombre nuevo Y el viejo de la biblioteca", () => {
+    // 0089 renombró "Short de baño X" → "Traje de baño X" para que el nombre no
+    // arranque con la palabra de otra prenda. El guard tiene que seguir cazando
+    // el viejo: hay prendas que los usuarios describen a mano y no controlamos.
+    expect(contextoUso("Traje de baño marino")).toBe("bano");
+    expect(contextoUso("Short de baño marino")).toBe("bano");
+    expect(contextosCompatibles("Short de lino marino", "Traje de baño marino")).toBe(false);
+  });
+
   it("dos prendas de baño sí se cubren entre ellas", () => {
     expect(contextosCompatibles("Traje de baño marino", "Short de baño negro")).toBe(true);
     expect(contextoUso("Bikini de dos piezas")).toBe("bano");

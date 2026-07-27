@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.39.1] - 2026-07-27
+
+### Changed
+
+- **Los trajes de baño de hombre ya se llaman "traje de baño", no "short de baño".** El nombre viejo empezaba con la palabra de otra prenda, y eso fue justo lo que hizo que el motor tomara el traje de baño de Roberto por el short de lino de su cápsula (mismo primer sustantivo, mismo color, misma categoría). El arreglo de fondo ya estaba en 0.2.38.0; esto quita la trampa de raíz, y de paso es como se dice en español de México. Si tenías uno guardado, se renombró solo — la prenda, su foto y los looks donde aparece siguen igual.
+
 ## [0.2.39.0] - 2026-07-27
 
 ### Added
