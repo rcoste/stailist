@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.39.2] - 2026-07-27
+
+### Fixed
+
+- **La foto de una prenda ahora dice de qué prenda es.** Al abrir una miniatura de "ya lo tienes" se veía TU prenda pero con el nombre de la pieza de la cápsula encima: la foto de un traje de baño titulada "Short de lino marino" (lo cachó Roberto, y se lee como que la app confunde una prenda con otra). Ahora el título es tu prenda y debajo dice qué pieza de la cápsula cubre. Si se llaman igual, solo dice "en tu clóset".
+
 ## [0.2.39.1] - 2026-07-27
 
 ### Changed

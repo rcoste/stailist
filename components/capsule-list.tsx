@@ -116,15 +116,20 @@ export function CapsuleList({
   // PrendaZoom de la maleta/looks en vez de inventar otro visor.
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
   const zoomDe = (r: CapsuleRow): PrendaZoomData => {
-    // Si tu prenda se llama igual que la ideal, "la cubre tu X" repite el título
-    // ("Traje marino de lana · la cubre tu Traje marino de lana"): ahí basta con
-    // decir que es tuya.
+    const { src, kind } = rowImageKind(r, images, catImgs);
+    // La foto manda: se etiqueta con lo que SE VE. Cuando es tu prenda, el
+    // título es TU prenda y abajo qué pieza de la cápsula cubre — al revés se
+    // leía como un error de la app (la foto de un traje de baño titulada "Short
+    // de lino marino"; lo cachó Roberto). Si se llaman igual, no repitas.
     const mismoNombre = r.by?.trim().toLowerCase() === r.item.nombre.trim().toLowerCase();
-    return {
-      image: rowImage(r, images, catImgs),
-      nombre: r.item.nombre,
-      sub: r.by ? (mismoNombre ? "en tu clóset" : `la cubre tu ${r.by}`) : r.item.porque,
-    };
+    if (kind === "tuya" && r.by) {
+      return {
+        image: src,
+        nombre: r.by,
+        sub: mismoNombre ? "en tu clóset" : `de tu clóset · cubre "${r.item.nombre}"`,
+      };
+    }
+    return { image: src, nombre: r.item.nombre, sub: r.item.porque };
   };
 
   // Decidir desde la comparación: además de guardar, abre la SIGUIENTE sin
@@ -483,17 +488,34 @@ const rowKey = (r: CapsuleRow) => `${r.item.tipo}-${r.item.nombre}`;
 
 // Imagen para una fila: la del clóset (por `by`) o, si es ideal (falta/pendiente),
 // la de la biblioteca compartida y luego la curada estática del catálogo.
+// OJO: la foto puede ser DE TU PRENDA o de la prenda ideal — quien la muestre
+// tiene que etiquetarla con lo que de verdad se ve (ver rowImageKind).
 function rowImage(
   r: CapsuleRow,
   images: Record<string, string>,
   catalogImages: Record<string, string>
 ): string | null {
+  return rowImageKind(r, images, catalogImages).src;
+}
+
+// La misma imagen, diciendo QUÉ es: "tuya" = la foto de la prenda de tu clóset
+// que cubre esa pieza; "ideal" = la de la pieza que te falta. Existe porque
+// etiquetar la foto de tu traje de baño con el nombre de la pieza ideal ("Short
+// de lino marino") se lee como que la app confunde una prenda con otra.
+function rowImageKind(
+  r: CapsuleRow,
+  images: Record<string, string>,
+  catalogImages: Record<string, string>
+): { src: string | null; kind: "tuya" | "ideal" } {
   const own = r.by ? images[r.by] : null;
-  if (own) return own;
+  if (own) return { src: own, kind: "tuya" };
   if (r.base === "falta" || r.base === "pendiente") {
-    return catalogImages[faltaKey(r.item)] ?? faltaImage(r.item);
+    return {
+      src: catalogImages[faltaKey(r.item)] ?? faltaImage(r.item),
+      kind: "ideal",
+    };
   }
-  return null;
+  return { src: null, kind: "ideal" };
 }
 
 // Miniatura de prenda con fallback DIGNO: si no hay imagen, un swatch del color de
@@ -934,7 +956,7 @@ function TienesSection({
               <button
                 type="button"
                 onClick={() => onZoom(r)}
-                aria-label={`Ver ${r.item.nombre} en grande`}
+                aria-label={`Ver ${r.by ?? r.item.nombre} en grande`}
                 className="relative aspect-[3/4] w-[38px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg transition-colors hover:border-ink"
               >
                 <Thumb
@@ -1002,8 +1024,8 @@ function Rail({
             type="button"
             onClick={() => onZoom?.(r)}
             className="relative aspect-[3/4] w-[46px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg transition-colors hover:border-ink"
-            title={r.item.nombre}
-            aria-label={`Ver ${r.item.nombre} en grande`}
+            title={r.by ?? r.item.nombre}
+            aria-label={`Ver ${r.by ?? r.item.nombre} en grande`}
           >
             <Thumb src={src} colorFamilia={r.item.colorFamilia} sizes="46px" icon={15} />
           </button>
