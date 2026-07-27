@@ -155,3 +155,42 @@ describe("capsuleRows — el parecido rechazado cuenta como hueco", () => {
     expect(capsuleRows(t, viejo)[0].difiere).toBeNull();
   });
 });
+
+// "tienes" desmentido: el match acredita cobertura falsa (te dice que ya tienes
+// algo que no) y hasta ahora no había forma de corregirlo — el "N de M" solo se
+// podía corregir hacia abajo. Es lo que hace confiable al número.
+describe("capsuleRows — desmentir un 'tienes' del match", () => {
+  const t = target([ideal({ nombre: "Henley de algodón gris" })]);
+  const match: CapsuleMatch = {
+    signature: "s",
+    entries: [{ status: "tienes", by: "Camiseta térmica" }],
+  };
+
+  it("sin decisión cuenta como cubierta (comportamiento de siempre)", () => {
+    const [r] = capsuleRows(t, match);
+    expect(r.covered).toBe(true);
+    expect(r.effective).toBe("tienes");
+  });
+
+  it("desmentido: deja de contar y pasa a hueco real", () => {
+    const [r] = capsuleRows(t, match, { "0": "reject" });
+    expect(r.covered).toBe(false);
+    expect(r.effective).toBe("falta");
+    // base intacto: la UI sabe que vino de un "tienes" (nota + deshacer).
+    expect(r.base).toBe("tienes");
+  });
+
+  it("deshacer (accept) lo devuelve a cubierta", () => {
+    const [r] = capsuleRows(t, match, { "0": "accept" });
+    expect(r.covered).toBe(true);
+    expect(r.effective).toBe("tienes");
+  });
+
+  it("un 'falta' no se ve afectado por un override colgado", () => {
+    const tf = target([ideal()]);
+    const mf: CapsuleMatch = { signature: "s", entries: [{ status: "falta", by: null }] };
+    const [r] = capsuleRows(tf, mf, { "0": "reject" });
+    expect(r.effective).toBe("falta");
+    expect(r.decision).toBeNull();
+  });
+});

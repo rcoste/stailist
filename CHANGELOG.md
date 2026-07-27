@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.33.0] - 2026-07-26
+
+### Added
+
+- **"Ya lo tienes" ahora se puede abrir y corregir.** Era la única sección sin acciones: miniaturas mudas que no decían de qué prenda tuya te estaba acreditando, y si el match se equivocaba dándote cobertura de más, no había forma de arreglarlo — el "N de M" solo se podía corregir hacia abajo. Ahora:
+  - Un **"ver cuáles"** despliega la lista: cada pieza ideal con **"la cubre tu «X»"**. Va **cerrada por defecto** — si no la abres, la pantalla se ve igual que siempre; no es una tarea que la app te pida.
+  - **"no la cubre"** desmiente el emparejamiento: la pieza pasa a "lo que más te suma" con todas sus opciones y el conteo baja. Se puede deshacer con "cambiar".
+
 ## [0.2.32.0] - 2026-07-26
 
 ### Added

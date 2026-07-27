@@ -214,12 +214,15 @@ export function CapsuleList({
   // decidida no salte de sección. Sin match → todo "pendiente".
   const byPrio = (a: CapsuleRow, b: CapsuleRow) => a.item.prioridad - b.item.prioridad;
   const pendiente = rows.filter((r) => r.base === "pendiente").sort(byPrio);
-  const tienes = rows.filter((r) => r.base === "tienes").sort(byPrio);
+  const tienes = rows
+    .filter((r) => r.base === "tienes" && r.decision !== "reject")
+    .sort(byPrio);
   // Lo que falta, ordenado por lo que MÁS te suma (desbloquea más looks); a igualdad, prioridad.
-  // Un "parecido" que ya rechazaste ES un hueco real: se muda a "lo que más te
-  // suma" en vez de quedarse en "decide" (ya decidiste) con menos puertas.
+  // Incluye lo que el match dio por resuelto y tú desmentiste: un "parecido" que
+  // rechazaste o un "tienes" que dijiste que no cubre. Ambos son huecos reales y
+  // llevan las mismas puertas que un hueco de origen.
   const falta = rows
-    .filter((r) => r.base === "falta" || (r.base === "parecido" && r.decision === "reject"))
+    .filter((r) => r.base === "falta" || (r.base !== "pendiente" && r.decision === "reject"))
     .sort((a, b) => unlockOf(b) - unlockOf(a) || byPrio(a, b));
   const decidir = rows
     .filter((r) => r.base === "parecido" && r.decision !== "reject")
@@ -348,6 +351,17 @@ export function CapsuleList({
                   onReject={(reason) => rejectItem(r.index, reason)}
                   onOtra={() => rejectItem(r.index, null)}
                   onQuitar={() => quitarItem(r.index)}
+                  // "tienes" desmentido: nota propia + deshacer (por si fue un
+                  // mal tap, o si el match tenía razón después de todo).
+                  reject={r.base === "tienes"}
+                  note={
+                    r.base === "tienes"
+                      ? `dijiste que tu ${r.by ?? "prenda"} no la cubre`
+                      : undefined
+                  }
+                  onChange={
+                    r.base === "tienes" ? () => decide(r.index, "accept") : undefined
+                  }
                 />
               )
             )}
@@ -384,7 +398,12 @@ export function CapsuleList({
 
       {tienes.length > 0 ? (
         <Section title="Ya lo tienes" count={tienes.length}>
-          <Rail rows={tienes} images={images} catalogImages={catImgs} />
+          <TienesSection
+            rows={tienes}
+            images={images}
+            catalogImages={catImgs}
+            onNoCubre={(index) => decide(index, "reject")}
+          />
         </Section>
       ) : null}
     </div>
@@ -584,6 +603,7 @@ function SumaCard({
   wishSaved,
   onToggleWish,
   reject,
+  note,
   onChange,
   swapBusy = false,
   swapErrored = false,
@@ -600,6 +620,8 @@ function SumaCard({
   wishSaved: boolean;
   onToggleWish: () => void;
   reject?: boolean;
+  /** Nota del banner de "ya decidiste" (por defecto, la del parecido rechazado). */
+  note?: string;
   onChange?: () => void;
   // Camino A: "no me late" → swap. Solo se pasan en la sección de huecos.
   swapBusy?: boolean;
@@ -633,7 +655,7 @@ function SumaCard({
         {reject ? (
           <div className="flex items-start justify-between gap-2">
             <span className="text-[10.5px] leading-snug text-muted">
-              preferiste la sugerida — sigue en lo que falta
+              {note ?? "preferiste la sugerida — sigue en lo que falta"}
             </span>
             {onChange ? (
               <button
@@ -761,6 +783,78 @@ function SumaCard({
 
 // "Ya lo tienes": fila horizontal de miniaturas (46px, 3:4) + celda "+N" si hay
 // más de las que se muestran.
+// "Ya lo tienes": el rail compacto de siempre + un desplegable para VER de qué
+// te está acreditando y desmentirlo si el match se equivocó.
+//
+// Por qué colapsado (decisión con Roberto): esta sección se lee como "esto ya
+// está resuelto" — abrirla por default la convertiría en otra lista de
+// pendientes y pondría al usuario a auditar 15 emparejamientos que nadie pidió.
+// Cerrada, la pantalla se ve idéntica a antes: coste cero para quien no la
+// necesita. Se abre cuando YA notaste algo raro ("¿por qué dice que tengo un
+// henley?"), no porque la app insista.
+function TienesSection({
+  rows,
+  images,
+  catalogImages,
+  onNoCubre,
+}: {
+  rows: CapsuleRow[];
+  images: Record<string, string>;
+  catalogImages: Record<string, string>;
+  onNoCubre: (index: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex flex-col gap-2.5">
+      {open ? (
+        <ul className="flex flex-col gap-1.5">
+          {rows.map((r) => (
+            <li
+              key={rowKey(r)}
+              className="flex items-center gap-2.5 rounded-md border border-line bg-surface p-2"
+            >
+              <span className="relative aspect-[3/4] w-[38px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
+                <Thumb
+                  src={rowImage(r, images, catalogImages)}
+                  colorFamilia={r.item.colorFamilia}
+                  sizes="38px"
+                  icon={13}
+                />
+              </span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-[13px] font-medium text-ink">
+                  {r.item.nombre}
+                </span>
+                {/* De QUÉ prenda tuya te está acreditando: hoy esto no se veía en
+                    ningún lado, ni con el match perfecto. */}
+                <span className="truncate text-[11px] text-muted">
+                  {r.by ? `la cubre tu ${r.by}` : "cubierta"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNoCubre(r.index)}
+                className="ml-auto shrink-0 text-[11px] font-medium text-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                no la cubre
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Rail rows={rows} images={images} catalogImages={catalogImages} />
+      )}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-fit text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
+      >
+        {open ? "ocultar" : "ver cuáles"}
+      </button>
+    </div>
+  );
+}
+
 function Rail({
   rows,
   images,

@@ -394,6 +394,10 @@ function effectiveStatus(
     if (decision === "reject") return "falta";
     return "parecido";
   }
+  // "tienes" desmentido: el match acredita cobertura que no es real (te dice que
+  // ya tienes algo que no). Era el ÚNICO error del match sin puerta de arreglo, y
+  // por eso el "N de M" no se podía corregir hacia abajo. "accept" lo restaura.
+  if (base === "tienes" && decision === "reject") return "falta";
   return base;
 }
 
@@ -427,7 +431,12 @@ export function capsuleRows(
     const e = match
       ? normalizeEntry(match.entries[i])
       : { status: "pendiente" as const, by: null, difiere: null };
-    const decision = e.status === "parecido" ? overrides?.[String(i)] ?? null : null;
+    // La decisión aplica a "parecido" (elegir tu prenda o la ideal) y a "tienes"
+    // (desmentir una cobertura falsa). En "falta"/"pendiente" no hay nada que decidir.
+    const decision =
+      e.status === "parecido" || e.status === "tienes"
+        ? overrides?.[String(i)] ?? null
+        : null;
     const effective = effectiveStatus(e.status, decision);
     const swapCount = swap?.rejectedCount ?? 0;
     return {
