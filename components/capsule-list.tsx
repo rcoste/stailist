@@ -661,7 +661,7 @@ function SumaCard({
               <button
                 type="button"
                 onClick={onChange}
-                className="shrink-0 text-[11px] font-medium text-accent underline underline-offset-2"
+                className="flex min-h-11 shrink-0 items-center text-[11px] font-medium text-accent underline underline-offset-2"
               >
                 cambiar
               </button>
@@ -680,7 +680,7 @@ function SumaCard({
             type="button"
             onClick={onOwn}
             disabled={ownBusy}
-            className={`flex min-h-[38px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border bg-surface px-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50 ${
+            className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border bg-surface px-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50 ${
               render.state === "ready" ? "border-accent" : "border-line"
             }`}
           >
@@ -695,7 +695,7 @@ function SumaCard({
             type="button"
             onClick={onToggleWish}
             aria-pressed={wishSaved}
-            className={`flex min-h-[38px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2.5 text-[13px] font-semibold transition-colors ${
+            className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2.5 text-[13px] font-semibold transition-colors ${
               wishSaved
                 ? "border-accent bg-accent-soft text-accent"
                 : "border-line bg-surface text-ink hover:border-accent"
@@ -750,26 +750,29 @@ function SumaCard({
               <button
                 type="button"
                 onClick={onOtra}
-                className="text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
+                className="flex min-h-11 items-center text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
               >
-                otra
+                otra más
               </button>
               <button
                 type="button"
                 onClick={onQuitar}
-                className="text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
+                className="flex min-h-11 items-center text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
               >
                 quitar
               </button>
             </div>
           ) : (
+            // Área táctil de 44px (el enlace medía 17) y SEPARADO de "ya la
+            // tengo": son acciones opuestas y estaban a 4px — un dedo que fallaba
+            // el botón disparaba un swap de IA de ~5s sobre la cápsula.
             <button
               type="button"
               onClick={() => setShowReasons(true)}
               data-hint-target="capsula-swap"
-              className="self-start text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
+              className="relative -mb-2 mt-0.5 flex min-h-11 items-center self-start text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
             >
-              no me late
+              esta no me late — cámbiala
             </button>
           )
         ) : null}
@@ -834,9 +837,9 @@ function TienesSection({
               <button
                 type="button"
                 onClick={() => onNoCubre(r.index)}
-                className="ml-auto shrink-0 text-[11px] font-medium text-muted underline underline-offset-2 transition-colors hover:text-ink"
+                className="ml-auto flex min-h-11 shrink-0 items-center text-[11px] font-medium text-muted underline underline-offset-2 transition-colors hover:text-ink"
               >
-                no la cubre
+                esta no la cubre
               </button>
             </li>
           ))}
@@ -847,7 +850,7 @@ function TienesSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-fit text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
+        className="flex min-h-11 w-fit items-center text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
       >
         {open ? "ocultar" : "ver cuáles"}
       </button>
@@ -969,7 +972,7 @@ function DecideRow({
         <button
           type="button"
           onClick={() => onDecide(index, "accept")}
-          className="ml-auto shrink-0 text-xs font-medium text-accent underline underline-offset-2"
+          className="ml-auto flex min-h-11 shrink-0 items-center text-xs font-medium text-accent underline underline-offset-2"
         >
           cambiar
         </button>
@@ -1077,16 +1080,16 @@ function DecideRow({
               la IA trae otra sugerencia para el mismo hueco (tope 2). */}
           {onNinguna && !row.atSwapCap ? (
             swapBusy ? (
-              <span className="flex min-h-9 items-center gap-1.5 text-[11.5px] text-muted">
+              <span className="flex min-h-11 items-center gap-1.5 text-[11.5px] text-muted">
                 <Spinner className="h-3 w-3" /> buscando otra sugerencia…
               </span>
             ) : (
               <button
                 type="button"
                 onClick={onNinguna}
-                className="min-h-9 text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
+                className="flex min-h-11 items-center text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
               >
-                ¿ninguna te late? te sugiero otra
+                ninguna me late — cámbiala
               </button>
             )
           ) : null}

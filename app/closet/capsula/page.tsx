@@ -213,8 +213,8 @@ export default async function CapsulaPage({
                       pantalla, no se muestra ni se marca visto (espera). */}
                   {!profile.hints_seen?.["capsula-swap"] ? (
                     <Hint id="capsula-swap">
-                      ¿alguna pieza no te convence? dime que no te late y te
-                      sugiero otra en su lugar
+                      ¿alguna pieza no te late? dímelo y te sugiero otra en su
+                      lugar
                     </Hint>
                   ) : null}
 

@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.33.1] - 2026-07-26
+
+### Fixed
+
+- **Los enlaces de la cápsula ya se pueden tocar bien.** Nueve de quince controles estaban por debajo del mínimo táctil (el "no me late" medía 17 px de alto) y encima quedaba pegado al botón "ya la tengo": un dedo que fallaba por 4 px disparaba un cambio de pieza con IA en vez de marcarla como tuya. Ahora todos miden 44 px y esas dos acciones opuestas están separadas.
+- **Un solo vocabulario para "no me gusta"**, que antes eran tres frases distintas para dos cosas distintas: **"esta no me late — cámbiala"** y **"ninguna me late — cámbiala"** cambian la pieza sugerida; **"esta no la cubre"** corrige el emparejamiento del match. Rechazar una prenda y corregir un error ya no se dicen igual.
+
 ## [0.2.33.0] - 2026-07-26
 
 ### Added
