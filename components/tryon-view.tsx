@@ -32,6 +32,7 @@ export function TryonView({
   prendas,
   nombre,
   onGenerar,
+  fit = "alto",
 }: {
   image: string | null;
   generating: boolean;
@@ -39,6 +40,14 @@ export function TryonView({
   prendas: TryonPrenda[];
   nombre: string;
   onGenerar?: () => void;
+  /**
+   * Quién manda la geometría. "alto" (default): el render llena el alto
+   * disponible y de ahí sale su ancho — es el detalle a pantalla completa, donde
+   * el objetivo es que TODO quepa sin scroll. "ancho": el render toma el ancho
+   * que queda y su alto sale del 3:4 — es la card dentro de una lista, donde no
+   * hay un alto dado y ponerle uno fijo sería un número inventado.
+   */
+  fit?: "alto" | "ancho";
 }) {
   const [full, setFull] = useState(false);
   const [fase, setFase] = useState(0);
@@ -56,15 +65,25 @@ export function TryonView({
 
   const hasRender = !!image && !generating;
 
-  // Layout v2 (handoff design_handoff_look_detalle_v2 §5): el render MANDA la
-  // altura — llena el alto disponible y de ahí sale su ancho (3:4); las
+  // Layout v2 (handoff design_handoff_look_detalle_v2 §5): el render manda y las
   // miniaturas van en una COLUMNA de 56px al lado (la tira horizontal de abajo
-  // gastaba ~79px de alto que ahora son render). Sigue siendo flexible: en
-  // pantallas cortas el marco se encoge (decisión de Roberto: nada de scroll).
+  // gastaba ~79px de alto que ahora son render). Lo que cambia entre las dos
+  // superficies es QUIÉN da la medida — ver `fit`.
+  const anchoManda = fit === "ancho";
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 items-stretch justify-center gap-2">
-        <div className="relative aspect-[3/4] h-full min-h-0 max-w-[calc(100%-3.5rem-0.5rem)] overflow-hidden rounded-sm border border-line bg-tile">
+    <div className={anchoManda ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"}>
+      <div
+        className={`flex items-stretch justify-center gap-2 ${
+          anchoManda ? "" : "min-h-0 flex-1"
+        }`}
+      >
+        <div
+          className={`relative aspect-[3/4] overflow-hidden rounded-sm border border-line bg-tile ${
+            anchoManda
+              ? "min-w-0 flex-1"
+              : "h-full min-h-0 max-w-[calc(100%-3.5rem-0.5rem)]"
+          }`}
+        >
         {hasRender ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -128,9 +147,13 @@ export function TryonView({
             del render: estiradas (handoff) el cover recortaba la prenda misma
             (feedback de Roberto en el teléfono real). Con muchas prendas la
             columna hace scroll interno. */}
-        {hasRender ? (
+        {/* En modo card la columna se reserva SIEMPRE (aunque esté vacía mientras
+            genera): si apareciera solo al final, el marco se angostaría de golpe
+            y la card daría un brinco con todo lo de abajo. En el detalle no
+            aplica — ahí el alto es fijo y el ancho no mueve nada. */}
+        {hasRender || (anchoManda && generating) ? (
           <div className="flex w-14 shrink-0 flex-col gap-1.5 overflow-y-auto">
-            {prendas.map((p, i) => (
+            {(hasRender ? prendas : []).map((p, i) => (
               <div
                 key={i}
                 className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-sm border border-line bg-tile"

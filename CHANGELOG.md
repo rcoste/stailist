@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.40.0] - 2026-07-27
+
+### Changed
+
+- **En los looks de cápsula y viaje, tu foto es ahora la protagonista de la card.** Antes el render quedaba en una miniatura de 42 px con un "toca para verlo en grande": un toque de más para ver algo que tarda ~20 s y cuesta en cada generación. Ahora, en cuanto existe, ocupa el sitio de la tira de prendas y ellas se van a una columna al lado, con la lupa a pantalla completa arriba a la derecha — la misma anatomía que ya tenía el detalle del look, no un tercer diseño distinto.
+- **Una sola fila de acción por look.** Sin foto: "verme con este look" en negro (es la acción que casi nadie sabe que existe) con el 👍/👎 al lado. Con foto ya no hay nada que generar, así que la fila es solo "¿te gusta?" y sus botones, sin nada que les compita — el feedback es la señal más escasa que tenemos.
+- **La card ya no brinca al terminar el try-on.** El sitio de la columna de prendas se reserva desde que arranca la generación; antes el marco se angostaba de golpe al aparecer la foto y todo lo de abajo saltaba.
+
 ## [0.2.39.3] - 2026-07-27
 
 ### Fixed

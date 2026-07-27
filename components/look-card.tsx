@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { DownReason } from "@/components/down-reason";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
-import { TryonModal } from "@/components/tryon-modal";
+import { TryonView } from "@/components/tryon-view";
 import { VER_PRENDA_LABEL } from "@/components/ideal-tile";
 import { useTryon } from "@/lib/use-tryon";
 import { OCCASIONS } from "@/lib/trip";
@@ -19,6 +19,13 @@ import { OCCASIONS } from "@/lib/trip";
 //
 // El try-on vive AQUÍ y no solo en el Historial: antes, para probarte un look de
 // viaje tenías que marcarlo favorito, ir al Historial y probártelo allá.
+//
+// Y el render es el PROTAGONISTA de la card, no un adjunto: ocupa el lugar de la
+// tira de prendas (que se va a una columna al lado) en cuanto existe. La primera
+// versión lo dejaba en una miniatura de 42px con un "toca para verlo en grande" —
+// un toque de más para ver algo que tarda ~20 s y cuesta en cada generación.
+// Reusa TryonView, la misma pieza del detalle del look: la lupa, la animación de
+// generación y la voz del coach vienen incluidas.
 
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
 
@@ -95,6 +102,11 @@ export function LookCard({
     revealMode: "inline",
     returnTo,
   });
+  // El render ocupa el sitio de la tira desde que ARRANCA la generación: la
+  // animación de TryonView (silueta + prendas que entran) es la espera, y así no
+  // hay un salto de layout al terminar.
+  const puedeProbar = !!ensureOutfitId;
+  const mostrarRender = puedeProbar && (!!t.image || t.mode === "gen");
 
   return (
     <div className="rounded-lg border border-line bg-surface p-3.5 shadow-[var(--shadow-hairline)]">
@@ -117,47 +129,67 @@ export function LookCard({
         {look.titulo}
       </h3>
 
-      <div className="my-3 flex gap-[7px]">
-        {look.prendas.map((p, j) => {
-          const img = (p.id ? rendered[p.id] : null) ?? p.image;
-          const isRendering = p.id ? !!rendering?.has(p.id) : false;
-          const canRender = !img && !!p.id && !isRendering && !!onRenderPrenda;
-          return (
-            <button
-              key={j}
-              type="button"
-              onClick={() => {
-                if (img) setZoom({ image: img, nombre: p.nombre });
-                else if (canRender) onRenderPrenda?.(p.id as string);
-              }}
-              title={p.nombre}
-              aria-label={
-                img ? `Ver ${p.nombre}` : canRender ? `Generar ${p.nombre}` : p.nombre
-              }
-              className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
-            >
-              {img ? (
-                <Image src={img} alt={p.nombre} fill sizes="120px" className="object-cover" />
-              ) : isRendering ? (
-                <span className="flex h-full w-full items-center justify-center">
-                  <Spinner className="h-4 w-4 text-accent" />
-                </span>
-              ) : canRender ? (
-                <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1 text-accent">
-                  <Icon name="destello" size={16} />
-                  <span className="text-center text-[8px] font-bold uppercase leading-tight tracking-wide">
-                    {VER_PRENDA_LABEL}
+      {/* El render manda en cuanto existe (o mientras se genera): ocupa el sitio
+          de la tira y las prendas pasan a la columna de al lado. */}
+      {mostrarRender ? (
+        <div className="my-3">
+          <TryonView
+            fit="ancho"
+            image={t.image}
+            generating={t.mode === "gen"}
+            error={t.mode === "error" ? t.errMsg : null}
+            prendas={look.prendas.map((p) => ({
+              nombre: p.nombre,
+              swatch: "var(--c-tile)",
+              imagen: (p.id ? rendered[p.id] : null) ?? p.image,
+            }))}
+            nombre={look.titulo}
+            onGenerar={t.generar}
+          />
+        </div>
+      ) : (
+        <div className="my-3 flex gap-[7px]">
+          {look.prendas.map((p, j) => {
+            const img = (p.id ? rendered[p.id] : null) ?? p.image;
+            const isRendering = p.id ? !!rendering?.has(p.id) : false;
+            const canRender = !img && !!p.id && !isRendering && !!onRenderPrenda;
+            return (
+              <button
+                key={j}
+                type="button"
+                onClick={() => {
+                  if (img) setZoom({ image: img, nombre: p.nombre });
+                  else if (canRender) onRenderPrenda?.(p.id as string);
+                }}
+                title={p.nombre}
+                aria-label={
+                  img ? `Ver ${p.nombre}` : canRender ? `Generar ${p.nombre}` : p.nombre
+                }
+                className="relative aspect-[3/4] flex-1 overflow-hidden rounded-md border border-line bg-bg"
+              >
+                {img ? (
+                  <Image src={img} alt={p.nombre} fill sizes="120px" className="object-cover" />
+                ) : isRendering ? (
+                  <span className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-4 w-4 text-accent" />
                   </span>
-                </span>
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-muted">
-                  <Icon name="gancho" size={18} />
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                ) : canRender ? (
+                  <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1 text-accent">
+                    <Icon name="destello" size={16} />
+                    <span className="text-center text-[8px] font-bold uppercase leading-tight tracking-wide">
+                      {VER_PRENDA_LABEL}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-muted">
+                    <Icon name="gancho" size={18} />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <p className="display text-[13.5px] font-medium leading-relaxed text-ink">
         {look.porque}
@@ -169,15 +201,30 @@ export function LookCard({
         </p>
       ) : null}
 
-      {/* "Así te queda": el try-on del look, aquí mismo. */}
-      {ensureOutfitId ? (
-        <div className="mt-3">
-          <TryonRow t={t} nombre={look.titulo} />
-        </div>
-      ) : null}
-
+      {/* Una sola fila de acción. Sin render: la primaria es probártelo (negra —
+          es la acción que nadie sabe que existe) y los votos van al lado. Con
+          render ya no hay nada que generar, así que la fila es solo el voto y
+          nada le compite: el feedback es la señal más escasa que tenemos y no
+          puede quedar de sobra visual. */}
       <div className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
-        <span className="text-[11.5px] text-muted">¿Te gusta?</span>
+        {mostrarRender || !puedeProbar ? (
+          <span className="text-[11.5px] text-muted">¿te gusta?</span>
+        ) : t.mode === "sin_avatar" ? (
+          <Link
+            href={t.avatarHref}
+            className="flex min-h-11 items-center gap-1.5 rounded-sm bg-ink px-3.5 text-[13px] font-semibold text-bg transition-opacity hover:opacity-90"
+          >
+            <Icon name="destello" size={15} /> crea tu avatar
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={t.generar}
+            className="flex min-h-11 items-center gap-1.5 rounded-sm bg-ink px-3.5 text-[13px] font-semibold text-bg transition-opacity hover:opacity-90"
+          >
+            <Icon name="destello" size={15} /> verme con este look
+          </button>
+        )}
         <div className="ml-auto flex gap-2">
           <VoteButton
             active={voto === "up"}
@@ -192,6 +239,13 @@ export function LookCard({
           />
         </div>
       </div>
+
+      {/* El error de generación vive fuera del marco cuando aún no hay render
+          (dentro del marco solo se ve si el marco existe). */}
+      {t.mode === "error" && !t.image ? (
+        <p className="mt-2 text-[12px] text-error">{t.errMsg}</p>
+      ) : null}
+
       {voto === "down" ? (
         <div className="mt-3">
           <DownReason onSave={onDownReason} />
@@ -228,75 +282,5 @@ function VoteButton({
     >
       <Icon name="pulgar" size={17} rotate={rotate ? 180 : undefined} active={active} />
     </button>
-  );
-}
-
-// La fila del try-on dentro de la card: botón → generando → miniatura tocable.
-// Deliberadamente discreta (borde hairline, no botón negro): en una lista de 15
-// looks, 15 botones de acento serían un muro. La foto sí se gana el acento.
-function TryonRow({ t, nombre }: { t: ReturnType<typeof useTryon>; nombre: string }) {
-  if (t.mode === "full" && t.image) {
-    return (
-      <TryonModal
-        image={t.image}
-        lookName={nombre}
-        onClose={t.closeFull}
-        changeHref={t.avatarHref}
-      />
-    );
-  }
-
-  if (t.mode === "sin_avatar") {
-    return (
-      <Link
-        href={t.avatarHref}
-        className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft px-3 text-sm font-medium text-ink transition-colors hover:bg-accent hover:text-on-accent"
-      >
-        <Icon name="destello" size={16} /> Crea tu avatar para verte con él
-      </Link>
-    );
-  }
-
-  if (t.mode === "gen") {
-    return (
-      <div className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-accent bg-accent-soft text-sm text-ink">
-        <Spinner className="h-4 w-4 text-accent" /> creando tu look… (~20 s)
-      </div>
-    );
-  }
-
-  if (t.image) {
-    return (
-      <button
-        type="button"
-        onClick={t.openFull}
-        className="flex w-full items-center gap-3 rounded-md border border-accent bg-accent-soft p-2 text-left transition-colors duration-200 hover:bg-accent/10"
-      >
-        <span className="relative h-14 w-[42px] shrink-0 overflow-hidden rounded-sm border border-line bg-surface">
-          <Image src={t.image} alt={`Tú con ${nombre}`} fill sizes="42px" className="object-cover" />
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
-            Así te queda <Icon name="destello" size={14} className="text-accent" />
-          </span>
-          <span className="text-xs text-muted">Toca para verlo en grande</span>
-        </span>
-      </button>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <button
-        type="button"
-        onClick={t.generar}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-line bg-bg text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
-      >
-        <Icon name="destello" size={16} className="text-accent" /> verme con este look
-      </button>
-      {t.mode === "error" ? (
-        <p className="text-center text-xs text-error">{t.errMsg}</p>
-      ) : null}
-    </div>
   );
 }
