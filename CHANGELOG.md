@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.36.1] - 2026-07-26
+
+### Fixed
+
+- **Marcar "ya la tengo" en una pieza que antes comparaste ya no la deja como hueco.** Si primero elegiste "quiero la sugerida" en una comparación y después marcaste esa pieza como tuya, seguía apareciendo en "lo que más te suma" con un cartel sin sentido: "dijiste que tu Traje marino de lana no la cubre". La decisión vieja se quedaba pegada y cambiaba de significado. Ahora decir "ya la tengo" borra cualquier decisión previa sobre esa pieza, y lo mismo al recalcular el match. Se corrigieron también los perfiles que ya tenían el resto pegado.
+
 ## [0.2.36.0] - 2026-07-26
 
 ### Fixed

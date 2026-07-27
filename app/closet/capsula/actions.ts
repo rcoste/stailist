@@ -361,17 +361,33 @@ export async function recalcularMatch(): Promise<{ ok: boolean }> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("capsule_target, gender")
+    .select("capsule_target, capsule_match, capsule_overrides, gender")
     .eq("id", user.id)
     .single();
   const target = profile?.capsule_target as CapsuleTarget | null;
   if (!target) return { ok: false };
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  const prev = (profile?.capsule_match as CapsuleMatch | null) ?? null;
+  const overrides = ((profile?.capsule_overrides as CapsuleOverrides | null) ?? {}) as CapsuleOverrides;
 
   try {
     const closet = await loadClosetLite(supabase, user.id);
     const match = await matchCapsule(target, closet, gender);
-    await supabase.from("profiles").update({ capsule_match: match }).eq("id", user.id);
+
+    // Misma trampa que en "ya la tengo": si un slot pasó a "tienes" y NO lo era,
+    // la decisión vieja (tomada sobre un "parecido") cambia de significado y lo
+    // volvería un hueco falso. Se descarta. Si YA era "tienes", el override sí es
+    // un desmentido legítimo del usuario y se respeta.
+    const limpios: CapsuleOverrides = { ...overrides };
+    match.entries.forEach((e, i) => {
+      const antes = prev?.entries?.[i]?.status;
+      if (e.status === "tienes" && antes !== "tienes") delete limpios[String(i)];
+    });
+
+    await supabase
+      .from("profiles")
+      .update({ capsule_match: match, capsule_overrides: limpios })
+      .eq("id", user.id);
   } catch {
     return { ok: false }; // el cliente ofrece reintentar
   }
@@ -522,7 +538,25 @@ export async function markFaltaOwned(
       : match.entries[i] ?? { status: "falta", by: null }
   );
   const newMatch: CapsuleMatch = { signature: matchSignature(closet), entries };
-  await supabase.from("profiles").update({ capsule_match: newMatch }).eq("id", user.id);
+
+  // LIMPIA la decisión vieja de este slot. Un override "reject" puede venir de
+  // cuando era "parecido" ("quiero la sugerida"), y desde que un reject sobre un
+  // "tienes" significa "esto NO lo cubre", ese resto convertía la prenda recién
+  // agregada en un hueco con el cartel absurdo "dijiste que tu X no la cubre"
+  // (le pasó a Roberto con su traje marino). Decir "ya la tengo" es la señal más
+  // explícita posible de propiedad: manda sobre cualquier decisión previa.
+  const { data: ovRow } = await supabase
+    .from("profiles")
+    .select("capsule_overrides")
+    .eq("id", user.id)
+    .single();
+  const overrides = ((ovRow?.capsule_overrides as CapsuleOverrides | null) ?? {}) as CapsuleOverrides;
+  delete overrides[String(index)];
+
+  await supabase
+    .from("profiles")
+    .update({ capsule_match: newMatch, capsule_overrides: overrides })
+    .eq("id", user.id);
 
   // OJO: revalidar la ruta DONDE estás (/closet/capsula), no solo /closet —
   // si no, la fila no se reubica a "Ya lo tienes" y el botón "ya la tengo" se
