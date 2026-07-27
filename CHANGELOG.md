@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.40.1] - 2026-07-27
+
+### Fixed
+
+- **En el try-on ya no sales abotonado hasta el cuello.** Las camisas salían cerradas al cuello y los polos con todos los botones puestos — nerd, y como nadie se viste de verdad (lo cachó Roberto). El prompt cuidaba la pose ("nada de pose de catálogo") pero no cómo se lleva la ropa. Ahora la camisa va con el primer botón abierto (dos si el look es casual) y el polo con la tira abierta. Se respeta la excepción real: con corbata o traje formal, la camisa sí va cerrada. Y si el consejo de styling del look dice otra cosa, ese manda.
+
 ## [0.2.40.0] - 2026-07-27
 
 ### Changed

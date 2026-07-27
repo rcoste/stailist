@@ -6,8 +6,20 @@ export const maxDuration = 60;
 
 const GEMINI_MODEL = "gemini-3-pro-image";
 
+// Cómo se LLEVA la ropa, no solo cuál es. El prompt ya cuidaba la POSE ("no una
+// pose de catálogo") pero no el prendido, y el modelo abrochaba todo hasta
+// arriba: camisas cerradas al cuello y polos con los tres botones puestos, que
+// es como nadie se viste (lo cachó Roberto: "renderea muy nerd el look"). La
+// excepción es real y hay que decirla — con corbata o traje formal, la camisa SÍ
+// va cerrada — y el tip de styling del outfit, que se inyecta más abajo, manda
+// por encima de esto (si dice "abróchate hasta arriba", se obedece).
+const COMO_SE_LLEVA =
+  " Style the garments the way a well-dressed person actually wears them, never like a shop mannequin: leave a shirt's top button undone (two if the look is casual), and a polo's placket open or with a single button fastened. EXCEPTION: if the outfit includes a tie, or is clearly formal (a suit worn with a dress shirt), button the shirt all the way up. If the styling note below says otherwise, the note wins.";
+
 const PROMPT_TAIL =
-  " Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments. Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text.";
+  " Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments." +
+  COMO_SE_LLEVA +
+  " Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text.";
 
 const PROMPT =
   "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images." +
