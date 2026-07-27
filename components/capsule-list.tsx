@@ -7,6 +7,7 @@ import { Icon } from "@/components/icon";
 import { CapsuleTabsContext } from "@/components/capsule-tabs-context";
 import { Spinner } from "@/components/spinner";
 import { OwnedPhotoBanner } from "@/components/owned-photo-banner";
+import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { Toast } from "@/components/toast";
 import { faltaImage, familiaToHex, faltaKey } from "@/lib/capsule-images";
 import { outfitsNow, unlocksByIndex } from "@/lib/capsule-math";
@@ -109,6 +110,22 @@ export function CapsuleList({
 
   // Cuál comparación está abierta (la manda el padre para poder encadenar).
   const [abierta, setAbierta] = useState<number | null>(null);
+
+  // Visor de prenda: las miniaturas son de 38-46px y no se distingue qué prenda
+  // es (pedido de Roberto). Un toque la abre en grande, con nombre — reusa el
+  // PrendaZoom de la maleta/looks en vez de inventar otro visor.
+  const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
+  const zoomDe = (r: CapsuleRow): PrendaZoomData => {
+    // Si tu prenda se llama igual que la ideal, "la cubre tu X" repite el título
+    // ("Traje marino de lana · la cubre tu Traje marino de lana"): ahí basta con
+    // decir que es tuya.
+    const mismoNombre = r.by?.trim().toLowerCase() === r.item.nombre.trim().toLowerCase();
+    return {
+      image: rowImage(r, images, catImgs),
+      nombre: r.item.nombre,
+      sub: r.by ? (mismoNombre ? "en tu clóset" : `la cubre tu ${r.by}`) : r.item.porque,
+    };
+  };
 
   // Decidir desde la comparación: además de guardar, abre la SIGUIENTE sin
   // decidir. Antes volvías al estado neutro y tenías que picarle a la que sigue
@@ -244,6 +261,7 @@ export function CapsuleList({
   return (
     <div className="flex flex-col gap-7">
       <Toast message={toast} />
+      <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
 
       {lastOwned ? (
         <OwnedPhotoBanner
@@ -347,6 +365,9 @@ export function CapsuleList({
                   onNinguna={() => rejectItem(r.index, null)}
                   onReject={(reason) => rejectItem(r.index, reason)}
                   onQuitar={() => quitarItem(r.index)}
+                  onZoom={(url) =>
+                    setZoom({ image: url, nombre: r.item.nombre, sub: r.item.porque })
+                  }
                 />
               ) : (
                 <SumaCard
@@ -450,6 +471,7 @@ export function CapsuleList({
             images={images}
             catalogImages={catImgs}
             onNoCubre={(index) => decide(index, "reject")}
+            onZoom={(r) => setZoom(zoomDe(r))}
           />
         </Section>
       ) : null}
@@ -691,6 +713,7 @@ function SumaCard({
   onReject,
   onOtra,
   onQuitar,
+  onZoom,
 }: {
   row: CapsuleRow;
   catalogImages: Record<string, string>;
@@ -710,6 +733,8 @@ function SumaCard({
   onReject?: (reason: VetoReason | null) => void;
   onOtra?: () => void;
   onQuitar?: () => void;
+  /** Con imagen ya lista, el toque la amplía (sin imagen sigue generándola). */
+  onZoom?: (url: string) => void;
 }) {
   const { item } = row;
   const [showReasons, setShowReasons] = useState(false);
@@ -720,6 +745,12 @@ function SumaCard({
   const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
   const render = useIdealRender(idealArgs(item), idealSrc, onRendered);
   const onTapTile = () => {
+    // Con la imagen lista, el toque la AMPLÍA; sin ella, la genera (el tap ya
+    // tenía dueño y no se le quita: primero verla, luego verla en grande).
+    if (render.src && onZoom) {
+      onZoom(render.src);
+      return;
+    }
     if (render.state === "idle") void render.start();
   };
   return (
@@ -881,11 +912,14 @@ function TienesSection({
   images,
   catalogImages,
   onNoCubre,
+  onZoom,
 }: {
   rows: CapsuleRow[];
   images: Record<string, string>;
   catalogImages: Record<string, string>;
   onNoCubre: (index: number) => void;
+  /** Toca la miniatura → verla en grande (las de 38px no se distinguen). */
+  onZoom: (row: CapsuleRow) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -897,14 +931,19 @@ function TienesSection({
               key={rowKey(r)}
               className="flex items-center gap-2.5 rounded-md border border-line bg-surface p-2"
             >
-              <span className="relative aspect-[3/4] w-[38px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
+              <button
+                type="button"
+                onClick={() => onZoom(r)}
+                aria-label={`Ver ${r.item.nombre} en grande`}
+                className="relative aspect-[3/4] w-[38px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg transition-colors hover:border-ink"
+              >
                 <Thumb
                   src={rowImage(r, images, catalogImages)}
                   colorFamilia={r.item.colorFamilia}
                   sizes="38px"
                   icon={13}
                 />
-              </span>
+              </button>
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-[13px] font-medium text-ink">
                   {r.item.nombre}
@@ -926,7 +965,7 @@ function TienesSection({
           ))}
         </ul>
       ) : (
-        <Rail rows={rows} images={images} catalogImages={catalogImages} />
+        <Rail rows={rows} images={images} catalogImages={catalogImages} onZoom={onZoom} />
       )}
       <button
         type="button"
@@ -943,10 +982,12 @@ function Rail({
   rows,
   images,
   catalogImages,
+  onZoom,
 }: {
   rows: CapsuleRow[];
   images: Record<string, string>;
   catalogImages: Record<string, string>;
+  onZoom?: (row: CapsuleRow) => void;
 }) {
   const MAX = 7;
   const shown = rows.slice(0, MAX);
@@ -956,13 +997,16 @@ function Rail({
       {shown.map((r) => {
         const src = rowImage(r, images, catalogImages);
         return (
-          <span
+          <button
             key={rowKey(r)}
-            className="relative aspect-[3/4] w-[46px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg"
+            type="button"
+            onClick={() => onZoom?.(r)}
+            className="relative aspect-[3/4] w-[46px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg transition-colors hover:border-ink"
             title={r.item.nombre}
+            aria-label={`Ver ${r.item.nombre} en grande`}
           >
             <Thumb src={src} colorFamilia={r.item.colorFamilia} sizes="46px" icon={15} />
-          </span>
+          </button>
         );
       })}
       {extra > 0 ? (
@@ -996,6 +1040,7 @@ function DecideRow({
   onQuitar,
   expandido = false,
   onExpandir,
+  onZoom,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
@@ -1021,6 +1066,8 @@ function DecideRow({
    *  que sigue"). */
   expandido?: boolean;
   onExpandir?: () => void;
+  /** Reenviado a la SumaCard del estado ya-rechazado (ver imagen en grande). */
+  onZoom?: (url: string) => void;
 }) {
   const { item, by, decision, index } = row;
   const src = by ? images[by] : null;
@@ -1084,6 +1131,7 @@ function DecideRow({
         onToggleWish={onToggleWish}
         reject
         onChange={() => onDecide(index, "reject")}
+        onZoom={onZoom}
         swapBusy={swapBusy}
         swapErrored={swapErrored}
         onReject={onReject}

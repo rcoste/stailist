@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.37.0] - 2026-07-26
+
+### Added
+
+- **Toca la foto de una prenda en la cápsula y la ves en grande.** Las miniaturas de "ya lo tienes" miden 38 px y no se distinguía qué prenda era; ahora un toque la abre completa, con su nombre y qué prenda tuya la cubre. También funciona en la tira compacta y en las piezas que te faltan (ahí, si la foto aún no existe, el primer toque la sigue generando).
+
 ## [0.2.36.2] - 2026-07-26
 
 ### Fixed
