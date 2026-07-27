@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { describeItem, SYSTEM_PROMPT, type EngineItem } from "./prompt";
+import {
+  describeItem,
+  REGLA_PRENDAS_REALES,
+  SYSTEM_PROMPT,
+  type EngineItem,
+} from "./prompt";
 
 // Helper: prenda del motor con attrs mínimos + overrides.
 const item = (attrs: EngineItem["attrs"]): EngineItem => ({ id: "x", attrs });
@@ -260,5 +265,24 @@ describe("SYSTEM_PROMPT — ropa de baño y de entrenar (v27)", () => {
     expect(SYSTEM_PROMPT).toContain("bra");
     expect(SYSTEM_PROMPT).toContain("ÚNICO top");
     expect(SYSTEM_PROMPT).toMatch(/capa encima/);
+  });
+});
+
+describe("REGLA_PRENDAS_REALES — no inventar prendas que no existen", () => {
+  it("prohíbe explícitamente los tejidos de punto en lino", () => {
+    // El motor le propuso a Roberto una "Playera de lino esmeralda" (tipo
+    // "playera-lino"). El lino no se teje en punto: esa prenda no se vende.
+    const r = REGLA_PRENDAS_REALES.toLowerCase();
+    expect(r).toContain("lino no se teje en punto");
+    expect(r).toContain("no playeras");
+    expect(r).toContain("suéteres de lino");
+  });
+
+  it("nombra el test que debe aplicar el modelo: que se pueda comprar tal cual", () => {
+    expect(REGLA_PRENDAS_REALES.toLowerCase()).toContain("comprar tal cual");
+  });
+
+  it("cubre las prendas cuyo nombre ya implica su tela", () => {
+    expect(REGLA_PRENDAS_REALES.toLowerCase()).toContain("jeans son de mezclilla");
   });
 });

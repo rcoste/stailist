@@ -11,7 +11,7 @@ import {
 } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
-import { tasteSignalLines } from "@/lib/engine/prompt";
+import { REGLA_PRENDAS_REALES, tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 
 export type CapsuleInputs = {
@@ -153,6 +153,7 @@ LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda.
 - "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").
 
 Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado.
+${REGLA_PRENDAS_REALES}
 CLIMA DE VIAJE: su ciudad define el centro de gravedad del clóset, pero no puede empacar lo que no tiene. Si dice que viaja a un clima DISTINTO al suyo, súmale las piezas de ese clima aunque su ciudad no las pida, integradas a su paleta y su estilo (un abrigo de lana camel o carbón sirve igual en su ciudad para una noche fría). No es un guardarropa paralelo, pero SÍ tiene que alcanzar para vestirse de pies a cabeza allá:
 - FRÍO (y su clima no es frío): 1 o 2 piezas bastan, porque el frío se resuelve por CAPAS ENCIMA de lo que ya tiene. Un abrigo real (lana, largo), no una chamarra ligera; suma un suéter grueso si su clima es de plano cálido.
 - CALOR o playa (y su clima no es de calor): aquí NO alcanza con una pieza. Un viaje de calor le cambia el outfit COMPLETO — su ropa de diario no sirve. Dale un SET mínimo de 3 a 4: traje de baño (obligatorio si mencionó playa; no lo omitas por combinable que no sea), al menos un short o bermuda de calle (de lino o algodón — NO de baño: son prendas distintas y necesita las dos), y 1 o 2 tops frescos (camisa de lino, playera ligera). Si su clima ya es de calor, esto ya está cubierto por su día a día y no lo dupliques.

@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
-import { tasteSignalLines } from "@/lib/engine/prompt";
+import { REGLA_PRENDAS_REALES, tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 import {
   occasionLabels,
@@ -187,6 +187,8 @@ Aterriza a la persona:
 - COLORIMETRÍA: nombra colores de su paleta; nunca un color de su EVITA. ${metalTxt}
 - Su estilo y gustos definen la vibra.
 - ${vetoTxt}
+
+${REGLA_PRENDAS_REALES}
 
 Devuelve "items" (la cápsula). Cada prenda:
 - nombre: etiqueta humana y específica con color. Ej "Traje de baño negro", "Short de lino beige".

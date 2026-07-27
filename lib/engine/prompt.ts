@@ -147,6 +147,17 @@ export type EngineContext = {
   styleWords?: string | null; // su estilo EN SUS PALABRAS (texto libre del perfil)
 };
 
+// PRENDAS QUE DE VERDAD EXISTEN — regla compartida por los DOS motores que
+// inventan prendas ideales libres del catálogo: la cápsula del clóset
+// (capsule-target) y la maleta del viaje (trip-capsule). Vive aquí, en una sola
+// constante, porque escrita a mano en cada prompt se desincroniza.
+//
+// El motor le propuso a Roberto una "Playera de lino esmeralda" (tipo
+// "playera-lino"): el lino es fibra rígida y sin elasticidad, no se teje en
+// punto, así que esa prenda no existe como producto. Un clóset cápsula es una
+// lista de compras — pedir algo que no se vende la vuelve inservible.
+export const REGLA_PRENDAS_REALES = `PRENDAS QUE DE VERDAD EXISTEN (regla dura): cada pieza tiene que ser un PRODUCTO que la persona pueda ir a comprar tal cual. Antes de escribir un nombre, pregúntate si esa prenda existe en una tienda normal; si dudas, usa la versión canónica de esa tela o de esa prenda. NO inventes combinaciones tela+prenda que no se hacen: el lino no se teje en punto (hay camisa, pantalón, short y saco de lino — NO playeras, camisetas ni suéteres de lino), y una prenda cuyo nombre YA implica su tela no admite otra (unos jeans son de mezclilla; un traje de baño no es de lana). Prefiere siempre el nombre con el que esa prenda se vende de verdad.`;
+
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
 
 Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 2-3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.

@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.39.3] - 2026-07-27
+
+### Fixed
+
+- **La app ya no te propone prendas que no existen.** Al rearmar su cápsula, a Roberto le salió una "playera de lino": el lino es fibra rígida, no se teje en punto, así que esa prenda no se vende en ninguna tienda — y una cápsula es una lista de compras, así que pedir algo inexistente la vuelve inservible. Ahora los dos motores que inventan prendas (la cápsula del clóset y la maleta del viaje) tienen que proponer cosas que se puedan comprar tal cual: en lino hay camisa, pantalón, short y saco, no playeras ni suéteres; y a unos jeans no se les pone otra tela porque ya son de mezclilla. La regla vive en un solo lugar para los dos motores.
+
 ## [0.2.39.2] - 2026-07-27
 
 ### Fixed
