@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.36.0] - 2026-07-26
+
+### Fixed
+
+- **Un reloj ya no se compara contra unos lentes.** El motor tenía una red que impide cruzar categorías (un pantalón no lo cubre un zapato), pero reloj, lentes, cinturón y bolsa son todos "accesorio", así que los daba por intercambiables. Ahora distingue la clase fina dentro de accesorios, en código y no solo pidiéndoselo a la IA. Los emparejamientos ya calculados se recalculan solos en tu próxima visita.
+
+### Changed
+
+- **Al decidir una comparación, se abre sola la siguiente.** Antes volvías al estado neutro y tenías que tocar una por una; con cuatro pendientes eran cuatro toques de más.
+
 ## [0.2.35.1] - 2026-07-26
 
 ### Fixed

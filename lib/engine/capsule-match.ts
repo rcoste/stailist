@@ -40,7 +40,35 @@ export function closetItemLine(c: ClosetItemLite): string {
 // visita (sin esto, el fix solo llegaría a quien cambie su clóset). OJO: no
 // tocar closetSignature — la comparten los looks de la cápsula y regenerarlos
 // cuesta llamadas.
-const MATCH_PROMPT_VERSION = "m3";
+const MATCH_PROMPT_VERSION = "m4";
+
+
+// CLASE FINA dentro de "accesorio": la zona no alcanza. Un reloj y unos lentes son
+// ambos 'accesorio', así que el guard de zona los daba por intercambiables — le
+// pasó a Roberto: "Reloj de acero con detalles en oro" emparejado con "Lentes
+// redondos". El prompt YA pide distinguirlos y el modelo se lo saltó; esto lo
+// blinda en código, que es donde no se olvida. Exportada para test.
+const CLASES_ACCESORIO: [string, RegExp][] = [
+  ["reloj", /reloj/],
+  ["lentes", /lentes|gafas|anteojos/],
+  ["cinturon", /cinturon/],
+  ["bufanda", /bufanda|pashmina|mascada|panuelo/],
+  ["sombrero", /gorra|sombrero|boina|beanie|gorro/],
+  ["bolsa", /bolsa|bolso|cartera|mochila|morral|maletin|bandolera|tote/],
+  ["joyeria", /collar|arete|anillo|pulsera|brazalete|joyer|cadena/],
+  ["corbata", /corbata|pajarita/],
+  ["calcetin", /calcet|medias/],
+  ["guantes", /guante/],
+];
+const normaliza = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+/** null = clase desconocida → no bloquea (mejor dejar pasar que falsear un hueco). */
+export function claseAccesorio(texto: string): string | null {
+  const n = normaliza(texto);
+  for (const [clase, re] of CLASES_ACCESORIO) if (re.test(n)) return clase;
+  return null;
+}
 
 export function matchSignature(closet: Parameters<typeof closetSignature>[0]): string {
   return `${MATCH_PROMPT_VERSION}|${closetSignature(closet)}`;
@@ -188,6 +216,14 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     const cat = by ? resolveCategory(by) : null;
     if (!cat || zoneOf(cat) !== zoneOf(ideal.category)) {
       return { status: "falta", by: null, difiere: null };
+    }
+    // Dentro de accesorios, la clase fina también tiene que coincidir.
+    if (ideal.category === "accesorio" && cat === "accesorio") {
+      const idealClase = claseAccesorio(`${ideal.nombre} ${ideal.tipo}`);
+      const realClase = claseAccesorio(by!);
+      if (idealClase && realClase && idealClase !== realClase) {
+        return { status: "falta", by: null, difiere: null };
+      }
     }
     // "difiere" sólo tiene sentido en "parecido" (en "tienes" no hay diferencia
     // que contar). Se acota para que no desborde la línea de la card.

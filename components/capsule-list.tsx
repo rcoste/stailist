@@ -107,6 +107,20 @@ export function CapsuleList({
       await setCapsuleOverride(index, decision);
     });
 
+  // Cuál comparación está abierta (la manda el padre para poder encadenar).
+  const [abierta, setAbierta] = useState<number | null>(null);
+
+  // Decidir desde la comparación: además de guardar, abre la SIGUIENTE sin
+  // decidir. Antes volvías al estado neutro y tenías que picarle a la que sigue
+  // una por una; en una cápsula con 4-5 pendientes eso son tapping de más.
+  const decidirYSeguir = (index: number, decision: CapsuleDecision) => {
+    decide(index, decision);
+    const quedan = rows
+      .filter((r) => r.base === "parecido" && r.decision === null && r.index !== index)
+      .sort((a, b) => a.item.prioridad - b.item.prioridad);
+    setAbierta(quedan.length ? quedan[0].index : null);
+  };
+
   const setBusy = (index: number, on: boolean) =>
     setOwnBusy((s) => {
       const n = new Set(s);
@@ -410,7 +424,7 @@ export function CapsuleList({
                 images={images}
                 catalogImages={catImgs}
                 onRendered={(url) => onRendered(faltaKey(r.item), url)}
-                onDecide={decide}
+                onDecide={decidirYSeguir}
                 ownBusy={ownBusy.has(r.index)}
                 onOwn={() => markOwned(r.index, r.item.nombre)}
                 wishSaved={wishSaved.has(faltaKey(r.item))}
@@ -421,6 +435,8 @@ export function CapsuleList({
                 onNinguna={() => rejectItem(r.index, null)}
                 onReject={(reason) => rejectItem(r.index, reason)}
                 onQuitar={() => quitarItem(r.index)}
+                expandido={abierta === r.index}
+                onExpandir={() => setAbierta(r.index)}
               />
             ))}
           </ul>
@@ -978,6 +994,8 @@ function DecideRow({
   onNinguna,
   onReject,
   onQuitar,
+  expandido = false,
+  onExpandir,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
@@ -998,14 +1016,17 @@ function DecideRow({
   /** Swap con razón y "quitar": solo aplican ya rechazado (= hueco real). */
   onReject?: (reason: VetoReason | null) => void;
   onQuitar?: () => void;
+  /** La apertura la manda el padre: al confirmar una, encadena a la siguiente
+   *  sin volver al estado neutro (Roberto: "no debería tener que picarle a la
+   *  que sigue"). */
+  expandido?: boolean;
+  onExpandir?: () => void;
 }) {
   const { item, by, decision, index } = row;
   const src = by ? images[by] : null;
   const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
   const render = useIdealRender(idealArgs(item), idealSrc, onRendered);
   const [sel, setSel] = useState<null | "ideal" | "tuya">(null);
-  // La comparación grande se abre a petición (ver más abajo).
-  const [expandido, setExpandido] = useState(false);
 
   const onTapIdeal = async () => {
     if (render.state === "ready") {
@@ -1081,7 +1102,7 @@ function DecideRow({
       <li>
         <button
           type="button"
-          onClick={() => setExpandido(true)}
+          onClick={onExpandir}
           className="flex w-full items-center gap-2.5 rounded-md border border-line bg-surface p-3 text-left transition-colors hover:border-ink"
         >
           <span className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
