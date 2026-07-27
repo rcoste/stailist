@@ -15,6 +15,7 @@ import {
   type MatchEntry,
   SWAP_CAP,
   type VetoReason,
+  visibleQuestions,
 } from "@/lib/capsule";
 import { EMPTY_VETOES, type StyleVetoes, vetoLabels } from "@/lib/vetoes";
 import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
@@ -63,9 +64,18 @@ export async function saveLifestyle(
     (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
   const allQ = [...assessmentQuestions(gender), ...dynamicQ];
 
+  // Recolecta primero TODO lo que llegó, porque la visibilidad de una pregunta
+  // condicional depende de otra respuesta (el clima de viaje solo aplica si dijo
+  // que viaja). Validar sobre allQ exigía responder preguntas que el formulario
+  // nunca mostró → bloqueaba a quien NO viaja. Se valida solo lo que aplica, y
+  // lo que no aplica ni siquiera entra a `answers`.
+  const recibido: LifestyleAnswers = {};
+  for (const q of allQ) recibido[q.id] = String(formData.get(q.id) ?? "");
+  const aplican = visibleQuestions(allQ, recibido);
+
   const answers: LifestyleAnswers = {};
-  for (const q of allQ) {
-    const raw = String(formData.get(q.id) ?? "");
+  for (const q of aplican) {
+    const raw = recibido[q.id] ?? "";
     if (q.multi) {
       const vals = raw.split(",").filter(Boolean);
       if (vals.length === 0 || !vals.every((v) => q.options.some((o) => o.value === v))) {
@@ -79,6 +89,15 @@ export async function saveLifestyle(
       answers[q.id] = raw;
     }
   }
+
+  // Guarda las respuestas ANTES de generar. Un timeout de Vercel mata la función
+  // entera: el catch de abajo NUNCA corre, y el cuestionario se perdía completo
+  // (le pasó a Roberto — 10 respuestas a la basura por un 504). Persistidas
+  // primero, un timeout cuesta la cápsula pero no volver a contestar todo.
+  await supabase
+    .from("profiles")
+    .update({ lifestyle: answers, updated_at: new Date().toISOString() })
+    .eq("id", user.id);
 
   let target: CapsuleTarget;
   try {
@@ -103,10 +122,7 @@ export async function saveLifestyle(
     // cambia después, la cápsula se ofrece a regenerar.
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
   } catch {
-    await supabase
-      .from("profiles")
-      .update({ lifestyle: answers, updated_at: new Date().toISOString() })
-      .eq("id", user.id);
+    // Las respuestas ya quedaron guardadas arriba.
     return {
       status: "error",
       message: "Guardé tus respuestas pero no pude armar tu cápsula. Inténtalo de nuevo en un momento.",

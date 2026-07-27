@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.35.1] - 2026-07-26
+
+### Fixed
+
+- **Armar la cápsula ya no se corta a la mitad.** Terminar el cuestionario devolvía un "esta página no se pudo cargar": armar la cápsula tarda ~40 segundos y el límite estaba en 60, así que un perfil rico se pasaba y el servidor cortaba la llamada. El techo sube a 300 segundos, que es el máximo de la plataforma.
+- **Y si algo falla, ya no pierdes el cuestionario.** Tus respuestas ahora se guardan **antes** de armar la cápsula. Antes se guardaban solo si la generación fallaba "por las buenas" — un corte por tiempo mataba el proceso entero y las 10 respuestas se iban con él. Ahora un fallo cuesta la cápsula, no volver a contestar todo.
+- **Quien no viaja podía quedarse atorado**: la pregunta nueva del clima de viaje se validaba aunque nunca se hubiera mostrado, así que el cuestionario se rechazaba con un "te faltó responder una" imposible de resolver. Ahora solo se exigen las preguntas que de verdad viste.
+
 ## [0.2.35.0] - 2026-07-26
 
 ### Added

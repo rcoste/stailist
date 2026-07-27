@@ -7,7 +7,11 @@ import { ensureStyleQuestions } from "@/lib/style-questions-cache";
 
 // La acción saveLifestyle (2 llamadas a Opus, ~27s) se dispara desde esta página, y
 // la primera vez también se generan las preguntas de estilo personalizadas (~1 Opus).
-export const maxDuration = 60;
+// Armar la cápsula es 1 llamada larga a Opus (~40s típico, más con un perfil
+// rico). Con el tope en 60 se cortaba a la mitad y devolvía 504 (le pasó a
+// Roberto). 300s es el máximo actual de la plataforma — el usuario no espera
+// tanto en la práctica; esto es red de seguridad, no el caso normal.
+export const maxDuration = 300;
 
 export default async function EditarCapsulaPage() {
   const profile = await requireOnboarded();
