@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.36.2] - 2026-07-26
+
+### Fixed
+
+- **Las prendas generadas ya no salen achatadas.** Se creaban cuadradas pero se muestran en un hueco vertical, así que la app las ampliaba un tercio y les recortaba los lados: la prenda se veía grande, apretada y corta (lo cachó Roberto con un polo negro que salía más chaparro que el suyo). Ahora se generan en la misma proporción en la que se ven. Aplica a las piezas sugeridas de la cápsula y a las fotos que la app genera para tu clóset.
+
 ## [0.2.36.1] - 2026-07-26
 
 ### Fixed

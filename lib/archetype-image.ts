@@ -28,10 +28,18 @@ export function buildImagePrompt(
 }
 
 // Genera la imagen y devuelve los bytes JPEG, o null si falla.
+// La proporción DEBE coincidir con el hueco donde se muestra. Generar 1:1 y
+// pintarlo en un tile 3:4 con object-cover amplía la foto ~33% y le come los
+// lados: la prenda se ve grande, apretada y "chaparra" (lo cachó Roberto con un
+// polo negro). Los tiles de cápsula y clóset son 3:4; el catálogo histórico es
+// 1:1, por eso el default no cambia y cada caller pide lo suyo.
+export type ImageAspect = "1:1" | "3:4";
+
 export async function generateArchetypeImage(
   desc: string,
   type: ImageType,
-  gender?: Gender
+  gender?: Gender,
+  aspect: ImageAspect = "1:1"
 ): Promise<Buffer | null> {
   const key = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!key) return null;
@@ -45,7 +53,7 @@ export async function generateArchetypeImage(
           contents: [{ parts: [{ text: buildImagePrompt(desc, type, gender) }] }],
           generationConfig: {
             responseModalities: ["IMAGE"],
-            imageConfig: { aspectRatio: "1:1" },
+            imageConfig: { aspectRatio: aspect },
           },
         }),
       }

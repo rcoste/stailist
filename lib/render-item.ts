@@ -88,7 +88,7 @@ export async function renderItemImage(
     .single();
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
-  const bytes = await generateArchetypeImage(conColor, type, gender);
+  const bytes = await generateArchetypeImage(conColor, type, gender, "3:4");
   if (!bytes) {
     await supabase
       .from("items")

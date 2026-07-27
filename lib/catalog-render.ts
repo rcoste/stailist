@@ -46,7 +46,7 @@ export async function ensureCatalogRender(
     visual: args.visual,
   });
   const type = args.categoria === "calzado" ? "shoes" : "flat";
-  const bytes = await generateArchetypeImage(desc, type, args.gender ?? undefined);
+  const bytes = await generateArchetypeImage(desc, type, args.gender ?? undefined, "3:4");
   if (!bytes) return { ok: false, error: "render_fallo" };
 
   const path = `${key}.jpg`;
