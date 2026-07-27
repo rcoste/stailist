@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.35.0] - 2026-07-26
+
+### Added
+
+- **La cápsula ya considera a qué clima viajas, no solo el de tu ciudad.** Si vives en un clima templado pero viajas al frío, tu clóset ideal salía correcto para tu ciudad y genérico para tu vida: nunca te iba a proponer un abrigo de verdad — y no puedes empacar lo que no tienes. Ahora, **solo si dijiste que viajas seguido**, aparece una pregunta más: "¿a qué clima viajas?", con casillas para marcar frío, playa o nada distinto. Quien no viaja no ve ese paso.
+- El motor suma **1 o 2 piezas** para ese clima —un abrigo de lana de verdad, un traje de baño— no un guardarropa paralelo, y en tu paleta para que sirvan también en tu ciudad.
+
 ## [0.2.34.0] - 2026-07-26
 
 ### Changed

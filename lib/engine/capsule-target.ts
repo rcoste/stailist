@@ -152,7 +152,8 @@ LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda.
 - "subline": UNA línea (≤ ~95 chars) que conecte la firma con cómo armaste la cápsula. Ej: "Así armé tu cápsula para que ese sea tu default, sin pensarlo."
 - "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").
 
-Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`,
+Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado.
+CLIMA DE VIAJE: su ciudad define el centro de gravedad del clóset, pero no puede empacar lo que no tiene. Si dice que viaja a un clima DISTINTO al suyo, súmale las piezas mínimas para ese clima aunque su ciudad no las pida — 1 o 2, no un guardarropa paralelo, y que se integren a su paleta y su estilo (un abrigo de lana camel o carbón sirve igual en su ciudad para una noche fría). Si viaja a frío de verdad y su clima NO es frío: un abrigo real (lana, largo), no una chamarra ligera. Si viaja a playa/calor y su clima no es de calor: traje de baño y una pieza fresca de lino. Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`,
     messages: [
       {
         role: "user",

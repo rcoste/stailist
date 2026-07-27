@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { AssessmentQuestion, LifestyleAnswers } from "@/lib/capsule";
+import { visibleQuestions, type AssessmentQuestion, type LifestyleAnswers } from "@/lib/capsule";
 import { saveLifestyle, type CapsuleState } from "./actions";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
@@ -35,9 +35,12 @@ export function CapsulaForm({
   // Pantalla despierta mientras se arma la cápsula (~27s).
   useWakeLock(pending);
 
-  const total = questions.length;
-  const q = questions[step];
-  const last = step === total - 1;
+  // Los pasos son las preguntas visibles AHORA: marcar "viajo seguido" agrega el
+  // paso del clima de viaje; desmarcarlo lo quita. El total se recalcula solo.
+  const visibles = visibleQuestions(questions, answers);
+  const total = visibles.length;
+  const q = visibles[Math.min(step, total - 1)];
+  const last = Math.min(step, total - 1) === total - 1;
   const answered = !!answers[q.id];
 
   // Guard anti-tap-reflejo: el botón de armar ocupa el MISMO lugar que "Siguiente"
@@ -95,7 +98,7 @@ export function CapsulaForm({
       {pending ? <GeneratingScreen phrases={CAPSULE_PHRASES} /> : null}
       <form action={formAction} className="flex min-h-[calc(100dvh-7rem)] flex-col">
       {/* Respuestas de todos los pasos viajan como hidden inputs. */}
-      {questions.map((qq) => (
+      {visibles.map((qq) => (
         <input key={qq.id} type="hidden" name={qq.id} value={answers[qq.id] ?? ""} />
       ))}
 

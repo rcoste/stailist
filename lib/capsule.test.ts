@@ -4,6 +4,7 @@ import {
   assessmentQuestions,
   capsuleRows,
   closetSignature,
+  visibleQuestions,
   lifestyleSummary,
   type CapsuleItem,
   type CapsuleMatch,
@@ -192,5 +193,54 @@ describe("capsuleRows — desmentir un 'tienes' del match", () => {
     const [r] = capsuleRows(tf, mf, { "0": "reject" });
     expect(r.effective).toBe("falta");
     expect(r.decision).toBeNull();
+  });
+});
+
+
+// Pregunta condicional del clima de viaje: la cápsula sale genérica si solo mira
+// el clima de tu ciudad (no puedes empacar lo que no tienes), pero cobrarle el
+// paso a quien no viaja sería fricción pura. Esta es la lógica que lo decide.
+describe("visibleQuestions — el clima de viaje solo aparece si viajas", () => {
+  const qs = ASSESSMENT_QUESTIONS;
+  const viaje = () => qs.find((q) => q.id === "viaje_clima")!;
+  const ids = (a: Record<string, string>) => visibleQuestions(qs, a).map((q) => q.id);
+
+  it("la pregunta existe y es condicional a 'viajo' de actividades", () => {
+    expect(viaje().showIf).toEqual({ question: "actividades", value: "viajo" });
+    expect(viaje().multi).toBe(true);
+  });
+
+  it("sin responder actividades: no se muestra", () => {
+    expect(ids({})).not.toContain("viaje_clima");
+  });
+
+  it("con actividades pero SIN viajo: no se muestra", () => {
+    expect(ids({ actividades: "gym,noche" })).not.toContain("viaje_clima");
+  });
+
+  it("con 'viajo' entre varias: se muestra", () => {
+    expect(ids({ actividades: "gym,viajo,noche" })).toContain("viaje_clima");
+  });
+
+  it("no confunde un valor que CONTIENE la palabra (match exacto por coma)", () => {
+    expect(ids({ actividades: "viajobarato" })).not.toContain("viaje_clima");
+  });
+
+  it("las no-condicionales nunca se filtran", () => {
+    const base = ids({});
+    for (const q of qs) if (!q.showIf) expect(base).toContain(q.id);
+  });
+});
+
+describe("lifestyleSummary — el clima de viaje llega al motor", () => {
+  it("nombra a dónde viaja", () => {
+    const s = lifestyleSummary({ actividades: "viajo", viaje_clima: "frio,calor" }) ?? "";
+    expect(s).toContain("viaja a:");
+    expect(s.toLowerCase()).toContain("frío de verdad");
+  });
+
+  it('"nada distinto a mi clima" no agrega ruido al prompt', () => {
+    const s = lifestyleSummary({ actividades: "viajo", viaje_clima: "similar" }) ?? "";
+    expect(s).not.toContain("viaja a:");
   });
 });

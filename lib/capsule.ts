@@ -28,6 +28,10 @@ export type AssessmentQuestion = {
   label: string;
   help?: string;
   multi?: boolean; // opción múltiple (respuesta = valores separados por coma)
+  /** Pregunta CONDICIONAL: solo se muestra si otra respuesta incluye `value`.
+   *  Sin esto, precisar el clima de viaje costaría un paso a TODO el mundo para
+   *  servir a quien viaja; así solo lo ve quien dijo que viaja. */
+  showIf?: { question: string; value: string };
   options: {
     value: string;
     label: string;
@@ -105,6 +109,34 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     ],
   },
   {
+    // Condicional (solo si marcó "Viajo seguido"): tu ciudad define el centro de
+    // gravedad del clóset, pero no puedes empacar lo que no tienes — si viajas a
+    // un clima distinto, esas piezas tienen que NACER en la cápsula. Sin esto la
+    // cápsula sale correcta para tu ciudad y genérica para tu vida real.
+    id: "viaje_clima",
+    label: "¿A qué clima viajas?",
+    help: "Marca todo lo que aplique. Sumo esas piezas aunque no sean de tu ciudad.",
+    multi: true,
+    showIf: { question: "actividades", value: "viajo" },
+    options: [
+      {
+        value: "frio",
+        label: "Frío de verdad",
+        hint: "Nieve o inviernos duros: pide un abrigo real, no una chamarra.",
+      },
+      {
+        value: "calor",
+        label: "Playa o mucho calor",
+        hint: "Sol, humedad, alberca.",
+      },
+      {
+        value: "similar",
+        label: "Nada muy distinto a mi clima",
+        exclusive: true,
+      },
+    ],
+  },
+  {
     id: "formalidad_techo",
     label: "Cuando te arreglas al máximo, ¿hasta dónde llegas?",
     help: "Tu evento más formal típico.",
@@ -169,6 +201,22 @@ export function assessmentQuestions(
 
 export type LifestyleAnswers = Record<string, string>;
 
+// Las preguntas que de verdad van a mostrarse, dadas las respuestas de ahora: una
+// condicional entra sólo si la respuesta de la que depende la incluye. Pura y
+// testeable — la usa el formulario (para caminar los pasos) y el motor (para no
+// mandarle al prompt una respuesta de una pregunta que ya no aplica, p. ej. si
+// alguien marcó "viajo seguido", contestó el clima de viaje y luego se arrepintió).
+export function visibleQuestions(
+  questions: AssessmentQuestion[],
+  answers: LifestyleAnswers
+): AssessmentQuestion[] {
+  return questions.filter((q) => {
+    if (!q.showIf) return true;
+    const raw = answers[q.showIf.question] ?? "";
+    return raw.split(",").filter(Boolean).includes(q.showIf.value);
+  });
+}
+
 // Resumen en lenguaje natural (voz amiga) para el contexto del motor.
 export function lifestyleSummary(answers: LifestyleAnswers | null): string | null {
   if (!answers || Object.keys(answers).length === 0) return null;
@@ -190,6 +238,9 @@ export function lifestyleSummary(answers: LifestyleAnswers | null): string | nul
   else if (eventos === "aveces") parts.push("a veces tiene eventos de arreglarse");
   const actividades = labels("actividades", ["ninguna"]);
   if (actividades.length) parts.push(`fuera del trabajo: ${actividades.join(", ")}`);
+  // Clima de viaje (condicional): "similar" = no necesita nada extra, no se dice.
+  const viajeClima = labels("viaje_clima", ["similar"]);
+  if (viajeClima.length) parts.push(`viaja a: ${viajeClima.join(" y ")}`);
   // "nose" se descarta: "prefiere la ropa aún no lo sé" no es una frase.
   const fit = labels("fit", ["nose"]);
   if (fit.length) parts.push(`prefiere la ropa ${fit[0]}`);
