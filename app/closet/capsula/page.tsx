@@ -208,12 +208,12 @@ export default async function CapsulaPage({
                     />
                   ) : null}
 
-                  {/* Hint de función (una vez): el swap "no me late". El
+                  {/* Hint de función (una vez): el swap "no me convence". El
                       coach-mark apunta al botón; si no hay ningún hueco en
                       pantalla, no se muestra ni se marca visto (espera). */}
                   {!profile.hints_seen?.["capsula-swap"] ? (
                     <Hint id="capsula-swap">
-                      ¿alguna pieza no te late? dímelo y te sugiero otra en su
+                      ¿alguna pieza no te convence? dímelo y te sugiero otra en su
                       lugar
                     </Hint>
                   ) : null}

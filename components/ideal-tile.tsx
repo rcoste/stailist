@@ -149,21 +149,32 @@ export function IdealTileInner({
       <Image src={render.src} alt="" fill sizes={sizes} className="object-cover" />
     );
   }
+  // Sin render: NO se pinta el tile del color de la prenda a sangre. Un bloque de
+  // color saturado en una app monocroma es lo más llamativo de la pantalla, no
+  // comunica nada y se lee como imagen rota (assessment UX, 2026-07-26). En su
+  // lugar: el papel del sistema + la percha, y el color baja a una banda al pie
+  // — el dato de color se conserva sin competir con las fotos reales.
   const hex = familiaToHex(colorFamilia);
-  const light = isLightHex(hex);
   return (
     <>
-      <span className="absolute inset-0 flex items-center justify-center" style={{ background: hex }}>
+      <span className="absolute inset-0 flex items-center justify-center bg-tile">
         {render.state !== "generating" ? (
-          <Icon name="gancho" size={20} className={light ? "text-ink/30" : "text-white/50"} />
+          <Icon name="gancho" size={20} className="text-ink/25" />
         ) : null}
       </span>
       {render.state === "generating" ? (
         <GenOverlay />
       ) : (
-        <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-black/55 to-transparent px-2 pb-1.5 pt-5 text-[10px] font-semibold text-white">
-          <Icon name="destello" size={12} /> {restLabel}
-        </span>
+        <>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[5px]"
+            style={{ background: hex }}
+          />
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 px-2 pb-2.5 pt-5 text-[10px] font-semibold text-muted">
+            <Icon name="destello" size={12} /> {restLabel}
+          </span>
+        </>
       )}
     </>
   );

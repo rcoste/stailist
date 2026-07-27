@@ -145,7 +145,7 @@ export function TripResult({
     Record<number, { by: string; byImage: string | null }>
   >({});
   // Flujo "Buscar en mi clóset": hoja con candidatos de la IA. Dos modos:
-  // "falta" (cubrir un hueco sin comprar) y "swap" ("no me late" sobre una prenda
+  // "falta" (cubrir un hueco sin comprar) y "swap" ("no me convence" sobre una prenda
   // ya cubierta — cámbiala por otra del clóset).
   const [subFlow, setSubFlow] = useState<{
     index: number;
@@ -478,7 +478,7 @@ export function TripResult({
                   </>
                 )}
               </button>
-              {/* Swap "no me late": busca en el clóset otra prenda que cubra este
+              {/* Swap "no me convence": busca en el clóset otra prenda que cubra este
                   hueco (mismo flujo que "buscar en mi clóset" de las faltantes). */}
               <button
                 type="button"
@@ -489,7 +489,7 @@ export function TripResult({
                 }}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
               >
-                <Icon name="repetir" size={15} /> no me late — cámbiala
+                <Icon name="repetir" size={15} /> no me convence — cámbiala
               </button>
             </div>
           ) : null

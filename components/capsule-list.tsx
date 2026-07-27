@@ -22,7 +22,6 @@ import {
   SelCheck,
   VER_PRENDA_LABEL,
   idealArgs,
-  isLightHex,
   useIdealRender,
   type RenderArgs,
 } from "@/components/ideal-tile";
@@ -370,7 +369,39 @@ export function CapsuleList({
       ) : null}
 
       {decidir.length > 0 ? (
-        <Section title="Decide si te sirve" count={decidir.length}>
+        // Cerrada por defecto (assessment UX): resolver ambigüedades del match
+        // vale menos que ver qué te falta, y abierta era lo MÁS grande de la
+        // pantalla. El resumen deja claro que están ahí.
+        <Section
+          title="Decide si te sirve"
+          count={decidir.length}
+          collapsible
+          summary={
+            <>
+              <span className="flex shrink-0 gap-1">
+                {decidir.slice(0, 2).map((r) => (
+                  <span
+                    key={rowKey(r)}
+                    className="relative aspect-[3/4] w-8 overflow-hidden rounded-sm border border-line bg-tile"
+                  >
+                    <Thumb
+                      src={rowImage(r, images, catImgs)}
+                      colorFamilia={r.item.colorFamilia}
+                      sizes="32px"
+                      icon={11}
+                    />
+                  </span>
+                ))}
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[13.5px] font-semibold leading-tight text-ink">
+                  {decidir.length === 1 ? "1 por decidir" : `${decidir.length} por decidir`}
+                </span>
+                <span className="text-[11.5px] text-muted">tuya o la sugerida</span>
+              </span>
+            </>
+          }
+        >
           <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {decidir.map((r) => (
               <DecideRow
@@ -452,14 +483,16 @@ function Thumb({
   const shown = src ?? generated;
   if (shown) return <Image src={shown} alt="" fill sizes={sizes} className="object-cover" />;
 
+  // Mismo tratamiento que IdealTileInner: papel + percha + banda de color al pie
+  // (nada de bloques de color a sangre, que se leen como imagen rota).
   const hex = familiaToHex(colorFamilia);
-  const light = isLightHex(hex);
-  const tone = light ? "text-ink/45" : "text-white/65";
+  const tone = "text-muted";
 
   if (!renderArgs) {
     return (
-      <span className="flex h-full w-full items-center justify-center" style={{ background: hex }}>
-        <Icon name="gancho" size={icon} className={light ? "text-ink/35" : "text-white/55"} />
+      <span className="relative flex h-full w-full items-center justify-center bg-tile">
+        <Icon name="gancho" size={icon} className="text-ink/25" />
+        <span aria-hidden className="absolute inset-x-0 bottom-0 h-[4px]" style={{ background: hex }} />
       </span>
     );
   }
@@ -488,8 +521,7 @@ function Thumb({
       type="button"
       onClick={onRender}
       disabled={busy}
-      className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 disabled:opacity-80"
-      style={{ background: hex }}
+      className="relative flex h-full w-full flex-col items-center justify-center gap-1 bg-tile px-1 disabled:opacity-80"
       title={VER_PRENDA_LABEL}
     >
       {busy ? (
@@ -502,6 +534,7 @@ function Thumb({
           </span>
         </>
       )}
+      <span aria-hidden className="absolute inset-x-0 bottom-0 h-[4px]" style={{ background: hex }} />
     </button>
   );
 }
@@ -510,11 +543,19 @@ function Section({
   title,
   count,
   children,
+  collapsible,
+  summary,
 }: {
   title: string;
   count: number;
   children: React.ReactNode;
+  /** Arranca cerrada: solo el rótulo + una barra de resumen que la abre. */
+  collapsible?: boolean;
+  /** Lo que se ve cerrada (miniaturas + una línea). Obligatorio si collapsible. */
+  summary?: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+  const closed = !!collapsible && !open;
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
@@ -523,7 +564,31 @@ function Section({
         </span>
         <span className="tabular text-[11px] text-muted">{count}</span>
       </div>
-      {children}
+      {closed ? (
+        // Cerrada: una barra que dice qué hay y la abre. No esconde nada — está
+        // a un toque — pero deja de competir por atención con lo que sí importa.
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex min-h-11 w-full items-center gap-2.5 rounded-md border border-line bg-surface p-3 text-left transition-colors hover:border-ink"
+        >
+          {summary}
+          <Icon name="chevron" size={16} className="ml-auto shrink-0 text-faint" />
+        </button>
+      ) : (
+        <>
+          {children}
+          {collapsible ? (
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 w-fit items-center text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              ocultar
+            </button>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -623,7 +688,7 @@ function SumaCard({
   /** Nota del banner de "ya decidiste" (por defecto, la del parecido rechazado). */
   note?: string;
   onChange?: () => void;
-  // Camino A: "no me late" → swap. Solo se pasan en la sección de huecos.
+  // Camino A: "no me convence" → swap. Solo se pasan en la sección de huecos.
   swapBusy?: boolean;
   swapErrored?: boolean;
   onReject?: (reason: VetoReason | null) => void;
@@ -706,7 +771,7 @@ function SumaCard({
           </button>
         </div>
 
-        {/* Camino A: "no me late" → alternativa (swap). Solo en la sección de huecos. */}
+        {/* Camino A: "no me convence" → alternativa (swap). Solo en la sección de huecos. */}
         {onReject ? (
           swapBusy ? (
             <div className="flex items-center gap-2 text-[12px] text-muted">
@@ -772,7 +837,7 @@ function SumaCard({
               data-hint-target="capsula-swap"
               className="relative -mb-2 mt-0.5 flex min-h-11 items-center self-start text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
             >
-              esta no me late — cámbiala
+              esta no me convence — cámbiala
             </button>
           )
         ) : null}
@@ -939,6 +1004,8 @@ function DecideRow({
   const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
   const render = useIdealRender(idealArgs(item), idealSrc, onRendered);
   const [sel, setSel] = useState<null | "ideal" | "tuya">(null);
+  // La comparación grande se abre a petición (ver más abajo).
+  const [expandido, setExpandido] = useState(false);
 
   const onTapIdeal = async () => {
     if (render.state === "ready") {
@@ -1005,7 +1072,46 @@ function DecideRow({
     );
   }
 
-  // Sin decidir — "elige tocando": la sugerida (la que falta) vs la tuya. Tocar la
+  // Sin decidir, COMPACTA (assessment UX): antes esta card era lo más alto de la
+  // pantalla — dos fotos 3:4 por pieza — para la tarea que menos vale. Ahora
+  // arranca como una fila y un toque la abre a la comparación grande: quien
+  // necesita ver la prenda para decidir la tiene, pero deja de dominar.
+  if (!expandido) {
+    return (
+      <li>
+        <button
+          type="button"
+          onClick={() => setExpandido(true)}
+          className="flex w-full items-center gap-2.5 rounded-md border border-line bg-surface p-3 text-left transition-colors hover:border-ink"
+        >
+          <span className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
+            <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="40px" restLabel="" />
+          </span>
+          <span className="text-[10px] font-bold text-faint">vs</span>
+          <span className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
+            {src ? (
+              <Image src={src} alt={by ?? ""} fill sizes="40px" className="object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center">
+                <Icon name="gancho" size={13} className="text-ink/25" />
+              </span>
+            )}
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-[13.5px] font-semibold leading-tight text-ink">
+              {item.nombre}
+            </span>
+            <span className="truncate text-[11px] text-muted">
+              {row.difiere ? `cambia: ${row.difiere}` : "tuya o la sugerida"}
+            </span>
+          </span>
+          <Icon name="chevron" size={16} className="ml-auto shrink-0 text-faint" />
+        </button>
+      </li>
+    );
+  }
+
+  // Abierta — "elige tocando": la sugerida (la que falta) vs la tuya. Tocar la
   // sugerida sin imagen la GENERA antes de poder elegirla (nunca eliges un vacío).
   return (
     <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-[13px]">
@@ -1089,7 +1195,7 @@ function DecideRow({
                 onClick={onNinguna}
                 className="flex min-h-11 items-center text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
               >
-                ninguna me late — cámbiala
+                ninguna me convence — cámbiala
               </button>
             )
           ) : null}

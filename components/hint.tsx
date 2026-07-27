@@ -19,7 +19,7 @@ import { dismissHint, type HintId } from "@/lib/hints";
 // `center`: fuerza nota centrada sin recorte (hints de orientación general, sin
 // un elemento concreto que señalar). Sin `center`, el hint REQUIERE su target:
 // si no está en pantalla, no se muestra ni se marca visto (espera a otra visita
-// donde el target sí exista — p.ej. "no me late" solo aparece con un parecido).
+// donde el target sí exista — p.ej. "no me convence" solo aparece con un parecido).
 
 const LG = 1024;
 

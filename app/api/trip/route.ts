@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Memoria de rechazos: prendas que la persona ya cambió con "no me late"
+        // Memoria de rechazos: prendas que la persona ya cambió con "no me convence"
         // en maletas anteriores (eventos trip_item_swap). El motor evita armar
         // ideales para ellas y el match las usa como último recurso. Sin esto,
         // cada maleta nueva re-proponía la misma prenda rechazada (bug real,

@@ -79,7 +79,7 @@ export async function suggestTripSubstitutes(
     loadClosetImageMap(supabase, user.id),
   ]);
   const closet = closetAll.filter((c) => !used.has(c.nombre));
-  // Si el hueco YA está cubierto, esto es un swap ("no me late"): el motor recibe
+  // Si el hueco YA está cubierto, esto es un swap ("no me convence"): el motor recibe
   // la rechazada para proponer alternativas con otro aire, no más de lo mismo.
   const matches = await matchSubstitutes(
     missing,
@@ -206,7 +206,7 @@ export async function setTripSubstitute(
     unknown
   >;
   // ¿Qué cubría este hueco ANTES? (sub previo, o lo que dijo el match). Si había
-  // algo y eligió otra cosa, es un swap "no me late" → señal real de rechazo.
+  // algo y eligió otra cosa, es un swap "no me convence" → señal real de rechazo.
   const target = trip.capsule_target as CapsuleTarget | null;
   const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
   let prevBy = typeof overrides[subKey(index)] === "string"

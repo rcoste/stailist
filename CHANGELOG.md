@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.34.0] - 2026-07-26
+
+### Changed
+
+- **La cápsula deja de pedirte tres cosas a la vez.** La pantalla abría sus tres secciones con el mismo peso —comprar, decidir, revisar— y la más grande era la que menos importa. Ahora "lo que más te suma" manda y las otras dos arrancan cerradas, a un toque. Con cinco piezas, la pantalla que antes pedía scroll ahora cabe de un vistazo.
+- **La comparación "decide si te sirve" empieza en una fila.** Las dos miniaturas, el nombre y en qué difieren; un toque la abre a la comparación grande de siempre, con sus fotos y sus acciones. Antes cada una era la card más alta de la pantalla.
+- **Las prendas sin foto ya no son un bloque de color.** Un rectángulo saturado se leía como imagen rota y era lo más llamativo de una app en blanco y negro. Ahora es el papel de la app con una percha y el color en una banda delgada al pie — el dato de color sigue ahí, sin gritar.
+- **Se fue el "no me late".** Sonaba a relleno, no a la voz de la app. Ahora es **"esta no me convence — cámbiala"**, y lo mismo en Viaje, que arrastraba la misma frase.
+
 ## [0.2.33.1] - 2026-07-26
 
 ### Fixed

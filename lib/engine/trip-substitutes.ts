@@ -6,7 +6,7 @@ import type { CapsuleItem, ClosetItemLite } from "@/lib/capsule";
 // para no tener que comprar. Mismo criterio de clase que el match de cápsula: la
 // CLASE manda; el color/formalidad solo desempata. Vacío si nada sirve de verdad.
 // `rejected`: la prenda del clóset que HOY cubre el hueco pero no le late (swap
-// "no me late") — el motor propone alternativas con otro aire, no más de lo mismo.
+// "no me convence") — el motor propone alternativas con otro aire, no más de lo mismo.
 export async function matchSubstitutes(
   missing: CapsuleItem,
   closet: ClosetItemLite[],
