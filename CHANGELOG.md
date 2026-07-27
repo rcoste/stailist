@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.38.0] - 2026-07-27
+
+### Fixed
+
+- **El aviso "actualizar mis looks" ya se va cuando los actualizas.** Al generar los looks de tu cápsula se guardaba una marca del clóset distinta a la que la pantalla comparaba, así que nunca coincidían: el cartel amarillo quedaba pegado para siempre y volvía a salir aunque acabaras de regenerar. Ahora hay una sola marca.
+- **Un traje de baño ya no cuenta como que tienes un short.** A Roberto su "short de baño marino" le tapaba el "short de lino marino" de la cápsula — y su lectura fue "de shorts solo me puso un traje de baño". Lo que no es ropa de calle (baño, pijama, ropa interior, gym) ya no cubre ropa de calle ni al revés, y va blindado en código, no solo pidiéndoselo a la IA. Los emparejamientos ya calculados se recalculan en tu próxima visita.
+
+### Changed
+
+- **Si viajas a un clima caluroso, la cápsula ahora sí te viste allá.** Antes sumaba "1 o 2 piezas" para el clima de viaje y trataba igual al frío que al calor. No es lo mismo: el frío se resuelve con capas encima de lo que ya tienes, pero un viaje de calor te cambia el outfit completo. Ahora el calor pide un set de 3 o 4 (traje de baño, un short de calle, tops frescos) y esas piezas quedan exentas de la regla de que todo debe combinar con al menos otras tres — que era, en silencio, lo que dejaba fuera al traje de baño.
+
 ## [0.2.37.0] - 2026-07-26
 
 ### Added

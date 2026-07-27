@@ -129,7 +129,7 @@ Los tops son la categoría más grande y el principal multiplicador (se ven más
 - Apunta a que un outfit típico use ≤3 colores.
 
 == COHESIÓN (regla de 3) ==
-Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo pega con 1-2, no se ganó su lugar: cámbiala por algo más versátil. Ancla todo en los neutros para que casi cada top funcione con casi cada bottom. Básicos primero; permite 2-3 piezas "héroe" con carácter, pero cada una debe seguir entrando en ≥3 outfits.
+Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo pega con 1-2, no se ganó su lugar: cámbiala por algo más versátil. ÚNICA excepción: las piezas que entran por CLIMA DE VIAJE (abajo) están exentas de esta regla — un traje de baño no combina con nada y aun así hace falta. Ancla todo en los neutros para que casi cada top funcione con casi cada bottom. Básicos primero; permite 2-3 piezas "héroe" con carácter, pero cada una debe seguir entrando en ≥3 outfits.
 
 == ATERRIZAJE EN SU VIDA Y SU CUERPO ==
 - VIDA: refleja cómo pasa su tiempo DE VERDAD (sus respuestas). El peso de la cápsula sigue su vida real, no una aspiracional. Cubre AMBOS lados: lo que su día exige Y cómo le gusta vestir cuando elige.
@@ -153,7 +153,10 @@ LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda.
 - "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").
 
 Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado.
-CLIMA DE VIAJE: su ciudad define el centro de gravedad del clóset, pero no puede empacar lo que no tiene. Si dice que viaja a un clima DISTINTO al suyo, súmale las piezas mínimas para ese clima aunque su ciudad no las pida — 1 o 2, no un guardarropa paralelo, y que se integren a su paleta y su estilo (un abrigo de lana camel o carbón sirve igual en su ciudad para una noche fría). Si viaja a frío de verdad y su clima NO es frío: un abrigo real (lana, largo), no una chamarra ligera. Si viaja a playa/calor y su clima no es de calor: traje de baño y una pieza fresca de lino. Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`,
+CLIMA DE VIAJE: su ciudad define el centro de gravedad del clóset, pero no puede empacar lo que no tiene. Si dice que viaja a un clima DISTINTO al suyo, súmale las piezas de ese clima aunque su ciudad no las pida, integradas a su paleta y su estilo (un abrigo de lana camel o carbón sirve igual en su ciudad para una noche fría). No es un guardarropa paralelo, pero SÍ tiene que alcanzar para vestirse de pies a cabeza allá:
+- FRÍO (y su clima no es frío): 1 o 2 piezas bastan, porque el frío se resuelve por CAPAS ENCIMA de lo que ya tiene. Un abrigo real (lana, largo), no una chamarra ligera; suma un suéter grueso si su clima es de plano cálido.
+- CALOR o playa (y su clima no es de calor): aquí NO alcanza con una pieza. Un viaje de calor le cambia el outfit COMPLETO — su ropa de diario no sirve. Dale un SET mínimo de 3 a 4: traje de baño (obligatorio si mencionó playa; no lo omitas por combinable que no sea), al menos un short o bermuda de calle (de lino o algodón — NO de baño: son prendas distintas y necesita las dos), y 1 o 2 tops frescos (camisa de lino, playera ligera). Si su clima ya es de calor, esto ya está cubierto por su día a día y no lo dupliques.
+Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`,
     messages: [
       {
         role: "user",

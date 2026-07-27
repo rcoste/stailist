@@ -37,11 +37,27 @@ export function closetItemLine(c: ClosetItemLite): string {
 
 // Versión del prompt del match, PARTE de la firma del caché: al afinar las
 // reglas, los matches viejos quedan stale y se recalculan en la siguiente
-// visita (sin esto, el fix solo llegaría a quien cambie su clóset). OJO: no
-// tocar closetSignature — la comparten los looks de la cápsula y regenerarlos
-// cuesta llamadas.
-const MATCH_PROMPT_VERSION = "m4";
+// visita (sin esto, el fix solo llegaría a quien cambie su clóset). OJO: los
+// looks de la cápsula usan ESTA MISMA firma (matchSignature), así que subirla
+// también los marca viejos — correcto (cambió qué tienes), pero no es gratis:
+// el usuario ve el aviso y decide regenerar. No la subas por gusto.
+const MATCH_PROMPT_VERSION = "m5";
 
+// CONTEXTO DE USO: hay prendas que NO son ropa de calle y por eso jamás cubren
+// una pieza de calle, aunque compartan zona, color y hasta el tipo. Le pasó a
+// Roberto: su "Short de baño marino" quedó como que ya tenía el "Short de lino
+// marino" de su cápsula — y su conclusión fue "de shorts solo me puso un traje
+// de baño". El catálogo no marca contexto (bikini y traje de baño viven como
+// categoría 'vestido'), así que esto va por texto y en código, no en el prompt.
+// Términos INEQUÍVOCOS a propósito: "deportivo" solo no entra (hay relojes
+// deportivos y sacos sport), porque un falso hueco es tan malo como un falso
+// "ya lo tienes". Exportada para test.
+const CLASES_CONTEXTO: [string, RegExp][] = [
+  ["bano", /traje de bano|banador|bikini|trikini|de bano|short(s)? de playa/],
+  ["dormir", /pijama|piyama|camison|bata de bano|albornoz/],
+  ["interior", /calzon|calzoncillo|boxer|brasier|brassiere|sosten|tanga|bralette/],
+  ["gym", /gym|gimnasio|entrenamiento|running|para correr|de yoga|sports bra/],
+];
 
 // CLASE FINA dentro de "accesorio": la zona no alcanza. Un reloj y unos lentes son
 // ambos 'accesorio', así que el guard de zona los daba por intercambiables — le
@@ -68,6 +84,22 @@ export function claseAccesorio(texto: string): string | null {
   const n = normaliza(texto);
   for (const [clase, re] of CLASES_ACCESORIO) if (re.test(n)) return clase;
   return null;
+}
+
+/** null = ropa de calle (el caso normal). Ver CLASES_CONTEXTO. */
+export function contextoUso(texto: string): string | null {
+  const n = normaliza(texto);
+  for (const [clase, re] of CLASES_CONTEXTO) if (re.test(n)) return clase;
+  return null;
+}
+
+/**
+ * ¿La prenda real puede cubrir a la ideal, en cuanto a CONTEXTO de uso? Solo
+ * bloquea cuando los contextos existen y son distintos, o cuando uno es de calle
+ * y el otro no. Dos trajes de baño sí se cubren entre ellos.
+ */
+export function contextosCompatibles(ideal: string, real: string): boolean {
+  return contextoUso(ideal) === contextoUso(real);
 }
 
 export function matchSignature(closet: Parameters<typeof closetSignature>[0]): string {
@@ -133,8 +165,9 @@ export async function matchCapsule(
 REGLAS (en orden de prioridad):
 1. La CLASE de prenda manda por encima de TODO. "by" DEBE ser de la MISMA clase que la prenda ideal: un pantalón solo lo cubre otro pantalón; un zapato, otro zapato; un reloj, otro reloj. NUNCA cruces clases por color o material parecido — un chino NO lo cubren unos mocasines; un reloj NO lo cubren unos lentes; un cinturón NO lo cubre una cartera. Entre accesorios distingue la clase fina (reloj ≠ lentes ≠ cinturón ≠ bufanda ≠ gorra). Si NINGUNA prenda del clóset es de la misma clase, es "falta" con by="". Prohibido emparejar prendas de categorías distintas (top, bottom, calzado, abrigo, vestido, accesorio).
 2. Dentro de la misma clase, el TIPO FINO manda: si el rasgo que DEFINE a la prenda ideal (la botonadura de un henley o un polo, el cuello de un cuello tortuga, los botones de una camisa) no existe en la prenda real, es "falta" — una camiseta lisa NO cubre un henley ni un polo; un crewneck NO cubre un cuello tortuga. El USO también manda: una capa térmica/base de invierno no cubre una camiseta de diario (ni al revés). La manga (corta vs larga) baja a "parecido" si TODO lo demás coincide; sumada a otro rasgo distinto, es "falta".
-3. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
-4. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
+3. CONTEXTO DE USO: lo que no es ropa de calle NUNCA cubre ropa de calle, ni al revés, aunque sea el mismo tipo y color. Un short de baño NO cubre un short de lino; una playera de gym NO cubre una camiseta de diario; una pijama, un bikini o la ropa interior no cubren nada de calle. Y si la prenda ideal ES de baño (traje de baño), solo la cubre otra prenda de baño.
+4. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
+5. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
 
 Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN (1..N). Cada entrada:
 - status: "tienes" | "parecido" | "falta".
@@ -215,6 +248,11 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     if (claimed === "falta") return { status: "falta", by: null, difiere: null };
     const cat = by ? resolveCategory(by) : null;
     if (!cat || zoneOf(cat) !== zoneOf(ideal.category)) {
+      return { status: "falta", by: null, difiere: null };
+    }
+    // Contexto de uso: lo que no es ropa de calle no cubre ropa de calle (ni al
+    // revés). Va ANTES de la clase fina porque cruza todas las categorías.
+    if (!contextosCompatibles(`${ideal.nombre} ${ideal.tipo}`, by!)) {
       return { status: "falta", by: null, difiere: null };
     }
     // Dentro de accesorios, la clase fina también tiene que coincidir.

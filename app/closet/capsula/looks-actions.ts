@@ -4,11 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   capsuleRows,
-  closetSignature,
   type CapsuleMatch,
   type CapsuleOverrides,
   type CapsuleTarget,
 } from "@/lib/capsule";
+import { matchSignature } from "@/lib/engine/capsule-match";
 import { loadClosetLite } from "@/lib/capsule-data";
 import {
   generateTripOutfits,
@@ -92,7 +92,12 @@ export async function generateCapsuleOutfits(
       formalidad: r.item.formalidad,
     }));
 
-  const sig = closetSignature(closet);
+  // OJO: la firma tiene que ser la MISMA que compara la página (matchSignature
+  // = versión del prompt + firma del clóset). Cuando aquí se guardaba
+  // closetSignature() a secas, nunca coincidía con la de la página y el banner
+  // "Cambiaste tu clóset — actualiza tus looks" quedaba pegado para siempre:
+  // regenerabas y volvía a salir. Un solo generador de firma, sin excepciones.
+  const sig = matchSignature(closet);
   if (packable.length < 2) {
     await supabase
       .from("profiles")
