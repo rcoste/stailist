@@ -31,6 +31,12 @@ export type PrendaAnalisis = {
   largo?: "crop" | "regular" | "largo";
   corte?: "entallado" | "recto" | "holgado";
   manga?: "sin" | "corta" | "larga";
+  // CONTEXTO de uso: solo cuando la prenda NO es de calle. Ausente = calle, que
+  // es el caso normal. Lo usa el match para no dar por cubierta una prenda de
+  // calle con un traje de baño (y viceversa). Se pide explícitamente en el
+  // prompt que NO marque athleisure: leggings y sudaderas deportivas se llevan
+  // en la calle todos los días.
+  contexto?: "bano" | "dormir" | "interior" | "gym";
   // Atributos de combinación (opcionales): el motor los usa para juzgar mejor
   // (no lana en calor, no dos estampados que pelean, color real de bicolores).
   material?: string; // tela/material aparente: "algodón", "lana", "mezclilla", "piel"…
@@ -114,6 +120,12 @@ export async function POST(request: NextRequest) {
               formalidad: {
                 type: "string",
                 enum: ["casual", "formal-casual", "formal"],
+              },
+              contexto: {
+                type: "string",
+                enum: ["bano", "dormir", "interior", "gym"],
+                description:
+                  "SOLO si la prenda no es ropa de calle: traje de baño/bikini ('bano'), pijama ('dormir'), ropa interior ('interior'), o ropa técnica de entrenar ('gym'). Omítelo para todo lo demás. NO marques 'gym' athleisure que se usa en la calle (leggings, joggers, sudaderas, tenis): eso es ropa de calle.",
               },
               temporada: {
                 type: "string",

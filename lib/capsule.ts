@@ -306,6 +306,11 @@ export type ClosetItemLite = {
   material?: string | null;
   patron?: string | null;
   corte?: string | null;
+  // CONTEXTO de uso ('bano' | 'gym' | 'dormir' | 'interior'), o null/ausente =
+  // ropa de calle. Es el dato AUTORITATIVO del guard del match: el texto del
+  // nombre sigue de respaldo, pero si alguien renombra su bikini a "Marino
+  // dos piezas" el texto ya no lo caza y el atributo sí.
+  contexto?: string | null;
   color_secundario?: string | null;
 };
 

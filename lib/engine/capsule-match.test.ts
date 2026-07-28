@@ -181,3 +181,29 @@ describe("claseBottom — un pantalón largo no es un short", () => {
     expect(claseBottom("Pantalón capri")).toBe("largo");
   });
 });
+
+
+describe("contextosCompatibles — el atributo guardado gana sobre el nombre", () => {
+  it("un bikini renombrado sin la palabra 'bikini' se sigue cazando por atributo", () => {
+    // El nombre es frágil: la persona lo edita y el guard de texto deja de verlo.
+    // Con attrs.contexto puesto por la biblioteca o por el análisis de la foto,
+    // da igual cómo lo llame.
+    expect(contextosCompatibles("Falda midi negra", "Marino dos piezas")).toBe(true);
+    expect(contextosCompatibles("Falda midi negra", "Marino dos piezas", "bano")).toBe(
+      false
+    );
+  });
+
+  it("sin atributo, sigue funcionando por texto (prendas viejas)", () => {
+    expect(contextosCompatibles("Short de lino", "Traje de baño marino", null)).toBe(
+      false
+    );
+    expect(contextosCompatibles("Short de lino", "Bermuda caqui", null)).toBe(true);
+  });
+
+  it("dos prendas de baño se cubren aunque una lo diga por atributo", () => {
+    expect(contextosCompatibles("Traje de baño negro", "Marino dos piezas", "bano")).toBe(
+      true
+    );
+  });
+});

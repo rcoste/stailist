@@ -16,11 +16,23 @@ import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 // actions son endpoints públicos para usuarios autenticados — un cliente
 // manipulado no debe poder meter strings arbitrarios que luego entran a los
 // prompts del motor). patron se valida contra el vocabulario cerrado.
+// Vocabulario CERRADO: cualquier otra cosa se descarta (ausente = ropa de calle,
+// que es el caso normal). Igual que patron, no se acepta texto libre — de aquí
+// sale una decisión del match, no una etiqueta decorativa.
+const CONTEXTOS_VALIDOS = ["bano", "dormir", "interior", "gym"] as const;
+function cleanContexto(v: unknown): string | undefined {
+  return typeof v === "string" &&
+    (CONTEXTOS_VALIDOS as readonly string[]).includes(v)
+    ? v
+    : undefined;
+}
+
 function cleanAtributosRicos(attrs: PrendaAnalisis) {
   return {
     material: cleanTextAttr(attrs.material, MAX_MATERIAL_LEN),
     patron: cleanPatron(attrs.patron),
     color_secundario: cleanTextAttr(attrs.color_secundario, MAX_COLOR_LEN),
+    contexto: cleanContexto(attrs.contexto),
   };
 }
 

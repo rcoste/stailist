@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.46.0] - 2026-07-28
+
+### Changed
+
+- **Que una prenda no sea de calle ahora es un dato suyo, no una corazonada por su nombre.** Antes se deducía del texto ("si se llama traje de baño, no es de calle"), así que renombrar tu bikini bastaba para que el motor volviera a tratarlo como ropa normal. Ahora la biblioteca marca sus prendas de baño, tus fotos nuevas se marcan solas al analizarlas, y el nombre queda solo de respaldo para las prendas viejas.
+- **A propósito NO se marcó la ropa deportiva.** En la biblioteca hay 24 prendas que suenan a "no es de calle", pero casi todas son athleisure —leggings, joggers, sudaderas, tenis— y esa ropa hoy se usa en la calle todos los días; se sembraron justo para eso. Marcarlas las sacaría de tus looks normales. Solo se marcó lo inequívoco: las 5 de baño.
+
 ## [0.2.45.0] - 2026-07-28
 
 ### Fixed

@@ -125,11 +125,20 @@ export function contextoUso(texto: string): string | null {
 
 /**
  * ¿La prenda real puede cubrir a la ideal, en cuanto a CONTEXTO de uso? Solo
- * bloquea cuando los contextos existen y son distintos, o cuando uno es de calle
- * y el otro no. Dos trajes de baño sí se cubren entre ellos.
+ * bloquea cuando los contextos difieren. Dos trajes de baño sí se cubren.
+ *
+ * `realAttr` es el contexto GUARDADO de la prenda real (items.attrs.contexto) y
+ * gana sobre el texto: el nombre es frágil —alguien renombra su bikini a "Marino
+ * dos piezas" y el texto ya no lo caza— mientras que el atributo lo pone la
+ * biblioteca o el análisis de la foto. Sin atributo, cae al texto de siempre.
  */
-export function contextosCompatibles(ideal: string, real: string): boolean {
-  return contextoUso(ideal) === contextoUso(real);
+export function contextosCompatibles(
+  ideal: string,
+  real: string,
+  realAttr?: string | null
+): boolean {
+  const ctxReal = realAttr?.trim() ? realAttr.trim() : contextoUso(real);
+  return contextoUso(ideal) === ctxReal;
 }
 
 export function matchSignature(closet: Parameters<typeof closetSignature>[0]): string {
@@ -256,6 +265,20 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
   // si el modelo parafraseó el nombre. null = no apunta a ninguna prenda real.
   const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
   const closetByName = new Map(closet.map((c) => [norm(c.nombre), c.category]));
+  // Contexto GUARDADO de cada prenda real (attrs.contexto), para que el guard no
+  // dependa solo de cómo se llame.
+  const ctxByName = new Map(
+    closet.map((c) => [norm(c.nombre), c.contexto ?? null])
+  );
+  const resolveContexto = (by: string): string | null => {
+    const n = norm(by);
+    if (ctxByName.has(n)) return ctxByName.get(n) ?? null;
+    for (const c of closet) {
+      const cn = norm(c.nombre);
+      if (cn && n && (cn.includes(n) || n.includes(cn))) return c.contexto ?? null;
+    }
+    return null;
+  };
   const resolveCategory = (by: string): string | null => {
     const n = norm(by);
     if (closetByName.has(n)) return closetByName.get(n) ?? null;
@@ -283,7 +306,7 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     }
     // Contexto de uso: lo que no es ropa de calle no cubre ropa de calle (ni al
     // revés). Va ANTES de la clase fina porque cruza todas las categorías.
-    if (!contextosCompatibles(`${ideal.nombre} ${ideal.tipo}`, by!)) {
+    if (!contextosCompatibles(`${ideal.nombre} ${ideal.tipo}`, by!, resolveContexto(by!))) {
       return { status: "falta", by: null, difiere: null };
     }
     // Dentro de bottoms, el LARGO de pierna también tiene que coincidir.
