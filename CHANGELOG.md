@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.40.2] - 2026-07-27
+
+### Changed
+
+- **Escondido el atajo "usa el estilo de una de nuestras stylists" (Carla / María).** En pantalla eran dos nombres y un párrafo: sin una sola imagen no le dicen nada a nadie, y estábamos pidiéndote adoptar un estilo que no puedes ver. Sigue estando el camino que sí tiene sentido — subir 1-3 fotos del estilo que te gusta. Apagado, no borrado: cuando cada stylist tenga fotos de su guardarropa se vuelve a prender. Nadie lo había usado, así que no le quita nada a ningún perfil.
+
 ## [0.2.40.1] - 2026-07-27
 
 ### Fixed

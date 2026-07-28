@@ -16,6 +16,15 @@ type Fit = { verdict: string; note: string };
 export type StyleRef = { summary: string; tags: string[]; fit?: Fit | null; images: string[] };
 type Preview = { summary: string; tags: string[]; fit: Fit; images: { path: string; url: string | null }[] };
 
+// El atajo "usa el estilo de una de nuestras stylists" (Carla / María) está
+// APAGADO, no borrado. Decisión de Roberto: en pantalla son dos nombres y un
+// párrafo — sin una sola imagen no dicen nada, y estás pidiéndole a alguien que
+// adopte un estilo que no puede ver. La maquinaria sigue completa (los presets
+// en lib/referencias, applyReferencePreset, y el camino al motor): cuando haya
+// fotos del guardarropa de cada una, se prende esto y ya. Nadie había aplicado
+// ninguna (0 perfiles al apagarlo), así que esconderlo no le quita nada a nadie.
+const MOSTRAR_STYLISTS = false;
+
 const VERDICT: Record<string, { label: string; cls: string }> = {
   va: { label: "te va increíble", cls: "bg-success/10 text-success" },
   ajustes: { label: "te va, con ajustes", cls: "bg-accent-soft text-ink" },
@@ -272,7 +281,9 @@ export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
           </button>
 
           {/* Referencias precargadas: el atajo sin fotos — estilos de nuestras
-              stylists, aplicables con un tap. */}
+              stylists, aplicables con un tap. Apagado hasta que tengan imagen. */}
+          {MOSTRAR_STYLISTS ? (
+          <>
           <p className="mt-1 text-[12px] text-muted">
             ¿O prefieres el estilo de una de nuestras stylists?
           </p>
@@ -290,6 +301,8 @@ export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
               </button>
             ))}
           </div>
+          </>
+          ) : null}
         </>
       )}
 
