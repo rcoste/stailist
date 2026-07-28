@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.42.0] - 2026-07-28
+
+### Changed
+
+- **Tus fotos de referencia ahora se SUMAN, ya no se reemplazan.** El botón decía "cambiar", y subir una foto nueva borraba las que ya tenías — del perfil y del storage. Nadie lee "cambiar" como "vas a perder las anteriores". Ahora dice **"sumar foto"** y agrega hasta 3; cuando llegas al tope te dice "3 de 3 fotos" en vez de ofrecerte un botón que no haría nada. El análisis se recalcula sobre el conjunto completo, así que el resumen describe tu estilo entero y no la última foto.
+- **Las fotos de referencia ahora se ven.** Vivían en una columna de 64 px al lado del texto: en un teléfono de 375 px eso dejaba el texto en 163 px, con el resumen partido en 8 renglones y las etiquetas cayendo una por fila. Ahora van arriba, a lo ancho de la card — que es lo mínimo en una sección cuyo argumento es que tu referencia es visual. De paso: antes solo se mostraban 2 fotos aunque hubieras subido 3.
+
+### Fixed
+
+- Si el análisis de un estilo fallaba al sumar fotos, se borraban también las que ya tenías guardadas y tu perfil quedaba apuntando a archivos inexistentes. Ahora solo se limpian las nuevas.
+
 ## [0.2.41.0] - 2026-07-28
 
 ### Changed

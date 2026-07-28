@@ -33,6 +33,7 @@ export default async function PerfilPage() {
     tags: string[];
     fit?: { verdict: string; note: string } | null;
     images: string[];
+    paths?: string[];
   } | null = null;
   if (sr) {
     const paths = Array.isArray(sr.image_paths)
@@ -49,6 +50,9 @@ export default async function PerfilPage() {
       tags: sr.tags ?? [],
       fit: sr.fit ?? null,
       images: (data ?? []).map((s) => s.signedUrl).filter((u): u is string => !!u),
+      // Las rutas viajan al cliente para poder SUMAR fotos sin perder las que ya
+      // hay (la card las manda de vuelta como `keep`).
+      paths,
     };
   }
 

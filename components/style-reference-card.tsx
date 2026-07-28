@@ -14,7 +14,17 @@ import { REFERENCIAS_PRECARGADAS } from "@/lib/referencias";
 import { StyleWordsCard } from "@/components/style-words-card";
 
 type Fit = { verdict: string; note: string };
-export type StyleRef = { summary: string; tags: string[]; fit?: Fit | null; images: string[] };
+export type StyleRef = {
+  summary: string;
+  tags: string[];
+  fit?: Fit | null;
+  images: string[];
+  /** Rutas de storage de esas fotos — se mandan como `keep` al sumar más. */
+  paths?: string[];
+};
+
+// Tope de fotos de referencia. Vive aquí y en la API (que lo revalida).
+const MAX_FOTOS = 3;
 type Preview = { summary: string; tags: string[]; fit: Fit; images: { path: string; url: string | null }[] };
 
 // El atajo "usa el estilo de una de nuestras stylists" (Carla / María) está
@@ -80,8 +90,17 @@ export function StyleReferenceCard({
   }
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, 3);
-    if (files.length === 0) return;
+    // Las que ya tenías se CONSERVAN y las nuevas se suman hasta el tope.
+    // Antes cualquier subida reemplazaba todo y borraba las anteriores del
+    // storage, con un botón que solo decía "cambiar" — nadie lee eso como
+    // "vas a perder las que tenías".
+    const keep = (saved?.paths ?? []).slice(0, MAX_FOTOS);
+    const hueco = Math.max(0, MAX_FOTOS - keep.length);
+    const files = Array.from(e.target.files ?? []).slice(0, hueco);
+    if (files.length === 0) {
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     setErr(null);
     setBusy(true);
     setPreview(null);
@@ -90,7 +109,7 @@ export function StyleReferenceCard({
       const res = await fetch("/api/estilo-referencia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images }),
+        body: JSON.stringify({ images, keep }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -125,6 +144,7 @@ export function StyleReferenceCard({
           tags: preview.tags,
           fit: preview.fit,
           images: preview.images.map((i) => i.url).filter((u): u is string => !!u),
+          paths: preview.images.map((i) => i.path),
         });
         setPreview(null);
       }
@@ -162,6 +182,10 @@ export function StyleReferenceCard({
     });
   }
 
+  // Con el tope alcanzado ya no se puede sumar: se dice el conteo en vez de
+  // ofrecer un botón que no va a hacer nada.
+  const lleno = (saved?.paths?.length ?? 0) >= MAX_FOTOS;
+
   const fitChip = (fit: Fit) => {
     const v = VERDICT[fit.verdict] ?? VERDICT.ajustes;
     return (
@@ -186,14 +210,18 @@ export function StyleReferenceCard({
           Tu estilo de referencia
         </span>
         {saved && !preview && !busy ? (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={pending}
-            className="shrink-0 text-[11.5px] font-medium text-accent hover:text-accent-deep disabled:opacity-50"
-          >
-            cambiar
-          </button>
+          lleno ? (
+            <span className="shrink-0 text-[11.5px] text-muted">{MAX_FOTOS} de {MAX_FOTOS} fotos</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={pending}
+              className="shrink-0 text-[11.5px] font-medium text-accent hover:text-accent-deep disabled:opacity-50"
+            >
+              sumar foto
+            </button>
+          )
         ) : null}
       </div>
 
@@ -204,14 +232,16 @@ export function StyleReferenceCard({
       ) : preview ? (
         // PREVIEW: el usuario decide si lo absorbe (pushback).
         <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
+          {/* Mismo formato que el estado guardado: si aquí se vieran chicas y al
+              guardar grandes, la transición daría un salto raro. */}
+          <div className="grid grid-cols-3 gap-1.5">
             {preview.images.map((im, i) =>
               im.url ? (
                 <div
                   key={i}
-                  className="relative h-[88px] w-[68px] shrink-0 overflow-hidden rounded-md border border-line bg-bg"
+                  className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg"
                 >
-                  <Image src={im.url} alt="" fill sizes="68px" className="object-cover" />
+                  <Image src={im.url} alt="" fill sizes="110px" className="object-cover" />
                 </div>
               ) : null
             )}
@@ -241,17 +271,24 @@ export function StyleReferenceCard({
         </div>
       ) : saved ? (
         // GUARDADO.
-        <div className="flex gap-3">
-          <div className="flex shrink-0 gap-1.5">
-            {saved.images.slice(0, 2).map((u, i) => (
-              <div
-                key={i}
-                className="relative h-[88px] w-[64px] overflow-hidden rounded-md border border-line bg-bg"
-              >
-                <Image src={u} alt="" fill sizes="64px" className="object-cover" />
-              </div>
-            ))}
-          </div>
+        // Las fotos MANDAN y van arriba a lo ancho. Antes iban en una columna de
+        // 64px al lado del texto, que en un teléfono de 375px dejaba la columna
+        // de texto en 163px: el resumen salía en 8 renglones de ribete y las
+        // etiquetas caían una por fila. En una card cuyo argumento es "tu
+        // referencia es visual", las fotos eran lo más chico de la card.
+        <div className="flex flex-col gap-3">
+          {saved.images.length > 0 ? (
+            <div className="grid grid-cols-3 gap-1.5">
+              {saved.images.slice(0, MAX_FOTOS).map((u, i) => (
+                <div
+                  key={i}
+                  className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg"
+                >
+                  <Image src={u} alt="" fill sizes="110px" className="object-cover" />
+                </div>
+              ))}
+            </div>
+          ) : null}
           <div className="flex min-w-0 flex-col gap-1.5">
             {saved.fit ? fitChip(saved.fit) : null}
             {saved.fit ? (

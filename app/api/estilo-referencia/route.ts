@@ -54,20 +54,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "sin_api_key" }, { status: 503 });
   }
 
-  let body: { images?: string[] } = {};
+  // `images` = fotos NUEVAS (data URL). `keep` = rutas de fotos que la persona
+  // YA tenía guardadas y quiere conservar: se SUMAN en vez de reemplazarse.
+  // Van por ruta y no re-subidas — el servidor las baja del bucket para el
+  // análisis, así que ni se duplican en storage ni chocan con CORS desde el
+  // navegador. El resumen se recalcula sobre el conjunto COMPLETO: es una
+  // lectura del estilo entero, no de la última foto.
+  let body: { images?: string[]; keep?: string[] } = {};
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const raw = Array.isArray(body.images) ? body.images.slice(0, 3) : [];
+  const MAX_FOTOS = 3;
+  const keep = (Array.isArray(body.keep) ? body.keep : [])
+    .filter((p): p is string => typeof p === "string" && p.startsWith(`${user.id}/`))
+    .slice(0, MAX_FOTOS);
+  const raw = Array.isArray(body.images)
+    ? body.images.slice(0, Math.max(0, MAX_FOTOS - keep.length))
+    : [];
   const parsed = raw
     .map((d) => d.match(/^data:(image\/\w+);base64,(.+)$/))
     .filter((m): m is RegExpMatchArray => !!m);
-  if (parsed.length === 0) return NextResponse.json({ error: "bad_image" }, { status: 400 });
+  if (parsed.length === 0 && keep.length === 0) {
+    return NextResponse.json({ error: "bad_image" }, { status: 400 });
+  }
 
-  // Sube cada foto al bucket privado (referencia del usuario).
-  const image_paths: string[] = [];
+  // Las conservadas se bajan del bucket para poder mandárselas a la visión.
+  const keptParsed: [string, string, string][] = [];
+  for (const path of keep) {
+    const { data: blob } = await supabase.storage.from("prendas").download(path);
+    if (!blob) continue;
+    const b64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
+    keptParsed.push([path, path.endsWith(".png") ? "image/png" : "image/jpeg", b64]);
+  }
+
+  // Sube cada foto NUEVA al bucket privado (referencia del usuario).
+  const image_paths: string[] = keptParsed.map(([p]) => p);
   for (const m of parsed) {
     const [, mt, b64] = m;
     const ext = mt.includes("png") ? "png" : "jpg";
@@ -79,6 +102,12 @@ export async function POST(request: NextRequest) {
     if (!up.error) image_paths.push(path);
   }
   if (image_paths.length === 0) return NextResponse.json({ error: "upload" }, { status: 502 });
+
+  // Lo que ve la IA: las conservadas + las nuevas, en ese orden.
+  const paraVision: { mt: string; b64: string }[] = [
+    ...keptParsed.map(([, mt, b64]) => ({ mt, b64 })),
+    ...parsed.map((m) => ({ mt: m[1], b64: m[2] })),
+  ];
 
   // El perfil para el FIT ya se cargó arriba (mismo fetch que el gate).
   const season = (prof?.palette_season as Season | null) ?? null;
@@ -97,17 +126,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const client = new Anthropic();
-    const content: Anthropic.MessageParam["content"] = parsed.map((m) => ({
+    const content: Anthropic.MessageParam["content"] = paraVision.map((im) => ({
       type: "image" as const,
       source: {
         type: "base64" as const,
-        media_type: m[1] as "image/jpeg" | "image/png",
-        data: m[2],
+        media_type: im.mt as "image/jpeg" | "image/png",
+        data: im.b64,
       },
     }));
     content.push({
       type: "text",
-      text: `Estas ${parsed.length} foto(s) muestran un estilo que le gusta a tu clienta. ${perfil}\n\nDescribe el ESTILO (no a las personas) y, sobre todo, evalúa si le VA a ELLA según su colorimetría, silueta y vetos. Sé honesta — si algo no le favorece, dilo (ese es tu valor como estilista).`,
+      text: `Estas ${paraVision.length} foto(s) muestran un estilo que le gusta a tu clienta. ${perfil}\n\nDescribe el ESTILO (no a las personas) y, sobre todo, evalúa si le VA a ELLA según su colorimetría, silueta y vetos. Sé honesta — si algo no le favorece, dilo (ese es tu valor como estilista).`,
     });
 
     const res = await client.messages.create({
@@ -162,8 +191,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ summary, tags, fit: out.fit, images });
   } catch {
-    // Falló el análisis → limpia las fotos huérfanas.
-    await supabase.storage.from("prendas").remove(image_paths);
+    // Falló el análisis → limpia solo las fotos NUEVAS. Las conservadas siguen
+    // siendo su referencia guardada: borrarlas dejaría el perfil apuntando a
+    // archivos que ya no existen.
+    const nuevas = image_paths.filter((p) => !keep.includes(p));
+    if (nuevas.length) await supabase.storage.from("prendas").remove(nuevas);
     return NextResponse.json({ error: "analisis" }, { status: 502 });
   }
 }
