@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.47.0] - 2026-07-28
+
+### Fixed
+
+- **Si eres mujer, el checklist del registro ya te deja marcar ropa formal.** Te ofrecía 33 prendas y solo 9 servían para una ocasión formal: **ni un solo par de tacones**, ningún abrigo formal, y un único pantalón. Terminabas el registro con un clóset que no podía vestir una boda ni una junta — y después la cápsula te reportaba esos huecos como si no tuvieras la ropa, cuando en realidad nunca te la ofrecimos. Ahora se suman 12 básicos que ya existían en la biblioteca: tacón negro y nude, pantalón de vestir, falda lápiz y midi, abrigo de lana, gabardina, blazer negro, camisa oxford, blusa de seda y vestido de trabajo.
+
 ## [0.2.46.0] - 2026-07-28
 
 ### Changed
