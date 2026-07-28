@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
@@ -8,6 +8,7 @@ import { ChangeAvatar } from "@/components/change-avatar";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
 import { resetHints } from "@/lib/hints";
+import { logEstiloTabView } from "@/app/perfil/actions";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
 import { StyleReferenceCard, type StyleRef } from "@/components/style-reference-card";
@@ -33,6 +34,7 @@ export type PerfilTabsProps = {
   siluetaLabel: string | null; // "Promedio · Parejo" o null si no hay
   styleReference: StyleRef | null; // estilo de referencia (foto de inspiración)
   styleWords: string | null; // su estilo en sus palabras (texto libre)
+  tieneCapsula: boolean; // para avisar que cambiar el estilo la deja vieja
   banner: {
     title: string; // estación o fallback
     sub: string | null; // "Pulido versátil · metal oro"
@@ -58,6 +60,17 @@ function Wordmark() {
 // existentes (ColorimetriaSection, StyleVetoesSection).
 export function PerfilTabs(props: PerfilTabsProps) {
   const [tab, setTab] = useState<Tab>("cuenta");
+
+  // Telemetría: ¿alguien ABRE la pestaña de estilo? Sus dos campos llevan
+  // semanas vacíos y no sabemos si es que la petición no convence o que nadie
+  // llega — sin este dato, rediseñarla es apostar. Una vez por visita a la
+  // pestaña (el ref evita re-registrar si vuelves a ella sin recargar).
+  const estiloLogueado = useRef(false);
+  useEffect(() => {
+    if (tab !== "estilo" || estiloLogueado.current) return;
+    estiloLogueado.current = true;
+    void logEstiloTabView();
+  }, [tab]);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "cuenta", label: "cuenta" },
@@ -195,6 +208,7 @@ function EstiloTab({
   banner,
   styleReference,
   styleWords,
+  tieneCapsula,
 }: PerfilTabsProps) {
   const showSilueta = gender === "mujer" || gender === "hombre";
   return (
@@ -302,7 +316,11 @@ function EstiloTab({
       {/* UNA sola card de "cuál es tu estilo": las fotos mandan y el texto libre
           vive adentro como renglón opcional. Antes eran dos bloques seguidos
           preguntando lo mismo. */}
-      <StyleReferenceCard initial={styleReference} styleWords={styleWords} />
+      <StyleReferenceCard
+        initial={styleReference}
+        styleWords={styleWords}
+        tieneCapsula={tieneCapsula}
+      />
     </div>
   );
 }

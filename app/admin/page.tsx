@@ -61,6 +61,7 @@ export default async function AdminOverview() {
     skipRes,
     active7dRes,
     tripsC,
+    estiloViewRes,
   ] = await Promise.all([
     // Perfiles completos para embudo + adopción (avatar, cápsula). En beta la
     // tabla es chica; traemos solo las columnas que el dashboard necesita.
@@ -88,7 +89,16 @@ export default async function AdminOverview() {
     // Activos 7d: usuarias distintas con cualquier evento en la ventana.
     supabase.from("events").select("user_id").gte("created_at", since7d),
     supabase.from("trips").select("*", { count: "exact", head: true }),
+    // ¿Alguien ABRE perfil → estilo? Sus dos campos (referencia y palabras)
+    // llevan semanas vacíos y sin esto no se puede distinguir "la petición no
+    // convence" de "nadie llega". user_id para contar PERSONAS, no visitas.
+    supabase.from("events").select("user_id").eq("type", "perfil_estilo_view"),
   ]);
+
+  const estiloVisitas = estiloViewRes.data?.length ?? 0;
+  const estiloPersonas = new Set(
+    (estiloViewRes.data ?? []).map((e) => e.user_id as string)
+  ).size;
 
   // ── KPIs de votos / TTV (igual que antes) ──────────────────────────────
   const events = eventsRes.data ?? [];
@@ -167,6 +177,15 @@ export default async function AdminOverview() {
         />
         <Stat label="Activas (7 días)" value={String(active7d)} hint="con actividad reciente" />
         <Stat label="Outfits generados" value={String(outfitsC.count ?? 0)} />
+        <Stat
+          label="Abren perfil → estilo"
+          value={String(estiloPersonas)}
+          hint={
+            estiloVisitas > 0
+              ? `${estiloVisitas} visitas · de ${totalUsers} perfiles`
+              : "nadie ha entrado aún"
+          }
+        />
         <Stat
           label="Ratio 👍"
           value={ratio === null ? "—" : `${ratio}%`}

@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.43.0] - 2026-07-28
+
+### Added
+
+- **Ahora te avisamos que cambiar tu estilo deja tu cápsula desactualizada.** Ya pasaba —cambiabas tu referencia o tus palabras y la próxima vez que abrías la cápsula te salía "se quedó atrás de ti"—, pero te enterabas después y sin relacionarlo con lo que acababas de hacer. Ahora el aviso sale ahí mismo, con un enlace directo, y solo si de verdad ya tienes cápsula.
+- **Medimos si alguien abre perfil → estilo.** Sus dos campos llevan semanas vacíos y no podíamos distinguir dos cosas muy distintas: que la petición no convenza, o que nadie llegue a esa pantalla. Sin este dato, cualquier rediseño se estrenaría con las mismas cero personas. Se registra una vez por visita y aparece en el admin como cuántas personas entran, de cuántos perfiles.
+
 ## [0.2.42.0] - 2026-07-28
 
 ### Changed

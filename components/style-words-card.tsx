@@ -21,10 +21,13 @@ import { STYLE_WORDS_MAX } from "@/lib/style-words";
 export function StyleWordsCard({
   initial,
   variant = "card",
+  onSaved,
 }: {
   initial: string | null;
   /** "card" = bloque propio (legacy). "inline" = renglón dentro de otra card. */
   variant?: "card" | "inline";
+  /** Avisa al contenedor que el estilo cambió (deja la cápsula desactualizada). */
+  onSaved?: () => void;
 }) {
   const [value, setValue] = useState(initial ?? "");
   const [saved, setSaved] = useState(initial ?? "");
@@ -38,8 +41,10 @@ export function StyleWordsCard({
     setError(false);
     start(async () => {
       const r = await saveStyleWords(value);
-      if (r.ok) setSaved(value.trim());
-      else setError(true);
+      if (r.ok) {
+        setSaved(value.trim());
+        onSaved?.();
+      } else setError(true);
     });
   }
 

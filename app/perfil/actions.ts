@@ -160,3 +160,32 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/**
+ * Registra que alguien ABRIÓ la pestaña "estilo" del perfil.
+ *
+ * Existe para separar dos hipótesis que hoy no podemos distinguir: los campos
+ * de esa pantalla (referencia y palabras) llevan semanas vacíos, y eso puede
+ * ser porque la petición no convence o porque nadie llega. Sin este dato, un
+ * rediseño se estrena con las mismas cero personas.
+ *
+ * Se llama una vez por montaje de la pestaña, no por render. Best-effort: si
+ * falla, no rompe nada ni se le dice al usuario — es telemetría, no producto.
+ * En modo "ver como" del admin ni siquiera corre (el proxy bloquea los POST),
+ * que es justo lo que queremos: las visitas del admin no cuentan.
+ */
+export async function logEstiloTabView(): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("events").insert({
+      user_id: user.id,
+      type: "perfil_estilo_view",
+    });
+  } catch {
+    // silencio a propósito
+  }
+}

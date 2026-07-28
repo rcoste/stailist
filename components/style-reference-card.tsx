@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import {
@@ -56,10 +57,13 @@ const VERDICT: Record<string, { label: string; cls: string }> = {
 export function StyleReferenceCard({
   initial,
   styleWords = null,
+  tieneCapsula = false,
 }: {
   initial: StyleRef | null;
   /** El texto libre, ahora un renglón de esta card en vez de una card aparte. */
   styleWords?: string | null;
+  /** ¿Ya tiene cápsula? Solo entonces avisamos que la deja desactualizada. */
+  tieneCapsula?: boolean;
 }) {
   const [saved, setSaved] = useState<StyleRef | null>(initial);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -67,6 +71,11 @@ export function StyleReferenceCard({
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  // Cambiar la referencia (o el texto) altera la firma de estilo de la cápsula:
+  // la próxima vez que la abra le va a salir "tu cápsula se quedó atrás". Eso ya
+  // funcionaba, pero se enteraba después y sin relacionarlo con lo que acababa
+  // de hacer aquí. Se avisa en el momento, no al llegar allá.
+  const [tocoElEstilo, setTocoElEstilo] = useState(false);
 
   function downscale(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -147,6 +156,7 @@ export function StyleReferenceCard({
           paths: preview.images.map((i) => i.path),
         });
         setPreview(null);
+        setTocoElEstilo(true);
       }
     });
   }
@@ -178,7 +188,10 @@ export function StyleReferenceCard({
   function quitar() {
     start(async () => {
       const r = await removeStyleReference();
-      if (r.ok) setSaved(null);
+      if (r.ok) {
+        setSaved(null);
+        setTocoElEstilo(true);
+      }
     });
   }
 
@@ -360,9 +373,29 @@ export function StyleReferenceCard({
 
       {err ? <p className="text-xs text-error">{err}</p> : null}
 
+      {/* Aviso de consecuencia: tu cápsula se armó con el estilo de antes. */}
+      {tocoElEstilo && tieneCapsula ? (
+        <Link
+          href="/closet/capsula"
+          className="flex items-start gap-2 rounded-sm border border-line bg-bg p-2.5 text-[12px] leading-snug text-muted transition-colors hover:border-ink"
+        >
+          <Icon name="destello" size={14} className="mt-px shrink-0 text-accent" />
+          <span>
+            Tu cápsula se armó con tu estilo de antes —{" "}
+            <span className="font-medium text-ink">ponla al día</span> cuando quieras.
+          </span>
+        </Link>
+      ) : null}
+
       {/* El texto libre, degradado a renglón. Se oculta mientras decides sobre
           unas fotos recién analizadas: ahí la card tiene una sola pregunta. */}
-      {!preview ? <StyleWordsCard initial={styleWords} variant="inline" /> : null}
+      {!preview ? (
+        <StyleWordsCard
+          initial={styleWords}
+          variant="inline"
+          onSaved={() => setTocoElEstilo(true)}
+        />
+      ) : null}
     </div>
   );
 }

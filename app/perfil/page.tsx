@@ -56,6 +56,10 @@ export default async function PerfilPage() {
     };
   }
 
+  // ¿Ya tiene cápsula? Solo entonces tiene sentido avisarle que cambiar su
+  // estilo la deja desactualizada — si no tiene, el aviso sería ruido.
+  const tieneCapsula = !!profile.capsule_target;
+
   // Banner del pasaporte (pestaña Estilo): estación + (arquetipo · metal) + tus
   // mejores colores. Degrada con gracia si aún no hay colorimetría/estilo.
   const season = profile.palette_season;
@@ -164,6 +168,7 @@ export default async function PerfilPage() {
         banner={banner}
         styleReference={styleReference}
         styleWords={profile.style_words}
+        tieneCapsula={tieneCapsula}
         signOut={signOut}
       />
     </AppShell>
