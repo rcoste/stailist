@@ -41,7 +41,7 @@ export function closetItemLine(c: ClosetItemLite): string {
 // looks de la cápsula usan ESTA MISMA firma (matchSignature), así que subirla
 // también los marca viejos — correcto (cambió qué tienes), pero no es gratis:
 // el usuario ve el aviso y decide regenerar. No la subas por gusto.
-const MATCH_PROMPT_VERSION = "m5";
+const MATCH_PROMPT_VERSION = "m6";
 
 // CONTEXTO DE USO: hay prendas que NO son ropa de calle y por eso jamás cubren
 // una pieza de calle, aunque compartan zona, color y hasta el tipo. Le pasó a
@@ -87,6 +87,32 @@ const normaliza = (s: string) =>
 export function claseAccesorio(texto: string): string | null {
   const n = normaliza(texto);
   for (const [clase, re] of CLASES_ACCESORIO) if (re.test(n)) return clase;
+  return null;
+}
+
+// LARGO DE PIERNA dentro de 'bottom'. La zona no alcanza: un short de lino y un
+// pantalón de lino son ambos 'bottom', así que el match daba el pantalón por
+// "parecido" al short (le pasó a Roberto). La regla del prompt trataba el largo
+// como trata la manga —un matiz menor— y en la pierna no lo es: no te metes a la
+// alberca en pantalón, ni vas a una junta en bermudas. Son prendas distintas,
+// no versiones de la misma.
+//
+// OJO con el español: "pantalón corto" ES un short. Por eso lo corto se evalúa
+// PRIMERO, y el orden del array importa. Los largos ambiguos (capri, culotte,
+// pescador) quedan fuera a propósito: devuelven null y no bloquean, porque un
+// hueco falso es tan caro como un falso "ya lo tienes".
+const CLASES_BOTTOM: [string, RegExp][] = [
+  ["corto", /\bshort|bermuda|pantaloneta|pantalon(es)? corto|de pierna corta/],
+  ["falda", /\bfalda|\bskirt/],
+  ["largo", /pantalon|\bjean|chino|vaquero|legging|jogger|palazzo|slack|trouser/],
+];
+
+/**
+ * null = largo desconocido → no bloquea. Solo distingue dentro de 'bottom'.
+ */
+export function claseBottom(texto: string): string | null {
+  const n = normaliza(texto);
+  for (const [clase, re] of CLASES_BOTTOM) if (re.test(n)) return clase;
   return null;
 }
 
@@ -169,9 +195,10 @@ export async function matchCapsule(
 REGLAS (en orden de prioridad):
 1. La CLASE de prenda manda por encima de TODO. "by" DEBE ser de la MISMA clase que la prenda ideal: un pantalón solo lo cubre otro pantalón; un zapato, otro zapato; un reloj, otro reloj. NUNCA cruces clases por color o material parecido — un chino NO lo cubren unos mocasines; un reloj NO lo cubren unos lentes; un cinturón NO lo cubre una cartera. Entre accesorios distingue la clase fina (reloj ≠ lentes ≠ cinturón ≠ bufanda ≠ gorra). Si NINGUNA prenda del clóset es de la misma clase, es "falta" con by="". Prohibido emparejar prendas de categorías distintas (top, bottom, calzado, abrigo, vestido, accesorio).
 2. Dentro de la misma clase, el TIPO FINO manda: si el rasgo que DEFINE a la prenda ideal (la botonadura de un henley o un polo, el cuello de un cuello tortuga, los botones de una camisa) no existe en la prenda real, es "falta" — una camiseta lisa NO cubre un henley ni un polo; un crewneck NO cubre un cuello tortuga. El USO también manda: una capa térmica/base de invierno no cubre una camiseta de diario (ni al revés). La manga (corta vs larga) baja a "parecido" si TODO lo demás coincide; sumada a otro rasgo distinto, es "falta".
-3. CONTEXTO DE USO: lo que no es ropa de calle NUNCA cubre ropa de calle, ni al revés, aunque sea el mismo tipo y color. Un short de baño NO cubre un short de lino; una playera de gym NO cubre una camiseta de diario; una pijama, un bikini o la ropa interior no cubren nada de calle. Y si la prenda ideal ES de baño (traje de baño), solo la cubre otra prenda de baño.
-4. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
-5. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
+3. LARGO DE PIERNA: en pantalones, el largo NO es un matiz como la manga — es otra prenda. Un pantalón largo NUNCA cubre un short o una bermuda, ni al revés, aunque compartan tela y color; y una falda no cubre un pantalón. Si el ideal pide un short y solo tienes pantalones largos, es "falta".
+4. CONTEXTO DE USO: lo que no es ropa de calle NUNCA cubre ropa de calle, ni al revés, aunque sea el mismo tipo y color. Un short de baño NO cubre un short de lino; una playera de gym NO cubre una camiseta de diario; una pijama, un bikini o la ropa interior no cubren nada de calle. Y si la prenda ideal ES de baño (traje de baño), solo la cubre otra prenda de baño.
+5. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
+6. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
 
 Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN (1..N). Cada entrada:
 - status: "tienes" | "parecido" | "falta".
@@ -258,6 +285,14 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     // revés). Va ANTES de la clase fina porque cruza todas las categorías.
     if (!contextosCompatibles(`${ideal.nombre} ${ideal.tipo}`, by!)) {
       return { status: "falta", by: null, difiere: null };
+    }
+    // Dentro de bottoms, el LARGO de pierna también tiene que coincidir.
+    if (ideal.category === "bottom" && cat === "bottom") {
+      const idealLargo = claseBottom(`${ideal.nombre} ${ideal.tipo}`);
+      const realLargo = claseBottom(by!);
+      if (idealLargo && realLargo && idealLargo !== realLargo) {
+        return { status: "falta", by: null, difiere: null };
+      }
     }
     // Dentro de accesorios, la clase fina también tiene que coincidir.
     if (ideal.category === "accesorio" && cat === "accesorio") {

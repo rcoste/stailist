@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.45.0] - 2026-07-28
+
+### Fixed
+
+- **Un pantalón largo ya no cuenta como "parecido" a un short.** El motor trataba el largo de pierna como trata la manga —un matiz menor— y no lo es: a la playa no vas en pantalón, ni a una junta en bermudas. Son prendas distintas, no versiones de la misma. Ahora un pantalón nunca cubre un short o una bermuda (ni al revés), y una falda no cubre un pantalón. Cuida la trampa del español: "pantalón corto" ES un short y se clasifica como tal. Tu emparejamiento se recalcula solo en la próxima visita.
+- **Las imágenes de prendas del catálogo dejaron de verse recortadas.** Se generaban cuadradas y se muestran en un hueco vertical, así que el navegador las ampliaba un tercio y les cortaba los lados: la prenda salía grande y chaparra. El generador ya crea en la proporción correcta desde hace días, pero **98 de las 102 imágenes existentes** eran anteriores al arreglo. Se corrigieron todas, extendiendo el papel del fondo en vez de regenerarlas — así la prenda queda idéntica, solo deja de recortarse.
+
 ## [0.2.44.0] - 2026-07-28
 
 ### Changed

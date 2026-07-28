@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   claseAccesorio,
+  claseBottom,
   closetItemLine,
   contextoUso,
   contextosCompatibles,
@@ -134,11 +135,49 @@ describe("matchSignature — una sola firma para el match Y los looks", () => {
     // El banner "cambiaste tu clóset — actualiza tus looks" quedaba pegado porque
     // los looks se guardaban con closetSignature() y la página comparaba contra
     // matchSignature(): nunca coincidían. Si vuelven a divergir, esto lo caza.
-    expect(matchSignature(closet)).toBe(`m5|${closetSignature(closet)}`);
+    expect(matchSignature(closet)).toBe(`m6|${closetSignature(closet)}`);
     expect(matchSignature(closet)).not.toBe(closetSignature(closet));
   });
 
   it("es estable entre llamadas con el mismo clóset", () => {
     expect(matchSignature(closet)).toBe(matchSignature([...closet]));
+  });
+});
+
+
+describe("claseBottom — un pantalón largo no es un short", () => {
+  it("el caso de Roberto: su pantalón de lino no cubre el short de lino", () => {
+    expect(claseBottom("Short de lino gris claro")).toBe("corto");
+    expect(claseBottom("Pantalón de lino")).toBe("largo");
+  });
+
+  it('"pantalón corto" es un SHORT, no un pantalón', () => {
+    // Trampa del español: la palabra "pantalón" está dentro del nombre de la
+    // prenda corta. Si el largo se evaluara primero, saldría mal.
+    expect(claseBottom("Pantalón corto de algodón")).toBe("corto");
+    expect(claseBottom("Pantalones cortos beige")).toBe("corto");
+  });
+
+  it("bermuda cuenta como corto y jeans/chinos como largo", () => {
+    expect(claseBottom("Bermuda sastre marino")).toBe("corto");
+    expect(claseBottom("Jeans negros rectos")).toBe("largo");
+    expect(claseBottom("Chino marino")).toBe("largo");
+    expect(claseBottom("Leggings negros")).toBe("largo");
+  });
+
+  it("una falda es su propia clase", () => {
+    expect(claseBottom("Falda midi plisada")).toBe("falda");
+    expect(claseBottom("Falda midi")).not.toBe(claseBottom("Pantalón de vestir"));
+  });
+
+  it("lo que no reconoce NO bloquea", () => {
+    // Un hueco falso cuesta lo mismo que un falso "ya lo tienes": ante la duda,
+    // devuelve null, no bloquea, y lo juzga la IA. Los largos intermedios
+    // (culotte, pescador) caen aquí a propósito.
+    expect(claseBottom("Culotte de lino")).toBe(null);
+    expect(claseBottom("Prenda rara sin tipo")).toBe(null);
+    // Un capri sí dice "pantalón", así que se clasifica como largo — correcto:
+    // tampoco cubre un short.
+    expect(claseBottom("Pantalón capri")).toBe("largo");
   });
 });
