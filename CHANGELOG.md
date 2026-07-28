@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.44.0] - 2026-07-28
+
+### Changed
+
+- **El checklist de setup en Hoy ahora enseña una sola tarea.** Listaba los cinco pasos con los hechos tachados: ~450 px para contarte algo que ya sabías, y el CTA quedaba empujado hacia abajo. Un paso completado no es información — solo el pendiente lo es. Ahora hay un encabezado que resume ("4 de 5 listos · ver lo hecho") y debajo únicamente lo que falta. Los completados siguen ahí, en un plegable que abres si quieres revisarlos: con check y en gris, sin tachado (el tachado sobre gris no se lee y era lo que ensuciaba la pantalla). Si te faltan dos o más, se muestra solo el primero y el encabezado te dice cuántos quedan.
+- **Copy más humano en Hoy.** "sube un look que ames" → "sube un look que te encante". Y la card de prenda pasó de "PRENDA NUEVA · aún no estrenas camiseta vinotinto" a "SIN ESTRENAR · camiseta vinotinto": el eyebrow ya lo dice, repetirlo gastaba dos renglones.
+
 ## [0.2.43.0] - 2026-07-28
 
 ### Added

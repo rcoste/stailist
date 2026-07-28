@@ -28,7 +28,13 @@ export function HomeCard({
   );
 
   const eyebrow =
-    card.kind === "viaje" ? "tu viaje" : card.kind === "estrena" ? "prenda nueva" : "ayer";
+    card.kind === "viaje"
+      ? "tu viaje"
+      : card.kind === "estrena"
+        ? // "sin estrenar" es lo que de verdad dice el renglón: la tienes y no la
+          // has usado. "prenda nueva" sonaba a que acabas de comprarla.
+          "sin estrenar"
+        : "ayer";
 
   const texto =
     card.kind === "viaje"
@@ -38,7 +44,9 @@ export function HomeCard({
           ? `${card.lugar} es mañana — checa tu maleta`
           : `${card.lugar} en ${card.dias} días — checa tu maleta`
       : card.kind === "estrena"
-        ? `aún no estrenas ${card.nombre.toLowerCase()}`
+        ? // Solo el nombre: el eyebrow ya dijo "sin estrenar" y repetirlo en la
+          // frase gastaba dos renglones para una idea.
+          card.nombre.toLowerCase()
         : // El título del look es un nombre propio ("Oficina sin esfuerzo"): en
           // minúsculas y sin comillas se confundía con la frase.
           card.worn || ayerEstado === "si"

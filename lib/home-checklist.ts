@@ -60,7 +60,7 @@ export function buildHomeChecklist(s: ChecklistSignals): HomeChecklist | null {
     {
       id: "estilo",
       label: "afina tu estilo",
-      hint: "sube un look que ames",
+      hint: "sube un look que te encante",
       href: "/perfil/referencia",
       done: s.hasStyleReference,
     },
