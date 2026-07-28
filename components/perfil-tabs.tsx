@@ -11,7 +11,6 @@ import { resetHints } from "@/lib/hints";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
 import { StyleReferenceCard, type StyleRef } from "@/components/style-reference-card";
-import { StyleWordsCard } from "@/components/style-words-card";
 import type { Season } from "@/lib/colorimetria";
 import type { Gender, StyleVetoes } from "@/lib/vetoes";
 
@@ -300,8 +299,10 @@ function EstiloTab({
         ) : null}
       </div>
 
-      <StyleReferenceCard initial={styleReference} />
-      <StyleWordsCard initial={styleWords} />
+      {/* UNA sola card de "cuál es tu estilo": las fotos mandan y el texto libre
+          vive adentro como renglón opcional. Antes eran dos bloques seguidos
+          preguntando lo mismo. */}
+      <StyleReferenceCard initial={styleReference} styleWords={styleWords} />
     </div>
   );
 }

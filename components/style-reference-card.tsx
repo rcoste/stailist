@@ -11,6 +11,7 @@ import {
   applyReferencePreset,
 } from "@/app/perfil/actions";
 import { REFERENCIAS_PRECARGADAS } from "@/lib/referencias";
+import { StyleWordsCard } from "@/components/style-words-card";
 
 type Fit = { verdict: string; note: string };
 export type StyleRef = { summary: string; tags: string[]; fit?: Fit | null; images: string[] };
@@ -35,7 +36,21 @@ const VERDICT: Record<string, { label: string; cls: string }> = {
 // lo describe Y evalúa si te VA (colorimetría/silueta/vetos) → veredicto honesto.
 // TÚ decides si lo absorbes (pushback antes de guardar). La colorimetría sigue
 // mandando el color; esto inspira vibe y siluetas.
-export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
+// Card ÚNICA de "cuál es tu estilo" (2026-07-28). Antes eran dos pegadas —
+// esta (fotos) y "tu estilo en tus palabras" (texto) — preguntando lo mismo con
+// el mismo peso. Se quedó la de referencias VISUALES como la petición principal
+// (señalar es fácil; describirte por escrito casi nadie puede) y el texto bajó a
+// un renglón opcional adentro. El dato que sostiene el orden: en 28 días nadie
+// subió una foto, así que el camino bueno tampoco estaba funcionando compitiendo
+// contra otro.
+export function StyleReferenceCard({
+  initial,
+  styleWords = null,
+}: {
+  initial: StyleRef | null;
+  /** El texto libre, ahora un renglón de esta card en vez de una card aparte. */
+  styleWords?: string | null;
+}) {
   const [saved, setSaved] = useState<StyleRef | null>(initial);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -307,6 +322,10 @@ export function StyleReferenceCard({ initial }: { initial: StyleRef | null }) {
       )}
 
       {err ? <p className="text-xs text-error">{err}</p> : null}
+
+      {/* El texto libre, degradado a renglón. Se oculta mientras decides sobre
+          unas fotos recién analizadas: ahí la card tiene una sola pregunta. */}
+      {!preview ? <StyleWordsCard initial={styleWords} variant="inline" /> : null}
     </div>
   );
 }

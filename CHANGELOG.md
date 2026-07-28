@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.41.0] - 2026-07-28
+
+### Changed
+
+- **"Cuál es tu estilo" ahora se pregunta una sola vez.** Eran dos bloques pegados haciendo la misma pregunta con el mismo peso: uno pedía fotos de un estilo que te gusta y el otro, justo debajo, pedía que lo describieras por escrito. Ni Roberto sabía cuál era cuál. Ahora es una sola card: las fotos son la petición (señalar es fácil; describir tu propio estilo con palabras casi nadie puede), y el texto libre bajó a un renglón opcional adentro — "¿algo más que deba saber?", cerrado hasta que lo abras, para lo que las fotos no dicen: un corte que odias, algo que nunca te pondrías. Lo que ya hayas escrito sigue igual y sigue llegando a todos tus looks, tu cápsula y tu maleta.
+
 ## [0.2.40.2] - 2026-07-27
 
 ### Changed
