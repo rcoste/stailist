@@ -27,3 +27,25 @@ describe("REFERENCIAS_PRECARGADAS", () => {
     }
   });
 });
+
+describe("imágenes del preset — la regla para poder ofrecerlo", () => {
+  it("Carla se ofrece: tiene flat-lays de su guardarropa", () => {
+    const carla = referenciaPreset("carla");
+    expect(carla?.imagenes?.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("María NO se ofrece todavía: su guardarropa no está sembrado", () => {
+    // Sin imágenes es un nombre y un párrafo pidiéndote adoptar un estilo que no
+    // puedes ver — por eso se apagó la sección entera. La regla es la misma para
+    // todas: sin flat-lays, no se ofrece.
+    expect(referenciaPreset("maria")?.imagenes ?? []).toHaveLength(0);
+  });
+
+  it("las rutas apuntan a arquetipos públicos", () => {
+    for (const r of REFERENCIAS_PRECARGADAS) {
+      for (const src of r.imagenes ?? []) {
+        expect(src).toMatch(/^\/archetypes\/[a-z0-9-]+\.png$/);
+      }
+    }
+  });
+});

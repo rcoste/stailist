@@ -28,14 +28,20 @@ export type StyleRef = {
 const MAX_FOTOS = 3;
 type Preview = { summary: string; tags: string[]; fit: Fit; images: { path: string; url: string | null }[] };
 
-// El atajo "usa el estilo de una de nuestras stylists" (Carla / María) está
-// APAGADO, no borrado. Decisión de Roberto: en pantalla son dos nombres y un
-// párrafo — sin una sola imagen no dicen nada, y estás pidiéndole a alguien que
-// adopte un estilo que no puede ver. La maquinaria sigue completa (los presets
-// en lib/referencias, applyReferencePreset, y el camino al motor): cuando haya
-// fotos del guardarropa de cada una, se prende esto y ya. Nadie había aplicado
-// ninguna (0 perfiles al apagarlo), así que esconderlo no le quita nada a nadie.
-const MOSTRAR_STYLISTS = false;
+// El atajo "usa el estilo de una de nuestras stylists" se apagó el 2026-07-28
+// porque en pantalla eran dos nombres y un párrafo: le pedías a alguien adoptar
+// un estilo que no puede ver. Vuelve, pero con la regla que faltaba — un preset
+// SOLO se ofrece si trae flat-lays de su propio guardarropa. Hoy eso deja fuera
+// a María (su guardarropa no está sembrado) y deja a Carla, cuyas 47 prendas ya
+// existen en la biblioteca con imagen. Cero costo de generación.
+//
+// Es también el experimento barato que decidimos antes de sembrar a María: si
+// con imágenes tampoco la usa nadie, sembrar otro guardarropa habría sido
+// generar 40 imágenes para nada. La métrica no necesita evento — se lee del
+// estado: profiles.style_reference->>'preset'.
+const PRESETS_VISIBLES = REFERENCIAS_PRECARGADAS.filter(
+  (r) => (r.imagenes?.length ?? 0) > 0
+);
 
 const VERDICT: Record<string, { label: string; cls: string }> = {
   va: { label: "te va increíble", cls: "bg-success/10 text-success" },
@@ -347,22 +353,36 @@ export function StyleReferenceCard({
 
           {/* Referencias precargadas: el atajo sin fotos — estilos de nuestras
               stylists, aplicables con un tap. Apagado hasta que tengan imagen. */}
-          {MOSTRAR_STYLISTS ? (
+          {PRESETS_VISIBLES.length > 0 ? (
           <>
           <p className="mt-1 text-[12px] text-muted">
-            ¿O prefieres el estilo de una de nuestras stylists?
+            ¿O te late el estilo de una de nuestras stylists?
           </p>
           <div className="flex flex-col gap-2">
-            {REFERENCIAS_PRECARGADAS.map((r) => (
+            {PRESETS_VISIBLES.map((r) => (
               <button
                 key={r.id}
                 type="button"
                 onClick={() => usarPreset(r.id)}
                 disabled={pending}
-                className="flex flex-col items-start gap-0.5 rounded-sm border border-line bg-bg px-3 py-2.5 text-left transition-colors hover:border-ink disabled:opacity-50"
+                className="flex flex-col gap-2 rounded-sm border border-line bg-bg p-2.5 text-left transition-colors hover:border-ink disabled:opacity-50"
               >
-                <span className="text-[13.5px] font-semibold text-ink">{r.nombre}</span>
-                <span className="text-[12px] leading-snug text-muted">{r.desc}</span>
+                {/* Sus prendas primero: es lo que convierte un nombre en un
+                    estilo que puedes juzgar de un vistazo. */}
+                <span className="grid grid-cols-4 gap-1.5">
+                  {r.imagenes!.slice(0, 4).map((src) => (
+                    <span
+                      key={src}
+                      className="relative aspect-[3/4] overflow-hidden rounded-sm border border-line bg-tile"
+                    >
+                      <Image src={src} alt="" fill sizes="80px" className="object-cover" />
+                    </span>
+                  ))}
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-[13.5px] font-semibold text-ink">{r.nombre}</span>
+                  <span className="text-[12px] leading-snug text-muted">{r.desc}</span>
+                </span>
               </button>
             ))}
           </div>

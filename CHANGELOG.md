@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.48.0] - 2026-07-28
+
+### Changed
+
+- **Vuelve "usa el estilo de una de nuestras stylists", ahora con sus prendas a la vista.** Se había apagado esta mañana porque eran dos nombres y un párrafo: te pedía adoptar un estilo que no podías ver. Ahora la tarjeta abre con cuatro piezas reales del guardarropa de Carla —una falda de satén mostaza, un pantalón ancho de lino, unos jeans de leopardo y unas mules negras— y su estilo se entiende de un vistazo. La regla nueva es que un estilo **solo se ofrece si trae fotos de su guardarropa**: por eso María todavía no aparece, y aparecerá cuando el suyo esté sembrado.
+
 ## [0.2.47.0] - 2026-07-28
 
 ### Fixed
