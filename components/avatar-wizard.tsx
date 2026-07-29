@@ -146,6 +146,9 @@ export function AvatarWizard({
   // Foto de cara en recorte (dataURL). Reusa ImageCrop (mismo del carrete de
   // prendas): sirve para aislarte si la foto trae más de una persona.
   const [cropFaceSrc, setCropFaceSrc] = useState<string | null>(null);
+  // Input ÚNICO de la foto de cara: lo dispara el recuadro (que ahora es el
+  // control) y el enlace de "cambiar la foto".
+  const faceInputRef = useRef<HTMLInputElement>(null);
   // Qué etapa está generando/falló (para los mensajes y el retry del error).
   const [genKind, setGenKind] = useState<"cara" | "cuerpo">("cara");
   // Las caras comprimidas se cachean: los ajustes regeneran sin recomprimir.
@@ -398,10 +401,33 @@ export function AvatarWizard({
             </p>
           </div>
 
-          {/* Un solo hueco: preview con retículo de encuadre, o el placeholder con
-              la invitación de foto grupal (el recorte se resuelve dentro de la app,
-              nunca sales a otra pantalla). */}
-          <div className="relative aspect-[1/1.06] overflow-hidden rounded-lg border border-line bg-tile">
+          {/* UN solo hueco, y es el control. Antes el recuadro se veía tocable
+              pero no hacía nada, y la acción vivía en dos botones debajo: falsa
+              afordancia clásica. Ahora el recuadro ES el botón y cambia lo que
+              hace según su estado — vacío abre el selector, con foto abre el
+              recorte. Un solo input sin `capture` deja que iOS ofrezca su hoja
+              (Cámara / Fototeca), que es lo que hacían los dos botones. */}
+          <input
+            ref={faceInputRef}
+            type="file"
+            accept="image/*,.heic,.heif"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              if (faceInputRef.current) faceInputRef.current.value = "";
+              if (f) setSlot("face", f);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() =>
+              previews.face
+                ? setCropFaceSrc(previews.face)
+                : faceInputRef.current?.click()
+            }
+            aria-label={previews.face ? "Ajustar tu foto" : "Agregar tu foto"}
+            className="relative block aspect-[1/1.06] w-full overflow-hidden rounded-lg border border-line bg-tile text-left transition-colors hover:border-ink"
+          >
             {previews.face ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -411,34 +437,38 @@ export function AvatarWizard({
                   className="pointer-events-none absolute inset-[16%] rounded-sm border-2 border-white/90"
                   style={{ boxShadow: "0 0 0 9999px rgb(20 20 20 / 0.34)" }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setCropFaceSrc(previews.face)}
-                  className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-3.5 py-3 text-left text-[12.5px] font-medium text-white"
+                <span
+                  className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-3.5 py-3 text-[12.5px] font-medium text-white"
                   style={{ backgroundColor: "rgb(20 20 20 / 0.78)" }}
                 >
                   <span>¿sale alguien más? déjate solo a ti</span>
                   <span className="shrink-0 font-bold underline underline-offset-2">ajustar</span>
-                </button>
+                </span>
               </>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2.5 px-8 text-center">
+              <span className="flex h-full flex-col items-center justify-center gap-2.5 px-8 text-center">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface text-muted">
                   <Icon name="camara" size={24} />
                 </span>
-                <span className="text-sm font-semibold text-ink">tu cara, de frente</span>
+                <span className="text-sm font-semibold text-ink">toca para poner tu cara</span>
                 <span className="text-xs leading-snug text-muted">
-                  ¿sales con alguien más? súbela igual — recorto tu cara.
+                  de frente. ¿sales con alguien más? súbela igual — recorto tu cara.
                 </span>
-              </div>
+              </span>
             )}
-          </div>
+          </button>
 
-          {/* Dos botones iguales: cámara (frontal en móvil) / carrete. */}
-          <div className="grid grid-cols-2 gap-3">
-            <PhotoButton label="cámara" icon="camara" capture="user" onPick={(f) => setSlot("face", f)} />
-            <PhotoButton label="carrete" onPick={(f) => setSlot("face", f)} />
-          </div>
+          {/* Con foto puesta, cambiarla es la acción secundaria: el recuadro ya
+              se lo llevó el recorte, que es lo que casi siempre quieres hacer. */}
+          {previews.face ? (
+            <button
+              type="button"
+              onClick={() => faceInputRef.current?.click()}
+              className="w-fit text-[12.5px] font-medium text-muted underline underline-offset-4 hover:text-ink"
+            >
+              cambiar la foto
+            </button>
+          ) : null}
 
           {/* Las cuatro reglas de la foto ideal, en dos columnas sobre hairline. */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line pt-4">
@@ -887,50 +917,6 @@ function PickLink({
   );
 }
 
-// Botón de captura (cámara o carrete) para el "hueco único" de la pantalla 1.
-// Los dos van iguales debajo del hueco; el de cámara abre la frontal en móvil.
-function PhotoButton({
-  label,
-  icon,
-  capture,
-  onPick,
-}: {
-  label: string;
-  icon?: "camara";
-  capture?: "user" | "environment";
-  onPick: (file: File | null) => void;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => ref.current?.click()}
-        className="flex min-h-[50px] items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
-      >
-        {icon ? <Icon name={icon} size={17} /> : null}
-        {label}
-      </button>
-      <input
-        ref={ref}
-        type="file"
-        accept="image/*,.heic,.heif"
-        capture={capture}
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0] ?? null;
-          if (ref.current) ref.current.value = "";
-          onPick(f);
-        }}
-      />
-    </>
-  );
-}
-
-// variant "card" = acción principal (tarjeta completa). "sutil" = extra
-// opcional: fila discreta SIN tarjeta, para que la jerarquía visual diga lo que
-// el copy quiere decir. Dos tarjetas idénticas se leen como "dos pasos
-// obligatorios" por más que una diga "Opcional" — el diseño le gana al texto.
 function UploadTile({
   label,
   hint,

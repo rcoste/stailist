@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 
 // Recortador táctil simple (sin librerías, por el design system): un recuadro
@@ -29,20 +29,52 @@ export function ImageCrop({
   const imgRef = useRef<HTMLImageElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
   const drag = useRef<{ mode: DragMode; startX: number; startY: number; orig: Rect } | null>(null);
+  // Último tamaño MOSTRADO conocido. Sirve para dos cosas: crear el recuadro en
+  // cuanto la imagen tenga medidas, y re-escalarlo si esas medidas cambian.
+  const disp = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
 
   function dispSize() {
     const r = imgRef.current?.getBoundingClientRect();
     return { w: r?.width ?? 0, h: r?.height ?? 0 };
   }
 
-  // Recuadro inicial: 80% centrado sobre la caja mostrada de la imagen.
-  function onImgLoad() {
+  // El recuadro NO puede depender solo de onLoad. Ese evento se dispara cuando la
+  // imagen termina de decodificar, que puede ser ANTES de que el layout le dé
+  // tamaño (pasa con data URLs, imágenes en caché, o si el contenedor aún no se
+  // midió). El código anterior hacía `if (!w || !h) return` y no reintentaba
+  // nunca: sin recuadro, "usar" salía por su propio guard sin hacer nada y la
+  // persona veía su foto sin recortar, como si el ajuste se hubiera perdido.
+  //
+  // Un ResizeObserver sobre la imagen cubre todos los casos: la primera medida
+  // válida crea el recuadro, y cualquier cambio posterior (girar el teléfono,
+  // aparecer el teclado) lo re-escala en proporción para que la selección siga
+  // encuadrando lo mismo.
+  const ajustar = useCallback(() => {
     const { w, h } = dispSize();
     if (!w || !h) return;
-    const rw = w * 0.8;
-    const rh = h * 0.8;
-    setRect({ x: (w - rw) / 2, y: (h - rh) / 2, w: rw, h: rh });
-  }
+    const prev = disp.current;
+    disp.current = { w, h };
+    setRect((r) => {
+      if (!r) {
+        const rw = w * 0.8;
+        const rh = h * 0.8;
+        return { x: (w - rw) / 2, y: (h - rh) / 2, w: rw, h: rh };
+      }
+      if (!prev.w || !prev.h || (prev.w === w && prev.h === h)) return r;
+      const fx = w / prev.w;
+      const fy = h / prev.h;
+      return { x: r.x * fx, y: r.y * fy, w: r.w * fx, h: r.h * fy };
+    });
+  }, []);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    ajustar();
+    const ro = new ResizeObserver(ajustar);
+    ro.observe(img);
+    return () => ro.disconnect();
+  }, [ajustar, src]);
 
   function start(e: React.PointerEvent, mode: DragMode) {
     if (!rect) return;
@@ -84,8 +116,12 @@ export function ImageCrop({
 
   function usar() {
     const img = imgRef.current;
-    if (!img || !rect) return;
-    const scale = img.naturalWidth / dispSize().w; // mostrado → natural
+    const { w: dw } = dispSize();
+    // Sin recuadro o sin medidas no se puede recortar. Antes esto salía en
+    // silencio y parecía que el botón no servía; ahora al menos no rompe y el
+    // caso ya no debería ocurrir (ver el ResizeObserver de arriba).
+    if (!img || !rect || !dw) return;
+    const scale = img.naturalWidth / dw; // mostrado → natural
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(rect.w * scale));
     canvas.height = Math.max(1, Math.round(rect.h * scale));
@@ -141,7 +177,7 @@ export function ImageCrop({
             ref={imgRef}
             src={src}
             alt="Foto a recortar"
-            onLoad={onImgLoad}
+            onLoad={ajustar}
             className="max-h-[75dvh] max-w-full select-none"
             draggable={false}
           />

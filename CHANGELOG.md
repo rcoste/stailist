@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.49.0] - 2026-07-28
+
+### Fixed
+
+- **El recorte de tu foto ya no se pierde.** Ajustabas el encuadre, dabas "usar" y volvía tu foto sin recortar, como si nada. La causa: el recuadro se creaba al terminar de cargar la imagen, pero si en ese instante todavía no tenía tamaño en pantalla, no se creaba **nunca** — y sin recuadro el botón salía sin hacer nada. Ahora se crea en cuanto la imagen tiene medidas, y si la pantalla cambia (giras el teléfono, aparece el teclado) el recuadro se re-escala en vez de desencuadrarse.
+
+### Changed
+
+- **En la foto del avatar, el recuadro es el botón.** Se veía tocable pero no hacía nada, y la acción estaba en dos botones debajo. Ahora tocas el recuadro: vacío abre el selector de fotos, con foto abre el recorte. Los dos botones se fueron — iOS ya ofrece "Cámara / Fototeca" en su propia hoja.
+
 ## [0.2.48.0] - 2026-07-28
 
 ### Changed
