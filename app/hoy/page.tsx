@@ -3,7 +3,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { loadJourneySignals } from "@/lib/journey-data";
-import { Hint } from "@/components/hint";
+import { HintChain, type HintCandidato } from "@/components/hint";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 import type { ClosetPick } from "@/components/weather-picker";
 import { loadClosetPicks } from "@/lib/closet-picks";
@@ -159,49 +159,50 @@ export default async function HoyPage({
   const accountDays =
     (new Date().getTime() - new Date(profile.created_at).getTime()) / 86_400_000;
   // Progressive: orientación primero (hoy-casa), luego función de valor
-  // (fab-generar → hoy-tryon) cuando ya hay look, y viaje al final. UNA por visita.
-  const hint = !seen["hoy-casa"]
-    ? "hoy-casa"
-    : lookInicial && !seen["fab-generar"]
-      ? "fab-generar"
-      : lookInicial && !seen["hoy-tryon"]
-        ? "hoy-tryon"
-        : accountDays >= 3 && !seen["viaje"]
-          ? "viaje"
-          : null;
+  // (fab-generar → hoy-tryon) cuando ya hay look, y viaje al final. UNA por
+  // visita — pero es HintChain quien elige: se muestra el primero de la lista
+  // que encuentre su target, no el primero a secas. Antes, un tip que había
+  // perdido su target se quedaba con el turno para siempre (y sin marcarse
+  // visto), enterrando a los de abajo.
+  const candidatos: HintCandidato[] = [];
+  if (!seen["hoy-casa"]) {
+    candidatos.push({
+      id: "hoy-casa",
+      children:
+        "esta es tu casa — cada día te espera un look nuevo aquí, pensado para tu plan y tu clima",
+    });
+  }
+  if (lookInicial && !seen["fab-generar"]) {
+    candidatos.push({
+      id: "fab-generar",
+      children:
+        "¿otro plan hoy? tócalo y te armo un look nuevo desde cualquier pantalla",
+    });
+  }
+  if (lookInicial && !seen["hoy-tryon"]) {
+    candidatos.push({
+      id: "hoy-tryon",
+      children:
+        "¿cómo te va a quedar? aquí te lo pruebo puesto en ti, no en una modelo",
+    });
+  }
+  if (accountDays >= 3 && !seen["viaje"]) {
+    candidatos.push({
+      id: "viaje",
+      children:
+        "¿viaje pronto? aquí dentro te armo la maleta completa, con el clima de cada parada",
+    });
+  }
 
   // El banner (sólo hints ahora) va centrado y angosto en desktop.
-  const hasBanner = !!hint;
+  const hasBanner = candidatos.length > 0;
 
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-4">
         {hasBanner ? (
           <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
-            {hint === "hoy-casa" ? (
-              <Hint id="hoy-casa" center>
-                esta es tu casa — cada día te espera un look nuevo aquí, pensado
-                para tu plan y tu clima
-              </Hint>
-            ) : null}
-            {hint === "fab-generar" ? (
-              <Hint id="fab-generar">
-                ¿otro plan hoy? tócalo y te armo un look nuevo desde cualquier
-                pantalla
-              </Hint>
-            ) : null}
-            {hint === "hoy-tryon" ? (
-              <Hint id="hoy-tryon">
-                ¿cómo te va a quedar? aquí te lo pruebo puesto en ti, no en una
-                modelo
-              </Hint>
-            ) : null}
-            {hint === "viaje" ? (
-              <Hint id="viaje">
-                ¿viaje pronto? aquí dentro te armo la maleta completa, con el
-                clima de cada parada
-              </Hint>
-            ) : null}
+            <HintChain candidatos={candidatos} />
           </div>
         ) : null}
         <HoyClient

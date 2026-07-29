@@ -4,7 +4,7 @@ import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
 import { ClosetNav } from "@/components/closet-nav";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
-import { Hint } from "@/components/hint";
+import { HintChain, type HintCandidato } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
 import { fotosBloqueadas } from "@/lib/edad";
 import { createClient } from "@/lib/supabase/server";
@@ -91,12 +91,28 @@ export default async function ClosetPage() {
 
   // Progressive: orientación (las pestañas) primero; luego la función de agregar
   // ropa real, solo si aún no ha subido fotos (a quien ya lo hizo no lo regañamos).
+  // Se muestra el primero que encuentre su target (ver HintChain), no el
+  // primero a secas: así un tip sin target no entierra al que va detrás.
   const seenH = profile.hints_seen ?? {};
-  const closetHint = !seenH["closet-tabs"]
-    ? "closet-tabs"
-    : !hasOwnPhotos && !seenH["closet-agregar"]
-      ? "closet-agregar"
-      : null;
+  const candidatos: HintCandidato[] = [];
+  if (!seenH["closet-tabs"]) {
+    candidatos.push({
+      id: "closet-tabs",
+      children: (
+        <>
+          aquí también viven tu <strong>cápsula</strong> (el clóset ideal para tu
+          vida) y tu <strong>wishlist</strong> — toca para cambiarte
+        </>
+      ),
+    });
+  }
+  if (!hasOwnPhotos && !seenH["closet-agregar"]) {
+    candidatos.push({
+      id: "closet-agregar",
+      children:
+        "súmale tu ropa real con una foto — tus looks se vuelven 100% tuyos",
+    });
+  }
 
   return (
     <AppShell desktop="wide">
@@ -132,17 +148,7 @@ export default async function ClosetPage() {
 
         {/* Hints contextuales (una por visita): orientación de pestañas, luego
             la función de sumar tu ropa real. */}
-        {closetHint === "closet-tabs" ? (
-          <Hint id="closet-tabs">
-            aquí también viven tu <strong>cápsula</strong> (el clóset ideal para
-            tu vida) y tu <strong>wishlist</strong> — toca para cambiarte
-          </Hint>
-        ) : null}
-        {closetHint === "closet-agregar" ? (
-          <Hint id="closet-agregar">
-            súmale tu ropa real con una foto — tus looks se vuelven 100% tuyos
-          </Hint>
-        ) : null}
+        <HintChain candidatos={candidatos} />
 
         <ClosetGrid items={items} />
 

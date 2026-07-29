@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.51.0] - 2026-07-28
+
+### Fixed
+
+- **Revive el tip del try-on, muerto desde hace cuatro días.** El rediseño del detalle del look se llevó por delante la marca que le decía al tip a qué botón apuntar, así que "aquí te lo pruebo puesto en ti" dejó de salir. Y no fallaba solo: como no se dibujaba, tampoco se marcaba como visto, así que se quedaba con el turno en cada visita y **enterraba al tip de viaje** en cualquier día con look ya generado.
+- **Un tip que no encuentra a quién señalar ahora cede el turno.** Los tips de una pantalla van en orden de prioridad y se muestra el primero que se pueda dibujar, no el primero a secas.
+- **Los tips ya funcionan en pestañas de fondo.** Buscaban su elemento con el reloj de animación del navegador, que en una pestaña oculta se congela por completo (medido: cero avances en tres segundos). Una PWA restaurada o una pestaña abierta y vista después podía quedarse sin tip para siempre. Ahora la búsqueda corre con un temporizador normal y se rinde a los 500 ms.
+
 ## [0.2.50.0] - 2026-07-28
 
 ### Fixed

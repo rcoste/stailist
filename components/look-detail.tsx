@@ -212,6 +212,7 @@ export function LookDetail({
           avatarHref ? (
             <Link
               href={avatarHref}
+              data-hint-target="hoy-tryon"
               className="flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
             >
               <Icon name="destello" size={18} /> crea tu avatar para verte
@@ -221,6 +222,12 @@ export function LookDetail({
               type="button"
               onClick={onGenerar}
               disabled={generating}
+              // El tip "aquí te lo pruebo puesto en ti" señala este botón. Vivía
+              // en hoy-client hasta que esta pantalla lo absorbió y el atributo
+              // se perdió en la mudanza: cuatro días de tip muerto. Si el botón
+              // vuelve a moverse, el atributo se muda CON él (lo exige
+              // lib/hints-catalog.test.ts).
+              data-hint-target="hoy-tryon"
               className="flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
             >
               <Icon name="destello" size={18} />

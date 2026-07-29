@@ -4,7 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icon";
-import { dismissHint, type HintId } from "@/lib/hints";
+import { dismissHint } from "@/lib/hints";
+import { HINT_MODO, type HintId } from "@/lib/hints-catalog";
 
 // Tip de descubrimiento just-in-time. UNA por pantalla (el server decide cuál),
 // jamás bloquea el flujo, se cierra con un tap y no vuelve (profiles.hints_seen).
@@ -16,25 +17,31 @@ import { dismissHint, type HintId } from "@/lib/hints";
 // - DESKTOP (≥1024px): el banner inline de siempre (regla de acento + eyebrow).
 //   El coach-mark de desktop se hará en un pase aparte; por ahora intacto.
 //
-// `center`: fuerza nota centrada sin recorte (hints de orientación general, sin
-// un elemento concreto que señalar). Sin `center`, el hint REQUIERE su target:
-// si no está en pantalla, no se muestra ni se marca visto (espera a otra visita
-// donde el target sí exista — p.ej. "no me convence" solo aparece con un parecido).
+// Centrado vs spotlight NO se pasa por prop: se lee de HINT_MODO
+// (lib/hints-catalog). Como prop, la misma decisión podía escribirse distinto en
+// cada lugar donde se usa el tip, y el test que exige target para los spotlight
+// no tendría de dónde saberlo.
 
 const LG = 1024;
 
 export function Hint({
   id,
   children,
-  center = false,
+  onUnavailable,
 }: {
   id: HintId;
   children: React.ReactNode;
-  center?: boolean;
+  /**
+   * El coach-mark buscó su target y no lo encontró. Lo llama HintChain para
+   * pasar al siguiente candidato — sin esto, un tip cuyo target borró un
+   * rediseño se queda con el turno para siempre y entierra al que va detrás.
+   */
+  onUnavailable?: () => void;
 }) {
   const [gone, setGone] = useState(false);
   // null = aún sin medir (evita parpadeo SSR); luego true/false.
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const center = HINT_MODO[id] === "centrado";
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LG - 1}px)`);
@@ -52,9 +59,44 @@ export function Hint({
   if (gone || isMobile === null) return null;
   if (!isMobile) return <InlineHint onClose={cerrar}>{children}</InlineHint>;
   return (
-    <CoachMark id={id} center={center} onClose={cerrar}>
+    <CoachMark
+      id={id}
+      center={center}
+      onClose={cerrar}
+      onUnavailable={onUnavailable}
+    >
       {children}
     </CoachMark>
+  );
+}
+
+export type HintCandidato = {
+  id: HintId;
+  /** El texto del tip. Se arma en el server, donde vive la copy. */
+  children: React.ReactNode;
+};
+
+/**
+ * Los tips de una pantalla, en orden de prioridad: se muestra el PRIMERO que se
+ * pueda dibujar. Si el de arriba no encuentra su target, cede el turno al
+ * siguiente en la misma visita en vez de dejar la pantalla sin tip.
+ *
+ * El caso real que lo motiva: `hoy-tryon` perdió su target en el rediseño del
+ * detalle del look y, como no se dibujaba, tampoco se marcaba visto — así que se
+ * quedaba con el turno cada visita y el tip de viaje no salía nunca.
+ */
+export function HintChain({ candidatos }: { candidatos: HintCandidato[] }) {
+  const [i, setI] = useState(0);
+  const actual = candidatos[i];
+  if (!actual) return null;
+  return (
+    <Hint
+      key={actual.id}
+      id={actual.id}
+      onUnavailable={() => setI((n) => n + 1)}
+    >
+      {actual.children}
+    </Hint>
   );
 }
 
@@ -112,11 +154,13 @@ function CoachMark({
   id,
   center,
   onClose,
+  onUnavailable,
   children,
 }: {
   id: HintId;
   center: boolean;
   onClose: () => void;
+  onUnavailable?: () => void;
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -124,14 +168,31 @@ function CoachMark({
   const [rect, setRect] = useState<Rect | null>(null);
   const [ready, setReady] = useState(center); // center no necesita target
   const okRef = useRef<HTMLButtonElement>(null);
+  // Por ref y no en las deps del efecto: el callback llega inline desde
+  // HintChain, así que cambia de identidad en cada render y volvería a lanzar la
+  // búsqueda del target una y otra vez.
+  const cedeRef = useRef(onUnavailable);
+  useEffect(() => {
+    cedeRef.current = onUnavailable;
+  });
 
   useEffect(() => setMounted(true), []);
 
-  // Localiza y mide el target (reintenta unos frames por si monta tarde).
+  // Localiza y mide el target (reintenta un rato por si monta tarde).
+  //
+  // El reintento va con setTimeout y NO con requestAnimationFrame, aunque rAF
+  // sea lo natural para medir layout: en una pestaña oculta el navegador
+  // congela rAF por completo (medido: 0 frames en 3s con visibilityState
+  // "hidden"). Con rAF, un hint cuyo target monta tarde en una pestaña de fondo
+  // —una PWA restaurada, una pestaña abierta y vista después— se quedaba
+  // colgado del reintento para siempre: ni se dibujaba ni cedía el turno.
+  //
+  // El corte va por tiempo transcurrido y no por número de intentos, porque en
+  // segundo plano los timers se estiran a ~1s y 20 intentos serían 20 segundos.
   useLayoutEffect(() => {
     if (center) return;
-    let raf = 0;
-    let tries = 0;
+    let timer = 0;
+    const t0 = performance.now();
     const measure = () => {
       const el = findTarget(id);
       if (el) {
@@ -141,10 +202,13 @@ function CoachMark({
         setReady(true);
         return;
       }
-      if (tries++ < 20) raf = requestAnimationFrame(measure);
+      // Medio segundo es de sobra para un elemento que monta tarde. Si a estas
+      // alturas no está, no va a estar: cede el turno al siguiente candidato.
+      if (performance.now() - t0 < 500) timer = window.setTimeout(measure, 32);
+      else cedeRef.current?.();
     };
     measure();
-    return () => cancelAnimationFrame(raf);
+    return () => clearTimeout(timer);
   }, [id, center]);
 
   // Reposiciona en resize (el scroll está bloqueado mientras el coach-mark vive).

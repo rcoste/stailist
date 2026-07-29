@@ -154,7 +154,7 @@ export default async function HistorialPage({
             {/* Hint contextual (una vez): "me lo puse" es la señal que más
                 enseña al motor — pedirla donde viven los looks pasados. */}
             {!profile.hints_seen?.["historial-worn"] ? (
-              <Hint id="historial-worn" center>
+              <Hint id="historial-worn">
                 cuando uses un look en la vida real, márcale{" "}
                 <strong>“me lo puse”</strong> — así aprendo qué te queda y qué
                 no
