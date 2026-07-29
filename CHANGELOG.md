@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.54.0] - 2026-07-29
+
+### Added
+
+- **Las tres formas de sumar ropa ahora están a la vista en el clóset, no escondidas tras "agregar".** Mientras tu clóset sea puro catálogo, arriba de la reja aparece "este clóset todavía no es tuyo" con las tres salidas desplegadas: subir varias fotos de golpe, marcar prendas de la biblioteca (sin tomar una sola foto) o subir una prenda suelta. Se va solo en cuanto subes tu primera foto. El dolor número uno de estas apps es catalogar el clóset, y las dos salidas que lo esquivan vivían detrás de una palabra —"agregar"— que suena precisamente al trabajo de una prenda a la vez.
+
+### Changed
+
+- **Las tres formas de añadir dicen lo mismo en todas partes.** La hoja de "agregar" y el drawer de "más" tenían dos versiones distintas de los mismos textos, así que mejorar uno dejaba el otro atrás. Ahora hay una sola copia — y la de la biblioteca por fin dice lo único que importa: que llenas tu clóset **sin tomar una sola foto**. También cambia el orden: primero las dos formas rápidas, la foto suelta al final.
+
+### Removed
+
+- **Fuera el tip de "súmale tu ropa real".** Señalaba el botón "agregar" para anunciar las tres formas; ahora esas tres formas están en la pantalla. Un tip que explica lo que ya se ve es una puerta que dice EMPUJE. Quedan 7 tips.
+
 ## [0.2.53.0] - 2026-07-29
 
 ### Fixed

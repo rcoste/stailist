@@ -4,6 +4,7 @@ import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
 import { ClosetNav } from "@/components/closet-nav";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
+import { ClosetLlenalo } from "@/components/closet-llenalo";
 import { HintChain, type HintCandidato } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
 import { fotosBloqueadas } from "@/lib/edad";
@@ -106,16 +107,15 @@ export default async function ClosetPage() {
       ),
     });
   }
-  if (!hasOwnPhotos && !seenH["closet-agregar"]) {
-    candidatos.push({
-      id: "closet-agregar",
-      // Decía "con una foto" y nombraba el camino más lento. La hoja ofrece
-      // tres, y el que ataca la fricción de setup —el enemigo declarado del
-      // proyecto— es subir varias de golpe. Ese es el que se anuncia.
-      children:
-        "súmale tu ropa real — sube varias fotos de golpe y yo saco cada prenda; tus looks se vuelven 100% tuyos",
-    });
-  }
+  // Aquí había un segundo tip, "closet-agregar", que señalaba el botón
+  // "agregar" para anunciar las tres formas de sumar ropa. Se retiró junto con
+  // ClosetLlenalo: ese bloque PONE las tres formas en la pantalla, así que el
+  // tip explicaba lo que ya se ve.
+
+  // El bloque de "llénalo" solo si el clóset es puro catálogo Y las fotos no
+  // están bloqueadas: a una menor sin permiso no se le ofrecen dos caminos que
+  // no puede tomar (su aviso propio ya está arriba y le deja el catálogo).
+  const mostrarLlenalo = !hasOwnPhotos && !fotosBloqueadas(profile);
 
   return (
     <AppShell desktop="wide">
@@ -139,7 +139,11 @@ export default async function ClosetPage() {
               clóset
             </h1>
             <p className="mt-1.5 text-[13px] text-muted">
-              {hasOwnPhotos
+              {/* Con el bloque de "llénalo" a la vista, "básicos para arrancar"
+                  sobra: ese bloque ya dice —con más fuerza— que el clóset es
+                  prestado. Sin el bloque (fotos bloqueadas) la etiqueta sigue
+                  siendo el único lugar que lo aclara. */}
+              {hasOwnPhotos || mostrarLlenalo
                 ? `${items.length} ${items.length === 1 ? "prenda" : "prendas"}`
                 : `${items.length} básicos para arrancar`}
             </p>
@@ -152,6 +156,10 @@ export default async function ClosetPage() {
         {/* Hints contextuales (una por visita): orientación de pestañas, luego
             la función de sumar tu ropa real. */}
         <HintChain candidatos={candidatos} />
+
+        {/* Mientras el clóset sea puro catálogo, las tres formas de sumar ropa
+            van desplegadas aquí en vez de escondidas tras "agregar". */}
+        {mostrarLlenalo ? <ClosetLlenalo userId={profile.id} /> : null}
 
         <ClosetGrid items={items} />
 

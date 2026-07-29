@@ -14,9 +14,15 @@
 // muerto sin que nada fallara. Por eso el modo se declara aquí y hay un test
 // (hints-catalog.test.ts) que truena si un spotlight se queda sin su target.
 
-// Hubo un noveno, "historial-worn" ("márcale me lo puse"), retirado el
-// 2026-07-29: nombraba una acción que ya no vive en Historial —el worn se mudó a
-// Hoy como la card "¿te lo pusiste?" del día siguiente, que se explica sola.
+// Dos retirados el 2026-07-29:
+// · "historial-worn" ("márcale me lo puse") — nombraba una acción que ya no vive
+//   en Historial: el worn se mudó a Hoy como la card "¿te lo pusiste?".
+// · "closet-agregar" ("súmale tu ropa real") — señalaba el botón "agregar" para
+//   anunciar las tres formas de sumar ropa. Ahora esas tres formas están
+//   DESPLEGADAS en el clóset (ClosetLlenalo) mientras no haya foto propia, así
+//   que el tip explicaba lo que ya se ve, y señalaba un botón que dejó de ser el
+//   camino. Un tip encima de contenido autoexplicativo es una puerta que dice
+//   EMPUJE.
 export type HintId =
   // Orientación (dónde estás / para qué sirve la sección)
   | "hoy-casa"
@@ -26,7 +32,6 @@ export type HintId =
   | "viaje"
   // Función de valor (qué puedes HACER dentro de la sección)
   | "hoy-tryon"
-  | "closet-agregar"
   | "capsula-swap";
 
 export type HintModo = "centrado" | "spotlight";
@@ -40,7 +45,6 @@ export const HINT_MODO: Record<HintId, HintModo> = {
   "wishlist-cartera": "spotlight",
   viaje: "spotlight",
   "hoy-tryon": "spotlight",
-  "closet-agregar": "spotlight",
   "capsula-swap": "spotlight",
 };
 

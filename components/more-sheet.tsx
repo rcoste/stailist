@@ -10,6 +10,7 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
+import { AddOptions } from "@/components/add-options";
 import { AddPhotoFlow, type AddFlowHandle } from "@/components/add-photo-flow";
 import { ImportCarreteFlow } from "@/components/import-carrete-flow";
 import type { TripContext } from "@/lib/trip-context";
@@ -308,26 +309,10 @@ function NivelAgregar({
   // carrete múltiple vs. set preestablecido) no se entiende solo con el nombre.
   // El handoff marca este trade-off: con descripción se pierde la gramática de
   // tiles, pero gana el contexto — que es lo que aquí hace falta.
-  const filas: { icon: IconName; title: string; sub: string; onClick: () => void }[] = [
-    {
-      icon: "camara",
-      title: "una prenda",
-      sub: "una foto de algo suelto, tipo unos tenis",
-      onClick: onAddPhoto,
-    },
-    {
-      icon: "destello",
-      title: "varias de golpe",
-      sub: "sube varias fotos del carrete y saco cada prenda",
-      onClick: onAddCarrete,
-    },
-    {
-      icon: "libro",
-      title: "la biblioteca",
-      sub: "elige de un set de básicos ya listo",
-      onClick: onAddBiblioteca,
-    },
-  ];
+  //
+  // La lista sale de AddOptions: aquí vivía una segunda copia con textos
+  // distintos a los de la hoja de "agregar", y las mejoras siempre se quedaban
+  // en una de las dos.
   return (
     <div style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
       <div className="mb-3 flex items-center gap-3">
@@ -341,40 +326,12 @@ function NivelAgregar({
         </button>
         <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">agregar al clóset</h3>
       </div>
-      <div className="flex flex-col gap-2">
-        {filas.map((f) => (
-          <FilaAgregar key={f.title} icon={f.icon} title={f.title} sub={f.sub} onClick={f.onClick} />
-        ))}
-      </div>
+      <AddOptions
+        onFoto={onAddPhoto}
+        onCarrete={onAddCarrete}
+        onBiblioteca={onAddBiblioteca}
+      />
     </div>
-  );
-}
-
-function FilaAgregar({
-  icon,
-  title,
-  sub,
-  onClick,
-}: {
-  icon: IconName;
-  title: string;
-  sub: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3.5 rounded-sm border border-line bg-surface px-3.5 py-3 text-left transition-colors hover:border-accent"
-    >
-      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-sm border border-line text-ink">
-        <Icon name={icon} size={20} />
-      </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-[15px] font-semibold text-ink">{title}</span>
-        <span className="text-[13px] leading-snug text-muted">{sub}</span>
-      </span>
-    </button>
   );
 }
 
