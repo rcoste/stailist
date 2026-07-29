@@ -5,7 +5,6 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { HistoryList, type HistoryOutfit } from "./history-list";
-import { Hint } from "@/components/hint";
 
 export default async function HistorialPage({
   searchParams,
@@ -150,18 +149,12 @@ export default async function HistorialPage({
             </Link>
           </div>
         ) : (
-          <>
-            {/* Hint contextual (una vez): "me lo puse" es la señal que más
-                enseña al motor — pedirla donde viven los looks pasados. */}
-            {!profile.hints_seen?.["historial-worn"] ? (
-              <Hint id="historial-worn">
-                cuando uses un look en la vida real, márcale{" "}
-                <strong>“me lo puse”</strong> — así aprendo qué te queda y qué
-                no
-              </Hint>
-            ) : null}
-            <HistoryList outfits={list} initialFiltro={initialFiltro} />
-          </>
+          // Aquí vivía el tip "márcale me lo puse". Se quitó el 2026-07-29: esa
+          // acción ya no está en esta pantalla —el worn del mismo día se movió a
+          // Hoy, como la card "¿te lo pusiste?" del día siguiente— así que
+          // mandaba a buscar un botón que no existe. Y la card pregunta sola,
+          // con sí/no de un tap: no hay nada que explicar.
+          <HistoryList outfits={list} initialFiltro={initialFiltro} />
         )}
       </section>
     </AppShell>

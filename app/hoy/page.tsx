@@ -168,8 +168,12 @@ export default async function HoyPage({
   if (!seen["hoy-casa"]) {
     candidatos.push({
       id: "hoy-casa",
+      // Decía "cada día te espera un look nuevo aquí". Falso: no hay generación
+      // automática (el único proceso que corre solo es el correo semanal), y el
+      // look se arma cuando tú lo pides. El fondo del propio tip dice "tu look
+      // de hoy, aún no" — la promesa se desmentía sola en el primer contacto.
       children:
-        "esta es tu casa — cada día te espera un look nuevo aquí, pensado para tu plan y tu clima",
+        "esta es tu casa — dime qué traes hoy y te armo el look, con tu clima y lo que hay en tu clóset",
     });
   }
   if (lookInicial && !seen["fab-generar"]) {

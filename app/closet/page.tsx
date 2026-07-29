@@ -101,7 +101,7 @@ export default async function ClosetPage() {
       children: (
         <>
           aquí también viven tu <strong>cápsula</strong> (el clóset ideal para tu
-          vida) y tu <strong>wishlist</strong> — toca para cambiarte
+          vida) y tu <strong>wishlist</strong> — toca para verlas
         </>
       ),
     });
@@ -109,8 +109,11 @@ export default async function ClosetPage() {
   if (!hasOwnPhotos && !seenH["closet-agregar"]) {
     candidatos.push({
       id: "closet-agregar",
+      // Decía "con una foto" y nombraba el camino más lento. La hoja ofrece
+      // tres, y el que ataca la fricción de setup —el enemigo declarado del
+      // proyecto— es subir varias de golpe. Ese es el que se anuncia.
       children:
-        "súmale tu ropa real con una foto — tus looks se vuelven 100% tuyos",
+        "súmale tu ropa real — sube varias fotos de golpe y yo saco cada prenda; tus looks se vuelven 100% tuyos",
     });
   }
 

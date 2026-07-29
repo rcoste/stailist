@@ -14,12 +14,14 @@
 // muerto sin que nada fallara. Por eso el modo se declara aquí y hay un test
 // (hints-catalog.test.ts) que truena si un spotlight se queda sin su target.
 
+// Hubo un noveno, "historial-worn" ("márcale me lo puse"), retirado el
+// 2026-07-29: nombraba una acción que ya no vive en Historial —el worn se mudó a
+// Hoy como la card "¿te lo pusiste?" del día siguiente, que se explica sola.
 export type HintId =
   // Orientación (dónde estás / para qué sirve la sección)
   | "hoy-casa"
   | "fab-generar"
   | "closet-tabs"
-  | "historial-worn"
   | "wishlist-cartera"
   | "viaje"
   // Función de valor (qué puedes HACER dentro de la sección)
@@ -32,7 +34,6 @@ export type HintModo = "centrado" | "spotlight";
 export const HINT_MODO: Record<HintId, HintModo> = {
   // Orientación general: no hay UN elemento que señalar.
   "hoy-casa": "centrado",
-  "historial-worn": "centrado",
   // Señalan un elemento concreto.
   "fab-generar": "spotlight",
   "closet-tabs": "spotlight",

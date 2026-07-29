@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.53.0] - 2026-07-29
+
+### Fixed
+
+- **El primer tip de la app ya no promete algo que no hace.** Decía "cada día te espera un look nuevo aquí", pero el look no se genera solo: lo armas cuando se lo pides. La propia pantalla debajo del tip decía "tu look de hoy, aún no". Ahora dice lo que de verdad pasa: dime qué traes hoy y te armo el look, con tu clima y lo que hay en tu clóset.
+- **El tip de sumar ropa ya nombra el camino rápido.** Decía "con una foto" y anunciaba el más lento; ahora dice que subas varias de golpe y que yo saco cada prenda, que es lo que de verdad te ahorra la tarde.
+
+### Removed
+
+- **Fuera el tip de "márcale me lo puse".** Vivía en Historial, pero esa acción se mudó a Hoy —la card "¿te lo pusiste?" del día siguiente— así que mandaba a buscar un botón que ya no está ahí. La card pregunta sola, con sí o no de un tap. Quedan 8 tips.
+
 ## [0.2.52.0] - 2026-07-28
 
 ### Changed
