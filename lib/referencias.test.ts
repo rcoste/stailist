@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { REFERENCIAS_PRECARGADAS, referenciaPreset } from "./referencias";
+import {
+  REFERENCIAS_PRECARGADAS,
+  referenciaPreset,
+  presetsPara,
+} from "./referencias";
 
 // El catálogo entra al motor vía styleReferenceForEngine — estos tests pinnean
 // el contrato: ids únicos, summary con sustancia, tags acotados (el motor corta
@@ -47,5 +51,34 @@ describe("imágenes del preset — la regla para poder ofrecerlo", () => {
         expect(src).toMatch(/^\/archetypes\/[a-z0-9-]+\.png$/);
       }
     }
+  });
+});
+
+describe("presetsPara — a quién se le ofrece", () => {
+  it("a un hombre no se le ofrece un guardarropa de mujer", () => {
+    // Hoy los dos presets son de mujer: a un hombre la sección desaparece.
+    // Correcto — lo pendiente es sembrar un guardarropa de hombre, no prestarle
+    // faldas y mules mientras tanto.
+    expect(presetsPara("hombre")).toEqual([]);
+  });
+
+  it("a una mujer se le ofrece Carla y no María", () => {
+    const ids = presetsPara("mujer").map((r) => r.id);
+    expect(ids).toContain("carla");
+    expect(ids).not.toContain("maria");
+  });
+
+  it("sin género no se ofrece nada segmentado", () => {
+    expect(presetsPara(null).every((r) => !r.segmento)).toBe(true);
+  });
+
+  it("todo preset ofrecible declara su segmento", () => {
+    // Guard para el día que se siembre un guardarropa de hombre: si alguien le
+    // agrega imágenes sin poner `segmento`, se le ofrecería a todo el mundo.
+    const conImagen = REFERENCIAS_PRECARGADAS.filter(
+      (r) => (r.imagenes?.length ?? 0) > 0
+    );
+    expect(conImagen.length).toBeGreaterThan(0);
+    expect(conImagen.every((r) => !!r.segmento)).toBe(true);
   });
 });

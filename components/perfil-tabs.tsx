@@ -320,6 +320,7 @@ function EstiloTab({
         initial={styleReference}
         styleWords={styleWords}
         tieneCapsula={tieneCapsula}
+        gender={gender}
       />
     </div>
   );

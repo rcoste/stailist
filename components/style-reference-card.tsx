@@ -11,7 +11,7 @@ import {
   removeStyleReference,
   applyReferencePreset,
 } from "@/app/perfil/actions";
-import { REFERENCIAS_PRECARGADAS } from "@/lib/referencias";
+import { REFERENCIAS_PRECARGADAS, presetsPara } from "@/lib/referencias";
 import { StyleWordsCard } from "@/components/style-words-card";
 
 type Fit = { verdict: string; note: string };
@@ -30,18 +30,14 @@ type Preview = { summary: string; tags: string[]; fit: Fit; images: { path: stri
 
 // El atajo "usa el estilo de una de nuestras stylists" se apagó el 2026-07-28
 // porque en pantalla eran dos nombres y un párrafo: le pedías a alguien adoptar
-// un estilo que no puede ver. Vuelve, pero con la regla que faltaba — un preset
-// SOLO se ofrece si trae flat-lays de su propio guardarropa. Hoy eso deja fuera
-// a María (su guardarropa no está sembrado) y deja a Carla, cuyas 47 prendas ya
-// existen en la biblioteca con imagen. Cero costo de generación.
+// un estilo que no puede ver. Volvió con la regla que faltaba (solo con
+// flat-lays), pero le faltaba la segunda: el guardarropa de Carla es de MUJER y
+// se le estaba ofreciendo a hombres. Las dos viven ahora en presetsPara().
 //
 // Es también el experimento barato que decidimos antes de sembrar a María: si
 // con imágenes tampoco la usa nadie, sembrar otro guardarropa habría sido
 // generar 40 imágenes para nada. La métrica no necesita evento — se lee del
 // estado: profiles.style_reference->>'preset'.
-const PRESETS_VISIBLES = REFERENCIAS_PRECARGADAS.filter(
-  (r) => (r.imagenes?.length ?? 0) > 0
-);
 
 const VERDICT: Record<string, { label: string; cls: string }> = {
   va: { label: "te va increíble", cls: "bg-success/10 text-success" },
@@ -64,13 +60,20 @@ export function StyleReferenceCard({
   initial,
   styleWords = null,
   tieneCapsula = false,
+  gender = null,
+  conEtiqueta = true,
 }: {
   initial: StyleRef | null;
   /** El texto libre, ahora un renglón de esta card en vez de una card aparte. */
   styleWords?: string | null;
   /** ¿Ya tiene cápsula? Solo entonces avisamos que la deja desactualizada. */
   tieneCapsula?: boolean;
+  /** Para no ofrecerle el guardarropa de una stylist del otro segmento. */
+  gender?: "hombre" | "mujer" | null;
+  /** false en su página propia, donde el título de la página ya lo dice. */
+  conEtiqueta?: boolean;
 }) {
+  const presets = presetsPara(gender);
   const [saved, setSaved] = useState<StyleRef | null>(initial);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -225,7 +228,14 @@ export function StyleReferenceCard({
         className="hidden"
       />
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+        {/* En su página propia el encabezado ya dice "tu estilo de referencia":
+            repetirlo dos renglones abajo es ruido. Dentro de Perfil, donde la
+            card va entre otras, la etiqueta es lo que la nombra. */}
+        <span
+          className={`text-[11px] font-medium uppercase tracking-wide text-muted ${
+            conEtiqueta ? "" : "sr-only"
+          }`}
+        >
           Tu estilo de referencia
         </span>
         {saved && !preview && !busy ? (
@@ -353,13 +363,13 @@ export function StyleReferenceCard({
 
           {/* Referencias precargadas: el atajo sin fotos — estilos de nuestras
               stylists, aplicables con un tap. Apagado hasta que tengan imagen. */}
-          {PRESETS_VISIBLES.length > 0 ? (
+          {presets.length > 0 ? (
           <>
           <p className="mt-1 text-[12px] text-muted">
             ¿O te late el estilo de una de nuestras stylists?
           </p>
           <div className="flex flex-col gap-2">
-            {PRESETS_VISIBLES.map((r) => (
+            {presets.map((r) => (
               <button
                 key={r.id}
                 type="button"

@@ -31,6 +31,10 @@ export default async function PerfilReferenciaPage() {
       tags: sr.tags ?? [],
       fit: sr.fit ?? null,
       images: (data ?? []).map((s) => s.signedUrl).filter((u): u is string => !!u),
+      // Sin esto, "sumar foto" desde ESTA página mandaba keep:[] y las fotos que
+      // ya tenías se quedaban fuera de la referencia guardada. En /perfil sí
+      // viajaban; aquí no, y es justo la página a la que apunta el checklist.
+      paths,
     };
   }
 
@@ -48,7 +52,16 @@ export default async function PerfilReferenciaPage() {
         </h1>
       </div>
 
-      <StyleReferenceCard initial={styleReference} />
+      {/* Mismos props que en Perfil: esta página y aquella card son la MISMA
+          cosa, y cuando divergen se ven bugs de una sola pantalla (el texto
+          libre salía vacío aunque estuviera guardado). */}
+      <StyleReferenceCard
+        initial={styleReference}
+        styleWords={profile.style_words}
+        tieneCapsula={!!profile.capsule_target}
+        gender={profile.gender}
+        conEtiqueta={false}
+      />
     </div>
   );
 }

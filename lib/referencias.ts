@@ -23,6 +23,13 @@ export type ReferenciaPreset = {
    * son las que se sembraron de su guardarropa real.
    */
   imagenes?: string[];
+  /**
+   * A quién se le ofrece. Un guardarropa real es de una persona concreta: el de
+   * Carla son faldas al bies, mules y tops al cuerpo — ofrecérselo a un hombre
+   * es ofrecerle ropa que no se va a poner (Roberto lo vio en su propio perfil,
+   * 2026-07-28). Sin `segmento` el preset es para todos.
+   */
+  segmento?: "hombre" | "mujer";
 };
 
 export const REFERENCIAS_PRECARGADAS: ReferenciaPreset[] = [
@@ -30,6 +37,7 @@ export const REFERENCIAS_PRECARGADAS: ReferenciaPreset[] = [
     id: "carla",
     nombre: "Carla",
     desc: "statement y color: base limpia de neutros que remata con una pieza que habla",
+    segmento: "mujer",
     summary:
       "Base minimalista de neutros rematada con UNA pieza statement por look: un pop de color vivo, un print animal o un satén con caída. Siluetas relajadas con aire de resort — pantalones anchos de lino, tops al cuerpo, faldas midi al bies — y acentos que elevan: sandalia de tacón fino, dorados en capas. Editorial pero usable: un solo protagonista por look, el resto respira.",
     tags: ["statement sobre neutros", "aire resort", "midi al bies", "print como acento", "dorados"],
@@ -47,6 +55,7 @@ export const REFERENCIAS_PRECARGADAS: ReferenciaPreset[] = [
     id: "maria",
     nombre: "María",
     desc: "effortless y neutros: relajado, básicos bien puestos, cero esfuerzo aparente",
+    segmento: "mujer",
     summary:
       "Effortless de neutros: todo en fits relajados y baggy — jamás entallado — con la mezcla high-low como firma: una sudadera con pantalón sastre, un tank de costillas con blazer o trench, shorts de vestir con pieza especial. Una sola pieza protagonista por look (un accesorio con carácter o un twist en la prenda), el resto básicos impecables. Acentos western sutiles: cinturón con hebilla, bota vaquera.",
     tags: ["effortless", "fits relajados", "high-low con sastre", "básicos elevados", "western sutil"],
@@ -58,3 +67,21 @@ export const REFERENCIAS_PRECARGADAS: ReferenciaPreset[] = [
 
 export const referenciaPreset = (id: string): ReferenciaPreset | null =>
   REFERENCIAS_PRECARGADAS.find((r) => r.id === id) ?? null;
+
+/**
+ * Los presets que se le ofrecen a alguien. Dos filtros, los dos por la misma
+ * razón —no pedir que adoptes un estilo que no puedes juzgar o no puedes usar—:
+ * tiene que traer imágenes de su guardarropa Y ser de tu segmento.
+ *
+ * Hoy los dos presets son de mujer, así que a un hombre no se le ofrece ninguno
+ * y la sección entera desaparece. Es correcto: sembrar un guardarropa de hombre
+ * es el trabajo pendiente, no mostrarle el de una mujer mientras tanto.
+ */
+export function presetsPara(
+  gender: "hombre" | "mujer" | null
+): ReferenciaPreset[] {
+  return REFERENCIAS_PRECARGADAS.filter(
+    (r) =>
+      (r.imagenes?.length ?? 0) > 0 && (!r.segmento || r.segmento === gender)
+  );
+}

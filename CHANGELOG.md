@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.50.0] - 2026-07-28
+
+### Fixed
+
+- **El "qué sigue" del inicio ya muestra TODOS los pendientes.** Decía "2 pendientes" y enseñaba uno: anunciaba un dato y lo escondía. Ahora se listan todos, con jerarquía en vez de cinco filas iguales — el siguiente en grande y con su gancho, los demás en renglones compactos y tocables (si te late más el tercero, entras directo a ese). El bloque sigue cabiendo arriba del botón de armar tu look.
+- **El estilo de una stylist ya no se le ofrece a quien no le sirve.** El guardarropa de Carla es de mujer y le estaba apareciendo a hombres: faldas al bies y mules como propuesta de estilo. Ahora un estilo se ofrece solo si es de tu segmento; a los hombres la sección desaparece hasta que sembremos un guardarropa de hombre.
+- **"Afina tu estilo" con su página completa.** Entrando desde el inicio, el renglón de "¿algo más que deba saber?" salía vacío aunque tuvieras texto guardado, y sumar una foto ahí se llevaba por delante las que ya tenías. La página tenía media card; ahora es la misma que en Perfil.
+
 ## [0.2.49.0] - 2026-07-28
 
 ### Fixed
