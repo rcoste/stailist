@@ -5,6 +5,10 @@ docs_para_claude/
 .env
 .env.local
 .env*.local
+# Respaldos del .env (llevan secretos dentro). Los patrones de arriba NO los
+# cazan: ".env.local.bak-123" no termina en ".local".
+.env*.bak*
+*.bak-[0-9]*
 
 # Sistema
 .DS_Store
