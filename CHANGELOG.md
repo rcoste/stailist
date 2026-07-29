@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.52.0] - 2026-07-28
+
+### Changed
+
+- **Los tips ahora son una tarjeta, no un texto suelto sobre la pantalla apagada.** El texto blanco flotando funcionaba cuando estas pantallas estaban vacías; con el rediseño se llenaron de fotos y prendas, y el tip caía encima de una camiseta blanca y se volvía ilegible. Ahora tiene fondo propio: el contraste ya no depende de qué haya debajo.
+- **El tip apunta a lo que te está señalando.** Una punta lo conecta con el elemento iluminado, y la tarjeta va centrada en él — antes se alineaba a un lado y se leía como dos cosas sueltas.
+- **Se coloca donde quepa.** Debajo del elemento si hay lugar, arriba si no, midiendo su alto real. Antes caía siempre debajo asumiendo un alto fijo, y por eso aterrizaba encima de la fila de filtros o de la primera prenda.
+- **La pantalla se apaga más (de 72% a 84%).** Es el mismo nivel que ya usaban los tips centrados, los únicos que se veían bien.
+
 ## [0.2.51.0] - 2026-07-28
 
 ### Fixed

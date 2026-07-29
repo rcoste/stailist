@@ -148,7 +148,12 @@ function findTarget(id: string): HTMLElement | null {
   );
 }
 
-const PAD = 8;
+const PAD = 8; // aire entre el elemento real y el borde del recorte
+const GAP = 12; // separación entre el recorte y la nota
+const MARGEN = 16; // respiro mínimo contra los bordes de la pantalla
+
+const clamp = (v: number, min: number, max: number) =>
+  Math.min(Math.max(v, min), max);
 
 function CoachMark({
   id,
@@ -167,7 +172,10 @@ function CoachMark({
   // rect null + !center = target no encontrado todavía → no renderizamos.
   const [rect, setRect] = useState<Rect | null>(null);
   const [ready, setReady] = useState(center); // center no necesita target
+  // Alto real de la nota; 0 = aún sin medir (ver `medida`).
+  const [noteH, setNoteH] = useState(0);
   const okRef = useRef<HTMLButtonElement>(null);
+  const noteRef = useRef<HTMLDivElement>(null);
   // Por ref y no en las deps del efecto: el callback llega inline desde
   // HintChain, así que cambia de identidad en cada render y volvería a lanzar la
   // búsqueda del target una y otra vez.
@@ -225,6 +233,18 @@ function CoachMark({
     return () => window.removeEventListener("resize", onResize);
   }, [id, center]);
 
+  // Mide la nota (y la vuelve a medir si el texto reflowea, p.ej. al girar el
+  // teléfono). Sin esto la colocación tendría que adivinar el alto.
+  useLayoutEffect(() => {
+    const el = noteRef.current;
+    if (!el) return;
+    const medir = () => setNoteH(el.getBoundingClientRect().height);
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ready]);
+
   // Bloquea el scroll del body + Escape para cerrar + foco inicial en "entendido".
   useEffect(() => {
     if (!ready) return;
@@ -242,29 +262,47 @@ function CoachMark({
 
   if (!mounted || !ready) return null;
 
-  // Posición de la nota: debajo del hoyo si cabe, arriba si no; clamp horizontal.
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const NOTE_W = Math.min(340, vw - 32);
+  const NOTE_W = Math.min(340, vw - 2 * MARGEN);
+  const plano = center || !rect;
+  // La colocación necesita el alto REAL de la nota, que depende del largo del
+  // texto. Antes se asumía "~180px" y el fallo se pagaba en el peor momento: con
+  // un tip largo, la nota se salía por abajo. Se mide tras montar (noteH) y
+  // hasta entonces la nota va invisible — un salto de posición se nota más que
+  // un frame de espera.
+  const medida = plano || noteH > 0;
+
   let noteStyle: React.CSSProperties;
-  if (center || !rect) {
-    noteStyle = {
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%, -50%)",
-      width: NOTE_W,
-    };
+  // Dónde va la punta: arriba (la nota está DEBAJO del elemento) o abajo.
+  let punta: "arriba" | "abajo" | null = null;
+  let puntaX = 0;
+
+  if (plano) {
+    noteStyle = { left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: NOTE_W };
   } else {
-    const holeBottom = rect.top + rect.height + PAD;
     const holeTop = rect.top - PAD;
-    const left = Math.min(Math.max(rect.left - PAD, 16), vw - NOTE_W - 16);
-    // ~180px es el alto típico de la nota + acciones; si no cabe abajo, va arriba.
-    const below = holeBottom + 18;
-    if (below + 180 < vh) {
-      noteStyle = { left, top: below, width: NOTE_W };
+    const holeBottom = rect.top + rect.height + PAD;
+    // Centrada en el elemento, no alineada a su izquierda: con la punta, el
+    // centro es lo que hace que se lea "te hablo de ESTO".
+    const centroX = rect.left + rect.width / 2;
+    const left = clamp(centroX - NOTE_W / 2, MARGEN, Math.max(MARGEN, vw - NOTE_W - MARGEN));
+    const cabeAbajo = holeBottom + GAP + noteH + MARGEN <= vh;
+    const cabeArriba = holeTop - GAP - noteH - MARGEN >= 0;
+
+    if (cabeAbajo || !cabeArriba) {
+      noteStyle = { left, top: holeBottom + GAP, width: NOTE_W };
+      punta = "arriba";
     } else {
-      noteStyle = { left, bottom: vh - holeTop + 18, width: NOTE_W };
+      noteStyle = { left, top: holeTop - GAP - noteH, width: NOTE_W };
+      punta = "abajo";
     }
+    // Si no cabe ni arriba ni abajo (elemento enorme), la nota se queda donde
+    // toque pero sin punta: apuntar a algo que la tapa confunde más que ayuda.
+    if (!cabeAbajo && !cabeArriba) punta = null;
+    // La punta sigue al elemento dentro del ancho de la nota, con un mínimo de
+    // margen para no salirse por la esquina redondeada.
+    puntaX = clamp(centroX - left, 18, NOTE_W - 18);
   }
 
   return createPortal(
@@ -285,7 +323,10 @@ function CoachMark({
             width: rect.width + PAD * 2,
             height: rect.height + PAD * 2,
             borderRadius: rect.radius,
-            boxShadow: "0 0 0 200vmax rgb(10 10 10 / 0.72)",
+            // 0.84, igual que el velo plano del centrado. A 0.72 la pantalla
+            // seguía demasiado viva: el elemento iluminado competía con todo lo
+            // demás en vez de destacar, que es el único trabajo del velo.
+            boxShadow: "0 0 0 200vmax rgb(10 10 10 / 0.84)",
           }}
         >
           <span
@@ -307,31 +348,56 @@ function CoachMark({
         />
       )}
 
-      {/* Nota del coach (no cierra al tocarla). */}
+      {/* Nota del coach: una TARJETA con fondo propio, no texto flotando sobre
+          el velo (no cierra al tocarla).
+
+          Por qué la tarjeta: el texto suelto funcionaba cuando estas pantallas
+          estaban vacías. El rediseño las llenó de fotos y chips, y en 0.84 el
+          velo apaga el fondo pero no lo borra — la serif blanca caía encima de
+          una camiseta blanca y desaparecía. El fondo sólido hace que el
+          contraste del texto no dependa NUNCA de qué haya debajo. */}
       <div
-        className="hint-note absolute flex flex-col gap-3"
-        style={noteStyle}
+        ref={noteRef}
+        className="hint-note absolute"
+        // `visibility` y no `opacity`: la animación de entrada anima opacity y
+        // gana sobre el estilo inline, así que ocultarla por ahí no funciona.
+        style={{ ...noteStyle, visibility: medida ? undefined : "hidden" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* `.display` (no `.editorial`): .editorial fuerza font-style:normal
-            fuera de las cascade layers → gana sobre la utilidad `italic` y la
-            serif sale en redonda (se lee como la Bodoni del v2, ya abandonada).
-            .display solo fija la familia, así que aquí sí manda la itálica. */}
-        <p className="display text-[22px] font-normal italic leading-[1.4] text-on-accent">
-          <Icon
-            name="destello"
-            size={16}
-            strokeWidth={2}
-            className="mr-2 inline-block translate-y-px"
+        {/* La punta: es lo que dice "te hablo de ESTO" y no "hay un recuadro por
+            allá y un texto por acá". Sin borde propio — a este tamaño el borde
+            en dos lados de un rombo se lee como un defecto. */}
+        {punta ? (
+          <span
+            aria-hidden
+            className="absolute h-3 w-3 rotate-45 bg-accent"
+            style={{
+              left: puntaX - 6,
+              [punta === "arriba" ? "top" : "bottom"]: -5,
+            }}
           />
-          {children}
-        </p>
-        <div>
+        ) : null}
+        <div className="relative flex flex-col gap-3 rounded-lg border border-on-accent/15 bg-accent p-4">
+          {/* `.display` (no `.editorial`): .editorial fuerza font-style:normal
+              fuera de las cascade layers → gana sobre la utilidad `italic` y la
+              serif sale en redonda (se lee como la Bodoni del v2, ya abandonada).
+              .display solo fija la familia, así que aquí sí manda la itálica. */}
+          <p className="display text-[19px] font-normal italic leading-[1.35] text-on-accent">
+            <Icon
+              name="destello"
+              size={15}
+              strokeWidth={2}
+              className="mr-1.5 inline-block translate-y-px"
+            />
+            {children}
+          </p>
+          {/* El "entendido" a la derecha: sobre la tarjeta ya es lo único
+              tocable, y a la izquierda competía con el arranque del texto. */}
           <button
             ref={okRef}
             type="button"
             onClick={onClose}
-            className="rounded-sm bg-on-accent px-4 py-2.5 text-[13px] font-bold text-accent"
+            className="-mb-1 -mr-1 ml-auto min-h-9 rounded-sm px-3 text-[13px] font-bold text-on-accent transition-colors hover:bg-on-accent/10"
           >
             entendido
           </button>
