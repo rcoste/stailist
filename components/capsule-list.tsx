@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useContext, useMemo, useOptimistic, useState, useTransition } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
@@ -18,6 +27,7 @@ import {
   setCapsuleOverride,
 } from "@/app/closet/capsula/actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
+import { prewarmRenders, type PrewarmJob } from "@/lib/prewarm-renders";
 import { SuggestionCard } from "@/components/suggestion-card";
 import { MotivoSheet } from "@/components/motivo-sheet";
 import {
@@ -276,6 +286,35 @@ export function CapsuleList({
   const decidir = rows
     .filter((r) => r.base === "parecido" && r.decision !== "reject")
     .sort(byPrio);
+
+  // Las que se ven como CARD GRANDE y todavía no tienen imagen, en el orden en
+  // que aparecen. Solo esas: precalentar las 33 costaría un dineral en renders
+  // para llenar tiles que la persona ni va a mirar (ver lib/prewarm-renders).
+  const porPrecalentar: PrewarmJob[] = [...pendiente, ...falta]
+    .filter((r) => !catImgs[faltaKey(r.item)] && !faltaImage(r.item))
+    .map((r) => ({ key: faltaKey(r.item), args: idealArgs(r.item) }));
+
+  // La lista viva, en un ref, para que el efecto de abajo no dependa de un array
+  // que se recrea en cada render (misma técnica que el resto del archivo).
+  const jobsRef = useRef<PrewarmJob[]>(porPrecalentar);
+  useEffect(() => {
+    jobsRef.current = porPrecalentar;
+  });
+
+  // Dispara el precalentado UNA vez por visita. La firma en las deps es de
+  // strings (no del array) para que un re-render no lo relance, y el ref
+  // `lanzado` es el cinturón: pagar dos veces el mismo render sería tirar dinero.
+  const lanzado = useRef(false);
+  const firmaPrewarm = porPrecalentar.map((j) => j.key).join("|");
+  useEffect(() => {
+    if (lanzado.current || !firmaPrewarm) return;
+    lanzado.current = true;
+    const ac = new AbortController();
+    void prewarmRenders(jobsRef.current, onRendered, ac.signal);
+    // Salir de la cápsula cancela la fila: no tiene sentido seguir pagando
+    // renders de tiles que ya nadie está viendo.
+    return () => ac.abort();
+  }, [firmaPrewarm, onRendered]);
 
   return (
     <div className="flex flex-col gap-7">

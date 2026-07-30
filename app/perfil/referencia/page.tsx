@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { returnLabel, safeReturn } from "@/lib/return-to";
 import { StyleReferenceCard, type StyleRef } from "@/components/style-reference-card";
 
 // "Afina tu estilo" con ruta propia. Antes esta feature vivía enterrada en un tab
@@ -9,8 +10,15 @@ import { StyleReferenceCard, type StyleRef } from "@/components/style-reference-
 // StyleReferenceCard (subir 1-3 fotos → veredicto honesto → guardar).
 export const maxDuration = 60;
 
-export default async function PerfilReferenciaPage() {
+export default async function PerfilReferenciaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ return?: string }>;
+}) {
   const profile = await requireOnboarded();
+  // `?return=/hoy` cuando se llega desde el checklist de Home (ver lib/return-to).
+  const { return: ret } = await searchParams;
+  const returnTo = safeReturn(ret);
 
   // Firma las fotos de referencia (bucket privado) para las miniaturas — mismo
   // patrón que app/perfil/page.tsx.
@@ -40,8 +48,8 @@ export default async function PerfilReferenciaPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
-      <Link href="/perfil" className="text-sm font-medium text-muted hover:text-ink">
-        ← Perfil
+      <Link href={returnTo} className="text-sm font-medium text-muted hover:text-ink">
+        ← {returnLabel(returnTo)}
       </Link>
       <div className="mb-5 mt-2 flex flex-col gap-1.5">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">

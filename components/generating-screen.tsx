@@ -15,18 +15,36 @@ export function GeneratingScreen({
   phrases,
   intervalMs = 1900,
   tone = "light",
+  avisarTrasMs = 8000,
 }: {
   phrases: GenPhrase[];
   intervalMs?: number;
   /** "dark" para el takeover oscuro del try-on (mismo lenguaje, sobre #0a0a0a). */
   tone?: "light" | "dark";
+  /**
+   * A los cuántos ms aparece el aviso de "no salgas de la app". 0 lo apaga.
+   *
+   * Por tiempo y no por prop en cada llamada: solo importa cuando la espera ya
+   * es larga de verdad. Un try-on de 8s nunca lo enseña; la cápsula, que tarda
+   * ~40s, sí — y es justo donde Alberto perdió el proceso ("chance hay que
+   * poner mensaje de no salir de la tab/safari porque el proceso se rompe").
+   * En iOS, Safari suspende la pestaña al cambiar de app y la petición muere.
+   */
+  avisarTrasMs?: number;
 }) {
   const [i, setI] = useState(0);
+  const [avisar, setAvisar] = useState(false);
   useEffect(() => {
     if (phrases.length <= 1) return;
     const id = setInterval(() => setI((n) => (n + 1) % phrases.length), intervalMs);
     return () => clearInterval(id);
   }, [phrases.length, intervalMs]);
+
+  useEffect(() => {
+    if (!avisarTrasMs) return;
+    const id = setTimeout(() => setAvisar(true), avisarTrasMs);
+    return () => clearTimeout(id);
+  }, [avisarTrasMs]);
 
   const len = phrases.length;
   const prev = phrases[(i - 1 + len) % len];
@@ -71,6 +89,16 @@ export function GeneratingScreen({
           />
         ))}
       </div>
+      {/* Aparece solo si la espera se alargó. Ocupa su sitio desde el principio
+          (invisible) para que no empuje las frases al aparecer. */}
+      <p
+        className={`mt-2 max-w-[280px] text-[12.5px] leading-snug transition-opacity duration-500 ${
+          dark ? "text-on-accent/60" : "text-muted"
+        } ${avisar ? "opacity-100" : "opacity-0"}`}
+        aria-hidden={!avisar}
+      >
+        esto tarda un poco — quédate en la app, si te sales se cancela.
+      </p>
       <span className="sr-only" aria-live="polite">
         Creando…
       </span>

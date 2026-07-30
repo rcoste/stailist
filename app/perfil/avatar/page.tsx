@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { isBuild } from "@/lib/silueta";
 import { fotosBloqueadas } from "@/lib/edad";
+import { safeReturn } from "@/lib/return-to";
 import { AvatarWizard } from "@/components/avatar-wizard";
 
 // Wizard de creación de avatar digital (issue #1). Llega aquí desde el nudge de
@@ -12,20 +13,6 @@ import { AvatarWizard } from "@/components/avatar-wizard";
 // terminado — solo estar logueado y con género. La generación corre en
 // /api/avatar/generate.
 export const maxDuration = 60;
-
-const RETURNS = new Set(["/hoy", "/perfil", "/onboarding/wow"]);
-
-// Valida el destino de regreso SIN romper la query. El wow manda
-// `/onboarding/wow?look=<id>` para retomar ESE look al volver; comparar el string
-// completo contra el allowlist nunca hacía match y caía a /perfil (flujo roto:
-// tras crear el avatar en el onboarding te dejaba en Perfil en vez del try-on).
-// Validamos solo el pathname y conservamos la query. Guard anti open-redirect:
-// interno (empieza con "/") y no protocol-relative ("//host").
-function safeReturn(ret: string | undefined): string {
-  if (!ret || !ret.startsWith("/") || ret.startsWith("//")) return "/perfil";
-  const path = ret.split(/[?#]/)[0];
-  return RETURNS.has(path) ? ret : "/perfil";
-}
 
 export default async function PerfilAvatarPage({
   searchParams,

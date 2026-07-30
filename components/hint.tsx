@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { Icon } from "@/components/icon";
 import { dismissHint } from "@/lib/hints";
 import { HINT_MODO, type HintId } from "@/lib/hints-catalog";
+import { MARGEN, PAD, colocarNota, enPantalla } from "@/lib/coach-mark";
 
 // Tip de descubrimiento just-in-time. UNA por pantalla (el server decide cuál),
 // jamás bloquea el flujo, se cierra con un tap y no vuelve (profiles.hints_seen).
@@ -148,13 +149,6 @@ function findTarget(id: string): HTMLElement | null {
   );
 }
 
-const PAD = 8; // aire entre el elemento real y el borde del recorte
-const GAP = 12; // separación entre el recorte y la nota
-const MARGEN = 16; // respiro mínimo contra los bordes de la pantalla
-
-const clamp = (v: number, min: number, max: number) =>
-  Math.min(Math.max(v, min), max);
-
 function CoachMark({
   id,
   center,
@@ -200,11 +194,33 @@ function CoachMark({
   useLayoutEffect(() => {
     if (center) return;
     let timer = 0;
+    let acercado = false;
     const t0 = performance.now();
     const measure = () => {
       const el = findTarget(id);
       if (el) {
-        const r = el.getBoundingClientRect();
+        let r = el.getBoundingClientRect();
+        // El target existe pero puede estar FUERA DE LA PANTALLA (la cápsula
+        // tiene 15 filas; el botón al que apunta el tip vive en la número 9).
+        // Sin esto se dibujaba el velo con el hoyo y la nota en su posición
+        // real —a 1500px de scroll— y con el scroll ya bloqueado: pantalla
+        // negra, sin nota y sin forma de llegar a ella. Alberto lo reportó como
+        // "se puso negra y ya no puedo acceder aunque le di refresh"; no se
+        // curaba al recargar porque el tip solo se marca visto al tocarlo.
+        //
+        // Lo traemos a la vista ANTES de medir. El candado de scroll se pone
+        // después (efecto de `ready`), así que aquí todavía se puede mover.
+        if (!enPantalla(r, window.innerHeight) && !acercado) {
+          acercado = true;
+          el.scrollIntoView({ block: "center", behavior: "auto" });
+          r = el.getBoundingClientRect();
+        }
+        // Si ni acercándolo entra (contenedor sin scroll, elemento más alto que
+        // la pantalla), es preferible ceder el turno que iluminar la nada.
+        if (!enPantalla(r, window.innerHeight)) {
+          cedeRef.current?.();
+          return;
+        }
         const radius = getComputedStyle(el).borderRadius || "8px";
         setRect({ top: r.top, left: r.left, width: r.width, height: r.height, radius });
         setReady(true);
@@ -281,28 +297,12 @@ function CoachMark({
   if (plano) {
     noteStyle = { left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: NOTE_W };
   } else {
-    const holeTop = rect.top - PAD;
-    const holeBottom = rect.top + rect.height + PAD;
-    // Centrada en el elemento, no alineada a su izquierda: con la punta, el
-    // centro es lo que hace que se lea "te hablo de ESTO".
-    const centroX = rect.left + rect.width / 2;
-    const left = clamp(centroX - NOTE_W / 2, MARGEN, Math.max(MARGEN, vw - NOTE_W - MARGEN));
-    const cabeAbajo = holeBottom + GAP + noteH + MARGEN <= vh;
-    const cabeArriba = holeTop - GAP - noteH - MARGEN >= 0;
-
-    if (cabeAbajo || !cabeArriba) {
-      noteStyle = { left, top: holeBottom + GAP, width: NOTE_W };
-      punta = "arriba";
-    } else {
-      noteStyle = { left, top: holeTop - GAP - noteH, width: NOTE_W };
-      punta = "abajo";
-    }
-    // Si no cabe ni arriba ni abajo (elemento enorme), la nota se queda donde
-    // toque pero sin punta: apuntar a algo que la tapa confunde más que ayuda.
-    if (!cabeAbajo && !cabeArriba) punta = null;
-    // La punta sigue al elemento dentro del ancho de la nota, con un mínimo de
-    // margen para no salirse por la esquina redondeada.
-    puntaX = clamp(centroX - left, 18, NOTE_W - 18);
+    // La colocación es matemática pura y vive en lib/coach-mark (con tests): es
+    // la parte que, al fallar, se ve como una pantalla negra sin salida.
+    const c = colocarNota(rect, noteH, vw, vh, NOTE_W);
+    noteStyle = { left: c.left, top: c.top, width: NOTE_W };
+    punta = c.punta;
+    puntaX = c.puntaX;
   }
 
   return createPortal(

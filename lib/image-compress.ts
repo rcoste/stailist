@@ -32,3 +32,20 @@ export function comprimir(file: Blob, max = 1280, quality = 0.88): Promise<Blob>
     img.src = URL.createObjectURL(file);
   });
 }
+
+// Igual, pero devuelve un dataURL — el formato que come /api/analizar-prenda.
+// 1280px es el mismo tamaño del import del clóset: suficiente para que la IA lea
+// la tela, sin reventar el payload con una foto de 12 MP.
+export async function comprimirADataUrl(
+  file: Blob,
+  max = 1280,
+  quality = 0.85
+): Promise<string> {
+  const blob = await comprimir(file, max, quality);
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result as string);
+    fr.onerror = () => reject(new Error("read_failed"));
+    fr.readAsDataURL(blob);
+  });
+}
