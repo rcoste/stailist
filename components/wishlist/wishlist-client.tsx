@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
@@ -52,6 +52,29 @@ function comprimir(file: Blob): Promise<string> {
   });
 }
 
+// Lo que de verdad pasa mientras esperas, en orden: visión → color de la tela →
+// comparación contra tu paleta. El progreso es lenguaje, no un spinner (misma
+// regla que GeneratingScreen); y aquí se queda DENTRO de la tarjeta porque
+// agregar una prenda no merece apoderarse de la pantalla.
+const FRASES = ["leyendo la prenda…", "sacando su color real…", "¿va con tu paleta?"];
+
+function FraseRotando() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((n) => (n + 1) % FRASES.length), 2600);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span
+      key={i}
+      className="text-[12px] text-muted"
+      style={{ animation: "var(--dur-medium) var(--ease-enter) step-in both" }}
+    >
+      {FRASES[i]}
+    </span>
+  );
+}
+
 const BADGE: Record<Verdict, { label: string; tone: string; cls: string }> = {
   va: { label: "va contigo", tone: "✓", cls: "bg-success/10 text-success" },
   "no-ideal": { label: "no ideal", tone: "!", cls: "bg-warning/10 text-warning" },
@@ -76,6 +99,8 @@ export function WishlistClient({
   const [pending, start] = useTransition();
   const [tryonId, setTryonId] = useState<string | null>(null);
   const [combo, setCombo] = useState(false);
+  /** URL local de la prenda que se está analizando (tarjeta provisional). */
+  const [pendiente, setPendiente] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // El color y el nombre los saca la IA, NO el cálculo de color dominante del
@@ -95,6 +120,12 @@ export function WishlistClient({
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
+    // Tu foto entra a la reja AL INSTANTE, antes de analizar nada: la tienes en
+    // local, así que hacerte esperar 10s frente a un botón congelado era
+    // esconder algo que ya existía. La espera se vuelve ver tu prenda ya puesta
+    // ahí mientras se le llena el nombre y el color.
+    const previa = URL.createObjectURL(file);
+    setPendiente(previa);
     let hex: string | null = null;
     let verdict: Verdict | null = null;
     let nombre: string | null = null;
@@ -120,6 +151,8 @@ export function WishlistClient({
     if (hex && va.length) verdict = checkColor(hex, va, evita).verdict;
     const res = await saveToWishlist(file, hex, verdict, "upload", nombre);
     setBusy(false);
+    setPendiente(null);
+    URL.revokeObjectURL(previa);
     if (inputRef.current) inputRef.current.value = "";
     if (res.ok) router.refresh();
   }
@@ -181,7 +214,7 @@ export function WishlistClient({
         </button>
       ) : null}
 
-      {items.length === 0 ? (
+      {items.length === 0 && !pendiente ? (
         <div className="flex flex-col items-center gap-3 rounded-md border border-line bg-surface px-6 py-10 text-center">
           <p className="text-sm text-muted">
             aún no agregas nada. cuando veas algo en tienda o en línea, tómale foto
@@ -198,6 +231,22 @@ export function WishlistClient({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          {/* Provisional: misma caja que las demás para que al resolverse no
+              salte nada — solo se le llenan el nombre y el color. */}
+          {pendiente ? (
+            <div className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface">
+              <div className="relative aspect-[3/4] w-full bg-bg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={pendiente} alt="" className="h-full w-full object-cover" />
+              </div>
+              {/* 103px = el alto medido del cuerpo ya resuelto (nombre + chip +
+                  "pruébatela"). Igualarlo evita que la reja dé un salto justo
+                  cuando la prenda aparece. */}
+              <div className="flex min-h-[103px] flex-col justify-center gap-1 p-2">
+                <FraseRotando />
+              </div>
+            </div>
+          ) : null}
           {items.map((it) => (
             <div
               key={it.id}

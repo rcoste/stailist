@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.61.0] - 2026-07-30
+
+### Changed
+
+- **Al agregar una prenda a la wishlist, tu foto entra al instante.** El análisis se tarda unos segundos, y hasta ahora eso era un botón congelado que decía "agregando…" sin más. Ahora tu prenda aparece en la reja de inmediato —la foto ya la tienes— y adentro te va contando qué está pasando: leyendo la prenda, sacando su color real, viendo si va con tu paleta. La tarjeta se queda del mismo tamaño, así que nada salta cuando termina.
+
 ## [0.2.60.0] - 2026-07-30
 
 ### Fixed
