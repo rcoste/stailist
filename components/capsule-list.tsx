@@ -783,30 +783,25 @@ function SumaCard({
     }
     if (render.state === "idle") void render.start();
   };
-  // El eyebrow es "la categoría del hueco, o lo que vale" — nunca la razón (esa
-  // es la serif). Con tres candidatos, este es el orden: lo que acaba de pasar,
-  // lo que la prenda desbloquea, y si no, qué es este hueco.
+  // El eyebrow es contexto de una línea — nunca la razón (esa es la serif).
+  // Orden: lo que acaba de pasar (swap) > tu decisión (le da sentido al
+  // "cambiar" de al lado) > lo que la prenda desbloquea > el caso base.
   const eyebrow = swapped
     ? "te la cambié"
-    : unlock && unlock > 0
-      ? `+${unlock} looks`
-      : reject
-        ? (note ?? "lo desmentiste")
+    : reject
+      ? (note ?? "preferiste la sugerida")
+      : unlock && unlock > 0
+        ? `+${unlock} looks`
         : "te falta este básico";
 
-  // "cambiar" = enséñame la otra opción. Es OTRO eje que los tres del pie (que
-  // son veredictos sobre la prenda), y por eso vive arriba y no como cuarto
-  // botón — poner ambos abajo fue exactamente la ambigüedad del card viejo.
-  const topAction = reject && onChange
-    ? { label: "cambiar", icon: "repetir" as const, onClick: onChange }
-    : onReject && !row.atSwapCap
-      ? {
-          label: "cambiar",
-          icon: "repetir" as const,
-          onClick: () => onReject(null),
-          // El tip de la cápsula señala ESTE botón: es el que cambia la prenda.
-          hintTarget: "capsula-swap",
-        }
+  // "cambiar" = DESHACER tu decisión entre tu prenda y la sugerida. NUNCA
+  // "búscame otra" (corrección de Roberto, 2026-07-29: el primer corte lo usó
+  // así y revolvía los dos ejes que esta card vino a separar). El reemplazo
+  // vive dentro de "no me va", que primero pide el motivo — y ese motivo es lo
+  // que el motor usa para no proponer el mismo error (REASON_HINT).
+  const topAction =
+    reject && onChange
+      ? { label: "cambiar", icon: "repetir" as const, onClick: onChange }
       : null;
 
   return (
@@ -839,7 +834,18 @@ function SumaCard({
           active: wishSaved,
         },
       ]}
-      onNoMeVa={onQuitar}
+      noMeVa={
+        onQuitar
+          ? {
+              // Al tope de swaps ya no se ofrece reemplazo: la hoja salta el
+              // paso 2 y el motivo va directo al retiro.
+              puedeReemplazar: !!onReject && !row.atSwapCap,
+              onReemplazar: (r) => onReject?.(r),
+              onQuitar,
+              hintTarget: "capsula-swap",
+            }
+          : null
+      }
       resolved={resolvedMotivo ? { motivo: resolvedMotivo } : null}
       busy={swapBusy}
       busyLabel="buscando una alternativa…"

@@ -22,10 +22,17 @@ import {
 //  · los dos botones principales pesaban igual, ambos con icono y ambos
 //    partiendo su texto en dos líneas.
 //
-// La estructura nueva separa dos ejes que estaban revueltos:
+// La estructura separa dos ejes que estaban revueltos:
 //  · el PIE son veredictos sobre la prenda (me la quedo / la quiero / no me va);
-//  · la acción de arriba es "enséñame otra" o "búscala en mi clóset" — otro eje,
-//    y por eso no es un cuarto botón del pie.
+//  · la acción de ARRIBA no es un veredicto — es otro camino: en cápsula,
+//    "cambiar" DESHACE tu decisión entre tu prenda y la sugerida; en viaje,
+//    "en mi clóset" busca cubrir el hueco con lo que ya tienes.
+//
+// OJO con "cambiar" (corrección de Roberto, 2026-07-29): nunca significa
+// "búscame otra sugerencia". El primer corte de esta card lo usó así y revolvía
+// los dos ejes otra vez. Pedir un reemplazo es una CONSECUENCIA de que la prenda
+// no te va, así que vive dentro de "no me va": motivo primero (obligatorio),
+// y con el motivo en mano, la resolución — reemplazo o fuera.
 
 export type SuggestionFooterAction = {
   label: string;
@@ -46,7 +53,7 @@ export function SuggestionCard({
   foto,
   topAction,
   footer,
-  onNoMeVa,
+  noMeVa,
   resolved,
   busy = false,
   busyLabel,
@@ -60,17 +67,24 @@ export function SuggestionCard({
   porque: string;
   /** El tile de la foto — cada módulo trae el suyo (genera bajo demanda). */
   foto: React.ReactNode;
-  /** "cambiar" en cápsula, "buscar en mi clóset" en viaje. */
+  /** "cambiar" (deshacer tu decisión) en cápsula, "en mi clóset" en viaje. */
   topAction?: {
     label: string;
     icon: IconName;
     onClick: () => void;
-    /** id de hint que apunta a ESTE botón (el coach-mark lo busca por atributo). */
-    hintTarget?: string;
   } | null;
   footer: SuggestionFooterAction[];
-  /** Con handler, se agrega "no me va" al pie y pide motivo antes de resolver. */
-  onNoMeVa?: (reason: VetoReason) => void;
+  /** "no me va": pide el motivo (obligatorio) y con él en mano, la resolución —
+   *  reemplazo o fuera. Los DOS reciben el motivo: el reemplazo lo usa el motor
+   *  para no repetir el error; el retiro lo guarda como veto. */
+  noMeVa?: {
+    /** false cuando ya no se ofrecen más reemplazos (tope de swaps). */
+    puedeReemplazar: boolean;
+    onReemplazar: (reason: VetoReason) => void;
+    onQuitar: (reason: VetoReason) => void;
+    /** id de hint que apunta al botón "no me va" (lo busca el coach-mark). */
+    hintTarget?: string;
+  } | null;
   /** Ya resuelto: el card colapsa a este acuse (sin toast — el card ES el acuse). */
   resolved?: { motivo: string } | null;
   busy?: boolean;
@@ -79,6 +93,13 @@ export function SuggestionCard({
   razonCompacta?: boolean;
 }) {
   const [preguntando, setPreguntando] = useState(false);
+  // Motivo elegido en el paso 1 de la hoja; null = todavía en los chips.
+  const [motivo, setMotivo] = useState<VetoReason | null>(null);
+
+  const cerrarHoja = () => {
+    setPreguntando(false);
+    setMotivo(null);
+  };
 
   // Estado resuelto. El texto va en UN SOLO span junto al icono: partido en
   // nodos sueltos, el gap del flex se mete entre las palabras.
@@ -118,7 +139,6 @@ export function SuggestionCard({
               <button
                 type="button"
                 onClick={topAction.onClick}
-                data-hint-target={topAction.hintTarget}
                 className="relative -my-[15px] -mr-1.5 ml-auto flex min-h-11 shrink-0 items-center gap-[5px] px-1.5 text-[12px] font-semibold text-muted transition-colors hover:text-ink"
               >
                 <Icon name={topAction.icon} size={14} />
@@ -166,10 +186,11 @@ export function SuggestionCard({
               {a.label}
             </button>
           ))}
-          {onNoMeVa ? (
+          {noMeVa ? (
             <button
               type="button"
               onClick={() => setPreguntando(true)}
+              data-hint-target={noMeVa.hintTarget}
               className="flex h-[46px] min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-l border-line text-[13px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
             >
               <Icon name="equis" size={15} /> no me va
@@ -183,30 +204,73 @@ export function SuggestionCard({
       ) : null}
 
       {/* La hoja de motivo es OBLIGATORIA: "no me va" no resuelve sin motivo.
-          Cerrarla sin elegir deja el card como estaba. */}
-      {onNoMeVa ? (
-        <Sheet open={preguntando} onClose={() => setPreguntando(false)}>
-          <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
-            ¿por qué no?
-          </h3>
-          <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">
-            me sirve para no repetir el error.
-          </p>
-          <div className="mt-[15px] flex flex-wrap gap-[7px] pb-1">
-            {VETO_REASONS_OFRECIDOS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => {
-                  setPreguntando(false);
-                  onNoMeVa(r);
-                }}
-                className="flex min-h-11 items-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink2 transition-colors hover:border-ink hover:bg-tile"
-              >
-                {VETO_REASON_LABEL[r]}
-              </button>
-            ))}
-          </div>
+          Dos pasos — el motivo primero, y CON el motivo, la resolución:
+          reemplazo o fuera. Sin tope de swaps, el paso 2 se salta (solo queda
+          quitar). Cerrarla a medias deja el card como estaba. */}
+      {noMeVa ? (
+        <Sheet open={preguntando} onClose={cerrarHoja}>
+          {motivo === null ? (
+            <>
+              <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
+                ¿por qué no?
+              </h3>
+              <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">
+                me sirve para no repetir el error.
+              </p>
+              <div className="mt-[15px] flex flex-wrap gap-[7px] pb-1">
+                {VETO_REASONS_OFRECIDOS.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => {
+                      if (noMeVa.puedeReemplazar) {
+                        setMotivo(r);
+                      } else {
+                        cerrarHoja();
+                        noMeVa.onQuitar(r);
+                      }
+                    }}
+                    className="flex min-h-11 items-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink2 transition-colors hover:border-ink hover:bg-tile"
+                  >
+                    {VETO_REASON_LABEL[r]}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
+                vale — {VETO_REASON_LABEL[motivo]}.
+              </h3>
+              <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">
+                ¿te busco un reemplazo con eso en mente, o la quito?
+              </p>
+              <div className="mt-[15px] flex flex-col gap-[7px] pb-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const m = motivo;
+                    cerrarHoja();
+                    noMeVa.onReemplazar(m);
+                  }}
+                  className="flex min-h-11 items-center justify-center border border-ink bg-surface px-3.5 text-[13px] font-bold text-ink transition-colors hover:bg-tile"
+                >
+                  búscame un reemplazo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const m = motivo;
+                    cerrarHoja();
+                    noMeVa.onQuitar(m);
+                  }}
+                  className="flex min-h-11 items-center justify-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-muted transition-colors hover:border-ink hover:bg-tile hover:text-ink"
+                >
+                  solo quítala
+                </button>
+              </div>
+            </>
+          )}
         </Sheet>
       ) : null}
     </li>

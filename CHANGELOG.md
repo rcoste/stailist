@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.58.0] - 2026-07-29
+
+### Fixed
+
+- **"Cambiar" vuelve a significar lo que siempre significó: deshacer tu decisión.** En el card nuevo de ayer lo usé también como "búscame otra sugerencia", revolviendo dos cosas distintas (lo cachó Roberto). "Cambiar" solo aparece cuando ya elegiste entre tu prenda y la sugerida, y te deja volver a elegir. Punto.
+- **Pedir un reemplazo ahora vive dentro de "no me va" — con el motivo por delante.** Tocas "no me va", dices por qué, y con eso en mano decides: "búscame un reemplazo" (el motor usa tu motivo para no repetir el error) o "solo quítala". Antes el reemplazo salía sin motivo, así que el motor buscaba a ciegas. Si ya agotaste los reemplazos de ese hueco, el motivo va directo al retiro sin preguntarte de más.
+
 ## [0.2.57.0] - 2026-07-29
 
 ### Changed
