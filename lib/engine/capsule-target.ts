@@ -139,6 +139,7 @@ Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo
 Devuelve "items". Cada prenda:
 - nombre: etiqueta humana y específica, con color y material cuando aporte. Ej: "Cuello tortuga de lana merino azul marino", "Chukka de ante café".
 - tipo: clave corta normalizada, sin color. Ej: "cuello-tortuga", "chukka", "blazer", "jeans".
+- hueco: el ROL que cubre, en 2-4 palabras, minúsculas, sin color ni marca. Ej: "pantalón no denim", "tenis limpio", "abrigo de diario". Lo LEE la persona, así que va en español correcto y con acentos (a diferencia de "tipo", que es una llave interna).
 - category ∈ {${CATEGORIES.join(", ")}} — 'saco' para sacos/blazers/sastrería (pieza formal por ocasión); 'abrigo' SOLO para capas por clima (abrigo, cárdigan, parka). Un traje va como 'saco' + su pantalón 'bottom' aparte.
 - colorFamilia: familia simple ("marino", "gris", "camel", "blanco"…), dentro de su paleta.
 - formalidad ∈ {${FORMALIDADES.join(", ")}}
@@ -184,6 +185,7 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
                 properties: {
                   nombre: { type: "string" },
                   tipo: { type: "string" },
+                  hueco: { type: "string" },
                   category: { type: "string", enum: [...CATEGORIES] },
                   colorFamilia: { type: "string" },
                   formalidad: { type: "string", enum: [...FORMALIDADES] },
@@ -195,6 +197,7 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
                 required: [
                   "nombre",
                   "tipo",
+                  "hueco",
                   "category",
                   "colorFamilia",
                   "formalidad",

@@ -19,9 +19,9 @@ import {
 } from "@/app/closet/capsula/actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import { SuggestionCard } from "@/components/suggestion-card";
+import { MotivoSheet } from "@/components/motivo-sheet";
 import {
   IdealTileInner,
-  SelCheck,
   VER_PRENDA_LABEL,
   idealArgs,
   useIdealRender,
@@ -381,7 +381,6 @@ export function CapsuleList({
                   onToggleWish={() => toggleWish(r)}
                   swapBusy={swapBusy.has(r.index)}
                   swapErrored={swapError.has(r.index)}
-                  onNinguna={() => rejectItem(r.index, null)}
                   onReject={(reason) => rejectItem(r.index, reason)}
                   onQuitar={(reason) => quitarItem(r.index, reason)}
                   resolvedMotivo={resolved.get(r.index) ?? null}
@@ -473,7 +472,6 @@ export function CapsuleList({
                 unlock={unlockOf(r)}
                 swapBusy={swapBusy.has(r.index)}
                 swapErrored={swapError.has(r.index)}
-                onNinguna={() => rejectItem(r.index, null)}
                 onReject={(reason) => rejectItem(r.index, reason)}
                 onQuitar={(reason) => quitarItem(r.index, reason)}
                 resolvedMotivo={resolved.get(r.index) ?? null}
@@ -993,7 +991,6 @@ function DecideRow({
   unlock,
   swapBusy = false,
   swapErrored = false,
-  onNinguna,
   onReject,
   onQuitar,
   resolvedMotivo,
@@ -1012,12 +1009,11 @@ function DecideRow({
   onToggleWish: () => void;
   /** Cuántos looks desbloquea (para la card de hueco tras rechazar el parecido). */
   unlock?: number;
-  /** Tercer camino (feedback de Roberto): no te gusta NI la tuya NI la sugerida
-   *  → pide otra alternativa (mismo swap del camino A, sin razón). */
   swapBusy?: boolean;
   swapErrored?: boolean;
-  onNinguna?: () => void;
-  /** Swap con razón y "quitar": solo aplican ya rechazado (= hueco real). */
+  /** Tercer camino: no te va NI la tuya NI la sugerida. Sale por la hoja de
+   *  motivo (obligatoria) y de ahí a reemplazo o retiro — antes era un swap a
+   *  ciegas y el motivo, que es lo que el motor necesita, se perdía. */
   onReject?: (reason: VetoReason | null) => void;
   onQuitar?: (reason: VetoReason) => void;
   /** Ya resuelta con "no me va" (lo hereda la SumaCard del estado rechazado). */
@@ -1035,6 +1031,14 @@ function DecideRow({
   const idealSrc = catalogImages[faltaKey(item)] ?? faltaImage(item);
   const render = useIdealRender(idealArgs(item), idealSrc, onRendered);
   const [sel, setSel] = useState<null | "ideal" | "tuya">(null);
+  // La hoja de motivo del duelo: la MISMA que abre "no me va" en el pie del card
+  // ya resuelto (handoff §3 — las dos entradas llaman al mismo openAsk()).
+  const [preguntando, setPreguntando] = useState(false);
+  const [motivo, setMotivo] = useState<VetoReason | null>(null);
+  const cerrarHoja = () => {
+    setPreguntando(false);
+    setMotivo(null);
+  };
 
   const onTapIdeal = async () => {
     if (render.state === "ready") {
@@ -1046,40 +1050,48 @@ function DecideRow({
     if (ok) setSel("ideal");
   };
 
+  // "cambiar" desde cualquier estado resuelto: DESHACE la decisión (el override
+  // es un toggle) y devuelve el card al duelo con la selección limpia. Reabrirlo
+  // es parte del trabajo: sin `onExpandir` volvías a la fila colapsada y había
+  // que picarle otra vez para ver lo que ibas a cambiar.
+  const volverAlDuelo = (d: CapsuleDecision) => {
+    setSel(null);
+    onDecide(index, d);
+    onExpandir?.();
+  };
+
   if (decision === "accept") {
+    // Elegiste la TUYA. Mismo card de sugerencia que los demás estados — pero
+    // con tu prenda al frente y sin pie: no hay veredictos que ofrecer sobre una
+    // prenda que ya está en tu clóset. La única salida es deshacer.
     return (
-      <li className="flex items-center gap-2.5 rounded-md border border-line bg-accent-soft p-3.5">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-          <Icon name="check" size={13} strokeWidth={2.4} />
-        </span>
-        {/* Lidera con TU prenda (lo que elegiste), no con la ideal: la palomita
-            + el nombre ideal se leían como "elegí la ideal" cuando en realidad
-            optaste por la tuya. */}
-        <div className="flex min-w-0 flex-col">
-          <span className="text-sm font-medium text-ink">
-            {by ? `Tu ${by}` : item.nombre}
-          </span>
-          {by ? (
-            <span className="truncate text-xs text-muted">
-              cubre el hueco de “{item.nombre}”
+      <SuggestionCard
+        eyebrow="en tu clóset"
+        nombre={by ?? item.nombre}
+        porque="listo — ese hueco lo cubre lo que ya traes."
+        foto={
+          src ? (
+            <Image src={src} alt={by ?? ""} fill sizes="86px" className="object-contain" />
+          ) : (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <Icon name="gancho" size={20} className="text-ink/25" />
             </span>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={() => onDecide(index, "accept")}
-          className="ml-auto flex min-h-11 shrink-0 items-center text-xs font-medium text-accent underline underline-offset-2"
-        >
-          cambiar
-        </button>
-      </li>
+          )
+        }
+        topAction={{
+          label: "cambiar",
+          icon: "repetir",
+          onClick: () => volverAlDuelo("accept"),
+        }}
+        footer={[]}
+      />
     );
   }
 
-  if (decision === "reject") {
-    // Rechazar el "parecido" lo vuelve un hueco REAL: debe tener las mismas
-    // puertas que un hueco de "lo que más te suma" (swap, quitar, desbloqueo).
-    // Antes solo traía "ya la tengo"/wishlist y quedaba huérfano.
+  // Elegiste la SUGERIDA (o la descartaste con motivo, que resuelve igual). El
+  // hueco es real: le tocan las mismas puertas que a un hueco de "lo que más te
+  // suma" (ya la tengo · wishlist · no me va), y "cambiar" para volver al duelo.
+  if (decision === "reject" || resolvedMotivo) {
     return (
       <SumaCard
         row={row}
@@ -1090,8 +1102,9 @@ function DecideRow({
         onOwn={onOwn}
         wishSaved={wishSaved}
         onToggleWish={onToggleWish}
-        reject
-        onChange={() => onDecide(index, "reject")}
+        reject={decision === "reject"}
+        note="la sugerida"
+        onChange={decision === "reject" ? () => volverAlDuelo("reject") : undefined}
         onZoom={onZoom}
         swapBusy={swapBusy}
         swapErrored={swapErrored}
@@ -1112,7 +1125,7 @@ function DecideRow({
         <button
           type="button"
           onClick={onExpandir}
-          className="flex w-full items-center gap-2.5 rounded-md border border-line bg-surface p-3 text-left transition-colors hover:border-ink"
+          className="flex w-full items-center gap-2.5 border border-line bg-surface p-3 text-left transition-colors hover:border-ink"
         >
           <span className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
             <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="40px" restLabel="" />
@@ -1120,7 +1133,7 @@ function DecideRow({
           <span className="text-[10px] font-bold text-faint">vs</span>
           <span className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
             {src ? (
-              <Image src={src} alt={by ?? ""} fill sizes="40px" className="object-cover" />
+              <Image src={src} alt={by ?? ""} fill sizes="40px" className="object-contain" />
             ) : (
               <span className="flex h-full w-full items-center justify-center">
                 <Icon name="gancho" size={13} className="text-ink/25" />
@@ -1141,128 +1154,162 @@ function DecideRow({
     );
   }
 
-  // Abierta — "elige tocando": la sugerida (la que falta) vs la tuya. Tocar la
-  // sugerida sin imagen la GENERA antes de poder elegirla (nunca eliges un vacío).
+  // Abierta — EL DUELO. Dos columnas idénticas y sin preselección: si una llega
+  // más grande, el card ya decidió por el usuario antes de que comparara.
+  // Tocar la sugerida sin imagen la GENERA antes de poder elegirla (nunca eliges
+  // un vacío).
   return (
-    <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-[13px]">
-      <div className="flex flex-col">
-        <span className="text-[15px] font-semibold leading-tight text-ink">{item.nombre}</span>
-        <span className="mt-0.5 text-[11.5px] leading-snug text-muted">{item.porque}</span>
-        {/* EN QUÉ difiere la tuya de la ideal: sin esto la comparación te deja
-            adivinando de las fotos (dos camisas azul rey que solo cambian de
-            manga). Los matches viejos no lo traen → simplemente no se muestra. */}
-        {row.difiere ? (
-          <span className="mt-1.5 flex w-fit items-center gap-1 rounded-sm bg-tile px-1.5 py-[3px] text-[10.5px] font-medium text-muted">
-            <Icon name="sliders" size={11} /> cambia: {row.difiere}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5">
-        {/* LA SUGERIDA (la que falta) */}
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-accent">
-            la sugerida
-          </span>
-          <button
-            type="button"
-            onClick={onTapIdeal}
-            className={`relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border bg-tile ${
-              sel === "ideal" ? "border-accent shadow-[0_0_0_2px] shadow-accent" : "border-line"
-            }`}
-          >
-            <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="120px" />
-            {sel === "ideal" ? <SelCheck /> : null}
-          </button>
-          <span className="truncate text-[11px] font-medium text-ink">
-            {item.nombre} <span className="font-normal text-muted">· la que falta</span>
-          </span>
-        </div>
-
-        {/* LO MÁS PARECIDO (tu prenda). El rótulo decía "ya la tienes", pero esta
-            card solo sale cuando el match fue "parecido" — afirmar que ya la
-            tienes hacía que cualquier match imperfecto se leyera como error
-            (feedback de Roberto: henley sugerido vs térmica "que ya tienes"). */}
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-muted">
-            lo más parecido
-          </span>
-          <button
-            type="button"
-            onClick={() => setSel("tuya")}
-            className={`relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-sm border bg-tile ${
-              sel === "tuya" ? "border-accent shadow-[0_0_0_2px] shadow-accent" : "border-line"
-            }`}
-          >
-            {src ? (
-              <Image src={src} alt={by ?? ""} fill sizes="120px" className="object-cover" />
-            ) : (
-              <Icon name="gancho" size={20} className="text-muted" />
-            )}
-            {sel === "tuya" ? <SelCheck /> : null}
-          </button>
-          <span className="truncate text-[11px] font-medium text-ink">
-            {by} <span className="font-normal text-muted">· en tu clóset</span>
-          </span>
-        </div>
-      </div>
-
-      {sel === null ? (
-        <div className="flex flex-col items-center gap-0.5">
-          <p className="text-center text-[11.5px] text-muted">
-            Toca la prenda que prefieras para este hueco
-          </p>
-          {/* Tercer camino: ninguna de las dos. Reusa el swap del camino A —
-              la IA trae otra sugerencia para el mismo hueco (tope 2). */}
-          {onNinguna && !row.atSwapCap ? (
-            swapBusy ? (
-              <span className="flex min-h-11 items-center gap-1.5 text-[11.5px] text-muted">
-                <Spinner className="h-3 w-3" /> buscando otra sugerencia…
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={onNinguna}
-                className="flex min-h-11 items-center text-[11.5px] font-semibold text-muted underline underline-offset-2 transition-colors hover:text-ink"
-              >
-                ninguna me convence — cámbiala
-              </button>
-            )
+    <li className="border border-line bg-surface">
+      {/* a · cabecera. El rótulo nombra EL HUECO y la nota lo argumenta: nunca
+          dicen lo mismo, y ninguno repite el nombre de las prendas (ese vive en
+          el pie de su columna). */}
+      <div className="border-b border-line2 px-[13px] pb-[11px] pt-3">
+        <span className="block truncate text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
+          te falta
+          {item.hueco ? (
+            <>
+              {" · "}
+              <b className="text-ink">{item.hueco}</b>
+            </>
           ) : null}
-          {swapErrored ? (
-            <span className="text-[10.5px] text-error">
-              no pude traer otra — inténtalo de nuevo
+        </span>
+        <div className="mt-1.5 flex items-start gap-[9px]">
+          <span aria-hidden className="display shrink-0 pt-1 text-[14px] leading-none text-ink">
+            ✦
+          </span>
+          <p className="display text-[16px] italic leading-5 text-ink2">{item.porque}</p>
+        </div>
+      </div>
+
+      {/* b · el duelo, 50/50. El `gap-px` sobre el fondo ES la hairline que las
+          separa (una sola línea, sin bordes que se dupliquen). */}
+      <div className="grid grid-cols-2 gap-px bg-line2">
+        <DuelOp
+          rotulo="la sugerida"
+          nombre={item.nombre}
+          elegida={sel === "ideal"}
+          onClick={onTapIdeal}
+        >
+          <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="172px" />
+        </DuelOp>
+        <DuelOp
+          rotulo="en tu clóset"
+          nombre={by ?? "tu prenda"}
+          elegida={sel === "tuya"}
+          onClick={() => setSel("tuya")}
+        >
+          {src ? (
+            <Image src={src} alt={by ?? ""} fill sizes="172px" className="object-contain" />
+          ) : (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <Icon name="gancho" size={22} className="text-ink/25" />
             </span>
-          ) : null}
+          )}
+        </DuelOp>
+      </div>
+
+      {/* c · el botón de elegir: aparece al picar, y su label NOMBRA la elección.
+          Uno solo y de ancho completo — alineado con una columna se leería como
+          el pie de esa columna. No es negro relleno: ese está reservado a
+          "generar" en toda la app. */}
+      {sel ? (
+        <button
+          type="button"
+          onClick={() => onDecide(index, sel === "tuya" ? "accept" : "reject")}
+          style={{ animation: "step-in var(--dur-short) var(--ease-enter) both" }}
+          className="flex h-[52px] w-full items-center justify-center border-t border-line bg-accent-soft text-[14.5px] font-bold text-ink transition-colors hover:bg-line2"
+        >
+          elegir {sel === "ideal" ? "la sugerida" : "la tuya"}
+        </button>
+      ) : null}
+
+      {/* d · la salida, DENTRO del card: en una lista de varios duelos, una
+          salida por fuera no se sabría a cuál pertenece. Abre la MISMA hoja de
+          motivo que el "no me va" del card ya resuelto. */}
+      {swapBusy ? (
+        <div className="flex min-h-11 items-center justify-center gap-2 border-t border-line2 text-[12.5px] text-muted">
+          <Spinner className="h-3.5 w-3.5" /> buscando una alternativa…
         </div>
-      ) : (
-        <div className="flex items-center gap-2.5">
-          <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-ink">
-            {sel === "tuya" ? (
-              <>
-                Te quedas con tus <b>{by}</b>
-                <span className="block text-[10.5px] text-muted">
-                  cubren el hueco de “{item.nombre}”
-                </span>
-              </>
-            ) : (
-              <>
-                Quieres los <b>{item.nombre}</b>
-                <span className="block text-[10.5px] text-muted">
-                  siguen en tu lista de lo que falta
-                </span>
-              </>
-            )}
-          </span>
-          <button
-            type="button"
-            onClick={() => onDecide(index, sel === "tuya" ? "accept" : "reject")}
-            className="min-h-10 shrink-0 rounded-sm bg-accent px-4 text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-deep"
-          >
-            Confirmar
-          </button>
-        </div>
-      )}
+      ) : onQuitar ? (
+        <button
+          type="button"
+          onClick={() => setPreguntando(true)}
+          className="flex min-h-11 w-full items-center justify-center border-t border-line2 text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
+        >
+          ninguna de las dos me va
+        </button>
+      ) : null}
+
+      {swapErrored ? (
+        <p className="border-t border-line2 px-[13px] py-2 text-[11px] text-error">
+          No pude buscar otra — inténtalo de nuevo.
+        </p>
+      ) : null}
+
+      {onQuitar ? (
+        <MotivoSheet
+          open={preguntando}
+          onClose={cerrarHoja}
+          motivo={motivo}
+          onMotivo={setMotivo}
+          // Al tope de swaps ya no hay reemplazo que ofrecer: el chip resuelve
+          // directo al retiro.
+          puedeReemplazar={!!onReject && !row.atSwapCap}
+          onReemplazar={(r) => onReject?.(r)}
+          onQuitar={onQuitar}
+        />
+      ) : null}
     </li>
+  );
+}
+
+// Una columna del duelo. Es un <button> con `flex-direction:column` a propósito:
+// un <button> centra su contenido verticalmente, y con un nombre de una línea y
+// otro de dos las dos columnas quedaban desalineadas.
+function DuelOp({
+  rotulo,
+  nombre,
+  elegida,
+  onClick,
+  children,
+}: {
+  rotulo: string;
+  nombre: string;
+  elegida: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button type="button" onClick={onClick} className="flex flex-col bg-surface text-left">
+      {/* Alto FIJO (no aspect-ratio): así las dos fotos y los dos pies caen en la
+          misma línea base sin importar la proporción de cada archivo. */}
+      <span className="relative block h-[172px] w-full overflow-hidden bg-tile">
+        {children}
+        {/* Elegida = anillo de tinta sobre la foto. SIN relleno de fondo: ese
+            gris es el del botón de elegir, y juntos se fundían en un bloque. */}
+        {elegida ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30 shadow-[inset_0_0_0_2px_var(--c-ink)]"
+          />
+        ) : null}
+      </span>
+      <span
+        className={`block px-[11px] pt-[9px] text-[9.5px] font-bold uppercase tracking-[0.13em] ${
+          elegida ? "text-ink" : "text-faint"
+        }`}
+      >
+        {rotulo}
+      </span>
+      {/* Dos líneas reservadas: un nombre largo no debe correr el rótulo de su
+          columna respecto al de la otra. */}
+      <span
+        className={`block min-h-12 px-[11px] pb-[11px] pt-[3px] text-[13.5px] leading-[17px] tracking-[-0.005em] text-ink ${
+          elegida ? "font-bold" : "font-semibold"
+        }`}
+      >
+        {nombre}
+      </span>
+    </button>
   );
 }

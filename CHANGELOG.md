@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.65.0] - 2026-07-30
+
+### Changed
+
+- **"Decide si te sirve" ahora es un duelo parejo.** La prenda sugerida salía 55% más ancha que la tuya: el diseño ya había votado antes de que tú compararas. Ahora las dos columnas miden exactamente igual, con la foto completa (no recortada) y sin nada preseleccionado. Cuando picas una, aparece un solo botón de ancho completo que dice qué estás eligiendo — "elegir la sugerida" o "elegir la tuya" — en vez de dos botones al 50% que se leían como el pie de la columna de al lado.
+- **Cada card resuelve una sola cosa.** El card mezclaba elegir prenda, calificarla, mandarla a wishlist y descartarla. Ahora eliges primero, y las salidas aparecen después, cuando ya hay algo sobre qué opinar.
+- **Al decidir, el card se convierte en la misma tarjeta de sugerencia del resto de la app** — con su foto, su razón en la voz del coach y "cambiar" para deshacer. Antes, quedarte con tu prenda te dejaba una palomita y una línea de texto; ahora ves cuál prenda te quedaste.
+- **"Ninguna de las dos me va" ahora te pregunta por qué.** Antes cambiaba la sugerencia a ciegas: la IA proponía otra sin saber qué había fallado. Ahora abre la misma hoja de motivo que ya usa "no me va", y con el motivo en mano decides si quieres un reemplazo o quitarla — y ese motivo es justo lo que el motor necesita para no repetir el error.
+- **El rótulo del card nombra el hueco, no la prenda.** El nombre salía dos veces (de título y otra vez bajo su foto). Ahora arriba dice de qué hueco se trata ("te falta · pantalón no denim") y la prenda se nombra una sola vez, en su columna. Las cápsulas nuevas traen ese nombre; las de antes muestran solo "te falta".
+
+### Fixed
+
+- **Las prendas sugeridas ya no salen recortadas.** Se mostraban con recorte de relleno, y a las camisas les comía el cuello y a los zapatos la punta. Ahora se ven completas sobre su fondo.
+
 ## [0.2.64.0] - 2026-07-30
 
 ### Changed

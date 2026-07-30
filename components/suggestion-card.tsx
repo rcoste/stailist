@@ -2,13 +2,9 @@
 
 import { useState } from "react";
 import { Icon, type IconName } from "@/components/icon";
-import { Sheet } from "@/components/sheet";
+import { MotivoSheet } from "@/components/motivo-sheet";
 import { Spinner } from "@/components/spinner";
-import {
-  VETO_REASONS_OFRECIDOS,
-  VETO_REASON_LABEL,
-  type VetoReason,
-} from "@/lib/capsule";
+import { type VetoReason } from "@/lib/capsule";
 
 // El card de prenda sugerida — cápsula ideal y viaje (handoff
 // design_handoff_capsula_card). Antes eran dos cards distintas para el mismo
@@ -177,6 +173,11 @@ export function SuggestionCard({
         <div className="flex min-h-[46px] items-center justify-center gap-2 border-t border-line text-[13px] text-muted">
           <Spinner className="h-3.5 w-3.5" /> {busyLabel ?? "un segundo…"}
         </div>
+      ) : footer.length === 0 && !noMeVa ? (
+        // Sin salidas no hay pie: el `border-t` sin botones dejaba una raya
+        // suelta bajo el contenido. Pasa en el estado "en tu clóset" del card de
+        // duelo, donde la decisión ya no tiene veredictos que ofrecer.
+        null
       ) : (
         <div className="flex border-t border-line">
           {footer.map((a) => (
@@ -212,74 +213,18 @@ export function SuggestionCard({
       ) : null}
 
       {/* La hoja de motivo es OBLIGATORIA: "no me va" no resuelve sin motivo.
-          Dos pasos — el motivo primero, y CON el motivo, la resolución:
-          reemplazo o fuera. Sin tope de swaps, el paso 2 se salta (solo queda
-          quitar). Cerrarla a medias deja el card como estaba. */}
+          Es la MISMA que abre la salida del duelo (`ninguna de las dos me va`)
+          — por eso vive en su propio componente. */}
       {noMeVa ? (
-        <Sheet open={preguntando} onClose={cerrarHoja}>
-          {motivo === null ? (
-            <>
-              <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
-                ¿por qué no?
-              </h3>
-              <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">
-                me sirve para no repetir el error.
-              </p>
-              <div className="mt-[15px] flex flex-wrap gap-[7px] pb-1">
-                {VETO_REASONS_OFRECIDOS.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => {
-                      if (noMeVa.puedeReemplazar) {
-                        setMotivo(r);
-                      } else {
-                        cerrarHoja();
-                        noMeVa.onQuitar(r);
-                      }
-                    }}
-                    className="flex min-h-11 items-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink2 transition-colors hover:border-ink hover:bg-tile"
-                  >
-                    {VETO_REASON_LABEL[r]}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
-                vale — {VETO_REASON_LABEL[motivo]}.
-              </h3>
-              <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">
-                ¿te busco un reemplazo con eso en mente, o la quito?
-              </p>
-              <div className="mt-[15px] flex flex-col gap-[7px] pb-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const m = motivo;
-                    cerrarHoja();
-                    noMeVa.onReemplazar(m);
-                  }}
-                  className="flex min-h-11 items-center justify-center border border-ink bg-surface px-3.5 text-[13px] font-bold text-ink transition-colors hover:bg-tile"
-                >
-                  búscame un reemplazo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const m = motivo;
-                    cerrarHoja();
-                    noMeVa.onQuitar(m);
-                  }}
-                  className="flex min-h-11 items-center justify-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-muted transition-colors hover:border-ink hover:bg-tile hover:text-ink"
-                >
-                  solo quítala
-                </button>
-              </div>
-            </>
-          )}
-        </Sheet>
+        <MotivoSheet
+          open={preguntando}
+          onClose={cerrarHoja}
+          motivo={motivo}
+          onMotivo={setMotivo}
+          puedeReemplazar={noMeVa.puedeReemplazar}
+          onReemplazar={noMeVa.onReemplazar}
+          onQuitar={noMeVa.onQuitar}
+        />
       ) : null}
     </li>
   );
