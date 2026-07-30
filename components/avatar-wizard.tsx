@@ -776,7 +776,12 @@ export function AvatarWizard({
         <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
           <span className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-accent" />
           <p className="text-sm font-medium text-ink">{genMsg}</p>
-          <p className="text-xs text-muted">Tarda unos segundos.</p>
+          {/* El aviso va por delante y no cuando ya se rompió: generar el avatar
+              tarda ~40s, y en iOS cambiar de app suspende la pestaña y mata la
+              petición. Alberto lo perdió justo aquí, al aceptar el retrato. */}
+          <p className="max-w-[280px] text-xs leading-snug text-muted">
+            Tarda como un minuto — quédate en la app, si te sales se cancela.
+          </p>
         </div>
       )}
 

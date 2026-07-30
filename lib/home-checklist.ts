@@ -9,6 +9,13 @@
 // → prendas (tu ropa real) → estilo (afinar hacia una referencia) → silueta
 // (afinar a tu cuerpo, solo aplica a hombre/mujer) → cápsula al final (una cápsula
 // de básicos de arquetipo no dice nada; cobra sentido cuando ya metiste prendas).
+//
+// Los pasos que abren una pantalla-wizard llevan `?return=/hoy`: al terminar hay
+// que devolver a la persona AQUÍ, a la lista de pasos que venía siguiendo. Sin
+// eso el avatar te dejaba en Perfil y la cadena se rompía (feedback de Alberto,
+// 2026-07-30: "después del avatar se rompió la continuidad de lo que iba a
+// hacer"). No lo llevan /closet (es una pestaña de la barra: nunca pierdes el
+// hilo) ni la cápsula (al guardarla te lleva a verla, que es lo que quieres).
 
 export type ChecklistStepId =
   | "avatar"
@@ -47,7 +54,7 @@ export function buildHomeChecklist(s: ChecklistSignals): HomeChecklist | null {
       id: "avatar",
       label: "créate tu avatar",
       hint: "te pruebo los looks encima",
-      href: "/perfil/avatar",
+      href: "/perfil/avatar?return=%2Fhoy",
       done: s.hasAvatar,
     },
     {
@@ -61,7 +68,7 @@ export function buildHomeChecklist(s: ChecklistSignals): HomeChecklist | null {
       id: "estilo",
       label: "afina tu estilo",
       hint: "sube un look que te encante",
-      href: "/perfil/referencia",
+      href: "/perfil/referencia?return=%2Fhoy",
       done: s.hasStyleReference,
     },
     // Silueta solo para géneros con contenido propio (hombre/mujer).
@@ -71,7 +78,7 @@ export function buildHomeChecklist(s: ChecklistSignals): HomeChecklist | null {
             id: "silueta" as const,
             label: "cuéntame de tu cuerpo",
             hint: "afino los looks a tu medida",
-            href: "/perfil/silueta",
+            href: "/perfil/silueta?return=%2Fhoy",
             done: s.hasSilueta,
           },
         ]

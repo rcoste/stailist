@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.66.0] - 2026-07-30
+
+Los primeros arreglos del feedback de Alberto, el segundo tester real.
+
+### Fixed
+
+- **La pantalla ya no se queda negra y sin salida.** Si un tip te iba a señalar un botón que estaba más abajo de lo que se veía, se pintaba el velo oscuro con el foco y el texto fuera de la pantalla — y con el scroll bloqueado. Quedaba todo negro, y recargar no lo arreglaba. Ahora el tip primero trae el botón a la vista, y si aun así no cabe, se salta y le cede el turno al siguiente. La nota nunca puede quedar fuera de la pantalla.
+- **"¿Me va este color?" ya lee la prenda y no el fondo de la foto.** En una foto de producto de tienda, el fondo blanco del estudio ocupa más espacio que la prenda: el veredicto salía sobre un blanco que nadie iba a comprar. Ahora lo lee la misma IA que ya usa tu wishlist. En la foto de prueba, antes leía un gris `#e0e0e0` (el fondo) y ahora lee `#26314d` (el azul marino real). Además te dice qué prenda vio, no solo un código de color.
+- **Terminar un paso del "qué sigue" ya no te deja tirado.** Al crear tu avatar desde la lista de Home acababas en tu Perfil, sin rastro de los otros pasos que ibas siguiendo. Ahora vuelves a Home, con el paso tachado y el siguiente esperándote. Igual para "afina tu estilo" y "cuéntame de tu cuerpo".
+
+### Changed
+
+- **Tu cápsula ya no se ve como una pared de recuadros grises.** Las imágenes de las prendas sugeridas se generaban solo cuando las tocabas, así que la primera vez que veías tu cápsula estaba casi toda vacía. Ahora las de arriba se van generando solas de fondo y aparecen mientras la ves.
+- **Te avisamos antes de que se rompa.** Crear tu avatar o armar tu cápsula tarda cerca de un minuto, y si te sales de la app el navegador corta el proceso a media. Ahora se avisa desde el principio en el avatar, y en las demás esperas el aviso aparece solo si se está tardando.
+- **"Chequea un color" ahora se llama "¿me va este color?"** — el título nombraba el mecanismo en vez de la pregunta que traes en la cabeza cuando estás parada en la tienda. Alberto entró al módulo y salió sin saber para qué servía.
+
 ## [0.2.65.0] - 2026-07-30
 
 ### Changed

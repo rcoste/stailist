@@ -54,10 +54,14 @@ export function SiluetaFlow({
   gender,
   initialBuild,
   initialVolume,
+  returnTo = "/perfil",
 }: {
   gender: Gender;
   initialBuild: Build | null;
   initialVolume: Volume | null;
+  /** A dónde salir al terminar (o al saltar). Desde el checklist de Home es
+   *  /hoy: ahí está la lista de pasos que la persona venía siguiendo. */
+  returnTo?: string;
 }) {
   const router = useRouter();
   const done = !!(initialBuild && initialVolume);
@@ -109,7 +113,7 @@ export function SiluetaFlow({
         </div>
         <button
           type="button"
-          onClick={() => router.push("/perfil")}
+          onClick={() => router.push(returnTo)}
           className="self-center text-sm font-medium text-muted hover:text-ink"
         >
           Saltar por ahora
@@ -200,7 +204,7 @@ export function SiluetaFlow({
         </button>
         <button
           type="button"
-          onClick={() => router.push("/perfil")}
+          onClick={() => router.push(returnTo)}
           className="min-h-11 flex-[2] rounded-sm bg-accent text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
         >
           Listo
