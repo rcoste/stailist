@@ -362,10 +362,39 @@ export function ImportCarreteFlow({
   // ====== RENDER POR ESTADO ======
 
   if (state.kind === "explainer") {
+    // Los pasos son los estados REALES de este flujo (revisar → analizando →
+    // texto → render), no un resumen bonito: así el explainer funciona como
+    // avance de lo que va a pasar y nada sorprende a medio camino.
+    //
+    // Los tres datos que se agregaron (2026-07-29) son los que cambian la
+    // decisión de entrar, y ninguno estaba dicho:
+    //   · que son VARIAS fotos de una vez — el subtítulo decía "una foto",
+    //     justo lo contrario del argumento de la función;
+    //   · que puedes recortar cada foto (existe, en el paso "revisar", y es la
+    //     salida cuando sales acompañada en la foto);
+    //   · que NADA entra al clóset sin que lo apruebes prenda por prenda. Es el
+    //     miedo real de un import con IA: que te llene el clóset de basura.
     const pasos = [
-      { icon: "camara" as const, t: "subes fotos", s: "con tu outfit puesto, o tu ropa extendida en la cama." },
-      { icon: "destello" as const, t: "la IA separa cada prenda", s: "saco, pantalón, zapatos… una por una." },
-      { icon: "gancho" as const, t: "las carga limpias", s: "listas en tu clóset, como de catálogo." },
+      {
+        icon: "camara" as const,
+        t: "subes tus fotos",
+        s: `con la ropa puesta o extendida en la cama. hasta ${MAX_FOTOS} de una vez, y puedes recortar cada una.`,
+      },
+      {
+        icon: "destello" as const,
+        t: "separo cada prenda",
+        s: "saco, pantalón, zapatos… una por una.",
+      },
+      {
+        icon: "check" as const,
+        t: "tú decides qué se queda",
+        s: "las repasas antes de que entren; lo que no sea tuyo, fuera.",
+      },
+      {
+        icon: "gancho" as const,
+        t: "quedan limpias",
+        s: "en tu clóset, como de catálogo.",
+      },
     ];
     return (
       <Overlay>
@@ -375,7 +404,8 @@ export function ImportCarreteFlow({
             así <em className="font-normal italic">funciona</em>
           </h2>
           <p className="text-sm text-muted">
-            una foto con tu outfit y te separo cada prenda.
+            varias fotos de una vez — yo separo cada prenda y tú decides qué se
+            queda.
           </p>
         </div>
         <ol className="flex flex-col">

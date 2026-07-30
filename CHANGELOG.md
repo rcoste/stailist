@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.56.0] - 2026-07-29
+
+### Changed
+
+- **"Así funciona" ya cuenta las tres cosas que faltaban.** La pantalla que explica la carga en bulto decía "una foto con tu outfit" — el singular, justo lo contrario del argumento de la función. Ahora dice **varias fotos de una vez (hasta 12)**, que **puedes recortar cada una** (útil si sales acompañada en la foto) y, la más importante, que **nada entra a tu clóset sin que lo apruebes**: repasas prenda por prenda y lo que no sea tuyo se va. Son cuatro pasos en vez de tres, y cada uno es una pantalla real del flujo — así el explainer es un avance de lo que viene y nada sorprende a medio camino.
+
 ## [0.2.55.0] - 2026-07-29
 
 ### Changed
