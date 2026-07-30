@@ -19,7 +19,7 @@ export default async function WishlistPage() {
 
   const { data: rows } = await supabase
     .from("wishlist_items")
-    .select("id, image_path, image_url, color_hex, verdict, name, created_at")
+    .select("id, image_path, image_url, color_hex, verdict, name, created_at, tryon_path, attrs")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
@@ -45,6 +45,13 @@ export default async function WishlistPage() {
     colorHex: (r.color_hex as string | null) ?? null,
     verdict: (r.verdict as WishlistItem["verdict"]) ?? null,
     name: (r.name as string | null) ?? null,
+    // Ya tiene su try-on generado (cacheado): la tarjeta lo marca y el botón
+    // deja de prometer una espera que no va a haber.
+    tieneTryon: !!r.tryon_path,
+    // Solo con categoría se puede pasar al clóset (el motor la necesita para
+    // saber qué rol cubre la prenda).
+    puedeAlCloset:
+      !!r.image_path && !!(r.attrs as { categoria?: string } | null)?.categoria,
   }));
 
   // Prendas del clóset (para combinar en 3c). Resuelve imagen como el clóset.

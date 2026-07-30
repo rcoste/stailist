@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.62.0] - 2026-07-30
+
+### Added
+
+- **"Ya la compré": la prenda de tu wishlist pasa a tu clóset de un toque.** Antes, comprar algo que habías guardado te obligaba a volver a fotografiarlo y volver a esperar el análisis. Ahora se muda con su foto y todo lo que ya sabíamos de ella, y el motor puede armarte looks con ella de inmediato.
+- **Las prendas que ya te probaste se distinguen.** El botón deja de decir "pruébatela" y dice **"así te queda"**: ya está generado, así que verlo otra vez es instantáneo — y de un vistazo sabes cuáles ya viste puestas y cuáles no.
+
+### Fixed
+
+- **La nota del probador ya se lee.** "Así te verías con esta prenda" era texto blanco flotando sobre la foto, y sobre una prenda clara desaparecía. Ahora se apoya en un degradado —el mismo recurso que usa el probador de Hoy— y la advertencia de que es una aproximación se lee de verdad.
+
 ## [0.2.61.0] - 2026-07-30
 
 ### Changed

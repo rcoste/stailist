@@ -12,6 +12,9 @@ export async function addWishlistItem(input: {
   verdict: string | null;
   source?: Source;
   name?: string | null;
+  /** Análisis completo de la foto. Lo usa "ya la compré" para crear la prenda
+   *  en el clóset sin volver a analizarla. */
+  attrs?: Record<string, unknown> | null;
 }): Promise<{ ok: boolean; id?: string }> {
   const supabase = await createClient();
   const {
@@ -30,6 +33,7 @@ export async function addWishlistItem(input: {
       verdict: input.verdict,
       source: input.source ?? "upload",
       name: input.name ?? null,
+      attrs: input.attrs ?? null,
     })
     .select("id")
     .single();
@@ -151,6 +155,63 @@ export async function toggleWishlistArchetype(input: {
   revalidatePath("/wishlist");
   revalidatePath("/closet/biblioteca");
   return { ok: true, saved: true };
+}
+
+// "Ya la compré": la prenda deja la wishlist y entra al clóset de verdad, para
+// que el motor pueda armar looks con ella. Sin este atajo, comprar algo que
+// guardaste obligaba a volver a fotografiarlo y volver a analizarlo.
+//
+// La foto NO se re-sube ni se borra: la fila del clóset apunta al MISMO objeto
+// de storage. Por eso el borrado de aquí es directo y no pasa por
+// removeWishlistItem, que sí limpia el storage — usarlo dejaría la prenda recién
+// creada apuntando a una imagen borrada.
+//
+// El try-on cacheado sí se borra: era "tú con una prenda que no tenías", y una
+// vez en el clóset los try-ons se generan por outfit, no por prenda suelta.
+export async function moveWishlistItemToCloset(
+  id: string
+): Promise<{ ok: boolean; reason?: "sin_attrs" | "sin_foto" }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: row } = await supabase
+    .from("wishlist_items")
+    .select("image_path, tryon_path, attrs, name, color_hex")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+  if (!row) return { ok: false };
+
+  const imagePath = row.image_path as string | null;
+  // Solo las que subiste por foto: las de la cápsula y la biblioteca son
+  // referencias a catálogo, y para ésas el camino es "ya la tengo" en su propia
+  // pantalla (que ya existe y hace el match correcto).
+  if (!imagePath) return { ok: false, reason: "sin_foto" };
+  const attrs = row.attrs as Record<string, unknown> | null;
+  if (!attrs?.categoria) return { ok: false, reason: "sin_attrs" };
+
+  const { error: insErr } = await supabase.from("items").insert({
+    user_id: user.id,
+    source: "photo",
+    photo_path: imagePath,
+    attrs: { ...attrs, nombre: (row.name as string | null) ?? attrs.nombre },
+  });
+  if (insErr) {
+    console.error("[wishlist] pasar al clóset falló:", insErr.message);
+    return { ok: false };
+  }
+
+  await supabase.from("wishlist_items").delete().eq("id", id).eq("user_id", user.id);
+  if (row.tryon_path) {
+    await supabase.storage.from("prendas").remove([row.tryon_path as string]);
+  }
+
+  revalidatePath("/wishlist");
+  revalidatePath("/closet");
+  return { ok: true };
 }
 
 export async function removeWishlistItem(id: string): Promise<{ ok: boolean }> {

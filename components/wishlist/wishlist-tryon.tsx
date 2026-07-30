@@ -127,8 +127,19 @@ export function WishlistTryon({ itemId, onClose }: { itemId: string; onClose: ()
       >
         ✕
       </button>
-      <p className="relative z-[5] mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[12px] text-on-accent/80">
-        así te verías con esta prenda · es una aproximación
+      {/* Degradado al pie: la nota era texto blanco flotando sobre la foto y
+          sobre una prenda clara desaparecía (mismo error que tenían los tips).
+          El degradado le da suelo sin tapar el look — es el patrón que ya usa
+          el try-on de Hoy (tryon-immersive). */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 z-[4] h-40 bg-gradient-to-b from-transparent to-black/85"
+      />
+      <p className="relative z-[5] mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[13px] leading-snug text-on-accent">
+        así te verías con esta prenda
+        <span className="block text-[12px] text-on-accent/70">
+          es una aproximación — el corte real puede variar
+        </span>
       </p>
     </div>
   );

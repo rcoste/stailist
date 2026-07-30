@@ -12,7 +12,9 @@ export async function saveToWishlist(
   source: "upload" | "capsule" | "gap" = "upload",
   /** Lo que la IA identificó ("Pantalón de lino oliva"). Sin él la tarjeta sale
    *  sin nombre, que es como estuvo hasta 2026-07-30. */
-  name: string | null = null
+  name: string | null = null,
+  /** Análisis completo — habilita el "ya la compré" (necesita la categoría). */
+  attrs: Record<string, unknown> | null = null
 ): Promise<{ ok: boolean }> {
   const supabase = createClient();
   const {
@@ -28,5 +30,5 @@ export async function saveToWishlist(
     console.error("[wishlist] upload falló:", up.error.message);
     return { ok: false };
   }
-  return addWishlistItem({ imagePath: path, colorHex, verdict, source, name });
+  return addWishlistItem({ imagePath: path, colorHex, verdict, source, name, attrs });
 }

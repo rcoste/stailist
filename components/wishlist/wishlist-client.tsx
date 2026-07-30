@@ -7,11 +7,12 @@ import { Icon } from "@/components/icon";
 import type { Swatch } from "@/lib/palette-data";
 import { checkColor, type Verdict } from "@/lib/color/match";
 import { saveToWishlist } from "@/lib/wishlist-add";
-import { removeWishlistItem } from "@/lib/wishlist-actions";
+import { moveWishlistItemToCloset, removeWishlistItem } from "@/lib/wishlist-actions";
 import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
 import { ComboBuilder } from "@/components/wishlist/combo-builder";
 import { ClosetNav } from "@/components/closet-nav";
 import { Hint } from "@/components/hint";
+import { Toast } from "@/components/toast";
 
 export type WishlistItem = {
   id: string;
@@ -19,6 +20,10 @@ export type WishlistItem = {
   colorHex: string | null;
   verdict: Verdict | null;
   name: string | null;
+  /** Ya se generó su try-on (cacheado): verlo es instantáneo. */
+  tieneTryon?: boolean;
+  /** Subida por foto y con categoría → se puede pasar al clóset al comprarla. */
+  puedeAlCloset?: boolean;
 };
 
 export type ClosetPick = { id: string; nombre: string; image: string | null };
@@ -101,6 +106,9 @@ export function WishlistClient({
   const [combo, setCombo] = useState(false);
   /** URL local de la prenda que se está analizando (tarjeta provisional). */
   const [pendiente, setPendiente] = useState<string | null>(null);
+  /** id de la prenda que se está pasando al clóset. */
+  const [moviendo, setMoviendo] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // El color y el nombre los saca la IA, NO el cálculo de color dominante del
@@ -129,6 +137,7 @@ export function WishlistClient({
     let hex: string | null = null;
     let verdict: Verdict | null = null;
     let nombre: string | null = null;
+    let attrs: Record<string, unknown> | null = null;
     try {
       const dataUrl = await comprimir(file);
       const res = await fetch("/api/analizar-prenda", {
@@ -139,17 +148,20 @@ export function WishlistClient({
       if (res.ok) {
         // La respuesta viene envuelta: { analisis: {...} }, no plana.
         const { analisis } = (await res.json()) as {
-          analisis?: { nombre?: string; color_hex?: string };
+          analisis?: Record<string, unknown>;
         };
-        nombre = analisis?.nombre ?? null;
-        hex = analisis?.color_hex ?? null;
+        // Se guarda el análisis COMPLETO, no solo nombre y color: la categoría
+        // es lo que permite pasar la prenda al clóset cuando la compras.
+        attrs = analisis ?? null;
+        nombre = (analisis?.nombre as string) ?? null;
+        hex = (analisis?.color_hex as string) ?? null;
       }
     } catch {
       // Sin análisis se guarda igual: la foto en la wishlist vale por sí sola y
       // perderla por un fallo de red sería peor que quedarse sin veredicto.
     }
     if (hex && va.length) verdict = checkColor(hex, va, evita).verdict;
-    const res = await saveToWishlist(file, hex, verdict, "upload", nombre);
+    const res = await saveToWishlist(file, hex, verdict, "upload", nombre, attrs);
     setBusy(false);
     setPendiente(null);
     URL.revokeObjectURL(previa);
@@ -161,6 +173,19 @@ export function WishlistClient({
     start(async () => {
       const res = await removeWishlistItem(id);
       if (res.ok) router.refresh();
+    });
+  }
+
+  function alCloset(id: string) {
+    setMoviendo(id);
+    start(async () => {
+      const res = await moveWishlistItemToCloset(id);
+      setMoviendo(null);
+      if (res.ok) {
+        setToast("Ya está en tu clóset");
+        setTimeout(() => setToast(null), 2400);
+        router.refresh();
+      }
     });
   }
 
@@ -295,13 +320,43 @@ export function WishlistClient({
                     <span className="text-[10px] text-muted">sin colorimetría</span>
                   )}
                 </div>
+                {/* Con el try-on ya generado el botón lo DICE: "así te queda"
+                    (mismo lenguaje que el detalle del look) y sin destello, que
+                    en esta app significa "esto va a generar algo". Volver a
+                    verlo es instantáneo — prometer una espera que no existe es
+                    lo que hacía dudar de si ya lo habías hecho. */}
                 <button
                   type="button"
                   onClick={() => setTryonId(it.id)}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-sm border border-line bg-bg text-[12px] font-semibold text-ink transition-colors hover:border-ink"
+                  className={`flex min-h-9 items-center justify-center gap-1.5 rounded-sm border text-[12px] font-semibold transition-colors ${
+                    it.tieneTryon
+                      ? "border-ink bg-surface text-ink"
+                      : "border-line bg-bg text-ink hover:border-ink"
+                  }`}
                 >
-                  <Icon name="destello" size={14} /> pruébatela
+                  {it.tieneTryon ? (
+                    <>
+                      <Icon name="check" size={13} strokeWidth={2.4} /> así te queda
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="destello" size={14} /> pruébatela
+                    </>
+                  )}
                 </button>
+                {/* La salida cuando la compras: pasa al clóset y el motor ya
+                    puede armar looks con ella, sin volver a fotografiarla. */}
+                {it.puedeAlCloset ? (
+                  <button
+                    type="button"
+                    onClick={() => alCloset(it.id)}
+                    disabled={moviendo === it.id}
+                    className="flex min-h-9 items-center justify-center gap-1.5 text-[12px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+                  >
+                    <Icon name="mas" size={13} strokeWidth={2} />
+                    {moviendo === it.id ? "pasándola…" : "ya la compré"}
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}
@@ -315,6 +370,8 @@ export function WishlistClient({
       {combo ? (
         <ComboBuilder wishlist={items} closet={closet} onClose={() => setCombo(false)} />
       ) : null}
+
+      <Toast message={toast} />
     </section>
   );
 }
