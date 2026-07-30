@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.59.0] - 2026-07-30
+
+### Fixed
+
+- **"Armar maleta" ya no te manda a un asistente en blanco teniendo viajes guardados.** El atajo solo te llevaba a tu maleta si el viaje salía en los próximos 7 días; con uno guardado más lejos te abría el asistente de cero, como si no existiera. Ahora, si no hay viaje inminente, entras a tu lista de viajes — donde está el tuyo y también el botón para armar otro.
+
+### Changed
+
+- **Los atajos de "más" ya no repiten viaje dos veces.** Había "armar maleta" y "viajes", y la lista de viajes ya abre con "armar una maleta nueva" como acción principal: uno contenía al otro. Quedó un solo atajo, **viajes**, y en su lugar entró **tu cápsula**, que estaba a dos toques y no tenía atajo en ningún lado.
+- **Los atajos de "más" ahora funcionan también en una pestaña que estaba en segundo plano.** Navegaban dentro del reloj de animación del navegador, que se congela cuando la pestaña no está al frente.
+
 ## [0.2.58.0] - 2026-07-29
 
 ### Fixed

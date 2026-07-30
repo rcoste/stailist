@@ -63,13 +63,19 @@ export function MoreSheet({
 
   // Cierra la hoja antes de navegar o de disparar un flujo (nadie queda con la
   // hoja abierta detrás).
+  // setTimeout y no requestAnimationFrame: rAF se congela por completo en una
+  // pestaña oculta (misma trampa que tenían los hints), así que ahí la hoja se
+  // cerraba y la navegación no ocurría nunca. Lo único que hace falta es ceder
+  // un tick para que la hoja cierre antes de navegar.
   function choose(action: () => void) {
     setOpen(false);
-    requestAnimationFrame(action);
+    setTimeout(action, 0);
   }
   const go = (href: string) => choose(() => router.push(href));
 
-  const maletaHref = trip ? trip.href : "/viaje";
+  // Con un viaje vivo (≤7 días), directo a su maleta; si no, la lista — nunca
+  // el asistente en blanco, que es a donde iba antes y se sentía roto.
+  const maletaHref = trip ? trip.href : "/viaje/lista";
 
   return (
     <>
@@ -262,11 +268,19 @@ function NivelAtajos({
   go: (href: string) => void;
   onAgregar: () => void;
 }) {
+  // "armar maleta" y "viajes" eran dos mosaicos donde uno CONTENÍA al otro: la
+  // lista de viajes ya abre con "armar una maleta nueva" como acción principal.
+  // Y el chico mentía — solo llevaba a TU maleta si el viaje salía en ≤7 días;
+  // con un viaje guardado más lejos te aventaba a un asistente en blanco, como
+  // si no existiera (lo vio Roberto con su Tokio a 130 días).
+  //
+  // Ahora es uno: la lista, que es el hub honesto. Se conserva lo bueno del
+  // viejo — con un viaje vivo entras directo a su maleta.
   const tiles: { icon: IconName; label: string; onClick: () => void }[] = [
-    { icon: "maleta", label: "armar maleta", onClick: () => go(maletaHref) },
+    { icon: "maleta", label: "viajes", onClick: () => go(maletaHref) },
+    { icon: "camisa", label: "tu cápsula", onClick: () => go("/closet/capsula") },
     { icon: "lupa", label: "modo tienda", onClick: () => go("/cartera/chequear") },
     { icon: "paleta", label: "tus colores", onClick: () => go("/cartera") },
-    { icon: "maletin", label: "viajes", onClick: () => go("/viaje/lista") },
     { icon: "corazon", label: "favoritos", onClick: () => go("/historial?filtro=fav") },
     { icon: "bookmark", label: "wishlist", onClick: () => go("/wishlist") },
   ];
