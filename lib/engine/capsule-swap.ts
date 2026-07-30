@@ -21,11 +21,18 @@ export type CapsuleSwapInputs = {
 
 // Instrucción por razón: qué debe cambiar la alternativa respecto a lo rechazado.
 const REASON_HINT: Record<VetoReason, string> = {
-  "no-lo-uso":
-    "La persona NO usa ese tipo de prenda. Propón un TIPO de prenda distinto que cubra el mismo rol (misma categoría), no una variante del mismo tipo.",
+  "no-es-mi-estilo":
+    "La prenda NO va con su estilo. Propón un TIPO de prenda distinto que cubra el mismo rol (misma categoría), no una variante del mismo tipo.",
   "muy-formal": "La sintió DEMASIADO formal. Propón algo del mismo rol pero más relajado/casual.",
   "muy-casual": "La sintió DEMASIADO casual. Propón algo del mismo rol pero más pulido.",
   "color-no": "No le gustó ESE color. Mantén el tipo de prenda pero cámbialo a otro color de su paleta.",
+  "ya-tengo-algo-asi":
+    "Ya tiene algo parecido. Propón una prenda que cubra el mismo rol pero CLARAMENTE distinta de lo rechazado y de lo que ya está en la cápsula — otro tipo, otra silueta u otro color.",
+  "fuera-de-presupuesto":
+    "Le pareció caro. Propón la versión más básica y accesible que cubra el mismo rol: material y detalles simples, nada de piezas statement.",
+  // Ya no se ofrece en la UI; sigue aquí porque hay decisiones guardadas con él.
+  "no-lo-uso":
+    "La persona NO usa ese tipo de prenda. Propón un TIPO de prenda distinto que cubra el mismo rol (misma categoría), no una variante del mismo tipo.",
 };
 
 // CAPA A — reemplazo de UN slot: la persona rechazó la prenda ideal de un hueco.

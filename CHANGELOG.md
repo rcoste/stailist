@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.57.0] - 2026-07-29
+
+### Changed
+
+- **El card de prenda sugerida, rehecho — y ahora es el mismo en cápsula y en viaje.** Arrancaba con meta-texto ("preferiste la sugerida — sigue en lo que falta") partido en dos renglones, y el nombre de la prenda, que es el tema, entraba en tercer lugar. Ahora abre con el nombre, la razón va en la serif itálica del coach (la misma voz del detalle del look), y la foto se ve completa: caja 4:5 sin recortar, porque recortar una prenda ya recortada la decapita.
+- **De cuatro acciones a tres, y sin dos que signifiquen lo mismo.** "cambiar" y "esta no me convence — cámbiala" eran la misma cosa dicha dos veces. El pie tiene ahora las tres respuestas posibles a una sugerencia —**ya la tengo · wishlist · no me va**— y "cambiar" vive arriba, con la categoría: no es un veredicto sobre la prenda, es "enséñame la otra opción".
+- **En viaje, "buscar en mi clóset" pasó a ese mismo lugar de arriba** (como "en mi clóset"): es la misma idea de "enséñame otra cosa", no un veredicto.
+
+### Added
+
+- **"No me va" ahora pregunta por qué, y sí lo guarda.** Antes el motivo era opcional y se perdía. Ahora la hoja es obligatoria con seis motivos —no es mi estilo · muy formal · muy casual · no me gusta el color · ya tengo algo así · fuera de presupuesto— y el card se queda en su acuse: "vale — ya tengo algo así. no te la vuelvo a sugerir." Los dos motivos nuevos también le dicen al motor qué buscar distinto la próxima vez.
+
 ## [0.2.56.0] - 2026-07-29
 
 ### Changed

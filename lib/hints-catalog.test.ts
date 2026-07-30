@@ -39,9 +39,13 @@ const FUENTES = CARPETAS.flatMap((c) => archivos(join(RAIZ, c))).map((ruta) => (
 // atributo son la implementación, no un target de verdad.
 const CODIGO = FUENTES.filter((f) => !f.ruta.endsWith("components/hint.tsx"));
 
+// Dos formas de declarar el target, las dos válidas: el atributo directo en el
+// JSX, o `hintTarget: "<id>"` cuando el elemento lo pinta un componente genérico
+// (SuggestionCard lo pone en el botón que le pasan). Si solo se buscara el
+// atributo, mover un target a un componente compartido apagaría el candado.
 const targetsDeclarados = new Set<string>();
 for (const f of CODIGO) {
-  for (const m of f.texto.matchAll(/data-hint-target="([^"]+)"/g)) {
+  for (const m of f.texto.matchAll(/(?:data-hint-target|hintTarget)[:=]\s*"([^"]+)"/g)) {
     targetsDeclarados.add(m[1]);
   }
 }

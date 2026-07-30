@@ -18,6 +18,7 @@ import {
   setCapsuleOverride,
 } from "@/app/closet/capsula/actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
+import { SuggestionCard } from "@/components/suggestion-card";
 import {
   IdealTileInner,
   SelCheck,
@@ -35,6 +36,7 @@ import {
   type CapsuleSwaps,
   type CapsuleTarget,
   type VetoReason,
+  VETO_REASON_LABEL,
 } from "@/lib/capsule";
 
 // Pantalla completa de la cápsula, "enfocada en lo que falta" (handoff Screen 4):
@@ -191,12 +193,24 @@ export function CapsuleList({
     });
   };
 
-  const quitarItem = (index: number) => {
-    setSwap(index, true);
+  // "no me va": retira el slot CON su motivo y deja el card en su estado
+  // resuelto. Sin router.refresh() a propósito — refrescar borra la fila (los
+  // slots retirados no se listan) y el acuse desaparecería en el mismo frame.
+  // El handoff es explícito: el card ES el acuse, no hay toast. La cápsula se
+  // pone al día en la siguiente carga.
+  const [resolved, setResolved] = useState<Map<number, string>>(() => new Map());
+
+  const quitarItem = (index: number, reason: VetoReason) => {
+    setResolved((m) => new Map(m).set(index, VETO_REASON_LABEL[reason]));
     startTransition(async () => {
-      await dismissCapsuleSlot(index);
-      setSwap(index, false);
-      router.refresh();
+      const res = await dismissCapsuleSlot(index, reason);
+      if (!res.ok) {
+        setResolved((m) => {
+          const n = new Map(m);
+          n.delete(index);
+          return n;
+        });
+      }
     });
   };
 
@@ -369,7 +383,8 @@ export function CapsuleList({
                   swapErrored={swapError.has(r.index)}
                   onNinguna={() => rejectItem(r.index, null)}
                   onReject={(reason) => rejectItem(r.index, reason)}
-                  onQuitar={() => quitarItem(r.index)}
+                  onQuitar={(reason) => quitarItem(r.index, reason)}
+                  resolvedMotivo={resolved.get(r.index) ?? null}
                   onZoom={(url) =>
                     setZoom({ image: url, nombre: r.item.nombre, sub: r.item.porque })
                   }
@@ -388,14 +403,14 @@ export function CapsuleList({
                   swapBusy={swapBusy.has(r.index)}
                   swapErrored={swapError.has(r.index)}
                   onReject={(reason) => rejectItem(r.index, reason)}
-                  onOtra={() => rejectItem(r.index, null)}
-                  onQuitar={() => quitarItem(r.index)}
+                  onQuitar={(reason) => quitarItem(r.index, reason)}
+                  resolvedMotivo={resolved.get(r.index) ?? null}
                   // "tienes" desmentido: nota propia + deshacer (por si fue un
                   // mal tap, o si el match tenía razón después de todo).
                   reject={r.base === "tienes"}
                   note={
                     r.base === "tienes"
-                      ? `dijiste que tu ${r.by ?? "prenda"} no la cubre`
+                      ? "lo desmentiste"
                       : undefined
                   }
                   onChange={
@@ -460,7 +475,8 @@ export function CapsuleList({
                 swapErrored={swapError.has(r.index)}
                 onNinguna={() => rejectItem(r.index, null)}
                 onReject={(reason) => rejectItem(r.index, reason)}
-                onQuitar={() => quitarItem(r.index)}
+                onQuitar={(reason) => quitarItem(r.index, reason)}
+                resolvedMotivo={resolved.get(r.index) ?? null}
                 expandido={abierta === r.index}
                 onExpandir={() => setAbierta(r.index)}
               />
@@ -706,15 +722,6 @@ function BigCard({
   );
 }
 
-// Razones opcionales del rechazo (issue #89): un tap que afina el swap y puede
-// sumar un veto. "solo cámbiala" = sin razón.
-const REJECT_REASONS: { id: VetoReason; label: string }[] = [
-  { id: "no-lo-uso", label: "no lo uso" },
-  { id: "muy-formal", label: "muy formal" },
-  { id: "muy-casual", label: "muy casual" },
-  { id: "color-no", label: "ese color no" },
-];
-
 // Tarjeta grande para "lo que más te suma" (y para el estado "quiero la sugerida"
 // de Decide): tile grande tappable que GENERA la imagen enfrente + cuerpo con
 // nombre/porqué y la fila de acciones "ya la tengo" · "wishlist".
@@ -733,8 +740,8 @@ function SumaCard({
   swapBusy = false,
   swapErrored = false,
   onReject,
-  onOtra,
   onQuitar,
+  resolvedMotivo,
   onZoom,
 }: {
   row: CapsuleRow;
@@ -753,13 +760,14 @@ function SumaCard({
   swapBusy?: boolean;
   swapErrored?: boolean;
   onReject?: (reason: VetoReason | null) => void;
-  onOtra?: () => void;
-  onQuitar?: () => void;
+  /** "no me va": retira el slot CON su motivo (la hoja lo hace obligatorio). */
+  onQuitar?: (reason: VetoReason) => void;
+  /** Ya resuelta con "no me va": el card colapsa a su acuse. */
+  resolvedMotivo?: string | null;
   /** Con imagen ya lista, el toque la amplía (sin imagen sigue generándola). */
   onZoom?: (url: string) => void;
 }) {
   const { item } = row;
-  const [showReasons, setShowReasons] = useState(false);
   const swapped = row.swapCount > 0;
   // SIEMPRE la imagen ideal/sugerida — nunca la de la prenda del clóset (`by`):
   // esta tarjeta representa "la sugerida" (en falta y al rechazar un parecido).
@@ -775,146 +783,68 @@ function SumaCard({
     }
     if (render.state === "idle") void render.start();
   };
+  // El eyebrow es "la categoría del hueco, o lo que vale" — nunca la razón (esa
+  // es la serif). Con tres candidatos, este es el orden: lo que acaba de pasar,
+  // lo que la prenda desbloquea, y si no, qué es este hueco.
+  const eyebrow = swapped
+    ? "te la cambié"
+    : unlock && unlock > 0
+      ? `+${unlock} looks`
+      : reject
+        ? (note ?? "lo desmentiste")
+        : "te falta este básico";
+
+  // "cambiar" = enséñame la otra opción. Es OTRO eje que los tres del pie (que
+  // son veredictos sobre la prenda), y por eso vive arriba y no como cuarto
+  // botón — poner ambos abajo fue exactamente la ambigüedad del card viejo.
+  const topAction = reject && onChange
+    ? { label: "cambiar", icon: "repetir" as const, onClick: onChange }
+    : onReject && !row.atSwapCap
+      ? {
+          label: "cambiar",
+          icon: "repetir" as const,
+          onClick: () => onReject(null),
+          // El tip de la cápsula señala ESTE botón: es el que cambia la prenda.
+          hintTarget: "capsula-swap",
+        }
+      : null;
+
   return (
-    <li className="relative flex overflow-hidden rounded-lg border border-line bg-surface">
-      <button
-        type="button"
-        onClick={onTapTile}
-        className="relative flex min-h-[148px] w-[118px] shrink-0 items-center justify-center self-stretch overflow-hidden border-r border-line"
-      >
-        <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="118px" />
-      </button>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-2 px-[15px] pb-[13px] pt-[14px]">
-        {reject ? (
-          <div className="flex items-start justify-between gap-2">
-            <span className="text-[10.5px] leading-snug text-muted">
-              {note ?? "preferiste la sugerida — sigue en lo que falta"}
-            </span>
-            {onChange ? (
-              <button
-                type="button"
-                onClick={onChange}
-                className="flex min-h-11 shrink-0 items-center text-[11px] font-medium text-accent underline underline-offset-2"
-              >
-                cambiar
-              </button>
-            ) : null}
-          </div>
-        ) : unlock && unlock > 0 ? (
-          <span className="flex w-fit items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-[2px] text-[10.5px] font-semibold text-accent">
-            <Icon name="destello" size={11} /> desbloquea ~{unlock} looks
-          </span>
-        ) : null}
-        <span className="text-[15px] font-semibold leading-tight text-ink">{item.nombre}</span>
-        <span className="text-[11.5px] leading-snug text-muted">{item.porque}</span>
-
-        <div className="mt-auto flex items-center gap-[9px]">
-          <button
-            type="button"
-            onClick={onOwn}
-            disabled={ownBusy}
-            className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border bg-surface px-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50 ${
-              render.state === "ready" ? "border-accent" : "border-line"
-            }`}
-          >
-            {ownBusy ? (
-              <Spinner className="h-3.5 w-3.5" />
-            ) : (
-              <Icon name="mas" size={14} strokeWidth={2} />
-            )}
-            {ownBusy ? "agregando…" : "ya la tengo"}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleWish}
-            aria-pressed={wishSaved}
-            className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2.5 text-[13px] font-semibold transition-colors ${
-              wishSaved
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-line bg-surface text-ink hover:border-accent"
-            }`}
-          >
-            <Icon name={wishSaved ? "bookmarkFill" : "bookmark"} size={14} />
-            {wishSaved ? "en wishlist" : "wishlist"}
-          </button>
-        </div>
-
-        {/* Camino A: "no me convence" → alternativa (swap). Solo en la sección de huecos. */}
-        {onReject ? (
-          swapBusy ? (
-            <div className="flex items-center gap-2 text-[12px] text-muted">
-              <Spinner className="h-3.5 w-3.5" /> buscando una alternativa…
-            </div>
-          ) : showReasons ? (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] text-muted">¿por qué? (opcional)</span>
-              <div className="flex flex-wrap gap-1.5">
-                {REJECT_REASONS.map((rr) => (
-                  <button
-                    key={rr.id}
-                    type="button"
-                    onClick={() => onReject(rr.id)}
-                    className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11.5px] text-ink transition-colors hover:border-accent"
-                  >
-                    {rr.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => onReject(null)}
-                  className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11.5px] font-medium text-accent transition-colors hover:border-accent"
-                >
-                  solo cámbiala
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowReasons(false)}
-                className="self-start text-[11px] text-muted hover:text-ink"
-              >
-                cancelar
-              </button>
-            </div>
-          ) : swapped ? (
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-[11px] font-medium text-accent">
-                <Icon name="destello" size={11} /> te la cambié
-              </span>
-              <button
-                type="button"
-                onClick={onOtra}
-                className="flex min-h-11 items-center text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
-              >
-                otra más
-              </button>
-              <button
-                type="button"
-                onClick={onQuitar}
-                className="flex min-h-11 items-center text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
-              >
-                quitar
-              </button>
-            </div>
-          ) : (
-            // Área táctil de 44px (el enlace medía 17) y SEPARADO de "ya la
-            // tengo": son acciones opuestas y estaban a 4px — un dedo que fallaba
-            // el botón disparaba un swap de IA de ~5s sobre la cápsula.
-            <button
-              type="button"
-              onClick={() => setShowReasons(true)}
-              data-hint-target="capsula-swap"
-              className="relative -mb-2 mt-0.5 flex min-h-11 items-center self-start text-[11.5px] font-medium text-muted underline underline-offset-2 hover:text-ink"
-            >
-              esta no me convence — cámbiala
-            </button>
-          )
-        ) : null}
-        {swapErrored ? (
-          <span className="text-[11px] text-error">No pude buscar otra — inténtalo de nuevo.</span>
-        ) : null}
-      </div>
-    </li>
+    <SuggestionCard
+      eyebrow={eyebrow}
+      nombre={item.nombre}
+      porque={item.porque}
+      foto={
+        <button
+          type="button"
+          onClick={onTapTile}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          <IdealTileInner render={render} colorFamilia={item.colorFamilia} sizes="86px" />
+        </button>
+      }
+      topAction={topAction}
+      footer={[
+        {
+          label: ownBusy ? "agregando…" : "ya la tengo",
+          icon: "mas",
+          onClick: onOwn,
+          busy: ownBusy,
+          primary: true,
+        },
+        {
+          label: wishSaved ? "en wishlist" : "wishlist",
+          icon: wishSaved ? "bookmarkFill" : "bookmark",
+          onClick: onToggleWish,
+          active: wishSaved,
+        },
+      ]}
+      onNoMeVa={onQuitar}
+      resolved={resolvedMotivo ? { motivo: resolvedMotivo } : null}
+      busy={swapBusy}
+      busyLabel="buscando una alternativa…"
+      error={swapErrored ? "No pude buscar otra — inténtalo de nuevo." : null}
+    />
   );
 }
 
@@ -1060,6 +990,7 @@ function DecideRow({
   onNinguna,
   onReject,
   onQuitar,
+  resolvedMotivo,
   expandido = false,
   onExpandir,
   onZoom,
@@ -1082,7 +1013,9 @@ function DecideRow({
   onNinguna?: () => void;
   /** Swap con razón y "quitar": solo aplican ya rechazado (= hueco real). */
   onReject?: (reason: VetoReason | null) => void;
-  onQuitar?: () => void;
+  onQuitar?: (reason: VetoReason) => void;
+  /** Ya resuelta con "no me va" (lo hereda la SumaCard del estado rechazado). */
+  resolvedMotivo?: string | null;
   /** La apertura la manda el padre: al confirmar una, encadena a la siguiente
    *  sin volver al estado neutro (Roberto: "no debería tener que picarle a la
    *  que sigue"). */
@@ -1157,8 +1090,8 @@ function DecideRow({
         swapBusy={swapBusy}
         swapErrored={swapErrored}
         onReject={onReject}
-        onOtra={onNinguna}
         onQuitar={onQuitar}
+        resolvedMotivo={resolvedMotivo}
       />
     );
   }

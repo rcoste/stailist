@@ -304,7 +304,16 @@ export async function rejectCapsuleItem(
 
 // "Quitar": retira el slot de la cápsula sin generar más alternativas (decisión
 // explícita de la usuaria). Suma el tipo como veto.
-export async function dismissCapsuleSlot(index: number): Promise<{ ok: boolean }> {
+// Retira el slot de la cápsula ("no me va" — no te la vuelvo a sugerir).
+//
+// `reason` llega desde la hoja de motivo, que el handoff hace OBLIGATORIA porque
+// es la señal que evita repetir el error. Antes esta función no la aceptaba y
+// heredaba la del swap anterior (casi siempre null): la hoja habría prometido
+// "me sirve para no repetir el error" y el motivo se habría tirado a la basura.
+export async function dismissCapsuleSlot(
+  index: number,
+  reason: VetoReason | null = null
+): Promise<{ ok: boolean }> {
   if (!Number.isInteger(index) || index < 0) return { ok: false };
   const supabase = await createClient();
   const {
@@ -330,7 +339,7 @@ export async function dismissCapsuleSlot(index: number): Promise<{ ok: boolean }
     [key]: {
       item: shownItem,
       rejectedCount: Math.max(existing?.rejectedCount ?? 0, 1),
-      reason: existing?.reason ?? null,
+      reason: reason ?? existing?.reason ?? null,
       dismissed: true,
     },
   };

@@ -15,6 +15,7 @@ import {
   type SubstituteCandidate,
 } from "@/lib/trip-actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
+import { SuggestionCard } from "@/components/suggestion-card";
 import { useTripPacked } from "@/components/trip-packed-context";
 import { familiaToHex } from "@/lib/capsule-images";
 import { Toast } from "@/components/toast";
@@ -67,57 +68,44 @@ function FaltaCard({
   const onTapTile = () => {
     if (render.state === "idle") void render.start();
   };
+  // Misma card que la cápsula (SuggestionCard). "buscar en mi clóset" va en el
+  // slot de arriba, donde la cápsula pone "cambiar": las dos son "enséñame otra
+  // cosa", no un veredicto sobre esta prenda — y el pie es solo de veredictos.
+  //
+  // Sin "no me va" aquí: el viaje no tiene dónde guardar un veto de este tipo
+  // (la cápsula sí, en capsule_swaps). Ofrecer un botón que solo esconde la fila
+  // sería prometer que aprendemos algo que no aprendemos.
   return (
-    <li className="relative flex overflow-hidden rounded-md border border-line bg-surface">
-      <button
-        type="button"
-        onClick={onTapTile}
-        className="relative flex min-h-[136px] w-[104px] shrink-0 items-center justify-center self-stretch overflow-hidden border-r border-line"
-      >
-        <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="104px" />
-      </button>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-2 px-[14px] pb-[12px] pt-[13px]">
-        <div className="flex flex-col">
-          <b className="text-[14px] font-semibold leading-tight text-ink">{row.nombre}</b>
-          <span className="text-[11.5px] leading-snug text-muted">{row.porque}</span>
-        </div>
-
-        <div className="mt-auto flex flex-col gap-[9px]">
-          <button
-            type="button"
-            onClick={onBuscar}
-            className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-sm bg-accent text-xs font-semibold text-on-accent transition-colors hover:bg-accent-deep"
-          >
-            <Icon name="lupa" size={13} /> buscar en mi clóset
-          </button>
-          <div className="flex items-center gap-[9px]">
-            <button
-              type="button"
-              onClick={onYaLoTengo}
-              disabled={ownBusy}
-              className="flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface px-2 text-xs font-semibold text-ink transition-colors hover:border-ink disabled:opacity-50"
-            >
-              {ownBusy ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="check" size={13} />}
-              {ownBusy ? "agregando…" : "ya lo tengo"}
-            </button>
-            <button
-              type="button"
-              onClick={onToggleWish}
-              aria-pressed={wishSaved}
-              className={`flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2 text-xs font-semibold transition-colors ${
-                wishSaved
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-line bg-surface text-ink hover:border-accent"
-              }`}
-            >
-              <Icon name={wishSaved ? "bookmarkFill" : "bookmark"} size={14} />
-              {wishSaved ? "en wishlist" : "wishlist"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </li>
+    <SuggestionCard
+      eyebrow="para el viaje"
+      nombre={row.nombre}
+      porque={row.porque}
+      foto={
+        <button
+          type="button"
+          onClick={onTapTile}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="86px" />
+        </button>
+      }
+      topAction={{ label: "en mi clóset", icon: "lupa", onClick: onBuscar }}
+      footer={[
+        {
+          label: ownBusy ? "agregando…" : "ya lo tengo",
+          icon: "mas",
+          onClick: onYaLoTengo,
+          busy: ownBusy,
+          primary: true,
+        },
+        {
+          label: wishSaved ? "en wishlist" : "wishlist",
+          icon: wishSaved ? "bookmarkFill" : "bookmark",
+          onClick: onToggleWish,
+          active: wishSaved,
+        },
+      ]}
+    />
   );
 }
 

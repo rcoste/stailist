@@ -432,7 +432,40 @@ export type CapsuleOverrides = Record<string, CapsuleDecision>; // clave = índi
 // --- Camino A: rechazar/afinar una prenda ideal (issue #89) ----------------
 
 // Razón opcional del rechazo (tap rápido). Alimenta los vetos y el prompt del swap.
-export type VetoReason = "no-lo-uso" | "muy-formal" | "muy-casual" | "color-no";
+// Motivos de rechazo de una prenda sugerida. Los seis primeros son los que se
+// ofrecen hoy (handoff design_handoff_capsula_card §3); "no-lo-uso" ya no se
+// ofrece pero se conserva porque hay decisiones guardadas con ese id.
+export type VetoReason =
+  | "no-es-mi-estilo"
+  | "muy-formal"
+  | "muy-casual"
+  | "color-no"
+  | "ya-tengo-algo-asi"
+  | "fuera-de-presupuesto"
+  | "no-lo-uso";
+
+// Etiqueta visible de cada motivo. Vive junto al tipo para que agregar un motivo
+// obligue a escribir su etiqueta y su instrucción para el motor (REASON_HINT).
+export const VETO_REASON_LABEL: Record<VetoReason, string> = {
+  "no-es-mi-estilo": "no es mi estilo",
+  "muy-formal": "muy formal",
+  "muy-casual": "muy casual",
+  "color-no": "no me gusta el color",
+  "ya-tengo-algo-asi": "ya tengo algo así",
+  "fuera-de-presupuesto": "fuera de presupuesto",
+  "no-lo-uso": "no lo uso",
+};
+
+// Los que se ofrecen en la hoja de motivo, en orden. Seis es el tope del handoff:
+// más allá de eso la gente elige el primero.
+export const VETO_REASONS_OFRECIDOS: VetoReason[] = [
+  "no-es-mi-estilo",
+  "muy-formal",
+  "muy-casual",
+  "color-no",
+  "ya-tengo-algo-asi",
+  "fuera-de-presupuesto",
+];
 
 // Overlay por slot: la alternativa vigente + cuántas ideales se han rechazado en
 // ese slot (tope SWAP_CAP) + la razón del último rechazo. capsule_target NO se muta;
