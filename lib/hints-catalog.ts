@@ -23,6 +23,12 @@
 //   que el tip explicaba lo que ya se ve, y señalaba un botón que dejó de ser el
 //   camino. Un tip encima de contenido autoexplicativo es una puerta que dice
 //   EMPUJE.
+//
+// Y uno nuevo, "closet-boton-agregar": el caso legítimo del mismo cambio. Al
+// subir tu primera foto el bloque se retira y el botón "agregar" aparece donde
+// antes no había nada; sin avisar, la persona busca el atajo que venía usando y
+// no lo encuentra. Este tip NO explica algo que ya se ve — señala un control que
+// acaba de aparecer, que es para lo que sirve un coach-mark.
 export type HintId =
   // Orientación (dónde estás / para qué sirve la sección)
   | "hoy-casa"
@@ -32,7 +38,9 @@ export type HintId =
   | "viaje"
   // Función de valor (qué puedes HACER dentro de la sección)
   | "hoy-tryon"
-  | "capsula-swap";
+  | "capsula-swap"
+  // Continuidad: un control que ANTES no estaba y ahora sí
+  | "closet-boton-agregar";
 
 export type HintModo = "centrado" | "spotlight";
 
@@ -46,6 +54,7 @@ export const HINT_MODO: Record<HintId, HintModo> = {
   viaje: "spotlight",
   "hoy-tryon": "spotlight",
   "capsula-swap": "spotlight",
+  "closet-boton-agregar": "spotlight",
 };
 
 export const HINT_IDS = Object.keys(HINT_MODO) as HintId[];

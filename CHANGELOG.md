@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.55.0] - 2026-07-29
+
+### Changed
+
+- **En el clóset ya solo hay una forma de añadir ropa a la vista, no dos.** Mientras el bloque de las tres opciones esté arriba, el botón "agregar" no se muestra: abría una hoja con exactamente lo que ya estaba desplegado abajo, y siendo el elemento más fuerte de la pantalla dejaba la jerarquía al revés. Cuando subes tu primera foto el bloque se retira y el botón vuelve, ya como la puerta de siempre. Siempre hay uno de los dos — y "más → añadir prendas" sigue estando en los dos estados.
+
+### Added
+
+- **Un aviso cuando los dos cambian de lugar.** Al subir tu primera foto, el bloque que venías usando desaparece y aparece un botón donde antes no había nada. Ahora un tip señala el botón nuevo y explica el relevo: "ya subiste lo tuyo, así que quité el bloque de arriba — desde aquí le sumas más ropa cuando quieras". Sale una sola vez, y pasa antes que cualquier otro tip del clóset porque explica algo que acaba de cambiar en la pantalla.
+
 ## [0.2.54.0] - 2026-07-29
 
 ### Added

@@ -48,6 +48,10 @@ export function AddSheet({
         <button
           type="button"
           onClick={() => setOpen(true)}
+          // Lo señala el tip que avisa que este botón tomó el lugar del bloque
+          // de tres opciones. En /closet solo se renderiza la variante "chip",
+          // así que no compite con la "ghost" del home.
+          data-hint-target="closet-boton-agregar"
           className={
             variant === "ghost"
               ? "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm border border-line text-[15px] font-semibold text-ink transition-colors duration-200 hover:border-accent hover:text-accent"

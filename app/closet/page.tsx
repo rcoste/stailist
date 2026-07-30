@@ -96,6 +96,20 @@ export default async function ClosetPage() {
   // primero a secas: así un tip sin target no entierra al que va detrás.
   const seenH = profile.hints_seen ?? {};
   const candidatos: HintCandidato[] = [];
+  // Va PRIMERO cuando aplica, por delante de la orientación: explica un cambio
+  // que acaba de pasar en la pantalla, y ese momento se pierde si se posterga
+  // una visita. La orientación de las pestañas puede esperar.
+  if (hasOwnPhotos && !seenH["closet-boton-agregar"]) {
+    candidatos.push({
+      id: "closet-boton-agregar",
+      children: (
+        <>
+          ya subiste lo tuyo, así que quité el bloque de arriba —{" "}
+          <strong>desde aquí</strong> le sumas más ropa cuando quieras
+        </>
+      ),
+    });
+  }
   if (!seenH["closet-tabs"]) {
     candidatos.push({
       id: "closet-tabs",
@@ -148,7 +162,14 @@ export default async function ClosetPage() {
                 : `${items.length} básicos para arrancar`}
             </p>
           </div>
-          <AddSheet userId={profile.id} />
+          {/* Uno de los dos, nunca los dos: con el bloque de tres opciones
+              arriba de la reja, este botón abría una hoja con lo que ya estaba
+              desplegado abajo — y siendo el elemento más fuerte de la pantalla,
+              dejaba la jerarquía al revés. Cuando el bloque se retira (primera
+              foto propia), el botón vuelve y es la puerta permanente; el tip
+              "closet-boton-agregar" avisa del relevo. "más → añadir prendas"
+              está en los dos estados, así que nunca hay un momento sin salida. */}
+          {mostrarLlenalo ? null : <AddSheet userId={profile.id} />}
         </div>
 
         <ClosetNav />
