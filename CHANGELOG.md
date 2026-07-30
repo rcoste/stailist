@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.63.0] - 2026-07-30
+
+### Changed
+
+- **Las prendas de tu wishlist ahora se ven como las sugerencias de tu cápsula.** Estaban en una reja de dos columnas, con tarjetas tan angostas que las acciones se apilaban una encima de otra en botones diminutos. Ahora cada prenda ocupa el ancho: su foto a la izquierda, el nombre y el veredicto de color a la derecha, y las acciones abajo, a lo ancho. Es la misma tarjeta que ya usan la cápsula y el viaje — una prenda guardada es lo mismo que una sugerida: algo que estás considerando, con su veredicto y sus salidas.
+
 ## [0.2.62.0] - 2026-07-30
 
 ### Added

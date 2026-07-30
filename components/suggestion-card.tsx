@@ -50,6 +50,7 @@ export function SuggestionCard({
   eyebrow,
   nombre,
   porque,
+  chip,
   foto,
   topAction,
   footer,
@@ -64,7 +65,11 @@ export function SuggestionCard({
   /** La categoría del hueco (o lo que vale), NO la razón. Va en versalitas. */
   eyebrow: string;
   nombre: string;
-  porque: string;
+  /** La voz del coach. Opcional: la wishlist no siempre tiene un porqué. */
+  porque?: string | null;
+  /** Un distintivo bajo el nombre (p. ej. el veredicto de color de la wishlist),
+   *  para lo que no cabe en el eyebrow porque lleva color con significado. */
+  chip?: React.ReactNode;
   /** El tile de la foto — cada módulo trae el suyo (genera bajo demanda). */
   foto: React.ReactNode;
   /** "cambiar" (deshacer tu decisión) en cápsula, "en mi clóset" en viaje. */
@@ -155,13 +160,16 @@ export function SuggestionCard({
               del look y de los hints. `.display` y no `.editorial`: esa fuerza
               font-style:normal fuera de las cascade layers y la serif saldría
               en redonda. */}
-          <p
-            className={`display mt-[7px] text-[16px] italic leading-5 text-ink2 ${
-              razonCompacta ? "line-clamp-1" : ""
-            }`}
-          >
-            {porque}
-          </p>
+          {chip ? <div className="mt-[7px] flex">{chip}</div> : null}
+          {porque ? (
+            <p
+              className={`display mt-[7px] text-[16px] italic leading-5 text-ink2 ${
+                razonCompacta ? "line-clamp-1" : ""
+              }`}
+            >
+              {porque}
+            </p>
+          ) : null}
         </div>
       </div>
 

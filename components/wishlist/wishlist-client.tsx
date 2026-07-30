@@ -12,6 +12,7 @@ import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
 import { ComboBuilder } from "@/components/wishlist/combo-builder";
 import { ClosetNav } from "@/components/closet-nav";
 import { Hint } from "@/components/hint";
+import { SuggestionCard } from "@/components/suggestion-card";
 import { Toast } from "@/components/toast";
 
 export type WishlistItem = {
@@ -101,7 +102,7 @@ export function WishlistClient({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [pending, start] = useTransition();
+  const [, start] = useTransition();
   const [tryonId, setTryonId] = useState<string | null>(null);
   const [combo, setCombo] = useState(false);
   /** URL local de la prenda que se está analizando (tarjeta provisional). */
@@ -255,59 +256,40 @@ export function WishlistClient({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-          {/* Provisional: misma caja que las demás para que al resolverse no
-              salte nada — solo se le llenan el nombre y el color. */}
+        // Misma card que la cápsula y el viaje (SuggestionCard): foto a la
+        // izquierda, la información a la derecha y las acciones en el pie a lo
+        // ancho. La reja de 2 columnas dejaba tarjetas de ~170px donde no
+        // caben varias acciones — se apilaban botones diminutos uno sobre otro
+        // (Roberto, 2026-07-30). Una prenda de la wishlist es lo mismo que una
+        // sugerida: algo que estás considerando, con su veredicto y sus salidas.
+        <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
+          {/* Provisional mientras se analiza: misma anatomía para que al
+              resolverse no salte nada. */}
           {pendiente ? (
-            <div className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface">
-              <div className="relative aspect-[3/4] w-full bg-bg">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={pendiente} alt="" className="h-full w-full object-cover" />
+            <li className="border border-line bg-surface">
+              <div className="flex gap-[13px] p-[12px_13px]">
+                <div className="relative aspect-[4/5] w-[86px] shrink-0 overflow-hidden bg-tile">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={pendiente} alt="" className="h-full w-full object-cover" />
+                </div>
+                <div className="flex min-h-[108px] flex-1 flex-col justify-center">
+                  <FraseRotando />
+                </div>
               </div>
-              {/* 103px = el alto medido del cuerpo ya resuelto (nombre + chip +
-                  "pruébatela"). Igualarlo evita que la reja dé un salto justo
-                  cuando la prenda aparece. */}
-              <div className="flex min-h-[103px] flex-col justify-center gap-1 p-2">
-                <FraseRotando />
-              </div>
-            </div>
+            </li>
           ) : null}
           {items.map((it) => (
-            <div
+            <SuggestionCard
               key={it.id}
-              className={`flex flex-col overflow-hidden rounded-lg border border-line bg-surface ${
-                pending ? "opacity-70" : ""
-              }`}
-            >
-              <div className="relative aspect-[3/4] w-full bg-bg">
-                {it.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={it.image} alt="prenda" className="h-full w-full object-cover" />
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => del(it.id)}
-                  aria-label="quitar"
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-[14px] text-white backdrop-blur-sm"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="flex flex-col gap-2 p-2">
-                {/* El nombre: la tarjeta no lo mostraba aunque la columna
-                    existiera, así que una prenda subida por foto se quedaba
-                    en "una imagen y un veredicto de color" sin decir qué es. */}
-                {it.name ? (
-                  <p className="line-clamp-2 text-[13px] font-semibold leading-tight text-ink">
-                    {it.name}
-                  </p>
-                ) : null}
-                <div className="flex items-center gap-2">
+              eyebrow="la quieres"
+              nombre={it.name ?? "prenda guardada"}
+              chip={
+                <span className="flex items-center gap-2">
                   {it.colorHex ? (
                     <span
+                      aria-hidden
                       className="h-4 w-4 flex-none rounded-full border border-line"
                       style={{ backgroundColor: it.colorHex }}
-                      aria-hidden
                     />
                   ) : null}
                   {it.verdict ? (
@@ -319,48 +301,40 @@ export function WishlistClient({
                   ) : (
                     <span className="text-[10px] text-muted">sin colorimetría</span>
                   )}
-                </div>
-                {/* Con el try-on ya generado el botón lo DICE: "así te queda"
-                    (mismo lenguaje que el detalle del look) y sin destello, que
-                    en esta app significa "esto va a generar algo". Volver a
-                    verlo es instantáneo — prometer una espera que no existe es
-                    lo que hacía dudar de si ya lo habías hecho. */}
-                <button
-                  type="button"
-                  onClick={() => setTryonId(it.id)}
-                  className={`flex min-h-9 items-center justify-center gap-1.5 rounded-sm border text-[12px] font-semibold transition-colors ${
-                    it.tieneTryon
-                      ? "border-ink bg-surface text-ink"
-                      : "border-line bg-bg text-ink hover:border-ink"
-                  }`}
-                >
-                  {it.tieneTryon ? (
-                    <>
-                      <Icon name="check" size={13} strokeWidth={2.4} /> así te queda
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="destello" size={14} /> pruébatela
-                    </>
-                  )}
-                </button>
-                {/* La salida cuando la compras: pasa al clóset y el motor ya
-                    puede armar looks con ella, sin volver a fotografiarla. */}
-                {it.puedeAlCloset ? (
-                  <button
-                    type="button"
-                    onClick={() => alCloset(it.id)}
-                    disabled={moviendo === it.id}
-                    className="flex min-h-9 items-center justify-center gap-1.5 text-[12px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
-                  >
-                    <Icon name="mas" size={13} strokeWidth={2} />
-                    {moviendo === it.id ? "pasándola…" : "ya la compré"}
-                  </button>
-                ) : null}
-              </div>
-            </div>
+                </span>
+              }
+              foto={
+                it.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={it.image}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                ) : null
+              }
+              topAction={{ label: "quitar", icon: "equis", onClick: () => del(it.id) }}
+              footer={[
+                {
+                  label: it.tieneTryon ? "así te queda" : "pruébatela",
+                  icon: it.tieneTryon ? "check" : "destello",
+                  onClick: () => setTryonId(it.id),
+                  primary: true,
+                },
+                ...(it.puedeAlCloset
+                  ? [
+                      {
+                        label: moviendo === it.id ? "pasándola…" : "ya la compré",
+                        icon: "mas" as const,
+                        onClick: () => alCloset(it.id),
+                        busy: moviendo === it.id,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           ))}
-        </div>
+        </ul>
       )}
 
       {tryonId ? (
