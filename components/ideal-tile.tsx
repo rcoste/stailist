@@ -123,7 +123,7 @@ function GenOverlay() {
 function RevealImg({ src, sizes }: { src: string; sizes: string }) {
   return (
     <span className="gen-reveal absolute inset-0">
-      <Image src={src} alt="" fill sizes={sizes} className="object-cover" />
+      <Image src={src} alt="" fill sizes={sizes} className="object-contain" />
     </span>
   );
 }
@@ -142,11 +142,15 @@ export function IdealTileInner({
   sizes: string;
   restLabel?: string;
 }) {
+  // `contain` y nunca `cover`: estos renders ya vienen recortados contra su
+  // fondo limpio, y volver a recortarlos le comía el cuello a las camisas y la
+  // punta a los zapatos. Si la foto no tiene la proporción del hueco sobra tile
+  // a los lados, y eso es correcto (handoff del card de duelo, §b).
   if (render.src) {
     return render.generated ? (
       <RevealImg src={render.src} sizes={sizes} />
     ) : (
-      <Image src={render.src} alt="" fill sizes={sizes} className="object-cover" />
+      <Image src={render.src} alt="" fill sizes={sizes} className="object-contain" />
     );
   }
   // Sin render: NO se pinta el tile del color de la prenda a sangre. Un bloque de
@@ -177,14 +181,5 @@ export function IdealTileInner({
         </>
       )}
     </>
-  );
-}
-
-// Anillo/check de selección (esquina del tile).
-export function SelCheck() {
-  return (
-    <span className="absolute right-1.5 top-1.5 z-30 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-accent text-on-accent">
-      <Icon name="check" size={12} strokeWidth={2.6} />
-    </span>
   );
 }

@@ -253,6 +253,13 @@ export function lifestyleSummary(answers: LifestyleAnswers | null): string | nul
 export type CapsuleItem = {
   nombre: string; // etiqueta humana: "Cuello tortuga azul marino"
   tipo: string; // clave de prenda para el match: "cuello-tortuga"
+  // El ROL que cubre, en palabras de la persona: "pantalón no denim", "tenis
+  // limpio". Lo lee el rótulo del card de duelo, que necesita nombrar el hueco
+  // SIN repetir el nombre de la prenda. No se usa `tipo` para esto: es una llave
+  // de máquina sin acentos ni eñes ("pantalon-vestir", "panuelo", "botin") y en
+  // versalitas sale con faltas de ortografía. Opcional: las cápsulas generadas
+  // antes de 2026-07-30 no lo traen y el rótulo cae a "te falta" a secas.
+  hueco?: string | null;
   category: Category;
   colorFamilia: string; // "marino", "neutro claro", etc. (dentro de su paleta)
   formalidad: Formalidad;

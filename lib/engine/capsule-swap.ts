@@ -150,5 +150,13 @@ Propón la alternativa (item).`,
   if (!item || !item.nombre || !item.tipo) throw new Error("BAD_SWAP");
   // El rol lo define la categoría del slot: la fijamos por si el modelo se desvió,
   // y conservamos la prioridad original del slot (su lugar en la cápsula no cambia).
-  return { ...item, category: slot.category, prioridad: slot.prioridad };
+  // `hueco` se HEREDA por la misma razón: la alternativa cubre EL MISMO hueco, así
+  // que el rótulo del card no debe cambiar al cambiar la prenda (y así tampoco hay
+  // que volver a pedírselo al modelo).
+  return {
+    ...item,
+    category: slot.category,
+    prioridad: slot.prioridad,
+    hueco: slot.hueco ?? null,
+  };
 }
