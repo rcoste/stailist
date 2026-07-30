@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.64.0] - 2026-07-30
+
+### Changed
+
+- **Las tres cosas que puedes hacer con una prenda guardada están juntas, abajo.** Ver cómo te queda · ya la compré · quitar. Antes "quitar" vivía arriba, separada de las otras dos, y no había razón: las tres son decisiones sobre esa misma prenda.
+
 ## [0.2.63.0] - 2026-07-30
 
 ### Changed

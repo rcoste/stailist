@@ -313,7 +313,10 @@ export function WishlistClient({
                   />
                 ) : null
               }
-              topAction={{ label: "quitar", icon: "equis", onClick: () => del(it.id) }}
+              // Las tres salidas van en el PIE, como en la cápsula: ver cómo
+              // te queda · pasarla al clóset · quitarla. Arriba no queda nada
+              // porque aquí no hay "otro eje" — las tres son decisiones sobre
+              // esta prenda.
               footer={[
                 {
                   label: it.tieneTryon ? "así te queda" : "pruébatela",
@@ -331,6 +334,11 @@ export function WishlistClient({
                       },
                     ]
                   : []),
+                {
+                  label: "quitar",
+                  icon: "equis" as const,
+                  onClick: () => del(it.id),
+                },
               ]}
             />
           ))}
