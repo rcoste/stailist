@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import type { Swatch } from "@/lib/palette-data";
-import { dominantColor } from "@/lib/color/extract";
 import { checkColor, type Verdict } from "@/lib/color/match";
 import { saveToWishlist } from "@/lib/wishlist-add";
 import { removeWishlistItem } from "@/lib/wishlist-actions";
@@ -23,6 +22,35 @@ export type WishlistItem = {
 };
 
 export type ClosetPick = { id: string; nombre: string; image: string | null };
+
+// Comprime a 1280px JPEG antes de mandarla al análisis (mismo tamaño que usa el
+// import del clóset: suficiente para que la IA lea la tela, y no revienta el
+// payload con una foto de 12 MP).
+function comprimir(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const max = 1280;
+      let { width, height } = img;
+      if (width > height && width > max) {
+        height = (height * max) / width;
+        width = max;
+      } else if (height > max) {
+        width = (width * max) / height;
+        height = max;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      URL.revokeObjectURL(img.src);
+      resolve(dataUrl);
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 const BADGE: Record<Verdict, { label: string; tone: string; cls: string }> = {
   va: { label: "va contigo", tone: "✓", cls: "bg-success/10 text-success" },
@@ -50,39 +78,50 @@ export function WishlistClient({
   const [combo, setCombo] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+  // El color y el nombre los saca la IA, NO el cálculo de color dominante del
+  // navegador. Ese cálculo servía para una foto tomada de cerca, pero con una
+  // FOTO DE PRODUCTO —prenda chica sobre fondo de estudio— devuelve el fondo:
+  // el pantalón de lino oliva de Roberto se guardó como #f2f2f2 con veredicto
+  // "va contigo", que es un juicio sobre el fondo blanco de Zara (2026-07-30).
+  // No era cuestión de calibrar el umbral: el fondo de estudio (242) cae bajo el
+  // corte de "casi blanco" (244) y, aunque no cayera, en esa foto hay más
+  // píxeles de fondo que de tela dentro del recorte.
+  //
+  // El mismo analizador del clóset acierta en esas fotos (medido: #7BA69A para
+  // un suéter verde de catálogo, #DED6C4 para un vestido beige) porque el prompt
+  // le pide el color de la TELA ignorando luz y sombra. De paso trae nombre,
+  // categoría y material — el nombre es el que la tarjeta nunca tuvo.
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = async () => {
-      let hex: string | null = null;
-      let verdict: Verdict | null = null;
-      const max = 140;
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, w, h);
-        hex = dominantColor(ctx.getImageData(0, 0, w, h).data, w, h);
-        if (va.length) verdict = checkColor(hex, va, evita).verdict;
+    let hex: string | null = null;
+    let verdict: Verdict | null = null;
+    let nombre: string | null = null;
+    try {
+      const dataUrl = await comprimir(file);
+      const res = await fetch("/api/analizar-prenda", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      if (res.ok) {
+        // La respuesta viene envuelta: { analisis: {...} }, no plana.
+        const { analisis } = (await res.json()) as {
+          analisis?: { nombre?: string; color_hex?: string };
+        };
+        nombre = analisis?.nombre ?? null;
+        hex = analisis?.color_hex ?? null;
       }
-      URL.revokeObjectURL(url);
-      const res = await saveToWishlist(file, hex, verdict, "upload");
-      setBusy(false);
-      if (inputRef.current) inputRef.current.value = "";
-      if (res.ok) router.refresh();
-    };
-    img.onerror = () => {
-      setBusy(false);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
+    } catch {
+      // Sin análisis se guarda igual: la foto en la wishlist vale por sí sola y
+      // perderla por un fallo de red sería peor que quedarse sin veredicto.
+    }
+    if (hex && va.length) verdict = checkColor(hex, va, evita).verdict;
+    const res = await saveToWishlist(file, hex, verdict, "upload", nombre);
+    setBusy(false);
+    if (inputRef.current) inputRef.current.value = "";
+    if (res.ok) router.refresh();
   }
 
   function del(id: string) {
@@ -181,6 +220,14 @@ export function WishlistClient({
                 </button>
               </div>
               <div className="flex flex-col gap-2 p-2">
+                {/* El nombre: la tarjeta no lo mostraba aunque la columna
+                    existiera, así que una prenda subida por foto se quedaba
+                    en "una imagen y un veredicto de color" sin decir qué es. */}
+                {it.name ? (
+                  <p className="line-clamp-2 text-[13px] font-semibold leading-tight text-ink">
+                    {it.name}
+                  </p>
+                ) : null}
                 <div className="flex items-center gap-2">
                   {it.colorHex ? (
                     <span

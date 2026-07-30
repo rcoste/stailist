@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.60.0] - 2026-07-30
+
+### Fixed
+
+- **El veredicto de color de la wishlist ya juzga la prenda, no el fondo de la foto.** Un pantalón de lino oliva de Zara se guardó como `#f2f2f2` —el blanco del estudio— y con eso te dijo "va contigo": una respuesta sobre el fondo, no sobre el pantalón. El cálculo que hacía el navegador ignoraba lo "casi blanco" a partir de 244, y el fondo de esas fotos es 242; y aunque el umbral fuera otro, en una foto de producto hay más píxeles de fondo que de tela. Ahora el color lo lee el mismo analizador que usa tu clóset, que sí distingue la tela de la luz.
+- **Y la prenda que subes por foto ya tiene nombre.** La app siempre lo supo, pero la tarjeta nunca lo mostraba: veías una imagen, un color y nada más. Ahora dice qué es — "Playera blanca oversize", "Chinos azul marino".
+
 ## [0.2.59.0] - 2026-07-30
 
 ### Fixed
