@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.68.2] - 2026-07-31
+
+### Fixed
+
+- **El icono de camisa por fin parece una camisa.** Era un cuerpo alto y estrecho con dos rayitas por mangas, y al tamaño al que se usa de verdad (20-30px) las rayitas desaparecían: quedaba un vaso. Sale en el mosaico de "tus esenciales" del menú "más" y en la opción "hombre" del onboarding — o sea, en lo primero que ves de la app. Ahora tiene cuerpo ancho, mangas con hombro y cuello en V.
+
 ## [0.2.68.1] - 2026-07-30
 
 ### Changed
