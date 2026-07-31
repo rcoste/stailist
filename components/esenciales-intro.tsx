@@ -20,10 +20,11 @@ import { markIntroSeen } from "@/lib/intros";
 // Las dos filas de la demostración. Los iconos son los del sistema — nada de
 // ilustraciones nuevas: lo que comunica es la operación, no el dibujo.
 //
-// La percha en AMBAS filas, y no camisa arriba: el glifo de camisa del sistema
-// es alto y estrecho, y a este tamaño se lee como un vaso (verificado en
-// pantalla a 26 y a 30px). La percha es la marca genérica de "prenda" que ya usa
-// toda la app, y quien diferencia las filas es el rótulo, no el dibujo.
+// La percha en AMBAS filas, y no camisa arriba: para la fila de abajo no hay
+// glifo de pantalón, así que camisa arriba + percha abajo rompería la simetría
+// de la multiplicación (una fila con prenda concreta y la otra con el genérico).
+// La percha es la marca genérica de "prenda" que ya usa toda la app, y quien
+// diferencia las filas es el rótulo, no el dibujo.
 const ARRIBA: IconName[] = ["gancho", "gancho", "gancho"];
 const ABAJO: IconName[] = ["gancho", "gancho", "gancho"];
 
@@ -53,9 +54,8 @@ export function EsencialesIntro({
 
       {/* La demostración: la multiplicación. Es todo el argumento en una imagen
           — seis prendas dan nueve maneras de vestirte.
-          Cada fila lleva su ETIQUETA y no depende de que el icono se lea: a 26px
-          la camisa del sistema parecía un vaso, y si el dibujo tiene que cargar
-          solo con el significado, el argumento se cae. */}
+          Cada fila lleva su ETIQUETA y no depende de que el icono se lea: si el
+          dibujo tiene que cargar solo con el significado, el argumento se cae. */}
       <div className="my-auto flex flex-col items-center gap-2.5 border border-line bg-surface px-4 py-7">
         <Fila iconos={ARRIBA} rotulo="3 de arriba" />
         <Operador signo="×" />

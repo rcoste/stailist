@@ -1,6 +1,7 @@
 // Set de íconos de línea propio (rebrand v2 — adiós emoji). viewBox 24, fill
 // none, stroke currentColor, trazo 1.6 (2.2 activo), caps/joins redondeados.
-// Glifos fieles al handoff (ui_kits/app/primitives.jsx). Hereda color del texto.
+// Glifos fieles al handoff (ui_kits/app/primitives.jsx), salvo los que tienen
+// nota propia explicando por qué se redibujaron. Hereda color del texto.
 import type { JSX } from "react";
 
 export type IconName =
@@ -259,10 +260,17 @@ const GLYPHS: Record<IconName, JSX.Element> = {
   flecha: <path d="M5 12h14M13 6l6 6-6 6" />,
   // Género (onboarding): vestido (mujer) y camisa (hombre).
   vestido: <path d="M12 3a3 3 0 0 1 3 3c0 1.5-1 2.5-1.5 4l3.5 8H7l3.5-8C10 8.5 9 7.5 9 6a3 3 0 0 1 3-3z" />,
+  // La versión vieja era un cuerpo de 8 de ancho hasta y=21 con las mangas como
+  // dos rayitas: a 26-30px se leía como un VASO. Ahora el cuerpo ocupa ~10 del
+  // viewBox, termina en y=19.6, y las mangas tienen volumen real (hombro que
+  // sale y baja hasta el puño). El cuello es una V ancha y profunda — es lo que
+  // la separa de una playera de cuello redondo. Probado a 20/26/30: cualquier
+  // detalle extra adentro (placket, alas de cuello) se vuelve mancha a ese
+  // tamaño, por eso el interior va limpio.
   camisa: (
     <>
-      <path d="M8 4h8v6l-1 11H9L8 10z" />
-      <path d="M8 4l-1 4M16 4l1 4" />
+      <path d="M8.9 4.4L7 5.2 3.4 8.6 5.9 11 6.9 9.2V19.6h10.2V9.2l1 1.8 2.5-2.4-3.6-3.4-1.9-.8" />
+      <path d="M8.9 4.4L12 8.6 15.1 4.4" />
     </>
   ),
   bookmark: <path d="M6 4h12v16l-6-4-6 4z" />,
