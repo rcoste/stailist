@@ -25,7 +25,7 @@ export function CapsuleCard({
           <Icon name="destello" size={16} />
         </span>
         <span className="flex min-w-0 flex-col">
-          <span className="text-sm font-semibold text-ink">Descubre tu clóset cápsula</span>
+          <span className="text-sm font-semibold text-ink">Descubre tus esenciales</span>
           <span className="text-xs text-muted">
             Cuéntame de tu vida y te armo el clóset ideal.
           </span>
@@ -43,7 +43,7 @@ export function CapsuleCard({
         className="flex items-center gap-3 rounded-lg border border-line bg-surface px-[15px] py-[13px] transition-colors hover:border-accent"
       >
         <span className="flex min-w-0 flex-col">
-          <span className="text-sm font-semibold text-ink">Tu cápsula está lista</span>
+          <span className="text-sm font-semibold text-ink">Tus esenciales están listos</span>
           <span className="text-xs text-muted">Ve qué prendas ya tienes y cuáles te faltan.</span>
         </span>
         <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
@@ -63,7 +63,7 @@ export function CapsuleCard({
         </span>
         <span className="flex min-w-0 flex-1 items-center gap-[7px]">
           <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-success">
-            Cápsula
+            Esenciales
           </span>
           <span className="text-[13.5px] font-semibold text-ink">Completa</span>
           <span className="tabular text-xs text-muted">
@@ -87,7 +87,7 @@ export function CapsuleCard({
     >
       <div className="flex items-baseline justify-between">
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
-          tu cápsula
+          tus esenciales
         </span>
         <span className="text-[26px] font-bold leading-none tracking-[-0.02em] text-ink">
           <span className="tabular">{view.haveCount}</span>
@@ -108,7 +108,7 @@ export function CapsuleCard({
         <>
           <p className="display mt-3 text-sm text-muted">
             te {nFaltan === 1 ? "falta" : "faltan"} {nFaltan}{" "}
-            {nFaltan === 1 ? "esencial" : "esenciales"}:
+            {nFaltan === 1 ? "pieza" : "piezas"}:
           </p>
           <div className="mt-[11px] flex gap-2">
             {faltan.map((it, i) => (

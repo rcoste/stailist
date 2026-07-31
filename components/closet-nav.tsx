@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 // Segmented control del clóset (mismo patrón que los mini-tabs de Perfil), para
-// movernos entre las sub-secciones: prendas (tu ropa), cápsula (la meta) y
+// movernos entre las sub-secciones: prendas (tu ropa), esenciales (la meta) y
 // wishlist (lo que evalúas comprar). Navega por ruta — cada sub-sección conserva
 // su propio loader. La cartera de colores ya NO vive aquí: es identidad de
 // estilo y vive en Perfil → Estilo (junto al pasaporte).
@@ -12,7 +12,7 @@ const TABS: { href: string; label: string; match: (p: string) => boolean }[] = [
   { href: "/closet", label: "prendas", match: (p) => p === "/closet" },
   {
     href: "/closet/capsula",
-    label: "cápsula",
+    label: "esenciales",
     match: (p) => p.startsWith("/closet/capsula"),
   },
   { href: "/wishlist", label: "wishlist", match: (p) => p.startsWith("/wishlist") },

@@ -8,7 +8,7 @@ export default function Loading() {
       phrases={[
         { a: "leyendo tu ", k: "estilo", b: "…" },
         { a: "afinando tus ", k: "preguntas", b: "…" },
-        { a: "personalizando tu ", k: "cápsula", b: "…" },
+        { a: "personalizando tus ", k: "esenciales", b: "…" },
       ]}
     />
   );

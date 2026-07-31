@@ -24,14 +24,14 @@ type Feature = { title: string; desc: string; cta: string; path: string };
 const FEATURES: Feature[] = [
   {
     title: "¿Un viaje pronto?",
-    desc: `Arma tu maleta en <b style="font-weight:700;color:#141414;">modo Viaje</b>: una cápsula que cabe en carry-on y se reparte en outfits por día — con el clima de cada parada.`,
+    desc: `Arma tu maleta en <b style="font-weight:700;color:#141414;">modo Viaje</b>: lo justo que cabe en carry-on, repartido en outfits por día — con el clima de cada parada.`,
     cta: "Probar modo Viaje",
     path: "/viaje",
   },
   {
     title: "Menos ropa, más looks.",
-    desc: `Descubre tu <b style="font-weight:700;color:#141414;">cápsula</b>: te muestra cuánto rinde de verdad cada prenda y qué te falta para desbloquear más combinaciones.`,
-    cta: "Ver mi cápsula",
+    desc: `Descubre tus <b style="font-weight:700;color:#141414;">esenciales</b>: te muestran cuánto rinde de verdad cada prenda y qué te falta para desbloquear más combinaciones.`,
+    cta: "Ver mis esenciales",
     path: "/closet",
   },
   {

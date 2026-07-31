@@ -562,11 +562,11 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 05 · CÁPSULA */}
+        {/* 05 · ESENCIALES */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>05</span> Clóset cápsula
+              <span className={styles.n}>05</span> Tus esenciales
             </div>
             <div className={styles.banner}>
               <div className={styles.bannerCopy}>
@@ -574,9 +574,10 @@ export function Landing() {
                   Menos ropa. Más <em className={styles.s}>outfits</em>.
                 </h2>
                 <p className={styles.lead}>
-                  Una cápsula es un puñado de prendas que combinan entre sí.
-                  stailist te ayuda a armar la tuya con lo que ya tienes — y te
-                  enseña cuánto rinde de verdad cada pieza.
+                  Un puñado de prendas que combinan entre sí — los estilistas
+                  llevan desde los setenta llamándolo &ldquo;clóset cápsula&rdquo;.
+                  stailist arma el tuyo con lo que ya tienes y te enseña cuánto
+                  rinde de verdad cada pieza.
                 </p>
                 <ul className={styles.bpoints}>
                   <li>
@@ -604,7 +605,7 @@ export function Landing() {
                     <div>
                       <b>Nada de prendas huérfanas. </b>
                       <span>
-                        Todo lo que entra a tu cápsula combina con el resto. Sin
+                        Todo lo que entra a tu lista combina con el resto. Sin
                         esa blusa que solo va con una cosa.
                       </span>
                     </div>
@@ -649,7 +650,7 @@ export function Landing() {
                   Tu maleta, <em className={styles.s}>resuelta</em>.
                 </h2>
                 <p className={styles.lead}>
-                  Dime a dónde vas y cuántos días. Te armo una cápsula que cabe
+                  Dime a dónde vas y cuántos días. Te armo una maleta que cabe
                   en carry-on y te la reparto en outfits por día — con el clima
                   real de cada parada.
                 </p>
@@ -657,7 +658,7 @@ export function Landing() {
                   <li>
                     <span className={styles.bk}>01</span>
                     <div>
-                      <b>Una cápsula que rinde. </b>
+                      <b>Una maleta que rinde. </b>
                       <span>
                         Pocas prendas, todos los días cubiertos. Empacas ligero
                         sin repetir el mismo look.

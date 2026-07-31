@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
           rechazadas = [];
         }
 
-        send({ phase: "armando tu cápsula de viaje…" });
+        send({ phase: "armando tu maleta…" });
         const target = await generateTripCapsuleTarget({
           days,
           ocasiones,

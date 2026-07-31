@@ -85,7 +85,7 @@ export function buildHomeChecklist(s: ChecklistSignals): HomeChecklist | null {
       : []),
     {
       id: "capsula",
-      label: "arma tu cápsula",
+      label: "arma tus esenciales",
       hint: "tus básicos, lo que te falta",
       href: "/closet/capsula/editar",
       done: s.hasCapsule,

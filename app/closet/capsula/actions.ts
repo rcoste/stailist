@@ -125,7 +125,7 @@ export async function saveLifestyle(
     // Las respuestas ya quedaron guardadas arriba.
     return {
       status: "error",
-      message: "Guardé tus respuestas pero no pude armar tu cápsula. Inténtalo de nuevo en un momento.",
+      message: "Guardé tus respuestas pero no pude armar tus esenciales. Inténtalo de nuevo en un momento.",
     };
   }
 
@@ -144,7 +144,7 @@ export async function saveLifestyle(
     })
     .eq("id", user.id);
   if (error) {
-    return { status: "error", message: "No pude guardar tu cápsula — dale otra vez." };
+    return { status: "error", message: "No pude guardar tus esenciales — dale otra vez." };
   }
 
   redirect("/closet/capsula");

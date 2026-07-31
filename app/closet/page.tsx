@@ -115,7 +115,7 @@ export default async function ClosetPage() {
       id: "closet-tabs",
       children: (
         <>
-          aquí también viven tu <strong>cápsula</strong> (el clóset ideal para tu
+          aquí también viven tus <strong>esenciales</strong> (el clóset ideal para tu
           vida) y tu <strong>wishlist</strong> — toca para verlas
         </>
       ),

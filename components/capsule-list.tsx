@@ -334,7 +334,7 @@ export function CapsuleList({
       <div className="flex flex-col">
         <div className="flex items-baseline justify-between gap-2.5">
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-            Tu cápsula ideal
+            Tus esenciales
           </span>
           <span className="display text-[16px] font-semibold text-ink">
             {match ? (
@@ -384,7 +384,7 @@ export function CapsuleList({
       {/* Sin match: la cápsula ideal como lista simple (el botón "calcular" vive
           en la página). */}
       {pendiente.length > 0 ? (
-        <Section title="Tu cápsula ideal" count={pendiente.length}>
+        <Section title="La lista completa" count={pendiente.length}>
           <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {pendiente.map((r) => (
               <BigCard

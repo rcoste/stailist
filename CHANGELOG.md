@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.67.0] - 2026-07-30
+
+### Changed
+
+- **"Tu cápsula" ahora se llama "tus esenciales".** "Cápsula" es jerga de moda: viene del oficio, no del idioma de nadie. La voz del producto prohíbe la jerga técnica de moda desde el día uno, y ésta se nos había colado en la navegación, en la franja del clóset, en el cuestionario, en el correo semanal y en la landing. "Esenciales" ya era la palabra que la app usaba sola cuando tenía que explicarse ("te faltan 3 esenciales").
+
+### Added
+
+- **La primera vez que entras a tus esenciales, te explico la idea.** Una lista de 20 prendas que no compraste se lee como una lista de compras que la app se sacó de la manga. Ahora antes de la lista va la lógica, en una imagen: 3 prendas de arriba × 3 de abajo = 9 looks. Y de dónde viene — los estilistas llevan desde los setenta armando los clósets así. Se muestra una vez; "volver a ver los tips" en tu Perfil la trae de vuelta.
+
+### Fixed
+
+- **Las corridas de pruebas ya no cuentan código de otra rama.** Las tareas en segundo plano crean copias del proyecto dentro de la carpeta, y el corredor de pruebas las estaba incluyendo: el conteo se inflaba (264 reales se reportaban como 541) y una rama ajena podía pintar de rojo un árbol sano. Interno, no lo ves en la app.
+
 ## [0.2.66.0] - 2026-07-30
 
 Los primeros arreglos del feedback de Alberto, el segundo tester real.
