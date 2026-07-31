@@ -403,7 +403,7 @@ export function StyleReferenceCard({
 
       {err ? <p className="text-xs text-error">{err}</p> : null}
 
-      {/* Aviso de consecuencia: tu cápsula se armó con el estilo de antes. */}
+      {/* Aviso de consecuencia: tus esenciales se armaron con el estilo de antes. */}
       {tocoElEstilo && tieneCapsula ? (
         <Link
           href="/closet/capsula"
@@ -411,7 +411,7 @@ export function StyleReferenceCard({
         >
           <Icon name="destello" size={14} className="mt-px shrink-0 text-accent" />
           <span>
-            Tu cápsula se armó con tu estilo de antes —{" "}
+            Tus esenciales se armaron con tu estilo de antes —{" "}
             <span className="font-medium text-ink">ponla al día</span> cuando quieras.
           </span>
         </Link>

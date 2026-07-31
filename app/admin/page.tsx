@@ -313,7 +313,7 @@ export default async function AdminOverview() {
         </SectionTitle>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Avatar" value={String(conAvatar)} hint="generaron su avatar" />
-          <Stat label="Cápsula" value={String(conCapsula)} hint="calcularon su cápsula" />
+          <Stat label="Esenciales" value={String(conCapsula)} hint="calcularon sus esenciales" />
           <Stat
             label="Viajes"
             value={tripsC.error ? "—" : String(tripsC.count ?? 0)}

@@ -278,7 +278,7 @@ function NivelAtajos({
   // viejo — con un viaje vivo entras directo a su maleta.
   const tiles: { icon: IconName; label: string; onClick: () => void }[] = [
     { icon: "maleta", label: "viajes", onClick: () => go(maletaHref) },
-    { icon: "camisa", label: "tu cápsula", onClick: () => go("/closet/capsula") },
+    { icon: "camisa", label: "tus esenciales", onClick: () => go("/closet/capsula") },
     { icon: "lupa", label: "modo tienda", onClick: () => go("/cartera/chequear") },
     { icon: "paleta", label: "tus colores", onClick: () => go("/cartera") },
     { icon: "corazon", label: "favoritos", onClick: () => go("/historial?filtro=fav") },

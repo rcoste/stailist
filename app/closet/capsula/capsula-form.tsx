@@ -17,7 +17,7 @@ const CAPSULE_PHRASES: GenPhrase[] = [
   { a: "leyendo tu ", k: "vida", b: "…" },
   { a: "cruzando tus ", k: "colores", b: "…" },
   { a: "afinando tu ", k: "silueta", b: "…" },
-  { a: "armando tu ", k: "cápsula", b: "…" },
+  { a: "armando tus ", k: "esenciales", b: "…" },
 ];
 
 // Cuestionario paso a paso (handoff Screen 5): una pregunta a la vez, opciones
@@ -202,7 +202,7 @@ export function CapsulaForm({
       <div className="fixed bottom-0 left-1/2 flex w-full max-w-[430px] -translate-x-1/2 flex-col gap-2 border-t border-line bg-surface px-[18px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[11px]">
         {last ? (
           <p className="text-center text-[11.5px] text-muted">
-            Último paso — esto <span className="font-semibold text-ink">arma tu cápsula</span> (~30s)
+            Último paso — esto <span className="font-semibold text-ink">arma tus esenciales</span> (~30s)
           </p>
         ) : null}
         <div className="flex gap-2.5">
@@ -228,11 +228,11 @@ export function CapsulaForm({
             >
               {pending ? (
                 <>
-                  <Spinner className="h-4 w-4" /> Armando tu cápsula…
+                  <Spinner className="h-4 w-4" /> Armando tus esenciales…
                 </>
               ) : (
                 <>
-                  <Icon name="destello" size={16} /> Armar mi cápsula
+                  <Icon name="destello" size={16} /> Armar mis esenciales
                 </>
               )}
             </button>

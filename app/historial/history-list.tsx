@@ -378,7 +378,7 @@ function Featured({
             {o.origen !== "daily" ? (
               <span className="inline-flex items-center gap-1 rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
                 <Icon name={o.origen === "viaje" ? "maleta" : "gancho"} size={11} />{" "}
-                {o.origen === "viaje" ? "Viaje" : "Cápsula"}
+                {o.origen === "viaje" ? "Viaje" : "Esenciales"}
               </span>
             ) : o.occasion ? (
               <span className="rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
@@ -428,7 +428,7 @@ function GridTile({
           {o.origen !== "daily" ? (
             <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-px text-[10px] font-semibold text-accent">
               <Icon name={o.origen === "viaje" ? "maleta" : "gancho"} size={10} />{" "}
-              {o.origen === "viaje" ? "Viaje" : "Cápsula"}
+              {o.origen === "viaje" ? "Viaje" : "Esenciales"}
             </span>
           ) : null}
           <span className="tabular">{o.fecha}</span>

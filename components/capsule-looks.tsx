@@ -19,7 +19,7 @@ import {
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
 
 const PHRASES: GenPhrase[] = [
-  { a: "mirando tu ", k: "cápsula", b: "…" },
+  { a: "mirando tus ", k: "esenciales", b: "…" },
   { a: "cruzando tus ", k: "prendas", b: "…" },
   { a: "armando ", k: "combinaciones", b: "…" },
 ];
@@ -113,7 +113,7 @@ export function CapsuleLooks({
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium text-ink">¿Y qué armo con esto?</span>
             <span className="text-sm text-muted">
-              Te muestro los looks que salen de las prendas que ya tienes de tu cápsula.
+              Te muestro los looks que salen de las prendas que ya tienes de tus esenciales.
             </span>
           </div>
           {error ? (
@@ -136,8 +136,8 @@ export function CapsuleLooks({
     return (
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
         <span className="text-sm text-muted">
-          Con lo que ya tienes de tu cápsula todavía no alcanza para un look completo.
-          Completa tu base en &quot;Tu cápsula&quot; y vuelve.
+          Con lo que ya tienes todavía no alcanza para un look completo.
+          Completa tus esenciales y vuelve.
         </span>
         <button
           type="button"
@@ -160,7 +160,7 @@ export function CapsuleLooks({
 
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted">
-          {outfits.length} {outfits.length === 1 ? "look" : "looks"} con tu cápsula
+          {outfits.length} {outfits.length === 1 ? "look" : "looks"} con tus esenciales
         </span>
         <div className="flex shrink-0 items-center gap-2.5">
           <button
@@ -236,7 +236,7 @@ export function CapsuleLooks({
           <span className="text-ink">
             {sinCubrir.map((o) => (OCC_LABEL.get(o) ?? o).toLowerCase()).join(", ")}
           </span>{" "}
-          — te falta algo para eso. Revisa lo que te falta en &quot;la cápsula&quot;.
+          — te falta algo para eso. Revisa lo que te falta en &quot;tus esenciales&quot;.
         </p>
       ) : null}
     </div>

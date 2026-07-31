@@ -130,7 +130,7 @@ export function StyleWordsCard({
       {campo}
       <p className="text-xs text-muted">
         Opcional — pero es la señal más directa que me puedes dar: la uso en cada
-        look, en tu cápsula y al armar tu maleta.
+        look, en tus esenciales y al armar tu maleta.
       </p>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { CapsuleTabsContext } from "@/components/capsule-tabs-context";
 
-// Pestañas de la cápsula: "la cápsula" (el plan + cobertura) / "tus looks"
+// Pestañas de los esenciales: "tus esenciales" (el plan + cobertura) / "tus looks"
 // (outfits con lo que ya tienes). Mismo lenguaje visual que el viaje
 // ("la maleta" / "tus looks"). La generación de looks vive dentro de <CapsuleLooks/>
 // (server action), así que aquí no hay estado de generación — solo el switch.
@@ -28,7 +28,7 @@ export function CapsuleTabs({
     <div className="flex flex-col gap-6">
       <div className="-mt-1 flex gap-6 border-b border-line">
         <Tab
-          label="la cápsula"
+          label="tus esenciales"
           count={capsulaCount}
           on={tab === "capsula"}
           onClick={() => setTab("capsula")}

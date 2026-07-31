@@ -6,6 +6,7 @@ import { CapsuleList } from "@/components/capsule-list";
 import { Hint } from "@/components/hint";
 import { CapsuleLooks } from "@/components/capsule-looks";
 import { CapsuleTabs } from "@/components/capsule-tabs";
+import { EsencialesGate } from "@/components/esenciales-intro";
 import { PorQueEsTuya } from "@/components/por-que-es-tuya";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 import { Icon, type IconName } from "@/components/icon";
@@ -162,9 +163,17 @@ export default async function CapsulaPage({
     <AppShell desktop="wide">
       <section className="flex flex-col gap-6 pt-1">
         <ClosetNav />
+        {/* La primera visita explica la idea antes de soltar la lista: sin eso,
+            15 prendas que no compraste se leen como una lista de compras que la
+            app se sacó de la manga. La navegación del clóset se queda arriba —
+            la intro informa, no secuestra. */}
+        <EsencialesGate
+          vista={!!profile.hints_seen?.["intro:esenciales"]}
+          total={target.items.length}
+        >
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink lg:text-[38px]">
-            tu cápsula
+            tus esenciales
           </h1>
           <Link
             href="/closet/capsula/editar"
@@ -204,7 +213,7 @@ export default async function CapsulaPage({
                     className="flex w-full items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft p-3 text-left text-sm font-medium text-accent transition-colors hover:border-accent"
                   >
                     <Icon name="destello" size={16} />
-                    Tu cápsula se quedó atrás de ti — ponla al día
+                    Tus esenciales se quedaron atrás de ti — ponlos al día
                   </button>
                 </form>
               ) : null}
@@ -216,7 +225,7 @@ export default async function CapsulaPage({
                   </span>
                   <span className="text-[12.5px] leading-snug text-muted">
                     Cuando varias no te laten, casi siempre es que hay que afinar tu
-                    estilo, no la prenda. Ajusta lo que no va y te rearmo la cápsula.
+                    estilo, no la prenda. Ajusta lo que no va y te rearmo la lista.
                   </span>
                   <div className="flex flex-wrap gap-2 pt-0.5">
                     <Link
@@ -230,7 +239,7 @@ export default async function CapsulaPage({
                         type="submit"
                         className="flex min-h-9 items-center gap-1.5 rounded-sm bg-accent px-3 text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep"
                       >
-                        <Icon name="destello" size={15} /> Rearmar mi cápsula
+                        <Icon name="destello" size={15} /> Rearmar mi lista
                       </button>
                     </form>
                   </div>
@@ -243,7 +252,7 @@ export default async function CapsulaPage({
                 href="/closet/capsula/editar"
                 className="hidden w-fit items-center gap-1 text-sm font-semibold text-ink hover:underline lg:flex"
               >
-                editar mi cápsula <Icon name="chevron" size={14} />
+                editar mis esenciales <Icon name="chevron" size={14} />
               </Link>
             </div>
 
@@ -298,6 +307,7 @@ export default async function CapsulaPage({
             />
           }
         />
+        </EsencialesGate>
       </section>
     </AppShell>
   );
@@ -318,7 +328,7 @@ function DoneState({ have, total }: { have: number; total: number }) {
             </span>
           </span>
           <h2 className="text-[18px] font-semibold leading-tight text-ink">
-            Tu guardarropa esencial está completo
+            Tienes todos tus esenciales
           </h2>
         </div>
       </div>
@@ -341,13 +351,13 @@ function DoneState({ have, total }: { have: number; total: number }) {
           icon="corazon"
           href="/perfil"
           title="Afina tus gustos"
-          sub="Ajusta la cápsula si tu estilo cambió"
+          sub="Ajusta tus esenciales si tu estilo cambió"
         />
         <NextCard
           icon="gancho"
           href="/closet"
           title="Ve todo tu guardarropa"
-          sub="Toda tu ropa, no solo la cápsula"
+          sub="Toda tu ropa, no solo lo esencial"
         />
       </div>
     </div>
