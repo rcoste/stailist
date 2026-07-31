@@ -178,6 +178,7 @@ export function LookDetail({
               outfitId={outfitId}
               initialFavorited={initialFavorited}
               variant="ring"
+              confirmaDestino
             />
           </div>
         </div>

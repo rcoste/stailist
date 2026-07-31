@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.68.0] - 2026-07-30
+
+### Fixed
+
+- **Guardar un look ahora te dice dónde quedó.** Le dabas al corazón, el corazón se llenaba y ahí terminaba todo: nada te decía que el look se había guardado en algún lado ni cómo volver a él. El sitio siempre existió —el filtro "favoritos" del Historial, también en el menú "más"—, pero si nada te lo dice, guardar se siente como que no pasó nada. Ahora el corazón confirma y te ofrece ir.
+
 ## [0.2.67.0] - 2026-07-30
 
 ### Changed
