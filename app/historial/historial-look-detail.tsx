@@ -13,13 +13,19 @@ import { useWakeLock } from "@/lib/use-wake-lock";
 import { ocasionLabel, type HistoryOutfit, type EstadoItem } from "./history-list";
 
 // Detalle del look en Historial — misma anatomía v2 que el detalle de Hoy
+//
+// Se llama HistorialLookDetail y NO LookDetail a secas: había DOS componentes
+// con ese nombre (éste y components/look-detail.tsx, el de Hoy y el wow), y era
+// el único nombre repetido del repo. Cuesta caro — al añadir el acuse del
+// corazón se editó uno y se probó el otro, y por un rato pareció que el arreglo
+// estaba roto. El nombre ahora dice de cuál se habla.
 // (handoff design_handoff_look_detalle_v2): back en vez de wordmark, nombre en
 // serif + sub de fecha, pestañas con corazón y ⋯ a la derecha, pie del coach, y
 // la TAB BAR VISIBLE (el overlay termina arriba de ella — antes la tapaba).
 // Lo propio del historial: "me lo vuelvo a poner" y borrar (en el menú ⋯).
 // Compartir vive en la lupa (arriba a la derecha), no en este menú.
 
-export function LookDetail({
+export function HistorialLookDetail({
   o,
   e,
   rewearing,

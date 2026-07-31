@@ -7,7 +7,7 @@ import { voteOutfit, toggleFavorite, wearToday } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { Heart } from "@/components/heart";
-import { LookDetail } from "./look-detail";
+import { HistorialLookDetail } from "./historial-look-detail";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { deleteOutfit } from "@/lib/delete-actions";
 
@@ -316,7 +316,7 @@ export function HistoryList({
           oscuro inmersivo. Las acciones viven aquí, no en cada tarjeta, para que
           el diario se mantenga limpio. */}
       {lookAbierto ? (
-        <LookDetail
+        <HistorialLookDetail
           o={lookAbierto}
           e={estado[lookAbierto.id]}
           rewearing={rewearing === lookAbierto.id}

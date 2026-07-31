@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.68.1] - 2026-07-30
+
+### Changed
+
+- Interno: el detalle de look del Historial pasa a llamarse `HistorialLookDetail`. Había dos componentes llamados `LookDetail` —el único nombre repetido del repo— y al arreglar el corazón se editó uno y se probó el otro. No lo ves en la app.
+
 ## [0.2.68.0] - 2026-07-30
 
 ### Fixed
