@@ -463,10 +463,13 @@ export function SwipeDeck({
             No va
           </span>
 
-          {/* Nombre sobre degradado de protección */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 via-ink/35 to-transparent px-4 pb-5 pt-12">
-            <p className="font-display text-[22px] italic text-surface">{look.nombre}</p>
-          </div>
+          {/* SIN el nombre del estilo, a propósito (Roberto, 2026-07-30).
+              Un rótulo como "Minimalista" o "Coreano" hace que la persona
+              conteste con su AUTOIMAGEN —"¿yo soy minimalista?"— en vez de con
+              su gusto —"¿me quiero poner esto?"—. Y quien no conoce el término
+              queda descalificado de opinar sobre una foto que sí entiende.
+              El nombre sigue existiendo en los datos: lo usan el alt de la
+              imagen, el aria-label de los botones y el admin. */}
         </div>
       </div>
 
