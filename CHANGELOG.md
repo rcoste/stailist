@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.70.0] - 2026-07-31
+
+### Added
+
+- **Destilador (herramienta interna, solo admin).** Una pantalla para curar, foto por foto, las referencias con las que se le enseña al motor cómo se lleva cada estilo. Funciona por swipe desde el celular, porque la curaduría son ~90 fotos por tanda y se hace en ratos muertos, no sentado frente a la computadora. Dos señales separadas a propósito: "sirve" define el estilo y el ★ ("así me vestiría yo") guarda el gusto personal aparte — si se mezclaran, el motor acabaría copiando el clóset de una persona en vez del estilo.
+- **Filtro de visión sobre las referencias cosechadas.** De 178 fotos traídas de Pinterest, 85 no servían: portadas de blog con el título encima, collages, anuncios de tienda con precios, flat-lays sin persona y looks de mujer colados en una búsqueda de hombre. Antes eso se lo iba a comer el humano a mano; ahora lo tira un pase de visión y las descartadas se guardan aparte por si se equivoca.
+- **Recetario de estilos, todavía DESCONECTADO del motor.** El motor recibía los gustos como tres palabras sueltas ("pulido, clasico, elegante") y ninguna de sus 432 líneas de prompt decía qué significan, así que improvisaba. El recetario las cambia por fórmulas concretas a nivel prenda. Está escrito y probado pero sin conectar: la primera destilación salió de las fotos SIN curar, y no se le cambian los outfits a gente real con material que sabemos malo. Se conecta cuando la curaduría termine y gane un A/B contra el motor actual.
+
+### Fixed
+
+- La barra del admin ya no se parte en dos filas en el celular; ahora hace scroll horizontal. En el destilador, esa segunda fila empujaba los botones de decisión abajo del fold.
+
 ## [0.2.69.0] - 2026-07-31
 
 ### Changed

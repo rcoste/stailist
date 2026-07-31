@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/catalogo", label: "Catálogo" },
   { href: "/admin/looks", label: "Looks" },
+  { href: "/admin/destilador", label: "Destilador" },
   { href: "/admin/usuarios", label: "Usuarios" },
   { href: "/admin/allowlist", label: "Allowlist" },
   { href: "/admin/waitlist", label: "Waitlist" },
@@ -15,7 +16,10 @@ const LINKS = [
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-wrap items-center gap-1">
+    // Una sola fila con scroll: en el celular, envolver a dos filas empujaba el
+    // contenido del destilador abajo del fold y había que hacer scroll para
+    // llegar a los botones.
+    <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {LINKS.map((l) => {
         const active =
           l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
@@ -23,7 +27,7 @@ export function AdminNav() {
           <Link
             key={l.href}
             href={l.href}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
               active
                 ? "bg-accent text-on-accent"
                 : "text-muted hover:bg-bg hover:text-ink"

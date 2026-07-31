@@ -312,6 +312,19 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.tasteTags.length > 0) {
     lines.push(`Tags de gusto (en orden de fuerza): ${ctx.tasteTags.join(", ")}.`);
+    // AQUÍ VA EL RECETARIO (lib/engine/recetario.ts) — desconectado a propósito.
+    //
+    // Los tags solos son tres palabras que el modelo interpreta a su antojo
+    // ("pulido" no dice si la camisa va abierta o abotonada), y el recetario les
+    // pone contenido concreto. Pero la primera versión se destiló de fotos SIN
+    // CURAR, y casi la mitad eran portadas de blog, collages y anuncios. Meterlo
+    // a producción así le cambiaría los outfits a gente real con material que
+    // sabemos malo.
+    //
+    // Se reconecta cuando la curaduría (/admin/destilador) termine y el A/B
+    // contra el motor actual lo gane. Son estas dos líneas:
+    //   const receta = recetasParaPrompt(recetasParaTags(ctx.tasteTags, ctx.gender));
+    //   if (receta) lines.push(receta);
   }
   if (ctx.styleWords?.trim()) {
     // slice defensivo: el tope de 280 vive en la app, no en la DB — un valor
