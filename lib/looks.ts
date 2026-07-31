@@ -58,6 +58,17 @@ const ESTILOS: EstiloRow[] = [
   // los K-dramas está muy fuerte. Se diferencia de Monocromático por la
   // SILUETA (abrigo largo + wide-leg fluido, no el tono único ceñido).
   ["coreano", "Coreano", "holgado, fluido y monocromo — muy K-drama", ["fluido", "oversize", "sobrio"]],
+  // 2026-07-31: el eje que FALTABA. Tatiana lo dijo revisando el deck — "están
+  // muy señoriales, falta algo más sexy" — y al revisar las 26 tenía razón:
+  // TODAS eran holgadas y cubiertas. A quien le gusta la ropa que marca la
+  // silueta no le aparecía ninguna carta suya, así que el motor no se enteraba
+  // nunca de ese gusto.
+  //
+  // Women-only como coquette: el equivalente masculino de este eje no es "lo
+  // mismo pero de hombre", así que no se inventa. El tag `ceñido` es nuevo a
+  // propósito — al ser raro pesa más en el vector de gustos (ver tasteTags,
+  // que normaliza por frecuencia).
+  ["de-salir", "De salir", "ceñido, corto y con actitud", ["ceñido", "atrevido", "glam"], "mujer"],
 ];
 
 export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "unisex"]) => ({

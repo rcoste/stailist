@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.69.0] - 2026-07-31
+
+### Changed
+
+- **Las cartas del swipe de estilos, rehechas de cero (mujer).** Tatiana lo dijo revisando la app: "muchos de los outfits no están tan padres" y "se ven muy señoriales". Tenía razón, y al revisarlas de cerca el problema no era uno solo. Las 27 cartas se rehicieron con fotos reales de referencia que ella y Roberto curaron, en vez de describirle la ropa a la IA con palabras — que era lo que hacía que saliera lo más promedio posible. Ahora cada estilo tiene su propia calle, su propia pose y su propio peinado, en vez de las 25 contra la misma pared gris.
+- **Las cartas ya no dicen cómo se llama el estilo.** Un rótulo como "Minimalista" o "Coreano" hace que contestes con tu autoimagen —"¿yo soy minimalista?"— en vez de con tu gusto —"¿me quiero poner esto?"—. Y si no conoces el término, quedas descalificado de opinar sobre una foto que sí entiendes. Ahora solo ves el look.
+
+### Added
+
+- **Una carta nueva: "de salir".** De los 26 estilos, ninguno mostraba ropa que marcara la silueta — todo era holgado y cubierto. A quien le gusta lo ceñido no le aparecía ninguna carta suya, así que nunca nos enterábamos de ese gusto. Es el hueco que detectó Tatiana.
+
 ## [0.2.68.1] - 2026-07-30
 
 ### Changed
