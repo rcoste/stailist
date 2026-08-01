@@ -2,6 +2,12 @@ import { getProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { routeForStep } from "@/lib/onboarding";
 import { createClient } from "@/lib/supabase/server";
+import {
+  ITEM_IMAGE_SELECT,
+  itemImageUrlSync,
+  itemPrivatePaths,
+  type ItemImageRow,
+} from "@/lib/item-image";
 import { WowClient, type WowOutfit } from "./wow-client";
 
 // El momento wow: 2-3 outfits generados con tu clóset, tus gustos y tu paleta.
@@ -45,19 +51,40 @@ export default async function WowPage({
       .limit(3);
     if (saved && saved.length > 0) {
       const itemIds = [...new Set(saved.flatMap((o) => o.item_ids as string[]))];
+      // ITEM_IMAGE_SELECT y no solo "attrs": attrs.image_path SOLO existe en las
+      // prendas del catálogo. Una foto propia guarda su imagen en
+      // render_path/photo_path (bucket privado), así que leyendo attrs a secas
+      // salían SIN imagen.
       const { data: items } = await supabase
         .from("items")
-        .select("id, attrs")
+        .select(`id, ${ITEM_IMAGE_SELECT}`)
         .in("id", itemIds);
+
+      const privadas = Array.from(
+        new Set((items ?? []).flatMap((i) => itemPrivatePaths(i as ItemImageRow)))
+      );
+      const firmadas = new Map<string, string>();
+      if (privadas.length > 0) {
+        const { data: urls } = await supabase.storage
+          .from("prendas")
+          .createSignedUrls(privadas, 3600);
+        urls?.forEach((u) => {
+          if (u.path && u.signedUrl) firmadas.set(u.path, u.signedUrl);
+        });
+      }
+
       const attrsById = new Map(
-        (items ?? []).map((i) => [
-          i.id,
-          i.attrs as {
-            nombre?: string;
-            color_hex?: string;
-            image_path?: string | null;
-          },
-        ])
+        (items ?? []).map((i) => {
+          const attrs = i.attrs as { nombre?: string; color_hex?: string };
+          return [
+            i.id,
+            {
+              nombre: attrs?.nombre,
+              color_hex: attrs?.color_hex,
+              imagen: itemImageUrlSync(i as ItemImageRow, (p) => firmadas.get(p)),
+            },
+          ];
+        })
       );
       initialOutfits = await Promise.all(
         saved.reverse().map(async (o) => {
@@ -76,7 +103,7 @@ export default async function WowPage({
             prendas: (o.item_ids as string[]).map((id) => ({
               nombre: attrsById.get(id)?.nombre ?? "Prenda",
               swatch: attrsById.get(id)?.color_hex ?? "#E5E1DD",
-              imagen: attrsById.get(id)?.image_path ?? null,
+              imagen: attrsById.get(id)?.imagen ?? null,
             })),
           };
         })

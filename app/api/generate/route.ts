@@ -15,6 +15,12 @@ import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
 import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
+import {
+  ITEM_IMAGE_SELECT,
+  itemImageUrlSync,
+  itemPrivatePaths,
+  type ItemImageRow,
+} from "@/lib/item-image";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
@@ -62,7 +68,11 @@ export async function POST(request: NextRequest) {
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase
             .from("items")
-            .select("id, attrs")
+            // ITEM_IMAGE_SELECT y no solo "attrs": attrs.image_path SOLO existe
+            // en las prendas del catálogo. Una foto propia guarda su imagen en
+            // render_path/photo_path (bucket privado), así que leyendo attrs a
+            // secas salían SIN imagen — 252 de las 272 fotos propias de la base.
+            .select(`id, ${ITEM_IMAGE_SELECT}`)
             .eq("user_id", user.id)
             .is("deleted_at", null),
           supabase
@@ -155,7 +165,32 @@ export async function POST(request: NextRequest) {
         send({ total: candidates.length });
 
         const gender = profile.gender as "hombre" | "mujer" | null;
-        const itemById = new Map(items.map((i) => [i.id, i.attrs]));
+
+        // Las fotos propias y los renders viven en el bucket privado: hay que
+        // firmarlas. Se firman TODAS de una vez aquí y no por outfit, porque
+        // esto corre dentro del stream y una petición a Storage por look se
+        // notaría como retraso entre carta y carta.
+        const privadas = Array.from(
+          new Set(items.flatMap((i) => itemPrivatePaths(i as ItemImageRow)))
+        );
+        const firmadas = new Map<string, string>();
+        if (privadas.length > 0) {
+          const { data: urls } = await supabase.storage
+            .from("prendas")
+            .createSignedUrls(privadas, 3600);
+          urls?.forEach((u) => {
+            if (u.path && u.signedUrl) firmadas.set(u.path, u.signedUrl);
+          });
+        }
+        const itemById = new Map(
+          items.map((i) => [
+            i.id,
+            {
+              ...i.attrs,
+              imagen: itemImageUrlSync(i as ItemImageRow, (p) => firmadas.get(p)),
+            },
+          ])
+        );
         const finalized: typeof candidates = [];
 
         // Registro por outfit para el flywheel: qué pasó con cada candidato.
@@ -201,7 +236,7 @@ export async function POST(request: NextRequest) {
               prendas: (row.item_ids as string[]).map((id) => ({
                 nombre: itemById.get(id)?.nombre ?? "Prenda",
                 swatch: itemById.get(id)?.color_hex ?? "#E5E1DD",
-                imagen: itemById.get(id)?.image_path ?? null,
+                imagen: itemById.get(id)?.imagen ?? null,
               })),
             },
           });
