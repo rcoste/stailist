@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.71.0] - 2026-08-01
+
+### Added
+
+- **Segunda vuelta del destilador.** La primera curaduría pedía dos juicios distintos con un solo botón: si la foto es del estilo (taxonomía) y si se ve bien (ojo). Son preguntas distintas, y quien cura contesta la que puede contestar — si se lo pondría. Medido contra un juez que solo sabe taxonomía: 35% de acuerdo en smart casual, con 17 de 26 fotos rechazadas que sí eran del estilo, y ese estilo quedó con 3 aprobadas de 26. Ahora las 31 discrepancias se revisan con la pregunta separada: "es del estilo pero no es lo mío" (vuelve a destilar), "está mal puesto" o "de verdad no es de ese estilo". Con el sesgo metido en la taxonomía, el recetario deja de describir el estilo y describe el guardarropa de una persona.
+- **Juez de estilo independiente** (`scripts/juez-estilo.mjs`): clasifica cada referencia por taxonomía sin ver el veredicto humano, y marca dónde discrepan.
+
+### Fixed
+
+- `referencias_juez` se había creado desde un script y quedó en producción con RLS activo y **cero políticas** — ilegible desde la app y sin versionar en migraciones. Ahora está en `0096` con su política de admin.
+
 ## [0.2.70.0] - 2026-07-31
 
 ### Added

@@ -9,9 +9,9 @@
 // se hace en ratos muertos, desde el celular. Un archivo local no sincroniza.
 
 import { createClient } from "@/lib/supabase/server";
-import type { Referencia } from "./destilador-tipos";
+import type { Referencia, Discrepancia } from "./destilador-tipos";
 
-export type { Juicio, Referencia } from "./destilador-tipos";
+export type { Juicio, Referencia, Discrepancia } from "./destilador-tipos";
 
 /** Cuántas fotos hay y cuántas van juzgadas, por estilo. */
 export async function resumenPorEstilo(
@@ -74,4 +74,53 @@ export async function referenciasDeEstilo(
     mio: r.mio,
     nota: r.nota,
   }));
+}
+
+/**
+ * Las fotos donde el humano dijo "no sirve" y el juez de taxonomía dice que SÍ
+ * son del estilo — la cola de la segunda pasada.
+ *
+ * Es el único conjunto donde hace falta re-preguntar: si ambos dicen que no, no
+ * hay nada que discutir, y las que el humano aprobó ya están dentro. Las ya
+ * revisadas salen de la cola.
+ */
+export async function discrepancias(
+  genero: "hombre" | "mujer"
+): Promise<Discrepancia[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("referencias")
+    .select("id, path, estilo, sirve, motivo, mio, nota, referencias_juez!inner(es_del_estilo, ejecucion, observado)")
+    .eq("genero", genero)
+    .eq("sirve", false)
+    .is("revision", null)
+    .eq("referencias_juez.es_del_estilo", true)
+    .order("estilo")
+    .order("path");
+
+  if (!data?.length) return [];
+
+  const { data: urls } = await supabase.storage
+    .from("referencias")
+    .createSignedUrls(data.map((r) => r.path), 3600);
+  const porPath = new Map((urls ?? []).map((u) => [u.path, u.signedUrl]));
+
+  return data.map((r) => {
+    // El embed llega como arreglo o como objeto según la forma del join; se
+    // normaliza aquí para que la pantalla no cargue con ese detalle.
+    const juez = Array.isArray(r.referencias_juez)
+      ? r.referencias_juez[0]
+      : r.referencias_juez;
+    return {
+      id: r.id,
+      path: r.path,
+      url: porPath.get(r.path) ?? null,
+      sirve: r.sirve,
+      motivo: r.motivo,
+      mio: r.mio,
+      nota: r.nota,
+      observado: juez?.observado ?? null,
+      ejecucion: juez?.ejecucion ?? 0,
+    };
+  });
 }

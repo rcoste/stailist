@@ -23,6 +23,42 @@ export type Juicio = {
   motivo?: string | null;
   mio?: boolean;
   nota?: string | null;
+  revision?: string | null;
+};
+
+/**
+ * Las salidas de la segunda pasada, sobre las fotos donde el humano y la
+ * taxonomía discreparon.
+ *
+ * `destila` es la razón de existir de todo esto: "es del estilo pero no es lo
+ * mío" tiene que volver a la destilación. Filtrar el estilo por el gusto de una
+ * persona produce su guardarropa, no el estilo — y eso solo le sirve a ella.
+ */
+export const REVISIONES = [
+  {
+    id: "no-es-lo-mio",
+    label: "Es del estilo, pero no es lo mío",
+    pista: "Cuenta para el estilo, no para tu gusto",
+    destila: true,
+  },
+  {
+    id: "mal-ejecutada",
+    label: "Está mal puesto",
+    pista: "El estilo sí, la ejecución no",
+    destila: false,
+  },
+  {
+    id: "no-es-del-estilo",
+    label: "De verdad no es de este estilo",
+    pista: "Aquí el juez se equivocó",
+    destila: false,
+  },
+] as const;
+
+export type Discrepancia = Referencia & {
+  /** Qué vio el juez de taxonomía — le da contexto a la re-decisión. */
+  observado: string | null;
+  ejecucion: number;
 };
 
 /** Los motivos de rechazo, en orden de qué tan seguido pasan. */
