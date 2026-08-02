@@ -65,12 +65,23 @@ export default async function AdminDestilador({
           const pendientes = r.total - r.juzgadas;
           const validado = VALIDADOS.has(r.estilo);
           return (
-            <div key={r.estilo} className="flex items-center justify-between gap-3 px-3 py-2">
+            // El activo se resalta: sin esto, el panel decía cuántas faltan en
+            // cada estilo pero no en cuál estabas parado, y el contador de abajo
+            // ("1 de 34") no dice de qué.
+            <div
+              key={r.estilo}
+              className={`flex items-center justify-between gap-3 px-3 py-2 ${
+                r.estilo === activo ? "bg-accent-soft" : ""
+              }`}
+            >
               {/* El conteo se esconde en el celular: es dato de apoyo y cada
                   línea extra empuja los botones de decisión fuera de la
                   pantalla, que es el problema que este panel vino a resolver. */}
               <div className="flex min-w-0 items-baseline gap-2">
-                <span className="truncate text-sm font-medium text-ink">{r.estilo}</span>
+                <span className="truncate text-sm font-medium text-ink">
+                  {r.estilo === activo && <span className="mr-1">▸</span>}
+                  {r.estilo}
+                </span>
                 <span className="hidden text-xs text-muted sm:inline">
                   {r.sirven} sirven de {r.juzgadas}
                 </span>
@@ -84,7 +95,7 @@ export default async function AdminDestilador({
                 </Link>
               ) : (
                 <span className="shrink-0 text-xs font-medium text-muted">
-                  {validado ? "✓ listo y aprobado" : "curado · falta destilar"}
+                  {validado ? "✓ listo y aprobado" : "✓ curado"}
                 </span>
               )}
             </div>

@@ -107,8 +107,10 @@ export function DestiladorClient({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between text-sm text-muted">
+        {/* El estilo va aquí, no solo en el panel: "1 de 34" a secas no dice de
+            qué estilo, y con tres en la lista eso obliga a adivinar. */}
         <span>
-          {i + 1} de {fotos.length}
+          <b className="text-ink">{estilo}</b> · {i + 1} de {fotos.length}
         </span>
         <span>
           {juzgadas} juzgadas · {sirven} sirven
