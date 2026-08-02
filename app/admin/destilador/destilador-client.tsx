@@ -94,7 +94,7 @@ export function DestiladorClient({
       <div className="flex flex-col items-center gap-3 py-12 text-center">
         <p className="text-lg font-semibold text-ink">Terminaste {estilo}</p>
         <p className="text-sm text-muted">
-          {sirven} de {fotos.length} sirven. Cambia de estilo arriba.
+          {sirven} de {fotos.length} sirven. El estado de cada estilo está arriba.
         </p>
       </div>
     );
@@ -121,10 +121,11 @@ export function DestiladorClient({
         />
       </div>
 
-      {/* 52vh en el celular NO es un número al aire: es lo que deja los botones
-          de decisión dentro de la primera pantalla, con la cabecera del admin y
-          los chips arriba. Más alto y hay que hacer scroll para decidir. */}
-      <div className="relative h-[52vh] w-full select-none sm:h-[70vh]">
+      {/* 44vh en el celular NO es un número al aire: es lo que deja los botones
+          de decisión dentro de la primera pantalla, contando la cabecera del
+          admin y el panel de estado. Más alto y hay que hacer scroll para
+          decidir, que es justo lo que hace sentir que la herramienta pelea. */}
+      <div className="relative h-[44vh] w-full select-none sm:h-[68vh]">
         {/* La siguiente, atrás, para que se sienta una pila y no una foto suelta. */}
         {fotos[i + 1]?.url && (
           <div className="absolute inset-0 scale-95 overflow-hidden rounded-xl border border-line bg-tile opacity-40">

@@ -15,10 +15,22 @@
 // obliga.
 //
 // DE DÓNDE SALE
-// De leer ~60 fotos de calle por estilo, cosechadas de Pinterest, y anotar lo
-// que se REPITE. No es el gusto de quien escribe esto: si 40 de 50 fotos traen
-// calzado limpio sin logo, ese patrón es del estilo, no mío. El volumen es
-// justo la defensa contra el criterio de quien destila.
+// De fotos de calle cosechadas de Pinterest, filtradas por visión (se fue el
+// 48%: portadas de blog, collages, anuncios) y CURADAS a mano en /admin/destilador.
+// Lo que se anota es lo que SE REPITE, no lo que le gusta a quien destila: si 14
+// de 20 fotos traen pantalón claro de pinzas, ese patrón es del estilo.
+//
+// La curaduría pasó por dos vueltas, y la segunda importa. En la primera se
+// preguntaba "¿sirve?" con un solo botón, y eso mezcla dos juicios distintos:
+// si la foto ES del estilo (taxonomía) y si se ve bien (ojo). Medido contra un
+// juez que solo sabe taxonomía, el acuerdo en smart-casual fue de 35%: 17 de 26
+// fotos rechazadas SÍ eran del estilo, y quedaron 3 aprobadas de 26. La segunda
+// vuelta las separó y smart-casual subió a 12. Sin ese paso, esto describiría el
+// guardarropa de una persona en vez del estilo.
+//
+// Base actual: clásico elegante 35 fotos · minimalista 28 · smart casual 12.
+// Smart-casual sigue siendo el más flojo — los patrones de abajo son los que se
+// repiten aun así, pero con 12 fotos la cola de variantes no está cubierta.
 //
 // CÓMO SE USA
 // recetasParaTags() elige las recetas de los estilos que empatan con los gustos
@@ -51,22 +63,26 @@ export const RECETAS_HOMBRE: Receta[] = [
     nombre: "Smart casual",
     tags: ["pulido", "versatil", "moderno"],
     silueta:
-      "Tres capas, no dos: una pieza abierta encima (camisa, overshirt, chamarra o suéter) sobre una base lisa, y pantalón de tela. La tercera pieza ES el estilo — sin ella queda ropa, no outfit.",
+      "Tres piezas, y el pantalón AMPLIO —de tela, con caída, nunca entallado—. Encima casi siempre hay una tercera pieza (camisa abierta, overshirt, suéter, saco o abrigo); sin ella queda ropa, no outfit.",
     formulas: [
-      "camisa de tela abierta + playera blanca lisa + chino crema + tenis blanco de piel",
-      "overshirt azul marino + playera blanca + chino camel + mocasín café",
-      "suéter fino de cuello redondo + camisa con cuello asomando + pantalón de tela gris + mocasín",
-      "camisa oscura arremangada + pantalón negro de pinzas + tenis blanco limpio",
-      "chamarra de mezclilla oscura + sudadera lisa crema + chino camel + tenis",
-      "playera lisa + chino verde olivo + cinturón café + tenis blanco",
+      "camisa abierta + playera blanca lisa + jeans claros rectos + tenis blanco de piel",
+      "camisa gris abierta + playera blanca + pantalón negro amplio + tenis crema",
+      "suéter negro fino + pantalón negro + cinturón + zapato negro (monocromo de arriba abajo)",
+      "playera lisa oversize + pantalón de pinzas amplio + mocasín café",
+      "suéter azul marino + camisa con el cuello asomando + chino crema + mocasín",
+      "camisa de lino azul claro abierta + pantalón gris topo amplio + cinturón + mocasín café",
       "abrigo largo negro + playera y pantalón del mismo tono + tenis blanco",
+      "saco azul marino + playera blanca + pantalón crema + cinturón + zapato oscuro",
+      "overshirt azul marino + playera blanca + chino crema",
     ],
     detalles: [
       "La camisa va ABIERTA sobre una playera lisa, no abotonada sola: es lo que la baja de formal a smart casual.",
+      "La camisa abierta NUNCA del mismo tono que el pantalón: se lee como conjunto y no como outfit. Es la misma trampa del \"traje desparejado\" —saco y pantalón del mismo color sin ser un traje real—, con otra prenda.",
+      "El pantalón amplio es la mitad del estilo. Con pantalón entallado el mismo outfit se ve de oficina.",
+      "El monocromo oscuro (todo negro, todo gris) es una variante completa del estilo, no una salida perezosa.",
       "Mangas dobladas a media antebrazo cuando la camisa va sola.",
+      "Cinturón visible cuando el pantalón es de pinzas; a juego con el zapato.",
       "El pantalón cae al tobillo o con un quiebre mínimo — nunca amontonado sobre el zapato.",
-      "Cinturón del mismo tono que el zapato en los looks con pantalón de vestir.",
-      "Máximo dos colores más un neutro. Si hay un color fuerte, todo lo demás se apaga.",
     ],
     evitar: [
       "Traje completo de dos piezas: eso ya es sastre, no smart casual.",
@@ -76,18 +92,18 @@ export const RECETAS_HOMBRE: Receta[] = [
       "Camisa fajada con la playera asomando por debajo.",
     ],
     capsula: [
+      "camisa de tela clara (crema o azul claro)",
       "overshirt azul marino",
-      "camisa de tela crema",
       "playera blanca lisa de buen cuello",
       "playera negra lisa",
-      "suéter fino de cuello redondo",
+      "suéter fino de cuello redondo azul marino",
+      "suéter negro fino",
+      "pantalón de pinzas amplio gris",
+      "pantalón de tela negro",
       "chino crema",
-      "chino camel",
-      "pantalón de tela negro o gris",
       "jeans claro de corte recto",
       "tenis blanco de piel",
       "mocasín café",
-      "cinturón café",
     ],
   },
   {
@@ -99,20 +115,23 @@ export const RECETAS_HOMBRE: Receta[] = [
     formulas: [
       "camisa azul claro con cuello abierto + pantalón de pinzas crema + mocasín café",
       "camisa azul marino + pantalón crema + cinturón café + mocasín café",
-      "polo tejido camel + pantalón crema de pinzas + mocasín",
+      "polo tejido (camel, negro o marino) + pantalón crema de pinzas + mocasín",
       "saco azul marino + camisa blanca + pantalón crema + mocasín café",
       "suéter fino crema + pantalón azul marino de pinzas + mocasín",
       "camisa de lino café + pantalón crema + tenis blanco de piel",
-      "polo negro + pantalón camel de cintura alta + cinturón negro",
-      "saco color crema + camisa blanca + pantalón azul marino",
+      "playera lisa oscura + pantalón camel de pinzas + cinturón de piel",
+      "camisa de lino crema + pantalón crema (total claro, un solo tono de arriba abajo)",
+      "polo blanco + suéter atado al hombro + pantalón crema",
+      "chamarra de gamuza café + cuello alto negro + pantalón oscuro",
     ],
     detalles: [
+      "El pantalón claro de pinzas, talle alto y pierna amplia, es LA firma: aparece en dos de cada tres looks.",
       "Cuello abierto uno o dos botones, sin corbata. Abotonado hasta arriba sin corbata se ve incómodo.",
       "La textura hace el trabajo que en otros estilos hace el estampado: lino, punto, franela, gamuza.",
-      "Cintura alta con el pantalón de pinzas — se ve la línea del cinturón, no la esconde la camisa.",
       "El mocasín café es el zapato firma; el tenis blanco de piel es la única alternativa que no rompe.",
+      "El oscuro de arriba casi siempre es azul marino o café, no negro.",
       "Reloj y cinturón de piel, nada más. Cero logos a la vista.",
-      "Dos colores en total: uno claro abajo, uno medio u oscuro arriba.",
+      "Dos colores en total: uno claro abajo, uno medio u oscuro arriba. El total claro también vale.",
     ],
     evitar: [
       "Pantalón slim o entallado: mata la caída y con ella el estilo.",
@@ -127,12 +146,12 @@ export const RECETAS_HOMBRE: Receta[] = [
       "pantalón azul marino",
       "camisa blanca",
       "camisa azul claro",
-      "camisa azul marino",
+      "camisa de lino crema",
       "polo tejido camel",
+      "polo tejido negro",
       "suéter fino crema",
       "saco azul marino",
       "mocasín café",
-      "tenis blanco de piel",
       "cinturón café",
     ],
   },
@@ -143,41 +162,58 @@ export const RECETAS_HOMBRE: Receta[] = [
     silueta:
       "Silueta relajada, nunca ajustada: hombro que cae, pierna amplia y recta, largo al tobillo. Se ve limpio por la proporción, no por ir entallado.",
     formulas: [
+      // Esta fórmula decía "pantalón de tela crema" y contradecía el detalle de
+      // que la pieza de encima nunca va del mismo tono que el pantalón. El
+      // generador obedeció la fórmula —es lo concreto— y salió el conjunto
+      // crema-sobre-crema. Las fórmulas mandan sobre los detalles: una fórmula
+      // que viola una regla la deja muerta.
+      "camisa de lino crema abierta + playera blanca + pantalón taupe amplio + tenis blanco",
       "playera blanca oversize + pantalón de tela crema amplio + tenis blanco liso",
       "suéter gris de punto + chino beige + tenis blanco",
       "playera café + pantalón crema + tenis blanco",
       "camisa de lino crema abierta + playera blanca + pantalón negro amplio",
-      "overshirt verde olivo + playera blanca + pantalón crema",
-      "cardigan beige + playera blanca + pantalón crema",
+      "camisa de lino clara + pantalón verde olivo amplio + tenis blanco",
+      // "cardigan beige + pantalón crema" violaba la regla del tono igual que la
+      // fórmula 1. Gris contra crema sí contrasta.
+      "cardigan gris + playera blanca + pantalón crema",
       "suéter negro + pantalón crema de tela",
-      "playera taupe oversize + pantalón café",
+      "chamarra ligera taupe + playera blanca + pantalón crema",
     ],
     detalles: [
       "DOS colores en todo el look. Es la regla más fuerte del estilo y la que lo separa de los demás.",
-      "El contraste es de claridad, no de color: crema con café, blanco con negro, gris con gris.",
+      // Redactado como CONDICIONAL a propósito. Antes decía "la camisa de lino
+      // abierta es la tercera pieza más repetida", que es cierto como estadística
+      // pero se lee como orden: el generador le metía camisa a fórmulas que no la
+      // pedían, y de paso rompía la regla del tono. Un dato de frecuencia tiene
+      // que decir CUÁNDO aplica, o se vuelve un imperativo.
+      "CUANDO el look lleve una tercera pieza, la más típica es la camisa de lino abierta sobre playera lisa, más que el suéter. Si la fórmula no pide tercera pieza, no se agrega ninguna.",
+      "El contraste es de claridad, no de color: crema con café, blanco con negro, gris con gris. Dos tonos vecinos (café sobre crema) se leen apagados, no minimalistas.",
+      "El pantalón tiene PESO y cae limpio desde la cadera, con el dobladillo justo al tobillo. Amontonado sobre el zapato o arrugado en la rodilla se ve como pijama, y ahí se cae el estilo entero.",
+      "La pieza abierta de encima NUNCA va del mismo tono que el pantalón: camisa crema sobre pantalón crema se lee como conjunto de dormir, no como outfit. En las referencias la camisa clara va con pantalón taupe, olivo o negro.",
+      "El verde olivo es el único color que entra sin romper la regla; funciona como si fuera un neutro.",
       "La textura evita que se vea plano: punto grueso, lino, sarga. Sin textura, dos colores se ven pobres.",
       "Tenis blanco liso, sin detalles ni suela gruesa.",
       "Nada de hardware: sin cierres a la vista, sin herrajes, sin cadenas.",
-      "Un solo accesorio como mucho, y discreto — reloj delgado.",
     ],
     evitar: [
       "Un tercer color. Dos y se acabó.",
+      "Camisa o cardigan del mismo tono que el pantalón — se lee como conjunto, no como look armado.",
       "Estampados de cualquier tipo, incluidos los pequeños.",
       "Logos visibles, aunque sean chicos.",
       "Prendas entalladas — el minimalismo aquí es de silueta amplia, no de corte ceñido.",
       "Saco estructurado y mocasín: eso lo empuja a clásico elegante, que es otro estilo.",
     ],
     capsula: [
+      "camisa de lino crema",
       "playera blanca oversize",
       "playera negra lisa",
       "playera taupe o café",
       "suéter de punto crema",
       "suéter negro",
-      "overshirt crema",
-      "camisa de lino crema",
       "cardigan gris",
       "pantalón de tela crema amplio",
       "chino beige",
+      "pantalón verde olivo amplio",
       "pantalón negro amplio",
       "tenis blanco liso",
     ],

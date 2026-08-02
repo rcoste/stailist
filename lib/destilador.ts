@@ -37,11 +37,12 @@ export async function resumenPorEstilo(
 }
 
 /**
- * Las fotos de un estilo, con URL firmada, las pendientes primero.
+ * Las fotos PENDIENTES de un estilo, con URL firmada.
  *
- * Las pendientes van al principio porque el trabajo es terminar de juzgar: si
- * la lista arrancara por el orden del archivo, cada sesión nueva empezaría
- * repasando lo ya visto.
+ * Solo pendientes, no todas. La primera versión traía todas con las pendientes
+ * al principio, y el resultado era que el swipe nunca se acababa: al terminar
+ * lo pendiente seguía mostrando lo ya juzgado, sin nada que lo indicara. Se
+ * sentía como si el trabajo no se guardara.
  */
 export async function referenciasDeEstilo(
   genero: "hombre" | "mujer",
@@ -53,7 +54,7 @@ export async function referenciasDeEstilo(
     .select("id, path, sirve, motivo, mio, nota")
     .eq("genero", genero)
     .eq("estilo", estilo)
-    .order("sirve", { ascending: true, nullsFirst: true })
+    .is("sirve", null)
     .order("path");
 
   if (!data?.length) return [];

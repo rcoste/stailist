@@ -1,5 +1,6 @@
 import type { Weather } from "@/lib/weather";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
+import { recetasParaTags, recetasParaPrompt } from "@/lib/engine/recetario";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import {
   type TasteSignal,
@@ -103,7 +104,15 @@ import {
 // deportivo tipo bra no se prohíbe: pide una capa encima (así el athleisure en
 // color sigue sirviendo). El motor de VIAJE no se toca — tiene su propio prompt y
 // ahí la playa sí es una ocasión legítima.
-export const PROMPT_VERSION = "v27";
+// v28 (2026-08-01): recetario de estilos. Los gustos entraban al prompt como
+// tres palabras sueltas ("pulido, clasico, elegante") y NADA decía qué
+// significan, así que el modelo improvisaba — el mismo defecto que hacía aguados
+// los outfits del primer deck de swipes. Ahora, para los estilos destilados, el
+// prompt lleva fórmulas concretas a nivel prenda, los detalles que separan "bien
+// puesto" de "aguado", y qué arruina el estilo. Sale de fotos de calle filtradas
+// por visión y curadas a mano (ver lib/engine/recetario.ts). Tope de 2 recetas:
+// más se contradicen entre sí. Solo hombre por ahora.
+export const PROMPT_VERSION = "v28";
 
 export type EngineItem = {
   id: string;
@@ -312,19 +321,14 @@ export function contextBlock(ctx: EngineContext): string[] {
   }
   if (ctx.tasteTags.length > 0) {
     lines.push(`Tags de gusto (en orden de fuerza): ${ctx.tasteTags.join(", ")}.`);
-    // AQUÍ VA EL RECETARIO (lib/engine/recetario.ts) — desconectado a propósito.
-    //
     // Los tags solos son tres palabras que el modelo interpreta a su antojo
-    // ("pulido" no dice si la camisa va abierta o abotonada), y el recetario les
-    // pone contenido concreto. Pero la primera versión se destiló de fotos SIN
-    // CURAR, y casi la mitad eran portadas de blog, collages y anuncios. Meterlo
-    // a producción así le cambiaría los outfits a gente real con material que
-    // sabemos malo.
-    //
-    // Se reconecta cuando la curaduría (/admin/destilador) termine y el A/B
-    // contra el motor actual lo gane. Son estas dos líneas:
-    //   const receta = recetasParaPrompt(recetasParaTags(ctx.tasteTags, ctx.gender));
-    //   if (receta) lines.push(receta);
+    // ("pulido" no dice si la camisa va abierta o abotonada). El recetario les
+    // pone contenido concreto, destilado de fotos de calle ya curadas — ver
+    // lib/engine/recetario.ts.
+    if (ctx.gender) {
+      const receta = recetasParaPrompt(recetasParaTags(ctx.tasteTags, ctx.gender));
+      if (receta) lines.push(receta);
+    }
   }
   if (ctx.styleWords?.trim()) {
     // slice defensivo: el tope de 280 vive en la app, no en la DB — un valor

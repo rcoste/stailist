@@ -8,6 +8,18 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.72.0] - 2026-08-02
+
+### Fixed
+
+- **El destilador no terminaba nunca.** La lista traía TODAS las fotos con las pendientes al principio, así que al acabar lo pendiente seguía mostrando lo ya juzgado sin nada que lo indicara: se sentía como si el trabajo no se guardara. Ahora solo trae pendientes y avisa cuando el estilo está completo.
+- **No había forma de saber en qué punto va cada estilo** sin acordarse. Se agregó un panel de estado que dice, por estilo, cuántas faltan y cuáles ya pasaron la validación visual del recetario. Los chips de navegación se quitaron: duplicaban el panel y tener dos formas de llegar a lo mismo era parte de la confusión.
+
+### Changed
+
+- **Recetario afinado contra la prueba visual.** Se generaron outfits usando solo el texto destilado, sin pasarle ninguna foto al generador, y se compararon contra las referencias de origen. Salieron tres fallas que ninguna prueba automática caza: (a) faltaba la regla de que la pieza abierta de encima nunca va del mismo tono que el pantalón — se confirmó contra las 12 referencias antes de escribirla; (b) una fórmula pedía justo lo que la regla prohíbe, y **una fórmula que viola una regla la deja muerta** porque el generador obedece lo concreto; (c) un detalle redactado como estadística ("la camisa abierta es la tercera pieza más repetida") se leía como orden y metía camisas donde la fórmula no las pedía. Clásico elegante y minimalista quedaron aprobados.
+- Smart casual pasa de 12 a 67 fotos de referencia. Con 12, una foto suelta pesaba como patrón — de ahí salía una fórmula que no representaba al estilo.
+
 ## [0.2.71.0] - 2026-08-01
 
 ### Added

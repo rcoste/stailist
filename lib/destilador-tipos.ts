@@ -61,6 +61,16 @@ export type Discrepancia = Referencia & {
   ejecucion: number;
 };
 
+/**
+ * Estilos cuya destilación YA pasó la prueba visual: se generaron outfits
+ * usando solo el texto del recetario y se compararon contra las fotos de origen.
+ *
+ * Vive en código y se actualiza a mano a propósito — es un juicio humano sobre
+ * imágenes, no algo que la base pueda saber. Sin esto, la única forma de saber
+ * qué estilo ya está cerrado era acordarse, y eso no es un estado del sistema.
+ */
+export const VALIDADOS = new Set(["clasico-elegante", "minimalista"]);
+
 /** Los motivos de rechazo, en orden de qué tan seguido pasan. */
 export const MOTIVOS = [
   { id: "no-es-el-estilo", label: "no es de este estilo" },

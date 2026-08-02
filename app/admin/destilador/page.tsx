@@ -4,6 +4,7 @@ import {
   referenciasDeEstilo,
   discrepancias,
 } from "@/lib/destilador";
+import { VALIDADOS } from "@/lib/destilador-tipos";
 import { DestiladorClient } from "./destilador-client";
 import { RevisionClient } from "./revision-client";
 
@@ -37,12 +38,11 @@ export default async function AdminDestilador({
       <RevisionClient items={pendientesRevision} />
     );
   }
-  // Por defecto se abre donde falta trabajo, no en el primero por orden
-  // alfabético: quien entra viene a terminar, no a repasar.
-  const activo =
-    estilo ??
-    resumen.find((r) => r.juzgadas < r.total)?.estilo ??
-    resumen[0]?.estilo;
+  // Por defecto abre donde HAY trabajo. Si ya no queda nada pendiente en ningún
+  // estilo, no se abre ninguno: el panel de arriba dice el estado y el swipe
+  // vacío solo confundiría.
+  const conPendientes = resumen.find((r) => r.juzgadas < r.total)?.estilo;
+  const activo = estilo ?? conPendientes ?? null;
   const referencias = activo ? await referenciasDeEstilo("hombre", activo) : [];
 
   if (!resumen.length) {
@@ -54,42 +54,69 @@ export default async function AdminDestilador({
     );
   }
 
+  const faltan = resumen.reduce((n, r) => n + (r.total - r.juzgadas), 0);
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Una fila con scroll, no wrap: en el celular cada fila extra empuja los
-          botones de decisión abajo del fold. */}
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {pendientesRevision.length > 0 && (
-          <Link
-            href="/admin/destilador?estilo=revision"
-            className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-sm font-medium text-bg"
-          >
-            revisar {pendientesRevision.length}
-          </Link>
-        )}
-        {resumen.map((r) => (
-          <Link
-            key={r.estilo}
-            href={`/admin/destilador?estilo=${r.estilo}`}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${
-              r.estilo === activo
-                ? "bg-ink text-bg"
-                : "border border-line text-muted"
-            }`}
-          >
-            {r.estilo}{" "}
-            <span className="opacity-60">
-              {r.juzgadas}/{r.total}
-            </span>
-          </Link>
-        ))}
+      {/* Estado de un vistazo. Sin esto había que acordarse de qué estilo estaba
+          cerrado y cuál no, y eso no es un estado del sistema — es memoria. */}
+      <div className="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface">
+        {resumen.map((r) => {
+          const pendientes = r.total - r.juzgadas;
+          const validado = VALIDADOS.has(r.estilo);
+          return (
+            <div key={r.estilo} className="flex items-center justify-between gap-3 px-3 py-2">
+              {/* El conteo se esconde en el celular: es dato de apoyo y cada
+                  línea extra empuja los botones de decisión fuera de la
+                  pantalla, que es el problema que este panel vino a resolver. */}
+              <div className="flex min-w-0 items-baseline gap-2">
+                <span className="truncate text-sm font-medium text-ink">{r.estilo}</span>
+                <span className="hidden text-xs text-muted sm:inline">
+                  {r.sirven} sirven de {r.juzgadas}
+                </span>
+              </div>
+              {pendientes > 0 ? (
+                <Link
+                  href={`/admin/destilador?estilo=${r.estilo}`}
+                  className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-xs font-semibold text-bg"
+                >
+                  faltan {pendientes}
+                </Link>
+              ) : (
+                <span className="shrink-0 text-xs font-medium text-muted">
+                  {validado ? "✓ listo y aprobado" : "curado · falta destilar"}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <DestiladorClient
-        key={activo}
-        referencias={referencias}
-        estilo={activo ?? ""}
-      />
+      {faltan === 0 && pendientesRevision.length === 0 && (
+        <p className="rounded-xl border border-line bg-surface p-3 text-sm text-muted">
+          No queda nada por curar. Avísame y destilo lo que falte.
+        </p>
+      )}
+
+      {pendientesRevision.length > 0 && (
+        <Link
+          href="/admin/destilador?estilo=revision"
+          className="self-start rounded-full bg-ink px-3 py-1.5 text-sm font-medium text-bg"
+        >
+          revisar {pendientesRevision.length} discrepancias
+        </Link>
+      )}
+
+      {/* El swipe solo si hay algo que juzgar. Los chips de estilo se quitaron:
+          duplicaban el panel de arriba, que ya dice el estado y lleva al que
+          falta. Dos formas de navegar a lo mismo era parte de la confusión. */}
+      {activo && referencias.length > 0 && (
+        <DestiladorClient
+          key={activo}
+          referencias={referencias}
+          estilo={activo}
+        />
+      )}
     </div>
   );
 }
