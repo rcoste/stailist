@@ -69,7 +69,14 @@ export type Discrepancia = Referencia & {
  * imágenes, no algo que la base pueda saber. Sin esto, la única forma de saber
  * qué estilo ya está cerrado era acordarse, y eso no es un estado del sistema.
  */
-export const VALIDADOS = new Set(["clasico-elegante", "minimalista"]);
+// Vacío a propósito desde 2026-08-02. Clásico elegante y minimalista SÍ pasaron
+// la prueba visual, pero se compararon contra las mismas fotos sesgadas de las
+// que salieron: el test medía fidelidad al material, no cobertura del estilo, y
+// por construcción no podía detectar lo que faltaba. Las búsquedas eran
+// demasiado específicas ("old money", "neutral") y dejaron fuera ~75% de lo que
+// devuelve una búsqueda genérica — en clásico elegante, todo el registro oscuro
+// que el recetario llegó a declarar ajeno al estilo.
+export const VALIDADOS = new Set<string>([]);
 
 /** Los motivos de rechazo, en orden de qué tan seguido pasan. */
 export const MOTIVOS = [

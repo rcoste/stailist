@@ -8,6 +8,13 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.72.2] - 2026-08-02
+
+### Changed
+
+- **Las referencias se re-cosecharon con búsquedas genéricas.** Las búsquedas eran demasiado específicas ("smart casual men outfit **wide trousers**", "**old money** men outfit") y eso no busca el estilo: busca las prendas que ya se habían decidido que son el estilo, así que las fotos no pueden contradecir la hipótesis. Medido: de lo que devuelve una búsqueda genérica, solo coincidía el 10% en smart casual y el ~26% en los otros dos. El hueco es real y concreto — el recetario de clásico elegante llegó a declarar que "el negro no pertenece al estilo", y las búsquedas genéricas lo traen repetido.
+- Se retira el sello de "aprobado" de clásico elegante y minimalista. Sí pasaron la prueba visual, pero contra las mismas fotos sesgadas de las que salieron: el test medía fidelidad al material, no cobertura del estilo, y por construcción no podía detectar lo que faltaba.
+
 ## [0.2.72.1] - 2026-08-02
 
 ### Fixed
