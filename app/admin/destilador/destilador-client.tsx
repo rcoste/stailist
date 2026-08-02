@@ -151,11 +151,15 @@ export function DestiladorClient({
         >
           {foto.url ? (
             /* eslint-disable-next-line @next/next/no-img-element -- URL firmada de Storage */
+            /* object-CONTAIN, no cover: recortar para llenar la carta le come
+               los zapatos o el largo del pantalón, que es justo lo que hay que
+               ver para decidir si el outfit sirve. Se prefiere la banda a los
+               lados antes que juzgar media foto. */
             <img
               src={foto.url}
               alt="referencia"
               draggable={false}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">

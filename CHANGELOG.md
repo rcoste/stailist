@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.72.1] - 2026-08-02
+
+### Fixed
+
+- Las fotos del destilador se recortaban para llenar la carta, y lo primero que se perdía eran los zapatos y el largo del pantalón — justo lo que hay que ver para decidir si un outfit sirve. Ahora se muestran completas, aunque queden bandas a los lados.
+
 ## [0.2.72.0] - 2026-08-02
 
 ### Fixed

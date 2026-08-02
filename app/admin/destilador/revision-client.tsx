@@ -64,7 +64,7 @@ export function RevisionClient({ items }: { items: Discrepancia[] }) {
           <img
             src={foto.url}
             alt="referencia"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">
