@@ -122,8 +122,16 @@ for (let i = 0; i < rows.length; i += CONCURRENCIA) {
       continue;
     }
     if (v.familia === "ninguno" || v.confianza < MIN_CONFIANZA) {
+      // Se mueven a la carpeta de tránsito, no se dejan con el nombre viejo:
+      // una casilla disuelta que conserva filas rechazadas sigue apareciendo en
+      // el panel del destilador como si fuera una familia, y quien cura no
+      // tiene forma de saber que ya no existe. Pasó con tonos-tierra y
+      // color-protagonista: 25 filas rechazadas mantenían vivas dos familias
+      // que la taxonomía v2 había eliminado.
       await db.query(
-        `update public.referencias set sirve = false, motivo = 'sin-estilo' where id = $1`,
+        `update public.referencias
+         set estilo = '_sin-familia', sirve = false, motivo = 'sin-estilo'
+         where id = $1`,
         [ref.id]
       );
       sinCasa++;
