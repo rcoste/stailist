@@ -214,11 +214,28 @@ export function DestiladorClient({
             </span>
           )}
 
+          {/* Qué familia se está juzgando, SOBRE la foto: con la carta a 82vh
+              el encabezado se sale de la pantalla, y "¿es buen ejemplo de
+              esto?" no se puede contestar sin saber qué es "esto". Va abajo a
+              la izquierda para no chocar con los sellos (arriba) ni con la
+              estrella (abajo a la derecha). */}
+          <span className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-bg/85 px-3 py-1.5 text-sm font-semibold text-ink backdrop-blur">
+            {estilo}
+          </span>
+
+          {/* stopPropagation en pointerDown, no solo en click: el contenedor de
+              la carta hace setPointerCapture al recibir el pointerdown, y un
+              puntero capturado por el padre nunca completa el click en el
+              botón — se veía como que la estrella no hacía nada. */}
           <button
-            onClick={() => guardar(foto.id, { mio: !foto.mio })}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              guardar(foto.id, { mio: !foto.mio });
+            }}
             aria-label="así me vestiría yo"
-            className={`absolute bottom-4 right-4 rounded-full px-3 py-2 text-sm backdrop-blur ${
-              foto.mio ? "bg-ink text-bg" : "bg-bg/80 text-ink"
+            className={`absolute bottom-4 right-4 rounded-full px-4 py-2.5 text-base backdrop-blur ${
+              foto.mio ? "bg-ink text-bg" : "bg-bg/85 text-ink"
             }`}
           >
             ★

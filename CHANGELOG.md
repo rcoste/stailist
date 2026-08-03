@@ -8,6 +8,13 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.74.3] - 2026-08-03
+
+### Fixed
+
+- **La estrella del destilador no hacía nada al tocarla.** El contenedor de la carta llama a setPointerCapture para poder seguir el arrastre, y un puntero capturado por el padre nunca completa el click en el botón de adentro — así que "así me vestiría yo" era inalcanzable salvo con el teclado. También se hizo más grande: era un blanco chico para el pulgar.
+- **Al agrandar la foto a 82vh, el nombre de la familia se salía de la pantalla** y había que subir a ver cuál se estaba juzgando. Ahora va sobre la foto, abajo a la izquierda: la pregunta es "¿es buen ejemplo de esta familia?" y no se puede contestar sin ver de cuál se habla.
+
 ## [0.2.74.2] - 2026-08-03
 
 ### Added
