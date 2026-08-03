@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.74.1] - 2026-08-03
+
+### Added
+
+- **Flechas del teclado en el destilador y foto más grande en escritorio.** La curaduría se diseñó para el celular con una mano, pero las tandas grandes (300+ fotos) se hacen sentado, y ahí arrastrar con el mouse es más lento y más cansado que una flecha: ← no va, → sirve, ↑ marca tu gusto. Y como en escritorio se decide con el teclado y no con los botones, la foto pasa de 68vh a 82vh — lo que se juzga es el corte de la prenda, y para eso hay que verla.
+
 ## [0.2.74.0] - 2026-08-03
 
 ### Changed

@@ -1,16 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MOTIVOS, type Referencia } from "@/lib/destilador-tipos";
 import { guardarJuicio } from "./actions";
 
 // Curaduría por swipe, pensada para el celular con una mano.
 //
-// La versión de teclado servía sentado frente a la computadora, y esto se hace
-// en ratos muertos —de pasajero, en una sala de espera—, así que el gesto manda
-// y todo tiene que caer bajo el pulgar. Misma mecánica que el deck de gustos
-// (pointer events + transform, sin librerías): arrastrar decide, y los botones
-// grandes son el camino garantizado cuando el gesto no sale.
+// El gesto manda porque esto se hace en ratos muertos —de pasajero, en una sala
+// de espera— y todo tiene que caer bajo el pulgar. Misma mecánica que el deck
+// de gustos (pointer events + transform, sin librerías): arrastrar decide, y
+// los botones grandes son el camino garantizado cuando el gesto no sale.
+//
+// El teclado volvió porque las tandas grandes (300+ fotos) se curan sentado, y
+// ahí arrastrar con el mouse es más lento y más cansado que una flecha. Conviven:
+// el gesto para el celular, las flechas para el escritorio.
 const UMBRAL = 90; // px para que cuente como decisión
 const FLICK = 0.6; // px/ms — un aventón rápido decide aunque no cruce el umbral
 
@@ -89,6 +92,33 @@ export function DestiladorClient({
     else setDrag({ x: 0, y: 0, activo: false });
   }
 
+  // Flechas para curar sentado: ← no va, → sirve, ↑ marca el gusto. Las mismas
+  // direcciones que el gesto, para no tener que aprender dos mapas.
+  //
+  // El listener vive en window y no en un elemento con foco: tras cada decisión
+  // la carta se desmonta, y un handler colgado de ella perdería el foco en la
+  // primera flecha — se sentiría como que el teclado "se apaga" a la segunda foto.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      // Si hay algo escribiendo (un input, un textarea), el teclado es suyo.
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        decidir(false);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        decidir(true);
+      } else if (e.key === "ArrowUp" && foto) {
+        e.preventDefault();
+        guardar(foto.id, { mio: !foto.mio });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   if (!foto) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
@@ -126,8 +156,11 @@ export function DestiladorClient({
       {/* 44vh en el celular NO es un número al aire: es lo que deja los botones
           de decisión dentro de la primera pantalla, contando la cabecera del
           admin y el panel de estado. Más alto y hay que hacer scroll para
-          decidir, que es justo lo que hace sentir que la herramienta pelea. */}
-      <div className="relative h-[44vh] w-full select-none sm:h-[68vh]">
+          decidir, que es justo lo que hace sentir que la herramienta pelea.
+          En escritorio manda otra cosa: ahí se decide con las flechas, no con
+          botones, así que la foto puede llenar la pantalla — y necesita hacerlo,
+          porque lo que se juzga es el corte de la prenda. */}
+      <div className="relative h-[44vh] w-full select-none sm:h-[82vh]">
         {/* La siguiente, atrás, para que se sienta una pila y no una foto suelta. */}
         {fotos[i + 1]?.url && (
           <div className="absolute inset-0 scale-95 overflow-hidden rounded-xl border border-line bg-tile opacity-40">
@@ -228,8 +261,11 @@ export function DestiladorClient({
         </div>
       ) : (
         <p className="text-center text-xs text-muted">
-          Arrastra la foto: derecha sirve, izquierda no. El ★ es aparte — marca tu
-          gusto sin afectar el estilo.
+          <span className="hidden sm:inline">
+            Flechas: ← no va · → sirve · ↑ marca tu gusto.{" "}
+          </span>
+          <span className="sm:hidden">Arrastra la foto: derecha sirve, izquierda no. </span>
+          El ★ es aparte — marca tu gusto sin afectar el estilo.
         </p>
       )}
 
