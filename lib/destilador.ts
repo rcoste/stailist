@@ -25,6 +25,11 @@ export async function resumenPorEstilo(
 
   const porEstilo = new Map<string, { total: number; juzgadas: number; sirven: number }>();
   for (const r of data ?? []) {
+    // Los que empiezan con "_" son carpetas de tránsito, no estilos: la cosecha
+    // de clima llega sin estilo asignado y un clasificador la reparte después
+    // (scripts/clasificar-estilo.mjs). Lo que no se pudo repartir se queda ahí y
+    // no es curable — mostrarlo sería inventar un estilo que no existe.
+    if (r.estilo.startsWith("_")) continue;
     const acc = porEstilo.get(r.estilo) ?? { total: 0, juzgadas: 0, sirven: 0 };
     acc.total++;
     if (r.sirve !== null) acc.juzgadas++;

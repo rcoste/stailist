@@ -15,6 +15,16 @@
 // vertical y de buena resolución, igual que una foto buena. Se necesita ver la
 // imagen, así que se ve.
 //
+// V2: TAMBIÉN JUZGA EJECUCIÓN, no solo formato. La primera versión dejaba
+// pasar todo lo que técnicamente era "una foto de outfit" — incluidos looks
+// amateur con el fit destrozado y styling de disfraz, porque técnicamente SÍ
+// son fotos de outfit. Pinterest rankea por engagement, no por calidad, así
+// que las búsquedas genéricas traen mucho de eso. Ahora se califica qué tan
+// bien está PUESTO el look (0-10) y lo de 4 para abajo se descarta. Ojo: se
+// juzga ejecución, NO qué prendas son ni si pertenecen al estilo — eso último
+// lo deciden el juez de estilo y la curaduría humana. Juzgar prendas aquí
+// reintroduciría el sesgo de búsqueda que ya nos mordió una vez.
+//
 // NO BORRA: mueve a _descartadas/ dentro de cada estilo. Si el modelo se
 // equivoca —y se equivoca— la foto se recupera moviéndola de vuelta.
 //
@@ -49,19 +59,43 @@ NO sirve si tiene cualquiera de esto:
 - Es foto de producto o flat-lay: prendas acomodadas sin que nadie las use, o prenda sola sobre fondo liso.
 - Es un anuncio de tienda (precios, logos de e-commerce).
 - La persona sale tan de cerca que no se ve el outfit (solo cara o solo torso).
+- Es una imagen generada por IA o un render 3D (anatomía rara, texturas plásticas, fondo derretido, cara de maniquí).
+- El look es de OTRO REGISTRO, no de vida real: gala o red carpet (esmoquin, traje de premiación), escenario/videoclip/sesión editorial extrema, cosplay o disfraz, styling de pasarela que nadie usaría en la calle. La prueba: ¿un hombre podría salir así un martes cualquiera sin que la gente piense que viene de un evento o una filmación? Si no, no sirve. OJO: atrevido no es disfraz — un look llamativo pero usable en la calle SÍ sirve.
 - La persona NO es un hombre. Esta cosecha destila estilo masculino, y las búsquedas de Pinterest devuelven looks de mujer mezclados aunque el término diga "men".
 
-Una marca de ropa chiquita en la prenda misma NO es motivo de rechazo.`;
+Una marca de ropa chiquita en la prenda misma NO es motivo de rechazo.
+
+Si la imagen sirve, además califica la EJECUCIÓN del outfit de 0 a 10 — qué tan bien está PUESTO, no qué prendas son. Sé DURO: el estándar es un editor de moda escogiendo referencias, no un cumplido. La mayoría de lo que circula en Pinterest es un 4-6, no un 7-8.
+
+- 9-10: editorial. Podría salir en una revista tal cual. Raro.
+- 7-8: street style sólido. Fit correcto en TODAS las prendas, proporciones cuidadas, el look se ve intencional de pies a cabeza.
+- 5-6: decente con peros. Una prenda que no fitea perfecto, un largo raro, un zapato que desentona — pero el conjunto se sostiene.
+- 3-4: amateur. Tallas visiblemente mal (hombros caídos, pantalón embolsado sin intención), combinación torpe, o se ve vestido por accidente.
+- 0-2: disfraz. Styling forzado, demasiados accesorios, pose de catálogo barato, o el look es una caricatura del estilo que intenta.
+
+Señales que BAJAN puntos aunque la foto se vea "bien": prendas arrugadas, fit de una talla equivocada, más de 2 accesorios llamativos, capas que no tienen sentido térmico entre sí, el conjunto grita "outfit para la foto" en vez de ropa que alguien usa.
+
+IMPORTANTE: la ejecución NO juzga el tipo de prenda ni el estilo. Un look de estética que no te guste pero bien llevado es un 7, no un 4. Solo castigas CÓMO está llevado.`;
 
 const ESQUEMA = {
   type: "object",
   properties: {
     razon: { type: "string", description: "Qué se ve en la imagen, en pocas palabras" },
     sirve: { type: "boolean" },
+    // Sin minimum/maximum: el structured output los rechaza con 400 en
+    // enteros. El rango vive en la descripción y el prompt.
+    ejecucion: {
+      type: "integer",
+      description: "Qué tan bien puesto está el outfit, de 0 a 10. 0 si sirve=false.",
+    },
   },
-  required: ["razon", "sirve"],
+  required: ["razon", "sirve", "ejecucion"],
   additionalProperties: false,
 };
+
+// De 4 para abajo es lo amateur/disfrazado. 5-7 se queda a propósito: la
+// curaduría humana decide sobre lo decente; el filtro solo mata lo horrible.
+const MIN_EJECUCION = 5;
 
 async function clasificar(ruta) {
   const b64 = readFileSync(ruta).toString("base64");
@@ -70,7 +104,7 @@ async function clasificar(ruta) {
     try {
       const r = await cliente.messages.create({
         model: "claude-sonnet-5",
-        max_tokens: 200,
+        max_tokens: 400,
         system: SISTEMA,
         messages: [
           {
@@ -122,11 +156,12 @@ for (const estilo of estilos) {
         if (errores === 1) console.error(`  ⚠ ${f}: ${v.error}`);
         return;
       }
-      if (!v.sirve) {
+      const mala = v.sirve && v.ejecucion < MIN_EJECUCION;
+      if (!v.sirve || mala) {
         if (!existsSync(descartes)) mkdirSync(descartes, { recursive: true });
         renameSync(path.join(dir, f), path.join(descartes, f));
         fuera++;
-        console.log(`  ✗ ${f} — ${v.razon}`);
+        console.log(`  ✗ ${f} — ${mala ? `ejecución ${v.ejecucion}/10: ` : ""}${v.razon}`);
       }
     });
   }

@@ -28,9 +28,16 @@
 // vuelta las separó y smart-casual subió a 12. Sin ese paso, esto describiría el
 // guardarropa de una persona en vez del estilo.
 //
-// Base actual: clásico elegante 35 fotos · minimalista 28 · smart casual 12.
-// Smart-casual sigue siendo el más flojo — los patrones de abajo son los que se
-// repiten aun así, pero con 12 fotos la cola de variantes no está cubierta.
+// Hubo una tercera vuelta, y también importa. Las búsquedas eran demasiado
+// específicas ("smart casual men outfit WIDE TROUSERS", "OLD MONEY men outfit"):
+// eso no busca el estilo, busca las prendas que uno ya decidió que son el
+// estilo, y las fotos no pueden contradecir la hipótesis nunca. Al re-cosechar
+// con búsquedas genéricas ("smart casual outfit men", a secas) solo coincidía el
+// 10% de lo que ya había. Dos reglas escritas aquí resultaron falsas: que smart
+// casual necesita tres piezas, y que el negro no pertenece al clásico elegante.
+//
+// Base actual (aprobadas a mano): smart casual 71 · clásico elegante 53 ·
+// minimalista 35.
 //
 // CÓMO SE USA
 // recetasParaTags() elige las recetas de los estilos que empatan con los gustos
@@ -55,6 +62,20 @@ export type Receta = {
   evitar: string[];
   /** Las prendas que más fórmulas generan (alimenta cápsula y viaje) */
   capsula: string[];
+  /**
+   * Cómo abriga este estilo SIN dejar de ser este estilo.
+   *
+   * El motor ya recibe el clima ("Clima de hoy: 8°C"), pero hasta aquí el
+   * recetario solo describía el estilo en tiempo templado — así que con frío la
+   * IA improvisaba la capa, que es exactamente el problema que el recetario vino
+   * a resolver. Peor: la silueta de smart casual dice que dos piezas bastan, y
+   * eso a 8°C es un mal consejo.
+   *
+   * Se destila aparte porque es una pregunta acotada (qué capa, qué material,
+   * qué calzado), no un estilo distinto: el 80% del look no cambia con el clima.
+   * Por eso NO hay recetas separadas de verano e invierno.
+   */
+  frio?: string[];
 };
 
 export const RECETAS_HOMBRE: Receta[] = [
@@ -63,8 +84,11 @@ export const RECETAS_HOMBRE: Receta[] = [
     nombre: "Smart casual",
     tags: ["pulido", "versatil", "moderno"],
     silueta:
-      "Tres piezas, y el pantalón AMPLIO —de tela, con caída, nunca entallado—. Encima casi siempre hay una tercera pieza (camisa abierta, overshirt, suéter, saco o abrigo); sin ella queda ropa, no outfit.",
+      "DOS piezas bien elegidas bastan: una prenda de arriba lisa y un pantalón de tela con caída. La tercera pieza (camisa abierta, overshirt, saco) es una opción frecuente, NO un requisito — la mitad de los looks reales no la llevan. Lo que nunca falla es el pantalón: de tela o chino, pierna recta, largo al tobillo.",
     formulas: [
+      "polo tejido (camel, marino, café o negro) + pantalón de tela + cinturón de piel + tenis blanco",
+      "playera lisa + chino beige o camel + cinturón + tenis blanco de piel",
+      "suéter fino de media cremallera + pantalón de tela gris + tenis blanco",
       "camisa abierta + playera blanca lisa + jeans claros rectos + tenis blanco de piel",
       "camisa gris abierta + playera blanca + pantalón negro amplio + tenis crema",
       "suéter negro fino + pantalón negro + cinturón + zapato negro (monocromo de arriba abajo)",
@@ -78,7 +102,8 @@ export const RECETAS_HOMBRE: Receta[] = [
     detalles: [
       "La camisa va ABIERTA sobre una playera lisa, no abotonada sola: es lo que la baja de formal a smart casual.",
       "La camisa abierta NUNCA del mismo tono que el pantalón: se lee como conjunto y no como outfit. Es la misma trampa del \"traje desparejado\" —saco y pantalón del mismo color sin ser un traje real—, con otra prenda.",
-      "El pantalón amplio es la mitad del estilo. Con pantalón entallado el mismo outfit se ve de oficina.",
+      "El polo tejido es la pieza más repetida del estilo — más que la camisa. De punto fino, nunca de piqué deportivo.",
+      "El pantalón es de TELA o chino, casi nunca mezclilla. Cuando hay jeans son claros, limpios y de corte recto.",
       "El monocromo oscuro (todo negro, todo gris) es una variante completa del estilo, no una salida perezosa.",
       "Mangas dobladas a media antebrazo cuando la camisa va sola.",
       "Cinturón visible cuando el pantalón es de pinzas; a juego con el zapato.",
@@ -111,7 +136,7 @@ export const RECETAS_HOMBRE: Receta[] = [
     nombre: "Clásico elegante",
     tags: ["clasico", "elegante", "minimalista"],
     silueta:
-      "Pantalón claro de pinzas, cintura alta y pierna recta y amplia; arriba algo más oscuro y de corte limpio. El pantalón claro es el ancla del estilo — es lo primero que se ve y lo que lo distingue.",
+      "Pantalón de pinzas con cintura alta y pierna recta y amplia; arriba algo de corte limpio y cuello abierto. El CORTE del pantalón es el ancla, no su color: el claro domina pero el oscuro es igual de legítimo.",
     formulas: [
       "camisa azul claro con cuello abierto + pantalón de pinzas crema + mocasín café",
       "camisa azul marino + pantalón crema + cinturón café + mocasín café",
@@ -125,7 +150,8 @@ export const RECETAS_HOMBRE: Receta[] = [
       "chamarra de gamuza café + cuello alto negro + pantalón oscuro",
     ],
     detalles: [
-      "El pantalón claro de pinzas, talle alto y pierna amplia, es LA firma: aparece en dos de cada tres looks.",
+      "El pantalón de pinzas con talle alto y pierna amplia es LA firma — el CORTE, no el color. El claro (crema, beige) domina, pero el oscuro (marino, gris, café, negro) es igual de legítimo: la primera versión de este recetario decía que el negro no pertenecía al estilo, y era falso — salía de haber cosechado solo con la búsqueda \"old money\", que es un sub-género veraniego.",
+      "El polo tejido de punto fino es tan central como la camisa: aparece en uno de cada cuatro looks.",
       "Cuello abierto uno o dos botones, sin corbata. Abotonado hasta arriba sin corbata se ve incómodo.",
       "La textura hace el trabajo que en otros estilos hace el estampado: lino, punto, franela, gamuza.",
       "El mocasín café es el zapato firma; el tenis blanco de piel es la única alternativa que no rompe.",
@@ -135,7 +161,6 @@ export const RECETAS_HOMBRE: Receta[] = [
     ],
     evitar: [
       "Pantalón slim o entallado: mata la caída y con ella el estilo.",
-      "Negro de pies a cabeza — pertenece a otro registro.",
       "Estampados llamativos, logos, hardware brillante.",
       "Tenis deportivos de cualquier tipo.",
       "Mezclilla oscura rígida con camisa formal.",

@@ -8,6 +8,21 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.73.0] - 2026-08-03
+
+### Added
+
+- **El destilador ya sabe de clima.** Cada referencia se etiqueta como calor, templado o frío mirando la ropa que trae puesta — no la palabra de la búsqueda. El primer intento fue cosechar con "winter" en el término de Pinterest y falló medible: de 22 fotos "de invierno", solo 7 eran de frío. La ropa visible no miente; la etiqueta de la búsqueda sí.
+- **Reparto automático de estilo** (`scripts/clasificar-estilo.mjs`). La cosecha de clima se busca genérica —por técnica ("layering", "cold weather street style") y con una canasta ancha de prendas de abrigo— y es un pase de visión el que decide a qué estilo pertenece cada foto. Así la búsqueda deja de decidir con qué prenda abriga cada estilo, que era el mismo sesgo de "old money" en otra dimensión.
+
+### Changed
+
+- **El filtro de cosecha ahora juzga cómo está puesto el look, no solo si es una foto de outfit.** Antes pasaba cualquier cosa que técnicamente fuera una foto de una persona vestida, incluidos looks amateur y de disfraz — Pinterest rankea por engagement, no por calidad. Ahora califica ejecución de 0 a 10 y descarta de 4 para abajo, y tira lo que es de otro registro (gala, pasarela, cosplay). Calibrado contra los juicios humanos ya existentes: mata el esmoquin y no se lleva ninguna foto buena.
+
+### Fixed
+
+- **23 imágenes generadas por IA estaban coladas entre las referencias aprobadas** (~9% del total, una con marca de agua de KlingAI). Destilar de ahí es aprender moda de una copia de copia, con fits idealizados que no existen — y con más razón cuando el producto mismo genera imágenes. Se marcan con motivo `render-ia` y quedan fuera de la destilación, recuperables si alguna resulta ser foto real.
+
 ## [0.2.72.3] - 2026-08-02
 
 ### Fixed
