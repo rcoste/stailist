@@ -24,6 +24,7 @@
 import { readFileSync, readdirSync, existsSync, mkdirSync, renameSync } from "node:fs";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
+import { FAMILIAS } from "./familias.mjs";
 
 const carpeta = process.argv[2] ?? "_frio";
 const RAIZ = "docs_para_claude/cosecha-hombre";
@@ -38,46 +39,24 @@ const leer = (k) => {
 process.env.ANTHROPIC_API_KEY = leer("ANTHROPIC_API_KEY");
 const cliente = new Anthropic();
 
-// Las mismas descripciones que usa el juez de estilo, para que un mismo look no
-// cuente como de un estilo aquí y de otro allá.
-const ESTILOS = {
-  "smart-casual":
-    "Registro entre lo formal y lo casual. Camisa, polo o suéter fino con pantalón de tela o jeans limpios; nunca traje completo, nunca ropa deportiva.",
-  "clasico-elegante":
-    "Sastrería atemporal y tejidos nobles. Pantalón de pinzas, camisa, saco, mocasín. Sin estampados llamativos ni logos.",
-  minimalista:
-    "Paleta reducida (dos colores), cero estampados y cero logos, siluetas limpias. La textura sustituye al color.",
-  sastre:
-    "Sastrería como protagonista: traje o conjunto de saco y pantalón, construcción visible, corbata opcional.",
-  "casual-effortless":
-    "Casual sin esfuerzo aparente: prendas cómodas y sueltas, bien combinadas, sin que se note el trabajo.",
-  preppy:
-    "Universitario clásico americano: rugby, cárdigan, camisa oxford, chinos, náuticos. Rayas y escudos.",
-  edgy: "Registro oscuro y con filo: cuero, negro dominante, botas, siluetas duras o deconstruidas.",
-  "tonos-tierra":
-    "Paleta de tierra: camel, oliva, café, arena. Tonos naturales combinados entre sí, texturas orgánicas.",
-  "color-protagonista":
-    "Un color saturado manda el look. Bloques de color o una pieza intensa que ordena todo lo demás.",
-};
+const SISTEMA = `Clasificas fotos de outfits masculinos según a qué familia de estilo pertenecen.
 
-const SISTEMA = `Clasificas fotos de outfits masculinos según a qué estilo pertenecen.
-
-Estilos posibles:
-${Object.entries(ESTILOS).map(([id, d]) => `- ${id}: ${d}`).join("\n")}
+Familias posibles:
+${Object.entries(FAMILIAS).map(([id, f]) => `- ${id}: ${f.descripcion}`).join("\n")}
 
 Reglas:
-- Contesta el estilo que MEJOR describe el look, no el que más se le parezca de lejos.
-- Si el look no es claramente de ninguno, contesta "ninguno". Es una respuesta correcta y frecuente — una cosecha amplia trae mucho que no encaja.
-- Un look puede rozar dos estilos; elige el dominante y baja la confianza.
+- Contesta la familia que MEJOR describe el look, no la que más se le parezca de lejos.
+- Si el look no es claramente de ninguna, contesta "ninguno". Es una respuesta correcta y frecuente — una cosecha amplia trae mucho que no encaja.
+- Un look puede rozar dos familias; elige la dominante y baja la confianza.
 - No juzgues si el look te gusta ni si está bien puesto. Solo a qué familia pertenece.
 
-Confianza 1-5: 5 = ejemplo de libro del estilo; 3 = encaja pero con dudas; 1 = casi adivinando.`;
+Confianza 1-5: 5 = ejemplo de libro de la familia; 3 = encaja pero con dudas; 1 = casi adivinando.`;
 
 const ESQUEMA = {
   type: "object",
   properties: {
     observado: { type: "string", description: "Qué lleva puesto, en pocas palabras" },
-    estilo: { type: "string", enum: [...Object.keys(ESTILOS), "ninguno"] },
+    estilo: { type: "string", enum: [...Object.keys(FAMILIAS), "ninguno"] },
     confianza: { type: "integer", description: "1 a 5" },
   },
   required: ["observado", "estilo", "confianza"],

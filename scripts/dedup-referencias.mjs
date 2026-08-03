@@ -85,8 +85,12 @@ for (const [estilo, fotos] of porEstilo) {
   const duplicadas = [];
 
   for (const f of fotos) {
-    const archivo = f.path.split("/").pop();
-    const h = dhash(`${RAIZ}/${estilo}/${archivo}`);
+    // El archivo local se deriva del PATH, no de la columna estilo: la
+    // taxonomía v2 renombró estilos en la base pero las carpetas del disco (y
+    // el storage) conservan el nombre con el que se cosechó. El path es llave,
+    // la columna es clasificación — solo el path localiza el archivo.
+    const [, dirCosecha, archivo] = f.path.split("/");
+    const h = dhash(`${RAIZ}/${dirCosecha}/${archivo}`);
     if (!h) continue;
     const gemela = vistas.find((v) => distancia(v.hash, h) <= UMBRAL);
     if (gemela) {

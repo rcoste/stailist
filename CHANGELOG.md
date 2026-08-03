@@ -8,6 +8,13 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.74.0] - 2026-08-03
+
+### Changed
+
+- **Taxonomía v2 de referencias: 10 familias generables + el color como dimensión.** La lista v1 mezclaba familias reales (sastre), paletas (tonos tierra) y cualidades (casual effortless) como si fueran alternativas — medido: de 362 fotos de invierno, tonos-tierra se llevó 52 y sastre 1, porque el color le ganaba la casilla a la construcción. Y peor: el conjunto salía de lo que se cosechó primero, no del espacio real de estilos — 15 de las 25 cartas del deck (streetwear, gorpcore, utility, hipster...) no tenían ni una referencia. Las familias v2 se derivan del deck agrupando por vocabulario de prendas: sastre, clásico arreglado (fusión de clásico elegante + smart casual, indistinguibles en los datos), casual limpio (minimalista + effortless, ídem), preppy, edgy, y cinco nuevas — street urbano, deportivo, utilitario, thrift/vintage y resort/boho. La paleta (tierra/neutra/oscura/color) ahora es columna, como el clima, y conecta con la colorimetría.
+- Al re-clasificar contra el catálogo completo, 126 de 206 fotos huérfanas encontraron familia — 48 en street urbano, el registro que el catálogo viejo ni siquiera podía nombrar.
+
 ## [0.2.73.2] - 2026-08-03
 
 ### Fixed
