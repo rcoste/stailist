@@ -33,13 +33,30 @@ export type Juicio = {
  * `destila` es la razón de existir de todo esto: "es del estilo pero no es lo
  * mío" tiene que volver a la destilación. Filtrar el estilo por el gusto de una
  * persona produce su guardarropa, no el estilo — y eso solo le sirve a ella.
+ *
+ * `mio` va aparte de `destila` porque son dos preguntas: si la foto entra a la
+ * destilación, y si a quien cura le gusta. La primera versión no tenía la salida
+ * de "me equivoqué", así que rescatar una foto descartada por error del dedo
+ * obligaba a pasar por "no es lo mío" — y eso escribía un "no me gusta" falso en
+ * el único campo que distingue el estilo del guardarropa de una persona.
+ *
+ * Las dos que rescatan van primero: son el trabajo de corrección que justifica
+ * esta pantalla, y en el celular lo de arriba es lo que se alcanza con el dedo.
  */
 export const REVISIONES = [
+  {
+    id: "me-equivoque",
+    label: "Sí sirve — me equivoqué",
+    pista: "Es del estilo y además es lo tuyo",
+    destila: true,
+    mio: true,
+  },
   {
     id: "no-es-lo-mio",
     label: "Es del estilo, pero no es lo mío",
     pista: "Cuenta para el estilo, no para tu gusto",
     destila: true,
+    mio: false,
   },
   {
     id: "mal-ejecutada",

@@ -31,10 +31,15 @@ export async function guardarJuicio(
 /**
  * Resuelve una discrepancia de la segunda pasada.
  *
- * "no es lo mío" DEVUELVE la foto a la destilación (sirve = true) y de paso
- * deja constancia de que no es del gusto de quien cura (mio = false). Esa es la
- * corrección que justifica toda la segunda pasada: el estilo lo define la
- * taxonomía, no el guardarropa de una persona.
+ * Las dos salidas que rescatan DEVUELVEN la foto a la destilación (sirve =
+ * true) y se diferencian en el gusto: "me equivoqué" deja mio = true, "no es lo
+ * mío" deja mio = false. Esa es la corrección que justifica toda la segunda
+ * pasada: el estilo lo define la taxonomía, no el guardarropa de una persona.
+ *
+ * `mio` sale de la opción y ya no de una comparación con el id: cuando estaba
+ * escrito a mano aquí, agregar una salida nueva pedía acordarse de tocar este
+ * archivo también, y olvidarlo no rompía nada visible — solo dejaba el gusto sin
+ * registrar.
  */
 export async function resolverDiscrepancia(
   id: string,
@@ -50,7 +55,8 @@ export async function resolverDiscrepancia(
     .update({
       revision,
       sirve: opcion.destila,
-      mio: revision === "no-es-lo-mio" ? false : undefined,
+      // Las que no destilan no opinan del gusto: dejan `mio` como estaba.
+      mio: "mio" in opcion ? opcion.mio : undefined,
       juzgada_en: new Date().toISOString(),
     })
     .eq("id", id);

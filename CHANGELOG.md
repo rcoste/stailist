@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.73.1] - 2026-08-03
+
+### Fixed
+
+- **En la segunda vuelta del destilador no se podía decir "me equivoqué".** Las tres salidas asumían que el descarte había sido correcto en algún sentido; la más cercana —"es del estilo, pero no es lo mío"— rescata la foto pero de paso registra que no gusta. Quien descartó una foto por error del dedo tenía que declarar un "no me gusta" falso para poder recuperarla, justo en el campo que separa el estilo del guardarropa de quien cura. Ahora hay una cuarta salida que rescata sin mentir sobre el gusto.
+
 ## [0.2.73.0] - 2026-08-03
 
 ### Added
