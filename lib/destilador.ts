@@ -9,6 +9,7 @@
 // se hace en ratos muertos, desde el celular. Un archivo local no sincroniza.
 
 import { createClient } from "@/lib/supabase/server";
+import { MOTIVOS_AUTOMATICOS } from "./destilador-tipos";
 import type { Referencia, Discrepancia } from "./destilador-tipos";
 
 export type { Juicio, Referencia, Discrepancia } from "./destilador-tipos";
@@ -89,6 +90,10 @@ export async function referenciasDeEstilo(
  * Es el único conjunto donde hace falta re-preguntar: si ambos dicen que no, no
  * hay nada que discutir, y las que el humano aprobó ya están dentro. Las ya
  * revisadas salen de la cola.
+ *
+ * Los descartes de máquina quedan fuera (ver MOTIVOS_AUTOMATICOS): la pregunta
+ * de esta pantalla es "la rechazaste, ¿por qué?", y no se le puede pedir cuentas
+ * a nadie por lo que descartó un script.
  */
 export async function discrepancias(
   genero: "hombre" | "mujer"
@@ -100,6 +105,9 @@ export async function discrepancias(
     .eq("genero", genero)
     .eq("sirve", false)
     .is("revision", null)
+    .or(
+      `motivo.is.null,motivo.not.in.(${MOTIVOS_AUTOMATICOS.join(",")})`
+    )
     .eq("referencias_juez.es_del_estilo", true)
     .order("estilo")
     .order("path");

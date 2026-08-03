@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.73.2] - 2026-08-03
+
+### Fixed
+
+- **La segunda vuelta del destilador pedía revisar descartes que hizo un script, no una persona.** Después de barrer las imágenes generadas por IA, las 4 fotos en cola de revisión eran justo esas 4 —una con la marca de agua de KlingAI a la vista— presentadas como "esta sí es del estilo, la rechazaste, ¿por qué?". Revisarlas las habría devuelto a la destilación. La cola ahora solo trae rechazos humanos: preguntarle a alguien por qué descartó algo que no descartó no tiene respuesta posible.
+
 ## [0.2.73.1] - 2026-08-03
 
 ### Fixed

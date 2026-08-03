@@ -102,3 +102,17 @@ export const MOTIVOS = [
   { id: "aburrido", label: "correcto pero soso" },
   { id: "no-es-outfit", label: "no es foto de outfit" },
 ] as const;
+
+/**
+ * Motivos que pone un script, no una persona.
+ *
+ * La segunda vuelta pregunta "la rechazaste, ¿por qué?", y esa pregunta solo
+ * tiene sentido sobre un rechazo humano. Sin esta distinción, los descartes
+ * automáticos entraban a la cola en cuanto el juez de taxonomía decía que sí
+ * eran del estilo — y el juez opina de estilo, no de si la imagen es real.
+ *
+ * Pasó de verdad: tras barrer los renders de IA, las 4 discrepancias en cola
+ * eran las 4 renders (una con marca de agua de KlingAI visible), pidiendo que
+ * las rescataran de vuelta a la destilación.
+ */
+export const MOTIVOS_AUTOMATICOS = ["duplicada", "render-ia", "sin-estilo"] as const;
