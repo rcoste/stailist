@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.74.2] - 2026-08-03
+
+### Added
+
+- **Tercera dimensión de las referencias: la silueta** (ceñida / recta / holgada), etiquetada por visión en las 675 fotos. El fit era el hueco más grande del perfil — no había ninguna pregunta ni columna sobre cómo le gusta a alguien que le quede la ropa; lo que existía (body_type, body_build) describe el cuerpo, que es otra cosa. El motor llevaba meses aplicando una regla universal ("evita todo holgado o todo pegado") igual para todas las personas. El desglose por familia separa dos grupos: las que tienen silueta propia (street urbano es holgado en 69 de 77) y las que admiten las tres (clásico arreglado: 77/82/65, sastre: 8/7/8) — en esas el fit es preferencia personal y la receta no debe imponerlo.
+
 ## [0.2.74.1] - 2026-08-03
 
 ### Added
