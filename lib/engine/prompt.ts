@@ -157,12 +157,31 @@ import {
 // del estilo. Y para los 2 de 50 que de verdad no tenían con qué, el prompt lo
 // dice y pide honestidad en la explicación en vez de bautizar el look con el
 // nombre de un estilo que no es (ver lib/engine/cobertura.ts).
-export const PROMPT_VERSION = "v32";
+// v33 (2026-08-04): el motor ya sabe QUÉ es cada prenda. La categoría (top,
+// bottom, saco, calzado…) nunca llegaba al prompt: describeItem mandaba nombre,
+// color, formalidad y material, pero no la categoría, así que el modelo la
+// deducía del nombre. Y encima 648 de las 967 prendas de la base la tienen
+// vacía en sus attrs — las del catálogo la heredan del arquetipo y nadie la
+// copiaba. Resultado: a un ítem llamado "Traje marino de lana" (categoría
+// `saco`) lo leyó como traje completo y armó el look SIN pantalón, rompiendo su
+// propia regla de "un bottom siempre". Lo cazó Roberto viendo el render, donde
+// el generador de imágenes había inventado un pantalón gris. Ahora la categoría
+// se resuelve al leer (conCategoria) y va pegada al nombre entre corchetes.
+export const PROMPT_VERSION = "v33";
 
 export type EngineItem = {
   id: string;
   attrs: {
     nombre?: string;
+    /**
+     * top | bottom | calzado | abrigo | saco | vestido | accesorio.
+     *
+     * La resuelve categoriaDeItem (lib/item-image.ts): las prendas del catálogo
+     * la heredan del arquetipo y no la traen en sus propios attrs. Va al prompt
+     * — sin ella el modelo la deducía del NOMBRE, y con un ítem llamado "Traje
+     * marino de lana" que en realidad es un saco, armaba el look sin pantalón.
+     */
+    categoria?: string;
     color?: string;
     color_hex?: string;
     image_path?: string | null;
@@ -360,7 +379,10 @@ export function describeItem(item: EngineItem): string {
     a.largo ? `largo ${a.largo}` : null,
     a.manga ? `manga ${a.manga}` : null,
   ].filter(Boolean);
-  return [a.nombre ?? a.tipo, color, a.formalidad, a.temporada, ...extras]
+  // La categoría va pegada al nombre y entre corchetes: es lo que DEFINE qué es
+  // la prenda, y el nombre solo no basta ("Traje marino de lana" es un saco).
+  const que = a.categoria ? `${a.nombre ?? a.tipo} [${a.categoria}]` : (a.nombre ?? a.tipo);
+  return [que, color, a.formalidad, a.temporada, ...extras]
     .filter(Boolean)
     .join(" · ");
 }

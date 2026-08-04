@@ -15,7 +15,7 @@ import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
-import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
+import { conCategoria, ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
@@ -248,7 +248,16 @@ async function generateInto(
   try {
     const [profileRes, itemsRes, recentRes, tasteSignal] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", userId).single(),
-      supabase.from("items").select("id, attrs").eq("user_id", userId).is("deleted_at", null),
+      // ITEM_IMAGE_SELECT trae también la categoría del arquetipo: las prendas
+      // del catálogo no la copian a sus attrs y sin ella el motor deduce del
+      // nombre (ver conCategoria). "Tu look de hoy" llama al MISMO motor que
+      // /api/generate, así que necesita el mismo dato o arma peor que la otra
+      // pantalla sin que nada lo delate.
+      supabase
+        .from("items")
+        .select(`id, ${ITEM_IMAGE_SELECT}`)
+        .eq("user_id", userId)
+        .is("deleted_at", null),
       supabase
         .from("outfits")
         .select("item_ids")
@@ -269,7 +278,10 @@ async function generateInto(
     if (!profile) throw new GenError("closet_vacio");
     const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
     const allItems = (itemsRes.data ?? []) as EngineItem[];
-    const { items } = applyVetoes(allItems, vetoes);
+    const { items } = applyVetoes(
+      conCategoria(allItems as unknown as ItemImageRow[]) as unknown as EngineItem[],
+      vetoes
+    );
     if (items.length < 3) throw new GenError("closet_vacio");
 
     // Ancla (Hoy): la prenda fijada debe estar disponible para el motor aunque

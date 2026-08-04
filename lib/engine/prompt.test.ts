@@ -490,3 +490,26 @@ describe("closetBlock — la marca de estilo (v32)", () => {
     expect(l).not.toContain("tipo de prenda de:");
   });
 });
+
+describe("describeItem — la categoría (v33)", () => {
+  it("dice qué ES la prenda, no solo cómo se llama", () => {
+    // El caso que lo motivó: un ítem llamado "Traje marino de lana" que en la
+    // base es categoría `saco`. Sin la categoría, el motor lo leyó como traje
+    // completo y armó el look SIN pantalón — rompiendo su propia regla de "un
+    // bottom siempre". Roberto lo cazó en el render, donde el generador de
+    // imágenes había inventado un pantalón gris.
+    const linea = describeItem({
+      id: "x",
+      attrs: { nombre: "Traje marino de lana", categoria: "saco", color_hex: "#1F2A44" },
+    });
+    expect(linea).toContain("[saco]");
+  });
+
+  it("sin categoría, la línea sale como antes", () => {
+    // 2 de cada 3 prendas de la base no la declaran; se resuelve desde el
+    // arquetipo al leer, pero si de plano no hay, no se inventa nada.
+    const linea = describeItem({ id: "x", attrs: { nombre: "Camiseta negra" } });
+    expect(linea).not.toContain("[");
+    expect(linea).toContain("Camiseta negra");
+  });
+});

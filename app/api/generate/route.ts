@@ -19,6 +19,7 @@ import {
   ITEM_IMAGE_SELECT,
   itemImageUrlSync,
   itemPrivatePaths,
+  conCategoria,
   type ItemImageRow,
 } from "@/lib/item-image";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
@@ -102,8 +103,13 @@ export async function POST(request: NextRequest) {
         // Vetos (issue #2): quita las prendas vetadas ANTES del check de mínimo,
         // para que vetar hacia un clóset corto caiga al estado de "insuficiente".
         const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
+        // conCategoria resuelve la categoría de cada prenda ANTES de que el
+        // motor la vea: las del catálogo la heredan del arquetipo y no la traen
+        // en sus propios attrs — 2 de cada 3 prendas de la base. Sin esto el
+        // motor deducía del nombre y a un "Traje marino de lana" (que es un
+        // saco) lo armaba sin pantalón.
         const { items } = applyVetoes(
-          (itemsRes.data ?? []) as EngineItem[],
+          conCategoria((itemsRes.data ?? []) as unknown as ItemImageRow[]) as unknown as EngineItem[],
           vetoes
         );
         if (items.length < 3) {

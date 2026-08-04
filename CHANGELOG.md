@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.90.0] - 2026-08-04
+
+### Fixed
+
+- **La app ya sabe qué es cada prenda de tu clóset, y dejó de armarte trajes sin pantalón.** Al armar tus looks nunca le llegaba la categoría de tus prendas —si algo es un pantalón, un saco o unos zapatos— así que la adivinaba por el nombre. Con una prenda llamada "Traje marino de lana", que en realidad es solo el saco, entendía que ya venía completo y armaba el look sin nada abajo; en el render aparecía un pantalón inventado. Dos de cada tres prendas de la app estaban así: el dato existía en el catálogo y no llegaba. Aplica a los looks del día y a "tu look de hoy".
+
 ## [0.2.89.0] - 2026-08-04
 
 ### Changed
