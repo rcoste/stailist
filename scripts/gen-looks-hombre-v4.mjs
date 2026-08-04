@@ -58,8 +58,14 @@ const AVATAR = {
 };
 
 // [id, familia|null, modelo, escena, pose, outfit]
-// outfit: null = su carta v3 (la ropa ya servía, solo cambia la puesta en escena)
-//         "archivo.jpg" = foto nueva en REFS/ (las 8 que había que rehacer)
+// outfit: null            = su carta v3 (la ropa ya servía, solo cambia la escena)
+//         "archivo.jpg"   = foto nueva en REFS/
+//         {texto: "..."}  = el outfit descrito, sin foto. Es el peor de los tres
+//           y solo se usa cuando no hay imagen que pasar: sin referencia visual
+//           el generador rellena la proporción y la caída con lo más promedio
+//           que sabe, que es justo el defecto que esta versión vino a arreglar.
+//           Se compensa apoyándose en la receta de la familia, que sí describe
+//           silueta y ejecución.
 //
 // REPARTO: cada modelo lleva registros MEZCLADOS a propósito. Si uno cargara los
 // estilos arreglados y otro los de calle, el deck estaría enseñando eso en vez de
@@ -68,7 +74,7 @@ const CARTAS = [
   // ── sastre ────────────────────────────────────────────────────────────────
   ["sastre", "sastre", "m1",
     "A city street outside a modern office building, glass and stone, soft overcast light, blurred pedestrians far behind.",
-    "Caught mid-step crossing the sidewalk, jacket moving with him, looking ahead past the camera.", null],
+    "Caught mid-step crossing the sidewalk, jacket moving with him, looking ahead past the camera.", "sastre.jpg"],
   ["glam-noche", "sastre", "m3",
     "A city street at NIGHT: wet asphalt reflecting warm neon and shop signs, dark blue evening sky, blurred lights behind.",
     "Walking toward the camera through the night street, hands relaxed, looking slightly aside.", "glam-noche.jpg"],
@@ -78,37 +84,47 @@ const CARTAS = [
     "Standing three-quarter beside the wall, one hand in his coat pocket, chin slightly down, looking away.", null],
   ["smart-casual", "clasico-arreglado", "rob",
     "Outside a modern cafe: glass front, a few small tables and chairs on the sidewalk, soft afternoon light.",
-    "Caught mid-step leaving the cafe, one hand adjusting his sleeve, gaze off to the side.", null],
+    "Caught mid-step leaving the cafe, one hand adjusting his sleeve, gaze off to the side.", "smart-casual.jpg"],
   ["academia", "clasico-arreglado", "m3",
     "A university quad: red brick building, clipped lawn and a stone path, a few students blurred far behind, crisp autumn light.",
-    "Walking across the path mid-step, bag strap in one hand, looking ahead past the camera.", null],
+    "Walking across the path mid-step, bag strap in one hand, looking ahead past the camera.", "academia.jpg"],
   // ── casual-limpio ─────────────────────────────────────────────────────────
   ["minimalista", "casual-limpio", "rob",
     "A wide empty sidewalk beside a clean modern building, large plain surfaces, cool neutral daylight, deep empty space behind.",
     "Caught mid-step walking, arms relaxed at his sides, looking away to the side.", "minimalista.jpg"],
   ["casual-effortless", "casual-limpio", "m1",
     "A leafy residential street with low houses and parked bikes, warm soft daylight filtered through trees.",
-    "Standing three-quarter with both hands in his pockets, weight on one leg, looking down the street.", null],
+    "Standing three-quarter with both hands in his pockets, weight on one leg, looking down the street.", "casual-effortless.jpg"],
   ["coreano", "casual-limpio", "m2",
     "A minimal urban plaza with tall clean concrete columns and long shadows, cool grey daylight.",
-    "Caught mid-step, the wide trousers moving with him, looking away to the side.", null],
+    "Caught mid-step, the wide trousers moving with him, looking away to the side.", "coreano.jpg"],
   ["monocromatico", "casual-limpio", "m1",
     "A dim modern underpass or gallery with smooth dark walls and a single band of daylight from the side.",
-    "Standing three-quarter against the wall, one hand in his pocket, chin slightly down.", null],
+    // Referencia que mandó Roberto por chat (no llegó como archivo, así que va
+    // descrita). Tonal camel de arriba abajo con texturas distintas — es la
+    // lectura más limpia de "monocromático" del deck: un solo tono, y lo que
+    // cambia es el material, no el color.
+    "Standing three-quarter against the wall, one hand in his pocket, chin slightly down.",
+    { texto:
+      "a camel wool blazer worn open over a cream ribbed wool turtleneck, with beige tailored trousers " +
+      "with a clean crease and brown suede loafers — a strictly TONAL camel-and-cream look, one single " +
+      "warm neutral family head to toe, where the interest comes from the different textures (smooth wool " +
+      "blazer, chunky ribbed knit, flat tailoring, soft suede) and NOT from any colour contrast. " +
+      "No black, no dark accents, nothing that breaks the tonal run" }],
   // ── preppy ────────────────────────────────────────────────────────────────
   ["preppy", "preppy", "m3",
     "A university campus in autumn: red brick building, ivy, a stone stair and clipped lawn, crisp golden-free cool daylight.",
-    "Walking down the stone stair mid-step, bag in one hand, looking ahead past the camera.", null],
+    "Walking down the stone stair mid-step, bag in one hand, looking ahead past the camera.", "preppy.jpg"],
   ["nautico", "preppy", "m3",
     "A harbour boardwalk: wooden dock planks, white boat hulls and masts blurred behind, bright coastal daylight.",
-    "Standing three-quarter at the dock rail, one hand on the rail, looking out to the side.", null],
+    "Standing three-quarter at the dock rail, one hand on the rail, looking out to the side.", "nautico.jpg"],
   // ── edgy ──────────────────────────────────────────────────────────────────
   ["edgy", "edgy", "m2",
     "A narrow city street at dusk beside a dark brick wall and a metal shutter, cold blue light, blurred street lamps behind.",
-    "Standing three-quarter against the shutter, one hand in his jacket pocket, looking straight past the camera.", null],
+    "Standing three-quarter against the shutter, one hand in his jacket pocket, looking straight past the camera.", "edgy.jpg"],
   ["grunge", "edgy", "m3",
     "A gritty side street with a graffitied wall and a chain-link fence, flat grey overcast light.",
-    "Caught mid-step walking past the fence, hands loose, looking down and away.", null],
+    "Caught mid-step walking past the fence, hands loose, looking down and away.", "grunge.jpg"],
   // ── street-urbano ─────────────────────────────────────────────────────────
   ["streetwear", "street-urbano", "m1",
     "A busy city sidewalk in front of an old painted facade and a metal door, flat daylight, blurred traffic behind.",
@@ -126,7 +142,7 @@ const CARTAS = [
   // ── utilitario ────────────────────────────────────────────────────────────
   ["utility", "utilitario", "rob",
     "A loading area behind a warehouse: corrugated metal, a roll-up door and painted concrete, flat grey light.",
-    "Caught mid-step crossing the frame, hands loose, looking down and away.", null],
+    "Caught mid-step crossing the frame, hands loose, looking down and away.", "utility.jpg"],
   // ── thrift-vintage ────────────────────────────────────────────────────────
   ["hipster", "thrift-vintage", "m1",
     "Outside a second-hand shop: a painted blue storefront with a window full of odd objects, soft daylight.",
@@ -137,20 +153,20 @@ const CARTAS = [
   // ── resort-boho ───────────────────────────────────────────────────────────
   ["coastal", "resort-boho", "m3",
     "A whitewashed coastal street: white walls, a blue door, bright sea light and a sliver of sea far behind.",
-    "Walking down the white street mid-step, relaxed, looking off to the side.", null],
+    "Walking down the white street mid-step, relaxed, looking off to the side.", "coastal.jpg"],
   ["boho", "resort-boho", "m1",
     "A sunlit plaza with old stone arches and a few market stalls blurred behind, warm even light.",
     "Standing three-quarter in the plaza, one hand in his pocket, looking away to the side.", "boho.jpg"],
   // ── sin familia (atributos, no estilos: conservan su ropa) ────────────────
   ["tonos-tierra", null, "rob",
     "A path beside a low adobe-toned wall with dry grass and a tree, warm late afternoon light.",
-    "Caught mid-step along the wall, hands relaxed, looking away.", null],
+    "Caught mid-step along the wall, hands relaxed, looking away.", "tonos-tierra.jpg"],
   ["color-protagonista", null, "m2",
     "A plain white-painted wall with a single strong shadow, bright clean daylight, nothing else competing.",
     "Standing three-quarter, weight on one leg, one hand in his pocket, looking straight past the camera.", null],
   ["romantico", null, "m3",
     "A quiet street beside a garden wall with climbing plants and soft pink blossom, gentle diffuse light.",
-    "Standing three-quarter by the wall, hands loose at his sides, chin slightly down, looking aside.", null],
+    "Standing three-quarter by the wall, hands loose at his sides, chin slightly down, looking aside.", "romantico.jpg"],
 ];
 
 // ── Recetas: la ejecución que una foto sola no garantiza ────────────────────
@@ -181,7 +197,7 @@ const SIN_MARCAS =
   "CRITICAL: any graphic printed on a garment must be an INVENTED, abstract, non-legible design. Never reproduce a real brand name, band logo or trademark, " +
   "even if one is visible in the reference. No readable text anywhere in the image. No watermark.";
 
-function prompt(familia, escena, pose) {
+function prompt(familia, escena, pose, textoOutfit = null) {
   const r = familia ? RECETAS[familia] : null;
   const receta = r
     ? `HOW THIS STYLE IS ACTUALLY WORN (distilled from real street photography — follow this for the execution): ` +
@@ -189,8 +205,11 @@ function prompt(familia, escena, pose) {
       `DETAILS THAT MAKE IT: ${r.detalles.join(" ")} ` +
       `NEVER: ${r.evitar.join(" ")} `
     : "";
+  const queLleva = textoOutfit
+    ? `He is wearing: ${textoOutfit}. `
+    : `${OUTFIT_REF} `;
   return (
-    `Candid full-body street-style fashion photograph of a young man, 20-32 years old. ${IDENTIDAD} ${OUTFIT_REF} ${receta}` +
+    `Candid full-body street-style fashion photograph of a young man, 20-32 years old. ${IDENTIDAD} ${queLleva}${receta}` +
     `POSE: ${pose} SCENE: ${escena} ${FRAMING} ${EXPRESSION} ${ANCLA} ` +
     `Photorealistic, natural depth of field, sharp, high quality, neutral white balance. ${SIN_MARCAS}`
   );
@@ -198,20 +217,21 @@ function prompt(familia, escena, pose) {
 
 async function gen(id, familia, modelo, escena, pose, outfit) {
   const salida = `public/looks/${id}-hombre.png`;
+  const porTexto = outfit && typeof outfit === "object" && outfit.texto;
   // La foto del outfit: la carta v3 respaldada, o la referencia nueva.
-  const refOutfit = outfit ? `${REFS}/${outfit}` : `${RESPALDO}/${id}-hombre.png`;
-  if (!existsSync(refOutfit)) return console.error(`FALTA referencia: ${refOutfit}`);
+  const refOutfit = porTexto ? null : outfit ? `${REFS}/${outfit}` : `${RESPALDO}/${id}-hombre.png`;
+  if (refOutfit && !existsSync(refOutfit)) return console.error(`FALTA referencia: ${refOutfit}`);
   if (!existsSync(AVATAR[modelo])) return console.error(`FALTA avatar: ${AVATAR[modelo]}`);
 
-  const text = prompt(familia, escena, pose);
-  if (DRY) return console.log(`— ${id} (${modelo}, ${outfit ?? "carta v3"})\n${text.slice(0, 260)}…\n`);
+  const text = prompt(familia, escena, pose, porTexto || null);
+  if (DRY) return console.log(`— ${id} (${modelo}, ${porTexto ? "texto" : outfit ?? "carta v3"})\n${text.slice(0, 260)}…\n`);
 
   const mime = (p) => (p.endsWith(".png") ? "image/png" : "image/jpeg");
   const parts = [
     { text },
     { inlineData: { mimeType: mime(AVATAR[modelo]), data: b64(AVATAR[modelo]) } },
-    { inlineData: { mimeType: mime(refOutfit), data: b64(refOutfit) } },
   ];
+  if (refOutfit) parts.push({ inlineData: { mimeType: mime(refOutfit), data: b64(refOutfit) } });
 
   for (let intento = 1; intento <= 3; intento++) {
     try {

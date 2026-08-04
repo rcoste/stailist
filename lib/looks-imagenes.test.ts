@@ -14,7 +14,9 @@ import { LOOKS, looksForGender } from "./looks";
 // Es el peor tipo de bug — el que se ve como "la generación no quedó bien" y te
 // manda a re-generar imágenes en vez de a revisar el nombre del archivo.
 
-const publicPath = (src: string) => `public${src}`;
+// Las rutas llevan un rompe-caché (`?v=N`, ver lib/looks.ts): en disco no
+// existe ese sufijo, así que se quita antes de comprobar el archivo.
+const publicPath = (src: string) => `public${src.split("?")[0]}`;
 
 describe("imágenes del deck de swipes", () => {
   for (const gender of ["hombre", "mujer"] as const) {
@@ -33,9 +35,35 @@ describe("imágenes del deck de swipes", () => {
     const soloUnGenero = LOOKS.filter((l) => l.segment !== "unisex");
     expect(soloUnGenero.length).toBeGreaterThan(0);
     for (const l of soloUnGenero) {
-      expect(l.image).toBe(`/looks/${l.id}.png`);
+      expect(l.image?.split("?")[0]).toBe(`/looks/${l.id}.png`);
       expect(existsSync(`public/looks/${l.id}-mujer.png`)).toBe(false);
       expect(existsSync(`public/looks/${l.id}-hombre.png`)).toBe(false);
     }
+  });
+});
+
+describe("rompe-caché de las imágenes del deck", () => {
+  // Sin esto, rehacer una carta no se ve: el archivo conserva su nombre, el
+  // navegador cree que es la misma imagen de siempre y sirve la que tenía
+  // guardada. Pasó de verdad — se rehicieron las 25 cartas de hombre y en el
+  // teléfono seguían saliendo las viejas.
+  it("todas las rutas llevan versión", () => {
+    for (const gender of ["hombre", "mujer"] as const) {
+      for (const l of looksForGender(gender)) {
+        expect(l.image, `${l.id} (${gender}) sin ?v=`).toMatch(/\?v=\d+$/);
+      }
+    }
+  });
+
+  // El otro lado del acople: Next devuelve 400 a cualquier imagen LOCAL con
+  // query string cuyo pathname no esté declarado en images.localPatterns. Si
+  // alguien limpia esa config, el deck entero deja de cargar.
+  it("next.config declara /looks/** como local con query permitida", async () => {
+    const cfg = await import("../next.config");
+    const patrones = cfg.default.images?.localPatterns ?? [];
+    expect(
+      patrones.some((p) => p.pathname === "/looks/**" && p.search === ""),
+      "falta { pathname: '/looks/**', search: '' } en images.localPatterns"
+    ).toBe(true);
   });
 });

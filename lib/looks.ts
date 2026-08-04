@@ -71,6 +71,17 @@ const ESTILOS: EstiloRow[] = [
   ["de-salir", "De salir", "ceñido, corto y con actitud", ["ceñido", "atrevido", "glam"], "mujer"],
 ];
 
+// Rompe-caché de las imágenes del deck.
+//
+// Las cartas se rehacen conservando el nombre de archivo (minimalista-hombre.png
+// sigue siendo minimalista-hombre.png), así que para el navegador es la misma
+// imagen de siempre y sirve la que ya tenía guardada — se rehízo el deck entero
+// y en el teléfono seguían saliendo las cartas viejas. Subir este número cambia
+// la URL sin renombrar 50 archivos ni tocar los scripts que los generan.
+//
+// SÚBELO cada vez que se regeneren las imágenes del deck.
+const V = "4";
+
 export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "unisex"]) => ({
   id,
   nombre,
@@ -80,7 +91,8 @@ export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "un
   prendas: [],
   // Imagen por defecto: unisex usa el archivo de hombre; los específicos (p. ej.
   // coquette/mujer) usan /looks/<id>.png. looksForGender() resuelve por género.
-  image: segment === "unisex" ? `/looks/${id}-hombre.png` : `/looks/${id}.png`,
+  image:
+    segment === "unisex" ? `/looks/${id}-hombre.png?v=${V}` : `/looks/${id}.png?v=${V}`,
 }));
 
 export const LOOK_IDS = new Set(LOOKS.map((l) => l.id));
@@ -92,7 +104,9 @@ export function looksForGender(gender: "hombre" | "mujer"): Look[] {
   ).map((l) => ({
     ...l,
     image:
-      l.segment === "unisex" ? `/looks/${l.id}-${gender}.png` : `/looks/${l.id}.png`,
+      l.segment === "unisex"
+        ? `/looks/${l.id}-${gender}.png?v=${V}`
+        : `/looks/${l.id}.png?v=${V}`,
   }));
 }
 
