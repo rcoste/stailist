@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.75.3] - 2026-08-03
+
+### Fixed
+
+- **Las cápsulas de las recetas nombraban prendas que no existen.** Renglones como "Suéter de ochos azul marino y crema" querían decir "hay dos suéteres, uno de cada color", pero se leen igual de bien como un suéter bicolor — y así salió en la reconstrucción de preppy en frío: medio marino, medio beige. La cápsula es lo que el motor le va a decir a la IA que busque en tu clóset, así que la misma frase podía hacerle pedir una prenda imposible en vez de aceptar la que sí tienes colgada. 17 renglones corregidos en 6 familias: los colores alternativos ahora van con "o", y las prendas distintas en renglones separados.
+
 ## [0.2.75.2] - 2026-08-03
 
 ### Fixed
