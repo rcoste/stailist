@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.93.0] - 2026-08-04
+
+### Fixed
+
+- **Ya no te toca un estilo por tener sus etiquetas más comunes.** Al leer tus swipes, cada etiqueta pesaba igual: la que define un estilo ("preppy", "gorpcore") y la que tiene medio catálogo ("pulido", "clásico"). Por eso a alguien cuyo estilo es minimalista y sobrio le salía "preppy" — la carta preppy comparte dos etiquetas genéricas con casi todo, y con eso le ganaba a la familia que de verdad le correspondía. Ahora cada etiqueta pesa por lo distintiva que es, así que un estilo solo te toca si de verdad se parece a lo que te gustó. A quien sí es preppy le sigue tocando preppy.
+
 ## [0.2.92.0] - 2026-08-04
 
 ### Added

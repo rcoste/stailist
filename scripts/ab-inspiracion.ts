@@ -204,6 +204,9 @@ async function main() {
     conInspo: boolean;
   }[] = [];
 
+  // Las fotas ya usadas, para no repetir referencia entre casos: en la primera
+  // corrida salieron 20 fotos distintas para 36 espacios (una 4 veces).
+  const usadas = new Set<string>();
   for (let i = 0; i < CASOS.length; i++) {
     const caso = CASOS[i];
     const ctx = ctxDe(caso);
@@ -213,8 +216,11 @@ async function main() {
       clima: bandaDeClima({ temp_c: caso.temp, condition: caso.cond } as never),
       season: (profile.palette_season as string | null) ?? null,
       fitPref: (profile.fit_pref as "recta" | "holgada" | "mixta" | null) ?? null,
+      ocasion: caso.ocasion,
+      evitar: usadas,
       rand: rng(20260804 + i * 31),
     });
+    refs.forEach((r) => usadas.add(r.path));
     const fotos: { b64: string; mime: string }[] = [];
     for (const r of refs) {
       const { data } = await s.storage.from("referencias").download(r.path);

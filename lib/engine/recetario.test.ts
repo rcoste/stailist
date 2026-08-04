@@ -174,3 +174,28 @@ describe("recetario v2 — material", () => {
     }
   });
 });
+
+describe("el peso distintivo de cada tag (v34)", () => {
+  it("no te da una familia por tener sus etiquetas genéricas", () => {
+    // El caso de Roberto: sus tags son pulido, clasico, minimalista, sobrio…
+    // La carta "preppy" lleva [preppy, clasico, pulido]; con todos los tags
+    // pesando igual, esos dos genéricos le daban 1.50 y la familia PREPPY le
+    // ganaba a Clásico arreglado, que tenía tres cartas suyas puntuando. Él lo
+    // cachó de memoria: "según yo era clásico elegante".
+    const suyos = ["pulido", "clasico", "minimalista", "sobrio", "casual", "versatil", "moderno", "natural"];
+    const familias = recetasParaTags(suyos, "hombre", 3).map((r) => r.familia);
+    expect(familias).toContain("casual-limpio");
+    expect(familias.indexOf("clasico-arreglado")).toBeLessThan(familias.indexOf("preppy"));
+  });
+
+  it("a quien SÍ es preppy le sigue tocando preppy, y de calle", () => {
+    // La otra mitad de la prueba: el arreglo no puede romper el caso legítimo.
+    const preppy = ["preppy", "clasico", "nautico", "pulido", "fresco", "academia"];
+    expect(recetasParaTags(preppy, "hombre")[0].familia).toBe("preppy");
+  });
+
+  it("y al gorpcore le toca deportivo", () => {
+    const gorp = ["gorpcore", "utility", "deportivo", "tecnico", "casual"];
+    expect(recetasParaTags(gorp, "hombre")[0].familia).toBe("deportivo");
+  });
+});

@@ -135,15 +135,38 @@ export const RECETAS_HOMBRE: Receta[] = FAMILIAS_DECK.map((f) => {
 // en taste vector); aquí solo se consultan para no tener DOS listas de tags.
 const TAGS_POR_CARTA = new Map(LOOKS.map((l) => [l.id, l.tags]));
 
+// En cuántas de las ~27 cartas del deck aparece cada tag. "atrevido" está en 6,
+// "pulido" y "clasico" en 4; "gorpcore" o "preppy", en una. Se calcula del deck
+// real, no a mano: si mañana se canjea una carta, el peso se recalcula solo.
+const CARTAS_POR_TAG: Map<string, number> = (() => {
+  const m = new Map<string, number>();
+  for (const l of LOOKS) for (const t of l.tags) m.set(t, (m.get(t) ?? 0) + 1);
+  return m;
+})();
+
 /**
  * Las recetas que aplican a unos gustos dados, de la más fuerte a la más débil.
  *
  * `tasteTags` viene EN ORDEN DE FUERZA de computeTasteTags, así que un tag en
- * primera posición pesa más que uno en la sexta. score de una carta =
- * Σ 1/(posición+1) sobre sus tags que aparecen: premia qué tan arriba está el
- * tag Y cuántos tags de la carta empatan. La familia hereda el MEJOR score de
- * sus cartas — no la suma, porque una familia con 4 cartas sumaría más que una
- * de 1 solo por ser ancha, y utilitario nunca ganaría ni al fan del utility.
+ * primera posición pesa más que uno en la sexta. La familia hereda el MEJOR
+ * score de sus cartas —no la suma, porque una familia con 4 cartas sumaría más
+ * que una de 1 solo por ser ancha, y utilitario nunca ganaría ni al fan del
+ * utility.
+ *
+ * CADA TAG PESA POR LO DISTINTIVO QUE ES: 1/(cartas que lo llevan). Sin eso, un
+ * tag genérico valía igual que uno identitario y las cuentas salían mal. Le pasó
+ * a Roberto: le tocó la familia PREPPY sin tener el tag "preppy". La carta
+ * preppy lleva [preppy, clasico, pulido], y "clasico" y "pulido" son sus dos
+ * tags más fuertes — así que la carta puntuaba 1.50 por dos etiquetas que tiene
+ * medio deck, y le ganaba a Clásico arreglado (1.31), que tenía TRES cartas
+ * suyas puntuando y más señal total. Él mismo lo cachó: "según yo era clásico
+ * elegante". Y de paso se perdía la familia con más material de la biblioteca
+ * (226 fotos contra 28 del preppy).
+ *
+ * Comprobado contra tres perfiles antes de cambiarlo: al preppy de verdad le
+ * sigue tocando Preppy (1.19, con el segundo lugar en 0.29) y al gorpcore
+ * Deportivo (1.36). Lo único que cambia es a quién le tocaba una familia por
+ * etiquetas genéricas.
  *
  * El tope existe porque inyectar cinco recetas es lo mismo que no inyectar
  * ninguna: el modelo acaba con una sopa de reglas que se contradicen (el
@@ -159,7 +182,9 @@ export function recetasParaTags(
   const scoreCarta = (carta: string) =>
     (TAGS_POR_CARTA.get(carta) ?? []).reduce((suma, t) => {
       const p = posicion.get(t);
-      return p === undefined ? suma : suma + 1 / (p + 1);
+      if (p === undefined) return suma;
+      // Qué tan arriba está el tag × qué tan identitario es de esa carta.
+      return suma + 1 / (p + 1) / (CARTAS_POR_TAG.get(t) ?? 1);
     }, 0);
 
   return RECETAS_HOMBRE.map((receta) => {
