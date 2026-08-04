@@ -18,7 +18,7 @@ export type GeneratedOutfit = {
 export async function generateOutfits(
   ctx: EngineContext,
   // Solo para el A/B del arnés (ver buildUserMessage). Producción no lo pasa.
-  opciones: { marcarEstilo?: boolean } = {}
+  opciones: { marcarEstilo?: boolean; sinRecetario?: boolean } = {}
 ): Promise<GeneratedOutfit[]> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ENGINE_NOT_CONNECTED");

@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.85.0] - 2026-08-04
+
+### Added
+
+- **Pantalla interna de A/B a ciegas** (`/admin/ab`): el mismo día, el mismo clóset y la misma persona, resueltos por dos versiones del motor —con y sin las recetas de estilo destiladas—, lado a lado y sin decir cuál es cuál. El lado se sortea en cada par y la clave vive fuera del código que llega al navegador, para que el juicio sea sobre los looks y no sobre la etiqueta. Sirve para contestar la única pregunta que importaba: la reconstrucción del motor de esta semana, ¿suma o resta? Ningún usuario real la había visto — los 155 outfits con votos son todos de la versión anterior.
+
 ## [0.2.84.0] - 2026-08-04
 
 ### Added

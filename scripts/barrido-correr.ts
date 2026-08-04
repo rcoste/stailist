@@ -156,6 +156,11 @@ let hechos = 0;
 // sobre una muestra común de 6 — o sea, nada. Pareado, el ruido del modelo
 // afecta a los dos brazos por igual.
 const AB = process.argv.includes("--ab");
+// Qué se está midiendo en el A/B: la marca de estilo (default) o el recetario
+// entero. El segundo contesta la pregunta grande: la reconstrucción del motor de
+// esta semana ¿suma o resta? Ningún usuario real la ha visto (155 outfits con
+// votos son todos de v27 para atrás).
+const QUE = process.argv.includes("--ab=recetario") || process.argv.includes("--recetario") ? "recetario" : "marca";
 
 // El muestreo modular repite combinaciones (con --n=50 salen 18 distintas). En
 // el barrido normal esa repetición da varias muestras del mismo caso, que sirve;
@@ -174,7 +179,7 @@ const tanda: [Caso, boolean][] = AB
   ? unicos.flatMap((c) => [[c, true] as [Caso, boolean], [c, false] as [Caso, boolean]])
   : unicos.map((c) => [c, true] as [Caso, boolean]);
 
-async function correr(caso: Caso, marcarEstilo = true) {
+async function correr(caso: Caso, tratamiento = true) {
   // La semilla sale del caso: mismo caso → mismo clóset, siempre. En el A/B los
   // dos brazos comparten clóset a propósito: si cambiara, mediríamos el clóset.
   const items = closetDe(caso.closet, casos.indexOf(caso) * 7919 + 13);
@@ -202,18 +207,21 @@ async function correr(caso: Caso, marcarEstilo = true) {
   };
 
   try {
-    const outfits = await generateOutfits(ctx, { marcarEstilo });
+    const outfits = await generateOutfits(
+      ctx,
+      QUE === "recetario" ? { sinRecetario: !tratamiento } : { marcarEstilo: tratamiento }
+    );
     for (const o of outfits) {
       const prendas = o.item_ids.map((id) => items.find((i: EngineItem) => i.id === id)).filter(Boolean) as EngineItem[];
       const ejecucion = revisarEjecucion(prendas);
       const veredicto = await juzgar(caso, o, items);
-      resultados.push({ caso, brazo: marcarEstilo ? "con-marca" : "sin-marca", look: o.nombre, prendas: prendas.map((p) => p.attrs.nombre), ejecucion, veredicto });
+      resultados.push({ caso, brazo: tratamiento ? "con-marca" : "sin-marca", look: o.nombre, prendas: prendas.map((p) => p.attrs.nombre), ejecucion, veredicto });
     }
   } catch (e) {
-    resultados.push({ caso, brazo: marcarEstilo ? "con-marca" : "sin-marca", error: (e as Error).message });
+    resultados.push({ caso, brazo: tratamiento ? "con-marca" : "sin-marca", error: (e as Error).message });
   }
   console.log(
-    `  ${++hechos}/${tanda.length}  ${caso.perfil}/${caso.closet}/${caso.clima.id}${AB ? ` [${marcarEstilo ? "con" : "sin"} marca]` : ""}`
+    `  ${++hechos}/${tanda.length}  ${caso.perfil}/${caso.closet}/${caso.clima.id}${AB ? ` [${tratamiento ? "con" : "sin"} ${QUE}]` : ""}`
   );
 }
 
@@ -233,7 +241,7 @@ for (let i = 0; i < tanda.length; i += CONC) {
 mkdirSync("docs_para_claude/barrido", { recursive: true });
 // El A/B escribe a su propio archivo: sobreescribir ultimo.json dejaría la
 // revisión de Roberto apuntando a looks que ya no son los que él vio.
-const SALIDA = AB ? "docs_para_claude/barrido/ab.json" : "docs_para_claude/barrido/ultimo.json";
+const SALIDA = AB ? `docs_para_claude/barrido/ab-${QUE}.json` : "docs_para_claude/barrido/ultimo.json";
 writeFileSync(SALIDA, JSON.stringify(resultados, null, 2));
 
 // ── Resumen por FRECUENCIA ───────────────────────────────────────────────────

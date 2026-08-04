@@ -367,7 +367,21 @@ export function describeItem(item: EngineItem): string {
 
 // Contexto de la clienta (ocasión, colorimetría, estilo, gustos, clima).
 // Compartido por el generador (1ª pasada) y el crítico (2ª pasada).
-export function contextBlock(ctx: EngineContext): string[] {
+/**
+ * `sinRecetario: true` quita del prompt TODO lo que introdujo la destilación:
+ * las fórmulas del estilo, su paleta, sus vetos y el aviso de cobertura.
+ *
+ * Existe SOLO para el arnés (barrido-correr --ab=recetario). El recetario entró
+ * en v28 y desde entonces el motor no lo ha visto un solo usuario real: los 155
+ * outfits con votos son todos de v27 para atrás (13 👍, 3 👎, 12 puestos). O sea
+ * que la reconstrucción del motor de esta semana está sin validar por humanos, y
+ * la única forma honesta de saber si suma o resta es correr los dos lado a lado.
+ * Producción nunca lo pasa.
+ */
+export function contextBlock(
+  ctx: EngineContext,
+  opciones: { sinRecetario?: boolean } = {}
+): string[] {
   const lines: string[] = [];
 
   // Género: concordancia gramatical de lo que la persona LEE (explicación/tip)
@@ -463,7 +477,7 @@ export function contextBlock(ctx: EngineContext): string[] {
     // ("pulido" no dice si la camisa va abierta o abotonada). El recetario les
     // pone contenido concreto, destilado de fotos de calle ya curadas — ver
     // lib/engine/recetario.ts.
-    if (ctx.gender) {
+    if (ctx.gender && !opciones.sinRecetario) {
       // El clima entra a la SELECCIÓN de fórmulas, no solo al prompt: mandar
       // las 15 fórmulas revueltas es como no mandar clima (v29).
       const recetas = recetasParaTags(ctx.tasteTags, ctx.gender);
@@ -651,11 +665,16 @@ export function closetBlock(items: EngineItem[], recetas: Receta[] = []): string
  */
 export function buildUserMessage(
   ctx: EngineContext,
-  opciones: { marcarEstilo?: boolean } = {}
+  opciones: { marcarEstilo?: boolean; sinRecetario?: boolean } = {}
 ): string {
-  const recetas = opciones.marcarEstilo === false ? [] : recetasDelContexto(ctx);
+  // Sin recetario no hay marca posible: la marca ES el recetario aplicado al
+  // clóset. Apagar uno y dejar la otra mediría una mezcla que nunca existió.
+  const recetas =
+    opciones.marcarEstilo === false || opciones.sinRecetario
+      ? []
+      : recetasDelContexto(ctx);
   const lines: string[] = [
-    ...contextBlock(ctx),
+    ...contextBlock(ctx, opciones),
     "",
     ...closetBlock(ctx.items, recetas),
   ];
