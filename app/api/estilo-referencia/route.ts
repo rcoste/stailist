@@ -1,4 +1,4 @@
-import { ENGINE_MODEL } from "@/lib/models";
+import { CLASSIFY_MODEL } from "@/lib/models";
 import { NextResponse, type NextRequest } from "next/server";
 import { PERMISO_PENDIENTE_MSG } from "@/lib/consentimiento";
 import { fotosBloqueadas, type AgeRange } from "@/lib/edad";
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     });
 
     const res = await client.messages.create({
-      model: ENGINE_MODEL,
+      model: CLASSIFY_MODEL,
       max_tokens: 800,
       system:
         "Eres la estilista de la clienta. Miras 1-3 fotos de un estilo que le gusta y haces dos cosas: (1) describes el ESTILO (estética, prendas, siluetas, formalidad, aire de paleta), NUNCA el físico ni la identidad de quien aparece; (2) evalúas honestamente si ese estilo le VA a ELLA según su colorimetría, silueta y vetos. Voz cálida y directa, tuteo, cero jerga técnica de moda. Devuelve: `summary` (1-2 frases del estilo, que un motor de outfits pueda usar para empujar el VIBE y las siluetas, no el color); `tags` (4-6 etiquetas cortas en minúscula); `fit.verdict` ('va' = le queda increíble | 'ajustes' = le va pero hay que adaptarlo | 'ojo' = hay cosas que NO le favorecen); `fit.note` (1-2 frases honestas: por qué le va, o qué adaptar, o qué cuidar — menciona colorimetría/silueta/vetos concretos cuando aplique; ej: 'me encanta el aire sastre para ti; pero su paleta es muy cálida y a ti te lucen los fríos, así que te lo llevo a tus tonos'). Si choca con un veto, dilo claro.",

@@ -1,4 +1,4 @@
-import { ENGINE_MODEL } from "@/lib/models";
+import { EXTRACT_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   try {
     const client = new Anthropic({ maxRetries: 2 });
     const res = await client.messages.create({
-      model: ENGINE_MODEL,
+      model: EXTRACT_MODEL,
       max_tokens: 1200,
       system: `Lees el SCREENSHOT del itinerario de viaje de alguien (confirmación de vuelo, app de aerolínea, correo, captura de reserva) y sacas su RUTA para pre-llenar su maleta. Hoy es ${hoy}.
 

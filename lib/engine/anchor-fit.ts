@@ -1,3 +1,4 @@
+import { GUARD_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { describeItem, type EngineItem } from "./prompt";
 
@@ -8,7 +9,7 @@ import { describeItem, type EngineItem } from "./prompt";
 
 export type AnchorFit = { fits: boolean; note: string };
 
-const FIT_MODEL = "claude-haiku-4-5-20251001";
+const FIT_MODEL = GUARD_MODEL;
 
 const FIT_SYSTEM = `Eres la stylist de stailist. La clienta quiere usar HOY una prenda específica para una ocasión. Tu único trabajo: decir si esa prenda es razonable para esa ocasión.
 

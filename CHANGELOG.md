@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.89.0] - 2026-08-04
+
+### Changed
+
+- **Cada tarea de IA corre ahora en el modelo que le toca, no todas en el más caro.** Hasta hoy casi todo usaba el modelo grande, y eso no era una decisión: era lo que había quedado. Armarte un outfit, proponerte tu cápsula y leer tus prendas en una foto siguen en el mejor modelo — ahí un error se ve, o peor, se propaga a todos los looks que vengan después. Emparejar prendas contra reglas ya escritas, ponerle nombre a tu estilo o sacar las ciudades de un screenshot de vuelo pasan a modelos más rápidos, porque ahí el resultado lo confirmas tú en la misma pantalla. Un test impide que el nombre de un modelo vuelva a escribirse suelto en un archivo.
+
 ## [0.2.88.0] - 2026-08-04
 
 ### Changed

@@ -1,4 +1,4 @@
-import { ENGINE_MODEL } from "@/lib/models";
+import { VISION_MODEL } from "@/lib/models";
 import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   try {
     const client = new Anthropic();
     const res = await client.messages.create({
-      model: ENGINE_MODEL,
+      model: VISION_MODEL,
       // 2800: hasta 8 prendas con descripcion larga + los campos nuevos
       // (material/patron/color_secundario); menos arriesgaba truncar el JSON.
       max_tokens: 2800,

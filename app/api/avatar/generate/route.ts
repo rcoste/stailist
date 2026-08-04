@@ -1,3 +1,4 @@
+import { GUARD_MODEL } from "@/lib/models";
 import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
@@ -8,7 +9,7 @@ export const maxDuration = 60;
 const GEMINI_MODEL = "gemini-3-pro-image";
 // Juez de parecido: visión barata. Si puntúa bajo, se regenera UNA vez y se
 // devuelve el mejor de los dos — el usuario nunca ve el intento malo.
-const JUDGE_MODEL = "claude-haiku-4-5";
+const JUDGE_MODEL = GUARD_MODEL;
 const JUDGE_MIN = 6; // umbral 1-10 para reintentar
 
 // El tipo de cuerpo (de la silueta del perfil o del wizard) alimenta el prompt.
