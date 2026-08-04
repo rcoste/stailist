@@ -286,3 +286,55 @@ describe("REGLA_PRENDAS_REALES — no inventar prendas que no existen", () => {
     expect(REGLA_PRENDAS_REALES.toLowerCase()).toContain("jeans son de mezclilla");
   });
 });
+
+describe("contextBlock — preferencia de corte (v29)", () => {
+  it("holgada: manda elegir el corte amplio pero conserva la regla de una sola zona con volumen", () => {
+    const line = contextBlock({ ...baseCtx, fitPref: "holgada" }).find((l) =>
+      l.includes("Cómo le gusta que le quede")
+    );
+    expect(line).toContain("HOLGADA");
+    // Sin este freno, "prefiere holgado" se lee como permiso para inflar todo
+    // el look y sale un disfraz, que es justo lo que las recetas vetan.
+    expect(line).toContain("solo UNA zona lleva volumen");
+  });
+
+  it("recta: pide corte recto y aclara que recto no es entallado", () => {
+    const line = contextBlock({ ...baseCtx, fitPref: "recta" }).find((l) =>
+      l.includes("Cómo le gusta que le quede")
+    );
+    expect(line).toContain("RECTA");
+    expect(line).toContain("no es entallado");
+  });
+
+  it("mixta: NO se traduce a un corte — deja mandar a la receta", () => {
+    // Cuando los dos pares se contradicen, la persona no tiene preferencia
+    // fuerte. Convertir esa moneda al aire en "recta" u "holgada" haría que el
+    // motor actuara con confianza sobre un dato falso.
+    const line = contextBlock({ ...baseCtx, fitPref: "mixta" }).find((l) =>
+      l.includes("Cómo le gusta que le quede")
+    );
+    expect(line).toContain("NO tiene preferencia fuerte");
+    expect(line).not.toContain("elige la de corte amplio");
+    expect(line).not.toContain("elige el corte recto");
+  });
+
+  it("sin dato no agrega línea (perfiles anteriores a los pares)", () => {
+    for (const fitPref of [null, undefined] as const) {
+      const lines = contextBlock({ ...baseCtx, fitPref });
+      expect(lines.some((l) => l.includes("Cómo le gusta que le quede"))).toBe(false);
+    }
+  });
+
+  it("el gusto de corte y el cuerpo son líneas distintas y conviven", () => {
+    // La trampa a evitar: que alguien confunda body_build (qué cuerpo tienes)
+    // con fit_pref (cómo te gusta que quede). Son preguntas distintas y el
+    // prompt debe llevar las dos sin que una pise a la otra.
+    const lines = contextBlock({
+      ...baseCtx,
+      fitPref: "holgada",
+      silueta: "complexión media, carga arriba",
+    });
+    expect(lines.some((l) => l.includes("Su cuerpo (orientación de styling"))).toBe(true);
+    expect(lines.some((l) => l.includes("Cómo le gusta que le quede"))).toBe(true);
+  });
+});

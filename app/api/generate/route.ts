@@ -154,6 +154,10 @@ export async function POST(request: NextRequest) {
             profile.body_build as Build | null,
             profile.body_volume as Volume | null
           ),
+          // Su GUSTO de corte (pares de fotos del onboarding), distinto del
+          // cuerpo de arriba. Sin esto, las recetas que delegan en "la
+          // preferencia de la persona" quedan apuntando a nada.
+          fitPref: (profile.fit_pref as EngineContext["fitPref"]) ?? null,
           ageStyling: ageStylingLine(profile.age_range as AgeRange | null),
           tasteSignal,
           styleReference: styleReferenceForEngine(profile.style_reference),

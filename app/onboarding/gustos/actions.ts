@@ -186,6 +186,35 @@ export async function saveCalibration(
   return { ok: !error };
 }
 
+/**
+ * La preferencia de corte que sale de los pares de fotos.
+ *
+ * Se guarda aparte de `lifestyle` porque no es una respuesta de estilo de vida:
+ * es una dimensión que el motor consulta en cada generación, y 8 de las 10
+ * recetas la piden por nombre ("manda la preferencia de la persona"). Columna
+ * propia = una lectura, sin desenterrarla de un JSON.
+ *
+ * No redirige ni bloquea: si falla, el onboarding sigue y el motor se queda
+ * como estaba (eligiendo por la silueta de la receta). Es una señal que
+ * enriquece, no un requisito.
+ */
+export async function saveCorte(
+  corte: "recta" | "holgada" | "mixta"
+): Promise<{ ok: boolean }> {
+  if (!["recta", "holgada", "mixta"].includes(corte)) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ fit_pref: corte, updated_at: new Date().toISOString() })
+    .eq("id", user.id);
+  return { ok: !error };
+}
+
 // Re-edición de gustos DESPUÉS del onboarding (desde el Perfil): recalcula tags y
 // arquetipo y los guarda SIN tocar el onboarding_step (ya avanzó). Misma firma que
 // saveTastes para que el SwipeDeck la trate igual.

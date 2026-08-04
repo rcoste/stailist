@@ -12,9 +12,12 @@ import {
   saveTastes,
   getCalibrationQuestions,
   saveCalibration,
+  saveCorte,
   type SwipeResult,
 } from "./actions";
 import type { StyleArchetype } from "@/lib/engine/archetype";
+import type { Gender } from "@/lib/auth";
+import { ParesDeCorte, type Corte } from "./pares-corte";
 
 // Deck de swipes estilo Tinder (rebrand v3): pila con profundidad, carta activa
 // A COLOR (la ropa es el contenido), las de atrás en B&N. Sellos ME GUSTA / NO VA
@@ -30,6 +33,7 @@ export function SwipeDeck({
   doneHref = "/onboarding/colorimetria",
   doneLabel = "Sigamos con tus colores",
   calibracion = false,
+  gender = "hombre",
 }: {
   looks: Look[];
   // Acción al terminar (default = onboarding). El Perfil pasa updateTastes.
@@ -38,9 +42,12 @@ export function SwipeDeck({
   ) => Promise<{ archetype: StyleArchetype } | { error: string }>;
   doneHref?: string;
   doneLabel?: string;
-  /** Onboarding: tras el reveal, 2-3 preguntas de calibración generadas a la
-   *  medida de los swipes (si la IA ya las tiene listas; si no, sigue directo). */
+  /** Onboarding: tras el reveal, los pares de corte y luego 2-3 preguntas de
+   *  calibración generadas a la medida de los swipes (si la IA ya las tiene
+   *  listas; si no, sigue directo). */
   calibracion?: boolean;
+  /** Para elegir las fotos de los pares de corte. */
+  gender?: Gender;
 }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -54,6 +61,10 @@ export function SwipeDeck({
   // Antes de las preguntas, un intro OPCIONAL: la persona decide si las hace o
   // sigue directo (son 2-3 y pueden sentirse tediosas — no imponerlas).
   const [calibIntro, setCalibIntro] = useState<AssessmentQuestion[] | null>(null);
+  // Pares de corte: dos fotos donde solo cambia cómo queda la ropa. Cierran el
+  // hueco de que 8 de las 10 recetas dicen "manda la preferencia de la persona"
+  // sobre un dato que nunca se preguntaba.
+  const [pares, setPares] = useState(false);
   const [calibIdx, setCalibIdx] = useState(0);
   const [multiSel, setMultiSel] = useState<string[]>([]); // selección de una pregunta multi
   const calibAnswers = useRef<Record<string, string>>({});
@@ -61,11 +72,23 @@ export function SwipeDeck({
   const start = useRef({ x: 0, y: 0 });
   const vel = useRef({ x: 0, t: 0, vx: 0 });
 
-  // Del reveal a la calibración: si las preguntas ya están calientes (se generan
-  // en background desde que terminó el swipe), se muestran; si no, directo a
-  // colores — jamás se espera a la IA.
+  // Del reveal a los pares de corte. Van ANTES de la calibración por dos
+  // razones: se contestan viendo (dos taps, sin leer) y son deterministas —
+  // siempre existen, mientras que las preguntas dependen de que la IA haya
+  // terminado. De paso le regalan a la IA los segundos que tarda la persona en
+  // elegir, así que llega lista más veces.
   function continuar() {
+    setPares(true);
+  }
+
+  // Cerrados los pares: se guarda la preferencia y sigue el flujo de siempre.
+  // El guardado NO bloquea la navegación — si falla, el motor se queda como
+  // estaba (eligiendo por la silueta de la receta) y no tiene caso frenar el
+  // onboarding por una señal que enriquece pero no es requisito.
+  function terminarPares(corte: Corte) {
+    setPares(false);
     startTransition(async () => {
+      await saveCorte(corte).catch(() => null);
       const qs = await getCalibrationQuestions().catch(() => null);
       // Si hay preguntas, primero el intro opcional (la persona decide); si no
       // hay, directo a colores — jamás se espera a la IA.
@@ -166,6 +189,18 @@ export function SwipeDeck({
           >
             Reintentar
           </button>
+        </div>
+      );
+    }
+
+    // Los pares de corte, entre el reveal y la calibración.
+    if (pares) {
+      return (
+        <div
+          className="flex flex-1 flex-col pb-4"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <ParesDeCorte gender={gender} onDone={terminarPares} />
         </div>
       );
     }

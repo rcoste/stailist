@@ -1,0 +1,32 @@
+-- Cómo le gusta a la persona que le quede la ropa.
+--
+-- EL HUECO QUE CIERRA
+-- 8 de las 10 recetas destiladas dicen, con esas palabras, "manda la
+-- preferencia de la persona" entre recto y holgado. Esa preferencia nunca se
+-- preguntaba: lo único que el perfil guarda de este terreno es body_build /
+-- body_volume, que describen el CUERPO, no el gusto. Saber que alguien es de
+-- complexión ancha no dice si prefiere pierna recta o amplia.
+--
+-- Resultado: el motor recibía una receta que le delegaba la decisión a un dato
+-- inexistente, y elegía al azar entre el chino recto y el pantalón amplio del
+-- mismo clóset.
+--
+-- POR QUÉ NO SE PREGUNTA CON PALABRAS
+-- Porque nadie sabe contestarla. "¿Prefieres corte standard, relajado o
+-- entallado?" asume un vocabulario que la usuaria no tiene — y es justo la
+-- persona que no sabe vestirse la que usa la app. El fit no se declara, se
+-- reconoce al verlo: dos fotos idénticas donde lo ÚNICO que cambia es el corte.
+--
+-- LOS TRES VALORES
+--   recta / holgada  — las dos respuestas coincidieron.
+--   mixta            — contestó, pero eligió distinto en cada par. Eso NO es
+--                      ruido: significa que no tiene preferencia fuerte, y es
+--                      información que el motor usa para dejar mandar a la
+--                      silueta dominante de la receta. Inventarle un valor a
+--                      una moneda al aire sería peor que admitir que no se
+--                      sabe: el motor actuaría con confianza sobre un dato
+--                      falso.
+--   null             — todavía no se le pregunta (perfiles anteriores a esto).
+alter table public.profiles
+  add column if not exists fit_pref text
+  check (fit_pref is null or fit_pref in ('recta', 'holgada', 'mixta'));

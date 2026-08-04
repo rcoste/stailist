@@ -155,6 +155,12 @@ export type EngineContext = {
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
   silueta: string | null; // orientación de cuerpo (complexión + dónde carga); señal suave
+  /**
+   * Cómo le gusta que le quede la ropa, medida con los pares de fotos del
+   * onboarding. Distinto de `silueta`, que describe su CUERPO.
+   * 'mixta' = contestó y no tiene preferencia fuerte. null = no se le preguntó.
+   */
+  fitPref?: "recta" | "holgada" | "mixta" | null;
   ageStyling?: string | null; // orientación por edad (life-stage); señal suave, solo extremos
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
   seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
@@ -341,6 +347,22 @@ export function contextBlock(ctx: EngineContext): string[] {
       );
       if (receta) lines.push(receta);
     }
+  }
+  // Va PEGADO a la receta: casi todas dicen "manda la preferencia de la persona"
+  // entre recto y holgado, y sin esta línea esa frase queda apuntando a un dato
+  // que el motor no tiene — así que elegía al azar entre el pantalón recto y el
+  // amplio del mismo clóset. 'mixta' no se traduce a un corte: decirle al modelo
+  // que no hay preferencia fuerte es más útil que inventarle una.
+  if (ctx.fitPref === "recta" || ctx.fitPref === "holgada") {
+    lines.push(
+      ctx.fitPref === "holgada"
+        ? `Cómo le gusta que le quede la ropa (lo eligió viendo fotos, no lo declaró): HOLGADA — prefiere caída y amplitud a que la prenda siga el cuerpo. Cuando la receta admita varias siluetas o su clóset tenga las dos opciones, elige la de corte amplio. No la conviertas en disfraz: sigue valiendo la regla de que solo UNA zona lleva volumen a la vez.`
+        : `Cómo le gusta que le quede la ropa (lo eligió viendo fotos, no lo declaró): RECTA — prefiere que la prenda siga la línea del cuerpo, sin amplitud extra. Cuando la receta admita varias siluetas o su clóset tenga las dos opciones, elige el corte recto. Recto no es entallado: nada apretado.`
+    );
+  } else if (ctx.fitPref === "mixta") {
+    lines.push(
+      `Cómo le gusta que le quede la ropa: NO tiene preferencia fuerte (eligió distinto entre dos pares de fotos). Deja que mande la silueta que la receta de su estilo señale como dominante; no fuerces ni lo amplio ni lo recto.`
+    );
   }
   if (ctx.styleWords?.trim()) {
     // slice defensivo: el tope de 280 vive en la app, no en la DB — un valor

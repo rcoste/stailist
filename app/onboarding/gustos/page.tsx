@@ -21,7 +21,11 @@ export default async function GustosPage() {
         </h1>
       </div>
 
-      <SwipeDeck looks={looks} calibracion />
+      <SwipeDeck
+        looks={looks}
+        calibracion
+        gender={profile.gender ?? "hombre"}
+      />
     </section>
   );
 }

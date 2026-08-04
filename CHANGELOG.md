@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.78.0] - 2026-08-03
+
+### Added
+
+- **Ahora la app sabe cómo te gusta que te quede la ropa, y no te lo pregunta con palabras.** Al terminar los swipes salen dos pares de fotos: la misma persona, la misma pared, la misma luz, la misma ropa del mismo color — lo único que cambia es el corte. Eliges una de cada par y listo, son unos diez segundos. Existía un hueco silencioso: ocho de las diez recetas destiladas dicen "manda la preferencia de la persona" entre recto y holgado, y esa preferencia no se guardaba en ningún lado, así que el motor elegía al azar entre el pantalón recto y el amplio del mismo clóset. Preguntarlo con palabras no servía —"¿corte standard o relajado?" da por hecho un vocabulario que justo no tiene quien no sabe vestirse—, pero ver dos fotos y señalar lo hace cualquiera. Si eliges distinto en cada par no pasa nada malo: significa que no tienes una preferencia fuerte, se guarda así, y el motor deja que mande la silueta del estilo en vez de inventarte una.
+
 ## [0.2.77.0] - 2026-08-03
 
 ### Changed
