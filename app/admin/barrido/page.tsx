@@ -9,10 +9,17 @@ import datos from "@/lib/engine/barrido/revision.json";
 // cuántos son el juez siendo más literal que la receta. Eso no lo decide otra
 // IA: lo decide alguien mirando la ropa.
 //
-// No se generan imágenes de los looks —serían ~130 renders— porque cada prenda
-// del catálogo YA tiene su foto. Ver las piezas juntas alcanza de sobra para
-// decir "el juez tiene razón" o "el juez se pasó", que es la única pregunta de
-// esta pantalla.
+// Cada look va en DOS vistas porque contestan preguntas distintas: las fotos de
+// catálogo dejan ver el color y la formalidad pieza por pieza, y el render con
+// el look puesto deja ver la proporción y si el conjunto se lee como outfit o
+// como suma de prendas — que es justo lo que ni las reglas ni el juez miden.
+//
+// El render usa el MISMO prompt que el try-on de la app (ver
+// scripts/barrido-tryon.ts): con otro criterio se estaría juzgando una imagen
+// que la gente nunca vería.
+//
+// Solo se rinden los marcados: los limpios no tienen nada que juzgar y son ~20
+// minutos de generación.
 //
 // Los marcados van primero: la atención de quien revisa es el recurso caro.
 export const dynamic = "force-dynamic";
@@ -25,6 +32,7 @@ const looks = datos.looks as {
   fallos: string[];
   diagnostico: string;
   vetos: string[];
+  tryon?: string;
 }[];
 
 export default function AdminBarrido() {
@@ -53,8 +61,24 @@ export default function AdminBarrido() {
             <span className="text-xs text-muted">{l.contexto}</span>
           </div>
 
-          {/* Las prendas, con su foto del catálogo. */}
-          <div className="flex flex-wrap gap-2">
+          {/* El look puesto (si se rindió) junto a las prendas sueltas: las dos
+              vistas contestan preguntas distintas. La foto de catálogo deja ver
+              el color y la formalidad de cada pieza; el render deja ver la
+              proporción y si el conjunto se lee como look o como suma de
+              prendas — que es justo lo que ni las reglas ni el juez miden. */}
+          <div className="flex flex-wrap items-start gap-3">
+            {l.tryon ? (
+              <div className="w-40 shrink-0 overflow-hidden rounded-lg border border-line bg-bg">
+                <Image
+                  src={l.tryon}
+                  alt={l.titulo}
+                  width={160}
+                  height={213}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : null}
+            <div className="flex flex-1 flex-wrap gap-2">
             {l.prendas.map((p, i) => (
               <figure key={`${p.nombre}-${i}`} className="flex w-24 flex-col gap-1">
                 <div className="aspect-square overflow-hidden rounded-lg border border-line bg-bg">
@@ -77,6 +101,7 @@ export default function AdminBarrido() {
                 </figcaption>
               </figure>
             ))}
+            </div>
           </div>
 
           {l.fallos.length > 0 ? (
