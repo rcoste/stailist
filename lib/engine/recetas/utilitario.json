@@ -1,0 +1,118 @@
+{
+  "familia": "utilitario",
+  "conteo": {
+    "total": "16",
+    "calor": "0",
+    "templado": "8",
+    "frio": "8",
+    "tierra": "13",
+    "neutra": "1",
+    "oscura": "2",
+    "color": "0",
+    "cenida": "2",
+    "recta": "5",
+    "holgada": "9"
+  },
+  "receta": {
+    "silueta": "La familia admite dos siluetas y manda la preferencia de la persona. La dominante es holgada arriba y abajo: suéter o chamarra corta de trabajo con pantalón amplio (cargo o denim ancho) rematado en bota o tenis. La alterna es recta: chamarra de trabajo estructurada con pantalón de tela o denim recto con dobladillo. La chamarra corta que termina a la cintura funciona de contrapeso al pantalón ancho; cuando el pantalón es recto la parte de arriba puede caer más suelta.",
+    "formulas": [
+      {
+        "look": "Chamarra de trabajo negra con cuello de pana + playera negra + jeans claros anchos + botas negras de piel",
+        "clima": "templado"
+      },
+      {
+        "look": "Chamarra de trabajo camel (Detroit) + playera blanca + pantalón de tela café recto con dobladillo + tenis altos de lona negros",
+        "clima": "templado"
+      },
+      {
+        "look": "Sobrecamisa (chore coat) verde olivo + playera blanca + pantalón café de pana recto + tenis blancos",
+        "clima": "templado"
+      },
+      {
+        "look": "Sobrecamisa verde olivo + playera blanca + pantalón blanco crudo con dobladillo + botas de trabajo café",
+        "clima": "templado"
+      },
+      {
+        "look": "Sobrecamisa verde botella + playera blanca + jeans negros anchos tipo cargo + tenis de corredor azul marino",
+        "clima": "templado"
+      },
+      {
+        "look": "Sobrecamisa color arena + playera blanca + pantalón de tela verde olivo + botas Chelsea café",
+        "clima": "templado"
+      },
+      {
+        "look": "Henley verde olivo de manga larga + pantalón cargo beige recto + cinturón de piel café + botas de trabajo café",
+        "clima": "templado"
+      },
+      {
+        "look": "Suéter de punto grueso crema cuello redondo + camiseta blanca asomando + pantalón cargo verde olivo recto + tenis de corredor beige",
+        "clima": "templado"
+      },
+      {
+        "look": "Parka técnica verde muy oscuro con capucha + suéter de punto gris + pantalón cargo verde olivo + gorro tejido verde + botas negras de piel",
+        "clima": "frio"
+      },
+      {
+        "look": "Chamarra de trabajo café encerada + playera blanca + jeans índigo crudo con dobladillo + cinturón de piel café + botas de trabajo café + gorro tejido negro",
+        "clima": "frio"
+      },
+      {
+        "look": "Suéter de punto grueso café + pantalón cargo verde olivo ancho con dobladillo + tenis de lona negros + gorra",
+        "clima": "frio"
+      },
+      {
+        "look": "Chamarra de piel café oscuro con cuello de borrego + suéter de punto café + pantalón café recto + botas negras de piel",
+        "clima": "frio"
+      },
+      {
+        "look": "Bomber acolchado negro con capucha + playera negra + pantalón cargo negro + tenis de corredor gris y negro",
+        "clima": "frio"
+      },
+      {
+        "look": "Suéter de punto tipo polo gris cuello abierto + camiseta blanca debajo + pantalón cargo verde olivo ancho + gorra verde",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "Dobladillo enrollado en el pantalón cuando remata en bota o tenis de lona: deja ver el tobillo o el forro y evita que la pierna ancha se amontone.",
+      "Camiseta blanca o clara asomando bajo el suéter de punto en el cuello, para cortar el bloque de un solo color.",
+      "Chamarra de trabajo corta que cierra a la cintura sobre pantalón ancho: es el contraste de proporción que sostiene la silueta.",
+      "Cinturón de piel café visible cuando la parte de arriba va fajada o corta y el pantalón es de tela o denim.",
+      "Gorro tejido (verde, negro o café) o gorra plana en los looks de frío y templado fresco.",
+      "Botas de trabajo de piel café con costura visible o botas negras de piel con cordones: el calzado ancla el look.",
+      "Detalles de bolsillos funcionales a la vista (cargo, parche de pecho en la chore coat) como parte del estilo, no ocultos.",
+      "La chamarra abierta con suéter o playera debajo cuando hace de tercera capa en frío; cerrada cuando es la única capa de abrigo."
+    ],
+    "evitar": [
+      "Pantalón ceñido o skinny: choca con el volumen que pide la familia.",
+      "Tenis blancos limpios de moda o de plataforma; aquí el tenis es de lona gastada o de corredor discreto.",
+      "Telas brillantes o formales (lana de traje, satén): la familia es lona, pana, punto grueso y denim crudo.",
+      "Colores saturados o de temporada; la paleta es tierra apagada.",
+      "Sacos de vestir o blazers estructurados como capa exterior.",
+      "Sobreaccesorizar con logos grandes o joyería llamativa: la nota es funcional y sobria."
+    ],
+    "capsula": [
+      "Chamarra de trabajo corta camel con cuello de pana (Detroit)",
+      "Chamarra de trabajo negra con cuello contrastante",
+      "Sobrecamisa (chore coat) verde olivo de lona",
+      "Suéter de punto grueso crema cuello redondo",
+      "Suéter de punto grueso café",
+      "Henley verde olivo de manga larga",
+      "Playera blanca de algodón grueso",
+      "Pantalón cargo verde olivo",
+      "Jeans anchos lavado claro",
+      "Pantalón de tela café recto",
+      "Pantalón blanco crudo",
+      "Botas de trabajo de piel café",
+      "Tenis altos de lona negros",
+      "Gorro tejido verde o café"
+    ],
+    "frio": [
+      "La capa exterior es chamarra de trabajo encerada, sobrecamisa de lona, parka técnica oscura, bomber acolchado o chamarra de piel con cuello de borrego; todas cortas o a la cadera, nunca abrigos largos de vestir.",
+      "Debajo va suéter de punto grueso o henley, con camiseta clara como primera capa; el punto grueso hace buena parte del abrigo.",
+      "El gorro tejido y, en la chamarra de piel, guantes de piz café completan el abrigo sin romper el registro utilitario.",
+      "Se abriga por capas de tela ruda superpuestas, no por volumen técnico llamativo; el remate es siempre bota de piel."
+    ],
+    "paleta": "Manda la gama tierra: verde olivo, café, camel, arena, crema y denim índigo o lavado, con playera blanca de apoyo. El negro entra en chamarras y calzado; se evitan colores saturados."
+  }
+}

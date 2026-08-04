@@ -1,0 +1,123 @@
+{
+  "familia": "thrift-vintage",
+  "conteo": {
+    "total": "13",
+    "calor": "2",
+    "templado": "5",
+    "frio": "6",
+    "tierra": "9",
+    "neutra": "2",
+    "oscura": "1",
+    "color": "1",
+    "cenida": "0",
+    "recta": "3",
+    "holgada": "10"
+  },
+  "receta": {
+    "silueta": "Predomina la silueta holgada (10 de 13): el volumen manda arriba y abajo, con pantalones o jeans anchos de tiro alto y prendas superiores amplias o cropped que se quedan a la cintura. También hay tres looks de silueta recta con pantalón de tela o jean más contenido. Regla base: si el pantalón va ancho, la prenda de arriba se acorta o se mete; si el volumen se concentra abajo, arriba se ajusta un poco.",
+    "formulas": [
+      {
+        "look": "polo tejido de patrón geométrico en tonos tierra + pantalón de tela crema recto + tenis blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de cuadros manga corta verde oscuro abierta sobre camiseta de tirantes blanca + pantalón de tela negro de tiro alto + cinturón trenzado + mocasín negro",
+        "clima": "calor"
+      },
+      {
+        "look": "suéter de cuello en V a rayas tierra sobre camiseta blanca + jean azul medio ancho + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter de punto gris de cuello redondo sobre camiseta blanca + jean azul oscuro ancho + cinturón de piel + zapato de piel marrón",
+        "clima": "templado"
+      },
+      {
+        "look": "cardigan de punto azul claro cropped sobre camisa blanca + jean azul medio ancho + pañuelo negro al cuello",
+        "clima": "templado"
+      },
+      {
+        "look": "sudadera crema lisa + jean azul oscuro ancho + gorra crema + mocasín camel",
+        "clima": "templado"
+      },
+      {
+        "look": "camiseta blanca de estampado gráfico + jean azul medio con dobladillo + cinturón negro + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de franela a cuadros abierta sobre camiseta blanca + jean azul claro ancho + zuecos de ante gris",
+        "clima": "templado"
+      },
+      {
+        "look": "cazadora de pana marrón abierta sobre suéter verde oliva + pantalón chino camel recto + botas de piel marrón",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra de piel marrón + suéter de punto gris + jean azul oscuro ancho + cinturón de piel + mocasín marrón",
+        "clima": "frio"
+      },
+      {
+        "look": "cazadora de piel marrón + camisa de cuadros abierta sobre camiseta blanca + jean azul claro ancho + zuecos de ante",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra shearling camel con borrego crema + suéter de cuello alto crema + pantalón de tela crema de tiro alto + cinturón trenzado marrón",
+        "clima": "frio"
+      },
+      {
+        "look": "cardigan grueso de punto marrón sobre camiseta crema + pantalón de pana camel + botas de ante marrón + calcetín oscuro visible",
+        "clima": "frio"
+      },
+      {
+        "look": "suéter de cuadros tierra de cuello redondo + pantalón de cuadros glen beige + botas de piel marrón",
+        "clima": "frio"
+      },
+      {
+        "look": "cortavientos verde vintage abierto sobre camiseta gráfica blanca + jean azul medio con dobladillo + cinturón negro + tenis blanco",
+        "clima": "templado"
+      }
+    ],
+    "detalles": [
+      "La camisa de cuadros abierta va solo sobre camiseta blanca o de tirantes, nunca sola; es capa media, no prenda única.",
+      "Pantalón de tiro alto: la prenda de arriba se mete o se corta a la cintura para marcar la línea.",
+      "Dobladillo del jean o del chino enrollado una o dos vueltas dejando ver el tobillo o el calcetín oscuro.",
+      "Cinturón visible siempre que el pantalón sea de tiro alto: trenzado de piel marrón o de lona negro.",
+      "Capas superpuestas visibles: cuello de camiseta asomando bajo el suéter, camisa abierta bajo chamarra.",
+      "Calzado gastado con intención: tenis blanco vivido, botas de ante rozadas, mocasín de piel envejecida.",
+      "Accesorios de época sueltos: gafas de sol de pasta, gorra de tela, pañuelo al cuello, cadenas finas.",
+      "Mezcla de patrones tierra (cuadros con rayas, glen con liso) mientras compartan la misma familia de color."
+    ],
+    "evitar": [
+      "Prendas nuevas y brillantes de acabado impecable: rompe el aire de segunda mano encontrada.",
+      "Todo holgado arriba y abajo sin acortar ni meter nada: se ve como pijama, no como proporción.",
+      "Negro total o colores fríos saturados que saquen la ropa de la paleta tierra.",
+      "Calzado deportivo tecnológico o suela chunky moderna: pide tenis clásico, mocasín o bota de piel.",
+      "Camisa de cuadros abrochada y sola sin camiseta debajo: pierde el juego de capas.",
+      "Logos grandes o prendas de tendencia obvia: aquí manda lo atemporal con pasado."
+    ],
+    "capsula": [
+      "Jean azul medio y azul oscuro de corte ancho",
+      "Pantalón de tela crema de tiro alto",
+      "Pantalón de pana camel",
+      "Chino camel recto",
+      "Camiseta blanca lisa y de estampado gráfico",
+      "Suéter de punto de cuello redondo en gris o tierra",
+      "Cardigan grueso de punto marrón",
+      "Camisa de cuadros de franela",
+      "Cazadora de pana marrón",
+      "Chamarra de piel marrón",
+      "Suéter de cuello alto crema",
+      "Cinturón de piel trenzado marrón",
+      "Botas de ante o piel marrón",
+      "Tenis blanco clásico"
+    ],
+    "frio": [
+      "El abrigo entra como pana, piel, shearling o punto grueso, siempre en tonos tierra; nada de tela técnica.",
+      "Se abriga por capas apiladas: camiseta, suéter y encima chamarra o cardigan, todas visibles.",
+      "La capa exterior suele quedar corta o a la cadera para no tapar el tiro alto del pantalón.",
+      "Cuello alto crema o suéter de cuadros hacen de capa principal bajo una chamarra abierta.",
+      "Calcetín oscuro visible entre el dobladillo enrollado y la bota mantiene el aire vintage."
+    ],
+    "paleta": "Manda la gama tierra: marrón, camel, crema, beige, verde oliva y ocre, casi siempre en las prendas superiores y de abrigo. El azul entra sobre todo por el jean, y los neutros crema y blanco en camisetas y pantalones; el negro y los patrones de color son excepción puntual."
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "familia": "resort-boho",
+  "conteo": {
+    "total": "43",
+    "calor": "28",
+    "templado": "15",
+    "frio": "0",
+    "tierra": "26",
+    "neutra": "13",
+    "oscura": "0",
+    "color": "4",
+    "cenida": "2",
+    "recta": "19",
+    "holgada": "22"
+  },
+  "receta": {
+    "silueta": "La familia admite dos siluetas y manda la preferencia de la persona. Recta: camisa de lino metida a medias o por fuera con pantalón de corte derecho o chino, tobillo a la vista. Holgada: pantalón fluido de pierna ancha con talle alto y prenda superior de volumen medio; el volumen abajo se equilibra con torso más ajustado (tank o camiseta ceñida) o camisa metida al frente. El punto fijo en ambas: el tobillo se ve, sea por bastilla doblada o largo al tobillo.",
+    "formulas": [
+      {
+        "look": "camisa de lino azul cielo abierta sobre el pecho + short chino beige + mocasín de gamuza sin calcetín",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino azul claro remangada + short blanco + alpargata o zapato slip-on beige",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino verde olivo manga corta con bolsillo + camiseta blanca cuello redondo + short chino beige con bastilla doblada + tenis blanco de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "polo tejido de punto azul marino manga corta + pantalón de lino blanco de pierna ancha + sandalia tipo Birkenstock beige",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino azul rey abierta + short estampado azul y blanco + slipper de terciopelo azul marino",
+        "clima": "calor"
+      },
+      {
+        "look": "tank o camiseta blanca de canalé + camisa de crochet crema manga corta abierta + pantalón de lino beige de pierna ancha + sandalia de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino crema manga larga remangada + short a rayas azul y blanco + tote de lona",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino gris oscuro remangada + pantalón de lino crudo con bastilla doblada + mocasín de gamuza café",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino beige manga larga abierta + pantalón blanco recto + mocasín de gamuza beige",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino verde olivo manga larga por fuera + pantalón de lino crema de pierna ancha + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino blanca remangada + pantalón chino verde olivo con bastilla doblada + sandalia de piel café",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino azul claro metida al frente + pantalón de lino café con pliegues y cinturón de piel + mocasín beige",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino beige metida con cinturón de piel + pantalón de pierna ancha verde olivo + zapato derby café",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino crema por dentro + camiseta blanca + overshirt/chaqueta de lino crema encima + pantalón de lino gris topo con pliegues + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "camiseta blanca + overshirt de lana/algodón café con bolsillos de parche + pantalón de lino blanco recto + tenis blanco",
+        "clima": "templado"
+      }
+    ],
+    "detalles": [
+      "La camisa de lino abierta 2-3 botones aplica en calor y cuando la manga va remangada al antebrazo; en templado puede ir metida al frente con cinturón de piel visible.",
+      "El tobillo siempre a la vista: bastilla doblada una o dos veces en short y pantalón, o largo justo al tobillo.",
+      "Cuando el pantalón es de pierna ancha, el torso se cierra: camiseta o tank ceñido, o camisa metida al frente para no perder la cintura.",
+      "Cinturón de piel café ancho cuando la camisa va metida, sobre todo con pantalón de pliegues.",
+      "Collar delgado o medallón discreto sobre el pecho abierto; pulseras de cuentas de madera en la versión boho.",
+      "Calzado sin calcetín: mocasín de gamuza, sandalia de piel, alpargata o tenis blanco liso.",
+      "La camiseta blanca de base bajo camisa abierta o de crochet es recurrente y suma capa sin abrigar.",
+      "En la versión boho, una sola pieza con textura (crochet, chaqueta de denim con tejido étnico) manda; el resto queda liso y en neutros."
+    ],
+    "evitar": [
+      "Tenis deportivos con logo grande o suela pesada: rompen el aire relajado de resort.",
+      "Pantalón entubado o skinny; la familia pide recto o de pierna ancha.",
+      "Telas rígidas y brillantes tipo poliéster; aquí manda lino y algodón con caída y textura.",
+      "Camisa abotonada hasta el cuello con todo cerrado: mata el pecho abierto y remangado que define el estilo.",
+      "Negro total o colores saturados fuera de la paleta tierra/neutra (salvo el azul cielo y el azul rey puntuales).",
+      "Mezclar dos piezas de mucho volumen a la vez sin cerrar el torso (camisa oversize + pantalón ancho suelto)."
+    ],
+    "capsula": [
+      "Camisa de lino azul cielo",
+      "Camisa de lino beige o crema",
+      "Camisa de lino verde olivo",
+      "Camiseta blanca de cuello redondo",
+      "Tank blanco de canalé",
+      "Pantalón de lino blanco/crudo de pierna ancha",
+      "Pantalón chino o de lino verde olivo",
+      "Short chino beige",
+      "Short blanco",
+      "Mocasín de gamuza café o beige",
+      "Sandalia de piel café",
+      "Tenis blanco liso de piel",
+      "Cinturón de piel café",
+      "Tote de lona"
+    ],
+    "frio": [
+      "No hay fotos de frío en esta familia: no lleva abrigo pesado ni tejido grueso.",
+      "La capa más abrigadora que aparece es una overshirt o chaqueta ligera de lino/algodón sobre camisa y camiseta, para templado, no para frío real.",
+      "Si baja la temperatura, se resuelve por capas ligeras (camiseta + camisa + overshirt) manteniendo lino y neutros, no cambiando de material."
+    ],
+    "paleta": "Manda la gama tierra y neutra: crema, beige, blanco, verde olivo, café y gris topo. El color entra solo como acento puntual en azul cielo o azul rey, y algún estampado azul y blanco en short; nada de tonos oscuros o saturados."
+  }
+}

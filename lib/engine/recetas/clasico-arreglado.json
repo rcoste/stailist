@@ -1,0 +1,122 @@
+{
+  "familia": "clasico-arreglado",
+  "conteo": {
+    "total": "226",
+    "calor": "41",
+    "templado": "96",
+    "frio": "89",
+    "tierra": "97",
+    "neutra": "96",
+    "oscura": "27",
+    "color": "6",
+    "cenida": "76",
+    "recta": "85",
+    "holgada": "65"
+  },
+  "receta": {
+    "silueta": "La familia admite varias siluetas y manda la preferencia de la persona. Lo que se repite: la parte de arriba va entallada o de caída limpia, metida o a la altura de cadera, y el pantalón define el look — ceñido/tapered para versión pulida, o recto/holgado de talle alto con pinza para versión relajada. Regla constante: el volumen se concentra en una sola zona, nunca arriba y abajo a la vez.",
+    "formulas": [
+      {
+        "look": "polo tejido de punto blanco de manga corta + pantalón de pinza beige + mocasín de ante café",
+        "clima": "calor"
+      },
+      {
+        "look": "playera de cuello redondo verde salvia + chino beige tapered + tenis blanco de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "polo de punto negro de manga corta + pantalón de vestir gris oscuro de pinza + mocasín café",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino azul cielo con cuello abierto + pantalón de lino blanco de pinza + mocasín de ante café",
+        "clima": "calor"
+      },
+      {
+        "look": "playera negra de cuello redondo + pantalón de pinza crema talle alto + mocasín negro de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino verde olivo remangada + pantalón negro de pinza + mocasín negro",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino blanca sobre playera blanca + chino gris topo de pinza + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa negra abierta sobre playera blanca + pantalón beige recto + tenis o mocasín negro",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter fino de cuello redondo azul sobre camisa blanca (cuello afuera) + pantalón azul marino + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "chaqueta-camisa de lana beige + playera blanca + pantalón azul marino de pinza + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter cuello tortuga beige de punto waffle + pantalón gris de pinza + botín Chelsea de ante café",
+        "clima": "frio"
+      },
+      {
+        "look": "medio cierre de punto grueso gris + pantalón azul marino ancho de pinza + mocasín de ante",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra de piel café + suéter fino beige de cuello redondo + pantalón gris de franela + tenis blanco",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo largo camel + suéter fino crema + pantalón negro recto + botín negro de piel",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo de cuadros gris + suéter gris de cuello redondo sobre camisa blanca + pantalón azul marino de pinza + monkstrap de ante café",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "El polo o la camisa van con uno o dos botones abiertos, nunca todo cerrado hasta el cuello.",
+      "Cuando la parte de arriba es camisa de lino/algodón, remángala hasta el antebrazo; da el punto justo de arreglado relajado.",
+      "Cinturón de piel fino que dialogue con el zapato (café con café, negro con negro); aparece casi siempre que el pantalón lleva pinza.",
+      "Reloj de metal o piel en la muñeca y lentes de sol de pasta: los dos accesorios que más se repiten.",
+      "El pantalón de pinza termina justo arriba del tobillo o con dobladillo mínimo — deja ver el zapato completo.",
+      "La camisa abierta sobre playera blanca aplica en clima templado como capa ligera, no en calor pleno.",
+      "Cuando la silueta es holgada arriba (medio cierre, suéter grueso), mételo o deja que caiga limpio; el pantalón sube de talle para no perder la cintura."
+    ],
+    "evitar": [
+      "Traje completo o saco estructurado de sastre: sale de la familia.",
+      "Ropa deportiva visible: sudaderas con logo, tenis de running, jerseys técnicos.",
+      "Volumen holgado arriba Y abajo al mismo tiempo — se pierde la línea.",
+      "Estampados llamativos o logos grandes; la familia vive de prendas lisas.",
+      "Zapato y cinturón que no se hablan (café con negro sin intención).",
+      "Pantalón demasiado largo que se amontona sobre el zapato."
+    ],
+    "capsula": [
+      "Polo de punto fino (blanco, negro, beige)",
+      "Playera de cuello redondo de buen algodón (blanco, negro, verde salvia)",
+      "Camisa de lino de cuello abierto (azul cielo, verde olivo, blanca)",
+      "Pantalón de pinza de tela beige/crema",
+      "Pantalón de vestir gris oscuro o azul marino de pinza",
+      "Chino tapered beige o gris topo",
+      "Suéter fino de cuello redondo (beige, azul, gris)",
+      "Suéter de cuello tortuga o medio cierre de punto",
+      "Mocasín de ante café",
+      "Mocasín de piel negro",
+      "Tenis blanco minimalista de piel",
+      "Cinturón de piel fino café y negro",
+      "Abrigo largo camel o de lana",
+      "Chamarra de piel o chaqueta-camisa de lana"
+    ],
+    "frio": [
+      "Abriga por capas finas apiladas: suéter fino o de cuello tortuga sobre camisa, y encima abrigo largo o chamarra — nunca una sola capa gruesa deportiva.",
+      "La capa exterior manda en color tierra u oscuro (camel, café, gris, azul marino) y deja que el punto de abajo asome en el cuello.",
+      "Punto de lana con textura (waffle, canalé, medio cierre) sustituye a la playera cuando baja la temperatura, manteniendo la línea entallada.",
+      "El calzado se vuelve botín Chelsea o monkstrap de ante/piel; el mocasín aguanta en frío suave.",
+      "Cuello tortuga bajo abrigo o chamarra de piel es la fórmula de frío más repetida — reemplaza a la camisa cuando hace mucho frío."
+    ],
+    "paleta": "Manda el color tierra (beige, crema, camel, café, verde olivo) empatado con la neutra (blanco, gris, negro, azul marino). El oscuro pleno (looks todo negro) es minoría y el color vivo es casi inexistente: mantén todo en tonos apagados y terrosos."
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "familia": "sastre",
+  "conteo": {
+    "total": "27",
+    "calor": "3",
+    "templado": "19",
+    "frio": "5",
+    "tierra": "15",
+    "neutra": "12",
+    "oscura": "0",
+    "color": "0",
+    "cenida": "10",
+    "recta": "9",
+    "holgada": "8"
+  },
+  "receta": {
+    "silueta": "La familia admite varias siluetas y manda la preferencia de la persona. Base recta: hombro estructurado del saco y pantalón de tela con caída limpia. Cuando el pantalón es de pinza y pierna ancha, el torso se mantiene ajustado (saco entallado o playera fajada) para no perder la cintura. Cuando el pantalón es más recto y de tiro medio, el saco puede ir un poco más suelto.",
+    "formulas": [
+      {
+        "look": "polo tejido de punto beige de manga corta con cuello abierto + pantalón de vestir crema + mocasín de ante café",
+        "clima": "calor"
+      },
+      {
+        "look": "playera negra de cuello redondo fajada + pantalón de pinza crema tiro alto + cinturón de piel + mocasín negro de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino blanca desabrochada arriba + saco de lino verde olivo + pantalón de lino beige + mocasín café",
+        "clima": "calor"
+      },
+      {
+        "look": "saco de lino azul claro + playera de punto gris + pantalón de vestir blanco + slip-on de ante azul",
+        "clima": "calor"
+      },
+      {
+        "look": "polo tejido de punto crema de manga corta + pantalón de pinza café oscuro pierna ancha + tenis blanco de piel",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa oxford azul cielo con mangas dobladas + pantalón de vestir beige de pinza + cinturón café + mocasín penny café",
+        "clima": "templado"
+      },
+      {
+        "look": "saco príncipe de Gales gris-beige + camisa satinada beige desabrochada + pantalón de pinza negro pierna ancha + botín negro",
+        "clima": "templado"
+      },
+      {
+        "look": "saco de cuadros houndstooth beige + camisa negra abierta + pantalón de pinza crema + mocasín con borla café",
+        "clima": "templado"
+      },
+      {
+        "look": "blazer azul marino + camisa blanca desabrochada arriba + pantalón de franela gris + zapato oxford café",
+        "clima": "templado"
+      },
+      {
+        "look": "saco espiga café + camisa de lino rosa + pañuelo al cuello estampado + pantalón espiga a juego",
+        "clima": "templado"
+      },
+      {
+        "look": "traje azul marino cruzado + camisa blanca sin corbata + mocasín con borla de ante café",
+        "clima": "templado"
+      },
+      {
+        "look": "blazer beige de lino + camisa blanca + chino azul marino con dobladillo + mocasín de ante café",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter café de ochos con medio cierre + camisa blanca y corbata negra + pantalón de franela espiga + guantes de piel negros",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo largo café espiga + suéter camello de cuello en V + camisa blanca + pantalón de vestir crema + mocasín café",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo de cuadros houndstooth crudo + traje café oscuro de tres piezas + camisa clara con corbata + mocasín con borla de ante",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo azul noche + traje gris cruzado + camisa blanca con corbata roja + mocasín negro de piel",
+        "clima": "frio"
+      },
+      {
+        "look": "suéter beige de cuello alto + blazer beige + pantalón de franela gris de pinza + mocasín café",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "El cuello abierto sin corbata es el default diurno: uno o dos botones sueltos en camisa, o el cuello en V del polo tejido. La corbata solo aparece en frío formal (con traje bajo abrigo o suéter).",
+      "Pantalón de pinza de tiro medio-alto: la pinza y el largo justo al zapato son lo que hace que el look se lea deliberado y no prestado.",
+      "Cinturón de piel visible cuando la camisa o playera va fajada; el color del cinturón coordina con el zapato (café con café, negro con negro).",
+      "Reloj de vestir con correa de piel casi siempre presente; es el único accesorio de muñeca.",
+      "Mocasín (penny o de borla) de ante o piel es el zapato ancla; tenis blanco de piel solo con pantalón de pinza ancho y sin saco.",
+      "Pañuelo de bolsillo asomando en el saco en los looks más armados; discreto, no dominante.",
+      "En calor, el saco es de lino con textura visible y botones de contraste; se lleva abierto.",
+      "Dobladillo del pantalón a la altura del tobillo o con vuelta, dejando ver el zapato completo."
+    ],
+    "evitar": [
+      "Zapato deportivo de colores o suela chunky: rompe la línea de sastrería.",
+      "Playera con estampados grandes o logos visibles bajo el saco.",
+      "Pantalón entubado muy pegado con saco estructurado: pelea con la silueta recta de la familia.",
+      "Mezclar negro con café en cinturón y zapato dentro del mismo look.",
+      "Corbata en climas de calor o con looks de polo/playera: descoloca el registro.",
+      "Saco sin planchar o pantalón sin caída; la construcción visible es el punto de la familia."
+    ],
+    "capsula": [
+      "Pantalón de vestir/franela crema de pinza",
+      "Pantalón de franela gris de pinza",
+      "Pantalón de pinza café oscuro pierna ancha",
+      "Chino azul marino",
+      "Blazer azul marino",
+      "Saco de lino claro (beige/olivo)",
+      "Saco de cuadros (houndstooth o príncipe de Gales)",
+      "Camisa blanca de vestir",
+      "Camisa oxford azul cielo",
+      "Polo tejido de punto beige o crema",
+      "Suéter de cuello alto o en V camello/beige",
+      "Mocasín de ante café",
+      "Mocasín o zapato negro de piel",
+      "Abrigo largo de lana (café espiga o azul noche)"
+    ],
+    "frio": [
+      "La capa de abrigo es lana pesada: abrigo largo hasta la rodilla (espiga, houndstooth o azul liso) sobre traje o saco, o suéter grueso de punto de ochos.",
+      "El calor viene por capas apiladas de sastrería, no por prendas técnicas: suéter sobre camisa, saco encima, abrigo al final.",
+      "Accesorios de piel en el frío más duro: guantes negros de piel; bolsa de piel café como complemento.",
+      "La paleta se oscurece un poco en frío (café oscuro, gris carbón, azul noche) pero se mantiene en tierra y neutros.",
+      "El zapato sigue siendo mocasín o botín de piel; no cambia a bota pesada."
+    ],
+    "paleta": "Manda la gama tierra: cafés, camello, beige, crema, olivo y espigas, apoyada en neutros como gris, blanco y azul marino. Toques de color puntuales y suaves (rosa pálido, azul cielo, corbata roja); nada saturado ni negro dominante salvo como acento."
+  }
+}

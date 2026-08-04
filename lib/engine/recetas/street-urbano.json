@@ -1,0 +1,130 @@
+{
+  "familia": "street-urbano",
+  "conteo": {
+    "total": "57",
+    "calor": "5",
+    "templado": "26",
+    "frio": "26",
+    "tierra": "22",
+    "neutra": "18",
+    "oscura": "12",
+    "color": "5",
+    "cenida": "4",
+    "recta": "1",
+    "holgada": "52"
+  },
+  "receta": {
+    "silueta": "Silueta holgada dominante (52 de 57): la parte de abajo casi siempre es ancha (baggy, wide, cargo amplio) y arriba va oversized o de corte cuadrado. El truco de proporción que se repite es volumen arriba con volumen abajo, pero equilibrado por largo: la playera/hoodie corta o metida un poco para que el pantalón mande. Hay minoría ceñida abajo (jeans slim negros con hoodie oversized) pero es la excepción; manda lo ancho.",
+    "formulas": [
+      {
+        "look": "playera oversized blanca + pantalón baggy café + tenis Jordan rojo/blanco + gorra béisbol",
+        "clima": "calor"
+      },
+      {
+        "look": "playera gráfica amarilla de corte cuadrado + jeans anchos beige + zapato negro chunky + gorra + bolso cruzado",
+        "clima": "calor"
+      },
+      {
+        "look": "playera oversized café + cargo amplio verde olivo + sneaker panda + gorra cachucha + riñonera cruzada",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa manga corta café abierta + playera blanca debajo + cargo ancho crema + tenis blanco/café",
+        "clima": "calor"
+      },
+      {
+        "look": "sudadera crewneck verde + playera blanca asomando + short de tela oscuro + tenis chunky gris + calcetín blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "playera oversized azul marino + pantalón baggy negro + tenis Samba negro",
+        "clima": "templado"
+      },
+      {
+        "look": "hoodie negro oversized + playera blanca asomando + cargo joggers caqui + tenis blanco chunky + beanie",
+        "clima": "templado"
+      },
+      {
+        "look": "sudadera crewneck gris oversized + playera blanca larga debajo + cargo verde olivo ancho + New Balance café",
+        "clima": "templado"
+      },
+      {
+        "look": "hoodie verde oversized + playera blanca asomando + cargo beige ancho + Air Force 1 blanco + lentes de sol",
+        "clima": "templado"
+      },
+      {
+        "look": "sweater verde salvia + playera blanca asomando + pantalón de tela negro ancho + tenis chunky blanco + bolso cruzado",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de pana crema oversized + playera blanca + jeans negro slim + tenis blanco + bolso cruzado",
+        "clima": "templado"
+      },
+      {
+        "look": "puffer negro The North Face + playera blanca + jeans anchos azul claro + tenis panda + gorra",
+        "clima": "frio"
+      },
+      {
+        "look": "puffer negro + hoodie gris debajo + cargo negro ancho + tenis gris corredor + beanie",
+        "clima": "frio"
+      },
+      {
+        "look": "puffer verde + playera blanca + cargo negro ancho + Samba blanco",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo largo camel oversized + hoodie mostaza + joggers gris + tenis crema plataforma",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo negro largo + hoodie negro gráfico + joggers negro + tenis blanco + gorra béisbol + bolso",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra bomber verde olivo + sweater gris + playera crema asomando + cargo beige ancho + tenis crema + beanie",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "El layering de playera asomando bajo hoodie/sweater/puffer es la firma: siempre una capa base blanca o crema visible por debajo del dobladillo",
+      "La gorra (béisbol o beanie) aparece en la mayoría; es el remate del look, no opcional para dar el registro",
+      "Bolso cruzado (crossbody o riñonera) cruzado sobre el pecho, casi siempre negro, aporta la línea diagonal que corta el volumen",
+      "Cadena plateada al cuello asomando, reloj y anillos: joyería discreta pero presente",
+      "Playera base más larga que la capa de arriba, asomando 3-5 cm, es lo que separa intencional de descuidado",
+      "Los tenis son voluminosos: Jordan, Dunk/panda, Air Force, chunky corredor o Samba; nunca zapato fino",
+      "Calcetín blanco visible con short o pantalón corto de tela es correcto en calor",
+      "La camisa manga corta abierta sobre playera blanca aplica solo en calor, como capa ligera, no como camisa cerrada"
+    ],
+    "evitar": [
+      "Pantalón entubado arriba y playera ceñida a la vez: mata el volumen que define la familia",
+      "Zapato de vestir o sneaker minimalista fino; el calzado tiene que tener cuerpo",
+      "Look monocapa sin nada asomando ni gorra ni bolso: se ve incompleto, aguado",
+      "Camisa fajada o cinturón visible marcando cintura",
+      "Colores saturados peleando entre sí; el color entra en una sola prenda, el resto tierra o neutro"
+    ],
+    "capsula": [
+      "Playera oversized blanca",
+      "Playera oversized negra o azul marino",
+      "Hoodie oversized (negro, gris o verde)",
+      "Sudadera crewneck oversized (gris o verde)",
+      "Pantalón baggy café/tierra",
+      "Cargo ancho verde olivo",
+      "Cargo o pantalón ancho beige/crema",
+      "Jeans anchos azul claro",
+      "Pantalón de tela negro ancho",
+      "Puffer negro",
+      "Tenis chunky blanco/crema",
+      "Tenis panda (Dunk o Jordan negro/blanco)",
+      "Gorra béisbol y beanie",
+      "Bolso cruzado negro"
+    ],
+    "frio": [
+      "La capa exterior es puffer (negro, verde o café) o abrigo largo camel/negro oversized; el puffer corto es el más frecuente",
+      "Debajo del puffer va hoodie o sweater con playera base asomando: dos o tres capas visibles apiladas",
+      "El volumen del abrigo no rompe la silueta porque el pantalón sigue igual de ancho abajo",
+      "El beanie sustituye a la gorra en frío; los tenis pueden pasar a corredor grueso o plataforma",
+      "Todo el frío se resuelve en paleta oscura o tierra: negro, verde olivo, camel, gris"
+    ],
+    "paleta": "Manda la gama tierra (café, olivo, beige, camel) y la neutra (blanco, gris, negro). El color entra en una sola prenda por look —verde, amarillo o verde salvia— siempre sobre base neutra; nunca dos colores fuertes juntos."
+  }
+}

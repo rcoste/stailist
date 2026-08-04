@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.75.0] - 2026-08-03
+
+### Added
+
+- **Las 10 recetas destiladas y su prueba de reconstrucción, en el admin** (`/admin/recetas`). Cada familia se destiló mirando sus fotos aprobadas —616 en total— y de ahí salieron sus fórmulas (etiquetadas por clima), su paleta, su silueta, cómo abriga y qué la arruina. Los tres looks de cada familia se generaron usando ÚNICAMENTE el texto de la receta, sin que el generador viera ninguna foto de referencia: si el look se ve como el estilo, la destilación capturó el estilo. La receta va junto a sus imágenes porque juzgar "¿esto es sastre?" sin ver qué dice la receta obliga a adivinar de dónde viene el error.
+
 ## [0.2.74.6] - 2026-08-03
 
 ### Fixed

@@ -1,0 +1,127 @@
+{
+  "familia": "deportivo",
+  "conteo": {
+    "total": "39",
+    "calor": "5",
+    "templado": "22",
+    "frio": "12",
+    "tierra": "6",
+    "neutra": "19",
+    "oscura": "14",
+    "color": "0",
+    "cenida": "11",
+    "recta": "7",
+    "holgada": "21"
+  },
+  "receta": {
+    "silueta": "La familia admite varias siluetas y manda la preferencia de la persona. Domina la holgada (pants amplios, cargo militar, sudadera con cuerpo) pero funciona igual la ceñida arriba-abajo (jogger entallado + sudadera de talla justa). La regla que sí se sostiene: cuando abajo va holgado, arriba se mantiene medido, y viceversa; rara vez todo suelto o todo pegado.",
+    "formulas": [
+      {
+        "look": "playera de algodón blanca + short deportivo azul marino + tenis de correr blancos con calcetín blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "playera de algodón negra + short deportivo negro con jareta + tenis de correr gris/blanco con calcetín blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "playera técnica azul marino + short gris jaspeado + tenis de entrenamiento crema con calcetín blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "playera negra + short gris de rendimiento + tenis de correr grises, mochila negra",
+        "clima": "calor"
+      },
+      {
+        "look": "sudadera de cuello redondo gris jaspeado sobre playera blanca + jogger negro entallado + tenis blancos, riñonera cruzada negra",
+        "clima": "templado"
+      },
+      {
+        "look": "playera negra + pants gris oscuro con jareta + tenis de correr blancos con calcetín blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "sudadera azul acero de cuello redondo + jogger azul marino + tenis blancos",
+        "clima": "templado"
+      },
+      {
+        "look": "conjunto de felpa azul marino (sudadera con capucha + jogger) sobre playera blanca + tenis blancos",
+        "clima": "templado"
+      },
+      {
+        "look": "medio cierre gris de tela técnica + jogger negro entallado + tenis de correr negro/blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "conjunto de felpa negro (sudadera + jogger) + tenis blancos",
+        "clima": "templado"
+      },
+      {
+        "look": "chamarra softshell azul marino + jogger azul marino a juego sobre playera gris + tenis de correr negro/blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "chaleco acolchado verde olivo sobre sudadera gris + jogger negro + tenis de correr negro/blanco, en aeropuerto",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra puffer negra abierta sobre sudadera con capucha gris + jogger negro + tenis blancos, gorro de punto",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra puffer negra sobre sudadera con capucha negra + pants negro + tenis de correr gris/blanco, gorra béisbol",
+        "clima": "frio"
+      },
+      {
+        "look": "impermeable de montaña negro sobre sudadera con cierre gris + cargo militar verde olivo + tenis de trail, gorro",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra puffer negra + sudadera con capucha gris + cargo azul marino + botas de trail negras, gorro y guantes",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "El calcetín blanco visible sobre el tobillo es parte del look con short y con jogger, no un descuido; refuerza la lectura deportiva.",
+      "La playera blanca asomando bajo la sudadera de cuello redondo da capas limpias; es un recurso que se repite y vale meterlo cuando la sudadera es de un solo tono.",
+      "Con puffer o impermeable, la capucha de la sudadera de abajo queda por fuera del cuello de la chamarra: sale a propósito.",
+      "El conjunto monocromo (sudadera + jogger del mismo tono: negro, azul marino, gris topo) es una fórmula fuerte de esta familia; trátalo como una sola pieza.",
+      "La riñonera cruzada negra o la mochila negra son los accesorios que aparecen; una bolsa de cuero o de vestir rompe la familia.",
+      "El tenis manda: de correr, de trail o de entrenamiento con suela gruesa. El tenis blanco liso tipo court solo funciona con conjunto de felpa entallado.",
+      "Gorra de béisbol y gorro de punto son los cubrecabezas de la familia; alternan según clima, nunca sombrero.",
+      "Cuando el pantalón es cargo militar amplio, la parte de arriba se cierra (chamarra técnica) para no soltar toda la silueta."
+    ],
+    "evitar": [
+      "Zapato de vestir, mocasín o bota de piel formal: matan la lectura deportiva al instante.",
+      "Jeans de mezclilla azul clásica: la familia usa pants, jogger, cargo o short técnico, no denim.",
+      "Camisa de botones o polo de vestir bajo la chamarra técnica; arriba va playera o sudadera.",
+      "Accesorios de cuero formal (cinturón visible, portafolio, bolsa estructurada).",
+      "Mezclar demasiados colores fuertes: la familia es de neutros y tierra, un estampado llamativo la saca.",
+      "Todo holgado de arriba a abajo sin contraste de volumen; se lee desaliñado, no deportivo."
+    ],
+    "capsula": [
+      "Playera de algodón lisa en blanco, negro y azul marino",
+      "Playera técnica de rendimiento en azul marino o blanco",
+      "Sudadera de cuello redondo gris jaspeado",
+      "Sudadera con capucha en gris, negro y azul marino",
+      "Prenda de medio cierre de tela técnica en gris",
+      "Jogger entallado negro y azul marino",
+      "Pants amplio en gris oscuro y negro",
+      "Short deportivo en negro, azul marino y gris",
+      "Cargo militar amplio en verde olivo",
+      "Chamarra puffer negra",
+      "Chaleco acolchado verde olivo",
+      "Chamarra softshell o impermeable de montaña en negro o verde olivo",
+      "Tenis de correr en blanco, gris y negro/blanco",
+      "Riñonera cruzada negra y gorro de punto"
+    ],
+    "frio": [
+      "La capa exterior es acolchada o técnica: puffer negra, chaleco acolchado olivo o impermeable de montaña; nunca abrigo de paño.",
+      "Se abriga por capas: playera o sudadera con capucha debajo, y la capucha queda visible por fuera del cuello de la chamarra.",
+      "El puffer se usa abierto sobre la sudadera cuando el frío es moderado, y cerrado con gorro y guantes cuando es intenso.",
+      "Abajo se mantiene el jogger, pants o cargo; en frío extremo el tenis de correr cede su lugar a la bota de trail.",
+      "Gorro de punto y gorra son la constante en frío; el gorro para nieve, la gorra para ciudad seca."
+    ],
+    "paleta": "Manda lo neutro y lo oscuro: negro, gris jaspeado, azul marino y blanco en playeras, sudaderas y pants. El tierra entra por el verde olivo, casi siempre en cargo y en capas exteriores (chaleco, impermeable), y el topo en conjuntos de felpa. No hay colores vivos."
+  }
+}

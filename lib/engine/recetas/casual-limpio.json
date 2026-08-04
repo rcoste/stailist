@@ -1,0 +1,127 @@
+{
+  "familia": "casual-limpio",
+  "conteo": {
+    "total": "122",
+    "calor": "15",
+    "templado": "49",
+    "frio": "58",
+    "tierra": "51",
+    "neutra": "49",
+    "oscura": "20",
+    "color": "2",
+    "cenida": "25",
+    "recta": "30",
+    "holgada": "67"
+  },
+  "receta": {
+    "silueta": "La familia admite varias siluetas: manda la preferencia de la persona. La regla constante es que solo UNA zona lleva volumen a la vez — o playera oversize con pantalón recto/entubado, o playera a talla con pantalón ancho de caída. La proporción holgada domina el reparto (playera boxy o tejido amplio arriba con pantalón de pierna ancha), pero la versión recta y la ceñida (playera a talla con pantalón de pinza que cae limpio) son igual de válidas. Nunca volumen arriba y abajo al mismo tiempo.",
+    "formulas": [
+      {
+        "look": "playera cuello redondo beige manga corta + short de lino blanco + tenis blancos",
+        "clima": "calor"
+      },
+      {
+        "look": "playera de punto verde seco manga corta + pantalón chino camel a tobillo + tenis blancos",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de lino crema abierta sobre playera blanca + pantalón chino verde olivo con dobladillo + sandalias de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "playera negra a talla + pantalón de pinza crema recto + mocasines negros de piel + cinturón de piel",
+        "clima": "calor"
+      },
+      {
+        "look": "playera blanca lisa manga corta + pantalón jogger gris con dobladillo + tenis blancos",
+        "clima": "calor"
+      },
+      {
+        "look": "playera negra oversize + pantalón chino beige recto + tenis blancos + reloj",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa overshirt café abierta sobre playera blanca + pantalón ancho crema + tenis blancos minimalistas",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa de lino beige mangas dobladas + pantalón chino verde olivo ancho + tenis crema",
+        "clima": "templado"
+      },
+      {
+        "look": "camisa beige oversize + jeans claros de pierna ancha + tenis blancos con suela gum",
+        "clima": "templado"
+      },
+      {
+        "look": "sudadera negra sobre camisa blanca de cuello + pantalón de pinza café + tenis blancos",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter tejido azul marino sobre playera blanca + pantalón café ancho + tenis crema",
+        "clima": "frio"
+      },
+      {
+        "look": "suéter medio cierre crema + pantalón de pinza negro recto + tenis blancos",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo largo camel + suéter cuello alto crema + pantalón crema ancho + tenis blancos",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo largo negro + suéter cuello alto negro + pantalón crema de pinza + zapato negro de piel + cinturón",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra bomber de lana gris + suéter cuello alto gris + pantalón negro recto + tenis blancos",
+        "clima": "frio"
+      },
+      {
+        "look": "tejido cuello alto negro + pantalón de pana crema ancho con dobladillo + tenis blancos",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "La camisa o overshirt abierta sobre playera lisa aplica en calor y templado, nunca cerrada del todo; funciona como capa ligera, no como abrigo",
+      "El dobladillo del pantalón a la vista (una o dos vueltas) aparece cuando el pantalón es ancho o de pierna larga, para que rompa limpio sobre el tenis",
+      "Cuando la playera es a talla y va fajada suave o al ras, entra el cinturón de piel visible; con playera oversize por fuera, sin cinturón",
+      "El tenis manda ser blanco o crema minimalista sin logos; el mocasín o zapato negro de piel entra solo cuando el resto va más pulido (pantalón de pinza, tejido liso)",
+      "La camisa de lino o algodón lleva las mangas dobladas hasta el antebrazo en calor y templado",
+      "El reloj es el único accesorio de muñeca constante; nada más compite",
+      "La bolsa tote de piel o lona en tono tierra o marino aparece como remate en looks templados y de frío",
+      "El pantalón de pinza con caída limpia sube el registro; el jogger o la pana con dobladillo lo baja a fin de semana"
+    ],
+    "evitar": [
+      "Volumen arriba Y abajo a la vez: playera oversize con pantalón muy ancho pierde la línea",
+      "Logos grandes, estampados o gráficos que rompan la superficie lisa",
+      "Tenis deportivos aparatosos o de colores; el calzado va limpio y sobrio",
+      "Mezclar más de tres colores: la familia vive de dos o tres tonos por look",
+      "Colgar demasiados accesorios (pulseras apiladas, cadenas gruesas) sobre una base que pide silencio",
+      "Camisa abierta sobre torso desnudo sin playera debajo en el registro limpio; siempre lleva la playera lisa"
+    ],
+    "capsula": [
+      "Playera blanca lisa cuello redondo",
+      "Playera negra lisa (a talla y oversize)",
+      "Playera beige o de punto en tono tierra",
+      "Camisa de lino crema o beige",
+      "Overshirt de algodón café o verde olivo",
+      "Suéter tejido liso en marino, café o crema",
+      "Suéter cuello alto negro o crema",
+      "Suéter medio cierre crema",
+      "Pantalón chino beige/camel recto",
+      "Pantalón de pinza crema y negro",
+      "Jeans claros de pierna ancha",
+      "Abrigo largo de lana camel o negro",
+      "Tenis blancos minimalistas de piel",
+      "Mocasín o zapato negro de piel"
+    ],
+    "frio": [
+      "Abriga por capas lisas superpuestas: playera blanca de base asomando bajo suéter, y suéter bajo abrigo largo — todo en superficie lisa sin volumen extra",
+      "El abrigo largo (camel o negro) y el suéter cuello alto son las piezas madre del frío; el abrigo cae recto y largo sobre pantalón ancho",
+      "El tejido grueso (suéter de canalé, medio cierre, cuello alto) sustituye a la capa exterior cuando no hace tanto frío, manteniendo la paleta contenida",
+      "La bufanda lisa en crema o marino se suma como única textura extra; nada de patrones",
+      "Incluso en frío el tenis blanco sigue siendo la base; el zapato de piel entra solo con el registro más formal (abrigo + cuello alto + pinza)"
+    ],
+    "paleta": "Tonos tierra y neutros mandan: crema, beige, camel, café, verde olivo, con blanco y negro como anclas. El color saturado prácticamente no existe; todo se mueve dentro de neutros cálidos y una que otra pieza oscura."
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "familia": "preppy",
+  "conteo": {
+    "total": "28",
+    "calor": "3",
+    "templado": "22",
+    "frio": "3",
+    "tierra": "5",
+    "neutra": "13",
+    "oscura": "1",
+    "color": "9",
+    "cenida": "1",
+    "recta": "17",
+    "holgada": "10"
+  },
+  "receta": {
+    "silueta": "Recta domina la familia: torso ajustado a semi-holgado con pantalón de pierna recta que rompe limpio sobre el zapato. Admite una variante holgada (jeans anchos, chino amplio) sobre todo con rugby; el corte ceñido casi no aparece. Manda la preferencia de la persona entre recto y holgado, pero la parte de arriba siempre queda estructurada, nunca oversize informe.",
+    "formulas": [
+      {
+        "look": "polo tejido azul cielo + short chino caqui + tenis blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "polo piqué verde + short blanco atlético + calcetín blanco alto + tenis blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa de cuadros vichy manga larga arremangada abierta sobre camiseta + pantalón de lino blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa oxford azul manga larga arremangada + chino caqui + mocasín náutico café + gorra de béisbol",
+        "clima": "templado"
+      },
+      {
+        "look": "polo de punto verde manga corta + pantalón carpintero blanco + mocasín de ante café + cinturón de piel café + gorra verde",
+        "clima": "templado"
+      },
+      {
+        "look": "rugby de rayas anchas vino y azul marino con cuello blanco + pantalón blanco recto + tenis blanco + gorra celeste",
+        "clima": "templado"
+      },
+      {
+        "look": "rugby de rayas azul marino y celeste con cuello blanco + chino caqui recto + lentes de sol",
+        "clima": "templado"
+      },
+      {
+        "look": "rugby color block verde/vino/blanco sobre camisa oxford celeste + jeans azul oscuro con dobladillo + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "rugby de rayas amarillo y azul marino sobre camisa oxford celeste + jeans claros rectos + tenis blanco + calcetín blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter de ochos azul marino sobre camisa oxford celeste + chino crema + cinturón café + mocasín penny café",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter cuello en V azul marino con ribete sobre camisa blanca abierta + chino verde oliva arremangado + mocasín de ante café",
+        "clima": "templado"
+      },
+      {
+        "look": "rugby de rayas azul marino y verde sobre camiseta blanca + jeans anchos claros + tenis blanco + gorro tejido beige",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter de ochos crema sobre camisa de mezclilla + jeans azul medio rectos + mocasín negro",
+        "clima": "frio"
+      },
+      {
+        "look": "abrigo largo camel + chaleco de ochos gris con ribete sobre camisa oxford celeste + pantalón de vestir azul marino + gorra",
+        "clima": "frio"
+      },
+      {
+        "look": "chamarra rompevientos azul marino con cuello alto sobre polo blanco + pantalón de pana celeste + gorra náutica",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "La camisa oxford asoma bajo el rugby o el suéter: cuello por fuera y a veces el faldón visible; es lo que separa preppy bien puesto de rugby suelto.",
+      "Arremangar la camisa oxford dos vueltas en clima templado; en frío va cubierta por la capa de punto.",
+      "Cinturón de piel café siempre que el pantalón lleva presillas visibles (chino, oxford fajada); con jeans anchos o rugby suelto puede omitirse.",
+      "Calcetín blanco alto visible es correcto solo con short atlético o tenis; con mocasín va invisible o sin calcetín.",
+      "El suéter en V o de ochos siempre lleva camisa de cuello debajo, nunca a piel.",
+      "Gorra de béisbol lisa o con logo pequeño (náutica, universitaria) para diario; lentes de sol tipo carey rematan el look.",
+      "Rayas anchas horizontales son la firma del rugby; una sola prenda con patrón por outfit, el resto liso."
+    ],
+    "evitar": [
+      "Rugby o suéter oversize sin nada de cuello asomando debajo: se cae al streetwear.",
+      "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico.",
+      "Estampados peleando entre sí: rugby a rayas con camisa a cuadros fuerte encima.",
+      "Logos grandes o gráficos llamativos; el branding preppy es discreto y bordado.",
+      "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia.",
+      "Camisa oxford fajada con cinturón brillante o hebilla grande estilo formal."
+    ],
+    "capsula": [
+      "Camisa oxford celeste manga larga",
+      "Camisa oxford blanca",
+      "Polo de punto o piqué en verde y azul",
+      "Rugby de rayas anchas (marino/vino, marino/amarillo)",
+      "Suéter de ochos azul marino y crema",
+      "Suéter cuello en V azul marino con ribete",
+      "Chino caqui recto",
+      "Pantalón crema o blanco recto",
+      "Jeans azul medio rectos",
+      "Short chino caqui y short blanco",
+      "Mocasín penny café y náutico café",
+      "Tenis blanco liso",
+      "Gorra de béisbol náutica/universitaria",
+      "Cinturón de piel café"
+    ],
+    "frio": [
+      "Capa de punto grueso sobre camisa: suéter de ochos o chaleco de ochos encima de la oxford, sin perder el cuello asomando.",
+      "Abrigo largo camel de lana como pieza exterior máxima, sobre el punto; mantiene la línea recta y larga.",
+      "Chamarra rompevientos azul marino con cuello alto para frío ligero o náutico, cerrada sobre polo.",
+      "El frío sube el volumen del torso con lana, pero el pantalón sigue recto (vestir marino, pana, jeans); nada de acolchado deportivo.",
+      "Calzado de frío: mocasín de piel café o negro, o tenis blanco; se puede añadir calcetín blanco visible con dobladillo del pantalón corto."
+    ],
+    "paleta": "Base neutra y marina: azul marino, celeste, blanco, crema y caqui en la mayoría de las prendas. El color entra por acentos deportivos (verde botella, vino, amarillo mostaza) sobre todo en rugbies a rayas; los tonos tierra (camel, oliva, café) viven en abrigos, chinos y calzado. El camel es de abrigo y el oliva de pantalón, no de suéter."
+  }
+}

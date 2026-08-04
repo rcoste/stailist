@@ -1,0 +1,122 @@
+{
+  "familia": "edgy",
+  "conteo": {
+    "total": "45",
+    "calor": "2",
+    "templado": "18",
+    "frio": "25",
+    "tierra": "7",
+    "neutra": "4",
+    "oscura": "34",
+    "color": "0",
+    "cenida": "17",
+    "recta": "6",
+    "holgada": "22"
+  },
+  "receta": {
+    "silueta": "La familia admite dos siluetas y manda la preferencia de la persona. Opción ceñida: playera o suéter pegado + pantalón entubado + bota, con la chaqueta cropped que corta a la cadera. Opción holgada: playera de corte regular + pantalón ancho de pierna recta que rompe sobre el zapato, con chaqueta oversize. Lo que no se ve es la mezcla desequilibrada tipo arriba enorme con abajo entubado extremo salvo el caso deliberado playera fajada + pantalón ancho.",
+    "formulas": [
+      {
+        "look": "playera negra de cuello redondo entallada + pantalón de vestir negro de pierna ancha + mocasín negro, cinturón de hebilla discreta",
+        "clima": "calor"
+      },
+      {
+        "look": "camisa café de lino sobre playera negra abierta + pantalón de tela gris oscuro ancho + tenis blanco",
+        "clima": "calor"
+      },
+      {
+        "look": "playera negra estampada con mangas dobladas + jeans azul índigo de corte recto + tenis o bota",
+        "clima": "templado"
+      },
+      {
+        "look": "playera blanca de cuello redondo + jeans negros anchos + chaqueta de piel negra tipo camisa (sobrecamisa) + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "playera negra + chino beige ancho + chaqueta de piel negra oversize + bota negra",
+        "clima": "templado"
+      },
+      {
+        "look": "playera negra + pantalón negro de vestir + chamarra de piel negra estilo aviador con cuello camisero + tenis blanco",
+        "clima": "templado"
+      },
+      {
+        "look": "playera blanca + jeans negros anchos + bomber de piel negra + mocasín café",
+        "clima": "templado"
+      },
+      {
+        "look": "chamarra de mezclilla negra + playera negra + pantalón cargo negro entubado + bota militar negra, cadena plateada",
+        "clima": "templado"
+      },
+      {
+        "look": "suéter negro de cuello alto ceñido + pantalón negro entubado + chamarra biker de piel negra + bota Chelsea negra",
+        "clima": "frio"
+      },
+      {
+        "look": "suéter negro tejido + jeans negros entubados + chamarra de piel negra tipo racer + bota café de agujeta",
+        "clima": "frio"
+      },
+      {
+        "look": "playera negra + jeans negros entubados + chamarra aviador de piel negra con forro de borrego + bota Chelsea",
+        "clima": "frio"
+      },
+      {
+        "look": "suéter gris oscuro + jeans negros entubados + abrigo largo de borrego gris + bota café desgastada",
+        "clima": "frio"
+      },
+      {
+        "look": "suéter negro de cuello alto + pantalón negro entubado + abrigo largo negro de lana doble botonadura + zapato derby negro",
+        "clima": "frio"
+      },
+      {
+        "look": "sudadera negra con capucha + pantalón cargo gris ancho + chamarra puffer negra + bota negra de suela gruesa",
+        "clima": "frio"
+      },
+      {
+        "look": "camisa floral oscura + jeans negros entubados + abrigo negro largo de lana + botín negro, cinturón de piel",
+        "clima": "frio"
+      }
+    ],
+    "detalles": [
+      "El monocromo negro de pies a cabeza es la jugada central: cuando todo es negro, la textura (piel, lana, mezclilla) hace el contraste, no el color.",
+      "La chaqueta de piel abierta sobre playera lisa aplica cuando quieres registro relajado; ciérrala parcial solo en frío real.",
+      "Cadena plateada corta o collar delgado sobre playera de cuello redondo cuando el look es muy liso y necesita un punto de metal.",
+      "Cinturón de piel con hebilla discreta visible sobre pantalón de talle medio-alto: ancla la silueta cuando la playera va fajada o semi-fajada.",
+      "Doblar las mangas de la playera o camisa hasta medio antebrazo cuando quieres el aire desaliñado noventero.",
+      "Lentes de sol de pasta oscura y reloj de acero rematan el look de día sin romper la paleta.",
+      "Un solo toque café —bota de gamuza, mocasín, chamarra de ante— rompe el negro total sin salirse de la familia.",
+      "La camisa estampada floral oscura solo aparece bajo abrigo negro y con todo lo demás negro: es acento, no protagonista."
+    ],
+    "evitar": [
+      "Colores vivos o estampados llamativos: la familia es oscura y tierra, cualquier color saturado la rompe.",
+      "Tenis deportivos ruidosos con logos grandes; el calzado es bota, mocasín, botín o tenis blanco liso.",
+      "Prendas que no tienen ni una textura interesante: total negro en telas planas y baratas se ve apagado, no edgy.",
+      "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo.",
+      "Accesorios dorados brillantes o cinturones de hebilla grande decorativa; el metal va plateado y discreto."
+    ],
+    "capsula": [
+      "Playera negra de cuello redondo de buen algodón",
+      "Playera blanca de cuello redondo",
+      "Suéter negro de cuello alto ceñido",
+      "Chamarra de piel negra tipo racer o biker",
+      "Chamarra de piel negra con cuello camisero (estilo camisa)",
+      "Jeans negros entubados",
+      "Jeans negros o índigo de corte ancho",
+      "Pantalón negro de vestir de pierna recta o ancha",
+      "Pantalón cargo negro",
+      "Abrigo largo negro de lana",
+      "Bota Chelsea negra",
+      "Bota de agujeta café de gamuza",
+      "Tenis blanco liso",
+      "Cinturón de piel negro de hebilla discreta"
+    ],
+    "frio": [
+      "La capa exterior es el protagonista y casi siempre negra: chamarra de piel, aviador con borrego, abrigo largo de lana, puffer o abrigo de borrego.",
+      "Debajo del abrigo se mantiene la silueta ceñida —suéter de cuello alto o playera pegada + pantalón entubado— para que el volumen viva solo en la capa de arriba.",
+      "El puffer negro se combina con sudadera con capucha y pantalón cargo ancho para el registro más urbano y relajado.",
+      "El cuello de borrego o el forro de peluche aporta la textura de abrigo sin salir de la paleta oscura.",
+      "El calzado sube de peso: bota Chelsea, bota de agujeta o botín de suela gruesa cierran el look de frío."
+    ],
+    "paleta": "Negro dominante de pies a cabeza, con grises oscuros y toques de tierra (café, camel, beige) en chamarras de ante, botas o un chino ocasional. Blanco solo como playera base. Cero color saturado."
+  }
+}
