@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.77.0] - 2026-08-03
+
+### Changed
+
+- **El deck de estilos de hombre, rehecho (25 cartas).** El de mujer se rehizo hace un mes y el de hombre se quedó atrás: las 25 cartas estaban contra la misma pared gris, con la misma pose, y sus outfits se escribieron antes de que existiera la destilación. Ahora cada carta tiene su locación —muelle con veleros para náutico, campus con hiedra para preppy, calle mojada con neón para glam de noche, tianguis de ropa para vintage— y su ejecución la manda la receta destilada de su familia. Ocho cartas además estrenan outfit porque el que tenían no leía el estilo: glam de noche parecía uniforme de mesero, Y2K no tenía nada de los 2000 y era gemela de streetwear, hipster leía a papá, y athleisure traía mallas bajo el short. Los outfits nuevos salen de fotos de calle —primero de las 616 ya curadas, y solo lo que ahí no existía se buscó aparte—; a la carta llega la ropa, nunca la foto. Los cuatro modelos quedaron repartidos con registros mezclados a propósito: si uno cargara los estilos arreglados y otro los de calle, el swipe mediría con quién te identificas en vez de qué ropa te gusta, y ese dato es el que alimenta al motor.
+
 ## [0.2.76.0] - 2026-08-03
 
 ### Changed
