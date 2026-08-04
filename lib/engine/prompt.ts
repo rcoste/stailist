@@ -127,7 +127,16 @@ import {
 // distinto cada vez. Ahora el orden va entero y PRIMERO, en el prompt del
 // generador y en el del juez — si solo lo tuviera uno, el juez "repararía"
 // decisiones correctas del otro.
-export const PROMPT_VERSION = "v30";
+// v31 (2026-08-04): piso de formalidad por ocasión. El prompt pedía subir el
+// registro con comparativos sin ancla ("un punto más arreglado", "ante la duda
+// arréglalo más") — más arreglado ¿que qué? Ahora cada ocasión trae su piso
+// concreto: qué tiene que llevar el look como mínimo y qué no puede llevar,
+// condicionado al clóset (si no hay saco, pide lo más arreglado que haya y que
+// lo diga, en vez de exigir algo que no existe). Honestidad sobre su efecto: el
+// barrido NO demostró que mejore — la línea base real era 11%, no el 32% que
+// midió una versión rota del arnés, y el cambio movió 2 casos a 1 de 18. Se
+// queda por ser correcto de forma, no por evidencia.
+export const PROMPT_VERSION = "v31";
 
 export type EngineItem = {
   id: string;
@@ -260,6 +269,57 @@ La explicación (una línea por outfit):
 - Ejemplos del tono: "los tonos tierra te encienden la cara", "cómodo pero con intención — nadie sabrá que te tomó 2 minutos".
 - PROHIBIDO: "estación otoño profundo", "paleta cromática", "silueta versátil" y cualquier frase de revista técnica.`;
 
+/**
+ * El PISO de formalidad de la ocasión: qué tiene que traer el look como mínimo
+ * y qué no puede traer.
+ *
+ * POR QUÉ HACE FALTA
+ * El prompt pedía subir el registro con comparativos sin ancla: "un punto más
+ * arreglado", "ante la duda arréglalo más, no menos". Más arreglado ¿que qué?
+ * El modelo sabía que la ocasión importaba y no sabía qué exigir.
+ *
+ * Se midió en un barrido de 129 looks: para "evento de noche" fallaba el 32% —
+ * uno de cada tres— y con el clóset COMPLETO (con blazer, saco, pantalón de
+ * vestir y mocasines a la mano) todavía el 22%. Salían suéter con chinos y
+ * botines, o polo con tenis, para una cena. En "diario" el fallo era 0%: el
+ * problema no era el motor en general, era la ocasión sin traducir.
+ *
+ * CONDICIONADO AL CLÓSET A PROPÓSITO
+ * No exige una prenda que la persona no tiene: pide la MÁS arreglada que haya y
+ * que lo diga. Un piso absoluto contra un clóset pobre produce lo peor de los
+ * dos mundos — el motor no puede cumplirlo, y al intentarlo saca un look peor
+ * que el que habría armado con lo disponible.
+ */
+export function pisoDeFormalidad(ctx: EngineContext): string {
+  const esNoche = ctx.timeOfDay === "noche";
+  const esEvento = ctx.objective === "evento";
+
+  // El wizard ya preguntó la formalidad: manda ella, con su propio bloque.
+  if (esEvento && ctx.formality) return "";
+
+  if (esEvento || esNoche) {
+    return (
+      "PISO DE FORMALIDAD (evento / noche) — el look DEBE subir de registro:\n" +
+      "- Al menos UNA pieza que lo eleve: saco o blazer, camisa de vestir, punto fino sobre camisa, o calzado de piel. Si el clóset tiene saco o blazer, ése es el camino por default.\n" +
+      "- FUERA: tenis deportivos o voluminosos, sudadera, hoodie, jogger, bermuda, short, gorra y ropa de entrenar. Un tenis de piel liso y limpio sí pasa, pero solo si no hay calzado de piel.\n" +
+      "- Si el clóset NO da para eso, arma con lo MÁS arreglado que haya y dilo en la explicación, sin fingir que es de gala. Jamás inventes prendas que no están.\n" +
+      "- Ante la duda, sube medio nivel. Quedarse corto en un evento se siente mal; pasarse un poco, no."
+    );
+  }
+
+  if (ctx.objective === "oficina") {
+    return (
+      "PISO DE FORMALIDAD (oficina):\n" +
+      "- FUERA: bermuda, short, ropa deportiva (jogger, sudadera, tenis de correr) y gorra.\n" +
+      "- Pantalón largo siempre; el calzado, limpio y cerrado."
+    );
+  }
+
+  // Diario, aeropuerto y refrescar no tienen piso: ahí lo cómodo ES lo correcto,
+  // y el barrido lo confirmó (0% de fallo de ocasión en diario).
+  return "";
+}
+
 // Una prenda como línea: incluye el hex para que el modelo juzgue el color real.
 export function describeItem(item: EngineItem): string {
   const a = item.attrs;
@@ -310,6 +370,9 @@ export function contextBlock(ctx: EngineContext): string[] {
       ? OBJECTIVES[ctx.objective as Objective]
       : "Día a día";
   lines.push(`Ocasión: ${objectiveLabel}.`);
+  // El piso concreto de esa ocasión va más abajo, junto al momento del día
+  // (ver pisoDeFormalidad): "Ocasión: Un evento" a secas no le dice al modelo
+  // qué exigir.
   if (ctx.lifestyle) {
     lines.push(ctx.lifestyle);
   }
@@ -325,12 +388,13 @@ export function contextBlock(ctx: EngineContext): string[] {
     }
   }
   if (ctx.timeOfDay === "noche") {
-    lines.push(
-      "Momento: de noche — favorece tonos más oscuros y un punto más arreglado."
-    );
+    lines.push("Momento: de noche — favorece tonos más oscuros.");
   } else if (ctx.timeOfDay === "dia") {
     lines.push("Momento: de día.");
   }
+
+  const piso = pisoDeFormalidad(ctx);
+  if (piso) lines.push(piso);
 
   // Formalidad del evento (el wizard la pregunta para "evento") + default
   // mexicano: las bodas/eventos formales en México son más arreglados que el

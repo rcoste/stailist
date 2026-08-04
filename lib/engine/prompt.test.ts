@@ -144,6 +144,7 @@ describe("orderClosetForEngine — anti sesgo posicional", () => {
 import {
   contextBlock,
   ESCALERA_DE_PRIORIDADES,
+  pisoDeFormalidad,
   type EngineContext,
 } from "./prompt";
 import { CRITIC_SYSTEM_TEXT } from "./critic";
@@ -384,5 +385,55 @@ describe("escalera de prioridades (v30)", () => {
     // colorimetría porque a él le pesó más la receta.
     expect(SYSTEM_PROMPT).toContain(ESCALERA_DE_PRIORIDADES);
     expect(CRITIC_SYSTEM_TEXT).toContain(ESCALERA_DE_PRIORIDADES);
+  });
+});
+
+describe("piso de formalidad (v31)", () => {
+  // El barrido de 129 looks midió que "evento de noche" fallaba el 32% —uno de
+  // cada tres— y con el clóset COMPLETO todavía el 22%: salían suéter con
+  // chinos y botines para una cena teniendo saco a la mano. En "diario" el
+  // fallo era 0%. El motor no estaba roto en general: la ocasión no estaba
+  // traducida a nada exigible.
+  const ctx = (o: Partial<EngineContext>): EngineContext => ({ ...baseCtx, ...o });
+
+  it("evento: exige una pieza que eleve y prohíbe lo deportivo", () => {
+    const p = pisoDeFormalidad(ctx({ objective: "evento" }));
+    expect(p).toContain("saco o blazer");
+    expect(p).toContain("FUERA");
+    expect(p).toMatch(/tenis deportivos/);
+  });
+
+  it("noche cuenta como evento aunque la ocasión sea otra", () => {
+    expect(pisoDeFormalidad(ctx({ objective: "diario", timeOfDay: "noche" }))).toContain(
+      "PISO DE FORMALIDAD"
+    );
+  });
+
+  it("si el wizard ya preguntó la formalidad, manda ella", () => {
+    // Su bloque es más específico (casual/semiformal/formal/gala); dos pisos a
+    // la vez se contradicen y el modelo escoge.
+    expect(pisoDeFormalidad(ctx({ objective: "evento", formality: "gala" }))).toBe("");
+  });
+
+  it("oficina prohíbe short y deportivo, sin exigir saco", () => {
+    const p = pisoDeFormalidad(ctx({ objective: "oficina" }));
+    expect(p).toContain("bermuda");
+    expect(p).not.toContain("saco o blazer");
+  });
+
+  it("diario y aeropuerto no tienen piso", () => {
+    // Ahí lo cómodo ES lo correcto — el barrido lo confirmó con 0% de fallo.
+    for (const objective of ["diario", "viaje", "refrescar"]) {
+      expect(pisoDeFormalidad(ctx({ objective })), objective).toBe("");
+    }
+  });
+
+  it("no exige prendas que el clóset no tenga", () => {
+    // Un piso absoluto contra un clóset pobre da lo peor de los dos mundos: el
+    // motor no puede cumplirlo y al intentarlo saca algo peor que lo que habría
+    // armado con lo que hay. (En el barrido el clóset hostil fallaba 47%.)
+    const p = pisoDeFormalidad(ctx({ objective: "evento" }));
+    expect(p).toContain("Si el clóset NO da para eso");
+    expect(p).toContain("Jamás inventes prendas");
   });
 });

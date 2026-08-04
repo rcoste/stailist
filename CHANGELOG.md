@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.82.0] - 2026-08-04
+
+### Added
+
+- **Cada ocasión ahora tiene un piso concreto de qué tan arreglado va el look.** Antes el motor solo leía cosas como "de noche, un punto más arreglado" — más arreglado que qué, nunca se decía. Ahora, para un evento o de noche, el look tiene que traer al menos una pieza que lo eleve (saco, camisa de vestir, punto fino sobre camisa o calzado de piel) y quedan fuera los tenis deportivos, la sudadera, el jogger y la bermuda; para oficina quedan fuera el short y lo deportivo. Y si tu clóset no da para eso, arma con lo más arreglado que tengas y te lo dice, en vez de pedirte ropa que no tienes.
+- **Pantalla interna de barrido** (`/admin/barrido`): los looks que genera el motor en pruebas automáticas, con las fotos de cada prenda, para poder juzgar a ojo cuáles fallos son reales y cuáles son el revisor automático siendo demasiado estricto.
+
 ## [0.2.81.0] - 2026-08-04
 
 ### Changed

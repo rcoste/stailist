@@ -60,7 +60,9 @@ export const CLIMAS = [
   { id: "templado", weather: { temp_c: 22, condition: "despejado" } },
   { id: "calor", weather: { temp_c: 30, condition: "soleado" } },
 ];
-export const OCASIONES = ["diario", "oficina", "evento de noche"];
+export const OCASIONES = process.env.SOLO_OCASION
+  ? [process.env.SOLO_OCASION]
+  : ["diario", "oficina", "evento de noche"];
 // Las dos fronteras de Roberto: invierno (frío) y otoño (cálido). Si la
 // colorimetría manda sobre la paleta del estilo, un mismo gusto tiene que
 // producir looks de color distinto entre estas dos.
