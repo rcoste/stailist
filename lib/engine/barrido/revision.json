@@ -30,7 +30,14 @@
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia.",
     "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico."
    ],
-   "tryon": "/barrido/39.png"
+   "tryon": "/barrido/39.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "hostil",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 8,
@@ -64,7 +71,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/8.png"
+   "tryon": "/barrido/8.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "basicos",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 44,
@@ -95,7 +109,14 @@
     "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico.",
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/44.png"
+   "tryon": "/barrido/44.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "hostil",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 47,
@@ -130,7 +151,14 @@
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia.",
     "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico."
    ],
-   "tryon": "/barrido/47.png"
+   "tryon": "/barrido/47.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "hostil",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 3,
@@ -163,7 +191,14 @@
    "vetos": [
     "Mezclar más de tres colores: la familia vive de dos o tres tonos por look"
    ],
-   "tryon": "/barrido/3.png"
+   "tryon": "/barrido/3.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "basicos",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 12,
@@ -192,7 +227,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/12.png"
+   "tryon": "/barrido/12.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "basicos",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 17,
@@ -225,7 +267,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/17.png"
+   "tryon": "/barrido/17.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "completo",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 18,
@@ -263,7 +312,14 @@
     "Zapato de vestir, mocasín o bota de piel formal: matan la lectura deportiva al instante.",
     "Camisa de botones o polo de vestir bajo la chamarra técnica; arriba va playera o sudadera."
    ],
-   "tryon": "/barrido/18.png"
+   "tryon": "/barrido/18.png",
+   "ctx": {
+    "perfil": "deportivo",
+    "closet": "completo",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 27,
@@ -300,7 +356,14 @@
    "vetos": [
     "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico."
    ],
-   "tryon": "/barrido/27.png"
+   "tryon": "/barrido/27.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "completo",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 29,
@@ -333,7 +396,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/29.png"
+   "tryon": "/barrido/29.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "completo",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 36,
@@ -362,7 +432,14 @@
    "vetos": [
     "Jeans de mezclilla azul clásica: la familia usa pants, jogger, cargo o short técnico, no denim."
    ],
-   "tryon": "/barrido/36.png"
+   "tryon": "/barrido/36.png",
+   "ctx": {
+    "perfil": "deportivo",
+    "closet": "hostil",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 37,
@@ -391,7 +468,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/37.png"
+   "tryon": "/barrido/37.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "hostil",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 42,
@@ -420,7 +504,14 @@
    "vetos": [
     "Logos grandes, estampados o gráficos que rompan la superficie lisa"
    ],
-   "tryon": "/barrido/42.png"
+   "tryon": "/barrido/42.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "hostil",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 46,
@@ -453,7 +544,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/46.png"
+   "tryon": "/barrido/46.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "hostil",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 2,
@@ -479,7 +577,14 @@
    ],
    "diagnostico": "polo casual para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/2.png"
+   "tryon": "/barrido/2.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "basicos",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 6,
@@ -507,7 +612,14 @@
    "vetos": [
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/6.png"
+   "tryon": "/barrido/6.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "basicos",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 10,
@@ -535,7 +647,14 @@
    "vetos": [
     "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico."
    ],
-   "tryon": "/barrido/10.png"
+   "tryon": "/barrido/10.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "basicos",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 13,
@@ -567,7 +686,14 @@
    "vetos": [
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/13.png"
+   "tryon": "/barrido/13.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "basicos",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 14,
@@ -599,7 +725,14 @@
    "vetos": [
     "Mezclar más de tres colores: la familia vive de dos o tres tonos por look"
    ],
-   "tryon": "/barrido/14.png"
+   "tryon": "/barrido/14.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "basicos",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 15,
@@ -627,7 +760,14 @@
    "vetos": [
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/15.png"
+   "tryon": "/barrido/15.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "basicos",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 19,
@@ -664,7 +804,14 @@
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia.",
     "Tenis de moda voluminosos o de colores; el calzado es tenis blanco liso, mocasín café o náutico."
    ],
-   "tryon": "/barrido/19.png"
+   "tryon": "/barrido/19.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "completo",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 21,
@@ -700,7 +847,14 @@
    "vetos": [
     "Mezclar más de tres colores: la familia vive de dos o tres tonos por look"
    ],
-   "tryon": "/barrido/21.png"
+   "tryon": "/barrido/21.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "completo",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 22,
@@ -734,7 +888,14 @@
    ],
    "diagnostico": "saco formal en clima caluroso",
    "vetos": [],
-   "tryon": "/barrido/22.png"
+   "tryon": "/barrido/22.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "completo",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 24,
@@ -766,7 +927,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/24.png"
+   "tryon": "/barrido/24.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "completo",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 25,
@@ -802,7 +970,14 @@
    "vetos": [
     "Mezclar más de tres colores: la familia vive de dos o tres tonos por look"
    ],
-   "tryon": "/barrido/25.png"
+   "tryon": "/barrido/25.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "completo",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 32,
@@ -834,7 +1009,14 @@
    "vetos": [
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/32.png"
+   "tryon": "/barrido/32.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "completo",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 33,
@@ -868,7 +1050,14 @@
    ],
    "diagnostico": "saco de traje en clima caluroso",
    "vetos": [],
-   "tryon": "/barrido/33.png"
+   "tryon": "/barrido/33.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "completo",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 34,
@@ -898,7 +1087,14 @@
    ],
    "diagnostico": "polo y tenis casuales para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/34.png"
+   "tryon": "/barrido/34.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "hostil",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 35,
@@ -926,7 +1122,14 @@
    "vetos": [
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/35.png"
+   "tryon": "/barrido/35.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "hostil",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 38,
@@ -952,7 +1155,14 @@
    ],
    "diagnostico": "tenis casuales sin saco para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/38.png"
+   "tryon": "/barrido/38.png",
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "hostil",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 40,
@@ -978,7 +1188,14 @@
    ],
    "diagnostico": "demasiado casual para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/40.png"
+   "tryon": "/barrido/40.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "hostil",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 41,
@@ -1004,7 +1221,14 @@
    ],
    "diagnostico": "sin saco y tenis para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/41.png"
+   "tryon": "/barrido/41.png",
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "hostil",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 43,
@@ -1030,7 +1254,14 @@
    ],
    "diagnostico": "demasiado casual para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/43.png"
+   "tryon": "/barrido/43.png",
+   "ctx": {
+    "perfil": "deportivo",
+    "closet": "hostil",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 48,
@@ -1056,7 +1287,14 @@
    ],
    "diagnostico": "casual deportivo para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/48.png"
+   "tryon": "/barrido/48.png",
+   "ctx": {
+    "perfil": "deportivo",
+    "closet": "hostil",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 49,
@@ -1084,7 +1322,14 @@
    "vetos": [
     "Pantalón negro de vestir o total black: rompe la paleta terrosa y marina de la familia."
    ],
-   "tryon": "/barrido/49.png"
+   "tryon": "/barrido/49.png",
+   "ctx": {
+    "perfil": "preppy-puro",
+    "closet": "hostil",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 50,
@@ -1112,7 +1357,14 @@
    "vetos": [
     "Ajuste a medias en todo (ni ceñido ni ancho): la familia vive de un contraste de proporción claro, el corte regular flojo mata el filo."
    ],
-   "tryon": "/barrido/50.png"
+   "tryon": "/barrido/50.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "hostil",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 4,
@@ -1137,7 +1389,14 @@
    ],
    "diagnostico": "falta chaqueta y calzado no edgy",
    "vetos": [],
-   "tryon": "/barrido/4.png"
+   "tryon": "/barrido/4.png",
+   "ctx": {
+    "perfil": "street",
+    "closet": "basicos",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 5,
@@ -1162,7 +1421,14 @@
    ],
    "diagnostico": "demasiado casual para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/5.png"
+   "tryon": "/barrido/5.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "basicos",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 9,
@@ -1191,7 +1457,14 @@
    ],
    "diagnostico": "",
    "vetos": [],
-   "tryon": "/barrido/9.png"
+   "tryon": "/barrido/9.png",
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "basicos",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 16,
@@ -1224,7 +1497,14 @@
    ],
    "diagnostico": "",
    "vetos": [],
-   "tryon": "/barrido/16.png"
+   "tryon": "/barrido/16.png",
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "completo",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 20,
@@ -1257,7 +1537,14 @@
    ],
    "diagnostico": "azul cobalto saturado domina el look",
    "vetos": [],
-   "tryon": "/barrido/20.png"
+   "tryon": "/barrido/20.png",
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "completo",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 23,
@@ -1293,7 +1580,14 @@
     "Zapato de vestir, mocasín o bota de piel formal: matan la lectura deportiva al instante.",
     "Accesorios de cuero formal (cinturón visible, portafolio, bolsa estructurada)."
    ],
-   "tryon": "/barrido/23.png"
+   "tryon": "/barrido/23.png",
+   "ctx": {
+    "perfil": "deportivo",
+    "closet": "completo",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 26,
@@ -1326,7 +1620,14 @@
    ],
    "diagnostico": "tenis casuales para evento de noche formal",
    "vetos": [],
-   "tryon": "/barrido/26.png"
+   "tryon": "/barrido/26.png",
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "completo",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 28,
@@ -1359,7 +1660,14 @@
    ],
    "diagnostico": "overshirt pesado para 30°C de calor",
    "vetos": [],
-   "tryon": "/barrido/28.png"
+   "tryon": "/barrido/28.png",
+   "ctx": {
+    "perfil": "caotico",
+    "closet": "completo",
+    "clima": "calor",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 30,
@@ -1392,7 +1700,14 @@
    ],
    "diagnostico": "pantalón marino fuera de paleta tierra",
    "vetos": [],
-   "tryon": "/barrido/30.png"
+   "tryon": "/barrido/30.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "completo",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 31,
@@ -1428,7 +1743,14 @@
     "Zapato de vestir, mocasín o bota de piel formal: matan la lectura deportiva al instante.",
     "Accesorios de cuero formal (cinturón visible, portafolio, bolsa estructurada)."
    ],
-   "tryon": "/barrido/31.png"
+   "tryon": "/barrido/31.png",
+   "ctx": {
+    "perfil": "deportivo",
+    "closet": "completo",
+    "clima": "frio",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 45,
@@ -1453,7 +1775,14 @@
    ],
    "diagnostico": "sudadera y tenis urbanos para evento de noche",
    "vetos": [],
-   "tryon": "/barrido/45.png"
+   "tryon": "/barrido/45.png",
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "hostil",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   },
   {
    "n": 1,
@@ -1479,7 +1808,14 @@
    ],
    "fallos": [],
    "diagnostico": "",
-   "vetos": []
+   "vetos": [],
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "basicos",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 7,
@@ -1505,7 +1841,14 @@
    ],
    "fallos": [],
    "diagnostico": "",
-   "vetos": []
+   "vetos": [],
+   "ctx": {
+    "perfil": "clasico-arreglado",
+    "closet": "basicos",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "invierno"
+   }
   },
   {
    "n": 11,
@@ -1531,7 +1874,14 @@
    ],
    "fallos": [],
    "diagnostico": "",
-   "vetos": []
+   "vetos": [],
+   "ctx": {
+    "perfil": "minimalista",
+    "closet": "basicos",
+    "clima": "templado",
+    "ocasion": "evento de noche",
+    "paleta": "otono"
+   }
   }
  ]
 }
