@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/recetas", label: "Recetas" },
   { href: "/admin/barrido", label: "Barrido" },
   { href: "/admin/ab", label: "A/B" },
+  { href: "/admin/inspo", label: "Inspo" },
   { href: "/admin/usuarios", label: "Usuarios" },
   { href: "/admin/allowlist", label: "Allowlist" },
   { href: "/admin/waitlist", label: "Waitlist" },
