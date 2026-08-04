@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.74.5] - 2026-08-03
+
+### Fixed
+
+- **Dos familias desaparecieron del panel del destilador al pasar la tabla de mil filas.** Supabase corta en 1,000 filas sin avisar, y el panel trae todas las filas para contarlas: thrift-vintage se esfumó con 20 fotos pendientes y utilitario completo, mientras el panel decía "no queda nada por curar". Con 1,070 filas de hombre, las familias cuyas filas caían después del corte simplemente no existían para la pantalla.
+
 ## [0.2.74.4] - 2026-08-03
 
 ### Added

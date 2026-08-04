@@ -19,10 +19,15 @@ export async function resumenPorEstilo(
   genero: "hombre" | "mujer"
 ): Promise<{ estilo: string; total: number; juzgadas: number; sirven: number }[]> {
   const supabase = await createClient();
+  // range explícito: Supabase corta en 1000 filas SIN avisar, y esta consulta
+  // trae todas las filas para contarlas. Al pasar la tabla de mil, las familias
+  // cuyas filas caían después del corte desaparecían del panel — thrift-vintage
+  // se esfumó con 20 pendientes y el panel decía "no queda nada por curar".
   const { data } = await supabase
     .from("referencias")
     .select("estilo, sirve")
-    .eq("genero", genero);
+    .eq("genero", genero)
+    .range(0, 49999);
 
   const porEstilo = new Map<string, { total: number; juzgadas: number; sirven: number }>();
   for (const r of data ?? []) {
