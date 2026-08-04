@@ -37,6 +37,9 @@ type Caso = {
   temp: number;
   momento: string;
   fotos: { url: string; carpeta: string }[];
+  /** El primer look de cada lado, puesto sobre su avatar. */
+  renderCon?: string;
+  renderSin?: string;
   conFotos: Look[];
   sinFotos: Look[];
 };
@@ -125,9 +128,11 @@ export default async function AdminInspo() {
           Qué fotos vio el motor, qué armó y por qué
         </h1>
         <p className="text-sm leading-relaxed text-muted">
-          Arriba, las 3 fotos de la biblioteca que se le enseñaron. Abajo, los looks
-          que armó viéndolas y los que armó sin verlas —con sus prendas y con la
-          frase que él mismo escribió para explicarlos—. Todo lo demás fue idéntico.
+          Arriba, las 3 fotos de la biblioteca que se le enseñaron. Abajo, a la
+          izquierda lo que armó VIÉNDOLAS y a la derecha lo que armó sin verlas —con
+          el primer look puesto sobre tu avatar, las prendas, y la frase que él mismo
+          escribió—. El motor es el mismo en los dos lados; lo único distinto es si
+          vio las fotos.
         </p>
         <p className="text-sm leading-relaxed text-error">
           Ojo con las marcadas: para <span className="font-semibold">oficina</span> y{" "}
@@ -177,16 +182,43 @@ export default async function AdminInspo() {
             <div className="flex flex-col gap-3 lg:flex-row">
               <div className="flex flex-1 flex-col gap-3 rounded-lg border border-line bg-bg p-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-ink">
-                  viendo las fotos
+                  con 3 fotos de referencia
                 </p>
+                {/* El primer look, puesto: es el que se comparó en el A/B y lo
+                    único que deja ver si el resultado se PARECE a la referencia
+                    de arriba, que es la pregunta. */}
+                {c.renderCon ? (
+                  <div className="w-40 overflow-hidden rounded-lg border border-line bg-surface">
+                    <Image
+                      src={c.renderCon}
+                      alt="puesto"
+                      width={160}
+                      height={213}
+                      className="h-auto w-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : null}
                 {c.conFotos.map((l, i) => (
                   <Prendas key={i} l={l} urlDe={resolver} />
                 ))}
               </div>
               <div className="flex flex-1 flex-col gap-3 rounded-lg border border-line bg-bg p-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-muted">
-                  sin verlas
+                  solo con tu clóset
                 </p>
+                {c.renderSin ? (
+                  <div className="w-40 overflow-hidden rounded-lg border border-line bg-surface">
+                    <Image
+                      src={c.renderSin}
+                      alt="puesto"
+                      width={160}
+                      height={213}
+                      className="h-auto w-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : null}
                 {c.sinFotos.map((l, i) => (
                   <Prendas key={i} l={l} urlDe={resolver} />
                 ))}

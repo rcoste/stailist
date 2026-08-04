@@ -33,6 +33,12 @@ const clave = JSON.parse(
   readFileSync("docs_para_claude/barrido/ab-clave.json", "utf8")
 ) as { n: number; izq: string; caso: string }[];
 
+// Los renders del A/B, por par y lado. La clave dice qué lado fue el que vio las
+// fotos, así que se puede saber cuál render corresponde a cuál brazo — sin eso,
+// la pantalla enseñaría el avatar del lado equivocado.
+const renderDe = (n: number, conFotos: boolean, izqEsCon: boolean) =>
+  `/ab/${n}-${(conFotos ? izqEsCon : !izqEsCon) ? "a" : "b"}.png`;
+
 const k = (f: Fila) => `${f.caso.ocasion}|${f.caso.temp}|${f.caso.momento}`;
 const porCaso = new Map<string, { fotos: string[]; con: Fila[]; sin: Fila[] }>();
 for (const f of d) {
@@ -60,6 +66,9 @@ const casos = clave
       // item_ids para que la pantalla resuelva y firme las imágenes de las
       // prendas, y la explicación tal cual la escribió el motor: sin el porqué,
       // la comparación es media historia.
+      // Solo el PRIMER look de cada lado tiene render: es el que se comparó.
+      renderCon: renderDe(c.n, true, c.izq === "con-recetario"),
+      renderSin: renderDe(c.n, false, c.izq === "con-recetario"),
       conFotos: e.con.map((x) => ({
         look: x.look,
         prendas: x.prendas,
