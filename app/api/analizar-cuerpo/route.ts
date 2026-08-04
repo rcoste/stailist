@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
   try {
     const client = new Anthropic();
     const res = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: ENGINE_MODEL,
       max_tokens: 200,
       system:
         "Miras la foto de cuerpo entero de una persona y eliges cuál de estas complexiones se parece MÁS a la suya. " +

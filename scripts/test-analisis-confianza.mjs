@@ -32,7 +32,7 @@ const SCHEMA = {
 async function analizar(label, path, mime) {
   const b64 = readFileSync(path).toString("base64");
   const res = await client.messages.create({
-    model: "claude-opus-4-8", max_tokens: 500, system: SYSTEM,
+    model: "claude-opus-5", max_tokens: 500, system: SYSTEM,
     messages: [{ role: "user", content: [
       { type: "image", source: { type: "base64", media_type: mime, data: b64 } },
       { type: "text", text: "Describe esta prenda para mi clóset." },

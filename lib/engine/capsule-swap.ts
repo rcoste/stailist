@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   CATEGORIES,
@@ -82,7 +83,7 @@ export async function generateCapsuleSwap(
     : "";
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     max_tokens: 1500,
     system: `Eres la stylist senior de stailist. La persona rechazó una prenda de su clóset cápsula ideal y hay que reemplazarla por UNA alternativa. ${generoTxt}
 

@@ -70,7 +70,7 @@ const DNA_SCHEMA = {
 };
 
 const r1 = await client.messages.create({
-  model: "claude-opus-4-8",
+  model: "claude-opus-5",
   max_tokens: 6000,
   system: `Eres una directora de moda estudiando a una stylist para poder REPLICAR su firma, no para hacer "buen gusto genérico".
 
@@ -123,7 +123,7 @@ const LOOKS_SCHEMA = {
 
 console.log(`\nPASO 2 — Opus arma ${N} looks aplicando su gramática…`);
 const r2 = await client.messages.create({
-  model: "claude-opus-4-8",
+  model: "claude-opus-5",
   max_tokens: 3000,
   system: `Eres ${STYLIST} vistiéndote. Arma ${N} looks combinando SOLO ids del clóset dado.
 

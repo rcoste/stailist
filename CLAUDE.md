@@ -25,7 +25,7 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 ## Stack y arquitectura (cerrada en eng review)
 - Next.js en Vercel (Hobby: límite 60s por función — generación con streaming, retry siempre client-side).
 - Supabase: Postgres (RLS en todo), Storage privado con URLs firmadas, Auth magic link + allowlist server-side.
-- IA: `claude-opus-4-8` con structured outputs (motor de outfits + análisis de prendas por visión); los jueces de styling (Hoy y Viaje) corren en `claude-sonnet-5` (constante compartida `JUDGE_MODEL` en `lib/engine/critic.ts`). Prompt versionado en cada outfit.
+- IA: `claude-opus-5` con structured outputs (motor de outfits + análisis de prendas por visión); los jueces de styling (Hoy y Viaje) en `claude-sonnet-5`. **Los nombres viven en `lib/models.ts` (`ENGINE_MODEL` / `JUDGE_MODEL`) — nunca hardcodear un modelo en un archivo suelto**: estaban escritos a mano en 14 archivos y al actualizar generación se quedaban unos atrás, corriendo en silencio con un modelo viejo. En el motor el thinking va APAGADO (en los modelos 5 viene ON por default y cuesta ~50% de latencia sin mejorar el look; el campo `analisis` del schema ya obliga a razonar antes de comprometer). Prompt versionado en cada outfit.
 - Clima: Open-Meteo (sin API key). Geolocalización del navegador con fallback sin-clima.
 - Spec completa: `docs/designs/mvp-onboarding-90s.md` (scope, UX, errores, tests, arquitectura). Backlog: `TODOS.md`. Historial de versiones: `CHANGELOG.md` (versión vigente en `VERSION`).
 

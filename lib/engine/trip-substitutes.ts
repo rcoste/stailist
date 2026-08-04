@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { CapsuleItem, ClosetItemLite } from "@/lib/capsule";
 
@@ -29,7 +30,7 @@ export async function matchSubstitutes(
         : "";
 
   const res = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     max_tokens: 700,
     system: `Eres la stylist de stailist.${generoTxt} Falta UNA prenda para un viaje y la persona NO quiere comprar: quiere resolverlo con lo que YA tiene. Te doy la prenda que falta y su CLÓSET REAL. Propón hasta 3 prendas del clóset que de verdad puedan SUSTITUIRLA, la mejor primero.
 

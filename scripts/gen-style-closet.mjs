@@ -40,7 +40,7 @@ const CLOSET_SCHEMA = {
 
 console.log(`PASO 2 — Opus define el clóset ideal de ${STYLIST}…`);
 const r1 = await client.messages.create({
-  model: "claude-opus-4-8",
+  model: "claude-opus-5",
   max_tokens: 4000,
   system: `Eres stylist senior. A partir del ESTILO de una persona, define el CLÓSET IDEAL que debería tener: ~24 prendas concretas (tops, bottoms, vestidos, sacos, abrigos, calzado, bolsas, accesorios) que encarnen su estilo. NO copies outfits; define PIEZAS individuales combinables. Incluye su vocabulario firma (colores, prints, texturas, siluetas) Y las básicas neutras que lo anclan. Piezas reales, específicas.`,
   messages: [{ role: "user", content: `ESTILO de ${STYLIST}:\n${BRIEF}\n\nDefine su clóset ideal (~24 piezas).` }],
@@ -75,7 +75,7 @@ const LOOKS_SCHEMA = {
 
 console.log(`\nPASO 3 — Opus arma ${N} looks combinando SOLO ese clóset…`);
 const r2 = await client.messages.create({
-  model: "claude-opus-4-8",
+  model: "claude-opus-5",
   max_tokens: 2000,
   system: `Eres stylist. Arma ${N} looks completos combinando ÚNICAMENTE prendas del clóset dado (por id). Cada look: 1 protagonista + resto neutro, coherente, con su fórmula. Varía la ocasión. NO inventes prendas fuera del clóset.`,
   messages: [{ role: "user", content: `CLÓSET (id · nombre):\n${closet.map((c) => `${c.id} · ${c.nombre}`).join("\n")}\n\nArma ${N} looks.` }],

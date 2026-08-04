@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   ASSESSMENT_QUESTIONS,
@@ -103,7 +104,7 @@ export async function generateCapsuleTarget(
         : "Género no definido: usa prendas neutras/unisex.";
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     // ~25-40 prendas con material + por qué cada una, más el "plan" (borrador
     // de razonamiento del schema): la cápsula nueva es grande y ya corría cerca
     // del tope viejo (8000) — margen holgado; solo se paga lo que se emite.

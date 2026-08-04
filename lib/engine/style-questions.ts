@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AssessmentQuestion } from "@/lib/capsule";
 import type { Gender } from "@/lib/auth";
@@ -33,7 +34,7 @@ export async function generateStyleQuestions(
     .join("\n");
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     max_tokens: 1500,
     system: `Eres la stylist senior de stailist. Ya CONOCES el estilo de esta persona (abajo). Tu trabajo: hacer 2-3 preguntas de opción múltiple HECHAS A LA MEDIDA de SU estilo, para afinar su clóset cápsula. Nada genérico ni que ya sepamos.
 

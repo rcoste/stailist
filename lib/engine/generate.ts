@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildOutfitSchema } from "./schema";
 import {
@@ -28,10 +29,17 @@ export async function generateOutfits(
   const itemIds = ctx.items.map((i) => i.id);
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     // 3072: el campo "analisis" (borrador de razonamiento del schema) consume
     // tokens antes de los outfits; 2048 quedaba justo.
     max_tokens: 3072,
+    // Thinking APAGADO. En los modelos 5 viene encendido por default y en el
+    // motor cuesta ~50% más de latencia (32s contra 21s, medido) sin que se vea
+    // en los looks: el schema ya obliga a razonar en el campo "analisis" antes
+    // de comprometer los outfits, que es la misma idea con el costo dentro del
+    // presupuesto. Y esto corre dentro del límite de 60s de Vercel CON los
+    // jueces detrás — 32s de generación deja el margen demasiado corto.
+    thinking: { type: "disabled" },
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildUserMessage(ctx, opciones) }],
     output_config: {

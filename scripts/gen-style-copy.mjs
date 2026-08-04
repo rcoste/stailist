@@ -50,7 +50,7 @@ const SCHEMA = {
 
 console.log(`Pidiendo a Opus ${N} outfits en el estilo de ${STYLIST}…`);
 const resp = await client.messages.create({
-  model: "claude-opus-4-8",
+  model: "claude-opus-5",
   max_tokens: 3000,
   system: `Eres la stylist personal que CANALIZA la estética de ${STYLIST}. ESTE ES UN TEST DE GENERALIZACIÓN: hay que demostrar que su estilo sobrevive con vocabulario NUEVO. Inventa outfits que encarnen sus PRINCIPIOS pero con prendas, colores, prints y siluetas que ella NO haya usado. Cada outfit es un look completo de pies a cabeza, coherente, con proporción cuidada y su fórmula abstracta (neutros + UN protagonista + oro). Varía la ocasión entre los ${N}. Si un look podría confundirse con una de sus fotos existentes, fallaste: empújalo a algo fresco que igual se sienta 100% ella.`,
   messages: [{ role: "user", content: `${STYLIST} — PRINCIPIOS:\n${BRIEF}\n\n${AVOID}\n\nGenera ${N} outfits nuevos que prueben que su estilo generaliza a prendas frescas.` }],

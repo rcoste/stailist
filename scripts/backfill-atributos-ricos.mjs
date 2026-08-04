@@ -37,7 +37,7 @@ import { createClient as createSupabase } from "@supabase/supabase-js";
 // --- Config -----------------------------------------------------------------
 
 const MODELO_BARATO = "claude-haiku-4-5"; // el caballo de carga del backfill
-const MODELO_REFERENCIA = "claude-opus-4-8"; // solo para --validate
+const MODELO_REFERENCIA = "claude-opus-5"; // solo para --validate
 const LOTE_TEXTO = 20; // prendas por llamada (texto)
 const PARALELO_VISION = 4; // llamadas de visión simultáneas
 

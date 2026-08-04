@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { OCCASIONS, occasionLabels, type Occasion, type TripOutfit } from "@/lib/trip";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
@@ -282,7 +283,7 @@ export async function generateTripOutfits(
     : "";
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     max_tokens: 4096,
     system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
 

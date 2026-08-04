@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
@@ -157,7 +158,7 @@ export async function generateTripCapsuleTarget(
       : "";
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     // 4608: el "plan" (borrador de razonamiento) consume tokens antes de los
     // items, y el piso de suficiencia (v24) empuja cápsulas más grandes —
     // 3584 quedaba justo y un truncado tira TODA la creación del viaje. El

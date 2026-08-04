@@ -19,11 +19,12 @@ import type { GeneratedOutfit } from "./generate";
 // devuelve el outfit original con veredicto "ok" — nunca rompe la generación.
 // Rúbrica más exigente para mujer que para hombre.
 
-// Modelo COMPARTIDO de los jueces (Hoy y Viaje). Sonnet 5: mejor juicio que
-// 4.6 a mismo costo por token. OJO: en Sonnet 5 el thinking adaptativo viene
-// ON por default — cada llamada de juez lo apaga explícito para mantener la
-// latencia (corren dentro del límite de 60s de Vercel).
-export const JUDGE_MODEL = "claude-sonnet-5";
+// Modelo de los jueces. Vive en lib/models.ts junto con el del motor: tenerlos
+// separados fue lo que dejó 14 archivos apuntando a un Opus viejo mientras los
+// jueces ya estaban actualizados. Se re-exporta porque media docena de archivos
+// lo importan desde aquí.
+export { JUDGE_MODEL } from "@/lib/models";
+import { JUDGE_MODEL } from "@/lib/models";
 
 export type CriticVerdict = "ok" | "reparado" | "rechazado";
 

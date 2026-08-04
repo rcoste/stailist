@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Look } from "@/lib/looks";
 import type { Gender } from "@/lib/auth";
@@ -40,7 +41,7 @@ export async function generateArchetype(
     .join("\n");
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     max_tokens: 512,
     system: `Eres la stylist de stailist, la amiga cool que se viste increíble. A partir de los looks que le encantaron a alguien, le pones nombre a su estilo.
 

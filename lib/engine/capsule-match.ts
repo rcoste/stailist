@@ -1,3 +1,4 @@
+import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   closetSignature,
@@ -192,7 +193,7 @@ export async function matchCapsule(
     : "";
 
   const response = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: ENGINE_MODEL,
     // Una entrada por prenda ideal; la cápsula nueva llega a 30-40 → 2048 truncaba.
     max_tokens: 4096,
     system: `Eres la stylist de stailist.${generoTxt} Te doy la CÁPSULA IDEAL de alguien (prendas que debería tener) y su CLÓSET REAL. Por CADA prenda ideal, clasifícala en uno de TRES estados según lo que ya tiene:

@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.88.0] - 2026-08-04
+
+### Changed
+
+- **La app corre en Claude Opus 5.** Estaba en la generación anterior del modelo para armar tus outfits, leer tus prendas en una foto, proponerte tu cápsula y planear tu maleta. El nombre del modelo estaba escrito a mano en catorce archivos distintos, así que ahora vive en un solo lugar: actualizar de generación deja de ser una cacería en la que siempre se queda alguno atrás corriendo en silencio con lo viejo. La velocidad no cambia — se midió y quedó igual que antes.
+
 ## [0.2.87.0] - 2026-08-04
 
 ### Changed
