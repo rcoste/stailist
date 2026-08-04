@@ -3,10 +3,12 @@ import { buildCriticSchema } from "./schema";
 import {
   contextBlock,
   closetBlock,
+  recetasDelContexto,
   ESCALERA_DE_PRIORIDADES,
   type EngineContext,
 } from "./prompt";
 import { bloqueEjecucion } from "./reglas-ejecucion";
+import { bandaDeClima } from "./recetario";
 import type { GeneratedOutfit } from "./generate";
 
 // Juez de styling, UNO POR OUTFIT (para poder ir mostrándolos conforme se
@@ -105,7 +107,15 @@ function buildCriticMessage(
   outfit: GeneratedOutfit,
   priorOutfits: GeneratedOutfit[]
 ): string {
-  const lines: string[] = [...contextBlock(ctx), "", ...closetBlock(ctx.items)];
+  // El juez ve las MISMAS marcas de estilo que el generador. Si solo las viera
+  // uno, el juez "repararía" el look quitando justo la prenda que lo hacía de su
+  // estilo — el mismo motivo por el que la escalera de prioridades va en los dos
+  // prompts y no en uno (v30).
+  const lines: string[] = [
+    ...contextBlock(ctx),
+    "",
+    ...closetBlock(ctx.items, recetasDelContexto(ctx)),
+  ];
 
   lines.push("", `Look a revisar — "${outfit.nombre}": ${outfit.item_ids.join(" + ")}`);
 
@@ -113,8 +123,13 @@ function buildCriticMessage(
   // prendas del look (ver reglas-ejecucion.ts). Van antes de la rúbrica y
   // marcados como verificados para que el juez los repare en vez de opinar
   // sobre ellos: detección determinista, reparación con criterio.
+  // El clóset completo va aparte del look: la regla del frío distingue "no se
+  // puso el abrigo que tiene" (reparable) de "no tiene abrigo" (no lo es).
   lines.push(
-    ...bloqueEjecucion(ctx.items.filter((i) => outfit.item_ids.includes(i.id)))
+    ...bloqueEjecucion(
+      ctx.items.filter((i) => outfit.item_ids.includes(i.id)),
+      { clima: bandaDeClima(ctx.weather), closet: ctx.items }
+    )
   );
 
   if (priorOutfits.length > 0) {

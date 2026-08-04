@@ -35,8 +35,21 @@
 // determinista + reparación con criterio, que es lo que cada uno hace mejor.
 
 import type { EngineItem } from "./prompt";
+import type { Clima } from "./recetario";
+import { tipoDePrenda } from "./vocabulario";
 
 export type Violacion = { regla: string; detalle: string };
+
+/**
+ * Lo que las reglas necesitan saber además del look.
+ *
+ * `closet` es el clóset COMPLETO, no las prendas del look, y esa distinción es
+ * la que separa un fallo de una carencia: salir a 8°C sin abrigo teniendo uno es
+ * un error que el juez puede reparar; hacerlo sin tener ninguno no es reparable
+ * y va por otro camino (el aviso de honestidad, ver cobertura.ts). Una regla que
+ * no distinga las dos manda al juez a arreglar lo que no se puede.
+ */
+export type ContextoReglas = { clima?: Clima; closet?: EngineItem[] };
 
 /** #rrggbb → [r,g,b]. null si no hay hex o viene mal escrito. */
 function rgb(hex?: string): [number, number, number] | null {
@@ -123,7 +136,10 @@ const nombre = (i: EngineItem) => i.attrs.nombre ?? i.attrs.tipo ?? i.id;
  * como violación: una regla que dispara por datos incompletos hace más daño que
  * la que no dispara, porque manda al juez a "reparar" lo que estaba bien.
  */
-export function revisarEjecucion(items: EngineItem[]): Violacion[] {
+export function revisarEjecucion(
+  items: EngineItem[],
+  ctx: ContextoReglas = {}
+): Violacion[] {
   const v: Violacion[] = [];
   const conColor = items.filter((i) => rgb(i.attrs.color_hex));
 
@@ -177,12 +193,83 @@ export function revisarEjecucion(items: EngineItem[]): Violacion[] {
     }
   }
 
+  // 4. Prenda de código: hay atuendos que no admiten piezas sueltas. Un smoking
+  //    no es "un saco negro elegante" — es un conjunto con reglas (pantalón del
+  //    mismo juego con galón, camisa blanca, moño), y una pieza fuera del código
+  //    no lo hace variado sino equivocado, que es lo que ve cualquiera que
+  //    conozca el código y justo la gente que va a esos eventos.
+  //
+  //    Es el mismo principio que el traje desparejado —piezas que fingen ser un
+  //    conjunto— llevado a su caso más estricto. El look que la motivó: saco de
+  //    smoking negro + camisa azul claro + corbata burdeos + pantalón de vestir
+  //    gris, para alguien de perfil deportivo en un evento de noche. Roberto:
+  //    "el peor de todos... un Frankenstein espantoso".
+  //
+  //    La regla NO exige que el clóset tenga las piezas: si no las tiene, el
+  //    arreglo correcto es quitar el smoking y armar un formal normal, y eso es
+  //    lo que dice el detalle. Un smoking a medias se lee como error; un buen
+  //    look formal sin smoking, no.
+  const esSmoking = (i: EngineItem) => /smoking|esmoquin|tuxedo/.test(TIPO(i));
+  if (items.some(esSmoking)) {
+    const falta: string[] = [];
+    const pantalon = items.find((i) => tipoDePrenda(nombre(i))?.zona === "pierna");
+    if (pantalon && !esSmoking(pantalon)) {
+      falta.push(
+        `el pantalón ("${nombre(pantalon)}") no es del smoking — el pantalón de smoking lleva el galón de raso y es el único que va con ese saco`
+      );
+    }
+    // La camisa del smoking es blanca. Se juzga por el color real y no por el
+    // nombre: "Camisa de vestir" no dice de qué color es.
+    const camisa = items.find((i) => /camisa/.test(TIPO(i)));
+    const camisaRgb = camisa ? rgb(camisa.attrs.color_hex) : null;
+    if (camisa && camisaRgb && Math.min(...camisaRgb) < 200) {
+      falta.push(`la camisa ("${nombre(camisa)}") tiene que ser blanca`);
+    }
+    const corbata = items.find((i) => /corbata/.test(TIPO(i)));
+    if (corbata && !/mo[nñ]o|pajarita|bow/.test(TIPO(corbata))) {
+      falta.push(`con smoking va moño, no corbata ("${nombre(corbata)}")`);
+    }
+    if (falta.length) {
+      v.push({
+        regla: "codigo-de-smoking",
+        detalle: `Este look mezcla un smoking con piezas que no son de smoking: ${falta.join("; ")}. El smoking es un conjunto con código cerrado, no un saco negro elegante. Complétalo con las piezas correctas del clóset o quita el smoking y arma un look formal normal — a medias se lee como error, no como versión relajada.`,
+      });
+    }
+  }
+
+  // 5. Frío sin abrigo. Objetivo, no de gusto: a 8°C una camiseta y un pantalón
+  //    no alcanzan, y de nada sirve que el look esté bien compuesto si la
+  //    persona se congela. Roberto lo marcó en dos looks del barrido.
+  //
+  //    SOLO dispara si el clóset TIENE una capa: si no la tiene, no es un fallo
+  //    reparable sino una carencia, y esa se dice con honestidad en la
+  //    explicación (ver cobertura.ts) en vez de mandar al juez a arreglar algo
+  //    que no puede.
+  if (ctx.clima === "frio" && ctx.closet?.length) {
+    const esCapa = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "capa";
+    if (!items.some(esCapa)) {
+      const disponibles = ctx.closet.filter(esCapa);
+      if (disponibles.length) {
+        v.push({
+          regla: "frio-sin-abrigo",
+          detalle: `Hace frío y el look no lleva ninguna capa de abrigo, pero su clóset SÍ tiene: ${disponibles
+            .slice(0, 4)
+            .map(nombre)
+            .join(", ")}. Añade la que mejor vaya con el look — a esta temperatura salir sin abrigo no es una decisión de estilo, es un look que no se puede usar.`,
+        });
+      }
+    }
+  }
+
   return v;
 }
 
 /** Bloque para el mensaje del juez. Vacío si el look está limpio. */
-export function bloqueEjecucion(items: EngineItem[]): string[] {
-  const v = revisarEjecucion(items);
+export function bloqueEjecucion(
+  items: EngineItem[],
+  ctx: ContextoReglas = {}
+): string[] {
+  const v = revisarEjecucion(items, ctx);
   if (v.length === 0) return [];
   return [
     "",

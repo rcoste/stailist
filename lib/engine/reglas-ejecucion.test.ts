@@ -129,3 +129,83 @@ describe("reglas de ejecución — el catálogo de básicos", () => {
     expect(v[0].regla).toBe("capa-invisible");
   });
 });
+
+describe("codigo-de-smoking", () => {
+  // El look #18 del barrido, literal: saco de smoking + camisa azul + corbata
+  // burdeos + pantalón de vestir gris. Roberto: "el peor de todos... un
+  // Frankenstein espantoso". El clóset TENÍA pantalón de smoking y moño negro.
+  const smokingRoto = [
+    p("Saco de smoking negro", "#111111"),
+    p("Camisa azul claro", "#A8C4E0"),
+    p("Corbata burdeos", "#6B2434"),
+    p("Pantalón de vestir gris", "#808080"),
+  ];
+
+  it("caza el smoking armado con piezas que no son de smoking", () => {
+    const v = revisarEjecucion(smokingRoto);
+    const r = v.find((x) => x.regla === "codigo-de-smoking");
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("galón");
+    expect(r!.detalle).toContain("blanca");
+    expect(r!.detalle).toContain("moño");
+  });
+
+  it("un smoking completo pasa limpio", () => {
+    const v = revisarEjecucion([
+      p("Saco de smoking negro", "#111111"),
+      p("Camisa blanca", "#FFFFFF"),
+      p("Moño negro", "#111111"),
+      p("Pantalón de smoking negro", "#111111"),
+    ]);
+    expect(v.find((x) => x.regla === "codigo-de-smoking")).toBeUndefined();
+  });
+
+  it("no toca los looks que no llevan smoking", () => {
+    const v = revisarEjecucion([
+      p("Blazer marino", "#1F2A44"),
+      p("Camisa azul claro", "#A8C4E0"),
+      p("Chinos beige", "#D2B48C"),
+    ]);
+    expect(v.find((x) => x.regla === "codigo-de-smoking")).toBeUndefined();
+  });
+});
+
+describe("frio-sin-abrigo", () => {
+  const looksito = [p("Camiseta marino", "#1F2A44"), p("Pantalón negro", "#111111")];
+
+  it("marca el look sin capa a 8°C cuando el clóset SÍ tiene abrigo", () => {
+    const v = revisarEjecucion(looksito, {
+      clima: "frio",
+      closet: [...looksito, p("Abrigo de lana marino", "#1F2A44")],
+    });
+    const r = v.find((x) => x.regla === "frio-sin-abrigo");
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Abrigo de lana marino");
+  });
+
+  it("NO marca cuando el clóset no tiene ninguna capa", () => {
+    // Ahí no es un fallo reparable sino una carencia: mandar al juez a
+    // "arreglarlo" es mandarlo a inventar una prenda. Eso se dice con
+    // honestidad en la explicación, no se repara.
+    const v = revisarEjecucion(looksito, { clima: "frio", closet: looksito });
+    expect(v.find((x) => x.regla === "frio-sin-abrigo")).toBeUndefined();
+  });
+
+  it("no dice nada en templado ni en calor", () => {
+    const closet = [...looksito, p("Abrigo de lana marino", "#1F2A44")];
+    for (const clima of ["templado", "calor"] as const) {
+      expect(
+        revisarEjecucion(looksito, { clima, closet }).find(
+          (x) => x.regla === "frio-sin-abrigo"
+        ),
+        clima
+      ).toBeUndefined();
+    }
+  });
+
+  it("el look que ya trae abrigo pasa limpio", () => {
+    const conAbrigo = [...looksito, p("Abrigo de lana marino", "#1F2A44")];
+    const v = revisarEjecucion(conAbrigo, { clima: "frio", closet: conAbrigo });
+    expect(v.find((x) => x.regla === "frio-sin-abrigo")).toBeUndefined();
+  });
+});

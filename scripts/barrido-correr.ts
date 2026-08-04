@@ -150,8 +150,33 @@ const casos: Caso[] = muestra(N, [
 const resultados: unknown[] = [];
 let hechos = 0;
 
-async function correr(caso: Caso) {
-  // La semilla sale del caso: mismo caso → mismo clóset, siempre.
+// A/B PAREADO (--ab): cada caso corre DOS veces, con la marca de estilo puesta
+// y sin ella, en la misma corrida y con el mismo clóset. Es la única forma de
+// leer el efecto: comparar dos corridas distintas dio 3 casos mejor y 3 peor
+// sobre una muestra común de 6 — o sea, nada. Pareado, el ruido del modelo
+// afecta a los dos brazos por igual.
+const AB = process.argv.includes("--ab");
+
+// El muestreo modular repite combinaciones (con --n=50 salen 18 distintas). En
+// el barrido normal esa repetición da varias muestras del mismo caso, que sirve;
+// en el A/B es gasto doble sin información nueva, así que ahí se deduplican.
+const unicos = AB
+  ? [
+      ...new Map(
+        casos.map((c) => [
+          `${c.perfil}|${c.closet}|${c.clima.id}|${c.ocasion}|${c.paleta}`,
+          c,
+        ])
+      ).values(),
+    ]
+  : casos;
+const tanda: [Caso, boolean][] = AB
+  ? unicos.flatMap((c) => [[c, true] as [Caso, boolean], [c, false] as [Caso, boolean]])
+  : unicos.map((c) => [c, true] as [Caso, boolean]);
+
+async function correr(caso: Caso, marcarEstilo = true) {
+  // La semilla sale del caso: mismo caso → mismo clóset, siempre. En el A/B los
+  // dos brazos comparten clóset a propósito: si cambiara, mediríamos el clóset.
   const items = closetDe(caso.closet, casos.indexOf(caso) * 7919 + 13);
   const tags = tagsDe(caso.perfil);
   const ctx: EngineContext = {
@@ -177,30 +202,39 @@ async function correr(caso: Caso) {
   };
 
   try {
-    const outfits = await generateOutfits(ctx);
+    const outfits = await generateOutfits(ctx, { marcarEstilo });
     for (const o of outfits) {
       const prendas = o.item_ids.map((id) => items.find((i: EngineItem) => i.id === id)).filter(Boolean) as EngineItem[];
       const ejecucion = revisarEjecucion(prendas);
       const veredicto = await juzgar(caso, o, items);
-      resultados.push({ caso, look: o.nombre, prendas: prendas.map((p) => p.attrs.nombre), ejecucion, veredicto });
+      resultados.push({ caso, brazo: marcarEstilo ? "con-marca" : "sin-marca", look: o.nombre, prendas: prendas.map((p) => p.attrs.nombre), ejecucion, veredicto });
     }
   } catch (e) {
-    resultados.push({ caso, error: (e as Error).message });
+    resultados.push({ caso, brazo: marcarEstilo ? "con-marca" : "sin-marca", error: (e as Error).message });
   }
-  console.log(`  ${++hechos}/${casos.length}  ${caso.perfil}/${caso.closet}/${caso.clima.id}`);
+  console.log(
+    `  ${++hechos}/${tanda.length}  ${caso.perfil}/${caso.closet}/${caso.clima.id}${AB ? ` [${marcarEstilo ? "con" : "sin"} marca]` : ""}`
+  );
 }
 
 // Envuelto en main(): el archivo se compila a CommonJS y ahí el await de nivel
 // superior no existe.
 async function main() {
 catalogo = await cargarCatalogo("hombre");
-console.log(`Barrido: ${casos.length} casos, concurrencia ${CONC}\n`);
-for (let i = 0; i < casos.length; i += CONC) {
-  await Promise.all(casos.slice(i, i + CONC).map(correr));
+// En A/B cada caso entra dos veces (con y sin marca) y se barajan intercalados
+// para que los dos brazos vean las mismas condiciones de la API.
+console.log(
+  `Barrido: ${unicos.length} casos${AB ? " × 2 brazos (A/B pareado)" : ""} = ${tanda.length} corridas, concurrencia ${CONC}\n`
+);
+for (let i = 0; i < tanda.length; i += CONC) {
+  await Promise.all(tanda.slice(i, i + CONC).map(([c, m]) => correr(c, m)));
 }
 
 mkdirSync("docs_para_claude/barrido", { recursive: true });
-writeFileSync("docs_para_claude/barrido/ultimo.json", JSON.stringify(resultados, null, 2));
+// El A/B escribe a su propio archivo: sobreescribir ultimo.json dejaría la
+// revisión de Roberto apuntando a looks que ya no son los que él vio.
+const SALIDA = AB ? "docs_para_claude/barrido/ab.json" : "docs_para_claude/barrido/ultimo.json";
+writeFileSync(SALIDA, JSON.stringify(resultados, null, 2));
 
 // ── Resumen por FRECUENCIA ───────────────────────────────────────────────────
 // El punto entero del barrido: "esto pasa 8 de 50 veces" en vez de "vi uno feo".
@@ -227,7 +261,7 @@ console.log("FALLOS POR FRECUENCIA");
   .forEach(([k, n]) =>
     console.log(`  ${String(n).padStart(3)}  (${Math.round((n / looks) * 100)}%)  ${k}`)
   );
-console.log("\n→ docs_para_claude/barrido/ultimo.json");
+console.log(`\n→ ${SALIDA}`);
 }
 
 main();

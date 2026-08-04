@@ -16,7 +16,9 @@ export type GeneratedOutfit = {
 // Una llamada al modelo → 2-3 outfits validados. El schema con enum de ids
 // garantiza prendas reales; aquí validamos además forma y cantidad.
 export async function generateOutfits(
-  ctx: EngineContext
+  ctx: EngineContext,
+  // Solo para el A/B del arnés (ver buildUserMessage). Producción no lo pasa.
+  opciones: { marcarEstilo?: boolean } = {}
 ): Promise<GeneratedOutfit[]> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ENGINE_NOT_CONNECTED");
@@ -31,7 +33,7 @@ export async function generateOutfits(
     // tokens antes de los outfits; 2048 quedaba justo.
     max_tokens: 3072,
     system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: buildUserMessage(ctx) }],
+    messages: [{ role: "user", content: buildUserMessage(ctx, opciones) }],
     output_config: {
       format: {
         type: "json_schema",

@@ -1,6 +1,16 @@
 import type { Weather } from "@/lib/weather";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
-import { recetasParaTags, recetasParaPrompt } from "@/lib/engine/recetario";
+import {
+  recetasParaTags,
+  recetasParaPrompt,
+  bandaDeClima,
+  type Receta,
+} from "@/lib/engine/recetario";
+import {
+  coberturaDeReceta,
+  bloqueCobertura,
+  familiasPorPrenda,
+} from "@/lib/engine/cobertura";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import {
   type TasteSignal,
@@ -136,7 +146,18 @@ import {
 // barrido NO demostró que mejore — la línea base real era 11%, no el 32% que
 // midió una versión rota del arnés, y el cambio movió 2 casos a 1 de 18. Se
 // queda por ser correcto de forma, no por evidencia.
-export const PROMPT_VERSION = "v31";
+// v32 (2026-08-04): el clóset marcado por familia + aviso de cobertura. Origen:
+// reconstruyendo los 50 clósets del barrido resultó que en 48 de 50 el motor SÍ
+// tenía prendas de la familia a mano — en los casos preppy tenía polo, chino y
+// mocasín y armó "camiseta marino + pantalón negro + tenis skate". No le
+// faltaban ingredientes: recibía 45 prendas en lista plana y la receta en prosa,
+// y tenía que emparejarlas de memoria mientras cuadraba clima, colorimetría y
+// ocasión. Ahora el emparejamiento va hecho (es aritmética de vocabulario, no
+// criterio) y va también al juez, para que no "repare" quitando justo la prenda
+// del estilo. Y para los 2 de 50 que de verdad no tenían con qué, el prompt lo
+// dice y pide honestidad en la explicación en vez de bautizar el look con el
+// nombre de un estilo que no es (ver lib/engine/cobertura.ts).
+export const PROMPT_VERSION = "v32";
 
 export type EngineItem = {
   id: string;
@@ -445,11 +466,19 @@ export function contextBlock(ctx: EngineContext): string[] {
     if (ctx.gender) {
       // El clima entra a la SELECCIÓN de fórmulas, no solo al prompt: mandar
       // las 15 fórmulas revueltas es como no mandar clima (v29).
-      const receta = recetasParaPrompt(
-        recetasParaTags(ctx.tasteTags, ctx.gender),
-        ctx.weather
-      );
+      const recetas = recetasParaTags(ctx.tasteTags, ctx.gender);
+      const receta = recetasParaPrompt(recetas, ctx.weather);
       if (receta) lines.push(receta);
+      // Y si su clóset NO da para esa receta, decirlo ANTES de que el modelo
+      // intente cumplirla: sin esto arma algo, lo bautiza con el nombre del
+      // estilo y la persona nota la mentira antes que nosotros. Solo la receta
+      // principal — avisar de las dos es pedirle disculpas por partida doble.
+      if (recetas[0]) {
+        const aviso = bloqueCobertura(
+          coberturaDeReceta(recetas[0], ctx.items, bandaDeClima(ctx.weather))
+        );
+        if (aviso) lines.push(aviso);
+      }
     }
   }
   // Va PEGADO a la receta: casi todas dicen "manda la preferencia de la persona"
@@ -563,17 +592,73 @@ export function orderClosetForEngine(
   return out;
 }
 
+/**
+ * Las recetas que aplican a esta persona. Una sola definición para que el
+ * contexto, el clóset y la cobertura hablen de las MISMAS recetas: calculadas
+ * por separado en cada sitio, un cambio en el tope o en el puntaje las
+ * desincronizaría en silencio y el clóset acabaría marcado con una familia que
+ * el prompt no explicó.
+ */
+export function recetasDelContexto(ctx: EngineContext): Receta[] {
+  if (!ctx.gender || ctx.tasteTags.length === 0) return [];
+  return recetasParaTags(ctx.tasteTags, ctx.gender);
+}
+
 // El clóset como bloque (ids + descripción con hex).
-export function closetBlock(items: EngineItem[]): string[] {
+//
+// LA MARCA DE FAMILIA
+// Cada prenda que pertenece al vocabulario de su estilo va marcada. El motor
+// recibe hasta 45 prendas sueltas y la receta en prosa; emparejarlas de memoria
+// es donde se cae (ver familiasPorPrenda). Marcarlas le ahorra ese trabajo y le
+// deja el que sí es suyo: elegir entre las que sirven.
+//
+// Redactado como DATO y no como orden a propósito: "usa estas" convertiría el
+// motor en un filtro y le quitaría el clima, la ocasión y la colorimetría, que
+// mandan por encima de la receta en la escalera.
+//
+// Y dice "tipo de prenda de" y no "de su estilo" por una razón que se vio al
+// mirar el prompt armado: el emparejamiento es por TIPO, así que unos tenis
+// skate negros salen marcados para el preppy —cuya receta los veta por nombre—.
+// "De su estilo" leería como aprobación de esa prenda concreta y le daría al
+// motor una autoridad que el dato no tiene. Nombrar la marca por lo que de
+// verdad es deja que la receta siga mandando sobre ella.
+export function closetBlock(items: EngineItem[], recetas: Receta[] = []): string[] {
+  const familias = recetas.length ? familiasPorPrenda(items, recetas) : new Map();
   const lines = ["Su clóset (usa SOLO estos ids):"];
   for (const item of items) {
-    lines.push(`- ${item.id}: ${describeItem(item)}`);
+    const suyas = familias.get(item.id);
+    const marca = suyas?.length ? `  ← tipo de prenda de: ${suyas.join(" / ")}` : "";
+    lines.push(`- ${item.id}: ${describeItem(item)}${marca}`);
+  }
+  if (familias.size > 0) {
+    lines.push(
+      "",
+      "Las prendas marcadas son las que pertenecen al VOCABULARIO DE PRENDAS de la familia que le gusta: ya están cruzadas contra su receta, no lo vuelvas a hacer de memoria. Constrúyele el look con ellas cuando el clima, la ocasión y su colorimetría lo permitan; un look armado ENTERO con prendas sin marcar suele ser señal de que te fuiste de su estilo sin querer.",
+      "OJO con qué significa la marca: es por TIPO de prenda, no por color ni por acabado. Que unos tenis estén marcados no quiere decir que ESOS tenis sirvan — si la receta veta el calzado voluminoso o de color, la receta manda sobre la marca. Y una prenda sin marcar puede entrar perfectamente si el look la pide (un neutro que resuelve, la capa que el día exige)."
+    );
   }
   return lines;
 }
 
-export function buildUserMessage(ctx: EngineContext): string {
-  const lines: string[] = [...contextBlock(ctx), "", ...closetBlock(ctx.items)];
+/**
+ * `marcarEstilo: false` apaga la marca de familia en el clóset.
+ *
+ * Existe SOLO para el A/B del arnés (scripts/barrido-correr.ts --ab): correr el
+ * mismo caso con y sin la marca, en la misma corrida y contra el mismo modelo,
+ * es la única forma de saber si sirve sin que el ruido del modelo se coma la
+ * señal. Comparar dos corridas distintas ya nos dio un resultado ilegible.
+ * Producción nunca lo pasa.
+ */
+export function buildUserMessage(
+  ctx: EngineContext,
+  opciones: { marcarEstilo?: boolean } = {}
+): string {
+  const recetas = opciones.marcarEstilo === false ? [] : recetasDelContexto(ctx);
+  const lines: string[] = [
+    ...contextBlock(ctx),
+    "",
+    ...closetBlock(ctx.items, recetas),
+  ];
 
   if (ctx.recentCombos.length > 0) {
     lines.push("", "Combinaciones recientes (NO las repitas exactas):");

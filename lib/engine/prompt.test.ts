@@ -148,6 +148,8 @@ import {
   type EngineContext,
 } from "./prompt";
 import { CRITIC_SYSTEM_TEXT } from "./critic";
+import { closetBlock } from "./prompt";
+import { RECETAS_HOMBRE } from "./recetario";
 import { EMPTY_TASTE_SIGNAL } from "./taste-signal";
 
 // Contexto mínimo: todo apagado, para probar cada línea nueva por separado.
@@ -435,5 +437,56 @@ describe("piso de formalidad (v31)", () => {
     const p = pisoDeFormalidad(ctx({ objective: "evento" }));
     expect(p).toContain("Si el clóset NO da para eso");
     expect(p).toContain("Jamás inventes prendas");
+  });
+});
+
+describe("closetBlock — la marca de estilo (v32)", () => {
+  const preppy = RECETAS_HOMBRE.find((r) => r.familia === "preppy")!;
+  const items = [
+    { id: "a", attrs: { nombre: "Polo marino" } },
+    { id: "b", attrs: { nombre: "Chinos beige" } },
+    { id: "c", attrs: { nombre: "Hoodie gris" } },
+  ];
+
+  it("marca las prendas del vocabulario de su familia y deja el resto sin marcar", () => {
+    // El motor tenía polo y chino a mano y armó camiseta + pantalón negro +
+    // tenis skate para alguien preppy: no le faltaban ingredientes, no los
+    // reconoció. La marca le entrega hecho ese emparejamiento.
+    const l = closetBlock(items, [preppy]).join("\n");
+    expect(l).toMatch(/a: Polo marino.*tipo de prenda de: Preppy/);
+    expect(l).toMatch(/b: Chinos beige.*tipo de prenda de: Preppy/);
+    expect(l).toMatch(/c: Hoodie gris$/m);
+  });
+
+  it("sin recetas el clóset sale idéntico a como salía antes", () => {
+    // Mujer no tiene recetas destiladas todavía: su prompt no debe cambiar ni
+    // ganar una explicación de marcas que nunca aparecen.
+    const l = closetBlock(items).join("\n");
+    expect(l).not.toContain("tipo de prenda de:");
+    expect(l).not.toContain("marcadas");
+  });
+
+  it("la marca informa, no ordena: deja entrar prendas sin marcar", () => {
+    // Redactarla como filtro le quitaría al motor el clima, la ocasión y la
+    // colorimetría, que mandan sobre la receta en la escalera de prioridades.
+    const l = closetBlock(items, [preppy]).join("\n");
+    expect(l).toContain("puede entrar perfectamente si el look la pide");
+  });
+
+  it("avisa que la marca es por tipo, no aprobación de esa prenda", () => {
+    // Se vio mirando el prompt armado: unos tenis skate negros salen marcados
+    // para el preppy, cuya receta los veta por nombre. Sin este aviso la marca
+    // le daría al motor una autoridad que el emparejamiento no tiene.
+    const l = closetBlock(items, [preppy]).join("\n");
+    expect(l).toContain("por TIPO de prenda, no por color");
+    expect(l).toContain("la receta manda sobre la marca");
+  });
+
+  it("no marca lo que no es ropa de calle", () => {
+    const l = closetBlock(
+      [{ id: "x", attrs: { nombre: "Traje de baño marino" } }],
+      [preppy]
+    ).join("\n");
+    expect(l).not.toContain("tipo de prenda de:");
   });
 });

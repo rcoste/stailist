@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.84.0] - 2026-08-04
+
+### Added
+
+- **La app ya sabe cuáles de tus prendas son de tu estilo, y te arma el look con ésas.** Antes le pasaba tu clóset entero como una lista suelta —hasta 45 prendas— junto con la descripción de tu estilo en prosa, y tenía que cruzarlas de memoria mientras cuadraba el clima, tus colores y la ocasión. Ahí se caía: probándolo, a alguien que le gusta el preppy le armó camiseta marino con pantalón negro y tenis de skate **teniendo polo, chinos y mocasines en el clóset**. No le faltaban prendas: no las reconocía como suyas. Ahora ese cruce se hace por código antes de pedirle nada, y el director de estilo ve las mismas marcas para no "arreglar" el look quitando justo la prenda que lo hacía tuyo.
+- **Y si tu clóset de plano no da para ese estilo, te lo dice.** Con lo que tengas se arma el mejor look posible, pero sin bautizarlo con el nombre de un estilo que no es, y diciéndote qué prenda te abriría esa puerta.
+- **Ya no te arma un smoking a medias.** Un smoking es un conjunto con código cerrado —su pantalón, camisa blanca, moño—, no un saco negro elegante. Salía saco de smoking con camisa azul, corbata burdeos y pantalón de vestir gris. Ahora, o se completa con lo que hay, o el smoking se queda fuera y el look formal se arma normal.
+- **Ya no te manda a 8°C sin abrigo.** Si hace frío y el look no lleva capa **teniendo tú una en el clóset**, se corrige. Si no tienes ninguna, no se inventa: eso se dice, no se repara.
+
+### Changed
+
+- Los estilos ya no se leen como reglamento. La descripción de tu estilo dice qué **tipo** de prenda es de esa familia, no aprueba una prenda concreta: si la receta veta el calzado voluminoso, la receta manda sobre la marca.
+
 ## [0.2.83.0] - 2026-08-04
 
 ### Added
