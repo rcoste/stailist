@@ -194,8 +194,18 @@ export default async function AdminAb() {
         <h1 className="text-lg font-semibold text-ink">A/B a ciegas: ¿qué versión arma mejor?</h1>
         <p className="text-sm leading-relaxed text-muted">
           Cada fila es <span className="text-ink">la misma persona, el mismo clóset y el mismo día</span>,
-          resuelto por dos versiones del motor. Una lleva las recetas de estilo
-          destiladas de las 616 fotos; la otra no. Todo lo demás es idéntico.
+          resuelto por <span className="text-ink">el motor de julio</span> y por{" "}
+          <span className="text-ink">el de hoy</span>. Julio es el que tiene la única
+          señal humana que existe: 155 looks generados, 13 👍 y 12 “me lo puse”. Lo
+          de esta semana —las recetas destiladas de 616 fotos, la marca de prendas
+          por estilo, el orden de prioridades y el piso de formalidad— no lo ha
+          visto nadie.
+        </p>
+        <p className="text-sm leading-relaxed text-muted">
+          Todo lo demás es idéntico: mismo perfil, mismas 127 prendas y en el mismo
+          orden, mismo clima, mismo modelo. Hasta el arreglo del bug de hoy —que el
+          motor no sabía si una prenda era un pantalón o un saco— va en los dos
+          lados, porque era un bug y no parte de la forma nueva de armar.
         </p>
         <p className="text-sm leading-relaxed text-muted">
           <span className="text-ink">No te digo cuál es cuál</span>, y el lado se
@@ -204,8 +214,10 @@ export default async function AdminAb() {
           también es respuesta útil: si salen muchos empates, el cambio no se nota.
         </p>
         <p className="text-xs text-muted">
-          {pares.length} pares · {juzgados} juzgados. De esto depende si seguimos
-          por este camino o volvemos al motor de julio.
+          {pares.length} pares · {juzgados} juzgados. La pregunta que decide:{" "}
+          <span className="text-ink">
+            ¿sirvió de algo la semana de destilar, o julio ya lo hacía igual de bien?
+          </span>
         </p>
       </div>
 

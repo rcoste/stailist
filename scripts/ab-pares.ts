@@ -39,7 +39,7 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   }
 }
 
-const ROBERTO = process.argv.includes("--roberto");
+const ROBERTO = process.argv.includes("--roberto") || process.argv.includes("--julio");
 
 type Fila = {
   caso: Record<string, unknown>;
@@ -69,9 +69,14 @@ const claveCaso = (f: Fila) =>
     : [f.caso.perfil, f.caso.closet, (f.caso.clima as { id: string })?.id, f.caso.ocasion, f.caso.paleta].join("|");
 
 async function main() {
-  const archivo = ROBERTO
-    ? "docs_para_claude/barrido/ab-roberto.json"
-    : "docs_para_claude/barrido/ab-recetario.json";
+  // --julio: el A/B de verdad (motor de julio contra el de hoy). --roberto: el
+  // anterior, que comparaba hoy contra hoy-sin-recetario y por eso no contestaba
+  // la pregunta. El sintético queda de default.
+  const archivo = process.argv.includes("--julio")
+    ? "docs_para_claude/barrido/ab-julio-vs-hoy.json"
+    : ROBERTO
+      ? "docs_para_claude/barrido/ab-roberto.json"
+      : "docs_para_claude/barrido/ab-recetario.json";
   const todo = JSON.parse(readFileSync(archivo, "utf8")) as Fila[];
 
   const s = createClient(
@@ -90,7 +95,7 @@ async function main() {
   }
 
   const casos = [...new Set(todo.map(claveCaso))];
-  const r = rng(20260804);
+  const r = rng(20260804 + (process.argv.includes("--julio") ? 77 : 0));
   const pares: unknown[] = [];
   const claves: unknown[] = [];
 
