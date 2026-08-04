@@ -60,6 +60,12 @@ const AVATAR = {
 // [id, familia|null, modelo, escena, pose, outfit]
 // outfit: null            = su carta v3 (la ropa ya servía, solo cambia la escena)
 //         "archivo.jpg"   = foto nueva en REFS/
+//         {foto, ajuste}  = esa foto PERO con un cambio puntual ("el chaleco va
+//           azul marino, no olivo"). Existe para no tener que salir a buscar
+//           otra referencia cuando la que hay solo falla en un detalle, y para
+//           que ese detalle quede escrito: si se regenerara el deck desde cero,
+//           la carta vuelve a salir igual. Un solo cambio por carta — dos ya no
+//           se distinguen de describir el outfit entero.
 //         {texto: "..."}  = el outfit descrito, sin foto. Es el peor de los tres
 //           y solo se usa cuando no hay imagen que pasar: sin referencia visual
 //           el generador rellena la proporción y la caída con lo más promedio
@@ -135,7 +141,12 @@ const CARTAS = [
   // ── deportivo ─────────────────────────────────────────────────────────────
   ["athleisure", "deportivo", "m2",
     "A park path at the edge of the city: asphalt track, trees and a running lane, bright even morning light.",
-    "Caught mid-step jogging lightly, relaxed, looking ahead past the camera.", "athleisure.jpg"],
+    // Camina, NO corre: athleisure es ropa atlética usada fuera del deporte —
+    // si sale trotando ya es ropa deportiva y la carta mide otra cosa.
+    // El chaleco pasa a marino porque olivo lo dejaba pegado a gorpcore y
+    // utility, sus dos vecinas en el deck.
+    "Caught mid-step walking at an easy pace, hands relaxed, looking ahead past the camera.",
+    { foto: "athleisure.jpg", ajuste: "the puffer gilet is NAVY BLUE, not olive green" }],
   ["gorpcore", "deportivo", "m1",
     "A concrete stair and metal railing beside an elevated road, wet ground, cold overcast light, city blurred behind.",
     "Standing on the stair three-quarter, one hand on the sling strap, looking away to the side.", "gorpcore.jpg"],
@@ -197,7 +208,7 @@ const SIN_MARCAS =
   "CRITICAL: any graphic printed on a garment must be an INVENTED, abstract, non-legible design. Never reproduce a real brand name, band logo or trademark, " +
   "even if one is visible in the reference. No readable text anywhere in the image. No watermark.";
 
-function prompt(familia, escena, pose, textoOutfit = null) {
+function prompt(familia, escena, pose, textoOutfit = null, ajuste = null) {
   const r = familia ? RECETAS[familia] : null;
   const receta = r
     ? `HOW THIS STYLE IS ACTUALLY WORN (distilled from real street photography — follow this for the execution): ` +
@@ -207,7 +218,9 @@ function prompt(familia, escena, pose, textoOutfit = null) {
     : "";
   const queLleva = textoOutfit
     ? `He is wearing: ${textoOutfit}. `
-    : `${OUTFIT_REF} `;
+    // El ajuste va DESPUÉS y en mayúsculas: la instrucción tiene que ganarle a
+    // lo que se ve en la foto, que es la fuente más fuerte para el generador.
+    : `${OUTFIT_REF} ${ajuste ? `ONE DELIBERATE CHANGE from the reference outfit: ${ajuste}. Everything else stays exactly as in the reference. ` : ""}`;
   return (
     `Candid full-body street-style fashion photograph of a young man, 20-32 years old. ${IDENTIDAD} ${queLleva}${receta}` +
     `POSE: ${pose} SCENE: ${escena} ${FRAMING} ${EXPRESSION} ${ANCLA} ` +
@@ -217,14 +230,17 @@ function prompt(familia, escena, pose, textoOutfit = null) {
 
 async function gen(id, familia, modelo, escena, pose, outfit) {
   const salida = `public/looks/${id}-hombre.png`;
-  const porTexto = outfit && typeof outfit === "object" && outfit.texto;
+  const obj = outfit && typeof outfit === "object" ? outfit : null;
+  const porTexto = obj?.texto ?? null;
+  const archivo = obj?.foto ?? (typeof outfit === "string" ? outfit : null);
   // La foto del outfit: la carta v3 respaldada, o la referencia nueva.
-  const refOutfit = porTexto ? null : outfit ? `${REFS}/${outfit}` : `${RESPALDO}/${id}-hombre.png`;
+  const refOutfit = porTexto ? null : archivo ? `${REFS}/${archivo}` : `${RESPALDO}/${id}-hombre.png`;
   if (refOutfit && !existsSync(refOutfit)) return console.error(`FALTA referencia: ${refOutfit}`);
   if (!existsSync(AVATAR[modelo])) return console.error(`FALTA avatar: ${AVATAR[modelo]}`);
 
-  const text = prompt(familia, escena, pose, porTexto || null);
-  if (DRY) return console.log(`— ${id} (${modelo}, ${porTexto ? "texto" : outfit ?? "carta v3"})\n${text.slice(0, 260)}…\n`);
+  const text = prompt(familia, escena, pose, porTexto, obj?.ajuste ?? null);
+  const etiqueta = porTexto ? "texto" : `${archivo ?? "carta v3"}${obj?.ajuste ? " +ajuste" : ""}`;
+  if (DRY) return console.log(`— ${id} (${modelo}, ${etiqueta})\n${text.slice(0, 260)}…\n`);
 
   const mime = (p) => (p.endsWith(".png") ? "image/png" : "image/jpeg");
   const parts = [
