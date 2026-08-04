@@ -43,9 +43,20 @@ export default async function AdminRecetas() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {f.reconstruccion.map((url, i) => (
                 <figure key={url} className="flex flex-col gap-1">
-                  <div className="overflow-hidden rounded-xl border border-line bg-tile">
+                  {/* aspect-[3/4] reserva el hueco antes de que baje la foto:
+                      sin eso, cada imagen que aterriza empuja el contenido y la
+                      página salta bajo el cursor mientras se lee.
+                      loading lazy porque son 30 fotos y solo se ven 3 a la vez:
+                      cargarlas todas de golpe era lo que hacía la espera. */}
+                  <div className="aspect-[3/4] overflow-hidden rounded-xl border border-line bg-tile">
                     {/* eslint-disable-next-line @next/next/no-img-element -- URL firmada de Storage */}
-                    <img src={url} alt={`${f.familia} ${i + 1}`} className="w-full" />
+                    <img
+                      src={url}
+                      alt={`${f.familia} ${i + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <figcaption className="text-xs text-muted">
                     {i === 2 && !tieneFrio ? "templado" : CLIMAS[i]}
