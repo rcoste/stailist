@@ -19,32 +19,27 @@ export async function resumenPorEstilo(
   genero: "hombre" | "mujer"
 ): Promise<{ estilo: string; total: number; juzgadas: number; sirven: number }[]> {
   const supabase = await createClient();
-  // range explícito: Supabase corta en 1000 filas SIN avisar, y esta consulta
-  // trae todas las filas para contarlas. Al pasar la tabla de mil, las familias
-  // cuyas filas caían después del corte desaparecían del panel — thrift-vintage
-  // se esfumó con 20 pendientes y el panel decía "no queda nada por curar".
+  // Agregado en la BASE (vista referencias_resumen, 0101), no en JS: la versión
+  // que traía todas las filas y contaba aquí murió al llegar la tabla a 1,070 —
+  // Supabase corta en 1,000 filas y es un límite del servidor que ni un range()
+  // explícito pasa. Dos familias desaparecieron del panel con fotos pendientes
+  // adentro mientras la pantalla decía "no queda nada por curar".
   const { data } = await supabase
-    .from("referencias")
-    .select("estilo, sirve")
+    .from("referencias_resumen")
+    .select("estilo, total, juzgadas, sirven")
     .eq("genero", genero)
-    .range(0, 49999);
+    // Los que empiezan con "_" son carpetas de tránsito, no estilos: lo que el
+    // clasificador no pudo repartir no es curable, y mostrarlo sería inventar
+    // un estilo que no existe.
+    .not("estilo", "like", "\\_%")
+    .order("estilo");
 
-  const porEstilo = new Map<string, { total: number; juzgadas: number; sirven: number }>();
-  for (const r of data ?? []) {
-    // Los que empiezan con "_" son carpetas de tránsito, no estilos: la cosecha
-    // de clima llega sin estilo asignado y un clasificador la reparte después
-    // (scripts/clasificar-estilo.mjs). Lo que no se pudo repartir se queda ahí y
-    // no es curable — mostrarlo sería inventar un estilo que no existe.
-    if (r.estilo.startsWith("_")) continue;
-    const acc = porEstilo.get(r.estilo) ?? { total: 0, juzgadas: 0, sirven: 0 };
-    acc.total++;
-    if (r.sirve !== null) acc.juzgadas++;
-    if (r.sirve === true) acc.sirven++;
-    porEstilo.set(r.estilo, acc);
-  }
-  return [...porEstilo.entries()]
-    .map(([estilo, v]) => ({ estilo, ...v }))
-    .sort((a, b) => a.estilo.localeCompare(b.estilo));
+  return (data ?? []).map((r) => ({
+    estilo: r.estilo,
+    total: r.total,
+    juzgadas: r.juzgadas,
+    sirven: r.sirven,
+  }));
 }
 
 /**
