@@ -119,7 +119,15 @@ import {
 // Ahora el prompt solo lleva las fórmulas de la banda del día (frío/templado/
 // calor), en frío añade cómo abriga el estilo, y lleva la paleta de la familia
 // con la colorimetría personal por encima. Ver lib/engine/recetario.ts.
-export const PROMPT_VERSION = "v29";
+// v30 (2026-08-04): escalera de prioridades. Cada señal decía a quién le ganaba
+// ELLA —"su colorimetría manda sobre la paleta del estilo", "sus palabras
+// mandan sobre los tags"— pero nadie declaraba el orden completo: eran pares
+// sueltos. Donde dos señales chocaban sin par escrito (la receta contra la
+// ocasión, la receta contra el feedback) el modelo decidía solo y decidía
+// distinto cada vez. Ahora el orden va entero y PRIMERO, en el prompt del
+// generador y en el del juez — si solo lo tuviera uno, el juez "repararía"
+// decisiones correctas del otro.
+export const PROMPT_VERSION = "v30";
 
 export type EngineItem = {
   id: string;
@@ -180,7 +188,39 @@ export type EngineContext = {
 // lista de compras — pedir algo que no se vende la vuelve inservible.
 export const REGLA_PRENDAS_REALES = `PRENDAS QUE DE VERDAD EXISTEN (regla dura): cada pieza tiene que ser un PRODUCTO que la persona pueda ir a comprar tal cual. Antes de escribir un nombre, pregúntate si esa prenda existe en una tienda normal; si dudas, usa la versión canónica de esa tela o de esa prenda. NO inventes combinaciones tela+prenda que no se hacen: el lino no se teje en punto (hay camisa, pantalón, short y saco de lino — NO playeras, camisetas ni suéteres de lino), y una prenda cuyo nombre YA implica su tela no admite otra (unos jeans son de mezclilla; un traje de baño no es de lana). Prefiere siempre el nombre con el que esa prenda se vende de verdad.`;
 
+/**
+ * El orden en que mandan las señales cuando chocan.
+ *
+ * POR QUÉ HACE FALTA
+ * Cada señal del prompt decía a quién le gana ELLA —"su colorimetría manda
+ * sobre la paleta del estilo", "sus palabras mandan sobre los tags"— pero
+ * nadie declaraba el orden completo. Eran pares sueltos, no una escalera: donde
+ * dos señales chocaban y su par no estaba escrito (la receta contra la ocasión,
+ * la receta contra el feedback aprendido), el modelo decidía solo y decidía
+ * distinto cada vez.
+ *
+ * Se vio en un look real: receta preppy + ocasión de coctel + colorimetría de
+ * invierno produjeron un marino formal que no era ni preppy ni un traje de
+ * verdad. Cada señal jaló para su lado y el resultado no fue de nadie.
+ *
+ * Va PRIMERO en el prompt, antes que cualquier regla concreta, porque es el
+ * marco con el que se leen todas las demás.
+ */
+export const ESCALERA_DE_PRIORIDADES = `ORDEN DE MANDO (cuando dos señales se contradigan, gana la de arriba):
+1. REGLAS DURAS — vetos, género, edad y la prenda ancla del día. No se rompen nunca, por ningún motivo.
+2. CLIMA Y OCASIÓN — la física del día. Un look correcto para el que se muere de frío o va mal vestido al evento ya falló.
+3. COLORIMETRÍA — qué color va cerca de su cara. Manda sobre la paleta del estilo y sobre cualquier referencia.
+4. SUS PALABRAS — lo que ella misma escribió de su estilo. Es la señal más directa de quién es.
+5. RECETA DEL ESTILO — cómo se lleva su familia: silueta, combinaciones, lo que la arruina. Manda sobre el resto salvo lo de arriba.
+6. CÓMO LE GUSTA QUE LE QUEDE — recto u holgado, cuando la receta admita las dos.
+7. LO QUE HA VOTADO — inclínate hacia lo que le gustó, pero es tendencia, no regla.
+8. SU CUERPO — solo para desempatar entre looks parejos. Jamás motivo para descartar uno.
+
+Cómo usarlo: NO es permiso para ignorar lo de abajo. Casi siempre todo cabe junto. La escalera solo decide cuando de verdad se contradicen, y en ese caso cedes lo de abajo, no lo de arriba. Si cediste algo del 4 al 8, compénsalo con el resto del look en vez de dejarlo a medias.`;
+
 export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga cool que se viste increíble y le arma looks a su gente con CARIÑO y ojo de experta.
+
+${ESCALERA_DE_PRIORIDADES}
 
 Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 2-3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.
 

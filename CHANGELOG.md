@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.81.0] - 2026-08-04
+
+### Changed
+
+- **Cuando dos cosas se contradicen, la app ya sabe cuál manda.** Antes cada regla decía a quién le ganaba ella —tu colorimetría le gana a la paleta del estilo, tus palabras le ganan a tus gustos del swipe— pero nunca estaba escrito el orden completo, así que cuando chocaban dos que no se mencionaban entre sí (el estilo contra la ocasión, por ejemplo) el resultado salía distinto cada vez. Ahora el orden es uno solo y explícito: primero lo que nunca se rompe (tus vetos, tu género, la prenda que fijaste), luego el clima y la ocasión, luego los colores que te favorecen, luego lo que tú escribiste de tu estilo, y de ahí para abajo. Lo usan igual la stylist que arma el look y el director de estilo que lo revisa — antes tenían criterios distintos y el segundo podía deshacer una buena decisión del primero.
+
 ## [0.2.80.0] - 2026-08-04
 
 ### Added

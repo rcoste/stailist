@@ -141,7 +141,12 @@ describe("orderClosetForEngine — anti sesgo posicional", () => {
   });
 });
 
-import { contextBlock, type EngineContext } from "./prompt";
+import {
+  contextBlock,
+  ESCALERA_DE_PRIORIDADES,
+  type EngineContext,
+} from "./prompt";
+import { CRITIC_SYSTEM_TEXT } from "./critic";
 import { EMPTY_TASTE_SIGNAL } from "./taste-signal";
 
 // Contexto mínimo: todo apagado, para probar cada línea nueva por separado.
@@ -336,5 +341,48 @@ describe("contextBlock — preferencia de corte (v29)", () => {
     });
     expect(lines.some((l) => l.includes("Su cuerpo (orientación de styling"))).toBe(true);
     expect(lines.some((l) => l.includes("Cómo le gusta que le quede"))).toBe(true);
+  });
+});
+
+describe("escalera de prioridades (v30)", () => {
+  // El bug que la motiva NO fue una regla ausente, fue una regla sin rango:
+  // "su colorimetría manda sobre la paleta del estilo" y "sus palabras mandan
+  // sobre los tags" estaban escritas, pero eran pares sueltos. Donde dos
+  // señales chocaban sin par declarado —la receta contra la ocasión— el modelo
+  // decidía solo, y decidía distinto cada vez.
+  it("declara las ocho señales en orden", () => {
+    const orden = [
+      "REGLAS DURAS",
+      "CLIMA Y OCASIÓN",
+      "COLORIMETRÍA",
+      "SUS PALABRAS",
+      "RECETA DEL ESTILO",
+      "CÓMO LE GUSTA QUE LE QUEDE",
+      "LO QUE HA VOTADO",
+      "SU CUERPO",
+    ];
+    let anterior = -1;
+    for (const señal of orden) {
+      const pos = ESCALERA_DE_PRIORIDADES.indexOf(señal);
+      expect(pos, `falta "${señal}" en la escalera`).toBeGreaterThan(-1);
+      expect(pos, `"${señal}" está fuera de orden`).toBeGreaterThan(anterior);
+      anterior = pos;
+    }
+  });
+
+  it("aclara que no es permiso para ignorar lo de abajo", () => {
+    // Sin esta línea la escalera se lee como "cumple 1 y olvídate del resto", y
+    // el motor dejaría de intentar que todo quepa junto — que es lo que pasa
+    // casi siempre.
+    expect(ESCALERA_DE_PRIORIDADES).toContain("NO es permiso para ignorar");
+    expect(ESCALERA_DE_PRIORIDADES).toContain("solo decide cuando de verdad se contradicen");
+  });
+
+  it("va en el prompt del generador Y en el del juez", () => {
+    // Si solo la tuviera el generador, el juez repararía con otro orden de
+    // prioridades y desharía decisiones correctas: cambiaría el top elegido por
+    // colorimetría porque a él le pesó más la receta.
+    expect(SYSTEM_PROMPT).toContain(ESCALERA_DE_PRIORIDADES);
+    expect(CRITIC_SYSTEM_TEXT).toContain(ESCALERA_DE_PRIORIDADES);
   });
 });

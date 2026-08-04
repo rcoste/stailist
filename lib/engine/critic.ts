@@ -1,6 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { buildCriticSchema } from "./schema";
-import { contextBlock, closetBlock, type EngineContext } from "./prompt";
+import {
+  contextBlock,
+  closetBlock,
+  ESCALERA_DE_PRIORIDADES,
+  type EngineContext,
+} from "./prompt";
 import { bloqueEjecucion } from "./reglas-ejecucion";
 import type { GeneratedOutfit } from "./generate";
 
@@ -29,7 +34,15 @@ export type CriticResult = {
   razon: string | null;
 };
 
-const CRITIC_SYSTEM = `Eres el director de estilo de stailist: revisas UN look que armó la stylist antes de enseñárselo a la clienta. Subes el nivel, no rehaces.
+// La MISMA escalera que usa la stylist para armar. Sin esto el juez trabaja con
+// otro orden de prioridades y "repara" decisiones correctas: cambia el top que
+// la stylist eligió por colorimetría porque a él le pesó más la receta, y el
+// look sale peor después de la revisión que antes.
+export const CRITIC_SYSTEM_TEXT = `Eres el director de estilo de stailist: revisas UN look que armó la stylist antes de enseñárselo a la clienta. Subes el nivel, no rehaces.
+
+${ESCALERA_DE_PRIORIDADES}
+
+Antes de cambiar algo, pregúntate si la stylist cedió a propósito por algo de MÁS arriba en esa escalera. Si fue así, no lo "arregles": lo empeorarías.
 
 Qué haces (elige UN veredicto):
 - "ok": está bien armado y los colores combinan → DÉJALO IGUAL (mismas prendas).
@@ -143,7 +156,7 @@ export async function reviewOutfit(
       // "ok" en silencio (juez deshabilitado sin señal).
       max_tokens: 1536,
       thinking: { type: "disabled" },
-      system: CRITIC_SYSTEM,
+      system: CRITIC_SYSTEM_TEXT,
       messages: [
         {
           role: "user",
