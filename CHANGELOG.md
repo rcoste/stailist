@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.92.0] - 2026-08-04
+
+### Added
+
+- **Prueba interna: enseñarle al motor fotos de looks reales antes de armar.** De la biblioteca de 616 fotos de calle ya curadas se eligen tres que caigan en tu estilo, tu clima, tus colores y cómo te gusta que te quede la ropa, y se le muestran al motor mientras arma. La idea es que una foto no se comprime: se ve la proporción, cómo cae la tela y cuántos colores conviven — todo lo que se pierde al describir un estilo con palabras. Está a prueba a ciegas antes de decidir si entra al producto.
+
 ## [0.2.91.0] - 2026-08-04
 
 ### Fixed

@@ -39,7 +39,7 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   }
 }
 
-const ROBERTO = process.argv.includes("--roberto") || process.argv.includes("--julio");
+const ROBERTO = process.argv.includes("--roberto") || process.argv.includes("--julio") || process.argv.includes("--inspo");
 
 type Fila = {
   caso: Record<string, unknown>;
@@ -72,7 +72,9 @@ async function main() {
   // --julio: el A/B de verdad (motor de julio contra el de hoy). --roberto: el
   // anterior, que comparaba hoy contra hoy-sin-recetario y por eso no contestaba
   // la pregunta. El sintético queda de default.
-  const archivo = process.argv.includes("--julio")
+  const archivo = process.argv.includes("--inspo")
+    ? "docs_para_claude/barrido/ab-inspiracion.json"
+    : process.argv.includes("--julio")
     ? "docs_para_claude/barrido/ab-julio-vs-hoy.json"
     : ROBERTO
       ? "docs_para_claude/barrido/ab-roberto.json"
@@ -95,7 +97,7 @@ async function main() {
   }
 
   const casos = [...new Set(todo.map(claveCaso))];
-  const r = rng(20260804 + (process.argv.includes("--julio") ? 77 : 0));
+  const r = rng(20260804 + (process.argv.includes("--julio") ? 77 : 0) + (process.argv.includes("--inspo") ? 155 : 0));
   const pares: unknown[] = [];
   const claves: unknown[] = [];
 

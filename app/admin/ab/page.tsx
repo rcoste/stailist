@@ -194,18 +194,15 @@ export default async function AdminAb() {
         <h1 className="text-lg font-semibold text-ink">A/B a ciegas: ¿qué versión arma mejor?</h1>
         <p className="text-sm leading-relaxed text-muted">
           Cada fila es <span className="text-ink">la misma persona, el mismo clóset y el mismo día</span>,
-          resuelto por <span className="text-ink">el motor de julio</span> y por{" "}
-          <span className="text-ink">el de hoy</span>. Julio es el que tiene la única
-          señal humana que existe: 155 looks generados, 13 👍 y 12 “me lo puse”. Lo
-          de esta semana —las recetas destiladas de 616 fotos, la marca de prendas
-          por estilo, el orden de prioridades y el piso de formalidad— no lo ha
-          visto nadie.
+          resuelto por el mismo motor: uno de los dos lados vio{" "}
+          <span className="text-ink">3 fotos reales de looks que funcionan</span> —de
+          tu estilo, tu clima y tu corte— antes de armar. El otro no.
         </p>
         <p className="text-sm leading-relaxed text-muted">
           Todo lo demás es idéntico: mismo perfil, mismas 127 prendas y en el mismo
-          orden, mismo clima, mismo modelo. Hasta el arreglo del bug de hoy —que el
-          motor no sabía si una prenda era un pantalón o un saco— va en los dos
-          lados, porque era un bug y no parte de la forma nueva de armar.
+          orden, mismo clima, mismo modelo. No te enseño las fotos de inspiración
+          mientras juzgas — con verlas sabrías de inmediato cuál lado es cuál y se
+          acabaría el ciego. Te las enseño al final.
         </p>
         <p className="text-sm leading-relaxed text-muted">
           <span className="text-ink">No te digo cuál es cuál</span>, y el lado se
@@ -216,7 +213,7 @@ export default async function AdminAb() {
         <p className="text-xs text-muted">
           {pares.length} pares · {juzgados} juzgados. La pregunta que decide:{" "}
           <span className="text-ink">
-            ¿sirvió de algo la semana de destilar, o julio ya lo hacía igual de bien?
+            ¿enseñarle fotos de looks reales le ayuda a armar mejor, o da igual?
           </span>
         </p>
       </div>
