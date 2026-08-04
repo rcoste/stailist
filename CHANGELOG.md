@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.87.0] - 2026-08-04
+
+### Changed
+
+- **El A/B a ciegas ahora corre sobre un perfil hecho con el onboarding actual.** El deck de swipes se rehizo entero y los pares de corte se añadieron después de que la gente ya estaba dentro, así que medir con un perfil de julio era medir el motor alimentado con datos viejos. Sale un dato de paso: con el deck nuevo, el mismo usuario pasa de leerse como "preppy y sastre" a "casual limpio" — el deck viejo le atribuía un estilo que no era suyo. Y son 12 pares en vez de 8, cargados hacia el día a día: la tanda anterior resultó ser 100% eventos de noche, el caso más difícil y el menos frecuente.
+
 ## [0.2.86.0] - 2026-08-04
 
 ### Fixed

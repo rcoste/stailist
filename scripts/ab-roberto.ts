@@ -42,20 +42,35 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
 const CONC = Number(
   (process.argv.find((a) => a.startsWith("--concurrencia=")) ?? "--concurrencia=3").split("=")[1]
 );
-const EMAIL = "roberto@kublau.com";
+// El perfil de PRUEBA, hecho con el onboarding actual (deck v4 + pares de
+// corte). El real de Roberto tiene tags del 27 de julio y fit_pref en null, así
+// que medir con él sería medir el motor alimentado con datos viejos. Su clóset
+// (127 prendas) se clonó aquí — ver scripts/clonar-perfil-prueba.sql.
+const EMAIL = "roberto@playrobix.com";
 
 // Ocasión × clima: lo que de verdad cambia día con día para una misma persona.
-// Se incluye el evento de noche aunque sea el caso más difícil — es donde más
-// se vio fallar y donde más importa saber si el recetario ayuda o estorba.
+//
+// DOCE y no ocho: con ocho juicios humanos un 5-3 es exactamente lo que sale
+// tirando una moneda. Doce empieza a distinguirse del azar sin volverse una
+// tarea larga.
+//
+// PESAN HACIA EL DIARIO a propósito (5 de 12). Es la promesa del producto —"qué
+// me pongo hoy"— y donde el motor falla la mitad que en evento de noche. El
+// barrido anterior resultó ser 100% evento de noche por accidente, o sea que
+// llevábamos horas optimizando el caso más raro y más difícil.
 const CASOS = [
   { ocasion: "diario", momento: "dia", temp: 22, cond: "despejado" },
   { ocasion: "diario", momento: "dia", temp: 9, cond: "nublado" },
   { ocasion: "diario", momento: "dia", temp: 30, cond: "soleado" },
+  { ocasion: "diario", momento: "dia", temp: 16, cond: "lluvia ligera" },
+  { ocasion: "diario", momento: "noche", temp: 18, cond: "despejado" },
   { ocasion: "oficina", momento: "dia", temp: 22, cond: "despejado" },
   { ocasion: "oficina", momento: "dia", temp: 9, cond: "nublado" },
+  { ocasion: "oficina", momento: "dia", temp: 28, cond: "soleado" },
   { ocasion: "evento", momento: "noche", temp: 18, cond: "despejado" },
   { ocasion: "evento", momento: "noche", temp: 9, cond: "nublado" },
-  { ocasion: "diario", momento: "noche", temp: 18, cond: "despejado" },
+  { ocasion: "viaje", momento: "dia", temp: 20, cond: "despejado" },
+  { ocasion: "refrescar", momento: "dia", temp: 24, cond: "despejado" },
 ] as const;
 
 async function main() {
