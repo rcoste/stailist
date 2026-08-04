@@ -36,7 +36,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/1-a.png"
    },
    "der": {
     "titulo": "Vino sobrio",
@@ -64,7 +65,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/1-b.png"
    }
   },
   {
@@ -108,7 +110,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/2-a.png"
    },
    "der": {
     "titulo": "Verde profundo",
@@ -141,7 +144,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/2-b.png"
    }
   },
   {
@@ -180,7 +184,8 @@
       "nombre": "Gafas de sol negras",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/3-a.png"
    },
    "der": {
     "titulo": "Verde que te enciende",
@@ -208,7 +213,8 @@
       "nombre": "Lentes wayfarer",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/3-b.png"
    }
   },
   {
@@ -247,7 +253,8 @@
       "nombre": "Botines Chelsea negros",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/4-a.png"
    },
    "der": {
     "titulo": "Verde que ilumina",
@@ -275,7 +282,8 @@
       "nombre": "Botines Chelsea",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/4-b.png"
    }
   },
   {
@@ -319,7 +327,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/5-a.png"
    },
    "der": {
     "titulo": "Marino de noche",
@@ -352,7 +361,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/5-b.png"
    }
   },
   {
@@ -396,7 +406,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/6-a.png"
    },
    "der": {
     "titulo": "Azul rey de lunes",
@@ -424,7 +435,8 @@
       "nombre": "Cinturón negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/6-b.png"
    }
   },
   {
@@ -463,7 +475,8 @@
       "nombre": "Botines Chelsea de gamuza",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/7-a.png"
    },
    "der": {
     "titulo": "Vino discreto",
@@ -491,7 +504,8 @@
       "nombre": "Botines Chelsea negros",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/7-b.png"
    }
   },
   {
@@ -530,7 +544,8 @@
       "nombre": "Cinturón negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/8-a.png"
    },
    "der": {
     "titulo": "Azul rey de junta",
@@ -563,7 +578,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/8-b.png"
    }
   },
   {
@@ -607,7 +623,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/9-a.png"
    },
    "der": {
     "titulo": "Marino de noche",
@@ -640,7 +657,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/9-b.png"
    }
   },
   {
@@ -684,7 +702,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/10-a.png"
    },
    "der": {
     "titulo": "Vuelo pulido en marino",
@@ -717,7 +736,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/10-b.png"
    }
   },
   {
@@ -761,7 +781,8 @@
       "nombre": "Abrigo charcoal",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/11-a.png"
    },
    "der": {
     "titulo": "Marino de gala",
@@ -794,7 +815,8 @@
       "nombre": "Abrigo charcoal",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/11-b.png"
    }
   },
   {
@@ -833,7 +855,8 @@
       "nombre": "Gafas de sol negras",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/12-a.png"
    },
    "der": {
     "titulo": "Lino esmeralda de día",
@@ -861,7 +884,8 @@
       "nombre": "Reloj negro",
       "foto": null
      }
-    ]
+    ],
+    "tryon": "/ab/12-b.png"
    }
   }
  ]

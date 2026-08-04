@@ -36,6 +36,8 @@ type Lado = {
   titulo: string;
   explicacion?: string;
   itemIds?: string[];
+  /** El look puesto sobre su avatar. Ausente si el render falló o no se generó. */
+  tryon?: string;
   prendas: { nombre: string; foto: string | null }[];
 };
 type Par = {
@@ -95,6 +97,23 @@ function Columna({
         </span>
         <span className="text-sm font-medium text-ink">{lado.titulo}</span>
       </div>
+      {/* El look PUESTO va primero: es lo que deja ver la proporción y si el
+          conjunto se lee como outfit, que es la mitad que las fotos sueltas no
+          muestran. Ojo con lo que prueba: el generador de imágenes no recibe la
+          receta ni el tip, así que si abre un botón o dobla una manga es
+          decisión suya, no del motor. */}
+      {lado.tryon ? (
+        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+          <Image
+            src={lado.tryon}
+            alt={`${lado.titulo} puesto`}
+            width={320}
+            height={427}
+            className="h-auto w-full object-cover"
+            unoptimized
+          />
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {piezas.map((p, i) => (
           <figure key={`${p.nombre}-${i}`} className="flex w-20 flex-col gap-1">
