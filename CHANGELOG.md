@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.86.0] - 2026-08-04
+
+### Fixed
+
+- **"Rehaz tus gustos" ahora sí te pregunta cómo te gusta que te quede la ropa.** Los pares de fotos de corte —recta u holgada— se añadieron al onboarding cuando ya había gente dentro, y la pantalla de rehacer gustos nunca los mostró: quien ya se había registrado no tenía ninguna forma de contestarlos, así que el motor armaba tus looks sin saber ese dato. Y lo necesita: casi todas las recetas de estilo dicen que entre recto y amplio manda tu preferencia. Si ya estabas usando la app, vuelve a swipear desde tu perfil y al final te salen los pares.
+
 ## [0.2.85.0] - 2026-08-04
 
 ### Added

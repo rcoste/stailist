@@ -33,6 +33,7 @@ export function SwipeDeck({
   doneHref = "/onboarding/colorimetria",
   doneLabel = "Sigamos con tus colores",
   calibracion = false,
+  soloPares = false,
   gender = "hombre",
 }: {
   looks: Look[];
@@ -46,6 +47,18 @@ export function SwipeDeck({
    *  calibración generadas a la medida de los swipes (si la IA ya las tiene
    *  listas; si no, sigue directo). */
   calibracion?: boolean;
+  /**
+   * Los pares de corte SIN las preguntas de calibración.
+   *
+   * Para quien rehace sus gustos desde el Perfil. Los pares se añadieron después
+   * de que la gente ya se había onboardeado, y "Rehaz tus gustos" no los
+   * mostraba: quien ya estaba dentro no tenía NINGUNA forma de contestarlos y su
+   * fit_pref se quedaba en null para siempre — con 8 de las 10 recetas diciendo
+   * "manda la preferencia de la persona" sobre un dato que nunca llegaba.
+   * Las preguntas de calibración sí se dejan fuera aquí: son la parte larga y
+   * quien vuelve a swipear ya pasó por ellas.
+   */
+  soloPares?: boolean;
   /** Para elegir las fotos de los pares de corte. */
   gender?: Gender;
 }) {
@@ -89,6 +102,12 @@ export function SwipeDeck({
     setPares(false);
     startTransition(async () => {
       await saveCorte(corte).catch(() => null);
+      // Rehaciendo gustos desde el Perfil los pares son el último paso: las
+      // preguntas de calibración son la parte larga y esa persona ya las pasó.
+      if (soloPares) {
+        router.push(doneHref);
+        return;
+      }
       const qs = await getCalibrationQuestions().catch(() => null);
       // Si hay preguntas, primero el intro opcional (la persona decide); si no
       // hay, directo a colores — jamás se espera a la IA.
@@ -365,7 +384,7 @@ export function SwipeDeck({
           <p className="mt-3 max-w-[300px] text-[18px] leading-snug text-muted">
             {archetype.descripcion}
           </p>
-          {calibracion ? (
+          {calibracion || soloPares ? (
             // Con calibración: el botón consulta si las preguntas ya están
             // calientes (sin esperar a la IA) — si no, navega directo.
             <button
