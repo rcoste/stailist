@@ -111,7 +111,10 @@ async function render(look: Look): Promise<boolean> {
 
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
-  const objetivo = datos.looks.filter((l) => l.fallos.length > 0).slice(0, N);
+  // Con --todos entran también los limpios: para juzgar si la revisora se pasa
+  // hay que poder comparar un marcado contra uno que aprobó.
+  const todos = process.argv.includes("--todos");
+  const objetivo = (todos ? datos.looks : datos.looks.filter((l) => l.fallos.length > 0)).slice(0, N);
   console.log(`Renderizando ${objetivo.length} looks marcados…\n`);
 
   let ok = 0;

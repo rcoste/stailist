@@ -1815,7 +1815,8 @@
     "clima": "templado",
     "ocasion": "evento de noche",
     "paleta": "invierno"
-   }
+   },
+   "tryon": "/barrido/1.png"
   },
   {
    "n": 7,
@@ -1848,7 +1849,8 @@
     "clima": "templado",
     "ocasion": "evento de noche",
     "paleta": "invierno"
-   }
+   },
+   "tryon": "/barrido/7.png"
   },
   {
    "n": 11,
@@ -1881,7 +1883,8 @@
     "clima": "templado",
     "ocasion": "evento de noche",
     "paleta": "otono"
-   }
+   },
+   "tryon": "/barrido/11.png"
   }
  ]
 }

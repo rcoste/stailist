@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.83.0] - 2026-08-04
+
+### Added
+
+- **En la pantalla de barrido ahora se puede dejar veredicto y comentario en cada look.** Botones de "acertó" / "exageró" para calificar a la IA revisora, y un campo libre para escribir qué le ves de malo o de bueno. Guarda solo, sin botón: son cincuenta juicios escritos de corrido y no tiene caso arriesgarlos a que se cierre la pestaña. También se renderizaron los looks que la revisora dejó pasar, no solo los que marcó — para saber si se pasa de estricta hay que poder comparar contra los que aprobó.
+
 ## [0.2.82.0] - 2026-08-04
 
 ### Added

@@ -1,5 +1,8 @@
 import Image from "next/image";
 import datos from "@/lib/engine/barrido/revision.json";
+import { createClient } from "@/lib/supabase/server";
+import { Nota } from "./nota";
+import type { Veredicto } from "./actions";
 
 // Los looks del barrido, para juzgarlos a ojo.
 //
@@ -63,8 +66,18 @@ const QUE_SIGNIFICA: Record<string, string> = {
 const explicar = (f: string) =>
   QUE_SIGNIFICA[f] ?? (f.startsWith("regla:") ? "lo detectó una regla del código" : "");
 
-export default function AdminBarrido() {
+export default async function AdminBarrido() {
   const marcados = looks.filter((l) => l.fallos.length);
+  // Los juicios ya escritos, para que la pantalla no se sienta amnésica al
+  // volver: revisar 50 looks no se hace de una sentada.
+  const supabase = await createClient();
+  const { data: notas } = await supabase
+    .from("barrido_notas")
+    .select("look_n, veredicto, comentario");
+  const notaDe = new Map(
+    (notas ?? []).map((n) => [n.look_n as number, n as { veredicto: Veredicto | null; comentario: string | null }])
+  );
+  const juzgados = (notas ?? []).filter((n) => n.veredicto).length;
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
@@ -96,8 +109,13 @@ export default function AdminBarrido() {
           ))}
         </div>
         <p className="text-xs text-muted">
-          {looks.length} looks · {marcados.length} con algo marcado · los marcados van
-          primero.
+          {looks.length} looks · {marcados.length} con algo marcado · {juzgados} ya
+          juzgados por ti. Los marcados van primero; los 3 limpios están al final.
+        </p>
+        <p className="text-xs text-muted">
+          Que {marcados.length} de {looks.length} salgan marcados ya es sospechoso de
+          por sí: un revisor que marca el 94% no está discriminando. Por eso importa
+          tu veredicto.
         </p>
       </div>
 
@@ -198,9 +216,15 @@ export default function AdminBarrido() {
             </div>
           ) : (
             <p className="border-t border-line pt-3 text-sm text-success">
-              Limpio — no marcó nada
+              Limpio — la IA revisora no marcó nada. ¿Estuvo bien en no marcarlo?
             </p>
           )}
+
+          <Nota
+            lookN={l.n}
+            veredicto={notaDe.get(l.n)?.veredicto ?? null}
+            comentario={notaDe.get(l.n)?.comentario ?? ""}
+          />
         </section>
       ))}
     </div>
