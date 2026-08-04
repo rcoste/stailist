@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.91.0] - 2026-08-04
+
+### Fixed
+
+- **Una prenda ya no puede mostrar la foto de otra.** Cuando describes una prenda sin subirle foto, la app le presta la imagen de una parecida del catálogo para que no salga como un cuadro de color. Esa comparación se hacía por palabras del nombre, ignorando una lista de colores… que no incluía "esmeralda". Así que una "camisa de lino esmeralda" acabó mostrando la foto de un suéter esmeralda — y no era solo la foto: el probador virtual te ponía el suéter, y la app creía que tenías una camisa fresca para 30°C cuando en pantalla había lana. Ahora la comparación es por tipo de prenda de verdad: un suéter nunca presta su foto a una camisa, ni un pantalón a un short. Si no hay una del mismo tipo, no se presta nada y se genera la imagen de tu prenda real.
+
 ## [0.2.90.0] - 2026-08-04
 
 ### Fixed

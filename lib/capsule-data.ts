@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClosetItemLite } from "@/lib/capsule";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
+import { tipoDePrenda } from "@/lib/engine/vocabulario";
 
 // Distancia RGB entre dos hex (#rrggbb o #rgb). Infinito si alguno no parsea.
 export function hexDistance(a: string, b: string): number {
@@ -18,20 +19,23 @@ export function hexDistance(a: string, b: string): number {
   return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
 }
 
-// Palabras que NO sirven para identificar el TIPO de prenda (colores, materiales,
-// cortes) — se filtran del hint para quedarnos con el tipo ("jeans", "reloj").
-const TYPE_STOPWORDS = new Set([
-  "negro", "negra", "negros", "blanco", "blanca", "gris", "azul", "marino", "cafe",
-  "verde", "vino", "beige", "camel", "crema", "rojo", "rosa", "oliva", "mostaza",
-  "lana", "algodon", "seda", "piel", "ante", "mezclilla", "cashmere", "merino",
-  "corte", "recto", "estructurado", "oxford", "claro", "oscuro", "del", "con", "las",
-  "los", "una", "para",
-]);
-const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-const typeTokens = (s: string) =>
-  norm(s)
-    .split(/[\s-]+/)
-    .filter((w) => w.length > 3 && !TYPE_STOPWORDS.has(w));
+// El TIPO de prenda de un nombre, con LISTA BLANCA (lib/engine/vocabulario.ts).
+//
+// Antes esto era una lista negra de palabras a ignorar —colores, materiales,
+// cortes— y una lista negra de colores siempre va incompleta. Tenía negro,
+// blanco, gris, azul, marino, verde, vino, beige… y NO tenía "esmeralda". Así
+// que "Camisa de lino esmeralda" y "Suéter esmeralda" coincidían en la palabra
+// "esmeralda", el código las daba por el mismo tipo de prenda, y a la camisa le
+// prestaba la foto del suéter.
+//
+// Lo que costaba: 30 prendas de la base muestran la foto de OTRA prenda. Y no es
+// solo cosmético — el try-on genera el look con la prenda equivocada y el motor
+// cree que tiene una camisa de lino fresca cuando en la imagen hay un suéter de
+// lana. Roberto lo cazó en un look para 30°C.
+//
+// La lista blanca no tiene ese problema: si el nombre no cae en un tipo
+// conocido, devuelve null y NO se presta nada — el caller cae al render limpio
+// de la prenda real, que es el resultado correcto.
 
 // Presta el flat-lay de un arquetipo del catálogo para una prenda sin foto propia
 // (las de "ya la tengo"), para que no salga como un bloque de color. Exige misma
@@ -54,9 +58,11 @@ export async function borrowArchetypeImage(
     .in("segment", ["unisex", gender ?? "hombre"]);
   if (!data?.length) return null;
 
-  const want = new Set(typeTokens(nameHint));
+  // El tipo de la prenda que busca imagen. Sin tipo reconocible NO se presta
+  // nada: mejor el render limpio de la prenda real que la foto de otra cosa.
+  const quiero = tipoDePrenda(nameHint)?.tipo ?? null;
+  if (!quiero) return null;
   let best: string | null = null;
-  let bestOverlap = -1;
   let bestDist = Infinity;
   for (const a of data) {
     const img = a.image_path as string | null;
@@ -64,15 +70,11 @@ export async function borrowArchetypeImage(
     if (!img || !hex) continue;
     const d = hexDistance(targetHex, hex);
     if (d >= 40) continue; // el color debe parecerse
-    const at = new Set(typeTokens(String(a.name ?? "")));
-    let overlap = 0;
-    for (const t of want) if (at.has(t)) overlap++;
-    // Tipo OBLIGATORIO: sin coincidencia de nombre NO se presta — ni en tops
-    // (suéter ≠ t-shirt) ni en accesorios (cinturón ≠ reloj). Mejor render limpio.
-    if (overlap === 0) continue;
-    // Prefiere mayor coincidencia de tipo; a igualdad, el color más cercano.
-    if (overlap > bestOverlap || (overlap === bestOverlap && d < bestDist)) {
-      bestOverlap = overlap;
+    // MISMO tipo canónico, no "parecido": un suéter no cubre una camisa aunque
+    // los dos sean esmeralda. Entre los del tipo correcto gana el color más
+    // cercano.
+    if (tipoDePrenda(String(a.name ?? ""))?.tipo !== quiero) continue;
+    if (d < bestDist) {
       bestDist = d;
       best = img;
     }
