@@ -21,6 +21,7 @@ type Fila = {
   inspiracion?: string[];
   look?: string;
   prendas?: string[];
+  item_ids?: string[];
   explicacion?: string;
   error?: string;
 };
@@ -56,8 +57,21 @@ const casos = clave
       temp: e.con[0]?.caso.temp ?? 0,
       momento: e.con[0]?.caso.momento ?? "",
       fotos: e.fotos.map((p) => ({ url: `/inspo/${p.replace(/\//g, "_")}`, carpeta: p.split("/")[1] })),
-      conFotos: e.con.map((x) => ({ look: x.look, prendas: x.prendas, explicacion: x.explicacion })),
-      sinFotos: e.sin.map((x) => ({ look: x.look, prendas: x.prendas, explicacion: x.explicacion })),
+      // item_ids para que la pantalla resuelva y firme las imágenes de las
+      // prendas, y la explicación tal cual la escribió el motor: sin el porqué,
+      // la comparación es media historia.
+      conFotos: e.con.map((x) => ({
+        look: x.look,
+        prendas: x.prendas,
+        itemIds: x.item_ids,
+        explicacion: x.explicacion,
+      })),
+      sinFotos: e.sin.map((x) => ({
+        look: x.look,
+        prendas: x.prendas,
+        itemIds: x.item_ids,
+        explicacion: x.explicacion,
+      })),
     };
   })
   .filter(Boolean);
