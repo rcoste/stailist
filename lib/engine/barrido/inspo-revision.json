@@ -8,120 +8,122 @@
    "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_preppy_f-ecd450e6.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_casual-effortless_00477b2c.jpg",
+     "carpeta": "casual-effortless"
     },
     {
-     "url": "/inspo/hombre_preppy_f-f098de84.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_clasico-arreglado_f-bdd292ed.jpg",
+     "carpeta": "clasico-arreglado"
     },
     {
-     "url": "/inspo/hombre_preppy_f-96f9a0cd.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_minimalista_20199cc4.jpg",
+     "carpeta": "minimalista"
     }
    ],
    "renderCon": "/ab/1-b.png",
    "renderSin": "/ab/1-a.png",
    "conFotos": [
     {
-     "look": "Marino de patio universitario",
+     "look": "Clásico de mediodía",
      "prendas": [
-      "Blazer marino",
-      "Camisa blanca",
-      "Chinos beige",
-      "Mocasines café",
-      "Cinturón negro"
-     ],
-     "itemIds": [
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
-      "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
-      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "El marino y el blanco te limpian la cara al instante, y el blazer te da esos hombros definidos que te quedan de lujo sin verse disfrazado."
-    },
-    {
-     "look": "Punto sobre camisa",
-     "prendas": [
-      "Suéter cuello V marino",
-      "Camisa oxford blanca",
-      "Chinos carbón",
-      "Botines Chelsea de gamuza"
-     ],
-     "itemIds": [
-      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "f7b568ae-8368-44c8-9dc2-8472098c05f2"
-     ],
-     "explicacion": "El cuello blanco asomando bajo el punto marino es el truco más elegante y barato que existe: te enmarca la cara y sube el look sin esfuerzo."
-    },
-    {
-     "look": "Limpio de martes",
-     "prendas": [
-      "Polo marino",
-      "Jeans azul oscuro",
-      "Tenis blancos urbanos",
+      "Camisa azul claro",
+      "Pantalón negro",
+      "Cinturón café",
+      "Zapato derby de piel chocolate",
       "Gafas de sol negras"
      ],
      "itemIds": [
-      "95d3aa82-f962-404a-9443-f860d1674361",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a",
+      "db54370a-904f-41b6-bf94-ef0888606a6e",
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "cff65d0d-b568-46be-a0fe-6fbc09d57970",
+      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
       "a5f4034f-899a-4d4f-93f5-8e62870e2446"
      ],
-     "explicacion": "Simple bien hecho: el polo marino entallado con denim oscuro y tenis blancos te deja pulido y cómodo para el día entero."
+     "explicacion": "Camisa fajada y pantalón oscuro te alargan la línea, y el azul claro junto a la cara te despierta la mirada mientras el café del zapato le mete calidez."
+    },
+    {
+     "look": "Limpio de lunes libre",
+     "prendas": [
+      "Camisa oxford azul",
+      "Chinos beige",
+      "Cinturón negro",
+      "Tenis blancos"
+     ],
+     "itemIds": [
+      "02c8311c-b347-48be-b0fd-dd1a9c87510f",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2",
+      "a8c361a6-e373-4007-8e83-04461af72b40"
+     ],
+     "explicacion": "Mangas arremangadas, chino recto y tenis blancos: cómodo, fresco para los 22°C y con ese aire pulido que te queda tan natural."
+    },
+    {
+     "look": "Punto marino sin esfuerzo",
+     "prendas": [
+      "Suéter cuello V marino",
+      "Chinos beige",
+      "Tenis retro blanco",
+      "Lentes aviador"
+     ],
+     "itemIds": [
+      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "189bb0ea-ad59-45d5-8cd1-269a95c04d58",
+      "b8d0e6ea-4b84-4fc2-8d40-35d01af2d470"
+     ],
+     "explicacion": "El marino te define los hombros y te ilumina la cara, y el contraste con el chino claro hace todo el trabajo por ti."
     }
    ],
    "sinFotos": [
     {
-     "look": "Vino discreto",
+     "look": "Negro limpio de martes",
      "prendas": [
-      "Camiseta vino",
+      "Camisa negra",
+      "Jeans azul oscuro",
+      "Botines Chelsea negros",
+      "Cinturón negro"
+     ],
+     "itemIds": [
+      "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+      "c9b2a866-a95f-42ec-9db8-97e153faca56",
+      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     ],
+     "explicacion": "El negro junto a la cara te define los rasgos, y el jean oscuro con botín te alarga la línea sin esfuerzo."
+    },
+    {
+     "look": "Mezclilla con intención",
+     "prendas": [
+      "Camiseta blanca",
+      "Chamarra de mezclilla",
       "Chinos carbón",
       "Tenis blancos urbanos",
       "Gafas de sol negras"
      ],
      "itemIds": [
-      "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "d1671b0f-238d-43da-bb6b-55dc4e7151af",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
       "a81cdf75-5d5e-4565-b423-75e148921c9a",
       "a5f4034f-899a-4d4f-93f5-8e62870e2446"
      ],
-     "explicacion": "El vino te calienta la cara sin gritar y el carbón lo aterriza: simple, limpio y perfecto para 22°C."
+     "explicacion": "La chamarra entallada te marca hombros y el blanco puro te ilumina: casual pero armado, justo para 22 grados."
     },
     {
-     "look": "Esmeralda de día",
+     "look": "Verde que enciende",
      "prendas": [
       "Camisa de lino esmeralda",
-      "Jeans azul oscuro",
-      "Botines Chelsea negros",
-      "Reloj negro"
+      "Chinos azul marino",
+      "Mocasines café",
+      "Cinturón café"
      ],
      "itemIds": [
       "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
-      "8a758cd3-5865-401f-8741-a463199b6247"
+      "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
+      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
      ],
-     "explicacion": "El esmeralda es de tus mejores colores y con el denim oscuro y botín negro te deja pulido sin esfuerzo."
-    },
-    {
-     "look": "Piel negra, blanco limpio",
-     "prendas": [
-      "Camiseta blanca",
-      "Chamarra de piel negra clásica",
-      "Jeans azul oscuro",
-      "Tenis de piel negros"
-     ],
-     "itemIds": [
-      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
-      "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-      "c9b2a866-a95f-42ec-9db8-97e153faca56",
-      "9a37432f-1d00-4806-a128-0edeb55c7178"
-     ],
-     "explicacion": "La chamarra de piel te marca los hombros y el blanco te ilumina: el toque atrevido que te queda natural."
+     "explicacion": "El esmeralda es de tus mejores colores: te da vida en la cara y el marino abajo lo mantiene sobrio y elegante."
     }
    ]
   },
@@ -137,12 +139,12 @@
      "carpeta": "casual-effortless"
     },
     {
-     "url": "/inspo/hombre_minimalista_ba313432.jpg",
-     "carpeta": "minimalista"
+     "url": "/inspo/hombre_smart-casual_f-f84d3caa.jpg",
+     "carpeta": "smart-casual"
     },
     {
-     "url": "/inspo/hombre_preppy_3a5b5df6.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_minimalista_ba313432.jpg",
+     "carpeta": "minimalista"
     }
    ],
    "renderCon": "/ab/2-b.png",
@@ -152,101 +154,101 @@
      "look": "Puffer y mezclilla clara",
      "prendas": [
       "Chamarra acolchada azul marino",
-      "Suéter de cuello redondo vino",
+      "Suéter esmeralda de lana fina",
       "Jeans claros",
       "Tenis blancos urbanos"
      ],
      "itemIds": [
       "dafa93e8-cd03-40ae-95c7-698ad055f83d",
-      "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
       "f4860d65-01fa-4eed-87f2-260ac27585d2",
       "a81cdf75-5d5e-4565-b423-75e148921c9a"
      ],
-     "explicacion": "El vino te enciende la cara y la mezclilla clara aligera todo el negro-azul de arriba: abrigado, relajado y con intención para un día nublado."
+     "explicacion": "El esmeralda te enciende la cara y con el puffer marino y los jeans claros queda abrigado, relajado y con estructura arriba."
     },
     {
-     "look": "Marino sobre azul claro",
+     "look": "Abrigo largo de ciudad",
      "prendas": [
-      "Suéter cuello V marino",
-      "Camisa azul claro",
-      "Chinos beige",
-      "Botines Chelsea",
-      "Cinturón café"
-     ],
-     "itemIds": [
-      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
-      "db54370a-904f-41b6-bf94-ef0888606a6e",
-      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
-      "15269f21-4ba6-4e17-8e84-e07db28520cc",
-      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
-     ],
-     "explicacion": "El cuello de camisa asomando bajo el punto marino te estructura los hombros y el azul te limpia el rostro — clásico bien hecho, sin esfuerzo."
-    },
-    {
-     "look": "Negro limpio",
-     "prendas": [
-      "Chamarra de piel negra clásica",
-      "Cuello tortuga negro",
+      "Abrigo charcoal",
+      "Cuello tortuga negro de lana merino",
+      "Camisa oxford blanca",
       "Chinos carbón",
-      "Tenis de piel negros"
+      "Tenis blancos"
      ],
      "itemIds": [
-      "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
+      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
+      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
+      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "9a37432f-1d00-4806-a128-0edeb55c7178"
+      "f9284946-c02a-41ee-b261-4db131a196a4"
      ],
-     "explicacion": "Cuello tortuga negro + piel es tu combo más afilado: el negro pegado a la cara te define, y el chino carbón evita que se vea uniforme."
+     "explicacion": "El negro pegado al rostro más la camisa blanca asomando te afila todo, y el abrigo largo te alarga la línea sin verse disfraz."
+    },
+    {
+     "look": "Bomber limpio",
+     "prendas": [
+      "Chamarra bomber",
+      "Cuello tortuga negro",
+      "Pantalón negro",
+      "Tenis blancos"
+     ],
+     "itemIds": [
+      "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
+      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "a8c361a6-e373-4007-8e83-04461af72b40"
+     ],
+     "explicacion": "Todo oscuro y los tenis blancos como remate: mínimo esfuerzo, máximo aire pulido, y el cuello alto te define los hombros."
     }
    ],
    "sinFotos": [
     {
-     "look": "Esmeralda en piel",
+     "look": "Verde profundo, día limpio",
      "prendas": [
       "Suéter esmeralda de lana fina",
-      "Jeans azul oscuro",
+      "Chinos carbón",
       "Chamarra de piel negra clásica",
       "Botines Chelsea negros"
      ],
      "itemIds": [
       "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
+      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
       "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
       "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
      ],
-     "explicacion": "El esmeralda te enciende la cara y la piel negra le mete hombro y estructura: limpio, abrigado y con actitud."
+     "explicacion": "El esmeralda te enciende la cara y la piel negra encima te marca hombros: casual pero con clase, perfecto para 9°C."
     },
     {
-     "look": "Negro sobre negro, con abrigo",
+     "look": "Negro sobre denim oscuro",
      "prendas": [
       "Cuello tortuga negro",
-      "Chinos carbón",
-      "Abrigo charcoal",
-      "Botines Chelsea negros"
-     ],
-     "itemIds": [
-      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
-     ],
-     "explicacion": "El cuello tortuga negro te afila la cara y el abrigo largo te alarga entero — mínimo esfuerzo, máxima elegancia para 9°C."
-    },
-    {
-     "look": "Vino y mezclilla oscura",
-     "prendas": [
-      "Suéter de cuello redondo vino",
       "Jeans azul oscuro",
-      "Chamarra ultraligera",
+      "Chamarra acolchada azul marino",
       "Botines Chelsea de gamuza"
      ],
      "itemIds": [
-      "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
       "29a0eb22-90aa-47c4-b02d-498632820ba4",
-      "ffb2b447-7aff-48f0-a6b5-90bd4ccf3de6",
+      "dafa93e8-cd03-40ae-95c7-698ad055f83d",
       "f7b568ae-8368-44c8-9dc2-8472098c05f2"
      ],
-     "explicacion": "El vino te da color sin gritar y con la mezclilla oscura y los botines de gamuza el look se ve relajado pero cuidado."
+     "explicacion": "El cuello tortuga negro te alarga y limpia la línea, y el café de los botines rompe el oscuro sin gritar."
+    },
+    {
+     "look": "Vino discreto de martes",
+     "prendas": [
+      "Suéter de cuello redondo vino",
+      "Chinos azul marino",
+      "Chamarra ultraligera",
+      "Tenis blancos urbanos"
+     ],
+     "itemIds": [
+      "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+      "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+      "ffb2b447-7aff-48f0-a6b5-90bd4ccf3de6",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a"
+     ],
+     "explicacion": "El vino te da color en la cara sin llamar la atención y los tenis blancos lo aterrizan: cómodo, abrigado y con intención."
     }
    ]
   },
@@ -258,118 +260,118 @@
    "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_preppy_f-a8c344ba.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_casual-effortless_54c630f4.jpg",
+     "carpeta": "casual-effortless"
     },
     {
-     "url": "/inspo/hombre_preppy_054026db.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_clasico-elegante_347739e1.jpg",
+     "carpeta": "clasico-elegante"
     },
     {
-     "url": "/inspo/hombre_preppy_f-bd209d90.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_casual-effortless_6b2c9267.jpg",
+     "carpeta": "casual-effortless"
     }
    ],
    "renderCon": "/ab/3-a.png",
    "renderSin": "/ab/3-b.png",
    "conFotos": [
     {
-     "look": "Cancha limpia",
+     "look": "Capa ligera, base limpia",
      "prendas": [
-      "Polo blanco",
-      "Bermuda sastre marino",
-      "Tenis blancos urbanos",
-      "Gafas de sol wayfarer"
+      "Camisa azul empolvado",
+      "Camiseta blanca",
+      "Pantalón negro",
+      "Tenis de piel negros"
      ],
      "itemIds": [
-      "c5a9482a-3546-43d2-84be-630a1a679660",
-      "b988abf9-eba7-4567-b80c-3fc04090f120",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a",
-      "d1d1c205-a473-4519-9fb7-ba95cc66b191"
+      "855bcca6-cf79-46cb-ae1d-04c1315630e6",
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+      "9a37432f-1d00-4806-a128-0edeb55c7178"
      ],
-     "explicacion": "Blanco y marino es la combinación más fresca y pulida que tienes, y el polo te limpia la cara al instante con 30 grados encima."
+     "explicacion": "La camisa abierta sobre la playera blanca te da hombros y estructura sin calor, y el negro abajo estira toda la línea."
     },
     {
-     "look": "Verde de domingo",
+     "look": "Café de media mañana",
      "prendas": [
-      "Camisa de lino esmeralda",
+      "Polo marino",
       "Pantalón de lino",
-      "Mocasines café",
-      "Cinturón café"
+      "Tenis blancos",
+      "Lentes wayfarer"
      ],
      "itemIds": [
-      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+      "95d3aa82-f962-404a-9443-f860d1674361",
       "0e231ce2-9146-4da1-b680-334c91ebd0fa",
-      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
-      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
+      "f9284946-c02a-41ee-b261-4db131a196a4",
+      "0ef455c2-b38d-4f3a-90ad-1e1d941d982a"
      ],
-     "explicacion": "El esmeralda cerca de la cara te enciende y el lino claro abajo mantiene todo ligero: relajado pero se ve pensado."
+     "explicacion": "El marino te enciende la cara y contra el lino claro se ve pulido sin esfuerzo — perfecto para un día de sol."
     },
     {
-     "look": "Azul rey directo",
+     "look": "Domingo relajado",
      "prendas": [
-      "Camisa azul rey de manga corta",
-      "Chinos carbón",
-      "Tenis blancos",
-      "Reloj negro"
+      "Jersey de México verde",
+      "Jeans azul oscuro",
+      "Botines Chelsea de gamuza",
+      "Gorra negra"
      ],
      "itemIds": [
-      "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "f9284946-c02a-41ee-b261-4db131a196a4",
-      "8a758cd3-5865-401f-8741-a463199b6247"
+      "229fbac8-2876-4497-bbe8-f12d81674e5b",
+      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
+      "f7b568ae-8368-44c8-9dc2-8472098c05f2",
+      "73c33129-c829-4e83-8e7b-07915bc02b3d"
      ],
-     "explicacion": "El azul rey es tu mejor carta de color y el carbón lo aterriza: un look de todos los días con hombros bien marcados."
+     "explicacion": "El verde es de tus mejores colores y con jeans rectos y botín café queda casual pero con carácter."
     }
    ],
    "sinFotos": [
     {
-     "look": "Verde limpio de día",
+     "look": "Verde limpio",
      "prendas": [
       "Camisa de lino esmeralda",
-      "Pantalón de lino marino",
+      "Chinos beige",
       "Tenis blancos urbanos",
       "Gafas de sol negras"
      ],
      "itemIds": [
       "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-      "2e3343b2-56a1-4fbd-b5ac-7bbb6d6761e1",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
       "a81cdf75-5d5e-4565-b423-75e148921c9a",
       "a5f4034f-899a-4d4f-93f5-8e62870e2446"
      ],
-     "explicacion": "El esmeralald junto a la cara te enciende la mirada y el lino te salva del calor: fresco, pulido y con un color que casi nadie sabe usar tan bien."
+     "explicacion": "El lino esmeralda te enciende la cara y el beige abajo lo aterriza: fresco para los 30°C y con un aire cuidado sin esfuerzo."
     },
     {
-     "look": "Azul rey directo",
+     "look": "Azul rey de diario",
      "prendas": [
       "Camisa azul rey de manga corta",
-      "Chinos carbón",
-      "Tenis de piel negros",
+      "Bermuda sastre marino",
+      "Sandalia de cuero negra",
       "Reloj negro"
      ],
      "itemIds": [
       "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "9a37432f-1d00-4806-a128-0edeb55c7178",
+      "b988abf9-eba7-4567-b80c-3fc04090f120",
+      "9d59b8e9-a26b-4f66-8905-f6535be48076",
       "8a758cd3-5865-401f-8741-a463199b6247"
      ],
-     "explicacion": "El azul rey te ilumina la cara y el carbón abajo lo aterriza — manga corta con estructura, perfecto para un día soleado sin verte desarmado."
+     "explicacion": "Ese azul rey es de tus mejores colores y la bermuda sastre marino mantiene todo pulido aunque estés en shorts."
     },
     {
-     "look": "Blanco y marino de siempre",
+     "look": "Vino sobre carbón",
      "prendas": [
-      "Polo blanco",
-      "Bermuda sastre marino",
-      "Sandalia de cuero negra",
+      "Camiseta vino",
+      "Chinos carbón",
+      "Tenis blancos",
       "Gafas de sol wayfarer"
      ],
      "itemIds": [
-      "c5a9482a-3546-43d2-84be-630a1a679660",
-      "b988abf9-eba7-4567-b80c-3fc04090f120",
-      "010d102c-4ce3-4781-8415-d14b40513d27",
+      "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
+      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+      "f9284946-c02a-41ee-b261-4db131a196a4",
       "d1d1c205-a473-4519-9fb7-ba95cc66b191"
      ],
-     "explicacion": "El blanco puro te limpia el rostro y la bermuda sastre mantiene la línea recta: cómodo para 30 grados pero con intención, nadie sabrá que te tomó dos minutos."
+     "explicacion": "El vino te da color en la cara sin gritar y los chinos carbón con tenis blancos limpian la línea del cuerpo de arriba a abajo."
     }
    ]
   },
@@ -381,120 +383,122 @@
    "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_preppy_f-f098de84.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_casual-limpio_f-a7a99e58.jpg",
+     "carpeta": "casual-limpio"
     },
     {
-     "url": "/inspo/hombre_minimalista_449a49ce.jpg",
+     "url": "/inspo/hombre_clasico-elegante_13538a6c.jpg",
+     "carpeta": "clasico-elegante"
+    },
+    {
+     "url": "/inspo/hombre_minimalista_5f924082.jpg",
      "carpeta": "minimalista"
-    },
-    {
-     "url": "/inspo/hombre_preppy_f-96f9a0cd.jpg",
-     "carpeta": "preppy"
     }
    ],
    "renderCon": "/ab/4-a.png",
    "renderSin": "/ab/4-b.png",
    "conFotos": [
     {
-     "look": "Marino sobre blanco",
+     "look": "Overshirt marino, calle limpia",
      "prendas": [
-      "Camisa oxford blanca",
-      "Suéter cuello V marino",
-      "Chinos carbón",
-      "Botines Chelsea",
-      "Chamarra impermeable ligera"
+      "Camisa overshirt marino",
+      "Suéter crewneck verde bosque",
+      "Jeans negros",
+      "Tenis blancos urbanos",
+      "Reloj negro"
      ],
      "itemIds": [
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "15269f21-4ba6-4e17-8e84-e07db28520cc",
-      "89ea44b2-a72b-46e3-b8bc-42487acd77ab"
+      "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+      "89115e62-f673-4503-a3c4-8e58af9acd18",
+      "a81ad417-f786-4b45-b06c-f809ba5655a7",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a",
+      "8a758cd3-5865-401f-8741-a463199b6247"
      ],
-     "explicacion": "El marino con el cuello blanco asomando te limpia la cara al instante, y la chamarra impermeable te salva de la lluvia sin romper la línea pulida."
+     "explicacion": "El verde bosque bajo el marino te enciende la cara y los tenis blancos rompen todo lo oscuro justo donde debe: abajo."
     },
     {
-     "look": "Bomber, limpio y directo",
+     "look": "Polo marino de domingo",
      "prendas": [
-      "Camiseta blanca",
-      "Chamarra bomber",
-      "Jeans azul oscuro",
-      "Tenis blancos urbanos"
+      "Polo marino",
+      "Chinos beige",
+      "Mocasines burdeos",
+      "Cinturón café"
      ],
      "itemIds": [
-      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
-      "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a"
+      "95d3aa82-f962-404a-9443-f860d1674361",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
+      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
      ],
-     "explicacion": "Blanco, negro y jeans oscuros: el contraste te marca los hombros y se ve intencional aunque te tome dos minutos."
+     "explicacion": "El polo entallado en marino te da hombro y estructura, y el pantalón claro abajo aligera sin robarte protagonismo."
     },
+    {
+     "look": "Cárdigan de café lluvioso",
+     "prendas": [
+      "Cárdigan marino",
+      "Camiseta blanca",
+      "Chinos carbón",
+      "Tenis blancos"
+     ],
+     "itemIds": [
+      "c89437c2-f385-4a2b-95a0-da021da9d00a",
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+      "a8c361a6-e373-4007-8e83-04461af72b40"
+     ],
+     "explicacion": "Blanco puro pegado a la cara más el cárdigan abierto: cómodo para el día gris, pero se ve pensado."
+    }
+   ],
+   "sinFotos": [
     {
      "look": "Verde que enciende",
      "prendas": [
       "Suéter esmeralda de lana fina",
       "Jeans azul oscuro",
+      "Chamarra impermeable ligera",
       "Botines Chelsea negros",
-      "Chamarra de piel negra clásica"
+      "Reloj negro"
      ],
      "itemIds": [
       "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-      "29a0eb22-90aa-47c4-b02d-498632820ba4",
+      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
+      "89ea44b2-a72b-46e3-b8bc-42487acd77ab",
       "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
-      "236fbffe-fdb3-45f5-a5d9-044fc5d16284"
+      "8a758cd3-5865-401f-8741-a463199b6247"
      ],
-     "explicacion": "El esmeralda es de esos colores que te levantan el rostro, y la chamarra de piel negra encima le da estructura y aguanta la llovizna."
-    }
-   ],
-   "sinFotos": [
+     "explicacion": "El esmeralda te levanta el rostro al instante y la chamarra impermeable te cubre de la llovizna sin romper lo pulido."
+    },
     {
-     "look": "Esmeralda a prueba de lluvia",
+     "look": "Negro con piel",
      "prendas": [
-      "Suéter esmeralda de lana fina",
+      "Cuello tortuga negro",
       "Chinos carbón",
-      "Chamarra impermeable ligera",
+      "Chamarra de piel negra clásica",
       "Botines Chelsea negros"
      ],
      "itemIds": [
-      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "89ea44b2-a72b-46e3-b8bc-42487acd77ab",
+      "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
       "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
      ],
-     "explicacion": "El esmeralda te enciende la cara y la chamarra gris te cubre de la llovizna sin robarle protagonismo; los chinos carbón y los chelsea negros lo dejan limpio y con línea."
+     "explicacion": "El cuello tortuga negro y la piel te dan hombros y línea limpia — puro filo sin esfuerzo."
     },
     {
-     "look": "Marino sobre blanco",
+     "look": "Vino sobre denim",
      "prendas": [
-      "Camisa oxford blanca",
-      "Suéter cuello V marino",
+      "Suéter de cuello redondo vino",
       "Jeans azul oscuro",
-      "Botines Chelsea negros"
-     ],
-     "itemIds": [
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
-     ],
-     "explicacion": "El cuello de la camisa blanca asomando bajo el suéter marino te estructura los hombros y te ilumina la cara — pulido sin esfuerzo, con jeans oscuros para el día a día."
-    },
-    {
-     "look": "Vino bajo overshirt",
-     "prendas": [
-      "Camiseta vino",
-      "Camisa overshirt marino",
-      "Jeans negros",
+      "Chamarra bomber",
       "Tenis de piel negros"
      ],
      "itemIds": [
-      "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
-      "39c4d4eb-d14a-4c5f-8210-902b412c0844",
-      "a81ad417-f786-4b45-b06c-f809ba5655a7",
+      "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+      "c9b2a866-a95f-42ec-9db8-97e153faca56",
+      "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
       "9a37432f-1d00-4806-a128-0edeb55c7178"
      ],
-     "explicacion": "El vino te favorece y la overshirt marino abierta te da esa capa relajada con intención; jeans negros y tenis de piel lo mantienen sobrio para un día de lluvia ligera."
+     "explicacion": "El vino te calienta la cara y el denim oscuro lo aterriza: relajado pero con intención para el día."
     }
    ]
   },
@@ -506,93 +510,89 @@
    "momento": "noche",
    "fotos": [
     {
-     "url": "/inspo/hombre_preppy_f-f098de84.jpg",
-     "carpeta": "preppy"
-    },
-    {
-     "url": "/inspo/hombre_preppy_f-044cf35c.jpg",
-     "carpeta": "preppy"
-    },
-    {
      "url": "/inspo/hombre_casual-effortless_9d5101e5.jpg",
      "carpeta": "casual-effortless"
+    },
+    {
+     "url": "/inspo/hombre_clasico-elegante_74b86185.jpg",
+     "carpeta": "clasico-elegante"
+    },
+    {
+     "url": "/inspo/hombre_minimalista_449a49ce.jpg",
+     "carpeta": "minimalista"
     }
    ],
    "renderCon": "/ab/5-b.png",
    "renderSin": "/ab/5-a.png",
    "conFotos": [
     {
-     "look": "Cuello asomado",
+     "look": "Carbón sobre azul",
      "prendas": [
-      "Camisa oxford azul",
       "Suéter crewneck carbón",
+      "Camisa oxford azul",
       "Jeans azul oscuro",
       "Botines Chelsea negros"
      ],
      "itemIds": [
-      "02c8311c-b347-48be-b0fd-dd1a9c87510f",
       "d67554e9-931f-4b95-900b-a019848aee0e",
+      "02c8311c-b347-48be-b0fd-dd1a9c87510f",
       "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
       "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
      ],
-     "explicacion": "El truco es dejar asomar el cuello de la camisa bajo el suéter: te arma los hombros y sube el look sin esfuerzo, y el carbón con azul te deja la cara despierta de noche."
+     "explicacion": "El cuello y los puños de la camisa asomando bajo el suéter oscuro te dan estructura arriba y el azul junto a la cara te despierta la mirada."
     },
     {
-     "look": "V marino de noche",
+     "look": "Negro total, noche",
      "prendas": [
-      "Camisa oxford blanca",
-      "Suéter cuello V marino",
-      "Chinos carbón",
-      "Botines Chelsea de gamuza",
-      "Cinturón café"
-     ],
-     "itemIds": [
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "f7b568ae-8368-44c8-9dc2-8472098c05f2",
-      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
-     ],
-     "explicacion": "Marino y blanco cerca de la cara es tu combinación más limpia, y el chino carbón con los botines de gamuza café le da calidez sin salirse de lo sobrio."
-    },
-    {
-     "look": "Esmeralda con piel",
-     "prendas": [
-      "Suéter esmeralda de lana fina",
+      "Cuello tortuga negro",
       "Chamarra de piel negra clásica",
-      "Jeans negros",
-      "Tenis de piel negros"
+      "Pantalón negro",
+      "Botines Chelsea negros"
      ],
      "itemIds": [
-      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
       "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-      "a81ad417-f786-4b45-b06c-f809ba5655a7",
-      "9a37432f-1d00-4806-a128-0edeb55c7178"
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
      ],
-     "explicacion": "El esmeralda te enciende la cara y la piel negra encima te define los hombros: mismo look de siempre pero con un punto atrevido."
+     "explicacion": "Todo negro con el contraste punto + piel: el negro es de tus mejores colores y esta línea limpia te alarga y te afila los hombros."
+    },
+    {
+     "look": "Bomber limpio",
+     "prendas": [
+      "Camiseta blanca",
+      "Chamarra bomber",
+      "Pantalón negro",
+      "Tenis blancos urbanos"
+     ],
+     "itemIds": [
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
+      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a"
+     ],
+     "explicacion": "Blanco puro junto a la cara y todo lo demás oscuro: sencillísimo, fresco para la noche y se ve pensado sin esfuerzo."
     }
    ],
    "sinFotos": [
     {
-     "look": "Negro sobre negro",
+     "look": "Noche en negro",
      "prendas": [
-      "Camisa negra",
-      "Jeans negros",
+      "Camiseta negra",
+      "Jeans azul oscuro",
       "Chamarra de piel negra clásica",
-      "Botines Chelsea negros",
-      "Cinturón negro"
+      "Botines Chelsea negros"
      ],
      "itemIds": [
-      "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
-      "a81ad417-f786-4b45-b06c-f809ba5655a7",
+      "f69423f7-d264-41d2-90b1-674522a8c31c",
+      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
       "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
      ],
-     "explicacion": "El negro es tu mejor carta de noche y la piel le mete estructura al hombro: se ve caro sin esfuerzo."
+     "explicacion": "El negro cerca de la cara te define los rasgos y la piel te da hombros y estructura sin esfuerzo — limpio, oscuro y con actitud de noche."
     },
     {
-     "look": "Esmeralda de noche",
+     "look": "Esmeralda discreto",
      "prendas": [
       "Suéter esmeralda de lana fina",
       "Chinos carbón",
@@ -602,26 +602,26 @@
      "itemIds": [
       "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
+      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
       "8a758cd3-5865-401f-8741-a463199b6247"
      ],
-     "explicacion": "El esmeralda te enciende la cara y el carbón lo aterriza: limpio, sobrio y con un punto distinto."
+     "explicacion": "El esmeralda te enciende la cara y sobre el carbón se ve elegante sin gritar: tu punto arreglado para la noche."
     },
     {
-     "look": "Overshirt marino",
+     "look": "Camisa negra, mezclilla oscura",
      "prendas": [
-      "Camiseta blanca",
-      "Camisa overshirt marino",
+      "Camisa negra",
       "Jeans azul oscuro",
-      "Tenis de piel negros"
+      "Botines Chelsea de gamuza",
+      "Cinturón negro"
      ],
      "itemIds": [
-      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
-      "39c4d4eb-d14a-4c5f-8210-902b412c0844",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "9a37432f-1d00-4806-a128-0edeb55c7178"
+      "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+      "c9b2a866-a95f-42ec-9db8-97e153faca56",
+      "f7b568ae-8368-44c8-9dc2-8472098c05f2",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "La camisa abierta sobre la blanca te arma los hombros y el marino con denim oscuro se ve relajado pero pensado."
+     "explicacion": "Camisa negra fajada con mezclilla oscura te alarga la línea, y la gamuza café mete la textura que hace ver el look pensado."
     }
    ]
   },
@@ -633,15 +633,15 @@
    "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_casual-effortless_00477b2c.jpg",
-     "carpeta": "casual-effortless"
-    },
-    {
-     "url": "/inspo/hombre_minimalista_20199cc4.jpg",
+     "url": "/inspo/hombre_minimalista_f6b10326.jpg",
      "carpeta": "minimalista"
     },
     {
-     "url": "/inspo/hombre_casual-effortless_9d5101e5.jpg",
+     "url": "/inspo/hombre_smart-casual_0cfe531f.jpg",
+     "carpeta": "smart-casual"
+    },
+    {
+     "url": "/inspo/hombre_casual-effortless_7d48f383.jpg",
      "carpeta": "casual-effortless"
     }
    ],
@@ -649,54 +649,54 @@
    "renderSin": "/ab/6-b.png",
    "conFotos": [
     {
-     "look": "Blanco impecable",
+     "look": "Camisa abierta, tono oficina",
+     "prendas": [
+      "Playera blanca interior",
+      "Camisa overshirt marino",
+      "Pantalón negro",
+      "Mocasines negros",
+      "Cinturón negro"
+     ],
+     "itemIds": [
+      "37a9f3c0-fbec-493d-963d-2eb9a912b028",
+      "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "c0780181-ad59-4219-8287-eba5c1ca03f2",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     ],
+     "explicacion": "La camisa marino abierta sobre blanco te da estructura en los hombros y el pantalón negro afina todo: relajado sin perder oficina."
+    },
+    {
+     "look": "Gris limpio con tenis",
+     "prendas": [
+      "Camiseta blanca",
+      "Saco sport gris carbón",
+      "Pantalón negro",
+      "Tenis blancos"
+     ],
+     "itemIds": [
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "625a5348-47fc-4e73-93d2-fb4f91c91072",
+      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+      "f9284946-c02a-41ee-b261-4db131a196a4"
+     ],
+     "explicacion": "El blanco puro junto a la cara te ilumina y el saco gris te arma la silueta; los tenis blancos bajan el tono justo para el día."
+    },
+    {
+     "look": "Esmeralda sobre camisa",
      "prendas": [
       "Camisa oxford blanca",
-      "Blazer marino",
+      "Suéter esmeralda de lana fina",
       "Chinos carbón",
-      "Zapato derby de piel chocolate",
-      "Cinturón negro"
+      "Tenis blancos urbanos"
      ],
      "itemIds": [
       "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
+      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+      "a81cdf75-5d5e-4565-b423-75e148921c9a"
      ],
-     "explicacion": "El blanco puro junto a la cara te deja fresco y el blazer marino te arma los hombros; el carbón abajo evita el efecto \"traje desparejado\" y el derby chocolate le da el toque cálido."
-    },
-    {
-     "look": "Azul de lunes ganador",
-     "prendas": [
-      "Camisa oxford azul",
-      "Chinos azul marino",
-      "Mocasines burdeos",
-      "Cinturón café"
-     ],
-     "itemIds": [
-      "02c8311c-b347-48be-b0fd-dd1a9c87510f",
-      "8e7c4378-a465-4892-a5bf-e673152a3c4e",
-      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
-      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
-     ],
-     "explicacion": "Camisa azul con pantalón marino es la fórmula limpia que nunca falla, y el mocasín burdeos mete ese guiño de color que te queda increíble."
-    },
-    {
-     "look": "Oficina relajada",
-     "prendas": [
-      "Camisa blanca",
-      "Jeans azul oscuro",
-      "Botines Chelsea negros",
-      "Cinturón negro"
-     ],
-     "itemIds": [
-      "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-      "c9b2a866-a95f-42ec-9db8-97e153faca56",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "Camisa blanca fajada con jeans oscuros y botín negro: cómodo para 22 grados y sigue viéndose pulido, sin esfuerzo."
+     "explicacion": "El esmeralda te enciende la cara y el cuello de la camisa asomando le da ese remate pulido que tanto te queda."
     }
    ],
    "sinFotos": [
@@ -707,48 +707,48 @@
       "Camisa oxford blanca",
       "Chinos carbón",
       "Zapato derby de piel chocolate",
-      "Cinturón café"
+      "Cinturón negro"
      ],
      "itemIds": [
       "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
       "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
       "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
-      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "El blazer marino con la camisa blanca te limpia la cara y te da hombros; los chinos carbón rompen el efecto \"traje desparejado\" y el derby chocolate le mete carácter."
+     "explicacion": "El marino y el blanco te levantan la cara al instante, y el blazer entallado te marca hombros — pulido sin esfuerzo."
     },
     {
-     "look": "Oficina sin esfuerzo",
+     "look": "Carbón y negro, cero ruido",
+     "prendas": [
+      "Saco sport gris carbón",
+      "Camisa negra",
+      "Pantalón de vestir marino",
+      "Mocasines negros"
+     ],
+     "itemIds": [
+      "625a5348-47fc-4e73-93d2-fb4f91c91072",
+      "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+      "610aba90-5895-4c3c-b600-fcd492fef093",
+      "c0780181-ad59-4219-8287-eba5c1ca03f2"
+     ],
+     "explicacion": "El negro cerca de la cara te da contraste limpio y el gris con marino le baja lo severo: elegancia que no grita, justo tu estilo."
+    },
+    {
+     "look": "Oficina sin saco",
      "prendas": [
       "Camisa oxford azul",
-      "Pantalón negro",
-      "Mocasines negros",
-      "Cinturón negro"
+      "Pantalón de vestir carbón",
+      "Mocasines burdeos",
+      "Cinturón café"
      ],
      "itemIds": [
       "02c8311c-b347-48be-b0fd-dd1a9c87510f",
-      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
-      "c0780181-ad59-4219-8287-eba5c1ca03f2",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "El azul cerca del rostro te ilumina y el pantalón negro entallado alarga la línea: sobrio, fresco para los 22°C y listo en dos minutos."
-    },
-    {
-     "look": "Business casual afilado",
-     "prendas": [
-      "Polo marino",
-      "Saco sport gris carbón",
-      "Pantalón de vestir carbón",
-      "Botines Chelsea de gamuza"
-     ],
-     "itemIds": [
-      "95d3aa82-f962-404a-9443-f860d1674361",
-      "625a5348-47fc-4e73-93d2-fb4f91c91072",
       "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
-      "f7b568ae-8368-44c8-9dc2-8472098c05f2"
+      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
+      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
      ],
-     "explicacion": "El polo marino te queda impecable junto a la cara y el saco gris carbón te da la estructura que buscas sin verse acartonado; los botines de gamuza café bajan la formalidad justo lo necesario."
+     "explicacion": "Para un día templado: camisa fajada, pantalón entallado y el burdeos del zapato como único guiño de color — simple pero bien hecho."
     }
    ]
   },
@@ -760,118 +760,120 @@
    "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_preppy_f-a8c344ba.jpg",
-     "carpeta": "preppy"
-    },
-    {
-     "url": "/inspo/hombre_preppy_054026db.jpg",
-     "carpeta": "preppy"
-    },
-    {
-     "url": "/inspo/hombre_minimalista_e6ca0a59.jpg",
+     "url": "/inspo/hombre_minimalista_fbca4ba0.jpg",
      "carpeta": "minimalista"
+    },
+    {
+     "url": "/inspo/hombre_clasico-elegante_f80d4ae7.jpg",
+     "carpeta": "clasico-elegante"
+    },
+    {
+     "url": "/inspo/hombre_casual-effortless_acbe3a7f.jpg",
+     "carpeta": "casual-effortless"
     }
    ],
    "renderCon": "/ab/7-b.png",
    "renderSin": "/ab/7-a.png",
    "conFotos": [
     {
-     "look": "Blanco impecable de oficina",
+     "look": "Negro y arena, limpio",
      "prendas": [
-      "Camisa oxford blanca",
-      "Pantalón de vestir carbón",
+      "Camiseta negra",
+      "Pantalón de lino",
+      "Tenis blancos",
+      "Cinturón negro"
+     ],
+     "itemIds": [
+      "f69423f7-d264-41d2-90b1-674522a8c31c",
+      "0e231ce2-9146-4da1-b680-334c91ebd0fa",
+      "f9284946-c02a-41ee-b261-4db131a196a4",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     ],
+     "explicacion": "El negro pegado a la cara te define los rasgos y el lino claro abajo baja el calor: dos piezas, cero esfuerzo, look resuelto."
+    },
+    {
+     "look": "Monocromo de oficina",
+     "prendas": [
+      "Polo marino",
+      "Pantalón negro",
       "Mocasines negros",
       "Cinturón negro"
      ],
      "itemIds": [
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
+      "95d3aa82-f962-404a-9443-f860d1674361",
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
       "c0780181-ad59-4219-8287-eba5c1ca03f2",
       "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "El blanco puro te limpia la cara y el pantalón carbón te da línea recta: sobrio, fresco para los 28°C y siempre correcto en la oficina."
+     "explicacion": "El polo marino entallado te marca hombros y con pantalón negro y mocasines se ve serio sin ponerte saco con 28 grados."
     },
     {
-     "look": "Esmeralda con carácter",
+     "look": "Camiseta negra, mocasín negro",
      "prendas": [
-      "Camisa de lino esmeralda",
-      "Pantalón negro",
-      "Mocasines burdeos",
-      "Reloj negro"
+      "Camiseta carbón",
+      "Chinos beige",
+      "Mocasines negros",
+      "Cinturón negro",
+      "Gafas de sol negras"
      ],
      "itemIds": [
-      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
-      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
-      "8a758cd3-5865-401f-8741-a463199b6247"
+      "548e759a-4e9a-4010-b14e-47aa6c92a8b7",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "c0780181-ad59-4219-8287-eba5c1ca03f2",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2",
+      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
      ],
-     "explicacion": "El esmeralda es de tus colores estrella y el lino respira con el calor; el negro abajo y el burdeos en el pie son ese toque atrevido sin gritar."
-    },
-    {
-     "look": "Azul rey de día",
-     "prendas": [
-      "Camisa azul rey de manga corta",
-      "Chinos carbón",
-      "Zapato formal negro",
-      "Cinturón negro"
-     ],
-     "itemIds": [
-      "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "73b272dd-bdd6-4210-ae88-c3a4872dae2b",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "El azul rey te enciende la mirada y con el chino carbón y zapato negro se lee pulido aunque sea manga corta — ideal para un día soleado de escritorio."
+     "explicacion": "El truco está en el zapato: la misma base casual, pero con mocasín y cinturón negros pasa directo a modo oficina."
     }
    ],
    "sinFotos": [
     {
-     "look": "Azul rey de lunes",
+     "look": "Blanco impecable",
      "prendas": [
-      "Camisa azul rey de manga corta",
+      "Camisa blanca",
       "Chinos carbón",
       "Mocasines negros",
       "Cinturón negro"
      ],
      "itemIds": [
-      "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
+      "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
       "c0780181-ad59-4219-8287-eba5c1ca03f2",
       "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "El azul rey te enciende la cara y el carbón lo aterriza: manga corta para el calor, pero con línea limpia de oficina."
+     "explicacion": "El blanco puro te limpia la cara y el carbón abajo alarga la línea: lo simple, pero bien hecho, es tu mejor jugada en oficina."
     },
     {
-     "look": "Lino esmeralda",
+     "look": "Azul rey de lunes",
      "prendas": [
-      "Camisa de lino esmeralda",
-      "Pantalón de lino marino",
+      "Camisa azul rey de manga corta",
+      "Pantalón de vestir carbón",
+      "Mocasines burdeos",
+      "Reloj negro"
+     ],
+     "itemIds": [
+      "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
+      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
+      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
+      "8a758cd3-5865-401f-8741-a463199b6247"
+     ],
+     "explicacion": "El azul rey te enciende la mirada y la manga corta salva los 28°C sin perder el aire pulido; los mocasines burdeos son el detalle que se nota."
+    },
+    {
+     "look": "Marino relajado con filo",
+     "prendas": [
+      "Polo marino",
+      "Chinos carbón",
       "Botines Chelsea de gamuza",
       "Cinturón café"
      ],
      "itemIds": [
-      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-      "2e3343b2-56a1-4fbd-b5ac-7bbb6d6761e1",
+      "95d3aa82-f962-404a-9443-f860d1674361",
+      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
       "f7b568ae-8368-44c8-9dc2-8472098c05f2",
       "cff65d0d-b568-46be-a0fe-6fbc09d57970"
      ],
-     "explicacion": "El esmeralda es de tus mejores colores y el lino te salva del calor; los botines café le dan el remate pulido."
-    },
-    {
-     "look": "Blanco impecable",
-     "prendas": [
-      "Camisa oxford blanca",
-      "Chinos azul marino",
-      "Mocasines burdeos",
-      "Cinturón negro"
-     ],
-     "itemIds": [
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "8e7c4378-a465-4892-a5bf-e673152a3c4e",
-      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "Blanco puro contra marino te limpia el rostro y los mocasines burdeos meten ese toque tuyo sin gritar."
+     "explicacion": "El polo entallado en marino te marca hombros y el café de la gamuza calienta el look sin gritar: cómodo con calor, pero se ve intencional."
     }
    ]
   },
@@ -887,120 +889,118 @@
      "carpeta": "minimalista"
     },
     {
-     "url": "/inspo/hombre_preppy_3a5b5df6.jpg",
-     "carpeta": "preppy"
+     "url": "/inspo/hombre_clasico-elegante_f-fe69749f.jpg",
+     "carpeta": "clasico-elegante"
     },
     {
-     "url": "/inspo/hombre_casual-effortless_3a5e17f6.jpg",
-     "carpeta": "casual-effortless"
+     "url": "/inspo/hombre_minimalista_f-999a5e89.jpg",
+     "carpeta": "minimalista"
     }
    ],
    "renderCon": "/ab/8-a.png",
    "renderSin": "/ab/8-b.png",
    "conFotos": [
     {
-     "look": "Charcoal de lunes",
+     "look": "Charcoal y negro, sin ruido",
      "prendas": [
-      "Cuello tortuga negro de lana merino",
       "Abrigo charcoal",
+      "Cuello tortuga negro de lana merino",
       "Pantalón negro",
-      "Botines Chelsea negros",
-      "Bufanda de lana vino"
+      "Botines Chelsea negros"
      ],
      "itemIds": [
-      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
       "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
+      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
       "0234b83b-463f-4f6f-9ab2-4ae92f482819",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
-      "519406c8-5c6d-416a-9939-70fae869f37d"
+      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
      ],
-     "explicacion": "El cuello tortuga negro te limpia la cara y el abrigo largo te alarga y te da hombros: entras a la oficina con autoridad sin decir nada."
+     "explicacion": "El cuello alto negro te define la cara y el abrigo largo te alarga toda la línea: lo más limpio que puedes ponerte a 9°C."
     },
     {
-     "look": "Esmeralda y chocolate",
+     "look": "Capas de oficina inglesa",
+     "prendas": [
+      "Blazer marrón de lana",
+      "Suéter crewneck carbón",
+      "Camisa oxford blanca",
+      "Pantalón de vestir marino",
+      "Zapato derby de piel chocolate"
+     ],
+     "itemIds": [
+      "4adc24d6-1b26-469f-b964-49023caa7f6f",
+      "d67554e9-931f-4b95-900b-a019848aee0e",
+      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
+      "610aba90-5895-4c3c-b600-fcd492fef093",
+      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb"
+     ],
+     "explicacion": "El cuello de la camisa blanca asomando sobre el punto gris te ilumina, y el chocolate del zapato amarra el marrón de arriba: puro oficio bien hecho."
+    },
+    {
+     "look": "Esmeralda bajo el abrigo",
+     "prendas": [
+      "Abrigo charcoal",
+      "Suéter esmeralda de lana fina",
+      "Chinos carbón",
+      "Mocasines burdeos"
+     ],
+     "itemIds": [
+      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
+      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+      "b5f07035-b01a-4c12-b045-5a66c20b2dba"
+     ],
+     "explicacion": "El verde esmeralda te enciende la cara sin gritar, y sobre base carbón se ve como una decisión, no como un accidente."
+    }
+   ],
+   "sinFotos": [
+    {
+     "look": "Esmeralda de lunes",
      "prendas": [
       "Suéter esmeralda de lana fina",
-      "Blazer marrón de lana",
       "Chinos carbón",
-      "Botines Chelsea de gamuza"
+      "Abrigo charcoal",
+      "Botines Chelsea negros"
      ],
      "itemIds": [
       "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-      "4adc24d6-1b26-469f-b964-49023caa7f6f",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "f7b568ae-8368-44c8-9dc2-8472098c05f2"
+      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
+      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
      ],
-     "explicacion": "El verde esmeralda te enciende la mirada y el blazer café de lana le mete estructura y textura al carbón: pulido, pero con carácter."
+     "explicacion": "El esmeralda cerca de la cara te enciende la mirada y el abrigo charcoal le pone los hombros y la seriedad que la oficina pide con este frío."
     },
     {
-     "look": "Marino sobre blanco",
+     "look": "Capas de junta",
      "prendas": [
       "Camisa oxford blanca",
       "Suéter cuello V marino",
       "Pantalón de vestir gris",
-      "Zapato derby de piel chocolate",
-      "Cinturón negro"
+      "Botines Chelsea negros",
+      "Bufanda de lana vino"
      ],
      "itemIds": [
       "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
       "a264017d-d48d-420e-8c55-fbdf6b74dd71",
       "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
-      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+      "519406c8-5c6d-416a-9939-70fae869f37d"
      ],
-     "explicacion": "El cuello de camisa blanca asomando bajo el marino te ilumina la cara y el gris rompe el bloque: clásico bien hecho, cero esfuerzo."
-    }
-   ],
-   "sinFotos": [
-    {
-     "look": "Marino impecable",
-     "prendas": [
-      "Blazer marino",
-      "Camisa oxford blanca",
-      "Pantalón de vestir carbón",
-      "Zapato formal negro",
-      "Cinturón negro"
-     ],
-     "itemIds": [
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
-      "73b272dd-bdd6-4210-ae88-c3a4872dae2b",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "El marino y el blanco te limpian la cara al instante, y el blazer entallado te da esos hombros marcados que te sientan tan bien."
+     "explicacion": "El blanco de la camisa asomando bajo el marino te limpia el rostro, y la bufanda vino remata sin gritar: pulido con cero esfuerzo."
     },
     {
-     "look": "Esmeralda de junta",
+     "look": "Negro con blazer",
      "prendas": [
-      "Blazer estructurado negro",
-      "Suéter esmeralda de lana fina",
-      "Pantalón de vestir gris",
-      "Botines Chelsea negros"
-     ],
-     "itemIds": [
-      "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
-      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-      "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
-      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
-     ],
-     "explicacion": "El esmeralda es tu color y sobre el gris con el saco negro se ve caro sin gritar — abrigado y con carácter para un día de 9°C."
-    },
-    {
-     "look": "Cuello tortuga con oficio",
-     "prendas": [
-      "Abrigo charcoal",
       "Cuello tortuga negro de lana merino",
+      "Blazer marino",
       "Chinos carbón",
-      "Botines Chelsea negros"
+      "Zapato formal negro"
      ],
      "itemIds": [
-      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
       "af0ed4ff-1bf3-4021-865b-48d892baaedf",
+      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
       "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
+      "73b272dd-bdd6-4210-ae88-c3a4872dae2b"
      ],
-     "explicacion": "El negro pegado al rostro te define y el abrigo largo te alarga la línea: mínimo esfuerzo, máximo aplomo para el frío nublado."
+     "explicacion": "El cuello tortuga negro te define la línea del rostro y el blazer marino sobre el carbón te da estructura arriba sin parecer traje suelto."
     }
    ]
   },
@@ -1012,148 +1012,148 @@
    "momento": "noche",
    "fotos": [
     {
-     "url": "/inspo/hombre_casual-effortless_9d5101e5.jpg",
-     "carpeta": "casual-effortless"
+     "url": "/inspo/hombre_clasico-elegante_2a15f250.jpg",
+     "carpeta": "clasico-elegante"
     },
     {
-     "url": "/inspo/hombre_casual-limpio_f-a7a99e58.jpg",
-     "carpeta": "casual-limpio"
+     "url": "/inspo/hombre_smart-casual_b5b1a523.jpg",
+     "carpeta": "smart-casual"
     },
     {
-     "url": "/inspo/hombre_minimalista_f6b10326.jpg",
-     "carpeta": "minimalista"
+     "url": "/inspo/hombre_clasico-elegante_f-16e10683.jpg",
+     "carpeta": "clasico-elegante"
     }
    ],
    "renderCon": "/ab/9-a.png",
    "renderSin": "/ab/9-b.png",
    "conFotos": [
     {
-     "look": "Marino de gala",
-     "prendas": [
-      "Traje marino de lana",
-      "Camisa blanca",
-      "Pantalón de vestir marino",
-      "Corbata de seda vino",
-      "Zapato derby de piel chocolate"
-     ],
-     "itemIds": [
-      "bcc07ff1-2c2f-445f-9d4a-a6253338ba04",
-      "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-      "610aba90-5895-4c3c-b600-fcd492fef093",
-      "597bfd31-88fa-4d04-9785-e10f16d0465c",
-      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb"
-     ],
-     "explicacion": "El marino con camisa blanca te limpia la cara y el vino de la corbata le mete el punto de color justo — impecable para una noche de evento."
-    },
-    {
-     "look": "Negro con intención",
+     "look": "Noche parisina",
      "prendas": [
       "Blazer estructurado negro",
-      "Cuello tortuga negro de lana merino",
-      "Pantalón de vestir carbón",
-      "Botines Chelsea negros",
-      "Reloj negro"
-     ],
-     "itemIds": [
-      "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
-      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
-      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
-      "8a758cd3-5865-401f-8741-a463199b6247"
-     ],
-     "explicacion": "El cuello tortuga negro bajo el blazer te alarga el torso y te define hombros: elegante sin corbata y perfecto de noche."
-    },
-    {
-     "look": "Esmeralda bajo marino",
-     "prendas": [
-      "Blazer marino",
-      "Suéter esmeralda de lana fina",
-      "Pantalón negro",
+      "Camisa negra",
+      "Chinos beige",
       "Mocasines negros",
       "Cinturón negro"
      ],
      "itemIds": [
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
-      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
+      "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
       "c0780181-ad59-4219-8287-eba5c1ca03f2",
       "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "El esmeralda te enciende la cara y con el blazer marino y pantalón negro se ve arreglado pero relajado, como te gusta."
+     "explicacion": "El contraste de negro arriba con el pantalón claro te alarga y te define los hombros: el negro junto a la cara te enciende la mirada de noche."
+    },
+    {
+     "look": "Café de la esquina",
+     "prendas": [
+      "Suéter cuello V marino",
+      "Camisa blanca",
+      "Chinos beige",
+      "Mocasines café",
+      "Cinturón café"
+     ],
+     "itemIds": [
+      "a264017d-d48d-420e-8c55-fbdf6b74dd71",
+      "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
+      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
+     ],
+     "explicacion": "El marino sobre el cuello blanco de la camisa te limpia la cara y le da ese aire tranquilo pero cuidado que va perfecto con 18 grados."
+    },
+    {
+     "look": "Milán al caminar",
+     "prendas": [
+      "Saco sport gris carbón",
+      "Cuello tortuga negro de lana merino",
+      "Chinos carbón",
+      "Botines Chelsea negros",
+      "Cinturón negro"
+     ],
+     "itemIds": [
+      "625a5348-47fc-4e73-93d2-fb4f91c91072",
+      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
+      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     ],
+     "explicacion": "El cuello tortuga negro bajo el saco gris te estructura el torso y se ve arregladísimo sin corbata — ideal para un evento de noche."
     }
    ],
    "sinFotos": [
     {
      "look": "Marino de noche",
      "prendas": [
-      "Blazer marino",
+      "Traje marino de lana",
       "Camisa blanca",
-      "Pantalón de vestir carbón",
+      "Pantalón de vestir marino",
       "Corbata de seda vino",
       "Zapato formal negro"
      ],
      "itemIds": [
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
+      "f1bf17d3-c897-44e7-88a2-2b3583e7c7de",
       "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
+      "610aba90-5895-4c3c-b600-fcd492fef093",
       "597bfd31-88fa-4d04-9785-e10f16d0465c",
       "73b272dd-bdd6-4210-ae88-c3a4872dae2b"
      ],
-     "explicacion": "El blazer marino entallado te marca hombros y el blanco cerca de la cara te ilumina; la corbata vino es el toque que dice que sí te arreglaste."
+     "explicacion": "El marino con blanco te limpia la cara y el vino de la corbata le mete el punto de color justo — es el look que nunca falla en un evento mexicano de noche."
     },
     {
-     "look": "Negro total, cero esfuerzo aparente",
+     "look": "Carbón con remate burdeos",
      "prendas": [
-      "Blazer estructurado negro",
-      "Cuello tortuga negro de lana merino",
-      "Pantalón de vestir gris",
-      "Mocasines negros"
-     ],
-     "itemIds": [
-      "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
-      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
-      "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
-      "c0780181-ad59-4219-8287-eba5c1ca03f2"
-     ],
-     "explicacion": "El cuello tortuga negro bajo el blazer te estiliza y te da estructura sin corbata: elegante de noche y con actitud."
-    },
-    {
-     "look": "Traje marino, remate chocolate",
-     "prendas": [
-      "Traje marino de lana",
+      "Traje de lana gris carbón",
       "Camisa oxford blanca",
-      "Pantalón de vestir marino",
-      "Zapato derby de piel chocolate",
+      "Pantalón de vestir carbón",
+      "Mocasines burdeos",
       "Cinturón negro"
      ],
      "itemIds": [
-      "bcc07ff1-2c2f-445f-9d4a-a6253338ba04",
+      "554863eb-2ad0-4137-916e-1f7a8303dc4a",
       "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "610aba90-5895-4c3c-b600-fcd492fef093",
-      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
+      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
+      "b5f07035-b01a-4c12-b045-5a66c20b2dba",
       "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "Traje completo, como pide un evento en México, y el zapato chocolate le quita solemnidad sin bajarle el nivel."
+     "explicacion": "Gris carbón y blanco te dan contraste sin gritar, y los mocasines burdeos son el detalle que dice que sí pensaste el look."
+    },
+    {
+     "look": "Negro sobre gris",
+     "prendas": [
+      "Blazer estructurado negro",
+      "Camisa negra",
+      "Pantalón de vestir gris",
+      "Botines Chelsea negros"
+     ],
+     "itemIds": [
+      "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
+      "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+      "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
+      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
+     ],
+     "explicacion": "El negro cerca de la cara te define los rasgos y el blazer estructurado te marca hombros: elegante y con un toque atrevido para la noche."
     }
    ]
   },
   {
    "n": 10,
-   "caso": "evento|9|noche",
-   "ocasion": "evento",
-   "temp": 9,
-   "momento": "noche",
+   "caso": "viaje|20|dia",
+   "ocasion": "viaje",
+   "temp": 20,
+   "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_minimalista_f-208a0dbf.jpg",
+     "url": "/inspo/hombre_minimalista_7a98f1d1.jpg",
      "carpeta": "minimalista"
     },
     {
-     "url": "/inspo/hombre_casual-effortless_3a5e17f6.jpg",
-     "carpeta": "casual-effortless"
+     "url": "/inspo/hombre_smart-casual_73de39f0.jpg",
+     "carpeta": "smart-casual"
     },
     {
-     "url": "/inspo/hombre_minimalista_ba313432.jpg",
+     "url": "/inspo/hombre_minimalista_91ee6fbd.jpg",
      "carpeta": "minimalista"
     }
    ],
@@ -1161,58 +1161,183 @@
    "renderSin": "/ab/10-a.png",
    "conFotos": [
     {
-     "look": "Noche de etiqueta suave",
+     "look": "Negro sobre arena",
      "prendas": [
-      "Blazer estructurado negro",
-      "Camisa blanca",
-      "Pantalón de vestir carbón",
-      "Zapato formal negro",
-      "Corbata de seda vino"
+      "Suéter de lana negro",
+      "Pantalón cargo beige",
+      "Tenis blancos urbanos",
+      "Reloj negro"
      ],
      "itemIds": [
-      "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
-      "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
-      "73b272dd-bdd6-4210-ae88-c3a4872dae2b",
-      "597bfd31-88fa-4d04-9785-e10f16d0465c"
+      "7384d177-67c0-454d-a8a7-1a527ea69fb5",
+      "602efa3f-d4a4-4a51-853a-5896f2447c7e",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a",
+      "8a758cd3-5865-401f-8741-a463199b6247"
      ],
-     "explicacion": "El negro con la camisa blanca te define la cara al instante y la corbata vino le mete ese punto elegante sin gritar."
+     "explicacion": "El negro te limpia la cara y el pantalón claro y holgado abajo te da esa proporción relajada perfecta para pasar seguridad sin batallar."
     },
     {
-     "look": "Marino con corbata",
+     "look": "Escala en negro",
      "prendas": [
-      "Traje marino de lana",
-      "Camisa oxford blanca",
-      "Pantalón de vestir marino",
-      "Zapato derby de piel chocolate",
+      "Camiseta blanca",
+      "Chaqueta negra con cierre",
+      "Jeans negros",
+      "Tenis blancos urbanos",
+      "Gafas de sol negras"
+     ],
+     "itemIds": [
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "ff2c8b59-de61-4c63-95c8-cb0e1315b834",
+      "a81ad417-f786-4b45-b06c-f809ba5655a7",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a",
+      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
+     ],
+     "explicacion": "Blanco y negro es tu combinación ganadora: la chamarra abierta te marca hombros y los tenis blancos lo mantienen ligero para el vuelo."
+    },
+    {
+     "look": "Cárdigan de vuelo",
+     "prendas": [
+      "Camiseta blanca",
+      "Cárdigan marino",
+      "Chinos beige",
+      "Botines Chelsea de gamuza"
+     ],
+     "itemIds": [
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "c89437c2-f385-4a2b-95a0-da021da9d00a",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "f7b568ae-8368-44c8-9dc2-8472098c05f2"
+     ],
+     "explicacion": "El marino junto al blanco te ilumina y el cárdigan abierto es la capa cómoda que se quita en el avión sin perder el estilo."
+    }
+   ],
+   "sinFotos": [
+    {
+     "look": "Terminal en negro",
+     "prendas": [
+      "Camiseta negra",
+      "Chamarra bomber",
+      "Jeans azul oscuro",
+      "Tenis blancos urbanos",
+      "Gafas de sol negras"
+     ],
+     "itemIds": [
+      "f69423f7-d264-41d2-90b1-674522a8c31c",
+      "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
+      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a",
+      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
+     ],
+     "explicacion": "El negro junto a la cara te define los rasgos y el bomber te suma hombro; cómodo para volar y limpio al bajar del avión."
+    },
+    {
+     "look": "Mezclilla bien portada",
+     "prendas": [
+      "Camiseta blanca",
+      "Chamarra de mezclilla",
+      "Chinos azul marino",
+      "Tenis de piel negros",
+      "Reloj negro"
+     ],
+     "itemIds": [
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "d1671b0f-238d-43da-bb6b-55dc4e7151af",
+      "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+      "9a37432f-1d00-4806-a128-0edeb55c7178",
+      "8a758cd3-5865-401f-8741-a463199b6247"
+     ],
+     "explicacion": "El blanco puro te ilumina y la chamarra entallada arriba con chinos rectos abajo te da esa proporción que se ve intencional sin esfuerzo."
+    },
+    {
+     "look": "Vino discreto",
+     "prendas": [
+      "Camiseta vino",
+      "Chaqueta negra con cierre",
+      "Pantalón técnico",
+      "Tenis blancos"
+     ],
+     "itemIds": [
+      "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
+      "ff2c8b59-de61-4c63-95c8-cb0e1315b834",
+      "6ff5e760-ad84-405d-b407-464e15f9a09f",
+      "f9284946-c02a-41ee-b261-4db131a196a4"
+     ],
+     "explicacion": "El vino te calienta la cara sin gritar, y el pantalón técnico con la chaqueta negra es lo más práctico que hay para pasar seguridad viéndote pulido."
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "caso": "evento|9|noche",
+   "ocasion": "evento",
+   "temp": 9,
+   "momento": "noche",
+   "fotos": [
+    {
+     "url": "/inspo/hombre_minimalista_f-2adf70dc.jpg",
+     "carpeta": "minimalista"
+    },
+    {
+     "url": "/inspo/hombre_clasico-elegante_f-fe42f38d.jpg",
+     "carpeta": "clasico-elegante"
+    },
+    {
+     "url": "/inspo/hombre_casual-effortless_3a5e17f6.jpg",
+     "carpeta": "casual-effortless"
+    }
+   ],
+   "renderCon": "/ab/11-a.png",
+   "renderSin": "/ab/11-b.png",
+   "conFotos": [
+    {
+     "look": "Noche de abrigo largo",
+     "prendas": [
+      "Cuello tortuga negro de lana merino",
+      "Pantalón de vestir gris",
+      "Abrigo charcoal",
+      "Botines Chelsea negros",
       "Cinturón negro"
      ],
      "itemIds": [
-      "bcc07ff1-2c2f-445f-9d4a-a6253338ba04",
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "610aba90-5895-4c3c-b600-fcd492fef093",
-      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
+      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
+      "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
+      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
+      "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
       "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "Traje marino completo y zapato chocolate: te ves impecable y los hombros del saco te dan esa estructura que te queda tan bien."
+     "explicacion": "El cuello tortuga negro te limpia la cara y el abrigo largo te alarga la línea: el pantalón gris claro rompe el bloque oscuro justo como en la foto."
     },
     {
-     "look": "Cuello tortuga bajo abrigo",
+     "look": "Marino de invierno",
      "prendas": [
-      "Abrigo charcoal",
-      "Saco sport gris carbón",
-      "Cuello tortuga negro de lana merino",
-      "Pantalón negro",
-      "Botines Chelsea negros"
+      "Cuello tortuga negro",
+      "Pantalón de vestir carbón",
+      "Chamarra acolchada azul marino",
+      "Botines Chelsea de gamuza"
      ],
      "itemIds": [
-      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
-      "625a5348-47fc-4e73-93d2-fb4f91c91072",
-      "af0ed4ff-1bf3-4021-865b-48d892baaedf",
-      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
-      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
+      "a65d36c2-da14-4782-904e-b0a27dfeb1b6",
+      "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
+      "dafa93e8-cd03-40ae-95c7-698ad055f83d",
+      "f7b568ae-8368-44c8-9dc2-8472098c05f2"
      ],
-     "explicacion": "El tortuga negro pegado a la cara te ilumina y el abrigo largo remata el look para la noche fría — arreglado sin corbata."
+     "explicacion": "Marino y negro juntos son puro contraste elegante, y los botines de gamuza café le dan el toque cálido sin quitarte lo arreglado."
+    },
+    {
+     "look": "Café sobre negro",
+     "prendas": [
+      "Suéter de lana negro",
+      "Pantalón negro",
+      "Blazer marrón de lana",
+      "Botines de cuero marrón"
+     ],
+     "itemIds": [
+      "7384d177-67c0-454d-a8a7-1a527ea69fb5",
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "4adc24d6-1b26-469f-b964-49023caa7f6f",
+      "0c0467f9-2901-4608-a97d-09433a1e0ded"
+     ],
+     "explicacion": "Base negra de arriba a abajo con el chocolate de la lana encima: te marca los hombros y el café te va increíble para la noche."
     }
    ],
    "sinFotos": [
@@ -1223,179 +1348,50 @@
       "Camisa blanca",
       "Pantalón de vestir marino",
       "Corbata de seda vino",
-      "Zapato derby de piel chocolate"
+      "Zapato formal negro"
      ],
      "itemIds": [
       "f1bf17d3-c897-44e7-88a2-2b3583e7c7de",
       "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
       "610aba90-5895-4c3c-b600-fcd492fef093",
       "597bfd31-88fa-4d04-9785-e10f16d0465c",
-      "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb"
+      "73b272dd-bdd6-4210-ae88-c3a4872dae2b"
      ],
-     "explicacion": "El traje marino con camisa blanca te limpia la cara y el vino de la corbata te la enciende: es el nivel que un evento mexicano de noche pide sin pensarlo."
+     "explicacion": "El marino con camisa blanca te limpia la cara y la corbata vino le mete el toque de noche sin gritar; los hombros del saco te dan esa estructura que te queda perfecta."
     },
     {
-     "look": "Negro nocturno",
+     "look": "Todo negro con intención",
      "prendas": [
       "Blazer estructurado negro",
       "Cuello tortuga negro de lana merino",
       "Pantalón de vestir carbón",
-      "Botines Chelsea negros"
+      "Botines Chelsea negros",
+      "Abrigo charcoal"
      ],
      "itemIds": [
       "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
       "af0ed4ff-1bf3-4021-865b-48d892baaedf",
       "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
-      "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
+      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54"
      ],
-     "explicacion": "El cuello tortuga negro bajo el blazer te marca hombros y te alarga la línea — arreglado, abrigado y sin corbata cuando quieres verte más moderno."
+     "explicacion": "El negro pegado al cuello te define muchísimo y el pantalón carbón evita que parezca traje desparejado: elegante, abrigado y con actitud para la noche."
     },
     {
-     "look": "Vino y lana",
+     "look": "Carbón y vino",
      "prendas": [
-      "Blazer marino",
+      "Saco sport gris carbón",
       "Suéter de cuello redondo vino",
-      "Chinos carbón",
-      "Abrigo charcoal",
-      "Zapato formal negro"
-     ],
-     "itemIds": [
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
-      "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
-      "73b272dd-bdd6-4210-ae88-c3a4872dae2b"
-     ],
-     "explicacion": "El vino junto al rostro te da color sin gritar, el blazer marino sobre chinos carbón se lee intencional y el abrigo de lana te salva los 9°C con estilo."
-    }
-   ]
-  },
-  {
-   "n": 11,
-   "caso": "viaje|20|dia",
-   "ocasion": "viaje",
-   "temp": 20,
-   "momento": "dia",
-   "fotos": [
-    {
-     "url": "/inspo/hombre_casual-effortless_9d5101e5.jpg",
-     "carpeta": "casual-effortless"
-    },
-    {
-     "url": "/inspo/hombre_minimalista_f6b10326.jpg",
-     "carpeta": "minimalista"
-    },
-    {
-     "url": "/inspo/hombre_casual-effortless_00477b2c.jpg",
-     "carpeta": "casual-effortless"
-    }
-   ],
-   "renderCon": "/ab/11-a.png",
-   "renderSin": "/ab/11-b.png",
-   "conFotos": [
-    {
-     "look": "Vuelo tranquilo",
-     "prendas": [
-      "Camisa oxford azul",
-      "Suéter marino",
-      "Jeans azul oscuro",
-      "Botines Chelsea negros"
-     ],
-     "itemIds": [
-      "02c8311c-b347-48be-b0fd-dd1a9c87510f",
-      "211ecafb-6097-4092-9bce-65e08061488f",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
-     ],
-     "explicacion": "El marino sobre la camisa azul te ilumina la cara y el cuello asomando te da esa estructura arriba que se ve pensada aunque vayas cómodo."
-    },
-    {
-     "look": "Capa oliva de aeropuerto",
-     "prendas": [
-      "Playera blanca interior",
-      "Overshirt oliva",
       "Pantalón negro",
-      "Mocasines café",
-      "Gafas de sol negras"
+      "Mocasines burdeos"
      ],
      "itemIds": [
-      "37a9f3c0-fbec-493d-963d-2eb9a912b028",
-      "7037cca8-2ded-4ea5-b641-3ae7b4d299c9",
-      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
-      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
-      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
+      "625a5348-47fc-4e73-93d2-fb4f91c91072",
+      "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+      "0234b83b-463f-4f6f-9ab2-4ae92f482819",
+      "b5f07035-b01a-4c12-b045-5a66c20b2dba"
      ],
-     "explicacion": "La overshirt abierta sobre blanco te marca los hombros y el oliva te enciende el tono de piel: relajado, pero de los que se ven bien en cualquier foto."
-    },
-    {
-     "look": "Mezclilla y negro",
-     "prendas": [
-      "Camiseta negra",
-      "Chamarra de mezclilla",
-      "Chinos carbón",
-      "Tenis blancos urbanos"
-     ],
-     "itemIds": [
-      "f69423f7-d264-41d2-90b1-674522a8c31c",
-      "d1671b0f-238d-43da-bb6b-55dc4e7151af",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a"
-     ],
-     "explicacion": "Negro cerca de la cara siempre te limpia el look, y la chamarra de mezclilla le mete el toque casual perfecto para pasar seguridad sin batallar."
-    }
-   ],
-   "sinFotos": [
-    {
-     "look": "Vuelo en negro",
-     "prendas": [
-      "Camiseta negra",
-      "Chamarra de piel negra clásica",
-      "Jeans azul oscuro",
-      "Tenis blancos",
-      "Gafas de sol negras"
-     ],
-     "itemIds": [
-      "f69423f7-d264-41d2-90b1-674522a8c31c",
-      "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "f9284946-c02a-41ee-b261-4db131a196a4",
-      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
-     ],
-     "explicacion": "El negro cerca de la cara te define y la piel te da hombros; con jeans oscuros y tenis blancos pasas de la fila del check-in a cualquier plan sin cambiarte."
-    },
-    {
-     "look": "Capa marino limpia",
-     "prendas": [
-      "Camiseta blanca",
-      "Camisa overshirt marino",
-      "Chinos carbón",
-      "Tenis blancos urbanos",
-      "Reloj negro"
-     ],
-     "itemIds": [
-      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
-      "39c4d4eb-d14a-4c5f-8210-902b412c0844",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a",
-      "8a758cd3-5865-401f-8741-a463199b6247"
-     ],
-     "explicacion": "El marino y el blanco te encienden la cara, y la overshirt abierta te suma estructura sin apretar nada en el avión."
-    },
-    {
-     "look": "Denim con oficio",
-     "prendas": [
-      "Polo marino",
-      "Chamarra de mezclilla",
-      "Pantalón técnico",
-      "Tenis de piel negros"
-     ],
-     "itemIds": [
-      "95d3aa82-f962-404a-9443-f860d1674361",
-      "d1671b0f-238d-43da-bb6b-55dc4e7151af",
-      "6ff5e760-ad84-405d-b407-464e15f9a09f",
-      "9a37432f-1d00-4806-a128-0edeb55c7178"
-     ],
-     "explicacion": "Cómodo pero con intención: el marino cerca del rostro te ilumina y el pantalón técnico aguanta las horas de vuelo viéndose pulido."
+     "explicacion": "El vino te enciende la cara y el saco gris lo vuelve arreglado sin acartonarte — el mocasín burdeos remata el detalle que nadie más va a traer."
     }
    ]
   },
@@ -1407,120 +1403,118 @@
    "momento": "dia",
    "fotos": [
     {
-     "url": "/inspo/hombre_casual-limpio_f-a7a99e58.jpg",
+     "url": "/inspo/hombre_tonos-tierra_f-63454984.jpg",
+     "carpeta": "tonos-tierra"
+    },
+    {
+     "url": "/inspo/hombre_smart-casual_09af06f8.jpg",
+     "carpeta": "smart-casual"
+    },
+    {
+     "url": "/inspo/hombre_casual-limpio_f-858526ce.jpg",
      "carpeta": "casual-limpio"
-    },
-    {
-     "url": "/inspo/hombre_preppy_f-ecd450e6.jpg",
-     "carpeta": "preppy"
-    },
-    {
-     "url": "/inspo/hombre_preppy_f-933c946f.jpg",
-     "carpeta": "preppy"
     }
    ],
    "renderCon": "/ab/12-b.png",
    "renderSin": "/ab/12-a.png",
    "conFotos": [
     {
-     "look": "Esmeralda de día",
+     "look": "Overshirt de domingo largo",
      "prendas": [
-      "Camisa de lino esmeralda",
-      "Pantalón negro",
-      "Mocasines café",
-      "Lentes wayfarer"
-     ],
-     "itemIds": [
-      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
-      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
-      "0ef455c2-b38d-4f3a-90ad-1e1d941d982a"
-     ],
-     "explicacion": "El esmeralda te enciende la cara y el lino respira con estos 24°C: base negra limpia y mocasín café para que se vea pensado sin esfuerzo."
-    },
-    {
-     "look": "Blazer con actitud relajada",
-     "prendas": [
-      "Blazer marino",
-      "Camisa oxford blanca",
-      "Chinos carbón",
+      "Overshirt oliva",
+      "Camiseta blanca",
+      "Pantalón de lino",
       "Botines Chelsea de gamuza"
      ],
      "itemIds": [
-      "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
-      "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+      "7037cca8-2ded-4ea5-b641-3ae7b4d299c9",
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "0e231ce2-9146-4da1-b680-334c91ebd0fa",
       "f7b568ae-8368-44c8-9dc2-8472098c05f2"
      ],
-     "explicacion": "El blazer marino te marca el hombro y te da estructura, y con chinos carbón se lee como decisión de estilo, no como traje suelto."
+     "explicacion": "La camiseta blanca te limpia la cara y el overshirt abierto te da hombros y estructura sin calor de más."
     },
     {
-     "look": "Azul rey y denim",
+     "look": "Marino limpio",
      "prendas": [
-      "Camisa azul rey de manga corta",
-      "Jeans azul oscuro",
-      "Tenis blancos urbanos",
-      "Gafas de sol wayfarer"
+      "Suéter marino",
+      "Chinos beige",
+      "Tenis blancos",
+      "Gafas de sol negras"
      ],
      "itemIds": [
-      "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a",
-      "d1d1c205-a473-4519-9fb7-ba95cc66b191"
+      "211ecafb-6097-4092-9bce-65e08061488f",
+      "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+      "a8c361a6-e373-4007-8e83-04461af72b40",
+      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
      ],
-     "explicacion": "El azul rey es de tus mejores colores y con jeans oscuros y tenis blancos queda fresco, limpio y muy tú."
+     "explicacion": "El marino pegado a la cara te enciende la mirada y el chino claro abajo aligera todo para 24°C."
+    },
+    {
+     "look": "Mezclilla y negro",
+     "prendas": [
+      "Chamarra de mezclilla",
+      "Camiseta blanca",
+      "Pantalón negro",
+      "Tenis de piel negros"
+     ],
+     "itemIds": [
+      "d1671b0f-238d-43da-bb6b-55dc4e7151af",
+      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+      "9a37432f-1d00-4806-a128-0edeb55c7178"
+     ],
+     "explicacion": "Blanco arriba, negro abajo y la chamarra encima: contraste nítido, tres piezas y cero esfuerzo aparente."
     }
    ],
    "sinFotos": [
     {
-     "look": "Verde limpio de día",
+     "look": "Esmeralda al frente",
      "prendas": [
       "Camisa de lino esmeralda",
-      "Chinos carbón",
+      "Pantalón de lino marino",
       "Tenis blancos urbanos",
-      "Cinturón negro"
-     ],
-     "itemIds": [
-      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-      "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-      "a81cdf75-5d5e-4565-b423-75e148921c9a",
-      "b3cad850-c048-42cc-bec7-2350639d8ee2"
-     ],
-     "explicacion": "El esmeralda te enciende la cara y con el carbón abajo se ve pulido sin esfuerzo — perfecto para el calor de hoy."
-    },
-    {
-     "look": "Capa marino con intención",
-     "prendas": [
-      "Camiseta blanca",
-      "Camisa overshirt marino",
-      "Jeans azul oscuro",
-      "Tenis de piel negros",
       "Gafas de sol negras"
      ],
      "itemIds": [
-      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
-      "39c4d4eb-d14a-4c5f-8210-902b412c0844",
-      "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-      "9a37432f-1d00-4806-a128-0edeb55c7178",
+      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+      "2e3343b2-56a1-4fbd-b5ac-7bbb6d6761e1",
+      "a81cdf75-5d5e-4565-b423-75e148921c9a",
       "a5f4034f-899a-4d4f-93f5-8e62870e2446"
      ],
-     "explicacion": "La overshirt abierta te marca hombros y da estructura, mientras la blanca mantiene todo fresco y limpio."
+     "explicacion": "El verde esmeralda te enciende la cara y con el lino marino abajo se ve fresco sin perder el filo pulido que te gusta."
     },
     {
-     "look": "Vino sobrio",
+     "look": "Azul rey de día",
      "prendas": [
-      "Camiseta vino",
-      "Chinos azul marino",
+      "Camisa azul rey de manga corta",
+      "Jeans azul oscuro",
       "Botines Chelsea negros",
-      "Reloj negro"
+      "Cinturón negro"
      ],
      "itemIds": [
-      "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
-      "8e7c4378-a465-4892-a5bf-e673152a3c4e",
-      "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
-      "8a758cd3-5865-401f-8741-a463199b6247"
+      "0e94a7a2-295c-4f01-9f6c-094ce89b3ebb",
+      "c9b2a866-a95f-42ec-9db8-97e153faca56",
+      "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
+      "b3cad850-c048-42cc-bec7-2350639d8ee2"
      ],
-     "explicacion": "El vino con marino es esa mezcla discreta pero distinta que refresca tu estilo, y los botines suben el nivel al instante."
+     "explicacion": "El azul rey es de tus mejores colores y el botín negro le da estructura al look sin que se sienta arreglado de más."
+    },
+    {
+     "look": "Blanco limpio, marino recto",
+     "prendas": [
+      "Camisa de lino blanca",
+      "Bermuda sastre marino",
+      "Mocasines café",
+      "Cinturón café"
+     ],
+     "itemIds": [
+      "0ce673f1-35be-4afc-ab36-490ed451f885",
+      "b988abf9-eba7-4567-b80c-3fc04090f120",
+      "f337e0aa-17d4-46c6-9338-22b1264aadbd",
+      "cff65d0d-b568-46be-a0fe-6fbc09d57970"
+     ],
+     "explicacion": "Blanco puro arriba te limpia la cara y la bermuda sastre con mocasín café sube el nivel para el calor: simple, pero bien hecho."
     }
    ]
   }

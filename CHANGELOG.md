@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.94.0] - 2026-08-04
+
+### Changed
+
+- **Cuando te gustan varios estilos, la app deja de promediarlos.** Si te gustan tres estilos distintos, la respuesta no es un look que intente ser los tres a la vez —eso no es de ninguno—: son tres looks, uno de cada estilo, y tú eliges cuál te queda hoy. Cada look se arma con su propia foto de referencia, y las referencias se reparten entre tus estilos en vez de salir todas del mismo. En pruebas, los tres looks pasaron de ser tres variaciones del mismo registro a ser tres registros distintos: uno más arreglado, uno intermedio y uno relajado.
+
 ## [0.2.93.0] - 2026-08-04
 
 ### Fixed

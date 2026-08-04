@@ -153,13 +153,51 @@ export async function elegirInspiracion(
     // las de su silueta. Al revés, el orden de la base decidiría cuáles ve.
     const mezcladas = barajar(libres, rand);
     const quiere = fitPref === "recta" || fitPref === "holgada" ? fitPref : null;
-    if (!quiere) return mezcladas.slice(0, tope);
-    return [
-      ...mezcladas.filter((r) => r.silueta === quiere),
-      ...mezcladas.filter((r) => r.silueta !== quiere),
-    ].slice(0, tope);
+    const ordenadas = quiere
+      ? [
+          ...mezcladas.filter((r) => r.silueta === quiere),
+          ...mezcladas.filter((r) => r.silueta !== quiere),
+        ]
+      : mezcladas;
+    return repartirPorFamilia(ordenadas, familias, tope);
   }
   return [];
+}
+
+/**
+ * Una foto por familia antes de repetir familia.
+ *
+ * Sin esto, a alguien con dos estilos le podían tocar las tres fotos del mismo —
+ * y con "un look por foto", los tres looks acabarían siendo del mismo estilo.
+ * Roberto: "si me gustan minimalista, coreano e hipster, no vas a promediar y
+ * hacer una quimera; la respuesta es una de las tres, o las tres". Repartir es
+ * lo que hace posible ese "las tres".
+ *
+ * Round-robin: primero una de cada familia en el orden en que le gustan (las
+ * familias vienen ordenadas por fuerza), y si sobran espacios se rellena con lo
+ * que haya.
+ */
+function repartirPorFamilia<T extends { estilo: string }>(
+  xs: T[],
+  familias: string[],
+  tope: number
+): T[] {
+  const porFamilia = new Map<string, T[]>();
+  for (const x of xs) porFamilia.set(x.estilo, [...(porFamilia.get(x.estilo) ?? []), x]);
+  const out: T[] = [];
+  // Vueltas de round-robin hasta llenar el tope o agotar el material.
+  for (let vuelta = 0; out.length < tope && vuelta < tope; vuelta++) {
+    for (const f of familias) {
+      const cola = porFamilia.get(f);
+      if (cola?.length && out.length < tope) out.push(cola.shift()!);
+    }
+    // Familias que no estaban en la lista (el filtro se aflojó): también entran.
+    for (const [f, cola] of porFamilia) {
+      if (familias.includes(f)) continue;
+      if (cola.length && out.length < tope) out.push(cola.shift()!);
+    }
+  }
+  return out;
 }
 
 function barajar<T>(xs: T[], rand: () => number): T[] {
@@ -180,13 +218,17 @@ function barajar<T>(xs: T[], rand: () => number): T[] {
  * enfrente intenta parecerse a ellas con lo que sea, y ahí es donde salen los
  * looks Frankenstein.
  */
-export const INSTRUCCION_INSPIRACION = `LOOKS DE REFERENCIA (fotos reales de calle, ya curadas): te paso 3 imágenes de looks de SU estilo, para ESTE clima. Son de gente real bien vestida, no catálogo.
+export const INSTRUCCION_INSPIRACION = `LOOKS DE REFERENCIA (fotos reales de calle, ya curadas): te paso 3 imágenes de looks que a esta persona le gustan, para ESTE clima y ESTA ocasión. Son de gente real bien vestida, no catálogo.
 
-Cómo usarlas, en este orden:
-1. Si con SU clóset puedes reproducir uno de esos looks —mismo tipo de prendas, misma idea— hazlo. Es la mejor opción: sabemos que ese look funciona.
-2. Si no da para reproducir ninguno, úsalas como referencia de PROPORCIÓN y de COMBINACIÓN: qué tan holgado va arriba contra abajo, cuántos colores conviven, dónde cae el pantalón sobre el zapato, qué capa va abierta.
-3. Si un look de la foto no se puede acercar con lo que tiene, IGNÓRALO. No fuerces prendas para parecerte a una foto: un look forzado se ve peor que uno simple bien resuelto.
+UNA FOTO POR LOOK. Arma UN outfit por cada foto, EN ORDEN: el primero responde a la primera imagen, el segundo a la segunda, el tercero a la tercera. NO mezcles las tres en cada look.
 
-EL COLOR DE LA FOTO NO ES LITERAL — esto es importante. Lo que hay que tomar de la foto es la ESTRUCTURA: qué tipo de prenda va con cuál y en qué proporción. NO el color exacto. Si la foto trae un polo azul y ella tiene uno verde que le favorece más por su colorimetría, el verde es la respuesta CORRECTA, no una concesión. Lo mismo con una camisa blanca de la foto y una crema suya. Su colorimetría manda sobre el color de la referencia, siempre.
+Esto es lo más importante de toda la instrucción, así que va con su porqué: a alguien le pueden gustar tres estilos distintos —minimalista, coreano, vintage— y la respuesta correcta NO es promediarlos. Un promedio de tres estilos no es un estilo: es un look que no es de ninguno y que no le sirve a nadie. La respuesta correcta es darle uno de cada uno y que ELLA elija cuál se pone hoy. Un look tibio que intenta ser las tres cosas es peor que tres looks con carácter.
+
+Cómo usar cada foto, en este orden:
+1. Si con SU clóset puedes reproducir ese look —mismo tipo de prendas, misma idea— hazlo. Es la mejor opción: sabemos que funciona.
+2. Si no da para reproducirlo, úsalo como referencia de PROPORCIÓN y de COMBINACIÓN: qué tan holgado va arriba contra abajo, cuántos colores conviven, dónde cae el pantalón sobre el zapato, qué capa va abierta.
+3. Si no se puede acercar con lo que tiene, IGNORA esa foto y arma el mejor look posible con lo que hay. No fuerces prendas para parecerte a una imagen: un look forzado se ve peor que uno simple bien resuelto.
+
+EL COLOR DE LA FOTO NO ES LITERAL — importante. De la foto se toma la ESTRUCTURA: qué tipo de prenda va con cuál y en qué proporción. NO el color exacto. Si la foto trae un polo azul y ella tiene uno verde que le favorece más por su colorimetría, el verde es la respuesta CORRECTA, no una concesión. Su colorimetría manda sobre el color de la referencia, siempre.
 
 REGLA DURA: las prendas del look son SIEMPRE del clóset de la persona (por id). Las fotos orientan; jamás uses ni menciones una prenda que solo está en la imagen.`;
