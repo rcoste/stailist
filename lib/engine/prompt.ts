@@ -112,7 +112,14 @@ import {
 // puesto" de "aguado", y qué arruina el estilo. Sale de fotos de calle filtradas
 // por visión y curadas a mano (ver lib/engine/recetario.ts). Tope de 2 recetas:
 // más se contradicen entre sí. Solo hombre por ahora.
-export const PROMPT_VERSION = "v28";
+// v29 (2026-08-03): recetario v2 — las 10 familias de la taxonomía nueva (616
+// fotos curadas), con CLIMA. Las 3 recetas de v28 eran de la taxonomía vieja
+// (smart-casual y clásico-elegante ya ni existen: se fusionaron) y no sabían de
+// clima, así que la receta empujaba cuello de tortuga igual a 8 que a 28°C.
+// Ahora el prompt solo lleva las fórmulas de la banda del día (frío/templado/
+// calor), en frío añade cómo abriga el estilo, y lleva la paleta de la familia
+// con la colorimetría personal por encima. Ver lib/engine/recetario.ts.
+export const PROMPT_VERSION = "v29";
 
 export type EngineItem = {
   id: string;
@@ -326,7 +333,12 @@ export function contextBlock(ctx: EngineContext): string[] {
     // pone contenido concreto, destilado de fotos de calle ya curadas — ver
     // lib/engine/recetario.ts.
     if (ctx.gender) {
-      const receta = recetasParaPrompt(recetasParaTags(ctx.tasteTags, ctx.gender));
+      // El clima entra a la SELECCIÓN de fórmulas, no solo al prompt: mandar
+      // las 15 fórmulas revueltas es como no mandar clima (v29).
+      const receta = recetasParaPrompt(
+        recetasParaTags(ctx.tasteTags, ctx.gender),
+        ctx.weather
+      );
       if (receta) lines.push(receta);
     }
   }

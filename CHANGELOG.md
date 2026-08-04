@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.76.0] - 2026-08-03
+
+### Changed
+
+- **El motor de outfits ahora usa las 10 recetas destiladas, con clima (prompt v29).** Antes tenía 3 recetas de la taxonomía vieja —dos de esos estilos ya ni existen— y ninguna sabía de clima: la receta empujaba el mismo cuello de tortuga a 8 que a 28 grados. Ahora cada ❤️ del swipe apunta a una de las 10 familias (streetwear y Y2K → street urbano; hipster y vintage → thrift, etc.), el prompt recibe solo las fórmulas de la banda de temperatura del día, en frío añade cómo abriga ese estilo sin dejar de serlo, y lleva la paleta de la familia con la colorimetría personal por encima. Un test de guardia amarra el mapa cartas→familias contra el de los scripts: si divergen truena el CI, no el motor en silencio.
+
 ## [0.2.75.3] - 2026-08-03
 
 ### Fixed
