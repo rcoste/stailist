@@ -8,6 +8,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.75.1] - 2026-08-03
+
+### Fixed
+
+- **La pantalla de recetas reventaba en producción.** Cargaba los JSON con un import dinámico armado desde un arreglo de nombres: en desarrollo funciona, pero el bundler de producción no puede resolver una ruta que solo existe en tiempo de ejecución. Ahora son imports estáticos, uno por familia.
+
 ## [0.2.75.0] - 2026-08-03
 
 ### Added

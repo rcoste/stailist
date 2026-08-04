@@ -45,30 +45,38 @@ export type FamiliaConReceta = {
   reconstruccion: string[];
 };
 
-// Import estático con glob no existe en Next sin bundler tricks; el listado
-// explícito además documenta qué familias hay destiladas.
-const ARCHIVOS = [
-  "casual-limpio",
-  "clasico-arreglado",
-  "deportivo",
-  "edgy",
-  "preppy",
-  "resort-boho",
-  "sastre",
-  "street-urbano",
-  "thrift-vintage",
-  "utilitario",
-] as const;
+// Imports ESTÁTICOS, uno por familia. La primera versión hacía
+// `import(\`@/lib/engine/recetas/${f}.json\`)` sobre un arreglo de nombres: en
+// desarrollo funciona, pero el bundler de producción no puede resolver una ruta
+// que solo existe en tiempo de ejecución y la página reventaba con
+// MODULE_NOT_FOUND. El listado explícito además documenta qué hay destilado.
+import casualLimpio from "@/lib/engine/recetas/casual-limpio.json";
+import clasicoArreglado from "@/lib/engine/recetas/clasico-arreglado.json";
+import deportivo from "@/lib/engine/recetas/deportivo.json";
+import edgy from "@/lib/engine/recetas/edgy.json";
+import preppy from "@/lib/engine/recetas/preppy.json";
+import resortBoho from "@/lib/engine/recetas/resort-boho.json";
+import sastre from "@/lib/engine/recetas/sastre.json";
+import streetUrbano from "@/lib/engine/recetas/street-urbano.json";
+import thriftVintage from "@/lib/engine/recetas/thrift-vintage.json";
+import utilitario from "@/lib/engine/recetas/utilitario.json";
+
+const CARGADAS = [
+  casualLimpio,
+  clasicoArreglado,
+  deportivo,
+  edgy,
+  preppy,
+  resortBoho,
+  sastre,
+  streetUrbano,
+  thriftVintage,
+  utilitario,
+] as unknown as { familia: string; conteo: Conteo; receta: RecetaDestilada }[];
 
 export async function recetasConReconstruccion(): Promise<FamiliaConReceta[]> {
   const supabase = await createClient();
-
-  const cargadas = await Promise.all(
-    ARCHIVOS.map(async (f) => {
-      const mod = await import(`@/lib/engine/recetas/${f}.json`);
-      return mod.default as { familia: string; conteo: Conteo; receta: RecetaDestilada };
-    })
-  );
+  const cargadas = CARGADAS;
 
   // Una sola firma para las 30: firmar de a una multiplicaba las llamadas y la
   // página tardaba en abrir.
