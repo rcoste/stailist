@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { LOOKS, looksForGender } from "./looks";
+import { LOOKS, LOOKS_V, looksForGender } from "./looks";
 
 // Cada carta del swipe TIENE que tener su archivo de imagen en public/.
 //
@@ -55,15 +55,23 @@ describe("rompe-caché de las imágenes del deck", () => {
     }
   });
 
-  // El otro lado del acople: Next devuelve 400 a cualquier imagen LOCAL con
-  // query string cuyo pathname no esté declarado en images.localPatterns. Si
-  // alguien limpia esa config, el deck entero deja de cargar.
-  it("next.config declara /looks/** como local con query permitida", async () => {
+  // El otro lado del acople, y el que ya reventó producción: el componente
+  // <Image> valida la query contra images.localPatterns con igualdad EXACTA y
+  // LANZA en render si no casa — la pantalla completa se cae, no solo la
+  // imagen. La primera versión de este test pedía `search: ""` creyendo que
+  // era un comodín; `search: ""` significa "sin query" y rechazaba el ?v=.
+  //
+  // Y no basta con probar el endpoint del optimizador: ese responde 200 igual.
+  // Por eso lo que se comprueba aquí es que la config declare EXACTAMENTE la
+  // misma versión que arman las rutas.
+  it("next.config declara la MISMA versión que usan las rutas", async () => {
     const cfg = await import("../next.config");
     const patrones = cfg.default.images?.localPatterns ?? [];
+    const looks = patrones.find((p) => p.pathname === "/looks/**");
+    expect(looks, "falta el patrón /looks/** en images.localPatterns").toBeDefined();
     expect(
-      patrones.some((p) => p.pathname === "/looks/**" && p.search === ""),
-      "falta { pathname: '/looks/**', search: '' } en images.localPatterns"
-    ).toBe(true);
+      looks!.search,
+      `la config permite "${looks!.search}" pero las rutas piden "?v=${LOOKS_V}"`
+    ).toBe(`?v=${LOOKS_V}`);
   });
 });

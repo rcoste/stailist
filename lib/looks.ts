@@ -80,7 +80,15 @@ const ESTILOS: EstiloRow[] = [
 // la URL sin renombrar 50 archivos ni tocar los scripts que los generan.
 //
 // SÚBELO cada vez que se regeneren las imágenes del deck.
-const V = "4";
+//
+// Se exporta porque next.config.ts TIENE que declarar exactamente esta query en
+// images.localPatterns: el componente <Image> valida el `search` con igualdad
+// exacta —`search: ""` significa "sin query", no "cualquier query"— y si no
+// coincide LANZA en render y tumba la pantalla entera. Importarlo de aquí evita
+// que los dos números se separen (ya pasó: subí el `?v=` sin la config buena y
+// el deck reventó en producción).
+export const LOOKS_V = "4";
+const V = LOOKS_V;
 
 export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "unisex"]) => ({
   id,
