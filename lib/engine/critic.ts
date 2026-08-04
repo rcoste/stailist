@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { buildCriticSchema } from "./schema";
 import { contextBlock, closetBlock, type EngineContext } from "./prompt";
+import { bloqueEjecucion } from "./reglas-ejecucion";
 import type { GeneratedOutfit } from "./generate";
 
 // Juez de styling, UNO POR OUTFIT (para poder ir mostrándolos conforme se
@@ -94,6 +95,14 @@ function buildCriticMessage(
   const lines: string[] = [...contextBlock(ctx), "", ...closetBlock(ctx.items)];
 
   lines.push("", `Look a revisar — "${outfit.nombre}": ${outfit.item_ids.join(" + ")}`);
+
+  // Fallos de armado ya COMPROBADOS con los colores y materiales reales de las
+  // prendas del look (ver reglas-ejecucion.ts). Van antes de la rúbrica y
+  // marcados como verificados para que el juez los repare en vez de opinar
+  // sobre ellos: detección determinista, reparación con criterio.
+  lines.push(
+    ...bloqueEjecucion(ctx.items.filter((i) => outfit.item_ids.includes(i.id)))
+  );
 
   if (priorOutfits.length > 0) {
     lines.push("", "Looks ya aprobados (mantén éste DISTINTO de ellos):");

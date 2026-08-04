@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.80.0] - 2026-08-04
+
+### Added
+
+- **La app ya no te arma looks donde una prenda desaparece encima de otra.** Salió probando: de los primeros cinco looks generados, dos caían en el mismo error —camisa negra abierta sobre camiseta negra (la capa no se ve, parece una sola prenda) y saco marino con pantalón marino sin ser un traje—, más un botín negro con reloj café. Ahora esos tres fallos se comprueban con los colores y materiales reales de tus prendas antes de enseñarte el look, y el director de estilo los repara con lo que hay en tu clóset. La regla no es "nunca repitas color": es que si repites color, cambie el material — por eso una chamarra de piel negra sobre un suéter negro sigue siendo válida, que es justo como se lleva el estilo edgy.
+
 ## [0.2.71.1] - 2026-08-01
 
 ### Fixed
