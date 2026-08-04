@@ -64,6 +64,36 @@ export function DestiladorClient({
     }, 200);
   }
 
+  /**
+   * "Ya vi este outfit" — sale de la destilación sin contar como rechazo.
+   *
+   * Una sesión de fotos produce varias tomas del mismo look, y el dedup por
+   * píxeles no las caza: basta con que el modelo gire para que el hash cambie.
+   * Un look repetido cuenta como patrón repetido, así que la receta acabaría
+   * describiendo la sesión de fotos de alguien en vez del estilo.
+   *
+   * Se intentó resolver con un pase de visión que comparaba pares. Era
+   * sobre-ingeniería: quien cura ya está mirando las fotos una por una, y
+   * reconocer que un outfit se repite le toma medio segundo — contra doce
+   * minutos de máquina y una llamada de IA por par.
+   *
+   * Va aparte de "no va" a propósito: la foto puede ser un ejemplo perfecto del
+   * estilo, solo que ya lo contamos. Marcarla como rechazo ensuciaría la señal
+   * de qué arruina un estilo.
+   */
+  function repetido() {
+    if (!foto || saliendo) return;
+    const id = foto.id;
+    setSaliendo("left");
+    guardar(id, { sirve: false, motivo: "mismo-outfit" });
+    setTimeout(() => {
+      setSaliendo(null);
+      setDrag({ x: 0, y: 0, activo: false });
+      setI((n) => n + 1);
+      setPidiendoMotivo(null);
+    }, 200);
+  }
+
   function onDown(e: React.PointerEvent) {
     if (saliendo) return;
     inicio.current = { x: e.clientX, y: e.clientY };
@@ -113,6 +143,9 @@ export function DestiladorClient({
       } else if (e.key === "ArrowUp" && foto) {
         e.preventDefault();
         guardar(foto.id, { mio: !foto.mio });
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        repetido();
       }
     }
     window.addEventListener("keydown", onKey);
@@ -258,6 +291,16 @@ export function DestiladorClient({
         </button>
       </div>
 
+      {/* Más chico y aparte de los otros dos: no es una tercera opinión sobre
+          la foto, es sacarla de la cuenta. Mezclarlo con "no va" perdería la
+          diferencia entre "esto arruina el estilo" y "esto ya lo conté". */}
+      <button
+        onClick={repetido}
+        className="self-center rounded-full border border-line px-4 py-2 text-sm text-muted active:bg-tile"
+      >
+        Ya vi este outfit
+      </button>
+
       {pidiendoMotivo ? (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
           <span className="text-xs text-muted">¿Por qué no? (opcional)</span>
@@ -279,7 +322,7 @@ export function DestiladorClient({
       ) : (
         <p className="text-center text-xs text-muted">
           <span className="hidden sm:inline">
-            Flechas: ← no va · → sirve · ↑ marca tu gusto.{" "}
+            Flechas: ← no va · → sirve · ↑ tu gusto · ↓ ya lo vi.{" "}
           </span>
           <span className="sm:hidden">Arrastra la foto: derecha sirve, izquierda no. </span>
           El ★ es aparte — marca tu gusto sin afectar el estilo.

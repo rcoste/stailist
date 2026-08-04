@@ -8,6 +8,16 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 - **Las prendas con foto propia salían sin imagen al generar outfits.** En las cartas de looks aparecía el nombre de la prenda y un cuadro vacío donde iba la foto. La imagen se leía de un solo lugar, y ese lugar solo lo llenan las prendas del catálogo: una foto tuya guarda su imagen en otro lado. Eran 252 de las 272 fotos propias de toda la base — el 93%, y le pegaba a todas las personas que han subido fotos. No fallaba ni avisaba: simplemente dejaba el hueco.
 
+## [0.2.74.4] - 2026-08-03
+
+### Added
+
+- **Botón "ya vi este outfit" en el destilador** (tecla ↓). Una sesión de fotos produce varias tomas del mismo look y el dedup por píxeles no las caza: basta con que el modelo gire para que el hash cambie. Un look repetido cuenta como patrón repetido, así que la receta acabaría describiendo la sesión de fotos de alguien en vez del estilo. Va aparte de "no va" porque la foto puede ser un ejemplo perfecto del estilo — solo que ya lo contamos.
+
+### Removed
+
+- El dedup por visión que comparaba pares de fotos. Era sobre-ingeniería: quien cura ya está mirando las fotos una por una y reconocer un outfit repetido le toma medio segundo, contra doce minutos de máquina y una llamada de IA por par.
+
 ## [0.2.74.3] - 2026-08-03
 
 ### Fixed
