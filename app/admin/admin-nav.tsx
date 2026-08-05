@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/admin/ab", label: "A/B" },
   { href: "/admin/inspo", label: "Inspo" },
   { href: "/admin/duplicados", label: "Repetidas" },
+  { href: "/admin/revisar", label: "Revisar" },
   { href: "/admin/usuarios", label: "Usuarios" },
   { href: "/admin/allowlist", label: "Allowlist" },
   { href: "/admin/waitlist", label: "Waitlist" },
