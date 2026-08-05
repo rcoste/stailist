@@ -33,7 +33,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { generateOutfits } from "../lib/engine/generate";
-import { orderClosetForEngine, type EngineContext } from "../lib/engine/prompt";
+import {
+  orderClosetForEngine,
+  type EngineContext,
+  type EngineItem,
+} from "../lib/engine/prompt";
 import { elegirBlueprint } from "../lib/engine/blueprint";
 import { recetasParaTags } from "../lib/engine/recetario";
 import { EMPTY_TASTE_SIGNAL } from "../lib/engine/taste-signal";
@@ -55,7 +59,7 @@ const EMAIL = "roberto@playrobix.com";
 // no es la temperatura —dentro de la banda el motor ve lo mismo— sino la
 // estructura que le toca a cada uno. La temperatura y el momento varían para
 // que los looks no salgan idénticos por construcción.
-const CASOS = Array.from({ length: 20 }, (_, i) => ({
+const CASOS = Array.from({ length: Number((process.argv.find((a) => a.startsWith("--casos=")) ?? "--casos=20").split("=")[1]) }, (_, i) => ({
   n: i + 1,
   ocasion: "diario",
   temp: 16 + (i % 10),
@@ -83,9 +87,13 @@ async function main() {
     .is("deleted_at", null);
 
   const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
-  const items = orderClosetForEngine(
-    applyVetoes((crudas ?? []) as never, vetoes).items as never
-  );
+  // SIN barajar aquí: el barajado va DENTRO de ctxDe, una vez por generación.
+  // Barajarlo una sola vez y reusar el orden en las 40 llamadas es exactamente
+  // lo que orderClosetForEngine existe para evitar —los modelos sobre-eligen lo
+  // de arriba de la lista— y hace que salgan SIEMPRE las mismas prendas.
+  // Producción lo llama por generación (generate/route.ts, look-of-day/route.ts);
+  // este arnés no, y por eso Roberto vio los mismos dos looks una y otra vez.
+  const items = applyVetoes((crudas ?? []) as never, vetoes).items as never as EngineItem[];
   const tags = (profile.taste_tags as string[]) ?? [];
   const familias = recetasParaTags(tags, profile.gender).map((r) => r.familia);
 
@@ -99,7 +107,7 @@ async function main() {
       archetype: profile.style_archetype,
       season: profile.palette_season,
       flow: profile.palette_flow,
-      items,
+      items: orderClosetForEngine(items),
       weather: { temp_c: caso.temp, condition: caso.cond },
       recentCombos: [],
       vetoes: vetoLabels(vetoes),
@@ -181,7 +189,7 @@ async function main() {
   }
 
   writeFileSync(
-    "docs_para_claude/barrido/ab-blueprint.json",
+    (process.argv.find((a) => a.startsWith("--salida=")) ?? "--salida=docs_para_claude/barrido/ab-blueprint.json").split("=")[1],
     JSON.stringify(resultados, null, 1)
   );
   console.log(
