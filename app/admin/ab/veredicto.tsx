@@ -50,9 +50,14 @@ export function Veredicto({
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-3">
+      {/* SIN "Iguales", a propósito.
+          En el A/B de 12 pares, 5 fueron empate — el 42% de los datos sin
+          información— y con 7 decididos hacía falta un 7-0 para llegar a
+          p<0.05. O sea que la prueba no podía pasar aunque el cambio fuera
+          bueno: el instrumento, no la hipótesis. Forzar la elección duele un
+          poco al juzgar y es lo que hace que el resultado se pueda leer. */}
       <div className="flex items-center gap-2">
         {botón("izq", "← Mejor la A")}
-        {botón("igual", "Iguales")}
         {botón("der", "Mejor la B →")}
       </div>
       <div className="flex items-center gap-2">

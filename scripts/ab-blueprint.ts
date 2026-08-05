@@ -59,10 +59,10 @@ const EMAIL = "roberto@playrobix.com";
 // no es la temperatura —dentro de la banda el motor ve lo mismo— sino la
 // estructura que le toca a cada uno. La temperatura y el momento varían para
 // que los looks no salgan idénticos por construcción.
-const CASOS = Array.from({ length: Number((process.argv.find((a) => a.startsWith("--casos=")) ?? "--casos=20").split("=")[1]) }, (_, i) => ({
+const CASOS = Array.from({ length: Number((process.argv.find((a) => a.startsWith("--casos=")) ?? "--casos=40").split("=")[1]) }, (_, i) => ({
   n: i + 1,
   ocasion: "diario",
-  temp: 16 + (i % 10),
+  temp: 16 + (i % 10),  // 16-25°, toda la banda templada
   momento: i % 5 === 4 ? "noche" : "dia",
   cond: ["despejado", "nublado", "soleado"][i % 3],
 }));
