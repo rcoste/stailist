@@ -24,6 +24,7 @@ export async function generateOutfits(
     marcarEstilo?: boolean;
     sinRecetario?: boolean;
     sinBlueprint?: boolean;
+    sinRotacion?: boolean;
     blueprint?: BlueprintEmparejado | null;
   } = {}
 ): Promise<GeneratedOutfit[]> {

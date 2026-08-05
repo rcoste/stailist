@@ -15,6 +15,7 @@ import {
   bloqueBlueprint,
   type BlueprintEmparejado,
 } from "@/lib/engine/blueprint";
+import { calcularRotacion, bloqueRotacion } from "@/lib/engine/rotacion";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import {
   type TasteSignal,
@@ -191,7 +192,16 @@ import {
 // celdas de (ocasión × clima) con material; sin blueprint armable el motor
 // trabaja como siempre. Sembrado por día y clóset para que el juez revise
 // contra la MISMA estructura que usó el generador.
-export const PROMPT_VERSION = "v35";
+// v36 (2026-08-05): rotación del clóset. El mismo historial de 14 días que ya
+// se cargaba para no repetir combinaciones, leído POR PRENDA en vez de por
+// look: qué descansó y qué se vio mucho. Antes nada le decía al motor que una
+// prenda llevaba tres semanas sin salir — solo que no repitiera un conjunto
+// entero. Medido sobre el clóset real de Roberto (240 looks): los chinos
+// carbón salían en el 30% y 61 de 127 prendas no salían nunca. Entra como
+// DESEMPATE, no como cuota: forzar una prenda donde no cabe sale peor que
+// repetir. Dos corridas de 12 días: 24→27 y 25→27 prendas distintas, y la más
+// repetida baja de 6× a 4-5×.
+export const PROMPT_VERSION = "v36";
 
 export type EngineItem = {
   id: string;
@@ -710,6 +720,8 @@ export function buildUserMessage(
     sinRecetario?: boolean;
     /** Apaga la estructura de referencia. Solo para el A/B del arnés. */
     sinBlueprint?: boolean;
+    /** Apaga la rotación del clóset. Solo para medirla contra su ausencia. */
+    sinRotacion?: boolean;
     /**
      * Usa ESTA estructura en vez de la sembrada del día. Solo para el arnés.
      *
@@ -758,6 +770,15 @@ export function buildUserMessage(
     for (const combo of ctx.recentCombos) {
       lines.push(`- ${combo.join(" + ")}`);
     }
+  }
+
+  // Y el mismo historial leído POR PRENDA, no por look. La lista de arriba solo
+  // prohíbe repetir un conjunto entero; nada le decía al motor que una prenda
+  // lleva tres semanas sin salir. Medido sobre 240 looks del clóset real: los
+  // chinos carbón salieron en el 30% y 61 de 127 prendas no salieron nunca.
+  if (!opciones.sinRotacion) {
+    const rot = bloqueRotacion(calcularRotacion(ctx.items, ctx.recentCombos));
+    if (rot) lines.push("", rot);
   }
 
   lines.push("", "Ármale 2-3 outfits.");
