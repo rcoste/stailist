@@ -40,7 +40,21 @@ export type Zona = "torso" | "capa" | "pierna" | "pie" | "accesorio" | "no-calle
 export type TipoPrenda = {
   /** El id canónico ("polo", "chino", "mocasin"). */
   tipo: string;
+  /** La zona PRINCIPAL. Casi siempre la única. */
   zona: Zona;
+  /**
+   * TODAS las zonas que la prenda cubre. Una sola, salvo las de cuerpo entero.
+   *
+   * Un traje trae su pantalón; un vestido y un jumpsuit resuelven torso y pierna
+   * de una vez. Sin esto el motor pedía un bottom aparte y armaba "Traje marino
+   * de lana + Pantalón de vestir marino" — un traje puesto con el pantalón de
+   * otro. Lo cazó Roberto juzgando el par #11 del A/B: "si el traje azul marino
+   * y el pantalón son del mismo juego y que no sean diferentes".
+   *
+   * `zona` sigue siendo la principal para que las reglas que preguntan por una
+   * sola ("¿hay capa de abrigo?") no cambien de comportamiento.
+   */
+  zonas: Zona[];
 };
 
 // EL ORDEN IMPORTA: gana la primera que casa, así que va de lo específico a lo
@@ -58,6 +72,24 @@ const REGLAS: [RegExp, string, Zona][] = [
   [/pijama|piyama|camison|bata de bano|albornoz/, "dormir", "no-calle"],
   [/calzon|calzoncillo|boxer|brasier|sosten|tanga|bralette/, "interior", "no-calle"],
   [/\bgym\b|gimnasio|entrenamiento|running|para correr|de yoga|sports bra/, "gym", "no-calle"],
+
+  // --- CUERPO ENTERO: resuelven dos zonas. Van antes que torso y capa porque
+  // "traje" cazaría "saco de traje" y "vestido camisero" cazaría "camisa".
+  //
+  // OJO con el orden dentro del bloque: "traje de baño" ya se cazó arriba (es
+  // no-calle), así que aquí "traje" ya no puede confundirse con el de baño. Y
+  // "pantalón de traje" / "saco de traje" NO deben caer aquí — son piezas
+  // sueltas de un traje, no el traje entero—, de ahí el guard de que no venga
+  // precedido de "saco de" ni "pantalón de".
+  [/(?<!saco de |pantal[oó]n de |chaleco de )\btraje\b(?! de ba)/, "traje", "capa"],
+  [/esmoquin|smoking|tuxedo/, "esmoquin", "capa"],
+  // Sin "mono": en ESTE catálogo esa cadena es el moño de corbata (la ñ se
+  // descompone al normalizar), no el mono/jumpsuit español. El jumpsuit siempre
+  // viene nombrado — "Jumpsuit elegante negro", "Enterizo negro" — así que
+  // reclamar "mono" aquí solo le robaría la corbata sin ganar nada.
+  [/jumpsuit|enterizo|overol|\bpeto\b/, "jumpsuit", "torso"],
+  [/conjunto (deportivo|de punto)|\bset\b de/, "conjunto-deportivo", "torso"],
+  [/\bvestido\b|slip dress|wrap dress|\bdress\b/, "vestido", "torso"],
 
   // --- Torso, de lo más específico a lo más genérico
   [/\brugby\b/, "rugby", "torso"],
@@ -146,10 +178,25 @@ const normaliza = (s: string) =>
 export function tipoDePrenda(nombre: string): TipoPrenda | null {
   const n = normaliza(nombre);
   for (const [re, tipo, zona] of REGLAS) {
-    if (re.test(n)) return { tipo, zona };
+    if (re.test(n)) return { tipo, zona, zonas: DOS_ZONAS[tipo] ?? [zona] };
   }
   return null;
 }
+
+/**
+ * Las prendas que resuelven DOS zonas de una vez.
+ *
+ * La zona principal es la que ya declara REGLAS; aquí solo se añade la segunda.
+ * Un traje se lee como capa (es lo que domina la silueta) pero trae su pantalón;
+ * un vestido y un jumpsuit se leen como torso y resuelven también la pierna.
+ */
+const DOS_ZONAS: Record<string, Zona[]> = {
+  traje: ["capa", "pierna"],
+  esmoquin: ["capa", "pierna"],
+  vestido: ["torso", "pierna"],
+  jumpsuit: ["torso", "pierna"],
+  "conjunto-deportivo": ["torso", "pierna"],
+};
 
 /**
  * Los tipos que menciona un texto libre — una fórmula de receta, por ejemplo.

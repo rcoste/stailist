@@ -158,10 +158,17 @@ export function coberturaDeReceta(
   const tiposFamilia = new Set(deLaFamilia.map((t) => t.tipo));
 
   // Qué tipos de esta familia tiene de verdad, por zona.
+  //
+  // Se suman TODAS las zonas de la prenda, no solo la principal: un vestido
+  // resuelve torso y pierna de una vez, y contarlo solo como torso deja la
+  // pierna en falso hueco — le diríamos a una mujer con cinco vestidos que no
+  // tiene con qué vestirse de abajo.
   const cubiertas = new Set<Zona>();
   for (const it of items) {
     const t = tipoDePrenda(it.attrs.nombre ?? it.attrs.tipo ?? "");
-    if (t && t.zona !== "no-calle" && tiposFamilia.has(t.tipo)) cubiertas.add(t.zona);
+    if (t && t.zona !== "no-calle" && tiposFamilia.has(t.tipo)) {
+      for (const z of t.zonas) cubiertas.add(z);
+    }
   }
 
   const exigidas: Zona[] = clima === "frio" ? [...ZONAS_DE_LOOK, "capa"] : ZONAS_DE_LOOK;

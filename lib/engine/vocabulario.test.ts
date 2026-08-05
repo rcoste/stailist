@@ -9,10 +9,52 @@ describe("tipoDePrenda", () => {
     expect(tipoDePrenda("Camisa oxford azul")).toEqual({
       tipo: "camisa-oxford",
       zona: "torso",
+      zonas: ["torso"],
     });
     expect(tipoDePrenda("Oxford negro de charol")).toEqual({
       tipo: "zapato-formal",
       zona: "pie",
+      zonas: ["pie"],
+    });
+  });
+
+  describe("prendas de cuerpo entero", () => {
+    // El bug del par #11 del A/B: el motor armó "Traje marino de lana" MÁS
+    // "Pantalón de vestir marino" — un traje puesto con el pantalón de otro.
+    // Roberto: "si el traje azul marino y el pantalón son del mismo juego y que
+    // no sean diferentes". Pasaba porque el traje se leía solo como capa, así
+    // que la zona pierna seguía pareciendo vacía y el motor la rellenaba.
+    it("el traje trae su pantalón", () => {
+      expect(tipoDePrenda("Traje marino de lana")?.zonas).toEqual(["capa", "pierna"]);
+      expect(tipoDePrenda("Esmoquin negro")?.zonas).toEqual(["capa", "pierna"]);
+    });
+
+    it("el vestido y el jumpsuit resuelven torso y pierna", () => {
+      expect(tipoDePrenda("Vestido midi burdeos")?.zonas).toEqual(["torso", "pierna"]);
+      expect(tipoDePrenda("Slip dress satinado negro")?.zonas).toEqual(["torso", "pierna"]);
+      expect(tipoDePrenda("Jumpsuit elegante negro")?.zonas).toEqual(["torso", "pierna"]);
+      expect(tipoDePrenda("Enterizo negro")?.zonas).toEqual(["torso", "pierna"]);
+    });
+
+    it("las PIEZAS de un traje siguen siendo piezas sueltas", () => {
+      // "Saco de traje azul marino" y "Pantalón de traje" existen en el catálogo
+      // como prendas independientes: si el patrón del traje se las llevara, un
+      // saco solo pasaría a cubrir la pierna y volveríamos a armar looks sin
+      // pantalón — el bug de v33 al revés.
+      expect(tipoDePrenda("Saco de traje azul marino")?.zonas).toEqual(["capa"]);
+      expect(tipoDePrenda("Pantalón de traje azul marino")?.zonas).toEqual(["pierna"]);
+      expect(tipoDePrenda("Chaleco de traje gris")?.zonas).toEqual(["capa"]);
+    });
+
+    it("el traje de baño sigue siendo no-calle, no un traje", () => {
+      expect(tipoDePrenda("Traje de baño negro")?.tipo).toBe("bano");
+    });
+
+    it("el moño de corbata no se confunde con el mono/jumpsuit", () => {
+      // La ñ se descompone al normalizar, así que "moño" llega como "mono". En
+      // ESTE catálogo esa cadena es la corbata; el jumpsuit siempre viene
+      // nombrado.
+      expect(tipoDePrenda("Moño negro")?.tipo).toBe("corbata");
     });
   });
 

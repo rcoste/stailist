@@ -237,6 +237,33 @@ export function revisarEjecucion(
     }
   }
 
+  // 4b. El traje con el pantalón de otro. Lo cazó Roberto juzgando el par #11
+  //     del A/B: el look llevaba "Traje marino de lana" Y ADEMÁS "Pantalón de
+  //     vestir marino". Su comentario: "si el traje azul marino y el pantalón
+  //     son del mismo juego y que no sean diferentes".
+  //
+  //     Un traje ya trae su pantalón. Añadirle otro no es un matiz de estilo:
+  //     o sobra una prenda o son dos piezas dispares que se leen como error.
+  //
+  //     SOLO traje y esmoquin, a propósito. Un vestido sobre pantalón sí es un
+  //     look real y no se toca; el traje con otro pantalón no lo es nunca.
+  const enteros = items.filter((i) => {
+    const t = tipoDePrenda(nombre(i));
+    return t?.tipo === "traje" || t?.tipo === "esmoquin";
+  });
+  if (enteros.length) {
+    const piernaSuelta = items.find((i) => {
+      const t = tipoDePrenda(nombre(i));
+      return t?.zonas.includes("pierna") && t.tipo !== "traje" && t.tipo !== "esmoquin";
+    });
+    if (piernaSuelta) {
+      v.push({
+        regla: "traje-con-pantalon-ajeno",
+        detalle: `El look lleva "${nombre(enteros[0])}" (que YA incluye su pantalón) y además "${nombre(piernaSuelta)}". Quita el pantalón suelto: un traje se lleva con el suyo, y dos piezas de juegos distintos se leen como error, no como estilo.`,
+      });
+    }
+  }
+
   // 5. Frío sin abrigo. Objetivo, no de gusto: a 8°C una camiseta y un pantalón
   //    no alcanzan, y de nada sirve que el look esté bien compuesto si la
   //    persona se congela. Roberto lo marcó en dos looks del barrido.

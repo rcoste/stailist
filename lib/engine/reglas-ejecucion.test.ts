@@ -209,3 +209,52 @@ describe("frio-sin-abrigo", () => {
     expect(v.find((x) => x.regla === "frio-sin-abrigo")).toBeUndefined();
   });
 });
+
+describe("el traje con el pantalón de otro", () => {
+  // El par #11 del A/B ciego, tal cual salió. Roberto, sin saber qué lado era
+  // cuál: "depende del evento... y también si el traje azul marino y el
+  // pantalón son del mismo juego y que no sean diferentes". Tenía razón: el
+  // motor no sabía que un traje ya trae su pantalón, porque el vocabulario lo
+  // leía solo como capa y la zona pierna seguía pareciendo vacía.
+  it("caza el look del par #11", () => {
+    const v = revisarEjecucion([
+      p("Traje marino de lana", "#1F2A44"),
+      p("Camisa blanca", "#FFFFFF"),
+      p("Pantalón de vestir marino", "#1F2A44"),
+      p("Corbata de seda vino", "#722F37"),
+      p("Zapato formal negro", "#1A1A1A"),
+    ]);
+    expect(v.map((x) => x.regla)).toContain("traje-con-pantalon-ajeno");
+  });
+
+  it("un traje solo, con su propio pantalón, no dispara nada", () => {
+    const v = revisarEjecucion([
+      p("Traje marino de lana", "#1F2A44"),
+      p("Camisa blanca", "#FFFFFF"),
+      p("Zapato formal negro", "#1A1A1A"),
+    ]);
+    expect(v.map((x) => x.regla)).not.toContain("traje-con-pantalon-ajeno");
+  });
+
+  it("un SACO de traje con pantalón aparte es legítimo", () => {
+    // Es la diferencia que importa: el saco suelto SÍ pide un pantalón. Si la
+    // regla no distinguiera "traje" de "saco de traje", prohibiría el look más
+    // normal que existe.
+    const v = revisarEjecucion([
+      p("Saco de traje azul marino", "#1F2A44"),
+      p("Camisa blanca", "#FFFFFF"),
+      p("Pantalón de traje gris carbón", "#36454F"),
+      p("Zapato formal negro", "#1A1A1A"),
+    ]);
+    expect(v.map((x) => x.regla)).not.toContain("traje-con-pantalon-ajeno");
+  });
+
+  it("un vestido sobre pantalón NO se toca — es un look real", () => {
+    const v = revisarEjecucion([
+      p("Vestido midi burdeos", "#722F37"),
+      p("Pantalón de vestir negro", "#1A1A1A"),
+      p("Botines Chelsea negros", "#1A1A1A"),
+    ]);
+    expect(v.map((x) => x.regla)).not.toContain("traje-con-pantalon-ajeno");
+  });
+});

@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.96.0] - 2026-08-05
+
+### Fixed
+
+- **Un traje ya trae su pantalón.** El motor podía proponerte un traje azul marino y, encima, un pantalón de vestir distinto — dos piezas de juegos diferentes que se leen como error. Pasaba porque la app entendía el traje solo como "saco", así que creía que te faltaba algo de abajo. Ahora sabe que hay prendas que resuelven dos partes del cuerpo a la vez, y eso vale también para vestidos y jumpsuits: si llevas un vestido, ya no cree que estés a medio vestir. De paso empezó a reconocer 27 prendas más del guardarropa femenino.
+
 ## [0.2.95.0] - 2026-08-04
 
 ### Changed
