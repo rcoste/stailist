@@ -201,7 +201,17 @@ import {
 // DESEMPATE, no como cuota: forzar una prenda donde no cabe sale peor que
 // repetir. Dos corridas de 12 días: 24→27 y 25→27 prendas distintas, y la más
 // repetida baja de 6× a 4-5×.
-export const PROMPT_VERSION = "v36";
+// v37 (2026-08-05): los neutros no compiten con la paleta. Las paletas de
+// estación solo listan colores CON carácter —ninguna incluye un gris medio— y
+// el modelo leía esa ausencia como rechazo: en el clóset real de Roberto, sus
+// grises, azules suaves y denim claro salieron 0-1 veces en 31 looks (el 20%
+// del clóset se llevó el 2% del uso) mientras el vino, con el 4% de las
+// prendas, se llevó el 12%. Él lo diagnosticó antes que la medición. Ahora el
+// prompt (y las tres rúbricas del juez, que decían lo contrario y lo habrían
+// deshecho) dicen que gris, azul suave, denim, blanco hueso, crudo y negro son
+// el FONDO: ni favorecen ni apagan. Tres corridas de 12 días: las prendas
+// olvidadas pasan de 1.0 a 2.3 de 21; la variedad total no se mueve.
+export const PROMPT_VERSION = "v37";
 
 export type EngineItem = {
   id: string;
@@ -436,7 +446,7 @@ export function describeItem(item: EngineItem): string {
  */
 export function contextBlock(
   ctx: EngineContext,
-  opciones: { sinRecetario?: boolean } = {}
+  opciones: { sinRecetario?: boolean; sinNeutros?: boolean } = {}
 ): string[] {
   const lines: string[] = [];
 
@@ -518,7 +528,20 @@ export function contextBlock(
     const flowSeason = flowKey ? SEASONS[flowKey] : null;
     const flowLabel = flowSeason ? ` (con flow a ${flowSeason.label})` : "";
     lines.push(
-      `Su colorimetría: paleta tipo ${s.label}${flowLabel}. Le favorecen cerca de la cara: ${favs}. EVITA cerca de la cara (la apagan): ${avoid}.`
+      `Su colorimetría: paleta tipo ${s.label}${flowLabel}. Le favorecen cerca de la cara: ${favs}. EVITA cerca de la cara (la apagan): ${avoid}.`,
+      // SIN esta línea el modelo lee la paleta como binaria —o favorece o
+      // apaga— y todo lo que no está en la lista de favoritos pierde siempre.
+      // Medido en el clóset real de Roberto: sus grises, azules suaves y
+      // denim claro salieron 0-1 veces en 31 looks (el 20% del clóset se
+      // llevó el 2% del uso), mientras el vino —4% de las prendas— se llevó
+      // el 12%, casi tres veces lo que le tocaba. Él lo cachó antes que la
+      // medición: "está dándole demasiado peso a la paleta, son la guinda y
+      // la esmeralda porque soy invierno, y a las otras no les da importancia;
+      // ahí es donde nos está matando la rotación, porque rota pero
+      // priorizando". Las paletas de estación solo listan colores CON carácter
+      // —ninguna incluye un gris medio— y su ausencia se estaba leyendo como
+      // rechazo.
+      ...(opciones.sinNeutros ? [] : [`Los NEUTROS no entran en esa balanza: gris en cualquier tono, azul suave, denim, blanco hueso, crudo y negro son el FONDO del guardarropa, no un color que compita. Ni la favorecen ni la apagan — funcionan siempre, cerca de la cara y lejos. Que un neutro no esté en su lista de favoritos NO es motivo para descartarlo: la lista solo ordena los colores CON carácter. Un look de neutros con una sola pieza de su paleta es tan correcto como uno que la use entera.`])
     );
   }
 
@@ -722,6 +745,8 @@ export function buildUserMessage(
     sinBlueprint?: boolean;
     /** Apaga la rotación del clóset. Solo para medirla contra su ausencia. */
     sinRotacion?: boolean;
+    /** Apaga la aclaración de que los neutros no compiten. Solo para medirla. */
+    sinNeutros?: boolean;
     /**
      * Usa ESTA estructura en vez de la sembrada del día. Solo para el arnés.
      *

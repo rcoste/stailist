@@ -76,20 +76,20 @@ Puedes sumar UN tip de styling: un solo movimiento concreto para llevar mejor la
 - Voz de amiga cool, una frase corta, sin jerga.`;
 
 const RUBRICA_MUJER = `Revisa con ojo de stylist de moda femenina (muchos grados de libertad, sé exigente):
-- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Lo near-face (top/abrigo) idealmente la favorece; un color de su EVITA near-face es preferencia, no veto — cámbialo SOLO si hay una mejor opción en el clóset, nunca rechaces el look solo por eso.
+- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Lo near-face (top/abrigo) idealmente la favorece; un color de su EVITA near-face es preferencia, no veto — cámbialo SOLO si hay una mejor opción en el clóset, nunca rechaces el look solo por eso. Y los NEUTROS (gris de cualquier tono, azul suave, denim, blanco hueso, crudo, negro) NO compiten con su paleta: son el fondo, funcionan siempre. Que un gris no esté en su lista de favoritos NO es un problema que reparar — la lista solo ordena los colores CON carácter.
 - Proporción y silueta: equilibra volumen (oversize arriba ↔ entallado abajo); evita "todo holgado" o "todo pegado".
 - Cintura y largos: define la cintura cuando ayude; cuida el largo de falda/vestido contra el calzado.
 - Capas y coherencia: vestido O dos piezas con lógica; saco/capa que sume; no mezcles deportivo con formal salvo intención.
 - Completitud: si se siente incompleto, intercambia por una pieza que lo cierre.`;
 
 const RUBRICA_HOMBRE = `Revisa con criterio masculino (más formulaico, lo esencial):
-- Color: máx 1-2 protagonistas + neutros; nada que choque (juzga por el hex). Near-face en su paleta; un EVITA near-face es preferencia (cámbialo solo si hay mejor opción en el clóset), no motivo de rechazo.
+- Color: máx 1-2 protagonistas + neutros; nada que choque (juzga por el hex). Near-face en su paleta; un EVITA near-face es preferencia (cámbialo solo si hay mejor opción en el clóset), no motivo de rechazo. Los NEUTROS (gris, azul suave, denim, blanco hueso, crudo, negro) NO compiten con la paleta: son el fondo y funcionan siempre — no los cambies por un color de su lista.
 - Coherencia de formalidad: no mezcles sastre formal con deportivo salvo intención.
 - Proporción básica: que no sea todo holgado ni todo pegado.`;
 
 // Sin género definido: lo esencial sin asumir tipo de guardarropa.
 const RUBRICA_NEUTRA = `Revisa lo esencial (sin asumir género):
-- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Near-face en su paleta; un EVITA near-face es preferencia (cámbialo solo si hay mejor opción en el clóset), no motivo de rechazo.
+- Color: máx 1-2 protagonistas + neutros; nada que choque o se enlode (juzga por el hex). Near-face en su paleta; un EVITA near-face es preferencia (cámbialo solo si hay mejor opción en el clóset), no motivo de rechazo. Los NEUTROS (gris, azul suave, denim, blanco hueso, crudo, negro) NO compiten con la paleta: son el fondo y funcionan siempre — no los cambies por un color de su lista.
 - Proporción: equilibra volumen (holgado arriba ↔ entallado abajo); evita "todo holgado" o "todo pegado".
 - Coherencia de formalidad: no mezcles formal con deportivo salvo intención.
 - Completitud: si se siente incompleto, intercambia por una pieza que lo cierre.`;

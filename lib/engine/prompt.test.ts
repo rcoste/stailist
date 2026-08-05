@@ -513,3 +513,56 @@ describe("describeItem — la categoría (v33)", () => {
     expect(linea).toContain("Camiseta negra");
   });
 });
+
+describe("los neutros no compiten con la paleta", () => {
+  // Roberto lo cachó antes que la medición: "está dándole demasiado peso a la
+  // paleta — son la guinda y la esmeralda porque soy invierno, y a las otras no
+  // les da importancia; ahí es donde nos está matando la rotación, porque rota
+  // pero priorizando".
+  //
+  // Y el dato le dio la razón: sus grises, azules suaves y denim claro salieron
+  // 0-1 veces en 31 looks (el 20% del clóset se llevó el 2% del uso), mientras
+  // el vino —4% de las prendas— se llevó el 12%. La causa: las paletas de
+  // estación solo listan colores CON carácter (ninguna incluye un gris medio) y
+  // el modelo leía esa ausencia como rechazo.
+  const ctx = {
+    gender: "hombre",
+    objective: "diario",
+    plan: null,
+    lifestyle: null,
+    tasteTags: [],
+    archetype: null,
+    season: "invierno",
+    flow: null,
+    items: [],
+    weather: null,
+    recentCombos: [],
+    vetoes: [],
+    timeOfDay: "dia",
+    silueta: null,
+    tasteSignal: EMPTY_TASTE_SIGNAL,
+  } as unknown as EngineContext;
+
+  it("dice que el gris y el azul suave son FONDO, no competidores", () => {
+    const b = contextBlock(ctx).join("\n");
+    expect(b).toContain("Los NEUTROS no entran en esa balanza");
+    expect(b).toContain("no un color que compita");
+  });
+
+  it("aclara que faltar de la lista NO es motivo para descartar", () => {
+    // Es la frase que arregla el error de lógica: una paleta sin grises no
+    // significa que los grises queden mal.
+    const b = contextBlock(ctx).join("\n");
+    expect(b).toContain("NO es motivo para descartarlo");
+  });
+
+  it("no se pierde la lista de EVITA — esa sí es una preferencia real", () => {
+    const b = contextBlock(ctx).join("\n");
+    expect(b).toContain("EVITA cerca de la cara");
+  });
+
+  it("sin colorimetría no dice nada de neutros", () => {
+    const b = contextBlock({ ...ctx, season: null } as EngineContext).join("\n");
+    expect(b).not.toContain("Los NEUTROS");
+  });
+});
