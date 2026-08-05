@@ -55,7 +55,8 @@ function mediaTypeOf(b64: string): string {
 function buildPrompt(
   tip: string | null,
   garments: string[],
-  identity?: { n: number; hasFace: boolean; hasSheet: boolean }
+  identity?: { n: number; hasFace: boolean; hasSheet: boolean },
+  sinImagen: string[] = []
 ): string {
   let p =
     identity && identity.n > 1
@@ -66,6 +67,18 @@ function buildPrompt(
   // prenda genérica — sabe que es "un suéter esmeralda", no una t-shirt blanca.
   if (garments.length > 0) {
     p += ` The garments are (described in Spanish): ${garments.join("; ")}.`;
+  }
+  // Y cuando SÍ falta una imagen, decirlo explícitamente. La lista de arriba
+  // sola no alcanzó: es una descripción pasiva compitiendo contra imágenes
+  // concretas, y el modelo resolvió dejando la playera blanca base del avatar
+  // donde el outfit pedía una camisa de lino esmeralda. Nombrar la prenda
+  // faltante como INSTRUCCIÓN —y prohibir el relleno por default— es lo que
+  // cierra el hueco mientras la prenda consigue su render.
+  if (sinImagen.length > 0) {
+    p +=
+      ` IMPORTANT — these garments have NO reference image and you must render them from their Spanish description alone: ${sinImagen.join("; ")}.` +
+      " They are part of the outfit and MUST appear on the body, with the exact garment type, colour and fabric their description states." +
+      " Do NOT substitute them with the person's base clothing (the plain white t-shirt or blue jeans) and do NOT omit them.";
   }
   const t = (tip ?? "").trim();
   if (t) {
@@ -215,11 +228,16 @@ export async function POST(request: NextRequest) {
   try {
     const parts = [
       {
-        text: buildPrompt((outfit.tip as string | null) ?? null, prendaNames, {
-          n: identityB64.length,
-          hasFace: !!faceRefB64,
-          hasSheet: !!sheetRefB64,
-        }),
+        text: buildPrompt(
+          (outfit.tip as string | null) ?? null,
+          prendaNames,
+          {
+            n: identityB64.length,
+            hasFace: !!faceRefB64,
+            hasSheet: !!sheetRefB64,
+          },
+          sinImagen
+        ),
       },
       ...identityB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
       ...prendasB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),

@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.94.1] - 2026-08-04
+
+### Fixed
+
+- **La prenda que no tenía foto salía sin foto — y salía mal puesta.** Una prenda del clóset puede sacar su imagen de cuatro lados: tu foto, su arquetipo, su render limpio, o una imagen prestada de una prenda muy parecida. Prestar se volvió estricto hace poco (antes te enseñaba un suéter donde el look decía camisa), y eso dejó a unas pocas prendas sin ninguna de las cuatro: aparecían como "sin foto" en el look. Peor: al verte con el look puesto, el avatar no recibía esa prenda y se quedaba con la playera blanca de base, así que la imagen contradecía al outfit. Ahora esas prendas generan su propio render, y si aun así faltara la imagen, al avatar se le dice qué prenda es y que no la sustituya por su ropa de base.
+
 ## [0.2.94.0] - 2026-08-04
 
 ### Changed
