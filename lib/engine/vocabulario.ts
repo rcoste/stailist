@@ -199,6 +199,24 @@ const DOS_ZONAS: Record<string, Zona[]> = {
 };
 
 /**
+ * Todos los tipos canónicos, agrupados por su zona principal.
+ *
+ * Existe para que quien DESCRIBE una prenda hable el mismo idioma que quien la
+ * empareja. Los blueprints (la disección de una foto de referencia en su
+ * estructura) se generan pidiéndole al modelo que elija de esta lista: si
+ * pudiera escribir "suéter ligero" en texto libre, el emparejamiento contra el
+ * clóset volvería a ser adivinanza de cadenas — que es justo lo que el
+ * vocabulario existe para evitar.
+ */
+export const TIPOS_POR_ZONA: Record<Zona, string[]> = (() => {
+  const out = {} as Record<Zona, string[]>;
+  for (const [, tipo, zona] of REGLAS) {
+    (out[zona] ??= []).includes(tipo) || out[zona].push(tipo);
+  }
+  return out;
+})();
+
+/**
  * Los tipos que menciona un texto libre — una fórmula de receta, por ejemplo.
  *
  * Distinto de tipoDePrenda: aquí el texto trae VARIAS prendas ("polo + short +
