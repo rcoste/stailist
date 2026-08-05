@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/recetas", label: "Recetas" },
   { href: "/admin/barrido", label: "Barrido" },
   { href: "/admin/ab", label: "A/B" },
+  { href: "/admin/comparador", label: "Comparador" },
   { href: "/admin/inspo", label: "Inspo" },
   { href: "/admin/duplicados", label: "Repetidas" },
   { href: "/admin/revisar", label: "Revisar" },

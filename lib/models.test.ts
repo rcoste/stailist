@@ -9,13 +9,33 @@ import {
   EXTRACT_MODEL,
   GUARD_MODEL,
 } from "./models";
+import { CATALOGO } from "./proveedores/catalogo";
+import { PRECIOS } from "./proveedores/precios";
 
-/** Todos los .ts/.tsx de app/ y lib/, menos el propio models.ts y los tests. */
+// DOS listas de modelos, y son cosas distintas a propósito:
+//
+//   lib/models.ts        lo que CORRE en producción. Una tarea, un modelo.
+//   lib/proveedores/     la BANCA: quién puede entrar a que lo midan, y a qué
+//                        precio. Nombrar un modelo aquí no lo pone a correr en
+//                        el producto — eso sigue siendo una línea en models.ts,
+//                        y esa línea sólo se mueve cuando una medición lo gana.
+//
+// Por eso lib/proveedores/ queda fuera del guard. No es una excepción de
+// conveniencia: es que ahí los nombres son DATOS (un catálogo y una tabla de
+// precios), no una elección de qué usar escondida en un archivo suelto.
+const EXENTOS = ["lib/models.ts", "lib/proveedores/"];
+
+/** Todos los .ts/.tsx de app/ y lib/, menos los exentos y los tests. */
 function fuentes(dir: string, out: string[] = []): string[] {
   for (const e of readdirSync(dir)) {
     const p = join(dir, e);
     if (statSync(p).isDirectory()) fuentes(p, out);
-    else if (/\.tsx?$/.test(e) && !/\.test\.tsx?$/.test(e) && p !== "lib/models.ts") out.push(p);
+    else if (
+      /\.tsx?$/.test(e) &&
+      !/\.test\.tsx?$/.test(e) &&
+      !EXENTOS.some((x) => p.startsWith(x))
+    )
+      out.push(p);
   }
   return out;
 }
@@ -52,5 +72,23 @@ describe("los modelos viven en un solo lugar", () => {
     expect(CLASSIFY_MODEL).toContain("sonnet");
     expect(EXTRACT_MODEL).toContain("haiku");
     expect(GUARD_MODEL).toContain("haiku");
+  });
+
+  it("lo que corre en producción se puede medir en el comparador", () => {
+    // Si el modelo de producción no está en la banca, no hay forma de retarlo
+    // con otro sin tocar código — y entonces la comparación deja de existir
+    // justo para la pregunta que más importa.
+    const ids = new Set(CATALOGO.map((m) => m.id));
+    for (const m of [ENGINE_MODEL, VISION_MODEL, JUDGE_MODEL]) expect(ids, m).toContain(m);
+  });
+
+  it("todo modelo de la banca tiene precio conocido", () => {
+    // Un costo inventado se ve igual de creíble que uno real y decide mal. Los
+    // de OpenRouter son la excepción legítima: su costo real viene en la propia
+    // respuesta de la API, así que no hay nada que mantener a mano aquí.
+    const sinPrecio = CATALOGO.filter(
+      (m) => m.proveedor !== "openrouter" && !(m.id in PRECIOS)
+    ).map((m) => m.id);
+    expect(sinPrecio, `sin precio: ${sinPrecio.join(", ")}`).toEqual([]);
   });
 });
