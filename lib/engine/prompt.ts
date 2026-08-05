@@ -10,6 +10,7 @@ import {
   bloqueCobertura,
   familiasPorPrenda,
 } from "@/lib/engine/cobertura";
+import { blueprintDelContexto, bloqueBlueprint } from "@/lib/engine/blueprint";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import {
   type TasteSignal,
@@ -177,7 +178,16 @@ import {
 // condena a ellos. Lectura conjunta de los dos A/B: la prosa estorba, la marca
 // ayuda, y juntas se cancelan. Las recetas siguen existiendo como DATOS
 // (vocabulario de prendas por familia) para la marca y la cobertura.
-export const PROMPT_VERSION = "v34";
+// v35 (2026-08-05): estructura de referencia (blueprint). UN look real de calle
+// diseccionado —núcleo contra guarnición, la relación de color SIN nombrar
+// colores, el detalle que lo hace funcionar y qué lo rompe— con su núcleo YA
+// cruzado contra el clóset, así que el modelo elige CUÁL prenda y no de qué
+// tipo. Es el trabajo que hasta ahora se le tiraba en vuelo, el mismo fallo que
+// se arregló para el recetario en v32 y a las fotos nunca. Solo entra en las
+// celdas de (ocasión × clima) con material; sin blueprint armable el motor
+// trabaja como siempre. Sembrado por día y clóset para que el juez revise
+// contra la MISMA estructura que usó el generador.
+export const PROMPT_VERSION = "v35";
 
 export type EngineItem = {
   id: string;
@@ -691,7 +701,12 @@ export function closetBlock(items: EngineItem[], recetas: Receta[] = []): string
  */
 export function buildUserMessage(
   ctx: EngineContext,
-  opciones: { marcarEstilo?: boolean; sinRecetario?: boolean } = {}
+  opciones: {
+    marcarEstilo?: boolean;
+    sinRecetario?: boolean;
+    /** Apaga la estructura de referencia. Solo para el A/B del arnés. */
+    sinBlueprint?: boolean;
+  } = {}
 ): string {
   // Sin recetario no hay marca posible: la marca ES el recetario aplicado al
   // clóset. Apagar uno y dejar la otra mediría una mezcla que nunca existió.
@@ -704,6 +719,24 @@ export function buildUserMessage(
     "",
     ...closetBlock(ctx.items, recetas),
   ];
+
+  // La estructura de referencia: UN look real de calle diseccionado, con su
+  // núcleo ya cruzado contra el clóset. Va DESPUÉS del clóset porque nombra sus
+  // ids, y solo existe para las celdas de (ocasión × clima) que tienen material.
+  //
+  // Silencio absoluto cuando no hay: elegirBlueprint devuelve null si la celda
+  // no está cubierta o si el clóset no da para ninguno, y ahí el motor arma
+  // como siempre. Es la misma decisión que se tomó con las fotos de inspiración
+  // tras perder su A/B — cuando la referencia no ayuda, ninguna es mejor que
+  // una mala.
+  if (!opciones.sinBlueprint) {
+    const bp = blueprintDelContexto(
+      ctx,
+      bandaDeClima(ctx.weather),
+      recetasDelContexto(ctx).map((r) => r.familia)
+    );
+    if (bp) lines.push("", bloqueBlueprint(bp));
+  }
 
   if (ctx.recentCombos.length > 0) {
     lines.push("", "Combinaciones recientes (NO las repitas exactas):");

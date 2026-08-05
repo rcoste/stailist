@@ -9,6 +9,7 @@ import {
 } from "./prompt";
 import { bloqueEjecucion } from "./reglas-ejecucion";
 import { bandaDeClima } from "./recetario";
+import { blueprintDelContexto, revisarColorBlueprint } from "./blueprint";
 import type { GeneratedOutfit } from "./generate";
 
 // Juez de styling, UNO POR OUTFIT (para poder ir mostrándolos conforme se
@@ -132,6 +133,33 @@ function buildCriticMessage(
       { clima: bandaDeClima(ctx.weather), closet: ctx.items }
     )
   );
+
+  // La relación de color de la estructura de referencia, comprobada con los hex
+  // reales del look. Es la cerca que NO puede alucinar: "capa profunda sobre
+  // base clara" se vuelve una comparación de luminancias, y "un solo tono vivo"
+  // un conteo de saturaciones.
+  //
+  // blueprintDelContexto está sembrado por día y clóset a propósito: si el juez
+  // eligiera otro blueprint que el generador, repararía el look contra una
+  // estructura que nadie usó.
+  const bpJuez = blueprintDelContexto(
+    ctx,
+    bandaDeClima(ctx.weather),
+    recetasDelContexto(ctx).map((r) => r.familia)
+  );
+  if (bpJuez) {
+    const reparos = revisarColorBlueprint(
+      bpJuez.bp,
+      ctx.items.filter((i) => outfit.item_ids.includes(i.id))
+    );
+    if (reparos.length) {
+      lines.push(
+        "",
+        "LA RELACIÓN DE COLOR DE LA REFERENCIA NO SE CUMPLE (medido con los colores reales, no es opinión — REPÁRALO):",
+        ...reparos.map((r) => `- ${r}`)
+      );
+    }
+  }
 
   if (priorOutfits.length > 0) {
     lines.push("", "Looks ya aprobados (mantén éste DISTINTO de ellos):");

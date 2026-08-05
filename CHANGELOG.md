@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.98.0] - 2026-08-05
+
+### Added
+
+- **Tu look del día se arma sobre un look real que funciona.** Antes la app partía de cero cada vez y salían combinaciones correctas pero sosas. Ahora, para el día a día, toma un look de calle de verdad —de los que tú mismo curaste—, lo descompone en su estructura (qué va con qué, en qué proporción, qué detalle lo hace funcionar) y lo rehace con TU ropa. No copia colores: la estructura dice "algo oscuro arriba sobre base clara" y tu colorimetría decide cuáles tonos. Y si tu clóset no da para esa estructura, no se fuerza nada: se arma como siempre.
+
 ## [0.2.97.0] - 2026-08-05
 
 ### Fixed

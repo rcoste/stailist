@@ -214,7 +214,11 @@ export function bloqueBlueprint(e: BlueprintEmparejado): string {
 
   return `ESTRUCTURA DE REFERENCIA (un look real de calle, ya diseccionado y cruzado contra su clóset)
 
-Arma UN look sobre esta estructura. El emparejamiento con sus prendas ya está hecho: tú eliges CUÁL de las candidatas, no de qué tipo.
+EL PRIMER look lo armas SOBRE esta estructura. Los otros van libres, con tu criterio de siempre.
+
+Eso es a propósito y va con su porqué: una estructura concreta produce un look con carácter, y dos o tres estructuras a la vez producen el promedio de todas — que no es ninguna. Si le gustan varios estilos, la respuesta no es mezclarlos en un look tibio: es darle uno con carácter y que el resto de la tanda respire.
+
+El emparejamiento con sus prendas ya está hecho: tú eliges CUÁL de las candidatas, no de qué tipo.
 
 NÚCLEO — lo que hace que este look sea este look:
 ${lineas.join("\n")}
@@ -229,6 +233,43 @@ EL DETALLE QUE LO HACE FUNCIONAR: ${bp.clave}
 LO QUE LO ARRUINA: ${bp.rompe}${sinVer}
 
 QUÉ MANDA SOBRE QUÉ: la ocasión decide el nivel de arreglo y la colorimetría decide los colores. La referencia decide la COMBINACIÓN — qué va con qué y en qué proporción. Si la estructura y la ocasión se contradicen, gana la ocasión.`;
+}
+
+/**
+ * El blueprint del contexto — el MISMO para el generador y para el juez.
+ *
+ * POR QUÉ SEMBRADO POR DÍA Y NO AL AZAR
+ * El juez tiene que revisar la relación de color contra la estructura que el
+ * generador usó de verdad; si cada uno eligiera al azar, el juez repararía el
+ * look contra un blueprint que nadie usó. Y el azar puro tampoco sirve para la
+ * rotación: hace falta que un día dé lo mismo dos veces (generador y juez) y
+ * que dos días den cosas distintas.
+ *
+ * La semilla sale del día y del clóset: estable dentro del día, distinta mañana.
+ */
+export function blueprintDelContexto(
+  ctx: {
+    objective: string | null;
+    items: EngineItem[];
+    weather: unknown;
+  },
+  clima: Clima,
+  familias: string[]
+): BlueprintEmparejado | null {
+  const dia = new Date().toISOString().slice(0, 10);
+  const semilla = [...dia, ...(ctx.items[0]?.id ?? "")].reduce(
+    (h, c) => (h * 31 + c.charCodeAt(0)) % 2147483647,
+    7
+  );
+  let n = semilla;
+  const rand = () => ((n = (n * 1103515245 + 12345) % 2147483648) / 2147483648);
+  return elegirBlueprint({
+    ocasion: ctx.objective ?? "diario",
+    clima,
+    items: ctx.items,
+    familias,
+    rand,
+  });
 }
 
 /**

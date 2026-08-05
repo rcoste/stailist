@@ -247,3 +247,30 @@ describe("la cerca de color: se verifica con números, no con opinión", () => {
     expect(reparos).toEqual([]);
   });
 });
+
+describe("una estructura, no varias", () => {
+  const closet = [
+    p("Camisa overshirt marino", "#1F2A44"),
+    p("Suéter crewneck carbón", "#36454F"),
+    p("Chinos beige", "#C8B99C"),
+    p("Tenis blancos urbanos", "#FFFFFF"),
+  ];
+
+  it("pide el PRIMER look sobre la estructura y deja los otros libres", () => {
+    // Al probarlo de verdad con el clóset de Roberto, el primer look siguió la
+    // estructura al pie y el segundo la ignoró: el prompt decía "arma UN look
+    // sobre esta estructura" y luego "ármale 2-3 outfits", y esa ambigüedad la
+    // resolvía el modelo a su gusto. Ahora se dice.
+    const b = bloqueBlueprint(emparejarBlueprint(BP(), closet));
+    expect(b).toContain("EL PRIMER look");
+    expect(b).toContain("Los otros van libres");
+  });
+
+  it("explica POR QUÉ una sola, que es la lección que costó el recetario", () => {
+    // El recetario perdió su A/B inyectando DOS familias enteras a la vez y
+    // pidiendo un outfit. Roberto lo formuló antes de ver el resultado: "no
+    // promedies; una de las tres, o las tres".
+    const b = bloqueBlueprint(emparejarBlueprint(BP(), closet));
+    expect(b).toContain("el promedio de todas");
+  });
+});
