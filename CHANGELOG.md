@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.95.0] - 2026-08-04
+
+### Changed
+
+- **El motor vuelve a armar sin el recetario en prosa.** La prueba a ciegas (12 pares, Roberto de juez, sin saber qué lado era cuál) dio 5-4-2: indistinguible de una moneda, y la regla escrita antes de correr decía "si no gana, se revierte". Se van las fórmulas de estilo, la paleta de familia y los vetos en prosa. Se quedan las dos piezas que son datos y no prosa: la marca de qué prendas del clóset pertenecen a tu estilo (esa sí ganó su propia prueba) y el aviso honesto cuando tu clóset no da para tu estilo.
+
 ## [0.2.94.1] - 2026-08-04
 
 ### Fixed

@@ -2,7 +2,6 @@ import type { Weather } from "@/lib/weather";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
 import {
   recetasParaTags,
-  recetasParaPrompt,
   bandaDeClima,
   type Receta,
 } from "@/lib/engine/recetario";
@@ -167,7 +166,18 @@ import {
 // propia regla de "un bottom siempre". Lo cazó Roberto viendo el render, donde
 // el generador de imágenes había inventado un pantalón gris. Ahora la categoría
 // se resuelve al leer (conCategoria) y va pegada al nombre entre corchetes.
-export const PROMPT_VERSION = "v33";
+// v34 (2026-08-04): fuera las fórmulas en prosa del recetario — el revert
+// pre-registrado. El A/B ciego (12 pares, Roberto de juez, lado sorteado) dio
+// 5-4-2 a favor de julio: indistinguible del azar, y la regla escrita ANTES de
+// correr decía "si no gana, se revierte". Se van las fórmulas, la paleta de
+// familia y los vetos en prosa (recetasParaPrompt). Se QUEDAN la marca de
+// familia en el clóset y el aviso de cobertura: la marca ganó su propio A/B
+// (79%→69% marcados, p≈0.09) y son señales de datos, no prosa — el A/B del
+// recetario los apagaba junto con las fórmulas, así que su derrota no los
+// condena a ellos. Lectura conjunta de los dos A/B: la prosa estorba, la marca
+// ayuda, y juntas se cancelan. Las recetas siguen existiendo como DATOS
+// (vocabulario de prendas por familia) para la marca y la cobertura.
+export const PROMPT_VERSION = "v34";
 
 export type EngineItem = {
   id: string;
@@ -495,20 +505,14 @@ export function contextBlock(
   }
   if (ctx.tasteTags.length > 0) {
     lines.push(`Tags de gusto (en orden de fuerza): ${ctx.tasteTags.join(", ")}.`);
-    // Los tags solos son tres palabras que el modelo interpreta a su antojo
-    // ("pulido" no dice si la camisa va abierta o abotonada). El recetario les
-    // pone contenido concreto, destilado de fotos de calle ya curadas — ver
-    // lib/engine/recetario.ts.
+    // Las fórmulas en prosa del recetario vivieron aquí de v28 a v33 y se
+    // fueron en v34 por el A/B pre-registrado (5-4-2, azar). Lo que queda del
+    // recetario son sus DATOS: la marca de familia en el clóset (closetBlock) y
+    // este aviso de cobertura — si el clóset NO da para su estilo, decirlo
+    // ANTES de que el modelo arme algo y lo bautice con un nombre que no es.
+    // La persona nota esa mentira antes que nosotros.
     if (ctx.gender && !opciones.sinRecetario) {
-      // El clima entra a la SELECCIÓN de fórmulas, no solo al prompt: mandar
-      // las 15 fórmulas revueltas es como no mandar clima (v29).
       const recetas = recetasParaTags(ctx.tasteTags, ctx.gender);
-      const receta = recetasParaPrompt(recetas, ctx.weather);
-      if (receta) lines.push(receta);
-      // Y si su clóset NO da para esa receta, decirlo ANTES de que el modelo
-      // intente cumplirla: sin esto arma algo, lo bautiza con el nombre del
-      // estilo y la persona nota la mentira antes que nosotros. Solo la receta
-      // principal — avisar de las dos es pedirle disculpas por partida doble.
       if (recetas[0]) {
         const aviso = bloqueCobertura(
           coberturaDeReceta(recetas[0], ctx.items, bandaDeClima(ctx.weather))
