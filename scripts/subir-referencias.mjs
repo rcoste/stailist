@@ -43,8 +43,15 @@ const db = new pg.Client({
 });
 await db.connect();
 
+// El guion bajo marca carpeta de STAGING, no familia: _descartadas, _duda-ia,
+// _sin-familia, _frio, _nuevas... El filtro nombraba una sola por su nombre y
+// las demás entraban a la biblioteca con `estilo` = "_duda-ia", que no es un
+// estilo de nadie. Inertes para el selector (nunca casan con las familias de un
+// usuario) pero basura en la curaduría — y _descartadas-ia son justo las que
+// acabábamos de apartar por generadas con IA. Se cazó al subir la primera
+// cosecha por ocasión, que fue la que estrenó esas carpetas.
 const estilos = readdirSync(RAIZ, { withFileTypes: true })
-  .filter((e) => e.isDirectory() && e.name !== "_descartadas")
+  .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
   .map((e) => e.name);
 
 let subidas = 0;
