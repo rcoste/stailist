@@ -16,6 +16,20 @@ export type Referencia = {
   /** "Así me vestiría yo": gusto personal, SEPARADO de si sirve para el estilo. */
   mio: boolean;
   nota: string | null;
+  /**
+   * Lo que la máquina leyó de la foto, para curar con la información completa.
+   *
+   * Roberto: "una cosa es sastre y otra para qué ocasión; no puedo decir qué tan
+   * bien está algo con info incompleta". Antes la carta enseñaba SOLO el nombre
+   * del estilo, y la ocasión se etiquetaba después de curar — así que nadie
+   * verificaba nunca esa etiqueta. Es el fallo que perdió el A/B de las fotos de
+   * inspiración: la máquina marcó "oficina" en looks casuales y no había quién
+   * la corrigiera. Enseñarlas convierte la curaduría en dos juicios por el mismo
+   * precio: ¿es del estilo? y ¿la máquina leyó bien la foto?
+   */
+  clima: string | null;
+  ocasiones: string[] | null;
+  registro: string | null;
 };
 
 export type Juicio = {

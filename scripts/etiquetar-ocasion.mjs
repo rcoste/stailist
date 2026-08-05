@@ -42,6 +42,8 @@ const arg = (k, d) =>
 const LIMITE = arg("limite", 10);
 const CONC = arg("conc", 5);
 const APLICAR = process.argv.includes("--aplicar");
+/** Etiquetar las que AÚN NO se curan, para que se curen con la ocasión a la vista. */
+const PENDIENTES = process.argv.includes("--pendientes");
 const FAMILIAS = (process.argv.find((a) => a.startsWith("--familias=")) ?? "")
   .replace("--familias=", "")
   .split(",")
@@ -97,11 +99,22 @@ async function main() {
   );
   const client = new Anthropic();
 
+  // ANTES de curar, no después (--pendientes).
+  //
+  // Etiquetar solo lo ya aprobado ahorraba visión sobre fotos que quizá se
+  // rechazan, pero dejaba a la ocasión SIN NADIE QUE LA VERIFIQUE: el humano
+  // juzga el estilo a ciegas de la ocasión, la máquina la pone después y ahí
+  // muere el asunto. Es justo lo que perdió el A/B de las fotos de inspiración
+  // — la máquina marcó "oficina" en looks casuales (215 "cuidado" contra 77
+  // "arreglado") y no había quién la corrigiera. Roberto: "una cosa es sastre y
+  // otra para qué ocasión; no puedo decir qué tan bien está algo con info
+  // incompleta". Tiene razón, y el ahorro no compensa: son centavos de visión
+  // contra la única señal humana que tenemos.
   let q = s
     .from("referencias")
     .select("id, path, estilo, clima")
-    .eq("sirve", true)
     .is("ocasiones", null);
+  q = PENDIENTES ? q.is("sirve", null) : q.eq("sirve", true);
   if (FAMILIAS.length) q = q.in("estilo", FAMILIAS);
   const { data: filas } = await q.limit(LIMITE);
 

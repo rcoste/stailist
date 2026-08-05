@@ -57,7 +57,7 @@ export async function referenciasDeEstilo(
   const supabase = await createClient();
   const { data } = await supabase
     .from("referencias")
-    .select("id, path, sirve, motivo, mio, nota")
+    .select("id, path, sirve, motivo, mio, nota, clima, ocasiones, registro")
     .eq("genero", genero)
     .eq("estilo", estilo)
     .is("sirve", null)
@@ -80,6 +80,9 @@ export async function referenciasDeEstilo(
     motivo: r.motivo,
     mio: r.mio,
     nota: r.nota,
+    clima: r.clima,
+    ocasiones: r.ocasiones,
+    registro: r.registro,
   }));
 }
 
@@ -101,7 +104,7 @@ export async function discrepancias(
   const supabase = await createClient();
   const { data } = await supabase
     .from("referencias")
-    .select("id, path, estilo, sirve, motivo, mio, nota, referencias_juez!inner(es_del_estilo, ejecucion, observado)")
+    .select("id, path, estilo, sirve, motivo, mio, nota, clima, ocasiones, registro, referencias_juez!inner(es_del_estilo, ejecucion, observado)")
     .eq("genero", genero)
     .eq("sirve", false)
     .is("revision", null)
@@ -133,6 +136,9 @@ export async function discrepancias(
       motivo: r.motivo,
       mio: r.mio,
       nota: r.nota,
+      clima: r.clima,
+      ocasiones: r.ocasiones,
+      registro: r.registro,
       observado: juez?.observado ?? null,
       ejecucion: juez?.ejecucion ?? 0,
     };

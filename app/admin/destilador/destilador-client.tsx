@@ -252,9 +252,35 @@ export function DestiladorClient({
               esto?" no se puede contestar sin saber qué es "esto". Va abajo a
               la izquierda para no chocar con los sellos (arriba) ni con la
               estrella (abajo a la derecha). */}
-          <span className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-bg/85 px-3 py-1.5 text-sm font-semibold text-ink backdrop-blur">
-            {estilo}
-          </span>
+          {/* Y con el estilo, LO QUE LA MÁQUINA LEYÓ de la foto: para qué
+              ocasiones sirve, qué tan arreglada es y de qué clima. Roberto:
+              "una cosa es sastre y otra para qué ocasión; no puedo decir qué tan
+              bien está algo con info incompleta". Antes solo iba el estilo, y la
+              ocasión se etiquetaba DESPUÉS de curar — así que nadie verificaba
+              jamás esa etiqueta. Ése es el fallo que perdió el A/B de las fotos
+              de inspiración: la máquina marcó "oficina" en looks casuales y no
+              hubo quién la corrigiera. Aquí el mismo swipe contesta las dos
+              cosas: ¿es del estilo? y ¿la máquina leyó bien la foto? */}
+          <div className="pointer-events-none absolute bottom-4 left-4 flex max-w-[65%] flex-wrap gap-1.5">
+            <span className="rounded-full bg-bg/85 px-3 py-1.5 text-sm font-semibold text-ink backdrop-blur">
+              {estilo}
+            </span>
+            {foto.registro ? (
+              <span className="rounded-full bg-bg/85 px-2.5 py-1.5 text-xs text-ink backdrop-blur">
+                {foto.registro}
+              </span>
+            ) : null}
+            {foto.clima ? (
+              <span className="rounded-full bg-bg/85 px-2.5 py-1.5 text-xs text-ink backdrop-blur">
+                {foto.clima}
+              </span>
+            ) : null}
+            {foto.ocasiones?.length ? (
+              <span className="rounded-full bg-bg/85 px-2.5 py-1.5 text-xs text-ink backdrop-blur">
+                {foto.ocasiones.join(" · ")}
+              </span>
+            ) : null}
+          </div>
 
           {/* stopPropagation en pointerDown, no solo en click: el contenedor de
               la carta hace setPointerCapture al recibir el pointerdown, y un
