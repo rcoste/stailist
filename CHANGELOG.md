@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.103.0] - 2026-08-05
+
+### Added
+
+- **Comparador de modelos, adentro del admin.** Subes fotos —tú vestido, o el clóset sobre la cama—, varios modelos las leen, y tú marcas qué prenda no está, cuál se les fue y qué dato leyeron mal. Las columnas van sin nombre hasta que terminas de calificar, y el orden se sortea por foto: nadie califica igual sabiendo cuál es el modelo barato. Al final se revela quién es quién, con aciertos, costo real y tiempo. Compite Claude (Opus 5, Sonnet 5, Haiku 4.5) contra Gemini (3.6 / 3.5 Flash y Flash-Lite), y Kimi K2 y DeepSeek quedan listos para cuando haya llave de OpenRouter.
+
+- **Cada llamada a un modelo ahora guarda su recibo**: tokens, costo en dólares y cuánto tardó. El proyecto llevaba dos meses sin poder contestar "¿cuánto cuesta leer una prenda contra armar un look?", porque la factura sólo llega por día y por modelo. Primer dato: leer una foto con varias prendas cuesta $0.034 con Opus 5 y $0.0014 con Gemini 3.1 Flash-Lite — 26 veces menos y 4 veces más rápido.
+
+### Changed
+
+- **Los prompts de visión salieron de sus rutas a un archivo compartido.** Leer una prenda y leer varias vivían dentro de sus rutas de API; ahora producción y el comparador llaman exactamente el mismo texto y el mismo schema. Es la única forma de que una comparación signifique algo: si el banco de pruebas tiene su propia copia del prompt, mide una app que no existe.
+
 ## [0.2.98.0] - 2026-08-05
 
 ### Added
