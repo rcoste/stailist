@@ -45,11 +45,15 @@ await db.connect();
 // que se ven antes de decidir, en vez de contestar "templado" por defecto.
 const SISTEMA = `Clasificas para qué CLIMA está vestida la persona de la foto, viendo solo la ropa.
 
-- "calor": manga corta, lino, shorts, sandalias, telas abiertas o muy ligeras, sin capas.
-- "templado": manga larga ligera, una sola capa fina (sobrecamisa, saco sin nada grueso abajo), entretiempo.
-- "frio": abrigo, chamarra gruesa o de lana, capas múltiples, tejido grueso, bufanda, guantes.
+- "calor": manga corta, lino, seersucker, algodón abierto, shorts, sandalias o mocasín sin calcetín, telas ligeras y claras. TAMBIÉN cuenta un saco o traje SI la tela es de verano —lino, seersucker, algodón sin forro, hombro blando— porque eso es ropa de calor, no una capa de abrigo.
+- "templado": manga larga de peso medio, una capa fina de entretiempo, lana ligera, mezclilla.
+- "frio": abrigo, chamarra gruesa o de lana con forro, capas múltiples, tejido grueso, bufanda, guantes.
 
-Regla de desempate: manda la prenda MÁS abrigadora visible. Un saco sobre camiseta es templado; un abrigo sobre suéter es frío. Si de verdad no se puede leer (foto recortada, ropa tapada), usa "templado".`;
+JUZGA POR LA TELA Y EL PESO, NO POR SI HAY UNA CAPA. Este es EL error a evitar y ya se cometió: la versión anterior decía "un saco es templado" y por eso un traje de lino crudo cruzado, en pleno sol de verano, quedó marcado como templado. Un saco de lino en Florencia en junio es calor; el mismo corte en lana con forro es frío. La prenda no dice el clima — la tela sí.
+
+Señales de que un saco es de VERANO: lino arrugado, color crudo o claro, sin forro (se ve la caída blanda), hombro sin estructura, se lleva sobre camisa sin corbata o con la camisa abierta, calzado sin calcetín, sol duro y sombras marcadas en la foto.
+
+Regla de desempate: manda la prenda más abrigadora visible, PESADA POR SU TELA. Un abrigo de lana sobre suéter es frío. Un saco de lino sobre camisa es calor. Si de verdad no se puede leer (foto recortada, ropa tapada), usa "templado".`;
 
 const ESQUEMA = {
   type: "object",
@@ -91,13 +95,29 @@ async function etiquetar(ref) {
   }
 }
 
+// --rehacer-arregladas: vuelve a mirar las que YA tienen clima pero son de
+// registro arreglado/formal.
+//
+// POR QUÉ HACE FALTA UNA PASADA HACIA ATRÁS
+// El criterio viejo decía literalmente que un saco es "templado", así que
+// degradaba a templado TODO look arreglado de verano. Se cazó con un traje de
+// lino crudo cruzado, fotografiado a pleno sol en Pitti, marcado como templado.
+// Con ese sesgo, la casilla "arreglado + calor" quedó en 2 fotos de 113
+// arregladas (2%) y parecía que faltaba material — cuando lo que fallaba era la
+// clasificación. Sin re-mirar lo ya etiquetado, el arreglo del criterio solo
+// sirve para lo que se coseche de aquí en adelante.
+const REHACER = process.argv.includes("--rehacer-arregladas");
 const { rows } = await db.query(
-  `select id, estilo, path from public.referencias
-   where genero = $1 and clima is null and (sirve is not false)
-   order by estilo, path`,
+  REHACER
+    ? `select id, estilo, path from public.referencias
+       where genero = $1 and registro in ('arreglado','formal') and (sirve is not false)
+       order by estilo, path`
+    : `select id, estilo, path from public.referencias
+       where genero = $1 and clima is null and (sirve is not false)
+       order by estilo, path`,
   [genero]
 );
-console.log(`${rows.length} referencias sin clima.\n`);
+console.log(`${rows.length} referencias ${REHACER ? "arregladas por re-mirar" : "sin clima"}.\n`);
 
 let errores = 0;
 const conteo = new Map(); // estilo → { calor, templado, frio }
