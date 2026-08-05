@@ -70,6 +70,25 @@ const POR_CELDA: Record<string, Blueprint[]> = {
   "diario|templado": blueprintsDiarioTemplado as Blueprint[],
 };
 
+/**
+ * APAGADO en producción hasta que gane su A/B.
+ *
+ * Se shippeó encendido y eso estuvo mal: es una HIPÓTESIS de motor, no un
+ * arreglo de bug, y entró a la ruta que lleva el 70% del uso real sin un solo
+ * juicio de Roberto. Con el recetario y las fotos de inspiración perdiendo sus
+ * A/B justo antes, el antecedente pedía más cuidado, no menos. Él lo cachó:
+ * "¿por qué decidiste no hacer el A/B o enseñarme los resultados antes de
+ * mandarlo a prod?".
+ *
+ * El arnés (scripts/ab-blueprint.ts) SÍ lo usa — de ahí que el interruptor viva
+ * aquí y no en la selección: apaga producción sin apagar la medición.
+ *
+ * REGLA PRE-REGISTRADA, escrita antes de ver un solo veredicto:
+ *   15-5 o mejor a favor  → se enciende
+ *   cualquier cosa debajo → se queda apagado
+ */
+const ENCENDIDO_EN_PRODUCCION = false;
+
 /** Una pieza del núcleo con las prendas del clóset que podrían cumplirla. */
 export type PiezaEmparejada = PiezaBlueprint & {
   /** Prendas del clóset del MISMO tipo canónico. Lo ideal. */
@@ -256,6 +275,7 @@ export function blueprintDelContexto(
   clima: Clima,
   familias: string[]
 ): BlueprintEmparejado | null {
+  if (!ENCENDIDO_EN_PRODUCCION) return null;
   const dia = new Date().toISOString().slice(0, 10);
   const semilla = [...dia, ...(ctx.items[0]?.id ?? "")].reduce(
     (h, c) => (h * 31 + c.charCodeAt(0)) % 2147483647,

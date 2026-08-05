@@ -39,7 +39,11 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   }
 }
 
-const ROBERTO = process.argv.includes("--roberto") || process.argv.includes("--julio") || process.argv.includes("--inspo");
+const ROBERTO =
+  process.argv.includes("--roberto") ||
+  process.argv.includes("--julio") ||
+  process.argv.includes("--inspo") ||
+  process.argv.includes("--blueprint");
 
 type Fila = {
   caso: Record<string, unknown>;
@@ -65,14 +69,20 @@ function rng(semilla: number) {
 
 const claveCaso = (f: Fila) =>
   ROBERTO
-    ? `${f.caso.ocasion}|${f.caso.temp}|${f.caso.momento}`
+    // El `n` entra a la clave cuando el arnés lo trae: el A/B del blueprint
+    // corre 20 días de diario templado y las temperaturas se repiten, así que
+    // sin él dos casos distintos colapsaban en uno y se perdía la mitad de los
+    // pares. Los arneses viejos no traen `n` y siguen agrupando igual.
+    ? `${f.caso.n ?? ""}|${f.caso.ocasion}|${f.caso.temp}|${f.caso.momento}`
     : [f.caso.perfil, f.caso.closet, (f.caso.clima as { id: string })?.id, f.caso.ocasion, f.caso.paleta].join("|");
 
 async function main() {
   // --julio: el A/B de verdad (motor de julio contra el de hoy). --roberto: el
   // anterior, que comparaba hoy contra hoy-sin-recetario y por eso no contestaba
   // la pregunta. El sintético queda de default.
-  const archivo = process.argv.includes("--inspo")
+  const archivo = process.argv.includes("--blueprint")
+    ? "docs_para_claude/barrido/ab-blueprint.json"
+    : process.argv.includes("--inspo")
     ? "docs_para_claude/barrido/ab-inspiracion.json"
     : process.argv.includes("--julio")
     ? "docs_para_claude/barrido/ab-julio-vs-hoy.json"
@@ -97,7 +107,7 @@ async function main() {
   }
 
   const casos = [...new Set(todo.map(claveCaso))];
-  const r = rng(20260804 + (process.argv.includes("--julio") ? 77 : 0) + (process.argv.includes("--inspo") ? 155 : 0));
+  const r = rng(20260804 + (process.argv.includes("--julio") ? 77 : 0) + (process.argv.includes("--inspo") ? 155 : 0) + (process.argv.includes("--blueprint") ? 311 : 0));
   const pares: unknown[] = [];
   const claves: unknown[] = [];
 

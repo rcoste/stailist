@@ -4,6 +4,7 @@ import {
   elegirBlueprint,
   bloqueBlueprint,
   revisarColorBlueprint,
+  blueprintDelContexto,
   type Blueprint,
 } from "./blueprint";
 import { claridad, viveza, banda, esVivo } from "./color-medidas";
@@ -272,5 +273,40 @@ describe("una estructura, no varias", () => {
     // promedies; una de las tres, o las tres".
     const b = bloqueBlueprint(emparejarBlueprint(BP(), closet));
     expect(b).toContain("el promedio de todas");
+  });
+});
+
+describe("el interruptor de producción", () => {
+  it("blueprintDelContexto devuelve null mientras esté apagado", () => {
+    // El blueprint se shippeó encendido sin un solo juicio de Roberto, en la
+    // ruta que lleva el 70% del uso real, justo después de que el recetario y
+    // las fotos perdieran sus A/B. Queda apagado hasta ganar el suyo: 15-5 o
+    // mejor sobre 20 pares, regla escrita antes de ver ningún veredicto.
+    const closet = [
+      p("Camisa overshirt marino", "#1F2A44"),
+      p("Suéter crewneck carbón", "#36454F"),
+      p("Chinos beige", "#C8B99C"),
+      p("Tenis blancos urbanos", "#FFFFFF"),
+    ];
+    expect(
+      blueprintDelContexto(
+        { objective: "diario", items: closet, weather: null },
+        "templado",
+        ["casual-limpio"]
+      )
+    ).toBeNull();
+  });
+
+  it("pero elegirBlueprint SIGUE funcionando: el arnés tiene que poder medir", () => {
+    const closet = [
+      p("Camisa overshirt marino", "#1F2A44"),
+      p("Suéter crewneck carbón", "#36454F"),
+      p("Chinos beige", "#C8B99C"),
+      p("Tenis blancos urbanos", "#FFFFFF"),
+      p("Camiseta blanca", "#FFFFFF"),
+    ];
+    expect(
+      elegirBlueprint({ ocasion: "diario", clima: "templado", items: closet, rand: () => 0.5 })
+    ).not.toBeNull();
   });
 });

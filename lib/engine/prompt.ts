@@ -10,7 +10,11 @@ import {
   bloqueCobertura,
   familiasPorPrenda,
 } from "@/lib/engine/cobertura";
-import { blueprintDelContexto, bloqueBlueprint } from "@/lib/engine/blueprint";
+import {
+  blueprintDelContexto,
+  bloqueBlueprint,
+  type BlueprintEmparejado,
+} from "@/lib/engine/blueprint";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import {
   type TasteSignal,
@@ -706,6 +710,15 @@ export function buildUserMessage(
     sinRecetario?: boolean;
     /** Apaga la estructura de referencia. Solo para el A/B del arnés. */
     sinBlueprint?: boolean;
+    /**
+     * Usa ESTA estructura en vez de la sembrada del día. Solo para el arnés.
+     *
+     * En producción la siembra por día es lo correcto (generador y juez tienen
+     * que ver la misma), pero eso le daría al A/B la MISMA estructura en los 20
+     * casos y mediría una sola. Inyectándola, cada caso prueba una distinta —
+     * que es justo la variable bajo prueba.
+     */
+    blueprint?: BlueprintEmparejado | null;
   } = {}
 ): string {
   // Sin recetario no hay marca posible: la marca ES el recetario aplicado al
@@ -730,11 +743,13 @@ export function buildUserMessage(
   // tras perder su A/B — cuando la referencia no ayuda, ninguna es mejor que
   // una mala.
   if (!opciones.sinBlueprint) {
-    const bp = blueprintDelContexto(
-      ctx,
-      bandaDeClima(ctx.weather),
-      recetasDelContexto(ctx).map((r) => r.familia)
-    );
+    const bp =
+      opciones.blueprint ??
+      blueprintDelContexto(
+        ctx,
+        bandaDeClima(ctx.weather),
+        recetasDelContexto(ctx).map((r) => r.familia)
+      );
     if (bp) lines.push("", bloqueBlueprint(bp));
   }
 

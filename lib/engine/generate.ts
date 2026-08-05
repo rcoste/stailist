@@ -1,6 +1,7 @@
 import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildOutfitSchema } from "./schema";
+import type { BlueprintEmparejado } from "./blueprint";
 import {
   buildUserMessage,
   SYSTEM_PROMPT,
@@ -19,7 +20,12 @@ export type GeneratedOutfit = {
 export async function generateOutfits(
   ctx: EngineContext,
   // Solo para el A/B del arnés (ver buildUserMessage). Producción no lo pasa.
-  opciones: { marcarEstilo?: boolean; sinRecetario?: boolean } = {}
+  opciones: {
+    marcarEstilo?: boolean;
+    sinRecetario?: boolean;
+    sinBlueprint?: boolean;
+    blueprint?: BlueprintEmparejado | null;
+  } = {}
 ): Promise<GeneratedOutfit[]> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ENGINE_NOT_CONNECTED");

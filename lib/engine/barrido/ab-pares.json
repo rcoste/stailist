@@ -5,65 +5,70 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 22,
+    "temp": 23,
     "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Negro limpio de martes",
-    "explicacion": "El negro junto a la cara te define los rasgos, y el jean oscuro con botín te alarga la línea sin esfuerzo.",
+    "titulo": "Esmeralda en capas",
+    "explicacion": "El esmeralda te enciende la cara y la orilla de la camiseta blanca asomando por debajo del punto es el detalle que hace que se vea pensado; no la fajes.",
     "itemIds": [
-     "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
-     "c9b2a866-a95f-42ec-9db8-97e153faca56",
-     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
-     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "b71ceedd-1120-43b4-9726-80e8ca771203",
+     "189bb0ea-ad59-45d5-8cd1-269a95c04d58",
+     "a5f4034f-899a-4d4f-93f5-8e62870e2446"
     ],
     "prendas": [
      {
-      "nombre": "Camisa negra",
+      "nombre": "Suéter esmeralda de lana fina",
       "foto": null
      },
      {
-      "nombre": "Jeans azul oscuro",
+      "nombre": "Camiseta blanca",
       "foto": null
      },
      {
-      "nombre": "Botines Chelsea negros",
+      "nombre": "Pantalón azul marino",
       "foto": null
      },
      {
-      "nombre": "Cinturón negro",
+      "nombre": "Tenis retro blanco",
+      "foto": null
+     },
+     {
+      "nombre": "Gafas de sol negras",
       "foto": null
      }
     ],
     "tryon": "/ab/1-a.png"
    },
    "der": {
-    "titulo": "Clásico de mediodía",
-    "explicacion": "Camisa fajada y pantalón oscuro te alargan la línea, y el azul claro junto a la cara te despierta la mirada mientras el café del zapato le mete calidez.",
+    "titulo": "Lino esmeralda",
+    "explicacion": "El esmeralda es de esos verdes que te despiertan la cara, y con el marino y los tenis blancos queda limpio y fresco para el sol de hoy.",
     "itemIds": [
-     "db54370a-904f-41b6-bf94-ef0888606a6e",
-     "0234b83b-463f-4f6f-9ab2-4ae92f482819",
-     "cff65d0d-b568-46be-a0fe-6fbc09d57970",
-     "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "b3cad850-c048-42cc-bec7-2350639d8ee2",
      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
     ],
     "prendas": [
      {
-      "nombre": "Camisa azul claro",
+      "nombre": "Camisa de lino esmeralda",
       "foto": null
      },
      {
-      "nombre": "Pantalón negro",
+      "nombre": "Chinos azul marino",
       "foto": null
      },
      {
-      "nombre": "Cinturón café",
+      "nombre": "Tenis blancos urbanos",
       "foto": null
      },
      {
-      "nombre": "Zapato derby de piel chocolate",
+      "nombre": "Cinturón negro",
       "foto": null
      },
      {
@@ -79,23 +84,57 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 9,
+    "temp": 21,
     "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Verde profundo, día limpio",
-    "explicacion": "El esmeralda te enciende la cara y la piel negra encima te marca hombros: casual pero con clase, perfecto para 9°C.",
+    "titulo": "Esmeralda de día",
+    "explicacion": "El esmeralda cerca de la cara te enciende la mirada y el marino lo aterriza: limpio, fresco y perfecto para 21°C de sol.",
     "itemIds": [
-     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-     "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-     "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Suéter esmeralda de lana fina",
+      "nombre": "Camisa de lino esmeralda",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos azul marino",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/2-a.png"
+   },
+   "der": {
+    "titulo": "Columna gris, capa marino",
+    "explicacion": "La overshirt marino abierta te deja una franja gris clara al centro que estiliza, y el marino junto a la cara te despierta la mirada; mangas remangadas y listo.",
+    "itemIds": [
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+     "c72a5c65-fac7-4b60-9df1-b02a882ba9fc",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa overshirt marino",
+      "foto": null
+     },
+     {
+      "nombre": "Suéter gris",
       "foto": null
      },
      {
@@ -103,40 +142,11 @@
       "foto": null
      },
      {
-      "nombre": "Chamarra de piel negra clásica",
-      "foto": null
-     },
-     {
-      "nombre": "Botines Chelsea negros",
-      "foto": null
-     }
-    ],
-    "tryon": "/ab/2-a.png"
-   },
-   "der": {
-    "titulo": "Puffer y mezclilla clara",
-    "explicacion": "El esmeralda te enciende la cara y con el puffer marino y los jeans claros queda abrigado, relajado y con estructura arriba.",
-    "itemIds": [
-     "dafa93e8-cd03-40ae-95c7-698ad055f83d",
-     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-     "f4860d65-01fa-4eed-87f2-260ac27585d2",
-     "a81cdf75-5d5e-4565-b423-75e148921c9a"
-    ],
-    "prendas": [
-     {
-      "nombre": "Chamarra acolchada azul marino",
-      "foto": null
-     },
-     {
-      "nombre": "Suéter esmeralda de lana fina",
-      "foto": null
-     },
-     {
-      "nombre": "Jeans claros",
-      "foto": null
-     },
-     {
       "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
@@ -148,23 +158,24 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 30,
+    "temp": 16,
     "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Capa ligera, base limpia",
-    "explicacion": "La camisa abierta sobre la playera blanca te da hombros y estructura sin calor, y el negro abajo estira toda la línea.",
+    "titulo": "Columna blanca",
+    "explicacion": "La bomber abierta y la camiseta blanca por fuera te hacen una línea limpia al centro, y el blanco cerca de la cara te despierta la mirada al instante.",
     "itemIds": [
-     "855bcca6-cf79-46cb-ae1d-04c1315630e6",
+     "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
      "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
      "7f805424-1bd1-4260-bc01-e2b91160ae5d",
-     "9a37432f-1d00-4806-a128-0edeb55c7178"
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "a5f4034f-899a-4d4f-93f5-8e62870e2446"
     ],
     "prendas": [
      {
-      "nombre": "Camisa azul empolvado",
+      "nombre": "Chamarra bomber",
       "foto": null
      },
      {
@@ -176,36 +187,40 @@
       "foto": null
      },
      {
-      "nombre": "Tenis de piel negros",
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Gafas de sol negras",
       "foto": null
      }
     ],
     "tryon": "/ab/3-a.png"
    },
    "der": {
-    "titulo": "Verde limpio",
-    "explicacion": "El lino esmeralda te enciende la cara y el beige abajo lo aterriza: fresco para los 30°C y con un aire cuidado sin esfuerzo.",
+    "titulo": "Verde que ilumina",
+    "explicacion": "El esmeralda te enciende la cara y con los chinos carbón y el chelsea negro se ve limpio sin esfuerzo — perfecto para el fresco de hoy.",
     "itemIds": [
-     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-     "7e1cc9d5-513d-493e-b951-3bf429fecd83",
-     "a81cdf75-5d5e-4565-b423-75e148921c9a",
-     "a5f4034f-899a-4d4f-93f5-8e62870e2446"
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Camisa de lino esmeralda",
+      "nombre": "Suéter esmeralda de lana fina",
       "foto": null
      },
      {
-      "nombre": "Chinos beige",
+      "nombre": "Chinos carbón",
       "foto": null
      },
      {
-      "nombre": "Tenis blancos urbanos",
+      "nombre": "Botines Chelsea negros",
       "foto": null
      },
      {
-      "nombre": "Gafas de sol negras",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
@@ -217,32 +232,32 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 16,
+    "temp": 22,
     "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Overshirt marino, calle limpia",
-    "explicacion": "El verde bosque bajo el marino te enciende la cara y los tenis blancos rompen todo lo oscuro justo donde debe: abajo.",
+    "titulo": "Oxford abierta, tres bloques",
+    "explicacion": "Llévala abierta como chaqueta, mangas dos vueltas y la camiseta blanca por dentro: el azul y el blanco te despejan la cara y el chino claro alarga la pierna sin esfuerzo.",
     "itemIds": [
-     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
-     "89115e62-f673-4503-a3c4-8e58af9acd18",
-     "a81ad417-f786-4b45-b06c-f809ba5655a7",
+     "02c8311c-b347-48be-b0fd-dd1a9c87510f",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "7e1cc9d5-513d-493e-b951-3bf429fecd83",
      "a81cdf75-5d5e-4565-b423-75e148921c9a",
      "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Camisa overshirt marino",
+      "nombre": "Camisa oxford azul",
       "foto": null
      },
      {
-      "nombre": "Suéter crewneck verde bosque",
+      "nombre": "Camiseta blanca",
       "foto": null
      },
      {
-      "nombre": "Jeans negros",
+      "nombre": "Chinos beige",
       "foto": null
      },
      {
@@ -257,30 +272,25 @@
     "tryon": "/ab/4-a.png"
    },
    "der": {
-    "titulo": "Verde que enciende",
-    "explicacion": "El esmeralda te levanta el rostro al instante y la chamarra impermeable te cubre de la llovizna sin romper lo pulido.",
+    "titulo": "Vino sobrio de martes",
+    "explicacion": "El vino junto a la cara te da color sin gritar, y el carbón lo aterriza: limpio, recto y listo para cualquier plan del día.",
     "itemIds": [
-     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-     "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-     "89ea44b2-a72b-46e3-b8bc-42487acd77ab",
-     "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
+     "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "189bb0ea-ad59-45d5-8cd1-269a95c04d58",
      "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Suéter esmeralda de lana fina",
+      "nombre": "Camiseta vino",
       "foto": null
      },
      {
-      "nombre": "Jeans azul oscuro",
+      "nombre": "Chinos carbón",
       "foto": null
      },
      {
-      "nombre": "Chamarra impermeable ligera",
-      "foto": null
-     },
-     {
-      "nombre": "Botines Chelsea negros",
+      "nombre": "Tenis retro blanco",
       "foto": null
      },
      {
@@ -296,64 +306,64 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 18,
+    "temp": 21,
     "ocasion": "diario",
-    "momento": "noche",
+    "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Noche en negro",
-    "explicacion": "El negro cerca de la cara te define los rasgos y la piel te da hombros y estructura sin esfuerzo — limpio, oscuro y con actitud de noche.",
+    "titulo": "Punto esmeralda, camisa asomada",
+    "explicacion": "El esmeralda te enciende la cara y el truco está en dejar ver cuello, puños y faldón de la camisa blanca bajo el suéter: se ve armado sin esfuerzo.",
     "itemIds": [
-     "f69423f7-d264-41d2-90b1-674522a8c31c",
-     "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-     "236fbffe-fdb3-45f5-a5d9-044fc5d16284",
-     "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
+     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a"
     ],
     "prendas": [
      {
-      "nombre": "Camiseta negra",
+      "nombre": "Camisa blanca",
       "foto": null
      },
      {
-      "nombre": "Jeans azul oscuro",
+      "nombre": "Suéter esmeralda de lana fina",
       "foto": null
      },
      {
-      "nombre": "Chamarra de piel negra clásica",
+      "nombre": "Pantalón de vestir gris",
       "foto": null
      },
      {
-      "nombre": "Botines Chelsea negros",
+      "nombre": "Tenis blancos urbanos",
       "foto": null
      }
     ],
     "tryon": "/ab/5-a.png"
    },
    "der": {
-    "titulo": "Carbón sobre azul",
-    "explicacion": "El cuello y los puños de la camisa asomando bajo el suéter oscuro te dan estructura arriba y el azul junto a la cara te despierta la mirada.",
+    "titulo": "Verde limpio",
+    "explicacion": "El esmeralda junto a la cara te enciende la mirada y con pantalón negro recto y tenis blancos se ve pulido sin esfuerzo.",
     "itemIds": [
-     "d67554e9-931f-4b95-900b-a019848aee0e",
-     "02c8311c-b347-48be-b0fd-dd1a9c87510f",
-     "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
-     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Suéter crewneck carbón",
+      "nombre": "Camisa de lino esmeralda",
       "foto": null
      },
      {
-      "nombre": "Camisa oxford azul",
+      "nombre": "Pantalón negro",
       "foto": null
      },
      {
-      "nombre": "Jeans azul oscuro",
+      "nombre": "Tenis blancos urbanos",
       "foto": null
      },
      {
-      "nombre": "Botines Chelsea negros",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
@@ -365,70 +375,65 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 22,
-    "ocasion": "oficina",
-    "momento": "dia",
+    "temp": 25,
+    "ocasion": "diario",
+    "momento": "noche",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Camisa abierta, tono oficina",
-    "explicacion": "La camisa marino abierta sobre blanco te da estructura en los hombros y el pantalón negro afina todo: relajado sin perder oficina.",
+    "titulo": "Punto verde con puños a la vista",
+    "explicacion": "El esmeralda te enciende la cara y el truco está en dejar asomar cuello y puños de la camisa blanca bajo el suéter: eso convierte jeans y punto en algo compuesto, y el derby chocolate lo remata para la noche.",
     "itemIds": [
-     "37a9f3c0-fbec-493d-963d-2eb9a912b028",
-     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
-     "0234b83b-463f-4f6f-9ab2-4ae92f482819",
-     "c0780181-ad59-4219-8287-eba5c1ca03f2",
-     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "a81ad417-f786-4b45-b06c-f809ba5655a7",
+     "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Playera blanca interior",
+      "nombre": "Camisa blanca",
       "foto": null
      },
      {
-      "nombre": "Camisa overshirt marino",
+      "nombre": "Suéter esmeralda de lana fina",
       "foto": null
      },
      {
-      "nombre": "Pantalón negro",
+      "nombre": "Jeans negros",
       "foto": null
      },
      {
-      "nombre": "Mocasines negros",
+      "nombre": "Zapato derby de piel chocolate",
       "foto": null
      },
      {
-      "nombre": "Cinturón negro",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
     "tryon": "/ab/6-a.png"
    },
    "der": {
-    "titulo": "Marino que manda",
-    "explicacion": "El marino y el blanco te levantan la cara al instante, y el blazer entallado te marca hombros — pulido sin esfuerzo.",
+    "titulo": "Esmeralda de noche",
+    "explicacion": "El esmeralda cerca de la cara te enciende la mirada y el lino aguanta los 25°C, mientras el marino y los mocasines de piel te suben el nivel sin esfuerzo.",
     "itemIds": [
-     "30ab4ac0-d5f9-4a1e-8f4d-b97fb5c29aba",
-     "a93e8d2f-a2fd-4c93-bcd4-9ad688f11dfc",
-     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-     "b7491dbb-a8cb-4c24-ad0f-c84c1ed156eb",
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "c0780181-ad59-4219-8287-eba5c1ca03f2",
      "b3cad850-c048-42cc-bec7-2350639d8ee2"
     ],
     "prendas": [
      {
-      "nombre": "Blazer marino",
+      "nombre": "Camisa de lino esmeralda",
       "foto": null
      },
      {
-      "nombre": "Camisa oxford blanca",
+      "nombre": "Chinos azul marino",
       "foto": null
      },
      {
-      "nombre": "Chinos carbón",
-      "foto": null
-     },
-     {
-      "nombre": "Zapato derby de piel chocolate",
+      "nombre": "Mocasines negros",
       "foto": null
      },
      {
@@ -444,64 +449,69 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 28,
-    "ocasion": "oficina",
+    "temp": 18,
+    "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Blanco impecable",
-    "explicacion": "El blanco puro te limpia la cara y el carbón abajo alarga la línea: lo simple, pero bien hecho, es tu mejor jugada en oficina.",
+    "titulo": "Esmeralda de martes",
+    "explicacion": "El esmeralda es de los colores que más te encienden la cara, y con el marino abajo y la gamuza café queda pulido sin esfuerzo.",
     "itemIds": [
-     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-     "c0780181-ad59-4219-8287-eba5c1ca03f2",
-     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "f7b568ae-8368-44c8-9dc2-8472098c05f2",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Camisa blanca",
+      "nombre": "Suéter esmeralda de lana fina",
       "foto": null
      },
      {
-      "nombre": "Chinos carbón",
+      "nombre": "Chinos azul marino",
       "foto": null
      },
      {
-      "nombre": "Mocasines negros",
+      "nombre": "Botines Chelsea de gamuza",
       "foto": null
      },
      {
-      "nombre": "Cinturón negro",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
     "tryon": "/ab/7-a.png"
    },
    "der": {
-    "titulo": "Negro y arena, limpio",
-    "explicacion": "El negro pegado a la cara te define los rasgos y el lino claro abajo baja el calor: dos piezas, cero esfuerzo, look resuelto.",
+    "titulo": "Marino sobre carbón",
+    "explicacion": "Overshirt abierta con las mangas remangadas, camiseta fajada y tenis claros: el marino te levanta la cara y el blanco de abajo corta el bloque oscuro para que no se vea plano.",
     "itemIds": [
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
      "f69423f7-d264-41d2-90b1-674522a8c31c",
-     "0e231ce2-9146-4da1-b680-334c91ebd0fa",
-     "f9284946-c02a-41ee-b261-4db131a196a4",
-     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     "25c6dca9-3c79-4456-b46f-cc3ecf92dfc6",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
+     {
+      "nombre": "Camisa overshirt marino",
+      "foto": null
+     },
      {
       "nombre": "Camiseta negra",
       "foto": null
      },
      {
-      "nombre": "Pantalón de lino",
+      "nombre": "Pantalón de vestir carbón",
       "foto": null
      },
      {
-      "nombre": "Tenis blancos",
+      "nombre": "Tenis blancos urbanos",
       "foto": null
      },
      {
-      "nombre": "Cinturón negro",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
@@ -513,48 +523,19 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 9,
-    "ocasion": "oficina",
+    "temp": 17,
+    "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Charcoal y negro, sin ruido",
-    "explicacion": "El cuello alto negro te define la cara y el abrigo largo te alarga toda la línea: lo más limpio que puedes ponerte a 9°C.",
-    "itemIds": [
-     "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
-     "af0ed4ff-1bf3-4021-865b-48d892baaedf",
-     "0234b83b-463f-4f6f-9ab2-4ae92f482819",
-     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49"
-    ],
-    "prendas": [
-     {
-      "nombre": "Abrigo charcoal",
-      "foto": null
-     },
-     {
-      "nombre": "Cuello tortuga negro de lana merino",
-      "foto": null
-     },
-     {
-      "nombre": "Pantalón negro",
-      "foto": null
-     },
-     {
-      "nombre": "Botines Chelsea negros",
-      "foto": null
-     }
-    ],
-    "tryon": "/ab/8-a.png"
-   },
-   "der": {
-    "titulo": "Esmeralda de lunes",
-    "explicacion": "El esmeralda cerca de la cara te enciende la mirada y el abrigo charcoal le pone los hombros y la seriedad que la oficina pide con este frío.",
+    "titulo": "Verde que ilumina",
+    "explicacion": "El esmeralda junto a la cara te enciende la mirada y con el marino y la gamuza café queda pulido sin esfuerzo — perfecto para 17°C nublado.",
     "itemIds": [
      "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
-     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
-     "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
-     "950cb515-4698-4fae-bfe0-371fd3a3c3d9"
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "f7b568ae-8368-44c8-9dc2-8472098c05f2",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
@@ -562,15 +543,49 @@
       "foto": null
      },
      {
-      "nombre": "Chinos carbón",
+      "nombre": "Chinos azul marino",
       "foto": null
      },
      {
-      "nombre": "Abrigo charcoal",
+      "nombre": "Botines Chelsea de gamuza",
       "foto": null
      },
      {
-      "nombre": "Botines Chelsea negros",
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/8-a.png"
+   },
+   "der": {
+    "titulo": "Cárdigan de domingo bien resuelto",
+    "explicacion": "Deja el cárdigan abierto y la camiseta fuera: esa línea blanca al centro te alarga y el marino junto a la cara te deja despierto sin esfuerzo.",
+    "itemIds": [
+     "c89437c2-f385-4a2b-95a0-da021da9d00a",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Cárdigan marino",
+      "foto": null
+     },
+     {
+      "nombre": "Camiseta blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Pantalón negro",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
@@ -582,36 +597,31 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 18,
-    "ocasion": "evento",
-    "momento": "noche",
+    "temp": 22,
+    "ocasion": "diario",
+    "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Noche parisina",
-    "explicacion": "El contraste de negro arriba con el pantalón claro te alarga y te define los hombros: el negro junto a la cara te enciende la mirada de noche.",
+    "titulo": "Esmeralda de martes",
+    "explicacion": "El esmeralda cerca de la cara te enciende la mirada y los chinos carbón lo aterrizan: limpio, fresco para los 22°C y con un color que casi nadie se atreve a usar tan bien.",
     "itemIds": [
-     "3014d88f-4df4-4fc0-9aa3-e6a2e7ab72eb",
-     "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
-     "7e1cc9d5-513d-493e-b951-3bf429fecd83",
-     "c0780181-ad59-4219-8287-eba5c1ca03f2",
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
      "b3cad850-c048-42cc-bec7-2350639d8ee2"
     ],
     "prendas": [
      {
-      "nombre": "Blazer estructurado negro",
+      "nombre": "Camisa de lino esmeralda",
       "foto": null
      },
      {
-      "nombre": "Camisa negra",
+      "nombre": "Chinos carbón",
       "foto": null
      },
      {
-      "nombre": "Chinos beige",
-      "foto": null
-     },
-     {
-      "nombre": "Mocasines negros",
+      "nombre": "Tenis blancos urbanos",
       "foto": null
      },
      {
@@ -622,71 +632,26 @@
     "tryon": "/ab/9-a.png"
    },
    "der": {
-    "titulo": "Marino de noche",
-    "explicacion": "El marino con blanco te limpia la cara y el vino de la corbata le mete el punto de color justo — es el look que nunca falla en un evento mexicano de noche.",
+    "titulo": "Columna clara, marco marino",
+    "explicacion": "El blanco pegado a la cara te aclara la mirada y la overshirt marino abierta te enmarca el torso y te estira: relajado, pero se ve pensado.",
     "itemIds": [
-     "f1bf17d3-c897-44e7-88a2-2b3583e7c7de",
-     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-     "610aba90-5895-4c3c-b600-fcd492fef093",
-     "597bfd31-88fa-4d04-9785-e10f16d0465c",
-     "73b272dd-bdd6-4210-ae88-c3a4872dae2b"
-    ],
-    "prendas": [
-     {
-      "nombre": "Traje marino de lana",
-      "foto": null
-     },
-     {
-      "nombre": "Camisa blanca",
-      "foto": null
-     },
-     {
-      "nombre": "Pantalón de vestir marino",
-      "foto": null
-     },
-     {
-      "nombre": "Corbata de seda vino",
-      "foto": null
-     },
-     {
-      "nombre": "Zapato formal negro",
-      "foto": null
-     }
-    ],
-    "tryon": "/ab/9-b.png"
-   }
-  },
-  {
-   "n": 10,
-   "ctx": {
-    "perfil": "tu perfil real",
-    "closet": "tu clóset (127 prendas)",
-    "temp": 20,
-    "ocasion": "viaje",
-    "momento": "dia",
-    "paleta": "invierno con flow a otoño"
-   },
-   "izq": {
-    "titulo": "Terminal en negro",
-    "explicacion": "El negro junto a la cara te define los rasgos y el bomber te suma hombro; cómodo para volar y limpio al bajar del avión.",
-    "itemIds": [
-     "f69423f7-d264-41d2-90b1-674522a8c31c",
-     "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
-     "2bfbf4c7-b715-4efb-b1fd-89dcbd5bdec9",
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "0e231ce2-9146-4da1-b680-334c91ebd0fa",
      "a81cdf75-5d5e-4565-b423-75e148921c9a",
      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
     ],
     "prendas": [
      {
-      "nombre": "Camiseta negra",
+      "nombre": "Camisa overshirt marino",
       "foto": null
      },
      {
-      "nombre": "Chamarra bomber",
+      "nombre": "Camiseta blanca",
       "foto": null
      },
      {
-      "nombre": "Jeans azul oscuro",
+      "nombre": "Pantalón de lino",
       "foto": null
      },
      {
@@ -698,28 +663,78 @@
       "foto": null
      }
     ],
-    "tryon": "/ab/10-a.png"
+    "tryon": "/ab/9-b.png"
+   }
+  },
+  {
+   "n": 10,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 25,
+    "ocasion": "diario",
+    "momento": "noche",
+    "paleta": "invierno con flow a otoño"
    },
-   "der": {
-    "titulo": "Negro sobre arena",
-    "explicacion": "El negro te limpia la cara y el pantalón claro y holgado abajo te da esa proporción relajada perfecta para pasar seguridad sin batallar.",
+   "izq": {
+    "titulo": "Vino profundo de noche",
+    "explicacion": "El vino te enciende la cara de noche y esa tira de camiseta blanca asomando bajo el punto es el detalle que marca cintura y evita el bloque oscuro — el suéter va suelto, nunca fajado.",
     "itemIds": [
-     "7384d177-67c0-454d-a8a7-1a527ea69fb5",
-     "602efa3f-d4a4-4a51-853a-5896f2447c7e",
-     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
+     "f337e0aa-17d4-46c6-9338-22b1264aadbd",
      "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Suéter de lana negro",
+      "nombre": "Suéter de cuello redondo vino",
       "foto": null
      },
      {
-      "nombre": "Pantalón cargo beige",
+      "nombre": "Camiseta blanca",
       "foto": null
      },
      {
-      "nombre": "Tenis blancos urbanos",
+      "nombre": "Pantalón de vestir gris",
+      "foto": null
+     },
+     {
+      "nombre": "Mocasines café",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/10-a.png"
+   },
+   "der": {
+    "titulo": "Esmeralda de noche",
+    "explicacion": "El esmeralda te enciende la cara y con pantalón negro y chelsea de piel se ve arreglado sin esfuerzo — perfecto para el fresco de la noche.",
+    "itemIds": [
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+     "b3cad850-c048-42cc-bec7-2350639d8ee2",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa de lino esmeralda",
+      "foto": null
+     },
+     {
+      "nombre": "Pantalón negro",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea negros",
+      "foto": null
+     },
+     {
+      "nombre": "Cinturón negro",
       "foto": null
      },
      {
@@ -735,74 +750,69 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 9,
-    "ocasion": "evento",
-    "momento": "noche",
+    "temp": 24,
+    "ocasion": "diario",
+    "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Noche de abrigo largo",
-    "explicacion": "El cuello tortuga negro te limpia la cara y el abrigo largo te alarga la línea: el pantalón gris claro rompe el bloque oscuro justo como en la foto.",
+    "titulo": "Verde limpio de martes",
+    "explicacion": "El lino esmeralda te levanta el rostro y con el marino abajo se ve pulido sin esfuerzo — perfecto para 24°C.",
     "itemIds": [
-     "af0ed4ff-1bf3-4021-865b-48d892baaedf",
-     "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
-     "8373e307-2a2c-4fa7-b9d5-a54ef4fd5b54",
-     "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
-     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+     "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Cuello tortuga negro de lana merino",
+      "nombre": "Camisa de lino esmeralda",
       "foto": null
      },
      {
-      "nombre": "Pantalón de vestir gris",
+      "nombre": "Chinos azul marino",
       "foto": null
      },
      {
-      "nombre": "Abrigo charcoal",
+      "nombre": "Tenis blancos urbanos",
       "foto": null
      },
      {
-      "nombre": "Botines Chelsea negros",
-      "foto": null
-     },
-     {
-      "nombre": "Cinturón negro",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
     "tryon": "/ab/11-a.png"
    },
    "der": {
-    "titulo": "Marino de gala",
-    "explicacion": "El marino con camisa blanca te limpia la cara y la corbata vino le mete el toque de noche sin gritar; los hombros del saco te dan esa estructura que te queda perfecta.",
+    "titulo": "Cárdigan abierto, línea limpia",
+    "explicacion": "Faja la camiseta blanca y deja el cárdigan abierto: esa línea vertical te estira toda la silueta y el blanco cerca de la cara te deja impecable.",
     "itemIds": [
-     "f1bf17d3-c897-44e7-88a2-2b3583e7c7de",
-     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
-     "610aba90-5895-4c3c-b600-fcd492fef093",
-     "597bfd31-88fa-4d04-9785-e10f16d0465c",
-     "73b272dd-bdd6-4210-ae88-c3a4872dae2b"
+     "c89437c2-f385-4a2b-95a0-da021da9d00a",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "b71ceedd-1120-43b4-9726-80e8ca771203",
+     "7b189845-4751-407b-9f19-e78873c2567f",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Traje marino de lana",
+      "nombre": "Cárdigan marino",
       "foto": null
      },
      {
-      "nombre": "Camisa blanca",
+      "nombre": "Camiseta blanca",
       "foto": null
      },
      {
-      "nombre": "Pantalón de vestir marino",
+      "nombre": "Pantalón azul marino",
       "foto": null
      },
      {
-      "nombre": "Corbata de seda vino",
+      "nombre": "Zapato formal café",
       "foto": null
      },
      {
-      "nombre": "Zapato formal negro",
+      "nombre": "Reloj negro",
       "foto": null
      }
     ],
@@ -814,17 +824,313 @@
    "ctx": {
     "perfil": "tu perfil real",
     "closet": "tu clóset (127 prendas)",
-    "temp": 24,
-    "ocasion": "refrescar",
+    "temp": 20,
+    "ocasion": "diario",
+    "momento": "noche",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Negro nocturno",
+    "explicacion": "El negro junto a la cara te define los rasgos y el carbón abajo rompe el bloque: limpio, recto y listo para cualquier plan de noche.",
+    "itemIds": [
+     "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa negra",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos carbón",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea negros",
+      "foto": null
+     },
+     {
+      "nombre": "Cinturón negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/12-a.png"
+   },
+   "der": {
+    "titulo": "Punto esmeralda de noche",
+    "explicacion": "El esmeralda te enciende la cara y contra el pantalón negro se ve limpísimo; la playera blanca asomando en cuello y bajo corta el tejido y el tenis retro de piel lo mantiene relajado sin verse desarreglado.",
+    "itemIds": [
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "37a9f3c0-fbec-493d-963d-2eb9a912b028",
+     "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+     "189bb0ea-ad59-45d5-8cd1-269a95c04d58"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter esmeralda de lana fina",
+      "foto": null
+     },
+     {
+      "nombre": "Playera blanca interior",
+      "foto": null
+     },
+     {
+      "nombre": "Pantalón negro",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis retro blanco",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/12-b.png"
+   }
+  },
+  {
+   "n": 13,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 23,
+    "ocasion": "diario",
     "momento": "dia",
     "paleta": "invierno con flow a otoño"
    },
    "izq": {
-    "titulo": "Esmeralda al frente",
-    "explicacion": "El verde esmeralda te enciende la cara y con el lino marino abajo se ve fresco sin perder el filo pulido que te gusta.",
+    "titulo": "Negro limpio de martes",
+    "explicacion": "El negro junto a la cara te define los rasgos y el carbón abajo evita el efecto traje suelto: pulido sin esfuerzo.",
+    "itemIds": [
+     "80047d0a-9ce3-492a-8aa3-6ab530c3f811",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa negra",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos carbón",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea negros",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/13-a.png"
+   },
+   "der": {
+    "titulo": "Columna clara, marco marino",
+    "explicacion": "El suéter gris y el chino claro hacen una línea limpia de arriba abajo y el overshirt marino abierto te enmarca y te estira: relajado pero se ve pensado.",
+    "itemIds": [
+     "c72a5c65-fac7-4b60-9df1-b02a882ba9fc",
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+     "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+     "15269f21-4ba6-4e17-8e84-e07db28520cc",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter gris",
+      "foto": null
+     },
+     {
+      "nombre": "Camisa overshirt marino",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos beige",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/13-b.png"
+   }
+  },
+  {
+   "n": 14,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 18,
+    "ocasion": "diario",
+    "momento": "dia",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Blanco impecable",
+    "explicacion": "El blanco puro junto a la cara te limpia la mirada y el marino remata todo con calma: simple, recto y con clase sin esfuerzo.",
+    "itemIds": [
+     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "1d1b5cbc-79e3-4bcf-a5fe-566068a81e49",
+     "b3cad850-c048-42cc-bec7-2350639d8ee2"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos azul marino",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea negros",
+      "foto": null
+     },
+     {
+      "nombre": "Cinturón negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/14-a.png"
+   },
+   "der": {
+    "titulo": "Trucker de mezclilla, línea limpia",
+    "explicacion": "La camiseta blanca fajada y la chamarra abierta te dibujan una línea vertical que estiliza, y el blanco puro pegado a la cara te despierta el rostro al instante.",
+    "itemIds": [
+     "d1671b0f-238d-43da-bb6b-55dc4e7151af",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "d1d1c205-a473-4519-9fb7-ba95cc66b191"
+    ],
+    "prendas": [
+     {
+      "nombre": "Chamarra de mezclilla",
+      "foto": null
+     },
+     {
+      "nombre": "Camiseta blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos carbón",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Gafas de sol wayfarer",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/14-b.png"
+   }
+  },
+  {
+   "n": 15,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 19,
+    "ocasion": "diario",
+    "momento": "dia",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Marco marino",
+    "explicacion": "La sobrecamisa marino abierta te enmarca y el blanco continuo de camiseta, pantalón y tenis te estira la silueta sin esfuerzo — el marino además te despeja la cara.",
+    "itemIds": [
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "7e1cc9d5-513d-493e-b951-3bf429fecd83",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "d1d1c205-a473-4519-9fb7-ba95cc66b191"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa overshirt marino",
+      "foto": null
+     },
+     {
+      "nombre": "Camiseta blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos beige",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Gafas de sol wayfarer",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/15-a.png"
+   },
+   "der": {
+    "titulo": "Marino limpio de martes",
+    "explicacion": "El marino junto a la cara te define los rasgos y la camiseta blanca abajo mantiene todo fresco: cómodo para 19°C, pero se ve pensado.",
+    "itemIds": [
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "29a0eb22-90aa-47c4-b02d-498632820ba4",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa overshirt marino",
+      "foto": null
+     },
+     {
+      "nombre": "Camiseta blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Jeans azul oscuro",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/15-b.png"
+   }
+  },
+  {
+   "n": 16,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 24,
+    "ocasion": "diario",
+    "momento": "dia",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Verde que ilumina",
+    "explicacion": "El esmeralda junto a tu cara te enciende la mirada y el lino respira con estos 24°C; abajo negro limpio para que el color sea el único protagonista.",
     "itemIds": [
      "ddb7584a-9c0b-46fb-8469-767e2b8a8fd6",
-     "2e3343b2-56a1-4fbd-b5ac-7bbb6d6761e1",
+     "7f805424-1bd1-4260-bc01-e2b91160ae5d",
      "a81cdf75-5d5e-4565-b423-75e148921c9a",
      "a5f4034f-899a-4d4f-93f5-8e62870e2446"
     ],
@@ -834,7 +1140,7 @@
       "foto": null
      },
      {
-      "nombre": "Pantalón de lino marino",
+      "nombre": "Pantalón negro",
       "foto": null
      },
      {
@@ -846,20 +1152,65 @@
       "foto": null
      }
     ],
-    "tryon": "/ab/12-a.png"
+    "tryon": "/ab/16-a.png"
    },
    "der": {
-    "titulo": "Overshirt de domingo largo",
-    "explicacion": "La camiseta blanca te limpia la cara y el overshirt abierto te da hombros y estructura sin calor de más.",
+    "titulo": "Punto marino, raya de plancha",
+    "explicacion": "El marino junto a la cara te levanta el tono y el cuello de la camisa blanca asomando por el medio cierre es lo que vuelve arreglado un suéter casual — deja el cierre a media asta y los puños afuera.",
     "itemIds": [
-     "7037cca8-2ded-4ea5-b641-3ae7b4d299c9",
-     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
-     "0e231ce2-9146-4da1-b680-334c91ebd0fa",
-     "f7b568ae-8368-44c8-9dc2-8472098c05f2"
+     "d5243e1f-f46a-4439-a7cc-30fac7c0fac5",
+     "fc5c9350-8e49-4d4c-a4eb-18376c084b02",
+     "c6ef58e4-961b-4fe8-b9a1-0a6f31848cf0",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
     ],
     "prendas": [
      {
-      "nombre": "Overshirt oliva",
+      "nombre": "Suéter half-zip marino",
+      "foto": null
+     },
+     {
+      "nombre": "Camisa blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Pantalón de vestir gris",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/16-b.png"
+   }
+  },
+  {
+   "n": 17,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 17,
+    "ocasion": "diario",
+    "momento": "dia",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Verde profundo de martes",
+    "explicacion": "El esmeralda te enciende la cara y la camiseta blanca asomando un par de dedos bajo el suéter te marca la cintura sin esfuerzo — negro abajo y tenis blancos para cerrar limpio.",
+    "itemIds": [
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "7f805424-1bd1-4260-bc01-e2b91160ae5d",
+     "189bb0ea-ad59-45d5-8cd1-269a95c04d58"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter esmeralda de lana fina",
       "foto": null
      },
      {
@@ -867,15 +1218,266 @@
       "foto": null
      },
      {
-      "nombre": "Pantalón de lino",
+      "nombre": "Pantalón negro",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis retro blanco",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/17-a.png"
+   },
+   "der": {
+    "titulo": "Verde bosque de domingo",
+    "explicacion": "El verde bosque junto a la cara te levanta el tono al instante y con jeans oscuros y tenis blancos queda limpio sin esforzarse.",
+    "itemIds": [
+     "89115e62-f673-4503-a3c4-8e58af9acd18",
+     "29a0eb22-90aa-47c4-b02d-498632820ba4",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter crewneck verde bosque",
+      "foto": null
+     },
+     {
+      "nombre": "Jeans azul oscuro",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/17-b.png"
+   }
+  },
+  {
+   "n": 18,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 19,
+    "ocasion": "diario",
+    "momento": "dia",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Vino y marino",
+    "explicacion": "El vino te enciende la cara y sobre el marino se ve caro sin esfuerzo; los botines de gamuza le dan el remate pulido.",
+    "itemIds": [
+     "c7d219d8-6c1d-4d66-8002-0682f74fd70c",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "f7b568ae-8368-44c8-9dc2-8472098c05f2",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camiseta vino",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos azul marino",
       "foto": null
      },
      {
       "nombre": "Botines Chelsea de gamuza",
       "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
      }
     ],
-    "tryon": "/ab/12-b.png"
+    "tryon": "/ab/18-a.png"
+   },
+   "der": {
+    "titulo": "Bloque oscuro, remate limpio",
+    "explicacion": "Tres oscuros que solo se distinguen por textura y el esmeralda encendiéndote la cara: llevas la sobrecamisa abierta, con el suéter asomando, y los tenis blancos son el único punto de luz.",
+    "itemIds": [
+     "39c4d4eb-d14a-4c5f-8210-902b412c0844",
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Camisa overshirt marino",
+      "foto": null
+     },
+     {
+      "nombre": "Suéter esmeralda de lana fina",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos carbón",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/18-b.png"
+   }
+  },
+  {
+   "n": 19,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 20,
+    "ocasion": "diario",
+    "momento": "noche",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Verde de noche",
+    "explicacion": "El esmeralda te enciende la cara de inmediato y con el marino y los Chelsea de piel se ve pulido sin esfuerzo.",
+    "itemIds": [
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "950cb515-4698-4fae-bfe0-371fd3a3c3d9",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter esmeralda de lana fina",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos azul marino",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea negros",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/19-a.png"
+   },
+   "der": {
+    "titulo": "Bomber de noche",
+    "explicacion": "El vino te enciende la cara y el bloque oscuro suéter-pantalón te estira la línea; deja la bomber abierta y que el tenis claro sea lo único que rompa, así se ve pensado sin esfuerzo.",
+    "itemIds": [
+     "3a2ebf0d-2579-44ca-80e8-079c95abc4fd",
+     "2ad1a8af-7997-48d3-9e79-f701e1ca5b3b",
+     "e48a2e9f-8488-41c9-bea4-1c1ae96dceef",
+     "189bb0ea-ad59-45d5-8cd1-269a95c04d58",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Chamarra bomber",
+      "foto": null
+     },
+     {
+      "nombre": "Suéter de cuello redondo vino",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos carbón",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis retro blanco",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/19-b.png"
+   }
+  },
+  {
+   "n": 20,
+   "ctx": {
+    "perfil": "tu perfil real",
+    "closet": "tu clóset (127 prendas)",
+    "temp": 16,
+    "ocasion": "diario",
+    "momento": "dia",
+    "paleta": "invierno con flow a otoño"
+   },
+   "izq": {
+    "titulo": "Bloque marino",
+    "explicacion": "Todo en marino de arriba abajo te estiliza y el marino te aviva la cara; la camiseta blanca asomando en el cuello es el detalle que le da profundidad.",
+    "itemIds": [
+     "d5243e1f-f46a-4439-a7cc-30fac7c0fac5",
+     "e6b6e370-d8bc-432a-b76b-7b30bff1de11",
+     "b71ceedd-1120-43b4-9726-80e8ca771203",
+     "a81cdf75-5d5e-4565-b423-75e148921c9a",
+     "054b1998-4349-4042-91ff-1c363d8acf0b"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter half-zip marino",
+      "foto": null
+     },
+     {
+      "nombre": "Camiseta blanca",
+      "foto": null
+     },
+     {
+      "nombre": "Pantalón azul marino",
+      "foto": null
+     },
+     {
+      "nombre": "Tenis blancos urbanos",
+      "foto": null
+     },
+     {
+      "nombre": "Gorra marino",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/20-a.png"
+   },
+   "der": {
+    "titulo": "Esmeralda de martes",
+    "explicacion": "El esmeralda te enciende la cara y con el marino y la gamuza café se ve trabajado sin esfuerzo.",
+    "itemIds": [
+     "a1a6a0d9-a498-4364-8c9a-0240ad2ccd1d",
+     "8e7c4378-a465-4892-a5bf-e673152a3c4e",
+     "f7b568ae-8368-44c8-9dc2-8472098c05f2",
+     "8a758cd3-5865-401f-8741-a463199b6247"
+    ],
+    "prendas": [
+     {
+      "nombre": "Suéter esmeralda de lana fina",
+      "foto": null
+     },
+     {
+      "nombre": "Chinos azul marino",
+      "foto": null
+     },
+     {
+      "nombre": "Botines Chelsea de gamuza",
+      "foto": null
+     },
+     {
+      "nombre": "Reloj negro",
+      "foto": null
+     }
+    ],
+    "tryon": "/ab/20-b.png"
    }
   }
  ]
