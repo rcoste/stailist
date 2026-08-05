@@ -91,6 +91,14 @@ const REGLAS: [RegExp, string, Zona][] = [
   [/conjunto (deportivo|de punto)|\bset\b de/, "conjunto-deportivo", "torso"],
   [/\bvestido\b|slip dress|wrap dress|\bdress\b/, "vestido", "torso"],
 
+  // La sobrecamisa va ANTES del bloque de torso aunque sea una capa: su nombre
+  // suele traer "camisa" dentro ("Camisa overshirt marino", "Sobrecamisa de
+  // lana") y la regla genérica de camisa se la llevaba al torso. Consecuencia
+  // real: la prenda no contaba como capa de abrigo, así que a 8°C la regla de
+  // "frío sin abrigo" no la veía y la cobertura por zonas salía mal. Ocho
+  // prendas de usuarios lo tenían, incluida una de los pares del A/B.
+  [/overshirt|sobrecamisa|chore coat|chaqueta-camisa/, "overshirt", "capa"],
+
   // --- Torso, de lo más específico a lo más genérico
   [/\brugby\b/, "rugby", "torso"],
   [/\bhenley\b/, "henley", "torso"],
@@ -111,7 +119,7 @@ const REGLAS: [RegExp, string, Zona][] = [
   [/camisa|\bshirt\b/, "camisa", "torso"],
 
   // --- Capa (lo que va encima). Zona propia: un abrigo no cubre un saco.
-  [/overshirt|sobrecamisa|chore coat|chaqueta-camisa/, "overshirt", "capa"],
+  // (La sobrecamisa vive más arriba, antes del torso: ver el porqué allá.)
   [/blazer/, "blazer", "capa"],
   [/\bsaco\b|americana/, "saco", "capa"],
   [/chaleco/, "chaleco", "capa"],

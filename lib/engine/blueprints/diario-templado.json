@@ -1,0 +1,2220 @@
+[
+ {
+  "id": "c07b22bd-286e-4a61-8830-d252d629a176",
+  "path": "hombre/clasico-arreglado/f-69f3f251.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "bomber",
+    "detalle": "chamarra corta tipo harrington/blouson de algodón mate, cuello camisero plano, cierre frontal abierto, largo justo a la cintura que deja ver la hebilla del cinturón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta de punto grueso, cuello redondo, manga corta, caída holgada pero recta, metida por dentro del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "jeans",
+    "detalle": "mezclilla de lavado claro, corte recto y ligeramente amplio, tiro medio-alto, largo al tobillo con un pequeño quiebre sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "mocasin",
+    "detalle": "mocasín de piel lisa con suela gruesa de perfil bajo, empeine limpio, llevado sin calcetín visible"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "cinturón de piel de ancho medio con hebilla metálica cuadrada, visible por completo gracias al fajado"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "bolsa",
+    "detalle": "bolsa de piel suave estilo mensajero cruzada al hombro, correa ancha de tela"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "cadena fina y corta al cuello, apenas asomando sobre el cuello de la camiseta"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres niveles bien separados: capa en el tono más oscuro y saturado, torso en un tono medio apagado y frío que hace de puente, base de pierna muy clara y desgastada; calzado y cinturón se van a extremos neutros (uno muy oscuro, otro tierra medio) para cerrar el conjunto abajo",
+  "color_libre": "el tono medio del torso puede moverse a cualquier apagado frío o tierra suave; el cinturón puede ir de tierra medio a oscuro sin consecuencia; la capa puede ser cualquier oscuro sólido siempre que siga siendo el punto más profundo del look",
+  "clave": "el fajado de la camiseta con la chamarra abierta y corta: el cinturón queda expuesto en la mitad exacta del cuerpo y marca la cintura alta, lo que convierte un trío casual (chamarra + tee + jeans) en una silueta compuesta; el mocasín de piel pulida abajo remata y evita que caiga en 'sudadera y tenis'",
+  "rompe": "meter tenis o botas en lugar del zapato de piel, dejar la camiseta por fuera tapando el cinturón, cerrar la chamarra, o usar jeans oscuros que borren el contraste de tres niveles"
+ },
+ {
+  "id": "a4d853bc-731c-49bb-aecc-071fb6e22c36",
+  "path": "hombre/clasico-arreglado/f-2d057cf8.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "arreglado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "evento"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de cuello redondo, caída suave y ligeramente holgada, mangas largas arremangadas apenas en la muñeca, metido por dentro del pantalón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de vestir lisa con cuello semi-abierto sin corbata, primer botón desabotonado, cuello y puño asomando por debajo del punto"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "pantalón de algodón con pinza al frente, talle alto marcado en la cintura, pierna amplia con caída recta y limpia"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "cinturón de piel de ancho medio con hebilla metálica dorada rectangular, bien visible al llevar el suéter por dentro"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "capa",
+    "tipo": "abrigo",
+    "detalle": "prenda exterior de lana suave con solapa y bolsillos de parche, no se lleva puesta: va doblada sobre el antebrazo"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de vestir plano, caja metálica pequeña, esfera clara y correa de piel"
+   }
+  ],
+  "zonas_no_visibles": [
+   "pie"
+  ],
+  "color_relacion": "tres neutros terrosos escalonados: un tono medio-oscuro apagado arriba, una base clara luminosa abajo y un tono intermedio en la capa que hace de puente entre ambos; el cuello y puños en el punto más claro de todo el conjunto, y los cueros/metales en el más cálido y oscuro. Cero colores saturados, todo dentro de la misma familia cálida",
+  "color_libre": "el tono del suéter puede ir a cualquier oscuro apagado (vino, azul profundo, chocolate, gris pizarra); el pantalón a cualquier claro de tierra (crema, gris claro, hueso); la capa al beige, camel o gris medio. Lo que no puede cambiar es que el suéter sea el más oscuro, el pantalón el más claro y la camisa el punto de máxima luz",
+  "clave": "el cuello desabotonado de la camisa erguido fuera del escote del suéter y el puño saliendo justo en la muñeca: dos toques de blanco que enmarcan cara y mano, y el suéter metido por dentro para que el cinturón de piel marque la cintura alta. Eso es lo que lo saca de 'suéter casual' y lo convierte en arreglado",
+  "rompe": "llevar el suéter por fuera tapando el cinturón y la línea de cintura; cambiar el pantalón de pinza y talle alto por jeans o algo ajustado; sustituir la camisa por camiseta (desaparecen cuello y puños y todo cae a casual); meter un color saturado o un cinturón/reloj de tono frío que rompa la unidad cálida"
+ },
+ {
+  "id": "e0010698-aea5-4e27-af9c-da08d324bc84",
+  "path": "hombre/smart-casual/f-c9669ef1.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "chamarra-piel",
+    "detalle": "Cazadora corta de ante mate, cuello banda con una sola presilla abotonada, cierre frontal abierto de arriba a abajo, bolsillos de vista en diagonal, largo a la cadera y mangas que llegan justo a la muñeca"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "Camisa lisa de algodón, cuello suave sin corbata con dos botones abiertos, metida por dentro y con caída limpia, sin bolsillos visibles"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "jeans",
+    "detalle": "Vaquero lavado con degradado, corte recto ligeramente entallado, cintura a la altura natural, presillas y bolsillos clásicos de cinco piezas"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "Reloj de caja metálica con brazalete metálico, asomando por debajo del puño de la manga"
+   }
+  ],
+  "zonas_no_visibles": [
+   "pie"
+  ],
+  "color_relacion": "Tres bloques: capa en tono medio-oscuro cálido y textura mate, base de torso en el punto más claro y luminoso del conjunto, pierna en un tono medio frío y desaturado que hace de puente. Solo un color con carácter (la capa); los otros dos son neutros de distinta temperatura",
+  "color_libre": "El marrón del ante puede ser cualquier tono cálido apagado (tabaco, camel, oliva profundo, borgoña oscuro) mientras siga siendo mate y más oscuro que el resto; el vaquero puede pasar a un azul lavado o beige claro siempre que no compita con la camisa; la camisa puede ser crudo o celeste muy pálido",
+  "clave": "El contraste de texturas: ante mate y absorbente contra algodón nítido y luminoso contra denim lavado con roce. Y la camisa abierta al segundo botón bajo un cuello banda sin solapa, que deja el escote limpio y verticaliza todo el torso sin necesidad de corbata",
+  "rompe": "Cerrar la cremallera de la cazadora (mata el bloque claro central y el efecto vertical), llevar la camisa por fuera, o meter un cuarto color/estampado. También lo rompe una chaqueta de piel brillante en lugar de ante: el look depende de que la capa sea mate"
+ },
+ {
+  "id": "bc7ad9f1-b5d1-4f4b-9bc2-da9e534af77e",
+  "path": "hombre/smart-casual/df410427.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "Camisa de tejido con cuerpo (algodón lavado tipo pana fina/franela ligera), corte holgado y hombro caído, un bolsillo de parche en el pecho, abotonada casi hasta arriba dejando solo el primer botón abierto, mangas remangadas de forma descuidada a media antebrazo, faldón suelto por fuera sin fajar y largo que cubre la cadera."
+   },
+   {
+    "zona": "pierna",
+    "tipo": "jeans",
+    "detalle": "Mezclilla muy ancha, pierna recta-baggy que cae en columna desde la cadera, tiro medio-alto, largo que se apila sobre el empeine con quiebre marcado, lavado desgastado con roces claros en muslo y rodilla."
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "Sneaker bajo minimalista de piel lisa, suela delgada y perfil limpio, sin logos visibles, tobillo descubierto."
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "Gafas de sol de acetato con montura gruesa y forma rectangular pequeña, lente oscuro."
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "Reloj de pulsera metálico con bisel deportivo, visible gracias a la manga remangada."
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "Solo tres registros: una pieza superior saturada de tono profundo y apagado que es el único punto de color, una base inferior neutra oscura muy cercana al negro que la ancla, y un calzado en el extremo claro del rango que corta la masa oscura por abajo. Los accesorios repiten el oscuro de la base para no competir. Contraste alto y aislado al pie; contraste medio y cálido entre torso y pierna.",
+  "color_libre": "El tono saturado del torso puede migrar a cualquier color profundo desaturado (tabaco, verde botella, azul tinta, óxido) siempre que sea oscuro y mate; la base inferior admite grafito, marrón muy oscuro o azul índigo desgastado; el calzado puede ser crudo, hueso o gris muy claro. Lo que no puede es haber un cuarto color.",
+  "clave": "El volumen invertido en tres pasos: camisa holgada que cae recta sobre un pantalón aún más ancho, y todo ese peso resuelto por un zapato bajo y estrecho que aparece limpio bajo el apilado de la mezclilla. Sumado a las mangas remangadas justo por encima del reloj, que es lo único que rompe la silueta y da la sensación de estar armado sin esfuerzo.",
+  "rompe": "Fajar la camisa o cambiarla por una entallada mata el juego de volúmenes; un pantalón slim o tobillero deja el look desequilibrado; un tenis voluminoso o con suela alta absorbe el único punto de aire visual y lo convierte en streetwear genérico; añadir una tercera pieza de color o un estampado destruye la economía cromática."
+ },
+ {
+  "id": "f8ed2cdc-36ea-4d4d-a7c2-91f88fd874f3",
+  "path": "hombre/clasico-arreglado/f-7bcf45b5.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de medio cierre con cuello alto levantado, hombros limpios, puños y bajo elásticos ajustados; se lleva cerrado hasta media altura sobre otra prenda"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa lisa de cuello suave abotonado hasta arriba, asomando por el cuello del punto y por los puños en la muñeca"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "pantalón de algodón de talle medio-alto con pinza, pierna recta y ligeramente cónica, largo justo con quiebre mínimo sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "mocasin",
+    "detalle": "mocasín de ante con borlas, perfil bajo, sin calcetín visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj discreto de correa fina que aparece bajo el puño"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "tres niveles: un tono oscuro saturado y sólido en el torso, base de pierna muy clara y neutra, y calzado en un tono terroso medio que hace de puente; la camisa aporta el punto más claro del conjunto en cuello y puños. Sin estampados: todo por bloques planos y contraste alto arriba-abajo",
+  "color_libre": "el oscuro del punto puede ser cualquier tono profundo (verde botella, gris pizarra, marrón oscuro); la pierna cualquier neutro claro (crema, piedra, gris claro); el zapato cualquier tono medio cálido, y la camisa cualquier claro casi neutro",
+  "clave": "el cuello de la camisa levantado dentro del cuello del punto y los puños asomando un centímetro: eso convierte un jersey de cremallera en algo arreglado, no en ropa de fin de semana",
+  "rompe": "llevar la camisa por fuera del punto o sin ella (cuello desnudo), meter un tercer color fuerte, o cambiar el pantalón limpio de pinza por vaquero o jogger y el mocasín de ante por tenis"
+ },
+ {
+  "id": "51b70886-c2ef-47f4-9558-9e219fbcdc43",
+  "path": "hombre/clasico-arreglado/f-cf70301e.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "arreglado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "evento",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "polo",
+    "detalle": "polo de punto acanalado grueso, manga corta ajustada al brazo, cuello abierto tipo camp con dos botones sueltos, cae justo sobre la cintura del pantalon"
+   },
+   {
+    "zona": "capa",
+    "tipo": "gabardina",
+    "detalle": "trench largo de tela ligera, cruzado con solapas anchas, llevado suelto sobre los hombros sin meter los brazos y sin abotonar"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalon de talle alto con pinzas, pierna ancha y caida fluida, tela de aspecto lino/gabardina suave, sin cinturon visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "pieza discreta apenas visible en la muñeca bajo la manga del abrigo"
+   }
+  ],
+  "zonas_no_visibles": [
+   "pie"
+  ],
+  "color_relacion": "tres registros de un mismo territorio neutro-terroso: capa clara y calida, torso en tono oscuro saturado y mate que ancla el centro, base inferior clara casi igual de luminosa que la capa; el oscuro queda enmarcado en claro arriba y abajo, cero estampados, cero cuarto color",
+  "color_libre": "la capa puede irse a cualquier neutro claro o medio (arena, gris humo, crudo), el punto del torso a cualquier tono profundo apagado (marino, ciruela, carbon, terracota quemada) siempre que sea mas oscuro que capa y pantalon; el pantalon debe mantenerse claro y en la misma familia calida o fria de la capa",
+  "clave": "el trench cargado en los hombros sin brazos dentro, que abre un marco claro a los lados y deja al punto oscuro funcionando como bloque central; sumado a que el polo es de punto y manga corta bajo un abrigo largo, mezcla de estaciones que es lo que le da el aire editorial",
+  "rompe": "meter los brazos en la gabardina y abotonarla (mata el marco y vuelve el look funcional), un pantalon oscuro o pitillo que rompa el bloque claro inferior, cambiar el punto acanalado por camiseta lisa de algodon, o añadir un cuarto color o estampado"
+ },
+ {
+  "id": "d116c67a-2434-42f6-8534-eff0db589f7b",
+  "path": "hombre/clasico-arreglado/f-b4c78503.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "evento"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "Camisa ligera de rayas finas verticales, cuello abierto sin corbata con dos botones sueltos, mangas arremangadas de forma descuidada hasta el codo, metida por dentro con caída holgada"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "Pantalón de talle muy alto con pinzas, corte amplio y recto, largo con dobladillo vuelto que rompe justo sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "mocasin",
+    "detalle": "Mocasín de antelina con borlas, sin calcetín, tobillo al aire"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "Gafas de sol redondas pequeñas de montura metálica fina y lente oscura"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "Reloj de esfera clara con brazalete metálico, visible en la muñeca por la manga subida"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "Dos bloques: arriba un tono muy claro y frío casi blanco por el rayado microfino, abajo un tono medio terroso y cálido sólido; el calzado repite la familia cálida del pantalón un tono más apagado. Solo dos temperaturas conviviendo, sin ningún tercer color que compita, y los metales de gafas y reloj como único brillo",
+  "color_libre": "El claro de arriba puede ir a blanco puro, crema o cualquier pastel muy lavado; el pantalón admite camel, tabaco, caqui oscuro u oliva apagado; el mocasín puede ser cualquier marrón medio o incluso bronceado, mientras siga en la misma familia cálida que el pantalón",
+  "clave": "El talle altísimo con pinzas es lo que sostiene todo: sube la cintura visible hasta media caja del torso, alarga la pierna y convierte una camisa desabotonada y arrugada en algo compuesto. Sumado a las mangas arremangadas de forma irregular y el tobillo desnudo, el look es sastrería sin chaqueta llevada con desorden deliberado",
+  "rompe": "Bajar el talle o meter un pantalón slim: se pierde la proporción entera. También lo mata planchar la camisa, bajar las mangas, ponerle calcetín visible al mocasín, o sacar la camisa por fuera del pantalón"
+ },
+ {
+  "id": "52c9c4df-58dd-4834-9f8c-f221d14c5e6a",
+  "path": "hombre/clasico-arreglado/f-d4676f92.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de cuello en V, cuerpo ajustado sin holgura, puños y cintura de canalé, metido por dentro del pantalón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de vestir de popelín liso, cuello semi-abierto sin corbata, asomando por el cuello en V y por el puño de la manga"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "algodón de peso medio, pinzas frontales, corte recto ligeramente afilado, talle en la cintura natural con presillas visibles"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "piel lisa, ancho medio, hebilla metálica discreta, a la vista porque el suéter va metido"
+   },
+   {
+    "zona": "capa",
+    "tipo": "abrigo",
+    "detalle": "abrigo de paño de lana, solapa ancha, llevado doblado sobre el antebrazo en vez de puesto"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de montura fina redondeada con lente oscura"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de esfera clara y correa de piel, caja delgada, asomando bajo el puño"
+   }
+  ],
+  "zonas_no_visibles": [
+   "pie"
+  ],
+  "color_relacion": "gama única de neutros cálidos en tres escalones de claridad: tono medio arriba, base más clara abajo, y el abrigo un escalón más oscuro y saturado que el punto; el cinturón repite el tono del abrigo y funciona de bisagra en la cintura; único punto de máxima claridad y frescura, la camisa que asoma en cuello y puño",
+  "color_libre": "el suéter puede moverse a cualquier neutro cálido medio (arena, camel, gris topo, verde apagado) y el abrigo a un tono más oscuro de esa misma familia; el pantalón admite crema, hueso, gris claro o caqui pálido; la camisa puede ser blanca o celeste muy pálido; el cinturón y el calzado deben mantenerse en el registro del abrigo",
+  "clave": "que el suéter vaya METIDO y el cinturón quede a la vista: eso corta la silueta en la cintura y convierte un dos piezas de punto en algo estructurado; a eso se suma el cuello de la camisa abierto y erguido sobre la V y el filo de puño blanco bajo la manga, que son los dos únicos puntos de contraste alto y lo que sube el look de casual a arreglado",
+  "rompe": "llevar el suéter por fuera tapando el cinturón, o meter un cuarto color ajeno a la gama de neutros cálidos; también rompe una camisa con el cuello aplastado dentro de la V o mangas del suéter que tapen el puño, porque desaparecen los dos únicos acentos claros"
+ },
+ {
+  "id": "e5d88cd8-3b7a-4e6c-97a0-68335a169c3d",
+  "path": "hombre/clasico-arreglado/f-bad45ada.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de cuello en V, manga larga, corte holgado que cae sin marcar el cuerpo, largo justo a la cadera, metido por dentro del pantalón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa lisa de cuello puntiagudo abierto sin corbata, llevada debajo del punto de modo que cuello y puños queden fuera"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "talle alto, pinzas al frente, pierna muy ancha y recta con caída pesada, largo que rompe sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "zapato-formal",
+    "detalle": "zapato bajo de piel con acordonado, puntera redonda y suela gruesa vista, algo tosco frente a la formalidad del pantalón"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "piel lisa de ancho medio con hebilla rectangular metálica, bien visible sobre el talle alto"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja pequeña con correa fina, asomando en la muñeca por el puño de la camisa"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "pulsera delgada discreta en la otra muñeca"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres bloques y nada más: un tono oscuro saturado y sólido en el torso, una base muy clara y neutra en la pierna, y un tono terroso medio en el pie que ancla; la camisa aporta el punto más claro del conjunto y el cinturón repite el tono del zapato",
+  "color_libre": "el oscuro del punto puede ser cualquier tono profundo (verde, gris, burdeos) mientras siga siendo sólido y sin dibujo; la base clara admite crudo, arena o gris muy pálido; zapato y cinturón pueden ir a negro o cognac siempre que coincidan entre sí",
+  "clave": "el cuello abierto de la camisa cayendo por fuera sobre el punto y los puños asomando generosos: es lo que convierte un suéter holgado en algo arreglado, y el punto metido por dentro para que la hebilla y el talle alto marquen la cintura muy arriba",
+  "rompe": "pantalón entallado o de talle bajo (mata la proporción ancho abajo/limpio arriba), suéter por fuera tapando el cinturón, o esconder el cuello de la camisa dentro del punto"
+ },
+ {
+  "id": "76fccfc6-60d5-4fe6-a501-e144264a7bca",
+  "path": "hombre/smart-casual/09af06f8.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de cuello redondo, corte algo holgado y largo corto que termina justo en la cintura, puños y bajo con canalé marcado, mangas ligeramente arremangadas en el antebrazo"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de vestir en tela lisa con caída, pinza al frente y raya de plancha, pierna recta-amplia que se afina un poco al tobillo, dobladillo con vuelta que apoya sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis bajos de piel lisa, silueta minimalista de corte tipo court, suela delgada del mismo tono, sin logos llamativos"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "calcetin",
+    "detalle": "calcetín invisible o muy bajo: el tobillo queda casi al descubierto entre la vuelta del pantalón y el tenis"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "dos bloques y nada más: un tono oscuro y saturado, sólido y sin patrón, en todo el torso contra una base clara y neutra de cintura a suelo; el calzado repite el extremo más claro de la paleta, así que la mirada solo registra oscuro-arriba / claro-abajo. Contraste alto, cero terceros colores, cero estampados",
+  "color_libre": "el bloque superior puede ir a cualquier oscuro profundo (carbón, verde botella, borgoña, marrón chocolate) y el inferior a cualquier claro cálido o frío (crema, arena, gris hielo, blanco roto); el calzado puede seguir al pantalón o irse a un neutro claro distinto",
+  "clave": "la proporción del talle corto: el suéter termina exactamente en la cintura del pantalón, dejando ver dónde arranca la pinza y alargando toda la pierna; eso, más el bajo con vuelta que rompe justo sobre el tenis y deja el tobillo asomando, es lo que convierte dos prendas básicas en una silueta cuidada",
+  "rompe": "un suéter largo que tape la cintura y la pinza (mata la proporción), un pantalón de mezclilla o jogger en lugar de la tela de vestir con raya (pierde la tensión formal-casual), un tenis voluminoso de suela gruesa o con colores, o meter un tercer color/estampado que rompa el esquema de solo dos bloques"
+ },
+ {
+  "id": "620c1de0-e2c0-404f-b8f5-4fbe97c45fc9",
+  "path": "hombre/smart-casual/04f12f45.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "blazer",
+    "detalle": "blazer desestructurado de punto jaspeado, hombro blando sin relleno, dos botones abierto, solapa estrecha, largo justo a la cadera; se lleva siempre desabotonado"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo, algodón medio, corte recto y limpio, sin gráficos, llevada por fuera del pantalón con caída suave"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "chino de algodón liso, corte slim que se afina al tobillo, dobladillo con una vuelta pequeña que descubre el tobillo, sin quiebre sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis bajos minimalistas de piel lisa, suela delgada del mismo tono, cordones finos, sin logos visibles ni suela voluminosa"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de pasta con forma de ojo de cerradura/redondeada, lente oscuro"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja redonda con carátula clara y correa de piel oscura, llevado sobre el puño del blazer"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "anillo discreto de banda lisa"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres bloques y nada más: capa en tono claro texturizado, base de torso en el tono más claro y limpio del conjunto, pierna en el único tono profundo que ancla el look, y calzado que repite el claro del torso para cerrar el círculo; contraste medio arriba, contraste alto entre pierna y calzado, cero estampados",
+  "color_libre": "la capa puede ir en cualquier neutro claro jaspeado, el pantalón en cualquier tono profundo y saturado pero sobrio, y la camiseta/tenis pueden desplazarse a cualquier claro cálido o frío siempre que sean el mismo registro entre sí",
+  "clave": "que la camiseta lisa sin cuello ni botones haga de camisa bajo un saco: el blazer es de punto blando y va abierto, así que la caída limpia y sin arrugas de la camiseta por fuera es lo que sostiene la formalidad; eso, más el tobillo descubierto por la vuelta del chino que conecta visualmente con el tenis liso",
+  "rompe": "un blazer estructurado con hombro rígido o de traje (convierte el conjunto en un traje mal emparejado), una camiseta con gráfico o cuello descuidado, tenis deportivos de suela gruesa o con logos grandes, y pantalón que se amontone sobre el zapato tapando el tobillo"
+ },
+ {
+  "id": "e319b7c2-d25f-49eb-ab26-beace1419dac",
+  "path": "hombre/clasico-arreglado/f-25845cc9.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "chaqueta camisera ligera tipo chore coat en algodón/lino, cuello camisero, botonadura frontal abierta, bolsillos de plastrón, largo justo por debajo de la cadera, mangas remangadas ligeramente en el puño"
+   },
+   {
+    "zona": "torso",
+    "tipo": "polo",
+    "detalle": "polo de punto texturizado con canalé, manga larga, cuello suave abierto con placket de dos botones sin abrochar, ajuste ceñido metido en el pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "pantalón de algodón de pinzas suaves, talle alto, pierna recta ligeramente cónica, dobladillo con vuelta que descansa justo sobre el zapato sin quiebre"
+   },
+   {
+    "zona": "pie",
+    "tipo": "mocasin",
+    "detalle": "mocasín de ante sin borlas, corte bajo, suela fina, llevado sin calcetín visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de correa oscura y caja discreta en la muñeca izquierda, asomando bajo el puño remangado"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "cinturón fino de piel apenas visible en la cintura, tono que dialoga con el calzado"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres pisos en la misma familia cálida: capa y torso en dos claros muy próximos que se diferencian solo por textura, pierna en un tono medio apagado que baja la temperatura, y calzado en el punto más oscuro para anclar; contraste total bajo, sin ningún color saturado ni patrón",
+  "color_libre": "la pareja clara de capa+torso puede moverse a cualquier neutro pálido (hueso, arena, gris cálido), el pantalón a cualquier tono medio terroso o apagado (verde, tabaco, azul polvo, gris topo) y el zapato a cualquier oscuro cálido; lo único que no puede cambiar es el orden de claro arriba, medio en medio y oscuro abajo",
+  "clave": "la capa y el polo son casi el mismo tono claro y solo se distinguen por el canalé del punto contra el liso de la chaqueta: ese contraste de textura en vez de color es lo que hace que el conjunto se lea intencional y no descuidado, reforzado por el polo metido dentro para marcar cintura alta",
+  "rompe": "meter un color saturado o un estampado en cualquier pieza, dejar el polo por fuera perdiendo la línea de cintura, o cambiar el mocasín de ante por tenis o zapato brillante: lo primero mata la monocromía cálida, lo segundo alarga el torso y desequilibra, lo tercero rompe el registro suave y sin brillo de todo el look"
+ },
+ {
+  "id": "46ed2d4a-9177-42ba-8a1f-36e78892aa32",
+  "path": "hombre/clasico-elegante/39678ce9.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "polo",
+    "detalle": "polo de punto liso, manga corta ajustada al brazo, cuello abierto sin abotonar, fajado dentro del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de pinza, talle alto, pierna muy ancha y recta que cae con quiebre largo sobre el zapato, tejido mate con caída"
+   },
+   {
+    "zona": "capa",
+    "tipo": "sueter",
+    "detalle": "punto de ochos grueso anudado sobre los hombros, mangas cruzadas al frente y cayendo largas sobre el pecho, a modo de capa decorativa"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo minimalista de piel lisa, suela gruesa, sin calcetín visible"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "cinturón delgado de piel con hebilla pequeña, marcando la cintura alta y cortando el bloque monocromo"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de pasta, montura rectangular estrecha"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj deportivo de brazalete metálico, visible en la muñeca"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "monocromo cálido casi total: torso muy claro, capa y pierna en el mismo tono claro apenas más apagado, calzado igual de claro; un único punto oscuro y estrecho en la cintura como única interrupción, más el detalle oscuro de las gafas",
+  "color_libre": "toda la gama clara puede desplazarse a otro neutro pálido (crema, arena, gris hueso) siempre que las tres piezas se mantengan casi iguales; el cinturón puede ser cualquier tono claramente más oscuro que el resto",
+  "clave": "que el pantalón sea de pinza y talle alto con pierna ancha y el polo vaya fajado: la cintura queda alta y marcada por el cinturón oscuro, y el suéter anudado añade volumen arriba sin romper el monocromo",
+  "rompe": "sacar el polo del pantalón o quitar el cinturón (se pierde la línea de cintura y el bloque claro se vuelve pijama); también un pantalón estrecho o un tercer color fuerte en el calzado"
+ },
+ {
+  "id": "ab6fb660-985c-4b2b-8811-3dcb6f5c66ae",
+  "path": "hombre/smart-casual/10bcf09c.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "camisa-chaqueta de algodón/sarga con dos bolsillos de parche con tapa en el pecho, cuello camisero, botonadura abierta de arriba a abajo, mangas remangadas hasta el antebrazo, largo que cubre justo la cadera"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo, algodón medio, sin gráficos, llevada por dentro solo en la parte frontal (medio fajada) para marcar cintura"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "jeans",
+    "detalle": "denim de lavado claro con degradado natural, corte recto ligeramente tapered, tiro medio, dobladillo con vuelta única que deja ver el tobillo"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo de piel lisa, suela gruesa del mismo tono, silueta minimalista sin logos visibles"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj analógico de caja redonda mediana con correa de piel, visible al remangar la manga"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "cadena muy fina al cuello, apenas asomando por el escote de la camiseta"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "Tres bloques y solo tres: una capa en tono neutro cálido claro, una base en el tono más claro y luminoso del conjunto (repetido literalmente en el calzado, que cierra el circuito arriba-abajo), y una pierna en tono medio frío desaturado que hace de único punto de contraste. Nada saturado, ningún estampado, contraste medio-bajo en todo el conjunto.",
+  "color_libre": "El neutro cálido de la sobrecamisa puede irse a arena, piedra, verde salvia apagado, gris topo u oxido suave; el denim puede oscurecerse a medio o pasar a un pantalón de tono terroso; la base y el calzado pueden ser crema, hueso o gris muy claro en vez de blanco puro. Lo que no puede cambiar es que sean tres tonos, poco saturados, y que base y zapato compartan tono.",
+  "clave": "La sobrecamisa se lleva completamente abierta y con las mangas remangadas, funcionando como marco: crea dos líneas verticales que enmarcan la franja clara de la camiseta en el centro. Y la camiseta metida solo por delante justo en la cintura del jean marca el punto de quiebre de la silueta, que es lo que separa esto de 'camisa suelta encima de una playera'.",
+  "rompe": "Abotonar la sobrecamisa (mata el marco vertical y el bloque central claro), o dejar la camiseta totalmente por fuera hasta cubrir la bragueta (borra la cintura y hunde las piernas). También lo rompe un zapato oscuro o deportivo aparatoso: el calzado tiene que rimar con la base clara, no cortar la pierna."
+ },
+ {
+  "id": "39c83493-6f2a-46a4-b27c-80bd6731fbf1",
+  "path": "hombre/clasico-arreglado/f-142b85ba.jpg",
+  "estilo": "clasico-arreglado",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de vestir de popelín liso, cuello semi-abierto sin corbata, puños abotonados que asoman en la muñeca; llevada por dentro del pantalón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "suéter fino de punto liso con cuello en V amplio, manga larga, caída suave sin volumen, largo justo a la cadera y metido ligeramente bajo el cinturón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de talle alto con pinza al frente, pierna muy ancha y recta, caída pesada de lana/gabardina, largo que rompe sobre el zapato"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "cinturon",
+    "detalle": "cinturón de piel lisa de ancho medio con hebilla rectangular metálica, visible a la altura de la cintura alta"
+   },
+   {
+    "zona": "pie",
+    "tipo": "zapato-formal",
+    "detalle": "zapato bajo de piel con acordonado tipo derby, puntera redonda y suela gruesa de perfil visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja pequeña con correa de piel, asomando bajo el puño"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "pulsera fina de cuentas en la otra muñeca"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres bloques limpios: un tono oscuro saturado y sólido en el torso, base inferior clara y luminosa de gran superficie, y un tono medio-oscuro terroso anclando el pie; la camisa aporta el punto más claro y frío que corta el bloque oscuro en cuello y puños; cinturón en tono oscuro que hace de bisagra entre arriba y abajo",
+  "color_libre": "el suéter puede ir en cualquier tono profundo y sólido (marino, verde botella, vino, gris pizarra); el pantalón en cualquier claro cremoso o gris hielo; el zapato y cinturón en cualquier tono medio-oscuro coordinado entre sí; la camisa puede ser blanca o azul muy pálido",
+  "clave": "el cuello de la camisa abierto y planchado saliendo por encima del cuello en V, más los puños asomando limpios en ambas muñecas: eso es lo que convierte un suéter casual en algo vestido. Y el contraste de proporción: torso ajustado y corto contra pantalón de pierna enorme con pinza y talle alto, con el cinturón marcando exactamente la frontera",
+  "rompe": "un pantalón entallado o de tiro bajo (mata la proporción entera), meter el suéter suelto o dejarlo por fuera tapando el cinturón, esconder el cuello de la camisa dentro del suéter, o cambiar la camisa por camiseta: el look pierde su tensión formal-casual"
+ },
+ {
+  "id": "58106467-3b56-47a8-8c2d-bbf0d3750f49",
+  "path": "hombre/casual-limpio/f-0426074e.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "camisa-chaqueta oversize en tela mate con caída, bolsillo de parche en el pecho, abierta por completo, hombros caídos y mangas remangadas al antebrazo; el largo llega a la cadera baja"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo, algodón de peso medio, corte holgado y por dentro del pantalón para marcar la cintura"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de sastrería con pinza, talle alto, pierna muy ancha y recta, largo que rompe sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo de piel lisa, suela gruesa limpia, sin estridencias"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de acetato con montura rectangular y esquinas suaves"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de pulsera metálica con brazalete integrado, esfera pequeña"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "Dos tonos oscuros muy cercanos pero distintos en textura y temperatura conviviendo en capa y pierna, con un torso oscuro casi neutro de puente entre ellos; el único punto claro es el calzado, que corta el bloque oscuro por abajo. Tres valores en total: oscuro cálido, oscuro frío, claro puntual",
+  "color_libre": "El tono de la sobrecamisa y del pantalón pueden ser cualquier pareja oscura de temperaturas distintas (uno cálido, uno frío o neutro); la camiseta puede ir del tono más oscuro del conjunto a un medio apagado; el calzado admite cualquier claro sucio o crema en lugar del blanco",
+  "clave": "El contraste de siluetas dentro de un mismo bloque oscuro: la camiseta metida por dentro del pantalón de talle alto crea una cintura visible bajo la sobrecamisa abierta, y las mangas remangadas dejan ver antebrazo y reloj. Sin ese fajado y ese remangue todo se convierte en una masa oscura sin arquitectura",
+  "rompe": "Dejar la camiseta por fuera, cerrar la sobrecamisa, o cambiar el pantalón ancho de sastrería por un jean estrecho: se pierde la tensión entre lo relajado arriba y lo estructurado abajo. También lo rompe un calzado oscuro, que borra el único corte de luz del look"
+ },
+ {
+  "id": "dbe6a4f1-4175-41e3-90ad-32e8c3160b74",
+  "path": "hombre/casual-limpio/f-a7a99e58.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "sobrecamisa de tejido grueso tipo algodón/gamuza, cuello camisero, botonadura frontal abierta, dos bolsos de parche con tapeta en el pecho, largo a la cadera, hombro relajado y mangas ligeramente remangadas"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto de aguja gruesa con textura tipo panal, cuello redondo, cuerpo recto que asoma por debajo de la sobrecamisa"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "pantalón de algodón liso, tiro medio, pierna afilada con caída limpia y bajo tobillero que deja ver el empeine"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo de piel lisa, silueta minimalista de corte deportivo clásico, suela fina a juego, sin calcetín visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de buceo con caja metálica y brazalete de acero, visible al remangar la manga"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "tres valores oscuros muy cercanos apilados (capa, punto y pierna casi del mismo peso, apenas diferenciados por textura y un matiz más terroso en el punto medio) y un único punto de máximo contraste claro abajo, en el calzado; cero estampados, todo sólido",
+  "color_libre": "los tres tonos oscuros pueden moverse de familia (azulados, terrosos, grises) siempre que queden a un paso de distancia entre sí y ninguno sea claro; el calzado puede ser cualquier claro casi blanco",
+  "clave": "la gradación de oscuros casi idénticos que solo se leen por textura —punto rugoso contra tejido liso de la sobrecamisa contra pantalón mate— más el bajo tobillero que corta la pierna y deja el sneaker claro como único acento; el dobladillo del suéter asomando bajo la sobrecamisa crea la tercera capa visible",
+  "rompe": "cerrar la sobrecamisa (mata el efecto de capas y el marco vertical), meter un color medio o un estampado en el bloque oscuro, o cambiar el sneaker claro por calzado oscuro: se pierde el único anclaje de contraste y el look se vuelve una masa plana"
+ },
+ {
+  "id": "d4d1a5dd-cc9d-469a-8d8e-628705dd1744",
+  "path": "hombre/casual-limpio/f-198b8638.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "bomber",
+    "detalle": "chamarra ligera tipo Harrington/bomber corta, con cuello camisero de contraste, cierre frontal abierto, puños y cintura elásticos, largo justo a la cadera, tela lisa mate sin brillo"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sudadera",
+    "detalle": "sudadera de cuello redondo en punto jaspeado, con refuerzo en V en el escote, silueta limpia y largo que asoma bajo la chamarra"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "pantalón de algodón de corte recto ligeramente afilado, tiro medio, sin pinzas visibles, bajo con dobladillo limpio que rompe apenas sobre el tenis"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis deportivo de running clásico en ante y malla, suela gruesa clara, agujetas claras, aire retro-atlético"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "calcetin",
+    "detalle": "calcetín corto de canalé que apenas asoma en el tobillo, tono claro alineado con el calzado"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "Dos bloques oscuros del mismo tono (capa y pierna) que enmarcan un centro claro-jaspeado; el calzado repite ese mismo claro medio abajo, cerrando el sándwich. Solo dos familias de color, ambas neutras, con contraste medio-alto entre centro y extremos y contraste casi nulo entre capa y pantalón",
+  "color_libre": "El par oscuro puede ir a azul marino, gris grafito, verde muy oscuro o marrón profundo siempre que capa y pantalón compartan tono; el centro y el calzado pueden ir de crudo a gris jaspeado, arena o beige claro. El cuello de contraste de la chamarra admite un tono ligeramente distinto sin romper nada",
+  "clave": "Que el pantalón sea prácticamente del mismo tono oscuro que la chamarra: la pierna continúa la capa y crea un marco vertical continuo, y el punto claro del torso queda como único bloque de luz arriba, con el tenis claro respondiéndole abajo. Sumado a eso, el cierre abierto de la chamarra y su largo corto dejan ver una franja de sudadera por debajo, que es lo que evita que el conjunto se lea como uniforme",
+  "rompe": "Poner el pantalón en un tono intermedio distinto (o estampado) que separe la pierna de la chamarra y meta un tercer color; también lo rompe un calzado oscuro o formal, que mata el eco claro de abajo, o cerrar la chamarra hasta arriba, que borra el bloque claro central"
+ },
+ {
+  "id": "c804b0e5-7d0a-4826-a62a-b7064aef4a2d",
+  "path": "hombre/casual-limpio/f-08c9a8f9.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "Camisa-chaqueta de lana ligera, cuello camisero, botonadura completa abierta, un bolsillo de plastrón en el pecho, largo a la cadera, mangas remangadas un giro, caída suave sin estructura de sastre"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "Punto fino de cuello redondo, liso, sin gráficos, largo justo por debajo de la cintura, llevado por dentro-suelto sin fajar"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "Pantalón de lana/franela de pinzas ligeras, corte recto ligeramente cónico, dobladillo con vuelta ancha que rompe apenas sobre el zapato, deja ver el tobillo"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "Sneaker minimalista de piel lisa, suela baja de goma, sin logos visibles, cordones al tono"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "bolsa",
+    "detalle": "Tote de nylon mate estructurado, asas largas, llevado en la mano y colgando"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "Montura redonda fina de acetato/metal"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "Reloj de esfera oscura con correa oscura, visible al remangar"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "Tres niveles de valor escalonados: capa en el tono más oscuro y saturado, torso en el más claro casi luminoso, pierna en un medio exacto entre los dos; calzado vuelve al claro del torso para cerrar el circuito, y el accesorio grande repite el oscuro de la capa. Todo son neutros de la misma familia fría, cero patrones, cero acentos de color.",
+  "color_libre": "El oscuro de la capa puede irse a marino, carbón, verde profundo o marrón chocolate; el medio de la pierna a gris, topo, piedra o beige mientras se mantenga a media distancia; el claro del torso a crudo, hueso o gris muy pálido. Lo único intocable es el escalonamiento oscuro-medio-claro y que el calzado eco el tono más claro.",
+  "clave": "La capa se lleva abierta y sin abotonar, así el bloque claro del torso funciona como una columna vertical central que estrecha la silueta y separa visualmente los dos tonos oscuro y medio; sumado a las mangas remangadas y la vuelta del pantalón que dejan ver muñeca y tobillo, es lo que convierte un conjunto de tres neutros en algo deliberado y no en ropa de estar por casa.",
+  "rompe": "Abotonar la camisa-chaqueta (mata la columna clara y el look se vuelve un bloque pesado). También lo arruina: meter el punto por dentro del pantalón, un pantalón del mismo oscuro que la capa (desaparece el escalonamiento), un sneaker deportivo con suela gruesa o logos, o añadir cualquier patrón o color de acento a un esquema que vive del monocromo por valores."
+ },
+ {
+  "id": "cbbe2f2a-b7a5-4b5a-8fac-3e0e63b40d7c",
+  "path": "hombre/casual-effortless/f-5105c3c8.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "relajado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sudadera",
+    "detalle": "sudadera de cuello redondo, corte holgado con hombro caído y manga amplia, tejido grueso de felpa, largo que cubre la cadera con puño y bajo acanalados"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "cargo",
+    "detalle": "pantalón cargo de algodón ligero, pierna recta-amplia con bolsillos de parche a los lados, largo tobillero que deja el tobillo al aire"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis deportivos tipo running de perfil bajo, suela gruesa con cámara de aire y paneles en gamuza y malla"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de pasta con montura redondeada y lente oscura"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de pulsera metálico que asoma en la muñeca al meter la mano al bolsillo"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "calcetin",
+    "detalle": "calcetín corto y claro apenas visible sobre el tenis"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "tres bloques: arriba un tono muy claro y cálido sin dibujo, abajo un tono medio-oscuro apagado y terroso que hace todo el contraste, y calzado que repite el tono claro del torso para cerrar el círculo; cero estampados, máximo dos familias de color",
+  "color_libre": "el tono claro del torso puede ir a cualquier neutro pálido (crema, arena, gris hueso) y el pantalón a cualquier oscuro apagado no negro (verde, marrón, azul polvoriento); lo que no debe cambiar es que el calzado eco el tono de arriba",
+  "clave": "el largo tobillero del cargo dejando un dedo de piel antes del tenis claro: eso separa visualmente el bloque oscuro del calzado y hace que el conjunto se lea intencional y no descuidado, además del volumen amplio arriba equilibrado por una pierna igual de relajada pero cortada",
+  "rompe": "meter un pantalón ajustado o de largo completo que cubra el tenis, añadir un tercer color fuerte o un logo grande en el pecho, o cambiar el tenis claro por bota/zapato oscuro que hunda la parte baja"
+ },
+ {
+  "id": "505d3335-7ca9-4f88-822c-cb293588da09",
+  "path": "hombre/casual-limpio/f-cfb66425.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "bomber",
+    "detalle": "Bomber de tejido mate tipo algodón/twill, cuello banda tejido, cierre frontal abierto, puños y bajo elásticos, largo a la cadera, silueta limpia sin volumen excesivo"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "Punto fino de cuello redondo, liso sin dibujo, ajuste recto que cae justo bajo la cintura del pantalón, puños y ribete acanalados"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "Pantalón de tejido con textura mate, corte cónico ajustado, tiro medio, sin pinzas visibles, largo justo con ligero break sobre el tenis"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "Tenis bajo minimalista de piel lisa, suela plana delgada, sin logos ni contrastes, cordones del mismo tono"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "Gafas de pasta con montura rectangular de acetato grueso, aro completo"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "Dos tonos oscuros próximos pero distinguibles por textura: la capa en un tono medio-oscuro terroso y el interior más pierna en un oscuro neutro casi monocromo, todo cortado en seco por un calzado muy claro que actúa como único punto de luz; fondo neutro cálido que no compite",
+  "color_libre": "El tono de la capa puede moverse a cualquier medio-oscuro apagado (terroso, azulado, vinoso) siempre que quede más claro y menos neutro que el bloque interior; el bloque suéter+pantalón puede ir a otro oscuro neutro (grafito, azul noche, marrón oscuro) mientras sea casi monótono; el calzado puede ser cualquier claro luminoso, incluso hueso o gris muy pálido",
+  "clave": "El suéter y el pantalón forman un bloque oscuro casi continuo —mismo registro de color, textura ligeramente distinta— y la chaqueta abierta funciona como marco vertical encima; el ribete del punto cayendo justo sobre la cintura evita que ese bloque se lea como pijama, y el tenis claro es lo único que rompe la columna oscura",
+  "rompe": "Cerrar la chaqueta (mata el marco vertical y el bloque interior), meter un tercer color saturado o un estampado en el torso, calzado oscuro que fundiría la pierna con el suelo, o pantalón ancho/con caída que rompería la línea cónica limpia"
+ },
+ {
+  "id": "abd0f135-48ba-46da-a4c7-93f36254ac61",
+  "path": "hombre/tonos-tierra/eb13343c.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "Camisa-chaqueta de algodón/lino lavado, corte holgado y hombro caído, un bolsillo de parche en el pecho, largo que cubre la cadera, llevada abierta con las mangas remangadas apenas al antebrazo"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "Camiseta de punto grueso, cuello redondo, corte recto y algo largo, por fuera del pantalón asomando bajo el borde de la sobrecamisa"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "Pantalón de algodón/denim rígido, tiro alto, pierna muy ancha y recta con caída pesada, largo que se apila sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "Sneaker bajo minimalista de piel lisa, suela gruesa de goma, sin logos visibles"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "Gafas de sol de acetato con montura rectangular estrecha y cristal oscuro"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "Dos bloques: un tono medio-oscuro terroso y apagado en la capa contra una base muy clara que ocupa pierna, torso y calzado; el interior y el pantalón comparten familia clara con una ligera diferencia de temperatura, sin ningún acento cromático. Paleta de dos valores, cero saturación",
+  "color_libre": "El tono de la capa puede moverse a cualquier medio-oscuro desaturado (tierra, piedra, verde apagado, azul polvoriento, gris pardo) y la base clara puede ir de crudo a hueso o gris muy claro; lo único intocable es que capa y base sigan a distinta altura de luminosidad",
+  "clave": "La camiseta clara sale por debajo del faldón de la sobrecamisa abierta y hace de puente exacto con el pantalón: la columna clara continúa sin corte del pecho al zapato, y la capa oscura funciona como marco vertical a los lados del torso",
+  "rompe": "Abotonar la sobrecamisa o fajar la camiseta (mata la columna clara y el efecto marco); usar un pantalón oscuro o ajustado, que rompe el bloque claro y la proporción ancha; añadir un color saturado o un logo que meta un tercer punto de atención"
+ },
+ {
+  "id": "87266700-0e6a-4527-8861-e7f6784697da",
+  "path": "hombre/tonos-tierra/f-63454984.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto grueso de algodón con textura marcada, cuello redondo, corte holgado y largo que cubre la cadera, sin meter"
+   },
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "camisa-chaqueta de tela lavada tipo pana/algodón, cuello camisero blando, abierta sin abotonar, hombro caído y largo por debajo de la cadera"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "pantalón de algodón ligeramente rígido, pierna recta y amplia, caída con arrugas naturales, largo que rompe sobre el tobillo"
+   },
+   {
+    "zona": "pie",
+    "tipo": "bota",
+    "detalle": "botín tipo chelsea de ante, perfil bajo y limpio, suela fina"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de esfera clara y correa estrecha, visible al asomar la muñeca del puño"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres niveles del mismo eje cálido neutro: capa en el tono más oscuro y apagado, torso y pierna en tonos claros casi iguales que crean un bloque continuo, y calzado en un medio terroso que aterriza el conjunto. Cero colores saturados, cero estampados, contraste concentrado solo entre capa y bloque claro",
+  "color_libre": "la capa puede ir a cualquier oscuro apagado (marino, gris pizarra, marrón profundo); el bloque suéter+pantalón puede moverse a arena, crema, gris hueso o camel pálido siempre que ambos queden casi al mismo valor; el calzado a cualquier medio terroso o gris ante",
+  "clave": "que el suéter claro y el pantalón claro sean casi el mismo tono, creando una columna monocroma que la capa oscura y abierta enmarca por los lados como dos líneas verticales; el suéter cae suelto sobre el pantalón sin fajar y el bajo del overshirt asoma por debajo del punto",
+  "rompe": "cerrar o abotonar la capa (mata el marco vertical), fajar el suéter, subir el contraste entre suéter y pantalón, un pantalón ajustado o de mezclilla azul, o cambiar el botín de ante por tenis blancos"
+ },
+ {
+  "id": "2bb016de-9715-4eae-acbe-c1727e881da9",
+  "path": "hombre/casual-effortless/0feb1f20.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto de canalé medio grueso con cuello tipo polo y media cremallera abierta, corte holgado y largo justo a la cadera, mangas remangadas a media pantorrilla del antebrazo"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa lisa de popelín llevada debajo, cuello desabotonado asomando por el cuello del punto y puños visibles saliendo bajo la manga remangada"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de pinza con raya marcada, tiro medio-alto, pierna recta y ligeramente amplia, largo que apoya sobre el zapato sin romperse"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis minimalistas de piel lisa, suela baja y limpia, sin logo visible, tobillo descubierto"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja metálica con correa oscura, visible por la manga remangada"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "dos bloques: un tono medio cálido y apagado arriba contra una base muy clara abajo, con la camisa interior aún más clara que el punto para abrir el escote; calzado del mismo registro claro que el pantalón y un único punto oscuro pequeño en la muñeca. Tres valores en total, sin ningún color saturado",
+  "color_libre": "el tono del punto puede moverse a cualquier medio apagado (terroso, verdoso, gris, azul polvo) siempre que quede más oscuro que el pantalón; el pantalón y el tenis pueden ir a cualquier claro neutro; la camisa a cualquier claro más luminoso que el punto",
+  "clave": "el cuello de la camisa saliendo abierto dentro del cuello-polo del punto y los puños asomando bajo las mangas remangadas: eso es lo que convierte un suéter casual en un look arreglado, junto con la raya de plancha del pantalón contrastando con el tenis",
+  "rompe": "meter el punto por dentro del pantalón, cerrar la cremallera hasta arriba y esconder la camisa, o cambiar el pantalón de pinza con raya por jeans o jogger: el look pierde el contraste sastre-punto y cae en chándal"
+ },
+ {
+  "id": "218c604f-edc1-4832-b228-3e4e1e4f7890",
+  "path": "hombre/tonos-tierra/f-7f764695.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "chamarra-mezclilla",
+    "detalle": "chamarra corta tipo trucker en ante/piel vuelta, cuello camisero, dos bolsillos de pecho con tapa, botonadura frontal abierta, largo justo a la cadera, mangas remangadas ligeramente en el puño"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de algodón, cuello redondo, corte limpio, metida por dentro del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "chino de algodón ligero, tiro medio, pierna estrecha y afilada, largo al tobillo sin quiebre, sin dobladillo visible"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis bajos de lona con puntera de goma y suela blanca, cordones al tono, silueta plana y minimalista"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de pasta con montura rectangular fina"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "tres niveles: capa en tono medio-oscuro terroso y mate, torso en el valor más claro y neutro, pierna en un tono claro cálido intermedio, calzado repitiendo el claro del torso para cerrar el circuito. Contraste vertical suave arriba-abajo, con el punto más claro concentrado en el centro del pecho",
+  "color_libre": "la capa puede ir a cualquier tono oscuro apagado y terroso; el pantalón a cualquier neutro claro cálido; lo que no se toca es que torso y calzado compartan el mismo valor claro y que la capa sea la pieza más oscura",
+  "clave": "la textura mate y aterciopelada del ante contra la lisura de la camiseta y del chino: es lo único que da riqueza a un look de cuatro piezas sin estampado. Eso, más la camiseta metida por dentro y la chamarra abierta, que dibujan una línea vertical clara en el centro del cuerpo",
+  "rompe": "llevar la camiseta por fuera o abotonar la chamarra (se pierde la franja clara central y el torso se acorta); un pantalón ancho o con quiebre sobre el zapato, que mata la silueta afilada; un calzado oscuro o pesado, que rompe la rima con la camiseta y ancla el look hacia abajo"
+ },
+ {
+  "id": "1eaec440-5da7-4e9b-95df-e3614d40ffdc",
+  "path": "hombre/tonos-tierra/f-e8888cff.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "overshirt",
+    "detalle": "sobrecamisa de tejido grueso mate, corte holgado y algo corto, cuello camisero abierto, botonadura frontal vista, dos bolsillos de parche con tapa a la altura del pecho, mangas largas caídas hasta la muñeca, llevada abierta"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de punto medio, cuello redondo, hombro caído, largo por debajo de la cadera de modo que asoma bajo la sobrecamisa, sin meter en el pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de algodón sarga, tiro alto, pierna ancha y recta con caída limpia, largo que se apoya sobre el calzado formando un ligero quiebre, sin pinzas visibles"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis de suela gruesa tipo chunky, piel lisa, cordones, tobillo bajo, en el mismo tono claro del pantalón"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de pasta con montura rectangular gruesa y lente espejado"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "calcetin",
+    "detalle": "calcetín corto que apenas aparece, invisible al ojo, sin cortar la línea de la pierna"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "dos bloques y nada más: un tono medio-oscuro cálido y saturado en la capa, contra una base muy clara y casi monocroma que une torso, pierna y calzado; sin terceros colores, sin estampado, todo mate salvo el brillo del lente",
+  "color_libre": "la capa puede ser cualquier tono medio-oscuro cálido o profundo siempre que quede claramente más oscuro que la base; la base clara puede moverse entre blancos y cremas o incluso un gris muy claro, pero torso, pierna y zapato deben leerse como el mismo bloque",
+  "clave": "la base clara es continua de arriba abajo —camiseta, pantalón y tenis en el mismo tono— y la sobrecamisa abierta funciona como marco vertical que parte esa columna en dos franjas; el largo de la camiseta asomando bajo el dobladillo de la capa es lo que evita que la silueta se corte en la cintura",
+  "rompe": "meter la camiseta en el pantalón o abotonar la sobrecamisa (se pierde la columna clara y el marco), un pantalón pitillo o corto que rompa el volumen ancho, calzado oscuro que ancle la parte baja, o añadir un tercer color/estampado que desarme el juego de solo dos bloques"
+ },
+ {
+  "id": "237193c3-d237-4387-b971-649648d91999",
+  "path": "hombre/tonos-tierra/f-a4ed67f7.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "cardigan",
+    "detalle": "punto grueso de canalé, cuello en V profundo, botonadura frontal abierta, corte cajón que termina a la cadera, mangas largas remangadas ligeramente al antebrazo"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "cuello redondo, algodón de peso medio, caída limpia sin meter, largo que asoma por debajo del punto"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "tejido rústico tipo lona/denim sin lavar, tiro alto, pierna ancha y recta con caída pesada, ligero break sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo minimalista de piel lisa, suela fina, sin gráficos"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "aro pequeño discreto en la oreja"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "gama monocromática cálida y clarísima: la capa un tono ligeramente más saturado y medio que el pantalón, el torso el punto más luminoso y frío del conjunto, calzado alineado con el tono más claro. Cero contraste fuerte, todo se resuelve por diferencias mínimas de valor y textura",
+  "color_libre": "puede trasladarse a una familia gris-piedra, verde salvia apagado o azul polvo, siempre manteniendo capa un paso más oscura que pierna y torso como el punto más claro; el calzado debe seguir al tono más claro",
+  "clave": "la camiseta clara asomando por el escote en V y por el bajo del cardigan abierto, que corta verticalmente el bloque de punto y evita que la gama de tonos casi iguales se lea como pijama; el contraste real lo aporta la textura de canalé grueso contra la lona lisa del pantalón",
+  "rompe": "cerrar el cardigan o meter la camiseta dentro del pantalón, un pantalón estrecho o de tono oscuro que rompa el continuo claro, y calzado voluminoso o de suela alta que ancle el volumen abajo"
+ },
+ {
+  "id": "b18392b7-2f58-4f59-a137-ab040c2c1d0c",
+  "path": "hombre/casual-effortless/7d48f383.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de vestir lisa, cuello semi-abierto sin corbata, faldón asomando por debajo del punto y puños visibles en las muñecas; se lleva por dentro del pantalón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de cuello redondo, liso sin textura marcada, corte holgado y largo que cae a la cadera, mangas hasta la muñeca sin arremangar"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de lana con textura jaspeada, pinza suave, pierna recta y ancha, largo tobillero sin quiebre sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker de piel lisa con suela gruesa tipo chunky, silueta limpia y minimalista, cordones al tono"
+   }
+  ],
+  "guarnicion": [],
+  "zonas_no_visibles": [
+   "capa",
+   "accesorio"
+  ],
+  "color_relacion": "tres niveles claros: pieza superior en el tono más oscuro y saturado del conjunto, base inferior en un neutro terroso medio con textura moteada, y los extremos (cuello, faldón, puños y calzado) en el tono más claro que enmarca y cierra el look; sin patrones ni colores de acento",
+  "color_libre": "el punto puede ser cualquier tono oscuro sólido (marino, verde muy profundo, gris carbón); el pantalón cualquier neutro medio con textura de lana (camel, gris topo, verde apagado); la camisa y el sneaker deben mantenerse en el extremo claro, pero pueden ir a crema o hueso",
+  "clave": "el triple asomo de la camisa clara bajo el punto oscuro —cuello, puños y faldón por delante— que es lo que convierte un suéter casual en un look armado; se refuerza con el tobillo descubierto entre el bajo del pantalón y el sneaker",
+  "rompe": "meter el suéter por dentro o esconder el faldón y los puños de la camisa: el look pierde toda su estructura y queda plano; también lo rompe un pantalón de mezclilla o un largo que se amontone sobre el zapato, o cambiar el sneaker limpio por uno deportivo con logos y colores"
+ },
+ {
+  "id": "d137b736-7af5-4714-adfa-945780fffada",
+  "path": "hombre/casual-effortless/60b56f1a.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto de cuello redondo, corte boxy y algo corto de talle, mangas amplias remangadas en el antebrazo, tejido grueso liso"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo que asoma un par de dedos por debajo del bajo del punto, sin meter"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de trabajo de sarga, tiro alto, pierna muy ancha y recta con costura frontal marcada, largo que se apila sobre el empeine"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis retro bajos de piel, silueta plana y estrecha, con detalle de tres bandas en contraste y suela de goma tipo gum"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de pasta redondas de armazón fino"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "un tono oscuro y sólido dominando el torso contra un tono medio-oscuro terroso en la pierna (dos oscuros que no son el mismo, contraste suave), cortados por una franja muy clara en la cintura y una base clara en el pie que cierra abajo lo que abre la camiseta",
+  "color_libre": "los dos oscuros pueden moverse a cualquier par de tonos profundos que no coincidan (uno frío arriba, uno terroso abajo, o al revés); el calzado y la capa base admiten cualquier neutro muy claro",
+  "clave": "la banda de la camiseta clara asomando por debajo del punto boxy: es lo que separa las dos masas oscuras y da la única línea horizontal del look, y el eco de ese claro en el tenis lo equilibra",
+  "rompe": "meter la camiseta o usar un punto largo que la tape (desaparece la franja y el torso se vuelve un bloque), o cambiar el pantalón ancho por uno slim: la silueta depende del contraste corto-arriba / muy ancho-abajo"
+ },
+ {
+  "id": "c3228c0e-dbd4-492c-9ab5-12b7c60ebaf1",
+  "path": "hombre/casual-effortless/549b5de6.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de lino ligera, corte relajado con caída fluida, cuello abierto sin corbata, primeros botones sueltos, mangas remangadas hasta el antebrazo, faldón por fuera y largo que cubre la cadera"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de algodón/lino de pierna muy ancha y recta, tiro medio-alto, sin pinzas visibles, largo generoso que se apila sobre el calzado"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis bajos de lona con puntera de goma y suela plana, silueta clásica y ligera, casi tapados por el bajo del pantalón"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja cuadrada con brazalete metálico de eslabones, visible al llevar la manga remangada"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "dos bloques y nada más: un tono profundo y apagado arriba contra una base muy clara y neutra abajo; el calzado repite la claridad del bajo para alargar la pierna, y el único brillo es el metal del reloj. Contraste medio-alto pero de temperatura cálida en ambos bloques, sin un tercer color compitiendo",
+  "color_libre": "el tono oscuro del torso puede ir a cualquier profundo mate cálido o frío (tierra, vino apagado, verde oscuro, azul tinta, negro suavizado); la base clara admite cualquier neutro pálido (crudo, arena, gris claro, blanco roto). Lo que no se toca es que sean solo dos colores y que el calzado siga la familia del pantalón",
+  "clave": "el desequilibrio de volúmenes controlado: camisa fluida pero pegada al torso, metida en ninguna parte, cortando la silueta justo en la cadera para que el pantalón enorme arranque desde un punto definido; las mangas remangadas y el cuello abierto quitan formalidad a una camisa que si no sería de vestir, y el pantalón cae tan largo que solo asoma la punta del tenis",
+  "rompe": "meter la camisa dentro del pantalón o usar cinturón visible (mata la línea limpia); un pantalón estrecho o corto de tobillo, que deja el look sin su contraste de volumen; añadir un tercer color o un estampado; calzado voluminoso o de suela alta bajo tanto tejido; camisa de tela rígida y brillante en lugar de lino mate"
+ },
+ {
+  "id": "3e24d47a-4bed-497a-8851-64508926a037",
+  "path": "hombre/casual-effortless/1c8d637f.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "camisa-oxford",
+    "detalle": "camisa de algodón con cuello button-down, un bolsillo de parche en el pecho, llevada abierta como sobrecamisa ligera y con las mangas remangadas dos vueltas a media antebrazo; corte recto que cae suelto sin abolsarse"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo, punto de algodón medio, sin gráficos, largo justo para quedar por dentro del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "chino de algodón con caída limpia, talle medio, pierna recta ligeramente afilada y dobladillo remangado una vuelta ancha que deja ver el tobillo"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo de piel lisa, silueta minimalista, suela fina y plana, sin logos visibles"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de pasta con forma wayfarer y lente oscura"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja metálica con correa oscura, asomando bajo la manga remangada"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "tres bloques: capa en el tono más oscuro y saturado del conjunto, base de torso y calzado en el tono más claro posible, y pierna en un neutro cálido intermedio que hace de puente; paleta de tres valores sin ningún patrón, todo liso, el contraste fuerte se concentra entre capa y camiseta",
+  "color_libre": "la capa admite cualquier oscuro profundo (azul noche, verde bosque, gris carbón, burdeos apagado); el pantalón puede ir a cualquier neutro cálido medio (arena, camel claro, gris cálido, oliva desaturado); la base y el calzado pueden moverse a crudo, hueso o gris muy claro. Lo que no se toca es el orden de valores: oscuro arriba, medio abajo, claro en el centro y en el pie",
+  "clave": "la camisa abierta funciona como chaqueta y no como camisa: el remangado marcado en dos vueltas, los faldones cayendo sueltos por fuera y la camiseta metida por dentro del chino crean una línea vertical limpia en el centro que estiliza; el dobladillo remangado del pantalón deja un pequeño hueco de tobillo que conecta con el sneaker claro",
+  "rompe": "abotonar la camisa (mata el efecto capa y lo convierte en camisa sola), bajar las mangas o llevar la camiseta por fuera tapando la cintura, meterle un patrón o logo a la camiseta, un pantalón oscuro o del mismo valor que la camisa (pierde los tres bloques), y un sneaker voluminoso o deportivo con logos en lugar del zapato bajo y liso"
+ },
+ {
+  "id": "5ef505df-c34f-4fab-a92e-014859c665f5",
+  "path": "hombre/casual-effortless/f-9564e0ac.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "relajado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sudadera",
+    "detalle": "sudadera de cuello redondo oversize, algodón grueso con puños y bajo acanalados anchos, hombro caído y largo que termina justo en la cadera"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "cargo",
+    "detalle": "pantalón amplio de tela ligera tipo ripstop, cintura con cordón, caída globosa con mucho break y tobillo elastizado/recogido"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis chunky de running retro, suela gruesa y voluminosa, mismo tono que la parte de arriba para no cortar la silueta"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "bolsa",
+    "detalle": "bolsa pequeña de nylon cruzada al pecho, correa ancha en diagonal sobre el torso, tono oscuro que hace de línea gráfica"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa",
+   "accesorio"
+  ],
+  "color_relacion": "dos bloques: tono claro cálido y neutro arriba y en el calzado, tono medio terroso apagado en la pierna; un único acento oscuro fino cruzando el torso. Contraste medio-suave, nada saturado",
+  "color_libre": "el tono claro puede ir a crudo, hueso, arena o gris pálido; el pantalón puede ser cualquier apagado terroso (oliva, topo, marrón, gris piedra); el accesorio cruzado en negro o cualquier oscuro plano",
+  "clave": "la silueta invertida: volumen ancho arriba y abajo pero cintura marcada por el borde acanalado de la sudadera cayendo justo encima del pantalón, más el eco de tono entre sudadera y tenis que encierra el bloque oscuro-terroso del pantalón",
+  "rompe": "meter el pantalón en un corte slim o de largo corto sin break, o cambiar los tenis chunky claros por algo plano y oscuro: la silueta se desinfla y el bloque de color deja de cerrarse arriba y abajo"
+ },
+ {
+  "id": "e81c9188-ad63-451e-9bba-3606bc8e5142",
+  "path": "hombre/casual-effortless/f-8e2e85cc.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto grueso de cuello redondo, corte oversize con hombro caído, puños y bajo con rib ancho, largo que cae sobre la cadera"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo debajo, asomando apenas en el cuello y por el bajo del punto"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de tela mate, tiro alto, pierna muy ancha y recta con caída pesada, bajo largo que se apila sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis bajos retro de piel con tres bandas laterales, suela fina de goma tipo gum y lengüeta marcada"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol colgadas del cuello del suéter"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "anillo sencillo en la mano"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "calcetin",
+    "detalle": "calcetín corto claro apenas visible en el tobillo"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "tres bloques: tono claro-cálido apagado arriba, tono muy oscuro y mate abajo, y calzado claro con detalle contrastante oscuro; la prenda interior repite el claro del torso para unir; máximo tres familias de color y cero estampados",
+  "color_libre": "el punto puede ir a cualquier neutro cálido claro (arena, crema, gris humo) y el pantalón a cualquier oscuro mate (negro, marino, verde muy profundo); el tenis puede ser blanco o hueso con banda de cualquier tono oscuro",
+  "clave": "el contraste de volúmenes: punto grueso y amplio arriba metido por fuera sobre pantalón todavía más ancho, con la camiseta interior asomando un dedo en cuello y bajo para cortar la masa de tejido — y el bajo apilándose justo encima de un tenis bajo y ligero que devuelve el look a lo casual",
+  "rompe": "pantalón entallado o de largo tobillero (mata la proporción ancho-sobre-ancho), suéter fino o entallado, calzado voluminoso o formal, o meter la camiseta y el suéter dentro del pantalón"
+ },
+ {
+  "id": "8a3b2de2-5cd1-41e5-b539-7817dcc44fac",
+  "path": "hombre/casual-effortless/560ff8b8.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sudadera",
+    "detalle": "sudadera de cuello redondo, tejido jaspeado de peso medio, corte holgado pero no oversize, mangas ligeramente arremangadas en el antebrazo y largo que cae justo bajo la cintura"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo usada debajo, asomando apenas 2-3 cm por el bajo de la sudadera"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "chino de algodón firme, tiro medio-alto, pierna recta amplia con caída limpia, tobillo con dobladillo/vuelta que rompe justo encima del zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo de piel lisa, silueta minimalista sin logos visibles, suela fina, tobillo al aire"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de acetato con montura tipo wayfarer y lente oscuro"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de brazalete metálico, esfera clara, visible al llevar la mano en el bolsillo"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "gama monocorde de tres claros muy próximos: un tono claro frío jaspeado arriba, un tono claro cálido y algo más saturado abajo, y el punto más luminoso repetido en la camiseta que asoma y en el calzado; sin ningún contraste fuerte salvo el negro puntual del accesorio de cara",
+  "color_libre": "la pareja arriba/abajo puede moverse entera a otras dos claridades cercanas (frío arriba y cálido abajo, o al revés) siempre que sigan siendo tonos apagados y de luminosidad similar; el calzado y la capa interior pueden ir a cualquier claro muy alto",
+  "clave": "la franja del bajo de la camiseta asomando bajo la sudadera: es lo que da capas e intención a un conjunto que si no sería una sudadera suelta; eso más el dobladillo del pantalón parándose exacto sobre el sneaker, dejando ver el tobillo",
+  "rompe": "meter un color saturado o un contraste oscuro en torso o pierna; pantalón pitillo o largo que se amontone sobre el zapato; sudadera con capucha, logo grande o demasiado corta como para no dejar asomar la camiseta; calzado voluminoso o de suela gruesa deportiva"
+ },
+ {
+  "id": "c1fc0d19-0b56-4588-8f2c-1f9e0724baa2",
+  "path": "hombre/casual-effortless/9d5101e5.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "Camisa de vestir ligera a rayas finas verticales, cuello abotonado clásico y puños que sobresalen; se lleva metida bajo el punto, asomando solo cuello y puños"
+   },
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "Suéter de punto acanalado grueso, cuello redondo, corte holgado y largo hasta la cadera, mangas caídas y remangadas apenas en el antebrazo, encima de la camisa"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "jeans",
+    "detalle": "Vaquero de pierna ancha y recta, tiro medio, lavado con degradados y marcas de uso, largo que apoya y se apila sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "zapato-formal",
+    "detalle": "Zapato bajo de piel lisa con puntera redonda y suela gruesa de goma, aspecto robusto tipo derby de trabajo"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "Reloj de pulsera metálica de caja pequeña y rectangular, llevado sobre el puño de la camisa"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "Dos anillos finos de metal en ambas manos"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "Bloque superior de un tono oscuro apagado y mate, cortado por un asomo de tejido claro con rayado fino de contraste bajo en cuello y puños; abajo un medio con lavado irregular que hace de tono intermedio entre el oscuro de arriba y el oscuro del calzado; metales fríos como único brillo",
+  "color_libre": "El tono del punto puede ser cualquier oscuro apagado (no negro puro); las rayas de la camisa pueden ser de cualquier color suave sobre base clara; el lavado del vaquero admite cualquier intensidad media siempre que no sea plano; el calzado puede ser cualquier oscuro profundo",
+  "clave": "Los puños de la camisa rayada asomando bien largos bajo las mangas del punto y el cuello abierto por encima del escote redondo: eso es lo que convierte un suéter con jeans anchos en algo compuesto y no en ropa de estar en casa",
+  "rompe": "Meter el suéter, esconder cuello y puños, o pasar a un vaquero ajustado y un tenis: se cae el volumen de arriba-abajo y desaparece la nota de sastrería que da la camisa"
+ },
+ {
+  "id": "68bec147-49c2-416d-89c3-17091aee4dea",
+  "path": "hombre/minimalista/af84d6b5.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "Camisa ligera de algodón/lino con caída fluida, cuello italiano abierto sin corbata, dos botones superiores desabotonados, mangas remangadas de forma descuidada hasta media antebrazo, faldón por fuera del pantalón terminando a la altura de la entrepierna"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "chino",
+    "detalle": "Pantalón de pinzas de tejido suave, tiro medio-alto, corte recto con leve conicidad, largo cropped que deja ver el tobillo sin quiebre sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "Sneaker minimalista de piel lisa, sin logos visibles, suela gruesa lisa, cordones al tono, llevado sin calcetín visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "Reloj de caja metálica con brazalete de eslabones, visible en la muñeca izquierda al llevar la mano en el bolsillo"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "Monocromía cálida en dos peldaños muy próximos: tono más claro y luminoso arriba, un paso apenas más profundo y terroso en la pierna, y vuelta al tono más claro en el calzado, que rima con la camisa y cierra el bloque; único punto de contraste es el brillo metálico del accesorio. Cero estampados, cero color saturado.",
+  "color_libre": "Los tonos exactos de la pareja claro/arena pueden desplazarse a marfil, hueso, avena, gris perla o caqui pálido; el calzado puede ir en cualquier tono claro que repita el de la camisa. Lo que no debe cambiar es que ambos tonos sean cálidos y estén a un solo paso de distancia.",
+  "clave": "El escalonado clarísimo camisa → pantalón un tono más denso → tenis que vuelve al tono de la camisa, sostenido por la camisa por fuera con faldón corto y las mangas remangadas: eso es lo que convierte una camisa formal en algo relajado sin perder pulcritud, y el tobillo descubierto por el largo cropped es lo que hace que un sneaker no se vea deportivo.",
+  "rompe": "Metersela camisa y añadir cinturón (lo vuelve oficinista), bajar las mangas y abotonar el puño, un pantalón con largo completo que se arrugue sobre el zapato, o introducir una tercera familia de color —negro, azul marino, cualquier estampado— que rompa la monocromía cálida."
+ },
+ {
+  "id": "f0d40da5-7e4a-40fd-a76c-ed40b93e9de2",
+  "path": "hombre/minimalista/449a49ce.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "bomber",
+    "detalle": "chamarra ligera de tela lisa con cuello tipo Harrington, cierre completo abierto, puños y bajo elásticos, corte corto que termina justo en la cadera, hombros limpios sin estructura"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de algodón medio, cuello redondo, manga corta, caída holgada y largo que cubre la cintura, llevada por fuera del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de tela suave, tiro medio, pierna recta ligeramente cónica, largo que rompe una vez sobre el tobillo, sin pinzas visibles"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo minimalista de piel lisa, suela fina del mismo tono, sin logos ni contrastes"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de montura fina y lente oscuro pequeño, forma redondeada"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "cadena delgada al cuello, apenas visible en el escote de la camiseta"
+   }
+  ],
+  "zonas_no_visibles": [
+   "accesorio"
+  ],
+  "color_relacion": "tres bloques de valor bien separados: capa en tono claro cálido neutro, torso en el punto más claro y luminoso del conjunto, pierna en el extremo más oscuro; el calzado repite el valor más claro para cerrar el circuito arriba-abajo. Cero estampados, cada zona un solo tono plano",
+  "color_libre": "la capa puede moverse a cualquier neutro medio-claro (arena, gris piedra, camel apagado, verde salvia desaturado) y el pantalón a cualquier oscuro sólido (negro, azul tinta, gris grafito, marrón profundo) siempre que la camiseta y el sneaker se queden en el tono más claro disponible",
+  "clave": "la chamarra va totalmente abierta y sin nada que la cierre, dejando la camiseta clara como una columna central continua desde el cuello hasta el tiro del pantalón; el sneaker claro rima con esa columna y evita que el bloque oscuro de la pierna se hunda",
+  "rompe": "cerrar el cierre de la chamarra o meter la camiseta dentro del pantalón: se pierde la columna clara central. También romperlo un calzado oscuro (el bajo queda pesado y sin eco del torso), un pantalón claro (desaparecen los tres niveles de valor) o cualquier estampado, logo o textura ruidosa en las tres capas"
+ },
+ {
+  "id": "97dfb49a-0164-4fdd-9ed4-d8fa00e57e11",
+  "path": "hombre/minimalista/91ee6fbd.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "capa",
+    "tipo": "cardigan",
+    "detalle": "cardigan de punto fino sin cuello, abierto todo el recorrido, largo justo por debajo de la cadera, caída suave y mangas ligeramente holgadas remangadas apenas en la muñeca"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta de punto grueso con cuello redondo acanalado, corte relajado, fajada de forma limpia dentro del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de tejido sólido con pinzas al frente, talle alto, pierna ancha y caída recta con bastante largo que se acumula sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "zapato-formal",
+    "detalle": "zapato bajo de piel con acabado mate y textura, puntera discreta, suela fina, casi tapado por el bajo del pantalón"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de esfera clara y caja metálica pulida, visible al asomar la muñeca del bolsillo"
+   }
+  ],
+  "zonas_no_visibles": [],
+  "color_relacion": "tres valores de la misma familia neutra sin ningún color saturado: la capa en el tono medio, el torso en el más claro y limpio, la pierna en un claro cálido apenas más apagado, y el calzado como único punto más oscuro y terroso que ancla abajo; contraste bajo en todo el conjunto",
+  "color_libre": "la capa puede ir a cualquier neutro medio (gris cálido, topo, verde apagado, camel); el pantalón a cualquier claro cálido (crudo, arena, hueso); el torso puede ser blanco o crema; el zapato cualquier marrón o neutro más oscuro que el pantalón",
+  "clave": "la camiseta pesada fajada limpiamente marcando la cintura alta del pantalón de pinzas, y el cardigan abierto colgando por encima sin cerrar: la línea vertical del cardigan abre el torso claro en el centro y alarga la silueta, mientras el volumen se concentra abajo",
+  "rompe": "cerrar el cardigan o dejar la camiseta fuera del pantalón (se pierde la cintura alta y el conjunto se vuelve un bulto), meter un pantalón ajustado o corto de tobillo, o introducir un color saturado o un estampado que rompa la escala monocroma de neutros"
+ },
+ {
+  "id": "e37dfffb-81f8-470a-940b-75be4afdf1a6",
+  "path": "hombre/minimalista/60b56f1a.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto grueso de cuello redondo, corte boxy y corto de talle, hombro caído y mangas anchas remangadas hacia el codo"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de cuello redondo asomando por debajo del dobladillo del punto, capa base larga"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de trabajo en tela firme de algodón, tiro alto, pierna muy ancha y recta con caída en bloque y break amplio sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis retro bajos de perfil plano, suela fina en goma, con panel lateral en contraste"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de pasta redondas de montura fina"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "tres bloques: un tono muy oscuro y saturado arriba, un medio-oscuro apagado y terroso abajo, y un tono muy claro casi neutro asomando en la capa base y repetido en el calzado; contraste alto arriba-abajo contra un mismo claro que rima cintura y pies",
+  "color_libre": "el oscuro del punto y el terroso del pantalón pueden moverse a cualquier par de tonos profundos distintos entre sí; el claro de camiseta y tenis debe mantenerse claro pero puede ser crudo, arena o gris pálido",
+  "clave": "el dobladillo de la camiseta clara asomando dos o tres dedos por debajo del punto boxy — es lo que da la línea de cintura y hace que el volumen de arriba y de abajo dialoguen en vez de aplastarse",
+  "rompe": "meter la camiseta por dentro o usar un suéter largo que tape la cintura; también un pantalón entallado o un tenis voluminoso de suela gruesa, que rompen el equilibrio de volumen ancho con silueta baja en el pie"
+ },
+ {
+  "id": "9c8c4d2f-d1e3-4e7b-ba89-b0bbe9670275",
+  "path": "hombre/minimalista/ec61e0b1.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "relajado",
+  "ocasiones": [
+   "diario"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "Camiseta de algodón grueso corte oversize, hombros caídos, manga corta ancha con dobladillo remangado, largo que cubre la cadera y cae suelta sin fajar; estampado gráfico tipo vintage en el pecho a un solo color contrastante"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "jeans",
+    "detalle": "Denim de pierna muy ancha y recta, tiro alto, tejido con lavado desgastado y arrugas marcadas, largo excesivo que se apila sobre el zapato formando pliegues en el tobillo"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "Sneaker bajo de piel lisa, silueta retro de cancha con suela de goma fina y bandas laterales contrastantes; casi tapado por el bajo del pantalón"
+   }
+  ],
+  "guarnicion": [],
+  "zonas_no_visibles": [
+   "capa",
+   "accesorio"
+  ],
+  "color_relacion": "Dos bloques de contraste alto: torso en tono muy claro cálido, pierna en tono muy oscuro lavado; el calzado repite el claro del torso para cerrar el circuito, y el estampado aporta un único acento cálido saturado de superficie mínima",
+  "color_libre": "El acento del gráfico puede ser cualquier tono cálido o terroso sin cambiar nada; el claro del torso puede ir de crudo a gris humo y el oscuro de la pierna a azul tinta o marrón profundo mientras se mantenga la distancia entre ambos",
+  "clave": "La proporción: la camiseta amplia termina justo por debajo de la cintura del pantalón ancho, sin fajar y sin quedar corta, de modo que la silueta es una sola columna recta; y el bajo apilándose sobre el sneaker dejando ver solo la punta blanca",
+  "rompe": "Meter el pantalón dentro del zapato o acortarlo al tobillo, cambiar el denim ancho por uno ajustado, o fajar la camiseta: la silueta en columna desaparece y el look se vuelve genérico"
+ },
+ {
+  "id": "1f367e32-d599-46d8-a615-bd3261267a92",
+  "path": "hombre/minimalista/1ac46f12.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de lino de cuerpo fluido, corte holgado, mangas remangadas de forma descuidada hasta el antebrazo, cuello abierto dos botones, faldón por fuera sin fajar, bolsillo de parche en el pecho"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón de tela lavada tipo lino/algodón, tiro alto, pierna extra ancha y recta desde la cadera, largo que se apoya y se rompe sobre el zapato, sin pinzas visibles y sin cinturón"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis bajos de lona con puntera de goma redonda, silueta plana y minimalista, casi tapados por el ruedo del pantalón"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj rectangular pequeño de correa metálica, único elemento con brillo en todo el conjunto"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "dos bloques y nada más: un tono profundo y saturado arriba contra una base muy clara y desaturada abajo, ambos de la misma familia cálida y terrosa, así que el contraste es de luminosidad y no de matiz; el calzado repite el claro de la base para alargar la pierna y el metal del reloj es el único acento frío",
+  "color_libre": "el bloque superior puede ir a cualquier oscuro cálido o profundo (tierra, vino, verde botella, azul tinta) y el inferior a cualquier claro apagado (crema, arena, gris hueso, celeste desvaído); lo que no puede cambiar es que el de arriba sea claramente el más oscuro de los dos",
+  "clave": "el desequilibrio de volúmenes: camisa holgada pero con hombro definido metida visualmente por la cintura altísima del pantalón, de modo que el faldón cae libre justo hasta donde arranca la pierna ancha y crea una silueta de columna. Eso más las mangas subidas de forma irregular, que dan aire relajado a una prenda que de otro modo se leería formal",
+  "rompe": "cambiar el pantalón por uno ceñido o de tiro bajo (desaparece la silueta entera), fajar la camisa o abotonarla hasta arriba, y añadir un tercer color fuerte o un calzado voluminoso y oscuro que corte la caída del ruedo"
+ },
+ {
+  "id": "aab900f3-0e66-4aa0-9377-98bdd797a180",
+  "path": "hombre/minimalista/d5a55d1d.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto de canalé grueso con medio cierre y cuello alto, corte holgado, mangas amplias, largo a la cadera"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "cuello redondo de algodón liso, asomando por el cuello y por debajo del dobladillo del punto"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "tejido rígido tipo lona/denim claro, tiro alto, pierna muy ancha y recta, largo que se apila sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "sneaker bajo de piel lisa, silueta minimalista, suela fina"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "gorra",
+    "detalle": "gorra de béisbol de tela con visera curva y logo bordado pequeño al frente"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "bolsa",
+    "detalle": "tote grande de tela blanda, colgado al hombro cruzando el pecho, se deforma con el peso"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "monocromía casi total en un rango claro y cálido de un solo bloque —torso y pierna en el mismo tono con mínima variación de textura—, calzado en el punto más claro de la escala, y dos únicos puntos de contraste máximo oscuro (cabeza y bolsa) que enmarcan el conjunto arriba y al costado",
+  "color_libre": "la familia clara puede moverse a cualquier neutro pálido (crudo, arena, gris muy claro, blanco roto) siempre que suéter y pantalón queden dentro de dos pasos de tono; los dos acentos oscuros pueden ser negro, marrón muy oscuro o azul tinta, pero deben ser el mismo registro entre sí",
+  "clave": "la camiseta interior asomando en dos puntos —cuello y bajo el dobladillo del punto— crea una capa intermedia que da profundidad a un outfit de un solo tono, y el volumen enorme del pantalón se equilibra porque el punto es igual de holgado pero se corta en la cadera",
+  "rompe": "meter un tono medio o saturado en torso o pierna (rompe el bloque monocromo), usar pantalón ajustado o de largo corto que no se apile, o multiplicar los acentos oscuros más allá de dos piezas: el look vive de la tensión entre un campo claro amplio y dos puntos negros aislados"
+ },
+ {
+  "id": "ae7a787e-7df5-4561-8fd1-d9e2029afa7a",
+  "path": "hombre/minimalista/2942a290.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de lino/algodón texturizado, corte holgado, cuello abierto sin abotonar los dos primeros botones, mangas remangadas de forma descuidada hasta el antebrazo, bolsillo de parche en el pecho, faldón suelto por fuera del pantalón"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon",
+    "detalle": "pantalón utilitario de sarga, talle alto, pierna muy ancha y recta tipo fatigue, largo que rompe con quiebre generoso sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "tenis",
+    "detalle": "tenis retro de perfil bajo en ante y nylon, suela delgada de goma con tono ligeramente más oscuro, silueta estrecha que contrasta con el volumen del pantalón"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "bolsa",
+    "detalle": "mochila de lona estructurada con correas anchas acolchadas y detalles de piel, llevada en un solo hombro"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de caja redonda y esfera oscura sobre correa textil, visible al remangar la manga"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "cordón fino al cuello, apenas asomando por el escote abierto de la camisa"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "dos bloques: torso en tono muy claro y cálido, pierna en un tono medio-oscuro apagado y terroso; el calzado repite el claro del torso para cerrar el circuito, y un único acento oscuro y frío entra solo por el accesorio de espalda. Tres valores en total, todos desaturados, sin ningún color vivo",
+  "color_libre": "el claro cálido de la camisa puede ir a crudo, avena o arena; el medio-oscuro del pantalón puede ser oliva, café tabaco, gris pizarra o azul apagado; la mochila admite cualquier oscuro (negro, marino, verde profundo) siempre que sea el punto más oscuro del conjunto",
+  "clave": "la desproporción controlada: camisa holgada con faldón suelto y mangas subidas encima de un pantalón de pierna muy ancha, y el zapato claro y estrecho que evita que el volumen inferior pese; el cuello abierto sin plancha y el quiebre de la tela en el tobillo son lo que lo mantiene relajado en vez de descuidado",
+  "rompe": "meter la camisa dentro del pantalón, bajar las mangas o usar una camisa entallada y planchada; también un pantalón slim o un calzado oscuro y voluminoso, que rompería el eco claro entre torso y pie y aplastaría la silueta"
+ },
+ {
+  "id": "f8418876-f4a2-4a0c-83d4-029fcabc786c",
+  "path": "hombre/minimalista/b7a924d2.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "viaje"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "sueter",
+    "detalle": "punto fino de cuello redondo, silueta holgada con hombro caído y mangas algo largas arremangadas, largo que termina en la cadera alta"
+   },
+   {
+    "zona": "torso",
+    "tipo": "camiseta",
+    "detalle": "camiseta lisa de algodón que asoma solo unos centímetros por debajo del punto, en la cintura"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "tiro alto, pierna muy ancha y recta desde la cadera, tela con caída fluida, largo excesivo que se apila sobre el zapato"
+   },
+   {
+    "zona": "pie",
+    "tipo": "mocasin",
+    "detalle": "zapato bajo de piel con puntera cuadrada y hebilla, casi tapado por el dobladillo"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de montura pequeña y ovalada"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "casi monocromo oscuro: punto en el tono más profundo arriba, pantalón un grado más apagado y frío abajo, con una única franja clara muy estrecha entre ambos y el calzado en un neutro terroso a medio camino",
+  "color_libre": "el terroso del zapato puede ir a cualquier neutro medio; el pantalón puede desplazarse a otro oscuro apagado siempre que no iguale exactamente al punto; la franja de la camiseta puede ser cualquier claro liso",
+  "clave": "la tira de camiseta asomando en la cintura: es lo único que separa dos masas oscuras y marca dónde acaba el torso, y sin ella el look se convierte en un bloque sin cintura",
+  "rompe": "meter el suéter dentro del pantalón, o cambiar la pierna ancha con caída por algo entallado o corto de largo: se pierde la proporción de volumen arriba y abajo con la única línea clara en medio"
+ },
+ {
+  "id": "632367b6-99ff-41b6-98fb-f9d93133be64",
+  "path": "hombre/minimalista/f6b10326.jpg",
+  "estilo": "casual-limpio",
+  "clima": "templado",
+  "registro": "cuidado",
+  "ocasiones": [
+   "diario",
+   "oficina",
+   "evento"
+  ],
+  "nucleo": [
+   {
+    "zona": "torso",
+    "tipo": "camisa",
+    "detalle": "camisa de tejido mate tipo lino/franela ligera, corte holgado y caída fluida, cuello camp abierto sin los dos primeros botones, bolsillo de parche en el pecho, mangas subidas a media forma descuidada, faldón metido dentro del pantalón"
+   },
+   {
+    "zona": "torso",
+    "tipo": "tank",
+    "detalle": "camiseta interior de tirantes/cuello bajo que asoma en el escote abierto de la camisa"
+   },
+   {
+    "zona": "pierna",
+    "tipo": "pantalon-vestir",
+    "detalle": "pantalón de tela ligera con cintura elástica alta, pinzas, pierna amplia que se estrecha al tobillo y largo cropped que deja el tobillo al aire"
+   },
+   {
+    "zona": "pie",
+    "tipo": "mocasin",
+    "detalle": "mocasín de piel con antifaz, montado sobre suela gruesa tipo lug, llevado sin calcetín visible"
+   }
+  ],
+  "guarnicion": [
+   {
+    "zona": "accesorio",
+    "tipo": "lentes",
+    "detalle": "gafas de sol de acetato con montura rectangular y lente oscura"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "joyeria",
+    "detalle": "cadena fina al cuello visible en el escote y pulsera de eslabones en una muñeca"
+   },
+   {
+    "zona": "accesorio",
+    "tipo": "reloj",
+    "detalle": "reloj de brazalete metálico, esfera clara, asomando bajo la manga remangada"
+   }
+  ],
+  "zonas_no_visibles": [
+   "capa"
+  ],
+  "color_relacion": "dos bloques: un tono medio apagado y terroso arriba contra un tono muy oscuro casi neutro abajo y en el calzado; un punto claro mínimo en el escote como único quiebre, y metales cálidos como acento discreto",
+  "color_libre": "el tono terroso de la camisa puede moverse a cualquier neutro apagado medio (arena, gris topo, azul desaturado); el bloque inferior puede ser cualquier oscuro profundo; la interior clara puede virar a crudo o gris muy claro",
+  "clave": "la camisa holgada metida dentro de una cintura elástica alta: el volumen se acumula arriba y la línea de la cintura queda marcada, y el escote abierto con la interior clara asomando evita que el conjunto se lea como pijama",
+  "rompe": "meterle un pantalón ajustado o de tiro bajo, cerrar la camisa hasta arriba, o bajar el largo del pantalón hasta cubrir el mocasín: se pierde el contraste de volúmenes y el tobillo descubierto que aligera todo el bloque oscuro"
+ }
+]

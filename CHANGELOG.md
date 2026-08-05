@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.97.0] - 2026-08-05
+
+### Fixed
+
+- **La sobrecamisa vuelve a contar como abrigo.** Una prenda llamada "camisa overshirt" se estaba leyendo como camisa de vestir, no como la capa que es. Efecto real: en un día frío la app no la veía como algo con que abrigarte, y podía proponerte salir sin capa teniéndola en el clóset.
+
 ## [0.2.96.0] - 2026-08-05
 
 ### Fixed
