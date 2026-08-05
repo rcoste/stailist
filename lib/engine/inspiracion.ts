@@ -46,6 +46,36 @@ export type Inspiracion = {
 type PaletaRef = "tierra" | "neutra" | "oscura" | "color";
 
 /**
+ * Las ocasiones que EXIGEN un nivel mínimo de arreglo, y cuál.
+ *
+ * DE DÓNDE SALE (v2, tras perder el A/B 2-5-5)
+ * Las fotos perdieron SOLO donde importa el registro: oficina 0-2, evento 0-1,
+ * mientras en diario iban 2-1. Roberto, sin saber qué lado era cuál: "ni al caso
+ * la A, jamás usaría eso para la oficina — camisa de manga corta y abierta" y
+ * "llevar pantalón de lino a la oficina, pues no".
+ *
+ * La causa era mecánica: cada foto trae su `registro` etiquetado y el selector
+ * NUNCA lo miraba. A los dos casos de oficina se le enseñaron 18 fotos "cuidado"
+ * contra 9 "arreglado", y el motor copió lo que vio. La biblioteca está sesgada
+ * de origen porque el criterio de etiquetado de "oficina" se escribió generoso a
+ * propósito (hoy las oficinas van de corporativa a creativa) — cierto en general,
+ * falso para quien va de saco.
+ */
+const PISO_DE_REGISTRO: Record<string, string[]> = {
+  oficina: ["arreglado", "formal"],
+  evento: ["arreglado", "formal"],
+};
+
+/**
+ * "Refrescar mi estilo" es una ocasión del producto pero no del etiquetado: la
+ * biblioteca se clasificó con cuatro (diario/oficina/evento/viaje). Sin este
+ * mapeo, los casos de refrescar caían al respaldo sin filtro — 3 de las 36 fotos
+ * de la corrida quedaron fuera de ocasión justo por eso. Refrescar es el día a
+ * día con ganas de cambiar algo, así que diario es su equivalente honesto.
+ */
+const OCASION_EQUIVALENTE: Record<string, string> = { refrescar: "diario" };
+
+/**
  * Qué paletas de la biblioteca le quedan a una colorimetría.
  *
  * "neutra" entra siempre: es el vocabulario común (blanco, gris, negro suave) y
@@ -133,18 +163,42 @@ export async function elegirInspiracion(
       .in("estilo", familias);
 
   const paletas = paletasPara(season);
+  const oc = ocasion ? (OCASION_EQUIVALENTE[ocasion] ?? ocasion) : null;
+  const piso = oc ? PISO_DE_REGISTRO[oc] : undefined;
+
   // La ocasión es el filtro MÁS importante —una foto casual no sirve de
   // referencia para un evento— así que es lo último que se suelta. Se aflojan
   // antes la paleta y el clima.
   const conOcasion = <T extends { contains: (c: string, v: string[]) => T }>(q: T) =>
-    ocasion ? q.contains("ocasiones", [ocasion]) : q;
-  const intentos = [
-    conOcasion(base().eq("clima", clima).in("paleta", paletas) as never),
-    conOcasion(base().eq("clima", clima) as never),
-    conOcasion(base() as never),
-    base().eq("clima", clima),
-    base(),
-  ];
+    oc ? q.contains("ocasiones", [oc]) : q;
+  const conPiso = <T extends { in: (c: string, v: string[]) => T }>(q: T) =>
+    piso ? q.in("registro", piso) : q;
+
+  /**
+   * El orden en que se afloja, y DÓNDE se corta.
+   *
+   * Para oficina y evento la escalera termina en el piso de registro: si no hay
+   * una sola foto arreglada de sus familias, se devuelve VACÍO y el motor arma
+   * sin referencia. Eso no es una carencia, es la lección del A/B — julio, sin
+   * ninguna foto, ganó los dos casos de oficina contra fotos casuales. Cuando la
+   * ocasión pide nivel, NINGUNA referencia es mejor que una demasiado relajada.
+   *
+   * Para el resto (diario, viaje, refrescar) se conserva la escalera larga: ahí
+   * una foto de calle de más nunca hizo daño y las fotos iban ganando 2-1.
+   */
+  const intentos = piso
+    ? [
+        conPiso(conOcasion(base().eq("clima", clima).in("paleta", paletas) as never)),
+        conPiso(conOcasion(base().eq("clima", clima) as never)),
+        conPiso(conOcasion(base() as never)),
+      ]
+    : [
+        conOcasion(base().eq("clima", clima).in("paleta", paletas) as never),
+        conOcasion(base().eq("clima", clima) as never),
+        conOcasion(base() as never),
+        base().eq("clima", clima),
+        base(),
+      ];
   for (const q of intentos) {
     const { data } = (await (q as unknown as Promise<{ data: Inspiracion[] | null }>)) ?? {};
     const libres = (data ?? []).filter((r) => !evitar?.has(r.path));
@@ -230,5 +284,7 @@ Cómo usar cada foto, en este orden:
 3. Si no se puede acercar con lo que tiene, IGNORA esa foto y arma el mejor look posible con lo que hay. No fuerces prendas para parecerte a una imagen: un look forzado se ve peor que uno simple bien resuelto.
 
 EL COLOR DE LA FOTO NO ES LITERAL — importante. De la foto se toma la ESTRUCTURA: qué tipo de prenda va con cuál y en qué proporción. NO el color exacto. Si la foto trae un polo azul y ella tiene uno verde que le favorece más por su colorimetría, el verde es la respuesta CORRECTA, no una concesión. Su colorimetría manda sobre el color de la referencia, siempre.
+
+EL NIVEL DE ARREGLO TAMPOCO LO MANDA LA FOTO — lo manda la OCASIÓN. De la referencia tomas la COMBINACIÓN (qué va con qué, qué proporción, qué capa abierta); qué tan arreglado va el look lo decide para qué es el día. Si la ocasión pide saco y la foto trae una sobrecamisa, la respuesta es el saco con la lógica de combinación de la foto — no la sobrecamisa. Bajarle el nivel a un look de oficina o de evento porque la referencia era casual es el peor error que puedes cometer aquí: la persona no lo usa y pierde la confianza en todo lo demás.
 
 REGLA DURA: las prendas del look son SIEMPRE del clóset de la persona (por id). Las fotos orientan; jamás uses ni menciones una prenda que solo está en la imagen.`;
