@@ -13,6 +13,7 @@ import {
   DEFECTOS_MOTOR,
   MIN_VEREDICTO,
   MAX_VEREDICTO,
+  POOL_VERSION,
   type TamanoCorrida,
   type VarianteMotor,
 } from "@/lib/comparador/motor";
@@ -70,6 +71,7 @@ export async function abrirCorridaMotor(input: {
       tamano: input.tamano,
       variantes,
       prompt_version: PROMPT_VERSION,
+      pool_version: POOL_VERSION,
       regla: regla || null,
     })
     .select("id")

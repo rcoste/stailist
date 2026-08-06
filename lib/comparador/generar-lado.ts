@@ -115,6 +115,12 @@ export async function generarLadoYGuardar(opciones: {
       objective: brief.objective,
       momento: brief.momento,
       weather: brief.weather,
+      // El evento concreto. Van por los MISMOS campos de producción: `plan` es
+      // el "¿qué tienes en mente?" y `formality` es lo que el wizard pregunta
+      // cuando la ocasión es un evento. Un brief viejo (pool v1) no los trae y
+      // cae a null, exactamente como antes.
+      plan: brief.plan ?? null,
+      formality: brief.formality ?? null,
     });
 
     const t0 = Date.now();

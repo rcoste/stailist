@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.116.0] - 2026-08-06
+
+### Added
+
+- **Los eventos del comparador ya son eventos concretos** (pool de briefs **v2**). "Evento · noche templada" era incalificable: una boda y una cena con amigos comparten esa etiqueta y no comparten piso de formalidad, ni calzado, ni registro — marcar "no va para la ocasión" era emitir un juicio sin saber cuál ocasión. Ahora cada evento lleva su `plan` ("una boda de noche, en salón") y su `formality`, **los mismos dos campos que producción le pasa al motor** cuando el wizard los pregunta, no inventos del arnés; la pantalla de voto los muestra arriba. Entró además un evento **de día** (comida familiar) porque no existía ninguno: hasta v1 todo evento era de noche y `pisoDeFormalidad` tiene una rama para evento-de-día que nunca se había medido.
+- **La versión del pool se congela en cada corrida** (`pool_version`, migración 0115) y la tabla "Qué modelo usamos" avisa cuando los retadores se midieron en pools distintos. El pool está congelado justamente para que corridas de meses distintos sean comparables; al cambiarlo, esa promesa deja de valer **entre** retadores. Cada corrida sigue siendo justa consigo misma (control y retador resuelven el mismo día); lo que ya no se puede es leer a Gemini contra Sonnet si corrieron pools distintos, y ahora la pantalla lo dice en vez de sumar peras con manzanas en silencio.
+
+### Changed
+
+- **El par no se guarda hasta votar todos sus looks.** Antes bastaba con uno: Roberto votaba el primero, el par se guardaba, y los looks 2 y 3 se quedaban sin ver — **99 de 119 looks del primer veredicto nunca se miraron**. Un botón que deja avanzar a medias termina midiendo lo que nadie miró. El botón ahora nombra lo que falta ("Faltan los looks 2 y 3") en vez de solo estar apagado, y solo exige los looks que **los dos** lados armaron: si un lado trajo dos, el tercero no tiene contra qué medirse. El 👍/👎 sigue siendo opcional — es diagnóstico, no voto.
+
 ## [0.2.115.1] - 2026-08-06
 
 ### Fixed

@@ -43,7 +43,7 @@ export default async function AdminComparador() {
   // persona sobre prendas que no son tuyas.
   const { data: corridasMotor } = await supabase
     .from("comparador_motor_corridas")
-    .select("id, creada, tamano, variantes, estado")
+    .select("id, creada, tamano, variantes, estado, pool_version")
     .eq("closet_user_id", perfil.id)
     .order("creada", { ascending: false })
     .limit(20);
@@ -73,6 +73,7 @@ export default async function AdminComparador() {
     corridas: (corridasMotor ?? []).map((c) => ({
       id: c.id as string,
       variantes: c.variantes as { clave: string; etiqueta: string }[],
+      pool: (c.pool_version as string | null) ?? null,
     })),
     pares: (paresMotor ?? []).map((p) => ({
       corrida_id: p.corrida_id as string,
@@ -86,6 +87,9 @@ export default async function AdminComparador() {
       error: (l.error as string | null) ?? null,
     })),
   });
+  // Si los retadores no se midieron todos sobre el mismo pool, la frase
+  // "resolvieron los mismos días" deja de ser cierta y hay que decirlo.
+  const poolsMezclados = [...new Set(resumen.flatMap((r) => r.pools))].sort();
   const pendientesPorCorrida = new Map<string, { votos: number; marcas: number }>();
   for (const p of paresMotor ?? []) {
     const k = p.corrida_id as string;
@@ -125,10 +129,20 @@ export default async function AdminComparador() {
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-ink">Qué modelo usamos</h2>
           <p className="text-xs text-muted">
-            Cada retador contra producción, con todas sus corridas juntas. Son
-            comparables entre sí porque los briefs están congelados: los tres
-            resolvieron los mismos días.
+            Cada retador contra producción, con todas sus corridas juntas.
+            {poolsMezclados.length > 1
+              ? ""
+              : " Son comparables entre sí porque los briefs están congelados: todos resolvieron los mismos días."}
           </p>
+          {poolsMezclados.length > 1 ? (
+            <p className="text-xs font-semibold text-warning">
+              Ojo: estos retadores no resolvieron los mismos días. Hay corridas
+              del pool {poolsMezclados.join(" y ")} y los briefs cambiaron entre
+              versiones. Cada retador contra producción sigue siendo justo (los
+              dos corren el mismo día); lo que no se puede es compararlos entre
+              sí — para eso hay que volver a correr sobre el pool nuevo.
+            </p>
+          ) : null}
           <div className="flex flex-col gap-2">
             {resumen.map((r) => {
               const noCabe = r.msRetador != null && r.msRetador > LIMITE_VERCEL_MS;
@@ -161,6 +175,9 @@ export default async function AdminComparador() {
                         )}s`
                       : ""}
                     {r.errores ? ` · ${r.errores} fallaron` : ""}
+                    {/* Cuál pool, solo cuando hay mezcla: sin esto el aviso de
+                        arriba dice que algo no cuadra y no dice cuál fila. */}
+                    {poolsMezclados.length > 1 ? ` · pool ${r.pools.join("+")}` : ""}
                   </span>
                   {noCabe ? (
                     <span className="text-xs font-semibold text-error">

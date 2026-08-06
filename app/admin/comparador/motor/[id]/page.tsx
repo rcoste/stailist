@@ -94,6 +94,11 @@ export default async function CorridaMotor({
         parId: p.id,
         n: p.n,
         etiqueta: p.brief.etiqueta,
+        // El evento en las palabras del brief. "evento" a secas no se puede
+        // calificar: sin saber si es boda o cena con amigos, "no va para la
+        // ocasión" es una marca que no se puede emitir.
+        plan: p.brief.plan ?? null,
+        formalidad: p.brief.formality ?? null,
         izq: lado(izqClave),
         der: lado(derClave),
         // Las claves van para que el try-on (que responde por variante) se
@@ -143,6 +148,7 @@ export default async function CorridaMotor({
       estado={corrida.estado}
       nota={corrida.nota}
       promptVersion={corrida.promptVersion}
+      poolVersion={corrida.poolVersion}
       resultado={marcadorMotor(corrida.variantes, corrida.pares)}
       notas={notas}
       comentarios={comentarios}

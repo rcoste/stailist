@@ -48,9 +48,31 @@ describe("briefs", () => {
   it("el veredicto cicla el pool y distingue las vueltas en la etiqueta", () => {
     const briefs = briefsPara("veredicto", 24);
     expect(briefs).toHaveLength(24);
-    // La 2ª vuelta del pool (posición 10+) no repite etiqueta exacta.
-    expect(briefs[10].etiqueta).not.toBe(briefs[0].etiqueta);
-    expect(briefs[10].objective).toBe(briefs[0].objective);
+    // La 2ª vuelta reusa el brief pero NO su etiqueta exacta (lleva "(2ª)"),
+    // para que dos pares del mismo día se distingan al leer las notas. El
+    // índice donde empieza sale del pool, no de un número escrito aquí: el
+    // pool crece cuando entra un brief nuevo.
+    const segunda = briefs.findIndex((b) => b.etiqueta.includes("(2ª)"));
+    expect(segunda).toBeGreaterThan(0);
+    expect(briefs[segunda].etiqueta).not.toBe(briefs[0].etiqueta);
+    expect(briefs[segunda].objective).toBe(briefs[0].objective);
+    expect(briefs[segunda].weather).toEqual(briefs[0].weather);
+  });
+
+  it("los eventos son eventos concretos: plan y formalidad, como producción", () => {
+    // Sin esto no se puede calificar "no va para la ocasión": una boda y una
+    // cena con amigos comparten la palabra "evento" y no comparten piso.
+    const eventos = briefsPara("veredicto", 22).filter(
+      (b) => b.objective === "evento"
+    );
+    expect(eventos.length).toBeGreaterThan(0);
+    for (const b of eventos) {
+      expect(b.plan, b.etiqueta).toBeTruthy();
+      expect(["casual", "semiformal", "formal", "gala"]).toContain(b.formality);
+    }
+    // Y no todos de noche: pisoDeFormalidad tiene una rama de evento-de-día
+    // que hasta el pool v1 nunca se había medido.
+    expect(eventos.some((b) => b.momento === "dia")).toBe(true);
   });
 
   it("espejos: 0 en vistazo, ~10% con mínimo 2 en veredicto", () => {
@@ -350,6 +372,20 @@ describe("resumenPorRetador", () => {
     expect(k.msRetador! > LIMITE_VERCEL_MS).toBe(true);
     const s = resumenPorRetador(base).find((x) => x.clave === "sonnet")!;
     expect(s.msRetador! > LIMITE_VERCEL_MS).toBe(false);
+  });
+
+  it("arrastra el pool de briefs: sin él la tabla sumaría días distintos", () => {
+    // Una corrida vieja (sin columna) es del pool v1; la pantalla usa esto
+    // para avisar cuando los retadores no resolvieron los mismos días.
+    const r = resumenPorRetador({
+      ...base,
+      corridas: [
+        { ...base.corridas[0], pool: null },
+        { ...base.corridas[1], pool: "v2" },
+      ],
+    });
+    expect(r.find((x) => x.clave === "sonnet")!.pools).toEqual(["v1"]);
+    expect(r.find((x) => x.clave === "kimi")!.pools).toEqual(["v2"]);
   });
 
   it("ignora corridas que no sean control-contra-retador", () => {

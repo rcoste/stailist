@@ -26,6 +26,8 @@ export type CorridaMotorCargada = {
   tamano: TamanoCorrida;
   variantes: VarianteMotor[];
   promptVersion: string;
+  /** El pool de briefs con el que se midió (v1 en las corridas anteriores). */
+  poolVersion: string;
   regla: string | null;
   estado: string;
   nota: string | null;
@@ -168,6 +170,7 @@ export async function cargarCorridaMotor(
     tamano: corrida.tamano as TamanoCorrida,
     variantes,
     promptVersion: corrida.prompt_version as string,
+    poolVersion: (corrida.pool_version as string | null) ?? "v1",
     regla: (corrida.regla as string | null) ?? null,
     estado: corrida.estado as string,
     nota: (corrida.nota as string | null) ?? null,
