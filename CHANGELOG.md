@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.108.1] - 2026-08-06
+
+### Added
+
+- **Dos retadores más en el comparador de motores: Gemini 3.5 Flash y Kimi K2.6.** Antes solo se podía retar a producción con Sonnet. Ojo con cómo se leen: son de OTRO proveedor, y el prompt lleva 38 versiones afinadas contra Claude — si pierden, eso condena al combo modelo+prompt, no al modelo. La pantalla lo dice en cada variante para que dentro de tres meses nadie lea de más.
+- **Haiku 4.5 NO entra, y eso también es un resultado**: su compilador rechaza el schema del motor porque el enum que impide inventar prendas lleva los ~113 ids de tu clóset ("Schema is too complex"). Correrlo sin ese enum sería medirlo con otro arnés, así que queda fuera en vez de degradado. Lo cazó el smoke antes de quemar una corrida entera.
+
+### Fixed
+
+- **Kimi devolvía JSON con saltos de línea sin escapar y la generación tronaba.** El JSON era correcto salvo por eso; ahora se rescata (el parse estricto sigue primero, así que Claude y Gemini ni se enteran). Tirarlo entero habría castigado a un modelo por un bug de serialización en vez de por su criterio de styling — y habría reventado a media corrida, con el voto ya empezado.
+
 ## [0.2.108.0] - 2026-08-05
 
 ### Added
