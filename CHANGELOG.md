@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.111.2] - 2026-08-06
+
+### Fixed
+
+- **Lo que falta por hacer estaba escondido abajo del marcador.** Roberto entró a completar las marcas de sus primeros pares, vio el resultado, concluyó "ya terminó" y nunca llegó a la tarjeta: vivía octava en la página, debajo de los costos y las notas. Ahora las tarjetas accionables (marcas pendientes, pares sin generar) van pegadas al título: el marcador es lectura, eso es trabajo.
+- **La lista de corridas dice qué te falta en cada una** ("te falta: votar 5 · marcar looks de 3") sin tener que entrar a revisarlas una por una.
+- **La lista solo muestra corridas sobre TU clóset.** El permiso de admin deja ver todas y eso sirve para depurar, pero en la lista de trabajo una corrida ajena es ruido: dice "te falta votar" de un experimento de otra persona sobre prendas que no son tuyas.
+
 ## [0.2.111.1] - 2026-08-06
 
 ### Changed

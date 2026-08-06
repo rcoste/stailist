@@ -15,7 +15,7 @@ import { NuevaCorrida } from "./nueva-corrida";
 export const dynamic = "force-dynamic";
 
 export default async function AdminComparador() {
-  await requireAdmin();
+  const perfil = await requireAdmin();
   const supabase = await createClient();
   const listos = proveedoresListos();
 
@@ -36,17 +36,39 @@ export default async function AdminComparador() {
   }
 
   // La segunda mitad: corridas de MOTOR (dos variantes, voto ciego, veredicto).
+  // Solo las corridas sobre TU clóset. El RLS deja a cualquier admin ver
+  // todas, y eso está bien para depurar, pero en la lista de trabajo las
+  // ajenas son ruido: dicen "te falta votar" de un experimento de otra
+  // persona sobre prendas que no son tuyas.
   const { data: corridasMotor } = await supabase
     .from("comparador_motor_corridas")
     .select("id, creada, tamano, variantes, estado")
+    .eq("closet_user_id", perfil.id)
     .order("creada", { ascending: false })
     .limit(20);
   // Acotado a las corridas listadas: un veredicto son hasta ~80 lados, y sin
   // el .in() esta query crecería sin tope con cada corrida nueva.
+  const idsMotor = (corridasMotor ?? []).map((c) => c.id as string);
   const { data: costosMotor } = await supabase
     .from("comparador_motor_lados")
     .select("corrida_id, costo_usd")
-    .in("corrida_id", (corridasMotor ?? []).map((c) => c.id as string));
+    .in("corrida_id", idsMotor);
+
+  // Qué le falta a cada corrida, para verlo SIN entrar: votos pendientes y
+  // marcas por look pendientes. Una corrida cerrada puede seguir teniendo
+  // trabajo útil encima (el diagnóstico se completa después del resultado).
+  const { data: paresMotor } = await supabase
+    .from("comparador_motor_pares")
+    .select("corrida_id, voto, marcas_look")
+    .in("corrida_id", idsMotor);
+  const pendientesPorCorrida = new Map<string, { votos: number; marcas: number }>();
+  for (const p of paresMotor ?? []) {
+    const k = p.corrida_id as string;
+    const acc = pendientesPorCorrida.get(k) ?? { votos: 0, marcas: 0 };
+    if (p.voto == null) acc.votos++;
+    else if (p.marcas_look == null) acc.marcas++;
+    pendientesPorCorrida.set(k, acc);
+  }
   const costoMotorPorCorrida = new Map<string, number>();
   for (const c of costosMotor ?? []) {
     if (c.costo_usd == null) continue;
@@ -119,6 +141,21 @@ export default async function AdminComparador() {
                     <span className="text-xs text-muted">
                       gastado: {formatoUsd(costoMotorPorCorrida.get(c.id as string) ?? 0)}
                     </span>
+                    {(() => {
+                      const p = pendientesPorCorrida.get(c.id as string);
+                      if (!p || (!p.votos && !p.marcas)) return null;
+                      return (
+                        <span className="text-xs font-semibold text-accent">
+                          te falta:{" "}
+                          {[
+                            p.votos ? `votar ${p.votos}` : null,
+                            p.marcas ? `marcar looks de ${p.marcas}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      );
+                    })()}
                   </Link>
                 </li>
               );
