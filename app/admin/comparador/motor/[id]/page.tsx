@@ -110,6 +110,7 @@ export default async function CorridaMotor({
 
     return (
       <VotarClient
+        corridaId={id}
         pares={paraVotar}
         yaHechos={corrida.pares.length - votables.length}
         total={corrida.pares.length}

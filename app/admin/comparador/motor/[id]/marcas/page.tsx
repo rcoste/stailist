@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { cargarCorridaMotor } from "@/lib/comparador/motor-servidor";
-import { MarcasClient, type ParParaMarcar } from "./marcas-client";
+import { VotarClient, type ParParaVotar } from "../votar-client";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,12 @@ export const dynamic = "force-dynamic";
 // SIGUE CIEGO: las columnas se muestran como "Look A/B" con el MISMO orden
 // sembrado del par. Se sabe el marcador global, sí, pero no cuál columna es
 // cuál en cada par — y eso es lo que mantiene las marcas honestas.
+//
+// USA LA MISMA PANTALLA QUE VOTAR (VotarClient en modo "marcar"). Tuvo su
+// propio componente y fue un error: prendas a 56px, sin try-on, sin etiquetas
+// de defecto y con los tres looks apilados. Juzgar un look es el mismo trabajo
+// se entre por donde se entre; verlo peor aquí solo hacía la marca peor que el
+// voto.
 export default async function CompletarMarcas({
   params,
 }: {
@@ -60,7 +66,7 @@ export default async function CompletarMarcas({
     );
   }
 
-  const paraMarcar: ParParaMarcar[] = pendientes.map((p) => {
+  const paraMarcar: ParParaVotar[] = pendientes.map((p) => {
     const [izqClave, derClave] = corrida.ordenPorPar[p.id];
     const lado = (clave: string) => {
       const l = p.lados.find((x) => x.variante === clave)!;
@@ -83,10 +89,25 @@ export default async function CompletarMarcas({
       parId: p.id,
       n: p.n,
       etiqueta: p.brief.etiqueta,
+      plan: p.brief.plan ?? null,
+      formalidad: p.brief.formality ?? null,
       izq: lado(izqClave),
       der: lado(derClave),
+      // El try-on responde por variante; estas claves lo mapean a las columnas
+      // con el MISMO orden del ciego.
+      claveIzq: izqClave,
+      claveDer: derClave,
     };
   });
 
-  return <MarcasClient corridaId={id} pares={paraMarcar} />;
+  return (
+    <VotarClient
+      modo="marcar"
+      corridaId={id}
+      pares={paraMarcar}
+      yaHechos={0}
+      total={paraMarcar.length}
+      tamano={corrida.tamano}
+    />
+  );
 }

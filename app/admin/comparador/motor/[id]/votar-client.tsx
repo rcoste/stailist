@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
-import { votarParMotor } from "../../motor-actions";
+import { votarParMotor, completarMarcas } from "../../motor-actions";
 
 // Votar a ciegas, un par a la vez. Las columnas se llaman "Look A / Look B" y
 // el orden viene barajado del servidor: aquí NADIE sabe qué variante es cuál —
@@ -219,11 +219,25 @@ export function VotarClient({
   yaHechos,
   total,
   tamano,
+  modo = "votar",
+  corridaId,
 }: {
   pares: ParParaVotar[];
   yaHechos: number;
   total: number;
   tamano: string;
+  /**
+   * "votar": el par no tiene voto todavía y se decide aquí.
+   * "marcar": el par YA se votó y solo falta el diagnóstico look por look.
+   *
+   * Es un modo y no una segunda pantalla porque la primera versión SÍ fue una
+   * segunda pantalla: prendas a 56px, sin try-on, sin etiquetas de defecto y
+   * con los looks apilados. Mirar un look para juzgarlo es el mismo trabajo
+   * las dos veces; que se vea distinto según de dónde entraste solo hacía la
+   * marca peor que el voto.
+   */
+  modo?: "votar" | "marcar";
+  corridaId: string;
 }) {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
@@ -286,17 +300,25 @@ export function VotarClient({
     if (guardando) return;
     setGuardando(true);
     setError(null);
-    const r = await votarParMotor(
-      par.parId,
-      votos,
-      { izq: defIzq, der: defDer },
-      nota,
-      { izq: marcIzq, der: marcDer },
-      { izq: comIzq, der: comDer }
-    );
+    const r =
+      modo === "marcar"
+        ? await completarMarcas(
+            par.parId,
+            { izq: marcIzq, der: marcDer },
+            { izq: comIzq, der: comDer },
+            { izq: defIzq, der: defDer }
+          )
+        : await votarParMotor(
+            par.parId,
+            votos,
+            { izq: defIzq, der: defDer },
+            nota,
+            { izq: marcIzq, der: marcDer },
+            { izq: comIzq, der: comDer }
+          );
     setGuardando(false);
     if (!r.ok) {
-      setError(r.error ?? "no se pudo guardar el voto");
+      setError(r.error ?? "no se pudo guardar");
       return;
     }
     setMarcIzq({});
@@ -310,6 +332,7 @@ export function VotarClient({
     setTryon({});
     setLook(0);
     if (idx + 1 < pares.length) setIdx(idx + 1);
+    else if (modo === "marcar") router.push(`/admin/comparador/motor/${corridaId}`);
     else router.refresh();
   };
 
@@ -321,25 +344,39 @@ export function VotarClient({
   const comparables = Array.from({ length: nLooks }, (_, i) => i).filter(
     (i) => par.izq[i] && par.der[i]
   );
-  const faltan = comparables.filter((i) => !votos[i]);
-  // El guardado se abre hasta calificar los comparables. Antes bastaba con
-  // uno: Roberto votaba el primero, el par se guardaba, y los looks 2 y 3 se
+  // Marcando, la puerta la cierra el 👍/👎 de CADA look existente (los dos
+  // lados, aunque uno tenga menos): la marca es diagnóstico por look, no una
+  // comparación, así que un look sin par de enfrente igual se puede juzgar.
+  const sinMarca = Array.from({ length: nLooks }, (_, i) => i).filter(
+    (i) => (par.izq[i] && !marcIzq[i]) || (par.der[i] && !marcDer[i])
+  );
+  const faltan = modo === "marcar" ? sinMarca : comparables.filter((i) => !votos[i]);
+  // El guardado se abre hasta calificar todo. Antes bastaba con un voto:
+  // Roberto votaba el primero, el par se guardaba, y los looks 2 y 3 se
   // quedaban sin ver — 99 de 119 en el primer veredicto. El botón que deja
   // avanzar a medias termina midiendo lo que nadie miró.
-  const listo = faltan.length === 0 && Object.keys(votos).length > 0;
+  const listo =
+    faltan.length === 0 && (modo === "marcar" || Object.keys(votos).length > 0);
 
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-ink">¿Cuál quedó mejor?</h1>
+          <h1 className="text-xl font-semibold text-ink">
+            {modo === "marcar" ? "Completar las marcas" : "¿Cuál quedó mejor?"}
+          </h1>
           <span className="rounded-full border border-line px-2 py-0.5 text-xs text-muted">
             {yaHechos + idx + 1} de {total}
           </span>
         </div>
         <p className="text-sm text-muted">
           Brief: <span className="font-semibold text-ink">{par.etiqueta}</span>
-          {tamano === "vistazo" ? " · vistazo: caza defectos, aquí no se corona a nadie" : ""}
+          {tamano === "vistazo" && modo === "votar"
+            ? " · vistazo: caza defectos, aquí no se corona a nadie"
+            : ""}
+          {modo === "marcar"
+            ? " · este par ya se votó; falta el diagnóstico look por look. Sigue ciego: no se revela cuál columna es cuál."
+            : ""}
         </p>
         {/* El evento concreto, tal cual lo recibió el motor. Sin esto, "evento"
             a secas no se puede calificar: una boda y una cena con amigos no
@@ -366,7 +403,7 @@ export function VotarClient({
             }`}
           >
             Look {i + 1}
-            {votos[i] ? " ✓" : ""}
+            {faltan.includes(i) ? "" : " ✓"}
           </button>
         ))}
       </div>
@@ -415,7 +452,14 @@ export function VotarClient({
       {/* El voto del LOOK visible, pegado a lo que se está viendo. Antes los
           botones estaban al final de la página y se leían como si aplicaran al
           look en pantalla cuando en realidad cubrían los tres: Roberto votó 16
-          pares guiándose solo por el primero sin saberlo. */}
+          pares guiándose solo por el primero sin saberlo.
+
+          Marcando NO hay botones de voto, y no es un olvido: estos pares ya
+          tienen voto y su corrida ya se puede leer con el reveal encendido.
+          Re-votar con el marcador a la vista no completa una medición, la
+          edita — es justo lo que el pre-registro existe para impedir. Si un
+          par de esos se quiere volver a juzgar, se vuelve a correr. */}
+      {modo === "votar" ? (
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           ¿Cuál gana en el look {look + 1}?
@@ -443,7 +487,9 @@ export function VotarClient({
           ))}
         </div>
       </div>
+      ) : null}
 
+      {modo === "votar" ? (
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           ¿Por qué? (opcional, de todo el par)
@@ -456,6 +502,7 @@ export function VotarClient({
           className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
         />
       </div>
+      ) : null}
 
       {error ? <p className="text-sm text-error">{error}</p> : null}
 
@@ -467,19 +514,36 @@ export function VotarClient({
         {guardando
           ? "Guardando…"
           : faltan.length === 1
-            ? `Falta votar el look ${faltan[0] + 1}`
+            ? `Falta ${modo === "marcar" ? "marcar" : "votar"} el look ${faltan[0] + 1}`
             : faltan.length
               ? `Faltan los looks ${listaEnEspanol(faltan.map((i) => i + 1))}`
-              : "Guardar el par"}
+              : modo === "marcar"
+                ? idx + 1 < pares.length
+                  ? "Guardar y siguiente"
+                  : "Guardar y terminar"
+                : "Guardar el par"}
       </button>
       <p className="text-xs text-muted">
-        Votas look contra look, y para guardar hay que votar{" "}
-        {comparables.length === 1 ? "el que hay" : `los ${comparables.length}`}:
-        el resultado del PAR sale por mayoría, así que un par decidido solo por
-        el primero deja los otros sin mirar. La unidad de la prueba
-        sigue siendo el par, porque los looks de un lado salen de una sola
-        llamada al motor y no son votos independientes. El 👍/👎 es aparte y
-        sigue siendo opcional — llevas {marcados} en este par.
+        {modo === "marcar" ? (
+          <>
+            Marca 👍/👎 los {nLooks * 2} looks del par (los dos lados) para
+            guardar: la marca es diagnóstico look por look, y una a medias deja
+            el marcador diciendo “0 👎” cuando lo que pasó es que nadie los
+            miró. El voto de este par no se toca —ya está emitido y su corrida
+            ya se puede leer—; esto solo completa lo que falta. Llevas{" "}
+            {marcados} de {nLooks * 2}.
+          </>
+        ) : (
+          <>
+            Votas look contra look, y para guardar hay que votar{" "}
+            {comparables.length === 1 ? "el que hay" : `los ${comparables.length}`}:
+            el resultado del PAR sale por mayoría, así que un par decidido solo
+            por el primero deja los otros sin mirar. La unidad de la prueba
+            sigue siendo el par, porque los looks de un lado salen de una sola
+            llamada al motor y no son votos independientes. El 👍/👎 es aparte y
+            sigue siendo opcional — llevas {marcados} en este par.
+          </>
+        )}
       </p>
     </div>
   );
