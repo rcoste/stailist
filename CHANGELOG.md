@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.112.0] - 2026-08-06
+
+### Added
+
+- **Try-on de CADA look, no solo del primero.** La primera versión rendereaba únicamente el look 1 de cada lado para no multiplicar costo y espera; se quedó corta en cuanto llegó el 👍/👎 por look, porque ahora se juzgan los tres y solo se podía ver puesto uno. Ahora cada carta trae su botón "verme con este". Sigue pidiéndose **de a dos**: al pedir el look 2 se renderean el 2 de los dos lados, para que el ruido del render quede simétrico entre variantes — un lado con foto contra otro con cuadrícula mediría el formato, no el look. Los renders ya hechos se conservan (no se re-pagan).
+
 ## [0.2.111.2] - 2026-08-06
 
 ### Fixed

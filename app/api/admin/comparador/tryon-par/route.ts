@@ -5,9 +5,10 @@ import { generarTryon } from "@/lib/tryon";
 
 export const maxDuration = 60;
 
-// Los DOS lados de un par, puestos en tu avatar. Por par y nunca por lado
-// suelto: renderear uno solo dejaría al otro compitiendo con una cuadrícula de
-// prendas, y el voto mediría el formato de presentación en vez del look.
+// Los DOS lados de un par en el MISMO índice de look, puestos en tu avatar.
+// Nunca un lado suelto: renderear uno solo dejaría al otro compitiendo con una
+// cuadrícula de prendas, y el juicio mediría el formato en vez del look. Por
+// eso se pide {parId, indice} y salen los dos.
 //
 // Bajo demanda, no automático. El render puede decidir el voto en lugar del
 // outfit —uno correcto se ve mal con un render pobre— así que el default sigue
@@ -22,14 +23,18 @@ export async function POST(request: NextRequest) {
   const perfil = await requireAdmin();
   const supabase = await createClient();
 
-  let body: { parId?: string } = {};
+  let body: { parId?: string; indice?: number } = {};
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
   const { parId } = body;
-  if (!parId) return NextResponse.json({ error: "faltan_datos" }, { status: 400 });
+  // El look dentro del lado. Sin índice, el primero (compatibilidad).
+  const indice = Number.isInteger(body.indice) ? (body.indice as number) : 0;
+  if (!parId || indice < 0) {
+    return NextResponse.json({ error: "faltan_datos" }, { status: 400 });
+  }
 
   const { data: par } = await supabase
     .from("comparador_motor_pares")
@@ -62,34 +67,33 @@ export async function POST(request: NextRequest) {
 
   const { data: lados } = await supabase
     .from("comparador_motor_lados")
-    .select("id, variante, looks, tryon_path")
+    .select("id, variante, looks, tryons")
     .eq("par_id", ladosDe);
   if (!lados?.length) return NextResponse.json({ error: "sin_lados" }, { status: 404 });
 
-  // Se renderea el PRIMER look de cada lado: es el que la usuaria vería
-  // arriba, y rendear los tres multiplicaría costo y espera por nada.
   type Look = { item_ids: string[]; tip?: string | null };
   const resultados = await Promise.all(
     lados.map(async (l) => {
-      const primero = ((l.looks as Look[] | null) ?? [])[0];
-      if (!primero?.item_ids?.length) {
+      const look = ((l.looks as Look[] | null) ?? [])[indice];
+      if (!look?.item_ids?.length) {
         return { variante: l.variante as string, error: "sin_looks" };
       }
-      const cachePath = `${duenoId}/tryons/comparador-${l.id}.jpg`;
+      const previos = (l.tryons as Record<string, string> | null) ?? {};
+      const cachePath = `${duenoId}/tryons/comparador-${l.id}-${indice}.jpg`;
       const r = await generarTryon({
         supabase,
         userId: duenoId,
-        itemIds: primero.item_ids,
-        tip: primero.tip ?? null,
+        itemIds: look.item_ids,
+        tip: look.tip ?? null,
         cachePath,
-        yaGenerado: (l.tryon_path as string | null) ?? null,
+        yaGenerado: previos[String(indice)] ?? null,
         origin: request.nextUrl.origin,
       });
       if ("error" in r) return { variante: l.variante as string, error: r.error };
       if (!r.cached) {
         await supabase
           .from("comparador_motor_lados")
-          .update({ tryon_path: cachePath })
+          .update({ tryons: { ...previos, [String(indice)]: cachePath } })
           .eq("id", l.id);
       }
       return { variante: l.variante as string, image: r.image };
@@ -103,5 +107,5 @@ export async function POST(request: NextRequest) {
   for (const r of resultados) {
     porVariante[r.variante] = "image" in r ? { image: r.image } : { error: r.error };
   }
-  return NextResponse.json({ ok: true, porVariante });
+  return NextResponse.json({ ok: true, indice, porVariante });
 }
