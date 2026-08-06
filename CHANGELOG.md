@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.104.2] - 2026-08-05
+
+### Fixed
+
+- **Al calificar ya se ven todos los datos, no seis.** Faltaban corte, largo y manga —que sí llegan al motor y salen en los consejos de cómo llevar la prenda— y sobre todo la descripción, que es donde vive el detalle fino: zapato Derby contra Oxford, saco cruzado contra sencillo. Sin eso, se estaba calificando menos de lo que la app realmente usa.
+
 ## [0.2.104.1] - 2026-08-05
 
 ### Fixed

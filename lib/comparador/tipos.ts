@@ -6,7 +6,19 @@ import { costoUsd } from "@/lib/proveedores/precios";
 
 export type Modo = "una" | "varias";
 
-/** Campos que se califican. Son los que el motor usa después. */
+/**
+ * Campos que se califican. TODOS los que el modelo puede devolver, no una
+ * selección mía.
+ *
+ * Al principio puse siete y dejé fuera largo, corte y manga. Estaba mal: esos
+ * tres SÍ llegan al motor (describeItem los manda) y salen en los consejos de
+ * cómo llevar la prenda. Calificar un modelo sin poder marcar esos campos
+ * medía menos de lo que la app usa.
+ *
+ * `descripcion` va aparte porque es un párrafo y no un dato corto — ver
+ * CAMPO_LARGO. Es donde vive el detalle fino (Derby contra Oxford, saco cruzado
+ * contra sencillo) y hasta ahora la pantalla lo escondía.
+ */
 export const CAMPOS_JUZGABLES = [
   "nombre",
   "categoria",
@@ -15,7 +27,15 @@ export const CAMPOS_JUZGABLES = [
   "formalidad",
   "temporada",
   "patron",
+  "corte",
+  "largo",
+  "manga",
+  "color_secundario",
+  "contexto",
 ] as const;
+
+/** Se muestra como bloque de texto, no como etiqueta corta. */
+export const CAMPO_LARGO = "descripcion";
 
 /**
  * El juicio sobre una lectura. Dos formas, porque son dos preguntas.

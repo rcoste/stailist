@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CAMPOS_JUZGABLES, type FotoComparada, type Modo, type Veredicto } from "@/lib/comparador/tipos";
+import {
+  CAMPOS_JUZGABLES,
+  CAMPO_LARGO,
+  type FotoComparada,
+  type Modo,
+  type Veredicto,
+} from "@/lib/comparador/tipos";
 import { calificar } from "../actions";
 
 // Una foto a la vez, grande, y debajo lo que vio cada modelo.
@@ -26,6 +32,12 @@ const ETIQUETA_CAMPO: Record<string, string> = {
   formalidad: "formalidad",
   temporada: "temporada",
   patron: "patrón",
+  corte: "corte",
+  largo: "largo",
+  manga: "manga",
+  color_secundario: "2º color",
+  contexto: "contexto",
+  descripcion: "descripción",
 };
 
 const LETRAS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -213,6 +225,7 @@ export function CalificarClient({
                         </div>
 
                         {!inventada ? (
+                          <>
                           <div className="flex flex-wrap gap-1.5">
                             {CAMPOS_JUZGABLES.filter((c) => c !== "nombre").map((campo) => {
                               const valor = p[campo];
@@ -238,6 +251,31 @@ export function CalificarClient({
                               );
                             })}
                           </div>
+
+                          {/* La descripción va como bloque y no como etiqueta:
+                              es un párrafo, y es DONDE VIVE EL DETALLE FINO —
+                              zapato Derby contra Oxford, saco cruzado contra
+                              sencillo, pantalón con pretina o sin ella. Nada de
+                              eso tiene campo propio, así que si no se muestra
+                              aquí no hay forma de calificarlo. */}
+                          {typeof p[CAMPO_LARGO] === "string" && p[CAMPO_LARGO] ? (
+                            <button
+                              onClick={() => marcarCampo(l.modeloId, idx, CAMPO_LARGO)}
+                              className={`rounded-lg border p-2 text-left ${
+                                (a.camposMal[String(idx)] ?? []).includes(CAMPO_LARGO)
+                                  ? "border-error bg-error/10"
+                                  : "border-line"
+                              }`}
+                            >
+                              <span className="block text-[10px] uppercase tracking-wide text-muted">
+                                descripción
+                              </span>
+                              <span className="block text-xs leading-relaxed text-ink">
+                                {String(p[CAMPO_LARGO])}
+                              </span>
+                            </button>
+                          ) : null}
+                          </>
                         ) : null}
                       </div>
                     );
