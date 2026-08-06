@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.104.3] - 2026-08-05
+
+### Fixed
+
+- **Al calificar, la ropa de otra persona ya no cuenta como "faltante".** En una foto donde sale alguien más, listar su reloj no es acertar: es meter una prenda ajena a tu clóset, que es el mismo daño que inventarla. El botón ahora dice "no es mía" y cubre los dos casos.
+
 ## [0.2.104.2] - 2026-08-05
 
 ### Fixed

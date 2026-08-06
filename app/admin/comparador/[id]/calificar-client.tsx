@@ -17,11 +17,18 @@ import { calificar } from "../actions";
 // pregunta no admite gusto: la prenda está en la foto o no está.
 //
 // EN MODO "VARIAS" SE CALIFICAN TRES COSAS, no una:
-//   ✗ sobra   — la prenda no está en la foto. EL ERROR CARO: una prenda
-//               inventada se guarda con su render limpio, se ve igual de real
-//               que las demás, y no hay forma de detectarla desde la app hasta
-//               que sale en un outfit. A Roberto le tomó dos meses cazar tres.
-//   faltaron  — cuántas prendas de la foto no listó.
+//   ✗ no es mía — la prenda no debería entrar a tu clóset. Cubre DOS casos que
+//               para el producto son el mismo daño: la que el modelo se
+//               inventó de la nada, y la que sí está en la foto pero es de
+//               OTRA PERSONA. Roberto subió una foto donde sale la mano de su
+//               esposa: tres modelos listaron el reloj de ella. Guardado, ese
+//               reloj es suyo para siempre y empieza a salir en sus outfits —
+//               exactamente el fallo del suéter esmeralda.
+//               EL ERROR CARO: se guarda con su render limpio, se ve igual de
+//               real que las demás, y no hay forma de detectarlo desde la app
+//               hasta que aparece en un look. Cazar tres tomó dos meses.
+//   faltaron  — prendas TUYAS que están en la foto y no listó. Ojo: lo de otra
+//               persona NO cuenta como faltante; ignorarlo es lo correcto.
 //   campo mal — de las que sí vio, cuáles leyó mal.
 
 const ETIQUETA_CAMPO: Record<string, string> = {
@@ -141,7 +148,7 @@ export function CalificarClient({
         </h1>
         <p className="text-sm leading-relaxed text-muted">
           {modo === "varias"
-            ? "Toca ✗ en una prenda que NO esté en la foto. Toca un dato para marcarlo equivocado. Y abajo dile cuántas prendas de la foto se le fueron."
+            ? "Toca ✗ en lo que NO debería entrar a tu clóset: lo que no está en la foto, y también lo que es de otra persona que sale en ella. Toca un dato para marcarlo equivocado. Abajo, cuántas prendas TUYAS se le fueron."
             : "Toca el dato que esté equivocado. Lo que no toques cuenta como acertado."}
         </p>
         <p className="text-sm font-semibold text-ink">
@@ -212,14 +219,14 @@ export function CalificarClient({
                           {modo === "varias" ? (
                             <button
                               onClick={() => marcarInventada(l.modeloId, idx)}
-                              title="esta prenda no está en la foto"
+                              title="no debería entrar a tu clóset: o no está en la foto, o es de otra persona"
                               className={`shrink-0 rounded-full border px-2 py-1 text-xs font-semibold ${
                                 inventada
                                   ? "border-error bg-error text-bg"
                                   : "border-line text-muted"
                               }`}
                             >
-                              ✗ no está
+                              ✗ no es mía
                             </button>
                           ) : null}
                         </div>
@@ -283,7 +290,9 @@ export function CalificarClient({
 
                   {modo === "varias" ? (
                     <div className="flex items-center justify-between gap-3 rounded-lg bg-bg p-2">
-                      <span className="text-xs text-muted">Prendas de la foto que se le fueron</span>
+                      <span className="text-xs text-muted">
+                        Prendas <span className="font-medium text-ink">tuyas</span> que se le fueron
+                      </span>
                       <span className="flex items-center gap-2">
                         <button
                           onClick={() => cambiarFaltaron(l.modeloId, -1)}
