@@ -147,6 +147,7 @@ function par(over: Partial<ParMotor>): ParMotor {
     voto: null,
     defectos: null,
     marcasLook: null,
+    defectosLook: null,
     comentariosLook: null,
     nota: null,
     lados: [
@@ -213,6 +214,15 @@ describe("marcadorMotor", () => {
     expect([b.looksArriba, b.looksAbajo]).toEqual([1, 1]);
     // Las marcas NO son votos: 'a' ganó UN par pese a tener dos looks 👍.
     expect(a.victorias).toBe(1);
+  });
+
+  it("suma los defectos por look junto con los del formato viejo por lado", () => {
+    const pares = [
+      par({ id: "p1", voto: "a", defectos: { b: ["clima"] } }), // formato viejo
+      par({ id: "p2", n: 2, voto: "a", defectosLook: { b: { "0": ["clima"], "2": ["color"] } } }),
+    ];
+    const b = marcadorMotor(VARIANTES, pares).variantes.find((v) => v.clave === "b")!;
+    expect(b.defectos).toEqual({ clima: 2, color: 1 });
   });
 
   it("los defectos marcados en un espejo SÍ cuentan (es etiquetado válido)", () => {

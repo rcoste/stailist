@@ -132,7 +132,8 @@ export async function abrirCorridaMotor(input: {
 export async function votarParMotor(
   parId: string,
   eleccion: "izq" | "der" | "empate",
-  defectos: { izq?: string[]; der?: string[] },
+  /** Defectos POR LOOK: {índice: ["clima", ...]}. */
+  defectos: { izq?: Record<number, string[]>; der?: Record<number, string[]> },
   nota?: string,
   /**
    * Diagnóstico por look: qué look de cada lado sirve y cuál no, por posición.
@@ -152,7 +153,6 @@ export async function votarParMotor(
     return { ok: false, error: "elección inválida" };
   }
   const TAGS_VALIDOS = new Set<string>(DEFECTOS_MOTOR.map((d) => d.clave));
-  const limpiar = (xs?: string[]) => (xs ?? []).filter((x) => TAGS_VALIDOS.has(x));
 
   const { data: par } = await supabase
     .from("comparador_motor_pares")
@@ -200,11 +200,20 @@ export async function votarParMotor(
   );
 
   const voto = eleccion === "empate" ? "empate" : eleccion === "izq" ? izq : der;
-  const porVariante: Record<string, string[]> = {};
-  const dIzq = limpiar(defectos.izq);
-  const dDer = limpiar(defectos.der);
-  if (dIzq.length) porVariante[izq] = dIzq;
-  if (dDer.length) porVariante[der] = dDer;
+  // Defectos por look, resueltos a variante y filtrados contra el catálogo.
+  const defectosPorVariante: Record<string, Record<string, string[]>> = {};
+  const limpiarDefectos = (d?: Record<number, string[]>) => {
+    const out: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(d ?? {})) {
+      const tags = (Array.isArray(v) ? v : []).filter((x) => TAGS_VALIDOS.has(x));
+      if (tags.length && Number.isInteger(Number(k))) out[k] = tags;
+    }
+    return out;
+  };
+  const dIzq = limpiarDefectos(defectos.izq);
+  const dDer = limpiarDefectos(defectos.der);
+  if (Object.keys(dIzq).length) defectosPorVariante[izq] = dIzq;
+  if (Object.keys(dDer).length) defectosPorVariante[der] = dDer;
 
   // Las marcas por look se guardan resueltas a la variante, igual que el voto.
   const marcasPorVariante: Record<string, Record<string, string>> = {};
@@ -243,7 +252,7 @@ export async function votarParMotor(
     .from("comparador_motor_pares")
     .update({
       voto,
-      defectos: Object.keys(porVariante).length ? porVariante : null,
+      defectos_look: Object.keys(defectosPorVariante).length ? defectosPorVariante : null,
       marcas_look: Object.keys(marcasPorVariante).length ? marcasPorVariante : null,
       comentarios_look: Object.keys(comentariosPorVariante).length
         ? comentariosPorVariante
