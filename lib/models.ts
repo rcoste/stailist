@@ -1,3 +1,5 @@
+import type { Modelo } from "@/lib/proveedores";
+
 // Los modelos de IA que usa stailist, en UN solo lugar y repartidos por TAREA.
 //
 // POR QUÉ EXISTE ESTE ARCHIVO
@@ -33,6 +35,18 @@
  * respuesta, que es la misma idea con el costo dentro del presupuesto.
  */
 export const ENGINE_MODEL = "claude-opus-5";
+
+/**
+ * El mismo motor, como `Modelo` de la puerta común (lib/proveedores): el motor
+ * llama por ahí para que cada generación salga con su recibo de tokens/costo/
+ * tiempo — y para que el comparador pueda correr OTRA variante por la misma
+ * puerta sin duplicar una línea del motor.
+ */
+export const MODELO_MOTOR: Modelo = {
+  proveedor: "anthropic",
+  id: ENGINE_MODEL,
+  etiqueta: "Opus 5",
+};
 
 /**
  * Leer una prenda en una foto: color, tipo, material, patrón, tipo fino.
@@ -106,6 +120,15 @@ export const TAG_MODEL = VISION_MODEL;
  * lo apaga explícitamente.
  */
 export const JUDGE_MODEL = "claude-sonnet-5";
+
+/** El juez como `Modelo` de la puerta común. FIJO en las comparaciones del
+ * motor: la variable bajo prueba es el generador; si el juez también cambiara,
+ * la corrida mediría dos cosas a la vez. */
+export const MODELO_JUEZ: Modelo = {
+  proveedor: "anthropic",
+  id: JUDGE_MODEL,
+  etiqueta: "Sonnet 5",
+};
 
 /**
  * Clasificar contra reglas YA ESCRITAS y redactar textos cortos: emparejar una

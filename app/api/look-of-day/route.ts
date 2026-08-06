@@ -4,19 +4,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, createTokenClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
 import { reviewOutfit } from "@/lib/engine/critic";
-import { type EngineContext } from "@/lib/engine/prompt";
+import {
+  cargarBaseDelMotor,
+  construirContexto,
+  resolverYPersistirObjetivo,
+} from "@/lib/engine/contexto";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
-import { PROMPT_VERSION, orderClosetForEngine, type EngineItem } from "@/lib/engine/prompt";
+import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
-import type { Season } from "@/lib/colorimetria";
-import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
-import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
-import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
-import { ageStylingLine, type AgeRange } from "@/lib/edad";
-import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
-import { conCategoria, ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
-import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -246,92 +243,34 @@ async function generateInto(
   body: Body
 ) {
   try {
-    const [profileRes, itemsRes, recentRes, tasteSignal] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).single(),
-      // ITEM_IMAGE_SELECT trae también la categoría del arquetipo: las prendas
-      // del catálogo no la copian a sus attrs y sin ella el motor deduce del
-      // nombre (ver conCategoria). "Tu look de hoy" llama al MISMO motor que
-      // /api/generate, así que necesita el mismo dato o arma peor que la otra
-      // pantalla sin que nada lo delate.
-      supabase
-        .from("items")
-        .select(`id, ${ITEM_IMAGE_SELECT}`)
-        .eq("user_id", userId)
-        .is("deleted_at", null),
-      supabase
-        .from("outfits")
-        .select("item_ids")
-        .eq("user_id", userId)
-        // Un look borrado no debe seguir restringiendo lo que te armo hoy.
-        .is("deleted_at", null)
-        // Solo los looks DIARIOS restringen al motor diario. Los del viaje y los
-        // de la cápsula viven en outfits para el try-on/favorito, pero son otro
-        // contexto: 15 looks de cápsula dejarían al motor de Hoy sin qué armar.
-        .eq("source", "daily")
-        // Solo combos COMPLETOS (legacy null o 'ready'); nunca placeholders.
-        .or("gen_status.is.null,gen_status.eq.ready")
-        .gte("created_at", new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()),
-      loadTasteSignal(supabase, userId),
-    ]);
-
-    const profile = profileRes.data;
-    if (!profile) throw new GenError("closet_vacio");
-    const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
-    const allItems = (itemsRes.data ?? []) as EngineItem[];
-    const { items } = applyVetoes(
-      conCategoria(allItems as unknown as ItemImageRow[]) as unknown as EngineItem[],
-      vetoes
-    );
-    if (items.length < 3) throw new GenError("closet_vacio");
-
-    // Ancla (Hoy): la prenda fijada debe estar disponible para el motor aunque
-    // esté vetada o de otra temporada — es elección explícita de la usuaria. Si
-    // la prenda ya no existe (borrada), cae a sin-ancla.
-    let seedItemId: string | null =
-      typeof body.seedItemId === "string" ? body.seedItemId : null;
-    if (seedItemId && !items.some((i) => i.id === seedItemId)) {
-      const original = allItems.find((i) => i.id === seedItemId);
-      if (original) items.push(original);
-      else seedItemId = null;
-    }
+    // La carga y la construcción del contexto son las COMPARTIDAS
+    // (lib/engine/contexto.ts): "Tu look de hoy" llama al MISMO motor que
+    // /api/generate, y tener dos copias ya había derivado (esta ruta no pasaba
+    // fitPref; la otra no filtraba placeholders del historial).
+    const carga = await cargarBaseDelMotor(supabase, userId);
+    if ("error" in carga) throw new GenError("closet_vacio");
+    const { base } = carga;
+    const profile = base.profile;
 
     const weather: Weather | null = await resolveWeather(body);
 
-    const objective =
-      typeof body.objective === "string" && body.objective in OBJECTIVES
-        ? body.objective
-        : profile.last_objective;
-    if (objective && objective !== profile.last_objective) {
-      await supabase.from("profiles").update({ last_objective: objective }).eq("id", userId);
-    }
+    const objective = await resolverYPersistirObjetivo(
+      supabase,
+      profile,
+      body.objective,
+      userId,
+      OBJECTIVES
+    );
 
-    const ctx: EngineContext = {
-      gender: profile.gender as "hombre" | "mujer" | null,
+    const ctx = construirContexto(base, {
       objective,
-      plan: typeof body.plan === "string" ? body.plan.slice(0, 200) : null,
-      lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
-      tasteTags: (profile.taste_tags ?? []) as string[],
-      archetype:
-        (profile.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
-      season: profile.palette_season as Season | null,
-      flow: profile.palette_flow as Season | null,
-      // Agrupado por categoría + barajado por llamada (anti sesgo posicional).
-      items: orderClosetForEngine(items),
+      plan: typeof body.plan === "string" ? body.plan : null,
+      momento: typeof body.momento === "string" ? body.momento : null,
       weather,
-      recentCombos: (recentRes.data ?? []).map((o) => o.item_ids as string[]),
-      vetoes: vetoLabels(vetoes),
-      timeOfDay: body.momento === "noche" ? "noche" : body.momento === "dia" ? "dia" : null,
-      silueta: siluetaPromptLine(
-        profile.body_build as Build | null,
-        profile.body_volume as Volume | null
-      ),
-      ageStyling: ageStylingLine(profile.age_range as AgeRange | null),
-      tasteSignal,
-      seedItemId,
+      seedItemId: typeof body.seedItemId === "string" ? body.seedItemId : null,
       formality: typeof body.formality === "string" ? body.formality : null,
-      styleReference: styleReferenceForEngine(profile.style_reference),
-      styleWords: (profile.style_words as string | null) ?? null,
-    };
+    });
+    const seedItemId = ctx.seedItemId ?? null;
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
     const result = await reviewOutfit(ctx, candidates[0], []);

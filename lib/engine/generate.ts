@@ -1,5 +1,5 @@
-import { ENGINE_MODEL } from "@/lib/models";
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELO_MOTOR } from "@/lib/models";
+import { llamar, type Modelo, type Recibo } from "@/lib/proveedores";
 import { buildOutfitSchema } from "./schema";
 import type { BlueprintEmparejado } from "./blueprint";
 import {
@@ -15,57 +15,65 @@ export type GeneratedOutfit = {
   tip?: string | null; // "el toque" — lo produce el juez; null/ausente = sin tip
 };
 
-// Una llamada al modelo → 2-3 outfits validados. El schema con enum de ids
-// garantiza prendas reales; aquí validamos además forma y cantidad.
-export async function generateOutfits(
+export type OpcionesGeneracion = {
+  // Flags del arnés/comparador (ver buildUserMessage). Producción no los pasa.
+  marcarEstilo?: boolean;
+  sinRecetario?: boolean;
+  sinBlueprint?: boolean;
+  sinRotacion?: boolean;
+  sinNeutros?: boolean;
+  blueprint?: BlueprintEmparejado | null;
+  /**
+   * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).
+   * Solo lo pasa el comparador — una variante ES {modelo + prompt + reglas}.
+   * OJO: cambiar el modelo aquí NO cambia producción; eso sigue siendo la
+   * línea de lib/models.ts, y solo se mueve cuando una corrida lo gana.
+   */
+  modelo?: Modelo;
+};
+
+/**
+ * Una llamada al modelo → 2-3 outfits validados, CON su recibo (tokens, costo,
+ * tiempo). El schema con enum de ids garantiza prendas reales; aquí validamos
+ * además forma y cantidad. Va por la puerta común (lib/proveedores) para que
+ * producción y comparador sean LA MISMA llamada — la clase de arnés que imita
+ * al motor en vez de llamarlo ya nos costó un día en bugs.
+ */
+export async function generarConRecibo(
   ctx: EngineContext,
-  // Solo para el A/B del arnés (ver buildUserMessage). Producción no lo pasa.
-  opciones: {
-    marcarEstilo?: boolean;
-    sinRecetario?: boolean;
-    sinBlueprint?: boolean;
-    sinRotacion?: boolean;
-    sinNeutros?: boolean;
-    blueprint?: BlueprintEmparejado | null;
-  } = {}
-): Promise<GeneratedOutfit[]> {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  opciones: OpcionesGeneracion = {}
+): Promise<{ outfits: GeneratedOutfit[]; recibo: Recibo }> {
+  const modelo = opciones.modelo ?? MODELO_MOTOR;
+  // El error histórico del motor, distinguible: la ruta lo traduce a
+  // "sin_api_key" para el usuario.
+  if (modelo.proveedor === "anthropic" && !process.env.ANTHROPIC_API_KEY) {
     throw new Error("ENGINE_NOT_CONNECTED");
   }
 
-  const client = new Anthropic();
   const itemIds = ctx.items.map((i) => i.id);
 
-  const response = await client.messages.create({
-    model: ENGINE_MODEL,
+  // Thinking APAGADO (lo apaga el adaptador para todos los proveedores): en los
+  // modelos 5 viene encendido por default y en el motor cuesta ~50% más de
+  // latencia (32s contra 21s, medido) sin que se vea en los looks — el schema
+  // ya obliga a razonar en el campo "analisis" antes de comprometer los
+  // outfits. Y esto corre dentro del límite de 60s de Vercel CON los jueces
+  // detrás.
+  const recibo = await llamar({
+    modelo,
+    system: SYSTEM_PROMPT,
+    texto: buildUserMessage(ctx, opciones),
+    schema: buildOutfitSchema(itemIds),
     // 3072: el campo "analisis" (borrador de razonamiento del schema) consume
     // tokens antes de los outfits; 2048 quedaba justo.
-    max_tokens: 3072,
-    // Thinking APAGADO. En los modelos 5 viene encendido por default y en el
-    // motor cuesta ~50% más de latencia (32s contra 21s, medido) sin que se vea
-    // en los looks: el schema ya obliga a razonar en el campo "analisis" antes
-    // de comprometer los outfits, que es la misma idea con el costo dentro del
-    // presupuesto. Y esto corre dentro del límite de 60s de Vercel CON los
-    // jueces detrás — 32s de generación deja el margen demasiado corto.
-    thinking: { type: "disabled" },
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: buildUserMessage(ctx, opciones) }],
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: buildOutfitSchema(itemIds),
-      },
-    },
+    maxTokens: 3072,
   });
 
-  const text = response.content.find((b) => b.type === "text")?.text;
-  if (!text) throw new Error("EMPTY_RESPONSE");
   // Truncado por tope de tokens = JSON incompleto. Error distinguible (no un
   // JSON.parse opaco): el schema no puede acotar el "analisis" (maxLength no
   // está soportado en structured outputs), así que este es el backstop.
-  if (response.stop_reason === "max_tokens") throw new Error("TRUNCATED_RESPONSE");
+  if (recibo.truncada) throw new Error("TRUNCATED_RESPONSE");
 
-  const parsed = JSON.parse(text) as { outfits: GeneratedOutfit[] };
+  const parsed = JSON.parse(recibo.texto) as { outfits: GeneratedOutfit[] };
   const valid = new Set(itemIds);
   const outfits = (parsed.outfits ?? [])
     .filter(
@@ -84,11 +92,23 @@ export async function generateOutfits(
   // prompt ya la pide; esto es la red de seguridad por si el modelo la omite).
   const seed = ctx.seedItemId;
   if (seed && valid.has(seed)) {
-    return outfits.map((o) =>
-      o.item_ids.includes(seed)
-        ? o
-        : { ...o, item_ids: [seed, ...o.item_ids].slice(0, 5) }
-    );
+    return {
+      outfits: outfits.map((o) =>
+        o.item_ids.includes(seed)
+          ? o
+          : { ...o, item_ids: [seed, ...o.item_ids].slice(0, 5) }
+      ),
+      recibo,
+    };
   }
+  return { outfits, recibo };
+}
+
+/** La firma histórica, para quien no necesita el recibo. */
+export async function generateOutfits(
+  ctx: EngineContext,
+  opciones: OpcionesGeneracion = {}
+): Promise<GeneratedOutfit[]> {
+  const { outfits } = await generarConRecibo(ctx, opciones);
   return outfits;
 }

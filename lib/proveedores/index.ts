@@ -53,6 +53,12 @@ export type Recibo = {
   /** null si no conocemos el precio del modelo. */
   costoUsd: number | null;
   ms: number;
+  /**
+   * La respuesta se cortó por tope de tokens. Quien pidió JSON tiene que
+   * tratarlo como fallo distinguible ANTES de parsear: un JSON incompleto
+   * truena con un error opaco de sintaxis que no dice qué pasó.
+   */
+  truncada: boolean;
 };
 
 export class ErrorProveedor extends Error {
@@ -130,7 +136,12 @@ async function conAnthropic(p: Peticion): Promise<Omit<Recibo, "ms">> {
     entrada: res.usage.input_tokens,
     salida: res.usage.output_tokens,
   };
-  return { texto, tokens, costoUsd: costoUsd(p.modelo.id, tokens) };
+  return {
+    texto,
+    tokens,
+    costoUsd: costoUsd(p.modelo.id, tokens),
+    truncada: res.stop_reason === "max_tokens",
+  };
 }
 
 // ── Gemini ─────────────────────────────────────────────────────────────────
@@ -217,7 +228,7 @@ async function leerRespuestaGemini(
     throw new ErrorProveedor("gemini", `${res.status} ${(await res.text()).slice(0, 300)}`);
   }
   const json = (await res.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
+    candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[];
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
   };
   const texto = json.candidates?.[0]?.content?.parts?.map((x) => x.text ?? "").join("");
@@ -226,7 +237,12 @@ async function leerRespuestaGemini(
     entrada: json.usageMetadata?.promptTokenCount ?? 0,
     salida: json.usageMetadata?.candidatesTokenCount ?? 0,
   };
-  return { texto, tokens, costoUsd: costoUsd(p.modelo.id, tokens) };
+  return {
+    texto,
+    tokens,
+    costoUsd: costoUsd(p.modelo.id, tokens),
+    truncada: json.candidates?.[0]?.finishReason === "MAX_TOKENS",
+  };
 }
 
 // ── OpenRouter ─────────────────────────────────────────────────────────────
@@ -301,7 +317,7 @@ async function conOpenRouter(p: Peticion): Promise<Omit<Recibo, "ms">> {
     throw new ErrorProveedor("openrouter", explicarOpenRouter(res.status, await res.text()));
   }
   const json = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: { message?: { content?: string }; finish_reason?: string }[];
     usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number };
   };
   const texto = json.choices?.[0]?.message?.content;
@@ -314,5 +330,6 @@ async function conOpenRouter(p: Peticion): Promise<Omit<Recibo, "ms">> {
     texto,
     tokens,
     costoUsd: json.usage?.cost ?? costoUsd(p.modelo.id, tokens),
+    truncada: json.choices?.[0]?.finish_reason === "length",
   };
 }
