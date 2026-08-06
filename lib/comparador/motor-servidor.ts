@@ -92,6 +92,8 @@ export async function cargarCorridaMotor(
     voto: (p.voto as string | null) ?? null,
     defectos: (p.defectos as Record<string, string[]> | null) ?? null,
     marcasLook: (p.marcas_look as Record<string, Record<string, string>> | null) ?? null,
+    comentariosLook:
+      (p.comentarios_look as Record<string, Record<string, string>> | null) ?? null,
     nota: (p.nota as string | null) ?? null,
     lados: porPar.get(p.id as string) ?? [],
   }));

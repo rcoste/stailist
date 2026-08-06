@@ -145,6 +145,7 @@ function par(over: Partial<ParMotor>): ParMotor {
     voto: null,
     defectos: null,
     marcasLook: null,
+    comentariosLook: null,
     nota: null,
     lados: [
       { variante: "a", looks: [], reviews: null, error: null, costoUsd: 0.2, ms: 30000 },

@@ -139,7 +139,9 @@ export async function votarParMotor(
    * NO es la unidad del veredicto (los looks de un lado salen de una sola
    * llamada, no son independientes) — es lo que dice cuál arrastró el voto.
    */
-  marcas?: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> }
+  marcas?: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> },
+  /** El porqué de CADA look. Es lo que se convierte en regla. */
+  comentarios?: { izq?: Record<number, string>; der?: Record<number, string> }
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const supabase = await createClient();
@@ -206,6 +208,16 @@ export async function votarParMotor(
 
   // Las marcas por look se guardan resueltas a la variante, igual que el voto.
   const marcasPorVariante: Record<string, Record<string, string>> = {};
+  // Los comentarios se recortan a 800: uno por look son hasta 6 por par, y el
+  // valor está en la frase que nombra el defecto, no en el ensayo.
+  const limpiarComentarios = (c?: Record<number, string>) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(c ?? {})) {
+      const t = typeof v === "string" ? v.trim().slice(0, 800) : "";
+      if (t && Number.isInteger(Number(k))) out[k] = t;
+    }
+    return out;
+  };
   const limpiarMarcas = (m?: Record<number, "arriba" | "abajo">) => {
     const out: Record<string, string> = {};
     for (const [k, v] of Object.entries(m ?? {})) {
@@ -218,6 +230,12 @@ export async function votarParMotor(
   if (Object.keys(mIzq).length) marcasPorVariante[izq] = mIzq;
   if (Object.keys(mDer).length) marcasPorVariante[der] = mDer;
 
+  const comentariosPorVariante: Record<string, Record<string, string>> = {};
+  const cIzq = limpiarComentarios(comentarios?.izq);
+  const cDer = limpiarComentarios(comentarios?.der);
+  if (Object.keys(cIzq).length) comentariosPorVariante[izq] = cIzq;
+  if (Object.keys(cDer).length) comentariosPorVariante[der] = cDer;
+
   // `.is("voto", null)`: un par votado NO se re-vota. Sin esto, se podría
   // cambiar un voto después de ver el reveal — exactamente lo que el
   // pre-registro existe para impedir.
@@ -227,6 +245,9 @@ export async function votarParMotor(
       voto,
       defectos: Object.keys(porVariante).length ? porVariante : null,
       marcas_look: Object.keys(marcasPorVariante).length ? marcasPorVariante : null,
+      comentarios_look: Object.keys(comentariosPorVariante).length
+        ? comentariosPorVariante
+        : null,
       // 1500 y no 500: el porqué del voto es el dato más valioso de la
       // corrida — es lo que convierte "ganó A" en una regla. Cortarlo a dos
       // líneas invitaba a no escribirlo.
@@ -253,7 +274,8 @@ export async function votarParMotor(
  */
 export async function completarMarcas(
   parId: string,
-  marcas: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> }
+  marcas: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> },
+  comentarios?: { izq?: Record<number, string>; der?: Record<number, string> }
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const supabase = await createClient();
@@ -295,9 +317,28 @@ export async function completarMarcas(
   if (Object.keys(mIzq).length) porVariante[izq] = mIzq;
   if (Object.keys(mDer).length) porVariante[der] = mDer;
 
+  const limpiarTexto = (c?: Record<number, string>) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(c ?? {})) {
+      const t = typeof v === "string" ? v.trim().slice(0, 800) : "";
+      if (t && Number.isInteger(Number(k))) out[k] = t;
+    }
+    return out;
+  };
+  const comentariosPorVariante: Record<string, Record<string, string>> = {};
+  const cIzq = limpiarTexto(comentarios?.izq);
+  const cDer = limpiarTexto(comentarios?.der);
+  if (Object.keys(cIzq).length) comentariosPorVariante[izq] = cIzq;
+  if (Object.keys(cDer).length) comentariosPorVariante[der] = cDer;
+
   const { error } = await supabase
     .from("comparador_motor_pares")
-    .update({ marcas_look: Object.keys(porVariante).length ? porVariante : null })
+    .update({
+      marcas_look: Object.keys(porVariante).length ? porVariante : null,
+      comentarios_look: Object.keys(comentariosPorVariante).length
+        ? comentariosPorVariante
+        : null,
+    })
     .eq("id", parId);
   if (error) return { ok: false, error: error.message };
 

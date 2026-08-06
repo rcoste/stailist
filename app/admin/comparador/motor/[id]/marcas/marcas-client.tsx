@@ -21,10 +21,14 @@ function Carta({
   look,
   marca,
   setMarca,
+  comentario,
+  setComentario,
 }: {
   look: LookParaVotar;
   marca?: "arriba" | "abajo";
   setMarca: (m: "arriba" | "abajo" | undefined) => void;
+  comentario?: string;
+  setComentario: (c: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
@@ -79,6 +83,13 @@ function Carta({
         ))}
       </div>
       <p className="text-xs leading-relaxed text-muted">{look.explicacion}</p>
+      <textarea
+        value={comentario ?? ""}
+        onChange={(e) => setComentario(e.target.value)}
+        rows={2}
+        placeholder="qué le viste a este (opcional)"
+        className="rounded-lg border border-line bg-bg p-2 text-xs text-ink placeholder:text-muted"
+      />
     </div>
   );
 }
@@ -94,6 +105,8 @@ export function MarcasClient({
   const [idx, setIdx] = useState(0);
   const [mIzq, setMIzq] = useState<Record<number, "arriba" | "abajo">>({});
   const [mDer, setMDer] = useState<Record<number, "arriba" | "abajo">>({});
+  const [cIzq, setCIzq] = useState<Record<number, string>>({});
+  const [cDer, setCDer] = useState<Record<number, string>>({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,7 +116,11 @@ export function MarcasClient({
     if (guardando) return;
     setGuardando(true);
     setError(null);
-    const r = await completarMarcas(par.parId, { izq: mIzq, der: mDer });
+    const r = await completarMarcas(
+      par.parId,
+      { izq: mIzq, der: mDer },
+      { izq: cIzq, der: cDer }
+    );
     setGuardando(false);
     if (!r.ok) {
       setError(r.error ?? "no se pudo guardar");
@@ -111,6 +128,8 @@ export function MarcasClient({
     }
     setMIzq({});
     setMDer({});
+    setCIzq({});
+    setCDer({});
     if (idx + 1 < pares.length) setIdx(idx + 1);
     else router.push(`/admin/comparador/motor/${corridaId}`);
   };
@@ -119,7 +138,9 @@ export function MarcasClient({
     titulo: string,
     looks: LookParaVotar[],
     marcas: Record<number, "arriba" | "abajo">,
-    setMarcas: (m: Record<number, "arriba" | "abajo">) => void
+    setMarcas: (m: Record<number, "arriba" | "abajo">) => void,
+    comentarios: Record<number, string>,
+    setComentarios: (c: Record<number, string>) => void
   ) => (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{titulo}</p>
@@ -134,6 +155,8 @@ export function MarcasClient({
             else delete next[i];
             setMarcas(next);
           }}
+          comentario={comentarios[i]}
+          setComentario={(c) => setComentarios({ ...comentarios, [i]: c })}
         />
       ))}
     </div>
@@ -156,8 +179,8 @@ export function MarcasClient({
       </header>
 
       <div className="flex gap-3">
-        {columna("Look A", par.izq, mIzq, setMIzq)}
-        {columna("Look B", par.der, mDer, setMDer)}
+        {columna("Look A", par.izq, mIzq, setMIzq, cIzq, setCIzq)}
+        {columna("Look B", par.der, mDer, setMDer, cDer, setCDer)}
       </div>
 
       {error ? <p className="text-sm text-error">{error}</p> : null}
