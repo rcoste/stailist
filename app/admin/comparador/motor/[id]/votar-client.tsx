@@ -38,12 +38,18 @@ function CartaLook({
   setMarca,
   comentario,
   setComentario,
+  tryon,
+  pedirTryon,
+  rendereando,
 }: {
   look: LookParaVotar;
   marca?: "arriba" | "abajo";
   setMarca: (m: "arriba" | "abajo" | undefined) => void;
   comentario?: string;
   setComentario?: (c: string) => void;
+  tryon?: { image?: string; error?: string };
+  pedirTryon?: () => void;
+  rendereando?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
@@ -108,6 +114,34 @@ function CartaLook({
           </div>
         ))}
       </div>
+      {/* El try-on de ESTE look. Se pide por índice y salen los dos lados a
+          la vez, para que el ruido del render quede simétrico. */}
+      {tryon?.image ? (
+        <span className="relative block aspect-[3/4] overflow-hidden rounded-lg border border-line">
+          <Image
+            src={tryon.image}
+            alt={`${look.nombre} en tu avatar`}
+            fill
+            sizes="(max-width: 430px) 45vw, 260px"
+            loading="eager"
+            className="object-cover"
+          />
+        </span>
+      ) : null}
+      {tryon?.error ? (
+        <p className="text-xs text-error">
+          {tryon.error === "sin_avatar" ? "no tienes avatar" : `sin render (${tryon.error})`}
+        </p>
+      ) : null}
+      {pedirTryon && !tryon?.image ? (
+        <button
+          disabled={rendereando}
+          onClick={pedirTryon}
+          className="rounded-lg border border-line py-1.5 text-xs font-semibold text-ink active:bg-tile disabled:opacity-50"
+        >
+          {rendereando ? "vistiendo…" : "verme con este"}
+        </button>
+      ) : null}
       <p className="text-xs leading-relaxed text-muted">{look.explicacion}</p>
       {look.tip ? (
         <p className="text-xs leading-relaxed text-muted">✦ {look.tip}</p>
@@ -137,12 +171,16 @@ function Columna({
   setMarcas,
   comentarios,
   setComentarios,
+  pedirTryon,
+  rendereando,
 }: {
   titulo: string;
   looks: LookParaVotar[];
   defectos: string[];
   setDefectos: (d: string[]) => void;
-  tryon?: { image?: string; error?: string };
+  tryon?: Record<number, { image?: string; error?: string }>;
+  pedirTryon: (indice: number) => void;
+  rendereando: number | null;
   marcas: Record<number, "arriba" | "abajo">;
   setMarcas: (m: Record<number, "arriba" | "abajo">) => void;
   comentarios: Record<number, string>;
@@ -157,27 +195,6 @@ function Columna({
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{titulo}</p>
-      {/* El try-on del PRIMER look, cuando se pidió. Va arriba: es lo que
-          decide de un vistazo, y las prendas siguen abajo como referencia. */}
-      {tryon?.image ? (
-        <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-line">
-          <Image
-            src={tryon.image}
-            alt={`${titulo} en tu avatar`}
-            fill
-            sizes="(max-width: 430px) 50vw, 300px"
-            loading="eager"
-            className="object-cover"
-          />
-        </span>
-      ) : null}
-      {tryon?.error ? (
-        <p className="text-xs text-error">
-          {tryon.error === "sin_avatar"
-            ? "no tienes avatar todavía"
-            : `no salió el render (${tryon.error})`}
-        </p>
-      ) : null}
       {looks.map((l, i) => (
         <CartaLook
           key={i}
@@ -191,6 +208,9 @@ function Columna({
           }}
           comentario={comentarios[i]}
           setComentario={(c) => setComentarios({ ...comentarios, [i]: c })}
+          tryon={tryon?.[i]}
+          pedirTryon={() => pedirTryon(i)}
+          rendereando={rendereando === i}
         />
       ))}
       <div className="flex flex-wrap gap-1.5">
@@ -236,31 +256,46 @@ export function VotarClient({
   const [error, setError] = useState<string | null>(null);
   // El try-on del par actual, por VARIANTE (la respuesta no dice izq/der para
   // no delatar el ciego; se mapea abajo con las claves que mandó el servidor).
-  const [tryon, setTryon] = useState<Record<string, { image?: string; error?: string }> | null>(null);
-  const [renderizando, setRenderizando] = useState(false);
+  // Try-on por VARIANTE y por índice de look. La respuesta no dice izq/der
+  // para no delatar el ciego; se mapea abajo con las claves del servidor.
+  const [tryon, setTryon] = useState<
+    Record<string, Record<number, { image?: string; error?: string }>>
+  >({});
+  const [renderizando, setRenderizando] = useState<number | null>(null);
 
   const par = pares[idx];
 
-  const verEnAvatar = async () => {
-    if (renderizando) return;
-    setRenderizando(true);
+  // Pide el look `indice` de LOS DOS lados. Nunca uno solo: si un lado tuviera
+  // render y el otro no, la comparación mediría el formato, no el look.
+  const verEnAvatar = async (indice: number) => {
+    if (renderizando !== null) return;
+    setRenderizando(indice);
     setError(null);
     try {
       const r = await fetch("/api/admin/comparador/tryon-par", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parId: par.parId }),
+        body: JSON.stringify({ parId: par.parId, indice }),
       });
       const json = (await r.json()) as {
         porVariante?: Record<string, { image?: string; error?: string }>;
         error?: string;
       };
       if (json.error) setError(json.error);
-      else setTryon(json.porVariante ?? null);
+      else {
+        const porVariante = json.porVariante ?? {};
+        setTryon((prev) => {
+          const next = { ...prev };
+          for (const [clave, v] of Object.entries(porVariante)) {
+            next[clave] = { ...(next[clave] ?? {}), [indice]: v };
+          }
+          return next;
+        });
+      }
     } catch {
       setError("no se pudo generar el try-on");
     } finally {
-      setRenderizando(false);
+      setRenderizando(null);
     }
   };
 
@@ -288,7 +323,7 @@ export function VotarClient({
     setComIzq({});
     setComDer({});
     setNota("");
-    setTryon(null); // el try-on es de ESTE par; el siguiente empieza sin él
+    setTryon({}); // el try-on es de ESTE par; el siguiente empieza sin él
     if (idx + 1 < pares.length) setIdx(idx + 1);
     else router.refresh();
   };
@@ -318,7 +353,9 @@ export function VotarClient({
           looks={par.izq}
           defectos={defIzq}
           setDefectos={setDefIzq}
-          tryon={tryon?.[par.claveIzq]}
+          tryon={tryon[par.claveIzq]}
+          pedirTryon={verEnAvatar}
+          rendereando={renderizando}
           marcas={marcIzq}
           setMarcas={setMarcIzq}
           comentarios={comIzq}
@@ -329,30 +366,15 @@ export function VotarClient({
           looks={par.der}
           defectos={defDer}
           setDefectos={setDefDer}
-          tryon={tryon?.[par.claveDer]}
+          tryon={tryon[par.claveDer]}
+          pedirTryon={verEnAvatar}
+          rendereando={renderizando}
           marcas={marcDer}
           setMarcas={setMarcDer}
           comentarios={comDer}
           setComentarios={setComDer}
         />
       </div>
-
-      {!tryon ? (
-        <button
-          disabled={renderizando}
-          onClick={verEnAvatar}
-          className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
-        >
-          {renderizando ? "Vistiendo tu avatar… (20-40s)" : "Ver los dos en mi avatar"}
-        </button>
-      ) : null}
-      {!tryon ? (
-        <p className="text-xs text-muted">
-          Los dos lados se rendean juntos, con el mismo avatar. Pídelo solo
-          cuando las prendas no te alcancen para decidir: un render feo puede
-          hundir un look correcto, y ese ruido entra a tu voto.
-        </p>
-      ) : null}
 
       {/* El PORQUÉ, en grande y con su propio título: es el dato más valioso
           de la corrida. "Ganó A" no se convierte en nada; "ganó A porque el
