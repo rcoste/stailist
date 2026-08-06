@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.116.1] - 2026-08-06
+
+### Fixed
+
+- **"Completar las marcas" usaba otro layout, y era un error mío.** Tenía su propio componente: prendas a 56px, sin try-on, sin etiquetas de defecto y con los tres looks apilados en dos columnas — mientras que votar mostraba un look por pestaña con las prendas al doble y "verme con este". Juzgar un look es el mismo trabajo se entre por donde se entre; verlo peor aquí sólo hacía la marca peor que el voto. Ahora las dos pantallas son **el mismo componente** (`VotarClient`, modo `marcar`), así que marcar hereda try-on, prendas grandes, defectos y comentario por look. Se borró `marcas-client.tsx`.
+- **Los defectos marcados en esa pantalla se perdían en silencio.** Las etiquetas ("rompe el clima", "color que choca") se pintaban pero `completarMarcas` no las guardaba. Ahora sí: lo sellado por el pre-registro es el VOTO, no el diagnóstico, y cada tag confirmado es candidato a regla comprobable en código.
+- **La puerta de guardado también aplica al marcar**: pide 👍/👎 en los looks de los dos lados antes de dejar avanzar, por la misma razón que en el voto — una marca a medias deja el marcador diciendo "0 👎" cuando lo que pasó es que nadie los miró.
+
+### Notes
+
+- En modo `marcar` **no** hay botones de A/B, y no es un olvido: esos pares ya tienen voto y su corrida ya se puede leer con el reveal encendido. Re-votar con el marcador a la vista no completa una medición, la edita.
+
 ## [0.2.116.0] - 2026-08-06
 
 ### Added

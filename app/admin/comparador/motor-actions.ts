@@ -304,7 +304,14 @@ export async function votarParMotor(
 export async function completarMarcas(
   parId: string,
   marcas: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> },
-  comentarios?: { izq?: Record<number, string>; der?: Record<number, string> }
+  comentarios?: { izq?: Record<number, string>; der?: Record<number, string> },
+  /**
+   * Defectos por look. Se guardan igual que las marcas y por la misma razón:
+   * lo sellado es el VOTO, no el diagnóstico, y cada tag confirmado es
+   * candidato a regla comprobable en código. La pantalla los pinta también
+   * marcando; sin esto se los tragaba en silencio.
+   */
+  defectos?: { izq?: Record<number, string[]>; der?: Record<number, string[]> }
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const supabase = await createClient();
@@ -360,6 +367,21 @@ export async function completarMarcas(
   if (Object.keys(cIzq).length) comentariosPorVariante[izq] = cIzq;
   if (Object.keys(cDer).length) comentariosPorVariante[der] = cDer;
 
+  const TAGS_VALIDOS = new Set<string>(DEFECTOS_MOTOR.map((d) => d.clave));
+  const limpiarDefectos = (d?: Record<number, string[]>) => {
+    const out: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(d ?? {})) {
+      const tags = (Array.isArray(v) ? v : []).filter((x) => TAGS_VALIDOS.has(x));
+      if (tags.length && Number.isInteger(Number(k))) out[k] = tags;
+    }
+    return out;
+  };
+  const defectosPorVariante: Record<string, Record<string, string[]>> = {};
+  const dIzq = limpiarDefectos(defectos?.izq);
+  const dDer = limpiarDefectos(defectos?.der);
+  if (Object.keys(dIzq).length) defectosPorVariante[izq] = dIzq;
+  if (Object.keys(dDer).length) defectosPorVariante[der] = dDer;
+
   const { error } = await supabase
     .from("comparador_motor_pares")
     .update({
@@ -367,6 +389,9 @@ export async function completarMarcas(
       comentarios_look: Object.keys(comentariosPorVariante).length
         ? comentariosPorVariante
         : null,
+      ...(Object.keys(defectosPorVariante).length
+        ? { defectos_look: defectosPorVariante }
+        : {}),
     })
     .eq("id", parId);
   if (error) return { ok: false, error: error.message };
