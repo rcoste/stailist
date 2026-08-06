@@ -192,6 +192,36 @@ export function ladoInvertido(parId: string): boolean {
  * sorteara, la mitad de los espejos quedarían en el mismo orden y no medirían
  * nada.
  */
+/**
+ * El voto del PAR, derivado de los votos por look.
+ *
+ * Se vota look contra look (comparar dos es mucho más fácil que sostener seis
+ * en la cabeza), pero la unidad de la prueba sigue siendo el par: los 2-3 looks
+ * de un lado salen de UNA llamada al motor, así que contarlos como votos
+ * independientes inflaría la significancia del sign test.
+ *
+ * Mayoría simple; empate entre las dos variantes → "empate". Los looks votados
+ * "empate" no cuentan para ninguna, pero tampoco anulan al par: un par donde A
+ * gana uno y los otros dos empatan, lo gana A.
+ */
+export function votoDelPar(
+  votosLook: Record<string, string> | null | undefined
+): string | null {
+  const cuenta = new Map<string, number>();
+  for (const v of Object.values(votosLook ?? {})) {
+    if (!v || v === "empate") continue;
+    cuenta.set(v, (cuenta.get(v) ?? 0) + 1);
+  }
+  if (cuenta.size === 0) {
+    // Sin votos decisivos: si hubo al menos un look votado, es empate; si no
+    // se votó nada, el par sigue pendiente.
+    return Object.keys(votosLook ?? {}).length > 0 ? "empate" : null;
+  }
+  const orden = [...cuenta.entries()].sort((a, b) => b[1] - a[1]);
+  if (orden.length > 1 && orden[0][1] === orden[1][1]) return "empate";
+  return orden[0][0];
+}
+
 export function ordenDelPar(
   parId: string,
   repiteDe: string | null,

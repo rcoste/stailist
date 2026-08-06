@@ -6,6 +6,7 @@ import {
   nRepetidos,
   ladoInvertido,
   ordenDelPar,
+  votoDelPar,
   opcionesDeVariante,
   pBinomial,
   marcadorMotor,
@@ -78,6 +79,29 @@ describe("el ciego", () => {
       const espejo = ordenDelPar(`esp-${i}`, `orig-${i}`, claves);
       expect(espejo).toEqual([original[1], original[0]]);
     }
+  });
+});
+
+describe("votoDelPar (deriva el par de los votos por look)", () => {
+  it("mayoría simple decide", () => {
+    expect(votoDelPar({ "0": "a", "1": "a", "2": "b" })).toBe("a");
+  });
+
+  it("un look ganado y dos empatados lo gana quien ganó", () => {
+    expect(votoDelPar({ "0": "a", "1": "empate", "2": "empate" })).toBe("a");
+  });
+
+  it("empatados en victorias = empate del par", () => {
+    expect(votoDelPar({ "0": "a", "1": "b" })).toBe("empate");
+  });
+
+  it("todos empatados = empate, no pendiente", () => {
+    expect(votoDelPar({ "0": "empate", "1": "empate" })).toBe("empate");
+  });
+
+  it("sin votos = pendiente (null), no empate", () => {
+    expect(votoDelPar({})).toBeNull();
+    expect(votoDelPar(null)).toBeNull();
   });
 });
 

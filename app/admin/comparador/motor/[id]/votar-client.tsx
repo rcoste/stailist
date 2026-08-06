@@ -225,6 +225,7 @@ export function VotarClient({
   const [defDer, setDefDer] = useState<PorLook<string[]>>({});
   const [comIzq, setComIzq] = useState<PorLook<string>>({});
   const [comDer, setComDer] = useState<PorLook<string>>({});
+  const [votos, setVotos] = useState<PorLook<"izq" | "der" | "empate">>({});
   const [nota, setNota] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -272,13 +273,13 @@ export function VotarClient({
     }
   };
 
-  const votar = async (eleccion: "izq" | "der" | "empate") => {
+  const votar = async () => {
     if (guardando) return;
     setGuardando(true);
     setError(null);
     const r = await votarParMotor(
       par.parId,
-      eleccion,
+      votos,
       { izq: defIzq, der: defDer },
       nota,
       { izq: marcIzq, der: marcDer },
@@ -295,6 +296,7 @@ export function VotarClient({
     setDefDer({});
     setComIzq({});
     setComDer({});
+    setVotos({});
     setNota("");
     setTryon({});
     setLook(0);
@@ -331,7 +333,7 @@ export function VotarClient({
             }`}
           >
             Look {i + 1}
-            {marcIzq[i] || marcDer[i] ? " ·" : ""}
+            {votos[i] ? " ✓" : ""}
           </button>
         ))}
       </div>
@@ -377,9 +379,41 @@ export function VotarClient({
         />
       </div>
 
+      {/* El voto del LOOK visible, pegado a lo que se está viendo. Antes los
+          botones estaban al final de la página y se leían como si aplicaran al
+          look en pantalla cuando en realidad cubrían los tres: Roberto votó 16
+          pares guiándose solo por el primero sin saberlo. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          ¿Por qué elegiste ese? (la comparación)
+          ¿Cuál gana en el look {look + 1}?
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {(["izq", "empate", "der"] as const).map((op) => (
+            <button
+              key={op}
+              onClick={() =>
+                setVotos((prev) => {
+                  const next = { ...prev };
+                  if (next[look] === op) delete next[look];
+                  else next[look] = op;
+                  return next;
+                })
+              }
+              className={`rounded-xl border py-3 text-sm font-semibold ${
+                votos[look] === op
+                  ? "border-ink bg-ink text-bg"
+                  : "border-line text-ink active:bg-tile"
+              }`}
+            >
+              {op === "izq" ? "Gana A" : op === "der" ? "Gana B" : "Empate"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+          ¿Por qué? (opcional, de todo el par)
         </p>
         <textarea
           value={nota}
@@ -392,33 +426,21 @@ export function VotarClient({
 
       {error ? <p className="text-sm text-error">{error}</p> : null}
 
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          disabled={guardando}
-          onClick={() => votar("izq")}
-          className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
-        >
-          Gana A
-        </button>
-        <button
-          disabled={guardando}
-          onClick={() => votar("empate")}
-          className="rounded-xl border border-line py-4 text-base font-semibold text-ink active:bg-tile disabled:opacity-50"
-        >
-          Empate
-        </button>
-        <button
-          disabled={guardando}
-          onClick={() => votar("der")}
-          className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
-        >
-          Gana B
-        </button>
-      </div>
+      <button
+        disabled={guardando || Object.keys(votos).length === 0}
+        onClick={votar}
+        className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+      >
+        {guardando
+          ? "Guardando…"
+          : `Guardar el par (${Object.keys(votos).length} de ${nLooks} looks votados)`}
+      </button>
       <p className="text-xs text-muted">
-        El voto es del PAR completo (los {nLooks} looks juntos) — es lo que la
-        usuaria vería. Llevas {marcados} looks marcados; puedes votar sin
-        marcarlos todos.
+        Votas look contra look; el resultado del PAR sale por mayoría — es la
+        unidad de la prueba, porque los looks de un lado salen de una sola
+        llamada al motor y no son votos independientes. No hace falta votar los{" "}
+        {nLooks}: con uno basta para guardar. Llevas {marcados} looks marcados
+        con 👍/👎.
       </p>
     </div>
   );
