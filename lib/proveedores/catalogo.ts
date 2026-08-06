@@ -58,14 +58,33 @@ export function modeloPorId(id: string): Modelo | null {
 }
 
 /**
- * El retador natural del motor en el comparador: mismo prompt y mismas reglas,
- * generador en Sonnet. Es la única comparación de modelo JUSTA hoy — misma
- * familia, así que los modismos de un prompt afinado 38 versiones contra
- * Claude se trasladan; dárselo a otro proveedor mediría el traje prestado.
- * Vive aquí (la banca) y no en lib/models.ts (producción): nombrarlo no lo
- * pone a correr en el producto.
+ * Los retadores del motor en el comparador. Viven aquí (la banca) y no en
+ * lib/models.ts (producción): nombrarlos no los pone a correr en el producto.
+ *
+ * Dos clases, y la lectura de sus resultados NO es la misma:
+ * - MISMA FAMILIA (sonnet, haiku): la comparación justa — los modismos de un
+ *   prompt afinado 38 versiones contra Claude se trasladan. Una derrota aquí
+ *   sí habla del modelo.
+ * - OTRO PROVEEDOR (geminiFlash, kimi): el TRAJE PRESTADO. Si pierden su
+ *   vistazo, eso condena al combo modelo+prompt, no al modelo — adaptarles el
+ *   prompt sería otro proyecto. Si sobreviven pese al traje, eso sí es señal.
+ *
+ * La escalera (calcada de la decisión de visión): el vistazo de 6 pares solo
+ * DESCARTA o promueve; únicamente quien sobrevive gana derecho a un veredicto
+ * de 20-40 con regla pre-registrada.
+ *
+ * LA PUERTA DE ENTRADA (verificada con scripts/smoke-motor.ts ANTES de entrar,
+ * como en visión): aceptar el schema del motor CON el enum anti-invención del
+ * clóset (~113 UUIDs). Haiku 4.5 NO pasa — la API lo rechaza con "Schema is
+ * too complex for compilation" (2026-08-06). Correrlo sin el enum sería
+ * medirlo con otro arnés, así que queda fuera, no degradado.
  */
 export const RETADOR_MOTOR = "claude-sonnet-5";
+export const RETADORES_MOTOR = {
+  sonnet: RETADOR_MOTOR,
+  geminiFlash: "gemini-3.5-flash",
+  kimi: "moonshotai/kimi-k2.6",
+} as const;
 
 /** Qué proveedores tienen llave puesta. Lo usa la pantalla para no ofrecer lo que no corre. */
 export function proveedoresListos(): Record<string, boolean> {
