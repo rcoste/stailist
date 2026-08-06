@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.109.0] - 2026-08-06
+
+### Added
+
+- **"Ver los dos en mi avatar" al votar.** Un botón por par que viste tu avatar con el look de CADA lado, los dos a la vez y con el mismo render. Bajo demanda a propósito: el default sigue siendo la cuadrícula de prendas porque mide la composición (que es lo que el motor decide), y un render pobre puede hundir un look correcto. Pídelo cuando las prendas no te alcancen para decidir. Se cachea por lado: volver a pedirlo no cuesta.
+
+### Changed
+
+- **El try-on se extrajo a `lib/tryon.ts` y ahora lo comparten producción y el comparador.** El prompt, las referencias de identidad de tu avatar y el guard de prendas sin imagen son los de verdad, no una copia — el comparador no tiene filas en `outfits` (no ensucia tu historial) y antes eso obligaba a duplicar todo el pipeline. Misma regla que el motor: un solo archivo, dos caminos.
+
+### Fixed
+
+- **Las prendas con foto propia no acababan de cargar al votar** (se veían cuadros vacíos donde el catálogo sí aparecía). Tus renders son JPGs a tamaño completo y se estaban pintando crudos dentro de cuadros de 56 px, cada uno con URL firmada distinta que el navegador no puede cachear. Ahora pasan por el optimizador y pesan ~3 KB, y se piden de inmediato en vez de al hacer scroll: comparar imágenes ES la tarea de esa pantalla.
+
 ## [0.2.108.1] - 2026-08-06
 
 ### Added

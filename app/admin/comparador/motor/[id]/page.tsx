@@ -96,6 +96,10 @@ export default async function CorridaMotor({
         etiqueta: p.brief.etiqueta,
         izq: lado(izqClave),
         der: lado(derClave),
+        // Las claves van para que el try-on (que responde por variante) se
+        // mapee a izquierda/derecha con el MISMO orden del ciego.
+        claveIzq: izqClave,
+        claveDer: derClave,
       };
     });
 
