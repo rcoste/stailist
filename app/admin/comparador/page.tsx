@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CATALOGO, proveedoresListos } from "@/lib/proveedores/catalogo";
+import { resumenPorRetador, LIMITE_VERCEL_MS } from "@/lib/comparador/motor";
 import { formatoUsd } from "@/lib/proveedores/precios";
 import { NuevaCorrida } from "./nueva-corrida";
 
@@ -61,6 +62,30 @@ export default async function AdminComparador() {
     .from("comparador_motor_pares")
     .select("corrida_id, voto, marcas_look")
     .in("corrida_id", idsMotor);
+
+  // El resumen entre corridas: cada retador contra el control, todo junto.
+  // La decisión de qué modelo usar no vive en ninguna corrida sola.
+  const { data: ladosResumen } = await supabase
+    .from("comparador_motor_lados")
+    .select("corrida_id, variante, costo_usd, ms, error")
+    .in("corrida_id", idsMotor);
+  const resumen = resumenPorRetador({
+    corridas: (corridasMotor ?? []).map((c) => ({
+      id: c.id as string,
+      variantes: c.variantes as { clave: string; etiqueta: string }[],
+    })),
+    pares: (paresMotor ?? []).map((p) => ({
+      corrida_id: p.corrida_id as string,
+      voto: (p.voto as string | null) ?? null,
+    })),
+    lados: (ladosResumen ?? []).map((l) => ({
+      corrida_id: l.corrida_id as string,
+      variante: l.variante as string,
+      costo_usd: l.costo_usd != null ? Number(l.costo_usd) : null,
+      ms: l.ms as number | null,
+      error: (l.error as string | null) ?? null,
+    })),
+  });
   const pendientesPorCorrida = new Map<string, { votos: number; marcas: number }>();
   for (const p of paresMotor ?? []) {
     const k = p.corrida_id as string;
@@ -95,6 +120,61 @@ export default async function AdminComparador() {
           listo: listos[m.proveedor] ?? false,
         }))}
       />
+
+      {resumen.length ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-ink">Qué modelo usamos</h2>
+          <p className="text-xs text-muted">
+            Cada retador contra producción, con todas sus corridas juntas. Son
+            comparables entre sí porque los briefs están congelados: los tres
+            resolvieron los mismos días.
+          </p>
+          <div className="flex flex-col gap-2">
+            {resumen.map((r) => {
+              const noCabe = r.msRetador != null && r.msRetador > LIMITE_VERCEL_MS;
+              const ahorro =
+                r.costoRetador != null && r.costoControl != null && r.costoControl > 0
+                  ? Math.round((1 - r.costoRetador / r.costoControl) * 100)
+                  : null;
+              return (
+                <div
+                  key={r.clave}
+                  className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4"
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-ink">{r.etiqueta}</span>
+                    <span className="text-sm text-muted">
+                      {r.paresVotados
+                        ? `${r.ganaRetador} · ${r.empates} empates · ${r.ganaControl} producción`
+                        : "sin votar"}
+                    </span>
+                  </span>
+                  <span className="text-xs text-muted">
+                    {r.costoRetador == null
+                      ? "sin costo"
+                      : `${formatoUsd(r.costoRetador)} por look contra ${formatoUsd(
+                          r.costoControl
+                        )}${ahorro != null ? ` (${ahorro}% menos)` : ""}`}
+                    {r.msRetador != null
+                      ? ` · ${Math.round(r.msRetador / 1000)}s contra ${Math.round(
+                          (r.msControl ?? 0) / 1000
+                        )}s`
+                      : ""}
+                    {r.errores ? ` · ${r.errores} fallaron` : ""}
+                  </span>
+                  {noCabe ? (
+                    <span className="text-xs font-semibold text-error">
+                      No cabe en producción: pasa el límite de 60s de Vercel y el
+                      juez todavía corre detrás. Aunque gane la votación, no
+                      puede usarse.
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">

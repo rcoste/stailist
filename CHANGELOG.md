@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.113.0] - 2026-08-06
+
+### Added
+
+- **"Qué modelo usamos": el resumen de todos los retadores en una sola tabla.** La decisión no vive en ninguna corrida sola — para contestarla había que abrir tres marcadores y sostenerlos en la cabeza. Ahora cada retador aparece contra producción con sus victorias, empates, costo por look, tiempo y fallos, sumando todas sus corridas. Son comparables entre sí porque los briefs están congelados: los tres resolvieron los mismos días.
+- **Marca a quién no le alcanza la latencia**, aunque gane la votación: si el generador pasa de 60 segundos no cabe en producción (el juez todavía corre detrás). Kimi K2.6 corre a 129s de promedio y ahí queda descalificado por física, no por gusto.
+
 ## [0.2.112.0] - 2026-08-06
 
 ### Added
