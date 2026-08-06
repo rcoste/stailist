@@ -1,5 +1,5 @@
 import { MODELO_MOTOR } from "@/lib/models";
-import { llamar, type Modelo, type Recibo } from "@/lib/proveedores";
+import { llamar, parsearJson, type Modelo, type Recibo } from "@/lib/proveedores";
 import { buildOutfitSchema } from "./schema";
 import type { BlueprintEmparejado } from "./blueprint";
 import {
@@ -73,7 +73,9 @@ export async function generarConRecibo(
   // está soportado en structured outputs), así que este es el backstop.
   if (recibo.truncada) throw new Error("TRUNCATED_RESPONSE");
 
-  const parsed = JSON.parse(recibo.texto) as { outfits: GeneratedOutfit[] };
+  // parsearJson y no JSON.parse: Kimi emite saltos de línea crudos dentro de
+  // los strings — JSON correcto salvo por eso (ver lib/proveedores).
+  const parsed = parsearJson<{ outfits: GeneratedOutfit[] }>(recibo.texto);
   const valid = new Set(itemIds);
   const outfits = (parsed.outfits ?? [])
     .filter(

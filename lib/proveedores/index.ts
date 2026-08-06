@@ -77,6 +77,30 @@ export async function llamar(p: Peticion): Promise<Recibo> {
   return { ...r, ms: Date.now() - t0 };
 }
 
+/**
+ * JSON.parse con tolerancia a UN defecto concreto: caracteres de control
+ * CRUDOS dentro de los strings (saltos de línea sin escapar). Lo emite Kimi
+ * K2.6 con schema — el JSON es correcto salvo por eso, y tirarlo entero
+ * castigaría al modelo por un bug de serialización, no de criterio.
+ *
+ * Primero el parse estricto (Claude y Gemini jamás entran al fallback). Si
+ * truena, se reemplaza todo carácter de control por un espacio: dentro de un
+ * string, un salto de línea→espacio conserva el sentido; entre tokens, un
+ * espacio sigue siendo whitespace legal. Si aún así no parsea, el error
+ * original de verdad era otro y se relanza.
+ */
+export function parsearJson<T>(texto: string): T {
+  try {
+    return JSON.parse(texto) as T;
+  } catch (e) {
+    try {
+      return JSON.parse(texto.replace(/[\u0000-\u001F]+/g, " ")) as T;
+    } catch {
+      throw e;
+    }
+  }
+}
+
 function despachar(p: Peticion): Promise<Omit<Recibo, "ms">> {
   switch (p.modelo.proveedor) {
     case "anthropic":

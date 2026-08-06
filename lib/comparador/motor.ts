@@ -2,7 +2,7 @@ import type { OpcionesGeneracion } from "@/lib/engine/generate";
 import type { Modelo } from "@/lib/proveedores";
 import type { Weather } from "@/lib/weather";
 import { costoUsd } from "@/lib/proveedores/precios";
-import { RETADOR_MOTOR } from "@/lib/proveedores/catalogo";
+import { RETADORES_MOTOR } from "@/lib/proveedores/catalogo";
 import { JUDGE_MODEL, ENGINE_MODEL } from "@/lib/models";
 
 // Lo puro del comparador de MOTORES: variantes, briefs, ciego, marcador y
@@ -43,8 +43,23 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
   {
     clave: "sonnet",
     etiqueta: "Sonnet 5",
-    ayuda: "mismo prompt y reglas, generador en Sonnet (2.5× más barato)",
-    modeloId: RETADOR_MOTOR,
+    ayuda: "misma familia, mismo prompt (2.5× más barato) — la comparación justa",
+    modeloId: RETADORES_MOTOR.sonnet,
+  },
+  // Haiku 4.5 NO está: rechaza el schema del motor (el enum de ~113 UUIDs del
+  // clóset excede su compilador — "Schema is too complex"). Cazado por el
+  // smoke antes de quemar una corrida; ver lib/proveedores/catalogo.ts.
+  {
+    clave: "gemini-flash",
+    etiqueta: "Gemini 3.5 Flash",
+    ayuda: "OTRO proveedor: si pierde, condena al combo modelo+prompt, no al modelo",
+    modeloId: RETADORES_MOTOR.geminiFlash,
+  },
+  {
+    clave: "kimi",
+    etiqueta: "Kimi K2.6",
+    ayuda: "OTRO proveedor (vía OpenRouter, prepago): misma lectura de traje prestado",
+    modeloId: RETADORES_MOTOR.kimi,
   },
   {
     clave: "sin-marca-estilo",
