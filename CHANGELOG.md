@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.116.3] - 2026-08-06
+
+### Added
+
+- **Al completar las marcas ya se puede decir cuál te late más de cada par**, look por look. Faltaba y se sentía: juzgando dos looks lado a lado, la opinión natural es comparativa, y la pantalla solo dejaba decir "este sirve / este no" en aislado.
+- **Pero NO reescribe el veredicto.** Se guarda en una columna aparte (`prefs_look`, migración 0116) y la distinción es todo el punto: `voto` se emitió **a ciegas y antes** de que el marcador fuera alcanzable —es lo que lee la regla pre-registrada— y esto se anota **después**, con el resultado global ya visible. Sigue siendo ciego por par (las columnas nunca dicen qué variante son), así que es dato bueno; solo es dato **más débil**, y por eso se lee aparte en vez de mezclarse.
+- **El marcador lo muestra en su propia sección**, etiquetada "no cuenta para el veredicto". Contesta algo que el voto no contestó: los primeros 16 pares del veredicto de Gemini se votaron mirando **solo el primer look**, así que la preferencia sobre los looks 2 y 3 no estaba registrada en ningún lado.
+
+### Changed
+
+- **La puerta de guardado al marcar ahora pide las dos cosas** por look: el 👍/👎 de cada lado y la preferencia entre ellos. Son preguntas distintas ("¿este sirve?" y "¿cuál de los dos?") y las dos se perdían si el botón dejaba pasar.
+
 ## [0.2.116.2] - 2026-08-06
 
 ### Fixed

@@ -311,7 +311,23 @@ export async function completarMarcas(
    * candidato a regla comprobable en código. La pantalla los pinta también
    * marcando; sin esto se los tragaba en silencio.
    */
-  defectos?: { izq?: Record<number, string[]>; der?: Record<number, string[]> }
+  defectos?: { izq?: Record<number, string[]>; der?: Record<number, string[]> },
+  /**
+   * "De estos dos, cuál me late más", look por look — anotado AHORA, con el
+   * par ya votado.
+   *
+   * Se guarda en `prefs_look`, NO en `votos_look`, y esa separación es todo el
+   * punto: `voto` se emitió a ciegas y antes de que el marcador fuera
+   * alcanzable, y es lo que la regla pre-registrada lee. Esto se anota cuando
+   * la corrida ya tiene todos sus votos — sigue siendo ciego por par (las
+   * columnas nunca dicen qué variante son) pero ya no es ciego al marcador
+   * global. Es una segunda lectura, más débil, y por eso no toca el resultado.
+   *
+   * Existe porque los primeros 16 pares del veredicto se votaron mirando solo
+   * el primer look: la preferencia sobre los looks 2 y 3 no estaba en ningún
+   * lado.
+   */
+  prefs?: Record<number, "izq" | "der" | "empate">
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const supabase = await createClient();
@@ -382,10 +398,23 @@ export async function completarMarcas(
   if (Object.keys(dIzq).length) defectosPorVariante[izq] = dIzq;
   if (Object.keys(dDer).length) defectosPorVariante[der] = dDer;
 
+  // Las preferencias, resueltas a la variante igual que todo lo demás: el
+  // ciego no se guarda en la base, se deshace al escribir.
+  const prefsResueltas: Record<string, Record<string, string>> = {};
+  for (const [k, v] of Object.entries(prefs ?? {})) {
+    if (!Number.isInteger(Number(k))) continue;
+    if (v !== "izq" && v !== "der" && v !== "empate") continue;
+    const clave = v === "empate" ? "empate" : v === "izq" ? izq : der;
+    prefsResueltas[clave] = { ...(prefsResueltas[clave] ?? {}), [k]: "gana" };
+  }
+
   const { error } = await supabase
     .from("comparador_motor_pares")
     .update({
       marcas_look: Object.keys(porVariante).length ? porVariante : null,
+      ...(Object.keys(prefsResueltas).length
+        ? { prefs_look: prefsResueltas }
+        : {}),
       comentarios_look: Object.keys(comentariosPorVariante).length
         ? comentariosPorVariante
         : null,

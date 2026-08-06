@@ -11,6 +11,7 @@ import {
   pBinomial,
   marcadorMotor,
   resumenPorRetador,
+  preferenciasPorLook,
   estimadoMotor,
   LIMITE_VERCEL_MS,
   N_VISTAZO,
@@ -195,6 +196,7 @@ function par(over: Partial<ParMotor>): ParMotor {
     marcasLook: null,
     defectosLook: null,
     comentariosLook: null,
+    prefsLook: null,
     nota: null,
     lados: [
       { variante: "a", looks: [], reviews: null, error: null, costoUsd: 0.2, ms: 30000 },
@@ -409,5 +411,46 @@ describe("estimadoMotor", () => {
 
   it("una clave desconocida devuelve null, no un precio inventado", () => {
     expect(estimadoMotor(["produccion", "no-existe"], 20)).toBeNull();
+  });
+});
+
+describe("preferenciasPorLook", () => {
+  // La preferencia se anota DESPUÉS del voto, con el marcador global ya
+  // alcanzable. Es evidencia más débil, así que se cuenta aparte — y estos
+  // tests fijan justamente que sea aparte.
+  const pares = [
+    par({
+      id: "p1",
+      voto: "a",
+      prefsLook: { a: { "0": "gana", "1": "gana" }, b: { "2": "gana" } },
+    }),
+    par({ id: "p2", voto: "b", prefsLook: { empate: { "0": "gana" }, b: { "1": "gana" } } }),
+  ];
+
+  it("cuenta los looks preferidos de cada variante y los empates", () => {
+    const r = preferenciasPorLook(VARIANTES, pares);
+    expect(r.find((x) => x.clave === "a")!.gana).toBe(2);
+    expect(r.find((x) => x.clave === "b")!.gana).toBe(2);
+    expect(r.empates).toBe(1);
+  });
+
+  it("NO toca el marcador: el veredicto sigue saliendo solo de los votos", () => {
+    // Es la garantía que hace legítimo dejar votar en la pantalla de marcas.
+    // Si esto se rompiera, una preferencia anotada tras ver el resultado
+    // estaría reescribiendo el resultado.
+    const conPrefs = marcadorMotor(VARIANTES, pares);
+    const sinPrefs = marcadorMotor(
+      VARIANTES,
+      pares.map((p) => ({ ...p, prefsLook: null }))
+    );
+    expect(conPrefs).toEqual(sinPrefs);
+  });
+
+  it("una variante desconocida no cuenta (corrida vieja, catálogo cambiado)", () => {
+    const r = preferenciasPorLook(VARIANTES, [
+      par({ prefsLook: { fantasma: { "0": "gana" } } }),
+    ]);
+    expect(r.every((x) => x.gana === 0)).toBe(true);
+    expect(r.empates).toBe(0);
   });
 });

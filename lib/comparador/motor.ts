@@ -339,6 +339,12 @@ export type ParMotor = {
   defectosLook: Record<string, Record<string, string[]>> | null;
   /** El porqué de cada look: {variante: {índice: "texto"}}. */
   comentariosLook: Record<string, Record<string, string>> | null;
+  /**
+   * Preferencia por look anotada DESPUÉS del voto, al completar las marcas.
+   * No deriva `voto` ni entra en la regla pre-registrada: se emitió con el
+   * marcador global ya alcanzable. Se lee aparte, etiquetada.
+   */
+  prefsLook: Record<string, Record<string, string>> | null;
   nota: string | null;
   lados: LadoMotor[];
 };
@@ -363,6 +369,37 @@ export type ResultadoVariante = {
    */
   looksTotales: number;
 };
+
+/**
+ * La preferencia look por look anotada DESPUÉS del voto. Se cuenta y se
+ * reporta APARTE del marcador: nació con el marcador global ya alcanzable, así
+ * que es evidencia más débil que el voto ciego y mezclarla sería lavarle esa
+ * diferencia.
+ *
+ * Sirve para una pregunta concreta que el veredicto no contestó: los primeros
+ * pares se votaron mirando solo el primer look, y esto dice si la preferencia
+ * sobre los looks 2 y 3 apuntaba al mismo lado.
+ */
+export function preferenciasPorLook(
+  variantes: { clave: string; etiqueta: string }[],
+  pares: ParMotor[]
+): { clave: string; etiqueta: string; gana: number }[] & { empates?: number } {
+  const acc = new Map(variantes.map((v) => [v.clave, { ...v, gana: 0 }]));
+  let empates = 0;
+  for (const par of pares) {
+    for (const [clave, porIndice] of Object.entries(par.prefsLook ?? {})) {
+      const n = Object.keys(porIndice).length;
+      if (clave === "empate") empates += n;
+      else {
+        const a = acc.get(clave);
+        if (a) a.gana += n;
+      }
+    }
+  }
+  const filas = [...acc.values()] as ReturnType<typeof preferenciasPorLook>;
+  filas.empates = empates;
+  return filas;
+}
 
 export type MarcadorMotor = {
   variantes: ResultadoVariante[];
