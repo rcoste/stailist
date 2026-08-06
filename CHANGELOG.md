@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.104.0] - 2026-08-05
+
+### Added
+
+- **Cuatro modelos más entran al comparador**, vía OpenRouter: Kimi K2.6, Qwen3-VL 32B, Llama 4 Scout y Mistral Small 3.2. El más barato cobra $0.09 por millón de tokens de entrada contra los $5 de Opus 5 — cincuenta y cinco veces menos. Se eligieron verificando contra el catálogo real que cada uno vea imágenes y acepte un formato de salida fijo: de los 340 modelos que ofrece OpenRouter, sólo 91 aceptan imágenes.
+
+### Fixed
+
+- **Los fallos de OpenRouter se leen en español.** Es el único proveedor de prepago del proyecto: sin saldo devuelve un bloque de JSON que hacía parecer que algo estaba roto, cuando sólo faltaba comprar créditos.
+
 ## [0.2.103.1] - 2026-08-05
 
 ### Fixed

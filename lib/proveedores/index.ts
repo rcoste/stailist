@@ -233,6 +233,22 @@ async function leerRespuestaGemini(
 // Una sola llave para decenas de modelos (Kimi K2, DeepSeek, Qwen, Llama…) en
 // vez de abrir cuenta con cada fabricante. Habla el dialecto de OpenAI.
 
+/**
+ * Traduce los fallos de OpenRouter a algo que se entienda en la pantalla.
+ *
+ * El error crudo llega como un bloque de JSON de 300 caracteres, y este es el
+ * único proveedor de PREPAGO que usamos: sin saldo devuelve 402 y todas las
+ * lecturas fallan igual. Un mensaje claro ahí ahorra ir a leer logs para
+ * enterarse de que sólo faltaba comprar créditos.
+ */
+function explicarOpenRouter(status: number, cuerpo: string): string {
+  if (status === 402) return "OpenRouter sin saldo — compra créditos en openrouter.ai/settings/credits";
+  if (status === 401) return "la llave de OpenRouter no es válida";
+  if (status === 429) return "OpenRouter pidió esperar (demasiadas peticiones seguidas)";
+  if (status === 404) return "ese modelo ya no existe en OpenRouter";
+  return `${status} ${cuerpo.slice(0, 200)}`;
+}
+
 async function conOpenRouter(p: Peticion): Promise<Omit<Recibo, "ms">> {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new ErrorProveedor("openrouter", "falta OPENROUTER_API_KEY");
@@ -275,7 +291,7 @@ async function conOpenRouter(p: Peticion): Promise<Omit<Recibo, "ms">> {
   });
 
   if (!res.ok) {
-    throw new ErrorProveedor("openrouter", `${res.status} ${(await res.text()).slice(0, 300)}`);
+    throw new ErrorProveedor("openrouter", explicarOpenRouter(res.status, await res.text()));
   }
   const json = (await res.json()) as {
     choices?: { message?: { content?: string } }[];

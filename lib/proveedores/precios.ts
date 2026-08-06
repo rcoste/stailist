@@ -57,6 +57,16 @@ export const PRECIOS: Record<string, Precio> = {
   // llamadas más grandes rondan los 10k, así que el tramo caro no aplica.
   "gemini-3.1-pro-preview": { entrada: 2, salida: 12 },
   "gemini-2.5-pro": { entrada: 1.25, salida: 10 },
+
+  // Vía OpenRouter. Estos precios son SÓLO para el estimado que se muestra
+  // antes de lanzar: el costo que se guarda con cada lectura viene del propio
+  // OpenRouter en la respuesta, así que si mueven una tarifa el número real
+  // sigue siendo correcto aunque esta tabla envejezca. Tomados de su catálogo
+  // el 2026-08-05.
+  "moonshotai/kimi-k2.6": { entrada: 0.589, salida: 2.48 },
+  "qwen/qwen3-vl-32b-instruct": { entrada: 0.1, salida: 0.42 },
+  "meta-llama/llama-4-scout": { entrada: 0.1, salida: 0.3 },
+  "mistralai/mistral-small-3.2-24b-instruct": { entrada: 0.09, salida: 0.25 },
 };
 
 /**

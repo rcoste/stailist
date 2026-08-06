@@ -37,9 +37,20 @@ export const CATALOGO: Modelo[] = [
   { proveedor: "gemini", id: "gemini-3.5-flash", etiqueta: "Gemini 3.5 Flash" },
   { proveedor: "gemini", id: "gemini-3.5-flash-lite", etiqueta: "Gemini 3.5 Flash-Lite" },
   { proveedor: "gemini", id: "gemini-3.1-flash-lite", etiqueta: "Gemini 3.1 Flash-Lite" },
-  // Requieren OPENROUTER_API_KEY. Aparecen deshabilitados hasta que exista.
-  { proveedor: "openrouter", id: "moonshotai/kimi-k2", etiqueta: "Kimi K2" },
-  { proveedor: "openrouter", id: "deepseek/deepseek-chat", etiqueta: "DeepSeek" },
+  // Vía OpenRouter: una sola llave para todo lo que no es Anthropic ni Google.
+  // Aparecen deshabilitados hasta que exista OPENROUTER_API_KEY.
+  //
+  // DOS FILTROS QUE HAY QUE PASAR PARA ENTRAR AQUÍ, y los verifiqué contra el
+  // catálogo de OpenRouter el 2026-08-05 en vez de confiar en el nombre:
+  //   1. QUE VEA IMÁGENES. De los 340 modelos, sólo 91 tienen entrada de
+  //      imagen. Kimi K2 y DeepSeek Chat —los dos que había puesto de memoria—
+  //      NO la tienen: aquí no habrían servido de nada.
+  //   2. QUE ACEPTE UN SCHEMA de salida. Sin eso la respuesta llega como texto
+  //      libre y no se puede comparar campo por campo con las demás.
+  { proveedor: "openrouter", id: "moonshotai/kimi-k2.6", etiqueta: "Kimi K2.6" },
+  { proveedor: "openrouter", id: "qwen/qwen3-vl-32b-instruct", etiqueta: "Qwen3-VL 32B" },
+  { proveedor: "openrouter", id: "meta-llama/llama-4-scout", etiqueta: "Llama 4 Scout" },
+  { proveedor: "openrouter", id: "mistralai/mistral-small-3.2-24b-instruct", etiqueta: "Mistral Small 3.2" },
 ];
 
 export function modeloPorId(id: string): Modelo | null {
