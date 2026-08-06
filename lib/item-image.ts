@@ -14,7 +14,7 @@
 // que sin esto el motor no puede saber si algo es un top, un pantalón o un saco
 // — lo adivinaba del nombre. Ver categoriaDeItem.
 export const ITEM_IMAGE_SELECT =
-  "photo_path, render_status, render_path, attrs, archetypes(name, image_path, category)";
+  "photo_path, render_status, render_path, attrs, archetypes(name, image_path, category, attrs)";
 
 export type ItemImageRow = {
   photo_path?: string | null;
@@ -25,6 +25,7 @@ export type ItemImageRow = {
     name?: string | null;
     image_path?: string | null;
     category?: string | null;
+    attrs?: { subtipo?: string | null } | null;
   } | null;
 };
 
@@ -49,6 +50,26 @@ export type ItemImageRow = {
  */
 export function categoriaDeItem(item: ItemImageRow): string | null {
   return item.attrs?.categoria?.trim() || item.archetypes?.category?.trim() || null;
+}
+
+/**
+ * El tipo FINO de la prenda: derby/oxford, cruzado/sencillo, con pinzas.
+ *
+ * Mismo caso que la categoría y por eso se resuelve igual: las prendas del
+ * catálogo lo heredan del arquetipo y NUNCA se copia a la prenda. Son 645 de
+ * las 953 de la base, salidas de sólo 176 arquetipos distintos — copiar el dato
+ * a cada prenda sería leer la misma imagen 645 veces y, peor, dejaría 645
+ * copias que envejecen si alguien corrige el arquetipo.
+ *
+ * Prioridad: lo que la prenda declara gana sobre lo que hereda. Si la persona
+ * corrigió el subtipo de SU prenda, ese es el bueno.
+ */
+export function subtipoDeItem(item: ItemImageRow): string | null {
+  return (
+    (item.attrs as { subtipo?: string } | null)?.subtipo?.trim() ||
+    item.archetypes?.attrs?.subtipo?.trim() ||
+    null
+  );
 }
 
 export type ItemImagePick =
@@ -103,6 +124,19 @@ export function itemImageUrlSync(
 export function conCategoria<T extends ItemImageRow>(rows: T[]): T[] {
   return rows.map((r) => {
     const cat = categoriaDeItem(r);
-    return cat ? ({ ...r, attrs: { ...(r.attrs ?? {}), categoria: cat } } as T) : r;
+    // El SUBTIPO se completa igual y por lo mismo (v38): el tipo fino vive en
+    // el arquetipo y no se copia a la prenda. Sin esto el motor no vería
+    // "derby" ni "cruzado" en 645 de las 953 prendas de la base — que es
+    // exactamente el hueco que el subtipo vino a tapar.
+    const sub = subtipoDeItem(r);
+    if (!cat && !sub) return r;
+    return {
+      ...r,
+      attrs: {
+        ...(r.attrs ?? {}),
+        ...(cat ? { categoria: cat } : {}),
+        ...(sub ? { subtipo: sub } : {}),
+      },
+    } as T;
   });
 }

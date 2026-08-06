@@ -31,7 +31,7 @@ function fuentes(dir: string, out: string[] = []): string[] {
     const p = join(dir, e);
     if (statSync(p).isDirectory()) fuentes(p, out);
     else if (
-      /\.tsx?$/.test(e) &&
+      /\.(tsx?|mjs)$/.test(e) &&
       !/\.test\.tsx?$/.test(e) &&
       !EXENTOS.some((x) => p.startsWith(x))
     )
@@ -39,6 +39,58 @@ function fuentes(dir: string, out: string[] = []): string[] {
   }
   return out;
 }
+
+/**
+ * Scripts que TODAVÍA escriben su modelo a mano. La lista existe para que la
+ * deuda se vea y encoja, no para tolerarla en silencio: cualquier script NUEVO
+ * que hardcodee un modelo truena este test.
+ *
+ * De dónde salió: los 20 scripts de esta carpeta quedaron fuera del guard
+ * original —que sólo miraba app/ y lib/— y ahí es donde se fue el dinero de
+ * agosto: procesar cientos de fotos con Opus porque nadie lo había decidido,
+ * sólo heredado. Los cuatro etiquetadores ya salieron de aquí.
+ *
+ * Para sacar uno: pásalo a .ts, que llame a `llamar()` de lib/proveedores con
+ * un modelo de lib/models.ts, y bórralo de esta lista.
+ */
+/**
+ * ¿El archivo elige a mano un modelo de LECTURA o de CRITERIO?
+ *
+ * Los de IMAGEN (`*-image`) se excluyen a propósito: ahí no hay una decisión
+ * por tarea que centralizar —hay un modelo bueno y ya—, y meterlos sólo haría
+ * ruido en una lista que debe leerse como deuda real.
+ */
+function modeloAMano(txt: string): boolean {
+  const ids = txt.match(/["'](?:claude|gemini)-[a-z0-9.-]+["']/g) ?? [];
+  return ids.some((id) => !id.includes("-image"));
+}
+
+const DEUDA_SCRIPTS = [
+  // Criterio de estilo, no percepción: destilar familias y diseccionar
+  // blueprints está más cerca del motor que de la visión, y sus prompts están
+  // afinados contra Claude. Se miden aparte ANTES de moverlos.
+  "scripts/destilar-familia.mjs",
+  "scripts/diseccionar.mjs",
+  "scripts/clasificar-cosecha.mjs",
+  "scripts/clasificar-estilo.mjs",
+  "scripts/filtrar-cosecha.mjs",
+  "scripts/reclasificar-referencias.mjs",
+  "scripts/juez-estilo.mjs",
+  "scripts/auditar-taxonomia.mjs",
+  "scripts/elegir-ref-carta.mjs",
+  "scripts/alternativas-carta.mjs",
+  // Generan texto o imágenes, no leen.
+  "scripts/gen-style-closet.mjs",
+  "scripts/gen-style-copy.mjs",
+  "scripts/gen-style-v2.mjs",
+  "scripts/barrer-renders.mjs",
+  // Arneses y backfills ya corridos.
+  "scripts/barrido-correr.ts",
+  "scripts/backfill-atributos-ricos.mjs",
+  "scripts/backfill-archetype-styling.mjs",
+  "scripts/test-analisis-confianza.mjs",
+  "scripts/etiquetar-ocasion.mjs",
+];
 
 describe("los modelos viven en un solo lugar", () => {
   it("ningún archivo escribe el nombre de un modelo a mano", () => {
@@ -58,6 +110,31 @@ describe("los modelos viven en un solo lugar", () => {
     for (const m of deClaude) expect(m, m).toMatch(/^claude-(opus|sonnet|haiku)-[45]/);
     // Nada debe quedarse en la generación anterior de Opus.
     expect(deClaude.filter((m) => m.includes("opus-4"))).toEqual([]);
+  });
+
+  it("ningún script NUEVO escribe el nombre de un modelo a mano", () => {
+    // El guard original sólo miraba app/ y lib/, y por eso 20 scripts se
+    // quedaron fuera — justo los que procesan cientos de fotos y donde se fue
+    // el gasto de agosto. La lista de deuda hace visible lo que falta migrar;
+    // cualquier script nuevo que hardcodee un modelo cae aquí.
+    const culpables = fuentes("scripts")
+      .filter((f) => modeloAMano(readFileSync(f, "utf8")))
+      .filter((f) => !DEUDA_SCRIPTS.includes(f));
+    expect(culpables, `escriben un modelo a mano: ${culpables.join(", ")}`).toEqual([]);
+  });
+
+  it("la deuda de scripts sólo puede encoger", () => {
+    // Si un script de la lista ya no existe o ya no hardcodea, hay que sacarlo
+    // de la lista — si no, la deuda parece más grande de lo que es y deja de
+    // creerse.
+    const sobran = DEUDA_SCRIPTS.filter((f) => {
+      try {
+        return !modeloAMano(readFileSync(f, "utf8"));
+      } catch {
+        return true; // ya no existe
+      }
+    });
+    expect(sobran, `ya no hacen falta en la lista: ${sobran.join(", ")}`).toEqual([]);
   });
 
   it("visión corre en Gemini, y eso NO es un descuido", () => {

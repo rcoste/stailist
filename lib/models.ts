@@ -75,6 +75,30 @@ export const VISION_MODEL = {
 };
 
 /**
+ * Etiquetar una FOTO DE REFERENCIA contra reglas ya escritas: para qué clima
+ * está vestida, de qué paleta es, qué silueta tiene, para qué ocasión sirve.
+ *
+ * Es el mismo tipo de tarea que leer una prenda —percibir, con el criterio ya
+ * en el prompt— y por eso hereda su decisión: gana el modelo que ganó la
+ * medición de visión, no el que estaba por default.
+ *
+ * OJO CON EL AHORRO, que es cero HOY: las 671 referencias vigentes ya están
+ * etiquetadas. Yo mismo conté mal al proponerlo —vi 233 sin clima y no reparé
+ * en que todas son referencias descartadas (`sirve = false`), que nadie va a
+ * etiquetar—. Esto sirve para la próxima cosecha, no para ahora.
+ *
+ * Lo que sí vale desde ya es el criterio: procesar cientos de imágenes con las
+ * reglas ya escritas en el prompt nunca fue trabajo para el modelo caro, y con
+ * esto queda decidido en un solo lugar en vez de heredado en cada script.
+ *
+ * LO QUE **NO** BAJA AQUÍ, y es a propósito: destilar familias de estilo y
+ * diseccionar blueprints. Eso no es percibir, es decidir — más cerca del motor
+ * que de la visión — y sus prompts están afinados contra Claude. Se mide aparte
+ * antes de mover nada.
+ */
+export const TAG_MODEL = VISION_MODEL;
+
+/**
  * Los jueces de styling (Hoy y Viaje). Corren UNA VEZ POR OUTFIT y dentro del
  * límite de 60s de Vercel, así que la latencia pesa tanto como el criterio.
  *

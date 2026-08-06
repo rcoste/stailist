@@ -12,18 +12,28 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
-import Anthropic from "@anthropic-ai/sdk";
+import { llamar } from "../lib/proveedores";
+import { TAG_MODEL } from "../lib/models";
+
+// Envuelto en main(): tsx compila los .ts a CommonJS y ahí el await de
+// nivel superior no existe. Los demás scripts .ts del proyecto hacen igual.
+async function main() {
 
 const genero = process.argv[2] ?? "hombre";
 const CONCURRENCIA = 6;
+/** Tope de referencias por corrida. 0 = todas. Sirve para probar un cambio
+ *  con seis imágenes antes de soltarlo sobre cientos. */
+const TOPE = Number((process.argv.find((a) => a.startsWith("--n=")) ?? "--n=0").split("=")[1]);
 
 const env = readFileSync(".env.local", "utf8");
-const leer = (k) => {
+const leer = (k: string): string => {
   const l = env.split("\n").find((x) => x.startsWith(`${k}=`));
-  return l ? l.slice(k.length + 1).trim().replace(/^"|"$/g, "") : null;
+  return l ? l.slice(k.length + 1).trim().replace(/^"|"$/g, "") : "";
 };
+// Las dos llaves: la de Anthropic por si el modelo de etiquetado vuelve a
+// serlo, y la de Google, que es la que usa hoy (ver TAG_MODEL).
 process.env.ANTHROPIC_API_KEY = leer("ANTHROPIC_API_KEY");
-const cliente = new Anthropic();
+process.env.GOOGLE_GENERATIVE_AI_API_KEY = leer("GOOGLE_GENERATIVE_AI_API_KEY");
 const supabase = createClient(leer("NEXT_PUBLIC_SUPABASE_URL"), leer("SUPABASE_SERVICE_ROLE_KEY"), {
   auth: { persistSession: false },
 });
@@ -55,42 +65,36 @@ const ESQUEMA = {
   additionalProperties: false,
 };
 
-async function etiquetar(ref) {
+async function etiquetar(ref: { path: string }) {
   const { data, error } = await supabase.storage.from("referencias").download(ref.path);
   if (error) return { error: `descarga: ${error.message}` };
   const b64 = Buffer.from(await data.arrayBuffer()).toString("base64");
   const tipo = ref.path.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
   for (let intento = 1; intento <= 3; intento++) {
     try {
-      const r = await cliente.messages.create({
-        model: "claude-sonnet-5",
-        max_tokens: 150,
+      const r = await llamar({
+        modelo: TAG_MODEL,
+        maxTokens: 150,
         system: SISTEMA,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: tipo, data: b64 } },
-              { type: "text", text: "¿Qué silueta tiene este look?" },
-            ],
-          },
-        ],
-        output_config: { format: { type: "json_schema", schema: ESQUEMA } },
+        texto: "¿Qué silueta tiene este look?",
+        imagen: { mediaType: tipo, base64: b64 },
+        schema: ESQUEMA,
       });
-      return JSON.parse(r.content.find((c) => c.type === "text")?.text ?? "{}");
+      return JSON.parse(r.texto);
     } catch (e) {
-      if (intento === 3) return { error: e.message };
+      if (intento === 3) return { error: (e as Error).message };
       await new Promise((r) => setTimeout(r, 2000 * intento));
     }
   }
 }
 
-const { rows } = await db.query(
+const { rows: todas } = await db.query(
   `select id, estilo, path from public.referencias
    where genero = $1 and silueta is null and (sirve is not false)
    order by estilo, path`,
   [genero]
 );
+const rows = TOPE ? todas.slice(0, TOPE) : todas;
 console.log(`${rows.length} referencias sin silueta.\n`);
 
 let errores = 0;
@@ -122,3 +126,7 @@ if (errores) {
   if (errores === rows.length) process.exitCode = 1;
 }
 await db.end();
+
+}
+
+main();

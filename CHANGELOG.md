@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.107.0] - 2026-08-05
+
+### Added
+
+- **Tu clóset ya sabe distinguir un derby de un oxford.** Se releyeron las 953 prendas de la base para llenar el tipo fino que se agregó hace un rato y que hasta ahora venía vacío en todas. 529 quedaron con dato (las demás de verdad no tienen: una playera lisa no es de ningún tipo fino). En tu clóset, 69 de 113. Costó $0.54 — con el modelo anterior habrían sido $19.
+
+### Changed
+
+- **Etiquetar fotos de referencia (clima, paleta, silueta) también pasó a Gemini**, por la misma razón que leer prendas: percibir con las reglas ya escritas nunca fue trabajo para el modelo caro. Sin ahorro hoy —no hay nada pendiente de etiquetar— pero queda decidido en un solo lugar.
+
+### Fixed
+
+- **El tipo fino de las prendas del catálogo no llegaba al motor.** Se guardaba en el arquetipo pero no se resolvía al leer, así que el motor lo veía en 24 de tus 113 prendas en vez de 69. Nada truena cuando pasa eso: sólo empeora en silencio.
+
 ## [0.2.106.0] - 2026-08-05
 
 ### Changed

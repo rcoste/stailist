@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { pickItemImage, itemImageUrlSync, type ItemImageRow } from "./item-image";
+import {
+  pickItemImage,
+  itemImageUrlSync,
+  conCategoria,
+  subtipoDeItem,
+  type ItemImageRow,
+} from "./item-image";
 
 // El orden canónico es arquetipo → render limpio → foto → prestada. Estos casos
 // blindan justo lo que rompió el try-on y el pasaporte: olvidar render/prestada.
@@ -75,5 +81,42 @@ describe("itemImageUrlSync — construcción de URL", () => {
   it("privada sin firma disponible → null", () => {
     const item: ItemImageRow = { photo_path: "u/missing.jpg" };
     expect(itemImageUrlSync(item, signed)).toBeNull();
+  });
+});
+
+describe("subtipo — el tipo fino que hereda del catálogo (v38)", () => {
+  const delCatalogo = (subArq: string | null, subPropio?: string): ItemImageRow => ({
+    attrs: subPropio ? ({ subtipo: subPropio } as never) : ({} as never),
+    archetypes: { name: "Tenis", category: "calzado", attrs: { subtipo: subArq } },
+  });
+
+  it("lo hereda del arquetipo cuando la prenda no lo trae", () => {
+    // 645 de las 953 prendas de la base vienen del catálogo y NO copian el
+    // subtipo. Sin herencia, el motor no vería "derby" ni "cruzado" en dos
+    // tercios del clóset — que es justo el hueco que el subtipo vino a tapar.
+    expect(subtipoDeItem(delCatalogo("chelsea"))).toBe("chelsea");
+  });
+
+  it("lo que la prenda declara le gana al arquetipo", () => {
+    // Si la persona corrigió el subtipo de SU prenda, ese es el bueno.
+    expect(subtipoDeItem(delCatalogo("chelsea", "chukka"))).toBe("chukka");
+  });
+
+  it("sin subtipo en ningún lado, null", () => {
+    expect(subtipoDeItem(delCatalogo(null))).toBeNull();
+  });
+
+  it("conCategoria lo deja puesto en attrs, junto con la categoría", () => {
+    // ESTE es el test que faltaba: subtipoDeItem funcionaba y conCategoria no
+    // lo llamaba, así que el motor veía 24 de 113 en vez de 69 — y nada
+    // truena cuando eso pasa, sólo empeora en silencio.
+    const [r] = conCategoria([delCatalogo("chelsea")]);
+    expect((r.attrs as { subtipo?: string }).subtipo).toBe("chelsea");
+    expect((r.attrs as { categoria?: string }).categoria).toBe("calzado");
+  });
+
+  it("una prenda sin nada que heredar se devuelve intacta", () => {
+    const item: ItemImageRow = { attrs: { image_path: "/x.png" } };
+    expect(conCategoria([item])[0]).toBe(item);
   });
 });
