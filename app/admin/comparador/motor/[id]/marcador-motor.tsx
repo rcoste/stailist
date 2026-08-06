@@ -115,6 +115,51 @@ export function MarcadorMotorView({
         </p>
       </header>
 
+      {/* LO ACCIONABLE VA ARRIBA. Estas tarjetas vivían al final, debajo del
+          marcador y las notas: Roberto entró a completar sus marcas, vio el
+          resultado, concluyó "ya está" y nunca llegó a ellas. El marcador es
+          lectura; esto es trabajo pendiente. */}
+      {marcasPendientes > 0 ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">
+            {marcasPendientes} {marcasPendientes === 1 ? "par votado" : "pares votados"} sin
+            marcas por look
+          </p>
+          <p className="text-xs text-muted">
+            Se votaron antes de que existiera el 👍/👎 por look. El voto queda
+            intacto (eso es lo que sella el resultado); esto completa el
+            diagnóstico, y sigue ciego.
+          </p>
+          <Link
+            href={`/admin/comparador/motor/${corridaId}/marcas`}
+            className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
+          >
+            Marcar los looks que faltan
+          </Link>
+        </div>
+      ) : null}
+
+      {esVistazo && sinGenerar > 0 ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">
+            Faltan {sinGenerar} {sinGenerar === 1 ? "par" : "pares"} por generar
+          </p>
+          <p className="text-xs text-muted">
+            Un vistazo no declara ganador, así que ver este marcador no
+            corrompe nada: se puede retomar y terminar los briefs que faltan.
+            (En un veredicto no se permite — ahí seguir después de ver el
+            marcador sí contaminaría los votos restantes.)
+          </p>
+          <button
+            disabled={retomando}
+            onClick={retomar}
+            className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
+          >
+            {retomando ? "Retomando…" : `Generar los ${sinGenerar} que faltan`}
+          </button>
+        </div>
+      ) : null}
+
       {esVistazo ? (
         <div className="rounded-xl border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">El vistazo no declara ganador.</p>
@@ -237,47 +282,6 @@ export function MarcadorMotorView({
 
       {nota ? (
         <p className="text-xs text-muted">Nota de la corrida: {nota}</p>
-      ) : null}
-
-      {marcasPendientes > 0 ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
-          <p className="text-sm font-semibold text-ink">
-            {marcasPendientes} {marcasPendientes === 1 ? "par votado" : "pares votados"} sin
-            marcas por look
-          </p>
-          <p className="text-xs text-muted">
-            Se votaron antes de que existiera el 👍/👎 por look. El voto queda
-            intacto (eso es lo que sella el resultado); esto completa el
-            diagnóstico, y sigue ciego.
-          </p>
-          <Link
-            href={`/admin/comparador/motor/${corridaId}/marcas`}
-            className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
-          >
-            Marcar los looks que faltan
-          </Link>
-        </div>
-      ) : null}
-
-      {esVistazo && sinGenerar > 0 ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
-          <p className="text-sm font-semibold text-ink">
-            Faltan {sinGenerar} {sinGenerar === 1 ? "par" : "pares"} por generar
-          </p>
-          <p className="text-xs text-muted">
-            Un vistazo no declara ganador, así que ver este marcador no
-            corrompe nada: se puede retomar y terminar los briefs que faltan.
-            (En un veredicto no se permite — ahí seguir después de ver el
-            marcador sí contaminaría los votos restantes.)
-          </p>
-          <button
-            disabled={retomando}
-            onClick={retomar}
-            className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
-          >
-            {retomando ? "Retomando…" : `Generar los ${sinGenerar} que faltan`}
-          </button>
-        </div>
       ) : null}
 
       {conErrores && estado !== "cerrada" ? (
