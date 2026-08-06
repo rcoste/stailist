@@ -33,6 +33,9 @@ export type ParParaVotar = {
   parId: string;
   n: number;
   etiqueta: string;
+  /** El evento concreto del brief (pool v2 en adelante). */
+  plan: string | null;
+  formalidad: string | null;
   izq: LookParaVotar[];
   der: LookParaVotar[];
   claveIzq: string;
@@ -40,6 +43,12 @@ export type ParParaVotar = {
 };
 
 type PorLook<T> = Record<number, T>;
+
+/** "1, 2 y 3" — el botón nombra lo que falta, no cuenta cuántos faltan. */
+function listaEnEspanol(ns: number[]): string {
+  if (ns.length <= 1) return String(ns[0] ?? "");
+  return `${ns.slice(0, -1).join(", ")} y ${ns[ns.length - 1]}`;
+}
 
 function Lado({
   titulo,
@@ -306,6 +315,19 @@ export function VotarClient({
 
   const marcados = Object.keys(marcIzq).length + Object.keys(marcDer).length;
 
+  // Los looks que SE PUEDEN comparar: los dos lados armaron uno con ese índice.
+  // Si un lado solo trajo dos looks, el tercero no tiene contra qué medirse y
+  // exigir un voto ahí sería pedir algo imposible.
+  const comparables = Array.from({ length: nLooks }, (_, i) => i).filter(
+    (i) => par.izq[i] && par.der[i]
+  );
+  const faltan = comparables.filter((i) => !votos[i]);
+  // El guardado se abre hasta calificar los comparables. Antes bastaba con
+  // uno: Roberto votaba el primero, el par se guardaba, y los looks 2 y 3 se
+  // quedaban sin ver — 99 de 119 en el primer veredicto. El botón que deja
+  // avanzar a medias termina midiendo lo que nadie miró.
+  const listo = faltan.length === 0 && Object.keys(votos).length > 0;
+
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
@@ -319,6 +341,17 @@ export function VotarClient({
           Brief: <span className="font-semibold text-ink">{par.etiqueta}</span>
           {tamano === "vistazo" ? " · vistazo: caza defectos, aquí no se corona a nadie" : ""}
         </p>
+        {/* El evento concreto, tal cual lo recibió el motor. Sin esto, "evento"
+            a secas no se puede calificar: una boda y una cena con amigos no
+            comparten piso de formalidad ni calzado. */}
+        {par.plan ? (
+          <p className="text-sm text-ink">
+            Pidió: “{par.plan}”
+            {par.formalidad ? (
+              <span className="text-muted"> · {par.formalidad}</span>
+            ) : null}
+          </p>
+        ) : null}
       </header>
 
       {/* Pestañas por look: cada lado muestra UNO a la vez, y así las prendas
@@ -427,20 +460,26 @@ export function VotarClient({
       {error ? <p className="text-sm text-error">{error}</p> : null}
 
       <button
-        disabled={guardando || Object.keys(votos).length === 0}
+        disabled={guardando || !listo}
         onClick={votar}
         className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
       >
         {guardando
           ? "Guardando…"
-          : `Guardar el par (${Object.keys(votos).length} de ${nLooks} looks votados)`}
+          : faltan.length === 1
+            ? `Falta votar el look ${faltan[0] + 1}`
+            : faltan.length
+              ? `Faltan los looks ${listaEnEspanol(faltan.map((i) => i + 1))}`
+              : "Guardar el par"}
       </button>
       <p className="text-xs text-muted">
-        Votas look contra look; el resultado del PAR sale por mayoría — es la
-        unidad de la prueba, porque los looks de un lado salen de una sola
-        llamada al motor y no son votos independientes. No hace falta votar los{" "}
-        {nLooks}: con uno basta para guardar. Llevas {marcados} looks marcados
-        con 👍/👎.
+        Votas look contra look, y para guardar hay que votar{" "}
+        {comparables.length === 1 ? "el que hay" : `los ${comparables.length}`}:
+        el resultado del PAR sale por mayoría, así que un par decidido solo por
+        el primero deja los otros sin mirar. La unidad de la prueba
+        sigue siendo el par, porque los looks de un lado salen de una sola
+        llamada al motor y no son votos independientes. El 👍/👎 es aparte y
+        sigue siendo opcional — llevas {marcados} en este par.
       </p>
     </div>
   );

@@ -1,7 +1,8 @@
-// Dejar un VISTAZO ya generado para que solo haya que llegar a votar.
+// Dejar una corrida ya generada para que solo haya que llegar a votar.
 //
-// Uso:  npx tsx scripts/correr-vistazo.ts <clave-retador> [correo-del-closet]
+// Uso:  npx tsx scripts/correr-vistazo.ts <retador> [correo] [tamaño] [nPares] [regla]
 //   ej: npx tsx scripts/correr-vistazo.ts gemini-flash roberto@kublau.com
+//   ej: npx tsx scripts/correr-vistazo.ts gemini-flash roberto@kublau.com veredicto 20 "si no gana con p<0.05, se queda Opus"
 //
 // Corre el MISMO camino que la pantalla: crea la corrida con los helpers
 // compartidos (briefsPara, nRepetidos, variantePorClave) y genera cada lado
@@ -11,7 +12,12 @@
 // CUESTA DINERO REAL (~$2-3 por vistazo de 6 pares). Imprime el gasto al final.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
-import { briefsPara, nRepetidos, variantePorClave } from "../lib/comparador/motor";
+import {
+  briefsPara,
+  nRepetidos,
+  variantePorClave,
+  POOL_VERSION,
+} from "../lib/comparador/motor";
 import { generarLadoYGuardar } from "../lib/comparador/generar-lado";
 import { PROMPT_VERSION } from "../lib/engine/prompt";
 
@@ -24,6 +30,13 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
 async function main() {
   const claveRetador = process.argv[2];
   const correo = process.argv[3] ?? "roberto@kublau.com";
+  const tamano = process.argv[4] === "veredicto" ? "veredicto" : "vistazo";
+  const nPares = tamano === "veredicto" ? Number(process.argv[5] ?? 20) : 6;
+  const regla = process.argv[6] ?? "";
+  if (tamano === "veredicto" && !regla.trim()) {
+    console.error("Un veredicto EXIGE su regla pre-registrada como 6º argumento.");
+    process.exit(1);
+  }
   const retador = claveRetador ? variantePorClave(claveRetador) : null;
   if (!retador || retador.clave === "produccion") {
     console.error(
@@ -55,16 +68,21 @@ async function main() {
 
   const control = variantePorClave("produccion")!;
   const variantes = [control, retador];
-  console.log(`Vistazo: ${control.etiqueta} vs ${retador.etiqueta} · clóset de ${correo}`);
+  console.log(
+    `${tamano === "veredicto" ? "VEREDICTO" : "Vistazo"}: ${control.etiqueta} vs ${retador.etiqueta} · ${nPares} pares · clóset de ${correo}`
+  );
+  if (regla) console.log(`Regla pre-registrada: ${regla}`);
 
   const { data: corrida, error: eCorrida } = await supabase
     .from("comparador_motor_corridas")
     .insert({
       user_id: dueno.id,
       closet_user_id: dueno.id,
-      tamano: "vistazo",
+      tamano,
       variantes,
       prompt_version: PROMPT_VERSION,
+      pool_version: POOL_VERSION,
+      regla: regla.trim() || null,
     })
     .select("id")
     .single();
@@ -74,7 +92,7 @@ async function main() {
   }
   const corridaId = corrida.id as string;
 
-  const briefs = briefsPara("vistazo", 6);
+  const briefs = briefsPara(tamano, nPares);
   const { data: pares, error: ePares } = await supabase
     .from("comparador_motor_pares")
     .insert(briefs.map((brief, i) => ({ corrida_id: corridaId, n: i + 1, brief })))
@@ -86,8 +104,29 @@ async function main() {
     console.error("No se pudieron crear los pares:", ePares?.message);
     process.exit(1);
   }
-  if (nRepetidos("vistazo", 6) > 0) {
-    console.warn("OJO: el vistazo ahora pide espejos y este script no los crea.");
+  // Los espejos: repiten un par con el orden invertido y SIN volver a generar.
+  // Miden si el voto sobrevive a voltear las columnas.
+  const reps = nRepetidos(tamano, nPares);
+  if (reps > 0) {
+    const ordenados = [...pares].sort((a, b) => (a.n as number) - (b.n as number));
+    const espejos = Array.from({ length: reps }, (_, k) => {
+      const original = ordenados[Math.floor(((k + 0.5) * nPares) / reps)];
+      return {
+        corrida_id: corridaId,
+        n: nPares + k + 1,
+        brief: briefs[(original.n as number) - 1],
+        repite_de: original.id,
+      };
+    });
+    const { error: eEspejos } = await supabase
+      .from("comparador_motor_pares")
+      .insert(espejos);
+    if (eEspejos) {
+      await supabase.from("comparador_motor_corridas").delete().eq("id", corridaId);
+      console.error("No se pudieron crear los espejos:", eEspejos.message);
+      process.exit(1);
+    }
+    console.log(`  (+${reps} pares espejo, sin costo)`);
   }
 
   console.log(`Corrida ${corridaId} · ${pares.length} pares · generando…\n`);

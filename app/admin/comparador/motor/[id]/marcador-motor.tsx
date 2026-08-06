@@ -25,6 +25,7 @@ export function MarcadorMotorView({
   estado,
   nota,
   promptVersion,
+  poolVersion,
   resultado,
   notas,
   comentarios,
@@ -37,6 +38,7 @@ export function MarcadorMotorView({
   estado: string;
   nota: string | null;
   promptVersion: string;
+  poolVersion: string;
   resultado: MarcadorMotor;
   notas: { n: number; etiqueta: string; nota: string }[];
   comentarios: {
@@ -109,7 +111,7 @@ export function MarcadorMotorView({
           </Link>
         </div>
         <p className="text-sm text-muted">
-          Prompt {promptVersion} · {resultado.votados} pares votados
+          Prompt {promptVersion} · briefs {poolVersion} · {resultado.votados} pares votados
           {resultado.empates ? ` · ${resultado.empates} empates` : ""}
           {sinGenerar > 0 ? ` · ${sinGenerar} pares sin generar` : ""}
         </p>

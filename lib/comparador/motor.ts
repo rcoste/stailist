@@ -97,6 +97,18 @@ export type BriefMotor = {
   objective: string;
   momento: "dia" | "noche" | null;
   weather: Weather | null;
+  /**
+   * Qué evento es, en las palabras de quien pide. Va al motor por el MISMO
+   * campo que producción ("Tiene en mente: …") y se muestra al votar.
+   *
+   * Existe porque "evento" a secas no se puede calificar: una boda y una cena
+   * con amigos comparten la etiqueta y no comparten NADA de lo que el motor
+   * tiene que acertar. Al votar, "no va para la ocasión" era una marca que no
+   * se podía emitir con honestidad sin saber cuál ocasión.
+   */
+  plan?: string;
+  /** Lo que el wizard pregunta para "evento": casual | semiformal | formal | gala. */
+  formality?: string;
 };
 
 const CLIMAS = {
@@ -107,6 +119,19 @@ const CLIMAS = {
 } as const;
 
 /**
+ * La versión del pool. Se congela en cada corrida al abrirla y sirve para UNA
+ * cosa: que la tabla "qué modelo usamos" no sume corridas que resolvieron días
+ * distintos. Un retador medido contra el pool v1 y otro contra el v2 se pueden
+ * leer cada uno contra SU control (eso siempre es justo, corren el mismo día),
+ * pero no entre sí.
+ *
+ * v1 → v2 (2026-08-06): los dos briefs de "evento" se volvieron eventos
+ * concretos (boda / cena con amigos) y entró un tercero de día (comida
+ * familiar). Los briefs 1-2 y 4-6 no se movieron.
+ */
+export const POOL_VERSION = "v2";
+
+/**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
  * de tres meses (contra un modelo nuevo) verá los MISMOS días. Los primeros 6
  * son el vistazo; el veredicto cicla el pool completo.
@@ -114,18 +139,51 @@ const CLIMAS = {
  * Cubre lo que el motor tiene que saber resolver: las tres ocasiones con piso
  * de formalidad distinto (diario sin piso, oficina, evento/noche) por las
  * cuatro bandas de clima que cambian el clóset disponible.
+ *
+ * LOS EVENTOS VAN CON NOMBRE Y APELLIDO
+ * "evento · noche templada" era incalificable: una boda y una cena con amigos
+ * caen en esa etiqueta y no comparten piso de formalidad, ni calzado, ni
+ * registro. Ahora cada uno lleva su `plan` y su `formality` — los MISMOS dos
+ * campos que producción le pasa al motor cuando el wizard los pregunta, no
+ * inventos del arnés.
+ *
+ * El de día (comida familiar) entró porque no existía: hasta v1, TODO evento
+ * era de noche, y pisoDeFormalidad tiene una rama distinta para evento-de-día
+ * que nunca se había medido.
  */
 const POOL_BRIEFS: BriefMotor[] = [
   { etiqueta: "diario · templado", objective: "diario", momento: "dia", weather: CLIMAS.templado },
   { etiqueta: "oficina · templado", objective: "oficina", momento: "dia", weather: CLIMAS.templado },
-  { etiqueta: "evento · noche templada", objective: "evento", momento: "noche", weather: CLIMAS.templado },
+  {
+    etiqueta: "boda · noche templada",
+    objective: "evento",
+    momento: "noche",
+    weather: CLIMAS.templado,
+    plan: "una boda de noche, en salón",
+    formality: "formal",
+  },
   { etiqueta: "diario · frío", objective: "diario", momento: "dia", weather: CLIMAS.frio },
   { etiqueta: "oficina · calor", objective: "oficina", momento: "dia", weather: CLIMAS.calor },
   { etiqueta: "diario · lluvia", objective: "diario", momento: "dia", weather: CLIMAS.lluvia },
-  { etiqueta: "evento · noche fría", objective: "evento", momento: "noche", weather: CLIMAS.frio },
+  {
+    etiqueta: "cena con amigos · noche fría",
+    objective: "evento",
+    momento: "noche",
+    weather: CLIMAS.frio,
+    plan: "cena con amigos en un restaurante",
+    formality: "casual",
+  },
   { etiqueta: "diario · calor", objective: "diario", momento: "dia", weather: CLIMAS.calor },
   { etiqueta: "oficina · frío", objective: "oficina", momento: "dia", weather: CLIMAS.frio },
   { etiqueta: "aeropuerto · templado", objective: "viaje", momento: "dia", weather: CLIMAS.templado },
+  {
+    etiqueta: "comida familiar · calor",
+    objective: "evento",
+    momento: "dia",
+    weather: CLIMAS.calor,
+    plan: "comida en casa de mis papás",
+    formality: "casual",
+  },
 ];
 
 export const N_VISTAZO = 6;
@@ -469,6 +527,8 @@ export type FilaResumen = {
   msRetador: number | null;
   msControl: number | null;
   errores: number;
+  /** Versiones del pool de briefs que resolvió este retador, ordenadas. */
+  pools: string[];
 };
 
 /**
@@ -480,10 +540,17 @@ export type FilaResumen = {
  * marcadores y sostenerlos en la cabeza.
  *
  * Se apoya en que el pool de briefs está CONGELADO: las corridas son
- * comparables entre sí porque resolvieron los mismos días.
+ * comparables entre sí porque resolvieron los mismos días. Cuando el pool
+ * cambia de versión eso deja de ser cierto ENTRE retadores, así que cada fila
+ * arrastra en qué pool se midió y la pantalla avisa si se están mezclando.
  */
 export function resumenPorRetador(input: {
-  corridas: { id: string; variantes: { clave: string; etiqueta: string }[] }[];
+  corridas: {
+    id: string;
+    variantes: { clave: string; etiqueta: string }[];
+    /** Ausente en corridas anteriores al versionado: son del pool v1. */
+    pool?: string | null;
+  }[];
   pares: { corrida_id: string; voto: string | null }[];
   lados: {
     corrida_id: string;
@@ -494,7 +561,7 @@ export function resumenPorRetador(input: {
   }[];
 }): FilaResumen[] {
   const CONTROL = "produccion";
-  const acc = new Map<string, FilaResumen & { cR: number; cRn: number; cC: number; cCn: number; mR: number; mRn: number; mC: number; mCn: number }>();
+  const acc = new Map<string, FilaResumen & { cR: number; cRn: number; cC: number; cCn: number; mR: number; mRn: number; mC: number; mCn: number; poolSet: Set<string> }>();
   // De cada corrida, quién es el retador (la variante que no es el control).
   const retadorDe = new Map<string, { clave: string; etiqueta: string }>();
 
@@ -516,10 +583,13 @@ export function resumenPorRetador(input: {
         msRetador: null,
         msControl: null,
         errores: 0,
+        pools: [],
         cR: 0, cRn: 0, cC: 0, cCn: 0, mR: 0, mRn: 0, mC: 0, mCn: 0,
+        poolSet: new Set<string>(),
       });
     }
     acc.get(r.clave)!.corridas++;
+    acc.get(r.clave)!.poolSet.add(c.pool || "v1");
   }
 
   for (const p of input.pares) {
@@ -565,6 +635,7 @@ export function resumenPorRetador(input: {
       msRetador: a.mRn ? Math.round(a.mR / a.mRn) : null,
       msControl: a.mCn ? Math.round(a.mC / a.mCn) : null,
       errores: a.errores,
+      pools: [...a.poolSet].sort(),
     }))
     // Primero quien más veces le ganó al control: es el orden de la decisión.
     .sort((x, y) => y.ganaRetador - x.ganaRetador || x.ganaControl - y.ganaControl);
