@@ -36,6 +36,7 @@ const ETIQUETA_CAMPO: Record<string, string> = {
   categoria: "categoría",
   color: "color",
   material: "material",
+  subtipo: "tipo fino",
   formalidad: "formalidad",
   temporada: "temporada",
   patron: "patrón",

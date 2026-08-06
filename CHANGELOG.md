@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.105.0] - 2026-08-05
+
+### Added
+
+- **La app ahora distingue un derby de un oxford, un saco cruzado de uno sencillo, un pantalón con pinzas de uno sin ellas.** Ese detalle ya lo leían los modelos, pero vivía suelto dentro del nombre y de la descripción — y la descripción nunca llegaba al motor. O sea que llevábamos meses armando looks sin poder saber que unos zapatos cafés piden traje y otros van con jeans. Ahora es un dato propio: se guarda, se puede corregir, y el motor lo usa (prompt v38). Las prendas que ya tenías no lo traen; se les puede rellenar después.
+
 ## [0.2.104.3] - 2026-08-05
 
 ### Fixed

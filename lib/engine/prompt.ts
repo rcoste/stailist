@@ -211,7 +211,19 @@ import {
 // deshecho) dicen que gris, azul suave, denim, blanco hueso, crudo y negro son
 // el FONDO: ni favorecen ni apagan. Tres corridas de 12 días: las prendas
 // olvidadas pasan de 1.0 a 2.3 de 21; la variedad total no se mueve.
-export const PROMPT_VERSION = "v37";
+// v38 (2026-08-05): SUBTIPO de prenda — el tipo fino que decide con qué se
+// combina: derby contra oxford, saco cruzado contra sencillo, pantalón con o
+// sin pinzas. Salió de Roberto calificando el comparador de modelos: "el
+// correcto era Derby, pero sólo venía en el nombre, no como una categoría para
+// yo decir si está bien o mal". El dato SÍ se leía —los modelos lo escribían en
+// el nombre y en la descripción— pero la descripción sólo alimenta al generador
+// de imágenes y nunca llegaba hasta acá. O sea que el motor llevaba meses sin
+// poder distinguir un oxford negro (que pide traje) de un derby café (que va
+// con jeans), aunque los dos se llamen "zapatos de vestir cafés". Va como campo
+// propio y no dentro del nombre porque así se puede verificar, corregir y medir.
+// Las 953 prendas anteriores no lo tienen: es opcional y su ausencia no cambia
+// nada de lo que ya funcionaba.
+export const PROMPT_VERSION = "v38";
 
 export type EngineItem = {
   id: string;
@@ -235,6 +247,16 @@ export type EngineItem = {
     largo?: string; // crop/regular/largo — habilita tips de fajar
     corte?: string; // entallado/recto/holgado — habilita tips de proporción
     manga?: string; // sin/corta/larga — habilita tips de arremangar
+    /**
+     * El tipo FINO: derby/oxford/mocasín, cruzado/sencillo, con pinzas.
+     *
+     * Distingue prendas que se llaman igual y NO se combinan igual: un oxford
+     * negro pide traje, un derby café va con jeans, y los dos son "zapatos de
+     * vestir cafés". El dato ya se leía —dentro del nombre y de la descripción—
+     * pero la descripción sólo alimenta al generador de imágenes y nunca llegaba
+     * al motor. Opcional: las 953 prendas guardadas antes de esto no lo tienen.
+     */
+    subtipo?: string;
     material?: string; // tela aparente ("lana", "lino"…) — clima y combinación
     patron?: string; // liso/rayas/cuadros/… — evita dos estampados que pelean
     color_secundario?: string; // segundo color si es bicolor/estampada
@@ -425,7 +447,21 @@ export function describeItem(item: EngineItem): string {
   ].filter(Boolean);
   // La categoría va pegada al nombre y entre corchetes: es lo que DEFINE qué es
   // la prenda, y el nombre solo no basta ("Traje marino de lana" es un saco).
-  const que = a.categoria ? `${a.nombre ?? a.tipo} [${a.categoria}]` : (a.nombre ?? a.tipo);
+  //
+  // Y con ella el SUBTIPO, que es el tipo fino: derby contra oxford, cruzado
+  // contra sencillo, con pinzas o sin ellas. Nació de Roberto calificando el
+  // comparador: el modelo SÍ leía "zapatos derby", pero sólo dentro del texto
+  // libre del nombre y de la descripción — y la descripción nunca llega hasta
+  // acá, sólo alimenta al generador de imágenes. O sea que el motor llevaba
+  // meses armando looks sin poder distinguir un oxford negro (que pide traje)
+  // de un derby café (que va con jeans), aunque los dos se llamen "zapatos de
+  // vestir cafés". Va como campo propio y no metido en el nombre porque así se
+  // puede verificar, corregir y medir.
+  const base = a.nombre ?? a.tipo;
+  const conSubtipo = a.subtipo && !`${base}`.toLowerCase().includes(a.subtipo.toLowerCase())
+    ? `${base} (${a.subtipo})`
+    : base;
+  const que = a.categoria ? `${conSubtipo} [${a.categoria}]` : conSubtipo;
   return [que, color, a.formalidad, a.temporada, ...extras]
     .filter(Boolean)
     .join(" · ");

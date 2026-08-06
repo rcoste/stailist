@@ -30,6 +30,10 @@ function cleanContexto(v: unknown): string | undefined {
 function cleanAtributosRicos(attrs: PrendaAnalisis) {
   return {
     material: cleanTextAttr(attrs.material, MAX_MATERIAL_LEN),
+    // El tipo fino: derby/oxford, cruzado/sencillo, con pinzas. Corto a
+    // propósito — es una etiqueta, no una descripción, y el motor la lee pegada
+    // al nombre. Si el modelo se explaya, se recorta en vez de descartarse.
+    subtipo: cleanTextAttr(attrs.subtipo, MAX_MATERIAL_LEN),
     patron: cleanPatron(attrs.patron),
     color_secundario: cleanTextAttr(attrs.color_secundario, MAX_COLOR_LEN),
     contexto: cleanContexto(attrs.contexto),

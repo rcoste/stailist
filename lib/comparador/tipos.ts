@@ -24,6 +24,7 @@ export const CAMPOS_JUZGABLES = [
   "categoria",
   "color",
   "material",
+  "subtipo",
   "formalidad",
   "temporada",
   "patron",

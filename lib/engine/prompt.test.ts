@@ -9,6 +9,36 @@ import {
 // Helper: prenda del motor con attrs mínimos + overrides.
 const item = (attrs: EngineItem["attrs"]): EngineItem => ({ id: "x", attrs });
 
+describe("describeItem — subtipo v38", () => {
+  const item = (attrs: Record<string, unknown>) => ({ id: "x", attrs }) as never;
+
+  it("el tipo fino llega al motor entre paréntesis", () => {
+    // Sin esto el motor no puede distinguir un oxford negro (que pide traje) de
+    // un derby café (que va con jeans): los dos se llaman "zapatos de vestir".
+    expect(describeItem(item({ nombre: "Zapatos de vestir cafés", categoria: "calzado", subtipo: "derby" })))
+      .toContain("Zapatos de vestir cafés (derby) [calzado]");
+  });
+
+  it("no se repite cuando el nombre ya lo dice", () => {
+    // "Zapatos derby café (derby)" se lee como error de la app.
+    const t = describeItem(item({ nombre: "Zapatos derby café", categoria: "calzado", subtipo: "derby" }));
+    expect(t).toContain("Zapatos derby café [calzado]");
+    expect(t).not.toContain("(derby)");
+  });
+
+  it("compara sin importar mayúsculas", () => {
+    const t = describeItem(item({ nombre: "Saco Cruzado gris", categoria: "saco", subtipo: "cruzado" }));
+    expect(t).not.toContain("(cruzado)");
+  });
+
+  it("una prenda sin subtipo se describe igual que antes", () => {
+    // Las 953 prendas guardadas antes de v38 no lo tienen: su ausencia no debe
+    // cambiar nada de lo que ya funcionaba.
+    expect(describeItem(item({ nombre: "Playera blanca", categoria: "top" })))
+      .toContain("Playera blanca [top]");
+  });
+});
+
 describe("describeItem — datos ricos v21", () => {
   it("línea base: nombre · color hex · formalidad · temporada", () => {
     expect(
