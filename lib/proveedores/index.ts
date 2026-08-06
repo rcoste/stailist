@@ -270,7 +270,14 @@ async function conOpenRouter(p: Peticion): Promise<Omit<Recibo, "ms">> {
     },
     body: JSON.stringify({
       model: p.modelo.id,
-      max_tokens: p.maxTokens ?? 1024,
+      // Con holgura, y por la misma razón que en Gemini: cuando el modelo
+      // razona, esos tokens salen de este presupuesto y el JSON llega cortado
+      // a la mitad. Kimi K2.6 fallaba así — "Unterminated string in JSON".
+      max_tokens: (p.maxTokens ?? 1024) * 4,
+      // Razonamiento apagado donde el modelo lo permita. En Claude y en Gemini
+      // también lo está: si un lado razona y el otro no, la comparación mide
+      // dos cosas a la vez. Los modelos que no lo soportan ignoran el campo.
+      reasoning: { enabled: false },
       // Pide el costo real ya calculado por OpenRouter: cada modelo de ahí
       // tiene su propio precio y mantenerlos a mano en PRECIOS sería una lista
       // desactualizándose sola.

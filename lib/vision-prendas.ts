@@ -106,5 +106,10 @@ export async function leerPrendas(
     schema: SCHEMA_PRENDAS,
   });
   const json = JSON.parse(recibo.texto) as { prendas?: PrendaDetectada[] };
-  return { prendas: json.prendas ?? [], recibo };
+  // Sin la llave `prendas` NO es "no vio nada": es que la respuesta no respetó
+  // el formato. Devolver una lista vacía haría ver a un modelo roto como uno
+  // que simplemente no encontró ropa — y en el comparador eso lo premiaría por
+  // no inventar nada. Que truene, y que se registre como el fallo que es.
+  if (!Array.isArray(json.prendas)) throw new Error("la respuesta no trae la lista de prendas");
+  return { prendas: json.prendas, recibo };
 }

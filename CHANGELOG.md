@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.104.1] - 2026-08-05
+
+### Fixed
+
+- **Un modelo que responde mal ya no pasa por uno que "no vio nada".** Si la respuesta no traía la lista de prendas, se registraba como "leyó 0 prendas" — y en el comparador eso lo premiaba por no inventar nada. Ahora se registra como el fallo que es.
+- **Kimi K2.6 devolvía JSON cortado**, mismo síntoma que los Gemini grandes: los tokens de razonamiento se comían el presupuesto de salida. Se apaga el razonamiento donde el modelo lo permita —igual que en Claude y en Gemini, para que la comparación no mida dos cosas a la vez— y se le da holgura al presupuesto.
+
 ## [0.2.104.0] - 2026-08-05
 
 ### Added
