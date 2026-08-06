@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.103.1] - 2026-08-05
+
+### Fixed
+
+- **Subir una foto al comparador ya no truena.** Salía "error de servidor" sin más pista. Faltaban dos cosas que el import del clóset sí hacía desde hace meses y que no reusé: convertir el HEIC de las fotos de iPhone, y comprimirlas antes de mandarlas. Una foto de celular pesa varios megas y las acciones de servidor cortan a 1 MB, así que la petición ni siquiera llegaba. Ahora se comprimen a 1280px (una de 10 MB queda en 0.5 MB) y se suben de una en una, con el avance a la vista.
+
 ## [0.2.103.0] - 2026-08-05
 
 ### Added

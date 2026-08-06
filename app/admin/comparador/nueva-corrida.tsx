@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { estimado, type Modo } from "@/lib/comparador/tipos";
 import { formatoUsd } from "@/lib/proveedores/precios";
-import { abrirCorrida, cambiarEstado } from "./actions";
+import { comprimirADataUrl } from "@/lib/image-compress";
+import { toUsableImage } from "@/lib/image-file";
+import { abrirCorrida, subirFoto, cambiarEstado } from "./actions";
 
 // Subir fotos, elegir quién compite, VER EL COSTO, y correr.
 //
@@ -32,7 +34,8 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
   const [modo, setModo] = useState<Modo>("varias");
   const [elegidos, setElegidos] = useState<string[]>([]);
   const [fotos, setFotos] = useState<{ nombre: string; dataUrl: string }[]>([]);
-  const [avance, setAvance] = useState<{ hechas: number; total: number } | null>(null);
+  const [avance, setAvance] = useState<{ hechas: number; total: number; etapa: "subiendo" | "leyendo" } | null>(null);
+  const [preparando, setPreparando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, empezar] = useTransition();
   const input = useRef<HTMLInputElement>(null);
@@ -45,33 +48,61 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
   const alternar = (id: string) =>
     setElegidos((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
 
+  // Convertir y comprimir ANTES de mandar, con los mismos ayudantes que usa el
+  // import del clóset. No es un lujo, son dos fallas seguras:
+  //   HEIC   — las fotos de iPhone llegan en un formato que ni los navegadores
+  //            no-WebKit ni las APIs de visión saben decodificar.
+  //   TAMAÑO — una foto de celular pesa 3-5 MB y en base64 crece un tercio más.
+  //            Las acciones de servidor de Next cortan a 1 MB, así que la
+  //            petición ni siquiera llegaba: devolvía error de servidor a secas.
+  // 1280px es lo mismo que usa el clóset: alcanza para que el modelo lea la
+  // tela y el color, sin reventar el envío.
   const agregar = async (archivos: FileList | null) => {
     if (!archivos) return;
-    const nuevas = await Promise.all(
-      [...archivos].slice(0, 12).map(
-        (f) =>
-          new Promise<{ nombre: string; dataUrl: string }>((res) => {
-            const r = new FileReader();
-            r.onload = () => res({ nombre: f.name, dataUrl: String(r.result) });
-            r.readAsDataURL(f);
-          })
-      )
-    );
-    setFotos((xs) => [...xs, ...nuevas].slice(0, 12));
+    setError(null);
+    setPreparando(true);
+    try {
+      const nuevas: { nombre: string; dataUrl: string }[] = [];
+      for (const f of [...archivos].slice(0, 12)) {
+        const usable = await toUsableImage(f);
+        nuevas.push({ nombre: f.name, dataUrl: await comprimirADataUrl(usable) });
+      }
+      setFotos((xs) => [...xs, ...nuevas].slice(0, 12));
+    } catch {
+      setError("No pude leer alguna de esas fotos. Prueba con otra.");
+    } finally {
+      setPreparando(false);
+    }
   };
 
   const lanzar = () =>
     empezar(async () => {
       setError(null);
-      const r = await abrirCorrida(modo, elegidos, fotos);
+      const r = await abrirCorrida(modo, elegidos);
       if ("error" in r) {
         setError(r.error);
         return;
       }
-      const trabajos = r.fotos.flatMap((f) =>
-        elegidos.map((modeloId) => ({ fotoId: f.id, modeloId }))
+
+      // Una foto por llamada: juntas pasan el límite de 1 MB de las acciones
+      // de servidor y la petición muere antes de llegar.
+      setAvance({ hechas: 0, total: fotos.length, etapa: "subiendo" });
+      const subidas: string[] = [];
+      for (const [n, f] of fotos.entries()) {
+        const s = await subirFoto(r.id, n + 1, f.dataUrl);
+        if ("error" in s) {
+          setError(`No pude subir la foto ${n + 1}: ${s.error}`);
+          setAvance(null);
+          return;
+        }
+        subidas.push(s.id);
+        setAvance({ hechas: n + 1, total: fotos.length, etapa: "subiendo" });
+      }
+
+      const trabajos = subidas.flatMap((fotoId) =>
+        elegidos.map((modeloId) => ({ fotoId, modeloId }))
       );
-      setAvance({ hechas: 0, total: trabajos.length });
+      setAvance({ hechas: 0, total: trabajos.length, etapa: "leyendo" });
       let i = 0;
       let hechas = 0;
       // De a 3 en paralelo: leer varias prendas devuelve mucho texto y tarda,
@@ -89,7 +120,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
             // Una lectura caída no tumba la corrida; se ve como hueco al calificar.
           }
           hechas++;
-          setAvance({ hechas, total: trabajos.length });
+          setAvance({ hechas, total: trabajos.length, etapa: "leyendo" });
         }
       });
       await Promise.all(obreros);
@@ -102,7 +133,8 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
     return (
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
         <p className="text-sm font-semibold text-ink">
-          Leyendo… {avance.hechas} de {avance.total}
+          {avance.etapa === "subiendo" ? "Subiendo fotos" : "Leyendo"}… {avance.hechas} de{" "}
+          {avance.total}
         </p>
         <div className="h-2 overflow-hidden rounded-full bg-tile">
           <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
@@ -148,10 +180,15 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
           onChange={(e) => agregar(e.target.files)}
         />
         <button
+          disabled={preparando}
           onClick={() => input.current?.click()}
-          className="rounded-xl border border-dashed border-line py-6 text-sm font-medium text-muted"
+          className="rounded-xl border border-dashed border-line py-6 text-sm font-medium text-muted disabled:opacity-50"
         >
-          {fotos.length ? `${fotos.length} foto${fotos.length > 1 ? "s" : ""} · agregar más` : "Elegir fotos"}
+          {preparando
+            ? "Preparando las fotos…"
+            : fotos.length
+              ? `${fotos.length} foto${fotos.length > 1 ? "s" : ""} · agregar más`
+              : "Elegir fotos"}
         </button>
         {fotos.length ? (
           <div className="flex flex-wrap gap-2">
@@ -204,7 +241,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
       {error ? <p className="text-sm text-error">{error}</p> : null}
 
       <button
-        disabled={pendiente || elegidos.length < 2 || !fotos.length}
+        disabled={pendiente || preparando || elegidos.length < 2 || !fotos.length}
         onClick={lanzar}
         className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
       >
