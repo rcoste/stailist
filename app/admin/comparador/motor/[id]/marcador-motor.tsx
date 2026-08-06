@@ -5,7 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEFECTOS_MOTOR, type MarcadorMotor } from "@/lib/comparador/motor";
 import { formatoUsd } from "@/lib/proveedores/precios";
-import { cambiarEstadoMotor, reintentarFallidos } from "../../motor-actions";
+import {
+  cambiarEstadoMotor,
+  reintentarFallidos,
+  retomarGeneracion,
+} from "../../motor-actions";
 
 // El reveal: recién aquí se sabe qué variante era cada columna. El veredicto
 // se lee CONTRA LA REGLA pre-registrada, que se muestra arriba del marcador —
@@ -49,6 +53,19 @@ export function MarcadorMotorView({
     setCerrando(false);
     if (!r.ok) {
       setErrorCierre(r.error ?? "no se pudo cerrar");
+      return;
+    }
+    router.refresh();
+  };
+
+  const [retomando, setRetomando] = useState(false);
+  const retomar = async () => {
+    setRetomando(true);
+    setErrorCierre(null);
+    const r = await retomarGeneracion(corridaId);
+    setRetomando(false);
+    if (!r.ok) {
+      setErrorCierre(r.error ?? "no se pudo retomar");
       return;
     }
     router.refresh();
@@ -115,6 +132,11 @@ export function MarcadorMotorView({
               <span>tiempo por par: {v.msPromedio == null ? "—" : `${Math.round(v.msPromedio / 1000)}s`}</span>
               {v.errores ? <span className="text-error">{v.errores} lados fallaron</span> : null}
             </div>
+            {v.looksArriba + v.looksAbajo > 0 ? (
+              <p className="text-xs text-muted">
+                looks marcados: {v.looksArriba} 👍 · {v.looksAbajo} 👎
+              </p>
+            ) : null}
             {Object.keys(v.defectos).length ? (
               <div className="flex flex-col gap-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">Defectos</p>
@@ -163,7 +185,11 @@ export function MarcadorMotorView({
       {notas.length ? (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Notas por par
+            Por qué votaste lo que votaste
+          </p>
+          <p className="text-xs text-muted">
+            Esto es la cosecha real de la corrida: cada razón que se repita es
+            candidata a regla comprobable del motor.
           </p>
           {notas.map((x) => (
             <p key={`${x.n}`} className="text-xs leading-relaxed text-muted">
@@ -178,6 +204,27 @@ export function MarcadorMotorView({
 
       {nota ? (
         <p className="text-xs text-muted">Nota de la corrida: {nota}</p>
+      ) : null}
+
+      {esVistazo && sinGenerar > 0 ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">
+            Faltan {sinGenerar} {sinGenerar === 1 ? "par" : "pares"} por generar
+          </p>
+          <p className="text-xs text-muted">
+            Un vistazo no declara ganador, así que ver este marcador no
+            corrompe nada: se puede retomar y terminar los briefs que faltan.
+            (En un veredicto no se permite — ahí seguir después de ver el
+            marcador sí contaminaría los votos restantes.)
+          </p>
+          <button
+            disabled={retomando}
+            onClick={retomar}
+            className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
+          >
+            {retomando ? "Retomando…" : `Generar los ${sinGenerar} que faltan`}
+          </button>
+        </div>
       ) : null}
 
       {conErrores && estado !== "cerrada" ? (

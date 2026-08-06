@@ -245,6 +245,8 @@ export type ParMotor = {
   repiteDe: string | null;
   voto: string | null; // clave de variante o 'empate'
   defectos: Record<string, string[]> | null;
+  /** Diagnóstico por look: {variante: {índice: "arriba"|"abajo"}}. */
+  marcasLook: Record<string, Record<string, string>> | null;
   nota: string | null;
   lados: LadoMotor[];
 };
@@ -259,6 +261,9 @@ export type ResultadoVariante = {
   costoPromedio: number | null;
   msPromedio: number | null;
   errores: number;
+  /** Looks marcados 👍 y 👎 (diagnóstico, NO votos: ver marcas_look). */
+  looksArriba: number;
+  looksAbajo: number;
 };
 
 export type MarcadorMotor = {
@@ -303,6 +308,8 @@ export function marcadorMotor(
       costoPromedio: null,
       msPromedio: null,
       errores: 0,
+      looksArriba: 0,
+      looksAbajo: 0,
       costoSuma: 0,
       costoN: 0,
       msSuma: 0,
@@ -346,6 +353,15 @@ export function marcadorMotor(
       if (!a) continue;
       for (const t of tags) a.defectos[t] = (a.defectos[t] ?? 0) + 1;
     }
+    // Las marcas por look, igual: diagnóstico de CUÁL look arrastró el voto.
+    for (const [clave, porIndice] of Object.entries(par.marcasLook ?? {})) {
+      const a = acc.get(clave);
+      if (!a) continue;
+      for (const m of Object.values(porIndice)) {
+        if (m === "arriba") a.looksArriba++;
+        else if (m === "abajo") a.looksAbajo++;
+      }
+    }
   }
 
   // Los espejos: ¿el voto sobrevivió a invertir el orden?
@@ -369,6 +385,8 @@ export function marcadorMotor(
       costoPromedio: a.costoN ? a.costoSuma / a.costoN : null,
       msPromedio: a.msN ? Math.round(a.msSuma / a.msN) : null,
       errores: a.errores,
+      looksArriba: a.looksArriba,
+      looksAbajo: a.looksAbajo,
     })),
     empates,
     votados,

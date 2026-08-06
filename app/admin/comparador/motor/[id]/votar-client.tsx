@@ -32,10 +32,42 @@ export type ParParaVotar = {
   claveDer: string;
 };
 
-function CartaLook({ look }: { look: LookParaVotar }) {
+function CartaLook({
+  look,
+  marca,
+  setMarca,
+}: {
+  look: LookParaVotar;
+  marca?: "arriba" | "abajo";
+  setMarca: (m: "arriba" | "abajo" | undefined) => void;
+}) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
-      <p className="text-sm font-semibold text-ink">{look.nombre}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-semibold text-ink">{look.nombre}</p>
+        {/* Marca por look: dice CUÁL arrastró el voto del par. No es un voto
+            aparte — los tres looks salen de una sola llamada al motor. */}
+        <span className="flex shrink-0 gap-1">
+          <button
+            onClick={() => setMarca(marca === "arriba" ? undefined : "arriba")}
+            aria-label="este look sí"
+            className={`rounded-full border px-2 py-0.5 text-xs ${
+              marca === "arriba" ? "border-ink bg-ink text-bg" : "border-line text-muted"
+            }`}
+          >
+            👍
+          </button>
+          <button
+            onClick={() => setMarca(marca === "abajo" ? undefined : "abajo")}
+            aria-label="este look no"
+            className={`rounded-full border px-2 py-0.5 text-xs ${
+              marca === "abajo" ? "border-error text-error" : "border-line text-muted"
+            }`}
+          >
+            👎
+          </button>
+        </span>
+      </div>
       {/* Miniaturas por next/image, como el clóset: tus renders propios son
           JPGs a tamaño completo en el bucket privado, y pintarlos con <img>
           crudo bajaba ~400 KB por prenda para un cuadro de 56 px. Las del
@@ -86,12 +118,16 @@ function Columna({
   defectos,
   setDefectos,
   tryon,
+  marcas,
+  setMarcas,
 }: {
   titulo: string;
   looks: LookParaVotar[];
   defectos: string[];
   setDefectos: (d: string[]) => void;
   tryon?: { image?: string; error?: string };
+  marcas: Record<number, "arriba" | "abajo">;
+  setMarcas: (m: Record<number, "arriba" | "abajo">) => void;
 }) {
   const alternar = (clave: string) =>
     setDefectos(
@@ -124,7 +160,17 @@ function Columna({
         </p>
       ) : null}
       {looks.map((l, i) => (
-        <CartaLook key={i} look={l} />
+        <CartaLook
+          key={i}
+          look={l}
+          marca={marcas[i]}
+          setMarca={(m) => {
+            const next = { ...marcas };
+            if (m) next[i] = m;
+            else delete next[i];
+            setMarcas(next);
+          }}
+        />
       ))}
       <div className="flex flex-wrap gap-1.5">
         {DEFECTOS_MOTOR.map((d) => (
@@ -160,6 +206,8 @@ export function VotarClient({
   const [idx, setIdx] = useState(0);
   const [defIzq, setDefIzq] = useState<string[]>([]);
   const [defDer, setDefDer] = useState<string[]>([]);
+  const [marcIzq, setMarcIzq] = useState<Record<number, "arriba" | "abajo">>({});
+  const [marcDer, setMarcDer] = useState<Record<number, "arriba" | "abajo">>({});
   const [nota, setNota] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +245,13 @@ export function VotarClient({
     if (guardando) return;
     setGuardando(true);
     setError(null);
-    const r = await votarParMotor(par.parId, eleccion, { izq: defIzq, der: defDer }, nota);
+    const r = await votarParMotor(
+      par.parId,
+      eleccion,
+      { izq: defIzq, der: defDer },
+      nota,
+      { izq: marcIzq, der: marcDer }
+    );
     setGuardando(false);
     if (!r.ok) {
       setError(r.error ?? "no se pudo guardar el voto");
@@ -205,6 +259,8 @@ export function VotarClient({
     }
     setDefIzq([]);
     setDefDer([]);
+    setMarcIzq({});
+    setMarcDer({});
     setNota("");
     setTryon(null); // el try-on es de ESTE par; el siguiente empieza sin él
     if (idx + 1 < pares.length) setIdx(idx + 1);
@@ -237,6 +293,8 @@ export function VotarClient({
           defectos={defIzq}
           setDefectos={setDefIzq}
           tryon={tryon?.[par.claveIzq]}
+          marcas={marcIzq}
+          setMarcas={setMarcIzq}
         />
         <Columna
           titulo="Look B"
@@ -244,6 +302,8 @@ export function VotarClient({
           defectos={defDer}
           setDefectos={setDefDer}
           tryon={tryon?.[par.claveDer]}
+          marcas={marcDer}
+          setMarcas={setMarcDer}
         />
       </div>
 
@@ -264,12 +324,21 @@ export function VotarClient({
         </p>
       ) : null}
 
-      <input
-        value={nota}
-        onChange={(e) => setNota(e.target.value)}
-        placeholder="nota del par (lo que no cabe en un tag)"
-        className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
-      />
+      {/* El PORQUÉ, en grande y con su propio título: es el dato más valioso
+          de la corrida. "Ganó A" no se convierte en nada; "ganó A porque el
+          otro puso botines de gamuza con lluvia" es una regla. */}
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+          ¿Por qué elegiste ese?
+        </p>
+        <textarea
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+          rows={3}
+          placeholder="qué te decidió, qué te chocó, qué le faltó al otro — con tus palabras"
+          className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+        />
+      </div>
 
       {error ? <p className="text-sm text-error">{error}</p> : null}
 

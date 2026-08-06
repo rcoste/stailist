@@ -133,7 +133,13 @@ export async function votarParMotor(
   parId: string,
   eleccion: "izq" | "der" | "empate",
   defectos: { izq?: string[]; der?: string[] },
-  nota?: string
+  nota?: string,
+  /**
+   * Diagnóstico por look: qué look de cada lado sirve y cuál no, por posición.
+   * NO es la unidad del veredicto (los looks de un lado salen de una sola
+   * llamada, no son independientes) — es lo que dice cuál arrastró el voto.
+   */
+  marcas?: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> }
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const supabase = await createClient();
@@ -198,6 +204,20 @@ export async function votarParMotor(
   if (dIzq.length) porVariante[izq] = dIzq;
   if (dDer.length) porVariante[der] = dDer;
 
+  // Las marcas por look se guardan resueltas a la variante, igual que el voto.
+  const marcasPorVariante: Record<string, Record<string, string>> = {};
+  const limpiarMarcas = (m?: Record<number, "arriba" | "abajo">) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(m ?? {})) {
+      if ((v === "arriba" || v === "abajo") && Number.isInteger(Number(k))) out[k] = v;
+    }
+    return out;
+  };
+  const mIzq = limpiarMarcas(marcas?.izq);
+  const mDer = limpiarMarcas(marcas?.der);
+  if (Object.keys(mIzq).length) marcasPorVariante[izq] = mIzq;
+  if (Object.keys(mDer).length) marcasPorVariante[der] = mDer;
+
   // `.is("voto", null)`: un par votado NO se re-vota. Sin esto, se podría
   // cambiar un voto después de ver el reveal — exactamente lo que el
   // pre-registro existe para impedir.
@@ -206,7 +226,11 @@ export async function votarParMotor(
     .update({
       voto,
       defectos: Object.keys(porVariante).length ? porVariante : null,
-      nota: nota?.trim().slice(0, 500) || null,
+      marcas_look: Object.keys(marcasPorVariante).length ? marcasPorVariante : null,
+      // 1500 y no 500: el porqué del voto es el dato más valioso de la
+      // corrida — es lo que convierte "ganó A" en una regla. Cortarlo a dos
+      // líneas invitaba a no escribirlo.
+      nota: nota?.trim().slice(0, 1500) || null,
     })
     .eq("id", parId)
     .is("voto", null)
@@ -242,6 +266,49 @@ export async function cambiarEstadoMotor(
     revalidatePath(`/admin/comparador/motor/${corridaId}`);
   }
   return { ok: !error, error: error?.message };
+}
+
+/**
+ * Retoma una corrida para generar los pares que quedaron SIN generar.
+ *
+ * Solo para VISTAZOS, y la restricción es el punto: un vistazo por diseño no
+ * declara ganador, así que ver su marcador antes de terminar no corrompe
+ * ningún resultado pre-registrado. En un veredicto sí lo haría —seguir
+ * generando después de ver quién va ganando contamina los votos que faltan—,
+ * y por eso ahí "cerrada" sigue siendo terminal.
+ *
+ * Existe porque la pantalla de generación se cortó a media corrida sin dejar
+ * claro cuántos pares faltaban (decía "6 de 12 lados" con el botón de parar
+ * debajo), y los tres briefs restantes —frío, calor y lluvia, justo los que
+ * más mueven el clóset— quedaron sin medir.
+ */
+export async function retomarGeneracion(
+  corridaId: string
+): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: corrida } = await supabase
+    .from("comparador_motor_corridas")
+    .select("tamano")
+    .eq("id", corridaId)
+    .maybeSingle();
+  if (!corrida) return { ok: false, error: "no existe la corrida" };
+  if (corrida.tamano !== "vistazo") {
+    return {
+      ok: false,
+      error: "solo un vistazo se retoma: en un veredicto, generar después de ver el marcador contamina los votos que faltan",
+    };
+  }
+
+  const { error } = await supabase
+    .from("comparador_motor_corridas")
+    .update({ estado: "corriendo" })
+    .eq("id", corridaId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/admin/comparador/motor/${corridaId}`);
+  return { ok: true };
 }
 
 /**
