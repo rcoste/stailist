@@ -6,7 +6,10 @@ import type { EngineContext } from "./prompt";
 // red de seguridad del ancla — sin gastar una llamada real.
 
 const llamar = vi.fn();
-vi.mock("@/lib/proveedores", () => ({
+vi.mock("@/lib/proveedores", async (importOriginal) => ({
+  // Mock PARCIAL: solo la llamada de red se stubbea; parsearJson es lógica
+  // pura y corre de verdad (tiene sus propios tests en lib/proveedores).
+  ...(await importOriginal<typeof import("@/lib/proveedores")>()),
   llamar: (...args: unknown[]) => llamar(...args),
 }));
 
