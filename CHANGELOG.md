@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.115.0] - 2026-08-06
+
+### Changed
+
+- **Se vota look contra look, no conjunto contra conjunto.** Idea de Roberto a media votación del primer veredicto: comparar dos looks es mucho más fácil que sostener seis en la cabeza, y el resultado del par SE DERIVA de los individuales. Ahora los botones "Gana A / Empate / Gana B" viven **dentro de la pestaña del look** que estás viendo, y el par se resuelve por mayoría. La unidad estadística no cambia —sigue siendo el par— porque los 2-3 looks de un lado salen de UNA sola llamada al motor y no son votos independientes; contarlos por separado inflaría la significancia.
+
+### Fixed
+
+- **Los botones de voto estaban al final de la página y engañaban.** Se leían como si aplicaran al look en pantalla cuando en realidad cubrían los tres, y el texto que lo aclaraba estaba *debajo* de los botones. Roberto votó 16 pares de su primer veredicto guiándose solo por el primer look sin saberlo; esa corrida quedó anotada con el caveat para que no se lea de más.
+
 ## [0.2.114.0] - 2026-08-06
 
 ### Changed

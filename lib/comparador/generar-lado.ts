@@ -18,6 +18,19 @@ import {
 //
 // Es la misma regla de siempre: la ruta pone HTTP y sesión, el script pone el
 // cliente de servicio, y el trabajo real vive en un solo archivo.
+//
+// LO QUE NO SE ACUMULA, Y ES A PROPÓSITO
+// Cada lado carga el contexto DESDE CERO, así que los 6 briefs de una corrida
+// ven el MISMO historial de 14 días: el brief 4 no sabe que existió el 1. En la
+// vida real la rotación sí se acumula día con día.
+//
+// No acumular es lo correcto AQUÍ: si el historial creciera, habría que decidir
+// el de quién —el de la variante A o el de la B, que generan looks distintos— y
+// para el tercer brief estarían en estados diferentes. Dejarían de compararse
+// bajo condiciones idénticas, que es lo único que hace válido el experimento.
+//
+// El costo de esa decisión: dentro de una corrida se ve más repetición de
+// prendas entre pares de la que se vería en 6 días seguidos de uso real.
 
 export type ResultadoLado =
   | { ok: true; yaEstaba?: true; espejo?: true }

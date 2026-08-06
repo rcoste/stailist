@@ -8,6 +8,7 @@ import {
   briefsPara,
   nRepetidos,
   ordenDelPar,
+  votoDelPar,
   variantePorClave,
   DEFECTOS_MOTOR,
   MIN_VEREDICTO,
@@ -131,7 +132,13 @@ export async function abrirCorridaMotor(input: {
  */
 export async function votarParMotor(
   parId: string,
-  eleccion: "izq" | "der" | "empate",
+  /**
+   * Voto POR LOOK: {índice: "izq"|"der"|"empate"}. El voto del par se DERIVA
+   * de estos por mayoría (votoDelPar) — comparar dos looks es mucho más fácil
+   * que sostener seis en la cabeza, y los sub-votos no son independientes, así
+   * que la unidad de la prueba sigue siendo el par.
+   */
+  votosLook: Record<number, "izq" | "der" | "empate">,
   /** Defectos POR LOOK: {índice: ["clima", ...]}. */
   defectos: { izq?: Record<number, string[]>; der?: Record<number, string[]> },
   nota?: string,
@@ -149,8 +156,12 @@ export async function votarParMotor(
 
   // Las server actions son endpoints: el payload se valida aquí, no se confía
   // en que la pantalla mande bien.
-  if (eleccion !== "izq" && eleccion !== "der" && eleccion !== "empate") {
-    return { ok: false, error: "elección inválida" };
+  const entradas = Object.entries(votosLook ?? {}).filter(
+    ([k, v]) =>
+      Number.isInteger(Number(k)) && (v === "izq" || v === "der" || v === "empate")
+  );
+  if (entradas.length === 0) {
+    return { ok: false, error: "hay que votar al menos un look" };
   }
   const TAGS_VALIDOS = new Set<string>(DEFECTOS_MOTOR.map((d) => d.clave));
 
@@ -199,7 +210,13 @@ export async function votarParMotor(
     [variantes[0].clave, variantes[1].clave]
   );
 
-  const voto = eleccion === "empate" ? "empate" : eleccion === "izq" ? izq : der;
+  // Cada voto por look, resuelto a su variante; el del par sale por mayoría.
+  const votosResueltos: Record<string, string> = {};
+  for (const [k, v] of entradas) {
+    votosResueltos[k] = v === "empate" ? "empate" : v === "izq" ? izq : der;
+  }
+  const voto = votoDelPar(votosResueltos);
+  if (!voto) return { ok: false, error: "no se pudo derivar el voto del par" };
   // Defectos por look, resueltos a variante y filtrados contra el catálogo.
   const defectosPorVariante: Record<string, Record<string, string[]>> = {};
   const limpiarDefectos = (d?: Record<number, string[]>) => {
@@ -252,6 +269,7 @@ export async function votarParMotor(
     .from("comparador_motor_pares")
     .update({
       voto,
+      votos_look: votosResueltos,
       defectos_look: Object.keys(defectosPorVariante).length ? defectosPorVariante : null,
       marcas_look: Object.keys(marcasPorVariante).length ? marcasPorVariante : null,
       comentarios_look: Object.keys(comentariosPorVariante).length
