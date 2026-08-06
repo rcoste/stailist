@@ -1,4 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { llamar, type Recibo } from "@/lib/proveedores";
+import { MODELO_JUEZ } from "@/lib/models";
 import { buildCriticSchema } from "./schema";
 import {
   contextBlock,
@@ -25,7 +26,6 @@ import type { GeneratedOutfit } from "./generate";
 // jueces ya estaban actualizados. Se re-exporta porque media docena de archivos
 // lo importan desde aquí.
 export { JUDGE_MODEL } from "@/lib/models";
-import { JUDGE_MODEL } from "@/lib/models";
 
 export type CriticVerdict = "ok" | "reparado" | "rechazado";
 
@@ -36,6 +36,8 @@ export type CriticResult = {
   outfit: GeneratedOutfit;
   verdict: CriticVerdict;
   razon: string | null;
+  /** El recibo de la llamada (tokens/costo/ms). null si el juez no corrió o falló. */
+  recibo: Recibo | null;
 };
 
 // La MISMA escalera que usa la stylist para armar. Sin esto el juez trabaja con
@@ -187,38 +189,30 @@ export async function reviewOutfit(
 ): Promise<CriticResult> {
   // Sin juez (no hay API key): pasa el outfit tal cual, veredicto neutro.
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { outfit, verdict: "ok", razon: null };
+    return { outfit, verdict: "ok", razon: null, recibo: null };
   }
 
   try {
-    const client = new Anthropic();
     const itemIds = ctx.items.map((i) => i.id);
-    const response = await client.messages.create({
-      model: JUDGE_MODEL,
+    // Por la puerta común (lib/proveedores): mismo recibo que el generador, y
+    // el thinking lo apaga el adaptador. El modelo es FIJO (MODELO_JUEZ)
+    // también en el comparador: la variable bajo prueba es el generador.
+    const recibo = await llamar({
+      modelo: MODELO_JUEZ,
+      system: CRITIC_SYSTEM_TEXT,
+      texto: buildCriticMessage(ctx, outfit, priorOutfits),
+      schema: buildCriticSchema(itemIds),
       // 1536: el tokenizer de Sonnet 5 emite ~30% más tokens que 4.6 para el
       // mismo texto — con 1024 un veredicto largo truncaba y el catch devolvía
       // "ok" en silencio (juez deshabilitado sin señal).
-      max_tokens: 1536,
-      thinking: { type: "disabled" },
-      system: CRITIC_SYSTEM_TEXT,
-      messages: [
-        {
-          role: "user",
-          content: buildCriticMessage(ctx, outfit, priorOutfits),
-        },
-      ],
-      output_config: {
-        format: {
-          type: "json_schema",
-          schema: buildCriticSchema(itemIds),
-        },
-      },
+      maxTokens: 1536,
     });
 
-    const text = response.content.find((b) => b.type === "text")?.text;
-    if (!text) return { outfit, verdict: "ok", razon: null };
+    // Truncado = veredicto ilegible → fail-forward igual que siempre, pero con
+    // el recibo (la llamada SÍ costó).
+    if (recibo.truncada) return { outfit, verdict: "ok", razon: null, recibo };
 
-    const parsed = JSON.parse(text) as GeneratedOutfit & {
+    const parsed = JSON.parse(recibo.texto) as GeneratedOutfit & {
       veredicto?: CriticVerdict;
       razon?: string;
     };
@@ -233,7 +227,7 @@ export async function reviewOutfit(
     // quien llama decide descartarlo o mostrarlo como último recurso. El original
     // ya trae el ancla (los candidatos vienen anclados del generador).
     if (verdict === "rechazado") {
-      return { outfit, verdict, razon };
+      return { outfit, verdict, razon, recibo };
     }
 
     // ok / reparado: usamos el look del juez solo si es válido; si no, el original.
@@ -257,10 +251,11 @@ export async function reviewOutfit(
         ),
         verdict,
         razon,
+        recibo,
       };
     }
-    return { outfit, verdict: "ok", razon: null };
+    return { outfit, verdict: "ok", razon: null, recibo };
   } catch {
-    return { outfit, verdict: "ok", razon: null };
+    return { outfit, verdict: "ok", razon: null, recibo: null };
   }
 }

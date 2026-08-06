@@ -26,6 +26,10 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 
 - [x] **Backfill de atributos ricos (material / patrón / color secundario)** — HECHO 2026-07-01 (mismo día que v21): `scripts/backfill-atributos-ricos.mjs` re-infirió las 415 prendas activas con `claude-haiku-4-5` desde el nombre (validado vs Opus: patrón 12/12, material 11/12), escritura aditiva (jamás pisa datos existentes ni correcciones del usuario), todo marcado `atributos_v21: "backfill-texto-haiku"` en attrs. Resultado: 415 con patrón, 151 con material (solo donde el nombre daba señal — sin adivinar). La nota del red team también quedó: material/patrón/segundo color son editables en la hoja de la prenda (`updateItemAttrs` + closet-grid). *Pase de VISIÓN también hecho* (mismo día, con `SUPABASE_SERVICE_ROLE_KEY` local): 410/415 con material (validado vs Opus: patrón 8/8, material 7/8), 5 patrones corregidos por la foto. Restan 4 prendas sin imagen y 1 sin señal — irrelevantes.
 
+## Diferido del comparador de motores (2026-08-05)
+
+- [ ] **Nivel de certeza por prenda** (`confirmed_exact` / `confirmed_generic` / `assumed`): una prenda subida por foto es un dato duro; un básico del checklist es una aproximación ("tengo jeans" no dice si son rectos o wide). Hoy el motor las trata igual. Guardar la certeza permitiría (a) que el motor confíe distinto, (b) pedir la variante visual solo donde importa ("¿los tuyos son ajustados, rectos u holgados?"). *Origen*: la única idea genuinamente nueva del análisis de motores del 2026-08-05 (doc de ChatGPT); todo lo demás ya existía o ya había perdido su A/B. *Por qué ahora no*: es trabajo de clóset/onboarding, no del comparador, y el experimento con usuarias reales sigue pendiente. *Trigger*: defectos del comparador o quejas reales que se expliquen por "el motor asumió un corte que no era".
+
 ## Fases futuras (del design doc — NO tocar hasta validar el MVP)
 
 - [ ] Sugerencias de compra estratégica con ROI ("esta pieza desbloquea 8 outfits") — el modelo de negocio latente.

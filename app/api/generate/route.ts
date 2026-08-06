@@ -1,29 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateOutfits, type GeneratedOutfit } from "@/lib/engine/generate";
-import { reviewOutfit, type CriticVerdict } from "@/lib/engine/critic";
+import { armarLooks } from "@/lib/engine/pipeline";
+import type { GeneratedOutfit } from "@/lib/engine/generate";
 import {
-  PROMPT_VERSION,
-  orderClosetForEngine,
-  type EngineItem,
-  type EngineContext,
-} from "@/lib/engine/prompt";
+  cargarBaseDelMotor,
+  construirContexto,
+  resolverYPersistirObjetivo,
+} from "@/lib/engine/contexto";
+import { PROMPT_VERSION } from "@/lib/engine/prompt";
 import { resolveWeather, type Weather } from "@/lib/weather";
-import type { Season } from "@/lib/colorimetria";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
-import { lifestyleSummary, type LifestyleAnswers } from "@/lib/capsule";
-import { applyVetoes, vetoLabels, EMPTY_VETOES, type StyleVetoes } from "@/lib/vetoes";
-import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
-import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import {
-  ITEM_IMAGE_SELECT,
   itemImageUrlSync,
   itemPrivatePaths,
-  conCategoria,
   type ItemImageRow,
 } from "@/lib/item-image";
-import { loadTasteSignal } from "@/lib/engine/taste-signal";
-import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 
 // Dentro del límite de 60s de Vercel Hobby. El retry es SIEMPRE client-side
 // (petición nueva) — nunca reintentamos aquí adentro.
@@ -32,6 +23,12 @@ export const maxDuration = 60;
 // Respuesta NDJSON (una línea JSON por evento): primero fases de progreso,
 // al final {done} con los outfits o {error}. El streaming mantiene viva la
 // conexión mientras el modelo piensa.
+//
+// La carga del contexto vive en lib/engine/contexto.ts (compartida con el
+// look de hoy y el comparador) y el pipeline (generar → juez → piso de 2) en
+// lib/engine/pipeline.ts (compartido con el comparador; el look de hoy genera
+// UN solo look y no usa este loop): esta ruta solo pone el streaming, el
+// guardado y la instrumentación.
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const {
@@ -65,114 +62,34 @@ export async function POST(request: NextRequest) {
         const startedAt = Date.now();
         send({ phase: "leyendo tu clóset…" });
 
-        const [profileRes, itemsRes, recentRes, tasteSignal] = await Promise.all([
-          supabase.from("profiles").select("*").eq("id", user.id).single(),
-          supabase
-            .from("items")
-            // ITEM_IMAGE_SELECT y no solo "attrs": attrs.image_path SOLO existe
-            // en las prendas del catálogo. Una foto propia guarda su imagen en
-            // render_path/photo_path (bucket privado), así que leyendo attrs a
-            // secas salían SIN imagen — 252 de las 272 fotos propias de la base.
-            .select(`id, ${ITEM_IMAGE_SELECT}`)
-            .eq("user_id", user.id)
-            .is("deleted_at", null),
-          supabase
-            .from("outfits")
-            .select("item_ids")
-            .eq("user_id", user.id)
-            // Un look borrado no debe seguir restringiendo lo que te armo.
-            .is("deleted_at", null)
-            // Solo los looks DIARIOS restringen al motor diario. Los del viaje
-            // y los de la cápsula viven en outfits para el try-on/favorito, pero
-            // son otro contexto: 15 looks de cápsula dejarían al motor de Hoy
-            // sin combinaciones que proponer.
-            .eq("source", "daily")
-            .gte(
-              "created_at",
-              new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()
-            ),
-          loadTasteSignal(supabase, user.id),
-        ]);
-
-        const profile = profileRes.data;
-        if (!profile) {
+        const carga = await cargarBaseDelMotor(supabase, user.id);
+        if ("error" in carga) {
           send({ error: "closet_vacio" });
           controller.close();
           return;
         }
-        // Vetos (issue #2): quita las prendas vetadas ANTES del check de mínimo,
-        // para que vetar hacia un clóset corto caiga al estado de "insuficiente".
-        const vetoes = (profile.style_vetoes as StyleVetoes | null) ?? EMPTY_VETOES;
-        // conCategoria resuelve la categoría de cada prenda ANTES de que el
-        // motor la vea: las del catálogo la heredan del arquetipo y no la traen
-        // en sus propios attrs — 2 de cada 3 prendas de la base. Sin esto el
-        // motor deducía del nombre y a un "Traje marino de lana" (que es un
-        // saco) lo armaba sin pantalón.
-        const { items } = applyVetoes(
-          conCategoria((itemsRes.data ?? []) as unknown as ItemImageRow[]) as unknown as EngineItem[],
-          vetoes
-        );
-        if (items.length < 3) {
-          send({ error: "closet_vacio" });
-          controller.close();
-          return;
-        }
+        const { base } = carga;
+        const { profile, items } = base;
 
         send({ phase: "combinando colores…" });
         const weather: Weather | null = await resolveWeather(body);
 
         // Ocasión: la del request si es válida, si no la última guardada.
-        const objective =
-          typeof body.objective === "string" && body.objective in OBJECTIVES
-            ? body.objective
-            : profile.last_objective;
-        if (objective && objective !== profile.last_objective) {
-          await supabase
-            .from("profiles")
-            .update({ last_objective: objective })
-            .eq("id", user.id);
-        }
+        const objective = await resolverYPersistirObjetivo(
+          supabase,
+          profile,
+          body.objective,
+          user.id,
+          OBJECTIVES
+        );
 
         send({ phase: "afinando para tu paleta…" });
-        const ctx: EngineContext = {
-          gender: profile.gender as "hombre" | "mujer" | null,
+        const ctx = construirContexto(base, {
           objective,
-          plan: typeof body.plan === "string" ? body.plan.slice(0, 200) : null,
-          lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
-          tasteTags: (profile.taste_tags ?? []) as string[],
-          archetype:
-            (profile.style_archetype as {
-              nombre: string;
-              descripcion: string;
-            } | null) ?? null,
-          season: profile.palette_season as Season | null,
-          flow: profile.palette_flow as Season | null,
-          // Agrupado por categoría + barajado por llamada (anti sesgo posicional).
-          items: orderClosetForEngine(items),
+          plan: typeof body.plan === "string" ? body.plan : null,
+          momento: typeof body.momento === "string" ? body.momento : null,
           weather,
-          recentCombos: (recentRes.data ?? []).map(
-            (o) => o.item_ids as string[]
-          ),
-          vetoes: vetoLabels(vetoes),
-          timeOfDay:
-            body.momento === "noche" ? "noche" : body.momento === "dia" ? "dia" : null,
-          silueta: siluetaPromptLine(
-            profile.body_build as Build | null,
-            profile.body_volume as Volume | null
-          ),
-          // Su GUSTO de corte (pares de fotos del onboarding), distinto del
-          // cuerpo de arriba. Sin esto, las recetas que delegan en "la
-          // preferencia de la persona" quedan apuntando a nada.
-          fitPref: (profile.fit_pref as EngineContext["fitPref"]) ?? null,
-          ageStyling: ageStylingLine(profile.age_range as AgeRange | null),
-          tasteSignal,
-          styleReference: styleReferenceForEngine(profile.style_reference),
-          styleWords: (profile.style_words as string | null) ?? null,
-        };
-        const candidates = await generateOutfits(ctx);
-
-        // El cliente mostrará N outfits con placeholders mientras llegan.
-        send({ total: candidates.length });
+        });
 
         const gender = profile.gender as "hombre" | "mujer" | null;
 
@@ -201,20 +118,7 @@ export async function POST(request: NextRequest) {
             },
           ])
         );
-        const finalized: typeof candidates = [];
 
-        // Registro por outfit para el flywheel: qué pasó con cada candidato.
-        type Review = {
-          before: string[];
-          after: string[];
-          changed: boolean;
-          verdict: CriticVerdict;
-          razon: string | null;
-          shown: boolean;
-        };
-        const reviews: Review[] = [];
-        // Rechazados retenidos: solo se muestran si caemos por debajo de 2.
-        const held: { outfit: GeneratedOutfit; review: Review }[] = [];
         let slot = 0; // el cliente APPENDea cada outfit; el index es informativo.
 
         // Guarda en DB + streamea un outfit ya aprobado. Devuelve true si se mostró.
@@ -235,7 +139,6 @@ export async function POST(request: NextRequest) {
             .single();
           if (saveError || !row) return false;
 
-          finalized.push(outfit);
           send({
             index: slot++,
             outfit: {
@@ -253,42 +156,17 @@ export async function POST(request: NextRequest) {
           return true;
         };
 
-        // 2ª pasada POR OUTFIT: el juez (Sonnet) revisa y se va mostrando cada
-        // uno apenas se aprueba, para esconder la latencia detrás del reveal.
-        // Si el juez RECHAZA (irreparable con este clóset), lo retenemos: solo
-        // lo mostramos al final si nos quedaríamos con menos de 2 looks.
-        for (let i = 0; i < candidates.length; i++) {
-          send({
-            phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
-          });
-          const result = await reviewOutfit(ctx, candidates[i], finalized);
-          const review: Review = {
-            before: candidates[i].item_ids,
-            after: result.outfit.item_ids,
-            changed:
-              result.outfit.item_ids.join(",") !== candidates[i].item_ids.join(","),
-            verdict: result.verdict,
-            razon: result.razon,
-            shown: false,
-          };
-
-          if (result.verdict === "rechazado") {
-            held.push({ outfit: result.outfit, review });
-            reviews.push(review);
-            continue;
-          }
-
-          if (await saveAndStream(result.outfit)) review.shown = true;
-          reviews.push(review);
-        }
-
-        // Piso de 2 looks: si descartar rechazados nos dejó cortos, rellenamos
-        // con los retenidos (mejor un look mediocre que menos de 2). #4b: aquí
-        // iría una regeneración dirigida en vez de rescatar el rechazado.
-        for (const h of held) {
-          if (finalized.length >= 2) break;
-          if (await saveAndStream(h.outfit)) h.review.shown = true;
-        }
+        // El pipeline compartido: generar → juez por outfit → piso de 2. Cada
+        // look se guarda y streamea apenas se aprueba (hook alAprobar), para
+        // esconder la latencia del juez detrás del reveal.
+        const { finalized, reviews } = await armarLooks(ctx, {}, {
+          alCandidatos: (n) => send({ total: n }),
+          alRevisar: (i) =>
+            send({
+              phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
+            }),
+          alAprobar: saveAndStream,
+        });
 
         if (finalized.length === 0) {
           send({ error: "no_pude_guardar" });
@@ -328,7 +206,7 @@ export async function POST(request: NextRequest) {
         ];
         if (profile.onboarding_step === 4) {
           const ttvSeconds = Math.round(
-            (Date.now() - new Date(profile.created_at).getTime()) / 1000
+            (Date.now() - new Date(profile.created_at as string).getTime()) / 1000
           );
           events.push(
             {

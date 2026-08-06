@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.108.0] - 2026-08-05
+
+### Added
+
+- **El comparador de MOTORES** — la segunda mitad de `/admin/comparador`. Dos variantes del motor ({modelo + prompt + reglas encendidas}) arman looks sobre los mismos días y el mismo clóset; se vota a ciegas cuál quedó mejor ("Look A / Look B", orden sorteado por par y resuelto en el servidor), y al final se revela qué era cada una con un veredicto contra una regla escrita ANTES de votar. Dos tamaños con papeles distintos: **vistazo** (6 pares) para cazar defectos y sacar reglas — nunca declara ganador — y **veredicto** (20-40 pares) para decidir, con ~10% de pares espejo (mismos looks, orden volteado, gratis) que miden la consistencia del juez humano. Generación por bloques de 3 pares, abortable con nota, y el costo estimado ANTES del botón (calibrado con recibos reales: ~$0.52/par Opus vs Sonnet). Cada defecto se etiqueta por lado (clima, ocasión, color, proporción…) — la cosecha que se convierte en reglas comprobables del motor.
+- **La banca de variantes**: producción (control), Sonnet 5 con el mismo prompt (la única comparación de modelo justa hoy: misma familia, 2.5× más barato), y apagar de a UNA las reglas del motor (marca de estilo, estructura de referencia, rotación, neutros-como-fondo). Un test exige que cada variante cambie una sola cosa — una que cambiara dos no diría cuál causó la diferencia.
+- **Un voto no se cambia.** Una vez votado un par, queda; re-votar después de ver el reveal es exactamente lo que el pre-registro existe para impedir, y ahora lo impide la base, no la pantalla. Los lados que fallan por el proveedor (sobrecarga, límite de ritmo) sí se pueden reintentar sin re-pagar lo ya generado.
+- Smoke barato del pipeline completo para verificar refactors del motor sin abrir la pantalla: `npx tsx scripts/smoke-motor.ts [variante]` (~$0.25).
+
+### Changed
+
+- **El contexto del motor vive en UN solo lugar** (`lib/engine/contexto.ts`) y el pipeline de generar→juez→piso-de-2 en otro (`lib/engine/pipeline.ts`): `/api/generate`, "Tu look de hoy" y el comparador corren EL MISMO código, no copias. La extracción destapó dos derivas silenciosas que ya existían entre las dos copias — "Tu look de hoy" nunca recibía tu preferencia de corte (recto/holgado), y `/api/generate` no filtraba placeholders del historial — y las dos quedaron unificadas hacia el lado correcto, así que los looks pueden variar ligeramente respecto a antes: es el arreglo, no una regresión.
+- **El motor y sus jueces llaman por la puerta común** (`lib/proveedores`): cada generación sale con su recibo de tokens, costo y tiempo, y una respuesta cortada por tope de tokens ahora es un error distinguible en vez de un JSON roto opaco. El modelo resuelto de cada llamada queda congelado en cada resultado del comparador — un cambio de modelos a media corrida ya no puede mezclar dos motores sin dejar rastro.
+
 ## [0.2.107.0] - 2026-08-05
 
 ### Added
