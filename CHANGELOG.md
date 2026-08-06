@@ -2,7 +2,7 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
-## [0.2.108.0] - 2026-08-06
+## [0.2.108.0] - 2026-08-05
 
 ### Added
 
