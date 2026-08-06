@@ -28,6 +28,7 @@ export function MarcadorMotorView({
   resultado,
   notas,
   sinGenerar,
+  marcasPendientes,
 }: {
   corridaId: string;
   tamano: string;
@@ -38,6 +39,8 @@ export function MarcadorMotorView({
   resultado: MarcadorMotor;
   notas: { n: number; etiqueta: string; nota: string }[];
   sinGenerar: number;
+  /** Pares ya votados a los que les falta el diagnóstico por look. */
+  marcasPendientes: number;
 }) {
   const router = useRouter();
   const [notaCierre, setNotaCierre] = useState("");
@@ -204,6 +207,26 @@ export function MarcadorMotorView({
 
       {nota ? (
         <p className="text-xs text-muted">Nota de la corrida: {nota}</p>
+      ) : null}
+
+      {marcasPendientes > 0 ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">
+            {marcasPendientes} {marcasPendientes === 1 ? "par votado" : "pares votados"} sin
+            marcas por look
+          </p>
+          <p className="text-xs text-muted">
+            Se votaron antes de que existiera el 👍/👎 por look. El voto queda
+            intacto (eso es lo que sella el resultado); esto completa el
+            diagnóstico, y sigue ciego.
+          </p>
+          <Link
+            href={`/admin/comparador/motor/${corridaId}/marcas`}
+            className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
+          >
+            Marcar los looks que faltan
+          </Link>
+        </div>
       ) : null}
 
       {esVistazo && sinGenerar > 0 ? (

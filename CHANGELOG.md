@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.110.1] - 2026-08-06
+
+### Added
+
+- **Completar las marcas 👍/👎 de pares que ya votaste.** El 👍/👎 por look llegó a mitad de una corrida y los primeros pares quedaron sin él, o sea con la mitad del diagnóstico. Ahora el marcador ofrece completarlos: **el voto no se toca** (eso es lo que sella el resultado) y **sigue ciego** — no se revela cuál columna es cuál en cada par, aunque ya se conozca el marcador global.
+
 ## [0.2.110.0] - 2026-08-06
 
 ### Added
