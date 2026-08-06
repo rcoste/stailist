@@ -397,6 +397,127 @@ export function marcadorMotor(
   };
 }
 
+// ── El resumen entre corridas ──────────────────────────────────────────────
+
+/** Lo que Vercel corta. Un generador que lo pase no puede ir a producción
+ * aunque gane la votación: el juez todavía tiene que correr detrás. */
+export const LIMITE_VERCEL_MS = 60_000;
+
+export type FilaResumen = {
+  clave: string;
+  etiqueta: string;
+  corridas: number;
+  paresVotados: number;
+  ganaControl: number;
+  ganaRetador: number;
+  empates: number;
+  /** Costo y tiempo por lado, del retador y del control de SUS corridas. */
+  costoRetador: number | null;
+  costoControl: number | null;
+  msRetador: number | null;
+  msControl: number | null;
+  errores: number;
+};
+
+/**
+ * Cada retador contra el control, leyendo TODAS sus corridas juntas.
+ *
+ * Existe porque la decisión ("qué modelo usamos") no vive en ninguna corrida
+ * sola: hay que comparar Sonnet, Gemini y Kimi entre sí, y cada uno tiene su
+ * propia corrida contra producción. Sin esta vista había que abrir tres
+ * marcadores y sostenerlos en la cabeza.
+ *
+ * Se apoya en que el pool de briefs está CONGELADO: las corridas son
+ * comparables entre sí porque resolvieron los mismos días.
+ */
+export function resumenPorRetador(input: {
+  corridas: { id: string; variantes: { clave: string; etiqueta: string }[] }[];
+  pares: { corrida_id: string; voto: string | null }[];
+  lados: {
+    corrida_id: string;
+    variante: string;
+    costo_usd: number | null;
+    ms: number | null;
+    error: string | null;
+  }[];
+}): FilaResumen[] {
+  const CONTROL = "produccion";
+  const acc = new Map<string, FilaResumen & { cR: number; cRn: number; cC: number; cCn: number; mR: number; mRn: number; mC: number; mCn: number }>();
+  // De cada corrida, quién es el retador (la variante que no es el control).
+  const retadorDe = new Map<string, { clave: string; etiqueta: string }>();
+
+  for (const c of input.corridas) {
+    const r = c.variantes.find((v) => v.clave !== CONTROL);
+    if (!r || !c.variantes.some((v) => v.clave === CONTROL)) continue;
+    retadorDe.set(c.id, r);
+    if (!acc.has(r.clave)) {
+      acc.set(r.clave, {
+        clave: r.clave,
+        etiqueta: r.etiqueta,
+        corridas: 0,
+        paresVotados: 0,
+        ganaControl: 0,
+        ganaRetador: 0,
+        empates: 0,
+        costoRetador: null,
+        costoControl: null,
+        msRetador: null,
+        msControl: null,
+        errores: 0,
+        cR: 0, cRn: 0, cC: 0, cCn: 0, mR: 0, mRn: 0, mC: 0, mCn: 0,
+      });
+    }
+    acc.get(r.clave)!.corridas++;
+  }
+
+  for (const p of input.pares) {
+    const r = retadorDe.get(p.corrida_id);
+    if (!r || p.voto == null) continue;
+    const a = acc.get(r.clave)!;
+    a.paresVotados++;
+    if (p.voto === "empate") a.empates++;
+    else if (p.voto === CONTROL) a.ganaControl++;
+    else a.ganaRetador++;
+  }
+
+  for (const l of input.lados) {
+    const r = retadorDe.get(l.corrida_id);
+    if (!r) continue;
+    const a = acc.get(r.clave)!;
+    if (l.error) {
+      // Solo cuentan como error del RETADOR los suyos: que el control falle en
+      // su corrida no dice nada del que se está midiendo.
+      if (l.variante === r.clave) a.errores++;
+      continue;
+    }
+    const esRetador = l.variante === r.clave;
+    if (l.costo_usd != null) {
+      if (esRetador) { a.cR += l.costo_usd; a.cRn++; } else { a.cC += l.costo_usd; a.cCn++; }
+    }
+    if (l.ms != null) {
+      if (esRetador) { a.mR += l.ms; a.mRn++; } else { a.mC += l.ms; a.mCn++; }
+    }
+  }
+
+  return [...acc.values()]
+    .map((a) => ({
+      clave: a.clave,
+      etiqueta: a.etiqueta,
+      corridas: a.corridas,
+      paresVotados: a.paresVotados,
+      ganaControl: a.ganaControl,
+      ganaRetador: a.ganaRetador,
+      empates: a.empates,
+      costoRetador: a.cRn ? a.cR / a.cRn : null,
+      costoControl: a.cCn ? a.cC / a.cCn : null,
+      msRetador: a.mRn ? Math.round(a.mR / a.mRn) : null,
+      msControl: a.mCn ? Math.round(a.mC / a.mCn) : null,
+      errores: a.errores,
+    }))
+    // Primero quien más veces le ganó al control: es el orden de la decisión.
+    .sort((x, y) => y.ganaRetador - x.ganaRetador || x.ganaControl - y.ganaControl);
+}
+
 // ── El estimado ────────────────────────────────────────────────────────────
 
 /**

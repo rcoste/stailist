@@ -9,7 +9,9 @@ import {
   opcionesDeVariante,
   pBinomial,
   marcadorMotor,
+  resumenPorRetador,
   estimadoMotor,
+  LIMITE_VERCEL_MS,
   N_VISTAZO,
   type ParMotor,
 } from "./motor";
@@ -234,6 +236,69 @@ describe("marcadorMotor", () => {
     ];
     const m = marcadorMotor(VARIANTES, pares);
     expect(m.variantes.find((v) => v.clave === "a")!.errores).toBe(1);
+  });
+});
+
+describe("resumenPorRetador", () => {
+  const base = {
+    corridas: [
+      { id: "c1", variantes: [{ clave: "produccion", etiqueta: "Producción" }, { clave: "sonnet", etiqueta: "Sonnet 5" }] },
+      { id: "c2", variantes: [{ clave: "produccion", etiqueta: "Producción" }, { clave: "kimi", etiqueta: "Kimi" }] },
+    ],
+    pares: [
+      { corrida_id: "c1", voto: "produccion" },
+      { corrida_id: "c1", voto: "empate" },
+      { corrida_id: "c1", voto: "sonnet" },
+      { corrida_id: "c1", voto: null }, // sin votar: no cuenta
+      { corrida_id: "c2", voto: "kimi" },
+      { corrida_id: "c2", voto: "kimi" },
+    ],
+    lados: [
+      { corrida_id: "c1", variante: "produccion", costo_usd: 0.26, ms: 55000, error: null },
+      { corrida_id: "c1", variante: "sonnet", costo_usd: 0.18, ms: 51000, error: null },
+      { corrida_id: "c2", variante: "produccion", costo_usd: 0.26, ms: 55000, error: null },
+      { corrida_id: "c2", variante: "kimi", costo_usd: 0.16, ms: 129000, error: null },
+      { corrida_id: "c2", variante: "kimi", costo_usd: null, ms: null, error: "TRUNCATED" },
+    ],
+  };
+
+  it("cuenta victorias del control y del retador por separado, sin los sin-votar", () => {
+    const r = resumenPorRetador(base);
+    const s = r.find((x) => x.clave === "sonnet")!;
+    expect([s.ganaControl, s.ganaRetador, s.empates, s.paresVotados]).toEqual([1, 1, 1, 3]);
+  });
+
+  it("ordena por quién le ganó más al control — el orden de la decisión", () => {
+    expect(resumenPorRetador(base)[0].clave).toBe("kimi"); // 2 victorias contra 1
+  });
+
+  it("separa costo y tiempo del retador del de SU control", () => {
+    const k = resumenPorRetador(base).find((x) => x.clave === "kimi")!;
+    expect(k.costoRetador).toBeCloseTo(0.16);
+    expect(k.costoControl).toBeCloseTo(0.26);
+    expect(k.msRetador).toBe(129000);
+    expect(k.msControl).toBe(55000);
+  });
+
+  it("un error del retador cuenta como suyo y no ensucia sus promedios", () => {
+    const k = resumenPorRetador(base).find((x) => x.clave === "kimi")!;
+    expect(k.errores).toBe(1);
+    expect(k.costoRetador).toBeCloseTo(0.16); // no lo arrastra a la baja
+  });
+
+  it("el límite de Vercel deja ver quién no cabe aunque gane", () => {
+    const k = resumenPorRetador(base).find((x) => x.clave === "kimi")!;
+    expect(k.msRetador! > LIMITE_VERCEL_MS).toBe(true);
+    const s = resumenPorRetador(base).find((x) => x.clave === "sonnet")!;
+    expect(s.msRetador! > LIMITE_VERCEL_MS).toBe(false);
+  });
+
+  it("ignora corridas que no sean control-contra-retador", () => {
+    const r = resumenPorRetador({
+      ...base,
+      corridas: [{ id: "c3", variantes: [{ clave: "sin-rotacion", etiqueta: "A" }, { clave: "sin-neutros", etiqueta: "B" }] }],
+    });
+    expect(r).toHaveLength(0);
   });
 });
 
