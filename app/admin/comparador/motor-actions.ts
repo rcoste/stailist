@@ -240,6 +240,71 @@ export async function votarParMotor(
   return { ok: true };
 }
 
+/**
+ * Añade las marcas 👍/👎 por look a un par YA VOTADO, sin tocar su voto.
+ *
+ * Existe porque las marcas por look llegaron a mitad de una corrida: los
+ * primeros pares se votaron sin ellas y esa mitad quedó ciega. El voto sigue
+ * siendo inmutable —eso es lo que protege el pre-registro—; lo que se completa
+ * es el DIAGNÓSTICO, que nunca fue la unidad del veredicto.
+ *
+ * Funciona con la corrida cerrada a propósito: cerrar sella el resultado, no
+ * las notas al margen.
+ */
+export async function completarMarcas(
+  parId: string,
+  marcas: { izq?: Record<number, "arriba" | "abajo">; der?: Record<number, "arriba" | "abajo"> }
+): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: par } = await supabase
+    .from("comparador_motor_pares")
+    .select("id, corrida_id, repite_de, voto")
+    .eq("id", parId)
+    .maybeSingle();
+  if (!par) return { ok: false, error: "no existe ese par" };
+  if (!par.voto) {
+    return { ok: false, error: "ese par no se ha votado — usa la pantalla de votación" };
+  }
+
+  const { data: corrida } = await supabase
+    .from("comparador_motor_corridas")
+    .select("variantes")
+    .eq("id", par.corrida_id)
+    .single();
+  if (!corrida) return { ok: false, error: "no existe la corrida" };
+
+  const variantes = corrida.variantes as VarianteMotor[];
+  const [izq, der] = ordenDelPar(
+    par.id as string,
+    (par.repite_de as string | null) ?? null,
+    [variantes[0].clave, variantes[1].clave]
+  );
+
+  const limpiar = (m?: Record<number, "arriba" | "abajo">) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(m ?? {})) {
+      if ((v === "arriba" || v === "abajo") && Number.isInteger(Number(k))) out[k] = v;
+    }
+    return out;
+  };
+  const porVariante: Record<string, Record<string, string>> = {};
+  const mIzq = limpiar(marcas.izq);
+  const mDer = limpiar(marcas.der);
+  if (Object.keys(mIzq).length) porVariante[izq] = mIzq;
+  if (Object.keys(mDer).length) porVariante[der] = mDer;
+
+  const { error } = await supabase
+    .from("comparador_motor_pares")
+    .update({ marcas_look: Object.keys(porVariante).length ? porVariante : null })
+    .eq("id", parId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/admin/comparador/motor/${par.corrida_id}`);
+  return { ok: true };
+}
+
 export async function cambiarEstadoMotor(
   corridaId: string,
   estado: "corriendo" | "juzgando" | "cerrada",

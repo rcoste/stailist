@@ -130,6 +130,16 @@ export default async function CorridaMotor({
       resultado={marcadorMotor(corrida.variantes, corrida.pares)}
       notas={notas}
       sinGenerar={Math.ceil(trabajos.length / 2)}
+      marcasPendientes={
+        corrida.pares.filter(
+          (p) =>
+            p.voto !== null &&
+            !p.marcasLook &&
+            claves.every((c) =>
+              p.lados.some((l) => l.variante === c && (l.looks?.length ?? 0) > 0)
+            )
+        ).length
+      }
     />
   );
 }
