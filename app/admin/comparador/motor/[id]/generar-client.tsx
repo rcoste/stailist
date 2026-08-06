@@ -107,6 +107,7 @@ export function GenerarClient({
   const avance = hechos + persistidos.size;
   const pct = total ? Math.round((avance / total) * 100) : 0;
   const paresListos = Math.floor(avance / 2);
+  const paresPendientes = Math.ceil((trabajos.length - persistidos.size) / 2);
 
   return (
     <div className="flex flex-col gap-4">
@@ -138,7 +139,8 @@ export function GenerarClient({
               onClick={correrBloque}
               className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
             >
-              Generar los primeros {Math.ceil(Math.min(LADOS_POR_BLOQUE, trabajos.length) / 2)} pares
+              Generar {hechos > 0 ? "los siguientes" : "los primeros"}{" "}
+              {Math.ceil(Math.min(LADOS_POR_BLOQUE, trabajos.length) / 2)} pares
             </button>
           </>
         ) : null}
@@ -150,13 +152,25 @@ export function GenerarClient({
           </p>
         ) : null}
 
+        {/* La pausa tiene que gritar cuántos pares FALTAN. La primera versión
+            solo decía "6 de 12 lados" y ponía el botón de parar justo debajo:
+            Roberto cortó una corrida a la mitad creyendo que ya había
+            terminado, y los 3 briefs restantes (frío, calor, lluvia) nunca se
+            midieron. El progreso se cuenta en PARES, que es la unidad que se
+            vota; los lados son detalle de implementación. */}
         {fase === "pausa" ? (
-          <button
-            onClick={correrBloque}
-            className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
-          >
-            Seguir con el siguiente bloque
-          </button>
+          <>
+            <p className="text-sm font-semibold text-ink">
+              Faltan {paresPendientes} {paresPendientes === 1 ? "par" : "pares"} por
+              generar de {Math.round(total / 2)}.
+            </p>
+            <button
+              onClick={correrBloque}
+              className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+            >
+              Generar {Math.min(LADOS_POR_BLOQUE / 2, paresPendientes)} más
+            </button>
+          </>
         ) : null}
 
         {fase === "pausa" && fallos.length > 0 ? (
@@ -182,12 +196,18 @@ export function GenerarClient({
         </div>
       ) : null}
 
+      {/* Detrás de un disclosure: parar es la EXCEPCIÓN, no el siguiente paso.
+          Abierto y en negrita se lee como "ya acabé, sigue aquí". */}
       {fase !== "listo" ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
-          <p className="text-sm font-semibold text-ink">Parar aquí</p>
+        <details className="rounded-xl border border-line bg-surface p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-muted">
+            Parar antes de tiempo
+          </summary>
+          <div className="mt-2 flex flex-col gap-2">
           <p className="text-xs text-muted">
-            Se vota con los pares que ya existen. Deja una nota de por qué —
-            dentro de tres meses nadie se acuerda.
+            Se vota con los pares que ya existen y los que falten quedan sin
+            medir. Deja una nota de por qué — dentro de tres meses nadie se
+            acuerda.
           </p>
           <input
             value={notaAborto}
@@ -202,7 +222,8 @@ export function GenerarClient({
           >
             {abortando ? "Cerrando…" : "Parar y votar con lo que hay"}
           </button>
-        </div>
+          </div>
+        </details>
       ) : null}
     </div>
   );
