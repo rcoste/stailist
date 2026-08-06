@@ -247,6 +247,8 @@ export type ParMotor = {
   defectos: Record<string, string[]> | null;
   /** Diagnóstico por look: {variante: {índice: "arriba"|"abajo"}}. */
   marcasLook: Record<string, Record<string, string>> | null;
+  /** Defectos POR LOOK: {variante: {índice: ["clave"]}}. Reemplaza a `defectos`. */
+  defectosLook: Record<string, Record<string, string[]>> | null;
   /** El porqué de cada look: {variante: {índice: "texto"}}. */
   comentariosLook: Record<string, Record<string, string>> | null;
   nota: string | null;
@@ -350,10 +352,20 @@ export function marcadorMotor(
   // del etiquetado del veredicto en silencio.
   for (const par of pares) {
     if (par.voto == null) continue;
+    // Las dos formas: `defectos` era por lado (corridas viejas) y
+    // `defectosLook` es por look. Sumarlas juntas evita perder la cosecha de
+    // la primera corrida solo porque el formato mejoró después.
     for (const [clave, tags] of Object.entries(par.defectos ?? {})) {
       const a = acc.get(clave);
       if (!a) continue;
       for (const t of tags) a.defectos[t] = (a.defectos[t] ?? 0) + 1;
+    }
+    for (const [clave, porIndice] of Object.entries(par.defectosLook ?? {})) {
+      const a = acc.get(clave);
+      if (!a) continue;
+      for (const tags of Object.values(porIndice)) {
+        for (const t of tags) a.defectos[t] = (a.defectos[t] ?? 0) + 1;
+      }
     }
     // Las marcas por look, igual: diagnóstico de CUÁL look arrastró el voto.
     for (const [clave, porIndice] of Object.entries(par.marcasLook ?? {})) {

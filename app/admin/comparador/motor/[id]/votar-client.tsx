@@ -10,10 +10,17 @@ import { votarParMotor } from "../../motor-actions";
 // el orden viene barajado del servidor: aquí NADIE sabe qué variante es cuál —
 // el voto viaja como izquierda/derecha y el servidor lo resuelve.
 //
-// Los defectos por lado son la cosecha real del vistazo: cada tag confirmado
-// es candidato a regla comprobable en código (reglas-ejecucion.ts). Marcar un
-// defecto NO obliga a votar en contra — un look puede romper el clima y aun
-// así ser el mejor de los dos.
+// UNA PESTAÑA POR LOOK, y esa decisión manda todo lo demás. La primera versión
+// apilaba los 3 looks de cada lado en dos columnas: en un celular eso deja
+// ~170px por lado, así que las prendas salían a 56px ("no se ven, están muy
+// chiquitas"), el try-on era lo único legible porque ocupaba el ancho completo,
+// y las etiquetas de defecto caían al fondo de la columna leyéndose como si
+// aplicaran a los tres looks. Mostrando UN look por lado a la vez, las prendas
+// caben al doble y cada control —👍/👎, defectos, comentario, try-on— vive
+// dentro del look al que pertenece.
+//
+// Lado a lado se queda: comparar A contra B ES la tarea, y apilarlos obligaría
+// a recordar uno mientras se mira el otro.
 
 export type LookParaVotar = {
   nombre: string;
@@ -32,202 +39,168 @@ export type ParParaVotar = {
   claveDer: string;
 };
 
-function CartaLook({
+type PorLook<T> = Record<number, T>;
+
+function Lado({
+  titulo,
   look,
+  indice,
   marca,
   setMarca,
+  defectos,
+  setDefectos,
   comentario,
   setComentario,
   tryon,
   pedirTryon,
   rendereando,
 }: {
-  look: LookParaVotar;
+  titulo: string;
+  look: LookParaVotar | undefined;
+  indice: number;
   marca?: "arriba" | "abajo";
   setMarca: (m: "arriba" | "abajo" | undefined) => void;
-  comentario?: string;
-  setComentario?: (c: string) => void;
-  tryon?: { image?: string; error?: string };
-  pedirTryon?: () => void;
-  rendereando?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-ink">{look.nombre}</p>
-        {/* Marca por look: dice CUÁL arrastró el voto del par. No es un voto
-            aparte — los tres looks salen de una sola llamada al motor. */}
-        <span className="flex shrink-0 gap-1">
-          <button
-            onClick={() => setMarca(marca === "arriba" ? undefined : "arriba")}
-            aria-label="este look sí"
-            className={`rounded-full border px-2 py-0.5 text-xs ${
-              marca === "arriba" ? "border-ink bg-ink text-bg" : "border-line text-muted"
-            }`}
-          >
-            👍
-          </button>
-          <button
-            onClick={() => setMarca(marca === "abajo" ? undefined : "abajo")}
-            aria-label="este look no"
-            className={`rounded-full border px-2 py-0.5 text-xs ${
-              marca === "abajo" ? "border-error text-error" : "border-line text-muted"
-            }`}
-          >
-            👎
-          </button>
-        </span>
-      </div>
-      {/* Miniaturas por next/image, como el clóset: tus renders propios son
-          JPGs a tamaño completo en el bucket privado, y pintarlos con <img>
-          crudo bajaba ~400 KB por prenda para un cuadro de 56 px. Las del
-          catálogo (públicas, en CDN) aparecían al instante y las tuyas se
-          quedaban cargando — que es justo lo que se veía en el celular. */}
-      <div className="flex flex-wrap gap-1.5">
-        {look.prendas.map((p) => (
-          <div key={p.id} className="flex w-14 flex-col items-center gap-1">
-            <span className="relative block h-14 w-14 overflow-hidden rounded-lg border border-line">
-              {p.imagen ? (
-                <Image
-                  src={p.imagen}
-                  alt={p.nombre}
-                  fill
-                  sizes="56px"
-                  // eager, no lazy: aquí comparar las prendas ES la tarea, y
-                  // una miniatura que aparece al hacer scroll llega tarde para
-                  // votar. Ya optimizadas pesan ~3 KB, así que pedir las ~26 de
-                  // golpe cuesta menos que UNA sola sin optimizar.
-                  loading="eager"
-                  className="object-cover"
-                />
-              ) : (
-                <span
-                  className="absolute inset-0"
-                  style={{ backgroundColor: p.swatch }}
-                  aria-hidden
-                />
-              )}
-            </span>
-            <span className="line-clamp-2 text-center text-[10px] leading-tight text-muted">
-              {p.nombre}
-            </span>
-          </div>
-        ))}
-      </div>
-      {/* El try-on de ESTE look. Se pide por índice y salen los dos lados a
-          la vez, para que el ruido del render quede simétrico. */}
-      {tryon?.image ? (
-        <span className="relative block aspect-[3/4] overflow-hidden rounded-lg border border-line">
-          <Image
-            src={tryon.image}
-            alt={`${look.nombre} en tu avatar`}
-            fill
-            sizes="(max-width: 430px) 45vw, 260px"
-            loading="eager"
-            className="object-cover"
-          />
-        </span>
-      ) : null}
-      {tryon?.error ? (
-        <p className="text-xs text-error">
-          {tryon.error === "sin_avatar" ? "no tienes avatar" : `sin render (${tryon.error})`}
-        </p>
-      ) : null}
-      {pedirTryon && !tryon?.image ? (
-        <button
-          disabled={rendereando}
-          onClick={pedirTryon}
-          className="rounded-lg border border-line py-1.5 text-xs font-semibold text-ink active:bg-tile disabled:opacity-50"
-        >
-          {rendereando ? "vistiendo…" : "verme con este"}
-        </button>
-      ) : null}
-      <p className="text-xs leading-relaxed text-muted">{look.explicacion}</p>
-      {look.tip ? (
-        <p className="text-xs leading-relaxed text-muted">✦ {look.tip}</p>
-      ) : null}
-      {/* El porqué de ESTE look. El 👍/👎 dice cuál arrastró el voto; esto
-          dice qué tuvo, que es lo único que se vuelve regla. */}
-      {setComentario ? (
-        <textarea
-          value={comentario ?? ""}
-          onChange={(e) => setComentario(e.target.value)}
-          rows={2}
-          placeholder="qué le viste a este (opcional)"
-          className="rounded-lg border border-line bg-bg p-2 text-xs text-ink placeholder:text-muted"
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function Columna({
-  titulo,
-  looks,
-  defectos,
-  setDefectos,
-  tryon,
-  marcas,
-  setMarcas,
-  comentarios,
-  setComentarios,
-  pedirTryon,
-  rendereando,
-}: {
-  titulo: string;
-  looks: LookParaVotar[];
   defectos: string[];
   setDefectos: (d: string[]) => void;
-  tryon?: Record<number, { image?: string; error?: string }>;
-  pedirTryon: (indice: number) => void;
-  rendereando: number | null;
-  marcas: Record<number, "arriba" | "abajo">;
-  setMarcas: (m: Record<number, "arriba" | "abajo">) => void;
-  comentarios: Record<number, string>;
-  setComentarios: (c: Record<number, string>) => void;
+  comentario?: string;
+  setComentario: (c: string) => void;
+  tryon?: { image?: string; error?: string };
+  pedirTryon: () => void;
+  rendereando: boolean;
 }) {
   const alternar = (clave: string) =>
     setDefectos(
-      defectos.includes(clave)
-        ? defectos.filter((x) => x !== clave)
-        : [...defectos, clave]
+      defectos.includes(clave) ? defectos.filter((x) => x !== clave) : [...defectos, clave]
     );
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{titulo}</p>
-      {looks.map((l, i) => (
-        <CartaLook
-          key={i}
-          look={l}
-          marca={marcas[i]}
-          setMarca={(m) => {
-            const next = { ...marcas };
-            if (m) next[i] = m;
-            else delete next[i];
-            setMarcas(next);
-          }}
-          comentario={comentarios[i]}
-          setComentario={(c) => setComentarios({ ...comentarios, [i]: c })}
-          tryon={tryon?.[i]}
-          pedirTryon={() => pedirTryon(i)}
-          rendereando={rendereando === i}
-        />
-      ))}
-      <div className="flex flex-wrap gap-1.5">
-        {DEFECTOS_MOTOR.map((d) => (
-          <button
-            key={d.clave}
-            onClick={() => alternar(d.clave)}
-            className={`rounded-full border px-2 py-1 text-[11px] font-medium ${
-              defectos.includes(d.clave)
-                ? "border-error text-error"
-                : "border-line text-muted"
-            }`}
-          >
-            {d.label}
-          </button>
-        ))}
-      </div>
+
+      {!look ? (
+        <p className="text-xs text-muted">este lado no armó un {indice + 1}º look</p>
+      ) : (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
+          {/* min-h de dos renglones: sin esto un nombre que envuelve a 3
+              líneas empuja sus prendas más abajo que las del otro lado, y la
+              comparación prenda-contra-prenda deja de ser posible de un
+              vistazo. Es una pantalla de comparar: las dos columnas tienen que
+              arrancar a la misma altura. */}
+          <div className="flex min-h-[2.6rem] items-start justify-between gap-2">
+            <p className="line-clamp-2 text-sm font-semibold leading-tight text-ink">
+              {look.nombre}
+            </p>
+            <span className="flex shrink-0 gap-1">
+              <button
+                onClick={() => setMarca(marca === "arriba" ? undefined : "arriba")}
+                aria-label="este look sí"
+                className={`rounded-full border px-2 py-0.5 text-sm ${
+                  marca === "arriba" ? "border-ink bg-ink text-bg" : "border-line text-muted"
+                }`}
+              >
+                👍
+              </button>
+              <button
+                onClick={() => setMarca(marca === "abajo" ? undefined : "abajo")}
+                aria-label="este look no"
+                className={`rounded-full border px-2 py-0.5 text-sm ${
+                  marca === "abajo" ? "border-error text-error" : "border-line text-muted"
+                }`}
+              >
+                👎
+              </button>
+            </span>
+          </div>
+
+          {/* Las prendas, EN GRANDE. Dos por fila dentro de la columna: con un
+              solo look en pantalla caben al doble que antes. */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {look.prendas.map((p) => (
+              <div key={p.id} className="flex flex-col items-center gap-1">
+                <span className="relative block aspect-square w-full overflow-hidden rounded-lg border border-line">
+                  {p.imagen ? (
+                    <Image
+                      src={p.imagen}
+                      alt={p.nombre}
+                      fill
+                      sizes="(max-width: 430px) 22vw, 120px"
+                      loading="eager"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="absolute inset-0"
+                      style={{ backgroundColor: p.swatch }}
+                      aria-hidden
+                    />
+                  )}
+                </span>
+                <span className="line-clamp-2 text-center text-[11px] leading-tight text-muted">
+                  {p.nombre}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {tryon?.image ? (
+            <span className="relative block aspect-[3/4] overflow-hidden rounded-lg border border-line">
+              <Image
+                src={tryon.image}
+                alt={`${look.nombre} en tu avatar`}
+                fill
+                sizes="(max-width: 430px) 45vw, 260px"
+                loading="eager"
+                className="object-cover"
+              />
+            </span>
+          ) : null}
+          {tryon?.error ? (
+            <p className="text-xs text-error">
+              {tryon.error === "sin_avatar" ? "no tienes avatar" : `sin render (${tryon.error})`}
+            </p>
+          ) : null}
+          {!tryon?.image ? (
+            <button
+              disabled={rendereando}
+              onClick={pedirTryon}
+              className="rounded-lg border border-line py-1.5 text-xs font-semibold text-ink active:bg-tile disabled:opacity-50"
+            >
+              {rendereando ? "vistiendo…" : "verme con este"}
+            </button>
+          ) : null}
+
+          <p className="text-xs leading-relaxed text-muted">{look.explicacion}</p>
+          {look.tip ? (
+            <p className="text-xs leading-relaxed text-muted">✦ {look.tip}</p>
+          ) : null}
+
+          {/* Los defectos, DENTRO del look. Antes vivían al fondo de la columna,
+              después de los tres, y se leían como si aplicaran a todos. */}
+          <div className="flex flex-wrap gap-1">
+            {DEFECTOS_MOTOR.map((d) => (
+              <button
+                key={d.clave}
+                onClick={() => alternar(d.clave)}
+                className={`rounded-full border px-2 py-1 text-[11px] font-medium ${
+                  defectos.includes(d.clave)
+                    ? "border-error text-error"
+                    : "border-line text-muted"
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            value={comentario ?? ""}
+            onChange={(e) => setComentario(e.target.value)}
+            rows={2}
+            placeholder="qué le viste a este (opcional)"
+            className="rounded-lg border border-line bg-bg p-2 text-xs text-ink placeholder:text-muted"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -245,25 +218,25 @@ export function VotarClient({
 }) {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
-  const [defIzq, setDefIzq] = useState<string[]>([]);
-  const [defDer, setDefDer] = useState<string[]>([]);
-  const [marcIzq, setMarcIzq] = useState<Record<number, "arriba" | "abajo">>({});
-  const [marcDer, setMarcDer] = useState<Record<number, "arriba" | "abajo">>({});
-  const [comIzq, setComIzq] = useState<Record<number, string>>({});
-  const [comDer, setComDer] = useState<Record<number, string>>({});
+  const [look, setLook] = useState(0);
+  const [marcIzq, setMarcIzq] = useState<PorLook<"arriba" | "abajo">>({});
+  const [marcDer, setMarcDer] = useState<PorLook<"arriba" | "abajo">>({});
+  const [defIzq, setDefIzq] = useState<PorLook<string[]>>({});
+  const [defDer, setDefDer] = useState<PorLook<string[]>>({});
+  const [comIzq, setComIzq] = useState<PorLook<string>>({});
+  const [comDer, setComDer] = useState<PorLook<string>>({});
   const [nota, setNota] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // El try-on del par actual, por VARIANTE (la respuesta no dice izq/der para
-  // no delatar el ciego; se mapea abajo con las claves que mandó el servidor).
   // Try-on por VARIANTE y por índice de look. La respuesta no dice izq/der
   // para no delatar el ciego; se mapea abajo con las claves del servidor.
   const [tryon, setTryon] = useState<
-    Record<string, Record<number, { image?: string; error?: string }>>
+    Record<string, PorLook<{ image?: string; error?: string }>>
   >({});
   const [renderizando, setRenderizando] = useState<number | null>(null);
 
   const par = pares[idx];
+  const nLooks = Math.max(par.izq.length, par.der.length);
 
   // Pide el look `indice` de LOS DOS lados. Nunca uno solo: si un lado tuviera
   // render y el otro no, la comparación mediría el formato, no el look.
@@ -316,69 +289,94 @@ export function VotarClient({
       setError(r.error ?? "no se pudo guardar el voto");
       return;
     }
-    setDefIzq([]);
-    setDefDer([]);
     setMarcIzq({});
     setMarcDer({});
+    setDefIzq({});
+    setDefDer({});
     setComIzq({});
     setComDer({});
     setNota("");
-    setTryon({}); // el try-on es de ESTE par; el siguiente empieza sin él
+    setTryon({});
+    setLook(0);
     if (idx + 1 < pares.length) setIdx(idx + 1);
     else router.refresh();
   };
+
+  const marcados = Object.keys(marcIzq).length + Object.keys(marcDer).length;
 
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-ink">
-            ¿Cuál quedó mejor?
-          </h1>
+          <h1 className="text-xl font-semibold text-ink">¿Cuál quedó mejor?</h1>
           <span className="rounded-full border border-line px-2 py-0.5 text-xs text-muted">
             {yaHechos + idx + 1} de {total}
           </span>
         </div>
         <p className="text-sm text-muted">
           Brief: <span className="font-semibold text-ink">{par.etiqueta}</span>
-          {tamano === "vistazo"
-            ? " · vistazo: caza defectos, aquí no se corona a nadie"
-            : ""}
+          {tamano === "vistazo" ? " · vistazo: caza defectos, aquí no se corona a nadie" : ""}
         </p>
       </header>
 
+      {/* Pestañas por look: cada lado muestra UNO a la vez, y así las prendas
+          caben grandes. El punto marca los que ya llevan 👍/👎. */}
+      <div className="flex gap-2">
+        {Array.from({ length: nLooks }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => setLook(i)}
+            className={`flex-1 rounded-xl border py-2 text-sm font-semibold ${
+              look === i ? "border-accent bg-accent-soft text-ink" : "border-line text-muted"
+            }`}
+          >
+            Look {i + 1}
+            {marcIzq[i] || marcDer[i] ? " ·" : ""}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-3">
-        <Columna
+        <Lado
           titulo="Look A"
-          looks={par.izq}
-          defectos={defIzq}
-          setDefectos={setDefIzq}
-          tryon={tryon[par.claveIzq]}
-          pedirTryon={verEnAvatar}
-          rendereando={renderizando}
-          marcas={marcIzq}
-          setMarcas={setMarcIzq}
-          comentarios={comIzq}
-          setComentarios={setComIzq}
+          look={par.izq[look]}
+          indice={look}
+          marca={marcIzq[look]}
+          setMarca={(m) => {
+            const next = { ...marcIzq };
+            if (m) next[look] = m;
+            else delete next[look];
+            setMarcIzq(next);
+          }}
+          defectos={defIzq[look] ?? []}
+          setDefectos={(d) => setDefIzq({ ...defIzq, [look]: d })}
+          comentario={comIzq[look]}
+          setComentario={(c) => setComIzq({ ...comIzq, [look]: c })}
+          tryon={tryon[par.claveIzq]?.[look]}
+          pedirTryon={() => verEnAvatar(look)}
+          rendereando={renderizando === look}
         />
-        <Columna
+        <Lado
           titulo="Look B"
-          looks={par.der}
-          defectos={defDer}
-          setDefectos={setDefDer}
-          tryon={tryon[par.claveDer]}
-          pedirTryon={verEnAvatar}
-          rendereando={renderizando}
-          marcas={marcDer}
-          setMarcas={setMarcDer}
-          comentarios={comDer}
-          setComentarios={setComDer}
+          look={par.der[look]}
+          indice={look}
+          marca={marcDer[look]}
+          setMarca={(m) => {
+            const next = { ...marcDer };
+            if (m) next[look] = m;
+            else delete next[look];
+            setMarcDer(next);
+          }}
+          defectos={defDer[look] ?? []}
+          setDefectos={(d) => setDefDer({ ...defDer, [look]: d })}
+          comentario={comDer[look]}
+          setComentario={(c) => setComDer({ ...comDer, [look]: c })}
+          tryon={tryon[par.claveDer]?.[look]}
+          pedirTryon={() => verEnAvatar(look)}
+          rendereando={renderizando === look}
         />
       </div>
 
-      {/* El PORQUÉ, en grande y con su propio título: es el dato más valioso
-          de la corrida. "Ganó A" no se convierte en nada; "ganó A porque el
-          otro puso botines de gamuza con lluvia" es una regla. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           ¿Por qué elegiste ese? (la comparación)
@@ -418,8 +416,9 @@ export function VotarClient({
         </button>
       </div>
       <p className="text-xs text-muted">
-        Cada voto se guarda solo. Marcar un defecto no te obliga a votar en
-        contra: un look puede romper algo y aun así ser el mejor de los dos.
+        El voto es del PAR completo (los {nLooks} looks juntos) — es lo que la
+        usuaria vería. Llevas {marcados} looks marcados; puedes votar sin
+        marcarlos todos.
       </p>
     </div>
   );

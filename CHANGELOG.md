@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.114.0] - 2026-08-06
+
+### Changed
+
+- **La pantalla de votar, rehecha: una pestaña por look.** Antes apilaba los 3 looks de cada lado en dos columnas, y en un celular eso deja ~170px por lado: las prendas salían a 56px (imposibles de juzgar), el try-on era lo único legible porque ocupaba el ancho completo, y las etiquetas de defecto caían al fondo de la columna leyéndose como si aplicaran a los tres looks a la vez. Ahora cada lado muestra UN look, **las prendas se ven al doble de grandes**, y cada control —👍/👎, defectos, comentario, "verme con este"— vive dentro del look al que pertenece. Los dos lados siguen lado a lado: comparar A contra B es la tarea, y apilarlos obligaría a recordar uno mientras se mira el otro.
+- **Los defectos ahora son POR LOOK**, no por lado. Era la pieza que había quedado fuera de sitio desde que el 👍/👎 y el comentario pasaron a ser por look. Las corridas viejas conservan sus defectos por lado y el marcador suma las dos formas, para no perder la cosecha de la primera corrida solo porque el formato mejoró.
+- Los nombres de look se recortan a dos renglones para que las prendas de los dos lados arranquen a la misma altura: en una pantalla de comparar, que una columna empiece más abajo que la otra rompe justamente lo que se viene a hacer.
+
 ## [0.2.113.0] - 2026-08-06
 
 ### Added
