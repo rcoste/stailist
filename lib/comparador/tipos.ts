@@ -47,9 +47,22 @@ export const CAMPO_LARGO = "descripcion";
  * no hay forma de detectarla desde la app hasta que aparece en un outfit. A
  * Roberto le tomó dos meses cazar tres.
  */
-export type Veredicto =
+export type Veredicto = (
   | { camposMal: string[] }
-  | { inventadas: number[]; faltaron: number; camposMal: Record<string, string[]> };
+  | { inventadas: number[]; faltaron: number; camposMal: Record<string, string[]> }
+) & {
+  /**
+   * Lo que no cabe en marcar un campo. "Le dio el beneficio de la duda al
+   * color, la luz estaba imposible"; "leyó la prenda de mi esposa"; "dijo
+   * chelsea y son chukka".
+   *
+   * Existe porque los campos son casillas y el juicio real casi nunca lo es.
+   * Sin esto, todo lo que Roberto nota mientras califica se queda en su cabeza
+   * y a los tres días ya no está — que es exactamente lo que pasó con el reloj
+   * de la foto de su esposa, que salió a la luz por casualidad al conversarlo.
+   */
+  nota?: string;
+};
 
 export type Lectura = {
   modeloId: string;
@@ -84,6 +97,8 @@ export type ResultadoModelo = {
   /** Lo que costaría leer 30 fotos, que es un onboarding real. */
   costoPor30: number | null;
   msPromedio: number | null;
+  /** Lo que Roberto escribió sobre este modelo, foto por foto. */
+  notas: string[];
 };
 
 function esMulti(
@@ -120,6 +135,7 @@ export function marcador(fotos: FotoComparada[]): ResultadoModelo[] {
           costoTotal: 0,
           costoPor30: null,
           msPromedio: null,
+          notas: [],
           msSuma: 0,
           msN: 0,
           costoN: 0,
@@ -136,6 +152,8 @@ export function marcador(fotos: FotoComparada[]): ResultadoModelo[] {
         a.msN++;
       }
       if (!l.veredicto) continue;
+      const nota = l.veredicto.nota?.trim();
+      if (nota) a.notas.push(nota);
 
       a.fotosJuzgadas++;
       const v = l.veredicto;
@@ -170,6 +188,7 @@ export function marcador(fotos: FotoComparada[]): ResultadoModelo[] {
       costoTotal: a.costoN ? a.costoTotal : null,
       costoPor30: a.costoN ? ((a.costoTotal ?? 0) / a.costoN) * 30 : null,
       msPromedio: a.msN ? Math.round(a.msSuma / a.msN) : null,
+      notas: a.notas,
     }))
     .sort(
       (x, y) =>

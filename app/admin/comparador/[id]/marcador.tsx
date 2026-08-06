@@ -91,6 +91,19 @@ export function Marcador({
                 </p>
               ) : null}
 
+              {/* Tus notas, ya con el nombre del modelo enfrente. Es lo único
+                  de esta pantalla que puede decir algo que ninguna casilla
+                  captura — y suele ser lo que más vale. */}
+              {r.notas.length ? (
+                <ul className="flex flex-col gap-1 border-l-2 border-line pl-3">
+                  {r.notas.map((n2, k) => (
+                    <li key={k} className="text-xs leading-relaxed text-ink">
+                      {n2}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
               {fallos.length ? (
                 <p className="text-xs leading-relaxed text-muted">
                   Lee mal:{" "}

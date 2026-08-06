@@ -22,8 +22,9 @@ const foto = (
 const multi = (
   inventadas: number[] = [],
   faltaron = 0,
-  camposMal: Record<string, string[]> = {}
-): Veredicto => ({ inventadas, faltaron, camposMal });
+  camposMal: Record<string, string[]> = {},
+  nota?: string
+): Veredicto => ({ inventadas, faltaron, camposMal, ...(nota ? { nota } : {}) });
 
 describe("marcador", () => {
   it("inventar pesa más que acertar", () => {
@@ -103,6 +104,33 @@ describe("marcador", () => {
       foto("b", [{ modeloId: "m", veredicto: multi(), costoUsd: 0.02 }]),
     ]);
     expect(r[0].costoPor30).toBeCloseTo(0.6, 5);
+  });
+});
+
+describe("notas", () => {
+  it("junta lo que escribiste de cada modelo, en orden", () => {
+    // Es lo único del marcador que puede decir algo que ninguna casilla
+    // captura, y suele ser lo que más vale.
+    const r = marcador([
+      foto("a", [{ modeloId: "m", veredicto: multi([], 0, {}, "le dio el beneficio de la duda al color") }]),
+      foto("b", [{ modeloId: "m", veredicto: multi([], 0, {}, "dijo chelsea y son chukka") }]),
+    ]);
+    expect(r[0].notas).toEqual([
+      "le dio el beneficio de la duda al color",
+      "dijo chelsea y son chukka",
+    ]);
+  });
+
+  it("una nota en blanco no ensucia el resultado", () => {
+    const r = marcador([foto("a", [{ modeloId: "m", veredicto: multi([], 0, {}, "   ") }])]);
+    expect(r[0].notas).toEqual([]);
+  });
+
+  it("una nota no cuenta como error: la foto sigue siendo impecable", () => {
+    // Comentar algo no es marcarlo mal. Si contara, escribir contexto castigaría
+    // al modelo y dejarías de escribirlo.
+    const r = marcador([foto("a", [{ modeloId: "m", veredicto: multi([], 0, {}, "buena lectura") }])]);
+    expect(r[0].impecables).toBe(1);
   });
 });
 

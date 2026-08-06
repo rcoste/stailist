@@ -50,7 +50,7 @@ const ETIQUETA_CAMPO: Record<string, string> = {
 
 const LETRAS = ["A", "B", "C", "D", "E", "F", "G"];
 
-type MarcaMulti = { inventadas: number[]; faltaron: number; camposMal: Record<string, string[]> };
+type MarcaMulti = { inventadas: number[]; faltaron: number; camposMal: Record<string, string[]>; nota: string };
 
 export function CalificarClient({
   corridaId,
@@ -71,7 +71,7 @@ export function CalificarClient({
 
   const foto = fotos[i];
   const de = (modeloId: string): MarcaMulti =>
-    marcas[modeloId] ?? { inventadas: [], faltaron: 0, camposMal: {} };
+    marcas[modeloId] ?? { inventadas: [], faltaron: 0, camposMal: {}, nota: "" };
 
   const marcarInventada = (modeloId: string, idx: number) =>
     setMarcas((m) => {
@@ -104,6 +104,9 @@ export function CalificarClient({
       };
     });
 
+  const escribirNota = (modeloId: string, nota: string) =>
+    setMarcas((m) => ({ ...m, [modeloId]: { ...de(modeloId), nota } }));
+
   const cambiarFaltaron = (modeloId: string, d: number) =>
     setMarcas((m) => {
       const a = de(modeloId);
@@ -127,8 +130,12 @@ export function CalificarClient({
                     camposMal: Object.fromEntries(
                       Object.entries(a.camposMal).filter(([, cs]) => cs.length)
                     ),
+                    ...(a.nota.trim() ? { nota: a.nota.trim() } : {}),
                   }
-                : { camposMal: a.camposMal["0"] ?? [] };
+                : {
+                    camposMal: a.camposMal["0"] ?? [],
+                    ...(a.nota.trim() ? { nota: a.nota.trim() } : {}),
+                  };
             return calificar(foto.fotoId, l.modeloId, v);
           })
       );
@@ -315,6 +322,18 @@ export function CalificarClient({
                   ) : null}
                 </>
               )}
+
+              {/* Lo que no cabe en marcar un campo. Sin esto, lo que notas
+                  mientras calificas se pierde: el reloj de la foto con su
+                  esposa salió a la luz de casualidad al platicarlo, no del
+                  registro. */}
+              <textarea
+                value={a.nota}
+                onChange={(e) => escribirNota(l.modeloId, e.target.value)}
+                rows={2}
+                placeholder="algo que añadir sobre lo que leyó…"
+                className="w-full rounded-lg border border-line bg-bg p-2 text-xs text-ink placeholder:text-muted"
+              />
             </div>
           );
         })}

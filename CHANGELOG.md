@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.105.1] - 2026-08-05
+
+### Added
+
+- **Un campo de comentarios por modelo al calificar.** Para lo que no cabe en marcar una casilla: "la luz estaba imposible, le doy el beneficio de la duda", "esa prenda es de mi esposa", "dijo chelsea y son chukka". Aparece con el nombre del modelo enfrente en los resultados, y no cuenta como error.
+
 ## [0.2.105.0] - 2026-08-05
 
 ### Added
