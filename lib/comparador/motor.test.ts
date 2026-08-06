@@ -249,6 +249,31 @@ describe("marcadorMotor", () => {
     expect(b.defectos).toEqual({ clima: 2, color: 1 });
   });
 
+  it("cuenta los looks GENERADOS, para que un '0 👎' no se lea como 'nada salió mal'", () => {
+    // El caso real: 20 marcas sobre 119 looks en el primer veredicto. Sin el
+    // denominador, el marcador decía "0 👎" de una variante que nadie revisó.
+    const tresLooks = [{}, {}, {}] as never[];
+    const pares = [
+      par({
+        id: "p1",
+        voto: "a",
+        marcasLook: { a: { "0": "arriba" } }, // solo el primero de tres
+        lados: [
+          { variante: "a", looks: tresLooks, reviews: null, error: null, costoUsd: 0.2, ms: 3e4 },
+          { variante: "b", looks: tresLooks, reviews: null, error: null, costoUsd: 0.1, ms: 2e4 },
+        ],
+      }),
+    ];
+    const m = marcadorMotor(VARIANTES, pares);
+    const a = m.variantes.find((v) => v.clave === "a")!;
+    const b = m.variantes.find((v) => v.clave === "b")!;
+    expect(a.looksTotales).toBe(3);
+    expect(a.looksArriba + a.looksAbajo).toBe(1); // 1 de 3 revisados
+    // 'b' no tiene NINGUNA marca, pero generó 3 looks: la pantalla debe poder
+    // distinguir "salió limpio" de "nadie lo miró".
+    expect([b.looksArriba, b.looksAbajo, b.looksTotales]).toEqual([0, 0, 3]);
+  });
+
   it("los defectos marcados en un espejo SÍ cuentan (es etiquetado válido)", () => {
     const pares = [
       par({ id: "p1", voto: "a" }),

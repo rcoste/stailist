@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.115.1] - 2026-08-06
+
+### Fixed
+
+- **Las marcas por look ahora se leen con su denominador**, y sin él mentían. El marcador decía "9 👍 · 0 👎" sin aclarar de cuántos: ese "0 👎" se lee como "nada salió mal" cuando en realidad puede querer decir "nadie los miró". En el primer veredicto hubo **20 marcas sobre 119 looks generados**. Ahora dice "N de M revisados", en rojo cuando falta más de la mitad, con un aviso explícito de que lo no marcado NO es lo mismo que lo malo. El voto de cada par sigue siendo completo; lo parcial es el diagnóstico look por look.
+
 ## [0.2.115.0] - 2026-08-06
 
 ### Changed

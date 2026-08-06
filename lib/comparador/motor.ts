@@ -298,6 +298,12 @@ export type ResultadoVariante = {
   /** Looks marcados 👍 y 👎 (diagnóstico, NO votos: ver marcas_look). */
   looksArriba: number;
   looksAbajo: number;
+  /**
+   * Cuántos looks GENERÓ esta variante. Sin este denominador, "0 👎" se lee
+   * como "nada salió mal" cuando puede significar "nadie los miró" — que fue
+   * exactamente lo que pasó en el primer veredicto: 20 marcas sobre 119 looks.
+   */
+  looksTotales: number;
 };
 
 export type MarcadorMotor = {
@@ -344,6 +350,7 @@ export function marcadorMotor(
       errores: 0,
       looksArriba: 0,
       looksAbajo: 0,
+      looksTotales: 0,
       costoSuma: 0,
       costoN: 0,
       msSuma: 0,
@@ -369,6 +376,8 @@ export function marcadorMotor(
         a.msSuma += lado.ms;
         a.msN++;
       }
+      // El denominador de las marcas: cuántos looks generó de verdad.
+      a.looksTotales += lado.looks?.length ?? 0;
     }
     if (par.voto == null) continue;
     votados++;
@@ -431,6 +440,7 @@ export function marcadorMotor(
       errores: a.errores,
       looksArriba: a.looksArriba,
       looksAbajo: a.looksAbajo,
+      looksTotales: a.looksTotales,
     })),
     empates,
     votados,

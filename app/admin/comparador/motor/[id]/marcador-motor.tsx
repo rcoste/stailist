@@ -189,9 +189,21 @@ export function MarcadorMotorView({
               <span>tiempo por par: {v.msPromedio == null ? "—" : `${Math.round(v.msPromedio / 1000)}s`}</span>
               {v.errores ? <span className="text-error">{v.errores} lados fallaron</span> : null}
             </div>
-            {v.looksArriba + v.looksAbajo > 0 ? (
+            {/* SIEMPRE con denominador. Un "0 👎" suelto se lee como "nada
+                salió mal" cuando puede querer decir "nadie los miró": en el
+                primer veredicto hubo 20 marcas sobre 119 looks. */}
+            {v.looksTotales > 0 ? (
               <p className="text-xs text-muted">
-                looks marcados: {v.looksArriba} 👍 · {v.looksAbajo} 👎
+                looks: {v.looksArriba} 👍 · {v.looksAbajo} 👎 ·{" "}
+                <span
+                  className={
+                    v.looksArriba + v.looksAbajo < v.looksTotales / 2
+                      ? "text-error"
+                      : undefined
+                  }
+                >
+                  {v.looksArriba + v.looksAbajo} de {v.looksTotales} revisados
+                </span>
               </p>
             ) : null}
             {Object.keys(v.defectos).length ? (
@@ -237,6 +249,20 @@ export function MarcadorMotorView({
             </p>
           ) : null}
         </div>
+      ) : null}
+
+      {/* Aviso de cobertura: sin él, un marcador con pocas marcas invita a
+          leer la ausencia como si fuera juicio. */}
+      {resultado.variantes.some(
+        (v) => v.looksTotales > 0 && v.looksArriba + v.looksAbajo < v.looksTotales / 2
+      ) ? (
+        <p className="rounded-xl border border-line bg-surface p-4 text-xs text-muted">
+          <span className="font-semibold text-ink">Cobertura parcial:</span> se
+          marcó menos de la mitad de los looks. Los que no tienen 👍/👎{" "}
+          <span className="font-semibold text-ink">no se revisaron</span> — no
+          quiere decir que estuvieran mal. El voto de cada par sí es completo;
+          lo incompleto es el diagnóstico look por look.
+        </p>
       ) : null}
 
       {comentarios.length ? (
