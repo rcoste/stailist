@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.110.0] - 2026-08-06
+
+### Added
+
+- **👍/👎 por look, además del voto del par.** Un lado con un look excelente y dos flojos se votaba igual que uno con tres decentes, y esa diferencia se perdía entera. Idea de Roberto tras el primer vistazo real. Va como DIAGNÓSTICO, no como voto: los tres looks de un lado salen de UNA sola llamada al motor, así que contarlos como tres observaciones independientes inflaría la significancia. El voto del par sigue siendo la unidad del veredicto — que además es lo que la usuaria ve: el set completo.
+- **"¿Por qué elegiste ese?"** ahora es un campo grande con su propio título, no una línea opcional al final. Es el dato más valioso de una corrida: "ganó A" no se convierte en nada, "ganó A porque el otro puso gamuza con lluvia" es una regla. El marcador lo muestra bajo ese título en vez de "notas por par".
+- **Retomar un vistazo para generar los pares que faltaron.** Solo vistazos, y la restricción es el punto: un vistazo por diseño no declara ganador, así que ver su marcador antes de terminar no corrompe nada. En un veredicto sigue prohibido — ahí seguir después de ver quién va ganando contaminaría los votos restantes.
+
+### Fixed
+
+- **La pantalla de generación invitaba a cortar la corrida a la mitad.** Decía "6 de 12 lados" (la unidad que se vota son PARES) y ponía el botón de parar abierto justo debajo del de continuar. Roberto cortó su primer vistazo real creyendo que ya había terminado, y tres briefs —frío, calor y lluvia, justo los que más mueven el clóset— nunca se midieron. Ahora la pausa dice cuántos PARES faltan, y parar quedó detrás de un disclosure porque es la excepción, no el siguiente paso.
+
 ## [0.2.109.0] - 2026-08-06
 
 ### Added
