@@ -89,7 +89,15 @@ export async function POST(request: NextRequest) {
         yaGenerado: previos[String(indice)] ?? null,
         origin: request.nextUrl.origin,
       });
-      if ("error" in r) return { variante: l.variante as string, error: r.error };
+      if ("error" in r)
+        return {
+          variante: l.variante as string,
+          error: r.error,
+          // El motivo real (HTTP 500 de Google, timeout, filtro…). Sin esto,
+          // "está fallando el render" no se puede diagnosticar sin salir a
+          // interrogar la API a mano.
+          detalle: r.detalle,
+        };
       if (!r.cached) {
         await supabase
           .from("comparador_motor_lados")
@@ -103,9 +111,13 @@ export async function POST(request: NextRequest) {
   // La respuesta va por VARIANTE; la pantalla la mapea a izquierda/derecha con
   // el mismo orden del ciego (ordenDelPar). Así el try-on no puede delatar
   // cuál lado es cuál.
-  const porVariante: Record<string, { image?: string; error?: string }> = {};
+  const porVariante: Record<
+    string,
+    { image?: string; error?: string; detalle?: string }
+  > = {};
   for (const r of resultados) {
-    porVariante[r.variante] = "image" in r ? { image: r.image } : { error: r.error };
+    porVariante[r.variante] =
+      "image" in r ? { image: r.image } : { error: r.error, detalle: r.detalle };
   }
   return NextResponse.json({ ok: true, indice, porVariante });
 }

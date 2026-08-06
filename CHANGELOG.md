@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.116.2] - 2026-08-06
+
+### Fixed
+
+- **El try-on fallaba y no había forma de saber por qué.** Roberto: "está fallando los renders de gemini". Medido contra la API real: de 8 llamadas idénticas a `gemini-3-pro-image`, con la llave y el prompt sanos, **2 volvieron `500 INTERNAL` en ~200ms** y otra corrida murió con `ETIMEDOUT` de red (las buenas tardan 13-18s). O sea: el servicio se cae solo, de forma intermitente, y del lado de Google.
+- **Ahora se reintenta lo reintentable.** Antes no había retry: un 500 pasajero se comía el render y la persona veía "sin render (generacion)". Se reintenta una vez ante 5xx, 429 y cortes de red; un 400 (llave mala) o un 200-sin-imagen (filtro de seguridad) NO se reintentan, porque repetirlos da lo mismo.
+- **Y se dice el motivo real.** El código nunca leía el cuerpo de la respuesta: 500 de Google, timeout de red, llave inválida y prompt bloqueado salían todos como el mismo `"generacion"`. Ahora el motivo se registra en el servidor y —en el comparador— se muestra en pantalla junto a un botón de **reintentar**.
+- **Ninguna espera puede comerse la función.** No había timeout: una conexión colgada se llevaba los 60s de Vercel y la persona no veía ni el error. Ahora hay 30s por intento y 52s de presupuesto total, y el reintento no arranca si ya no cabe.
+
+Todo esto vive en `lib/tryon.ts`, así que lo hereda **producción** ("verme con este" en el detalle del look), no solo el comparador. La lógica de reintento se extrajo a `pedirImagen()` para poder probarla: 6 tests con `fetch` inyectado cubren las cuatro decisiones (qué se reintenta, qué no, qué motivo se reporta, y que el presupuesto se respeta).
+
 ## [0.2.116.1] - 2026-08-06
 
 ### Fixed

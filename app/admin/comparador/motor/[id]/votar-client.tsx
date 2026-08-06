@@ -73,7 +73,7 @@ function Lado({
   setDefectos: (d: string[]) => void;
   comentario?: string;
   setComentario: (c: string) => void;
-  tryon?: { image?: string; error?: string };
+  tryon?: { image?: string; error?: string; detalle?: string };
   pedirTryon: () => void;
   rendereando: boolean;
 }) {
@@ -163,9 +163,20 @@ function Lado({
               />
             </span>
           ) : null}
+          {/* El motivo REAL cuando falla. El servicio de imágenes se cae solo
+              —500 intermitentes, timeouts de red— y decir solo "sin render"
+              dejaba imposible distinguir eso de un avatar que falta o de un
+              prompt bloqueado. */}
           {tryon?.error ? (
             <p className="text-xs text-error">
-              {tryon.error === "sin_avatar" ? "no tienes avatar" : `sin render (${tryon.error})`}
+              {tryon.error === "sin_avatar"
+                ? "no tienes avatar"
+                : tryon.error === "generacion"
+                  ? "el servicio de imágenes falló — vuelve a intentar"
+                  : `sin render (${tryon.error})`}
+              {tryon.detalle ? (
+                <span className="block text-[11px] text-muted">{tryon.detalle}</span>
+              ) : null}
             </p>
           ) : null}
           {!tryon?.image ? (
@@ -174,7 +185,11 @@ function Lado({
               onClick={pedirTryon}
               className="rounded-lg border border-line py-1.5 text-xs font-semibold text-ink active:bg-tile disabled:opacity-50"
             >
-              {rendereando ? "vistiendo…" : "verme con este"}
+              {rendereando
+                ? "vistiendo…"
+                : tryon?.error
+                  ? "reintentar"
+                  : "verme con este"}
             </button>
           ) : null}
 
@@ -255,7 +270,7 @@ export function VotarClient({
   // Try-on por VARIANTE y por índice de look. La respuesta no dice izq/der
   // para no delatar el ciego; se mapea abajo con las claves del servidor.
   const [tryon, setTryon] = useState<
-    Record<string, PorLook<{ image?: string; error?: string }>>
+    Record<string, PorLook<{ image?: string; error?: string; detalle?: string }>>
   >({});
   const [renderizando, setRenderizando] = useState<number | null>(null);
 
@@ -275,7 +290,10 @@ export function VotarClient({
         body: JSON.stringify({ parId: par.parId, indice }),
       });
       const json = (await r.json()) as {
-        porVariante?: Record<string, { image?: string; error?: string }>;
+        porVariante?: Record<
+          string,
+          { image?: string; error?: string; detalle?: string }
+        >;
         error?: string;
       };
       if (json.error) setError(json.error);
