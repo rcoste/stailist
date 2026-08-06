@@ -119,6 +119,22 @@ export default async function CorridaMotor({
     .filter((p) => p.nota)
     .map((p) => ({ n: p.n, etiqueta: p.brief.etiqueta, nota: p.nota! }));
 
+  // Los comentarios por look, ya revelados a su variante: es la cosecha que
+  // se lee para escribir reglas, y sin verla junta no sirve de nada.
+  const etiquetaDe = new Map(corrida.variantes.map((v) => [v.clave, v.etiqueta]));
+  const comentarios = corrida.pares.flatMap((p) =>
+    Object.entries(p.comentariosLook ?? {}).flatMap(([clave, porIndice]) =>
+      Object.entries(porIndice).map(([idx, texto]) => ({
+        n: p.n,
+        etiqueta: p.brief.etiqueta,
+        variante: etiquetaDe.get(clave) ?? clave,
+        look: Number(idx) + 1,
+        marca: p.marcasLook?.[clave]?.[idx] ?? null,
+        texto,
+      }))
+    )
+  );
+
   return (
     <MarcadorMotorView
       corridaId={id}
@@ -129,6 +145,7 @@ export default async function CorridaMotor({
       promptVersion={corrida.promptVersion}
       resultado={marcadorMotor(corrida.variantes, corrida.pares)}
       notas={notas}
+      comentarios={comentarios}
       sinGenerar={Math.ceil(trabajos.length / 2)}
       marcasPendientes={
         corrida.pares.filter(

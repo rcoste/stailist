@@ -36,10 +36,14 @@ function CartaLook({
   look,
   marca,
   setMarca,
+  comentario,
+  setComentario,
 }: {
   look: LookParaVotar;
   marca?: "arriba" | "abajo";
   setMarca: (m: "arriba" | "abajo" | undefined) => void;
+  comentario?: string;
+  setComentario?: (c: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
@@ -108,6 +112,17 @@ function CartaLook({
       {look.tip ? (
         <p className="text-xs leading-relaxed text-muted">✦ {look.tip}</p>
       ) : null}
+      {/* El porqué de ESTE look. El 👍/👎 dice cuál arrastró el voto; esto
+          dice qué tuvo, que es lo único que se vuelve regla. */}
+      {setComentario ? (
+        <textarea
+          value={comentario ?? ""}
+          onChange={(e) => setComentario(e.target.value)}
+          rows={2}
+          placeholder="qué le viste a este (opcional)"
+          className="rounded-lg border border-line bg-bg p-2 text-xs text-ink placeholder:text-muted"
+        />
+      ) : null}
     </div>
   );
 }
@@ -120,6 +135,8 @@ function Columna({
   tryon,
   marcas,
   setMarcas,
+  comentarios,
+  setComentarios,
 }: {
   titulo: string;
   looks: LookParaVotar[];
@@ -128,6 +145,8 @@ function Columna({
   tryon?: { image?: string; error?: string };
   marcas: Record<number, "arriba" | "abajo">;
   setMarcas: (m: Record<number, "arriba" | "abajo">) => void;
+  comentarios: Record<number, string>;
+  setComentarios: (c: Record<number, string>) => void;
 }) {
   const alternar = (clave: string) =>
     setDefectos(
@@ -170,6 +189,8 @@ function Columna({
             else delete next[i];
             setMarcas(next);
           }}
+          comentario={comentarios[i]}
+          setComentario={(c) => setComentarios({ ...comentarios, [i]: c })}
         />
       ))}
       <div className="flex flex-wrap gap-1.5">
@@ -208,6 +229,8 @@ export function VotarClient({
   const [defDer, setDefDer] = useState<string[]>([]);
   const [marcIzq, setMarcIzq] = useState<Record<number, "arriba" | "abajo">>({});
   const [marcDer, setMarcDer] = useState<Record<number, "arriba" | "abajo">>({});
+  const [comIzq, setComIzq] = useState<Record<number, string>>({});
+  const [comDer, setComDer] = useState<Record<number, string>>({});
   const [nota, setNota] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -250,7 +273,8 @@ export function VotarClient({
       eleccion,
       { izq: defIzq, der: defDer },
       nota,
-      { izq: marcIzq, der: marcDer }
+      { izq: marcIzq, der: marcDer },
+      { izq: comIzq, der: comDer }
     );
     setGuardando(false);
     if (!r.ok) {
@@ -261,6 +285,8 @@ export function VotarClient({
     setDefDer([]);
     setMarcIzq({});
     setMarcDer({});
+    setComIzq({});
+    setComDer({});
     setNota("");
     setTryon(null); // el try-on es de ESTE par; el siguiente empieza sin él
     if (idx + 1 < pares.length) setIdx(idx + 1);
@@ -295,6 +321,8 @@ export function VotarClient({
           tryon={tryon?.[par.claveIzq]}
           marcas={marcIzq}
           setMarcas={setMarcIzq}
+          comentarios={comIzq}
+          setComentarios={setComIzq}
         />
         <Columna
           titulo="Look B"
@@ -304,6 +332,8 @@ export function VotarClient({
           tryon={tryon?.[par.claveDer]}
           marcas={marcDer}
           setMarcas={setMarcDer}
+          comentarios={comDer}
+          setComentarios={setComDer}
         />
       </div>
 
@@ -329,7 +359,7 @@ export function VotarClient({
           otro puso botines de gamuza con lluvia" es una regla. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          ¿Por qué elegiste ese?
+          ¿Por qué elegiste ese? (la comparación)
         </p>
         <textarea
           value={nota}

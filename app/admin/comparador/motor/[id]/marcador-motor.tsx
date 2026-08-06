@@ -27,6 +27,7 @@ export function MarcadorMotorView({
   promptVersion,
   resultado,
   notas,
+  comentarios,
   sinGenerar,
   marcasPendientes,
 }: {
@@ -38,6 +39,14 @@ export function MarcadorMotorView({
   promptVersion: string;
   resultado: MarcadorMotor;
   notas: { n: number; etiqueta: string; nota: string }[];
+  comentarios: {
+    n: number;
+    etiqueta: string;
+    variante: string;
+    look: number;
+    marca: string | null;
+    texto: string;
+  }[];
   sinGenerar: number;
   /** Pares ya votados a los que les falta el diagnóstico por look. */
   marcasPendientes: number;
@@ -182,6 +191,27 @@ export function MarcadorMotorView({
               y la memoria de los looks puede inflarla.
             </p>
           ) : null}
+        </div>
+      ) : null}
+
+      {comentarios.length ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Qué le viste a cada look
+          </p>
+          <p className="text-xs text-muted">
+            Ya revelado a su variante. Lo que se repita aquí es candidato a
+            regla comprobable del motor.
+          </p>
+          {comentarios.map((c, i) => (
+            <p key={i} className="text-xs leading-relaxed text-muted">
+              <span className="font-semibold text-ink">
+                {c.marca === "arriba" ? "👍 " : c.marca === "abajo" ? "👎 " : ""}
+                {c.variante}, look {c.look} (par {c.n}, {c.etiqueta}):
+              </span>{" "}
+              {c.texto}
+            </p>
+          ))}
         </div>
       ) : null}
 

@@ -247,6 +247,8 @@ export type ParMotor = {
   defectos: Record<string, string[]> | null;
   /** Diagnóstico por look: {variante: {índice: "arriba"|"abajo"}}. */
   marcasLook: Record<string, Record<string, string>> | null;
+  /** El porqué de cada look: {variante: {índice: "texto"}}. */
+  comentariosLook: Record<string, Record<string, string>> | null;
   nota: string | null;
   lados: LadoMotor[];
 };

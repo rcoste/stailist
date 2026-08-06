@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.111.0] - 2026-08-06
+
+### Added
+
+- **Un comentario por look, no solo por par.** El 👍/👎 dice CUÁL look arrastró el voto; el comentario dice POR QUÉ, que es lo único que se convierte en regla. Antes el porqué vivía a nivel del par: servía para explicar la comparación, pero no para señalar el defecto de un look concreto entre seis. Va en las dos pantallas —al votar y al completar marcas de pares viejos— y el marcador los muestra juntos, ya revelados a su variante, bajo "qué le viste a cada look".
+
 ## [0.2.110.1] - 2026-08-06
 
 ### Added
