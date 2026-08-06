@@ -57,6 +57,16 @@ export function modeloPorId(id: string): Modelo | null {
   return CATALOGO.find((m) => m.id === id) ?? null;
 }
 
+/**
+ * El retador natural del motor en el comparador: mismo prompt y mismas reglas,
+ * generador en Sonnet. Es la única comparación de modelo JUSTA hoy — misma
+ * familia, así que los modismos de un prompt afinado 38 versiones contra
+ * Claude se trasladan; dárselo a otro proveedor mediría el traje prestado.
+ * Vive aquí (la banca) y no en lib/models.ts (producción): nombrarlo no lo
+ * pone a correr en el producto.
+ */
+export const RETADOR_MOTOR = "claude-sonnet-5";
+
 /** Qué proveedores tienen llave puesta. Lo usa la pantalla para no ofrecer lo que no corre. */
 export function proveedoresListos(): Record<string, boolean> {
   return {
