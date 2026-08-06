@@ -35,6 +35,25 @@ export default async function AdminComparador() {
     costoPorCorrida.set(k, (costoPorCorrida.get(k) ?? 0) + Number(c.costo_usd));
   }
 
+  // La segunda mitad: corridas de MOTOR (dos variantes, voto ciego, veredicto).
+  const { data: corridasMotor } = await supabase
+    .from("comparador_motor_corridas")
+    .select("id, creada, tamano, variantes, estado")
+    .order("creada", { ascending: false })
+    .limit(20);
+  // Acotado a las corridas listadas: un veredicto son hasta ~80 lados, y sin
+  // el .in() esta query crecería sin tope con cada corrida nueva.
+  const { data: costosMotor } = await supabase
+    .from("comparador_motor_lados")
+    .select("corrida_id, costo_usd")
+    .in("corrida_id", (corridasMotor ?? []).map((c) => c.id as string));
+  const costoMotorPorCorrida = new Map<string, number>();
+  for (const c of costosMotor ?? []) {
+    if (c.costo_usd == null) continue;
+    const k = c.corrida_id as string;
+    costoMotorPorCorrida.set(k, (costoMotorPorCorrida.get(k) ?? 0) + Number(c.costo_usd));
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
@@ -56,7 +75,60 @@ export default async function AdminComparador() {
       />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-ink">Corridas</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-ink">Motores</h2>
+          <Link
+            href="/admin/comparador/motor/nueva"
+            className="text-sm font-semibold text-accent"
+          >
+            Nueva corrida de motor
+          </Link>
+        </div>
+        <p className="text-xs text-muted">
+          Dos variantes del motor ({"{"}modelo + prompt + reglas{"}"}) arman
+          looks sobre los mismos días y tu clóset; votas a ciegas y el veredicto
+          se lee contra una regla escrita antes de votar.
+        </p>
+        {!corridasMotor?.length ? (
+          <p className="text-sm text-muted">Todavía no hay ninguna.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {corridasMotor.map((c) => {
+              const variantes = c.variantes as { etiqueta: string }[];
+              return (
+                <li key={c.id}>
+                  <Link
+                    href={`/admin/comparador/motor/${c.id}`}
+                    className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-ink">
+                        {c.tamano as string} ·{" "}
+                        {variantes.map((v) => v.etiqueta).join(" vs ")} ·{" "}
+                        {new Date(c.creada as string).toLocaleDateString("es-MX", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs text-muted">
+                        {c.estado as string}
+                      </span>
+                    </span>
+                    <span className="text-xs text-muted">
+                      gastado: {formatoUsd(costoMotorPorCorrida.get(c.id as string) ?? 0)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-ink">Visión (leer prendas)</h2>
         {!corridas?.length ? (
           <p className="text-sm text-muted">Todavía no hay ninguna.</p>
         ) : (
