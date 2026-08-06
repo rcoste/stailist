@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   try {
     const { prendas } = await leerPrendas(
       { mediaType, base64: b64 },
-      { proveedor: "anthropic", id: VISION_MODEL, etiqueta: "producción" }
+      VISION_MODEL
     );
     // Tope duro: nunca más de 8 aunque el modelo se exceda.
     return NextResponse.json({ prendas: prendas.slice(0, 8) });

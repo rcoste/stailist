@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   try {
     const { analisis } = await leerPrenda(
       { mediaType, base64: b64 },
-      { proveedor: "anthropic", id: VISION_MODEL, etiqueta: "producción" }
+      VISION_MODEL
     );
     return NextResponse.json({ analisis });
   } catch {

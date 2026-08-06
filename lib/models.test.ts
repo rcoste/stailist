@@ -54,17 +54,28 @@ describe("los modelos viven en un solo lugar", () => {
   it("cada tarea apunta a un modelo real y de la generación vigente", () => {
     // Los ids sueltos se equivocan callados: un nombre inválido no truena hasta
     // que alguien usa esa pantalla en producción.
-    const todos = [ENGINE_MODEL, VISION_MODEL, JUDGE_MODEL, CLASSIFY_MODEL, EXTRACT_MODEL, GUARD_MODEL];
-    for (const m of todos) expect(m, m).toMatch(/^claude-(opus|sonnet|haiku)-[45]/);
+    const deClaude = [ENGINE_MODEL, JUDGE_MODEL, CLASSIFY_MODEL, EXTRACT_MODEL, GUARD_MODEL];
+    for (const m of deClaude) expect(m, m).toMatch(/^claude-(opus|sonnet|haiku)-[45]/);
     // Nada debe quedarse en la generación anterior de Opus.
-    expect(todos.filter((m) => m.includes("opus-4"))).toEqual([]);
+    expect(deClaude.filter((m) => m.includes("opus-4"))).toEqual([]);
+  });
+
+  it("visión corre en Gemini, y eso NO es un descuido", () => {
+    // Es el único que no es de Anthropic. Lo ganó midiendo: cinco fotos reales,
+    // once modelos, Roberto calificando a ciegas. Empata con Opus en errores,
+    // cuesta 27 veces menos y es 6 veces más rápido — y Opus fue el ÚNICO que
+    // inventó una prenda, el error que nadie puede detectar desde la app.
+    // Este test existe para que un futuro "se nos coló un modelo raro" no lo
+    // revierta sin volver a medir: docs/decisiones/vision-2026-08-05.md.
+    expect(VISION_MODEL.proveedor).toBe("gemini");
+    expect(VISION_MODEL.id).toBe("gemini-3.1-flash-lite");
   });
 
   it("el criterio de styling corre en el modelo bueno", () => {
     // Si algún día alguien baja el motor para ahorrar, que sea una decisión y no
-    // un descuido: aquí se decide si el producto sirve.
+    // un descuido: aquí se decide si el producto sirve. Visión ya NO está aquí
+    // — bajó a Gemini contra evidencia, no por ahorrar a ciegas.
     expect(ENGINE_MODEL).toContain("opus");
-    expect(VISION_MODEL).toContain("opus");
   });
 
   it("lo que corre por outfit o solo confirma, en el rápido", () => {
@@ -79,7 +90,7 @@ describe("los modelos viven en un solo lugar", () => {
     // con otro sin tocar código — y entonces la comparación deja de existir
     // justo para la pregunta que más importa.
     const ids = new Set(CATALOGO.map((m) => m.id));
-    for (const m of [ENGINE_MODEL, VISION_MODEL, JUDGE_MODEL]) expect(ids, m).toContain(m);
+    for (const m of [ENGINE_MODEL, VISION_MODEL.id, JUDGE_MODEL]) expect(ids, m).toContain(m);
   });
 
   it("todo modelo de la banca tiene precio conocido", () => {
@@ -90,5 +101,7 @@ describe("los modelos viven en un solo lugar", () => {
       (m) => m.proveedor !== "openrouter" && !(m.id in PRECIOS)
     ).map((m) => m.id);
     expect(sinPrecio, `sin precio: ${sinPrecio.join(", ")}`).toEqual([]);
+    // Y el de producción también, que es del que sale la factura de verdad.
+    expect(VISION_MODEL.id in PRECIOS).toBe(true);
   });
 });

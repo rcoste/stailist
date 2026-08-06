@@ -35,17 +35,44 @@
 export const ENGINE_MODEL = "claude-opus-5";
 
 /**
- * Leer una prenda en una foto: color, tipo, material, patrón.
+ * Leer una prenda en una foto: color, tipo, material, patrón, tipo fino.
  *
- * Parece "solo percibir" y por eso el primer reparto la bajaba a Sonnet. Se
- * queda arriba por dos razones. Una: un color mal leído NO se queda ahí — se
- * propaga a cada look que se arme con esa prenda, y la persona nunca sabe por
- * qué sus outfits se sienten raros. Dos, y decisiva: Roberto sobre la versión
- * que ya existía — "subía una imagen y detectaba, ah, este lente, playera tal;
- * lo hacía muy, muy bien". Cuando algo ya funciona bien, la carga de la prueba
- * la tiene el cambio.
+ * ES EL ÚNICO QUE NO ES DE ANTHROPIC, y no fue una corazonada: lo ganó midiendo.
+ * Cinco fotos reales del clóset de Roberto (persona vestida, de traje, de gym,
+ * con abrigo), once modelos leyendo LA MISMA foto con ESTE MISMO prompt, y
+ * Roberto calificando a ciegas prenda por prenda — sin saber qué columna era
+ * cuál. Resultado en docs/decisiones/vision-2026-08-05.md.
+ *
+ *     modelo                  errores/foto   30 fotos   tiempo
+ *     Gemini 3.5 Flash            0.60        $0.24       3.5s
+ *     Gemini 3.1 Flash-Lite       0.80        $0.05       2.6s   <- éste
+ *     Opus 5 (lo anterior)        0.80        $1.37      16.6s
+ *     Sonnet 5                    0.80        $0.52      13.5s
+ *     Haiku 4.5                   2.20        $0.19       9.4s
+ *
+ * Empata con Opus en errores, cuesta 27 VECES MENOS y es 6 veces más rápido.
+ * Gemini 3.5 Flash acertó un poco más (0.6 contra 0.8) pero cuesta 5 veces más:
+ * la diferencia es 0.2 errores por foto, que no paga esa multiplicación.
+ *
+ * Y lo que de verdad decidió: OPUS FUE EL ÚNICO QUE INVENTÓ UNA PRENDA. Es el
+ * error que la persona no puede detectar — se guarda con su render limpio, se
+ * ve igual de real que las demás, y sólo aparece semanas después dentro de un
+ * outfit. A Roberto le tomó dos meses cazar tres. Mistral Small inventó dos y
+ * quedó fuera pese a ser el más barato de los once.
+ *
+ * SIGUE SIENDO EL MODELO BUENO PARA SU TAREA, que es el criterio de este
+ * archivo: un color mal leído NO se queda ahí, se propaga a cada look que use
+ * esa prenda. Lo que cambió es qué modelo es "el bueno" aquí, no la regla.
+ *
+ * PARA CUANDO SALGA UNO NUEVO: no lo cambies de oído. Corre /admin/comparador
+ * contra éste — la pantalla existe justo para eso y la corrida entera costó
+ * $0.48.
  */
-export const VISION_MODEL = "claude-opus-5";
+export const VISION_MODEL = {
+  proveedor: "gemini" as const,
+  id: "gemini-3.1-flash-lite",
+  etiqueta: "Gemini 3.1 Flash-Lite",
+};
 
 /**
  * Los jueces de styling (Hoy y Viaje). Corren UNA VEZ POR OUTFIT y dentro del

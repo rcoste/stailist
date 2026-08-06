@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.106.0] - 2026-08-05
+
+### Changed
+
+- **Leer tus prendas de una foto ahora corre en Gemini 3.1 Flash-Lite, no en Opus 5.** Lo ganó midiendo: cinco fotos reales, once modelos leyendo la misma foto con el mismo prompt, y Roberto calificando a ciegas sin saber qué columna era cuál. Empata con Opus en aciertos, cuesta **27 veces menos** y es **6 veces más rápido** — subir una prenda pasa de ~17 segundos a menos de 3. Y lo que decidió no fue el precio: Opus fue el único que inventó una prenda que no estaba en la foto, que es el error que nadie puede detectar hasta que aparece en un look semanas después. Todo el razonamiento y cómo retarlo cuando salga un modelo nuevo: `docs/decisiones/vision-2026-08-05.md`.
+
 ## [0.2.105.1] - 2026-08-05
 
 ### Added
