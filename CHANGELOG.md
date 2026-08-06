@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.111.1] - 2026-08-06
+
+### Changed
+
+- **Generar un lado del comparador salió a `lib/comparador/generar-lado.ts`**, compartido por la ruta admin y por `scripts/correr-vistazo.ts`. Ahora se puede dejar un vistazo entero generado sin nadie mirando —para llegar solo a votar— sin escribir por segunda vez el mismo camino. La ruta pone HTTP y sesión; el script, el cliente de servicio; el trabajo real vive en un archivo.
+
 ## [0.2.111.0] - 2026-08-06
 
 ### Added
