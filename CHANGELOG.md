@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.119.0] - 2026-08-06
+
+### Fixed
+
+- **La pantalla de esenciales estaba muerta para quien no tuviera su match ya calculado.** A Pablo le decía "No pude calcular — reintentar" para siempre. Roberto lo intuyó: **fue el cambio de modelo**, aunque no como parecía.
+
+  La llamada que compara tu cápsula ideal contra tu clóset apuntaba a un Opus de la **familia 4**, donde el thinking viene apagado. El 2026-08-04 se centralizaron los modelos y pasó a uno de la **familia 5, donde el thinking adaptativo viene ENCENDIDO por default**. El thinking se comió los 4.096 tokens de salida, la respuesta llegó **sin bloque de texto**, y el `catch` mudo del caller lo convirtió en un botón de reintentar que nunca iba a funcionar. Medido en el caso que explotó: thinking ON = 2.963 tokens y 21.8s; OFF = 1.284 y 10.4s — ni siquiera compraba calidad, porque las reglas ya están escritas en el prompt. Verificado contra los datos reales de Pablo (34 prendas ideales × 17 reales): **7.5s, 34 entradas**.
+
+- **Y había ONCE llamadas más con exactamente el mismo hueco**: viaje (outfits, cápsula, sustitutos), arquetipo, cápsula ideal, swaps, preguntas de estilo, ancla, análisis de cuerpo, itinerarios y estilo de referencia. Ninguna tronaba todavía — cada una era una bomba esperando una entrada lo bastante grande. Todas apagadas.
+
+- **El error ya no se traga.** `recalcularMatch` devolvía `{ok: false}` sin registrar nada, que es por qué esto no se pudo diagnosticar leyendo un log: hubo que reproducirlo a mano contra la base.
+
+### Added
+
+- **Un guard que impide que vuelva a pasar** (`lib/thinking.test.ts`): recorre `app/` y `lib/` y truena si un `messages.create` no apaga el thinking. Probado por mutación — al quitarle el apagado a un archivo, falla nombrándolo. Es el tipo de deuda que un test caza y una revisión no.
+
 ## [0.2.118.0] - 2026-08-06
 
 Tres fricciones de UX que reportaron Roberto y Pablo probando el flujo.

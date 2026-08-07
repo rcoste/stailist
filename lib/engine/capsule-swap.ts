@@ -85,6 +85,10 @@ export async function generateCapsuleSwap(
   const response = await client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 1500,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). Estas tareas tienen sus reglas en el system.
+    thinking: { type: "disabled" },
     system: `Eres la stylist senior de stailist. La persona rechazó una prenda de su clóset cápsula ideal y hay que reemplazarla por UNA alternativa. ${generoTxt}
 
 Reglas:

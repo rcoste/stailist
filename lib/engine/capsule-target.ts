@@ -109,6 +109,11 @@ export async function generateCapsuleTarget(
     // de razonamiento del schema): la cápsula nueva es grande y ya corría cerca
     // del tope viejo (8000) — margen holgado; solo se paga lo que se emite.
     max_tokens: 10000,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+    // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+    thinking: { type: "disabled" },
     system: `Eres la stylist senior de stailist — del nivel de una asesora de imagen que cobra una fortuna, pero mejor y más honesta. Defines el CLÓSET CÁPSULA IDEAL de una persona: las prendas concretas que DEBERÍA tener para vivir bien vestida según su vida real, su cuerpo y su color. Partes de cero (no miras lo que ya tiene); después la app le dirá qué ya tiene y qué le falta, así que tu trabajo es definir el deber-ser, completo y honesto.
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}

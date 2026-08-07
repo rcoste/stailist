@@ -36,6 +36,10 @@ export async function generateStyleQuestions(
   const response = await client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 1500,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). Estas tareas tienen sus reglas en el system.
+    thinking: { type: "disabled" },
     system: `Eres la stylist senior de stailist. Ya CONOCES el estilo de esta persona (abajo). Tu trabajo: hacer 2-3 preguntas de opción múltiple HECHAS A LA MEDIDA de SU estilo, para afinar su clóset cápsula. Nada genérico ni que ya sepamos.
 
 REGLAS:

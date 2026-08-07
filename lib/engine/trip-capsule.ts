@@ -164,6 +164,11 @@ export async function generateTripCapsuleTarget(
     // 3584 quedaba justo y un truncado tira TODA la creación del viaje. El
     // tope solo se paga si se emite.
     max_tokens: 4608,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+    // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+    thinking: { type: "disabled" },
     system: `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar. Al final explicas tu lógica en una "firma" que la persona SÍ lee.
 
 Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo ve. Ahí decide antes de listar: cuántas piezas pide este viaje (días × ocasiones × clima), qué 2-3 neutros anclan la maleta, qué acentos van, y qué pieza cubre cada ocasión. Verifica ahí la interoperabilidad: cada top debe funcionar con (casi) todos los bottoms — si una pieza solo arma UN look, gana su lugar por ocasión única o sale. DESPUÉS genera los items ejecutando ese plan.

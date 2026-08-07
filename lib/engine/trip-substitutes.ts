@@ -32,6 +32,10 @@ export async function matchSubstitutes(
   const res = await client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 700,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). Estas tareas tienen sus reglas en el system.
+    thinking: { type: "disabled" },
     system: `Eres la stylist de stailist.${generoTxt} Falta UNA prenda para un viaje y la persona NO quiere comprar: quiere resolverlo con lo que YA tiene. Te doy la prenda que falta y su CLÓSET REAL. Propón hasta 3 prendas del clóset que de verdad puedan SUSTITUIRLA, la mejor primero.
 
 REGLAS:
