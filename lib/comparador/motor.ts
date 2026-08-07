@@ -87,6 +87,33 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
   },
 ];
 
+/**
+ * Un brief traducido a lo que el motor recibe. UN solo lugar.
+ *
+ * Vivía copiado en generar-lado.ts y en scripts/ver-prompt.ts, y ya derivó:
+ * el script no pasaba `paraguas`, así que imprimía "NO lleva paraguas" para el
+ * brief que sí lo lleva. Es exactamente el patrón que lib/engine/contexto.ts
+ * existe para matar — un arnés que IMITA al motor en vez de llamarlo — solo
+ * que un escalón más arriba.
+ */
+export function peticionDeBrief(brief: BriefMotor): {
+  objective: string;
+  momento: "dia" | "noche" | null;
+  weather: Weather | null;
+  plan: string | null;
+  formality: string | null;
+  paraguas: boolean;
+} {
+  return {
+    objective: brief.objective,
+    momento: brief.momento,
+    weather: brief.weather,
+    plan: brief.plan ?? null,
+    formality: brief.formality ?? null,
+    paraguas: brief.paraguas === true,
+  };
+}
+
 export function variantePorClave(clave: string): VarianteMotor | null {
   return VARIANTES_MOTOR.find((v) => v.clave === clave) ?? null;
 }
@@ -109,6 +136,11 @@ export type BriefMotor = {
   plan?: string;
   /** Lo que el wizard pregunta para "evento": casual | semiformal | formal | gala. */
   formality?: string;
+  /**
+   * Va a llevar paraguas. Solo tiene sentido con lluvia, y ahí lo cambia todo:
+   * el paraguas tapa el torso pero no los pies.
+   */
+  paraguas?: boolean;
 };
 
 const CLIMAS = {
@@ -128,8 +160,17 @@ const CLIMAS = {
  * v1 → v2 (2026-08-06): los dos briefs de "evento" se volvieron eventos
  * concretos (boda / cena con amigos) y entró un tercero de día (comida
  * familiar). Los briefs 1-2 y 4-6 no se movieron.
+ *
+ * v2 → v3 (2026-08-06): la lluvia se parte en DOS briefs, con paraguas y sin
+ * él. No es un refinamiento: el paraguas tapa el torso y no los pies, así que
+ * cada caso exige algo distinto y el motor puede fallar de dos maneras que
+ * antes se medían como una. Sin paraguas se mide si pone capa que repela agua
+ * Y calzado apto; con paraguas, si RELAJA arriba pero sigue acertando abajo —
+ * ese segundo caso mide la sobre-aplicación de la regla, que hasta hoy no se
+ * medía. Salió del veredicto de Gemini: 4 de sus 6 defectos de clima fueron
+ * lluvia, y producción también falló ahí.
  */
-export const POOL_VERSION = "v2";
+export const POOL_VERSION = "v3";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -164,7 +205,13 @@ const POOL_BRIEFS: BriefMotor[] = [
   },
   { etiqueta: "diario · frío", objective: "diario", momento: "dia", weather: CLIMAS.frio },
   { etiqueta: "oficina · calor", objective: "oficina", momento: "dia", weather: CLIMAS.calor },
-  { etiqueta: "diario · lluvia", objective: "diario", momento: "dia", weather: CLIMAS.lluvia },
+  {
+    etiqueta: "diario · lluvia sin paraguas",
+    objective: "diario",
+    momento: "dia",
+    weather: CLIMAS.lluvia,
+    paraguas: false,
+  },
   {
     etiqueta: "cena con amigos · noche fría",
     objective: "evento",
@@ -176,6 +223,15 @@ const POOL_BRIEFS: BriefMotor[] = [
   { etiqueta: "diario · calor", objective: "diario", momento: "dia", weather: CLIMAS.calor },
   { etiqueta: "oficina · frío", objective: "oficina", momento: "dia", weather: CLIMAS.frio },
   { etiqueta: "aeropuerto · templado", objective: "viaje", momento: "dia", weather: CLIMAS.templado },
+  {
+    // El caso que mide la SOBRE-aplicación: con paraguas, la capa de arriba se
+    // elige por estilo. Un motor que igual te encaja la impermeable falla aquí.
+    etiqueta: "diario · lluvia con paraguas",
+    objective: "diario",
+    momento: "dia",
+    weather: CLIMAS.lluvia,
+    paraguas: true,
+  },
   {
     etiqueta: "comida familiar · calor",
     objective: "evento",

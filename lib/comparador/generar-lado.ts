@@ -7,6 +7,7 @@ import { modeloPorId } from "@/lib/proveedores/catalogo";
 import { ErrorProveedor } from "@/lib/proveedores";
 import {
   opcionesDeVariante,
+  peticionDeBrief,
   type BriefMotor,
   type VarianteMotor,
 } from "./motor";
@@ -111,17 +112,9 @@ export async function generarLadoYGuardar(opciones: {
     const carga = await cargarBaseDelMotor(supabase, closetUserId);
     if ("error" in carga) throw new Error("closet_vacio");
 
-    const ctx = construirContexto(carga.base, {
-      objective: brief.objective,
-      momento: brief.momento,
-      weather: brief.weather,
-      // El evento concreto. Van por los MISMOS campos de producción: `plan` es
-      // el "¿qué tienes en mente?" y `formality` es lo que el wizard pregunta
-      // cuando la ocasión es un evento. Un brief viejo (pool v1) no los trae y
-      // cae a null, exactamente como antes.
-      plan: brief.plan ?? null,
-      formality: brief.formality ?? null,
-    });
+    // El brief traducido por el ÚNICO traductor (peticionDeBrief): plan,
+    // formalidad y paraguas viajan por los mismos campos que usa producción.
+    const ctx = construirContexto(carga.base, peticionDeBrief(brief));
 
     const t0 = Date.now();
     const { finalized, reviews, recibos } = await armarLooks(ctx, opcionesGen);

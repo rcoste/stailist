@@ -4,6 +4,7 @@ import {
   REGLA_PRENDAS_REALES,
   SYSTEM_PROMPT,
   type EngineItem,
+  queSePoneA,
 } from "./prompt";
 
 // Helper: prenda del motor con attrs mínimos + overrides.
@@ -594,5 +595,31 @@ describe("los neutros no compiten con la paleta", () => {
   it("sin colorimetría no dice nada de neutros", () => {
     const b = contextBlock({ ...ctx, season: null } as EngineContext).join("\n");
     expect(b).not.toContain("Los NEUTROS");
+  });
+});
+
+describe("queSePoneA — la temperatura traducida a ropa", () => {
+  // Hasta v38 el prompt decía "Clima de hoy: 18°C, nublado" y NADA MÁS: nunca
+  // qué significa vestirse a 18°. Que Opus acertara era suerte —adivinaba el
+  // registro mexicano—; Gemini adivinó distinto y apiló lana sobre lana sobre
+  // lana a 18°, dos veces en el veredicto.
+  it("18° NO es clima de abrigo, y lo dice con esas palabras", () => {
+    const t = queSePoneA(18);
+    expect(t).toContain("TEMPLADO");
+    expect(t.toLowerCase()).toContain("no es clima de abrigo");
+  });
+
+  it("las bandas son las MISMAS que ve la usuaria en el selector de clima", () => {
+    // Si la pantalla dice "Templado · manga larga ligera" y el motor entiende
+    // otra cosa, la persona pidió una cosa y recibió otra.
+    expect(queSePoneA(5)).toContain("HELADO");
+    expect(queSePoneA(12)).toContain("FRÍO");
+    expect(queSePoneA(19)).toContain("TEMPLADO");
+    expect(queSePoneA(25)).toContain("CÁLIDO");
+    expect(queSePoneA(33)).toContain("CALUROSO");
+  });
+
+  it("cubre todo el rango sin huecos", () => {
+    for (let t = -10; t <= 50; t++) expect(queSePoneA(t).length, `${t}°`).toBeGreaterThan(20);
   });
 });

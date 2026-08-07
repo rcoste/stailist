@@ -49,7 +49,32 @@ export type Violacion = { regla: string; detalle: string };
  * y va por otro camino (el aviso de honestidad, ver cobertura.ts). Una regla que
  * no distinga las dos manda al juez a arreglar lo que no se puede.
  */
-export type ContextoReglas = { clima?: Clima; closet?: EngineItem[] };
+export type ContextoReglas = {
+  clima?: Clima;
+  closet?: EngineItem[];
+  /** El día está lluvioso (viene del clima resuelto, no de la banda de temperatura). */
+  lluvia?: boolean;
+  /**
+   * Va a llevar paraguas. Cambia SOLO lo de arriba: el paraguas tapa el torso,
+   * no los pies. Con paraguas la capa exterior se puede elegir por estilo; sin
+   * él tiene que repeler agua. El calzado no lo toca — llueva como llueva, se
+   * pisa el agua igual.
+   */
+  paraguas?: boolean;
+};
+
+/**
+ * Materiales que el agua ARRUINA. Es el criterio de Roberto, dicho por él:
+ * "chukka o chelsea de gamuza, cosas que se vayan a meter agua o se vayan a
+ * afectar… seamos un poquito más tolerantes". O sea NO es el tipo de zapato
+ * (un tenis de piel o de suela gruesa pasa, un botín Chelsea de piel pasa) —
+ * es de qué está hecho.
+ *
+ * Piel y sintético pasan; ante, gamuza y las telas no. Medido sobre los 44
+ * pares de calzado de la base: 33 pasan, 6 caen aquí, 4 no tienen material
+ * (y esos NO bloquean, ver abajo).
+ */
+const MATERIAL_SE_ARRUINA = /ante|gamuza|lona|tela|textil|algod[oó]n|punto|lino|terciopelo|pana/;
 
 /** #rrggbb → [r,g,b]. null si no hay hex o viene mal escrito. */
 function rgb(hex?: string): [number, number, number] | null {
@@ -283,6 +308,74 @@ export function revisarEjecucion(
             .slice(0, 4)
             .map(nombre)
             .join(", ")}. Añade la que mejor vaya con el look — a esta temperatura salir sin abrigo no es una decisión de estilo, es un look que no se puede usar.`,
+        });
+      }
+    }
+  }
+
+  // 6. LLUVIA Y EL CALZADO. Es el fallo más marcado del veredicto: 4 de los 6
+  //    defectos de clima de toda la corrida cayeron en el brief de lluvia, y
+  //    los DOS motores fallaron ahí (Gemini 3, producción 1). Que el prompt
+  //    afinado 38 veces contra Claude también fallara es la prueba de que esto
+  //    no es cosa de pedirlo mejor: va comprobado.
+  //
+  //    Y falla EL CALZADO, no el abrigo: en 2 de los 3 casos de Gemini la
+  //    chamarra impermeable SÍ estaba, y el look se caía por unos tenis
+  //    blancos. Una regla sobre la capa exterior habría pasado por encima de
+  //    los dos.
+  if (ctx.lluvia && ctx.closet?.length) {
+    const esPie = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "pie";
+    // Abierto (sandalia, huarache) o de un material que el agua arruina.
+    const noAguanta = (i: EngineItem) => {
+      if (tipoDePrenda(nombre(i))?.tipo === "sandalia") return true;
+      const m = norm(i.attrs.material);
+      // Sin material no se juzga: una regla que dispara por datos incompletos
+      // manda al juez a "arreglar" lo que estaba bien.
+      return !!m && MATERIAL_SE_ARRUINA.test(m);
+    };
+    const malos = items.filter(esPie).filter(noAguanta);
+    if (malos.length) {
+      const alternativas = ctx.closet.filter(esPie).filter((i) => !noAguanta(i));
+      // Sin recambio no es un fallo reparable sino una carencia: se calla, igual
+      // que la regla del frío.
+      if (alternativas.length) {
+        v.push({
+          regla: "lluvia-calzado",
+          detalle: `Va a llover y el look lleva "${malos
+            .map(nombre)
+            .join('", "')}" — ese material se arruina con el agua. Cámbialo por algo que aguante: ${alternativas
+            .slice(0, 4)
+            .map(nombre)
+            .join(", ")}. Piel y sintético pasan; ante, gamuza y tela no.`,
+        });
+      }
+    }
+  }
+
+  // 7. LLUVIA Y LA CAPA DE ARRIBA — pero solo SIN paraguas.
+  //    La distinción es de Roberto y es correcta: el paraguas tapa el torso,
+  //    así que con paraguas la capa se elige por estilo. Sin él, tiene que
+  //    repeler agua. Sin la distinción, cada día de lluvia colapsaría a la
+  //    misma chamarra impermeable durante toda la temporada.
+  if (ctx.lluvia && !ctx.paraguas && ctx.closet?.length) {
+    const esCapa = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "capa";
+    const repele = (i: EngineItem) =>
+      familiaMaterial(i.attrs.material, i.attrs.nombre) === "tecnico" ||
+      /impermeable|gabardina|chubasquero|rompevientos|parka/.test(TIPO(i));
+    const capas = items.filter(esCapa);
+    if (!capas.some(repele)) {
+      const disponibles = ctx.closet.filter(esCapa).filter(repele);
+      if (disponibles.length) {
+        v.push({
+          regla: "lluvia-sin-impermeable",
+          detalle: `Va a llover, no lleva paraguas, y ${
+            capas.length
+              ? `"${capas.map(nombre).join('", "')}" no repele agua`
+              : "el look no lleva capa de abrigo"
+          }. Su clóset sí tiene con qué: ${disponibles
+            .slice(0, 3)
+            .map(nombre)
+            .join(", ")}.`,
         });
       }
     }
