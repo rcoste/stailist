@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { cargarCorridaMotor } from "@/lib/comparador/motor-servidor";
-import { marcadorMotor, estimadoMotor } from "@/lib/comparador/motor";
+import {
+  marcadorMotor,
+  estimadoMotor,
+  preferenciasPorLook,
+} from "@/lib/comparador/motor";
 import { GenerarClient } from "./generar-client";
 import { VotarClient, type ParParaVotar } from "./votar-client";
 import { MarcadorMotorView } from "./marcador-motor";
@@ -141,6 +145,8 @@ export default async function CorridaMotor({
     )
   );
 
+  const prefs = preferenciasPorLook(corrida.variantes, corrida.pares);
+
   return (
     <MarcadorMotorView
       corridaId={id}
@@ -153,6 +159,7 @@ export default async function CorridaMotor({
       resultado={marcadorMotor(corrida.variantes, corrida.pares)}
       notas={notas}
       comentarios={comentarios}
+      preferencias={{ filas: prefs, empates: prefs.empates ?? 0 }}
       sinGenerar={Math.ceil(trabajos.length / 2)}
       marcasPendientes={
         corrida.pares.filter(

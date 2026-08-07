@@ -98,6 +98,7 @@ export async function cargarCorridaMotor(
       (p.defectos_look as Record<string, Record<string, string[]>> | null) ?? null,
     comentariosLook:
       (p.comentarios_look as Record<string, Record<string, string>> | null) ?? null,
+    prefsLook: (p.prefs_look as Record<string, Record<string, string>> | null) ?? null,
     nota: (p.nota as string | null) ?? null,
     lados: porPar.get(p.id as string) ?? [],
   }));

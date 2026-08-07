@@ -29,6 +29,7 @@ export function MarcadorMotorView({
   resultado,
   notas,
   comentarios,
+  preferencias,
   sinGenerar,
   marcasPendientes,
 }: {
@@ -41,6 +42,12 @@ export function MarcadorMotorView({
   poolVersion: string;
   resultado: MarcadorMotor;
   notas: { n: number; etiqueta: string; nota: string }[];
+  /**
+   * La preferencia look por look anotada DESPUÉS del voto. Va aparte del
+   * marcador y dicho con todas sus letras: nació con el resultado global ya
+   * alcanzable, así que es evidencia más débil que el voto ciego.
+   */
+  preferencias: { filas: { clave: string; etiqueta: string; gana: number }[]; empates: number };
   comentarios: {
     n: number;
     etiqueta: string;
@@ -265,6 +272,36 @@ export function MarcadorMotorView({
           quiere decir que estuvieran mal. El voto de cada par sí es completo;
           lo incompleto es el diagnóstico look por look.
         </p>
+      ) : null}
+
+      {/* LA SEGUNDA LECTURA, y separada a propósito. Se anotó al completar las
+          marcas, o sea con el resultado de arriba ya alcanzable: sigue siendo
+          ciega por par (las columnas nunca dicen qué variante son) pero no es
+          ciega al marcador. Mezclarla con el veredicto le lavaría esa
+          diferencia; leerla aparte contesta algo que el veredicto no contestó,
+          porque los primeros pares se votaron mirando solo el primer look. */}
+      {preferencias.filas.some((f) => f.gana > 0) || preferencias.empates ? (
+        <section className="flex flex-col gap-2 rounded-xl border border-dashed border-line p-4">
+          <h2 className="text-sm font-semibold text-ink">
+            Preferencia look por look (no cuenta para el veredicto)
+          </h2>
+          <p className="text-xs leading-relaxed text-muted">
+            Anotada al completar las marcas, con el resultado de arriba ya
+            visible. Es evidencia más débil que el voto —por eso vive aquí y no
+            allá— pero contesta algo que el voto no: si tu preferencia sobre los
+            looks 2 y 3 apuntaba al mismo lado que el primero.
+          </p>
+          <div className="flex flex-wrap gap-3 text-sm text-ink">
+            {preferencias.filas.map((f) => (
+              <span key={f.clave}>
+                <span className="font-semibold">{f.gana}</span> {f.etiqueta}
+              </span>
+            ))}
+            {preferencias.empates ? (
+              <span className="text-muted">{preferencias.empates} empates</span>
+            ) : null}
+          </div>
+        </section>
       ) : null}
 
       {comentarios.length ? (

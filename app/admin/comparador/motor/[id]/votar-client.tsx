@@ -324,7 +324,8 @@ export function VotarClient({
             par.parId,
             { izq: marcIzq, der: marcDer },
             { izq: comIzq, der: comDer },
-            { izq: defIzq, der: defDer }
+            { izq: defIzq, der: defDer },
+            votos
           )
         : await votarParMotor(
             par.parId,
@@ -368,7 +369,14 @@ export function VotarClient({
   const sinMarca = Array.from({ length: nLooks }, (_, i) => i).filter(
     (i) => (par.izq[i] && !marcIzq[i]) || (par.der[i] && !marcDer[i])
   );
-  const faltan = modo === "marcar" ? sinMarca : comparables.filter((i) => !votos[i]);
+  const sinVoto = comparables.filter((i) => !votos[i]);
+  // Marcando falta un look si le debe CUALQUIERA de las dos cosas: el 👍/👎 de
+  // cada lado o la preferencia entre los dos. Son preguntas distintas —"¿este
+  // sirve?" y "¿cuál de los dos?"— y las dos se pierden si el botón deja pasar.
+  const faltan =
+    modo === "marcar"
+      ? [...new Set([...sinMarca, ...sinVoto])].sort((a, b) => a - b)
+      : sinVoto;
   // El guardado se abre hasta calificar todo. Antes bastaba con un voto:
   // Roberto votaba el primero, el par se guardaba, y los looks 2 y 3 se
   // quedaban sin ver — 99 de 119 en el primer veredicto. El botón que deja
@@ -472,16 +480,23 @@ export function VotarClient({
           look en pantalla cuando en realidad cubrían los tres: Roberto votó 16
           pares guiándose solo por el primero sin saberlo.
 
-          Marcando NO hay botones de voto, y no es un olvido: estos pares ya
-          tienen voto y su corrida ya se puede leer con el reveal encendido.
-          Re-votar con el marcador a la vista no completa una medición, la
-          edita — es justo lo que el pre-registro existe para impedir. Si un
-          par de esos se quiere volver a juzgar, se vuelve a correr. */}
-      {modo === "votar" ? (
+          Marcando también se pregunta, pero NO reescribe el voto del par: se
+          guarda aparte (prefs_look). El voto salió a ciegas y antes de que el
+          marcador fuera alcanzable —es lo que lee la regla pre-registrada— y
+          esto se anota después, con el marcador global ya visible. Sigue
+          siendo ciego por par (las columnas nunca dicen qué variante son),
+          así que es dato bueno; solo es dato MÁS DÉBIL, y por eso se lee
+          aparte en vez de mezclarse. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          ¿Cuál gana en el look {look + 1}?
+          ¿Cuál te late más en el look {look + 1}?
         </p>
+        {modo === "marcar" ? (
+          <p className="text-xs text-muted">
+            Esto NO cambia el resultado del par —ya está votado y sellado—; se
+            guarda como lectura aparte.
+          </p>
+        ) : null}
         <div className="grid grid-cols-3 gap-2">
           {(["izq", "empate", "der"] as const).map((op) => (
             <button
@@ -505,7 +520,6 @@ export function VotarClient({
           ))}
         </div>
       </div>
-      ) : null}
 
       {modo === "votar" ? (
       <div className="flex flex-col gap-1">
@@ -532,7 +546,7 @@ export function VotarClient({
         {guardando
           ? "Guardando…"
           : faltan.length === 1
-            ? `Falta ${modo === "marcar" ? "marcar" : "votar"} el look ${faltan[0] + 1}`
+            ? `Falta ${modo === "marcar" ? "calificar" : "votar"} el look ${faltan[0] + 1}`
             : faltan.length
               ? `Faltan los looks ${listaEnEspanol(faltan.map((i) => i + 1))}`
               : modo === "marcar"
@@ -544,12 +558,13 @@ export function VotarClient({
       <p className="text-xs text-muted">
         {modo === "marcar" ? (
           <>
-            Marca 👍/👎 los {nLooks * 2} looks del par (los dos lados) para
-            guardar: la marca es diagnóstico look por look, y una a medias deja
-            el marcador diciendo “0 👎” cuando lo que pasó es que nadie los
-            miró. El voto de este par no se toca —ya está emitido y su corrida
-            ya se puede leer—; esto solo completa lo que falta. Llevas{" "}
-            {marcados} de {nLooks * 2}.
+            Dos cosas por look: el 👍/👎 de cada lado ({marcados} de{" "}
+            {nLooks * 2}) y cuál de los dos te late más. Los dos hacen falta
+            para guardar — una marca a medias deja el marcador diciendo “0 👎”
+            cuando lo que pasó es que nadie los miró. <strong>El voto de este
+            par no se toca</strong>: ya está emitido y su corrida ya se puede
+            leer, así que tu preferencia se guarda como lectura aparte y no
+            entra en el veredicto.
           </>
         ) : (
           <>
