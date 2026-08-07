@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.126.0] - 2026-08-07
+
+De la cosecha del veredicto: 4 reglas nuevas, un bug mío de la pantalla de votar, y **dos preguntas contestadas con datos en vez de con opinión**.
+
+### Fixed
+
+- **Se podía votar un look que solo un lado armó**, y ese voto contaba para la mayoría del par. Es lo que hizo que el par 6 saliera "empate" y su espejo "gana Gemini": la **única** diferencia entre los dos era un voto emitido contra un lado vacío. Se leyó como que Roberto fue inconsistente cuando el inconsistente era yo. Ahora ese look dice que no se vota y por qué.
+
+### Added — las reglas, todas salidas de sus comentarios
+
+- **`sueter-sin-base`**: la observación más repetida del veredicto — **7 comentarios** de "falta t-shirt abajo", en los dos motores. Textual: *"en un suéter tiene que haber casi siempre algo más abajo, tipo polo, playera o camisa, deberíamos añadir eso a la rúbrica"*. El cuello tortuga queda fuera: es cerrado y va a piel por diseño.
+- **`zona-duplicada`**: *"metió dos pares de zapatos"* (mocasines burdeos + zapato formal negro) y *"metió suéteres repetidos"*. Dos criterios porque el cuerpo no es simétrico — pies y piernas admiten **una sola** prenda aunque sean de tipos distintos; el torso solo prohíbe repetir el **mismo tipo**, porque camiseta bajo camisa es exactamente lo que pide la regla de arriba.
+- **`manga-corta-con-saco`**: *"Manga corta con saco jamás!!"* — dos veces en el mismo veredicto y con signos de admiración.
+- **`mocasin-en-frio`**: ver abajo.
+
+### Notes — las dos preguntas, contestadas con sus 309 looks marcados
+
+Roberto pidió investigar el mocasín en frío y las combinaciones de color, reconociendo que era *"opinión personal"*. Sus propias marcas dan la respuesta:
+
+| | 👎 | vs línea base 16% | p |
+|---|---|---|---|
+| mocasín **en frío** | **44%** (n=9) | frío sin mocasín: **6%** | **0.038** |
+| mocasín fuera del frío | 16% (n=85) | igual que la base | — |
+| **café + negro + gris** | **46%** (n=13) | — | **0.009** |
+| café + gris (sin negro) | **4%** (n=23) | el mejor de todos | — |
+| café + negro (sin gris) | 13% (n=24) | normal | — |
+
+**El mocasín se volvió regla**: el problema no es el mocasín, es el mocasín *en frío* — el mismo escote y suela fina que ya lo descalifican en lluvia. Repartido en 4 briefs y los dos motores.
+
+**El color NO se volvió regla, a propósito.** La señal es fuerte y limpia (p = 0.009, 11 briefs distintos), pero una regla de "café+negro+gris = mal" marcaría **7 looks que Roberto aprobó** — entre ellos *"Tortuga y lana en clave chocolate"* y *"Charcoal bien capeado"*. El patrón que se alcanza a ver es que el café falla cuando aparece **huérfano** entre neutros fríos, y funciona cuando se repite o cuando no compite con negro. Con n=13 eso es una hipótesis, no una regla: escribirla ahora sería castigar looks buenos por una correlación que no está aislada.
+
 ## [0.2.125.2] - 2026-08-07
 
 ### Fixed

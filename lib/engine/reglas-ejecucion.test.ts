@@ -50,7 +50,13 @@ describe("reglas de ejecución — lo que NO debe marcar", () => {
     // La receta de edgy lo dice con todas sus letras: "cuando todo es negro, la
     // textura hace el contraste, no el color". Una regla de "mismo tono = mal"
     // a secas rompería esa carta y monocromático — y ahí sí sería un parche.
+    // El fixture lleva camiseta debajo porque el look real la lleva: cuando
+    // entró `sueter-sin-base` este test empezó a fallar y tenía razón — un
+    // suéter a piel es justo lo que Roberto marcó siete veces. Se completó el
+    // look sin tocar lo que este test comprueba (que el mismo tono con
+    // material distinto NO se marca).
     const v = revisarEjecucion([
+      p("Camiseta blanca", "#FFFFFF", { material: "algodón" }),
       p("Chamarra de piel negra", "#1A1A1A", { material: "piel" }),
       p("Suéter negro", "#1A1A1A", { material: "punto" }),
     ]);
@@ -480,5 +486,140 @@ describe("codigo-de-smoking: los dos huecos que Roberto marcó", () => {
         p("Cinturón negro", "#111111"),
       ])
     ).toBeUndefined();
+  });
+});
+
+describe("las cuatro reglas que salieron del veredicto", () => {
+  const closet = [
+    p("Camiseta blanca", "#FFFFFF"),
+    p("Camisa oxford blanca", "#F5F5F0"),
+    p("Botines Chelsea negros", "#111111", { material: "piel" }),
+    p("Zapato derby café", "#5A3A22", { material: "piel" }),
+  ];
+  const r = (its: ReturnType<typeof p>[], ctx = {}) =>
+    revisarEjecucion(its, { closet, ...ctx });
+
+  describe("zona-duplicada", () => {
+    // Los dos casos son de Gemini en el veredicto, marcados por Roberto:
+    // "metió dos pares de zapatos" y "metió suéteres repetidos".
+    it("dos pares de calzado en un look", () => {
+      const v = r([
+        p("Camisa blanca", "#FFFFFF"),
+        p("Pantalón negro", "#111111"),
+        p("Mocasines burdeos", "#5A1F2A", { material: "piel" }),
+        p("Zapato formal negro", "#111111", { material: "piel" }),
+      ]).find((x) => x.regla === "zona-duplicada");
+      expect(v).toBeDefined();
+      expect(v!.detalle).toContain("Mocasines burdeos");
+      expect(v!.detalle).toContain("Zapato formal negro");
+    });
+
+    it("dos suéteres apilados", () => {
+      expect(
+        r([
+          p("Suéter cuello V marino", "#1F2A44"),
+          p("Suéter de lana negro", "#111111"),
+          p("Pantalón de vestir gris", "#6B6B6B"),
+          p("Botines Chelsea negros", "#111111"),
+        ]).find((x) => x.regla === "zona-duplicada")
+      ).toBeDefined();
+    });
+
+    it("PERO dos capas sí se apilan: suéter bajo abrigo es correcto", () => {
+      // Si esto se rompiera, la regla estaría prohibiendo vestirse en invierno.
+      expect(
+        r([
+          p("Camiseta blanca", "#FFFFFF"),
+          p("Abrigo charcoal", "#3A3A3A"),
+          p("Pantalón negro", "#111111"),
+          p("Botines Chelsea negros", "#111111"),
+        ]).find((x) => x.regla === "zona-duplicada")
+      ).toBeUndefined();
+    });
+  });
+
+  describe("sueter-sin-base", () => {
+    // SIETE comentarios de Roberto en un solo veredicto, en los dos motores.
+    it("el suéter a piel se marca, y ofrece la base del clóset", () => {
+      const v = r([
+        p("Suéter de lana negro", "#111111"),
+        p("Jeans azul oscuro", "#2A3B5C"),
+        p("Botines Chelsea negros", "#111111"),
+      ]).find((x) => x.regla === "sueter-sin-base");
+      expect(v).toBeDefined();
+      expect(v!.detalle).toContain("Suéter de lana negro");
+    });
+
+    it("con camiseta debajo pasa limpio", () => {
+      expect(
+        r([
+          p("Camiseta blanca", "#FFFFFF"),
+          p("Suéter de lana negro", "#111111"),
+          p("Jeans azul oscuro", "#2A3B5C"),
+        ]).find((x) => x.regla === "sueter-sin-base")
+      ).toBeUndefined();
+    });
+
+    it("el cuello tortuga NO pide base: es cerrado y va a piel por diseño", () => {
+      expect(
+        r([
+          p("Cuello tortuga negro de lana merino", "#111111"),
+          p("Chinos carbón", "#3A3A3A"),
+        ]).find((x) => x.regla === "sueter-sin-base")
+      ).toBeUndefined();
+    });
+  });
+
+  describe("manga-corta-con-saco", () => {
+    // Roberto, dos veces y con signos: "Manga corta con saco jamás!!"
+    it("camisa de manga corta bajo un saco", () => {
+      expect(
+        r([
+          p("Camisa de manga corta blanca", "#FFFFFF", { manga: "manga corta" }),
+          p("Blazer marino", "#1F2A44"),
+          p("Pantalón de vestir gris", "#6B6B6B"),
+        ]).find((x) => x.regla === "manga-corta-con-saco")
+      ).toBeDefined();
+    });
+
+    it("sin saco, la manga corta no molesta a nadie", () => {
+      expect(
+        r([
+          p("Camisa de manga corta blanca", "#FFFFFF", { manga: "manga corta" }),
+          p("Chinos beige", "#C8B89A"),
+        ]).find((x) => x.regla === "manga-corta-con-saco")
+      ).toBeUndefined();
+    });
+  });
+
+  describe("mocasin-en-frio", () => {
+    // Medido sobre 309 looks marcados: el mocasín va bien en general (16% de
+    // 👎, la línea base) pero en frío salta a 44% contra 6% (p = 0.038).
+    const look = [
+      p("Cuello tortuga negro", "#111111"),
+      p("Pantalón de vestir gris", "#6B6B6B"),
+      p("Mocasines café", "#5A3A22", { material: "piel" }),
+    ];
+
+    it("en frío se marca y ofrece el recambio", () => {
+      const v = r(look, { clima: "frio" }).find((x) => x.regla === "mocasin-en-frio");
+      expect(v).toBeDefined();
+      expect(v!.detalle).toContain("Mocasines café");
+      expect(v!.detalle).toContain("Botines Chelsea negros");
+    });
+
+    it("en templado NO: el mocasín ahí va igual de bien que todo lo demás", () => {
+      expect(
+        r(look, { clima: "templado" }).find((x) => x.regla === "mocasin-en-frio")
+      ).toBeUndefined();
+    });
+
+    it("sin recambio en el clóset se calla: es carencia, no fallo", () => {
+      expect(
+        revisarEjecucion(look, { clima: "frio", closet: look }).find(
+          (x) => x.regla === "mocasin-en-frio"
+        )
+      ).toBeUndefined();
+    });
   });
 });
