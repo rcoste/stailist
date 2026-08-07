@@ -87,7 +87,18 @@ function Lado({
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{titulo}</p>
 
       {!look ? (
-        <p className="text-xs text-muted">este lado no armó un {indice + 1}º look</p>
+        // NO es un fallo, y decirlo importa: el prompt pide "2 o 3 outfits",
+        // así que entregar 2 es una respuesta legal. Roberto abrió esta
+        // pestaña, encontró un lado vacío y la leyó como error. Medido sobre
+        // 93 lados: producción entregó 3 el 100% de las veces, Gemini el 94%.
+        // La diferencia es real y se mide en el marcador; aquí solo se explica.
+        <p className="text-xs leading-relaxed text-muted">
+          Este lado entregó menos looks: armó {indice} y el otro {indice + 1}.
+          <span className="mt-0.5 block">
+            No es un fallo — el motor puede dar 2 o 3. Este look no se puede
+            comparar, así que no cuenta para el voto del par.
+          </span>
+        </p>
       ) : (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
           {/* min-h de dos renglones: sin esto un nombre que envuelve a 3
@@ -429,7 +440,14 @@ export function VotarClient({
             }`}
           >
             Look {i + 1}
-            {faltan.includes(i) ? "" : " ✓"}
+            {/* Un look que solo tiene un lado no se puede comparar: se marca
+                con "–" en vez de dejar que la pestaña prometa una comparación
+                que no existe. */}
+            {!par.izq[i] || !par.der[i]
+              ? " –"
+              : faltan.includes(i)
+                ? ""
+                : " ✓"}
           </button>
         ))}
       </div>
