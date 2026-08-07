@@ -101,6 +101,7 @@ export function peticionDeBrief(brief: BriefMotor): {
   momento: "dia" | "noche" | null;
   weather: Weather | null;
   plan: string | null;
+  tipoEvento: string | null;
   formality: string | null;
   paraguas: boolean;
   veCliente: boolean | null;
@@ -110,6 +111,7 @@ export function peticionDeBrief(brief: BriefMotor): {
     momento: brief.momento,
     weather: brief.weather,
     plan: brief.plan ?? null,
+    tipoEvento: brief.tipoEvento ?? null,
     formality: brief.formality ?? null,
     paraguas: brief.paraguas === true,
     // null (no false) cuando el brief no lo dice: false significaría "hoy no ve
@@ -138,6 +140,8 @@ export type BriefMotor = {
    * se podía emitir con honestidad sin saber cuál ocasión.
    */
   plan?: string;
+  /** QUÉ evento es, del catálogo (lib/eventos.ts). */
+  tipoEvento?: string;
   /** Lo que el wizard pregunta para "evento": casual | semiformal | formal | gala. */
   formality?: string;
   /**
@@ -181,6 +185,21 @@ const CLIMAS = {
  * medía. Salió del veredicto de Gemini: 4 de sus 6 defectos de clima fueron
  * lluvia, y producción también falló ahí.
  *
+ * v5 → v6 (2026-08-07, el mismo día): la boda de noche vuelve a "formal". En
+ * v5 la subí a "gala" por el default de subeDeNoche y la primera corrida lo
+ * cazó: el juez exigía esmoquin con moño y charol en los DOS looks de boda. En
+ * México una boda de noche en salón es traje oscuro y corbata — el black tie
+ * se especifica en la invitación. El pool medía un estándar que no es el de
+ * aquí, y el motor "fallaba" contra una vara equivocada.
+ *
+ * v4 → v5 (2026-08-07): los eventos llevan su TIPO del catálogo
+ * (lib/eventos.ts), no solo su nivel de formalidad. Es lo mismo que pasó con
+ * "evento" a secas en v2, un escalón más fino: una boda y una graduación son
+ * las dos "formal" y no se resuelven igual, y hasta v4 el motor no tenía cómo
+ * saber la diferencia. Y entra un cuarto evento —un funeral— porque es el
+ * único caso del catálogo donde el no-destacar MANDA sobre el estilo y la
+ * colorimetría: sin él, esa regla no se mide en ningún lado.
+ *
  * v3 → v4 (2026-08-07): el trabajo se parte igual que la lluvia. Con el código
  * "depende del día" el registro cambia por el día, así que los briefs llevan
  * `veCliente` explícito — sin él, un clóset de código variable correría TODOS
@@ -188,7 +207,7 @@ const CLIMAS = {
  * criterio. Y entra un PAR ESPEJO a mismo clima (templado con cliente / sin
  * cliente): solo cambia el flag, así que mide directo si el motor distingue.
  */
-export const POOL_VERSION = "v4";
+export const POOL_VERSION = "v6";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -225,6 +244,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     momento: "noche",
     weather: CLIMAS.templado,
     plan: "una boda de noche, en salón",
+    tipoEvento: "boda",
     formality: "formal",
   },
   { etiqueta: "diario · frío", objective: "diario", momento: "dia", weather: CLIMAS.frio },
@@ -242,7 +262,8 @@ const POOL_BRIEFS: BriefMotor[] = [
     momento: "noche",
     weather: CLIMAS.frio,
     plan: "cena con amigos en un restaurante",
-    formality: "casual",
+    tipoEvento: "cena-amigos",
+    formality: "semiformal",
   },
   { etiqueta: "diario · calor", objective: "diario", momento: "dia", weather: CLIMAS.calor },
   { etiqueta: "trabajo · frío, con cliente", objective: "oficina", momento: "dia", weather: CLIMAS.frio, veCliente: true },
@@ -267,14 +288,35 @@ const POOL_BRIEFS: BriefMotor[] = [
     paraguas: true,
   },
   {
+    // El funeral: el ÚNICO caso donde el no-destacar manda sobre el estilo y
+    // la colorimetría. Un motor que aquí saque su verde esmeralda falló, y ese
+    // fallo no se veía en ningún brief del pool.
+    etiqueta: "funeral · templado",
+    objective: "evento",
+    momento: "dia",
+    weather: CLIMAS.templado,
+    plan: "un funeral",
+    tipoEvento: "funeral",
+    formality: "formal",
+  },
+  {
     etiqueta: "comida familiar · calor",
     objective: "evento",
     momento: "dia",
     weather: CLIMAS.calor,
     plan: "comida en casa de mis papás",
+    tipoEvento: "comida-familiar",
     formality: "casual",
   },
 ];
+
+/**
+ * Cuántos días trae UNA vuelta al pool. Exportado porque el eval lo necesita
+ * para "n vueltas": estaba escrito a mano como 13 en tres archivos y el pool
+ * acaba de crecer a 14 — la clase de número que se queda atrás en silencio y
+ * deja un brief sin medir sin que nadie lo note.
+ */
+export const N_POOL = POOL_BRIEFS.length;
 
 export const N_VISTAZO = 6;
 export const MIN_VEREDICTO = 20;

@@ -13,15 +13,16 @@ import { createClient } from "@supabase/supabase-js";
 import { pasoEval } from "../lib/evales/paso";
 import {
   briefCompleto,
+  colorDelPerfil,
   estiloDelPerfil,
   marcadorEval,
   type EvalBriefFila,
 } from "../lib/evales/evales";
 import { PROMPT_VERSION } from "../lib/engine/prompt";
-import { RUBRICA_VERSION, tieneEstilo } from "../lib/engine/rubrica";
+import { RUBRICA_VERSION, tieneEstilo, tieneColor } from "../lib/engine/rubrica";
 import { RUBRICA_VISION_VERSION } from "../lib/engine/rubrica-vision";
 import { MODELO_MOTOR, MODELO_JUEZ } from "../lib/models";
-import { POOL_VERSION, briefsPara } from "../lib/comparador/motor";
+import { N_POOL, POOL_VERSION, briefsPara } from "../lib/comparador/motor";
 
 for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   const i = l.indexOf("=");
@@ -53,7 +54,9 @@ function mapear(b: Record<string, unknown>): EvalBriefFila {
 
 async function abrir(s: Cliente, duenoId: string, vueltas: number, nota: string | null) {
   const { data: perfil } = await s.from("profiles").select("*").eq("id", duenoId).single();
-  const conEstilo = tieneEstilo(estiloDelPerfil((perfil ?? {}) as Record<string, unknown>));
+  const pf = (perfil ?? {}) as Record<string, unknown>;
+  const conEstilo = tieneEstilo(estiloDelPerfil(pf));
+  const conColor = tieneColor(colorDelPerfil(pf));
 
   const { data: c, error } = await s
     .from("eval_corridas")
@@ -67,13 +70,14 @@ async function abrir(s: Cliente, duenoId: string, vueltas: number, nota: string 
       rubrica_version: RUBRICA_VERSION,
       rubrica_vision_version: RUBRICA_VISION_VERSION,
       con_estilo: conEstilo,
+      con_color: conColor,
       ...(nota ? { nota } : {}),
     })
     .select("id")
     .single();
   if (error) throw error;
 
-  const briefs = briefsPara("veredicto", vueltas * 13);
+  const briefs = briefsPara("veredicto", vueltas * N_POOL);
   const { error: eb } = await s
     .from("eval_briefs")
     .insert(briefs.map((brief, i) => ({ corrida_id: c.id, n: i + 1, brief })));
@@ -85,7 +89,7 @@ async function abrir(s: Cliente, duenoId: string, vueltas: number, nota: string 
     `corrida ${c.id}\n  ${PROMPT_VERSION} · ${MODELO_MOTOR.id} · pool ${POOL_VERSION} · ${RUBRICA_VERSION}/${RUBRICA_VISION_VERSION}` +
       `\n  ${briefs.length} briefs · estilo declarado: ${conEstilo ? "sí" : "NO (la dimensión no medirá)"}`
   );
-  return { id: c.id as string, conEstilo };
+  return { id: c.id as string, conEstilo, conColor };
 }
 
 async function main() {
@@ -107,20 +111,23 @@ async function main() {
 
   let corridaId: string;
   let conEstilo: boolean;
+  let conColor: boolean;
   if (seguir >= 0) {
     corridaId = args[seguir + 1];
     const { data: c } = await s
       .from("eval_corridas")
-      .select("con_estilo")
+      .select("con_estilo, con_color")
       .eq("id", corridaId)
       .single();
     conEstilo = c?.con_estilo === true;
+    conColor = c?.con_color === true;
     console.log(`retomando ${corridaId}`);
   } else {
     const vueltas = Math.max(1, Math.min(3, Number(args[0]) || 1));
     const abierta = await abrir(s, dueno.id as string, vueltas, nota);
     corridaId = abierta.id;
     conEstilo = abierta.conEstilo;
+    conColor = abierta.conColor;
   }
 
   // Dos pasadas: la primera genera, la segunda califica. El servidor decide
@@ -164,10 +171,10 @@ async function main() {
     .eq("corrida_id", corridaId)
     .order("n");
   const filas = (finales ?? []).map(mapear);
-  const m = marcadorEval(filas, conEstilo);
+  const m = marcadorEval(filas, conEstilo, conColor);
 
   const prom = (d: typeof m.texto) => {
-    const xs = [d.ocasion, d.clima, d.armado, d.estilo, d.wow].filter(
+    const xs = [d.ocasion, d.clima, d.armado, d.estilo, d.color, d.wow].filter(
       (x): x is number => x != null
     );
     return xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(2) : "—";
@@ -178,7 +185,7 @@ async function main() {
   console.log(`EVAL ${PROMPT_VERSION} · ${MODELO_MOTOR.id}`);
   console.log(`  ${m.looksCalificados}/${m.looks} looks calificados · ${m.errores} errores`);
   console.log(`  dimensión      texto  visión`);
-  for (const d of ["ocasion", "clima", "armado", "estilo", "wow"] as const) {
+  for (const d of ["ocasion", "clima", "armado", "estilo", "color", "wow"] as const) {
     const t = m.texto[d];
     const v = m.vision[d];
     console.log(

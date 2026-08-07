@@ -8,7 +8,8 @@ import {
   ropaDeDressCode,
   type WorkDressCode,
 } from "@/lib/dress-code";
-import { FORMALIDADES, ropaDeFormalidad } from "@/lib/formalidad";
+import { FORMALIDADES, ropaDeFormalidad, formalidadLegible } from "@/lib/formalidad";
+import { TIPOS_EVENTO, formalidadDeEvento } from "@/lib/eventos";
 
 // Compositor de "crear outfit" como WIZARD de 3 pasos (rebrand v3):
 // 1) ocasión (grid 2×2 + campo abierto) · 2) día/noche · 3) clima (lista de
@@ -21,6 +22,13 @@ export type LookInput = {
   momento: "dia" | "noche";
   seedItemId?: string | null; // ancla opcional: prenda fijada para hoy
   formality?: string | null; // solo en "evento": casual | semiformal | formal | gala
+  /**
+   * QUÉ evento es (lib/eventos.ts). Reemplazó a preguntar el nivel de
+   * formalidad a secas: una boda y una graduación son las dos "formal" y no se
+   * resuelven igual — y sobre todo, la gente sabe decir "una boda" y no sabe
+   * traducir "coctel" ni "etiqueta".
+   */
+  tipoEvento?: string | null;
   /** Va a llevar paraguas. Solo viaja cuando dijo que llueve. */
   paraguas?: boolean;
   /**
@@ -186,7 +194,13 @@ export function LookRequest({
   const [paraguas, setParaguas] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
-  const [formality, setFormality] = useState<string | null>(null); // solo "evento"
+  // El TIPO de evento (boda, cena con amigos…). Es lo primero que se pregunta
+  // al elegir "evento"; su formalidad sale del catálogo y solo se toca si el
+  // caso es raro.
+  const [tipoEvento, setTipoEvento] = useState<string | null>(null);
+  // El AJUSTE manual de formalidad, cuando el default del tipo no aplica.
+  // null = usar el del catálogo, que es lo normal.
+  const [formalityManual, setFormalityManual] = useState<string | null>(null);
   // Solo se pregunta si NO lo tiene guardado, y solo al elegir "trabajo".
   const [dressCode, setDressCode] = useState<string | null>(null);
   // "¿hoy ves cliente?" — solo para quien dijo "depende del día". Sin esto el
@@ -211,17 +225,22 @@ export function LookRequest({
   // siguiente sesión).
   const codigoHoy = workDressCode ?? dressCode;
   const pideVeCliente = objective === "oficina" && codigoHoy === "variable";
-  // "Evento" exige elegir formalidad para avanzar (es justo el dato que faltaba).
+  // "Evento" exige elegir QUÉ evento es para avanzar (antes se pedía el nivel
+  // de formalidad; ahora ese sale del catálogo y no hay que traducir jerga).
   const step1Ready =
     hasOpen ||
     (objective === "evento"
-      ? !!formality
+      ? !!tipoEvento
       : pideDressCode
         ? !!dressCode
         : !!objective);
-  // La formalidad solo viaja cuando la ocasión final es "evento".
-  const formalityOut =
-    objectivePart.objective === "evento" && !hasOpen ? formality : null;
+  // La formalidad: la del catálogo según el tipo y el momento, salvo que la
+  // haya ajustado a mano. El momento importa — una cena no es una comida.
+  const formality =
+    formalityManual ?? formalidadDeEvento(tipoEvento, momento) ?? null;
+  const esEvento = objectivePart.objective === "evento" && !hasOpen;
+  const formalityOut = esEvento ? formality : null;
+  const tipoEventoOut = esEvento ? tipoEvento : null;
 
   function next() {
     setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
@@ -242,6 +261,7 @@ export function LookRequest({
         momento,
         seedItemId,
         formality: formalityOut,
+        tipoEvento: tipoEventoOut,
         ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
         ...(pideVeCliente ? { veCliente } : {}),
         ...coords,
@@ -257,6 +277,7 @@ export function LookRequest({
       momento,
       seedItemId,
       formality: formalityOut,
+      tipoEvento: tipoEventoOut,
       ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
       ...(pideVeCliente ? { veCliente } : {}),
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
@@ -269,7 +290,12 @@ export function LookRequest({
   function pickObjective(key: string) {
     setObjective((o) => (o === key ? null : key));
     setOpenText("");
-    if (key !== "evento") setFormality(null); // formalidad solo aplica a evento
+    // El tipo de evento y su ajuste solo aplican a "evento": salirse de ahí
+    // los limpia, o el siguiente evento heredaría la corrección del anterior.
+    if (key !== "evento") {
+      setTipoEvento(null);
+      setFormalityManual(null);
+    }
   }
   function changeOpenText(v: string) {
     setOpenText(v);
@@ -345,7 +371,15 @@ export function LookRequest({
                   gender={gender}
                   objective={objective}
                   openText={openText}
+                  tipoEvento={tipoEvento}
+                  onTipoEvento={(k) => {
+                    setTipoEvento((t) => (t === k ? null : k));
+                    // Cambiar de evento reinicia el ajuste: el default del tipo
+                    // nuevo es el bueno, no el que se corrigió para el anterior.
+                    setFormalityManual(null);
+                  }}
                   formality={formality}
+                  onFormalityManual={setFormalityManual}
                   pideDressCode={pideDressCode}
                   dressCode={dressCode}
                   onDressCode={setDressCode}
@@ -355,7 +389,6 @@ export function LookRequest({
                   onVeCliente={setVeCliente}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
-                  onFormality={setFormality}
                 />
                 {closet.length > 0 ? (
                   <AnchorTrigger
@@ -433,7 +466,10 @@ function StepOcasion({
   gender,
   objective,
   openText,
+  tipoEvento,
+  onTipoEvento,
   formality,
+  onFormalityManual,
   pideDressCode,
   dressCode,
   onDressCode,
@@ -443,12 +479,14 @@ function StepOcasion({
   onVeCliente,
   onPick,
   onOpenText,
-  onFormality,
 }: {
   gender: "hombre" | "mujer" | null;
   objective: string | null;
   openText: string;
+  tipoEvento: string | null;
+  onTipoEvento: (k: string) => void;
   formality: string | null;
+  onFormalityManual: (f: string | null) => void;
   pideDressCode: boolean;
   dressCode: string | null;
   onDressCode: (d: string) => void;
@@ -458,7 +496,6 @@ function StepOcasion({
   onVeCliente: (v: boolean) => void;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
-  onFormality: (f: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-3.5">
@@ -493,43 +530,77 @@ function StepOcasion({
         })}
       </div>
 
-      {/* Formalidad: solo al elegir "evento" (lo ambiguo). Hay que elegir una
-          para poder avanzar — es el dato que faltaba para acertar la boda. */}
+      {/* QUÉ evento es. Reemplazó a preguntar el nivel de formalidad a secas,
+          y la razón es la misma que hizo nacer lib/formalidad.ts: "la mayoría
+          de la gente tiene el problema de que si lee formal, coctel, gala o
+          etiqueta, no sabe cuál es el dress code que implica". Nadie tiene ese
+          problema con "una boda". La formalidad sale del catálogo (y sube un
+          escalón de noche donde toca); el ajuste queda para el caso raro. */}
       {objective === "evento" ? (
         <div
           className="flex flex-col gap-2.5"
           style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
         >
-          <span className="text-[13px] font-semibold text-ink">
-            ¿qué tan formal?
-          </span>
+          <span className="text-[13px] font-semibold text-ink">¿qué evento?</span>
           <div className="flex flex-wrap gap-2">
-            {FORMALIDAD.map((f) => {
-              const on = formality === f.key;
+            {TIPOS_EVENTO.map((t) => {
+              const on = tipoEvento === t.key;
               return (
                 <button
-                  key={f.key}
+                  key={t.key}
                   type="button"
-                  onClick={() => onFormality(f.key)}
+                  onClick={() => onTipoEvento(t.key)}
                   aria-pressed={on}
-                  className={`flex flex-col items-start rounded-sm border px-3.5 py-2 text-left transition-colors ${
+                  className={`rounded-sm border px-3.5 py-2 text-[14px] font-semibold transition-colors ${
                     on
                       ? "border-accent bg-accent text-on-accent"
                       : "border-line bg-surface text-ink hover:border-ink"
                   }`}
                 >
-                  <span className="text-[14px] font-semibold">
-                    {ropaDe(f, gender)}
-                  </span>
-                  <span
-                    className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
-                  >
-                    {f.jerga}
-                  </span>
+                  {t.label}
                 </button>
               );
             })}
           </div>
+
+          {/* El ajuste, detrás de un disclosure y con el default ya resuelto a
+              la vista. Roberto: "si es una comida familiar, pues quién sabe;
+              por alguna razón rara requiero traje sin corbata, pero no
+              debería". Existe para ese caso, no para el normal. */}
+          {tipoEvento ? (
+            <details className="rounded-sm border border-line bg-surface px-3.5 py-2">
+              <summary className="cursor-pointer text-[13px] text-muted">
+                voy {formalidadLegible(formality, gender) ?? "normal"} · cambiar
+              </summary>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {FORMALIDAD.map((f) => {
+                  const on = formality === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() => onFormalityManual(f.key)}
+                      aria-pressed={on}
+                      className={`flex flex-col items-start rounded-sm border px-3 py-1.5 text-left transition-colors ${
+                        on
+                          ? "border-accent bg-accent text-on-accent"
+                          : "border-line bg-bg text-ink hover:border-ink"
+                      }`}
+                    >
+                      <span className="text-[13px] font-semibold">
+                        {ropaDe(f, gender)}
+                      </span>
+                      <span
+                        className={`text-[11px] ${on ? "opacity-80" : "text-muted"}`}
+                      >
+                        {f.jerga}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          ) : null}
         </div>
       ) : null}
 

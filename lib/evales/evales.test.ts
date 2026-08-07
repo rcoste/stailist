@@ -19,6 +19,7 @@ const nota = (p: Partial<NotaRubrica> = {}): NotaRubrica => ({
   clima: 4,
   armado: 4,
   estilo: 3,
+  color: 4,
   wow: 3,
   aprobado: true,
   porQue: "x",
@@ -92,6 +93,12 @@ describe("marcadorEval", () => {
     const f = fila({ notas: conNotas([{ texto: nota(), vision: nota() }]) });
     expect(marcadorEval([f], false).texto.estilo).toBeNull();
     expect(marcadorEval([f], true).texto.estilo).toBe(3);
+  });
+
+  it("sin colorimetría, la dimensión color tampoco se promedia", () => {
+    const f = fila({ notas: conNotas([{ texto: nota(), vision: nota() }]) });
+    expect(marcadorEval([f], true, false).texto.color).toBeNull();
+    expect(marcadorEval([f], true, true).texto.color).toBe(4);
   });
 
   it("cuenta la reparación del juez de producción — el número que dirá cuándo sobra", () => {

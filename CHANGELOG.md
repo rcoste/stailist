@@ -2,6 +2,54 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.130.0] - 2026-08-07
+
+### Added — el juez con ojos de colorimetría (r8 / rv3), con los DOS extremos
+
+Roberto: *"casi todo lo que me sugiere es verde esmeralda o vino — son los que me favorecen, pero hay colores que están bien; no un pastel ni un mostaza, pero sí un azul marino. No seamos estrictos forzando únicamente los que favorecen, permitiendo también los neutrales"*.
+
+El juez ahora recibe su paleta (mejores / prestados / evita, **con hex** — dos "vino" distintos no son el mismo vino) y la califica con una vara de **dos lados**, que es lo que la hace útil:
+
+- Un color de su EVITA cerca de la cara → **2**.
+- Un **NEUTRAL** cerca de la cara (marino, gris, camel, blanco) → **4, y está bien**. Explícitamente: *"NO lo castigues por no ser uno de sus colores estrella"*.
+- Uno de sus colores → **5**.
+- **Y el otro lado:** repetir el mismo color estrella sin ninguna otra decisión de color → **baja a 3 aunque le favorezca**. *"Favorecer es el piso, no el objetivo."*
+
+**Por qué el segundo lado no es opcional:** un juez que solo premiara "está en su paleta" volvería al motor MÁS monótono — que es exactamente el síntoma que Roberto describe. Y ya estaba pasando: en la primera línea base el **wow salió 3.16, la nota más baja de las cinco**.
+
+Funcionó a la primera. De la corrida nueva, el juez escribió: *"todo el look se resuelve en el mismo negro/charcoal de siempre sin ningún guiño de color que hable de su arquetipo"*. Eso es la monotonía cazada, no el color que apaga.
+
+### Added — catálogo de tipos de evento (v44)
+
+*"Podríamos tener ya opciones: una comida, cena, cita, boda — y sobre eso vamos afinando más"* (Roberto). `lib/eventos.ts`: boda, cena con amigos, comida familiar, cita, comida de trabajo, fiesta, graduación, funeral.
+
+**Sustituye la pregunta de formalidad; no se suma a ella.** Cada tipo trae su formalidad por defecto —que es justo lo que la gente no sabe traducir (*"si lee formal, coctel, gala o etiqueta no sabe cuál es el dress code"*)— editable detrás de un disclosure para el caso raro. Nadie tiene ese problema con "una boda". Si se sumara, "evento" pasaría de una pregunta a dos.
+
+Y cada tipo aporta lo que la formalidad **no** captura: en la boda hay fotos y protagonistas a quienes no hacer sombra; el funeral pone el no-destacar **por encima del estilo y de la colorimetría**; la cita se ve de cerca, así que lo que toca la cara pesa más.
+
+### Fixed — la boda de noche NO es black tie (lo cazó el propio eval)
+
+La primera versión subía boda y fiesta un escalón de noche. El eval lo cazó en una corrida: el juez exigía **esmoquin con moño y charol** en los dos looks de boda. En México una boda de noche en salón es traje oscuro y corbata — el black tie se especifica en la invitación. El pool medía un estándar que no es el de aquí y el motor "fallaba" contra una vara equivocada. Ahora **solo la cena con amigos sube** (la diferencia entre comer y cenar con los mismos amigos sí es real).
+
+### Notes — línea base v44 · r8/rv3 · pool v6 (40 looks, $2.70, cero errores)
+
+| dimensión | texto | visión | vs v43 (texto) |
+|---|---|---|---|
+| ocasión | 4.58 | 4.95 | = |
+| clima | **4.65** | 4.68 | **+0.27** |
+| armado | 4.28 | 4.47 | −0.10 |
+| estilo | 3.38 | 3.98 | −0.19 |
+| color | 4.10 | 4.20 | *nueva* |
+| wow | **2.98** | 3.33 | −0.18 |
+| aprobado | **93%** | **95%** | +1 |
+
+**Violaciones de reglas: 0%** (era 3%). El juez de producción reparó 50%.
+
+**Estilo y wow siguen siendo las dos más bajas, y no bajaron por casualidad: la vara subió.** El motor cumple ocasión y clima casi perfecto y se queda en "correcto pero plano" — la etiqueta que Roberto inventó para el 3 del wow.
+
+### Added — `N_POOL` exportado
+El pool creció de 13 a 14 briefs (entró el funeral) y el 13 estaba escrito a mano en tres archivos. La clase de número que se queda atrás en silencio y deja un brief sin medir.
+
 ## [0.2.129.0] - 2026-08-07
 
 ### Added — el módulo de evales: la curva del motor contra sí mismo

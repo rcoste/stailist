@@ -19,6 +19,7 @@ import { calcularRotacion, bloqueRotacion } from "@/lib/engine/rotacion";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
+import { lineaTipoEvento } from "@/lib/eventos";
 import {
   type TasteSignal,
   type RememberedOutfit,
@@ -231,7 +232,18 @@ import {
 // defectos de clima cayeron en el brief de lluvia —con los DOS motores
 // fallando— y dos looks apilaron lana sobre lana a 18°. Va en el prompt (la
 // banda) y en código (lo que se puede comprobar: reglas-ejecucion #6 y #7).
-export const PROMPT_VERSION = "v43";
+// v40-v43: dress code del trabajo (los cuatro registros de "oficina", con el
+// "depende del día" que pregunta si hoy ve cliente), paraguas, y la formalidad
+// dicha en ropa en vez de en jerga.
+// v44 (2026-08-07): QUÉ evento es, del catálogo (lib/eventos.ts). "Evento" +
+// nivel de formalidad no alcanza: una boda y una graduación son las dos
+// "formal" y no se resuelven igual — en la boda hay fotos y protagonistas a
+// quienes no hacerles sombra, la graduación es de día y respira más, el funeral
+// exige no destacar por encima de cualquier preferencia de estilo. Eso es lo
+// que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
+// escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
+// una comida, cena, cita, boda— y sobre eso vamos afinando más".
+export const PROMPT_VERSION = "v44";
 
 export type EngineItem = {
   id: string;
@@ -275,6 +287,14 @@ export type EngineContext = {
   gender: "hombre" | "mujer" | null; // concordancia gramatical + criterio de styling
   objective: string | null;
   plan: string | null; // texto libre opcional del compositor ("¿algo en mente?")
+  /**
+   * QUÉ evento es, del catálogo (lib/eventos.ts). Distinto de la formalidad:
+   * ésta dice cuánto te arreglas, y el tipo dice lo que la formalidad NO
+   * captura — dónde te sientas, cuánto caminas, si hay fotos, qué se ve mal
+   * ahí. Una boda y una graduación son las dos "formal" y no se resuelven
+   * igual.
+   */
+  tipoEvento?: string | null;
   lifestyle: string | null; // resumen de vida del assessment de cápsula
   tasteTags: string[];
   archetype: { nombre: string; descripcion: string } | null;
@@ -552,6 +572,10 @@ export function contextBlock(
   if (ctx.lifestyle) {
     lines.push(ctx.lifestyle);
   }
+  // QUÉ evento es, antes que sus palabras: el catálogo trae lo que la
+  // formalidad no captura (postura, fotos, qué se ve mal ahí).
+  const queEvento = lineaTipoEvento(ctx.tipoEvento);
+  if (queEvento) lines.push(`Es ${queEvento}.`);
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
   }

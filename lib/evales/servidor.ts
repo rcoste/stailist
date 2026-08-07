@@ -100,6 +100,7 @@ export async function cargarEvalCorrida(
       rubricaVersion: c.rubrica_version as string,
       rubricaVisionVersion: c.rubrica_vision_version as string,
       conEstilo: c.con_estilo === true,
+      conColor: c.con_color === true,
       estado: c.estado as string,
       nota: (c.nota as string | null) ?? null,
     },

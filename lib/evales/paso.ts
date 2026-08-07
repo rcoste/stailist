@@ -9,7 +9,7 @@ import { evaluarLookConVision } from "@/lib/engine/rubrica-vision";
 import { ErrorProveedor } from "@/lib/proveedores";
 import { peticionDeBrief, type BriefMotor, type LookMotor } from "@/lib/comparador/motor";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
-import { estiloDelPerfil, type NotaDeLook } from "./evales";
+import { estiloDelPerfil, colorDelPerfil, type NotaDeLook } from "./evales";
 
 // UN PASO del eval: generar un brief (motor de producción completo) o
 // calificarlo (los tres jueces sobre cada look). Mismo patrón que
@@ -37,7 +37,7 @@ export async function pasoEval(opciones: {
   const [{ data: corrida }, { data: fila }] = await Promise.all([
     supabase
       .from("eval_corridas")
-      .select("id, closet_user_id, estado, prompt_version, con_estilo")
+      .select("id, closet_user_id, estado, prompt_version, con_estilo, con_color")
       .eq("id", corridaId)
       .maybeSingle(),
     supabase
@@ -112,20 +112,28 @@ export async function pasoEval(opciones: {
   if ("error" in carga) return { error: "closet_vacio", status: 400 };
   const { profile, items: closet } = carga.base;
   const estilo = estiloDelPerfil(profile);
-  // Coherencia con lo congelado: si la corrida se abrió sin señal de estilo y
-  // el perfil ya la tiene (o al revés), la dimensión mediría a medias.
+  const color = colorDelPerfil(profile);
+  // Coherencia con lo CONGELADO: si la corrida se abrió sin señal y el perfil
+  // ya la tiene (o al revés), la dimensión mediría a medias. Se manda lo que la
+  // corrida declaró, no lo que el perfil tenga hoy.
   const conEstilo = corrida.con_estilo === true;
+  const conColor = corrida.con_color === true;
 
   const briefRubrica: BriefRubrica = {
     objective: brief.objective,
     workDressCode: (profile.work_dress_code as string | null) ?? null,
     veCliente: typeof brief.veCliente === "boolean" ? brief.veCliente : null,
     plan: brief.plan ?? null,
+    // El MISMO tipo que recibió el motor. Sin esto el juez calificaría la boda
+    // y la graduación con la misma vara — que es exactamente el hueco que el
+    // catálogo vino a cerrar.
+    tipoEvento: brief.tipoEvento ?? null,
     formality: brief.formality ?? null,
     momento: brief.momento,
     weather: brief.weather,
     paraguas: brief.paraguas === true,
     estilo: conEstilo ? estilo : null,
+    color: conColor ? color : null,
   };
 
   const imagenes = await imagenesDeLooks(supabase, looks);

@@ -85,7 +85,7 @@ export default async function EvalCorridaPage({
       corrida={corrida}
       filas={filas}
       prendas={prendas}
-      m={marcadorEval(filas, corrida.conEstilo)}
+      m={marcadorEval(filas, corrida.conEstilo, corrida.conColor)}
       acuerdo={acuerdoDeCalibracion(filas)}
       gender={(perfil?.gender as string | null) ?? null}
     />

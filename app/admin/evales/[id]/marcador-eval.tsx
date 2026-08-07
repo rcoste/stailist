@@ -26,6 +26,7 @@ const DIMS = [
   { k: "clima", label: "clima" },
   { k: "armado", label: "armado" },
   { k: "estilo", label: "estilo" },
+  { k: "color", label: "color" },
   { k: "wow", label: "wow" },
 ] as const;
 
@@ -101,11 +102,14 @@ export function MarcadorEvalView({
             </tbody>
           </table>
         </div>
-        {!corrida.conEstilo ? (
+        {!corrida.conEstilo || !corrida.conColor ? (
           <p className="text-xs text-muted">
-            La dimensión de estilo va vacía: el perfil de este clóset no tenía
-            estilo declarado al abrir la corrida, así que el juez la deja neutra
-            y promediarla fingiría una medición.
+            {[!corrida.conEstilo && "estilo", !corrida.conColor && "color"]
+              .filter(Boolean)
+              .join(" y ")}{" "}
+            va vacío: el perfil de este clóset no traía ese dato al abrir la
+            corrida, así que el juez lo deja neutro y promediarlo fingiría una
+            medición.
           </p>
         ) : null}
       </section>
