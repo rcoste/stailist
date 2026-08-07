@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.144.0] - 2026-08-07
+
+### Added — congelar una versión del prompt para poder correrla después
+
+Roberto: *"eventualmente sí tenemos que guardar los códigos para cuando saquemos la versión 49 y así hacer comparaciones… como los frontier labs, ver si sale mejor el 48 contra el 49"*.
+
+**No podía esperar a "eventualmente", y por una razón de tiempo:** el prompt vive en el código y **dos versiones no se pueden cargar a la vez** en el mismo proceso. Cuando el repo vaya en v49, v48 seguirá en un commit de git pero ya no habrá forma de *ejecutarla* junto a la nueva. Congelarla mientras está viva es trivial; reconstruirla después es arqueología.
+
+`scripts/prompt-congelar.ts` guarda el `system` y el mensaje de usuario **ya renderizado** para los 14 briefs del pool; `lib/engine/prompt-congelado.ts` lo ejecuta. El schema se reconstruye del clóset, así que la llamada es reproducible exactamente.
+
+**v48 ya está congelado** (14 briefs, 374 KB) y **verificado ejecutándose**: 5s, $0.027, tres looks válidos.
+
+### Notes — lo que el congelado no reproduce, y hay que saberlo
+
+- **Si el clóset cambia**, el congelado pide prendas que ya no existen. `correrCongelado` lo detecta y **falla claro** en vez de generar looks fantasma con un enum recortado — eso mediría el clóset, no el prompt.
+- **Las reglas y el juez son los de HOY**, no los de entonces. A propósito: lo que se compara es el prompt, y dejar el resto igual es lo que hace la comparación limpia.
+- **El barajeo del clóset queda fijo** en el snapshot. Es lo correcto: las dos versiones verán el mismo orden y la diferencia no podrá venir de ahí.
+
+### Added — el paso queda escrito en `docs/como-decidir-un-cambio-del-motor.md`
+
+Congelar es **parte de subir de versión**, no un extra que se recuerda.
+
 ## [0.2.143.0] - 2026-08-07
 
 ### Added — el instrumento estrenado, y `docs/como-decidir-un-cambio-del-motor.md`
