@@ -454,3 +454,37 @@ describe("preferenciasPorLook", () => {
     expect(r.empates).toBe(0);
   });
 });
+
+describe("looks entregados por par", () => {
+  // El prompt pide "2 o 3 outfits", así que entregar 2 es legal — pero es
+  // MENOS, y no se veía en ningún lado: Roberto lo descubrió abriendo una
+  // pestaña de "Look 3" que en un lado estaba vacía. Medido sobre 93 lados:
+  // producción entregó 3 el 100% de las veces; Gemini, el 94%.
+  it("promedia solo sobre los lados que entregaron algo", () => {
+    const m = marcadorMotor(VARIANTES, [
+      par({
+        id: "p1",
+        voto: "a",
+        lados: [
+          { variante: "a", looks: [{}, {}, {}] as never, reviews: null, error: null, costoUsd: 0.2, ms: 1 },
+          { variante: "b", looks: [{}, {}] as never, reviews: null, error: null, costoUsd: 0.1, ms: 1 },
+        ],
+      }),
+      par({
+        id: "p2",
+        voto: "b",
+        lados: [
+          { variante: "a", looks: [{}, {}, {}] as never, reviews: null, error: null, costoUsd: 0.2, ms: 1 },
+          // Un lado que TRONÓ no debe bajarle el promedio a nadie: es un error,
+          // que ya se cuenta aparte, no una entrega corta.
+          { variante: "b", looks: null, reviews: null, error: "boom", costoUsd: null, ms: null },
+        ],
+      }),
+    ]);
+    const a = m.variantes.find((x) => x.clave === "a")!;
+    const b = m.variantes.find((x) => x.clave === "b")!;
+    expect(a.looksTotales / a.ladosConLooks).toBe(3);
+    expect(b.looksTotales / b.ladosConLooks).toBe(2);
+    expect(b.errores).toBe(1);
+  });
+});

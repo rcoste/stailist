@@ -424,6 +424,13 @@ export type ResultadoVariante = {
    * exactamente lo que pasó en el primer veredicto: 20 marcas sobre 119 looks.
    */
   looksTotales: number;
+  /**
+   * Lados que ENTREGARON looks (sin error). Con looksTotales da el promedio de
+   * looks por par: el prompt pide "2 o 3", así que entregar 2 es legal — pero
+   * un motor que da 2 te está dando menos que uno que da 3, y eso no se veía
+   * en ningún lado. Roberto lo descubrió abriendo una pestaña vacía.
+   */
+  ladosConLooks: number;
 };
 
 /**
@@ -502,6 +509,7 @@ export function marcadorMotor(
       looksArriba: 0,
       looksAbajo: 0,
       looksTotales: 0,
+      ladosConLooks: 0,
       costoSuma: 0,
       costoN: 0,
       msSuma: 0,
@@ -529,6 +537,7 @@ export function marcadorMotor(
       }
       // El denominador de las marcas: cuántos looks generó de verdad.
       a.looksTotales += lado.looks?.length ?? 0;
+      if ((lado.looks?.length ?? 0) > 0) a.ladosConLooks++;
     }
     if (par.voto == null) continue;
     votados++;
@@ -592,6 +601,7 @@ export function marcadorMotor(
       looksArriba: a.looksArriba,
       looksAbajo: a.looksAbajo,
       looksTotales: a.looksTotales,
+      ladosConLooks: a.ladosConLooks,
     })),
     empates,
     votados,

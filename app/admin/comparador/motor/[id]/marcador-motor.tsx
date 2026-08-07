@@ -196,6 +196,15 @@ export function MarcadorMotorView({
             <div className="flex flex-col gap-1 text-xs text-muted">
               <span>costo por par: {v.costoPromedio == null ? "—" : formatoUsd(v.costoPromedio)}</span>
               <span>tiempo por par: {v.msPromedio == null ? "—" : `${Math.round(v.msPromedio / 1000)}s`}</span>
+              {/* Cuántos looks te entregó de verdad. El prompt pide "2 o 3", así
+                  que dar 2 es legal — pero es menos, y hasta hoy no se veía en
+                  ninguna parte: Roberto lo encontró abriendo una pestaña vacía. */}
+              {v.ladosConLooks > 0 ? (
+                <span>
+                  looks por par: {(v.looksTotales / v.ladosConLooks).toFixed(2)}
+                  {v.looksTotales / v.ladosConLooks < 2.99 ? " (el máximo es 3)" : ""}
+                </span>
+              ) : null}
               {v.errores ? <span className="text-error">{v.errores} lados fallaron</span> : null}
             </div>
             {/* SIEMPRE con denominador. Un "0 👎" suelto se lee como "nada

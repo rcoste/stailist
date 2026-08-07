@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.122.2] - 2026-08-06
+
+De Roberto votando la corrida de verificación: abrió la pestaña "Look 3" y un lado estaba vacío, sin explicación.
+
+### Fixed
+
+- **"Este lado no armó un 3º look" se leía como un fallo, y no lo es.** Investigado: ese lado **generó 2 looks**, el juez no rechazó nada (2 looks, 2 reviews). El prompt pide *"2 o 3 outfits"* — entregar 2 es una respuesta legal. Ahora el mensaje lo dice, y la pestaña se marca con "–" para que no prometa una comparación que no existe.
+
+### Added
+
+- **"looks por par" en el marcador.** Entregar 2 es legal, pero **es menos**, y hasta hoy no se veía en ninguna parte — Roberto lo descubrió por accidente al abrir una pestaña vacía. Medido sobre los 93 lados de la base: **producción entregó 3 el 100% de las veces (47/47); Gemini, el 94% (30/32)**. Diferencia chica, pero es entrega real y ahora se mide en vez de aparecerse.
+- El promedio se calcula **solo sobre lados que entregaron algo**: un lado que tronó ya se cuenta como error y bajarle además el promedio lo castigaría dos veces por lo mismo (con su test).
+
 ## [0.2.122.1] - 2026-08-06
 
 ### Fixed
