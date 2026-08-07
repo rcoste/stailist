@@ -20,6 +20,27 @@ import type { GeneratedOutfit } from "./generate";
 // Corre en Sonnet (rápido/barato, ya que se llama por cada outfit). Si falla,
 // devuelve el outfit original con veredicto "ok" — nunca rompe la generación.
 // Rúbrica más exigente para mujer que para hombre.
+//
+// EL TIP, Y POR QUÉ SE REESCRIBIÓ (2026-08-07)
+// El wow salió 2.98 en el eval —la nota más baja de las seis— y la causa no era
+// que faltaran tips: eran 40 de 40. Era que TODOS decían lo mismo. De 40 tips,
+// 27 eran "deja X abierto"; arremangar apareció UNA vez y un accesorio, cero.
+// Un motor con un solo truco.
+//
+// Y el prompt lo pedía, literalmente: decía "NO ves la prenda (solo
+// tipo/color/formalidad), así que prioriza movimientos SEGUROS: dejar una capa
+// abierta", y marcaba fajar y cuffear como "de RIESGO". El modelo obedecía.
+//
+// Lo que ya no era cierto es la premisa: desde v38 describeItem manda corte,
+// largo, manga, material y subtipo, y este juez los recibe (usa closetBlock).
+// O sea que llevaba versiones creyéndose más ciego de lo que estaba. Ahora
+// tiene un repertorio explícito con la condición de activación de cada gesto
+// —atada a esos atributos— y la orden de no caer en el gesto fácil por default.
+//
+// Se quitó además "NO pongas tip en todos los looks": este juez revisa UN
+// outfit a la vez y no ve a los otros, así que esa cuota era imposible de
+// cumplir por construcción. El criterio que sí puede evaluar (si no eleva, va
+// vacío) se queda.
 
 // Modelo de los jueces. Vive en lib/models.ts junto con el del motor: tenerlos
 // separados fue lo que dejó 14 archivos apuntando a un Opus viejo mientras los
@@ -68,11 +89,22 @@ Reglas duras:
 
 EL TOQUE (cómo llevarlo) — campo "tip", OPCIONAL:
 Puedes sumar UN tip de styling: un solo movimiento concreto para llevar mejor las prendas que YA trae ESTE look. Reglas (síguelas o deja "tip" en cadena vacía):
-- UNO solo, o NINGUNO. Si el look ya está completo y no hay un movimiento que de verdad lo eleve, deja "tip" en cadena vacía. Mejor sin tip que uno forzado. NO pongas tip en todos los looks.
+- UNO solo, o NINGUNO. Si el look ya está completo y no hay un movimiento que de verdad lo eleve, deja "tip" en cadena vacía. Mejor sin tip que uno forzado.
 - SOLO sobre prendas que están en el look (las de item_ids). NUNCA inventes ni menciones una prenda que NO está en la lista, ni siquiera como sugerencia para añadir ("súmale una camisa encima", "ponte un saco" si no está → PROHIBIDO). El toque es cómo llevar lo que YA hay; si no hay un buen movimiento con eso, deja el tip vacío. (Causó confusión real un tip que decía "deja la camisa de lino abierta" cuando el look era polo + pantalón de lino, sin ninguna camisa.)
 - Concreto y nombrando una prenda REAL del look ("deja el blazer abierto", "abre el primer botón del polo"), nunca genérico ("acomoda tu top") ni una prenda ausente.
-- NO ves la prenda (solo tipo/color/formalidad), así que prioriza movimientos SEGUROS que no dependen del largo/corte exacto: dejar una capa/blazer/chamarra abierta, jugar la proporción (si algo es holgado, equilibra con algo entallado), abrir un botón o el cuello, arremangar (solo si es manga larga).
-- Movimientos de RIESGO (fajar — depende del largo del top; cuffear el pantalón — depende del tipo y del zapato): úsalos SOLO si la prenda claramente lo permite; si dudas, frasea condicional ("si te da el largo, medio fájala al frente") o no lo pongas.
+
+EL REPERTORIO. Cada prenda del look te llega con sus atributos de styling cuando existen — corte (entallado/recto/holgado), largo (crop/regular/largo), manga (sin/corta/larga), material y subtipo (derby, oxford, mocasín, cruzado, con pinzas). ÚSALOS: son la diferencia entre un gesto que cae bien y uno genérico. Estos son los movimientos, con lo que cada uno necesita para funcionar:
+- ABRIR UNA CAPA (blazer, chamarra, overshirt, abrigo) — pide que haya capa Y que lo de abajo aporte algo al abrirse (color, textura, cuello). Si abajo hay más de lo mismo, abrir no eleva nada.
+- ARREMANGAR — pide manga larga. Dos vueltas sobre el antebrazo en camisa; en blazer, por encima del puño de la camisa para que asome lo de abajo.
+- FAJAR O MEDIO FAJAR — pide largo regular o largo. Con largo "crop" NO se faja (ya está a la cintura); si el largo no viene, frasea condicional.
+- CUFFEAR EL PANTALÓN — pide que el calzado se vea (botín, mocasín, tenis). Con bota alta no aporta.
+- JUGAR LA PROPORCIÓN — pide un corte holgado y otro entallado en el mismo look: nombra los dos y di qué equilibra.
+- EL CUELLO — abrir uno o dos botones, o sacar el cuello de la camisa por encima del punto/half-zip.
+- EL CALZADO Y EL SUBTIPO — cuando el subtipo es distintivo (derby contra oxford, mocasín sin calcetín), el gesto puede ser cómo se lleva ese zapato.
+- ACCESORIO QUE YA ESTÁ EN EL LOOK — cinturón, reloj, lentes, bufanda: cómo se coloca o con qué se alinea. NUNCA uno que no esté en item_ids.
+
+NO TE REPITAS. "Deja la capa abierta" es el gesto más fácil y por eso el más gastado: si es el primero que se te ocurre, BUSCA OTRO del repertorio que este look permita, y quédate con abrir la capa solo si de verdad es el mejor movimiento aquí. Un stylist que dijera lo mismo en todos los looks no se sentiría stylist.
+- Movimientos que dependen de un dato que quizá no tengas: si el atributo que el gesto necesita no viene, o lo frasea condicional ("si te da el largo, medio fájala al frente") o eliges otro gesto. Nunca afirmes un largo o un corte que no te dieron.
 - Respeta formalidad (formal: fajar sí, medio-fajar/cuffear casual no), el vibe (minimalista = menos es más) y el género.
 - Si el contexto trae su cuerpo, conecta el efecto cuando aplique ("fájala al frente — te marca la cintura, que te equilibra").
 - Voz de amiga cool, una frase corta, sin jerga.`;

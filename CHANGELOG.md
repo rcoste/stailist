@@ -2,6 +2,46 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.131.0] - 2026-08-07
+
+### Added — el repertorio de gestos del critic, y la métrica que lo vigila
+
+Atacando el wow (2.98, la nota más baja del eval). El diagnóstico no era falta de tips —eran 40 de 40— sino que **casi todos decían lo mismo**: "deja X abierto" en 24 de 40, seis veces más que el siguiente gesto.
+
+**Y el prompt lo pedía, literalmente.** `critic.ts` decía *"NO ves la prenda (solo tipo/color/formalidad), así que prioriza movimientos SEGUROS: dejar una capa abierta"*, y marcaba fajar y cuffear como *"de RIESGO"*. La premisa **ya era falsa**: desde v38 `describeItem` manda corte, largo, manga y subtipo, y este juez los recibe. Llevaba versiones creyéndose más ciego de lo que estaba.
+
+Ahora tiene un **repertorio explícito con la condición de activación de cada gesto** (fajar pide largo regular; cuffear pide que el calzado se vea; arremangar pide manga larga) y la orden de no caer en el gesto fácil por default.
+
+También se quitó *"NO pongas tip en todos los looks"*: este juez revisa **un outfit a la vez y no ve los otros**, así que esa cuota era imposible de cumplir por construcción.
+
+### Added — `lib/engine/gestos.ts`: variedad de gestos, la métrica anti-Goodhart
+
+El wow lo califica un juez, y en cuanto se optimiza el prompt contra ese juez la nota deja de medir. La variedad de gestos es un **conteo sobre el texto que el motor produjo**: da igual lo que el juez opine. Es la métrica primaria del wow; la rúbrica queda de termómetro secundario.
+
+**El principio, aprendido a golpes: el gesto es el VERBO, no el sustantivo.** Un tip nombra varias prendas y solo una es sobre la que se actúa; las demás son el efecto ("deja la chamarra abierta para que se vea la camiseta contra **los botines**"). La primera versión contaba cada mención y por eso reportaba variedad inexistente.
+
+### Notes — qué pasó: la variedad subió, el wow NO
+
+| | antes | después |
+|---|---|---|
+| **dominancia** (1.00 = un solo truco) | **0.60** | **0.38** |
+| equilibrio | 0.69 | 0.80 |
+| gestos distintos | 7 | 6 |
+| abrir-capa | 24 | 15 |
+| cuello | 4 | 12 |
+| accesorio (el nudo de la corbata, nuevo) | 1 | 6 |
+| **wow (juez de texto)** | **2.98** | **2.90** |
+
+**La concentración bajó de verdad (−37%) y el wow no se movió** (0.08 sobre ~40 looks está dentro del ruido). Y el repertorio **se redistribuyó más que ampliarse**: bajó abrir-capa, subieron cuello y accesorio, pero desaparecieron proporción y abotonar y fajar casi. Cambió un monocultivo por un duocultivo (abrir-capa + cuello = 27 de 39).
+
+**Conclusión: el gesto no es el cuello de botella del wow.** Eso descarta la hipótesis principal y apunta a la otra mitad — la decisión del look, que es del generador, no del critic.
+
+### Notes — verificado antes: el 5 del wow SÍ es alcanzable
+
+Cero cincos en 40 looks admitía dos lecturas, y la equivocada habría invalidado todo el trabajo siguiente. `scripts/wow-alcanzable.ts` le da al juez looks escritos a mano para sacar 5: **el caso extremo sacó wow 5** (y 5 en ocasión, armado, estilo y color); el control deliberadamente plano sacó **2**. La escala discrimina; el margen es del motor.
+
+Dato de paso: el gesto del look que sacó 5 fue *"arremanga el blazer dos vueltas por encima del puño de la camisa"* — arremangar aparecía **3 veces en 40** looks reales.
+
 ## [0.2.130.0] - 2026-08-07
 
 ### Added — el juez con ojos de colorimetría (r8 / rv3), con los DOS extremos

@@ -208,6 +208,21 @@ async function main() {
     `  costo $${m.costoTotal.toFixed(2)} · generación $${m.costoGenPromedio?.toFixed(3) ?? "—"} / ${m.msGenPromedio ? Math.round(m.msGenPromedio / 1000) : "—"}s`
   );
 
+  // La métrica que NO se puede adular: se cuenta sobre el texto del motor, no
+  // sobre la opinión de un juez.
+  const g = m.gestos;
+  console.log(
+    `\nGESTOS DE STYLING (métrica primaria del wow — aritmética, no opinión)`
+  );
+  console.log(
+    `  ${g.distintos} gestos distintos en ${g.conTip}/${g.total} looks con tip`
+  );
+  console.log(
+    `  dominancia ${g.dominancia.toFixed(2)} (1.00 = un solo truco) · equilibrio ${g.equilibrio.toFixed(2)}`
+  );
+  for (const [k, n] of Object.entries(g.porGesto).sort((a, b) => b[1] - a[1]))
+    console.log(`    ${k.padEnd(14)} ${n}`);
+
   // Los rechazos, que es de donde salen las reglas nuevas.
   console.log(`\nLO QUE LOS JUECES RECHAZARON`);
   for (const f of filas) {
