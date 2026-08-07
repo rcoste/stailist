@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.133.0] - 2026-08-07
+
+### Added — el motor por fin puede decir "no puedo"
+
+Roberto: *"boda de etiqueta y el usuario no tiene traje. Debería decir NO y no permitir; no es que 'ok, pues puede con unos jeans más un suéter'. Va a haber casos en los que no haya prendas y no se pueda."*
+
+Tenía razón, y el motor estaba **construido** para no poder decirlo. El juez sí rechaza un look irreparable, pero el piso de 2 del pipeline lo rescataba igual, con este comentario al lado: *"mejor un look mediocre que menos de 2"*. Esa premisa es cierta para el día a día y **falsa para una boda de etiqueta**: ahí no hay nada que ponerse, y decirlo vale más que inventarlo. Un stylist que te manda de jeans a una boda no pierde medio punto de rúbrica — pierde toda su credibilidad.
+
+`lib/engine/alcance.ts` lo comprueba **en código y antes de gastar un token**: "¿tiene saco?" es una pregunta verificable, no una opinión, y un modelo al que se le pide honestidad puede igual armar algo y llamarlo formal — es lo que ya hacía.
+
+Solo se pronuncia en **formal y gala**; en casual y semiformal un "no puedo" sería falso. Y en gala el esmoquin **avisa pero no bloquea**: un traje oscuro impecable es una respuesta legítima, y el prompt ya lo decía.
+
+En Hoy es una **pantalla propia, no un error**: dice qué falta, ofrece agregar esa prenda y deja la salida de pedir otra cosa (quizá el evento no era tan formal).
+
+### Fixed — dos sesgos de género en mi propia regla, cazados midiendo
+
+Al probar contra los **24 clósets reales** de la base, bloqueaba 8 — incluido el de una usuaria con **82 prendas**. Dos causas, las dos mías:
+
+1. **"Sandalia" como excluyente duro.** Sus *"Tacones nude de tira"* vienen del catálogo con `subtipo: "sandalia"`, que es correcto — y mi regla los tiraba. Una sandalia de tacón es calzado de boda; el excluyente sólo valía para calzado masculino.
+2. **El saco como indispensable para todas.** Para una mujer, blusa de vestir + pantalón de vestir + tacón es un look formal completo. Exigir blazer le negaba el código a media población.
+
+Tras arreglar los dos: **6 de 24**, todos clósets de 11 a 24 prendas a los que de verdad les falta la pieza.
+
+La lección quedó escrita en el archivo: un excluyente sólo entra si es categórico para **cualquier** persona; en la duda, dejar pasar. **Un falso "no puedo" es peor que un look mediocre**, porque le niega a alguien algo que sí tenía.
+
 ## [0.2.132.0] - 2026-08-07
 
 ### Changed — la mano de stylist deja de ser opcional (v45)

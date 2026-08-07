@@ -20,6 +20,7 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
 import { lineaTipoEvento } from "@/lib/eventos";
+import { alcanceDeFormalidad, lineaAlcance } from "./alcance";
 import {
   type TasteSignal,
   type RememberedOutfit,
@@ -617,6 +618,14 @@ export function contextBlock(
 
   const piso = pisoDeFormalidad(ctx);
   if (piso) lines.push(piso);
+
+  // Y si el clóset da JUSTO para ese código: avisar, no bloquear. El caso de
+  // "no da" ni siquiera llega hasta aquí — lo corta el pipeline antes de
+  // generar (lib/engine/alcance.ts).
+  const avisoAlcance = lineaAlcance(
+    alcanceDeFormalidad(ctx.items, (ctx.formality as never) ?? null, ctx.gender)
+  );
+  if (avisoAlcance) lines.push(avisoAlcance);
 
   // Formalidad del evento (el wizard la pregunta para "evento") + default
   // mexicano: las bodas/eventos formales en México son más arreglados que el

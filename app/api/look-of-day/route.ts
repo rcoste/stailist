@@ -3,6 +3,7 @@ import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, createTokenClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
+import { alcanceDeFormalidad } from "@/lib/engine/alcance";
 import { reviewOutfit } from "@/lib/engine/critic";
 import {
   cargarBaseDelMotor,
@@ -297,6 +298,25 @@ async function generateInto(
       veCliente: typeof body.veCliente === "boolean" ? body.veCliente : null,
     });
     const seedItemId = ctx.seedItemId ?? null;
+
+    // ¿Este clóset da para el código que pidió? Se contesta ANTES de generar:
+    // es una consulta al clóset, no una opinión. Roberto: "boda de etiqueta y
+    // el usuario no tiene traje — debería decir NO, no 'ok, pues puede con unos
+    // jeans más un suéter'". Decirlo hoy vale más que un look que la deja mal
+    // en la puerta.
+    const alcance = alcanceDeFormalidad(
+      ctx.items,
+      (body.formality as never) ?? null,
+      ctx.gender
+    );
+    if (alcance.faltaLoEsencial) {
+      return NextResponse.json({
+        status: "no_alcanza",
+        faltan: alcance.faltan,
+        tiene: alcance.tiene,
+      });
+    }
+
     const startedAt = Date.now();
     const candidates = await generateOutfits(ctx);
     const result = await reviewOutfit(ctx, candidates[0], []);

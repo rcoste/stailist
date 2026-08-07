@@ -42,6 +42,10 @@ type State =
   | { kind: "ready"; outfit: HoyOutfit }
   // El ancla no va con la ocasión: el stylist avisa y la usuaria decide.
   | { kind: "anchor_warning"; note: string; seedItemName: string; input: LookInput }
+  // NO es un error: es la respuesta. El clóset no da para el código de
+  // vestimenta que pidió, y decírselo hoy vale más que un look que la deja mal
+  // en la puerta. Por eso tiene estado propio y no un ERROR_COPY más.
+  | { kind: "no_alcanza"; faltan: string[] }
   | { kind: "error"; code: string };
 
 const ERROR_COPY: Record<string, string> = {
@@ -185,6 +189,10 @@ export function HoyClient({
           setState({ kind: "error", code: data.error });
           return;
         }
+        if (data.status === "no_alcanza") {
+          setState({ kind: "no_alcanza", faltan: data.faltan ?? [] });
+          return;
+        }
         // El ancla no va con la ocasión: muestra el aviso y deja decidir.
         if (data.status === "anchor_warning") {
           setState({
@@ -318,6 +326,42 @@ export function HoyClient({
     }
     const frases = buildGenFrases(li, closet.length, ocasionFrase);
     return <StylistGenerating frases={frases} plan={plan} />;
+  }
+
+  if (state.kind === "no_alcanza") {
+    const falta = state.faltan.join(", ");
+    return (
+      <div className="flex flex-col items-center gap-5 py-16 text-center lg:mx-auto lg:max-w-md">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-muted">
+          <Icon name="gancho" size={22} />
+        </span>
+        <div className="flex flex-col gap-2">
+          <p className="text-base text-ink">
+            Para ese código de vestimenta te falta {falta}.
+          </p>
+          <p className="text-sm text-muted">
+            No te armo algo que no va a funcionar ahí — mejor lo sabes hoy y no
+            en la puerta.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/closet"
+            className="flex min-h-12 items-center justify-center rounded-sm bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            agregar esa prenda
+          </Link>
+          {/* La salida sin comprar nada: quizá el evento no era tan formal. */}
+          <button
+            type="button"
+            onClick={() => setState({ kind: "ask" })}
+            className="min-h-12 rounded-sm px-8 text-base font-medium text-muted transition-colors duration-200 hover:text-ink"
+          >
+            pedir otra cosa
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (state.kind === "error") {

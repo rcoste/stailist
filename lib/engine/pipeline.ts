@@ -1,6 +1,8 @@
 import { generarConRecibo, type GeneratedOutfit, type OpcionesGeneracion } from "./generate";
 import { reviewOutfit, type CriticVerdict } from "./critic";
 import type { EngineContext } from "./prompt";
+import { alcanceDeFormalidad, type Alcance } from "./alcance";
+import type { Formalidad } from "@/lib/formalidad";
 import type { Recibo } from "@/lib/proveedores";
 
 // El pipeline COMPLETO del motor diario: generar candidatos → juez por outfit
@@ -31,6 +33,15 @@ export type ResultadoPipeline = {
   /** Recibos de TODAS las llamadas: [generación, juez, juez, …]. Los del juez
    * pueden faltar (fail-forward sin recibo). */
   recibos: Recibo[];
+  /**
+   * El clóset NO da para el código de vestimenta que se pidió. Cuando viene,
+   * `finalized` va vacío A PROPÓSITO: no es un fallo, es la respuesta.
+   *
+   * Roberto: "boda de etiqueta y el usuario no tiene traje — debería decir NO;
+   * no es que 'ok, pues puede con unos jeans más un suéter'". Quien llama lo
+   * muestra con lo que le falta, en vez de un look que la va a dejar mal.
+   */
+  noAlcanza?: Alcance;
 };
 
 export type HooksPipeline = {
@@ -51,6 +62,20 @@ export async function armarLooks(
   opciones: OpcionesGeneracion = {},
   hooks: HooksPipeline = {}
 ): Promise<ResultadoPipeline> {
+  // ANTES DE GASTAR UN TOKEN: ¿este clóset da para el código que se pidió? Es
+  // una consulta al clóset, no una opinión — así que se contesta aquí y no en
+  // el prompt, donde el modelo podía (y solía) armar algo igual y llamarlo
+  // formal. Solo se pronuncia en formal y gala; en casual y semiformal un "no
+  // puedo" sería falso.
+  const alcance = alcanceDeFormalidad(
+    ctx.items,
+    (ctx.formality as Formalidad | null) ?? null,
+    ctx.gender
+  );
+  if (alcance.faltaLoEsencial) {
+    return { finalized: [], reviews: [], recibos: [], noAlcanza: alcance };
+  }
+
   const { outfits: candidates, recibo } = await generarConRecibo(ctx, opciones);
   const recibos: Recibo[] = [recibo];
   hooks.alCandidatos?.(candidates.length);
