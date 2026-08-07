@@ -8,7 +8,12 @@ import {
   ESCALERA_DE_PRIORIDADES,
   type EngineContext,
 } from "./prompt";
-import { bloqueEjecucion } from "./reglas-ejecucion";
+import {
+  bloqueEjecucion,
+  revisarEjecucion,
+  type ContextoReglas,
+  type Violacion,
+} from "./reglas-ejecucion";
 import { bandaDeClima } from "./recetario";
 import { blueprintDelContexto, revisarColorBlueprint } from "./blueprint";
 import type { GeneratedOutfit } from "./generate";
@@ -164,20 +169,7 @@ function buildCriticMessage(
   lines.push(
     ...bloqueEjecucion(
       ctx.items.filter((i) => outfit.item_ids.includes(i.id)),
-      {
-        clima: bandaDeClima(ctx.weather),
-        closet: ctx.items,
-        // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado
-        // son la misma BANDA de temperatura y dos problemas distintos.
-        lluvia: /lluvia|llov|chubasco|tormenta/i.test(ctx.weather?.condition ?? ""),
-        paraguas: ctx.paraguas,
-        // La formalidad del evento: sin ella, "separates en boda formal" no se
-        // puede distinguir de "separates en la oficina", que es correcto.
-        formality: ctx.formality,
-        // Para quién: la regla del suéter es convención MASCULINA, y aplicarla
-        // a una mujer marca como error el punto a piel, que ahí es normal.
-        gender: ctx.gender,
-      }
+      contextoDeReglas(ctx)
     )
   );
 
@@ -230,7 +222,9 @@ function keepAnchor(o: GeneratedOutfit, seed: string | null): GeneratedOutfit {
 export async function reviewOutfit(
   ctx: EngineContext,
   outfit: GeneratedOutfit,
-  priorOutfits: GeneratedOutfit[]
+  priorOutfits: GeneratedOutfit[],
+  /** Interno: esta llamada YA es el segundo intento, no encadenar otro. */
+  esReintento = false
 ): Promise<CriticResult> {
   // Sin juez (no hay API key): pasa el outfit tal cual, veredicto neutro.
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -284,16 +278,45 @@ export async function reviewOutfit(
       parsed.item_ids.length >= 2 &&
       parsed.item_ids.every((id) => valid.has(id))
     ) {
+      const reparado = keepAnchor(
+        {
+          nombre: parsed.nombre,
+          item_ids: parsed.item_ids,
+          explicacion: parsed.explicacion,
+          tip,
+        },
+        ctx.seedItemId ?? null
+      );
+
+      // SE COMPRUEBA LA REPARACIÓN. Nadie miraba el resultado del reparador, y
+      // medido sobre las cuatro corridas del eval eso dejaba pasar dos cosas
+      // distintas: 9 violaciones que el juez no arregló, y 5 que él MISMO
+      // introdujo al arreglar otra. Si algo sigue roto, se le devuelve la lista
+      // exacta y se le da UN intento más — no dos: a la tercera el problema ya
+      // no es de atención sino de que este clóset no da, y ahí insistir sólo
+      // quema tiempo del usuario que está esperando su look.
+      const roto = loQueSigueRoto(ctx, reparado);
+      if (roto.length > 0 && !esReintento) {
+        const segunda = await reviewOutfit(ctx, reparado, priorOutfits, true);
+        // Se queda con el segundo intento sólo si de verdad mejoró: si dejó el
+        // look igual de roto (o peor), nos quedamos con el primero y no
+        // pagamos el cambio.
+        const rotoDespues = loQueSigueRoto(ctx, segunda.outfit);
+        if (rotoDespues.length < roto.length) {
+          return {
+            ...segunda,
+            // El veredicto del par de pasadas es "reparado": hubo cambio.
+            verdict: "reparado",
+            razon: segunda.razon ?? razon,
+            // El recibo de la PRIMERA pasada se pierde para quien llama, así
+            // que se suma aquí: el costo real fueron dos llamadas.
+            recibo: sumarRecibos(recibo, segunda.recibo),
+          };
+        }
+      }
+
       return {
-        outfit: keepAnchor(
-          {
-            nombre: parsed.nombre,
-            item_ids: parsed.item_ids,
-            explicacion: parsed.explicacion,
-            tip,
-          },
-          ctx.seedItemId ?? null
-        ),
+        outfit: reparado,
         verdict,
         razon,
         recibo,
@@ -303,4 +326,66 @@ export async function reviewOutfit(
   } catch {
     return { outfit, verdict: "ok", razon: null, recibo: null };
   }
+}
+
+
+/**
+ * El contexto que las reglas de ejecución necesitan, derivado del del motor.
+ *
+ * Vive aparte porque lo usan DOS caminos: el bloque de hallazgos que se le da
+ * al juez, y la comprobación de su resultado (ver reviewOutfit). Si cada uno lo
+ * armara por su cuenta, el juez podría reparar contra una vara distinta de la
+ * que lo verifica — y eso es justo lo que este archivo no puede permitirse.
+ */
+function contextoDeReglas(ctx: EngineContext): ContextoReglas {
+  return {
+    clima: bandaDeClima(ctx.weather),
+    closet: ctx.items,
+    // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado son la
+    // misma BANDA de temperatura y dos problemas distintos.
+    lluvia: /lluvia|llov|chubasco|tormenta/i.test(ctx.weather?.condition ?? ""),
+    paraguas: ctx.paraguas,
+    // La formalidad del evento: sin ella, "separates en boda formal" no se
+    // puede distinguir de "separates en la oficina", que es correcto.
+    formality: ctx.formality,
+    // Para quién: la regla del suéter es convención MASCULINA, y aplicarla a
+    // una mujer marca como error el punto a piel, que ahí es normal.
+    gender: ctx.gender,
+  };
+}
+
+/**
+ * ¿La reparación del juez dejó el look LIMPIO de reglas? Devuelve lo que sigue
+ * roto (vacío = limpio).
+ *
+ * POR QUÉ EXISTE, con el número que lo justifica: sobre 91 violaciones de las
+ * cuatro corridas del eval, el juez reparó 87 (96%) — o sea que la premisa de
+ * "el juez ignora los hallazgos" era falsa. Pero quedaron 9 sin reparar Y el
+ * juez INTRODUJO 5 nuevas al arreglar otra cosa. Ese segundo número es el que
+ * pide esta comprobación: nadie estaba mirando el resultado del reparador.
+ */
+export function loQueSigueRoto(
+  ctx: EngineContext,
+  outfit: GeneratedOutfit
+): Violacion[] {
+  return revisarEjecucion(
+    ctx.items.filter((i) => outfit.item_ids.includes(i.id)),
+    contextoDeReglas(ctx)
+  );
+}
+
+
+/** Los dos recibos como uno: el costo real de una revisión con reintento. */
+function sumarRecibos(a: Recibo, b: Recibo | null): Recibo {
+  if (!b) return a;
+  return {
+    ...b,
+    tokens: {
+      entrada: a.tokens.entrada + b.tokens.entrada,
+      salida: a.tokens.salida + b.tokens.salida,
+    },
+    costoUsd:
+      a.costoUsd == null && b.costoUsd == null ? null : (a.costoUsd ?? 0) + (b.costoUsd ?? 0),
+    ms: (a.ms ?? 0) + (b.ms ?? 0),
+  };
 }

@@ -2,6 +2,35 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.138.0] - 2026-08-07
+
+### Added — se comprueba la reparación del juez (v46)
+
+Nadie miraba el resultado del reparador. Ahora, tras reparar, se vuelven a correr las reglas sobre el look que el juez devolvió; si queda algo roto se le devuelve **la lista exacta** y se le da **un** intento más — y el segundo resultado **solo se acepta si dejó menos roto que el primero**.
+
+### Fixed — mi diagnóstico anterior era falso, con el número que lo prueba
+
+Le dije a Roberto que *"el juez ignora hallazgos verificados"*. **Es falso.** Medido sobre las cuatro corridas del eval:
+
+| | |
+|---|---|
+| violaciones antes del juez | **91** |
+| reparadas por el juez | **87 (96%)** |
+| quedaron rotas | 9 |
+| **introducidas POR el juez** | **5** |
+
+Vi el residuo sin su denominador. El juez repara casi todo; lo que nadie veía es que **introduce violaciones nuevas al arreglar otra cosa**. Ese es el hueco que esta comprobación cierra, y es más chico y más específico de lo que anuncié.
+
+### Notes — el hallazgo que vale más que el cambio: la varianza entre corridas es ENORME
+
+Las dos corridas de v46, **con el mismo código**, dieron **76% y 88%** de aprobación. Doce puntos.
+
+Eso obliga a retirar varias lecturas de hoy: comparar dos versiones con una corrida cada una **no puede distinguir** una mejora de 5-10 puntos del ruido. La primera corrida de v46 dio 76% y llegué a escribir que el cambio había empeorado los looks (z = 2.19); la segunda mostró que era varianza.
+
+Lo que sí sostiene la evidencia: **las violaciones de reglas bajaron de 8% a 0% y 3%** en las dos corridas — eso es consistente y es lo que el cambio garantiza por construcción, no por estadística.
+
+Lo que NO se puede afirmar: que mejore (ni que empeore) la calidad general. **El instrumento sigue sin poder para eso**, y el arreglo es el mismo que ya está anotado: diseño pareado — las dos versiones sobre los MISMOS briefs.
+
 ## [0.2.137.0] - 2026-08-07
 
 ### Fixed — la regla del suéter aplicaba una convención masculina a todos

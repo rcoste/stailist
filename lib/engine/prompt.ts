@@ -236,6 +236,13 @@ import {
 // v40-v43: dress code del trabajo (los cuatro registros de "oficina", con el
 // "depende del día" que pregunta si hoy ve cliente), paraguas, y la formalidad
 // dicha en ropa en vez de en jerga.
+// v46 (2026-08-07): SE COMPRUEBA LA REPARACIÓN DEL JUEZ. No cambia el texto
+// del prompt — cambia que ahora alguien mira el resultado del reparador. Sobre
+// las cuatro corridas del eval el juez reparaba el 96% de las violaciones (87
+// de 91), así que la premisa de "las ignora" era falsa; lo que nadie veía es
+// que INTRODUCE 5 nuevas al arreglar otra cosa. Si tras reparar sigue algo
+// roto, se le devuelve la lista exacta y se le da UN intento más, y el segundo
+// resultado solo se acepta si de verdad dejó menos roto que el primero.
 // v45 (2026-08-07): la mano de stylist deja de ser opcional. La línea decía
 // "cuando el clóset lo permita" y remataba con "si el clóset solo da para lo
 // simple, lo simple BIEN HECHO es la decisión" — dos puertas de salida en la
@@ -264,7 +271,7 @@ import {
 // que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
 // escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
 // una comida, cena, cita, boda— y sobre eso vamos afinando más".
-export const PROMPT_VERSION = "v45";
+export const PROMPT_VERSION = "v46";
 
 export type EngineItem = {
   id: string;

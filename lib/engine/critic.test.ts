@@ -12,7 +12,7 @@ vi.mock("@/lib/proveedores", () => ({
   llamar: (...args: unknown[]) => llamar(...args),
 }));
 
-const { reviewOutfit } = await import("./critic");
+const { reviewOutfit, loQueSigueRoto } = await import("./critic");
 
 const ctx = {
   items: [
@@ -150,5 +150,57 @@ describe("reviewOutfit", () => {
     );
     const r = await reviewOutfit({ ...ctx, seedItemId: "a" } as EngineContext, original, []);
     expect(r.outfit.item_ids).toContain("a");
+  });
+});
+
+describe("loQueSigueRoto — se comprueba la reparación del juez", () => {
+  // POR QUÉ EXISTE, con su número: de 91 violaciones en las cuatro corridas del
+  // eval, el juez reparó 87 (96%). Pero 9 quedaron rotas y él INTRODUJO 5
+  // nuevas al arreglar otra cosa — y nadie estaba mirando su resultado.
+  const item = (id: string, nombre: string, extra: Record<string, unknown> = {}) =>
+    ({ id, attrs: { nombre, tipo: nombre, ...extra } }) as unknown as EngineItem;
+
+  const ctxCon = (items: EngineItem[]) =>
+    ({
+      items,
+      weather: { temp_c: 18, condition: "nublado" },
+      gender: "hombre",
+      paraguas: false,
+      formality: null,
+      seedItemId: null,
+    }) as unknown as EngineContext;
+
+  it("un look limpio no reporta nada", () => {
+    const items = [
+      item("a", "Camiseta blanca", { categoria: "top", color_hex: "#FFFFFF" }),
+      item("b", "Suéter de lana negro", { categoria: "top", color_hex: "#111111" }),
+      item("c", "Jeans azul oscuro", { categoria: "bottom", color_hex: "#2A3B5C" }),
+    ];
+    const out = { nombre: "x", item_ids: ["a", "b", "c"], explicacion: "x" };
+    expect(loQueSigueRoto(ctxCon(items), out)).toEqual([]);
+  });
+
+  it("caza el suéter a piel que el juez dejó pasar — el caso real de Roberto", () => {
+    const items = [
+      item("b", "Suéter marino", { categoria: "top", color_hex: "#27425F" }),
+      item("c", "Jeans negros", { categoria: "bottom", color_hex: "#111111" }),
+    ];
+    const out = { nombre: "x", item_ids: ["b", "c"], explicacion: "x" };
+    const roto = loQueSigueRoto(ctxCon(items), out);
+    expect(roto.map((r) => r.regla)).toContain("sueter-sin-base");
+  });
+
+  it("solo mira las prendas DEL LOOK, no el clóset entero", () => {
+    // Si mirara el clóset, la camiseta que existe pero no está puesta haría
+    // creer que el look está limpio — que es exactamente el fallo a evitar.
+    const items = [
+      item("a", "Camiseta blanca", { categoria: "top", color_hex: "#FFFFFF" }),
+      item("b", "Suéter marino", { categoria: "top", color_hex: "#27425F" }),
+      item("c", "Jeans negros", { categoria: "bottom", color_hex: "#111111" }),
+    ];
+    const sinLaCamiseta = { nombre: "x", item_ids: ["b", "c"], explicacion: "x" };
+    expect(loQueSigueRoto(ctxCon(items), sinLaCamiseta).map((r) => r.regla)).toContain(
+      "sueter-sin-base"
+    );
   });
 });
