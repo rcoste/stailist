@@ -60,6 +60,7 @@ export async function addPhotoItem(
   const { error } = await supabase.from("items").insert({
     user_id: user.id,
     source: "photo",
+    certeza: "exacta",
     photo_path: photoPath,
     attrs: {
       nombre: attrs.nombre,
@@ -289,6 +290,10 @@ export async function addArchetypes(
     toInsert.map((a) => ({
       user_id: user.id,
       source: "archetype",
+      // GENERICA y no "asumida": eligió ESTA prenda del catálogo a propósito,
+      // así que el tipo sí es suyo. Lo que sigue siendo del arquetipo son los
+      // detalles finos (corte, largo), y por eso tampoco es "exacta".
+      certeza: "generica",
       archetype_id: a.id,
       attrs: {
         nombre: a.name,
@@ -335,6 +340,8 @@ export async function addPhotoItems(
     clean.map((it) => ({
       user_id: user.id,
       source: "photo",
+      // Su foto, leída por la visión: dato duro.
+      certeza: "exacta",
       attrs: {
         nombre: it.attrs.nombre,
         categoria: it.attrs.categoria,

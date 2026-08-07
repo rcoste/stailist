@@ -48,6 +48,10 @@ export async function saveCloset(
       archetypes.map((a) => ({
         user_id: user.id,
         source: "archetype",
+        // ASUMIDA: marcó "tengo algo así" en el checklist. Sabemos que tiene
+        // una prenda de esa familia y NADA más — el corte y el largo que el
+        // catálogo trae son del arquetipo, no de la suya.
+        certeza: "asumida",
         archetype_id: a.id,
         // image_path entra a attrs para mostrar la prenda en los outfits sin
         // join. Cuando suba foto propia, este campo apuntará a su foto.

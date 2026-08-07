@@ -196,6 +196,7 @@ export async function moveWishlistItemToCloset(
   const { error: insErr } = await supabase.from("items").insert({
     user_id: user.id,
     source: "photo",
+    certeza: "exacta",
     photo_path: imagePath,
     attrs: { ...attrs, nombre: (row.name as string | null) ?? attrs.nombre },
   });

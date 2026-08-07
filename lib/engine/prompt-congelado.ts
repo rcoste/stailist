@@ -23,6 +23,13 @@ import type { GeneratedOutfit } from "./generate";
 //   lo que se compara es el PROMPT, y dejar el resto igual es lo que hace la
 //   comparación limpia. Si además se quisiera congelar el juez, sería otra cosa
 //   y habría que decirlo.
+// - ESTO CORRE **SOLO EL GENERADOR**, no el pipeline completo: no pasa por el
+//   critic ni por la reparación en código. Lo descubrió la primera comparación
+//   real (v48 contra v49): el `wow` salió 2.30 y 2.40 contra los ~3.0 del eval,
+//   porque el TIP lo produce el juez y aquí no hay juez. Como el recorte afecta
+//   IGUAL a las dos versiones, la comparación pareada sigue siendo válida —
+//   pero los niveles ABSOLUTOS de aquí no se pueden leer junto a los del eval.
+//   Para el nivel absoluto está el eval; esto sirve para "A contra B".
 
 export type PromptCongelado = {
   version: string;
