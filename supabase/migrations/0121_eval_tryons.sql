@@ -1,0 +1,12 @@
+-- El render ("así te queda") dentro del calibrador.
+--
+-- Roberto, calibrando: "sin el render no estoy seguro". Tiene razón y es la
+-- misma razón por la que el comparador lo tiene: la cuadrícula de prendas mide
+-- la COMPOSICIÓN (que es lo que el motor decide) pero hay looks donde el juicio
+-- necesita ver el conjunto puesto.
+--
+-- Se cachea por brief e índice de look — {"0": "<path>", "1": "<path>"} — para
+-- no volver a pagar ~$0.13 y 16s cada vez que se abre la misma corrida. Va bajo
+-- demanda y nunca automático: renderear los 40 looks de una corrida costaría
+-- más que la corrida entera.
+alter table public.eval_briefs add column if not exists tryons jsonb;

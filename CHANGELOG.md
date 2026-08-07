@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.135.0] - 2026-08-07
+
+### Added — el "por qué no" al marcar 👎
+
+Roberto, calibrando: *"si pongo 'no', que me puedas dar un input box de por qué no"*. Ahora el 👎 **se detiene y pregunta**; el 👍 avanza solo.
+
+Es el dato más valioso de toda la calibración: un 👎 sin motivo dice que algo falló, **con motivo dice QUÉ** — y eso es lo que se convierte en regla. La caja lo dice explícitamente: *"para funeral debe ser traje negro, no marino" sirve; "no me gusta" no*.
+
+`⌘↵` guarda y sigue. Hay salida sin motivo, para no convertir la fatiga en abandono. Y en el revelado los motivos salen agrupados como **"candidatos a regla"**, separados de los desacuerdos con los jueces.
+
+### Added — el render dentro del calibrador
+
+Roberto: *"sin el render no estoy seguro"*. Botón **"ver cómo queda puesto"** (tecla `R`), bajo demanda y cacheado en `eval_briefs.tryons`.
+
+**Nunca automático**: cuesta ~$0.13 y ~15s por look, así que renderear los 40 de una corrida costaría más que la corrida entera. Y va **después** de la cuadrícula a propósito — la cuadrícula mide la composición, que es lo que el motor decide; el render lo interpreta un modelo de imagen que alucina.
+
+Usa `lib/tryon.ts`, el mismo núcleo que producción. La guarda del avatar quedó verificada en vivo: pedirlo desde la sesión de otro admin devuelve `closet_ajeno` en vez de renderear con la cara equivocada.
+
+### Changed — el funeral pide NEGRO, y el marino queda descartado
+
+Roberto, sobre un look real de la corrida: *"era un traje azul marino. Para funeral debe ser traje negro; sería menos peor una camisa blanca, pantalón negro y un suéter gris oscuro — se ve mejor, pero no azul."*
+
+En México el luto es negro y **el marino se lee como oficina**. La regla entra completa, incluida su salida: si el clóset no da un traje negro, es mejor armar **piezas sueltas oscuras** que sacar un traje marino entero — *el conjunto correcto en el color equivocado se nota más que el conjunto suelto en el color correcto*.
+
 ## [0.2.134.0] - 2026-08-07
 
 ### Changed — el calibrador, rediseñado para que calificar sea rápido y ciego
