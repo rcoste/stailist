@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PerfilTabs } from "@/components/perfil-tabs";
 import { nameFromEmail } from "@/lib/pasaporte";
 import { buildLabel, volumeLabel } from "@/lib/silueta";
+import { dressCodePorClave, ropaDeDressCode } from "@/lib/dress-code";
 import { seasonPalette, seasonDisplayLabel, metalForSeason } from "@/lib/colorimetria";
 import { signOut } from "./actions";
 import { resendParentConsent } from "./consentimiento-actions";
@@ -78,6 +79,10 @@ export default async function PerfilPage() {
     sub: subParts.length > 0 ? subParts.join(" · ") : null,
     swatches: (pal?.mejores ?? []).slice(0, 5).map((c) => c.hex),
   };
+
+  // Cómo se viste para trabajar, con el ancla concreta de su género.
+  const dc = dressCodePorClave(profile.work_dress_code);
+  const dressCodeLabel = dc ? ropaDeDressCode(dc, profile.gender) : null;
 
   const siluetaLabel =
     profile.body_build || profile.body_volume
@@ -165,6 +170,7 @@ export default async function PerfilPage() {
         gender={profile.gender}
         styleVetoes={profile.style_vetoes}
         siluetaLabel={siluetaLabel}
+        dressCodeLabel={dressCodeLabel}
         banner={banner}
         styleReference={styleReference}
         styleWords={profile.style_words}

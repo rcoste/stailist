@@ -167,6 +167,7 @@ export function LookRequest({
   defaultSeedItemId = null,
   gender = null,
   workDressCode = null,
+  desdeElQuiz = null,
 }: {
   title?: string;
   defaultObjective: string | null;
@@ -184,6 +185,8 @@ export function LookRequest({
   gender?: "hombre" | "mujer" | null;
   /** El que ya tiene guardado. null = nunca se le ha preguntado. */
   workDressCode?: string | null;
+  /** Lo que dijo en el quiz de vida ("oficina creativa o casual"), para el puente. */
+  desdeElQuiz?: string | null;
 }) {
   // "viaje" (la opción "Aeropuerto" del onboarding) NO es una ocasión del wizard; se
   // trata como "diario" (look cómodo del día) para NO re-preguntar la ocasión al armar
@@ -376,6 +379,7 @@ export function LookRequest({
                   pideDressCode={pideDressCode}
                   dressCode={dressCode}
                   onDressCode={setDressCode}
+                  desdeElQuiz={desdeElQuiz}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
                   onFormality={setFormality}
@@ -460,6 +464,7 @@ function StepOcasion({
   pideDressCode,
   dressCode,
   onDressCode,
+  desdeElQuiz,
   onPick,
   onOpenText,
   onFormality,
@@ -471,6 +476,7 @@ function StepOcasion({
   pideDressCode: boolean;
   dressCode: string | null;
   onDressCode: (d: string) => void;
+  desdeElQuiz: string | null;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
   onFormality: (f: string) => void;
@@ -563,7 +569,15 @@ function StepOcasion({
             ¿cómo te vistes para trabajar?
           </span>
           <span className="-mt-1.5 text-[12px] text-muted">
-            te lo pregunto una vez y lo recuerdo
+            {/* El puente con lo que YA contestó en el quiz de estilo de vida.
+                Sin él la pregunta se siente repetida y con razón: allá dijo
+                "oficina creativa o casual" y aquí se le vuelve a preguntar por
+                el trabajo. La diferencia es real —aquella describe la FORMA de
+                su semana y esta el REGISTRO de su ropa— pero si no se dice,
+                nadie la ve. */}
+            {desdeElQuiz
+              ? `dijiste que tu día es ${desdeElQuiz} — esto es qué significa en ropa`
+              : "te lo pregunto una vez y lo recuerdo"}
           </span>
           <div className="flex flex-col gap-2">
             {WORK_DRESS_CODES.map((d) => {

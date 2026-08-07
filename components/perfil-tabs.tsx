@@ -32,6 +32,7 @@ export type PerfilTabsProps = {
   gender: Gender | null;
   styleVetoes: StyleVetoes;
   siluetaLabel: string | null; // "Promedio · Parejo" o null si no hay
+  dressCodeLabel: string | null; // "camisa o polo, sin saco" o null si no lo ha dicho
   styleReference: StyleRef | null; // estilo de referencia (foto de inspiración)
   styleWords: string | null; // su estilo en sus palabras (texto libre)
   tieneCapsula: boolean; // para avisar que cambiar el estilo la deja vieja
@@ -205,6 +206,7 @@ function EstiloTab({
   tasteTags,
   gender,
   siluetaLabel,
+  dressCodeLabel,
   banner,
   styleReference,
   styleWords,
@@ -311,6 +313,25 @@ function EstiloTab({
             <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
           </Link>
         ) : null}
+
+        {/* El código de vestimenta del trabajo. La pregunta del wizard se hace
+            UNA vez, así que sin esta fila una respuesta equivocada era
+            permanente — y quien nunca eligió "trabajo" no tenía forma de
+            darlo. */}
+        <Link
+          href="/perfil/trabajo"
+          className="flex items-center gap-3 border-t border-line p-4 transition-colors hover:bg-bg"
+        >
+          <div className="flex min-w-0 flex-col">
+            <span className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+              Cómo te vistes para trabajar
+            </span>
+            <span className="text-sm font-medium text-ink">
+              {dressCodeLabel ?? "cuéntame de tu chamba"}
+            </span>
+          </div>
+          <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
+        </Link>
       </div>
 
       {/* UNA sola card de "cuál es tu estilo": las fotos mandan y el texto libre

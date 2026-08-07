@@ -60,6 +60,7 @@ export function HoyClient({
   defaultObjective,
   gender,
   workDressCode,
+  desdeElQuiz,
   closet = [],
   autoAsk = false,
   homeCard = null,
@@ -78,6 +79,8 @@ export function HoyClient({
   gender: "hombre" | "mujer" | null;
   /** Su código de vestimenta del trabajo; null = nunca se le ha preguntado. */
   workDressCode: string | null;
+  /** Lo que dijo del trabajo en el quiz de vida, para el puente de la pregunta. */
+  desdeElQuiz: string | null;
   /** Clóset para el picker de ancla del wizard ("¿algo que te quieras poner hoy?"). */
   closet?: ClosetPick[];
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
@@ -281,6 +284,7 @@ export function HoyClient({
         defaultObjective={defaultObjective}
         gender={gender}
         workDressCode={workDressCode}
+        desdeElQuiz={desdeElQuiz}
         closet={closet}
         defaultSeedItemId={seedFromCard}
         onPick={(input) => {

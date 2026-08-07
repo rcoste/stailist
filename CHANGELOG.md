@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.124.1] - 2026-08-07
+
+### Added
+
+- **El código de vestimenta del trabajo, editable en Perfil** (`/perfil/trabajo`). Lo cachó Roberto antes de lanzar el veredicto: *"¿no debería yo antes en mi perfil contestar la info de trabajo para probar la calibración y así poder correr las pruebas bien?"*. Tenía razón por partida doble — **el comparador corre sobre el perfil de quien califica**, así que sin el dato los briefs de trabajo se generan sin calibrar y no prueban nada; y la pregunta del wizard se hace **una sola vez**, así que contestar mal era permanente y quien nunca eligiera "trabajo" no tenía forma de darlo.
+
+### Fixed
+
+- **La pregunta se sentía repetida, y con razón.** El quiz de estilo de vida ya pregunta *"¿cómo son tus días entre semana?"* con "Oficina formal / Oficina creativa o casual". Son cosas distintas —aquella describe la **forma** de la semana (multi: oficina, remoto, estudio) y alimenta la cápsula; esta el **registro** de la ropa y alimenta el piso de formalidad— pero si no se dice, nadie lo nota. Ahora las dos pantallas tienden el puente: *"Me dijiste que tu día es oficina creativa o casual — esto es lo que me falta: qué significa eso en ropa"*.
+
+  Es justo la distinción que le faltaba a Roberto para poder calificar: *"oficina creativa o casual"* no dice si eso es camisa sin saco o jeans y camiseta.
+
 ## [0.2.124.0] - 2026-08-06
 
 Última pieza de calibración antes del veredicto nuevo. Idea de Roberto: *"para desbloquear el modo de oficina el usuario debería de responder algunas preguntas de calibración"*.
