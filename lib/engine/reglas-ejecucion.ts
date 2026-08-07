@@ -269,9 +269,26 @@ export function revisarEjecucion(
     if (camisa && camisaRgb && Math.min(...camisaRgb) < 200) {
       falta.push(`la camisa ("${nombre(camisa)}") tiene que ser blanca`);
     }
+    const esMono = (i: EngineItem) => /mo[nñ]o|pajarita|bow/.test(TIPO(i));
     const corbata = items.find((i) => /corbata/.test(TIPO(i)));
-    if (corbata && !/mo[nñ]o|pajarita|bow/.test(TIPO(corbata))) {
+    if (corbata && !esMono(corbata)) {
       falta.push(`con smoking va moño, no corbata ("${nombre(corbata)}")`);
+    }
+    // FALTA el moño, no solo "trae la corbata equivocada". Roberto lo marcó en
+    // los DOS looks de esmoquin de la corrida de verificación —incluido el que
+    // aprobó— y la regla no lo veía: solo miraba una corbata presente. Un
+    // esmoquin con el cuello desnudo no es una versión relajada, es incompleto.
+    if (!corbata && !items.some(esMono)) {
+      falta.push("le falta el moño — un smoking sin moño queda incompleto");
+    }
+    // El cinturón. El pantalón de smoking no lleva trabillas: va con faja o
+    // tirantes, o con nada. Roberto marcó 👎 el esmoquin CON cinturón y 👍 el
+    // mismo esmoquin sin él — la única diferencia entre los dos looks.
+    const cinturon = items.find((i) => /cintur[oó]n/.test(TIPO(i)));
+    if (cinturon) {
+      falta.push(
+        `sobra el cinturón ("${nombre(cinturon)}") — el pantalón de smoking no lleva trabillas: va con faja, tirantes o nada`
+      );
     }
     if (falta.length) {
       v.push({

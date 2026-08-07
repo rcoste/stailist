@@ -39,7 +39,7 @@ import { queSePoneA } from "./prompt";
 // r2 → r3: el estándar de lluvia se afinó con la corrida de verificación (el
 // mocasín de piel se colaba). La rúbrica lo sigue: si el juez calificara con
 // una vara distinta a la que el motor recibe, mediría otra cosa.
-export const RUBRICA_VERSION = "r3";
+export const RUBRICA_VERSION = "r4";
 
 /** El mismo contexto que recibió el motor. Un juez que califica "evento" a
  * secas tendría el mismo problema que Roberto votando: "evento es algo muy
@@ -85,9 +85,11 @@ export type NotaRubrica = {
 
 const FORMALIDAD: Record<string, string> = {
   casual: "casual (relajado pero cuidado)",
-  semiformal: "semiformal (coctel / business elevado)",
-  formal: "formal",
-  gala: "de gala / etiqueta",
+  semiformal: "semiformal / coctel (saco sí, corbata opcional)",
+  formal:
+    "formal — traje y corbata. En México esto NO es esmoquin: traje oscuro, camisa lisa y corbata. Un esmoquin aquí está SOBREVESTIDO",
+  gala:
+    "etiqueta rigurosa / black tie — aquí sí va el esmoquin, con moño, camisa blanca y sin cinturón",
 };
 
 /** El brief como lo lee el juez. Pura y exportada para poder probarla. */

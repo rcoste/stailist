@@ -54,11 +54,16 @@ const OCASION_KEYS = new Set(OCASIONES.map((o) => o.key));
 
 // "Un evento" es ambiguo (de un coctel casual a una boda de etiqueta) y el motor
 // adivinaba mal. Al elegir evento pedimos el nivel de formalidad para acertar.
-const FORMALIDAD: { key: string; label: string }[] = [
-  { key: "casual", label: "casual" },
-  { key: "semiformal", label: "semiformal" },
-  { key: "formal", label: "formal" },
-  { key: "gala", label: "de gala" },
+// Las palabras que trae la INVITACIÓN, no una escala abstracta. Roberto:
+// "cuál es el código de vestimenta, normalmente la invitación lo dice". Y hace
+// falta la distinción porque "formal" a secas mandaba al motor al esmoquin —
+// en México una boda formal es traje y corbata; el esmoquin es de etiqueta
+// rigurosa. La clave NO cambia (se guarda en outfits): solo la etiqueta.
+const FORMALIDAD: { key: string; label: string; ayuda: string }[] = [
+  { key: "casual", label: "casual", ayuda: "sin saco" },
+  { key: "semiformal", label: "semiformal", ayuda: "coctel, saco sí" },
+  { key: "formal", label: "formal", ayuda: "traje y corbata" },
+  { key: "gala", label: "etiqueta rigurosa", ayuda: "esmoquin" },
 ];
 
 // 5 bandas de temperatura (mismas de modo Viaje — set canónico, no inventar).
@@ -425,13 +430,18 @@ function StepOcasion({
                   type="button"
                   onClick={() => onFormality(f.key)}
                   aria-pressed={on}
-                  className={`rounded-sm border px-3.5 py-2 text-[14px] font-semibold transition-colors ${
+                  className={`flex flex-col items-start rounded-sm border px-3.5 py-2 text-left transition-colors ${
                     on
                       ? "border-accent bg-accent text-on-accent"
                       : "border-line bg-surface text-ink hover:border-ink"
                   }`}
                 >
-                  {f.label}
+                  <span className="text-[14px] font-semibold">{f.label}</span>
+                  <span
+                    className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
+                  >
+                    {f.ayuda}
+                  </span>
                 </button>
               );
             })}

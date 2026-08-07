@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.123.0] - 2026-08-06
+
+De la corrida de verificación: los **dos** motores fallaron idénticamente en el brief nuevo de boda, y los comentarios de Roberto fueron quirúrgicos.
+
+### Fixed
+
+- **"Formal" mandaba al motor al esmoquin.** Los dos motores sacaron esmoquin para "boda formal de noche"; Roberto: *"en una boda mexicana formal jamás iría alguien así vestido… la gente va de traje y corbata"*. Es **el mismo hueco que el clima**: una suposición cultural que nunca se escribió. Ahora las etiquetas usan **el vocabulario de la invitación** — `formal` = traje y corbata (y prohíbe explícitamente el esmoquin), `etiqueta rigurosa` = esmoquin con su código completo. La clave guardada no cambia; sí la etiqueta, la ayuda en pantalla y lo que recibe el motor (**v41**) y la rúbrica (**r4**).
+- **La regla del smoking tenía dos huecos, y son exactamente los dos comentarios de Roberto.** No miraba el **cinturón** (*"Smoking no lleva cinturón"* — era la única diferencia entre el esmoquin que aprobó y el que rechazó) y solo cazaba "corbata que no es moño", nunca "sin nada al cuello" (*"falta moño de Smoking"*, que marcó **incluso en el look que aprobó**). Las dos ahora se comprueban.
+
+### Notes
+
+Los votos de Roberto dan el estándar completo, y no es "esmoquin vs traje": traje marino + corbata → 👍 los dos motores · esmoquin sin cinturón → 👍 (*"falta moño"*) · esmoquin **con** cinturón → 👎 · blazer con cuello tortuga o camisa negra → 👎 los dos.
+
 ## [0.2.122.2] - 2026-08-06
 
 De Roberto votando la corrida de verificación: abrió la pestaña "Look 3" y un lado estaba vacío, sin explicación.
