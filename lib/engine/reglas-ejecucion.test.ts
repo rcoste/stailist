@@ -739,3 +739,91 @@ describe("lluvia: el tenis de MALLA se veta, el de piel no", () => {
     expect(enLluvia([calzado("Tenis de piel negros", "piel")])).toBeUndefined();
   });
 });
+
+// Las dos reglas que salieron de la calibración de v47 por Roberto. Sus cuatro
+// 👎 los cazó el juez de texto (3) y el visual (2) — el CÓDIGO cazó cero, y
+// tres de los cuatro eran de clima, que es justo lo comprobable.
+describe("blazer-no-es-abrigo", () => {
+  const p_ = (nombre: string, extra: Record<string, unknown> = {}) =>
+    ({ id: nombre, attrs: { nombre, tipo: nombre, color_hex: "#333333", ...extra } }) as never;
+
+  const CAMISA = p_("Camisa blanca", { categoria: "top", color_hex: "#FFFFFF" });
+  const PANT = p_("Pantalón de vestir gris", { categoria: "bottom" });
+  const BLAZER = p_("Blazer marino", { categoria: "saco", material: "lana" });
+  const ABRIGO = p_("Abrigo charcoal", { categoria: "abrigo", material: "lana" });
+  const SUETER = p_("Suéter de lana negro", { categoria: "top" });
+
+  const enFrio = (its: unknown[], closet: unknown[]) =>
+    revisarEjecucion(its as never, { clima: "frio", closet: closet as never, gender: "hombre" }).find(
+      (v) => v.regla === "blazer-no-es-abrigo"
+    );
+
+  it("el blazer SOLO a 8°C no abriga — el caso real que Roberto marcó", () => {
+    const closet = [CAMISA, PANT, BLAZER, ABRIGO, SUETER];
+    expect(enFrio([CAMISA, PANT, BLAZER], closet)).toBeDefined();
+  });
+
+  it("con un ABRIGO encima, pasa", () => {
+    const closet = [CAMISA, PANT, BLAZER, ABRIGO];
+    expect(enFrio([CAMISA, PANT, BLAZER, ABRIGO], closet)).toBeUndefined();
+  });
+
+  it("con una capa de PUNTO debajo, también pasa — la otra salida que él nombró", () => {
+    const closet = [CAMISA, PANT, BLAZER, SUETER];
+    expect(enFrio([CAMISA, PANT, BLAZER, SUETER], closet)).toBeUndefined();
+  });
+
+  it("sin abrigo NI punto en el clóset se calla: es carencia, no fallo", () => {
+    const closet = [CAMISA, PANT, BLAZER];
+    expect(enFrio([CAMISA, PANT, BLAZER], closet)).toBeUndefined();
+  });
+});
+
+describe("lana-en-calor", () => {
+  const p_ = (nombre: string, extra: Record<string, unknown> = {}) =>
+    ({ id: nombre, attrs: { nombre, tipo: nombre, color_hex: "#888888", ...extra } }) as never;
+
+  const LINO = p_("Camisa de lino blanca", { categoria: "top", material: "lino", color_hex: "#FAFAF7" });
+  const LANA = p_("Pantalón de vestir gris", { categoria: "bottom", material: "lana" });
+  const ALGODON = p_("Chinos beige", { categoria: "bottom", material: "algodón" });
+
+  const enCalor = (its: unknown[], closet: unknown[]) =>
+    revisarEjecucion(its as never, { clima: "calor", closet: closet as never }).find(
+      (v) => v.regla === "lana-en-calor"
+    );
+
+  it("el pantalón de lana a 29°C se marca — el caso real de la corrida", () => {
+    expect(enCalor([LINO, LANA], [LINO, LANA, ALGODON])).toBeDefined();
+  });
+
+  it("la LANA FRÍA no cuenta: existe justo para el verano", () => {
+    // Sin esta excepción la regla marcaría el traje de verano correcto.
+    const tropical = p_("Pantalón de lana fría", { categoria: "bottom", material: "lana fría" });
+    expect(enCalor([LINO, tropical], [LINO, tropical, ALGODON])).toBeUndefined();
+  });
+
+  it("sin alternativa en el clóset se calla", () => {
+    expect(enCalor([LINO, LANA], [LINO, LANA])).toBeUndefined();
+  });
+});
+
+describe("blazer-no-es-abrigo: la CATEGORÍA manda sobre el nombre", () => {
+  it("un 'Blazer de lana' con categoría abrigo SÍ abriga — el falso positivo real", () => {
+    // El catálogo trae "Blazer marrón de lana" con categoría "abrigo": es una
+    // pieza pesada que hace de capa exterior. La primera versión de la regla lo
+    // juzgó por el nombre y marcó un look que Roberto había APROBADO.
+    const p_ = (nombre: string, extra: Record<string, unknown> = {}) =>
+      ({ id: nombre, attrs: { nombre, tipo: nombre, color_hex: "#5C4433", ...extra } }) as never;
+    const items = [
+      p_("Camisa oxford blanca", { categoria: "top", color_hex: "#FFFFFF" }),
+      p_("Pantalón de vestir marino", { categoria: "bottom", material: "lana" }),
+      p_("Blazer marrón de lana", { categoria: "abrigo", material: "lana" }),
+    ];
+    const v = revisarEjecucion(items as never, {
+      clima: "frio",
+      closet: [...items, p_("Abrigo charcoal", { categoria: "abrigo" })] as never,
+      gender: "hombre",
+    });
+    expect(v.find((x) => x.regla === "blazer-no-es-abrigo")).toBeUndefined();
+  });
+});

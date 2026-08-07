@@ -360,6 +360,84 @@ export function revisarEjecucion(
     }
   }
 
+  // 5b. UN BLAZER NO ES UN ABRIGO. La regla #5 se conforma con que haya
+  //     CUALQUIER pieza de zona "capa", y el blazer lo es — así que un saco de
+  //     lana a 8°C pasaba como si abrigara. Roberto lo cazó calibrando v47:
+  //     "para hacer frío ahí falta una capa; que tuviera un abrigo encima del
+  //     blazer, o un crew neck entre la camisa y el blazer".
+  //
+  //     La salida son las DOS que él nombró: un abrigo de verdad encima, o una
+  //     capa de punto debajo. Con cualquiera de las dos, el look aguanta.
+  if (ctx.clima === "frio" && ctx.closet?.length) {
+    const SOLO_SASTRE = /blazer|saco|americana|chaleco/;
+    const ABRIGA_DE_VERDAD = /abrigo|gab(a|á)rdina|parka|puffer|acolchad|plumas|trench|anorak|chamarra|cazadora|chaqueta/;
+    // La CATEGORÍA manda sobre el nombre. Un "Blazer marrón de lana" del
+    // catálogo viene con categoría "abrigo" —es una pieza pesada que sí hace de
+    // capa exterior— y juzgarlo por su nombre lo tiraba: la primera versión de
+    // esta regla marcó ese look, que Roberto había aprobado. El nombre es una
+    // heurística; la categoría es un dato.
+    const esSastreLigero = (i: EngineItem) =>
+      SOLO_SASTRE.test(TIPO(i)) &&
+      (i.attrs.categoria ?? "").toLowerCase() !== "abrigo";
+    const capas = items.filter((i) => tipoDePrenda(nombre(i))?.zona === "capa");
+    const soloSastre =
+      capas.length > 0 &&
+      capas.every(esSastreLigero) &&
+      !capas.some((i) => ABRIGA_DE_VERDAD.test(TIPO(i)));
+    // El punto debajo salva el look: es la otra salida que Roberto nombró.
+    const conPunto = items.some((i) =>
+      /su[eé]ter|sweater|jersey|punto|knit|cardigan|c[aá]rdigan|cuello (alto|tortuga)|turtleneck/.test(
+        TIPO(i)
+      )
+    );
+    if (soloSastre && !conPunto) {
+      const abrigos = ctx.closet.filter((i) => ABRIGA_DE_VERDAD.test(TIPO(i)));
+      const puntos = ctx.closet.filter((i) =>
+        /su[eé]ter|sweater|jersey|punto|knit|cardigan|c[aá]rdigan/.test(TIPO(i))
+      );
+      // Sin nada con qué arreglarlo es carencia, no fallo: se calla, igual que #5.
+      if (abrigos.length || puntos.length) {
+        v.push({
+          regla: "blazer-no-es-abrigo",
+          detalle: `A esta temperatura "${nombre(capas[0])}" no abriga por sí solo: un saco es sastrería, no una capa de frío. Súmale ${
+            abrigos.length ? `un abrigo encima (${abrigos.slice(0, 2).map(nombre).join(" o ")})` : ""
+          }${abrigos.length && puntos.length ? ", o " : ""}${
+            puntos.length ? `una capa de punto debajo (${puntos.slice(0, 2).map(nombre).join(" o ")})` : ""
+          }.`,
+        });
+      }
+    }
+  }
+
+  // 5c. LANA EN CALOR. El prompt lo pide desde v4 ("nada de lana ni tejidos
+  //     pesados en calor") y aun así apareció un pantalón de lana a 29°C
+  //     soleado. Roberto: "está muy, muy, muy caluroso; la lana es muy calurosa
+  //     para soleado". Es el patrón de siempre: lo que el prompt pide y no se
+  //     cumple, se comprueba.
+  if (ctx.clima === "calor" && ctx.closet?.length) {
+    const DE_INVIERNO = /lana|tweed|pana|terciopelo|cachemir|cashmere|franela|shearling|borrega/;
+    // La lana FRÍA (tropical, fresco lana) existe justo para el verano: no
+    // cuenta. Sin esta excepción la regla marcaría el traje de verano correcto.
+    const esDeInvierno = (i: EngineItem) => {
+      const t = `${norm(i.attrs.material)} ${TIPO(i)}`;
+      if (/lana fr[ií]a|tropical|fresco lana|lana ligera/.test(t)) return false;
+      return DE_INVIERNO.test(t);
+    };
+    const pesadas = items.filter(esDeInvierno);
+    if (pesadas.length) {
+      const puestas = new Set(items.map((i) => i.id));
+      const alternativas = ctx.closet.filter((i) => !puestas.has(i.id) && !esDeInvierno(i));
+      if (alternativas.length) {
+        v.push({
+          regla: "lana-en-calor",
+          detalle: `Hace calor y el look lleva ${pesadas
+            .map((i) => `"${nombre(i)}"`)
+            .join(", ")} — lana y tejidos de invierno dan calor aunque el color sea claro. Cámbialo por algo de algodón, lino o mezcla ligera del clóset.`,
+        });
+      }
+    }
+  }
+
   // 6. LLUVIA Y EL CALZADO. Es el fallo más marcado del veredicto: 4 de los 6
   //    defectos de clima de toda la corrida cayeron en el brief de lluvia, y
   //    los DOS motores fallaron ahí (Gemini 3, producción 1). Que el prompt

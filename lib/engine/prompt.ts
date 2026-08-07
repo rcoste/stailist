@@ -236,6 +236,12 @@ import {
 // v40-v43: dress code del trabajo (los cuatro registros de "oficina", con el
 // "depende del día" que pregunta si hoy ve cliente), paraguas, y la formalidad
 // dicha en ropa en vez de en jerga.
+// v48 (2026-08-07): dos reglas de clima que faltaban, las dos de la calibración
+// de v47 por Roberto. (a) UN BLAZER NO ES UN ABRIGO: la regla del frío se
+// conformaba con cualquier pieza de zona "capa" y el blazer lo es, así que un
+// saco de lana a 8°C pasaba como si abrigara. (b) LANA EN CALOR: el prompt lo
+// pedía desde v4 y aun así salió un pantalón de lana a 29°C soleado — lo que el
+// prompt pide y no se cumple, se comprueba.
 // v47 (2026-08-07): PRIMERO EL CÓDIGO, DESPUÉS EL JUEZ. La idea es de Roberto:
 // "muchas de las cosas que fallaban era nada más ay, te faltó esto. Es como
 // decir te faltó ponerte calzones — no es que tengas que cambiarte toda la ropa".
@@ -281,7 +287,7 @@ import {
 // que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
 // escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
 // una comida, cena, cita, boda— y sobre eso vamos afinando más".
-export const PROMPT_VERSION = "v47";
+export const PROMPT_VERSION = "v48";
 
 export type EngineItem = {
   id: string;
