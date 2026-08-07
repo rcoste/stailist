@@ -3,6 +3,7 @@ import {
   VARIANTES_MOTOR,
   variantePorClave,
   briefsPara,
+  peticionDeBrief,
   nRepetidos,
   ladoInvertido,
   ordenDelPar,
@@ -486,5 +487,36 @@ describe("looks entregados por par", () => {
     expect(a.looksTotales / a.ladosConLooks).toBe(3);
     expect(b.looksTotales / b.ladosConLooks).toBe(2);
     expect(b.errores).toBe(1);
+  });
+});
+
+describe("los briefs de trabajo dicen si ve cliente", () => {
+  // Con el código "depende del día" el registro cambia por el día. Sin el flag
+  // explícito en el brief, un clóset de código variable correría TODOS los
+  // briefs de trabajo en modo cubrirse-en-medio: mediríamos el hedge, no el
+  // criterio.
+  const pool = briefsPara("veredicto", 13);
+  const trabajo = pool.filter((b) => b.objective === "oficina");
+
+  it("todos los briefs de trabajo lo declaran, ninguno lo deja al azar", () => {
+    expect(trabajo.length).toBeGreaterThan(1);
+    for (const b of trabajo) {
+      expect(typeof b.veCliente, b.etiqueta).toBe("boolean");
+    }
+  });
+
+  it("hay un PAR ESPEJO: mismo clima, y lo único que cambia es el cliente", () => {
+    // Es el que mide directo si el motor distingue. Un motor que arme lo mismo
+    // en los dos falló, y ese fallo no se veía en ningún lado.
+    const templados = trabajo.filter((b) => b.weather?.temp_c === 18);
+    expect(templados).toHaveLength(2);
+    expect(new Set(templados.map((b) => b.veCliente))).toEqual(new Set([true, false]));
+  });
+
+  it("peticionDeBrief lo traduce, y la ausencia es null (no un 'no' inventado)", () => {
+    const conCliente = trabajo.find((b) => b.veCliente === true)!;
+    expect(peticionDeBrief(conCliente).veCliente).toBe(true);
+    const diario = pool.find((b) => b.objective === "diario")!;
+    expect(peticionDeBrief(diario).veCliente).toBeNull();
   });
 });

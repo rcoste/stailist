@@ -103,6 +103,7 @@ export function peticionDeBrief(brief: BriefMotor): {
   plan: string | null;
   formality: string | null;
   paraguas: boolean;
+  veCliente: boolean | null;
 } {
   return {
     objective: brief.objective,
@@ -111,6 +112,9 @@ export function peticionDeBrief(brief: BriefMotor): {
     plan: brief.plan ?? null,
     formality: brief.formality ?? null,
     paraguas: brief.paraguas === true,
+    // null (no false) cuando el brief no lo dice: false significaría "hoy no ve
+    // cliente" y eso es una afirmación, no la ausencia de una.
+    veCliente: typeof brief.veCliente === "boolean" ? brief.veCliente : null,
   };
 }
 
@@ -141,6 +145,13 @@ export type BriefMotor = {
    * el paraguas tapa el torso pero no los pies.
    */
   paraguas?: boolean;
+  /**
+   * Si ese día ve cliente. Solo pesa cuando el código de trabajo del clóset es
+   * "variable" — con los otros tres el registro no cambia por el día. Sin él,
+   * un dueño de clóset "variable" haría que TODOS los briefs de trabajo
+   * corrieran en modo cubrirse-en-medio, midiendo el hedge en vez del criterio.
+   */
+  veCliente?: boolean;
 };
 
 const CLIMAS = {
@@ -169,8 +180,15 @@ const CLIMAS = {
  * ese segundo caso mide la sobre-aplicación de la regla, que hasta hoy no se
  * medía. Salió del veredicto de Gemini: 4 de sus 6 defectos de clima fueron
  * lluvia, y producción también falló ahí.
+ *
+ * v3 → v4 (2026-08-07): el trabajo se parte igual que la lluvia. Con el código
+ * "depende del día" el registro cambia por el día, así que los briefs llevan
+ * `veCliente` explícito — sin él, un clóset de código variable correría TODOS
+ * los briefs de trabajo en modo cubrirse-en-medio y mediríamos el hedge, no el
+ * criterio. Y entra un PAR ESPEJO a mismo clima (templado con cliente / sin
+ * cliente): solo cambia el flag, así que mide directo si el motor distingue.
  */
-export const POOL_VERSION = "v3";
+export const POOL_VERSION = "v4";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -194,7 +212,13 @@ export const POOL_VERSION = "v3";
  */
 const POOL_BRIEFS: BriefMotor[] = [
   { etiqueta: "diario · templado", objective: "diario", momento: "dia", weather: CLIMAS.templado },
-  { etiqueta: "oficina · templado", objective: "oficina", momento: "dia", weather: CLIMAS.templado },
+  {
+    etiqueta: "trabajo · templado, día normal",
+    objective: "oficina",
+    momento: "dia",
+    weather: CLIMAS.templado,
+    veCliente: false,
+  },
   {
     etiqueta: "boda · noche templada",
     objective: "evento",
@@ -204,7 +228,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     formality: "formal",
   },
   { etiqueta: "diario · frío", objective: "diario", momento: "dia", weather: CLIMAS.frio },
-  { etiqueta: "oficina · calor", objective: "oficina", momento: "dia", weather: CLIMAS.calor },
+  { etiqueta: "trabajo · calor, día normal", objective: "oficina", momento: "dia", weather: CLIMAS.calor, veCliente: false },
   {
     etiqueta: "diario · lluvia sin paraguas",
     objective: "diario",
@@ -221,8 +245,18 @@ const POOL_BRIEFS: BriefMotor[] = [
     formality: "casual",
   },
   { etiqueta: "diario · calor", objective: "diario", momento: "dia", weather: CLIMAS.calor },
-  { etiqueta: "oficina · frío", objective: "oficina", momento: "dia", weather: CLIMAS.frio },
+  { etiqueta: "trabajo · frío, con cliente", objective: "oficina", momento: "dia", weather: CLIMAS.frio, veCliente: true },
   { etiqueta: "aeropuerto · templado", objective: "viaje", momento: "dia", weather: CLIMAS.templado },
+  {
+    // EL ESPEJO DEL TRABAJO: mismo clima que "trabajo · templado, día normal",
+    // y lo ÚNICO que cambia es que hoy ve cliente. Un motor que arme lo mismo
+    // en los dos falló — y ese fallo no se veía en ningún lado hasta ahora.
+    etiqueta: "trabajo · templado, con cliente",
+    objective: "oficina",
+    momento: "dia",
+    weather: CLIMAS.templado,
+    veCliente: true,
+  },
   {
     // El caso que mide la SOBRE-aplicación: con paraguas, la capa de arriba se
     // elige por estilo. Un motor que igual te encaja la impermeable falla aquí.
