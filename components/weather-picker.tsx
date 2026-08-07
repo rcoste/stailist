@@ -54,17 +54,59 @@ const OCASION_KEYS = new Set(OCASIONES.map((o) => o.key));
 
 // "Un evento" es ambiguo (de un coctel casual a una boda de etiqueta) y el motor
 // adivinaba mal. Al elegir evento pedimos el nivel de formalidad para acertar.
-// Las palabras que trae la INVITACIÓN, no una escala abstracta. Roberto:
-// "cuál es el código de vestimenta, normalmente la invitación lo dice". Y hace
-// falta la distinción porque "formal" a secas mandaba al motor al esmoquin —
-// en México una boda formal es traje y corbata; el esmoquin es de etiqueta
-// rigurosa. La clave NO cambia (se guarda en outfits): solo la etiqueta.
-const FORMALIDAD: { key: string; label: string; ayuda: string }[] = [
-  { key: "casual", label: "casual", ayuda: "sin saco" },
-  { key: "semiformal", label: "semiformal", ayuda: "coctel, saco sí" },
-  { key: "formal", label: "formal", ayuda: "traje y corbata" },
-  { key: "gala", label: "etiqueta rigurosa", ayuda: "esmoquin" },
+//
+// LA ROPA ES EL TITULAR; LA PALABRA DE LA INVITACIÓN, LA PISTA.
+// Empezó al revés (titular "formal", pista "traje y corbata") y Roberto lo
+// paró: "la mayoría de la gente tiene el problema de que si lee formal,
+// coctel, gala o etiqueta, no sabe cuál es el dress code que implica". Tiene
+// razón — preguntar en la jerga que la persona no entiende no es preguntar,
+// es adivinar con pasos extra. Así funciona en los dos sentidos: quien no
+// conoce las palabras elige por lo que se pondría, y quien trae la invitación
+// en la mano busca su palabra en la pista.
+//
+// Y VA POR GÉNERO, porque el ancla concreta lo es: "traje y corbata" no le
+// dice nada a una mujer, y la usuaria objetivo de este producto es una mujer.
+const FORMALIDAD: {
+  key: string;
+  hombre: string;
+  mujer: string;
+  neutro: string;
+  ayuda: string;
+}[] = [
+  {
+    key: "casual",
+    hombre: "sin saco",
+    mujer: "sin arreglarte de más",
+    neutro: "sin arreglarte de más",
+    ayuda: "casual · sport",
+  },
+  {
+    key: "semiformal",
+    hombre: "saco, sin corbata",
+    mujer: "de coctel",
+    neutro: "arreglado, sin llegar a traje",
+    ayuda: "semiformal · coctel · cocktail",
+  },
+  {
+    key: "formal",
+    hombre: "traje y corbata",
+    mujer: "vestido largo o midi",
+    neutro: "traje y corbata, o vestido largo",
+    ayuda: "formal · etiqueta",
+  },
+  {
+    key: "gala",
+    hombre: "esmoquin",
+    mujer: "vestido largo de gala",
+    neutro: "esmoquin, o vestido largo de gala",
+    ayuda: "etiqueta rigurosa · black tie · gala",
+  },
 ];
+
+/** El ancla concreta según a quién se le pregunta. */
+function ropaDe(f: (typeof FORMALIDAD)[number], gender: string | null): string {
+  return gender === "hombre" ? f.hombre : gender === "mujer" ? f.mujer : f.neutro;
+}
 
 // 5 bandas de temperatura (mismas de modo Viaje — set canónico, no inventar).
 const BUCKETS = [
@@ -112,6 +154,7 @@ export function LookRequest({
   skipObjective,
   closet = [],
   defaultSeedItemId = null,
+  gender = null,
 }: {
   title?: string;
   defaultObjective: string | null;
@@ -125,13 +168,21 @@ export function LookRequest({
   skipObjective?: boolean;
   // Clóset para el picker de ancla (paso clima). Vacío = no se muestra el picker.
   closet?: ClosetPick[];
+  /** Para las anclas de formalidad: la ropa concreta es distinta por género. */
+  gender?: "hombre" | "mujer" | null;
 }) {
   // "viaje" (la opción "Aeropuerto" del onboarding) NO es una ocasión del wizard; se
   // trata como "diario" (look cómodo del día) para NO re-preguntar la ocasión al armar
   // el primer look — si no, el skip fallaba y volvía a pedir la ocasión ya elegida.
   const normObjective = defaultObjective === "viaje" ? "diario" : defaultObjective;
   const hasDefaultObj = !!(normObjective && OCASION_KEYS.has(normObjective));
-  const skip = !!skipObjective && hasDefaultObj;
+  // "Evento" NUNCA se salta, aunque venga elegido del onboarding: es la única
+  // ocasión que exige un dato más (la formalidad) y ese dato vive en el paso
+  // que el skip se brincaba. O sea que quien elegía "un evento" en el
+  // onboarding recibía su PRIMER look sin que nadie le preguntara si era una
+  // boda de etiqueta o una cena — justo el hueco que hace incalificable el
+  // resultado. Un tap de más para ellos; el resto no lo nota.
+  const skip = !!skipObjective && hasDefaultObj && normObjective !== "evento";
   const firstStep: 1 | 2 = skip ? 2 : 1;
   const totalSteps = skip ? 2 : 3;
   const [step, setStep] = useState<1 | 2 | 3>(firstStep);
@@ -284,6 +335,7 @@ export function LookRequest({
             {step === 1 ? (
               <div className="flex flex-col gap-5">
                 <StepOcasion
+                  gender={gender}
                   objective={objective}
                   openText={openText}
                   formality={formality}
@@ -364,6 +416,7 @@ const ON = "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]";
 const ICON_ON = "bg-accent border-accent text-on-accent";
 
 function StepOcasion({
+  gender,
   objective,
   openText,
   formality,
@@ -371,6 +424,7 @@ function StepOcasion({
   onOpenText,
   onFormality,
 }: {
+  gender: "hombre" | "mujer" | null;
   objective: string | null;
   openText: string;
   formality: string | null;
@@ -436,7 +490,9 @@ function StepOcasion({
                       : "border-line bg-surface text-ink hover:border-ink"
                   }`}
                 >
-                  <span className="text-[14px] font-semibold">{f.label}</span>
+                  <span className="text-[14px] font-semibold">
+                    {ropaDe(f, gender)}
+                  </span>
                   <span
                     className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
                   >

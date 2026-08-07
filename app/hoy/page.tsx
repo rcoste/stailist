@@ -217,6 +217,7 @@ export default async function HoyPage({
           wornInicial={wornInicial}
           userId={profile.id}
           defaultObjective={profile.last_objective}
+          gender={(profile.gender as "hombre" | "mujer" | null) ?? null}
           closet={closet}
           autoAsk={autoAsk}
           homeCard={homeCard}
