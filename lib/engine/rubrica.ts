@@ -3,6 +3,7 @@ import { MODELO_JUEZ } from "@/lib/models";
 import { queSePoneA } from "./prompt";
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
+import { lineaTipoEvento } from "@/lib/eventos";
 
 // LA RÚBRICA: un look calificado contra su brief, por un juez automático.
 //
@@ -48,7 +49,18 @@ import { lineaFormalidad } from "@/lib/formalidad";
 // salía gratis. La regla de la excepción también es suya: la formalidad acota
 // al estilo — un boho que va de gala no tiene holgura, y no reprueba por no
 // verse boho.
-export const RUBRICA_VERSION = "r7";
+// r7 → r8: entra la dimensión COLOR, y con los DOS extremos a propósito.
+// Roberto: "casi todo lo que me sugiere es verde esmeralda o vino — son los que
+// me favorecen, pero hay colores que están bien; no un pastel ni un mostaza,
+// pero sí un azul marino. No seamos estrictos forzando únicamente los que
+// favorecen, permitiendo también los neutrales".
+//
+// Un juez que solo premiara "está en su paleta" haría al motor MÁS monótono, y
+// eso ya está pasando: en la primera línea base el wow salió 3.16, la nota más
+// baja de las cinco. Por eso la dimensión castiga las dos cosas: el color que
+// apaga la cara Y el clóset reducido a los tres colores estrella. Favorecer es
+// el piso, no el objetivo.
+export const RUBRICA_VERSION = "r8";
 
 /** El mismo contexto que recibió el motor. Un juez que califica "evento" a
  * secas tendría el mismo problema que Roberto votando: "evento es algo muy
@@ -61,6 +73,8 @@ export type BriefRubrica = {
   /** Solo si el código es "variable": si ese día veía cliente. */
   veCliente?: boolean | null;
   plan?: string | null;
+  /** QUÉ evento es (lib/eventos.ts): lo que la formalidad no captura. */
+  tipoEvento?: string | null;
   formality?: string | null;
   momento?: "dia" | "noche" | null;
   weather: { temp_c: number; condition: string } | null;
@@ -68,7 +82,25 @@ export type BriefRubrica = {
   /** El estilo DECLARADO de la persona — el mismo que recibió el motor. Sin él,
    * la dimensión "estilo" queda neutra (3) y no pesa en aprobado. */
   estilo?: EstiloRubrica | null;
+  /** Su colorimetría, la MISMA que recibió el motor. Sin ella, "color" queda
+   * neutra (3): no se puede juzgar qué le enciende la cara sin saber su paleta. */
+  color?: ColorRubrica | null;
 };
+
+/** La paleta de la persona, en los mismos tres grupos que consume el motor. */
+export type ColorRubrica = {
+  /** Cómo se llama su estación, para nombrarla en el análisis. */
+  estacion: string | null;
+  mejores: { nombre: string; hex: string }[];
+  /** Los prestados de su guiño (la frontera con la estación vecina). */
+  prestados: { nombre: string; hex: string }[];
+  /** Los que tienden a apagarla. PREFERENCIA fuerte cerca de la cara, no veto. */
+  evita: { nombre: string; hex: string }[];
+};
+
+export function tieneColor(c: ColorRubrica | null | undefined): boolean {
+  return !!(c && (c.mejores.length || c.evita.length));
+}
 
 /**
  * El estilo de la persona, en las MISMAS líneas que consume el motor
@@ -113,6 +145,8 @@ export type NotaRubrica = {
   armado: number;
   /** 1-5: ¿el look es de ESTA persona? 3 = neutro (o sin estilo declarado). */
   estilo: number;
+  /** 1-5: el color cerca de la cara Y que no sea el uniforme de siempre. */
+  color: number;
   /** 1-5: 3 = correcto pero plano; 5 = "siento que tengo un stylist". */
   wow: number;
   /** ¿Alguien que se viste bien se lo pondría TAL CUAL para este brief? */
@@ -132,6 +166,10 @@ export function briefParaRubrica(b: BriefRubrica): string {
     const dc = lineaDressCode(b.workDressCode, b.veCliente);
     lineas.push(dc || "No dijo cómo se viste para trabajar: júzgalo contra un registro de oficina neutro y no castigues por no acertarle a un código que nadie declaró.");
   }
+  // El MISMO catálogo que recibe el motor: una boda y una graduación son las
+  // dos "formal" y no se califican igual.
+  const queEvento = lineaTipoEvento(b.tipoEvento);
+  if (queEvento) lineas.push(`Es ${queEvento}.`);
   if (b.plan?.trim()) lineas.push(`Pidió, en sus palabras: "${b.plan.trim()}".`);
   // La MISMA tabla que ve la pantalla y recibe el motor (lib/formalidad.ts):
   // si el juez calificara con una vara distinta, mediría otra cosa.
@@ -162,6 +200,25 @@ export function briefParaRubrica(b: BriefRubrica): string {
     ].filter(Boolean);
     lineas.push(`SU ESTILO (el motor lo recibió y debía honrarlo):\n${partes.join("\n")}`);
   }
+  // La paleta, en los mismos tres grupos que recibe el motor. Los hex van
+  // porque el look también los trae: sin ellos el juez compararía nombres de
+  // color, que es justo donde dos "vino" distintos se leen igual.
+  if (tieneColor(b.color)) {
+    const c = b.color!;
+    const lista = (xs: { nombre: string; hex: string }[]) =>
+      xs.map((x) => `${x.nombre} ${x.hex}`).join(", ") || "—";
+    lineas.push(
+      [
+        `SU COLORIMETRÍA${c.estacion ? ` (${c.estacion})` : ""}:`,
+        `Le encienden la cara: ${lista(c.mejores)}`,
+        c.prestados.length ? `También le sirven (su guiño): ${lista(c.prestados)}` : "",
+        `Tienden a apagarla cerca de la cara: ${lista(c.evita)}`,
+        `Todo lo demás —marino, gris, camel, blanco, caqui— es NEUTRAL: ni la enciende ni la apaga, y está permitido.`,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
+  }
   return lineas.join("\n");
 }
 
@@ -185,7 +242,7 @@ export const SYSTEM_RUBRICA = `Eres el evaluador de calidad de stailist, un styl
 
 Primero llena "analisis": qué pide este brief exactamente (registro, clima, lluvia), y qué ves en el look que cumple o rompe eso. DESPUÉS puntúa a partir de tu análisis.
 
-Las cinco dimensiones, cada una de 1 a 5:
+Las seis dimensiones, cada una de 1 a 5:
 
 1. ocasion — ¿el registro es el que ESTE pedido exige? No "un evento" en abstracto: si dice boda formal, se evalúa contra boda formal; si dice oficina, ir de lino completo es demasiado informal; una cena casual con amigos NO exige traje. 5 = registro exacto; 3 = pasable pero un escalón arriba o abajo; 1 = fuera de lugar.
 
@@ -195,9 +252,16 @@ Las cinco dimensiones, cada una de 1 a 5:
 
 4. estilo — ¿el look es de ESTA persona? Cuando el pedido trae "SU ESTILO", califica si el look lo honra: piezas, tonos y registro que se sienten de alguien con ese estilo, no de un maniquí genérico. REGLA: la formalidad ACOTA al estilo, no al revés. En casual el estilo manda — un look que lo ignora por completo es un 2. Conforme sube la formalidad, el estilo solo cabe en los detalles (color, textura, accesorio, un gesto) dentro del dress code: en formal o etiqueta NO castigues por "no verse de su estilo"; castiga solo si no hay NI UN gesto personal donde sí cabía. Si el pedido NO trae "SU ESTILO", pon 3 y no lo uses para aprobar.
 
-5. wow — ¿se siente que hay un stylist detrás, o solo ropa que no choca? 3 = CORRECTO PERO PLANO: nada mal, nada memorable. 5 = una decisión con chispa (una mezcla que sorprende bien, una prenda usada con intención) Y un gesto de styling concreto y ejecutable (remangar dos vueltas, desfajar, dejar abierto). OJO: el tip solo suma si es un gesto físico específico — la prosa bonita sin gesto no cuenta. 1 = aburrido o incoherente.
+5. color — el color CERCA DE LA CARA (top y abrigo; el bottom y el calzado son libres). Lee "SU COLORIMETRÍA" y aplica esta vara, que tiene DOS lados y los dos cuentan:
+   - Un color de su lista de EVITA cerca de la cara: 2. Le apaga la cara. (Es preferencia fuerte, no veto: si su clóset no daba otra cosa, 3.)
+   - Un NEUTRAL cerca de la cara (marino, gris, camel, blanco, caqui, negro si no está en su EVITA): 4. Perfectamente bien. NO lo castigues por no ser uno de sus colores estrella — un guardarropa de puros colores fuertes no existe.
+   - Uno de sus colores (mejores o prestados) cerca de la cara: 5.
+   - Y EL OTRO LADO, igual de importante: si el look repite el MISMO color estrella que ya es su default obvio y no hay ninguna otra decisión de color en todo el conjunto, BAJA a 3 aunque el color le favorezca. Un motor que resuelve todo con sus dos o tres colores seguros no está aplicando colorimetría, está usando un uniforme. Favorecer es el piso, no el objetivo.
+   Sin "SU COLORIMETRÍA" en el pedido, pon 3 y no la uses para aprobar.
 
-aprobado: ¿alguien que se viste bien se lo pondría TAL CUAL para este pedido? Un fallo claro de clima, de lluvia o de ocasión lo tira aunque el resto esté bien. Ignorar por completo el estilo declarado en un pedido casual también lo tira; en formal o etiqueta, no. La duda razonable ("no sé si lino con algodón") NO lo tira.
+6. wow — ¿se siente que hay un stylist detrás, o solo ropa que no choca? 3 = CORRECTO PERO PLANO: nada mal, nada memorable. 5 = una decisión con chispa (una mezcla que sorprende bien, una prenda usada con intención) Y un gesto de styling concreto y ejecutable (remangar dos vueltas, desfajar, dejar abierto). OJO: el tip solo suma si es un gesto físico específico — la prosa bonita sin gesto no cuenta. 1 = aburrido o incoherente.
+
+aprobado: ¿alguien que se viste bien se lo pondría TAL CUAL para este pedido? Un fallo claro de clima, de lluvia o de ocasión lo tira aunque el resto esté bien. Ignorar por completo el estilo declarado en un pedido casual también lo tira; en formal o etiqueta, no. La duda razonable ("no sé si lino con algodón") NO lo tira. Y OJO: un color neutral cerca de la cara NO tira nada, ni tampoco repetir un color favorecedor — eso baja la nota de color, no reprueba el look.
 
 porQue: una línea concreta, nombrando prendas — como lo diría un stylist, no un robot.`;
 
@@ -222,6 +286,7 @@ export function normalizarNota(raw: NotaRubrica): NotaRubrica {
     clima: enEscala(raw.clima),
     armado: enEscala(raw.armado),
     estilo: enEscala(raw.estilo),
+    color: enEscala(raw.color),
     wow: enEscala(raw.wow),
     aprobado: raw.aprobado === true,
   };
@@ -235,11 +300,22 @@ export const SCHEMA_RUBRICA = {
     clima: ESCALA,
     armado: ESCALA,
     estilo: ESCALA,
+    color: ESCALA,
     wow: ESCALA,
     aprobado: { type: "boolean" },
     porQue: { type: "string" },
   },
-  required: ["analisis", "ocasion", "clima", "armado", "estilo", "wow", "aprobado", "porQue"],
+  required: [
+    "analisis",
+    "ocasion",
+    "clima",
+    "armado",
+    "estilo",
+    "color",
+    "wow",
+    "aprobado",
+    "porQue",
+  ],
   additionalProperties: false,
 } as const;
 

@@ -146,6 +146,8 @@ export type PeticionDeLook = {
   /** Ya resuelta por quien llama (request válido o last_objective). */
   objective: string | null;
   plan?: string | null;
+  /** QUÉ evento es, del catálogo (lib/eventos.ts). */
+  tipoEvento?: string | null;
   /** Cualquier cosa que no sea "dia"/"noche" cae a null. */
   momento?: string | null;
   weather: Weather | null;
@@ -184,6 +186,7 @@ export function construirContexto(
     gender: profile.gender as "hombre" | "mujer" | null,
     objective: p.objective,
     plan: typeof p.plan === "string" ? p.plan.slice(0, 200) : null,
+    tipoEvento: typeof p.tipoEvento === "string" ? p.tipoEvento : null,
     lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
     tasteTags: (profile.taste_tags ?? []) as string[],
     archetype:

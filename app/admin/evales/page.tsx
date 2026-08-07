@@ -75,7 +75,7 @@ export default async function AdminEvales() {
       rubrica: `${c.rubrica_version}/${c.rubrica_vision_version}`,
       estado: c.estado as string,
       conEstilo: c.con_estilo === true,
-      m: marcadorEval(fs, c.con_estilo === true),
+      m: marcadorEval(fs, c.con_estilo === true, c.con_color === true),
       pendientes: fs.length,
     };
   });
@@ -151,7 +151,7 @@ export default async function AdminEvales() {
               <tbody>
                 {listas.map((f) => {
                   const prom = (d: typeof f.m.texto) => {
-                    const xs = [d.ocasion, d.clima, d.armado, d.estilo, d.wow].filter(
+                    const xs = [d.ocasion, d.clima, d.armado, d.estilo, d.color, d.wow].filter(
                       (x): x is number => x != null
                     );
                     return xs.length

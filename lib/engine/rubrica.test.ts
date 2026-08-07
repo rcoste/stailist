@@ -76,17 +76,34 @@ describe("el sistema de la rúbrica — anclas que no deben perderse", () => {
     expect(SYSTEM_RUBRICA).toContain("NO lo tira");
   });
 
-  it("el schema exige las cinco dimensiones + aprobado", () => {
+  it("el schema exige las seis dimensiones + aprobado", () => {
     expect(SCHEMA_RUBRICA.required).toEqual([
       "analisis",
       "ocasion",
       "clima",
       "armado",
       "estilo",
+      "color",
       "wow",
       "aprobado",
       "porQue",
     ]);
+  });
+
+  // La dimensión de color (r8) tiene DOS lados y el segundo es el que la hace
+  // útil: sin él, premiar "está en su paleta" volvería al motor más monótono —
+  // que es exactamente lo que Roberto ve ("casi todo es verde esmeralda o
+  // vino") y lo que la línea base midió (wow 3.16, la nota más baja).
+  it("un neutral cerca de la cara está BIEN, no es un castigo", () => {
+    expect(SYSTEM_RUBRICA).toContain("NO lo castigues por no ser uno de sus colores estrella");
+  });
+
+  it("repetir el color estrella de siempre BAJA la nota aunque favorezca", () => {
+    expect(SYSTEM_RUBRICA).toContain("Favorecer es el piso, no el objetivo");
+  });
+
+  it("ni el neutral ni el color repetido reprueban el look", () => {
+    expect(SYSTEM_RUBRICA).toContain("eso baja la nota de color, no reprueba el look");
   });
 
   // El juez con sombrero de stylist (r7). Las dos anclas que no deben perderse:
@@ -126,5 +143,43 @@ describe("el estilo en el brief — el juez lee lo MISMO que el motor recibió",
       estilo: { marca: null, palabras: null, arquetipo: null },
     });
     expect(t).not.toContain("SU ESTILO");
+  });
+});
+
+describe("la colorimetría en el brief", () => {
+  const paleta = {
+    estacion: "invierno",
+    mejores: [{ nombre: "Vino", hex: "#722F37" }],
+    prestados: [{ nombre: "Verde esmeralda", hex: "#046307" }],
+    evita: [{ nombre: "Mostaza", hex: "#D4A017" }],
+  };
+
+  it("los tres grupos viajan CON su hex — dos 'vino' distintos no son lo mismo", () => {
+    const t = briefParaRubrica({
+      objective: "diario",
+      weather: null,
+      color: paleta,
+    });
+    expect(t).toContain("SU COLORIMETRÍA (invierno)");
+    expect(t).toContain("Vino #722F37");
+    expect(t).toContain("Verde esmeralda");
+    expect(t).toContain("Mostaza");
+  });
+
+  it("los neutrales se declaran PERMITIDOS en el propio brief", () => {
+    // Sin esta línea, el juez leería la paleta como una lista cerrada y
+    // castigaría el marino — que es exactamente lo que no queremos.
+    const t = briefParaRubrica({ objective: "diario", weather: null, color: paleta });
+    expect(t).toContain("NEUTRAL");
+    expect(t).toContain("está permitido");
+  });
+
+  it("sin colorimetría, el brief no inventa una paleta", () => {
+    const t = briefParaRubrica({
+      objective: "diario",
+      weather: null,
+      color: { estacion: null, mejores: [], prestados: [], evita: [] },
+    });
+    expect(t).not.toContain("SU COLORIMETRÍA");
   });
 });

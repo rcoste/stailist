@@ -1,6 +1,7 @@
 import type { BriefMotor } from "@/lib/comparador/motor";
 import type { LookMotor } from "@/lib/comparador/motor";
-import type { NotaRubrica, EstiloRubrica } from "@/lib/engine/rubrica";
+import type { NotaRubrica, EstiloRubrica, ColorRubrica } from "@/lib/engine/rubrica";
+import { seasonPalette, normSeason, SEASONS, type Season } from "@/lib/colorimetria";
 import type { Violacion } from "@/lib/engine/reglas-ejecucion";
 import { costoUsd } from "@/lib/proveedores/precios";
 import { MODELO_MOTOR, JUDGE_MODEL, VISION_MODEL } from "@/lib/models";
@@ -54,9 +55,27 @@ export type EvalCorrida = {
   rubricaVersion: string;
   rubricaVisionVersion: string;
   conEstilo: boolean;
+  /** Si el perfil tenía colorimetría al abrir la corrida (misma lógica que
+   * conEstilo: sin ella el juez pone 3 neutro y promediarlo no mide nada). */
+  conColor: boolean;
   estado: string;
   nota: string | null;
 };
+
+/** La paleta del perfil en los mismos tres grupos que consume el motor. */
+export function colorDelPerfil(profile: Record<string, unknown>): ColorRubrica {
+  const season = profile.palette_season as Season | null;
+  const flow = profile.palette_flow as Season | null;
+  if (!season) return { estacion: null, mejores: [], prestados: [], evita: [] };
+  const p = seasonPalette(season, flow);
+  const key = normSeason(season);
+  return {
+    estacion: (key && SEASONS[key]?.label) || season,
+    mejores: p.mejores.map((c) => ({ nombre: c.nombre, hex: c.hex })),
+    prestados: p.prestados.map((c) => ({ nombre: c.nombre, hex: c.hex })),
+    evita: p.evita.map((c) => ({ nombre: c.nombre, hex: c.hex })),
+  };
+}
 
 /** El estilo del perfil en las MISMAS líneas que consume el motor. */
 export function estiloDelPerfil(profile: Record<string, unknown>): EstiloRubrica {
@@ -95,6 +114,7 @@ export type PromediosDim = {
   clima: number | null;
   armado: number | null;
   estilo: number | null;
+  color: number | null;
   wow: number | null;
 };
 
@@ -124,13 +144,16 @@ const promedio = (xs: number[]): number | null =>
 
 export function marcadorEval(
   filas: EvalBriefFila[],
-  conEstilo: boolean
+  conEstilo: boolean,
+  conColor = true
 ): MarcadorEval {
-  const dims = ["ocasion", "clima", "armado", "estilo", "wow"] as const;
-  const acc = {
-    texto: { ocasion: [], clima: [], armado: [], estilo: [], wow: [] } as Record<string, number[]>,
-    vision: { ocasion: [], clima: [], armado: [], estilo: [], wow: [] } as Record<string, number[]>,
-  };
+  const dims = ["ocasion", "clima", "armado", "estilo", "color", "wow"] as const;
+  const vacio = () =>
+    ({ ocasion: [], clima: [], armado: [], estilo: [], color: [], wow: [] }) as Record<
+      string,
+      number[]
+    >;
+  const acc = { texto: vacio(), vision: vacio() };
   let looks = 0;
   let looksCalificados = 0;
   const aprobadoTexto = { si: 0, de: 0 };
@@ -186,8 +209,9 @@ export function marcadorEval(
     clima: promedio(de.clima),
     armado: promedio(de.armado),
     // Sin señal de estilo el juez pone 3 neutro: promediarlo diría "3.0" con
-    // cara de medición cuando no midió nada.
+    // cara de medición cuando no midió nada. Igual con la colorimetría.
     estilo: conEstilo ? promedio(de.estilo) : null,
+    color: conColor ? promedio(de.color) : null,
     wow: promedio(de.wow),
   });
 

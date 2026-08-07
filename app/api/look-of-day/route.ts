@@ -34,6 +34,8 @@ type Body = {
   seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
   forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
   formality?: string; // solo en "evento": casual | semiformal | formal | gala
+  /** QUÉ evento es, del catálogo (lib/eventos.ts). */
+  tipoEvento?: string | null;
   paraguas?: boolean; // solo cuando el clima trae lluvia
   workDressCode?: string; // solo la primera vez que elige "trabajo"
   /** Del día: solo cuenta si su código de trabajo es "variable". */
@@ -285,6 +287,7 @@ async function generateInto(
       weather,
       seedItemId: typeof body.seedItemId === "string" ? body.seedItemId : null,
       formality: typeof body.formality === "string" ? body.formality : null,
+      tipoEvento: typeof body.tipoEvento === "string" ? body.tipoEvento : null,
       // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no debe
       // soltarle la mano a la capa exterior. El contexto lo pasa tal cual y la
       // regla #7 solo mira `paraguas` cuando `lluvia` es cierto.

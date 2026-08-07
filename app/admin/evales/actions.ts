@@ -4,11 +4,16 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PROMPT_VERSION } from "@/lib/engine/prompt";
-import { RUBRICA_VERSION, tieneEstilo } from "@/lib/engine/rubrica";
+import { RUBRICA_VERSION, tieneEstilo, tieneColor } from "@/lib/engine/rubrica";
 import { RUBRICA_VISION_VERSION } from "@/lib/engine/rubrica-vision";
 import { MODELO_MOTOR, MODELO_JUEZ } from "@/lib/models";
-import { briefsPara, POOL_VERSION } from "@/lib/comparador/motor";
-import { briefCompleto, estiloDelPerfil, type EvalBriefFila } from "@/lib/evales/evales";
+import { briefsPara, N_POOL, POOL_VERSION } from "@/lib/comparador/motor";
+import {
+  briefCompleto,
+  colorDelPerfil,
+  estiloDelPerfil,
+  type EvalBriefFila,
+} from "@/lib/evales/evales";
 
 // Abrir una corrida de eval, sellarla como lista, cerrarla, y guardar la
 // calibración humana.
@@ -28,7 +33,7 @@ export async function abrirEvalCorrida(input: {
 
   const vueltas = Math.max(1, Math.min(3, Math.round(input.vueltas || 1)));
   // "veredicto" cicla el pool completo n veces; 13 briefs por vuelta.
-  const briefs = briefsPara("veredicto", vueltas * 13);
+  const briefs = briefsPara("veredicto", vueltas * N_POOL);
 
   // Si el perfil trae señal de estilo, la dimensión "estilo" mide; si no, el
   // juez la deja neutra y el marcador no la promedia. Se congela AQUÍ para que
@@ -38,7 +43,9 @@ export async function abrirEvalCorrida(input: {
     .select("*")
     .eq("id", perfil.id)
     .single();
-  const conEstilo = tieneEstilo(estiloDelPerfil((p ?? {}) as Record<string, unknown>));
+  const datos = (p ?? {}) as Record<string, unknown>;
+  const conEstilo = tieneEstilo(estiloDelPerfil(datos));
+  const conColor = tieneColor(colorDelPerfil(datos));
 
   const { data: corrida, error } = await supabase
     .from("eval_corridas")
@@ -52,6 +59,7 @@ export async function abrirEvalCorrida(input: {
       rubrica_version: RUBRICA_VERSION,
       rubrica_vision_version: RUBRICA_VISION_VERSION,
       con_estilo: conEstilo,
+      con_color: conColor,
     })
     .select("id")
     .single();

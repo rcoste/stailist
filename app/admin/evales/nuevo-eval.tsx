@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatoUsd } from "@/lib/proveedores/precios";
 import { estimadoEval } from "@/lib/evales/evales";
+import { N_POOL } from "@/lib/comparador/motor";
 import { abrirEvalCorrida } from "./actions";
 
 // Abrir una corrida de eval. No hay nada que elegir salvo el tamaño: la
@@ -16,7 +17,7 @@ export function NuevoEval() {
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const nBriefs = vueltas * 13;
+  const nBriefs = vueltas * N_POOL;
   const estimado = estimadoEval(nBriefs);
 
   const crear = async () => {
