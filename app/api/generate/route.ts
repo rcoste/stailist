@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
         // El pipeline compartido: generar → juez por outfit → piso de 2. Cada
         // look se guarda y streamea apenas se aprueba (hook alAprobar), para
         // esconder la latencia del juez detrás del reveal.
-        const { finalized, reviews } = await armarLooks(ctx, {}, {
+        const { finalized, reviews, noAlcanza } = await armarLooks(ctx, {}, {
           alCandidatos: (n) => send({ total: n }),
           alRevisar: (i) =>
             send({
@@ -190,6 +190,13 @@ export async function POST(request: NextRequest) {
           alAprobar: saveAndStream,
         });
 
+        // El clóset no da para el código pedido: NO es un fallo, es la
+        // respuesta. Va con lo que falta para que la pantalla lo pueda decir.
+        if (noAlcanza) {
+          send({ error: "no_alcanza", faltan: noAlcanza.faltan });
+          controller.close();
+          return;
+        }
         if (finalized.length === 0) {
           send({ error: "no_pude_guardar" });
           controller.close();
