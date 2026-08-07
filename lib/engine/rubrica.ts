@@ -36,7 +36,10 @@ import { queSePoneA } from "./prompt";
 // de abrigo), no una base ligera bajo una sola capa: camisa + chamarra a 18°
 // es normal, cuello tortuga de merino + abrigo de lana no. El ancla se
 // precisa; el criterio de lluvia NO se suaviza (ese sí es el estándar de hoy).
-export const RUBRICA_VERSION = "r2";
+// r2 → r3: el estándar de lluvia se afinó con la corrida de verificación (el
+// mocasín de piel se colaba). La rúbrica lo sigue: si el juez calificara con
+// una vara distinta a la que el motor recibe, mediría otra cosa.
+export const RUBRICA_VERSION = "r3";
 
 /** El mismo contexto que recibió el motor. Un juez que califica "evento" a
  * secas tendría el mismo problema que Roberto votando: "evento es algo muy
@@ -102,8 +105,8 @@ export function briefParaRubrica(b: BriefRubrica): string {
     if (/lluvia|llov|chubasco|tormenta/i.test(b.weather.condition)) {
       lineas.push(
         b.paraguas
-          ? "Lleva paraguas: la capa de arriba se elige por estilo (el paraguas la cubre), pero el calzado igual tiene que aguantar agua — el paraguas no tapa los pies."
-          : "NO lleva paraguas: la capa de arriba debe repeler agua y el calzado debe aguantarla (nada de ante, gamuza, tela ni abierto)."
+          ? "Lleva paraguas: la capa de arriba se elige por estilo (el paraguas la cubre), pero el calzado igual tiene que aguantar agua — el paraguas no tapa los pies. Fuera ante, gamuza, tela, y fuera también mocasín, náutico y sandalia (escotados y de suela fina: el agua entra aunque sean de piel). Pasan botas, botines y tenis de piel o sintético."
+          : "NO lleva paraguas: la capa de arriba debe repeler agua, y el calzado también. Fuera ante, gamuza, tela, y fuera también mocasín, náutico y sandalia (escotados y de suela fina: el agua entra aunque sean de piel). Pasan botas, botines y tenis de piel o sintético."
       );
     }
   }
@@ -134,7 +137,7 @@ Las cuatro dimensiones, cada una de 1 a 5:
 
 1. ocasion — ¿el registro es el que ESTE pedido exige? No "un evento" en abstracto: si dice boda formal, se evalúa contra boda formal; si dice oficina, ir de lino completo es demasiado informal; una cena casual con amigos NO exige traje. 5 = registro exacto; 3 = pasable pero un escalón arriba o abajo; 1 = fuera de lugar.
 
-2. clima — ¿la ropa corresponde a la temperatura y a la lluvia según lo dicho en el brief? OJO con la vara en templado (16-21°): UNA capa sobre una base ligera es NORMAL (camisa + chamarra, suéter fino + shell, blazer sobre camisa — todo eso está bien, sobre todo de noche o con lluvia). El fallo es apilar DOS piezas de abrigo (cuello tortuga de lana + abrigo de lana, suéter grueso bajo sobretodo) — eso sí es un 2. En lluvia, el calzado manda: ante, gamuza, tela o abierto es un fallo aunque la chamarra sea impermeable. 5 = clavado; 1 = rompe el clima.
+2. clima — ¿la ropa corresponde a la temperatura y a la lluvia según lo dicho en el brief? OJO con la vara en templado (16-21°): UNA capa sobre una base ligera es NORMAL (camisa + chamarra, suéter fino + shell, blazer sobre camisa — todo eso está bien, sobre todo de noche o con lluvia). El fallo es apilar DOS piezas de abrigo (cuello tortuga de lana + abrigo de lana, suéter grueso bajo sobretodo) — eso sí es un 2. En lluvia, el calzado manda: ante, gamuza y tela son fallo, y también el mocasín, el náutico y la sandalia (escotados y de suela fina — el agua entra aunque sean de piel), aunque la chamarra sea impermeable. Botas, botines y tenis de piel o sintético pasan. 5 = clavado; 1 = rompe el clima.
 
 3. armado — ¿el look está bien construido? Capas con lógica (una camiseta bajo el suéter cuando toca; nada de overshirt sobre suéter grueso), pesos y materiales que se hablan (no piezas de invierno con piezas de verano), cueros y colores que dialogan. 5 = todo se habla; 1 = piezas que se pelean.
 

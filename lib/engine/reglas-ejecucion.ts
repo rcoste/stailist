@@ -76,6 +76,25 @@ export type ContextoReglas = {
  */
 const MATERIAL_SE_ARRUINA = /ante|gamuza|lona|tela|textil|algod[oó]n|punto|lino|terciopelo|pana/;
 
+/**
+ * Formas de calzado que el agua vence AUNQUE sean de piel, y por eso el
+ * material no basta para juzgarlas.
+ *
+ * Salió de la corrida de verificación: 5 de los 17 looks de lluvia trajeron
+ * mocasín, y el mocasín es de piel — o sea que pasaba limpio por el filtro de
+ * material. Roberto ya lo había dicho votando el veredicto ("Mocasín en lluvia
+ * no aplica") y también había dicho la regla tolerante ("tenis de piel o con
+ * suela grande, botines Chelsea… seamos un poquito más tolerantes"). Las dos
+ * cosas son ciertas a la vez porque la diferencia no es de qué está hecho sino
+ * de cómo está hecho: un Chelsea te cubre el tobillo y un tenis de suela
+ * gruesa te levanta del charco; un mocasín es escotado, de suela fina y sin
+ * cierre — el agua entra por arriba.
+ *
+ * Náutico y sandalia van por lo mismo. Bota, botín, tenis y zapato formal NO
+ * están aquí: esos los juzga el material, como quiso Roberto.
+ */
+const FORMA_NO_AGUANTA = new Set(["mocasin", "nautico", "sandalia"]);
+
 /** #rrggbb → [r,g,b]. null si no hay hex o viene mal escrito. */
 function rgb(hex?: string): [number, number, number] | null {
   if (!hex) return null;
@@ -327,7 +346,10 @@ export function revisarEjecucion(
     const esPie = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "pie";
     // Abierto (sandalia, huarache) o de un material que el agua arruina.
     const noAguanta = (i: EngineItem) => {
-      if (tipoDePrenda(nombre(i))?.tipo === "sandalia") return true;
+      const t = tipoDePrenda(nombre(i))?.tipo;
+      // La FORMA manda sobre el material: un mocasín de piel sigue siendo un
+      // mocasín. Este orden importa — al revés, la piel lo absolvía.
+      if (t && FORMA_NO_AGUANTA.has(t)) return true;
       const m = norm(i.attrs.material);
       // Sin material no se juzga: una regla que dispara por datos incompletos
       // manda al juez a "arreglar" lo que estaba bien.

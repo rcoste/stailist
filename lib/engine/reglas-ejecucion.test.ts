@@ -379,3 +379,66 @@ describe("lluvia-sin-impermeable", () => {
     ).toBeUndefined();
   });
 });
+
+describe("lluvia-calzado: la FORMA manda sobre el material", () => {
+  // Cazado en la corrida de verificación: 5 de los 17 looks de lluvia traían
+  // mocasín, y el mocasín es de PIEL — se colaba por el filtro de material.
+  // Roberto había dicho las dos cosas y las dos son ciertas: "mocasín en
+  // lluvia no aplica" Y "tenis de piel o suela grande, Chelsea… seamos
+  // tolerantes". La diferencia no es de qué está hecho sino de cómo: el
+  // Chelsea cubre el tobillo, el tenis te levanta del charco, el mocasín es
+  // escotado y de suela fina.
+  const arriba = [
+    p("Camisa oxford blanca", "#F5F5F0", { material: "algodón" }),
+    p("Chamarra impermeable ligera", "#4A4A4A", { material: "sintético" }),
+    p("Chinos carbón", "#3A3A3A", { material: "algodón" }),
+  ];
+  const closet = [
+    ...arriba,
+    p("Botines Chelsea negros", "#111111", { material: "piel" }),
+    p("Mocasines negros", "#111111", { material: "piel" }),
+  ];
+  const conCalzado = (zapato: ReturnType<typeof p>) => [...arriba, zapato];
+
+  it("el mocasín de PIEL cae — el material no lo absuelve", () => {
+    const r = revisarEjecucion(
+      conCalzado(p("Mocasines negros", "#111111", { material: "piel" })),
+      { lluvia: true, closet }
+    ).find((x) => x.regla === "lluvia-calzado");
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Mocasines negros");
+  });
+
+  it("el náutico también, por la misma razón", () => {
+    expect(
+      revisarEjecucion(conCalzado(p("Náuticos café", "#5A3A22", { material: "piel" })), {
+        lluvia: true,
+        closet,
+      }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeDefined();
+  });
+
+  it("pero el Chelsea de piel y el tenis de piel SIGUEN pasando", () => {
+    // Si esto se rompiera, la regla dejó de ser la que Roberto pidió.
+    for (const zapato of [
+      p("Botines Chelsea negros", "#111111", { material: "piel" }),
+      p("Tenis de piel negros", "#111111", { material: "piel" }),
+      p("Botas de senderismo negras", "#111111", { material: "sintético" }),
+    ]) {
+      expect(
+        revisarEjecucion(conCalzado(zapato), { lluvia: true, closet }).find(
+          (x) => x.regla === "lluvia-calzado"
+        ),
+        zapato.attrs.nombre
+      ).toBeUndefined();
+    }
+  });
+
+  it("sin lluvia el mocasín no molesta a nadie", () => {
+    expect(
+      revisarEjecucion(conCalzado(p("Mocasines negros", "#111111", { material: "piel" })), {
+        closet,
+      }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeUndefined();
+  });
+});
