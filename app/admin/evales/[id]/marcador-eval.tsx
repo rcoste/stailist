@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatoUsd } from "@/lib/proveedores/precios";
 import { formalidadLegible } from "@/lib/formalidad";
@@ -230,9 +230,24 @@ function fmt(n: number | null): string {
 }
 
 /**
- * La muestra que se marca a mano. Prioriza los looks SIN marca y los que los
- * jueces vieron distinto entre sí: donde texto y visión discrepan es donde una
- * marca humana informa más.
+ * EL CALIBRADOR: un look a la vez, con el teclado, y los jueces TAPADOS.
+ *
+ * POR QUÉ ASÍ (Roberto: "métele cabeza"):
+ * - UN look en pantalla, grande. La versión anterior era una lista de 30 con
+ *   miniaturas de 80px; calificar ropa mirando estampillas no es calificar.
+ * - CON EL TECLADO. Son 30 juicios seguidos: ← 👎 · → 👍 · ↑ saltar · ⌫ deshacer.
+ *   Cada tap ahorrado se multiplica por 30.
+ * - LOS JUECES NO SE VEN HASTA EL FINAL. Antes se revelaban look por look, y
+ *   eso contamina exactamente lo que se está midiendo: el acuerdo vale como
+ *   evidencia sólo si la marca se emitió a ciegas. Es el mismo principio que el
+ *   voto ciego del comparador.
+ * - NADA DE router.refresh() POR MARCA. Se guarda en segundo plano y la
+ *   pantalla avanza sola; recargar entre look y look hacía la tarea lenta justo
+ *   en el punto donde la fatiga decide si se termina o no.
+ *
+ * EL REVELADO no es una calificación: es la cosecha. Lo que importa no es el
+ * porcentaje sino DÓNDE difieren el humano y cada juez — de ahí salen las
+ * reglas y los ajustes de rúbrica.
  */
 function Calibrador({
   filas,
@@ -244,132 +259,250 @@ function Calibrador({
   gender: string | null;
 }) {
   const router = useRouter();
-  const [guardando, setGuardando] = useState<string | null>(null);
 
-  const casos = filas
-    .flatMap((f) =>
-      (f.looks ?? []).map((look, i) => ({
-        fila: f,
-        look,
-        i,
-        nota: f.notas?.[i] ?? null,
-        marca: f.marcas?.[String(i)] ?? null,
-      }))
-    )
-    .filter((c) => c.nota)
-    // Sin marcar primero, y dentro de esos los que los jueces vieron distinto.
-    .sort((a, b) => {
-      if (!!a.marca !== !!b.marca) return a.marca ? 1 : -1;
-      const dis = (c: typeof a) =>
-        c.nota!.texto && c.nota!.vision && c.nota!.texto.aprobado !== c.nota!.vision.aprobado
-          ? 0
-          : 1;
-      return dis(a) - dis(b);
-    })
-    .slice(0, 30);
+  // La muestra se congela al montar: si se recalculara con cada marca, el look
+  // que acabas de calificar saltaría de posición y perderías el hilo.
+  const [casos] = useState(() =>
+    filas
+      .flatMap((f) =>
+        (f.looks ?? []).map((look, i) => ({
+          fila: f,
+          look,
+          i,
+          nota: f.notas?.[i] ?? null,
+          marcaPrevia: f.marcas?.[String(i)] ?? null,
+        }))
+      )
+      .filter((c) => c.nota)
+      .sort((a, b) => {
+        // Sin marcar primero; dentro de esos, los que los jueces vieron
+        // distinto — ahí es donde una marca humana informa más.
+        if (!!a.marcaPrevia !== !!b.marcaPrevia) return a.marcaPrevia ? 1 : -1;
+        const dis = (c: typeof a) =>
+          c.nota!.texto && c.nota!.vision && c.nota!.texto.aprobado !== c.nota!.vision.aprobado
+            ? 0
+            : 1;
+        return dis(a) - dis(b);
+      })
+      .slice(0, 30)
+  );
 
-  const marcar = async (
-    fila: EvalBriefFila,
-    i: number,
-    marca: "arriba" | "abajo"
-  ) => {
-    setGuardando(`${fila.id}|${i}`);
-    await guardarMarcasEval(fila.id, { [i]: marca });
-    setGuardando(null);
-    router.refresh();
-  };
+  const [idx, setIdx] = useState(0);
+  const [marcas, setMarcas] = useState<Record<number, "arriba" | "abajo">>({});
+  const [revelado, setRevelado] = useState(false);
+
+  const marcar = useCallback(
+    (m: "arriba" | "abajo") => {
+      setIdx((i) => {
+        const c = casos[i];
+        if (!c) return i;
+        setMarcas((prev) => ({ ...prev, [i]: m }));
+        // En segundo plano, sin bloquear el avance: quien califica no debe
+        // esperar a la red entre look y look.
+        void guardarMarcasEval(c.fila.id, { [c.i]: m });
+        return i + 1;
+      });
+    },
+    [casos]
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (revelado) return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); marcar("abajo"); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); marcar("arriba"); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); setIdx((i) => i + 1); }
+      else if (e.key === "Backspace") { e.preventDefault(); setIdx((i) => Math.max(0, i - 1)); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [marcar, revelado]);
+
+  const hechas = Object.keys(marcas).length;
+  const c = casos[idx];
+
+  // ── El revelado: al terminar la muestra, o cuando se pide ──
+  if (revelado || (!c && hechas > 0)) {
+    const juzgados = casos
+      .map((x, i) => ({ ...x, mia: marcas[i] }))
+      .filter((x) => x.mia);
+    const acuerdo = (quien: "texto" | "vision") => {
+      const con = juzgados.filter((x) => x.nota?.[quien]);
+      const ok = con.filter((x) => x.nota![quien]!.aprobado === (x.mia === "arriba"));
+      return con.length ? Math.round((ok.length / con.length) * 100) : null;
+    };
+    const discrepan = juzgados.filter(
+      (x) =>
+        (x.nota?.texto && x.nota.texto.aprobado !== (x.mia === "arriba")) ||
+        (x.nota?.vision && x.nota.vision.aprobado !== (x.mia === "arriba"))
+    );
+
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">
+            Calibraste {juzgados.length} looks
+          </p>
+          <div className="flex gap-6">
+            {(["texto", "vision"] as const).map((q) => (
+              <div key={q} className="flex flex-col">
+                <span className="text-2xl font-semibold text-ink">
+                  {acuerdo(q) == null ? "—" : `${acuerdo(q)}%`}
+                </span>
+                <span className="text-xs text-muted">
+                  acuerdo del juez {q === "texto" ? "de texto" : "visual"}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted">
+            Si esto baja con el tiempo, la rúbrica se afinó de más contra sí
+            misma y hay que revisarla antes de confiar en sus números.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-ink">
+            Donde no coincidimos ({discrepan.length}) — la cosecha
+          </h3>
+          <p className="text-xs text-muted">
+            Aquí es donde salen las reglas nuevas: o el juez ve algo que tú no, o
+            tú ves algo que a la rúbrica le falta decir.
+          </p>
+          {discrepan.map((x, k) => (
+            <div key={k} className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3">
+              <p className="text-xs text-muted">{x.fila.brief.etiqueta}</p>
+              <p className="text-sm font-semibold text-ink">
+                {x.look.nombre} — tú {x.mia === "arriba" ? "👍" : "👎"}
+              </p>
+              {x.nota?.texto && x.nota.texto.aprobado !== (x.mia === "arriba") ? (
+                <p className="text-xs text-muted">
+                  <b>texto {x.nota.texto.aprobado ? "👍" : "👎"}:</b> {x.nota.texto.porQue}
+                </p>
+              ) : null}
+              {x.nota?.vision && x.nota.vision.aprobado !== (x.mia === "arriba") ? (
+                <p className="text-xs text-muted">
+                  <b>visión {x.nota.vision.aprobado ? "👍" : "👎"}:</b> {x.nota.vision.porQue}
+                </p>
+              ) : null}
+            </div>
+          ))}
+          {discrepan.length === 0 ? (
+            <p className="text-sm text-muted">
+              Coincidieron en todo. Con esta muestra, las rúbricas ven como tú.
+            </p>
+          ) : null}
+        </div>
+
+        <button
+          onClick={() => router.refresh()}
+          className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile"
+        >
+          Actualizar el marcador
+        </button>
+      </div>
+    );
+  }
+
+  if (!c) {
+    return (
+      <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+        No hay looks calificados que marcar.
+      </p>
+    );
+  }
+
+  const f = c.fila.brief;
+  const formal = formalidadLegible(f.formality, gender);
 
   return (
-    <div className="flex flex-col gap-4">
-      {casos.map((c) => {
-        const clave = `${c.fila.id}|${c.i}`;
-        const f = c.fila.brief;
-        const formal = formalidadLegible(f.formality, gender);
-        return (
-          <div key={clave} className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
-            <p className="text-xs text-muted">
-              {f.plan?.trim() || f.etiqueta}
-              {formal ? ` · ${formal}` : ""}
-              {f.weather ? ` · ${f.weather.temp_c}°C ${f.weather.condition}` : ""}
-            </p>
-            <p className="text-sm font-semibold text-ink">{c.look.nombre}</p>
-            <div className="flex flex-wrap gap-2">
-              {c.look.item_ids.map((id) => {
-                const p = prendas[id];
-                return p?.imagen ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={id}
-                    src={p.imagen}
-                    alt={p.nombre}
-                    className="h-20 w-20 rounded-lg border border-line object-cover"
-                  />
-                ) : (
-                  <div
-                    key={id}
-                    className="flex h-20 w-20 items-center justify-center rounded-lg border border-line p-1 text-center text-[10px] text-muted"
-                    style={{ background: p?.swatch ?? "#E5E1DD" }}
-                  >
-                    {p?.nombre ?? "Prenda"}
-                  </div>
-                );
-              })}
-            </div>
+    <div className="flex flex-col gap-3">
+      {/* Progreso: cuántos van de la muestra. Sin esto, 30 juicios seguidos se
+          sienten infinitos. */}
+      <div className="flex items-center gap-3">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-tile">
+          <div
+            className="h-full bg-accent transition-all"
+            style={{ width: `${(idx / casos.length) * 100}%` }}
+          />
+        </div>
+        <span className="shrink-0 text-xs text-muted">
+          {idx + 1} de {casos.length}
+        </span>
+      </div>
 
-            {/* Los jueces se ven DESPUÉS de la marca: verlos antes contaminaría
-                justo lo que se está midiendo. */}
-            {c.marca ? (
-              <details className="text-xs">
-                <summary className="cursor-pointer text-muted">
-                  Lo que dijeron los jueces
-                </summary>
-                <div className="mt-1 flex flex-col gap-1 text-muted">
-                  {c.nota?.texto ? (
-                    <p>
-                      <b>texto</b> {c.nota.texto.aprobado ? "👍" : "👎"}:{" "}
-                      {c.nota.texto.porQue}
-                    </p>
-                  ) : null}
-                  {c.nota?.vision ? (
-                    <p>
-                      <b>visión</b> {c.nota.vision.aprobado ? "👍" : "👎"}:{" "}
-                      {c.nota.vision.porQue}
-                    </p>
-                  ) : null}
-                  {(c.nota?.violaciones ?? []).map((v, k) => (
-                    <p key={k}>
-                      <b>código</b> {v.regla}: {v.detalle}
-                    </p>
-                  ))}
-                </div>
-              </details>
-            ) : null}
+      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+        <p className="text-xs text-muted">
+          {f.plan?.trim() || f.etiqueta}
+          {formal ? ` · ${formal}` : ""}
+          {f.weather ? ` · ${f.weather.temp_c}°C ${f.weather.condition}` : ""}
+        </p>
+        <p className="text-base font-semibold text-ink">{c.look.nombre}</p>
 
-            <div className="flex gap-2">
-              {(["arriba", "abajo"] as const).map((m) => (
-                <button
-                  key={m}
-                  disabled={guardando === clave}
-                  onClick={() => marcar(c.fila, c.i, m)}
-                  className={`flex-1 rounded-xl border py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                    c.marca === m
-                      ? "border-accent bg-accent text-on-accent"
-                      : "border-line text-ink active:bg-tile"
-                  }`}
-                >
-                  {m === "arriba" ? "👍 me lo pondría" : "👎 no"}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-      {casos.length === 0 ? (
-        <p className="text-sm text-muted">No hay looks calificados que marcar.</p>
-      ) : null}
+        {/* Prendas GRANDES: se está juzgando ropa, no leyendo una lista. */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {c.look.item_ids.map((id) => {
+            const p = prendas[id];
+            return p?.imagen ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={id}
+                src={p.imagen}
+                alt={p.nombre}
+                className="aspect-square w-full rounded-lg border border-line object-cover"
+              />
+            ) : (
+              <div
+                key={id}
+                className="flex aspect-square w-full items-center justify-center rounded-lg border border-line p-2 text-center text-xs text-muted"
+                style={{ background: p?.swatch ?? "#E5E1DD" }}
+              >
+                {p?.nombre ?? "Prenda"}
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-sm text-muted">{c.look.explicacion}</p>
+        {c.look.tip ? (
+          <p className="text-sm text-muted">
+            <b className="text-ink">el toque:</b> {c.look.tip}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => marcar("abajo")}
+          className="flex-1 rounded-xl border border-line py-4 text-base font-semibold text-ink active:bg-tile"
+        >
+          👎 no
+        </button>
+        <button
+          onClick={() => marcar("arriba")}
+          className="flex-1 rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+        >
+          👍 me lo pondría
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted">
+          ← 👎 · → 👍 · ↑ saltar · ⌫ atrás
+        </p>
+        {hechas > 0 ? (
+          <button
+            onClick={() => setRevelado(true)}
+            className="text-xs font-semibold text-accent"
+          >
+            ver el resultado ({hechas})
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
+
 
 function CerrarEval({
   corridaId,

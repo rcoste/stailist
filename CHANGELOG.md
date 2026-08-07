@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.134.0] - 2026-08-07
+
+### Changed — el calibrador, rediseñado para que calificar sea rápido y ciego
+
+Roberto: *"métele cabeza"*. Cuatro cambios, cada uno con su razón:
+
+**Un look a la vez, grande.** Era una lista de 30 con miniaturas de 80px. Las prendas ahora van a **314px** en cuadrícula: calificar ropa mirando estampillas no es calificar.
+
+**Con el teclado**: `←` 👎 · `→` 👍 · `↑` saltar · `⌫` atrás. Son 30 juicios seguidos y cada tap ahorrado se multiplica por 30.
+
+**Los jueces NO se ven hasta el final.** Antes se revelaban look por look, y eso contamina exactamente lo que se mide: el acuerdo vale como evidencia sólo si la marca se emitió a ciegas. Mismo principio que el voto ciego del comparador.
+
+**Sin `router.refresh()` por marca.** Se guarda en segundo plano y la pantalla avanza sola. Recargar entre look y look hacía la tarea lenta justo donde la fatiga decide si se termina o no.
+
+Y la muestra **se congela al montar**: si se reordenara con cada marca, el look recién calificado saltaría de posición.
+
+### Added — el revelado es la cosecha, no la calificación
+
+Al terminar (o cuando se pida), aparece el acuerdo con cada juez **y la lista de desacuerdos** con lo que dijo cada uno. Ahí es donde salen las reglas nuevas: o el juez ve algo que el humano no, o el humano ve algo que a la rúbrica le falta decir. El porcentaje solo dice si la rúbrica sigue siendo confiable; los desacuerdos dicen qué hacer.
+
 ## [0.2.133.0] - 2026-08-07
 
 ### Added — el motor por fin puede decir "no puedo"
