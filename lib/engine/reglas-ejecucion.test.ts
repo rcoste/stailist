@@ -442,3 +442,43 @@ describe("lluvia-calzado: la FORMA manda sobre el material", () => {
     ).toBeUndefined();
   });
 });
+
+describe("codigo-de-smoking: los dos huecos que Roberto marcó", () => {
+  // De la corrida de verificación. Los dos motores sacaron esmoquin para la
+  // boda formal y él marcó exactamente dos cosas: "Smoking no lleva cinturón"
+  // y "falta moño de Smoking" — esta última incluso en el look que APROBÓ.
+  const base = [
+    p("Esmoquin negro", "#0A0A0A"),
+    p("Camisa blanca", "#FFFFFF"),
+    p("Zapato formal negro", "#111111"),
+  ];
+  const regla = (its: ReturnType<typeof p>[]) =>
+    revisarEjecucion(its, {}).find((x) => x.regla === "codigo-de-smoking");
+
+  it("el cinturón sobra — era la ÚNICA diferencia entre su 👍 y su 👎", () => {
+    const r = regla([...base, p("Cinturón negro", "#111111")]);
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Cinturón negro");
+    expect(r!.detalle).toContain("trabillas");
+  });
+
+  it("sin nada al cuello, falta el moño (antes solo veía la corbata equivocada)", () => {
+    const r = regla(base);
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("moño");
+  });
+
+  it("con moño y sin cinturón, el esmoquin pasa limpio", () => {
+    expect(regla([...base, p("Moño negro de seda", "#0A0A0A")])).toBeUndefined();
+  });
+
+  it("sin smoking, ni el cinturón ni la falta de moño molestan", () => {
+    expect(
+      regla([
+        p("Traje marino de lana", "#1F2A44"),
+        p("Camisa blanca", "#FFFFFF"),
+        p("Cinturón negro", "#111111"),
+      ])
+    ).toBeUndefined();
+  });
+});

@@ -229,7 +229,7 @@ import {
 // defectos de clima cayeron en el brief de lluvia —con los DOS motores
 // fallando— y dos looks apilaron lana sobre lana a 18°. Va en el prompt (la
 // banda) y en código (lo que se puede comprobar: reglas-ejecucion #6 y #7).
-export const PROMPT_VERSION = "v40";
+export const PROMPT_VERSION = "v41";
 
 export type EngineItem = {
   id: string;
@@ -563,11 +563,19 @@ export function contextBlock(
   // Formalidad del evento (el wizard la pregunta para "evento") + default
   // mexicano: las bodas/eventos formales en México son más arreglados que el
   // default del modelo; ante la duda, subir nivel, no bajarlo.
+  // EL VOCABULARIO DE LA INVITACIÓN, no una escala abstracta. "Formal" a secas
+  // dejaba al modelo elegir entre traje y esmoquin, y elegía esmoquin: los DOS
+  // motores lo hicieron en la corrida de verificación. Roberto: "en una boda
+  // mexicana formal jamás iría alguien así vestido… la gente va de traje y
+  // corbata". Es el mismo hueco que el clima — una suposición cultural que
+  // nunca se escribió — y se cierra igual: diciéndola.
   const FORMALITY_LABELS: Record<string, string> = {
     casual: "casual (relajado pero cuidado)",
-    semiformal: "semiformal (coctel / business elevado)",
-    formal: "formal",
-    gala: "de gala / etiqueta (lo más arreglado)",
+    semiformal: "semiformal / coctel (business elevado; saco sí, corbata opcional)",
+    formal:
+      "formal — TRAJE Y CORBATA. En México esto NO es esmoquin: es traje oscuro (marino, gris o negro), camisa lisa y corbata. Si el clóset tiene esmoquin, NO lo uses aquí; el esmoquin es solo para etiqueta rigurosa",
+    gala:
+      "etiqueta rigurosa / black tie — AQUÍ SÍ va el esmoquin, y con su código completo: moño (nunca corbata larga), camisa blanca, pantalón del propio esmoquin y SIN cinturón. Si el clóset no tiene con qué completarlo, arma un traje oscuro impecable en vez de un esmoquin a medias",
   };
   if (ctx.formality && FORMALITY_LABELS[ctx.formality]) {
     lines.push(
