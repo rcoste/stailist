@@ -41,7 +41,14 @@ import { lineaFormalidad } from "@/lib/formalidad";
 // r2 → r3: el estándar de lluvia se afinó con la corrida de verificación (el
 // mocasín de piel se colaba). La rúbrica lo sigue: si el juez calificara con
 // una vara distinta a la que el motor recibe, mediría otra cosa.
-export const RUBRICA_VERSION = "r6";
+// r6 → r7: entra la dimensión ESTILO (idea de Roberto: "un juez con sombrero
+// de stylist — ¿el outfit es de esa persona, considerando sus gustos y el
+// estilo que buscaba?"). Hasta r6 la rúbrica calificaba a una persona ANÓNIMA:
+// el motor recibía la marca de estilo y el juez no, así que ignorar los gustos
+// salía gratis. La regla de la excepción también es suya: la formalidad acota
+// al estilo — un boho que va de gala no tiene holgura, y no reprueba por no
+// verse boho.
+export const RUBRICA_VERSION = "r7";
 
 /** El mismo contexto que recibió el motor. Un juez que califica "evento" a
  * secas tendría el mismo problema que Roberto votando: "evento es algo muy
@@ -58,7 +65,29 @@ export type BriefRubrica = {
   momento?: "dia" | "noche" | null;
   weather: { temp_c: number; condition: string } | null;
   paraguas?: boolean;
+  /** El estilo DECLARADO de la persona — el mismo que recibió el motor. Sin él,
+   * la dimensión "estilo" queda neutra (3) y no pesa en aprobado. */
+  estilo?: EstiloRubrica | null;
 };
+
+/**
+ * El estilo de la persona, en las MISMAS líneas que consume el motor
+ * (lib/engine/contexto.ts los pone en EngineContext): un juez que leyera otra
+ * versión del estilo calificaría contra una vara que el motor nunca vio.
+ */
+export type EstiloRubrica = {
+  /** styleReference ya traducido (lib/estilo-referencia.ts): el vibe de sus fotos. */
+  marca: string | null;
+  /** style_words: cómo describe su estilo en sus palabras. */
+  palabras: string | null;
+  /** El arquetipo destilado de sus swipes: "nombre — descripción". */
+  arquetipo: string | null;
+};
+
+/** ¿El brief trae señal de estilo de verdad? (para saber si la dimensión mide algo) */
+export function tieneEstilo(e: EstiloRubrica | null | undefined): boolean {
+  return !!(e && (e.marca || e.palabras || e.arquetipo));
+}
 
 export type PrendaRubrica = {
   nombre: string;
@@ -82,6 +111,8 @@ export type NotaRubrica = {
   clima: number;
   /** 1-5: capas con lógica, pesos y materiales que se hablan, colores que dialogan. */
   armado: number;
+  /** 1-5: ¿el look es de ESTA persona? 3 = neutro (o sin estilo declarado). */
+  estilo: number;
   /** 1-5: 3 = correcto pero plano; 5 = "siento que tengo un stylist". */
   wow: number;
   /** ¿Alguien que se viste bien se lo pondría TAL CUAL para este brief? */
@@ -120,6 +151,17 @@ export function briefParaRubrica(b: BriefRubrica): string {
       );
     }
   }
+  // El estilo declarado, en las MISMAS líneas que el motor recibió: la
+  // dimensión "estilo" mide obediencia a esto, no al gusto del juez.
+  if (tieneEstilo(b.estilo)) {
+    const e = b.estilo!;
+    const partes = [
+      e.marca ? `Su marca de estilo: ${e.marca}` : "",
+      e.palabras ? `En sus palabras: "${e.palabras}"` : "",
+      e.arquetipo ? `Su arquetipo: ${e.arquetipo}` : "",
+    ].filter(Boolean);
+    lineas.push(`SU ESTILO (el motor lo recibió y debía honrarlo):\n${partes.join("\n")}`);
+  }
   return lineas.join("\n");
 }
 
@@ -143,7 +185,7 @@ export const SYSTEM_RUBRICA = `Eres el evaluador de calidad de stailist, un styl
 
 Primero llena "analisis": qué pide este brief exactamente (registro, clima, lluvia), y qué ves en el look que cumple o rompe eso. DESPUÉS puntúa a partir de tu análisis.
 
-Las cuatro dimensiones, cada una de 1 a 5:
+Las cinco dimensiones, cada una de 1 a 5:
 
 1. ocasion — ¿el registro es el que ESTE pedido exige? No "un evento" en abstracto: si dice boda formal, se evalúa contra boda formal; si dice oficina, ir de lino completo es demasiado informal; una cena casual con amigos NO exige traje. 5 = registro exacto; 3 = pasable pero un escalón arriba o abajo; 1 = fuera de lugar.
 
@@ -151,9 +193,11 @@ Las cuatro dimensiones, cada una de 1 a 5:
 
 3. armado — ¿el look está bien construido? Capas con lógica (una camiseta bajo el suéter cuando toca; nada de overshirt sobre suéter grueso), pesos y materiales que se hablan (no piezas de invierno con piezas de verano), cueros y colores que dialogan. 5 = todo se habla; 1 = piezas que se pelean.
 
-4. wow — ¿se siente que hay un stylist detrás, o solo ropa que no choca? 3 = CORRECTO PERO PLANO: nada mal, nada memorable. 5 = una decisión con chispa (una mezcla que sorprende bien, una prenda usada con intención) Y un gesto de styling concreto y ejecutable (remangar dos vueltas, desfajar, dejar abierto). OJO: el tip solo suma si es un gesto físico específico — la prosa bonita sin gesto no cuenta. 1 = aburrido o incoherente.
+4. estilo — ¿el look es de ESTA persona? Cuando el pedido trae "SU ESTILO", califica si el look lo honra: piezas, tonos y registro que se sienten de alguien con ese estilo, no de un maniquí genérico. REGLA: la formalidad ACOTA al estilo, no al revés. En casual el estilo manda — un look que lo ignora por completo es un 2. Conforme sube la formalidad, el estilo solo cabe en los detalles (color, textura, accesorio, un gesto) dentro del dress code: en formal o etiqueta NO castigues por "no verse de su estilo"; castiga solo si no hay NI UN gesto personal donde sí cabía. Si el pedido NO trae "SU ESTILO", pon 3 y no lo uses para aprobar.
 
-aprobado: ¿alguien que se viste bien se lo pondría TAL CUAL para este pedido? Un fallo claro de clima, de lluvia o de ocasión lo tira aunque el resto esté bien. La duda razonable ("no sé si lino con algodón") NO lo tira.
+5. wow — ¿se siente que hay un stylist detrás, o solo ropa que no choca? 3 = CORRECTO PERO PLANO: nada mal, nada memorable. 5 = una decisión con chispa (una mezcla que sorprende bien, una prenda usada con intención) Y un gesto de styling concreto y ejecutable (remangar dos vueltas, desfajar, dejar abierto). OJO: el tip solo suma si es un gesto físico específico — la prosa bonita sin gesto no cuenta. 1 = aburrido o incoherente.
+
+aprobado: ¿alguien que se viste bien se lo pondría TAL CUAL para este pedido? Un fallo claro de clima, de lluvia o de ocasión lo tira aunque el resto esté bien. Ignorar por completo el estilo declarado en un pedido casual también lo tira; en formal o etiqueta, no. La duda razonable ("no sé si lino con algodón") NO lo tira.
 
 porQue: una línea concreta, nombrando prendas — como lo diría un stylist, no un robot.`;
 
@@ -177,6 +221,7 @@ export function normalizarNota(raw: NotaRubrica): NotaRubrica {
     ocasion: enEscala(raw.ocasion),
     clima: enEscala(raw.clima),
     armado: enEscala(raw.armado),
+    estilo: enEscala(raw.estilo),
     wow: enEscala(raw.wow),
     aprobado: raw.aprobado === true,
   };
@@ -189,11 +234,12 @@ export const SCHEMA_RUBRICA = {
     ocasion: ESCALA,
     clima: ESCALA,
     armado: ESCALA,
+    estilo: ESCALA,
     wow: ESCALA,
     aprobado: { type: "boolean" },
     porQue: { type: "string" },
   },
-  required: ["analisis", "ocasion", "clima", "armado", "wow", "aprobado", "porQue"],
+  required: ["analisis", "ocasion", "clima", "armado", "estilo", "wow", "aprobado", "porQue"],
   additionalProperties: false,
 } as const;
 
@@ -210,7 +256,10 @@ export async function evaluarLook(
     system: SYSTEM_RUBRICA,
     texto: `EL PEDIDO:\n${briefParaRubrica(brief)}\n\nEL LOOK A CALIFICAR:\n${lookParaRubrica(look)}`,
     schema: SCHEMA_RUBRICA as unknown as Record<string, unknown>,
-    maxTokens: 700,
+    // 900 y no 700: con la dimensión de estilo (r7) el "analisis" creció y la
+    // primera corrida del eval trajo un RUBRICA_TRUNCADA real. Truncar sale
+    // más caro que el margen — se pagó la llamada entera y no quedó nota.
+    maxTokens: 900,
   });
   if (recibo.truncada) throw new Error("RUBRICA_TRUNCADA");
   return { nota: normalizarNota(parsearJson<NotaRubrica>(recibo.texto)), recibo };
