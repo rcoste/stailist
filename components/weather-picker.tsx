@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { Spinner } from "@/components/spinner";
 import { Icon, type IconName } from "@/components/icon";
+import {
+  WORK_DRESS_CODES,
+  ropaDeDressCode,
+  type WorkDressCode,
+} from "@/lib/dress-code";
 
 // Compositor de "crear outfit" como WIZARD de 3 pasos (rebrand v3):
 // 1) ocasión (grid 2×2 + campo abierto) · 2) día/noche · 3) clima (lista de
@@ -17,6 +22,12 @@ export type LookInput = {
   formality?: string | null; // solo en "evento": casual | semiformal | formal | gala
   /** Va a llevar paraguas. Solo viaja cuando dijo que llueve. */
   paraguas?: boolean;
+  /**
+   * Su código de vestimenta del trabajo, si se le acaba de preguntar. Viaja
+   * UNA vez —quien llama lo guarda en el perfil— y de ahí en adelante ya no se
+   * pregunta: dónde trabajas no cambia cada mañana.
+   */
+  workDressCode?: WorkDressCode;
 } & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
 
 // Prenda del clóset para el picker de ancla (foto resuelta en el server).
@@ -46,7 +57,7 @@ const norm = (s: string) =>
 // 4 ocasiones del wizard (sin "viaje": ya hay un Modo viaje propio).
 const OCASIONES: { key: string; label: string; help: string; icon: IconName }[] = [
   { key: "diario", label: "el día a día", help: "lo de siempre, resuelto", icon: "sol" },
-  { key: "oficina", label: "oficina", help: "verte pro sin pensarlo", icon: "maletin" },
+  { key: "oficina", label: "trabajo", help: "verte pro sin pensarlo", icon: "maletin" },
   { key: "evento", label: "un evento", help: "algo que importa", icon: "destello" },
   { key: "refrescar", label: "refrescar", help: "distinto a ayer", icon: "repetir" },
 ];
@@ -155,6 +166,7 @@ export function LookRequest({
   closet = [],
   defaultSeedItemId = null,
   gender = null,
+  workDressCode = null,
 }: {
   title?: string;
   defaultObjective: string | null;
@@ -170,6 +182,8 @@ export function LookRequest({
   closet?: ClosetPick[];
   /** Para las anclas de formalidad: la ropa concreta es distinta por género. */
   gender?: "hombre" | "mujer" | null;
+  /** El que ya tiene guardado. null = nunca se le ha preguntado. */
+  workDressCode?: string | null;
 }) {
   // "viaje" (la opción "Aeropuerto" del onboarding) NO es una ocasión del wizard; se
   // trata como "diario" (look cómodo del día) para NO re-preguntar la ocasión al armar
@@ -211,6 +225,8 @@ export function LookRequest({
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
   const [formality, setFormality] = useState<string | null>(null); // solo "evento"
+  // Solo se pregunta si NO lo tiene guardado, y solo al elegir "trabajo".
+  const [dressCode, setDressCode] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [locFailed, setLocFailed] = useState(false);
 
@@ -220,8 +236,18 @@ export function LookRequest({
     ? { objective: "diario", plan: openText.trim() }
     : { objective: objective ?? "diario" };
 
+  // Trabajo exige su código de vestimenta la PRIMERA vez, por lo mismo que
+  // evento exige formalidad: sin ese dato el motor adivina y el resultado no se
+  // puede ni calificar. Después ya no se pregunta nunca.
+  const pideDressCode = objective === "oficina" && !workDressCode;
   // "Evento" exige elegir formalidad para avanzar (es justo el dato que faltaba).
-  const step1Ready = hasOpen || (objective === "evento" ? !!formality : !!objective);
+  const step1Ready =
+    hasOpen ||
+    (objective === "evento"
+      ? !!formality
+      : pideDressCode
+        ? !!dressCode
+        : !!objective);
   // La formalidad solo viaja cuando la ocasión final es "evento".
   const formalityOut =
     objectivePart.objective === "evento" && !hasOpen ? formality : null;
@@ -240,7 +266,14 @@ export function LookRequest({
     const coords = await getPosition();
     setLocating(false);
     if (coords)
-      onPick({ ...objectivePart, momento, seedItemId, formality: formalityOut, ...coords });
+      onPick({
+        ...objectivePart,
+        momento,
+        seedItemId,
+        formality: formalityOut,
+        ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
+        ...coords,
+      });
     else setLocFailed(true);
   }
 
@@ -252,6 +285,7 @@ export function LookRequest({
       momento,
       seedItemId,
       formality: formalityOut,
+      ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
       ...(rain ? { paraguas } : {}),
     });
@@ -339,6 +373,9 @@ export function LookRequest({
                   objective={objective}
                   openText={openText}
                   formality={formality}
+                  pideDressCode={pideDressCode}
+                  dressCode={dressCode}
+                  onDressCode={setDressCode}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
                   onFormality={setFormality}
@@ -420,6 +457,9 @@ function StepOcasion({
   objective,
   openText,
   formality,
+  pideDressCode,
+  dressCode,
+  onDressCode,
   onPick,
   onOpenText,
   onFormality,
@@ -428,6 +468,9 @@ function StepOcasion({
   objective: string | null;
   openText: string;
   formality: string | null;
+  pideDressCode: boolean;
+  dressCode: string | null;
+  onDressCode: (d: string) => void;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
   onFormality: (f: string) => void;
@@ -497,6 +540,53 @@ function StepOcasion({
                     className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
                   >
                     {f.ayuda}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* El código de vestimenta del TRABAJO. Solo la primera vez: es un dato de
+          persona, no de día. Roberto no pudo calificar un look de oficina en la
+          corrida de verificación —"depende del tipo de oficina… el look está
+          padre pero depende"— porque ni el motor ni él tenían el dato.
+          Mismo patrón que la formalidad del evento: aparece al elegir, hay que
+          contestarlo para avanzar, y las opciones dicen la ROPA, no la jerga. */}
+      {pideDressCode ? (
+        <div
+          className="flex flex-col gap-2.5"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <span className="text-[13px] font-semibold text-ink">
+            ¿cómo te vistes para trabajar?
+          </span>
+          <span className="-mt-1.5 text-[12px] text-muted">
+            te lo pregunto una vez y lo recuerdo
+          </span>
+          <div className="flex flex-col gap-2">
+            {WORK_DRESS_CODES.map((d) => {
+              const on = dressCode === d.key;
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => onDressCode(d.key)}
+                  aria-pressed={on}
+                  className={`flex flex-col items-start rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
+                    on
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface text-ink hover:border-ink"
+                  }`}
+                >
+                  <span className="text-[14px] font-semibold">
+                    {ropaDeDressCode(d, gender)}
+                  </span>
+                  <span
+                    className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
+                  >
+                    {d.ejemplos}
                   </span>
                 </button>
               );

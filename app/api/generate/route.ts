@@ -46,11 +46,24 @@ export async function POST(request: NextRequest) {
     plan?: string;
     momento?: string;
     paraguas?: boolean;
+    workDressCode?: string;
   } = {};
   try {
     body = await request.json();
   } catch {
     // sin body = sin clima, no pasa nada
+  }
+  // El código de vestimenta del trabajo se PERSISTE la primera (y única) vez
+  // que llega: es de la persona, no de la petición. Se valida aquí porque una
+  // route es un endpoint; el CHECK de la columna es la segunda red.
+  if (
+    typeof body.workDressCode === "string" &&
+    ["formal", "business_casual", "casual", "variable"].includes(body.workDressCode)
+  ) {
+    await supabase
+      .from("profiles")
+      .update({ work_dress_code: body.workDressCode })
+      .eq("id", user.id);
   }
 
   const encoder = new TextEncoder();

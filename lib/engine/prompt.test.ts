@@ -667,3 +667,60 @@ describe("formalidad: el ancla concreta, no la palabra suelta", () => {
     expect(t.toLowerCase()).toContain("sin cinturón");
   });
 })
+
+describe("el código de vestimenta del trabajo", () => {
+  // "Oficina" no es un registro: son cuatro. Roberto no pudo calificar un look
+  // de oficina de la corrida de verificación — "depende del tipo de oficina…
+  // el look está padre pero depende" — porque ni el motor ni él tenían el dato.
+  const ctx = (workDressCode: string | null): EngineContext =>
+    ({
+      gender: "hombre",
+      objective: "oficina",
+      workDressCode,
+      timeOfDay: "dia",
+      weather: null,
+      items: [],
+      tasteTags: [],
+      vetoes: [],
+      recentCombos: [],
+      lifestyle: null,
+      archetype: null,
+      season: null,
+      flow: null,
+      silueta: null,
+      fitPref: null,
+      ageStyling: null,
+      tasteSignal: EMPTY_TASTE_SIGNAL,
+      seedItemId: null,
+      formality: null,
+      plan: null,
+      styleReference: null,
+      styleWords: null,
+    }) as unknown as EngineContext;
+
+  it("sin código, queda el piso mínimo de siempre (no inventa un registro)", () => {
+    const t = pisoDeFormalidad(ctx(null));
+    expect(t).toContain("PISO DE FORMALIDAD (trabajo)");
+    expect(t).not.toContain("saco o blazer");
+  });
+
+  it("formal pide saco; casual dice explícitamente que NO lo sobrevista", () => {
+    expect(pisoDeFormalidad(ctx("formal"))).toContain("saco o blazer");
+    const casual = pisoDeFormalidad(ctx("casual"));
+    expect(casual).toContain("jeans");
+    expect(casual).toContain("no lo sobrevistas");
+  });
+
+  it("'depende del día' no es un cajón vacío: da una salida accionable", () => {
+    // Roberto lo pidió sin nombrarlo: "igual hay una cena de trabajo importante
+    // donde sí importe ir de traje".
+    const t = pisoDeFormalidad(ctx("variable"));
+    expect(t).toContain("business casual");
+    expect(t.toLowerCase()).toContain("tip");
+  });
+
+  it("el código NO se cuela en otras ocasiones", () => {
+    const diario = { ...ctx("formal"), objective: "diario" } as EngineContext;
+    expect(pisoDeFormalidad(diario)).not.toContain("banca");
+  });
+});

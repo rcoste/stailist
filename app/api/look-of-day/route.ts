@@ -35,6 +35,7 @@ type Body = {
   forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
   formality?: string; // solo en "evento": casual | semiformal | formal | gala
   paraguas?: boolean; // solo cuando el clima trae lluvia
+  workDressCode?: string; // solo la primera vez que elige "trabajo"
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -57,6 +58,18 @@ export async function POST(request: NextRequest) {
   }
   const force = !!body.force;
   const seedItemId = typeof body.seedItemId === "string" ? body.seedItemId : null;
+  // El código de vestimenta se PERSISTE la primera (y única) vez que llega:
+  // es de la persona, no de la petición. La lista se valida aquí porque una
+  // server route es un endpoint — el CHECK de la columna es la segunda red.
+  if (
+    typeof body.workDressCode === "string" &&
+    ["formal", "business_casual", "casual", "variable"].includes(body.workDressCode)
+  ) {
+    await supabase
+      .from("profiles")
+      .update({ work_dress_code: body.workDressCode })
+      .eq("id", user.id);
+  }
   const forceAnchor = !!body.forceAnchor;
   const today = todayStr();
 
