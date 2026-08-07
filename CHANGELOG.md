@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.125.0] - 2026-08-07
+
+### Added
+
+- **"¿Hoy ves cliente?" — la pregunta del día para quien dijo "depende del día".** Roberto preguntó qué pasaba si elegía esa opción, y la respuesta honesta era: **era la peor atendida de las cuatro**. El motor se cubría en business casual y le pasaba la pelota al tip, así que salía mal por los dos lados — corto el día de cliente, tieso el día que no. Y es precisamente la persona para quien la respuesta sí cambia (*"trabajo en home office pero cuando veo cliente me visto más formal"*).
+
+  Elegir "depende del día" **es la persona diciendo que ese dato es del día, no de ella** — así que ahora desbloquea un toggle en el wizard, igual que el paraguas: solo lo ve quien lo eligió, default "no", y **no se persiste** (es del día). Con la respuesta el motor deja de hedgear: día de cliente pide saco y descarta jeans; día normal dice explícitamente que **no lo sobrevista**.
+
+  Verificado end-to-end: con "sí veo cliente" el motor armó *blazer marino + camisa blanca + zapato formal*, y el tip fue *"deja el blazer desabotonado al caminar y abotónalo justo al sentarte con el cliente"*. Prompt **v43**, rúbrica **r6**.
+
 ## [0.2.124.1] - 2026-08-07
 
 ### Added

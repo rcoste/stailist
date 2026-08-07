@@ -151,6 +151,8 @@ export type PeticionDeLook = {
   weather: Weather | null;
   /** Va a llevar paraguas. Solo se pregunta cuando el clima trae lluvia. */
   paraguas?: boolean;
+  /** Solo si su código de trabajo es "variable": si HOY ve cliente. */
+  veCliente?: boolean | null;
   seedItemId?: string | null;
   formality?: string | null;
 };
@@ -214,5 +216,8 @@ export function construirContexto(
     styleWords: (profile.style_words as string | null) ?? null,
     // De la PERSONA, no de la petición: dónde trabajas no cambia cada mañana.
     workDressCode: (profile.work_dress_code as string | null) ?? null,
+    // Del DÍA, no del perfil: quien eligió "depende del día" está diciendo
+    // exactamente eso.
+    veCliente: typeof p.veCliente === "boolean" ? p.veCliente : null,
   };
 }

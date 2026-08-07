@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
     momento?: string;
     paraguas?: boolean;
     workDressCode?: string;
+    /** Del día: solo cuenta si su código de trabajo es "variable". */
+    veCliente?: boolean;
   } = {};
   try {
     body = await request.json();
@@ -106,6 +108,9 @@ export async function POST(request: NextRequest) {
           // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no
           // debe soltarle la mano a la capa exterior.
           paraguas: body.paraguas === true,
+          // NO se persiste: es del día, como el paraguas. Solo cuenta si su código
+          // de trabajo es "variable" (el prompt lo ignora en los otros tres).
+          veCliente: typeof body.veCliente === "boolean" ? body.veCliente : null,
         });
 
         const gender = profile.gender as "hombre" | "mujer" | null;

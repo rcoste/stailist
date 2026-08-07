@@ -36,6 +36,8 @@ type Body = {
   formality?: string; // solo en "evento": casual | semiformal | formal | gala
   paraguas?: boolean; // solo cuando el clima trae lluvia
   workDressCode?: string; // solo la primera vez que elige "trabajo"
+  /** Del día: solo cuenta si su código de trabajo es "variable". */
+  veCliente?: boolean;
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -287,6 +289,9 @@ async function generateInto(
       // soltarle la mano a la capa exterior. El contexto lo pasa tal cual y la
       // regla #7 solo mira `paraguas` cuando `lluvia` es cierto.
       paraguas: body.paraguas === true,
+      // NO se persiste: es del día, como el paraguas. Solo cuenta si su código
+      // de trabajo es "variable" (el prompt lo ignora en los otros tres).
+      veCliente: typeof body.veCliente === "boolean" ? body.veCliente : null,
     });
     const seedItemId = ctx.seedItemId ?? null;
     const startedAt = Date.now();
