@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.118.0] - 2026-08-06
+
+Tres fricciones de UX que reportaron Roberto y Pablo probando el flujo.
+
+### Fixed
+
+- **"rehacer el cuerpo" no dejaba rehacer el cuerpo.** Se leía como "déjame elegir otra vez mi cuerpo" y hacía otra cosa: regeneraba con exactamente los mismos datos. Quien quería cambiar su complexión o sus fotos tenía que irse por "ajustar la cara", avanzar, y recién ahí llegar al cuerpo — un camino que nadie adivina. Ahora son **tres botones que dicen lo que hacen**: `otra toma` (lo mismo, otra vez), `cambiar cuerpo` (vuelve al paso que lo define) y `la cara`. Medidos a 375px: 114px por columna, una línea, sin desbordar.
+- **El clima ya no viene contestado.** Venía en "Templado" preseleccionado, con su borde de tinta y su bolita llena, y eso hacía **dos** daños: la lista se leía como "ya está resuelto" —así que la píldora de ubicación, que es el camino práctico y el **único que lee la lluvia**, se volvía invisible— y quien pasaba de largo le mandaba 19° al motor sin haberlo elegido. Lo segundo no es cosmético: **"rompe el clima" fue la etiqueta de defecto más marcada del veredicto (5 de 6)**. Ahora nada viene marcado y "armar mi look" espera a que elijas.
+- **La salida del onboarding tenía peso de nota al pie.** "entrar a la app" era texto gris de 14px al fondo de la pantalla — el elemento más débil de la vista, siendo la única puerta a la app. Ahora es un botón: toma el lugar primario cuando ya hay render (ahí no compite con nada, porque el de "verme" desaparece) y queda como secundaria con borde mientras el render sigue siendo la invitación principal.
+
+### Notes
+
+- **El avatar no cambió de modelo, y aquí está la prueba**: la imagen la hace `gemini-3-pro-image` y el juez de parecido Haiku 4.5. Cero menciones de Opus en todo el camino del avatar. El último cambio a ese archivo antes de hoy fue el 2026-08-04, y lo único que hizo fue sustituir el string `"claude-haiku-4-5"` por la constante `GUARD_MODEL` — **el mismo modelo**, solo centralizado.
+
 ## [0.2.117.1] - 2026-08-06
 
 Persiguiendo "el avatar tarda muchísimo, como tres minutos".
