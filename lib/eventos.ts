@@ -107,7 +107,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     label: "un funeral",
     formalidad: "formal",
     paraElMotor:
-      "un funeral o misa: sobrio y discreto. Tonos oscuros o apagados, nada llamativo, nada que pida atención. Aquí la regla de no destacar MANDA sobre cualquier preferencia de estilo o de colorimetría",
+      "un funeral o misa: sobrio y discreto. EL COLOR ES NEGRO — o gris muy oscuro o carbón si no hay negro. El AZUL MARINO NO sirve aquí aunque sea un traje impecable: en México el luto es negro y el marino se lee como oficina, no como duelo. Si el clóset no da un traje negro, es MEJOR armar piezas sueltas oscuras (pantalón negro, camisa blanca, suéter o saco gris oscuro) que sacar un traje marino completo — el conjunto correcto en el color equivocado se nota más que el conjunto suelto en el color correcto. Nada llamativo, nada que pida atención. Aquí la regla de no destacar MANDA sobre cualquier preferencia de estilo o de colorimetría",
   },
 ];
 

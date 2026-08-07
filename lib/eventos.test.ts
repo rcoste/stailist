@@ -69,6 +69,19 @@ describe("lo que llega al motor", () => {
     expect(lineaTipoEvento("boda")).toContain("blanco");
   });
 
+  it("el funeral pide NEGRO y descarta el marino explícitamente", () => {
+    // Roberto, calibrando un look de funeral: "era un traje azul marino. Para
+    // funeral debe ser negro; sería menos peor una camisa blanca, pantalón
+    // negro y un suéter gris oscuro — se ve mejor, pero no azul". En México el
+    // luto es negro y el marino se lee como oficina.
+    const l = lineaTipoEvento("funeral");
+    expect(l).toContain("NEGRO");
+    expect(l).toContain("AZUL MARINO NO");
+    // Y la salida cuando el clóset no da un traje negro: piezas sueltas
+    // oscuras antes que un traje del color equivocado.
+    expect(l).toContain("piezas sueltas oscuras");
+  });
+
   it("el funeral pone el no-destacar por encima del estilo y la colorimetría", () => {
     // Es el único caso donde una preferencia personal cede: si el juez de
     // estilo o el de color pesaran aquí, empujarían justo a lo contrario.
