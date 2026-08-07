@@ -97,7 +97,7 @@ export async function armarLooks(
   // final si nos quedaríamos con menos de 2 looks.
   for (let i = 0; i < candidates.length; i++) {
     hooks.alRevisar?.(i);
-    const result = await reviewOutfit(ctx, candidates[i], finalized);
+    const result = await reviewOutfit(ctx, candidates[i], finalized, false, opciones);
     if (result.recibo) recibos.push(result.recibo);
     const review: RevisionDeLook = {
       before: candidates[i].item_ids,

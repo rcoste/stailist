@@ -22,6 +22,13 @@ export type OpcionesGeneracion = {
   sinBlueprint?: boolean;
   sinRotacion?: boolean;
   sinNeutros?: boolean;
+  /**
+   * Apaga la reparación EN CÓDIGO (lib/engine/reparar.ts) y deja que el juez
+   * arregle todo, como antes de v47. Solo para el comparador: es la variante
+   * que mide si arreglar "te faltó ponerte X" con código en vez de con una
+   * llamada de más ayuda o estorba.
+   */
+  sinRepararEnCodigo?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

@@ -204,3 +204,25 @@ describe("loQueSigueRoto — se comprueba la reparación del juez", () => {
     );
   });
 });
+
+describe("sinRepararEnCodigo — la variante que mide el cambio de v47", () => {
+  // Es el único cambio del día que TOCA LOS LOOKS por su cuenta (añade una
+  // camiseta, cambia un zapato). Sin poder apagarlo, no hay forma de medir si
+  // ayuda o estorba — y un cambio invasivo sin medir daña en silencio.
+  it("la variante existe en el catálogo con su flag", async () => {
+    const { VARIANTES_MOTOR } = await import("@/lib/comparador/motor");
+    const v = VARIANTES_MOTOR.find((x) => x.clave === "sin-reparar-codigo");
+    expect(v).toBeDefined();
+    expect(v!.opciones).toMatchObject({ sinRepararEnCodigo: true });
+  });
+
+  it("una variante cambia UNA sola cosa: no toca modelo ni otros flags", () => {
+    // Regla del comparador: si una variante cambiara dos cosas a la vez, el
+    // resultado no diría cuál causó la diferencia.
+    return import("@/lib/comparador/motor").then(({ VARIANTES_MOTOR }) => {
+      const v = VARIANTES_MOTOR.find((x) => x.clave === "sin-reparar-codigo")!;
+      expect(v.modeloId).toBeUndefined();
+      expect(Object.keys(v.opciones ?? {})).toEqual(["sinRepararEnCodigo"]);
+    });
+  });
+});
