@@ -2,6 +2,36 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.143.0] - 2026-08-07
+
+### Added — el instrumento estrenado, y `docs/como-decidir-un-cambio-del-motor.md`
+
+Primera decisión tomada con el comparador pareado: **¿la reparación en código (v47) ayuda o estorba?** Era el único cambio del día que **toca los looks por su cuenta** —añade una camiseta, cambia un zapato— y el único sin medir.
+
+Flag `sinRepararEnCodigo` + variante en el catálogo, **regla pre-registrada antes de generar**, 12 pares, **$0.74**.
+
+### Notes — el veredicto: indistinguible, y se queda
+
+| | |
+|---|---|
+| Producción gana | 7 |
+| Sin reparación gana | 5 |
+| diferencia media | +0.019 pts |
+| **t** | **0.13 → dentro del ruido** |
+| para resolverlo harían falta | ~50 pares (~$12) |
+
+**La regla pre-registrada decía:** *"si |t| < 2 se declara indistinguible y se QUEDA como está (ya está en prod y no hay evidencia de daño)"*. Se cumple lo escrito.
+
+**Y hay un argumento que el marcador no mide y sí sostiene el cambio:** a igual calidad, la reparación en código resuelve el **47% de las violaciones sin una sola llamada** y deja limpios al **37% de los looks** que traían algo roto. Misma calidad, menos latencia y menos costo — eso basta.
+
+**Una hipótesis que queda anotada, no concluida:** por dimensión, la reparación sale **peor en clima** (4.22 contra 4.54) y **mejor en color** (4.38 contra 4.04). Con 12 pares eso es ruido perfectamente posible, pero si se repite tendría sentido: añadir una prenda por regla puede desajustar la banda térmica.
+
+### Lo que de verdad cambió
+
+Antes: ocho versiones shippeadas en un día sin poder demostrar que ninguna mejorara, y ~$26 por corrida sin conclusión.
+
+Ahora: **$0.74 y doce minutos para saber que no sé** — que es infinitamente mejor que creer que sé.
+
 ## [0.2.142.0] - 2026-08-07
 
 ### Added — el instrumento pareado: la rúbrica juzga A contra B sobre los MISMOS briefs

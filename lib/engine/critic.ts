@@ -225,7 +225,9 @@ export async function reviewOutfit(
   outfit: GeneratedOutfit,
   priorOutfits: GeneratedOutfit[],
   /** Interno: esta llamada YA es el segundo intento, no encadenar otro. */
-  esReintento = false
+  esReintento = false,
+  /** Los flags del arnés. Solo se lee `sinRepararEnCodigo` (ver más abajo). */
+  opciones: { sinRepararEnCodigo?: boolean } = {}
 ): Promise<CriticResult> {
   // Sin juez (no hay API key): pasa el outfit tal cual, veredicto neutro.
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -307,7 +309,7 @@ export async function reviewOutfit(
       // aquí — sin llamada, sin latencia y sin riesgo de perder lo que ya
       // estaba bien.
       let look = reparado;
-      if (roto.length > 0) {
+      if (roto.length > 0 && !opciones.sinRepararEnCodigo) {
         const arreglo = repararEnCodigo(
           reparado.item_ids,
           ctx.items,
@@ -323,7 +325,7 @@ export async function reviewOutfit(
       // resuelve eligiendo "otro pantalón cualquiera": hay que ver cuál, y eso
       // es criterio.
       if (roto.length > 0 && !esReintento) {
-        const segunda = await reviewOutfit(ctx, look, priorOutfits, true);
+        const segunda = await reviewOutfit(ctx, look, priorOutfits, true, opciones);
         // Se queda con el segundo intento sólo si de verdad mejoró: si dejó el
         // look igual de roto (o peor), nos quedamos con el primero y no
         // pagamos el cambio.

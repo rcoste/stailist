@@ -80,6 +80,13 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     opciones: { sinRotacion: true },
   },
   {
+    clave: "sin-reparar-codigo",
+    etiqueta: "Sin reparación en código",
+    ayuda:
+      "el juez arregla TODO, como antes de v47 — mide si reparar 'te faltó ponerte X' con código ayuda o estorba",
+    opciones: { sinRepararEnCodigo: true },
+  },
+  {
     clave: "sin-neutros",
     etiqueta: "Sin neutros-como-fondo",
     ayuda: "sin la aclaración de que los neutros no compiten con la paleta (v37)",
