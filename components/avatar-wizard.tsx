@@ -406,11 +406,19 @@ export function AvatarWizard({
               afordancia clásica. Ahora el recuadro ES el botón y cambia lo que
               hace según su estado — vacío abre el selector, con foto abre el
               recorte. Un solo input sin `capture` deja que iOS ofrezca su hoja
-              (Cámara / Fototeca), que es lo que hacían los dos botones. */}
+              (Cámara / Fototeca), que es lo que hacían los dos botones.
+
+              `accept` va limpio, SOLO `image/*`: con las extensiones pegadas
+              (`image/*,.heic,.heif`) Android abría el carrete directo, sin
+              ofrecer la cámara — Pablo no pudo tomarse la foto, tuvo que
+              buscar una ya hecha. Perder las extensiones no pierde HEIC:
+              toUsableImage lo detecta por `file.type` O por la extensión del
+              nombre, así que la conversión sigue igual; lo único que cambia es
+              qué archivos ofrece el selector. */}
           <input
             ref={faceInputRef}
             type="file"
-            accept="image/*,.heic,.heif"
+            accept="image/*"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null;
@@ -907,10 +915,11 @@ function PickLink({
       >
         {label}
       </button>
+      {/* `accept` limpio: ver la nota del input de la cara. */}
       <input
         ref={ref}
         type="file"
-        accept="image/*,.heic,.heif"
+        accept="image/*"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0] ?? null;
@@ -999,7 +1008,7 @@ function UploadTile({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,.heic,.heif"
+        accept="image/*"
         capture={capture}
         onChange={(e) => {
           const f = e.target.files?.[0] ?? null;

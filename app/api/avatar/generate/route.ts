@@ -1,4 +1,5 @@
 import { GUARD_MODEL } from "@/lib/models";
+import { pedirImagen } from "@/lib/gemini-imagen";
 import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
@@ -6,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
 
-const GEMINI_MODEL = "gemini-3-pro-image";
+
 // Juez de parecido: visión barata. Si puntúa bajo, se regenera UNA vez y se
 // devuelve el mejor de los dos — el usuario nunca ve el intento malo.
 const JUDGE_MODEL = GUARD_MODEL;
@@ -140,29 +141,28 @@ function buildPrompt(build: string, nFaces: number): string {
   );
 }
 
-// Una generación con Gemini. Devuelve el base64 de la imagen o null.
-// `aspect`: 3:4 para retrato/cuerpo; 16:9 para el character sheet (3 vistas).
-async function generarAvatar(parts: unknown[], aspect: "3:4" | "16:9" = "3:4"): Promise<string | null> {
-  const gemRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: aspect },
-        },
-      }),
-    }
-  );
-  if (!gemRes.ok) return null;
-  const data = await gemRes.json();
-  const img = data?.candidates?.[0]?.content?.parts?.find(
-    (p: { inlineData?: { data?: string } }) => p.inlineData?.data
-  );
-  return (img?.inlineData?.data as string | undefined) ?? null;
+// Una generación con Gemini, por la puerta común (lib/gemini-imagen).
+//
+// Tenía SU PROPIA copia del fetch, y por eso se quedó fuera del reintento y
+// del timeout que el try-on sí recibió: el servicio de imágenes devuelve 500
+// intermitentes y cortes de red (medido: 2 de 8 llamadas), y aquí un solo 500
+// mataba la generación de la cara sin dejar rastro de por qué.
+//
+// `motivo` se devuelve para poder registrarlo: un fallo mudo era invisible en
+// los eventos —la fila de instrumentación se escribe DESPUÉS, así que las
+// generaciones que fallaban no dejaban ninguna—, y eso es justo lo que hizo
+// imposible saber por qué "tardó muchísimo" la primera vez que pasó.
+async function generarAvatar(
+  parts: unknown[],
+  aspect: "3:4" | "16:9" = "3:4"
+): Promise<{ image: string | null; motivo: string | null; ms: number }> {
+  const t0 = Date.now();
+  const r = await pedirImagen(parts as Parameters<typeof pedirImagen>[0], {
+    aspecto: aspect,
+  });
+  return "data" in r
+    ? { image: r.data, motivo: null, ms: Date.now() - t0 }
+    : { image: null, motivo: r.motivo, ms: Date.now() - t0 };
 }
 
 // El media_type DEBE coincidir con los bytes reales (la API lo valida y truena
@@ -173,6 +173,36 @@ function mediaTypeOf(b64: string): "image/png" | "image/jpeg" | "image/webp" {
   if (b64.startsWith("iVBOR")) return "image/png";
   if (b64.startsWith("UklGR")) return "image/webp";
   return "image/jpeg";
+}
+
+/**
+ * Deja constancia de una generación que NO salió.
+ *
+ * Existe porque los fallos eran INVISIBLES: la fila de instrumentación
+ * (`avatar_judge`) se escribe al final, así que una generación que moría antes
+ * no dejaba ninguna. En la tabla solo se veían los éxitos — y con esa foto
+ * incompleta, "el avatar tardó muchísimo / falló" era imposible de diagnosticar
+ * sin salir a interrogar la API de Google a mano.
+ *
+ * Best-effort a propósito: si el registro falla, la respuesta de error a la
+ * persona no cambia.
+ */
+async function registrarFallo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  stage: string,
+  motivo: string | null,
+  ms: number
+) {
+  try {
+    await supabase.from("events").insert({
+      user_id: userId,
+      type: "avatar_fallo",
+      data: { stage, motivo: motivo?.slice(0, 300) ?? null, ms },
+    });
+  } catch {
+    // Un error al anotar el error no debe tapar el error.
+  }
 }
 
 // Juez de parecido (best-effort): compara la selfie con el avatar generado y
@@ -276,12 +306,18 @@ export async function POST(request: NextRequest) {
     }
     try {
       const img = (d: string) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } });
-      const image = await generarAvatar(
+      const r = await generarAvatar(
         [{ text: buildSheetPrompt() }, img(body.headshotB64), img(body.avatarB64)],
         "16:9"
       );
-      if (!image) return NextResponse.json({ error: "generacion" }, { status: 502 });
-      return NextResponse.json({ image });
+      if (!r.image) {
+        await registrarFallo(supabase, user.id, "sheet", r.motivo, r.ms);
+        return NextResponse.json(
+          { error: "generacion", detalle: r.motivo ?? undefined },
+          { status: 502 }
+        );
+      }
+      return NextResponse.json({ image: r.image });
     } catch {
       return NextResponse.json({ error: "generacion" }, { status: 502 });
     }
@@ -356,8 +392,16 @@ export async function POST(request: NextRequest) {
       ];
     }
 
-    let image = await generarAvatar(parts);
-    if (!image) return NextResponse.json({ error: "generacion" }, { status: 502 });
+    const primera = await generarAvatar(parts);
+    let image = primera.image;
+    let msGen = primera.ms;
+    if (!image) {
+      await registrarFallo(supabase, user.id, stage ?? "legacy", primera.motivo, primera.ms);
+      return NextResponse.json(
+        { error: "generacion", detalle: primera.motivo ?? undefined },
+        { status: 502 }
+      );
+    }
 
     // Juez de parecido: si el primer intento sale bajo, UN reintento y nos
     // quedamos con el de mejor score. Best-effort: sin juez, pasa tal cual.
@@ -365,11 +409,12 @@ export async function POST(request: NextRequest) {
     let reintento = false;
     if (veredicto && veredicto.score < JUDGE_MIN) {
       reintento = true;
-      const segunda = await generarAvatar(parts);
-      if (segunda) {
-        const v2 = await juzgarParecido(faceB64, segunda);
+      const otra = await generarAvatar(parts);
+      msGen += otra.ms;
+      if (otra.image) {
+        const v2 = await juzgarParecido(faceB64, otra.image);
         if (v2 && v2.score > veredicto.score) {
-          image = segunda;
+          image = otra.image;
           veredicto = v2;
         }
       }
@@ -383,6 +428,12 @@ export async function POST(request: NextRequest) {
         score: veredicto?.score ?? null,
         problema: veredicto?.problema || null,
         reintento,
+        // CUÁNTO TARDÓ. Sin esto, "tardó muchísimo" no se podía contestar:
+        // el evento decía el score y si reintentó, pero no el tiempo, así que
+        // no había forma de separar "Gemini iba lento" de "la subida iba
+        // lenta" de "el juez pidió otra". El motor sí lo registra
+        // (generation_timing); esto no lo hacía.
+        ms_generacion: msGen,
         stage: stage ?? "legacy",
         ajuste: ajuste || null,
         n_caras: faces.length,
