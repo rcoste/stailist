@@ -10,6 +10,20 @@ import type { EvalBriefFila, EvalCorrida, NotaDeLook } from "./evales";
 export type PrendaEvalUI = {
   id: string;
   nombre: string;
+  /**
+   * El material, cuando NO está ya dicho en el nombre.
+   *
+   * Roberto, calibrando: "si hay un pantalón o camisa, no sé si es de lino o
+   * qué, y eso influye". Y hay una razón más fuerte que la comodidad: el juez
+   * de texto SÍ recibe el material (lookParaRubrica lo manda). Si quien
+   * calibra juzga sin él, el acuerdo mide dos criterios distintos sobre dos
+   * informaciones distintas — y ese número es justo el que decide si la
+   * rúbrica sigue siendo confiable.
+   *
+   * null cuando el nombre ya lo dice ("Camisa de lino blanca"): repetirlo sería
+   * ruido en una pantalla donde cada línea compite con la foto.
+   */
+  material: string | null;
   swatch: string;
   imagen: string | null;
 };
@@ -79,10 +93,21 @@ export async function cargarEvalCorrida(
     }
     for (const i of list) {
       const arch = i.archetypes as { name?: string; image_path?: string | null } | null;
-      const attrs = (i.attrs ?? {}) as { nombre?: string; color_hex?: string };
+      const attrs = (i.attrs ?? {}) as {
+        nombre?: string;
+        color_hex?: string;
+        material?: string;
+      };
+      const nombre = arch?.name ?? attrs.nombre ?? "Prenda";
+      const material = attrs.material?.trim() || null;
       prendas[i.id as string] = {
         id: i.id as string,
-        nombre: arch?.name ?? attrs.nombre ?? "Prenda",
+        nombre,
+        // Solo si aporta: si el nombre ya dice "lino", repetirlo es ruido.
+        material:
+          material && !nombre.toLowerCase().includes(material.toLowerCase())
+            ? material
+            : null,
         swatch: attrs.color_hex ?? "#E5E1DD",
         imagen: itemImageUrlSync(i as unknown as ItemImageRow, (p) => firmadas.get(p)),
       };
