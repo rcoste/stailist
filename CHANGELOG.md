@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.137.0] - 2026-08-07
+
+### Fixed — la regla del suéter aplicaba una convención masculina a todos
+
+Roberto, calibrando: *"si hay un suéter, debe haber una playera abajo… al menos para hombre, no sé si para mujer, porque las mujeres son otro boleto"*. **Tenía razón, y el research lo confirma** (`docs/decisiones/base-bajo-el-sueter-2026-08-07.md`).
+
+La base bajo el punto es **convención masculina**: la lana pica, absorbe el sudor, y el suéter se lava menos. En el guardarropa femenino **no es regla** — llevar el punto a piel es una elección normal y el camisol es opcional.
+
+`sueter-sin-base` no distinguía género, así que marcaba como error algo correcto en la mitad de los clósets. Ahora solo dispara con `gender === "hombre"`, y **sin género declarado tampoco**: en la duda, no inventar el error.
+
+Es el mismo sesgo que ya costó dos correcciones en `alcance.ts` — aquí al revés.
+
+**Y una base que faltaba:** el cuello tortuga bajo un suéter de pico. Estaba excluido *como suéter* pero no contaba *como base*, aunque es el clásico de invierno.
+
+### Fixed — el tenis de malla en lluvia
+
+Roberto: *"sí vetaría lo de la lluvia, como unos Ultraboost, que son los tenis de tela; pero [el de piel] sí puede ser de preferencia"*.
+
+`MATERIAL_SE_ARRUINA` solo tenía "lona" y "tela", así que la malla técnica pasaba limpia. Entran **malla, mesh, knit, primeknit, flyknit**. El tenis de piel **sigue pasando**: vetarlo daría falsos rechazos — mucha gente sale con tenis bajo lluvia.
+
+### Notes — la calibración de Roberto sobre v45
+
+**32 looks: 28 👍, 4 👎 (88%).** Acuerdo con el juez de texto **88%**, con el visual **78%**.
+
+De sus 4 rechazos: el juez visual cazó **0** y el de texto **1**. Y el del suéter **el código SÍ lo cazó** — la regla disparó, el juez la recibió y el look llegó igual.
+
+**Eso apunta a un fallo distinto y más grave: el juez ignora hallazgos verificados.** Medido en las cuatro corridas, **9 violaciones sobrevivieron al juez**, 5 de ellas `traje-desparejado`. No falta criterio — falta que lo que ya se detecta se aplique. Es el siguiente arreglo.
+
 ## [0.2.136.0] - 2026-08-07
 
 ### Added — el nombre (y el material) bajo cada prenda del calibrador

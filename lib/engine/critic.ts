@@ -174,6 +174,9 @@ function buildCriticMessage(
         // La formalidad del evento: sin ella, "separates en boda formal" no se
         // puede distinguir de "separates en la oficina", que es correcto.
         formality: ctx.formality,
+        // Para quién: la regla del suéter es convención MASCULINA, y aplicarla
+        // a una mujer marca como error el punto a piel, que ahí es normal.
+        gender: ctx.gender,
       }
     )
   );

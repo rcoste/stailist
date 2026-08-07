@@ -63,6 +63,14 @@ export type ContextoReglas = {
   paraguas?: boolean;
   /** La formalidad del evento, cuando el wizard la preguntó. */
   formality?: string | null;
+  /**
+   * Para quién. Hoy solo lo usa la regla del suéter, y por una razón medida:
+   * "el suéter pide algo debajo" es una convención del guardarropa MASCULINO.
+   * En el femenino, llevar el punto a piel es una elección normal y frecuente —
+   * el camisol es opcional, no requisito. Sin este dato la regla marcaba como
+   * error algo correcto en la mitad de los clósets.
+   */
+  gender?: string | null;
 };
 
 /**
@@ -76,7 +84,8 @@ export type ContextoReglas = {
  * pares de calzado de la base: 33 pasan, 6 caen aquí, 4 no tienen material
  * (y esos NO bloquean, ver abajo).
  */
-const MATERIAL_SE_ARRUINA = /ante|gamuza|lona|tela|textil|algod[oó]n|punto|lino|terciopelo|pana/;
+const MATERIAL_SE_ARRUINA =
+  /ante|gamuza|lona|tela|textil|algod[oó]n|punto|lino|terciopelo|pana|malla|mesh|knit|primeknit|flyknit/;
 
 /**
  * Formas de calzado que el agua vence AUNQUE sean de piel, y por eso el
@@ -467,18 +476,31 @@ export function revisarEjecucion(
 
   // 9. EL SUÉTER PIDE ALGO DEBAJO. La observación más repetida de Roberto en
   //    todo el veredicto: SIETE comentarios de "falta t-shirt abajo", en los
-  //    dos motores. Textual: "en un suéter tiene que haber casi siempre
-  //    (dependería del material del suéter) algo más abajo, tipo polo, playera
-  //    o camisa, deberíamos añadir eso a la rúbrica".
+  //    dos motores. Y volvió a salir calibrando el eval: "es muy raro que haya
+  //    el suéter directo y no haya una playera abajo… esto es recurrente".
   //
-  //    El cuello tortuga NO cuenta: es cerrado y se lleva a piel por diseño.
+  //    SOLO PARA HOMBRE, y esto se investigó antes de escribirlo. En el
+  //    guardarropa masculino la base bajo el punto es convención (comodidad —
+  //    la lana pica—, absorber el sudor, y que el suéter se lave menos). En el
+  //    femenino NO lo es: llevar el punto a piel es una elección normal y el
+  //    camisol es opcional. Sin el género, la regla marcaba como error algo
+  //    correcto en la mitad de los clósets — el mismo sesgo que ya costó dos
+  //    correcciones en alcance.ts, aquí al revés.
+  //    Sin género declarado tampoco dispara: en la duda, no inventar el error.
+  //
+  //    QUÉ VALE COMO BASE (del research): camiseta de cuello redondo, camisa de
+  //    cuello, polo, y el cuello tortuga bajo un suéter de pico. Lo que NO
+  //    cuenta como suéter-a-piel es el propio cuello tortuga: es cerrado y se
+  //    lleva a piel por diseño, así que queda excluido de la regla.
   const esSueter = (i: EngineItem) =>
     /su[eé]ter|sweater|cardigan|c[aá]rdigan|jersey|punto|knit/.test(TIPO(i)) &&
     !/cuello (alto|tortuga)|turtleneck/.test(TIPO(i));
   const esBaseDebajo = (i: EngineItem) =>
-    /camiseta|playera|camisa|polo|t-?shirt|blusa|top b[aá]sico/.test(TIPO(i));
+    /camiseta|playera|camisa|polo|t-?shirt|blusa|top b[aá]sico|cuello (alto|tortuga)|turtleneck/.test(
+      TIPO(i)
+    );
   const sueters = items.filter(esSueter);
-  if (sueters.length && !items.some(esBaseDebajo)) {
+  if (ctx.gender === "hombre" && sueters.length && !items.some(esBaseDebajo)) {
     v.push({
       regla: "sueter-sin-base",
       detalle: `"${nombre(sueters[0])}" va sobre la piel: un suéter casi siempre pide algo debajo (camiseta, polo o camisa) — se ve mejor y se puede quitar una capa. Añade una base del clóset.`,

@@ -539,15 +539,45 @@ describe("las cuatro reglas que salieron del veredicto", () => {
   });
 
   describe("sueter-sin-base", () => {
-    // SIETE comentarios de Roberto en un solo veredicto, en los dos motores.
+    const SUELTO = [
+      p("Suéter de lana negro", "#111111"),
+      p("Jeans azul oscuro", "#2A3B5C"),
+      p("Botines Chelsea negros", "#111111"),
+    ];
+
+    // SIETE comentarios de Roberto en un solo veredicto, en los dos motores, y
+    // otra vez calibrando el eval: "es muy raro que haya el suéter directo y no
+    // haya una playera abajo".
     it("el suéter a piel se marca, y ofrece la base del clóset", () => {
-      const v = r([
-        p("Suéter de lana negro", "#111111"),
-        p("Jeans azul oscuro", "#2A3B5C"),
-        p("Botines Chelsea negros", "#111111"),
-      ]).find((x) => x.regla === "sueter-sin-base");
+      const v = r(SUELTO, { gender: "hombre" }).find((x) => x.regla === "sueter-sin-base");
       expect(v).toBeDefined();
       expect(v!.detalle).toContain("Suéter de lana negro");
+    });
+
+    // El research: en el guardarropa femenino llevar el punto a piel es una
+    // elección normal y el camisol es opcional. Aplicar aquí la convención
+    // masculina marcaba como error algo correcto en la mitad de los clósets.
+    it("para MUJER no es error: el punto a piel es elección, no fallo", () => {
+      expect(
+        r(SUELTO, { gender: "mujer" }).find((x) => x.regla === "sueter-sin-base")
+      ).toBeUndefined();
+    });
+
+    it("sin género declarado tampoco dispara: en la duda, no inventar el error", () => {
+      expect(r(SUELTO).find((x) => x.regla === "sueter-sin-base")).toBeUndefined();
+    });
+
+    it("el cuello tortuga BAJO un suéter cuenta como base (del research)", () => {
+      expect(
+        r(
+          [
+            p("Cuello tortuga negro de merino", "#111111"),
+            p("Suéter de pico gris", "#6E7075"),
+            p("Pantalón de vestir carbón", "#3A3B3F"),
+          ],
+          { gender: "hombre" }
+        ).find((x) => x.regla === "sueter-sin-base")
+      ).toBeUndefined();
     });
 
     it("con camiseta debajo pasa limpio", () => {
@@ -556,7 +586,7 @@ describe("las cuatro reglas que salieron del veredicto", () => {
           p("Camiseta blanca", "#FFFFFF"),
           p("Suéter de lana negro", "#111111"),
           p("Jeans azul oscuro", "#2A3B5C"),
-        ]).find((x) => x.regla === "sueter-sin-base")
+        ], { gender: "hombre" }).find((x) => x.regla === "sueter-sin-base")
       ).toBeUndefined();
     });
 
@@ -670,5 +700,42 @@ describe("separates-en-evento-formal", () => {
         (x) => x.regla === "separates-en-evento-formal"
       )
     ).toBeUndefined();
+  });
+});
+
+describe("lluvia: el tenis de MALLA se veta, el de piel no", () => {
+  // Roberto: "sí definitivamente yo vetaría lo de la lluvia, como unos ultra
+  // boost, que son los tenis de tela; pero [el de piel] sí puede ser de
+  // preferencia". La malla/knit sintético no estaba en la lista de materiales
+  // que el agua arruina — solo lona y tela — así que un tenis de punto técnico
+  // pasaba limpio.
+  const calzado = (nombre: string, material: string) => ({
+    id: nombre,
+    attrs: { categoria: "calzado", nombre, tipo: nombre, material, color_hex: "#111111" },
+  });
+
+  // El clóset SIEMPRE con una alternativa: sin recambio la regla se calla a
+  // propósito (es carencia, no fallo reparable), y el test estaría midiendo esa
+  // otra rama en vez del material.
+  const RECAMBIO = calzado("Botines Chelsea negros", "piel");
+  const enLluvia = (its: { id: string; attrs: Record<string, unknown> }[]) =>
+    revisarEjecucion(its as never, {
+      clima: "templado",
+      lluvia: true,
+      paraguas: false,
+      closet: [...its, RECAMBIO] as never,
+    }).find((v) => v.regla === "lluvia-calzado");
+
+  it("un tenis de malla técnica NO aguanta la lluvia", () => {
+    // Los tres materiales del tenis deportivo moderno. Antes solo "lona" y
+    // "tela" estaban en la lista, así que un Ultraboost pasaba limpio.
+    for (const material of ["malla", "mesh", "knit"]) {
+      expect(enLluvia([calzado("Tenis Ultraboost", material)])).toBeDefined();
+    }
+  });
+
+  it("un tenis de PIEL sigue pasando: es preferencia, no veto", () => {
+    // Vetarlo daría falsos rechazos — mucha gente sale con tenis bajo lluvia.
+    expect(enLluvia([calzado("Tenis de piel negros", "piel")])).toBeUndefined();
   });
 });

@@ -158,6 +158,7 @@ export async function pasoEval(opciones: {
       lluvia: /lluvia|llov|chubasco|tormenta/i.test(brief.weather?.condition ?? ""),
       paraguas: brief.paraguas === true,
       formality: brief.formality ?? null,
+      gender: (profile.gender as string | null) ?? null,
     });
 
     let texto = previa?.texto ?? null;
