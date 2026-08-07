@@ -2,11 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import { createClient } from "@/lib/supabase/server";
 import { generateArchetypeImage } from "@/lib/archetype-image";
+import { pedirImagen, GEMINI_MODEL } from "@/lib/gemini-imagen";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 export const maxDuration = 60;
 
-const GEMINI_MODEL = "gemini-3-pro-image";
+// El modelo del render de prenda, en un solo lugar. Medido el 2026-08-06
+// sobre la misma foto y el mismo prompt: este 17.3s de promedio; el rápido
+// (GEMINI_MODEL_RAPIDO) 7.7s, con salidas que a ojo no se distinguen. El
+// cambio NO se hace de oído: lo decide Roberto viendo los renders.
 
 // Render limpio de UNA prenda. La estrategia ganadora es IMAGEN→IMAGEN: en vez
 // de describir la prenda en texto (que pierde el estilo real — hay mil cortes),
@@ -95,40 +99,17 @@ async function extractGarment(
 
   const prompt = `From the photo of the person, isolate ONLY this single garment they are wearing: ${quePrenda}. Produce a professional e-commerce flat lay photograph of just that one garment, ${encuadre}. CRITICAL: preserve the garment's exact real-world color, cut, silhouette, fabric, texture, pattern and distinctive details (collar, sleeves, buttons, zipper, sole, etc.) exactly as seen on the person — do not redesign it, do not change its style. Remove the person, any other garments, and the background entirely. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. No people, no props, no text, no labels.`;
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                { inlineData: { mimeType, data: photoB64 } },
-              ],
-            },
-          ],
-          generationConfig: {
-            responseModalities: ["IMAGE"],
-            imageConfig: { aspectRatio: "1:1" },
-          },
-        }),
-      }
-    );
-    if (!res.ok) {
-      console.error("[render-prenda] Gemini HTTP", res.status);
-      return null;
-    }
-    const data = await res.json();
-    const part = data?.candidates?.[0]?.content?.parts?.find(
-      (p: { inlineData?: { data?: string } }) => p.inlineData?.data
-    );
-    if (!part?.inlineData?.data) return null;
-    return Buffer.from(part.inlineData.data, "base64");
-  } catch (err) {
-    console.error("[render-prenda] fallo:", err);
+  // Por la puerta común (lib/gemini-imagen): esta era la CUARTA copia del mismo
+  // fetch, y como las otras se quedó sin reintento ni timeout. El servicio da
+  // 500 intermitentes: sin reintento, cada uno dejaba una prenda sin imagen y
+  // el flujo la marcaba "failed" sin decir por qué.
+  const r = await pedirImagen(
+    [{ text: prompt }, { inlineData: { mimeType, data: photoB64 } }],
+    { modelo: GEMINI_MODEL, aspecto: "1:1" }
+  );
+  if ("motivo" in r) {
+    console.error(`[render-prenda] ${r.motivo}`);
     return null;
   }
+  return Buffer.from(r.data, "base64");
 }

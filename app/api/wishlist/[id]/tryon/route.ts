@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { pedirImagen } from "@/lib/gemini-imagen";
 
 export const maxDuration = 60;
 
-const GEMINI_MODEL = "gemini-3-pro-image";
 
 // Mismo lenguaje v3 que /api/tryon: viste el avatar con la prenda, foto limpia.
 const PROMPT =
@@ -87,28 +87,18 @@ export async function POST(
       { inlineData: { mimeType: "image/jpeg", data: avatarB64 } },
       { inlineData: { mimeType: "image/jpeg", data: garmentB64 } },
     ];
-    const gemRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig: {
-            responseModalities: ["IMAGE"],
-            imageConfig: { aspectRatio: "3:4" },
-          },
-        }),
-      }
-    );
-    if (!gemRes.ok) return NextResponse.json({ error: "generacion" }, { status: 502 });
-    const data = await gemRes.json();
-    const img = data?.candidates?.[0]?.content?.parts?.find(
-      (p: { inlineData?: { data?: string } }) => p.inlineData?.data
-    );
-    if (!img) return NextResponse.json({ error: "sin_imagen" }, { status: 502 });
+    // Por la puerta común (lib/gemini-imagen): reintento, timeout y motivo real.
+    // Esta era otra copia suelta del mismo fetch — las cazó lib/thinking.test.ts.
+    const r = await pedirImagen(parts, { aspecto: "3:4" });
+    if ("motivo" in r) {
+      console.error(`[wishlist tryon] ${r.motivo}`);
+      return NextResponse.json(
+        { error: "generacion", detalle: r.motivo },
+        { status: 502 }
+      );
+    }
 
-    const buffer = Buffer.from(img.inlineData.data, "base64");
+    const buffer = Buffer.from(r.data, "base64");
     const path = `${user.id}/tryons/wishlist-${id}.jpg`;
     const up = await supabase.storage
       .from("prendas")

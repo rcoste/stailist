@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.120.0] - 2026-08-06
+
+De Pablo: leer las prendas de una foto salió bien, pero **generar sus imágenes tardó**.
+
+### Notes — medido
+
+Un render de prenda tarda **17.3s de promedio** (3 corridas). Como el pool corre hasta 4 en paralelo, 3 prendas ≈ 17s, no 3×17. El culpable no es el pool: es el modelo.
+
+El mismo prompt y la misma foto con el modelo **rápido** (`gemini-3.1-flash-image`, el que la app ya usa para los arquetipos del catálogo y para el fallback texto→imagen): **7.7s** — **2.2× más rápido**. Probado en las tres categorías difíciles (top, calzado, pantalón); las salidas no se distinguen a ojo. **El cambio NO se hace de oído**: queda para que Roberto decida viendo los renders.
+
+### Fixed
+
+- **Eran SEIS copias del mismo fetch a Gemini**, no dos. Al consolidar el try-on y el avatar aparecieron cuatro más: render de prenda, arquetipos, y los dos try-on de wishlist. Todas se habían quedado sin el reintento, el timeout y el motivo real de fallo — cada 500 pasajero dejaba una prenda marcada "failed" sin decir por qué. Todas pasan ahora por `lib/gemini-imagen.ts`, que ahora acepta modelo y proporción.
+
+### Added
+
+- **El guard se extiende a las imágenes**: `lib/thinking.test.ts` truena si algún archivo genera imágenes con su propio fetch en vez de la puerta común. **Encontró dos copias que yo no había visto** (los try-on de wishlist) en su primera corrida.
+
 ## [0.2.119.0] - 2026-08-06
 
 ### Fixed

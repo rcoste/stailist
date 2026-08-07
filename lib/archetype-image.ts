@@ -1,8 +1,8 @@
+import { pedirImagen, GEMINI_MODEL_RAPIDO } from "@/lib/gemini-imagen";
 // Generación de la imagen flat-lay de un básico (estilo A) con Gemini. Mismo
 // prompt que scripts/gen-archetypes.mjs, pero on-demand desde el admin. La
 // salida sube a Storage (bucket público), no a public/ (read-only en prod).
 
-const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image";
 
 export type ImageType = "flat" | "shoes";
 export type Gender = "hombre" | "mujer" | null;
@@ -41,35 +41,18 @@ export async function generateArchetypeImage(
   gender?: Gender,
   aspect: ImageAspect = "1:1"
 ): Promise<Buffer | null> {
-  const key = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!key) return null;
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${key}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: buildImagePrompt(desc, type, gender) }] }],
-          generationConfig: {
-            responseModalities: ["IMAGE"],
-            imageConfig: { aspectRatio: aspect },
-          },
-        }),
-      }
-    );
-    if (!res.ok) {
-      console.error("[archetype-image] Gemini HTTP", res.status);
-      return null;
-    }
-    const data = await res.json();
-    const part = data?.candidates?.[0]?.content?.parts?.find(
-      (p: { inlineData?: { data?: string } }) => p.inlineData?.data
-    );
-    if (!part?.inlineData?.data) return null;
-    return Buffer.from(part.inlineData.data, "base64");
-  } catch (err) {
-    console.error("[archetype-image] fallo:", err);
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) return null;
+  // Por la puerta común (lib/gemini-imagen): tenía SU propia copia del fetch y
+  // por eso se quedó sin el reintento y el timeout que el try-on ya tenía. El
+  // servicio devuelve 500 intermitentes; sin reintento, cada uno era una prenda
+  // que se quedaba sin imagen.
+  const r = await pedirImagen(
+    [{ text: buildImagePrompt(desc, type, gender) }],
+    { modelo: GEMINI_MODEL_RAPIDO, aspecto: aspect }
+  );
+  if ("motivo" in r) {
+    console.error(`[archetype-image] ${r.motivo}`);
     return null;
   }
+  return Buffer.from(r.data, "base64");
 }

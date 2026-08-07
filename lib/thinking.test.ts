@@ -74,3 +74,25 @@ describe("thinking apagado en todas las llamadas a Claude", () => {
     expect(txt).toContain('thinking: { type: "disabled" }');
   });
 });
+
+// La MISMA idea, del otro lado: la generación de imágenes también tuvo cuatro
+// copias del mismo fetch a Gemini, y las copias se quedaron sin el reintento y
+// el timeout que la primera sí recibió. El avatar quedó sin reintento un mes;
+// el render de prenda marcaba "failed" ante un 500 pasajero.
+describe("las imágenes salen por una sola puerta", () => {
+  it("nadie llama a generateContent de Gemini fuera de lib/gemini-imagen.ts", () => {
+    const fuera: string[] = [];
+    for (const f of [...fuentes("app"), ...fuentes("lib")]) {
+      if (f === "lib/gemini-imagen.ts") continue;
+      const txt = readFileSync(f, "utf8");
+      // Solo la generación de IMÁGENES: la de texto va por lib/proveedores.
+      if (/generativelanguage\.googleapis\.com/.test(txt) && /responseModalities/.test(txt)) {
+        fuera.push(f);
+      }
+    }
+    expect(
+      fuera,
+      `Generan imágenes con su propio fetch (se pierden el reintento y el timeout):\n${fuera.join("\n")}`
+    ).toEqual([]);
+  });
+});
