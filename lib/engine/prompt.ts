@@ -236,6 +236,16 @@ import {
 // v40-v43: dress code del trabajo (los cuatro registros de "oficina", con el
 // "depende del día" que pregunta si hoy ve cliente), paraguas, y la formalidad
 // dicha en ropa en vez de en jerga.
+// v47 (2026-08-07): PRIMERO EL CÓDIGO, DESPUÉS EL JUEZ. La idea es de Roberto:
+// "muchas de las cosas que fallaban era nada más ay, te faltó esto. Es como
+// decir te faltó ponerte calzones — no es que tengas que cambiarte toda la ropa".
+// El reintento de v46 le devolvía el look ENTERO al juez con libertad sobre las
+// cinco prendas para arreglar que faltara una camiseta. Ahora lo reparable
+// tocando UNA prenda se arregla en código (lib/engine/reparar.ts) y solo lo que
+// pide criterio va al juez. Medido sobre las 135 violaciones reales del eval:
+// el código solo resuelve 47%, y deja LIMPIOS sin ninguna llamada al 37% de los
+// looks que traían algo roto. Las dos violaciones más frecuentes —mocasín en
+// frío (31) y suéter sin base (29)— las arregla al 100%.
 // v46 (2026-08-07): SE COMPRUEBA LA REPARACIÓN DEL JUEZ. No cambia el texto
 // del prompt — cambia que ahora alguien mira el resultado del reparador. Sobre
 // las cuatro corridas del eval el juez reparaba el 96% de las violaciones (87
@@ -271,7 +281,7 @@ import {
 // que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
 // escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
 // una comida, cena, cita, boda— y sobre eso vamos afinando más".
-export const PROMPT_VERSION = "v46";
+export const PROMPT_VERSION = "v47";
 
 export type EngineItem = {
   id: string;

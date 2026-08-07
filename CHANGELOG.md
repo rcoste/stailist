@@ -2,6 +2,40 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.139.0] - 2026-08-07
+
+### Changed — primero el código, después el juez (v47)
+
+La pregunta de Roberto: *"¿cuando hay un intento, se rehace el outfit o se corrige? Muchas de las cosas que fallaban era nada más 'ay, te faltó esto'. Es como decir 'te faltó ponerte calzones' — no es que tengas que cambiarte toda la ropa porque no traes calzones."*
+
+**Rehacía.** El reintento de v46 le devolvía el look entero al mismo juez, con libertad sobre las cinco prendas, para arreglar que faltara una camiseta. Podía volver con otro look completo — perdiendo lo que ya estaba bien y cobrando una llamada por ello.
+
+`lib/engine/reparar.ts` lo hace **quirúrgico**: toca UNA prenda, la que causa la violación, y comprueba que no aparezcan violaciones nuevas. Y va **antes** del juez, así que en los casos que resuelve del todo **no hay segunda llamada** — ni latencia ni costo.
+
+| se arregla en código | cómo |
+|---|---|
+| `sueter-sin-base` | **añade** la base más neutra del clóset |
+| `frio-sin-abrigo` | **añade** el abrigo |
+| `lluvia-sin-impermeable` | **añade** la capa que repele |
+| `mocasin-en-frio`, `lluvia-calzado` | **sustituye** el calzado |
+
+Lo que **no** toca, a propósito: `traje-desparejado`, `cueros-que-no-se-hablan`, `capa-invisible`, `codigo-de-smoking`. Elegir "otro pantalón cualquiera" no arregla un traje desparejado — hay que ver **cuál**, y eso es criterio.
+
+### Notes — medido sobre las 135 violaciones reales del eval
+
+**El código solo resuelve el 47%**, y deja **limpios sin ninguna llamada al 37%** de los looks que traían algo roto. Las dos violaciones más frecuentes las arregla **al 100%**:
+
+| regla | resueltas |
+|---|---|
+| `mocasin-en-frio` | **31/31** |
+| `sueter-sin-base` | **29/29** |
+| `lluvia-calzado` | 1/1 |
+| `cueros-que-no-se-hablan` | 2/17 |
+
+La corrida de v47: **0% de violaciones** y `armado` en **4.37 / 4.69** — el más alto de las siete corridas del eval.
+
+**Lo que sigue sin poder afirmarse:** que suba la calidad general. El aprobado dio 80%/86%, dentro del rango de 76-94% que las siete corridas han mostrado **con distintos códigos y también con el mismo**. Esa varianza es el problema de fondo, y el arreglo sigue siendo el diseño pareado.
+
 ## [0.2.138.0] - 2026-08-07
 
 ### Added — se comprueba la reparación del juez (v46)

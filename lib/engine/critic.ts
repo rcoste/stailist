@@ -1,4 +1,5 @@
 import { llamar, type Recibo } from "@/lib/proveedores";
+import { repararEnCodigo } from "./reparar";
 import { MODELO_JUEZ } from "@/lib/models";
 import { buildCriticSchema } from "./schema";
 import {
@@ -295,9 +296,34 @@ export async function reviewOutfit(
       // exacta y se le da UN intento más — no dos: a la tercera el problema ya
       // no es de atención sino de que este clóset no da, y ahí insistir sólo
       // quema tiempo del usuario que está esperando su look.
-      const roto = loQueSigueRoto(ctx, reparado);
+      let roto = loQueSigueRoto(ctx, reparado);
+
+      // PRIMERO EL CÓDIGO. La idea es de Roberto: "muchas de las cosas que
+      // fallaban era nada más 'ay, te faltó esto'. Es como decir 'te faltó
+      // ponerte calzones' — no es que tengas que cambiarte toda la ropa".
+      // Tenía razón: el segundo intento le devolvía el look ENTERO al juez, con
+      // libertad sobre las cinco prendas, para arreglar que faltara una
+      // camiseta. Ahora lo que se puede arreglar tocando UNA prenda se arregla
+      // aquí — sin llamada, sin latencia y sin riesgo de perder lo que ya
+      // estaba bien.
+      let look = reparado;
+      if (roto.length > 0) {
+        const arreglo = repararEnCodigo(
+          reparado.item_ids,
+          ctx.items,
+          contextoDeReglas(ctx)
+        );
+        if (arreglo.hechas.length > 0) {
+          look = keepAnchor({ ...reparado, item_ids: arreglo.itemIds }, ctx.seedItemId ?? null);
+          roto = loQueSigueRoto(ctx, look);
+        }
+      }
+
+      // Y SOLO LO QUE EL CÓDIGO NO PUDO va al juez. Un traje desparejado no se
+      // resuelve eligiendo "otro pantalón cualquiera": hay que ver cuál, y eso
+      // es criterio.
       if (roto.length > 0 && !esReintento) {
-        const segunda = await reviewOutfit(ctx, reparado, priorOutfits, true);
+        const segunda = await reviewOutfit(ctx, look, priorOutfits, true);
         // Se queda con el segundo intento sólo si de verdad mejoró: si dejó el
         // look igual de roto (o peor), nos quedamos con el primero y no
         // pagamos el cambio.
@@ -316,8 +342,10 @@ export async function reviewOutfit(
       }
 
       return {
-        outfit: reparado,
-        verdict,
+        outfit: look,
+        // Si el código tuvo que meter mano, el look CAMBIÓ: decir "ok" ahí
+        // dejaría la reparación fuera del registro del flywheel.
+        verdict: look === reparado ? verdict : "reparado",
         razon,
         recibo,
       };

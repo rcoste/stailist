@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { EngineContext } from "./prompt";
+import type { EngineContext, EngineItem } from "./prompt";
 import type { GeneratedOutfit } from "./generate";
 
 // reviewOutfit con la puerta común stubbeada. Lo que se fija es el
