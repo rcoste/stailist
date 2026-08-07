@@ -34,6 +34,7 @@ type Body = {
   seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
   forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
   formality?: string; // solo en "evento": casual | semiformal | formal | gala
+  paraguas?: boolean; // solo cuando el clima trae lluvia
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -269,6 +270,10 @@ async function generateInto(
       weather,
       seedItemId: typeof body.seedItemId === "string" ? body.seedItemId : null,
       formality: typeof body.formality === "string" ? body.formality : null,
+      // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no debe
+      // soltarle la mano a la capa exterior. El contexto lo pasa tal cual y la
+      // regla #7 solo mira `paraguas` cuando `lluvia` es cierto.
+      paraguas: body.paraguas === true,
     });
     const seedItemId = ctx.seedItemId ?? null;
     const startedAt = Date.now();

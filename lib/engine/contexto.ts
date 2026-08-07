@@ -149,6 +149,8 @@ export type PeticionDeLook = {
   /** Cualquier cosa que no sea "dia"/"noche" cae a null. */
   momento?: string | null;
   weather: Weather | null;
+  /** Va a llevar paraguas. Solo se pregunta cuando el clima trae lluvia. */
+  paraguas?: boolean;
   seedItemId?: string | null;
   formality?: string | null;
 };
@@ -191,6 +193,7 @@ export function construirContexto(
     flow: profile.palette_flow as Season | null,
     items: orderClosetForEngine(items),
     weather: p.weather,
+    paraguas: p.paraguas === true,
     recentCombos: base.recentCombos,
     vetoes: vetoLabels(vetoes),
     timeOfDay:

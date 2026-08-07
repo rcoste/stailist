@@ -132,7 +132,14 @@ function buildCriticMessage(
   lines.push(
     ...bloqueEjecucion(
       ctx.items.filter((i) => outfit.item_ids.includes(i.id)),
-      { clima: bandaDeClima(ctx.weather), closet: ctx.items }
+      {
+        clima: bandaDeClima(ctx.weather),
+        closet: ctx.items,
+        // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado
+        // son la misma BANDA de temperatura y dos problemas distintos.
+        lluvia: /lluvia|llov|chubasco|tormenta/i.test(ctx.weather?.condition ?? ""),
+        paraguas: ctx.paraguas,
+      }
     )
   );
 

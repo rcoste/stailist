@@ -258,3 +258,124 @@ describe("el traje con el pantalón de otro", () => {
     expect(v.map((x) => x.regla)).not.toContain("traje-con-pantalon-ajeno");
   });
 });
+
+// Los looks REALES del veredicto de Gemini que dispararon estas dos reglas.
+// 4 de los 6 defectos de clima de toda la corrida cayeron en el brief de
+// lluvia, y los DOS motores fallaron ahí — producción incluida, con el prompt
+// afinado 38 veces. Por eso van comprobadas y no pedidas.
+describe("lluvia-calzado", () => {
+  // "Gris en capas" (Gemini): la chamarra impermeable SÍ estaba; el look se
+  // cayó por los tenis. Roberto: "Falla en no poner botas o calzado para lluvia".
+  const look = [
+    p("Camiseta carbón", "#3A3A3A"),
+    p("Chamarra impermeable ligera", "#4A4A4A", { material: "sintético" }),
+    p("Chinos carbón", "#3A3A3A"),
+    p("Tenis de lona blancos", "#F0F0F0", { material: "lona" }),
+  ];
+  const closet = [...look, p("Botines Chelsea negros", "#111111", { material: "piel" })];
+
+  it("marca el calzado que el agua arruina, y ofrece el que sí aguanta", () => {
+    const r = revisarEjecucion(look, { lluvia: true, closet }).find(
+      (x) => x.regla === "lluvia-calzado"
+    );
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Tenis de lona blancos");
+    expect(r!.detalle).toContain("Botines Chelsea negros");
+  });
+
+  it("el criterio es el MATERIAL, no el tipo: tenis de piel pasan", () => {
+    // Roberto, textual: "hay unos tenis que pueden ser tenis de piel o con
+    // suela grande… seamos un poquito más tolerantes".
+    const conPiel = [...look.slice(0, 3), p("Tenis de piel blancos", "#F0F0F0", { material: "piel" })];
+    expect(
+      revisarEjecucion(conPiel, { lluvia: true, closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeUndefined();
+  });
+
+  it("la gamuza NO pasa aunque sea un botín", () => {
+    const gamuza = [...look.slice(0, 3), p("Botín chukka de gamuza", "#8A6B4F", { material: "gamuza" })];
+    expect(
+      revisarEjecucion(gamuza, { lluvia: true, closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeDefined();
+  });
+
+  it("una sandalia cae aunque sea de piel: el material no la salva", () => {
+    const sandalia = [...look.slice(0, 3), p("Sandalia de cuero negra", "#111111", { material: "piel" })];
+    expect(
+      revisarEjecucion(sandalia, { lluvia: true, closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeDefined();
+  });
+
+  it("sin material no se juzga: datos incompletos no inventan violaciones", () => {
+    const sinMat = [...look.slice(0, 3), p("Zapato derby chocolate", "#5A3A22")];
+    expect(
+      revisarEjecucion(sinMat, { lluvia: true, closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeUndefined();
+  });
+
+  it("sin recambio en el clóset se calla: es carencia, no fallo reparable", () => {
+    expect(
+      revisarEjecucion(look, { lluvia: true, closet: look }).find(
+        (x) => x.regla === "lluvia-calzado"
+      )
+    ).toBeUndefined();
+  });
+
+  it("el paraguas NO salva el calzado — tapa el torso, no los pies", () => {
+    expect(
+      revisarEjecucion(look, { lluvia: true, paraguas: true, closet }).find(
+        (x) => x.regla === "lluvia-calzado"
+      )
+    ).toBeDefined();
+  });
+
+  it("sin lluvia no dice nada", () => {
+    expect(
+      revisarEjecucion(look, { closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeUndefined();
+  });
+});
+
+describe("lluvia-sin-impermeable", () => {
+  // "Charcoal en la llovizna" (Gemini): abrigo de LANA bajo la lluvia.
+  const look = [
+    p("Cuello tortuga negro", "#111111", { material: "lana" }),
+    p("Abrigo charcoal", "#3A3A3A", { material: "lana" }),
+    p("Jeans negros", "#1A1A1A", { material: "mezclilla" }),
+    p("Botines Chelsea negros", "#111111", { material: "piel" }),
+  ];
+  const closet = [...look, p("Chamarra impermeable ligera", "#4A4A4A", { material: "sintético" })];
+
+  it("sin paraguas, la capa de lana no basta", () => {
+    const r = revisarEjecucion(look, { lluvia: true, closet }).find(
+      (x) => x.regla === "lluvia-sin-impermeable"
+    );
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Chamarra impermeable ligera");
+  });
+
+  it("CON paraguas la deja pasar: es lo que evita que la temporada de lluvias sea la misma chamarra todos los días", () => {
+    expect(
+      revisarEjecucion(look, { lluvia: true, paraguas: true, closet }).find(
+        (x) => x.regla === "lluvia-sin-impermeable"
+      )
+    ).toBeUndefined();
+  });
+
+  it("el look que ya trae la impermeable pasa limpio", () => {
+    const conImper = [...look.slice(0, 1), closet[4], ...look.slice(2)];
+    expect(
+      revisarEjecucion(conImper, { lluvia: true, closet }).find(
+        (x) => x.regla === "lluvia-sin-impermeable"
+      )
+    ).toBeUndefined();
+  });
+
+  it("sin impermeable en el clóset se calla", () => {
+    expect(
+      revisarEjecucion(look, { lluvia: true, closet: look }).find(
+        (x) => x.regla === "lluvia-sin-impermeable"
+      )
+    ).toBeUndefined();
+  });
+});

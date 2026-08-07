@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     objective?: string;
     plan?: string;
     momento?: string;
+    paraguas?: boolean;
   } = {};
   try {
     body = await request.json();
@@ -89,6 +90,9 @@ export async function POST(request: NextRequest) {
           plan: typeof body.plan === "string" ? body.plan : null,
           momento: typeof body.momento === "string" ? body.momento : null,
           weather,
+          // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no
+          // debe soltarle la mano a la capa exterior.
+          paraguas: body.paraguas === true,
         });
 
         const gender = profile.gender as "hombre" | "mujer" | null;

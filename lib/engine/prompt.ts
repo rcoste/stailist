@@ -223,7 +223,13 @@ import {
 // propio y no dentro del nombre porque así se puede verificar, corregir y medir.
 // Las 953 prendas anteriores no lo tienen: es opcional y su ausencia no cambia
 // nada de lo que ya funcionaba.
-export const PROMPT_VERSION = "v38";
+// v39: el clima, traducido. Hasta v38 el prompt decía la temperatura y nunca
+// qué significa vestirse a esa temperatura, y la lluvia viajaba como una
+// palabra suelta. Los dos huecos salieron del veredicto de Gemini: 4 de los 6
+// defectos de clima cayeron en el brief de lluvia —con los DOS motores
+// fallando— y dos looks apilaron lana sobre lana a 18°. Va en el prompt (la
+// banda) y en código (lo que se puede comprobar: reglas-ejecucion #6 y #7).
+export const PROMPT_VERSION = "v39";
 
 export type EngineItem = {
   id: string;
@@ -274,6 +280,8 @@ export type EngineContext = {
   flow: Season | null;
   items: EngineItem[];
   weather: Weather | null;
+  /** Va a llevar paraguas (solo se pregunta cuando dice que llueve). */
+  paraguas?: boolean;
   recentCombos: string[][]; // item_ids de outfits de los últimos 14 días
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
@@ -396,6 +404,25 @@ La explicación (una línea por outfit):
  * dos mundos — el motor no puede cumplirlo, y al intentarlo saca un look peor
  * que el que habría armado con lo disponible.
  */
+/**
+ * Qué se pone alguien a esa temperatura, en las MISMAS bandas que la app le
+ * enseña a la usuaria al pedirle el clima (components/weather-picker.tsx). Que
+ * el motor y la pantalla usen la misma escala no es cosmético: si la pantalla
+ * dice "Templado · manga larga ligera" y el motor entiende otra cosa, la
+ * persona pidió una cosa y recibió otra.
+ */
+export function queSePoneA(tempC: number): string {
+  if (tempC <= 8)
+    return "Eso es HELADO: pide abrigo grueso y capas de verdad (térmica o punto grueso debajo).";
+  if (tempC <= 15)
+    return "Eso es FRÍO: pide suéter o chamarra. Una capa de abrigo, no dos apiladas.";
+  if (tempC <= 21)
+    return "Eso es TEMPLADO: manga larga ligera y ya. NO es clima de abrigo ni de apilar lana sobre lana — una sola capa ligera basta, y muchas veces ni eso.";
+  if (tempC <= 27)
+    return "Eso es CÁLIDO: playera o manga corta, a gusto. Nada de capas de abrigo.";
+  return "Eso es CALUROSO: lo más fresco que tenga, tejidos ligeros y respirables. Cero capas.";
+}
+
 export function pisoDeFormalidad(ctx: EngineContext): string {
   const esNoche = ctx.timeOfDay === "noche";
   const esEvento = ctx.objective === "evento";
@@ -641,7 +668,29 @@ export function contextBlock(
     lines.push(ctx.ageStyling);
   }
   if (ctx.weather) {
-    lines.push(`Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}.`);
+    // LA TEMPERATURA, TRADUCIDA A ROPA. Hasta v38 esto decía solo el número
+    // ("Clima de hoy: 18°C, nublado") y nunca qué significa vestirse a 18°.
+    // Que Opus acertara era suerte: adivinaba el registro mexicano. Gemini
+    // adivinó distinto y apiló lana sobre lana sobre lana a 18° — dos veces.
+    // La app YA tiene esta traducción (el selector de clima dice "Templado ·
+    // manga larga ligera"); nunca llegaba al motor.
+    lines.push(
+      `Clima de hoy: ${ctx.weather.temp_c}°C, ${ctx.weather.condition}. ${queSePoneA(
+        ctx.weather.temp_c
+      )}`
+    );
+    // LA LLUVIA. Antes viajaba como una palabra suelta ("lluvia") sin decir qué
+    // exige. Los DOS motores fallaron ahí en el veredicto — producción incluida,
+    // con el prompt más afinado que existe. Aquí se dice; y además se comprueba
+    // en código (lib/engine/reglas-ejecucion.ts), porque una instrucción que se
+    // puede ignorar no es una garantía.
+    if (/lluvia|llov|chubasco|tormenta/i.test(ctx.weather.condition)) {
+      lines.push(
+        ctx.paraguas
+          ? "VA A LLOVER y lleva paraguas: la capa de arriba la eliges por estilo (el paraguas la cubre). El CALZADO no: el paraguas no tapa los pies. Nada de ante, gamuza ni tela, y nada abierto — piel o sintético, que aguanten el agua."
+          : "VA A LLOVER y NO lleva paraguas: la capa de arriba tiene que repeler agua (impermeable, técnica, gabardina) y el CALZADO no puede ser de ante, gamuza ni tela, ni abierto. Piel o sintético."
+      );
+    }
   }
 
   if (ctx.vetoes.length > 0) {

@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.121.0] - 2026-08-06
+
+El clima, que resultó ser el hueco más grande del motor. Sale del veredicto de Gemini: 4 de los 6 defectos de clima de toda la corrida cayeron en el brief de lluvia — **y los dos motores fallaron ahí**, producción incluida.
+
+### Fixed
+
+- **El prompt decía la temperatura y nunca qué significa vestirse a esa temperatura.** Literalmente `Clima de hoy: 18°C, nublado.` y nada más. Que Opus acertara era suerte: adivinaba el registro mexicano. Gemini adivinó distinto y apiló lana sobre lana sobre lana a 18°, dos veces. La app **ya tenía** esa traducción —el selector de clima dice "Templado · manga larga ligera"— pero nunca llegaba al motor. Ahora sí, y con las **mismas cinco bandas** que ve la usuaria: si la pantalla promete una cosa y el motor entiende otra, pidió una cosa y recibió otra (`queSePoneA`, prompt **v39**).
+- **La lluvia viajaba como una palabra suelta.** Ahora dice qué exige — y además **se comprueba en código**, porque una instrucción que se puede ignorar no es una garantía: producción, con el prompt afinado 38 veces contra Claude, igual mandó mocasines a la lluvia.
+
+### Added
+
+- **Regla `lluvia-calzado`**: el criterio es el **material**, no el tipo de zapato — palabras de Roberto: *"unos tenis de piel o con suela grande… seamos un poquito más tolerantes"*. Piel y sintético pasan; ante, gamuza y tela no; las sandalias caen aunque sean de piel. **Es el fallo que de verdad importa**: en 2 de los 3 casos de Gemini la chamarra impermeable SÍ estaba y el look se caía por unos tenis. Una regla sobre la capa exterior —lo que yo iba a escribir— habría pasado por encima de los dos.
+- **Regla `lluvia-sin-impermeable`**, condicionada al paraguas.
+- **"¿Llevas paraguas?"** en el selector de clima, y solo cuando dice que llueve (cero fricción para quien no le llueve). Idea de Roberto, y es más que un refinamiento: **el paraguas tapa el torso pero no los pies**, así que abre la capa de arriba y deja el calzado firme. Sin esa distinción, la temporada de lluvias entera colapsaría a la misma chamarra impermeable. Default en "no" — no contestar cae del lado seguro.
+- **Pool de briefs v3**: la lluvia se parte en dos, con paraguas y sin él. El de "con paraguas" mide algo que hasta hoy no se medía: la **sobre-aplicación** de la regla (un motor que igual te encaja la impermeable aunque ya no haga falta).
+
+### Fixed (de paso)
+
+- **El mapeo brief → motor estaba copiado en dos lados y ya había derivado**: `scripts/ver-prompt.ts` no pasaba `paraguas`, así que imprimía "NO lleva paraguas" para el brief que sí lo lleva. Una caja negra que miente es peor que no tenerla. Ahora hay un solo traductor (`peticionDeBrief`).
+
 ## [0.2.120.1] - 2026-08-06
 
 ### Fixed

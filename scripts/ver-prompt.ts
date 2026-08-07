@@ -21,7 +21,7 @@ import {
   SYSTEM_PROMPT,
   PROMPT_VERSION,
 } from "../lib/engine/prompt";
-import { briefsPara } from "../lib/comparador/motor";
+import { briefsPara, peticionDeBrief } from "../lib/comparador/motor";
 
 for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   const i = l.indexOf("=");
@@ -54,15 +54,17 @@ async function main() {
     process.exit(1);
   }
 
-  const briefs = briefsPara("vistazo", 6);
+  // El pool COMPLETO, no solo el vistazo: si no, los briefs de la segunda mitad
+  // (la lluvia con y sin paraguas) no se pueden inspeccionar y caen al primero
+  // en silencio.
+  const briefs = briefsPara("veredicto", 20);
   const brief =
     (etiquetaBrief && briefs.find((b) => b.etiqueta === etiquetaBrief)) || briefs[0];
 
-  const ctx = construirContexto(carga.base, {
-    objective: brief.objective,
-    momento: brief.momento,
-    weather: brief.weather,
-  });
+  // El MISMO traductor que usa la corrida real: sin esto el script imprimía
+  // "NO lleva paraguas" para el brief que sí lo lleva — y una caja negra que
+  // miente es peor que no tenerla.
+  const ctx = construirContexto(carga.base, peticionDeBrief(brief));
 
   const mensaje = buildUserMessage(ctx);
   const bloqueContexto = contextBlock(ctx).join("\n");

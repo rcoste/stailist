@@ -15,6 +15,8 @@ export type LookInput = {
   momento: "dia" | "noche";
   seedItemId?: string | null; // ancla opcional: prenda fijada para hoy
   formality?: string | null; // solo en "evento": casual | semiformal | formal | gala
+  /** Va a llevar paraguas. Solo viaja cuando dijo que llueve. */
+  paraguas?: boolean;
 } & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
 
 // Prenda del clóset para el picker de ancla (foto resuelta en el server).
@@ -144,6 +146,12 @@ export function LookRequest({
   // veredicto (5 de 6). Un clima que nadie eligió es peor que preguntar.
   const [climaIdx, setClimaIdx] = useState<number | null>(null);
   const [rain, setRain] = useState(false);
+  // El paraguas cambia SOLO lo de arriba: tapa el torso, no los pies. Sin él,
+  // la capa exterior tiene que repeler agua; con él se elige por estilo. Sin
+  // esta pregunta, cada día de lluvia colapsaría a la misma chamarra
+  // impermeable toda la temporada. Default en `false` a propósito: no
+  // contestar debe caer en el lado seguro.
+  const [paraguas, setParaguas] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
   const [formality, setFormality] = useState<string | null>(null); // solo "evento"
@@ -189,6 +197,7 @@ export function LookRequest({
       seedItemId,
       formality: formalityOut,
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
+      ...(rain ? { paraguas } : {}),
     });
   }
 
@@ -295,6 +304,8 @@ export function LookRequest({
                 locFailed={locFailed}
                 onIdx={setClimaIdx}
                 onRain={setRain}
+                paraguas={paraguas}
+                onParaguas={setParaguas}
                 onLocate={useLocation}
               />
             )}
@@ -510,6 +521,8 @@ function StepClima({
   locFailed,
   onIdx,
   onRain,
+  paraguas,
+  onParaguas,
   onLocate,
 }: {
   /** null = nadie ha elegido todavía. Ver el comentario de `climaIdx`. */
@@ -519,6 +532,8 @@ function StepClima({
   locFailed: boolean;
   onIdx: (i: number) => void;
   onRain: (r: boolean) => void;
+  paraguas: boolean;
+  onParaguas: (p: boolean) => void;
   onLocate: () => void;
 }) {
   return (
@@ -614,6 +629,49 @@ function StepClima({
           </button>
         </div>
       </div>
+
+      {/* El paraguas, SOLO si dijo que llueve. Cero fricción para quien no le
+          llueve, y para quien sí es la pregunta que decide el look: el paraguas
+          tapa el torso pero no los pies, así que abre la capa de arriba y deja
+          el calzado firme. Sin ella, todos los días de lluvia salen con la
+          misma chamarra impermeable. */}
+      {rain ? (
+        <div
+          className="mt-3 flex items-center gap-3"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <span className="flex flex-col">
+            <span className="text-[14px] font-semibold text-ink">
+              ¿llevas paraguas?
+            </span>
+            <span className="text-[13px] text-muted">
+              si sí, arriba te suelto la mano
+            </span>
+          </span>
+          <div className="ml-auto inline-flex overflow-hidden rounded-sm border border-line">
+            <button
+              type="button"
+              onClick={() => onParaguas(false)}
+              aria-pressed={!paraguas}
+              className={`min-h-[38px] px-5 text-[14px] font-semibold transition-colors ${
+                !paraguas ? "bg-accent text-on-accent" : "bg-surface text-ink"
+              }`}
+            >
+              no
+            </button>
+            <button
+              type="button"
+              onClick={() => onParaguas(true)}
+              aria-pressed={paraguas}
+              className={`min-h-[38px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
+                paraguas ? "bg-accent text-on-accent" : "bg-surface text-ink"
+              }`}
+            >
+              sí
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
