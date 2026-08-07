@@ -58,6 +58,7 @@ export function HoyClient({
   votoInicial = null,
   userId,
   defaultObjective,
+  gender,
   closet = [],
   autoAsk = false,
   homeCard = null,
@@ -72,6 +73,8 @@ export function HoyClient({
   wornInicial: boolean;
   userId: string;
   defaultObjective: string | null;
+  /** Las anclas de formalidad son distintas por género ("traje y corbata" vs "vestido largo"). */
+  gender: "hombre" | "mujer" | null;
   /** Clóset para el picker de ancla del wizard ("¿algo que te quieras poner hoy?"). */
   closet?: ClosetPick[];
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
@@ -273,6 +276,7 @@ export function HoyClient({
       <LookRequest
         title="Tu look de hoy"
         defaultObjective={defaultObjective}
+        gender={gender}
         closet={closet}
         defaultSeedItemId={seedFromCard}
         onPick={(input) => {

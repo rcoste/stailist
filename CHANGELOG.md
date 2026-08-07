@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.123.1] - 2026-08-06
+
+### Fixed
+
+- **La formalidad se preguntaba en jerga que la gente no entiende.** Roberto: *"la mayoría de la gente tiene el problema de que si lee formal, coctel, gala o etiqueta, no sepa cuál es el dress code que implica"*. Tiene razón — preguntar con una palabra que la persona no entiende no es preguntar. **Se invirtió la jerarquía**: la ROPA es el titular y la palabra de la invitación es la pista. Funciona en los dos sentidos: quien no conoce las palabras elige por lo que se pondría; quien trae la invitación busca su palabra ahí.
+- **Y va por género**, porque el ancla concreta lo es: *"traje y corbata"* no le dice nada a una mujer — y la usuaria objetivo de este producto es mujer. Hombre ve "saco, sin corbata / traje y corbata / esmoquin"; mujer ve "de coctel / vestido largo o midi / vestido largo de gala". El wizard no recibía el género; ahora sí (Hoy y onboarding).
+- **"Un evento" ya no se salta la pregunta de formalidad en el onboarding.** Quien elegía "un evento" en el onboarding recibía su **primer** look sin que nadie le preguntara si era una boda de etiqueta o una cena — justo el hueco que vuelve incalificable el resultado. Un tap de más para ellos; el resto no lo nota.
+
 ## [0.2.123.0] - 2026-08-06
 
 De la corrida de verificación: los **dos** motores fallaron idénticamente en el brief nuevo de boda, y los comentarios de Roberto fueron quirúrgicos.

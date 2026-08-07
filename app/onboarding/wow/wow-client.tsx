@@ -64,6 +64,7 @@ export function WowClient({
   initialOutfits,
   userId,
   defaultObjective,
+  gender,
   hasAvatar,
   closetCount,
   resumeLookId,
@@ -71,6 +72,7 @@ export function WowClient({
   initialOutfits: WowOutfit[] | null;
   userId: string;
   defaultObjective: string | null;
+  gender: "hombre" | "mujer" | null;
   hasAvatar: boolean;
   /** Nº de prendas del clóset — para la frase "revisando tus N prendas…". */
   closetCount: number;
@@ -160,6 +162,7 @@ export function WowClient({
       <LookRequest
         title="Antes de armar tu primer look…"
         defaultObjective={defaultObjective}
+        gender={gender}
         onPick={generate}
         skipObjective
       />

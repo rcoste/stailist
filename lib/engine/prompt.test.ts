@@ -623,3 +623,47 @@ describe("queSePoneA — la temperatura traducida a ropa", () => {
     for (let t = -10; t <= 50; t++) expect(queSePoneA(t).length, `${t}°`).toBeGreaterThan(20);
   });
 });
+
+describe("formalidad: el ancla concreta, no la palabra suelta", () => {
+  // Los DOS motores sacaron esmoquin para "boda formal" y Roberto marcó 👎
+  // todo lo que no era traje y corbata: "en una boda mexicana formal jamás
+  // iría alguien así vestido". Es el mismo hueco que el clima — una suposición
+  // cultural que nunca se escribió.
+  const ctx = (formality: string): EngineContext =>
+    ({
+      gender: "hombre",
+      objective: "evento",
+      plan: "una boda de noche, en salón",
+      formality,
+      timeOfDay: "noche",
+      weather: { temp_c: 18, condition: "nublado" },
+      items: [],
+      tasteTags: [],
+      vetoes: [],
+      recentCombos: [],
+      lifestyle: null,
+      archetype: null,
+      season: null,
+      flow: null,
+      silueta: null,
+      fitPref: null,
+      ageStyling: null,
+      tasteSignal: EMPTY_TASTE_SIGNAL,
+      seedItemId: null,
+      styleReference: null,
+      styleWords: null,
+    }) as unknown as EngineContext;
+
+  it("'formal' dice traje y corbata Y prohíbe el esmoquin", () => {
+    const t = contextBlock(ctx("formal")).join("\n");
+    expect(t).toContain("TRAJE Y CORBATA");
+    expect(t).toContain("NO es esmoquin");
+  });
+
+  it("'gala' es donde el esmoquin SÍ va, con su código completo", () => {
+    const t = contextBlock(ctx("gala")).join("\n");
+    expect(t).toContain("esmoquin");
+    expect(t.toLowerCase()).toContain("moño");
+    expect(t.toLowerCase()).toContain("sin cinturón");
+  });
+})
