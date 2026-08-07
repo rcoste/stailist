@@ -597,7 +597,12 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
       repaired,
       dropped: dropped - (restored.length - result.length),
     };
-  } catch {
+  } catch (e) {
+    // El juez falla hacia adelante (se queda con los looks sin revisar), pero
+    // "falla en silencio" no es lo mismo que "falla sin dejar rastro".
+    console.error(
+      `[trip-outfits] el juez falló, sigo sin revisar — ${e instanceof Error ? e.message : String(e)}`
+    );
     return { outfits, repaired: 0, dropped: 0 };
   }
 }

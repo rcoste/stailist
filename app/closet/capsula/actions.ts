@@ -121,7 +121,10 @@ export async function saveLifestyle(
     // Firma del estilo COMPLETO (referencia + sus palabras): si cualquiera
     // cambia después, la cápsula se ofrece a regenerar.
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
-  } catch {
+  } catch (e) {
+    console.error(
+      `[capsula] buildCapsuleTarget falló — ${e instanceof Error ? e.message : String(e)}`
+    );
     // Las respuestas ya quedaron guardadas arriba.
     return {
       status: "error",
@@ -268,7 +271,10 @@ export async function rejectCapsuleItem(
         flow,
         vetoes: vetoLabels(vetoes),
       });
-    } catch {
+    } catch (e) {
+      console.error(
+        `[capsula] swap falló — ${e instanceof Error ? e.message : String(e)}`
+      );
       return { ok: false };
     }
     nextSwaps[key] = { item: alt, rejectedCount: newCount, reason: reason ?? null };
@@ -463,7 +469,10 @@ export async function regenerateCapsuleTarget(): Promise<void> {
       ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
     });
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
-  } catch {
+  } catch (e) {
+    console.error(
+      `[capsula] regenerateCapsuleTarget falló — ${e instanceof Error ? e.message : String(e)}`
+    );
     return;
   }
 

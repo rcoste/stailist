@@ -43,7 +43,7 @@ function weatherFromClima(clima: string | undefined): TripWeatherInput | null {
 // viaje. Cachea en profiles.capsule_outfits + firma del clóset.
 export async function generateCapsuleOutfits(
   append = false
-): Promise<{ ok: boolean; count: number; added: number }> {
+): Promise<{ ok: boolean; count: number; added: number; motivo?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -124,8 +124,13 @@ export async function generateCapsuleOutfits(
   try {
     outfits = await generateTripOutfits(genInputs);
     outfits = (await reviewTripOutfits(genInputs, outfits)).outfits;
-  } catch {
-    return { ok: false, count: existing.length, added: 0 };
+  } catch (e) {
+    // El motivo SE REGISTRA y VIAJA. Este catch mudo es por qué "No pude armar
+    // otros looks" no se pudo diagnosticar leyendo los logs: la única pista era
+    // el texto rojo en pantalla. Tercer catch mudo del día en un camino de IA.
+    const motivo = e instanceof Error ? e.message : String(e);
+    console.error(`[capsula-looks] generateCapsuleOutfits falló — ${motivo}`);
+    return { ok: false, count: existing.length, added: 0, motivo: motivo.slice(0, 200) };
   }
 
   let finalOutfits = outfits;

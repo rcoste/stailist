@@ -48,7 +48,8 @@ export function CapsuleLooks({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [appending, setAppending] = useState(false);
-  const [error, setError] = useState(false);
+  // `string` = el motivo real que mandó el servidor; `true` = falló sin motivo.
+  const [error, setError] = useState<string | boolean>(false);
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
   );
@@ -64,7 +65,7 @@ export function CapsuleLooks({
       setAppending(append);
       const res = await generateCapsuleOutfits(append);
       setAppending(false);
-      if (!res.ok) setError(true);
+      if (!res.ok) setError(res.motivo ?? true);
       router.refresh();
     });
 
@@ -204,7 +205,14 @@ export function CapsuleLooks({
       ) : null}
 
       {error ? (
-        <p className="text-sm text-error">No pude armar otros looks — inténtalo otra vez.</p>
+        <p className="text-sm text-error">
+          No pude armar otros looks — inténtalo otra vez.
+          {/* El motivo, cuando el servidor lo manda. Sin esto, un reporte de
+              "sigue fallando" no trae nada con qué diagnosticar. */}
+          {typeof error === "string" ? (
+            <span className="mt-0.5 block text-xs text-muted">{error}</span>
+          ) : null}
+        </p>
       ) : null}
 
       <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
