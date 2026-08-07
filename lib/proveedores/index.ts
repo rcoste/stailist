@@ -40,7 +40,15 @@ export type Peticion = {
   modelo: Modelo;
   system: string;
   texto: string;
+  /** UNA imagen (leer una prenda, juzgar un avatar). */
   imagen?: { mediaType: string; base64: string };
+  /**
+   * VARIAS imágenes, en orden. Nació con la rúbrica visual: juzgar un look es
+   * ver TODAS sus prendas juntas —la misma cuadrícula que ve el humano al
+   * votar— y con una sola imagen eso no se puede. `imagen` sigue funcionando;
+   * las dos se concatenan.
+   */
+  imagenes?: { mediaType: string; base64: string }[];
   /** JSON Schema. Cada proveedor lo pide a su manera; aquí se traduce. */
   schema?: Record<string, unknown>;
   maxTokens?: number;
@@ -60,6 +68,11 @@ export type Recibo = {
    */
   truncada: boolean;
 };
+
+/** Todas las imágenes de la petición, en orden: la suelta y luego la lista. */
+function imagenesDe(p: Peticion): { mediaType: string; base64: string }[] {
+  return [...(p.imagen ? [p.imagen] : []), ...(p.imagenes ?? [])];
+}
 
 export class ErrorProveedor extends Error {
   constructor(
@@ -133,18 +146,14 @@ async function conAnthropic(p: Peticion): Promise<Omit<Recibo, "ms">> {
       {
         role: "user",
         content: [
-          ...(p.imagen
-            ? ([
-                {
-                  type: "image" as const,
-                  source: {
-                    type: "base64" as const,
-                    media_type: p.imagen.mediaType as "image/jpeg" | "image/png",
-                    data: p.imagen.base64,
-                  },
-                },
-              ] as const)
-            : []),
+          ...imagenesDe(p).map((im) => ({
+            type: "image" as const,
+            source: {
+              type: "base64" as const,
+              media_type: im.mediaType as "image/jpeg" | "image/png",
+              data: im.base64,
+            },
+          })),
           { type: "text" as const, text: p.texto },
         ],
       },
@@ -217,9 +226,9 @@ async function pedirAGemini(p: Peticion, key: string, sinPensar: boolean) {
           {
             role: "user",
             parts: [
-              ...(p.imagen
-                ? [{ inlineData: { mimeType: p.imagen.mediaType, data: p.imagen.base64 } }]
-                : []),
+              ...imagenesDe(p).map((im) => ({
+                inlineData: { mimeType: im.mediaType, data: im.base64 },
+              })),
               { text: p.texto },
             ],
           },
@@ -294,10 +303,10 @@ async function conOpenRouter(p: Peticion): Promise<Omit<Recibo, "ms">> {
   if (!key) throw new ErrorProveedor("openrouter", "falta OPENROUTER_API_KEY");
 
   const contenido: unknown[] = [];
-  if (p.imagen) {
+  for (const im of imagenesDe(p)) {
     contenido.push({
       type: "image_url",
-      image_url: { url: `data:${p.imagen.mediaType};base64,${p.imagen.base64}` },
+      image_url: { url: `data:${im.mediaType};base64,${im.base64}` },
     });
   }
   contenido.push({ type: "text", text: p.texto });

@@ -157,10 +157,30 @@ aprobado: ¿alguien que se viste bien se lo pondría TAL CUAL para este pedido? 
 
 porQue: una línea concreta, nombrando prendas — como lo diría un stylist, no un robot.`;
 
-// La escala como enum y no como minimum/maximum: el compilador de schemas del
-// API no soporta cotas numéricas en enteros (400 "not supported") — cazado en
-// la primera corrida del acuerdo, donde las 136 llamadas fallaron con eso.
-const ESCALA = { type: "integer", enum: [1, 2, 3, 4, 5] } as const;
+// LA ESCALA, en el mínimo común denominador de los proveedores.
+//
+// Cada uno rechaza una forma distinta y las dos se descubrieron corriendo:
+// Anthropic no acepta `minimum`/`maximum` en enteros (400 "not supported"),
+// y Gemini no acepta `enum` de enteros (400 "TYPE_STRING"). Queda el entero
+// pelón: el rango vive en el prompt y se comprueba al leer, que es donde una
+// validación de verdad puede hacer algo.
+const ESCALA = { type: "integer", description: "de 1 a 5" } as const;
+
+/** Acota una nota al 1-5 por si el modelo se sale. */
+const enEscala = (n: unknown): number =>
+  Math.min(5, Math.max(1, Math.round(Number(n) || 3)));
+
+/** Normaliza lo que devuelve cualquier proveedor a una nota válida. */
+export function normalizarNota(raw: NotaRubrica): NotaRubrica {
+  return {
+    ...raw,
+    ocasion: enEscala(raw.ocasion),
+    clima: enEscala(raw.clima),
+    armado: enEscala(raw.armado),
+    wow: enEscala(raw.wow),
+    aprobado: raw.aprobado === true,
+  };
+}
 
 export const SCHEMA_RUBRICA = {
   type: "object",
@@ -193,5 +213,5 @@ export async function evaluarLook(
     maxTokens: 700,
   });
   if (recibo.truncada) throw new Error("RUBRICA_TRUNCADA");
-  return { nota: parsearJson<NotaRubrica>(recibo.texto), recibo };
+  return { nota: normalizarNota(parsearJson<NotaRubrica>(recibo.texto)), recibo };
 }

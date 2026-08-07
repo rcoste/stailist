@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.128.0] - 2026-08-07
+
+### Added — la rúbrica que MIRA
+
+Idea de Roberto: *"hemos visto que yo veo cosas que tú no ves. Igual el modelo de visión ve cosas que yo hubiera visto, y nos podemos ahorrar; lo metemos como última capa del loop"*. El diagnóstico es exacto: **cuando él vota ve una cuadrícula de FOTOS; el juez de texto solo ve nombres**. Todo lo que vive en la imagen y no en el nombre —el tono real, la textura, si dos piezas se pelean a la vista— le es invisible.
+
+`lib/engine/rubrica-vision.ts` le pasa al modelo de visión **las mismas fotos que ve el humano al votar**, con el mismo brief y el mismo schema que la rúbrica de texto (si cambiara la vara, la comparación no diría cuál ve más sino que miden cosas distintas).
+
+**Lo que NO juzga, a propósito: el try-on renderizado.** Ese lo inventa un modelo de imagen que alucina, así que juzgarlo sería juzgar al renderizador y no la decisión del motor — un buen outfit con mal render saldría castigado. Y cuesta ~$0.13 y 16s por look, contra las fotos que ya existen.
+
+### Notes — medido sobre los 116 looks marcados del veredicto
+
+| | acuerdo | de sus 21 👎 |
+|---|---|---|
+| rúbrica de texto | 80% | caza 7 |
+| **rúbrica visual** | **83%** | caza 7 |
+
+**De los 11 👎 que hoy no caza nadie, la visión caza 2.** Modesto — pero el costo es **$0.19 por 116 looks** ($0.0016 cada uno, **5× más barato que el juez de texto**), y uno de los dos hallazgos es notable:
+
+> *"La mezcla de café y gris carbón junto con el vino resulta discordante"*
+
+Es **exactamente el patrón que los datos de Roberto habían mostrado** (café+negro+gris, 46% de 👎, p = 0.009) y que se decidió NO convertir en regla por muestra chica. El juez visual lo levantó solo, sin conocer ese análisis. Dos fuentes independientes apuntando al mismo sitio.
+
+El otro: *"la camisa de lino de cuello cubano es demasiado informal para un blazer sastre"* — un desajuste de registro que el nombre de la prenda no delata.
+
+**Cobertura combinada de los 21 👎: de 10 (48%) a 12 (57%).** Se gana el lugar como **buscador de reglas**, no como compuerta — por lo mismo que el juez de texto: lo que gatea la generación deja de poder evaluarla.
+
+### Fixed
+
+- **La puerta común solo admitía UNA imagen.** Juzgar un look es ver todas sus prendas juntas; ahora `Peticion.imagenes` acepta la lista y los tres adaptadores (Anthropic, Gemini, OpenRouter) la mandan en orden.
+- **El schema de la escala, en el mínimo común denominador.** Anthropic rechaza `minimum`/`maximum` en enteros y Gemini rechaza `enum` de enteros — las dos se descubrieron corriendo, con 136 y 116 llamadas fallidas. Queda el entero pelón, con el rango en el prompt y la validación al leer (`normalizarNota`), que es donde una validación puede hacer algo.
+
 ## [0.2.127.0] - 2026-08-07
 
 ### Changed
