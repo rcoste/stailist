@@ -57,6 +57,33 @@ El marcador sale también en `/admin/comparador/motor/<id>`.
 **5. Leer el `t`, no el marcador.** `|t| > 2` es señal; por debajo, la
 diferencia no sobrevive al ruido y el script dice cuántos pares harían falta.
 
+## Comparar VERSIONES del prompt (v48 contra v49)
+
+El prompt vive en el código, y **dos versiones no se pueden cargar a la vez en
+el mismo proceso**. Cuando el repo va en v49, v48 sigue en un commit de git pero
+ya no hay forma de *ejecutarla* junto a la nueva.
+
+Por eso, **antes de subir de versión**:
+
+```bash
+npx tsx scripts/prompt-congelar.ts roberto@kublau.com --nota "qué cambió"
+```
+
+Guarda el `system` y el mensaje de usuario **ya renderizado** para los 14 briefs
+del pool. Con eso —y el schema, que se reconstruye del clóset— la llamada queda
+reproducible exactamente. `lib/engine/prompt-congelado.ts` la ejecuta.
+
+**Congelar el día que la versión está viva es trivial; reconstruirla después es
+arqueología.** Hacerlo es parte de subir de versión, no un extra.
+
+Lo que el congelado NO reproduce, y hay que saberlo al leer un resultado:
+
+- **Si el clóset cambió**, el congelado pide prendas que ya no existen.
+  `correrCongelado` lo detecta y falla claro en vez de generar looks fantasma.
+- **Las reglas y el juez son los de HOY**, no los de entonces — a propósito: lo
+  que se compara es el prompt, y dejar el resto igual es lo que hace la
+  comparación limpia.
+
 ## Lo que este instrumento NO decide
 
 **Qué modelo usar.** Un juez Claude tiende a preferir looks escritos por Claude,
