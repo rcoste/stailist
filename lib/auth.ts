@@ -75,6 +75,12 @@ export type Profile = {
   } | null;
   // Su estilo EN SUS PALABRAS (texto libre opcional del perfil, ≤280 chars).
   style_words: string | null;
+  /**
+   * Cómo se viste para trabajar. Se pregunta la primera vez que elige la
+   * ocasión "trabajo", no en el onboarding: quien nunca la use no paga nada.
+   * null = todavía sin preguntar.
+   */
+  work_dress_code: string | null;
 };
 
 // Cookie del modo "ver como" (admin ve la app con los datos de otro usuario,

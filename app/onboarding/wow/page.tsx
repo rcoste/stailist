@@ -121,6 +121,7 @@ export default async function WowPage({
         userId={profile.id}
         defaultObjective={profile.last_objective}
         gender={(profile.gender as "hombre" | "mujer" | null) ?? null}
+        workDressCode={(profile.work_dress_code as string | null) ?? null}
         hasAvatar={!!profile.avatar_path}
         closetCount={(await countPromise).count ?? 0}
         resumeLookId={resumeLookId ?? null}

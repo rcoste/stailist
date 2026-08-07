@@ -65,6 +65,7 @@ export function WowClient({
   userId,
   defaultObjective,
   gender,
+  workDressCode,
   hasAvatar,
   closetCount,
   resumeLookId,
@@ -73,6 +74,8 @@ export function WowClient({
   userId: string;
   defaultObjective: string | null;
   gender: "hombre" | "mujer" | null;
+  /** Su código de vestimenta del trabajo; null = nunca se le ha preguntado. */
+  workDressCode: string | null;
   hasAvatar: boolean;
   /** Nº de prendas del clóset — para la frase "revisando tus N prendas…". */
   closetCount: number;
@@ -163,6 +166,7 @@ export function WowClient({
         title="Antes de armar tu primer look…"
         defaultObjective={defaultObjective}
         gender={gender}
+        workDressCode={workDressCode}
         onPick={generate}
         skipObjective
       />

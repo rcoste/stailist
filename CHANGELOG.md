@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.124.0] - 2026-08-06
+
+Última pieza de calibración antes del veredicto nuevo. Idea de Roberto: *"para desbloquear el modo de oficina el usuario debería de responder algunas preguntas de calibración"*.
+
+### Added
+
+- **"¿Cómo te vistes para trabajar?", una sola vez.** "Oficina" no es un registro: son cuatro, y sin saber cuál el motor adivinaba. Roberto no pudo calificar un look de trabajo en la corrida de verificación — *"depende del tipo de oficina… el look está padre pero depende"* — porque ni el motor ni él tenían el dato. Mismo patrón que "evento" a secas y que el clima sin traducir: **una pregunta que el producto nunca hizo, y sin la cual ni el motor acierta ni el humano califica**.
+- **Se pregunta la primera vez que eliges "trabajo", no en el onboarding**: quien nunca use la ocasión no paga fricción. Se guarda en el perfil (`work_dress_code`, migración 0118) y no se vuelve a preguntar — es un dato de persona, no de día (a diferencia del paraguas).
+- Cuatro opciones, con **la ropa de titular y la jerga de pista**, y **por género** (mismo criterio que la formalidad): *traje o al menos saco* · *camisa o polo, sin saco* · *jeans y estoy bien* · **depende del día**. Esa última no es relleno: Roberto la pidió sin nombrarla (*"igual hay una cena de trabajo importante donde sí importe ir de traje"*), y al motor le da una salida accionable — arma en business casual y explica en el tip cómo subir o bajar el registro.
+
+### Changed
+
+- **"Oficina" → "Trabajo"** en toda la app. La palabra dejaba fuera a quien no trabaja en una. La clave guardada no cambia (vive en `outfits` y en `last_objective`); solo la etiqueta.
+- El motor (**v42**) y la rúbrica (**r5**) reciben el código. Sin él, la rúbrica lo dice explícitamente y **no castiga** por no acertarle a un registro que nadie declaró.
+
 ## [0.2.123.1] - 2026-08-06
 
 ### Fixed

@@ -1,6 +1,7 @@
 import { llamar, parsearJson, type Recibo } from "@/lib/proveedores";
 import { MODELO_JUEZ } from "@/lib/models";
 import { queSePoneA } from "./prompt";
+import { lineaDressCode } from "@/lib/dress-code";
 
 // LA RÚBRICA: un look calificado contra su brief, por un juez automático.
 //
@@ -39,7 +40,7 @@ import { queSePoneA } from "./prompt";
 // r2 → r3: el estándar de lluvia se afinó con la corrida de verificación (el
 // mocasín de piel se colaba). La rúbrica lo sigue: si el juez calificara con
 // una vara distinta a la que el motor recibe, mediría otra cosa.
-export const RUBRICA_VERSION = "r4";
+export const RUBRICA_VERSION = "r5";
 
 /** El mismo contexto que recibió el motor. Un juez que califica "evento" a
  * secas tendría el mismo problema que Roberto votando: "evento es algo muy
@@ -47,6 +48,8 @@ export const RUBRICA_VERSION = "r4";
  * bien". */
 export type BriefRubrica = {
   objective: string;
+  /** Su código de vestimenta del trabajo: "oficina" son cuatro registros, no uno. */
+  workDressCode?: string | null;
   plan?: string | null;
   formality?: string | null;
   momento?: "dia" | "noche" | null;
@@ -95,6 +98,14 @@ const FORMALIDAD: Record<string, string> = {
 /** El brief como lo lee el juez. Pura y exportada para poder probarla. */
 export function briefParaRubrica(b: BriefRubrica): string {
   const lineas = [`Ocasión: ${b.objective}.`];
+  // "Trabajo" sin su código es incalificable, y no en teoría: Roberto no pudo
+  // votar un look de oficina de la corrida de verificación ("depende del tipo
+  // de oficina… el look está padre pero depende"). El juez tendría el mismo
+  // problema.
+  if (b.objective === "oficina") {
+    const dc = lineaDressCode(b.workDressCode);
+    lineas.push(dc || "No dijo cómo se viste para trabajar: júzgalo contra un registro de oficina neutro y no castigues por no acertarle a un código que nadie declaró.");
+  }
   if (b.plan?.trim()) lineas.push(`Pidió, en sus palabras: "${b.plan.trim()}".`);
   if (b.formality && FORMALIDAD[b.formality])
     lineas.push(`Formalidad: ${FORMALIDAD[b.formality]}.`);

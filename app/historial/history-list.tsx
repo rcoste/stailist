@@ -33,7 +33,7 @@ type Estado = Record<string, EstadoItem>;
 // Etiqueta corta de ocasión (de objectives.ts, pero compacta para chips).
 const OCASION_LABEL: Record<string, string> = {
   diario: "Diario",
-  oficina: "Oficina",
+  oficina: "Trabajo",
   evento: "Evento",
   viaje: "Aeropuerto",
   refrescar: "Refrescar",
