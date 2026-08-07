@@ -235,6 +235,26 @@ import {
 // v40-v43: dress code del trabajo (los cuatro registros de "oficina", con el
 // "depende del día" que pregunta si hoy ve cliente), paraguas, y la formalidad
 // dicha en ropa en vez de en jerga.
+// v45 (2026-08-07): la mano de stylist deja de ser opcional. La línea decía
+// "cuando el clóset lo permita" y remataba con "si el clóset solo da para lo
+// simple, lo simple BIEN HECHO es la decisión" — dos puertas de salida en la
+// misma frase, así que no decidir nada siempre era defendible. Y el motor las
+// usaba: el wow salió 2.98 en el eval, la nota más baja de las seis, con el
+// juez escribiendo cosas como "la camiseta blanca, bomber negra y jeans negros
+// son el básico más genérico posible; se siente más piloto automático que
+// styling".
+//
+// Ahora cada look debe llevar una decisión NOMBRABLE (el análisis la escribe
+// antes de comprometer el outfit) y pasar la prueba del piloto automático:
+// ¿alguien que no sabe de moda habría armado esto sin pensar? La guarda de
+// siempre se queda y se refuerza — jamás forzar una pieza con tal de tener algo
+// que nombrar: una decisión mala es peor que una decisión sobria.
+//
+// Va aquí y NO en el critic: el paso anterior (v44 + repertorio de gestos)
+// atacó el wow desde el juez —la variedad de gestos subió 37%— y el wow no se
+// movió. O sea que el cuello de botella no era el gesto sino la elección de
+// prendas, que es de este prompt.
+//
 // v44 (2026-08-07): QUÉ evento es, del catálogo (lib/eventos.ts). "Evento" +
 // nivel de formalidad no alcanza: una boda y una graduación son las dos
 // "formal" y no se resuelven igual — en la boda hay fotos y protagonistas a
@@ -243,7 +263,7 @@ import {
 // que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
 // escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
 // una comida, cena, cita, boda— y sobre eso vamos afinando más".
-export const PROMPT_VERSION = "v44";
+export const PROMPT_VERSION = "v45";
 
 export type EngineItem = {
   id: string;
@@ -393,7 +413,9 @@ Armonía del outfit (cómo combinan las prendas entre sí):
 - Materiales: si la prenda trae material, úsalo — nada de lana o tejidos pesados en calor, ni lino fresco en frío; y que los pesos de tela de un mismo look se hablen (no mezcles piezas de invierno con piezas de verano).
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
 - Capas con lógica de vida real: cada capa en su orden natural — camisa o playera debajo, suéter/knit encima, saco/blazer/abrigo al final. JAMÁS combos que nadie usa en la calle: chaleco sastre sobre suéter, saco debajo de una sudadera, dos abrigos juntos. Matiz de la camisa: una camisa de vestir fina va DEBAJO del punto, no encima; PERO una sobrecamisa/overshirt gruesa abierta SÍ vale como capa exterior sobre un suéter ligero — no la trates como error. La prueba: si no te imaginas a una persona real saliendo así a la calle, no lo armes.
-- Que se note la mano de stylist: cuando el clóset lo permita, el look lleva UNA decisión visible — una capa con intención, un contraste de textura (punto + piel, lana + mezclilla, tejido + satén), o un color que remata sobre base neutra. Y si el clóset solo da para lo simple, lo simple BIEN HECHO es la decisión (fit + color); jamás fuerces una pieza solo para "vestir" el look.
+- Que se note la mano de stylist. CADA look lleva UNA decisión visible, y tienes que poder nombrarla: un contraste de textura (punto + piel, lana + mezclilla, tejido + satén), un color que remata sobre base neutra, una capa que cambia la silueta, o una proporción deliberada (volumen arriba contra línea limpia abajo).
+- LA PRUEBA DEL PILOTO AUTOMÁTICO, aplícala a cada look antes de entregarlo: ¿alguien que NO sabe de moda habría armado exactamente esto abriendo su clóset sin pensar? Si la respuesta es sí, no hay decisión — todavía no es un look de stylist, es ropa que no choca. Camiseta blanca + chamarra negra + jeans negros es el ejemplo exacto de lo que NO pasa esta prueba. Cámbiale una pieza por otra del clóset que sí meta una decisión, o cambia la combinación entera.
+- Y la guarda, que sigue mandando: JAMÁS fuerces una pieza solo para "vestir" el look, ni metas un color o una textura que pelee con el clima, la ocasión o su colorimetría con tal de tener algo que nombrar. Si de verdad este clóset solo da para lo simple en este día, entrega lo simple — pero entonces la decisión es el fit y el color exacto, y también hay que nombrarla. Una decisión mala es peor que una decisión sobria.
 - Vestido o falda en el look: cuida el largo contra el calzado (un midi pide calzado que estilice — algo de altura o silueta limpia; largo + calzado muy plano acortan la figura) y define la cintura cuando ayude (cinturón, top entallado o fajado).
 - Coherencia: no mezcles formalidades opuestas (sastre formal con deportivo) salvo que su vibe lo pida a propósito.
 - Marino + negro SÍ combinan (dos fríos que contrastan sin chocar), incluso en formal — un traje marino con zapatos o cinturón negros es clásico. Solo cuida que se vea intencional (mismo peso de tela, calzado oscuro), no como traje desparejado.

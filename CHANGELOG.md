@@ -2,6 +2,40 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.132.0] - 2026-08-07
+
+### Changed — la mano de stylist deja de ser opcional (v45)
+
+El prompt del generador decía *"cuando el clóset lo permita, el look lleva UNA decisión visible"* y remataba con *"si el clóset solo da para lo simple, lo simple BIEN HECHO es la decisión"*. **Dos puertas de salida en la misma frase**: no decidir nada siempre era defendible. Y el motor las usaba — el juez escribió *"la camiseta blanca, bomber negra y jeans negros son el básico más genérico posible; se siente más piloto automático que styling"*.
+
+Ahora cada look debe llevar una decisión **nombrable**, y el campo `analisis` la escribe antes de comprometer el outfit. Más **la prueba del piloto automático**: *¿alguien que NO sabe de moda habría armado exactamente esto abriendo su clóset sin pensar?* Si sí, no hay decisión.
+
+La guarda de siempre se queda y se refuerza: jamás forzar una pieza con tal de tener algo que nombrar. **Una decisión mala es peor que una decisión sobria.**
+
+Va en el generador y no en el critic porque el paso anterior ya descartó al critic: la variedad de gestos subió 37% y el wow no se movió.
+
+### Notes — el efecto es real en dirección, pequeño en tamaño, y NO significativo
+
+| dimensión (texto) | v44+gestos | v45 |
+|---|---|---|
+| ocasión | 4.62 | 4.67 |
+| clima | 4.51 | 4.53 |
+| armado | 4.23 | **4.42** |
+| estilo | 3.26 | **3.50** |
+| color | 3.92 | **4.28** |
+| **wow** | 2.90 | **3.08** |
+| aprobado | 92% | 94% |
+
+**Suben las 6 de 6.** Test de signos: p = 0.031 — pero **ese p está inflado**: las dimensiones no son independientes (un look bueno las sube todas a la vez), así que cuenta como evidencia direccional, no como prueba.
+
+Por dimensión, nada alcanza señal. El Welch del wow contra su antecesor da **t = 1.18**; y dos corridas del MISMO prompt difieren en 0.08 (t = −0.51), que es la escala del ruido.
+
+### Notes — el hallazgo metodológico: el diseño no tiene poder
+
+Con sd = 0.65 y ~37 looks por corrida, detectar un efecto de +0.2 con 80% de poder pediría **169 looks por lado — 5 vueltas al pool cada uno, ~$26**. Estamos midiendo diferencias de 0.2 con una regla cuya resolución es ~0.3.
+
+La salida barata no es más muestra sino **diseño pareado**: correr los dos prompts sobre los MISMOS briefs y comparar par a par elimina la varianza entre días, que es la que domina. Es exactamente lo que el comparador ya hace — con la rúbrica de juez en vez del voto humano, que es el uso para el que la rúbrica sí sirve (iterar prompt, no coronar modelo).
+
 ## [0.2.131.0] - 2026-08-07
 
 ### Added — el repertorio de gestos del critic, y la métrica que lo vigila
