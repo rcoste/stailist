@@ -516,6 +516,17 @@ export function VotarClient({
           siendo ciego por par (las columnas nunca dicen qué variante son),
           así que es dato bueno; solo es dato MÁS DÉBIL, y por eso se lee
           aparte en vez de mezclarse. */}
+      {/* NO se vota un look que solo un lado armó: no hay qué comparar, y ese
+          voto contaba igual para la mayoría del par. Pasó en el veredicto — el
+          par 6 salió "empate" y su espejo "gana Gemini", y la ÚNICA diferencia
+          era un voto emitido contra un lado vacío. Se leyó como que Roberto fue
+          inconsistente cuando el inconsistente era yo. */}
+      {!par.izq[look] || !par.der[look] ? (
+        <p className="rounded-xl border border-dashed border-line p-3 text-xs leading-relaxed text-muted">
+          Este look no se vota: solo un lado lo armó, así que no hay contra qué
+          compararlo. La diferencia de entrega se mide aparte, en el marcador.
+        </p>
+      ) : (
       <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           ¿Cuál te late más en el look {look + 1}?
@@ -549,6 +560,7 @@ export function VotarClient({
           ))}
         </div>
       </div>
+      )}
 
       {modo === "votar" ? (
       <div className="flex flex-col gap-1">

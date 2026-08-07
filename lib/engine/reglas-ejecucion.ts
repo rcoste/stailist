@@ -420,6 +420,110 @@ export function revisarEjecucion(
     }
   }
 
+  // 8. UNA PRENDA POR ZONA. Estructural, no de gusto: dos pares de zapatos o
+  //    dos suéteres apilados no es un estilo, es un error de armado. Los dos
+  //    salieron del veredicto, los dos de Gemini y los dos marcados por
+  //    Roberto: "metió dos pares de zapatos" (mocasines burdeos + zapato
+  //    formal negro) y "metió suéteres repetidos" (cuello V marino + lana
+  //    negro).
+  //
+    //    Se mira el TIPO FINO, no la zona. Primero lo escribí por zona y el
+    //    test viejo lo cazó de inmediato: camisa y camiseta son las dos
+    //    "torso", y una camiseta BAJO una camisa es exactamente lo que la
+    //    regla de abajo pide. Por tipo fino no hay ambigüedad — dos mocasines
+    //    son dos mocasines, y una camisa sobre una camiseta son dos cosas
+    //    distintas.
+  //    Dos criterios, porque el cuerpo no es simétrico:
+  //    - PIES y PIERNAS: uno solo, punto. Dos calzados CUALESQUIERA son un
+  //      error aunque sean de tipos distintos (los mocasines burdeos y el
+  //      zapato formal negro del veredicto eran justo eso).
+  //    - TORSO: se apila por diseño, así que solo cuenta repetir el MISMO
+  //      tipo (dos suéteres sí; camiseta bajo camisa no). Lo cazó un test
+  //      viejo cuando lo escribí por zona: camisa y camiseta son las dos
+  //      "torso", y esa combinación es la que la regla de abajo PIDE.
+  const dup = (cuales: EngineItem[], que: string) => {
+    if (cuales.length < 2) return;
+    v.push({
+      regla: "zona-duplicada",
+      detalle: `El look lleva ${cuales.length} ${que}: ${cuales
+        .map(nombre)
+        .join(", ")}. Solo se usa una a la vez — quita la que sobre.`,
+    });
+  };
+  const deZona = (z: string) =>
+    items.filter((i) => tipoDePrenda(nombre(i))?.zona === z);
+  dup(deZona("pie"), "pares de calzado");
+  dup(deZona("pierna"), "prendas de pierna");
+
+  const porTipo = new Map<string, EngineItem[]>();
+  for (const i of items) {
+    const t = tipoDePrenda(nombre(i));
+    if (!t || t.zona !== "torso") continue;
+    porTipo.set(t.tipo, [...(porTipo.get(t.tipo) ?? []), i]);
+  }
+  for (const [, cuales] of porTipo) dup(cuales, "prendas del mismo tipo");
+
+  // 9. EL SUÉTER PIDE ALGO DEBAJO. La observación más repetida de Roberto en
+  //    todo el veredicto: SIETE comentarios de "falta t-shirt abajo", en los
+  //    dos motores. Textual: "en un suéter tiene que haber casi siempre
+  //    (dependería del material del suéter) algo más abajo, tipo polo, playera
+  //    o camisa, deberíamos añadir eso a la rúbrica".
+  //
+  //    El cuello tortuga NO cuenta: es cerrado y se lleva a piel por diseño.
+  const esSueter = (i: EngineItem) =>
+    /su[eé]ter|sweater|cardigan|c[aá]rdigan|jersey|punto|knit/.test(TIPO(i)) &&
+    !/cuello (alto|tortuga)|turtleneck/.test(TIPO(i));
+  const esBaseDebajo = (i: EngineItem) =>
+    /camiseta|playera|camisa|polo|t-?shirt|blusa|top b[aá]sico/.test(TIPO(i));
+  const sueters = items.filter(esSueter);
+  if (sueters.length && !items.some(esBaseDebajo)) {
+    v.push({
+      regla: "sueter-sin-base",
+      detalle: `"${nombre(sueters[0])}" va sobre la piel: un suéter casi siempre pide algo debajo (camiseta, polo o camisa) — se ve mejor y se puede quitar una capa. Añade una base del clóset.`,
+    });
+  }
+
+  // 10. MANGA CORTA CON SACO, NUNCA. Roberto, dos veces en el mismo veredicto
+  //     y con signos de admiración: "Manga corta con saco jamás!!" y "Camisa
+  //     de manga corta en traje jamás!!". Es una regla de código de vestir, no
+  //     una preferencia: la manga del saco deja ver que no hay manga debajo.
+  const esMangaCorta = (i: EngineItem) =>
+    /manga corta|polo de manga corta/.test(TIPO(i)) ||
+    (/camisa|camiseta/.test(TIPO(i)) && /manga corta/.test(norm(i.attrs.manga)));
+  const conSaco = items.find((i) => esSaco(i) || /esmoquin|smoking|traje/.test(TIPO(i)));
+  const mangaCorta = items.find(esMangaCorta);
+  if (conSaco && mangaCorta) {
+    v.push({
+      regla: "manga-corta-con-saco",
+      detalle: `"${nombre(mangaCorta)}" es de manga corta y el look lleva "${nombre(conSaco)}": bajo un saco va manga larga siempre — la manga corta se asoma y arruina la línea. Cámbiala por una camisa de manga larga.`,
+    });
+  }
+
+  // 11. MOCASÍN EN FRÍO. Medido sobre los 309 looks marcados de Roberto: el
+  //     mocasín en general va bien (16% de 👎, igual que la línea base), pero
+  //     EN FRÍO se dispara a 44% contra 6% del resto del calzado en frío
+  //     (p = 0.038, repartido en 4 briefs y los dos motores). Es el escote y
+  //     la suela fina: el mismo rasgo que lo descalifica en lluvia.
+  if (ctx.clima === "frio" && ctx.closet?.length) {
+    const esMocasin = (i: EngineItem) => tipoDePrenda(nombre(i))?.tipo === "mocasin";
+    const puestos = items.filter(esMocasin);
+    if (puestos.length) {
+      const esPie = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "pie";
+      const alternativas = ctx.closet.filter((i) => esPie(i) && !esMocasin(i));
+      if (alternativas.length) {
+        v.push({
+          regla: "mocasin-en-frio",
+          detalle: `Hace frío y el look lleva "${puestos
+            .map(nombre)
+            .join('", "')}": el mocasín es escotado y de suela fina, se siente frío. Cámbialo por algo cerrado: ${alternativas
+            .slice(0, 4)
+            .map(nombre)
+            .join(", ")}.`,
+        });
+      }
+    }
+  }
+
   return v;
 }
 
