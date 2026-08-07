@@ -6,6 +6,7 @@ import type { Violacion } from "@/lib/engine/reglas-ejecucion";
 import { costoUsd } from "@/lib/proveedores/precios";
 import { MODELO_MOTOR, JUDGE_MODEL, VISION_MODEL } from "@/lib/models";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
+import { variedadDeGestos, type VariedadGestos } from "@/lib/engine/gestos";
 
 // EL EVAL, lo puro: tipos, marcador, acuerdo de calibración y estimado.
 //
@@ -137,6 +138,12 @@ export type MarcadorEval = {
   costoGenPromedio: number | null;
   msGenPromedio: number | null;
   costoTotal: number;
+  /**
+   * La VARIEDAD de gestos de styling. Es la métrica primaria del wow y la única
+   * de este marcador que no depende de un juez: se cuenta sobre el texto que el
+   * motor produjo, así que optimizar el prompt contra ella no la corrompe.
+   */
+  gestos: VariedadGestos;
 };
 
 const promedio = (xs: number[]): number | null =>
@@ -232,6 +239,7 @@ export function marcadorEval(
       ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length)
       : null,
     costoTotal: Math.round(costoTotal * 10000) / 10000,
+    gestos: variedadDeGestos(filas.flatMap((f) => (f.looks ?? []).map((l) => l.tip))),
   };
 }
 
