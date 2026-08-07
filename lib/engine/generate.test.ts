@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MODELO_MOTOR } from "@/lib/models";
 import type { EngineContext } from "./prompt";
 
 // generarConRecibo con la puerta común stubbeada: se fijan los contratos que
@@ -42,6 +43,13 @@ const respuesta = (outfits: unknown, truncada = false) => ({
   truncada,
 });
 
+/** La env var del proveedor del motor vigente: sigue a MODELO_MOTOR. */
+const LLAVE_DEL_MOTOR: string = {
+  anthropic: "ANTHROPIC_API_KEY",
+  gemini: "GOOGLE_GENERATIVE_AI_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+}[MODELO_MOTOR.proveedor];
+
 const dosLooks = (ids: string[]) => [
   { nombre: "Uno", item_ids: ids.slice(0, 2), explicacion: "va" },
   { nombre: "Dos", item_ids: ids.slice(0, 2), explicacion: "va" },
@@ -49,12 +57,14 @@ const dosLooks = (ids: string[]) => [
 
 beforeEach(() => {
   llamar.mockReset();
-  process.env.ANTHROPIC_API_KEY = "test-key";
+  // La llave del proveedor que el motor use HOY. Estaba clavada a Anthropic y
+  // este test cazó el cambio a Gemini en el momento en que ocurrió.
+  process.env[LLAVE_DEL_MOTOR] = "test-key";
 });
 
 describe("generarConRecibo", () => {
   it("sin API key truena con ENGINE_NOT_CONNECTED (la ruta lo traduce a sin_api_key)", async () => {
-    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env[LLAVE_DEL_MOTOR];
     await expect(generarConRecibo(ctxCon(["a", "b"]))).rejects.toThrow("ENGINE_NOT_CONNECTED");
     expect(llamar).not.toHaveBeenCalled();
   });
@@ -95,11 +105,12 @@ describe("generarConRecibo", () => {
   });
 
   it("sin modelo en opciones usa el de producción (MODELO_MOTOR)", async () => {
+    // Contra MODELO_MOTOR, no contra un id escrito a mano: el motor cambia
+    // cuando una corrida lo gana (pasó a Gemini el 2026-08-07) y lo que este
+    // test protege es que producción use EL de lib/models, no cuál sea.
     llamar.mockResolvedValue(respuesta(dosLooks(["a", "b"])));
     await generarConRecibo(ctxCon(["a", "b"]));
-    expect(llamar.mock.calls[0][0]).toMatchObject({
-      modelo: { proveedor: "anthropic", id: "claude-opus-5" },
-    });
+    expect(llamar.mock.calls[0][0]).toMatchObject({ modelo: MODELO_MOTOR });
   });
 
   it("el modelo de la variante SÍ llega a la llamada — el contrato del comparador", async () => {

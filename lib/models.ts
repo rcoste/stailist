@@ -35,6 +35,9 @@ import type { Modelo } from "@/lib/proveedores";
  * respuesta, que es la misma idea con el costo dentro del presupuesto.
  */
 export const ENGINE_MODEL = "claude-opus-5";
+// OJO: ENGINE_MODEL ya NO es el motor de outfits — ese es MODELO_MOTOR, que
+// pasó a Gemini el 2026-08-07 (ver abajo). Aquí quedan la cápsula ideal y el
+// viaje, que no se midieron.
 
 /**
  * El mismo motor, como `Modelo` de la puerta común (lib/proveedores): el motor
@@ -42,10 +45,32 @@ export const ENGINE_MODEL = "claude-opus-5";
  * tiempo — y para que el comparador pueda correr OTRA variante por la misma
  * puerta sin duplicar una línea del motor.
  */
+/**
+ * EL MOTOR DE OUTFITS — y aquí SÍ cambió, medido.
+ *
+ * Gemini 3.5 Flash reemplazó a Opus 5 el 2026-08-07, por la regla que Roberto
+ * escribió ANTES de votar y sobre 20 pares ciegos del pool v4:
+ *
+ *   pares      Gemini 6 · Producción 5 · 9 empates   (p = 1.000)
+ *   defectos   5 contra 3 — dentro del doble que la regla permitía
+ *   clima      0 contra 1 — la condición que ponía a prueba los fixes del día
+ *
+ * LO QUE ESTO NO DICE: que arme mejores looks. Con p = 1.000 son
+ * indistinguibles, y la regla obliga a declarar el motivo real — costo
+ * (-42%: $0.152 contra $0.260 por generación) y latencia (-44%: 27s contra
+ * 48s), que es tiempo que la persona siente esperando.
+ *
+ * SOLO EL MOTOR DE OUTFITS. La cápsula ideal y el viaje siguen en Opus
+ * (ENGINE_MODEL) porque el veredicto midió outfits y nada más; extrapolar a lo
+ * que no se midió es exactamente lo que este comparador existe para no hacer.
+ *
+ * Para revertir: cambiar proveedor/id de vuelta a "anthropic" / ENGINE_MODEL.
+ * Es una línea y no arrastra nada más.
+ */
 export const MODELO_MOTOR: Modelo = {
-  proveedor: "anthropic",
-  id: ENGINE_MODEL,
-  etiqueta: "Opus 5",
+  proveedor: "gemini",
+  id: "gemini-3.5-flash",
+  etiqueta: "Gemini 3.5 Flash",
 };
 
 /**

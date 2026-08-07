@@ -46,7 +46,17 @@ export async function generarConRecibo(
   const modelo = opciones.modelo ?? MODELO_MOTOR;
   // El error histórico del motor, distinguible: la ruta lo traduce a
   // "sin_api_key" para el usuario.
-  if (modelo.proveedor === "anthropic" && !process.env.ANTHROPIC_API_KEY) {
+  //
+  // La llave se elige POR PROVEEDOR, no fija a Anthropic. Estaba clavada ahí
+  // y al pasar el motor a Gemini dejó de proteger nada: sin la llave de Google
+  // el motor tronaba con un error opaco en vez del "sin_api_key" limpio. Lo
+  // cazó su propio test en el momento del cambio.
+  const LLAVE: Record<string, string> = {
+    anthropic: "ANTHROPIC_API_KEY",
+    gemini: "GOOGLE_GENERATIVE_AI_API_KEY",
+    openrouter: "OPENROUTER_API_KEY",
+  };
+  if (!process.env[LLAVE[modelo.proveedor]]) {
     throw new Error("ENGINE_NOT_CONNECTED");
   }
 

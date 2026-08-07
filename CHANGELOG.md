@@ -2,6 +2,33 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.127.0] - 2026-08-07
+
+### Changed
+
+- **El motor de outfits pasa de Opus 5 a Gemini 3.5 Flash.** Es lo que dice la regla que Roberto escribió **antes** de votar, sobre 20 pares ciegos del pool v4: pares **6-5** (con el voto huérfano excluido), defectos **5 contra 3** (dentro del doble permitido) y **clima 0 contra 1**. Las tres condiciones se cumplen.
+
+  **Lo que esto NO dice es que arme mejores looks**: con **p = 1.000** son indistinguibles, y la regla obliga a declarar el motivo real — **costo −42%** ($0.152 contra $0.260 por generación) y **latencia −44%** (27s contra 48s), que es tiempo que la persona siente esperando.
+
+  **Solo el motor de outfits.** La cápsula ideal y el viaje siguen en Opus: el veredicto midió outfits y nada más, y extrapolar a lo que no se midió es exactamente lo que este comparador existe para no hacer. Revertir es una línea.
+
+  *(Corrección honesta: había recomendado esperar porque los espejos salieron 0/2. Investigándolo, **uno de esos dos flips fue el bug del voto huérfano**, no inconsistencia de Roberto. La razón para dudar era mía.)*
+
+### Fixed
+
+- **La guarda de "sin API key" seguía clavada a Anthropic** mientras el motor ya corría en Gemini: sin la llave de Google el motor habría tronado con un error opaco en vez del `sin_api_key` limpio que la ruta traduce. **Lo cazó su propio test en el mismo momento del cambio.** Ahora la llave se elige por proveedor.
+
+### Notes — verificación de las 5 reglas nuevas, sin votar a nadie
+
+6 briefs donde cayeron las violaciones, los dos motores, medido con el chequeo determinista:
+
+| | veredicto (antes) | verificación (ahora) |
+|---|---|---|
+| violaciones totales | 41 de 117 looks (**35%**) | 3 de 35 (**8.6%**) |
+| las 5 reglas nuevas | 26 | **0** |
+
+Y el crítico cita las reglas al reparar: *"cambié los mocasines burdeos por botines para que no se congele con este frío"*, *"le meto la camiseta blanca"*, *"el blazer suelto con pantalón negro distinto lee como separates; lo cambié por el traje marino"*. **24 de 35 looks reparados antes de que nadie los viera** — que es exactamente el principio que pidió Roberto.
+
 ## [0.2.126.1] - 2026-08-07
 
 ### Added
