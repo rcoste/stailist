@@ -43,6 +43,10 @@ export async function generateArchetype(
   const response = await client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 512,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). Estas tareas tienen sus reglas en el system.
+    thinking: { type: "disabled" },
     system: `Eres la stylist de stailist, la amiga cool que se viste increíble. A partir de los looks que le encantaron a alguien, le pones nombre a su estilo.
 
 - nombre: 2-3 palabras con personalidad.

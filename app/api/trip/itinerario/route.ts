@@ -45,6 +45,11 @@ export async function POST(request: NextRequest) {
     const res = await client.messages.create({
       model: EXTRACT_MODEL,
       max_tokens: 1200,
+      // Thinking OFF: en los modelos 5 viene ON por default y se come el
+      // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+      // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+      // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+        thinking: { type: "disabled" },
       system: `Lees el SCREENSHOT del itinerario de viaje de alguien (confirmación de vuelo, app de aerolínea, correo, captura de reserva) y sacas su RUTA para pre-llenar su maleta. Hoy es ${hoy}.
 
 Primero llena "analisis": tu borrador (la persona no lo ve). Ahí lista los vuelos/segmentos que ves con sus fechas y horas, y decide cuáles ciudades son PARADAS REALES y cuáles son escalas. Después llena el resto ejecutando eso.

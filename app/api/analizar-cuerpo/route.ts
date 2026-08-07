@@ -59,6 +59,11 @@ export async function POST(request: NextRequest) {
     const res = await client.messages.create({
       model: CLASSIFY_MODEL,
       max_tokens: 200,
+      // Thinking OFF: en los modelos 5 viene ON por default y se come el
+      // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+      // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+      // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+        thinking: { type: "disabled" },
       system:
         "Miras la foto de cuerpo entero de una persona y eliges cuál de estas complexiones se parece MÁS a la suya. " +
         "Es para representarla con una silueta fiel en una app de moda, no para juzgarla ni para dar consejos de salud.\n\n" +

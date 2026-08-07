@@ -45,6 +45,11 @@ export async function checkAnchorFit(
     const res = await client.messages.create({
       model: FIT_MODEL,
       max_tokens: 220,
+      // Thinking OFF: en los modelos 5 viene ON por default y se come el
+      // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+      // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+      // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+        thinking: { type: "disabled" },
       system: FIT_SYSTEM,
       messages: [
         {

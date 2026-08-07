@@ -285,6 +285,10 @@ export async function generateTripOutfits(
   const response = await client.messages.create({
     model: ENGINE_MODEL,
     max_tokens: 4096,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). Estas tareas tienen sus reglas en el system.
+    thinking: { type: "disabled" },
     system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
 
 REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. En "extra" SOLO puedes poner números de capas (${capasTxt}) o accesorios (${accTxt}); nada más. ${generoTxt}${vetoSystemTxt}

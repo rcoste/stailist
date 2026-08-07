@@ -397,7 +397,14 @@ export async function recalcularMatch(): Promise<{ ok: boolean }> {
       .from("profiles")
       .update({ capsule_match: match, capsule_overrides: limpios })
       .eq("id", user.id);
-  } catch {
+  } catch (e) {
+    // El motivo SE REGISTRA. Este catch mudo es lo que dejó a Pablo con un
+    // botón de "reintentar" que nunca iba a funcionar: el error real era
+    // EMPTY_RESPONSE (el thinking de los modelos 5 se comía el presupuesto de
+    // salida) y no había forma de saberlo sin reproducirlo a mano.
+    console.error(
+      `[capsula] recalcularMatch falló — ${e instanceof Error ? e.message : String(e)}`
+    );
     return { ok: false }; // el cliente ofrece reintentar
   }
   // CLAVE: revalidar la ruta DONDE estás (/closet/capsula), no solo /closet — si no,

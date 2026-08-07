@@ -194,6 +194,21 @@ export async function matchCapsule(
 
   const response = await client.messages.create({
     model: CLASSIFY_MODEL,
+    // THINKING APAGADO, y no es una optimización: sin esto la pantalla NO
+    // funciona.
+    //
+    // Esta llamada apuntaba a un Opus de la familia 4 —donde el thinking viene
+    // OFF— y el 2026-08-04 se centralizó a un modelo de la 5, donde
+    // viene ON por default. El thinking se come el presupuesto de salida y la
+    // respuesta llega SIN bloque de texto: `EMPTY_RESPONSE`, que el caller
+    // convertía en "No pude calcular — reintentar" para siempre. Le pasó a
+    // Pablo con 34 prendas ideales contra 17 reales; a quien ya tenía su match
+    // cacheado de antes del 4 no le pasó nada, y por eso tardó en verse.
+    //
+    // Medido con este mismo esquema: ON = 2.963 tokens de salida y 21.8s;
+    // OFF = 1.284 y 10.4s. Ni siquiera compra calidad — las reglas del
+    // clasificado ya están escritas en el system.
+    thinking: { type: "disabled" },
     // Una entrada por prenda ideal; la cápsula nueva llega a 30-40 → 2048 truncaba.
     max_tokens: 4096,
     system: `Eres la stylist de stailist.${generoTxt} Te doy la CÁPSULA IDEAL de alguien (prendas que debería tener) y su CLÓSET REAL. Por CADA prenda ideal, clasifícala en uno de TRES estados según lo que ya tiene:
@@ -248,7 +263,20 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
   });
 
   const text = response.content.find((b) => b.type === "text")?.text;
-  if (!text) throw new Error("EMPTY_RESPONSE");
+  if (!text) {
+    // El motivo, no solo el síntoma: sin esto "EMPTY_RESPONSE" no distingue
+    // "se acabó el presupuesto" de "solo pensó" de "no contestó".
+    throw new Error(
+      `EMPTY_RESPONSE (stop=${response.stop_reason}, bloques=${
+        response.content.map((b) => b.type).join("+") || "ninguno"
+      }, salida=${response.usage.output_tokens}tok)`
+    );
+  }
+  if (response.stop_reason === "max_tokens") {
+    // Truncada: el JSON viene a medias y JSON.parse tronaría con un error que
+    // no dice nada. Mejor decir qué pasó.
+    throw new Error(`TRUNCADA (${response.usage.output_tokens}tok de ${4096})`);
+  }
   const parsed = JSON.parse(text) as {
     entries: { status: MatchEntry["status"]; by: string; difiere?: string }[];
   };
