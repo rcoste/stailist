@@ -539,24 +539,34 @@ function Calibrador({
         <p className="text-base font-semibold text-ink">{c.look.nombre}</p>
 
         {/* Prendas GRANDES: se está juzgando ropa, no leyendo una lista. */}
+        {/* Cada prenda CON SU NOMBRE debajo. Roberto: "si hay un pantalón o
+            camisa, no sé si es de lino o qué, y eso influye". Y el material va
+            porque el juez de texto también lo recibe: calibrar con menos
+            información de la que tiene el juez mediría dos cosas distintas. */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {c.look.item_ids.map((id) => {
             const p = prendas[id];
-            return p?.imagen ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={id}
-                src={p.imagen}
-                alt={p.nombre}
-                className="aspect-square w-full rounded-lg border border-line object-cover"
-              />
-            ) : (
-              <div
-                key={id}
-                className="flex aspect-square w-full items-center justify-center rounded-lg border border-line p-2 text-center text-xs text-muted"
-                style={{ background: p?.swatch ?? "#E5E1DD" }}
-              >
-                {p?.nombre ?? "Prenda"}
+            return (
+              <div key={id} className="flex flex-col gap-1">
+                {p?.imagen ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.imagen}
+                    alt={p.nombre}
+                    className="aspect-square w-full rounded-lg border border-line object-cover"
+                  />
+                ) : (
+                  <div
+                    className="aspect-square w-full rounded-lg border border-line"
+                    style={{ background: p?.swatch ?? "#E5E1DD" }}
+                  />
+                )}
+                <p className="text-xs leading-tight text-ink">
+                  {p?.nombre ?? "Prenda"}
+                  {p?.material ? (
+                    <span className="text-muted"> · {p.material}</span>
+                  ) : null}
+                </p>
               </div>
             );
           })}

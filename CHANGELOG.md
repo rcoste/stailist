@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.136.0] - 2026-08-07
+
+### Added — el nombre (y el material) bajo cada prenda del calibrador
+
+Roberto: *"si hay un pantalón o camisa, no sé si es de lino o qué, y eso influye"*.
+
+Hay una razón más fuerte que la comodidad: **el juez de texto SÍ recibe el material** (`lookParaRubrica` se lo manda). Si quien calibra juzga sin él, el acuerdo compara dos criterios sobre **dos informaciones distintas** — y ese número es justo el que decide si la rúbrica sigue siendo confiable.
+
+El material solo aparece **cuando el nombre no lo dice ya**: "Chamarra de piel negra" no repite "piel", pero "Pantalón de vestir gris" gana su "· lana". En una pantalla donde cada línea compite con la foto, repetir es ruido.
+
 ## [0.2.135.0] - 2026-08-07
 
 ### Added — el "por qué no" al marcar 👎
