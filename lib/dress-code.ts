@@ -65,6 +65,20 @@ export const WORK_DRESS_CODES: {
   },
 ];
 
+/**
+ * La línea del caso VARIABLE, ya sabiendo cómo es HOY.
+ *
+ * Elegir "depende del día" es la persona diciendo que ese dato es del DÍA, no
+ * de ella — así que se le pregunta el día, igual que el paraguas. Sin la
+ * respuesta el motor tiene que cubrirse en medio, y ahí sale mal por los dos
+ * lados: corto el día de cliente, tieso el día que no. Roberto, que es este
+ * caso: "trabajo en home office pero cuando veo cliente me visto más formal".
+ */
+const VARIABLE_HOY: Record<"si" | "no", string> = {
+  si: "Su código de trabajo varía según el día, y HOY SÍ VE CLIENTE: sube el registro — saco o blazer sobre camisa (o blusa), pantalón de vestir o chino oscuro, calzado de piel. Hoy NO es día de jeans ni de tenis.",
+  no: "Su código de trabajo varía según el día, y HOY NO VE CLIENTE: no lo sobrevistas de junta. Business casual real o incluso jeans oscuros y limpios con una prenda que suba el conjunto; cómodo y cuidado, sin saco obligatorio.",
+};
+
 export function dressCodePorClave(k: string | null | undefined) {
   return WORK_DRESS_CODES.find((d) => d.key === k) ?? null;
 }
@@ -77,7 +91,18 @@ export function ropaDeDressCode(
   return gender === "hombre" ? d.hombre : gender === "mujer" ? d.mujer : d.neutro;
 }
 
-/** La línea que va al prompt. Vacía si no se le ha preguntado. */
-export function lineaDressCode(k: string | null | undefined): string {
+/**
+ * La línea que va al prompt. Vacía si no se le ha preguntado.
+ *
+ * `veCliente` solo aplica al caso "variable" y solo cuando se sabe: en los
+ * otros tres el registro no cambia por el día, y preguntarlo sería ruido.
+ */
+export function lineaDressCode(
+  k: string | null | undefined,
+  veCliente?: boolean | null
+): string {
+  if (k === "variable" && (veCliente === true || veCliente === false)) {
+    return VARIABLE_HOY[veCliente ? "si" : "no"];
+  }
   return dressCodePorClave(k)?.paraElMotor ?? "";
 }

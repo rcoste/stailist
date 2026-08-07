@@ -724,3 +724,57 @@ describe("el código de vestimenta del trabajo", () => {
     expect(pisoDeFormalidad(diario)).not.toContain("banca");
   });
 });
+
+describe("'depende del día': la pregunta del día lo desambigua", () => {
+  // Elegir "depende del día" es la persona diciendo que su registro es dato del
+  // DÍA. Roberto, que es este caso: "trabajo en home office pero cuando veo
+  // cliente me visto más formal". Sin la respuesta el motor se cubre en medio
+  // y sale mal por los dos lados.
+  const ctx = (veCliente: boolean | null): EngineContext =>
+    ({
+      gender: "hombre",
+      objective: "oficina",
+      workDressCode: "variable",
+      veCliente,
+      timeOfDay: "dia",
+      weather: null,
+      items: [],
+      tasteTags: [],
+      vetoes: [],
+      recentCombos: [],
+      lifestyle: null,
+      archetype: null,
+      season: null,
+      flow: null,
+      silueta: null,
+      fitPref: null,
+      ageStyling: null,
+      tasteSignal: EMPTY_TASTE_SIGNAL,
+      seedItemId: null,
+      formality: null,
+      plan: null,
+      styleReference: null,
+      styleWords: null,
+    }) as unknown as EngineContext;
+
+  it("día de cliente: sube el registro y descarta los jeans", () => {
+    const t = pisoDeFormalidad(ctx(true));
+    expect(t).toContain("SÍ VE CLIENTE");
+    expect(t).toContain("saco o blazer");
+    expect(t).toContain("NO es día de jeans");
+  });
+
+  it("día normal: dice explícitamente que NO lo sobrevista", () => {
+    const t = pisoDeFormalidad(ctx(false));
+    expect(t).toContain("NO VE CLIENTE");
+    expect(t).toContain("no lo sobrevistas");
+    // Y el saco deja de ser obligatorio, que es la diferencia con el día de
+    // cliente: aquí los jeans oscuros limpios son una respuesta válida.
+    expect(t).toContain("sin saco obligatorio");
+    expect(t).toContain("jeans");
+  });
+
+  it("sin respuesta, se queda el hedge (no inventa un día)", () => {
+    expect(pisoDeFormalidad(ctx(null))).toContain("Sin más señal");
+  });
+});

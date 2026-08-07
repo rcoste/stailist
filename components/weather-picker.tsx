@@ -28,6 +28,11 @@ export type LookInput = {
    * pregunta: dónde trabajas no cambia cada mañana.
    */
   workDressCode?: WorkDressCode;
+  /**
+   * Solo cuando su código de trabajo es "variable": si HOY ve cliente. Es dato
+   * del DÍA — elegir "depende del día" es justamente decir eso.
+   */
+  veCliente?: boolean;
 } & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
 
 // Prenda del clóset para el picker de ancla (foto resuelta en el server).
@@ -230,6 +235,10 @@ export function LookRequest({
   const [formality, setFormality] = useState<string | null>(null); // solo "evento"
   // Solo se pregunta si NO lo tiene guardado, y solo al elegir "trabajo".
   const [dressCode, setDressCode] = useState<string | null>(null);
+  // "¿hoy ves cliente?" — solo para quien dijo "depende del día". Sin esto el
+  // motor se cubre en medio y sale mal por los dos lados: corto el día de
+  // cliente, tieso el día que no.
+  const [veCliente, setVeCliente] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locFailed, setLocFailed] = useState(false);
 
@@ -243,6 +252,11 @@ export function LookRequest({
   // evento exige formalidad: sin ese dato el motor adivina y el resultado no se
   // puede ni calificar. Después ya no se pregunta nunca.
   const pideDressCode = objective === "oficina" && !workDressCode;
+  // El código efectivo: el guardado, o el que acaba de elegir en este mismo
+  // paso (así la pregunta del día aparece de inmediato, sin esperar a la
+  // siguiente sesión).
+  const codigoHoy = workDressCode ?? dressCode;
+  const pideVeCliente = objective === "oficina" && codigoHoy === "variable";
   // "Evento" exige elegir formalidad para avanzar (es justo el dato que faltaba).
   const step1Ready =
     hasOpen ||
@@ -275,6 +289,7 @@ export function LookRequest({
         seedItemId,
         formality: formalityOut,
         ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
+        ...(pideVeCliente ? { veCliente } : {}),
         ...coords,
       });
     else setLocFailed(true);
@@ -289,6 +304,7 @@ export function LookRequest({
       seedItemId,
       formality: formalityOut,
       ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
+      ...(pideVeCliente ? { veCliente } : {}),
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
       ...(rain ? { paraguas } : {}),
     });
@@ -380,6 +396,9 @@ export function LookRequest({
                   dressCode={dressCode}
                   onDressCode={setDressCode}
                   desdeElQuiz={desdeElQuiz}
+                  pideVeCliente={pideVeCliente}
+                  veCliente={veCliente}
+                  onVeCliente={setVeCliente}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
                   onFormality={setFormality}
@@ -465,6 +484,9 @@ function StepOcasion({
   dressCode,
   onDressCode,
   desdeElQuiz,
+  pideVeCliente,
+  veCliente,
+  onVeCliente,
   onPick,
   onOpenText,
   onFormality,
@@ -477,6 +499,9 @@ function StepOcasion({
   dressCode: string | null;
   onDressCode: (d: string) => void;
   desdeElQuiz: string | null;
+  pideVeCliente: boolean;
+  veCliente: boolean;
+  onVeCliente: (v: boolean) => void;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
   onFormality: (f: string) => void;
@@ -605,6 +630,51 @@ function StepOcasion({
                 </button>
               );
             })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* "¿Hoy ves cliente?" — SOLO para quien dijo "depende del día". Elegir
+          esa opción es la persona diciendo que su registro es dato del DÍA, no
+          de ella; así que se le pregunta el día, igual que el paraguas. Cero
+          fricción para los otros tres códigos. Roberto, que es este caso:
+          "trabajo en home office pero cuando veo cliente me visto más formal".
+          Default "no": es el día más común, y el que sí ve cliente ya sabe que
+          hoy es distinto. */}
+      {pideVeCliente ? (
+        <div
+          className="flex items-center gap-3 rounded-sm border border-line bg-surface p-3.5"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[14px] font-semibold text-ink">
+              ¿hoy ves cliente?
+            </span>
+            <span className="text-[12px] text-muted">
+              me dijiste que depende del día
+            </span>
+          </span>
+          <div className="ml-auto inline-flex shrink-0 overflow-hidden rounded-sm border border-line">
+            <button
+              type="button"
+              onClick={() => onVeCliente(false)}
+              aria-pressed={!veCliente}
+              className={`min-h-[38px] px-5 text-[14px] font-semibold transition-colors ${
+                !veCliente ? "bg-accent text-on-accent" : "bg-surface text-ink"
+              }`}
+            >
+              no
+            </button>
+            <button
+              type="button"
+              onClick={() => onVeCliente(true)}
+              aria-pressed={veCliente}
+              className={`min-h-[38px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
+                veCliente ? "bg-accent text-on-accent" : "bg-surface text-ink"
+              }`}
+            >
+              sí
+            </button>
           </div>
         </div>
       ) : null}

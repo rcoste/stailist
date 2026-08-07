@@ -230,7 +230,7 @@ import {
 // defectos de clima cayeron en el brief de lluvia —con los DOS motores
 // fallando— y dos looks apilaron lana sobre lana a 18°. Va en el prompt (la
 // banda) y en código (lo que se puede comprobar: reglas-ejecucion #6 y #7).
-export const PROMPT_VERSION = "v42";
+export const PROMPT_VERSION = "v43";
 
 export type EngineItem = {
   id: string;
@@ -285,6 +285,8 @@ export type EngineContext = {
   paraguas?: boolean;
   /** Su código de vestimenta del trabajo. null = todavía no se le pregunta. */
   workDressCode?: string | null;
+  /** Solo si su código es "variable": si HOY ve cliente. Es dato del día. */
+  veCliente?: boolean | null;
   recentCombos: string[][]; // item_ids de outfits de los últimos 14 días
   vetoes: string[]; // hard NOs (issue #2): jamás incluir ni sugerir
   timeOfDay: "dia" | "noche" | null; // momento del look (afina día/noche)
@@ -453,7 +455,7 @@ export function pisoDeFormalidad(ctx: EngineContext): string {
     // registros distintos, y sin saber cuál el motor tenía que adivinar. Le
     // pasó a Roberto calificando: "depende del tipo de oficina… el look está
     // padre pero depende". Si no se le ha preguntado, se queda el piso solo.
-    const suyo = lineaDressCode(ctx.workDressCode);
+    const suyo = lineaDressCode(ctx.workDressCode, ctx.veCliente);
     return suyo ? `${base}\n- ${suyo}` : base;
   }
 

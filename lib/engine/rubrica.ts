@@ -40,7 +40,7 @@ import { lineaDressCode } from "@/lib/dress-code";
 // r2 → r3: el estándar de lluvia se afinó con la corrida de verificación (el
 // mocasín de piel se colaba). La rúbrica lo sigue: si el juez calificara con
 // una vara distinta a la que el motor recibe, mediría otra cosa.
-export const RUBRICA_VERSION = "r5";
+export const RUBRICA_VERSION = "r6";
 
 /** El mismo contexto que recibió el motor. Un juez que califica "evento" a
  * secas tendría el mismo problema que Roberto votando: "evento es algo muy
@@ -50,6 +50,8 @@ export type BriefRubrica = {
   objective: string;
   /** Su código de vestimenta del trabajo: "oficina" son cuatro registros, no uno. */
   workDressCode?: string | null;
+  /** Solo si el código es "variable": si ese día veía cliente. */
+  veCliente?: boolean | null;
   plan?: string | null;
   formality?: string | null;
   momento?: "dia" | "noche" | null;
@@ -103,7 +105,7 @@ export function briefParaRubrica(b: BriefRubrica): string {
   // de oficina… el look está padre pero depende"). El juez tendría el mismo
   // problema.
   if (b.objective === "oficina") {
-    const dc = lineaDressCode(b.workDressCode);
+    const dc = lineaDressCode(b.workDressCode, b.veCliente);
     lineas.push(dc || "No dijo cómo se viste para trabajar: júzgalo contra un registro de oficina neutro y no castigues por no acertarle a un código que nadie declaró.");
   }
   if (b.plan?.trim()) lineas.push(`Pidió, en sus palabras: "${b.plan.trim()}".`);
