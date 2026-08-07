@@ -229,7 +229,7 @@ import {
 // defectos de clima cayeron en el brief de lluvia —con los DOS motores
 // fallando— y dos looks apilaron lana sobre lana a 18°. Va en el prompt (la
 // banda) y en código (lo que se puede comprobar: reglas-ejecucion #6 y #7).
-export const PROMPT_VERSION = "v39";
+export const PROMPT_VERSION = "v40";
 
 export type EngineItem = {
   id: string;
@@ -687,8 +687,8 @@ export function contextBlock(
     if (/lluvia|llov|chubasco|tormenta/i.test(ctx.weather.condition)) {
       lines.push(
         ctx.paraguas
-          ? "VA A LLOVER y lleva paraguas: la capa de arriba la eliges por estilo (el paraguas la cubre). El CALZADO no: el paraguas no tapa los pies. Nada de ante, gamuza ni tela, y nada abierto — piel o sintético, que aguanten el agua."
-          : "VA A LLOVER y NO lleva paraguas: la capa de arriba tiene que repeler agua (impermeable, técnica, gabardina) y el CALZADO no puede ser de ante, gamuza ni tela, ni abierto. Piel o sintético."
+          ? "VA A LLOVER y lleva paraguas: la capa de arriba la eliges por estilo (el paraguas la cubre). El CALZADO no: el paraguas no tapa los pies. Fuera el ante, la gamuza y la tela, y fuera también el mocasín, el náutico y la sandalia — son escotados y de suela fina, el agua entra por arriba aunque sean de piel. Sí pasan botas, botines y tenis de piel o sintético."
+          : "VA A LLOVER y NO lleva paraguas: la capa de arriba tiene que repeler agua (impermeable, técnica, gabardina). Y el CALZADO: fuera el ante, la gamuza y la tela, y fuera también el mocasín, el náutico y la sandalia — son escotados y de suela fina, el agua entra por arriba aunque sean de piel. Sí pasan botas, botines y tenis de piel o sintético."
       );
     }
   }

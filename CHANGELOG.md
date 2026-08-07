@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.122.1] - 2026-08-06
+
+### Fixed
+
+- **El mocasín se colaba a la lluvia.** Roberto lo vio votando la corrida de verificación: un look con chamarra impermeable ✓ y **mocasines negros**. La regla nueva miraba solo el material, y el mocasín es de **piel** — pasaba limpio. Medido en la corrida: **5 de los 17 looks de lluvia** traían mocasín.
+
+  Las dos cosas que dijo Roberto son ciertas a la vez: *"Mocasín en lluvia no aplica"* (su voto del veredicto) y *"tenis de piel o con suela grande, botines Chelsea… seamos un poquito más tolerantes"* (su criterio). No se contradicen porque **la diferencia no es de qué está hecho el zapato sino de cómo**: el Chelsea cubre el tobillo, el tenis de suela gruesa te levanta del charco, y el mocasín es escotado y de suela fina — el agua entra por arriba.
+
+  Ahora **la forma manda sobre el material**: mocasín, náutico y sandalia caen siempre; bota, botín, tenis y zapato formal los sigue juzgando el material, como pidió. El orden importa — al revés, la piel absolvía al mocasín.
+
+- El estándar se actualizó en los **tres** lugares que tienen que decir lo mismo: el código (`reglas-ejecucion`), el prompt del motor (**v40**) y la rúbrica (**r3**). Si el juez calificara con una vara distinta a la que el motor recibe, mediría otra cosa.
+
 ## [0.2.122.0] - 2026-08-06
 
 ### Added
