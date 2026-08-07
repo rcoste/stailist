@@ -76,15 +76,55 @@ describe("el sistema de la rúbrica — anclas que no deben perderse", () => {
     expect(SYSTEM_RUBRICA).toContain("NO lo tira");
   });
 
-  it("el schema exige las cuatro dimensiones + aprobado", () => {
+  it("el schema exige las cinco dimensiones + aprobado", () => {
     expect(SCHEMA_RUBRICA.required).toEqual([
       "analisis",
       "ocasion",
       "clima",
       "armado",
+      "estilo",
       "wow",
       "aprobado",
       "porQue",
     ]);
+  });
+
+  // El juez con sombrero de stylist (r7). Las dos anclas que no deben perderse:
+  // la formalidad acota al estilo (el boho que va de gala no reprueba por no
+  // verse boho), y sin estilo declarado la dimensión queda neutra.
+  it("la formalidad acota al estilo, no al revés", () => {
+    expect(SYSTEM_RUBRICA).toContain("la formalidad ACOTA al estilo");
+    expect(SYSTEM_RUBRICA).toContain("NO castigues");
+  });
+
+  it("sin estilo declarado, la dimensión es neutra y no pesa en aprobado", () => {
+    expect(SYSTEM_RUBRICA).toContain("pon 3 y no lo uses para aprobar");
+  });
+});
+
+describe("el estilo en el brief — el juez lee lo MISMO que el motor recibió", () => {
+  it("marca, palabras y arquetipo viajan al brief", () => {
+    const t = briefParaRubrica({
+      objective: "diario",
+      weather: { temp_c: 18, condition: "nublado" },
+      estilo: {
+        marca: "minimalismo cálido de líneas limpias",
+        palabras: "sencillo pero con intención",
+        arquetipo: "El arquitecto — neutros y estructura",
+      },
+    });
+    expect(t).toContain("SU ESTILO");
+    expect(t).toContain("minimalismo cálido");
+    expect(t).toContain("sencillo pero con intención");
+    expect(t).toContain("El arquitecto");
+  });
+
+  it("sin señal de estilo, el brief no finge una", () => {
+    const t = briefParaRubrica({
+      objective: "diario",
+      weather: { temp_c: 18, condition: "nublado" },
+      estilo: { marca: null, palabras: null, arquetipo: null },
+    });
+    expect(t).not.toContain("SU ESTILO");
   });
 });

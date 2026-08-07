@@ -32,7 +32,10 @@ import {
 // MISMA RÚBRICA, OTRO SENTIDO. Comparte brief y schema con rubrica.ts a
 // propósito: si cambiara la vara, la comparación entre las dos no diría cuál
 // ve más, diría que miden cosas distintas.
-export const RUBRICA_VISION_VERSION = "rv1";
+// rv1 → rv2: entra la dimensión ESTILO, en sincronía con r7 de la rúbrica de
+// texto (misma vara, otro sentido). Aquí es donde más muerde: "boho" o
+// "minimalista" viven en texturas y tonos que la foto muestra y el nombre no.
+export const RUBRICA_VISION_VERSION = "rv2";
 
 export const SYSTEM_RUBRICA_VISION = `Eres el evaluador visual de stailist. Te doy el PEDIDO de una persona y las FOTOS de las prendas que un stylist con IA eligió para ella. Tu ventaja sobre un evaluador de texto es que TÚ VES: el tono real de cada pieza, la textura, el peso de la tela, y cómo se ven juntas.
 
@@ -43,9 +46,10 @@ Después puntúa de 1 a 5, igual que el evaluador de texto:
 1. ocasion — ¿el registro que se VE corresponde al pedido? Una prenda puede llamarse formal y verse deportiva.
 2. clima — ¿los pesos y materiales que se ven corresponden al clima del pedido? Aquí la foto manda: un punto grueso se ve grueso.
 3. armado — ¿las piezas se hablan? Tonos que conviven o chocan, texturas que contrastan o se funden, proporciones que funcionan. ESTE es el punto donde más ves tú que un evaluador de texto.
-4. wow — ¿se ve que hubo un stylist detrás, o es ropa que no choca? 3 = correcto pero plano; 5 = una decisión con chispa Y un gesto de styling concreto y ejecutable en el tip.
+4. estilo — ¿lo que VES es de esta persona? Cuando el pedido trae "SU ESTILO", recuerda que un estilo vive en texturas, tonos y siluetas que la foto muestra y el nombre no. REGLA: la formalidad ACOTA al estilo — en casual el estilo manda (ignorarlo es un 2); en formal o etiqueta solo cabe en detalles y NO se castiga por "no verse de su estilo", solo si no hay ni un gesto personal donde sí cabía. Sin "SU ESTILO" en el pedido, pon 3 y no lo uses para aprobar.
+5. wow — ¿se ve que hubo un stylist detrás, o es ropa que no choca? 3 = correcto pero plano; 5 = una decisión con chispa Y un gesto de styling concreto y ejecutable en el tip.
 
-aprobado: ¿alguien que se viste bien saldría así? Un choque visual claro lo tira aunque los nombres suenen bien.
+aprobado: ¿alguien que se viste bien saldría así? Un choque visual claro lo tira aunque los nombres suenen bien. Ignorar por completo el estilo declarado en un pedido casual también; en formal o etiqueta, no.
 
 porQue: una línea concreta, nombrando lo que VISTE.`;
 
@@ -92,7 +96,8 @@ export async function evaluarLookConVision(
     texto,
     imagenes: conFoto.map((p) => p.imagen!),
     schema: SCHEMA_RUBRICA as unknown as Record<string, unknown>,
-    maxTokens: 900,
+    // 1100: con rv2 el análisis describe además el registro de estilo que ve.
+    maxTokens: 1100,
   });
   if (recibo.truncada) throw new Error("RUBRICA_VISION_TRUNCADA");
   return { nota: normalizarNota(parsearJson<NotaRubrica>(recibo.texto)), recibo };

@@ -2,6 +2,53 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.129.0] - 2026-08-07
+
+### Added — el módulo de evales: la curva del motor contra sí mismo
+
+Idea de Roberto: *"como los frontier labs, que tienen sus criterios de evaluación y van viendo cuando sacan un modelo nuevo cómo mejora comparado con los pasados — así vemos cómo nuestro motor va mejorando contra el motor pasado, aprovechando el learning loop y las reglas"*.
+
+**`/admin/evales`** corre el pool congelado de días con el motor VIGENTE y lo califican los tres jueces automáticos (reglas de código + rúbrica de texto + rúbrica visual), **sin voto humano**. Todo queda clavado a `{prompt_version, modelo, pool, versiones de las rúbricas}` y la lista de corridas es la curva.
+
+**Por qué es otra pantalla y no el comparador:** el comparador es la **balanza** (A contra B, ciego, voto humano, decide un cambio); el eval es la **banda de medir** (una variante, jueces automáticos, dice el nivel). Uno decide, el otro vigila.
+
+**Y sobre quitar los jueces de producción** (Roberto: *"habría un punto en el que ya ni siquiera tendría que tener jueces"*): la pantalla mide la **tasa de reparación** por versión justamente para eso. Las rueditas se quitan cuando los datos muestran que ya no las tocas, no por fe — hoy repara 57%, así que todavía no.
+
+### Added — la dimensión ESTILO en las dos rúbricas (r7 / rv2)
+
+*"Un juez con sombrero de stailist: ¿el outfit es OK considerando los gustos de la persona y el estilo que buscaba?"*. Hueco real: el motor recibía la marca de estilo y **el juez no**, así que ignorar los gustos salía con 5. Ahora el juez lee las MISMAS líneas que el motor (referencia + sus palabras + arquetipo destilado).
+
+**La excepción de Roberto, codificada:** *"si una persona tiene su estilo boho y va a una boda de gala, no tiene mucha holgura"*. **La formalidad ACOTA al estilo, no al revés** — en casual el estilo manda; en formal/etiqueta solo cabe en detalles y no se castiga por "no verse de su estilo". Y sin estilo declarado la dimensión queda neutra y **no se promedia**: un 3 constante con cara de medición ensuciaría la comparación entre corridas.
+
+### Added — calibración humana, la defensa anti-Goodhart
+
+Un juez contra el que se optimiza deja de medir. La pantalla sirve una muestra de **20-30 looks** (prioriza los no marcados y **los que texto y visión vieron distinto**, que es donde una marca humana informa más) y reporta el acuerdo de cada capa contra el humano. Los jueces solo se revelan **después** de marcar.
+
+### Notes — la primera línea base (v43 · Gemini 3.5 Flash · r7/rv2)
+
+37 looks, 13 días del pool v4, **$2.39**, cero errores.
+
+| dimensión | texto | visión |
+|---|---|---|
+| ocasión | 4.59 | 4.92 |
+| clima | 4.38 | 4.49 |
+| armado | 4.38 | 4.49 |
+| **estilo** | **3.57** | **4.19** |
+| **wow** | **3.16** | **3.51** |
+| promedio | 4.02 | 4.32 |
+| aprobado | 92% | 92% |
+
+**Las dos más bajas son las dos que no son "no romper nada": estilo y wow.** El motor cumple ocasión y clima casi perfecto y se queda en "correcto pero plano" — que es literalmente la etiqueta que Roberto usó para el 3 del wow.
+
+Reglas de código: **3% de looks con violación** (1 de 37). El juez de producción **reparó 57%** y rechazó 0.
+
+### Fixed
+- `RUBRICA_TRUNCADA` real en la primera corrida: la dimensión nueva alargó el análisis y 700/900 tokens quedaron cortos. Truncar sale más caro que el margen — se paga la llamada entera y no queda nota. Ahora 900 (texto) y 1100 (visión).
+
+### Added — `scripts/eval-correr.ts`
+Correr un eval completo desde la terminal (media hora sin nadie mirando) y llegar al marcador ya hecho. Llama `lib/evales/paso.ts`, el MISMO archivo que la pantalla: no hay arnés que pueda derivar del producto.
+
+
 ## [0.2.128.0] - 2026-08-07
 
 ### Added — la rúbrica que MIRA
