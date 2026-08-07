@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.141.0] - 2026-08-07
+
+### Added — la bota de montaña no es calzado de calle
+
+Roberto, sobre unas Columbia de senderismo a 8°C despejado: *"no deberían ir a menos que esté nevando — se ve ruidosa, le rompe la madre al look"*. Es calzado **funcional, no estilístico**: suela dentada y refuerzos técnicos gritan montaña en una banqueta. Y en México no nieva.
+
+**La excepción, que fue mi pushback y él aceptó:** con lluvia y sin otro calzado que aguante, la bota se queda. **Funcional feo gana a bonito empapado.**
+
+### Changed — el color se juzga en OKLCH, no en RGB
+
+`lib/engine/color-perceptual.ts`. La distancia euclidiana en RGB **no separa el matiz de la luminosidad**, así que dos colores oscuros y desaturados siempre "se parecen": café chocolate `#5C4433` y burdeos `#5C2A2E` medían **26.5** —por debajo del umbral de 60— y la regla de cueros los daba por el mismo café.
+
+En OKLCH sus matices están a **40°**, que es lo que el ojo ve.
+
+**Dos fuentes independientes apuntaban aquí**, que es cuando este proyecto actúa: el juez visual lo cazó antes que ninguna regla (*"el cinturón marrón chocolate desentona con los mocasines burdeos"*), y el research que trajo Roberto llega a lo mismo desde la literatura — *"conviene trabajar con CIELAB/CIELCH u OKLCH, donde están separadas perceptualmente la luminosidad, el croma y el matiz"*.
+
+Se eligió **OKLab sobre CIELAB** por dos razones prácticas: se calcula desde sRGB con aritmética directa, y corrige el defecto conocido de CIELAB con los azules — que en este catálogo son media paleta (marino, denim, azul rey).
+
+Un detalle que importaba: un color casi acromático **no tiene matiz**. El ángulo de un gris es ruido numérico, y compararlo haría que dos grises idénticos parecieran colores opuestos.
+
+### Notes — verificado sobre los 295 looks de las siete corridas
+
+`cueros-que-no-se-hablan` marca **16 (5%)** y **caza uno de los 👎 de Roberto**.
+
+Marca **uno que él aprobó**, y vale la pena decir cuál: *"Mocasines burdeos + Cinturón café"* — **exactamente el caso que el juez visual había señalado**. Ahí Roberto y el juez visual discrepan, y con un solo caso no se puede decidir quién tiene razón. Queda para la siguiente calibración.
+
 ## [0.2.140.0] - 2026-08-07
 
 ### Added — dos reglas de clima que faltaban (v48)
