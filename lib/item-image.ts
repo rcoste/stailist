@@ -14,9 +14,11 @@
 // que sin esto el motor no puede saber si algo es un top, un pantalón o un saco
 // — lo adivinaba del nombre. Ver categoriaDeItem.
 export const ITEM_IMAGE_SELECT =
-  "photo_path, render_status, render_path, attrs, archetypes(name, image_path, category, attrs)";
+  "photo_path, render_status, render_path, attrs, certeza, archetypes(name, image_path, category, attrs)";
 
 export type ItemImageRow = {
+  /** Cuánto sabemos de verdad de esta prenda (migración 0124). */
+  certeza?: "exacta" | "generica" | "asumida" | null;
   photo_path?: string | null;
   render_status?: string | null;
   render_path?: string | null;

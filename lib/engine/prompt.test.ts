@@ -803,3 +803,41 @@ describe("la formalidad vive en UN solo lugar", () => {
     expect(lineaFormalidad(undefined)).toBe("");
   });
 });
+
+describe("la certeza de la prenda llega al motor (v49)", () => {
+  // Roberto: "el motor trata igual 'subí la foto de mis jeans' y 'marqué que
+  // tengo jeans'". Al medirlo salió peor que un dato faltante: uno INVENTADO —
+  // el checklist copia los atributos del arquetipo, así que unos jeans que la
+  // persona sólo marcó llegaban con "corte: recto" indistinguible de un dato
+  // leído en su foto. En el clóset real de Roberto son 79 de 114 prendas.
+  const base = { nombre: "Jeans negros", categoria: "bottom", corte: "recto" };
+
+  it("una prenda ASUMIDA se marca como aproximada", () => {
+    const t = describeItem({ id: "a", certeza: "asumida", attrs: base } as never);
+    expect(t).toContain("APROXIMADOS");
+    // El corte SIGUE yendo: la instrucción es no construir sobre él, no
+    // esconderlo. Ocultarlo dejaría al motor sin nada donde hoy tiene algo.
+    expect(t).toContain("corte recto");
+  });
+
+  it("una prenda con FOTO no se marca: su dato es duro", () => {
+    expect(describeItem({ id: "a", certeza: "exacta", attrs: base } as never)).not.toContain(
+      "APROXIMADOS"
+    );
+  });
+
+  it("una GENERICA tampoco: eligió esa prenda del catálogo a propósito", () => {
+    expect(describeItem({ id: "a", certeza: "generica", attrs: base } as never)).not.toContain(
+      "APROXIMADOS"
+    );
+  });
+
+  it("sin certeza (dato viejo) no se marca — no inventar desconfianza", () => {
+    expect(describeItem({ id: "a", attrs: base } as never)).not.toContain("APROXIMADOS");
+  });
+
+  it("el prompt dice QUÉ HACER con una prenda aproximada, no solo que lo es", () => {
+    expect(SYSTEM_PROMPT).toContain("DETALLES APROXIMADOS");
+    expect(SYSTEM_PROMPT).toContain("NO construyas el look sobre esos detalles");
+  });
+});

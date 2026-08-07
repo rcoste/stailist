@@ -236,6 +236,14 @@ import {
 // v40-v43: dress code del trabajo (los cuatro registros de "oficina", con el
 // "depende del día" que pregunta si hoy ve cliente), paraguas, y la formalidad
 // dicha en ropa en vez de en jerga.
+// v49 (2026-08-07): LA CERTEZA DE CADA PRENDA. Roberto: "el motor trata igual
+// 'subí la foto de mis jeans' y 'marqué que tengo jeans'". Al medirlo salió algo
+// peor que un dato faltante: uno INVENTADO que parece real — al marcar el
+// checklist, el alta copia los atributos del arquetipo, así que unos jeans que
+// la persona sólo marcó llegaban con "corte: recto" y el motor no podía
+// distinguirlo de un dato leído en su foto. Ahora van marcados como
+// APROXIMADOS y el prompt dice qué hacer: usar la pieza con confianza, no
+// construir el look sobre sus detalles.
 // v48 (2026-08-07): dos reglas de clima que faltaban, las dos de la calibración
 // de v47 por Roberto. (a) UN BLAZER NO ES UN ABRIGO: la regla del frío se
 // conformaba con cualquier pieza de zona "capa" y el blazer lo es, así que un
@@ -287,10 +295,20 @@ import {
 // que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
 // escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
 // una comida, cena, cita, boda— y sobre eso vamos afinando más".
-export const PROMPT_VERSION = "v48";
+export const PROMPT_VERSION = "v49";
 
 export type EngineItem = {
   id: string;
+  /**
+   * Cuánto sabemos de VERDAD sobre esta prenda (ver migración 0124).
+   *
+   * "asumida" es el caso que importa y el que estaba escondido: al marcar el
+   * checklist de básicos, el alta COPIA los atributos del arquetipo del
+   * catálogo. Unos "Jeans negros" que la persona sólo marcó llegan aquí con
+   * `corte: recto` — un dato que nadie confirmó y que el motor no podía
+   * distinguir de uno leído en su foto.
+   */
+  certeza?: "exacta" | "generica" | "asumida" | null;
   attrs: {
     nombre?: string;
     /**
@@ -434,6 +452,7 @@ Armonía del outfit (cómo combinan las prendas entre sí):
 - Ancla en neutros: máximo 1-2 colores protagonistas por look; el resto neutros (negro, blanco, gris, beige, marino, camel). Tres saturados juntos casi nunca funcionan.
 - Usa los hex para juzgar el color real: si hay un color fuerte, acompáñalo de neutros; evita dos saturados que compitan o tonos que se enloden juntos.
 - Estampados: máximo UN estampado protagonista por look (rayas, cuadros, floral, gráfico…); el resto liso. Dos estampados juntos casi nunca — solo si uno es muy sutil y no compiten.
+- DETALLES APROXIMADOS: una prenda marcada "detalles APROXIMADOS" es un básico que la persona dijo tener pero nunca describió — el corte, el largo y la manga vienen del catálogo, no de SU prenda. Úsala con confianza como PIEZA (sí tiene unos jeans), pero NO construyas el look sobre esos detalles: no bases un juego de proporción en que sean rectos, ni un tip en un largo que quizá no es. Si el look depende de ese detalle para funcionar, prefiere una prenda que sí esté confirmada.
 - Materiales: si la prenda trae material, úsalo — nada de lana o tejidos pesados en calor, ni lino fresco en frío; y que los pesos de tela de un mismo look se hablen (no mezcles piezas de invierno con piezas de verano).
 - Proporción: equilibra el volumen — si arriba es holgado/oversize, abajo algo más entallado (y al revés). Evita "todo holgado" o "todo pegado".
 - Capas con lógica de vida real: cada capa en su orden natural — camisa o playera debajo, suéter/knit encima, saco/blazer/abrigo al final. JAMÁS combos que nadie usa en la calle: chaleco sastre sobre suéter, saco debajo de una sudadera, dos abrigos juntos. Matiz de la camisa: una camisa de vestir fina va DEBAJO del punto, no encima; PERO una sobrecamisa/overshirt gruesa abierta SÍ vale como capa exterior sobre un suéter ligero — no la trates como error. La prueba: si no te imaginas a una persona real saliendo así a la calle, no lo armes.
@@ -549,6 +568,11 @@ export function describeItem(item: EngineItem): string {
     a.corte ? `corte ${a.corte}` : null,
     a.largo ? `largo ${a.largo}` : null,
     a.manga ? `manga ${a.manga}` : null,
+    // LA MARCA DE CERTEZA. Sin ella, el corte que el catálogo le puso a un
+    // básico marcado en el checklist se lee igual que el que la visión leyó en
+    // su foto — y con eso se arman reglas de proporción y tips de styling. Que
+    // el modelo sepa cuál es cuál es la diferencia entre afirmar y suponer.
+    item.certeza === "asumida" ? "detalles APROXIMADOS (básico marcado, sin foto)" : null,
   ].filter(Boolean);
   // La categoría va pegada al nombre y entre corchetes: es lo que DEFINE qué es
   // la prenda, y el nombre solo no basta ("Traje marino de lana" es un saco).

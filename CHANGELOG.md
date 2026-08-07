@@ -2,6 +2,42 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.145.0] - 2026-08-07
+
+### Added — la certeza de cada prenda (v49)
+
+Roberto: *"el motor trata igual 'subí la foto de mis jeans' y 'marqué que tengo jeans'"*.
+
+Al medirlo salió **algo peor que un dato faltante: uno inventado que parece real.** Al marcar el checklist de básicos, el alta **copia los atributos del arquetipo del catálogo**. Unos *"Jeans negros"* que la persona solo marcó llegaban al motor con **`corte: recto`** — un dato que nadie confirmó y que el motor no podía distinguir de uno leído en su foto. Con eso se alimentan reglas de proporción y tips de styling.
+
+**En el clóset de Roberto son 79 de 114 prendas (69%).**
+
+Tres niveles en `items.certeza`: **exacta** (su foto, leída por la visión) · **genérica** (eligió esa prenda del catálogo a propósito) · **asumida** (marcó el checklist). El backfill es conservador: todo lo que no venga de foto queda como asumida — equivocarse hacia menos certeza hace al motor prudente; hacia más, lo hace mentir con seguridad.
+
+En el prompt van marcadas como **APROXIMADOS**, con la instrucción de qué hacer: *usar la pieza con confianza, no construir el look sobre esos detalles*. El corte **sigue yendo** — esconderlo dejaría al motor sin nada donde hoy tiene algo.
+
+### Added — `scripts/prompt-comparar.ts`: el ciclo completo, estrenado
+
+Congelar → correr → juzgar → comparar. **v48 contra v49**, los 14 briefs del pool, mismo clóset y mismo barajeo, **$1.64**:
+
+| | |
+|---|---|
+| v49 gana | 9 |
+| v48 gana | 5 |
+| diferencia | +0.020 |
+| **t** | **0.18 → dentro del ruido** |
+| harían falta | ~35 briefs |
+
+**v49 no muestra mejora medible, y hay una razón de fondo:** la rúbrica juzga por **nombre, color y material** — no ve el corte. El efecto de este cambio vive en proporción y fit, que ninguna dimensión mide directamente. **El instrumento no puede ver este cambio**, y decirlo es más honesto que buscarle un número.
+
+Se queda igual porque **es corrección de información, no optimización de calidad**: el motor dejó de recibir un dato inventado como si fuera real. Eso es correcto tenga o no efecto medible.
+
+### Notes — la limitación del método que la primera corrida destapó
+
+`correrCongelado` ejecuta **solo el generador**, no el pipeline completo: no pasa por el critic ni por la reparación en código. Se vio en el `wow`, que salió **2.30 y 2.40** contra los ~3.0 del eval — porque **el tip lo produce el juez**, y aquí no hay juez.
+
+Como el recorte afecta **igual a las dos versiones**, la comparación pareada sigue siendo válida. Pero los niveles **absolutos** de aquí no se pueden leer junto a los del eval. Quedó escrito en el archivo.
+
 ## [0.2.144.0] - 2026-08-07
 
 ### Added — congelar una versión del prompt para poder correrla después
