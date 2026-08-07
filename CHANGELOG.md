@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.140.0] - 2026-08-07
+
+### Added — dos reglas de clima que faltaban (v48)
+
+De la calibración de v47 por Roberto: **30 looks, 26 👍, 4 👎 (87%)**, con el acuerdo más alto hasta ahora — **90% con el juez de texto y 90% con el visual**.
+
+Pero **de sus 4 rechazos el código cazó CERO**, y tres eran de clima, que es justo lo comprobable. Dos se volvieron regla:
+
+**`blazer-no-es-abrigo`.** La regla del frío se conformaba con cualquier pieza de zona "capa", y el blazer lo es — así que un saco de lana a 8°C pasaba como si abrigara. Roberto: *"para hacer frío ahí falta una capa; que tuviera un abrigo encima del blazer, o un crew neck entre la camisa y el blazer"*. Las dos salidas que él nombró son las que la regla acepta.
+
+**`lana-en-calor`.** El prompt lo pide desde v4 (*"nada de lana ni tejidos pesados en calor"*) y aun así salió un pantalón de lana a 29°C soleado. Roberto: *"la lana es muy calurosa para soleado"*. Lo que el prompt pide y no se cumple, se comprueba. La **lana fría** queda excluida: existe justo para el verano.
+
+### Fixed — la categoría manda sobre el nombre
+
+La primera versión de `blazer-no-es-abrigo` marcó un look que Roberto **había aprobado**: un *"Blazer marrón de lana"* que en el catálogo tiene **categoría `abrigo`** — es una pieza pesada que sí hace de capa exterior, y la regla lo juzgó por su nombre.
+
+El nombre es una heurística; la categoría es un dato.
+
+### Notes — verificado sobre los 295 looks de las siete corridas
+
+| | |
+|---|---|
+| looks marcados | **4 (1%)** |
+| **de sus 4 👎, cazan** | **2** |
+| looks aprobados marcados | **0** |
+
+Precisas, no un colador: recogen los dos rechazos de clima sin tocar nada de lo que aprobó.
+
 ## [0.2.139.0] - 2026-08-07
 
 ### Changed — primero el código, después el juez (v47)
