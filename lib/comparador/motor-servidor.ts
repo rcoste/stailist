@@ -70,6 +70,7 @@ export async function cargarCorridaMotor(
     variante: string;
     looks: LookMotor[] | null;
     reviews: unknown;
+    notas: unknown;
     error: string | null;
     costo_usd: string | number | null;
     ms: number | null;
@@ -80,6 +81,7 @@ export async function cargarCorridaMotor(
       variante: l.variante,
       looks: l.looks,
       reviews: l.reviews,
+      notas: (l.notas as LadoMotor["notas"]) ?? null,
       error: l.error,
       costoUsd: l.costo_usd != null ? Number(l.costo_usd) : null,
       ms: l.ms,
