@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.117.1] - 2026-08-06
+
+Persiguiendo "el avatar tarda muchísimo, como tres minutos".
+
+### Fixed
+
+- **El juez del avatar podía bloquear minutos por una función opcional.** Se creaba con `new Anthropic()` a secas, y el default del SDK es **2 reintentos y 10 minutos de timeout** — en una función que Vercel corta a los 60s eso no protege de nada: convierte un mal momento de la API en una persona esperando hasta que la función muera, sin avatar y sin explicación. Y el juez es best-effort por diseño (si no contesta, el avatar pasa igual). Ahora: 15s y un reintento. Medido: 3.0 / 3.2 / 2.9s con las dos imágenes reales, así que 15s es holgado.
+- **La segunda generación (la que pide el juez cuando el parecido sale bajo) ya no arranca si no cabe.** Si al llegar ahí ya pasaron 30s, insistir no mejoraba el avatar: mataba la petición contra el límite de 60s y la persona se quedaba sin nada después de esperar. Queda anotado cuando no cupo (`segunda_no_cupo`), porque eso también es un dato.
+
+### Added
+
+- **El evento del avatar ahora separa el tiempo en tres**: `ms_generacion` (Gemini), `ms_juez` y `ms_total`. Con un solo número no se puede decir si la espera fue Gemini, el juez, o todo lo demás — y son arreglos distintos.
+
+### Notes
+
+Cuatro hipótesis medidas y **descartadas** antes de tocar nada:
+
+| Hipótesis | Medición | Veredicto |
+|---|---|---|
+| Cambió el modelo del avatar | `gemini-3-pro-image` + Haiku de juez desde 0.2.89.0, sin tocar | No |
+| El timeout de 30s que puse hoy cortaba generaciones buenas | 4 corridas con el prompt e imagen reales: 15.6 / 16.0 / 16.4 / 17.0s | No |
+| El payload pesa demasiado | Gemini devuelve 0.75 MB en base64; el POST del cuerpo ≈ 1.95 MB → 2-8s de subida | No |
+| El juez es lento | 3.0 / 3.2 / 2.9s (2.806 tokens de entrada) | No en el caso normal |
+
+Con eso, el camino normal da ~20s para la cara y ~20s para el cuerpo, no tres minutos. **La causa sigue sin identificarse**: la instrumentación que la contestaría se desplegó a las 18:12 y los intentos lentos fueron antes. El siguiente intento ya deja los tres tiempos.
+
 ## [0.2.117.0] - 2026-08-06
 
 Del primer flujo completo de Pablo en Android.

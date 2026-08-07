@@ -13,6 +13,15 @@ export const maxDuration = 60;
 const JUDGE_MODEL = GUARD_MODEL;
 const JUDGE_MIN = 6; // umbral 1-10 para reintentar
 
+/**
+ * Hasta cuándo vale la pena arrancar la SEGUNDA generación (la que pide el
+ * juez cuando el parecido sale bajo). Vercel corta la función a los 60s y una
+ * generación medida tarda ~16s más ~3s de juez: si al llegar aquí ya pasaron
+ * 30s, la segunda no termina — y quedarse sin respuesta es peor que quedarse
+ * con el avatar regular que ya se tiene.
+ */
+const LIMITE_SEGUNDA_MS = 30_000;
+
 // El tipo de cuerpo (de la silueta del perfil o del wizard) alimenta el prompt.
 // Espejo fiel: NO adelgazar. Básicos ajustados → la silueta se ve para que el
 // try-on sea fiel.
@@ -214,7 +223,15 @@ async function juzgarParecido(
 ): Promise<{ score: number; problema: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = new Anthropic();
+    // Timeout y reintentos ACOTADOS a mano. Por default el SDK trae
+    // `maxRetries: 2` y `timeout: 10 minutos`: en una función que Vercel corta
+    // a los 60s, eso no protege de nada — solo convierte un mal momento de la
+    // API en un usuario esperando hasta que la función muera, sin avatar y sin
+    // explicación. Y este juez es BEST-EFFORT por diseño (si no contesta, el
+    // avatar pasa igual), así que bloquear por él es lo contrario de lo que se
+    // quiere. Medido: 3.0s / 3.2s / 2.9s con las dos imágenes reales, así que
+    // 15s es holgado.
+    const client = new Anthropic({ maxRetries: 1, timeout: 15_000 });
     const res = await client.messages.create({
       model: JUDGE_MODEL,
       max_tokens: 200,
@@ -263,6 +280,9 @@ async function juzgarParecido(
 // soporta muchas referencias — más ángulos = identidad más fiel), y un juez de
 // visión puntúa el parecido: si sale bajo, se regenera una vez en silencio.
 export async function POST(request: NextRequest) {
+  // Reloj de la petición completa. Sin esto solo se sabía cuánto tardó Gemini,
+  // que resultó ser la parte que NO era el problema.
+  const t0Req = Date.now();
   const supabase = await createClient();
   const {
     data: { user },
@@ -405,14 +425,22 @@ export async function POST(request: NextRequest) {
 
     // Juez de parecido: si el primer intento sale bajo, UN reintento y nos
     // quedamos con el de mejor score. Best-effort: sin juez, pasa tal cual.
+    const tJuez = Date.now();
     let veredicto = await juzgarParecido(faceB64, image);
+    let msJuez = Date.now() - tJuez;
     let reintento = false;
-    if (veredicto && veredicto.score < JUDGE_MIN) {
+    // La segunda generación solo sale si CABE. Vercel corta a los 60s: si la
+    // primera ya se llevó el presupuesto, insistir no mejora el avatar —
+    // mata la petición y la persona se queda sin nada después de esperar.
+    const cabeOtra = Date.now() - t0Req < LIMITE_SEGUNDA_MS;
+    if (veredicto && veredicto.score < JUDGE_MIN && cabeOtra) {
       reintento = true;
       const otra = await generarAvatar(parts);
       msGen += otra.ms;
       if (otra.image) {
+        const t2 = Date.now();
         const v2 = await juzgarParecido(faceB64, otra.image);
+        msJuez += Date.now() - t2;
         if (v2 && v2.score > veredicto.score) {
           image = otra.image;
           veredicto = v2;
@@ -434,6 +462,15 @@ export async function POST(request: NextRequest) {
         // lenta" de "el juez pidió otra". El motor sí lo registra
         // (generation_timing); esto no lo hacía.
         ms_generacion: msGen,
+        // El juez y el TOTAL, por separado. Con un solo número no se puede
+        // decir si "tardó muchísimo" fue Gemini, el juez, o todo lo demás
+        // (descargar las fotos, subir el resultado): son arreglos distintos.
+        ms_juez: msJuez,
+        ms_total: Date.now() - t0Req,
+        // Si el juez pidió otra y NO cupo, eso también es un dato: dice que el
+        // presupuesto está apretado, no que el avatar haya salido bien.
+        segunda_no_cupo:
+          !!veredicto && veredicto.score < JUDGE_MIN && !reintento ? true : undefined,
         stage: stage ?? "legacy",
         ajuste: ajuste || null,
         n_caras: faces.length,
