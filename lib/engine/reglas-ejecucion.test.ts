@@ -623,3 +623,52 @@ describe("las cuatro reglas que salieron del veredicto", () => {
     });
   });
 });
+
+describe("separates-en-evento-formal", () => {
+  // La única regla que salió de DOS fuentes independientes: Roberto la escribió
+  // cuatro veces en el veredicto ("No mantuvo el traje completo") y el juez
+  // automático la levantó solo, en looks distintos ("el blazer marino con
+  // pantalón gris es un combo de separates, no el traje oscuro que pide una
+  // boda formal").
+  const separates = [
+    p("Blazer marino", "#1F2A44"),
+    p("Camisa blanca", "#FFFFFF"),
+    p("Pantalón de vestir gris", "#6B6B6B"),
+    p("Zapato formal negro", "#111111"),
+  ];
+  const closet = [...separates, p("Traje marino de lana", "#1F2A44")];
+
+  it("en boda formal, el blazer con pantalón ajeno se marca", () => {
+    const v = revisarEjecucion(separates, { formality: "formal", closet }).find(
+      (x) => x.regla === "separates-en-evento-formal"
+    );
+    expect(v).toBeDefined();
+    expect(v!.detalle).toContain("Traje marino de lana");
+  });
+
+  it("con el traje completo pasa limpio", () => {
+    expect(
+      revisarEjecucion(
+        [p("Traje marino de lana", "#1F2A44"), p("Camisa blanca", "#FFFFFF")],
+        { formality: "formal", closet }
+      ).find((x) => x.regla === "separates-en-evento-formal")
+    ).toBeUndefined();
+  });
+
+  it("los MISMOS separates en la oficina están bien — ahí no dice nada", () => {
+    // Si esto se rompiera, la regla estaría prohibiendo el blazer de diario.
+    expect(
+      revisarEjecucion(separates, { closet }).find(
+        (x) => x.regla === "separates-en-evento-formal"
+      )
+    ).toBeUndefined();
+  });
+
+  it("sin traje en el clóset se calla: es carencia, no fallo reparable", () => {
+    expect(
+      revisarEjecucion(separates, { formality: "formal", closet: separates }).find(
+        (x) => x.regla === "separates-en-evento-formal"
+      )
+    ).toBeUndefined();
+  });
+});

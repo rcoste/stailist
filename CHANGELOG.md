@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.126.1] - 2026-08-07
+
+### Added
+
+- **`separates-en-evento-formal`**, y es la regla mejor respaldada de toda la tanda: salió de **dos fuentes independientes que no se hablan**. Roberto la escribió cuatro veces votando (*"No mantuvo el traje completo"*, *"a menos que el pantalón y saco sean del mismo traje, esto está mal"*) y **el juez automático la levantó solo**, en looks distintos: *"el blazer marino con pantalón gris es un combo de separates, no el traje oscuro que pide una boda formal de noche en salón"*. Blazer con pantalón de otro juego es correcto en la oficina y corto en una boda; la regla solo dispara con formalidad formal o de gala, y solo si el clóset tiene traje.
+
+### Notes — medido: ¿debe el juez ser una compuerta del pipeline?
+
+Roberto: *"si el juez está detectando cosas, podemos meterlas en una iteración antes… que se corrijan los errores que detecta"*. El principio es correcto — **si una máquina detecta un error, que no llegue al humano** — y ya está construido así: las reglas de código viajan al crítico como hallazgos verificados y él repara (`verdict: reparado` en los reviews).
+
+Lo que los datos dicen sobre añadir el **juez** como segunda compuerta, medido sobre los 117 looks del veredicto:
+
+| de los 21 looks que Roberto marcó 👎 | los caza |
+|---|---|
+| el código solo | 3 |
+| **el juez solo** | **2** |
+| los dos | 5 |
+| **nadie** | **11 (52%)** |
+
+El juez aporta **2 catches únicos de 21**. Como compuerta es débil, cuesta 3 llamadas más por generación, y —lo grave— el momento en que gatea la generación **deja de poder evaluarla**: todo look habría sido filtrado para pasarle.
+
+Pero como **buscador de reglas** vale oro: sus 7 rechazos únicos son casi todos de registro (*"demasiado urbano/motero para una oficina"*, *"separates, no el traje que pide una boda formal"*), y de ahí salió la regla de arriba. El camino que sí compone: **el juez encuentra el patrón → se escribe la regla en código → el código hace la pasada previa**. Determinista, gratis, y no se puede adular.
+
 ## [0.2.126.0] - 2026-08-07
 
 De la cosecha del veredicto: 4 reglas nuevas, un bug mío de la pantalla de votar, y **dos preguntas contestadas con datos en vez de con opinión**.

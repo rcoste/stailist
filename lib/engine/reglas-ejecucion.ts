@@ -61,6 +61,8 @@ export type ContextoReglas = {
    * pisa el agua igual.
    */
   paraguas?: boolean;
+  /** La formalidad del evento, cuando el wizard la preguntó. */
+  formality?: string | null;
 };
 
 /**
@@ -519,6 +521,36 @@ export function revisarEjecucion(
             .slice(0, 4)
             .map(nombre)
             .join(", ")}.`,
+        });
+      }
+    }
+  }
+
+  // 12. EN UN EVENTO FORMAL, EL TRAJE VA COMPLETO. Blazer con pantalón de otro
+  //     color son "separates": correctos para la oficina, cortos para una boda
+  //     formal. Es la única regla de esta tanda que salió de DOS fuentes
+  //     independientes que no se hablan entre sí — Roberto la escribió cuatro
+  //     veces en el veredicto ("No mantuvo el traje completo", "a menos que el
+  //     pantalón y saco sean del mismo traje, esto está mal") y el juez
+  //     automático la levantó solo, en looks distintos: "el blazer marino con
+  //     pantalón gris es un combo de separates, no el traje oscuro que pide una
+  //     boda formal de noche en salón".
+  //
+  //     Solo dispara si el clóset TIENE un traje: sin él no es un fallo
+  //     reparable sino una carencia, igual que el frío sin abrigo.
+  if ((ctx.formality === "formal" || ctx.formality === "gala") && ctx.closet?.length) {
+    const esTraje = (i: EngineItem) =>
+      /traje|esmoquin|smoking|tuxedo/.test(TIPO(i));
+    const saco = items.find(esSaco);
+    if (saco && !items.some(esTraje)) {
+      const trajes = ctx.closet.filter(esTraje);
+      if (trajes.length) {
+        v.push({
+          regla: "separates-en-evento-formal",
+          detalle: `Es un evento formal y el look arma con piezas sueltas ("${nombre(saco)}" con un pantalón de otro juego). Eso son separates: bien para la oficina, cortos para aquí. Su clóset tiene traje completo: ${trajes
+            .slice(0, 3)
+            .map(nombre)
+            .join(", ")}. Úsalo con su propio pantalón.`,
         });
       }
     }

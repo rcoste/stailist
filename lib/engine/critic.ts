@@ -139,6 +139,9 @@ function buildCriticMessage(
         // son la misma BANDA de temperatura y dos problemas distintos.
         lluvia: /lluvia|llov|chubasco|tormenta/i.test(ctx.weather?.condition ?? ""),
         paraguas: ctx.paraguas,
+        // La formalidad del evento: sin ella, "separates en boda formal" no se
+        // puede distinguir de "separates en la oficina", que es correcto.
+        formality: ctx.formality,
       }
     )
   );
