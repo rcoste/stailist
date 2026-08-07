@@ -79,7 +79,7 @@ export function buildOutfitSchema(itemIds: string[]) {
       analisis: {
         type: "string",
         description:
-          "Tu borrador de trabajo (la clienta NO lo ve; 3-6 líneas, MÁXIMO 6 — cada token de más retrasa el look): neutros y colores fuertes del clóset, qué mandan clima/ocasión, qué descartas (colorimetría, vetos, estampados que pelean) y las combinaciones más fuertes que ves. Piensa aquí ANTES de armar los outfits.",
+          "Tu borrador de trabajo (la clienta NO lo ve; 3-6 líneas, MÁXIMO 6 — cada token de más retrasa el look): neutros y colores fuertes del clóset, qué mandan clima/ocasión, qué descartas (colorimetría, vetos, estampados que pelean) y las combinaciones más fuertes que ves. Piensa aquí ANTES de armar los outfits. Y CIERRA con una línea por look nombrando su decisión de stylist en pocas palabras (\"decisión: punto grueso contra sastre\", \"decisión: el vino remata sobre gris\"); si al escribirla te sale \"ninguna\" o algo que cualquiera habría hecho sin pensar, ese look todavía no está — cámbialo antes de entregarlo.",
       },
       outfits: {
         type: "array",
