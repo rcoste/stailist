@@ -103,6 +103,7 @@ export default async function CorridaMotor({
         // ocasión" es una marca que no se puede emitir.
         plan: p.brief.plan ?? null,
         formalidad: p.brief.formality ?? null,
+        gender: corrida.closetGender,
         izq: lado(izqClave),
         der: lado(derClave),
         // Las claves van para que el try-on (que responde por variante) se

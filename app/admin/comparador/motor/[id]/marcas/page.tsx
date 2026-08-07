@@ -91,6 +91,7 @@ export default async function CompletarMarcas({
       etiqueta: p.brief.etiqueta,
       plan: p.brief.plan ?? null,
       formalidad: p.brief.formality ?? null,
+      gender: corrida.closetGender,
       izq: lado(izqClave),
       der: lado(derClave),
       // El try-on responde por variante; estas claves lo mapean a las columnas

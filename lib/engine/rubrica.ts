@@ -2,6 +2,7 @@ import { llamar, parsearJson, type Recibo } from "@/lib/proveedores";
 import { MODELO_JUEZ } from "@/lib/models";
 import { queSePoneA } from "./prompt";
 import { lineaDressCode } from "@/lib/dress-code";
+import { lineaFormalidad } from "@/lib/formalidad";
 
 // LA RÚBRICA: un look calificado contra su brief, por un juez automático.
 //
@@ -88,14 +89,6 @@ export type NotaRubrica = {
   porQue: string;
 };
 
-const FORMALIDAD: Record<string, string> = {
-  casual: "casual (relajado pero cuidado)",
-  semiformal: "semiformal / coctel (saco sí, corbata opcional)",
-  formal:
-    "formal — traje y corbata. En México esto NO es esmoquin: traje oscuro, camisa lisa y corbata. Un esmoquin aquí está SOBREVESTIDO",
-  gala:
-    "etiqueta rigurosa / black tie — aquí sí va el esmoquin, con moño, camisa blanca y sin cinturón",
-};
 
 /** El brief como lo lee el juez. Pura y exportada para poder probarla. */
 export function briefParaRubrica(b: BriefRubrica): string {
@@ -109,8 +102,10 @@ export function briefParaRubrica(b: BriefRubrica): string {
     lineas.push(dc || "No dijo cómo se viste para trabajar: júzgalo contra un registro de oficina neutro y no castigues por no acertarle a un código que nadie declaró.");
   }
   if (b.plan?.trim()) lineas.push(`Pidió, en sus palabras: "${b.plan.trim()}".`);
-  if (b.formality && FORMALIDAD[b.formality])
-    lineas.push(`Formalidad: ${FORMALIDAD[b.formality]}.`);
+  // La MISMA tabla que ve la pantalla y recibe el motor (lib/formalidad.ts):
+  // si el juez calificara con una vara distinta, mediría otra cosa.
+  if (b.formality && lineaFormalidad(b.formality))
+    lineas.push(`Formalidad: ${lineaFormalidad(b.formality)}.`);
   if (b.momento === "noche") lineas.push("Momento: de noche.");
   else if (b.momento === "dia") lineas.push("Momento: de día.");
   if (b.weather) {

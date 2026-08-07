@@ -18,6 +18,7 @@ import {
 import { calcularRotacion, bloqueRotacion } from "@/lib/engine/rotacion";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import { lineaDressCode } from "@/lib/dress-code";
+import { lineaFormalidad } from "@/lib/formalidad";
 import {
   type TasteSignal,
   type RememberedOutfit,
@@ -574,23 +575,11 @@ export function contextBlock(
   // Formalidad del evento (el wizard la pregunta para "evento") + default
   // mexicano: las bodas/eventos formales en México son más arreglados que el
   // default del modelo; ante la duda, subir nivel, no bajarlo.
-  // EL VOCABULARIO DE LA INVITACIÓN, no una escala abstracta. "Formal" a secas
-  // dejaba al modelo elegir entre traje y esmoquin, y elegía esmoquin: los DOS
-  // motores lo hicieron en la corrida de verificación. Roberto: "en una boda
-  // mexicana formal jamás iría alguien así vestido… la gente va de traje y
-  // corbata". Es el mismo hueco que el clima — una suposición cultural que
-  // nunca se escribió — y se cierra igual: diciéndola.
-  const FORMALITY_LABELS: Record<string, string> = {
-    casual: "casual (relajado pero cuidado)",
-    semiformal: "semiformal / coctel (business elevado; saco sí, corbata opcional)",
-    formal:
-      "formal — TRAJE Y CORBATA. En México esto NO es esmoquin: es traje oscuro (marino, gris o negro), camisa lisa y corbata. Si el clóset tiene esmoquin, NO lo uses aquí; el esmoquin es solo para etiqueta rigurosa",
-    gala:
-      "etiqueta rigurosa / black tie — AQUÍ SÍ va el esmoquin, y con su código completo: moño (nunca corbata larga), camisa blanca, pantalón del propio esmoquin y SIN cinturón. Si el clóset no tiene con qué completarlo, arma un traje oscuro impecable en vez de un esmoquin a medias",
-  };
-  if (ctx.formality && FORMALITY_LABELS[ctx.formality]) {
+  // La tabla vive en lib/formalidad.ts, compartida con la pantalla, la rúbrica
+  // y el comparador. Estuvo escrita en las cuatro y la cuarta se quedó atrás.
+  if (ctx.formality && lineaFormalidad(ctx.formality)) {
     lines.push(
-      `Formalidad del evento: ${FORMALITY_LABELS[ctx.formality]} — RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.`
+      `Formalidad del evento: ${lineaFormalidad(ctx.formality)} — RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.`
     );
   } else if (ctx.objective === "evento") {
     lines.push(

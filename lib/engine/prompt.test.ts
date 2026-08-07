@@ -178,6 +178,7 @@ import {
   pisoDeFormalidad,
   type EngineContext,
 } from "./prompt";
+import { formalidadLegible, lineaFormalidad } from "@/lib/formalidad";
 import { CRITIC_SYSTEM_TEXT } from "./critic";
 import { closetBlock } from "./prompt";
 import { RECETAS_HOMBRE } from "./recetario";
@@ -776,5 +777,29 @@ describe("'depende del día': la pregunta del día lo desambigua", () => {
 
   it("sin respuesta, se queda el hedge (no inventa un día)", () => {
     expect(pisoDeFormalidad(ctx(null))).toContain("Sin más señal");
+  });
+});
+
+describe("la formalidad vive en UN solo lugar", () => {
+  // Estuvo escrita cuatro veces —wizard, prompt, rúbrica y la pantalla donde se
+  // califica el comparador— y cuando el criterio cambió ("formal es traje y
+  // corbata, no esmoquin") la cuarta se quedó atrás: Roberto votando el
+  // veredicto vio "· formal" a secas y no supo contra qué juzgar.
+  it("lo que recibe el motor sale de lib/formalidad", () => {
+    expect(lineaFormalidad("formal")).toContain("TRAJE Y CORBATA");
+    expect(lineaFormalidad("formal")).toContain("NO es esmoquin");
+    expect(lineaFormalidad("gala")).toContain("esmoquin");
+  });
+
+  it("lo que LEE quien califica trae la ropa primero y la jerga después", () => {
+    expect(formalidadLegible("formal", "hombre")).toBe("traje y corbata (formal · etiqueta)");
+    expect(formalidadLegible("gala", "mujer")).toBe(
+      "vestido largo de gala (etiqueta rigurosa · black tie · gala)"
+    );
+  });
+
+  it("sin formalidad no inventa nada", () => {
+    expect(formalidadLegible(null)).toBeNull();
+    expect(lineaFormalidad(undefined)).toBe("");
   });
 });
