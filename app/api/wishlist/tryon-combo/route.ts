@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
+import { pedirImagen } from "@/lib/gemini-imagen";
 
 export const maxDuration = 60;
 
-const GEMINI_MODEL = "gemini-3-pro-image";
 const MAX_GARMENTS = 4;
 
 const PROMPT =
@@ -120,27 +120,18 @@ export async function POST(request: NextRequest) {
       { inlineData: { mimeType: "image/jpeg", data: avatarB64 } },
       ...garmentsB64.map((d) => ({ inlineData: { mimeType: "image/jpeg", data: d } })),
     ];
-    const gemRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig: {
-            responseModalities: ["IMAGE"],
-            imageConfig: { aspectRatio: "3:4" },
-          },
-        }),
-      }
-    );
-    if (!gemRes.ok) return NextResponse.json({ error: "generacion" }, { status: 502 });
-    const data = await gemRes.json();
-    const img = data?.candidates?.[0]?.content?.parts?.find(
-      (p: { inlineData?: { data?: string } }) => p.inlineData?.data
-    );
-    if (!img) return NextResponse.json({ error: "sin_imagen" }, { status: 502 });
-    return NextResponse.json({ image: `data:image/jpeg;base64,${img.inlineData.data}` });
+    // Por la puerta común (lib/gemini-imagen): reintento, timeout y motivo real.
+    // Esta era otra copia suelta del mismo fetch — las cazó lib/thinking.test.ts.
+    const r = await pedirImagen(parts, { aspecto: "3:4" });
+    if ("motivo" in r) {
+      console.error(`[wishlist combo] ${r.motivo}`);
+      return NextResponse.json(
+        { error: "generacion", detalle: r.motivo },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ image: `data:image/jpeg;base64,${r.data}` });
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 502 });
   }

@@ -11,6 +11,14 @@
 // hay un modelo de imagen y ya. El guard de modelos lo exceptúa explícitamente.
 export const GEMINI_MODEL = "gemini-3-pro-image";
 
+/**
+ * El rápido. Ya se usaba para los arquetipos del catálogo y para el fallback
+ * texto→imagen del render de prenda; se nombra aquí para que las dos puertas
+ * salgan del mismo lugar. Medido el 2026-08-06 sobre la MISMA foto y el MISMO
+ * prompt de extracción: pro 17.3s de promedio, flash 7.7s.
+ */
+export const GEMINI_MODEL_RAPIDO = "gemini-3.1-flash-image";
+
 // EL SERVICIO DE IMÁGENES FALLA SOLO, Y HAY QUE CONTARLO CON ESO.
 //
 // Medido el 2026-08-06 contra gemini-3-pro-image con una llave y un prompt
@@ -52,13 +60,16 @@ type Parte = { text: string } | { inlineData: { mimeType: string; data: string }
 export async function pedirImagen(
   parts: Parte[],
   opciones: {
-    /** 3:4 para retrato y cuerpo; 16:9 para el sheet de 3 vistas. */
-    aspecto?: "3:4" | "16:9";
+    /** 3:4 retrato y cuerpo · 16:9 el sheet de 3 vistas · 1:1 la prenda. */
+    aspecto?: "3:4" | "16:9" | "1:1";
+    /** Por default el bueno. El render de prenda y el catálogo pueden pedir otro. */
+    modelo?: string;
     fetchImpl?: typeof fetch;
     ahora?: () => number;
   } = {}
 ): Promise<{ data: string } | { motivo: string }> {
   const hacerFetch = opciones.fetchImpl ?? fetch;
+  const modelo = opciones.modelo ?? GEMINI_MODEL;
   const ahora = opciones.ahora ?? (() => Date.now());
   const t0 = ahora();
   const cuerpo = JSON.stringify({
@@ -80,7 +91,7 @@ export async function pedirImagen(
     }
     try {
       const res = await hacerFetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -97,7 +108,7 @@ export async function pedirImagen(
           mensaje = (JSON.parse(txt)?.error?.message as string) ?? mensaje;
         } catch {}
         motivo = `HTTP ${res.status}: ${mensaje}`;
-        console.error(`[imagen] ${GEMINI_MODEL} ${intento}/${INTENTOS} — ${motivo}`);
+        console.error(`[imagen] ${modelo} ${intento}/${INTENTOS} — ${motivo}`);
         if (!vaLaPena(res.status)) break;
         continue;
       }
@@ -111,7 +122,7 @@ export async function pedirImagen(
       const razon =
         data?.candidates?.[0]?.finishReason ?? data?.promptFeedback?.blockReason;
       motivo = `respondió sin imagen${razon ? ` (${razon})` : ""}`;
-      console.error(`[imagen] ${GEMINI_MODEL} — ${motivo}`);
+      console.error(`[imagen] ${modelo} — ${motivo}`);
       break;
     } catch (e) {
       // Timeout de red o corte de conexión: los dos son reintentables y los dos
@@ -120,7 +131,7 @@ export async function pedirImagen(
         e instanceof Error && e.name === "TimeoutError"
           ? `sin respuesta en ${Math.round(TIMEOUT_MS / 1000)}s`
           : `red: ${e instanceof Error ? e.message : "falló"}`;
-      console.error(`[imagen] ${GEMINI_MODEL} ${intento}/${INTENTOS} — ${motivo}`);
+      console.error(`[imagen] ${modelo} ${intento}/${INTENTOS} — ${motivo}`);
     }
   }
   return { motivo };
