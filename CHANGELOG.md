@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.125.1] - 2026-08-07
+
+### Changed
+
+- **Pool de briefs v4: el trabajo se parte igual que la lluvia.** Roberto: *"pero podríamos tener un día que sí veo cliente y otro que no"*. Y no es solo cobertura — **sin el flag explícito, un clóset con código "depende del día" haría que TODOS los briefs de trabajo corrieran en modo cubrirse-en-medio**, así que el veredicto habría medido el hedge en vez del criterio. Su perfil es justamente ese caso.
+
+  Los tres briefs de trabajo declaran ahora si ve cliente, y entra **un par espejo a mismo clima** (templado con cliente / día normal, 18°C los dos): lo único que cambia es el flag, así que mide directo si el motor distingue. Un motor que arme lo mismo en los dos falló — y ese fallo no se veía en ningún lado.
+
+  Verificado con el prompt real: el mismo brief a 18°C produce *"HOY NO VE CLIENTE: no lo sobrevistas de junta… sin saco obligatorio"* contra *"HOY SÍ VE CLIENTE: sube el registro — saco o blazer… hoy NO es día de jeans"*.
+
+- Las etiquetas de esos briefs pasan de "oficina" a "trabajo", igual que la app.
+
 ## [0.2.125.0] - 2026-08-07
 
 ### Added
