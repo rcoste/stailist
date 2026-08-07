@@ -133,7 +133,16 @@ export function LookRequest({
   );
   const [openText, setOpenText] = useState("");
   const [momento, setMomento] = useState<"dia" | "noche">("dia");
-  const [climaIdx, setClimaIdx] = useState(2); // Templado por defecto
+  // SIN clima por defecto, y es importante que no lo haya.
+  //
+  // Venía en "Templado" preseleccionado, con su borde de tinta y su bolita
+  // llena. Eso hacía dos daños a la vez: la lista de abajo se leía como "ya
+  // está contestado" —así que la píldora de ubicación, que es el camino
+  // práctico y el único que lee la lluvia, se volvía invisible— y quien pasaba
+  // de largo mandaba 19° al motor sin haberlo elegido. Lo segundo no es
+  // cosmético: "rompe el clima" fue la etiqueta de defecto más marcada del
+  // veredicto (5 de 6). Un clima que nadie eligió es peor que preguntar.
+  const [climaIdx, setClimaIdx] = useState<number | null>(null);
   const [rain, setRain] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
@@ -172,6 +181,7 @@ export function LookRequest({
   }
 
   function armar() {
+    if (climaIdx === null) return;
     const b = BUCKETS[climaIdx];
     onPick({
       ...objectivePart,
@@ -296,7 +306,10 @@ export function LookRequest({
           <button
             type="button"
             onClick={step === 3 ? armar : next}
-            disabled={(step === 1 && !step1Ready) || (step === 3 && locating)}
+            disabled={
+              (step === 1 && !step1Ready) ||
+              (step === 3 && (locating || climaIdx === null))
+            }
             className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
           >
             {step === 3 ? (
@@ -499,7 +512,8 @@ function StepClima({
   onRain,
   onLocate,
 }: {
-  idx: number;
+  /** null = nadie ha elegido todavía. Ver el comentario de `climaIdx`. */
+  idx: number | null;
   rain: boolean;
   locating: boolean;
   locFailed: boolean;

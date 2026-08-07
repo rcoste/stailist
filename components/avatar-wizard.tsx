@@ -817,8 +817,17 @@ export function AvatarWizard({
             />
           </div>
 
-          {/* Footer: una acción primaria; las dos salidas en fila partida de links
-              (mismo peso), con hairline superior y divisor central. */}
+          {/* Footer: una acción primaria; las salidas en fila partida de links
+              (mismo peso), con hairline superior y divisores.
+
+              SON TRES, y la de en medio es la que faltaba. "rehacer el cuerpo"
+              se leía como "déjame elegir otra vez mi cuerpo" y hacía otra cosa:
+              regeneraba con EXACTAMENTE los mismos datos. Quien quería cambiar
+              su complexión o sus fotos tenía que irse por "ajustar la cara",
+              avanzar, y recién ahí llegar al cuerpo — un camino que nadie
+              adivina (le pasó a Roberto y a Pablo). Ahora cada botón dice lo
+              que hace: otra toma con lo mismo, cambiar lo que describe el
+              cuerpo, o volver a la cara. */}
           <div className="flex flex-col gap-1 pt-1">
             <button
               type="button"
@@ -833,9 +842,18 @@ export function AvatarWizard({
                 type="button"
                 disabled={saving}
                 onClick={generateBody}
-                className="flex min-h-12 flex-1 items-center justify-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+                className="flex min-h-12 flex-1 items-center justify-center gap-1 text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
               >
-                <Icon name="repetir" size={14} /> rehacer el cuerpo
+                <Icon name="repetir" size={14} /> otra toma
+              </button>
+              <span className="w-px shrink-0 bg-line" aria-hidden />
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setStep("cuerpo")}
+                className="flex min-h-12 flex-1 items-center justify-center text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+              >
+                cambiar cuerpo
               </button>
               <span className="w-px shrink-0 bg-line" aria-hidden />
               <button
@@ -844,7 +862,7 @@ export function AvatarWizard({
                 onClick={() => setStep("cara")}
                 className="flex min-h-12 flex-1 items-center justify-center text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
               >
-                ajustar la cara
+                la cara
               </button>
             </div>
           </div>

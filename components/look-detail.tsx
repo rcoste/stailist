@@ -258,13 +258,25 @@ export function LookDetail({
           </div>
         </div>
 
+        {/* LA SALIDA DEL ONBOARDING, con peso de botón.
+            Era texto gris de 14px al fondo de la pantalla: el elemento MÁS
+            débil de la vista, siendo la única puerta a la app. Quien no la veía
+            se quedaba en el look sin saber qué seguía ("está muy escondido").
+            Toma el lugar primario cuando ya hay render —ahí no compite con
+            nada, porque el botón de "verme" desaparece— y se queda como
+            secundaria con borde mientras el render sigue siendo la invitación
+            principal. */}
         {enterApp ? (
           <button
             type="button"
             onClick={enterApp}
-            className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 text-[14px] font-semibold text-muted transition-colors hover:text-ink"
+            className={
+              hasRender
+                ? "mt-1.5 flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+                : "mt-1.5 flex h-[48px] w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-[15px] font-semibold text-ink transition-colors hover:border-ink"
+            }
           >
-            entrar a la app <Icon name="flecha" size={15} />
+            entrar a la app <Icon name="flecha" size={16} />
           </button>
         ) : null}
       </div>
