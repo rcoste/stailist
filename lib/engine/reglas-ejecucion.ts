@@ -37,6 +37,7 @@
 import type { EngineItem } from "./prompt";
 import type { Clima } from "./recetario";
 import { tipoDePrenda } from "./vocabulario";
+import { mismoColorAOjo, oklch } from "./color-perceptual";
 
 export type Violacion = { regla: string; detalle: string };
 
@@ -236,11 +237,21 @@ export function revisarEjecucion(
   const cueros = conColor.filter(esCuero);
   for (let i = 0; i < cueros.length; i++) {
     for (let j = i + 1; j < cueros.length; j++) {
-      const d = distancia(rgb(cueros[i].attrs.color_hex)!, rgb(cueros[j].attrs.color_hex)!);
-      // Ni iguales ni claramente distintos: la franja de en medio es la que se
-      // lee como error. Café con café pasa; café con crema también (son dos
-      // decisiones). Café con negro no.
-      if (d <= MISMO_TONO || d > 200) continue;
+      const ha = cueros[i].attrs.color_hex;
+      const hb = cueros[j].attrs.color_hex;
+      // EN OKLCH, NO EN RGB. La distancia euclidiana en RGB no separa el matiz
+      // de la luminosidad, así que dos colores oscuros y desaturados siempre
+      // "se parecen": café chocolate #5C4433 y burdeos #5C2A2E medían 26.5 —
+      // por debajo del umbral— y la regla los daba por el mismo café. En OKLCH
+      // sus matices están a 40° y son lo que el ojo ve: dos colores distintos.
+      // Lo cazó el juez visual antes que ninguna regla.
+      const mismo = mismoColorAOjo(ha, hb);
+      if (mismo === null) continue; // sin hex no se juzga
+      // Claramente distintos = mucha diferencia de LUMINOSIDAD (café con crema
+      // son dos decisiones, no un accidente). Eso sí se lee bien en OKLCH.
+      const la = oklch(ha)!.L;
+      const lb = oklch(hb)!.L;
+      if (mismo || Math.abs(la - lb) > 0.35) continue;
       v.push({
         regla: "cueros-que-no-se-hablan",
         detalle: `"${nombre(cueros[i])}" y "${nombre(cueros[j])}" son cueros de colores distintos que no dialogan: se lee como accidente. Iguálalos (café con café, negro con negro) o quita uno.`,
@@ -433,6 +444,53 @@ export function revisarEjecucion(
           detalle: `Hace calor y el look lleva ${pesadas
             .map((i) => `"${nombre(i)}"`)
             .join(", ")} — lana y tejidos de invierno dan calor aunque el color sea claro. Cámbialo por algo de algodón, lino o mezcla ligera del clóset.`,
+        });
+      }
+    }
+  }
+
+  // 5d. LA BOTA DE MONTAÑA NO ES CALZADO DE CALLE. Roberto, calibrando v47
+  //     sobre unas Columbia de senderismo a 8°C despejado: "no deberían ir a
+  //     menos que esté nevando — se ve ruidosa, le rompe la madre al look".
+  //
+  //     Es calzado FUNCIONAL, no estilístico: suela dentada, refuerzos y logos
+  //     técnicos gritan montaña en una banqueta. Y en México no nieva, así que
+  //     en la práctica es "fuera".
+  //
+  //     LA EXCEPCIÓN, que es mía y él la aceptó: con lluvia y SIN otro calzado
+  //     que aguante, prefiero que salga la bota a que salga un mocasín.
+  //     Funcional feo gana a bonito empapado. Es la misma lógica de siempre —
+  //     sin recambio, la regla se calla.
+  if (ctx.closet?.length) {
+    const esDeMontana = (i: EngineItem) =>
+      tipoDePrenda(nombre(i))?.zona === "pie" &&
+      /senderismo|hiking|trekking|monta[nñ]a|traeking|goretex|gore-tex|columbia|salomon|merrell|timberland|caterpillar|nieve|snow/.test(
+        TIPO(i)
+      );
+    const montaneras = items.filter(esDeMontana);
+    if (montaneras.length) {
+      const puestas = new Set(items.map((i) => i.id));
+      const otros = ctx.closet
+        .filter((i) => !puestas.has(i.id))
+        .filter((i) => tipoDePrenda(nombre(i))?.zona === "pie")
+        .filter((i) => !esDeMontana(i));
+      // Con lluvia, el recambio además tiene que aguantar el agua: cambiar una
+      // bota impermeable por un mocasín sería "arreglar" hacia atrás.
+      const aptos = ctx.lluvia
+        ? otros.filter((i) => {
+            const t = tipoDePrenda(nombre(i))?.tipo;
+            if (t && FORMA_NO_AGUANTA.has(t)) return false;
+            const m = norm(i.attrs.material);
+            return !m || !MATERIAL_SE_ARRUINA.test(m);
+          })
+        : otros;
+      if (aptos.length) {
+        v.push({
+          regla: "bota-de-montana-en-la-calle",
+          detalle: `"${nombre(montaneras[0])}" es calzado de montaña, no de calle: la suela y los refuerzos técnicos rompen el registro del look. Cámbiala por ${aptos
+            .slice(0, 2)
+            .map(nombre)
+            .join(" o ")}.`,
         });
       }
     }

@@ -827,3 +827,46 @@ describe("blazer-no-es-abrigo: la CATEGORÍA manda sobre el nombre", () => {
     expect(v.find((x) => x.regla === "blazer-no-es-abrigo")).toBeUndefined();
   });
 });
+
+describe("bota-de-montana-en-la-calle", () => {
+  // Roberto, calibrando v47: "no deberían ir a menos que esté nevando — se ve
+  // ruidosa, le rompe la madre al look".
+  const p_ = (nombre: string, extra: Record<string, unknown> = {}) =>
+    ({ id: nombre, attrs: { nombre, tipo: nombre, color_hex: "#111111", ...extra } }) as never;
+
+  const COLUMBIA = p_("Botas de senderismo negras Columbia", {
+    categoria: "calzado",
+    material: "sintético",
+  });
+  const CHELSEA = p_("Botines Chelsea negros", { categoria: "calzado", material: "piel" });
+  const MOCASIN = p_("Mocasines de gamuza café", { categoria: "calzado", material: "gamuza" });
+  const TOP = p_("Camiseta blanca", { categoria: "top", color_hex: "#FFFFFF" });
+  const PANT = p_("Jeans negros", { categoria: "bottom" });
+
+  const r_ = (its: unknown[], closet: unknown[], ctx = {}) =>
+    revisarEjecucion(its as never, { closet: closet as never, ...ctx }).find(
+      (v) => v.regla === "bota-de-montana-en-la-calle"
+    );
+
+  it("en día seco se marca: es calzado funcional, no de calle", () => {
+    expect(r_([TOP, PANT, COLUMBIA], [TOP, PANT, COLUMBIA, CHELSEA])).toBeDefined();
+  });
+
+  it("sin otro calzado en el clóset se calla: es carencia, no fallo", () => {
+    expect(r_([TOP, PANT, COLUMBIA], [TOP, PANT, COLUMBIA])).toBeUndefined();
+  });
+
+  it("CON LLUVIA y sin recambio que aguante, la bota se queda", () => {
+    // La excepción: funcional feo gana a bonito empapado. Cambiarla por el
+    // mocasín de gamuza sería "arreglar" hacia atrás.
+    expect(
+      r_([TOP, PANT, COLUMBIA], [TOP, PANT, COLUMBIA, MOCASIN], { lluvia: true, clima: "templado" })
+    ).toBeUndefined();
+  });
+
+  it("con lluvia PERO con un botín de piel disponible, sí se cambia", () => {
+    expect(
+      r_([TOP, PANT, COLUMBIA], [TOP, PANT, COLUMBIA, CHELSEA], { lluvia: true, clima: "templado" })
+    ).toBeDefined();
+  });
+});
