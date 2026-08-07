@@ -8,6 +8,7 @@ import {
   ropaDeDressCode,
   type WorkDressCode,
 } from "@/lib/dress-code";
+import { FORMALIDADES, ropaDeFormalidad } from "@/lib/formalidad";
 
 // Compositor de "crear outfit" como WIZARD de 3 pasos (rebrand v3):
 // 1) ocasión (grid 2×2 + campo abierto) · 2) día/noche · 3) clima (lista de
@@ -70,59 +71,12 @@ const OCASION_KEYS = new Set(OCASIONES.map((o) => o.key));
 
 // "Un evento" es ambiguo (de un coctel casual a una boda de etiqueta) y el motor
 // adivinaba mal. Al elegir evento pedimos el nivel de formalidad para acertar.
-//
-// LA ROPA ES EL TITULAR; LA PALABRA DE LA INVITACIÓN, LA PISTA.
-// Empezó al revés (titular "formal", pista "traje y corbata") y Roberto lo
-// paró: "la mayoría de la gente tiene el problema de que si lee formal,
-// coctel, gala o etiqueta, no sabe cuál es el dress code que implica". Tiene
-// razón — preguntar en la jerga que la persona no entiende no es preguntar,
-// es adivinar con pasos extra. Así funciona en los dos sentidos: quien no
-// conoce las palabras elige por lo que se pondría, y quien trae la invitación
-// en la mano busca su palabra en la pista.
-//
-// Y VA POR GÉNERO, porque el ancla concreta lo es: "traje y corbata" no le
-// dice nada a una mujer, y la usuaria objetivo de este producto es una mujer.
-const FORMALIDAD: {
-  key: string;
-  hombre: string;
-  mujer: string;
-  neutro: string;
-  ayuda: string;
-}[] = [
-  {
-    key: "casual",
-    hombre: "sin saco",
-    mujer: "sin arreglarte de más",
-    neutro: "sin arreglarte de más",
-    ayuda: "casual · sport",
-  },
-  {
-    key: "semiformal",
-    hombre: "saco, sin corbata",
-    mujer: "de coctel",
-    neutro: "arreglado, sin llegar a traje",
-    ayuda: "semiformal · coctel · cocktail",
-  },
-  {
-    key: "formal",
-    hombre: "traje y corbata",
-    mujer: "vestido largo o midi",
-    neutro: "traje y corbata, o vestido largo",
-    ayuda: "formal · etiqueta",
-  },
-  {
-    key: "gala",
-    hombre: "esmoquin",
-    mujer: "vestido largo de gala",
-    neutro: "esmoquin, o vestido largo de gala",
-    ayuda: "etiqueta rigurosa · black tie · gala",
-  },
-];
+// La tabla vive en lib/formalidad.ts — la comparten esta pantalla, el prompt,
+// la rúbrica y la pantalla donde se califica el comparador. Vivía escrita en
+// las cuatro y la cuarta se quedó atrás cuando el criterio cambió.
+const FORMALIDAD = FORMALIDADES;
+const ropaDe = ropaDeFormalidad;
 
-/** El ancla concreta según a quién se le pregunta. */
-function ropaDe(f: (typeof FORMALIDAD)[number], gender: string | null): string {
-  return gender === "hombre" ? f.hombre : gender === "mujer" ? f.mujer : f.neutro;
-}
 
 // 5 bandas de temperatura (mismas de modo Viaje — set canónico, no inventar).
 const BUCKETS = [
@@ -570,7 +524,7 @@ function StepOcasion({
                   <span
                     className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
                   >
-                    {f.ayuda}
+                    {f.jerga}
                   </span>
                 </button>
               );

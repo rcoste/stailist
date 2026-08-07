@@ -32,6 +32,8 @@ export type CorridaMotorCargada = {
   estado: string;
   nota: string | null;
   closetUserId: string;
+  /** Género del dueño del clóset: el ancla concreta de la formalidad es por género. */
+  closetGender: "hombre" | "mujer" | null;
   pares: ParMotor[];
   /**
    * El orden del CIEGO por par: las claves de variante en el orden en que la
@@ -111,6 +113,16 @@ export async function cargarCorridaMotor(
     }
   }
 
+  // El género del dueño, para traducir la formalidad con su ancla ("traje y
+  // corbata" contra "vestido largo"). Del DUEÑO, no del admin que mira: es su
+  // clóset y su evento.
+  const { data: perfilDueno } = await supabase
+    .from("profiles")
+    .select("gender")
+    .eq("id", corrida.closet_user_id as string)
+    .maybeSingle();
+  const genero = (perfilDueno?.gender as "hombre" | "mujer" | null) ?? null;
+
   const variantes = corrida.variantes as VarianteMotor[];
   const claves: [string, string] = [variantes[0]?.clave, variantes[1]?.clave] as [
     string,
@@ -176,6 +188,7 @@ export async function cargarCorridaMotor(
     estado: corrida.estado as string,
     nota: (corrida.nota as string | null) ?? null,
     closetUserId: corrida.closet_user_id as string,
+    closetGender: genero,
     pares,
     ordenPorPar,
     prendas,

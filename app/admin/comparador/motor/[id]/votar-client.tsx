@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
+import { formalidadLegible } from "@/lib/formalidad";
 import { votarParMotor, completarMarcas } from "../../motor-actions";
 
 // Votar a ciegas, un par a la vez. Las columnas se llaman "Look A / Look B" y
@@ -36,6 +37,8 @@ export type ParParaVotar = {
   /** El evento concreto del brief (pool v2 en adelante). */
   plan: string | null;
   formalidad: string | null;
+  /** Del dueño del clóset: el ancla concreta de la formalidad es por género. */
+  gender: "hombre" | "mujer" | null;
   izq: LookParaVotar[];
   der: LookParaVotar[];
   claveIzq: string;
@@ -421,8 +424,16 @@ export function VotarClient({
         {par.plan ? (
           <p className="text-sm text-ink">
             Pidió: “{par.plan}”
-            {par.formalidad ? (
-              <span className="text-muted"> · {par.formalidad}</span>
+            {/* La formalidad TRADUCIDA, no la clave cruda. Decía solo "formal"
+                y Roberto, votando: "aquí no está tan claro al decir formal cuál
+                era el dress code". Quien califica necesita exactamente lo mismo
+                que quien pide — un dato que no se puede leer no se puede
+                calificar. */}
+            {formalidadLegible(par.formalidad, par.gender) ? (
+              <span className="text-muted">
+                {" "}
+                · {formalidadLegible(par.formalidad, par.gender)}
+              </span>
             ) : null}
           </p>
         ) : null}

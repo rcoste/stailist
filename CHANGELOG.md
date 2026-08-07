@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.125.2] - 2026-08-07
+
+### Fixed
+
+- **La pantalla donde se califica el comparador mostraba la clave cruda.** Roberto, votando el veredicto: *"aquí no está tan claro al decir formal cuál era el dress code del evento"*. Decía `Pidió: "una boda de noche, en salón" · formal` — la misma jerga que la app ya le traduce al usuario, sin traducir para **quien juzga**. Un dato que no se puede leer no se puede calificar. Ahora dice **"traje y corbata (formal · etiqueta)"**, con el ancla del género del dueño del clóset.
+- **Y la causa: esa tabla vivía escrita CUATRO veces** — wizard, prompt del motor, rúbrica y la pantalla de votación. Cuando el criterio cambió ayer ("formal es traje y corbata, no esmoquin") se actualizaron tres y **la cuarta se quedó atrás**. Ahora vive en `lib/formalidad.ts` y las cuatro la leen de ahí. Es la misma consolidación que ya se hizo con el código de trabajo (`lib/dress-code.ts`), por la misma razón.
+
 ## [0.2.125.1] - 2026-08-07
 
 ### Changed
