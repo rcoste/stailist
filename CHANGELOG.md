@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.122.0] - 2026-08-06
+
+### Added
+
+- **La rúbrica automática (r2) + su medición de acuerdo.** Idea de Roberto: "la rúbrica va a tardar demasiado viéndolo yo — automatizarlo, un learning loop". `lib/engine/rubrica.ts` califica un look contra su brief con 4 dimensiones derivadas de sus 32 comentarios reales (ocasión, clima, armado, y **wow como escala** — su etiqueta "correcto pero plano" es el 3), más un `aprobado` global. El juez recibe **el mismo brief que el motor** (plan, formalidad, paraguas): calificar "evento" a secas era justo lo que a Roberto le impedía votar.
+- **El gate que la mantiene honesta**: `scripts/rubrica-acuerdo.ts` la corre contra las 148 marcas 👍/👎 ya emitidas (a ciegas, ya pagadas) y mide el acuerdo. r1: 61%. r2 (un ancla precisada): **70%** — todavía nivel "filtro grueso", no autopiloto. Las discrepancias restantes están dominadas por el juez aplicando **el estándar de hoy** (calzado en lluvia, capas en templado) a looks v38 que Roberto marcó antes de fijar ese estándar — sus propios comentarios contradicen varios de sus 👍 ("mocasín en lluvia no aplica" en un look con 👍). La calibración real viene de marcas frescas sobre looks v39.
+- Escrito en el código lo que la rúbrica **no** puede decidir: modelos. Un juez Claude prefiere looks de Claude; esa decisión se queda con el voto ciego humano.
+
 ## [0.2.121.0] - 2026-08-06
 
 El clima, que resultó ser el hueco más grande del motor. Sale del veredicto de Gemini: 4 de los 6 defectos de clima de toda la corrida cayeron en el brief de lluvia — **y los dos motores fallaron ahí**, producción incluida.
