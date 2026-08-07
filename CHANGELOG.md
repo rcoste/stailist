@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.120.1] - 2026-08-06
+
+### Fixed
+
+- **"No pude armar otros looks" ya dice por qué.** Era el TERCER `catch` mudo del día en un camino de IA: la acción devolvía `{ok: false}` sin registrar nada, así que al buscarlo en los logs de producción no había absolutamente nada — la única pista era el texto rojo en pantalla. Ahora el motivo se registra en el servidor **y viaja a la pantalla**, debajo del mensaje.
+- Mismo tratamiento a los otros cuatro `catch` mudos de la cápsula y el viaje: armar la cápsula ideal, los swaps, regenerarla, y el juez de looks (que falla hacia adelante a propósito — pero "falla en silencio" no es lo mismo que "falla sin dejar rastro").
+
+### Notes
+
+Reproducido con los datos reales de Roberto (31 prendas empacables): **generar 18.9s + juez 7.8s, 10 looks, sin error**. El camino que falló es `generateTripOutfits`, que era **uno de los once** que heredaron el thinking encendido y se arregló en la 0.2.119.0 — desplegada a las 18:44, once minutos antes de su clic.
+
+Que ya funcione con el código nuevo y le fallara a las 18:55 apunta a una **pestaña abierta desde antes del deploy**: las server actions de una página vieja siguen pegándole al deployment viejo. Es una hipótesis, no una conclusión — y no se puede confirmar porque el `catch` era mudo. **Recargar la página y reintentar** es la prueba.
+
 ## [0.2.120.0] - 2026-08-06
 
 De Pablo: leer las prendas de una foto salió bien, pero **generar sus imágenes tardó**.
