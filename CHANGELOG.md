@@ -2,6 +2,40 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.142.0] - 2026-08-07
+
+### Added — el instrumento pareado: la rúbrica juzga A contra B sobre los MISMOS briefs
+
+**El problema, medido:** dos corridas del eval **con el mismo código** dieron 76% y 88% de aprobación. Doce puntos. Con esa varianza, comparar dos versiones con una corrida cada una no distingue una mejora del ruido — y así se decidieron cuatro versiones del motor hoy, todas con la honestidad de decir *"esto no es concluyente"*.
+
+**La varianza que domina es la del DÍA, no la del motor.** Un brief de lluvia con clóset corto produce peores looks que uno de diario templado, y qué briefs toquen a cada corrida mueve el promedio más que el cambio que se quiere medir. Comparar A y B sobre el **mismo** brief cancela esa varianza por construcción: es la diferencia entre medir dos personas con la misma báscula y medirlas en dos básculas distintas.
+
+El comparador **ya** corría los dos lados sobre el mismo brief; solo esperaba el voto humano para decidir. `scripts/comparador-juzgar.ts` deja que la rúbrica juzgue, y el marcador sale en la pantalla de la corrida.
+
+### Notes — validado contra el veredicto que Roberto ya había votado
+
+Sobre las 20 parejas del veredicto Opus-contra-Gemini, **$1.40**:
+
+| | |
+|---|---|
+| Gemini gana | **14** |
+| Producción gana | 6 |
+| diferencia media | **−0.196 pts** |
+| **t** | **−2.65 → señal** |
+| para detectar +0.2 pts | **~22 pares** |
+
+Y dice **dónde**: la diferencia se concentra en **estilo (3.20 → 3.65)**, la dimensión que más ha costado todo el día.
+
+**Ese "~22 pares" es el punto de todo esto.** Sin parear hacían falta ~169 looks por lado (~$26) y aun así el ruido del día se comía el resultado.
+
+### Notes — y el aviso que impide que este número se use mal
+
+Esa corrida **cambia de modelo**, y ahí la rúbrica **no decide**: un juez Claude tiende a preferir looks escritos por Claude. Está en `rubrica.ts` desde que nació, y sin el aviso el número saldría igual de convincente en pantalla. Se muestra en el script **y** en la UI.
+
+Lo curioso, y lo que hace la señal más creíble no menos: el juez es Sonnet (Claude) y **prefirió Gemini** — o sea, contra su propio sesgo esperado.
+
+**Lo que esto decide:** iteraciones de prompt y de reglas, donde los dos lados corren el mismo juez y su sesgo se cancela. **Lo que no:** coronar un modelo. Eso sigue siendo el voto ciego humano.
+
 ## [0.2.141.0] - 2026-08-07
 
 ### Added — la bota de montaña no es calzado de calle

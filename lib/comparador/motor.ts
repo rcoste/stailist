@@ -453,6 +453,9 @@ export type LadoMotor = {
   variante: string;
   looks: LookMotor[] | null;
   reviews: unknown;
+  /** Las notas de la rúbrica, una por look (scripts/comparador-juzgar.ts).
+   * null = esta corrida todavía no se juzgó automáticamente. */
+  notas?: import("@/lib/engine/rubrica").NotaRubrica[] | null;
   error: string | null;
   costoUsd: number | null;
   ms: number | null;

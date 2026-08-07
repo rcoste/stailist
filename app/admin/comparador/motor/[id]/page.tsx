@@ -6,6 +6,7 @@ import {
   estimadoMotor,
   preferenciasPorLook,
 } from "@/lib/comparador/motor";
+import { marcadorPareado, type ResultadoPareado } from "@/lib/comparador/juez-pareado";
 import { GenerarClient } from "./generar-client";
 import { VotarClient, type ParParaVotar } from "./votar-client";
 import { MarcadorMotorView } from "./marcador-motor";
@@ -148,6 +149,24 @@ export default async function CorridaMotor({
 
   const prefs = preferenciasPorLook(corrida.variantes, corrida.pares);
 
+  // EL MARCADOR PAREADO: la rúbrica sobre los MISMOS briefs. Aparece solo si
+  // alguien ya juzgó la corrida (scripts/comparador-juzgar.ts) — es una lectura
+  // aparte del voto, no lo sustituye.
+  const juzgados = corrida.pares
+    .filter((p) => !p.repiteDe)
+    .map((p) => ({
+      n: p.n,
+      etiqueta: p.brief.etiqueta,
+      lados: p.lados.map((l) => ({ variante: l.variante, notas: l.notas ?? [] })),
+    }));
+  const hayNotas = juzgados.some((j) => j.lados.some((l) => l.notas.length > 0));
+  const pareado = hayNotas
+    ? marcadorPareado(juzgados, [claves[0], claves[1]])
+    : null;
+  // Si las variantes cambian de MODELO, la rúbrica describe pero no decide.
+  const cambiaModelo =
+    new Set(corrida.variantes.map((v) => v.modeloId ?? "produccion")).size > 1;
+
   return (
     <MarcadorMotorView
       corridaId={id}
@@ -161,6 +180,9 @@ export default async function CorridaMotor({
       notas={notas}
       comentarios={comentarios}
       preferencias={{ filas: prefs, empates: prefs.empates ?? 0 }}
+      pareado={pareado}
+      cambiaModelo={cambiaModelo}
+      etiquetas={Object.fromEntries(corrida.variantes.map((v) => [v.clave, v.etiqueta]))}
       sinGenerar={Math.ceil(trabajos.length / 2)}
       marcasPendientes={
         corrida.pares.filter(

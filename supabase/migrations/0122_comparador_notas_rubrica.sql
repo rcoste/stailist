@@ -1,0 +1,16 @@
+-- LA RÚBRICA JUZGA EL COMPARADOR: el instrumento pareado.
+--
+-- El comparador ya corre A y B sobre el MISMO brief, pero esperaba el voto
+-- humano para decidir. Ahora la rúbrica puede juzgar los dos lados y la
+-- comparación se hace par a par.
+--
+-- POR QUÉ IMPORTA, con el número que lo justifica: dos corridas del eval con EL
+-- MISMO CÓDIGO dieron 76% y 88% de aprobación. Con esa varianza entre días,
+-- comparar dos versiones con una corrida cada una no distingue una mejora del
+-- ruido. Comparar sobre el mismo brief cancela esa varianza por construcción.
+--
+-- Una nota por look, en el orden de `looks`. El voto humano NO se toca: sigue
+-- siendo quien corona un modelo (un juez Claude prefiere looks de Claude). Esto
+-- decide iteraciones de prompt y reglas, donde los dos lados corren el mismo
+-- juez y el sesgo se cancela.
+alter table public.comparador_motor_lados add column if not exists notas jsonb;

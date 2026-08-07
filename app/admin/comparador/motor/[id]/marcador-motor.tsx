@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEFECTOS_MOTOR, type MarcadorMotor } from "@/lib/comparador/motor";
+import { paresNecesarios, type ResultadoPareado } from "@/lib/comparador/juez-pareado";
 import { formatoUsd } from "@/lib/proveedores/precios";
 import {
   cambiarEstadoMotor,
@@ -30,6 +31,9 @@ export function MarcadorMotorView({
   notas,
   comentarios,
   preferencias,
+  pareado,
+  cambiaModelo,
+  etiquetas,
   sinGenerar,
   marcasPendientes,
 }: {
@@ -48,6 +52,10 @@ export function MarcadorMotorView({
    * alcanzable, así que es evidencia más débil que el voto ciego.
    */
   preferencias: { filas: { clave: string; etiqueta: string; gana: number }[]; empates: number };
+  /** El marcador de la RÚBRICA sobre los mismos briefs. null si nadie juzgó. */
+  pareado: ResultadoPareado | null;
+  cambiaModelo: boolean;
+  etiquetas: Record<string, string>;
   comentarios: {
     n: number;
     etiqueta: string;
@@ -289,6 +297,92 @@ export function MarcadorMotorView({
           ciega al marcador. Mezclarla con el veredicto le lavaría esa
           diferencia; leerla aparte contesta algo que el veredicto no contestó,
           porque los primeros pares se votaron mirando solo el primer look. */}
+      {pareado && pareado.comparables > 0 ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            La rúbrica, par a par
+          </h2>
+          <p className="text-xs text-muted">
+            El mismo juez sobre los MISMOS briefs. Comparar dentro del brief
+            cancela la varianza del día — que es la que domina: dos corridas del
+            eval con el mismo código llegaron a diferir 12 puntos.
+          </p>
+          {cambiaModelo ? (
+            <p className="rounded-xl border border-line bg-surface p-3 text-xs text-warning">
+              Estas variantes cambian de MODELO. La rúbrica no corona modelos —
+              un juez Claude prefiere looks de Claude. Esto dice DÓNDE difieren,
+              no cuál usar: eso lo decide el voto ciego.
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4 text-sm">
+            {Object.entries(pareado.gana).map(([clave, n]) => (
+              <div key={clave} className="flex justify-between">
+                <span className="text-muted">{etiquetas[clave] ?? clave}</span>
+                <span className="font-semibold text-ink">gana {n}</span>
+              </div>
+            ))}
+            <div className="flex justify-between">
+              <span className="text-muted">empates</span>
+              <span className="text-ink">{pareado.empates}</span>
+            </div>
+            {pareado.diferencia ? (
+              <div className="mt-1 border-t border-line pt-2">
+                <div className="flex justify-between">
+                  <span className="text-muted">diferencia media</span>
+                  <span className="font-semibold text-ink">
+                    {pareado.diferencia.media >= 0 ? "+" : ""}
+                    {pareado.diferencia.media.toFixed(3)} pts
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">t</span>
+                  <span className="font-semibold text-ink">
+                    {pareado.diferencia.t ?? "—"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted">
+                  {pareado.diferencia.t != null && Math.abs(pareado.diferencia.t) > 2
+                    ? "La diferencia sobrevive al ruido."
+                    : `Dentro del ruido. Para detectar +0.2 pts harían falta ~${paresNecesarios(
+                        pareado.diferencia.se * Math.sqrt(pareado.comparables)
+                      )} pares.`}
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          {/* DÓNDE está la diferencia: sin esto el número es un veredicto sin
+              diagnóstico, y lo que sirve para iterar es saber qué dimensión se
+              movió. */}
+          <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+            <table className="w-full min-w-[380px] text-xs">
+              <thead>
+                <tr className="border-b border-line text-left text-muted">
+                  <th className="p-2 font-medium">dimensión</th>
+                  {Object.keys(pareado.gana).map((c) => (
+                    <th key={c} className="p-2 font-medium">
+                      {etiquetas[c] ?? c}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {["ocasion", "clima", "armado", "estilo", "color", "wow"].map((d) => (
+                  <tr key={d} className="border-b border-line last:border-0">
+                    <td className="p-2 text-muted">{d}</td>
+                    {Object.keys(pareado.gana).map((c) => (
+                      <td key={c} className="p-2 font-semibold text-ink">
+                        {pareado.porDimension[c]?.[d]?.toFixed(2) ?? "—"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
       {preferencias.filas.some((f) => f.gana > 0) || preferencias.empates ? (
         <section className="flex flex-col gap-2 rounded-xl border border-dashed border-line p-4">
           <h2 className="text-sm font-semibold text-ink">
