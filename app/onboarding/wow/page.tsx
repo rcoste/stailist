@@ -2,6 +2,7 @@ import { getProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { routeForStep } from "@/lib/onboarding";
 import { createClient } from "@/lib/supabase/server";
+import { ASSESSMENT_QUESTIONS } from "@/lib/capsule";
 import {
   ITEM_IMAGE_SELECT,
   itemImageUrlSync,
@@ -111,6 +112,18 @@ export default async function WowPage({
     }
   }
 
+  // El puente con el quiz de estilo de vida: allá describió la FORMA de su
+  // semana ("oficina creativa o casual"), aquí se le pide el REGISTRO de su
+  // ropa. Sin decirlo, la segunda pregunta se siente repetida.
+  const life = (profile.lifestyle ?? {}) as Record<string, string>;
+  const qTrabajo = ASSESSMENT_QUESTIONS.find((x) => x.id === "trabajo");
+  const desdeElQuiz =
+    (life.trabajo ?? "")
+      .split(",")
+      .map((v) => qTrabajo?.options.find((o) => o.value === v)?.label.toLowerCase())
+      .filter(Boolean)
+      .join(" / ") || null;
+
   return (
     <section className="flex flex-1 flex-col pt-4">
       {/* El chrome (barra de progreso + encabezados) lo controla el cliente por
@@ -122,6 +135,7 @@ export default async function WowPage({
         defaultObjective={profile.last_objective}
         gender={(profile.gender as "hombre" | "mujer" | null) ?? null}
         workDressCode={(profile.work_dress_code as string | null) ?? null}
+        desdeElQuiz={desdeElQuiz}
         hasAvatar={!!profile.avatar_path}
         closetCount={(await countPromise).count ?? 0}
         resumeLookId={resumeLookId ?? null}

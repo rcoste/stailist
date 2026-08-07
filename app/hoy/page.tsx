@@ -9,6 +9,7 @@ import type { ClosetPick } from "@/components/weather-picker";
 import { loadClosetPicks } from "@/lib/closet-picks";
 import { loadHomeCard } from "@/lib/home-card";
 import { buildHomeChecklist } from "@/lib/home-checklist";
+import { ASSESSMENT_QUESTIONS } from "@/lib/capsule";
 
 export default async function HoyPage({
   searchParams,
@@ -201,6 +202,18 @@ export default async function HoyPage({
   // El banner (sólo hints ahora) va centrado y angosto en desktop.
   const hasBanner = candidatos.length > 0;
 
+  // El puente con el quiz de estilo de vida: allá describió la FORMA de su
+  // semana ("oficina creativa o casual"), aquí se le pide el REGISTRO de su
+  // ropa. Sin decirlo, la segunda pregunta se siente repetida.
+  const life = (profile.lifestyle ?? {}) as Record<string, string>;
+  const qTrabajo = ASSESSMENT_QUESTIONS.find((x) => x.id === "trabajo");
+  const desdeElQuiz =
+    (life.trabajo ?? "")
+      .split(",")
+      .map((v) => qTrabajo?.options.find((o) => o.value === v)?.label.toLowerCase())
+      .filter(Boolean)
+      .join(" / ") || null;
+
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-4 pt-4">
@@ -219,6 +232,7 @@ export default async function HoyPage({
           defaultObjective={profile.last_objective}
           gender={(profile.gender as "hombre" | "mujer" | null) ?? null}
           workDressCode={(profile.work_dress_code as string | null) ?? null}
+          desdeElQuiz={desdeElQuiz}
           closet={closet}
           autoAsk={autoAsk}
           homeCard={homeCard}
