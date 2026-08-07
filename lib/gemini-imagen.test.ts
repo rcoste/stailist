@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { pedirImagen } from "./tryon";
+import { pedirImagen } from "./gemini-imagen";
 
-// El reintento del try-on, que existe porque el servicio de imágenes falla
+// El reintento de la puerta de imagen (try-on Y avatar), que existe porque
+// el servicio falla
 // solo: medido el 2026-08-06, 2 de 8 llamadas idénticas a gemini-3-pro-image
 // volvieron `500 INTERNAL` en ~200ms con la llave y el prompt sanos, y otra
 // corrida murió con ETIMEDOUT de red.

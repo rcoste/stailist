@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.117.0] - 2026-08-06
+
+Del primer flujo completo de Pablo en Android.
+
+### Fixed
+
+- **En Android, el botón de foto abría el carrete directo en vez de ofrecer la cámara.** El `accept` llevaba las extensiones pegadas (`image/*,.heic,.heif`) y eso hace que Chrome resuelva el selector a documentos en vez de mostrar el chooser con la cámara. Ahora va limpio (`image/*`) en el avatar y en añadir prenda — fotografiar la prenda ahí mismo es medio punto de ese flujo. **No se pierde HEIC**: `toUsableImage` lo detecta por `file.type` **o** por la extensión del nombre, así que la conversión sigue igual; lo único que cambia es qué archivos ofrece el selector. (El de "importar carrete" se queda como está: ahí la cámara no aplica.)
+- **El avatar no heredaba el reintento del try-on.** Tenía **su propia copia** del fetch a Gemini, así que se quedó fuera del retry y del timeout que `lib/tryon.ts` sí recibió — y el servicio devuelve 500 intermitentes (2 de 8 medidas). Un solo 500 mataba la generación de la cara. Ahora las dos pasan por `lib/gemini-imagen.ts`, la puerta común.
+
+### Added
+
+- **El avatar ahora deja rastro de cuánto tardó** (`ms_generacion` en el evento `avatar_judge`). El motor lo registraba desde siempre (`generation_timing`); el avatar no, y por eso "tardó muchísimo" no se podía contestar con datos: no había forma de separar "Gemini iba lento" de "la subida iba lenta" de "el juez pidió otra generación".
+- **Y los fallos dejan rastro**, que antes eran invisibles: la fila de instrumentación se escribe al final del camino feliz, así que una generación que moría antes no dejaba ninguna — en la tabla solo se veían los éxitos. Evento nuevo `avatar_fallo` con el motivo real y el tiempo (migración 0117; el CHECK de `events` es lista blanca y un tipo sin agregar truena el insert en silencio — ya pasó con `trip_item_swap`).
+
+### Notes
+
+- La lentitud de Pablo **no vino de un cambio de modelo**: el avatar usa `gemini-3-pro-image` + Haiku 4.5 de juez desde la 0.2.89.0, y nada de lo de esta semana tocó ese camino. Sus dos generaciones salieron con score 8 y **sin reintento** del juez (el 12% global sí reintenta, que son dos generaciones seguidas).
+
 ## [0.2.116.3] - 2026-08-06
 
 ### Added

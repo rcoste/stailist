@@ -159,7 +159,11 @@ export function AddPhotoFlow({
     <input
       ref={inputRef}
       type="file"
-      accept="image/*,.heic,.heif"
+      // `accept` limpio, sin las extensiones: con ellas pegadas Android abre
+      // el carrete directo y no ofrece la cámara — y fotografiar una prenda
+      // ahí mismo es medio punto del flujo. HEIC no se pierde: toUsableImage
+      // lo detecta por file.type O por la extensión del nombre.
+      accept="image/*"
       onChange={onFile}
       className="hidden"
     />
