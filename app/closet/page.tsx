@@ -56,6 +56,9 @@ export default async function ClosetPage() {
       categoria: a.categoria ?? arch?.category ?? null,
       certeza: (r.certeza as string | null) ?? null,
       corte: a.corte ?? null,
+      confirmados: Array.isArray((r.attrs as { confirmados?: unknown })?.confirmados)
+        ? ((r.attrs as { confirmados: string[] }).confirmados)
+        : [],
       usos: usos.get(r.id as string) ?? 0,
     };
   });

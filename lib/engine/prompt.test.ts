@@ -832,6 +832,18 @@ describe("la certeza de la prenda llega al motor (v49)", () => {
     );
   });
 
+  it("un atributo CONFIRMADO deja de marcarse, aunque la prenda siga siendo asumida", () => {
+    // Es el atributo lo que queda resuelto, no la prenda: quien confirmó el
+    // corte de sus jeans no debe seguir leyendo que todo en ellos es aproximado.
+    const t = describeItem({
+      id: "a",
+      certeza: "asumida",
+      attrs: { ...base, confirmados: ["corte"] },
+    } as never);
+    expect(t).not.toContain("APROXIMADOS");
+    expect(t).toContain("corte recto");
+  });
+
   it("sin certeza (dato viejo) no se marca — no inventar desconfianza", () => {
     expect(describeItem({ id: "a", attrs: base } as never)).not.toContain("APROXIMADOS");
   });

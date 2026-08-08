@@ -19,6 +19,8 @@ export type PrendaAfinable = {
   certeza: string | null;
   /** El valor que el catálogo le puso (y que nadie confirmó). */
   corte: string | null;
+  /** Los atributos que la persona YA confirmó a mano. */
+  confirmados?: string[];
   /** Cuántas veces ha aparecido en un look. */
   usos: number;
 };
@@ -26,6 +28,8 @@ export type PrendaAfinable = {
 export type Pregunta = {
   id: string;
   nombre: string;
+  /** Qué silueta dibujar. Un pantalón y una camisa no se ven igual de anchos. */
+  familia: "bottom" | "top";
   /** Qué atributo se pregunta. Hoy solo el corte: es el que mueve el look. */
   atributo: "corte";
   /** La pregunta, en la voz del producto. */
@@ -78,6 +82,9 @@ export function preguntasPendientes(
     // El corte inventado tiene que EXISTIR: si el catálogo no le puso ninguno,
     // el motor no está afirmando nada falso y no hay nada que corregir.
     .filter((p) => !!p.corte)
+    // Lo ya confirmado no se vuelve a preguntar: es el atributo, no la prenda,
+    // lo que queda resuelto.
+    .filter((p) => !(p.confirmados ?? []).includes("corte"))
     // Y la prenda tiene que USARSE. Una que nunca entró a un look puede estar
     // mal descrita sin consecuencia; preguntarla es cobrar sin dar.
     .filter((p) => p.usos > 0)
@@ -85,9 +92,11 @@ export function preguntasPendientes(
     .slice(0, tope)
     .map((p) => {
       const plural = esPlural(p.nombre);
+      const familia = (p.categoria ?? "").toLowerCase() === "bottom" ? "bottom" : "top";
       return {
         id: p.id,
         nombre: p.nombre,
+        familia,
         atributo: "corte" as const,
         texto: plural ? "¿cómo te quedan?" : "¿cómo te queda?",
         opciones: plural ? OPCIONES_CORTE : OPCIONES_CORTE_TOP,

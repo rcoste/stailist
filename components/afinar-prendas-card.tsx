@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Pregunta } from "@/lib/afinar-prendas";
 import { confirmarCorte } from "@/app/closet/actions";
+import { SiluetaCorte } from "@/components/silueta-corte";
 
 // "AFINEMOS TRES PRENDAS" — la otra mitad de la certeza.
 //
@@ -107,16 +108,24 @@ export function AfinarPrendasCard({
         <p className="text-[13px] text-muted">
           {q.texto} · la he usado en {q.usos} {q.usos === 1 ? "look" : "looks"}
         </p>
-        <div className="mt-1 flex flex-col gap-2">
+        {/* En fila y con silueta: las tres se comparan de un vistazo, que es
+            justo lo que la persona necesita para saber dónde cae la suya.
+            Apiladas y sin dibujo, "recto" y "holgado" son dos palabras que hay
+            que imaginar por separado. */}
+        <div className="mt-1 grid grid-cols-3 gap-2">
           {q.opciones.map((o) => (
             <button
               key={o.valor}
               type="button"
               disabled={guardando}
               onClick={() => responder(o.valor)}
-              className="min-h-11 rounded-sm border border-line bg-surface px-4 text-left text-[15px] text-ink transition-colors hover:border-ink active:bg-tile disabled:opacity-50"
+              className="flex flex-col items-center gap-1.5 rounded-sm border border-line bg-surface px-2 py-3 text-ink transition-colors hover:border-ink active:bg-tile disabled:opacity-50"
             >
-              {o.label}
+              <SiluetaCorte
+                corte={o.valor as "entallado" | "recto" | "holgado"}
+                tipo={q.familia}
+              />
+              <span className="text-center text-[13px] leading-tight">{o.label}</span>
             </button>
           ))}
         </div>
