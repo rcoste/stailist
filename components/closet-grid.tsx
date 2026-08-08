@@ -983,14 +983,26 @@ function ItemSheet({
                             setAtando(false);
                             onSaved();
                           }}
-                          className="flex w-20 shrink-0 flex-col gap-1 rounded-sm border border-line bg-surface p-1 text-left transition-colors hover:border-accent disabled:opacity-50"
+                          className="flex w-28 shrink-0 flex-col gap-1 rounded-sm border border-line bg-surface p-1 text-left transition-colors hover:border-accent disabled:opacity-50"
                         >
                           <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-bg">
                             {c.imagen ? (
-                              <Image src={c.imagen} alt="" fill sizes="80px" className="object-cover" />
+                              <Image src={c.imagen} alt="" fill sizes="112px" className="object-cover" />
                             ) : null}
                           </div>
-                          <span className="truncate text-[11px] text-muted">{c.nombre}</span>
+                          {/* SIN `truncate`, y la tarjeta más ancha. Roberto,
+                              mirando cuatro candidatos: "no es claro cuál es el
+                              pantalón que va con ese". Con 80px y una línea los
+                              cuatro decían "Pantalón de…" — y lo que los
+                              distingue (marino, gris oscuro) está AL FINAL del
+                              nombre, justo donde cortaba. Una lista para elegir
+                              cuyas etiquetas son idénticas no es una lista. */}
+                          <span className="text-[11px] leading-tight text-muted">{c.nombre}</span>
+                          {c.conjunto ? (
+                            <span className="text-[10px] leading-tight text-warning">
+                              ya es de otro conjunto
+                            </span>
+                          ) : null}
                         </button>
                       ))
                     )}
@@ -1021,9 +1033,10 @@ function ItemSheet({
                         setAtando(false);
                         onSaved();
                       }}
-                      className="self-start text-[13px] font-medium text-accent disabled:opacity-50"
+                      className="flex min-h-10 items-center justify-center gap-2 rounded-sm border border-accent px-3 text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft disabled:opacity-50"
                     >
-                      no está en mi clóset — créalo
+                      {atando ? <Spinner className="h-4 w-4" /> : null}
+                      su pantalón no está en mi clóset — créalo
                     </button>
                   ) : null}
                   </>
