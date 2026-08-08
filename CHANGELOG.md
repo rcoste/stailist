@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.150.0] - 2026-08-07
+
+Los tres salen de una foto que subió Roberto —él con un traje puesto— y de lo que vio en la pantalla de confirmación.
+
+### Fixed — faltaba "Saco" en los dos editores de foto
+
+Roberto: *"no entendí… suponiendo que fuera un blazer, ¿en dónde entraría, en top, en abrigo? No sé ahí por qué no lo detectó"*.
+
+**Sí lo detectó.** El schema de visión tiene las 7 categorías y la prenda salió con `categoria: "saco"` — pero la lista de botones sólo tenía 6, sin saco. Sin botón que le corresponda, la prenda aparece con **nada marcado**, y se lee como que el modelo falló.
+
+Peor que cosmético: tocar cualquiera de las otras seis para "arreglarlo" rompía un dato correcto, casi siempre hacia `abrigo` — que es justo el error que el prompt de visión se esfuerza en evitar (saco = por formalidad; abrigo = SOLO capa por clima). **18 prendas de foto son categoría saco y todas pasaron por ahí.**
+
+### Fixed — un traje de verdad disparaba la regla de "traje desparejado"
+
+Roberto pidió que el traje se guardara como conjunto y no partido en dos. Partirlo es correcto y está medido: guardarlo como una sola prenda hacía que el motor armara looks **sin pantalón**. Pero su observación destapó algo peor.
+
+Nada decía que esas dos piezas van juntas — y la regla `traje-desparejado` marca como error exactamente eso: saco y pantalón de vestir del mismo color. **O sea que subir un traje de verdad creaba el par que el motor tiene prohibido juntar.** Tener un buen traje impedía usarlo.
+
+Ahora las dos piezas se pueden atar con un `conjunto`, y la regla deja pasar el par atado (pero sigue marcando el saco de un traje con el pantalón de otro).
+
+**El lazo lo pone la persona, no el código**, y es deliberado: un blazer con un pantalón del mismo tono que NO son traje es justo el error que la regla existe para cazar. Atarlos por parecido apagaría la regla en el único caso donde sirve. Y la pregunta sólo sale cuando hay **exactamente** un saco y un pantalón formal: con dos sacos, "¿son traje?" tiene cuatro respuestas y se contestaría al azar.
+
+### Added — corte y largo en la confirmación, con "no aplica"
+
+Mi número de ayer —*"sólo 36 prendas se quedan sin corte"*— contestaba la pregunta equivocada: medía los **huecos**, no los **errores**. La visión llena el corte en 199 prendas y se guarda tal cual, sin que nadie lo vea nunca; una lectura mala es hoy invisible e incorregible. Es el mismo dato inventado de siempre con otro disfraz.
+
+Ambos aparecen sólo donde cambian el look, y con **"no aplica"** explícito, como pidió Roberto: sin esa salida, la única forma de no contestar es dejar lo que el modelo puso — o sea, aceptarlo en silencio.
+
 ## [0.2.149.0] - 2026-08-07
 
 ### Fixed — las prendas con el dato inventado eran las únicas que no se podían corregir

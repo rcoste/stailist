@@ -46,6 +46,32 @@ describe("reglas de ejecución — los casos que la motivaron", () => {
 // La otra mitad, y la que decide si esto es una regla o un parche: los looks
 // que se ven así pero SÍ funcionan no deben marcarse.
 describe("reglas de ejecución — lo que NO debe marcar", () => {
+  it("un TRAJE de verdad no es un traje desparejado", () => {
+    // El caso que lo destapó: Roberto sube la foto de su traje gris, la visión
+    // lo parte —bien— en saco y pantalón, y el par resultante es exactamente
+    // lo que la regla prohíbe. Sin el lazo, tener un traje bueno impedía
+    // usarlo. El lazo lo pone la persona al dar de alta, no el código: un
+    // blazer con pantalón del mismo tono que NO son traje es justo el error
+    // que la regla existe para cazar.
+    const v = revisarEjecucion([
+      p("Saco de traje gris oscuro", "#3A3A3C", { conjunto: "t1" }),
+      p("Camisa blanca", "#FAFAF7"),
+      p("Pantalón de vestir gris oscuro", "#3A3A3C", { conjunto: "t1" }),
+    ]);
+    expect(v.map((x) => x.regla)).not.toContain("traje-desparejado");
+  });
+
+  it("pero dos conjuntos DISTINTOS siguen siendo un traje desparejado", () => {
+    // El saco de un traje con el pantalón de otro es el error clásico, y el
+    // lazo no debe taparlo: sin esta comprobación bastaría con que ambos
+    // tuvieran conjunto —cualquiera— para que la regla callara.
+    const v = revisarEjecucion([
+      p("Saco de traje gris oscuro", "#3A3A3C", { conjunto: "t1" }),
+      p("Pantalón de vestir gris oscuro", "#3A3A3C", { conjunto: "t2" }),
+    ]);
+    expect(v.map((x) => x.regla)).toContain("traje-desparejado");
+  });
+
   it("mismo tono con material distinto sí funciona (es la jugada de edgy)", () => {
     // La receta de edgy lo dice con todas sus letras: "cuando todo es negro, la
     // textura hace el contraste, no el color". Una regla de "mismo tono = mal"

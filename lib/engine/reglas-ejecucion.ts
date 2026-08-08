@@ -224,6 +224,12 @@ export function revisarEjecucion(
     for (const pant of conColor.filter(esPantalonVestir)) {
       const d = distancia(rgb(saco.attrs.color_hex)!, rgb(pant.attrs.color_hex)!);
       if (d > MISMO_TONO) continue;
+      // UN TRAJE DE VERDAD NO ES UN TRAJE DESPAREJADO. Sale de Roberto subiendo
+      // la foto de su traje gris: la visión lo parte —bien— en saco y pantalón,
+      // y el par resultante es exactamente lo que esta regla prohíbe. Sin esta
+      // salida, tener un traje bueno impedía usarlo, que es lo contrario de lo
+      // que la regla busca. El lazo lo pone la persona al darlo de alta.
+      if (saco.attrs.conjunto && saco.attrs.conjunto === pant.attrs.conjunto) continue;
       v.push({
         regla: "traje-desparejado",
         detalle: `"${nombre(saco)}" y "${nombre(pant)}" son del mismo color sin ser un traje: se lee como un traje mal conjuntado, no como un look armado. Cambia el pantalón por uno de otro color.`,

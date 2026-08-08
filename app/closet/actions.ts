@@ -375,6 +375,8 @@ export async function addPhotoItems(
         largo: it.attrs.largo,
         corte: it.attrs.corte,
         manga: it.attrs.manga,
+        // El lazo del traje, si la persona dijo que saco y pantalón son uno.
+        ...(it.attrs.conjunto ? { conjunto: it.attrs.conjunto } : {}),
         ...cleanAtributosRicos(it.attrs),
       },
       render_status: it.renderStatus,
