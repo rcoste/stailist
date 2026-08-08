@@ -9,6 +9,7 @@ import { Icon } from "@/components/icon";
 import { ImageCrop } from "@/components/image-crop";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { parDeTraje } from "@/lib/par-de-traje";
+import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
@@ -55,29 +56,7 @@ const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
 ];
 // Paleta de colores comunes de ropa para corregir el color con un tap (swatch +
 // alternativas). El swatch detectado se muestra aparte como punto de partida.
-// LA PALETA ES PARA CORREGIR, NO PARA DESCRIBIR — y esa distinción se había
-// perdido. El color real lo lee la visión y se guarda como hex exacto; estos 11
-// son sólo los atajos de "no, es otro". Antes la marcada se elegía comparando
-// NOMBRES ("gris oscuro" ≠ "Gris"), así que 123 de 312 prendas salían con
-// ningún swatch encendido y parecía que no había detectado el color. Ahora se
-// compara por hex y el color leído se dibuja como su propio swatch.
-//
-// "Gris oscuro" entra porque faltaba de verdad: el gris carbón es media
-// sastrería masculina (trajes, abrigos, pantalones de vestir) y el único gris
-// disponible era uno de en medio — corregir con él ACLARABA la prenda.
-const PALETTE: { name: string; hex: string }[] = [
-  { name: "Negro", hex: "#1A1A1A" },
-  { name: "Gris oscuro", hex: "#3A3A3C" },
-  { name: "Blanco", hex: "#F2F2F2" },
-  { name: "Gris", hex: "#8A8A8A" },
-  { name: "Azul marino", hex: "#1F2A44" },
-  { name: "Azul", hex: "#3B5BA5" },
-  { name: "Beige", hex: "#C8B89E" },
-  { name: "Café", hex: "#6B4F3A" },
-  { name: "Verde", hex: "#3E5641" },
-  { name: "Vino", hex: "#5E2A33" },
-  { name: "Rosa", hex: "#C98B9E" },
-];
+// La paleta y el cálculo de vecinos viven en lib/paleta-colores.ts (con tests).
 
 // Comprime una imagen a 1280px JPEG; devuelve dataURL para el análisis.
 function comprimir(file: Blob): Promise<string> {
@@ -885,11 +864,26 @@ function DraftCard({
 }) {
   const a = item.attrs;
   const baja = a.confianza === "baja";
+  // Se abre por prenda y no se vuelve a cerrar: quien pidió ver todos los
+  // colores es porque la lectura le falló, y volver a esconderlos sería quitarle
+  // la salida justo cuando la está usando.
+  const [todosLosColores, setTodosLosColores] = useState(false);
   // El nombre que se enseña es el que LEYÓ la visión ("gris oscuro"), no el del
   // atajo más parecido: es más específico y es lo que de verdad se guardó.
   const colorName = a.color;
-  // El swatch de lo leído sólo hace falta si no es ya uno de los 11 atajos.
-  const hayLeido = !!item.leido.hex && !PALETTE.some((p) => mismoHex(item.leido.hex, p.hex));
+  // El swatch de lo leído sólo hace falta si no es ya uno de los atajos.
+  const hayLeido = !!item.leido.hex && !PALETA.some((p) => mismoHex(item.leido.hex, p.hex));
+  // VECINOS PRIMERO (idea de Roberto): un carbón puede confundirse con negro o
+  // marino, jamás con rosa. Enseñar las once cada vez obligaba a buscar entre
+  // colores que nadie iba a elegir.
+  //
+  // PERO LA PUERTA SE ABRE SIEMPRE. Filtrar por cercanía da por hecho que la
+  // lectura es aproximadamente correcta, que es justo lo que falla cuando más
+  // falta hace corregir: un saco marino con luz cálida se puede leer "café", y
+  // ahí el color bueno no está entre los vecinos del café. Si el filtro cerrara
+  // la puerta, el único error que importa sería el único imposible de arreglar.
+  const cercanos = coloresCercanos(item.leido.hex, 4);
+  const mostrar = todosLosColores ? PALETA : cercanos;
   return (
     <div
       className={`flex flex-col gap-3 rounded-xl border p-3 transition-opacity ${
@@ -973,12 +967,13 @@ function DraftCard({
                   style={{ backgroundColor: item.leido.hex }}
                 />
               ) : null}
-              {PALETTE.map((p) => (
+              {mostrar.map((p) => (
                 <button
                   key={p.hex}
                   type="button"
                   onClick={() => onPatch({ color: p.name, color_hex: p.hex })}
                   aria-label={p.name}
+                  title={p.name}
                   className={`h-7 w-7 rounded-full border-2 transition-transform ${
                     mismoHex(a.color_hex, p.hex)
                       ? "scale-110 border-accent"
@@ -987,6 +982,17 @@ function DraftCard({
                   style={{ backgroundColor: p.hex }}
                 />
               ))}
+              {/* La puerta. Sin esto, una lectura MUY equivocada sería
+                  incorregible — ver el comentario de `cercanos`. */}
+              {!todosLosColores ? (
+                <button
+                  type="button"
+                  onClick={() => setTodosLosColores(true)}
+                  className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+                >
+                  otro color
+                </button>
+              ) : null}
             </div>
           </Field>
 
