@@ -23,6 +23,8 @@ export type PrendaAfinable = {
   confirmados?: string[];
   /** Cuántas veces ha aparecido en un look. */
   usos: number;
+  /** La imagen con que se muestra en el clóset — para poder identificarla. */
+  imagen?: string | null;
 };
 
 export type Pregunta = {
@@ -37,6 +39,15 @@ export type Pregunta = {
   opciones: { valor: string; label: string }[];
   /** Para ordenar y para explicar por qué se pregunta ésta. */
   usos: number;
+  /**
+   * La misma imagen con la que la prenda aparece en el clóset.
+   *
+   * NO ES UNA FOTO SUYA, y la card lo dice: por definición estas prendas
+   * llegaron marcando el checklist, así que la imagen es la del catálogo. Sirve
+   * para reconocer CUÁL de sus tres pantalones oscuros es "Jeans negros", que
+   * es lo único que hace contestable la pregunta.
+   */
+  imagen: string | null;
 };
 
 /**
@@ -101,6 +112,7 @@ export function preguntasPendientes(
         texto: plural ? "¿cómo te quedan?" : "¿cómo te queda?",
         opciones: plural ? OPCIONES_CORTE : OPCIONES_CORTE_TOP,
         usos: p.usos,
+        imagen: p.imagen ?? null,
       };
     });
 }

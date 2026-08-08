@@ -88,6 +88,18 @@ describe("cómo se pregunta", () => {
     expect(camisa.opciones[0].label).toBe("entallada");
   });
 
+  it("lleva la imagen: sin ella la pregunta no se puede contestar", () => {
+    // No es adorno. Con tres pantalones oscuros, "Jeans negros" no identifica
+    // ninguno y se contesta al azar — y una respuesta al azar es PEOR que no
+    // preguntar, porque el dato falso queda marcado como confirmado.
+    const [q] = preguntasPendientes([p({ imagen: "/catalogo/jeans.png" })]);
+    expect(q.imagen).toBe("/catalogo/jeans.png");
+    // Y si la prenda no tiene ninguna, la pregunta sigue saliendo: se pierde la
+    // ayuda visual, no la oportunidad de corregir el dato.
+    const [sinImagen] = preguntasPendientes([p({ imagen: null })]);
+    expect(sinImagen.imagen).toBeNull();
+  });
+
   it("las opciones están en palabras de persona, no de catálogo", () => {
     const [q] = preguntasPendientes([p()]);
     // El valor guardado es el del catálogo; lo que se LEE, no.

@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.148.0] - 2026-08-07
+
+### Fixed — la pregunta del corte no se podía contestar: faltaba ver la prenda
+
+Roberto, con la card enfrente: *"si me enseñaras una foto de los jeans sería más fácil, pero no sé si es una foto de los jeans que yo subí o porque estaban en la biblioteca y dije que yo los tenía"*.
+
+Son **dos** problemas distintos en una frase, y el segundo es el grave.
+
+**Sin imagen, la pregunta no se puede contestar.** Su clóset tiene varios pantalones oscuros; el nombre "Jeans azul oscuro" no identifica ninguno. Y una pregunta que no se puede contestar bien se contesta al azar — que es **peor que no preguntar**: el dato falso queda marcado como confirmado y el motor deja de desconfiar de él. Justo lo contrario de para lo que existe la certeza.
+
+**Con imagen y sin letrero, la imagen miente.** Estas prendas son, por definición, las que entraron marcando el checklist: la imagen es del catálogo. Si parece suya, la persona contestaría mirando el dibujo en vez de acordarse de su prenda — o sea describiendo la nuestra.
+
+Ahora la card lleva la miniatura, y lleva letrero: **"Imagen del catálogo, no es tu prenda — piensa en la tuya"**. El encabezado dice también de dónde salieron: *"Las marcaste en la lista de básicos: sé que las tienes, pero no cómo te quedan"*.
+
 ## [0.2.147.0] - 2026-08-07
 
 ### Added — siluetas para que la pregunta del corte se pueda contestar
