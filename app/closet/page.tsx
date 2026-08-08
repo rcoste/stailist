@@ -45,26 +45,6 @@ export default async function ClosetPage() {
       usos.set(id, (usos.get(id) ?? 0) + 1);
     }
   }
-  const afinables: PrendaAfinable[] = (rows ?? []).map((r) => {
-    const a = (r.attrs ?? {}) as { nombre?: string; categoria?: string; corte?: string };
-    const arch = r.archetypes as { name?: string; category?: string } | null;
-    return {
-      id: r.id as string,
-      nombre: arch?.name ?? a.nombre ?? "Prenda",
-      // La categoría se resuelve igual que en el motor: la del arquetipo cuenta
-      // cuando la prenda no la trae (2 de cada 3 del catálogo no la copian).
-      categoria: a.categoria ?? arch?.category ?? null,
-      certeza: (r.certeza as string | null) ?? null,
-      corte: a.corte ?? null,
-      confirmados: Array.isArray((r.attrs as { confirmados?: unknown })?.confirmados)
-        ? ((r.attrs as { confirmados: string[] }).confirmados)
-        : [],
-      usos: usos.get(r.id as string) ?? 0,
-    };
-  });
-  const preguntas = preguntasPendientes(afinables);
-  const faltan = cuantasFaltan(afinables);
-
   // Las fotos propias y los renders viven en el bucket privado → URL firmada para
   // mostrarlas. Juntamos ambos paths en una sola petición de firmas.
   const photoPaths = Array.from(
@@ -83,6 +63,34 @@ export default async function ClosetPage() {
       if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
     });
   }
+
+  // LAS PRENDAS AFINABLES VAN DESPUÉS DE FIRMAR, y no antes, porque la pregunta
+  // necesita la IMAGEN. Roberto, viendo la card: "si me enseñaras una foto de
+  // los jeans sería más fácil" — tiene tres pantalones oscuros y el nombre
+  // "Jeans negros" no le decía cuál de todos. Una pregunta sobre una prenda que
+  // no puedes identificar no se puede contestar bien; se contesta al azar, que
+  // es peor que no preguntar (el motor se queda con un dato falso pero marcado
+  // como confirmado).
+  const afinables: PrendaAfinable[] = (rows ?? []).map((r) => {
+    const a = (r.attrs ?? {}) as { nombre?: string; categoria?: string; corte?: string };
+    const arch = r.archetypes as { name?: string; category?: string } | null;
+    return {
+      id: r.id as string,
+      nombre: arch?.name ?? a.nombre ?? "Prenda",
+      // La categoría se resuelve igual que en el motor: la del arquetipo cuenta
+      // cuando la prenda no la trae (2 de cada 3 del catálogo no la copian).
+      categoria: a.categoria ?? arch?.category ?? null,
+      certeza: (r.certeza as string | null) ?? null,
+      corte: a.corte ?? null,
+      confirmados: Array.isArray((r.attrs as { confirmados?: unknown })?.confirmados)
+        ? ((r.attrs as { confirmados: string[] }).confirmados)
+        : [],
+      usos: usos.get(r.id as string) ?? 0,
+      imagen: itemImageUrlSync(r as ItemImageRow, (p) => signed.get(p)),
+    };
+  });
+  const preguntas = preguntasPendientes(afinables);
+  const faltan = cuantasFaltan(afinables);
 
   // Resuelve nombre/imagen/categoría: del arquetipo si lo hay, si no de attrs
   // (las fotos propias usan la URL firmada y la categoría que confirmó la usuaria).
