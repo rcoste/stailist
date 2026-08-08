@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.146.0] - 2026-08-07
+
+### Added — "afinemos 3 prendas": preguntar solo donde el dato cambia el look
+
+La otra mitad de la certeza (v49). Guardar que un dato es asumido hace al motor **prudente**; confirmarlo lo hace **exacto**.
+
+Pero preguntar todo sería deshacer justo lo que el checklist de básicos vino a resolver: **catalogar el clóset no debe tomar horas**. Así que se pregunta donde el dato **cambia el look** y donde la prenda **se usa**:
+
+| filtro | por qué |
+|---|---|
+| solo prendas **asumidas** | las de foto ya tienen su dato |
+| solo donde el corte **importa** | el corte de unos lentes no cambia ningún look |
+| solo si hay un corte **inventado** | sin él, el motor no afirma nada falso |
+| solo si **se ha usado** | preguntar una que nunca entró a un look es cobrar sin dar |
+| **de a 3** | es un goteo, no un formulario |
+
+Ordenadas por **usos**, que es donde el dato falso más pesa. En el clóset de Roberto: de 78 asumidas, **29 califican** — y las encabezan sus *"Jeans negros"* con **14 usos** y un `corte: recto` que nadie confirmó.
+
+### Los detalles que hacen que no se sienta un formulario
+
+- **Cada pregunta dice cuánto se usa la prenda** (*"la he usado en 14 looks"*). No es decoración: es la respuesta a *"¿y por qué me preguntas esto?"*.
+- **"Ahora no" siempre visible** y **"saltar esta"** por pregunta — quizá ya no la tiene, o no se acuerda. Obligar a contestar convertiría el goteo en un muro.
+- **Plural o singular según la prenda**: *"¿cómo te quedan?"* para unos jeans, *"¿cómo te queda?"* y *"entallada"* para una camisa.
+- Las opciones están **en palabras de persona** ("ajustados al cuerpo"), no de catálogo ("entallado") — aunque se guarde el valor del catálogo.
+
+### Al confirmar, la prenda pasa a `generica` — no a `exacta`
+
+`exacta` está reservado a lo que la visión leyó de su foto. El resto de los detalles (largo, manga) siguen viniendo del arquetipo, y **prometer más certeza de la que hay es justo el problema que esto arregla**.
+
+### Verificado en el navegador, contra el clóset real
+Aparece con 3 preguntas, responder guarda (`corte: holgado`, `certeza: generica`) y avanza a la siguiente cambiando a singular femenino. La prueba se revirtió al terminar.
+
 ## [0.2.145.0] - 2026-08-07
 
 ### Added — la certeza de cada prenda (v49)

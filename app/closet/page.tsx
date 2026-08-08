@@ -4,6 +4,8 @@ import { AddSheet } from "@/components/add-sheet";
 import { BackfillImagesButton } from "@/components/backfill-images-button";
 import { ClosetNav } from "@/components/closet-nav";
 import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
+import { AfinarPrendasCard } from "@/components/afinar-prendas-card";
+import { preguntasPendientes, cuantasFaltan, type PrendaAfinable } from "@/lib/afinar-prendas";
 import { ClosetLlenalo } from "@/components/closet-llenalo";
 import { HintChain, type HintCandidato } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
@@ -20,12 +22,45 @@ export default async function ClosetPage() {
     supabase
       .from("items")
       .select(
-        "id, source, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
+        "id, source, certeza, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
       )
       .eq("user_id", profile.id)
       .is("deleted_at", null),
     loadLovedCounts(supabase, profile.id),
   ]);
+
+  // QUÉ PRENDAS VALE LA PENA PREGUNTAR. Los usos salen de los looks reales: una
+  // prenda que nunca entró a un outfit puede estar mal descrita sin
+  // consecuencia, y preguntarla sería cobrar sin dar. Se lee aparte (no con un
+  // join) porque item_ids es un array de texto y el conteo se hace en memoria
+  // sobre unos cientos de filas — más simple que pelear con el operador.
+  const { data: outfitsUsados } = await supabase
+    .from("outfits")
+    .select("item_ids")
+    .eq("user_id", profile.id)
+    .is("deleted_at", null);
+  const usos = new Map<string, number>();
+  for (const o of outfitsUsados ?? []) {
+    for (const id of (o.item_ids as string[] | null) ?? []) {
+      usos.set(id, (usos.get(id) ?? 0) + 1);
+    }
+  }
+  const afinables: PrendaAfinable[] = (rows ?? []).map((r) => {
+    const a = (r.attrs ?? {}) as { nombre?: string; categoria?: string; corte?: string };
+    const arch = r.archetypes as { name?: string; category?: string } | null;
+    return {
+      id: r.id as string,
+      nombre: arch?.name ?? a.nombre ?? "Prenda",
+      // La categoría se resuelve igual que en el motor: la del arquetipo cuenta
+      // cuando la prenda no la trae (2 de cada 3 del catálogo no la copian).
+      categoria: a.categoria ?? arch?.category ?? null,
+      certeza: (r.certeza as string | null) ?? null,
+      corte: a.corte ?? null,
+      usos: usos.get(r.id as string) ?? 0,
+    };
+  });
+  const preguntas = preguntasPendientes(afinables);
+  const faltan = cuantasFaltan(afinables);
 
   // Las fotos propias y los renders viven en el bucket privado → URL firmada para
   // mostrarlas. Juntamos ambos paths en una sola petición de firmas.
@@ -181,6 +216,10 @@ export default async function ClosetPage() {
         {/* Mientras el clóset sea puro catálogo, las tres formas de sumar ropa
             van desplegadas aquí en vez de escondidas tras "agregar". */}
         {mostrarLlenalo ? <ClosetLlenalo userId={profile.id} /> : null}
+
+        {preguntas.length > 0 ? (
+          <AfinarPrendasCard preguntas={preguntas} faltan={faltan} />
+        ) : null}
 
         <ClosetGrid items={items} />
 

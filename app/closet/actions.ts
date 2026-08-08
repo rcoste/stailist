@@ -402,3 +402,52 @@ export async function addLibraryCandidates(
 
   return { ok: true, added: clean.length };
 }
+
+
+/**
+ * Confirma el CORTE de una prenda que solo estaba marcada en el checklist.
+ *
+ * Es la otra mitad de la certeza (migración 0124): guardar que un dato es
+ * asumido hace al motor prudente; confirmarlo lo hace exacto. Y al confirmarlo
+ * la prenda deja de ser "asumida" — el dato que más mueve el look ya es suyo.
+ *
+ * NO pasa a "exacta": eso está reservado a lo que la visión leyó de su foto.
+ * El resto de los detalles (largo, manga) siguen viniendo del arquetipo, y
+ * prometer más certeza de la que hay es justo el problema que esto arregla.
+ */
+export async function confirmarCorte(
+  itemId: string,
+  corte: "entallado" | "recto" | "holgado"
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "sin sesión" };
+  if (!["entallado", "recto", "holgado"].includes(corte)) {
+    return { ok: false, error: "corte inválido" };
+  }
+
+  // El .eq del user_id no es decorativo: sin él, un id ajeno editaría la prenda
+  // de otra persona. El RLS es la segunda red, no la primera.
+  const { data: fila } = await supabase
+    .from("items")
+    .select("attrs")
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!fila) return { ok: false, error: "no existe esa prenda" };
+
+  const { error } = await supabase
+    .from("items")
+    .update({
+      attrs: { ...((fila.attrs as Record<string, unknown>) ?? {}), corte },
+      certeza: "generica",
+    })
+    .eq("id", itemId)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/closet");
+  return { ok: true };
+}
