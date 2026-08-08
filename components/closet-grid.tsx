@@ -13,6 +13,7 @@ import {
 } from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { PrendaZoom } from "@/components/prenda-zoom";
+import { ejemploDeTalla } from "@/lib/prenda-atributos";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
@@ -259,6 +260,17 @@ function Tile({
         ) : null}
       </div>
       <p className="truncate text-[11.5px] font-medium text-ink">{item.nombre}</p>
+      {/* MARCA Y TALLA, DEBAJO DEL NOMBRE — y aquí es donde de verdad sirven.
+          El caso de Roberto: "tengo dos playeras similares, pero una es de
+          Express y otra es de Uniqlo". Ese momento de "¿cuál era cuál?" pasa
+          MIRANDO EL CLÓSET, entre dos miniaturas casi idénticas, no dentro de
+          la ficha que ya abriste. Guardar el dato y esconderlo aquí sería
+          pedirle que lo escriba para nada. Sólo aparece si lo escribió. */}
+      {item.marca || item.talla ? (
+        <p className="truncate text-[10.5px] leading-tight text-muted">
+          {[item.marca, item.talla].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
     </button>
   );
 }
@@ -985,7 +997,7 @@ function ItemSheet({
                 <input
                   value={talla}
                   onChange={(e) => setTalla(e.target.value)}
-                  placeholder="M, 42…"
+                  placeholder={ejemploDeTalla(categoria)}
                   className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                 />
               </div>

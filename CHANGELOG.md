@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.178.0] - 2026-08-08
+
+### Added — la marca y la talla, donde de verdad sirven
+
+Roberto explicando para qué las quiere: *"tengo dos playeras similares, pero una es de Express y otra es de Uniqlo, y me ayuda a llevar referencia de que son diferentes"*. Y acotando el alcance él mismo: *"ni la marca ni la talla van a afectar la generación, pero a la persona le van a ayudar de 'ah, ok, ya sé qué playera era ésa'"*. Exacto — y eso decide dónde tienen que aparecer.
+
+**En el clóset, debajo del nombre.** Ese momento de *"¿cuál era cuál?"* pasa mirando la rejilla, entre dos miniaturas casi idénticas — no dentro de una ficha que ya abriste. Guardar el dato y esconderlo ahí sería pedirle que lo escriba para nada. Sólo aparece si lo escribió.
+
+**En el aviso de "creo que ya la tienes".** *"Ya tienes Camiseta blanca"* no dice **cuál**, así que no se puede saber si la nueva es repetida o es la otra. Con *"Camiseta blanca · Express"*, sí. El aviso no decide: le da lo que necesita para decidir él.
+
+**El formato de la talla cambia con la prenda**, también suyo: *"para sacos o trajes es 42, 44, 50; para calzado tiene un formato, para playera tiene otro"*. El campo sugiere el que toca y sigue a la categoría que elijas. Es un **ejemplo, no una validación** — también su criterio: *"la persona lo puede poner como sea, al final de cuentas es una referencia"*. Las tallas reales son un desastre (US, EU, MX, letras, 32x34, talla única), y un campo que rechace lo que dice la etiqueta de SU prenda estaría equivocado él, no ella.
+
+**Y la marca separa dos prendas que se llaman igual**, igual que ya lo hacía el material. Con marcas distintas, el detector deja de avisar: son dos prendas de verdad.
+
+Con una honestidad sobre su alcance: esa regla **casi nunca puede dispararse hoy**, porque la visión no lee marcas (2 de 336 prendas) y la nueva llega sin ella. Es correcta y estará ahí cuando el dato exista, pero lo que resuelve el caso de Roberto **hoy** es verla en el clóset y en el aviso. La ausencia de marca nunca cuenta como "marca distinta" — si contara, el detector se apagaría en silencio casi siempre.
+
 ## [0.2.177.0] - 2026-08-08
 
 ### Fixed — ahora se dice qué NO te propuse y por qué

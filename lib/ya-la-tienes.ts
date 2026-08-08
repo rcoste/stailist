@@ -50,6 +50,8 @@ export type PrendaExistente = {
   colorHex: string | null;
   material?: string | null;
   corte?: string | null;
+  /** La marca, si la tecleó. Ver por qué separa, abajo. */
+  marca?: string | null;
   /**
    * ¿El corte de ESTA prenda es de fiar? Sólo lo es si salió de su foto o si
    * la persona lo confirmó a mano.
@@ -72,6 +74,7 @@ export type PrendaNueva = {
   colorHex: string | null;
   material?: string | null;
   corte?: string | null;
+  marca?: string | null;
 };
 
 /**
@@ -170,6 +173,17 @@ export function yaLaTienes(
     // 12 falsas alarmas a 0). Los tres "Pantalón negro" de Roberto son de
     // sintético, lana y algodón — tres pantalones distintos.
     if (choca(nueva.material, p.material)) continue;
+    // LA MARCA SEPARA IGUAL QUE EL MATERIAL, y el caso lo puso Roberto: "tengo
+    // dos playeras similares, pero una es de Express y otra es de Uniqlo".
+    // Mismo nombre, mismo color, mismo material — y son dos prendas de verdad.
+    // Sin esto el aviso le diría "creo que ya la tienes" y estaría equivocado,
+    // que es la clase de error que enseña a ignorar el aviso.
+    //
+    // `choca` sólo descarta cuando las DOS tienen dato y difieren: casi ninguna
+    // prenda trae marca (la visión la vio en 2 de 336), así que esto no cambia
+    // nada salvo en el caso donde la persona se molestó en escribirla — o sea,
+    // exactamente donde le importa distinguir.
+    if (choca(nueva.marca, p.marca)) continue;
     // El corte de la nueva SIEMPRE es de fiar (sale de su propia foto); el de
     // la vieja, sólo si lo dice. Ver `corteDeFiar`.
     if (p.corteDeFiar && choca(nueva.corte, p.corte)) continue;

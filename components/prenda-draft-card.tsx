@@ -390,7 +390,16 @@ export function DraftCard({
                 <span className="text-[11px] font-medium text-ink">
                   Creo que ya la tienes
                 </span>
-                <span className="truncate text-[11px] text-muted">{yaEsta.nombre}</span>
+                {/* CON SU MARCA Y TALLA si las tiene, y eso es lo que hace
+                    contestable el aviso. Caso de Roberto: dos playeras blancas,
+                    una Express y otra Uniqlo. "Creo que ya tienes Camiseta
+                    blanca" no le dice CUÁL, así que no puede saber si esta
+                    tercera es repetida o es otra distinta; con "Camiseta blanca
+                    · Express" sí. El aviso no decide — le da lo que necesita
+                    para decidir él. */}
+                <span className="truncate text-[11px] text-muted">
+                  {[yaEsta.nombre, yaEsta.marca].filter(Boolean).join(" · ")}
+                </span>
               </span>
               <button
                 type="button"
