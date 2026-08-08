@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.156.0] - 2026-08-07
+
+### Fixed — los 4 "Traje …" que en realidad eran un saco (migración 0126)
+
+Los residuos de la puerta que se arregló en la versión anterior: una foto del traje puesto entrando por "una prenda" dejaba el saco leído como prenda principal y un nombre que dice *"traje"* para algo que es sólo el saco.
+
+No es cosmético: el motor recibe el nombre, y ya leyó una vez un *"Traje marino de lana"* como traje completo y armó el look **sin pantalón**.
+
+**Sólo renombra**, y es a propósito: no crea el pantalón que falta. No sabemos si esa persona lo tiene ni cómo es, y no hay foto suya — inventarle una prenda al clóset es exactamente el problema que llevamos días persiguiendo. El pantalón se da de alta desde la biblioteca (hay *"Pantalón de traje azul marino"* y 4 colores más) y se ata al saco desde la ficha.
+
+Idempotente: el filtro exige que el nombre empiece por "Traje", así que en cuanto se renombra deja de coincidir. Verificado corriéndola dos veces — la segunda toca 0 filas. *"Traje de baño"* queda excluido explícitamente.
+
 ## [0.2.155.0] - 2026-08-07
 
 ### Fixed — "una prenda" se tragaba el resto de la foto sin decirlo
