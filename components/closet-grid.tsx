@@ -12,6 +12,7 @@ import {
   crearPantalonDelTraje,
 } from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { PrendaZoom } from "@/components/prenda-zoom";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { distanciaPerceptual } from "@/lib/engine/color-perceptual";
@@ -110,7 +111,7 @@ const norm = (s: string) =>
 // otras categorías agregando entradas aquí.
 const SUBGROUPS: Record<string, { label: string; test: (n: string) => boolean }[]> = {
   abrigo: [
-    { label: "Chamarras", test: (n) => /mezclilla|denim|bomber|chamarra|cazadora|biker|moto/.test(n) },
+    { label: "Chamarras", test: (n) => /mezclilla|denim|bomber|chamarra|chaqueta|cazadora|biker|moto/.test(n) },
     { label: "Sobrecamisas", test: (n) => /sobrecamisa|overshirt|shacket|camisola/.test(n) },
     { label: "Chalecos", test: (n) => /chaleco|gilet/.test(n) },
   ],
@@ -685,6 +686,7 @@ function ItemSheet({
   const [corteTocado, setCorteTocado] = useState(false);
   const [atando, setAtando] = useState(false);
   const [rehaciendo, setRehaciendo] = useState(false);
+  const [zoom, setZoom] = useState(false);
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
@@ -778,13 +780,22 @@ function ItemSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3">
-          <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-md border border-line bg-bg">
+          {/* SE TOCA PARA VERLA EN GRANDE. El visor ya existía —lo usan los
+              looks y la maleta— y faltaba justo aquí: el clóset, que es donde
+              uno va A MIRAR su ropa. Roberto: "¿cómo le hago para ver en grande
+              la imagen?". */}
+          <button
+            type="button"
+            onClick={() => item.imagen && setZoom(true)}
+            aria-label="Ver la prenda en grande"
+            className="relative h-28 w-20 shrink-0 overflow-hidden rounded-md border border-line bg-bg"
+          >
             {item.imagen ? (
               <Image src={item.imagen} alt={item.nombre} fill sizes="88px" className="object-cover" />
             ) : (
               <span className="absolute inset-0" style={{ backgroundColor: item.swatch }} aria-hidden />
             )}
-          </div>
+          </button>
           <div className="flex flex-1 flex-col gap-1">
             <label className="text-xs font-medium text-muted">Nombre</label>
             <input
@@ -1090,6 +1101,11 @@ function ItemSheet({
         >
           <Icon name="equis" size={16} /> no tengo esta — quitar del clóset
         </button>
+
+        <PrendaZoom
+          data={zoom && item.imagen ? { image: item.imagen, nombre: item.nombre } : null}
+          onClose={() => setZoom(false)}
+        />
       </div>
     </div>
   );

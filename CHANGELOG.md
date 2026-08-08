@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.164.0] - 2026-08-07
+
+### Added — ver la prenda en grande desde su ficha
+
+Roberto: *"¿cómo le hago para ver en grande la imagen?"*. No se podía — y lo raro es que **el visor ya existía**: lo usan los looks, la maleta y "lleva puesto". Faltaba justo en el clóset, que es donde uno va **a mirar** su ropa. Ahora la miniatura de la ficha se toca.
+
+### Fixed — "Chaqueta" no entraba en el subgrupo Chamarras
+
+El clóset ya separa los Abrigos en **Chamarras · Sobrecamisas · Chalecos**, pero el patrón cubría *chamarra, cazadora, bomber, mezclilla, biker, moto* y **no "chaqueta"** — así que una chaqueta caía al cajón genérico junto a un abrigo largo.
+
+**La categoría `abrigo` está bien** y no se toca: en este modelo `abrigo` significa *capa por clima* (frente a `saco`, que es capa por formalidad), y una chaqueta con cierre lo es. Lo que fallaba era el subgrupo visual, no la clasificación.
+
 ## [0.2.163.0] - 2026-08-07
 
 ### Fixed — "Esmoquin negro" también era un saco (migración 0127)
