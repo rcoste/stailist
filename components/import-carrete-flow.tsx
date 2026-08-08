@@ -55,8 +55,19 @@ const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
 ];
 // Paleta de colores comunes de ropa para corregir el color con un tap (swatch +
 // alternativas). El swatch detectado se muestra aparte como punto de partida.
+// LA PALETA ES PARA CORREGIR, NO PARA DESCRIBIR — y esa distinción se había
+// perdido. El color real lo lee la visión y se guarda como hex exacto; estos 11
+// son sólo los atajos de "no, es otro". Antes la marcada se elegía comparando
+// NOMBRES ("gris oscuro" ≠ "Gris"), así que 123 de 312 prendas salían con
+// ningún swatch encendido y parecía que no había detectado el color. Ahora se
+// compara por hex y el color leído se dibuja como su propio swatch.
+//
+// "Gris oscuro" entra porque faltaba de verdad: el gris carbón es media
+// sastrería masculina (trajes, abrigos, pantalones de vestir) y el único gris
+// disponible era uno de en medio — corregir con él ACLARABA la prenda.
 const PALETTE: { name: string; hex: string }[] = [
   { name: "Negro", hex: "#1A1A1A" },
+  { name: "Gris oscuro", hex: "#3A3A3C" },
   { name: "Blanco", hex: "#F2F2F2" },
   { name: "Gris", hex: "#8A8A8A" },
   { name: "Azul marino", hex: "#1F2A44" },
@@ -109,6 +120,17 @@ type DraftItem = {
   attrs: PrendaDetectada;
   on: boolean;
   photoPreview: string; // dataURL de la foto de origen
+  /**
+   * El color TAL COMO LO LEYÓ la visión, guardado aparte y sin tocar.
+   *
+   * Vive fuera de `attrs` porque attrs se sobreescribe al corregir: sin esta
+   * copia, tocar un swatch de la paleta por error borraba para siempre un hex
+   * exacto (#3A3A3C, gris carbón) y lo cambiaba por el atajo más cercano
+   * (#8A8A8A, gris de en medio) — o sea que "corregir" aclaraba la prenda y no
+   * había vuelta atrás. Con la copia, el swatch de lo leído siempre está y
+   * volver es un tap.
+   */
+  leido: { color: string; hex: string };
 };
 
 // Prenda ya renderizada, en la curación visual.
@@ -137,8 +159,9 @@ type State =
   | { kind: "guardando" }
   | { kind: "error"; msg: string };
 
-const norm = (s: string) =>
-  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+/** Mismo color, ignorando mayúsculas y el # — los hex vienen de dos fuentes. */
+const mismoHex = (a?: string, b?: string) =>
+  !!a && !!b && a.replace("#", "").toLowerCase() === b.replace("#", "").toLowerCase();
 
 // headless: sin botón propio — lo dispara la hoja "Agregar" vía ref.start().
 export function ImportCarreteFlow({
@@ -212,7 +235,13 @@ export function ImportCarreteFlow({
           }
           if (!res.ok) return [] as DraftItem[];
           const { prendas } = (await res.json()) as { prendas: PrendaDetectada[] };
-          return prendas.map((p) => ({ id: uid(), attrs: p, on: true, photoPreview: f.dataUrl }));
+          return prendas.map((p) => ({
+            id: uid(),
+            attrs: p,
+            on: true,
+            photoPreview: f.dataUrl,
+            leido: { color: p.color, hex: p.color_hex },
+          }));
         })
       );
       const items = perPhoto.flat();
@@ -856,7 +885,11 @@ function DraftCard({
 }) {
   const a = item.attrs;
   const baja = a.confianza === "baja";
-  const colorName = PALETTE.find((p) => norm(p.name) === norm(a.color))?.name ?? a.color;
+  // El nombre que se enseña es el que LEYÓ la visión ("gris oscuro"), no el del
+  // atajo más parecido: es más específico y es lo que de verdad se guardó.
+  const colorName = a.color;
+  // El swatch de lo leído sólo hace falta si no es ya uno de los 11 atajos.
+  const hayLeido = !!item.leido.hex && !PALETTE.some((p) => mismoHex(item.leido.hex, p.hex));
   return (
     <div
       className={`flex flex-col gap-3 rounded-xl border p-3 transition-opacity ${
@@ -918,6 +951,28 @@ function DraftCard({
 
           <Field label={`Color · ${colorName}`}>
             <div className="flex flex-wrap gap-2">
+              {/* EL COLOR QUE LEÍ, con su hex exacto y encendido. Va primero y
+                  sólo aparece cuando no coincide con ningún atajo de la paleta:
+                  es la respuesta a "¿por qué no hay ninguno marcado?" — sí lo
+                  detectó, y con más precisión que cualquiera de los 11. Sin
+                  este swatch, la pantalla invita a tocar el gris de en medio
+                  para "arreglarlo", y eso EMPEORA el dato. */}
+              {hayLeido ? (
+                <button
+                  type="button"
+                  aria-label={`${item.leido.color} — el que leí`}
+                  title={`${item.leido.color} — el que leí`}
+                  onClick={() =>
+                    onPatch({ color: item.leido.color, color_hex: item.leido.hex })
+                  }
+                  className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                    mismoHex(a.color_hex, item.leido.hex)
+                      ? "scale-110 border-accent"
+                      : "border-line"
+                  }`}
+                  style={{ backgroundColor: item.leido.hex }}
+                />
+              ) : null}
               {PALETTE.map((p) => (
                 <button
                   key={p.hex}
@@ -925,7 +980,7 @@ function DraftCard({
                   onClick={() => onPatch({ color: p.name, color_hex: p.hex })}
                   aria-label={p.name}
                   className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                    norm(a.color) === norm(p.name)
+                    mismoHex(a.color_hex, p.hex)
                       ? "scale-110 border-accent"
                       : "border-line"
                   }`}
