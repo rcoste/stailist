@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.165.0] - 2026-08-08
+
+### Added — el color principal, editable en la ficha
+
+Roberto: *"tampoco me deja cambiarle el color"*. Cierto, y era el hueco más caro de los que quedaban: la ficha dejaba corregir el **segundo** color y no el primero — que es el que alimenta las reglas de cuero, las de monocromo y la colorimetría entera.
+
+Mismo criterio que en la carga: primero **el color que la prenda tiene**, luego los que de verdad se confunden con él, y la paleta completa a un tap.
+
+### Added — al cambiar nombre o color, se ofrece rehacer la imagen
+
+Idea de Roberto, y es correcta: *"si le cambio el color o nombre me debería preguntar si quiero generar nuevamente la imagen"*. El render **sale de esos dos datos**, así que cambiarlos lo deja obsoleto — una chamarra que renombras a gris sigue mostrándose azul.
+
+**Se pregunta, no se rehace sola:** cuesta una llamada y a veces el cambio fue una tilde. La pregunta lleva el motivo delante, que es lo que la hace contestable: *"Su imagen se generó con el nombre y el color anteriores — ¿la rehago?"*.
+
+### Fixed — el "blazer" era un abrigo, y yo me equivoqué
+
+Le dije a Roberto que *"Blazer marrón de lana"* estaba mal categorizado y debía ser `saco`. Me pidió mirarlo bien y tenía razón: la imagen es un **abrigo corto de lana** —largo de abrigo, tweed grueso, bolsillos de parche—. La categoría `abrigo` estaba **bien**; lo que mentía era el nombre. Renombrado a *"Abrigo de lana marrón"*.
+
 ## [0.2.164.0] - 2026-08-07
 
 ### Added — ver la prenda en grande desde su ficha

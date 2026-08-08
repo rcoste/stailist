@@ -13,6 +13,7 @@ import {
 } from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { PrendaZoom } from "@/components/prenda-zoom";
+import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { distanciaPerceptual } from "@/lib/engine/color-perceptual";
@@ -687,6 +688,11 @@ function ItemSheet({
   const [atando, setAtando] = useState(false);
   const [rehaciendo, setRehaciendo] = useState(false);
   const [zoom, setZoom] = useState(false);
+  const [colorHex, setColorHex] = useState(item.swatch);
+  const [todosLosColores, setTodosLosColores] = useState(false);
+  // Tras guardar un cambio de nombre o color, la imagen quedó vieja: se generó
+  // con los datos de antes. Ver el bloque de abajo.
+  const [ofrecerRender, setOfrecerRender] = useState(false);
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
@@ -703,6 +709,7 @@ function ItemSheet({
     material.trim() !== item.material ||
     patron !== item.patron ||
     colorSecundario.trim() !== item.colorSecundario ||
+    colorHex !== item.swatch ||
     corteTocado;
 
   // GENERALIZADO A CONJUNTOS DE DOS PIEZAS, no sólo trajes: el dato siempre fue
@@ -766,11 +773,24 @@ function ItemSheet({
       material,
       patron,
       color_secundario: colorSecundario,
+      ...(colorHex !== item.swatch
+        ? { color_hex: colorHex, color: PALETA.find((p) => p.hex === colorHex)?.name ?? "" }
+        : {}),
       // Va sólo si lo tocó: mandarlo siempre confirmaría lo que preseleccionamos.
       ...(corteTocado && corte ? { corte } : {}),
     });
     setSaving(false);
-    if (res.ok) onSaved();
+    if (!res.ok) return;
+    // LA IMAGEN SE GENERÓ CON EL NOMBRE Y EL COLOR VIEJOS. Idea de Roberto:
+    // "si le cambio el color o el nombre me debería preguntar si quiero
+    // generar nuevamente la imagen". Tiene razón — el render sale de esos dos
+    // datos, así que cambiarlos lo deja obsoleto. Se PREGUNTA en vez de
+    // rehacerlo solo: cuesta una llamada, y a veces el cambio es una tilde.
+    if (nombre.trim() !== item.nombre || colorHex !== item.swatch) {
+      setOfrecerRender(true);
+      return;
+    }
+    onSaved();
   }
 
   return (
@@ -892,6 +912,53 @@ function ItemSheet({
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* EL COLOR PRINCIPAL. Faltaba: se podía corregir el SEGUNDO color
+                y no el primero — el que alimenta las reglas de cuero, las de
+                monocromo y la colorimetría. Mismo criterio que en la carga:
+                primero el que tiene la prenda, luego los que de verdad se
+                confunden con él, y la paleta entera a un tap. */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-medium text-muted">Color</label>
+              <div className="flex flex-wrap items-center gap-2">
+                {!PALETA.some((p) => p.hex.toLowerCase() === item.swatch.toLowerCase()) ? (
+                  <button
+                    type="button"
+                    aria-label="el color que tiene"
+                    title="el color que tiene"
+                    onClick={() => setColorHex(item.swatch)}
+                    className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                      colorHex === item.swatch ? "scale-110 border-accent" : "border-line"
+                    }`}
+                    style={{ backgroundColor: item.swatch }}
+                  />
+                ) : null}
+                {(todosLosColores ? PALETA : coloresCercanos(item.swatch, 4)).map((p) => (
+                  <button
+                    key={p.hex}
+                    type="button"
+                    aria-label={p.name}
+                    title={p.name}
+                    onClick={() => setColorHex(p.hex)}
+                    className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                      colorHex.toLowerCase() === p.hex.toLowerCase()
+                        ? "scale-110 border-accent"
+                        : "border-line"
+                    }`}
+                    style={{ backgroundColor: p.hex }}
+                  />
+                ))}
+                {!todosLosColores ? (
+                  <button
+                    type="button"
+                    onClick={() => setTodosLosColores(true)}
+                    className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+                  >
+                    otro color
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -1081,7 +1148,47 @@ function ItemSheet({
               la imagen no es de esta prenda — rehacerla
             </button>
 
-            {dirty ? (
+            {/* LA OFERTA, después de guardar. No se rehace sola: cuesta una
+                llamada y a veces el cambio fue una tilde. Se pregunta con el
+                motivo delante, que es lo que la hace contestable. */}
+            {ofrecerRender ? (
+              <div className="flex flex-col gap-2 rounded-sm bg-warning/10 p-3">
+                <p className="text-[13px] leading-snug text-ink">
+                  Guardado. Su imagen se generó con el nombre y el color
+                  anteriores — ¿la rehago?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={rehaciendo}
+                    onClick={async () => {
+                      setRehaciendo(true);
+                      await fetch("/api/render-item", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ itemId: item.id, forzar: true }),
+                      }).catch(() => {});
+                      setRehaciendo(false);
+                      onSaved();
+                    }}
+                    className="flex min-h-9 items-center gap-2 rounded-sm bg-accent px-3 text-[13px] font-medium text-on-accent disabled:opacity-50"
+                  >
+                    {rehaciendo ? <Spinner className="h-3.5 w-3.5" /> : null}
+                    sí, rehazla
+                  </button>
+                  <button
+                    type="button"
+                    disabled={rehaciendo}
+                    onClick={onSaved}
+                    className="min-h-9 rounded-sm border border-line px-3 text-[13px] text-muted disabled:opacity-50"
+                  >
+                    así está bien
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {dirty && !ofrecerRender ? (
               <button
                 type="button"
                 onClick={guardar}
