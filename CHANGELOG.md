@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.171.0] - 2026-08-08
+
+### Added — te aviso si en esa foto sale alguien más
+
+Retoma la idea de Roberto del 2026-08-07 (*"que detecte quién es la persona y saque las prendas de esa persona"*), que quedó sin decidir porque la conversación pivoteó al traje y ahí se quedó.
+
+**El hueco, verificado**: el lector de varias prendas mira la foto y lista TODA la ropa que ve. Si subes una foto donde sales con alguien más, lista la ropa de los dos y te ofrece la camisa de tu amigo como tuya. Lo único que lo tapaba era que lo notaras — o que hubieras recortado antes, y el recorte era una pregunta genérica idéntica en todas las fotos (*"¿sale alguien más en alguna?"*), que es la clase de aviso que se aprende a ignorar porque siempre está. El *"no es mía"* del final sí lo caza, pero para entonces ya se generó y se pagó el render de ropa ajena.
+
+**Ahora el aviso va sobre LA foto que lo necesita** y antes de leer nada: la miniatura se marca con cuánta gente sale y el botón de recortar se enciende. Con doce fotos, *"en alguna sale alguien más"* obliga a buscarla, y buscar es justo lo que nadie hace.
+
+**Y reacciona**: al recortar se vuelve a contar, así que el aviso desaparece si el recorte bastó — y se queda si no. Un aviso que no responde a lo que hiciste no se distingue de un aviso roto.
+
+**No es reconocimiento facial, y esa es la decisión de fondo.** Contar no es identificar: no se compara ninguna cara con ninguna otra, no se guarda nada de la foto, y las caras de la gente que sale contigo —que nunca dio permiso para nada— no se analizan. Quién eres de las dos lo dices tú al recortar, que además acierta el 100% de las veces. La idea original pedía biometría; esto entrega el resultado sin ella.
+
+**Es una llamada aparte**, como el contador de prendas: medido esta mañana, añadir un campo al schema del lector mueve otras lecturas con z = 3.05, y seguía moviéndolas sin tocar una palabra del prompt. Preguntando aparte, la deriva es cero por construcción.
+
+**Medido antes de confiar en él** (`scripts/personas-en-foto.ts`, 3 corridas por caso): **15/15** en la decisión de avisar y 15/15 en el conteo exacto, sobre prendas extendidas, una persona, dos y tres.
+
+Un caso se ganó su lugar por un error mío: el primer banco pegaba dos fotos de la **misma** modelo con outfits distintos, el modelo contestó "1" tres de tres veces y lo conté como fallo. No lo era — es una persona, fotografiada dos veces. Quedó como caso fijo porque es exactamente el selfie de espejo, donde avisar sería avisar de más y el aviso se gastaría solo.
+
 ## [0.2.170.0] - 2026-08-08
 
 ### Fixed — segundo pase: la trampa que se armó sola esta mañana
