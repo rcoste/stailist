@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.168.0] - 2026-08-08
+
+### Added — ver el clóset por recién añadidas
+
+Idea de Roberto. El clóset ordenaba de una sola forma: **tus queridas primero** (las de outfits favoritos y usados), que es lo correcto para el día a día. Pero hay un momento en que eso estorba — acabas de subir doce prendas y quieres ver **ésas**, no tus favoritas de siempre.
+
+**El orden vive con los filtros, no en la fila de chips**: ahí competiría con las categorías, que es lo que de verdad se usa a diario. Y *"queridas primero"* sigue siendo el default: recién añadidas resuelve un momento concreto, no el uso normal.
+
 ## [0.2.167.0] - 2026-08-08
 
 ### Added — material y patrón en el alta múltiple
