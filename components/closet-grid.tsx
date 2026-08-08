@@ -7,6 +7,8 @@ import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { removeItem, updateItemAttrs } from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { SiluetaCorte } from "@/components/silueta-corte";
+import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 
 export type ClosetItem = {
   id: string;
@@ -21,7 +23,20 @@ export type ClosetItem = {
   colorSecundario: string; // "" = sin dato
   source: string; // "archetype" | "photo"
   renderStatus?: string; // "none" | "pending" | "done" | "failed"
+  corte?: string; // "" = sin dato; entallado | recto | holgado
+  corteConfirmado?: boolean; // ¿lo dijo la persona, o lo suponemos nosotros?
 };
+
+// Dónde el corte CAMBIA el look. Se IMPORTA en vez de copiarse: la card de
+// afinar y esta ficha preguntan lo mismo, y dos listas iguales escritas aparte
+// se desincronizan en silencio — la ficha ofrecería corte en una categoría que
+// la card ya dejó de preguntar, o al revés. Un zapato "recto" no significa
+// nada (17 calzados del catálogo lo traen relleno por rellenar).
+const CORTES: { v: "entallado" | "recto" | "holgado"; l: string }[] = [
+  { v: "entallado", l: "entallado" },
+  { v: "recto", l: "recto" },
+  { v: "holgado", l: "holgado" },
+];
 
 // Orden + label de categoría (espeja el de la página).
 const CAT: { key: string; label: string }[] = [
@@ -608,7 +623,17 @@ function FilterSheet({
   );
 }
 
-// Hoja de detalle: imagen grande + quitar. Si es foto, también editar atributos.
+// Hoja de detalle: imagen grande, atributos editables y quitar.
+//
+// EDITABLE PARA TODAS LAS PRENDAS, no sólo las fotografiadas. El gate anterior
+// (`esFoto`) tenía el efecto exactamente contrario al que buscaba: las prendas
+// con el dato inventado —670 del catálogo, 513 en categorías donde el corte
+// importa— eran justo las que no se dejaban corregir. La card de afinar da tres
+// al día; esto abre las 513 cuando a la persona se le antoje.
+//
+// EL CORTE PRESELECCIONA PERO NO CONFIRMA. Guardar sin tocar la silueta deja el
+// dato como estaba: si preseleccionar contara como confirmar, un "guardar" tras
+// cambiar el material marcaría el corte como revisado sin que nadie lo mirara.
 function ItemSheet({
   item,
   onClose,
@@ -622,6 +647,9 @@ function ItemSheet({
 }) {
   const esFoto = item.source === "photo";
   const [nombre, setNombre] = useState(item.nombre);
+  const [corte, setCorte] = useState(item.corte ?? "");
+  // Sólo un tap en una silueta cuenta como confirmación (ver cabecera).
+  const [corteTocado, setCorteTocado] = useState(false);
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
@@ -631,14 +659,14 @@ function ItemSheet({
   const [saving, setSaving] = useState(false);
 
   const dirty =
-    esFoto &&
-    (nombre.trim() !== item.nombre ||
-      categoria !== item.category ||
-      formalidad !== item.formalidad ||
-      temporada !== item.temporada ||
-      material.trim() !== item.material ||
-      patron !== item.patron ||
-      colorSecundario.trim() !== item.colorSecundario);
+    nombre.trim() !== item.nombre ||
+    categoria !== item.category ||
+    formalidad !== item.formalidad ||
+    temporada !== item.temporada ||
+    material.trim() !== item.material ||
+    patron !== item.patron ||
+    colorSecundario.trim() !== item.colorSecundario ||
+    corteTocado;
 
   async function guardar() {
     setSaving(true);
@@ -650,6 +678,8 @@ function ItemSheet({
       material,
       patron,
       color_secundario: colorSecundario,
+      // Va sólo si lo tocó: mandarlo siempre confirmaría lo que preseleccionamos.
+      ...(corteTocado && corte ? { corte } : {}),
     });
     setSaving(false);
     if (res.ok) onSaved();
@@ -670,31 +700,27 @@ function ItemSheet({
             )}
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            {esFoto ? (
-              <>
-                <label className="text-xs font-medium text-muted">Nombre</label>
-                <input
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
-                />
-              </>
-            ) : (
-              <>
-                <span className="text-base font-medium text-ink">{item.nombre}</span>
-                <span className="text-xs text-muted">
-                  {CAT_LABEL.get(item.category) ?? item.category} · básico
-                </span>
-              </>
-            )}
+            <label className="text-xs font-medium text-muted">Nombre</label>
+            <input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+            />
+            {/* De dónde salió la prenda, dicho sin rodeos: es lo que explica por
+                qué unos datos son firmes y otros suposición nuestra. */}
+            {!esFoto ? (
+              <span className="text-xs leading-snug text-muted">
+                La marcaste en la lista de básicos — lo de abajo es lo que
+                supongo. Corrígeme.
+              </span>
+            ) : null}
           </div>
           <button type="button" onClick={onClose} aria-label="Cerrar" className="text-muted">
             <Icon name="equis" size={18} />
           </button>
         </div>
 
-        {esFoto ? (
-          <>
+        <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-medium text-muted">Tipo</label>
               <div className="flex flex-wrap gap-2">
@@ -784,6 +810,43 @@ function ItemSheet({
               />
             </div>
 
+            {/* EL CORTE, sólo donde cambia el look. Con siluetas y no con las
+                tres palabras sueltas: "entallado / recto / holgado" no dice
+                nada sin ver a qué se refiere. */}
+            {EL_CORTE_IMPORTA.has(categoria) ? (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-muted">
+                  Cómo te queda
+                  {!corteTocado && corte && !item.corteConfirmado ? (
+                    <span className="ml-1 font-normal">· esto es lo que supongo</span>
+                  ) : null}
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {CORTES.map((c) => (
+                    <button
+                      key={c.v}
+                      type="button"
+                      onClick={() => {
+                        setCorte(c.v);
+                        setCorteTocado(true);
+                      }}
+                      className={`flex flex-col items-center gap-1 rounded-sm border px-2 py-2 text-xs transition-colors ${
+                        corte === c.v
+                          ? "border-accent bg-accent-soft text-accent"
+                          : "border-line bg-surface text-muted"
+                      }`}
+                    >
+                      <SiluetaCorte
+                        corte={c.v}
+                        tipo={categoria === "bottom" ? "bottom" : "top"}
+                      />
+                      {c.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {dirty ? (
               <button
                 type="button"
@@ -795,8 +858,7 @@ function ItemSheet({
                 guardar cambios
               </button>
             ) : null}
-          </>
-        ) : null}
+        </div>
 
         <button
           type="button"

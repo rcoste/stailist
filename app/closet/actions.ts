@@ -184,6 +184,13 @@ export async function updateItemAttrs(
     material?: string;
     patron?: string;
     color_secundario?: string;
+    /**
+     * Se manda SOLO si la persona tocó una silueta. Preseleccionamos lo que
+     * creemos, así que si se mandara siempre, guardar sin mirar marcaría como
+     * confirmado un dato que nadie revisó — que es exactamente la mentira que
+     * la certeza vino a impedir.
+     */
+    corte?: string;
   }
 ): Promise<{ ok: boolean }> {
   const supabase = await createClient();
@@ -192,14 +199,19 @@ export async function updateItemAttrs(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
 
+  // SIN GATE DE `source`. Antes sólo se dejaba editar lo fotografiado, y el
+  // efecto era exactamente el contrario del que se buscaba: las prendas con el
+  // dato INVENTADO —las 513 del catálogo en categorías donde el corte importa—
+  // eran justo las que no se podían corregir. Abrías la ficha de tus jeans, y
+  // no se dejaba tocar nada.
   const { data: item } = await supabase
     .from("items")
-    .select("attrs, source")
+    .select("attrs")
     .eq("id", id)
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .single();
-  if (!item || item.source !== "photo") return { ok: false };
+  if (!item) return { ok: false };
 
   const attrs = (item.attrs ?? {}) as Record<string, unknown>;
   const clean: Record<string, unknown> = { ...attrs };
@@ -227,6 +239,17 @@ export async function updateItemAttrs(
     const v = cleanTextAttr(patch.color_secundario, MAX_COLOR_LEN);
     if (v) clean.color_secundario = v;
     else delete clean.color_secundario;
+  }
+  // El corte, cuando viene, viene de un tap explícito en una silueta → cuenta
+  // como confirmado y el motor deja de tratarlo como aproximado. Es el mismo
+  // contrato que la card de afinar: se confirma el ATRIBUTO, no la prenda.
+  if (patch.corte && ["entallado", "recto", "holgado"].includes(patch.corte)) {
+    clean.corte = patch.corte;
+    const confirmados = new Set(
+      Array.isArray(clean.confirmados) ? (clean.confirmados as string[]) : []
+    );
+    confirmados.add("corte");
+    clean.confirmados = [...confirmados];
   }
 
   const { error } = await supabase
