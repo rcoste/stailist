@@ -19,6 +19,7 @@ import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
 import { AddSheet } from "@/components/add-sheet";
+import { EspejoFlow } from "@/components/espejo-flow";
 import { HomeCard } from "@/components/home-card";
 import type { HomeCard as HomeCardData } from "@/lib/home-card";
 import { HomeChecklist } from "@/components/home-checklist";
@@ -277,9 +278,26 @@ export function HoyClient({
             armar mi look de hoy
             <Icon name="flecha" size={19} />
           </button>
-          {/* Ya activado (checklist completo): el AddSheet vuelve como el atajo de
-              agregado rápido. Durante la activación vive dentro del checklist. */}
-          {checklist ? null : <AddSheet userId={userId} variant="ghost" />}
+          {/* "¿ME VEO BIEN?" — la otra forma de usar la app, y la de todos los
+              días: en vez de pedirme un look, me enseñas el que ya traes
+              puesto. Va aquí y no en la hoja de agregar porque no es agregar
+              ropa: es el momento de estar vestida y a punto de salir, que es
+              justo cuando alguien abre esto.
+              Comparte fila con "añadir" en vez de apilarse: los dos son
+              acciones de segundo nivel y un tercer bloque a lo ancho le
+              robaría peso al CTA, que es lo único que manda en esta pantalla. */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <EspejoFlow userId={userId} />
+            </div>
+            {/* Ya activado (checklist completo): el AddSheet vuelve como el atajo
+                de agregado rápido. Durante la activación vive dentro del checklist. */}
+            {checklist ? null : (
+              <div className="flex-1">
+                <AddSheet userId={userId} variant="ghost" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

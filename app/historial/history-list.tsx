@@ -19,7 +19,7 @@ export type HistoryOutfit = {
   createdAt: string; // ISO — para agrupar por mes
   fecha: string; // "18 jun"
   occasion: string | null; // clave cruda: diario/oficina/evento/viaje/refrescar
-  origen: "daily" | "viaje" | "capsula"; // de dónde salió (badge si no es diario)
+  origen: "daily" | "viaje" | "capsula" | "espejo"; // de dónde salió (badge si no es diario)
   tryonImage: string | null; // foto "cómo se me ve" (URL firmada) o null → collage
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
   voto: "up" | "down" | null;
@@ -42,6 +42,19 @@ export const ocasionLabel = (k: string) =>
   OCASION_LABEL[k] ?? k.charAt(0).toUpperCase() + k.slice(1);
 
 type Filtro = "todos" | "fav" | "liked" | `occ:${string}`;
+
+// El sello de dónde salió cada look. "daily" no lleva ninguno: es el caso
+// normal y sellarlo todo es no sellar nada. "Me lo puse" y no "Espejo" porque
+// eso es lo que significa para quien lo mira meses después — la foto es de un
+// look que SÍ existió, no de una propuesta.
+const BADGE: Record<
+  Exclude<HistoryOutfit["origen"], "daily">,
+  { icon: "maleta" | "gancho" | "camara"; label: string }
+> = {
+  viaje: { icon: "maleta", label: "Viaje" },
+  capsula: { icon: "gancho", label: "Esenciales" },
+  espejo: { icon: "camara", label: "Me lo puse" },
+};
 
 function monthKey(iso: string) {
   const d = new Date(iso);
@@ -377,8 +390,7 @@ function Featured({
           <p className="mt-1 flex items-center gap-2 text-[11.5px] text-white/85">
             {o.origen !== "daily" ? (
               <span className="inline-flex items-center gap-1 rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
-                <Icon name={o.origen === "viaje" ? "maleta" : "gancho"} size={11} />{" "}
-                {o.origen === "viaje" ? "Viaje" : "Esenciales"}
+                <Icon name={BADGE[o.origen].icon} size={11} /> {BADGE[o.origen].label}
               </span>
             ) : o.occasion ? (
               <span className="rounded-sm border border-white/40 px-[7px] py-0.5 font-semibold">
@@ -427,8 +439,7 @@ function GridTile({
         <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
           {o.origen !== "daily" ? (
             <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-px text-[10px] font-semibold text-accent">
-              <Icon name={o.origen === "viaje" ? "maleta" : "gancho"} size={10} />{" "}
-              {o.origen === "viaje" ? "Viaje" : "Esenciales"}
+              <Icon name={BADGE[o.origen].icon} size={10} /> {BADGE[o.origen].label}
             </span>
           ) : null}
           <span className="tabular">{o.fecha}</span>

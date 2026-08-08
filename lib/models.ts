@@ -156,6 +156,30 @@ export const MODELO_JUEZ: Modelo = {
 };
 
 /**
+ * MIRAR SU FOTO Y ACONSEJARLE: el "¿me veo bien?" de cada mañana.
+ *
+ * Va en el rápido y NO en el motor, a propósito. La tarea no es armar un look
+ * —eso es lo caro y lo que decide si el producto sirve— sino mirar uno que ya
+ * está puesto y decir tres cosas cortas. Es exactamente el trabajo del juez de
+ * outfits, con otro tono: leer una prenda en una foto y opinar contra un
+ * criterio que el prompt ya trae escrito.
+ *
+ * Y CORRE UNA VEZ AL DÍA POR PERSONA, que es lo que decide el reparto: es la
+ * única llamada del producto pensada para repetirse a diario y para siempre.
+ * Con Opus, un hábito diario que funcione es justo lo que rompería la factura.
+ *
+ * NO se baja a Gemini como la lectura de prendas: ahí la pregunta tiene
+ * respuesta correcta (la prenda está en la foto) y por eso se pudo medir a
+ * ciegas. Aquí lo que se juzga es el TONO con alguien inseguro delante, que es
+ * donde los modelos chicos se caen y donde una medición a ciegas es mucho más
+ * difícil de montar. Cuando la haya, este es el primer candidato a retar.
+ */
+export const ESPEJO_MODEL = JUDGE_MODEL;
+
+/** El del espejo como `Modelo` de la puerta común. */
+export const MODELO_ESPEJO: Modelo = MODELO_JUEZ;
+
+/**
  * Clasificar contra reglas YA ESCRITAS y redactar textos cortos: emparejar una
  * prenda de la cápsula con una del clóset, buscar sustitutos, ponerle nombre a
  * un estilo, escribir dos preguntas.
