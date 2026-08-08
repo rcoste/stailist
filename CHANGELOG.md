@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.157.0] - 2026-08-07
+
+### Added — crear el pantalón que le falta al saco, con su imagen
+
+Roberto, sobre los trajes que quedaron a medias: *"si tengo el traje, tengo el pantalón y tengo el saco… está raro si no hay imagen del pantalón"*.
+
+En la migración de hace un rato **no** lo creé, y con razón: no sabía si esa persona lo tenía, y crear ropa que nadie tiene es el problema de fondo de estos días. **Que él lo declare cambia las cosas** — deja de ser invención y pasa a ser un dato suyo.
+
+En la ficha de un saco, junto a las candidatas a pareja, sale **"no está en mi clóset — créalo"**: crea el pantalón, lo ata al saco y le genera la imagen.
+
+**Se deriva, no se rellena.** Color, material y temporada salen del saco que sí está fotografiado; lo único que se afirma de más es que un pantalón de traje es formal, que es la definición de la prenda. Lo que el saco no tiene, el pantalón tampoco: un material inventado alimenta las reglas de clima, y el motor sabe tratar un hueco pero no una mentira.
+
+La certeza queda en **`generica`**: la prenda es suya a propósito, pero nadie la ha fotografiado.
+
+El render va **aparte** de la creación: si tarda o falla, la prenda ya existe y el clóset la muestra con su color.
+
 ## [0.2.156.0] - 2026-08-07
 
 ### Fixed — los 4 "Traje …" que en realidad eran un saco (migración 0126)

@@ -18,6 +18,7 @@ import {
   type ItemImageRow,
 } from "@/lib/item-image";
 import type { PrendaExistente } from "@/lib/ya-la-tienes";
+import { attrsDelPantalon } from "@/lib/pantalon-del-traje";
 
 // Frontera de confianza LLM→DB: los campos de texto libre del análisis de
 // visión se normalizan/validan server-side antes de persistir (las server
@@ -621,4 +622,75 @@ export async function atarConjunto(
 
   revalidatePath("/closet");
   return { ok: true };
+}
+
+/**
+ * Crea el pantalón que le falta a un saco de traje, y los ata.
+ *
+ * Roberto, sobre los cuatro "Traje …" que quedaron a medias: "si tengo el
+ * traje, tengo el pantalón y tengo el saco… está raro si no hay imagen del
+ * pantalón". En la migración no lo creé porque no sabía si existía —crear ropa
+ * que nadie tiene es el problema que llevamos días persiguiendo—, pero que la
+ * persona lo declare cambia las cosas: deja de ser invención y pasa a ser un
+ * dato suyo.
+ *
+ * SE DERIVA DEL SACO (color, material, temporada) en vez de rellenarse a ojo:
+ * ver lib/pantalon-del-traje. La certeza queda en 'generica' — la prenda es
+ * suya a propósito, pero nadie la ha fotografiado.
+ *
+ * La imagen NO se genera aquí: el cliente pide el render después, para no
+ * amarrar esta acción a una llamada de 30s que puede fallar sola.
+ */
+export async function crearPantalonDelTraje(
+  sacoId: string
+): Promise<{ ok: boolean; id?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: saco } = await supabase
+    .from("items")
+    .select("attrs, archetypes(name)")
+    .eq("id", sacoId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .single();
+  if (!saco) return { ok: false };
+
+  const a = (saco.attrs ?? {}) as Record<string, string | undefined>;
+  const arch = saco.archetypes as { name?: string } | null;
+  const attrs = attrsDelPantalon({
+    nombre: a.nombre ?? arch?.name ?? "Saco",
+    color: a.color ?? null,
+    colorHex: a.color_hex ?? null,
+    material: a.material ?? null,
+    temporada: a.temporada ?? null,
+  });
+
+  const conjunto = crypto.randomUUID();
+  const { data: creado, error } = await supabase
+    .from("items")
+    .insert({
+      user_id: user.id,
+      source: "archetype",
+      // GENERICA: la eligió a propósito (dijo "sí lo tengo"), pero no hay foto
+      // suya y los detalles finos se heredaron del saco.
+      certeza: "generica",
+      attrs: { ...attrs, conjunto },
+    })
+    .select("id")
+    .single();
+  if (error || !creado) return { ok: false };
+
+  // El saco pierde cualquier lazo viejo y se queda con éste.
+  await supabase
+    .from("items")
+    .update({ attrs: { ...a, conjunto } })
+    .eq("id", sacoId)
+    .eq("user_id", user.id);
+
+  revalidatePath("/closet");
+  return { ok: true, id: creado.id as string };
 }
