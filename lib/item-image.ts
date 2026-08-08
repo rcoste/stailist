@@ -91,13 +91,21 @@ export function pickItemImage(item: ItemImageRow): ItemImagePick {
   return null;
 }
 
-// Rutas privadas candidatas de un item — para firmarlas en lote (una sola petición
-// a Storage) antes de resolver. Las pantallas que firman en lote usan esto.
+// Rutas privadas de un item — para firmarlas en lote (una sola petición a
+// Storage) antes de resolver. Las pantallas que firman en lote usan esto.
+//
+// ES EXACTAMENTE LA QUE pickItemImage VA A ELEGIR, ni una más. Antes devolvía
+// las dos candidatas, y mientras sólo 5 prendas en toda la base tenían foto
+// original eso no costaba nada. Desde hoy TODA prenda que entra por el carrete
+// guarda las dos —render y foto— así que firmar las dos significa pedirle a
+// Storage el doble de URLs por cada clóset que se abre, y la mitad son de
+// imágenes que nadie va a mostrar (el render siempre gana sobre la foto).
+//
+// Se deriva de pickItemImage en vez de repetir su orden: si mañana cambia la
+// preferencia, esto no se puede desincronizar.
 export function itemPrivatePaths(item: ItemImageRow): string[] {
-  const out: string[] = [];
-  if (item.render_status === "done" && item.render_path) out.push(item.render_path);
-  if (item.photo_path) out.push(item.photo_path);
-  return out;
+  const pick = pickItemImage(item);
+  return pick?.kind === "private" ? [pick.path] : [];
 }
 
 // Resuelve la URL final con un firmador SÍNCRONO (un Map pre-firmado en lote).

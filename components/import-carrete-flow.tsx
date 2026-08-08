@@ -765,6 +765,20 @@ export function ImportCarreteFlow({
             </span>
           </button>
         ) : null}
+        {/* CUÁNTO VA A TARDAR, ANTES DE COMPROMETERSE. El paso siguiente dibuja
+            una imagen por prenda (~17s cada una, de cuatro en cuatro) y no se
+            puede cancelar: con 12 fotos se puede llegar a 96 prendas, o sea
+            siete minutos mirando una barra. El número de prendas ya estaba en
+            el botón; lo que faltaba era lo único que hace decidible ese número.
+            Se dice sólo cuando pasa de un minuto — antes de eso es ruido. */}
+        {activos.length > 14 ? (
+          <p className="text-xs leading-snug text-muted">
+            Son muchas de una vez: dibujarlas tarda unos{" "}
+            {Math.ceil((activos.length / 4) * 17 / 60)} minutos y no se puede
+            parar a medias. Si tienes prisa, apaga algunas y vuelve luego por
+            ellas.
+          </p>
+        ) : null}
         <Footer
           cancel={() => setState({ kind: "idle" })}
           confirmLabel={`generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
