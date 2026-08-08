@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.177.0] - 2026-08-08
+
+### Fixed — ahora se dice qué NO te propuse y por qué
+
+Roberto: *"no sé si las cosas que no detectó es porque ya las tengo o porque no las detectó"*.
+
+El espejo filtraba en silencio. Si leía cinco prendas y descartaba tres, aparecían dos sin ninguna explicación — y **tres cosas muy distintas** (ya la tienes / no la vi / la vi mal) se veían exactamente igual desde su lado.
+
+Ahora lo descartado se dice, **con el nombre de la prenda tuya con la que lo emparejé**: *"Pantalón de lino beige → Pantalón de lino"*. No es un adorno: es la única forma de que un empate equivocado se pueda ver. Si son dos pantalones de lino distintos y no lo nombro, esa prenda no entra a su clóset jamás y él nunca se entera de por qué.
+
+### Added — marca y talla, opcionales, en la ficha
+
+Idea de Roberto. **Sí, pero no en la carga**, y eso es toda la decisión.
+
+Son los dos únicos atributos que ningún modelo puede leer: medido, la visión capturó marca en **2 de 336** prendas de foto (las Columbia, por el logo), y la talla vive en una etiqueta por dentro — no está en ninguna foto, nunca. O sea, tecleo manual siempre.
+
+Pedirlas al dar de alta —quince prendas por dos campos de texto en un teléfono— es exactamente la fricción de catalogar que mató al alfa de Replit y que este producto existe para no tener. En la ficha, en cambio, tienes el zapato en la mano y no hay prisa.
+
+**No las lee el motor, a propósito.** Nada entra al prompt sin medirse: la marca es señal de estilo de verdad (un Meermin no es un zapato café cualquiera), pero eso se prueba con el instrumento pareado, no de oído. Hoy su consumidor es la persona mirando su propia prenda — un consumidor legítimo, a diferencia de los campos que se escriben y no lee nadie.
+
+Y un desbordamiento que se cazó midiendo, no a ojo: sin `min-w-0`, un input no baja de lo que mide su texto de ejemplo, y *"Uniqlo, Massimo Dutti…"* empujaba la talla **32px fuera** de la ficha.
+
 ## [0.2.176.0] - 2026-08-08
 
 ### Fixed — el espejo confirmaba CERO campos y el carrete siete

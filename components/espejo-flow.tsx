@@ -48,11 +48,21 @@ type State =
 // · nada entra sin que lo marque: una foto de espejo tiene oclusión, luz de
 //   ambiente y prendas fuera de cuadro, y con la misma camisa tres veces por
 //   semana el auto-alta llenaría el clóset de duplicados en un mes.
+/** Una prenda de la foto que no se propone porque ya parece estar en el clóset. */
+type YaEsta = { nombre: string; comoEsta: string };
+
 type Sumar =
   | { paso: "oferta" }
   | { paso: "buscando" }
-  | { paso: "nada"; vistas: number }
-  | { paso: "elegir"; prendas: DraftLeida[]; tocados: Record<string, Set<string>>; vistas: number }
+  | { paso: "nada"; vistas: number; yaEstan: YaEsta[] }
+  | {
+      paso: "elegir";
+      prendas: DraftLeida[];
+      tocados: Record<string, Set<string>>;
+      vistas: number;
+      /** Lo que descarté por parecerse a algo tuyo — se DICE, no se esconde. */
+      yaEstan: YaEsta[];
+    }
   | { paso: "guardando" }
   | { paso: "hecho"; cuantas: number };
 
@@ -187,12 +197,13 @@ export function EspejoFlow({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: preview }),
       });
-      if (!res.ok) return setSumar({ paso: "nada", vistas: 0 });
-      const { prendas, vistas } = (await res.json()) as {
+      if (!res.ok) return setSumar({ paso: "nada", vistas: 0, yaEstan: [] });
+      const { prendas, vistas, yaEstan } = (await res.json()) as {
         prendas: PrendaDetectada[];
         vistas: number;
+        yaEstan: YaEsta[];
       };
-      if (prendas.length === 0) return setSumar({ paso: "nada", vistas });
+      if (prendas.length === 0) return setSumar({ paso: "nada", vistas, yaEstan });
       setSumar({
         paso: "elegir",
         prendas: prendas.map((p) => ({
@@ -206,9 +217,10 @@ export function EspejoFlow({
         })),
         tocados: {},
         vistas,
+        yaEstan,
       });
     } catch {
-      setSumar({ paso: "nada", vistas: 0 });
+      setSumar({ paso: "nada", vistas: 0, yaEstan: [] });
     }
   }
 
@@ -338,11 +350,14 @@ export function EspejoFlow({
                 ) : null}
 
                 {sumar.paso === "nada" ? (
-                  <p className="text-[13px] text-muted">
-                    {sumar.vistas > 0
-                      ? "Todo lo que traes ya está en tu clóset."
-                      : "No pude distinguir las prendas en esta foto."}
-                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-[13px] text-muted">
+                      {sumar.vistas > 0
+                        ? "Todo lo que traes ya está en tu clóset."
+                        : "No pude distinguir las prendas en esta foto."}
+                    </p>
+                    <YaEstanLista items={sumar.yaEstan} />
+                  </div>
                 ) : null}
 
                 {sumar.paso === "elegir" ? (
@@ -392,6 +407,7 @@ export function EspejoFlow({
                         }
                       />
                     ))}
+                    <YaEstanLista items={sumar.yaEstan} />
                     <button
                       type="button"
                       onClick={() => guardarPrendas()}
@@ -472,5 +488,33 @@ export function EspejoFlow({
       </button>
       {input}
     </>
+  );
+}
+
+/**
+ * Lo que vi en la foto y NO te propongo, con la prenda tuya que creo que es.
+ *
+ * Roberto: "no sé si las cosas que no detectó es porque ya las tengo o porque
+ * no las detectó". Filtrando en silencio, tres cosas muy distintas —ya la
+ * tienes, no la vi, la vi mal— se ven exactamente igual desde su lado.
+ *
+ * Y decir CON QUÉ la emparejé no es un adorno: es la única forma de que un
+ * empate equivocado se pueda ver. Si le digo "ya tienes Pantalón de lino" y
+ * éste es otro pantalón de lino distinto, sin nombrarlo nunca se entera — y esa
+ * prenda no entra a su clóset jamás.
+ */
+function YaEstanLista({ items }: { items: YaEsta[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1 rounded-sm bg-bg px-3 py-2">
+      <p className="text-[12px] font-medium text-muted">
+        Esto también lo vi, y creo que ya lo tienes:
+      </p>
+      {items.map((x, i) => (
+        <p key={`${x.nombre}-${i}`} className="text-[12px] leading-snug text-muted">
+          {x.nombre} <span className="text-ink">→ {x.comoEsta}</span>
+        </p>
+      ))}
+    </div>
   );
 }

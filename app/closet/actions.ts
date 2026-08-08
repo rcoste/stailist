@@ -217,6 +217,26 @@ export async function updateItemAttrs(
     material?: string;
     patron?: string;
     color_secundario?: string;
+    /**
+     * MARCA Y TALLA — los dos únicos atributos que ningún modelo puede leer.
+     *
+     * Idea de Roberto. Van SÓLO aquí y nunca en los flujos de alta, y eso es la
+     * decisión: la marca la vio la visión en 2 de 336 prendas (las Columbia,
+     * por el logo) y la talla vive en una etiqueta por dentro, así que las dos
+     * son tecleo manual siempre. Pedirlas al dar de alta —quince prendas por
+     * dos campos de texto en un teléfono— es exactamente la fricción de
+     * catalogar que mató al alfa de Replit y que este producto existe para no
+     * tener. En la ficha, en cambio, tienes el zapato en la mano y no hay prisa.
+     *
+     * NO LAS LEE EL MOTOR, y es a propósito. Nada entra al prompt sin medirse:
+     * la marca es señal de estilo de verdad (un Meermin no es un zapato café
+     * cualquiera), pero eso se prueba con el instrumento pareado, no de oído.
+     * Hoy su consumidor es la persona mirando su propia prenda, que es un
+     * consumidor legítimo — a diferencia de los campos que se escriben y no lee
+     * nadie.
+     */
+    marca?: string;
+    talla?: string;
     /** El color principal — no estaba editable en la ficha y es el que más pesa. */
     color?: string;
     color_hex?: string;
@@ -274,6 +294,14 @@ export async function updateItemAttrs(
   // EL COLOR PRINCIPAL. Faltaba: la ficha dejaba corregir el SEGUNDO color y no
   // el primero, que es el que alimenta las reglas de cuero, las de monocromo y
   // la colorimetría entera.
+  // Texto libre corto: mandar vacío BORRA el dato (te equivocaste de talla y
+  // la quitas, no te quedas con la mala).
+  for (const campo of ["marca", "talla"] as const) {
+    if (patch[campo] === undefined) continue;
+    const v = cleanTextAttr(patch[campo], MAX_MATERIAL_LEN);
+    if (v) clean[campo] = v;
+    else delete clean[campo];
+  }
   if (patch.color) clean.color = patch.color.slice(0, 40);
   if (patch.color_hex && /^#[0-9a-f]{6}$/i.test(patch.color_hex))
     clean.color_hex = patch.color_hex;
