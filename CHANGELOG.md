@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.160.0] - 2026-08-07
+
+### Fixed — "mala" no decía qué estaba mal
+
+Roberto, en la pantalla de curación visual: *"¿qué significa mala?"*. Buena pregunta: la etiqueta no dice si lo malo es la prenda o el dibujo. Es el **dibujo** — y eso sólo se sabía leyendo el código.
+
+Peor, el subtítulo lo escondía: *"Las que no coincidan no se pierden: nos ayudan a crecer la biblioteca"* explicaba una de las tres salidas y dejaba sin avisar la única que **sí** tira algo.
+
+Las tres salidas, ahora dichas:
+
+| botón | la prenda | la imagen |
+|---|---|---|
+| **es mía** | entra a tu clóset | se queda como su foto |
+| **no es mía** *(antes "no es")* | no entra | se guarda para la biblioteca |
+| **salió mal** *(antes "mala")* | no entra | se tira |
+
+Y el subtítulo distingue los dos casos: *"Si no es tuya, la imagen nos sirve para la biblioteca. Si el dibujo salió mal, lo tiro."*. El título deja de ser *"¿Cuáles son tu prenda?"*.
+
 ## [0.2.159.0] - 2026-08-07
 
 ### Fixed — el cabo suelto de la visión: medido, y peor de lo que dije
