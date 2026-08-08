@@ -1,6 +1,6 @@
 "use client";
 
-import { useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
 import { createClient } from "@/lib/supabase/client";
@@ -224,8 +224,51 @@ export function ImportCarreteFlow({
   // vez por tanda, no por prenda: son unos cientos de filas y la pantalla de
   // confirmación no debe esperar a nada.
   const [enElCloset, setEnElCloset] = useState<PrendaExistente[]>([]);
+  /**
+   * Cuánta gente sale en cada foto, cuando ya se pudo contar.
+   *
+   * Vive fuera del estado del flujo porque llega DESPUÉS de pintar la pantalla:
+   * la rejilla de fotos no puede esperar a una llamada de IA para que la mires.
+   * Sin dato (o con dato 0/1) no aparece nada.
+   */
+  const [personas, setPersonas] = useState<Record<string, number>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // ¿SALE ALGUIEN MÁS EN ESTA FOTO? Se pregunta AQUÍ, con las fotos elegidas y
+  // todavía sin leer, porque es el único momento en que la respuesta sirve para
+  // algo: después ya se leyó la ropa de tu amigo y ya la estás viendo en la
+  // lista. Es una llamada barata y aparte (ver lib/vision-personas).
+  //
+  // Una por foto y una sola vez: se salta las que ya tienen respuesta, así que
+  // recortar una foto no vuelve a pagar la pregunta de las otras.
+  const fotosDeRevisar = state.kind === "revisar" ? state.fotos : null;
+  useEffect(() => {
+    if (!fotosDeRevisar) return;
+    let vivo = true;
+    for (const f of fotosDeRevisar) {
+      if (personas[f.id] !== undefined) continue;
+      fetch("/api/contar-personas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: f.dataUrl }),
+      })
+        .then((r) => (r.ok ? r.json() : { personas: 0 }))
+        .then((d: { personas?: number }) => {
+          if (vivo) setPersonas((p) => ({ ...p, [f.id]: d.personas ?? 0 }));
+        })
+        .catch(() => {
+          // Sin dato no se avisa — queda como estaba antes de que esto existiera.
+          if (vivo) setPersonas((p) => ({ ...p, [f.id]: 0 }));
+        });
+    }
+    return () => {
+      vivo = false;
+    };
+    // `personas` se lee para saltarse lo ya contado, pero NO va en las deps: se
+    // escribe dentro del efecto y volvería a dispararlo en bucle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fotosDeRevisar]);
 
   // El explainer va ANTES del picker: el valor del carrete (1 foto → la IA separa
   // cada prenda) hay que contarlo primero. "elegir fotos" abre el picker nativo.
@@ -270,6 +313,14 @@ export function ImportCarreteFlow({
     setState((s) =>
       s.kind === "revisar" ? { ...s, fotos: s.fotos.map((f) => (f.id === id ? { ...f, dataUrl } : f)) } : s
     );
+    // La foto recortada se vuelve a contar. Es lo que cierra el lazo: recortas
+    // para dejarte sola y el aviso DESAPARECE — o se queda, y entonces sabes
+    // que el recorte no bastó. Un aviso que no reacciona a lo que hiciste no se
+    // distingue de un aviso roto.
+    setPersonas((p) => {
+      const { [id]: _, ...resto } = p;
+      return resto;
+    });
   }
 
   // --- 2) Revisadas → extracción de prendas (IA por foto) ---
@@ -633,25 +684,47 @@ export function ImportCarreteFlow({
 
   if (state.kind === "revisar") {
     const cropFoto = state.fotos.find((f) => f.id === cropId) ?? null;
+    // Las fotos donde de verdad sale alguien más. El aviso genérico de arriba
+    // preguntaba lo mismo en TODAS ("¿sale alguien más en alguna?"), que es la
+    // clase de aviso que se aprende a ignorar porque siempre está.
+    const conCompania = state.fotos.filter((f) => (personas[f.id] ?? 0) > 1);
     return (
       <Overlay>
         {input}
         <Header
           title="revisa tus fotos"
-          sub="¿Sale alguien más en alguna? Recórtala para dejarte solo a ti. Es opcional."
+          sub={
+            conCompania.length > 0
+              ? `En ${conCompania.length === 1 ? "una de tus fotos sale" : `${conCompania.length} de tus fotos sale`} alguien más. Recórtala para dejarte solo a ti, o te sumaré su ropa como tuya.`
+              : "¿Sale alguien más en alguna? Recórtala para dejarte solo a ti. Es opcional."
+          }
         />
         <div className="grid grid-cols-3 gap-2">
-          {state.fotos.map((f) => (
+          {state.fotos.map((f) => {
+            const acompanada = (personas[f.id] ?? 0) > 1;
+            return (
             <div
               key={f.id}
-              className="relative aspect-[3/4] overflow-hidden rounded-sm border border-line bg-bg"
+              className={`relative aspect-[3/4] overflow-hidden rounded-sm border bg-bg ${
+                acompanada ? "border-warning" : "border-line"
+              }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={f.dataUrl} alt="" className="h-full w-full object-cover" />
+              {/* SOBRE LA FOTO QUE LO NECESITA, no en un texto general: con
+                  doce miniaturas, "en alguna sale alguien más" obliga a
+                  buscarla, y buscar es justo lo que nadie hace. */}
+              {acompanada ? (
+                <span className="absolute left-1 top-1 rounded-sm bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-on-accent">
+                  salen {personas[f.id]}
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setCropId(f.id)}
-                className="absolute bottom-1 left-1 rounded-sm bg-ink/70 px-1.5 py-1 text-[11px] font-semibold text-on-accent"
+                className={`absolute bottom-1 left-1 rounded-sm px-1.5 py-1 text-[11px] font-semibold text-on-accent ${
+                  acompanada ? "bg-warning" : "bg-ink/70"
+                }`}
               >
                 recortar
               </button>
@@ -664,7 +737,8 @@ export function ImportCarreteFlow({
                 ×
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
         <Footer
           cancel={() => setState({ kind: "idle" })}
