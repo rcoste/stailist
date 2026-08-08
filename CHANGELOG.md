@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.175.0] - 2026-08-08
+
+### Added — el espejo también te llena el clóset
+
+Idea de Roberto: aprovechar la misma foto para sumar las prendas que todavía no estén.
+
+**Por qué vale la pena aunque la foto sea mal insumo para catalogar**: el enemigo declarado del proyecto no es combinar ropa, es la fricción de catalogar el clóset. Si vestirte lo va llenando, ese problema se resuelve **viviendo**.
+
+Tras el consejo aparece una línea discreta: *"¿hay algo aquí que no esté en tu clóset?"*. Lee la foto, descarta lo que ya tienes y te propone sólo lo nuevo, marcado por defecto.
+
+**Tres cosas que NO hace, y cada una por su motivo:**
+
+- **No va en el mismo schema del espejo.** Medido esta mañana: añadir un campo al schema de un lector mueve otras lecturas con **z = 3.05**, y seguía moviéndolas sin tocar una palabra del prompt. Pedirle al espejo que además liste prendas degradaría el consejo, que es su trabajo. Va como llamada aparte, igual que el contador de prendas y el de personas.
+- **No corre sola.** Sería una llamada de visión diaria por persona para algo que la mayoría de los días no aporta nada — te pones lo que ya tienes.
+- **No suma nada sin que lo marques.** Una foto de espejo tiene oclusión, luz de ambiente y prendas fuera de cuadro; y con la misma camisa tres veces por semana, el alta automática llenaría el clóset de duplicados en un mes.
+
+**El filtro es el de "creo que ya la tienes"**, calibrado contra la base real, usado al revés: en el carrete avisa, aquí descarta. El caso es otro — ahí estás catalogando y quieres verlo todo; aquí ya te vestiste, tienes prisa, y proponerte sumar la camisa blanca que llevas puesta desde junio es ruido que enseña a ignorar la función entera.
+
+**Verificado contra el clóset real de Roberto** (138 prendas): de cuatro prendas leídas en una foto, emparejó y descartó su pantalón de lino y sus tenis blancos, y propuso sólo las dos que de verdad no tenía.
+
+### Fixed — "sin dibujar todavía" dejó de ser lo mismo que "falló"
+
+`addPhotoItems` sólo aceptaba `done` o `failed`. El espejo suma prendas sin pararse a dibujarlas (cinco renders son ~85s y ahí la persona está saliendo de su casa), y marcarlas `failed` las habría dejado **sin imagen para siempre**: el auto-sanado del clóset sólo recoge las que están en `none`. Ahora acepta `null`, y esas prendas se dibujan solas después.
+
 ## [0.2.174.0] - 2026-08-08
 
 ### Added — "¿me veo bien?": le enseñas cómo saliste vestida y te contesta
