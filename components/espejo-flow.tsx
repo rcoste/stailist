@@ -7,6 +7,7 @@ import { toUsableImage } from "@/lib/image-file";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { addPhotoItems } from "@/app/closet/actions";
+import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
 
@@ -51,7 +52,7 @@ type Sumar =
   | { paso: "oferta" }
   | { paso: "buscando" }
   | { paso: "nada"; vistas: number }
-  | { paso: "elegir"; prendas: PrendaDetectada[]; on: Set<number>; vistas: number }
+  | { paso: "elegir"; prendas: DraftLeida[]; tocados: Record<string, Set<string>>; vistas: number }
   | { paso: "guardando" }
   | { paso: "hecho"; cuantas: number };
 
@@ -194,10 +195,16 @@ export function EspejoFlow({
       if (prendas.length === 0) return setSumar({ paso: "nada", vistas });
       setSumar({
         paso: "elegir",
-        prendas,
-        // Vienen TODAS encendidas: ya se filtró lo que parece estar, así que
-        // lo normal es quererlas. Apagar es la excepción.
-        on: new Set(prendas.map((_, i) => i)),
+        prendas: prendas.map((p) => ({
+          id: crypto.randomUUID(),
+          attrs: p,
+          // Todas encendidas: ya se filtró lo que parece estar, así que lo
+          // normal es quererlas. Apagar es la excepción.
+          on: true,
+          photoPreview: preview,
+          leido: { color: p.color, hex: p.color_hex },
+        })),
+        tocados: {},
         vistas,
       });
     } catch {
@@ -208,13 +215,15 @@ export function EspejoFlow({
   /** Guarda las marcadas. La imagen limpia la dibuja el clóset después. */
   async function guardarPrendas() {
     if (sumar.paso !== "elegir") return;
-    const elegidas = sumar.prendas.filter((_, i) => sumar.on.has(i));
+    const elegidas = sumar.prendas.filter((p) => p.on);
     if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0 });
     setSumar({ paso: "guardando" });
     try {
       const res = await addPhotoItems(
         elegidas.map((p) => ({
-          attrs: p,
+          // Lo que corrigió a mano viaja como confirmado, igual que en el
+          // carrete: es el MISMO contrato, porque ahora es la misma tarjeta.
+          attrs: { ...p.attrs, confirmados: [...(sumar.tocados[p.id] ?? [])] },
           // SIN RENDER Y SIN FOTO, las dos cosas a propósito:
           //
           // · renderStatus null (no 'failed'): dibujar cinco prendas son ~85s y
@@ -341,50 +350,54 @@ export function EspejoFlow({
                     <p className="text-[13px] text-ink">
                       Esto no lo veo en tu clóset. Marca lo que sí sea tuyo:
                     </p>
-                    <div className="flex flex-col gap-1.5">
-                      {sumar.prendas.map((p, i) => {
-                        const on = sumar.on.has(i);
-                        return (
-                          <button
-                            key={`${p.nombre}-${i}`}
-                            type="button"
-                            onClick={() =>
-                              setSumar((sm) => {
-                                if (sm.paso !== "elegir") return sm;
-                                const on2 = new Set(sm.on);
-                                on2.has(i) ? on2.delete(i) : on2.add(i);
-                                return { ...sm, on: on2 };
-                              })
-                            }
-                            className={`flex items-center gap-2.5 rounded-sm border px-3 py-2 text-left transition-colors ${
-                              on ? "border-accent bg-accent-soft" : "border-line bg-bg"
-                            }`}
-                          >
-                            <span
-                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border ${
-                                on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface"
-                              }`}
-                            >
-                              {on ? <Icon name="check" size={11} /> : null}
-                            </span>
-                            <span
-                              className="h-4 w-4 shrink-0 rounded-full border border-line"
-                              style={{ backgroundColor: p.color_hex }}
-                              aria-hidden
-                            />
-                            <span className="min-w-0 flex-1 truncate text-[13px] text-ink">
-                              {p.nombre}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* LA MISMA TARJETA DEL CARRETE, en compacto.
+                        La primera versión de esta lista era mía y sólo enseñaba
+                        nombre y color: el carrete confirmaba SIETE campos y el
+                        espejo cero — y al revés de como debería, porque la foto
+                        de espejo es el peor insumo del producto y por tanto la
+                        que más necesita corregirse. Compartirla no es limpieza
+                        de código: es lo que decide si el dato entra bien. */}
+                    {sumar.prendas.map((p) => (
+                      <DraftCard
+                        key={p.id}
+                        item={p}
+                        compacta
+                        yaEsta={null}
+                        onToggle={() =>
+                          setSumar((sm) =>
+                            sm.paso !== "elegir"
+                              ? sm
+                              : {
+                                  ...sm,
+                                  prendas: sm.prendas.map((x) =>
+                                    x.id === p.id ? { ...x, on: !x.on } : x
+                                  ),
+                                }
+                          )
+                        }
+                        onPatch={(patch, campos) =>
+                          setSumar((sm) => {
+                            if (sm.paso !== "elegir") return sm;
+                            const previos = sm.tocados[p.id] ?? new Set<string>();
+                            return {
+                              ...sm,
+                              prendas: sm.prendas.map((x) =>
+                                x.id === p.id ? { ...x, attrs: { ...x.attrs, ...patch } } : x
+                              ),
+                              tocados: campos?.length
+                                ? { ...sm.tocados, [p.id]: new Set([...previos, ...campos]) }
+                                : sm.tocados,
+                            };
+                          })
+                        }
+                      />
+                    ))}
                     <button
                       type="button"
                       onClick={() => guardarPrendas()}
                       className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
                     >
-                      sumar {sumar.on.size} al clóset
+                      sumar {sumar.prendas.filter((p) => p.on).length} al clóset
                     </button>
                   </div>
                 ) : null}

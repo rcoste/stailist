@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.176.0] - 2026-08-08
+
+### Fixed — el espejo confirmaba CERO campos y el carrete siete
+
+Roberto, mirando lo que acababa de shippear: *"pero a ver, justo se reusa mucha de la lógica que hicimos hace rato a la hora de cargar multiprenda y además detectar si hay duplicado"*.
+
+Tenía razón, y el hueco era peor de lo que suena. Medido: **el carrete confirma 7 campos editables; el espejo confirmaba 0.**
+
+Las *libs* sí se reusaban —leer la foto, el aviso de duplicado, el alta—, pero la **pantalla donde la persona corrige** no: al espejo le escribí una lista propia de nombre, color y una casilla. Y al revés de como debería ser: la foto de espejo es el **peor** insumo que recibe el producto (oclusión, luz de ambiente, prendas a medio ver), o sea justo la que más necesita poder corregirse, y era la única sin nada que corregir.
+
+Es el bug de siempre con otro disfraz —dato leído, guardado, usado por el motor, invisible e incorregible— sólo que esta vez lo construí el mismo día que lo estaba arreglando en otra pantalla.
+
+**Ahora las dos puertas usan la misma tarjeta** (`components/prenda-draft-card.tsx`), con sus siete campos, su paleta de vecinos y su aviso de duplicado. Y lo que corriges en el espejo viaja como confirmado, igual que en el carrete: es el mismo contrato porque es el mismo componente.
+
+**En modo compacto**, que es lo que la hace caber ahí: arranca cerrada con un *"afinar color, tipo y material"*. Saliendo de tu casa, exigirte siete campos por prenda convertiría un favor en un trámite — pero la puerta existe. **Y se abre sola** cuando el modelo declara baja confianza o marca campos inseguros: esconder justo lo que hay que revisar sería quedarse con lo peor de las dos formas.
+
+**El carrete no cambia.** El cuerpo de la tarjeta se movió byte a byte: 228 líneas idénticas y 17 nuevas, todas del modo compacto. Sin `compacta`, arranca abierta — exactamente como estaba.
+
 ## [0.2.175.0] - 2026-08-08
 
 ### Added — el espejo también te llena el clóset
