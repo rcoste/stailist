@@ -3,6 +3,7 @@
 import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
+import { createClient } from "@/lib/supabase/client";
 import { addPhotoItems, addLibraryCandidates, prendasParaComparar } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
@@ -145,9 +146,12 @@ const mismoHex = (a?: string, b?: string) =>
 
 // headless: sin botón propio — lo dispara la hoja "Agregar" vía ref.start().
 export function ImportCarreteFlow({
+  userId,
   headless = false,
   ref,
 }: {
+  /** Hace falta para guardar la foto original en la carpeta del usuario. */
+  userId?: string;
   headless?: boolean;
   ref?: Ref<AddFlowHandle>;
 } = {}) {
@@ -379,6 +383,36 @@ export function ImportCarreteFlow({
       const keep = state.items.filter((it) => it.verdict === "keep");
       const notmine = state.items.filter((it) => it.verdict === "notmine" && it.path);
 
+      // LA FOTO ORIGINAL SE GUARDA, y una sola vez por foto aunque de ella
+      // salieran seis prendas: todas comparten la misma imagen de referencia.
+      //
+      // Se tiraba, y eso cerraba tres puertas: no se podía comprobar de qué
+      // foto salió un render raro, ni volver a leer la prenda con un modelo
+      // mejor, ni regresar a la fuente cuando el dibujo sale mal. De 325
+      // prendas dadas de alta por foto, sólo 5 conservaban el original.
+      //
+      // FALLA HACIA ADELANTE: si la subida no sale, la prenda se guarda igual
+      // sin referencia. La prenda es el trabajo; la foto es el respaldo.
+      const rutaDeFoto = new Map<string, string>();
+      if (userId && keep.length > 0) {
+        const unicas = [...new Set(keep.map((it) => it.photo))];
+        const supabase = createClient();
+        await Promise.all(
+          unicas.map(async (dataUrl) => {
+            try {
+              const blob = await (await fetch(dataUrl)).blob();
+              const path = `${userId}/origen-${uid()}.jpg`;
+              const up = await supabase.storage
+                .from("prendas")
+                .upload(path, blob, { contentType: "image/jpeg" });
+              if (!up.error) rutaDeFoto.set(dataUrl, path);
+            } catch {
+              // sin referencia, pero la prenda entra igual
+            }
+          })
+        );
+      }
+
       const okItems =
         keep.length === 0
           ? { ok: true, added: 0 }
@@ -387,6 +421,7 @@ export function ImportCarreteFlow({
                 attrs: it.attrs,
                 renderPath: it.status === "done" ? it.path : null,
                 renderStatus: it.status === "done" ? "done" : "failed",
+                photoPath: rutaDeFoto.get(it.photo) ?? null,
               }))
             );
 

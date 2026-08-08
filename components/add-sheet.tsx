@@ -72,7 +72,7 @@ export function AddSheet({
         // misma foto pasa al lector que sí sabe separarlas.
         onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
       />
-      <ImportCarreteFlow headless ref={carreteRef} />
+      <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
       <Sheet open={open} onClose={() => setOpen(false)}>
         <h3 className="mx-1 mb-3 text-[19px] font-semibold text-ink">

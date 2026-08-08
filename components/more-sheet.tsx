@@ -112,7 +112,7 @@ export function MoreSheet({
         // aviso de "veo más de una prenda" aparece en una y en las otras no.
         onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
       />
-      <ImportCarreteFlow headless ref={carreteRef} />
+      <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
       <AtajosSheet
         open={open}

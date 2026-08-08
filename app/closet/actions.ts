@@ -359,6 +359,21 @@ export async function addPhotoItems(
     attrs: PrendaAnalisis;
     renderPath: string | null;
     renderStatus: "done" | "failed";
+    /**
+     * La foto ORIGINAL de donde salió la prenda.
+     *
+     * Se tiraba: de 325 prendas dadas de alta por foto, sólo 5 conservaban el
+     * original. Lo que quedaba era el dibujo generado a partir de ella, y eso
+     * cierra tres puertas a la vez — no se puede comprobar de qué foto salió un
+     * render raro, no se puede volver a leer la prenda con un modelo mejor
+     * (midiendo la deriva de visión hubo que usar renders como sustituto
+     * porque los originales no existen), y si el render sale mal no hay a dónde
+     * regresar: rehacerlo parte del texto, no de la prenda.
+     *
+     * NO cambia lo que se ve: pickItemImage prefiere el render sobre la foto,
+     * así que la miniatura sigue siendo el dibujo limpio.
+     */
+    photoPath?: string | null;
   }[]
 ): Promise<{ ok: boolean; added: number }> {
   const clean = items.slice(0, 30); // tope de seguridad por lote
@@ -370,9 +385,13 @@ export async function addPhotoItems(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, added: 0 };
 
-  // render_path debe estar dentro de la carpeta del usuario (defensa además de RLS).
+  // Las rutas deben estar dentro de la carpeta del usuario (defensa además de
+  // la RLS del Storage). Vale igual para el render y para la foto original.
   for (const it of clean) {
     if (it.renderPath && !it.renderPath.startsWith(`${user.id}/`)) {
+      return { ok: false, added: 0 };
+    }
+    if (it.photoPath && !it.photoPath.startsWith(`${user.id}/`)) {
       return { ok: false, added: 0 };
     }
   }
@@ -399,6 +418,7 @@ export async function addPhotoItems(
       },
       render_status: it.renderStatus,
       render_path: it.renderPath,
+      photo_path: it.photoPath ?? null,
     }))
   );
   if (error) return { ok: false, added: 0 };
