@@ -10,6 +10,14 @@ import {
   MAX_MATERIAL_LEN,
 } from "@/lib/prenda-atributos";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
+import {
+  ITEM_IMAGE_SELECT,
+  categoriaDeItem,
+  itemImageUrlSync,
+  itemPrivatePaths,
+  type ItemImageRow,
+} from "@/lib/item-image";
+import type { PrendaExistente } from "@/lib/ya-la-tienes";
 
 // Frontera de confianza LLM→DB: los campos de texto libre del análisis de
 // visión se normalizan/validan server-side antes de persistir (las server
@@ -481,4 +489,59 @@ export async function confirmarCorte(
 
   revalidatePath("/closet");
   return { ok: true };
+}
+
+/**
+ * El clóset, reducido a lo justo para preguntar "¿ya la tienes?".
+ *
+ * Se lee al entrar a la pantalla de confirmación del carrete, no antes: es una
+ * consulta por tanda de fotos, no por prenda leída.
+ *
+ * VA CON IMAGEN porque el aviso sin foto no se puede contestar. "Creo que ya
+ * tienes unos Mocasines café" no le dice a nadie si son ESOS mocasines; las dos
+ * imágenes lado a lado, sí. Es la misma lección de la card de afinar.
+ */
+export async function prendasParaComparar(): Promise<PrendaExistente[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: rows } = await supabase
+    .from("items")
+    .select(ITEM_IMAGE_SELECT)
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  if (!rows) return [];
+
+  const privadas = Array.from(new Set(rows.flatMap((r) => itemPrivatePaths(r as ItemImageRow))));
+  const firmadas = new Map<string, string>();
+  if (privadas.length > 0) {
+    const { data } = await supabase.storage.from("prendas").createSignedUrls(privadas, 3600);
+    data?.forEach((s) => {
+      if (s.path && s.signedUrl) firmadas.set(s.path, s.signedUrl);
+    });
+  }
+
+  return rows.map((r, i) => {
+    const fila = r as ItemImageRow & { id?: string };
+    const attrs = (fila.attrs ?? {}) as Record<string, string | undefined>;
+    const arch = fila.archetypes as { name?: string | null } | null;
+    return {
+      id: fila.id ?? String(i),
+      nombre: attrs.nombre ?? arch?.name ?? "",
+      categoria: categoriaDeItem(fila),
+      colorHex: attrs.color_hex ?? null,
+      material: attrs.material ?? null,
+      corte: attrs.corte ?? null,
+      // Sólo el corte leído de su foto o confirmado a mano puede descartar un
+      // aviso — ver el comentario de `corteDeFiar`.
+      corteDeFiar:
+        fila.certeza === "exacta" ||
+        (Array.isArray((fila.attrs as { confirmados?: unknown })?.confirmados) &&
+          (fila.attrs as { confirmados: string[] }).confirmados.includes("corte")),
+      imagen: itemImageUrlSync(fila, (p) => firmadas.get(p)),
+    };
+  });
 }
