@@ -10,7 +10,7 @@ import { Icon } from "@/components/icon";
 import { ImageCrop } from "@/components/image-crop";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
-import { parDeTraje } from "@/lib/par-de-traje";
+import { paresDeTraje } from "@/lib/par-de-traje";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
 import { yaLaTienes, type PrendaExistente } from "@/lib/ya-la-tienes";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
@@ -772,12 +772,13 @@ export function ImportCarreteFlow({
     const activos = state.items.filter((it) => it.on);
     // ¿Hay un saco y un pantalón formal? Entonces puede ser un traje — y sólo
     // la persona lo sabe. Ver lib/par-de-traje.ts para por qué no se deduce.
-    const par = parDeTraje(
-      activos.map((it) => ({ id: it.id, ...it.attrs }))
+    //
+    // POR FOTO, no por tanda: agrupado por tanda, subir el esmoquin y el traje
+    // gris juntos daba DOS sacos, la pregunta se consideraba ambigua y no salía
+    // ninguna. Roberto lo cazó en vivo y diagnosticó la causa él mismo.
+    const pares = paresDeTraje(
+      activos.map((it) => ({ id: it.id, foto: it.photoPreview, ...it.attrs }))
     );
-    const atado = par
-      ? !!activos.find((it) => it.id === par.saco)?.attrs.conjunto
-      : false;
     return (
       <Overlay>
         <Header
@@ -809,36 +810,46 @@ export function ImportCarreteFlow({
             ser—, pero sin decir que van juntas la regla de "traje desparejado"
             marca ese par como error y el motor nunca vuelve a ponerlas juntas.
             Un tap lo arregla, y lo contesta quien sabe: su dueño. */}
-        {par ? (
-          <button
-            type="button"
-            onClick={() => {
-              const id = atado ? undefined : uid();
-              patchItem(par.saco, { conjunto: id });
-              patchItem(par.pantalon, { conjunto: id });
-            }}
-            className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
-              atado ? "border-accent bg-accent-soft" : "border-line bg-bg"
-            }`}
-          >
-            <span
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border ${
-                atado ? "border-accent bg-accent text-on-accent" : "border-line bg-surface"
+        {pares.map((par) => {
+          const saco = activos.find((it) => it.id === par.saco);
+          const pantalon = activos.find((it) => it.id === par.pantalon);
+          const atado = !!saco?.attrs.conjunto;
+          return (
+            <button
+              key={par.foto + par.saco}
+              type="button"
+              onClick={() => {
+                const id = atado ? undefined : uid();
+                patchItem(par.saco, { conjunto: id });
+                patchItem(par.pantalon, { conjunto: id });
+              }}
+              className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                atado ? "border-accent bg-accent-soft" : "border-line bg-bg"
               }`}
             >
-              {atado ? <Icon name="check" size={13} /> : null}
-            </span>
-            <span className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium text-ink">
-                El saco y el pantalón son un traje
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border ${
+                  atado ? "border-accent bg-accent text-on-accent" : "border-line bg-surface"
+                }`}
+              >
+                {atado ? <Icon name="check" size={13} /> : null}
               </span>
-              <span className="text-xs leading-snug text-muted">
-                Si no me lo dices, los tomo como dos prendas sueltas y nunca te
-                los pongo juntos.
+              <span className="flex min-w-0 flex-col gap-0.5">
+                {/* CON NOMBRE Y APELLIDO. Antes sólo podía haber una casilla, y
+                    "el saco y el pantalón" bastaba. Ahora puede haber dos o
+                    tres en la misma pantalla —un esmoquin y un traje gris— y
+                    sin decir cuáles, marcar la correcta sería adivinar. */}
+                <span className="text-sm font-medium text-ink">
+                  {saco?.attrs.nombre ?? "El saco"} y {(pantalon?.attrs.nombre ?? "el pantalón").toLowerCase()} son un traje
+                </span>
+                <span className="text-xs leading-snug text-muted">
+                  Si no me lo dices, los tomo como dos prendas sueltas y nunca te
+                  los pongo juntos.
+                </span>
               </span>
-            </span>
-          </button>
-        ) : null}
+            </button>
+          );
+        })}
         {/* CUÁNTO VA A TARDAR, ANTES DE COMPROMETERSE. El paso siguiente dibuja
             una imagen por prenda (~17s cada una, de cuatro en cuatro) y no se
             puede cancelar: con 12 fotos se puede llegar a 96 prendas, o sea

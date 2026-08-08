@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.172.0] - 2026-08-08
+
+### Fixed — subir dos trajes de una vez hacía que no preguntara por ninguno
+
+Reportado por Roberto en vivo, **y diagnosticado por él**: *"cargué una foto donde salgo con jaquet y otra donde salgo con un traje gris, y en ninguna me preguntó lo de si eran conjunto… no sé si el bug fue que se cargaron dos cosas con conjunto en la misma tanda"*. Era exactamente eso.
+
+Confirmado contra su tanda real de esta mañana (10 prendas, una sola carga): una chaqueta de cuero, el esmoquin completo y un traje gris cruzado. **Dos sacos.**
+
+**La causa es una frase que escribí yo.** La pregunta *"¿el saco y el pantalón son un traje?"* se calculaba sobre la tanda **completa**, y la guarda decía: con dos sacos la pregunta tiene cuatro respuestas posibles, mejor no preguntar. El efecto perverso: **entre más trajes subes de una vez, menos te pregunta** — justo al revés de lo que debería.
+
+**Y la ambigüedad que temía nunca existió.** Cada prenda sabe de qué foto salió, y **un traje se lleva puesto en UNA foto**. Dentro de su foto, el saco del esmoquin y el pantalón del esmoquin son el único par posible. Agrupar por foto no relaja la guarda: la aplica donde de verdad significa algo. Dos sacos en la **misma** foto siguen sin preguntarse, que es el caso genuinamente ambiguo.
+
+**Las casillas ahora dicen cuál traje es.** Antes sólo podía haber una y *"el saco y el pantalón"* bastaba; ahora pueden salir dos o tres en la misma pantalla, y sin nombres marcar la correcta sería adivinar.
+
+Los datos de Roberto ya estaban bien: ató los dos trajes a mano desde la ficha. Esto es para que no haya que hacerlo a mano otra vez.
+
 ## [0.2.171.0] - 2026-08-08
 
 ### Added — te aviso si en esa foto sale alguien más
