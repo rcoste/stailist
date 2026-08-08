@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.163.0] - 2026-08-07
+
+### Fixed — "Esmoquin negro" también era un saco (migración 0127)
+
+La misma clase de bug que arregló la 0126, que no lo cazó porque filtraba por nombres que empiezan con *"Traje"*: una prenda guardada —bien— como `saco`, pero **nombrada como el conjunto entero**.
+
+No es sólo estética. El nombre llega al motor, y un ítem llamado *"Esmoquin negro"* en categoría saco es exactamente el patrón que hizo que un *"Traje marino de lana"* se leyera como traje completo y saliera un look **sin pantalón**. La categoría ya va al prompt; ahora el nombre deja de contradecirla.
+
+2 filas · el pantalón no se toca (*"Pantalón de esmoquin negro"* ya dice lo que es) · idempotente, verificado corriéndola dos veces.
+
 ## [0.2.162.0] - 2026-08-07
 
 ### Fixed — "Pantalón de traje Esmoquin negro"
