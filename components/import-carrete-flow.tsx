@@ -3,13 +3,14 @@
 import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
-import { addPhotoItems, addLibraryCandidates } from "@/app/closet/actions";
+import { addPhotoItems, addLibraryCandidates, prendasParaComparar } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { ImageCrop } from "@/components/image-crop";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { parDeTraje } from "@/lib/par-de-traje";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
+import { yaLaTienes, type PrendaExistente } from "@/lib/ya-la-tienes";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
@@ -152,6 +153,10 @@ export function ImportCarreteFlow({
 } = {}) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [cropId, setCropId] = useState<string | null>(null); // foto en recorte
+  // El clóset actual, para poder avisar "creo que ya la tienes". Se pide una
+  // vez por tanda, no por prenda: son unos cientos de filas y la pantalla de
+  // confirmación no debe esperar a nada.
+  const [enElCloset, setEnElCloset] = useState<PrendaExistente[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -232,6 +237,13 @@ export function ImportCarreteFlow({
         return;
       }
       setState({ kind: "texto", items });
+      // El clóset se pide DESPUÉS de mostrar la pantalla y sin await: el aviso
+      // de "ya la tienes" es una ayuda, y hacer esperar la confirmación por una
+      // ayuda sería cobrar por ella. Si tarda o falla, aparece tarde o no
+      // aparece — nada más.
+      prendasParaComparar()
+        .then(setEnElCloset)
+        .catch(() => {});
     } catch (e) {
       setState({
         kind: "error",
@@ -563,6 +575,16 @@ export function ImportCarreteFlow({
             <DraftCard
               key={it.id}
               item={it}
+              yaEsta={yaLaTienes(
+                {
+                  nombre: it.attrs.nombre,
+                  categoria: it.attrs.categoria,
+                  colorHex: it.attrs.color_hex,
+                  material: it.attrs.material,
+                  corte: it.attrs.corte,
+                },
+                enElCloset
+              )}
               onToggle={() => toggleItem(it.id)}
               onPatch={(p) => patchItem(it.id, p)}
             />
@@ -855,10 +877,13 @@ function Escala({
 
 function DraftCard({
   item,
+  yaEsta,
   onToggle,
   onPatch,
 }: {
   item: DraftItem;
+  /** La prenda del clóset que probablemente sea ésta, si la hay. */
+  yaEsta: PrendaExistente | null;
   onToggle: () => void;
   onPatch: (patch: Partial<PrendaDetectada>) => void;
 }) {
@@ -908,6 +933,37 @@ function DraftCard({
               No la vi bien — confírmala
             </span>
           )}
+          {/* "YA LA TIENES": avisa, no borra. De los 25 grupos con nombre
+              repetido en la base, 8 son prendas DISTINTAS de verdad (los tres
+              pantalones negros de Roberto son de sintético, lana y algodón).
+              Apagarla sola le quitaría ropa real sin que se entere; un aviso
+              que se ignora cuesta una mirada. Con foto, porque sin ver las dos
+              no se puede decidir. */}
+          {yaEsta && item.on ? (
+            <div className="flex items-center gap-2 rounded-sm bg-warning/10 p-1.5">
+              {yaEsta.imagen ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={yaEsta.imagen}
+                  alt=""
+                  className="h-10 w-8 shrink-0 rounded-sm border border-line object-cover"
+                />
+              ) : null}
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[11px] font-medium text-ink">
+                  Creo que ya la tienes
+                </span>
+                <span className="truncate text-[11px] text-muted">{yaEsta.nombre}</span>
+              </span>
+              <button
+                type="button"
+                onClick={onToggle}
+                className="ml-auto shrink-0 rounded-sm border border-line bg-surface px-2 py-1 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+              >
+                no sumarla
+              </button>
+            </div>
+          ) : null}
         </div>
         <button
           type="button"

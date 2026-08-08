@@ -2,6 +2,42 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.153.0] - 2026-08-07
+
+### Added — "creo que ya la tienes" al subir, no en la limpieza de después
+
+Roberto: *"¿hay algún paso o algo para evitar que carguemos prendas que ya estaban en el clóset? ¿O un aviso?"*. No lo había. Medido:
+
+| | |
+|---|---|
+| grupos con nombre repetido | 25 |
+| de esos, **idénticas** | **10** |
+| distintas de verdad (los tres pantalones negros) | 8 |
+| **cuántos vinieron por foto** | **31 de 31** |
+
+El flujo de biblioteca sí se protege (no reinserta un arquetipo que ya tienes); el de foto no tenía **ninguna** guarda, y el detector que existe vive en `/admin` — limpieza después del desastre, no aviso antes.
+
+**Avisa, no borra.** 8 de los 25 grupos son prendas distintas de verdad. Apagarla sola quitaría ropa real sin que nadie se entere; un aviso que se ignora cuesta una mirada. Va con la foto de la prenda del clóset, porque sin ver las dos no se puede decidir.
+
+### La regla salió de medir, y tres veces me corrigió
+
+`scripts/calibrar-ya-la-tienes.mjs` contrasta cada variante contra la base real:
+
+| regla | caza | falsas alarmas |
+|---|---|---|
+| categoría + nombre + color | 10/10 | 12 |
+| + material distinto descarta | 10/10 | 2 |
+| + material y corte descartan | 10/10 | **0** |
+| + corte sólo si es de fiar | 10/10 | 2 ← **ésta** |
+
+**1. El color no era lo que separaba.** El umbral daba exactamente igual de 0.04 a 0.20. Lo que distingue dos prendas que se llaman igual es **de qué están hechas**. La primera versión habría fallado más veces de las que acierta.
+
+**2. Se eligió la variante con 2 falsas alarmas y no la de 0** — a propósito. El corte del catálogo lo traen **491 de 670 prendas asumidas** sin que nadie lo confirme, y se vio en vivo callando un aviso legítimo: una camisa blanca de vestir no avisó porque la "Camisa blanca" del clóset traía corte `recto` inventado. La medición **no puede ver los avisos que se callan** — su referencia son duplicados que ya existen. Una falsa alarma cuesta una mirada; un aviso callado, una prenda repetida.
+
+**3. El umbral de color estaba flojo y lo cazó el navegador, no la calibración.** Unos *"Pantalón chino azul marino"* avisaban contra un *"Pantalón negro"*. Medido: dos lecturas de la misma prenda distan **0.006–0.010**; dos colores distintos, **0.054–0.208**. El umbral estaba en 0.08 — por encima de la diferencia entre marino y negro. Ahora **0.03**, en medio del hueco.
+
+Y un cuarto, de un test escrito mal a propósito de otra cosa: **el color en el nombre no cuenta como parecido**. "Camisa negra" y "Camiseta negra" comparten la palabra *negra*, son las dos `top` y las dos negras. El color ya se compara aparte con matemática; dejar que además cuente como identidad es medirlo dos veces y encima mal.
+
 ## [0.2.152.0] - 2026-08-07
 
 ### Changed — sólo los colores que de verdad se confunden
