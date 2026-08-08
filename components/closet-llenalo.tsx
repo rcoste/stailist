@@ -30,7 +30,14 @@ export function ClosetLlenalo({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-2.5 rounded-lg border border-line bg-bg p-3.5">
-      <AddPhotoFlow userId={userId} headless ref={photoRef} />
+      <AddPhotoFlow
+        userId={userId}
+        headless
+        ref={photoRef}
+        // Las tres puertas que montan este flujo lo cablean igual: si no, el
+        // aviso de "veo más de una prenda" aparece en una y en las otras no.
+        onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
+      />
       <ImportCarreteFlow headless ref={carreteRef} />
 
       <div className="flex flex-col gap-1 px-0.5">

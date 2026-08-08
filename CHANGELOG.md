@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.155.0] - 2026-08-07
+
+### Fixed — "una prenda" se tragaba el resto de la foto sin decirlo
+
+Roberto: *"en la foto viene tanto el pantalón como el saco… no sé si en las pruebas se tomaba solo como una cosa, 'traje'"*. Tenía razón, y el origen no era el que yo pensaba.
+
+**El catálogo está bien**: tiene *"Saco de traje X"* y *"Pantalón de traje X"* por separado, en 5 colores. Ningún arquetipo se llama sólo "Traje".
+
+**El lector de VARIAS también está bien**: de la foto de un look saca las 7 prendas por separado.
+
+El problema es la tercera puerta. El lector de **una prenda** devuelve UNA por diseño —*"si hay varias, elige la principal"*— y las demás **se perdían en silencio**. Así nacieron los *"Traje marino de lana"* de la base: una foto del traje puesto entrando por ahí, el saco leído como prenda principal, el pantalón desaparecido, y un nombre que dice "traje" para algo que es sólo el saco.
+
+Ahora el lector puede **decir que hay varias**, y cuando lo dice no se limita a avisar: ofrece **"sepáralas todas"**, que pasa **la misma foto** al lector que sí sabe hacerlo — sin volver a elegirla ni empezar de nuevo.
+
+### Fixed — el aviso salía en una puerta de tres
+
+El flujo de una prenda se monta en **tres** sitios (la hoja "Agregar", el bloque "llénalo" del clóset y la hoja "Más"), y sólo cableé el primero. Las tres van iguales; si no, la misma foto avisa o no según por dónde entres.
+
 ## [0.2.154.0] - 2026-08-07
 
 ### Added — el traje se ve como traje, sin dejar de ser dos prendas

@@ -104,7 +104,14 @@ export function MoreSheet({
       </div>
 
       {/* Flujos de añadir en modo headless: los dispara el nivel 2. */}
-      <AddPhotoFlow userId={userId} headless ref={photoRef} />
+      <AddPhotoFlow
+        userId={userId}
+        headless
+        ref={photoRef}
+        // Las tres puertas que montan este flujo lo cablean igual: si no, el
+        // aviso de "veo más de una prenda" aparece en una y en las otras no.
+        onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
+      />
       <ImportCarreteFlow headless ref={carreteRef} />
 
       <AtajosSheet
