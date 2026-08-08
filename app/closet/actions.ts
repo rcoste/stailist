@@ -545,3 +545,80 @@ export async function prendasParaComparar(): Promise<PrendaExistente[]> {
     };
   });
 }
+
+/**
+ * Ata (o desata) el saco y el pantalón de UN traje.
+ *
+ * Existía sólo al dar de alta desde una foto, y era un hueco: quien pasara de
+ * la casilla —o quien tuviera el traje de antes— no podía atarlo nunca. Los 4
+ * "Traje …" que hay en la base guardados como una sola pieza son justo eso.
+ *
+ * NO SE DUPLICA LA PRENDA, y ésa es la decisión de fondo. Roberto lo propuso —
+ * "que cuando es traje se guarde doble, para usarlo suelto o junto"— y suena
+ * inocente: el motor contaría el saco dos veces y podría meter los dos en un
+ * look, los conteos del clóset mentirían, y las dos copias se separarían en
+ * cuanto alguien editara una. Un traje son dos prendas con un lazo, no tres
+ * filas.
+ *
+ * `parejaId` en null desata: limpia el lazo de las dos piezas.
+ */
+export async function atarConjunto(
+  itemId: string,
+  parejaId: string | null
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  if (itemId === parejaId) return { ok: false };
+
+  // Todas las prendas del usuario que hoy tienen lazo, para poder limpiar el
+  // anterior: atar el saco a OTRO pantalón debe soltar el primero, o quedarían
+  // tres piezas en el mismo "traje".
+  const { data: filas } = await supabase
+    .from("items")
+    .select("id, attrs")
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  if (!filas) return { ok: false };
+
+  const attrsDe = (id: string) =>
+    (filas.find((f) => f.id === id)?.attrs ?? {}) as Record<string, unknown>;
+  const item = filas.find((f) => f.id === itemId);
+  if (!item) return { ok: false };
+  if (parejaId && !filas.find((f) => f.id === parejaId)) return { ok: false };
+
+  const viejos = new Set(
+    [itemId, parejaId]
+      .filter((x): x is string => !!x)
+      .map((id) => attrsDe(id).conjunto)
+      .filter((c): c is string => typeof c === "string")
+  );
+  const aLimpiar = filas.filter((f) => {
+    const c = (f.attrs as Record<string, unknown>)?.conjunto;
+    return typeof c === "string" && viejos.has(c);
+  });
+
+  for (const f of aLimpiar) {
+    const attrs = { ...((f.attrs ?? {}) as Record<string, unknown>) };
+    delete attrs.conjunto;
+    await supabase.from("items").update({ attrs }).eq("id", f.id).eq("user_id", user.id);
+  }
+
+  if (parejaId) {
+    const nuevo = crypto.randomUUID();
+    for (const id of [itemId, parejaId]) {
+      const base = { ...attrsDe(id) };
+      delete base.conjunto;
+      await supabase
+        .from("items")
+        .update({ attrs: { ...base, conjunto: nuevo } })
+        .eq("id", id)
+        .eq("user_id", user.id);
+    }
+  }
+
+  revalidatePath("/closet");
+  return { ok: true };
+}
