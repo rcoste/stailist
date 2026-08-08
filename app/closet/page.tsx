@@ -118,6 +118,8 @@ export default async function ClosetPage() {
       corte?: string;
       confirmados?: string[];
       conjunto?: string;
+      marca?: string;
+      talla?: string;
     };
     return {
       id: r.id as string,
@@ -133,6 +135,9 @@ export default async function ClosetPage() {
       category: attrs.categoria ?? arch?.category ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",
       temporada: attrs.temporada ?? "todo-el-año",
+      // Los teclea la persona en la ficha; casi ninguna prenda los trae.
+      marca: attrs.marca ?? null,
+      talla: attrs.talla ?? null,
       material: attrs.material ?? "",
       patron: attrs.patron ?? "",
       colorSecundario: attrs.color_secundario ?? "",

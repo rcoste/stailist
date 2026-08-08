@@ -52,31 +52,39 @@ export async function POST(request: NextRequest) {
   ]);
   if (!lectura) return NextResponse.json({ error: "no_pude_leer" }, { status: 502 });
 
-  // SÓLO LO QUE NO PARECE ESTAR YA. El aviso de "creo que ya la tienes" existe
-  // desde el carrete y está calibrado contra la base real; aquí se usa al revés
-  // —para FILTRAR en vez de para avisar— porque el caso es otro: en el carrete
-  // estás catalogando y quieres verlo todo; aquí ya te vestiste, tienes prisa,
-  // y proponerte sumar la camisa blanca que llevas puesta desde junio es ruido
-  // que enseña a ignorar la función entera.
-  const nuevas = lectura.prendas.filter(
-    (p) =>
-      !yaLaTienes(
-        {
-          nombre: p.nombre,
-          categoria: p.categoria,
-          colorHex: p.color_hex,
-          material: p.material,
-          corte: p.corte,
-        },
-        closet
-      )
-  );
+  // SE PARTE EN DOS Y SE DEVUELVEN LAS DOS. El aviso de "creo que ya la tienes"
+  // está calibrado contra la base real; aquí se usa al revés —para separar en
+  // vez de para avisar— porque el caso es otro: en el carrete estás catalogando
+  // y quieres verlo todo; aquí ya te vestiste y tienes prisa, y proponerte sumar
+  // la camisa blanca que llevas desde junio es ruido.
+  //
+  // PERO LO DESCARTADO SE DICE, con el nombre de la prenda tuya con la que lo
+  // emparejé. Roberto: "no sé si las cosas que no detectó es porque ya las tengo
+  // o porque no las detectó". Filtrando en silencio, tres cosas muy distintas
+  // —ya la tienes, no la vi, la vi mal— se ven exactamente igual desde su lado,
+  // y encima un empate equivocado se vuelve invisible: si le digo que ya tiene
+  // "Pantalón de lino" y éste es otro, sin decirlo nunca se entera.
+  const nuevas: typeof lectura.prendas = [];
+  const yaEstan: { nombre: string; comoEsta: string }[] = [];
+  for (const p of lectura.prendas) {
+    const match = yaLaTienes(
+      {
+        nombre: p.nombre,
+        categoria: p.categoria,
+        colorHex: p.color_hex,
+        material: p.material,
+        corte: p.corte,
+      },
+      closet
+    );
+    if (match) yaEstan.push({ nombre: p.nombre, comoEsta: match.nombre });
+    else nuevas.push(p);
+  }
 
   return NextResponse.json({
-    // Cuántas vio en total, para poder decir "las demás ya las tienes" en vez
-    // de dejar una lista corta sin explicación.
     vistas: lectura.prendas.length,
     prendas: nuevas,
+    yaEstan,
   });
 }
 

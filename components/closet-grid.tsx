@@ -26,6 +26,9 @@ export type ClosetItem = {
   category: string;
   formalidad: string;
   temporada: string;
+  /** Los dos que ningún modelo puede leer — se teclean en la ficha, opcionales. */
+  marca?: string | null;
+  talla?: string | null;
   material: string; // "" = sin dato
   patron: string; // "" = sin dato; valores de PATRONES
   colorSecundario: string; // "" = sin dato
@@ -730,6 +733,8 @@ function ItemSheet({
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
+  const [marca, setMarca] = useState(item.marca ?? "");
+  const [talla, setTalla] = useState(item.talla ?? "");
   const [material, setMaterial] = useState(item.material);
   const [patron, setPatron] = useState(item.patron);
   const [colorSecundario, setColorSecundario] = useState(item.colorSecundario);
@@ -740,6 +745,8 @@ function ItemSheet({
     categoria !== item.category ||
     formalidad !== item.formalidad ||
     temporada !== item.temporada ||
+    marca !== (item.marca ?? "") ||
+    talla !== (item.talla ?? "") ||
     material.trim() !== item.material ||
     patron !== item.patron ||
     colorSecundario.trim() !== item.colorSecundario ||
@@ -804,6 +811,8 @@ function ItemSheet({
       categoria,
       formalidad,
       temporada,
+      marca,
+      talla,
       material,
       patron,
       color_secundario: colorSecundario,
@@ -946,6 +955,39 @@ function ItemSheet({
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* MARCA Y TALLA — lo único que ningún modelo puede leer.
+                Idea de Roberto. Viven SÓLO aquí y jamás en los flujos de alta:
+                la visión vio marca en 2 de 336 prendas (las Columbia, por el
+                logo) y la talla está en una etiqueta por dentro, así que las dos
+                son tecleo manual siempre. Pedirlas al cargar quince prendas es
+                la fricción de catalogar que este producto existe para no tener;
+                aquí tienes la prenda en la mano y no hay prisa.
+                Opcionales de verdad: nada las pide, nada se rompe sin ellas. */}
+            {/* `min-w-0` en los dos: sin él un input NO baja de lo que mide su
+                texto de ejemplo (min-width:auto), y "Uniqlo, Massimo Dutti…"
+                empujaba la talla 32px fuera de la ficha. Medido en el
+                navegador, no a ojo. */}
+            <div className="flex gap-3">
+              <div className="flex min-w-0 flex-[2] flex-col gap-1">
+                <label className="text-xs font-medium text-muted">Marca (opcional)</label>
+                <input
+                  value={marca}
+                  onChange={(e) => setMarca(e.target.value)}
+                  placeholder="Uniqlo, Massimo Dutti…"
+                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <label className="text-xs font-medium text-muted">Talla</label>
+                <input
+                  value={talla}
+                  onChange={(e) => setTalla(e.target.value)}
+                  placeholder="M, 42…"
+                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                />
               </div>
             </div>
 
