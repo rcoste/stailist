@@ -2,6 +2,41 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.158.0] - 2026-08-07
+
+### Verificado — un día entero de cambios NO tocó ningún veredicto del motor
+
+Roberto: *"me preocupa que rompamos algo que ya funcionaba bien… los trajes para bodas y así, yo lo hacía bien"*. La preocupación es correcta y no se contesta con palabras.
+
+`scripts/regresion-reglas.ts` pasa las reglas de ejecución sobre **los 177 looks reales** que el motor ya generó, con el código de hoy y simulando el de ayer:
+
+| regla | antes | hoy | Δ |
+|---|---|---|---|
+| capa-invisible | 1 | 1 | 0 |
+| codigo-de-smoking | 1 | 1 | 0 |
+| cueros-que-no-se-hablan | 1 | 1 | 0 |
+| traje-desparejado | 2 | 2 | 0 |
+
+**Idéntico.** El único cambio de hoy que llega al motor era la excepción del traje, y como ninguna prenda tiene lazo todavía, es un no-op sobre los datos reales. La métrica perceptual nueva (`kL = 2`) **no la usa ninguna regla** — sólo el clóset.
+
+Lo que esto **no** cubre, y conviene tenerlo presente: el prompt de visión ganó una instrucción (`varias`), y eso sí puede mover otras lecturas. Se mide con el comparador de visión cuando haga falta.
+
+### Added — el motor por fin VE el lazo (v50)
+
+La excepción de la regla evitaba que el motor fuera *castigado* por juntar un saco con su pantalón, pero seguía sin **saber** que son un traje: su propio prompt le dice *"úsalos juntos sólo si de verdad son un traje (misma tela)"* y nada le decía cuáles lo eran. Ahora las dos piezas se marcan.
+
+`PROMPT_VERSION` sube a **v50** aunque hoy salga byte a byte igual que v49 (cero prendas con lazo): sin subirla, el primer look con un traje atado quedaría registrado como v49 siendo otro prompt.
+
+### Changed — de "traje" a "conjunto", y fuera lo imposible
+
+Roberto: *"se ve horrible ahí… cómo va a ser un short parte de un traje"*.
+
+Tenía razón, y **no era cuestión de orden**: ordenar por formalidad bajó la bermuda al tercer puesto, pero seguía ahí. Ahora hay una exclusión dura — short, bermuda, jogger, legging, deportivo, denim, jean, cargo — que **sólo aplica cuando el ancla es un saco**: un conjunto de dos piezas con short existe y es normal.
+
+Y el mecanismo se generaliza: el dato siempre fue genérico (un id compartido), lo específico era la UI. Ahora ata saco ↔ pantalón, top ↔ pantalón, y el chip dice **conjunto** (un traje es un conjunto, no al revés).
+
+**El límite no se mueve:** `conjunto` significa *"se vende como una pieza"*, NO *"me gusta con"*. Si se usa para gustos, la regla de traje desparejado deja de cazar el error para el que existe — y qué combina con qué es el trabajo del motor, no un dato a capturar a mano.
+
 ## [0.2.157.0] - 2026-08-07
 
 ### Added — crear el pantalón que le falta al saco, con su imagen
