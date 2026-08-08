@@ -193,6 +193,9 @@ export async function updateItemAttrs(
     material?: string;
     patron?: string;
     color_secundario?: string;
+    /** El color principal — no estaba editable en la ficha y es el que más pesa. */
+    color?: string;
+    color_hex?: string;
     /**
      * Se manda SOLO si la persona tocó una silueta. Preseleccionamos lo que
      * creemos, así que si se mandara siempre, guardar sin mirar marcaría como
@@ -244,6 +247,12 @@ export async function updateItemAttrs(
     if (v) clean.patron = v;
     else delete clean.patron;
   }
+  // EL COLOR PRINCIPAL. Faltaba: la ficha dejaba corregir el SEGUNDO color y no
+  // el primero, que es el que alimenta las reglas de cuero, las de monocromo y
+  // la colorimetría entera.
+  if (patch.color) clean.color = patch.color.slice(0, 40);
+  if (patch.color_hex && /^#[0-9a-f]{6}$/i.test(patch.color_hex))
+    clean.color_hex = patch.color_hex;
   if (patch.color_secundario !== undefined) {
     const v = cleanTextAttr(patch.color_secundario, MAX_COLOR_LEN);
     if (v) clean.color_secundario = v;
