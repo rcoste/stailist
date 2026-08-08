@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.152.0] - 2026-08-07
+
+### Changed — sólo los colores que de verdad se confunden
+
+Idea de Roberto: *"no tiene caso en cada prenda mostrar las mismas opciones de color; algo que cae entre negro o gris pudiera confundirse, pero nunca con rosa o amarillo"*.
+
+Ahora se ofrecen los **4 más cercanos** al color leído, más un **"otro color"** que abre la paleta completa.
+
+**La puerta abierta no es un detalle de UX, es la condición para que esto sea seguro.** Filtrar por cercanía da por hecho que la lectura es aproximadamente correcta — que es justo lo que falla cuando más falta hace corregir. Un saco marino con luz cálida se puede leer "café", y ahí el color bueno **no está entre los vecinos del café**. Con el filtro cerrado, el único error que importa sería el único imposible de arreglar.
+
+### Fixed — la métrica de cercanía ponía al vino junto al gris carbón
+
+Con las tres componentes de OKLab pesando igual, el vecino más cercano del carbón `#3A3A3C` salía **"Vino" `#5E2A33`**: comparten luminosidad casi exacta, y esa coincidencia pesaba más que la diferencia de croma (uno es neutro, el otro tiene color). A ojo nadie confunde un carbón con un burdeos, pero sí con un negro.
+
+La luminosidad ahora pesa la mitad (`kL = 2`) — que **no es un ajuste a ojo**: es el factor que la CIE fija para textiles en ΔE94, contra `kL = 1` de artes gráficas. En ropa, cambiar de **familia** de color salta más que cambiar de claridad.
+
+Y una corrección de un test mío, no del código: escribí que el segundo vecino del carbón debía ser el negro, y sale **azul marino**. El test estaba mal — *"¿es carbón o azul medianoche?"* es de las confusiones más comunes en sastrería, y en una foto todavía más.
+
 ## [0.2.151.0] - 2026-08-07
 
 ### Fixed — la paleta de colores invitaba a empeorar el dato

@@ -74,6 +74,40 @@ export function distanciaMatiz(a: string | null | undefined, b: string | null | 
 }
 
 /**
+ * Cuán lejos están dos colores PARA EL OJO — distancia en OKLab con la
+ * luminosidad pesando la mitad.
+ *
+ * SE CALCULA EN Lab (cartesiano) Y NO EN LCh (polar) porque el matiz es un
+ * ángulo: dos grises casi acromáticos pueden tener matices a 180° y ser el
+ * mismo color a la vista. En Lab eso no pasa, porque un croma cercano a cero
+ * acerca los dos puntos al eje sin importar el ángulo.
+ *
+ * EL PESO DE LA LUMINOSIDAD (kL = 2) NO ES UN AJUSTE A OJO: es el factor que la
+ * CIE fija para TEXTILES en ΔE94 (contra kL = 1 en artes gráficas). Y aquí se
+ * ve por qué existe. Con las tres componentes pesando igual, el vecino más
+ * cercano del gris carbón #3A3A3C salía "vino" #5E2A33 — porque comparten
+ * luminosidad casi exacta y la diferencia de croma (uno es neutro, el otro
+ * tiene color) pesaba menos que los 12 puntos de luz que lo separan del negro.
+ * A ojo nadie confunde un carbón con un burdeos, pero sí con un negro: en ropa,
+ * cambiar de FAMILIA de color salta más que cambiar de claridad.
+ */
+export function distanciaPerceptual(
+  a: string | null | undefined,
+  b: string | null | undefined
+): number | null {
+  const x = oklch(a);
+  const y = oklch(b);
+  if (!x || !y) return null;
+  const rad = (g: number) => (g * Math.PI) / 180;
+  const ax = x.C * Math.cos(rad(x.h));
+  const bx = x.C * Math.sin(rad(x.h));
+  const ay = y.C * Math.cos(rad(y.h));
+  const by = y.C * Math.sin(rad(y.h));
+  const PESO_L = 2;
+  return Math.hypot((x.L - y.L) / PESO_L, ax - ay, bx - by);
+}
+
+/**
  * ¿Son el MISMO color a ojo? Dos condiciones a la vez, y las dos hacen falta:
  * parecerse en luminosidad+croma Y compartir matiz.
  *
