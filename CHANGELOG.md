@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.154.0] - 2026-08-07
+
+### Added — el traje se ve como traje, sin dejar de ser dos prendas
+
+Roberto, viendo su traje partido en dos thumbnails: *"¿debería existir tanto individual como junto? Capaz cuando se guarda como traje se guarda doble"*.
+
+**Guardarlo doble se descartó**, y con motivos concretos: el motor contaría el saco dos veces y podría meter los dos en un mismo look; los conteos del clóset mentirían (114 prendas pasarían a 116 con la misma ropa); y las dos copias se separarían en cuanto alguien editara una — la misma clase de bug que se arregló dos veces hoy.
+
+**Lo que faltaba no era otra fila: era que el lazo se viera.**
+
+- Las dos piezas de un traje llevan la marca **traje** en el mosaico.
+- La ficha dice con qué va, con su foto, y deja **desatar**.
+- Y deja **atar**: antes el lazo sólo se podía poner al subir la foto, así que quien pasara de la casilla —o quien tuviera el traje de antes— no podía atarlo nunca. Los 4 *"Traje …"* que hay en la base guardados como una sola pieza son justo ese caso.
+
+### Fixed — a un saco de traje le ofrecía jeans
+
+Las candidatas a pareja salían ordenadas sólo por cercanía de color, y a un saco gris carbón le proponía primero unos **jeans** y una **bermuda**. El color por sí solo no sabe que un traje no lleva jeans: en OKLCH el denim oscuro cae cerquísima del carbón — la misma vecindad que hace confundir carbón con azul medianoche. Ahora ordena por **formalidad primero** y color después.
+
 ## [0.2.153.0] - 2026-08-07
 
 ### Added — "creo que ya la tienes" al subir, no en la limpieza de después

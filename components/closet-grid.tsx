@@ -5,10 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
-import { removeItem, updateItemAttrs } from "@/app/closet/actions";
+import { removeItem, updateItemAttrs, atarConjunto } from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
+import { distanciaPerceptual } from "@/lib/engine/color-perceptual";
 
 export type ClosetItem = {
   id: string;
@@ -25,6 +26,17 @@ export type ClosetItem = {
   renderStatus?: string; // "none" | "pending" | "done" | "failed"
   corte?: string; // "" = sin dato; entallado | recto | holgado
   corteConfirmado?: boolean; // ¿lo dijo la persona, o lo suponemos nosotros?
+  /**
+   * El lazo del traje: mismo id en el saco y en su pantalón.
+   *
+   * Se guardan como DOS prendas —así el motor puede usar el saco con jeans o el
+   * pantalón con un suéter— y el lazo es lo que dice que además son un traje.
+   * Roberto propuso guardarlo doble (suelto Y como traje) al ver dos thumbnails
+   * donde esperaba uno; se descartó porque el motor contaría el saco dos veces,
+   * los conteos del clóset mentirían y las dos copias se separarían al editar
+   * una. Lo que faltaba no era otra fila: era que el lazo SE VIERA.
+   */
+  conjunto?: string;
 };
 
 // Dónde el corte CAMBIA el look. Se IMPORTA en vez de copiarse: la card de
@@ -207,6 +219,16 @@ function Tile({
         ) : (
           <span className="absolute inset-0" style={{ backgroundColor: item.swatch }} aria-hidden />
         )}
+        {/* LA MARCA DEL TRAJE. Es lo único que faltaba: las dos piezas ya
+            estaban atadas por dentro, pero en el mosaico no había forma de
+            saber que van juntas — y por eso ver dos thumbnails donde se
+            esperaba un traje se sentía un error. Se marca el lazo, no se
+            duplica la prenda. */}
+        {item.conjunto ? (
+          <span className="absolute left-1 top-1 rounded-sm bg-ink/75 px-1.5 py-0.5 text-[10px] font-medium text-bg">
+            traje
+          </span>
+        ) : null}
         {/* Generando su imagen (prenda sin foto): spinner sobre el swatch. */}
         {rendering && !item.imagen ? (
           <span className="absolute inset-0 flex items-center justify-center bg-ink/15">
@@ -502,6 +524,7 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
       {selected ? (
         <ItemSheet
           item={selected}
+          todas={items}
           onClose={() => setSelected(null)}
           onRemove={() => setPorQuitar(selected)}
           onSaved={() => {
@@ -636,11 +659,14 @@ function FilterSheet({
 // cambiar el material marcaría el corte como revisado sin que nadie lo mirara.
 function ItemSheet({
   item,
+  todas,
   onClose,
   onRemove,
   onSaved,
 }: {
   item: ClosetItem;
+  /** Todo el clóset — para poder ofrecer la pareja del traje. */
+  todas: ClosetItem[];
   onClose: () => void;
   onRemove: () => void;
   onSaved: () => void;
@@ -650,6 +676,7 @@ function ItemSheet({
   const [corte, setCorte] = useState(item.corte ?? "");
   // Sólo un tap en una silueta cuenta como confirmación (ver cabecera).
   const [corteTocado, setCorteTocado] = useState(false);
+  const [atando, setAtando] = useState(false);
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
@@ -667,6 +694,36 @@ function ItemSheet({
     patron !== item.patron ||
     colorSecundario.trim() !== item.colorSecundario ||
     corteTocado;
+
+  // Sólo un saco o un pantalón pueden ser media pieza de un traje.
+  const esPiezaDeTraje = categoria === "saco" || categoria === "bottom";
+  const pareja = item.conjunto
+    ? (todas.find((o) => o.id !== item.id && o.conjunto === item.conjunto) ?? null)
+    : null;
+  // La otra mitad: si esto es un saco, los pantalones; y al revés.
+  //
+  // ORDENADAS POR FORMALIDAD Y LUEGO POR COLOR — en ese orden, y lo enseñó la
+  // pantalla: con sólo el color, a un saco de traje gris carbón le ofrecía
+  // primero unos JEANS y una BERMUDA. El color por sí solo no sabe que un
+  // traje no lleva jeans; en OKLCH el denim oscuro cae cerquísima del carbón
+  // (es la misma vecindad que hace confundir carbón con azul medianoche).
+  const PESO_FORMALIDAD: Record<string, number> = {
+    formal: 0,
+    "formal-casual": 1,
+    casual: 2,
+  };
+  const candidatas = esPiezaDeTraje
+    ? todas
+        .filter((o) => o.category === (categoria === "saco" ? "bottom" : "saco"))
+        .map((o) => ({
+          o,
+          f: PESO_FORMALIDAD[o.formalidad] ?? 2,
+          d: distanciaPerceptual(item.swatch, o.swatch) ?? 99,
+        }))
+        .sort((a, b) => a.f - b.f || a.d - b.d)
+        .slice(0, 8)
+        .map((x) => x.o)
+    : [];
 
   async function guardar() {
     setSaving(true);
@@ -844,6 +901,72 @@ function ItemSheet({
                     </button>
                   ))}
                 </div>
+              </div>
+            ) : null}
+
+            {/* EL LAZO DEL TRAJE, desde la ficha. Antes sólo se podía poner al
+                subir la foto: quien pasara de la casilla —o quien ya tuviera el
+                traje de antes— no podía atarlo nunca. Sólo sale donde tiene
+                sentido (saco ↔ pantalón), y las candidatas van ordenadas por
+                cercanía de color, que pone el pantalón del traje primero. */}
+            {esPiezaDeTraje ? (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-muted">
+                  {pareja ? "Es parte de un traje" : "¿Es parte de un traje?"}
+                </label>
+                {pareja ? (
+                  <div className="flex items-center gap-2 rounded-sm border border-line bg-bg p-2">
+                    {pareja.imagen ? (
+                      <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm border border-line">
+                        <Image src={pareja.imagen} alt="" fill sizes="36px" className="object-cover" />
+                      </div>
+                    ) : null}
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink">{pareja.nombre}</span>
+                    <button
+                      type="button"
+                      disabled={atando}
+                      onClick={async () => {
+                        setAtando(true);
+                        await atarConjunto(item.id, null);
+                        setAtando(false);
+                        onSaved();
+                      }}
+                      className="shrink-0 text-[13px] text-muted disabled:opacity-50"
+                    >
+                      desatar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {candidatas.length === 0 ? (
+                      <span className="text-[13px] text-muted">
+                        No veo con qué atarlo — te falta la otra pieza en el clóset.
+                      </span>
+                    ) : (
+                      candidatas.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          disabled={atando}
+                          onClick={async () => {
+                            setAtando(true);
+                            await atarConjunto(item.id, c.id);
+                            setAtando(false);
+                            onSaved();
+                          }}
+                          className="flex w-20 shrink-0 flex-col gap-1 rounded-sm border border-line bg-surface p-1 text-left transition-colors hover:border-accent disabled:opacity-50"
+                        >
+                          <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-bg">
+                            {c.imagen ? (
+                              <Image src={c.imagen} alt="" fill sizes="80px" className="object-cover" />
+                            ) : null}
+                          </div>
+                          <span className="truncate text-[11px] text-muted">{c.nombre}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             ) : null}
 

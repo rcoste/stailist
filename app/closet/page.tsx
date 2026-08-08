@@ -117,6 +117,7 @@ export default async function ClosetPage() {
       color_secundario?: string;
       corte?: string;
       confirmados?: string[];
+      conjunto?: string;
     };
     return {
       id: r.id as string,
@@ -138,6 +139,8 @@ export default async function ClosetPage() {
       source: (r.source as string) ?? "archetype",
       renderStatus: (r.render_status as string) ?? "none",
       corte: attrs.corte ?? "",
+      // El lazo del traje: mismo id en el saco y en su pantalón.
+      conjunto: attrs.conjunto ?? "",
       // Para poder decir en la ficha si el corte es dato o suposición nuestra.
       corteConfirmado: Array.isArray(attrs.confirmados)
         ? attrs.confirmados.includes("corte")
