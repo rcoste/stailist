@@ -24,13 +24,16 @@ export type PiezaLeida = {
 };
 
 /**
- * El par candidato a traje, o null si no hay ninguno.
+ * El par candidato a traje DENTRO DE UN GRUPO, o null si no hay ninguno.
  *
- * Se pregunta sólo cuando hay EXACTAMENTE un saco y EXACTAMENTE un pantalón
- * formal: con dos sacos la pregunta "¿son traje?" ya no tiene una respuesta,
- * tiene cuatro, y una pregunta ambigua en un flujo de carga se contesta al
- * azar. Ese caso se deja pasar sin preguntar — el lazo se puede poner después
- * desde la ficha; una respuesta al azar, no se puede quitar.
+ * Exige exactamente un saco y exactamente un pantalón formal: con dos sacos en
+ * el mismo grupo la pregunta "¿son traje?" ya no tiene una respuesta, tiene
+ * cuatro, y una pregunta ambigua en un flujo de carga se contesta al azar. Ese
+ * caso se deja pasar; el lazo se puede poner después desde la ficha, y una
+ * respuesta al azar no se puede quitar.
+ *
+ * OJO CON EL "GRUPO": llamar a esto con la tanda entera es lo que rompió el
+ * caso real de Roberto — ver paresDeTraje abajo.
  */
 export function parDeTraje(piezas: PiezaLeida[]): { saco: string; pantalon: string } | null {
   const sacos = piezas.filter((p) => (p.categoria ?? "").toLowerCase() === "saco");
@@ -43,4 +46,47 @@ export function parDeTraje(piezas: PiezaLeida[]): { saco: string; pantalon: stri
   );
   if (sacos.length !== 1 || pantalones.length !== 1) return null;
   return { saco: sacos[0].id, pantalon: pantalones[0].id };
+}
+
+/** Una pieza leída, sabiendo de QUÉ FOTO salió. */
+export type PiezaConFoto = PiezaLeida & { foto: string };
+
+/**
+ * Los pares candidatos de una tanda: uno por foto, no uno por tanda.
+ *
+ * EL BUG QUE ARREGLA, reportado por Roberto y diagnosticado por él mismo:
+ * subió en la misma tanda una foto con una chamarra de cuero, otra con su
+ * esmoquin y otra con su traje gris cruzado, y **no le preguntó nada**. Su
+ * sospecha —"no sé si el bug fue que se cargaron dos cosas con conjunto en la
+ * misma tanda"— era exactamente eso.
+ *
+ * La causa es una frase que escribí yo: `parDeTraje` corría sobre la tanda
+ * COMPLETA, veía dos sacos (el del esmoquin y el gris), decidía que la pregunta
+ * era ambigua y se callaba. Con lo cual, entre más trajes subes de una vez,
+ * menos te pregunta — justo al revés de lo que debería.
+ *
+ * Y la ambigüedad que yo temía nunca existió: cada prenda sabe de qué foto
+ * salió, y **un traje se lleva puesto en UNA foto**. Dentro de su foto, el saco
+ * del esmoquin y el pantalón del esmoquin son el único par posible. Agrupar por
+ * foto no relaja la guarda: la aplica donde de verdad significa algo. Dos sacos
+ * en la MISMA foto siguen sin preguntarse, que es el caso genuinamente ambiguo.
+ *
+ * El orden de salida sigue el de las piezas, para que las casillas aparezcan en
+ * el mismo orden en que se ven las prendas.
+ */
+export function paresDeTraje(
+  piezas: PiezaConFoto[]
+): { foto: string; saco: string; pantalon: string }[] {
+  const porFoto = new Map<string, PiezaConFoto[]>();
+  for (const p of piezas) {
+    const g = porFoto.get(p.foto);
+    if (g) g.push(p);
+    else porFoto.set(p.foto, [p]);
+  }
+  const out: { foto: string; saco: string; pantalon: string }[] = [];
+  for (const [foto, grupo] of porFoto) {
+    const par = parDeTraje(grupo);
+    if (par) out.push({ foto, ...par });
+  }
+  return out;
 }
