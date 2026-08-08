@@ -62,7 +62,12 @@ export default async function proxy(request: NextRequest) {
     pathname.startsWith("/api/cron") ||
     pathname.startsWith("/api/email/baja") ||
     // Permiso parental (menores): el tutor llega desde su correo, sin cuenta.
-    pathname.startsWith("/api/permiso");
+    pathname.startsWith("/api/permiso") ||
+    // La versión desplegada: un número, nada más — el mismo que ya va horneado
+    // en el JavaScript que cualquiera puede leer. Pedirle sesión lo volvería
+    // inútil justo donde más sirve (la pantalla de entrar), y además el aviso
+    // de "hay versión nueva" leería el HTML del login como si fuera JSON.
+    pathname === "/api/version";
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

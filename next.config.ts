@@ -1,7 +1,28 @@
+import { readFileSync } from "node:fs";
 import type { NextConfig } from "next";
 import { LOOKS_V } from "./lib/looks";
 
+// LA VERSIÓN, HORNEADA EN EL BUNDLE DEL NAVEGADOR.
+//
+// Existe por un día entero de confusión: se arregla algo, se despliega, Roberto
+// prueba desde su teléfono, no funciona, y los dos investigamos un rato hasta
+// descubrir que su navegador seguía corriendo el JavaScript de antes del
+// arreglo. La app nunca decía qué versión traía, así que no había forma de
+// saberlo sin excavar.
+//
+// Se lee del archivo VERSION y no de package.json, que lleva meses desfasado.
+const VERSION = (() => {
+  try {
+    return readFileSync("VERSION", "utf8").trim();
+  } catch {
+    return "desconocida";
+  }
+})();
+
 const nextConfig: NextConfig = {
+  // Va al cliente a propósito: es lo que permite comparar "el JavaScript que
+  // estoy corriendo" contra "lo que el servidor tiene ahora".
+  env: { NEXT_PUBLIC_APP_VERSION: VERSION },
   // El servidor de desarrollo bloquea por seguridad los recursos internos
   // (HMR, stack frames) pedidos desde un host que no sea localhost. Sin esto,
   // abrir la app desde el celular en la misma red pinta la página pero el

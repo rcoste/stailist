@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.173.0] - 2026-08-08
+
+### Added — "hay una versión nueva, recarga"
+
+Sale de una investigación que no debió existir. Roberto reportó que al subir un chaqué y un traje gris claro **tampoco** le preguntó si eran conjunto — el mismo síntoma que se había arreglado 13 minutos antes.
+
+**El arreglo sí servía.** Reconstruida su tanda real de las 12:01 —ahora se puede, porque la foto de origen ya se guarda— y pasada por el código nuevo, salen las dos preguntas: *"Saco de traje gris y pantalón de traje gris son un traje"* y *"Saco de chaqué gris oscuro y pantalón de traje gris oscuro son un traje"*. Lo que corría en su teléfono era el JavaScript de antes del arreglo.
+
+**Y no había forma de saberlo sin excavar en la base de datos.** La app nunca decía qué versión traía. Es un caso normal, no raro: quien prueba una app tiene la pestaña abierta desde hace rato, y una pantalla ya cargada se queda con los trozos de JavaScript que bajó al abrirse.
+
+Ahora la versión va **horneada en el bundle del navegador**, y se compara con la que el servidor tiene en ese momento. Si difieren, aparece una barra arriba de todo. Eso es un hecho comprobable —"el código que estás viendo correr es viejo"— no una corazonada.
+
+**Avisa, no recarga sola**: recargar en medio de una carga de doce fotos tiraría varios minutos de trabajo, que es arreglar un problema creando uno peor. Se puede cerrar.
+
+**Pregunta al abrir y cada vez que la app vuelve al frente.** Ese segundo momento es el que cuenta en una PWA instalada: se vuelve a ella horas después, justo cuando el bundle lleva más tiempo rezagado.
+
+**Y es conservador a propósito** (`hayVersionNueva`, con casos): sólo avisa con dos versiones de verdad y distintas. Un fallo de red o un despliegue raro no pueden convertirse en *"tu app está vieja"* — a la tercera barra falsa nadie le vuelve a creer, y ahí el aviso queda inservible para cuando importe.
+
+`/api/version` es público, como el resto de la información que ya va horneada en el JavaScript: pedirle sesión lo volvería inútil justo en la pantalla de entrar.
+
 ## [0.2.172.0] - 2026-08-08
 
 ### Fixed — subir dos trajes de una vez hacía que no preguntara por ninguno
