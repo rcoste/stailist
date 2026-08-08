@@ -62,6 +62,14 @@ describe("a quién NO se le pregunta — aquí está el valor", () => {
     }
   });
 
+  it("lo YA CONFIRMADO no se vuelve a preguntar", () => {
+    // Es el ATRIBUTO lo que queda resuelto, no la prenda: si mañana se
+    // preguntara el largo, esta misma prenda volvería a salir.
+    expect(preguntasPendientes([p({ confirmados: ["corte"] })])).toHaveLength(0);
+    // Y confirmar otro atributo no calla la pregunta del corte.
+    expect(preguntasPendientes([p({ confirmados: ["largo"] })])).toHaveLength(1);
+  });
+
   it("sin categoría tampoco: no se puede saber si el corte importa", () => {
     expect(preguntasPendientes([p({ categoria: null })])).toHaveLength(0);
   });

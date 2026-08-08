@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.147.0] - 2026-08-07
+
+### Added — siluetas para que la pregunta del corte se pueda contestar
+
+Roberto, al ver la primera versión: *"poner referencias visuales para que sea un poquito más claro para las personas saber dónde cae"*.
+
+Es la observación correcta, y redefine el problema: **no era cuántas opciones hay — era que "entallado / recto / holgado" no significa nada sin ver a qué se refiere.** Alguien que no piensa en ropa técnicamente no sabe si sus jeans son "rectos".
+
+Tres siluetas monocromas por familia (pantalón y prenda de arriba), en fila para que se comparen **de un vistazo**. Apiladas y sin dibujo, "recto" y "holgado" son dos palabras que hay que imaginar por separado.
+
+**Son dibujos y no fotos, a propósito:** una foto de unos jeans concretos sugeriría que la respuesta es *"los que se parecen a ésos"*, cuando lo que se pregunta es la silueta.
+
+En cada familia solo cambia **una** cosa (cuánto se abre el bajo). Los hombros, la cintura y la cadera quedan fijos: moverlos dibujaría otro cuerpo en vez de otra prenda.
+
+### Fixed — la primera versión de las siluetas no servía
+
+Trazaba cada pieza por separado y salían **diagonales cruzándose por dentro**; las tres opciones se veían casi iguales — exactamente el problema que venían a resolver. Ahora cada silueta es **un contorno cerrado**, que no puede cruzarse consigo mismo. Se vio en el navegador, no en el código.
+
+### Fixed — `certeza` decía dos cosas a la vez
+
+Roberto: *"esta certeza genérica, no entiendo eso"*. **Tenía razón en no entenderla, porque estaba mal.** El campo se usaba para dos cosas:
+
+1. **De dónde vino la prenda** (foto / catálogo / checklist) — un dato de origen, que no cambia nunca.
+2. **Si ya confirmó algún detalle** — que sí cambia, atributo por atributo.
+
+Mezclarlas hacía imposible lo que de verdad importa: si confirma el **corte** de unos jeans del checklist, el motor debe saber que el corte es suyo y que el **largo** sigue siendo del catálogo. Con un nivel global, o toda la prenda es confiable o ninguna.
+
+Ahora los atributos confirmados viven en `attrs.confirmados` (`["corte"]`) y `certeza` vuelve a significar solo el origen. El motor deja de marcar APROXIMADO **el atributo confirmado**, no la prenda entera.
+
+### Notes — la basura que salió al mirar los datos
+
+**17 calzados y 7 accesorios tienen `corte`** en el catálogo. Un zapato "recto" no significa nada: el campo se rellenó por rellenar. No los toca nadie porque la pregunta ya excluye esas categorías, pero queda anotado.
+
 ## [0.2.146.0] - 2026-08-07
 
 ### Added — "afinemos 3 prendas": preguntar solo donde el dato cambia el look

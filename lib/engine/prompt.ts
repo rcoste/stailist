@@ -326,6 +326,8 @@ export type EngineItem = {
     formalidad?: string;
     temporada?: string;
     tipo?: string;
+    /** Qué atributos confirmó la persona a mano (ver migración 0125). */
+    confirmados?: string[];
     largo?: string; // crop/regular/largo — habilita tips de fajar
     corte?: string; // entallado/recto/holgado — habilita tips de proporción
     manga?: string; // sin/corta/larga — habilita tips de arremangar
@@ -572,7 +574,12 @@ export function describeItem(item: EngineItem): string {
     // básico marcado en el checklist se lee igual que el que la visión leyó en
     // su foto — y con eso se arman reglas de proporción y tips de styling. Que
     // el modelo sepa cuál es cuál es la diferencia entre afirmar y suponer.
-    item.certeza === "asumida" ? "detalles APROXIMADOS (básico marcado, sin foto)" : null,
+    // La marca depende de si ESTE atributo está confirmado, no de un nivel
+    // global: quien confirmó el corte de sus jeans no debe seguir leyendo que
+    // todo en ellos es aproximado.
+    item.certeza === "asumida" && !(a.confirmados ?? []).includes("corte")
+      ? "detalles APROXIMADOS (básico marcado, sin foto)"
+      : null,
   ].filter(Boolean);
   // La categoría va pegada al nombre y entre corchetes: es lo que DEFINE qué es
   // la prenda, y el nombre solo no basta ("Traje marino de lana" es un saco).

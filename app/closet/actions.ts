@@ -407,13 +407,16 @@ export async function addLibraryCandidates(
 /**
  * Confirma el CORTE de una prenda que solo estaba marcada en el checklist.
  *
- * Es la otra mitad de la certeza (migración 0124): guardar que un dato es
- * asumido hace al motor prudente; confirmarlo lo hace exacto. Y al confirmarlo
- * la prenda deja de ser "asumida" — el dato que más mueve el look ya es suyo.
+ * Guarda el atributo en `attrs.confirmados`, NO un nivel global de certeza. La
+ * primera versión subía la prenda a "generica" y Roberto lo cazó al leerlo:
+ * "esta certeza genérica, no entiendo eso". Tenía razón, porque estaba mal —
+ * `certeza` dice de DÓNDE vino la prenda (foto / catálogo / checklist) y eso no
+ * cambia porque confirme un detalle.
  *
- * NO pasa a "exacta": eso está reservado a lo que la visión leyó de su foto.
- * El resto de los detalles (largo, manga) siguen viniendo del arquetipo, y
- * prometer más certeza de la que hay es justo el problema que esto arregla.
+ * Lo que sí cambia, y es lo que importa: si confirma el CORTE de unos jeans del
+ * checklist, el motor debe saber que el corte es suyo y que el LARGO sigue
+ * siendo del catálogo. Un nivel global no puede decir eso — o toda la prenda es
+ * confiable o ninguna.
  */
 export async function confirmarCorte(
   itemId: string,
@@ -438,12 +441,15 @@ export async function confirmarCorte(
     .maybeSingle();
   if (!fila) return { ok: false, error: "no existe esa prenda" };
 
+  const attrs = (fila.attrs as Record<string, unknown>) ?? {};
+  const confirmados = new Set(
+    Array.isArray(attrs.confirmados) ? (attrs.confirmados as string[]) : []
+  );
+  confirmados.add("corte");
+
   const { error } = await supabase
     .from("items")
-    .update({
-      attrs: { ...((fila.attrs as Record<string, unknown>) ?? {}), corte },
-      certeza: "generica",
-    })
+    .update({ attrs: { ...attrs, corte, confirmados: [...confirmados] } })
     .eq("id", itemId)
     .eq("user_id", user.id);
   if (error) return { ok: false, error: error.message };
