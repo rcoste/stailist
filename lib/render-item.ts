@@ -17,7 +17,18 @@ export type RenderItemResult = {
 export async function renderItemImage(
   supabase: SupabaseClient,
   userId: string,
-  itemId: string
+  itemId: string,
+  /**
+   * Rehacer la imagen aunque ya tenga una.
+   *
+   * Nace de un caso real: el "Esmoquin negro" de Roberto entró por una foto del
+   * traje ENTERO, así que su render —hecho a partir de esa foto— enseña saco y
+   * pantalón juntos. Como prenda es un saco, y su miniatura miente. La
+   * idempotencia de abajo existe para no gastar dinero regenerando lo que ya
+   * está; cuando la imagen es la equivocada, esa protección estorba. Sólo se
+   * pide desde la ficha, con un tap explícito.
+   */
+  forzar = false
 ): Promise<RenderItemResult> {
   const { data: item } = await supabase
     .from("items")
@@ -49,7 +60,7 @@ export async function renderItemImage(
     (item.render_status === "done" && !!item.render_path) ||
     !!item.photo_path ||
     !!attrs.image_path;
-  if (yaTieneImagen || item.render_status === "pending") {
+  if ((yaTieneImagen && !forzar) || item.render_status === "pending") {
     return { ok: true, skipped: true };
   }
 

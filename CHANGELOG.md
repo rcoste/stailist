@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.162.0] - 2026-08-07
+
+### Fixed — "Pantalón de traje Esmoquin negro"
+
+Roberto, tras crear el pantalón del esmoquin: *"creo también se tiene que editar el nombre"*. Tenía razón: mi derivación pegaba el prefijo `Pantalón de traje ` delante del nombre del saco, y con un esmoquin salían **dos prendas distintas pegadas** y con mayúscula a media frase.
+
+El pantalón de un esmoquin se llama **pantalón de esmoquin**, y su prefijo es otro. De paso, lo que sigue al prefijo va en minúscula: *"Pantalón de traje Marino de lana"* también se leía a descuido. La fila que ya estaba mal quedó corregida.
+
+### Added — rehacer una imagen que no es de esa prenda
+
+El otro hallazgo del mismo caso: la miniatura del *"Esmoquin negro"* enseña **saco y pantalón juntos**, porque entró por una foto del traje entero y su render salió de ahí. Como prenda es un saco: **la imagen miente**.
+
+Y no había forma de corregirla. El render es idempotente a propósito —para no gastar regenerando lo que ya está— y esa protección, que es la correcta el 99% de las veces, aquí bloqueaba justo lo que hacía falta. Ahora la ficha tiene **"la imagen no es de esta prenda — rehacerla"**, y sólo desde ahí se salta la guarda.
+
 ## [0.2.161.0] - 2026-08-07
 
 ### Fixed — los candidatos a pareja decían todos "Pantalón de…"
