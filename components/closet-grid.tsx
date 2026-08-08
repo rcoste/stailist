@@ -5,7 +5,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
-import { removeItem, updateItemAttrs, atarConjunto } from "@/app/closet/actions";
+import {
+  removeItem,
+  updateItemAttrs,
+  atarConjunto,
+  crearPantalonDelTraje,
+} from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
@@ -937,6 +942,7 @@ function ItemSheet({
                     </button>
                   </div>
                 ) : (
+                  <>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {candidatas.length === 0 ? (
                       <span className="text-[13px] text-muted">
@@ -966,6 +972,38 @@ function ItemSheet({
                       ))
                     )}
                   </div>
+                  {/* EL PANTALÓN QUE FALTA. Los cuatro "Traje …" de la base
+                      quedaron sin él: el lector de una prenda leyó el saco y
+                      el pantalón se perdió. En la migración no lo creé porque
+                      no sabía si existía —crear ropa que nadie tiene es el
+                      problema de fondo—, pero aquí lo declara su dueño, así
+                      que deja de ser invención. Se deriva del saco (color,
+                      material, temporada) y su imagen se genera después. */}
+                  {categoria === "saco" ? (
+                    <button
+                      type="button"
+                      disabled={atando}
+                      onClick={async () => {
+                        setAtando(true);
+                        const r = await crearPantalonDelTraje(item.id);
+                        // El render va aparte: si tarda o falla, la prenda ya
+                        // existe y el clóset la enseña con su color.
+                        if (r.ok && r.id) {
+                          fetch("/api/render-item", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ itemId: r.id }),
+                          }).catch(() => {});
+                        }
+                        setAtando(false);
+                        onSaved();
+                      }}
+                      className="self-start text-[13px] font-medium text-accent disabled:opacity-50"
+                    >
+                      no está en mi clóset — créalo
+                    </button>
+                  ) : null}
+                  </>
                 )}
               </div>
             ) : null}
