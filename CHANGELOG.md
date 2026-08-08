@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.151.0] - 2026-08-07
+
+### Fixed — la paleta de colores invitaba a empeorar el dato
+
+Roberto, sobre su traje: *"es gris muy oscuro, pero no es negro, y el gris que aparece se ve medio claro"*.
+
+Tres cosas encadenadas, y la del medio es la mala.
+
+**1. No se marcaba ningún swatch.** La comparación era por NOMBRE: la visión lee *"gris oscuro"* y la paleta tiene *"Gris"* → no empatan → nada encendido. Es el mismo patrón que el saco que faltaba: el dato existe, la UI no sabe enseñarlo. **123 de 312 prendas con foto (39%)** salían así — *plateado, dorado, marrón oscuro, azul claro, crema, marino, esmeralda…*
+
+**2. Y "corregirlo" destruía el dato bueno.** El color real se guarda como hex exacto leído de la tela. Tocar el gris de la paleta lo reemplazaba: `#3A3A3C` (carbón) → `#8A8A8A` (gris de en medio). O sea que **la prenda se aclaraba**, sin vuelta atrás, y ese hex alimenta las reglas de cuero, las de monocromo y la colorimetría. Dejarlo sin tocar era lo correcto — y la pantalla invitaba a lo contrario.
+
+**3. Faltaba el gris carbón.** No es un capricho: es media sastrería masculina (trajes, abrigos, pantalones de vestir) y el único gris disponible estaba a media escala.
+
+Ahora: el color leído se dibuja como **su propio swatch, primero y encendido** ("el que leí"), la marca se decide por hex y no por nombre, el nombre que se muestra es el que leyó la visión —*gris oscuro*, no *Gris*—, y la paleta suma **Gris oscuro**. El swatch de lo leído no desaparece al corregir: volver es un tap.
+
 ## [0.2.150.0] - 2026-08-07
 
 Los tres salen de una foto que subió Roberto —él con un traje puesto— y de lo que vio en la pantalla de confirmación.
