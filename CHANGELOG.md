@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.170.0] - 2026-08-08
+
+### Fixed — segundo pase: la trampa que se armó sola esta mañana
+
+Roberto pidió otro doble check. El hallazgo principal lo causó el cambio de hace un rato, y es el tipo de bug que sólo aparece cuando dos piezas correctas se juntan.
+
+**Renombrar una prenda y aceptar rehacer su imagen te devolvía la misma prenda equivocada.**
+
+Tres piezas, cada una razonable por su cuenta:
+
+1. Esta mañana `visual` —la descripción que escribe la visión al leer la foto— empezó a guardarse.
+2. El generador de imagen le hace **más** caso a esa descripción que al nombre: es su Capa 2, si hay descripción, manda.
+3. Al cambiar el nombre, la ficha ofrece rehacer la imagen.
+
+Júntalas y sale el caso literal de Roberto: tenía un abrigo guardado como *"Blazer marrón de lana"*, lo corrigió a *"Abrigo de lana marrón"*, aceptaría la oferta… y la descripción vieja, que dice **blazer**, volvería a dibujar un blazer. Corriges, aceptas, y no cambia nada.
+
+Ahora corregir el nombre o el color **tira la descripción vieja**: describía la prenda como el modelo la entendió, y si corriges lo que la prenda **es**, esa descripción dejó de valer. Se cae a la Capa 1 (nombre + atributos), que es como se renderizaba hasta ayer — se pierde detalle, no se gana un error. Y con la foto original delante, el detalle lo pone la imagen.
+
+La regla vive en `descripcionObsoleta` (`lib/garment-desc.ts`) con sus casos: es del dominio, no pegamento de una pantalla.
+
+### Fixed — se firmaba el doble de URLs de las que se muestran
+
+`itemPrivatePaths` devolvía las dos candidatas (render y foto) y `pickItemImage` sólo usa una. Mientras 5 prendas en toda la base tenían foto original eso no costaba nada; desde hoy **toda** prenda del carrete guarda las dos, así que abrir el clóset iba a pedirle a Storage el doble de URLs firmadas, y la mitad de imágenes que nadie muestra (el render siempre gana). Ahora se deriva de `pickItemImage`, así que no se puede desincronizar.
+
+### Added — cuánto tarda dibujar, antes de comprometerse
+
+El paso de generación hace una imagen por prenda (~17s, de cuatro en cuatro) y **no se puede cancelar**. Con 12 fotos se puede llegar a 96 prendas: siete minutos mirando una barra sin salida. El número ya estaba en el botón; faltaba lo único que lo hace decidible. Se avisa a partir de 15 prendas.
+
 ## [0.2.169.0] - 2026-08-08
 
 ### Fixed — el doble check del alta de prendas: cuatro huecos, medidos

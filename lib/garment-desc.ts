@@ -62,6 +62,43 @@ export function garmentDescPlain(g: GarmentAttrs): string {
   return s;
 }
 
+/**
+ * ¿La descripción visual guardada quedó obsoleta al corregir la prenda?
+ *
+ * Es una regla del dominio, no pegamento de una pantalla, y por eso vive aquí
+ * junto a la descripción y no dentro de la acción que guarda.
+ *
+ * EL CASO QUE LA HIZO NECESARIA, y se armó solo el mismo día: la descripción
+ * que escribe la visión al leer la foto ("chaqueta bomber de nylon NEGRO mate")
+ * empezó a guardarse, y el generador de imagen le hace MÁS caso que al nombre
+ * —es su Capa 2: si hay descripción, manda—. Encima, al cambiar el nombre la
+ * ficha ofrece rehacer la imagen.
+ *
+ * Junta las tres cosas y sale el abrigo de Roberto: guardado como "Blazer
+ * marrón de lana", corregido a "Abrigo de lana marrón", oferta aceptada… y la
+ * descripción vieja, que dice blazer, vuelve a dibujar un blazer. Corriges,
+ * aceptas, y te devuelve la misma prenda equivocada.
+ *
+ * Tirarla cae a la Capa 1 (nombre + atributos), que es como se renderizaba
+ * antes de que esto existiera: se pierde detalle, no se gana un error. Y con la
+ * foto original delante el detalle lo pone la imagen, no el texto.
+ */
+export function descripcionObsoleta(cambio: {
+  nombreViejo?: string | null;
+  nombreNuevo?: string | null;
+  hexViejo?: string | null;
+  hexNuevo?: string | null;
+}): boolean {
+  const txt = (v?: string | null) => (v ?? "").trim().toLowerCase();
+  // Sólo cuenta como cambio si LLEGA un valor nuevo: guardar sin tocar el
+  // nombre no puede tirar la descripción.
+  const nombreCambio =
+    !!cambio.nombreNuevo && txt(cambio.nombreNuevo) !== txt(cambio.nombreViejo);
+  const colorCambio =
+    !!cambio.hexNuevo && txt(cambio.hexNuevo) !== txt(cambio.hexViejo);
+  return nombreCambio || colorCambio;
+}
+
 export function garmentRenderDesc(g: GarmentAttrs): string {
   const desc = garmentDescPlain(g);
   // La orden cambia según la capa: con descripción del estilista se habla de

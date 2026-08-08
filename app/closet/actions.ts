@@ -20,6 +20,7 @@ import {
 } from "@/lib/item-image";
 import type { PrendaExistente } from "@/lib/ya-la-tienes";
 import { attrsDelPantalon } from "@/lib/pantalon-del-traje";
+import { descripcionObsoleta } from "@/lib/garment-desc";
 
 // Frontera de confianza LLM→DB: los campos de texto libre del análisis de
 // visión se normalizan/validan server-side antes de persistir (las server
@@ -276,6 +277,21 @@ export async function updateItemAttrs(
   if (patch.color) clean.color = patch.color.slice(0, 40);
   if (patch.color_hex && /^#[0-9a-f]{6}$/i.test(patch.color_hex))
     clean.color_hex = patch.color_hex;
+  // CORREGIR LA PRENDA INVALIDA SU DESCRIPCIÓN VISUAL. La regla y el porqué
+  // viven en lib/garment-desc (descripcionObsoleta): en resumen, la descripción
+  // le gana al nombre en el generador, así que sin esto renombrar "Blazer
+  // marrón" a "Abrigo de lana marrón" y aceptar rehacer la imagen devolvía otra
+  // vez un blazer.
+  if (
+    descripcionObsoleta({
+      nombreViejo: attrs.nombre as string | undefined,
+      nombreNuevo: clean.nombre as string | undefined,
+      hexViejo: attrs.color_hex as string | undefined,
+      hexNuevo: clean.color_hex as string | undefined,
+    })
+  ) {
+    delete clean.visual;
+  }
   if (patch.color_secundario !== undefined) {
     const v = cleanTextAttr(patch.color_secundario, MAX_COLOR_LEN);
     if (v) clean.color_secundario = v;

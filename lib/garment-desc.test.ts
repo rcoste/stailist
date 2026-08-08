@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
+import { descripcionObsoleta, garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
 
 // La descripción de una prenda tiene DOS consumidores con necesidades opuestas
 // y por eso se partió en dos funciones. Lo que estos tests fijan es el contrato
@@ -58,5 +58,53 @@ describe("garmentRenderDesc — describe Y ordena", () => {
     expect(garmentRenderDesc({ nombre: "x", visual: "jeans rectos de mezclilla índigo" })).toContain(
       "esta prenda"
     );
+  });
+});
+
+// LA TRAMPA QUE SE ARMÓ SOLA el día que `visual` empezó a guardarse: la
+// descripción le gana al nombre en el generador, y la ficha ofrece rehacer la
+// imagen justo después de renombrar. Sin esta regla, corriges el nombre,
+// aceptas la oferta, y te devuelve la misma prenda equivocada.
+describe("descripcionObsoleta — corregir la prenda invalida su descripción", () => {
+  it("el caso real: 'Blazer marrón de lana' → 'Abrigo de lana marrón'", () => {
+    expect(
+      descripcionObsoleta({
+        nombreViejo: "Blazer marrón de lana",
+        nombreNuevo: "Abrigo de lana marrón",
+      })
+    ).toBe(true);
+  });
+
+  it("cambiar el color también la invalida", () => {
+    // La descripción lleva el color dentro ("bomber de nylon NEGRO mate") y le
+    // ganaría al color corregido.
+    expect(descripcionObsoleta({ hexViejo: "#1B1B1B", hexNuevo: "#1F3A5F" })).toBe(true);
+  });
+
+  it("guardar sin cambiar nada NO la tira", () => {
+    // Lo importante: abrir la ficha, tocar la formalidad y guardar no puede
+    // costarte la descripción de la prenda.
+    expect(
+      descripcionObsoleta({
+        nombreViejo: "Abrigo de lana marrón",
+        nombreNuevo: "Abrigo de lana marrón",
+        hexViejo: "#5B4636",
+        hexNuevo: "#5B4636",
+      })
+    ).toBe(false);
+  });
+
+  it("un campo que no llega no cuenta como cambio", () => {
+    // updateItemAttrs puede recibir un patch parcial: sin nombre nuevo, el
+    // nombre no cambió — no es que haya cambiado a vacío.
+    expect(descripcionObsoleta({ nombreViejo: "Camisa blanca" })).toBe(false);
+    expect(descripcionObsoleta({ hexViejo: "#FFFFFF" })).toBe(false);
+  });
+
+  it("mayúsculas y espacios no son un cambio", () => {
+    expect(
+      descripcionObsoleta({ nombreViejo: "Camisa blanca", nombreNuevo: "  Camisa Blanca " })
+    ).toBe(false);
+    expect(descripcionObsoleta({ hexViejo: "#1b1b1b", hexNuevo: "#1B1B1B" })).toBe(false);
   });
 });
