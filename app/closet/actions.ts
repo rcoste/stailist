@@ -678,6 +678,7 @@ export async function prendasParaComparar(): Promise<PrendaExistente[]> {
       colorHex: attrs.color_hex ?? null,
       material: attrs.material ?? null,
       corte: attrs.corte ?? null,
+      marca: attrs.marca ?? null,
       // Sólo el corte leído de su foto o confirmado a mano puede descartar un
       // aviso — ver el comentario de `corteDeFiar`.
       corteDeFiar:

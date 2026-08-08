@@ -40,3 +40,34 @@ export function cleanPatron(v: unknown): Patron | undefined {
     ? (v as Patron)
     : undefined;
 }
+
+/**
+ * Cómo se escribe una talla, según lo que sea la prenda.
+ *
+ * Roberto: *"para sacos o trajes es 42, 44, 50; para calzado tiene un formato,
+ * para playera tiene otro"*. Tiene razón y es lo que hace usable un campo que
+ * si no queda como un cuadro vacío que no invita a nada.
+ *
+ * ES UN EJEMPLO, NO UNA VALIDACIÓN, y eso es deliberado — también suyo: *"la
+ * persona lo puede poner como sea, al final de cuentas es una referencia"*.
+ * Las tallas del mundo real son un desastre (US, EU, MX, letras, 32x34, "talla
+ * única"), y un campo que rechaza lo que la persona escribe en la etiqueta de
+ * SU prenda estaría equivocado él, no ella. Sugerimos el formato y aceptamos
+ * cualquier cosa.
+ */
+export function ejemploDeTalla(categoria?: string | null): string {
+  switch ((categoria ?? "").trim().toLowerCase()) {
+    case "calzado":
+      return "27, 8.5, 42…";
+    // Sastrería: se habla en números de pecho, no en letras.
+    case "saco":
+      return "38, 40, 48…";
+    case "bottom":
+      return "32, 32x34, M…";
+    case "accesorio":
+      return "única, M…";
+    // Tops, abrigos y vestidos van por letra casi siempre.
+    default:
+      return "S, M, L…";
+  }
+}

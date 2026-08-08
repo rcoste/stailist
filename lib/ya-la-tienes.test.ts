@@ -154,3 +154,61 @@ describe("las palabras que cuentan", () => {
     expect(palabras("Pantalón NEGRO").has("pantalon")).toBe(true);
   });
 });
+
+describe("la marca separa dos prendas que se llaman igual", () => {
+  // El caso lo puso Roberto: "tengo dos playeras similares, pero una es de
+  // Express y otra es de Uniqlo". Mismo nombre, mismo color, mismo material —
+  // y son dos prendas de verdad.
+  const express: PrendaExistente = {
+    id: "1",
+    nombre: "Camiseta blanca",
+    categoria: "top",
+    colorHex: "#FFFFFF",
+    material: "algodón",
+    marca: "Express",
+    imagen: null,
+  };
+
+  it("con marcas distintas NO avisa", () => {
+    expect(
+      yaLaTienes(
+        {
+          nombre: "Camiseta blanca",
+          categoria: "top",
+          colorHex: "#FFFFFF",
+          material: "algodón",
+          marca: "Uniqlo",
+        },
+        [express]
+      )
+    ).toBeNull();
+  });
+
+  it("con la MISMA marca sí avisa", () => {
+    expect(
+      yaLaTienes(
+        {
+          nombre: "Camiseta blanca",
+          categoria: "top",
+          colorHex: "#FFFFFF",
+          material: "algodón",
+          marca: "Express",
+        },
+        [express]
+      )?.id
+    ).toBe("1");
+  });
+
+  it("sin marca en la nueva, sigue avisando", () => {
+    // Y esto es lo importante de medir: la visión NO lee marcas (2 de 336), así
+    // que lo normal es que la nueva llegue sin ella. Si la ausencia contara
+    // como "marca distinta", el aviso dejaría de salir casi siempre — y el
+    // detector entero se apagaría en silencio.
+    expect(
+      yaLaTienes(
+        { nombre: "Camiseta blanca", categoria: "top", colorHex: "#FFFFFF", material: "algodón" },
+        [express]
+      )?.id
+    ).toBe("1");
+  });
+});

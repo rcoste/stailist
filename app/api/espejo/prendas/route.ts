@@ -118,6 +118,7 @@ async function closetParaComparar(
       colorHex: attrs.color_hex ?? null,
       material: attrs.material ?? null,
       corte: attrs.corte ?? null,
+      marca: attrs.marca ?? null,
       corteDeFiar:
         fila.certeza === "exacta" ||
         (Array.isArray(confirmados) && (confirmados as string[]).includes("corte")),
