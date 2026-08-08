@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.167.0] - 2026-08-08
+
+### Added — material y patrón en el alta múltiple
+
+Idea de Roberto: *"ver también texturas o patrones como parte de la info cuando se está dando de alta una prenda con el flujo multiprenda"*.
+
+Verificado antes de construir: el editor del carrete tenía **cero** menciones de material y patrón. La visión **sí los leía y los guardaba** — sólo que nunca los veías. El mismo caso que el corte de esta mañana: dato leído, usado e incorregible.
+
+Y no son adorno: el **material** decide *"lana en calor"* y el **patrón** decide *"dos estampados que pelean"*.
+
+**Son chips y no un campo de texto**, a propósito: esto es la carga masiva, y escribir *algodón* a mano en doce prendas es exactamente la fricción que este flujo existe para no tener. Vienen preseleccionados con lo que leyó el modelo, así que el camino normal es pasar de largo.
+
+**Lo que el modelo lea fuera de la lista se conserva** y aparece como una opción más — sin eso, un material como *cashmere* o *gabardina* se vería como si no hubiera nada elegido (el bug del saco y el del color otra vez) y tocar cualquier chip destruiría un dato más específico.
+
 ## [0.2.166.0] - 2026-08-08
 
 ### Added — la foto original ya no se tira
