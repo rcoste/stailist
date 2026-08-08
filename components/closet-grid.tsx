@@ -33,6 +33,7 @@ export type ClosetItem = {
   renderStatus?: string; // "none" | "pending" | "done" | "failed"
   corte?: string; // "" = sin dato; entallado | recto | holgado
   corteConfirmado?: boolean; // ¿lo dijo la persona, o lo suponemos nosotros?
+  creadoEn?: string; // ISO — para ordenar por lo recién añadido
   /**
    * El lazo del traje: mismo id en el saco y en su pantalón.
    *
@@ -282,6 +283,11 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   const [fFormalidad, setFFormalidad] = useState<Set<string>>(new Set());
   const [fTemporada, setFTemporada] = useState<Set<string>>(new Set());
   const [fSoloTuyas, setFSoloTuyas] = useState(false);
+  // ORDEN. Por defecto siguen primero "tus queridas" (las de outfits favoritos
+  // y usados), que es lo correcto para navegar el clóset todos los días. Pero
+  // hay un momento en que eso estorba: acabas de subir doce prendas y quieres
+  // ver ESAS, no tus favoritas de siempre. Idea de Roberto.
+  const [orden, setOrden] = useState<"queridas" | "nuevas">("queridas");
 
   const activeFilterCount = fFormalidad.size + fTemporada.size + (fSoloTuyas ? 1 : 0);
 
@@ -342,10 +348,13 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
     [items, rendered]
   );
 
-  const visibles = useMemo(
-    () => itemsWithRenders.filter((i) => !removed.has(i.id)),
-    [itemsWithRenders, removed]
-  );
+  const visibles = useMemo(() => {
+    const vivos = itemsWithRenders.filter((i) => !removed.has(i.id));
+    // El servidor ya las manda con las queridas primero; sólo hay que rehacer
+    // el orden cuando se pide el otro.
+    if (orden !== "nuevas") return vivos;
+    return [...vivos].sort((a, b) => (b.creadoEn ?? "").localeCompare(a.creadoEn ?? ""));
+  }, [itemsWithRenders, removed, orden]);
 
   // Pre-filtro por búsqueda + atributos (NO por categoría): la base sobre la que
   // se cuentan los chips de categoría y se arman los grupos.
@@ -521,6 +530,8 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
           onToggleFormalidad={(v) => toggleSet(fFormalidad, setFFormalidad, v)}
           onToggleTemporada={(v) => toggleSet(fTemporada, setFTemporada, v)}
           onToggleSoloTuyas={() => setFSoloTuyas((v) => !v)}
+          orden={orden}
+          onOrden={setOrden}
           onClear={() => {
             setFFormalidad(new Set());
             setFTemporada(new Set());
@@ -565,6 +576,8 @@ function FilterSheet({
   formalidad,
   temporada,
   soloTuyas,
+  orden,
+  onOrden,
   onToggleFormalidad,
   onToggleTemporada,
   onToggleSoloTuyas,
@@ -577,6 +590,8 @@ function FilterSheet({
   onToggleFormalidad: (v: string) => void;
   onToggleTemporada: (v: string) => void;
   onToggleSoloTuyas: () => void;
+  orden: "queridas" | "nuevas";
+  onOrden: (o: "queridas" | "nuevas") => void;
   onClear: () => void;
   onClose: () => void;
 }) {
@@ -598,6 +613,25 @@ function FilterSheet({
           <button type="button" onClick={onClear} className="text-sm font-medium text-accent underline underline-offset-[3px]">
             limpiar
           </button>
+        </div>
+
+        {/* EL ORDEN vive con los filtros y no en la fila de chips: ahí
+            competiría con las categorías, que es lo que de verdad se usa a
+            diario. "Queridas primero" sigue siendo el default — recién añadidas
+            resuelve un momento concreto (acabas de subir una tanda), no el uso
+            de todos los días. */}
+        <div className="flex flex-col gap-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+            Orden
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => onOrden("queridas")} className={pill(orden === "queridas")}>
+              tus queridas primero
+            </button>
+            <button type="button" onClick={() => onOrden("nuevas")} className={pill(orden === "nuevas")}>
+              recién añadidas
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2.5">

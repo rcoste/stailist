@@ -22,7 +22,7 @@ export default async function ClosetPage() {
     supabase
       .from("items")
       .select(
-        "id, source, certeza, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
+        "id, source, certeza, created_at, photo_path, render_status, render_path, attrs, archetypes(name, category, image_path)"
       )
       .eq("user_id", profile.id)
       .is("deleted_at", null),
@@ -145,6 +145,9 @@ export default async function ClosetPage() {
       corteConfirmado: Array.isArray(attrs.confirmados)
         ? attrs.confirmados.includes("corte")
         : false,
+      // Para poder ver el clóset por lo recién añadido. El orden por defecto
+      // sigue siendo "tus queridas primero"; esto es la otra vista.
+      creadoEn: (r.created_at as string) ?? "",
     };
   });
 
