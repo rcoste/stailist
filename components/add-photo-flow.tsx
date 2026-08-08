@@ -12,8 +12,16 @@ import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 // Mango imperativo para disparar el flujo desde fuera (la hoja "Agregar").
 export type AddFlowHandle = { start: () => void };
 
+// FALTABA "SACO", y no era cosmético. La visión sí lo detecta (el schema tiene
+// las 7 categorías), pero sin botón que le corresponda la prenda salía con
+// NADA marcado — Roberto, viendo su saco de traje: "no sé ahí por qué no lo
+// detectó". Sí lo detectó; la UI no sabía enseñarlo. Y peor: tocar cualquiera
+// de las otras seis para "arreglarlo" rompía un dato correcto, casi siempre
+// hacia 'abrigo', que es el error que el prompt de visión se esfuerza en
+// evitar (saco = por formalidad; abrigo = SOLO capa por clima).
 const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
   { v: "top", l: "Top" },
+  { v: "saco", l: "Saco" },
   { v: "bottom", l: "Pantalón" },
   { v: "abrigo", l: "Abrigo" },
   { v: "vestido", l: "Vestido" },

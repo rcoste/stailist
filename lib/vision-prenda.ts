@@ -73,6 +73,20 @@ export type PrendaAnalisis = {
   // resalta esos campos para que el usuario confirme justo lo que importa.
   confianza?: "alta" | "media" | "baja";
   inseguro?: InseguroCampo[]; // campos de los que NO está seguro
+  /**
+   * EL MODELO NO LO PRODUCE — por eso no está en SCHEMA_PRENDA. Lo pone la
+   * persona al confirmar: es el lazo entre el saco y el pantalón de UN traje.
+   *
+   * Un traje se guarda como dos prendas (guardarlo como una hacía que el motor
+   * armara looks sin pantalón), pero nada decía que esas dos van juntas, y la
+   * regla `traje-desparejado` castiga exactamente ese par. Sin el lazo, subir un
+   * traje de verdad creaba el par prohibido.
+   *
+   * NO SE DEDUCE SOLO a propósito: un blazer con un pantalón del mismo tono que
+   * NO son traje es justo el error que la regla existe para cazar. Atarlos por
+   * parecido apagaría la regla en el único caso donde sirve.
+   */
+  conjunto?: string;
 };
 
 /** El prompt, palabra por palabra. Lo comparte producción con el comparador. */

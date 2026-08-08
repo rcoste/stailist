@@ -7,19 +7,46 @@ import { addPhotoItems, addLibraryCandidates } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { ImageCrop } from "@/components/image-crop";
+import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
+import { parDeTraje } from "@/lib/par-de-traje";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 
 const MAX_FOTOS = 12;
 
+// FALTABA "SACO" — ver el comentario largo en add-photo-flow.tsx. La visión sí
+// lo detecta; sin botón, la prenda salía con nada marcado y parecía no
+// detectada. 18 prendas de foto son categoría 'saco' y todas pasaron por aquí.
 const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
   { v: "top", l: "Top" },
+  { v: "saco", l: "Saco" },
   { v: "bottom", l: "Pantalón" },
   { v: "abrigo", l: "Abrigo" },
   { v: "vestido", l: "Vestido" },
   { v: "calzado", l: "Calzado" },
   { v: "accesorio", l: "Accesorio" },
+];
+
+// EL CORTE Y EL LARGO en la confirmación. Mi número de ayer —"sólo 36 prendas
+// se quedan sin corte"— contestaba la pregunta equivocada: medía los huecos,
+// no los ERRORES. La visión llena el corte en 199 prendas y se guarda tal cual
+// (addPhotoItems lo escribe), sin que nadie lo vea nunca. Una lectura mala es
+// hoy invisible e incorregible, que es el mismo dato inventado de siempre con
+// otro disfraz.
+//
+// CON "no aplica" EXPLÍCITO, como pidió Roberto: unos leggings no tienen corte
+// que discutir y una camiseta no tiene largo interesante. Sin esa salida, la
+// única forma de no contestar es dejar lo que el modelo puso — o sea, aceptar.
+const CORTES: { v: string; l: string }[] = [
+  { v: "entallado", l: "entallado" },
+  { v: "recto", l: "recto" },
+  { v: "holgado", l: "holgado" },
+];
+const LARGOS: { v: string; l: string }[] = [
+  { v: "crop", l: "corto" },
+  { v: "regular", l: "regular" },
+  { v: "largo", l: "largo" },
 ];
 const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
   { v: "casual", l: "Casual" },
@@ -509,6 +536,14 @@ export function ImportCarreteFlow({
 
   if (state.kind === "texto") {
     const activos = state.items.filter((it) => it.on);
+    // ¿Hay un saco y un pantalón formal? Entonces puede ser un traje — y sólo
+    // la persona lo sabe. Ver lib/par-de-traje.ts para por qué no se deduce.
+    const par = parDeTraje(
+      activos.map((it) => ({ id: it.id, ...it.attrs }))
+    );
+    const atado = par
+      ? !!activos.find((it) => it.id === par.saco)?.attrs.conjunto
+      : false;
     return (
       <Overlay>
         <Header
@@ -525,6 +560,41 @@ export function ImportCarreteFlow({
             />
           ))}
         </div>
+
+        {/* EL LAZO DEL TRAJE. Un traje se guarda como dos prendas —así debe
+            ser—, pero sin decir que van juntas la regla de "traje desparejado"
+            marca ese par como error y el motor nunca vuelve a ponerlas juntas.
+            Un tap lo arregla, y lo contesta quien sabe: su dueño. */}
+        {par ? (
+          <button
+            type="button"
+            onClick={() => {
+              const id = atado ? undefined : uid();
+              patchItem(par.saco, { conjunto: id });
+              patchItem(par.pantalon, { conjunto: id });
+            }}
+            className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+              atado ? "border-accent bg-accent-soft" : "border-line bg-bg"
+            }`}
+          >
+            <span
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border ${
+                atado ? "border-accent bg-accent text-on-accent" : "border-line bg-surface"
+              }`}
+            >
+              {atado ? <Icon name="check" size={13} /> : null}
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-ink">
+                El saco y el pantalón son un traje
+              </span>
+              <span className="text-xs leading-snug text-muted">
+                Si no me lo dices, los tomo como dos prendas sueltas y nunca te
+                los pongo juntos.
+              </span>
+            </span>
+          </button>
+        ) : null}
         <Footer
           cancel={() => setState({ kind: "idle" })}
           confirmLabel={`generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
@@ -729,6 +799,52 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/**
+ * Escala de 3 valores + "no aplica" — para corte y largo.
+ *
+ * El "no aplica" es de Roberto y no es un extra: sin él, la única forma de no
+ * contestar es dejar lo que el modelo puso, o sea aceptarlo en silencio. Con la
+ * salida explícita, "esta prenda no tiene corte que discutir" se puede DECIR, y
+ * el atributo se borra en vez de quedarse con un valor inventado.
+ */
+function Escala({
+  opciones,
+  valor,
+  onPick,
+}: {
+  opciones: { v: string; l: string }[];
+  valor?: string;
+  onPick: (v: string | undefined) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {opciones.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onPick(o.v)}
+          className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
+            valor === o.v
+              ? "border-accent bg-accent-soft text-accent"
+              : "border-line bg-surface text-muted"
+          }`}
+        >
+          {o.l}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => onPick(undefined)}
+        className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
+          !valor ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
+        }`}
+      >
+        no aplica
+      </button>
+    </div>
+  );
+}
+
 function DraftCard({
   item,
   onToggle,
@@ -837,6 +953,28 @@ function DraftCard({
               ))}
             </div>
           </Field>
+
+          {/* Corte y largo SÓLO donde cambian el look: en un zapato o un
+              cinturón no significan nada. La lista se importa de afinar-prendas
+              para que ficha, card y este editor no se desincronicen. */}
+          {EL_CORTE_IMPORTA.has(a.categoria) ? (
+            <>
+              <Field label="Cómo le queda">
+                <Escala
+                  opciones={CORTES}
+                  valor={a.corte}
+                  onPick={(v) => onPatch({ corte: v as PrendaAnalisis["corte"] })}
+                />
+              </Field>
+              <Field label="Largo">
+                <Escala
+                  opciones={LARGOS}
+                  valor={a.largo}
+                  onPick={(v) => onPatch({ largo: v as PrendaAnalisis["largo"] })}
+                />
+              </Field>
+            </>
+          ) : null}
         </>
       )}
     </div>

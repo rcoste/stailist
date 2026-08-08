@@ -328,6 +328,21 @@ export type EngineItem = {
     tipo?: string;
     /** Qué atributos confirmó la persona a mano (ver migración 0125). */
     confirmados?: string[];
+    /**
+     * Las dos piezas de un TRAJE, atadas: mismo id en el saco y en el pantalón.
+     *
+     * Un traje se guarda como dos prendas —decisión vieja y correcta: guardarlo
+     * como una sola hacía que el motor armara looks SIN pantalón—, pero nada
+     * decía que ESAS dos van juntas. Y la regla `traje-desparejado` castiga
+     * justo eso: saco y pantalón de vestir del mismo color. O sea que subir un
+     * traje de verdad creaba, sin querer, el par que el motor tiene prohibido
+     * juntar. Con el conjunto puesto, la regla los deja pasar.
+     *
+     * LO PONE LA PERSONA, NO EL CÓDIGO. Un blazer con un pantalón del mismo
+     * tono que NO son traje es exactamente el error que la regla existe para
+     * cazar: atarlos solos apagaría la regla en el único caso que importa.
+     */
+    conjunto?: string;
     largo?: string; // crop/regular/largo — habilita tips de fajar
     corte?: string; // entallado/recto/holgado — habilita tips de proporción
     manga?: string; // sin/corta/larga — habilita tips de arremangar
