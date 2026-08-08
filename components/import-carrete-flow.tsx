@@ -11,7 +11,13 @@ import { ImageCrop } from "@/components/image-crop";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { paresDeTraje } from "@/lib/par-de-traje";
-import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
+// La tarjeta de confirmar una prenda y sus vocabularios viven aparte desde que
+// el espejo abrió una segunda puerta al clóset: allá reusa ésta, entera.
+import {
+  DraftCard,
+  mismoHex,
+  type DraftLeida,
+} from "@/components/prenda-draft-card";
 import { yaLaTienes, type PrendaExistente } from "@/lib/ya-la-tienes";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
@@ -19,90 +25,6 @@ import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 
 const MAX_FOTOS = 12;
 
-// FALTABA "SACO" — ver el comentario largo en add-photo-flow.tsx. La visión sí
-// lo detecta; sin botón, la prenda salía con nada marcado y parecía no
-// detectada. 18 prendas de foto son categoría 'saco' y todas pasaron por aquí.
-const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
-  { v: "top", l: "Top" },
-  { v: "saco", l: "Saco" },
-  { v: "bottom", l: "Pantalón" },
-  { v: "abrigo", l: "Abrigo" },
-  { v: "vestido", l: "Vestido" },
-  { v: "calzado", l: "Calzado" },
-  { v: "accesorio", l: "Accesorio" },
-];
-
-// EL CORTE Y EL LARGO en la confirmación. Mi número de ayer —"sólo 36 prendas
-// se quedan sin corte"— contestaba la pregunta equivocada: medía los huecos,
-// no los ERRORES. La visión llena el corte en 199 prendas y se guarda tal cual
-// (addPhotoItems lo escribe), sin que nadie lo vea nunca. Una lectura mala es
-// hoy invisible e incorregible, que es el mismo dato inventado de siempre con
-// otro disfraz.
-//
-// CON "no aplica" EXPLÍCITO, como pidió Roberto: unos leggings no tienen corte
-// que discutir y una camiseta no tiene largo interesante. Sin esa salida, la
-// única forma de no contestar es dejar lo que el modelo puso — o sea, aceptar.
-const CORTES: { v: string; l: string }[] = [
-  { v: "entallado", l: "entallado" },
-  { v: "recto", l: "recto" },
-  { v: "holgado", l: "holgado" },
-];
-const LARGOS: { v: string; l: string }[] = [
-  { v: "crop", l: "corto" },
-  { v: "regular", l: "regular" },
-  { v: "largo", l: "largo" },
-];
-
-// MATERIAL Y PATRÓN, que la visión ya leía y NADIE veía. Mismo caso que el
-// corte: dato leído, guardado y usado —el material decide "lana en calor" y el
-// patrón decide "dos estampados que pelean"— pero invisible en la pantalla
-// donde se confirma todo lo demás, y por tanto incorregible.
-//
-// Son chips y no un campo de texto: esto es la carga MASIVA, y escribir
-// "algodón" a mano en doce prendas es exactamente la fricción que este flujo
-// existe para no tener. Lo que el modelo lea fuera de la lista se conserva y
-// se muestra como una opción más (ver `conLeido`).
-const MATERIALES: { v: string; l: string }[] = [
-  { v: "algodón", l: "algodón" },
-  { v: "lana", l: "lana" },
-  { v: "mezclilla", l: "mezclilla" },
-  { v: "lino", l: "lino" },
-  { v: "punto", l: "punto" },
-  { v: "piel", l: "piel" },
-  { v: "ante", l: "ante" },
-  { v: "sintético", l: "sintético" },
-  { v: "seda", l: "seda" },
-];
-const PATRONES_CHIP: { v: string; l: string }[] = [
-  { v: "liso", l: "liso" },
-  { v: "rayas", l: "rayas" },
-  { v: "cuadros", l: "cuadros" },
-  { v: "floral", l: "floral" },
-  { v: "animal-print", l: "animal print" },
-  { v: "grafico", l: "gráfico" },
-  { v: "estampado", l: "estampado" },
-];
-
-/**
- * La lista con el valor leído dentro, si el modelo dijo algo que no está.
- *
- * Sin esto, un material como "cashmere" o "gabardina" se vería como si no
- * hubiera nada seleccionado —el mismo bug del saco y el del color— y tocar
- * cualquier chip para "arreglarlo" destruiría un dato más específico.
- */
-function conLeido(
-  opciones: { v: string; l: string }[],
-  leido?: string
-): { v: string; l: string }[] {
-  const v = (leido ?? "").trim();
-  if (!v || opciones.some((o) => o.v.toLowerCase() === v.toLowerCase())) return opciones;
-  return [{ v, l: v }, ...opciones];
-}
-const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
-  { v: "casual", l: "Casual" },
-  { v: "formal-casual", l: "Casual-formal" },
-  { v: "formal", l: "Formal" },
-];
 // Paleta de colores comunes de ropa para corregir el color con un tap (swatch +
 // alternativas). El swatch detectado se muestra aparte como punto de partida.
 // La paleta y el cálculo de vecinos viven en lib/paleta-colores.ts (con tests).
@@ -143,32 +65,17 @@ function uid() {
 // del server (no es un problema de las fotos).
 class PermisoError extends Error {}
 
-type DraftItem = {
-  id: string;
-  attrs: PrendaDetectada;
-  on: boolean;
-  photoPreview: string; // dataURL de la foto de origen
+type DraftItem = DraftLeida & {
   /**
    * Qué campos TOCÓ la persona en esta pantalla.
    *
-   * Esta es la confirmación más fuerte que existe en toda la app —aquí se
-   * repasa prenda por prenda y campo por campo— y no se registraba en ningún
-   * lado: al motor le llegaba igual una prenda revisada a mano que una que
-   * nadie miró. Sólo los TOCADOS, porque todo viene preseleccionado y dejarlo
-   * como está no es confirmar, es no haber mirado.
+   * Es lo único que este flujo añade a la prenda leída, y por eso vive aquí y
+   * no en el tipo compartido: la confirmación campo por campo sólo existe en la
+   * carga masiva. Sin esto, al motor le llegaba igual una prenda revisada a
+   * mano que una que nadie miró. Sólo los TOCADOS, porque todo viene
+   * preseleccionado y dejarlo como está no es confirmar, es no haber mirado.
    */
   tocados: Set<string>;
-  /**
-   * El color TAL COMO LO LEYÓ la visión, guardado aparte y sin tocar.
-   *
-   * Vive fuera de `attrs` porque attrs se sobreescribe al corregir: sin esta
-   * copia, tocar un swatch de la paleta por error borraba para siempre un hex
-   * exacto (#3A3A3C, gris carbón) y lo cambiaba por el atajo más cercano
-   * (#8A8A8A, gris de en medio) — o sea que "corregir" aclaraba la prenda y no
-   * había vuelta atrás. Con la copia, el swatch de lo leído siempre está y
-   * volver es un tap.
-   */
-  leido: { color: string; hex: string };
 };
 
 // Prenda ya renderizada, en la curación visual.
@@ -198,9 +105,6 @@ type State =
   | { kind: "guardando" }
   | { kind: "error"; msg: string };
 
-/** Mismo color, ignorando mayúsculas y el # — los hex vienen de dos fuentes. */
-const mismoHex = (a?: string, b?: string) =>
-  !!a && !!b && a.replace("#", "").toLowerCase() === b.replace("#", "").toLowerCase();
 
 // headless: sin botón propio — lo dispara la hoja "Agregar" vía ref.start().
 export function ImportCarreteFlow({
@@ -1074,309 +978,6 @@ function Footer({
       >
         {confirmLabel}
       </button>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-muted">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-/**
- * Escala de 3 valores + "no aplica" — para corte y largo.
- *
- * El "no aplica" es de Roberto y no es un extra: sin él, la única forma de no
- * contestar es dejar lo que el modelo puso, o sea aceptarlo en silencio. Con la
- * salida explícita, "esta prenda no tiene corte que discutir" se puede DECIR, y
- * el atributo se borra en vez de quedarse con un valor inventado.
- */
-function Escala({
-  opciones,
-  valor,
-  onPick,
-  vacio = "no aplica",
-}: {
-  opciones: { v: string; l: string }[];
-  valor?: string;
-  onPick: (v: string | undefined) => void;
-  /** Cómo se llama "ninguno". En el patrón "no aplica" confundiría con "liso". */
-  vacio?: string;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {opciones.map((o) => (
-        <button
-          key={o.v}
-          type="button"
-          onClick={() => onPick(o.v)}
-          className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-            valor === o.v
-              ? "border-accent bg-accent-soft text-accent"
-              : "border-line bg-surface text-muted"
-          }`}
-        >
-          {o.l}
-        </button>
-      ))}
-      <button
-        type="button"
-        onClick={() => onPick(undefined)}
-        className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-          !valor ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
-        }`}
-      >
-        {vacio}
-      </button>
-    </div>
-  );
-}
-
-function DraftCard({
-  item,
-  yaEsta,
-  onToggle,
-  onPatch,
-}: {
-  item: DraftItem;
-  /** La prenda del clóset que probablemente sea ésta, si la hay. */
-  yaEsta: PrendaExistente | null;
-  onToggle: () => void;
-  onPatch: (patch: Partial<PrendaDetectada>, campos?: string[]) => void;
-}) {
-  const a = item.attrs;
-  const baja = a.confianza === "baja";
-  // Se abre por prenda y no se vuelve a cerrar: quien pidió ver todos los
-  // colores es porque la lectura le falló, y volver a esconderlos sería quitarle
-  // la salida justo cuando la está usando.
-  const [todosLosColores, setTodosLosColores] = useState(false);
-  // El nombre que se enseña es el que LEYÓ la visión ("gris oscuro"), no el del
-  // atajo más parecido: es más específico y es lo que de verdad se guardó.
-  const colorName = a.color;
-  // El swatch de lo leído sólo hace falta si no es ya uno de los atajos.
-  const hayLeido = !!item.leido.hex && !PALETA.some((p) => mismoHex(item.leido.hex, p.hex));
-  // VECINOS PRIMERO (idea de Roberto): un carbón puede confundirse con negro o
-  // marino, jamás con rosa. Enseñar las once cada vez obligaba a buscar entre
-  // colores que nadie iba a elegir.
-  //
-  // PERO LA PUERTA SE ABRE SIEMPRE. Filtrar por cercanía da por hecho que la
-  // lectura es aproximadamente correcta, que es justo lo que falla cuando más
-  // falta hace corregir: un saco marino con luz cálida se puede leer "café", y
-  // ahí el color bueno no está entre los vecinos del café. Si el filtro cerrara
-  // la puerta, el único error que importa sería el único imposible de arreglar.
-  const cercanos = coloresCercanos(item.leido.hex, 4);
-  const mostrar = todosLosColores ? PALETA : cercanos;
-  return (
-    <div
-      className={`flex flex-col gap-3 rounded-xl border p-3 transition-opacity ${
-        item.on ? "border-line bg-bg" : "border-line bg-bg opacity-50"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.photoPreview}
-          alt=""
-          className="h-16 w-12 shrink-0 rounded-md border border-line object-cover"
-        />
-        <div className="flex flex-1 flex-col gap-1.5">
-          <input
-            value={a.nombre}
-            onChange={(e) => onPatch({ nombre: e.target.value }, ["nombre"])}
-            className="min-h-9 rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
-          />
-          {baja && (
-            <span className="w-fit rounded-sm bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
-              No la vi bien — confírmala
-            </span>
-          )}
-          {/* "YA LA TIENES": avisa, no borra. De los 25 grupos con nombre
-              repetido en la base, 8 son prendas DISTINTAS de verdad (los tres
-              pantalones negros de Roberto son de sintético, lana y algodón).
-              Apagarla sola le quitaría ropa real sin que se entere; un aviso
-              que se ignora cuesta una mirada. Con foto, porque sin ver las dos
-              no se puede decidir. */}
-          {yaEsta && item.on ? (
-            <div className="flex items-center gap-2 rounded-sm bg-warning/10 p-1.5">
-              {yaEsta.imagen ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={yaEsta.imagen}
-                  alt=""
-                  className="h-10 w-8 shrink-0 rounded-sm border border-line object-cover"
-                />
-              ) : null}
-              <span className="flex min-w-0 flex-col">
-                <span className="text-[11px] font-medium text-ink">
-                  Creo que ya la tienes
-                </span>
-                <span className="truncate text-[11px] text-muted">{yaEsta.nombre}</span>
-              </span>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="ml-auto shrink-0 rounded-sm border border-line bg-surface px-2 py-1 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-              >
-                no sumarla
-              </button>
-            </div>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-pressed={item.on}
-          aria-label={item.on ? "Quitar prenda" : "Incluir prenda"}
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
-            item.on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-muted"
-          }`}
-        >
-          <Icon name={item.on ? "check" : "mas"} size={14} />
-        </button>
-      </div>
-
-      {item.on && (
-        <>
-          <Field label="Tipo">
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIAS.map((c) => (
-                <button
-                  key={c.v}
-                  type="button"
-                  onClick={() => onPatch({ categoria: c.v }, ["categoria"])}
-                  className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                    a.categoria === c.v
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-surface text-muted"
-                  }`}
-                >
-                  {c.l}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label={`Color · ${colorName}`}>
-            <div className="flex flex-wrap gap-2">
-              {/* EL COLOR QUE LEÍ, con su hex exacto y encendido. Va primero y
-                  sólo aparece cuando no coincide con ningún atajo de la paleta:
-                  es la respuesta a "¿por qué no hay ninguno marcado?" — sí lo
-                  detectó, y con más precisión que cualquiera de los 11. Sin
-                  este swatch, la pantalla invita a tocar el gris de en medio
-                  para "arreglarlo", y eso EMPEORA el dato. */}
-              {hayLeido ? (
-                <button
-                  type="button"
-                  aria-label={`${item.leido.color} — el que leí`}
-                  title={`${item.leido.color} — el que leí`}
-                  onClick={() =>
-                    onPatch(
-                      { color: item.leido.color, color_hex: item.leido.hex },
-                      ["color"]
-                    )
-                  }
-                  className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                    mismoHex(a.color_hex, item.leido.hex)
-                      ? "scale-110 border-accent"
-                      : "border-line"
-                  }`}
-                  style={{ backgroundColor: item.leido.hex }}
-                />
-              ) : null}
-              {mostrar.map((p) => (
-                <button
-                  key={p.hex}
-                  type="button"
-                  onClick={() => onPatch({ color: p.name, color_hex: p.hex }, ["color"])}
-                  aria-label={p.name}
-                  title={p.name}
-                  className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                    mismoHex(a.color_hex, p.hex)
-                      ? "scale-110 border-accent"
-                      : "border-line"
-                  }`}
-                  style={{ backgroundColor: p.hex }}
-                />
-              ))}
-              {/* La puerta. Sin esto, una lectura MUY equivocada sería
-                  incorregible — ver el comentario de `cercanos`. */}
-              {!todosLosColores ? (
-                <button
-                  type="button"
-                  onClick={() => setTodosLosColores(true)}
-                  className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-                >
-                  otro color
-                </button>
-              ) : null}
-            </div>
-          </Field>
-
-          <Field label="Formalidad">
-            <div className="flex flex-wrap gap-1.5">
-              {FORMALIDADES.map((f) => (
-                <button
-                  key={f.v}
-                  type="button"
-                  onClick={() => onPatch({ formalidad: f.v }, ["formalidad"])}
-                  className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                    a.formalidad === f.v
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-surface text-muted"
-                  }`}
-                >
-                  {f.l}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          {/* Corte y largo SÓLO donde cambian el look: en un zapato o un
-              cinturón no significan nada. La lista se importa de afinar-prendas
-              para que ficha, card y este editor no se desincronicen. */}
-          {EL_CORTE_IMPORTA.has(a.categoria) ? (
-            <>
-              <Field label="Cómo le queda">
-                <Escala
-                  opciones={CORTES}
-                  valor={a.corte}
-                  onPick={(v) => onPatch({ corte: v as PrendaAnalisis["corte"] }, ["corte"])}
-                />
-              </Field>
-              <Field label="Largo">
-                <Escala
-                  opciones={LARGOS}
-                  valor={a.largo}
-                  onPick={(v) => onPatch({ largo: v as PrendaAnalisis["largo"] }, ["largo"])}
-                />
-              </Field>
-            </>
-          ) : null}
-
-          {/* Material y patrón van en TODAS las categorías: la lana de unos
-              guantes y el estampado de una bufanda cuentan igual. */}
-          <Field label="Material">
-            <Escala
-              opciones={conLeido(MATERIALES, a.material)}
-              valor={a.material}
-              onPick={(v) => onPatch({ material: v }, ["material"])}
-              vacio="no sé"
-            />
-          </Field>
-          <Field label="Patrón">
-            <Escala
-              opciones={conLeido(PATRONES_CHIP, a.patron)}
-              valor={a.patron}
-              onPick={(v) => onPatch({ patron: v as PrendaAnalisis["patron"] }, ["patron"])}
-              vacio="sin dato"
-            />
-          </Field>
-        </>
-      )}
     </div>
   );
 }
