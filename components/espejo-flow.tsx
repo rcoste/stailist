@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { addPhotoItems } from "@/app/closet/actions";
+import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
 
 // "¿ME VEO BIEN?" — el flujo de una sola pantalla.
@@ -31,6 +33,27 @@ type State =
   | { kind: "mirando"; preview: string }
   | { kind: "listo"; preview: string; lectura: LecturaEspejo }
   | { kind: "error"; msg: string };
+
+// SUMAR AL CLÓSET LO QUE TRAES PUESTO — el segundo tiempo, opcional.
+//
+// El enemigo declarado del proyecto no es combinar ropa: es la fricción de
+// catalogar el clóset. Si vestirte lo va llenando, ese problema se resuelve
+// viviendo. Por eso vale la pena aunque la foto sea mal insumo para catalogar.
+//
+// PERO VA DESPUÉS Y APARTE, nunca automático:
+// · el consejo es el trabajo — meterlo antes lo convierte en un trámite;
+// · leer prendas es otra llamada de visión, y correrla a diario para alguien
+//   que se puso lo que ya tiene sería pagar todos los días por nada;
+// · nada entra sin que lo marque: una foto de espejo tiene oclusión, luz de
+//   ambiente y prendas fuera de cuadro, y con la misma camisa tres veces por
+//   semana el auto-alta llenaría el clóset de duplicados en un mes.
+type Sumar =
+  | { paso: "oferta" }
+  | { paso: "buscando" }
+  | { paso: "nada"; vistas: number }
+  | { paso: "elegir"; prendas: PrendaDetectada[]; on: Set<number>; vistas: number }
+  | { paso: "guardando" }
+  | { paso: "hecho"; cuantas: number };
 
 // Comprime a 1280px: lo mismo que el resto de los flujos de foto.
 function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
@@ -87,6 +110,7 @@ export function EspejoFlow({
   ref?: Ref<EspejoHandle>;
 }) {
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [sumar, setSumar] = useState<Sumar>({ paso: "oferta" });
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -144,11 +168,73 @@ export function EspejoFlow({
         return;
       }
       const lectura = (await res.json()) as LecturaEspejo;
+      setSumar({ paso: "oferta" });
       setState({ kind: "listo", preview, lectura });
       // El diario ya tiene una entrada nueva.
       router.refresh();
     } catch {
       setState({ kind: "error", msg: "No pude leer la foto. Inténtalo otra vez." });
+    }
+  }
+
+  /** Busca en la foto lo que NO parece estar ya en el clóset. */
+  async function buscarPrendas(preview: string) {
+    setSumar({ paso: "buscando" });
+    try {
+      const res = await fetch("/api/espejo/prendas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: preview }),
+      });
+      if (!res.ok) return setSumar({ paso: "nada", vistas: 0 });
+      const { prendas, vistas } = (await res.json()) as {
+        prendas: PrendaDetectada[];
+        vistas: number;
+      };
+      if (prendas.length === 0) return setSumar({ paso: "nada", vistas });
+      setSumar({
+        paso: "elegir",
+        prendas,
+        // Vienen TODAS encendidas: ya se filtró lo que parece estar, así que
+        // lo normal es quererlas. Apagar es la excepción.
+        on: new Set(prendas.map((_, i) => i)),
+        vistas,
+      });
+    } catch {
+      setSumar({ paso: "nada", vistas: 0 });
+    }
+  }
+
+  /** Guarda las marcadas. La imagen limpia la dibuja el clóset después. */
+  async function guardarPrendas() {
+    if (sumar.paso !== "elegir") return;
+    const elegidas = sumar.prendas.filter((_, i) => sumar.on.has(i));
+    if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0 });
+    setSumar({ paso: "guardando" });
+    try {
+      const res = await addPhotoItems(
+        elegidas.map((p) => ({
+          attrs: p,
+          // SIN RENDER Y SIN FOTO, las dos cosas a propósito:
+          //
+          // · renderStatus null (no 'failed'): dibujar cinco prendas son ~85s y
+          //   aquí la persona está saliendo de su casa. Entran sin imagen y el
+          //   auto-sanado del clóset las dibuja después — pero ESE sólo recoge
+          //   las que están en 'none', así que marcarlas 'failed' las dejaría
+          //   sin imagen para siempre.
+          // · photoPath null aunque la foto exista: es un espejo de cuerpo
+          //   entero, no la prenda. Ponerla haría que la miniatura de "camisa
+          //   blanca" fuera tu foto completa, y además bloquearía el dibujo
+          //   limpio (tener foto cuenta como tener imagen).
+          renderPath: null,
+          renderStatus: null,
+          photoPath: null,
+        }))
+      );
+      setSumar({ paso: "hecho", cuantas: res.ok ? res.added : 0 });
+      router.refresh();
+    } catch {
+      setSumar({ paso: "hecho", cuantas: 0 });
     }
   }
 
@@ -219,6 +305,105 @@ export function EspejoFlow({
                 {lista.ajuste}
               </p>
               <p className="text-xs text-muted">Ya quedó en tu diario.</p>
+
+              {/* SEGUNDO TIEMPO — sumar al clóset lo que no tenga.
+                  Va DEBAJO del consejo y detrás de una línea discreta: el
+                  consejo es a lo que vino, y esto es un extra que la mayoría de
+                  los días no aplica porque te pusiste lo que ya tienes. */}
+              <div className="border-t border-line pt-3">
+                {sumar.paso === "oferta" ? (
+                  <button
+                    type="button"
+                    onClick={() => buscarPrendas(state.preview)}
+                    className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-accent"
+                  >
+                    <Icon name="mas" size={14} />
+                    ¿hay algo aquí que no esté en tu clóset?
+                  </button>
+                ) : null}
+
+                {sumar.paso === "buscando" ? (
+                  <p className="flex items-center gap-2 text-[13px] text-muted">
+                    <Spinner className="h-3.5 w-3.5" /> viendo qué te falta…
+                  </p>
+                ) : null}
+
+                {sumar.paso === "nada" ? (
+                  <p className="text-[13px] text-muted">
+                    {sumar.vistas > 0
+                      ? "Todo lo que traes ya está en tu clóset."
+                      : "No pude distinguir las prendas en esta foto."}
+                  </p>
+                ) : null}
+
+                {sumar.paso === "elegir" ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-[13px] text-ink">
+                      Esto no lo veo en tu clóset. Marca lo que sí sea tuyo:
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {sumar.prendas.map((p, i) => {
+                        const on = sumar.on.has(i);
+                        return (
+                          <button
+                            key={`${p.nombre}-${i}`}
+                            type="button"
+                            onClick={() =>
+                              setSumar((sm) => {
+                                if (sm.paso !== "elegir") return sm;
+                                const on2 = new Set(sm.on);
+                                on2.has(i) ? on2.delete(i) : on2.add(i);
+                                return { ...sm, on: on2 };
+                              })
+                            }
+                            className={`flex items-center gap-2.5 rounded-sm border px-3 py-2 text-left transition-colors ${
+                              on ? "border-accent bg-accent-soft" : "border-line bg-bg"
+                            }`}
+                          >
+                            <span
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border ${
+                                on ? "border-accent bg-accent text-on-accent" : "border-line bg-surface"
+                              }`}
+                            >
+                              {on ? <Icon name="check" size={11} /> : null}
+                            </span>
+                            <span
+                              className="h-4 w-4 shrink-0 rounded-full border border-line"
+                              style={{ backgroundColor: p.color_hex }}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 flex-1 truncate text-[13px] text-ink">
+                              {p.nombre}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => guardarPrendas()}
+                      className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
+                    >
+                      sumar {sumar.on.size} al clóset
+                    </button>
+                  </div>
+                ) : null}
+
+                {sumar.paso === "guardando" ? (
+                  <p className="flex items-center gap-2 text-[13px] text-muted">
+                    <Spinner className="h-3.5 w-3.5" /> sumándolas…
+                  </p>
+                ) : null}
+
+                {sumar.paso === "hecho" ? (
+                  <p className="text-[13px] text-ink">
+                    {sumar.cuantas > 0
+                      ? `Listo, ${sumar.cuantas} ${sumar.cuantas === 1 ? "prenda nueva" : "prendas nuevas"} en tu clóset. Les dibujo su foto en un momento.`
+                      : "No sumé nada."}
+                  </p>
+                ) : null}
+              </div>
+
               <button
                 type="button"
                 onClick={cerrar}

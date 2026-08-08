@@ -415,7 +415,14 @@ export async function addPhotoItems(
       confirmados?: string[];
     };
     renderPath: string | null;
-    renderStatus: "done" | "failed";
+    /**
+     * `null` = todavía no se ha intentado dibujarla, y NO es lo mismo que
+     * "falló". El auto-sanado del clóset sólo recoge las que están en `none`
+     * (render_status nulo): marcarlas 'failed' las deja sin imagen para
+     * siempre. Lo usa el espejo, que suma prendas sin pararse a dibujarlas —
+     * cinco renders son ~85s y ahí la persona está saliendo de su casa.
+     */
+    renderStatus: "done" | "failed" | null;
     /**
      * La foto ORIGINAL de donde salió la prenda.
      *
