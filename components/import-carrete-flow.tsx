@@ -162,7 +162,19 @@ export function ImportCarreteFlow({
 
   // El explainer va ANTES del picker: el valor del carrete (1 foto → la IA separa
   // cada prenda) hay que contarlo primero. "elegir fotos" abre el picker nativo.
-  useImperativeHandle(ref, () => ({ start: () => setState({ kind: "explainer" }) }), []);
+  // `startConFoto` es la puerta desde el flujo de UNA prenda: cuando la visión
+  // avisa que en la foto hay varias, se pasa la misma foto aquí en vez de hacer
+  // que la persona vuelva a empezar. Entra directo al recorte —ya está
+  // comprimida y ya la eligió— y se salta el explainer y el picker.
+  useImperativeHandle(
+    ref,
+    () => ({
+      start: () => setState({ kind: "explainer" }),
+      startConFoto: (dataUrl: string) =>
+        setState({ kind: "revisar", fotos: [{ id: uid(), dataUrl }] }),
+    }),
+    []
+  );
 
   // --- 1) Selección → comprime y pasa a "revisar" (recorte opcional) ---
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {

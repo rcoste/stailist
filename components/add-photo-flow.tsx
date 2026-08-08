@@ -10,7 +10,11 @@ import { Spinner } from "@/components/spinner";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 // Mango imperativo para disparar el flujo desde fuera (la hoja "Agregar").
-export type AddFlowHandle = { start: () => void };
+export type AddFlowHandle = {
+  start: () => void;
+  /** Sólo el flujo de varias: recibe una foto ya elegida y salta al recorte. */
+  startConFoto?: (dataUrl: string) => void;
+};
 
 // FALTABA "SACO", y no era cosmético. La visión sí lo detecta (el schema tiene
 // las 7 categorías), pero sin botón que le corresponda la prenda salía con
@@ -88,10 +92,16 @@ function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
 export function AddPhotoFlow({
   userId,
   headless = false,
+  onSepararFoto,
   ref,
 }: {
   userId: string;
   headless?: boolean;
+  /**
+   * Pasa la MISMA foto al lector de varias prendas. Lo cablea la hoja
+   * "Agregar", que es quien tiene los dos flujos a mano.
+   */
+  onSepararFoto?: (dataUrl: string) => void;
   ref?: Ref<AddFlowHandle>;
 }) {
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -194,6 +204,30 @@ export function AddPhotoFlow({
           className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
           style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
         >
+          {/* AQUÍ HAY MÁS DE UNA PRENDA. Este lector devuelve UNA por diseño y
+              ante varias elige la principal: las demás se perdían EN SILENCIO.
+              Así nacieron los "Traje marino de lana" de la base — una foto del
+              traje puesto entrando por esta puerta, el saco leído como prenda
+              principal, el pantalón desaparecido, y un nombre que dice "traje"
+              para algo que es sólo el saco.
+              No basta con avisar: se ofrece la salida buena, que es pasar la
+              MISMA foto al lector de varias sin volver a empezar. */}
+          {editable && a.varias && onSepararFoto ? (
+            <div className="flex flex-col gap-2 rounded-sm bg-warning/10 px-3 py-2.5">
+              <p className="text-xs text-warning">
+                Veo más de una prenda en esta foto. Aquí sólo puedo sumar una —
+                las demás se quedan fuera.
+              </p>
+              <button
+                type="button"
+                onClick={() => onSepararFoto(state.preview)}
+                className="self-start rounded-sm border border-warning/40 bg-surface px-2.5 py-1 text-xs font-medium text-warning transition-colors hover:border-warning"
+              >
+                sepáralas todas
+              </button>
+            </div>
+          ) : null}
+
           {mostrarAviso ? (
             <p className="rounded-sm bg-warning/10 px-3 py-2 text-xs text-warning">
               Le eché ojo pero de un par de cosas no estoy segura — revisa lo

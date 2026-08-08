@@ -64,7 +64,14 @@ export function AddSheet({
       )}
 
       {/* Flujos en modo headless: sin botón propio, los dispara la hoja. */}
-      <AddPhotoFlow userId={userId} headless ref={photoRef} />
+      <AddPhotoFlow
+        userId={userId}
+        headless
+        ref={photoRef}
+        // "Veo más de una prenda aquí": en vez de mandar a empezar de nuevo, la
+        // misma foto pasa al lector que sí sabe separarlas.
+        onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
+      />
       <ImportCarreteFlow headless ref={carreteRef} />
 
       <Sheet open={open} onClose={() => setOpen(false)}>
