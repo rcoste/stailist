@@ -21,6 +21,10 @@ export type Patron = (typeof PATRONES)[number];
 // poder meter párrafos en el clóset).
 export const MAX_MATERIAL_LEN = 40;
 export const MAX_COLOR_LEN = 30;
+// La descripción VISUAL de la prenda (cuello, mangas, botones, suela…). Es
+// larga a propósito: no es una etiqueta como el material, es lo que un
+// generador de imagen necesita para volver a dibujar ESA prenda y no otra.
+export const MAX_VISUAL_LEN = 400;
 
 // Normaliza un campo de texto libre del análisis: string plano de una línea,
 // truncado. Devuelve undefined si queda vacío (no se persiste la llave).

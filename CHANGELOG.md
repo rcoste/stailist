@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.169.0] - 2026-08-08
+
+### Fixed — el doble check del alta de prendas: cuatro huecos, medidos
+
+Roberto: *"hemos hecho bastantes fixes a esa parte del proceso, dale un double check para ver si no hay otras mejoras que nos falten o huecos"*. Se auditó contra la base real, no a ojo. Salieron siete; cuatro se arreglan aquí y tres quedan en su mesa (abajo).
+
+**1. "Rehacerla" no usaba la foto original — el dato de ayer no tenía un solo consumidor.**
+
+Ayer se empezó a guardar la foto de origen, y el commit prometía tres puertas: comprobar de qué foto salió un render raro, volver a leer la prenda con un modelo mejor, y **regresar a la fuente cuando el dibujo sale mal**. Esa tercera no existía: el botón que arregla un dibujo equivocado seguía yendo por texto→imagen.
+
+No es un matiz. Describir la prenda en palabras **pierde** la prenda — hay mil cortes de saco negro y *"saco negro"* no distingue ninguno. Con la foto delante, el modelo copia el corte, el color y los detalles reales.
+
+Verificado con una foto real (las Columbia): del piso de madera, con unas botas blancas y una puerta en el encuadre, salió el flat-lay de catálogo con el logo, el zigzag, la suela gris y las agujetas moteadas intactos. 16.8s.
+
+El prompt de extracción vivía dentro de `app/api/render-prenda`; se sacó a `lib/extraer-prenda.ts` en vez de copiarlo — habría sido la cuarta copia del mismo prompt en el repo.
+
+**2. La descripción visual se tiraba: 0 de 325 prendas la conservan.**
+
+Al leer una foto, la visión escribe una descripción detallada (*"bomber de nylon negro mate, cierre metálico frontal, puños acanalados"*). Es lo que hace fiel al **primer** render — y no se guardaba. Cualquier render posterior partía sólo del nombre, así que la imagen del clóset sólo podía **empeorar** con el tiempo. Ahora se guarda como `visual`, que es el campo que el generador ya sabía leer.
+
+**3. Lo que corriges en el alta ya cuenta como confirmado.**
+
+La pantalla de confirmación del carrete es la revisión más fuerte de toda la app —prenda por prenda, campo por campo— y **no se registraba nada**: al motor le llegaba igual una prenda repasada a mano que una que nadie miró. Ahora los campos que **tocas** se marcan como tuyos. Sólo los tocados: todo viene preseleccionado, así que dejarlo como está no es confirmar, es no haber mirado.
+
+**4. El tope por lote era silencioso.**
+
+`addPhotoItems` cortaba en 30 y devolvía éxito. Con 12 fotos × 8 prendas el botón podía decir *"sumar 72 al clóset"*, entrar 30 y perderse 42 **sin una palabra**. El tope sube a 60 y ahora se dice cuántas quedaron fuera. Un tope está bien; un tope callado es ropa que desaparece.
+
+### Added — ver el render en grande antes de juzgarlo
+
+En *"¿cuáles son tuyas?"* se decide **es mía / no es mía / salió mal** mirando un recuadro de dos columnas, que es justo donde no se distingue si el dibujo salió bien. El visor ya existía —lo usan los looks, la maleta y desde ayer la ficha— y faltaba en el único momento del flujo que es un juicio puramente visual.
+
 ## [0.2.168.0] - 2026-08-08
 
 ### Added — ver el clóset por recién añadidas

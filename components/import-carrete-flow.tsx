@@ -8,6 +8,7 @@ import { addPhotoItems, addLibraryCandidates, prendasParaComparar } from "@/app/
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { ImageCrop } from "@/components/image-crop";
+import { PrendaZoom } from "@/components/prenda-zoom";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { parDeTraje } from "@/lib/par-de-traje";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
@@ -148,6 +149,16 @@ type DraftItem = {
   on: boolean;
   photoPreview: string; // dataURL de la foto de origen
   /**
+   * Qué campos TOCÓ la persona en esta pantalla.
+   *
+   * Esta es la confirmación más fuerte que existe en toda la app —aquí se
+   * repasa prenda por prenda y campo por campo— y no se registraba en ningún
+   * lado: al motor le llegaba igual una prenda revisada a mano que una que
+   * nadie miró. Sólo los TOCADOS, porque todo viene preseleccionado y dejarlo
+   * como está no es confirmar, es no haber mirado.
+   */
+  tocados: Set<string>;
+  /**
    * El color TAL COMO LO LEYÓ la visión, guardado aparte y sin tocar.
    *
    * Vive fuera de `attrs` porque attrs se sobreescribe al corregir: sin esta
@@ -164,6 +175,7 @@ type DraftItem = {
 type RenderItem = {
   id: string;
   attrs: PrendaDetectada;
+  tocados: Set<string>;
   photo: string; // dataURL de la foto original (para el render imagen→imagen)
   status: "pending" | "done" | "failed";
   path: string | null;
@@ -203,6 +215,11 @@ export function ImportCarreteFlow({
 } = {}) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [cropId, setCropId] = useState<string | null>(null); // foto en recorte
+  // EL RENDER, EN GRANDE. Aquí se decide "es mía / salió mal" mirando un
+  // recuadro de dos columnas, que es justo donde no se distingue si el dibujo
+  // salió bien. El visor ya existía —lo usan los looks, la maleta y desde ayer
+  // la ficha— y faltaba en el único momento del flujo que es un juicio visual.
+  const [zoomId, setZoomId] = useState<string | null>(null);
   // El clóset actual, para poder avisar "creo que ya la tienes". Se pide una
   // vez por tanda, no por prenda: son unos cientos de filas y la pantalla de
   // confirmación no debe esperar a nada.
@@ -286,6 +303,7 @@ export function ImportCarreteFlow({
             attrs: p,
             on: true,
             photoPreview: f.dataUrl,
+            tocados: new Set<string>(),
             leido: { color: p.color, hex: p.color_hex },
           }));
         })
@@ -315,13 +333,26 @@ export function ImportCarreteFlow({
   }
 
   // --- Edición en la curación de texto ---
-  function patchItem(id: string, patch: Partial<PrendaDetectada>) {
+  //
+  // `campos` es lo que la persona DECLARÓ al tocar, y no siempre coincide con
+  // las llaves del patch: corregir el color mueve `color` y `color_hex` pero lo
+  // confirmado es "color", y el lazo del traje no confirma ningún atributo.
+  // Por eso va explícito en vez de deducirse de Object.keys.
+  function patchItem(id: string, patch: Partial<PrendaDetectada>, campos: string[] = []) {
     setState((s) =>
       s.kind === "texto"
         ? {
             ...s,
             items: s.items.map((it) =>
-              it.id === id ? { ...it, attrs: { ...it.attrs, ...patch } } : it
+              it.id === id
+                ? {
+                    ...it,
+                    attrs: { ...it.attrs, ...patch },
+                    tocados: campos.length
+                      ? new Set([...it.tocados, ...campos])
+                      : it.tocados,
+                  }
+                : it
             ),
           }
         : s
@@ -346,6 +377,7 @@ export function ImportCarreteFlow({
     const base: RenderItem[] = activos.map((it) => ({
       id: it.id,
       attrs: it.attrs,
+      tocados: it.tocados,
       photo: it.photoPreview,
       status: "pending",
       path: null,
@@ -464,7 +496,10 @@ export function ImportCarreteFlow({
           ? { ok: true, added: 0 }
           : await addPhotoItems(
               keep.map((it) => ({
-                attrs: it.attrs,
+                // `confirmados` viaja DENTRO de attrs porque ahí es donde vive
+                // en la base — el mismo lugar que usa la ficha y que el motor
+                // consulta para saber qué dato es de la persona.
+                attrs: { ...it.attrs, confirmados: [...it.tocados] },
                 renderPath: it.status === "done" ? it.path : null,
                 renderStatus: it.status === "done" ? "done" : "failed",
                 photoPath: rutaDeFoto.get(it.photo) ?? null,
@@ -479,6 +514,18 @@ export function ImportCarreteFlow({
 
       if (!okItems.ok) {
         setState({ kind: "error", msg: "No pude guardar las prendas. Inténtalo otra vez." });
+        return;
+      }
+      // EL TOPE POR LOTE SE DICE. Se puede llegar a 96 prendas (12 fotos × 8) y
+      // la acción guarda hasta 60: antes las de más se perdían sin una palabra,
+      // con el botón diciendo "sumar 72 al clóset". Un tope está bien; un tope
+      // callado es ropa que desaparece.
+      if (okItems.dejadas && okItems.dejadas > 0) {
+        setState({
+          kind: "error",
+          msg: `Sumé ${okItems.added} prendas — son muchas de una vez y ${okItems.dejadas} se quedaron fuera. Vuelve a entrar con esas fotos y las agrego.`,
+        });
+        router.refresh();
         return;
       }
       setState({ kind: "idle" });
@@ -679,7 +726,7 @@ export function ImportCarreteFlow({
                 enElCloset
               )}
               onToggle={() => toggleItem(it.id)}
-              onPatch={(p) => patchItem(it.id, p)}
+              onPatch={(p, campos) => patchItem(it.id, p, campos)}
             />
           ))}
         </div>
@@ -779,6 +826,7 @@ export function ImportCarreteFlow({
 
   if (state.kind === "visual") {
     const keep = state.items.filter((it) => it.verdict === "keep").length;
+    const grande = state.items.find((it) => it.id === zoomId) ?? null;
     return (
       <Overlay>
         <Header
@@ -792,7 +840,12 @@ export function ImportCarreteFlow({
         />
         <div className="grid grid-cols-2 gap-3">
           {state.items.map((it) => (
-            <RenderCard key={it.id} item={it} onVerdict={(v) => setVerdict(it.id, v)} />
+            <RenderCard
+              key={it.id}
+              item={it}
+              onVerdict={(v) => setVerdict(it.id, v)}
+              onZoom={() => setZoomId(it.id)}
+            />
           ))}
         </div>
         <Footer
@@ -800,6 +853,14 @@ export function ImportCarreteFlow({
           confirmLabel={`sumar ${keep} al clóset`}
           confirmDisabled={false}
           onConfirm={guardar}
+        />
+        <PrendaZoom
+          data={
+            grande?.url
+              ? { image: grande.url, nombre: grande.attrs.nombre, sub: grande.attrs.color }
+              : null
+          }
+          onClose={() => setZoomId(null)}
         />
       </Overlay>
     );
@@ -986,7 +1047,7 @@ function DraftCard({
   /** La prenda del clóset que probablemente sea ésta, si la hay. */
   yaEsta: PrendaExistente | null;
   onToggle: () => void;
-  onPatch: (patch: Partial<PrendaDetectada>) => void;
+  onPatch: (patch: Partial<PrendaDetectada>, campos?: string[]) => void;
 }) {
   const a = item.attrs;
   const baja = a.confianza === "baja";
@@ -1026,7 +1087,7 @@ function DraftCard({
         <div className="flex flex-1 flex-col gap-1.5">
           <input
             value={a.nombre}
-            onChange={(e) => onPatch({ nombre: e.target.value })}
+            onChange={(e) => onPatch({ nombre: e.target.value }, ["nombre"])}
             className="min-h-9 rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
           />
           {baja && (
@@ -1087,7 +1148,7 @@ function DraftCard({
                 <button
                   key={c.v}
                   type="button"
-                  onClick={() => onPatch({ categoria: c.v })}
+                  onClick={() => onPatch({ categoria: c.v }, ["categoria"])}
                   className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
                     a.categoria === c.v
                       ? "border-accent bg-accent-soft text-accent"
@@ -1114,7 +1175,10 @@ function DraftCard({
                   aria-label={`${item.leido.color} — el que leí`}
                   title={`${item.leido.color} — el que leí`}
                   onClick={() =>
-                    onPatch({ color: item.leido.color, color_hex: item.leido.hex })
+                    onPatch(
+                      { color: item.leido.color, color_hex: item.leido.hex },
+                      ["color"]
+                    )
                   }
                   className={`h-7 w-7 rounded-full border-2 transition-transform ${
                     mismoHex(a.color_hex, item.leido.hex)
@@ -1128,7 +1192,7 @@ function DraftCard({
                 <button
                   key={p.hex}
                   type="button"
-                  onClick={() => onPatch({ color: p.name, color_hex: p.hex })}
+                  onClick={() => onPatch({ color: p.name, color_hex: p.hex }, ["color"])}
                   aria-label={p.name}
                   title={p.name}
                   className={`h-7 w-7 rounded-full border-2 transition-transform ${
@@ -1159,7 +1223,7 @@ function DraftCard({
                 <button
                   key={f.v}
                   type="button"
-                  onClick={() => onPatch({ formalidad: f.v })}
+                  onClick={() => onPatch({ formalidad: f.v }, ["formalidad"])}
                   className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
                     a.formalidad === f.v
                       ? "border-accent bg-accent-soft text-accent"
@@ -1181,14 +1245,14 @@ function DraftCard({
                 <Escala
                   opciones={CORTES}
                   valor={a.corte}
-                  onPick={(v) => onPatch({ corte: v as PrendaAnalisis["corte"] })}
+                  onPick={(v) => onPatch({ corte: v as PrendaAnalisis["corte"] }, ["corte"])}
                 />
               </Field>
               <Field label="Largo">
                 <Escala
                   opciones={LARGOS}
                   valor={a.largo}
-                  onPick={(v) => onPatch({ largo: v as PrendaAnalisis["largo"] })}
+                  onPick={(v) => onPatch({ largo: v as PrendaAnalisis["largo"] }, ["largo"])}
                 />
               </Field>
             </>
@@ -1200,7 +1264,7 @@ function DraftCard({
             <Escala
               opciones={conLeido(MATERIALES, a.material)}
               valor={a.material}
-              onPick={(v) => onPatch({ material: v })}
+              onPick={(v) => onPatch({ material: v }, ["material"])}
               vacio="no sé"
             />
           </Field>
@@ -1208,7 +1272,7 @@ function DraftCard({
             <Escala
               opciones={conLeido(PATRONES_CHIP, a.patron)}
               valor={a.patron}
-              onPick={(v) => onPatch({ patron: v as PrendaAnalisis["patron"] })}
+              onPick={(v) => onPatch({ patron: v as PrendaAnalisis["patron"] }, ["patron"])}
               vacio="sin dato"
             />
           </Field>
@@ -1221,13 +1285,20 @@ function DraftCard({
 function RenderCard({
   item,
   onVerdict,
+  onZoom,
 }: {
   item: RenderItem;
   onVerdict: (v: RenderItem["verdict"]) => void;
+  onZoom: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-line bg-bg p-2">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
+      <button
+        type="button"
+        onClick={item.url ? onZoom : undefined}
+        aria-label={item.url ? `Ver ${item.attrs.nombre} en grande` : undefined}
+        className="relative block aspect-[3/4] w-full overflow-hidden rounded-md border border-line bg-surface"
+      >
         {item.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.url} alt={item.attrs.nombre} className="h-full w-full object-cover" />
@@ -1236,7 +1307,7 @@ function RenderCard({
             No se pudo generar — se guarda con su color
           </div>
         )}
-      </div>
+      </button>
       <p className="truncate text-xs font-medium text-ink">{item.attrs.nombre}</p>
       <div className="flex gap-1">
         <VerdictBtn label="es mía" on={item.verdict === "keep"} onClick={() => onVerdict("keep")} />

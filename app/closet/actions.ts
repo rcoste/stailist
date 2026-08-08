@@ -8,6 +8,7 @@ import {
   cleanTextAttr,
   MAX_COLOR_LEN,
   MAX_MATERIAL_LEN,
+  MAX_VISUAL_LEN,
 } from "@/lib/prenda-atributos";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import {
@@ -34,6 +35,28 @@ function cleanContexto(v: unknown): string | undefined {
     (CONTEXTOS_VALIDOS as readonly string[]).includes(v)
     ? v
     : undefined;
+}
+
+// Vocabulario CERRADO de lo que se puede declarar confirmado: son los campos
+// que el motor consulta para saber si un dato es de la persona o suposición
+// nuestra. Un cliente manipulado no debe poder marcar "confirmado" cualquier
+// cosa — la lista es corta y se valida contra ella.
+const CONFIRMABLES = [
+  "nombre",
+  "categoria",
+  "color",
+  "formalidad",
+  "temporada",
+  "corte",
+  "largo",
+  "material",
+  "patron",
+] as const;
+function confirmadosLimpios(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v)].filter(
+    (x): x is string => typeof x === "string" && (CONFIRMABLES as readonly string[]).includes(x)
+  );
 }
 
 function cleanAtributosRicos(attrs: PrendaAnalisis) {
@@ -356,7 +379,25 @@ export async function addArchetypes(
 // clóset cae al swatch de color. Spec: docs/designs/import-carrete-multiprenda.md
 export async function addPhotoItems(
   items: {
-    attrs: PrendaAnalisis;
+    attrs: PrendaAnalisis & {
+      /**
+       * La descripción VISUAL que escribió la visión al leer la foto (cuello,
+       * mangas, botones, suela, textura…). Se tiraba: 0 de 325 prendas la
+       * conservan.
+       *
+       * Y era la pieza cara del alta. Es lo que hace fiel al PRIMER render — el
+       * prompt de extracción la usa para señalar qué prenda sacar de la foto —
+       * y al no guardarse, cualquier render posterior partía sólo del nombre.
+       * O sea que la imagen del clóset sólo podía empeorar con el tiempo.
+       *
+       * Se guarda como `visual`, que es el nombre que garmentRenderDesc ya lee
+       * (la "Capa 2" del render) — así el dato entra a un camino que existe en
+       * vez de estrenar uno.
+       */
+      descripcion?: string;
+      /** Los campos que la persona TOCÓ en la confirmación. Ver abajo. */
+      confirmados?: string[];
+    };
     renderPath: string | null;
     renderStatus: "done" | "failed";
     /**
@@ -375,9 +416,15 @@ export async function addPhotoItems(
      */
     photoPath?: string | null;
   }[]
-): Promise<{ ok: boolean; added: number }> {
-  const clean = items.slice(0, 30); // tope de seguridad por lote
-  if (clean.length === 0) return { ok: true, added: 0 };
+): Promise<{ ok: boolean; added: number; dejadas?: number }> {
+  // EL TOPE SE DICE, NO SE ESCONDE. Antes esto era `slice(0, 30)` a secas y la
+  // acción devolvía `ok: true`: si alguien subía 12 fotos con 8 prendas cada
+  // una, el botón decía "sumar 45 al clóset", 15 se perdían y nadie se enteraba
+  // nunca. Un tope está bien; un tope callado es pérdida de datos silenciosa.
+  const MAX_LOTE = 60;
+  const clean = items.slice(0, MAX_LOTE);
+  const dejadas = items.length - clean.length;
+  if (clean.length === 0) return { ok: true, added: 0, dejadas };
 
   const supabase = await createClient();
   const {
@@ -414,6 +461,21 @@ export async function addPhotoItems(
         manga: it.attrs.manga,
         // El lazo del traje, si la persona dijo que saco y pantalón son uno.
         ...(it.attrs.conjunto ? { conjunto: it.attrs.conjunto } : {}),
+        // La descripción visual, para que el render se pueda rehacer fiel.
+        ...(cleanTextAttr(it.attrs.descripcion, MAX_VISUAL_LEN)
+          ? { visual: cleanTextAttr(it.attrs.descripcion, MAX_VISUAL_LEN) }
+          : {}),
+        // LO QUE LA PERSONA CORRIGIÓ A MANO, marcado como suyo.
+        //
+        // Aquí se toca cada campo de cada prenda —tipo, color, formalidad,
+        // corte, largo, material, patrón— y nada de eso se registraba: una
+        // prenda revisada campo por campo le llegaba al motor exactamente igual
+        // que una que nadie miró. Sólo cuentan los campos TOCADOS, por la misma
+        // razón que en la ficha: todo viene preseleccionado, así que "no
+        // tocarlo" no es confirmar, es no haber mirado.
+        ...(confirmadosLimpios(it.attrs.confirmados).length
+          ? { confirmados: confirmadosLimpios(it.attrs.confirmados) }
+          : {}),
         ...cleanAtributosRicos(it.attrs),
       },
       render_status: it.renderStatus,
@@ -424,7 +486,7 @@ export async function addPhotoItems(
   if (error) return { ok: false, added: 0 };
 
   revalidatePath("/closet");
-  return { ok: true, added: clean.length };
+  return { ok: true, added: clean.length, dejadas };
 }
 
 // Render rechazado en la confirmación visual ("no es mi prenda" pero la imagen
