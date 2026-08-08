@@ -19,6 +19,22 @@ describe("el nombre del pantalón sale del saco", () => {
     expect(nombrePantalon("Saco azul de lana")).toBe("Pantalón de traje azul de lana");
   });
 
+  it("un esmoquin no lleva 'pantalón de traje'", () => {
+    // El resultado real que vio Roberto: "Pantalón de traje Esmoquin negro" —
+    // dos prendas distintas pegadas, y con mayúscula a media frase.
+    expect(nombrePantalon("Esmoquin negro")).toBe("Pantalón de esmoquin negro");
+    expect(nombrePantalon("Saco de esmoquin negro")).toBe("Pantalón de esmoquin negro");
+    expect(nombrePantalon("Smoking azul medianoche")).toBe(
+      "Pantalón de esmoquin azul medianoche"
+    );
+  });
+
+  it("lo que sigue al prefijo va en minúscula", () => {
+    expect(nombrePantalon("Saco de traje Marino de lana")).toBe(
+      "Pantalón de traje marino de lana"
+    );
+  });
+
   it("no deja un nombre a medias si no queda nada que describir", () => {
     // "Pantalón de traje " con un espacio colgando se ve a un descuido.
     expect(nombrePantalon("Saco")).toBe("Pantalón de traje");

@@ -17,14 +17,18 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
   let itemId: string | undefined;
+  let forzar = false;
   try {
-    itemId = (await request.json())?.itemId;
+    const body = await request.json();
+    itemId = body?.itemId;
+    // Rehacer una imagen equivocada — ver renderItemImage.
+    forzar = body?.forzar === true;
   } catch {
     // sin body
   }
   if (!itemId) return NextResponse.json({ error: "bad_request" }, { status: 400 });
 
-  const result = await renderItemImage(supabase, user.id, itemId);
+  const result = await renderItemImage(supabase, user.id, itemId, forzar);
   if (!result.ok) {
     const status = result.error === "not_found" ? 404 : 502;
     return NextResponse.json({ error: result.error ?? "render_fallo" }, { status });

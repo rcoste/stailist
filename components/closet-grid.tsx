@@ -684,6 +684,7 @@ function ItemSheet({
   // Sólo un tap en una silueta cuenta como confirmación (ver cabecera).
   const [corteTocado, setCorteTocado] = useState(false);
   const [atando, setAtando] = useState(false);
+  const [rehaciendo, setRehaciendo] = useState(false);
   const [categoria, setCategoria] = useState(item.category);
   const [formalidad, setFormalidad] = useState(item.formalidad);
   const [temporada, setTemporada] = useState(item.temporada);
@@ -1043,6 +1044,31 @@ function ItemSheet({
                 )}
               </div>
             ) : null}
+
+            {/* REHACER LA IMAGEN. El caso: una prenda que entró por una foto
+                del conjunto entero —el esmoquin de Roberto— tiene una
+                miniatura que enseña saco Y pantalón, aunque la prenda sea sólo
+                el saco. La imagen miente y no había forma de corregirla: el
+                render es idempotente a propósito (no gastar en regenerar lo
+                que ya está), y esa protección aquí estorbaba. */}
+            <button
+              type="button"
+              disabled={rehaciendo}
+              onClick={async () => {
+                setRehaciendo(true);
+                await fetch("/api/render-item", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ itemId: item.id, forzar: true }),
+                }).catch(() => {});
+                setRehaciendo(false);
+                onSaved();
+              }}
+              className="flex items-center gap-2 self-start text-[13px] text-muted transition-colors hover:text-accent disabled:opacity-50"
+            >
+              {rehaciendo ? <Spinner className="h-3.5 w-3.5" /> : null}
+              la imagen no es de esta prenda — rehacerla
+            </button>
 
             {dirty ? (
               <button
