@@ -74,7 +74,8 @@ export type PrendaAnalisis = {
   confianza?: "alta" | "media" | "baja";
   inseguro?: InseguroCampo[]; // campos de los que NO está seguro
   /**
-   * ¿La foto tiene MÁS de una prenda de ropa?
+   * ¿La foto tiene MÁS de una prenda de ropa? NO lo llena el lector de prendas:
+   * lo pone `contarPrendas`, una llamada aparte. Ver abajo por qué.
    *
    * Este lector devuelve UNA prenda por diseño, y ante varias elige la
    * principal — o sea que las demás se pierden EN SILENCIO. Así nacieron los
@@ -105,7 +106,7 @@ export type PrendaAnalisis = {
 
 /** El prompt, palabra por palabra. Lo comparte producción con el comparador. */
 export const SYSTEM_PRENDA =
-"Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos de piel', 'Blusa blanca de seda', 'Falda midi plisada negra'). Identifica con cuidado el TIPO exacto de prenda, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones, sin abertura completa) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta (sin botones ni cuello rígido) tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate en si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). En ropa de mujer distingue igual de fino: una BLUSA (tela fluida, con o sin botones) no es una camisa de vestir ni una playera; una falda (cualquier largo) va en 'bottom'; un vestido o un enterizo/jumpsuit van en 'vestido'; tacones, flats, sandalias y botas van en 'calzado'; una bolsa va en 'accesorio'. CATEGORÍA — distingue con cuidado: 'saco' = saco, blazer, saco de traje o smoking (prenda estructurada de torso que se usa por FORMALIDAD, no por frío); 'abrigo' = SOLO capas por clima (abrigo, gabardina, parka, cárdigan, suéter grueso de capa). Un traje se registra como dos prendas: el saco (categoría 'saco') y su pantalón (categoría 'bottom'), por separado. FORMALIDAD — calibra con cuidado, es donde más te equivocas: 'formal' se reserva para sastrería y prendas de evento (saco de traje, camisa de vestir estructurada, vestido de coctel, tacón de vestir). Una camisa o una blusa del diario NO es automáticamente 'formal': la mayoría vive en 'formal-casual' (la prenda versátil que juega para ambos lados) o en 'casual' si es relajada (denim, lino arrugado, estampado playero, tirantes). Ante la duda entre dos niveles, elige 'formal-casual'. El color_hex es el color dominante real de la prenda (el de la TELA, ignorando sombras y luz de la foto). Si la prenda es claramente bicolor o estampada con un segundo color protagonista (rayas azul/blanco, colorblock), da también color_secundario (nombre del segundo color); si es de un solo color, omítelo. Da el material aparente de la tela ('algodón', 'lana', 'mezclilla', 'lino', 'piel', 'ante', 'punto', 'sintético', 'seda'…) — importa para clima y combinación; si no se distingue, omítelo en vez de adivinar. Da el patron: 'liso' si no tiene estampado, o el que tenga (rayas/cuadros/floral/animal-print/grafico/estampado). Si hay varias prendas o ninguna clara, elige la prenda principal Y marca 'varias' en true — es importante: quien mira esta foto sólo va a guardar la prenda que tú elijas, y las demás se perderían sin que se entere. 'varias' es true en cuanto haya DOS O MÁS prendas de ropa distintas (un traje puesto son dos: saco y pantalón; una persona vestida son varias), y false si la foto es de una sola prenda, aunque salga sobre una percha, doblada o puesta sin que se vea nada más. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla. IMPORTANTE — prefiere marcar inseguridad antes que inventar: si la foto no te deja distinguir bien un atributo (el tipo exacto, el material, la formalidad, el color real bajo la luz), da tu mejor estimación PERO agrégalo a 'inseguro' con el nombre del campo (nombre/categoria/color/formalidad/temporada/material/patron). Es mejor una duda honesta que un dato inventado con falsa seguridad — el usuario la confirma en un tap. 'confianza' resume qué tan clara está la foto: 'alta' si todo se ve nítido, 'media' si algo cuesta, 'baja' si la foto es ambigua (mala luz, prenda arrugada, varias prendas). Si estás seguro de todo, deja 'inseguro' vacío y 'confianza' en 'alta'. (6) subtipo: UNA a TRES palabras con el tipo fino de la prenda, SOLO cuando cambia qué tan formal es o con qué se combina. Es el dato que distingue prendas que se llaman igual y NO funcionan igual. Calzado: 'oxford', 'derby', 'monk', 'mocasín', 'chelsea', 'chukka', 'tenis de lona', 'tenis deportivo', 'sandalia', 'tacón de aguja', 'balerina'. Saco: 'cruzado', 'sencillo', 'smoking'. Pantalón: 'con pinzas', 'sin pinzas', 'cargo', 'chino', 'jean recto', 'wide leg'. Camisa: 'cuello button-down', 'cuello italiano', 'cuello mao'. Punto: 'cuello redondo', 'cuello V', 'cuello alto', 'cárdigan'. Falda: 'lápiz', 'plisada', 'línea A'. Abrigo: 'gabardina', 'parka', 'peacoat', 'puffer'. Un oxford negro pide traje y un derby café va con jeans, aunque los dos sean 'zapatos de vestir cafés': por eso importa. Si no lo distingues con seguridad, OMÍTELO — es peor un subtipo inventado que ninguno, porque el motor le hace caso.";
+"Eres experta en moda. Miras la foto de UNA prenda y describes sus atributos para un clóset digital. El nombre es corto y natural en español ('Jeans rectos azules', 'Tenis blancos de piel', 'Blusa blanca de seda', 'Falda midi plisada negra'). Identifica con cuidado el TIPO exacto de prenda, que es lo que más se confunde: un POLO (tejido de punto, cuello tejido con botonadura corta de 2-3 botones, sin abertura completa) NO es una camisa (tela plana, botonadura de arriba a abajo); una playera/camiseta (sin botones ni cuello rígido) tampoco es una camisa; una sudadera no es un suéter; unos chinos no son jeans. Ante la duda entre polo y camisa, fíjate en si la botonadura llega hasta abajo (camisa) o solo al pecho (polo). En ropa de mujer distingue igual de fino: una BLUSA (tela fluida, con o sin botones) no es una camisa de vestir ni una playera; una falda (cualquier largo) va en 'bottom'; un vestido o un enterizo/jumpsuit van en 'vestido'; tacones, flats, sandalias y botas van en 'calzado'; una bolsa va en 'accesorio'. CATEGORÍA — distingue con cuidado: 'saco' = saco, blazer, saco de traje o smoking (prenda estructurada de torso que se usa por FORMALIDAD, no por frío); 'abrigo' = SOLO capas por clima (abrigo, gabardina, parka, cárdigan, suéter grueso de capa). Un traje se registra como dos prendas: el saco (categoría 'saco') y su pantalón (categoría 'bottom'), por separado. FORMALIDAD — calibra con cuidado, es donde más te equivocas: 'formal' se reserva para sastrería y prendas de evento (saco de traje, camisa de vestir estructurada, vestido de coctel, tacón de vestir). Una camisa o una blusa del diario NO es automáticamente 'formal': la mayoría vive en 'formal-casual' (la prenda versátil que juega para ambos lados) o en 'casual' si es relajada (denim, lino arrugado, estampado playero, tirantes). Ante la duda entre dos niveles, elige 'formal-casual'. El color_hex es el color dominante real de la prenda (el de la TELA, ignorando sombras y luz de la foto). Si la prenda es claramente bicolor o estampada con un segundo color protagonista (rayas azul/blanco, colorblock), da también color_secundario (nombre del segundo color); si es de un solo color, omítelo. Da el material aparente de la tela ('algodón', 'lana', 'mezclilla', 'lino', 'piel', 'ante', 'punto', 'sintético', 'seda'…) — importa para clima y combinación; si no se distingue, omítelo en vez de adivinar. Da el patron: 'liso' si no tiene estampado, o el que tenga (rayas/cuadros/floral/animal-print/grafico/estampado). Si hay varias prendas o ninguna clara, elige la prenda principal. Cuando apliquen a la prenda, agrega también largo (crop/regular/largo), corte (entallado/recto/holgado) y manga (sin/corta/larga) — sirven para sugerir cómo llevarla. IMPORTANTE — prefiere marcar inseguridad antes que inventar: si la foto no te deja distinguir bien un atributo (el tipo exacto, el material, la formalidad, el color real bajo la luz), da tu mejor estimación PERO agrégalo a 'inseguro' con el nombre del campo (nombre/categoria/color/formalidad/temporada/material/patron). Es mejor una duda honesta que un dato inventado con falsa seguridad — el usuario la confirma en un tap. 'confianza' resume qué tan clara está la foto: 'alta' si todo se ve nítido, 'media' si algo cuesta, 'baja' si la foto es ambigua (mala luz, prenda arrugada, varias prendas). Si estás seguro de todo, deja 'inseguro' vacío y 'confianza' en 'alta'. (6) subtipo: UNA a TRES palabras con el tipo fino de la prenda, SOLO cuando cambia qué tan formal es o con qué se combina. Es el dato que distingue prendas que se llaman igual y NO funcionan igual. Calzado: 'oxford', 'derby', 'monk', 'mocasín', 'chelsea', 'chukka', 'tenis de lona', 'tenis deportivo', 'sandalia', 'tacón de aguja', 'balerina'. Saco: 'cruzado', 'sencillo', 'smoking'. Pantalón: 'con pinzas', 'sin pinzas', 'cargo', 'chino', 'jean recto', 'wide leg'. Camisa: 'cuello button-down', 'cuello italiano', 'cuello mao'. Punto: 'cuello redondo', 'cuello V', 'cuello alto', 'cárdigan'. Falda: 'lápiz', 'plisada', 'línea A'. Abrigo: 'gabardina', 'parka', 'peacoat', 'puffer'. Un oxford negro pide traje y un derby café va con jeans, aunque los dos sean 'zapatos de vestir cafés': por eso importa. Si no lo distingues con seguridad, OMÍTELO — es peor un subtipo inventado que ninguno, porque el motor le hace caso.";
 
 /** El schema de salida. Mismo comentario: uno solo, para los dos. */
 export const SCHEMA_PRENDA = {
@@ -140,11 +141,6 @@ export const SCHEMA_PRENDA = {
     patron: { type: "string", enum: [...PATRONES] },
     color_secundario: { type: "string" },
     confianza: { type: "string", enum: ["alta", "media", "baja"] },
-    varias: {
-      type: "boolean",
-      description:
-        "true si en la foto hay DOS O MÁS prendas de ropa distintas (un traje puesto, una persona vestida). false si es una sola prenda.",
-    },
     inseguro: {
       type: "array",
       items: { type: "string", enum: [...INSEGURO_CAMPOS] },
@@ -185,4 +181,57 @@ export async function leerPrenda(
     schema: SCHEMA_PRENDA,
   });
   return { analisis: JSON.parse(recibo.texto) as PrendaAnalisis, recibo };
+}
+
+
+// ¿CUÁNTAS PRENDAS HAY EN LA FOTO? — una llamada SEPARADA, y eso es lo
+// importante.
+//
+// Este dato empezó como un campo más del schema de lectura, y medirlo dijo que
+// no salía gratis: sobre 425 prendas releídas, con control de ruido (la misma
+// foto leída dos veces con el MISMO prompt para saber cuánto cambia el modelo
+// solo), añadir el campo movía otras lecturas con z = 3.05 — `subtipo` z = 3.35
+// y `temporada` z = 2.23. Y seguía moviéndolas incluso sacando toda mención del
+// system prompt: era el schema en sí.
+//
+// La disyuntiva parecía ser "o detecto varias prendas, o no toco las lecturas".
+// Es falsa: preguntándolo APARTE, el lector de prendas queda byte a byte como
+// estaba —prompt y schema idénticos, así que la deriva es cero por
+// construcción— y la detección se conserva entera. Cuesta una llamada de visión
+// más por foto, que en flash-lite es ruido en la factura.
+//
+// OJO CON LO QUE SE MIDIÓ: el instrumento detecta CAMBIO, no DAÑO. Que una
+// lectura cambie no prueba que empeore. Pero cambiar sin saber si mejora es
+// justo lo que no se hace aquí.
+
+const SYSTEM_CONTAR =
+  "Miras la foto de ropa y contestas UNA cosa: si hay más de una prenda. 'varias' es true en cuanto haya DOS O MÁS prendas de ropa distintas — un traje puesto son dos (saco y pantalón), una persona vestida son varias. false si es una sola prenda, aunque salga sobre percha, doblada o puesta. Los accesorios cuentan como prendas.";
+
+const SCHEMA_CONTAR = {
+  type: "object",
+  properties: { varias: { type: "boolean" } },
+  required: ["varias"],
+  additionalProperties: false,
+} as Record<string, unknown>;
+
+/** ¿Hay más de una prenda en la foto? Falla hacia false: sin dato, no se avisa. */
+export async function contarPrendas(
+  imagen: { mediaType: string; base64: string },
+  modelo: Modelo
+): Promise<boolean> {
+  try {
+    const recibo = await llamar({
+      modelo,
+      maxTokens: 40,
+      system: SYSTEM_CONTAR,
+      texto: "¿Hay más de una prenda en esta foto?",
+      imagen,
+      schema: SCHEMA_CONTAR,
+    });
+    return !!(JSON.parse(recibo.texto) as { varias?: boolean }).varias;
+  } catch {
+    // Que esta llamada falle NO puede tumbar el alta de la prenda: el aviso es
+    // una ayuda, la prenda es el trabajo.
+    return false;
+  }
 }
