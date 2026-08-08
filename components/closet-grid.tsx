@@ -224,14 +224,16 @@ function Tile({
         ) : (
           <span className="absolute inset-0" style={{ backgroundColor: item.swatch }} aria-hidden />
         )}
-        {/* LA MARCA DEL TRAJE. Es lo único que faltaba: las dos piezas ya
-            estaban atadas por dentro, pero en el mosaico no había forma de
-            saber que van juntas — y por eso ver dos thumbnails donde se
-            esperaba un traje se sentía un error. Se marca el lazo, no se
-            duplica la prenda. */}
+        {/* LA MARCA DEL CONJUNTO. Es lo que faltaba: las dos piezas ya estaban
+            atadas por dentro, pero en el mosaico no había forma de saber que
+            van juntas — y por eso ver dos thumbnails donde se esperaba un traje
+            se sentía un error. Se marca el lazo, no se duplica la prenda.
+            Dice "conjunto" y no "traje" porque el mecanismo sirve igual para un
+            conjunto de dos piezas o un pants set: un traje es un conjunto, no
+            al revés. */}
         {item.conjunto ? (
           <span className="absolute left-1 top-1 rounded-sm bg-ink/75 px-1.5 py-0.5 text-[10px] font-medium text-bg">
-            traje
+            conjunto
           </span>
         ) : null}
         {/* Generando su imagen (prenda sin foto): spinner sobre el swatch. */}
@@ -700,8 +702,26 @@ function ItemSheet({
     colorSecundario.trim() !== item.colorSecundario ||
     corteTocado;
 
-  // Sólo un saco o un pantalón pueden ser media pieza de un traje.
-  const esPiezaDeTraje = categoria === "saco" || categoria === "bottom";
+  // GENERALIZADO A CONJUNTOS DE DOS PIEZAS, no sólo trajes: el dato siempre fue
+  // genérico (un id compartido) y lo específico era la UI. Un traje, un
+  // conjunto de dos piezas, un pants set — todo lo que se COMPRÓ junto y se lee
+  // como una prenda.
+  //
+  // EL LÍMITE, y no se mueve: `conjunto` significa "se vende como una pieza",
+  // NO "me gusta con". Si se usa para gustos, la regla de traje desparejado
+  // deja de cazar el error para el que existe — y qué combina con qué es el
+  // trabajo del motor, no un dato que la persona deba capturar a mano.
+  const esPiezaDeTraje =
+    categoria === "saco" || categoria === "bottom" || categoria === "top";
+  const catsPareja = categoria === "bottom" ? ["saco", "top"] : ["bottom"];
+  // LO QUE NO PUEDE SER EL PANTALÓN DE UN TRAJE, pase lo que pase con el color.
+  // Roberto, viendo la lista: "se ve horrible ahí… cómo va a ser un short parte
+  // de un traje". Tiene razón y no es cuestión de orden: ordenar por formalidad
+  // bajó la bermuda al tercer puesto, pero seguía ahí. Esto es un hecho de la
+  // prenda, no una preferencia. Sólo aplica cuando el ancla es un SACO: un
+  // conjunto de dos piezas con short existe y es perfectamente normal.
+  const IMPOSIBLE_EN_UN_TRAJE =
+    /short|bermuda|jogger|legging|deportiv|mezclilla|denim|jean|cargo|palazzo|bikini/i;
   const pareja = item.conjunto
     ? (todas.find((o) => o.id !== item.id && o.conjunto === item.conjunto) ?? null)
     : null;
@@ -719,7 +739,10 @@ function ItemSheet({
   };
   const candidatas = esPiezaDeTraje
     ? todas
-        .filter((o) => o.category === (categoria === "saco" ? "bottom" : "saco"))
+        .filter((o) => o.id !== item.id && catsPareja.includes(o.category))
+        .filter(
+          (o) => categoria !== "saco" || !IMPOSIBLE_EN_UN_TRAJE.test(`${o.nombre} ${o.material}`)
+        )
         .map((o) => ({
           o,
           f: PESO_FORMALIDAD[o.formalidad] ?? 2,
@@ -917,7 +940,7 @@ function ItemSheet({
             {esPiezaDeTraje ? (
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-muted">
-                  {pareja ? "Es parte de un traje" : "¿Es parte de un traje?"}
+                  {pareja ? "Es parte de un conjunto" : "¿Es parte de un conjunto?"}
                 </label>
                 {pareja ? (
                   <div className="flex items-center gap-2 rounded-sm border border-line bg-bg p-2">

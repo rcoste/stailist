@@ -295,7 +295,12 @@ import {
 // que la formalidad NO captura y hasta hoy sólo podía llegar si la persona lo
 // escribía a mano en el campo libre. Roberto: "podríamos tener ya opciones —
 // una comida, cena, cita, boda— y sobre eso vamos afinando más".
-export const PROMPT_VERSION = "v49";
+// v50: el motor ve el lazo del conjunto. NO-OP sobre los datos de hoy —cero
+// prendas tienen `conjunto`, así que el prompt sale byte a byte igual que v49—
+// pero la versión sube igual: es la etiqueta de "con qué prompt se armó este
+// look", y sin subirla el primer look CON un traje atado quedaría registrado
+// como v49 siendo otro prompt. Esa deriva es justo lo que la versión evita.
+export const PROMPT_VERSION = "v50";
 
 export type EngineItem = {
   id: string;
@@ -595,6 +600,12 @@ export function describeItem(item: EngineItem): string {
     item.certeza === "asumida" && !(a.confirmados ?? []).includes("corte")
       ? "detalles APROXIMADOS (básico marcado, sin foto)"
       : null,
+    // EL LAZO DEL CONJUNTO. Sin esto, el motor ya no era CASTIGADO por juntar
+    // un saco con su pantalón —la regla los exime— pero seguía sin SABER que
+    // son un traje: su propio prompt le dice "úsalos juntos sólo si de verdad
+    // son un traje (misma tela)", y nada le decía cuáles lo eran. Se marcan las
+    // dos piezas con el mismo id para que pueda decidir a propósito.
+    a.conjunto ? `parte del conjunto ${a.conjunto.slice(0, 6)}` : null,
   ].filter(Boolean);
   // La categoría va pegada al nombre y entre corchetes: es lo que DEFINE qué es
   // la prenda, y el nombre solo no basta ("Traje marino de lana" es un saco).
