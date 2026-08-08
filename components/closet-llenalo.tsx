@@ -38,7 +38,7 @@ export function ClosetLlenalo({ userId }: { userId: string }) {
         // aviso de "veo más de una prenda" aparece en una y en las otras no.
         onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
       />
-      <ImportCarreteFlow headless ref={carreteRef} />
+      <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
       <div className="flex flex-col gap-1 px-0.5">
         <p className="text-[15px] font-bold leading-tight text-ink">

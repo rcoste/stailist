@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.166.0] - 2026-08-08
+
+### Added — la foto original ya no se tira
+
+Idea de Roberto: *"guardar también la imagen de referencia para consulta"*. Medido antes de construir:
+
+| | |
+|---|---|
+| prendas dadas de alta por foto | **325** |
+| que conservaban el original | **5** |
+| que sólo tenían el render | **297** |
+
+La foto vivía en el navegador durante el alta y **nunca subía**. Lo que quedaba era el dibujo generado a partir de ella, y eso cerraba tres puertas a la vez:
+
+- **No se podía comprobar nada.** Cuando el render del esmoquin salió con el pantalón, no había forma de ver de qué foto salió.
+- **No se podía volver a leer la prenda.** Midiendo la deriva de visión esta misma mañana **hubo que usar renders como sustituto** porque los originales no existen.
+- **Si el render sale mal, no hay a dónde regresar.** Rehacerlo parte del texto, no de la prenda.
+
+**Una subida por foto, no por prenda:** si de una imagen salieron seis prendas, las seis apuntan al mismo original. Y **falla hacia adelante** — si la subida no sale, la prenda se guarda igual sin referencia: la prenda es el trabajo, la foto es el respaldo.
+
+**No cambia lo que ves:** el orden de imágenes prefiere el render sobre la foto, así que la miniatura sigue siendo el dibujo limpio.
+
+*La otra mitad de la idea —"renderizar las imágenes para que se vean bonitas"— ya funcionaba: el flujo multiprenda genera el render de cada prenda desde que existe.*
+
 ## [0.2.165.0] - 2026-08-08
 
 ### Added — el color principal, editable en la ficha
