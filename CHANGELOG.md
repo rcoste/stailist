@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.149.0] - 2026-08-07
+
+### Fixed — las prendas con el dato inventado eran las únicas que no se podían corregir
+
+Roberto pidió dos cosas: confirmar más atributos al leer fotos, y un icono en el mosaico que mostrara el corte. Medir mandó a otro lado.
+
+**Lo de multiprenda ya estaba.** Nombre, tipo, color y formalidad ya son editables al revisar lo leído, y el modelo marca *"No la vi bien — confírmala"* donde dudó.
+
+**El corte NO debe ir en ese flujo.** De 312 prendas con foto, 199 traen corte; de las 113 sin él, **77 son calzado y accesorios** — donde el corte no significa nada. El hueco real son 36 filas en toda la base. Cobrar un quinto campo por prenda, en el flujo cuyo propósito es la velocidad, para arreglar 36 filas, es mal negocio. La visión ya lo lee bien: el corte es propiedad de la prenda, no del cuerpo, y por eso se ve en una foto de la prenda extendida.
+
+**El hueco real era otro.** La ficha de detalle sólo dejaba editar prendas fotografiadas (`item.source === "photo"`). Efecto: las **670 prendas del catálogo —513 en categorías donde el corte importa—** eran justamente las que traían el dato inventado, y las únicas que no se dejaban tocar.
+
+Ahora la ficha es editable para cualquier prenda, con las siluetas del corte dentro y una línea que dice de dónde salió: *"La marcaste en la lista de básicos — lo de abajo es lo que supongo. Corrígeme."*
+
+**El corte preselecciona pero no confirma.** Sólo un tap en una silueta lo marca como confirmado; guardar tras cambiar el material deja el corte como estaba. Si preseleccionar contara como confirmar, un guardado distraído marcaría como revisado un dato que nadie miró — la mentira exacta que la certeza vino a impedir.
+
+**Sin badge en el mosaico**, y es deliberado: imprimir "recto" en 513 mosaicos donde nos lo inventamos publica una certeza que no tenemos, y frente al clóset propio no responde ninguna pregunta.
+
+### Fixed — la precedencia dejaba invisible tu propia edición
+
+El clóset mostraba el nombre y la categoría **del arquetipo** por encima de los de la prenda; el motor, al revés (`categoriaDeItem`). Con la ficha abierta a todas las prendas eso dejaba de ser un detalle: renombrabas un básico, se guardaba, y en pantalla seguía el nombre viejo. Ahora manda lo que la prenda declara, igual que en el motor. Hoy no cambia nada visible —los 670 nombres propios son idénticos al del arquetipo—; en cuanto alguien edite, sí.
+
 ## [0.2.148.0] - 2026-08-07
 
 ### Fixed — la pregunta del corte no se podía contestar: faltaba ver la prenda

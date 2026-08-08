@@ -115,13 +115,21 @@ export default async function ClosetPage() {
       material?: string;
       patron?: string;
       color_secundario?: string;
+      corte?: string;
+      confirmados?: string[];
     };
     return {
       id: r.id as string,
-      nombre: arch?.name ?? attrs.nombre ?? "Prenda",
+      // LO QUE LA PRENDA DECLARA GANA sobre lo que hereda del catálogo — el
+      // mismo orden que ya usaba el motor (categoriaDeItem), que aquí estaba al
+      // revés. Con la ficha abierta a todas las prendas eso dejaba de ser un
+      // detalle: renombrabas un básico, se guardaba, y en pantalla seguía el
+      // nombre del arquetipo. Hoy el cambio es invisible (los 670 nombres
+      // propios son idénticos al del arquetipo); en cuanto alguien edite, no.
+      nombre: attrs.nombre ?? arch?.name ?? "Prenda",
       imagen: itemImageUrlSync(r as ItemImageRow, (p) => signed.get(p)),
       swatch: attrs.color_hex ?? "#E5E1DD",
-      category: arch?.category ?? attrs.categoria ?? attrs.tipo ?? "accesorio",
+      category: attrs.categoria ?? arch?.category ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",
       temporada: attrs.temporada ?? "todo-el-año",
       material: attrs.material ?? "",
@@ -129,6 +137,11 @@ export default async function ClosetPage() {
       colorSecundario: attrs.color_secundario ?? "",
       source: (r.source as string) ?? "archetype",
       renderStatus: (r.render_status as string) ?? "none",
+      corte: attrs.corte ?? "",
+      // Para poder decir en la ficha si el corte es dato o suposición nuestra.
+      corteConfirmado: Array.isArray(attrs.confirmados)
+        ? attrs.confirmados.includes("corte")
+        : false,
     };
   });
 

@@ -57,7 +57,7 @@ export type Pregunta = {
  * cinturón no significa nada. Preguntar por categorías donde el dato no se usa
  * sería gastar la paciencia de la persona en algo que el motor ignora.
  */
-const EL_CORTE_IMPORTA = new Set(["bottom", "top", "saco", "vestido", "abrigo"]);
+export const EL_CORTE_IMPORTA = new Set(["bottom", "top", "saco", "vestido", "abrigo"]);
 
 /** Las tres respuestas posibles, en palabras de persona y no de catálogo. */
 const OPCIONES_CORTE = [
