@@ -51,6 +51,52 @@ const LARGOS: { v: string; l: string }[] = [
   { v: "regular", l: "regular" },
   { v: "largo", l: "largo" },
 ];
+
+// MATERIAL Y PATRÓN, que la visión ya leía y NADIE veía. Mismo caso que el
+// corte: dato leído, guardado y usado —el material decide "lana en calor" y el
+// patrón decide "dos estampados que pelean"— pero invisible en la pantalla
+// donde se confirma todo lo demás, y por tanto incorregible.
+//
+// Son chips y no un campo de texto: esto es la carga MASIVA, y escribir
+// "algodón" a mano en doce prendas es exactamente la fricción que este flujo
+// existe para no tener. Lo que el modelo lea fuera de la lista se conserva y
+// se muestra como una opción más (ver `conLeido`).
+const MATERIALES: { v: string; l: string }[] = [
+  { v: "algodón", l: "algodón" },
+  { v: "lana", l: "lana" },
+  { v: "mezclilla", l: "mezclilla" },
+  { v: "lino", l: "lino" },
+  { v: "punto", l: "punto" },
+  { v: "piel", l: "piel" },
+  { v: "ante", l: "ante" },
+  { v: "sintético", l: "sintético" },
+  { v: "seda", l: "seda" },
+];
+const PATRONES_CHIP: { v: string; l: string }[] = [
+  { v: "liso", l: "liso" },
+  { v: "rayas", l: "rayas" },
+  { v: "cuadros", l: "cuadros" },
+  { v: "floral", l: "floral" },
+  { v: "animal-print", l: "animal print" },
+  { v: "grafico", l: "gráfico" },
+  { v: "estampado", l: "estampado" },
+];
+
+/**
+ * La lista con el valor leído dentro, si el modelo dijo algo que no está.
+ *
+ * Sin esto, un material como "cashmere" o "gabardina" se vería como si no
+ * hubiera nada seleccionado —el mismo bug del saco y el del color— y tocar
+ * cualquier chip para "arreglarlo" destruiría un dato más específico.
+ */
+function conLeido(
+  opciones: { v: string; l: string }[],
+  leido?: string
+): { v: string; l: string }[] {
+  const v = (leido ?? "").trim();
+  if (!v || opciones.some((o) => o.v.toLowerCase() === v.toLowerCase())) return opciones;
+  return [{ v, l: v }, ...opciones];
+}
 const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
   { v: "casual", l: "Casual" },
   { v: "formal-casual", l: "Casual-formal" },
@@ -893,10 +939,13 @@ function Escala({
   opciones,
   valor,
   onPick,
+  vacio = "no aplica",
 }: {
   opciones: { v: string; l: string }[];
   valor?: string;
   onPick: (v: string | undefined) => void;
+  /** Cómo se llama "ninguno". En el patrón "no aplica" confundiría con "liso". */
+  vacio?: string;
 }) {
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -921,7 +970,7 @@ function Escala({
           !valor ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
         }`}
       >
-        no aplica
+        {vacio}
       </button>
     </div>
   );
@@ -1144,6 +1193,25 @@ function DraftCard({
               </Field>
             </>
           ) : null}
+
+          {/* Material y patrón van en TODAS las categorías: la lana de unos
+              guantes y el estampado de una bufanda cuentan igual. */}
+          <Field label="Material">
+            <Escala
+              opciones={conLeido(MATERIALES, a.material)}
+              valor={a.material}
+              onPick={(v) => onPatch({ material: v })}
+              vacio="no sé"
+            />
+          </Field>
+          <Field label="Patrón">
+            <Escala
+              opciones={conLeido(PATRONES_CHIP, a.patron)}
+              valor={a.patron}
+              onPick={(v) => onPatch({ patron: v as PrendaAnalisis["patron"] })}
+              vacio="sin dato"
+            />
+          </Field>
         </>
       )}
     </div>
