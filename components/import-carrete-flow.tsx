@@ -701,8 +701,13 @@ export function ImportCarreteFlow({
     return (
       <Overlay>
         <Header
-          title="¿Cuáles son tu prenda?"
-          sub="Las que no coincidan no se pierden: nos ayudan a crecer la biblioteca."
+          title="¿Cuáles son tuyas?"
+          // LA COPY ANTERIOR EXPLICABA UNA DE LAS TRES SALIDAS Y ESCONDÍA LA
+          // QUE SÍ PIERDE ALGO. Roberto, mirándola: "¿qué significa mala?".
+          // "Mala" no habla de la prenda sino del RENDER, y eso no estaba
+          // escrito en ningún lado; encima el subtítulo prometía que "no se
+          // pierden", que es cierto para "no es mía" y falso para la tercera.
+          sub="Si no es tuya, la imagen nos sirve para la biblioteca. Si el dibujo salió mal, lo tiro."
         />
         <div className="grid grid-cols-2 gap-3">
           {state.items.map((it) => (
@@ -1133,12 +1138,12 @@ function RenderCard({
       <div className="flex gap-1">
         <VerdictBtn label="es mía" on={item.verdict === "keep"} onClick={() => onVerdict("keep")} />
         <VerdictBtn
-          label="no es"
+          label="no es mía"
           on={item.verdict === "notmine"}
           onClick={() => onVerdict("notmine")}
         />
         <VerdictBtn
-          label="mala"
+          label="salió mal"
           on={item.verdict === "trash"}
           onClick={() => onVerdict("trash")}
         />
