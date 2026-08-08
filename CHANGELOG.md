@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.161.0] - 2026-08-07
+
+### Fixed — los candidatos a pareja decían todos "Pantalón de…"
+
+Roberto: *"del saco del traje azul no es claro cuál es el pantalón que va con ese"*. Y no podía serlo: las tarjetas medían 80 px con el nombre en **una línea y truncado**, así que sus cuatro pantalones de vestir se leían idénticos — *"Pantalón de…"*. Lo que los distingue (*marino*, *gris oscuro*) está **al final** del nombre, justo donde cortaba.
+
+**Una lista para elegir cuyas etiquetas son todas iguales no es una lista.** Tarjetas más anchas y el nombre completo, en dos líneas si hace falta.
+
+Y se marca el candidato que **ya es de otro conjunto**: atarlo ahí soltaría el traje al que pertenece, y eso pasaba en silencio.
+
+### Fixed — "créalo" no parecía tocable
+
+La salida para el pantalón que falta —el caso del esmoquin— era texto de color, sin borde ni fondo: se leía como una frase, no como un botón. Roberto: *"al smoking no sé cómo hacer que aparezcan sus pantalones"*. La respuesta estaba en pantalla y no se veía. Ahora es un botón con borde y dice qué hace: **"su pantalón no está en mi clóset — créalo"**.
+
+### Nota — el traje gris que subió SÍ quedó atado
+
+Comprobado en la base: el saco y el pantalón que subió a las 05:09 comparten lazo. La casilla del flujo funciona. El marino es de **antes** de que la función existiera, y por eso hay que atarlo a mano — no es que se hubiera perdido.
+
 ## [0.2.160.0] - 2026-08-07
 
 ### Fixed — "mala" no decía qué estaba mal
