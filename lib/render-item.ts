@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
-import { garmentRenderDesc } from "@/lib/garment-desc";
+import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
+import { garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
 
 // Render limpio (tipo catálogo) de una prenda del clóset SIN imagen, desde sus
 // atributos (texto→imagen con Gemini), subido a Storage y cacheado en el item
@@ -77,7 +78,7 @@ export async function renderItemImage(
 
   // Descripción rica: detalle visual del estilista si lo hay, o los atributos que
   // la prenda ya carga (categoría, formalidad, largo/corte/manga de la visión).
-  const conColor = garmentRenderDesc({
+  const rasgos = {
     nombre,
     color: attrs.color,
     categoria: attrs.categoria,
@@ -87,7 +88,8 @@ export async function renderItemImage(
     corte: attrs.corte,
     manga: attrs.manga,
     visual: attrs.visual,
-  });
+  };
+  const conColor = garmentRenderDesc(rasgos);
   const type = categoria === "calzado" ? "shoes" : "flat";
 
   // Género del usuario: sin esto, prendas ambiguas (traje de baño, sandalias)
@@ -99,7 +101,46 @@ export async function renderItemImage(
     .single();
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
-  const bytes = await generateArchetypeImage(conColor, type, gender, "3:4");
+  // SI HAY FOTO ORIGINAL, SE VUELVE A ELLA. Éste era el hueco: desde ayer la
+  // foto de origen se guarda —y el commit que lo hizo prometía justo esto,
+  // "regresar a la fuente cuando el dibujo sale mal"— pero el botón que arregla
+  // un dibujo equivocado seguía yendo por texto→imagen. O sea que el dato nuevo
+  // no tenía ni un solo consumidor.
+  //
+  // Y no es un matiz: describir la prenda en palabras pierde la prenda (hay mil
+  // cortes de saco negro). Con la foto delante, el modelo copia el corte, el
+  // color y los detalles REALES, que es exactamente lo que el caso del esmoquin
+  // necesita — su foto trae el traje entero y aquí se le pide sólo el saco.
+  //
+  // Falla hacia texto→imagen: si la foto no se puede bajar o la extracción
+  // truena, sigue el camino de siempre en vez de dejar la prenda sin imagen.
+  let bytes: Buffer | null = null;
+  if (item.photo_path) {
+    try {
+      const { data: blob } = await supabase.storage.from("prendas").download(item.photo_path);
+      if (blob) {
+        bytes = await extraerPrendaDeFoto(
+          {
+            base64: Buffer.from(await blob.arrayBuffer()).toString("base64"),
+            mediaType: blob.type || "image/jpeg",
+          },
+          {
+            // El texto sólo señala CUÁL prenda sacar de la foto; el parecido lo
+            // pone la imagen. Por eso va la descripción SIN la orden de
+            // renderizar — ver garmentDescPlain.
+            // Sin `color` aparte: garmentDescPlain ya lo mete cuando el nombre
+            // no lo trae, y repetirlo sólo duplicaría el color en el prompt.
+            quePrenda: garmentDescPlain(rasgos),
+            categoria,
+            aspecto: "3:4",
+          }
+        );
+      }
+    } catch {
+      // sin foto utilizable → texto→imagen
+    }
+  }
+  if (!bytes) bytes = await generateArchetypeImage(conColor, type, gender, "3:4");
   if (!bytes) {
     await supabase
       .from("items")

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import { createClient } from "@/lib/supabase/server";
 import { generateArchetypeImage } from "@/lib/archetype-image";
-import { pedirImagen, GEMINI_MODEL } from "@/lib/gemini-imagen";
+import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 export const maxDuration = 60;
@@ -55,11 +55,14 @@ export async function POST(request: NextRequest) {
 
   let bytes: Buffer | null = null;
 
-  // Camino principal: imagen→imagen desde la foto original.
+  // Camino principal: imagen→imagen desde la foto original (lib/extraer-prenda).
   const match = body.image?.match(/^data:(image\/\w+);base64,(.+)$/);
   if (match) {
     const [, mediaType, b64] = match;
-    bytes = await extractGarment(b64, mediaType, conColor, attrs.categoria);
+    bytes = await extraerPrendaDeFoto(
+      { base64: b64, mediaType },
+      { quePrenda, categoria: attrs.categoria, color: attrs.color, aspecto: "1:1" }
+    );
   }
 
   // Fallback: texto→imagen (si no llegó foto o falló la extracción).
@@ -82,34 +85,4 @@ export async function POST(request: NextRequest) {
     .createSignedUrl(path, 3600);
 
   return NextResponse.json({ path, url: signed?.signedUrl ?? null });
-}
-
-// Extrae UNA prenda de la foto de la persona y la devuelve como flat-lay limpio,
-// fiel a la prenda real. Devuelve null si falla (el caller cae al fallback).
-async function extractGarment(
-  photoB64: string,
-  mimeType: string,
-  quePrenda: string,
-  categoria?: string
-): Promise<Buffer | null> {
-  const encuadre =
-    categoria === "calzado"
-      ? "placed neatly side by side, shot from a slight top-down angle, filling about 65% of the frame"
-      : "neatly laid flat and slightly styled, shot directly from above, filling about 70% of the frame";
-
-  const prompt = `From the photo of the person, isolate ONLY this single garment they are wearing: ${quePrenda}. Produce a professional e-commerce flat lay photograph of just that one garment, ${encuadre}. CRITICAL: preserve the garment's exact real-world color, cut, silhouette, fabric, texture, pattern and distinctive details (collar, sleeves, buttons, zipper, sole, etc.) exactly as seen on the person — do not redesign it, do not change its style. Remove the person, any other garments, and the background entirely. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. No people, no props, no text, no labels.`;
-
-  // Por la puerta común (lib/gemini-imagen): esta era la CUARTA copia del mismo
-  // fetch, y como las otras se quedó sin reintento ni timeout. El servicio da
-  // 500 intermitentes: sin reintento, cada uno dejaba una prenda sin imagen y
-  // el flujo la marcaba "failed" sin decir por qué.
-  const r = await pedirImagen(
-    [{ text: prompt }, { inlineData: { mimeType, data: photoB64 } }],
-    { modelo: GEMINI_MODEL, aspecto: "1:1" }
-  );
-  if ("motivo" in r) {
-    console.error(`[render-prenda] ${r.motivo}`);
-    return null;
-  }
-  return Buffer.from(r.data, "base64");
 }

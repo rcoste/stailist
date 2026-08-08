@@ -29,11 +29,19 @@ const CAT_EN: Record<string, string> = {
   accesorio: "accesorio",
 };
 
-export function garmentRenderDesc(g: GarmentAttrs): string {
+/**
+ * La DESCRIPCIÓN sola, sin la orden de renderizar.
+ *
+ * Existe porque hay dos consumidores con necesidades distintas. Texto→imagen
+ * necesita la orden ("renderiza exactamente esto"): es todo lo que el modelo va
+ * a tener. Imagen→imagen NO la necesita y le estorba — ahí la descripción sólo
+ * señala CUÁL prenda sacar de la foto, y va incrustada a media frase dentro de
+ * otro prompt que ya da sus propias órdenes. Dos imperativos peleando en la
+ * misma instrucción es ruido, no énfasis.
+ */
+export function garmentDescPlain(g: GarmentAttrs): string {
   // Capa 2: descripción visual precisa del estilista → es la base del render.
-  if (g.visual && g.visual.trim()) {
-    return `${g.visual.trim()}. Renderiza exactamente esta prenda, fiel como producto de ropa real.`;
-  }
+  if (g.visual && g.visual.trim()) return g.visual.trim();
 
   // Capa 1: arma con los atributos estructurados que la prenda ya carga.
   const parts: string[] = [g.nombre.trim()];
@@ -51,7 +59,15 @@ export function garmentRenderDesc(g: GarmentAttrs): string {
 
   let s = parts.join(" ");
   if (ctx.length) s += ` — ${ctx.join(", ")}`;
-  s +=
-    ". Renderiza exactamente este tipo de prenda, fiel como producto de ropa real (la prenda nombrada, no otra distinta).";
   return s;
+}
+
+export function garmentRenderDesc(g: GarmentAttrs): string {
+  const desc = garmentDescPlain(g);
+  // La orden cambia según la capa: con descripción del estilista se habla de
+  // "esta prenda"; sin ella, de "este tipo de prenda" — porque lo único que se
+  // tiene es el nombre, y ahí sí hay que insistir en que no traiga otra.
+  return g.visual && g.visual.trim()
+    ? `${desc}. Renderiza exactamente esta prenda, fiel como producto de ropa real.`
+    : `${desc}. Renderiza exactamente este tipo de prenda, fiel como producto de ropa real (la prenda nombrada, no otra distinta).`;
 }
