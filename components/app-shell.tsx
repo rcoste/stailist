@@ -3,6 +3,7 @@ import { Logo } from "./logo";
 import { TabBar } from "./tab-bar";
 import { DesktopHeader } from "./desktop-header";
 import { Icon } from "./icon";
+import { VersionNueva } from "./version-nueva";
 import { loadNavState } from "@/lib/trip-context";
 
 // hideTabBar: pantallas con una barra fija de acción abajo (Biblioteca,
@@ -29,6 +30,9 @@ export async function AppShell({
   const nav = hideTabBar ? null : await loadNavState();
   return (
     <div className="min-h-dvh bg-bg lg:bg-surface">
+      {/* Arriba del todo y en TODA pantalla: el aviso sirve para saber que lo
+          que estás probando es lo que se desplegó. Ver components/version-nueva. */}
+      <VersionNueva />
       <DesktopHeader />
       <div
         className={`mx-auto min-h-dvh w-full bg-bg lg:min-h-[calc(100dvh-3.5rem)] ${
