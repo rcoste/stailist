@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.159.0] - 2026-08-07
+
+### Fixed — el cabo suelto de la visión: medido, y peor de lo que dije
+
+Ayer marqué como riesgo la instrucción `varias` añadida al prompt que lee UNA prenda. Medirlo dio lo que no quería oír.
+
+`scripts/vision-deriva.ts` lee la misma foto **tres veces**: dos con el prompt nuevo —eso es el **ruido**, cuánto cambia el modelo consigo mismo— y una con el viejo, que es la **señal**. Sin ese control ningún número significa nada.
+
+| versión | n | z |
+|---|---|---|
+| 70 palabras a mitad del prompt | 67 | 2.4 · `material` 5 → 14 |
+| una cláusula corta | 71 | 1.8 |
+| la cláusula, muestra grande | 196 | 2.2 · `temporada` 3 → 16 |
+| **nada en el prompt, sólo el schema** | **425** (2 corridas) | **3.05** |
+
+Ni sacándolo del prompt por completo: **era el schema en sí**. `subtipo` z = 3.35, `temporada` z = 2.23. Replicado en dos muestras independientes.
+
+**La solución no era elegir.** La disyuntiva —"o detecto varias prendas, o no toco las lecturas"— era falsa: preguntándolo en una **llamada aparte**, el lector queda byte a byte como estaba (prompt y schema idénticos, deriva cero por construcción) y la detección se conserva entera. Cuesta una llamada de visión más por foto, que en flash-lite es ruido en la factura.
+
+**Y lo que se midió es CAMBIO, no DAÑO:** que una lectura cambie no prueba que empeore. Pero cambiar sin saber si mejora es justo lo que no se hace aquí.
+
+### Fixed — mi propio veredicto estaba mal calibrado
+
+El script cantaba "✅" si señal ≤ ruido × 1.5. Con 402 contra 323 —razón 1.24— dio verde cuando **z era 3.05**. Un cociente no sabe cuántas observaciones tiene detrás. Ahora el veredicto va por z.
+
 ## [0.2.158.0] - 2026-08-07
 
 ### Verificado — un día entero de cambios NO tocó ningún veredicto del motor

@@ -2,7 +2,7 @@ import { VISION_MODEL } from "@/lib/models";
 import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import { createClient } from "@/lib/supabase/server";
-import { leerPrenda } from "@/lib/vision-prenda";
+import { leerPrenda, contarPrendas } from "@/lib/vision-prenda";
 
 export const maxDuration = 60;
 
@@ -45,11 +45,14 @@ export async function POST(request: NextRequest) {
   const [, mediaType, b64] = match;
 
   try {
-    const { analisis } = await leerPrenda(
-      { mediaType, base64: b64 },
-      VISION_MODEL
-    );
-    return NextResponse.json({ analisis });
+    // Las dos preguntas van EN PARALELO y por separado: mezclar "¿cuántas
+    // prendas hay?" dentro del schema de lectura movía `subtipo` y `temporada`
+    // (z = 3.05 sobre 425 prendas). Ver contarPrendas.
+    const [{ analisis }, varias] = await Promise.all([
+      leerPrenda({ mediaType, base64: b64 }, VISION_MODEL),
+      contarPrendas({ mediaType, base64: b64 }, VISION_MODEL),
+    ]);
+    return NextResponse.json({ analisis: { ...analisis, varias } });
   } catch {
     return NextResponse.json({ error: "analisis" }, { status: 502 });
   }
