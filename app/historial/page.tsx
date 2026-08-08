@@ -19,7 +19,7 @@ export default async function HistorialPage({
 
   const { data: outfits } = await supabase
     .from("outfits")
-    .select("id, title, explanation, tip, occasion, item_ids, created_at, favorited_at, tryon_path, source")
+    .select("id, title, explanation, tip, occasion, item_ids, created_at, favorited_at, tryon_path, photo_path, source")
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     // Diarios siempre; los promovidos del viaje solo mientras sigan favoriteados
@@ -53,6 +53,12 @@ export default async function HistorialPage({
   const toSign = [
     ...new Set([
       ...(outfits ?? []).map((o) => o.tryon_path as string | null),
+      // La foto que ella subió en "¿me veo bien?". Va al mismo lote de firmas:
+      // sin esto, la entrada del espejo cae en el diario SIN imagen y sin
+      // prendas —item_ids va vacío a propósito— o sea, una tarjeta en blanco.
+      // Prometerle "ya quedó en tu diario" y que ahí no se vea nada es peor que
+      // no guardarlo.
+      ...(outfits ?? []).map((o) => o.photo_path as string | null),
       ...(items ?? []).flatMap((i) => [
         i.photo_path as string | null,
         i.render_path as string | null,
@@ -111,8 +117,16 @@ export default async function HistorialPage({
         ? "viaje"
         : (o.source as string | null) === "capsula"
           ? "capsula"
-          : "daily",
-    tryonImage: o.tryon_path ? signed.get(o.tryon_path as string) ?? null : null,
+          : (o.source as string | null) === "espejo"
+            ? "espejo"
+            : "daily",
+    // El espejo REUSA el hueco de la imagen grande: es exactamente lo mismo
+    // —una foto de ella con el look puesto— sólo que real en vez de renderizada.
+    tryonImage: o.tryon_path
+      ? signed.get(o.tryon_path as string) ?? null
+      : o.photo_path
+        ? signed.get(o.photo_path as string) ?? null
+        : null,
     prendas: (o.item_ids as string[]).map(
       (id) => imgById.get(id) ?? { nombre: "Prenda", swatch: "#E5E1DD", imagen: null }
     ),

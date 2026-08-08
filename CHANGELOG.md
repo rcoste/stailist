@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.174.0] - 2026-08-08
+
+### Added — "¿me veo bien?": le enseñas cómo saliste vestida y te contesta
+
+Idea de Roberto, y la primera entrada del producto que **no viene de la app**: los 177 outfits de la base los generó ella misma (`daily`/`viaje`/`capsula`). Nada había entrado nunca desde la vida real.
+
+**No es una evaluación, y esa es la decisión de fondo.** Una app que te califica sin que se lo pidas te está juzgando, y la usuaria de esto es gente con crisis frente al clóset: si el tono se va un grado, se construye algo que le dice a alguien inseguro, cada mañana, qué hizo mal. Aquí ella **pregunta** y la amiga **contesta**. Misma foto y mismo consejo, contrato emocional opuesto — y el momento también: ya estás vestida y a punto de salir. Ése es el instante en que alguien saca el teléfono; *"documentar mi outfit del día"* es una tarea, y las tareas no se sostienen.
+
+**Contesta tres cosas, y las tres se pagan HOY, sin un día de historial:**
+
+- **Tu colorimetría sobre ESE outfit** — qué te hace a la cara lo que traes cerca de ella. Se expresa igual que en el motor (favorecen / apagan, y los neutros fuera de la balanza) para que las dos voces del producto no se contradigan: si el motor te pone un gris y aquí se te critica, la app discute consigo misma delante de ti.
+- **El clima de tu día** — *"va a llover y sales sin nada encima"*. Sin dato de clima, el campo se omite entero en vez de inventarse el día.
+- **UN ajuste** que puedas hacer ahora sin cambiarte. Si no hace falta tocar nada, lo dice: *"así como estás, sales"*.
+
+**Lo que deliberadamente NO hace**: empatar la foto contra tu clóset. Es lo que más magia da y lo que más se equivoca, y un error visible a diario quema la confianza rápido. Y *"oye, siempre andas de azul"* necesita un mes de datos: prometerlo el día 1 sería vender lo que no se tiene.
+
+**Queda en tu diario, marcado como puesto.** Nace con `favorited_at` porque no es una propuesta: es lo que de verdad te pusiste — la señal de oro que el resto del producto persigue a duras penas. En el historial reusa el hueco de la imagen grande (es lo mismo que el try-on, pero real) y lleva su sello: *"Me lo puse"*.
+
+**Medido con cuatro fotos reales antes de shippear.** Lo correcto en los cuatro: el negro sobre invierno *"te queda increíble"*, el gris sobre primavera *"te apaga un poco"* con alternativa, las rayas azules declaradas fondo (*"no te apagan ni te levantan"* — la regla de los neutros funcionando), lluvia sin abrigo → aviso, 31°C con playera → *"vas fresca"*, y sin clima → campo omitido. 4-7s por respuesta.
+
+Corre en el modelo rápido y no en el motor: es la única llamada del producto pensada para repetirse **a diario y para siempre**, y con Opus un hábito que funcione es justo lo que rompería la factura.
+
 ## [0.2.173.0] - 2026-08-08
 
 ### Added — "hay una versión nueva, recarga"
