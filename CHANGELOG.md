@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.184.0] - 2026-08-08
+
+### Added — dibujarlas ahí mismo, y desde tu foto
+
+Roberto: *"debería darme la opción de generar ahí las imágenes, no forzar a después, igual así evalúo si quedan fieles o no, como en el flujo del multi upload"*.
+
+Las dos mitades importan, y **la segunda más**: no es sólo adelantar el dibujo, es poder **juzgar si se parece**. Dejándolo para el clóset, un render infiel se descubre días después y hay que ir a buscarlo. Es justo lo que el carrete hace —te enseña lo que dibujó y decides— y aquí faltaba.
+
+Tras sumar aparece **dibujarlas ahora** con su tiempo estimado, y la rejilla se llena conforme llegan. Sigue siendo opcional: si tienes prisa, el clóset las dibuja después como hasta ahora.
+
+**Y salen de tu foto, no de su nombre** (imagen→imagen, el mismo `/api/render-prenda` del carrete). Con la prenda delante el modelo copia el corte y el color reales en vez de inventar un *"suéter azul marino"* genérico.
+
+**Medido con honestidad**, sobre su playera azul marino recién sumada:
+
+| | |
+|---|---|
+| desde su foto (imagen→imagen) | 18.3 s |
+| desde el nombre (texto→imagen) | 7.2 s |
+
+Y en una prenda **lisa los dos resultados son indistinguibles**. El beneficio no es universal: aparece cuando la prenda tiene algo que preservar —el caso de sus botas Columbia, donde imagen→imagen conservó el logo, el zigzag y la suela gris, y el nombre habría dado una bota negra cualquiera—. Se elige imagen→imagen igual, por consistencia con el carrete y porque nunca es peor; pero los 11 segundos extra en un básico son reales y aquí quedan dichos.
+
+Falla hacia adelante y con reintento: la que no salga se queda para el clóset, que es exactamente donde estábamos antes.
+
 ## [0.2.183.0] - 2026-08-08
 
 ### Added — la foto de la prenda que creo que ya tienes

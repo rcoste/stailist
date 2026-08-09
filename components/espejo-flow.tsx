@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
-import { addPhotoItems, ligarPrendasAlEspejo } from "@/app/closet/actions";
+import { addPhotoItems, ligarPrendasAlEspejo, ponerRenderAPrenda } from "@/app/closet/actions";
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
@@ -63,7 +63,29 @@ type Sumar =
       yaEstan: YaEsta[];
     }
   | { paso: "guardando" }
-  | { paso: "hecho"; cuantas: number };
+  | {
+      paso: "hecho";
+      cuantas: number;
+      /** Lo recién creado, para poder dibujarlo aquí mismo si quiere. */
+      nuevas: { id: string; attrs: PrendaDetectada }[];
+    }
+  /**
+   * DIBUJANDO AQUÍ MISMO — lo pidió Roberto: "debería darme la opción de
+   * generar ahí las imágenes, no forzar a después, igual así evalúo si quedan
+   * fieles, como en el flujo del multi upload".
+   *
+   * Las dos mitades importan, y la segunda más: no es sólo adelantar el dibujo,
+   * es poder JUZGAR si se parece. Dejándolo para el clóset, un render infiel se
+   * descubre días después y hay que ir a buscarlo.
+   *
+   * Sale de la FOTO (imagen→imagen, el mismo /api/render-prenda del carrete) y
+   * no del nombre: con la prenda delante el modelo copia el corte y el color
+   * reales en vez de inventar un "suéter azul marino" cualquiera.
+   */
+  | {
+      paso: "dibujando";
+      items: { id: string; attrs: PrendaDetectada; url: string | null; listo: boolean }[];
+    };
 
 // Comprime a 1280px: lo mismo que el resto de los flujos de foto.
 function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
@@ -292,7 +314,7 @@ export function EspejoFlow({
   async function guardarPrendas(outfitId: string | null) {
     if (sumar.paso !== "elegir") return;
     const elegidas = sumar.prendas.filter((p) => p.on);
-    if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0 });
+    if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0, nuevas: [] });
     setSumar({ paso: "guardando" });
     try {
       const res = await addPhotoItems(
@@ -326,11 +348,65 @@ export function EspejoFlow({
           ...idsNuevos,
         ]);
       }
-      setSumar({ paso: "hecho", cuantas: res.ok ? res.added : 0 });
+      setSumar({
+        paso: "hecho",
+        cuantas: res.ok ? res.added : 0,
+        // Los ids llegan en el MISMO orden en que se insertaron, que es el de
+        // `elegidas`: por eso se emparejan por índice.
+        nuevas: idsNuevos.map((id, i) => ({ id, attrs: elegidas[i].attrs })),
+      });
       router.refresh();
     } catch {
-      setSumar({ paso: "hecho", cuantas: 0 });
+      setSumar({ paso: "hecho", cuantas: 0, nuevas: [] });
     }
+  }
+
+  /**
+   * Dibuja aquí mismo las prendas recién sumadas, desde SU foto.
+   *
+   * En paralelo y con reintento, igual que el carrete: el servicio de imagen da
+   * 500 intermitentes y sin reintentar cada uno deja una prenda sin foto.
+   * Falla hacia adelante — la que no salga se queda en 'none' y el clóset la
+   * dibuja después, que es exactamente donde estábamos antes.
+   */
+  async function dibujarNuevas(
+    nuevas: { id: string; attrs: PrendaDetectada }[],
+    preview: string
+  ) {
+    setSumar({
+      paso: "dibujando",
+      items: nuevas.map((n) => ({ ...n, url: null, listo: false })),
+    });
+    await Promise.all(
+      nuevas.map(async (n) => {
+        let url: string | null = null;
+        for (let intento = 0; intento < 2 && !url; intento++) {
+          try {
+            const res = await fetch("/api/render-prenda", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image: preview, attrs: n.attrs }),
+            });
+            if (res.ok) {
+              const d = (await res.json()) as { path: string; url: string | null };
+              await ponerRenderAPrenda(n.id, d.path);
+              url = d.url;
+            }
+          } catch {
+            // reintenta una vez; si no, se queda para el clóset
+          }
+        }
+        setSumar((sm) =>
+          sm.paso !== "dibujando"
+            ? sm
+            : {
+                ...sm,
+                items: sm.items.map((x) => (x.id === n.id ? { ...x, url, listo: true } : x)),
+              }
+        );
+      })
+    );
+    router.refresh();
   }
 
   const input = (
@@ -505,6 +581,44 @@ export function EspejoFlow({
                   </p>
                 ) : null}
 
+                {sumar.paso === "dibujando" ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-[13px] text-ink">
+                      {sumar.items.every((x) => x.listo)
+                        ? "Así quedaron. Si alguna no se parece, la rehaces desde su ficha."
+                        : "Dibujándolas desde tu foto…"}
+                    </p>
+                    {/* La rejilla se LLENA conforme llegan, como en el carrete:
+                        con un spinner global se siente el doble de lento. */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {sumar.items.map((x) => (
+                        <div key={x.id} className="flex flex-col gap-1.5">
+                          <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
+                            {x.url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={x.url}
+                                alt={x.attrs.nombre}
+                                className="h-full w-full object-cover"
+                                style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
+                              />
+                            ) : x.listo ? (
+                              <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] text-muted">
+                                No salió — la dibujo en tu clóset
+                              </div>
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <Spinner className="h-5 w-5 text-accent" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="truncate text-[11.5px] text-ink">{x.attrs.nombre}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
                 {sumar.paso === "hecho" ? (
                   sumar.cuantas > 0 ? (
                     // CUÁNDO Y DÓNDE, no "en un momento". Roberto: "no entendí
@@ -519,13 +633,28 @@ export function EspejoFlow({
                         {sumar.cuantas === 1 ? "prenda nueva" : "prendas nuevas"} en tu
                         clóset. Les dibujo su foto cuando lo abras.
                       </p>
+                      {/* DIBUJARLAS AQUÍ, no obligado a después. Lo pidió
+                          Roberto, y la razón de peso es la segunda mitad de su
+                          frase: "así evalúo si quedan fieles". Dejándolo para el
+                          clóset, un dibujo que no se parece se descubre días
+                          después y hay que ir a buscarlo. */}
+                      {sumar.nuevas.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => dibujarNuevas(sumar.nuevas, state.preview)}
+                          className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+                        >
+                          <Icon name="destello" size={14} />
+                          dibujarlas ahora · ~{Math.max(20, sumar.nuevas.length * 18)}s
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => {
                           cerrar();
                           router.push("/closet");
                         }}
-                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
+                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
                       >
                         verlas en mi clóset
                         <Icon name="flecha" size={14} />
