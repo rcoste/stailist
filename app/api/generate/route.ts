@@ -71,8 +71,46 @@ export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (obj: unknown) =>
-        controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      // SI LA PERSONA SE VA, LA GENERACIÓN SIGUE Y TERMINA BIEN.
+      //
+      // Antes `send` escribía al controlador a pelo. Cuando el cliente cierra la
+      // conexión —cambiar de app en iOS, bloquear la pantalla, tocar atrás— el
+      // controlador queda cerrado y el PRIMER send posterior lanza
+      // "Invalid state: Controller is already closed". Eso abortaba la corrida
+      // a media faena: los outfits ya guardados se quedaban ahí, pero la cola
+      // —el juez, los tiempos, y sobre todo el cierre del paso 5— nunca corría.
+      //
+      // Es exactamente lo que le pasó a Roberto hoy a las 15:17, deducido
+      // entonces por lo que FALTABA y confirmado a las 18:27 con el evento
+      // generation_failed: "Invalid state: Controller is already closed",
+      // paso 4. Y era caro: lo dejaba atrapado en el paso 4 con looks huérfanos.
+      //
+      // Ahora escribir es best-effort. Si ya no hay nadie al otro lado, se
+      // apunta y se sigue: el trabajo se termina y se guarda, que es lo que hace
+      // que al volver encuentre sus looks en vez de una regeneración pagada.
+      let cerrado = false;
+      const send = (obj: unknown) => {
+        if (cerrado) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+        } catch {
+          cerrado = true;
+        }
+      };
+      /** Cerrar dos veces también lanza; el finally no puede ser quien rompa. */
+      const cerrar = () => {
+        if (cerrado) return;
+        cerrado = true;
+        try {
+          cerrar();
+        } catch {
+          /* ya estaba cerrado por el cliente */
+        }
+      };
+      // El aborto del cliente llega por aquí antes que cualquier enqueue.
+      request.signal?.addEventListener("abort", () => {
+        cerrado = true;
+      });
 
       // FUERA del try: el catch lo necesita para decir en qué punto del
       // onboarding se rompió, y `profile` se destructura dentro.
@@ -85,7 +123,7 @@ export async function POST(request: NextRequest) {
         const carga = await cargarBaseDelMotor(supabase, user.id);
         if ("error" in carga) {
           send({ error: "closet_vacio" });
-          controller.close();
+          cerrar();
           return;
         }
         const { base } = carga;
@@ -199,12 +237,12 @@ export async function POST(request: NextRequest) {
         // respuesta. Va con lo que falta para que la pantalla lo pueda decir.
         if (noAlcanza) {
           send({ error: "no_alcanza", faltan: noAlcanza.faltan });
-          controller.close();
+          cerrar();
           return;
         }
         if (finalized.length === 0) {
           send({ error: "no_pude_guardar" });
-          controller.close();
+          cerrar();
           return;
         }
         const repaired = reviews.filter((r) => r.changed).length;
@@ -293,7 +331,7 @@ export async function POST(request: NextRequest) {
             message === "ENGINE_NOT_CONNECTED" ? "sin_api_key" : "generacion",
         });
       } finally {
-        controller.close();
+        cerrar();
       }
     },
   });
