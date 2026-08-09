@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.179.0] - 2026-08-08
+
+### Added — la entrada del espejo se ve como un look
+
+Idea de Roberto: *"cuando se extraigan las prendas, independientemente de que las tenga o no las tenga, que repliquemos el UI del generador de outfit — la foto de la persona con el outfit y junto los thumbnails"*. Y el porqué que da después es el bueno: *"si yo quiero ver mi historial, pues hay cosas que yo me puse y hay cosas que hice y no me puse"*. Las dos clases de entrada tienen que poder mirarse igual, o el diario son dos diarios.
+
+**Las piezas ya existían sin parecerlo**: el empate contra el clóset ya se calculaba —para no proponerle sumar lo que ya tiene— y se tiraba el `id`, quedándose sólo con el nombre. Con ese id, la entrada se cuelga de sus prendas y el detalle la pinta con el mismo `TryonView` de siempre: su foto grande y los thumbnails al lado.
+
+Se cuelgan **dos cosas**: las prendas suyas que la foto reconoció (en cuanto se saben, sin esperar a que sume nada) y las que dé de alta desde esa misma foto.
+
+**Y lo que de verdad compra va más allá de lo visual.** Hoy *"me lo puse"* es por outfit y se usó **12 veces** en toda la historia del proyecto. Con esto, cada foto dice qué **prendas** se puso de verdad — la señal de oro, por prenda, sin pedirle que vote nada.
+
+Un empate equivocado aquí cuesta una miniatura mal puesta en el diario; auto-crear una prenda equivocada cuesta ropa fantasma en el clóset para siempre. Por eso esto sí se hace solo y aquello sigue pidiendo confirmación.
+
+### Fixed — dos botones que le habrían borrado su foto
+
+Los cazó una entrada de prueba sembrada para mirar la pantalla. En una entrada del espejo había **dos** caminos para generar un try-on: el de `TryonView` y el CTA del pie (*"verme con este look"*).
+
+Los dos escriben `tryon_path`, y al resolver la imagen **el try-on gana sobre la foto**. O sea que cualquiera de los dos le habría cambiado su foto real por un avatar dibujado, sin avisar y sin vuelta atrás. En una entrada del espejo no hay nada que imaginar: ya se lo puso.
+
+Y dos textos que mentían: la pestaña decía *"así te queda"* (es cómo **saliste**, no cómo te quedaría) y el subtítulo enseñaba la clave interna — *"8 ago · espejo"*, ahora *"8 ago · me lo puse"*.
+
 ## [0.2.178.0] - 2026-08-08
 
 ### Added — la marca y la talla, donde de verdad sirven

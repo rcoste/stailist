@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
-import { addPhotoItems } from "@/app/closet/actions";
+import { addPhotoItems, ligarPrendasAlEspejo } from "@/app/closet/actions";
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
@@ -32,7 +32,7 @@ export type EspejoHandle = { start: () => void };
 type State =
   | { kind: "idle" }
   | { kind: "mirando"; preview: string }
-  | { kind: "listo"; preview: string; lectura: LecturaEspejo }
+  | { kind: "listo"; preview: string; lectura: LecturaEspejo; outfitId: string | null }
   | { kind: "error"; msg: string };
 
 // SUMAR AL CLÓSET LO QUE TRAES PUESTO — el segundo tiempo, opcional.
@@ -49,7 +49,7 @@ type State =
 //   ambiente y prendas fuera de cuadro, y con la misma camisa tres veces por
 //   semana el auto-alta llenaría el clóset de duplicados en un mes.
 /** Una prenda de la foto que no se propone porque ya parece estar en el clóset. */
-type YaEsta = { nombre: string; comoEsta: string };
+type YaEsta = { id: string; nombre: string; comoEsta: string };
 
 type Sumar =
   | { paso: "oferta" }
@@ -178,9 +178,9 @@ export function EspejoFlow({
         });
         return;
       }
-      const lectura = (await res.json()) as LecturaEspejo;
+      const lectura = (await res.json()) as LecturaEspejo & { outfitId?: string | null };
       setSumar({ paso: "oferta" });
-      setState({ kind: "listo", preview, lectura });
+      setState({ kind: "listo", preview, lectura, outfitId: lectura.outfitId ?? null });
       // El diario ya tiene una entrada nueva.
       router.refresh();
     } catch {
@@ -189,7 +189,7 @@ export function EspejoFlow({
   }
 
   /** Busca en la foto lo que NO parece estar ya en el clóset. */
-  async function buscarPrendas(preview: string) {
+  async function buscarPrendas(preview: string, outfitId: string | null) {
     setSumar({ paso: "buscando" });
     try {
       const res = await fetch("/api/espejo/prendas", {
@@ -203,6 +203,12 @@ export function EspejoFlow({
         vistas: number;
         yaEstan: YaEsta[];
       };
+      // LAS RECONOCIDAS SE CUELGAN EN CUANTO SE SABEN, sin esperar a que sume
+      // nada: son prendas suyas que la foto identificó, y el look ya se puede
+      // ver completo aunque decida no añadir ninguna de las nuevas.
+      if (outfitId && yaEstan.length > 0) {
+        void ligarPrendasAlEspejo(outfitId, yaEstan.map((y) => y.id)).then(() => router.refresh());
+      }
       if (prendas.length === 0) return setSumar({ paso: "nada", vistas, yaEstan });
       setSumar({
         paso: "elegir",
@@ -225,7 +231,7 @@ export function EspejoFlow({
   }
 
   /** Guarda las marcadas. La imagen limpia la dibuja el clóset después. */
-  async function guardarPrendas() {
+  async function guardarPrendas(outfitId: string | null) {
     if (sumar.paso !== "elegir") return;
     const elegidas = sumar.prendas.filter((p) => p.on);
     if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0 });
@@ -252,6 +258,15 @@ export function EspejoFlow({
           photoPath: null,
         }))
       );
+      // Las recién creadas se cuelgan del mismo look: la entrada del diario
+      // queda con TODO lo que traía puesto, lo suyo de antes y lo de hoy.
+      const idsNuevos = res.ok ? res.ids ?? [] : [];
+      if (outfitId && idsNuevos.length > 0) {
+        await ligarPrendasAlEspejo(outfitId, [
+          ...sumar.yaEstan.map((y) => y.id),
+          ...idsNuevos,
+        ]);
+      }
       setSumar({ paso: "hecho", cuantas: res.ok ? res.added : 0 });
       router.refresh();
     } catch {
@@ -335,7 +350,9 @@ export function EspejoFlow({
                 {sumar.paso === "oferta" ? (
                   <button
                     type="button"
-                    onClick={() => buscarPrendas(state.preview)}
+                    onClick={() =>
+                      buscarPrendas(state.preview, state.kind === "listo" ? state.outfitId : null)
+                    }
                     className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-accent"
                   >
                     <Icon name="mas" size={14} />
@@ -410,7 +427,9 @@ export function EspejoFlow({
                     <YaEstanLista items={sumar.yaEstan} />
                     <button
                       type="button"
-                      onClick={() => guardarPrendas()}
+                      onClick={() =>
+                        guardarPrendas(state.kind === "listo" ? state.outfitId : null)
+                      }
                       className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
                     >
                       sumar {sumar.prendas.filter((p) => p.on).length} al clóset

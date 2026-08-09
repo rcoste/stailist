@@ -65,7 +65,10 @@ export async function POST(request: NextRequest) {
   // y encima un empate equivocado se vuelve invisible: si le digo que ya tiene
   // "Pantalón de lino" y éste es otro, sin decirlo nunca se entera.
   const nuevas: typeof lectura.prendas = [];
-  const yaEstan: { nombre: string; comoEsta: string }[] = [];
+  // Con el ID, no sólo el nombre: es lo que deja que la entrada del diario
+  // enseñe las prendas como un look generado. El empate YA se estaba
+  // calculando y sólo se tiraba el id.
+  const yaEstan: { id: string; nombre: string; comoEsta: string }[] = [];
   for (const p of lectura.prendas) {
     const match = yaLaTienes(
       {
@@ -77,7 +80,7 @@ export async function POST(request: NextRequest) {
       },
       closet
     );
-    if (match) yaEstan.push({ nombre: p.nombre, comoEsta: match.nombre });
+    if (match) yaEstan.push({ id: match.id, nombre: p.nombre, comoEsta: match.nombre });
     else nuevas.push(p);
   }
 

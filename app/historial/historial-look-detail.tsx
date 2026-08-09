@@ -66,9 +66,14 @@ export function HistorialLookDetail({
       ? manual ?? "me"
       : "look";
 
-  const sub = o.occasion
-    ? `${o.fecha} · ${ocasionLabel(o.occasion).toLowerCase()}`
-    : o.fecha;
+  // "espejo" es una clave interna, no algo que decirle a nadie: el subtítulo
+  // decía "8 ago · espejo". Lo que significa esa entrada es que se lo puso.
+  const sub =
+    o.origen === "espejo"
+      ? `${o.fecha} · me lo puse`
+      : o.occasion
+        ? `${o.fecha} · ${ocasionLabel(o.occasion).toLowerCase()}`
+        : o.fecha;
 
   return (
     // El overlay termina ARRIBA de la tab bar (z-30 < z-40 de la barra): el
@@ -118,7 +123,10 @@ export function HistorialLookDetail({
           />
           {canMe ? (
             <SegTab
-              label="así te queda"
+              // En una entrada del espejo NO es un render de cómo te QUEDARÍA:
+              // es la foto de cómo saliste. Llamarla igual sería vender un
+              // avatar donde hay una foto real.
+              label={o.origen === "espejo" ? "tu foto" : "así te queda"}
               active={tab === "me"}
               pulse={generating}
               onClick={() => setManual("me")}
@@ -186,7 +194,11 @@ export function HistorialLookDetail({
               error={t.mode === "error" ? t.errMsg : null}
               prendas={o.prendas}
               nombre={o.nombre}
-              onGenerar={t.generar}
+              // SIN "rehacer" en el espejo, y no es cosmético: regenerar
+              // escribiría un try-on, y la imagen del try-on GANA sobre la foto
+              // — o sea que el botón le cambiaría su foto real por un avatar
+              // dibujado, sin avisar y sin vuelta atrás.
+              onGenerar={o.origen === "espejo" ? undefined : t.generar}
             />
           </div>
         )}
@@ -196,7 +208,12 @@ export function HistorialLookDetail({
 
         {/* Botonera: verme (si no hay render) + me lo vuelvo a poner + votos. */}
         <div className="-mx-4 mt-2 flex-none border-t border-line bg-surface px-4 pb-4 pt-2.5">
-          {!hasRender ? (
+          {/* NADA DE GENERAR TRY-ON EN EL ESPEJO. Ésta era la otra puerta —la
+              del pie, no la de TryonView— y hace lo mismo: escribe un try-on, y
+              el try-on GANA sobre la foto al resolver la imagen. O sea que este
+              botón le cambiaría su foto real por un avatar dibujado. En una
+              entrada del espejo no hay nada que imaginar: ya se lo puso. */}
+          {!hasRender && o.origen !== "espejo" ? (
             t.mode === "sin_avatar" ? (
               <Link
                 href={t.avatarHref}
