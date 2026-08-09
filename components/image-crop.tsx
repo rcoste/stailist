@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/icon";
 
 // Recortador táctil simple (sin librerías, por el design system): un recuadro
@@ -10,6 +11,13 @@ import { Icon } from "@/components/icon";
 type Rect = { x: number; y: number; w: number; h: number }; // px de la caja mostrada
 type Corner = "nw" | "ne" | "sw" | "se";
 type DragMode = "move" | Corner;
+
+/** `document` no existe en el render del servidor; el portal espera al cliente. */
+function useMontado(): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => setM(true), []);
+  return m;
+}
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const MIN = 44; // lado mínimo del recuadro
@@ -26,6 +34,7 @@ export function ImageCrop({
   /** Copy del encabezado (prendas vs cara). */
   title?: string;
 }) {
+  const montado = useMontado();
   const imgRef = useRef<HTMLImageElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
   const drag = useRef<{ mode: DragMode; startX: number; startY: number; orig: Rect } | null>(null);
@@ -150,8 +159,34 @@ export function ImageCrop({
     />
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-ink">
+  // VA POR PORTAL AL BODY, y no donde lo cuelguen.
+  //
+  // Los dos flujos que lo abren —el carrete de prendas y el espejo— lo
+  // renderizan DENTRO de su hoja. Una hoja es `fixed inset-0 z-50` con una
+  // animación de transform, así que: (1) el recortador, siendo descendiente, no
+  // puede pintarse por encima del contexto de apilamiento de su hoja aunque
+  // también pida z-50, y (2) mientras corre esa animación el transform del
+  // ancestro se vuelve el bloque contenedor de sus `fixed` y lo encierra dentro
+  // de la caja de la hoja.
+  //
+  // Resultado, que Roberto fotografió probando el multiupload: la barra de
+  // "cancelar / recorta a tu prenda / usar" asomando DEBAJO de la hoja de
+  // "revisa tus fotos", con las dos capas visibles a la vez y el recortador
+  // inservible.
+  //
+  // Portarlo al body lo arregla en los tres sitios de una vez y, más
+  // importante, deja de depender de dónde lo monten: quien añada un cuarto no
+  // tiene que enterarse de nada. Es la misma lección que ya costó el drawer que
+  // no cerraba (los fixed hijos de la tab bar, que también lleva translate).
+  //
+  // LA GRADA: z-[75]. El proyecto apila así — 50 hojas normales, 60 y 70 hojas
+  // a pantalla completa (viaje, try-on, cartera), 80 los hints. El recortador
+  // tiene que ganarle a CUALQUIER hoja, porque siempre se abre desde una y la
+  // hoja sigue viva detrás (al cancelar se vuelve a ella). Empatar a 50, que es
+  // lo que hacía, era justo el bug.
+  if (!montado) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[75] flex flex-col bg-ink">
       <div className="flex items-center justify-between px-4 py-3">
         <button
           type="button"
@@ -204,6 +239,7 @@ export function ImageCrop({
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

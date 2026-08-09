@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.199.0] - 2026-08-09
+
+### Fixed — el recortador salía DEBAJO de la hoja que lo abría
+
+Roberto lo fotografió probando el multiupload: la hoja de *"revisa tus fotos"* y, asomando por abajo, la barra del recortador (*"cancelar · recorta a tu prenda · usar"*) con su tira de fotos. Dos capas a pantalla completa visibles a la vez, y el recortador inservible.
+
+**La causa, doble.** `ImageCrop` se renderizaba DENTRO de la hoja, y ambos pedían `z-50`: un descendiente no puede pintarse por encima del contexto de apilamiento de su ancestro por mucho que empate el z-index. Y encima la hoja lleva una animación con `transform`, que mientras corre se convierte en el bloque contenedor de los `fixed` de sus hijos y encierra al recortador dentro de la caja de la hoja. Es la misma lección que ya costó el drawer que no cerraba.
+
+**El arreglo va en el componente, no en los tres sitios que lo usan**: `ImageCrop` se porta a sí mismo al `<body>`, así deja de depender de dónde lo monten y quien añada un cuarto uso no tiene que enterarse. Sube a `z-[75]`, que es la grada correcta — el proyecto apila 50 para hojas normales, 60/70 para las de pantalla completa (viaje, try-on, cartera) y 80 para los hints; el recortador siempre se abre desde una hoja que sigue viva detrás, así que tiene que ganarles a todas.
+
+Verificado reproduciendo el flujo: el recortador cuelga de `BODY`, ocupa los 390×844 completos, y el hit-test en cuatro puntos de la pantalla —arriba, centro, abajo y esquina— devuelve el recortador en los cuatro.
+
 ## [0.2.198.0] - 2026-08-09
 
 ### Fixed — el mazo del swipe arrancaba con seis cartas del mismo palo
