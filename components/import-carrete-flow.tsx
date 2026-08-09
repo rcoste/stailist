@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
 import { createClient } from "@/lib/supabase/client";
@@ -1142,7 +1143,11 @@ export function ImportCarreteFlow({
     return (
       <>
         {input}
-        {state.kind === "error" ? (
+        {/* El error del modo headless también va por portal: este componente vive
+            hasta en el drawer de la tab bar (translate), donde un fixed hijo se
+            queda confinado — el mismo bug del wizard, en miniatura. */}
+        {state.kind === "error" && typeof document !== "undefined" ? (
+          createPortal(
           <div
             className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40"
             onClick={() => {
@@ -1167,7 +1172,9 @@ export function ImportCarreteFlow({
                 entendido
               </button>
             </div>
-          </div>
+          </div>,
+            document.body
+          )
         ) : null}
       </>
     );
@@ -1227,7 +1234,19 @@ function Overlay({
   /** El pie va aparte de los hijos a propósito: fuera del scroll. */
   pie?: React.ReactNode;
 }) {
-  return (
+  // POR PORTAL AL BODY — la misma lección que el recortador, un día después.
+  //
+  // Este flujo se monta desde CUATRO lugares, y uno de ellos —el drawer de
+  // "más"— es hijo de la tab bar, que lleva un translate. Un ancestro con
+  // transform se vuelve el bloque contenedor de los `fixed` de sus hijos, así
+  // que el "fixed inset-0" del wizard se resolvía contra la CAJA DE LA BARRA:
+  // Roberto lo fotografió como "el modal aparece metido abajo" — el paso 1
+  // asomando en una franja bajo su look. Ya estaba escrito en la memoria del
+  // proyecto ("el translate de la tab bar confina los fixed de sus hijos");
+  // el Overlay nuevo no se protegió. Portado al body, da igual quién lo monte.
+  const montado = useMontadoCarrete();
+  if (!montado) return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex flex-col bg-bg"
       style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
@@ -1241,8 +1260,16 @@ function Overlay({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
+}
+
+/** `document` no existe en SSR; el portal espera al cliente. */
+function useMontadoCarrete(): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => setM(true), []);
+  return m;
 }
 
 /** Progreso del wizard — el mismo lenguaje que el de avatar, para que dos

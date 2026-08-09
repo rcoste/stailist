@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.205.0] - 2026-08-09
+
+### Fixed — el wizard de carga salía "metido abajo" al abrirlo desde la tab bar
+
+Roberto lo fotografió en su teléfono: el paso 1 del wizard asomando en una franja bajo su look, en vez de cubrir la pantalla.
+
+Es la **misma lección del recortador, un día después**. El flujo de carga se monta desde cuatro lugares, y uno —el drawer de "más"— es hijo de la tab bar, que lleva un `translate`. Un ancestro con transform se vuelve el bloque contenedor de los `fixed` de sus hijos, así que el `fixed inset-0` del wizard se resolvía contra la caja de la barra. Ya estaba escrito en la memoria del proyecto (*"el translate de la tab bar confina los fixed de sus hijos"* — el bug del drawer que no cerraba); el Overlay nuevo de ayer no se protegió.
+
+**Portado al `body` con `createPortal`**, igual que el recortador: da igual quién lo monte. El error del modo headless va por el mismo portal — mismo hueco en miniatura. Verificado midiendo: el overlay cuelga de `BODY` y ocupa 0,0 → 390×844, el viewport exacto.
+
 ## [0.2.204.0] - 2026-08-09
 
 ### Added — el cierre de la carga y el conjunto que contesta (tanda 3)
