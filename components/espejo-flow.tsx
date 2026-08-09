@@ -391,6 +391,53 @@ export function EspejoFlow({
    * Falla hacia adelante — la que no salga se queda en 'none' y el clóset la
    * dibuja después, que es exactamente donde estábamos antes.
    */
+  /**
+   * Dibuja UNA prenda desde la foto. Se usa dos veces: en la tanda inicial y
+   * cuando la persona dice "salió mal" sobre una sola.
+   */
+  async function dibujarUna(n: { id: string; attrs: PrendaDetectada }, preview: string) {
+    // "En curso" también al reintentar suelta (la primera vez ya viene así).
+    setSumar((sm) =>
+      sm.paso !== "dibujando"
+        ? sm
+        : { ...sm, items: sm.items.map((x) => (x.id === n.id ? { ...x, listo: false } : x)) }
+    );
+    let url: string | null = null;
+    for (let intento = 0; intento < 2 && !url; intento++) {
+      try {
+        const res = await fetch("/api/render-prenda", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: preview, attrs: n.attrs }),
+        });
+        if (res.ok) {
+          const d = (await res.json()) as { path: string; url: string | null };
+          await ponerRenderAPrenda(n.id, d.path);
+          url = d.url;
+        }
+      } catch {
+        // reintenta una vez; si no, se queda para el clóset
+      }
+    }
+    setSumar((sm) =>
+      sm.paso !== "dibujando"
+        ? sm
+        : { ...sm, items: sm.items.map((x) => (x.id === n.id ? { ...x, url, listo: true } : x)) }
+    );
+    router.refresh();
+  }
+
+  /**
+   * Dibuja aquí mismo las prendas recién sumadas, desde SU foto.
+   *
+   * POOL ACOTADO, no un Promise.all suelto: es la lección que el carrete ya
+   * pagó — disparar N renders a la vez pega el rate-limit de Gemini y cada 429
+   * deja una prenda sin foto. Mismo tope (4) para que las dos puertas se
+   * comporten igual bajo carga.
+   *
+   * Falla hacia adelante: la que no salga se queda en 'none' y el clóset la
+   * dibuja después, que es exactamente donde estábamos antes.
+   */
   async function dibujarNuevas(
     nuevas: { id: string; attrs: PrendaDetectada }[],
     preview: string
@@ -399,46 +446,14 @@ export function EspejoFlow({
       paso: "dibujando",
       items: nuevas.map((n) => ({ ...n, url: null, listo: false })),
     });
-    // POOL ACOTADO, no un Promise.all suelto. Es la lección que el carrete ya
-    // pagó: disparar N renders a la vez pega el rate-limit de Gemini y cada 429
-    // deja una prenda sin foto. Con 2 prendas da igual; con 8 no. El tope es el
-    // mismo (4) para que las dos puertas se comporten igual bajo carga.
     const CONCURRENCIA = 4;
     const cola = [...nuevas];
-    const dibujarUna = async (n: { id: string; attrs: PrendaDetectada }) => {
-      let url: string | null = null;
-      for (let intento = 0; intento < 2 && !url; intento++) {
-        try {
-          const res = await fetch("/api/render-prenda", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: preview, attrs: n.attrs }),
-          });
-          if (res.ok) {
-            const d = (await res.json()) as { path: string; url: string | null };
-            await ponerRenderAPrenda(n.id, d.path);
-            url = d.url;
-          }
-        } catch {
-          // reintenta una vez; si no, se queda para el clóset
-        }
-      }
-      setSumar((sm) =>
-        sm.paso !== "dibujando"
-          ? sm
-          : {
-              ...sm,
-              items: sm.items.map((x) => (x.id === n.id ? { ...x, url, listo: true } : x)),
-            }
-      );
-    };
     const trabajar = async () => {
-      for (let n = cola.shift(); n; n = cola.shift()) await dibujarUna(n);
+      for (let n = cola.shift(); n; n = cola.shift()) await dibujarUna(n, preview);
     };
     await Promise.all(
       Array.from({ length: Math.min(CONCURRENCIA, nuevas.length) }, trabajar)
     );
-    router.refresh();
   }
 
   /**
@@ -691,6 +706,19 @@ export function EspejoFlow({
                             )}
                           </div>
                           <p className="truncate text-[11.5px] text-ink">{x.attrs.nombre}</p>
+                          {/* "SALIÓ MAL" — el paso que el carrete tiene y aquí
+                              faltaba, y el que le habría ahorrado el suéter
+                              deforme: allá lo ves dibujado y lo tiras; aquí se
+                              quedaba. Redibuja sólo ésa. */}
+                          {x.listo && x.url ? (
+                            <button
+                              type="button"
+                              onClick={() => dibujarUna(x, state.preview)}
+                              className="text-[11px] text-muted underline underline-offset-2 transition-colors hover:text-accent"
+                            >
+                              salió mal — rehacer
+                            </button>
+                          ) : null}
                         </div>
                       ))}
                     </div>

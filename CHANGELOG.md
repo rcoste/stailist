@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.189.0] - 2026-08-08
+
+### Added — "salió mal", el paso del carrete que al espejo le faltaba
+
+Roberto: *"no entiendo por qué no lo hacemos igual que con el multiupload… yo veo el flujo casi igual"*.
+
+Tiene razón, y comparados paso por paso contra el código se parecen mucho más de lo que parecía. Al espejo le faltan **dos** pasos del carrete:
+
+| | multiupload | espejo |
+|---|---|---|
+| recortar si sale alguien más | ✅ y dice cuánta gente ve | ❌ |
+| leer las prendas | mismo lector | **el mismo** |
+| ¿ya la tienes? | avisa | filtra, y se puede desmentir |
+| confirmar cada prenda | misma tarjeta, abierta | **la misma**, cerrada |
+| dibujar | obligatorio | opcional |
+| **"es mía / no es mía / salió mal"** | ✅ | ❌ |
+
+Y **lo que estaba justificado era poco**: que la tarjeta arranque cerrada y que dibujar sea opcional, porque ahí estás saliendo de tu casa y no sentado catalogando. Los otros dos no tenían razón de ser — simplemente no los había construido.
+
+El del veredicto es el que costó caro: **es el paso que habría cazado el suéter deforme**. En el carrete lo ves dibujado y le das *"salió mal"*; en el espejo se quedaba tal cual. Ahora cada dibujo lleva su **"salió mal — rehacer"** y redibuja sólo ése.
+
+Queda pendiente el recorte + el aviso de personas, que es el otro hueco real: en una foto de espejo de un hotel puede salir alguien más, y ahí no hay nada que lo cace.
+
 ## [0.2.188.0] - 2026-08-08
 
 ### Fixed — la pose no es parte de la prenda
