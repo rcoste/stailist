@@ -67,6 +67,9 @@ function cleanAtributosRicos(attrs: PrendaAnalisis) {
     // propósito — es una etiqueta, no una descripción, y el motor la lee pegada
     // al nombre. Si el modelo se explaya, se recorta en vez de descartarse.
     subtipo: cleanTextAttr(attrs.subtipo, MAX_MATERIAL_LEN),
+    // Las teclea la persona en la confirmación; ningún modelo las produce.
+    marca: cleanTextAttr(attrs.marca, MAX_MATERIAL_LEN),
+    talla: cleanTextAttr(attrs.talla, MAX_MATERIAL_LEN),
     patron: cleanPatron(attrs.patron),
     color_secundario: cleanTextAttr(attrs.color_secundario, MAX_COLOR_LEN),
     contexto: cleanContexto(attrs.contexto),
@@ -444,13 +447,19 @@ export async function addPhotoItems(
     };
     renderPath: string | null;
     /**
-     * `null` = todavía no se ha intentado dibujarla, y NO es lo mismo que
-     * "falló". El auto-sanado del clóset sólo recoge las que están en `none`
-     * (render_status nulo): marcarlas 'failed' las deja sin imagen para
-     * siempre. Lo usa el espejo, que suma prendas sin pararse a dibujarlas —
-     * cinco renders son ~85s y ahí la persona está saliendo de su casa.
+     * `"none"` = todavía no se ha intentado dibujarla, y NO es lo mismo que
+     * "failed": el auto-sanado del clóset sólo recoge las que están en `none`,
+     * así que marcarlas 'failed' las deja sin imagen para siempre. Lo usa el
+     * espejo, que suma prendas sin pararse a dibujarlas (cinco renders son ~85s
+     * y ahí la persona está saliendo de su casa).
+     *
+     * ES EL STRING "none", NO `null`. La columna es NOT NULL con default
+     * 'none', y mandar null reventaba el insert ENTERO — el alta devolvía
+     * "no sumé nada" sin decir por qué. Lo escribí mal en el propio comentario
+     * que decía "las que están en none (render_status nulo)": son dos cosas
+     * distintas y la base sólo acepta una. Por eso el tipo ya no admite null.
      */
-    renderStatus: "done" | "failed" | null;
+    renderStatus: "done" | "failed" | "none";
     /**
      * La foto ORIGINAL de donde salió la prenda.
      *

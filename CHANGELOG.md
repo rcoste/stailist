@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.182.0] - 2026-08-08
+
+### Fixed — "No sumé nada": el alta reventaba entera
+
+Roberto: *"cuando le piqué añadir, me puso algo así como que no se pudo añadir. O sea, falló"*.
+
+**`items.render_status` es NOT NULL con default `'none'`**, y yo mandaba `null`. El insert moría y el flujo decía *"No sumé nada"* sin más.
+
+Lo peor es dónde estaba el error: en el comentario que escribí yo hace dos horas, *"el auto-sanado sólo recoge las que están en `none` (render_status nulo)"*. `'none'` es un **string**, no NULL — son dos cosas distintas y la base sólo acepta una. Escribí la explicación correcta y el código equivocado. El tipo ya no admite `null`, así que no puede repetirse.
+
+Verificado contra la base en las dos direcciones: con `'none'` entra y guarda; con `null` truena con exactamente ese error.
+
+### Added — marca y talla también al dar de alta
+
+Roberto: *"todavía no aparece el campo para añadir la marca y la talla"*.
+
+Estaban sólo en la ficha del clóset. La objeción que las dejó fuera sigue en pie —quince prendas por dos campos de texto es la fricción de catalogar que este producto existe para no tener— pero viven **dentro de "afinar"**, que arranca cerrado: quien lo abrió ya decidió corregir esa prenda, y negárselas ahí es mandarlo a la ficha a repetir un viaje que ya venía haciendo.
+
+### Fixed — la tarjeta del espejo enseñaba su cuerpo entero, cuatro veces
+
+En el carrete cada prenda viene de una foto distinta y la miniatura dice de cuál. En el espejo **todas salen de la misma foto**: repetir su cuerpo entero en cada fila no identifica nada, sólo llena la pantalla. Ahora ahí manda el color leído, que es lo único que distingue una fila de la siguiente.
+
+Y *"afinar"* deja de ser un enlace subrayado suelto —que es lo que hacía ver el paso a medio terminar— y pasa a ser un botón con su borde, como el resto.
+
 ## [0.2.181.0] - 2026-08-08
 
 ### Changed — una acción, dos llamadas

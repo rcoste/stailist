@@ -302,17 +302,18 @@ export function EspejoFlow({
           attrs: { ...p.attrs, confirmados: [...(sumar.tocados[p.id] ?? [])] },
           // SIN RENDER Y SIN FOTO, las dos cosas a propósito:
           //
-          // · renderStatus null (no 'failed'): dibujar cinco prendas son ~85s y
-          //   aquí la persona está saliendo de su casa. Entran sin imagen y el
-          //   auto-sanado del clóset las dibuja después — pero ESE sólo recoge
-          //   las que están en 'none', así que marcarlas 'failed' las dejaría
-          //   sin imagen para siempre.
+          // · renderStatus "none" (ni 'failed' ni null): dibujar cinco prendas
+          //   son ~85s y aquí la persona está saliendo de su casa. Entran sin
+          //   imagen y el auto-sanado del clóset las dibuja después — pero ESE
+          //   sólo recoge las que están en 'none'. Con 'failed' se quedarían sin
+          //   imagen para siempre; con null el insert truena (la columna es NOT
+          //   NULL) y no se suma NADA, que es lo que pasó.
           // · photoPath null aunque la foto exista: es un espejo de cuerpo
           //   entero, no la prenda. Ponerla haría que la miniatura de "camisa
           //   blanca" fuera tu foto completa, y además bloquearía el dibujo
           //   limpio (tener foto cuenta como tener imagen).
           renderPath: null,
-          renderStatus: null,
+          renderStatus: "none" as const,
           photoPath: null,
         }))
       );
