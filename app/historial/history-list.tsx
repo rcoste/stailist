@@ -19,7 +19,9 @@ export type HistoryOutfit = {
   createdAt: string; // ISO — para agrupar por mes
   fecha: string; // "18 jun"
   occasion: string | null; // clave cruda: diario/oficina/evento/viaje/refrescar
-  origen: "daily" | "viaje" | "capsula" | "espejo"; // de dónde salió (badge si no es diario)
+  origen: "daily" | "viaje" | "capsula" | "espejo";
+  /** Lo que traía puesto, en palabras — cubre lo que no tiene miniatura. */
+  resumen?: string | null; // de dónde salió (badge si no es diario)
   tryonImage: string | null; // foto "cómo se me ve" (URL firmada) o null → collage
   prendas: { nombre: string; swatch: string; imagen?: string | null }[];
   voto: "up" | "down" | null;

@@ -98,6 +98,10 @@ export async function POST(request: NextRequest) {
         // El TÍTULO, no el resumen: el resumen es un párrafo y el diario lo
         // pinta en la serif grande.
         title: lectura.titulo,
+        // LO QUE TRAÍA PUESTO, en palabras. Es lo único que cubre las prendas
+        // que se leyeron pero no existen como fila en su clóset: sin esto la
+        // entrada del diario enseña menos de lo que la app vio (ver 0129).
+        resumen: lectura.resumen,
         explanation: lectura.colorimetria,
         tip: lectura.ajuste,
         prompt_version: ESPEJO_VERSION,

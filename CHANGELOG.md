@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.193.0] - 2026-08-08
+
+### Fixed — la entrada del diario sabía menos de lo que la app había visto
+
+Roberto, mirando una entrada: *"no aparecen todos los thumbnails, solo de dos prendas y no de todas"*.
+
+Tenía razón, y **no era el emparejador** — probado contra su clóset real, empareja las cuatro. Las miniaturas sólo pueden enseñar prendas que **existen como fila**: las emparejadas con su clóset y las que sumó. Lo que la foto leyó pero no cayó en ninguna de las dos —su playera y su pantalón caqui— no tiene a qué apuntar, así que desaparecía.
+
+Y lo peor: **la app sí lo sabía**. El consejo empieza describiendo el outfit entero —*"chamarra de campo azul marino, playera oscura, pantalón caqui y tenis blancos"*— y esa lista se tiraba sin guardarse en ningún lado. La entrada terminaba sabiendo menos de lo que la app había leído un segundo antes.
+
+Ahora el resumen se guarda (migración 0129, idempotente) y la entrada dice **"Traías: …"** con el outfit completo, aunque sólo la mitad tenga miniatura. Nada de lo que la app vio se pierde.
+
 ## [0.2.192.0] - 2026-08-08
 
 ### Fixed — QA del espejo: dos bugs que se veían como "no cargó"
