@@ -727,25 +727,71 @@ export function ImportCarreteFlow({
           sub="Confirma o corrige cada una. Apaga con la ✓ las que no quieras sumar."
         />
         <div className="flex flex-col gap-3">
-          {state.items.map((it) => (
-            <DraftCard
-              key={it.id}
-              item={it}
-              onEsLaMisma={(itemId) => esLaMisma.current.set(it.id, itemId)}
-              yaEsta={yaLaTienes(
-                {
-                  nombre: it.attrs.nombre,
-                  categoria: it.attrs.categoria,
-                  colorHex: it.attrs.color_hex,
-                  material: it.attrs.material,
-                  corte: it.attrs.corte,
-                },
-                enElCloset
-              )}
-              onToggle={() => toggleItem(it.id)}
-              onPatch={(p, campos) => patchItem(it.id, p, campos)}
-            />
-          ))}
+          {/* LAS PIEZAS ATADAS SE VEN ATADAS (handoff de carga). El modelo de
+              conjunto ya existía (attrs.conjunto, el mismo que llevan 12
+              prendas en prod) — lo que no existía era VERLO: atabas el traje
+              con la casilla de abajo y las dos tarjetas seguían pintadas como
+              prendas sin relación. Ahora las piezas del mismo conjunto se
+              agrupan en un contenedor con cabecera y "separar".
+              El orden se conserva por primera aparición; una prenda suelta se
+              pinta plana, igual que siempre. */}
+          {(() => {
+            const card = (it: (typeof state.items)[number]) => (
+              <DraftCard
+                key={it.id}
+                item={it}
+                onEsLaMisma={(itemId) => esLaMisma.current.set(it.id, itemId)}
+                yaEsta={yaLaTienes(
+                  {
+                    nombre: it.attrs.nombre,
+                    categoria: it.attrs.categoria,
+                    colorHex: it.attrs.color_hex,
+                    material: it.attrs.material,
+                    corte: it.attrs.corte,
+                  },
+                  enElCloset
+                )}
+                onToggle={() => toggleItem(it.id)}
+                onPatch={(p, campos) => patchItem(it.id, p, campos)}
+              />
+            );
+            const vistos = new Set<string>();
+            return state.items.map((it) => {
+              if (vistos.has(it.id)) return null;
+              const c = it.attrs.conjunto;
+              const grupo = c
+                ? state.items.filter((x) => x.attrs.conjunto === c)
+                : [it];
+              grupo.forEach((x) => vistos.add(x.id));
+              if (grupo.length < 2) return card(it);
+              return (
+                <div
+                  key={`conj-${c}`}
+                  className="flex flex-col gap-3 rounded-xl border border-accent p-2.5"
+                >
+                  <div className="flex items-center justify-between gap-2 px-0.5">
+                    <span className="flex items-center gap-1.5 text-[12px] font-semibold text-ink">
+                      <Icon name="gancho" size={13} />
+                      mismo traje · {grupo.length} piezas
+                    </span>
+                    {/* Separar sólo quita la RELACIÓN, no las prendas — y es
+                        reversible: al soltar, la pregunta de "¿son un traje?"
+                        vuelve a aparecer abajo, que es el "volver a unir". */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        grupo.forEach((g) => patchItem(g.id, { conjunto: undefined }))
+                      }
+                      className="text-[12px] font-medium text-muted underline decoration-line underline-offset-2 transition-colors hover:text-ink"
+                    >
+                      separar
+                    </button>
+                  </div>
+                  {grupo.map(card)}
+                </div>
+              );
+            });
+          })()}
         </div>
 
         {/* EL LAZO DEL TRAJE. Un traje se guarda como dos prendas —así debe
@@ -756,6 +802,10 @@ export function ImportCarreteFlow({
           const saco = activos.find((it) => it.id === par.saco);
           const pantalon = activos.find((it) => it.id === par.pantalon);
           const atado = !!saco?.attrs.conjunto;
+          // Atados, la pregunta sobra: el contenedor de arriba ya enseña la
+          // relación y el "separar". Dejar las dos cosas era decirlo dos veces
+          // con dos controles distintos.
+          if (atado) return null;
           return (
             <button
               key={par.foto + par.saco}

@@ -298,6 +298,64 @@ export type DraftLeida = {
   leido: { color: string; hex: string };
 };
 
+// LOS CHIPS TOCABLES (handoff de carga): la tarjeta ya no se abre entera.
+//
+// Antes el carrete pintaba el formulario COMPLETO por prenda —siete secciones
+// siempre visibles— y el espejo lo escondía todo tras un "afinar" que también
+// lo abría entero. Las dos formas fallaban igual: para corregir UN campo había
+// que atravesar seis sanos, y con doce prendas la pantalla era un muro.
+//
+// Ahora cada prenda es una fila con chips que DICEN el valor actual (tipo,
+// color con su punto, formalidad, "+ más"), y tocar uno abre SOLO su editor.
+// Elegir cierra. El chip es a la vez el resumen y la puerta — no hay estado
+// "abierto del todo".
+type Seccion = "tipo" | "color" | "formalidad" | "mas";
+const SECCION_DE_CAMPO: Record<string, Seccion> = {
+  categoria: "tipo",
+  color: "color",
+  formalidad: "formalidad",
+  corte: "mas",
+  largo: "mas",
+  material: "mas",
+  patron: "mas",
+};
+
+/** Un chip del resumen: enseña el valor actual y abre su editor al tocarlo.
+ *  `alerta` = el modelo marcó ese campo como inseguro (borde warning: es la
+ *  invitación a revisar justo ése, sin abrir nada más). */
+function ChipResumen({
+  activo,
+  alerta,
+  dashed,
+  onClick,
+  children,
+}: {
+  activo: boolean;
+  alerta?: boolean;
+  dashed?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={activo}
+      className={`inline-flex min-h-7 items-center gap-1.5 whitespace-nowrap rounded-sm border px-2 text-[11.5px] font-medium transition-colors ${
+        dashed ? "border-dashed" : ""
+      } ${
+        activo
+          ? "border-accent bg-accent-soft text-accent"
+          : alerta
+            ? "border-warning/70 bg-surface text-ink"
+            : "border-line bg-surface text-ink"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function DraftCard({
   item,
   yaEsta,
@@ -332,12 +390,21 @@ export function DraftCard({
   const [todosLosColores, setTodosLosColores] = useState(false);
   /** La decisión del duplicado: null = sin contestar. */
   const [dupe, setDupe] = useState<null | "misma" | "otra">(null);
-  // Cerrada sólo si se pidió compacta Y el modelo dice que la vio bien. Cuando
-  // declara baja confianza o marca campos inseguros, se abre sola: esconder
-  // justo lo que hay que revisar sería quedarse con lo peor de las dos formas.
-  const [abierta, setAbierta] = useState(
-    !compacta || baja || (a.inseguro ?? []).length > 0
-  );
+  // Qué editor arranca abierto: el del PRIMER campo que el modelo marcó como
+  // inseguro. Sustituye al viejo "se abre entera cuando hay algo dudoso" —
+  // abrir siete secciones para revisar una enterraba la dudosa entre seis
+  // sanas. Con confianza baja y sin campo señalado, no se abre nada: el badge
+  // de "no la vi bien" y los bordes warning de los chips ya dicen dónde mirar.
+  const [seccion, setSeccion] = useState<Seccion | null>(() => {
+    for (const campo of a.inseguro ?? []) {
+      const sec = SECCION_DE_CAMPO[campo];
+      if (sec) return sec;
+    }
+    return null;
+  });
+  const inseguro = new Set<string>(a.inseguro ?? []);
+  /** Tocar el chip abierto lo cierra; tocar otro cambia de editor. */
+  const abre = (sec: Seccion) => setSeccion(seccion === sec ? null : sec);
   // El nombre que se enseña es el que LEYÓ la visión ("gris oscuro"), no el del
   // atajo más parecido: es más específico y es lo que de verdad se guardó.
   const colorName = a.color;
@@ -385,7 +452,9 @@ export function DraftCard({
           <input
             value={a.nombre}
             onChange={(e) => onPatch({ nombre: e.target.value }, ["nombre"])}
-            className="min-h-9 rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+            className={`min-h-9 rounded-sm border border-line bg-surface px-2.5 text-sm outline-none focus:border-accent ${
+              item.on ? "text-ink" : "text-muted line-through"
+            }`}
           />
           {baja && (
             <span className="w-fit rounded-sm bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
@@ -483,113 +552,160 @@ export function DraftCard({
         </button>
       </div>
 
-      {item.on && !abierta ? (
-        <button
-          type="button"
-          onClick={() => setAbierta(true)}
-          className="flex min-h-9 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
-        >
-          <Icon name="mas" size={13} />
-          afinar color, tipo, material y marca
-        </button>
+      {/* Los chips sólo viven mientras la prenda está prendida: apagada, la
+          fila queda en nombre tachado y nada tocable (handoff). */}
+      {item.on ? (
+        <div className="flex flex-wrap gap-1.5">
+          <ChipResumen
+            activo={seccion === "tipo"}
+            alerta={inseguro.has("categoria")}
+            onClick={() => abre("tipo")}
+          >
+            {CATEGORIAS.find((c) => c.v === a.categoria)?.l ?? "tipo"}
+          </ChipResumen>
+          <ChipResumen
+            activo={seccion === "color"}
+            alerta={inseguro.has("color")}
+            onClick={() => abre("color")}
+          >
+            <span
+              className="h-3 w-3 shrink-0 rounded-full border border-line"
+              style={{ backgroundColor: a.color_hex }}
+              aria-hidden
+            />
+            {colorName}
+          </ChipResumen>
+          <ChipResumen
+            activo={seccion === "formalidad"}
+            alerta={inseguro.has("formalidad")}
+            onClick={() => abre("formalidad")}
+          >
+            {FORMALIDADES.find((f) => f.v === a.formalidad)?.l ?? "formalidad"}
+          </ChipResumen>
+          <ChipResumen
+            dashed
+            activo={seccion === "mas"}
+            alerta={["corte", "largo", "material", "patron"].some((c) => inseguro.has(c))}
+            onClick={() => abre("mas")}
+          >
+            + más
+          </ChipResumen>
+        </div>
       ) : null}
 
-      {item.on && abierta && (
+      {/* EL EDITOR EN SITIO: sólo la sección del chip tocado. En tipo, color
+          y formalidad ELEGIR CIERRA — la corrección típica es un tap, no una
+          sesión de formulario. En "+ más" no: son varios campos opcionales y
+          cerrarse al primero obligaría a reabrir por cada uno; ahí cierra el
+          botón "listo". */}
+      {item.on && seccion === "tipo" && (
+        <Field label="Tipo">
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORIAS.map((c) => (
+              <button
+                key={c.v}
+                type="button"
+                onClick={() => {
+                  onPatch({ categoria: c.v }, ["categoria"]);
+                  setSeccion(null);
+                }}
+                className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
+                  a.categoria === c.v
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-line bg-surface text-muted"
+                }`}
+              >
+                {c.l}
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      {item.on && seccion === "color" && (
+        <Field label={`Color · ${colorName}`}>
+          <div className="flex flex-wrap gap-2">
+            {/* EL COLOR QUE LEÍ, con su hex exacto y encendido. Va primero y
+                sólo aparece cuando no coincide con ningún atajo de la paleta:
+                es la respuesta a "¿por qué no hay ninguno marcado?" — sí lo
+                detectó, y con más precisión que cualquiera de los 11. Sin este
+                swatch, la pantalla invita a tocar el gris de en medio para
+                "arreglarlo", y eso EMPEORA el dato. */}
+            {hayLeido ? (
+              <button
+                type="button"
+                aria-label={`${item.leido.color} — el que leí`}
+                title={`${item.leido.color} — el que leí`}
+                onClick={() => {
+                  onPatch({ color: item.leido.color, color_hex: item.leido.hex }, ["color"]);
+                  setSeccion(null);
+                }}
+                className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                  mismoHex(a.color_hex, item.leido.hex)
+                    ? "scale-110 border-accent"
+                    : "border-line"
+                }`}
+                style={{ backgroundColor: item.leido.hex }}
+              />
+            ) : null}
+            {mostrar.map((pOp) => (
+              <button
+                key={pOp.hex}
+                type="button"
+                onClick={() => {
+                  onPatch({ color: pOp.name, color_hex: pOp.hex }, ["color"]);
+                  setSeccion(null);
+                }}
+                aria-label={pOp.name}
+                title={pOp.name}
+                className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                  mismoHex(a.color_hex, pOp.hex) ? "scale-110 border-accent" : "border-line"
+                }`}
+                style={{ backgroundColor: pOp.hex }}
+              />
+            ))}
+            {/* La puerta. Sin esto, una lectura MUY equivocada sería
+                incorregible — ver el comentario de `cercanos`. Abre más
+                swatches SIN cerrar la sección: quien la pidió sigue buscando. */}
+            {!todosLosColores ? (
+              <button
+                type="button"
+                onClick={() => setTodosLosColores(true)}
+                className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+              >
+                otro color
+              </button>
+            ) : null}
+          </div>
+        </Field>
+      )}
+
+      {item.on && seccion === "formalidad" && (
+        <Field label="Formalidad">
+          <div className="flex flex-wrap gap-1.5">
+            {FORMALIDADES.map((f) => (
+              <button
+                key={f.v}
+                type="button"
+                onClick={() => {
+                  onPatch({ formalidad: f.v }, ["formalidad"]);
+                  setSeccion(null);
+                }}
+                className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
+                  a.formalidad === f.v
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-line bg-surface text-muted"
+                }`}
+              >
+                {f.l}
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      {item.on && seccion === "mas" && (
         <>
-          <Field label="Tipo">
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIAS.map((c) => (
-                <button
-                  key={c.v}
-                  type="button"
-                  onClick={() => onPatch({ categoria: c.v }, ["categoria"])}
-                  className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                    a.categoria === c.v
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-surface text-muted"
-                  }`}
-                >
-                  {c.l}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label={`Color · ${colorName}`}>
-            <div className="flex flex-wrap gap-2">
-              {/* EL COLOR QUE LEÍ, con su hex exacto y encendido. Va primero y
-                  sólo aparece cuando no coincide con ningún atajo de la paleta:
-                  es la respuesta a "¿por qué no hay ninguno marcado?" — sí lo
-                  detectó, y con más precisión que cualquiera de los 11. Sin
-                  este swatch, la pantalla invita a tocar el gris de en medio
-                  para "arreglarlo", y eso EMPEORA el dato. */}
-              {hayLeido ? (
-                <button
-                  type="button"
-                  aria-label={`${item.leido.color} — el que leí`}
-                  title={`${item.leido.color} — el que leí`}
-                  onClick={() =>
-                    onPatch(
-                      { color: item.leido.color, color_hex: item.leido.hex },
-                      ["color"]
-                    )
-                  }
-                  className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                    mismoHex(a.color_hex, item.leido.hex)
-                      ? "scale-110 border-accent"
-                      : "border-line"
-                  }`}
-                  style={{ backgroundColor: item.leido.hex }}
-                />
-              ) : null}
-              {mostrar.map((p) => (
-                <button
-                  key={p.hex}
-                  type="button"
-                  onClick={() => onPatch({ color: p.name, color_hex: p.hex }, ["color"])}
-                  aria-label={p.name}
-                  title={p.name}
-                  className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                    mismoHex(a.color_hex, p.hex)
-                      ? "scale-110 border-accent"
-                      : "border-line"
-                  }`}
-                  style={{ backgroundColor: p.hex }}
-                />
-              ))}
-              {/* La puerta. Sin esto, una lectura MUY equivocada sería
-                  incorregible — ver el comentario de `cercanos`. */}
-              {!todosLosColores ? (
-                <button
-                  type="button"
-                  onClick={() => setTodosLosColores(true)}
-                  className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-                >
-                  otro color
-                </button>
-              ) : null}
-            </div>
-          </Field>
-
-          <Field label="Formalidad">
-            <div className="flex flex-wrap gap-1.5">
-              {FORMALIDADES.map((f) => (
-                <button
-                  key={f.v}
-                  type="button"
-                  onClick={() => onPatch({ formalidad: f.v }, ["formalidad"])}
-                  className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                    a.formalidad === f.v
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-surface text-muted"
-                  }`}
-                >
-                  {f.l}
-                </button>
-              ))}
-            </div>
-          </Field>
-
           {/* Corte y largo SÓLO donde cambian el look: en un zapato o un
               cinturón no significan nada. La lista se importa de afinar-prendas
               para que ficha, card y este editor no se desincronicen. */}
@@ -634,9 +750,9 @@ export function DraftCard({
           {/* MARCA Y TALLA, y aquí sí — pero sólo aquí dentro.
               Roberto las pidió al dar de alta, y la objeción sigue en pie: en la
               carga masiva, quince prendas por dos campos de texto es la fricción
-              de catalogar que este producto existe para no tener. Pero este
-              bloque está CERRADO por defecto: quien lo abrió ya decidió afinar
-              esa prenda, y negárselas ahí sería mandarlo a la ficha a repetir un
+              de catalogar que este producto existe para no tener. Pero "+ más"
+              está cerrado por defecto: quien lo abrió ya decidió afinar esa
+              prenda, y negárselas ahí sería mandarlo a la ficha a repetir un
               viaje que ya venía haciendo.
               Ningún modelo las lee (marca: 2 de 336 prendas, y sólo por el logo;
               la talla vive en una etiqueta por dentro), así que llegan vacías
@@ -659,6 +775,14 @@ export function DraftCard({
               />
             </Field>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setSeccion(null)}
+            className="min-h-9 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-ink transition-colors hover:border-accent"
+          >
+            listo
+          </button>
         </>
       )}
     </div>

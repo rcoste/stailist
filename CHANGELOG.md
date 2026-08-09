@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.202.0] - 2026-08-09
+
+### Changed — confirmar prendas: chips tocables y el traje que se ve atado
+
+Segunda y tercera pieza del handoff de la carga (la primera fue el duplicado lado a lado, 0.2.201.0).
+
+**Chips tocables.** La tarjeta de confirmar ya no se abre entera. Antes el carrete pintaba el formulario completo por prenda —siete secciones siempre visibles— y el espejo lo escondía todo tras un "afinar" que también lo abría entero; las dos formas fallaban igual: para corregir UN campo había que atravesar seis sanos. Ahora cada prenda es una fila con chips que **dicen el valor actual** (tipo · color con su punto · formalidad · "+ más" punteado) y tocar uno abre SOLO su editor. En tipo, color y formalidad **elegir cierra** — la corrección típica es un tap. En "+ más" (cómo le queda, largo, material, patrón, marca y talla) cierra el botón "listo", porque son varios campos opcionales y cerrarse al primero obligaría a reabrir por cada uno.
+
+Los campos que el modelo marcó inseguros llevan **borde warning en su chip**, y el primero arranca con su editor abierto — sustituye al viejo "se abre entera cuando hay algo dudoso", que enterraba lo dudoso entre lo sano. Apagada la prenda: nombre tachado y chips fuera.
+
+**El traje se ve atado.** El modelo de conjunto ya existía (`attrs.conjunto`, 12 prendas en prod); lo que no existía era VERLO — atabas el traje con la casilla y las dos tarjetas seguían pintadas como prendas sin relación. Ahora las piezas del mismo conjunto viven en un contenedor con cabecera ("mismo traje · N piezas") y **"separar"**. Separar solo quita la relación y es reversible: la pregunta de "¿son un traje?" vuelve a aparecer, que es el "volver a unir".
+
+**Divergencia del handoff, deliberada**: el handoff detecta el conjunto solo ("misma tela en la misma foto, las dejo juntas"); aquí se sigue PREGUNTANDO. `lib/par-de-traje.ts` tiene escrito el porqué — la visión no distingue "misma tela" con fiabilidad, y solo el dueño sabe si son traje. La pregunta cuesta un tap; un auto-atado equivocado cuesta un conjunto falso que el motor respeta.
+
+Verificado en el navegador con una foto compuesta (blazer + chinos del propio handoff): la visión los leyó como saco + pantalón casual-formal y la pregunta NO salió (correcto: chinos no son traje); corrigiendo la formalidad a "Formal" **vía el propio chip**, la pregunta apareció, atar pintó el contenedor, y separar la trajo de vuelta.
+
 ## [0.2.201.0] - 2026-08-09
 
 ### Changed — el duplicado se decide viendo las dos fotos, no adivinando
