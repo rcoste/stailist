@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.181.0] - 2026-08-08
+
+### Changed — una acción, dos llamadas
+
+Roberto: *"¿por qué no hacemos dos llamadas distintas, una que haga lo de la evaluación y otra lo del reconocimiento de imágenes, que es lo que ya tenemos, para no entorpecer el prompt inicial?"*.
+
+**Eso ya era así.** `/api/espejo` evalúa con el modelo bueno y su propio prompt; `/api/espejo/prendas` reconoce con **exactamente el mismo `leerPrendas` del multiprenda**. Separadas desde el primer día, justo por lo que él dice: mezclarlas costaría lo que ya se midió — añadir un campo al schema de un lector mueve otras lecturas con **z = 3.05**, y seguía moviéndolas sin tocar una palabra del prompt.
+
+Lo que faltaba es la otra mitad de su frase, *"para acción, dos cosas"*: el reconocimiento vivía detrás de un enlace (*"¿hay algo aquí que no esté en tu clóset?"*) y si no lo tocabas, la entrada del diario se quedaba sin prendas para siempre.
+
+Ahora **las dos arrancan con la misma acción**, en paralelo. Medido con su foto real:
+
+| | |
+|---|---|
+| evaluación (sonnet) | 4.7 s |
+| reconocimiento (gemini) | **2.7 s** |
+| en paralelo | 4.7 s |
+| si fueran en serie | 7.4 s |
+
+El reconocimiento termina **2 segundos antes** que el consejo: cuando la respuesta aparece, la lista de prendas ya está. En tiempo de espera sale gratis.
+
+Y siguen siendo independientes: si el reconocimiento falla, el consejo sale igual y aparece un reintentar. Las prendas que ya son suyas se cuelgan solas del look —no hay nada que confirmar en algo que ya está en su clóset— y las nuevas siguen pidiendo confirmación antes de entrar.
+
 ## [0.2.180.0] - 2026-08-08
 
 ### Fixed — los thumbnails del espejo NO PODÍAN salir nunca

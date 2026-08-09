@@ -52,7 +52,6 @@ type State =
 type YaEsta = { id: string; nombre: string; comoEsta: string };
 
 type Sumar =
-  | { paso: "oferta" }
   | { paso: "buscando" }
   | { paso: "nada"; vistas: number; yaEstan: YaEsta[]; fallo?: boolean }
   | {
@@ -88,7 +87,8 @@ function comprimir(file: Blob): Promise<{ dataUrl: string; blob: Blob }> {
       canvas.toBlob(
         (blob) => {
           URL.revokeObjectURL(img.src);
-          blob ? resolve({ dataUrl, blob }) : reject(new Error("no_blob"));
+          if (blob) resolve({ dataUrl, blob });
+          else reject(new Error("no_blob"));
         },
         "image/jpeg",
         0.85
@@ -121,7 +121,7 @@ export function EspejoFlow({
   ref?: Ref<EspejoHandle>;
 }) {
   const [state, setState] = useState<State>({ kind: "idle" });
-  const [sumar, setSumar] = useState<Sumar>({ paso: "oferta" });
+  const [sumar, setSumar] = useState<Sumar>({ paso: "buscando" });
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -156,7 +156,30 @@ export function EspejoFlow({
         dondeEstoy(),
       ]);
 
+      // UNA ACCIÓN, DOS LLAMADAS, EN PARALELO — idea de Roberto.
+      //
+      // Son dos trabajos distintos y por eso son dos llamadas distintas desde el
+      // principio: la evaluación la hace el modelo bueno con su propio prompt, y
+      // el reconocimiento es EXACTAMENTE el mismo `leerPrendas` del multiprenda.
+      // Mezclarlos en un prompt sería lo que ya se midió que cuesta caro (añadir
+      // un campo al schema de un lector mueve otras lecturas con z = 3.05).
+      //
+      // Lo que cambia es que ya no hace falta pedir el segundo: antes vivía
+      // detrás de un enlace, y si no lo tocabas, la entrada del diario se
+      // quedaba sin prendas. Reconocer no depende del clima ni de la ubicación,
+      // así que arranca a la vez y suele terminar ANTES que el consejo — cuando
+      // el consejo aparece, la lista ya está.
+      //
+      // Y son independientes: si el reconocimiento falla, el consejo sale igual.
       const hora = new Date().getHours();
+      const reconocer = fetch("/api/espejo/prendas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
       const res = await fetch("/api/espejo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -179,9 +202,41 @@ export function EspejoFlow({
         return;
       }
       const lectura = (await res.json()) as LecturaEspejo & { outfitId?: string | null };
-      setSumar({ paso: "oferta" });
-      setState({ kind: "listo", preview, lectura, outfitId: lectura.outfitId ?? null });
-      // El diario ya tiene una entrada nueva.
+      const outfitId = lectura.outfitId ?? null;
+      setSumar({ paso: "buscando" });
+      setState({ kind: "listo", preview, lectura, outfitId });
+
+      // El reconocimiento, que ya venía corriendo.
+      const rec = (await reconocer) as
+        | { prendas: PrendaDetectada[]; vistas: number; yaEstan: YaEsta[] }
+        | null;
+      if (!rec) {
+        setSumar({ paso: "nada", vistas: 0, yaEstan: [], fallo: true });
+      } else {
+        // Las suyas se cuelgan solas: no hay nada que confirmar en una prenda
+        // que ya está en su clóset.
+        if (outfitId && rec.yaEstan.length > 0) {
+          await ligarPrendasAlEspejo(outfitId, rec.yaEstan.map((y) => y.id));
+        }
+        setSumar(
+          rec.prendas.length === 0
+            ? { paso: "nada", vistas: rec.vistas, yaEstan: rec.yaEstan }
+            : {
+                paso: "elegir",
+                prendas: rec.prendas.map((p) => ({
+                  id: crypto.randomUUID(),
+                  attrs: p,
+                  on: true,
+                  photoPreview: preview,
+                  leido: { color: p.color, hex: p.color_hex },
+                })),
+                tocados: {},
+                vistas: rec.vistas,
+                yaEstan: rec.yaEstan,
+              }
+        );
+      }
+      // El diario ya tiene una entrada nueva, con sus prendas.
       router.refresh();
     } catch {
       setState({ kind: "error", msg: "No pude leer la foto. Inténtalo otra vez." });
@@ -350,22 +405,9 @@ export function EspejoFlow({
                   consejo es a lo que vino, y esto es un extra que la mayoría de
                   los días no aplica porque te pusiste lo que ya tienes. */}
               <div className="border-t border-line pt-3">
-                {sumar.paso === "oferta" ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      buscarPrendas(state.preview, state.kind === "listo" ? state.outfitId : null)
-                    }
-                    className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-accent"
-                  >
-                    <Icon name="mas" size={14} />
-                    ¿hay algo aquí que no esté en tu clóset?
-                  </button>
-                ) : null}
-
                 {sumar.paso === "buscando" ? (
                   <p className="flex items-center gap-2 text-[13px] text-muted">
-                    <Spinner className="h-3.5 w-3.5" /> viendo qué te falta…
+                    <Spinner className="h-3.5 w-3.5" /> viendo qué traes puesto…
                   </p>
                 ) : null}
 
