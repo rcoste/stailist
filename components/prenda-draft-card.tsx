@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Icon } from "@/components/icon";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
+import { ejemploDeTalla } from "@/lib/prenda-atributos";
 import type { PrendaExistente } from "@/lib/ya-la-tienes";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
@@ -219,7 +220,9 @@ export const mismoHex = (a?: string, b?: string) =>
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    // `min-w-0 flex-1`: cuando dos Field comparten fila (marca y talla), sin
+    // esto el input no baja de lo que mide su texto de ejemplo y se sale.
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <span className="text-[11px] font-medium uppercase tracking-wide text-muted">{label}</span>
       {children}
     </div>
@@ -353,12 +356,26 @@ export function DraftCard({
       }`}
     >
       <div className="flex items-start gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.photoPreview}
-          alt=""
-          className="h-16 w-12 shrink-0 rounded-md border border-line object-cover"
-        />
+        {/* LA MINIATURA, O EL COLOR.
+            En el carrete cada prenda viene de una foto distinta, así que la
+            miniatura sirve para saber de cuál. En el espejo TODAS salen de la
+            misma foto: enseñar tu cuerpo entero cuatro veces seguidas no
+            identifica nada, sólo llena la pantalla de ruido. Ahí manda el color
+            leído, que es lo único que distingue una fila de la siguiente. */}
+        {compacta ? (
+          <span
+            className="h-16 w-12 shrink-0 rounded-md border border-line"
+            style={{ backgroundColor: item.leido.hex }}
+            aria-hidden
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.photoPreview}
+            alt=""
+            className="h-16 w-12 shrink-0 rounded-md border border-line object-cover"
+          />
+        )}
         <div className="flex flex-1 flex-col gap-1.5">
           <input
             value={a.nombre}
@@ -428,9 +445,10 @@ export function DraftCard({
         <button
           type="button"
           onClick={() => setAbierta(true)}
-          className="self-start text-[12px] text-muted underline underline-offset-2 transition-colors hover:text-accent"
+          className="flex min-h-9 items-center justify-center gap-1.5 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
         >
-          afinar color, tipo y material
+          <Icon name="mas" size={13} />
+          afinar color, tipo, material y marca
         </button>
       ) : null}
 
@@ -570,6 +588,35 @@ export function DraftCard({
               vacio="sin dato"
             />
           </Field>
+
+          {/* MARCA Y TALLA, y aquí sí — pero sólo aquí dentro.
+              Roberto las pidió al dar de alta, y la objeción sigue en pie: en la
+              carga masiva, quince prendas por dos campos de texto es la fricción
+              de catalogar que este producto existe para no tener. Pero este
+              bloque está CERRADO por defecto: quien lo abrió ya decidió afinar
+              esa prenda, y negárselas ahí sería mandarlo a la ficha a repetir un
+              viaje que ya venía haciendo.
+              Ningún modelo las lee (marca: 2 de 336 prendas, y sólo por el logo;
+              la talla vive en una etiqueta por dentro), así que llegan vacías
+              siempre — nada que corregir, sólo que escribir si quiere. */}
+          <div className="flex gap-2">
+            <Field label="Marca">
+              <input
+                value={a.marca ?? ""}
+                onChange={(e) => onPatch({ marca: e.target.value }, ["marca"])}
+                placeholder="Uniqlo, Zara…"
+                className="min-h-9 w-full rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+              />
+            </Field>
+            <Field label="Talla">
+              <input
+                value={a.talla ?? ""}
+                onChange={(e) => onPatch({ talla: e.target.value }, ["talla"])}
+                placeholder={ejemploDeTalla(a.categoria)}
+                className="min-h-9 w-full rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+              />
+            </Field>
+          </div>
         </>
       )}
     </div>

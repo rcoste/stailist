@@ -102,6 +102,18 @@ export type PrendaAnalisis = {
    * parecido apagaría la regla en el único caso donde sirve.
    */
   conjunto?: string;
+  /**
+   * MARCA Y TALLA — tampoco las produce el modelo, y por eso no están en
+   * SCHEMA_PRENDA. Las teclea la persona.
+   *
+   * Son los dos únicos atributos que ninguna visión puede leer: la marca sólo
+   * si hay un logo legible (2 de 336 prendas de la base), y la talla vive en
+   * una etiqueta por dentro que no sale en ninguna foto. Su consumidor no es el
+   * motor: es ella mirando dos playeras blancas y necesitando saber cuál es la
+   * de Uniqlo y cuál la de Express.
+   */
+  marca?: string;
+  talla?: string;
 };
 
 /** El prompt, palabra por palabra. Lo comparte producción con el comparador. */
