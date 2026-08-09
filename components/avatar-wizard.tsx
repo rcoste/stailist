@@ -151,6 +151,30 @@ export function AvatarWizard({
   const faceInputRef = useRef<HTMLInputElement>(null);
   // Qué etapa está generando/falló (para los mensajes y el retry del error).
   const [genKind, setGenKind] = useState<"cara" | "cuerpo">("cara");
+  // EL RETRATO SE DIBUJA MIENTRAS ELLA CONTESTA (idea de Roberto, 2026-08-09).
+  //
+  // Antes el orden era fotos → [20s de spinner] → cara → complexión y estatura →
+  // [otros 20s] → avatar. Los 20s del retrato eran tiempo muerto y las preguntas
+  // eran un paso en serie DESPUÉS.
+  //
+  // Ahora el retrato arranca al salir de las fotos y las preguntas se contestan
+  // encima de esa espera. No es sólo tapar el hueco: el cuerpo NO puede empezar
+  // hasta que el retrato está aprobado (va anclado a él), así que esos segundos
+  // son serie inevitable y las preguntas son la ÚNICA pieza movible del flujo.
+  // Contestadas antes, `generateBody` puede dispararse en el instante en que
+  // ella dice "sí, soy yo".
+  //
+  // CUÁNTO ES: 20.5s medidos (16.6 de Gemini + 3.7 del juez). n = 1 — la
+  // instrumentación de tiempos es nueva y de 53 generaciones sólo una trae
+  // reloj, así que es orden de magnitud, no número fino. Con 20s, dos taps
+  // caben de sobra.
+  //
+  // LO QUE NO ARREGLA: si ella pide ajustes al retrato, esas regeneraciones
+  // siguen siendo espera pelada. El ahorro se cobra una vez, en la primera.
+  const [caraEstado, setCaraEstado] = useState<"idle" | "vuelo" | "lista" | "falla">("idle");
+  // Está parada en la pantalla de espera aguardando al retrato (contestó antes
+  // de que aterrizara).
+  const [esperandoCara, setEsperandoCara] = useState(false);
   // Las caras comprimidas se cachean: los ajustes regeneran sin recomprimir.
   const facesRef = useRef<{ face: string; extra: string[] } | null>(null);
   // Character sheet (A2): 3 vistas en una imagen. Se genera EN PARALELO mientras
@@ -207,6 +231,7 @@ export function AvatarWizard({
       facesRef.current = null;
       setFaceGen(null);
       setFaceVeredicto(null);
+      setCaraEstado("idle");
     }
     setPhotos((p) => ({ ...p, [slot]: file }));
     setPreviews((prev) => {
@@ -268,10 +293,18 @@ export function AvatarWizard({
   }
 
   // Etapa 1: retrato. `ajuste` = corrección dirigida sobre el retrato previo.
-  async function generateFace(ajuste?: string) {
+  //
+  // `fondo` = corre mientras ella contesta complexión y estatura: NO toca la
+  // pantalla ni al empezar ni al fallar. Que un fallo la sacara de la forma a
+  // media escritura sería peor que la espera que estamos quitando; el error se
+  // guarda en `caraEstado` y sólo se enseña cuando ella pide avanzar.
+  async function generateFace(ajuste?: string, fondo = false) {
     setGenKind("cara");
-    setGenMsg(GEN_MSGS_CARA[0]);
-    setStep("generando");
+    setCaraEstado("vuelo");
+    if (!fondo) {
+      setGenMsg(GEN_MSGS_CARA[0]);
+      setStep("generando");
+    }
     try {
       const { face, extra } = await facesB64();
       const res = await fetch("/api/avatar/generate", {
@@ -295,11 +328,61 @@ export function AvatarWizard({
       setFaceVeredicto({ score: data.score ?? null, problema: data.problema ?? "" });
       setAjusteLibre("");
       setFails(0);
-      setStep("cara");
+      setCaraEstado("lista");
+      // En fondo NO se navega: ella sigue contestando. El efecto de abajo la
+      // pasa al retrato sólo si ya está esperándolo.
+      if (!fondo) setStep("cara");
     } catch {
       setFails((n) => n + 1);
+      setCaraEstado("falla");
+      if (!fondo) setStep("error");
+    }
+  }
+
+  // Ella terminó antes que el retrato y está en la pantalla de espera: en
+  // cuanto aterrice (o falle) se la lleva. Sin esto el botón la dejaba mirando
+  // un spinner que ya no giraba por nada.
+  useEffect(() => {
+    if (!esperandoCara) return;
+    if (caraEstado === "lista") {
+      setEsperandoCara(false);
+      setStep("cara");
+    } else if (caraEstado === "falla") {
+      setEsperandoCara(false);
       setStep("error");
     }
+  }, [esperandoCara, caraEstado]);
+
+  /** Salir de las fotos: el retrato arranca y ella pasa a las preguntas. */
+  function empezar() {
+    void generateFace(undefined, true);
+    setStep("cuerpo");
+  }
+
+  /** Salir de las preguntas hacia el retrato.
+   *
+   *  Tres desenlaces: ya aterrizó (pasa directo), falló (ahora sí el error, con
+   *  sus respuestas intactas — siguen en estado, la pantalla de error no
+   *  desmonta nada), o sigue en vuelo (espera con cara). */
+  function continuarDesdeCuerpo() {
+    // Revisita desde el preview ("cambiar cuerpo"): ahí el retrato ya está
+    // aprobado y lo que quiere es rehacer el cuerpo, no volver a verse la cara.
+    if (generated) {
+      void generateBody();
+      return;
+    }
+    if (caraEstado === "lista") {
+      setStep("cara");
+      return;
+    }
+    setGenKind("cara");
+    if (caraEstado === "falla") {
+      setStep("error");
+      return;
+    }
+    setGenMsg(GEN_MSGS_CARA[0]);
+    setEsperandoCara(true);
+    setStep("generando");
   }
 
   // Etapa 2: cuerpo completo anclado al retrato aprobado.
@@ -379,15 +462,15 @@ export function AvatarWizard({
           En "generando"/"error" (transitorias) no va. */}
       {step === "fotos" || step === "cara" || step === "cuerpo" || step === "preview" ? (
         <ProgressHeader
-          paso={step === "fotos" ? 1 : step === "cara" ? 2 : step === "cuerpo" ? 3 : "listo"}
+          paso={step === "fotos" ? 1 : step === "cuerpo" ? 2 : step === "cara" ? 3 : "listo"}
           onBack={
             step === "fotos"
               ? () => router.push(returnTo)
-              : step === "cara"
+              : step === "cuerpo"
                 ? () => setStep("fotos")
-                : step === "cuerpo"
-                  ? () => setStep("cara")
-                  : () => setStep("cuerpo")
+                : step === "cara"
+                  ? () => setStep("cuerpo")
+                  : () => setStep("cara")
           }
         />
       ) : null}
@@ -504,11 +587,14 @@ export function AvatarWizard({
           <button
             type="button"
             disabled={!canContinue}
-            onClick={() => generateFace()}
+            onClick={empezar}
             className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent px-5 text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
           >
             <Icon name="destello" size={16} />
-            ver mi retrato
+            {/* Ya no lleva al retrato: lleva a las preguntas mientras el
+                retrato se dibuja. Dejar "ver mi retrato" sería el mismo tipo de
+                mentira que el CTA de los pares del onboarding. */}
+            empezar
           </button>
           {skipHref ? (
             <Link
@@ -555,10 +641,12 @@ export function AvatarWizard({
             )
           ) : null}
 
-          {/* Camino feliz: siempre manda. */}
+          {/* Camino feliz: siempre manda. Y ahora dispara el cuerpo DIRECTO —
+              complexión y estatura ya se contestaron mientras se dibujaba este
+              retrato, así que no queda nada que preguntar en medio. */}
           <button
             type="button"
-            onClick={() => setStep("cuerpo")}
+            onClick={generateBody}
             className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             <Icon name="check" size={16} />
@@ -629,6 +717,34 @@ export function AvatarWizard({
 
       {step === "cuerpo" && (
         <div className="mt-2 flex flex-col gap-5">
+          {/* QUE SE VEA QUE ALGO PASA. Sin esta línea, esconder la generación
+              detrás de las preguntas no se siente como ganar tiempo: se siente
+              como que el trabajo empieza cuando pulsas "siguiente" y aparece el
+              spinner. Decirlo convierte latencia escondida en progreso visible,
+              que es lo que de verdad se está comprando aquí.
+              En la revisita desde el preview no va: ahí el retrato lleva rato
+              aprobado y la línea sería ruido. */}
+          {/* En "falla" no va NADA — ni la línea ni el hueco. El aviso se calla
+              a propósito: el error se enseña cuando ella pulsa continuar, no
+              interrumpiéndola a media forma. Excluir "falla" del condicional
+              (en vez de devolver null dentro) evita el párrafo vacío, que
+              seguía cobrando su gap-5 y dejaba un salto sin causa visible. */}
+          {!generated && (caraEstado === "vuelo" || caraEstado === "lista") ? (
+            <p className="flex items-center gap-2 text-[13px] leading-snug text-muted">
+              {caraEstado === "lista" ? (
+                <>
+                  <Icon name="check" size={14} />
+                  Tu retrato ya está listo — lo ves al terminar.
+                </>
+              ) : (
+                <>
+                  <Spinner className="h-3.5 w-3.5" />
+                  Mientras contestas, te voy dibujando el retrato.
+                </>
+              )}
+            </p>
+          ) : null}
+
           {metodo === "foto" ? (
             // MÉTODO POR FOTO (sigue disponible, ya no como pantalla-bifurcación).
             <>
@@ -752,11 +868,15 @@ export function AvatarWizard({
           <button
             type="button"
             disabled={!puedeGenerar}
-            onClick={generateBody}
+            onClick={continuarDesdeCuerpo}
             className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent px-5 text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
           >
             <Icon name="destello" size={16} />
-            generar mi avatar
+            {generated
+              ? "generar mi avatar"
+              : caraEstado === "lista"
+                ? "listo — ver mi retrato"
+                : "siguiente"}
           </button>
 
           {/* La bifurcación, ahora como link (no como pantalla): sin costar un paso. */}
@@ -783,7 +903,9 @@ export function AvatarWizard({
       {step === "generando" && (
         <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
           <span className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-accent" />
-          <p className="text-sm font-medium text-ink">{genMsg}</p>
+          <p className="text-sm font-medium text-ink">
+            {esperandoCara ? "Terminando tu retrato…" : genMsg}
+          </p>
           {/* El aviso va por delante y no cuando ya se rompió: generar el avatar
               tarda ~40s, y en iOS cambiar de app suspende la pestaña y mata la
               petición. Alberto lo perdió justo aquí, al aceptar el retrato. */}
