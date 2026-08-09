@@ -475,6 +475,22 @@ export async function addPhotoItems(
      * así que la miniatura sigue siendo el dibujo limpio.
      */
     photoPath?: string | null;
+    /**
+     * La foto de donde salió la prenda, GUARDADA APARTE de `photo_path`.
+     *
+     * Existe por una inconsistencia que Roberto pidió cerrar: el carrete dibuja
+     * con imagen→imagen desde la foto, y el clóset —cuando le toca dibujar
+     * después— lo hacía desde el NOMBRE, porque estas prendas entran sin foto.
+     * Misma prenda, dos resultados: fiel si la dibujas en el momento, genérica
+     * si lo dejas para luego.
+     *
+     * No puede ir en `photo_path` aunque sea el sitio natural, y por dos
+     * motivos concretos: esa columna es de dónde sale la MINIATURA (mientras no
+     * haya render, el clóset enseñaría su cuerpo entero como si fuera la
+     * prenda), y además cuenta como "ya tiene imagen" en la guarda del
+     * auto-sanado, que entonces no la dibujaría nunca.
+     */
+    origenFoto?: string | null;
   }[]
 ): Promise<{ ok: boolean; added: number; dejadas?: number; ids?: string[] }> {
   // EL TOPE SE DICE, NO SE ESCONDE. Antes esto era `slice(0, 30)` a secas y la
@@ -501,6 +517,9 @@ export async function addPhotoItems(
     if (it.photoPath && !it.photoPath.startsWith(`${user.id}/`)) {
       return { ok: false, added: 0 };
     }
+    if (it.origenFoto && !it.origenFoto.startsWith(`${user.id}/`)) {
+      return { ok: false, added: 0 };
+    }
   }
 
   // Devuelve los ids: el espejo los necesita para colgar las prendas del look
@@ -525,6 +544,8 @@ export async function addPhotoItems(
         manga: it.attrs.manga,
         // El lazo del traje, si la persona dijo que saco y pantalón son uno.
         ...(it.attrs.conjunto ? { conjunto: it.attrs.conjunto } : {}),
+        // De qué foto salió, para que el dibujo diferido también sea fiel.
+        ...(it.origenFoto ? { origen_foto: it.origenFoto } : {}),
         // La descripción visual, para que el render se pueda rehacer fiel.
         ...(cleanTextAttr(it.attrs.descripcion, MAX_VISUAL_LEN)
           ? { visual: cleanTextAttr(it.attrs.descripcion, MAX_VISUAL_LEN) }

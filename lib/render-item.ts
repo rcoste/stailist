@@ -52,6 +52,8 @@ export async function renderItemImage(
     corte?: string;
     manga?: string;
     visual?: string;
+    /** De qué foto salió (espejo): permite dibujarla igual que en el carrete. */
+    origen_foto?: string;
   };
 
   // Idempotencia: ya tiene imagen (arquetipo, render previo, foto, o prestada) o
@@ -114,10 +116,15 @@ export async function renderItemImage(
   //
   // Falla hacia texto→imagen: si la foto no se puede bajar o la extracción
   // truena, sigue el camino de siempre en vez de dejar la prenda sin imagen.
+  // LA FOTO DE ORIGEN VALE IGUAL QUE `photo_path`. Las prendas que entran por
+  // el espejo la guardan en attrs porque la columna decide la miniatura (ver
+  // addPhotoItems): sin esto, dibujarlas aquí caía a texto→imagen y la misma
+  // prenda salía fiel o genérica según quién la dibujara.
+  const fuente = item.photo_path ?? attrs.origen_foto ?? null;
   let bytes: Buffer | null = null;
-  if (item.photo_path) {
+  if (fuente) {
     try {
-      const { data: blob } = await supabase.storage.from("prendas").download(item.photo_path);
+      const { data: blob } = await supabase.storage.from("prendas").download(fuente);
       if (blob) {
         bytes = await extraerPrendaDeFoto(
           {
