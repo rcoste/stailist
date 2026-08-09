@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.191.0] - 2026-08-08
+
+### Added — "no es mía" al final del espejo
+
+Roberto, mirando el último paso: *"aquí ni sé si faltan opciones al igual que al final del flujo del multiupload"*. Sí faltaba una:
+
+| al final del multiupload | al final del espejo |
+|---|---|
+| es mía | implícito (ya la confirmó) |
+| **no es mía** | ❌ **faltaba** |
+| salió mal | ✅ |
+
+Y no sobra por haberla confirmado antes: **confirmar un nombre en una lista y reconocer una prenda dibujada son dos juicios distintos** — por eso el carrete separa los dos momentos. Hasta ahora, darse cuenta aquí obligaba a ir al clóset a buscarla y borrarla.
+
+Borra la prenda (borrado suave, como en el clóset) y vuelve a colgar el look sin ella: si no, la entrada del diario quedaría apuntando a una prenda que ya no existe.
+
+Y dos detalles de la misma pantalla: los dos botones dicen **rehacer** y **no es mía** —viven pegados y tienen que distinguirse por lo que HACEN, no por lo que describen— y con una sola prenda la rejilla deja de partirse en dos columnas, que dejaba medio hueco vacío leyéndose como si faltara algo.
+
 ## [0.2.190.0] - 2026-08-08
 
 ### Added — el espejo también avisa si sale alguien más

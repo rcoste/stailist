@@ -8,7 +8,12 @@ import { Icon } from "@/components/icon";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { ImageCrop } from "@/components/image-crop";
 import { Spinner } from "@/components/spinner";
-import { addPhotoItems, ligarPrendasAlEspejo, ponerRenderAPrenda } from "@/app/closet/actions";
+import {
+  addPhotoItems,
+  ligarPrendasAlEspejo,
+  ponerRenderAPrenda,
+  removeItem,
+} from "@/app/closet/actions";
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
@@ -97,6 +102,7 @@ type Sumar =
       cuantas: number;
       /** Lo recién creado, para poder dibujarlo aquí mismo si quiere. */
       nuevas: { id: string; attrs: PrendaDetectada }[];
+      yaEstan: YaEsta[];
     }
   /**
    * DIBUJANDO AQUÍ MISMO — lo pidió Roberto: "debería darme la opción de
@@ -114,6 +120,8 @@ type Sumar =
   | {
       paso: "dibujando";
       items: { id: string; attrs: PrendaDetectada; url: string | null; listo: boolean }[];
+      /** Las que ya eran suyas: hacen falta para recolgar el look si quita una. */
+      yaEstan: YaEsta[];
     };
 
 // Comprime a 1280px: lo mismo que el resto de los flujos de foto.
@@ -378,7 +386,8 @@ export function EspejoFlow({
   async function guardarPrendas(outfitId: string | null, rutaFoto: string | null) {
     if (sumar.paso !== "elegir") return;
     const elegidas = sumar.prendas.filter((p) => p.on);
-    if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0, nuevas: [] });
+    if (elegidas.length === 0)
+      return setSumar({ paso: "hecho", cuantas: 0, nuevas: [], yaEstan: sumar.yaEstan });
     setSumar({ paso: "guardando" });
     try {
       const res = await addPhotoItems(
@@ -422,10 +431,11 @@ export function EspejoFlow({
         // Los ids llegan en el MISMO orden en que se insertaron, que es el de
         // `elegidas`: por eso se emparejan por índice.
         nuevas: idsNuevos.map((id, i) => ({ id, attrs: elegidas[i].attrs })),
+        yaEstan: sumar.yaEstan,
       });
       router.refresh();
     } catch {
-      setSumar({ paso: "hecho", cuantas: 0, nuevas: [] });
+      setSumar({ paso: "hecho", cuantas: 0, nuevas: [], yaEstan: sumar.yaEstan });
     }
   }
 
@@ -488,10 +498,13 @@ export function EspejoFlow({
     nuevas: { id: string; attrs: PrendaDetectada }[],
     preview: string
   ) {
-    setSumar({
+    setSumar((sm) => ({
       paso: "dibujando",
       items: nuevas.map((n) => ({ ...n, url: null, listo: false })),
-    });
+      // El empate viaja hasta aquí: si quita una prenda tras verla dibujada,
+      // hay que volver a colgar el look sin ella.
+      yaEstan: "yaEstan" in sm ? sm.yaEstan : [],
+    }));
     const CONCURRENCIA = 4;
     const cola = [...nuevas];
     const trabajar = async () => {
@@ -500,6 +513,42 @@ export function EspejoFlow({
     await Promise.all(
       Array.from({ length: Math.min(CONCURRENCIA, nuevas.length) }, trabajar)
     );
+  }
+
+  /**
+   * "No es mía" — viéndola YA DIBUJADA, resulta que no era suya.
+   *
+   * Es la opción que el carrete tiene al final y aquí faltaba. Y no sobra por
+   * haberla confirmado antes: confirmar un NOMBRE en una lista y reconocer una
+   * PRENDA dibujada son dos juicios distintos, y por eso el carrete separa los
+   * dos momentos. Sin esto, darse cuenta aquí obligaba a ir al clóset a
+   * buscarla y borrarla.
+   *
+   * Borra la prenda (borrado suave, como en el clóset) y vuelve a colgar el
+   * look sin ella — si no, la entrada del diario se quedaría apuntando a una
+   * prenda que ya no existe.
+   */
+  async function noEsMia(
+    item: { id: string },
+    yaEstan: YaEsta[],
+    outfitId: string | null
+  ) {
+    setSumar((sm) =>
+      sm.paso !== "dibujando"
+        ? sm
+        : { ...sm, items: sm.items.filter((x) => x.id !== item.id) }
+    );
+    await removeItem(item.id);
+    if (outfitId) {
+      const quedan = [
+        ...yaEstan.map((y) => y.id),
+        ...(sumar.paso === "dibujando"
+          ? sumar.items.filter((x) => x.id !== item.id).map((x) => x.id)
+          : []),
+      ];
+      await ligarPrendasAlEspejo(outfitId, quedan);
+    }
+    router.refresh();
   }
 
   /**
@@ -792,7 +841,13 @@ export function EspejoFlow({
                     </p>
                     {/* La rejilla se LLENA conforme llegan, como en el carrete:
                         con un spinner global se siente el doble de lento. */}
-                    <div className="grid grid-cols-2 gap-2.5">
+                    {/* Con UNA prenda, dos columnas dejan medio hueco vacío que
+                        se lee como si faltara algo. */}
+                    <div
+                      className={`grid gap-2.5 ${
+                        sumar.items.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                      }`}
+                    >
                       {sumar.items.map((x) => (
                         <div key={x.id} className="flex flex-col gap-1.5">
                           <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
@@ -820,13 +875,38 @@ export function EspejoFlow({
                               deforme: allá lo ves dibujado y lo tiras; aquí se
                               quedaba. Redibuja sólo ésa. */}
                           {x.listo && x.url ? (
-                            <button
-                              type="button"
-                              onClick={() => dibujarUna(x, state.preview)}
-                              className="text-[11px] text-muted underline underline-offset-2 transition-colors hover:text-accent"
-                            >
-                              salió mal — rehacer
-                            </button>
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => dibujarUna(x, state.preview)}
+                                className="min-h-8 flex-1 rounded-sm border border-line bg-surface text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+                              >
+                                {/* "Rehacer" y no "salió mal": los dos botones
+                                    viven pegados y tienen que distinguirse por
+                                    lo que HACEN. Uno redibuja, el otro borra —
+                                    con dos frases que describen el problema en
+                                    vez de la consecuencia, no se sabe cuál es
+                                    cuál hasta haberla tocado. */}
+                                rehacer
+                              </button>
+                              {/* La que faltaba: verla dibujada es un juicio
+                                  distinto al de confirmar su nombre en una
+                                  lista, y hasta ahora obligaba a ir al clóset a
+                                  borrarla. */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  noEsMia(
+                                    x,
+                                    sumar.yaEstan,
+                                    state.kind === "listo" ? state.outfitId : null
+                                  )
+                                }
+                                className="min-h-8 flex-1 rounded-sm border border-line bg-surface text-[11px] text-muted transition-colors hover:border-error hover:text-error"
+                              >
+                                no es mía
+                              </button>
+                            </div>
                           ) : null}
                         </div>
                       ))}
