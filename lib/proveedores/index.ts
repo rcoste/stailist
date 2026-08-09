@@ -83,11 +83,48 @@ export class ErrorProveedor extends Error {
   }
 }
 
-/** La puerta común. */
+/**
+ * ¿Vale la pena reintentar este fallo?
+ *
+ * Mismos códigos que ya reintenta el generador de imágenes: rate-limit y
+ * cualquier 5xx. Un 400 (imagen corrupta, prompt inválido) NO se reintenta —
+ * reintentar lo que está mal escrito sólo cuesta tiempo y dinero.
+ */
+export function esReintentable(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /\b(429|5\d\d)\b/.test(msg) || /UNAVAILABLE|overloaded|ECONNRESET|fetch failed/i.test(msg);
+}
+
+/**
+ * La puerta común.
+ *
+ * REINTENTA UNA VEZ lo reintentable, y esto no es defensivo: es un fallo
+ * MEDIDO. Gemini devuelve 503 "Unable to process input image" de forma
+ * intermitente sobre imágenes perfectamente sanas — está documentado desde el
+ * script de deriva de esta mañana, donde una sola de esas respuestas tumbaba la
+ * corrida entera. El generador de imágenes lo aprendió y reintenta; los tres
+ * caminos que LEEN fotos no, y por eso un tropiezo del servidor se le enseñaba
+ * a la persona como si fuera culpa de su foto ("no detecté prendas en esas
+ * fotos, prueba con fotos donde la ropa se vea bien").
+ *
+ * Cazado en QA del espejo: el 503 salió a la primera y el reintento manual
+ * funcionó de inmediato — o sea que el usuario vio un error que no existía.
+ *
+ * Una sola vez y con una pausa corta: si falla dos veces seguidas ya no es un
+ * tropiezo, y hacer esperar más a alguien que está saliendo de su casa es peor
+ * que decirle que no se pudo.
+ */
 export async function llamar(p: Peticion): Promise<Recibo> {
   const t0 = Date.now();
-  const r = await despachar(p);
-  return { ...r, ms: Date.now() - t0 };
+  try {
+    const r = await despachar(p);
+    return { ...r, ms: Date.now() - t0 };
+  } catch (e) {
+    if (!esReintentable(e)) throw e;
+    await new Promise((r) => setTimeout(r, 600));
+    const r = await despachar(p);
+    return { ...r, ms: Date.now() - t0 };
+  }
 }
 
 /**
