@@ -467,7 +467,7 @@ export async function addPhotoItems(
      */
     photoPath?: string | null;
   }[]
-): Promise<{ ok: boolean; added: number; dejadas?: number }> {
+): Promise<{ ok: boolean; added: number; dejadas?: number; ids?: string[] }> {
   // EL TOPE SE DICE, NO SE ESCONDE. Antes esto era `slice(0, 30)` a secas y la
   // acción devolvía `ok: true`: si alguien subía 12 fotos con 8 prendas cada
   // una, el botón decía "sumar 45 al clóset", 15 se perdían y nadie se enteraba
@@ -494,7 +494,11 @@ export async function addPhotoItems(
     }
   }
 
-  const { error } = await supabase.from("items").insert(
+  // Devuelve los ids: el espejo los necesita para colgar las prendas del look
+  // que acaba de guardar en el diario.
+  const { data: creadas, error } = await supabase
+    .from("items")
+    .insert(
     clean.map((it) => ({
       user_id: user.id,
       source: "photo",
@@ -533,11 +537,17 @@ export async function addPhotoItems(
       render_path: it.renderPath,
       photo_path: it.photoPath ?? null,
     }))
-  );
+    )
+    .select("id");
   if (error) return { ok: false, added: 0 };
 
   revalidatePath("/closet");
-  return { ok: true, added: clean.length, dejadas };
+  return {
+    ok: true,
+    added: clean.length,
+    dejadas,
+    ids: (creadas ?? []).map((r) => r.id as string),
+  };
 }
 
 // Render rechazado en la confirmación visual ("no es mi prenda" pero la imagen
@@ -836,4 +846,64 @@ export async function crearPantalonDelTraje(
 
   revalidatePath("/closet");
   return { ok: true, id: creado.id as string };
+}
+
+/**
+ * Cuelga las prendas de una entrada del espejo, para que se vea como un look.
+ *
+ * Idea de Roberto: *"cuando se extraigan las prendas, independientemente de que
+ * las tenga o no las tenga, que repliquemos el UI del generador de outfit — la
+ * foto de la persona con el outfit y junto los thumbnails"*. Y el porqué que da
+ * después es el bueno: *"si yo quiero ver mi historial, pues hay cosas que yo me
+ * puse y hay cosas que hice y no me puse"*. Las dos clases de entrada tienen que
+ * poder mirarse igual, o el diario es dos diarios.
+ *
+ * LO QUE CUELGA SON DOS COSAS: las prendas suyas que la foto reconoció (el
+ * empate ya se calculaba y sólo se tiraba el id) y las que acaba de dar de alta
+ * desde esa misma foto.
+ *
+ * Y ESTO ES LO QUE DE VERDAD COMPRA, más allá de lo visual: hoy "me lo puse" es
+ * por OUTFIT y se usó 12 veces en la historia del proyecto. Con esto, cada foto
+ * dice qué PRENDAS se puso de verdad — la señal de oro, por prenda, sin pedirle
+ * que vote nada.
+ *
+ * Un empate equivocado aquí cuesta una miniatura mal puesta en una entrada del
+ * diario; auto-crear una prenda equivocada cuesta ropa fantasma en el clóset
+ * para siempre. Por eso esto sí se hace solo y aquello no.
+ */
+export async function ligarPrendasAlEspejo(
+  outfitId: string,
+  itemIds: string[]
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const ids = [...new Set(itemIds)].filter((x) => typeof x === "string" && x).slice(0, 20);
+  if (ids.length === 0) return { ok: true };
+
+  // Sólo prendas SUYAS y vivas: un id ajeno o borrado no puede colarse a la
+  // entrada (la RLS es la segunda red, no la primera).
+  const { data: suyas } = await supabase
+    .from("items")
+    .select("id")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .in("id", ids);
+  const limpios = (suyas ?? []).map((r) => r.id as string);
+  if (limpios.length === 0) return { ok: true };
+
+  const { error } = await supabase
+    .from("outfits")
+    .update({ item_ids: limpios })
+    .eq("id", outfitId)
+    .eq("user_id", user.id)
+    // Sólo entradas del espejo: esto NO puede reescribir un look generado.
+    .eq("source", "espejo");
+  if (error) return { ok: false };
+
+  revalidatePath("/historial");
+  return { ok: true };
 }
