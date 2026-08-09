@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.206.0] - 2026-08-09
+
+### Changed — las capas del espejo también nacen portadas
+
+Preventivo, no reparador — y la distinción importa: **medido, el espejo NO estaba confinado**. Se monta desde el home de Hoy y no tiene ni un ancestro con transform, así que sus tres capas a pantalla completa se dibujaban bien.
+
+Van portadas igual porque el mismo patrón explotó **dos veces en dos días** por la misma causa: el recortador dentro de la hoja del carrete, y el wizard de carga dentro del drawer de la tab bar. Un `fixed inset-0` se resuelve contra el ancestro transformado más cercano, y basta con mover el botón de "¿me veo bien?" al drawer —el sitio natural para una acción diaria— para reproducir el bug exacto. Verificado tras el cambio: la capa cuelga de `BODY` y ocupa el viewport entero.
+
+La regla del proyecto queda escrita en el código: **toda capa a pantalla completa nace portada al `body`**.
+
 ## [0.2.205.0] - 2026-08-09
 
 ### Fixed — el wizard de carga salía "metido abajo" al abrirlo desde la tab bar

@@ -1,6 +1,7 @@
 "use client";
 
-import { useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
@@ -17,6 +18,25 @@ import {
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
+
+/** Envuelve una capa a pantalla completa y la cuelga del `body`.
+ *
+ *  PREVENTIVO, no reparador: medido hoy, el espejo NO está confinado — se monta
+ *  desde el home de Hoy y no tiene ni un ancestro con transform. Va igual
+ *  porque el patrón ya explotó DOS VECES en dos días por la misma causa (el
+ *  recortador dentro de la hoja del carrete, y el wizard de carga dentro del
+ *  drawer de la tab bar, que lleva translate): un `fixed inset-0` se resuelve
+ *  contra el ancestro transformado más cercano, y basta que alguien mueva este
+ *  botón al drawer —que es el sitio natural para una acción diaria— para
+ *  reproducirlo exacto.
+ *
+ *  La regla del proyecto queda: toda capa a pantalla completa nace portada. */
+function Capa({ children }: { children: React.ReactNode }) {
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+  if (!montado) return null; // `document` no existe en SSR
+  return createPortal(children, document.body);
+}
 
 // "¿ME VEO BIEN?" — el flujo de una sola pantalla.
 //
@@ -601,410 +621,416 @@ export function EspejoFlow({
   // que se lea la ropa de otro EN SILENCIO.
   if (state.kind === "acompanada") {
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
-        <div
-          className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
-          style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-        >
-          <div className="flex items-start justify-between">
-            <h2 className="text-[22px] font-semibold leading-tight text-ink">
-              sale <em className="font-normal italic">alguien más</em>
-            </h2>
-            <button type="button" onClick={cerrar} aria-label="Cerrar" className="text-muted">
-              <Icon name="equis" size={18} />
-            </button>
+      <Capa>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
+          <div
+            className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
+            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+          >
+            <div className="flex items-start justify-between">
+              <h2 className="text-[22px] font-semibold leading-tight text-ink">
+                sale <em className="font-normal italic">alguien más</em>
+              </h2>
+              <button type="button" onClick={cerrar} aria-label="Cerrar" className="text-muted">
+                <Icon name="equis" size={18} />
+              </button>
+            </div>
+            <p className="text-sm leading-snug text-muted">
+              Veo {state.personas} personas en la foto. Si la leo así, te voy a sumar
+              su ropa como tuya — recórtala para dejarte solo a ti.
+            </p>
+            <div className="overflow-hidden rounded-xl border border-warning bg-bg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={state.preview} alt="" className="max-h-[46dvh] w-full object-contain" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setRecortando(true)}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent"
+              >
+                <Icon name="camara" size={16} />
+                recortar
+              </button>
+              <button
+                type="button"
+                onClick={() => mirar(state.preview, state.blob)}
+                className="min-h-11 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+              >
+                salgo solo yo — sigue así
+              </button>
+            </div>
           </div>
-          <p className="text-sm leading-snug text-muted">
-            Veo {state.personas} personas en la foto. Si la leo así, te voy a sumar
-            su ropa como tuya — recórtala para dejarte solo a ti.
-          </p>
-          <div className="overflow-hidden rounded-xl border border-warning bg-bg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={state.preview} alt="" className="max-h-[46dvh] w-full object-contain" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => setRecortando(true)}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent"
-            >
-              <Icon name="camara" size={16} />
-              recortar
-            </button>
-            <button
-              type="button"
-              onClick={() => mirar(state.preview, state.blob)}
-              className="min-h-11 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
-            >
-              salgo solo yo — sigue así
-            </button>
-          </div>
+          {recortando ? (
+            <ImageCrop
+              src={state.preview}
+              onCancel={() => setRecortando(false)}
+              onDone={async (recortada) => {
+                setRecortando(false);
+                // El recorte devuelve un dataURL; hace falta el blob para subirla.
+                const blob = await (await fetch(recortada)).blob();
+                await mirar(recortada, blob);
+              }}
+            />
+          ) : null}
         </div>
-        {recortando ? (
-          <ImageCrop
-            src={state.preview}
-            onCancel={() => setRecortando(false)}
-            onDone={async (recortada) => {
-              setRecortando(false);
-              // El recorte devuelve un dataURL; hace falta el blob para subirla.
-              const blob = await (await fetch(recortada)).blob();
-              await mirar(recortada, blob);
-            }}
-          />
-        ) : null}
-      </div>
+      </Capa>
     );
   }
 
   if (state.kind === "mirando" || state.kind === "listo") {
     const lista = state.kind === "listo" ? state.lectura : null;
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
-        <div
-          className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
-          style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-        >
-          <div className="flex items-start justify-between">
-            <h2 className="text-[22px] font-semibold leading-tight text-ink">
+      <Capa>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
+          <div
+            className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
+            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+          >
+            <div className="flex items-start justify-between">
+              <h2 className="text-[22px] font-semibold leading-tight text-ink">
+                {lista ? (
+                  <>
+                    te <em className="font-normal italic">veo</em>
+                  </>
+                ) : (
+                  "te estoy viendo…"
+                )}
+              </h2>
               {lista ? (
-                <>
-                  te <em className="font-normal italic">veo</em>
-                </>
-              ) : (
-                "te estoy viendo…"
-              )}
-            </h2>
-            {lista ? (
-              <button type="button" onClick={cerrar} aria-label="Cerrar" className="text-muted">
-                <Icon name="equis" size={18} />
-              </button>
-            ) : null}
-          </div>
-
-          {/* Su foto, grande. Es ella, no un dato de entrada. */}
-          {/* `shrink-0`: la hoja es un flex en columna, y en cuanto abajo
-              aparecen las prendas que sumar el contenido pasa de 747 a 985 px.
-              Flex aprieta lo único que puede — la foto — y la dejaba en 2 px de
-              alto: una raya. Cazado en QA midiendo el recuadro, porque a ojo
-              parecía que la foto simplemente "no cargó". */}
-          <div className="relative shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={state.preview} alt="" className="max-h-[44dvh] w-full object-contain" />
-            {!lista ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-bg/60">
-                <Spinner className="h-6 w-6 text-accent" />
-              </div>
-            ) : null}
-          </div>
-
-          {lista ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted">{lista.resumen}</p>
-              {/* De corrido y sin etiquetas de categoría: una amiga te dice tres
-                  cosas seguidas, no te entrega un informe por secciones. */}
-              <p className="text-[15px] leading-relaxed text-ink">{lista.colorimetria}</p>
-              {lista.clima ? (
-                <p className="flex gap-2 text-[15px] leading-relaxed text-ink">
-                  <Icon name="destello" size={16} className="mt-1 shrink-0 text-accent" />
-                  <span>{lista.clima}</span>
-                </p>
+                <button type="button" onClick={cerrar} aria-label="Cerrar" className="text-muted">
+                  <Icon name="equis" size={18} />
+                </button>
               ) : null}
-              <p className="rounded-xl bg-accent-soft px-3.5 py-3 text-[15px] leading-relaxed text-ink">
-                {lista.ajuste}
-              </p>
-              <p className="text-xs text-muted">Ya quedó en tu diario.</p>
+            </div>
 
-              {/* SEGUNDO TIEMPO — sumar al clóset lo que no tenga.
-                  Va DEBAJO del consejo y detrás de una línea discreta: el
-                  consejo es a lo que vino, y esto es un extra que la mayoría de
-                  los días no aplica porque te pusiste lo que ya tienes. */}
-              <div className="border-t border-line pt-3">
-                {sumar.paso === "buscando" ? (
-                  <p className="flex items-center gap-2 text-[13px] text-muted">
-                    <Spinner className="h-3.5 w-3.5" /> viendo qué traes puesto…
+            {/* Su foto, grande. Es ella, no un dato de entrada. */}
+            {/* `shrink-0`: la hoja es un flex en columna, y en cuanto abajo
+                aparecen las prendas que sumar el contenido pasa de 747 a 985 px.
+                Flex aprieta lo único que puede — la foto — y la dejaba en 2 px de
+                alto: una raya. Cazado en QA midiendo el recuadro, porque a ojo
+                parecía que la foto simplemente "no cargó". */}
+            <div className="relative shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={state.preview} alt="" className="max-h-[44dvh] w-full object-contain" />
+              {!lista ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-bg/60">
+                  <Spinner className="h-6 w-6 text-accent" />
+                </div>
+              ) : null}
+            </div>
+
+            {lista ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-muted">{lista.resumen}</p>
+                {/* De corrido y sin etiquetas de categoría: una amiga te dice tres
+                    cosas seguidas, no te entrega un informe por secciones. */}
+                <p className="text-[15px] leading-relaxed text-ink">{lista.colorimetria}</p>
+                {lista.clima ? (
+                  <p className="flex gap-2 text-[15px] leading-relaxed text-ink">
+                    <Icon name="destello" size={16} className="mt-1 shrink-0 text-accent" />
+                    <span>{lista.clima}</span>
                   </p>
                 ) : null}
+                <p className="rounded-xl bg-accent-soft px-3.5 py-3 text-[15px] leading-relaxed text-ink">
+                  {lista.ajuste}
+                </p>
+                <p className="text-xs text-muted">Ya quedó en tu diario.</p>
 
-                {sumar.paso === "nada" ? (
-                  <div className="flex flex-col gap-1.5">
-                    {sumar.fallo ? (
+                {/* SEGUNDO TIEMPO — sumar al clóset lo que no tenga.
+                    Va DEBAJO del consejo y detrás de una línea discreta: el
+                    consejo es a lo que vino, y esto es un extra que la mayoría de
+                    los días no aplica porque te pusiste lo que ya tienes. */}
+                <div className="border-t border-line pt-3">
+                  {sumar.paso === "buscando" ? (
+                    <p className="flex items-center gap-2 text-[13px] text-muted">
+                      <Spinner className="h-3.5 w-3.5" /> viendo qué traes puesto…
+                    </p>
+                  ) : null}
+
+                  {sumar.paso === "nada" ? (
+                    <div className="flex flex-col gap-1.5">
+                      {sumar.fallo ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            buscarPrendas(
+                              state.preview,
+                              state.kind === "listo" ? state.outfitId : null
+                            )
+                          }
+                          className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-accent"
+                        >
+                          <Icon name="destello" size={14} />
+                          se me atravesó algo — reintentar
+                        </button>
+                      ) : (
+                        <p className="text-[13px] text-muted">
+                          {sumar.vistas > 0
+                            ? "Todo lo que traes ya está en tu clóset."
+                            : "No pude distinguir las prendas en esta foto."}
+                        </p>
+                      )}
+                      <YaEstanLista
+                        items={sumar.yaEstan}
+                        onVer={(x) =>
+                          setZoom({ image: x.imagen, nombre: x.comoEsta, sub: `lo vi como “${x.nombre}”` })
+                        }
+                        onNoEs={(x) =>
+                          noEsEsa(x, state.kind === "listo" ? state.outfitId : null)
+                        }
+                      />
+                    </div>
+                  ) : null}
+
+                  {sumar.paso === "elegir" ? (
+                    <div className="flex flex-col gap-2.5">
+                      <p className="text-[13px] text-ink">
+                        Esto no lo veo en tu clóset. Marca lo que sí sea tuyo:
+                      </p>
+                      {/* LA MISMA TARJETA DEL CARRETE, en compacto.
+                          La primera versión de esta lista era mía y sólo enseñaba
+                          nombre y color: el carrete confirmaba SIETE campos y el
+                          espejo cero — y al revés de como debería, porque la foto
+                          de espejo es el peor insumo del producto y por tanto la
+                          que más necesita corregirse. Compartirla no es limpieza
+                          de código: es lo que decide si el dato entra bien. */}
+                      {sumar.prendas.map((p) => (
+                        <DraftCard
+                          key={p.id}
+                          item={p}
+                          compacta
+                          yaEsta={null}
+                          onToggle={() =>
+                            setSumar((sm) =>
+                              sm.paso !== "elegir"
+                                ? sm
+                                : {
+                                    ...sm,
+                                    prendas: sm.prendas.map((x) =>
+                                      x.id === p.id ? { ...x, on: !x.on } : x
+                                    ),
+                                  }
+                            )
+                          }
+                          onPatch={(patch, campos) =>
+                            setSumar((sm) => {
+                              if (sm.paso !== "elegir") return sm;
+                              const previos = sm.tocados[p.id] ?? new Set<string>();
+                              return {
+                                ...sm,
+                                prendas: sm.prendas.map((x) =>
+                                  x.id === p.id ? { ...x, attrs: { ...x.attrs, ...patch } } : x
+                                ),
+                                tocados: campos?.length
+                                  ? { ...sm.tocados, [p.id]: new Set([...previos, ...campos]) }
+                                  : sm.tocados,
+                              };
+                            })
+                          }
+                        />
+                      ))}
+                      <YaEstanLista
+                        items={sumar.yaEstan}
+                        onVer={(x) =>
+                          setZoom({ image: x.imagen, nombre: x.comoEsta, sub: `lo vi como “${x.nombre}”` })
+                        }
+                        onNoEs={(x) =>
+                          noEsEsa(x, state.kind === "listo" ? state.outfitId : null)
+                        }
+                      />
                       <button
                         type="button"
                         onClick={() =>
-                          buscarPrendas(
-                            state.preview,
-                            state.kind === "listo" ? state.outfitId : null
+                          guardarPrendas(
+                            state.kind === "listo" ? state.outfitId : null,
+                            state.kind === "listo" ? state.rutaFoto : null
                           )
                         }
-                        className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-accent"
+                        className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
                       >
-                        <Icon name="destello" size={14} />
-                        se me atravesó algo — reintentar
+                        sumar {sumar.prendas.filter((p) => p.on).length} al clóset
                       </button>
-                    ) : (
-                      <p className="text-[13px] text-muted">
-                        {sumar.vistas > 0
-                          ? "Todo lo que traes ya está en tu clóset."
-                          : "No pude distinguir las prendas en esta foto."}
-                      </p>
-                    )}
-                    <YaEstanLista
-                      items={sumar.yaEstan}
-                      onVer={(x) =>
-                        setZoom({ image: x.imagen, nombre: x.comoEsta, sub: `lo vi como “${x.nombre}”` })
-                      }
-                      onNoEs={(x) =>
-                        noEsEsa(x, state.kind === "listo" ? state.outfitId : null)
-                      }
-                    />
-                  </div>
-                ) : null}
-
-                {sumar.paso === "elegir" ? (
-                  <div className="flex flex-col gap-2.5">
-                    <p className="text-[13px] text-ink">
-                      Esto no lo veo en tu clóset. Marca lo que sí sea tuyo:
-                    </p>
-                    {/* LA MISMA TARJETA DEL CARRETE, en compacto.
-                        La primera versión de esta lista era mía y sólo enseñaba
-                        nombre y color: el carrete confirmaba SIETE campos y el
-                        espejo cero — y al revés de como debería, porque la foto
-                        de espejo es el peor insumo del producto y por tanto la
-                        que más necesita corregirse. Compartirla no es limpieza
-                        de código: es lo que decide si el dato entra bien. */}
-                    {sumar.prendas.map((p) => (
-                      <DraftCard
-                        key={p.id}
-                        item={p}
-                        compacta
-                        yaEsta={null}
-                        onToggle={() =>
-                          setSumar((sm) =>
-                            sm.paso !== "elegir"
-                              ? sm
-                              : {
-                                  ...sm,
-                                  prendas: sm.prendas.map((x) =>
-                                    x.id === p.id ? { ...x, on: !x.on } : x
-                                  ),
-                                }
-                          )
-                        }
-                        onPatch={(patch, campos) =>
-                          setSumar((sm) => {
-                            if (sm.paso !== "elegir") return sm;
-                            const previos = sm.tocados[p.id] ?? new Set<string>();
-                            return {
-                              ...sm,
-                              prendas: sm.prendas.map((x) =>
-                                x.id === p.id ? { ...x, attrs: { ...x.attrs, ...patch } } : x
-                              ),
-                              tocados: campos?.length
-                                ? { ...sm.tocados, [p.id]: new Set([...previos, ...campos]) }
-                                : sm.tocados,
-                            };
-                          })
-                        }
-                      />
-                    ))}
-                    <YaEstanLista
-                      items={sumar.yaEstan}
-                      onVer={(x) =>
-                        setZoom({ image: x.imagen, nombre: x.comoEsta, sub: `lo vi como “${x.nombre}”` })
-                      }
-                      onNoEs={(x) =>
-                        noEsEsa(x, state.kind === "listo" ? state.outfitId : null)
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        guardarPrendas(
-                          state.kind === "listo" ? state.outfitId : null,
-                          state.kind === "listo" ? state.rutaFoto : null
-                        )
-                      }
-                      className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
-                    >
-                      sumar {sumar.prendas.filter((p) => p.on).length} al clóset
-                    </button>
-                  </div>
-                ) : null}
-
-                {sumar.paso === "guardando" ? (
-                  <p className="flex items-center gap-2 text-[13px] text-muted">
-                    <Spinner className="h-3.5 w-3.5" /> sumándolas…
-                  </p>
-                ) : null}
-
-                {sumar.paso === "dibujando" ? (
-                  <div className="flex flex-col gap-2.5">
-                    <p className="text-[13px] text-ink">
-                      {sumar.items.every((x) => x.listo)
-                        ? "Así quedaron. Si alguna no se parece, la rehaces desde su ficha."
-                        : "Dibujándolas desde tu foto…"}
-                    </p>
-                    {/* La rejilla se LLENA conforme llegan, como en el carrete:
-                        con un spinner global se siente el doble de lento. */}
-                    {/* Con UNA prenda, dos columnas dejan medio hueco vacío que
-                        se lee como si faltara algo. */}
-                    <div
-                      className={`grid gap-2.5 ${
-                        sumar.items.length === 1 ? "grid-cols-1" : "grid-cols-2"
-                      }`}
-                    >
-                      {sumar.items.map((x) => (
-                        <div key={x.id} className="flex flex-col gap-1.5">
-                          <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
-                            {x.url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={x.url}
-                                alt={x.attrs.nombre}
-                                className="h-full w-full object-cover"
-                                style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
-                              />
-                            ) : x.listo ? (
-                              <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] text-muted">
-                                No salió — la dibujo en tu clóset
-                              </div>
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <Spinner className="h-5 w-5 text-accent" />
-                              </div>
-                            )}
-                          </div>
-                          <p className="truncate text-[11.5px] text-ink">{x.attrs.nombre}</p>
-                          {/* "SALIÓ MAL" — el paso que el carrete tiene y aquí
-                              faltaba, y el que le habría ahorrado el suéter
-                              deforme: allá lo ves dibujado y lo tiras; aquí se
-                              quedaba. Redibuja sólo ésa. */}
-                          {x.listo && x.url ? (
-                            <div className="flex gap-1">
-                              <button
-                                type="button"
-                                onClick={() => dibujarUna(x, state.preview)}
-                                className="min-h-8 flex-1 rounded-sm border border-line bg-surface text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-                              >
-                                {/* "Rehacer" y no "salió mal": los dos botones
-                                    viven pegados y tienen que distinguirse por
-                                    lo que HACEN. Uno redibuja, el otro borra —
-                                    con dos frases que describen el problema en
-                                    vez de la consecuencia, no se sabe cuál es
-                                    cuál hasta haberla tocado. */}
-                                rehacer
-                              </button>
-                              {/* La que faltaba: verla dibujada es un juicio
-                                  distinto al de confirmar su nombre en una
-                                  lista, y hasta ahora obligaba a ir al clóset a
-                                  borrarla. */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  noEsMia(
-                                    x,
-                                    sumar.yaEstan,
-                                    state.kind === "listo" ? state.outfitId : null
-                                  )
-                                }
-                                className="min-h-8 flex-1 rounded-sm border border-line bg-surface text-[11px] text-muted transition-colors hover:border-error hover:text-error"
-                              >
-                                no es mía
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {sumar.paso === "hecho" ? (
-                  sumar.cuantas > 0 ? (
-                    // CUÁNDO Y DÓNDE, no "en un momento". Roberto: "no entendí
-                    // en qué momento va a renderizar las nuevas". Con razón: la
-                    // prenda entra sin imagen y el clóset la dibuja SOLO cuando
-                    // se abre esa pantalla. Prometer un dibujo que ocurre en
-                    // otro sitio, sin decir cuál, es una promesa que no se puede
-                    // ver cumplir — así que ahora se dice, y se ofrece ir.
-                    <div className="flex flex-col gap-2">
+                  {sumar.paso === "guardando" ? (
+                    <p className="flex items-center gap-2 text-[13px] text-muted">
+                      <Spinner className="h-3.5 w-3.5" /> sumándolas…
+                    </p>
+                  ) : null}
+
+                  {sumar.paso === "dibujando" ? (
+                    <div className="flex flex-col gap-2.5">
                       <p className="text-[13px] text-ink">
-                        Listo, {sumar.cuantas}{" "}
-                        {sumar.cuantas === 1 ? "prenda nueva" : "prendas nuevas"} en tu
-                        clóset. Les dibujo su foto cuando lo abras.
+                        {sumar.items.every((x) => x.listo)
+                          ? "Así quedaron. Si alguna no se parece, la rehaces desde su ficha."
+                          : "Dibujándolas desde tu foto…"}
                       </p>
-                      {/* DIBUJARLAS AQUÍ, no obligado a después. Lo pidió
-                          Roberto, y la razón de peso es la segunda mitad de su
-                          frase: "así evalúo si quedan fieles". Dejándolo para el
-                          clóset, un dibujo que no se parece se descubre días
-                          después y hay que ir a buscarlo. */}
-                      {sumar.nuevas.length > 0 ? (
+                      {/* La rejilla se LLENA conforme llegan, como en el carrete:
+                          con un spinner global se siente el doble de lento. */}
+                      {/* Con UNA prenda, dos columnas dejan medio hueco vacío que
+                          se lee como si faltara algo. */}
+                      <div
+                        className={`grid gap-2.5 ${
+                          sumar.items.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                        }`}
+                      >
+                        {sumar.items.map((x) => (
+                          <div key={x.id} className="flex flex-col gap-1.5">
+                            <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
+                              {x.url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={x.url}
+                                  alt={x.attrs.nombre}
+                                  className="h-full w-full object-cover"
+                                  style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
+                                />
+                              ) : x.listo ? (
+                                <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] text-muted">
+                                  No salió — la dibujo en tu clóset
+                                </div>
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                  <Spinner className="h-5 w-5 text-accent" />
+                                </div>
+                              )}
+                            </div>
+                            <p className="truncate text-[11.5px] text-ink">{x.attrs.nombre}</p>
+                            {/* "SALIÓ MAL" — el paso que el carrete tiene y aquí
+                                faltaba, y el que le habría ahorrado el suéter
+                                deforme: allá lo ves dibujado y lo tiras; aquí se
+                                quedaba. Redibuja sólo ésa. */}
+                            {x.listo && x.url ? (
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => dibujarUna(x, state.preview)}
+                                  className="min-h-8 flex-1 rounded-sm border border-line bg-surface text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+                                >
+                                  {/* "Rehacer" y no "salió mal": los dos botones
+                                      viven pegados y tienen que distinguirse por
+                                      lo que HACEN. Uno redibuja, el otro borra —
+                                      con dos frases que describen el problema en
+                                      vez de la consecuencia, no se sabe cuál es
+                                      cuál hasta haberla tocado. */}
+                                  rehacer
+                                </button>
+                                {/* La que faltaba: verla dibujada es un juicio
+                                    distinto al de confirmar su nombre en una
+                                    lista, y hasta ahora obligaba a ir al clóset a
+                                    borrarla. */}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    noEsMia(
+                                      x,
+                                      sumar.yaEstan,
+                                      state.kind === "listo" ? state.outfitId : null
+                                    )
+                                  }
+                                  className="min-h-8 flex-1 rounded-sm border border-line bg-surface text-[11px] text-muted transition-colors hover:border-error hover:text-error"
+                                >
+                                  no es mía
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {sumar.paso === "hecho" ? (
+                    sumar.cuantas > 0 ? (
+                      // CUÁNDO Y DÓNDE, no "en un momento". Roberto: "no entendí
+                      // en qué momento va a renderizar las nuevas". Con razón: la
+                      // prenda entra sin imagen y el clóset la dibuja SOLO cuando
+                      // se abre esa pantalla. Prometer un dibujo que ocurre en
+                      // otro sitio, sin decir cuál, es una promesa que no se puede
+                      // ver cumplir — así que ahora se dice, y se ofrece ir.
+                      <div className="flex flex-col gap-2">
+                        <p className="text-[13px] text-ink">
+                          Listo, {sumar.cuantas}{" "}
+                          {sumar.cuantas === 1 ? "prenda nueva" : "prendas nuevas"} en tu
+                          clóset. Les dibujo su foto cuando lo abras.
+                        </p>
+                        {/* DIBUJARLAS AQUÍ, no obligado a después. Lo pidió
+                            Roberto, y la razón de peso es la segunda mitad de su
+                            frase: "así evalúo si quedan fieles". Dejándolo para el
+                            clóset, un dibujo que no se parece se descubre días
+                            después y hay que ir a buscarlo. */}
+                        {sumar.nuevas.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => dibujarNuevas(sumar.nuevas, state.preview)}
+                            className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+                          >
+                            <Icon name="destello" size={14} />
+                            dibujarlas ahora · ~{Math.max(20, sumar.nuevas.length * 18)}s
+                          </button>
+                        ) : null}
                         <button
                           type="button"
-                          onClick={() => dibujarNuevas(sumar.nuevas, state.preview)}
-                          className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-deep"
+                          onClick={() => {
+                            cerrar();
+                            router.push("/closet");
+                          }}
+                          className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
                         >
-                          <Icon name="destello" size={14} />
-                          dibujarlas ahora · ~{Math.max(20, sumar.nuevas.length * 18)}s
+                          verlas en mi clóset
+                          <Icon name="flecha" size={14} />
                         </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          cerrar();
-                          router.push("/closet");
-                        }}
-                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
-                      >
-                        verlas en mi clóset
-                        <Icon name="flecha" size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-[13px] text-ink">No sumé nada.</p>
-                  )
-                ) : null}
-              </div>
+                      </div>
+                    ) : (
+                      <p className="text-[13px] text-ink">No sumé nada.</p>
+                    )
+                  ) : null}
+                </div>
 
-              <button
-                type="button"
-                onClick={cerrar}
-                className="min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent"
-              >
-                gracias
-              </button>
-              <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
-            </div>
-          ) : (
-            <p className="editorial text-center text-sm text-muted">
-              mirando los colores, el clima y cómo te queda…
-            </p>
-          )}
+                <button
+                  type="button"
+                  onClick={cerrar}
+                  className="min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent"
+                >
+                  gracias
+                </button>
+                <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
+              </div>
+            ) : (
+              <p className="editorial text-center text-sm text-muted">
+                mirando los colores, el clima y cómo te queda…
+              </p>
+            )}
+          </div>
+          {input}
         </div>
-        {input}
-      </div>
+      </Capa>
     );
   }
 
   if (state.kind === "error") {
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center" onClick={cerrar}>
-        <div
-          className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center lg:rounded-[18px]"
-          style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <p className="text-sm text-error">{state.msg}</p>
-          <button
-            type="button"
-            onClick={cerrar}
-            className="min-h-11 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
+      <Capa>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center" onClick={cerrar}>
+          <div
+            className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center lg:rounded-[18px]"
+            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+            onClick={(e) => e.stopPropagation()}
           >
-            entendido
-          </button>
+            <p className="text-sm text-error">{state.msg}</p>
+            <button
+              type="button"
+              onClick={cerrar}
+              className="min-h-11 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
+            >
+              entendido
+            </button>
+          </div>
+          {input}
         </div>
-        {input}
-      </div>
+      </Capa>
     );
   }
 
