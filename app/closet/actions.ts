@@ -979,3 +979,48 @@ export async function ponerRenderAPrenda(
   revalidatePath("/closet");
   return { ok: true };
 }
+
+/** "Sí, es la misma": tu foto real pasa a mandar sobre el dibujo de catálogo.
+ *
+ *  Del handoff de carga. La regla del handoff era "reemplaza la imagen de
+ *  catálogo por la foto real", y se implementa SIN BORRAR NADA por decisión de
+ *  Roberto: `archetype_id` sigue intacto y lo único que cambia es una bandera
+ *  (`attrs.preferir_foto`) que invierte la prioridad en pickItemImage. Un "es la
+ *  misma" mal picado se deshace quitando la bandera, en vez de dejar a la prenda
+ *  sin su ficha de catálogo para siempre.
+ *
+ *  La foto ya está subida cuando se llama: el flujo de carga la sube antes de
+ *  leerla, así que aquí sólo se apunta a ella. */
+export async function esLaMismaPrenda(
+  itemId: string,
+  photoPath: string
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  // Dentro de su carpeta: defensa además de la RLS del Storage.
+  if (!photoPath.startsWith(`${user.id}/`)) return { ok: false };
+
+  const { data: fila } = await supabase
+    .from("items")
+    .select("attrs")
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!fila) return { ok: false };
+
+  const attrs = { ...((fila.attrs ?? {}) as Record<string, unknown>), preferir_foto: true };
+  const { error } = await supabase
+    .from("items")
+    .update({ photo_path: photoPath, attrs })
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  if (error) return { ok: false };
+
+  revalidatePath("/closet");
+  return { ok: true };
+}

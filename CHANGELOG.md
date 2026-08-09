@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.201.0] - 2026-08-09
+
+### Changed — el duplicado se decide viendo las dos fotos, no adivinando
+
+Primera pieza del handoff de diseño de la carga. Antes el aviso de "creo que ya la tienes" era una tira con una miniatura de 40×32 **recortada** y un solo botón, "no sumarla". Dos problemas: comparar una foto recortada induce error —el recorte esconde justo el detalle que distingue una camisa de otra— y "no sumarla" es media decisión, dice qué NO hacer y no qué sí.
+
+Ahora las dos imágenes van **completas y del mismo alto** (`object-contain`, nunca crop), rotuladas *EN TU FOTO* / *YA EN TU CLÓSET*, con la pregunta y **dos botones en el mismo bloque**. Resuelto, colapsa a una línea con ✓.
+
+**La regla de datos se implementó sin destruir nada.** El handoff pedía que "es la misma" reemplazara la imagen de catálogo por la foto real. Al ir a hacerlo apareció que en `pickItemImage` **la imagen del arquetipo gana sobre todo**, así que para que mande la foto habría que romper el vínculo al catálogo — irreversible, y un "es la misma" mal picado dejaría la prenda sin ficha para siempre. En vez de eso, una bandera (`attrs.preferir_foto`) invierte la prioridad: `archetype_id` sigue intacto y deshacer es quitar la bandera.
+
+La decisión se **apunta y se aplica al guardar**, no al picar: en el paso de confirmar la foto todavía no está subida, así que antes no hay a qué apuntar — y nada debe escribirse en el clóset hasta que se confirme la pantalla entera.
+
+**Sobre el token `arena` (#efeae0) del handoff**: no se agregó. El bloque usa `accent-soft`, que ya existe, y la señal de atención la da un filete `warning` — el mismo recurso del veredicto del juez del avatar. No se inventa un token para un aviso.
+
 ## [0.2.200.0] - 2026-08-09
 
 ### Changed — el carrete deja de ser un drawer y pasa a ser una pantalla

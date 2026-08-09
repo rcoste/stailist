@@ -4,7 +4,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "reac
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
 import { createClient } from "@/lib/supabase/client";
-import { addPhotoItems, addLibraryCandidates, prendasParaComparar } from "@/app/closet/actions";
+import { addPhotoItems, addLibraryCandidates, prendasParaComparar, esLaMismaPrenda } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { ImageCrop } from "@/components/image-crop";
@@ -118,6 +118,13 @@ export function ImportCarreteFlow({
   ref?: Ref<AddFlowHandle>;
 } = {}) {
   const [state, setState] = useState<State>({ kind: "idle" });
+  /** "sí, es la misma": borrador → id de la prenda del clóset con la que empata.
+   *
+   *  Se APUNTA aquí y se aplica al guardar, no al picar. En el paso de confirmar
+   *  la foto todavía no está subida —su ruta se resuelve al guardar— así que
+   *  antes no hay a qué apuntar. Y encima es lo correcto: nada se escribe en el
+   *  clóset hasta que la persona confirma la pantalla entera. */
+  const esLaMisma = useRef(new Map<string, string>());
   const [cropId, setCropId] = useState<string | null>(null); // foto en recorte
   // EL RENDER, EN GRANDE. Aquí se decide "es mía / salió mal" mirando un
   // recuadro de dos columnas, que es justo donde no se distingue si el dibujo
@@ -461,6 +468,16 @@ export function ImportCarreteFlow({
               }))
             );
 
+      // Las que la persona marcó como "es la misma": su foto real pasa a mandar
+      // sobre el dibujo de catálogo de la prenda que YA tiene. No borra nada
+      // (ver esLaMismaPrenda); best-effort, porque fallar aquí no debe tumbar un
+      // alta que ya salió bien.
+      for (const [draftId, itemId] of esLaMisma.current) {
+        const draft = state.kind === "visual" ? state.items.find((x) => x.id === draftId) : null;
+        const ruta = draft ? rutaDeFoto.get(draft.photo) : null;
+        if (ruta) await esLaMismaPrenda(itemId, ruta).catch(() => null);
+      }
+
       if (notmine.length > 0) {
         await addLibraryCandidates(
           notmine.map((it) => ({ attrs: it.attrs, imagePath: it.path as string }))
@@ -714,6 +731,7 @@ export function ImportCarreteFlow({
             <DraftCard
               key={it.id}
               item={it}
+              onEsLaMisma={(itemId) => esLaMisma.current.set(it.id, itemId)}
               yaEsta={yaLaTienes(
                 {
                   nombre: it.attrs.nombre,

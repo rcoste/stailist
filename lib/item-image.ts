@@ -22,7 +22,12 @@ export type ItemImageRow = {
   photo_path?: string | null;
   render_status?: string | null;
   render_path?: string | null;
-  attrs?: { image_path?: string | null; categoria?: string | null } | null;
+  attrs?: {
+    image_path?: string | null;
+    categoria?: string | null;
+    /** "es la misma": tu foto real manda sobre el dibujo de catálogo. */
+    preferir_foto?: boolean | null;
+  } | null;
   archetypes?: {
     name?: string | null;
     image_path?: string | null;
@@ -81,6 +86,18 @@ export type ItemImagePick =
 
 // ORDEN CANÓNICO: arquetipo → render limpio → foto cruda → prestada.
 export function pickItemImage(item: ItemImageRow): ItemImagePick {
+  // TU FOTO MANDA SOBRE EL DIBUJO, si dijiste "es la misma".
+  //
+  // Del handoff de carga: al resolver un duplicado con "sí, es la misma", la
+  // foto real de la persona sustituye al dibujo de catálogo. La forma obvia
+  // sería borrar el vínculo al arquetipo — y es justo la que no se hizo: eso es
+  // irreversible, y un "es la misma" mal picado dejaría la prenda sin su ficha
+  // de catálogo para siempre.
+  //
+  // En vez de eso, una bandera invierte la prioridad. No se borra NADA:
+  // archetype_id sigue ahí, y deshacer es quitar la bandera.
+  if (item.attrs?.preferir_foto && item.photo_path)
+    return { kind: "private", path: item.photo_path };
   const arch = item.archetypes?.image_path;
   if (arch) return { kind: "public", path: arch };
   if (item.render_status === "done" && item.render_path)

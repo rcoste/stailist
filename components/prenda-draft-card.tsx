@@ -303,6 +303,7 @@ export function DraftCard({
   yaEsta,
   onToggle,
   onPatch,
+  onEsLaMisma,
   compacta = false,
 }: {
   item: DraftLeida;
@@ -310,6 +311,8 @@ export function DraftCard({
   yaEsta: PrendaExistente | null;
   onToggle: () => void;
   onPatch: (patch: Partial<PrendaDetectada>, campos?: string[]) => void;
+  /** "sí, es la misma": el padre le pone esta foto a la prenda que ya existe. */
+  onEsLaMisma?: (itemId: string) => void;
   /**
    * Arranca cerrada, con un "afinar" que la abre.
    *
@@ -327,6 +330,8 @@ export function DraftCard({
   // colores es porque la lectura le falló, y volver a esconderlos sería quitarle
   // la salida justo cuando la está usando.
   const [todosLosColores, setTodosLosColores] = useState(false);
+  /** La decisión del duplicado: null = sin contestar. */
+  const [dupe, setDupe] = useState<null | "misma" | "otra">(null);
   // Cerrada sólo si se pidió compacta Y el modelo dice que la vio bien. Cuando
   // declara baja confianza o marca campos inseguros, se abre sola: esconder
   // justo lo que hay que revisar sería quedarse con lo peor de las dos formas.
@@ -393,39 +398,76 @@ export function DraftCard({
               Apagarla sola le quitaría ropa real sin que se entere; un aviso
               que se ignora cuesta una mirada. Con foto, porque sin ver las dos
               no se puede decidir. */}
+          {/* EL DUPLICADO, LADO A LADO — del handoff de carga.
+              Antes era una tira con una miniatura de 40×32 RECORTADA y un solo
+              botón ("no sumarla"). Dos problemas: comparar una foto recortada
+              induce error —el recorte esconde justo el detalle que distingue una
+              camisa de otra—, y "no sumarla" es media decisión: dice qué NO
+              hacer y no qué sí.
+              Ahora las dos imágenes van completas (`object-contain`, nunca
+              crop), rotuladas, del mismo alto, y la pregunta se contesta con dos
+              botones en el MISMO bloque. Resuelto, colapsa a una línea con ✓.
+              El fondo es `accent-soft` y la señal de atención la da el filete
+              `warning`: el handoff pedía un tono arena (#efeae0) que no está en
+              el DS, y no se inventa un token para un aviso. */}
           {yaEsta && item.on ? (
-            <div className="flex items-center gap-2 rounded-sm bg-warning/10 p-1.5">
-              {yaEsta.imagen ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={yaEsta.imagen}
-                  alt=""
-                  className="h-10 w-8 shrink-0 rounded-sm border border-line object-cover"
-                />
-              ) : null}
-              <span className="flex min-w-0 flex-col">
-                <span className="text-[11px] font-medium text-ink">
-                  Creo que ya la tienes
-                </span>
-                {/* CON SU MARCA Y TALLA si las tiene, y eso es lo que hace
-                    contestable el aviso. Caso de Roberto: dos playeras blancas,
-                    una Express y otra Uniqlo. "Creo que ya tienes Camiseta
-                    blanca" no le dice CUÁL, así que no puede saber si esta
-                    tercera es repetida o es otra distinta; con "Camiseta blanca
-                    · Express" sí. El aviso no decide — le da lo que necesita
-                    para decidir él. */}
-                <span className="truncate text-[11px] text-muted">
-                  {[yaEsta.nombre, yaEsta.marca].filter(Boolean).join(" · ")}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="ml-auto shrink-0 rounded-sm border border-line bg-surface px-2 py-1 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-              >
-                no sumarla
-              </button>
-            </div>
+            dupe ? (
+              <p className="flex items-start gap-1.5 rounded-sm bg-accent-soft px-2 py-1.5 text-[11px] leading-snug text-muted">
+                <Icon name="check" size={12} className="mt-px shrink-0 text-success" />
+                {dupe === "misma"
+                  ? "es la misma — le pongo tu foto a la que ya tienes"
+                  : `se suma como ${a.categoria ?? "prenda"} nueva`}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2 rounded-sm border-l-2 border-warning bg-accent-soft p-2.5">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { src: item.photoPreview, rotulo: "EN TU FOTO" },
+                    { src: yaEsta.imagen, rotulo: "YA EN TU CLÓSET" },
+                  ].map((x) => (
+                    <div key={x.rotulo} className="flex flex-col gap-1">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-faint">
+                        {x.rotulo}
+                      </span>
+                      {x.src ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={x.src}
+                          alt=""
+                          className="h-32 w-full rounded-sm border border-line bg-surface object-contain"
+                        />
+                      ) : (
+                        <span className="h-32 w-full rounded-sm border border-line bg-surface" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[12px] leading-snug text-ink">
+                  ¿es {a.categoria === "calzado" ? "el mismo" : "la misma"}{" "}
+                  {(yaEsta.nombre || a.nombre).toLowerCase()}?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDupe("misma");
+                      onEsLaMisma?.(yaEsta.id);
+                      onToggle(); // no se suma otra vez: se le pone la foto a la que ya está
+                    }}
+                    className="min-h-9 flex-1 rounded-sm bg-accent px-2 text-[12px] font-semibold text-on-accent"
+                  >
+                    sí, es la misma
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDupe("otra")}
+                    className="min-h-9 flex-1 rounded-sm border border-line bg-surface px-2 text-[12px] font-medium text-ink"
+                  >
+                    no, es otra
+                  </button>
+                </div>
+              </div>
+            )
           ) : null}
         </div>
         <button
