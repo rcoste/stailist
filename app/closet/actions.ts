@@ -663,7 +663,11 @@ export async function prendasParaComparar(): Promise<PrendaExistente[]> {
 
   const { data: rows } = await supabase
     .from("items")
-    .select(ITEM_IMAGE_SELECT)
+    // `id, ` DELANTE: ITEM_IMAGE_SELECT no lo trae, y sin él supabase devuelve
+    // filas sin id — los "ids" acababan siendo el índice del arreglo ("66",
+    // "7"). En el espejo eso significaba que las prendas reconocidas NUNCA se
+    // podían colgar del look: ligarPrendasAlEspejo las descartaba por no existir.
+    .select(`id, ${ITEM_IMAGE_SELECT}`)
     .eq("user_id", user.id)
     .is("deleted_at", null);
   if (!rows) return [];

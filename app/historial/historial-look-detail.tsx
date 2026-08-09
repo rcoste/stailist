@@ -62,8 +62,9 @@ export function HistorialLookDetail({
   const canMe = generating || hasRender;
   const tab: "look" | "me" = generating
     ? "me"
+    // Sin prendas colgadas, la retícula está vacía: la foto es lo único que hay.
     : hasRender
-      ? manual ?? "me"
+      ? (o.prendas.length === 0 ? "me" : manual ?? "me")
       : "look";
 
   // "espejo" es una clave interna, no algo que decirle a nadie: el subtítulo
@@ -116,11 +117,16 @@ export function HistorialLookDetail({
         {/* Pestañas + corazón + ⋯ (el menú cuelga del contenedor relativo de la
             fila — nunca un top absoluto medido a ojo). */}
         <div className="relative mt-2 flex items-center gap-1 border-b border-line">
+          {/* Sin prendas colgadas no hay nada que enseñar aquí, y una pestaña
+              que lleva a una retícula vacía se siente rota. Pasa en una entrada
+              del espejo donde no se pidió reconocer la ropa. */}
+          {o.prendas.length > 0 ? (
           <SegTab
             label="las prendas"
             active={tab === "look"}
             onClick={() => setManual("look")}
           />
+          ) : null}
           {canMe ? (
             <SegTab
               // En una entrada del espejo NO es un render de cómo te QUEDARÍA:

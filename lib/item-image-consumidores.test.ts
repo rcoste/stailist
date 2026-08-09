@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 // Quién puede pintar prendas SIN pasar por lib/item-image.ts.
@@ -19,6 +20,17 @@ import { describe, expect, it } from "vitest";
 // `lib/item-image.ts` existe justamente como fuente única del orden correcto
 // (arquetipo → render → foto → prestada). Este test vigila que las pantallas que
 // pintan prendas la usen, porque el modo de fallo es invisible.
+
+/** Todos los .ts/.tsx bajo una carpeta, recursivo. */
+function fuentes(dir: string): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) out.push(...fuentes(p));
+    else if (/\.tsx?$/.test(e.name) && !/\.test\./.test(e.name)) out.push(p);
+  }
+  return out;
+}
 
 const OBLIGADOS = [
   "app/api/generate/route.ts",
@@ -49,5 +61,25 @@ describe("consumidores de imágenes de prendas", () => {
       )
     );
     expect(ofensores, "leen attrs.image_path directo").toEqual([]);
+  });
+});
+
+// EL `id` NO VIENE EN ITEM_IMAGE_SELECT, y olvidarlo no truena: supabase
+// devuelve las filas sin id y el código sigue, con `fila.id ?? String(i)`
+// dando índices del arreglo en vez de UUIDs.
+//
+// Costó un bug entero: en el espejo, las prendas que la foto reconocía se
+// colgaban del look con "66" y "7" como ids, y la acción que las guarda las
+// descartaba por no existir. Los thumbnails no podían salir nunca, y no había
+// error en ningún lado — sólo una entrada del diario vacía.
+describe("quien pide ITEM_IMAGE_SELECT tiene que pedir el id", () => {
+  it("ningún archivo lo usa sin `id,` delante", () => {
+    const culpables = [...fuentes("app"), ...fuentes("lib")].filter((f) =>
+      /\.select\(\s*ITEM_IMAGE_SELECT\s*\)/.test(readFileSync(f, "utf8"))
+    );
+    expect(
+      culpables,
+      `piden ITEM_IMAGE_SELECT sin id: ${culpables.join(", ")}`
+    ).toEqual([]);
   });
 });

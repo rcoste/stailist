@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.180.0] - 2026-08-08
+
+### Fixed — los thumbnails del espejo NO PODÍAN salir nunca
+
+Roberto, con la pantalla delante: *"le piqué lo de las prendas, esa chamarra de hecho no la tengo, no vi que hiciera el proceso… está muy sloppy, y tampoco aparecen los thumbnails"*. Tenía razón en todo, y el bug de fondo era mío y certero.
+
+**`ITEM_IMAGE_SELECT` no incluye `id`.** Ocho llamadas del repo lo saben y escriben `` .select(`id, ${ITEM_IMAGE_SELECT}`) ``; las dos que escribí ayer y hoy lo omitían. Sin el id, supabase devuelve las filas sin él y el `fila.id ?? String(i)` de al lado rellenaba con el **índice del arreglo**: las prendas reconocidas se colgaban del look con ids `"66"` y `"7"`, y la acción que las guarda los descartaba por no existir.
+
+O sea que los thumbnails no podían aparecer **nunca**, y sin un solo error en ningún lado — sólo una entrada del diario vacía. Hay un test nuevo que caza a cualquiera que vuelva a pedir ese select sin id.
+
+**Y el mensaje mentía.** *"No pude distinguir las prendas en esta foto"* salió sobre una foto donde el propio consejo acababa de nombrar cuatro (chamarra militar, playera, pantalón khaki, tenis). Verificado releyendo su foto real: la visión lee las cuatro en 3.2s. El fallo era otro —un tropiezo del servicio— y el `catch` lo tragaba entero, convirtiendo "falló ahora, reinténtalo" en "esta foto no se deja leer", que es lo único que no se puede reintentar. Ahora se registra la causa y aparece un **reintentar**.
+
+### Fixed — el título del diario era un párrafo
+
+La entrada se llamaba *"Chamarra tipo militar en azul muy oscuro, playera del mismo tono debajo, pantalón khaki y tenis blancos."* — el resumen entero, en la serif grande, al lado de looks que se llaman *"Blazer con oficio"*.
+
+El resumen sirve para demostrar que miró la foto; para nombrarla hacía falta otra cosa. Ahora pide un título de dos o tres palabras. Con su misma foto: **"Casual de ciudad"**.
+
+Y la pestaña *"las prendas"* deja de aparecer cuando no hay ninguna colgada: llevaba a una retícula vacía.
+
 ## [0.2.179.0] - 2026-08-08
 
 ### Added — la entrada del espejo se ve como un look

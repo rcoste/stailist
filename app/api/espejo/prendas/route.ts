@@ -46,11 +46,22 @@ export async function POST(request: NextRequest) {
   const [, mediaType, b64] = match;
 
   // El clóset y la lectura, en paralelo: el filtro necesita las dos.
+  //
+  // EL ERROR SE REGISTRA, NO SE TRAGA. Antes era `.catch(() => null)` a secas, y
+  // el cliente pintaba "no pude distinguir las prendas en esta foto" para
+  // CUALQUIER fallo. Roberto vio ese mensaje sobre una foto donde el propio
+  // consejo acababa de nombrar cuatro prendas — o sea que el mensaje era falso
+  // y encima escondía la causa (un 503 de Gemini, un timeout, lo que fuera).
+  // Confundir "esta foto no se deja leer" con "el servicio falló" quita lo
+  // único accionable: volver a intentar.
   const [lectura, closet] = await Promise.all([
-    leerPrendas({ mediaType, base64: b64 }, VISION_MODEL).catch(() => null),
+    leerPrendas({ mediaType, base64: b64 }, VISION_MODEL).catch((e) => {
+      console.error("[espejo/prendas] no se pudo leer:", e?.message ?? e);
+      return null;
+    }),
     closetParaComparar(supabase, user.id),
   ]);
-  if (!lectura) return NextResponse.json({ error: "no_pude_leer" }, { status: 502 });
+  if (!lectura) return NextResponse.json({ error: "fallo_temporal" }, { status: 502 });
 
   // SE PARTE EN DOS Y SE DEVUELVEN LAS DOS. El aviso de "creo que ya la tienes"
   // está calibrado contra la base real; aquí se usa al revés —para separar en
@@ -104,7 +115,11 @@ async function closetParaComparar(
 ): Promise<PrendaExistente[]> {
   const { data: rows } = await supabase
     .from("items")
-    .select(ITEM_IMAGE_SELECT)
+    // `id, ` DELANTE: ITEM_IMAGE_SELECT no lo trae, y sin él supabase devuelve
+    // filas sin id — los "ids" acababan siendo el índice del arreglo ("66",
+    // "7"). En el espejo eso significaba que las prendas reconocidas NUNCA se
+    // podían colgar del look: ligarPrendasAlEspejo las descartaba por no existir.
+    .select(`id, ${ITEM_IMAGE_SELECT}`)
     .eq("user_id", userId)
     .is("deleted_at", null);
   if (!rows) return [];
