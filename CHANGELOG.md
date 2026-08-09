@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.190.0] - 2026-08-08
+
+### Added — el espejo también avisa si sale alguien más
+
+Cierra el último hueco de la comparación con el multiupload: **los dos flujos ya tienen los mismos pasos.**
+
+Sin esto, una foto de espejo de un cuarto de hotel con alguien al fondo se leía entera y su ropa entraba como tuya. Lo único que lo cazaba era que lo notaras en la lista.
+
+Se cuenta a la gente **antes de leer nada**, igual que el carrete, y si hay más de una la pantalla se para y ofrece recortar. Con salida para seguir sin recortar, a propósito: el conteo se equivoca a veces (un reflejo, un póster) y bloquear a alguien porque el modelo vio dos personas donde hay una sería peor que el problema. Lo que no puede pasar es que se lea la ropa de otro **en silencio**.
+
+**Medido sobre sus tres fotos de espejo reales, dos corridas cada una:**
+
+| | |
+|---|---|
+| interrupciones falsas | **0 de 6** |
+| retraso que añade | **1.6 s** de promedio |
+
+O sea: no molesta cuando sale solo, que es el 99% de las veces, y el segundo que cuesta se lo come la subida de la foto.
+
+### Los dos flujos, ahora
+
+| | multiupload | espejo |
+|---|---|---|
+| recortar si sale alguien más | ✅ | ✅ |
+| leer las prendas | mismo lector | mismo lector |
+| ¿ya la tienes? | avisa | filtra, y se puede desmentir |
+| confirmar cada prenda | misma tarjeta | misma tarjeta (cerrada) |
+| dibujar | obligatorio | opcional |
+| "salió mal" | ✅ | ✅ |
+
+Las dos diferencias que quedan son las únicas que estaban justificadas desde el principio: en el espejo estás saliendo de tu casa, no sentado catalogando.
+
 ## [0.2.189.0] - 2026-08-08
 
 ### Added — "salió mal", el paso del carrete que al espejo le faltaba
