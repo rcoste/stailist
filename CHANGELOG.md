@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.196.0] - 2026-08-09
+
+### Fixed — con tu look del día hecho, la home quedaba inalcanzable
+
+Roberto: *"después de que generó un outfit no tengo una forma de ir a la homescreen"*. Cierto, y el agujero era estructural: `/hoy` tiene dos pantallas —la home (`idle`: saludo, card contextual, **checklist de activación**, espejo, añadir) y el look (`ready`)— y al abrirla con look del día entraba directo en el look. El único `setState({kind:"idle"})` de todo el archivo es al salir del wizard **y sólo si no hay look**. O sea: en cuanto generabas, la home desaparecía el resto del día.
+
+Lo caro no es la navegación: es que **con ella desaparecía el checklist de "qué sigue"** (avatar → prendas → estilo → silueta → cápsula), la superficie diseñada para activar a alguien nuevo — justo después del momento que más lo engancha.
+
+**Dos puertas, ninguna inventada.** El título **"hoy"** del look ahora es un botón (es el nombre de la sección; tocarlo lleva a su home, la convención del logo de siempre, sobre pixeles que ya estaban ahí sin hacer nada). Y **tocar la pestaña "Hoy" estando en Hoy** hace lo que todo el mundo intenta por instinto. Mismo trato en el header de escritorio.
+
+**Sobre usar el botón negro** (lo preguntó Roberto): no. El ✨ significa *"hazme un look"* — es el único botón que produce valor, y volverlo ambiguo con "y también te lleva a inicio" lo empeora.
+
+**Y la home no puede mentir cuando ya hay look**: el titular pasa de *"tu look de hoy, aún no"* a *"listo"* con su nombre, y el CTA de *"armar mi look de hoy"* a **"ver mi look"** — volver a la home no puede disparar una generación pagada.
+
+**Dos trampas que sólo aparecieron midiendo en el navegador**, no leyendo el código:
+1. Next **no remonta** el componente cuando sólo cambia el query, así que `?inicio=1` cambiaba la URL y no la pantalla. Hace falta reaccionar al cambio, no leerlo al montar.
+2. Limpiar el query con `history.replaceState` desincroniza el router de Next del address bar: la prop no cambia, el efecto no vuelve a dispararse y **la segunda pulsación dejaba de funcionar**. Va por `router.replace`.
+
+Verificado con tres idas y vueltas seguidas por la pestaña y una por el título, sobre un look sembrado y borrado al terminar.
+
 ## [0.2.195.0] - 2026-08-09
 
 ### Fixed — el wow regeneraba encima de looks que ya existían

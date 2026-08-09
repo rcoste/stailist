@@ -33,10 +33,15 @@ export function DesktopHeader() {
             const active =
               pathname.startsWith(t.match) ||
               (t.extra ?? []).some((e) => pathname.startsWith(e));
+            // Mismo trato que la tab bar móvil: en /hoy, tocar "Hoy" ya activo
+            // pide la home (?inicio=1) en vez de no hacer nada. Sin esto, el
+            // callejón que reportó Roberto sigue vivo en escritorio.
+            const destino =
+              active && t.href === "/hoy" ? "/hoy?inicio=1" : t.href;
             return (
               <Link
                 key={t.href}
-                href={t.href}
+                href={destino}
                 className={`text-sm transition-colors duration-200 ${
                   active
                     ? "font-semibold text-ink underline decoration-1 underline-offset-8"

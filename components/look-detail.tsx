@@ -103,6 +103,7 @@ export function LookDetail({
   onGenerar,
   avatarHref = null,
   vermeSub,
+  onInicio,
 }: {
   nombre: string;
   prendas: LookDetailPrenda[];
@@ -128,6 +129,8 @@ export function LookDetail({
   avatarHref?: string | null;
   /** Sub-etiqueta de la primaria "verme…" (ej. "~20 s"). */
   vermeSub?: string;
+  /** Si viene, "hoy" es un botón a la home de la sección. El wow no lo pasa. */
+  onInicio?: () => void;
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
@@ -147,9 +150,26 @@ export function LookDetail({
       {/* Título (v2): "hoy" + nombre lado a lado, sin punto y a todo el ancho —
           el corazón se mudó a la fila de pestañas, que tenía hueco muerto. */}
       <div className="flex items-start gap-3 pb-1">
-        <h1 className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink">
-          hoy
-        </h1>
+        {/* "hoy" es el nombre de la sección, así que tocarlo lleva a la home de
+            la sección — la convención del logo de toda la vida, sobre pixeles
+            que ya estaban ahí sin hacer nada.
+            OPCIONAL a propósito: este mismo componente pinta el wow del
+            onboarding, donde no hay home a la que volver. Sin onInicio se
+            queda como estaba, un <h1> y ya. */}
+        {onInicio ? (
+          <button
+            type="button"
+            onClick={onInicio}
+            aria-label="Ir a inicio"
+            className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink transition-opacity hover:opacity-60"
+          >
+            hoy
+          </button>
+        ) : (
+          <h1 className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink">
+            hoy
+          </h1>
+        )}
         <span className="font-display text-[27px] italic leading-[29px] text-ink">
           {nombre}
         </span>
