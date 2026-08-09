@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
 import { Icon } from "@/components/icon";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
+import { ImageCrop } from "@/components/image-crop";
 import { Spinner } from "@/components/spinner";
 import { addPhotoItems, ligarPrendasAlEspejo, ponerRenderAPrenda } from "@/app/closet/actions";
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
@@ -32,6 +33,18 @@ export type EspejoHandle = { start: () => void };
 
 type State =
   | { kind: "idle" }
+  /**
+   * SALE ALGUIEN MÁS — el paso que el carrete tiene y aquí faltaba.
+   *
+   * Sin esto, una foto de espejo de un cuarto de hotel con alguien al fondo se
+   * lee entera: su ropa entra como tuya, y lo único que lo caza es que tú lo
+   * notes en la lista. El carrete lleva desde hace horas contando personas y
+   * marcando la foto que lo necesita; el espejo se quedó sin ello.
+   *
+   * NO CUESTA ESPERA: la cuenta corre en paralelo con la subida de la foto y la
+   * ubicación, que ya tardan lo suyo. Sólo se para si de verdad hay alguien más.
+   */
+  | { kind: "acompanada"; preview: string; blob: Blob; personas: number }
   | { kind: "mirando"; preview: string }
   | {
       kind: "listo";
@@ -162,6 +175,7 @@ export function EspejoFlow({
   const [sumar, setSumar] = useState<Sumar>({ paso: "buscando" });
   /** La prenda que se está mirando en grande (el visor de siempre). */
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
+  const [recortando, setRecortando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -172,10 +186,42 @@ export function EspejoFlow({
     if (inputRef.current) inputRef.current.value = "";
     if (!file) return;
 
-    let preview = "";
     try {
       const { dataUrl, blob } = await comprimir(await toUsableImage(file));
-      preview = dataUrl;
+      // Se cuenta a la gente ANTES de leer nada, igual que el carrete. La
+      // llamada es minúscula (una pregunta de sí/no con 40 tokens de salida) y
+      // corre mientras la pantalla ya enseña la foto.
+      setState({ kind: "mirando", preview: dataUrl });
+      const personas = await contarPersonas(dataUrl);
+      if (personas > 1) {
+        setState({ kind: "acompanada", preview: dataUrl, blob, personas });
+        return;
+      }
+      await mirar(dataUrl, blob);
+    } catch {
+      setState({ kind: "error", msg: "No pude leer la foto. Inténtalo otra vez." });
+    }
+  }
+
+  /** ¿Cuánta gente sale? Falla hacia 1: sin dato no se interrumpe a nadie. */
+  async function contarPersonas(dataUrl: string): Promise<number> {
+    try {
+      const r = await fetch("/api/contar-personas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      if (!r.ok) return 1;
+      const d = (await r.json()) as { personas?: number };
+      return typeof d.personas === "number" ? d.personas : 1;
+    } catch {
+      return 1;
+    }
+  }
+
+  async function mirar(dataUrl: string, blob: Blob) {
+    const preview = dataUrl;
+    try {
       setState({ kind: "mirando", preview });
 
       // La foto y la ubicación, en paralelo: ninguna de las dos debe hacer
@@ -497,6 +543,69 @@ export function EspejoFlow({
   );
 
   const cerrar = () => setState({ kind: "idle" });
+
+  // SALE ALGUIEN MÁS: se para y se ofrece el recorte, igual que el carrete.
+  //
+  // Con salida para seguir sin recortar, y a propósito: el conteo se equivoca a
+  // veces (un reflejo, un póster) y bloquear a alguien porque el modelo vio dos
+  // personas donde hay una sería peor que el problema. Lo que no puede pasar es
+  // que se lea la ropa de otro EN SILENCIO.
+  if (state.kind === "acompanada") {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
+        <div
+          className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
+          style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+        >
+          <div className="flex items-start justify-between">
+            <h2 className="text-[22px] font-semibold leading-tight text-ink">
+              sale <em className="font-normal italic">alguien más</em>
+            </h2>
+            <button type="button" onClick={cerrar} aria-label="Cerrar" className="text-muted">
+              <Icon name="equis" size={18} />
+            </button>
+          </div>
+          <p className="text-sm leading-snug text-muted">
+            Veo {state.personas} personas en la foto. Si la leo así, te voy a sumar
+            su ropa como tuya — recórtala para dejarte solo a ti.
+          </p>
+          <div className="overflow-hidden rounded-xl border border-warning bg-bg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={state.preview} alt="" className="max-h-[46dvh] w-full object-contain" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setRecortando(true)}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent"
+            >
+              <Icon name="camara" size={16} />
+              recortar
+            </button>
+            <button
+              type="button"
+              onClick={() => mirar(state.preview, state.blob)}
+              className="min-h-11 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              salgo solo yo — sigue así
+            </button>
+          </div>
+        </div>
+        {recortando ? (
+          <ImageCrop
+            src={state.preview}
+            onCancel={() => setRecortando(false)}
+            onDone={async (recortada) => {
+              setRecortando(false);
+              // El recorte devuelve un dataURL; hace falta el blob para subirla.
+              const blob = await (await fetch(recortada)).blob();
+              await mirar(recortada, blob);
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  }
 
   if (state.kind === "mirando" || state.kind === "listo") {
     const lista = state.kind === "listo" ? state.lectura : null;
