@@ -44,7 +44,17 @@ export async function extraerPrendaDeFoto(
 
   const que = prenda.color ? `${prenda.quePrenda}, en color ${prenda.color}` : prenda.quePrenda;
 
-  const prompt = `From the photo of the person, isolate ONLY this single garment they are wearing: ${que}. Produce a professional e-commerce flat lay photograph of just that one garment, ${encuadre}. CRITICAL: preserve the garment's exact real-world color, cut, silhouette, fabric, texture, pattern and distinctive details (collar, sleeves, buttons, zipper, sole, etc.) exactly as seen on the person — do not redesign it, do not change its style. Remove the person, any other garments, and the background entirely. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. No people, no props, no text, no labels.`;
+  // "COMO SI SE ACABARA DE QUITAR": la instrucción que faltaba, y que salió del
+  // suéter de Roberto. Su descripción decía "llevado sobre los hombros, con
+  // mangas dobladas" —el lector describe lo que VE, y ahí veía una pose— y el
+  // render la copió fielmente: un tejido a medio caer, fiel a la foto e inútil
+  // como imagen de catálogo.
+  //
+  // Va AQUÍ y no en el prompt del lector a propósito. Tocar el lector mueve
+  // otras lecturas (medido: z = 3.05 al añadirle un campo, sin cambiar una
+  // palabra del texto), y esa deriva se paga en el motor. Este prompt no
+  // alimenta ninguna lectura: sólo dibuja.
+  const prompt = `From the photo of the person, isolate ONLY this single garment they are wearing: ${que}. Produce a professional e-commerce flat lay photograph of just that one garment, ${encuadre}. IMPORTANT — how the garment happens to sit in the photo is NOT part of the garment: if it is draped over a shoulder, tied around the waist, folded over an arm, half-off, tucked, rolled up or worn open, IGNORE that entirely and present it as a normal product shot, laid out flat and symmetric as if it had just been taken off and neatly arranged. Any wording in the description about how it is being worn or carried describes the moment, not the item — do not reproduce it. CRITICAL: preserve the garment's exact real-world color, cut, silhouette, fabric, texture, pattern and distinctive details (collar, sleeves, buttons, zipper, sole, etc.) exactly as seen on the person — do not redesign it, do not change its style. Remove the person, any other garments, and the background entirely. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. No people, no props, no text, no labels.`;
 
   const r = await pedirImagen(
     [{ text: prompt }, { inlineData: { mimeType: foto.mediaType, data: foto.base64 } }],
