@@ -209,6 +209,18 @@ export function HistorialLookDetail({
           </div>
         )}
 
+        {/* LO QUE TRAÍA PUESTO, ENTERO.
+            Las miniaturas sólo pueden enseñar prendas que existen como fila: lo
+            emparejado con su clóset y lo que sumó. Lo que la foto leyó pero no
+            cayó en ninguna de las dos no tiene a qué apuntar, y desaparecía —
+            aunque lo traía puesto y la app lo sabía. Roberto: "no aparecen
+            todos los thumbnails, solo de dos prendas". */}
+        {o.origen === "espejo" && o.resumen ? (
+          <p className="mt-2 shrink-0 text-[12.5px] leading-snug text-muted">
+            Traías: {o.resumen}
+          </p>
+        ) : null}
+
         {/* El pie del coach (por qué ⇄ cómo llevarlo). */}
         {o.explicacion ? <CoachPie porQue={o.explicacion} como={o.tip} /> : null}
 

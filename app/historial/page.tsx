@@ -19,7 +19,7 @@ export default async function HistorialPage({
 
   const { data: outfits } = await supabase
     .from("outfits")
-    .select("id, title, explanation, tip, occasion, item_ids, created_at, favorited_at, tryon_path, photo_path, source")
+    .select("id, title, explanation, tip, occasion, item_ids, created_at, favorited_at, tryon_path, photo_path, resumen, source")
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     // Diarios siempre; los promovidos del viaje solo mientras sigan favoriteados
@@ -122,6 +122,7 @@ export default async function HistorialPage({
             : "daily",
     // El espejo REUSA el hueco de la imagen grande: es exactamente lo mismo
     // —una foto de ella con el look puesto— sólo que real en vez de renderizada.
+    resumen: (o.resumen as string | null) ?? null,
     tryonImage: o.tryon_path
       ? signed.get(o.tryon_path as string) ?? null
       : o.photo_path
