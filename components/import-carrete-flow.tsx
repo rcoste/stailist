@@ -539,7 +539,18 @@ export function ImportCarreteFlow({
       },
     ];
     return (
-      <Overlay>
+      <Overlay
+        paso={1}
+        onBack={() => setState({ kind: "idle" })}
+        pie={
+          <Footer
+            cancel={() => setState({ kind: "idle" })}
+            confirmLabel="elegir fotos"
+            confirmDisabled={false}
+            onConfirm={() => inputRef.current?.click()}
+          />
+        }
+      >
         {input}
         <div className="flex flex-col gap-1">
           <h2 className="text-[24px] font-semibold leading-tight text-ink">
@@ -568,12 +579,6 @@ export function ImportCarreteFlow({
             </li>
           ))}
         </ol>
-        <Footer
-          cancel={() => setState({ kind: "idle" })}
-          confirmLabel="elegir fotos"
-          confirmDisabled={false}
-          onConfirm={() => inputRef.current?.click()}
-        />
       </Overlay>
     );
   }
@@ -593,7 +598,18 @@ export function ImportCarreteFlow({
     // clase de aviso que se aprende a ignorar porque siempre está.
     const conCompania = state.fotos.filter((f) => (personas[f.id] ?? 0) > 1);
     return (
-      <Overlay>
+      <Overlay
+        paso={2}
+        onBack={() => setState({ kind: "explainer" })}
+        pie={
+          <Footer
+            cancel={() => setState({ kind: "idle" })}
+            confirmLabel={`leer ${state.fotos.length} ${state.fotos.length === 1 ? "foto" : "fotos"}`}
+            confirmDisabled={state.fotos.length === 0}
+            onConfirm={analizarFotos}
+          />
+        }
+      >
         {input}
         <Header
           title="revisa tus fotos"
@@ -644,12 +660,6 @@ export function ImportCarreteFlow({
             );
           })}
         </div>
-        <Footer
-          cancel={() => setState({ kind: "idle" })}
-          confirmLabel={`leer ${state.fotos.length} ${state.fotos.length === 1 ? "foto" : "fotos"}`}
-          confirmDisabled={state.fotos.length === 0}
-          onConfirm={analizarFotos}
-        />
         {cropFoto ? (
           <ImageCrop
             src={cropFoto.dataUrl}
@@ -684,7 +694,17 @@ export function ImportCarreteFlow({
       activos.map((it) => ({ id: it.id, foto: it.photoPreview, ...it.attrs }))
     );
     return (
-      <Overlay>
+      <Overlay
+        paso={3}
+        pie={
+          <Footer
+            cancel={() => setState({ kind: "idle" })}
+            confirmLabel={`generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
+            confirmDisabled={activos.length === 0}
+            onConfirm={generarRenders}
+          />
+        }
+      >
         <Header
           title="¿Detecté bien tus prendas?"
           sub="Confirma o corrige cada una. Apaga con la ✓ las que no quieras sumar."
@@ -768,12 +788,6 @@ export function ImportCarreteFlow({
             ellas.
           </p>
         ) : null}
-        <Footer
-          cancel={() => setState({ kind: "idle" })}
-          confirmLabel={`generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
-          confirmDisabled={activos.length === 0}
-          onConfirm={generarRenders}
-        />
       </Overlay>
     );
   }
@@ -831,7 +845,17 @@ export function ImportCarreteFlow({
     const keep = state.items.filter((it) => it.verdict === "keep").length;
     const grande = state.items.find((it) => it.id === zoomId) ?? null;
     return (
-      <Overlay>
+      <Overlay
+        paso={3}
+        pie={
+          <Footer
+            cancel={() => setState({ kind: "idle" })}
+            confirmLabel={`sumar ${keep} al clóset`}
+            confirmDisabled={false}
+            onConfirm={guardar}
+          />
+        }
+      >
         <Header
           title="¿Cuáles son tuyas?"
           // LA COPY ANTERIOR EXPLICABA UNA DE LAS TRES SALIDAS Y ESCONDÍA LA
@@ -851,12 +875,6 @@ export function ImportCarreteFlow({
             />
           ))}
         </div>
-        <Footer
-          cancel={() => setState({ kind: "idle" })}
-          confirmLabel={`sumar ${keep} al clóset`}
-          confirmDisabled={false}
-          onConfirm={guardar}
-        />
         <PrendaZoom
           data={
             grande?.url
@@ -928,15 +946,86 @@ export function ImportCarreteFlow({
 
 // ====== Subcomponentes ======
 
-function Overlay({ children }: { children: React.ReactNode }) {
+/** El contenedor del flujo: PANTALLA COMPLETA, no hoja.
+ *
+ *  POR QUÉ CAMBIÓ. Esto no es una hoja: es un wizard de cinco estados
+ *  (explainer → revisar → analizando → texto/visual → guardando) en el que se
+ *  construye el clóset, con N prendas × 3 decisiones y scroll. Una hoja promete
+ *  "corto y desechable", que es lo contrario. Y el proyecto YA tiene el patrón
+ *  correcto para esta clase de tarea —el wizard de avatar, pantalla completa con
+ *  "paso 1 de 3"—, así que dos tareas del mismo tipo estaban en dos registros, y
+ *  la que vivía en la hoja era la más larga de las dos.
+ *
+ *  Lo que se arregla de paso, todo visible en la captura de Roberto:
+ *   · la franja de la pantalla de atrás asomando arriba, que no daba contexto
+ *     sino ruido (un "hoy Traje marino de gala" cortado a la mitad);
+ *   · el scroll dentro de scroll;
+ *   · el pie `sticky` rebanando las tarjetas — ahora vive FUERA del área que
+ *     hace scroll, así que ya no puede pisar nada;
+ *   · no había dónde decir cuánto falta.
+ *
+ *  Lo que NO cambia, porque era lo bueno de la hoja: se puede salir en
+ *  cualquier momento, y salir no pierde lo hecho. */
+function Overlay({
+  children,
+  paso,
+  onBack,
+  pie,
+}: {
+  children: React.ReactNode;
+  /** Paso del wizard para la barra de progreso. Los estados de carga no lo pasan. */
+  paso?: 1 | 2 | 3;
+  onBack?: () => void;
+  /** El pie va aparte de los hijos a propósito: fuera del scroll. */
+  pie?: React.ReactNode;
+}) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40">
-      <div
-        className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5"
-        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-      >
-        {children}
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-bg"
+      style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+    >
+      <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col overflow-hidden px-5 pt-[max(1rem,env(safe-area-inset-top))]">
+        {paso ? <PasoHeader paso={paso} onBack={onBack} /> : null}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-4">{children}</div>
+        {pie ? (
+          <div className="shrink-0 border-t border-line pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+            {pie}
+          </div>
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+/** Progreso del wizard — el mismo lenguaje que el de avatar, para que dos
+ *  tareas iguales se lean iguales. Sin `onBack` la flecha no se pinta (los
+ *  estados de carga no admiten volver a medias). */
+function PasoHeader({ paso, onBack }: { paso: 1 | 2 | 3; onBack?: () => void }) {
+  return (
+    <div className="flex min-h-11 shrink-0 items-center gap-3 pb-4">
+      {onBack ? (
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="atrás"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:bg-accent-soft"
+        >
+          <Icon name="flecha" size={18} className="rotate-180" />
+        </button>
+      ) : (
+        <span className="h-9 w-9 shrink-0" aria-hidden />
+      )}
+      <div className="flex flex-1 gap-1.5">
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={`h-[3px] flex-1 rounded-full ${i <= paso ? "bg-ink" : "bg-line"}`}
+          />
+        ))}
+      </div>
+      <span className="shrink-0 text-[11px] font-bold uppercase tracking-[0.1em] tabular-nums text-muted">
+        paso {paso} de 3
+      </span>
     </div>
   );
 }
@@ -962,7 +1051,7 @@ function Footer({
   onConfirm: () => void;
 }) {
   return (
-    <div className="sticky bottom-0 flex gap-3 bg-surface pt-1">
+    <div className="flex gap-3">
       <button
         type="button"
         onClick={cancel}
@@ -1043,7 +1132,11 @@ function VerdictBtn({ label, on, onClick }: { label: string; on: boolean; onClic
 // Loading canónico del carrete (v3): spark girando lento + frase serif + conteo.
 function CarreteLoading({ frase, count }: { frase: string; count?: string }) {
   return (
-    <div className="flex flex-col items-center gap-4 py-8 text-center">
+    // `my-auto`: en pantalla completa el loader se centra vertical cuando sobra
+    // sitio, y no recorta nada cuando no (que es lo que sí haría justify-center
+    // en el contenedor con scroll). Antes se apoyaba en que la hoja se encogía
+    // al contenido; ahora la pantalla mide lo que mide.
+    <div className="my-auto flex flex-col items-center gap-4 py-8 text-center">
       <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-line text-ink motion-safe:animate-[spin_6s_linear_infinite]">
         <Icon name="destello" size={20} />
       </span>

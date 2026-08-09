@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.200.0] - 2026-08-09
+
+### Changed — el carrete deja de ser un drawer y pasa a ser una pantalla
+
+Lo propuso Roberto viendo la hoja de *"¿Cuáles son tuyas?"* montada encima de su look: *"igual sería mejor que no se viera como drawer sino como su propia pantalla"*. Tenía razón, y el argumento de fondo es que **lo que vivía dentro de esa hoja no era una hoja: era un wizard de cinco estados** (explainer → revisar → analizando → confirmar → guardando), con N prendas × 3 decisiones y scroll. Una hoja promete "corto y desechable", que es justo lo contrario del momento en que se construye tu clóset.
+
+Y el proyecto ya tenía el patrón correcto: el **wizard de avatar** es pantalla completa con "paso 1 de 3". Dos tareas del mismo tipo estaban en dos registros, y la que vivía en la hoja era la más larga de las dos. Ahora comparten lenguaje: barra de progreso, "paso N de 3" y botón atrás.
+
+Lo que se arregla de paso, todo visible en su captura:
+
+- **la franja de la pantalla de atrás asomando arriba** —un *"hoy Traje marino de gala"* cortado a la mitad— que no daba contexto sino ruido;
+- **el scroll dentro de scroll**;
+- **el pie pegajoso rebanando las tarjetas**: era `sticky bottom-0` DENTRO del área con scroll, con 4px de separación y fondo opaco. Ahora vive fuera del scroll, con su hairline. Medido: el área que hace scroll termina en 767px y el pie empieza en 767px — se tocan, no se pisan.
+
+**Lo que no cambió, a propósito**: el menú de entrada (*varias de golpe · la biblioteca · una prenda*) sigue siendo una hoja, porque un menú sí es del tamaño de una hoja. Lo que se volvió pantalla es el wizard. Y se puede seguir saliendo en cualquier momento sin perder lo hecho, que era lo bueno del drawer.
+
+**El costo, dicho**: en los pasos cortos —"revisa tus fotos" con dos fotos— ahora sobra pantalla, porque la hoja se encogía al contenido y una pantalla mide lo que mide. El loader se centra (`my-auto`) para no quedar pegado arriba; los pasos con pocas tarjetas quedan pendientes de pulir.
+
 ## [0.2.199.0] - 2026-08-09
 
 ### Fixed — el recortador salía DEBAJO de la hoja que lo abría
