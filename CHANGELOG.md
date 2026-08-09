@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.188.0] - 2026-08-08
+
+### Fixed — la pose no es parte de la prenda
+
+Roberto: *"¿cómo se genera la imagen a partir de la foto que cargo, vs cómo lo hacemos con el multiupload? Ahí según yo sí lo hace bien"*.
+
+**El camino es idéntico** — las dos puertas llaman al mismo `/api/render-prenda` con la foto y la descripción. Lo que cambiaba era **la descripción**, y se ve en lo que quedó guardado de su suéter:
+
+> *"Suéter de punto fino de color azul marino, **llevado sobre los hombros**, con mangas largas dobladas de forma natural…"*
+
+El lector describe lo que **ve**, y ahí veía una pose. El render la copió fielmente: un tejido a medio caer, fiel a la foto e inútil como imagen de catálogo. En el carrete casi nunca pasa porque la ropa va extendida o puesta normal — pose y prenda coinciden. En una foto de espejo, con la chamarra al hombro, dejan de coincidir.
+
+Ahora el prompt del render dice explícitamente que **cómo esté puesta la prenda en la foto no es parte de la prenda**: colgada del hombro, atada a la cintura, doblada en el brazo, medio quitada, fajada o arremangada — se ignora y se presenta como producto, extendida y simétrica, como si se acabara de quitar.
+
+**Va en el prompt del render y no en el del lector, a propósito.** Tocar el lector mueve otras lecturas —medido: z = 3.05 al añadirle un solo campo, sin cambiar una palabra del texto— y esa deriva se paga en el motor. Este prompt no alimenta ninguna lectura: sólo dibuja.
+
+Verificado con **su misma foto y su misma descripción** (la que dice *"llevado sobre los hombros"*): sale un suéter de cuello redondo extendido y simétrico.
+
 ## [0.2.187.0] - 2026-08-08
 
 ### Added — poder desmentir el empate, y verlo en grande
