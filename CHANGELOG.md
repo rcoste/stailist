@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.187.0] - 2026-08-08
+
+### Added — poder desmentir el empate, y verlo en grande
+
+Roberto, probando: *"debería poder ver en grande los thumbnails y confirmar o no si es correcto lo que leyó"*.
+
+Tiene razón y era el hueco más serio de los tres: los emparejamientos se le presentaban **como hechos**. Si me equivoco al decir *"esto ya lo tienes"*, no sólo cuelgo una prenda ajena de lo que se puso hoy — **deja fuera la de verdad, y no había forma de sumarla**.
+
+Ahora cada fila lleva **"no es ésa"**. Lo descuelga del look y pasa lo que la foto leyó a la lista de nuevas, para que pueda sumar la correcta. Sin esa segunda mitad el desmentido sería sólo una queja.
+
+Y se toca para **verla en grande** (el visor de siempre): con un recuadro de 9×11 px no se puede decidir si ésa es la prenda que traes puesta, que es justo lo que se le está preguntando.
+
+### Fixed — el recuadro en blanco
+
+*"No apareció uno de los thumbnails."* Era una prenda recién sumada que todavía no se había dibujado. Ahora sale **su color** en vez de un hueco: un recuadro vacío se lee como un error de la app, no como *"aún no tiene foto"*.
+
+### Nota — por qué el suéter salió raro
+
+*"La imagen del suéter de punto quedó de renderaje raro."* Cierto, y la causa no se arregla con un modelo mejor: en esa foto el suéter iba **colgado del hombro**, no puesto. Imagen→imagen copia lo que ve, así que produjo fielmente un tejido a medio caer — fiel a la foto e inútil como imagen de catálogo.
+
+Es el límite real de dibujar desde la foto, y rehacerla no ayudaría: partiría de la misma imagen. La salida sería un *"dibújala desde cero, sin mi foto"* que caiga a texto→imagen —genérica pero limpia—. No se construye todavía: primero hay que ver si pasa seguido o fue el caso de una noche.
+
 ## [0.2.186.0] - 2026-08-08
 
 ### Fixed — la misma prenda salía fiel o genérica según cuándo la dibujaras

@@ -85,7 +85,18 @@ export async function POST(request: NextRequest) {
   // Con el ID, no sólo el nombre: es lo que deja que la entrada del diario
   // enseñe las prendas como un look generado. El empate YA se estaba
   // calculando y sólo se tiraba el id.
-  const yaEstan: { id: string; nombre: string; comoEsta: string; imagen: string | null }[] = [];
+  // `leida` va entera para que la persona pueda DESMENTIR el empate: si dice
+  // "ésa no es", la prenda se pasa a la lista de nuevas con todo lo que se leyó
+  // de ella, y puede sumarla. Sin esto, un empate equivocado no sólo cuelga la
+  // prenda ajena del look: deja fuera la de verdad, y para siempre.
+  const yaEstan: {
+    id: string;
+    nombre: string;
+    comoEsta: string;
+    imagen: string | null;
+    colorHex: string | null;
+    leida: (typeof lectura.prendas)[number];
+  }[] = [];
   for (const p of lectura.prendas) {
     const match = yaLaTienes(
       {
@@ -97,7 +108,17 @@ export async function POST(request: NextRequest) {
       },
       closet
     );
-    if (match) yaEstan.push({ id: match.id, nombre: p.nombre, comoEsta: match.nombre, imagen: null });
+    if (match)
+      yaEstan.push({
+        id: match.id,
+        nombre: p.nombre,
+        comoEsta: match.nombre,
+        imagen: null,
+        // Para el recuadro cuando la prenda todavía no tiene dibujo: un color es
+        // mejor que un hueco en blanco.
+        colorHex: match.colorHex,
+        leida: p,
+      });
     else nuevas.push(p);
   }
 

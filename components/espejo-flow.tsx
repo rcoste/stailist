@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
 import { Icon } from "@/components/icon";
+import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { Spinner } from "@/components/spinner";
 import { addPhotoItems, ligarPrendasAlEspejo, ponerRenderAPrenda } from "@/app/closet/actions";
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
@@ -56,7 +57,15 @@ type State =
 //   ambiente y prendas fuera de cuadro, y con la misma camisa tres veces por
 //   semana el auto-alta llenaría el clóset de duplicados en un mes.
 /** Una prenda de la foto que no se propone porque ya parece estar en el clóset. */
-type YaEsta = { id: string; nombre: string; comoEsta: string; imagen: string | null };
+type YaEsta = {
+  id: string;
+  nombre: string;
+  comoEsta: string;
+  imagen: string | null;
+  colorHex: string | null;
+  /** Lo que la foto leyó, por si la persona desmiente el empate. */
+  leida: PrendaDetectada;
+};
 
 type Sumar =
   | { paso: "buscando" }
@@ -151,6 +160,8 @@ export function EspejoFlow({
 }) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [sumar, setSumar] = useState<Sumar>({ paso: "buscando" });
+  /** La prenda que se está mirando en grande (el visor de siempre). */
+  const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -430,6 +441,33 @@ export function EspejoFlow({
     router.refresh();
   }
 
+  /**
+   * "No es ésa" — la persona desmiente un empate.
+   *
+   * Hace las dos cosas que hacen falta: lo descuelga del look (la prenda ajena
+   * no debe quedarse pegada a lo que se puso hoy) y pasa lo que la foto leyó a
+   * la lista de nuevas, para que pueda sumar la de verdad. Sin la segunda mitad
+   * el desmentido sería sólo una queja: la prenda correcta seguiría sin poder
+   * entrar nunca.
+   */
+  function noEsEsa(x: YaEsta, outfitId: string | null) {
+    setSumar((sm) => {
+      if (sm.paso !== "elegir" && sm.paso !== "nada") return sm;
+      const yaEstan = sm.yaEstan.filter((y) => y.id !== x.id);
+      if (outfitId) void ligarPrendasAlEspejo(outfitId, yaEstan.map((y) => y.id));
+      const nueva: DraftLeida = {
+        id: crypto.randomUUID(),
+        attrs: x.leida,
+        on: true,
+        photoPreview: "",
+        leido: { color: x.leida.color, hex: x.leida.color_hex },
+      };
+      return sm.paso === "elegir"
+        ? { ...sm, yaEstan, prendas: [...sm.prendas, nueva] }
+        : { paso: "elegir", prendas: [nueva], tocados: {}, vistas: sm.vistas, yaEstan };
+    });
+  }
+
   const input = (
     <input
       ref={inputRef}
@@ -532,7 +570,15 @@ export function EspejoFlow({
                           : "No pude distinguir las prendas en esta foto."}
                       </p>
                     )}
-                    <YaEstanLista items={sumar.yaEstan} />
+                    <YaEstanLista
+                      items={sumar.yaEstan}
+                      onVer={(x) =>
+                        setZoom({ image: x.imagen, nombre: x.comoEsta, sub: `lo vi como “${x.nombre}”` })
+                      }
+                      onNoEs={(x) =>
+                        noEsEsa(x, state.kind === "listo" ? state.outfitId : null)
+                      }
+                    />
                   </div>
                 ) : null}
 
@@ -583,7 +629,15 @@ export function EspejoFlow({
                         }
                       />
                     ))}
-                    <YaEstanLista items={sumar.yaEstan} />
+                    <YaEstanLista
+                      items={sumar.yaEstan}
+                      onVer={(x) =>
+                        setZoom({ image: x.imagen, nombre: x.comoEsta, sub: `lo vi como “${x.nombre}”` })
+                      }
+                      onNoEs={(x) =>
+                        noEsEsa(x, state.kind === "listo" ? state.outfitId : null)
+                      }
+                    />
                     <button
                       type="button"
                       onClick={() =>
@@ -697,6 +751,7 @@ export function EspejoFlow({
               >
                 gracias
               </button>
+              <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
             </div>
           ) : (
             <p className="editorial text-center text-sm text-muted">
@@ -760,7 +815,15 @@ export function EspejoFlow({
  * éste es otro pantalón de lino distinto, sin nombrarlo nunca se entera — y esa
  * prenda no entra a su clóset jamás.
  */
-function YaEstanLista({ items }: { items: YaEsta[] }) {
+function YaEstanLista({
+  items,
+  onVer,
+  onNoEs,
+}: {
+  items: YaEsta[];
+  onVer: (x: YaEsta) => void;
+  onNoEs: (x: YaEsta) => void;
+}) {
   if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-2 rounded-sm bg-bg px-3 py-2.5">
@@ -774,20 +837,43 @@ function YaEstanLista({ items }: { items: YaEsta[] }) {
           nunca y él no se entera de por qué. */}
       {items.map((x, i) => (
         <div key={`${x.nombre}-${i}`} className="flex items-center gap-2.5">
-          {x.imagen ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={x.imagen}
-              alt=""
-              className="h-11 w-9 shrink-0 rounded-sm border border-line bg-surface object-cover"
-            />
-          ) : (
-            <span className="h-11 w-9 shrink-0 rounded-sm border border-line bg-surface" aria-hidden />
-          )}
-          <span className="flex min-w-0 flex-col leading-tight">
+          {/* SE TOCA PARA VERLA EN GRANDE. Con un recuadro de 9×11 no se puede
+              decidir si ésa es la prenda que traes puesta, que es justo lo que
+              se le está preguntando. */}
+          <button
+            type="button"
+            onClick={() => x.imagen && onVer(x)}
+            aria-label={`Ver ${x.comoEsta} en grande`}
+            className="h-11 w-9 shrink-0 overflow-hidden rounded-sm border border-line bg-surface"
+          >
+            {x.imagen ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={x.imagen} alt="" className="h-full w-full object-cover" />
+            ) : (
+              // SU COLOR, no un hueco en blanco: la prenda puede no estar
+              // dibujada todavía (recién sumada), y un recuadro vacío se lee
+              // como un error de la app en vez de como "aún no tiene foto".
+              <span
+                className="block h-full w-full"
+                style={{ backgroundColor: x.colorHex ?? "#E5E1DD" }}
+                aria-hidden
+              />
+            )}
+          </button>
+          <span className="flex min-w-0 flex-1 flex-col leading-tight">
             <span className="truncate text-[12.5px] text-ink">{x.comoEsta}</span>
             <span className="truncate text-[11px] text-muted">lo vi como “{x.nombre}”</span>
           </span>
+          {/* DESMENTIR EL EMPATE. Sin esto se le presenta como un hecho: si me
+              equivoqué, no sólo cuelga la prenda ajena del look — deja fuera la
+              de verdad, y no hay forma de sumarla. */}
+          <button
+            type="button"
+            onClick={() => onNoEs(x)}
+            className="shrink-0 rounded-sm border border-line bg-surface px-2 py-1 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+          >
+            no es ésa
+          </button>
         </div>
       ))}
     </div>
