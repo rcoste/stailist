@@ -9,7 +9,9 @@ import { buildLabel, volumeLabel } from "@/lib/silueta";
 // v-prefix: súbelo cuando cambie el prompt/formato del generador para invalidar las
 // preguntas cacheadas y regenerarlas. v2 = reencuadre "lo que te atrae" + opción
 // "Aún no lo sé".
-const QUESTIONS_VERSION = "v2";
+// v3 = prohibido el color (era 9 de 12 preguntas; el color es del paso de
+// colorimetría). Sube la versión para tirar las cacheadas, que son de esa tanda.
+const QUESTIONS_VERSION = "v3";
 
 export function styleQuestionsSig(p: {
   style_archetype: { nombre: string } | null;
