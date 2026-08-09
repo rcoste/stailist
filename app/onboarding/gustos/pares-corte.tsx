@@ -68,15 +68,28 @@ export function ParesDeCorte({
 
   return (
     <div className="flex flex-1 flex-col gap-5">
+      {/* CON SU PROPIA IDENTIDAD, no como cola del swipe.
+          Roberto, probando desde cero: "esto que obvio es importante… debería
+          ser su propia sección dentro del onboarding, al igual que la
+          colorimetría". Tiene razón por una razón concreta: `fit_pref` entra
+          DIRECTO al contexto del motor (contexto.ts) igual que la colorimetría
+          — es una entrada de primera clase, no un extra del paso de gustos.
+          Se le da cabecera propia y el porqué; lo que no se hace es partirlo a
+          otra pantalla, porque son dos taps y una navegación entera para cuatro
+          segundos sería cobrar más de lo que cuesta. */}
       <div className="flex flex-col gap-2">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
-          {idx + 1} de {PARES.length}
+          cómo te queda · {idx + 1} de {PARES.length}
         </p>
         <h2 className="text-[28px] font-bold leading-[1.05] tracking-[-0.025em] text-ink">
           {actual.titulo}
         </h2>
+        {/* EL PORQUÉ, que faltaba. "Es la misma ropa, cambia cómo queda"
+            describe la pantalla pero no dice para qué sirve contestarla, y sin
+            eso parece un test de personalidad en medio del registro. */}
         <p className="text-[15px] leading-snug text-muted">
-          Es la misma ropa — cambia cómo queda.
+          Es la misma ropa — cambia cómo queda. Con esto sé si buscarte cortes
+          ajustados o sueltos en cada look que te arme.
         </p>
       </div>
 

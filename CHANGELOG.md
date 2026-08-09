@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.194.0] - 2026-08-09
+
+### Fixed — el paso de los cortes: el CTA mentía, el título salía dos veces y nadie decía para qué
+
+Roberto, rehaciendo el onboarding desde cero. Tres cosas, y las tres ciertas.
+
+**El CTA prometía otra cosa.** Decía *"Sigamos con tus colores"* y lo que seguía eran los pares de corte — y después las preguntas de calibración. Los colores estaban **tres pasos más allá**. La etiqueta se escribió cuando el siguiente paso sí eran los colores y al meter los pares nadie la cambió. Ahora dice *"Ahora, cómo te queda"*.
+
+**Dos títulos apilados.** La página pintaba *"paso 1 de 5 · ¿te gusta o no?"* siempre, y los pares traían el suyo debajo. La cabecera ahora vive dentro del deck y desaparece en cuanto cede el turno — también en el reveal, donde igualmente sobraba.
+
+**Y no decía para qué sirve.** *"Es la misma ropa — cambia cómo queda"* describe la pantalla, no el motivo. Ahora: *"Con esto sé si buscarte cortes ajustados o sueltos en cada look que te arme"*.
+
+**Sobre si debería ser su propia sección**, como pidió Roberto: tiene razón en el fondo — `fit_pref` entra **directo al contexto del motor**, igual que la colorimetría, así que es una entrada de primera clase escondida como cola del paso de gustos. Se le da cabecera propia (*"cómo te queda · 1 de 2"*) y su porqué. Lo que no se hace es partirlo a otra pantalla: son dos taps, y una navegación entera para cuatro segundos cobraría más de lo que cuesta.
+
+### Fixed — la app le hablaba de vos a alguien en México
+
+Cazado de paso en la misma corrida: el arquetipo salió *"**tenés** ese don de moverte entre lo clásico y lo atrevido"*. Voseo rioplatense en un producto mexicano.
+
+El prompt ya decía *"Tuteo"* y no bastaba: el modelo lo lee como *"informal"* y se va al voseo. Ahora es explícito — *"tienes", jamás "tenés"; "tú", jamás "vos"*. Medido sobre 4 generaciones: **0 con voseo** (antes salía en la primera), y la misma frase ahora dice *"tienes ese don"*.
+
 ## [0.2.193.0] - 2026-08-08
 
 ### Fixed — la entrada del diario sabía menos de lo que la app había visto
