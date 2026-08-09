@@ -682,7 +682,12 @@ export function EspejoFlow({
           </div>
 
           {/* Su foto, grande. Es ella, no un dato de entrada. */}
-          <div className="relative overflow-hidden rounded-xl border border-line bg-bg">
+          {/* `shrink-0`: la hoja es un flex en columna, y en cuanto abajo
+              aparecen las prendas que sumar el contenido pasa de 747 a 985 px.
+              Flex aprieta lo único que puede — la foto — y la dejaba en 2 px de
+              alto: una raya. Cazado en QA midiendo el recuadro, porque a ojo
+              parecía que la foto simplemente "no cargó". */}
+          <div className="relative shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={state.preview} alt="" className="max-h-[44dvh] w-full object-contain" />
             {!lista ? (
