@@ -105,10 +105,106 @@ export const LOOKS: Look[] = ESTILOS.map(([id, nombre, vibe, tags, segment = "un
 
 export const LOOK_IDS = new Set(LOOKS.map((l) => l.id));
 
+/** Familias del mazo. El contraste que la gente percibe NO es por tag suelto
+ *  ("versatil" vs "moderno" no le dice nada a nadie): es por familia — la calle
+ *  contra lo pulido, lo suave contra lo que brilla. Se deriva de los tags que ya
+ *  existen, en orden de prioridad, para no tener que tocar las 27 filas ni
+ *  mantener dos listas que se desincronicen. */
+const FAMILIA_POR_TAG: [string, string][] = [
+  ["ceñido", "brillo"],
+  ["glam", "brillo"],
+  ["colorido", "brillo"],
+  ["y2k", "calle"],
+  ["gorpcore", "calle"],
+  ["urbano", "calle"],
+  ["deportivo", "calle"],
+  ["grunge", "calle"],
+  ["edgy", "calle"],
+  ["utility", "calle"],
+  ["romantico", "suave"],
+  ["coquette", "suave"],
+  ["boho", "suave"],
+  ["coastal", "suave"],
+  ["natural", "suave"],
+  ["calido", "suave"],
+  ["vintage", "retro"],
+  ["retro", "retro"],
+  ["hipster", "retro"],
+  ["academia", "retro"],
+  ["nautico", "retro"],
+  ["oversize", "limpio"],
+  ["fluido", "limpio"],
+  ["minimalista", "limpio"],
+  ["clasico", "limpio"],
+  ["estructurado", "limpio"],
+  ["preppy", "limpio"],
+  ["pulido", "limpio"],
+];
+const ORDEN_FAMILIAS = ["limpio", "calle", "suave", "brillo", "retro"];
+
+function familiaDe(l: Look): string {
+  for (const [tag, fam] of FAMILIA_POR_TAG) if (l.tags.includes(tag)) return fam;
+  return "limpio";
+}
+
+/** Reordena el mazo alternando familias, para que las primeras cartas
+ *  contrasten de verdad.
+ *
+ *  EL PROBLEMA, medido el 2026-08-09 sobre el orden de este archivo: las seis
+ *  primeras cartas —minimalista, casual sin esfuerzo, clásico elegante, preppy,
+ *  sastre, smart casual— eran todas del mismo cluster pulido/clásico, y el mazo
+ *  NO se baraja, así que ese arranque monótono era idéntico para todo el mundo.
+ *  Las polarizantes vivían al fondo: y2k en la 23, gorpcore en la 24, coquette
+ *  en la 24 y `de-salir` en la 27 de 27 — la última. Y esa carta existe
+ *  justamente porque Tatiana señaló que faltaba el eje "marca la silueta": el
+ *  parche al hueco estaba puesto donde menos se ve, y quien abandonaba a media
+ *  tanda no lo veía nunca.
+ *
+ *  QUÉ HACE: round-robin entre familias. Primera de limpio, primera de calle,
+ *  primera de suave, primera de brillo, primera de retro, segunda de limpio…
+ *  Dentro de cada familia se respeta el orden del archivo (curado a mano), así
+ *  que una carta nueva sólo se une a la rotación de la suya y no hay que
+ *  reordenar nada.
+ *
+ *  ANTES DE ESTO probé un greedy de "la carta que menos tags comparta con lo ya
+ *  visto". No sirvió —19 tags contra 18 en las diez primeras, y `de-salir`
+ *  seguía en la 27— porque a media lista todo solapa con todo y el criterio se
+ *  apaga. Queda escrito para que nadie lo reintente.
+ *
+ *  LO QUE NO HACE, a propósito: podar. Roberto propuso quitar del mazo los
+ *  estilos que los primeros swipes descarten. Un mazo que se poda con su propia
+ *  hipótesis deja de medir: las cartas que quedan sólo pueden confirmarla, y
+ *  después no se puede distinguir "no le gusta" de "nunca le apareció". Es el
+ *  mismo error que el comparador pareado existe para evitar.
+ *
+ *  DETERMINISTA: el mismo mazo para todo el mundo, así que los taste_tags
+ *  siguen siendo comparables entre personas y a lo largo del tiempo. */
+function porContraste(looks: Look[]): Look[] {
+  const porFamilia = new Map<string, Look[]>();
+  for (const l of looks) {
+    const f = familiaDe(l);
+    if (!porFamilia.has(f)) porFamilia.set(f, []);
+    porFamilia.get(f)!.push(l);
+  }
+  const familias = [
+    ...ORDEN_FAMILIAS.filter((f) => porFamilia.has(f)),
+    ...[...porFamilia.keys()].filter((f) => !ORDEN_FAMILIAS.includes(f)),
+  ];
+  const orden: Look[] = [];
+  for (let ronda = 0; orden.length < looks.length; ronda++) {
+    for (const f of familias) {
+      const c = porFamilia.get(f)![ronda];
+      if (c) orden.push(c);
+    }
+    if (ronda > looks.length) break; // red de seguridad
+  }
+  return orden;
+}
+
 // Cada estilo tiene su imagen por género: /looks/<id>-<genero>.png.
 export function looksForGender(gender: "hombre" | "mujer"): Look[] {
-  return LOOKS.filter(
-    (l) => l.segment === "unisex" || l.segment === gender
+  return porContraste(
+    LOOKS.filter((l) => l.segment === "unisex" || l.segment === gender)
   ).map((l) => ({
     ...l,
     image:

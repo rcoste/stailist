@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.198.0] - 2026-08-09
+
+### Fixed — el mazo del swipe arrancaba con seis cartas del mismo palo
+
+Roberto insistió en algo que yo había descartado: que las primeras cartas se sienten todas iguales. Tenía razón, y medido es peor de lo que él lo planteó.
+
+Las **seis primeras** —minimalista, casual sin esfuerzo, clásico elegante, preppy, sastre, smart casual— son todas del cluster pulido/clásico. Y **el mazo no se baraja**: ese arranque monótono era idéntico para todo el mundo, siempre. Las polarizantes vivían al fondo (y2k 23, gorpcore 24, coquette 24) y **`de-salir` era la 27 de 27** — la última. Esa carta se añadió el 2026-07-31 justamente porque Tatiana señaló que faltaba el eje "marca la silueta": el parche al hueco estaba puesto donde menos se ve, y quien abandonaba a media tanda no lo veía nunca.
+
+**Ahora el mazo rota entre familias** (limpio → calle → suave → brillo → retro → limpio…). Dentro de cada familia se respeta el orden curado del archivo, así que una carta nueva sólo se une a la rotación de la suya.
+
+| | antes | ahora |
+|---|---|---|
+| tags distintos en las 10 primeras | 18 | **21** |
+| cartas del cluster pulido en las 10 | 6 | **3** |
+| streetwear | 7ª | **2ª** |
+| color protagonista | 15ª | **4ª** |
+| glam de noche | 20ª | **9ª** |
+| de salir | **27ª** | **14ª** |
+
+**Un intento fallido queda documentado en el código** para que nadie lo repita: un greedy de "la carta que menos tags comparta con lo ya visto" no sirvió (19 tags contra 18, y `de-salir` seguía en la 27) porque a media lista todo solapa con todo y el criterio se apaga.
+
+**Lo que NO se hizo, y es deliberado.** Roberto también propuso podar el mazo con los primeros 10 swipes: si la dirección se ve clara, dejar de mostrar los estilos descartados. Un mazo que se poda con su propia hipótesis deja de medir — las cartas que quedan sólo pueden confirmarla, y después no se puede distinguir *"no le gusta"* de *"nunca le apareció"*. Es el mismo error que el comparador pareado existe para evitar. Reordenar da la calibración rápida que busca sin cobrar ese precio.
+
+Con guarda en tests: si alguien vuelve a dejar 5+ cartas del mismo palo entre las 10 primeras, o entierra `de-salir` pasada la posición 18, falla.
+
 ## [0.2.196.0] - 2026-08-09
 
 ### Fixed — con tu look del día hecho, la home quedaba inalcanzable
