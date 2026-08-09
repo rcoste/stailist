@@ -1,0 +1,732 @@
+[
+ {
+  "n": 1,
+  "archivo": "01-login.png",
+  "nota": "acceso",
+  "seg": 1,
+  "url": "/login",
+  "texto": "stailist\nVamos a vestirte increíble.\n\nTu stylist personal — un look listo para tu día en menos de 2 minutos.\n\nTu correo\nMándame el código\n\nACCESO RÁPIDO · SOLO LOCAL\n\nEntrar como Roberto\nEntrar como Claude",
+  "controles": [
+   "Mándame el código",
+   "Entrar como Roberto",
+   "Entrar como Claude"
+  ]
+ },
+ {
+  "n": 2,
+  "archivo": "02-genero.png",
+  "nota": "paso 1: qué ropa usas",
+  "seg": 5,
+  "url": "/onboarding/genero",
+  "texto": "stailist\n¿qué ropa usas?\n\nsolo para mostrarte las prendas correctas. tu estilo lo descubrimos enseguida.\n\nmujer\nvestidos, faldas, blusas y más\nhombre\ncamisas, pantalones, sastre y más\nempecemos",
+  "controles": [
+   "mujer vestidos, faldas, blusas y más",
+   "hombre camisas, pantalones, sastre y más",
+   "empecemos"
+  ]
+ },
+ {
+  "n": 3,
+  "archivo": "03-genero-marcado.png",
+  "nota": "OJO: elegir no avanza, hay que confirmar abajo",
+  "seg": 5,
+  "url": "/onboarding/genero",
+  "texto": "stailist\n¿qué ropa usas?\n\nsolo para mostrarte las prendas correctas. tu estilo lo descubrimos enseguida.\n\nmujer\nvestidos, faldas, blusas y más\nhombre\ncamisas, pantalones, sastre y más\nempecemos",
+  "controles": [
+   "mujer vestidos, faldas, blusas y más",
+   "hombre camisas, pantalones, sastre y más",
+   "empecemos"
+  ]
+ },
+ {
+  "n": 4,
+  "archivo": "04-edad.png",
+  "nota": "",
+  "seg": 8,
+  "url": "/onboarding/edad",
+  "texto": "stailist\n¿cuántos años tienes?\n\nnos ayuda a acertarle mejor a tu estilo. nada de fechas exactas, solo el rango.\n\n13 a 17\n18 a 24\n25 a 34\n35 a 44\n45 a 54\n55 o más\nseguir",
+  "controles": [
+   "13 a 17",
+   "18 a 24",
+   "25 a 34",
+   "35 a 44",
+   "45 a 54",
+   "55 o más",
+   "seguir"
+  ]
+ },
+ {
+  "n": 5,
+  "archivo": "05-edad-marcada.png",
+  "nota": "",
+  "seg": 9,
+  "url": "/onboarding/edad",
+  "texto": "stailist\n¿cuántos años tienes?\n\nnos ayuda a acertarle mejor a tu estilo. nada de fechas exactas, solo el rango.\n\n13 a 17\n18 a 24\n25 a 34\n35 a 44\n45 a 54\n55 o más\nseguir",
+  "controles": [
+   "13 a 17",
+   "18 a 24",
+   "25 a 34",
+   "35 a 44",
+   "45 a 54",
+   "55 o más",
+   "seguir"
+  ]
+ },
+ {
+  "n": 6,
+  "archivo": "06-gustos-carta1.png",
+  "nota": "paso 1 de 5 — con la explicación nueva",
+  "seg": 12,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nPASO 1 DE 5\n\n¿te gusta o no?\n\nDile sí a los looks que te laten y no a los que no — deslizando o con los botones. Con esto aprendo tu estilo y en un par de minutos te armo tu primer outfit.\n\nME GUSTA\nNO VA\n\n1 de 25",
+  "controles": [
+   "No me gusta Minimalista",
+   "Me gusta Minimalista"
+  ]
+ },
+ {
+  "n": 7,
+  "archivo": "07-gustos-mitad.png",
+  "nota": "a mitad del mazo",
+  "seg": 18,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nPASO 1 DE 5\n\n¿te gusta o no?\n\nDile sí a los looks que te laten y no a los que no — deslizando o con los botones. Con esto aprendo tu estilo y en un par de minutos te armo tu primer outfit.\n\nME GUSTA\nNO VA\n\n13 de 25",
+  "controles": [
+   "No me gusta Tonos tierra",
+   "Me gusta Tonos tierra"
+  ]
+ },
+ {
+  "n": 8,
+  "archivo": "08-gustos-fin-swipes.png",
+  "nota": "tras la última carta",
+  "seg": 24,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nleyendo tu estilo…",
+  "controles": []
+ },
+ {
+  "n": 9,
+  "archivo": "09-gustos-leyendo-espera1.png",
+  "nota": "5s cargando",
+  "seg": 29,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nTU ESTILO\n\nPulido sin esfuerzo\n\ntienes ese don de moverte entre lo clásico y lo atrevido sin que nada se sienta forzado\n\nAhora, cómo te queda",
+  "controles": [
+   "Ahora, cómo te queda"
+  ]
+ },
+ {
+  "n": 10,
+  "archivo": "10-estilo-reveal.png",
+  "nota": "tu arquetipo",
+  "seg": 29,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nTU ESTILO\n\nPulido sin esfuerzo\n\ntienes ese don de moverte entre lo clásico y lo atrevido sin que nada se sienta forzado\n\nAhora, cómo te queda",
+  "controles": [
+   "Ahora, cómo te queda"
+  ]
+ },
+ {
+  "n": 11,
+  "archivo": "11-pares-1.png",
+  "nota": "cómo te queda · 1 de 2",
+  "seg": 32,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nCÓMO TE QUEDA · 1 DE 2\n\n¿cuál te late más?\n\nEs la misma ropa — cambia cómo queda. Con esto sé si buscarte cortes ajustados o sueltos en cada look que te arme.",
+  "controles": [
+   "La de la izquierda",
+   "La de la derecha"
+  ]
+ },
+ {
+  "n": 12,
+  "archivo": "12-pares-2.png",
+  "nota": "cómo te queda · 2 de 2",
+  "seg": 34,
+  "url": "/onboarding/gustos",
+  "texto": "stailist\n\nCÓMO TE QUEDA · 2 DE 2\n\n¿y de estas dos?\n\nEs la misma ropa — cambia cómo queda. Con esto sé si buscarte cortes ajustados o sueltos en cada look que te arme.",
+  "controles": [
+   "La de la izquierda",
+   "La de la derecha"
+  ]
+ },
+ {
+  "n": 13,
+  "archivo": "13-tras-pares.png",
+  "nota": "¿va directo a colores? (la calibración salió del onboarding)",
+  "seg": 37,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\nHay tonos que te encienden la cara y otros que te la apagan. Quiero saber cuáles son los tuyos.\n\nTE ILUMINA\nTE APAGA\n\nel color viene en familias — el test encuentra la tuya\n\ncinco preguntas · cuarenta segundos · sin foto\nva, hagámoslo\nahora no",
+  "controles": [
+   "TE ILUMINA",
+   "TE APAGA",
+   "va, hagámoslo",
+   "ahora no"
+  ]
+ },
+ {
+  "n": 14,
+  "archivo": "14-color-portada.png",
+  "nota": "la portada del quiz, con salida",
+  "seg": 37,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\nHay tonos que te encienden la cara y otros que te la apagan. Quiero saber cuáles son los tuyos.\n\nTE ILUMINA\nTE APAGA\n\nel color viene en familias — el test encuentra la tuya\n\ncinco preguntas · cuarenta segundos · sin foto\nva, hagámoslo\nahora no",
+  "controles": [
+   "TE ILUMINA",
+   "TE APAGA",
+   "va, hagámoslo",
+   "ahora no"
+  ]
+ },
+ {
+  "n": 15,
+  "archivo": "15-color-q1.png",
+  "nota": "",
+  "seg": 38,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\n1 de 6\n\nMírate las venas de la muñeca con buena luz, ¿cómo se ven?\nAzuladas o moradas\nVerdosas\nNi idea, un poco de todo",
+  "controles": [
+   "Azuladas o moradas",
+   "Verdosas",
+   "Ni idea, un poco de todo"
+  ]
+ },
+ {
+  "n": 16,
+  "archivo": "16-color-q2.png",
+  "nota": "",
+  "seg": 40,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\n2 de 6\n\nCuando te da el sol, tu piel…\nSe pone roja rapidito\nSe broncea fácil, casi sin quemarse\nPrimero roja, luego doradita",
+  "controles": [
+   "Se pone roja rapidito",
+   "Se broncea fácil, casi sin quemarse",
+   "Primero roja, luego doradita"
+  ]
+ },
+ {
+  "n": 17,
+  "archivo": "17-color-q3.png",
+  "nota": "",
+  "seg": 42,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\n3 de 6\n\n¿Tu cabello natural?\nNegro o castaño muy oscuro\nCastaño medio\nCastaño claro o rubio oscuro\nRubio o muy claro\nRojizo o cobrizo",
+  "controles": [
+   "Negro o castaño muy oscuro",
+   "Castaño medio",
+   "Castaño claro o rubio oscuro",
+   "Rubio o muy claro",
+   "Rojizo o cobrizo"
+  ]
+ },
+ {
+  "n": 18,
+  "archivo": "18-color-q4.png",
+  "nota": "",
+  "seg": 44,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\n4 de 6\n\n¿Tus ojos?\nCafé oscuro o negro\nCafé medio o miel\nVerdes o avellana\nAzules o grises",
+  "controles": [
+   "Café oscuro o negro",
+   "Café medio o miel",
+   "Verdes o avellana",
+   "Azules o grises"
+  ]
+ },
+ {
+  "n": 19,
+  "archivo": "19-color-q5.png",
+  "nota": "",
+  "seg": 46,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\n5 de 6\n\n¿Qué te queda mejor: el oro o la plata?\nPlata\nOro\nNo sé / me quedan igual",
+  "controles": [
+   "Plata",
+   "Oro",
+   "No sé / me quedan igual"
+  ]
+ },
+ {
+  "n": 20,
+  "archivo": "20-color-q6.png",
+  "nota": "",
+  "seg": 47,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\n\n6 de 6\n\nCuando estrenas algo y te llueven los cumplidos, ¿de qué color suele ser?\nBlanco, negro o colores intensos (rojo, azul rey)\nPasteles y tonos suaves\nTierra: camel, oliva, vino\nVivos y cálidos: coral, turquesa, verde fresco",
+  "controles": [
+   "Blanco, negro o colores intensos (rojo, azul rey)",
+   "Pasteles y tonos suaves",
+   "Tierra: camel, oliva, vino",
+   "Vivos y cálidos: coral, turquesa, verde fresco"
+  ]
+ },
+ {
+  "n": 21,
+  "archivo": "21-color-q7.png",
+  "nota": "",
+  "seg": 49,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\nTU ESTACIÓN\ninvierno\n\nLo intenso te queda: contrastes fuertes y colores joya.\n\nTU PALETA\nNegro\nBlanco puro\nAzul rey\nRubí\nEsmeralda\nMEJOR EVITA\nCamel\nMostaza\nOliva apagado\nBeige amarillento\nTU METAL\noro\nplata\nguardar mi paleta\nesta no es mi colorimetría",
+  "controles": [
+   "guardar mi paleta",
+   "esta no es mi colorimetría"
+  ]
+ },
+ {
+  "n": 22,
+  "archivo": "22-color-calculando-espera1.png",
+  "nota": "4s cargando",
+  "seg": 53,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\nTU ESTACIÓN\ninvierno\n\nLo intenso te queda: contrastes fuertes y colores joya.\n\nTU PALETA\nNegro\nBlanco puro\nAzul rey\nRubí\nEsmeralda\nMEJOR EVITA\nCamel\nMostaza\nOliva apagado\nBeige amarillento\nTU METAL\noro\nplata\nguardar mi paleta\nesta no es mi colorimetría",
+  "controles": [
+   "guardar mi paleta",
+   "esta no es mi colorimetría"
+  ]
+ },
+ {
+  "n": 23,
+  "archivo": "23-colorimetria-resultado.png",
+  "nota": "tu estación",
+  "seg": 53,
+  "url": "/onboarding/colorimetria",
+  "texto": "stailist\nHablemos de tus colores\nTU ESTACIÓN\ninvierno\n\nLo intenso te queda: contrastes fuertes y colores joya.\n\nTU PALETA\nNegro\nBlanco puro\nAzul rey\nRubí\nEsmeralda\nMEJOR EVITA\nCamel\nMostaza\nOliva apagado\nBeige amarillento\nTU METAL\noro\nplata\nguardar mi paleta\nesta no es mi colorimetría",
+  "controles": [
+   "guardar mi paleta",
+   "esta no es mi colorimetría"
+  ]
+ },
+ {
+  "n": 24,
+  "archivo": "24-basicos-1.png",
+  "nota": "paso 3 de 5 — primera categoría",
+  "seg": 57,
+  "url": "/onboarding/closet",
+  "texto": "stailist\n\nPASO 3 DE 5\n\n¿qué ya tienes?\n\nSon básicos que mucha gente tiene. Marca los tuyos —así de rápido— y con eso te armo tu primer outfit. Después le sumas lo demás: de mi biblioteca o con fotos de tu propia ropa.\n\nArriba\nSacos\nAbajo\nAbrigos\nZapatos\n\nMarca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.\n\nCamiseta blanca\nCamiseta negra\nCamisa blanca\nCamisa azul claro\nPolo marino\nSuéter gris\nHoodie gris\nCamiseta gris\nCamisa de lino\nCamisa de mezclilla\nCamisa negra\nSuéter de cuello alto\nSuéter marino\nCárdigan marino\nPolo de punto oliva\nCamiseta de manga larga\nSudadera crema\nmarca lo que tengas de arriba",
+  "controles": [
+   "Arriba",
+   "Sacos",
+   "Abajo",
+   "Abrigos",
+   "Zapatos",
+   "Camiseta blanca",
+   "Camiseta negra",
+   "Camisa blanca",
+   "Camisa azul claro",
+   "Polo marino",
+   "Suéter gris",
+   "Hoodie gris",
+   "Camiseta gris",
+   "Camisa de lino",
+   "Camisa de mezclilla",
+   "Camisa negra"
+  ]
+ },
+ {
+  "n": 25,
+  "archivo": "25-basicos-2.png",
+  "nota": "",
+  "seg": 60,
+  "url": "/onboarding/closet",
+  "texto": "stailist\n\nPASO 3 DE 5\n\n¿qué ya tienes?\n\nSon básicos que mucha gente tiene. Marca los tuyos —así de rápido— y con eso te armo tu primer outfit. Después le sumas lo demás: de mi biblioteca o con fotos de tu propia ropa.\n\nArriba\n3\nSacos\nAbajo\nAbrigos\nZapatos\n\nMarca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.\n\nJeans azul oscuro\nPantalón negro\nChinos beige\nBermuda caqui\nJeans negros\nChinos azul marino\nPantalón de vestir gris\nChinos oliva\nJeans claros\nPantalón técnico\nmarca lo que tengas de abajo",
+  "controles": [
+   "Arriba 3",
+   "Sacos",
+   "Abajo",
+   "Abrigos",
+   "Zapatos",
+   "Jeans azul oscuro",
+   "Pantalón negro",
+   "Chinos beige",
+   "Bermuda caqui",
+   "Jeans negros",
+   "Chinos azul marino",
+   "Pantalón de vestir gris",
+   "Chinos oliva",
+   "Jeans claros",
+   "Pantalón técnico",
+   "marca lo que tengas de abajo"
+  ]
+ },
+ {
+  "n": 26,
+  "archivo": "26-basicos-3.png",
+  "nota": "",
+  "seg": 63,
+  "url": "/onboarding/closet",
+  "texto": "stailist\n\nPASO 3 DE 5\n\n¿qué ya tienes?\n\nSon básicos que mucha gente tiene. Marca los tuyos —así de rápido— y con eso te armo tu primer outfit. Después le sumas lo demás: de mi biblioteca o con fotos de tu propia ropa.\n\nArriba\n3\nSacos\nAbajo\n3\nAbrigos\nZapatos\n\nMarca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.\n\nTenis blancos\nZapato formal café\nBotas negras\nMocasines café\nSandalias de cuero\nZapato formal negro\nBotines Chelsea\nBotines de ante\nMocasines negros\nMocasines burdeos\nmarca lo que tengas de zapatos",
+  "controles": [
+   "Arriba 3",
+   "Sacos",
+   "Abajo 3",
+   "Abrigos",
+   "Zapatos",
+   "Tenis blancos",
+   "Zapato formal café",
+   "Botas negras",
+   "Mocasines café",
+   "Sandalias de cuero",
+   "Zapato formal negro",
+   "Botines Chelsea",
+   "Botines de ante",
+   "Mocasines negros",
+   "Mocasines burdeos",
+   "marca lo que tengas de zapatos"
+  ]
+ },
+ {
+  "n": 27,
+  "archivo": "27-basicos-4.png",
+  "nota": "",
+  "seg": 66,
+  "url": "/onboarding/closet",
+  "texto": "stailist\n\nPASO 3 DE 5\n\n¿qué ya tienes?\n\nSon básicos que mucha gente tiene. Marca los tuyos —así de rápido— y con eso te armo tu primer outfit. Después le sumas lo demás: de mi biblioteca o con fotos de tu propia ropa.\n\nArriba\n3\nSacos\nAbajo\n3\nAbrigos\nZapatos\n3\n\nMarca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.\n\nBlazer marino\nSaco de traje gris carbón\nSaco desestructurado oliva\nSaco desestructurado café\n¿tienes abrigos?\nya, ármalo",
+  "controles": [
+   "Arriba 3",
+   "Sacos",
+   "Abajo 3",
+   "Abrigos",
+   "Zapatos 3",
+   "Blazer marino",
+   "Saco de traje gris carbón",
+   "Saco desestructurado oliva",
+   "Saco desestructurado café",
+   "¿tienes abrigos?",
+   "ya, ármalo"
+  ]
+ },
+ {
+  "n": 28,
+  "archivo": "28-basicos-5.png",
+  "nota": "",
+  "seg": 70,
+  "url": "/onboarding/closet",
+  "texto": "stailist\n\nPASO 3 DE 5\n\n¿qué ya tienes?\n\nSon básicos que mucha gente tiene. Marca los tuyos —así de rápido— y con eso te armo tu primer outfit. Después le sumas lo demás: de mi biblioteca o con fotos de tu propia ropa.\n\nArriba\n3\nSacos\n3\nAbajo\n3\nAbrigos\nZapatos\n3\n\nMarca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.\n\nChamarra de mezclilla\nChamarra bomber\nOvershirt oliva\nAbrigo de lana marino\nGabardina beige\nParka negra\nChaqueta de campo\narmar mi primer look",
+  "controles": [
+   "Arriba 3",
+   "Sacos 3",
+   "Abajo 3",
+   "Abrigos",
+   "Zapatos 3",
+   "Chamarra de mezclilla",
+   "Chamarra bomber",
+   "Overshirt oliva",
+   "Abrigo de lana marino",
+   "Gabardina beige",
+   "Parka negra",
+   "Chaqueta de campo",
+   "armar mi primer look"
+  ]
+ },
+ {
+  "n": 29,
+  "archivo": "29-objetivo.png",
+  "nota": "paso 4 de 5 — qué necesitas hoy",
+  "seg": 73,
+  "url": "/onboarding/objetivo",
+  "texto": "stailist\n\nPASO 4 DE 5\n\n¿qué necesitas hoy?\n\nPara tu primer look te armo un día a día. Oficina, evento y más los pides desde Hoy, cuando los necesites.\n\ndía a día\ntrabajo\nDESPUÉS\nun evento\nDESPUÉS\naeropuerto\nDESPUÉS\nrefrescar mi estilo\n· DESPUÉS\nsiguiente",
+  "controles": [
+   "siguiente"
+  ]
+ },
+ {
+  "n": 30,
+  "archivo": "30-objetivo-marcado.png",
+  "nota": "",
+  "seg": 73,
+  "url": "/onboarding/objetivo",
+  "texto": "stailist\n\nPASO 4 DE 5\n\n¿qué necesitas hoy?\n\nPara tu primer look te armo un día a día. Oficina, evento y más los pides desde Hoy, cuando los necesites.\n\ndía a día\ntrabajo\nDESPUÉS\nun evento\nDESPUÉS\naeropuerto\nDESPUÉS\nrefrescar mi estilo\n· DESPUÉS\nsiguiente",
+  "controles": [
+   "siguiente"
+  ]
+ },
+ {
+  "n": 31,
+  "archivo": "31-wow-pregunta1.png",
+  "nota": "el wow empieza preguntando",
+  "seg": 76,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nPASO 1 DE 2\n\n¿de día o de noche?\nde día\njunta, lunch, oficina\nde noche\ncena, drinks, salida\nsiguiente",
+  "controles": [
+   "de día junta, lunch, oficina",
+   "de noche cena, drinks, salida",
+   "siguiente"
+  ]
+ },
+ {
+  "n": 32,
+  "archivo": "32-wow-pregunta2.png",
+  "nota": "",
+  "seg": 80,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nPASO 2 DE 2\n\n¿cómo está el clima?\nusar mi ubicación\nleo temp y lluvia por ti\nO DIME TÚ\nHelado\npara abrigo grueso\n5°\nFrío\nsuéter o chamarra\n12°\nTemplado\nmanga larga ligera\n19°\nCálido\nplayera, a gusto\n25°\nCaluroso\nlo más fresco\n33°\n¿va a llover?\nno\nsí\narmar mi look",
+  "controles": [
+   "Atrás",
+   "usar mi ubicación leo temp y lluvia por ti",
+   "Helado para abrigo grueso 5°",
+   "Frío suéter o chamarra 12°",
+   "Templado manga larga ligera 19°",
+   "Cálido playera, a gusto 25°",
+   "Caluroso lo más fresco 33°",
+   "no",
+   "sí",
+   "armar mi look"
+  ]
+ },
+ {
+  "n": 33,
+  "archivo": "33-wow-pregunta3.png",
+  "nota": "",
+  "seg": 83,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nPASO 2 DE 2\n\n¿cómo está el clima?\nusar mi ubicación\nno pude leerla — dime tú abajo\nO DIME TÚ\nHelado\npara abrigo grueso\n5°\nFrío\nsuéter o chamarra\n12°\nTemplado\nmanga larga ligera\n19°\nCálido\nplayera, a gusto\n25°\nCaluroso\nlo más fresco\n33°\n¿va a llover?\nno\nsí\narmar mi look",
+  "controles": [
+   "Atrás",
+   "usar mi ubicación no pude leerla — dime tú abajo",
+   "Helado para abrigo grueso 5°",
+   "Frío suéter o chamarra 12°",
+   "Templado manga larga ligera 19°",
+   "Cálido playera, a gusto 25°",
+   "Caluroso lo más fresco 33°",
+   "no",
+   "sí",
+   "armar mi look"
+  ]
+ },
+ {
+  "n": 34,
+  "archivo": "34-wow-arranca.png",
+  "nota": "arranca la generación del primer look",
+  "seg": 86,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nTU ESTILISTA ESTÁ PENSANDO\n\nrevisando tus 15 prendas…\n\n37%\nEL DÍA A DÍA\nDE DÍA\nCALUROSO\nCreando tu look…",
+  "controles": []
+ },
+ {
+  "n": 35,
+  "archivo": "35-wow-generando-espera1.png",
+  "nota": "6s cargando",
+  "seg": 92,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nTU ESTILISTA ESTÁ PENSANDO\n\narmando tus primeros lo\n\n76%\nEL DÍA A DÍA\nDE DÍA\nCALUROSO\nCreando tu look…",
+  "controles": []
+ },
+ {
+  "n": 36,
+  "archivo": "36-wow-generando-espera2.png",
+  "nota": "12s cargando",
+  "seg": 98,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nTU ESTILISTA ESTÁ PENSANDO\n\ndescartando lo que no combina contigo…\n\n91%\nEL DÍA A DÍA\nDE DÍA\nCALUROSO\nCreando tu look…",
+  "controles": []
+ },
+ {
+  "n": 37,
+  "archivo": "37-wow-opciones.png",
+  "nota": "los outfits, 12s de espera",
+  "seg": 98,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nTU ESTILISTA ESTÁ PENSANDO\n\ndescartando lo que no combina contigo…\n\n91%\nEL DÍA A DÍA\nDE DÍA\nCALUROSO\nCreando tu look…",
+  "controles": []
+ },
+ {
+  "n": 38,
+  "archivo": "38-avatar-fotos.png",
+  "nota": "paso 1 de 3 del avatar",
+  "seg": 99,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "PASO 1 DE 3\nUna foto tuya\n\nCon una me basta para armar tu avatar. No la guardo.\n\ntoca para poner tu cara\nde frente. ¿sales con alguien más? súbela igual — recorto tu cara.\nluz de día\nde frente\nsin lentes ni gorra\nsin filtros\nempezar\nahora no, seguir sin avatar",
+  "controles": [
+   "atrás",
+   "toca para poner tu cara de frente. ¿sales con alguien más? súbela igual — recorto tu cara.",
+   "empezar",
+   "ahora no, seguir sin avatar"
+  ]
+ },
+ {
+  "n": 39,
+  "archivo": "39-avatar-foto-puesta.png",
+  "nota": "con la foto cargada",
+  "seg": 102,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "PASO 1 DE 3\nUna foto tuya\n\nCon una me basta para armar tu avatar. No la guardo.\n\n¿sale alguien más? déjate solo a ti\najustar\ncambiar la foto\nluz de día\nde frente\nsin lentes ni gorra\nsin filtros\n+ sumar otro ángulo — opcional, afina el parecido\nempezar\nahora no, seguir sin avatar",
+  "controles": [
+   "atrás",
+   "¿sale alguien más? déjate solo a ti ajustar",
+   "cambiar la foto",
+   "+ sumar otro ángulo — opcional, afina el parecido",
+   "empezar",
+   "ahora no, seguir sin avatar"
+  ]
+ },
+ {
+  "n": 40,
+  "archivo": "40-avatar-cuerpo.png",
+  "nota": "paso 2 de 3 — con el retrato dibujándose encima",
+  "seg": 104,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "PASO 2 DE 3\n\nMientras contestas, te voy dibujando el retrato.\n\nTu silueta\n\nElige la que más se te parezca — para que la ropa te quede fiel.\n\nDelgado\nAtlético\nPromedio\nFuerte\nAmplio\nGrande\n¿cuánto mides?\nopcional — afina las proporciones\ncm\nsiguiente\nprefiero subir una foto de cuerpo",
+  "controles": [
+   "atrás",
+   "Delgado",
+   "Atlético",
+   "Promedio",
+   "Fuerte",
+   "Amplio",
+   "Grande",
+   "siguiente",
+   "prefiero subir una foto de cuerpo"
+  ]
+ },
+ {
+  "n": 41,
+  "archivo": "41-avatar-cuerpo-lleno.png",
+  "nota": "complexión + estatura",
+  "seg": 104,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "PASO 2 DE 3\n\nMientras contestas, te voy dibujando el retrato.\n\nTu silueta\n\nElige la que más se te parezca — para que la ropa te quede fiel.\n\nDelgado\nAtlético\nPromedio\nFuerte\nAmplio\nGrande\n¿cuánto mides?\nopcional — afina las proporciones\ncm\nsiguiente\nprefiero subir una foto de cuerpo",
+  "controles": [
+   "atrás",
+   "Delgado",
+   "Atlético",
+   "Promedio",
+   "Fuerte",
+   "Amplio",
+   "Grande",
+   "siguiente",
+   "prefiero subir una foto de cuerpo"
+  ]
+ },
+ {
+  "n": 42,
+  "archivo": "42-avatar-retrato-esperando-espera1.png",
+  "nota": "6s cargando",
+  "seg": 113,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "Terminando tu retrato…\n\nTarda como un minuto — quédate en la app, si te sales se cancela.",
+  "controles": []
+ },
+ {
+  "n": 43,
+  "archivo": "43-avatar-retrato-esperando-espera2.png",
+  "nota": "12s cargando",
+  "seg": 119,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "Terminando tu retrato…\n\nTarda como un minuto — quédate en la app, si te sales se cancela.",
+  "controles": []
+ },
+ {
+  "n": 44,
+  "archivo": "44-avatar-retrato-esperando-espera3.png",
+  "nota": "18s cargando",
+  "seg": 125,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "PASO 3 DE 3\n¿Te reconoces?\n\nPrimero clavamos tu cara — el cuerpo se arma sobre este retrato.\n\nMi juez de parecido te reconoce (9/10).\n\nsí, soy yo — sigamos\nalgo no cuadra",
+  "controles": [
+   "atrás",
+   "sí, soy yo — sigamos",
+   "algo no cuadra"
+  ]
+ },
+ {
+  "n": 45,
+  "archivo": "45-avatar-retrato.png",
+  "nota": "el retrato + el juez (18s tras contestar)",
+  "seg": 125,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "PASO 3 DE 3\n¿Te reconoces?\n\nPrimero clavamos tu cara — el cuerpo se arma sobre este retrato.\n\nMi juez de parecido te reconoce (9/10).\n\nsí, soy yo — sigamos\nalgo no cuadra",
+  "controles": [
+   "atrás",
+   "sí, soy yo — sigamos",
+   "algo no cuadra"
+  ]
+ },
+ {
+  "n": 46,
+  "archivo": "46-avatar-cuerpo-generando-espera1.png",
+  "nota": "6s cargando",
+  "seg": 133,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "Casi listo…\n\nTarda como un minuto — quédate en la app, si te sales se cancela.",
+  "controles": []
+ },
+ {
+  "n": 47,
+  "archivo": "47-avatar-cuerpo-generando-espera2.png",
+  "nota": "12s cargando",
+  "seg": 139,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "Generando tu avatar…\n\nTarda como un minuto — quédate en la app, si te sales se cancela.",
+  "controles": []
+ },
+ {
+  "n": 48,
+  "archivo": "48-avatar-cuerpo-generando-espera3.png",
+  "nota": "18s cargando",
+  "seg": 145,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "Casi listo…\n\nTarda como un minuto — quédate en la app, si te sales se cancela.",
+  "controles": []
+ },
+ {
+  "n": 49,
+  "archivo": "49-avatar-cuerpo-generando-espera4.png",
+  "nota": "24s cargando",
+  "seg": 151,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "LISTO\n¿Quedó?\n\nEste es tu avatar. Sobre él te voy a probar cada look.\n\nquedó, usar este\notra toma\ncambiar cuerpo\nla cara",
+  "controles": [
+   "atrás",
+   "quedó, usar este",
+   "otra toma",
+   "cambiar cuerpo",
+   "la cara"
+  ]
+ },
+ {
+  "n": 50,
+  "archivo": "50-avatar-listo.png",
+  "nota": "el avatar de cuerpo entero (25s)",
+  "seg": 151,
+  "url": "/perfil/avatar?return=%2Fonboarding%2Fwow",
+  "texto": "LISTO\n¿Quedó?\n\nEste es tu avatar. Sobre él te voy a probar cada look.\n\nquedó, usar este\notra toma\ncambiar cuerpo\nla cara",
+  "controles": [
+   "atrás",
+   "quedó, usar este",
+   "otra toma",
+   "cambiar cuerpo",
+   "la cara"
+  ]
+ },
+ {
+  "n": 51,
+  "archivo": "51-vuelta-al-look.png",
+  "nota": "de regreso del avatar",
+  "seg": 171,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nTUS PRIMEROS LOOKS\n\n¿con cuál empezamos?\n\nguarda tus favoritos · elige uno para verlo hoy.\n\nBásico ganador\nCamiseta negra con chinos beige es contraste limpio y fresco para el calor, y el negro cerca de tu cara es justo lo tuyo\nBlanco y azul, sin drama\nCamisa blanca con jeans y tenis blancos es tu combo ganador de calor: fresco, recto y sin una sola nota que sobre.\nempezar con «Básico ganador»",
+  "controles": [
+   "Guardar en favoritos",
+   "Básico ganador Camiseta negra con chinos beige es contraste limpio y fresco para el calor, y el negro cerca de tu cara es justo lo tuyo",
+   "Guardar en favoritos",
+   "Blanco y azul, sin drama Camisa blanca con jeans y tenis blancos es tu combo ganador de calor: fresco, recto y sin una sola nota que sobre.",
+   "empezar con «Básico ganador»"
+  ]
+ },
+ {
+  "n": 52,
+  "archivo": "52-tryon-sin-entrada.png",
+  "nota": "no encontré cómo probarlo",
+  "seg": 171,
+  "url": "/onboarding/wow",
+  "texto": "stailist\n\nTUS PRIMEROS LOOKS\n\n¿con cuál empezamos?\n\nguarda tus favoritos · elige uno para verlo hoy.\n\nBásico ganador\nCamiseta negra con chinos beige es contraste limpio y fresco para el calor, y el negro cerca de tu cara es justo lo tuyo\nBlanco y azul, sin drama\nCamisa blanca con jeans y tenis blancos es tu combo ganador de calor: fresco, recto y sin una sola nota que sobre.\nempezar con «Básico ganador»",
+  "controles": [
+   "Guardar en favoritos",
+   "Básico ganador Camiseta negra con chinos beige es contraste limpio y fresco para el calor, y el negro cerca de tu cara es justo lo tuyo",
+   "Guardar en favoritos",
+   "Blanco y azul, sin drama Camisa blanca con jeans y tenis blancos es tu combo ganador de calor: fresco, recto y sin una sola nota que sobre.",
+   "empezar con «Básico ganador»"
+  ]
+ }
+]

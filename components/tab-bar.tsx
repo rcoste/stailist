@@ -54,10 +54,17 @@ export function TabBar({ userId, trip }: { userId: string; trip: TripContext | n
     const active =
       pathname.startsWith(match ?? href) ||
       (extra?.some((e) => pathname.startsWith(e)) ?? false);
+    // TOCAR LA PESTAÑA ACTIVA VUELVE A LA RAÍZ DE LA SECCIÓN — la convención
+    // que todo el mundo intenta por instinto. En /hoy importa de verdad: con
+    // look del día la pantalla entra directa al look y tocar "Hoy" no hacía
+    // NADA (misma URL, mismo estado), así que la home quedaba inalcanzable.
+    // El parámetro es lo que deja pedirla: hoy-client lo lee y abre la home en
+    // vez del look.
+    const destino = active && href === "/hoy" ? "/hoy?inicio=1" : href;
     return (
       <Link
         key={href}
-        href={href}
+        href={destino}
         className={`flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors duration-200 ${
           active ? "text-accent" : "text-muted hover:text-ink"
         }`}

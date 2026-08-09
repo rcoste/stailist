@@ -15,8 +15,10 @@ import { WowClient, type WowOutfit } from "./wow-client";
 // Acepta step 4 (recién terminó checklist) Y step 5 (la generación lo cerró
 // mientras seguía en esta pantalla votando) — un reload no debe expulsarla
 // a /hoy a media votación, pero pasos anteriores sí redirigen.
-// Con step 5 NO se regenera: se muestran los outfits ya guardados (cada
-// generación cuesta dinero; recargar la página no debe disparar otra).
+// NUNCA se regenera encima de outfits que ya existen: cada generación cuesta
+// dinero, y recargar la página —o volver de hacerse el avatar— no debe disparar
+// otra. La condición es "¿ya tiene looks?", no "¿terminó una generación?" (ver
+// el bloque de abajo: son cosas distintas y confundirlas costó dos corridas).
 export default async function WowPage({
   searchParams,
 }: {
@@ -41,13 +43,35 @@ export default async function WowPage({
     .eq("user_id", profile.id)
     .is("deleted_at", null);
 
+  // ¿YA TIENE OUTFITS? — ésa es la pregunta, y antes se hacía otra.
+  //
+  // La guarda estaba condicionada a `onboarding_step >= 5`, que se escribe al
+  // FINAL del todo en /api/generate: después de generar, juzgar y registrar. Los
+  // outfits, en cambio, se guardan MIENTRAS se transmiten. Entre una cosa y otra
+  // hay una ventana en la que la persona ya tiene sus looks pero la base sigue
+  // diciendo "paso 4" — y entonces esta página los ignora y regenera, cobrando
+  // otra vez.
+  //
+  // No es teórico. Roberto, 2026-08-09: a las 15:17 se le generaron 2 outfits y
+  // la corrida murió antes de la cola (cero eventos de critic_review y de
+  // generation_timing, y el paso 5 sin escribir). Se fue a hacerse el avatar, y
+  // al volver el wow le generó 3 más desde cero — dos generaciones pagadas para
+  // una sola persona en su primer día.
+  //
+  // Preguntar por los outfits en vez de por el paso lo hace robusto a CUALQUIER
+  // forma de morir a mitad: el juez que truena, el timeout de Vercel, la pestaña
+  // que se cierra. Si hay looks guardados, se enseñan; no se regenera nunca
+  // encima de trabajo que ya se pagó.
   let initialOutfits: WowOutfit[] | null = null;
-  if (profile.onboarding_step >= 5) {
+  {
     const { data: saved } = await supabase
       .from("outfits")
       .select("id, item_ids, title, explanation, tryon_path")
       .eq("user_id", profile.id)
       .is("deleted_at", null)
+      // Los de viaje no son su primer look: tienen su propia pantalla y
+      // aparecerían aquí como si el wow los hubiera hecho.
+      .is("trip_id", null)
       .order("created_at", { ascending: false })
       .limit(3);
     if (saved && saved.length > 0) {
@@ -87,6 +111,31 @@ export default async function WowPage({
           ];
         })
       );
+      // Y SE CIERRA EL PASO, si la corrida que los hizo no llegó a cerrarlo.
+      //
+      // Sin esto, no regenerar convierte un bug de cobrar dos veces en uno peor:
+      // quedarse atrapado. ONBOARDING_COMPLETE es 5, así que con el paso en 4 la
+      // persona pulsa "entrar a la app", /hoy la rebota al wow, y otra vez —
+      // para siempre. Lo que rompía ese bucle era precisamente la regeneración
+      // que acabamos de quitar (a Roberto lo destrabó a las 16:36, cobrando).
+      //
+      // El `.eq("onboarding_step", 4)` lo hace idempotente: si ya está en 5, no
+      // escribe nada y dos pestañas abiertas no se pisan.
+      if (profile.onboarding_step === 4) {
+        await supabase
+          .from("profiles")
+          .update({ onboarding_step: 5, updated_at: new Date().toISOString() })
+          .eq("id", profile.id)
+          .eq("onboarding_step", 4);
+        // El embudo no puede quedarse ciego: sin este evento, quien llegó a su
+        // primer look por esta puerta se vería como quien nunca llegó.
+        await supabase.from("events").insert({
+          user_id: profile.id,
+          type: "onboarding_step",
+          data: { step: 5, via: "wow_reanudado" },
+        });
+      }
+
       initialOutfits = await Promise.all(
         saved.reverse().map(async (o) => {
           let tryon: string | null = null;

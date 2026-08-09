@@ -73,6 +73,11 @@ export function SwipeDeck({
    * "manda la preferencia de la persona" sobre un dato que nunca llegaba.
    * Las preguntas de calibración sí se dejan fuera aquí: son la parte larga y
    * quien vuelve a swipear ya pasó por ellas.
+   *
+   * DESDE 2026-08-09 EL ONBOARDING TAMBIÉN ENTRA POR AQUÍ, por lo mismo visto
+   * desde el otro lado: las preguntas eran tres pantallas más justo antes del
+   * paso que paga. Se siguen preguntando —son las mismas de /closet/capsula/
+   * editar, un paso del checklist de activación— sólo que después, y opcionales.
    */
   soloPares?: boolean;
   /** Para elegir las fotos de los pares de corte. */

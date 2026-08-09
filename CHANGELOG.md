@@ -2,6 +2,95 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.198.0] - 2026-08-09
+
+### Fixed — el mazo del swipe arrancaba con seis cartas del mismo palo
+
+Roberto insistió en algo que yo había descartado: que las primeras cartas se sienten todas iguales. Tenía razón, y medido es peor de lo que él lo planteó.
+
+Las **seis primeras** —minimalista, casual sin esfuerzo, clásico elegante, preppy, sastre, smart casual— son todas del cluster pulido/clásico. Y **el mazo no se baraja**: ese arranque monótono era idéntico para todo el mundo, siempre. Las polarizantes vivían al fondo (y2k 23, gorpcore 24, coquette 24) y **`de-salir` era la 27 de 27** — la última. Esa carta se añadió el 2026-07-31 justamente porque Tatiana señaló que faltaba el eje "marca la silueta": el parche al hueco estaba puesto donde menos se ve, y quien abandonaba a media tanda no lo veía nunca.
+
+**Ahora el mazo rota entre familias** (limpio → calle → suave → brillo → retro → limpio…). Dentro de cada familia se respeta el orden curado del archivo, así que una carta nueva sólo se une a la rotación de la suya.
+
+| | antes | ahora |
+|---|---|---|
+| tags distintos en las 10 primeras | 18 | **21** |
+| cartas del cluster pulido en las 10 | 6 | **3** |
+| streetwear | 7ª | **2ª** |
+| color protagonista | 15ª | **4ª** |
+| glam de noche | 20ª | **9ª** |
+| de salir | **27ª** | **14ª** |
+
+**Un intento fallido queda documentado en el código** para que nadie lo repita: un greedy de "la carta que menos tags comparta con lo ya visto" no sirvió (19 tags contra 18, y `de-salir` seguía en la 27) porque a media lista todo solapa con todo y el criterio se apaga.
+
+**Lo que NO se hizo, y es deliberado.** Roberto también propuso podar el mazo con los primeros 10 swipes: si la dirección se ve clara, dejar de mostrar los estilos descartados. Un mazo que se poda con su propia hipótesis deja de medir — las cartas que quedan sólo pueden confirmarla, y después no se puede distinguir *"no le gusta"* de *"nunca le apareció"*. Es el mismo error que el comparador pareado existe para evitar. Reordenar da la calibración rápida que busca sin cobrar ese precio.
+
+Con guarda en tests: si alguien vuelve a dejar 5+ cartas del mismo palo entre las 10 primeras, o entierra `de-salir` pasada la posición 18, falla.
+
+## [0.2.196.0] - 2026-08-09
+
+### Fixed — con tu look del día hecho, la home quedaba inalcanzable
+
+Roberto: *"después de que generó un outfit no tengo una forma de ir a la homescreen"*. Cierto, y el agujero era estructural: `/hoy` tiene dos pantallas —la home (`idle`: saludo, card contextual, **checklist de activación**, espejo, añadir) y el look (`ready`)— y al abrirla con look del día entraba directo en el look. El único `setState({kind:"idle"})` de todo el archivo es al salir del wizard **y sólo si no hay look**. O sea: en cuanto generabas, la home desaparecía el resto del día.
+
+Lo caro no es la navegación: es que **con ella desaparecía el checklist de "qué sigue"** (avatar → prendas → estilo → silueta → cápsula), la superficie diseñada para activar a alguien nuevo — justo después del momento que más lo engancha.
+
+**Dos puertas, ninguna inventada.** El título **"hoy"** del look ahora es un botón (es el nombre de la sección; tocarlo lleva a su home, la convención del logo de siempre, sobre pixeles que ya estaban ahí sin hacer nada). Y **tocar la pestaña "Hoy" estando en Hoy** hace lo que todo el mundo intenta por instinto. Mismo trato en el header de escritorio.
+
+**Sobre usar el botón negro** (lo preguntó Roberto): no. El ✨ significa *"hazme un look"* — es el único botón que produce valor, y volverlo ambiguo con "y también te lleva a inicio" lo empeora.
+
+**Y la home no puede mentir cuando ya hay look**: el titular pasa de *"tu look de hoy, aún no"* a *"listo"* con su nombre, y el CTA de *"armar mi look de hoy"* a **"ver mi look"** — volver a la home no puede disparar una generación pagada.
+
+**Dos trampas que sólo aparecieron midiendo en el navegador**, no leyendo el código:
+1. Next **no remonta** el componente cuando sólo cambia el query, así que `?inicio=1` cambiaba la URL y no la pantalla. Hace falta reaccionar al cambio, no leerlo al montar.
+2. Limpiar el query con `history.replaceState` desincroniza el router de Next del address bar: la prop no cambia, el efecto no vuelve a dispararse y **la segunda pulsación dejaba de funcionar**. Va por `router.replace`.
+
+Verificado con tres idas y vueltas seguidas por la pestaña y una por el título, sobre un look sembrado y borrado al terminar.
+
+## [0.2.195.0] - 2026-08-09
+
+### Fixed — el wow regeneraba encima de looks que ya existían
+
+Roberto, probando el flujo: generó sus outfits, se fue a hacerse el avatar y el try-on, y al volver le salió otra vez la misma pantalla generando de cero. La base le da la razón — 15:17 dos outfits, 15:22-15:28 el avatar, y a las 16:36 otros tres.
+
+**La guarda existía pero preguntaba lo que no debe.** Condicionaba a `onboarding_step >= 5`, que se escribe al FINAL de todo en `/api/generate` — después de generar, juzgar y registrar. Los outfits, en cambio, se guardan MIENTRAS se transmiten. Entre una cosa y otra hay una ventana en la que la persona ya tiene sus looks y la base sigue diciendo "paso 4". Su primera corrida murió justo ahí: guardó 2 outfits y no llegó a la cola. Él los vio —el cliente los muestra igual— pero la página los ignoró al volver. Ahora la condición es *¿ya tiene looks?*, que aguanta cualquier forma de morir a medias: el juez que truena, el timeout, la pestaña que se cierra.
+
+**Y se cierra el paso al reanudar**, que era la mitad que faltaba. Sin eso el arreglo empeoraba las cosas: el onboarding se da por completo en el paso 5, así que con el paso en 4 pulsas "entrar a la app", `/hoy` te rebota al wow, y otra vez — para siempre. Lo que rompía ese bucle era precisamente la regeneración que se acaba de quitar.
+
+**Cuántas veces ha pasado: una.** Medido comparando el primer outfit contra el cierre del paso 5 en todos los perfiles; el único hueco mayor a tres minutos es ése, de 78. No es una fuga sistemática. Y nadie está atrapado ahora mismo.
+
+**Por qué murió aquella corrida sigue sin saberse** — sólo iba a la consola. Se reconstruyó por lo que FALTABA, y eso dice que algo se rompió, nunca qué. Ahora el error queda escrito en la base (`generation_failed`, migración 0130).
+
+### Changed — el retrato del avatar se dibuja mientras contestas, no después
+
+Idea de Roberto. El orden era fotos → 20s de spinner → retrato → complexión y estatura → otros 20s → avatar. Ahora las preguntas se contestan encima de la primera espera.
+
+**No es sólo tapar el hueco.** El cuerpo va anclado al retrato aprobado, así que no puede empezar antes: esos segundos son serie inevitable y las preguntas son la única pieza movible del flujo. Contestadas antes, el cuerpo arranca en el instante del *"sí, soy yo"* en vez de dos pantallas después.
+
+**Cuánto es:** 20.5s medidos (16.6 de Gemini + 3.7 del juez). **n = 1** — de 53 generaciones sólo una trae reloj porque la instrumentación es nueva, así que es orden de magnitud, no número fino. A quién le sirve: de 26 perfiles, 20 no tienen estatura.
+
+**Lo que no arregla:** si pides ajustes al retrato, esas regeneraciones siguen siendo espera pelada. El ahorro se cobra una vez.
+
+**Que un fallo no se coma lo que llenaste:** la generación en fondo no toca la pantalla ni al empezar ni al fallar. Verificado en el navegador — la generación devolvió 502 a los 4s y la persona no se movió del formulario; el error salió al pulsar continuar.
+
+### Changed — el onboarding dice qué va a pasar, y suelta las preguntas que lo alargaban
+
+Roberto, entrando desde cero. Cinco cosas.
+
+**Nadie le decía qué hacer antes de los swipes.** La primera carta aparecía sin decir que se desliza ni para qué sirve. Va una línea en la pantalla misma, no una pantalla de preámbulo: un prólogo cobra tiempo y no da nada, y anunciar *"son 5 pasos"* hace que se sienta más largo. La barra ya dice cuánto falta; faltaba **qué ganas**.
+
+**La calibración sale del onboarding.** Eran tres pantallas más justo antes del paso que paga. No se pierden: son LAS MISMAS preguntas de `/closet/capsula/editar`, que ya es un paso del checklist de activación del home — o sea que ya vivían fuera, sólo que además se preguntaban dentro.
+
+**Y no vuelven a preguntar por color.** Medido sobre 4 perfiles reales: **9 de 12** preguntas generadas eran de color, dos citando la estación (*"dentro de tus neutros de otoño profundo"*) que el quiz determina DESPUÉS. La causa estaba en el prompt: prohibía "colorimetría base" —que el modelo leyó como "preferencias de color sí"— y encima ponía *"un color fuerte vs neutros"* como EJEMPLO de buena pregunta.
+
+**El paso de básicos dice qué son**, en vez de leerse como un catálogo que hay que llenar entero.
+
+### Added — /admin/basicos
+
+Curar qué prendas ve alguien nuevo en *"¿qué ya tienes?"*. Manda sobre `onboarding_subset`, la misma columna que filtra el onboarding: nada de lista paralela. Enseña los dos números que importan (unisex+hombre, unisex+mujer) y no el total, que sería el dato bonito y equivocado — prender diez prendas de mujer no le cambia nada a él.
+
+A la primera carga: **48 para un hombre, 53 para una mujer**. La spec dice ~15.
+
 ## [0.2.194.0] - 2026-08-09
 
 ### Fixed — el paso de los cortes: el CTA mentía, el título salía dos veces y nadie decía para qué

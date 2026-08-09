@@ -71,8 +71,50 @@ export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (obj: unknown) =>
-        controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      // SI LA PERSONA SE VA, LA GENERACIÓN SIGUE Y TERMINA BIEN.
+      //
+      // Antes `send` escribía al controlador a pelo. Cuando el cliente cierra la
+      // conexión —cambiar de app en iOS, bloquear la pantalla, tocar atrás— el
+      // controlador queda cerrado y el PRIMER send posterior lanza
+      // "Invalid state: Controller is already closed". Eso abortaba la corrida
+      // a media faena: los outfits ya guardados se quedaban ahí, pero la cola
+      // —el juez, los tiempos, y sobre todo el cierre del paso 5— nunca corría.
+      //
+      // Es exactamente lo que le pasó a Roberto hoy a las 15:17, deducido
+      // entonces por lo que FALTABA y confirmado a las 18:27 con el evento
+      // generation_failed: "Invalid state: Controller is already closed",
+      // paso 4. Y era caro: lo dejaba atrapado en el paso 4 con looks huérfanos.
+      //
+      // Ahora escribir es best-effort. Si ya no hay nadie al otro lado, se
+      // apunta y se sigue: el trabajo se termina y se guarda, que es lo que hace
+      // que al volver encuentre sus looks en vez de una regeneración pagada.
+      let cerrado = false;
+      const send = (obj: unknown) => {
+        if (cerrado) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+        } catch {
+          cerrado = true;
+        }
+      };
+      /** Cerrar dos veces también lanza; el finally no puede ser quien rompa. */
+      const cerrar = () => {
+        if (cerrado) return;
+        cerrado = true;
+        try {
+          cerrar();
+        } catch {
+          /* ya estaba cerrado por el cliente */
+        }
+      };
+      // El aborto del cliente llega por aquí antes que cualquier enqueue.
+      request.signal?.addEventListener("abort", () => {
+        cerrado = true;
+      });
+
+      // FUERA del try: el catch lo necesita para decir en qué punto del
+      // onboarding se rompió, y `profile` se destructura dentro.
+      let pasoOnboarding: number | null = null;
 
       try {
         const startedAt = Date.now();
@@ -81,11 +123,12 @@ export async function POST(request: NextRequest) {
         const carga = await cargarBaseDelMotor(supabase, user.id);
         if ("error" in carga) {
           send({ error: "closet_vacio" });
-          controller.close();
+          cerrar();
           return;
         }
         const { base } = carga;
         const { profile, items } = base;
+        pasoOnboarding = Number(profile.onboarding_step) || null;
 
         send({ phase: "combinando colores…" });
         const weather: Weather | null = await resolveWeather(body);
@@ -194,12 +237,12 @@ export async function POST(request: NextRequest) {
         // respuesta. Va con lo que falta para que la pantalla lo pueda decir.
         if (noAlcanza) {
           send({ error: "no_alcanza", faltan: noAlcanza.faltan });
-          controller.close();
+          cerrar();
           return;
         }
         if (finalized.length === 0) {
           send({ error: "no_pude_guardar" });
-          controller.close();
+          cerrar();
           return;
         }
         const repaired = reviews.filter((r) => r.changed).length;
@@ -265,12 +308,30 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error("[generate] fallo:", err);
         const message = err instanceof Error ? err.message : "desconocido";
+        // QUE QUEDE ESCRITO, no sólo en la consola.
+        //
+        // El 2026-08-09 una corrida guardó 2 outfits y murió antes de la cola.
+        // Se pudo deducir por lo que FALTABA (ni critic_review ni
+        // generation_timing ni el paso 5), pero el motivo se lo llevó una
+        // consola que ya no existe. Un fallo que sólo se puede diagnosticar por
+        // ausencia es un fallo que no se puede arreglar.
+        //
+        // Best-effort y al final: si esto también truena, no puede tapar el
+        // error de verdad que le vamos a mandar a la persona.
+        await supabase
+          .from("events")
+          .insert({
+            user_id: user.id,
+            type: "generation_failed",
+            data: { message: message.slice(0, 300), paso: pasoOnboarding },
+          })
+          .then(undefined, () => {});
         send({
           error:
             message === "ENGINE_NOT_CONNECTED" ? "sin_api_key" : "generacion",
         });
       } finally {
-        controller.close();
+        cerrar();
       }
     },
   });

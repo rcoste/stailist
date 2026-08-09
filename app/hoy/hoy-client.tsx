@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LookDetail } from "@/components/look-detail";
 import { SkipReasons } from "@/components/skip-reasons";
@@ -37,6 +38,17 @@ export type HoyOutfit = {
 
 type State =
   | { kind: "ask" }
+  // LA HOME CUANDO YA TIENES TU LOOK. Es el mismo lugar que "idle" —checklist,
+  // card contextual, espejo, añadir— pero con el texto y el botón dicendo la
+  // verdad: tu look existe y se va a VER, no a generar otra vez.
+  //
+  // Existía el agujero: al abrir /hoy con look del día se entraba en "ready" y
+  // NO había camino de vuelta (el único setState idle es al salir del wizard, y
+  // sólo si no hay look). O sea que en cuanto generabas, la home quedaba
+  // inalcanzable el resto del día — y con ella el checklist de activación, que
+  // es justo la superficie que guía a alguien nuevo. Lo reportó Roberto: "no
+  // tengo una forma de ir a la homescreen".
+  | { kind: "inicio" }
   | { kind: "idle" } // aún sin look del día: home (saludo + CTA) DENTRO del AppShell,
   // con la tab bar visible — no fuerza el wizard ni atrapa al usuario.
   | { kind: "generating"; outfitId: string } // outfitId "" = aún sin id (POST en vuelo)
@@ -70,6 +82,7 @@ export function HoyClient({
   autoAsk = false,
   homeCard = null,
   checklist = null,
+  verInicio = false,
 }: {
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
@@ -95,16 +108,31 @@ export function HoyClient({
   /** Checklist de activación (home idle): avatar → prendas → estilo → silueta →
    *  cápsula. null = todo hecho (se autodestruye). */
   checklist?: HomeChecklistData | null;
+  /** `?inicio=1`: abre la home aunque ya haya look del día (en vez del look). */
+  verInicio?: boolean;
 }) {
   const [state, setState] = useState<State>(
     pendingOutfitId && !autoAsk
       ? { kind: "generating", outfitId: pendingOutfitId }
       : autoAsk
         ? { kind: "ask" } // el botón ✨ sí abre el wizard de una
-        : lookInicial
-          ? { kind: "ready", outfit: lookInicial }
-          : { kind: "idle" } // sin look del día → home, NO el wizard a la fuerza
+        : verInicio && lookInicial
+          ? { kind: "inicio" } // pidió la home teniéndolo ya (tab "Hoy" / título)
+          : lookInicial
+            ? { kind: "ready", outfit: lookInicial }
+            : { kind: "idle" } // sin look del día → home, NO el wizard a la fuerza
   );
+  const router = useRouter();
+  // EL PARÁMETRO TIENE QUE ACTUAR, NO SÓLO LEERSE AL MONTAR.
+  //
+  // Tocar la pestaña "Hoy" estando en /hoy navega a /hoy?inicio=1, pero Next NO
+  // remonta el componente cuando sólo cambia el query: el useState de arriba ya
+  // corrió y el estado se quedaba en el look. La URL cambiaba y la pantalla no
+  // — medido en el navegador, que es la única razón por la que me enteré.
+  useEffect(() => {
+    if (verInicio) setState({ kind: "inicio" });
+  }, [verInicio]);
+
   // Pantalla despierta mientras se genera el look (no se auto-bloquea a media carga).
   useWakeLock(state.kind === "generating");
   // Fecha como eyebrow del empty state. Se calcula en cliente para evitar
@@ -235,7 +263,11 @@ export function HoyClient({
 
   // Sin look del día (y no llegaste por el ✨): home dentro del AppShell, con la
   // tab bar visible. Saludo + CTA — no te fuerza el wizard ni te atrapa.
-  if (state.kind === "idle") {
+  if (state.kind === "idle" || state.kind === "inicio") {
+    // Con look ya hecho, el titular y el botón NO pueden ser los mismos: decir
+    // "aún no" sobre un look que existe es mentir, y "armar mi look de hoy"
+    // dispararía otra generación pagada para algo que ya está.
+    const yaHayLook = state.kind === "inicio" && !!lookInicial;
     return (
       <div className="flex min-h-[calc(100dvh-13rem)] flex-col lg:mx-auto lg:min-h-[calc(100dvh-16rem)] lg:max-w-md">
         {/* Editorial y tipográfico — SIN foto de fondo (no confundir con un
@@ -249,11 +281,13 @@ export function HoyClient({
             <br />
             de hoy,{" "}
             <em className="font-display font-normal italic tracking-normal">
-              aún no
+              {yaHayLook ? "listo" : "aún no"}
             </em>
           </h1>
           <p className="mt-5 max-w-[280px] text-[20px] leading-snug text-muted">
-            dime tu plan y te lo dejo listo en segundos.
+            {yaHayLook
+              ? lookInicial?.nombre ?? "ya te lo armé."
+              : "dime tu plan y te lo dejo listo en segundos."}
           </p>
         </div>
         {/* Pie de la pantalla: contexto → acción principal → acción secundaria.
@@ -270,12 +304,29 @@ export function HoyClient({
               onEstrena={(itemId) => startGen(true, itemId)}
             />
           ) : null}
+          {/* El CTA cambia de VERBO, no sólo de etiqueta: con look hecho no
+              genera nada —volver a la home no puede costar dinero—, sólo te
+              devuelve al que ya tienes. */}
           <button
             type="button"
-            onClick={() => startGen(false)}
+            onClick={() => {
+              if (yaHayLook && lookInicial) {
+                setState({ kind: "ready", outfit: lookInicial });
+                // Limpiar el ?inicio=1 es parte del arreglo, no cosmética: si se
+                // queda, tocar la pestaña "Hoy" otra vez no navega (misma URL) y
+                // la home vuelve a ser inalcanzable — el mismo bug, más tarde.
+                //
+                // Y va por el ROUTER, no por history.replaceState: éste cambia
+                // la barra de direcciones a espaldas de Next, que se queda
+                // creyendo que sigue en ?inicio=1 — la prop no cambia, el efecto
+                // no vuelve a dispararse, y la segunda vez la pestaña dejaba de
+                // funcionar. Se vio midiendo: URL correcta, pantalla equivocada.
+                router.replace("/hoy", { scroll: false });
+              } else startGen(false);
+            }}
             className="flex min-h-[60px] w-full items-center justify-center gap-2.5 rounded-sm bg-accent text-base font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
-            armar mi look de hoy
+            {yaHayLook ? "ver mi look" : "armar mi look de hoy"}
             <Icon name="flecha" size={19} />
           </button>
           {/* "¿ME VEO BIEN?" — la otra forma de usar la app, y la de todos los
@@ -472,6 +523,7 @@ export function HoyClient({
       // look recién generado arranca sin voto (el key resetea el estado).
       votoInicial={state.outfit.id === lookInicial?.id ? votoInicial : null}
       onOtroLook={otroLook}
+      onInicio={() => setState({ kind: "inicio" })}
     />
   );
 }
@@ -493,6 +545,7 @@ function ReadyView({
   fechaLabel,
   votoInicial = null,
   onOtroLook,
+  onInicio,
 }: {
   outfit: HoyOutfit;
   userId: string;
@@ -500,6 +553,8 @@ function ReadyView({
   fechaLabel: string;
   votoInicial?: "up" | "down" | null;
   onOtroLook: () => void;
+  /** Volver a la home de la sección (el título "hoy" del look). */
+  onInicio: () => void;
 }) {
   const [skipOpen, setSkipOpen] = useState(false);
   // Hoja de razones: "skip" (desde "otro look") o "down" (desde el 👎). Misma
@@ -566,6 +621,7 @@ function ReadyView({
           onGenerar={t.generar}
           avatarHref={t.mode === "sin_avatar" ? t.avatarHref : null}
           vermeSub="~20 s"
+          onInicio={onInicio}
         />
       </div>
 

@@ -14,9 +14,11 @@ import { ASSESSMENT_QUESTIONS } from "@/lib/capsule";
 export default async function HoyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ generar?: string }>;
+  // `inicio`: pedir la home aunque ya haya look del día (pestaña "Hoy" activa,
+  // o el título "hoy" del propio look).
+  searchParams: Promise<{ generar?: string; inicio?: string }>;
 }) {
-  const { generar } = await searchParams;
+  const { generar, inicio } = await searchParams;
   // El botón ✨ manda ?generar=<timestamp> (cualquier valor presente cuenta).
   const autoAsk = generar != null;
   const profile = await requireOnboarded();
@@ -223,6 +225,7 @@ export default async function HoyPage({
           </div>
         ) : null}
         <HoyClient
+          verInicio={inicio === "1"}
           key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}
           pendingOutfitId={pendingOutfitId}

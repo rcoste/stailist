@@ -28,6 +28,18 @@ export default async function ClosetOnboardingPage() {
           ¿qué{" "}
           <em className="font-display font-normal italic tracking-normal">ya tienes</em>?
         </h1>
+        {/* QUÉ SON Y POR QUÉ SE PREGUNTAN.
+            Roberto: "debería quedar más claro… explicar que se le mostrarán
+            algunos básicos que probablemente ya tenga, para que los añada
+            fácil y se pueda hacer el primer look, y que más adelante podrá
+            añadir más de la biblioteca o de sus propias fotos".
+            Sin esto, la pantalla se lee como un catálogo que hay que llenar
+            entero — y son 15 taps justo antes del único momento que paga. */}
+        <p className="text-[15px] leading-snug text-muted">
+          Son básicos que mucha gente tiene. Marca los tuyos —así de rápido— y
+          con eso te armo tu primer outfit. Después le sumas lo demás: de mi
+          biblioteca o con fotos de tu propia ropa.
+        </p>
       </div>
 
       <Checklist catalog={(catalog ?? []) as CatalogItem[]} />

@@ -35,3 +35,8 @@ public/style-samples/
 
 # Handoffs de diseño (material de referencia: prototipos + assets, no código)
 claude-design-handoffs-stailist/
+
+# La página del recorrido de QA se genera desde los .jpg de al lado (2 MB de
+# base64 embebido). Vive publicada como artifact; en git sobra y ahoga al
+# escáner de credenciales del pre-push.
+docs/qa/*/recorrido.html
