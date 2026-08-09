@@ -105,6 +105,13 @@ type State =
   | { kind: "render"; items: RenderItem[]; done: number; total: number }
   | { kind: "visual"; items: RenderItem[] }
   | { kind: "guardando" }
+  // El cierre: cuánto entró, qué entró, y qué quedó atado como conjunto.
+  | {
+      kind: "listo";
+      added: number;
+      conjuntos: number;
+      thumbs: { url: string; nombre: string; enConjunto: boolean }[];
+    }
   | { kind: "error"; msg: string };
 
 
@@ -511,15 +518,48 @@ export function ImportCarreteFlow({
       // con el botón diciendo "sumar 72 al clóset". Un tope está bien; un tope
       // callado es ropa que desaparece.
       if (okItems.dejadas && okItems.dejadas > 0) {
+        // Sin refresh aquí — mismo desmonte que mataba al "listo" (ver abajo):
+        // el aviso del tope moría antes de leerse. El refresh va al cerrarlo.
         setState({
           kind: "error",
           msg: `Sumé ${okItems.added} prendas — son muchas de una vez y ${okItems.dejadas} se quedaron fuera. Vuelve a entrar con esas fotos y las agrego.`,
         });
+        return;
+      }
+      // LA PANTALLA DE CIERRE (handoff): antes el flujo simplemente se
+      // esfumaba a idle y el clóset aparecía cambiado sin que nadie dijera qué
+      // pasó. Ahora se dice: cuánto entró, las miniaturas de lo que entró, y —
+      // si ataste un traje— que quedó guardado como conjunto (las piezas del
+      // conjunto llevan su subrayado). Con 0 guardadas no hay nada que
+      // celebrar: idle directo, como antes.
+      if (okItems.added === 0) {
+        setState({ kind: "idle" });
         router.refresh();
         return;
       }
-      setState({ kind: "idle" });
-      router.refresh();
+      const porConjunto = new Map<string, number>();
+      for (const it of keep) {
+        const cj = it.attrs.conjunto;
+        if (cj) porConjunto.set(cj, (porConjunto.get(cj) ?? 0) + 1);
+      }
+      // OJO: AQUÍ NO HAY router.refresh(), y es la lección más rara del día.
+      // Este flujo vive DENTRO del bloque de clóset-vacío (closet-llenalo), que
+      // el servidor QUITA en cuanto tienes fotos propias. Refrescar aquí
+      // desmontaba ese bloque con el flujo adentro — y la pantalla de "listo"
+      // moría en el mismo frame en que nacía. Se vio en la prueba: la base
+      // pasó de 15 a 17 prendas y la pantalla nunca existió. El refresh va en
+      // "ver mi clóset", que es cuando ya no importa que nos desmonten.
+      setState({
+        kind: "listo",
+        added: okItems.added,
+        conjuntos: [...porConjunto.values()].filter((n) => n >= 2).length,
+        thumbs: keep.map((it) => ({
+          url: it.status === "done" && it.url ? it.url : it.photo,
+          nombre: it.attrs.nombre,
+          enConjunto:
+            !!it.attrs.conjunto && (porConjunto.get(it.attrs.conjunto) ?? 0) >= 2,
+        })),
+      });
     } catch {
       setState({ kind: "error", msg: "No pude guardar las prendas. Inténtalo otra vez." });
     }
@@ -1031,6 +1071,64 @@ export function ImportCarreteFlow({
     );
   }
 
+  if (state.kind === "listo") {
+    return (
+      <Overlay
+        pie={
+          <button
+            type="button"
+            onClick={() => {
+              setState({ kind: "idle" });
+              router.refresh();
+            }}
+            className="flex min-h-[54px] w-full items-center justify-center rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            ver mi clóset
+          </button>
+        }
+      >
+        <div className="my-auto flex flex-col items-center gap-5 text-center">
+          {/* El mismo anillo del loading, quieto: la tarea acabó. */}
+          <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-line text-ink">
+            <Icon name="check" size={18} />
+          </span>
+          <div className="flex flex-col gap-1">
+            <p className="text-[26px] font-semibold leading-tight text-ink">
+              +{state.added} a tu clóset
+            </p>
+            {state.conjuntos > 0 ? (
+              <p className="max-w-[300px] text-sm leading-snug text-muted">
+                {state.conjuntos === 1
+                  ? "y guardé tu traje como conjunto — sus piezas quedan relacionadas y las verás marcadas."
+                  : `y guardé ${state.conjuntos} conjuntos — sus piezas quedan relacionadas y las verás marcadas.`}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap justify-center gap-2 px-2">
+            {state.thumbs.map((t, i) => (
+              <div key={i} className="flex flex-col items-center gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.url}
+                  alt={t.nombre}
+                  title={t.nombre}
+                  className="h-20 w-14 rounded-md border border-line bg-surface object-cover"
+                />
+                {/* El subrayado del conjunto (handoff): la marca de "éstas van
+                    juntas" sin inventar un badge más. */}
+                {t.enConjunto ? (
+                  <span className="h-[3px] w-10 rounded-full bg-ink" aria-hidden />
+                ) : (
+                  <span className="h-[3px] w-10" aria-hidden />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Overlay>
+    );
+  }
+
   if (state.kind === "guardando") {
     return (
       <Overlay>
@@ -1047,7 +1145,13 @@ export function ImportCarreteFlow({
         {state.kind === "error" ? (
           <div
             className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40"
-            onClick={() => setState({ kind: "idle" })}
+            onClick={() => {
+              setState({ kind: "idle" });
+              // Por si el error llegó DESPUÉS de un guardado parcial (el tope):
+              // el clóset de atrás debe verse al día. En errores sin guardado
+              // es un refetch de más, inofensivo.
+              router.refresh();
+            }}
           >
             <div
               className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center"

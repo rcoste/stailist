@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
@@ -12,6 +12,7 @@ import {
   crearPantalonDelTraje,
 } from "@/app/closet/actions";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { Toast } from "@/components/toast";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { ejemploDeTalla } from "@/lib/prenda-atributos";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
@@ -210,15 +211,24 @@ function Tile({
   rendering = false,
   priority = false,
   onTap,
+  onConjunto,
+  resaltada = false,
 }: {
   item: ClosetItem;
   rendering?: boolean;
   priority?: boolean;
   onTap: () => void;
+  /** Tocar el badge de conjunto: resalta a sus compañeras (handoff de carga). */
+  onConjunto?: () => void;
+  resaltada?: boolean;
 }) {
   return (
     <button type="button" onClick={onTap} className="flex w-full flex-col gap-1.5 text-left">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
+      <div
+        className={`relative aspect-[3/4] overflow-hidden rounded-md border bg-surface transition-shadow ${
+          resaltada ? "border-ink ring-2 ring-ink" : "border-line"
+        }`}
+      >
         {item.imagen ? (
           <Image
             src={item.imagen}
@@ -238,8 +248,21 @@ function Tile({
             Dice "conjunto" y no "traje" porque el mecanismo sirve igual para un
             conjunto de dos piezas o un pants set: un traje es un conjunto, no
             al revés. */}
+        {/* Y AHORA CONTESTA (handoff): tocarlo resalta a las compañeras y un
+            toast dice quiénes son. Es un span con stopPropagation y no un
+            botón anidado —HTML no permite button dentro de button—; el tap
+            sobre el resto del tile sigue abriendo la ficha, como siempre. */}
         {item.conjunto ? (
-          <span className="absolute left-1 top-1 rounded-sm bg-ink/75 px-1.5 py-0.5 text-[10px] font-medium text-bg">
+          <span
+            role="button"
+            aria-label="Ver con qué va este conjunto"
+            onClick={(e) => {
+              if (!onConjunto) return;
+              e.stopPropagation();
+              onConjunto();
+            }}
+            className="absolute left-1 top-1 rounded-sm bg-ink/75 px-1.5 py-0.5 text-[10px] font-medium text-bg"
+          >
             conjunto
           </span>
         ) : null}
@@ -290,6 +313,24 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   // muestra el resultado en cuanto llega, sin recargar la página.
   const [rendered, setRendered] = useState<Record<string, string>>({}); // id → url
   const [rendering, setRendering] = useState<Set<string>>(new Set());
+  // Conjunto resaltado (tocar el badge) + su toast. Un solo timer: tocar otro
+  // badge antes de que expire el anterior cancela el viejo, o el primero
+  // apagaría el resaltado del segundo a media vida.
+  const [conjResaltado, setConjResaltado] = useState<string | null>(null);
+  const [conjToast, setConjToast] = useState<string | null>(null);
+  const conjTimer = useRef<number | null>(null);
+  function resaltaConjunto(item: ClosetItem) {
+    const cj = item.conjunto;
+    if (!cj) return;
+    const piezas = items.filter((x) => x.conjunto === cj);
+    setConjResaltado(cj);
+    setConjToast(piezas.map((x) => x.nombre.toLowerCase()).join(" + "));
+    if (conjTimer.current) window.clearTimeout(conjTimer.current);
+    conjTimer.current = window.setTimeout(() => {
+      setConjResaltado(null);
+      setConjToast(null);
+    }, 1600);
+  }
 
   // Búsqueda inline (la lupa expande el campo) + filtros de atributos (sliders).
   const [searchOpen, setSearchOpen] = useState(false);
@@ -501,6 +542,8 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
                     rendering={rendering.has(p.id)}
                     priority={eagerIds.has(p.id)}
                     onTap={() => setSelected(p)}
+                    onConjunto={() => resaltaConjunto(p)}
+                    resaltada={!!p.conjunto && p.conjunto === conjResaltado}
                   />
                 </li>
               ))}
@@ -581,6 +624,10 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
           if (id) void quitar(id);
         }}
       />
+
+      {/* El toast del conjunto: "saco azul + pantalón azul", mientras dura el
+          resaltado. El componente ya se auto-oculta con message null. */}
+      <Toast message={conjToast} />
     </div>
   );
 }

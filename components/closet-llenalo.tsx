@@ -23,13 +23,26 @@ import { ImportCarreteFlow } from "@/components/import-carrete-flow";
 // Monta sus propios flujos headless. Ya hay otros dos juegos en /closet (la hoja
 // de "agregar" y el drawer de la tab bar), así que no es un patrón nuevo: son
 // un input oculto y su estado, sin listeners globales.
-export function ClosetLlenalo({ userId }: { userId: string }) {
+export function ClosetLlenalo({
+  userId,
+  oculto = false,
+}: {
+  userId: string;
+  /** Con fotos propias el bloque no se pinta, pero el componente NO se
+   *  desmonta: sus wizards pueden estar a media faena justo cuando el primer
+   *  guardado voltea la condición (ver el comentario en closet/page.tsx). */
+  oculto?: boolean;
+}) {
   const router = useRouter();
   const photoRef = useRef<AddFlowHandle>(null);
   const carreteRef = useRef<AddFlowHandle>(null);
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-lg border border-line bg-bg p-3.5">
+    <div
+      className={
+        oculto ? "contents" : "flex flex-col gap-2.5 rounded-lg border border-line bg-bg p-3.5"
+      }
+    >
       <AddPhotoFlow
         userId={userId}
         headless
@@ -40,6 +53,8 @@ export function ClosetLlenalo({ userId }: { userId: string }) {
       />
       <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
+      {oculto ? null : (
+      <>
       <div className="flex flex-col gap-1 px-0.5">
         <p className="text-[15px] font-bold leading-tight text-ink">
           este clóset todavía no es tuyo
@@ -59,6 +74,8 @@ export function ClosetLlenalo({ userId }: { userId: string }) {
           onBiblioteca={() => router.push("/closet/biblioteca")}
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.204.0] - 2026-08-09
+
+### Added — el cierre de la carga y el conjunto que contesta (tanda 3)
+
+**La pantalla de "listo".** Antes el flujo se esfumaba a idle y el clóset aparecía cambiado sin que nadie dijera qué pasó. Ahora: anillo ✓, "+N a tu clóset", las miniaturas de lo que entró —las piezas de un conjunto con su subrayado— y, si ataste un traje, la frase que lo dice. CTA único: "ver mi clóset".
+
+**El badge de conjunto contesta.** Ya existía como etiqueta muerta; ahora tocarlo resalta a sus compañeras (anillo, ~1.6s) y un toast nombra al par: *"saco azul marino + pantalón azul marino"*. El tap en el resto del tile sigue abriendo la ficha.
+
+### Fixed — dos bugs que la propia prueba destapó
+
+**El guardado mataba su propia pantalla de cierre.** El flujo de carga vive dentro del bloque de clóset-vacío, que el servidor QUITA en cuanto tienes fotos propias — y `addPhotoItems` revalida `/closet` desde el servidor. Resultado: el primer guardado real de un usuario nuevo desmontaba el bloque con el wizard adentro, y el "listo" moría en el mismo frame en que nacía (verificado: la base pasó de 15 a 17 prendas y la pantalla nunca existió). El bloque ahora queda **montado pero oculto**: no pinta nada, pero sus flujos viven hasta terminar. El mismo desmonte silencioso mataba el aviso del tope de 60 prendas.
+
+**Los hints ya no disparan sobre un target tapado.** Al sobrevivir el "listo", el tip de *"desde aquí le sumas más ropa"* salió ENCIMA del cierre — atenuando un flujo vivo para señalar un botón que ni se veía ni se podía tocar. Ahora el coach-mark comprueba con `elementFromPoint` quién está de verdad arriba: si su target está bajo una capa, cede el turno sin marcarse visto, y vuelve en la próxima visita con la pantalla despejada. Vale para cualquier hint frente a cualquier overlay, no sólo este caso.
+
+Verificado de punta a punta en el navegador: subir la foto del traje → chips → atar → generar renders → validar → guardar → pantalla de listo con el conjunto nombrado → clóset → tap al badge → anillo + toast → se apaga solo.
+
 ## [0.2.203.0] - 2026-08-09
 
 ### Changed — el "leyendo tus fotos" enseña su trabajo

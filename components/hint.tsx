@@ -221,6 +221,24 @@ function CoachMark({
           cedeRef.current?.();
           return;
         }
+        // TAPADO POR UN OVERLAY: mismo veredicto que fuera de pantalla.
+        // El caso real: el wizard de carga termina, el guardado revalida
+        // /closet, y el tip de "desde aquí le sumas más ropa" disparaba ENCIMA
+        // de la pantalla de "listo" — atenuando un flujo vivo para señalar un
+        // botón que ni se veía ni se podía tocar. elementFromPoint en el centro
+        // del target dice quién está de verdad arriba; si no es el target ni
+        // pariente suyo, hay una capa encima. Ceder no marca visto, así que el
+        // tip vuelve en la próxima visita, ya con la pantalla despejada.
+        // (Los pointer-events-none, como el toast, no cuentan: elementFromPoint
+        // los salta solo.)
+        const encima = document.elementFromPoint(
+          r.left + r.width / 2,
+          r.top + r.height / 2
+        );
+        if (encima && !el.contains(encima) && !encima.contains(el)) {
+          cedeRef.current?.();
+          return;
+        }
         const radius = getComputedStyle(el).borderRadius || "8px";
         setRect({ top: r.top, left: r.left, width: r.width, height: r.height, radius });
         setReady(true);

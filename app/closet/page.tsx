@@ -250,7 +250,15 @@ export default async function ClosetPage() {
 
         {/* Mientras el clóset sea puro catálogo, las tres formas de sumar ropa
             van desplegadas aquí en vez de escondidas tras "agregar". */}
-        {mostrarLlenalo ? <ClosetLlenalo userId={profile.id} /> : null}
+        {/* SIEMPRE MONTADO, oculto cuando ya no toca — y la diferencia importa.
+            Antes era un condicional a secas, y el primer guardado de fotos
+            propias lo volteaba EN MEDIO del flujo: addPhotoItems revalida
+            /closet desde el servidor, hasOwnPhotos pasaba a true, el bloque se
+            desmontaba con el wizard adentro y la pantalla de "listo" moría en
+            el mismo frame en que nacía — justo en la primera carga real de un
+            usuario nuevo, el momento que más cierre merece. Oculto, el bloque
+            no pinta nada, pero sus flujos siguen vivos hasta terminar. */}
+        <ClosetLlenalo userId={profile.id} oculto={!mostrarLlenalo} />
 
         {preguntas.length > 0 ? (
           <AfinarPrendasCard preguntas={preguntas} faltan={faltan} />
