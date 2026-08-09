@@ -54,7 +54,7 @@ type YaEsta = { id: string; nombre: string; comoEsta: string };
 type Sumar =
   | { paso: "oferta" }
   | { paso: "buscando" }
-  | { paso: "nada"; vistas: number; yaEstan: YaEsta[] }
+  | { paso: "nada"; vistas: number; yaEstan: YaEsta[]; fallo?: boolean }
   | {
       paso: "elegir";
       prendas: DraftLeida[];
@@ -197,7 +197,10 @@ export function EspejoFlow({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: preview }),
       });
-      if (!res.ok) return setSumar({ paso: "nada", vistas: 0, yaEstan: [] });
+      // "Falló ahora" NO es "no se ven prendas": lo primero se reintenta, lo
+      // segundo no. Decirle lo segundo cuando pasó lo primero le quita la única
+      // salida que tenía.
+      if (!res.ok) return setSumar({ paso: "nada", vistas: 0, yaEstan: [], fallo: true });
       const { prendas, vistas, yaEstan } = (await res.json()) as {
         prendas: PrendaDetectada[];
         vistas: number;
@@ -226,7 +229,7 @@ export function EspejoFlow({
         yaEstan,
       });
     } catch {
-      setSumar({ paso: "nada", vistas: 0, yaEstan: [] });
+      setSumar({ paso: "nada", vistas: 0, yaEstan: [], fallo: true });
     }
   }
 
@@ -368,11 +371,27 @@ export function EspejoFlow({
 
                 {sumar.paso === "nada" ? (
                   <div className="flex flex-col gap-1.5">
-                    <p className="text-[13px] text-muted">
-                      {sumar.vistas > 0
-                        ? "Todo lo que traes ya está en tu clóset."
-                        : "No pude distinguir las prendas en esta foto."}
-                    </p>
+                    {sumar.fallo ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          buscarPrendas(
+                            state.preview,
+                            state.kind === "listo" ? state.outfitId : null
+                          )
+                        }
+                        className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-accent"
+                      >
+                        <Icon name="destello" size={14} />
+                        se me atravesó algo — reintentar
+                      </button>
+                    ) : (
+                      <p className="text-[13px] text-muted">
+                        {sumar.vistas > 0
+                          ? "Todo lo que traes ya está en tu clóset."
+                          : "No pude distinguir las prendas en esta foto."}
+                      </p>
+                    )}
                     <YaEstanLista items={sumar.yaEstan} />
                   </div>
                 ) : null}

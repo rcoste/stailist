@@ -30,6 +30,16 @@ import type { Weather } from "@/lib/weather";
 // cuando el consejo se haya ganado el hábito.
 
 export type LecturaEspejo = {
+  /**
+   * Cómo se llama este look en el diario. DOS O TRES PALABRAS.
+   *
+   * Existe porque usé `resumen` de título y quedó fatal: la entrada del diario
+   * se llamaba "Chamarra tipo militar en azul muy oscuro, playera del mismo tono
+   * debajo, pantalón khaki y tenis blancos" — un párrafo entero en la serif
+   * grande, al lado de looks que se llaman "Blazer con oficio". El resumen sirve
+   * para demostrar que miró la foto; para nombrarla hace falta otra cosa.
+   */
+  titulo: string;
   /** Qué trae puesto, en corto — para que se vea que la miró de verdad. */
   resumen: string;
   /** Qué le hace su paleta a la cara con ESTE outfit. Siempre algo que decir. */
@@ -40,17 +50,18 @@ export type LecturaEspejo = {
   ajuste: string;
 };
 
-export const ESPEJO_VERSION = "espejo-v1";
+export const ESPEJO_VERSION = "espejo-v2";
 
 export const SCHEMA_ESPEJO = {
   type: "object",
   properties: {
+    titulo: { type: "string" },
     resumen: { type: "string" },
     colorimetria: { type: "string" },
     clima: { type: "string" },
     ajuste: { type: "string" },
   },
-  required: ["resumen", "colorimetria", "ajuste"],
+  required: ["titulo", "resumen", "colorimetria", "ajuste"],
   additionalProperties: false,
 } as Record<string, unknown>;
 
@@ -60,7 +71,9 @@ CÓMO HABLAS: cálida, directa, de tú. Cero jerga de moda ("los tonos tierra te
 
 REGLA DE ORO DEL TONO: empiezas por lo que SÍ está funcionando, y es de verdad — no un cumplido de relleno para amortiguar. Siempre hay algo bien en un outfit. Después, y solo si aporta, UNA cosa que ella pueda cambiar en treinta segundos sin volver a vestirse. Si el look está bien, dilo y ya: inventar un pero para parecer útil es la forma más rápida de que deje de preguntarte.
 
-QUÉ CONTESTAS, cuatro campos y ni uno más:
+QUÉ CONTESTAS, cinco campos y ni uno más:
+
+(0) titulo: cómo se llama este look, en DOS O TRES PALABRAS. Es el nombre con el que ella lo va a reconocer meses después en su diario, no una descripción: "Militar y khaki", "Negro sobre negro", "Lino de domingo". Sin punto final y sin repetir la lista de prendas.
 
 (1) resumen: qué trae puesto, en una frase corta y natural ("camisa blanca, jeans oscuros y tenis blancos"). Sirve para que se note que miraste la foto, no para lucirte.
 
@@ -128,7 +141,10 @@ export async function mirarEspejo(
     schema: SCHEMA_ESPEJO,
   });
   const r = JSON.parse(recibo.texto) as LecturaEspejo;
+  // Red por si se explaya: el título entra a la serif grande del diario, y un
+  // párrafo ahí es lo que hizo falta arreglar.
+  const titulo = (r.titulo ?? "").trim().slice(0, 40) || r.resumen.slice(0, 40);
   // `clima` es opcional en el schema: si el modelo lo omite (porque no le dimos
   // dato) llega undefined, y la UI necesita distinguirlo de un string vacío.
-  return { ...r, clima: r.clima?.trim() ? r.clima : null };
+  return { ...r, titulo, clima: r.clima?.trim() ? r.clima : null };
 }

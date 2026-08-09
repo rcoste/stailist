@@ -95,7 +95,9 @@ export async function POST(request: NextRequest) {
         item_ids: [],
         source: "espejo",
         occasion: "espejo",
-        title: lectura.resumen.slice(0, 120),
+        // El TÍTULO, no el resumen: el resumen es un párrafo y el diario lo
+        // pinta en la serif grande.
+        title: lectura.titulo,
         explanation: lectura.colorimetria,
         tip: lectura.ajuste,
         prompt_version: ESPEJO_VERSION,
