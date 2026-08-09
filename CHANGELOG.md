@@ -2,6 +2,50 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.195.0] - 2026-08-09
+
+### Fixed — el wow regeneraba encima de looks que ya existían
+
+Roberto, probando el flujo: generó sus outfits, se fue a hacerse el avatar y el try-on, y al volver le salió otra vez la misma pantalla generando de cero. La base le da la razón — 15:17 dos outfits, 15:22-15:28 el avatar, y a las 16:36 otros tres.
+
+**La guarda existía pero preguntaba lo que no debe.** Condicionaba a `onboarding_step >= 5`, que se escribe al FINAL de todo en `/api/generate` — después de generar, juzgar y registrar. Los outfits, en cambio, se guardan MIENTRAS se transmiten. Entre una cosa y otra hay una ventana en la que la persona ya tiene sus looks y la base sigue diciendo "paso 4". Su primera corrida murió justo ahí: guardó 2 outfits y no llegó a la cola. Él los vio —el cliente los muestra igual— pero la página los ignoró al volver. Ahora la condición es *¿ya tiene looks?*, que aguanta cualquier forma de morir a medias: el juez que truena, el timeout, la pestaña que se cierra.
+
+**Y se cierra el paso al reanudar**, que era la mitad que faltaba. Sin eso el arreglo empeoraba las cosas: el onboarding se da por completo en el paso 5, así que con el paso en 4 pulsas "entrar a la app", `/hoy` te rebota al wow, y otra vez — para siempre. Lo que rompía ese bucle era precisamente la regeneración que se acaba de quitar.
+
+**Cuántas veces ha pasado: una.** Medido comparando el primer outfit contra el cierre del paso 5 en todos los perfiles; el único hueco mayor a tres minutos es ése, de 78. No es una fuga sistemática. Y nadie está atrapado ahora mismo.
+
+**Por qué murió aquella corrida sigue sin saberse** — sólo iba a la consola. Se reconstruyó por lo que FALTABA, y eso dice que algo se rompió, nunca qué. Ahora el error queda escrito en la base (`generation_failed`, migración 0130).
+
+### Changed — el retrato del avatar se dibuja mientras contestas, no después
+
+Idea de Roberto. El orden era fotos → 20s de spinner → retrato → complexión y estatura → otros 20s → avatar. Ahora las preguntas se contestan encima de la primera espera.
+
+**No es sólo tapar el hueco.** El cuerpo va anclado al retrato aprobado, así que no puede empezar antes: esos segundos son serie inevitable y las preguntas son la única pieza movible del flujo. Contestadas antes, el cuerpo arranca en el instante del *"sí, soy yo"* en vez de dos pantallas después.
+
+**Cuánto es:** 20.5s medidos (16.6 de Gemini + 3.7 del juez). **n = 1** — de 53 generaciones sólo una trae reloj porque la instrumentación es nueva, así que es orden de magnitud, no número fino. A quién le sirve: de 26 perfiles, 20 no tienen estatura.
+
+**Lo que no arregla:** si pides ajustes al retrato, esas regeneraciones siguen siendo espera pelada. El ahorro se cobra una vez.
+
+**Que un fallo no se coma lo que llenaste:** la generación en fondo no toca la pantalla ni al empezar ni al fallar. Verificado en el navegador — la generación devolvió 502 a los 4s y la persona no se movió del formulario; el error salió al pulsar continuar.
+
+### Changed — el onboarding dice qué va a pasar, y suelta las preguntas que lo alargaban
+
+Roberto, entrando desde cero. Cinco cosas.
+
+**Nadie le decía qué hacer antes de los swipes.** La primera carta aparecía sin decir que se desliza ni para qué sirve. Va una línea en la pantalla misma, no una pantalla de preámbulo: un prólogo cobra tiempo y no da nada, y anunciar *"son 5 pasos"* hace que se sienta más largo. La barra ya dice cuánto falta; faltaba **qué ganas**.
+
+**La calibración sale del onboarding.** Eran tres pantallas más justo antes del paso que paga. No se pierden: son LAS MISMAS preguntas de `/closet/capsula/editar`, que ya es un paso del checklist de activación del home — o sea que ya vivían fuera, sólo que además se preguntaban dentro.
+
+**Y no vuelven a preguntar por color.** Medido sobre 4 perfiles reales: **9 de 12** preguntas generadas eran de color, dos citando la estación (*"dentro de tus neutros de otoño profundo"*) que el quiz determina DESPUÉS. La causa estaba en el prompt: prohibía "colorimetría base" —que el modelo leyó como "preferencias de color sí"— y encima ponía *"un color fuerte vs neutros"* como EJEMPLO de buena pregunta.
+
+**El paso de básicos dice qué son**, en vez de leerse como un catálogo que hay que llenar entero.
+
+### Added — /admin/basicos
+
+Curar qué prendas ve alguien nuevo en *"¿qué ya tienes?"*. Manda sobre `onboarding_subset`, la misma columna que filtra el onboarding: nada de lista paralela. Enseña los dos números que importan (unisex+hombre, unisex+mujer) y no el total, que sería el dato bonito y equivocado — prender diez prendas de mujer no le cambia nada a él.
+
+A la primera carga: **48 para un hombre, 53 para una mujer**. La spec dice ~15.
+
 ## [0.2.194.0] - 2026-08-09
 
 ### Fixed — el paso de los cortes: el CTA mentía, el título salía dos veces y nadie decía para qué
