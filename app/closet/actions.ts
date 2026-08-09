@@ -920,3 +920,41 @@ export async function ligarPrendasAlEspejo(
   revalidatePath("/historial");
   return { ok: true };
 }
+
+/**
+ * Le pone a una prenda el render que se acaba de generar para ella.
+ *
+ * Existe para que el espejo pueda dibujar AHÍ MISMO lo que suma, en vez de
+ * dejarlo para cuando alguien abra el clóset. Roberto: *"debería darme la
+ * opción de generar ahí las imágenes, no forzar a después, igual así evalúo si
+ * quedan fieles o no, como en el flujo del multi upload"*. Tiene razón en las
+ * dos mitades: la opción, y sobre todo el poder JUZGAR si el dibujo se parece —
+ * que es justo lo que el carrete hace y aquí faltaba.
+ *
+ * Y el dibujo sale de su foto (imagen→imagen, el mismo /api/render-prenda del
+ * carrete), no del nombre: con la prenda delante el modelo copia el corte y el
+ * color reales en vez de inventar un "suéter azul marino" genérico.
+ */
+export async function ponerRenderAPrenda(
+  itemId: string,
+  renderPath: string
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  // Dentro de su carpeta: defensa además de la RLS del Storage.
+  if (!renderPath.startsWith(`${user.id}/`)) return { ok: false };
+
+  const { error } = await supabase
+    .from("items")
+    .update({ render_path: renderPath, render_status: "done" })
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  if (error) return { ok: false };
+
+  revalidatePath("/closet");
+  return { ok: true };
+}
