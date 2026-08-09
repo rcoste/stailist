@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.183.0] - 2026-08-08
+
+### Added — la foto de la prenda que creo que ya tienes
+
+Roberto: *"sería bueno que también ponga el thumbnail de las prendas que asume que ya tengo"*.
+
+Es el mismo argumento que ya valía en el carrete y que aquí había perdido: *"creo que ya tienes unos mocasines café"* no le dice a nadie si son **esos** mocasines. Con la imagen delante, un empate equivocado se ve; sin ella, esa prenda no entra a su clóset nunca y él no se entera de por qué.
+
+Se firman **después** de emparejar y sólo las emparejadas —dos o tres— en vez de las 138 del clóset entero, que era el motivo por el que no venían.
+
+### Fixed — "les dibujo su foto en un momento" no decía cuándo ni dónde
+
+Roberto: *"aquí no entendí en qué momento va a renderizar las nuevas"*. Con razón.
+
+La prenda entra sin imagen a propósito —dibujar dos son ~35s y ahí está saliendo de su casa— y el **clóset** la dibuja solo, pero únicamente cuando se abre esa pantalla. Prometer un dibujo que ocurre en otro sitio, sin decir cuál, es una promesa que no se puede ver cumplir.
+
+Ahora dice *"les dibujo su foto cuando lo abras"* y ofrece **ir**. Verificado contra sus dos prendas recién sumadas: las dos están en el estado exacto que dispara el dibujado (sin imagen de ningún tipo, `render_status` en `none`, `source` photo), así que la promesa era cierta — sólo faltaba decirla.
+
 ## [0.2.182.0] - 2026-08-08
 
 ### Fixed — "No sumé nada": el alta reventaba entera

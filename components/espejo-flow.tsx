@@ -49,7 +49,7 @@ type State =
 //   ambiente y prendas fuera de cuadro, y con la misma camisa tres veces por
 //   semana el auto-alta llenaría el clóset de duplicados en un mes.
 /** Una prenda de la foto que no se propone porque ya parece estar en el clóset. */
-type YaEsta = { id: string; nombre: string; comoEsta: string };
+type YaEsta = { id: string; nombre: string; comoEsta: string; imagen: string | null };
 
 type Sumar =
   | { paso: "buscando" }
@@ -506,11 +506,34 @@ export function EspejoFlow({
                 ) : null}
 
                 {sumar.paso === "hecho" ? (
-                  <p className="text-[13px] text-ink">
-                    {sumar.cuantas > 0
-                      ? `Listo, ${sumar.cuantas} ${sumar.cuantas === 1 ? "prenda nueva" : "prendas nuevas"} en tu clóset. Les dibujo su foto en un momento.`
-                      : "No sumé nada."}
-                  </p>
+                  sumar.cuantas > 0 ? (
+                    // CUÁNDO Y DÓNDE, no "en un momento". Roberto: "no entendí
+                    // en qué momento va a renderizar las nuevas". Con razón: la
+                    // prenda entra sin imagen y el clóset la dibuja SOLO cuando
+                    // se abre esa pantalla. Prometer un dibujo que ocurre en
+                    // otro sitio, sin decir cuál, es una promesa que no se puede
+                    // ver cumplir — así que ahora se dice, y se ofrece ir.
+                    <div className="flex flex-col gap-2">
+                      <p className="text-[13px] text-ink">
+                        Listo, {sumar.cuantas}{" "}
+                        {sumar.cuantas === 1 ? "prenda nueva" : "prendas nuevas"} en tu
+                        clóset. Les dibujo su foto cuando lo abras.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          cerrar();
+                          router.push("/closet");
+                        }}
+                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
+                      >
+                        verlas en mi clóset
+                        <Icon name="flecha" size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-ink">No sumé nada.</p>
+                  )
                 ) : null}
               </div>
 
@@ -587,14 +610,32 @@ export function EspejoFlow({
 function YaEstanLista({ items }: { items: YaEsta[] }) {
   if (items.length === 0) return null;
   return (
-    <div className="flex flex-col gap-1 rounded-sm bg-bg px-3 py-2">
+    <div className="flex flex-col gap-2 rounded-sm bg-bg px-3 py-2.5">
       <p className="text-[12px] font-medium text-muted">
         Esto también lo vi, y creo que ya lo tienes:
       </p>
+      {/* CON LA FOTO DE LA PRENDA QUE CREO QUE ES — pedido por Roberto, y es el
+          mismo argumento que ya vale en el carrete: "creo que ya tienes unos
+          mocasines café" no dice si son ESOS mocasines. Con la imagen delante,
+          un empate equivocado se ve; sin ella, esa prenda no entra a su clóset
+          nunca y él no se entera de por qué. */}
       {items.map((x, i) => (
-        <p key={`${x.nombre}-${i}`} className="text-[12px] leading-snug text-muted">
-          {x.nombre} <span className="text-ink">→ {x.comoEsta}</span>
-        </p>
+        <div key={`${x.nombre}-${i}`} className="flex items-center gap-2.5">
+          {x.imagen ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={x.imagen}
+              alt=""
+              className="h-11 w-9 shrink-0 rounded-sm border border-line bg-surface object-cover"
+            />
+          ) : (
+            <span className="h-11 w-9 shrink-0 rounded-sm border border-line bg-surface" aria-hidden />
+          )}
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-[12.5px] text-ink">{x.comoEsta}</span>
+            <span className="truncate text-[11px] text-muted">lo vi como “{x.nombre}”</span>
+          </span>
+        </div>
       ))}
     </div>
   );

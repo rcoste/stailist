@@ -4,7 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { VISION_MODEL } from "@/lib/models";
 import { leerPrendas } from "@/lib/vision-prendas";
 import { yaLaTienes, type PrendaExistente } from "@/lib/ya-la-tienes";
-import { ITEM_IMAGE_SELECT, categoriaDeItem, type ItemImageRow } from "@/lib/item-image";
+import {
+  ITEM_IMAGE_SELECT,
+  categoriaDeItem,
+  itemImageUrlSync,
+  itemPrivatePaths,
+  type ItemImageRow,
+} from "@/lib/item-image";
 
 // ¿QUÉ DE LO QUE TRAES PUESTO NO ESTÁ EN TU CLÓSET?
 //
@@ -54,7 +60,7 @@ export async function POST(request: NextRequest) {
   // y encima escondía la causa (un 503 de Gemini, un timeout, lo que fuera).
   // Confundir "esta foto no se deja leer" con "el servicio falló" quita lo
   // único accionable: volver a intentar.
-  const [lectura, closet] = await Promise.all([
+  const [lectura, { closet, filas }] = await Promise.all([
     leerPrendas({ mediaType, base64: b64 }, VISION_MODEL).catch((e) => {
       console.error("[espejo/prendas] no se pudo leer:", e?.message ?? e);
       return null;
@@ -79,7 +85,7 @@ export async function POST(request: NextRequest) {
   // Con el ID, no sólo el nombre: es lo que deja que la entrada del diario
   // enseñe las prendas como un look generado. El empate YA se estaba
   // calculando y sólo se tiraba el id.
-  const yaEstan: { id: string; nombre: string; comoEsta: string }[] = [];
+  const yaEstan: { id: string; nombre: string; comoEsta: string; imagen: string | null }[] = [];
   for (const p of lectura.prendas) {
     const match = yaLaTienes(
       {
@@ -91,8 +97,43 @@ export async function POST(request: NextRequest) {
       },
       closet
     );
-    if (match) yaEstan.push({ id: match.id, nombre: p.nombre, comoEsta: match.nombre });
+    if (match) yaEstan.push({ id: match.id, nombre: p.nombre, comoEsta: match.nombre, imagen: null });
     else nuevas.push(p);
+  }
+
+  // LA FOTO DE LA PRENDA QUE CREO QUE ES — y sólo de ésas.
+  //
+  // Roberto: "sería bueno que también ponga el thumbnail de las prendas que
+  // asume que ya tengo". Tiene razón, y es el mismo argumento que ya vale en el
+  // carrete: "creo que ya tienes unos Mocasines café" no le dice a nadie si son
+  // ESOS mocasines; las dos imágenes lado a lado, sí. Sin la foto, un empate
+  // equivocado no se puede ver, y esa prenda no entra a su clóset nunca.
+  //
+  // Se firman DESPUÉS de emparejar y sólo las emparejadas —dos o tres— en vez
+  // de las 138 del clóset entero, que era el motivo de no traerlas antes.
+  // ItemImageRow no declara `id` (el select lo pide aparte), así que se lee con
+  // el tipo ensanchado en vez de castear la fila entera.
+  const porId = new Map(
+    filas.map((f) => [(f as ItemImageRow & { id: string }).id, f])
+  );
+  const aFirmar = [
+    ...new Set(
+      yaEstan.flatMap((y) => {
+        const fila = porId.get(y.id);
+        return fila ? itemPrivatePaths(fila) : [];
+      })
+    ),
+  ];
+  const firmadas = new Map<string, string>();
+  if (aFirmar.length > 0) {
+    const { data } = await supabase.storage.from("prendas").createSignedUrls(aFirmar, 3600);
+    data?.forEach((x) => {
+      if (x.path && x.signedUrl) firmadas.set(x.path, x.signedUrl);
+    });
+  }
+  for (const y of yaEstan) {
+    const fila = porId.get(y.id);
+    y.imagen = fila ? itemImageUrlSync(fila, (ruta) => firmadas.get(ruta)) : null;
   }
 
   return NextResponse.json({
@@ -112,7 +153,7 @@ export async function POST(request: NextRequest) {
 async function closetParaComparar(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
-): Promise<PrendaExistente[]> {
+): Promise<{ closet: PrendaExistente[]; filas: ItemImageRow[] }> {
   const { data: rows } = await supabase
     .from("items")
     // `id, ` DELANTE: ITEM_IMAGE_SELECT no lo trae, y sin él supabase devuelve
@@ -122,9 +163,9 @@ async function closetParaComparar(
     .select(`id, ${ITEM_IMAGE_SELECT}`)
     .eq("user_id", userId)
     .is("deleted_at", null);
-  if (!rows) return [];
+  if (!rows) return { closet: [], filas: [] };
 
-  return rows.map((r, i) => {
+  const closet = rows.map((r, i) => {
     const fila = r as ItemImageRow & { id?: string };
     const attrs = (fila.attrs ?? {}) as Record<string, string | undefined>;
     const arch = fila.archetypes as { name?: string | null } | null;
@@ -140,7 +181,9 @@ async function closetParaComparar(
       corteDeFiar:
         fila.certeza === "exacta" ||
         (Array.isArray(confirmados) && (confirmados as string[]).includes("corte")),
+      // La imagen se resuelve DESPUÉS y sólo para las emparejadas.
       imagen: null,
     };
   });
+  return { closet, filas: rows as unknown as ItemImageRow[] };
 }
