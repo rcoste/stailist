@@ -31,7 +31,22 @@ export function SwipeDeck({
   looks,
   save = saveTastes,
   doneHref = "/onboarding/colorimetria",
-  doneLabel = "Sigamos con tus colores",
+  // "Sigamos con tus colores" MENTÍA, y dos veces: tras este botón vienen los
+  // pares de corte y después las preguntas de calibración — los colores son
+  // tres pasos más allá. La etiqueta se escribió cuando el siguiente paso sí
+  // eran los colores y al meter los pares nadie la cambió.
+  // Roberto lo cazó probando desde cero: "el CTA decía de sigamos con tus
+  // colores, y más bien seguimos con esto".
+  doneLabel = "Ahora, cómo te queda",
+  /**
+   * La cabecera del paso ("paso 1 de 5 · ¿te gusta o no?").
+   *
+   * Vive aquí y no en la página porque tiene que DESAPARECER cuando el deck
+   * cede el turno a otra pregunta. Estando en la página se apilaba sobre la
+   * cabecera de los pares de corte y salían dos títulos uno encima del otro —
+   * Roberto: "aparece dos veces el título, se ve raro".
+   */
+  cabecera,
   calibracion = false,
   soloPares = false,
   gender = "hombre",
@@ -46,6 +61,7 @@ export function SwipeDeck({
   /** Onboarding: tras el reveal, los pares de corte y luego 2-3 preguntas de
    *  calibración generadas a la medida de los swipes (si la IA ya las tiene
    *  listas; si no, sigue directo). */
+  cabecera?: React.ReactNode;
   calibracion?: boolean;
   /**
    * Los pares de corte SIN las preguntas de calibración.
@@ -215,6 +231,7 @@ export function SwipeDeck({
     // Los pares de corte, entre el reveal y la calibración.
     if (pares) {
       return (
+        // SIN la cabecera del deck: aquí manda la pregunta de los pares.
         <div
           className="flex flex-1 flex-col pb-4"
           style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
@@ -425,6 +442,9 @@ export function SwipeDeck({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
+      {/* La cabecera del paso sólo mientras el deck manda. Cuando cede el turno
+          a los pares de corte, la suya toma el relevo — antes se apilaban. */}
+      {cabecera}
       <div className="relative mx-auto aspect-[3/4] max-h-[60dvh] w-full max-w-80">
         {/* Cartas de atrás (profundidad) — en B&N */}
         {behind.map((b, i) => {

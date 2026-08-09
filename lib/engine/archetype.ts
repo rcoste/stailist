@@ -52,6 +52,8 @@ export async function generateArchetype(
 - nombre: 2-3 palabras con personalidad.
 - descripcion: UNA línea cálida que lo/la haga sentirse visto/a. Tuteo, cero jerga técnica de moda. Ej: "te van las cosas simples pero con un twist que se nota".
 
+ESPAÑOL DE MÉXICO, y esto NO es un detalle: escribe "tienes", "quieres", "puedes" — jamás "tenés", "querés", "podés"; "tú", jamás "vos". Decir sólo "tuteo" no basta: el modelo lo lee como "informal" y se va al voseo rioplatense. Salió en producción — "tenés ese don de moverte entre lo clásico y lo atrevido" — y una app que le habla de vos a alguien en México deja de sonar a su amiga y suena a traducción.
+
 CONCORDANCIA DE GÉNERO (crítico, respétalo en nombre Y descripción): ${genderGuidance(gender)}${ageNote ? `\n\n${ageNote} Que el nombre y la descripción le hablen a alguien de su etapa de vida.` : ""}`,
     messages: [
       {
