@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.186.0] - 2026-08-08
+
+### Fixed — la misma prenda salía fiel o genérica según cuándo la dibujaras
+
+Roberto, sobre acelerar el render: *"vamos con la segura mejor, manteniendo la calidad y consistencia del multi upload"*.
+
+**El modelo no se toca** — sigue el mismo del carrete. Pero buscando esa consistencia apareció una grieta de verdad:
+
+| quién dibuja | cómo | modelo |
+|---|---|---|
+| el carrete, y el espejo si le das *"dibujarlas ahora"* | imagen→imagen, desde tu foto | pro |
+| el clóset, cuando le toca dibujarlas después | **texto→imagen, desde el nombre** | flash |
+
+O sea: la misma prenda salía **fiel si la dibujabas en el momento y genérica si lo dejabas para luego**. Y el camino lento era el que se elige teniendo prisa, que es cuando menos se va a volver a mirar.
+
+La causa: esas prendas entran **sin foto** a propósito, así que al clóset no le quedaba de dónde copiar.
+
+**Ahora la foto de origen viaja con la prenda**, guardada aparte de `photo_path`. Aparte y no en la columna natural, por dos motivos concretos: esa columna decide la MINIATURA (sin render, el clóset enseñaría tu cuerpo entero como si fuera la prenda), y además cuenta como *"ya tiene imagen"* en la guarda del auto-sanado, que entonces no la dibujaría nunca.
+
+Verificado con una prenda real: el dibujo diferido tardó **18.5s** — el tiempo de imagen→imagen, no los ~7s del texto. Mismo camino, mismo modelo, dibujes cuando dibujes.
+
 ## [0.2.185.0] - 2026-08-08
 
 ### Fixed — el dibujo del espejo disparaba sin tope

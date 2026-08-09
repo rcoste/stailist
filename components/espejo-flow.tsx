@@ -32,7 +32,14 @@ export type EspejoHandle = { start: () => void };
 type State =
   | { kind: "idle" }
   | { kind: "mirando"; preview: string }
-  | { kind: "listo"; preview: string; lectura: LecturaEspejo; outfitId: string | null }
+  | {
+      kind: "listo";
+      preview: string;
+      lectura: LecturaEspejo;
+      outfitId: string | null;
+      /** Dónde quedó la foto en Storage — la heredan las prendas que sume. */
+      rutaFoto: string | null;
+    }
   | { kind: "error"; msg: string };
 
 // SUMAR AL CLÓSET LO QUE TRAES PUESTO — el segundo tiempo, opcional.
@@ -226,7 +233,7 @@ export function EspejoFlow({
       const lectura = (await res.json()) as LecturaEspejo & { outfitId?: string | null };
       const outfitId = lectura.outfitId ?? null;
       setSumar({ paso: "buscando" });
-      setState({ kind: "listo", preview, lectura, outfitId });
+      setState({ kind: "listo", preview, lectura, outfitId, rutaFoto: ruta });
 
       // El reconocimiento, que ya venía corriendo.
       const rec = (await reconocer) as
@@ -311,7 +318,7 @@ export function EspejoFlow({
   }
 
   /** Guarda las marcadas. La imagen limpia la dibuja el clóset después. */
-  async function guardarPrendas(outfitId: string | null) {
+  async function guardarPrendas(outfitId: string | null, rutaFoto: string | null) {
     if (sumar.paso !== "elegir") return;
     const elegidas = sumar.prendas.filter((p) => p.on);
     if (elegidas.length === 0) return setSumar({ paso: "hecho", cuantas: 0, nuevas: [] });
@@ -337,6 +344,10 @@ export function EspejoFlow({
           renderPath: null,
           renderStatus: "none" as const,
           photoPath: null,
+          // De qué foto salió. NO va en photoPath —eso decidiría la miniatura y
+          // enseñaría su cuerpo entero— pero sí deja que el clóset la dibuje
+          // después con la misma técnica que el carrete: desde la foto.
+          origenFoto: rutaFoto,
         }))
       );
       // Las recién creadas se cuelgan del mismo look: la entrada del diario
@@ -576,7 +587,10 @@ export function EspejoFlow({
                     <button
                       type="button"
                       onClick={() =>
-                        guardarPrendas(state.kind === "listo" ? state.outfitId : null)
+                        guardarPrendas(
+                          state.kind === "listo" ? state.outfitId : null,
+                          state.kind === "listo" ? state.rutaFoto : null
+                        )
                       }
                       className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
                     >
