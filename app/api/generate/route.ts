@@ -74,6 +74,10 @@ export async function POST(request: NextRequest) {
       const send = (obj: unknown) =>
         controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
 
+      // FUERA del try: el catch lo necesita para decir en qué punto del
+      // onboarding se rompió, y `profile` se destructura dentro.
+      let pasoOnboarding: number | null = null;
+
       try {
         const startedAt = Date.now();
         send({ phase: "leyendo tu clóset…" });
@@ -86,6 +90,7 @@ export async function POST(request: NextRequest) {
         }
         const { base } = carga;
         const { profile, items } = base;
+        pasoOnboarding = Number(profile.onboarding_step) || null;
 
         send({ phase: "combinando colores…" });
         const weather: Weather | null = await resolveWeather(body);
@@ -265,6 +270,24 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error("[generate] fallo:", err);
         const message = err instanceof Error ? err.message : "desconocido";
+        // QUE QUEDE ESCRITO, no sólo en la consola.
+        //
+        // El 2026-08-09 una corrida guardó 2 outfits y murió antes de la cola.
+        // Se pudo deducir por lo que FALTABA (ni critic_review ni
+        // generation_timing ni el paso 5), pero el motivo se lo llevó una
+        // consola que ya no existe. Un fallo que sólo se puede diagnosticar por
+        // ausencia es un fallo que no se puede arreglar.
+        //
+        // Best-effort y al final: si esto también truena, no puede tapar el
+        // error de verdad que le vamos a mandar a la persona.
+        await supabase
+          .from("events")
+          .insert({
+            user_id: user.id,
+            type: "generation_failed",
+            data: { message: message.slice(0, 300), paso: pasoOnboarding },
+          })
+          .then(undefined, () => {});
         send({
           error:
             message === "ENGINE_NOT_CONNECTED" ? "sin_api_key" : "generacion",
