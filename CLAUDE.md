@@ -20,18 +20,18 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 - PWA instalable (prompt tras el primer 👍), botón "me lo puse", historial persistente.
 - Beta cerrada: allowlist de correos + magic link. Solo español.
 
-**Fuera del MVP (no recuperar por accidente):** análisis de colorimetría por selfie, compras sugeridas, scraping de catálogos, multi-prenda en una foto (diferida — ver TODOS.md), pagos. (Ya entraron por decisión posterior de Roberto: avatar/try-on, modo maleta/viaje, y compartir el render del look — 2026-07-26.)
+**Fuera del MVP (no recuperar por accidente):** análisis de colorimetría por selfie, compras sugeridas, scraping de catálogos, pagos. (Ya entraron por decisión posterior de Roberto: avatar/try-on, modo maleta/viaje, compartir el render del look — 2026-07-26 — y **multi-prenda en una foto**, que este archivo listó como "diferida" mucho después de volverse la vía principal de alta: 303 de las 953 prendas de la base entraron por ahí.)
 
 ## Stack y arquitectura (cerrada en eng review)
-- Next.js en Vercel (Hobby: límite 60s por función — generación con streaming, retry siempre client-side).
+- Next.js en Vercel. El presupuesto de tiempo se fija POR RUTA con `maxDuration` (hoy 60s en casi todas las rutas de IA); generación con streaming, retry siempre client-side. OJO: la premisa original "Hobby corta a los 60s" es de 2026-06 y Vercel documenta ahora 300s por default en todos los planes — antes de pelear contra el techo (segunda generación del avatar que "no cabe", try-on largo), verificar subiendo el maxDuration de UNA ruta y midiendo.
 - Supabase: Postgres (RLS en todo), Storage privado con URLs firmadas, Auth magic link + allowlist server-side.
-- IA: los modelos viven SOLO en `lib/models.ts`, repartidos por tarea — **nunca hardcodear un modelo en un archivo suelto** (un test lo impide). `ENGINE_MODEL` opus-5: armar outfits, cápsula ideal, maleta. `VISION_MODEL` gemini-3.1-flash-lite: leer prendas en foto y etiquetar referencias (un color mal leído se propaga a todos los looks; ganó a ciegas — `docs/decisiones/vision-2026-08-05.md`). `JUDGE_MODEL` / `CLASSIFY_MODEL` sonnet-5: jueces por outfit, match de cápsula, sustitutos, arquetipo, preguntas. `EXTRACT_MODEL` / `GUARD_MODEL` haiku-4.5: OCR de itinerarios y guardas que fallan hacia adelante. En el motor el thinking va APAGADO (en los modelos 5 viene ON y cuesta ~50% de latencia sin mejorar el look; el campo `analisis` del schema ya obliga a razonar). Prompt versionado en cada outfit.
+- IA: los modelos viven SOLO en `lib/models.ts`, repartidos por tarea — **nunca hardcodear un modelo en un archivo suelto** (un test lo impide). El reparto de qué modelo hace qué NO se copia aquí: cada export de `lib/models.ts` lleva su porqué y su medición, y este archivo ya quedó mintiendo una vez ("ENGINE_MODEL arma outfits" siguió escrito aquí después de que el motor pasara a Gemini el 2026-08-07, medido a ciegas). Invariantes que sí son estables: en el motor el thinking va APAGADO (en los modelos con thinking-por-default cuesta ~50% de latencia sin mejorar el look; el campo `analisis` del schema ya obliga a razonar); prompt versionado en cada outfit; visión ganada a ciegas (`docs/decisiones/vision-2026-08-05.md`).
 - Cambios de modelo se deciden con evidencia, no de oído: `/admin/comparador` (visión y motor, votos a ciegas). Las llamadas de IA salen por la puerta común `lib/proveedores` (recibo de tokens/costo/tiempo por llamada); el contexto del motor vive en `lib/engine/contexto.ts` y el pipeline generar→juez en `lib/engine/pipeline.ts`, compartidos por `/api/generate`, el look de hoy y el comparador — **nunca re-duplicar ese código en una ruta**.
 - Clima: Open-Meteo (sin API key). Geolocalización del navegador con fallback sin-clima.
 - Spec completa: `docs/designs/mvp-onboarding-90s.md` (scope, UX, errores, tests, arquitectura). Backlog: `TODOS.md`. Historial de versiones: `CHANGELOG.md` (versión vigente en `VERSION`).
 
 ## Voz del producto
-**"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual: ✅ definida — DESIGN.md + tokens en app/globals.css (burdeos #722F37 + neutros cálidos; ámbar/terracota VETADO).
+**"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual: ✅ definida — la fuente de verdad es DESIGN.md + tokens en app/globals.css (NO copiar valores aquí: ya se desincronizó una vez — el rebrand v3 de 2026-06-26 cambió paleta y fuentes y este archivo siguió describiendo la v1 durante seis semanas). Veto vigente de Roberto: ámbar/terracota/naranja.
 
 ## Criterios de éxito del experimento
 - TTV: primer outfit en <2 min (medido automático).
@@ -165,14 +165,14 @@ shadow, animación, motion):
 
 1. Lee `DESIGN.md` y `globals.css` PRIMERO.
 2. Usa solo los tokens que ya están definidos ahí.
-3. ✅ `DESIGN.md` YA EXISTE (creado 2026-06-10 vía /design-consultation).
-   **Tokens actuales** (definidos en `app/globals.css`, usables como
-   utilidades Tailwind): `bg-bg` papel hueso · `bg-surface` cards ·
-   `text-ink` texto · `text-muted` secundario · `border-line` hairlines ·
-   `bg-accent` burdeos #722F37 (CTAs, énfasis) · `bg-accent-soft` ·
-   `text-on-accent` · `text-success` / `text-error` / `text-warning`.
-   Fuentes: Outfit (sans, todo) + Fraunces itálica (clase `.editorial`,
-   solo micro-acentos). **Vetado por Roberto: ámbar/terracota/naranja.**
+3. ✅ `DESIGN.md` YA EXISTE (creado 2026-06-10; rebrand v3 "Gen-Z
+   monocromo" 2026-06-26 — la tabla de historial al final de DESIGN.md es
+   el registro de qué está vigente). Los VALORES (hex, fuentes, nombres de
+   token) NO se listan aquí a propósito: este archivo los copió una vez y
+   quedó seis semanas describiendo la paleta muerta (burdeos/Outfit),
+   con lo que cualquier lector "corregía" contra un contrato viejo. Lee
+   los tokens de `app/globals.css` y su intención de `DESIGN.md`, siempre.
+   **Vetado por Roberto (esto sí es estable): ámbar/terracota/naranja.**
 
 **Prohibiciones absolutas** (esto es lo que blinda contra el Frankenstein):
 
