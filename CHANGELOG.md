@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.192.0] - 2026-08-08
+
+### Fixed — QA del espejo: dos bugs que se veían como "no cargó"
+
+Manejando el flujo completo en el navegador con una foto real inyectada en el selector de archivos. Los dos salieron en la **primera** corrida.
+
+**El 503 intermitente de la visión no se reintentaba.** Gemini devolvió `503 Unable to process input image` sobre una foto perfectamente sana, la lectura de prendas murió y apareció *"se me atravesó algo"*. El reintento manual funcionó **a la primera** — o sea que la persona vio un error que no existía.
+
+El generador de imágenes ya reintentaba 429/5xx desde hace tiempo; los **tres** caminos que LEEN fotos, no. Y en el carrete el mensaje era peor: *"no detecté prendas en esas fotos, prueba con fotos donde la ropa se vea bien"* le echa la culpa a la foto de la persona por un tropiezo del servidor.
+
+El reintento va en la puerta común para que lo hereden los tres. Una sola vez y con pausa corta —dos fallos seguidos ya no son un tropiezo— y nunca sobre un 400, donde lo que está mal es la petición.
+
+**La foto se aplastaba a 2 píxeles.** A ojo parecía que no había cargado; midiendo el recuadro apareció la causa: la hoja es un flex en columna, y en cuanto abajo salen las prendas que sumar el contenido pasa de 747 a 985 px. Flex aprieta lo único que puede —la foto— y la dejaba en una raya.
+
+Lo peor es cuándo: **desaparecía justo en el caso normal**, cuando SÍ hay prendas nuevas que enseñar. Verificado tras el arreglo con el mismo flujo: 359 px de alto con 1367 px de contenido.
+
 ## [0.2.191.0] - 2026-08-08
 
 ### Added — "no es mía" al final del espejo
