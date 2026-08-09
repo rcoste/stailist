@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.203.0] - 2026-08-09
+
+### Changed — el "leyendo tus fotos" enseña su trabajo
+
+Tanda 2 del handoff de la carga. Antes era un spinner con "2/3 fotos"; ahora cada foto lleva su **palomita** al terminar y un spinner encima mientras se lee, la **barra** avanza, y los nombres leídos van cayendo en vivo bajo *"encontré hasta ahora"* — la espera se vuelve el avance de la pantalla siguiente. Verificado en el navegador a media carga: "1 de 3 fotos · Saco azul marino · Pantalón azul marino" con la primera foto palomeada y las otras dos girando.
+
+**La "línea de escaneo" del handoff no está, a propósito**: sería una animación nueva y el DS obliga a preguntar antes de inventar una. El spinner sobre la foto pendiente —patrón que ya existe en todo el proyecto— comunica lo mismo.
+
+El paso de "generando" no se tocó: ya cumplía (grid que se llena prenda por prenda, contador).
+
 ## [0.2.202.0] - 2026-08-09
 
 ### Changed — confirmar prendas: chips tocables y el traje que se ve atado

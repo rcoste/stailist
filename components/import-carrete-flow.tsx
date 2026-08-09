@@ -98,7 +98,9 @@ type State =
   | { kind: "explainer" } // así funciona (timeline de 3 pasos) ANTES de elegir fotos
   | { kind: "preparando" } // convirtiendo/comprimiendo las fotos elegidas
   | { kind: "revisar"; fotos: Foto[] } // recorte opcional por foto antes de leer
-  | { kind: "analizando"; done: number; total: number }
+  // Las fotos viajan en el estado para pintarlas con su palomita; `encontradas`
+  // son los nombres leídos hasta ahora, creciendo en vivo (handoff de carga).
+  | { kind: "analizando"; fotos: Foto[]; listas: string[]; encontradas: string[] }
   | { kind: "texto"; items: DraftItem[] }
   | { kind: "render"; items: RenderItem[]; done: number; total: number }
   | { kind: "visual"; items: RenderItem[] }
@@ -239,27 +241,43 @@ export function ImportCarreteFlow({
     if (state.kind !== "revisar") return;
     const fotos = state.fotos;
     if (fotos.length === 0) return;
-    setState({ kind: "analizando", done: 0, total: fotos.length });
-    let done = 0;
+    setState({ kind: "analizando", fotos, listas: [], encontradas: [] });
     try {
       const perPhoto = await Promise.all(
         fotos.map(async (f) => {
+          // La marca va DESPUÉS de parsear, no al llegar la respuesta: así la
+          // palomita de la foto y sus nombres en "encontré hasta ahora"
+          // aparecen juntos. Funcional porque las fotos corren en paralelo y
+          // dos respuestas pueden aterrizar en el mismo tick.
+          const marca = (nombres: string[]) =>
+            setState((prev) =>
+              prev.kind === "analizando"
+                ? {
+                    ...prev,
+                    listas: [...prev.listas, f.id],
+                    encontradas: [...prev.encontradas, ...nombres],
+                  }
+                : prev
+            );
           const res = await fetch("/api/analizar-prendas", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ image: f.dataUrl }),
           });
-          done += 1;
-          setState({ kind: "analizando", done, total: fotos.length });
           if (res.status === 403) {
             // Permiso parental pendiente: no es un problema de la foto — corta
             // el flujo con el mensaje real en vez de "no detecté prendas".
             const err = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
             if (err.error === "permiso_pendiente" && err.message) throw new PermisoError(err.message);
+            marca([]);
             return [] as DraftItem[];
           }
-          if (!res.ok) return [] as DraftItem[];
+          if (!res.ok) {
+            marca([]);
+            return [] as DraftItem[];
+          }
           const { prendas } = (await res.json()) as { prendas: PrendaDetectada[] };
+          marca(prendas.map((pr) => pr.nombre));
           return prendas.map((p) => ({
             id: uid(),
             attrs: p,
@@ -692,9 +710,67 @@ export function ImportCarreteFlow({
   }
 
   if (state.kind === "analizando") {
+    // EL LOADING QUE ENSEÑA SU TRABAJO (handoff de carga). Antes era un spinner
+    // con "2/3 fotos"; ahora cada foto lleva su palomita al terminar, la barra
+    // avanza, y los nombres leídos van cayendo en "encontré hasta ahora" — la
+    // espera se vuelve el avance de la pantalla siguiente.
+    //
+    // La "línea de escaneo" del handoff NO está, a propósito: sería una
+    // animación nueva y el DS obliga a preguntar antes de inventar una. El
+    // spinner sobre la foto pendiente (patrón que ya existe en todo el
+    // proyecto) comunica lo mismo: ésta es la que va.
+    const hechas = state.listas.length;
     return (
       <Overlay>
-        <CarreteLoading frase="leyendo tus prendas…" count={`${state.done}/${state.total} fotos`} />
+        <div className="my-auto flex flex-col gap-5">
+          <div className="flex flex-col items-center gap-0.5 text-center">
+            <p className="shimmer-txt text-lg font-medium">leyendo tus prendas…</p>
+            <p className="tabular text-sm text-muted">
+              {hechas} de {state.fotos.length} {state.fotos.length === 1 ? "foto" : "fotos"}
+            </p>
+          </div>
+          <div className="h-[3px] w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full rounded-full bg-ink transition-[width] duration-500"
+              style={{ width: `${Math.max(4, (hechas / state.fotos.length) * 100)}%` }}
+            />
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {state.fotos.map((f) => {
+              const lista = state.listas.includes(f.id);
+              return (
+                <div
+                  key={f.id}
+                  className="relative h-20 w-14 overflow-hidden rounded-md border border-line bg-surface"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={f.dataUrl}
+                    alt=""
+                    className={`h-full w-full object-cover transition-opacity ${lista ? "" : "opacity-50"}`}
+                  />
+                  {lista ? (
+                    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-on-accent">
+                      <Icon name="check" size={9} />
+                    </span>
+                  ) : (
+                    <span className="absolute inset-0 m-auto h-5 w-5 animate-spin rounded-full border-2 border-line border-t-accent" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {state.encontradas.length > 0 ? (
+            <div className="flex flex-col items-center gap-1 px-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-faint">
+                encontré hasta ahora
+              </p>
+              <p className="text-center text-sm leading-snug text-ink">
+                {state.encontradas.join(" · ")}
+              </p>
+            </div>
+          ) : null}
+        </div>
       </Overlay>
     );
   }
