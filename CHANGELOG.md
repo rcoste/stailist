@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.185.0] - 2026-08-08
+
+### Fixed — el dibujo del espejo disparaba sin tope
+
+Roberto preguntó cómo ganar tiempo en el render *"no sé, sin paralelo, sin sacrificar calidad"*. **Ya iba en paralelo** —dos prendas son ~18s, no 36— pero con un `Promise.all` suelto, sin límite.
+
+Es la lección que el carrete ya pagó y que aquí no heredé: disparar N renders a la vez pega el rate-limit de Gemini, y cada 429 deja una prenda sin foto. Con dos prendas da igual; con ocho no. Ahora usa el mismo pool de 4, para que las dos puertas se comporten igual bajo carga.
+
+### Nota — la decisión de velocidad que sigue siendo suya
+
+El archivo del render lleva anotado desde el 2026-08-06 que hay un modelo de imagen 2.5× más rápido, y que *"el cambio NO se hace de oído: lo decide Roberto viendo los renders"*. Su pregunta es exactamente ese momento, así que se midió otra vez con una prenda que **sí tiene detalle que preservar** (su chamarra militar, misma foto y mismo prompt):
+
+| | |
+|---|---|
+| `gemini-3-pro-image` (el de hoy) | 16.6 s |
+| `gemini-3.1-flash-image` (el rápido) | **6.5 s** |
+
+Los dos salieron buenos. El pro se ve más de catálogo; el flash muestra algo más de construcción (botonadura, puños) y más caída natural en las mangas. **No puedo decir que el pro sea mejor** — pero es una sola prenda, y hoy ya me equivoqué una vez concluyendo de una muestra chica. El modelo NO se cambia hasta que Roberto elija.
+
 ## [0.2.184.0] - 2026-08-08
 
 ### Added — dibujarlas ahí mismo, y desde tu foto

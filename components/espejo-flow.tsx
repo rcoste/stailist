@@ -377,34 +377,44 @@ export function EspejoFlow({
       paso: "dibujando",
       items: nuevas.map((n) => ({ ...n, url: null, listo: false })),
     });
-    await Promise.all(
-      nuevas.map(async (n) => {
-        let url: string | null = null;
-        for (let intento = 0; intento < 2 && !url; intento++) {
-          try {
-            const res = await fetch("/api/render-prenda", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ image: preview, attrs: n.attrs }),
-            });
-            if (res.ok) {
-              const d = (await res.json()) as { path: string; url: string | null };
-              await ponerRenderAPrenda(n.id, d.path);
-              url = d.url;
-            }
-          } catch {
-            // reintenta una vez; si no, se queda para el clóset
+    // POOL ACOTADO, no un Promise.all suelto. Es la lección que el carrete ya
+    // pagó: disparar N renders a la vez pega el rate-limit de Gemini y cada 429
+    // deja una prenda sin foto. Con 2 prendas da igual; con 8 no. El tope es el
+    // mismo (4) para que las dos puertas se comporten igual bajo carga.
+    const CONCURRENCIA = 4;
+    const cola = [...nuevas];
+    const dibujarUna = async (n: { id: string; attrs: PrendaDetectada }) => {
+      let url: string | null = null;
+      for (let intento = 0; intento < 2 && !url; intento++) {
+        try {
+          const res = await fetch("/api/render-prenda", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: preview, attrs: n.attrs }),
+          });
+          if (res.ok) {
+            const d = (await res.json()) as { path: string; url: string | null };
+            await ponerRenderAPrenda(n.id, d.path);
+            url = d.url;
           }
+        } catch {
+          // reintenta una vez; si no, se queda para el clóset
         }
-        setSumar((sm) =>
-          sm.paso !== "dibujando"
-            ? sm
-            : {
-                ...sm,
-                items: sm.items.map((x) => (x.id === n.id ? { ...x, url, listo: true } : x)),
-              }
-        );
-      })
+      }
+      setSumar((sm) =>
+        sm.paso !== "dibujando"
+          ? sm
+          : {
+              ...sm,
+              items: sm.items.map((x) => (x.id === n.id ? { ...x, url, listo: true } : x)),
+            }
+      );
+    };
+    const trabajar = async () => {
+      for (let n = cola.shift(); n; n = cola.shift()) await dibujarUna(n);
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCIA, nuevas.length) }, trabajar)
     );
     router.refresh();
   }
