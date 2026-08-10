@@ -2,6 +2,36 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.213.0] - 2026-08-10
+
+### Fixed — el espejo era barbero: elogio hueco y consejo vacío
+
+Roberto, viendo su veredicto: *"siento está muy barbero el feedback"*. Medido sobre las **17 lecturas reales** de la base, no sobre esa captura:
+
+| | |
+|---|---|
+| lecturas | 17 |
+| **"así como estás, sales" como consejo COMPLETO** | **7 (41%)** — y las últimas 5, seguidas |
+| con superlativo genérico ("de lujo", "perfecto"…) | 5 |
+
+O sea que la fila de "mi consejo" no entregaba nada casi la mitad de las veces, y la de colores decía cosas que valdrían para cualquier outfit.
+
+**La causa era mi propio prompt**, que lo pedía sin querer: *"Siempre hay algo bien en un outfit"* + *"si el look está bien, dilo y ya"*. El razonamiento de esa regla sigue en pie —inventar un defecto para parecer útil es peor, y una nota diaria a alguien inseguro es otro producto— así que la corrección **no es volverlo crítico**, es otra:
+
+- **La prueba del elogio**: si la misma frase serviría para otro outfit, no sirve para éste. Lista explícita de frases prohibidas por vacías ("de lujo", "impecable", "te queda muy bien"…) y la obligación de nombrar la decisión concreta que funciona y por qué. *"El blanco junto a tu cara te levanta la piel"* es comprobable; *"te queda de lujo"* no.
+- **El consejo nunca se queda en blanco con buenos modales**: si de verdad no hay nada que tocar, el hueco se usa para algo utilizable — hasta dónde sirve el look, qué NO tocarle y por qué, o cómo llevarlo mejor. Información, no un piropo más.
+
+`ESPEJO_VERSION` a v3.
+
+**Medido pareado sobre las MISMAS 5 fotos** (las guardadas en `outfits.photo_path`, mismo contexto, v2 contra v3):
+
+| | v2 | v3 |
+|---|---|---|
+| consejos vacíos ("así como estás, sales") | 4 de 5 | **0** |
+| superlativos huecos | 2 de 5 | **0** |
+
+Y el cambio es de contenido, no de tono. Sobre la misma foto del traje: v2 decía *"te quedan de lujo… limpio y con carácter"* + *"así como estás, sales"*; v3 dice *"el blanco de la camisa pegado al cuello te limpia la cara, y el rojo de la corbata…"* + *"el nudo está un poco flojo, ajústalo hacia arriba… si vas a estar afuera, lleva algo para la llovizna"*. La misma amiga, mirando de verdad.
+
 ## [0.2.212.0] - 2026-08-09
 
 ### Fixed — el QA del espejo: el veredicto se saltaba solo, y dos botones negros
