@@ -350,6 +350,8 @@ export function EspejoFlow({
   /** La prenda que se está mirando en grande (el visor de siempre). */
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
   const [recortando, setRecortando] = useState(false);
+  /** Ya pasó del veredicto a las prendas (lo pidió ella, no el reloj). */
+  const [avanzado, setAvanzado] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -835,8 +837,20 @@ export function EspejoFlow({
     // Roberto revisando el handoff: ya tiene "rehacer · no es mía" por prenda,
     // que es justo lo que el handoff pedía para "salió mal" — y que ni la
     // propuesta de CD ni el carrete tienen. Copiarlas sería retroceder.
+    // EL VEREDICTO NO SE SALTA SOLO. Primera versión: pasoWizard salía de
+    // `sumar` a secas, así que en cuanto la búsqueda de prendas terminaba —unos
+    // segundos— la pantalla saltaba a "¿son tuyas?" y se llevaba por delante lo
+    // que la persona vino a leer. Cazado en QA: la captura del paso 1 nunca se
+    // pudo tomar porque el paso 1 duraba lo que tardaba una petición.
+    //
+    // Ahora avanza SÓLO cuando ella lo pide (o cuando ya no hay veredicto que
+    // enseñar, en el paso de dibujar, al que se llega desde el 2).
     const pasoWizard: 1 | 2 | 3 =
-      sumar.paso === "elegir" ? 2 : sumar.paso === "dibujando" || sumar.paso === "guardando" ? 3 : 1;
+      sumar.paso === "dibujando" || sumar.paso === "guardando"
+        ? 3
+        : avanzado && sumar.paso === "elegir"
+          ? 2
+          : 1;
     const rotuloPaso =
       pasoWizard === 2 ? "¿son tuyas?" : pasoWizard === 3 ? "sus fichas" : "te veo";
     // En el paso 1 el veredicto ES la pantalla; a partir del 2 estorba.
@@ -968,7 +982,27 @@ export function EspejoFlow({
                     los días no aplica porque te pusiste lo que ya tienes. */}
                 {/* La hairline separaba el consejo de este segundo tiempo. Sin
                     consejo arriba no separa nada: sería una raya al aire. */}
-                <div className={verVeredicto ? "border-t border-line pt-3" : ""}>
+                {/* EN EL PASO 1 esto no se pinta: sólo su CTA. Antes el bloque
+                    entero de prendas vivía aquí debajo y era la mitad de la
+                    sensación de "largo" — el veredicto y el trabajo de
+                    catalogar, apilados. */}
+                {verVeredicto && sumar.paso === "elegir" ? (
+                  <button
+                    type="button"
+                    onClick={() => setAvanzado(true)}
+                    className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+                  >
+                    vi {sumar.prendas.length}{" "}
+                    {sumar.prendas.length === 1 ? "prenda que no tienes" : "prendas que no tienes"}
+                    <Icon name="flecha" size={17} />
+                  </button>
+                ) : null}
+
+                <div
+                  className={
+                    verVeredicto && sumar.paso === "elegir" ? "hidden" : verVeredicto ? "border-t border-line pt-3" : ""
+                  }
+                >
                   {sumar.paso === "buscando" ? (
                     <p className="flex items-center gap-2 text-[13px] text-muted">
                       <Spinner className="h-3.5 w-3.5" /> viendo qué traes puesto…
@@ -1227,16 +1261,22 @@ export function EspejoFlow({
                     pantalla ENTERA es sumar prendas, y el botón más fuerte
                     invitaba a abandonar el paso que estás haciendo.
                     Fuera del paso 1 pasa a salida discreta. */}
+                {/* UN SOLO BOTÓN FUERTE POR PANTALLA. "gracias" es sólido sólo
+                    cuando es la ÚNICA acción — o sea, en el veredicto sin
+                    prendas que ofrecer: ahí cerrar es a lo que viniste. En
+                    cuanto aparece "vi N prendas que no tienes", dos negros
+                    apilados dejan de decir cuál es el camino (cazado en QA, con
+                    la pantalla delante). */}
                 <button
                   type="button"
                   onClick={cerrar}
                   className={
-                    verVeredicto
+                    verVeredicto && sumar.paso !== "elegir"
                       ? "min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent"
                       : "min-h-11 text-sm font-semibold text-muted transition-colors hover:text-ink"
                   }
                 >
-                  {verVeredicto ? "gracias" : "terminar aquí"}
+                  {verVeredicto && sumar.paso !== "elegir" ? "gracias" : "terminar aquí"}
                 </button>
                 <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
               </div>

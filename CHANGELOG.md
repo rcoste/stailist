@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.212.0] - 2026-08-09
+
+### Fixed — el QA del espejo: el veredicto se saltaba solo, y dos botones negros
+
+Roberto pidió que hiciera yo el QA del flujo nuevo en vez de entregarlo sin ver. Salieron **tres cosas**, y una era grave.
+
+**1. El veredicto duraba lo que una petición.** `pasoWizard` salía del estado de la búsqueda de prendas, así que en cuanto ésta terminaba —unos segundos— la pantalla saltaba sola a "¿son tuyas?" y se llevaba por delante justo lo que la persona vino a leer. **Así es como lo descubrí: la captura del paso 1 no se podía tomar porque el paso 1 no duraba.** Ahora avanza sólo cuando ella lo pide, con el CTA que el handoff pedía: *"vi N prendas que no tienes →"*.
+
+**2. Dos botones negros apilados** en el veredicto: el CTA nuevo y el "gracias" de siempre, los dos sólidos. "gracias" es sólido sólo cuando es la única acción —el veredicto sin prendas que ofrecer, donde cerrar es a lo que viniste—; con el CTA presente baja a *"terminar aquí"* discreto.
+
+**3. Y el hallazgo de método**: los errores de parseo del dev server no se ven en `npm run build`. El espejo estuvo un rato sin renderizar —`</Capa>` huérfano de una edición a medias— mientras `tsc`, `build` y los 818 tests pasaban en verde, porque el build corría sobre el archivo ya arreglado y el dev server servía el roto. Pasé varias corridas culpando al arnés de Playwright. La consola del navegador lo dijo en una línea.
+
+Verificado con la pantalla delante: hero a sangre con la foto, *"TE VEO / Básico bien hecho"* en serif itálica sobre el gradiente, filas hairline de colores y consejo, *"ya quedó en tu diario"*, y un solo botón fuerte.
+
 ## [0.2.211.0] - 2026-08-09
 
 ### Changed — el veredicto del espejo, como lo pedía el handoff
