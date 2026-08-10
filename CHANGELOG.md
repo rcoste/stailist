@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.210.0] - 2026-08-09
+
+### Changed — el espejo deja de ser un scroll largo y pasa a wizard de 3 pasos
+
+Handoff `te_veo`. Roberto: la pantalla *"se sentía muy saturada y largas"*. Y lo era: el veredicto, la foto grande, las tres filas, las tarjetas de prenda **y** la rejilla de dibujos vivían en el mismo scroll — al llegar a confirmar prendas seguías arrastrando todo lo de arriba.
+
+No cambia la máquina de estados, sólo **qué se pinta a la vez**: rótulo persistente *"paso N de 3 · nombre"*, y el veredicto (con su foto) se retira en cuanto empieza el trabajo de prendas. Mismo movimiento y misma cabecera que el carrete.
+
+**El paso 3 se queda EXACTAMENTE como está**, por decisión de Roberto revisando el handoff — y por una razón que salió al comparar: el espejo ya tiene *"rehacer · no es mía"* por prenda, que es justo lo que el handoff pedía para "salió mal" (*"no descarta la prenda: reintenta el dibujo"*). Ni la propuesta de CD ni el carrete lo tienen — allá "salió mal" tira el render. En ese punto el espejo va por delante de los dos; copiarlos sería retroceder.
+
+**Un defecto que sólo se vio al partir la pantalla**: abajo, *"gracias"* era el botón negro y *"sumar N al clóset"* el de contorno. En el veredicto está bien —cerrar **es** la acción principal, ya tienes lo que veniste a buscar—, pero en los pasos 2 y 3 la pantalla entera es sumar prendas y el botón más fuerte invitaba a abandonar el paso en curso. Fuera del paso 1, "sumar" pasa a sólido y la salida a *"terminar aquí"* discreto.
+
+**Pendiente de decisión**: la línea de escaneo del loading (animación nueva, necesita token de motion) queda fuera hasta ver cómo se siente el resto. El explainer de primera vez y los motion del veredicto que retienen el CTA ~1.9s también quedan fuera — el flujo existe para gente con prisa.
+
 ## [0.2.209.0] - 2026-08-09
 
 ### Fixed — el terracota vetado sale del onboarding, y dos hex huérfanos van al token

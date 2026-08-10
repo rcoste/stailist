@@ -718,15 +718,65 @@ export function EspejoFlow({
 
   if (state.kind === "mirando" || state.kind === "listo") {
     const lista = state.kind === "listo" ? state.lectura : null;
+    // EL WIZARD DE 3 PASOS (handoff `te_veo`). Roberto: la pantalla "se sentía
+    // muy saturada y largas". Y lo era: el veredicto, la foto grande, las tres
+    // filas, las tarjetas de prenda Y la rejilla de dibujos vivían en el MISMO
+    // scroll — al llegar a confirmar prendas seguías arrastrando todo lo de
+    // arriba.
+    //
+    // No cambia la máquina de estados, sólo QUÉ SE PINTA a la vez: el veredicto
+    // se retira en cuanto empieza el trabajo de prendas. Mismo movimiento que
+    // el carrete, y misma cabecera de progreso.
+    //
+    // El paso 3 (dibujar) se queda EXACTAMENTE como está, por decisión de
+    // Roberto revisando el handoff: ya tiene "rehacer · no es mía" por prenda,
+    // que es justo lo que el handoff pedía para "salió mal" — y que ni la
+    // propuesta de CD ni el carrete tienen. Copiarlas sería retroceder.
+    const pasoWizard: 1 | 2 | 3 =
+      sumar.paso === "elegir" ? 2 : sumar.paso === "dibujando" || sumar.paso === "guardando" ? 3 : 1;
+    const rotuloPaso =
+      pasoWizard === 2 ? "¿son tuyas?" : pasoWizard === 3 ? "sus fichas" : "te veo";
+    // En el paso 1 el veredicto ES la pantalla; a partir del 2 estorba.
+    const verVeredicto = pasoWizard === 1;
     return (
       <Pantalla>
           <div className="flex flex-col gap-4">
+            {/* Rótulo persistente: siempre se sabe dónde se está y cuánto falta.
+                Sólo con veredicto — mientras mira no hay pasos que contar. */}
+            {lista ? (
+              <div className="flex items-center gap-3">
+                <div className="flex flex-1 gap-1.5">
+                  {[1, 2, 3].map((i) => (
+                    <span
+                      key={i}
+                      className={`h-[3px] flex-1 rounded-full ${
+                        i <= pasoWizard ? "bg-ink" : "bg-line"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.14em] tabular-nums text-muted">
+                  paso {pasoWizard} de 3 · {rotuloPaso}
+                </span>
+              </div>
+            ) : null}
+
             <div className="flex items-start justify-between">
               <h2 className="text-[22px] font-semibold leading-tight text-ink">
                 {lista ? (
-                  <>
-                    te <em className="font-normal italic">veo</em>
-                  </>
+                  pasoWizard === 2 ? (
+                    <>
+                      ¿son <em className="font-normal italic">tuyas</em>?
+                    </>
+                  ) : pasoWizard === 3 ? (
+                    <>
+                      sus <em className="font-normal italic">fichas</em>
+                    </>
+                  ) : (
+                    <>
+                      te <em className="font-normal italic">veo</em>
+                    </>
+                  )
                 ) : (
                   "te estoy viendo…"
                 )}
@@ -744,6 +794,10 @@ export function EspejoFlow({
                 Flex aprieta lo único que puede — la foto — y la dejaba en 2 px de
                 alto: una raya. Cazado en QA midiendo el recuadro, porque a ojo
                 parecía que la foto simplemente "no cargó". */}
+            {/* LA FOTO, sólo mientras es la protagonista. En los pasos 2 y 3 el
+                trabajo son las prendas; dejarla arriba empujaba las tarjetas
+                fuera de la pantalla y era la mitad de la sensación de "largo". */}
+            {verVeredicto || !lista ? (
             <div className="relative shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={state.preview} alt="" className="max-h-[44dvh] w-full object-contain" />
@@ -753,9 +807,12 @@ export function EspejoFlow({
                 </div>
               ) : null}
             </div>
+            ) : null}
 
             {lista ? (
               <div className="flex flex-col gap-3">
+                {verVeredicto ? (
+                  <>
                 <p className="text-sm text-muted">{lista.resumen}</p>
                 {/* De corrido y sin etiquetas de categoría: una amiga te dice tres
                     cosas seguidas, no te entrega un informe por secciones. */}
@@ -770,12 +827,16 @@ export function EspejoFlow({
                   {lista.ajuste}
                 </p>
                 <p className="text-xs text-muted">Ya quedó en tu diario.</p>
+                  </>
+                ) : null}
 
                 {/* SEGUNDO TIEMPO — sumar al clóset lo que no tenga.
                     Va DEBAJO del consejo y detrás de una línea discreta: el
                     consejo es a lo que vino, y esto es un extra que la mayoría de
                     los días no aplica porque te pusiste lo que ya tienes. */}
-                <div className="border-t border-line pt-3">
+                {/* La hairline separaba el consejo de este segundo tiempo. Sin
+                    consejo arriba no separa nada: sería una raya al aire. */}
+                <div className={verVeredicto ? "border-t border-line pt-3" : ""}>
                   {sumar.paso === "buscando" ? (
                     <p className="flex items-center gap-2 text-[13px] text-muted">
                       <Spinner className="h-3.5 w-3.5" /> viendo qué traes puesto…
@@ -881,7 +942,10 @@ export function EspejoFlow({
                             state.kind === "listo" ? state.rutaFoto : null
                           )
                         }
-                        className="min-h-10 rounded-sm border border-accent text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
+                        // Sólido: en el paso 2 ESTA es la acción de la pantalla.
+                        // De contorno tenía menos peso que el "gracias" de abajo,
+                        // que llevaba a salirse.
+                        className="min-h-12 rounded-sm bg-accent text-[14px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
                       >
                         sumar {sumar.prendas.filter((p) => p.on).length} al clóset
                       </button>
@@ -1023,12 +1087,24 @@ export function EspejoFlow({
                   ) : null}
                 </div>
 
+                {/* LA JERARQUÍA SE INVIERTE FUERA DEL PASO 1, y sólo se vio al
+                    partir la pantalla en pasos: aquí abajo "gracias" era el
+                    botón negro y "sumar N al clóset" el de contorno. En el
+                    veredicto está bien —cerrar ES la acción principal, ya
+                    tienes lo que viniste a buscar—, pero en los pasos 2 y 3 la
+                    pantalla ENTERA es sumar prendas, y el botón más fuerte
+                    invitaba a abandonar el paso que estás haciendo.
+                    Fuera del paso 1 pasa a salida discreta. */}
                 <button
                   type="button"
                   onClick={cerrar}
-                  className="min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent"
+                  className={
+                    verVeredicto
+                      ? "min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent"
+                      : "min-h-11 text-sm font-semibold text-muted transition-colors hover:text-ink"
+                  }
                 >
-                  gracias
+                  {verVeredicto ? "gracias" : "terminar aquí"}
                 </button>
                 <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
               </div>
