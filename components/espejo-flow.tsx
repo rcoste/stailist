@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toUsableImage } from "@/lib/image-file";
-import { Icon } from "@/components/icon";
+import { Icon, type IconName } from "@/components/icon";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { ImageCrop } from "@/components/image-crop";
 import { Spinner } from "@/components/spinner";
@@ -38,6 +38,97 @@ function Capa({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 
+/** El hero del veredicto: su foto a sangre, con el veredicto encima.
+ *
+ *  Del handoff `te_veo`. Sustituye a la foto metida en una tarjeta con borde:
+ *  esto es SU foto, no un dato de entrada, y el gradiente inferior es lo que
+ *  deja escribir encima sin cajas.
+ *
+ *  EL RÓTULO DEL PASO Y EL CIERRE VIVEN AQUÍ, sobre el gradiente superior: en
+ *  una pantalla cuyo primer tercio es imagen, ponerlos debajo los mandaba fuera
+ *  de vista.
+ *
+ *  OJO CON LA LÍNEA DEL VEREDICTO: el handoff la ejemplifica como un juicio
+ *  ("elegante sin que el color haga el trabajo") y ese dato NO existe en la
+ *  lectura — los tres campos de opinión (colorimetría, clima, ajuste) son
+ *  justamente las tres filas de abajo. Se usa `titulo`, que ya se genera para
+ *  el diario y nombra el look en dos o tres palabras. Pedirle al modelo un
+ *  campo más es lo que NO se hace a la ligera aquí: añadir un campo al schema
+ *  de un lector movió otras lecturas con z = 3.05 (medido el 2026-08-08 sobre
+ *  425 prendas). Si el juicio de una línea vale la pena, se mide antes. */
+function HeroVeredicto({
+  foto,
+  titulo,
+  paso,
+  onCerrar,
+}: {
+  foto: string;
+  titulo: string | null;
+  paso: string;
+  onCerrar: () => void;
+}) {
+  return (
+    <div className="relative h-[46dvh] max-h-[400px] shrink-0 overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={foto}
+        alt=""
+        className="h-full w-full object-cover"
+        style={{ objectPosition: "50% 18%" }}
+      />
+      <span
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[170px]"
+        style={{ background: "linear-gradient(transparent, rgb(20 20 20 / 0.72))" }}
+        aria-hidden
+      />
+      <div className="absolute inset-x-0 top-0 z-[2] flex items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <span
+          className="rounded-[4px] px-2.5 py-[5px] text-[10px] font-bold uppercase tracking-[0.14em] text-white"
+          style={{ backgroundColor: "rgb(20 20 20 / 0.5)" }}
+        >
+          {paso}
+        </span>
+        <button
+          type="button"
+          onClick={onCerrar}
+          aria-label="Cerrar"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-white"
+          style={{ backgroundColor: "rgb(20 20 20 / 0.5)" }}
+        >
+          <Icon name="equis" size={13} />
+        </button>
+      </div>
+      {titulo ? (
+        <div className="absolute inset-x-5 bottom-4 z-[2] text-white">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-80">te veo</p>
+          <p className="mt-1 font-display text-[27px] italic leading-[1.15]">{titulo}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Una de las tres filas del veredicto: hairline, icono, título y texto. */
+function FilaVeredicto({
+  icono,
+  titulo,
+  children,
+}: {
+  icono: IconName;
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-3 border-t border-line py-3 first:border-t-0 first:pt-0.5">
+      <Icon name={icono} size={16} className="mt-0.5 shrink-0 text-ink2" />
+      <div className="min-w-0">
+        <p className="text-[13px] font-bold text-ink">{titulo}</p>
+        <p className="mt-0.5 text-[13.5px] leading-[1.5] text-ink2">{children}</p>
+      </div>
+    </div>
+  );
+}
+
 /** La pantalla del espejo: completa, no hoja.
  *
  *  DECISIÓN DE ROBERTO (2026-08-09), contra mi recomendación — la dejo escrita
@@ -57,10 +148,15 @@ function Capa({ children }: { children: React.ReactNode }) {
 function Pantalla({
   children,
   pie,
+  sangre,
 }: {
   children: React.ReactNode;
   /** Fuera del área con scroll, como en el carrete: no puede pisar contenido. */
   pie?: React.ReactNode;
+  /** Contenido a sangre ARRIBA del área con scroll (el hero del veredicto).
+   *  Va fuera del padding lateral y del scroll: es una imagen a pantalla
+   *  completa, no una tarjeta. */
+  sangre?: React.ReactNode;
 }) {
   return (
     <Capa>
@@ -68,10 +164,17 @@ function Pantalla({
         className="fixed inset-0 z-50 flex flex-col bg-bg"
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
       >
-        <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col overflow-hidden px-5 pt-[max(1rem,env(safe-area-inset-top))]">
-          <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-4">{children}</div>
+        <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col overflow-hidden">
+          {sangre}
+          <div
+            className={`flex flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4 ${
+              sangre ? "pt-4" : "pt-[max(1rem,env(safe-area-inset-top))]"
+            }`}
+          >
+            {children}
+          </div>
           {pie ? (
-            <div className="shrink-0 border-t border-line pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+            <div className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
               {pie}
             </div>
           ) : null}
@@ -739,11 +842,25 @@ export function EspejoFlow({
     // En el paso 1 el veredicto ES la pantalla; a partir del 2 estorba.
     const verVeredicto = pasoWizard === 1;
     return (
-      <Pantalla>
+      <Pantalla
+        sangre={
+          // El hero SOLO en el veredicto: en los pasos de prendas la foto ya no
+          // es el tema, y ocupando media pantalla empujaba el trabajo fuera.
+          lista && verVeredicto ? (
+            <HeroVeredicto
+              foto={state.preview}
+              titulo={lista.titulo}
+              paso="paso 1 de 3 · el veredicto"
+              onCerrar={cerrar}
+            />
+          ) : undefined
+        }
+      >
           <div className="flex flex-col gap-4">
             {/* Rótulo persistente: siempre se sabe dónde se está y cuánto falta.
-                Sólo con veredicto — mientras mira no hay pasos que contar. */}
-            {lista ? (
+                Sólo con veredicto — mientras mira no hay pasos que contar.
+                En el paso 1 vive DENTRO del hero, sobre la foto. */}
+            {lista && !verVeredicto ? (
               <div className="flex items-center gap-3">
                 <div className="flex flex-1 gap-1.5">
                   {[1, 2, 3].map((i) => (
@@ -761,6 +878,8 @@ export function EspejoFlow({
               </div>
             ) : null}
 
+            {/* En el paso 1 el titular ES el hero; aquí sólo los otros pasos. */}
+            {lista && verVeredicto ? null : (
             <div className="flex items-start justify-between">
               <h2 className="text-[22px] font-semibold leading-tight text-ink">
                 {lista ? (
@@ -787,6 +906,7 @@ export function EspejoFlow({
                 </button>
               ) : null}
             </div>
+            )}
 
             {/* Su foto, grande. Es ella, no un dato de entrada. */}
             {/* `shrink-0`: la hoja es un flex en columna, y en cuanto abajo
@@ -797,7 +917,7 @@ export function EspejoFlow({
             {/* LA FOTO, sólo mientras es la protagonista. En los pasos 2 y 3 el
                 trabajo son las prendas; dejarla arriba empujaba las tarjetas
                 fuera de la pantalla y era la mitad de la sensación de "largo". */}
-            {verVeredicto || !lista ? (
+            {!lista ? (
             <div className="relative shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={state.preview} alt="" className="max-h-[44dvh] w-full object-contain" />
@@ -813,20 +933,32 @@ export function EspejoFlow({
               <div className="flex flex-col gap-3">
                 {verVeredicto ? (
                   <>
-                <p className="text-sm text-muted">{lista.resumen}</p>
-                {/* De corrido y sin etiquetas de categoría: una amiga te dice tres
-                    cosas seguidas, no te entrega un informe por secciones. */}
-                <p className="text-[15px] leading-relaxed text-ink">{lista.colorimetria}</p>
-                {lista.clima ? (
-                  <p className="flex gap-2 text-[15px] leading-relaxed text-ink">
-                    <Icon name="destello" size={16} className="mt-1 shrink-0 text-accent" />
-                    <span>{lista.clima}</span>
-                  </p>
-                ) : null}
-                <p className="rounded-xl bg-accent-soft px-3.5 py-3 text-[15px] leading-relaxed text-ink">
-                  {lista.ajuste}
+                {/* TRES FILAS HAIRLINE, no párrafos sueltos ni una caja para el
+                    consejo (handoff `te_veo`). Antes el resumen, la colorimetría,
+                    el clima y el ajuste eran cuatro bloques con cuatro
+                    tratamientos distintos; ahora son tres filas iguales con su
+                    icono y su título, y se leen de un vistazo.
+
+                    EL `resumen` SE VA de esta pantalla —"nunca un párrafo que
+                    describa la prenda: ya es su foto"— y tiene razón, con el
+                    hero ocupando media pantalla. El campo sigue vivo: es lo que
+                    nombra la entrada del diario. */}
+                <div className="flex flex-col">
+                  <FilaVeredicto icono="sol" titulo="tus colores">
+                    {lista.colorimetria}
+                  </FilaVeredicto>
+                  {lista.clima ? (
+                    <FilaVeredicto icono="copo" titulo="el clima de hoy">
+                      {lista.clima}
+                    </FilaVeredicto>
+                  ) : null}
+                  <FilaVeredicto icono="destello" titulo="mi consejo">
+                    <strong className="font-bold text-ink">{lista.ajuste}</strong>
+                  </FilaVeredicto>
+                </div>
+                <p className="flex items-center gap-1.5 text-xs text-faint">
+                  <Icon name="check" size={12} /> ya quedó en tu diario
                 </p>
-                <p className="text-xs text-muted">Ya quedó en tu diario.</p>
                   </>
                 ) : null}
 

@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.211.0] - 2026-08-09
+
+### Changed — el veredicto del espejo, como lo pedía el handoff
+
+Corrección de rumbo. En 0.2.210.0 partí el espejo en tres pasos y describí lo que faltaba como "motion" — pero lo que faltaba era **la pantalla 2 entera**, que no construí: el handoff propone un hero a sangre con el veredicto encima y tres filas hairline, y yo dejé la disposición vieja (foto en tarjeta + párrafos sueltos) sólo repartida en pasos. Roberto lo señaló: *"no me quedó claro tu rechazo"*. No hubo rechazo, hubo omisión mal etiquetada.
+
+Ahora sí: **hero de 46dvh a sangre** con la foto (`object-position 50% 18%`), gradiente inferior, rótulo del paso y cierre sobre la imagen, y el nombre del look en serif itálica sobre el gradiente. Debajo, **tres filas hairline** con icono — tus colores · el clima de hoy · mi consejo — en vez de cuatro bloques con cuatro tratamientos distintos. El `resumen` sale de esta pantalla ("nunca un párrafo que describa la prenda: ya es su foto"); el campo sigue vivo porque nombra la entrada del diario.
+
+**Lo que el handoff pide y no existe**: la línea del hero se ejemplifica como un juicio (*"elegante sin que el color haga el trabajo"*) y ese dato no está en la lectura — los tres campos de opinión son justamente las tres filas. Se usa `titulo`, que ya se genera para el diario. Pedirle un campo más al modelo es lo que aquí no se hace a la ligera: añadir un campo al schema de un lector movió otras lecturas con z = 3.05 (medido sobre 425 prendas). Si el juicio de una línea vale la pena, se mide antes.
+
+**SIN VERIFICACIÓN VISUAL.** Compila, tipa y pasa los 818 tests, pero el arnés de Playwright dejó de poder abrir el espejo tras varias corridas y no llegué a ver esta pantalla renderizada. Queda a revisión de Roberto antes de darla por buena — por eso no se deploya con este commit.
+
 ## [0.2.210.0] - 2026-08-09
 
 ### Changed — el espejo deja de ser un scroll largo y pasa a wizard de 3 pasos
