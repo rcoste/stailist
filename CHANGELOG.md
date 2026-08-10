@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.214.0] - 2026-08-10
+
+### Fixed — confirmar las prendas te devolvía al veredicto
+
+Roberto: *"después de que le doy click al CTA… me regresa a la imagen de mi look con los consejos, y le tengo que picar nuevamente"*.
+
+**Faltaba un estado en el mapeo del wizard.** El flujo interno es `elegir → guardando → hecho → dibujando`, y `hecho` —el momento justo después de guardar— no estaba en la lista: caía al `: 1` por defecto y devolvía al paso 1. Peor todavía, el botón de "dibujarlas ahora" seguía existiendo pero enterrado al fondo de una pantalla que ya no era la suya, así que el flujo parecía haberse tragado la acción.
+
+**Y el segundo clic desaparece.** Guardar y dibujar eran dos decisiones separadas —diseño mío— y Roberto lo leyó como falta de respuesta (*"o que se procese la acción"*). Tiene razón: al confirmar "sí, son mías" ya diste el permiso. El dibujo arranca solo al terminar de guardar, con guarda por ids contra el doble arranque, y el CTA del paso 2 pasa a declarar el trabajo entero: **"sumar y dibujar 3 · ~54s"** en vez de sólo "sumar al clóset". El botón manual se queda como red por si el arranque no prende.
+
+Verificado en el navegador con foto real: paso 1 → 2 → 3 sin rebotes, y las fichas dibujadas a los ~16s sin tocar nada más.
+
 ## [0.2.213.0] - 2026-08-10
 
 ### Fixed — el espejo era barbero: elogio hueco y consejo vacío

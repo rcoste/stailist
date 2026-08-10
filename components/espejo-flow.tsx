@@ -662,6 +662,27 @@ export function EspejoFlow({
    * Falla hacia adelante: la que no salga se queda en 'none' y el clóset la
    * dibuja después, que es exactamente donde estábamos antes.
    */
+  /** Ya se disparó el dibujo de esta tanda (guarda contra el doble arranque en
+   *  un re-render). */
+  const dibujoLanzado = useRef<string | null>(null);
+  // ARRANCA SOLO al terminar de guardar. El segundo clic era de mi diseño —
+  // guardar y dibujar como dos decisiones— y Roberto lo reportó como falta de
+  // respuesta: "le tengo que picar nuevamente… o que se procese la acción".
+  // Tiene razón: al confirmar "sí, son mías" ya diste el permiso, y el costo
+  // (~18s por prenda) se declara en el propio botón del paso 2. El botón de
+  // "dibujarlas ahora" se queda para el caso en que el arranque falle.
+  useEffect(() => {
+    if (state.kind !== "listo") return;
+    if (sumar.paso !== "hecho" || sumar.nuevas.length === 0) return;
+    const marca = sumar.nuevas.map((n) => n.id).join(",");
+    if (dibujoLanzado.current === marca) return;
+    dibujoLanzado.current = marca;
+    void dibujarNuevas(sumar.nuevas, state.preview);
+    // `sumar` y `state` completos como deps re-dispararían en cada tick del
+    // dibujo; la marca por ids es lo que hace idempotente al efecto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sumar.paso, state.kind]);
+
   async function dibujarNuevas(
     nuevas: { id: string; attrs: PrendaDetectada }[],
     preview: string
@@ -845,8 +866,15 @@ export function EspejoFlow({
     //
     // Ahora avanza SÓLO cuando ella lo pide (o cuando ya no hay veredicto que
     // enseñar, en el paso de dibujar, al que se llega desde el 2).
+    // OJO CON `hecho`: es el estado entre guardar y dibujar, y faltaba en este
+    // mapeo — caía al `: 1` y devolvía al VEREDICTO justo después de confirmar
+    // las prendas. Roberto: "me regresa a la imagen de mi look con los consejos
+    // y le tengo que picar nuevamente". Peor aún, el botón de dibujar seguía
+    // existiendo pero enterrado al fondo de una pantalla que ya no era la suya.
+    // Va con los otros dos: una vez que empezó el trabajo de prendas, no se
+    // vuelve al veredicto solo.
     const pasoWizard: 1 | 2 | 3 =
-      sumar.paso === "dibujando" || sumar.paso === "guardando"
+      sumar.paso === "dibujando" || sumar.paso === "guardando" || sumar.paso === "hecho"
         ? 3
         : avanzado && sumar.paso === "elegir"
           ? 2
@@ -1113,7 +1141,12 @@ export function EspejoFlow({
                         // que llevaba a salirse.
                         className="min-h-12 rounded-sm bg-accent text-[14px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
                       >
-                        sumar {sumar.prendas.filter((p) => p.on).length} al clóset
+                        {/* DICE EL TRABAJO ENTERO. Antes decía sólo "sumar N al
+                            clóset" y el dibujo aparecía después como una segunda
+                            decisión; ahora arranca solo, así que el botón tiene
+                            que declarar los segundos que vienen detrás. */}
+                        sumar y dibujar {sumar.prendas.filter((p) => p.on).length} ·
+                        ~{Math.max(20, sumar.prendas.filter((p) => p.on).length * 18)}s
                       </button>
                     </div>
                   ) : null}
@@ -1232,6 +1265,8 @@ export function EspejoFlow({
                             className="flex min-h-10 items-center justify-center gap-1.5 rounded-sm bg-accent text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-deep"
                           >
                             <Icon name="destello" size={14} />
+                            {/* Red por si el arranque automático no prendió: el
+                                camino normal ya no pasa por aquí. */}
                             dibujarlas ahora · ~{Math.max(20, sumar.nuevas.length * 18)}s
                           </button>
                         ) : null}
