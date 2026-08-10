@@ -6,6 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { HistoryList, type HistoryOutfit } from "./history-list";
 
+/** Color de relleno cuando una prenda no tiene ni imagen ni color leído.
+ *
+ *  Era un `#E5E1DD` suelto repetido en dos pantallas — un hex a un punto de
+ *  `--c-line` (#e4e3e0) que nadie iba a mantener sincronizado. Va al token: es
+ *  un hueco de la UI, no el color de una prenda. */
+const SWATCH_VACIO = "var(--c-line)";
+
 export default async function HistorialPage({
   searchParams,
 }: {
@@ -85,7 +92,7 @@ export default async function HistorialPage({
         i.id as string,
         {
           nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-          swatch: attrs.color_hex ?? "#E5E1DD",
+          swatch: attrs.color_hex ?? SWATCH_VACIO,
           imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
         },
       ];
@@ -129,7 +136,7 @@ export default async function HistorialPage({
         ? signed.get(o.photo_path as string) ?? null
         : null,
     prendas: (o.item_ids as string[]).map(
-      (id) => imgById.get(id) ?? { nombre: "Prenda", swatch: "#E5E1DD", imagen: null }
+      (id) => imgById.get(id) ?? { nombre: "Prenda", swatch: SWATCH_VACIO, imagen: null }
     ),
     voto: votoByOutfit.get(o.id) ?? null,
     worn: wornOutfits.has(o.id),

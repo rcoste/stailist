@@ -11,6 +11,13 @@ import { loadHomeCard } from "@/lib/home-card";
 import { buildHomeChecklist } from "@/lib/home-checklist";
 import { ASSESSMENT_QUESTIONS } from "@/lib/capsule";
 
+/** Color de relleno cuando una prenda no tiene ni imagen ni color leído.
+ *
+ *  Era un `#E5E1DD` suelto repetido en dos pantallas — un hex a un punto de
+ *  `--c-line` (#e4e3e0) que nadie iba a mantener sincronizado. Va al token: es
+ *  un hueco de la UI, no el color de una prenda. */
+const SWATCH_VACIO = "var(--c-line)";
+
 export default async function HoyPage({
   searchParams,
 }: {
@@ -95,7 +102,7 @@ export default async function HoyPage({
           i.id as string,
           {
             nombre: arch?.name ?? attrs.nombre ?? "Prenda",
-            swatch: attrs.color_hex ?? "#E5E1DD",
+            swatch: attrs.color_hex ?? SWATCH_VACIO,
             imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
           },
         ];
@@ -118,7 +125,7 @@ export default async function HoyPage({
         return {
           id,
           nombre: p?.nombre ?? "Prenda",
-          swatch: p?.swatch ?? "#E5E1DD",
+          swatch: p?.swatch ?? SWATCH_VACIO,
           imagen: p?.imagen ?? null,
         };
       }),

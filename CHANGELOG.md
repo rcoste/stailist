@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.209.0] - 2026-08-09
+
+### Fixed — el terracota vetado sale del onboarding, y dos hex huérfanos van al token
+
+Roberto, sobre cómo trabajo: *"cuando sea que te pongo un color que no va con el DS, tú dime y proponme algo en su lugar"*. Justo: en la versión anterior señalé el terracota y le devolví la decisión sin traer el reemplazo — eso es dejarle a él un trabajo que es mío.
+
+**El cálido de la demo de colorimetría pasa a vino `#7d2b3d`.** Era terracota `#b6532f`, de la familia vetada, heredado del diseño anterior (`#c9563f`, comentado literalmente *"// terracota"*) y mantenido por el handoff: llevaba semanas de contrabando dentro de una pantalla del onboarding. Vino y no otro cálido por tres razones, escritas en el código: es inequívocamente ropa; rima con lo que el test **entrega** (`#8e1f3a` ya sale en las muestras de "tu paleta", tres bloques más abajo); y los otros candidatos fallaban — el café `#6f4a35` es seguro pero tan apagado que la demo deja de demostrar, y el oliva dorado `#8d6a2f` roza justo la familia vetada.
+
+**Barrido de hex sueltos** en `app/` y `components/`: casi todos los que aparecían resultaron ser comentarios explicando decisiones, no color real. Los dos genuinos eran el mismo: `#E5E1DD` como relleno de una prenda sin imagen ni color, repetido en Hoy e Historial — un hex a un punto de `--c-line` (#e4e3e0) que nadie iba a mantener sincronizado. Va al token: es un hueco de la UI, no el color de una prenda.
+
 ## [0.2.208.0] - 2026-08-09
 
 ### Fixed — la portada de colorimetría parecía una pregunta, y dejaba contestarla

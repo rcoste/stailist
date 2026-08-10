@@ -13,11 +13,22 @@ import { savePalette, skipColorimetria } from "./actions";
 // ilustrativos —como una imagen—, por eso van hardcodeados y NO como tokens.
 // Los dos tonos de la demo son CONTENIDO —muestras de tela—, no tokens de
 // marca: hacen falta uno cálido y uno frío claramente distintos para que la
-// diferencia se vea. OJO PENDIENTE: el cálido es terracota, y Roberto tiene
-// vetado ámbar/terracota/naranja en la identidad. Viene heredado del diseño
-// anterior (no lo introdujo el handoff); queda señalado para decidir si se
-// cambia por un cálido fuera de esa familia (un vino, por ejemplo).
-const TONO_CALIDO = "#b6532f"; // terracota — ver nota de arriba
+// diferencia se vea.
+//
+// EL CÁLIDO ERA TERRACOTA, y ámbar/terracota/naranja está vetado en la
+// identidad. Venía heredado del diseño anterior (#c9563f, comentado
+// literalmente "// terracota") y el handoff lo mantuvo (#b6532f) — o sea que
+// llevaba semanas de contrabando dentro de una pantalla del onboarding.
+//
+// VINO Y NO OTRO CÁLIDO, por tres razones:
+//   · es inequívocamente ropa (un tejido vino existe; un "naranja demo", no);
+//   · rima con lo que el test ENTREGA — #8e1f3a ya sale en las muestras de "tu
+//     paleta" tres bloques más abajo, así que la promesa y el ejemplo hablan el
+//     mismo idioma;
+//   · los otros candidatos fallaban: el café (#6f4a35) es seguro pero tan
+//     apagado que la demo deja de demostrar, y el oliva dorado (#8d6a2f) roza
+//     justo la familia vetada.
+const TONO_CALIDO = "#7d2b3d"; // vino
 const TONO_FRIO = "#96a08c"; // salvia
 
 /** Lo que el test devuelve, adelantado. Es lo mismo que pinta el reveal:
