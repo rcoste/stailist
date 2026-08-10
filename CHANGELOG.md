@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.207.0] - 2026-08-09
+
+### Changed — el espejo pasa a pantalla completa
+
+Decisión de Roberto, **contra mi recomendación** — queda escrito en el código porque el encuadre del módulo empuja al revés y conviene saber que se eligió a sabiendas. Mi objeción: el espejo es *"estoy vestida y salgo con prisa"*, y una hoja que se desliza y se va encaja con eso. Su argumento, que es bueno: el carrete ya es pantalla completa, y dos flujos que confirman prendas con **la misma tarjeta** no deberían vivir en dos registros distintos.
+
+Lo que gana de verdad, y esto sí es objetivo: el paso de confirmar prendas es largo —una tarjeta por prenda, con chips y editores— y en una hoja con `max-h: 92dvh` eso era scroll dentro de scroll, exactamente lo que se arregló en el carrete hace dos versiones. Ahora las dos pantallas con trabajo dentro (recortar por acompañada, y mirar/confirmar) usan el mismo contenedor: pantalla completa, scroll propio, pie fuera del scroll.
+
+**El error se queda como hoja**, y no por descuido: es un aviso de una línea con un botón. Pantalla completa para decir *"no pude leer la foto"* convierte un tropiezo en un acontecimiento.
+
+Verificado en el navegador con foto real: la capa cuelga de `BODY`, ocupa 0→844, sin `items-end`, y el veredicto se lee entero con las prendas debajo.
+
 ## [0.2.206.0] - 2026-08-09
 
 ### Changed — las capas del espejo también nacen portadas

@@ -38,6 +38,49 @@ function Capa({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 
+/** La pantalla del espejo: completa, no hoja.
+ *
+ *  DECISIÓN DE ROBERTO (2026-08-09), contra mi recomendación — la dejo escrita
+ *  porque el encuadre de este módulo empuja al revés y conviene saber que se
+ *  eligió a sabiendas: el espejo es "estoy vestida y salgo con prisa", y una
+ *  hoja que se desliza y se va encaja con eso. Su argumento, que es bueno: el
+ *  carrete ya es pantalla completa, y dos flujos que confirman prendas con la
+ *  MISMA tarjeta no deberían vivir en dos registros distintos.
+ *
+ *  Lo que gana de verdad: el paso de confirmar prendas es largo (una tarjeta
+ *  por prenda, con chips y editores), y en una hoja con max-h de 92dvh eso era
+ *  scroll dentro de scroll con el pie flotando encima — exactamente lo que se
+ *  arregló en el carrete.
+ *
+ *  La salida se conserva: el aspa cierra desde cualquier paso, que era lo bueno
+ *  de la hoja. */
+function Pantalla({
+  children,
+  pie,
+}: {
+  children: React.ReactNode;
+  /** Fuera del área con scroll, como en el carrete: no puede pisar contenido. */
+  pie?: React.ReactNode;
+}) {
+  return (
+    <Capa>
+      <div
+        className="fixed inset-0 z-50 flex flex-col bg-bg"
+        style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+      >
+        <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col overflow-hidden px-5 pt-[max(1rem,env(safe-area-inset-top))]">
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-4">{children}</div>
+          {pie ? (
+            <div className="shrink-0 border-t border-line pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+              {pie}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </Capa>
+  );
+}
+
 // "¿ME VEO BIEN?" — el flujo de una sola pantalla.
 //
 // Todo lo que aquí se decide sale del encuadre (ver lib/espejo): ella pregunta,
@@ -621,12 +664,8 @@ export function EspejoFlow({
   // que se lea la ropa de otro EN SILENCIO.
   if (state.kind === "acompanada") {
     return (
-      <Capa>
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
-          <div
-            className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
-            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-          >
+      <Pantalla>
+          <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <h2 className="text-[22px] font-semibold leading-tight text-ink">
                 sale <em className="font-normal italic">alguien más</em>
@@ -673,20 +712,15 @@ export function EspejoFlow({
               }}
             />
           ) : null}
-        </div>
-      </Capa>
+      </Pantalla>
     );
   }
 
   if (state.kind === "mirando" || state.kind === "listo") {
     const lista = state.kind === "listo" ? state.lectura : null;
     return (
-      <Capa>
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center">
-          <div
-            className="flex max-h-[92dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
-            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
-          >
+      <Pantalla>
+          <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <h2 className="text-[22px] font-semibold leading-tight text-ink">
                 {lista ? (
@@ -1005,12 +1039,15 @@ export function EspejoFlow({
             )}
           </div>
           {input}
-        </div>
-      </Capa>
+      </Pantalla>
     );
   }
 
   if (state.kind === "error") {
+    // ESTA SÍ SIGUE SIENDO HOJA, y no por descuido: es un aviso de una línea con
+    // un botón. Pantalla completa para decir "no pude leer la foto" convierte un
+    // tropiezo en un acontecimiento. Lo que pasó a pantalla son los pasos con
+    // trabajo dentro (recortar, mirar, confirmar prendas).
     return (
       <Capa>
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center" onClick={cerrar}>
