@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { type Season, SEASONS } from "@/lib/colorimetria";
+import { type Season } from "@/lib/colorimetria";
 import { SeasonReveal } from "@/components/season-reveal";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
@@ -11,60 +11,99 @@ import { savePalette, skipColorimetria } from "./actions";
 // CONTENIDO (no tokens): la intro DEMUESTRA qué es la colorimetría con muestras
 // de ropa. Dos tonos claramente distintos, uno cálido y uno frío. Son datos
 // ilustrativos —como una imagen—, por eso van hardcodeados y NO como tokens.
-const TONO_CALIDO = "#c9563f"; // terracota
-const TONO_FRIO = "#8e9b6b"; // olivo
+// Los dos tonos de la demo son CONTENIDO —muestras de tela—, no tokens de
+// marca: hacen falta uno cálido y uno frío claramente distintos para que la
+// diferencia se vea. OJO PENDIENTE: el cálido es terracota, y Roberto tiene
+// vetado ámbar/terracota/naranja en la identidad. Viene heredado del diseño
+// anterior (no lo introdujo el handoff); queda señalado para decidir si se
+// cambia por un cálido fuera de esa familia (un vino, por ejemplo).
+const TONO_CALIDO = "#b6532f"; // terracota — ver nota de arriba
+const TONO_FRIO = "#96a08c"; // salvia
 
-// Las FAMILIAS de color: las paletas REALES del test (SEASONS), SIN nombrar
-// estación. Mostrar varias —no una— es lo honesto: una sola se leería como "estos
-// son TUS colores" antes de responder nada; varias dicen "el color viene en
-// familias, la tuya sale del test". Orden cálido/frío alternado para que se lean
-// distintas. El reveal sí nombra la estación; aquí es vocabulario interno.
-const FAMILIAS: string[][] = (["primavera", "otono", "verano", "invierno"] as const).map(
-  (s) => SEASONS[s].colores.map((c) => c.hex)
-);
+/** Lo que el test devuelve, adelantado. Es lo mismo que pinta el reveal:
+ *  paleta, lo que apaga y el metal (`metalForSeason`), así que la promesa es
+ *  comprobable y no marketing. */
+const ENTREGA: {
+  titulo: string;
+  desc: string;
+  muestras?: string[];
+  apagados?: boolean;
+  metal?: boolean;
+}[] = [
+  {
+    titulo: "tu paleta",
+    desc: "los colores que te encienden",
+    muestras: ["#141414", "#274690", "#8e1f3a", "#1f6e52"],
+  },
+  {
+    titulo: "qué evitar",
+    desc: "los tonos que te apagan",
+    muestras: ["#b08d57", "#c2984e", "#8a9a6b", "#d9c9a3"],
+    apagados: true,
+  },
+  { titulo: "tu metal", desc: "oro o plata", metal: true },
+];
 
 // Un "campo" de la demostración: el tono como fondo, una silueta (la cara sin
 // dibujarla) y la etiqueta. El que apaga baja a saturate(.28) — no opacidad ni
 // gris total, para que se lea "el mismo tono, apagado".
+/** Un campo de la demo: la misma cara con un color al lado, y su veredicto ya
+ *  puesto.
+ *
+ *  YA NO ES UN BOTÓN, y ése es el arreglo. Antes cada campo tenía `onClick` y
+ *  tocarlo invertía cuál "ilumina": dos opciones lado a lado con etiquetas
+ *  cortas, en un onboarding donde TODAS las demás pantallas de dos opciones son
+ *  una pregunta. Se leía como una — y peor, dejaba "contestarla": podías hacer
+ *  que cualquiera de los dos colores fuera el que favorece, que enseña justo lo
+ *  contrario de la verdad (cuál te favorece es un hecho sobre ti, no una
+ *  elección).
+ *
+ *  No es teoría: mi propio recorrido automatizado del onboarding se atoró aquí
+ *  clicando "TE ILUMINA" y "TE APAGA" como si fueran las opciones a responder,
+ *  y se quedó dando vueltas en la portada sin llegar al test.
+ *
+ *  Ahora el veredicto viene dado (✓/✗) y la única acción de la pantalla es el
+ *  CTA. Handoff `design_handoff_colorimetria_intro`. */
 function ColorFace({
   color,
   ilumina,
   label,
-  onClick,
 }: {
   color: string;
   ilumina: boolean;
   label: string;
-  onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={ilumina}
-      className="relative flex aspect-[1/1.16] items-end justify-center p-3.5 transition-[filter] duration-300"
-      style={{ backgroundColor: color, filter: ilumina ? undefined : "saturate(0.28)" }}
+    <div
+      aria-hidden
+      className="relative flex aspect-[1/0.82] items-end justify-center rounded-lg p-2.5"
+      style={{
+        backgroundColor: color,
+        // El que apaga se DESATURA un punto, nunca gris total ni opacidad: la
+        // demo tiene que seguir leyéndose como dos telas, no como una activa y
+        // otra deshabilitada.
+        filter: ilumina ? undefined : "saturate(0.7) brightness(0.94)",
+      }}
     >
       <span
-        aria-hidden
-        className="absolute left-1/2 top-[14%] aspect-square w-[52%] -translate-x-1/2 rounded-full bg-tile"
-        style={{ border: "1px solid rgb(255 255 255 / 0.5)" }}
+        className="absolute left-1/2 top-[18%] aspect-square w-[46%] -translate-x-1/2 rounded-full"
+        style={{
+          backgroundColor: ilumina ? "#f8f5f0" : "#e7e2da",
+          boxShadow: ilumina ? "0 0 22px 6px rgb(255 250 240 / 0.55)" : undefined,
+        }}
       />
-      {/* Scrim de legibilidad de la etiqueta (contenido de la demo, no token). */}
       <span
-        className="relative z-[2] px-[9px] py-[5px] text-[10.5px] font-bold uppercase tracking-[0.1em] text-white"
-        style={{ backgroundColor: ilumina ? "rgb(20 20 20 / 0.72)" : "rgb(20 20 20 / 0.42)" }}
+        className="relative z-[2] flex items-center gap-1 rounded-[4px] px-[7px] py-[4px] text-[10px] font-bold uppercase tracking-[0.1em] text-white"
+        style={{ backgroundColor: "rgb(20 20 20 / 0.55)" }}
       >
+        <Icon name={ilumina ? "check" : "equis"} size={10} />
         {label}
       </span>
-    </button>
+    </div>
   );
 }
 
 export function Quiz() {
-  // Cuál de los dos campos "favorece" (el otro se apaga). Se puede invertir
-  // tocando cualquiera — enseña el concepto sin explicarlo.
-  const [iluminaIzq, setIluminaIzq] = useState(true);
   // Intro opcional: la colorimetría NO es gatekeep. Primero vendemos su valor y
   // dejamos saltarla (se puede llenar después desde Perfil).
   const [started, setStarted] = useState(false);
@@ -119,50 +158,68 @@ export function Quiz() {
   if (!started) {
     return (
       <div className="flex flex-1 flex-col">
-        <p className="font-display text-[19px] italic leading-[26px] text-muted">
-          Hay tonos que te encienden la cara y otros que te la apagan. Quiero
-          saber cuáles son los tuyos.
-        </p>
+        {/* LA DEMO, con su veredicto puesto y sin nada tocable. */}
+        <div className="my-auto flex flex-col gap-4">
+          <p className="text-sm text-muted">mira lo que hace un color equivocado:</p>
 
-        {/* La demostración, centrada en el aire libre (márgenes auto): el par de
-            campos + la paleta que anticipa el reveal + el costo declarado. */}
-        <div className="my-auto">
-          <div className="grid grid-cols-2 gap-3.5">
-            <ColorFace
-              color={TONO_CALIDO}
-              ilumina={iluminaIzq}
-              label={iluminaIzq ? "te ilumina" : "te apaga"}
-              onClick={() => setIluminaIzq(true)}
-            />
-            <ColorFace
-              color={TONO_FRIO}
-              ilumina={!iluminaIzq}
-              label={iluminaIzq ? "te apaga" : "te ilumina"}
-              onClick={() => setIluminaIzq(false)}
-            />
-          </div>
-
-          {/* Las familias de color (SIN nombrar estación). La etiqueta deja claro
-              que son ejemplos, no un veredicto — la tuya sale del test. Así no se
-              lee como "estos son TUS colores" antes de responder. */}
-          <div className="mt-5 flex flex-col gap-2">
-            <p className="text-[11px] font-semibold leading-snug text-muted">
-              el color viene en familias — el test encuentra la tuya
-            </p>
-            <div className="flex flex-col gap-1.5">
-              {FAMILIAS.map((fam, i) => (
-                <div key={i} className="flex h-5 overflow-hidden rounded-sm">
-                  {fam.map((hex) => (
-                    <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
-              ))}
+          <div className="flex flex-col gap-2.5 rounded-xl border border-line bg-surface p-3">
+            <div className="grid grid-cols-2 gap-2.5">
+              <ColorFace color={TONO_CALIDO} ilumina label="te enciende" />
+              <ColorFace color={TONO_FRIO} ilumina={false} label="te apaga" />
             </div>
+            {/* La leyenda es la tercera defensa contra "esto es una pregunta":
+                dice en voz alta que es un ejemplo y qué está variando. */}
+            <p className="text-center text-xs leading-snug text-muted">
+              <strong className="font-semibold text-ink">es la misma persona</strong> — solo
+              cambia el color de al lado.
+            </p>
           </div>
 
-          {/* Costo declarado, sobre hairline (se fue la placa dorada suelta). */}
-          <div className="mt-3.5 border-t border-line pt-3 text-center text-xs font-semibold text-muted">
-            cinco preguntas · cuarenta segundos · sin foto
+          {/* QUÉ TE LLEVAS, que es lo que decide si vale los 40 segundos.
+              Las tres filas son lo MISMO que entrega el reveal, adelantado: la
+              paleta, lo que te apaga y el metal (metalForSeason ya se pinta
+              ahí). Sustituye a las tiras de "familias de color", que explicaban
+              un concepto en vez de vender un resultado.
+
+              SIN NÚMEROS a propósito ("los colores", no "los 5"): la paleta sale
+              con más o menos tonos según la persona. */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-faint">
+              el test te entrega
+            </p>
+            {ENTREGA.map((e) => (
+              <div
+                key={e.titulo}
+                className="flex items-center gap-2.5 rounded-lg border border-line bg-surface px-3 py-2.5"
+              >
+                {e.metal ? (
+                  <span
+                    className="h-[18px] w-[26px] shrink-0 rounded-[3px]"
+                    style={{ background: "linear-gradient(135deg,#e6e8ea,#b9bdc1 48%,#8f9398)" }}
+                    aria-hidden
+                  />
+                ) : (
+                  <span
+                    className="flex h-[18px] w-[26px] shrink-0 overflow-hidden rounded-[3px]"
+                    style={{ opacity: e.apagados ? 0.45 : 1 }}
+                    aria-hidden
+                  >
+                    {e.muestras!.map((hex) => (
+                      <i key={hex} className="flex-1" style={{ backgroundColor: hex }} />
+                    ))}
+                  </span>
+                )}
+                <span className="text-[13.5px] font-bold text-ink">{e.titulo}</span>
+                <span className="ml-auto text-right text-xs text-muted">{e.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Costo declarado. SEIS y no cinco: son seis preguntas de verdad
+              (venas, sol, cabello, ojos, metal, cumplidos) y el copy decía
+              cinco — un número que miente en la pantalla que pide permiso. */}
+          <div className="border-t border-line pt-3 text-center text-xs font-semibold text-muted">
+            seis preguntas · cuarenta segundos · sin foto
           </div>
         </div>
 
@@ -172,7 +229,7 @@ export function Quiz() {
             onClick={() => setStarted(true)}
             className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
           >
-            va, hagámoslo <Icon name="flecha" size={18} />
+            encontrar mis colores <Icon name="flecha" size={18} />
           </button>
           <button
             type="button"

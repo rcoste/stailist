@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.208.0] - 2026-08-09
+
+### Fixed — la portada de colorimetría parecía una pregunta, y dejaba contestarla
+
+Handoff de diseño `colorimetria_intro` v2. Su premisa —que el par ilumina/apaga se leía como una pregunta más del onboarding— **está verificada por accidente**: mi propio recorrido automatizado del onboarding se atoró justo ahí, clicando "TE ILUMINA" y "TE APAGA" como si fueran las opciones a responder, y se quedó dando vueltas en la portada sin llegar al test.
+
+Y era peor que parecerlo: los dos campos tenían `onClick` y tocarlos **invertía cuál favorece**. Se podía "contestar" que el frío te enciende — enseñando lo contrario de la verdad, porque cuál te favorece es un hecho sobre ti, no una elección.
+
+Ahora el veredicto viene dado (✓ TE ENCIENDE / ✗ TE APAGA), la leyenda declara que es un ejemplo (*"es la misma persona — solo cambia el color de al lado"*) y **la única acción de la pantalla es el CTA**. Medido: dos tocables en total, el CTA y "ahora no".
+
+**Dos correcciones que el handoff trae y verifiqué antes de aceptar:**
+
+- **"cinco preguntas" era mentira.** Son seis (venas, sol, cabello, ojos, metal, cumplidos) — lo mismo que midió el recorrido de QA. El copy ya dice seis.
+- **"tu metal" sí se entrega.** `metalForSeason` se pinta en el reveal, así que la promesa de las tres filas es comprobable y no marketing.
+
+Las tiras de "familias de color" se van: explicaban un concepto en vez de vender el resultado. Y sobraba un lead: la pantalla arrastraba el párrafo serif del diseño anterior *y* el nuevo, dos leads apilados.
+
+**Pendiente de tu decisión**: el tono cálido de la demo es terracota (`#b6532f`), y ámbar/terracota/naranja está vetado en la identidad. Viene heredado del diseño anterior (`#c9563f`, comentado *"// terracota"*), no lo introdujo el handoff. Queda señalado en el código; cambiarlo por un cálido fuera de esa familia es una línea.
+
+**Lo que no se hizo**: el cross-fade lento entre las dos luces (marcado "opcional" en el handoff) — es una animación nueva y el DS obliga a preguntar antes de inventarla. Y cabe exacto en 390×844, pero **se desborda 126px en un iPhone SE (375×667)**: ahí hay que bajar para llegar al CTA. El handoff sólo contempla el tamaño grande.
+
 ## [0.2.207.0] - 2026-08-09
 
 ### Changed — el espejo pasa a pantalla completa
