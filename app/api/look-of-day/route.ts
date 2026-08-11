@@ -385,10 +385,19 @@ async function anchorWarningIfUnfit(
     (typeof body.objective === "string" && body.objective in OBJECTIVES
       ? OBJECTIVES[body.objective as keyof typeof OBJECTIVES]
       : "el día a día");
-  const weatherLine =
+  // EL TECHADO TAMBIÉN MANDA AQUÍ. Este gate corre ANTES de generar y puede
+  // bloquear el flujo con "esa prenda no va con la lluvia" — o sea que sin este
+  // filtro era la única pantalla donde el agua que la persona acaba de decir
+  // que no le toca vuelve a aparecer, y encima frenando.
+  const wCrudo =
     typeof body.weather?.temp_c === "number"
-      ? `${body.weather.temp_c}°C, ${body.weather.condition ?? "despejado"}`
+      ? {
+          temp_c: body.weather.temp_c,
+          condition: body.weather.condition ?? "despejado",
+        }
       : null;
+  const wGate = climaParaElMotor(wCrudo, body.techado === true);
+  const weatherLine = wGate ? `${wGate.temp_c}°C, ${wGate.condition}` : null;
 
   const fit = await checkAnchorFit(
     { id: seedItemId, attrs: item.attrs as EngineItem["attrs"] },

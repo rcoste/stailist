@@ -491,6 +491,150 @@ describe("la lluvia AUTOMÁTICA (el camino real de casi todos)", () => {
   });
 });
 
+describe("el funeral escrito con tus palabras", () => {
+  it("llega al motor COMO funeral, no como día normal", () => {
+    // El agujero que abrió quitarle el chip: el campo libre manda
+    // `objective: "diario"`, así que "un funeral" se armaba como un martes
+    // cualquiera y la regla del catálogo —EL COLOR ES NEGRO, el azul marino
+    // NO— no la alcanzaba ninguna ruta de código. Sigue SIN paso de detalle
+    // (eso se acordó), pero hereda la formalidad del catálogo.
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} />);
+    return (async () => {
+      await u.type(
+        screen.getByPlaceholderText(/escríbelo o díctalo/i),
+        "un funeral el jueves"
+      );
+      await siguiente(u);
+      // Del plan pasa directo a "cuándo": el texto libre no abre detalle.
+      expect(await screen.findByText(/¿qué día\?/i)).toBeTruthy();
+      await siguiente(u);
+      await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+      await u.click(await screen.findByRole("button", { name: /templado/i }));
+      await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+      await waitFor(() => expect(onPick).toHaveBeenCalled());
+      const input = onPick.mock.calls[0][0] as LookInput;
+      expect(input.objective).toBe("evento");
+      expect(input.tipoEvento).toBe("funeral");
+      expect(input.formality).toBe("formal");
+      // Y el texto sigue viajando tal cual, que es la promesa del campo.
+      expect(input.plan).toBe("un funeral el jueves");
+    })();
+  });
+
+  it("un plan cualquiera sigue siendo día normal y viaja tal cual", async () => {
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} />);
+    await u.type(
+      screen.getByPlaceholderText(/escríbelo o díctalo/i),
+      "concierto en la noche"
+    );
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    await u.click(await screen.findByRole("button", { name: /templado/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect(input.objective).toBe("diario");
+    expect(input.tipoEvento).toBeNull();
+    expect(input.plan).toBe("concierto en la noche");
+  });
+});
+
+describe("cambiar de día NO deja pegada la lluvia del día anterior", () => {
+  it("un pronóstico nuevo manda sobre la lluvia, el techo y la banda", async () => {
+    // El camino que lo rompía, con el botón atrás del propio wizard: resuelvo
+    // un día con lluvia → contesto "techado" → atrás → cambio la fecha a un día
+    // despejado. El banner decía despejado pero `rain` seguía prendido, se
+    // seguía preguntando por el techo y al motor le viajaba la banda VIEJA
+    // marcada como techada. Un pronóstico nuevo manda sobre lo que él mismo
+    // pre-llenó.
+    const { getWeather } = await import("@/lib/weather");
+    vi.mocked(getWeather).mockResolvedValue({ temp_c: 19, condition: "lluvia" });
+    stubNavigator({
+      permissions: { query: async () => ({ state: "granted" }) },
+      geolocation: {
+        getCurrentPosition: (ok: PositionCallback) =>
+          ok({ coords: { latitude: 18.9, longitude: -99.2 } } as GeolocationPosition),
+      },
+    });
+
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} />);
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+    await siguiente(u);
+
+    // Día lluvioso: contesto que estaré bajo techo.
+    await u.click(await screen.findByRole("button", { name: /^techado$/i }));
+
+    // Atrás y cambio la fecha: el nuevo día está despejado y más caluroso.
+    // OJO: una fecha futura se lee con getWeatherForDates, no con getWeather.
+    const { getWeatherForDates } = await import("@/lib/weather");
+    vi.mocked(getWeatherForDates).mockResolvedValue({ temp_c: 31, condition: "despejado" });
+    await u.click(screen.getByRole("button", { name: /atrás/i }));
+    await u.click(await screen.findByRole("button", { name: /^mañana$/i }));
+    await siguiente(u);
+
+    // Ya no se pregunta por una lluvia que no existe.
+    await waitFor(() => expect(screen.queryByText(/¿la lluvia te toca\?/i)).toBeNull());
+
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect("techado" in input).toBe(false);
+    expect("weather" in input && input.weather.condition).toBe("despejado");
+    expect("weather" in input && input.weather.temp_c).toBe(31);
+  });
+
+  it("si el pronóstico nuevo NO se puede leer, tampoco queda la lluvia vieja", async () => {
+    // El caso que descubrió este test al fallar: una fecha futura se lee con
+    // otra función, y si esa devuelve null (sin red, fuera del horizonte) el
+    // `if (!w) return` de resolverClima dejaba intacto todo lo del día anterior
+    // — y viajaba un "techado" contestado sobre la lluvia de otro día.
+    const { getWeather, getWeatherForDates } = await import("@/lib/weather");
+    vi.mocked(getWeather).mockResolvedValue({ temp_c: 19, condition: "lluvia" });
+    vi.mocked(getWeatherForDates).mockResolvedValue(null);
+    stubNavigator({
+      permissions: { query: async () => ({ state: "granted" }) },
+      geolocation: {
+        getCurrentPosition: (ok: PositionCallback) =>
+          ok({ coords: { latitude: 18.9, longitude: -99.2 } } as GeolocationPosition),
+      },
+    });
+
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} />);
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /^techado$/i }));
+
+    await u.click(screen.getByRole("button", { name: /atrás/i }));
+    await u.click(await screen.findByRole("button", { name: /^mañana$/i }));
+    await siguiente(u);
+
+    // Sin pronóstico se vuelve a preguntar desde cero, no se hereda nada.
+    await waitFor(() => expect(screen.queryByText(/¿la lluvia te toca\?/i)).toBeNull());
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    // La banda tampoco se hereda: hay que volver a elegirla.
+    await u.click(await screen.findByRole("button", { name: /cálido/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect("techado" in input).toBe(false);
+    expect("weather" in input && input.weather.condition).toBe("despejado");
+  });
+});
+
 describe("paso 2 — la boda de playa", () => {
   it("la boda ofrece 'guayabera o lino' además de los cuatro niveles", async () => {
     const u = userEvent.setup();

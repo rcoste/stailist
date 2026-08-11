@@ -15,7 +15,11 @@ import {
   type WorkDressCode,
 } from "@/lib/dress-code";
 import { FORMALIDADES, ropaDeFormalidad } from "@/lib/formalidad";
-import { TIPOS_EVENTO, formalidadDeEvento } from "@/lib/eventos";
+import {
+  TIPOS_EVENTO,
+  formalidadDeEvento,
+  reconocerPlanEscrito,
+} from "@/lib/eventos";
 import { pasosDelWizard } from "@/lib/wizard-pasos";
 // Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
 // del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
@@ -387,8 +391,14 @@ export function LookRequest({
 
   // Campo abierto y tarjetas son mutuamente excluyentes (el "o" lo deja claro).
   const hasOpen = openText.trim().length > 0;
+  // Los dos planes que perdieron su chip (graduación, funeral) siguen siendo
+  // reconocibles por su nombre. Sin esto, escribir "un funeral" llegaba al
+  // motor como DÍA NORMAL —sin piso de formalidad y sin la regla del negro—,
+  // que es peor de lo que se acordó al quitarlos de la rejilla: se acordó que
+  // no tuvieran paso de detalle, no que dejaran de ser lo que son.
+  const planEscrito = hasOpen ? reconocerPlanEscrito(openText) : null;
   const objectivePart: { objective: string; plan?: string } = hasOpen
-    ? { objective: "diario", plan: openText.trim() }
+    ? { objective: planEscrito ? "evento" : "diario", plan: openText.trim() }
     : { objective: objective ?? "diario" };
 
   // Trabajo exige su código de vestimenta la PRIMERA vez, por lo mismo que
@@ -420,11 +430,15 @@ export function LookRequest({
   const detalleReady = pideDressCode ? !!dressCode : true;
   // La formalidad: la del catálogo según el tipo y el momento, salvo que la
   // haya ajustado a mano. El momento importa — una cena no es una comida.
+  // El tipo EFECTIVO: el del chip, o el que se reconoció en el texto libre.
+  // El texto libre no abre el paso de detalle (eso sigue igual) — solo hereda
+  // la formalidad por defecto del catálogo, como cuando esos planes tenían chip.
+  const tipoEfectivo = hasOpen ? planEscrito : tipoEvento;
   const formality =
-    formalityManual ?? formalidadDeEvento(tipoEvento, momento) ?? null;
-  const esEvento = objectivePart.objective === "evento" && !hasOpen;
+    formalityManual ?? formalidadDeEvento(tipoEfectivo, momento) ?? null;
+  const esEvento = objectivePart.objective === "evento";
   const formalityOut = esEvento ? formality : null;
-  const tipoEventoOut = esEvento ? tipoEvento : null;
+  const tipoEventoOut = esEvento ? tipoEfectivo : null;
 
   function next() {
     setIdx((i) => Math.min(i + 1, pasos.length - 1));
@@ -459,9 +473,22 @@ export function LookRequest({
     // literal propio —sin el flag de mayúsculas y con otra lista de palabras—,
     // que es exactamente la divergencia que rompe el techado en silencio: la
     // UI no pregunta por una lluvia que el motor sí ve, o al revés.
+    // EL PRONÓSTICO SINCRONIZA, NO SOLO ENCIENDE.
+    //
+    // Antes esto solo sabía prender la lluvia (`if (llueve) setRain(true)`) y
+    // solo llenaba la banda si estaba vacía (`prev ?? mejor`). Con el botón
+    // atrás del propio wizard eso deja mentiras pegadas: resuelvo el sábado con
+    // lluvia, contesto "techado", regreso, cambio la fecha al domingo despejado
+    // — y el banner decía 28° despejado mientras `rain` seguía en true, se
+    // seguía preguntando "¿la lluvia te toca?" y al motor le viajaba la banda
+    // VIEJA con `techado`. Un pronóstico nuevo manda sobre todo lo que él mismo
+    // había pre-llenado; lo que la persona corrija después sigue ganando.
     const llueve = hayLluvia(w.condition);
-    setClimaIdx((prev) => prev ?? mejor);
-    if (llueve) setRain(true);
+    setClimaIdx(mejor);
+    setRain(llueve);
+    // Sin lluvia la pregunta del techo no existe: dejar `techado` prendido
+    // mandaría una respuesta a una pregunta que ya no se hizo.
+    if (!llueve) setTechado(false);
     autoPrefill.current = { idx: mejor, rain: llueve };
   }
 
@@ -498,6 +525,21 @@ export function LookRequest({
   useEffect(() => {
     autoClimaIntentado.current = false;
     setClimaAuto(null);
+    // Y CADUCA TAMBIÉN LO QUE EL PRONÓSTICO DEJÓ CONTESTADO. Borrar solo el
+    // banner no basta: la lluvia, el techo y la banda que él pre-llenó siguen
+    // siendo del día viejo. Normalmente el pronóstico nuevo los sobrescribe al
+    // volver al paso, pero si esa lectura falla (sin red, fecha fuera del
+    // horizonte) se quedaban pegados y viajaba al motor un "techado" contestado
+    // sobre una lluvia de otro día.
+    //
+    // Lo contestado A MANO no se toca: autoPrefill nulo significa que nadie
+    // pre-llenó nada, o sea que lo que hay en pantalla lo escribió la persona.
+    if (autoPrefill.current) {
+      setRain(false);
+      setTechado(false);
+      setClimaIdx(null);
+      autoPrefill.current = null;
+    }
   }, [ciudadGeo, fecha, donde, aquiCoords]);
 
   async function buscarCiudad() {

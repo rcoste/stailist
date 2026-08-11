@@ -3,6 +3,7 @@ import {
   TIPOS_EVENTO,
   formalidadDeEvento,
   lineaTipoEvento,
+  reconocerPlanEscrito,
   tipoEventoPorClave,
 } from "./eventos";
 import { FORMALIDADES } from "./formalidad";
@@ -127,6 +128,58 @@ describe("formalidades que aplican por plan", () => {
       t.formalidadesQueAplican.includes("playa")
     ).map((t) => t.key);
     expect(conPlaya).toEqual(["boda"]);
+  });
+});
+
+// Los dos planes que perdieron su chip (2026-08-11) siguen siendo reconocibles
+// por su nombre en el campo libre. Sin esto, escribir "un funeral" llegaba al
+// motor como día normal y la regla de mayor valor del catálogo —el negro, y el
+// azul marino NO— quedaba inalcanzable por cualquier ruta de código.
+describe("reconocerPlanEscrito — solo los que perdieron su chip", () => {
+  it("reconoce el funeral escrito de varias formas, con y sin acento", () => {
+    for (const t of [
+      "un funeral",
+      "El Funeral de mi tío",
+      "voy a un velorio en la noche",
+      "el sepelio es mañana",
+      "un entierro",
+    ]) {
+      expect(reconocerPlanEscrito(t), t).toBe("funeral");
+    }
+  });
+
+  it("reconoce la graduación con y sin acento", () => {
+    expect(reconocerPlanEscrito("la graduacion de mi hermana")).toBe("graduacion");
+    expect(reconocerPlanEscrito("una graduación de día")).toBe("graduacion");
+  });
+
+  it("NO es un parser de planes: lo demás sigue viajando tal cual", () => {
+    // La promesa del campo libre es "lo tomo tal cual". Esto solo restituye lo
+    // que se quitó de la rejilla; si empezara a cazar bodas y cenas estaría
+    // reintroduciendo por la puerta de atrás la clasificación que se mató.
+    for (const t of [
+      "concierto en la noche, algo cómodo",
+      "una boda en la playa",
+      "cena con mis suegros",
+      "café con una amiga",
+      "",
+    ]) {
+      expect(reconocerPlanEscrito(t), t).toBeNull();
+    }
+  });
+
+  it("no se dispara con palabras que solo CONTIENEN la raíz", () => {
+    // El \b importa: sin él, cualquier texto con "misa" adentro (camisa) o con
+    // la raíz pegada a otra palabra entraría por accidente.
+    expect(reconocerPlanEscrito("estrenar mi camisa nueva")).toBeNull();
+    expect(reconocerPlanEscrito("una misa de bautizo")).toBeNull();
+  });
+
+  it("lo que reconoce SÍ existe en el catálogo (o no serviría de nada)", () => {
+    for (const key of ["funeral", "graduacion"]) {
+      expect(tipoEventoPorClave(key), key).not.toBeNull();
+      expect(lineaTipoEvento(key).length).toBeGreaterThan(40);
+    }
   });
 });
 

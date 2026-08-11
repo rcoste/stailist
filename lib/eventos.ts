@@ -157,6 +157,36 @@ export function tipoEventoPorClave(k: string | null | undefined): TipoEvento | n
 }
 
 /**
+ * ¿El plan escrito con sus palabras nombra uno de los DOS planes que perdieron
+ * su chip? (graduación y funeral, 2026-08-11).
+ *
+ * POR QUÉ EXISTE Y POR QUÉ ES TAN ANGOSTO
+ * Al quitarlos de la rejilla quedaron solo alcanzables por el campo libre, y el
+ * campo libre manda `objective: "diario"`. O sea que escribir "un funeral"
+ * llegaba al motor como un día normal: sin piso de formalidad y —lo caro— sin
+ * la regla del catálogo que dice EL COLOR ES NEGRO, EL AZUL MARINO NO. Esa
+ * regla se escribió porque el motor se equivocó justo ahí.
+ *
+ * NO es un parser de planes. Reconoce las palabras de esos dos casos y nada
+ * más: el resto del texto libre sigue viajando tal cual, que es la promesa.
+ * Tampoco añade un paso al wizard — solo deja que la formalidad por defecto del
+ * catálogo y su línea al motor sigan aplicando, como cuando había chip.
+ */
+const PLANES_ESCRITOS: { key: string; re: RegExp }[] = [
+  // "misa" a secas NO entra: también la hay de boda y de bautizo.
+  { key: "funeral", re: /\b(funeral(es)?|velorio|sepelio|entierro|novenario)\b/ },
+  { key: "graduacion", re: /\b(graduacion(es)?|titulacion)\b/ },
+];
+
+export function reconocerPlanEscrito(texto: string): string | null {
+  const t = texto
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+  return PLANES_ESCRITOS.find((p) => p.re.test(t))?.key ?? null;
+}
+
+/**
  * La formalidad que implica un tipo de evento, ya considerando el momento.
  * Solo sube un escalón, nunca dos: una cena con amigos no llega a formal por
  * ser de noche.
