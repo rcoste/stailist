@@ -189,10 +189,14 @@ export function bucketLabel(temp_c: number): string {
   return best.label;
 }
 
-function getPosition(): Promise<{ lat: number; lon: number } | null> {
+// OJO con el timeout: cuando el permiso se pide POR PRIMERA VEZ, el prompt del
+// teléfono tarda lo que tarde la persona en leerlo — un timeout de 5s pierde
+// esa carrera y la app se rendía aunque dijeras que sí (bug que vivió Roberto).
+// Por eso el default es generoso; el caso permiso-ya-dado responde en <1s igual.
+function getPosition(timeoutMs = 30_000): Promise<{ lat: number; lon: number } | null> {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) return resolve(null);
-    const timer = setTimeout(() => resolve(null), 5000);
+    const timer = setTimeout(() => resolve(null), timeoutMs);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         clearTimeout(timer);
@@ -202,7 +206,7 @@ function getPosition(): Promise<{ lat: number; lon: number } | null> {
         clearTimeout(timer);
         resolve(null);
       },
-      { timeout: 4500, maximumAge: 600000 }
+      { timeout: timeoutMs - 500, maximumAge: 600000 }
     );
   });
 }
@@ -301,8 +305,6 @@ export function LookRequest({
   // motor se cubre en medio y sale mal por los dos lados: corto el día de
   // cliente, tieso el día que no.
   const [veCliente, setVeCliente] = useState(false);
-  const [locating, setLocating] = useState(false);
-  const [locFailed, setLocFailed] = useState(false);
   // El "¿dónde?" opcional (caso Irapuato: vives en CDMX, la comida del viernes
   // es en otra ciudad — el pronóstico depende del DÓNDE). Default silencioso:
   // donde estás; solo si lo tocas se geocodifica otra ciudad (misma pieza del
@@ -382,6 +384,27 @@ export function LookRequest({
   // elegido y las bandas amanecen contestadas. El paso se vuelve "así estará —
   // corrige si no va" en vez de una pregunta. Sin coords: el flujo manual de
   // siempre, con su píldora.
+  // Lee el clima de esas coords para la fecha elegida y deja el paso como
+  // CONCLUSIÓN (banner + bandas pre-llenadas, editables). Lo comparten el
+  // auto-resuelto al entrar al paso y el botón "compartir mi ubicación".
+  async function resolverClima(coords: { lat: number; lon: number }) {
+    setResolviendo(true);
+    const w = fecha
+      ? await getWeatherForDates(coords.lat, coords.lon, fecha, fecha)
+      : await getWeather(coords.lat, coords.lon);
+    setResolviendo(false);
+    if (!w) return;
+    setClimaAuto(w);
+    let mejor = 0;
+    BUCKETS.forEach((b, i) => {
+      if (Math.abs(b.temp_c - w.temp_c) < Math.abs(BUCKETS[mejor].temp_c - w.temp_c)) mejor = i;
+    });
+    const llueve = /lluvia|llovizna|chubasco|tormenta/.test(w.condition);
+    setClimaIdx((prev) => prev ?? mejor);
+    if (llueve) setRain(true);
+    autoPrefill.current = { idx: mejor, rain: llueve };
+  }
+
   useEffect(() => {
     if (paso !== "clima" || autoClimaIntentado.current) return;
     autoClimaIntentado.current = true;
@@ -394,29 +417,14 @@ export function LookRequest({
           const perm = await navigator.permissions?.query({
             name: "geolocation" as PermissionName,
           });
-          if (perm?.state === "granted") coords = await getPosition();
+          // Permiso YA dado → responde en <1s; el prompt nunca se dispara solo.
+          if (perm?.state === "granted") coords = await getPosition(5000);
         } catch {
           /* sin API de permisos → no adivinamos; queda el flujo manual */
         }
       }
       if (!coords || muerto) return;
-      setResolviendo(true);
-      const w = fecha
-        ? await getWeatherForDates(coords.lat, coords.lon, fecha, fecha)
-        : await getWeather(coords.lat, coords.lon);
-      if (muerto) return;
-      setResolviendo(false);
-      if (!w) return;
-      setClimaAuto(w);
-      // Bandas y lluvia pre-llenadas con lo leído — editables: lo manual gana.
-      let mejor = 0;
-      BUCKETS.forEach((b, i) => {
-        if (Math.abs(b.temp_c - w.temp_c) < Math.abs(BUCKETS[mejor].temp_c - w.temp_c)) mejor = i;
-      });
-      const llueve = /lluvia|llovizna|chubasco|tormenta/.test(w.condition);
-      setClimaIdx((prev) => prev ?? mejor);
-      if (llueve) setRain(true);
-      autoPrefill.current = { idx: mejor, rain: llueve };
+      await resolverClima(coords);
     })();
     return () => {
       muerto = true;
@@ -444,8 +452,8 @@ export function LookRequest({
   }
 
   // "Aquí, donde estoy": el tap ES el permiso — si el browser no lo tenía, lo
-  // pide ahora; si lo niega, el clima cae al flujo manual (y se dice, no se
-  // esconde).
+  // pide ahora (con timeout generoso: el prompt tarda lo que tarde la persona).
+  // Si lo niega, el clima cae al flujo manual (y se dice, no se esconde).
   async function elegirAqui() {
     setDonde("aqui");
     if (aquiCoords) return;
@@ -458,25 +466,20 @@ export function LookRequest({
     }
   }
 
-  async function useLocation() {
-    setLocating(true);
-    setLocFailed(false);
-    const coords = await getPosition();
-    setLocating(false);
-    if (coords)
-      onPick({
-        ...objectivePart,
-        momento,
-        seedItemId,
-        formality: formalityOut,
-        tipoEvento: tipoEventoOut,
-        ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
-        ...(pideVeCliente ? { veCliente } : {}),
-        fechaLocal: fmtFechaLocal(new Date()),
-        ...(fecha ? { plannedFor: fecha } : {}),
-        ...coords,
-      });
-    else setLocFailed(true);
+  // "Compartir mi ubicación" desde el paso del clima (el camino principal
+  // cuando el permiso aún no está): resuelve y muestra la conclusión ahí mismo.
+  async function compartirUbicacion() {
+    setResolviendo(true);
+    const c = await getPosition();
+    if (!c) {
+      setResolviendo(false);
+      setAquiFallo(true);
+      return;
+    }
+    setAquiCoords(c);
+    setAquiFallo(false);
+    autoClimaIntentado.current = true; // ya estamos resolviendo — que el efecto no doble
+    await resolverClima(c);
   }
 
   function armar() {
@@ -668,6 +671,7 @@ export function LookRequest({
                 onAqui={elegirAqui}
                 onOtra={() => setDonde("otra")}
                 aquiFallo={aquiFallo}
+                aquiListo={aquiCoords !== null}
                 ciudadTexto={ciudadTexto}
                 onCiudadTexto={(v) => {
                   setCiudadTexto(v);
@@ -686,13 +690,13 @@ export function LookRequest({
               <StepClima
                 idx={climaIdx}
                 rain={rain}
-                locating={locating}
-                locFailed={locFailed}
                 onIdx={setClimaIdx}
                 onRain={setRain}
                 paraguas={paraguas}
                 onParaguas={setParaguas}
-                onLocate={useLocation}
+                onCompartir={compartirUbicacion}
+                puedeCompartir={donde === "aqui"}
+                fallo={aquiFallo}
                 fechaLabel={fecha ? fechaLegible(fecha) : null}
                 climaAuto={climaAuto}
                 resolviendo={resolviendo}
@@ -710,7 +714,7 @@ export function LookRequest({
             disabled={
               (paso === "plan" && !planReady) ||
               (paso === "detalle" && !detalleReady) ||
-              (paso === "clima" && (locating || resolviendo || climaIdx === null))
+              (paso === "clima" && (resolviendo || climaIdx === null))
             }
             className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
           >
@@ -1076,6 +1080,7 @@ function StepCuando({
   onAqui,
   onOtra,
   aquiFallo,
+  aquiListo,
   ciudadTexto,
   onCiudadTexto,
   ciudadGeo,
@@ -1094,6 +1099,9 @@ function StepCuando({
   onAqui: () => void;
   onOtra: () => void;
   aquiFallo: boolean;
+  /** Ya hay coords: el tap del permiso funcionó — se dice, para que quede
+   *  claro DÓNDE se pidió la ubicación y que ya no se va a volver a pedir. */
+  aquiListo: boolean;
   ciudadTexto: string;
   onCiudadTexto: (v: string) => void;
   ciudadGeo: { lat: number; lon: number; label: string } | null;
@@ -1153,28 +1161,13 @@ function StepCuando({
             </button>
           </div>
           {otroDiaOpen ? (
-            <div
-              className="flex flex-wrap gap-2"
-              style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-            >
-              {dias.slice(2).map((d) => {
-                const on = d.key === fecha;
-                return (
-                  <button
-                    key={d.label}
-                    type="button"
-                    onClick={() => {
-                      onFecha(d.key);
-                      setOtroDiaOpen(false);
-                    }}
-                    aria-pressed={on}
-                    className={CHIP(on)}
-                  >
-                    {d.label}
-                  </button>
-                );
-              })}
-            </div>
+            <CalendarioDias
+              fecha={fecha}
+              onPick={(k) => {
+                onFecha(k);
+                setOtroDiaOpen(false);
+              }}
+            />
           ) : null}
         </div>
       ) : null}
@@ -1201,7 +1194,7 @@ function StepCuando({
           >
             <span className="text-[14px] font-semibold">aquí, donde estoy</span>
             <span className={`text-[12px] ${donde === "aqui" ? "opacity-80" : "text-muted"}`}>
-              leo tu clima yo
+              {aquiListo ? "listo — ya sé dónde" : "leo tu clima yo"}
             </span>
           </button>
           <button
@@ -1282,6 +1275,96 @@ function StepCuando({
   );
 }
 
+// El calendario de "otro día": rejilla de mes REAL (Roberto: "que se vea un
+// calendario así grande para que le piques y se cierra... pero no así [la
+// sábana de chips], se ve horrible"). Solo los días dentro del horizonte del
+// pronóstico se pueden tocar; el resto se ve, apagado, para que el mes se lea
+// como mes.
+function CalendarioDias({
+  fecha,
+  onPick,
+}: {
+  fecha: string | null;
+  onPick: (k: string | null) => void;
+}) {
+  const hoy = new Date();
+  const min = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const max = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + DIAS_PLANEABLES);
+  const keyHoy = fmtFechaLocal(min);
+
+  // Los meses que el rango toca (1 o 2).
+  const meses: Date[] = [];
+  for (
+    let m = new Date(min.getFullYear(), min.getMonth(), 1);
+    m <= max;
+    m = new Date(m.getFullYear(), m.getMonth() + 1, 1)
+  ) {
+    meses.push(m);
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-4 border border-line bg-surface p-3.5"
+      style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+    >
+      {meses.map((mes) => {
+        const nombreMes = mes.toLocaleDateString("es-MX", { month: "long" });
+        const diasEnMes = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate();
+        // getDay(): 0 = domingo. El encabezado arranca en domingo (D L M M J V S).
+        const offset = new Date(mes.getFullYear(), mes.getMonth(), 1).getDay();
+        return (
+          <div key={nombreMes} className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">
+              {nombreMes}
+            </span>
+            <div className="grid grid-cols-7 gap-y-0.5 text-center">
+              {["D", "L", "M", "M", "J", "V", "S"].map((d, i) => (
+                <span key={`${d}${i}`} className="text-[11px] font-bold text-faint">
+                  {d}
+                </span>
+              ))}
+              {Array.from({ length: offset }).map((_, i) => (
+                <span key={`v${i}`} />
+              ))}
+              {Array.from({ length: diasEnMes }).map((_, i) => {
+                const d = new Date(mes.getFullYear(), mes.getMonth(), i + 1);
+                const key = fmtFechaLocal(d);
+                const dentro = d >= min && d <= max;
+                const on = fecha === key || (!fecha && key === keyHoy);
+                if (!dentro) {
+                  return (
+                    <span
+                      key={key}
+                      className="flex h-10 items-center justify-center text-[14px] text-faint"
+                    >
+                      {i + 1}
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onPick(key === keyHoy ? null : key)}
+                    aria-pressed={on}
+                    className={`mx-auto flex h-10 w-10 items-center justify-center rounded-sm text-[14px] font-semibold transition-colors ${
+                      on
+                        ? "bg-accent text-on-accent"
+                        : "text-ink hover:bg-tile"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function StepMomento({
   momento,
   onPick,
@@ -1328,25 +1411,22 @@ function StepMomento({
 function StepClima({
   idx,
   rain,
-  locating,
-  locFailed,
   onIdx,
   onRain,
   paraguas,
   onParaguas,
-  onLocate,
   fechaLabel = null,
   climaAuto = null,
   resolviendo = false,
   ciudadLabel = null,
+  onCompartir,
+  puedeCompartir,
+  fallo,
 }: {
   /** null = nadie ha elegido todavía. Ver el comentario de `climaIdx`. */
   idx: number | null;
   rain: boolean;
-  locating: boolean;
-  locFailed: boolean;
-  /** "el sábado 16" cuando el look es para otro día: la píldora lee el
-   *  PRONÓSTICO de esa fecha (server, getWeatherForDates), no el clima de hoy. */
+  /** "el sábado 16" cuando el look es para otro día. */
   fechaLabel?: string | null;
   /** El clima ya PRE-RESUELTO (del "¿dónde?" del paso anterior): el paso es la
    *  CONCLUSIÓN — "en Cuernavaca va a llover" — y las bandas viven detrás de
@@ -1355,15 +1435,28 @@ function StepClima({
   resolviendo?: boolean;
   /** "Irapuato, Guanajuato" si el plan es en otra ciudad. */
   ciudadLabel?: string | null;
+  /** Compartir ubicación AQUÍ (el camino principal cuando aún no hay coords):
+   *  resuelve el clima y lo muestra como conclusión, sin salir del paso. */
+  onCompartir: () => void;
+  /** false cuando dijo "en otra ciudad" (ahí compartir ubicación no aplica). */
+  puedeCompartir: boolean;
+  /** La ubicación falló o fue negada → el cuestionario es el camino. */
+  fallo: boolean;
   onIdx: (i: number) => void;
   onRain: (r: boolean) => void;
   paraguas: boolean;
   onParaguas: (p: boolean) => void;
-  onLocate: () => void;
 }) {
-  // Las bandas + la lluvia manual: el cuestionario completo. Es el camino
-  // PRIMARIO sin coords, y la letra chica ("corrígeme") cuando el clima ya
-  // llegó resuelto.
+  // El listado manual solo se abre si la persona lo pide ("prefiero decirte
+  // yo") o si la ubicación falló — la decisión de Roberto: empujar a compartir
+  // ubicación, con la salida explícita a la vista, no dos caminos iguales.
+  const [manualAbierto, setManualAbierto] = useState(!puedeCompartir || fallo);
+  useEffect(() => {
+    if (fallo) setManualAbierto(true);
+  }, [fallo]);
+
+  // Las bandas + la lluvia manual: el cuestionario completo. Camino primario
+  // solo sin coords; letra chica ("corrígeme") cuando el clima llegó resuelto.
   const cuestionario = (
     <>
       <div className="flex flex-col">
@@ -1428,8 +1521,9 @@ function StepClima({
     </>
   );
 
-  // El paraguas, SOLO si llueve. Es pregunta real (no corrección): decide si
-  // la capa de arriba tiene que repeler agua o se elige por estilo.
+  // El paraguas, SOLO si llueve — y con su porqué de verdad: decide si la capa
+  // de arriba tiene que repeler agua o se elige por estilo (el calzado firme
+  // va igual). "Te suelto la mano" no lo entendía nadie.
   const filaParaguas = rain ? (
     <div
       className="mt-3 flex items-center gap-3"
@@ -1440,10 +1534,10 @@ function StepClima({
           ¿llevas paraguas?
         </span>
         <span className="text-[13px] text-muted">
-          si sí, arriba te suelto la mano
+          decide si tu capa de arriba tiene que aguantar agua
         </span>
       </span>
-      <div className="ml-auto inline-flex overflow-hidden rounded-sm border border-line">
+      <div className="ml-auto inline-flex shrink-0 overflow-hidden rounded-sm border border-line">
         <button
           type="button"
           onClick={() => onParaguas(false)}
@@ -1482,8 +1576,11 @@ function StepClima({
   }
 
   if (climaAuto) {
-    // LA CONCLUSIÓN: la app ya sabe — lo dice y ya. El cuestionario completo
-    // queda detrás de "corrígeme" para el día que el pronóstico no cuadre.
+    // LA CONCLUSIÓN — con su FUENTE a la vista: sin ella "20°" se leía como
+    // adivinanza (Roberto). El histórico se explica, no se disfraza.
+    const fuente = climaAuto.estimated
+      ? "no hay pronóstico tan lejos — es el clima típico de estas fechas"
+      : "pronóstico de Open-Meteo";
     return (
       <div className="flex flex-col">
         <div className="flex items-center gap-3 border border-ink bg-surface p-4">
@@ -1493,12 +1590,12 @@ function StepClima({
           <span className="flex min-w-0 flex-col">
             <span className="text-[17px] font-bold text-ink">
               {climaAuto.temp_c}° · {climaAuto.condition}
-              {climaAuto.estimated ? " (clima típico)" : ""}
             </span>
             <span className="text-[14px] text-muted">
               {fechaLabel ? `así se ve ${fechaLabel}` : "así está ahorita"}
               {ciudadLabel ? ` en ${ciudadLabel.split(",")[0]}` : ""}
             </span>
+            <span className="text-[12px] text-faint">{fuente}</span>
           </span>
         </div>
 
@@ -1514,51 +1611,46 @@ function StepClima({
     );
   }
 
-  // Sin coords: el flujo manual de siempre — píldora + cuestionario.
+  // Sin clima resuelto. El camino principal es COMPARTIR ubicación; el listado
+  // manual es la salida explícita — no dos opciones del mismo peso.
   return (
     <div className="flex flex-col">
-      <button
-        type="button"
-        onClick={onLocate}
-        disabled={locating}
-        className="flex items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink disabled:opacity-60"
-      >
-        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-          {locating ? <Spinner className="h-4 w-4" /> : <Icon name="ubicacion" size={17} />}
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="text-[15px] font-semibold text-ink">
-            {locating
-              ? fechaLabel
-                ? "leyendo el pronóstico…"
-                : "leyendo el clima…"
-              : "usar mi ubicación"}
+      {puedeCompartir && !manualAbierto ? (
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={onCompartir}
+            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            <Icon name="ubicacion" size={17} /> compartir mi ubicación
+          </button>
+          <span className="text-center text-[13px] text-muted">
+            {fechaLabel
+              ? `leo el pronóstico ${fechaLabel.startsWith("el ") ? "del " + fechaLabel.slice(3) : "de " + fechaLabel} y te lo muestro aquí`
+              : "leo tu clima y te lo muestro aquí"}
           </span>
-          <span className="text-[15px] text-muted">
-            {locFailed
-              ? "no pude leerla — dime tú abajo"
-              : fechaLabel
-                ? `leo el pronóstico de ${fechaLabel} por ti`
-                : "leo temp y lluvia por ti"}
-          </span>
-        </span>
-        <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
-      </button>
-
-      <div className="my-[18px] flex items-center gap-3">
-        <span className="h-px flex-1 bg-line" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-          o dime tú
-        </span>
-        <span className="h-px flex-1 bg-line" />
-      </div>
-
-      {cuestionario}
-      {filaParaguas}
+          <button
+            type="button"
+            onClick={() => setManualAbierto(true)}
+            className="min-h-[44px] text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+          >
+            prefiero decirte yo
+          </button>
+        </div>
+      ) : (
+        <>
+          {fallo ? (
+            <span className="mb-3 text-[13px] text-muted">
+              no pude leer tu ubicación — dime tú:
+            </span>
+          ) : null}
+          {cuestionario}
+          {filaParaguas}
+        </>
+      )}
     </div>
   );
 }
-
 
 // Disparador del ancla (paso 1): fila opcional que muestra la prenda elegida o
 // invita a abrir la hoja. Vive con la ocasión (intención), no con el clima.

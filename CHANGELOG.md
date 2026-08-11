@@ -2,6 +2,35 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.218.0] - 2026-08-10
+
+### Fixed — la ubicación perdía la carrera contra el prompt de permisos
+
+└ **El bug que vivió Roberto**: "aquí, donde estoy" pedía la ubicación con un
+  timeout de 5 segundos — y el prompt de permisos del teléfono tarda lo que
+  tarde la persona en leerlo. Aunque dijeras que sí, la app ya se había
+  rendido y te volvía a preguntar el clima a mano. Ahora el timeout es
+  generoso (30s) y el botón confirma en el momento: "listo — ya sé dónde".
+
+### Changed — cuarta pasada del wizard, del feedback en vivo
+
+└ **La fuente del clima, a la vista**: "20°" a secas se leía como adivinanza.
+  Pronóstico real → "pronóstico de Open-Meteo"; fuera del horizonte → "no hay
+  pronóstico tan lejos — es el clima típico de estas fechas". Explicar, no
+  disfrazar.
+
+└ **El paraguas dice su porqué real**: "decide si tu capa de arriba tiene que
+  aguantar agua" — el "te suelto la mano" no lo entendía nadie.
+
+└ **"Otro día" abre un calendario de verdad**: rejilla mensual con encabezados
+  (D L M M J V S), hoy marcado, el horizonte tocable y el resto del mes
+  apagado — la sábana de chips "se veía horrible" (cierto).
+
+└ **Empujar a compartir ubicación**: sin coords, el paso del clima ofrece UN
+  camino principal ("compartir mi ubicación" — resuelve y muestra ahí mismo)
+  y la salida explícita ("prefiero decirte yo") que abre el listado manual.
+  Dos opciones del mismo peso invitaban a la flojera de contestar a mano.
+
 ## [0.2.217.0] - 2026-08-10
 
 ### Changed — el wizard deja de sonar a máquina
