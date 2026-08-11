@@ -318,7 +318,12 @@ export function LookRequest({
   // permiso EN ese tap (gesto del usuario, no un prompt sorpresa al montar).
   const [donde, setDonde] = useState<"aqui" | "otra">("aqui");
   const [aquiCoords, setAquiCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [aquiFallo, setAquiFallo] = useState(false);
+  // El permiso tiene TRES finales, no dos, y el tercero era el "raro" que vivió
+  // Roberto: si el navegador ya lo tiene BLOQUEADO (un "no permitir" viejo), el
+  // prompt no vuelve a salir jamás — falla en silencio. Se distingue y se dice.
+  const [aquiEstado, setAquiEstado] = useState<
+    "idle" | "leyendo" | "listo" | "bloqueado" | "fallo"
+  >("idle");
   // El clima pre-resuelto ("así estará el sábado: 19°, lluvia"). Solo informa
   // el banner; las bandas quedan editables — la corrección manual siempre gana.
   const [climaAuto, setClimaAuto] = useState<Weather | null>(null);
@@ -451,33 +456,55 @@ export function LookRequest({
     else setCiudadFallo(true);
   }
 
-  // "Aquí, donde estoy": el tap ES el permiso — si el browser no lo tenía, lo
-  // pide ahora (con timeout generoso: el prompt tarda lo que tarde la persona).
-  // Si lo niega, el clima cae al flujo manual (y se dice, no se esconde).
+  // ¿El navegador tiene la ubicación BLOQUEADA para el sitio? (denied = ningún
+  // sitio puede re-abrir el prompt; solo la persona desde sus ajustes).
+  async function permisoBloqueado(): Promise<boolean> {
+    try {
+      const perm = await navigator.permissions?.query({
+        name: "geolocation" as PermissionName,
+      });
+      return perm?.state === "denied";
+    } catch {
+      return false;
+    }
+  }
+
+  // "Aquí, donde estoy": el tap ES el permiso — si está sin decidir, el prompt
+  // sale aquí mismo (con timeout generoso: tarda lo que tarde la persona). Si
+  // está bloqueado o falla, se DICE — el silencio era lo raro.
   async function elegirAqui() {
     setDonde("aqui");
     if (aquiCoords) return;
+    if (await permisoBloqueado()) {
+      setAquiEstado("bloqueado");
+      return;
+    }
+    setAquiEstado("leyendo");
     const c = await getPosition();
     if (c) {
       setAquiCoords(c);
-      setAquiFallo(false);
+      setAquiEstado("listo");
     } else {
-      setAquiFallo(true);
+      setAquiEstado((await permisoBloqueado()) ? "bloqueado" : "fallo");
     }
   }
 
   // "Compartir mi ubicación" desde el paso del clima (el camino principal
   // cuando el permiso aún no está): resuelve y muestra la conclusión ahí mismo.
   async function compartirUbicacion() {
+    if (await permisoBloqueado()) {
+      setAquiEstado("bloqueado");
+      return;
+    }
     setResolviendo(true);
     const c = await getPosition();
     if (!c) {
       setResolviendo(false);
-      setAquiFallo(true);
+      setAquiEstado((await permisoBloqueado()) ? "bloqueado" : "fallo");
       return;
     }
     setAquiCoords(c);
-    setAquiFallo(false);
+    setAquiEstado("listo");
     autoClimaIntentado.current = true; // ya estamos resolviendo — que el efecto no doble
     await resolverClima(c);
   }
@@ -670,8 +697,7 @@ export function LookRequest({
                 donde={donde}
                 onAqui={elegirAqui}
                 onOtra={() => setDonde("otra")}
-                aquiFallo={aquiFallo}
-                aquiListo={aquiCoords !== null}
+                aquiEstado={aquiCoords ? "listo" : aquiEstado}
                 ciudadTexto={ciudadTexto}
                 onCiudadTexto={(v) => {
                   setCiudadTexto(v);
@@ -696,7 +722,7 @@ export function LookRequest({
                 onParaguas={setParaguas}
                 onCompartir={compartirUbicacion}
                 puedeCompartir={donde === "aqui"}
-                fallo={aquiFallo}
+                aquiEstado={aquiEstado}
                 fechaLabel={fecha ? fechaLegible(fecha) : null}
                 climaAuto={climaAuto}
                 resolviendo={resolviendo}
@@ -1079,8 +1105,7 @@ function StepCuando({
   donde,
   onAqui,
   onOtra,
-  aquiFallo,
-  aquiListo,
+  aquiEstado,
   ciudadTexto,
   onCiudadTexto,
   ciudadGeo,
@@ -1098,10 +1123,9 @@ function StepCuando({
   donde: "aqui" | "otra";
   onAqui: () => void;
   onOtra: () => void;
-  aquiFallo: boolean;
-  /** Ya hay coords: el tap del permiso funcionó — se dice, para que quede
-   *  claro DÓNDE se pidió la ubicación y que ya no se va a volver a pedir. */
-  aquiListo: boolean;
+  /** El resultado del tap de "aquí": el permiso se pide AHÍ y se dice cómo
+   *  quedó — leyendo / listo / bloqueado por el navegador / falló. */
+  aquiEstado: "idle" | "leyendo" | "listo" | "bloqueado" | "fallo";
   ciudadTexto: string;
   onCiudadTexto: (v: string) => void;
   ciudadGeo: { lat: number; lon: number; label: string } | null;
@@ -1194,7 +1218,11 @@ function StepCuando({
           >
             <span className="text-[14px] font-semibold">aquí, donde estoy</span>
             <span className={`text-[12px] ${donde === "aqui" ? "opacity-80" : "text-muted"}`}>
-              {aquiListo ? "listo — ya sé dónde" : "leo tu clima yo"}
+              {aquiEstado === "listo"
+                ? "listo — ya sé dónde"
+                : aquiEstado === "leyendo"
+                  ? "leyendo tu ubicación…"
+                  : "leo tu clima yo"}
             </span>
           </button>
           <button
@@ -1214,7 +1242,12 @@ function StepCuando({
           </button>
         </div>
 
-        {donde === "aqui" && aquiFallo ? (
+        {donde === "aqui" && aquiEstado === "bloqueado" ? (
+          <span className="text-[12px] text-muted">
+            tu navegador tiene la ubicación bloqueada para stailist — actívala
+            en sus ajustes, o al final me dices tú el clima
+          </span>
+        ) : donde === "aqui" && aquiEstado === "fallo" ? (
           <span className="text-[12px] text-muted">
             no pude leer tu ubicación — el clima te lo pregunto en el siguiente paso
           </span>
@@ -1421,7 +1454,7 @@ function StepClima({
   ciudadLabel = null,
   onCompartir,
   puedeCompartir,
-  fallo,
+  aquiEstado,
 }: {
   /** null = nadie ha elegido todavía. Ver el comentario de `climaIdx`. */
   idx: number | null;
@@ -1440,8 +1473,9 @@ function StepClima({
   onCompartir: () => void;
   /** false cuando dijo "en otra ciudad" (ahí compartir ubicación no aplica). */
   puedeCompartir: boolean;
-  /** La ubicación falló o fue negada → el cuestionario es el camino. */
-  fallo: boolean;
+  /** Cómo quedó el permiso: bloqueado/fallo abren el cuestionario, con su
+   *  explicación — el "no pude leer tu ubicación" sin porqué era lo raro. */
+  aquiEstado: "idle" | "leyendo" | "listo" | "bloqueado" | "fallo";
   onIdx: (i: number) => void;
   onRain: (r: boolean) => void;
   paraguas: boolean;
@@ -1450,10 +1484,11 @@ function StepClima({
   // El listado manual solo se abre si la persona lo pide ("prefiero decirte
   // yo") o si la ubicación falló — la decisión de Roberto: empujar a compartir
   // ubicación, con la salida explícita a la vista, no dos caminos iguales.
-  const [manualAbierto, setManualAbierto] = useState(!puedeCompartir || fallo);
+  const sinUbicacion = aquiEstado === "bloqueado" || aquiEstado === "fallo";
+  const [manualAbierto, setManualAbierto] = useState(!puedeCompartir || sinUbicacion);
   useEffect(() => {
-    if (fallo) setManualAbierto(true);
-  }, [fallo]);
+    if (sinUbicacion) setManualAbierto(true);
+  }, [sinUbicacion]);
 
   // Las bandas + la lluvia manual: el cuestionario completo. Camino primario
   // solo sin coords; letra chica ("corrígeme") cuando el clima llegó resuelto.
@@ -1639,7 +1674,13 @@ function StepClima({
         </div>
       ) : (
         <>
-          {fallo ? (
+          {aquiEstado === "bloqueado" ? (
+            <span className="mb-3 text-[13px] text-muted">
+              tu navegador tiene la ubicación bloqueada para stailist (un "no
+              permitir" de antes) — actívala en los ajustes del navegador, o
+              dime tú:
+            </span>
+          ) : aquiEstado === "fallo" ? (
             <span className="mb-3 text-[13px] text-muted">
               no pude leer tu ubicación — dime tú:
             </span>

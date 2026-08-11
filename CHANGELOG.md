@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.219.0] - 2026-08-10
+
+### Fixed — el permiso de ubicación tiene TRES finales, y el tercero era mudo
+
+└ Lo que vivió Roberto: tocar "aquí, donde estoy" y recibir "no pude leer tu
+  ubicación" sin que nadie preguntara nada. La causa: cuando el navegador ya
+  tiene la ubicación BLOQUEADA para el sitio (un "no permitir" viejo — muy
+  probablemente del bug de los 5 segundos), el prompt no vuelve a salir jamás;
+  ningún sitio web puede re-abrirlo. Ahora se distingue y se dice:
+  · permiso sin decidir → el prompt sale en el tap + "leyendo tu ubicación…"
+  · bloqueado → "tu navegador tiene la ubicación bloqueada para stailist —
+    actívala en sus ajustes, o dime tú el clima" (en el tap Y en el paso del
+    clima, que abre el listado manual con esa explicación)
+  · fallo real (sin señal) → "no pude leerla — dime tú".
+  Verificado contra un navegador con el permiso realmente en "denied".
+
 ## [0.2.218.0] - 2026-08-10
 
 ### Fixed — la ubicación perdía la carrera contra el prompt de permisos
