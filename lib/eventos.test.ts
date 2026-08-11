@@ -117,4 +117,75 @@ describe("formalidades que aplican por plan", () => {
     const cena = TIPOS_EVENTO.find((t) => t.key === "cena-amigos")!;
     expect(cena.formalidadesQueAplican).not.toContain("gala");
   });
+
+  it("SOLO la boda ofrece 'de playa' — es el único plan donde el lugar manda", () => {
+    // La boda de destino es frecuente de verdad en México y hasta hoy no tenía
+    // dónde caer: se pedía como "formal" y llegaba traje oscuro con suela de
+    // cuero a la arena. Pero es de la boda, no un nivel más para todos: una
+    // "cena con amigos de playa" no es un código de vestimenta.
+    const conPlaya = TIPOS_EVENTO.filter((t) =>
+      t.formalidadesQueAplican.includes("playa")
+    ).map((t) => t.key);
+    expect(conPlaya).toEqual(["boda"]);
+  });
+});
+
+// "playa" NO es un escalón de la escalera: es el eje del LUGAR. Se ofrece, pero
+// nunca se elige sola — quien no la toca recibe el código de boda de siempre.
+describe("playa está fuera de la escalera de formalidad", () => {
+  it("ningún plan la trae como default: siempre es una elección explícita", () => {
+    // Si fuera default de algo, "subir un escalón de noche" desde playa no
+    // tendría a dónde ir, y la boda de salón amanecería en guayabera.
+    for (const t of TIPOS_EVENTO) expect(t.formalidad).not.toBe("playa");
+    expect(formalidadDeEvento("boda", "noche")).toBe("formal");
+    expect(formalidadDeEvento("boda", "dia")).toBe("formal");
+  });
+
+  it("lo que el motor recibe de playa contradice al traje, no lo matiza", () => {
+    // El error que existe hoy: pedir boda de playa como "formal" y recibir
+    // traje oscuro y suela de cuero para la arena. La línea tiene que decir
+    // que ahí eso está MAL, no solo sugerir lino.
+    const l = FORMALIDADES.find((f) => f.key === "playa")!.paraElMotor;
+    expect(l).toContain("guayabera");
+    expect(l.toLowerCase()).toContain("arena");
+    expect(l).toMatch(/NADA de traje oscuro|fuera el zapato de vestir/);
+    // Y sigue siendo una boda: el traje de baño no es un dress code.
+    expect(l.toLowerCase()).toContain("blanco entero");
+  });
+
+  // El guard nuevo en formalidadDeEvento (`if (i === -1) return t.formalidad`)
+  // no lo dispara NINGÚN dato real hoy: el único tipo con subeDeNoche (cena de
+  // amigos) tiene formalidad "casual", que SÍ vive en la escalera. O sea que la
+  // regresión que este guard previene —indexOf(-1) degradando en silencio a
+  // "casual"— está a cero cobertura con los datos actuales. Se prueba
+  // empujando un tipo sintético fuera de la escalera con subeDeNoche:true.
+  it("si algún día un plan con 'playa' sube de noche, el guard no lo degrada a casual", () => {
+    const sintetico = {
+      key: "__test-playa-de-noche__",
+      label: "test",
+      formalidad: "playa" as const,
+      paraElMotor: "test",
+      preguntaDetalle: "test",
+      formalidadesQueAplican: ["playa" as const],
+      subeDeNoche: true,
+    };
+    TIPOS_EVENTO.push(sintetico);
+    try {
+      // Sin el guard, ESCALERA.indexOf("playa") da -1 y
+      // ESCALERA[Math.min(-1 + 1, 3)] = ESCALERA[0] = "casual" — justo el bug
+      // que el comentario del código describe.
+      expect(formalidadDeEvento(sintetico.key, "noche")).toBe("playa");
+    } finally {
+      TIPOS_EVENTO.pop();
+    }
+  });
+
+  // "playa" vive en dos catálogos distintos (Formalidad y TipoEvento no
+  // comparten namespace) y es fácil confundirlos: playa NO es algo que se
+  // pueda pedir como plan/evento, solo como ajuste de formalidad DENTRO de
+  // "boda".
+  it("'playa' es una formalidad, no un tipo de evento — pedirla como evento no encuentra nada", () => {
+    expect(tipoEventoPorClave("playa")).toBeNull();
+    expect(formalidadDeEvento("playa", "dia")).toBeNull();
+  });
 });

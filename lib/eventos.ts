@@ -122,7 +122,11 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     formalidad: "formal",
     preguntaDetalle:
       "aquí manda la invitación — si trae dress code, hazle caso; si no, esto es lo normal",
-    formalidadesQueAplican: ["casual", "semiformal", "formal", "gala"],
+    // La única con "playa": es la boda de destino, que en México es frecuente y
+    // que hasta hoy no tenía dónde caer (se pedía como "formal" y llegaba traje
+    // oscuro con suela de cuero a la arena). Va al final de la lista porque no
+    // es el escalón que sigue de "gala" — es otro eje, el del lugar.
+    formalidadesQueAplican: ["casual", "semiformal", "formal", "gala", "playa"],
     paraElMotor:
       "una boda: hay fotos, hay ceremonia y se está de pie y sentado por turnos. NUNCA de blanco entero (es de quien se casa) y nada que compita con el protagonismo de los novios",
   },
@@ -164,8 +168,12 @@ export function formalidadDeEvento(
   const t = tipoEventoPorClave(k);
   if (!t) return null;
   if (momento !== "noche" || !t.subeDeNoche) return t.formalidad;
+  // "playa" NO está aquí: no es un escalón, es el eje del lugar (ver
+  // lib/formalidad.ts). Si un default no vive en la escalera se queda como
+  // está — sin este guard, indexOf(-1) lo degradaba en silencio a "casual".
   const ESCALERA: Formalidad[] = ["casual", "semiformal", "formal", "gala"];
   const i = ESCALERA.indexOf(t.formalidad);
+  if (i === -1) return t.formalidad;
   return ESCALERA[Math.min(i + 1, ESCALERA.length - 1)];
 }
 
