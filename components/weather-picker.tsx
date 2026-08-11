@@ -10,6 +10,7 @@ import {
 } from "@/lib/dress-code";
 import { FORMALIDADES, ropaDeFormalidad } from "@/lib/formalidad";
 import { TIPOS_EVENTO, formalidadDeEvento } from "@/lib/eventos";
+import { pasosDelWizard } from "@/lib/wizard-pasos";
 // Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
 // del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
 import {
@@ -349,18 +350,17 @@ export function LookRequest({
   const codigoHoy = workDressCode ?? dressCode;
   const pideVeCliente = objective === "oficina" && codigoHoy === "variable";
   // LOS PASOS, dinámicos: plan → detalle (solo si hay algo que acotar) →
-  // cuándo (fecha + día/noche + dónde) → clima. El "detalle" es la formalidad
-  // del evento o la calibración de trabajo — antes vivían apilados en el paso 1
-  // como long scroll. El wow (skip) salta el plan, como siempre.
-  const necesitaDetalle =
-    !hasOpen &&
-    ((objective === "evento" && !!tipoEvento) ||
-      (objective === "oficina" && (pideDressCode || codigoHoy === "variable")));
-  const pasos: PasoWizard[] = skip
-    ? ["cuando", "clima"]
-    : necesitaDetalle
-      ? ["plan", "detalle", "cuando", "clima"]
-      : ["plan", "cuando", "clima"];
+  // cuándo (fecha + día/noche + dónde) → clima. La máquina vive en
+  // lib/wizard-pasos.ts, como función pura y probada caso por caso: estaba
+  // inline aquí y así escondió durante meses el hueco del primer look.
+  const pasos = pasosDelWizard({
+    saltaElPlan: skip,
+    objective,
+    tipoEvento,
+    planLibre: hasOpen,
+    codigoGuardado: workDressCode ?? null,
+    codigoEfectivo: codigoHoy,
+  });
   const paso = pasos[Math.min(idx, pasos.length - 1)];
 
   // ¿Se puede avanzar desde el paso actual? Una condición por pantalla.
@@ -771,9 +771,6 @@ export function LookRequest({
     </div>
   );
 }
-
-// Los pasos posibles del wizard (la lista real se arma dinámica por plan).
-type PasoWizard = "plan" | "detalle" | "cuando" | "clima";
 
 // Acento serif itálico para los titulares del wizard (Instrument Serif).
 const EM = "font-display font-normal italic tracking-normal";

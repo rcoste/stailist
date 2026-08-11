@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.220.0] - 2026-08-11
+
+### Fixed — el PRIMER look de quien trabaja salía con el motor adivinando
+
+└ Hueco viejo (no de ayer): el wow —el primer look, el del onboarding— se
+  saltaba el paso del detalle junto con el del plan. Quien elegía "trabajo"
+  como objetivo recibía su primer look **sin que nadie le preguntara su código
+  de vestimenta**, o sea con el motor adivinando si su oficina es de traje o de
+  tenis. Y ese look es justo el que decide si la persona se queda. El backend
+  siempre estuvo listo (`/api/generate` ya persistía `work_dress_code`); lo que
+  faltaba era la pregunta. Roberto, al verlo: *"me extraña que no esté"*.
+
+└ **La máquina de pasos sale del componente** a `lib/wizard-pasos.ts`, como
+  función pura con 9 casos probados. El hueco había vivido meses escondido en
+  una condición booleana inline — ahí no se ve y no se prueba. Uno de los casos
+  blinda una trampa sutil que casi entra en este mismo fix: si el cálculo usara
+  el código de vestimenta *efectivo* en vez del *guardado*, tocar una opción
+  borraría el paso donde estás parado y el wizard saltaría solo.
+
 ## [0.2.219.0] - 2026-08-10
 
 ### Fixed — el permiso de ubicación tiene TRES finales, y el tercero era mudo
