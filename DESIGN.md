@@ -48,6 +48,8 @@
 - **Approach:** grid-disciplinado, columna única móvil-first
 - **Max content width:** 430px centrada (móvil y páginas `desktop="column"`)
 - **Border radius (crispado, NO pill — sin cambio vs. v2):** sm 3px (inputs, chips, botones, badges) · md 4px (tiles de prenda) · lg 6px (cards de outfit) · full 9999px **reservado solo** para puntos/indicadores circulares. Los CTAs son rectángulos crispados, NO pastillas.
+  - **Bottom-sheets: 14-18px**, aparte de la escala (van con `rounded-t-[Npx]` + su `lg:rounded-[Npx]`). Una hoja con radio de chip se lee como de otra app.
+  - **Excepciones de `rounded-full` en controles**, las dos por convención universal, no por gusto: el FAB de la tab bar y el **botón de micrófono del dictado** (una grabadora cuadrada no la reconoce nadie). Cualquier otro control circular sí es deriva.
 - **Sombras:** casi nulas — `0 1px 2px rgb(26 23 24 / 0.05)` máximo; las hairlines hacen la separación.
 - **Navegación:** tabs fijos abajo + FAB central de "armar look". Nada en hamburguesa.
 
@@ -67,6 +69,7 @@
 - **Duration:** micro 100ms · short 200ms · medium 300ms
 - **Firmas:** entradas fade + rise 8px (`step-in`); progreso de generación de outfits = frase de estilista que se escribe sola (typewriter) + barra de progreso, nunca spinner genérico. Ícono destello girando lento (`spin 6s`).
 - **Shimmer de texto** (`.shimmer-txt` en globals.css): barrido muted→ink→muted (1.6s) para etiquetas de carga cortas dentro de una fila (try-on "Creando tu look…"). Respeta `prefers-reduced-motion`.
+- **Pulso de micrófono** (`mic-pulse` en globals.css): onda de box-shadow (1.6s, infinita) en el botón redondo de la hoja de dictado del wizard. Es la única señal de que el mic está escuchando; por box-shadow y no por escala para no empujar el layout. Respeta `prefers-reduced-motion`.
 - **Excepción try-on:** el estado "generando" del try-on dentro de la `OutfitCard` sí usa spinner + shimmer en la fila al pie (no frases). Es carga local de ~20s con la card visible, no la generación full-screen del look. Decisión del handoff `design_handoff_tryon_protagonista`.
 
 ## Decisions Log

@@ -40,3 +40,4 @@ claude-design-handoffs-stailist/
 # base64 embebido). Vive publicada como artifact; en git sobra y ahoga al
 # escáner de credenciales del pre-push.
 docs/qa/*/recorrido.html
+design_handoff_crear_un_look/

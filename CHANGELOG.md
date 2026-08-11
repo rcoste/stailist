@@ -2,6 +2,74 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.222.0] - 2026-08-11
+
+### Changed — si estás bajo techo, la lluvia deja de mandar en tu look
+
+Segunda pasada del wizard "crear un look", del handoff de diseño validado con
+Roberto. El hueco que lo motivó, en sus palabras: *"puede estar lloviendo y si
+yo voy a estar siempre entechado, me la pela la lluvia"*. La app trataba
+cualquier día de lluvia como un día a la intemperie, así que una comida en un
+salón perdía los mocasines y ganaba una gabardina que nadie iba a usar.
+
+└ **"¿la lluvia te toca?" — afuera / techado**, solo cuando el pronóstico trae
+  agua. Con *techado* desaparece la pregunta del paraguas y **al motor no le
+  llega que llueve**: recibe la temperatura y nada más. La mitigación pasa
+  ANTES del modelo, no como una regla más del prompt — mandarle los dos hechos
+  ("va a llover" + "estará adentro") es pedirle que resuelva una contradicción,
+  y ahí es donde se rompe. Se apagan solas las tres reglas de lluvia (capa
+  impermeable, veto de calzado, paraguas). La temperatura NUNCA se toca: bajo
+  techo sigues eligiendo entre manga corta y abrigo. Lo que se GUARDA con el
+  look sigue diciendo que llovió — el historial no miente sobre el día.
+
+└ **La lluvia escrita a mano pasa por el mismo filtro**: si contestas "sí
+  llueve" en el cuestionario manual, también te pregunta si te toca. Sin eso se
+  colaba al motor por la puerta de atrás.
+
+└ **Bodas de playa**: la boda gana una quinta opción, *"guayabera o lino · de
+  playa"* (mujer: *"vestido fresco, fluido"*). Es frecuente de verdad en México
+  y no tenía dónde caer: se pedía como "formal" y llegaba traje oscuro con
+  suela de cuero para la arena. Trae su propia regla —fuera el saco oscuro y el
+  tacón de aguja, que se entierra— y **es el único código que invierte el
+  empuje del motor**: aquí pasarse de arreglado es el error, no quedarse corto.
+  Lo cazó una corrida real: la primera boda de playa devolvió blazer marino y
+  zapato de piel, empujada por el "ante la duda, sube medio nivel" que sirve
+  para los otros cuatro niveles. Prompt v51.
+
+└ **Dictado con micrófono propio** en el campo "cuéntamelo con tus palabras":
+  hoja "te escucho…" con la transcripción en vivo, y nada se usa hasta que lo
+  confirmas. Si tu navegador no sabe transcribir (pasa en la app instalada de
+  iPhone) el botón simplemente no aparece y queda el micrófono del teclado. Se
+  dice quién escucha: lo transcribe el navegador en su nube, nosotros solo
+  recibimos el texto.
+
+└ **La ubicación ya no se pide de sorpresa**: tocar "en esta ciudad" explica
+  primero para qué se usa ("te lo pide el navegador solo una vez — no importa
+  el punto exacto") y un botón la pide. Quien ya dio permiso no ve nada de eso:
+  se lee en silencio. El prompt del navegador sale una vez en la vida de la
+  instalación y un "no permitir" no se puede volver a preguntar.
+
+└ **Los planes sociales, en rejilla de dos columnas con ícono** y sin el chip
+  "otro…": graduación y funeral —esporádicos de verdad— entran por el campo
+  libre, con tus palabras.
+
+### Added — los primeros tests de pantalla del proyecto
+
+19 tests de componente del wizard (jsdom + testing-library), que blindan lo que
+ningún test de función pura alcanza: **qué decisión viaja al motor** según lo
+que tocaste. Cazaron un bug real antes de salir — al tocar "seguir dictando" se
+borraba lo que ya habías dictado, porque cada sesión de reconocimiento empieza
+en blanco. El cómo escribirlos está en CLAUDE.md (§ Tests): docblock de jsdom
+por archivo y `cleanup` a mano, las dos cosas fáciles de olvidar.
+
+### Fixed — una sola definición de "está lloviendo"
+
+La pregunta vivía escrita cinco veces (wizard, prompt, juez, rúbrica, evales) y
+la copia del wizard ya había derivado: sin el flag de mayúsculas y con otra
+lista de palabras. Ahora todas llaman a `hayLluvia`. Era justo la divergencia
+por la que el techado se rompe en silencio: la UI no pregunta por una lluvia
+que el motor sí ve.
+
 ## [0.2.221.0] - 2026-08-11
 
 ### Changed — el home se vuelve la central de acciones (y "Hoy" pasa a "Inicio")

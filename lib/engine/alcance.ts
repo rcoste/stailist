@@ -112,6 +112,13 @@ export function alcanceDeFormalidad(
   gender?: string | null
 ): Alcance {
   const nada: Alcance = { faltaLoEsencial: false, faltan: [], tiene: [] };
+  // "playa" NO se gatea, y es una decisión, no un olvido: el hueco que abre es
+  // que la boda de destino antes se pedía como "formal" y sí pasaba por aquí.
+  // Se deja pasar porque este chequeo mide CARENCIA ESTRUCTURAL —falta el saco
+  // sin el cual el código no existe— y en playa no hay una pieza así: casi
+  // cualquier clóset tiene algo fresco, y un falso "no puedo" le niega a
+  // alguien un look que sí podía armar. Si algún día se gatea, que sea con el
+  // mismo criterio permisivo del resto del archivo.
   if (formalidad !== "formal" && formalidad !== "gala") return nada;
 
   const saco = items.filter(esSaco);

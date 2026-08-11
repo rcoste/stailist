@@ -10,6 +10,7 @@ import { ErrorProveedor } from "@/lib/proveedores";
 import { peticionDeBrief, type BriefMotor, type LookMotor } from "@/lib/comparador/motor";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { estiloDelPerfil, colorDelPerfil, type NotaDeLook } from "./evales";
+import { hayLluvia } from "@/lib/weather";
 
 // UN PASO del eval: generar un brief (motor de producción completo) o
 // calificarlo (los tres jueces sobre cada look). Mismo patrón que
@@ -155,7 +156,7 @@ export async function pasoEval(opciones: {
     const violaciones = revisarEjecucion(its, {
       clima: bandaDeClima(brief.weather ?? null),
       closet,
-      lluvia: /lluvia|llov|chubasco|tormenta/i.test(brief.weather?.condition ?? ""),
+      lluvia: hayLluvia(brief.weather?.condition),
       paraguas: brief.paraguas === true,
       formality: brief.formality ?? null,
       gender: (profile.gender as string | null) ?? null,

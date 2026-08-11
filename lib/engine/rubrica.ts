@@ -4,6 +4,7 @@ import { queSePoneA } from "./prompt";
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
 import { lineaTipoEvento } from "@/lib/eventos";
+import { hayLluvia } from "@/lib/weather";
 
 // LA RÚBRICA: un look calificado contra su brief, por un juez automático.
 //
@@ -181,7 +182,7 @@ export function briefParaRubrica(b: BriefRubrica): string {
     lineas.push(
       `Clima: ${b.weather.temp_c}°C, ${b.weather.condition}. ${queSePoneA(b.weather.temp_c)}`
     );
-    if (/lluvia|llov|chubasco|tormenta/i.test(b.weather.condition)) {
+    if (hayLluvia(b.weather.condition)) {
       lineas.push(
         b.paraguas
           ? "Lleva paraguas: la capa de arriba se elige por estilo (el paraguas la cubre), pero el calzado igual tiene que aguantar agua — el paraguas no tapa los pies. Fuera ante, gamuza, tela, y fuera también mocasín, náutico y sandalia (escotados y de suela fina: el agua entra aunque sean de piel). Pasan botas, botines y tenis de piel o sintético."

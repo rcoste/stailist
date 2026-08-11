@@ -52,6 +52,12 @@ export type IconName =
   | "camisa"
   | "bookmark"
   | "bookmarkFill"
+  | "microfono"
+  | "paraguas"
+  | "techo"
+  | "cubiertos"
+  | "copa"
+  | "anillos"
   | "puntos";
 
 const GLYPHS: Record<IconName, JSX.Element> = {
@@ -267,6 +273,47 @@ const GLYPHS: Record<IconName, JSX.Element> = {
   ),
   bookmark: <path d="M6 4h12v16l-6-4-6 4z" />,
   bookmarkFill: <path d="M6 4h12v16l-6-4-6 4z" fill="currentColor" />,
+  // Dictado del wizard: el mic propio del campo abierto y su hoja "te escucho…".
+  microfono: (
+    <>
+      <rect x="9" y="2.5" width="6" height="11.5" rx="3" />
+      <path d="M5 11.5a7 7 0 0 0 14 0M12 18.5V21.5" />
+    </>
+  ),
+  // "¿llevas paraguas?" — la lluvia que sí toca.
+  paraguas: (
+    <>
+      <path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5h-17A8.5 8.5 0 0 1 12 3.5z" />
+      <path d="M12 12v6a2 2 0 0 0 4 0M12 3.5V2" />
+    </>
+  ),
+  // "¿la lluvia te toca?" → techado: el plan transcurre bajo techo.
+  techo: (
+    <>
+      <path d="M3 11l9-7 9 7" />
+      <path d="M5.5 9.5V20h13V9.5" />
+    </>
+  ),
+  // Chips de plan social: cena, cita, boda (comida familiar reusa "techo" como
+  // casa; trabajo reusa "maletin"; fiesta reusa "destello").
+  cubiertos: (
+    <>
+      <path d="M7 2.5v6a2 2 0 0 0 2 2v11M9 2.5v5.5M5 2.5v5.5" />
+      <path d="M17 2.5c-1.8 0-3 2.2-3 5.5v3.5h3v10" />
+    </>
+  ),
+  copa: (
+    <>
+      <path d="M7 3h10c0 5.2-2.2 8.5-5 8.5S7 8.2 7 3z" />
+      <path d="M12 11.5V20M8 20h8" />
+    </>
+  ),
+  anillos: (
+    <>
+      <circle cx="9" cy="14" r="5.5" />
+      <circle cx="15" cy="11" r="5.5" />
+    </>
+  ),
 };
 
 export function Icon({

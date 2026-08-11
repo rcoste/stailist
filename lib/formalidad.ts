@@ -18,7 +18,16 @@
 // género porque el ancla concreta lo es: "traje y corbata" no le dice nada a
 // una mujer.
 
-export type Formalidad = "casual" | "semiformal" | "formal" | "gala";
+/**
+ * Los cuatro niveles de la escalera + "playa", que NO es un nivel.
+ *
+ * "playa" es un código de vestimenta que manda el LUGAR, no el nivel: una boda
+ * en la playa pide guayabera o lino y castiga exactamente lo que premia una
+ * boda de salón (traje oscuro, corbata, suela de cuero). Por eso no vive en la
+ * escalera de formalidadDeEvento —subir o bajar un escalón desde "playa" no
+ * significa nada— y solo se ofrece en los planes donde el lugar existe.
+ */
+export type Formalidad = "casual" | "semiformal" | "formal" | "gala" | "playa";
 
 export const FORMALIDADES: {
   key: Formalidad;
@@ -63,6 +72,19 @@ export const FORMALIDADES: {
     jerga: "etiqueta rigurosa · black tie · gala",
     paraElMotor:
       "etiqueta rigurosa / black tie — AQUÍ SÍ va el esmoquin, y con su código completo: moño (nunca corbata larga), camisa blanca, pantalón del propio esmoquin y SIN cinturón. Si el clóset no tiene con qué completarlo, arma un traje oscuro impecable en vez de un esmoquin a medias",
+  },
+  // Va al final a propósito: no es el escalón que sigue de "gala", es otro eje.
+  // La boda en la playa es frecuente de verdad en México y hasta hoy no tenía
+  // dónde caer: quien la pedía elegía "formal" y recibía traje oscuro y suela
+  // de cuero para la arena.
+  {
+    key: "playa",
+    hombre: "guayabera o lino",
+    mujer: "vestido fresco, fluido",
+    neutro: "lino fresco o vestido fluido",
+    jerga: "de playa · beach formal",
+    paraElMotor:
+      "boda o evento EN LA PLAYA (o jardín de destino, con arena y calor). El código lo manda el lugar: telas frescas y claras —lino, algodón, guayabera— y NADA de traje oscuro, corbata ni esmoquin: ahí es un error de lectura del lugar, no una virtud. El CALZADO tiene que funcionar en arena o pasto: mocasín ligero, alpargata o sandalia de vestir; fuera el zapato de vestir de suela de cuero, y fuera el tacón de aguja (se entierra en la arena) — si hay tacón, que sea cuña o plataforma. Sigue siendo una boda: nada de traje de baño, short de playa, chanclas ni nada de blanco entero",
   },
 ];
 

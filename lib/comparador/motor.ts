@@ -149,7 +149,9 @@ export type BriefMotor = {
   plan?: string;
   /** QUÉ evento es, del catálogo (lib/eventos.ts). */
   tipoEvento?: string;
-  /** Lo que el wizard pregunta para "evento": casual | semiformal | formal | gala. */
+  /** Lo que el wizard pregunta para "evento". Los valores viven en Formalidad
+   *  (lib/formalidad.ts) — NO se re-enumeran aquí: la lista ya se quedó corta
+   *  cuando entró "playa". */
   formality?: string;
   /**
    * Va a llevar paraguas. Solo tiene sentido con lluvia, y ahí lo cambia todo:

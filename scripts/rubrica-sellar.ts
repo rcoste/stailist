@@ -21,6 +21,7 @@ import { revisarEjecucion } from "../lib/engine/reglas-ejecucion";
 import { bandaDeClima } from "../lib/engine/recetario";
 import type { EngineItem } from "../lib/engine/prompt";
 import { evaluarLook, RUBRICA_VERSION, type BriefRubrica } from "../lib/engine/rubrica";
+import { hayLluvia } from "@/lib/weather";
 
 for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   const i = l.indexOf("=");
@@ -83,7 +84,7 @@ async function main() {
   let violaciones = 0;
   for (const p of pares ?? []) {
     const brief = p.brief as BriefRubrica & { etiqueta: string };
-    const lluvia = /lluvia|llov|chubasco|tormenta/i.test(brief.weather?.condition ?? "");
+    const lluvia = hayLluvia(brief.weather?.condition);
     for (const l of (lados ?? []).filter((x) => x.par_id === p.id)) {
       for (const [idx, look] of ((l.looks as Look[] | null) ?? []).entries()) {
         const its = look.item_ids

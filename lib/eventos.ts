@@ -122,7 +122,11 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     formalidad: "formal",
     preguntaDetalle:
       "aquí manda la invitación — si trae dress code, hazle caso; si no, esto es lo normal",
-    formalidadesQueAplican: ["casual", "semiformal", "formal", "gala"],
+    // La única con "playa": es la boda de destino, que en México es frecuente y
+    // que hasta hoy no tenía dónde caer (se pedía como "formal" y llegaba traje
+    // oscuro con suela de cuero a la arena). Va al final de la lista porque no
+    // es el escalón que sigue de "gala" — es otro eje, el del lugar.
+    formalidadesQueAplican: ["casual", "semiformal", "formal", "gala", "playa"],
     paraElMotor:
       "una boda: hay fotos, hay ceremonia y se está de pie y sentado por turnos. NUNCA de blanco entero (es de quien se casa) y nada que compita con el protagonismo de los novios",
   },
@@ -153,6 +157,36 @@ export function tipoEventoPorClave(k: string | null | undefined): TipoEvento | n
 }
 
 /**
+ * ¿El plan escrito con sus palabras nombra uno de los DOS planes que perdieron
+ * su chip? (graduación y funeral, 2026-08-11).
+ *
+ * POR QUÉ EXISTE Y POR QUÉ ES TAN ANGOSTO
+ * Al quitarlos de la rejilla quedaron solo alcanzables por el campo libre, y el
+ * campo libre manda `objective: "diario"`. O sea que escribir "un funeral"
+ * llegaba al motor como un día normal: sin piso de formalidad y —lo caro— sin
+ * la regla del catálogo que dice EL COLOR ES NEGRO, EL AZUL MARINO NO. Esa
+ * regla se escribió porque el motor se equivocó justo ahí.
+ *
+ * NO es un parser de planes. Reconoce las palabras de esos dos casos y nada
+ * más: el resto del texto libre sigue viajando tal cual, que es la promesa.
+ * Tampoco añade un paso al wizard — solo deja que la formalidad por defecto del
+ * catálogo y su línea al motor sigan aplicando, como cuando había chip.
+ */
+const PLANES_ESCRITOS: { key: string; re: RegExp }[] = [
+  // "misa" a secas NO entra: también la hay de boda y de bautizo.
+  { key: "funeral", re: /\b(funeral(es)?|velorio|sepelio|entierro|novenario)\b/ },
+  { key: "graduacion", re: /\b(graduacion(es)?|titulacion)\b/ },
+];
+
+export function reconocerPlanEscrito(texto: string): string | null {
+  const t = texto
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+  return PLANES_ESCRITOS.find((p) => p.re.test(t))?.key ?? null;
+}
+
+/**
  * La formalidad que implica un tipo de evento, ya considerando el momento.
  * Solo sube un escalón, nunca dos: una cena con amigos no llega a formal por
  * ser de noche.
@@ -164,8 +198,12 @@ export function formalidadDeEvento(
   const t = tipoEventoPorClave(k);
   if (!t) return null;
   if (momento !== "noche" || !t.subeDeNoche) return t.formalidad;
+  // "playa" NO está aquí: no es un escalón, es el eje del lugar (ver
+  // lib/formalidad.ts). Si un default no vive en la escalera se queda como
+  // está — sin este guard, indexOf(-1) lo degradaba en silencio a "casual".
   const ESCALERA: Formalidad[] = ["casual", "semiformal", "formal", "gala"];
   const i = ESCALERA.indexOf(t.formalidad);
+  if (i === -1) return t.formalidad;
   return ESCALERA[Math.min(i + 1, ESCALERA.length - 1)];
 }
 

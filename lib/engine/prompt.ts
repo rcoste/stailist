@@ -1,4 +1,4 @@
-import type { Weather } from "@/lib/weather";
+import { hayLluvia, type Weather } from "@/lib/weather";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
 import {
   recetasParaTags,
@@ -300,7 +300,11 @@ import {
 // pero la versión sube igual: es la etiqueta de "con qué prompt se armó este
 // look", y sin subirla el primer look CON un traje atado quedaría registrado
 // como v49 siendo otro prompt. Esa deriva es justo lo que la versión evita.
-export const PROMPT_VERSION = "v50";
+// v51: entra "de playa" como código de vestimenta de la boda de destino, y con
+// él la primera EXCEPCIÓN a la escalada de formalidad. Para los cuatro niveles
+// de la escalera el texto sale byte a byte igual que v50 — la versión sube
+// porque el prompt ya no es el mismo para todos los casos.
+export const PROMPT_VERSION = "v51";
 
 export type EngineItem = {
   id: string;
@@ -405,7 +409,8 @@ export type EngineContext = {
   ageStyling?: string | null; // orientación por edad (life-stage); señal suave, solo extremos
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
   seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
-  formality?: string | null; // solo "evento": casual | semiformal | formal | gala
+  formality?: string | null; // solo en "evento". Los valores viven en Formalidad (lib/formalidad.ts) —
+  // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
   styleWords?: string | null; // su estilo EN SUS PALABRAS (texto libre del perfil)
 };
@@ -713,9 +718,16 @@ export function contextBlock(
   // La tabla vive en lib/formalidad.ts, compartida con la pantalla, la rúbrica
   // y el comparador. Estuvo escrita en las cuatro y la cuarta se quedó atrás.
   if (ctx.formality && lineaFormalidad(ctx.formality)) {
-    lines.push(
-      `Formalidad del evento: ${lineaFormalidad(ctx.formality)} — RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.`
-    );
+    // LA ESCALADA NO ES UNIVERSAL. "Ante la duda sube medio nivel" vale en la
+    // ESCALERA (casual→gala), donde pasarse de arreglado es el error barato. En
+    // "playa" el error barato es el CONTRARIO y el mismo consejo lo produce: la
+    // primera corrida con boda de playa devolvió blazer marino y zapato de piel
+    // de suela para la arena, empujada por esta misma frase.
+    const empuje =
+      ctx.formality === "playa"
+        ? "RESPÉTALA. Y ojo con el reflejo de arreglar de más: AQUÍ pasarse es el error, no quedarse corto — el saco oscuro y el zapato de suela de cuero se leen como no haber entendido dónde es. Si dudas entre dos, gana el más fresco."
+        : "RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.";
+    lines.push(`Formalidad del evento: ${lineaFormalidad(ctx.formality)} — ${empuje}`);
   } else if (ctx.objective === "evento") {
     lines.push(
       "Es un evento: en México tienden a ser más formales que el promedio (sobre todo bodas). Ante la duda, arréglalo más, no menos."
@@ -827,7 +839,7 @@ export function contextBlock(
     // con el prompt más afinado que existe. Aquí se dice; y además se comprueba
     // en código (lib/engine/reglas-ejecucion.ts), porque una instrucción que se
     // puede ignorar no es una garantía.
-    if (/lluvia|llov|chubasco|tormenta/i.test(ctx.weather.condition)) {
+    if (hayLluvia(ctx.weather.condition)) {
       lines.push(
         ctx.paraguas
           ? "VA A LLOVER y lleva paraguas: la capa de arriba la eliges por estilo (el paraguas la cubre). El CALZADO no: el paraguas no tapa los pies. Fuera el ante, la gamuza y la tela, y fuera también el mocasín, el náutico y la sandalia — son escotados y de suela fina, el agua entra por arriba aunque sean de piel. Sí pasan botas, botines y tenis de piel o sintético."

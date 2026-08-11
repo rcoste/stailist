@@ -184,6 +184,24 @@ body {
   }
 }
 
+/* Dictado del wizard ("te escucho…"): onda que sale del botón de micrófono
+   mientras escucha. Es la ÚNICA señal de que el mic está vivo — sin ella la
+   hoja se ve idéntica antes y después de empezar a grabar. Va por box-shadow
+   (no por escala) para no empujar el layout de la hoja. */
+@keyframes mic-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgb(10 10 10 / 0.3);
+  }
+  to {
+    box-shadow: 0 0 0 28px rgb(10 10 10 / 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="mic-pulse"] {
+    animation: none !important;
+  }
+}
+
 /* Cursor del typewriter de "generando" (Hoy): parpadeo duro. La frase de
    estilista que se escribe sola lleva este cursor al final. Se desactiva con
    motion-safe en el componente, pero el keyframe vive aquí (token de motion). */

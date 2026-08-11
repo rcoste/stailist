@@ -667,6 +667,25 @@ describe("formalidad: el ancla concreta, no la palabra suelta", () => {
     expect(t.toLowerCase()).toContain("moño");
     expect(t.toLowerCase()).toContain("sin cinturón");
   });
+
+  // LA ÚNICA EXCEPCIÓN A LA ESCALADA, y nació de una corrida real: la primera
+  // boda de playa devolvió blazer marino y zapato formal de piel para la arena.
+  // No fue el catálogo —la línea de "playa" ya decía lino y guayabera—, fue la
+  // frase que la envolvía: "ante la duda, sube medio nivel, nunca lo bajes".
+  it("'playa' invierte el empuje: aquí el error es pasarse, no quedarse corto", () => {
+    const t = contextBlock(ctx("playa")).join("\n");
+    expect(t).toContain("guayabera");
+    expect(t).toContain("pasarse es el error");
+    expect(t).not.toContain("sube medio nivel");
+  });
+
+  it("la escalera conserva su empuje de siempre (playa no se lo quitó a nadie)", () => {
+    for (const f of ["casual", "semiformal", "formal", "gala"]) {
+      const t = contextBlock(ctx(f)).join("\n");
+      expect(t, f).toContain("sube medio nivel, nunca lo bajes");
+      expect(t, f).not.toContain("pasarse es el error");
+    }
+  });
 })
 
 describe("el código de vestimenta del trabajo", () => {
@@ -801,6 +820,23 @@ describe("la formalidad vive en UN solo lugar", () => {
   it("sin formalidad no inventa nada", () => {
     expect(formalidadLegible(null)).toBeNull();
     expect(lineaFormalidad(undefined)).toBe("");
+  });
+
+  // "playa" es la quinta entrada de la tabla (v51) y ninguna prueba existente
+  // la lee por género: si `ropaDeFormalidad` le pegara al campo equivocado
+  // (p.ej. devolviera "vestido fresco, fluido" para "hombre"), nada lo cazaba.
+  // Es justo la pantalla que este archivo describe arriba: el comparador
+  // necesita la MISMA ropa concreta que ve quien pide el look.
+  it("'playa' también trae su ancla concreta por género", () => {
+    expect(formalidadLegible("playa", "hombre")).toBe(
+      "guayabera o lino (de playa · beach formal)"
+    );
+    expect(formalidadLegible("playa", "mujer")).toBe(
+      "vestido fresco, fluido (de playa · beach formal)"
+    );
+    expect(formalidadLegible("playa", null)).toBe(
+      "lino fresco o vestido fluido (de playa · beach formal)"
+    );
   });
 });
 

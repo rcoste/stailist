@@ -18,6 +18,7 @@ import {
 import { bandaDeClima } from "./recetario";
 import { blueprintDelContexto, revisarColorBlueprint } from "./blueprint";
 import type { GeneratedOutfit } from "./generate";
+import { hayLluvia } from "@/lib/weather";
 
 // Juez de styling, UNO POR OUTFIT (para poder ir mostrándolos conforme se
 // aprueban). Caza color que choca y problemas de styling y los ARREGLA
@@ -373,7 +374,7 @@ function contextoDeReglas(ctx: EngineContext): ContextoReglas {
     closet: ctx.items,
     // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado son la
     // misma BANDA de temperatura y dos problemas distintos.
-    lluvia: /lluvia|llov|chubasco|tormenta/i.test(ctx.weather?.condition ?? ""),
+    lluvia: hayLluvia(ctx.weather?.condition),
     paraguas: ctx.paraguas,
     // La formalidad del evento: sin ella, "separates en boda formal" no se
     // puede distinguir de "separates en la oficina", que es correcto.
