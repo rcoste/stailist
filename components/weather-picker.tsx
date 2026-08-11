@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from "react";
 import { Spinner } from "@/components/spinner";
 import { Icon, type IconName } from "@/components/icon";
 import {
@@ -17,6 +23,7 @@ import {
   getWeather,
   getWeatherForDates,
   geocodePlace,
+  hayLluvia,
   type Weather,
 } from "@/lib/weather";
 
@@ -30,7 +37,8 @@ export type LookInput = {
   plan?: string;
   momento: "dia" | "noche";
   seedItemId?: string | null; // ancla opcional: prenda fijada para hoy
-  formality?: string | null; // solo en "evento": casual | semiformal | formal | gala
+  formality?: string | null; // solo en "evento". Los valores viven en Formalidad (lib/formalidad.ts) —
+  // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
   /**
    * QUÉ evento es (lib/eventos.ts). Reemplazó a preguntar el nivel de
    * formalidad a secas: una boda y una graduación son las dos "formal" y no se
@@ -38,8 +46,19 @@ export type LookInput = {
    * traducir "coctel" ni "etiqueta".
    */
   tipoEvento?: string | null;
-  /** Va a llevar paraguas. Solo viaja cuando dijo que llueve. */
+  /** Va a llevar paraguas. Solo viaja cuando dijo que llueve Y que anda afuera. */
   paraguas?: boolean;
+  /**
+   * Va a estar BAJO TECHO. Solo viaja cuando el clima trae lluvia — es la
+   * respuesta a "¿la lluvia te toca?".
+   *
+   * Roberto: "puede estar lloviendo y si yo voy a estar siempre entechado, me
+   * la pela la lluvia". Con esto el server le quita el agua al clima que ve el
+   * motor (climaParaElMotor) y se apagan solas las tres reglas de lluvia:
+   * capa impermeable, calzado y paraguas. Lo que se GUARDA sigue siendo el
+   * clima real.
+   */
+  techado?: boolean;
   /**
    * Su código de vestimenta del trabajo, si se le acaba de preguntar. Viaja
    * UNA vez —quien llama lo guarda en el perfil— y de ahí en adelante ya no se
@@ -103,16 +122,26 @@ const COTIDIANOS: { key: string; label: string; help: string; icon: IconName }[]
 ];
 const OCASION_KEYS = new Set([...COTIDIANOS.map((o) => o.key), "evento"]);
 
-// Chips sociales: los frecuentes a la vista; los raros detrás de "otro…"
-// (Roberto: "¿qué tantas veces vas a un funeral? — los poco frecuentes no
-// ganan primera fila"). El orden es de frecuencia, no el del catálogo.
-const PLANES_VISIBLES = [
-  "cena-amigos",
-  "cita",
-  "comida-familiar",
-  "comida-trabajo",
-  "fiesta",
-  "boda",
+// Chips sociales: SEIS, en rejilla pareja de 2 columnas y con su ícono. El
+// orden es de frecuencia, no el del catálogo.
+//
+// YA NO HAY "otro…". Antes ese chip revelaba graduación y funeral; ahora esos
+// planes —esporádicos de verdad— entran por el campo abierto de abajo, con las
+// palabras de la persona. Roberto: "son eventos muy esporádicos... nos quita
+// espacio para una acción que no es tan recurrente y que puede ir en otros".
+//
+// CONSECUENCIA REAL, no cosmética: escribir "un funeral" es `planLibre`, y el
+// texto libre se SALTA el paso del detalle (lib/wizard-pasos.ts) y viaja tal
+// cual al motor. O sea que sus dos entradas del catálogo (con su formalidad y
+// su regla del negro) ya no se alcanzan desde aquí. Se quedan en lib/eventos.ts
+// a propósito: los looks viejos las referencian y `lineaTipoEvento` las lee.
+const PLANES_VISIBLES: { key: string; icon: IconName }[] = [
+  { key: "cena-amigos", icon: "cubiertos" },
+  { key: "cita", icon: "copa" },
+  { key: "comida-familiar", icon: "techo" },
+  { key: "comida-trabajo", icon: "maletin" },
+  { key: "fiesta", icon: "destello" },
+  { key: "boda", icon: "anillos" },
 ];
 
 // Fecha calendario LOCAL del dispositivo. NUNCA toISOString(): esa es UTC y
@@ -125,6 +154,11 @@ export function fmtFechaLocal(d: Date): string {
 
 // Hasta dónde se puede planear: el horizonte del pronóstico de Open-Meteo.
 const DIAS_PLANEABLES = 16;
+
+/** Para capacidades del navegador que no cambian mientras la página vive
+ *  (¿hay motor de dictado?): no hay a qué suscribirse. Constante de módulo a
+ *  propósito — una función nueva por render re-suscribiría en cada uno. */
+const suscripcionInmutable = () => () => {};
 
 // La lista de días de la fila "para hoy ▾". key null = hoy (no viaja al server:
 // hoy es el flujo de siempre, intacto).
@@ -285,14 +319,27 @@ export function LookRequest({
   // impermeable toda la temporada. Default en `false` a propósito: no
   // contestar debe caer en el lado seguro.
   const [paraguas, setParaguas] = useState(false);
+  // "¿La lluvia te toca?" — solo se pregunta cuando el clima trae lluvia.
+  // Default "afuera": es el lado seguro. Quien no conteste recibe el look de
+  // lluvia de siempre; solo quien DICE que anda bajo techo pierde el agua.
+  const [techado, setTechado] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
   // La fecha del plan. null = hoy — el default silencioso. Vive en el paso
   // "¿cuándo?" junto con día/noche (son la misma pregunta). Solo fechas
   // futuras viajan al server (plannedFor).
   const [fecha, setFecha] = useState<string | null>(null);
-  // "otro…" revela los planes raros (graduación, funeral).
-  const [masPlanes, setMasPlanes] = useState(false);
+  // La hoja de dictado ("te escucho…").
+  const [dictado, setDictado] = useState(false);
+  // ¿Este navegador sabe transcribir? Es una capacidad del entorno, no estado:
+  // en el server no hay window (false, no se pinta el botón) y en el cliente se
+  // lee una vez. Si es false queda el mic del teclado, que dicta igual.
+  const micDisponible = useSyncExternalStore(
+    suscripcionInmutable,
+    () => !!ctorDeDictado(),
+    () => false
+  );
+  const openInputRef = useRef<HTMLInputElement>(null);
   // El TIPO de evento (boda, cena con amigos…). Es lo primero que se pregunta
   // al elegir "evento"; su formalidad sale del catálogo y solo se toca si el
   // caso es raro.
@@ -322,8 +369,12 @@ export function LookRequest({
   // El permiso tiene TRES finales, no dos, y el tercero era el "raro" que vivió
   // Roberto: si el navegador ya lo tiene BLOQUEADO (un "no permitir" viejo), el
   // prompt no vuelve a salir jamás — falla en silencio. Se distingue y se dice.
+  // "pedir" = todavía no hay permiso y NO lo pedimos de sorpresa: se explica
+  // qué se va a usar y un botón lo pide. El prompt del navegador sale una sola
+  // vez en la vida de la instalación; gastarlo sin contexto es la forma más
+  // cara de perderlo (un "no permitir" no se puede volver a preguntar).
   const [aquiEstado, setAquiEstado] = useState<
-    "idle" | "leyendo" | "listo" | "bloqueado" | "fallo"
+    "idle" | "pedir" | "leyendo" | "listo" | "bloqueado" | "fallo"
   >("idle");
   // El clima pre-resuelto ("así estará el sábado: 19°, lluvia"). Solo informa
   // el banner; las bandas quedan editables — la corrección manual siempre gana.
@@ -404,7 +455,11 @@ export function LookRequest({
     BUCKETS.forEach((b, i) => {
       if (Math.abs(b.temp_c - w.temp_c) < Math.abs(BUCKETS[mejor].temp_c - w.temp_c)) mejor = i;
     });
-    const llueve = /lluvia|llovizna|chubasco|tormenta/.test(w.condition);
+    // La MISMA pregunta que se hace el motor (lib/weather). Vivía aquí como un
+    // literal propio —sin el flag de mayúsculas y con otra lista de palabras—,
+    // que es exactamente la divergencia que rompe el techado en silencio: la
+    // UI no pregunta por una lluvia que el motor sí ve, o al revés.
+    const llueve = hayLluvia(w.condition);
     setClimaIdx((prev) => prev ?? mejor);
     if (llueve) setRain(true);
     autoPrefill.current = { idx: mejor, rain: llueve };
@@ -456,29 +511,25 @@ export function LookRequest({
     else setCiudadFallo(true);
   }
 
-  // ¿El navegador tiene la ubicación BLOQUEADA para el sitio? (denied = ningún
-  // sitio puede re-abrir el prompt; solo la persona desde sus ajustes).
-  async function permisoBloqueado(): Promise<boolean> {
+  // Cómo está el permiso de ubicación para este sitio. null = el navegador no
+  // tiene la API de permisos (Safari viejo) — ahí no se adivina.
+  async function estadoDelPermiso(): Promise<PermissionState | null> {
     try {
       const perm = await navigator.permissions?.query({
         name: "geolocation" as PermissionName,
       });
-      return perm?.state === "denied";
+      return perm?.state ?? null;
     } catch {
-      return false;
+      return null;
     }
   }
 
-  // "Aquí, donde estoy": el tap ES el permiso — si está sin decidir, el prompt
-  // sale aquí mismo (con timeout generoso: tarda lo que tarde la persona). Si
-  // está bloqueado o falla, se DICE — el silencio era lo raro.
-  async function elegirAqui() {
-    setDonde("aqui");
-    if (aquiCoords) return;
-    if (await permisoBloqueado()) {
-      setAquiEstado("bloqueado");
-      return;
-    }
+  async function permisoBloqueado(): Promise<boolean> {
+    return (await estadoDelPermiso()) === "denied";
+  }
+
+  /** Pide la ubicación de verdad (dispara el prompt del navegador si falta). */
+  async function pedirUbicacion() {
     setAquiEstado("leyendo");
     const c = await getPosition();
     if (c) {
@@ -487,6 +538,26 @@ export function LookRequest({
     } else {
       setAquiEstado((await permisoBloqueado()) ? "bloqueado" : "fallo");
     }
+  }
+
+  // "En esta ciudad": el tap ya NO dispara el prompt del navegador. Si el
+  // permiso ya está dado, lee en silencio (responde en <1s); si está bloqueado,
+  // lo dice; y si nunca se ha preguntado, abre el reveal que explica para qué
+  // se usa y deja que el botón lo pida. El prompt sin contexto es lo que hace
+  // que la gente le dé "no permitir" — y ese "no" no tiene vuelta atrás.
+  async function elegirAqui() {
+    setDonde("aqui");
+    if (aquiCoords) return;
+    const perm = await estadoDelPermiso();
+    if (perm === "denied") {
+      setAquiEstado("bloqueado");
+      return;
+    }
+    if (perm === "granted") {
+      await pedirUbicacion();
+      return;
+    }
+    setAquiEstado("pedir");
   }
 
   // "Compartir mi ubicación" desde el paso del clima (el camino principal
@@ -533,7 +604,11 @@ export function LookRequest({
       fechaLocal: fmtFechaLocal(new Date()),
       ...(fecha ? { plannedFor: fecha } : {}),
       weather,
-      ...(rain ? { paraguas } : {}),
+      // Con lluvia hay DOS respuestas posibles y son excluyentes: bajo techo el
+      // agua no cuenta (y el paraguas no tiene sentido); afuera cuenta y el
+      // paraguas decide si la capa de arriba se elige por estilo. Sin lluvia no
+      // viaja ninguna de las dos.
+      ...(rain ? (techado ? { techado: true } : { paraguas }) : {}),
     });
   }
 
@@ -659,10 +734,11 @@ export function LookRequest({
                   openText={openText}
                   tipoEvento={tipoEvento}
                   onPickPlanSocial={pickPlanSocial}
-                  masPlanes={masPlanes}
-                  onMasPlanes={() => setMasPlanes(true)}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
+                  onDictar={() => setDictado(true)}
+                  micDisponible={micDisponible}
+                  inputRef={openInputRef}
                 />
                 {closet.length > 0 ? (
                   <AnchorTrigger
@@ -697,6 +773,7 @@ export function LookRequest({
                 donde={donde}
                 onAqui={elegirAqui}
                 onOtra={() => setDonde("otra")}
+                onPedirUbicacion={pedirUbicacion}
                 aquiEstado={aquiCoords ? "listo" : aquiEstado}
                 ciudadTexto={ciudadTexto}
                 onCiudadTexto={(v) => {
@@ -720,6 +797,8 @@ export function LookRequest({
                 onRain={setRain}
                 paraguas={paraguas}
                 onParaguas={setParaguas}
+                techado={techado}
+                onTechado={setTechado}
                 onCompartir={compartirUbicacion}
                 puedeCompartir={donde === "aqui"}
                 aquiEstado={aquiEstado}
@@ -757,6 +836,23 @@ export function LookRequest({
         </div>
       </div>
 
+      {dictado ? (
+        <DictadoSheet
+          inicial={openText}
+          onUsar={(t) => {
+            changeOpenText(t.slice(0, 200));
+            setDictado(false);
+          }}
+          onClose={() => setDictado(false)}
+          onEscribir={() => {
+            setDictado(false);
+            // Un tick para que la hoja se desmonte antes de pedir el foco: en
+            // iOS el teclado no sube si el input aún está tapado por el diálogo.
+            setTimeout(() => openInputRef.current?.focus(), 0);
+          }}
+        />
+      ) : null}
+
       {sheetOpen ? (
         <AnchorSheet
           closet={closet}
@@ -788,29 +884,33 @@ function StepPlan({
   openText,
   tipoEvento,
   onPickPlanSocial,
-  masPlanes,
-  onMasPlanes,
   onPick,
   onOpenText,
+  onDictar,
+  micDisponible,
+  inputRef,
 }: {
   objective: string | null;
   openText: string;
   tipoEvento: string | null;
+  /** Abre la hoja de dictado. Solo se pinta el botón si el mic existe aquí. */
+  onDictar: () => void;
+  micDisponible: boolean;
+  inputRef: RefObject<HTMLInputElement | null>;
   onPickPlanSocial: (k: string) => void;
-  masPlanes: boolean;
-  onMasPlanes: () => void;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
 }) {
-  // Los frecuentes en el orden de PLANES_VISIBLES; los raros tras "otro…".
-  const visibles = PLANES_VISIBLES.map((k) =>
-    TIPOS_EVENTO.find((t) => t.key === k)
-  ).filter((t): t is (typeof TIPOS_EVENTO)[number] => !!t);
-  const raros = TIPOS_EVENTO.filter((t) => !PLANES_VISIBLES.includes(t.key));
-  // Si el elegido es raro, se quedan a la vista aunque nadie tocara "otro…".
-  const mostrarRaros = masPlanes || raros.some((t) => t.key === tipoEvento);
+  // Los seis de PLANES_VISIBLES, en su orden de frecuencia (no el del catálogo).
+  const visibles = PLANES_VISIBLES.map((p) => {
+    const t = TIPOS_EVENTO.find((e) => e.key === p.key);
+    return t ? { ...t, icon: p.icon } : null;
+  }).filter((t): t is (typeof TIPOS_EVENTO)[number] & { icon: IconName } => !!t);
 
-  const chip = (t: (typeof TIPOS_EVENTO)[number]) => {
+  // Chip social: ícono monolínea + etiqueta, en rejilla pareja de 2 columnas.
+  // Seleccionado va con BORDE de tinta y el ícono entintado, no relleno: seis
+  // chips negros de golpe pesan más que toda la pantalla junta.
+  const chip = (t: (typeof visibles)[number]) => {
     const on = tipoEvento === t.key;
     return (
       <button
@@ -818,13 +918,16 @@ function StepPlan({
         type="button"
         onClick={() => onPickPlanSocial(t.key)}
         aria-pressed={on}
-        className={`min-h-[44px] rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
-          on
-            ? "border-accent bg-accent text-on-accent"
-            : "border-line bg-surface text-ink hover:border-ink"
+        className={`flex min-h-[44px] items-center gap-2 rounded-sm border bg-surface px-3 text-left text-[14px] font-semibold text-ink transition-colors ${
+          on ? ON : "border-line hover:border-ink"
         }`}
       >
-        {t.label}
+        <Icon
+          name={t.icon}
+          size={16}
+          className={`shrink-0 ${on ? "text-ink" : "text-muted"}`}
+        />
+        <span className="min-w-0 flex-1 leading-tight">{t.label}</span>
       </button>
     );
   };
@@ -876,29 +979,21 @@ function StepPlan({
           </span>
           <span className="h-px flex-1 bg-line" />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {visibles.map(chip)}
-          {mostrarRaros ? (
-            raros.map(chip)
-          ) : (
-            <button
-              type="button"
-              onClick={onMasPlanes}
-              aria-expanded={false}
-              className="min-h-[44px] rounded-sm border border-line bg-surface px-3.5 text-[14px] font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
-            >
-              otro…
-            </button>
-          )}
-        </div>
-
+        <div className="grid grid-cols-2 gap-2">{visibles.map(chip)}</div>
       </div>
 
-      {/* Campo abierto (alternativa). El placeholder invita al DICTADO: el
-          micrófono del teclado del teléfono ya dicta aquí gratis — cero infra,
-          y sin botón de mic propio (un mic que no graba es una mentira visual).
-          Lo escrito/dictado viaja tal cual al motor como `plan`. Parsear fecha
-          o plan del texto queda gateado a que el campo se use de verdad. */}
+      {/* Campo abierto (alternativa) y ÚNICA vía de los planes esporádicos
+          (graduación, funeral) desde que se fueron los chips. Lo escrito o
+          dictado viaja tal cual al motor como `plan`.
+
+          EL MIC ES PROPIO desde hoy. Este archivo decía "sin botón de mic
+          propio (un mic que no graba es una mentira visual)" y esa premisa era
+          correcta con la infra de entonces; ya no: el navegador transcribe con
+          Web Speech API y el botón sí graba. Roberto revirtió el veto en el
+          handoff. Lo que NO cambió es la regla de fondo: si la API no existe
+          aquí (pasa en PWA instalada de iOS), el botón no se pinta y queda el
+          mic del teclado, que sigue dictando gratis. Un mic muerto sería otra
+          vez la mentira visual. */}
       <div className="flex flex-col">
         <div className="my-0.5 mb-2 flex items-center gap-2.5">
           <span className="h-px flex-1 bg-line" />
@@ -907,24 +1002,285 @@ function StepPlan({
           </span>
           <span className="h-px flex-1 bg-line" />
         </div>
-        <label
-          className={`flex items-center gap-2.5 border bg-surface px-3.5 py-3.5 transition-colors focus-within:border-ink ${
+        <div
+          className={`flex min-h-[54px] items-center gap-2.5 border bg-surface py-1.5 pl-3.5 pr-2 transition-colors focus-within:border-ink ${
             openText ? "border-ink" : "border-line"
           }`}
         >
-          <Icon
-            name="lapiz"
-            size={18}
-            className={`shrink-0 ${openText ? "text-ink" : "text-muted"}`}
-          />
-          <input
-            value={openText}
-            onChange={(e) => onOpenText(e.target.value)}
-            maxLength={200}
-            placeholder={`escríbelo o díctalo — "concierto en la noche, algo cool"`}
-            className="min-w-0 flex-1 bg-transparent text-[13.5px] text-ink caret-accent outline-none placeholder:text-muted"
-          />
-        </label>
+          <label className="flex min-w-0 flex-1 items-center gap-2.5">
+            <Icon
+              name="lapiz"
+              size={18}
+              className={`shrink-0 ${openText ? "text-ink" : "text-muted"}`}
+            />
+            <input
+              ref={inputRef}
+              value={openText}
+              onChange={(e) => onOpenText(e.target.value)}
+              maxLength={200}
+              placeholder={
+                micDisponible
+                  ? `escríbelo o díctalo — "concierto…"`
+                  : `escríbelo o díctalo — "concierto en la noche, algo cool"`
+              }
+              className="min-w-0 flex-1 bg-transparent text-[13.5px] text-ink caret-accent outline-none placeholder:text-muted"
+            />
+          </label>
+          {micDisponible ? (
+            <button
+              type="button"
+              onClick={onDictar}
+              aria-label="Dictar tu plan"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-accent text-on-accent transition-colors hover:bg-accent-deep"
+            >
+              <Icon name="microfono" size={18} />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────── DICTADO (Web Speech API) ─────────────────────────
+//
+// Tipos mínimos escritos a mano: `SpeechRecognition` no está en lib.dom y en
+// Safari vive con prefijo (`webkitSpeechRecognition`). Solo lo que se usa.
+type ResultadoDictado = { isFinal: boolean; 0: { transcript: string } };
+type EventoDictado = { results: ArrayLike<ResultadoDictado> };
+type ErrorDictado = { error: string };
+type Reconocedor = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  abort(): void;
+  onstart: (() => void) | null;
+  onresult: ((e: EventoDictado) => void) | null;
+  onerror: ((e: ErrorDictado) => void) | null;
+  onend: (() => void) | null;
+};
+
+/**
+ * El constructor del reconocedor, o null si este navegador no lo tiene.
+ *
+ * Devolver null NO es un caso raro: es iOS en PWA instalada —justo cómo usan la
+ * app Tatiana y Toño— donde la API existe a medias o no existe. Por eso la
+ * disponibilidad se consulta y el botón se pinta o no; nunca se asume.
+ */
+function ctorDeDictado(): (new () => Reconocedor) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: new () => Reconocedor;
+    webkitSpeechRecognition?: new () => Reconocedor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+// La hoja "te escucho…": pulso mientras oye, transcripción en vivo en serif
+// itálica, y el texto se usa SOLO si la persona lo confirma. Nada se manda
+// sin que lo vea escrito — es la diferencia entre dictar y hablarle al vacío.
+function DictadoSheet({
+  inicial,
+  onUsar,
+  onClose,
+  onEscribir,
+}: {
+  /** Lo que ya había en el campo: el dictado se SUMA, no lo borra. */
+  inicial: string;
+  onUsar: (texto: string) => void;
+  onClose: () => void;
+  /** "Mejor lo escribo": cierra y manda el foco al campo. */
+  onEscribir: () => void;
+}) {
+  const [texto, setTexto] = useState("");
+  const [parcial, setParcial] = useState("");
+  const [escuchando, setEscuchando] = useState(false);
+  // "permiso" = el navegador tiene el mic bloqueado (no se puede re-preguntar);
+  // "falla" = cualquier otra (sin API, red, motor de voz caído). Se inicializa
+  // sin API ya en falla — no en un efecto: el estado inicial es estado inicial.
+  const [error, setError] = useState<null | "permiso" | "falla">(() =>
+    ctorDeDictado() ? null : "falla"
+  );
+  // Sube con "toca el micrófono y va de nuevo": re-corre el efecto y abre una
+  // sesión NUEVA de reconocimiento (reusar la anterior lanza en Safari).
+  const [turno, setTurno] = useState(0);
+  // Lo dictado en los turnos ANTERIORES. Existe porque cada sesión de
+  // reconocimiento empieza en blanco: `onresult` reconstruye la frase de SU
+  // sesión (por eso asigna en vez de acumular — el navegador reenvía todos sus
+  // resultados), así que sin este acumulador el segundo turno pisaba al
+  // primero y "seguir dictando" borraba lo que ya habías dicho.
+  const [previo, setPrevio] = useState("");
+  // Sin useCallback a propósito: necesita leer `texto` y `parcial` del render
+  // actual para archivarlos, y memoizarlo con [] los congelaría vacíos.
+  function otraVez() {
+    setPrevio((p) => [p, texto, parcial].filter(Boolean).join(" ").trim());
+    setTexto("");
+    setParcial("");
+    setError(null);
+    setTurno((t) => t + 1);
+  }
+
+  // El reconocedor es un SISTEMA EXTERNO: el efecto solo lo conecta y lo
+  // desconecta, y todo cambio de estado entra por sus callbacks (onstart,
+  // onresult, onerror, onend). Nada de setState en el cuerpo del efecto.
+  useEffect(() => {
+    const Ctor = ctorDeDictado();
+    if (!Ctor) return;
+    let rec: Reconocedor;
+    try {
+      rec = new Ctor();
+    } catch {
+      return;
+    }
+    rec.lang = "es-MX";
+    rec.interimResults = true;
+    // `continuous` no es confiable en Safari (termina solo igual). Se deja en
+    // false y el fin de turno se maneja explícito, con el mic tocable otra vez.
+    rec.continuous = false;
+    rec.onstart = () => setEscuchando(true);
+    rec.onresult = (e) => {
+      // Se RECONSTRUYE la frase completa en cada evento, nunca se acumula: el
+      // navegador reenvía todos los resultados de la sesión y sumarlos duplica
+      // cada palabra.
+      let fin = "";
+      let inter = "";
+      for (let i = 0; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) fin += r[0].transcript;
+        else inter += r[0].transcript;
+      }
+      setTexto(fin.trim());
+      setParcial(inter.trim());
+    };
+    rec.onerror = (e) => {
+      setEscuchando(false);
+      if (e.error === "aborted") return; // lo cancelamos nosotros
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        setError("permiso");
+      } else if (e.error !== "no-speech") {
+        // "no-speech" NO es un error que mostrar: es haberse quedado callado.
+        setError("falla");
+      }
+    };
+    rec.onend = () => setEscuchando(false);
+    try {
+      rec.start();
+    } catch {
+      /* onerror lo reporta; si ni eso, queda el mic tocable de nuevo */
+    }
+    return () => {
+      rec.onstart = null;
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      try {
+        rec.abort();
+      } catch {
+        /* ya estaba muerto */
+      }
+    };
+  }, [turno]);
+
+  const dicho = [previo, texto, parcial].filter(Boolean).join(" ").trim();
+  const usar = () => onUsar([inicial.trim(), dicho].filter(Boolean).join(" "));
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex flex-col justify-end bg-[rgb(10_10_10/0.34)] lg:items-center lg:justify-center"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Dictar tu plan"
+    >
+      <div
+        // 16px como la hoja del ancla de este mismo archivo (y como el resto de
+        // los bottom-sheets): el radio de 3-6px es de chips y cards, no de
+        // hojas. Con 4px esta se veía de otra app.
+        className="flex flex-col items-center rounded-t-[16px] border-t border-line bg-surface px-6 pb-7 pt-8 text-center lg:w-full lg:max-w-[430px] lg:rounded-[16px]"
+        style={{ animation: "var(--dur-medium) var(--ease-enter) sheet-up" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {error ? (
+          <>
+            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-bg text-ink">
+              <Icon name="microfono" size={28} />
+            </span>
+            <p className="mt-4 text-[20px] font-bold tracking-[-0.02em] text-ink">
+              no puedo escucharte
+            </p>
+            <p className="mt-2 max-w-[300px] text-[14px] leading-relaxed text-muted">
+              {error === "permiso"
+                ? "tu navegador tiene el micrófono bloqueado para stailist — actívalo en sus ajustes, o mejor escríbelo"
+                : "el dictado no está funcionando en este navegador — mejor escríbelo, es un segundo"}
+            </p>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={escuchando ? undefined : otraVez}
+              aria-label={escuchando ? "Escuchando" : "Seguir dictando"}
+              className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-accent text-on-accent"
+              style={
+                escuchando
+                  ? { animation: "mic-pulse 1.6s var(--ease-exit) infinite" }
+                  : undefined
+              }
+            >
+              <Icon name="microfono" size={28} />
+            </button>
+            <p className="mt-4 font-display text-[24px] italic text-ink">
+              {escuchando ? "te escucho…" : "listo, ¿así queda?"}
+            </p>
+            <p className="mt-2 min-h-[50px] max-w-[300px] font-display text-[18px] italic leading-snug text-muted">
+              {dicho ? (
+                <>
+                  {/* Lo ya reconocido (turnos anteriores incluidos) en tinta;
+                      lo que todavía se está oyendo, en gris. Sin `previo` aquí
+                      la hoja enseñaba solo el último turno y parecía que lo
+                      anterior se había perdido. */}
+                  <span className="text-ink">
+                    {[previo, texto].filter(Boolean).join(" ")}
+                  </span>
+                  {parcial ? ` ${parcial}` : null}
+                </>
+              ) : escuchando ? (
+                "cuéntame tu plan…"
+              ) : (
+                "no alcancé a oír nada — toca el micrófono y va de nuevo"
+              )}
+            </p>
+            {/* QUIÉN ESCUCHA, dicho en voz alta. El dictado no corre en el
+                teléfono: el navegador manda el audio a su propio servicio
+                (Google en Chrome, Apple en Safari) y nos devuelve el texto.
+                Nosotros nunca vemos el audio, pero eso no es obvio y lo
+                dictado puede llevar nombres y direcciones de terceros. El
+                permiso del sistema no lo explica; aquí sí. */}
+            <p className="mt-3 max-w-[300px] text-[11.5px] leading-snug text-faint">
+              lo transcribe tu navegador en su nube — nosotros solo recibimos el
+              texto, nunca el audio
+            </p>
+          </>
+        )}
+
+        <div className="mt-6 flex w-full gap-2.5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-[50px] flex-1 rounded-sm border border-line bg-surface text-[15px] font-semibold text-ink transition-colors hover:border-ink"
+          >
+            {error ? "cerrar" : "cancelar"}
+          </button>
+          <button
+            type="button"
+            onClick={error ? onEscribir : usar}
+            disabled={!error && !dicho}
+            className="min-h-[50px] flex-[1.4] rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-40"
+          >
+            {error ? "mejor lo escribo" : "listo, úsalo"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1102,6 +1458,7 @@ function StepCuando({
   donde,
   onAqui,
   onOtra,
+  onPedirUbicacion,
   aquiEstado,
   ciudadTexto,
   onCiudadTexto,
@@ -1120,9 +1477,11 @@ function StepCuando({
   donde: "aqui" | "otra";
   onAqui: () => void;
   onOtra: () => void;
+  /** El botón del reveal: aquí SÍ sale el prompt del navegador. */
+  onPedirUbicacion: () => void;
   /** El resultado del tap de "aquí": el permiso se pide AHÍ y se dice cómo
    *  quedó — leyendo / listo / bloqueado por el navegador / falló. */
-  aquiEstado: "idle" | "leyendo" | "listo" | "bloqueado" | "fallo";
+  aquiEstado: "idle" | "pedir" | "leyendo" | "listo" | "bloqueado" | "fallo";
   ciudadTexto: string;
   onCiudadTexto: (v: string) => void;
   ciudadGeo: { lat: number; lon: number; label: string } | null;
@@ -1213,13 +1572,17 @@ function StepCuando({
                 : "border-line bg-surface text-ink hover:border-ink"
             }`}
           >
-            <span className="text-[14px] font-semibold">aquí, donde estoy</span>
+            {/* "en esta ciudad", NO "aquí, donde estoy": con la segunda la
+                gente pensaba en el punto exacto donde está parada y dudaba de
+                compartirlo. Para el clima basta la ciudad y eso es lo que la
+                etiqueta debe prometer. */}
+            <span className="text-[14px] font-semibold">en esta ciudad</span>
             <span className={`text-[12px] ${donde === "aqui" ? "opacity-80" : "text-muted"}`}>
               {aquiEstado === "listo"
                 ? "listo — ya sé dónde"
                 : aquiEstado === "leyendo"
                   ? "leyendo tu ubicación…"
-                  : "leo tu clima yo"}
+                  : "tu ubicación de referencia"}
             </span>
           </button>
           <button
@@ -1238,6 +1601,28 @@ function StepCuando({
             </span>
           </button>
         </div>
+
+        {/* PRIMERA VEZ: se explica antes de pedir. El prompt del navegador sale
+            una sola vez y un "no permitir" no se puede volver a preguntar —
+            gastarlo sin decir para qué es la forma más cara de perderlo. */}
+        {donde === "aqui" && aquiEstado === "pedir" ? (
+          <div
+            className="flex flex-col gap-2"
+            style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+          >
+            <button
+              type="button"
+              onClick={onPedirUbicacion}
+              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+            >
+              <Icon name="ubicacion" size={17} /> compartir mi ubicación
+            </button>
+            <span className="text-center text-[12px] leading-snug text-muted">
+              te lo pide el navegador solo una vez — no importa el punto exacto,
+              la uso de referencia para el clima
+            </span>
+          </div>
+        ) : null}
 
         {donde === "aqui" && aquiEstado === "bloqueado" ? (
           <span className="text-[12px] text-muted">
@@ -1445,6 +1830,8 @@ function StepClima({
   onRain,
   paraguas,
   onParaguas,
+  techado,
+  onTechado,
   fechaLabel = null,
   climaAuto = null,
   resolviendo = false,
@@ -1472,11 +1859,14 @@ function StepClima({
   puedeCompartir: boolean;
   /** Cómo quedó el permiso: bloqueado/fallo abren el cuestionario, con su
    *  explicación — el "no pude leer tu ubicación" sin porqué era lo raro. */
-  aquiEstado: "idle" | "leyendo" | "listo" | "bloqueado" | "fallo";
+  aquiEstado: "idle" | "pedir" | "leyendo" | "listo" | "bloqueado" | "fallo";
   onIdx: (i: number) => void;
   onRain: (r: boolean) => void;
   paraguas: boolean;
   onParaguas: (p: boolean) => void;
+  /** "¿la lluvia te toca?" → true = bajo techo, la lluvia no manda el look. */
+  techado: boolean;
+  onTechado: (t: boolean) => void;
 }) {
   // El listado manual solo se abre si la persona lo pide ("prefiero decirte
   // yo") o si la ubicación falló — la decisión de Roberto: empujar a compartir
@@ -1553,10 +1943,63 @@ function StepClima({
     </>
   );
 
-  // El paraguas, SOLO si llueve — y con su porqué de verdad: decide si la capa
-  // de arriba tiene que repeler agua o se elige por estilo (el calzado firme
-  // va igual). "Te suelto la mano" no lo entendía nadie.
-  const filaParaguas = rain ? (
+  // "¿LA LLUVIA TE TOCA?" — antes que el paraguas, porque puede borrarlo.
+  //
+  // Roberto: "puede estar lloviendo y si yo voy a estar siempre entechado, me
+  // la pela la lluvia". Es cierto y era un agujero: la app trataba cualquier
+  // día de lluvia como un día a la intemperie, así que una comida en un salón
+  // techado perdía los mocasines y ganaba una gabardina que nadie iba a usar.
+  //
+  // Bajo techo NO se le avisa al motor que llueve (el server le quita el dato,
+  // ver climaParaElMotor): solo queda la temperatura, que sí importa igual.
+  const filaTecho = rain ? (
+    <div
+      className="mt-4 flex flex-col gap-2.5"
+      style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+    >
+      <span className="flex items-center gap-2">
+        <Icon name="techo" size={17} className="shrink-0 text-muted" />
+        <span className="flex flex-col">
+          <span className="text-[14px] font-semibold text-ink">
+            ¿la lluvia te toca?
+          </span>
+          <span className="text-[13px] text-muted">
+            {techado
+              ? "bajo techo, la lluvia no manda el look"
+              : "dime si andarás afuera o todo bajo techo"}
+          </span>
+        </span>
+      </span>
+      <div className="grid grid-cols-2 overflow-hidden rounded-sm border border-line">
+        <button
+          type="button"
+          onClick={() => onTechado(false)}
+          aria-pressed={!techado}
+          className={`min-h-[44px] text-[14px] font-semibold transition-colors ${
+            !techado ? "bg-accent text-on-accent" : "bg-surface text-ink"
+          }`}
+        >
+          afuera
+        </button>
+        <button
+          type="button"
+          onClick={() => onTechado(true)}
+          aria-pressed={techado}
+          className={`min-h-[44px] border-l border-line text-[14px] font-semibold transition-colors ${
+            techado ? "bg-accent text-on-accent" : "bg-surface text-ink"
+          }`}
+        >
+          techado
+        </button>
+      </div>
+    </div>
+  ) : null;
+
+  // El paraguas, solo si llueve Y le toca la lluvia — bajo techo la pregunta no
+  // significa nada. Su porqué de verdad: decide si la capa de arriba tiene que
+  // repeler agua o se elige por estilo (el calzado firme va igual). "Te suelto
+  // la mano" no lo entendía nadie.
+  const filaParaguas = rain && !techado ? (
     <div
       className="mt-3 flex items-center gap-3"
       style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
@@ -1617,7 +2060,7 @@ function StepClima({
       <div className="flex flex-col">
         <div className="flex items-center gap-3 border border-ink bg-surface p-4">
           <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-            <Icon name={/lluvia|llovizna|chubasco|tormenta/.test(climaAuto.condition) ? "lluvia" : "sol"} size={18} />
+            <Icon name={hayLluvia(climaAuto.condition) ? "lluvia" : "sol"} size={18} />
           </span>
           <span className="flex min-w-0 flex-col">
             <span className="text-[17px] font-bold text-ink">
@@ -1631,6 +2074,7 @@ function StepClima({
           </span>
         </div>
 
+        {filaTecho}
         {filaParaguas}
 
         <details className="mt-4">
@@ -1683,6 +2127,7 @@ function StepClima({
             </span>
           ) : null}
           {cuestionario}
+          {filaTecho}
           {filaParaguas}
         </>
       )}
