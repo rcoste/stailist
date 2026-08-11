@@ -13,6 +13,8 @@ import {
   type ClosetPick,
   ocasionLabel,
   bucketLabel,
+  fmtFechaLocal,
+  fechaLegible,
 } from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { voteOutfit } from "@/lib/outfit-actions";
@@ -52,7 +54,9 @@ type State =
   | { kind: "idle" } // aún sin look del día: home (saludo + CTA) DENTRO del AppShell,
   // con la tab bar visible — no fuerza el wizard ni atrapa al usuario.
   | { kind: "generating"; outfitId: string } // outfitId "" = aún sin id (POST en vuelo)
-  | { kind: "ready"; outfit: HoyOutfit }
+  // paraFecha: el look recién generado es para OTRO día (plannedFor) — la vista
+  // lo dice ("mañana") en vez de mentir con "hoy". Ausente = look de hoy.
+  | { kind: "ready"; outfit: HoyOutfit; paraFecha?: string | null }
   // El ancla no va con la ocasión: el stylist avisa y la usuaria decide.
   | { kind: "anchor_warning"; note: string; seedItemName: string; input: LookInput }
   // NO es un error: es la respuesta. El clóset no da para el código de
@@ -83,6 +87,7 @@ export function HoyClient({
   homeCard = null,
   checklist = null,
   verInicio = false,
+  hayPlaneado = false,
 }: {
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
@@ -110,6 +115,10 @@ export function HoyClient({
   checklist?: HomeChecklistData | null;
   /** `?inicio=1`: abre la home aunque ya haya look del día (en vez del look). */
   verInicio?: boolean;
+  /** Hay un look PLANEADO cerca de hoy (el server no conoce la zona horaria del
+   *  dispositivo, así que solo avisa "pregunta tú"). El cliente hace el check
+   *  con su fecha local y, si el planeado es de hoy, amanece como look del día. */
+  hayPlaneado?: boolean;
 }) {
   const [state, setState] = useState<State>(
     pendingOutfitId && !autoAsk
@@ -173,7 +182,18 @@ export function HoyClient({
           const data = await res.json();
           if (stopped) return;
           if (data.status === "ready" && data.outfit) {
-            setState({ kind: "ready", outfit: data.outfit });
+            setState({
+              kind: "ready",
+              outfit: data.outfit,
+              paraFecha: lastInput.current?.plannedFor ?? null,
+            });
+            return;
+          }
+          if (data.status === "no_alcanza") {
+            // El clóset no da para ese código de vestimenta. Llega por el
+            // polling porque la generación corre en background — antes este
+            // caso se perdía y el placeholder moría por timeout a los 150s.
+            setState({ kind: "no_alcanza", faltan: data.faltan ?? [] });
             return;
           }
           if (data.status === "error") {
@@ -194,6 +214,36 @@ export function HoyClient({
     if (state.kind === "generating" && state.outfitId) poll(state.outfitId);
     return () => cancelPoll.current?.();
     // Solo al montar: los cambios posteriores los maneja generar().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // El look PLANEADO que amanece: si el server avisó que hay uno cerca de hoy y
+  // la home abrió sin look, se pregunta con la fecha local del dispositivo (el
+  // server corre en UTC y no puede saber qué día es AQUÍ). Si el planeado es de
+  // hoy, se promueve a look del día y aparece — sin generar ni pagar nada.
+  useEffect(() => {
+    if (!hayPlaneado) return;
+    if (lookInicial || pendingOutfitId || autoAsk) return;
+    let muerto = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/look-of-day?promover=${fmtFechaLocal(new Date())}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok || muerto) return;
+        const data = await res.json();
+        if (!muerto && data.status === "ready" && data.outfit) {
+          setState({ kind: "ready", outfit: data.outfit });
+        }
+      } catch {
+        /* sin red no hay promoción — el look sigue planeado para el próximo intento */
+      }
+    })();
+    return () => {
+      muerto = true;
+    };
+    // Solo al montar: es un check de apertura, no una suscripción.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -233,7 +283,11 @@ export function HoyClient({
           return;
         }
         if (data.status === "ready" && data.outfit) {
-          setState({ kind: "ready", outfit: data.outfit });
+          setState({
+            kind: "ready",
+            outfit: data.outfit,
+            paraFecha: input.plannedFor ?? null,
+          });
           return;
         }
         // En background → seguimos por polling.
@@ -518,6 +572,7 @@ export function HoyClient({
       key={state.outfit.id}
       outfit={state.outfit}
       userId={userId}
+      paraFecha={state.paraFecha ?? null}
       fechaLabel={fechaLabel}
       // El voto persistido solo aplica al look con el que cargó la página; un
       // look recién generado arranca sin voto (el key resetea el estado).
@@ -542,6 +597,7 @@ const FRASES_ESTILISTA: Record<string, string> = {
 function ReadyView({
   outfit,
   userId,
+  paraFecha = null,
   fechaLabel,
   votoInicial = null,
   onOtroLook,
@@ -549,6 +605,8 @@ function ReadyView({
 }: {
   outfit: HoyOutfit;
   userId: string;
+  /** El look es para OTRO día (plannedFor): el título dice la fecha, no "hoy". */
+  paraFecha?: string | null;
   /** "MARTES · 15 JUL" — para el eyebrow del spread de desktop. */
   fechaLabel: string;
   votoInicial?: "up" | "down" | null;
@@ -622,6 +680,7 @@ function ReadyView({
           avatarHref={t.mode === "sin_avatar" ? t.avatarHref : null}
           vermeSub="~20 s"
           onInicio={onInicio}
+          seccionLabel={paraFecha ? fechaLegible(paraFecha) : undefined}
         />
       </div>
 

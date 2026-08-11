@@ -104,6 +104,7 @@ export function LookDetail({
   avatarHref = null,
   vermeSub,
   onInicio,
+  seccionLabel,
 }: {
   nombre: string;
   prendas: LookDetailPrenda[];
@@ -131,6 +132,9 @@ export function LookDetail({
   vermeSub?: string;
   /** Si viene, "hoy" es un botón a la home de la sección. El wow no lo pasa. */
   onInicio?: () => void;
+  /** Etiqueta de la sección. Default "hoy"; un look planeado para otro día dice
+   *  su fecha ("mañana") — decir "hoy" sobre el look del sábado sería mentir. */
+  seccionLabel?: string;
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
@@ -163,11 +167,11 @@ export function LookDetail({
             aria-label="Ir a inicio"
             className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink transition-opacity hover:opacity-60"
           >
-            hoy
+            {seccionLabel ?? "hoy"}
           </button>
         ) : (
           <h1 className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink">
-            hoy
+            {seccionLabel ?? "hoy"}
           </h1>
         )}
         <span className="font-display text-[27px] italic leading-[29px] text-ink">

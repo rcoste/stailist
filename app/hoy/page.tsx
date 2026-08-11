@@ -30,19 +30,30 @@ export default async function HoyPage({
   const autoAsk = generar != null;
   const profile = await requireOnboarded();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  // El server corre en UTC y NO conoce la zona horaria del dispositivo, así que
+  // "hoy" aquí es un rango (utc ± 1 día) y gana el look_date más reciente —
+  // look_date se escribe ya con la fecha LOCAL del cliente (fix del quirk de
+  // que el look del día rotaba a las 6pm de CDMX). El residuo aceptado: cerca
+  // de medianoche la primera pintura puede traer el look de ayer; el cliente lo
+  // corrige en cuanto pide o promueve uno con su fecha real.
+  const utcHoy = new Date();
+  const fechaUtc = (offsetDias: number) =>
+    new Date(utcHoy.getTime() + offsetDias * 86_400_000).toISOString().slice(0, 10);
 
   // ¿Ya hay look de hoy? Si está listo, lo pasamos. Si se está generando en
   // background, pasamos su id para que el cliente retome el polling (resiliente a
   // que bloquees/cambies de app a media carga).
-  const { data: look } = await supabase
+  const { data: looks } = await supabase
     .from("outfits")
     .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at")
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     .eq("is_look_of_day", true)
-    .eq("look_date", today)
-    .maybeSingle();
+    .gte("look_date", fechaUtc(-1))
+    .lte("look_date", fechaUtc(1))
+    .order("look_date", { ascending: false })
+    .limit(1);
+  const look = looks?.[0] ?? null;
 
   const lookStatus = look ? ((look.gen_status as string | null) ?? "ready") : null;
   const stale =
@@ -135,6 +146,23 @@ export default async function HoyPage({
       else if (ev.type === "vote_down") votoInicial = "down";
       else if (ev.type === "worn") wornInicial = true;
     }
+  }
+
+  // ¿Hay un look PLANEADO por estrenar cerca de hoy? Aquí solo se decide si
+  // vale la pena que el cliente pregunte (con SU fecha local) — un día de
+  // colchón por el desfase UTC/local. Cero costo para quien nunca planea.
+  let hayPlaneado = false;
+  if (!lookInicial && !pendingOutfitId) {
+    const { count } = await supabase
+      .from("outfits")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .is("deleted_at", null)
+      .eq("is_look_of_day", false)
+      .eq("gen_status", "ready")
+      .gte("planned_for", fechaUtc(-1))
+      .lte("planned_for", fechaUtc(1));
+    hayPlaneado = (count ?? 0) > 0;
   }
 
   // Clóset para el picker de ancla del wizard ("¿algo que te quieras poner hoy?"),
@@ -233,6 +261,7 @@ export default async function HoyPage({
         ) : null}
         <HoyClient
           verInicio={inicio === "1"}
+          hayPlaneado={hayPlaneado}
           key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}
           pendingOutfitId={pendingOutfitId}

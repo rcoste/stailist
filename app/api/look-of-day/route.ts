@@ -12,7 +12,7 @@ import {
 } from "@/lib/engine/contexto";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
-import { resolveWeather, type Weather } from "@/lib/weather";
+import { resolveWeather, getWeatherForDates, type Weather } from "@/lib/weather";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 
@@ -41,9 +41,86 @@ type Body = {
   workDressCode?: string; // solo la primera vez que elige "trabajo"
   /** Del día: solo cuenta si su código de trabajo es "variable". */
   veCliente?: boolean;
+  /** Fecha calendario LOCAL del dispositivo (YYYY-MM-DD). El server corre en
+   *  UTC — a las 6pm de CDMX ya cree que es mañana. */
+  fechaLocal?: string;
+  /** Look pedido por adelantado: fecha futura (≤ ~16 días). */
+  plannedFor?: string;
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// El "hoy" REAL: la fecha local del cliente si viene y es sana (±3 días del
+// reloj del server — un cliente con el reloj roto no manda el look a 2019);
+// si no, la del server como antes.
+function fechaLocalDe(body: Body): string {
+  const f = body.fechaLocal;
+  if (typeof f === "string" && DATE_RE.test(f)) {
+    const diff = Math.abs(new Date(f + "T12:00:00Z").getTime() - Date.now());
+    if (diff < 3 * 86_400_000) return f;
+  }
+  return todayStr();
+}
+
+// La fecha planeada, validada: futura (hoy o pasado caen al flujo normal) y
+// dentro del horizonte del pronóstico. Inválida = null = flujo de hoy.
+function plannedForDe(body: Body, hoy: string): string | null {
+  const p = body.plannedFor;
+  if (typeof p !== "string" || !DATE_RE.test(p)) return null;
+  if (p <= hoy) return null; // los strings ISO comparan bien lexicográficamente
+  const dias =
+    (new Date(p + "T00:00:00Z").getTime() - new Date(hoy + "T00:00:00Z").getTime()) /
+    86_400_000;
+  return dias > 16 ? null : p;
+}
+
+// Día D: ¿hay un look planeado para hoy? Promuévelo a look del día. Si esa
+// fecha ya tiene look del día (índice único parcial), EL EXISTENTE GANA — el
+// planeado se queda en historial. Determinista y sin crash.
+async function promoverPlaneado(
+  supabase: SupabaseClient,
+  userId: string,
+  today: string
+): Promise<Record<string, unknown> | null> {
+  const CAMPOS = "id, item_ids, title, explanation, tip, gen_status, created_at";
+  const { data: plan } = await supabase
+    .from("outfits")
+    .select(CAMPOS)
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .eq("planned_for", today)
+    .eq("is_look_of_day", false)
+    .eq("gen_status", "ready")
+    // Varios looks para la misma fecha: el más reciente gana (los demás quedan
+    // en historial, como cualquier look).
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!plan) return null;
+
+  const { error } = await supabase
+    .from("outfits")
+    .update({ is_look_of_day: true, look_date: today })
+    .eq("id", plan.id as string)
+    .eq("user_id", userId);
+  if (error) {
+    // 23505 del índice (user, look_date) where is_look_of_day: alguien ya es el
+    // look del día (transición/carrera) — se lee y se devuelve al ganador.
+    const { data: winner } = await supabase
+      .from("outfits")
+      .select(CAMPOS)
+      .eq("user_id", userId)
+      .is("deleted_at", null)
+      .eq("is_look_of_day", true)
+      .eq("look_date", today)
+      .maybeSingle();
+    const st = winner ? ((winner.gen_status as string | null) ?? "ready") : null;
+    return st === "ready" ? winner : null;
+  }
+  return plan;
+}
 
 // POST: arranca (o devuelve) el look de hoy. Crea un placeholder 'generating',
 // responde al instante con su id, y genera en background. El cliente hace polling
@@ -76,7 +153,10 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id);
   }
   const forceAnchor = !!body.forceAnchor;
-  const today = todayStr();
+  // "Hoy" es el del DISPOSITIVO (fechaLocal del body), no el del server: antes
+  // se usaba todayStr() (UTC) y el look del día rotaba a las 6pm de CDMX.
+  const today = fechaLocalDe(body);
+  const plannedFor = plannedForDe(body, today);
 
   // Gate de ocasión: si ancló una prenda y aún no confirmó, checa que vaya con la
   // ocasión. Si es un mismatch obvio (traje de baño + boda), devuelve un aviso
@@ -88,8 +168,9 @@ export async function POST(request: NextRequest) {
 
   // ¿Ya hay look de hoy? Si está listo y no es "otro look", devuélvelo. Si está
   // generándose (y no muerto), devuelve su id para que el cliente siga el polling.
-  // No aplica cuando está anclando una prenda: ahí siempre arma un look nuevo.
-  if (!force && !seedItemId) {
+  // No aplica cuando está anclando una prenda ni cuando el look es para OTRO
+  // día (plannedFor): ahí siempre arma un look nuevo.
+  if (!force && !seedItemId && !plannedFor) {
     const { data: existing } = await supabase
       .from("outfits")
       .select("id, item_ids, title, explanation, tip, gen_status, created_at")
@@ -113,16 +194,30 @@ export async function POST(request: NextRequest) {
       }
       // 'error' o 'generating' muerto → cae a regenerar.
     }
+
+    // Sin look de hoy usable: ¿hay uno PLANEADO para hoy? Amanece siendo el
+    // look del día — sin generar (ni pagar) nada nuevo.
+    const plan = await promoverPlaneado(supabase, user.id, today);
+    if (plan) {
+      return NextResponse.json({
+        outfitId: plan.id,
+        status: "ready",
+        outfit: await shape(supabase, plan as Parameters<typeof shape>[1]),
+      });
+    }
   }
 
   // "Otro look" / regenerar: el look de hoy anterior pierde el flag (sigue en
-  // historial) para respetar el índice único (user, look_date).
-  await supabase
-    .from("outfits")
-    .update({ is_look_of_day: false })
-    .eq("user_id", user.id)
-    .eq("is_look_of_day", true)
-    .eq("look_date", today);
+  // historial) para respetar el índice único (user, look_date). Un look para
+  // OTRO día no toca el de hoy.
+  if (!plannedFor) {
+    await supabase
+      .from("outfits")
+      .update({ is_look_of_day: false })
+      .eq("user_id", user.id)
+      .eq("is_look_of_day", true)
+      .eq("look_date", today);
+  }
 
   const objHint =
     typeof body.objective === "string" && body.objective in OBJECTIVES
@@ -137,8 +232,11 @@ export async function POST(request: NextRequest) {
       occasion: objHint,
       explanation: "",
       prompt_version: PROMPT_VERSION,
-      is_look_of_day: true,
-      look_date: today,
+      // Look para OTRO día: se guarda colgado a su fecha (planned_for) y NO es
+      // el look del día — lo será al llegar su día, vía promoverPlaneado().
+      is_look_of_day: !plannedFor,
+      look_date: plannedFor ? null : today,
+      ...(plannedFor ? { planned_for: plannedFor } : {}),
       gen_status: "generating",
     })
     .select("id")
@@ -175,6 +273,36 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
+  // ?promover=<fecha_local>: el check ligero al abrir la home. NO genera nada:
+  // si hay look del día listo lo devuelve; si hay uno PLANEADO para esa fecha
+  // lo promueve y lo devuelve; si no, "none" y el cliente sigue en idle.
+  const promover = request.nextUrl.searchParams.get("promover");
+  if (promover) {
+    const today = fechaLocalDe({ fechaLocal: promover });
+    const { data: existing } = await supabase
+      .from("outfits")
+      .select("id, item_ids, title, explanation, tip, gen_status, created_at")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .eq("is_look_of_day", true)
+      .eq("look_date", today)
+      .maybeSingle();
+    if (existing && ((existing.gen_status as string | null) ?? "ready") === "ready") {
+      return NextResponse.json({
+        status: "ready",
+        outfit: await shape(supabase, existing),
+      });
+    }
+    const plan = await promoverPlaneado(supabase, user.id, today);
+    if (plan) {
+      return NextResponse.json({
+        status: "ready",
+        outfit: await shape(supabase, plan as Parameters<typeof shape>[1]),
+      });
+    }
+    return NextResponse.json({ status: "none" });
+  }
+
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "bad_request" }, { status: 400 });
 
@@ -188,7 +316,22 @@ export async function GET(request: NextRequest) {
 
   const status = (o.gen_status as string | null) ?? "ready";
   if (status === "error") {
-    return NextResponse.json({ status: "error", error: (o.gen_error as string) ?? "generacion" });
+    const ge = (o.gen_error as string) ?? "generacion";
+    // "El clóset no alcanza para ese código" NO es un error genérico: trae la
+    // lista de lo que falta y su pantalla propia. Viaja codificado en gen_error
+    // porque la generación corre en background (after()) y su return se pierde
+    // — antes este caso dejaba el placeholder colgado hasta el timeout de 150s.
+    if (ge.startsWith("no_alcanza:")) {
+      let faltan: string[] = [];
+      try {
+        const parsed = JSON.parse(ge.slice("no_alcanza:".length));
+        if (Array.isArray(parsed)) faltan = parsed.filter((x) => typeof x === "string");
+      } catch {
+        /* lista ilegible → pantalla sin detalle, mejor que un error genérico */
+      }
+      return NextResponse.json({ status: "no_alcanza", faltan });
+    }
+    return NextResponse.json({ status: "error", error: ge });
   }
   if (status === "generating") {
     if (isStale(o.created_at as string)) {
@@ -271,7 +414,18 @@ async function generateInto(
     const { base } = carga;
     const profile = base.profile;
 
-    const weather: Weather | null = await resolveWeather(body);
+    // Look para otro día + ubicación: el clima es el PRONÓSTICO de esa fecha
+    // (getWeatherForDates, la misma pieza del modo Viaje — con fallback a
+    // histórico si algo falla dentro). El clima manual (bandas) manda igual
+    // que siempre. Riesgo aceptado y documentado: el pronóstico es del día en
+    // que se PIDE el look; el día D no se re-verifica.
+    const plannedFor = plannedForDe(body, fechaLocalDe(body));
+    const manual =
+      !!body.weather && typeof body.weather.temp_c === "number";
+    const weather: Weather | null =
+      plannedFor && !manual && typeof body.lat === "number" && typeof body.lon === "number"
+        ? await getWeatherForDates(body.lat, body.lon, plannedFor, plannedFor)
+        : await resolveWeather(body);
 
     const objective = await resolverYPersistirObjetivo(
       supabase,
@@ -310,11 +464,20 @@ async function generateInto(
       ctx.gender
     );
     if (alcance.faltaLoEsencial) {
-      return NextResponse.json({
-        status: "no_alcanza",
-        faltan: alcance.faltan,
-        tiene: alcance.tiene,
-      });
+      // OJO: esto corre en background (after()) — devolver un NextResponse aquí
+      // se perdía en el vacío y el placeholder quedaba "generating" hasta el
+      // timeout de 150s. El veredicto se escribe al placeholder y el GET lo
+      // traduce de vuelta a la pantalla de no_alcanza.
+      await supabase
+        .from("outfits")
+        .update({
+          gen_status: "error",
+          gen_error: "no_alcanza:" + JSON.stringify(alcance.faltan ?? []),
+          is_look_of_day: false,
+        })
+        .eq("id", outfitId)
+        .eq("user_id", userId);
+      return;
     }
 
     const startedAt = Date.now();
@@ -347,6 +510,11 @@ async function generateInto(
           prompt_version: PROMPT_VERSION,
           look_of_day: true,
           anchored: !!seedItemId, // ¿usó ancla? (medir adopción de la feature)
+          // Los dos gates pre-registrados del rediseño del wizard (2026-08-10):
+          // planned_for ≥1/usuaria activa en 2 semanas → se construye la agenda;
+          // % con plan_libre → se construye el parser del campo abierto.
+          planned_for: plannedFor ?? null,
+          plan_libre: typeof body.plan === "string" && body.plan.trim().length > 0,
         },
       },
       {

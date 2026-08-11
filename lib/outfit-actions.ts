@@ -66,7 +66,10 @@ export async function markWorn(
 // NO marca "worn" — esa sigue siendo la señal de oro real ("Me lo puse"), que el
 // usuario confirma en Hoy si de verdad lo usa. Tras esto, el cliente navega a /hoy.
 export async function wearToday(
-  outfitId: string
+  outfitId: string,
+  /** Fecha calendario LOCAL del dispositivo (YYYY-MM-DD). El server corre en
+   *  UTC — sin esto, "ponérmelo hoy" a las 7pm de CDMX caía en mañana. */
+  fechaLocal?: string
 ): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
@@ -74,7 +77,12 @@ export async function wearToday(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
 
-  const today = new Date().toISOString().slice(0, 10);
+  // La local si viene y es sana (±3 días del reloj del server); si no, la UTC.
+  const sana =
+    typeof fechaLocal === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(fechaLocal) &&
+    Math.abs(new Date(fechaLocal + "T12:00:00Z").getTime() - Date.now()) < 3 * 86_400_000;
+  const today = sana ? fechaLocal! : new Date().toISOString().slice(0, 10);
 
   // 1) El look de hoy actual deja de serlo (sigue en historial por su created_at).
   await supabase

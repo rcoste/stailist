@@ -42,6 +42,18 @@ export type LookInput = {
    * del DÍA — elegir "depende del día" es justamente decir eso.
    */
   veCliente?: boolean;
+  /**
+   * Fecha calendario LOCAL del dispositivo (YYYY-MM-DD). Resuelve "hoy" en la
+   * zona horaria de la persona — el server corre en UTC y a las 6pm de CDMX ya
+   * cree que es mañana.
+   */
+  fechaLocal?: string;
+  /**
+   * Look pedido por adelantado: fecha futura (≤ ~16 días, el horizonte del
+   * pronóstico). Ausente = hoy, el flujo de siempre. El look queda colgado a
+   * esta fecha y ese día amanece siendo el look del día.
+   */
+  plannedFor?: string | null;
 } & ({ lat: number; lon: number } | { weather: { temp_c: number; condition: string } });
 
 // Prenda del clóset para el picker de ancla (foto resuelta en el server).
@@ -68,14 +80,69 @@ const CAT_LABELS: Record<string, string> = {
 const norm = (s: string) =>
   s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-// 4 ocasiones del wizard (sin "viaje": ya hay un Modo viaje propio).
-const OCASIONES: { key: string; label: string; help: string; icon: IconName }[] = [
-  { key: "diario", label: "el día a día", help: "lo de siempre, resuelto", icon: "sol" },
+// El paso 1 habla en PLANES, no en categorías (rediseño 2026-08-10). Antes era
+// un 2×2 abstracto ("el día a día / trabajo / un evento / refrescar") que
+// obligaba a decidir si tu cena "cuenta como un evento" para llegar, dos
+// niveles adentro, al catálogo que sí la entiende. Ahora: 2 planes cotidianos
+// como cards + los planes sociales del catálogo (lib/eventos.ts) a la vista
+// como chips. "refrescar" salió del wizard (nadie entendía qué prometía —
+// tarea #14); si viene guardado del onboarding se trata como "diario", igual
+// que "viaje". Sin "viaje": ya hay un Modo viaje propio.
+const COTIDIANOS: { key: string; label: string; help: string; icon: IconName }[] = [
+  { key: "diario", label: "un día normal", help: "lo de siempre, resuelto", icon: "camisa" },
   { key: "oficina", label: "trabajo", help: "verte pro sin pensarlo", icon: "maletin" },
-  { key: "evento", label: "un evento", help: "algo que importa", icon: "destello" },
-  { key: "refrescar", label: "refrescar", help: "distinto a ayer", icon: "repetir" },
 ];
-const OCASION_KEYS = new Set(OCASIONES.map((o) => o.key));
+const OCASION_KEYS = new Set([...COTIDIANOS.map((o) => o.key), "evento"]);
+
+// Chips sociales: los frecuentes a la vista; los raros detrás de "otro…"
+// (Roberto: "¿qué tantas veces vas a un funeral? — los poco frecuentes no
+// ganan primera fila"). El orden es de frecuencia, no el del catálogo.
+const PLANES_VISIBLES = [
+  "cena-amigos",
+  "cita",
+  "comida-familiar",
+  "comida-trabajo",
+  "fiesta",
+  "boda",
+];
+
+// Fecha calendario LOCAL del dispositivo. NUNCA toISOString(): esa es UTC y
+// después de las 6pm (CDMX) ya es "mañana" — la misma trampa que tenía
+// look_date en el server.
+export function fmtFechaLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// Hasta dónde se puede planear: el horizonte del pronóstico de Open-Meteo.
+const DIAS_PLANEABLES = 16;
+
+// La lista de días de la fila "para hoy ▾". key null = hoy (no viaja al server:
+// hoy es el flujo de siempre, intacto).
+function proximosDias(): { key: string | null; label: string }[] {
+  const hoy = new Date();
+  return Array.from({ length: DIAS_PLANEABLES + 1 }, (_, i) => {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
+    const label =
+      i === 0
+        ? "hoy"
+        : i === 1
+          ? "mañana"
+          : `${d.toLocaleDateString("es-MX", { weekday: "short" }).replace(".", "")} ${d.getDate()}`;
+    return { key: i === 0 ? null : fmtFechaLocal(d), label };
+  });
+}
+
+// "el sábado 16" / "mañana" — para la fila cerrada, el copy del paso de clima y
+// la etiqueta del look planeado en la vista del look (hoy-client).
+export function fechaLegible(key: string): string {
+  const [y, m, dd] = key.split("-").map(Number);
+  const d = new Date(y, m - 1, dd);
+  const hoy = new Date();
+  const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+  if (fmtFechaLocal(manana) === key) return "mañana";
+  return `el ${d.toLocaleDateString("es-MX", { weekday: "long" })} ${d.getDate()}`;
+}
 
 // "Un evento" es ambiguo (de un coctel casual a una boda de etiqueta) y el motor
 // adivinaba mal. Al elegir evento pedimos el nivel de formalidad para acertar.
@@ -96,8 +163,15 @@ const BUCKETS = [
 ];
 
 // Etiquetas legibles del plan, reusadas por el "generando" (chips + frase).
+// Conserva las keys viejas ("evento", "refrescar"): looks históricos las traen.
+const OCASION_LABELS: Record<string, string> = {
+  diario: "el día a día",
+  oficina: "trabajo",
+  evento: "un evento",
+  refrescar: "refrescar",
+};
 export function ocasionLabel(key: string): string {
-  return OCASIONES.find((o) => o.key === key)?.label ?? key;
+  return OCASION_LABELS[key] ?? key;
 }
 export function bucketLabel(temp_c: number): string {
   let best = BUCKETS[0];
@@ -158,7 +232,11 @@ export function LookRequest({
   // "viaje" (la opción "Aeropuerto" del onboarding) NO es una ocasión del wizard; se
   // trata como "diario" (look cómodo del día) para NO re-preguntar la ocasión al armar
   // el primer look — si no, el skip fallaba y volvía a pedir la ocasión ya elegida.
-  const normObjective = defaultObjective === "viaje" ? "diario" : defaultObjective;
+  // "refrescar" igual: salió del wizard, pero sigue guardado en perfiles viejos.
+  const normObjective =
+    defaultObjective === "viaje" || defaultObjective === "refrescar"
+      ? "diario"
+      : defaultObjective;
   const hasDefaultObj = !!(normObjective && OCASION_KEYS.has(normObjective));
   // "Evento" NUNCA se salta, aunque venga elegido del onboarding: es la única
   // ocasión que exige un dato más (la formalidad) y ese dato vive en el paso
@@ -194,6 +272,13 @@ export function LookRequest({
   const [paraguas, setParaguas] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
+  // La fecha del plan. null = hoy — el default silencioso: la fila "para hoy ▾"
+  // se lee como suposición editable, no como pregunta. Solo fechas futuras
+  // viajan al server (plannedFor).
+  const [fecha, setFecha] = useState<string | null>(null);
+  const [fechaOpen, setFechaOpen] = useState(false);
+  // "otro…" revela los planes raros (graduación, funeral).
+  const [masPlanes, setMasPlanes] = useState(false);
   // El TIPO de evento (boda, cena con amigos…). Es lo primero que se pregunta
   // al elegir "evento"; su formalidad sale del catálogo y solo se toca si el
   // caso es raro.
@@ -264,6 +349,8 @@ export function LookRequest({
         tipoEvento: tipoEventoOut,
         ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
         ...(pideVeCliente ? { veCliente } : {}),
+        fechaLocal: fmtFechaLocal(new Date()),
+        ...(fecha ? { plannedFor: fecha } : {}),
         ...coords,
       });
     else setLocFailed(true);
@@ -280,6 +367,8 @@ export function LookRequest({
       tipoEvento: tipoEventoOut,
       ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
       ...(pideVeCliente ? { veCliente } : {}),
+      fechaLocal: fmtFechaLocal(new Date()),
+      ...(fecha ? { plannedFor: fecha } : {}),
       weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
       ...(rain ? { paraguas } : {}),
     });
@@ -297,6 +386,18 @@ export function LookRequest({
       setFormalityManual(null);
     }
   }
+
+  // Un chip social es objetivo + tipo en un solo tap (antes había que declarar
+  // "un evento" primero — la clasificación que este rediseño mató).
+  function pickPlanSocial(key: string) {
+    const off = tipoEvento === key;
+    setTipoEvento(off ? null : key);
+    setObjective(off ? null : "evento");
+    // Cambiar de plan reinicia el ajuste de formalidad: el default del tipo
+    // nuevo es el bueno, no el que se corrigió para el anterior.
+    setFormalityManual(null);
+    setOpenText("");
+  }
   function changeOpenText(v: string) {
     setOpenText(v);
     if (v.trim()) setObjective(null);
@@ -305,14 +406,20 @@ export function LookRequest({
   const displayStep = skip ? step - 1 : step;
   const meta = `PASO ${displayStep} DE ${totalSteps}`;
   // Titular con una palabra en serif itálica de acento (Instrument Serif).
+  // El del paso 1 es temporalmente NEUTRO a propósito: la fila de fecha es la
+  // única que puede decir "hoy" — el paso existe justo para no asumirlo.
   const question =
     step === 1 ? (
       <>
-        ¿a dónde <em className={EM}>vas</em> hoy?
+        ¿qué <em className={EM}>plan</em> tienes?
       </>
     ) : step === 2 ? (
       <>
         ¿de día o <em className={EM}>de noche</em>?
+      </>
+    ) : fecha ? (
+      <>
+        ¿cómo estará <em className={EM}>el clima</em>?
       </>
     ) : (
       <>
@@ -360,6 +467,54 @@ export function LookRequest({
           <h1 className="mt-2 text-[30px] font-bold leading-[1.04] tracking-[-0.025em] text-ink">
             {question}
           </h1>
+          {/* La fila de fecha: una suposición editable, no una pregunta. El
+              default (hoy) no pide nada; tocarla abre la lista de días — lista,
+              no calendario: 16 opciones se eligen en un tap. Oculta en el wow
+              (el primer look es de hoy por definición). */}
+          {step === 1 && !skip ? (
+            <div className="mt-1">
+              <button
+                type="button"
+                onClick={() => setFechaOpen((o) => !o)}
+                aria-expanded={fechaOpen}
+                aria-label={`cambiar el día — ${fecha ? `para ${fechaLegible(fecha)}` : "para hoy"}`}
+                className={`inline-flex min-h-[44px] items-center gap-1.5 text-[15px] font-semibold transition-colors hover:text-ink ${
+                  fecha ? "text-ink" : "text-muted"
+                }`}
+              >
+                {fecha ? `para ${fechaLegible(fecha)}` : "para hoy"}
+                <Icon name="chevron" size={14} rotate={fechaOpen ? 270 : 90} />
+              </button>
+              {fechaOpen ? (
+                <div
+                  className="-mx-[18px] flex gap-2 overflow-x-auto px-[18px] pb-2"
+                  style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+                >
+                  {proximosDias().map((d) => {
+                    const on = d.key === fecha || (!fecha && d.key === null);
+                    return (
+                      <button
+                        key={d.label}
+                        type="button"
+                        onClick={() => {
+                          setFecha(d.key);
+                          setFechaOpen(false);
+                        }}
+                        aria-pressed={on}
+                        className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
+                          on
+                            ? "border-accent bg-accent text-on-accent"
+                            : "border-line bg-surface text-ink hover:border-ink"
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {/* Cuerpo scrollable (animado por paso) */}
@@ -372,12 +527,9 @@ export function LookRequest({
                   objective={objective}
                   openText={openText}
                   tipoEvento={tipoEvento}
-                  onTipoEvento={(k) => {
-                    setTipoEvento((t) => (t === k ? null : k));
-                    // Cambiar de evento reinicia el ajuste: el default del tipo
-                    // nuevo es el bueno, no el que se corrigió para el anterior.
-                    setFormalityManual(null);
-                  }}
+                  onPickPlanSocial={pickPlanSocial}
+                  masPlanes={masPlanes}
+                  onMasPlanes={() => setMasPlanes(true)}
                   formality={formality}
                   onFormalityManual={setFormalityManual}
                   pideDressCode={pideDressCode}
@@ -411,6 +563,7 @@ export function LookRequest({
                 paraguas={paraguas}
                 onParaguas={setParaguas}
                 onLocate={useLocation}
+                fechaLabel={fecha ? fechaLegible(fecha) : null}
               />
             )}
           </div>
@@ -467,7 +620,9 @@ function StepOcasion({
   objective,
   openText,
   tipoEvento,
-  onTipoEvento,
+  onPickPlanSocial,
+  masPlanes,
+  onMasPlanes,
   formality,
   onFormalityManual,
   pideDressCode,
@@ -484,7 +639,9 @@ function StepOcasion({
   objective: string | null;
   openText: string;
   tipoEvento: string | null;
-  onTipoEvento: (k: string) => void;
+  onPickPlanSocial: (k: string) => void;
+  masPlanes: boolean;
+  onMasPlanes: () => void;
   formality: string | null;
   onFormalityManual: (f: string | null) => void;
   pideDressCode: boolean;
@@ -497,10 +654,38 @@ function StepOcasion({
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
 }) {
+  // Los frecuentes en el orden de PLANES_VISIBLES; los raros tras "otro…".
+  const visibles = PLANES_VISIBLES.map((k) =>
+    TIPOS_EVENTO.find((t) => t.key === k)
+  ).filter((t): t is (typeof TIPOS_EVENTO)[number] => !!t);
+  const raros = TIPOS_EVENTO.filter((t) => !PLANES_VISIBLES.includes(t.key));
+  // Si el elegido es raro, se quedan a la vista aunque nadie tocara "otro…".
+  const mostrarRaros = masPlanes || raros.some((t) => t.key === tipoEvento);
+
+  const chip = (t: (typeof TIPOS_EVENTO)[number]) => {
+    const on = tipoEvento === t.key;
+    return (
+      <button
+        key={t.key}
+        type="button"
+        onClick={() => onPickPlanSocial(t.key)}
+        aria-pressed={on}
+        className={`min-h-[44px] rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
+          on
+            ? "border-accent bg-accent text-on-accent"
+            : "border-line bg-surface text-ink hover:border-ink"
+        }`}
+      >
+        {t.label}
+      </button>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-3.5">
+      {/* Los 2 planes cotidianos, como cards (estos SÍ llevan ícono siempre). */}
       <div className="grid grid-cols-2 gap-2.5">
-        {OCASIONES.map((o) => {
+        {COTIDIANOS.map((o) => {
           const on = objective === o.key;
           return (
             <button
@@ -530,44 +715,40 @@ function StepOcasion({
         })}
       </div>
 
-      {/* QUÉ evento es. Reemplazó a preguntar el nivel de formalidad a secas,
-          y la razón es la misma que hizo nacer lib/formalidad.ts: "la mayoría
-          de la gente tiene el problema de que si lee formal, coctel, gala o
-          etiqueta, no sabe cuál es el dress code que implica". Nadie tiene ese
-          problema con "una boda". La formalidad sale del catálogo (y sube un
-          escalón de noche donde toca); el ajuste queda para el caso raro. */}
-      {objective === "evento" ? (
-        <div
-          className="flex flex-col gap-2.5"
-          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-        >
-          <span className="text-[13px] font-semibold text-ink">¿qué evento?</span>
-          <div className="flex flex-wrap gap-2">
-            {TIPOS_EVENTO.map((t) => {
-              const on = tipoEvento === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => onTipoEvento(t.key)}
-                  aria-pressed={on}
-                  className={`rounded-sm border px-3.5 py-2 text-[14px] font-semibold transition-colors ${
-                    on
-                      ? "border-accent bg-accent text-on-accent"
-                      : "border-line bg-surface text-ink hover:border-ink"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* Los planes sociales, A LA VISTA. Vienen del catálogo de eventos: cada
+          uno trae su formalidad default ("la gente sabe decir 'una boda' y no
+          sabe traducir 'coctel'"), así que elegir el chip ES contestar todo —
+          el ajuste queda para el caso raro. Antes vivían dos niveles adentro,
+          detrás de declarar "un evento". */}
+      <div className="flex flex-col gap-2.5">
+        <div className="my-0.5 flex items-center gap-2.5">
+          <span className="h-px flex-1 bg-line" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+            o un plan social
+          </span>
+          <span className="h-px flex-1 bg-line" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {visibles.map(chip)}
+          {mostrarRaros ? (
+            raros.map(chip)
+          ) : (
+            <button
+              type="button"
+              onClick={onMasPlanes}
+              aria-expanded={false}
+              className="min-h-[44px] rounded-sm border border-line bg-surface px-3.5 text-[14px] font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+            >
+              otro…
+            </button>
+          )}
+        </div>
 
-          {/* El ajuste, detrás de un disclosure y con el default ya resuelto a
-              la vista. Roberto: "si es una comida familiar, pues quién sabe;
-              por alguna razón rara requiero traje sin corbata, pero no
-              debería". Existe para ese caso, no para el normal. */}
-          {tipoEvento ? (
+        {/* El ajuste, detrás de un disclosure y con el default ya resuelto a
+            la vista. Roberto: "si es una comida familiar, pues quién sabe;
+            por alguna razón rara requiero traje sin corbata, pero no
+            debería". Existe para ese caso, no para el normal. */}
+        {tipoEvento ? (
             <details className="rounded-sm border border-line bg-surface px-3.5 py-2">
               <summary className="cursor-pointer text-[13px] text-muted">
                 voy {formalidadLegible(formality, gender) ?? "normal"} · cambiar
@@ -600,9 +781,8 @@ function StepOcasion({
                 })}
               </div>
             </details>
-          ) : null}
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {/* El código de vestimenta del TRABAJO. Solo la primera vez: es un dato de
           persona, no de día. Roberto no pudo calificar un look de oficina en la
@@ -704,12 +884,16 @@ function StepOcasion({
         </div>
       ) : null}
 
-      {/* Campo abierto (alternativa) */}
+      {/* Campo abierto (alternativa). El placeholder invita al DICTADO: el
+          micrófono del teclado del teléfono ya dicta aquí gratis — cero infra,
+          y sin botón de mic propio (un mic que no graba es una mentira visual).
+          Lo escrito/dictado viaja tal cual al motor como `plan`. Parsear fecha
+          o plan del texto queda gateado a que el campo se use de verdad. */}
       <div className="flex flex-col">
         <div className="my-0.5 mb-2 flex items-center gap-2.5">
           <span className="h-px flex-1 bg-line" />
           <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-            o algo más específico
+            o cuéntamelo con tus palabras
           </span>
           <span className="h-px flex-1 bg-line" />
         </div>
@@ -727,7 +911,7 @@ function StepOcasion({
             value={openText}
             onChange={(e) => onOpenText(e.target.value)}
             maxLength={200}
-            placeholder={`escríbelo tú — "cena con mis amigos"`}
+            placeholder={`escríbelo o díctalo — "concierto en la noche, algo cool"`}
             className="min-w-0 flex-1 bg-transparent text-[13.5px] text-ink caret-accent outline-none placeholder:text-muted"
           />
         </label>
@@ -789,12 +973,16 @@ function StepClima({
   paraguas,
   onParaguas,
   onLocate,
+  fechaLabel = null,
 }: {
   /** null = nadie ha elegido todavía. Ver el comentario de `climaIdx`. */
   idx: number | null;
   rain: boolean;
   locating: boolean;
   locFailed: boolean;
+  /** "el sábado 16" cuando el look es para otro día: la píldora lee el
+   *  PRONÓSTICO de esa fecha (server, getWeatherForDates), no el clima de hoy. */
+  fechaLabel?: string | null;
   onIdx: (i: number) => void;
   onRain: (r: boolean) => void;
   paraguas: boolean;
@@ -815,10 +1003,18 @@ function StepClima({
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="text-[15px] font-semibold text-ink">
-            {locating ? "leyendo el clima…" : "usar mi ubicación"}
+            {locating
+              ? fechaLabel
+                ? "leyendo el pronóstico…"
+                : "leyendo el clima…"
+              : "usar mi ubicación"}
           </span>
           <span className="text-[15px] text-muted">
-            {locFailed ? "no pude leerla — dime tú abajo" : "leo temp y lluvia por ti"}
+            {locFailed
+              ? "no pude leerla — dime tú abajo"
+              : fechaLabel
+                ? `leo el pronóstico de ${fechaLabel} por ti`
+                : "leo temp y lluvia por ti"}
           </span>
         </span>
         <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />

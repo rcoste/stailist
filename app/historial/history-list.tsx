@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { useRouter } from "next/navigation";
 import { voteOutfit, toggleFavorite, wearToday } from "@/lib/outfit-actions";
+import { fmtFechaLocal } from "@/components/weather-picker";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { Heart } from "@/components/heart";
@@ -208,7 +209,7 @@ export function HistoryList({
 
   async function rewear(id: string) {
     setRewearing(id);
-    const res = await wearToday(id);
+    const res = await wearToday(id, fmtFechaLocal(new Date()));
     if (res.ok) {
       router.push("/hoy");
     } else {

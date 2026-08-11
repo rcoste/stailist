@@ -2,6 +2,50 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.215.0] - 2026-08-10
+
+### Added — el wizard habla en planes, y ya puedes pedir un look por adelantado
+
+└ **El paso 1 dejó de clasificar.** "¿Qué plan tienes?" con los planes a la
+  vista: 2 cards cotidianas (un día normal, trabajo) + los planes sociales del
+  catálogo como chips (cena, cita, comida familiar, comida de trabajo, fiesta,
+  boda; graduación y funeral tras "otro…" — "¿qué tantas veces vas a un
+  funeral?"). Antes una cena obligaba a decidir si "contaba como un evento"
+  para llegar, dos niveles adentro, al catálogo que sí la entendía. Elegir un
+  chip resuelve todo de un tap (formalidad default + "cambiar", como siempre).
+  "Refrescar" salió del wizard (tarea #14: nadie entendía qué prometía); los
+  perfiles que lo traían guardado caen a "un día normal".
+
+└ **"Para hoy ▾" — la fecha como suposición editable.** Tocarla abre una lista
+  de días (hasta ~16, el horizonte del pronóstico). "El sábado tengo una cena"
+  por fin se puede pedir el miércoles: el look se genera con el PRONÓSTICO de
+  ese día (getWeatherForDates, la pieza del modo Viaje), se guarda colgado a su
+  fecha (`planned_for`, migración 0131) y **ese día amanece siendo tu look del
+  día** — sin generar ni pagar nada nuevo. La vista lo dice honesto: "el
+  miércoles 12", no "hoy". Verificado e2e: cena→mañana y boda→mié 12 generados,
+  y la promoción del día D probada contra la base.
+
+└ **El campo abierto invita al dictado** ("escríbelo o díctalo…"): el micrófono
+  del teclado ya dictaba ahí gratis — solo faltaba decirlo. Sin botón de mic
+  propio (un mic que no graba es una mentira visual). Gates pre-registrados en
+  events: `plan_libre` (¿se usa el campo? → parser) y `planned_for` (¿la gente
+  planea? → agenda visible).
+
+### Fixed — dos quirks que el rediseño destapó
+
+└ **El look del día rotaba a las 6pm de CDMX**: `look_date` se calculaba con el
+  reloj UTC del servidor. Ahora la fecha local del dispositivo viaja en el
+  request y manda; la primera pintura del server lee por rango (utc ± 1 día).
+  Residuo aceptado: cerca de medianoche la primera pintura puede traer el look
+  de ayer un momento. "Ponérmelo" del historial también manda su fecha local.
+
+└ **"Tu clóset no alcanza" moría en silencio**: el veredicto de alcance corría
+  en background (after()) y su respuesta se perdía en el vacío — el placeholder
+  quedaba "generando" hasta el timeout de 150s. Ahora el veredicto se escribe
+  al placeholder y el polling lo traduce a su pantalla con la lista de lo que
+  falta. (Verificado por código y tipos; el clóset del QA sí alcanzó para
+  ejercitarlo e2e.)
+
 ## [0.2.214.0] - 2026-08-10
 
 ### Fixed — confirmar las prendas te devolvía al veredicto
