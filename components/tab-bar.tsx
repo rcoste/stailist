@@ -8,8 +8,10 @@ import type { TripContext } from "@/lib/trip-context";
 
 // Tres destinos + "Más" + un botón central de ACCIÓN (Generar). El centro no es
 // una pestaña: es el botón estrella que dispara la generación de outfit.
-// Perfil salió de aquí a un ícono en el header. "Hoy" es tu home (lugar), el
-// botón central es la acción — no se pisan.
+// Perfil salió de aquí a un ícono en el header. "Inicio" es tu home (lugar), el
+// botón central es la acción — no se pisan. Se llamaba "Hoy" hasta 0.2.221:
+// desde que el producto planea looks para otros días (planned_for), el nombre
+// mentía — la central de acciones no es solo de hoy.
 //
 // El 4º slot dejó de ser Viaje y pasó a "Más" (hoja de acciones + lugares): la
 // medición mostró que modo tienda estaba a 4 taps y Cartera a 3, detrás de una
@@ -24,7 +26,7 @@ const TABS: {
   match?: string;
   extra?: string[];
 }[] = [
-  { href: "/hoy", label: "Hoy", icon: "sol" },
+  { href: "/hoy", label: "Inicio", icon: "sol" },
   // Wishlist es una sub-sección del clóset (tab), así que la pestaña Clóset se
   // queda activa también en /wishlist.
   { href: "/closet", label: "Clóset", icon: "gancho", extra: ["/wishlist"] },

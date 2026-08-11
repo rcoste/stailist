@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.221.0] - 2026-08-11
+
+### Changed — el home se vuelve la central de acciones (y "Hoy" pasa a "Inicio")
+
+Rediseño del home a partir del "critical roadmap" de Roberto (clasificar cada
+acción: one-time / recurrente / contextual) + los datos de 25 usuarios reales:
+el fit check tenía 3 usos ajenos en 2 meses viviendo en jerarquía fantasma, el
+40% del clóset entró por el carrete A PESAR de estar enterrado en drawers, y el
+avatar (one-time) gastaba la posición #1 del checklist. La pirámide estaba
+invertida. Design doc con 2 rondas adversariales (15 issues):
+`~/.gstack/projects/stailist/robertocoste-main-design-20260811-home.md`.
+
+└ **Cuatro zonas que calcan la taxonomía**: (1) *tu día* — el look de hoy + la
+  fila de looks PLANEADOS por estrenar ("mañana · Elegancia Nocturna", tap y lo
+  ves) — cero migraciones, lee `planned_for`; (2) *las recurrentes*, siempre a
+  un tap — **el fit check protagonista** ("¿me veo *bien* hoy?" — sube del
+  último renglón fantasma a tile dominante), añadir prendas, planear otro día;
+  (3) *lo contextual* — la card única de siempre, que ya NO se apaga cuando hay
+  look listo ("¿te lo pusiste ayer?" es justo más valiosa al volver con look);
+  (4) *qué sigue* — checklist v2: estilo → silueta → cápsula. **Salen avatar**
+  (su empujón vive donde tiene contexto: el CTA del try-on) **y prendas** (el
+  tile permanente la reemplaza).
+
+└ **La tab "Hoy" ahora es "Inicio"** (móvil y desktop): desde que se planean
+  looks para otros días, el nombre mentía. Las rutas no cambian. Los hints
+  se reescribieron (el "dime qué traes hoy y te armo el look" describía el
+  trabajo viejo de la pantalla).
+
+└ **Gate pre-registrado**: si con jerarquía protagonista el fit check no llega
+  a ≥3 usuarias distintas de Roberto en 2 semanas, el problema no era
+  visibilidad — se reevalúa la acción, no se empuja más.
+
 ## [0.2.220.0] - 2026-08-11
 
 ### Fixed — el PRIMER look de quien trabaja salía con el motor adivinando

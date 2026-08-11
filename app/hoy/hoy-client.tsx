@@ -21,8 +21,8 @@ import { voteOutfit } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
-import { AddSheet } from "@/components/add-sheet";
-import { EspejoFlow } from "@/components/espejo-flow";
+import { AddSheet, type AddSheetHandle } from "@/components/add-sheet";
+import { EspejoFlow, type EspejoHandle } from "@/components/espejo-flow";
 import { HomeCard } from "@/components/home-card";
 import type { HomeCard as HomeCardData } from "@/lib/home-card";
 import { HomeChecklist } from "@/components/home-checklist";
@@ -88,6 +88,7 @@ export function HoyClient({
   checklist = null,
   verInicio = false,
   hayPlaneado = false,
+  planeados = [],
 }: {
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
@@ -119,6 +120,10 @@ export function HoyClient({
    *  dispositivo, así que solo avisa "pregunta tú"). El cliente hace el check
    *  con su fecha local y, si el planeado es de hoy, amanece como look del día. */
   hayPlaneado?: boolean;
+  /** Los looks planeados por estrenar (candidatos con colchón utc−1; el cliente
+   *  filtra con su fecha local). Chips read-only de zona 1 — la agenda completa
+   *  sigue gateada a su métrica. */
+  planeados?: { id: string; title: string; plannedFor: string }[];
 }) {
   const [state, setState] = useState<State>(
     pendingOutfitId && !autoAsk
@@ -164,6 +169,9 @@ export function HoyClient({
   const [seedFromCard, setSeedFromCard] = useState<string | null>(null);
   // Cancela el polling en curso (al desmontar o al arrancar otro).
   const cancelPoll = useRef<(() => void) | null>(null);
+  // Los flujos headless de la zona de recurrentes (los tiles los disparan).
+  const espejoRef = useRef<EspejoHandle>(null);
+  const addRef = useRef<AddSheetHandle>(null);
 
   // Polling del estado del look hasta que esté listo o falle. Sobrevive el
   // backgrounding: cuando vuelves a la app (o iOS la recarga), reanuda y encuentra
@@ -315,22 +323,47 @@ export function HoyClient({
     else startGen(true);
   }
 
-  // Sin look del día (y no llegaste por el ✨): home dentro del AppShell, con la
-  // tab bar visible. Saludo + CTA — no te fuerza el wizard ni te atrapa.
+  // Abre un look PLANEADO desde su chip (zona 1). GET ?id= ya devuelve el
+  // outfit shaped (es lo que usa el polling) — un fetch y a la vista ready,
+  // con su fecha como etiqueta para no mentir con "hoy".
+  async function abrirPlaneado(id: string, plannedFor: string) {
+    try {
+      const res = await fetch(`/api/look-of-day?id=${id}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.status === "ready" && data.outfit) {
+        setState({ kind: "ready", outfit: data.outfit, paraFecha: plannedFor });
+      }
+    } catch {
+      /* sin red, el chip simplemente no navega */
+    }
+  }
+
+  // LA CENTRAL DE ACCIONES (rediseño 2026-08-11). El home dejó de ser solo el
+  // ritual del look de hoy: cuatro zonas que calcan la taxonomía de acciones —
+  // tu día (look + planeados) → recurrentes (fit check, prendas, planear) →
+  // contextual (card única) → qué sigue (checklist v2). La pirámide anterior
+  // estaba invertida: el fit check vivía en fantasma (3 usos ajenos en 2 meses)
+  // y añadir prendas enterrado en drawers (y aun así 40% del clóset entró ahí).
   if (state.kind === "idle" || state.kind === "inicio") {
     // Con look ya hecho, el titular y el botón NO pueden ser los mismos: decir
     // "aún no" sobre un look que existe es mentir, y "armar mi look de hoy"
     // dispararía otra generación pagada para algo que ya está.
     const yaHayLook = state.kind === "inicio" && !!lookInicial;
+    // El server manda candidatos con colchón (utc−1); el "futuro" REAL se
+    // decide aquí con la fecha local del dispositivo.
+    const hoyLocal = fmtFechaLocal(new Date());
+    const planeadosFuturos = planeados
+      .filter((p) => p.plannedFor > hoyLocal)
+      .slice(0, 3);
     return (
-      <div className="flex min-h-[calc(100dvh-13rem)] flex-col lg:mx-auto lg:min-h-[calc(100dvh-16rem)] lg:max-w-md">
-        {/* Editorial y tipográfico — SIN foto de fondo (no confundir con un
-            outfit). El cuerpo va centrado vertical; el CTA al pie. */}
-        <div className="flex flex-1 flex-col justify-center">
+      <div className="flex flex-col gap-7 pb-2 lg:mx-auto lg:max-w-md">
+        {/* ─── ZONA 1: TU DÍA ─── */}
+        <div className="pt-1">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
-            {fechaLabel || " "}
+            {fechaLabel || " "}
           </p>
-          <h1 className="mt-4 text-[52px] font-bold leading-[0.96] tracking-[-0.035em] text-ink">
+          <h1 className="mt-3 text-[44px] font-bold leading-[0.96] tracking-[-0.035em] text-ink">
             tu look
             <br />
             de hoy,{" "}
@@ -338,26 +371,33 @@ export function HoyClient({
               {yaHayLook ? "listo" : "aún no"}
             </em>
           </h1>
-          <p className="mt-5 max-w-[280px] text-[20px] leading-snug text-muted">
+          <p className="mt-3 max-w-[280px] text-[17px] leading-snug text-muted">
             {yaHayLook
               ? lookInicial?.nombre ?? "ya te lo armé."
               : "dime tu plan y te lo dejo listo en segundos."}
           </p>
-        </div>
-        {/* Pie de la pantalla: contexto → acción principal → acción secundaria.
-            La card contextual (si la hay) informa; el CTA manda; añadir prendas
-            es la acción #2 por frecuencia y va en jerarquía fantasma. */}
-        <div className="flex flex-col gap-3 pb-2">
-          {/* Checklist de activación: la superficie única para "qué sigue". Mientras
-              esté presente, cubre "añade prendas" — por eso el AddSheet suelto de
-              abajo se oculta (no duplicar la acción en la misma pantalla). */}
-          {checklist ? <HomeChecklist checklist={checklist} /> : null}
-          {homeCard ? (
-            <HomeCard
-              card={homeCard}
-              onEstrena={(itemId) => startGen(true, itemId)}
-            />
+
+          {/* Los looks planeados por estrenar: chips read-only, tap = verlo.
+              La agenda completa (editar/regenerar) sigue gateada a su métrica. */}
+          {planeadosFuturos.length > 0 ? (
+            <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
+              {planeadosFuturos.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => abrirPlaneado(p.id, p.plannedFor)}
+                  className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-sm border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink"
+                >
+                  <Icon name="calendario" size={14} className="text-muted" />
+                  <span className="whitespace-nowrap">
+                    {chipFecha(p.plannedFor)} ·{" "}
+                    <em className="font-display italic tracking-normal">{p.title}</em>
+                  </span>
+                </button>
+              ))}
+            </div>
           ) : null}
+
           {/* El CTA cambia de VERBO, no sólo de etiqueta: con look hecho no
               genera nada —volver a la home no puede costar dinero—, sólo te
               devuelve al que ya tienes. */}
@@ -367,43 +407,77 @@ export function HoyClient({
               if (yaHayLook && lookInicial) {
                 setState({ kind: "ready", outfit: lookInicial });
                 // Limpiar el ?inicio=1 es parte del arreglo, no cosmética: si se
-                // queda, tocar la pestaña "Hoy" otra vez no navega (misma URL) y
-                // la home vuelve a ser inalcanzable — el mismo bug, más tarde.
-                //
-                // Y va por el ROUTER, no por history.replaceState: éste cambia
-                // la barra de direcciones a espaldas de Next, que se queda
-                // creyendo que sigue en ?inicio=1 — la prop no cambia, el efecto
-                // no vuelve a dispararse, y la segunda vez la pestaña dejaba de
-                // funcionar. Se vio midiendo: URL correcta, pantalla equivocada.
+                // queda, tocar la pestaña otra vez no navega (misma URL) y la
+                // home vuelve a ser inalcanzable — el mismo bug, más tarde.
+                // Va por el ROUTER, no por history.replaceState (ver historial
+                // del bug: URL correcta, pantalla equivocada).
                 router.replace("/hoy", { scroll: false });
               } else startGen(false);
             }}
-            className="flex min-h-[60px] w-full items-center justify-center gap-2.5 rounded-sm bg-accent text-base font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            className="mt-5 flex min-h-[60px] w-full items-center justify-center gap-2.5 rounded-sm bg-accent text-base font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
             {yaHayLook ? "ver mi look" : "armar mi look de hoy"}
             <Icon name="flecha" size={19} />
           </button>
-          {/* "¿ME VEO BIEN?" — la otra forma de usar la app, y la de todos los
-              días: en vez de pedirme un look, me enseñas el que ya traes
-              puesto. Va aquí y no en la hoja de agregar porque no es agregar
-              ropa: es el momento de estar vestida y a punto de salir, que es
-              justo cuando alguien abre esto.
-              Comparte fila con "añadir" en vez de apilarse: los dos son
-              acciones de segundo nivel y un tercer bloque a lo ancho le
-              robaría peso al CTA, que es lo único que manda en esta pantalla. */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <EspejoFlow userId={userId} />
-            </div>
-            {/* Ya activado (checklist completo): el AddSheet vuelve como el atajo
-                de agregado rápido. Durante la activación vive dentro del checklist. */}
-            {checklist ? null : (
-              <div className="flex-1">
-                <AddSheet userId={userId} variant="ghost" />
-              </div>
-            )}
+        </div>
+
+        {/* ─── ZONA 2: LAS RECURRENTES (siempre visibles, un tap) ─── */}
+        <div className="flex flex-col gap-2.5">
+          {/* Fit check, EL PROTAGONISTA: era la acción más escondida y es la que
+              más trabaja — veredicto inmediato + carga prendas + hábito. */}
+          <button
+            type="button"
+            onClick={() => espejoRef.current?.start()}
+            className="flex items-center gap-4 border border-line bg-surface p-4 text-left transition-colors hover:border-ink"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-line bg-bg text-ink">
+              <Icon name="camara" size={21} />
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <b className="text-[17px] font-semibold text-ink">
+                ¿me veo{" "}
+                <em className="font-display font-normal italic tracking-normal">
+                  bien
+                </em>{" "}
+                hoy?
+              </b>
+              <span className="text-[14px] text-muted">
+                enséñame tu outfit y te digo — y me aprendo tus prendas
+              </span>
+            </span>
+            <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
+          </button>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => addRef.current?.open()}
+              className="flex min-h-[64px] flex-col items-start justify-center gap-0.5 border border-line bg-surface px-4 text-left transition-colors hover:border-ink"
+            >
+              <b className="text-[14px] font-semibold text-ink">añadir prendas</b>
+              <span className="text-[12px] text-muted">sube varias de golpe</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => startGen(false)}
+              className="flex min-h-[64px] flex-col items-start justify-center gap-0.5 border border-line bg-surface px-4 text-left transition-colors hover:border-ink"
+            >
+              <b className="text-[14px] font-semibold text-ink">planear otro día</b>
+              <span className="text-[12px] text-muted">la cena, la boda, el viernes</span>
+            </button>
           </div>
         </div>
+
+        {/* ─── ZONA 3: LO CONTEXTUAL (una card, solo cuando aplica) ─── */}
+        {homeCard ? (
+          <HomeCard card={homeCard} onEstrena={(itemId) => startGen(true, itemId)} />
+        ) : null}
+
+        {/* ─── ZONA 4: QUÉ SIGUE (checklist v2 — solo one-time sin otra casa) ─── */}
+        {checklist ? <HomeChecklist checklist={checklist} /> : null}
+
+        {/* Flujos headless: los disparan los tiles de arriba. */}
+        <EspejoFlow userId={userId} headless ref={espejoRef} />
+        <AddSheet userId={userId} variant="headless" ref={addRef} />
       </div>
     );
   }
@@ -694,4 +768,15 @@ function ReadyView({
       ) : null}
     </>
   );
+}
+
+// "sáb 16" / "mañana" — la fecha corta de los chips de looks planeados.
+function chipFecha(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const fecha = new Date(y, m - 1, d);
+  const hoy = new Date();
+  const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+  if (fmtFechaLocal(manana) === key) return "mañana";
+  const dia = fecha.toLocaleDateString("es-MX", { weekday: "short" }).replace(".", "");
+  return `${dia} ${fecha.getDate()}`;
 }

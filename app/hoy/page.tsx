@@ -169,28 +169,44 @@ export default async function HoyPage({
   // con las queridas primero (solo orden visual). Compartido con el modo viaje.
   const closet: ClosetPick[] = await loadClosetPicks(supabase, profile.id);
 
-  // Card contextual del home idle. Solo se calcula cuando NO hay look listo:
-  // con look en pantalla el home tiene otro trabajo y la card no se muestra.
-  const homeCard = lookInicial ? null : await loadHomeCard(supabase, profile.id);
+  // Card contextual del home. ANTES solo se calculaba sin look listo; el
+  // rediseño 2026-08-11 mató ese guard: "¿te lo pusiste ayer?" es justo más
+  // valiosa cuando vuelves con look, y el viaje activo no deja de existir
+  // porque hoy ya te vestiste. La regla de UNA card y su prioridad no cambian.
+  const homeCard = await loadHomeCard(supabase, profile.id);
 
   const nombre = (profile.email ?? "").split("@")[0];
 
-  // Checklist de activación: la superficie ÚNICA de "qué sigue" tras el primer
-  // outfit (reemplazó los nudges de uno en uno). Las acciones de inversión que
-  // predicen retención, con estado visible; se autodestruye al completarlas todas.
+  // Checklist v2 ("qué sigue"): solo los one-time SIN otra casa — estilo,
+  // silueta, cápsula. Avatar y prendas salieron (ver lib/home-checklist.ts).
+  // También vive con look listo: el empujón no muere porque hoy ya te vestiste.
   const signals = await loadJourneySignals(supabase, profile);
   const checklist = buildHomeChecklist({
-    hasAvatar: signals.hasAvatar,
-    editedCloset: signals.editedCloset,
     hasStyleReference: profile.style_reference != null,
     hasCapsule: signals.hasCapsule,
     siluetaApplies: signals.siluetaApplies,
     hasSilueta: signals.hasSilueta,
   });
-  // El checklist ("qué sigue") es la home de ANTES del look: vive sólo cuando no
-  // hay look del día — HoyClient lo pone en su pie (estado idle). Sobre el look ya
-  // generado se sentía fuera de lugar (Roberto), así que aquí NO se muestra como
-  // banner encima del look.
+
+  // LOS LOOKS PLANEADOS por estrenar (la fila de zona 1). El server no conoce
+  // la zona horaria del dispositivo, así que manda candidatos con colchón
+  // (planned_for ≥ utc − 1) y el CLIENTE filtra con su fecha local — mismo
+  // patrón que hayPlaneado. Chips read-only; la agenda completa sigue gateada.
+  const { data: planeadosRaw } = await supabase
+    .from("outfits")
+    .select("id, title, planned_for")
+    .eq("user_id", profile.id)
+    .is("deleted_at", null)
+    .eq("is_look_of_day", false)
+    .eq("gen_status", "ready")
+    .gte("planned_for", fechaUtc(-1))
+    .order("planned_for", { ascending: true })
+    .limit(4);
+  const planeados = (planeadosRaw ?? []).map((o) => ({
+    id: o.id as string,
+    title: (o.title as string | null) ?? "un look",
+    plannedFor: String(o.planned_for).slice(0, 10),
+  }));
 
   // Hints contextuales (walkthrough just-in-time). UNA burbuja por pantalla.
   const seen = profile.hints_seen ?? {};
@@ -206,19 +222,19 @@ export default async function HoyPage({
   if (!seen["hoy-casa"]) {
     candidatos.push({
       id: "hoy-casa",
-      // Decía "cada día te espera un look nuevo aquí". Falso: no hay generación
-      // automática (el único proceso que corre solo es el correo semanal), y el
-      // look se arma cuando tú lo pides. El fondo del propio tip dice "tu look
-      // de hoy, aún no" — la promesa se desmentía sola en el primer contacto.
+      // v2 (rediseño 2026-08-11): "dime qué traes hoy y te armo el look"
+      // describía el trabajo VIEJO de la pantalla. Ahora es la central de
+      // acciones — el hint presenta las tres recurrentes, no una.
       children:
-        "esta es tu casa — dime qué traes hoy y te armo el look, con tu clima y lo que hay en tu clóset",
+        "esta es tu central — pídeme un look, enséñame el que traes puesto o súmale prendas a tu clóset",
     });
   }
   if (lookInicial && !seen["fab-generar"]) {
     candidatos.push({
       id: "fab-generar",
+      // Sin "hoy": desde 0.2.215 también se planea para otros días.
       children:
-        "¿otro plan hoy? tócalo y te armo un look nuevo desde cualquier pantalla",
+        "¿otro plan? tócalo y te armo un look — para hoy o para el día que venga",
     });
   }
   if (lookInicial && !seen["hoy-tryon"]) {
@@ -262,6 +278,7 @@ export default async function HoyPage({
         <HoyClient
           verInicio={inicio === "1"}
           hayPlaneado={hayPlaneado}
+          planeados={planeados}
           key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}
           pendingOutfitId={pendingOutfitId}

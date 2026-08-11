@@ -11,7 +11,7 @@ import { Icon } from "./icon";
 // El activo se marca con subrayado fino — mismo lenguaje que la landing.
 
 const TABS: { href: string; label: string; match: string; extra?: string[] }[] = [
-  { href: "/hoy", label: "Hoy", match: "/hoy" },
+  { href: "/hoy", label: "Inicio", match: "/hoy" },
   { href: "/closet", label: "Clóset", match: "/closet", extra: ["/wishlist"] },
   { href: "/historial", label: "Historial", match: "/historial" },
   { href: "/viaje/lista", label: "Viaje", match: "/viaje" },
@@ -24,7 +24,7 @@ export function DesktopHeader() {
   return (
     <header className="sticky top-0 z-40 hidden border-b border-line bg-bg lg:block">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-8 px-6">
-        <Link href="/hoy" aria-label="Ir a Hoy" className="shrink-0">
+        <Link href="/hoy" aria-label="Ir a Inicio" className="shrink-0">
           <Logo className="h-6" />
         </Link>
 
