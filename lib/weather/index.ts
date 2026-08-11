@@ -19,6 +19,49 @@ function describe(code: number): string {
   return "tormenta";
 }
 
+// ¿ESTA CONDICIÓN TRAE AGUA? La pregunta la comparten el wizard que la
+// PREGUNTA (weather-picker), el prompt que la ORDENA (engine/prompt), el juez
+// que la revisa (engine/critic, engine/rubrica) y el banco de evales. Vivía
+// escrita cinco veces —y la copia del wizard ya había derivado: sin el flag de
+// mayúsculas y con otra lista de palabras—, que es justo como el techado se
+// rompe en silencio: la UI no pregunta por una lluvia que el motor sí ve.
+// Todas llaman aquí; agregar "aguacero" es un solo cambio.
+const LLUVIA_RE = /lluvia|llov|chubasco|tormenta/i;
+
+export function hayLluvia(condition: string | null | undefined): boolean {
+  return LLUVIA_RE.test(condition ?? "");
+}
+
+/**
+ * El clima que ve EL MOTOR cuando la persona dijo que va a estar bajo techo.
+ *
+ * Es la decisión de Roberto y es de mitigación, no de prompt: "si nosotros ya
+ * tenemos una heurística de que, aunque llueva, va a estar adentro, entonces no
+ * le damos ese dato". Mandarle los DOS hechos ("va a llover" + "va a estar
+ * adentro") lo obliga a resolver una contradicción y ahí es donde se rompe —
+ * mandarle solo la temperatura no.
+ *
+ * Quitar la palabra de lluvia apaga de una vez, y sin tocar el prompt, las tres
+ * cosas que dependen de ella: la instrucción de capa impermeable, la regla de
+ * calzado (reglas-ejecucion #6) y la de capa exterior (#7). Todas leen esta
+ * misma condición.
+ *
+ * LA TEMPERATURA NUNCA SE TOCA: bajo techo sigues eligiendo entre manga corta y
+ * abrigo. Lo único que sobra es el agua.
+ *
+ * OJO — esto es SOLO para el motor. El clima que se PERSISTE con el look es el
+ * real (llovió), porque el historial no debe mentir sobre el día.
+ */
+export function climaParaElMotor(
+  weather: Weather | null,
+  techado: boolean
+): Weather | null {
+  if (!weather || !techado || !hayLluvia(weather.condition)) return weather;
+  // "nublado" y no "despejado": cuando llueve el cielo está cerrado, y es lo
+  // más cercano a la verdad que se puede decir sin nombrar el agua.
+  return { ...weather, condition: "nublado" };
+}
+
 // Resuelve el clima desde el body del request: si viene clima manual (el
 // usuario lo eligió con referencias), se usa tal cual; si vienen coords, se
 // consulta Open-Meteo; si no, null (el motor genera sin clima).

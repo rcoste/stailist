@@ -12,7 +12,13 @@ import {
 } from "@/lib/engine/contexto";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
-import { resolveWeather, getWeatherForDates, type Weather } from "@/lib/weather";
+import {
+  resolveWeather,
+  getWeatherForDates,
+  climaParaElMotor,
+  hayLluvia,
+  type Weather,
+} from "@/lib/weather";
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 
@@ -34,10 +40,18 @@ type Body = {
   force?: boolean;
   seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
   forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
-  formality?: string; // solo en "evento": casual | semiformal | formal | gala
+  formality?: string; // solo en "evento". Los valores viven en Formalidad (lib/formalidad.ts) —
+  // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
   /** QUÉ evento es, del catálogo (lib/eventos.ts). */
   tipoEvento?: string | null;
   paraguas?: boolean; // solo cuando el clima trae lluvia
+  /**
+   * "¿la lluvia te toca?" → techado. Solo se pregunta cuando el pronóstico trae
+   * lluvia. Si es true, el motor NO se entera de que llueve (ver
+   * climaParaElMotor): la mitigación pasa ANTES del modelo, no como una regla
+   * más del prompt. El clima que se guarda con el look sigue siendo el real.
+   */
+  techado?: boolean;
   workDressCode?: string; // solo la primera vez que elige "trabajo"
   /** Del día: solo cuenta si su código de trabajo es "variable". */
   veCliente?: boolean;
@@ -435,18 +449,22 @@ async function generateInto(
       OBJECTIVES
     );
 
+    // BAJO TECHO LA LLUVIA NO EXISTE PARA EL MOTOR. Dijo que va a estar
+    // entechado: se le quita el dato del agua y queda solo la temperatura (el
+    // porqué, en climaParaElMotor). El paraguas deja de tener sentido con él.
+    const techado = body.techado === true;
     const ctx = construirContexto(base, {
       objective,
       plan: typeof body.plan === "string" ? body.plan : null,
       momento: typeof body.momento === "string" ? body.momento : null,
-      weather,
+      weather: climaParaElMotor(weather, techado),
       seedItemId: typeof body.seedItemId === "string" ? body.seedItemId : null,
       formality: typeof body.formality === "string" ? body.formality : null,
       tipoEvento: typeof body.tipoEvento === "string" ? body.tipoEvento : null,
       // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no debe
       // soltarle la mano a la capa exterior. El contexto lo pasa tal cual y la
       // regla #7 solo mira `paraguas` cuando `lluvia` es cierto.
-      paraguas: body.paraguas === true,
+      paraguas: body.paraguas === true && !techado,
       // NO se persiste: es del día, como el paraguas. Solo cuenta si su código
       // de trabajo es "variable" (el prompt lo ignora en los otros tres).
       veCliente: typeof body.veCliente === "boolean" ? body.veCliente : null,
@@ -490,7 +508,13 @@ async function generateInto(
       .update({
         item_ids: elegido.item_ids,
         occasion: objective ?? "diario",
-        weather,
+        // El clima REAL (llovió), más la marca de que se pidió bajo techo.
+        // OJO: hoy la marca NO se muestra en ningún lado — es para DIAGNÓSTICO
+        // (consultar la tabla cuando un look de día lluvioso traiga mocasines y
+        // parezca defecto del motor). Enseñarla en el historial es pendiente
+        // aparte; sin este aviso el comentario prometía una UI que no existe.
+        weather:
+          techado && hayLluvia(weather?.condition) ? { ...weather, techado: true } : weather,
         title: elegido.nombre,
         explanation: elegido.explicacion,
         tip: elegido.tip ?? null,

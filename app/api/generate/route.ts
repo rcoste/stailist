@@ -8,7 +8,12 @@ import {
   resolverYPersistirObjetivo,
 } from "@/lib/engine/contexto";
 import { PROMPT_VERSION } from "@/lib/engine/prompt";
-import { resolveWeather, type Weather } from "@/lib/weather";
+import {
+  resolveWeather,
+  climaParaElMotor,
+  hayLluvia,
+  type Weather,
+} from "@/lib/weather";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import {
   itemImageUrlSync,
@@ -46,6 +51,8 @@ export async function POST(request: NextRequest) {
     plan?: string;
     momento?: string;
     paraguas?: boolean;
+    /** Va a estar bajo techo: al motor no le llega la lluvia (climaParaElMotor). */
+    techado?: boolean;
     workDressCode?: string;
     /** Del día: solo cuenta si su código de trabajo es "variable". */
     veCliente?: boolean;
@@ -143,14 +150,17 @@ export async function POST(request: NextRequest) {
         );
 
         send({ phase: "afinando para tu paleta…" });
+        // Bajo techo la lluvia no le llega al motor: solo la temperatura (el
+        // porqué vive en climaParaElMotor). Lo que se guarda sigue siendo real.
+        const techado = body.techado === true;
         const ctx = construirContexto(base, {
           objective,
           plan: typeof body.plan === "string" ? body.plan : null,
           momento: typeof body.momento === "string" ? body.momento : null,
-          weather,
+          weather: climaParaElMotor(weather, techado),
           // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no
           // debe soltarle la mano a la capa exterior.
-          paraguas: body.paraguas === true,
+          paraguas: body.paraguas === true && !techado,
           // NO se persiste: es del día, como el paraguas. Solo cuenta si su código
           // de trabajo es "variable" (el prompt lo ignora en los otros tres).
           veCliente: typeof body.veCliente === "boolean" ? body.veCliente : null,
@@ -194,7 +204,13 @@ export async function POST(request: NextRequest) {
               user_id: user.id,
               item_ids: outfit.item_ids,
               occasion: objective ?? "diario",
-              weather,
+              // El clima REAL, con la marca de que se pidió bajo techo. La marca
+              // es para DIAGNÓSTICO (consultar la tabla), no se muestra todavía
+              // en ninguna pantalla — mismo caso que en /api/look-of-day.
+              weather:
+                techado && hayLluvia(weather?.condition)
+                  ? { ...weather, techado: true }
+                  : weather,
               title: outfit.nombre,
               explanation: outfit.explicacion,
               tip: outfit.tip ?? null,
