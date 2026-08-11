@@ -94,3 +94,27 @@ describe("lo que llega al motor", () => {
     expect(lineaTipoEvento(null)).toBe("");
   });
 });
+
+// Los campos del paso "detalle" del wizard (personalización por plan). El
+// invariante que blindan: el default —y su subida de noche— SIEMPRE es una de
+// las opciones ofrecidas, o el wizard mostraría pre-seleccionado algo que no
+// está en la lista.
+describe("formalidades que aplican por plan", () => {
+  it.each(TIPOS_EVENTO.map((t) => [t.label, t] as const))(
+    "%s: su default (y el de noche) está entre las opciones que ofrece",
+    (_label, t) => {
+      expect(t.formalidadesQueAplican.length).toBeGreaterThanOrEqual(2);
+      expect(t.formalidadesQueAplican).toContain(t.formalidad);
+      expect(t.formalidadesQueAplican).toContain(
+        formalidadDeEvento(t.key, "noche")
+      );
+      // Y el copy personalizado existe — la queja era "se siente copy-paste".
+      expect(t.preguntaDetalle.length).toBeGreaterThan(20);
+    }
+  );
+
+  it("la cena con amigos NO ofrece esmoquin (el absurdo que delató la máquina)", () => {
+    const cena = TIPOS_EVENTO.find((t) => t.key === "cena-amigos")!;
+    expect(cena.formalidadesQueAplican).not.toContain("gala");
+  });
+});

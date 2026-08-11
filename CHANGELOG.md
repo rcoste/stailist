@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.217.0] - 2026-08-10
+
+### Changed — el wizard deja de sonar a máquina
+
+Tercera pasada del día sobre el wizard, del feedback de Roberto: *"se siente
+copy-paste... debería sentirse más personalizado por opción"* + *"yo pondría
+hoy / mañana / otro día"* + *"me das la conclusión ya"*.
+
+└ **El detalle es de CADA plan, no una plantilla.** Cada evento del catálogo
+  trae su propio copy ("la cena es donde más se nota si te arreglaste...",
+  "aquí manda la invitación...") y SOLO las formalidades que le aplican —
+  ofrecer esmoquin para una cena con amigos delataba a la máquina. Con test
+  del invariante (el default y su subida de noche siempre están entre las
+  opciones ofrecidas).
+
+└ **"¿Qué día?" en tres opciones**: hoy · mañana · otro día… — y solo "otro
+  día" despliega la rejilla completa (wrap, sin scroll horizontal).
+
+└ **"¿Dónde?" explícito**: "aquí, donde estoy — leo tu clima yo" (el tap pide
+  el permiso de ubicación, no un prompt sorpresa) / "en otra ciudad — dime
+  cuál y saco el clima". Y el paso del clima se volvió LA CONCLUSIÓN: "20° ·
+  lluvia — así se ve el jueves 13 en Cuernavaca", paraguas si llueve, y el
+  cuestionario de bandas escondido tras "¿no va? corrígeme". Preguntar lo que
+  la app ya sabe era la fricción; sin coords, el flujo manual sigue intacto.
+
 ## [0.2.216.0] - 2026-08-10
 
 ### Changed — el wizard se splitea: una pregunta por pantalla

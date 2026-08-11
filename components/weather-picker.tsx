@@ -307,11 +307,16 @@ export function LookRequest({
   // es en otra ciudad — el pronóstico depende del DÓNDE). Default silencioso:
   // donde estás; solo si lo tocas se geocodifica otra ciudad (misma pieza del
   // modo Viaje, sin pedir permiso de ubicación).
-  const [ciudadOpen, setCiudadOpen] = useState(false);
   const [ciudadTexto, setCiudadTexto] = useState("");
   const [ciudadGeo, setCiudadGeo] = useState<{ lat: number; lon: number; label: string } | null>(null);
   const [ciudadBuscando, setCiudadBuscando] = useState(false);
   const [ciudadFallo, setCiudadFallo] = useState(false);
+  // "¿Dónde?" explícito (Roberto): "si es en tu ciudad, comparte tu ubicación;
+  // si es en otro lugar, dime la ciudad y saco el clima". Tocar "aquí" pide el
+  // permiso EN ese tap (gesto del usuario, no un prompt sorpresa al montar).
+  const [donde, setDonde] = useState<"aqui" | "otra">("aqui");
+  const [aquiCoords, setAquiCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [aquiFallo, setAquiFallo] = useState(false);
   // El clima pre-resuelto ("así estará el sábado: 19°, lluvia"). Solo informa
   // el banner; las bandas quedan editables — la corrección manual siempre gana.
   const [climaAuto, setClimaAuto] = useState<Weather | null>(null);
@@ -382,8 +387,9 @@ export function LookRequest({
     autoClimaIntentado.current = true;
     let muerto = false;
     (async () => {
-      let coords: { lat: number; lon: number } | null = ciudadGeo;
-      if (!coords) {
+      let coords: { lat: number; lon: number } | null =
+        donde === "otra" ? ciudadGeo : aquiCoords;
+      if (!coords && donde === "aqui") {
         try {
           const perm = await navigator.permissions?.query({
             name: "geolocation" as PermissionName,
@@ -419,12 +425,12 @@ export function LookRequest({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paso]);
 
-  // Cambiar de ciudad o de fecha invalida lo pre-resuelto (se re-lee al volver
-  // a entrar al paso de clima).
+  // Cambiar de dónde, ciudad o fecha invalida lo pre-resuelto (se re-lee al
+  // volver a entrar al paso de clima).
   useEffect(() => {
     autoClimaIntentado.current = false;
     setClimaAuto(null);
-  }, [ciudadGeo, fecha]);
+  }, [ciudadGeo, fecha, donde, aquiCoords]);
 
   async function buscarCiudad() {
     const q = ciudadTexto.trim();
@@ -433,11 +439,22 @@ export function LookRequest({
     setCiudadFallo(false);
     const geo = await geocodePlace(q);
     setCiudadBuscando(false);
-    if (geo) {
-      setCiudadGeo(geo);
-      setCiudadOpen(false);
+    if (geo) setCiudadGeo(geo);
+    else setCiudadFallo(true);
+  }
+
+  // "Aquí, donde estoy": el tap ES el permiso — si el browser no lo tenía, lo
+  // pide ahora; si lo niega, el clima cae al flujo manual (y se dice, no se
+  // esconde).
+  async function elegirAqui() {
+    setDonde("aqui");
+    if (aquiCoords) return;
+    const c = await getPosition();
+    if (c) {
+      setAquiCoords(c);
+      setAquiFallo(false);
     } else {
-      setCiudadFallo(true);
+      setAquiFallo(true);
     }
   }
 
@@ -647,8 +664,10 @@ export function LookRequest({
                 sinFecha={skip}
                 momento={momento}
                 onMomento={setMomento}
-                ciudadOpen={ciudadOpen}
-                onCiudadOpen={() => setCiudadOpen(true)}
+                donde={donde}
+                onAqui={elegirAqui}
+                onOtra={() => setDonde("otra")}
+                aquiFallo={aquiFallo}
                 ciudadTexto={ciudadTexto}
                 onCiudadTexto={(v) => {
                   setCiudadTexto(v);
@@ -658,7 +677,6 @@ export function LookRequest({
                 onQuitarCiudad={() => {
                   setCiudadGeo(null);
                   setCiudadTexto("");
-                  setCiudadOpen(false);
                 }}
                 ciudadBuscando={ciudadBuscando}
                 ciudadFallo={ciudadFallo}
@@ -918,17 +936,19 @@ function StepDetalle({
 }) {
   if (objective === "evento") {
     const plan = TIPOS_EVENTO.find((t) => t.key === tipoEvento);
+    // Solo las formalidades que APLICAN a este plan (esmoquin para una cena
+    // con amigos delataba la máquina) y el copy personalizado del catálogo —
+    // la queja exacta: "se siente copy-paste".
+    const opciones = plan
+      ? FORMALIDAD.filter((f) => plan.formalidadesQueAplican.includes(f.key))
+      : FORMALIDAD;
     return (
       <div className="flex flex-col gap-2.5">
         <span className="-mt-2 text-[13px] text-muted">
-          {/* El default ya viene resuelto del catálogo — esta pantalla existe
-              para VERLO y corregirlo si el caso es raro, no para traducir
-              jerga ("la gente sabe decir 'una boda', no 'coctel'"). */}
-          para {plan?.label ?? "tu plan"} lo normal es esto — cámbialo si tu
-          caso es distinto
+          {plan?.preguntaDetalle ?? "cámbialo si tu caso es distinto"}
         </span>
         <div className="flex flex-col gap-2">
-          {FORMALIDAD.map((f) => {
+          {opciones.map((f) => {
             const on = formality === f.key;
             return (
               <button
@@ -1044,16 +1064,18 @@ function StepDetalle({
 }
 
 // EL CUÁNDO: fecha y día/noche son la MISMA pregunta ("el sábado en la noche"
-// es una respuesta, no dos pantallas) + el dónde opcional (caso Irapuato:
-// la comida del viernes es en otra ciudad y el pronóstico depende de eso).
+// es una respuesta, no dos pantallas) + el dónde EXPLÍCITO (Roberto: "si es en
+// tu ciudad, comparte tu ubicación; si es en otro lugar, dime la ciudad").
 function StepCuando({
   fecha,
   onFecha,
   sinFecha,
   momento,
   onMomento,
-  ciudadOpen,
-  onCiudadOpen,
+  donde,
+  onAqui,
+  onOtra,
+  aquiFallo,
   ciudadTexto,
   onCiudadTexto,
   ciudadGeo,
@@ -1068,8 +1090,10 @@ function StepCuando({
   sinFecha: boolean;
   momento: "dia" | "noche";
   onMomento: (m: "dia" | "noche") => void;
-  ciudadOpen: boolean;
-  onCiudadOpen: () => void;
+  donde: "aqui" | "otra";
+  onAqui: () => void;
+  onOtra: () => void;
+  aquiFallo: boolean;
   ciudadTexto: string;
   onCiudadTexto: (v: string) => void;
   ciudadGeo: { lat: number; lon: number; label: string } | null;
@@ -1078,101 +1102,181 @@ function StepCuando({
   ciudadFallo: boolean;
   onBuscarCiudad: () => void;
 }) {
+  // "Otro día" despliega la rejilla completa (wrap, sin scroll horizontal —
+  // pedido de Roberto: hoy/mañana/otro día, y solo si eliges "otro" ves todo).
+  const [otroDiaOpen, setOtroDiaOpen] = useState(false);
+  const dias = proximosDias();
+  const keyManana = dias[1]?.key ?? null;
+  const esOtroDia = fecha !== null && fecha !== keyManana;
+  const CHIP = (on: boolean) =>
+    `min-h-[44px] rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
+      on
+        ? "border-accent bg-accent text-on-accent"
+        : "border-line bg-surface text-ink hover:border-ink"
+    }`;
+
   return (
     <div className="flex flex-col gap-5">
-      {/* El día: hoy por default, lista (no calendario — ≤16 opciones se
-          eligen en un tap). */}
       {!sinFecha ? (
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-semibold text-ink">¿qué día?</span>
-          <div className="-mx-[18px] flex gap-2 overflow-x-auto px-[18px] pb-1">
-            {proximosDias().map((d) => {
-              const on = d.key === fecha || (!fecha && d.key === null);
-              return (
-                <button
-                  key={d.label}
-                  type="button"
-                  onClick={() => onFecha(d.key)}
-                  aria-pressed={on}
-                  className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
-                    on
-                      ? "border-accent bg-accent text-on-accent"
-                      : "border-line bg-surface text-ink hover:border-ink"
-                  }`}
-                >
-                  {d.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onFecha(null);
+                setOtroDiaOpen(false);
+              }}
+              aria-pressed={fecha === null}
+              className={CHIP(fecha === null)}
+            >
+              hoy
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onFecha(keyManana);
+                setOtroDiaOpen(false);
+              }}
+              aria-pressed={fecha === keyManana && fecha !== null}
+              className={CHIP(fecha !== null && fecha === keyManana)}
+            >
+              mañana
+            </button>
+            <button
+              type="button"
+              onClick={() => setOtroDiaOpen((o) => !o)}
+              aria-expanded={otroDiaOpen}
+              className={CHIP(esOtroDia)}
+            >
+              {esOtroDia ? fechaLegible(fecha!).replace(/^el /, "") : "otro día…"}
+            </button>
           </div>
+          {otroDiaOpen ? (
+            <div
+              className="flex flex-wrap gap-2"
+              style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+            >
+              {dias.slice(2).map((d) => {
+                const on = d.key === fecha;
+                return (
+                  <button
+                    key={d.label}
+                    type="button"
+                    onClick={() => {
+                      onFecha(d.key);
+                      setOtroDiaOpen(false);
+                    }}
+                    aria-pressed={on}
+                    className={CHIP(on)}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {/* Día o noche */}
       <StepMomento momento={momento} onPick={onMomento} />
 
-      {/* El dónde, como suposición editable: "en tu ciudad ▾". Solo si el plan
-          es en otra parte se teclea — geocoding de Open-Meteo, sin pedir
-          permiso de ubicación. */}
+      {/* ¿DÓNDE? — pregunta explícita, con "aquí" como default. Tocar "aquí"
+          pide la ubicación en ese tap; "en otra ciudad" abre el geocoder (la
+          pieza del modo Viaje) — así el clima del siguiente paso llega como
+          CONCLUSIÓN ("en Cuernavaca va a llover"), no como cuestionario. */}
       <div className="flex flex-col gap-2">
-        {ciudadGeo ? (
-          <div className="flex items-center gap-2.5 rounded-sm border border-ink bg-surface px-3.5 py-2.5">
-            <Icon name="ubicacion" size={16} className="shrink-0 text-ink" />
-            <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">
-              en {ciudadGeo.label}
-            </span>
-            <button
-              type="button"
-              onClick={onQuitarCiudad}
-              aria-label="Quitar la ciudad"
-              className="shrink-0 text-[13px] font-semibold text-muted hover:text-ink"
-            >
-              quitar
-            </button>
-          </div>
-        ) : !ciudadOpen ? (
+        <span className="text-[13px] font-semibold text-ink">¿dónde?</span>
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={onCiudadOpen}
-            aria-expanded={false}
-            className="inline-flex min-h-[44px] items-center gap-1.5 self-start text-[14px] font-semibold text-muted transition-colors hover:text-ink"
+            onClick={onAqui}
+            aria-pressed={donde === "aqui"}
+            className={`flex min-h-[52px] flex-col items-start justify-center rounded-sm border px-3.5 py-2 text-left transition-colors ${
+              donde === "aqui"
+                ? "border-accent bg-accent text-on-accent"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
           >
-            en tu ciudad
-            <Icon name="chevron" size={13} rotate={90} />
+            <span className="text-[14px] font-semibold">aquí, donde estoy</span>
+            <span className={`text-[12px] ${donde === "aqui" ? "opacity-80" : "text-muted"}`}>
+              leo tu clima yo
+            </span>
           </button>
-        ) : (
-          <div
-            className="flex flex-col gap-1.5"
-            style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+          <button
+            type="button"
+            onClick={onOtra}
+            aria-pressed={donde === "otra"}
+            className={`flex min-h-[52px] flex-col items-start justify-center rounded-sm border px-3.5 py-2 text-left transition-colors ${
+              donde === "otra"
+                ? "border-accent bg-accent text-on-accent"
+                : "border-line bg-surface text-ink hover:border-ink"
+            }`}
           >
-            <label className="flex items-center gap-2.5 border border-line bg-surface px-3.5 py-2.5 transition-colors focus-within:border-ink">
-              <Icon name="ubicacion" size={16} className="shrink-0 text-muted" />
-              <input
-                value={ciudadTexto}
-                onChange={(e) => onCiudadTexto(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onBuscarCiudad();
-                }}
-                maxLength={60}
-                placeholder="¿en qué ciudad es el plan?"
-                className="min-w-0 flex-1 bg-transparent text-[14px] text-ink caret-accent outline-none placeholder:text-muted"
-              />
+            <span className="text-[14px] font-semibold">en otra ciudad</span>
+            <span className={`text-[12px] ${donde === "otra" ? "opacity-80" : "text-muted"}`}>
+              dime cuál y saco el clima
+            </span>
+          </button>
+        </div>
+
+        {donde === "aqui" && aquiFallo ? (
+          <span className="text-[12px] text-muted">
+            no pude leer tu ubicación — el clima te lo pregunto en el siguiente paso
+          </span>
+        ) : null}
+
+        {donde === "otra" ? (
+          ciudadGeo ? (
+            <div className="flex items-center gap-2.5 rounded-sm border border-ink bg-surface px-3.5 py-2.5">
+              <Icon name="ubicacion" size={16} className="shrink-0 text-ink" />
+              <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">
+                en {ciudadGeo.label}
+              </span>
               <button
                 type="button"
-                onClick={onBuscarCiudad}
-                disabled={ciudadBuscando || !ciudadTexto.trim()}
-                className="shrink-0 text-[13px] font-bold text-ink disabled:opacity-40"
+                onClick={onQuitarCiudad}
+                aria-label="Quitar la ciudad"
+                className="shrink-0 text-[13px] font-semibold text-muted hover:text-ink"
               >
-                {ciudadBuscando ? <Spinner className="h-4 w-4" /> : "buscar"}
+                quitar
               </button>
-            </label>
-            {ciudadFallo ? (
-              <span className="text-[12px] text-error">
-                no encontré esa ciudad — inténtalo con el nombre completo
-              </span>
-            ) : null}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div
+              className="flex flex-col gap-1.5"
+              style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+            >
+              <label className="flex items-center gap-2.5 border border-line bg-surface px-3.5 py-2.5 transition-colors focus-within:border-ink">
+                <Icon name="ubicacion" size={16} className="shrink-0 text-muted" />
+                <input
+                  value={ciudadTexto}
+                  onChange={(e) => onCiudadTexto(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onBuscarCiudad();
+                  }}
+                  maxLength={60}
+                  placeholder="¿en qué ciudad es el plan?"
+                  className="min-w-0 flex-1 bg-transparent text-[14px] text-ink caret-accent outline-none placeholder:text-muted"
+                />
+                <button
+                  type="button"
+                  onClick={onBuscarCiudad}
+                  disabled={ciudadBuscando || !ciudadTexto.trim()}
+                  className="shrink-0 text-[13px] font-bold text-ink disabled:opacity-40"
+                >
+                  {ciudadBuscando ? <Spinner className="h-4 w-4" /> : "buscar"}
+                </button>
+              </label>
+              {ciudadFallo ? (
+                <span className="text-[12px] text-error">
+                  no encontré esa ciudad — inténtalo con el nombre completo
+                </span>
+              ) : null}
+            </div>
+          )
+        ) : null}
       </div>
     </div>
   );
@@ -1244,8 +1348,9 @@ function StepClima({
   /** "el sábado 16" cuando el look es para otro día: la píldora lee el
    *  PRONÓSTICO de esa fecha (server, getWeatherForDates), no el clima de hoy. */
   fechaLabel?: string | null;
-  /** El clima ya PRE-RESUELTO (ciudad geocodificada o permiso ya dado): el
-   *  paso deja de preguntar — muestra lo leído y las bandas quedan editables. */
+  /** El clima ya PRE-RESUELTO (del "¿dónde?" del paso anterior): el paso es la
+   *  CONCLUSIÓN — "en Cuernavaca va a llover" — y las bandas viven detrás de
+   *  "corrígeme". Preguntar lo que la app ya sabe delataba a la máquina. */
   climaAuto?: Weather | null;
   resolviendo?: boolean;
   /** "Irapuato, Guanajuato" si el plan es en otra ciudad. */
@@ -1256,78 +1361,11 @@ function StepClima({
   onParaguas: (p: boolean) => void;
   onLocate: () => void;
 }) {
-  return (
-    <div className="flex flex-col">
-      {resolviendo ? (
-        // Leyendo el pronóstico solos (ciudad dicha o permiso ya dado).
-        <div className="flex items-center gap-3 border border-line bg-surface p-3.5">
-          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-            <Spinner className="h-4 w-4" />
-          </span>
-          <span className="text-[15px] font-semibold text-ink">
-            {fechaLabel ? "leyendo el pronóstico…" : "leyendo el clima…"}
-          </span>
-        </div>
-      ) : climaAuto ? (
-        // EL CLIMA YA CONTESTADO: el paso se vuelve confirmación. Las bandas
-        // de abajo quedan pre-llenadas y editables — corregir siempre gana.
-        <div className="flex items-center gap-3 border border-ink bg-surface p-3.5">
-          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-            <Icon name="ubicacion" size={17} />
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[15px] font-semibold text-ink">
-              {climaAuto.temp_c}° · {climaAuto.condition}
-              {climaAuto.estimated ? " (clima típico)" : ""}
-            </span>
-            <span className="text-[14px] text-muted">
-              {fechaLabel ? `así se ve ${fechaLabel}` : "así está ahorita"}
-              {ciudadLabel ? ` en ${ciudadLabel.split(",")[0]}` : ""} — ajusta
-              abajo si no va
-            </span>
-          </span>
-        </div>
-      ) : (
-        // Píldora de ubicación: si la usa, se leen temp Y lluvia automáticamente.
-        <button
-          type="button"
-          onClick={onLocate}
-          disabled={locating}
-          className="flex items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink disabled:opacity-60"
-        >
-          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-            {locating ? <Spinner className="h-4 w-4" /> : <Icon name="ubicacion" size={17} />}
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[15px] font-semibold text-ink">
-              {locating
-                ? fechaLabel
-                  ? "leyendo el pronóstico…"
-                  : "leyendo el clima…"
-                : "usar mi ubicación"}
-            </span>
-            <span className="text-[15px] text-muted">
-              {locFailed
-                ? "no pude leerla — dime tú abajo"
-                : fechaLabel
-                  ? `leo el pronóstico de ${fechaLabel} por ti`
-                  : "leo temp y lluvia por ti"}
-            </span>
-          </span>
-          <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
-        </button>
-      )}
-
-      {/* Divisor */}
-      <div className="my-[18px] flex items-center gap-3">
-        <span className="h-px flex-1 bg-line" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-          {climaAuto ? "o corrígeme" : "o dime tú"}
-        </span>
-        <span className="h-px flex-1 bg-line" />
-      </div>
-
-      {/* Lista de 5 bandas (bordes colapsados con -mt-px) */}
+  // Las bandas + la lluvia manual: el cuestionario completo. Es el camino
+  // PRIMARIO sin coords, y la letra chica ("corrígeme") cuando el clima ya
+  // llegó resuelto.
+  const cuestionario = (
+    <>
       <div className="flex flex-col">
         {BUCKETS.map((b, i) => {
           const on = i === idx;
@@ -1360,7 +1398,6 @@ function StepClima({
         })}
       </div>
 
-      {/* Fila de lluvia (solo el camino manual) */}
       <div className="mt-[18px] mb-1 flex items-center gap-3">
         <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
           <Icon name="lluvia" size={17} className="text-muted" /> ¿va a llover?
@@ -1388,52 +1425,140 @@ function StepClima({
           </button>
         </div>
       </div>
+    </>
+  );
 
-      {/* El paraguas, SOLO si dijo que llueve. Cero fricción para quien no le
-          llueve, y para quien sí es la pregunta que decide el look: el paraguas
-          tapa el torso pero no los pies, así que abre la capa de arriba y deja
-          el calzado firme. Sin ella, todos los días de lluvia salen con la
-          misma chamarra impermeable. */}
-      {rain ? (
-        <div
-          className="mt-3 flex items-center gap-3"
-          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+  // El paraguas, SOLO si llueve. Es pregunta real (no corrección): decide si
+  // la capa de arriba tiene que repeler agua o se elige por estilo.
+  const filaParaguas = rain ? (
+    <div
+      className="mt-3 flex items-center gap-3"
+      style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+    >
+      <span className="flex flex-col">
+        <span className="text-[14px] font-semibold text-ink">
+          ¿llevas paraguas?
+        </span>
+        <span className="text-[13px] text-muted">
+          si sí, arriba te suelto la mano
+        </span>
+      </span>
+      <div className="ml-auto inline-flex overflow-hidden rounded-sm border border-line">
+        <button
+          type="button"
+          onClick={() => onParaguas(false)}
+          aria-pressed={!paraguas}
+          className={`min-h-[38px] px-5 text-[14px] font-semibold transition-colors ${
+            !paraguas ? "bg-accent text-on-accent" : "bg-surface text-ink"
+          }`}
         >
-          <span className="flex flex-col">
-            <span className="text-[14px] font-semibold text-ink">
-              ¿llevas paraguas?
+          no
+        </button>
+        <button
+          type="button"
+          onClick={() => onParaguas(true)}
+          aria-pressed={paraguas}
+          className={`min-h-[38px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
+            paraguas ? "bg-accent text-on-accent" : "bg-surface text-ink"
+          }`}
+        >
+          sí
+        </button>
+      </div>
+    </div>
+  ) : null;
+
+  if (resolviendo) {
+    return (
+      <div className="flex items-center gap-3 border border-line bg-surface p-3.5">
+        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+          <Spinner className="h-4 w-4" />
+        </span>
+        <span className="text-[15px] font-semibold text-ink">
+          {fechaLabel ? "leyendo el pronóstico…" : "leyendo el clima…"}
+        </span>
+      </div>
+    );
+  }
+
+  if (climaAuto) {
+    // LA CONCLUSIÓN: la app ya sabe — lo dice y ya. El cuestionario completo
+    // queda detrás de "corrígeme" para el día que el pronóstico no cuadre.
+    return (
+      <div className="flex flex-col">
+        <div className="flex items-center gap-3 border border-ink bg-surface p-4">
+          <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+            <Icon name={/lluvia|llovizna|chubasco|tormenta/.test(climaAuto.condition) ? "lluvia" : "sol"} size={18} />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[17px] font-bold text-ink">
+              {climaAuto.temp_c}° · {climaAuto.condition}
+              {climaAuto.estimated ? " (clima típico)" : ""}
             </span>
-            <span className="text-[13px] text-muted">
-              si sí, arriba te suelto la mano
+            <span className="text-[14px] text-muted">
+              {fechaLabel ? `así se ve ${fechaLabel}` : "así está ahorita"}
+              {ciudadLabel ? ` en ${ciudadLabel.split(",")[0]}` : ""}
             </span>
           </span>
-          <div className="ml-auto inline-flex overflow-hidden rounded-sm border border-line">
-            <button
-              type="button"
-              onClick={() => onParaguas(false)}
-              aria-pressed={!paraguas}
-              className={`min-h-[38px] px-5 text-[14px] font-semibold transition-colors ${
-                !paraguas ? "bg-accent text-on-accent" : "bg-surface text-ink"
-              }`}
-            >
-              no
-            </button>
-            <button
-              type="button"
-              onClick={() => onParaguas(true)}
-              aria-pressed={paraguas}
-              className={`min-h-[38px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
-                paraguas ? "bg-accent text-on-accent" : "bg-surface text-ink"
-              }`}
-            >
-              sí
-            </button>
-          </div>
         </div>
-      ) : null}
+
+        {filaParaguas}
+
+        <details className="mt-4">
+          <summary className="cursor-pointer text-[13px] font-semibold text-muted hover:text-ink">
+            ¿no va? corrígeme
+          </summary>
+          <div className="mt-3">{cuestionario}</div>
+        </details>
+      </div>
+    );
+  }
+
+  // Sin coords: el flujo manual de siempre — píldora + cuestionario.
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        onClick={onLocate}
+        disabled={locating}
+        className="flex items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink disabled:opacity-60"
+      >
+        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+          {locating ? <Spinner className="h-4 w-4" /> : <Icon name="ubicacion" size={17} />}
+        </span>
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[15px] font-semibold text-ink">
+            {locating
+              ? fechaLabel
+                ? "leyendo el pronóstico…"
+                : "leyendo el clima…"
+              : "usar mi ubicación"}
+          </span>
+          <span className="text-[15px] text-muted">
+            {locFailed
+              ? "no pude leerla — dime tú abajo"
+              : fechaLabel
+                ? `leo el pronóstico de ${fechaLabel} por ti`
+                : "leo temp y lluvia por ti"}
+          </span>
+        </span>
+        <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
+      </button>
+
+      <div className="my-[18px] flex items-center gap-3">
+        <span className="h-px flex-1 bg-line" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+          o dime tú
+        </span>
+        <span className="h-px flex-1 bg-line" />
+      </div>
+
+      {cuestionario}
+      {filaParaguas}
     </div>
   );
 }
+
 
 // Disparador del ancla (paso 1): fila opcional que muestra la prenda elegida o
 // invita a abrir la hoja. Vive con la ocasión (intención), no con el clima.
