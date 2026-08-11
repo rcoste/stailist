@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.216.0] - 2026-08-10
+
+### Changed — el wizard se splitea: una pregunta por pantalla
+
+Feedback de Roberto sobre la 0.2.215.0, a minutos de shippeada: *"son
+bastantes acciones las que estás pidiendo en la misma pantalla… deberíamos
+splitear"*. Tenía razón — el paso 1 apilaba plan + fecha + formalidad +
+cuestionario de trabajo + campo abierto en un long scroll.
+
+└ **Pasos dinámicos: plan → detalle → cuándo → clima.** El "detalle" (la
+  formalidad del evento con su default pre-marcado, o la calibración de
+  trabajo) es su propio paso y **solo existe si hay algo que acotar** — la
+  barra de progreso se adapta (día normal = 3 pasos, boda = 4). La calibración
+  de trabajo sigue siendo one-time y ya era editable en /perfil/trabajo.
+
+└ **"¿Cuándo es?" — fecha y día/noche son la misma pregunta.** Un solo paso:
+  qué día (hoy default) + de día/de noche + **"en tu ciudad ▾"** para el caso
+  Irapuato (la comida del viernes es en OTRA ciudad): se teclea la ciudad, se
+  geocodifica con la pieza del modo Viaje, y el pronóstico sale de ahí — sin
+  pedir permiso de ubicación.
+
+└ **El clima deja de preguntar lo que la app ya sabe.** Con ciudad dicha (o
+  permiso de ubicación ya dado), el último paso llega CONTESTADO: "así estará
+  el clima — 21° · lluvia, así se ve el viernes 14 en Irapuato — ajusta abajo
+  si no va". Bandas y lluvia pre-marcadas, editables; si no tocas nada viaja el
+  clima leído exacto (21°), no la banda redondeada. Sin coords: el flujo manual
+  de siempre. Verificado e2e: boda→vie 14→Irapuato generó con 21°·lluvia reales.
+
 ## [0.2.215.0] - 2026-08-10
 
 ### Added — el wizard habla en planes, y ya puedes pedir un look por adelantado

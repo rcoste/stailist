@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/spinner";
 import { Icon, type IconName } from "@/components/icon";
 import {
@@ -8,8 +8,16 @@ import {
   ropaDeDressCode,
   type WorkDressCode,
 } from "@/lib/dress-code";
-import { FORMALIDADES, ropaDeFormalidad, formalidadLegible } from "@/lib/formalidad";
+import { FORMALIDADES, ropaDeFormalidad } from "@/lib/formalidad";
 import { TIPOS_EVENTO, formalidadDeEvento } from "@/lib/eventos";
+// Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
+// del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
+import {
+  getWeather,
+  getWeatherForDates,
+  geocodePlace,
+  type Weather,
+} from "@/lib/weather";
 
 // Compositor de "crear outfit" como WIZARD de 3 pasos (rebrand v3):
 // 1) ocasión (grid 2×2 + campo abierto) · 2) día/noche · 3) clima (lista de
@@ -245,9 +253,11 @@ export function LookRequest({
   // boda de etiqueta o una cena — justo el hueco que hace incalificable el
   // resultado. Un tap de más para ellos; el resto no lo nota.
   const skip = !!skipObjective && hasDefaultObj && normObjective !== "evento";
-  const firstStep: 1 | 2 = skip ? 2 : 1;
-  const totalSteps = skip ? 2 : 3;
-  const [step, setStep] = useState<1 | 2 | 3>(firstStep);
+  // ÍNDICE en la lista dinámica de pasos (ver `pasos` abajo): el wizard dejó de
+  // ser 3 pantallas fijas. Roberto: "son bastantes acciones las que estás
+  // pidiendo en la misma pantalla... deberíamos splitear" — una pregunta por
+  // pantalla, y los pasos que no aplican simplemente no existen.
+  const [idx, setIdx] = useState(0);
   const [objective, setObjective] = useState<string | null>(
     hasDefaultObj ? normObjective : null
   );
@@ -272,11 +282,10 @@ export function LookRequest({
   const [paraguas, setParaguas] = useState(false);
   const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
-  // La fecha del plan. null = hoy — el default silencioso: la fila "para hoy ▾"
-  // se lee como suposición editable, no como pregunta. Solo fechas futuras
-  // viajan al server (plannedFor).
+  // La fecha del plan. null = hoy — el default silencioso. Vive en el paso
+  // "¿cuándo?" junto con día/noche (son la misma pregunta). Solo fechas
+  // futuras viajan al server (plannedFor).
   const [fecha, setFecha] = useState<string | null>(null);
-  const [fechaOpen, setFechaOpen] = useState(false);
   // "otro…" revela los planes raros (graduación, funeral).
   const [masPlanes, setMasPlanes] = useState(false);
   // El TIPO de evento (boda, cena con amigos…). Es lo primero que se pregunta
@@ -294,6 +303,23 @@ export function LookRequest({
   const [veCliente, setVeCliente] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locFailed, setLocFailed] = useState(false);
+  // El "¿dónde?" opcional (caso Irapuato: vives en CDMX, la comida del viernes
+  // es en otra ciudad — el pronóstico depende del DÓNDE). Default silencioso:
+  // donde estás; solo si lo tocas se geocodifica otra ciudad (misma pieza del
+  // modo Viaje, sin pedir permiso de ubicación).
+  const [ciudadOpen, setCiudadOpen] = useState(false);
+  const [ciudadTexto, setCiudadTexto] = useState("");
+  const [ciudadGeo, setCiudadGeo] = useState<{ lat: number; lon: number; label: string } | null>(null);
+  const [ciudadBuscando, setCiudadBuscando] = useState(false);
+  const [ciudadFallo, setCiudadFallo] = useState(false);
+  // El clima pre-resuelto ("así estará el sábado: 19°, lluvia"). Solo informa
+  // el banner; las bandas quedan editables — la corrección manual siempre gana.
+  const [climaAuto, setClimaAuto] = useState<Weather | null>(null);
+  const [resolviendo, setResolviendo] = useState(false);
+  const autoClimaIntentado = useRef(false);
+  // Qué banda/lluvia dejó el pre-llenado: si al armar siguen igual, viaja el
+  // clima LEÍDO (22° reales), no la banda redondeada; si corrigió, gana lo suyo.
+  const autoPrefill = useRef<{ idx: number; rain: boolean } | null>(null);
 
   // Campo abierto y tarjetas son mutuamente excluyentes (el "o" lo deja claro).
   const hasOpen = openText.trim().length > 0;
@@ -310,15 +336,25 @@ export function LookRequest({
   // siguiente sesión).
   const codigoHoy = workDressCode ?? dressCode;
   const pideVeCliente = objective === "oficina" && codigoHoy === "variable";
-  // "Evento" exige elegir QUÉ evento es para avanzar (antes se pedía el nivel
-  // de formalidad; ahora ese sale del catálogo y no hay que traducir jerga).
-  const step1Ready =
-    hasOpen ||
-    (objective === "evento"
-      ? !!tipoEvento
-      : pideDressCode
-        ? !!dressCode
-        : !!objective);
+  // LOS PASOS, dinámicos: plan → detalle (solo si hay algo que acotar) →
+  // cuándo (fecha + día/noche + dónde) → clima. El "detalle" es la formalidad
+  // del evento o la calibración de trabajo — antes vivían apilados en el paso 1
+  // como long scroll. El wow (skip) salta el plan, como siempre.
+  const necesitaDetalle =
+    !hasOpen &&
+    ((objective === "evento" && !!tipoEvento) ||
+      (objective === "oficina" && (pideDressCode || codigoHoy === "variable")));
+  const pasos: PasoWizard[] = skip
+    ? ["cuando", "clima"]
+    : necesitaDetalle
+      ? ["plan", "detalle", "cuando", "clima"]
+      : ["plan", "cuando", "clima"];
+  const paso = pasos[Math.min(idx, pasos.length - 1)];
+
+  // ¿Se puede avanzar desde el paso actual? Una condición por pantalla.
+  const planReady =
+    hasOpen || (objective === "evento" ? !!tipoEvento : !!objective);
+  const detalleReady = pideDressCode ? !!dressCode : true;
   // La formalidad: la del catálogo según el tipo y el momento, salvo que la
   // haya ajustado a mano. El momento importa — una cena no es una comida.
   const formality =
@@ -328,11 +364,81 @@ export function LookRequest({
   const tipoEventoOut = esEvento ? tipoEvento : null;
 
   function next() {
-    setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
+    setIdx((i) => Math.min(i + 1, pasos.length - 1));
   }
   function back() {
-    if (step === firstStep) onExit?.();
-    else setStep((s) => (s - 1) as 1 | 2 | 3);
+    if (idx === 0) onExit?.();
+    else setIdx((i) => i - 1);
+  }
+
+  // PRE-RESOLVER el clima al entrar al paso: si hay ciudad geocodificada, o si
+  // el permiso de ubicación YA está dado (nunca disparamos el prompt del
+  // browser solos — eso es un gesto del usuario), se lee el pronóstico del día
+  // elegido y las bandas amanecen contestadas. El paso se vuelve "así estará —
+  // corrige si no va" en vez de una pregunta. Sin coords: el flujo manual de
+  // siempre, con su píldora.
+  useEffect(() => {
+    if (paso !== "clima" || autoClimaIntentado.current) return;
+    autoClimaIntentado.current = true;
+    let muerto = false;
+    (async () => {
+      let coords: { lat: number; lon: number } | null = ciudadGeo;
+      if (!coords) {
+        try {
+          const perm = await navigator.permissions?.query({
+            name: "geolocation" as PermissionName,
+          });
+          if (perm?.state === "granted") coords = await getPosition();
+        } catch {
+          /* sin API de permisos → no adivinamos; queda el flujo manual */
+        }
+      }
+      if (!coords || muerto) return;
+      setResolviendo(true);
+      const w = fecha
+        ? await getWeatherForDates(coords.lat, coords.lon, fecha, fecha)
+        : await getWeather(coords.lat, coords.lon);
+      if (muerto) return;
+      setResolviendo(false);
+      if (!w) return;
+      setClimaAuto(w);
+      // Bandas y lluvia pre-llenadas con lo leído — editables: lo manual gana.
+      let mejor = 0;
+      BUCKETS.forEach((b, i) => {
+        if (Math.abs(b.temp_c - w.temp_c) < Math.abs(BUCKETS[mejor].temp_c - w.temp_c)) mejor = i;
+      });
+      const llueve = /lluvia|llovizna|chubasco|tormenta/.test(w.condition);
+      setClimaIdx((prev) => prev ?? mejor);
+      if (llueve) setRain(true);
+      autoPrefill.current = { idx: mejor, rain: llueve };
+    })();
+    return () => {
+      muerto = true;
+    };
+    // Reintenta si cambia la ciudad o la fecha y se vuelve a entrar al paso.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paso]);
+
+  // Cambiar de ciudad o de fecha invalida lo pre-resuelto (se re-lee al volver
+  // a entrar al paso de clima).
+  useEffect(() => {
+    autoClimaIntentado.current = false;
+    setClimaAuto(null);
+  }, [ciudadGeo, fecha]);
+
+  async function buscarCiudad() {
+    const q = ciudadTexto.trim();
+    if (!q) return;
+    setCiudadBuscando(true);
+    setCiudadFallo(false);
+    const geo = await geocodePlace(q);
+    setCiudadBuscando(false);
+    if (geo) {
+      setCiudadGeo(geo);
+      setCiudadOpen(false);
+    } else {
+      setCiudadFallo(true);
+    }
   }
 
   async function useLocation() {
@@ -359,6 +465,16 @@ export function LookRequest({
   function armar() {
     if (climaIdx === null) return;
     const b = BUCKETS[climaIdx];
+    // Si el pre-llenado quedó tal cual, viaja el clima LEÍDO (grados y
+    // condición reales); si la usuaria corrigió algo, gana su corrección.
+    const intacto =
+      climaAuto &&
+      autoPrefill.current &&
+      climaIdx === autoPrefill.current.idx &&
+      rain === autoPrefill.current.rain;
+    const weather = intacto
+      ? { temp_c: climaAuto.temp_c, condition: climaAuto.condition }
+      : { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" };
     onPick({
       ...objectivePart,
       momento,
@@ -369,7 +485,7 @@ export function LookRequest({
       ...(pideVeCliente ? { veCliente } : {}),
       fechaLocal: fmtFechaLocal(new Date()),
       ...(fecha ? { plannedFor: fecha } : {}),
-      weather: { temp_c: b.temp_c, condition: rain ? "lluvia" : "despejado" },
+      weather,
       ...(rain ? { paraguas } : {}),
     });
   }
@@ -403,19 +519,36 @@ export function LookRequest({
     if (v.trim()) setObjective(null);
   }
 
-  const displayStep = skip ? step - 1 : step;
-  const meta = `PASO ${displayStep} DE ${totalSteps}`;
+  const meta = `PASO ${Math.min(idx, pasos.length - 1) + 1} DE ${pasos.length}`;
   // Titular con una palabra en serif itálica de acento (Instrument Serif).
-  // El del paso 1 es temporalmente NEUTRO a propósito: la fila de fecha es la
-  // única que puede decir "hoy" — el paso existe justo para no asumirlo.
+  // El del plan es temporalmente NEUTRO a propósito: la fecha vive en su paso
+  // "¿cuándo?" — el wizard existe justo para no asumir "hoy".
   const question =
-    step === 1 ? (
+    paso === "plan" ? (
       <>
         ¿qué <em className={EM}>plan</em> tienes?
       </>
-    ) : step === 2 ? (
+    ) : paso === "detalle" ? (
+      objective === "evento" ? (
+        <>
+          ¿qué tan <em className={EM}>arreglado</em> vas?
+        </>
+      ) : pideDressCode ? (
+        <>
+          ¿cómo te vistes <em className={EM}>para trabajar</em>?
+        </>
+      ) : (
+        <>
+          ¿te toca <em className={EM}>ver cliente</em>?
+        </>
+      )
+    ) : paso === "cuando" ? (
       <>
-        ¿de día o <em className={EM}>de noche</em>?
+        ¿<em className={EM}>cuándo</em> es?
+      </>
+    ) : climaAuto ? (
+      <>
+        así estará <em className={EM}>el clima</em>
       </>
     ) : fecha ? (
       <>
@@ -426,7 +559,7 @@ export function LookRequest({
         ¿cómo está <em className={EM}>el clima</em>?
       </>
     );
-  const showBack = step !== firstStep || !!onExit;
+  const showBack = idx !== 0 || !!onExit;
 
   return (
     <div className="fixed inset-0 z-50 bg-bg">
@@ -438,24 +571,24 @@ export function LookRequest({
               <button
                 type="button"
                 onClick={back}
-                aria-label={step === firstStep ? "Salir" : "Atrás"}
+                aria-label={idx === 0 ? "Salir" : "Atrás"}
                 className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-line text-ink transition-colors hover:border-ink"
               >
                 <Icon
-                  name={step === firstStep ? "equis" : "chevron"}
+                  name={idx === 0 ? "equis" : "chevron"}
                   size={16}
-                  rotate={step === firstStep ? 0 : 180}
+                  rotate={idx === 0 ? 0 : 180}
                 />
               </button>
             ) : (
               <span className="h-[34px] w-[34px]" />
             )}
             <div className="flex flex-1 gap-1.5">
-              {Array.from({ length: totalSteps }).map((_, i) => (
+              {pasos.map((p, i) => (
                 <span
-                  key={i}
+                  key={p}
                   className={`h-[3px] flex-1 rounded-full transition-colors duration-200 ${
-                    i <= displayStep - 1 ? "bg-ink" : "bg-line"
+                    i <= idx ? "bg-ink" : "bg-line"
                   }`}
                 />
               ))}
@@ -467,78 +600,20 @@ export function LookRequest({
           <h1 className="mt-2 text-[30px] font-bold leading-[1.04] tracking-[-0.025em] text-ink">
             {question}
           </h1>
-          {/* La fila de fecha: una suposición editable, no una pregunta. El
-              default (hoy) no pide nada; tocarla abre la lista de días — lista,
-              no calendario: 16 opciones se eligen en un tap. Oculta en el wow
-              (el primer look es de hoy por definición). */}
-          {step === 1 && !skip ? (
-            <div className="mt-1">
-              <button
-                type="button"
-                onClick={() => setFechaOpen((o) => !o)}
-                aria-expanded={fechaOpen}
-                aria-label={`cambiar el día — ${fecha ? `para ${fechaLegible(fecha)}` : "para hoy"}`}
-                className={`inline-flex min-h-[44px] items-center gap-1.5 text-[15px] font-semibold transition-colors hover:text-ink ${
-                  fecha ? "text-ink" : "text-muted"
-                }`}
-              >
-                {fecha ? `para ${fechaLegible(fecha)}` : "para hoy"}
-                <Icon name="chevron" size={14} rotate={fechaOpen ? 270 : 90} />
-              </button>
-              {fechaOpen ? (
-                <div
-                  className="-mx-[18px] flex gap-2 overflow-x-auto px-[18px] pb-2"
-                  style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-                >
-                  {proximosDias().map((d) => {
-                    const on = d.key === fecha || (!fecha && d.key === null);
-                    return (
-                      <button
-                        key={d.label}
-                        type="button"
-                        onClick={() => {
-                          setFecha(d.key);
-                          setFechaOpen(false);
-                        }}
-                        aria-pressed={on}
-                        className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
-                          on
-                            ? "border-accent bg-accent text-on-accent"
-                            : "border-line bg-surface text-ink hover:border-ink"
-                        }`}
-                      >
-                        {d.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
         </div>
 
         {/* Cuerpo scrollable (animado por paso) */}
         <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4 pt-[26px]">
-          <div key={step} style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
-            {step === 1 ? (
+          <div key={paso} style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
+            {paso === "plan" ? (
               <div className="flex flex-col gap-5">
-                <StepOcasion
-                  gender={gender}
+                <StepPlan
                   objective={objective}
                   openText={openText}
                   tipoEvento={tipoEvento}
                   onPickPlanSocial={pickPlanSocial}
                   masPlanes={masPlanes}
                   onMasPlanes={() => setMasPlanes(true)}
-                  formality={formality}
-                  onFormalityManual={setFormalityManual}
-                  pideDressCode={pideDressCode}
-                  dressCode={dressCode}
-                  onDressCode={setDressCode}
-                  desdeElQuiz={desdeElQuiz}
-                  pideVeCliente={pideVeCliente}
-                  veCliente={veCliente}
-                  onVeCliente={setVeCliente}
                   onPick={pickObjective}
                   onOpenText={changeOpenText}
                 />
@@ -550,8 +625,45 @@ export function LookRequest({
                   />
                 ) : null}
               </div>
-            ) : step === 2 ? (
-              <StepMomento momento={momento} onPick={setMomento} />
+            ) : paso === "detalle" ? (
+              <StepDetalle
+                gender={gender}
+                objective={objective}
+                tipoEvento={tipoEvento}
+                formality={formality}
+                onFormalityManual={setFormalityManual}
+                pideDressCode={pideDressCode}
+                dressCode={dressCode}
+                onDressCode={setDressCode}
+                desdeElQuiz={desdeElQuiz}
+                pideVeCliente={pideVeCliente}
+                veCliente={veCliente}
+                onVeCliente={setVeCliente}
+              />
+            ) : paso === "cuando" ? (
+              <StepCuando
+                fecha={fecha}
+                onFecha={setFecha}
+                sinFecha={skip}
+                momento={momento}
+                onMomento={setMomento}
+                ciudadOpen={ciudadOpen}
+                onCiudadOpen={() => setCiudadOpen(true)}
+                ciudadTexto={ciudadTexto}
+                onCiudadTexto={(v) => {
+                  setCiudadTexto(v);
+                  setCiudadFallo(false);
+                }}
+                ciudadGeo={ciudadGeo}
+                onQuitarCiudad={() => {
+                  setCiudadGeo(null);
+                  setCiudadTexto("");
+                  setCiudadOpen(false);
+                }}
+                ciudadBuscando={ciudadBuscando}
+                ciudadFallo={ciudadFallo}
+                onBuscarCiudad={buscarCiudad}
+              />
             ) : (
               <StepClima
                 idx={climaIdx}
@@ -564,6 +676,9 @@ export function LookRequest({
                 onParaguas={setParaguas}
                 onLocate={useLocation}
                 fechaLabel={fecha ? fechaLegible(fecha) : null}
+                climaAuto={climaAuto}
+                resolviendo={resolviendo}
+                ciudadLabel={ciudadGeo?.label ?? null}
               />
             )}
           </div>
@@ -573,14 +688,15 @@ export function LookRequest({
         <div className="flex flex-none border-t border-line bg-surface px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
           <button
             type="button"
-            onClick={step === 3 ? armar : next}
+            onClick={paso === "clima" ? armar : next}
             disabled={
-              (step === 1 && !step1Ready) ||
-              (step === 3 && (locating || climaIdx === null))
+              (paso === "plan" && !planReady) ||
+              (paso === "detalle" && !detalleReady) ||
+              (paso === "clima" && (locating || resolviendo || climaIdx === null))
             }
             className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
           >
-            {step === 3 ? (
+            {paso === "clima" ? (
               <>
                 <Icon name="destello" size={18} /> armar mi look
               </>
@@ -608,6 +724,9 @@ export function LookRequest({
   );
 }
 
+// Los pasos posibles del wizard (la lista real se arma dinámica por plan).
+type PasoWizard = "plan" | "detalle" | "cuando" | "clima";
+
 // Acento serif itálico para los titulares del wizard (Instrument Serif).
 const EM = "font-display font-normal italic tracking-normal";
 // Selección v3 monocroma: borde tinta (inset, sin reflow) — el ícono se rellena
@@ -615,42 +734,26 @@ const EM = "font-display font-normal italic tracking-normal";
 const ON = "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]";
 const ICON_ON = "bg-accent border-accent text-on-accent";
 
-function StepOcasion({
-  gender,
+// El paso del PLAN, y solo el plan: cards + chips + campo abierto. Lo que se
+// acota (formalidad, calibración de trabajo) vive en su propio paso "detalle" —
+// apilado aquí era el long scroll que Roberto marcó: "son bastantes acciones
+// las que estás pidiendo en la misma pantalla".
+function StepPlan({
   objective,
   openText,
   tipoEvento,
   onPickPlanSocial,
   masPlanes,
   onMasPlanes,
-  formality,
-  onFormalityManual,
-  pideDressCode,
-  dressCode,
-  onDressCode,
-  desdeElQuiz,
-  pideVeCliente,
-  veCliente,
-  onVeCliente,
   onPick,
   onOpenText,
 }: {
-  gender: "hombre" | "mujer" | null;
   objective: string | null;
   openText: string;
   tipoEvento: string | null;
   onPickPlanSocial: (k: string) => void;
   masPlanes: boolean;
   onMasPlanes: () => void;
-  formality: string | null;
-  onFormalityManual: (f: string | null) => void;
-  pideDressCode: boolean;
-  dressCode: string | null;
-  onDressCode: (d: string) => void;
-  desdeElQuiz: string | null;
-  pideVeCliente: boolean;
-  veCliente: boolean;
-  onVeCliente: (v: boolean) => void;
   onPick: (key: string) => void;
   onOpenText: (v: string) => void;
 }) {
@@ -744,145 +847,7 @@ function StepOcasion({
           )}
         </div>
 
-        {/* El ajuste, detrás de un disclosure y con el default ya resuelto a
-            la vista. Roberto: "si es una comida familiar, pues quién sabe;
-            por alguna razón rara requiero traje sin corbata, pero no
-            debería". Existe para ese caso, no para el normal. */}
-        {tipoEvento ? (
-            <details className="rounded-sm border border-line bg-surface px-3.5 py-2">
-              <summary className="cursor-pointer text-[13px] text-muted">
-                voy {formalidadLegible(formality, gender) ?? "normal"} · cambiar
-              </summary>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {FORMALIDAD.map((f) => {
-                  const on = formality === f.key;
-                  return (
-                    <button
-                      key={f.key}
-                      type="button"
-                      onClick={() => onFormalityManual(f.key)}
-                      aria-pressed={on}
-                      className={`flex flex-col items-start rounded-sm border px-3 py-1.5 text-left transition-colors ${
-                        on
-                          ? "border-accent bg-accent text-on-accent"
-                          : "border-line bg-bg text-ink hover:border-ink"
-                      }`}
-                    >
-                      <span className="text-[13px] font-semibold">
-                        {ropaDe(f, gender)}
-                      </span>
-                      <span
-                        className={`text-[11px] ${on ? "opacity-80" : "text-muted"}`}
-                      >
-                        {f.jerga}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </details>
-        ) : null}
       </div>
-
-      {/* El código de vestimenta del TRABAJO. Solo la primera vez: es un dato de
-          persona, no de día. Roberto no pudo calificar un look de oficina en la
-          corrida de verificación —"depende del tipo de oficina… el look está
-          padre pero depende"— porque ni el motor ni él tenían el dato.
-          Mismo patrón que la formalidad del evento: aparece al elegir, hay que
-          contestarlo para avanzar, y las opciones dicen la ROPA, no la jerga. */}
-      {pideDressCode ? (
-        <div
-          className="flex flex-col gap-2.5"
-          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-        >
-          <span className="text-[13px] font-semibold text-ink">
-            ¿cómo te vistes para trabajar?
-          </span>
-          <span className="-mt-1.5 text-[12px] text-muted">
-            {/* El puente con lo que YA contestó en el quiz de estilo de vida.
-                Sin él la pregunta se siente repetida y con razón: allá dijo
-                "oficina creativa o casual" y aquí se le vuelve a preguntar por
-                el trabajo. La diferencia es real —aquella describe la FORMA de
-                su semana y esta el REGISTRO de su ropa— pero si no se dice,
-                nadie la ve. */}
-            {desdeElQuiz
-              ? `dijiste que tu día es ${desdeElQuiz} — esto es qué significa en ropa`
-              : "te lo pregunto una vez y lo recuerdo"}
-          </span>
-          <div className="flex flex-col gap-2">
-            {WORK_DRESS_CODES.map((d) => {
-              const on = dressCode === d.key;
-              return (
-                <button
-                  key={d.key}
-                  type="button"
-                  onClick={() => onDressCode(d.key)}
-                  aria-pressed={on}
-                  className={`flex flex-col items-start rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
-                    on
-                      ? "border-accent bg-accent text-on-accent"
-                      : "border-line bg-surface text-ink hover:border-ink"
-                  }`}
-                >
-                  <span className="text-[14px] font-semibold">
-                    {ropaDeDressCode(d, gender)}
-                  </span>
-                  <span
-                    className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}
-                  >
-                    {d.ejemplos}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {/* "¿Hoy ves cliente?" — SOLO para quien dijo "depende del día". Elegir
-          esa opción es la persona diciendo que su registro es dato del DÍA, no
-          de ella; así que se le pregunta el día, igual que el paraguas. Cero
-          fricción para los otros tres códigos. Roberto, que es este caso:
-          "trabajo en home office pero cuando veo cliente me visto más formal".
-          Default "no": es el día más común, y el que sí ve cliente ya sabe que
-          hoy es distinto. */}
-      {pideVeCliente ? (
-        <div
-          className="flex items-center gap-3 rounded-sm border border-line bg-surface p-3.5"
-          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-        >
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[14px] font-semibold text-ink">
-              ¿hoy ves cliente?
-            </span>
-            <span className="text-[12px] text-muted">
-              me dijiste que depende del día
-            </span>
-          </span>
-          <div className="ml-auto inline-flex shrink-0 overflow-hidden rounded-sm border border-line">
-            <button
-              type="button"
-              onClick={() => onVeCliente(false)}
-              aria-pressed={!veCliente}
-              className={`min-h-[38px] px-5 text-[14px] font-semibold transition-colors ${
-                !veCliente ? "bg-accent text-on-accent" : "bg-surface text-ink"
-              }`}
-            >
-              no
-            </button>
-            <button
-              type="button"
-              onClick={() => onVeCliente(true)}
-              aria-pressed={veCliente}
-              className={`min-h-[38px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
-                veCliente ? "bg-accent text-on-accent" : "bg-surface text-ink"
-              }`}
-            >
-              sí
-            </button>
-          </div>
-        </div>
-      ) : null}
 
       {/* Campo abierto (alternativa). El placeholder invita al DICTADO: el
           micrófono del teclado del teléfono ya dicta aquí gratis — cero infra,
@@ -915,6 +880,299 @@ function StepOcasion({
             className="min-w-0 flex-1 bg-transparent text-[13.5px] text-ink caret-accent outline-none placeholder:text-muted"
           />
         </label>
+      </div>
+    </div>
+  );
+}
+
+// EL DETALLE del plan — su propio paso, no un long scroll (pedido de Roberto).
+// Qué muestra depende de qué se eligió: la formalidad del evento (con el
+// default del catálogo pre-seleccionado), o la calibración de trabajo (una
+// vez, se edita después en /perfil/trabajo), o el "¿ves cliente?" del día.
+function StepDetalle({
+  gender,
+  objective,
+  tipoEvento,
+  formality,
+  onFormalityManual,
+  pideDressCode,
+  dressCode,
+  onDressCode,
+  desdeElQuiz,
+  pideVeCliente,
+  veCliente,
+  onVeCliente,
+}: {
+  gender: "hombre" | "mujer" | null;
+  objective: string | null;
+  tipoEvento: string | null;
+  formality: string | null;
+  onFormalityManual: (f: string | null) => void;
+  pideDressCode: boolean;
+  dressCode: string | null;
+  onDressCode: (d: string) => void;
+  desdeElQuiz: string | null;
+  pideVeCliente: boolean;
+  veCliente: boolean;
+  onVeCliente: (v: boolean) => void;
+}) {
+  if (objective === "evento") {
+    const plan = TIPOS_EVENTO.find((t) => t.key === tipoEvento);
+    return (
+      <div className="flex flex-col gap-2.5">
+        <span className="-mt-2 text-[13px] text-muted">
+          {/* El default ya viene resuelto del catálogo — esta pantalla existe
+              para VERLO y corregirlo si el caso es raro, no para traducir
+              jerga ("la gente sabe decir 'una boda', no 'coctel'"). */}
+          para {plan?.label ?? "tu plan"} lo normal es esto — cámbialo si tu
+          caso es distinto
+        </span>
+        <div className="flex flex-col gap-2">
+          {FORMALIDAD.map((f) => {
+            const on = formality === f.key;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => onFormalityManual(f.key)}
+                aria-pressed={on}
+                className={`flex flex-col items-start rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
+                  on
+                    ? "border-accent bg-accent text-on-accent"
+                    : "border-line bg-surface text-ink hover:border-ink"
+                }`}
+              >
+                <span className="text-[14px] font-semibold">{ropaDe(f, gender)}</span>
+                <span className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}>
+                  {f.jerga}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Trabajo: la calibración one-time (después vive editable en /perfil/trabajo)
+  // y, para quien dijo "depende del día", la pregunta del día.
+  return (
+    <div className="flex flex-col gap-5">
+      {pideDressCode ? (
+        <div className="flex flex-col gap-2.5">
+          <span className="-mt-2 text-[13px] text-muted">
+            {/* El puente con lo que YA contestó en el quiz de estilo de vida.
+                Sin él la pregunta se siente repetida y con razón: allá dijo
+                "oficina creativa o casual" y aquí se le vuelve a preguntar por
+                el trabajo. La diferencia es real —aquella describe la FORMA de
+                su semana y esta el REGISTRO de su ropa— pero si no se dice,
+                nadie la ve. */}
+            {desdeElQuiz
+              ? `dijiste que tu día es ${desdeElQuiz} — esto es qué significa en ropa`
+              : "te lo pregunto una vez y lo recuerdo (lo cambias en tu perfil)"}
+          </span>
+          <div className="flex flex-col gap-2">
+            {WORK_DRESS_CODES.map((d) => {
+              const on = dressCode === d.key;
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => onDressCode(d.key)}
+                  aria-pressed={on}
+                  className={`flex flex-col items-start rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
+                    on
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface text-ink hover:border-ink"
+                  }`}
+                >
+                  <span className="text-[14px] font-semibold">
+                    {ropaDeDressCode(d, gender)}
+                  </span>
+                  <span className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}>
+                    {d.ejemplos}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* "¿Te toca ver cliente?" — SOLO para quien dijo "depende del día".
+          Copy temporalmente neutro: el plan puede ser para otro día (la fecha
+          se pregunta en el paso siguiente). Default "no": el día más común. */}
+      {pideVeCliente ? (
+        <div
+          className="flex items-center gap-3 rounded-sm border border-line bg-surface p-3.5"
+          style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+        >
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[14px] font-semibold text-ink">
+              ¿te toca ver cliente?
+            </span>
+            <span className="text-[12px] text-muted">
+              me dijiste que depende del día
+            </span>
+          </span>
+          <div className="ml-auto inline-flex shrink-0 overflow-hidden rounded-sm border border-line">
+            <button
+              type="button"
+              onClick={() => onVeCliente(false)}
+              aria-pressed={!veCliente}
+              className={`min-h-[44px] px-5 text-[14px] font-semibold transition-colors ${
+                !veCliente ? "bg-accent text-on-accent" : "bg-surface text-ink"
+              }`}
+            >
+              no
+            </button>
+            <button
+              type="button"
+              onClick={() => onVeCliente(true)}
+              aria-pressed={veCliente}
+              className={`min-h-[44px] border-l border-line px-5 text-[14px] font-semibold transition-colors ${
+                veCliente ? "bg-accent text-on-accent" : "bg-surface text-ink"
+              }`}
+            >
+              sí
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// EL CUÁNDO: fecha y día/noche son la MISMA pregunta ("el sábado en la noche"
+// es una respuesta, no dos pantallas) + el dónde opcional (caso Irapuato:
+// la comida del viernes es en otra ciudad y el pronóstico depende de eso).
+function StepCuando({
+  fecha,
+  onFecha,
+  sinFecha,
+  momento,
+  onMomento,
+  ciudadOpen,
+  onCiudadOpen,
+  ciudadTexto,
+  onCiudadTexto,
+  ciudadGeo,
+  onQuitarCiudad,
+  ciudadBuscando,
+  ciudadFallo,
+  onBuscarCiudad,
+}: {
+  fecha: string | null;
+  onFecha: (f: string | null) => void;
+  /** Wow (primer look del onboarding): es de hoy por definición — sin fecha. */
+  sinFecha: boolean;
+  momento: "dia" | "noche";
+  onMomento: (m: "dia" | "noche") => void;
+  ciudadOpen: boolean;
+  onCiudadOpen: () => void;
+  ciudadTexto: string;
+  onCiudadTexto: (v: string) => void;
+  ciudadGeo: { lat: number; lon: number; label: string } | null;
+  onQuitarCiudad: () => void;
+  ciudadBuscando: boolean;
+  ciudadFallo: boolean;
+  onBuscarCiudad: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-5">
+      {/* El día: hoy por default, lista (no calendario — ≤16 opciones se
+          eligen en un tap). */}
+      {!sinFecha ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-semibold text-ink">¿qué día?</span>
+          <div className="-mx-[18px] flex gap-2 overflow-x-auto px-[18px] pb-1">
+            {proximosDias().map((d) => {
+              const on = d.key === fecha || (!fecha && d.key === null);
+              return (
+                <button
+                  key={d.label}
+                  type="button"
+                  onClick={() => onFecha(d.key)}
+                  aria-pressed={on}
+                  className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-sm border px-3.5 text-[14px] font-semibold transition-colors ${
+                    on
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface text-ink hover:border-ink"
+                  }`}
+                >
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Día o noche */}
+      <StepMomento momento={momento} onPick={onMomento} />
+
+      {/* El dónde, como suposición editable: "en tu ciudad ▾". Solo si el plan
+          es en otra parte se teclea — geocoding de Open-Meteo, sin pedir
+          permiso de ubicación. */}
+      <div className="flex flex-col gap-2">
+        {ciudadGeo ? (
+          <div className="flex items-center gap-2.5 rounded-sm border border-ink bg-surface px-3.5 py-2.5">
+            <Icon name="ubicacion" size={16} className="shrink-0 text-ink" />
+            <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">
+              en {ciudadGeo.label}
+            </span>
+            <button
+              type="button"
+              onClick={onQuitarCiudad}
+              aria-label="Quitar la ciudad"
+              className="shrink-0 text-[13px] font-semibold text-muted hover:text-ink"
+            >
+              quitar
+            </button>
+          </div>
+        ) : !ciudadOpen ? (
+          <button
+            type="button"
+            onClick={onCiudadOpen}
+            aria-expanded={false}
+            className="inline-flex min-h-[44px] items-center gap-1.5 self-start text-[14px] font-semibold text-muted transition-colors hover:text-ink"
+          >
+            en tu ciudad
+            <Icon name="chevron" size={13} rotate={90} />
+          </button>
+        ) : (
+          <div
+            className="flex flex-col gap-1.5"
+            style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+          >
+            <label className="flex items-center gap-2.5 border border-line bg-surface px-3.5 py-2.5 transition-colors focus-within:border-ink">
+              <Icon name="ubicacion" size={16} className="shrink-0 text-muted" />
+              <input
+                value={ciudadTexto}
+                onChange={(e) => onCiudadTexto(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onBuscarCiudad();
+                }}
+                maxLength={60}
+                placeholder="¿en qué ciudad es el plan?"
+                className="min-w-0 flex-1 bg-transparent text-[14px] text-ink caret-accent outline-none placeholder:text-muted"
+              />
+              <button
+                type="button"
+                onClick={onBuscarCiudad}
+                disabled={ciudadBuscando || !ciudadTexto.trim()}
+                className="shrink-0 text-[13px] font-bold text-ink disabled:opacity-40"
+              >
+                {ciudadBuscando ? <Spinner className="h-4 w-4" /> : "buscar"}
+              </button>
+            </label>
+            {ciudadFallo ? (
+              <span className="text-[12px] text-error">
+                no encontré esa ciudad — inténtalo con el nombre completo
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -974,6 +1232,9 @@ function StepClima({
   onParaguas,
   onLocate,
   fechaLabel = null,
+  climaAuto = null,
+  resolviendo = false,
+  ciudadLabel = null,
 }: {
   /** null = nadie ha elegido todavía. Ver el comentario de `climaIdx`. */
   idx: number | null;
@@ -983,6 +1244,12 @@ function StepClima({
   /** "el sábado 16" cuando el look es para otro día: la píldora lee el
    *  PRONÓSTICO de esa fecha (server, getWeatherForDates), no el clima de hoy. */
   fechaLabel?: string | null;
+  /** El clima ya PRE-RESUELTO (ciudad geocodificada o permiso ya dado): el
+   *  paso deja de preguntar — muestra lo leído y las bandas quedan editables. */
+  climaAuto?: Weather | null;
+  resolviendo?: boolean;
+  /** "Irapuato, Guanajuato" si el plan es en otra ciudad. */
+  ciudadLabel?: string | null;
   onIdx: (i: number) => void;
   onRain: (r: boolean) => void;
   paraguas: boolean;
@@ -991,40 +1258,71 @@ function StepClima({
 }) {
   return (
     <div className="flex flex-col">
-      {/* Píldora de ubicación: si la usa, se leen temp Y lluvia automáticamente. */}
-      <button
-        type="button"
-        onClick={onLocate}
-        disabled={locating}
-        className="flex items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink disabled:opacity-60"
-      >
-        <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
-          {locating ? <Spinner className="h-4 w-4" /> : <Icon name="ubicacion" size={17} />}
-        </span>
-        <span className="flex min-w-0 flex-col">
+      {resolviendo ? (
+        // Leyendo el pronóstico solos (ciudad dicha o permiso ya dado).
+        <div className="flex items-center gap-3 border border-line bg-surface p-3.5">
+          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+            <Spinner className="h-4 w-4" />
+          </span>
           <span className="text-[15px] font-semibold text-ink">
-            {locating
-              ? fechaLabel
-                ? "leyendo el pronóstico…"
-                : "leyendo el clima…"
-              : "usar mi ubicación"}
+            {fechaLabel ? "leyendo el pronóstico…" : "leyendo el clima…"}
           </span>
-          <span className="text-[15px] text-muted">
-            {locFailed
-              ? "no pude leerla — dime tú abajo"
-              : fechaLabel
-                ? `leo el pronóstico de ${fechaLabel} por ti`
-                : "leo temp y lluvia por ti"}
+        </div>
+      ) : climaAuto ? (
+        // EL CLIMA YA CONTESTADO: el paso se vuelve confirmación. Las bandas
+        // de abajo quedan pre-llenadas y editables — corregir siempre gana.
+        <div className="flex items-center gap-3 border border-ink bg-surface p-3.5">
+          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+            <Icon name="ubicacion" size={17} />
           </span>
-        </span>
-        <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
-      </button>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[15px] font-semibold text-ink">
+              {climaAuto.temp_c}° · {climaAuto.condition}
+              {climaAuto.estimated ? " (clima típico)" : ""}
+            </span>
+            <span className="text-[14px] text-muted">
+              {fechaLabel ? `así se ve ${fechaLabel}` : "así está ahorita"}
+              {ciudadLabel ? ` en ${ciudadLabel.split(",")[0]}` : ""} — ajusta
+              abajo si no va
+            </span>
+          </span>
+        </div>
+      ) : (
+        // Píldora de ubicación: si la usa, se leen temp Y lluvia automáticamente.
+        <button
+          type="button"
+          onClick={onLocate}
+          disabled={locating}
+          className="flex items-center gap-3 border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink disabled:opacity-60"
+        >
+          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
+            {locating ? <Spinner className="h-4 w-4" /> : <Icon name="ubicacion" size={17} />}
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[15px] font-semibold text-ink">
+              {locating
+                ? fechaLabel
+                  ? "leyendo el pronóstico…"
+                  : "leyendo el clima…"
+                : "usar mi ubicación"}
+            </span>
+            <span className="text-[15px] text-muted">
+              {locFailed
+                ? "no pude leerla — dime tú abajo"
+                : fechaLabel
+                  ? `leo el pronóstico de ${fechaLabel} por ti`
+                  : "leo temp y lluvia por ti"}
+            </span>
+          </span>
+          <Icon name="chevron" size={17} className="ml-auto shrink-0 text-muted" />
+        </button>
+      )}
 
       {/* Divisor */}
       <div className="my-[18px] flex items-center gap-3">
         <span className="h-px flex-1 bg-line" />
         <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-          o dime tú
+          {climaAuto ? "o corrígeme" : "o dime tú"}
         </span>
         <span className="h-px flex-1 bg-line" />
       </div>
@@ -1205,7 +1503,7 @@ function AnchorTrigger({
           </span>
           <span className="flex min-w-0 flex-col">
             <span className="text-[15px] font-semibold text-ink">
-              ¿algo que te quieras poner hoy?
+              ¿algo que te quieras poner?
             </span>
             <span className="text-[15px] text-muted">
               lo armo alrededor de esa prenda
@@ -1258,7 +1556,7 @@ function AnchorSheet({
           <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-line" />
           <div className="flex items-center gap-3">
             <h2 className="text-[18px] font-bold tracking-[-0.02em] text-ink">
-              ¿algo que te quieras poner hoy?
+              ¿algo que te quieras poner?
             </h2>
             <button
               type="button"
