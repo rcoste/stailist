@@ -147,10 +147,15 @@ export default async function HistorialPage({
     <AppShell desktop="wide">
       <section className="flex flex-col gap-5 pt-4">
         <div>
+          {/* "diario", igual que la pestaña (el porqué largo vive en tab-bar).
+              Y la bajada cambia con él: "tus looks pasados" describía lo que
+              esta pantalla ERA —un archivo de sugerencias—. Desde que el fit
+              check escribe `worn` con foto, lo que se acumula aquí es lo que de
+              verdad te pusiste, que es otra cosa y mejor. */}
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
-            historial
+            diario
           </h1>
-          <p className="mt-1.5 text-sm text-muted">tus looks pasados viven aquí.</p>
+          <p className="mt-1.5 text-sm text-muted">lo que te has puesto, día por día.</p>
         </div>
 
         {list.length === 0 ? (
