@@ -103,7 +103,6 @@ export function LookDetail({
   onGenerar,
   avatarHref = null,
   vermeSub,
-  onInicio,
   seccionLabel,
   onFitCheck,
 }: {
@@ -131,10 +130,8 @@ export function LookDetail({
   avatarHref?: string | null;
   /** Sub-etiqueta de la primaria "verme…" (ej. "~20 s"). */
   vermeSub?: string;
-  /** Si viene, "hoy" es un botón a la home de la sección. El wow no lo pasa. */
-  onInicio?: () => void;
-  /** Etiqueta de la sección. Default "hoy"; un look planeado para otro día dice
-   *  su fecha ("mañana") — decir "hoy" sobre el look del sábado sería mentir. */
+  /** Eyebrow de fecha, SOLO cuando el look no es de hoy ("el jueves 13"). Sin
+   *  él no se pinta nada: sobre el look de hoy, "hoy" es ruido. */
   seccionLabel?: string;
   /** LA PROMESA FIJA del fit check (decisión de Roberto, 2026-08-11): abre el
    *  espejo. Reemplaza a la card "¿te lo pusiste ayer?" — oferta en vez de
@@ -159,32 +156,28 @@ export function LookDetail({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Título (v2): "hoy" + nombre lado a lado, sin punto y a todo el ancho —
-          el corazón se mudó a la fila de pestañas, que tenía hueco muerto. */}
-      <div className="flex items-start gap-3 pb-1">
-        {/* "hoy" es el nombre de la sección, así que tocarlo lleva a la home de
-            la sección — la convención del logo de toda la vida, sobre pixeles
-            que ya estaban ahí sin hacer nada.
-            OPCIONAL a propósito: este mismo componente pinta el wow del
-            onboarding, donde no hay home a la que volver. Sin onInicio se
-            queda como estaba, un <h1> y ya. */}
-        {onInicio ? (
-          <button
-            type="button"
-            onClick={onInicio}
-            aria-label="Ir a inicio"
-            className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink transition-opacity hover:opacity-60"
-          >
-            {seccionLabel ?? "hoy"}
-          </button>
-        ) : (
-          <h1 className="mt-0.5 text-[29px] font-bold leading-none tracking-[-0.015em] text-ink">
-            {seccionLabel ?? "hoy"}
-          </h1>
-        )}
-        <span className="font-display text-[27px] italic leading-[29px] text-ink">
+      {/* TÍTULO (v3): el nombre del look manda, a todo el ancho.
+          Antes la etiqueta de sección ("hoy" / "el jueves 13") iba a su lado en
+          29px bold, o sea al mismo peso visual que el nombre — y encima le
+          robaba el ancho, partiendo "Esmeralda a prueba de lluvia" en dos
+          líneas. La jerarquía estaba invertida: el nombre es el contenido, la
+          fecha es un dato al margen.
+          Ahora la fecha es un eyebrow y SOLO aparece cuando el look NO es de
+          hoy: decir "hoy" sobre el look de hoy no le dice nada a nadie.
+          (Roberto, viendo la pantalla en prod: "la fecha tan grande no aporta
+          en nada, y solo se vuelve relevante si se genera para X día".)
+          Se fue con ella el atajo de tocar la sección para ir a Inicio: la
+          pestaña Inicio de la barra hace exactamente eso, y era la única razón
+          por la que el bloque existía como botón. */}
+      <div className="flex flex-col pb-1">
+        {seccionLabel ? (
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-faint">
+            {seccionLabel}
+          </span>
+        ) : null}
+        <h1 className="font-display text-[27px] italic leading-[30px] text-ink">
           {nombre}
-        </span>
+        </h1>
       </div>
 
       {/* Cuerpo */}
@@ -272,36 +265,47 @@ export function LookDetail({
           )
         ) : null}
 
+        {/* UNA fila de acciones, no dos.
+            "otro look" ocupaba esta izquierda y se fue (Roberto, 2026-08-12):
+            · Regenerar sigue a la mano por DOS caminos — el 👎 abre la hoja de
+              razones, que remata con "Ver otro look", y el botón ✦ de la barra
+              genera desde cualquier pantalla.
+            · Y lo que se pierde es justamente lo que conviene perder: el atajo
+              de pedir otro sin decir por qué. Ese atajo es sospechoso número
+              uno de que el feedback esté seco (<10% de votos) — si puedes
+              saltar sin explicar, no explicas.
+            En su lugar sube la promesa del fit check, que antes vivía en una
+            tercera fila al pie leyéndose como letra chica. Es la única puerta
+            a la señal de oro: merece la posición, no el sótano. */}
         <div
-          className={`flex min-h-11 items-center justify-between ${!hasRender ? "mt-1.5" : ""}`}
+          className={`flex min-h-11 items-center justify-between gap-2 ${!hasRender ? "mt-1.5" : ""}`}
         >
-          <button
-            type="button"
-            onClick={onOtroLook}
-            disabled={disabled}
-            className="flex min-h-11 items-center gap-2 text-[14px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
-          >
-            <Icon name="repetir" size={16} /> otro look
-          </button>
-          <div className="flex items-center gap-2">
+          {onFitCheck ? (
+            <button
+              type="button"
+              onClick={onFitCheck}
+              className="flex min-h-11 items-center gap-2 text-left text-[14px] font-semibold text-muted transition-colors hover:text-ink"
+            >
+              <Icon name="camara" size={16} className="shrink-0" />
+              te digo cómo te queda
+            </button>
+          ) : (
+            // El wow y el historial no ofrecen fit check: ahí sigue "otro look".
+            <button
+              type="button"
+              onClick={onOtroLook}
+              disabled={disabled}
+              className="flex min-h-11 items-center gap-2 text-[14px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+            >
+              <Icon name="repetir" size={16} /> otro look
+            </button>
+          )}
+          <div className="flex shrink-0 items-center gap-2">
             <span className="mr-0.5 text-[13px] font-semibold text-muted">¿te gusta?</span>
             <VoteButton up={false} active={voto === "down"} onClick={() => onVote(false)} disabled={disabled} />
             <VoteButton up={true} active={voto === "up"} onClick={() => onVote(true)} disabled={disabled} />
           </div>
         </div>
-
-        {/* La promesa del fit check: una OFERTA quieta, no un recordatorio con
-            hora ni un favor que contestar. Vive fija bajo las acciones del look. */}
-        {onFitCheck ? (
-          <button
-            type="button"
-            onClick={onFitCheck}
-            className="flex min-h-10 w-full items-center justify-center gap-2 border-t border-line2 pt-1 text-[13px] text-muted transition-colors hover:text-ink"
-          >
-            <Icon name="camara" size={15} />
-            cuando te lo pongas, enséñamelo — te digo cómo se ve
-          </button>
-        ) : null}
 
         {/* LA SALIDA DEL ONBOARDING, con peso de botón.
             Era texto gris de 14px al fondo de la pantalla: el elemento MÁS

@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.223.1] - 2026-08-12
+
+### Changed — el nombre del look recupera su pantalla
+
+Dos ajustes al detalle del look, viéndolo en producción (Roberto).
+
+└ **La fecha deja de ser un titular.** "el jueves 13" ocupaba el mismo tamaño y
+  peso que el nombre del look, a su lado, y encima le robaba el ancho — así que
+  "Esmeralda a prueba de lluvia" se partía en dos líneas por culpa de un dato
+  al margen. Ahora la fecha es un eyebrow pequeño y **solo aparece cuando el
+  look no es de hoy**: decir "hoy" sobre el look de hoy no le dice nada a
+  nadie. El nombre pasa a titular único, a todo el ancho.
+└ **"Otro look" cede su lugar al fit check.** El pie tenía tres acciones en dos
+  filas y la invitación a enseñar el outfit vivía abajo, leyéndose como letra
+  chica. Ahora comparte una sola fila con el voto. Regenerar sigue a un tap por
+  dos caminos —el 👎 abre la hoja de razones, que remata con "ver otro look", y
+  el botón ✦ genera desde cualquier pantalla— y lo que se pierde es justo lo
+  que convenía perder: el atajo de pedir otro **sin decir por qué**, principal
+  sospechoso de que el feedback esté tan seco.
+
+Entre las dos, el look gana casi una pantalla de alto para las prendas.
+
 ## [0.2.223.0] - 2026-08-11
 
 ### Changed — el home deja de preguntar por hoy y te pregunta qué quieres

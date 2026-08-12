@@ -39,26 +39,52 @@ const base = {
 };
 
 describe("LookDetail — la promesa del fit check", () => {
-  it("con onFitCheck, ofrece enseñar el outfit y lo dispara al tocarla", () => {
+  it("ocupa la acción principal y dispara el espejo al tocarla", () => {
     const onFitCheck = vi.fn();
     render(<LookDetail {...base} onFitCheck={onFitCheck} />);
-    const fila = screen.getByRole("button", { name: /cuando te lo pongas/i });
-    fireEvent.click(fila);
+    fireEvent.click(screen.getByRole("button", { name: /te digo cómo te queda/i }));
     expect(onFitCheck).toHaveBeenCalledTimes(1);
   });
 
   it("es una OFERTA, no un favor: no pregunta si ya te lo pusiste", () => {
     // La card vieja preguntaba "¿te lo pusiste?" — un favor que casi nadie
     // contestaba, y encima justo al generar el look la respuesta ni existía.
-    // El copy nuevo ofrece algo a cambio; si alguien lo revierte a pregunta,
-    // esto truena.
+    // El copy promete algo a cambio; si alguien lo revierte a pregunta o a
+    // petición ("enséñame…"), esto truena.
     render(<LookDetail {...base} onFitCheck={() => {}} />);
     expect(screen.queryByText(/¿te lo pusiste/i)).toBeNull();
-    expect(screen.getByText(/te digo cómo se ve/i)).toBeTruthy();
+    expect(screen.getByText(/te digo cómo te queda/i)).toBeTruthy();
   });
 
-  it("sin onFitCheck no se dibuja (el wow y el historial no la usan)", () => {
+  it("con fit check, 'otro look' cede su lugar", () => {
+    // Regenerar no se pierde: el 👎 abre la hoja de razones que remata con
+    // "Ver otro look", y el ✦ de la barra genera desde cualquier pantalla. Lo
+    // que se quita es el atajo de pedir otro SIN decir por qué.
+    render(<LookDetail {...base} onFitCheck={() => {}} />);
+    expect(screen.queryByRole("button", { name: /otro look/i })).toBeNull();
+    // El voto sigue en su sitio: es la otra mitad de la fila.
+    expect(screen.getByRole("button", { name: /no me gusta este look/i })).toBeTruthy();
+  });
+
+  it("sin fit check (wow e historial) se conserva 'otro look'", () => {
     render(<LookDetail {...base} />);
-    expect(screen.queryByRole("button", { name: /cuando te lo pongas/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /otro look/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /te digo cómo te queda/i })).toBeNull();
+  });
+});
+
+describe("LookDetail — el encabezado", () => {
+  it("sin fecha, el nombre del look es el único titular", () => {
+    // "hoy" sobre el look de hoy no le dice nada a nadie, y en 29px bold le
+    // robaba el ancho al nombre hasta partirlo en dos líneas.
+    render(<LookDetail {...base} />);
+    expect(screen.getByRole("heading").textContent).toBe(base.nombre);
+    expect(screen.queryByText(/^hoy$/i)).toBeNull();
+  });
+
+  it("con fecha, va como eyebrow — el titular sigue siendo el nombre", () => {
+    render(<LookDetail {...base} seccionLabel="el jueves 13" />);
+    expect(screen.getByRole("heading").textContent).toBe(base.nombre);
+    expect(screen.getByText("el jueves 13")).toBeTruthy();
   });
 });

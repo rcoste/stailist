@@ -642,7 +642,6 @@ export function HoyClient({
       // look recién generado arranca sin voto (el key resetea el estado).
       votoInicial={state.outfit.id === lookInicial?.id ? votoInicial : null}
       onOtroLook={otroLook}
-      onInicio={() => setState({ kind: "inicio" })}
     />
   );
 }
@@ -665,7 +664,6 @@ function ReadyView({
   fechaLabel,
   votoInicial = null,
   onOtroLook,
-  onInicio,
 }: {
   outfit: HoyOutfit;
   userId: string;
@@ -675,8 +673,6 @@ function ReadyView({
   fechaLabel: string;
   votoInicial?: "up" | "down" | null;
   onOtroLook: () => void;
-  /** Volver a la home de la sección (el título "hoy" del look). */
-  onInicio: () => void;
 }) {
   const [skipOpen, setSkipOpen] = useState(false);
   // Hoja de razones: "skip" (desde "otro look") o "down" (desde el 👎). Misma
@@ -724,10 +720,11 @@ function ReadyView({
           detalle QUEPA sin scroll y la fila de acciones nunca quede escondida
           detrás de la barra. -mb-28 cancela el pb-28 del <main> (reserva de la
           tab bar); en desktop (lg) se libera al layout normal.
-          9.5rem (era 7): la fila de la promesa del fit check sumó ~40px al pie
-          — sin descontarlos, caía justo en la franja del FAB y la tab bar. */}
+          Vuelve a 7rem: la promesa del fit check dejó de ser una fila propia
+          al pie (se fusionó con la de acciones), así que los ~40px que había
+          que descontar por ella regresan a la foto. */}
       <div
-        className="mx-auto -mb-28 flex h-[calc(100dvh-9.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[440px] flex-col lg:mb-0 lg:h-auto lg:min-h-[calc(100dvh-9rem)]"
+        className="mx-auto -mb-28 flex h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[440px] flex-col lg:mb-0 lg:h-auto lg:min-h-[calc(100dvh-9rem)]"
         style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
       >
         <LookDetail
@@ -749,7 +746,6 @@ function ReadyView({
           onGenerar={t.generar}
           avatarHref={t.mode === "sin_avatar" ? t.avatarHref : null}
           vermeSub="~20 s"
-          onInicio={onInicio}
           seccionLabel={paraFecha ? fechaLegible(paraFecha) : undefined}
           onFitCheck={() => espejoRef.current?.start()}
         />
