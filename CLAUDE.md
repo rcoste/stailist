@@ -34,11 +34,12 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 `npm run test` (vitest). Dos clases de test, y la diferencia importa al escribir uno nuevo:
 
 - **Lógica pura** (la mayoría): corre en Node, sin DOM. Es donde vive el grueso — catálogos, prompt, reglas del motor, helpers.
-- **Componente** (desde 2026-08-11, `components/weather-picker.test.tsx` es el primero): necesita **dos cosas o no funciona**, y las dos son fáciles de olvidar porque fallan de formas confusas:
+- **Componente** (desde 2026-08-11, `components/weather-picker.test.tsx` es el primero): necesita **tres cosas**, las tres fáciles de olvidar porque fallan de formas confusas — sin las dos primeras el test no corre; sin la tercera corre en verde y lo que truena es el build:
   1. El docblock `// @vitest-environment jsdom` en la PRIMERA línea del archivo. Es por archivo a propósito: los tests de lógica pura no pagan el costo del DOM falso.
   2. `afterEach(cleanup)` de `@testing-library/react` a mano. El auto-cleanup solo se engancha con `globals: true`, que este repo no usa — sin él cada `render` se apila en el mismo document y toda query encuentra dos wizards ("found multiple elements", que no se lee como lo que es).
+  3. Si el test inspecciona los ARGUMENTOS de un mock, el `vi.fn()` tiene que declarar la firma completa aunque no use los parámetros (`vi.fn(async (_id: string, _patch: Record<string, unknown>) => …)`). Con `vi.fn(async () => …)` el mock declara cero parámetros, `mock.calls` queda tipado como `[][]` y cada `calls.at(-1)![1]` es un TS2493 que vitest NO ve —corre sin tipos— pero `next build` sí: el `tsconfig` incluye `**/*.tsx`, así que el build type-checkea también los tests. Cazado en `components/closet-grid.test.tsx`.
 
-Lo que un test de componente debe blindar aquí no es el markup: es **qué decisión de producto viaja al motor** (qué manda `onPick` según lo que se tocó). El markup cambia con cada rebrand; la decisión no.
+Lo que un test de componente debe blindar aquí no es el markup: es **qué decisión de producto viaja** — qué manda `onPick` al motor, qué `patch` sale hacia la base al tocar un chip de la ficha. El markup cambia con cada rebrand; la decisión no.
 
 ## Voz del producto
 **"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual: ✅ definida — la fuente de verdad es DESIGN.md + tokens en app/globals.css (NO copiar valores aquí: ya se desincronizó una vez — el rebrand v3 de 2026-06-26 cambió paleta y fuentes y este archivo siguió describiendo la v1 durante seis semanas). Veto vigente de Roberto: ámbar/terracota/naranja.
