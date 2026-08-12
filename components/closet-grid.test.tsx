@@ -39,6 +39,15 @@ vi.mock("next/image", () => ({
   default: ({ alt }: { alt: string }) => <span data-img={alt} />,
 }));
 
+// El router SÍ se mira: "arma un look con esta prenda" navega, y a dónde navega
+// es la decisión que viaja (el ancla va en la URL).
+const { push } = vi.hoisted(() => ({ push: vi.fn((_url: string) => {}) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn() }),
+  usePathname: () => "/closet",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const prenda = (over: Partial<ClosetItem> = {}): ClosetItem => ({
   id: "i1",
   nombre: "Jeans rectos",
@@ -73,7 +82,40 @@ function abrirFicha(over: Partial<ClosetItem> = {}, todas: ClosetItem[] = []) {
 /** El editor de un campo, por su etiqueta. */
 const editor = (label: RegExp) => screen.getByText(label).closest("div")!;
 
-beforeEach(() => updateItemAttrs.mockClear());
+beforeEach(() => {
+  updateItemAttrs.mockClear();
+  push.mockClear();
+});
+
+describe("ItemSheet — arma un look con esta prenda", () => {
+  it("manda la prenda como ancla en la URL", () => {
+    // LA PUERTA QUE FALTABA. El motor siempre supo anclar un look a una prenda
+    // —es regla dura del prompt, sobrevive a los vetos y el juez no puede
+    // quitarla— pero sólo se podía pedir desde un renglón "opcional" dentro del
+    // wizard. Aquí estás MIRANDO la prenda, que es cuando se te ocurre.
+    //
+    // Lo que se blinda es que el id viaje: sin él, el botón lleva al wizard
+    // normal y la persona tiene que volver a elegir la prenda que ya eligió.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /arma un look con esta prenda/i }));
+    expect(push).toHaveBeenCalled();
+    const url = push.mock.calls.at(-1)![0];
+    expect(url).toContain("prenda=i1");
+    expect(url).toContain("/hoy?generar=");
+  });
+
+  it("con cambios sin guardar NO navega", () => {
+    // Irse con correcciones a medias las tira — y aquí sería peor que en el
+    // fondo de la hoja, porque el motor generaría con los datos viejos.
+    abrirFicha();
+    fireEvent.change(screen.getByDisplayValue("Jeans rectos"), {
+      target: { value: "Jeans azules" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /arma un look con esta prenda/i }));
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByText(/cambios sin guardar/i)).toBeTruthy();
+  });
+});
 
 describe("ItemSheet — el resumen", () => {
   it("los chips DICEN el valor de la prenda, no el nombre del campo", () => {

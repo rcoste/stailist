@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { LookRequest, type LookInput } from "./weather-picker";
+import { LookRequest, type LookInput, type ClosetPick } from "./weather-picker";
 
 // Solo se simula lo que sale por RED (Open-Meteo). Las funciones puras del
 // módulo —hayLluvia y compañía— se conservan con `importOriginal`: son la
@@ -664,5 +664,53 @@ describe("paso 2 — la boda de playa", () => {
     const input = onPick.mock.calls[0][0] as LookInput;
     expect(input.formality).toBe("playa");
     expect(input.tipoEvento).toBe("boda");
+  });
+});
+
+describe("el ancla que llega precargada desde el clóset", () => {
+  // LA CONVERGENCIA, BLINDADA. La ficha de una prenda manda a
+  // /hoy?generar=…&prenda=<id> y el wizard abre con esa prenda ya fijada. No es
+  // un flujo nuevo: es la MISMA pregunta del paso 1 ("¿algo que te quieras
+  // poner?"), sólo que contestada antes de entrar.
+  //
+  // El contrato tiene dos mitades y las dos se prueban aquí: que la prenda SE
+  // VEA elegida (si no, la persona vuelve a elegir lo que ya eligió) y que
+  // VIAJE al motor (si no, el look se arma sin ella y el botón mintió).
+  const closet: ClosetPick[] = [
+    { id: "abc", nombre: "Blazer marino", imagen: null, swatch: "#1F2A44", category: "saco" },
+    { id: "xyz", nombre: "Jeans rectos", imagen: null, swatch: "#3B5A80", category: "bottom" },
+  ];
+
+  it("se ve fijada, sin volver a preguntar", () => {
+    render(<LookRequest {...props} closet={closet} defaultSeedItemId="abc" />);
+    expect(screen.getByText(/vas a usar/i)).toBeTruthy();
+    expect(screen.getByText("Blazer marino")).toBeTruthy();
+    expect(screen.queryByText(/¿algo que te quieras poner\?/i)).toBeNull();
+  });
+
+  it("y viaja al motor como seedItemId", async () => {
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(
+      <LookRequest {...props} onPick={onPick} closet={closet} defaultSeedItemId="abc" />
+    );
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    await u.click(await screen.findByRole("button", { name: /cálido/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    expect((onPick.mock.calls[0][0] as LookInput).seedItemId).toBe("abc");
+  });
+
+  it("una prenda que no es tuya no fija nada", () => {
+    // El id viene de la URL y cualquiera puede escribir ahí. El wizard lo busca
+    // en TU clóset: si no está, no enseña nada y la pregunta vuelve a su estado
+    // normal. (El motor además re-verifica dueño antes de anclar.)
+    render(<LookRequest {...props} closet={closet} defaultSeedItemId="de-alguien-mas" />);
+    expect(screen.queryByText(/vas a usar/i)).toBeNull();
+    expect(screen.getByText(/¿algo que te quieras poner\?/i)).toBeTruthy();
   });
 });

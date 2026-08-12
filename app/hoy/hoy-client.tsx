@@ -86,6 +86,7 @@ export function HoyClient({
   desdeElQuiz,
   closet = [],
   autoAsk = false,
+  seedItemId = null,
   homeTrip = null,
   ultimoLook = null,
   checklist = null,
@@ -110,6 +111,15 @@ export function HoyClient({
   closet?: ClosetPick[];
   /** Llegó por el botón ✨ (?generar=1): abre el form de una vez, en vez del look del día. */
   autoAsk?: boolean;
+  /**
+   * `?prenda=<id>`: el ancla ya elegida, desde la ficha de una prenda del clóset.
+   *
+   * Es el MISMO dato que el paso 1 del wizard pregunta ("¿algo que te quieras
+   * poner?"), sólo que contestado antes de entrar. Por eso no hay flujo nuevo:
+   * el clóset es otra superficie para hacer la misma selección, y de ahí en
+   * adelante todo es el camino de siempre — ocasión, clima, hora y el motor.
+   */
+  seedItemId?: string | null;
   /** Card de viaje del home — lo único contextual que queda (≤7 días o en curso). */
   homeTrip?: HomeTrip | null;
   /** El último look generado (card de zona 1, bajo el CTA). Tocarlo lo ABRE. */
@@ -486,6 +496,7 @@ export function HoyClient({
         workDressCode={workDressCode}
         desdeElQuiz={desdeElQuiz}
         closet={closet}
+        defaultSeedItemId={seedItemId}
         onPick={(input) => generar(input, pendingForce.current)}
         // Salir del wizard (paso 1): vuelve al look del día si lo hay, o al home
         // (estado idle, con la tab bar) — NUNCA a un loop que re-abra el wizard.
