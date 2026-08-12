@@ -62,7 +62,12 @@ function confirmadosLimpios(v: unknown): string[] {
 
 function cleanAtributosRicos(attrs: PrendaAnalisis) {
   return {
-    material: cleanTextAttr(attrs.material, MAX_MATERIAL_LEN),
+    // EN MINÚSCULAS, y en el SERVIDOR. Las tres puertas de alta escriben este
+    // campo y sólo la ficha del clóset lo normalizaba, así que el carrete podía
+    // dejar "Algodón " y la ficha "algodón" — dos materiales distintos para el
+    // motor, que agrupa por texto. Aquí es el único punto por el que pasan las
+    // tres.
+    material: cleanTextAttr(attrs.material, MAX_MATERIAL_LEN)?.toLowerCase(),
     // El tipo fino: derby/oxford, cruzado/sencillo, con pinzas. Corto a
     // propósito — es una etiqueta, no una descripción, y el motor la lee pegada
     // al nombre. Si el modelo se explaya, se recorta en vez de descartarse.

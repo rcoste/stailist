@@ -106,6 +106,12 @@ export const PATRONES_CHIP: { v: string; l: string }[] = [
  * Sin esto, un material como "cashmere" o "gabardina" se vería como si no
  * hubiera nada seleccionado —el mismo bug del saco y el del color— y tocar
  * cualquier chip para "arreglarlo" destruiría un dato más específico.
+ *
+ * SÓLO PARA MATERIAL, que es texto libre de verdad. En el patrón sería una
+ * trampa: su vocabulario es CERRADO (`cleanPatron` valida contra PATRONES y
+ * borra lo que no reconoce), así que un patrón raro se pintaría como chip
+ * elegible y tocarlo —el gesto de "sí, ése es"— lo borraría. Hoy no hay ni uno
+ * fuera de vocabulario en la base; el chip lo habría creado.
  */
 export function conLeido(
   opciones: { v: string; l: string }[],
@@ -241,8 +247,14 @@ export function Escala({
  * teclear "Lana" y crear la primera.
  */
 function igualValor(a: string | undefined, b: string): boolean {
-  return (a ?? "").trim().toLowerCase() === b.trim().toLowerCase();
+  return limpia(a ?? "") === limpia(b);
 }
+/** Minúsculas, sin espacios de sobra y SIN ACENTOS. Lo último porque la visión
+ *  escribe en español y a veces se come una tilde: sin esto, "algodon" y
+ *  "algodón" son dos chips gemelos y dos materiales distintos para el motor,
+ *  que agrupa por texto. */
+const limpia = (s: string) =>
+  s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 
 export type Seccion = "tipo" | "color" | "formalidad" | "mas";
 export const SECCION_DE_CAMPO: Record<string, Seccion> = {

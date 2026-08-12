@@ -457,7 +457,7 @@ export function DraftCard({
           </Field>
           <Field label="Patrón">
             <Escala
-              opciones={conLeido(PATRONES_CHIP, a.patron)}
+              opciones={PATRONES_CHIP}
               valor={a.patron}
               onPick={(v) => onPatch({ patron: v as PrendaAnalisis["patron"] }, ["patron"])}
               vacio="sin dato"

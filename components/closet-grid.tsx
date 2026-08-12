@@ -630,6 +630,13 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
 
       {selected ? (
         <ItemSheet
+          // UNA HOJA POR PRENDA. Sus ~18 useState se inicializan del `item`, así
+          // que sin `key` un futuro camino que cambie de prenda sin cerrar
+          // (abrir la pareja del conjunto, por ejemplo) escribiría los valores
+          // de la prenda A sobre el id de la B. Hoy no pasa —`selected` siempre
+          // pasa por null— y por eso mismo es barato blindarlo antes de que
+          // pase.
+          key={selected.id}
           item={selected}
           todas={items}
           onClose={() => setSelected(null)}
@@ -863,17 +870,49 @@ export function ItemSheet({
    */
   const [otroMaterial, setOtroMaterial] = useState(false);
 
+  /**
+   * Lo último que se guardó CON ÉXITO — contra esto se mide si hay pendientes.
+   *
+   * Antes se medía contra `item`, que son props del servidor y no se refrescan
+   * al guardar; o sea que después de un guardado exitoso `dirty` seguía siendo
+   * verdadero para siempre. Eso obligaba a esconder el botón de guardar con
+   * `!ofrecerRender`, y de ahí salía una pérdida de trabajo silenciosa: cambias
+   * el nombre, guardas, aparece la oferta de rehacer la imagen, ves de paso que
+   * la temporada está mal, la corriges — y ya no hay botón para guardarla. Tocas
+   * "así está bien", la hoja se cierra, y la temporada se perdió con un mensaje
+   * de éxito en pantalla. El rediseño lo empeoraba: los chips invitan justo a
+   * ese "ah, y esto también".
+   */
+  const [guardado, setGuardado] = useState({
+    nombre: item.nombre,
+    categoria: item.category,
+    formalidad: item.formalidad,
+    temporada: item.temporada,
+    marca: item.marca ?? "",
+    talla: item.talla ?? "",
+    material: item.material,
+    patron: item.patron,
+    colorSecundario: item.colorSecundario,
+    colorHex: item.swatch,
+  });
+
   const dirty =
-    nombre.trim() !== item.nombre ||
-    categoria !== item.category ||
-    formalidad !== item.formalidad ||
-    temporada !== item.temporada ||
-    marca !== (item.marca ?? "") ||
-    talla !== (item.talla ?? "") ||
-    material.trim() !== item.material ||
-    patron !== item.patron ||
-    colorSecundario.trim() !== item.colorSecundario ||
-    colorHex !== item.swatch ||
+    nombre.trim() !== guardado.nombre ||
+    categoria !== guardado.categoria ||
+    formalidad !== guardado.formalidad ||
+    temporada !== guardado.temporada ||
+    marca !== guardado.marca ||
+    talla !== guardado.talla ||
+    material.trim() !== guardado.material ||
+    patron !== guardado.patron ||
+    colorSecundario.trim() !== guardado.colorSecundario ||
+    // `mismoHex` y no `!==`: 127 prendas de la base guardan su hex en minúsculas
+    // y la paleta está en mayúsculas. Con comparación estricta, tocar el swatch
+    // que YA estaba puesto contaba como cambio — y ese cambio sustituía el
+    // nombre específico que tenía la prenda ("gris carbón") por el genérico de
+    // la paleta ("Gris oscuro") y ofrecía una regeneración de imagen, que se
+    // cobra, por un color que no cambió.
+    !mismoHex(colorHex, guardado.colorHex) ||
     corteTocado;
 
   // GENERALIZADO A CONJUNTOS DE DOS PIEZAS, no sólo trajes: el dato siempre fue
@@ -937,7 +976,7 @@ export function ItemSheet({
       material: material.trim().toLowerCase(),
       patron,
       color_secundario: colorSecundario,
-      ...(colorHex !== item.swatch
+      ...(!mismoHex(colorHex, guardado.colorHex)
         ? { color_hex: colorHex, color: PALETA.find((p) => mismoHex(p.hex, colorHex))?.name ?? "" }
         : {}),
       // Va sólo si lo tocó Y si la categoría admite corte.
@@ -951,6 +990,24 @@ export function ItemSheet({
       ...(corteTocado && corte && EL_CORTE_IMPORTA.has(categoria) ? { corte } : {}),
     });
     setSaving(false);
+    if (res.ok) {
+      // El nuevo punto de partida: a partir de aquí "sin guardar" significa lo
+      // que se cambie DESPUÉS de esto. El corte deja de contar como tocado
+      // porque acaba de quedar confirmado en la base.
+      setGuardado({
+        nombre: nombre.trim(),
+        categoria,
+        formalidad,
+        temporada,
+        marca,
+        talla,
+        material: material.trim().toLowerCase(),
+        patron,
+        colorSecundario: colorSecundario.trim(),
+        colorHex,
+      });
+      setCorteTocado(false);
+    }
     return res.ok;
   }
 
@@ -969,7 +1026,7 @@ export function ItemSheet({
     // generar nuevamente la imagen". Tiene razón — el render sale de esos dos
     // datos, así que cambiarlos lo deja obsoleto. Se PREGUNTA en vez de
     // rehacerlo solo: cuesta una llamada, y a veces el cambio es una tilde.
-    if (nombre.trim() !== item.nombre || colorHex !== item.swatch) {
+    if (nombre.trim() !== item.nombre || !mismoHex(colorHex, item.swatch)) {
       setOfrecerRender(true);
       return;
     }
@@ -1012,7 +1069,20 @@ export function ItemSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40 px-4 pb-4" onClick={onClose}>
+    // TOCAR FUERA NO DESCARTA CAMBIOS. Con la ficha en un resumen de chips la
+    // hoja mide media pantalla, así que la otra media es fondo — un botón
+    // enorme e invisible de "tira lo que llevas escrito". Con cambios sin
+    // guardar, el fondo no cierra; la equis sigue siendo la salida deliberada.
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40 px-4 pb-4"
+      onClick={() => {
+        if (dirty) {
+          setErrorFicha("Tienes cambios sin guardar. Guárdalos, o cierra con la ✕.");
+          return;
+        }
+        onClose();
+      }}
+    >
       <div
         className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-2xl bg-surface p-5"
         onClick={(e) => e.stopPropagation()}
@@ -1228,6 +1298,7 @@ export function ItemSheet({
                     vocabulario que la persona ya confirmó al dar de alta. */}
                 <Field label="Material">
                   {otroMaterial ? (
+                    <div className="flex flex-col gap-1.5">
                     <input
                       value={material}
                       autoFocus
@@ -1235,6 +1306,17 @@ export function ItemSheet({
                       placeholder="cashmere, gabardina…"
                       className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                     />
+                    {/* LA VUELTA. Sin ella, tocar "es otro material" por error
+                        dejaba tecleando el resto de la sesión: para volver a
+                        "lana" había que escribirla exacta. */}
+                    <button
+                      type="button"
+                      onClick={() => setOtroMaterial(false)}
+                      className="self-start text-[11.5px] text-muted underline underline-offset-2 transition-colors hover:text-accent"
+                    >
+                      elegir de la lista
+                    </button>
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-1.5">
                       <Escala
@@ -1256,7 +1338,7 @@ export function ItemSheet({
 
                 <Field label="Patrón">
                   <Escala
-                    opciones={conLeido(PATRONES_CHIP, item.patron)}
+                    opciones={PATRONES_CHIP}
                     valor={patron}
                     onPick={(v) => setPatron(v ?? "")}
                     vacio="sin dato"
@@ -1456,7 +1538,7 @@ export function ItemSheet({
             {/* LA OFERTA, después de guardar. No se rehace sola: cuesta una
                 llamada y a veces el cambio fue una tilde. Se pregunta con el
                 motivo delante, que es lo que la hace contestable. */}
-            {ofrecerRender ? (
+            {ofrecerRender && !dirty ? (
               <div className="flex flex-col gap-2 rounded-sm bg-warning/10 p-3">
                 <p className="text-[13px] leading-snug text-ink">
                   Guardado. Su imagen se generó con el nombre y el color
@@ -1484,7 +1566,7 @@ export function ItemSheet({
               </div>
             ) : null}
 
-            {dirty && !ofrecerRender ? (
+            {dirty ? (
               <button
                 type="button"
                 onClick={guardar}

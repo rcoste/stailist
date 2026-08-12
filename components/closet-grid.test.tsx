@@ -275,6 +275,73 @@ describe("ItemSheet — cuando el guardado falla", () => {
   });
 });
 
+describe("ItemSheet — seguir corrigiendo después de guardar", () => {
+  it("un cambio posterior a la oferta de rehacer la imagen SÍ se puede guardar", async () => {
+    // LA PÉRDIDA DE TRABAJO QUE ESTE REDISEÑO HACÍA MÁS PROBABLE. Cambias el
+    // nombre, guardas, sale la oferta de rehacer la imagen — y de paso ves en
+    // los chips que la temporada está mal. La corriges… y no había botón para
+    // guardarla: el guardar se escondía mientras la oferta estuviera puesta, y
+    // la oferta no se apagaba nunca. "Así está bien" cerraba la hoja y se
+    // llevaba la corrección, con un mensaje de éxito en pantalla.
+    abrirFicha();
+    fireEvent.change(screen.getByDisplayValue("Jeans rectos"), {
+      target: { value: "Jeans azules" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
+    await waitFor(() => expect(screen.getByText(/¿la rehago\?/i)).toBeTruthy());
+    // Guardado: ya no hay nada pendiente.
+    expect(screen.queryByRole("button", { name: /guardar cambios/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(within(editor(/^Temporada$/)).getByRole("button", { name: /^frío$/ }));
+
+    // La oferta cede el paso a lo que falta por guardar.
+    expect(screen.queryByText(/¿la rehago\?/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
+    await waitFor(() => expect(updateItemAttrs).toHaveBeenCalledTimes(2));
+    expect(updateItemAttrs.mock.calls.at(-1)![1]).toMatchObject({
+      temporada: "frio",
+      nombre: "Jeans azules",
+    });
+  });
+
+  it("tocar fuera con cambios sin guardar no los tira", () => {
+    // El fondo es la mitad de la pantalla desde que la ficha cabe en un
+    // resumen: un botón enorme e invisible de "descarta lo que llevas".
+    const onClose = vi.fn();
+    render(
+      <ItemSheet
+        item={prenda()}
+        todas={[]}
+        onClose={onClose}
+        onRemove={() => {}}
+        onSaved={() => {}}
+      />
+    );
+    fireEvent.change(screen.getByDisplayValue("Jeans rectos"), {
+      target: { value: "Jeans azules" },
+    });
+    fireEvent.click(document.querySelector(".fixed.inset-0")!);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText(/cambios sin guardar/i)).toBeTruthy();
+  });
+
+  it("sin cambios, tocar fuera cierra como siempre", () => {
+    const onClose = vi.fn();
+    render(
+      <ItemSheet
+        item={prenda()}
+        todas={[]}
+        onClose={onClose}
+        onRemove={() => {}}
+        onSaved={() => {}}
+      />
+    );
+    fireEvent.click(document.querySelector(".fixed.inset-0")!);
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+
 describe("ItemSheet — un material que no está en los chips", () => {
   it("se conserva y se ve elegido (no parece vacío)", () => {
     // 32 materiales distintos viven en la base y los chips son 10: satén,
