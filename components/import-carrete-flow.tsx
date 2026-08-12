@@ -14,11 +14,8 @@ import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { paresDeTraje } from "@/lib/par-de-traje";
 // La tarjeta de confirmar una prenda y sus vocabularios viven aparte desde que
 // el espejo abrió una segunda puerta al clóset: allá reusa ésta, entera.
-import {
-  DraftCard,
-  mismoHex,
-  type DraftLeida,
-} from "@/components/prenda-draft-card";
+import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
+import { mismoHex } from "@/components/prenda-campos";
 import { yaLaTienes, type PrendaExistente } from "@/lib/ya-la-tienes";
 import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";

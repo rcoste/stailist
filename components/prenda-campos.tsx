@@ -21,6 +21,10 @@ import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 // (valor + onChange) y el chip. Cada pantalla compone su ficha y conserva su
 // ciclo de vida.
 
+// LLEVA "SACO", y no siempre lo llevó: sin ese botón la visión sí lo detectaba
+// pero la prenda salía con nada marcado y parecía no detectada. 18 prendas de
+// foto de la base son categoría 'saco' y todas pasaron por aquí. Quitarlo
+// reabre ese hueco.
 export const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
   { v: "top", l: "Top" },
   { v: "saco", l: "Saco" },
@@ -81,6 +85,11 @@ export const MATERIALES: { v: string; l: string }[] = [
   // conserva sin necesidad de un chip propio.
   { v: "metal", l: "metal" },
 ];
+// ESPEJA `PATRONES` de lib/prenda-atributos, que se declara a sí mismo la única
+// fuente de verdad de este vocabulario: de ahí derivan los schemas de visión y
+// la validación server-side. Aquí sólo se le ponen etiquetas legibles. Un
+// patrón que exista en uno y no en el otro se pierde en silencio —o no se puede
+// elegir, o no pasa la validación—, así que se tocan los dos o ninguno.
 export const PATRONES_CHIP: { v: string; l: string }[] = [
   { v: "liso", l: "liso" },
   { v: "rayas", l: "rayas" },
@@ -103,7 +112,7 @@ export function conLeido(
   leido?: string
 ): { v: string; l: string }[] {
   const v = (leido ?? "").trim();
-  if (!v || opciones.some((o) => o.v.toLowerCase() === v.toLowerCase())) return opciones;
+  if (!v || opciones.some((o) => igualValor(v, o.v))) return opciones;
   return [{ v, l: v }, ...opciones];
 }
 export const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
@@ -111,17 +120,6 @@ export const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
   { v: "formal-casual", l: "Casual-formal" },
   { v: "formal", l: "Formal" },
 ];
-// Paleta de colores comunes de ropa para corregir el color con un tap (swatch +
-// alternativas). El swatch detectado se muestra aparte como punto de partida.
-// La paleta y el cálculo de vecinos viven en lib/paleta-colores.ts (con tests).
-
-// NOTA: aquí vivían `comprimir`, `uid`, `PermisoError`, `DraftItem`,
-// `RenderItem`, `Foto` y `State` — 90 líneas que quedaron al extraer esta
-// tarjeta del carrete y que no usaba ni este archivo ni ningún otro (los dos
-// consumidores solo importan DraftCard, mismoHex y DraftLeida). Borradas
-// 2026-08-12: el carrete tiene sus propias copias vivas, así que estas eran
-// dos verdades para lo mismo esperando a desincronizarse.
-
 /** Mismo color, ignorando mayúsculas y el # — los hex vienen de dos fuentes. */
 export const mismoHex = (a?: string, b?: string) =>
   !!a && !!b && a.replace("#", "").toLowerCase() === b.replace("#", "").toLowerCase();
@@ -166,7 +164,7 @@ export function Chips<T extends string>({
           type="button"
           onClick={() => onPick(o.v)}
           className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-            valor === o.v
+            igualValor(valor, o.v)
               ? "border-accent bg-accent-soft text-accent"
               : "border-line bg-surface text-muted"
           }`}
@@ -206,7 +204,7 @@ export function Escala({
           type="button"
           onClick={() => onPick(o.v)}
           className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-            valor === o.v
+            igualValor(valor, o.v)
               ? "border-accent bg-accent-soft text-accent"
               : "border-line bg-surface text-muted"
           }`}
@@ -218,7 +216,9 @@ export function Escala({
         type="button"
         onClick={() => onPick(undefined)}
         className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-          !valor ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
+          !valor?.trim()
+            ? "border-accent bg-accent-soft text-accent"
+            : "border-line bg-surface text-muted"
         }`}
       >
         {vacio}
@@ -227,7 +227,22 @@ export function Escala({
   );
 }
 
-/** Lo mínimo que la tarjeta necesita saber de una prenda leída. */
+/**
+ * ¿Este chip es el valor que tiene la prenda? Sin distinguir mayúsculas ni
+ * espacios, IGUAL QUE `conLeido`.
+ *
+ * Las dos funciones tienen que decidir lo mismo o se abre un hueco silencioso:
+ * `conLeido` ve "Lana" como si estuviera en la lista y no antepone nada, y una
+ * comparación estricta no resalta ningún chip — así que el campo se lee VACÍO
+ * teniendo dato, y el primer tap sustituye un valor real por otro.
+ *
+ * Hoy no hay ni una prenda así en la base, y aun así se arregla: el campo de
+ * texto libre de la ficha ("es otro material") es exactamente lo que permite
+ * teclear "Lana" y crear la primera.
+ */
+function igualValor(a: string | undefined, b: string): boolean {
+  return (a ?? "").trim().toLowerCase() === b.trim().toLowerCase();
+}
 
 export type Seccion = "tipo" | "color" | "formalidad" | "mas";
 export const SECCION_DE_CAMPO: Record<string, Seccion> = {

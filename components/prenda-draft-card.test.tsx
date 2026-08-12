@@ -111,14 +111,14 @@ describe("DraftCard — la decisión que viaja por onPatch", () => {
     const onPatch = vi.fn();
     render(<DraftCard item={draft()} yaEsta={null} onToggle={() => {}} onPatch={onPatch} />);
     abrir(/azul/i);
-    const swatches = screen
-      .getAllByRole("button")
-      .filter((b) => b.getAttribute("aria-label") && /^[A-ZÁÉÍÓÚ]/.test(b.getAttribute("aria-label")!));
-    expect(swatches.length).toBeGreaterThan(1);
-    fireEvent.click(swatches[swatches.length - 1]);
+    // Se abre la paleta entera y se elige un swatch POR SU NOMBRE, para poder
+    // fijar el par exacto. Con "tiene las dos propiedades" bastaría un
+    // `{ color: <el viejo>, color_hex: <el nuevo> }` para pasar — o sea, el test
+    // dejaría vivir justo la regresión que su comentario describe.
+    fireEvent.click(screen.getByRole("button", { name: /otro color/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Negro$/ }));
     const [patch, campos] = onPatch.mock.calls.at(-1)!;
-    expect(patch).toHaveProperty("color_hex");
-    expect(patch).toHaveProperty("color");
+    expect(patch).toEqual({ color: "Negro", color_hex: "#1A1A1A" });
     expect(campos).toContain("color");
   });
 

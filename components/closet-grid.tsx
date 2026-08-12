@@ -101,8 +101,24 @@ const TEMPORADAS: { v: string; l: string }[] = [
  */
 function nombreDelColor(hex: string, item: ClosetItem): string {
   if (mismoHex(hex, item.swatch) && item.colorNombre) return item.colorNombre;
-  return PALETA.find((p) => mismoHex(p.hex, hex))?.name ?? "color";
+  // "¿qué color?" y no "color": un chip que dice el nombre del campo rompe la
+  // premisa del resumen —cada chip DICE su valor— y se lee como un hueco. Así
+  // se lee como lo que es, una invitación a decirlo. Hoy no lo ve nadie (las
+  // 1064 prendas de la base traen nombre de color), así que esto es para la
+  // primera que entre sin él.
+  return PALETA.find((p) => mismoHex(p.hex, hex))?.name ?? "¿qué color?";
 }
+
+/**
+ * El texto de un chip del resumen, en minúsculas.
+ *
+ * Los catálogos traen las etiquetas capitalizadas porque ahí son OPCIONES de un
+ * editor ("Formal", "Casual-formal"), pero el nombre del color viene de la
+ * visión en minúsculas ("gris carbón") — y en la misma fila eso se veía como
+ * dos voces distintas. Todo lo demás de esta hoja es minúscula ("guardar
+ * cambios", "desatar", "cerrar").
+ */
+const enChip = (s: string) => s.toLocaleLowerCase("es");
 
 // El orden en que se ofrecen las parejas de un conjunto: primero por formalidad
 // y luego por color. Vive fuera del componente porque es una constante, no
@@ -815,8 +831,8 @@ export function ItemSheet({
   const [corteTocado, setCorteTocado] = useState(false);
   const [atando, setAtando] = useState(false);
   const [rehaciendo, setRehaciendo] = useState(false);
-  /** Qué salió mal al rehacer la imagen. null = nada que decir. */
-  const [errorRender, setErrorRender] = useState<string | null>(null);
+  /** Qué salió mal —al guardar o al rehacer la imagen—. null = nada que decir. */
+  const [errorFicha, setErrorFicha] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
   const [colorHex, setColorHex] = useState(item.swatch);
   const [todosLosColores, setTodosLosColores] = useState(false);
@@ -913,21 +929,41 @@ export function ItemSheet({
       temporada,
       marca,
       talla,
-      material,
+      // NORMALIZADO al escribir, y aquí está el porqué: los chips de material
+      // resaltan sin distinguir mayúsculas ni espacios (ver igualValor), así que
+      // un "Lana " tecleado en "es otro material" se vería igual que uno de la
+      // lista pero NO sería el mismo dato para nadie más — ni para el motor, que
+      // agrupa por texto. Se limpia en la puerta, no en cada lector.
+      material: material.trim().toLowerCase(),
       patron,
       color_secundario: colorSecundario,
       ...(colorHex !== item.swatch
-        ? { color_hex: colorHex, color: PALETA.find((p) => p.hex === colorHex)?.name ?? "" }
+        ? { color_hex: colorHex, color: PALETA.find((p) => mismoHex(p.hex, colorHex))?.name ?? "" }
         : {}),
-      // Va sólo si lo tocó: mandarlo siempre confirmaría lo que preseleccionamos.
-      ...(corteTocado && corte ? { corte } : {}),
+      // Va sólo si lo tocó Y si la categoría admite corte.
+      //
+      // Lo segundo tapa una fuga real: tocas la silueta de unos pantalones,
+      // cambias el tipo a "accesorio" —dos taps, en pantallas distintas— y el
+      // editor de corte desaparece, pero el valor seguía viajando Y quedando
+      // marcado como confirmado por ti. En la base ya hay 23 prendas con corte
+      // en categorías donde no significa nada (17 calzados, 6 accesorios); esto
+      // impide que la ficha siga fabricándolas.
+      ...(corteTocado && corte && EL_CORTE_IMPORTA.has(categoria) ? { corte } : {}),
     });
     setSaving(false);
     return res.ok;
   }
 
   async function guardar() {
-    if (!(await persistir())) return;
+    if (!(await persistir())) {
+      // SE DICE. Antes esta rama era un `return` a secas: la acción fallaba, la
+      // hoja se quedaba idéntica con el botón puesto, y la persona se iba
+      // creyendo que había guardado. Un guardado que falla en silencio es peor
+      // que uno que no existe — el mismo criterio que ya seguía rehacerImagen.
+      setErrorFicha("No pude guardar los cambios — inténtalo otra vez.");
+      return;
+    }
+    setErrorFicha(null);
     // LA IMAGEN SE GENERÓ CON EL NOMBRE Y EL COLOR VIEJOS. Idea de Roberto:
     // "si le cambio el color o el nombre me debería preguntar si quiero
     // generar nuevamente la imagen". Tiene razón — el render sale de esos dos
@@ -952,10 +988,10 @@ export function ItemSheet({
    */
   async function rehacerImagen() {
     setRehaciendo(true);
-    setErrorRender(null);
+    setErrorFicha(null);
     try {
       if (dirty && !(await persistir())) {
-        setErrorRender("No pude guardar los cambios — inténtalo otra vez.");
+        setErrorFicha("No pude guardar los cambios — inténtalo otra vez.");
         return;
       }
       const res = await fetch("/api/render-item", {
@@ -964,12 +1000,12 @@ export function ItemSheet({
         body: JSON.stringify({ itemId: item.id, forzar: true }),
       });
       if (!res.ok) {
-        setErrorRender("No pude rehacer la imagen — inténtalo en un momento.");
+        setErrorFicha("No pude rehacer la imagen — inténtalo en un momento.");
         return;
       }
       onSaved();
     } catch {
-      setErrorRender("Se cortó la conexión — inténtalo otra vez.");
+      setErrorFicha("Se cortó la conexión — inténtalo otra vez.");
     } finally {
       setRehaciendo(false);
     }
@@ -1026,7 +1062,7 @@ export function ItemSheet({
                 vistazo y sólo se abre lo que esté mal. */}
             <div className="flex flex-wrap gap-1.5">
               <ChipResumen activo={seccion === "tipo"} onClick={() => abre("tipo")}>
-                {CATEGORIAS.find((c) => c.v === categoria)?.l ?? "Tipo"}
+                {enChip(CATEGORIAS.find((c) => c.v === categoria)?.l ?? "Tipo")}
               </ChipResumen>
               <ChipResumen activo={seccion === "color"} onClick={() => abre("color")}>
                 <span
@@ -1034,10 +1070,10 @@ export function ItemSheet({
                   style={{ backgroundColor: colorHex }}
                   aria-hidden
                 />
-                {nombreDelColor(colorHex, item)}
+                {enChip(nombreDelColor(colorHex, item))}
               </ChipResumen>
               <ChipResumen activo={seccion === "formalidad"} onClick={() => abre("formalidad")}>
-                {FORMALIDADES.find((f) => f.v === formalidad)?.l ?? "Formalidad"}
+                {enChip(FORMALIDADES.find((f) => f.v === formalidad)?.l ?? "Formalidad")}
               </ChipResumen>
               {/* EL AVISO DEL CORTE SUPUESTO SUBE AL CHIP. Dentro de "+ más" el
                   "esto es lo que supongo" quedaría escondido tras un tap — o
@@ -1197,7 +1233,7 @@ export function ItemSheet({
                       autoFocus
                       onChange={(e) => setMaterial(e.target.value)}
                       placeholder="cashmere, gabardina…"
-                      className="min-h-9 w-full rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+                      className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                     />
                   ) : (
                     <div className="flex flex-col gap-1.5">
@@ -1232,7 +1268,7 @@ export function ItemSheet({
                     value={colorSecundario}
                     onChange={(e) => setColorSecundario(e.target.value)}
                     placeholder="blanco, beige…"
-                    className="min-h-9 w-full rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+                    className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                   />
                 </Field>
 
@@ -1254,7 +1290,7 @@ export function ItemSheet({
                       value={marca}
                       onChange={(e) => setMarca(e.target.value)}
                       placeholder="Uniqlo, Massimo Dutti…"
-                      className="min-h-9 w-full rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+                      className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                     />
                   </Field>
                   <Field label="Talla">
@@ -1262,17 +1298,23 @@ export function ItemSheet({
                       value={talla}
                       onChange={(e) => setTalla(e.target.value)}
                       placeholder={ejemploDeTalla(categoria)}
-                      className="min-h-9 w-full rounded-sm border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-accent"
+                      className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
                     />
                   </Field>
                 </div>
 
+                {/* "CERRAR" Y NO "LISTO", que es como se llama en el carrete.
+                    Ahí "listo" es verdad: cada tap ya viajó al borrador. Aquí no
+                    guarda nada —el guardado es el botón de abajo—, y un "listo"
+                    que sólo pliega invita a irse creyendo que se guardó. Es la
+                    misma palabra con dos significados en dos pantallas, y la de
+                    aquí es la que puede perder trabajo. */}
                 <button
                   type="button"
                   onClick={() => setSeccion(null)}
                   className="min-h-9 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-ink transition-colors hover:border-accent"
                 >
-                  listo
+                  cerrar
                 </button>
               </>
             )}
@@ -1407,8 +1449,8 @@ export function ItemSheet({
                 : "la imagen no es de esta prenda — rehacerla"}
             </button>
 
-            {errorRender ? (
-              <p className="text-[13px] leading-snug text-error">{errorRender}</p>
+            {errorFicha ? (
+              <p className="text-[13px] leading-snug text-error">{errorFicha}</p>
             ) : null}
 
             {/* LA OFERTA, después de guardar. No se rehace sola: cuesta una

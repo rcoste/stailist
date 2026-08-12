@@ -101,7 +101,11 @@ export async function addPhotoItem(
     attrs: {
       nombre: attrs.nombre,
       categoria: attrs.categoria,
-      color: attrs.color,
+      // Con tope, como el resto del texto libre de la visión: es la
+      // frontera de confianza LLM→DB, y desde hoy además se enseña tal
+      // cual en el chip del resumen de la ficha. `updateItemAttrs` ya lo
+      // acotaba; las dos puertas de alta no.
+      color: cleanTextAttr(attrs.color, MAX_COLOR_LEN),
       color_hex: attrs.color_hex,
       formalidad: attrs.formalidad,
       temporada: attrs.temporada,
@@ -535,7 +539,8 @@ export async function addPhotoItems(
       attrs: {
         nombre: it.attrs.nombre,
         categoria: it.attrs.categoria,
-        color: it.attrs.color,
+        // Mismo tope que en el alta de una prenda: ver addPhotoItem.
+        color: cleanTextAttr(it.attrs.color, MAX_COLOR_LEN),
         color_hex: it.attrs.color_hex,
         formalidad: it.attrs.formalidad,
         temporada: it.attrs.temporada,

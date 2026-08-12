@@ -18,8 +18,13 @@ afterEach(cleanup);
 // siluetas) cambia con cada rebrand; lo que no puede cambiar sin que alguien lo
 // decida es qué viaja a la base.
 
+// La firma va COMPLETA a propósito. Con `vi.fn(async () => …)` el mock declara
+// cero parámetros, así que `mock.calls` queda tipado como `[][]` y cada
+// `calls.at(-1)![1]` de abajo es un error TS2493 — que vitest no ve (corre sin
+// tipos) pero `next build` sí, porque type-checkea todo el proyecto.
 const { updateItemAttrs } = vi.hoisted(() => ({
-  updateItemAttrs: vi.fn(async () => ({ ok: true })),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- los parámetros existen para tipar mock.calls, no para usarse
+  updateItemAttrs: vi.fn(async (_id: string, _patch: Record<string, unknown>) => ({ ok: true })),
 }));
 
 vi.mock("@/app/closet/actions", () => ({
@@ -178,6 +183,98 @@ describe("ItemSheet — lo que viaja a la base", () => {
   });
 });
 
+describe("ItemSheet — lo que quedó detrás de un tap", () => {
+  it('"+ más" SIGUE conteniendo temporada, patrón, segundo color, marca y talla', () => {
+    // EL TEST QUE ATRAPA EL FALLO SILENCIOSO DE ESTE REDISEÑO. Todo menos el
+    // nombre vive ahora tras un chip; si un campo dejara de renderizarse, los
+    // demás tests seguirían verdes y el campo quedaría ineditable para siempre
+    // sin que nadie se entere. Que el panel ABRA no prueba que siga completo.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    for (const campo of [/^Temporada$/, /^Patrón$/, /^Segundo color/, /^Marca/, /^Talla$/]) {
+      expect(screen.getByText(campo)).toBeTruthy();
+    }
+  });
+
+  it("la temporada viaja al motor (cambió de menú a chips)", async () => {
+    // Alimenta las reglas de clima. Pasó de <select onChange> a <Chips onPick>:
+    // otro cable, mismo destino, y ningún test lo miraba.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(within(editor(/^Temporada$/)).getByRole("button", { name: /^frío$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
+    await waitFor(() => expect(updateItemAttrs).toHaveBeenCalled());
+    expect(updateItemAttrs.mock.calls.at(-1)![1]).toMatchObject({ temporada: "frio" });
+  });
+
+  it('"no sé" BORRA el material, y eso es a propósito', async () => {
+    // Camino destructivo que no existía: la UI vieja era un input, borrar el
+    // material pedía seleccionar y suprimir. Ahora es un tap. Se queda —"no sé"
+    // es una respuesta honesta y mejor que un dato inventado— pero queda escrito
+    // aquí para que nadie lo cambie por accidente.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(within(editor(/^Material$/)).getByRole("button", { name: /^no sé$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
+    await waitFor(() => expect(updateItemAttrs).toHaveBeenCalled());
+    expect(updateItemAttrs.mock.calls.at(-1)![1]).toMatchObject({ material: "" });
+  });
+
+  it('"+ más" NO se cierra al elegir: lo cierra su botón', () => {
+    // Es la regla contraria a la de los otros chips (donde elegir cierra), y la
+    // diferencia es deliberada: son varios campos opcionales y cerrarse en el
+    // primero obligaría a reabrir por cada uno.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(within(editor(/^Temporada$/)).getByRole("button", { name: /^frío$/ }));
+    expect(screen.getByText(/^Material$/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^cerrar$/ }));
+    expect(screen.queryByText(/^Material$/)).toBeNull();
+  });
+
+  it("el corte NO viaja si la categoría dejó de admitirlo", async () => {
+    // La fuga: tocas la silueta de unos pantalones, cambias el tipo a
+    // "accesorio", y el editor desaparece — pero el valor seguía viajando y
+    // quedando marcado como confirmado POR TI. En la base ya hay 23 prendas con
+    // corte donde no significa nada; la ficha no debe fabricar la 24.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(screen.getByRole("button", { name: /holgado/i }));
+    fireEvent.click(screen.getByRole("button", { name: /pantalón/i }));
+    fireEvent.click(within(editor(/^Tipo$/)).getByRole("button", { name: /^Accesorio$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
+    await waitFor(() => expect(updateItemAttrs).toHaveBeenCalled());
+    const patch = updateItemAttrs.mock.calls.at(-1)![1];
+    expect(patch).toMatchObject({ categoria: "accesorio" });
+    expect(patch).not.toHaveProperty("corte");
+  });
+});
+
+describe("ItemSheet — cuando el guardado falla", () => {
+  it("lo dice, y no se comporta como si hubiera guardado", async () => {
+    // Un guardado que falla en silencio es peor que uno que no existe: la
+    // persona corrige su prenda, la hoja se queda idéntica con el botón puesto,
+    // y se va creyendo que quedó. Es el mismo criterio que ya seguía rehacer la
+    // imagen, que sí pintaba su error.
+    updateItemAttrs.mockResolvedValueOnce({ ok: false });
+    const onSaved = vi.fn();
+    render(
+      <ItemSheet
+        item={prenda()}
+        todas={[]}
+        onClose={() => {}}
+        onRemove={() => {}}
+        onSaved={onSaved}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^casual$/i }));
+    fireEvent.click(within(editor(/^Formalidad$/)).getByRole("button", { name: /^Formal$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
+    await waitFor(() => expect(screen.getByText(/no pude guardar/i)).toBeTruthy());
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+});
+
 describe("ItemSheet — un material que no está en los chips", () => {
   it("se conserva y se ve elegido (no parece vacío)", () => {
     // 32 materiales distintos viven en la base y los chips son 10: satén,
@@ -194,8 +291,11 @@ describe("ItemSheet — un material que no está en los chips", () => {
     abrirFicha();
     fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
     fireEvent.click(screen.getByRole("button", { name: /es otro material/i }));
+    // Con espacios y mayúscula A PROPÓSITO: lo que se blinda es la limpieza en
+    // la puerta (`material.trim().toLowerCase()`). Con "cashmere" tal cual, el
+    // test pasaría igual si alguien quitara la normalización.
     fireEvent.change(screen.getByPlaceholderText(/cashmere/i), {
-      target: { value: "cashmere" },
+      target: { value: "  Cashmere " },
     });
     fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
     await waitFor(() => expect(updateItemAttrs).toHaveBeenCalled());

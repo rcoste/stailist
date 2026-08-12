@@ -35,13 +35,15 @@ import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 // pero la puerta para corregir existe, que es lo que faltaba.
 
 
-// FALTABA "SACO" — ver el comentario largo en add-photo-flow.tsx. La visión sí
-// lo detecta; sin botón, la prenda salía con nada marcado y parecía no
-// detectada. 18 prendas de foto son categoría 'saco' y todas pasaron por aquí.
-// El vocabulario (catálogos, Field, Escala, conLeido, el chip y su mapa de
-// secciones) vive en components/prenda-campos desde 2026-08-12: la ficha del
+// El vocabulario (catálogos, Field, Escala, Chips, conLeido, el chip y su mapa
+// de secciones) vive en components/prenda-campos desde 2026-08-12: la ficha del
 // clóset necesita el mismo lenguaje y no puede reusar esta tarjeta.
-// Se re-exporta lo que ya era público aquí para no mover a los consumidores.
+//
+// SIN RE-EXPORTAR NADA. La extracción dejó aquí un puente de diez nombres "para
+// no mover a los consumidores", y era una segunda puerta al mismo módulo: nueve
+// de los diez no los importaba nadie, y el décimo (mismoHex) es una línea de
+// import en un archivo. Un módulo compartido con dos direcciones válidas es
+// exactamente la ambigüedad que la extracción vino a quitar.
 import {
   CATEGORIAS,
   CORTES,
@@ -58,19 +60,6 @@ import {
   ChipResumen,
   type Seccion,
 } from "@/components/prenda-campos";
-
-export {
-  CATEGORIAS,
-  CORTES,
-  LARGOS,
-  MATERIALES,
-  PATRONES_CHIP,
-  FORMALIDADES,
-  conLeido,
-  mismoHex,
-  Field,
-  Escala,
-};
 
 export type DraftLeida = {
   id: string;
@@ -432,8 +421,11 @@ export function DraftCard({
       {item.on && seccion === "mas" && (
         <>
           {/* Corte y largo SÓLO donde cambian el look: en un zapato o un
-              cinturón no significan nada. La lista se importa de afinar-prendas
-              para que ficha, card y este editor no se desincronicen. */}
+              cinturón no significan nada. La LISTA viene de prenda-campos; de
+              afinar-prendas viene sólo `EL_CORTE_IMPORTA` —dónde preguntar—, y
+              ese archivo tiene además sus propias etiquetas en palabras de
+              persona (OPCIONES_CORTE). Los VALORES tienen que coincidir entre
+              los dos o la card de afinar y esta guardarían cosas distintas. */}
           {EL_CORTE_IMPORTA.has(a.categoria) ? (
             <>
               <Field label="Cómo le queda">
