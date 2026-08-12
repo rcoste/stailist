@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.225.1] - 2026-08-12
+
+### Fixed — probarte la misma combinación ya no cuesta la espera de siempre
+
+En "armar un look (wishlist + clóset)" cada intento se dibujaba desde cero,
+aunque fuera exactamente la misma combinación de hace un minuto. Probar los
+mismos zapatos con el mismo pantalón dos veces —que es justo como se decide una
+compra— costaba veinticuatro segundos las dos veces, y la imagen se perdía al
+cerrar.
+
+Ahora la primera vez tarda lo mismo y **las siguientes son instantáneas**: 24
+segundos → menos de uno. Da igual el orden en que elijas las prendas.
+
+Y si te regeneras el avatar, tus combinaciones se vuelven a dibujar solas con tu
+cara nueva, en vez de quedarse con la vieja.
+
 ## [0.2.225.0] - 2026-08-12
 
 ### Added — "arma un look con esta prenda"
