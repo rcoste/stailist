@@ -9,7 +9,7 @@ import { checkColor, type Verdict } from "@/lib/color/match";
 import { saveToWishlist } from "@/lib/wishlist-add";
 import { moveWishlistItemToCloset, removeWishlistItem } from "@/lib/wishlist-actions";
 import { WishlistTryon } from "@/components/wishlist/wishlist-tryon";
-import { ComboBuilder } from "@/components/wishlist/combo-builder";
+import { Probador } from "@/components/probador";
 import { ClosetNav } from "@/components/closet-nav";
 import { Hint } from "@/components/hint";
 import { SuggestionCard } from "@/components/suggestion-card";
@@ -236,7 +236,7 @@ export function WishlistClient({
           onClick={() => setCombo(true)}
           className="flex h-[50px] w-full lg:max-w-md items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
         >
-          <Icon name="repetir" size={16} /> armar un look (wishlist + clóset)
+          <Icon name="repetir" size={16} /> pruébate un look con esto
         </button>
       ) : null}
 
@@ -350,7 +350,15 @@ export function WishlistClient({
       ) : null}
 
       {combo ? (
-        <ComboBuilder wishlist={items} closet={closet} onClose={() => setCombo(false)} />
+        <Probador
+          wishlist={items.map((w) => ({
+            id: w.id,
+            image: w.image,
+            nombre: w.name ?? "Prenda",
+          }))}
+          closet={closet}
+          onClose={() => setCombo(false)}
+        />
       ) : null}
 
       <Toast message={toast} />

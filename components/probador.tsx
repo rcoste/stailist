@@ -4,21 +4,48 @@ import { useEffect, useState } from "react";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import Link from "next/link";
 import { Spinner } from "@/components/spinner";
-import type { WishlistItem, ClosetPick } from "@/components/wishlist/wishlist-client";
+/**
+ * Lo mínimo que el probador necesita saber de una prenda: cómo se ve y cómo se
+ * llama. Nada más.
+ *
+ * Antes importaba `WishlistItem` y `ClosetPick` de wishlist-client, y esa
+ * dependencia era justo lo que lo tenía atado a una pantalla: para montarlo
+ * desde el clóset había que arrastrar los tipos de la wishlist. Ahora cada
+ * pantalla mapea lo suyo a esto, que es lo único que se pinta.
+ */
+export type PrendaProbador = { id: string; image: string | null; nombre: string };
 
 type Sel = { kind: "w" | "c"; id: string };
 type Phase = "pick" | "gen" | "result" | "sin_avatar" | "error";
 const MAX = 4;
 
-// Cartera · Fase 3c: arma un look combinando candidatos del Wishlist + prendas
-// del clóset y míralo en tu avatar. Selector (cap 4) → /api/wishlist/tryon-combo.
-export function ComboBuilder({
+// EL PROBADOR: eliges hasta 4 prendas —tuyas o de tu wishlist— y te ves con
+// ellas puestas. Selector → /api/wishlist/tryon-combo.
+//
+// SE LLAMABA "armar un look" Y VIVÍA EN components/wishlist/ (2026-08-12).
+// Las dos cosas estaban mal por el mismo motivo: la etiqueta no nombraba lo que
+// es.
+//
+// El nombre chocaba de frente con "arma un look con esta prenda", que hace lo
+// CONTRARIO — ahí el motor decide qué ponerte; aquí decides tú y la app sólo lo
+// dibuja. Dos botones con el mismo nombre y resultados distintos es peor que un
+// nombre feo. "Probarte" vs "armar" es exactamente esa diferencia en español.
+//
+// Y la carpeta: vivía bajo `wishlist/`, que es donde guardas lo que NO tienes,
+// así que alguien que quisiera combinar su propia ropa no iba a buscar ahí
+// jamás. Funciona igual de bien con puras prendas tuyas.
+//
+// La RUTA de API sigue llamándose /api/wishlist/tryon-combo: es interna, nadie
+// la ve, y renombrarla sólo agrega riesgo de 404 sin ganar nada.
+export function Probador({
   wishlist,
   closet,
   onClose,
 }: {
-  wishlist: WishlistItem[];
-  closet: ClosetPick[];
+  /** Deseos: cosas que NO tienes. Vacío desde el clóset si no hay. */
+  wishlist: PrendaProbador[];
+  /** Tu ropa. */
+  closet: PrendaProbador[];
   onClose: () => void;
 }) {
   const [sel, setSel] = useState<Sel[]>([]);
@@ -75,7 +102,7 @@ export function ComboBuilder({
     return (
       <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-4 bg-accent px-8 text-center">
         <Spinner className="h-10 w-10 text-on-accent" />
-        <p className="text-sm font-semibold text-on-accent">Armando tu look…</p>
+        <p className="text-sm font-semibold text-on-accent">Probándote el look…</p>
         <p className="text-xs text-on-accent/60">Tarda unos segundos.</p>
       </div>
     );
@@ -85,7 +112,7 @@ export function ComboBuilder({
     return (
       <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-5 bg-accent px-8 text-center">
         <p className="text-sm font-semibold text-on-accent">
-          Para armar tu look necesitas tu avatar.
+          Para probarte un look necesitas tu avatar.
         </p>
         <div className="flex gap-3">
           <button
@@ -138,7 +165,7 @@ export function ComboBuilder({
   if (phase === "error") {
     return (
       <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-5 bg-accent px-8 text-center">
-        <p className="text-sm font-semibold text-on-accent">No pude armar tu look.</p>
+        <p className="text-sm font-semibold text-on-accent">No pude probarte el look.</p>
         <div className="flex gap-3">
           <button
             type="button"
@@ -163,7 +190,7 @@ export function ComboBuilder({
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-bg">
       <div className="flex flex-none items-center justify-between px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <span className="text-[17px] font-bold text-ink">armar un look</span>
+        <span className="text-[17px] font-bold text-ink">pruébate un look</span>
         <button type="button" onClick={onClose} className="text-sm font-semibold text-muted">
           cancelar
         </button>
@@ -177,7 +204,7 @@ export function ComboBuilder({
         {wishlist.length > 0 ? (
           <Section
             title="del wishlist"
-            items={wishlist.map((w) => ({ id: w.id, image: w.image, nombre: w.name ?? "Prenda" }))}
+            items={wishlist}
             kind="w"
             isSel={isSel}
             onToggle={toggle}

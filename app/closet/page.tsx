@@ -7,6 +7,7 @@ import { ClosetGrid, type ClosetItem } from "@/components/closet-grid";
 import { AfinarPrendasCard } from "@/components/afinar-prendas-card";
 import { preguntasPendientes, cuantasFaltan, type PrendaAfinable } from "@/lib/afinar-prendas";
 import { ClosetLlenalo } from "@/components/closet-llenalo";
+import { ProbadorEntry } from "@/components/probador-entry";
 import { HintChain, type HintCandidato } from "@/components/hint";
 import { requireOnboarded } from "@/lib/auth";
 import { fotosBloqueadas } from "@/lib/edad";
@@ -95,6 +96,39 @@ export default async function ClosetPage() {
   // Resuelve nombre/imagen/categoría: del arquetipo si lo hay, si no de attrs
   // (las fotos propias usan la URL firmada y la categoría que confirmó la usuaria).
   // Orden: tus queridas primero (las de outfits favoritos/usados) — solo visual.
+  // LOS DESEOS, para el probador. Se cargan aquí y no dentro del componente
+  // porque esta página ya es un server component con sesión: una consulta más,
+  // sin viaje extra al cliente. Sólo id, foto y nombre — lo único que el
+  // probador pinta.
+  const { data: deseos } = await supabase
+    .from("wishlist_items")
+    .select("id, image_path, image_url, name")
+    .eq("user_id", profile.id)
+    .order("created_at", { ascending: false });
+  const rutasDeseos = (deseos ?? [])
+    .map((d) => d.image_path as string | null)
+    .filter((p): p is string => !!p);
+  const firmadasDeseos = new Map<string, string>();
+  if (rutasDeseos.length) {
+    const { data } = await supabase.storage
+      .from("prendas")
+      .createSignedUrls(rutasDeseos, 3600);
+    data?.forEach((f) => {
+      if (f.path && f.signedUrl) firmadasDeseos.set(f.path, f.signedUrl);
+    });
+  }
+  // Las de cápsula traen referencia pública (`image_url`) y no se firman; las
+  // subidas por foto viven en el bucket privado. Mismo criterio que la wishlist.
+  const wishlistProbador = (deseos ?? []).map((d) => {
+    const ruta = d.image_path as string | null;
+    const firmada = ruta ? firmadasDeseos.get(ruta) : null;
+    return {
+      id: d.id as string,
+      image: firmada ?? (d.image_url as string | null) ?? null,
+      nombre: (d.name as string | null) ?? "Prenda",
+    };
+  });
+
   const items: ClosetItem[] = sortLovedFirst(
     rows ?? [],
     loved
@@ -250,6 +284,13 @@ export default async function ClosetPage() {
         </div>
 
         <ClosetNav />
+
+        {/* EL PROBADOR, desde donde está tu ropa. Vivía sólo en la wishlist
+            —tres taps y un scroll— que es donde guardas lo que NO tienes. */}
+        <ProbadorEntry
+          closet={items.map((i) => ({ id: i.id, image: i.imagen, nombre: i.nombre }))}
+          wishlist={wishlistProbador}
+        />
 
         {/* Hints contextuales (una por visita): orientación de pestañas, luego
             la función de sumar tu ropa real. */}
