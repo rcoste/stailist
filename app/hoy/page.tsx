@@ -24,11 +24,20 @@ export default async function HoyPage({
 }: {
   // `inicio`: pedir la home aunque ya haya look del día (pestaña "Hoy" activa,
   // o el título "hoy" del propio look).
-  searchParams: Promise<{ generar?: string; inicio?: string }>;
+  searchParams: Promise<{ generar?: string; inicio?: string; prenda?: string }>;
 }) {
-  const { generar, inicio } = await searchParams;
+  const { generar, inicio, prenda } = await searchParams;
   // El botón ✨ manda ?generar=<timestamp> (cualquier valor presente cuenta).
   const autoAsk = generar != null;
+  // `?prenda=<id>`: llegaste desde la ficha de una prenda del clóset con "arma
+  // un look con ésta". Es el ancla del wizard, precargada — el mismo dato que
+  // se elige a mano en el paso 1, sólo que ya contestado.
+  //
+  // NO SE VALIDA AQUÍ contra el clóset: el wizard busca el id en la lista que ya
+  // recibe (`closet`) y si no está, no enseña nada. Un id ajeno o inventado en
+  // la URL no puede hacer nada — el motor además re-verifica que la prenda sea
+  // tuya antes de anclarla (ver contexto.ts).
+  const seedItemId = typeof prenda === "string" && prenda ? prenda : null;
   const profile = await requireOnboarded();
   const supabase = await createClient();
   // El server corre en UTC y NO conoce la zona horaria del dispositivo, así que
@@ -272,7 +281,9 @@ export default async function HoyPage({
         <HoyClient
           verInicio={inicio === "1"}
           hayPlaneado={hayPlaneado}
-          key={`${nombre}:${generar ?? "view"}`}
+          // La prenda entra a la llave: llegar desde OTRA prenda con el wizard
+          // ya abierto tiene que remontar, o el ancla se quedaría en la primera.
+          key={`${nombre}:${generar ?? "view"}:${seedItemId ?? ""}`}
           lookInicial={lookInicial}
           pendingOutfitId={pendingOutfitId}
           votoInicial={votoInicial}
@@ -283,6 +294,7 @@ export default async function HoyPage({
           desdeElQuiz={desdeElQuiz}
           closet={closet}
           autoAsk={autoAsk}
+          seedItemId={seedItemId}
           homeTrip={homeTrip}
           ultimoLook={ultimoLook}
           checklist={checklist}

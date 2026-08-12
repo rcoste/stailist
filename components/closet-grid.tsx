@@ -831,6 +831,7 @@ export function ItemSheet({
   onRemove: () => void;
   onSaved: () => void;
 }) {
+  const router = useRouter();
   const esFoto = item.source === "photo";
   const [nombre, setNombre] = useState(item.nombre);
   const [corte, setCorte] = useState(item.corte ?? "");
@@ -1400,6 +1401,49 @@ export function ItemSheet({
                 </button>
               </>
             )}
+
+            {/* "ARMA UN LOOK CON ESTA PRENDA" — la puerta que faltaba.
+
+                El motor SIEMPRE supo hacer esto: `seedItemId` es una regla dura
+                del prompt, se re-inyecta aunque la prenda esté vetada, el juez
+                no puede quitarla y hay un chequeo que avisa si no va con la
+                ocasión. Pero tenía una sola entrada — un renglón "opcional"
+                dentro del paso 1 del wizard— y el clóset, que es donde estás
+                MIRANDO la prenda y pensando en ella, no podía disparar nada.
+
+                No es un flujo nuevo, y ése es todo el punto: `?prenda=<id>`
+                precarga el ancla y de ahí en adelante es el camino de siempre
+                (ocasión, clima, hora, motor). El clóset es otra superficie para
+                hacer la MISMA selección que el wizard ya ofrecía.
+
+                CON CAMBIOS SIN GUARDAR NO NAVEGA. Es la misma trampa del fondo
+                de la hoja: irte con correcciones a medias las tira, y aquí sería
+                peor porque el motor generaría con los datos viejos.
+
+                RELLENO, y es la única de la hoja que lo está mientras no haya
+                nada pendiente. Bordeada empataba en peso con "créalo" del bloque
+                de conjunto, que es una reparación de nicho; ésta es la razón por
+                la que abres una prenda que no vas a corregir. Con cambios sin
+                guardar el relleno pasa a "guardar cambios", que entonces sí es
+                lo urgente — nunca se ven dos rellenos compitiendo. */}
+            <button
+              type="button"
+              onClick={() => {
+                if (dirty) {
+                  setErrorFicha("Tienes cambios sin guardar. Guárdalos primero.");
+                  return;
+                }
+                router.push(`/hoy?generar=${Date.now()}&prenda=${item.id}`);
+              }}
+              className={`flex min-h-11 items-center justify-center gap-2 rounded-sm px-3 text-sm font-semibold transition-colors ${
+                dirty
+                  ? "border border-line bg-surface text-muted"
+                  : "bg-accent text-on-accent hover:bg-accent-deep"
+              }`}
+            >
+              <Icon name="destello" size={17} />
+              arma un look con esta prenda
+            </button>
 
             {/* EL LAZO DEL TRAJE, desde la ficha. Antes sólo se podía poner al
                 subir la foto: quien pasara de la casilla —o quien ya tuviera el

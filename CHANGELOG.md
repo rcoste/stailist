@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.225.0] - 2026-08-12
+
+### Added — "arma un look con esta prenda"
+
+Abres una prenda de tu clóset y ahora puedes pedir un look alrededor de ella.
+El outfit se arma con esa prenda dentro, sin excepción: aunque no case con el
+clima, aunque la tengas vetada. Si la app cree que no va con la ocasión te lo
+dice antes, y tú decides.
+
+De ahí en adelante es el camino de siempre — te pregunta el plan, el clima y la
+hora, porque eso es lo que necesita para elegir el *resto*.
+
+Es la misma prenda que ya podías fijar dentro del asistente, en un renglón
+opcional que casi nadie iba a encontrar. Ahora se pide desde donde de verdad se
+te ocurre: mirando la prenda.
+
 ## [0.2.224.1] - 2026-08-12
 
 ### Changed — el "historial" ahora se llama diario
