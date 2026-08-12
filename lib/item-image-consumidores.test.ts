@@ -55,6 +55,15 @@ describe("consumidores de imágenes de prendas", () => {
     // El patrón exacto que causó el bug. Leer attrs.image_path está bien DENTRO
     // de item-image.ts (es la fuente "prestada", la última del orden); en
     // cualquier otro lado es saltarse las tres fuentes anteriores.
+    //
+    // OJO AL FALSO POSITIVO: `wishlist_items.image_path` es OTRA COSA — un deseo
+    // tiene una sola imagen y no hay orden de fuentes que respetar, así que
+    // leerlo directo es correcto. La regla es textual y no distingue tablas, así
+    // que si alguna de estas pantallas empieza a pintar deseos, la forma
+    // `x.image_path ... ?? null` la va a marcar aunque esté bien. Cuando pase:
+    // separa la ruta en una const antes de firmarla (así lo hace app/closet/page
+    // desde 2026-08-12) — se lee mejor y no toca esta regla, que protege un bug
+    // que dejó sin imagen al 93% de las fotos propias.
     const ofensores = OBLIGADOS.filter((f) =>
       /image_path.*\?\?\s*null|imagen:\s*\w+\.get\([^)]*\)\?\.image_path/.test(
         readFileSync(f, "utf8")

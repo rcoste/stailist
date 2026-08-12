@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.226.0] - 2026-08-12
+
+### Added — el probador, ahora desde tu clóset
+
+Puedes elegir varias prendas y verte con ellas puestas. Ya se podía… pero sólo
+desde la wishlist: **Clóset → wishlist → bajar → botón.** Y la wishlist es donde
+guardas lo que *no* tienes, así que combinar tu propia ropa era lo último que se
+te ocurriría buscar ahí.
+
+Ahora está donde está tu ropa, arriba de todo: *"pruébate un look — combina
+prendas y mírate con ellas"*. Mezcla lo tuyo con lo que quieres comprar, igual
+que antes.
+
+### Changed — dos botones dejaron de llamarse igual
+
+*"Armar un look (wishlist + clóset)"* se llama ahora **"pruébate un look"**,
+porque *"arma un look con esta prenda"* —lo de ayer— hace lo contrario: ahí la
+app decide qué ponerte; aquí decides tú y la app sólo te lo dibuja.
+
 ## [0.2.225.1] - 2026-08-12
 
 ### Fixed — probarte la misma combinación ya no cuesta la espera de siempre
