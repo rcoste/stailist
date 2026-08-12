@@ -8,6 +8,7 @@ import { reviewOutfit } from "@/lib/engine/critic";
 import {
   cargarBaseDelMotor,
   construirContexto,
+  recortarPlan,
   resolverYPersistirObjetivo,
 } from "@/lib/engine/contexto";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
@@ -517,6 +518,11 @@ async function generateInto(
       .update({
         item_ids: elegido.item_ids,
         occasion: objective ?? "diario",
+        // Lo que escribió con sus palabras, con el MISMO recorte que vio el
+        // motor. Sin esto no hay forma de leer la cola larga de planes: el
+        // texto viajaba al modelo y se evaporaba, así que nadie sabía qué se le
+        // pide de verdad al stylist (ver migración 0132).
+        plan: recortarPlan(body.plan),
         // El clima REAL (llovió), más la marca de que se pidió bajo techo.
         // OJO: hoy la marca NO se muestra en ningún lado — es para DIAGNÓSTICO
         // (consultar la tabla cuando un look de día lluvioso traiga mocasines y

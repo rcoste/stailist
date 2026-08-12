@@ -159,6 +159,20 @@ export type PeticionDeLook = {
   formality?: string | null;
 };
 
+/** Tope del plan escrito a mano que ve el motor.
+ *
+ *  Exportado y con nombre porque hay DOS consumidores que tienen que coincidir:
+ *  el contexto (lo que el modelo lee) y la columna `outfits.plan` (lo que se
+ *  guarda). Si los dos números se separan, la tabla deja de reflejar lo que el
+ *  modelo vio — y esa tabla existe justamente para calibrar el prompt contra
+ *  planes reales. */
+export const PLAN_MAX_CHARS = 200;
+
+/** El plan tal como lo ve el motor: recortado, o null si no hay texto. */
+export function recortarPlan(plan: unknown): string | null {
+  return typeof plan === "string" ? plan.slice(0, PLAN_MAX_CHARS) : null;
+}
+
 /**
  * Arma el EngineContext. Baraja el clóset EN CADA llamada (orderClosetForEngine,
  * anti sesgo posicional): dos llamadas con la misma base ven órdenes distintos,
@@ -185,7 +199,7 @@ export function construirContexto(
   return {
     gender: profile.gender as "hombre" | "mujer" | null,
     objective: p.objective,
-    plan: typeof p.plan === "string" ? p.plan.slice(0, 200) : null,
+    plan: recortarPlan(p.plan),
     tipoEvento: typeof p.tipoEvento === "string" ? p.tipoEvento : null,
     lifestyle: lifestyleSummary(profile.lifestyle as LifestyleAnswers | null),
     tasteTags: (profile.taste_tags ?? []) as string[],
