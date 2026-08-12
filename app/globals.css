@@ -88,8 +88,15 @@
      del Pasaporte (se lee como objeto físico/tarjeta de identidad, no UI). */
   --radius-artifact: 10px;
 
-  /* Sombra única permitida */
+  /* Sombra de la app: casi nula, las hairlines hacen la separación. */
   --shadow-hairline: 0 1px 2px rgb(26 23 24 / 0.05);
+  /* ELEVACIÓN SOBRE VELO. La excepción, y solo para lo que de verdad flota
+     encima de un scrim (hoy: la nota del coach-mark). Sobre el papel, una
+     sombra así sería el ornamento que este sistema evita; sobre una pantalla
+     apagada al 38% es lo único que separa una tarjeta blanca del fondo — sin
+     ella se lee como un recorte más de la propia pantalla, no como algo que
+     está por encima. NO usar en cards, hojas ni botones del flujo normal. */
+  --shadow-float: 0 16px 40px -12px rgb(0 0 0 / 0.35);
 }
 
 body {

@@ -2,6 +2,80 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.223.0] - 2026-08-11
+
+### Changed — el home deja de preguntar por hoy y te pregunta qué quieres
+
+Rediseño de "Inicio" del handoff validado con Roberto. El home anterior asumía
+que lo que querías era el look **de hoy**: el titular decía "tu look de hoy,
+aún no" y el botón cambiaba de verbo según existiera o no. Dos problemas: el
+producto ya planea para cualquier día (desde 0.2.215), así que el titular
+mentía; y el botón hacía dos trabajos —crear y ver— sin decir cuál.
+
+└ **El titular ya no asume el día**: "¿qué look armamos?" con el CTA fijo
+  **"crear un look"**, que nunca desaparece. Cuándo lo preguntas en el wizard.
+└ **El último look bajó a una card con imagen**: el retrato de tu avatar
+  vistiéndolo si lo generaste, y si no, la tira de sus prendas. Tocarla lo
+  ABRE — ver lo que ya existe no vuelve a costar una generación.
+└ **Fuera los chips de looks planeados** (el historial ya los cubre) y fuera
+  el tile "planear otro día", que duplicaba el botón de arriba.
+└ **El fit check es el protagonista de las recurrentes**, con su ícono en
+  tinta invertida, y "añadir prendas" queda como tile delgado debajo.
+└ **"Qué sigue" perdió la caja**: hairline y pegado al fondo, solo pendientes
+  numerados por su posición real, y se colapsa a una línea cuando ya tienes un
+  look. Lo hecho vive tras "ver lo hecho", como antes.
+└ **Los tips ya no son una burbuja negra**: la pantalla se apaga al 38% y la
+  nota es una tarjeta blanca con serif itálica. En negro se confundía con los
+  botones —el CTA, el botón central y el fit check son exactamente ese negro—,
+  así que el tip parecía algo que tocar. Nuevo token `--shadow-float`,
+  documentado en DESIGN.md: la excepción para lo que flota sobre un velo.
+
+### Changed — la pregunta "¿te lo pusiste?" se volvió una oferta
+
+La card que preguntaba si te habías puesto el look de ayer era un favor: no
+daba nada a cambio y llegaba cuando la respuesta todavía no existía. Muere. En
+su lugar, el look lleva fija la invitación **"cuando te lo pongas, enséñamelo
+— te digo cómo se ve"**, que abre el fit check. Y el registro de que sí te lo
+pusiste ahora lo escribe el propio fit check, que trae la foto como prueba en
+vez de pedirte que contestes.
+
+En el panel, la señal de oro pasa a medirse por **cercanía**: un fit check a
+menos de 24 horas de un look generado cuenta como "se puso lo que le sugerí".
+
+### Added — cada viaje llega con la foto de su destino
+
+La card de viaje (solo a 7 días o menos) ahora abre con una foto del lugar:
+19 destinos en blanco y negro, elegidos por el nombre del viaje y, si no lo
+reconoce, por las ocasiones que marcaste. Son B&N a propósito — en esta app el
+color es de tu ropa, y una playa a color sería el atardecer naranja de siempre.
+
+### Removed — "sin estrenar" se va hasta que el registro de uso funcione
+
+Avisaba de prendas que "no habías estrenado", pero eso significa "nunca
+registrada como usada" y ese registro está seco: casi cualquier prenda
+calificaba. Era una alarma conectada a un cable cortado.
+
+### Fixed
+
+└ **Pedir una boda ya no te devuelve el look de la oficina.** Con un look de
+  hoy ya generado, el botón de crear reutilizaba el que estaba en caché e
+  ignoraba la ocasión que acababas de elegir — sin error ni aviso.
+└ **El home ya no puede quedar inalcanzable** al abrir un look planeado desde
+  su card (el parámetro de la URL se limpiaba solo en uno de los dos caminos).
+└ **Los faltantes de la maleta cuentan igual en la card y en el detalle**: al
+  desmarcar algo empacado, los dos números se separaban.
+└ **Un viaje con datos viejos ya no tumba el home entero.** Las dos cards
+  nuevas fallan hacia null en vez de reventar la pantalla.
+└ **La fecha del último look ya no parpadea de noche**: se calculaba con el
+  reloj del servidor (UTC), así que después de las 6pm decía "ayer" sobre algo
+  de hoy.
+└ **La cuenta regresiva del viaje usa tu reloj**: anunciaba "en curso" un
+  viaje de mañana y pedía comprar "hoy" a las 8 de la noche del día anterior.
+└ **Un viaje a "Roma Norte" ya no enseña el Coliseo** — es una colonia de la
+  CDMX, no Italia.
+└ El try-on de un viaje o de la cápsula ya no se cuela como "tu último look":
+  esas filas existen solo para guardar el render y no deben aparecer.
+
 ## [0.2.222.0] - 2026-08-11
 
 ### Changed — si estás bajo techo, la lluvia deja de mandar en tu look

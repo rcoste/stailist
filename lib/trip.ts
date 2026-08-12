@@ -1,6 +1,16 @@
 // Modo viaje (v1) — dominio puro (sin IA ni DB; seguro para cliente). Reusa el
 // modelo de cápsula: la cápsula ideal del viaje (CapsuleTarget) se cruza con tu
 // clóset (matchCapsule) → "empaca esto" + "te falta".
+
+/** Un viaje a dos meses no es contexto de hoy: fuera de esta ventana no se
+ *  anuncia (la card del home ni el aviso del botón "Más").
+ *
+ *  Vive AQUÍ y no en lib/trip-context porque la comparten server y cliente, y
+ *  ese archivo importa el cliente de Supabase de servidor: basta con que un
+ *  componente `"use client"` tome de ahí una constante para arrastrar
+ *  `next/headers` al bundle del navegador y romper la compilación entera de la
+ *  ruta. Pasó, y los 934 tests no lo vieron — solo el navegador. */
+export const VENTANA_VIAJE_DIAS = 7;
 import type {
   CapsuleMatch,
   CapsuleOverrides,

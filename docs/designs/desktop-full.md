@@ -69,7 +69,7 @@ DESIGN.md en el mismo commit de la Fase 1):
 
 | Pantalla | Layout desktop |
 |---|---|
-| **Hoy (con look)** | 2 columnas: izquierda imagen del look/try-on (sticky, ~40%), derecha título + explicación + tip + acciones (voto, me lo puse, pruébatelo). El look deja de ser "scroll de teléfono" y se vuelve página de revista. |
+| **Hoy (con look)** | 2 columnas: izquierda imagen del look/try-on (sticky, ~40%), derecha título + explicación + tip + acciones (voto, pruébatelo, fit check — el botón "me lo puse" dejó de existir en el rediseño del home del 2026-08-11; no lo construyas en desktop). El look deja de ser "scroll de teléfono" y se vuelve página de revista. |
 | **Hoy (vacío + wizard)** | Columna editorial centrada como hoy (un flujo enfocado no gana nada con ancho). |
 | **Clóset · prendas** | Grid `lg:grid-cols-5` (hoy 3), búsqueda y filtros en una fila arriba. Card "Descubre" al pie a lo ancho. |
 | **Clóset · cápsula** | 2 columnas: izquierda sticky "por qué es tuya" + progreso + nudges; derecha la lista de prendas. |

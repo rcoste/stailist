@@ -2,9 +2,14 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-// El viaje "vivo" del usuario: el que está en curso o arranca pronto. Lo comparten
-// la card contextual del home y el badge del botón "Más" de la tab bar, para que
-// ambos digan lo mismo y con la misma ventana.
+// El viaje "vivo" del usuario: el que está en curso o arranca pronto. Alimenta
+// el badge del botón "Más" de la tab bar.
+//
+// La card de viaje del home NO usa esta función: necesita además la maleta y sus
+// faltantes, así que tiene su propia consulta en lib/home-trip.ts. Lo que SÍ
+// comparten —y por eso vive aquí— es la ventana (VENTANA_VIAJE_DIAS) y el
+// cálculo de días: si el botón avisa de un viaje, la card tiene que hablar del
+// mismo y decir los mismos días.
 export type TripContext = {
   id: string;
   lugar: string;
@@ -12,12 +17,17 @@ export type TripContext = {
   href: string; // detalle si ya hay maleta; la lista si aún no
 };
 
-// Un viaje a dos meses no es contexto de hoy: fuera de esta ventana no se anuncia.
-export const VENTANA_VIAJE_DIAS = 7;
+// La ventana vive en lib/trip.ts (dominio puro) para que un componente cliente
+// pueda leerla sin arrastrar este archivo —y con él el Supabase de servidor—
+// al bundle del navegador. Se re-exporta para no romper a quien ya la importa
+// desde aquí.
+import { VENTANA_VIAJE_DIAS } from "@/lib/trip";
+export { VENTANA_VIAJE_DIAS };
 
 // Días entre hoy y una fecha YYYY-MM-DD, comparando fechas puras (sin horas):
 // evita que un viaje que empieza hoy salga como "faltan -1 días" por zona horaria.
-function diasHasta(fecha: string, hoy: string): number {
+// Exportada: la card de viaje del home (lib/home-trip) cuenta con la misma regla.
+export function diasHasta(fecha: string, hoy: string): number {
   const a = Date.parse(`${hoy}T00:00:00Z`);
   const b = Date.parse(`${fecha}T00:00:00Z`);
   return Math.round((b - a) / 86_400_000);

@@ -17,7 +17,7 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 - Motor de outfits: 2-3 outfits con justificación de una línea, generados en <30s con progreso por fases, voto 👍/👎 persistente.
 - "Tu look de hoy": al regresar, la app te recibe con un outfit generado para tu día (1 por día, considera el clima).
 - Clóset: 15 básicos con imágenes de arquetipo (generadas con IA una vez); fotos propias opcionales con confirmación editable del análisis.
-- PWA instalable (prompt tras el primer 👍), botón "me lo puse", historial persistente.
+- PWA instalable (prompt tras el primer 👍), botón "me lo puse", historial persistente. (El **botón** "me lo puse" ya no existe: murió en el rediseño del home del 2026-08-11 junto con la card "¿te lo pusiste ayer?", porque pedían un favor que casi nadie hacía. El **evento** `worn` sigue siendo la señal de oro; ahora lo escribe el fit check, que llega con la foto como prueba, y el panel lo cuenta por cercanía — ver `lib/senal-oro.ts`.)
 - Beta cerrada: allowlist de correos + magic link. Solo español.
 
 **Fuera del MVP (no recuperar por accidente):** análisis de colorimetría por selfie, compras sugeridas, scraping de catálogos, pagos. (Ya entraron por decisión posterior de Roberto: avatar/try-on, modo maleta/viaje, compartir el render del look — 2026-07-26 — y **multi-prenda en una foto**, que este archivo listó como "diferida" mucho después de volverse la vía principal de alta: 303 de las 953 prendas de la base entraron por ahí.)

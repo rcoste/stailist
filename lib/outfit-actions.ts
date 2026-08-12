@@ -38,33 +38,22 @@ export async function voteOutfit(
   return { ok: true };
 }
 
-// "Me lo puse" — la señal de oro del experimento: alguien usó un outfit en la
-// vida real. Idempotente por el índice único (user, outfit, 'worn').
-export async function markWorn(
-  outfitId: string
-): Promise<{ ok: boolean }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
-
-  const { error } = await supabase.from("events").insert({
-    user_id: user.id,
-    outfit_id: outfitId,
-    type: "worn",
-    data: {},
-  });
-
-  if (error && error.code !== "23505") return { ok: false };
-  return { ok: true };
-}
+// markWorn() vivía aquí y se borró en el rediseño del home (2026-08-11): su
+// único llamador era la card "¿te lo pusiste ayer?", que murió con él. El
+// evento `worn` NO desapareció —lo siguen leyendo el motor, el clóset y el
+// admin— pero ahora lo escribe quien tiene la prueba: el fit check, al recibir
+// la foto del outfit puesto (app/api/espejo/route.ts). Si algún día hace falta
+// marcar `worn` desde un botón otra vez, esta función está en el historial de
+// git; no la revivas por inercia sin una superficie que la llame.
 
 // "Ponérmelo" (re-wear): vuelve a poner un look pasado como el look del día de
 // HOY. Limpia el flag del look de hoy anterior (respeta el índice único parcial
 // (user, look_date) where is_look_of_day) y marca este outfit como el de hoy.
-// NO marca "worn" — esa sigue siendo la señal de oro real ("Me lo puse"), que el
-// usuario confirma en Hoy si de verdad lo usa. Tras esto, el cliente navega a /hoy.
+// NO marca "worn": volver a elegir un look no es habérselo puesto. La evidencia
+// de que sí se lo puso llega por otro lado — desde el rediseño del home
+// (2026-08-11) ya no hay una card que lo pregunte, sino el fit check (la foto
+// del outfit puesto) y la señal de oro por cercanía (lib/senal-oro).
+// Tras esto, el cliente navega a /hoy.
 export async function wearToday(
   outfitId: string,
   /** Fecha calendario LOCAL del dispositivo (YYYY-MM-DD). El server corre en

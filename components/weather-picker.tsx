@@ -265,8 +265,11 @@ export function LookRequest({
   defaultObjective: string | null;
   onPick: (input: LookInput) => void;
   onExit?: () => void;
-  // Ancla pre-seleccionada: la usa la card "aún no estrenas X" del home, que
-  // abre el wizard con esa prenda ya puesta como ancla.
+  // Ancla pre-seleccionada: abre el wizard con esa prenda ya puesta como ancla.
+  // SIN CALLERS desde que murió la card "aún no estrenas X" (rediseño del home,
+  // 2026-08-11). Se conserva porque el mecanismo de ancla sigue vivo y con uso
+  // —el picker "¿algo que te quieras poner?" del paso 1— y volver a enchufar
+  // una entrada externa es pasar la prop; borrarlo y rehacerlo costaría más.
   defaultSeedItemId?: string | null;
   // Wow (primer outfit): la ocasión ya se eligió en el paso de onboarding →
   // arranca en "momento" y muestra 2 pasos en vez de 3 (no re-pregunta ocasión).
