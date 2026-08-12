@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.227.0] - 2026-08-12
+
+### Added — puedes fijar varias prendas, no sólo una
+
+Antes podías decirle *"hoy quiero usar este blazer"* y te armaba el look
+alrededor. Ahora puedes decirle *"este blazer **y** estos jeans"* — hasta tres —
+y arma el resto alrededor de todas. Ninguna se cambia ni se cae, aunque no vayan
+con el clima.
+
+Las prendas que no pueden convivir salen apagadas y te dice por qué: dos
+pantalones no caben, un vestido no lleva pantalón. **Camisa y suéter sí**, que
+eso es un look en capas.
+
+Y si quieres decidir el outfit entero sin que la app opine, ésa es la otra
+pantalla: *"pruébate un look"*.
+
 ## [0.2.226.0] - 2026-08-12
 
 ### Added — el probador, ahora desde tu clóset

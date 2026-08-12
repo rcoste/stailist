@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { requireOnboarded } from "@/lib/auth";
+import { MAX_ANCLAS } from "@/lib/anclas";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { loadJourneySignals } from "@/lib/journey-data";
@@ -29,15 +30,18 @@ export default async function HoyPage({
   const { generar, inicio, prenda } = await searchParams;
   // El botón ✨ manda ?generar=<timestamp> (cualquier valor presente cuenta).
   const autoAsk = generar != null;
-  // `?prenda=<id>`: llegaste desde la ficha de una prenda del clóset con "arma
-  // un look con ésta". Es el ancla del wizard, precargada — el mismo dato que
-  // se elige a mano en el paso 1, sólo que ya contestado.
+  // `?prenda=<id>` o `?prenda=<id>,<id>`: llegaste desde el clóset con "arma un
+  // look con esta prenda". Son las anclas del wizard, precargadas — el mismo
+  // dato que se elige a mano en el paso 1, sólo que ya contestado.
   //
   // NO SE VALIDA AQUÍ contra el clóset: el wizard busca el id en la lista que ya
   // recibe (`closet`) y si no está, no enseña nada. Un id ajeno o inventado en
   // la URL no puede hacer nada — el motor además re-verifica que la prenda sea
   // tuya antes de anclarla (ver contexto.ts).
-  const seedItemId = typeof prenda === "string" && prenda ? prenda : null;
+  const seedItemIds =
+    typeof prenda === "string" && prenda
+      ? prenda.split(",").map((x) => x.trim()).filter(Boolean).slice(0, MAX_ANCLAS)
+      : [];
   const profile = await requireOnboarded();
   const supabase = await createClient();
   // El server corre en UTC y NO conoce la zona horaria del dispositivo, así que
@@ -283,7 +287,7 @@ export default async function HoyPage({
           hayPlaneado={hayPlaneado}
           // La prenda entra a la llave: llegar desde OTRA prenda con el wizard
           // ya abierto tiene que remontar, o el ancla se quedaría en la primera.
-          key={`${nombre}:${generar ?? "view"}:${seedItemId ?? ""}`}
+          key={`${nombre}:${generar ?? "view"}:${seedItemIds.join(",")}`}
           lookInicial={lookInicial}
           pendingOutfitId={pendingOutfitId}
           votoInicial={votoInicial}
@@ -294,7 +298,7 @@ export default async function HoyPage({
           desdeElQuiz={desdeElQuiz}
           closet={closet}
           autoAsk={autoAsk}
-          seedItemId={seedItemId}
+          seedItemIds={seedItemIds}
           homeTrip={homeTrip}
           ultimoLook={ultimoLook}
           checklist={checklist}

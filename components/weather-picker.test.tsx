@@ -679,10 +679,12 @@ describe("el ancla que llega precargada desde el clóset", () => {
   const closet: ClosetPick[] = [
     { id: "abc", nombre: "Blazer marino", imagen: null, swatch: "#1F2A44", category: "saco" },
     { id: "xyz", nombre: "Jeans rectos", imagen: null, swatch: "#3B5A80", category: "bottom" },
+    { id: "p2", nombre: "Pantalón de vestir", imagen: null, swatch: "#1A1A1A", category: "bottom" },
+    { id: "t1", nombre: "Camisa blanca", imagen: null, swatch: "#F2F2F2", category: "top" },
   ];
 
   it("se ve fijada, sin volver a preguntar", () => {
-    render(<LookRequest {...props} closet={closet} defaultSeedItemId="abc" />);
+    render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["abc"]} />);
     expect(screen.getByText(/vas a usar/i)).toBeTruthy();
     expect(screen.getByText("Blazer marino")).toBeTruthy();
     expect(screen.queryByText(/¿algo que te quieras poner\?/i)).toBeNull();
@@ -692,7 +694,7 @@ describe("el ancla que llega precargada desde el clóset", () => {
     const onPick = vi.fn();
     const u = userEvent.setup();
     render(
-      <LookRequest {...props} onPick={onPick} closet={closet} defaultSeedItemId="abc" />
+      <LookRequest {...props} onPick={onPick} closet={closet} defaultSeedItemIds={["abc"]} />
     );
     await u.click(screen.getByRole("button", { name: /un día normal/i }));
     await siguiente(u);
@@ -702,14 +704,79 @@ describe("el ancla que llega precargada desde el clóset", () => {
     await u.click(screen.getByRole("button", { name: /armar mi look/i }));
 
     await waitFor(() => expect(onPick).toHaveBeenCalled());
-    expect((onPick.mock.calls[0][0] as LookInput).seedItemId).toBe("abc");
+    expect((onPick.mock.calls[0][0] as LookInput).seedItemIds).toEqual(["abc"]);
+  });
+
+  it("se pueden fijar VARIAS: elegir no cierra la hoja", async () => {
+    // Con una sola prenda, elegir ERA terminar. Con varias, cerrarse en la
+    // primera obligaría a reabrir la hoja por cada una — el mismo error que ya
+    // corregimos en "+ más" de la ficha del clóset.
+    const u = userEvent.setup();
+    render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["abc"]} />);
+    await u.click(screen.getByRole("button", { name: /agregar otra/i }));
+    await u.click(screen.getByRole("button", { name: /jeans rectos/i }));
+    // La hoja sigue abierta (su buscador continúa en pantalla) y ya hay dos.
+    expect(screen.getByPlaceholderText(/busca una prenda/i)).toBeTruthy();
+    expect(screen.getAllByText(/vas a usar/i)).toHaveLength(2);
+  });
+
+  it("las dos viajan al motor", async () => {
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(
+      <LookRequest
+        {...props}
+        onPick={onPick}
+        closet={closet}
+        defaultSeedItemIds={["abc", "xyz"]}
+      />
+    );
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    await u.click(await screen.findByRole("button", { name: /cálido/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    expect((onPick.mock.calls[0][0] as LookInput).seedItemIds).toEqual(["abc", "xyz"]);
+  });
+
+  it("dos pantalones no se pueden, Y SE DICE POR QUÉ", async () => {
+    // ESTE TEST NACE DE UN BUG QUE LA SUITE NO VIO Y EL NAVEGADOR SÍ: el motivo
+    // del bloqueo se calculaba, se guardaba en estado… y no se pintaba nunca.
+    // El resultado era un botón que no responde y no explica — que no se lee
+    // como una regla, se lee como que la app está rota.
+    const u = userEvent.setup();
+    render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["xyz"]} />);
+    await u.click(screen.getByRole("button", { name: /agregar otra/i }));
+    await u.click(screen.getByRole("button", { name: /pantalón de vestir/i }));
+    expect(screen.getByText(/ya elegiste un pantalón/i)).toBeTruthy();
+    // Y no se sumó: sigue habiendo una sola.
+    expect(screen.getAllByText(/vas a usar/i)).toHaveLength(1);
+  });
+
+  it("pero DOS TOPS sí: camisa + suéter es un look en capas", async () => {
+    const u = userEvent.setup();
+    render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["abc"]} />);
+    await u.click(screen.getByRole("button", { name: /agregar otra/i }));
+    await u.click(screen.getByRole("button", { name: /camisa blanca/i }));
+    expect(screen.queryByText(/ya elegiste/i)).toBeNull();
+    expect(screen.getAllByText(/vas a usar/i)).toHaveLength(2);
+  });
+
+  it("cada ancla se quita sin abrir la hoja", async () => {
+    const u = userEvent.setup();
+    render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["abc", "xyz"]} />);
+    await u.click(screen.getByRole("button", { name: /quitar blazer marino/i }));
+    expect(screen.getAllByText(/vas a usar/i)).toHaveLength(1);
+    expect(screen.queryByText("Blazer marino")).toBeNull();
   });
 
   it("una prenda que no es tuya no fija nada", () => {
     // El id viene de la URL y cualquiera puede escribir ahí. El wizard lo busca
     // en TU clóset: si no está, no enseña nada y la pregunta vuelve a su estado
     // normal. (El motor además re-verifica dueño antes de anclar.)
-    render(<LookRequest {...props} closet={closet} defaultSeedItemId="de-alguien-mas" />);
+    render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["de-alguien-mas"]} />);
     expect(screen.queryByText(/vas a usar/i)).toBeNull();
     expect(screen.getByText(/¿algo que te quieras poner\?/i)).toBeTruthy();
   });

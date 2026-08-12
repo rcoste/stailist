@@ -21,6 +21,7 @@ import {
   reconocerPlanEscrito,
 } from "@/lib/eventos";
 import { pasosDelWizard } from "@/lib/wizard-pasos";
+import { MAX_ANCLAS, motivoBloqueo } from "@/lib/anclas";
 // Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
 // del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
 import {
@@ -40,7 +41,7 @@ export type LookInput = {
   objective: string;
   plan?: string;
   momento: "dia" | "noche";
-  seedItemId?: string | null; // ancla opcional: prenda fijada para hoy
+  seedItemIds?: string[]; // anclas opcionales: prendas fijadas para hoy
   formality?: string | null; // solo en "evento". Los valores viven en Formalidad (lib/formalidad.ts) —
   // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
   /**
@@ -256,7 +257,7 @@ export function LookRequest({
   onExit,
   skipObjective,
   closet = [],
-  defaultSeedItemId = null,
+  defaultSeedItemIds = [],
   gender = null,
   workDressCode = null,
   desdeElQuiz = null,
@@ -270,7 +271,8 @@ export function LookRequest({
   // 2026-08-11). Se conserva porque el mecanismo de ancla sigue vivo y con uso
   // —el picker "¿algo que te quieras poner?" del paso 1— y volver a enchufar
   // una entrada externa es pasar la prop; borrarlo y rehacerlo costaría más.
-  defaultSeedItemId?: string | null;
+  /** Anclas ya elegidas antes de entrar (desde la ficha de una prenda). */
+  defaultSeedItemIds?: string[];
   // Wow (primer outfit): la ocasión ya se eligió en el paso de onboarding →
   // arranca en "momento" y muestra 2 pasos en vez de 3 (no re-pregunta ocasión).
   skipObjective?: boolean;
@@ -330,7 +332,9 @@ export function LookRequest({
   // Default "afuera": es el lado seguro. Quien no conteste recibe el look de
   // lluvia de siempre; solo quien DICE que anda bajo techo pierde el agua.
   const [techado, setTechado] = useState(false);
-  const [seedItemId, setSeedItemId] = useState<string | null>(defaultSeedItemId); // ancla opcional
+  // ANCLAS (plural desde 0.2.227). `defaultSeedItemIds` llega de la ficha del
+  // clóset con las prendas ya elegidas; dentro del wizard se tocan aquí.
+  const [seedItemIds, setSeedItemIds] = useState<string[]>(defaultSeedItemIds);
   const [sheetOpen, setSheetOpen] = useState(false); // hoja del picker de prenda
   // La fecha del plan. null = hoy — el default silencioso. Vive en el paso
   // "¿cuándo?" junto con día/noche (son la misma pregunta). Solo fechas
@@ -641,7 +645,7 @@ export function LookRequest({
     onPick({
       ...objectivePart,
       momento,
-      seedItemId,
+      seedItemIds,
       formality: formalityOut,
       tipoEvento: tipoEventoOut,
       ...(dressCode ? { workDressCode: dressCode as WorkDressCode } : {}),
@@ -787,9 +791,13 @@ export function LookRequest({
                 />
                 {closet.length > 0 ? (
                   <AnchorTrigger
-                    selected={closet.find((c) => c.id === seedItemId) ?? null}
+                    selected={seedItemIds
+                      .map((id) => closet.find((c) => c.id === id))
+                      .filter((c): c is ClosetPick => !!c)}
                     onOpen={() => setSheetOpen(true)}
-                    onClear={() => setSeedItemId(null)}
+                    onQuitar={(id) =>
+                      setSeedItemIds((prev) => prev.filter((x) => x !== id))
+                    }
                   />
                 ) : null}
               </div>
@@ -901,11 +909,16 @@ export function LookRequest({
       {sheetOpen ? (
         <AnchorSheet
           closet={closet}
-          selected={seedItemId}
-          onSelect={(id) => {
-            setSeedItemId(id);
-            setSheetOpen(false);
-          }}
+          selected={seedItemIds}
+          // NO CIERRA AL ELEGIR, y ése es el cambio de fondo: con una sola
+          // prenda, elegir ERA terminar. Con varias, cerrarse en la primera
+          // obligaría a reabrir la hoja por cada una — el mismo error que ya
+          // corregimos en "+ más" de la ficha del clóset.
+          onToggle={(id) =>
+            setSeedItemIds((prev) =>
+              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+            )
+          }
           onClose={() => setSheetOpen(false)}
         />
       ) : null}
@@ -2185,57 +2198,58 @@ function StepClima({
 function AnchorTrigger({
   selected,
   onOpen,
-  onClear,
+  onQuitar,
 }: {
-  selected: ClosetPick | null;
+  selected: ClosetPick[];
   onOpen: () => void;
-  onClear: () => void;
+  onQuitar: (id: string) => void;
 }) {
   return (
     <div className="border-t border-line pt-4">
       <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
         opcional
       </p>
-      {selected ? (
-        <div className="flex items-center gap-3 border border-ink bg-surface p-2.5">
-          <span className="flex h-[44px] w-[36px] shrink-0 items-center justify-center overflow-hidden rounded-sm border border-line bg-tile">
-            {selected.imagen ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={selected.imagen}
-                alt={selected.nombre}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span
-                className="block h-full w-full"
-                style={{ backgroundColor: selected.swatch }}
-              />
-            )}
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
-              vas a usar
-            </span>
-            <span className="truncate text-[15px] font-semibold text-ink">
-              {selected.nombre}
-            </span>
-          </span>
-          <button
-            type="button"
-            onClick={onOpen}
-            className="ml-auto shrink-0 text-[13px] font-semibold text-ink underline underline-offset-2"
-          >
-            cambiar
-          </button>
-          <button
-            type="button"
-            onClick={onClear}
-            aria-label="Quitar prenda"
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border border-line text-muted transition-colors hover:border-ink hover:text-ink"
-          >
-            <Icon name="equis" size={14} />
-          </button>
+      {selected.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {/* UNA FILA POR PRENDA, no una lista comprimida. Cada una se puede
+              quitar sin abrir la hoja, que es lo que se quiere cuando te
+              arrepientes de la tercera: con un resumen tipo "3 prendas"
+              habría que entrar sólo para sacar una. */}
+          {selected.map((p) => (
+            <div key={p.id} className="flex items-center gap-3 border border-ink bg-surface p-2.5">
+              <span className="flex h-[44px] w-[36px] shrink-0 items-center justify-center overflow-hidden rounded-sm border border-line bg-tile">
+                {p.imagen ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.imagen} alt={p.nombre} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="block h-full w-full" style={{ backgroundColor: p.swatch }} />
+                )}
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+                  vas a usar
+                </span>
+                <span className="truncate text-[15px] font-semibold text-ink">{p.nombre}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => onQuitar(p.id)}
+                aria-label={`Quitar ${p.nombre}`}
+                className="ml-auto flex h-[30px] w-[30px] shrink-0 items-center justify-center border border-line text-muted transition-colors hover:border-ink hover:text-ink"
+              >
+                <Icon name="equis" size={14} />
+              </button>
+            </div>
+          ))}
+          {selected.length < MAX_ANCLAS ? (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="self-start text-[13px] font-semibold text-ink underline underline-offset-2"
+            >
+              agregar otra
+            </button>
+          ) : null}
         </div>
       ) : (
         <button
@@ -2267,14 +2281,19 @@ function AnchorTrigger({
 function AnchorSheet({
   closet,
   selected,
-  onSelect,
+  onToggle,
   onClose,
 }: {
   closet: ClosetPick[];
-  selected: string | null;
-  onSelect: (id: string | null) => void;
+  selected: string[];
+  onToggle: (id: string) => void;
   onClose: () => void;
 }) {
+  const catsElegidas = selected
+    .map((id) => closet.find((c) => c.id === id)?.category)
+    .filter((c): c is string => !!c);
+  /** Qué salió mal al intentar sumar una prenda. Se limpia al elegir bien. */
+  const [aviso, setAviso] = useState<string | null>(null);
   const cats = CAT_ORDER.filter((c) => closet.some((i) => i.category === c));
   const [cat, setCat] = useState<string>("todos");
   const [q, setQ] = useState("");
@@ -2352,6 +2371,16 @@ function AnchorSheet({
           </div>
         </div>
 
+        {/* EL PORQUÉ DEL BLOQUEO. Sin esto, tocar un segundo pantalón no hace
+            nada y no dice nada — que se lee como que la app está rota, no como
+            una regla. Vive fuera del scroll para que se vea aunque el tap haya
+            ocurrido abajo del todo. */}
+        {aviso ? (
+          <p className="flex-none border-t border-line bg-warning/10 px-[18px] py-2.5 text-[13px] leading-snug text-ink">
+            {aviso}
+          </p>
+        ) : null}
+
         <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
           {filtered.length === 0 ? (
             <p className="py-10 text-center text-[14px] text-muted">
@@ -2360,15 +2389,36 @@ function AnchorSheet({
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {filtered.map((c) => {
-                const on = c.id === selected;
+                const on = selected.includes(c.id);
+                // Sólo se calcula para las NO elegidas: quitar siempre se puede.
+                const bloqueo = on
+                  ? null
+                  : motivoBloqueo(
+                      c.category,
+                      catsElegidas
+                    );
                 return (
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => onSelect(on ? null : c.id)}
+                    onClick={() => {
+                      if (bloqueo) {
+                        // Se DICE por qué. Un chip que no responde al tap se
+                        // lee como que la app está rota.
+                        setAviso(bloqueo);
+                        return;
+                      }
+                      setAviso(null);
+                      onToggle(c.id);
+                    }}
                     aria-pressed={on}
+                    aria-disabled={!!bloqueo}
                     className={`relative aspect-[3/4] overflow-hidden rounded-md border text-left transition-colors ${
-                      on ? "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]" : "border-line"
+                      on
+                        ? "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]"
+                        : bloqueo
+                          ? "border-line opacity-40"
+                          : "border-line"
                     }`}
                   >
                     {c.imagen ? (
