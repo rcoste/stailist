@@ -59,7 +59,7 @@ const EXENTOS: Record<string, Record<string, string>> = {
   "app/api/generate/route.ts": {
     // El wow arma el PRIMER look, siempre para hoy y sin ancla: no hay clóset
     // que anclar todavía ni agenda que planear.
-    seedItemId: "el wow no ofrece anclar una prenda",
+    seedItemId: "el wow no ofrece anclar prendas",
     plannedFor: "el primer look es de hoy; planear otros días vive en /hoy",
     fechaLocal: "sin planear para otro día, la fecha local no cambia nada",
     // No los lee por nombre: le pasa el body ENTERO a resolveWeather(body),

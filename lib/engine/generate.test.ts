@@ -92,9 +92,43 @@ describe("generarConRecibo", () => {
 
   it("la red del ancla: si el modelo la omitió, se re-inyecta en cada look", async () => {
     llamar.mockResolvedValue(respuesta(dosLooks(["a", "b"])));
-    const ctx = { ...ctxCon(["a", "b", "ancla"]), seedItemId: "ancla" };
+    const ctx = { ...ctxCon(["a", "b", "ancla"]), seedItemIds: ["ancla"] };
     const { outfits } = await generarConRecibo(ctx);
     for (const o of outfits) expect(o.item_ids).toContain("ancla");
+  });
+
+  it("la red aguanta VARIAS anclas: entran todas, sin duplicar", async () => {
+    llamar.mockResolvedValue(respuesta(dosLooks(["a", "b"])));
+    const ctx = { ...ctxCon(["a", "b", "x", "y"]), seedItemIds: ["x", "y"] };
+    const { outfits } = await generarConRecibo(ctx);
+    for (const o of outfits) {
+      expect(o.item_ids).toContain("x");
+      expect(o.item_ids).toContain("y");
+      expect(new Set(o.item_ids).size).toBe(o.item_ids.length);
+    }
+  });
+
+  it("con anclas, el corte a 5 se lleva el ESTILISMO, nunca lo que fijaste", async () => {
+    // Quien fijó cuatro prendas ya decidió casi todo el look; recortar por el
+    // otro lado tiraría justo lo que pidió, que es lo único que esta red existe
+    // para impedir.
+    llamar.mockResolvedValue(respuesta(dosLooks(["a", "b"])));
+    const anclas = ["p", "q", "r", "s"];
+    const ctx = { ...ctxCon(["a", "b", ...anclas]), seedItemIds: anclas };
+    const { outfits } = await generarConRecibo(ctx);
+    for (const o of outfits) {
+      expect(o.item_ids).toHaveLength(5);
+      for (const id of anclas) expect(o.item_ids).toContain(id);
+    }
+  });
+
+  it("un ancla que el modelo SÍ puso no se duplica", async () => {
+    llamar.mockResolvedValue(respuesta(dosLooks(["a", "b"])));
+    const ctx = { ...ctxCon(["a", "b"]), seedItemIds: ["a"] };
+    const { outfits } = await generarConRecibo(ctx);
+    for (const o of outfits) {
+      expect(o.item_ids.filter((id: string) => id === "a")).toHaveLength(1);
+    }
   });
 
   it("devuelve el recibo de la llamada junto con los looks", async () => {

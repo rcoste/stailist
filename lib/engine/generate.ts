@@ -107,16 +107,24 @@ export async function generarConRecibo(
 
   if (outfits.length < 2) throw new Error("TOO_FEW_OUTFITS");
 
-  // Ancla: si la usuaria fijó una prenda, garantízala en cada candidato (el
-  // prompt ya la pide; esto es la red de seguridad por si el modelo la omite).
-  const seed = ctx.seedItemId;
-  if (seed && valid.has(seed)) {
+  // Anclas: si la usuaria fijó prendas, garantízalas en cada candidato (el
+  // prompt ya las pide; esto es la red de seguridad por si el modelo las omite).
+  //
+  // Van AL FRENTE y el corte a 5 se aplica DESPUÉS: con 4 anclas sólo queda un
+  // hueco para el estilismo, y así debe ser — quien fijó cuatro prendas ya
+  // decidió casi todo el look. Recortar por el otro lado tiraría justo lo que
+  // la persona pidió, que es lo único que este bloque existe para impedir.
+  const anclas = (ctx.seedItemIds ?? []).filter((id) => valid.has(id));
+  if (anclas.length) {
     return {
-      outfits: outfits.map((o) =>
-        o.item_ids.includes(seed)
-          ? o
-          : { ...o, item_ids: [seed, ...o.item_ids].slice(0, 5) }
-      ),
+      outfits: outfits.map((o) => {
+        const faltan = anclas.filter((id) => !o.item_ids.includes(id));
+        if (!faltan.length) return o;
+        return {
+          ...o,
+          item_ids: [...faltan, ...o.item_ids].slice(0, 5),
+        };
+      }),
       recibo,
     };
   }

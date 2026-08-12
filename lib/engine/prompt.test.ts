@@ -650,7 +650,7 @@ describe("formalidad: el ancla concreta, no la palabra suelta", () => {
       fitPref: null,
       ageStyling: null,
       tasteSignal: EMPTY_TASTE_SIGNAL,
-      seedItemId: null,
+      seedItemIds: [],
       styleReference: null,
       styleWords: null,
     }) as unknown as EngineContext;
@@ -711,7 +711,7 @@ describe("el código de vestimenta del trabajo", () => {
       fitPref: null,
       ageStyling: null,
       tasteSignal: EMPTY_TASTE_SIGNAL,
-      seedItemId: null,
+      seedItemIds: [],
       formality: null,
       plan: null,
       styleReference: null,
@@ -770,7 +770,7 @@ describe("'depende del día': la pregunta del día lo desambigua", () => {
       fitPref: null,
       ageStyling: null,
       tasteSignal: EMPTY_TASTE_SIGNAL,
-      seedItemId: null,
+      seedItemIds: [],
       formality: null,
       plan: null,
       styleReference: null,
@@ -887,5 +887,81 @@ describe("la certeza de la prenda llega al motor (v49)", () => {
   it("el prompt dice QUÉ HACER con una prenda aproximada, no solo que lo es", () => {
     expect(SYSTEM_PROMPT).toContain("DETALLES APROXIMADOS");
     expect(SYSTEM_PROMPT).toContain("NO construyas el look sobre esos detalles");
+  });
+});
+
+describe("el ancla: una prenda o varias", () => {
+  // LO QUE SE BLINDA AQUÍ ES UNA DECISIÓN DE PROCESO, no sólo un texto.
+  //
+  // Este archivo es prompt versionado y en esta casa los cambios del motor se
+  // deciden MIDIENDO, no de oído. Al volver el ancla plural, la tentación era
+  // reescribir la frase para que cubriera los dos casos — y eso habría cambiado
+  // el prompt de TODOS los looks de hoy (que llevan una sola prenda fijada),
+  // obligando a una corrida pareada en el comparador antes de poder shippear.
+  //
+  // Manteniendo la frase de UNA idéntica al carácter, lo único nuevo es el caso
+  // de 2+, que antes no existía: no hay contra qué compararlo. Si alguien la
+  // toca, este test se lo dice antes de que lo descubra el comparador.
+  const conAnclas = (ids: string[]): EngineContext =>
+    ({
+      gender: "hombre",
+      objective: "diario",
+      items: [
+        { id: "s1", attrs: { nombre: "Saco marino", categoria: "saco" } },
+        { id: "p1", attrs: { nombre: "Pantalón negro", categoria: "bottom" } },
+      ],
+      seedItemIds: ids,
+      tasteTags: [],
+      vetoes: [],
+      recentCombos: [],
+      lifestyle: null,
+      archetype: null,
+      season: null,
+      flow: null,
+      silueta: null,
+      fitPref: null,
+      ageStyling: null,
+      tasteSignal: EMPTY_TASTE_SIGNAL,
+      styleReference: null,
+      styleWords: null,
+      weather: null,
+    }) as unknown as EngineContext;
+
+  it("sin anclas no dice nada de anclas", () => {
+    expect(contextBlock(conAnclas([])).join("\n")).not.toContain("ANCLA");
+  });
+
+  it("UNA ancla: la frase es la de siempre, palabra por palabra", () => {
+    const linea = contextBlock(conAnclas(["s1"])).find((l) => l.includes("ANCLA"))!;
+    expect(linea).toContain("hoy QUIERE usar esta prenda →");
+    expect(linea).toContain("El look DEBE incluirla");
+    expect(linea).toContain("Jamás la quites ni la sustituyas.");
+    // Y NO se cuela el vocabulario del plural.
+    expect(linea).not.toContain("estas");
+    expect(linea).not.toContain("TODAS");
+  });
+
+  it("VARIAS: las lista todas y pide todas", () => {
+    const linea = contextBlock(conAnclas(["s1", "p1"])).find((l) => l.includes("ANCLA"))!;
+    expect(linea).toContain("estas 2 prendas");
+    expect(linea).toContain("DEBE incluirlas TODAS");
+    expect(linea).toContain("s1");
+    expect(linea).toContain("p1");
+  });
+
+  it("varias que no se llevan entre ellas: se respetan igual", () => {
+    // La respuesta es la misma que con el clima — quien las eligió sabe lo que
+    // quiere ponerse. Sin esta frase, el modelo tiene permiso para "arreglar"
+    // la combinación tirando una, que es justo lo que el ancla prohíbe.
+    const linea = contextBlock(conAnclas(["s1", "p1"])).find((l) => l.includes("ANCLA"))!;
+    expect(linea).toContain("entre ellas");
+    expect(linea).toContain("Jamás quites ni sustituyas ninguna.");
+  });
+
+  it("un id que ya no está en el clóset se ignora sin romper la frase", () => {
+    const linea = contextBlock(conAnclas(["s1", "fantasma"])).find((l) => l.includes("ANCLA"))!;
+    // Queda UNA de verdad → vuelve a la frase del singular, intacta.
+    expect(linea).toContain("hoy QUIERE usar esta prenda →");
+    expect(linea).not.toContain("fantasma");
   });
 });

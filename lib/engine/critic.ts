@@ -216,9 +216,10 @@ function buildCriticMessage(
 }
 
 // El juez nunca puede tirar el ancla: si su reescritura la perdió, la re-inyecta.
-function keepAnchor(o: GeneratedOutfit, seed: string | null): GeneratedOutfit {
-  if (!seed || o.item_ids.includes(seed)) return o;
-  return { ...o, item_ids: [seed, ...o.item_ids].slice(0, 5) };
+function keepAnchor(o: GeneratedOutfit, anclas: string[]): GeneratedOutfit {
+  const faltan = anclas.filter((id) => !o.item_ids.includes(id));
+  if (!faltan.length) return o;
+  return { ...o, item_ids: [...faltan, ...o.item_ids].slice(0, 5) };
 }
 
 export async function reviewOutfit(
@@ -289,7 +290,7 @@ export async function reviewOutfit(
           explicacion: parsed.explicacion,
           tip,
         },
-        ctx.seedItemId ?? null
+        ctx.seedItemIds ?? []
       );
 
       // SE COMPRUEBA LA REPARACIÓN. Nadie miraba el resultado del reparador, y
@@ -317,7 +318,7 @@ export async function reviewOutfit(
           contextoDeReglas(ctx)
         );
         if (arreglo.hechas.length > 0) {
-          look = keepAnchor({ ...reparado, item_ids: arreglo.itemIds }, ctx.seedItemId ?? null);
+          look = keepAnchor({ ...reparado, item_ids: arreglo.itemIds }, ctx.seedItemIds ?? []);
           roto = loQueSigueRoto(ctx, look);
         }
       }

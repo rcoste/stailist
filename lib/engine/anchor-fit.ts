@@ -2,7 +2,7 @@ import { GUARD_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { describeItem, type EngineItem } from "./prompt";
 
-// Chequeo ligero (Haiku) de si la prenda anclada va con la ocasión. NO bloquea
+// Chequeo ligero (Haiku) de si las prendas ancladas van con la ocasión. NO bloquea
 // el estilismo: el ancla manda casi siempre; solo cazamos mismatches obvios
 // (traje de baño para una boda) para no hacer ver tonta a la IA. Fail-open: si
 // no hay key o algo truena, devolvemos fits=true (nunca estorbamos al usuario).
@@ -34,11 +34,19 @@ const FIT_SCHEMA = {
   additionalProperties: false,
 };
 
+/**
+ * @param items Las prendas fijadas. Con una, el mensaje es EXACTAMENTE el de
+ * siempre — este guardia también es un prompt, y el caso de hoy no cambia. Con
+ * varias se listan y se pregunta si ALGUNA no va, en una sola llamada: una por
+ * prenda multiplicaría la latencia de un gate que corre ANTES de generar, que
+ * es justo donde peor se siente.
+ */
 export async function checkAnchorFit(
-  item: EngineItem,
+  items: EngineItem[],
   occasion: string,
   weatherLine: string | null
 ): Promise<AnchorFit> {
+  if (items.length === 0) return { fits: true, note: "" };
   if (!process.env.ANTHROPIC_API_KEY) return { fits: true, note: "" };
   try {
     const client = new Anthropic();
@@ -54,9 +62,13 @@ export async function checkAnchorFit(
       messages: [
         {
           role: "user",
-          content: `Prenda: ${describeItem(item)}\nOcasión: ${occasion}${
-            weatherLine ? `\nClima: ${weatherLine}` : ""
-          }`,
+          content: `${
+            items.length === 1
+              ? `Prenda: ${describeItem(items[0])}`
+              : `Prendas (¿alguna NO va?): ${items
+                  .map((i) => describeItem(i))
+                  .join(" | ")}`
+          }\nOcasión: ${occasion}${weatherLine ? `\nClima: ${weatherLine}` : ""}`,
         },
       ],
       output_config: {
