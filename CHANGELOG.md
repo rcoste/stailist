@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.223.4] - 2026-08-12
+
+### Fixed — "rehacer la imagen" ya hace algo
+
+Tocar *"la imagen no es de esta prenda — rehacerla"* en una prenda del catálogo
+generaba la imagen nueva, la guardaba… y seguía enseñando el dibujo de siempre.
+La generación se cobraba igual, y se podía repetir sin límite sin ver un solo
+cambio. Reportado por Roberto sobre una chamarra que la app pintó gris siendo
+negra — y en esa prenda había, de hecho, una imagen pagada que nadie mostró
+nunca.
+
+La causa: el dibujo del catálogo iba antes que tu imagen en el orden de
+prioridad. Ahora, cuando **tú** pides rehacerla, tu imagen manda. No se borra
+nada: la prenda conserva su ficha de catálogo y quitar la preferencia la
+restaura, igual que con "es la misma" de las fotos propias.
+
+└ **Rehacer guarda primero.** El render se hace con lo que hay en la base, no
+  con lo que tienes en pantalla, así que cambiar el color y tocar "rehacer"
+  regeneraba con el color viejo — otra vez la misma imagen. Ahora el botón lo
+  dice: *"guardar y rehacer la imagen con estos datos"*.
+└ **Si algo falla, te enteras.** El error se tragaba en silencio: una ruta caída
+  se veía idéntica a un render perfecto.
+
+**Lo que esto NO cambia:** los outfits que ya usaban la prenda con el color
+equivocado. Su miniatura se corrige sola —guardan la referencia, no una copia—
+pero el texto ya escrito ("el gris carbón funciona con…") se queda, porque se
+redactó cuando el dato era otro.
+
 ## [0.2.223.3] - 2026-08-12
 
 ### Added — la app ya recuerda lo que le pides con tus palabras

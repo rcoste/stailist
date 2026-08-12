@@ -27,6 +27,8 @@ export type ItemImageRow = {
     categoria?: string | null;
     /** "es la misma": tu foto real manda sobre el dibujo de catálogo. */
     preferir_foto?: boolean | null;
+    /** "rehacerla": el render que PEDISTE manda sobre el dibujo de catálogo. */
+    preferir_render?: boolean | null;
   } | null;
   archetypes?: {
     name?: string | null;
@@ -85,6 +87,9 @@ export type ItemImagePick =
   | null;
 
 // ORDEN CANÓNICO: arquetipo → render limpio → foto cruda → prestada.
+// Con DOS banderas que lo invierten, y las dos nacen de un "esa imagen no es mi
+// prenda": `preferir_foto` (tu foto real) y `preferir_render` (el render que
+// pediste rehacer). Ninguna borra nada — quitarlas restaura el catálogo.
 export function pickItemImage(item: ItemImageRow): ItemImagePick {
   // TU FOTO MANDA SOBRE EL DIBUJO, si dijiste "es la misma".
   //
@@ -98,6 +103,24 @@ export function pickItemImage(item: ItemImageRow): ItemImagePick {
   // archetype_id sigue ahí, y deshacer es quitar la bandera.
   if (item.attrs?.preferir_foto && item.photo_path)
     return { kind: "private", path: item.photo_path };
+  // EL RENDER QUE PEDISTE MANDA SOBRE EL DIBUJO DE CATÁLOGO.
+  //
+  // Misma bandera-que-invierte-prioridad que `preferir_foto`, por el mismo
+  // motivo y con el mismo cuidado: no se borra el vínculo al arquetipo, así que
+  // quitar la bandera devuelve la imagen de catálogo.
+  //
+  // Sin esto, "la imagen no es de esta prenda — rehacerla" era un botón que
+  // cobraba y no hacía nada VISIBLE: el render se generaba, se guardaba con
+  // `render_status: 'done'`… y esta función seguía devolviendo el arquetipo,
+  // que va justo abajo. Roberto lo reportó como "le piqué rehacer y no pasó
+  // nada" — y en su chamarra impermeable había, en efecto, un render pagado que
+  // nadie mostraba nunca. Podía repetirlo indefinidamente.
+  if (
+    item.attrs?.preferir_render &&
+    item.render_status === "done" &&
+    item.render_path
+  )
+    return { kind: "private", path: item.render_path };
   const arch = item.archetypes?.image_path;
   if (arch) return { kind: "public", path: arch };
   if (item.render_status === "done" && item.render_path)

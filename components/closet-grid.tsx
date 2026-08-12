@@ -783,6 +783,8 @@ function ItemSheet({
   const [corteTocado, setCorteTocado] = useState(false);
   const [atando, setAtando] = useState(false);
   const [rehaciendo, setRehaciendo] = useState(false);
+  /** Qué salió mal al rehacer la imagen. null = nada que decir. */
+  const [errorRender, setErrorRender] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
   const [colorHex, setColorHex] = useState(item.swatch);
   const [todosLosColores, setTodosLosColores] = useState(false);
@@ -863,7 +865,8 @@ function ItemSheet({
         .map((x) => x.o)
     : [];
 
-  async function guardar() {
+  /** Manda los cambios del formulario. Devuelve si se guardó. */
+  async function persistir(): Promise<boolean> {
     setSaving(true);
     const res = await updateItemAttrs(item.id, {
       nombre,
@@ -882,7 +885,11 @@ function ItemSheet({
       ...(corteTocado && corte ? { corte } : {}),
     });
     setSaving(false);
-    if (!res.ok) return;
+    return res.ok;
+  }
+
+  async function guardar() {
+    if (!(await persistir())) return;
     // LA IMAGEN SE GENERÓ CON EL NOMBRE Y EL COLOR VIEJOS. Idea de Roberto:
     // "si le cambio el color o el nombre me debería preguntar si quiero
     // generar nuevamente la imagen". Tiene razón — el render sale de esos dos
@@ -893,6 +900,41 @@ function ItemSheet({
       return;
     }
     onSaved();
+  }
+
+  /**
+   * Rehace la imagen. GUARDA PRIMERO si hay cambios sin mandar, porque el
+   * render lee los atributos de la BASE, no del formulario: sin esto, cambiar
+   * el color y tocar "rehacerla" regeneraba con el color viejo y la imagen
+   * salía idéntica — "no pasó nada", con la generación cobrada igual.
+   *
+   * Y el error se VE. Antes la llamada terminaba en `.catch(() => {})`, así
+   * que una ruta caída se veía exactamente igual que un render perfecto: el
+   * spinner paraba y nada cambiaba.
+   */
+  async function rehacerImagen() {
+    setRehaciendo(true);
+    setErrorRender(null);
+    try {
+      if (dirty && !(await persistir())) {
+        setErrorRender("No pude guardar los cambios — inténtalo otra vez.");
+        return;
+      }
+      const res = await fetch("/api/render-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: item.id, forzar: true }),
+      });
+      if (!res.ok) {
+        setErrorRender("No pude rehacer la imagen — inténtalo en un momento.");
+        return;
+      }
+      onSaved();
+    } catch {
+      setErrorRender("Se cortó la conexión — inténtalo otra vez.");
+    } finally {
+      setRehaciendo(false);
+    }
   }
 
   return (
@@ -1266,22 +1308,19 @@ function ItemSheet({
                 que ya está), y esa protección aquí estorbaba. */}
             <button
               type="button"
-              disabled={rehaciendo}
-              onClick={async () => {
-                setRehaciendo(true);
-                await fetch("/api/render-item", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ itemId: item.id, forzar: true }),
-                }).catch(() => {});
-                setRehaciendo(false);
-                onSaved();
-              }}
-              className="flex items-center gap-2 self-start text-[13px] text-muted transition-colors hover:text-accent disabled:opacity-50"
+              disabled={rehaciendo || saving}
+              onClick={rehacerImagen}
+              className="flex items-center gap-2 self-start text-left text-[13px] text-muted transition-colors hover:text-accent disabled:opacity-50"
             >
               {rehaciendo ? <Spinner className="h-3.5 w-3.5" /> : null}
-              la imagen no es de esta prenda — rehacerla
+              {dirty
+                ? "guardar y rehacer la imagen con estos datos"
+                : "la imagen no es de esta prenda — rehacerla"}
             </button>
+
+            {errorRender ? (
+              <p className="text-[13px] leading-snug text-error">{errorRender}</p>
+            ) : null}
 
             {/* LA OFERTA, después de guardar. No se rehace sola: cuesta una
                 llamada y a veces el cambio fue una tilde. Se pregunta con el
@@ -1296,16 +1335,7 @@ function ItemSheet({
                   <button
                     type="button"
                     disabled={rehaciendo}
-                    onClick={async () => {
-                      setRehaciendo(true);
-                      await fetch("/api/render-item", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ itemId: item.id, forzar: true }),
-                      }).catch(() => {});
-                      setRehaciendo(false);
-                      onSaved();
-                    }}
+                    onClick={rehacerImagen}
                     className="flex min-h-9 items-center gap-2 rounded-sm bg-accent px-3 text-[13px] font-medium text-on-accent disabled:opacity-50"
                   >
                     {rehaciendo ? <Spinner className="h-3.5 w-3.5" /> : null}
