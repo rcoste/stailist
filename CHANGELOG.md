@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.224.1] - 2026-08-12
+
+### Changed — el "historial" ahora se llama diario
+
+Era la única pestaña con nombre de sistema. Y el nombre viejo ya no era cierto:
+desde que el fit check registra lo que traes puesto con foto, esa pantalla dejó
+de ser un archivo de sugerencias para volverse el registro de **lo que de verdad
+te pusiste, día por día**.
+
+### Changed — el menú "más" adelgazó
+
+Tenía seis atajos y tres de ellos no ahorraban un solo toque: *tus esenciales* y
+*wishlist* son pestañas del clóset, y *favoritos* es un filtro del diario — con
+o sin atajo, llegar cuesta dos toques.
+
+Ese menú existe para un momento: estás en una tienda y quieres saber si algo va
+con tu paleta. Con seis opciones hay que leer seis; con tres, no. Quedan **añadir
+prendas** y los tres lugares que no viven en ninguna pestaña: viajes, modo tienda
+y tus colores.
+
 ## [0.2.224.0] - 2026-08-12
 
 ### Changed — la ficha de una prenda cabe en una pantalla

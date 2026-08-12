@@ -283,13 +283,29 @@ function NivelAtajos({
   //
   // Ahora es uno: la lista, que es el hub honesto. Se conserva lo bueno del
   // viejo — con un viaje vivo entras directo a su maleta.
+  //
+  // LA REGLA DE ESTA HOJA (2026-08-12), porque se estaba llenando: un atajo se
+  // gana su lugar si AHORRA AL MENOS UN TAP o si es la única forma de descubrir
+  // la cosa. Ni "es redundante" ni "no lo es" — esas dos preguntas.
+  //
+  // Salieron tres que no pasaban ninguna: "tus esenciales" y "wishlist" son
+  // pestañas VISIBLES del clóset, y "favoritos" es el segundo chip de la fila de
+  // filtros del diario (se ve sin scroll). Los tres costaban exactamente lo
+  // mismo por su propia casa —dos taps, empezando los dos por la barra de
+  // abajo—, así que no eran atajos: eran la misma distancia por otra puerta.
+  //
+  // Y no era gratis. Esta hoja existe para UN momento: estás parado en una
+  // tienda con el celular en la mano y quieres saber si ese suéter va con tu
+  // paleta. Con seis mosaicos, "modo tienda" es una de seis cosas que leer; con
+  // tres es instantáneo. Los tiles que no ahorraban taps estaban haciendo más
+  // lento el único momento para el que la hoja se construyó.
+  //
+  // Los tres que quedan sí pasan: viajes no tiene otra casa, modo tienda estaba
+  // a 4 taps y tus colores a 3.
   const tiles: { icon: IconName; label: string; onClick: () => void }[] = [
     { icon: "maleta", label: "viajes", onClick: () => go(maletaHref) },
-    { icon: "camisa", label: "tus esenciales", onClick: () => go("/closet/capsula") },
     { icon: "lupa", label: "modo tienda", onClick: () => go("/cartera/chequear") },
     { icon: "paleta", label: "tus colores", onClick: () => go("/cartera") },
-    { icon: "corazon", label: "favoritos", onClick: () => go("/historial?filtro=fav") },
-    { icon: "bookmark", label: "wishlist", onClick: () => go("/wishlist") },
   ];
   return (
     <div style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>

@@ -130,7 +130,7 @@ export function NuevaCorridaMotor() {
         <p className="text-xs text-muted">
           El juez es el mismo para las dos (la variable bajo prueba es el
           generador). Los looks se arman sobre TU clóset y no ensucian tu
-          historial.
+          diario.
         </p>
       </div>
 

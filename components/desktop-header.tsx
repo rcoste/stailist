@@ -13,7 +13,11 @@ import { Icon } from "./icon";
 const TABS: { href: string; label: string; match: string; extra?: string[] }[] = [
   { href: "/hoy", label: "Inicio", match: "/hoy" },
   { href: "/closet", label: "Clóset", match: "/closet", extra: ["/wishlist"] },
-  { href: "/historial", label: "Historial", match: "/historial" },
+  // "Diario", igual que en la barra móvil (ver el porqué largo en tab-bar).
+  // Capitalizado y no en minúscula: aquí el registro es editorial, el mismo de
+  // la landing ("Entrar"), y ésa es la diferencia deliberada entre las dos
+  // superficies.
+  { href: "/historial", label: "Diario", match: "/historial" },
   { href: "/viaje/lista", label: "Viaje", match: "/viaje" },
 ];
 

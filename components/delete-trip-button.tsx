@@ -29,7 +29,7 @@ export function DeleteTripButton({ tripId, lugar }: { tripId: string; lugar: str
       <ConfirmDelete
         open={confirmando}
         titulo={`¿borrar tu viaje a ${lugar}?`}
-        detalle="se va la maleta y su lista. los looks que guardaste de este viaje se quedan en tu historial."
+        detalle="se va la maleta y su lista. los looks que guardaste de este viaje se quedan en tu diario."
         confirmar="sí, bórralo"
         onCancel={() => setConfirmando(false)}
         onConfirm={async () => {

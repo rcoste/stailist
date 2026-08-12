@@ -19,6 +19,22 @@ import type { TripContext } from "@/lib/trip-context";
 // de la hoja, con estado vivo y aviso en el botón cuando hay viaje cerca.
 // `match` (opcional) = prefijo para marcar la pestaña activa, cuando difiere del
 // destino.
+//
+// EN MINÚSCULA LAS CUATRO. Tres iban capitalizadas y "más" no, sin que nadie lo
+// decidiera. Todo el v3 de la app es minúscula —los botones, los títulos de
+// sección, los chips— así que la barra era la excepción. El header de escritorio
+// SÍ va capitalizado y eso se queda: ahí el registro es editorial, el mismo de
+// la landing.
+//
+// "DIARIO" Y NO "HISTORIAL" (2026-08-12). Era la única etiqueta que salía de la
+// base de datos y no de la persona: "historial" es palabra de sistema (del
+// navegador, de transacciones) y no pasa el filtro de la voz. El nombre además
+// se volvió más cierto que antes — desde que el fit check escribe `worn` con
+// foto, esa pantalla dejó de ser "lo que te sugerí" para ser "lo que te
+// pusiste", que es literalmente un diario. Se descartó "looks" por ambiguo: al
+// lado de un botón que CREA looks, una pestaña llamada "looks" se lee como otra
+// puerta para crearlos. La ruta sigue siendo /historial: cambiarla rompería
+// enlaces por un nombre interno que nadie ve.
 const TABS: {
   href: string;
   label: string;
@@ -26,11 +42,11 @@ const TABS: {
   match?: string;
   extra?: string[];
 }[] = [
-  { href: "/hoy", label: "Inicio", icon: "sol" },
+  { href: "/hoy", label: "inicio", icon: "sol" },
   // Wishlist es una sub-sección del clóset (tab), así que la pestaña Clóset se
   // queda activa también en /wishlist.
-  { href: "/closet", label: "Clóset", icon: "gancho", extra: ["/wishlist"] },
-  { href: "/historial", label: "Historial", icon: "reloj" },
+  { href: "/closet", label: "clóset", icon: "gancho", extra: ["/wishlist"] },
+  { href: "/historial", label: "diario", icon: "reloj" },
 ];
 
 // Rutas que viven dentro de la hoja "Más": estando en ellas, el slot se pinta
