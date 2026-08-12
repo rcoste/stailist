@@ -123,96 +123,12 @@ export const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
 // alternativas). El swatch detectado se muestra aparte como punto de partida.
 // La paleta y el cálculo de vecinos viven en lib/paleta-colores.ts (con tests).
 
-// Comprime una imagen a 1280px JPEG; devuelve dataURL para el análisis.
-function comprimir(file: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const max = 1280;
-      let { width, height } = img;
-      if (width > height && width > max) {
-        height = (height * max) / width;
-        width = max;
-      } else if (height > max) {
-        width = (width * max) / height;
-        height = max;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      URL.revokeObjectURL(img.src);
-      resolve(dataUrl);
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-function uid() {
-  return crypto.randomUUID();
-}
-
-// Prenda detectada en la curación de texto.
-// Error tipado del 403 de permiso parental: corta el análisis con el mensaje
-// del server (no es un problema de las fotos).
-class PermisoError extends Error {}
-
-type DraftItem = {
-  id: string;
-  attrs: PrendaDetectada;
-  on: boolean;
-  photoPreview: string; // dataURL de la foto de origen
-  /**
-   * Qué campos TOCÓ la persona en esta pantalla.
-   *
-   * Esta es la confirmación más fuerte que existe en toda la app —aquí se
-   * repasa prenda por prenda y campo por campo— y no se registraba en ningún
-   * lado: al motor le llegaba igual una prenda revisada a mano que una que
-   * nadie miró. Sólo los TOCADOS, porque todo viene preseleccionado y dejarlo
-   * como está no es confirmar, es no haber mirado.
-   */
-  tocados: Set<string>;
-  /**
-   * El color TAL COMO LO LEYÓ la visión, guardado aparte y sin tocar.
-   *
-   * Vive fuera de `attrs` porque attrs se sobreescribe al corregir: sin esta
-   * copia, tocar un swatch de la paleta por error borraba para siempre un hex
-   * exacto (#3A3A3C, gris carbón) y lo cambiaba por el atajo más cercano
-   * (#8A8A8A, gris de en medio) — o sea que "corregir" aclaraba la prenda y no
-   * había vuelta atrás. Con la copia, el swatch de lo leído siempre está y
-   * volver es un tap.
-   */
-  leido: { color: string; hex: string };
-};
-
-// Prenda ya renderizada, en la curación visual.
-type RenderItem = {
-  id: string;
-  attrs: PrendaDetectada;
-  tocados: Set<string>;
-  photo: string; // dataURL de la foto original (para el render imagen→imagen)
-  status: "pending" | "done" | "failed";
-  path: string | null;
-  url: string | null;
-  verdict: "keep" | "notmine" | "trash";
-};
-
-// Foto elegida, ya comprimida (y opcionalmente recortada) antes de analizarla.
-type Foto = { id: string; dataUrl: string };
-
-type State =
-  | { kind: "idle" }
-  | { kind: "explainer" } // así funciona (timeline de 3 pasos) ANTES de elegir fotos
-  | { kind: "preparando" } // convirtiendo/comprimiendo las fotos elegidas
-  | { kind: "revisar"; fotos: Foto[] } // recorte opcional por foto antes de leer
-  | { kind: "analizando"; done: number; total: number }
-  | { kind: "texto"; items: DraftItem[] }
-  | { kind: "render"; items: RenderItem[]; done: number; total: number }
-  | { kind: "visual"; items: RenderItem[] }
-  | { kind: "guardando" }
-  | { kind: "error"; msg: string };
+// NOTA: aquí vivían `comprimir`, `uid`, `PermisoError`, `DraftItem`,
+// `RenderItem`, `Foto` y `State` — 90 líneas que quedaron al extraer esta
+// tarjeta del carrete y que no usaba ni este archivo ni ningún otro (los dos
+// consumidores solo importan DraftCard, mismoHex y DraftLeida). Borradas
+// 2026-08-12: el carrete tiene sus propias copias vivas, así que estas eran
+// dos verdades para lo mismo esperando a desincronizarse.
 
 /** Mismo color, ignorando mayúsculas y el # — los hex vienen de dos fuentes. */
 export const mismoHex = (a?: string, b?: string) =>
