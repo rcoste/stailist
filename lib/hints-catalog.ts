@@ -29,14 +29,21 @@
 // antes no había nada; sin avisar, la persona busca el atajo que venía usando y
 // no lo encuentra. Este tip NO explica algo que ya se ve — señala un control que
 // acaba de aparecer, que es para lo que sirve un coach-mark.
+// Otro retirado el 2026-08-11 (rediseño del home, handoff design_handoff_inicio):
+// · "hoy-casa" ("esta es tu central — pídeme un look, enséñame el que traes...")
+//   — describía de corrido las tres acciones de una pantalla que ahora se
+//   explica sola (hero-pregunta + CTA + tiles con nombre). Lo reemplaza
+//   "hoy-fitcheck": UN spotlight al tile del fit check, que es la acción nueva
+//   que nadie conoce y la que más trabaja (veredicto + carga prendas + hábito).
+//   Id nuevo a propósito: quien ya vio "hoy-casa" también debe ver este.
 export type HintId =
   // Orientación (dónde estás / para qué sirve la sección)
-  | "hoy-casa"
   | "fab-generar"
   | "closet-tabs"
   | "wishlist-cartera"
   | "viaje"
   // Función de valor (qué puedes HACER dentro de la sección)
+  | "hoy-fitcheck"
   | "hoy-tryon"
   | "capsula-swap"
   // Continuidad: un control que ANTES no estaba y ahora sí
@@ -45,13 +52,12 @@ export type HintId =
 export type HintModo = "centrado" | "spotlight";
 
 export const HINT_MODO: Record<HintId, HintModo> = {
-  // Orientación general: no hay UN elemento que señalar.
-  "hoy-casa": "centrado",
   // Señalan un elemento concreto.
   "fab-generar": "spotlight",
   "closet-tabs": "spotlight",
   "wishlist-cartera": "spotlight",
   viaje: "spotlight",
+  "hoy-fitcheck": "spotlight",
   "hoy-tryon": "spotlight",
   "capsula-swap": "spotlight",
   "closet-boton-agregar": "spotlight",

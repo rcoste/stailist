@@ -341,39 +341,31 @@ function CoachMark({
             width: rect.width + PAD * 2,
             height: rect.height + PAD * 2,
             borderRadius: rect.radius,
-            // 0.84, igual que el velo plano del centrado. A 0.72 la pantalla
-            // seguía demasiado viva: el elemento iluminado competía con todo lo
-            // demás en vez de destacar, que es el único trabajo del velo.
-            boxShadow: "0 0 0 200vmax rgb(10 10 10 / 0.84)",
+            // 0.38 (handoff design_handoff_inicio): la pantalla se APAGA, no se
+            // borra — el tile señalado queda iluminado encima. El 0.84 anterior
+            // existía porque la nota era texto claro flotando sobre el velo y
+            // necesitaba oscuridad para leerse; con la nota como card blanca con
+            // fondo propio, ese motivo ya no existe.
+            boxShadow: "0 0 0 200vmax rgb(10 10 10 / 0.38)",
           }}
-        >
-          <span
-            aria-hidden
-            className="hint-ring absolute"
-            style={{
-              inset: -5,
-              borderRadius: "inherit",
-              border: "1.5px solid var(--c-on-accent)",
-            }}
-          />
-        </div>
+        />
       ) : (
         // Centrado: scrim plano sin hoyo.
         <div
           aria-hidden
           className="absolute inset-0"
-          style={{ background: "rgb(10 10 10 / 0.84)" }}
+          style={{ background: "rgb(10 10 10 / 0.38)" }}
         />
       )}
 
-      {/* Nota del coach: una TARJETA con fondo propio, no texto flotando sobre
-          el velo (no cierra al tocarla).
+      {/* Nota del coach: una TARJETA BLANCA con fondo propio, no texto flotando
+          sobre el velo (no cierra al tocarla).
 
-          Por qué la tarjeta: el texto suelto funcionaba cuando estas pantallas
-          estaban vacías. El rediseño las llenó de fotos y chips, y en 0.84 el
-          velo apaga el fondo pero no lo borra — la serif blanca caía encima de
-          una camiseta blanca y desaparecía. El fondo sólido hace que el
-          contraste del texto no dependa NUNCA de qué haya debajo. */}
+          Blanca y no negra (handoff design_handoff_inicio, decisión 8): la
+          burbuja en tinta se confundía con los botones de la app — el CTA, el
+          FAB y el tile del fit check son exactamente ese negro. La card blanca
+          es "la app te habla", no "tócame". El fondo sólido sigue haciendo que
+          el contraste del texto no dependa NUNCA de qué haya debajo. */}
       <div
         ref={noteRef}
         className="hint-note absolute"
@@ -388,34 +380,34 @@ function CoachMark({
         {punta ? (
           <span
             aria-hidden
-            className="absolute h-3 w-3 rotate-45 bg-accent"
+            className="absolute h-3 w-3 rotate-45 bg-surface"
             style={{
               left: puntaX - 6,
               [punta === "arriba" ? "top" : "bottom"]: -5,
             }}
           />
         ) : null}
-        <div className="relative flex flex-col gap-3 rounded-lg border border-on-accent/15 bg-accent p-4">
+        {/* `--shadow-float`: la excepción del DS para lo que flota sobre un
+            velo (ver DESIGN.md → Sombras). Sin ella, la tarjeta blanca se lee
+            como un recorte más de la pantalla apagada. */}
+        <div
+          className="relative flex flex-col gap-3 rounded-lg bg-surface p-4"
+          style={{ boxShadow: "var(--shadow-float)" }}
+        >
           {/* `.display` (no `.editorial`): .editorial fuerza font-style:normal
               fuera de las cascade layers → gana sobre la utilidad `italic` y la
               serif sale en redonda (se lee como la Bodoni del v2, ya abandonada).
               .display solo fija la familia, así que aquí sí manda la itálica. */}
-          <p className="display text-[19px] font-normal italic leading-[1.35] text-on-accent">
-            <Icon
-              name="destello"
-              size={15}
-              strokeWidth={2}
-              className="mr-1.5 inline-block translate-y-px"
-            />
+          <p className="display text-[19px] font-normal italic leading-[1.4] text-ink">
             {children}
           </p>
-          {/* El "entendido" a la derecha: sobre la tarjeta ya es lo único
-              tocable, y a la izquierda competía con el arranque del texto. */}
+          {/* El "entendido" a la derecha: botón sólido en tinta — sobre la card
+              blanca ya no compite con nada y es lo único tocable. */}
           <button
             ref={okRef}
             type="button"
             onClick={onClose}
-            className="-mb-1 -mr-1 ml-auto min-h-9 rounded-sm px-3 text-[13px] font-bold text-on-accent transition-colors hover:bg-on-accent/10"
+            className="ml-auto min-h-10 rounded-sm bg-accent px-[18px] text-[13.5px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
           >
             entendido
           </button>
@@ -423,12 +415,10 @@ function CoachMark({
       </div>
 
       <style>{`
-        @keyframes hint-ring-pulse { 50% { transform: scale(1.045); opacity: 0.7; } }
         @keyframes hint-note-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
-        .hint-ring { animation: hint-ring-pulse 2s ease-in-out infinite; }
         .hint-note { animation: hint-note-in var(--dur-medium) var(--ease-enter) 120ms both; }
         @media (prefers-reduced-motion: reduce) {
-          .hint-ring, .hint-note { animation: none; }
+          .hint-note { animation: none; }
         }
       `}</style>
     </div>,

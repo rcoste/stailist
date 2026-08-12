@@ -50,7 +50,8 @@
 - **Border radius (crispado, NO pill — sin cambio vs. v2):** sm 3px (inputs, chips, botones, badges) · md 4px (tiles de prenda) · lg 6px (cards de outfit) · full 9999px **reservado solo** para puntos/indicadores circulares. Los CTAs son rectángulos crispados, NO pastillas.
   - **Bottom-sheets: 14-18px**, aparte de la escala (van con `rounded-t-[Npx]` + su `lg:rounded-[Npx]`). Una hoja con radio de chip se lee como de otra app.
   - **Excepciones de `rounded-full` en controles**, las dos por convención universal, no por gusto: el FAB de la tab bar y el **botón de micrófono del dictado** (una grabadora cuadrada no la reconoce nadie). Cualquier otro control circular sí es deriva.
-- **Sombras:** casi nulas — `0 1px 2px rgb(26 23 24 / 0.05)` máximo; las hairlines hacen la separación.
+- **Sombras:** casi nulas — `--shadow-hairline` (`0 1px 2px rgb(26 23 24 / 0.05)`) máximo; las hairlines hacen la separación.
+  - **Excepción, `--shadow-float`** (`0 16px 40px -12px rgb(0 0 0 / 0.35)`, agregada 2026-08-11): **solo para superficies que flotan sobre un velo/scrim** — hoy, la nota del coach-mark sobre la pantalla apagada. Sobre papel esa sombra sería ornamento; sobre un scrim al 38% es lo único que distingue una tarjeta blanca del fondo. Prohibida en cards, hojas y botones del flujo normal.
 - **Navegación:** tabs fijos abajo + FAB central de "armar look". Nada en hamburguesa.
 
 ### Desktop (plan desktop-full, 2026-07-14 — spec: docs/designs/desktop-full.md)
