@@ -5,6 +5,7 @@ import type { GeneratedOutfit } from "@/lib/engine/generate";
 import {
   cargarBaseDelMotor,
   construirContexto,
+  recortarPlan,
   resolverYPersistirObjetivo,
 } from "@/lib/engine/contexto";
 import { PROMPT_VERSION } from "@/lib/engine/prompt";
@@ -227,6 +228,11 @@ export async function POST(request: NextRequest) {
               user_id: user.id,
               item_ids: outfit.item_ids,
               occasion: objective ?? "diario",
+              // El plan en sus palabras, con el mismo recorte que vio el motor
+              // (migración 0132). Aquí importa el doble: es el PRIMER look, la
+              // única muestra que hay de cómo pide las cosas alguien que
+              // todavía no aprendió a usar la app.
+              plan: recortarPlan(body.plan),
               // El clima REAL, con la marca de que se pidió bajo techo. La marca
               // es para DIAGNÓSTICO (consultar la tabla), no se muestra todavía
               // en ninguna pantalla — mismo caso que en /api/look-of-day.

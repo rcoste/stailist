@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.223.3] - 2026-08-12
+
+### Added — la app ya recuerda lo que le pides con tus palabras
+
+El campo libre del wizard mandaba tu texto al stylist y ahí se perdía: no
+quedaba guardado en ningún lado. Ahora sí, con el mismo recorte que ve el motor.
+
+No cambia nada de lo que ves. Cambia lo que se puede saber: hasta hoy nadie
+podía responder qué le pide la gente al stylist cuando lo escribe con sus
+propias palabras — ni cuántas veces, ni para qué planes. Era la pregunta que
+decidía si construir la interpretación automática de ese campo (issue #232), y
+resultó que ni siquiera se podía formular: ese trabajo pide "20 planes reales"
+como requisito, y no había ninguno guardado.
+
 ## [0.2.223.2] - 2026-08-12
 
 ### Fixed — el primer look ya escucha que es una boda
