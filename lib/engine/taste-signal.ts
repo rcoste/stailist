@@ -171,6 +171,21 @@ async function loadTasteSignalUnsafe(
     const r = toRemembered(p);
     // Descarta recuerdos vacíos (todas las prendas borradas y sin título).
     if (r.items.length === 0 && !r.title) continue;
+    // Y descarta los recuerdos SIN PRENDAS de un `worn`.
+    //
+    // Desde 2026-08-11 el fit check escribe `worn` (ahí murió la card que lo
+    // preguntaba). Esas filas nacen con `item_ids: []` a propósito —el espejo
+    // no empata la foto contra el clóset, ver lib/espejo— así que llegarían
+    // aquí como "SE LO PUSO de verdad: <título>" sin una sola prenda: una línea
+    // que no enseña ninguna combinación y que, por ser `worn` (el cubo con más
+    // peso y solo 6 lugares), DESALOJA los recuerdos reales. La señal más
+    // fuerte del prompt se llenaría de humo.
+    //
+    // El evento sigue valiendo para el KPI y para el orden del clóset; lo que
+    // no entra es el prompt. Alimentar el motor con el `resumen` del fit check
+    // ("lo que traía puesto, en palabras") es una idea aparte y se decide
+    // midiendo en /admin/comparador, no de oído (TODOS.md).
+    if (p.type === "worn" && r.items.length === 0) continue;
     if (p.type === "worn") out.worn.push(r);
     else if (p.type === "vote_up") out.liked.push(r);
     else if (p.type === "vote_down") out.disliked.push(r);

@@ -105,6 +105,7 @@ export function LookDetail({
   vermeSub,
   onInicio,
   seccionLabel,
+  onFitCheck,
 }: {
   nombre: string;
   prendas: LookDetailPrenda[];
@@ -135,6 +136,13 @@ export function LookDetail({
   /** Etiqueta de la sección. Default "hoy"; un look planeado para otro día dice
    *  su fecha ("mañana") — decir "hoy" sobre el look del sábado sería mentir. */
   seccionLabel?: string;
+  /** LA PROMESA FIJA del fit check (decisión de Roberto, 2026-08-11): abre el
+   *  espejo. Reemplaza a la card "¿te lo pusiste ayer?" — oferta en vez de
+   *  favor, y sin hora: justo al generar todavía no te lo has puesto, que era
+   *  la trampa de preguntarlo. Solo la pasa el /hoy (en el wow y el historial
+   *  no aplica). La señal de oro se mide por cercanía: fit check ≤24h después
+   *  de un look generado (lib/senal-oro). */
+  onFitCheck?: () => void;
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
@@ -281,6 +289,19 @@ export function LookDetail({
             <VoteButton up={true} active={voto === "up"} onClick={() => onVote(true)} disabled={disabled} />
           </div>
         </div>
+
+        {/* La promesa del fit check: una OFERTA quieta, no un recordatorio con
+            hora ni un favor que contestar. Vive fija bajo las acciones del look. */}
+        {onFitCheck ? (
+          <button
+            type="button"
+            onClick={onFitCheck}
+            className="flex min-h-10 w-full items-center justify-center gap-2 border-t border-line2 pt-1 text-[13px] text-muted transition-colors hover:text-ink"
+          >
+            <Icon name="camara" size={15} />
+            cuando te lo pongas, enséñamelo — te digo cómo se ve
+          </button>
+        ) : null}
 
         {/* LA SALIDA DEL ONBOARDING, con peso de botón.
             Era texto gris de 14px al fondo de la pantalla: el elemento MÁS

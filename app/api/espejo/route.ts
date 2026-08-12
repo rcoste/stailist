@@ -115,11 +115,36 @@ export async function POST(request: NextRequest) {
       .single();
     outfitId = (data?.id as string) ?? null;
 
-    await supabase.from("events").insert({
-      user_id: user.id,
-      type: "espejo_subido",
-      data: { outfit_id: outfitId, con_clima: !!weather },
-    });
+    // DOS eventos, no uno. `espejo_subido` mide el uso del fit check; `worn` es
+    // la señal de comportamiento que el resto del producto ya consumía.
+    //
+    // El `worn` lo escribe AQUÍ desde el rediseño del home (2026-08-11), porque
+    // ahí murió la card "¿te lo pusiste ayer?" — que era su único escritor. Sin
+    // esto la señal se secaba en silencio y con ella tres lecturas: la línea más
+    // fuerte del prompt del motor ("SE LO PUSO de verdad", lib/engine/prompt),
+    // el orden del clóset por prendas usadas (lib/loved-items) y el KPI del
+    // admin. Y el fit check es MEJOR fuente que la card: la persona no contesta
+    // un favor, manda la foto de lo que trae puesto.
+    await supabase.from("events").insert([
+      {
+        user_id: user.id,
+        type: "espejo_subido",
+        data: { outfit_id: outfitId, con_clima: !!weather },
+      },
+      // Sin fila de outfit no hay `worn`: el evento existe para colgarse de un
+      // look concreto (así lo leen el motor y el clóset) y uno suelto sería
+      // ruido que infla el KPI sin enseñarle nada a nadie.
+      ...(outfitId
+        ? [
+            {
+              user_id: user.id,
+              type: "worn",
+              outfit_id: outfitId,
+              data: { via: "espejo" },
+            },
+          ]
+        : []),
+    ]);
   } catch {
     // el consejo ya está; el registro se pierde
   }
