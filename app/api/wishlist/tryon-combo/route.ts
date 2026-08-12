@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
 import { pedirImagen } from "@/lib/gemini-imagen";
+import { llaveDeCombo } from "@/lib/tryon-combo";
 
 export const maxDuration = 60;
 
@@ -27,8 +28,20 @@ async function fetchAsBase64(url: string): Promise<string | null> {
 }
 
 // Cartera · Fase 3c: combinar candidatos del Wishlist + prendas del clóset en un
-// solo try-on sobre el avatar. Bajo demanda (sin caché — es ad-hoc). Devuelve la
-// imagen como data URL para no escribir storage por cada combinación.
+// solo try-on sobre el avatar.
+//
+// CON CACHÉ DESDE 2026-08-12. Nació sin él a propósito —"es ad-hoc", decía el
+// comentario, "para no escribir storage por cada combinación"— y la intención
+// era buena. El hueco es que **ad-hoc no significa irrepetible**: probar los
+// mismos zapatos con el mismo pantalón dos veces ES la forma de una decisión de
+// compra, y cada vez se pagaba una generación de imagen entera. Peor: la imagen
+// se devolvía en base64 y se perdía al cerrar la hoja, así que ni siquiera la
+// primera sobrevivía.
+//
+// El caché no llena Storage de basura porque la llave es DETERMINISTA (ver
+// llaveDeCombo): la misma combinación siempre escribe el mismo archivo. Diez
+// intentos de la misma combinación son un archivo, no diez. Mismo patrón que su
+// hermano de una sola prenda, que ya cacheaba en `wishlist_items.tryon_path`.
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const {
@@ -66,6 +79,18 @@ export async function POST(request: NextRequest) {
     const { data } = await supabase.storage.from("prendas").createSignedUrl(path, 3600);
     return data?.signedUrl ?? null;
   };
+
+  // ¿Ya dibujamos ESTA combinación sobre ESTE avatar? Se pregunta antes de
+  // bajar una sola imagen: firmar una ruta que no existe devuelve error y
+  // `signFresh` lo vuelve null, así que la ausencia se detecta sin listar el
+  // bucket ni consultar tabla alguna.
+  const comboPath = `${user.id}/combo-${llaveDeCombo(
+    profile.avatar_path as string,
+    wishlistIds,
+    itemIds
+  )}.jpg`;
+  const cacheada = await signFresh(comboPath);
+  if (cacheada) return NextResponse.json({ image: cacheada, cached: true });
 
   const garmentUrls: string[] = [];
 
@@ -131,6 +156,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Se sube ANTES de responder, con `upsert`: la ruta es determinista, así
+    // que reescribir es idempotente y no acumula copias.
+    //
+    // Si la subida falla NO se pierde el trabajo: se devuelve la imagen igual,
+    // en base64 como antes. La persona ve su look —que es lo que pidió y lo que
+    // ya se pagó— y lo único que se pierde es el ahorro de la próxima vez.
+    const buffer = Buffer.from(r.data, "base64");
+    const up = await supabase.storage
+      .from("prendas")
+      .upload(comboPath, buffer, { contentType: "image/jpeg", upsert: true });
+    if (!up.error) {
+      const url = await signFresh(comboPath);
+      if (url) return NextResponse.json({ image: url });
+    }
     return NextResponse.json({ image: `data:image/jpeg;base64,${r.data}` });
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 502 });
