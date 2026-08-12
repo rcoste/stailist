@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.223.2] - 2026-08-12
+
+### Fixed — el primer look ya escucha que es una boda
+
+En el onboarding, el wizard pregunta **qué evento es** y **qué tan formal**… y la
+ruta que arma ese primer look tiraba las dos respuestas a la basura. Viajaban por
+la red y ahí se quedaban: `/api/generate` no las declaraba, y lo que una ruta no
+nombra no existe. Nada fallaba — solo llegaba un look de martes cualquiera.
+
+Lo que se perdía no era un matiz: con "una boda", el motor recibe ahora
+*"hay fotos, hay ceremonia, se está de pie y sentado por turnos, **nunca de
+blanco entero** — es de quien se casa"*. Esa instrucción no llegaba, así que el
+primer look de alguien podía ser blanco entero para una boda.
+
+Es el hermano del bug que arregló 0.2.223.0 (el botón de crear reutilizaba el
+look en caché ignorando la ocasión recién elegida): el wizard pregunta y la ruta
+no escucha. Por eso el arreglo viene con un **candado**: un test que compara el
+contrato que manda el wizard contra lo que cada ruta de verdad lee, y truena
+nombrando el campo sordo. Las excepciones legítimas se declaran con su razón.
+
 ## [0.2.223.1] - 2026-08-12
 
 ### Changed — el nombre del look recupera su pantalla
