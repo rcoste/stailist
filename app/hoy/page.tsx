@@ -7,7 +7,8 @@ import { HintChain, type HintCandidato } from "@/components/hint";
 import { HoyClient, type HoyOutfit } from "./hoy-client";
 import type { ClosetPick } from "@/components/weather-picker";
 import { loadClosetPicks } from "@/lib/closet-picks";
-import { loadHomeCard } from "@/lib/home-card";
+import { loadHomeTrip } from "@/lib/home-trip";
+import { loadUltimoLook } from "@/lib/ultimo-look";
 import { buildHomeChecklist } from "@/lib/home-checklist";
 import { ASSESSMENT_QUESTIONS } from "@/lib/capsule";
 
@@ -64,7 +65,6 @@ export default async function HoyPage({
 
   let lookInicial: HoyOutfit | null = null;
   let votoInicial: "up" | "down" | null = null;
-  let wornInicial = false;
 
   if (look && lookStatus === "ready") {
     const [{ data: items }, { data: events }] = await Promise.all([
@@ -144,7 +144,6 @@ export default async function HoyPage({
     for (const ev of events ?? []) {
       if (ev.type === "vote_up") votoInicial = "up";
       else if (ev.type === "vote_down") votoInicial = "down";
-      else if (ev.type === "worn") wornInicial = true;
     }
   }
 
@@ -169,18 +168,33 @@ export default async function HoyPage({
   // con las queridas primero (solo orden visual). Compartido con el modo viaje.
   const closet: ClosetPick[] = await loadClosetPicks(supabase, profile.id);
 
-  // Card contextual del home. ANTES solo se calculaba sin look listo; el
-  // rediseño 2026-08-11 mató ese guard: "¿te lo pusiste ayer?" es justo más
-  // valiosa cuando vuelves con look, y el viaje activo no deja de existir
-  // porque hoy ya te vestiste. La regla de UNA card y su prioridad no cambian.
-  const homeCard = await loadHomeCard(supabase, profile.id);
-
   const nombre = (profile.email ?? "").split("@")[0];
 
-  // Checklist v2 ("qué sigue"): solo los one-time SIN otra casa — estilo,
-  // silueta, cápsula. Avatar y prendas salieron (ver lib/home-checklist.ts).
-  // También vive con look listo: el empujón no muere porque hoy ya te vestiste.
-  const signals = await loadJourneySignals(supabase, profile);
+  // Lo que el home del rediseño 2026-08-11 necesita del server, en paralelo:
+  // · el viaje a ≤7 días (lo único contextual que quedó — "sin estrenar" murió
+  //   y "¿te lo pusiste ayer?" se volvió la invitación al fit check del look),
+  // · el último look generado (la card de zona 1 — cubre lo que hacían el CTA
+  //   "ver mi look" y los chips de planeados),
+  // · las señales del checklist ("qué sigue" no muere porque hoy ya te vestiste).
+  // BLINDADAS: las dos cards son un EXTRA de esta pantalla; un throw en
+  // cualquiera NO puede tumbar la home. El riesgo es real y no teórico:
+  // loadHomeTrip entra a capsuleRows, que recorre `capsule_target.items` y
+  // `capsule_match.entries` — dos JSONB escritos por IA a lo largo de varias
+  // revisiones del schema. Una fila vieja con la forma cambiada tira un
+  // TypeError dentro del Promise.all y deja a esa persona con /hoy en 500
+  // permanente, sin camino de regreso. Mismo patrón que lib/engine/taste-signal.
+  const seguro = async <T,>(p: Promise<T>): Promise<T | null> => {
+    try {
+      return await p;
+    } catch {
+      return null;
+    }
+  };
+  const [homeTrip, ultimoLook, signals] = await Promise.all([
+    seguro(loadHomeTrip(supabase, profile.id)),
+    seguro(loadUltimoLook(supabase, profile.id)),
+    loadJourneySignals(supabase, profile),
+  ]);
   const checklist = buildHomeChecklist({
     hasStyleReference: profile.style_reference != null,
     hasCapsule: signals.hasCapsule,
@@ -188,45 +202,25 @@ export default async function HoyPage({
     hasSilueta: signals.hasSilueta,
   });
 
-  // LOS LOOKS PLANEADOS por estrenar (la fila de zona 1). El server no conoce
-  // la zona horaria del dispositivo, así que manda candidatos con colchón
-  // (planned_for ≥ utc − 1) y el CLIENTE filtra con su fecha local — mismo
-  // patrón que hayPlaneado. Chips read-only; la agenda completa sigue gateada.
-  const { data: planeadosRaw } = await supabase
-    .from("outfits")
-    .select("id, title, planned_for")
-    .eq("user_id", profile.id)
-    .is("deleted_at", null)
-    .eq("is_look_of_day", false)
-    .eq("gen_status", "ready")
-    .gte("planned_for", fechaUtc(-1))
-    .order("planned_for", { ascending: true })
-    .limit(4);
-  const planeados = (planeadosRaw ?? []).map((o) => ({
-    id: o.id as string,
-    title: (o.title as string | null) ?? "un look",
-    plannedFor: String(o.planned_for).slice(0, 10),
-  }));
-
   // Hints contextuales (walkthrough just-in-time). UNA burbuja por pantalla.
   const seen = profile.hints_seen ?? {};
   const accountDays =
     (new Date().getTime() - new Date(profile.created_at).getTime()) / 86_400_000;
-  // Progressive: orientación primero (hoy-casa), luego función de valor
+  // Progressive: el fit check primero (la acción nueva), luego función de valor
   // (fab-generar → hoy-tryon) cuando ya hay look, y viaje al final. UNA por
   // visita — pero es HintChain quien elige: se muestra el primero de la lista
   // que encuentre su target, no el primero a secas. Antes, un tip que había
   // perdido su target se quedaba con el turno para siempre (y sin marcarse
   // visto), enterrando a los de abajo.
   const candidatos: HintCandidato[] = [];
-  if (!seen["hoy-casa"]) {
+  if (!seen["hoy-fitcheck"]) {
     candidatos.push({
-      id: "hoy-casa",
-      // v2 (rediseño 2026-08-11): "dime qué traes hoy y te armo el look"
-      // describía el trabajo VIEJO de la pantalla. Ahora es la central de
-      // acciones — el hint presenta las tres recurrentes, no una.
+      id: "hoy-fitcheck",
+      // v3 (handoff design_handoff_inicio): fuera el tour de tres acciones
+      // ("hoy-casa") — el home nuevo se explica solo. UN spotlight a la acción
+      // que nadie conoce y más trabaja: el fit check.
       children:
-        "esta es tu central — pídeme un look, enséñame el que traes puesto o súmale prendas a tu clóset",
+        "enséñame tu outfit de hoy — te digo cómo se ve y me aprendo tu clóset solito",
     });
   }
   if (lookInicial && !seen["fab-generar"]) {
@@ -278,12 +272,10 @@ export default async function HoyPage({
         <HoyClient
           verInicio={inicio === "1"}
           hayPlaneado={hayPlaneado}
-          planeados={planeados}
           key={`${nombre}:${generar ?? "view"}`}
           lookInicial={lookInicial}
           pendingOutfitId={pendingOutfitId}
           votoInicial={votoInicial}
-          wornInicial={wornInicial}
           userId={profile.id}
           defaultObjective={profile.last_objective}
           gender={(profile.gender as "hombre" | "mujer" | null) ?? null}
@@ -291,7 +283,8 @@ export default async function HoyPage({
           desdeElQuiz={desdeElQuiz}
           closet={closet}
           autoAsk={autoAsk}
-          homeCard={homeCard}
+          homeTrip={homeTrip}
+          ultimoLook={ultimoLook}
           checklist={checklist}
         />
       </section>

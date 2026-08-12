@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { LOOKS } from "@/lib/looks";
+import { contarSenalOroPorCercania } from "@/lib/senal-oro";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -51,6 +52,8 @@ export default async function AdminOverview() {
 
   // Ventana de "activos": eventos en los últimos 7 días.
   const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Ventana de la señal de oro por cercanía (ver las dos consultas de outfits).
+  const since90d = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     profilesRes,
@@ -62,6 +65,8 @@ export default async function AdminOverview() {
     active7dRes,
     tripsC,
     estiloViewRes,
+    looksGenRes,
+    fitChecksRes,
   ] = await Promise.all([
     // Perfiles completos para embudo + adopción (avatar, cápsula). En beta la
     // tabla es chica; traemos solo las columnas que el dashboard necesita.
@@ -93,12 +98,46 @@ export default async function AdminOverview() {
     // llevan semanas vacíos y sin esto no se puede distinguir "la petición no
     // convence" de "nadie llega". user_id para contar PERSONAS, no visitas.
     supabase.from("events").select("user_id").eq("type", "perfil_estilo_view"),
+    // Señal de oro por cercanía (2026-08-11): looks generados y fit checks, para
+    // cruzarlos en lib/senal-oro. La pregunta "¿te lo pusiste?" murió con el
+    // rediseño del home; el fit check ≤24h después de un look generado es la
+    // evidencia que la reemplaza (y trae foto).
+    //
+    // Acotadas a 90 días y no a toda la tabla: el cruce es O(fit checks × looks)
+    // por persona y estas dos consultas se ejecutan en cada pintada del panel.
+    // Además la métrica es de RECENCIA — un look de hace ocho meses no dice
+    // nada del experimento de esta semana.
+    // `source = daily`: los try-on fantasma de viaje/cápsula no son un look
+    // sugerido, y colarlos haría que un try-on + un fit check contaran como
+    // señal de oro.
+    supabase
+      .from("outfits")
+      .select("user_id, created_at")
+      .is("deleted_at", null)
+      .eq("source", "daily")
+      .gte("created_at", since90d)
+      .or("gen_status.is.null,gen_status.eq.ready"),
+    supabase
+      .from("outfits")
+      .select("user_id, created_at")
+      .is("deleted_at", null)
+      .eq("source", "espejo")
+      .gte("created_at", since90d),
   ]);
 
   const estiloVisitas = estiloViewRes.data?.length ?? 0;
   const estiloPersonas = new Set(
     (estiloViewRes.data ?? []).map((e) => e.user_id as string)
   ).size;
+
+  const aFecha = (r: { user_id: unknown; created_at: unknown }) => ({
+    userId: String(r.user_id),
+    createdAt: String(r.created_at),
+  });
+  const senalCercania = contarSenalOroPorCercania(
+    (looksGenRes.data ?? []).map(aFecha),
+    (fitChecksRes.data ?? []).map(aFecha)
+  );
 
   // ── KPIs de votos / TTV (igual que antes) ──────────────────────────────
   const events = eventsRes.data ?? [];
@@ -202,15 +241,26 @@ export default async function AdminOverview() {
         />
       </div>
 
-      {/* Señal de oro */}
+      {/* Señal de oro: el "me lo puse" explícito + la cercanía (fit check ≤24h
+          después de un look generado). La segunda es la que queda viva tras el
+          rediseño del home — la pregunta explícita ya no existe. */}
       <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4">
         <span className="text-xs font-medium uppercase tracking-wide text-muted">
           Señal de oro
         </span>
+        {/* UNA sola cifra manda: los fit checks a ≤24h de un look generado.
+            El total de `worn` va como contexto y en gris, porque desde que la
+            card "¿te lo pusiste?" murió, casi todo `worn` viene del propio fit
+            check (app/api/espejo) — enseñar las dos como si fueran evidencias
+            independientes contaba lo mismo dos veces. */}
         <span className="text-base text-ink">
-          {worn === 0
-            ? "Nadie se ha puesto un look todavía."
-            : `${worn} ${worn === 1 ? "vez que alguien marcó" : "veces que marcaron"} "me lo puse".`}
+          {senalCercania === 0
+            ? "Nadie se ha puesto un look sugerido todavía."
+            : `${senalCercania} ${senalCercania === 1 ? "vez" : "veces"} que alguien se puso algo a ≤24h de que se lo sugiriéramos.`}
+        </span>
+        <span className="text-xs text-muted">
+          {worn} {worn === 1 ? "registro" : "registros"} de uso en total (casi
+          todos vienen del fit check).
         </span>
       </div>
 
