@@ -2,6 +2,42 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.224.0] - 2026-08-12
+
+### Changed — la ficha de una prenda cabe en una pantalla
+
+Abrir una prenda del clóset te enseñaba doce campos desplegados a la vez y pedía
+scroll y medio, cuando casi siempre entras por una sola cosa: verla en grande,
+cambiarle el nombre, corregir el color o rehacer su imagen.
+
+Ahora arriba hay una fila que **dice** lo que la app cree de esa prenda —*saco ·
+● gris carbón · formal*— y tocas sólo lo que esté mal. El resto (temporada,
+cómo te queda, material, patrón, segundo color, marca y talla) vive detrás de
+*"+ más"*. La ficha entera cabe sin scroll.
+
+Es el mismo lenguaje que ya usas al dar de alta ropa por foto: los mismos chips,
+en el mismo orden. Antes eran dos formas distintas de tocar los mismos datos.
+
+Tres cosas siguen a la vista a propósito: el nombre, el lazo del conjunto —es el
+único lugar donde se ata un traje— y rehacer la imagen. Y las siluetas dibujadas
+del corte se quedan, porque enseñan mejor que las tres palabras sueltas; ahí el
+que cambió fue el otro lado.
+
+### Fixed — correcciones que se perdían sin avisar
+
+- Cambiabas el nombre, guardabas, y al corregir de paso otra cosa ya no había
+  botón para guardarla: se iba con un mensaje de éxito en pantalla.
+- Tocar fuera de la ficha tiraba lo que llevabas escrito, sin preguntar. Ahora
+  te avisa y no cierra.
+- Si el guardado fallaba, la ficha se quedaba idéntica y parecía guardado.
+- Tocar el color que ya estaba puesto sustituía el nombre fino de tu prenda
+  ("gris carbón") por el genérico de la paleta, y ofrecía rehacer la imagen por
+  un color que no había cambiado. Pasaba en 127 prendas.
+- El corte seguía guardándose —y quedando marcado como confirmado por ti— en
+  prendas donde ya no aplica, si le cambiabas el tipo después de tocarlo.
+- El material escrito a mano se guarda igual desde las tres puertas de alta;
+  antes "Algodón " y "algodón" eran dos materiales distintos para el motor.
+
 ## [0.2.223.4] - 2026-08-12
 
 ### Fixed — "rehacer la imagen" ya hace algo

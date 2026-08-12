@@ -107,6 +107,7 @@ export default async function ClosetPage() {
     const attrs = r.attrs as {
       nombre?: string;
       image_path?: string | null;
+      color?: string;
       color_hex?: string;
       categoria?: string;
       tipo?: string;
@@ -132,6 +133,12 @@ export default async function ClosetPage() {
       nombre: attrs.nombre ?? arch?.name ?? "Prenda",
       imagen: itemImageUrlSync(r as ItemImageRow, (p) => signed.get(p)),
       swatch: attrs.color_hex ?? "#E5E1DD",
+      // CÓMO SE LLAMA ESE COLOR. Sube ahora porque el resumen de la ficha lo
+      // dice en un chip ("negro", "azul marino"), y el hex no se puede leer: un
+      // punto de color sin nombre no distingue carbón de marino, que es la
+      // confusión que más se corrige. Es el nombre que se GUARDÓ —más
+      // específico que el atajo más parecido de la paleta.
+      colorNombre: attrs.color ?? "",
       category: attrs.categoria ?? arch?.category ?? attrs.tipo ?? "accesorio",
       formalidad: attrs.formalidad ?? "casual",
       temporada: attrs.temporada ?? "todo-el-año",

@@ -35,250 +35,32 @@ import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 // pero la puerta para corregir existe, que es lo que faltaba.
 
 
-// FALTABA "SACO" — ver el comentario largo en add-photo-flow.tsx. La visión sí
-// lo detecta; sin botón, la prenda salía con nada marcado y parecía no
-// detectada. 18 prendas de foto son categoría 'saco' y todas pasaron por aquí.
-export const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
-  { v: "top", l: "Top" },
-  { v: "saco", l: "Saco" },
-  { v: "bottom", l: "Pantalón" },
-  { v: "abrigo", l: "Abrigo" },
-  { v: "vestido", l: "Vestido" },
-  { v: "calzado", l: "Calzado" },
-  { v: "accesorio", l: "Accesorio" },
-];
-
-// EL CORTE Y EL LARGO en la confirmación. Mi número de ayer —"sólo 36 prendas
-// se quedan sin corte"— contestaba la pregunta equivocada: medía los huecos,
-// no los ERRORES. La visión llena el corte en 199 prendas y se guarda tal cual
-// (addPhotoItems lo escribe), sin que nadie lo vea nunca. Una lectura mala es
-// hoy invisible e incorregible, que es el mismo dato inventado de siempre con
-// otro disfraz.
+// El vocabulario (catálogos, Field, Escala, Chips, conLeido, el chip y su mapa
+// de secciones) vive en components/prenda-campos desde 2026-08-12: la ficha del
+// clóset necesita el mismo lenguaje y no puede reusar esta tarjeta.
 //
-// CON "no aplica" EXPLÍCITO, como pidió Roberto: unos leggings no tienen corte
-// que discutir y una camiseta no tiene largo interesante. Sin esa salida, la
-// única forma de no contestar es dejar lo que el modelo puso — o sea, aceptar.
-export const CORTES: { v: string; l: string }[] = [
-  { v: "entallado", l: "entallado" },
-  { v: "recto", l: "recto" },
-  { v: "holgado", l: "holgado" },
-];
-export const LARGOS: { v: string; l: string }[] = [
-  { v: "crop", l: "corto" },
-  { v: "regular", l: "regular" },
-  { v: "largo", l: "largo" },
-];
+// SIN RE-EXPORTAR NADA. La extracción dejó aquí un puente de diez nombres "para
+// no mover a los consumidores", y era una segunda puerta al mismo módulo: nueve
+// de los diez no los importaba nadie, y el décimo (mismoHex) es una línea de
+// import en un archivo. Un módulo compartido con dos direcciones válidas es
+// exactamente la ambigüedad que la extracción vino a quitar.
+import {
+  CATEGORIAS,
+  CORTES,
+  LARGOS,
+  MATERIALES,
+  PATRONES_CHIP,
+  FORMALIDADES,
+  SECCION_DE_CAMPO,
+  conLeido,
+  mismoHex,
+  Field,
+  Escala,
+  Chips,
+  ChipResumen,
+  type Seccion,
+} from "@/components/prenda-campos";
 
-// MATERIAL Y PATRÓN, que la visión ya leía y NADIE veía. Mismo caso que el
-// corte: dato leído, guardado y usado —el material decide "lana en calor" y el
-// patrón decide "dos estampados que pelean"— pero invisible en la pantalla
-// donde se confirma todo lo demás, y por tanto incorregible.
-//
-// Son chips y no un campo de texto: esto es la carga MASIVA, y escribir
-// "algodón" a mano en doce prendas es exactamente la fricción que este flujo
-// existe para no tener. Lo que el modelo lea fuera de la lista se conserva y
-// se muestra como una opción más (ver `conLeido`).
-export const MATERIALES: { v: string; l: string }[] = [
-  { v: "algodón", l: "algodón" },
-  { v: "lana", l: "lana" },
-  { v: "mezclilla", l: "mezclilla" },
-  { v: "lino", l: "lino" },
-  { v: "punto", l: "punto" },
-  { v: "piel", l: "piel" },
-  { v: "ante", l: "ante" },
-  { v: "sintético", l: "sintético" },
-  { v: "seda", l: "seda" },
-];
-export const PATRONES_CHIP: { v: string; l: string }[] = [
-  { v: "liso", l: "liso" },
-  { v: "rayas", l: "rayas" },
-  { v: "cuadros", l: "cuadros" },
-  { v: "floral", l: "floral" },
-  { v: "animal-print", l: "animal print" },
-  { v: "grafico", l: "gráfico" },
-  { v: "estampado", l: "estampado" },
-];
-
-/**
- * La lista con el valor leído dentro, si el modelo dijo algo que no está.
- *
- * Sin esto, un material como "cashmere" o "gabardina" se vería como si no
- * hubiera nada seleccionado —el mismo bug del saco y el del color— y tocar
- * cualquier chip para "arreglarlo" destruiría un dato más específico.
- */
-export function conLeido(
-  opciones: { v: string; l: string }[],
-  leido?: string
-): { v: string; l: string }[] {
-  const v = (leido ?? "").trim();
-  if (!v || opciones.some((o) => o.v.toLowerCase() === v.toLowerCase())) return opciones;
-  return [{ v, l: v }, ...opciones];
-}
-export const FORMALIDADES: { v: PrendaAnalisis["formalidad"]; l: string }[] = [
-  { v: "casual", l: "Casual" },
-  { v: "formal-casual", l: "Casual-formal" },
-  { v: "formal", l: "Formal" },
-];
-// Paleta de colores comunes de ropa para corregir el color con un tap (swatch +
-// alternativas). El swatch detectado se muestra aparte como punto de partida.
-// La paleta y el cálculo de vecinos viven en lib/paleta-colores.ts (con tests).
-
-// Comprime una imagen a 1280px JPEG; devuelve dataURL para el análisis.
-function comprimir(file: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const max = 1280;
-      let { width, height } = img;
-      if (width > height && width > max) {
-        height = (height * max) / width;
-        width = max;
-      } else if (height > max) {
-        width = (width * max) / height;
-        height = max;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      URL.revokeObjectURL(img.src);
-      resolve(dataUrl);
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-function uid() {
-  return crypto.randomUUID();
-}
-
-// Prenda detectada en la curación de texto.
-// Error tipado del 403 de permiso parental: corta el análisis con el mensaje
-// del server (no es un problema de las fotos).
-class PermisoError extends Error {}
-
-type DraftItem = {
-  id: string;
-  attrs: PrendaDetectada;
-  on: boolean;
-  photoPreview: string; // dataURL de la foto de origen
-  /**
-   * Qué campos TOCÓ la persona en esta pantalla.
-   *
-   * Esta es la confirmación más fuerte que existe en toda la app —aquí se
-   * repasa prenda por prenda y campo por campo— y no se registraba en ningún
-   * lado: al motor le llegaba igual una prenda revisada a mano que una que
-   * nadie miró. Sólo los TOCADOS, porque todo viene preseleccionado y dejarlo
-   * como está no es confirmar, es no haber mirado.
-   */
-  tocados: Set<string>;
-  /**
-   * El color TAL COMO LO LEYÓ la visión, guardado aparte y sin tocar.
-   *
-   * Vive fuera de `attrs` porque attrs se sobreescribe al corregir: sin esta
-   * copia, tocar un swatch de la paleta por error borraba para siempre un hex
-   * exacto (#3A3A3C, gris carbón) y lo cambiaba por el atajo más cercano
-   * (#8A8A8A, gris de en medio) — o sea que "corregir" aclaraba la prenda y no
-   * había vuelta atrás. Con la copia, el swatch de lo leído siempre está y
-   * volver es un tap.
-   */
-  leido: { color: string; hex: string };
-};
-
-// Prenda ya renderizada, en la curación visual.
-type RenderItem = {
-  id: string;
-  attrs: PrendaDetectada;
-  tocados: Set<string>;
-  photo: string; // dataURL de la foto original (para el render imagen→imagen)
-  status: "pending" | "done" | "failed";
-  path: string | null;
-  url: string | null;
-  verdict: "keep" | "notmine" | "trash";
-};
-
-// Foto elegida, ya comprimida (y opcionalmente recortada) antes de analizarla.
-type Foto = { id: string; dataUrl: string };
-
-type State =
-  | { kind: "idle" }
-  | { kind: "explainer" } // así funciona (timeline de 3 pasos) ANTES de elegir fotos
-  | { kind: "preparando" } // convirtiendo/comprimiendo las fotos elegidas
-  | { kind: "revisar"; fotos: Foto[] } // recorte opcional por foto antes de leer
-  | { kind: "analizando"; done: number; total: number }
-  | { kind: "texto"; items: DraftItem[] }
-  | { kind: "render"; items: RenderItem[]; done: number; total: number }
-  | { kind: "visual"; items: RenderItem[] }
-  | { kind: "guardando" }
-  | { kind: "error"; msg: string };
-
-/** Mismo color, ignorando mayúsculas y el # — los hex vienen de dos fuentes. */
-export const mismoHex = (a?: string, b?: string) =>
-  !!a && !!b && a.replace("#", "").toLowerCase() === b.replace("#", "").toLowerCase();
-
-export function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    // `min-w-0 flex-1`: cuando dos Field comparten fila (marca y talla), sin
-    // esto el input no baja de lo que mide su texto de ejemplo y se sale.
-    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-muted">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-/**
- * Escala de 3 valores + "no aplica" — para corte y largo.
- *
- * El "no aplica" es de Roberto y no es un extra: sin él, la única forma de no
- * contestar es dejar lo que el modelo puso, o sea aceptarlo en silencio. Con la
- * salida explícita, "esta prenda no tiene corte que discutir" se puede DECIR, y
- * el atributo se borra en vez de quedarse con un valor inventado.
- */
-export function Escala({
-  opciones,
-  valor,
-  onPick,
-  vacio = "no aplica",
-}: {
-  opciones: { v: string; l: string }[];
-  valor?: string;
-  onPick: (v: string | undefined) => void;
-  /** Cómo se llama "ninguno". En el patrón "no aplica" confundiría con "liso". */
-  vacio?: string;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {opciones.map((o) => (
-        <button
-          key={o.v}
-          type="button"
-          onClick={() => onPick(o.v)}
-          className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-            valor === o.v
-              ? "border-accent bg-accent-soft text-accent"
-              : "border-line bg-surface text-muted"
-          }`}
-        >
-          {o.l}
-        </button>
-      ))}
-      <button
-        type="button"
-        onClick={() => onPick(undefined)}
-        className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-          !valor ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted"
-        }`}
-      >
-        {vacio}
-      </button>
-    </div>
-  );
-}
-
-/** Lo mínimo que la tarjeta necesita saber de una prenda leída. */
 export type DraftLeida = {
   id: string;
   attrs: PrendaDetectada;
@@ -309,52 +91,6 @@ export type DraftLeida = {
 // color con su punto, formalidad, "+ más"), y tocar uno abre SOLO su editor.
 // Elegir cierra. El chip es a la vez el resumen y la puerta — no hay estado
 // "abierto del todo".
-type Seccion = "tipo" | "color" | "formalidad" | "mas";
-const SECCION_DE_CAMPO: Record<string, Seccion> = {
-  categoria: "tipo",
-  color: "color",
-  formalidad: "formalidad",
-  corte: "mas",
-  largo: "mas",
-  material: "mas",
-  patron: "mas",
-};
-
-/** Un chip del resumen: enseña el valor actual y abre su editor al tocarlo.
- *  `alerta` = el modelo marcó ese campo como inseguro (borde warning: es la
- *  invitación a revisar justo ése, sin abrir nada más). */
-function ChipResumen({
-  activo,
-  alerta,
-  dashed,
-  onClick,
-  children,
-}: {
-  activo: boolean;
-  alerta?: boolean;
-  dashed?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-expanded={activo}
-      className={`inline-flex min-h-7 items-center gap-1.5 whitespace-nowrap rounded-sm border px-2 text-[11.5px] font-medium transition-colors ${
-        dashed ? "border-dashed" : ""
-      } ${
-        activo
-          ? "border-accent bg-accent-soft text-accent"
-          : alerta
-            ? "border-warning/70 bg-surface text-ink"
-            : "border-line bg-surface text-ink"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
 
 export function DraftCard({
   item,
@@ -600,25 +336,14 @@ export function DraftCard({
           botón "listo". */}
       {item.on && seccion === "tipo" && (
         <Field label="Tipo">
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORIAS.map((c) => (
-              <button
-                key={c.v}
-                type="button"
-                onClick={() => {
-                  onPatch({ categoria: c.v }, ["categoria"]);
-                  setSeccion(null);
-                }}
-                className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                  a.categoria === c.v
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface text-muted"
-                }`}
-              >
-                {c.l}
-              </button>
-            ))}
-          </div>
+          <Chips
+            opciones={CATEGORIAS}
+            valor={a.categoria}
+            onPick={(v) => {
+              onPatch({ categoria: v }, ["categoria"]);
+              setSeccion(null);
+            }}
+          />
         </Field>
       )}
 
@@ -682,33 +407,25 @@ export function DraftCard({
 
       {item.on && seccion === "formalidad" && (
         <Field label="Formalidad">
-          <div className="flex flex-wrap gap-1.5">
-            {FORMALIDADES.map((f) => (
-              <button
-                key={f.v}
-                type="button"
-                onClick={() => {
-                  onPatch({ formalidad: f.v }, ["formalidad"]);
-                  setSeccion(null);
-                }}
-                className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                  a.formalidad === f.v
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface text-muted"
-                }`}
-              >
-                {f.l}
-              </button>
-            ))}
-          </div>
+          <Chips
+            opciones={FORMALIDADES}
+            valor={a.formalidad}
+            onPick={(v) => {
+              onPatch({ formalidad: v }, ["formalidad"]);
+              setSeccion(null);
+            }}
+          />
         </Field>
       )}
 
       {item.on && seccion === "mas" && (
         <>
           {/* Corte y largo SÓLO donde cambian el look: en un zapato o un
-              cinturón no significan nada. La lista se importa de afinar-prendas
-              para que ficha, card y este editor no se desincronicen. */}
+              cinturón no significan nada. La LISTA viene de prenda-campos; de
+              afinar-prendas viene sólo `EL_CORTE_IMPORTA` —dónde preguntar—, y
+              ese archivo tiene además sus propias etiquetas en palabras de
+              persona (OPCIONES_CORTE). Los VALORES tienen que coincidir entre
+              los dos o la card de afinar y esta guardarían cosas distintas. */}
           {EL_CORTE_IMPORTA.has(a.categoria) ? (
             <>
               <Field label="Cómo le queda">
@@ -740,7 +457,7 @@ export function DraftCard({
           </Field>
           <Field label="Patrón">
             <Escala
-              opciones={conLeido(PATRONES_CHIP, a.patron)}
+              opciones={PATRONES_CHIP}
               valor={a.patron}
               onPick={(v) => onPatch({ patron: v as PrendaAnalisis["patron"] }, ["patron"])}
               vacio="sin dato"

@@ -19,12 +19,28 @@ import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { distanciaPerceptual } from "@/lib/engine/color-perceptual";
+import {
+  CATEGORIAS,
+  CORTES,
+  FORMALIDADES,
+  MATERIALES,
+  PATRONES_CHIP,
+  ChipResumen,
+  Chips,
+  Escala,
+  Field,
+  conLeido,
+  mismoHex,
+  type Seccion,
+} from "@/components/prenda-campos";
 
 export type ClosetItem = {
   id: string;
   nombre: string;
   imagen: string | null;
   swatch: string;
+  /** Cómo se llama el color ("azul marino"). "" = no se guardó nombre. */
+  colorNombre?: string;
   category: string;
   formalidad: string;
   temporada: string;
@@ -52,17 +68,6 @@ export type ClosetItem = {
   conjunto?: string;
 };
 
-// Dónde el corte CAMBIA el look. Se IMPORTA en vez de copiarse: la card de
-// afinar y esta ficha preguntan lo mismo, y dos listas iguales escritas aparte
-// se desincronizan en silencio — la ficha ofrecería corte en una categoría que
-// la card ya dejó de preguntar, o al revés. Un zapato "recto" no significa
-// nada (17 calzados del catálogo lo traen relleno por rellenar).
-const CORTES: { v: "entallado" | "recto" | "holgado"; l: string }[] = [
-  { v: "entallado", l: "entallado" },
-  { v: "recto", l: "recto" },
-  { v: "holgado", l: "holgado" },
-];
-
 // Orden + label de categoría (espeja el de la página).
 const CAT: { key: string; label: string }[] = [
   { key: "top", label: "Tops" },
@@ -75,38 +80,62 @@ const CAT: { key: string; label: string }[] = [
 ];
 const CAT_LABEL = new Map(CAT.map((c) => [c.key, c.label]));
 
-// Opciones para editar una prenda fotografiada (labels humanas, no el enum crudo).
-const EDIT_CAT: { v: string; l: string }[] = [
-  { v: "top", l: "top" },
-  { v: "saco", l: "saco" },
-  { v: "bottom", l: "pantalón" },
-  { v: "abrigo", l: "abrigo" },
-  { v: "vestido", l: "vestido" },
-  { v: "calzado", l: "calzado" },
-  { v: "accesorio", l: "accesorio" },
-];
-const FORMALIDADES: { v: string; l: string }[] = [
-  { v: "casual", l: "casual" },
-  { v: "formal-casual", l: "casual-formal" },
-  { v: "formal", l: "formal" },
-];
+// Las opciones para EDITAR una prenda (tipo, formalidad, material, patrón,
+// corte) se importan de components/prenda-campos: son las mismas que confirma
+// el carrete, y tenerlas escritas dos veces ya había producido dos vocabularios
+// para lo mismo — la ficha ofrecía "—" como patrón y la tarjeta "sin dato".
 const TEMPORADAS: { v: string; l: string }[] = [
   { v: "calor", l: "calor" },
   { v: "templado", l: "templado" },
   { v: "frio", l: "frío" },
   { v: "todo-el-año", l: "todo el año" },
 ];
-// Patrones (espeja PATRONES de lib/prenda-atributos; "" = sin dato).
-const PATRONES_EDIT: { v: string; l: string }[] = [
-  { v: "", l: "—" },
-  { v: "liso", l: "liso" },
-  { v: "rayas", l: "rayas" },
-  { v: "cuadros", l: "cuadros" },
-  { v: "floral", l: "floral" },
-  { v: "animal-print", l: "animal print" },
-  { v: "grafico", l: "gráfico" },
-  { v: "estampado", l: "estampado" },
-];
+
+/**
+ * Cómo se llama el color que está puesto ahora en la ficha.
+ *
+ * Tres fuentes por orden de especificidad: si no se ha tocado nada, el nombre
+ * que se GUARDÓ con la prenda ("azul marino", más fino que cualquier atajo);
+ * si se eligió un swatch, el nombre de ese swatch; y si no hay ninguno, la
+ * palabra "color" — el punto de al lado ya enseña cuál es.
+ */
+function nombreDelColor(hex: string, item: ClosetItem): string {
+  if (mismoHex(hex, item.swatch) && item.colorNombre) return item.colorNombre;
+  // "¿qué color?" y no "color": un chip que dice el nombre del campo rompe la
+  // premisa del resumen —cada chip DICE su valor— y se lee como un hueco. Así
+  // se lee como lo que es, una invitación a decirlo. Hoy no lo ve nadie (las
+  // 1064 prendas de la base traen nombre de color), así que esto es para la
+  // primera que entre sin él.
+  return PALETA.find((p) => mismoHex(p.hex, hex))?.name ?? "¿qué color?";
+}
+
+/**
+ * El texto de un chip del resumen, en minúsculas.
+ *
+ * Los catálogos traen las etiquetas capitalizadas porque ahí son OPCIONES de un
+ * editor ("Formal", "Casual-formal"), pero el nombre del color viene de la
+ * visión en minúsculas ("gris carbón") — y en la misma fila eso se veía como
+ * dos voces distintas. Todo lo demás de esta hoja es minúscula ("guardar
+ * cambios", "desatar", "cerrar").
+ */
+const enChip = (s: string) => s.toLocaleLowerCase("es");
+
+// El orden en que se ofrecen las parejas de un conjunto: primero por formalidad
+// y luego por color. Vive fuera del componente porque es una constante, no
+// estado — dentro se reconstruía en cada tecla que se escribiera en la ficha.
+const PESO_FORMALIDAD: Record<string, number> = {
+  formal: 0,
+  "formal-casual": 1,
+  casual: 2,
+};
+// LO QUE NO PUEDE SER EL PANTALÓN DE UN TRAJE, pase lo que pase con el color.
+// Roberto, viendo la lista: "se ve horrible ahí… cómo va a ser un short parte
+// de un traje". Tiene razón y no es cuestión de orden: ordenar por formalidad
+// bajó la bermuda al tercer puesto, pero seguía ahí. Esto es un hecho de la
+// prenda, no una preferencia. Sólo aplica cuando el ancla es un SACO: un
+// conjunto de dos piezas con short existe y es perfectamente normal.
+const IMPOSIBLE_EN_UN_TRAJE =
+  /short|bermuda|jogger|legging|deportiv|mezclilla|denim|jean|cargo|palazzo|bikini/i;
 
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -601,6 +630,13 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
 
       {selected ? (
         <ItemSheet
+          // UNA HOJA POR PRENDA. Sus ~18 useState se inicializan del `item`, así
+          // que sin `key` un futuro camino que cambie de prenda sin cerrar
+          // (abrir la pareja del conjunto, por ejemplo) escribiría los valores
+          // de la prenda A sobre el id de la B. Hoy no pasa —`selected` siempre
+          // pasa por null— y por eso mismo es barato blindarlo antes de que
+          // pase.
+          key={selected.id}
           item={selected}
           todas={items}
           onClose={() => setSelected(null)}
@@ -762,7 +798,26 @@ function FilterSheet({
 // EL CORTE PRESELECCIONA PERO NO CONFIRMA. Guardar sin tocar la silueta deja el
 // dato como estaba: si preseleccionar contara como confirmar, un "guardar" tras
 // cambiar el material marcaría el corte como revisado sin que nadie lo mirara.
-function ItemSheet({
+//
+// RESUMEN EN CHIPS, NO DOCE CAMPOS ABIERTOS (2026-08-12). Roberto: "está
+// demasiado detalle… se ve una pantallota; hazlo como el multi upload y el fit
+// check". Tenía razón y el número lo confirmaba: doce editores abiertos a la
+// vez, 1.46 pantallas de scroll, para una ficha que casi siempre se abre por UNA
+// cosa —ver la prenda en grande, renombrarla, corregir el color, rehacer la
+// imagen—. Ahora una fila de chips DICE los valores (tipo, color, formalidad) y
+// tocar uno abre sólo su editor; el resto vive en "+ más".
+//
+// El vocabulario es el MISMO que el del carrete (components/prenda-campos), y
+// eso es lo que hace que valga la pena: quien corrigió doce prendas al darlas de
+// alta encuentra aquí los mismos chips, no un segundo idioma para los mismos
+// datos.
+//
+// LO QUE NO SE PLEGÓ, a propósito: el nombre (es la identidad de la prenda, y se
+// edita más que nada), el lazo del conjunto (no es un atributo sino una
+// relación, y es el único lugar donde se puede atar un traje) y rehacer la
+// imagen. Esconder esos tres detrás de un chip sería cambiar una pantallota por
+// una búsqueda del tesoro.
+export function ItemSheet({
   item,
   todas,
   onClose,
@@ -783,8 +838,8 @@ function ItemSheet({
   const [corteTocado, setCorteTocado] = useState(false);
   const [atando, setAtando] = useState(false);
   const [rehaciendo, setRehaciendo] = useState(false);
-  /** Qué salió mal al rehacer la imagen. null = nada que decir. */
-  const [errorRender, setErrorRender] = useState<string | null>(null);
+  /** Qué salió mal —al guardar o al rehacer la imagen—. null = nada que decir. */
+  const [errorFicha, setErrorFicha] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
   const [colorHex, setColorHex] = useState(item.swatch);
   const [todosLosColores, setTodosLosColores] = useState(false);
@@ -800,18 +855,64 @@ function ItemSheet({
   const [patron, setPatron] = useState(item.patron);
   const [colorSecundario, setColorSecundario] = useState(item.colorSecundario);
   const [saving, setSaving] = useState(false);
+  /** Qué chip está abierto. null = sólo el resumen (el estado normal). */
+  const [seccion, setSeccion] = useState<Seccion | null>(null);
+  /** Tocar el chip abierto lo cierra; tocar otro cambia de editor. */
+  const abre = (sec: Seccion) => setSeccion(seccion === sec ? null : sec);
+  /**
+   * La salida para un material que no está en los chips.
+   *
+   * Los nueve chips cubren 93% de las prendas con material, pero la cola es
+   * real (satén, gamuza, terciopelo, gabardina) y ESTA es la pantalla donde se
+   * afina una prenda concreta. Quitar el texto libre habría hecho incorregible
+   * justo lo específico; dejarlo abierto siempre habría vuelto a poner un campo
+   * de tecleo donde un tap basta el 93% de las veces.
+   */
+  const [otroMaterial, setOtroMaterial] = useState(false);
+
+  /**
+   * Lo último que se guardó CON ÉXITO — contra esto se mide si hay pendientes.
+   *
+   * Antes se medía contra `item`, que son props del servidor y no se refrescan
+   * al guardar; o sea que después de un guardado exitoso `dirty` seguía siendo
+   * verdadero para siempre. Eso obligaba a esconder el botón de guardar con
+   * `!ofrecerRender`, y de ahí salía una pérdida de trabajo silenciosa: cambias
+   * el nombre, guardas, aparece la oferta de rehacer la imagen, ves de paso que
+   * la temporada está mal, la corriges — y ya no hay botón para guardarla. Tocas
+   * "así está bien", la hoja se cierra, y la temporada se perdió con un mensaje
+   * de éxito en pantalla. El rediseño lo empeoraba: los chips invitan justo a
+   * ese "ah, y esto también".
+   */
+  const [guardado, setGuardado] = useState({
+    nombre: item.nombre,
+    categoria: item.category,
+    formalidad: item.formalidad,
+    temporada: item.temporada,
+    marca: item.marca ?? "",
+    talla: item.talla ?? "",
+    material: item.material,
+    patron: item.patron,
+    colorSecundario: item.colorSecundario,
+    colorHex: item.swatch,
+  });
 
   const dirty =
-    nombre.trim() !== item.nombre ||
-    categoria !== item.category ||
-    formalidad !== item.formalidad ||
-    temporada !== item.temporada ||
-    marca !== (item.marca ?? "") ||
-    talla !== (item.talla ?? "") ||
-    material.trim() !== item.material ||
-    patron !== item.patron ||
-    colorSecundario.trim() !== item.colorSecundario ||
-    colorHex !== item.swatch ||
+    nombre.trim() !== guardado.nombre ||
+    categoria !== guardado.categoria ||
+    formalidad !== guardado.formalidad ||
+    temporada !== guardado.temporada ||
+    marca !== guardado.marca ||
+    talla !== guardado.talla ||
+    material.trim() !== guardado.material ||
+    patron !== guardado.patron ||
+    colorSecundario.trim() !== guardado.colorSecundario ||
+    // `mismoHex` y no `!==`: 127 prendas de la base guardan su hex en minúsculas
+    // y la paleta está en mayúsculas. Con comparación estricta, tocar el swatch
+    // que YA estaba puesto contaba como cambio — y ese cambio sustituía el
+    // nombre específico que tenía la prenda ("gris carbón") por el genérico de
+    // la paleta ("Gris oscuro") y ofrecía una regeneración de imagen, que se
+    // cobra, por un color que no cambió.
+    !mismoHex(colorHex, guardado.colorHex) ||
     corteTocado;
 
   // GENERALIZADO A CONJUNTOS DE DOS PIEZAS, no sólo trajes: el dato siempre fue
@@ -825,15 +926,6 @@ function ItemSheet({
   // trabajo del motor, no un dato que la persona deba capturar a mano.
   const esPiezaDeTraje =
     categoria === "saco" || categoria === "bottom" || categoria === "top";
-  const catsPareja = categoria === "bottom" ? ["saco", "top"] : ["bottom"];
-  // LO QUE NO PUEDE SER EL PANTALÓN DE UN TRAJE, pase lo que pase con el color.
-  // Roberto, viendo la lista: "se ve horrible ahí… cómo va a ser un short parte
-  // de un traje". Tiene razón y no es cuestión de orden: ordenar por formalidad
-  // bajó la bermuda al tercer puesto, pero seguía ahí. Esto es un hecho de la
-  // prenda, no una preferencia. Sólo aplica cuando el ancla es un SACO: un
-  // conjunto de dos piezas con short existe y es perfectamente normal.
-  const IMPOSIBLE_EN_UN_TRAJE =
-    /short|bermuda|jogger|legging|deportiv|mezclilla|denim|jean|cargo|palazzo|bikini/i;
   const pareja = item.conjunto
     ? (todas.find((o) => o.id !== item.id && o.conjunto === item.conjunto) ?? null)
     : null;
@@ -844,26 +936,27 @@ function ItemSheet({
   // primero unos JEANS y una BERMUDA. El color por sí solo no sabe que un
   // traje no lleva jeans; en OKLCH el denim oscuro cae cerquísima del carbón
   // (es la misma vecindad que hace confundir carbón con azul medianoche).
-  const PESO_FORMALIDAD: Record<string, number> = {
-    formal: 0,
-    "formal-casual": 1,
-    casual: 2,
-  };
-  const candidatas = esPiezaDeTraje
-    ? todas
-        .filter((o) => o.id !== item.id && catsPareja.includes(o.category))
-        .filter(
-          (o) => categoria !== "saco" || !IMPOSIBLE_EN_UN_TRAJE.test(`${o.nombre} ${o.material}`)
-        )
-        .map((o) => ({
-          o,
-          f: PESO_FORMALIDAD[o.formalidad] ?? 2,
-          d: distanciaPerceptual(item.swatch, o.swatch) ?? 99,
-        }))
-        .sort((a, b) => a.f - b.f || a.d - b.d)
-        .slice(0, 8)
-        .map((x) => x.o)
-    : [];
+  //
+  // MEMOIZADO: recorre el clóset ENTERO (hasta mil prendas) calculando una
+  // distancia de color por cada una, y sin esto se rehacía en cada tecla que se
+  // escribiera en el nombre — que es justo lo que se hace con la ficha abierta.
+  const candidatas = useMemo(() => {
+    if (!esPiezaDeTraje) return [];
+    const catsPareja = categoria === "bottom" ? ["saco", "top"] : ["bottom"];
+    return todas
+      .filter((o) => o.id !== item.id && catsPareja.includes(o.category))
+      .filter(
+        (o) => categoria !== "saco" || !IMPOSIBLE_EN_UN_TRAJE.test(`${o.nombre} ${o.material}`)
+      )
+      .map((o) => ({
+        o,
+        f: PESO_FORMALIDAD[o.formalidad] ?? 2,
+        d: distanciaPerceptual(item.swatch, o.swatch) ?? 99,
+      }))
+      .sort((a, b) => a.f - b.f || a.d - b.d)
+      .slice(0, 8)
+      .map((x) => x.o);
+  }, [esPiezaDeTraje, categoria, todas, item.id, item.swatch]);
 
   /** Manda los cambios del formulario. Devuelve si se guardó. */
   async function persistir(): Promise<boolean> {
@@ -875,27 +968,65 @@ function ItemSheet({
       temporada,
       marca,
       talla,
-      material,
+      // NORMALIZADO al escribir, y aquí está el porqué: los chips de material
+      // resaltan sin distinguir mayúsculas ni espacios (ver igualValor), así que
+      // un "Lana " tecleado en "es otro material" se vería igual que uno de la
+      // lista pero NO sería el mismo dato para nadie más — ni para el motor, que
+      // agrupa por texto. Se limpia en la puerta, no en cada lector.
+      material: material.trim().toLowerCase(),
       patron,
       color_secundario: colorSecundario,
-      ...(colorHex !== item.swatch
-        ? { color_hex: colorHex, color: PALETA.find((p) => p.hex === colorHex)?.name ?? "" }
+      ...(!mismoHex(colorHex, guardado.colorHex)
+        ? { color_hex: colorHex, color: PALETA.find((p) => mismoHex(p.hex, colorHex))?.name ?? "" }
         : {}),
-      // Va sólo si lo tocó: mandarlo siempre confirmaría lo que preseleccionamos.
-      ...(corteTocado && corte ? { corte } : {}),
+      // Va sólo si lo tocó Y si la categoría admite corte.
+      //
+      // Lo segundo tapa una fuga real: tocas la silueta de unos pantalones,
+      // cambias el tipo a "accesorio" —dos taps, en pantallas distintas— y el
+      // editor de corte desaparece, pero el valor seguía viajando Y quedando
+      // marcado como confirmado por ti. En la base ya hay 23 prendas con corte
+      // en categorías donde no significa nada (17 calzados, 6 accesorios); esto
+      // impide que la ficha siga fabricándolas.
+      ...(corteTocado && corte && EL_CORTE_IMPORTA.has(categoria) ? { corte } : {}),
     });
     setSaving(false);
+    if (res.ok) {
+      // El nuevo punto de partida: a partir de aquí "sin guardar" significa lo
+      // que se cambie DESPUÉS de esto. El corte deja de contar como tocado
+      // porque acaba de quedar confirmado en la base.
+      setGuardado({
+        nombre: nombre.trim(),
+        categoria,
+        formalidad,
+        temporada,
+        marca,
+        talla,
+        material: material.trim().toLowerCase(),
+        patron,
+        colorSecundario: colorSecundario.trim(),
+        colorHex,
+      });
+      setCorteTocado(false);
+    }
     return res.ok;
   }
 
   async function guardar() {
-    if (!(await persistir())) return;
+    if (!(await persistir())) {
+      // SE DICE. Antes esta rama era un `return` a secas: la acción fallaba, la
+      // hoja se quedaba idéntica con el botón puesto, y la persona se iba
+      // creyendo que había guardado. Un guardado que falla en silencio es peor
+      // que uno que no existe — el mismo criterio que ya seguía rehacerImagen.
+      setErrorFicha("No pude guardar los cambios — inténtalo otra vez.");
+      return;
+    }
+    setErrorFicha(null);
     // LA IMAGEN SE GENERÓ CON EL NOMBRE Y EL COLOR VIEJOS. Idea de Roberto:
     // "si le cambio el color o el nombre me debería preguntar si quiero
     // generar nuevamente la imagen". Tiene razón — el render sale de esos dos
     // datos, así que cambiarlos lo deja obsoleto. Se PREGUNTA en vez de
     // rehacerlo solo: cuesta una llamada, y a veces el cambio es una tilde.
-    if (nombre.trim() !== item.nombre || colorHex !== item.swatch) {
+    if (nombre.trim() !== item.nombre || !mismoHex(colorHex, item.swatch)) {
       setOfrecerRender(true);
       return;
     }
@@ -914,10 +1045,10 @@ function ItemSheet({
    */
   async function rehacerImagen() {
     setRehaciendo(true);
-    setErrorRender(null);
+    setErrorFicha(null);
     try {
       if (dirty && !(await persistir())) {
-        setErrorRender("No pude guardar los cambios — inténtalo otra vez.");
+        setErrorFicha("No pude guardar los cambios — inténtalo otra vez.");
         return;
       }
       const res = await fetch("/api/render-item", {
@@ -926,19 +1057,32 @@ function ItemSheet({
         body: JSON.stringify({ itemId: item.id, forzar: true }),
       });
       if (!res.ok) {
-        setErrorRender("No pude rehacer la imagen — inténtalo en un momento.");
+        setErrorFicha("No pude rehacer la imagen — inténtalo en un momento.");
         return;
       }
       onSaved();
     } catch {
-      setErrorRender("Se cortó la conexión — inténtalo otra vez.");
+      setErrorFicha("Se cortó la conexión — inténtalo otra vez.");
     } finally {
       setRehaciendo(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40 px-4 pb-4" onClick={onClose}>
+    // TOCAR FUERA NO DESCARTA CAMBIOS. Con la ficha en un resumen de chips la
+    // hoja mide media pantalla, así que la otra media es fondo — un botón
+    // enorme e invisible de "tira lo que llevas escrito". Con cambios sin
+    // guardar, el fondo no cierra; la equis sigue siendo la salida deliberada.
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/40 px-4 pb-4"
+      onClick={() => {
+        if (dirty) {
+          setErrorFicha("Tienes cambios sin guardar. Guárdalos, o cierra con la ✕.");
+          return;
+        }
+        onClose();
+      }}
+    >
       <div
         className="flex max-h-[90dvh] w-full max-w-[430px] flex-col gap-4 overflow-y-auto rounded-2xl bg-surface p-5"
         onClick={(e) => e.stopPropagation()}
@@ -972,7 +1116,7 @@ function ItemSheet({
             {!esFoto ? (
               <span className="text-xs leading-snug text-muted">
                 La marcaste en la lista de básicos — lo de abajo es lo que
-                supongo. Corrígeme.
+                supongo. Toca para corregirme.
               </span>
             ) : null}
           </div>
@@ -982,211 +1126,280 @@ function ItemSheet({
         </div>
 
         <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted">Tipo</label>
-              <div className="flex flex-wrap gap-2">
-                {EDIT_CAT.map((c) => (
-                  <button
-                    key={c.v}
-                    type="button"
-                    onClick={() => setCategoria(c.v)}
-                    className={`min-h-9 rounded-sm border px-3 text-sm transition-colors ${
-                      categoria === c.v ? "border-accent bg-accent text-on-accent" : "border-line bg-surface text-ink"
-                    }`}
-                  >
-                    {c.l}
-                  </button>
-                ))}
-              </div>
+            {/* EL RESUMEN: cada chip DICE su valor y es la puerta a su editor.
+                Que digan el valor y no la etiqueta ("Pantalón", no "tipo") es
+                lo que quita el muro — así se revisa la prenda entera de un
+                vistazo y sólo se abre lo que esté mal. */}
+            <div className="flex flex-wrap gap-1.5">
+              <ChipResumen activo={seccion === "tipo"} onClick={() => abre("tipo")}>
+                {enChip(CATEGORIAS.find((c) => c.v === categoria)?.l ?? "Tipo")}
+              </ChipResumen>
+              <ChipResumen activo={seccion === "color"} onClick={() => abre("color")}>
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full border border-line"
+                  style={{ backgroundColor: colorHex }}
+                  aria-hidden
+                />
+                {enChip(nombreDelColor(colorHex, item))}
+              </ChipResumen>
+              <ChipResumen activo={seccion === "formalidad"} onClick={() => abre("formalidad")}>
+                {enChip(FORMALIDADES.find((f) => f.v === formalidad)?.l ?? "Formalidad")}
+              </ChipResumen>
+              {/* EL AVISO DEL CORTE SUPUESTO SUBE AL CHIP. Dentro de "+ más" el
+                  "esto es lo que supongo" quedaría escondido tras un tap — o
+                  sea, el único dato que la ficha pide revisar sería el único
+                  invisible. El borde de alerta es la invitación a abrirlo. */}
+              <ChipResumen
+                dashed
+                activo={seccion === "mas"}
+                alerta={
+                  EL_CORTE_IMPORTA.has(categoria) &&
+                  !!corte &&
+                  !item.corteConfirmado &&
+                  !corteTocado
+                }
+                onClick={() => abre("mas")}
+              >
+                + más
+              </ChipResumen>
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-muted">Formalidad</label>
-                <select
-                  value={formalidad}
-                  onChange={(e) => setFormalidad(e.target.value)}
-                  className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
-                >
-                  {FORMALIDADES.map((f) => (
-                    <option key={f.v} value={f.v}>
-                      {f.l}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-muted">Temporada</label>
-                <select
-                  value={temporada}
-                  onChange={(e) => setTemporada(e.target.value)}
-                  className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
-                >
-                  {TEMPORADAS.map((t) => (
-                    <option key={t.v} value={t.v}>
-                      {t.l}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Atributos ricos (v21): el motor los usa como señal dura (lana ≠
-                calor, máx. un estampado) — por eso son corregibles aquí. */}
-            <div className="flex gap-3">
-              <div className="flex flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-muted">Material</label>
-                <input
-                  value={material}
-                  onChange={(e) => setMaterial(e.target.value)}
-                  placeholder="algodón, lana, mezclilla…"
-                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+            {seccion === "tipo" && (
+              <Field label="Tipo">
+                <Chips
+                  opciones={CATEGORIAS}
+                  valor={categoria}
+                  onPick={(v) => {
+                    setCategoria(v);
+                    setSeccion(null);
+                  }}
                 />
-              </div>
-              <div className="flex flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-muted">Patrón</label>
-                <select
-                  value={patron}
-                  onChange={(e) => setPatron(e.target.value)}
-                  className="min-h-10 rounded-sm border border-line bg-surface px-2 text-sm text-ink"
-                >
-                  {PATRONES_EDIT.map((p) => (
-                    <option key={p.v} value={p.v}>
-                      {p.l}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* MARCA Y TALLA — lo único que ningún modelo puede leer.
-                Idea de Roberto. Viven SÓLO aquí y jamás en los flujos de alta:
-                la visión vio marca en 2 de 336 prendas (las Columbia, por el
-                logo) y la talla está en una etiqueta por dentro, así que las dos
-                son tecleo manual siempre. Pedirlas al cargar quince prendas es
-                la fricción de catalogar que este producto existe para no tener;
-                aquí tienes la prenda en la mano y no hay prisa.
-                Opcionales de verdad: nada las pide, nada se rompe sin ellas. */}
-            {/* `min-w-0` en los dos: sin él un input NO baja de lo que mide su
-                texto de ejemplo (min-width:auto), y "Uniqlo, Massimo Dutti…"
-                empujaba la talla 32px fuera de la ficha. Medido en el
-                navegador, no a ojo. */}
-            <div className="flex gap-3">
-              <div className="flex min-w-0 flex-[2] flex-col gap-1">
-                <label className="text-xs font-medium text-muted">Marca (opcional)</label>
-                <input
-                  value={marca}
-                  onChange={(e) => setMarca(e.target.value)}
-                  placeholder="Uniqlo, Massimo Dutti…"
-                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
-                />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-muted">Talla</label>
-                <input
-                  value={talla}
-                  onChange={(e) => setTalla(e.target.value)}
-                  placeholder={ejemploDeTalla(categoria)}
-                  className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
-                />
-              </div>
-            </div>
+              </Field>
+            )}
 
             {/* EL COLOR PRINCIPAL. Faltaba: se podía corregir el SEGUNDO color
                 y no el primero — el que alimenta las reglas de cuero, las de
                 monocromo y la colorimetría. Mismo criterio que en la carga:
                 primero el que tiene la prenda, luego los que de verdad se
                 confunden con él, y la paleta entera a un tap. */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted">Color</label>
-              <div className="flex flex-wrap items-center gap-2">
-                {!PALETA.some((p) => p.hex.toLowerCase() === item.swatch.toLowerCase()) ? (
-                  <button
-                    type="button"
-                    aria-label="el color que tiene"
-                    title="el color que tiene"
-                    onClick={() => setColorHex(item.swatch)}
-                    className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                      colorHex === item.swatch ? "scale-110 border-accent" : "border-line"
-                    }`}
-                    style={{ backgroundColor: item.swatch }}
-                  />
-                ) : null}
-                {(todosLosColores ? PALETA : coloresCercanos(item.swatch, 4)).map((p) => (
-                  <button
-                    key={p.hex}
-                    type="button"
-                    aria-label={p.name}
-                    title={p.name}
-                    onClick={() => setColorHex(p.hex)}
-                    className={`h-7 w-7 rounded-full border-2 transition-transform ${
-                      colorHex.toLowerCase() === p.hex.toLowerCase()
-                        ? "scale-110 border-accent"
-                        : "border-line"
-                    }`}
-                    style={{ backgroundColor: p.hex }}
-                  />
-                ))}
-                {!todosLosColores ? (
-                  <button
-                    type="button"
-                    onClick={() => setTodosLosColores(true)}
-                    className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-                  >
-                    otro color
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted">
-                Segundo color (si es bicolor)
-              </label>
-              <input
-                value={colorSecundario}
-                onChange={(e) => setColorSecundario(e.target.value)}
-                placeholder="blanco, beige…"
-                className="min-h-10 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
-              />
-            </div>
-
-            {/* EL CORTE, sólo donde cambia el look. Con siluetas y no con las
-                tres palabras sueltas: "entallado / recto / holgado" no dice
-                nada sin ver a qué se refiere. */}
-            {EL_CORTE_IMPORTA.has(categoria) ? (
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-muted">
-                  Cómo te queda
-                  {!corteTocado && corte && !item.corteConfirmado ? (
-                    <span className="ml-1 font-normal">· esto es lo que supongo</span>
-                  ) : null}
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {CORTES.map((c) => (
+            {seccion === "color" && (
+              <Field label={`Color · ${nombreDelColor(colorHex, item)}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  {!PALETA.some((p) => mismoHex(p.hex, item.swatch)) ? (
                     <button
-                      key={c.v}
                       type="button"
+                      aria-label="el color que tiene"
+                      title="el color que tiene"
                       onClick={() => {
-                        setCorte(c.v);
-                        setCorteTocado(true);
+                        setColorHex(item.swatch);
+                        setSeccion(null);
                       }}
-                      className={`flex flex-col items-center gap-1 rounded-sm border px-2 py-2 text-xs transition-colors ${
-                        corte === c.v
-                          ? "border-accent bg-accent-soft text-accent"
-                          : "border-line bg-surface text-muted"
+                      className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                        colorHex === item.swatch ? "scale-110 border-accent" : "border-line"
                       }`}
-                    >
-                      <SiluetaCorte
-                        corte={c.v}
-                        tipo={categoria === "bottom" ? "bottom" : "top"}
-                      />
-                      {c.l}
-                    </button>
+                      style={{ backgroundColor: item.swatch }}
+                    />
+                  ) : null}
+                  {(todosLosColores ? PALETA : coloresCercanos(item.swatch, 4)).map((p) => (
+                    <button
+                      key={p.hex}
+                      type="button"
+                      aria-label={p.name}
+                      title={p.name}
+                      onClick={() => {
+                        setColorHex(p.hex);
+                        setSeccion(null);
+                      }}
+                      className={`h-7 w-7 rounded-full border-2 transition-transform ${
+                        mismoHex(colorHex, p.hex) ? "scale-110 border-accent" : "border-line"
+                      }`}
+                      style={{ backgroundColor: p.hex }}
+                    />
                   ))}
+                  {/* Abre la paleta entera SIN cerrar la sección: quien la pidió
+                      es porque no encontró el suyo y sigue buscando. */}
+                  {!todosLosColores ? (
+                    <button
+                      type="button"
+                      onClick={() => setTodosLosColores(true)}
+                      className="min-h-7 rounded-sm border border-line bg-surface px-2 text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
+                    >
+                      otro color
+                    </button>
+                  ) : null}
                 </div>
-              </div>
-            ) : null}
+              </Field>
+            )}
+
+            {seccion === "formalidad" && (
+              <Field label="Formalidad">
+                <Chips
+                  opciones={FORMALIDADES}
+                  valor={formalidad}
+                  onPick={(v) => {
+                    setFormalidad(v);
+                    setSeccion(null);
+                  }}
+                />
+              </Field>
+            )}
+
+            {/* "+ MÁS": todo lo que se corrige de vez en cuando. No cierra al
+                elegir —son varios campos y cerrarse en el primero obligaría a
+                reabrir por cada uno—; cierra el botón "listo". */}
+            {seccion === "mas" && (
+              <>
+                <Field label="Temporada">
+                  <Chips opciones={TEMPORADAS} valor={temporada} onPick={setTemporada} />
+                </Field>
+
+                {/* EL CORTE, sólo donde cambia el look. Con siluetas y no con
+                    las tres palabras sueltas: "entallado / recto / holgado" no
+                    dice nada sin ver a qué se refiere — por eso este control
+                    NO se cambió por los chips del carrete. Es el único campo
+                    donde la ficha del clóset tiene el mejor editor de los dos. */}
+                {EL_CORTE_IMPORTA.has(categoria) ? (
+                  <Field
+                    label={
+                      !corteTocado && corte && !item.corteConfirmado
+                        ? "Cómo te queda · esto es lo que supongo"
+                        : "Cómo te queda"
+                    }
+                  >
+                    <div className="grid grid-cols-3 gap-2">
+                      {CORTES.map((c) => (
+                        <button
+                          key={c.v}
+                          type="button"
+                          onClick={() => {
+                            setCorte(c.v);
+                            setCorteTocado(true);
+                          }}
+                          className={`flex flex-col items-center gap-1 rounded-sm border px-2 py-2 text-xs transition-colors ${
+                            corte === c.v
+                              ? "border-accent bg-accent-soft text-accent"
+                              : "border-line bg-surface text-muted"
+                          }`}
+                        >
+                          <SiluetaCorte
+                            corte={c.v}
+                            tipo={categoria === "bottom" ? "bottom" : "top"}
+                          />
+                          {c.l}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                ) : null}
+
+                {/* Atributos ricos (v21): el motor los usa como señal dura (lana
+                    ≠ calor, máx. un estampado) — por eso son corregibles aquí.
+                    Chips en vez de texto libre y de un menú: es el mismo
+                    vocabulario que la persona ya confirmó al dar de alta. */}
+                <Field label="Material">
+                  {otroMaterial ? (
+                    <div className="flex flex-col gap-1.5">
+                    <input
+                      value={material}
+                      autoFocus
+                      onChange={(e) => setMaterial(e.target.value)}
+                      placeholder="cashmere, gabardina…"
+                      className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                    />
+                    {/* LA VUELTA. Sin ella, tocar "es otro material" por error
+                        dejaba tecleando el resto de la sesión: para volver a
+                        "lana" había que escribirla exacta. */}
+                    <button
+                      type="button"
+                      onClick={() => setOtroMaterial(false)}
+                      className="self-start text-[11.5px] text-muted underline underline-offset-2 transition-colors hover:text-accent"
+                    >
+                      elegir de la lista
+                    </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1.5">
+                      <Escala
+                        opciones={conLeido(MATERIALES, item.material)}
+                        valor={material}
+                        onPick={(v) => setMaterial(v ?? "")}
+                        vacio="no sé"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setOtroMaterial(true)}
+                        className="self-start text-[11.5px] text-muted underline underline-offset-2 transition-colors hover:text-accent"
+                      >
+                        es otro material
+                      </button>
+                    </div>
+                  )}
+                </Field>
+
+                <Field label="Patrón">
+                  <Escala
+                    opciones={PATRONES_CHIP}
+                    valor={patron}
+                    onPick={(v) => setPatron(v ?? "")}
+                    vacio="sin dato"
+                  />
+                </Field>
+
+                <Field label="Segundo color (si es bicolor)">
+                  <input
+                    value={colorSecundario}
+                    onChange={(e) => setColorSecundario(e.target.value)}
+                    placeholder="blanco, beige…"
+                    className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                  />
+                </Field>
+
+                {/* MARCA Y TALLA — lo único que ningún modelo puede leer.
+                    Idea de Roberto. Viven SÓLO aquí y jamás en los flujos de
+                    alta: la visión vio marca en 2 de 336 prendas (las Columbia,
+                    por el logo) y la talla está en una etiqueta por dentro, así
+                    que las dos son tecleo manual siempre. Pedirlas al cargar
+                    quince prendas es la fricción de catalogar que este producto
+                    existe para no tener; aquí tienes la prenda en la mano y no
+                    hay prisa.
+                    Opcionales de verdad: nada las pide, nada se rompe sin ellas.
+                    `min-w-0` en los dos: sin él un input NO baja de lo que mide
+                    su texto de ejemplo (min-width:auto), y "Uniqlo, Massimo
+                    Dutti…" empujaba la talla fuera de la ficha. */}
+                <div className="flex gap-3">
+                  <Field label="Marca (opcional)">
+                    <input
+                      value={marca}
+                      onChange={(e) => setMarca(e.target.value)}
+                      placeholder="Uniqlo, Massimo Dutti…"
+                      className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                    />
+                  </Field>
+                  <Field label="Talla">
+                    <input
+                      value={talla}
+                      onChange={(e) => setTalla(e.target.value)}
+                      placeholder={ejemploDeTalla(categoria)}
+                      className="min-h-10 w-full rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-accent"
+                    />
+                  </Field>
+                </div>
+
+                {/* "CERRAR" Y NO "LISTO", que es como se llama en el carrete.
+                    Ahí "listo" es verdad: cada tap ya viajó al borrador. Aquí no
+                    guarda nada —el guardado es el botón de abajo—, y un "listo"
+                    que sólo pliega invita a irse creyendo que se guardó. Es la
+                    misma palabra con dos significados en dos pantallas, y la de
+                    aquí es la que puede perder trabajo. */}
+                <button
+                  type="button"
+                  onClick={() => setSeccion(null)}
+                  className="min-h-9 rounded-sm border border-line bg-surface text-[12.5px] font-medium text-ink transition-colors hover:border-accent"
+                >
+                  cerrar
+                </button>
+              </>
+            )}
 
             {/* EL LAZO DEL TRAJE, desde la ficha. Antes sólo se podía poner al
                 subir la foto: quien pasara de la casilla —o quien ya tuviera el
@@ -1318,14 +1531,14 @@ function ItemSheet({
                 : "la imagen no es de esta prenda — rehacerla"}
             </button>
 
-            {errorRender ? (
-              <p className="text-[13px] leading-snug text-error">{errorRender}</p>
+            {errorFicha ? (
+              <p className="text-[13px] leading-snug text-error">{errorFicha}</p>
             ) : null}
 
             {/* LA OFERTA, después de guardar. No se rehace sola: cuesta una
                 llamada y a veces el cambio fue una tilde. Se pregunta con el
                 motivo delante, que es lo que la hace contestable. */}
-            {ofrecerRender ? (
+            {ofrecerRender && !dirty ? (
               <div className="flex flex-col gap-2 rounded-sm bg-warning/10 p-3">
                 <p className="text-[13px] leading-snug text-ink">
                   Guardado. Su imagen se generó con el nombre y el color
@@ -1353,7 +1566,7 @@ function ItemSheet({
               </div>
             ) : null}
 
-            {dirty && !ofrecerRender ? (
+            {dirty ? (
               <button
                 type="button"
                 onClick={guardar}
