@@ -50,6 +50,23 @@ export async function POST(request: NextRequest) {
     objective?: string;
     plan?: string;
     momento?: string;
+    /**
+     * QUÉ evento es y QUÉ TAN formal — las dos preguntas del paso de detalle
+     * del wizard (lib/eventos.ts, lib/formalidad.ts).
+     *
+     * Estaban SIN DECLARAR hasta 2026-08-12, y esa omisión no fallaba: el
+     * wizard las mandaba dentro de LookInput, llegaban por la red y aquí se
+     * caían al piso en silencio, porque `body` está tipado a mano y lo que no
+     * se nombra no existe. Resultado: en el onboarding podías decir "una boda"
+     * y "formal" y recibir el look de un martes cualquiera — en el PRIMER look
+     * de tu vida en la app, que es el que decide si vuelves.
+     *
+     * El hermano de este bug vivía en el CTA del home (devolvía el look
+     * cacheado ignorando la ocasión recién elegida) y se arregló en 0.2.223.0.
+     * Los dos son la misma forma: el wizard pregunta y la ruta no escucha.
+     */
+    formality?: string;
+    tipoEvento?: string;
     paraguas?: boolean;
     /** Va a estar bajo techo: al motor no le llega la lluvia (climaParaElMotor). */
     techado?: boolean;
@@ -157,6 +174,12 @@ export async function POST(request: NextRequest) {
           objective,
           plan: typeof body.plan === "string" ? body.plan : null,
           momento: typeof body.momento === "string" ? body.momento : null,
+          // Sin estas dos líneas el paso de detalle del wizard no sirve de nada
+          // aquí: `construirContexto` sabe recibirlas desde siempre (:189, :217)
+          // y era esta ruta la que no se las daba. La boda pedía traje y el
+          // motor armaba un martes.
+          formality: typeof body.formality === "string" ? body.formality : null,
+          tipoEvento: typeof body.tipoEvento === "string" ? body.tipoEvento : null,
           weather: climaParaElMotor(weather, techado),
           // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no
           // debe soltarle la mano a la capa exterior.
