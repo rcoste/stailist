@@ -54,6 +54,7 @@ import {
   mismoHex,
   Field,
   Escala,
+  Chips,
   ChipResumen,
   type Seccion,
 } from "@/components/prenda-campos";
@@ -346,25 +347,14 @@ export function DraftCard({
           botón "listo". */}
       {item.on && seccion === "tipo" && (
         <Field label="Tipo">
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORIAS.map((c) => (
-              <button
-                key={c.v}
-                type="button"
-                onClick={() => {
-                  onPatch({ categoria: c.v }, ["categoria"]);
-                  setSeccion(null);
-                }}
-                className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                  a.categoria === c.v
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface text-muted"
-                }`}
-              >
-                {c.l}
-              </button>
-            ))}
-          </div>
+          <Chips
+            opciones={CATEGORIAS}
+            valor={a.categoria}
+            onPick={(v) => {
+              onPatch({ categoria: v }, ["categoria"]);
+              setSeccion(null);
+            }}
+          />
         </Field>
       )}
 
@@ -428,25 +418,14 @@ export function DraftCard({
 
       {item.on && seccion === "formalidad" && (
         <Field label="Formalidad">
-          <div className="flex flex-wrap gap-1.5">
-            {FORMALIDADES.map((f) => (
-              <button
-                key={f.v}
-                type="button"
-                onClick={() => {
-                  onPatch({ formalidad: f.v }, ["formalidad"]);
-                  setSeccion(null);
-                }}
-                className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
-                  a.formalidad === f.v
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface text-muted"
-                }`}
-              >
-                {f.l}
-              </button>
-            ))}
-          </div>
+          <Chips
+            opciones={FORMALIDADES}
+            valor={a.formalidad}
+            onPick={(v) => {
+              onPatch({ formalidad: v }, ["formalidad"]);
+              setSeccion(null);
+            }}
+          />
         </Field>
       )}
 

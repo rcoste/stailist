@@ -1,8 +1,5 @@
 "use client";
 
-import { Icon } from "@/components/icon";
-import { PALETA } from "@/lib/paleta-colores";
-import { ejemploDeTalla } from "@/lib/prenda-atributos";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 
 // EL VOCABULARIO DE EDITAR UNA PRENDA — las piezas, no la pantalla.
@@ -44,7 +41,10 @@ export const CATEGORIAS: { v: PrendaAnalisis["categoria"]; l: string }[] = [
 // CON "no aplica" EXPLÍCITO, como pidió Roberto: unos leggings no tienen corte
 // que discutir y una camiseta no tiene largo interesante. Sin esa salida, la
 // única forma de no contestar es dejar lo que el modelo puso — o sea, aceptar.
-export const CORTES: { v: string; l: string }[] = [
+// Tipado con la unión y no con `string`: la ficha del clóset pinta cada corte
+// con su silueta (SiluetaCorte sólo acepta los tres), así que un valor de más
+// aquí tiene que romper la compilación, no la pantalla.
+export const CORTES: { v: "entallado" | "recto" | "holgado"; l: string }[] = [
   { v: "entallado", l: "entallado" },
   { v: "recto", l: "recto" },
   { v: "holgado", l: "holgado" },
@@ -74,6 +74,12 @@ export const MATERIALES: { v: string; l: string }[] = [
   { v: "ante", l: "ante" },
   { v: "sintético", l: "sintético" },
   { v: "seda", l: "seda" },
+  // METAL entra por los datos, no por intuición: son 15 prendas de la base —
+  // cinturones, relojes, joyería— y era el único hueco grande de la lista. Con
+  // él, los chips cubren 571 de las 616 prendas que traen material (93%); el
+  // resto son colas de una y dos (satén, gamuza, terciopelo) que `conLeido`
+  // conserva sin necesidad de un chip propio.
+  { v: "metal", l: "metal" },
 ];
 export const PATRONES_CHIP: { v: string; l: string }[] = [
   { v: "liso", l: "liso" },
@@ -127,6 +133,47 @@ export function Field({ label, children }: { label: string; children: React.Reac
     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <span className="text-[11px] font-medium uppercase tracking-wide text-muted">{label}</span>
       {children}
+    </div>
+  );
+}
+
+/**
+ * Un grupo de chips de opción única, SIN salida vacía.
+ *
+ * La diferencia con `Escala` no es cosmética: hay campos donde "ninguno" es una
+ * respuesta legítima (el corte de unos leggings) y campos donde no existe —toda
+ * prenda tiene un tipo, una formalidad y una temporada—. Ofrecer ahí un "no
+ * aplica" sería invitar a borrar un dato que el motor sí usa.
+ *
+ * Vive aquí porque el mismo markup estaba escrito tres veces (tipo y formalidad
+ * en la tarjeta del carrete, y otra vez en la ficha del clóset), que es
+ * justamente la duplicación que este módulo existe para no tener.
+ */
+export function Chips<T extends string>({
+  opciones,
+  valor,
+  onPick,
+}: {
+  opciones: { v: T; l: string }[];
+  valor?: string;
+  onPick: (v: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {opciones.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onPick(o.v)}
+          className={`min-h-8 rounded-sm border px-2.5 text-xs transition-colors ${
+            valor === o.v
+              ? "border-accent bg-accent-soft text-accent"
+              : "border-line bg-surface text-muted"
+          }`}
+        >
+          {o.l}
+        </button>
+      ))}
     </div>
   );
 }
