@@ -50,20 +50,48 @@ describe("construirContexto", () => {
   });
 
   it("re-inyecta el ancla desde allItems si el veto la había sacado", () => {
-    const ctx = construirContexto(base(), { ...peticion, seedItemId: "vetada" });
-    expect(ctx.seedItemId).toBe("vetada");
+    const ctx = construirContexto(base(), { ...peticion, seedItemIds: ["vetada"] });
+    expect(ctx.seedItemIds).toEqual(["vetada"]);
     expect(ctx.items.some((i) => i.id === "vetada")).toBe(true);
   });
 
   it("un ancla que ya no existe cae a sin-ancla, no truena", () => {
-    const ctx = construirContexto(base(), { ...peticion, seedItemId: "borrada" });
-    expect(ctx.seedItemId).toBeNull();
+    const ctx = construirContexto(base(), { ...peticion, seedItemIds: ["borrada"] });
+    expect(ctx.seedItemIds).toEqual([]);
     expect(ctx.items).toHaveLength(3);
+  });
+
+  it("EL SINGULAR VIEJO SIGUE FUNCIONANDO", () => {
+    // Un cliente que no recargó manda `seedItemId` a secas. Perder el ancla por
+    // eso no truena nada: sólo devuelve un look que ignora lo que se pidió, que
+    // es la peor forma de fallar en este producto.
+    const ctx = construirContexto(base(), { ...peticion, seedItemId: "vetada" });
+    expect(ctx.seedItemIds).toEqual(["vetada"]);
+  });
+
+  it("varias anclas se conservan EN ORDEN y sin repetir", () => {
+    // El orden importa porque el prompt las lista: una lista que se reordena
+    // sola entre llamadas es ruido para el modelo sin ninguna ganancia.
+    const ctx = construirContexto(base(), {
+      ...peticion,
+      seedItemIds: ["vetada", "a", "vetada"],
+    });
+    expect(ctx.seedItemIds).toEqual(["vetada", "a"]);
+  });
+
+  it("de varias anclas, la borrada se cae y las demás siguen", () => {
+    // Antes era todo o nada porque sólo había una. Con varias, perder el look
+    // entero porque una prenda ya no existe sería castigar de más.
+    const ctx = construirContexto(base(), {
+      ...peticion,
+      seedItemIds: ["a", "borrada", "vetada"],
+    });
+    expect(ctx.seedItemIds).toEqual(["a", "vetada"]);
   });
 
   it("no muta la base: re-inyectar el ancla no ensucia items para la siguiente llamada", () => {
     const b = base();
-    construirContexto(b, { ...peticion, seedItemId: "vetada" });
+    construirContexto(b, { ...peticion, seedItemIds: ["vetada"] });
     expect(b.items).toHaveLength(3);
   });
 

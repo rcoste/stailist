@@ -155,6 +155,9 @@ export type PeticionDeLook = {
   paraguas?: boolean;
   /** Solo si su código de trabajo es "variable": si HOY ve cliente. */
   veCliente?: boolean | null;
+  /** Las prendas fijadas. Array vacío = sin ancla. Acepta el singular viejo. */
+  seedItemIds?: string[] | null;
+  /** @deprecated El singular de antes. Se sigue leyendo para no romper llamadas viejas. */
   seedItemId?: string | null;
   formality?: string | null;
 };
@@ -189,11 +192,34 @@ export function construirContexto(
   // esté vetada o de otra temporada — es elección explícita de la usuaria. Si
   // ya no existe (borrada), cae a sin-ancla.
   const items = [...base.items];
-  let seedItemId = typeof p.seedItemId === "string" ? p.seedItemId : null;
-  if (seedItemId && !items.some((i) => i.id === seedItemId)) {
-    const original = base.allItems.find((i) => i.id === seedItemId);
-    if (original) items.push(original);
-    else seedItemId = null;
+  // Se aceptan las dos formas y se normaliza a lista: `seedItemIds` es la nueva
+  // y `seedItemId` la de antes. Sin esto, una llamada vieja (un cliente sin
+  // recargar, un test) perdería el ancla en silencio, que es exactamente la
+  // clase de fallo que este campo no puede tener.
+  const pedidas = Array.isArray(p.seedItemIds)
+    ? p.seedItemIds.filter((x): x is string => typeof x === "string" && !!x)
+    : typeof p.seedItemId === "string" && p.seedItemId
+      ? [p.seedItemId]
+      : [];
+  // Sin duplicados y CONSERVANDO EL ORDEN en que se eligieron: el prompt las
+  // lista, y una lista que cambia de orden entre llamadas es ruido para el
+  // modelo sin ninguna ganancia.
+  const seedItemIds: string[] = [];
+  for (const id of pedidas) {
+    if (seedItemIds.includes(id)) continue;
+    // Cada ancla tiene que estar DISPONIBLE aunque esté vetada o fuera de
+    // temporada: es elección explícita de la persona. Si ya no existe
+    // (borrada), esa se cae y las demás siguen — antes era todo o nada porque
+    // sólo había una.
+    if (items.some((i) => i.id === id)) {
+      seedItemIds.push(id);
+      continue;
+    }
+    const original = base.allItems.find((i) => i.id === id);
+    if (original) {
+      items.push(original);
+      seedItemIds.push(id);
+    }
   }
 
   return {
@@ -227,7 +253,7 @@ export function construirContexto(
     fitPref: (profile.fit_pref as EngineContext["fitPref"]) ?? null,
     ageStyling: ageStylingLine(profile.age_range as AgeRange | null),
     tasteSignal: base.tasteSignal,
-    seedItemId,
+    seedItemIds,
     formality: typeof p.formality === "string" ? p.formality : null,
     styleReference: styleReferenceForEngine(profile.style_reference),
     styleWords: (profile.style_words as string | null) ?? null,

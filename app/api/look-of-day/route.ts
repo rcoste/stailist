@@ -39,7 +39,9 @@ type Body = {
   plan?: string;
   momento?: string;
   force?: boolean;
-  seedItemId?: string; // ancla: prenda que la usuaria quiere usar hoy
+  seedItemIds?: string[]; // anclas: prendas que la usuaria quiere usar hoy
+  /** @deprecated el singular de antes; se sigue leyendo. */
+  seedItemId?: string;
   forceAnchor?: boolean; // ya confirmó usar el ancla pese al aviso de ocasión
   formality?: string; // solo en "evento". Los valores viven en Formalidad (lib/formalidad.ts) —
   // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
     // sin body = sin clima
   }
   const force = !!body.force;
-  const seedItemId = typeof body.seedItemId === "string" ? body.seedItemId : null;
+  const seedItemIds = anclasDe(body);
   // El código de vestimenta se PERSISTE la primera (y única) vez que llega:
   // es de la persona, no de la petición. La lista se valida aquí porque una
   // server route es un endpoint — el CHECK de la columna es la segunda red.
@@ -176,8 +178,8 @@ export async function POST(request: NextRequest) {
   // Gate de ocasión: si ancló una prenda y aún no confirmó, checa que vaya con la
   // ocasión. Si es un mismatch obvio (traje de baño + boda), devuelve un aviso
   // (sin generar) para que decida armar igual o cambiar de prenda.
-  if (seedItemId && !forceAnchor) {
-    const warning = await anchorWarningIfUnfit(supabase, user.id, seedItemId, body);
+  if (seedItemIds.length && !forceAnchor) {
+    const warning = await anchorWarningIfUnfit(supabase, user.id, seedItemIds, body);
     if (warning) return NextResponse.json(warning);
   }
 
@@ -185,7 +187,7 @@ export async function POST(request: NextRequest) {
   // generándose (y no muerto), devuelve su id para que el cliente siga el polling.
   // No aplica cuando está anclando una prenda ni cuando el look es para OTRO
   // día (plannedFor): ahí siempre arma un look nuevo.
-  if (!force && !seedItemId && !plannedFor) {
+  if (!force && !seedItemIds.length && !plannedFor) {
     const { data: existing } = await supabase
       .from("outfits")
       .select("id, item_ids, title, explanation, tip, gen_status, created_at")
@@ -365,22 +367,44 @@ function isStale(createdAt: string): boolean {
 // Chequeo de ocasión del ancla. Devuelve el payload de aviso si la prenda NO va
 // con la ocasión, o null si va (o no hay con qué decidir → no estorbar). Usa el
 // clima manual si lo hay (no resuelve geo aquí, para no meter latencia al gate).
+/**
+ * Las anclas que trae la petición, en la forma nueva o en la vieja.
+ *
+ * Un helper y no dos lecturas sueltas porque el cuerpo se lee en DOS puntas —el
+ * gate de ocasión y la generación— y si una entendiera `seedItemIds` y la otra
+ * sólo `seedItemId`, un cliente sin recargar pasaría el gate con una prenda y
+ * generaría sin ninguna. Ése es el tipo de desincronía que no truena: sólo
+ * devuelve un look que ignora lo que la persona pidió.
+ */
+function anclasDe(body: Body): string[] {
+  if (Array.isArray(body.seedItemIds)) {
+    return body.seedItemIds.filter((x): x is string => typeof x === "string" && !!x);
+  }
+  return typeof body.seedItemId === "string" && body.seedItemId ? [body.seedItemId] : [];
+}
+
 async function anchorWarningIfUnfit(
   supabase: SupabaseClient,
   userId: string,
-  seedItemId: string,
+  seedItemIds: string[],
   body: Body
 ): Promise<{ status: "anchor_warning"; note: string; seedItemName: string } | null> {
-  const { data: item } = await supabase
+  const { data: rows } = await supabase
     .from("items")
-    .select("attrs")
-    .eq("id", seedItemId)
+    .select("id, attrs")
+    .in("id", seedItemIds)
     .eq("user_id", userId)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!item) return null; // prenda borrada → que generateInto haga el fallback
+    .is("deleted_at", null);
+  // Ninguna existe (borradas) → que generateInto haga el fallback. Si existen
+  // algunas, se revisan ésas: perder una no debe cancelar el aviso de las otras.
+  if (!rows?.length) return null;
+  // En el orden en que las eligió, no en el que las devolvió Postgres: el aviso
+  // nombra una prenda y debe ser predecible.
+  const items = seedItemIds
+    .map((id) => rows.find((r) => r.id === id))
+    .filter((r): r is (typeof rows)[number] => !!r);
 
-  const attrs = (item.attrs ?? {}) as { nombre?: string };
+  const attrs = (items[0].attrs ?? {}) as { nombre?: string };
   const occasion =
     (typeof body.plan === "string" && body.plan.trim()) ||
     (typeof body.objective === "string" && body.objective in OBJECTIVES
@@ -401,7 +425,7 @@ async function anchorWarningIfUnfit(
   const weatherLine = wGate ? `${wGate.temp_c}°C, ${wGate.condition}` : null;
 
   const fit = await checkAnchorFit(
-    { id: seedItemId, attrs: item.attrs as EngineItem["attrs"] },
+    items.map((i) => ({ id: i.id as string, attrs: i.attrs as EngineItem["attrs"] })),
     occasion,
     weatherLine
   );
@@ -451,6 +475,8 @@ async function generateInto(
         ? await getWeatherForDates(body.lat, body.lon, plannedFor, plannedFor)
         : await resolveWeather(body);
 
+    const seedItemIds = anclasDe(body);
+
     const objective = await resolverYPersistirObjetivo(
       supabase,
       profile,
@@ -468,7 +494,7 @@ async function generateInto(
       plan: typeof body.plan === "string" ? body.plan : null,
       momento: typeof body.momento === "string" ? body.momento : null,
       weather: climaParaElMotor(weather, techado),
-      seedItemId: typeof body.seedItemId === "string" ? body.seedItemId : null,
+      seedItemIds,
       formality: typeof body.formality === "string" ? body.formality : null,
       tipoEvento: typeof body.tipoEvento === "string" ? body.tipoEvento : null,
       // Solo cuenta si de verdad llueve: un "sí llevo paraguas" con sol no debe
@@ -479,7 +505,10 @@ async function generateInto(
       // de trabajo es "variable" (el prompt lo ignora en los otros tres).
       veCliente: typeof body.veCliente === "boolean" ? body.veCliente : null,
     });
-    const seedItemId = ctx.seedItemId ?? null;
+    // Las que el contexto RESOLVIÓ — pueden ser menos que las pedidas: una
+    // prenda borrada se cae y las demás siguen. Nombre propio para no tapar a
+    // `seedItemIds` de arriba, que son las que llegaron en la petición.
+    const anclasResueltas = ctx.seedItemIds ?? [];
 
     // ¿Este clóset da para el código que pidió? Se contesta ANTES de generar:
     // es una consulta al clóset, no una opinión. Roberto: "boda de etiqueta y
@@ -548,7 +577,8 @@ async function generateInto(
           ms: Date.now() - startedAt,
           prompt_version: PROMPT_VERSION,
           look_of_day: true,
-          anchored: !!seedItemId, // ¿usó ancla? (medir adopción de la feature)
+          anchored: seedItemIds.length > 0, // ¿usó ancla? (medir adopción)
+          anclas: seedItemIds.length, // cuántas — para ver si el plural se usa
           // Los dos gates pre-registrados del rediseño del wizard (2026-08-10):
           // planned_for ≥1/usuaria activa en 2 semanas → se construye la agenda;
           // % con plan_libre → se construye el parser del campo abierto.

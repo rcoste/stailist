@@ -70,6 +70,9 @@ import {
 // v17 (2026-06-28): ancla opcional en Hoy — la usuaria fija UNA prenda que quiere
 // usar hoy (seedItemId). Entra como REGLA DURA: el look DEBE incluirla, el motor
 // arma alrededor y el juez nunca la quita (con red de seguridad en código).
+// v40 (2026-08-12): el ancla acepta VARIAS prendas (seedItemIds). La frase del
+// caso de UNA quedó intacta a propósito — ver el comentario largo en el bloque
+// del ancla: así el camino de hoy no cambia y no hay nada que medir.
 // v18 (2026-06-29): formalidad explícita para "evento" (el wizard la pregunta) +
 // default mexicano formal en eventos (las bodas mexicanas son más formales que
 // el default del modelo; antes sugería looks subvestidos).
@@ -408,7 +411,7 @@ export type EngineContext = {
   fitPref?: "recta" | "holgada" | "mixta" | null;
   ageStyling?: string | null; // orientación por edad (life-stage); señal suave, solo extremos
   tasteSignal: TasteSignal; // "la app aprende" (paso 9): feedback real (worn/votos/skip)
-  seedItemId?: string | null; // ancla (Hoy): prenda que la usuaria fijó para hoy — DEBE ir en el look
+  seedItemIds?: string[]; // anclas (Hoy): prendas que la usuaria fijó — DEBEN ir en el look
   formality?: string | null; // solo en "evento". Los valores viven en Formalidad (lib/formalidad.ts) —
   // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
@@ -687,13 +690,33 @@ export function contextBlock(
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
   }
-  if (ctx.seedItemId) {
-    const seed = ctx.items.find((i) => i.id === ctx.seedItemId);
-    if (seed) {
-      lines.push(
-        `ANCLA (REGLA DURA): hoy QUIERE usar esta prenda → ${seed.id}: ${describeItem(seed)}. El look DEBE incluirla; arma el resto alrededor respetando clima, colorimetría y ocasión. Si choca con el clima, inclúyela igual y compénsala con el resto. Jamás la quites ni la sustituyas.`
-      );
-    }
+  // EL ANCLA, EN SINGULAR O EN PLURAL.
+  //
+  // LA FRASE DEL SINGULAR NO SE TOCÓ NI UNA COMA, y es deliberado. Este archivo
+  // es prompt versionado y la casa decide los cambios del motor MIDIENDO, no de
+  // oído. Si el texto de una ancla cambiara al volverlo plural, cada look con
+  // una sola prenda fijada —o sea, todos los de hoy— pasaría a generarse con un
+  // prompt distinto, y eso sí habría que medirlo en el comparador con corrida
+  // pareada. Manteniéndolo idéntico, lo único nuevo es el caso de 2+, que antes
+  // no existía: no hay contra qué compararlo porque no había nada.
+  const anclas = (ctx.seedItemIds ?? [])
+    .map((id) => ctx.items.find((i) => i.id === id))
+    .filter((i): i is EngineItem => !!i);
+  if (anclas.length === 1) {
+    const seed = anclas[0];
+    lines.push(
+      `ANCLA (REGLA DURA): hoy QUIERE usar esta prenda → ${seed.id}: ${describeItem(seed)}. El look DEBE incluirla; arma el resto alrededor respetando clima, colorimetría y ocasión. Si choca con el clima, inclúyela igual y compénsala con el resto. Jamás la quites ni la sustituyas.`
+    );
+  } else if (anclas.length > 1) {
+    // El plural repite la misma promesa —TODAS entran, ninguna se sustituye— y
+    // agrega lo único que el singular no podía tener: qué hacer cuando las
+    // prendas fijadas no se llevan bien entre ellas. La respuesta es la misma
+    // que con el clima: se respetan igual y se compensa con el resto. Quien las
+    // eligió sabe lo que quiere ponerse.
+    const lista = anclas.map((i) => `${i.id}: ${describeItem(i)}`).join(" | ");
+    lines.push(
+      `ANCLA (REGLA DURA): hoy QUIERE usar estas ${anclas.length} prendas → ${lista}. El look DEBE incluirlas TODAS; arma el resto alrededor respetando clima, colorimetría y ocasión. Si alguna choca con el clima o entre ellas, inclúyelas igual y compénsalas con el resto. Jamás quites ni sustituyas ninguna.`
+    );
   }
   if (ctx.timeOfDay === "noche") {
     lines.push("Momento: de noche — favorece tonos más oscuros.");

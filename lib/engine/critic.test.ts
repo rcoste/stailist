@@ -148,7 +148,7 @@ describe("reviewOutfit", () => {
         tip: "",
       })
     );
-    const r = await reviewOutfit({ ...ctx, seedItemId: "a" } as EngineContext, original, []);
+    const r = await reviewOutfit({ ...ctx, seedItemIds: ["a"] } as EngineContext, original, []);
     expect(r.outfit.item_ids).toContain("a");
   });
 });
@@ -167,7 +167,7 @@ describe("loQueSigueRoto — se comprueba la reparación del juez", () => {
       gender: "hombre",
       paraguas: false,
       formality: null,
-      seedItemId: null,
+      seedItemIds: [],
     }) as unknown as EngineContext;
 
   it("un look limpio no reporta nada", () => {
