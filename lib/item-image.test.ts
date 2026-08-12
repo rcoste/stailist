@@ -54,6 +54,47 @@ describe("pickItemImage — orden canónico", () => {
     });
   });
 
+  it("preferir_render: el render que PEDISTE gana sobre el arquetipo", () => {
+    // EL BUG QUE CIERRA (reportado por Roberto, 2026-08-12): "la imagen no es
+    // de esta prenda — rehacerla" generaba el render, lo guardaba… y esta
+    // función seguía devolviendo el arquetipo. La imagen no cambiaba nunca y la
+    // generación se cobraba igual, tantas veces como lo intentaras. En su
+    // chamarra impermeable había, de hecho, un render pagado que nadie mostró.
+    const item: ItemImageRow = {
+      archetypes: { image_path: "/archetypes/x.png" },
+      render_status: "done",
+      render_path: "u/r.jpg",
+      attrs: { preferir_render: true },
+    };
+    expect(pickItemImage(item)).toEqual({ kind: "private", path: "u/r.jpg" });
+  });
+
+  it("preferir_render sin un render terminado NO deja a la prenda sin imagen", () => {
+    // La bandera se escribe al terminar el render, así que este estado no
+    // debería existir — pero si se diera (un render que falló después), caer al
+    // arquetipo es infinitamente mejor que un hueco gris.
+    const item: ItemImageRow = {
+      archetypes: { image_path: "/archetypes/x.png" },
+      render_status: "pending",
+      render_path: null,
+      attrs: { preferir_render: true },
+    };
+    expect(pickItemImage(item)).toEqual({ kind: "public", path: "/archetypes/x.png" });
+  });
+
+  it("tu foto sigue ganándole al render pedido", () => {
+    // Las dos banderas pueden coexistir: dijiste "es la misma" (tu foto real) y
+    // además rehiciste el dibujo. Tu foto es más verdad que cualquier render.
+    const item: ItemImageRow = {
+      archetypes: { image_path: "/archetypes/x.png" },
+      render_status: "done",
+      render_path: "u/r.jpg",
+      photo_path: "u/p.jpg",
+      attrs: { preferir_foto: true, preferir_render: true },
+    };
+    expect(pickItemImage(item)).toEqual({ kind: "private", path: "u/p.jpg" });
+  });
+
   it("sin ninguna fuente → null", () => {
     expect(pickItemImage({})).toBeNull();
   });

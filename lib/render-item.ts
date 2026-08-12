@@ -170,9 +170,25 @@ export async function renderItemImage(
     return { ok: false, error: "upload_fallo" };
   }
 
+  // Un render PEDIDO a mano gana sobre el dibujo de catálogo (bandera
+  // `preferir_render`, ver lib/item-image). Sin ella, rehacer la imagen de una
+  // prenda de arquetipo cobraba la generación y no cambiaba nada en pantalla:
+  // pickItemImage devolvía el arquetipo, que va antes que el render.
+  //
+  // Solo cuando se FORZÓ. El render automático (auto-sanado del clóset, "ya lo
+  // tengo") no es una corrección de nadie: si esa prenda además tiene arquetipo,
+  // el dibujo de catálogo sigue siendo la mejor imagen.
+  //
+  // Se lee y se re-escribe attrs en vez de un update parcial: `attrs` es jsonb y
+  // un update del objeto entero es la forma que usa el resto del archivo.
+  const nuevoAttrs = forzar ? { ...attrs, preferir_render: true } : attrs;
   await supabase
     .from("items")
-    .update({ render_path: path, render_status: "done" })
+    .update({
+      render_path: path,
+      render_status: "done",
+      ...(forzar ? { attrs: nuevoAttrs } : {}),
+    })
     .eq("id", itemId)
     .eq("user_id", userId);
 
