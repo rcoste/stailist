@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.234.0] - 2026-08-13
+
+### Changed — tus esenciales heredan lo que arreglamos en viaje
+
+- **"Decide si te sirve" ya no arranca escondida** detrás de un toque, y la
+  primera comparación abre sola. Se cerró cuando cada duelo ocupaba media
+  pantalla; hoy son filitas, así que esconderla ya no compraba nada.
+- Arriba de las dos fotos aparece de qué se trata: **"elige una · la que cubre
+  este hueco"**.
+- **Las imágenes se dibujan al cargar la página**, incluidas las de las
+  comparaciones (que se habían quedado fuera). Antes tenías que ir tocando una
+  por una: el tope estaba en 8 piezas y una cápsula pide entre 17 y 35.
+
 ## [0.2.233.1] - 2026-08-13
 
 ### Fixed — el duelo ya no tiene ese escalón raro entre las dos fotos
