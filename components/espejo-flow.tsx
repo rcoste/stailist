@@ -18,6 +18,7 @@ import {
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
+import { REGISTROS, esDeHoy, registroSugerido, type Registro } from "@/lib/registro";
 
 /** Envuelve una capa a pantalla completa y la cuelga del `body`.
  *
@@ -202,6 +203,10 @@ function Pantalla({
 // registro.
 export type EspejoHandle = { start: () => void };
 
+/** La marca de "esta es mi apuesta" en las chips de a dónde vas. Mismo
+ *  tratamiento que el picker del wizard — es el mismo gesto, no uno nuevo. */
+const ON_CHIP = "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]";
+
 type State =
   | { kind: "idle" }
   /**
@@ -216,6 +221,26 @@ type State =
    * ubicación, que ya tardan lo suyo. Sólo se para si de verdad hay alguien más.
    */
   | { kind: "acompanada"; preview: string; blob: Blob; personas: number }
+  /**
+   * ¿A DÓNDE VAS? — la única pregunta, y va aquí por una razón de reloj.
+   *
+   * "¿Me veo bien?" quiere decir "¿me veo bien PARA ESTO", y sin saber el plan
+   * la respuesta opina de una foto en el aire. Pero preguntarlo ANTES de la
+   * cámara le cobraría fricción al único momento que hace funcionar este
+   * módulo: ya estás vestida, en la puerta, y dudas.
+   *
+   * Idea de Roberto: meterlo en el hueco que ya existe. Entre elegir la foto y
+   * la respuesta del modelo ya corren tres cosas —contar personas, subir la
+   * foto a Storage y pedir la ubicación para el clima— que hasta hoy eran puro
+   * spinner. La pregunta vive en esa ventana, así que casi no cuesta espera.
+   *
+   * UN TAP SIEMPRE, y la chip sugerida NO se auto-confirma sola. Llegué a
+   * proponer "cero taps si acertamos" y estaba mal: un default que se dispara
+   * solo ES inferir en silencio, que es justo el error que esto viene a
+   * arreglar. La sugerencia se ve, para que el tap sea instantáneo; confirmarla
+   * sigue siendo de ella.
+   */
+  | { kind: "preguntando"; preview: string; blob: Blob }
   | { kind: "mirando"; preview: string }
   | {
       kind: "listo";
@@ -339,13 +364,31 @@ function dondeEstoy(): Promise<{ lat: number; lon: number } | null> {
 export function EspejoFlow({
   userId,
   headless = false,
+  ultimaOcasion = null,
+  ultimoLookCreadoEn = null,
+  lastObjective = null,
   ref,
 }: {
   userId: string;
   headless?: boolean;
+  /** La ocasión del último look que le armamos, y cuándo se armó (ISO). Si es
+   *  de HOY, es la mejor pista de a dónde va — no es adivinar, es acordarse. */
+  ultimaOcasion?: string | null;
+  ultimoLookCreadoEn?: string | null;
+  /** Para qué suele pedir looks (`profiles.last_objective`). */
+  lastObjective?: string | null;
   ref?: Ref<EspejoHandle>;
 }) {
   const [state, setState] = useState<State>({ kind: "idle" });
+  /** A dónde va, ya contestado. Sobrevive al recorte y al "salgo solo yo". */
+  const [registro, setRegistro] = useState<Registro | null>(null);
+  /**
+   * La cuenta de personas, arrancada mientras ella contesta.
+   *
+   * En un ref y no en estado: es una promesa en vuelo, no algo que se pinte, y
+   * meterla en estado provocaría un render por cada foto sin cambiar un pixel.
+   */
+  const personasRef = useRef<Promise<number>>(Promise.resolve(1));
   const [sumar, setSumar] = useState<Sumar>({ paso: "buscando" });
   /** La prenda que se está mirando en grande (el visor de siempre). */
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
@@ -366,14 +409,11 @@ export function EspejoFlow({
       const { dataUrl, blob } = await comprimir(await toUsableImage(file));
       // Se cuenta a la gente ANTES de leer nada, igual que el carrete. La
       // llamada es minúscula (una pregunta de sí/no con 40 tokens de salida) y
-      // corre mientras la pantalla ya enseña la foto.
-      setState({ kind: "mirando", preview: dataUrl });
-      const personas = await contarPersonas(dataUrl);
-      if (personas > 1) {
-        setState({ kind: "acompanada", preview: dataUrl, blob, personas });
-        return;
-      }
-      await mirar(dataUrl, blob);
+      // corre MIENTRAS ella contesta a dónde va — que es exactamente el hueco
+      // que la pregunta viene a ocupar. No se espera aquí: esperarla sería
+      // volver a poner un spinner delante de la única pregunta.
+      personasRef.current = contarPersonas(dataUrl);
+      setState({ kind: "preguntando", preview: dataUrl, blob });
     } catch {
       setState({ kind: "error", msg: "No pude leer la foto. Inténtalo otra vez." });
     }
@@ -395,7 +435,22 @@ export function EspejoFlow({
     }
   }
 
-  async function mirar(dataUrl: string, blob: Blob) {
+  /**
+   * Ella contestó. Recién aquí se cobra lo que la cuenta de personas haya
+   * tardado — y con suerte ya terminó mientras leía las cuatro opciones.
+   */
+  async function contestar(reg: Registro, dataUrl: string, blob: Blob) {
+    setRegistro(reg);
+    setState({ kind: "mirando", preview: dataUrl });
+    const personas = await personasRef.current;
+    if (personas > 1) {
+      setState({ kind: "acompanada", preview: dataUrl, blob, personas });
+      return;
+    }
+    await mirar(dataUrl, blob, reg);
+  }
+
+  async function mirar(dataUrl: string, blob: Blob, reg: Registro | null) {
     const preview = dataUrl;
     try {
       setState({ kind: "mirando", preview });
@@ -450,6 +505,7 @@ export function EspejoFlow({
           photoPath: ruta,
           ...(donde ?? {}),
           momento: hora >= 19 || hora < 6 ? "noche" : "dia",
+          registro: reg,
         }),
       });
       if (!res.ok) {
@@ -788,6 +844,78 @@ export function EspejoFlow({
   // veces (un reflejo, un póster) y bloquear a alguien porque el modelo vio dos
   // personas donde hay una sería peor que el problema. Lo que no puede pasar es
   // que se lea la ropa de otro EN SILENCIO.
+  if (state.kind === "preguntando") {
+    // LA SUGERENCIA SE CALCULA AQUÍ, en el cliente, y no en el server: depende
+    // de la hora LOCAL y el server corre en UTC — a las 6pm de CDMX ya cree que
+    // es mañana, la misma trampa que ya mordió a `look_date`.
+    const ahora = new Date();
+    const sugerido = registroSugerido({
+      // El look de ayer NO cuenta: haber pedido un look para una boda ayer no
+      // dice nada de a dónde vas hoy, y encender "algo especial" por eso sería
+      // el error caro (subir la vara sin razón).
+      ocasionDeHoy:
+        ultimoLookCreadoEn && esDeHoy(ultimoLookCreadoEn, ahora) ? ultimaOcasion : null,
+      lastObjective,
+      ahora,
+    });
+    return (
+      <Pantalla>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start justify-between">
+            <h2 className="text-[22px] font-semibold leading-tight text-ink">
+              ¿a dónde <em className="font-normal italic">vas</em>?
+            </h2>
+            <button type="button" onClick={cerrar} aria-label="Cerrar" className="text-muted">
+              <Icon name="equis" size={18} />
+            </button>
+          </div>
+          <p className="text-sm leading-snug text-muted">
+            Para decirte si vas bien necesito saber contra qué medirte.
+          </p>
+
+          {/* La foto sigue siendo grande —es ella, no un dato de entrada— pero
+              con techo: medido en un 375, a 40dvh las cuatro chips y su nota
+              caben sin scroll. Empezó en 26dvh y dejaba un tercio de pantalla
+              en blanco, que se lee como que falta algo por cargar. */}
+          <div className="overflow-hidden rounded-xl border border-line bg-bg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={state.preview} alt="" className="max-h-[40dvh] w-full object-contain" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            {REGISTROS.map((r) => {
+              const on = r.key === sugerido;
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => contestar(r.key, state.preview, state.blob)}
+                  data-sugerida={on || undefined}
+                  className={`min-h-[56px] border bg-surface px-3 py-3 text-left text-[15px] font-semibold leading-tight text-ink transition-colors ${
+                    on ? ON_CHIP : "border-line hover:border-ink"
+                  }`}
+                >
+                  {r.label}
+                  {/* La marca existía SÓLO en el borde, o sea que para quien usa
+                      lector de pantalla la nota de abajo ("la marcada es mi
+                      apuesta") señalaba a algo invisible. Va en el nombre. */}
+                  {on ? <span className="sr-only"> — mi apuesta</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          {/* POR QUÉ UNA VIENE MARCADA Y NO SELECCIONADA: marcarla acelera el
+              tap sin decidir por ella. Un default que se auto-confirma sería
+              inferir en silencio — el error que esta pantalla viene a arreglar. */}
+          <p className="text-[12.5px] leading-snug text-muted">
+            la marcada es mi apuesta — si no, dime tú
+          </p>
+        </div>
+        {input}
+      </Pantalla>
+    );
+  }
+
   if (state.kind === "acompanada") {
     return (
       <Pantalla>
@@ -819,7 +947,7 @@ export function EspejoFlow({
               </button>
               <button
                 type="button"
-                onClick={() => mirar(state.preview, state.blob)}
+                onClick={() => mirar(state.preview, state.blob, registro)}
                 className="min-h-11 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
               >
                 salgo solo yo — sigue así
@@ -834,7 +962,9 @@ export function EspejoFlow({
                 setRecortando(false);
                 // El recorte devuelve un dataURL; hace falta el blob para subirla.
                 const blob = await (await fetch(recortada)).blob();
-                await mirar(recortada, blob);
+                // El registro ya contestado sobrevive al recorte: volver a
+                // preguntarle a dónde va sería castigarla por recortar.
+                await mirar(recortada, blob, registro);
               }}
             />
           ) : null}
