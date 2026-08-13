@@ -28,6 +28,7 @@ export function TripTabs({
   maletaCount,
   looksCount,
   looksStale = false,
+  confirmado = true,
   maleta,
   looks,
 }: {
@@ -35,6 +36,8 @@ export function TripTabs({
   maletaCount: number;
   looksCount: number;
   looksStale?: boolean;
+  /** false = fase de plan (la pestaña se llama "el plan", no "la maleta"). */
+  confirmado?: boolean;
   maleta: ReactNode;
   looks: ReactNode;
 }) {
@@ -112,7 +115,12 @@ export function TripTabs({
       {generating && !appending ? <GeneratingScreen phrases={TRIP_PHRASES} /> : null}
       <div className="flex flex-col gap-4">
         <div className="-mt-1 flex gap-6 border-b border-line">
-          <Tab label="la maleta" count={maletaCount} on={tab === "maleta"} onClick={() => setTab("maleta")} />
+          <Tab
+            label={confirmado ? "la maleta" : "el plan"}
+            count={maletaCount}
+            on={tab === "maleta"}
+            onClick={() => setTab("maleta")}
+          />
           <Tab
             label="tus looks"
             count={looksCount}

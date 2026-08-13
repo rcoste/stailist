@@ -110,17 +110,33 @@ function FaltaCard({
   );
 }
 
-// Tab "La maleta" (handoff): barra de progreso + grid de "empaca esto" con check
-// tappable + "te falta" con "ya lo tengo". Un faltante marcado como "ya lo tengo"
-// pasa a empaca palomeado (persiste en empacado, sin acción nueva).
+// LA MISMA PANTALLA, DOS FASES — el flujo del handoff de Roberto (2026-08-13):
+//
+//   1. EL PLAN (antes de confirmar): revisar qué propone la maleta, en SU
+//      orden — lo que te falta y deberías comprar arriba, lo que te sugiero
+//      del clóset y puedes cambiar en medio, lo que ya tienes hasta abajo — y
+//      cerrar con "arma mis looks". SIN cheques ni barra de empacado: todavía
+//      no estás empacando, estás decidiendo.
+//   2. LA MALETA (después): los cheques de empacar + "empacar todo" + el
+//      progreso. Aquí ya no se decide, se mete a la maleta.
+//
+// La primera versión del candado dejó la pantalla vieja (cheques desde el
+// primer segundo) y Roberto la rebotó con razón: "no se parece nada al flujo
+// del handoff". La frontera entre fases es la misma señal del candado de
+// looks: confirmado ≡ ya generaste alguna vez (trips.outfits !== null) — cero
+// columnas nuevas. Confirmar ES generar; al regresar de los looks, esta
+// pestaña ya amaneció en modo maleta.
 export function TripResult({
   tripId,
   rows,
   savedWishKeys = [],
+  confirmado = true,
 }: {
   tripId: string;
   rows: TripRow[];
   savedWishKeys?: string[];
+  /** false = fase de plan (revisar y confirmar); true = fase de empacar. */
+  confirmado?: boolean;
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
@@ -182,6 +198,11 @@ export function TripResult({
   const empaca = rows.filter((r) => eff(r) !== "falta" || isPacked(r.index));
   const falta = rows.filter((r) => eff(r) === "falta" && !isPacked(r.index));
   const packedCount = empaca.filter((r) => isPacked(r.index)).length;
+  // Los grupos de la fase de PLAN (orden del handoff): los "parecido" son la
+  // sección de en medio ("te sugiero, puedes cambiarla") y el resto de lo
+  // cubierto es "ya lo tienes".
+  const planParecido = rows.filter((r) => eff(r) === "parecido");
+  const planTienes = empaca.filter((r) => eff(r) !== "parecido");
 
   function togglePacked(index: number, value?: boolean) {
     const next = value ?? !isPacked(index);
@@ -240,7 +261,150 @@ export function TripResult({
     <div className="flex flex-col gap-4">
       <Toast message={toast} />
 
+      {/* ══ FASE 1: EL PLAN — el orden es el del handoff: primero lo que pide
+          decisión (comprar / cambiar), al final lo que ya está resuelto. ══ */}
+      {!confirmado ? (
+        <>
+          {falta.length > 0 ? (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+                  No lo tienes — cómpralo o cúbrelo
+                </span>
+                <span className="tabular text-[11px] text-muted">{falta.length}</span>
+              </div>
+              <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
+                {falta.map((r) => (
+                  <FaltaCard
+                    key={r.index}
+                    row={r}
+                    ownBusy={ownBusy.has(r.index)}
+                    onBuscar={() => buscarSustituto(r)}
+                    onYaLoTengo={() => marcarYaLoTengo(r.index)}
+                    wishSaved={wishSaved.has(r.faltaKey)}
+                    onToggleWish={() => toggleWish(r)}
+                  />
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {planParecido.length > 0 ? (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+                  Te sugiero — cámbiala si no te late
+                </span>
+                <span className="tabular text-[11px] text-muted">{planParecido.length}</span>
+              </div>
+              {/* Con el PORQUÉ visible: en la fase de decidir, esconderlo tras
+                  el tap sería pedirle que confirme a ciegas. */}
+              <ul className="flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-x-6">
+                {planParecido.map((r) => {
+                  const { by, byImage } = ov(r);
+                  return (
+                    <li key={r.index}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setZoom({
+                            index: r.index,
+                            image: byImage,
+                            nombre: by ?? r.nombre,
+                            sub: r.porque,
+                          })
+                        }
+                        className="group flex w-full items-center gap-3 rounded-md border border-line bg-surface p-2.5 text-left transition-colors hover:border-ink"
+                      >
+                        <span className="relative block h-[64px] w-[52px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
+                          {byImage ? (
+                            <Image src={byImage} alt="" fill sizes="52px" className="object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-muted">
+                              <Icon name="gancho" size={16} />
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <b className="truncate text-[13.5px] font-semibold text-ink">
+                            {by ?? r.nombre}
+                          </b>
+                          <span className="line-clamp-2 text-[11.5px] leading-snug text-muted">
+                            {r.porque}
+                          </span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-muted group-hover:text-ink">
+                          <Icon name="repetir" size={13} /> cambiar
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+
+          {planTienes.length > 0 ? (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
+                  Ya lo tienes
+                </span>
+                <span className="tabular text-[11px] text-muted">{planTienes.length}</span>
+              </div>
+              <p className="-mt-1 text-[11.5px] leading-snug text-muted">
+                toca una para ver por qué va — y si no te late, ahí la cambias
+              </p>
+              {/* SIN cheques y a plena opacidad: aquí no se empaca, se revisa.
+                  Los cheques llegan con la fase de maleta, tras confirmar. */}
+              <ul className="grid grid-cols-4 gap-2">
+                {planTienes.map((r) => {
+                  const { by, byImage } = ov(r);
+                  return (
+                    <li key={r.index}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setZoom({
+                            index: r.index,
+                            image: byImage,
+                            nombre: by ?? r.nombre,
+                            sub: r.porque,
+                          })
+                        }
+                        title={by ?? r.nombre}
+                        aria-label={`Ver ${by ?? r.nombre}`}
+                        className="block w-full"
+                      >
+                        <span className="relative block aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
+                          {byImage ? (
+                            <Image
+                              src={byImage}
+                              alt={by ?? r.nombre}
+                              fill
+                              sizes="(max-width:430px) 25vw, 100px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-muted">
+                              <Icon name="gancho" size={20} />
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+
+      {/* ══ FASE 2: LA MALETA — cheques, empacar todo y progreso. ══ */}
+
       {/* Progreso de empacado (móvil — en desktop vive en el rail izquierdo) */}
+      {confirmado ? (
       <div className="flex items-center gap-2.5 lg:hidden">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
           <div
@@ -252,8 +416,9 @@ export function TripResult({
           {packedCount} / {empaca.length} empacadas
         </span>
       </div>
+      ) : null}
 
-      {empaca.length > 0 ? (
+      {confirmado && empaca.length > 0 ? (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
@@ -408,7 +573,7 @@ export function TripResult({
         </div>
       ) : null}
 
-      {falta.length > 0 ? (
+      {confirmado && falta.length > 0 ? (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
@@ -451,7 +616,10 @@ export function TripResult({
               disabled={generating}
               className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
             >
-              <Icon name="destello" size={18} /> generar mis looks
+              {/* En fase de plan el botón ES la confirmación del handoff:
+                  "me late" = quedó el plan, arma los looks y pasa a empacar. */}
+              <Icon name="destello" size={18} />{" "}
+              {confirmado ? "generar mis looks" : "me late — arma mis looks"}
             </button>
           )}
           {!looksExist && falta.length > 0 ? (
@@ -469,6 +637,7 @@ export function TripResult({
         action={
           zoom ? (
             <div className="flex flex-col gap-2">
+              {confirmado ? (
               <button
                 type="button"
                 onClick={() => {
@@ -489,6 +658,7 @@ export function TripResult({
                   </>
                 )}
               </button>
+              ) : null}
               {/* Swap "no me convence": busca en el clóset otra prenda que cubra este
                   hueco (mismo flujo que "buscar en mi clóset" de las faltantes). */}
               <button

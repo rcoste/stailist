@@ -226,6 +226,9 @@ export default async function ViajeDetallePage({
       : r.base;
   const maletaCount = rows.filter((r) => effInit(r) !== "falta" || empacado[String(r.index)]).length;
   const looksCount = resolvedOutfits?.length ?? 0;
+  // La frontera de las dos fases del flujo (plan → maleta): confirmado ≡ ya
+  // generó looks alguna vez. La misma señal del candado, cero columnas nuevas.
+  const confirmado = rawOutfits !== null;
   // Índices de lo empacable (para la barra del rail de desktop — el estado vivo
   // de los checks lo pone el TripPackedProvider).
   const empacaIndices = rows
@@ -302,10 +305,14 @@ export default async function ViajeDetallePage({
             </p>
           ) : null}
 
-          {/* Progreso de empacado en el rail (solo desktop; en móvil vive en el tab) */}
-          <div className="lg:mt-6">
-            <TripPackedBar empacaIndices={empacaIndices} />
-          </div>
+          {/* Progreso de empacado en el rail (solo desktop; en móvil vive en el
+              tab). Solo en fase de maleta: durante el plan aún no se empaca y
+              una barra en ceros presionaría a palomear antes de decidir. */}
+          {confirmado ? (
+            <div className="lg:mt-6">
+              <TripPackedBar empacaIndices={empacaIndices} />
+            </div>
+          ) : null}
 
           <DeleteTripButton tripId={trip.id as string} lugar={destino} />
         </div>
@@ -313,14 +320,16 @@ export default async function ViajeDetallePage({
         <div className="lg:min-w-0 lg:flex-1">
         <TripTabs
           tripId={trip.id}
-          maletaCount={maletaCount}
+          maletaCount={confirmado ? maletaCount : rows.length}
           looksCount={looksCount}
           looksStale={Boolean(trip.outfits_stale)}
+          confirmado={confirmado}
           maleta={
             <TripResult
               tripId={trip.id}
               rows={rows}
               savedWishKeys={savedWishKeys}
+              confirmado={confirmado}
             />
           }
           looks={
