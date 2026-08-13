@@ -74,12 +74,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, via: "en_curso" });
     }
     // 'fallo' o un 'generando' muerto: se reclama. El WHERE re-verifica el
-    // estado para que dos reclamos simultáneos no pasen los dos.
+    // MISMO estado que se leyó — no una lista amplia. Con ["fallo","generando"]
+    // a secas, dos requests que leyeran 'fallo' a la vez se robaban el turno:
+    // el primero lo pone en 'generando' con updated_at fresco, y el segundo lo
+    // casaría igual (cualquier updated_at ya es "menor que ahora"). El costo
+    // era solo una generación duplicada con upsert — pero cerrado es cerrado.
     const { data: reclamada } = await supabase
       .from("destino_imagenes")
       .update({ status: "generando", updated_at: new Date().toISOString() })
       .eq("slug", slug)
-      .in("status", ["fallo", "generando"])
+      .eq("status", muerto ? "generando" : "fallo")
       .lt("updated_at", new Date(Date.now() - (muerto ? GENERANDO_VIEJO_MS : 0)).toISOString())
       .select("slug");
     if (!reclamada || reclamada.length === 0) {
