@@ -58,14 +58,12 @@ function eff(r: TripRow): TripRow["base"] {
 function FaltaCard({
   row,
   ownBusy,
-  onBuscar,
   onYaLoTengo,
   wishSaved,
   onToggleWish,
 }: {
   row: TripRow;
   ownBusy: boolean;
-  onBuscar: () => void;
   onYaLoTengo: () => void;
   wishSaved: boolean;
   onToggleWish: () => void;
@@ -95,7 +93,11 @@ function FaltaCard({
           <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="86px" />
         </button>
       }
-      topAction={{ label: "en mi clóset", icon: "lupa", onClick: onBuscar }}
+      // SIN "en mi clóset" desde 2026-08-13 (Roberto): esta sección ya ES lo
+      // que la búsqueda de candidatas NO pudo cubrir — ofrecer aquí "buscar en
+      // mi clóset" contradice a la propia sección. El precio asumido: una
+      // prenda NUEVA del clóset que cubriría el hueco ya no se conecta desde
+      // aquí (la búsqueda se paga una vez y cachea su "no hubo nada").
       footer={[
         {
           label: ownBusy ? "agregando…" : "ya lo tengo",
@@ -191,24 +193,12 @@ function DueloCard({
           </span>
         </button>
       </div>
-      {/* El pie NOMBRA los dos veredictos (tocar una foto también decide, pero
-          un pie explícito es lo que hace obvio que esto es una pregunta). */}
-      <div className="grid grid-cols-2 border-t border-line text-[12.5px] font-semibold">
-        <button
-          type="button"
-          onClick={onSugerida}
-          className="min-h-10 border-r border-line text-muted transition-colors hover:text-ink"
-        >
-          prefiero la sugerida
-        </button>
-        <button
-          type="button"
-          onClick={onMia}
-          className="min-h-10 text-ink transition-colors hover:bg-bg"
-        >
-          me quedo con la mía
-        </button>
-      </div>
+      {/* Tocar la foto ES el veredicto (Roberto sobre la cápsula: "ya nada más
+          le dabas clic a la que querías"). La línea lo dice para que no haya
+          que adivinarlo; los botones de "prefiero/me quedo" de la v1 sobraban. */}
+      <p className="border-t border-line py-2.5 text-center text-[11.5px] text-muted">
+        toca la que te quedas — esa se va a tu maleta
+      </p>
       <button
         type="button"
         onClick={onOtras}
@@ -373,6 +363,11 @@ export function TripResult({
   // de lo que el server ya sabe. El server las persiste (setTripOverride);
   // esto es el espejo optimista.
   const [localDecide, setLocalDecide] = useState<Record<number, "accept" | "reject">>({});
+  // EL DUELO ABIERTO (uno a la vez, patrón de la cápsula — Roberto: "para no
+  // mostrar tanto de golpe... ya que escoges, se va haciendo grande el otro").
+  // null = el primero pendiente. Al decidir uno, vuelve a null y el siguiente
+  // se abre solo.
+  const [duelAbierto, setDuelAbierto] = useState<number | null>(null);
   const effLocal = (r: TripRow): TripRow["base"] => {
     const d = localDecide[r.index];
     if (d === "accept") return "tienes";
@@ -484,7 +479,6 @@ export function TripResult({
                     key={renderKey(r)}
                     row={conRender(r)}
                     ownBusy={ownBusy.has(r.index)}
-                    onBuscar={() => buscarSustituto(r)}
                     onYaLoTengo={() => marcarYaLoTengo(r.index)}
                     wishSaved={wishSaved.has(r.faltaKey)}
                     onToggleWish={() => toggleWish(r)}
@@ -504,13 +498,56 @@ export function TripResult({
                 </span>
                 <span className="tabular text-[11px] text-muted">{duelos.length}</span>
               </div>
-              <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
+              <ul className="flex flex-col gap-2.5 lg:max-w-[560px]">
                 {duelos.map(({ r, tuya, tipo }) => (
+                  (duelos.find((d) => d.r.index === duelAbierto) ?? duelos[0]).r.index !==
+                  r.index ? (
+                    // Compacta: la decisión existe y espera turno. Tap = abrirla.
+                    <li key={renderKey(r)}>
+                      <button
+                        type="button"
+                        onClick={() => setDuelAbierto(r.index)}
+                        className="flex w-full items-center gap-3 rounded-md border border-line bg-surface p-2.5 text-left transition-colors hover:border-ink"
+                      >
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          <span className="relative block h-[52px] w-[40px] overflow-hidden rounded-sm border border-line bg-tile">
+                            {conRender(r).idealImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={conRender(r).idealImage!} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="flex h-full w-full items-center justify-center text-muted">
+                                <Icon name="gancho" size={13} />
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-[10px] font-bold uppercase text-muted">vs</span>
+                          <span className="relative block h-[52px] w-[40px] overflow-hidden rounded-sm border border-line bg-tile">
+                            {tuya.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={tuya.image} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="flex h-full w-full items-center justify-center text-muted">
+                                <Icon name="gancho" size={13} />
+                              </span>
+                            )}
+                          </span>
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <b className="truncate text-[13.5px] font-semibold text-ink">{r.nombre}</b>
+                          <span className="truncate text-[11.5px] text-muted">
+                            ¿o tu {tuya.nombre}?
+                          </span>
+                        </span>
+                        <Icon name="chevron" size={16} className="shrink-0 text-muted" />
+                      </button>
+                    </li>
+                  ) : (
                   <DueloCard
                     key={renderKey(r)}
                     row={conRender(r)}
                     tuya={tuya}
                     onMia={() => {
+                      setDuelAbierto(null);
                       if (tipo === "falta") {
                         elegirSustituto(r.index, { nombre: tuya.nombre, image: tuya.image, porque: "" });
                       } else {
@@ -520,6 +557,7 @@ export function TripResult({
                       }
                     }}
                     onSugerida={() => {
+                      setDuelAbierto(null);
                       if (tipo === "falta") {
                         setDescartados((d) => new Set(d).add(r.index));
                         void dismissTripCandidate(tripId, r.index);
@@ -540,6 +578,7 @@ export function TripResult({
                     }}
                     onOtras={() => buscarSustituto(r, tipo === "parecido" ? "swap" : "falta")}
                   />
+                  )
                 ))}
               </ul>
             </div>
@@ -789,7 +828,6 @@ export function TripResult({
                 key={renderKey(r)}
                 row={conRender(r)}
                 ownBusy={ownBusy.has(r.index)}
-                onBuscar={() => buscarSustituto(r)}
                 onYaLoTengo={() => marcarYaLoTengo(r.index)}
                 wishSaved={wishSaved.has(r.faltaKey)}
                 onToggleWish={() => toggleWish(r)}

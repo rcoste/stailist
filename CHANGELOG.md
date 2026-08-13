@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.232.1] - 2026-08-13
+
+### Changed — los duelos del viaje, uno a la vez
+
+"Decide si te sirve" ya no te avienta todos los duelos de golpe: uno abierto
+y los demás en filitas compactas (las dos fotos en miniatura, "¿o tu camisa
+blanca?"). Decides tocando la foto que te quedas — y el siguiente duelo se
+abre solo. Igual que en tus esenciales.
+
+Y "No lo tienes" perdió el botón de "buscar en mi clóset": esa sección ya es,
+por definición, lo que la búsqueda no pudo cubrir con tu ropa — ofrecerte
+buscar ahí era contradecirla.
+
 ## [0.2.232.0] - 2026-08-13
 
 ### Changed — el plan del viaje se parte por lo que significa, no por de dónde viene
