@@ -10,6 +10,7 @@ import { IdealTileInner, useIdealRender, type RenderArgs } from "@/components/id
 import {
   dismissTripCandidate,
   proposeTripSubstitutes,
+  undoTripDuel,
   setTripOverride,
   setTripPacked,
   setTripPackedAll,
@@ -61,12 +62,15 @@ function FaltaCard({
   onYaLoTengo,
   wishSaved,
   onToggleWish,
+  onDeshacer,
 }: {
   row: TripRow;
   ownBusy: boolean;
   onYaLoTengo: () => void;
   wishSaved: boolean;
   onToggleWish: () => void;
+  /** Llegó aquí por un duelo ("preferiste la sugerida") → se puede deshacer. */
+  onDeshacer?: () => void;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
   const onTapTile = () => {
@@ -81,7 +85,6 @@ function FaltaCard({
   // sería prometer que aprendemos algo que no aprendemos.
   return (
     <SuggestionCard
-      eyebrow="para el viaje"
       nombre={row.nombre}
       porque={row.porque}
       foto={
@@ -98,6 +101,14 @@ function FaltaCard({
       // mi clóset" contradice a la propia sección. El precio asumido: una
       // prenda NUEVA del clóset que cubriría el hueco ya no se conecta desde
       // aquí (la búsqueda se paga una vez y cachea su "no hubo nada").
+      //
+      // El "deshacer" SÓLO aparece si esta card llegó desde un duelo: en las
+      // faltas de origen no hay decisión que revertir, y un botón que no
+      // deshace nada es peor que ninguno.
+      eyebrow={onDeshacer ? "preferiste la sugerida" : "para el viaje"}
+      topAction={
+        onDeshacer ? { label: "deshacer", icon: "repetir" as const, onClick: onDeshacer } : undefined
+      }
       footer={[
         {
           label: ownBusy ? "agregando…" : "ya lo tengo",
@@ -167,6 +178,15 @@ function DueloCard({
           <p className="display text-[16px] italic leading-5 text-ink2">{row.porque}</p>
         </div>
       </div>
+
+      {/* EL TÍTULO EN MEDIO (insistencia de Roberto, y tenía razón dos veces):
+          da el contexto de que hay que escoger UNA. Va con el MISMO tratamiento
+          que los rótulos "la sugerida"/"en tu clóset" de abajo —9.5px, bold,
+          versalitas, faint— para que se lea como etiqueta y no como el botón,
+          que fue el error de la v1 al ponerlo abajo con peso de acción. */}
+      <span className="block border-t border-line2 bg-tile/50 py-[7px] text-center text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
+        elige una · la que se va a tu maleta
+      </span>
 
       {/* El duelo 50/50. El `gap-px` sobre el fondo ES la hairline que separa
           las dos mitades (una sola línea, sin bordes duplicados). */}
@@ -298,6 +318,7 @@ export function TripResult({
   confirmado = true,
   candidatasIniciales = {},
   descartadosIniciales = [],
+  ganadosIniciales = [],
 }: {
   tripId: string;
   rows: TripRow[];
@@ -308,6 +329,8 @@ export function TripResult({
   candidatasIniciales?: Record<number, Candidata>;
   /** Duelos ya cerrados con "prefiero la sugerida" ("candNo:i"). */
   descartadosIniciales?: number[];
+  /** Duelos ya ganados por TU prenda (cand:i === sub:i). */
+  ganadosIniciales?: number[];
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
@@ -433,6 +456,35 @@ export function TripResult({
   // null = el primero pendiente. Al decidir uno, vuelve a null y el siguiente
   // se abre solo.
   const [duelAbierto, setDuelAbierto] = useState<number | null>(null);
+  /** Duelos ganados por tu prenda, para pintarles su "deshacer". Arranca del
+   *  server y crece con lo que decidas en esta sesión. */
+  const [ganados, setGanados] = useState<Set<number>>(() => new Set(ganadosIniciales));
+  /** Deshacer: limpia veredicto local Y en la base, y reabre ese duelo. */
+  function deshacerDuelo(index: number) {
+    setGanados((g) => {
+      const n = new Set(g);
+      n.delete(index);
+      return n;
+    });
+    setDescartados((d) => {
+      const n = new Set(d);
+      n.delete(index);
+      return n;
+    });
+    setLocalDecide((d) => {
+      const n = { ...d };
+      delete n[index];
+      return n;
+    });
+    setLocalSub((s) => {
+      const n = { ...s };
+      delete n[index];
+      return n;
+    });
+    setPackedFor(index, false);
+    setDuelAbierto(index);
+    void undoTripDuel(tripId, index);
+  }
   const effLocal = (r: TripRow): TripRow["base"] => {
     const d = localDecide[r.index];
     if (d === "accept") return "tienes";
@@ -444,22 +496,49 @@ export function TripResult({
   // Roberto): si hay comparación sugerida-vs-tuya, es duelo — venga del match
   // ("parecido") o de la búsqueda de candidatas (falta con candidata). Lo que
   // no tiene con qué compararse es compra; lo cubierto es "ya lo tienes".
-  const duelos: { r: TripRow; tuya: Candidata; tipo: "falta" | "parecido" }[] = [];
-  const planCompras: TripRow[] = [];
+  // Un duelo RESUELTO no desaparece: se queda en su sección, marcado y con su
+  // "deshacer" (patrón de la cápsula — Roberto: "esto antes ya lo teníamos
+  // así"). Los que ganó la sugerida SÍ se mudan a compras, porque ahí es donde
+  // viven sus acciones reales (wishlist / ya lo tengo), y ahí llevan el
+  // "deshacer" en el topAction.
+  const duelos: {
+    r: TripRow;
+    tuya: Candidata;
+    tipo: "falta" | "parecido";
+    ganado: boolean;
+  }[] = [];
+  const planCompras: { r: TripRow; deDuelo: boolean }[] = [];
   const planTienes: TripRow[] = [];
   for (const r of rows) {
-    const e = effLocal(r);
-    if (e === "parecido") {
-      const { by, byImage } = ov(r);
-      duelos.push({ r, tuya: { nombre: by ?? r.nombre, image: byImage }, tipo: "parecido" });
-    } else if (e === "falta" && !isPacked(r.index) && !localSub[r.index]) {
-      const cand = candidatas[r.index];
-      if (cand && !descartados.has(r.index)) duelos.push({ r, tuya: cand, tipo: "falta" });
-      else planCompras.push(r);
-    } else if (e !== "pendiente") {
-      planTienes.push(r);
+    const cand = candidatas[r.index];
+    const esParecido = r.base === "parecido";
+    if (!esParecido && !cand) {
+      // Nunca fue duelo: el camino de siempre.
+      const e = effLocal(r);
+      if (e === "falta" && !isPacked(r.index) && !localSub[r.index]) {
+        planCompras.push({ r, deDuelo: false });
+      } else if (e !== "pendiente") {
+        planTienes.push(r);
+      }
+      continue;
     }
+    // Es (o fue) un duelo. ¿En qué quedó?
+    const tuya: Candidata = esParecido
+      ? { nombre: ov(r).by ?? r.nombre, image: ov(r).byImage }
+      : cand!;
+    const tipo = esParecido ? ("parecido" as const) : ("falta" as const);
+    const decision = localDecide[r.index] ?? (esParecido ? r.decision : null);
+    const gano =
+      decision === "accept" || ganados.has(r.index) || !!localSub[r.index];
+    const perdio = decision === "reject" || descartados.has(r.index);
+    if (perdio) planCompras.push({ r, deDuelo: true });
+    else duelos.push({ r, tuya, tipo, ganado: gano });
   }
+  /** El duelo abierto: el elegido a mano, o el PRIMERO sin resolver. */
+  const abierto =
+    duelos.find((d) => d.r.index === duelAbierto)?.r.index ??
+    duelos.find((d) => !d.ganado)?.r.index ??
+    null;
 
 
   function togglePacked(index: number, value?: boolean) {
@@ -539,7 +618,7 @@ export function TripResult({
                 <span className="tabular text-[11px] text-muted">{planCompras.length}</span>
               </div>
               <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
-                {planCompras.map((r) => (
+                {planCompras.map(({ r, deDuelo }) => (
                   <FaltaCard
                     key={renderKey(r)}
                     row={conRender(r)}
@@ -547,6 +626,7 @@ export function TripResult({
                     onYaLoTengo={() => marcarYaLoTengo(r.index)}
                     wishSaved={wishSaved.has(r.faltaKey)}
                     onToggleWish={() => toggleWish(r)}
+                    onDeshacer={deDuelo ? () => deshacerDuelo(r.index) : undefined}
                   />
                 ))}
               </ul>
@@ -564,9 +644,42 @@ export function TripResult({
                 <span className="tabular text-[11px] text-muted">{duelos.length}</span>
               </div>
               <ul className="flex flex-col gap-2.5 lg:max-w-[560px]">
-                {duelos.map(({ r, tuya, tipo }) => (
-                  (duelos.find((d) => d.r.index === duelAbierto) ?? duelos[0]).r.index !==
-                  r.index ? (
+                {duelos.map(({ r, tuya, tipo, ganado }) =>
+                  ganado ? (
+                    // RESUELTO a favor de tu prenda: se queda a la vista con su
+                    // veredicto y su deshacer. Desaparecer sin dejar rastro era
+                    // lo que dejaba la decisión sin vuelta atrás.
+                    <li
+                      key={renderKey(r)}
+                      className="flex items-center gap-3 rounded-md border border-line bg-surface p-2.5"
+                    >
+                      <span className="relative block h-[52px] w-[40px] shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
+                        {tuya.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={tuya.image} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center text-muted">
+                            <Icon name="gancho" size={13} />
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
+                          te quedas con la tuya
+                        </span>
+                        <b className="truncate text-[13.5px] font-semibold text-ink">
+                          {tuya.nombre}
+                        </b>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => deshacerDuelo(r.index)}
+                        className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-muted transition-colors hover:text-ink"
+                      >
+                        <Icon name="repetir" size={13} /> deshacer
+                      </button>
+                    </li>
+                  ) : abierto !== r.index ? (
                     // Compacta: la decisión existe y espera turno. Tap = abrirla.
                     <li key={renderKey(r)}>
                       <button
@@ -643,7 +756,7 @@ export function TripResult({
                     }}
                   />
                   )
-                ))}
+                )}
               </ul>
             </div>
           ) : null}

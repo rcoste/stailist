@@ -33,14 +33,27 @@ describe("candidatasDeOverrides", () => {
     expect(descartados).toHaveLength(0);
   });
 
-  it("una candidata que YA es el sustituto elegido no vuelve a duelo", () => {
-    // Elegiste "me quedo con la mía": sub:3 = la candidata. Re-proponer el
-    // duelo sería preguntarte lo que ya contestaste.
-    const { candidatas } = candidatasDeOverrides(
+  it("una candidata que YA es el sustituto elegido sale como GANADA, no desaparece", () => {
+    // Elegiste "me quedo con la mía": sub:3 = la candidata. Sigue en el mapa
+    // porque el duelo resuelto se pinta (con su "deshacer"); lo que la
+    // distingue de una pendiente es estar en `ganados`. Omitirla —como hacía
+    // la primera versión— era justo lo que dejaba la decisión sin vuelta atrás.
+    const { candidatas, ganados } = candidatasDeOverrides(
       { [candKey(3)]: "Camisa negra", "sub:3": "Camisa negra" },
       img
     );
-    expect(candidatas[3]).toBeUndefined();
+    expect(candidatas[3]).toEqual({ nombre: "Camisa negra", image: "https://x/cam.jpg" });
+    expect(ganados).toEqual([3]);
+  });
+
+  it("un sustituto DISTINTO de la candidata no cuenta como duelo ganado", () => {
+    // Cambió la prenda por otra vía ("ver otras", swap): el duelo no lo ganó
+    // la candidata, así que no lleva su "deshacer".
+    const { ganados } = candidatasDeOverrides(
+      { [candKey(3)]: "Camisa negra", "sub:3": "Camisa azul" },
+      img
+    );
+    expect(ganados).toHaveLength(0);
   });
 
   it("sin imagen resuelta, la candidata sobrevive (la imagen es cosmética)", () => {
@@ -49,7 +62,7 @@ describe("candidatasDeOverrides", () => {
   });
 
   it("overrides null o vacío no truena", () => {
-    expect(candidatasDeOverrides(null, img)).toEqual({ candidatas: {}, descartados: [] });
-    expect(candidatasDeOverrides({}, img)).toEqual({ candidatas: {}, descartados: [] });
+    expect(candidatasDeOverrides(null, img)).toEqual({ candidatas: {}, descartados: [], ganados: [] });
+    expect(candidatasDeOverrides({}, img)).toEqual({ candidatas: {}, descartados: [], ganados: [] });
   });
 });

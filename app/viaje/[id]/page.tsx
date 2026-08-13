@@ -232,7 +232,7 @@ export default async function ViajeDetallePage({
   const confirmado = rawOutfits !== null;
   // Las candidatas del duelo ya calculadas (overrides "cand:i"), con su imagen
   // resuelta contra el mismo mapa del clóset que usa todo lo demás.
-  const { candidatas, descartados } = candidatasDeOverrides(
+  const { candidatas, descartados, ganados } = candidatasDeOverrides(
     overrides as Record<string, unknown> | null,
     (nombre) => imageMap[nombre] ?? null
   );
@@ -339,6 +339,7 @@ export default async function ViajeDetallePage({
               confirmado={confirmado}
               candidatasIniciales={candidatas}
               descartadosIniciales={descartados}
+              ganadosIniciales={ganados}
             />
           }
           looks={
