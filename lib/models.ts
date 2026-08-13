@@ -199,6 +199,21 @@ export const CLASSIFY_MODEL = "claude-sonnet-5";
 export const EXTRACT_MODEL = "claude-haiku-4-5-20251001";
 
 /**
+ * Elegir el sujeto visual de la foto de un destino de viaje ("Osaka" → "Osaka
+ * Castle…"). Corre UNA vez por destino en la vida del producto.
+ *
+ * Va en el barato por dos razones: la eligió Roberto explícitamente ("hacemos
+ * ahí un haiku que decida"), y el error tiene red — la foto genérica queda de
+ * fallback y la imagen fea se regenera. No cumple el criterio de "se ve todos
+ * los días" a secas: se ve, pero se corrige una vez y quedó.
+ */
+export const MODELO_MOTIVO_DESTINO: Modelo = {
+  proveedor: "anthropic",
+  id: "claude-haiku-4-5-20251001",
+  etiqueta: "Haiku 4.5",
+};
+
+/**
  * Chequeos baratos de "¿esto está obviamente mal?": si el avatar generado se
  * parece a la foto, si la prenda que la persona ancló pega con la ocasión.
  *
