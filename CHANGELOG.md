@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.233.0] - 2026-08-13
+
+### Added — el duelo del viaje se puede deshacer
+
+Elegiste tu prenda sobre la sugerida (o al revés) y te arrepentiste: ahora la
+decisión se queda a la vista, con su **deshacer**, y al tocarlo el duelo vuelve
+tal cual — sin volver a buscar en tu clóset. Antes la elección desaparecía sin
+vuelta atrás.
+
+Y arriba de las dos fotos aparece de qué se trata: **"elige una · la que se va
+a tu maleta"**.
+
 ## [0.2.232.3] - 2026-08-13
 
 ### Changed — el duelo del viaje es de dos, no de tres

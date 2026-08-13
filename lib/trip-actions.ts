@@ -203,6 +203,63 @@ export async function proposeTripSubstitutes(
   return out;
 }
 
+/**
+ * DESHACER un duelo ya resuelto — el "por si te arrepientes" que la cápsula
+ * tiene desde siempre y al viaje le faltaba (Roberto, 2026-08-13: "debería
+ * haber el botón de deshacer... por si la persona decide irse por la que ya
+ * tiene en lugar de la que le sugieren, o viceversa").
+ *
+ * Borra TODO rastro del veredicto y deja `cand:i` intacta, que es lo que
+ * permite volver a pintar el mismo duelo sin re-pagar la búsqueda:
+ *   · el override numérico (accept/reject de un "parecido");
+ *   · `sub:i` (el sustituto que puso "me quedo con la mía");
+ *   · `candNo:i` (el descarte de "prefiero la sugerida");
+ *   · `empacado[i]`, que setTripSubstitute marca al elegir — sin esto la
+ *     prenda volvía al duelo pero seguía contando como empacada.
+ */
+export async function undoTripDuel(tripId: string, index: number): Promise<void> {
+  if (!Number.isInteger(index)) return;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("overrides, empacado, outfits")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return;
+
+  const overrides = ((trip.overrides as Record<string, unknown> | null) ?? {}) as Record<
+    string,
+    unknown
+  >;
+  delete overrides[String(index)];
+  delete overrides[`sub:${index}`];
+  delete overrides[`candNo:${index}`];
+
+  const empacado = ((trip.empacado as Record<string, boolean> | null) ?? {}) as Record<
+    string,
+    boolean
+  >;
+  delete empacado[String(index)];
+
+  const hasOutfits = Array.isArray(trip.outfits) && trip.outfits.length > 0;
+  await supabase
+    .from("trips")
+    .update(
+      hasOutfits
+        ? { overrides, empacado, outfits_stale: true }
+        : { overrides, empacado }
+    )
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+  revalidatePath(`/viaje/${tripId}`);
+}
+
 /** "Prefiero la sugerida": cierra el duelo del hueco y no se vuelve a abrir. */
 export async function dismissTripCandidate(tripId: string, index: number): Promise<void> {
   if (!Number.isInteger(index)) return;
