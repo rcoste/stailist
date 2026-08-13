@@ -121,7 +121,17 @@ export function CapsuleList({
     });
 
   // Cuál comparación está abierta (la manda el padre para poder encadenar).
-  const [abierta, setAbierta] = useState<number | null>(null);
+  // ARRANCA EN LA PRIMERA SIN DECIDIR, no en null: con todas colapsadas había
+  // que picar para ver una sola comparación, que es el mismo "picar y picar"
+  // que Roberto reportó (2026-08-13) y que el viaje ya no tiene. `decidir` se
+  // calcula más abajo, así que aquí se replica su criterio —el MISMO de
+  // decidirYSeguir— sobre `target/match`, que sí están disponibles.
+  const [abierta, setAbierta] = useState<number | null>(() => {
+    const pendientes = capsuleRows(target, match, overrides ?? {}, swaps)
+      .filter((r) => !r.dismissed && r.base === "parecido" && r.decision === null)
+      .sort((a, b) => a.item.prioridad - b.item.prioridad);
+    return pendientes[0]?.index ?? null;
+  });
 
   // Visor de prenda: las miniaturas son de 38-46px y no se distingue qué prenda
   // es (pedido de Roberto). Un toque la abre en grande, con nombre — reusa el
@@ -290,7 +300,11 @@ export function CapsuleList({
   // Las que se ven como CARD GRANDE y todavía no tienen imagen, en el orden en
   // que aparecen. Solo esas: precalentar las 33 costaría un dineral en renders
   // para llenar tiles que la persona ni va a mirar (ver lib/prewarm-renders).
-  const porPrecalentar: PrewarmJob[] = [...pendiente, ...falta]
+  // `decidir` ENTRA: el duelo enseña la sugerida a tamaño grande y, colapsado,
+  // como miniatura de 40px — sin su render, abrías la comparación con un lado
+  // en gris. Se quedó fuera desde el principio por descuido, no por decisión.
+  // El orden es el de la pantalla: lo primero que se ve, lo primero que llega.
+  const porPrecalentar: PrewarmJob[] = [...pendiente, ...falta, ...decidir]
     .filter((r) => !catImgs[faltaKey(r.item)] && !faltaImage(r.item))
     .map((r) => ({ key: faltaKey(r.item), args: idealArgs(r.item) }));
 
@@ -466,38 +480,14 @@ export function CapsuleList({
       ) : null}
 
       {decidir.length > 0 ? (
-        // Cerrada por defecto (assessment UX): resolver ambigüedades del match
-        // vale menos que ver qué te falta, y abierta era lo MÁS grande de la
-        // pantalla. El resumen deja claro que están ahí.
+        // ABIERTA desde 2026-08-13. Se cerró cuando cada duelo era dos fotos 3:4
+        // —"abierta era lo MÁS grande de la pantalla"— pero eso ya lo resolvió
+        // el modo compacto: hoy es UNA comparación abierta y el resto filas de
+        // 40px. Cerrada, la tarea se escondía detrás de un tap que nadie tiene
+        // por qué adivinar (y en el viaje va abierta desde que nació).
         <Section
           title="Decide si te sirve"
           count={decidir.length}
-          collapsible
-          summary={
-            <>
-              <span className="flex shrink-0 gap-1">
-                {decidir.slice(0, 2).map((r) => (
-                  <span
-                    key={rowKey(r)}
-                    className="relative aspect-[3/4] w-8 overflow-hidden rounded-sm border border-line bg-tile"
-                  >
-                    <Thumb
-                      src={rowImage(r, images, catImgs)}
-                      colorFamilia={r.item.colorFamilia}
-                      sizes="32px"
-                      icon={11}
-                    />
-                  </span>
-                ))}
-              </span>
-              <span className="flex min-w-0 flex-col">
-                <span className="text-[13.5px] font-semibold leading-tight text-ink">
-                  {decidir.length === 1 ? "1 por decidir" : `${decidir.length} por decidir`}
-                </span>
-                <span className="text-[11.5px] text-muted">tuya o la sugerida</span>
-              </span>
-            </>
-          }
         >
           <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {decidir.map((r) => (
@@ -1228,6 +1218,14 @@ function DecideRow({
           <p className="display text-[16px] italic leading-5 text-ink2">{item.porque}</p>
         </div>
       </div>
+
+      {/* EL TÍTULO EN MEDIO: el contexto de que hay que escoger UNA. Con el
+          MISMO tratamiento que los rótulos de abajo —9.5px, bold, versalitas,
+          faint— para que se lea como etiqueta y nunca como el botón de elegir.
+          Nació en el duelo del viaje (2026-08-13) y baja aquí por paridad. */}
+      <span className="block border-t border-line2 bg-tile/50 py-[7px] text-center text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
+        elige una · la que cubre este hueco
+      </span>
 
       {/* b · el duelo, 50/50. El `gap-px` sobre el fondo ES la hairline que las
           separa (una sola línea, sin bordes que se dupliquen). */}

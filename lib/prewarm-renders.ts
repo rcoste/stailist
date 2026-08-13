@@ -19,7 +19,19 @@ import type { RenderArgs } from "@/components/ideal-tile";
 //  · el resultado se registra en la biblioteca COMPARTIDA (catalog_renders), así
 //    que el segundo usuario con ese mismo combo ya no paga nada. El chino azul
 //    marino de Alberto es el mismo chino azul marino de Toño.
-export const PREWARM_TOPE = 8;
+// EL TOPE, recalibrado el 2026-08-13 (de 8 a 40) con la base en la mano.
+//
+// El 8 se puso cuando cada render era dinero nuevo y la biblioteca compartida
+// estaba vacía. Hoy tiene 249 renders y la cuenta real es otra: precalentar
+// TODO lo que necesita imagen, para los 12 usuarios con cápsula, son 76
+// generaciones en total — un par de dólares UNA vez, y cada una queda para
+// quien venga después. Mientras tanto el tope dejaba 17 a 35 piezas por
+// cápsula pidiendo un tap cada una (Roberto: "no tener que picar y picar").
+//
+// 40 = una cápsula entera con margen (la más grande medida pide 35). Sigue
+// siendo un tope y no un "todo": es el backstop contra una cápsula
+// patológica, no el presupuesto.
+export const PREWARM_TOPE = 40;
 const CONCURRENCIA = 2;
 
 export type PrewarmJob = { key: string; args: RenderArgs };
