@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.231.0] - 2026-08-13
+
+### Changed — la cápsula y el viaje hablan el mismo idioma
+
+Los dos módulos hacían lo mismo con palabras distintas, y una palabra
+("cambiar") significaba lo contrario en cada uno. Ahora:
+
+- En esenciales, la sección de lo que te falta dice lo que es: **"No la
+  tienes — cómprala o cúbrela"** (antes "Lo que más te suma").
+- El botón que revierte tu decisión ahora se llama **"deshacer"** — "cambiar"
+  queda solo en el viaje, donde de verdad cambia una prenda por otra.
+
+### Added — el viaje ya te propone el reemplazo, no te manda a buscarlo
+
+Si al plan del viaje le falta algo que puedes cubrir con tu ropa, ya no hay
+que descubrir la lupa: la app busca sola y te pone el duelo — **la sugerida
+contra la tuya, con fotos**. Un tap y decidiste. Es la misma interacción de
+tus esenciales, ahora en los dos lugares.
+
 ## [0.2.230.2] - 2026-08-13
 
 ### Fixed — "viajes" en el menú ya lleva a tus viajes

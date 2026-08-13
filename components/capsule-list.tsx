@@ -400,11 +400,15 @@ export function CapsuleList({
       ) : null}
 
       {falta.length > 0 ? (
-        <Section title="Lo que más te suma" count={falta.length}>
+        // "Lo que más te suma" describía el premio, no el contenido — y Roberto
+        // lo rebotó: "primero vienen las prendas que tú NO tienes". Mismo
+        // vocabulario que la sección hermana del viaje. El dato de cuánto suma
+        // no se pierde: vive en el eyebrow de cada card ("+N looks").
+        <Section title="No la tienes — cómprala o cúbrela" count={falta.length}>
           <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {falta.map((r) =>
               // Un "parecido" rechazado va por DecideRow: misma SumaCard, pero
-              // conserva el "cambiar" para volver a tu prenda si te arrepientes.
+              // conserva el "deshacer" para volver a tu prenda si te arrepientes.
               r.base === "parecido" ? (
                 <DecideRow
                   key={rowKey(r)}
@@ -759,7 +763,7 @@ function BigCard({
   );
 }
 
-// Tarjeta grande para "lo que más te suma" (y para el estado "quiero la sugerida"
+// Tarjeta grande para "no la tienes" (y para el estado "quiero la sugerida"
 // de Decide): tile grande tappable que GENERA la imagen enfrente + cuerpo con
 // nombre/porqué y la fila de acciones "ya la tengo" · "wishlist".
 function SumaCard({
@@ -822,7 +826,7 @@ function SumaCard({
   };
   // El eyebrow es contexto de una línea — nunca la razón (esa es la serif).
   // Orden: lo que acaba de pasar (swap) > tu decisión (le da sentido al
-  // "cambiar" de al lado) > lo que la prenda desbloquea > el caso base.
+  // "deshacer" de al lado) > lo que la prenda desbloquea > el caso base.
   const eyebrow = swapped
     ? "te la cambié"
     : reject
@@ -831,14 +835,19 @@ function SumaCard({
         ? `+${unlock} looks`
         : "te falta este básico";
 
-  // "cambiar" = DESHACER tu decisión entre tu prenda y la sugerida. NUNCA
+  // "deshacer" = revertir tu decisión entre tu prenda y la sugerida. NUNCA
   // "búscame otra" (corrección de Roberto, 2026-07-29: el primer corte lo usó
   // así y revolvía los dos ejes que esta card vino a separar). El reemplazo
   // vive dentro de "no me va", que primero pide el motivo — y ese motivo es lo
   // que el motor usa para no proponer el mismo error (REASON_HINT).
+  //
+  // SE LLAMABA "cambiar" y era un homónimo venenoso: en el viaje "cambiar"
+  // significa exactamente lo prohibido aquí (búscame otra del clóset). Mismo
+  // verbo, significados opuestos, y Roberto —autor de la corrección— ya no
+  // recordaba qué hacía este botón. La palabra ahora dice lo que hace.
   const topAction =
     reject && onChange
-      ? { label: "cambiar", icon: "repetir" as const, onClick: onChange }
+      ? { label: "deshacer", icon: "repetir" as const, onClick: onChange }
       : null;
 
   return (
@@ -1015,7 +1024,7 @@ function Rail({
 
 // Las "parecido": se deciden en su lugar con "elige tocando" (adiós al cruce de
 // botones Sí/No). Sin decidir → tocas la prenda que prefieres → se marca → barra
-// que NOMBRA el veredicto → Confirmar. Aceptada → estado marcado con "cambiar";
+// que NOMBRA el veredicto → Confirmar. Aceptada → estado marcado con "deshacer";
 // rechazada ("quiero la sugerida") → adopta la SumaCard (tile + acciones).
 function DecideRow({
   row,
@@ -1089,7 +1098,7 @@ function DecideRow({
     if (ok) setSel("ideal");
   };
 
-  // "cambiar" desde cualquier estado resuelto: DESHACE la decisión (el override
+  // "deshacer" desde cualquier estado resuelto: revierte la decisión (el override
   // es un toggle) y devuelve el card al duelo con la selección limpia. Reabrirlo
   // es parte del trabajo: sin `onExpandir` volvías a la fila colapsada y había
   // que picarle otra vez para ver lo que ibas a cambiar.
@@ -1118,7 +1127,7 @@ function DecideRow({
           )
         }
         topAction={{
-          label: "cambiar",
+          label: "deshacer",
           icon: "repetir",
           onClick: () => volverAlDuelo("accept"),
         }}
@@ -1129,7 +1138,7 @@ function DecideRow({
 
   // Elegiste la SUGERIDA (o la descartaste con motivo, que resuelve igual). El
   // hueco es real: le tocan las mismas puertas que a un hueco de "lo que más te
-  // suma" (ya la tengo · wishlist · no me va), y "cambiar" para volver al duelo.
+  // suma" (ya la tengo · wishlist · no me va), y "deshacer" para volver al duelo.
   if (decision === "reject" || resolvedMotivo) {
     return (
       <SumaCard
