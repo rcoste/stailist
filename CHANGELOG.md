@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.232.3] - 2026-08-13
+
+### Changed — el duelo del viaje es de dos, no de tres
+
+Se quitó "ver otras de mi clóset" del duelo: si la app ya te propuso la mejor
+de tu clóset, una tercera puerta a seguir buscando decía —en la misma tarjeta—
+que no confiaba en su propia propuesta. Y de paso arreglaba un defecto: esa
+búsqueda te devolvía una lista encabezada por la misma prenda que ya tenías
+enfrente. Cambiar de prenda sigue donde tiene sentido: tocando una prenda ya
+elegida ("no me convence — cámbiala").
+
 ## [0.2.232.2] - 2026-08-13
 
 ### Fixed — el duelo del viaje se entiende solo

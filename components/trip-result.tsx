@@ -133,7 +133,6 @@ function DueloCard({
   tuya,
   onMia,
   onSugerida,
-  onOtras,
 }: {
   row: TripRow;
   /** El lado derecho del duelo: la prenda TUYA (candidata de la búsqueda, o
@@ -141,7 +140,6 @@ function DueloCard({
   tuya: Candidata;
   onMia: () => void;
   onSugerida: () => void;
-  onOtras: () => void;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
   // TOCAS → SE MARCA → BOTÓN QUE NOMBRA LA ELECCIÓN. Es el patrón exacto del
@@ -211,18 +209,20 @@ function DueloCard({
         </button>
       ) : null}
 
-      {/* La salida, DENTRO del card (en una lista de duelos, una salida por
-          fuera no se sabría de cuál es) y CON ÍCONO: sin él era una fila de
-          texto centrado igual a la instrucción de arriba — indistinguible de
-          una etiqueta. Mismo peso que el "ninguna de las dos me va" de la
-          cápsula: secundaria, nunca compitiendo con el botón de elegir. */}
-      <button
-        type="button"
-        onClick={onOtras}
-        className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-line2 text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
-      >
-        <Icon name="lupa" size={13} /> ver otras de mi clóset
-      </button>
+      {/* SIN "ver otras de mi clóset", y por dos razones (Roberto, 2026-08-13):
+          la de producto y la de defecto.
+          · Producto: el duelo declara "éstas son las dos contendientes". Una
+            tercera puerta a buscar dice, en la misma card, que no confiamos en
+            lo que acabamos de proponer. Es el MISMO argumento con el que se
+            quitó la lupa de "no lo tienes".
+          · Defecto: suggestTripSubstitutes filtra las prendas ya usadas por
+            `sub:` y por el match — NO por `cand:`. O sea que en un duelo nacido
+            de una falta, "ver otras" pagaba una llamada de IA nueva para
+            devolver una lista cuyo #1 era la prenda que ya estabas viendo.
+          El cambio de prenda no se pierde del producto: el zoom de cualquier
+          prenda de "ya lo tienes" trae "no me convence — cámbiala" (y ahí SÍ
+          filtra bien lo ya usado). Aquí se decide entre lo propuesto; el
+          intercambio vive sobre la prenda ya elegida. */}
     </li>
   );
 }
@@ -641,7 +641,6 @@ export function TripResult({
                         })();
                       }
                     }}
-                    onOtras={() => buscarSustituto(r, tipo === "parecido" ? "swap" : "falta")}
                   />
                   )
                 ))}
