@@ -8,7 +8,19 @@ import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarg
 import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
 import { faltaKey, catalogStorageKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
-import { tripDays, tripLogicLine, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
+import {
+  tripDays,
+  tripLogicLine,
+  luggageSummary,
+  rangoFechas,
+  nombreDeViaje,
+  tripConfirmado,
+  type Bolsas,
+  type Luggage,
+  type Parada,
+  type TripOutfit,
+  type Occasion,
+} from "@/lib/trip";
 import { fotosDeViajes } from "@/lib/destino-imagen-cache";
 import { candidatasDeOverrides } from "@/lib/trip-candidatas";
 import { TripResult, type TripRow } from "@/components/trip-result";
@@ -16,19 +28,6 @@ import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
 import { TripPackedProvider, TripPackedBar } from "@/components/trip-packed-context";
 import { DeleteTripButton } from "@/components/delete-trip-button";
-
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-function fmt(d: string): string {
-  const [, m, day] = d.split("-");
-  return `${Number(day)} ${MESES[Number(m) - 1] ?? ""}`;
-}
-// "17 – 24 nov" (mismo mes) o "28 nov – 3 dic" (distinto).
-function rango(i: string, f: string): string {
-  const [, mi, di] = i.split("-");
-  const [, mf, df] = f.split("-");
-  if (mi === mf) return `${Number(di)} – ${Number(df)} ${MESES[Number(mf) - 1] ?? ""}`;
-  return `${fmt(i)} – ${fmt(f)}`;
-}
 
 export default async function ViajeDetallePage({
   params,
@@ -67,10 +66,24 @@ export default async function ViajeDetallePage({
   const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
   const overrides = (trip.overrides as CapsuleOverrides | null) ?? null;
   const empacado = (trip.empacado as Record<string, boolean> | null) ?? {};
-  const [imageMap, nameToId] = await Promise.all([
+  // Todo lo que solo depende del perfil o del viaje ya cargado va en UN
+  // Promise.all — en serie eran ~2 round-trips extra por render (review).
+  const [imageMap, nameToId, { data: wishRows }, fotosMapa] = await Promise.all([
     loadClosetImageMap(supabase, profile.id),
     loadClosetNameToId(supabase, profile.id),
+    supabase
+      .from("wishlist_items")
+      .select("capsule_key")
+      .eq("user_id", profile.id)
+      .eq("source", "capsule"),
+    fotosDeViajes(supabase, [
+      { lugar: trip.lugar as string, ocasiones: (trip.ocasiones as string[] | null) ?? [] },
+    ]),
   ]);
+  const savedWishKeys = (wishRows ?? [])
+    .map((r) => r.capsule_key as string | null)
+    .filter((k): k is string => !!k);
+  const fotoDestino = fotosMapa.get(trip.lugar as string) ?? "/destinos/ciudad.webp";
 
   // Biblioteca compartida: renders de catálogo ya generados (tipo+color+género),
   // para mostrar al instante la prenda sugerida sin tener que regenerarla. Misma
@@ -93,16 +106,6 @@ export default async function ViajeDetallePage({
     const path = pathBySk.get(sk);
     if (path) catalogImages[fk] = catalogPublicUrl(supabase, path);
   }
-
-  // Prendas ya guardadas en la wishlist (para el estado del botón de cada faltante).
-  const { data: wishRows } = await supabase
-    .from("wishlist_items")
-    .select("capsule_key")
-    .eq("user_id", profile.id)
-    .eq("source", "capsule");
-  const savedWishKeys = (wishRows ?? [])
-    .map((r) => r.capsule_key as string | null)
-    .filter((k): k is string => !!k);
 
   // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):
   // cubren una prenda que faltaba con una real del clóset.
@@ -145,20 +148,12 @@ export default async function ViajeDetallePage({
     trip.bolsas as Bolsas | null,
     trip.maleta as Luggage | null
   );
-  const paradas = Array.isArray(trip.paradas) ? (trip.paradas as { lugar?: string }[]) : [];
+  const paradas = Array.isArray(trip.paradas) ? (trip.paradas as Parada[]) : [];
   const nParadas = paradas.length || 1;
 
-  // La foto del destino para el encabezado (catálogo → generada → genérica).
-  const fotosMapa = await fotosDeViajes(supabase, [
-    { lugar: trip.lugar as string, ocasiones: (trip.ocasiones as string[] | null) ?? [] },
-  ]);
-  const fotoDestino = fotosMapa.get(trip.lugar as string) ?? "/destinos/ciudad.webp";
-
-  // Título: una parada → su nombre; varias → la primera "y N más".
-  const destino =
-    nParadas > 1
-      ? `${(paradas[0]?.lugar ?? trip.lugar).split(",")[0].split(" · ")[0]} y ${nParadas - 1} más`
-      : trip.lugar;
+  // Título: una parada → su nombre; varias → el país compartido ("Japón") o
+  // "Tokio y 2 más" si la ruta cruza países.
+  const destino = nombreDeViaje(trip.lugar as string, paradas);
 
   // Outfits del viaje (v1.1): resueltos contra el clóset (cada nombre → su imagen).
   const rawOutfits = trip.outfits as TripOutfit[] | null;
@@ -227,9 +222,9 @@ export default async function ViajeDetallePage({
       : r.base;
   const maletaCount = rows.filter((r) => effInit(r) !== "falta" || empacado[String(r.index)]).length;
   const looksCount = resolvedOutfits?.length ?? 0;
-  // La frontera de las dos fases del flujo (plan → maleta): confirmado ≡ ya
-  // generó looks alguna vez. La misma señal del candado, cero columnas nuevas.
-  const confirmado = rawOutfits !== null;
+  // Revisión cerrada ("✓ listo — a empacar"): la llave y su grandfathering
+  // tienen dueño único en lib/trip (tripConfirmado).
+  const confirmado = tripConfirmado(overrides as Record<string, unknown> | null, rawOutfits);
   // Las candidatas del duelo ya calculadas (overrides "cand:i"), con su imagen
   // resuelta contra el mismo mapa del clóset que usa todo lo demás.
   const { candidatas, descartados, ganados } = candidatasDeOverrides(
@@ -242,14 +237,28 @@ export default async function ViajeDetallePage({
     .filter((r) => effInit(r) !== "falta" || empacado[String(r.index)])
     .map((r) => r.index);
 
+  // Las dos líneas del header (portada y compacto): la parte bold (fechas ·
+  // días) y el resto (clima · paradas · equipaje).
+  const fechas = `${rangoFechas(trip.fecha_inicio, trip.fecha_fin)} · ${days} días`;
+  const metaExtra =
+    [
+      weather ? `~${weather.temp_c}°C` : null,
+      nParadas > 1 ? `${nParadas} paradas` : null,
+      equipaje,
+    ]
+      .filter(Boolean)
+      .join(" · ") || null;
+
   return (
     <AppShell desktop="wide">
       <TripPackedProvider initial={empacado}>
-      {/* Desktop (F3 + handoff): 2 columnas — rail del viaje sticky a la izquierda
-          (resumen/clima/progreso), maleta/looks a la derecha. Móvil: columna. */}
+      {/* Desktop (F3): 2 columnas — rail del viaje sticky a la izquierda
+          (resumen/clima/progreso), pestañas a la derecha. Móvil (handoff
+          viaje 2): el header vive DENTRO de TripTabs — portada en "el plan",
+          compacto en las pestañas de trabajo. */}
       <section className="flex flex-col gap-4 pt-1 lg:flex-row lg:items-start lg:gap-10">
-        {/* Encabezado compartido (no cambia entre tabs). */}
-        <div className="flex flex-col gap-1.5 lg:sticky lg:top-20 lg:w-[34%] lg:shrink-0">
+        {/* Rail de desktop (móvil tiene su header en TripTabs). */}
+        <div className="hidden flex-col gap-1.5 lg:sticky lg:top-20 lg:flex lg:w-[34%] lg:shrink-0">
           <Link
             href="/viaje/lista"
             className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
@@ -258,24 +267,18 @@ export default async function ViajeDetallePage({
             modo viaje
           </Link>
           {/* La foto del destino como portada del viaje (B&N editorial: el
-              color es de tu ropa). Chica en móvil — el trabajo está abajo. */}
+              color es de tu ropa). */}
           <div className="relative mt-1 overflow-hidden rounded-md border border-line bg-tile">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={fotoDestino}
-              alt=""
-              className="h-[110px] w-full object-cover lg:h-[150px]"
-            />
+            <img src={fotoDestino} alt="" className="h-[150px] w-full object-cover" />
           </div>
-          <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink lg:text-[32px]">
+          <h1 className="mt-1 text-[32px] font-bold leading-tight tracking-[-0.025em] text-ink">
             tu maleta para{" "}
             <em className="display font-normal italic">{destino}</em>
           </h1>
           <div className="mt-1 flex items-center gap-2 text-[15px] font-semibold text-ink">
             <Icon name="calendario" size={16} className="text-accent" />
-            <span className="tabular">
-              {rango(trip.fecha_inicio, trip.fecha_fin)} · {days} días
-            </span>
+            <span className="tabular">{fechas}</span>
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
             {weather ? (
@@ -304,30 +307,35 @@ export default async function ViajeDetallePage({
             ) : null}
           </div>
 
-          {/* La lógica de la maleta: por qué esto y no otra cosa, en una línea.
-              Firma del motor si existe; plantilla con datos si el viaje es viejo. */}
-          {logica ? (
-            <p className="editorial mt-2.5 max-w-[340px] text-[14.5px] leading-relaxed text-muted">
-              {logica}
-            </p>
-          ) : null}
-
           {/* Progreso de empacado en el rail (solo desktop; en móvil vive en el
-              tab). Solo en fase de maleta: durante el plan aún no se empaca y
-              una barra en ceros presionaría a palomear antes de decidir. */}
+              tab). Solo con la revisión cerrada: durante el plan aún no se
+              empaca y una barra en ceros presionaría a palomear antes de decidir. */}
           {confirmado ? (
             <div className="lg:mt-6">
               <TripPackedBar empacaIndices={empacaIndices} />
             </div>
           ) : null}
 
+          <Link
+            href={`/viaje?edit=${trip.id}`}
+            className="mt-5 flex min-h-11 items-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+          >
+            <Icon name="lapiz" size={14} />
+            editar ruta y fechas
+          </Link>
           <DeleteTripButton tripId={trip.id as string} lugar={destino} />
         </div>
 
         <div className="lg:min-w-0 lg:flex-1">
         <TripTabs
           tripId={trip.id}
-          maletaCount={confirmado ? maletaCount : rows.length}
+          destino={destino}
+          fechas={fechas}
+          metaExtra={metaExtra}
+          foto={fotoDestino}
+          firma={logica || null}
+          actividades={(trip.ocasiones as Occasion[]) ?? []}
+          prendasCount={rows.length}
           looksCount={looksCount}
           looksStale={Boolean(trip.outfits_stale)}
           confirmado={confirmado}
@@ -336,7 +344,6 @@ export default async function ViajeDetallePage({
               tripId={trip.id}
               rows={rows}
               savedWishKeys={savedWishKeys}
-              confirmado={confirmado}
               candidatasIniciales={candidatas}
               descartadosIniciales={descartados}
               ganadosIniciales={ganados}
@@ -349,6 +356,7 @@ export default async function ViajeDetallePage({
               ocasiones={(trip.ocasiones as Occasion[]) ?? []}
               stale={Boolean(trip.outfits_stale)}
               favoritos={favoritos}
+              maletaCount={confirmado ? maletaCount : rows.length}
             />
           }
         />
