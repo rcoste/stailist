@@ -491,6 +491,44 @@ export async function setTripOverride(
   revalidatePath(`/viaje/${tripId}`);
 }
 
+/**
+ * "✓ listo — a empacar": cierra la fase de revisión SIN generar looks (flujo
+ * del handoff viaje 2: el plan → prendas → empacar → looks — la generación se
+ * movió al final de empacar). Antes "confirmado" se derivaba de outfits !==
+ * null porque confirmar ERA generar; ahora necesita su propia señal. Vive en
+ * overrides como llave plana "confirmado" (OJO: sin prefijo, a diferencia de
+ * "sub:"/"cand:" — no asumir que toda llave sin prefijo es índice numérico).
+ * Invisible para capsuleRows y cero columnas nuevas; el ÚNICO lector legítimo
+ * es tripConfirmado (lib/trip.ts), que también carga el grandfathering de los
+ * viajes viejos con outfits.
+ */
+export async function confirmTripPlan(tripId: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("overrides")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return;
+
+  const current = ((trip.overrides as CapsuleOverrides | null) ?? {}) as Record<string, unknown>;
+  if (current.confirmado === true) return;
+  current.confirmado = true;
+
+  await supabase
+    .from("trips")
+    .update({ overrides: current })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+  revalidatePath(`/viaje/${tripId}`);
+}
+
 // Checklist "lo empaqué": marca/desmarca una prenda de la maleta.
 export async function setTripPacked(
   tripId: string,

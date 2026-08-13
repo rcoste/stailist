@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { capsuleFloor, capsuleFloorGaps, type Occasion } from "./trip";
+import {
+  capsuleFloor,
+  capsuleFloorGaps,
+  fmtDiaMes,
+  rangoFechas,
+  nombreDeViaje,
+  rutaDeViaje,
+  type Occasion,
+} from "./trip";
 
 describe("capsuleFloor — piso de suficiencia (v24)", () => {
   it("caso NY real: 5 días, ciudad+noche+traslado, documentada (16)", () => {
@@ -89,5 +97,70 @@ describe("capsuleFloorGaps — vestidos acreditan bottoms", () => {
     ];
     // piso 5/3/2: tops = 2+3(vestidos) = 5 ✓, bottoms = 1+3 = 4 ≥ 3 ✓
     expect(capsuleFloorGaps(items, { tops: 5, bottoms: 3, calzado: 2 })).toEqual([]);
+  });
+});
+
+describe("fmtDiaMes / rangoFechas — las fechas como se leen (handoff viaje 2)", () => {
+  it("fmtDiaMes: día sin cero a la izquierda + mes corto", () => {
+    expect(fmtDiaMes("2026-12-07")).toBe("7 dic");
+    expect(fmtDiaMes("2026-01-31")).toBe("31 ene");
+  });
+
+  it("rangoFechas mismo mes: el mes se dice UNA vez", () => {
+    expect(rangoFechas("2026-12-07", "2026-12-13")).toBe("7 – 13 dic");
+  });
+
+  it("rangoFechas cruzando de mes: cada fecha con su mes", () => {
+    expect(rangoFechas("2026-11-28", "2026-12-03")).toBe("28 nov – 3 dic");
+  });
+});
+
+describe("nombreDeViaje — el nombre corto para títulos (handoff viaje 2)", () => {
+  const p = (lugar: string) => ({ lugar });
+
+  it("una parada: el nombre tal cual", () => {
+    expect(nombreDeViaje("Nueva York", [p("Nueva York, Nueva York, Estados Unidos")])).toBe(
+      "Nueva York"
+    );
+    expect(nombreDeViaje("Tokio", null)).toBe("Tokio");
+  });
+
+  it("multidestino con país compartido: el país (la fila 'Japón' del handoff)", () => {
+    expect(
+      nombreDeViaje("Tokio · Kioto · Osaka", [
+        p("Tokio, Tokio, Japón"),
+        p("Kioto, Kioto, Japón"),
+        p("Osaka, Osaka, Japón"),
+      ])
+    ).toBe("Japón");
+  });
+
+  it("multidestino cruzando países: cae a 'X y N más'", () => {
+    expect(
+      nombreDeViaje("Madrid · París", [p("Madrid, Madrid, España"), p("París, Isla de Francia, Francia")])
+    ).toBe("Madrid y 1 más");
+  });
+
+  it("paradas sin país (escritas a mano, sin geocodificar): cae a 'X y N más'", () => {
+    expect(nombreDeViaje("Comala · Suchitlán", [p("Comala"), p("Suchitlán")])).toBe(
+      "Comala y 1 más"
+    );
+  });
+});
+
+describe("rutaDeViaje — la ruta en el renglón de fechas", () => {
+  it("multidestino: primeras partes unidas con flechas", () => {
+    expect(
+      rutaDeViaje([
+        { lugar: "Tokio, Tokio, Japón" },
+        { lugar: "Kioto, Kioto, Japón" },
+        { lugar: "Osaka, Osaka, Japón" },
+      ])
+    ).toBe("Tokio → Kioto → Osaka");
+  });
+
+  it("una parada o ninguna: no hay ruta que contar", () => {
+    expect(rutaDeViaje([{ lugar: "Tokio, Tokio, Japón" }])).toBeNull();
+    expect(rutaDeViaje(null)).toBeNull();
   });
 });
