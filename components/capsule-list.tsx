@@ -1231,7 +1231,7 @@ function DecideRow({
 
       {/* b · el duelo, 50/50. El `gap-px` sobre el fondo ES la hairline que las
           separa (una sola línea, sin bordes que se dupliquen). */}
-      <div className="grid grid-cols-2 gap-px bg-line2">
+      <div className="grid grid-cols-2 gap-px bg-line">
         <DuelOp
           rotulo="la sugerida"
           nombre={item.nombre}
@@ -1331,7 +1331,11 @@ function DuelOp({
     <button type="button" onClick={onClick} className="flex flex-col bg-surface text-left">
       {/* Alto FIJO (no aspect-ratio): así las dos fotos y los dos pies caen en la
           misma línea base sin importar la proporción de cada archivo. */}
-      <span className="relative block h-[172px] w-full overflow-hidden bg-tile">
+      {/* `bg` y no `tile`: ver la nota larga en el duelo del viaje
+          (components/trip-result). Mismo defecto, mismas dos líneas — el
+          sobrante de `object-contain` dibujaba un rectángulo y se comía la
+          divisoria. */}
+      <span className="relative block h-[172px] w-full overflow-hidden bg-bg">
         {children}
         {/* Elegida = anillo de tinta sobre la foto. SIN relleno de fondo: ese
             gris es el del botón de elegir, y juntos se fundían en un bloque. */}

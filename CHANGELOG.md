@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.233.1] - 2026-08-13
+
+### Fixed — el duelo ya no tiene ese escalón raro entre las dos fotos
+
+Las dos prendas del duelo vienen con proporciones distintas (la sugerida es más
+alargada, la tuya suele ser cuadrada), así que a una siempre le sobra fondo. Ese
+sobrante estaba en un gris que no era el del papel de las fotos y dibujaba un
+rectángulo: lo que parecía la línea divisoria era en realidad el borde de la
+segunda foto. Ahora el fondo empata con el papel y la divisoria se ve de arriba
+abajo, en el viaje y en tus esenciales.
+
 ## [0.2.233.0] - 2026-08-13
 
 ### Added — el duelo del viaje se puede deshacer

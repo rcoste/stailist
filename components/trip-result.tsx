@@ -190,7 +190,7 @@ function DueloCard({
 
       {/* El duelo 50/50. El `gap-px` sobre el fondo ES la hairline que separa
           las dos mitades (una sola línea, sin bordes duplicados). */}
-      <div className="grid grid-cols-2 gap-px bg-line2">
+      <div className="grid grid-cols-2 gap-px bg-line">
         <DuelOpViaje
           rotulo="la sugerida"
           nombre={row.nombre}
@@ -266,7 +266,16 @@ function DuelOpViaje({
     <button type="button" onClick={onClick} className="flex flex-col bg-surface text-left">
       {/* Alto FIJO (no aspect-ratio): las dos fotos y los dos pies caen en la
           misma línea base sin importar la proporción de cada archivo. */}
-      <span className="relative block h-[172px] w-full overflow-hidden bg-tile">
+      {/* EL FONDO ES `bg` Y NO `tile`, y la diferencia se ve: los renders de
+          prenda vienen sobre papel #F5F3F0 y traen proporciones distintas —la
+          sugerida del catálogo es 3:4, la tuya del clóset suele ser 1:1— así
+          que con `object-contain` SIEMPRE sobra fondo en uno de los dos lados.
+          Con `tile` (#f7f6f4, a 9 puntos del papel) ese sobrante dibujaba un
+          rectángulo visible y la divisoria real se perdía dentro de él: lo que
+          se leía como línea era el borde de la segunda foto (Roberto,
+          2026-08-13). `bg` (#f4f3f1) está a 2 puntos: el sobrante desaparece,
+          las dos mitades quedan como un solo campo y la hairline se ve. */}
+      <span className="relative block h-[172px] w-full overflow-hidden bg-bg">
         {children}
         {elegida ? (
           <span
