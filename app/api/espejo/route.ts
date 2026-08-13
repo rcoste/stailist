@@ -91,9 +91,15 @@ export async function POST(request: NextRequest) {
   try {
     const r = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO);
     lectura = r.lectura;
-    // El recibo NO se espera: la persona está en la puerta y un insert de
-    // instrumentación no puede meterse en su camino.
-    void guardarRecibo(supabase, {
+    // SE ESPERA, aunque la tentación sea no hacerlo.
+    //
+    // La primera versión lo dejó como promesa suelta ("la persona está en la
+    // puerta"). Está mal en serverless: una vez que la ruta devuelve, la
+    // función se puede congelar y la promesa pendiente muere — o sea que el
+    // recibo se perdería justo en producción, que es donde importa, y en local
+    // funcionaría siempre. Un insert son decenas de milisegundos sobre una
+    // llamada que ya tardó seis mil.
+    await guardarRecibo(supabase, {
       userId: user.id,
       tarea: "espejo",
       modelo: MODELO_ESPEJO,
@@ -104,7 +110,7 @@ export async function POST(request: NextRequest) {
     // El fallo también se registra: un promedio que sólo cuenta los éxitos
     // miente hacia el lado optimista, y cuánto tarda en tronar es la mitad de
     // la respuesta a "¿cuánto tarda esto?".
-    void guardarFallo(supabase, {
+    await guardarFallo(supabase, {
       userId: user.id,
       tarea: "espejo",
       modelo: MODELO_ESPEJO,

@@ -47,7 +47,11 @@ const OCASION_LABEL: Record<string, string> = {
   trabajo: "Trabajo",
   especial: "Algo especial",
   rapido: "Gym o mandado",
-  espejo: "Me lo puse",
+  // "espejo" NO se traduce a "Me lo puse": los fit checks ya llevan ese sello
+  // como badge, y la fila pinta badge Y ocasión juntas — habría dicho "Me lo
+  // puse · Me lo puse" en las 21 lecturas anteriores a la vara, que son las
+  // únicas con `occasion = 'espejo'`. El fallback las deja en "Espejo", como
+  // hasta ahora.
 };
 export const ocasionLabel = (k: string) =>
   OCASION_LABEL[k] ?? k.charAt(0).toUpperCase() + k.slice(1);

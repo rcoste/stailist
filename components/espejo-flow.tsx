@@ -838,12 +838,6 @@ export function EspejoFlow({
 
   const cerrar = () => setState({ kind: "idle" });
 
-  // SALE ALGUIEN MÁS: se para y se ofrece el recorte, igual que el carrete.
-  //
-  // Con salida para seguir sin recortar, y a propósito: el conteo se equivoca a
-  // veces (un reflejo, un póster) y bloquear a alguien porque el modelo vio dos
-  // personas donde hay una sería peor que el problema. Lo que no puede pasar es
-  // que se lea la ropa de otro EN SILENCIO.
   if (state.kind === "preguntando") {
     // LA SUGERENCIA SE CALCULA AQUÍ, en el cliente, y no en el server: depende
     // de la hora LOCAL y el server corre en UTC — a las 6pm de CDMX ya cree que
@@ -916,6 +910,12 @@ export function EspejoFlow({
     );
   }
 
+  // SALE ALGUIEN MÁS: se para y se ofrece el recorte, igual que el carrete.
+  //
+  // Con salida para seguir sin recortar, y a propósito: el conteo se equivoca a
+  // veces (un reflejo, un póster) y bloquear a alguien porque el modelo vio dos
+  // personas donde hay una sería peor que el problema. Lo que no puede pasar es
+  // que se lea la ropa de otro EN SILENCIO.
   if (state.kind === "acompanada") {
     return (
       <Pantalla>
