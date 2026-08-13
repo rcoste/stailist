@@ -9,6 +9,7 @@ import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
 import { faltaKey, catalogStorageKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { tripDays, tripLogicLine, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
+import { fotosDeViajes } from "@/lib/destino-imagen-cache";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
@@ -146,6 +147,12 @@ export default async function ViajeDetallePage({
   const paradas = Array.isArray(trip.paradas) ? (trip.paradas as { lugar?: string }[]) : [];
   const nParadas = paradas.length || 1;
 
+  // La foto del destino para el encabezado (catálogo → generada → genérica).
+  const fotosMapa = await fotosDeViajes(supabase, [
+    { lugar: trip.lugar as string, ocasiones: (trip.ocasiones as string[] | null) ?? [] },
+  ]);
+  const fotoDestino = fotosMapa.get(trip.lugar as string) ?? "/destinos/ciudad.webp";
+
   // Título: una parada → su nombre; varias → la primera "y N más".
   const destino =
     nParadas > 1
@@ -240,7 +247,17 @@ export default async function ViajeDetallePage({
             <Icon name="chevron" size={15} rotate={180} />
             modo viaje
           </Link>
-          <h1 className="text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink lg:text-[32px]">
+          {/* La foto del destino como portada del viaje (B&N editorial: el
+              color es de tu ropa). Chica en móvil — el trabajo está abajo. */}
+          <div className="relative mt-1 overflow-hidden rounded-md border border-line bg-tile">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={fotoDestino}
+              alt=""
+              className="h-[110px] w-full object-cover lg:h-[150px]"
+            />
+          </div>
+          <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink lg:text-[32px]">
             tu maleta para{" "}
             <em className="display font-normal italic">{destino}</em>
           </h1>
