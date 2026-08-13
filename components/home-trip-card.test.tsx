@@ -43,13 +43,23 @@ const texto = (c: HTMLElement) =>
   (c.textContent ?? "").normalize("NFC").replace(/\u00a0/g, " ");
 const n = (s: string) => s.normalize("NFC");
 
+// LA FECHA ES RELATIVA A HOY, no fija. La card recalcula los días con el reloj
+// REAL del dispositivo (useEffect tras montar), así que un "2026-08-14" escrito
+// a mano era una bomba de tiempo: el test pasó dos días y al tercero "antes del
+// viernes" se volvió "consíguelos hoy — sales mañana" solo porque amaneció.
+// Cazado el 2026-08-13, exactamente así.
+const fmtLocal = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const EN_TRES_DIAS = new Date(Date.now() + 3 * 86_400_000);
+const DIA_SEMANA = EN_TRES_DIAS.toLocaleDateString("es-MX", { weekday: "long" });
+
 const base: HomeTrip = {
   lugar: "Cancún",
   dias: 3,
   href: "/viaje/lista",
   maletaLista: false,
   faltan: 0,
-  fechaInicio: "2026-08-14", // viernes
+  fechaInicio: fmtLocal(EN_TRES_DIAS),
   foto: "/destinos/playa.webp",
   ocasiones: ["playa"],
 };
@@ -87,8 +97,8 @@ describe("HomeTripCard", () => {
       />
     );
     expect(texto(container)).toContain(n("faltan 3 artículos"));
-    // El plazo sale de fechaInicio (viernes 14), no del día de hoy.
-    expect(texto(container)).toContain(n("consíguelos antes del viernes"));
+    // El plazo sale de fechaInicio (a 3 días de hoy), no del día de hoy.
+    expect(texto(container)).toContain(n(`consíguelos antes del ${DIA_SEMANA}`));
   });
 
   it("maleta cubierta: ya no pide nada, solo ofrece verla", () => {
