@@ -47,8 +47,13 @@ const MONO =
 // Heredado de gen-looks-genz: la luz fría es la firma del rebrand v3.
 const LUZ =
   "Cool neutral daylight from an open overcast sky or high open shade. NO golden hour, NO sunrise, NO sunset, NO warm light, NO lens flare.";
+// v2 (2026-08-13): HIGH-KEY. La v1 pedía "deep true blacks" y castigaba a los
+// sujetos de piedra oscura — la catedral de Guatemala salió como una mancha a
+// 140px y Roberto la rebotó ("se ve muy oscuro y no se entiende bien"). Kioto
+// se salvó solo porque el torii es claro. Elegido sobre 6 acabados generados
+// con el mismo sujeto, vistos al tamaño real de la card.
 const GRANO =
-  "High contrast with deep true blacks and clean bright whites, fine 35mm film grain, crisp and sharp, editorial magazine quality.";
+  "HIGH-KEY and airy: bright pale sky, luminous soft surfaces, gentle silver-gray midtones, NO heavy shadows, NO deep crushed blacks — the whole image reads light and open, like a slightly overexposed editorial film photo. Fine 35mm film grain, crisp and sharp, editorial magazine quality.";
 // Aire y formas: la card la enseña a ~140px, donde el detalle no se lee y la
 // silueta sí. Sin esto Gemini devuelve postal saturada de detalle.
 //
@@ -79,7 +84,9 @@ const DESTINOS = [
   ["ciudad", "a generic modern city skyline of tall towers seen across water or a wide avenue, clean geometric architecture, open sky above"],
 
   // México
-  ["cdmx", "the Angel of Independence victory column monument in Mexico City, photographed from below at a three-quarter angle against a wide open sky"],
+  // "wide open sky" + high-key devolvió al Ángel a su defecto v1 (aguja
+  // diminuta en 70% de cielo). Se pide la columna DE CERCA llenando el cuadro.
+  ["cdmx", "the Angel of Independence victory column monument in Mexico City photographed from close below, the tall column and golden angel statue filling the frame top to bottom, only a sliver of pale sky behind"],
   // Las agujas solas dejaban la foto medio vacía: se pide la fachada entera.
   ["guadalajara", "the full front stone facade of the Guadalajara Cathedral in Mexico seen from the plaza, its two tall pointed neo-gothic spires rising from it, the building filling most of the frame"],
   ["monterrey", "the distinctive saddle-shaped Cerro de la Silla mountain of Monterrey Mexico rising behind a foreground of clean modern city buildings"],
@@ -98,7 +105,10 @@ const DESTINOS = [
   // "A lo lejos" dejaba la torre chiquita sobre un primer plano negro que se
   // comía la foto. De cerca y desde abajo: la celosía ES la imagen.
   ["paris", "the Eiffel Tower in Paris seen from close below at a three-quarter angle, its intricate iron lattice structure filling the frame, open bright sky behind it"],
-  ["londres", "Tower Bridge in London seen across the River Thames, its two gothic towers and suspended walkways in full silhouette"],
+  // "in full silhouette" era de la v1 (negros profundos); contra la fórmula
+  // high-key producía un puente NEGRO en un cuadro claro — el único oscuro del
+  // set v2. La piedra clara del puente es la lectura correcta ahora.
+  ["londres", "Tower Bridge in London seen across the River Thames, its two pale stone gothic towers and suspended walkways in soft bright light"],
   ["roma", "the Colosseum in Rome seen from outside at a three-quarter angle, its tiers of stone arches against an open sky"],
   ["amsterdam", "a quiet canal in Amsterdam lined with narrow tall gabled houses, an arched bridge crossing in the middle distance"],
   ["tokio", "dense vertical Tokyo cityscape, stacked modern buildings and Tokyo Tower's lattice silhouette rising behind them"],

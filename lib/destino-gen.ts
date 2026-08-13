@@ -18,7 +18,7 @@ export const FORMULA_MONO =
 export const FORMULA_LUZ =
   "Cool neutral daylight from an open overcast sky or high open shade. NO golden hour, NO sunrise, NO sunset, NO warm light, NO lens flare.";
 export const FORMULA_GRANO =
-  "High contrast with deep true blacks and clean bright whites, fine 35mm film grain, crisp and sharp, editorial magazine quality.";
+  "HIGH-KEY and airy: bright pale sky, luminous soft surfaces, gentle silver-gray midtones, NO heavy shadows, NO deep crushed blacks — the whole image reads light and open, like a slightly overexposed editorial film photo. Fine 35mm film grain, crisp and sharp, editorial magazine quality.";
 export const FORMULA_COMPOSICION =
   "Calm minimal composition: the main subject is LARGE and dominant, filling most of the frame, with clean negative space around it — never a tiny distant subject lost in an empty sky. Strong graphic shapes reading as bold silhouettes. Quiet, architectural, unhurried.";
 export const FORMULA_LIMPIO =
