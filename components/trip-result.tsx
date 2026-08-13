@@ -9,6 +9,7 @@ import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { IdealTileInner, useIdealRender, type RenderArgs } from "@/components/ideal-tile";
 import {
   setTripPacked,
+  setTripPackedAll,
   setTripSubstitute,
   suggestTripSubstitutes,
   markTripFaltaOwned,
@@ -188,6 +189,16 @@ export function TripResult({
     setTripPacked(tripId, index, next);
   }
 
+  // "Empacar todo": palomear 15 prendas de una en una es tedio puro (queja de
+  // Roberto al pedirlo). Optimista + UN write (la action hace merge, así que
+  // correrlo con la mitad ya palomeada solo suma las que faltan).
+  function empacarTodo() {
+    const faltantes = empaca.filter((r) => !isPacked(r.index)).map((r) => r.index);
+    if (faltantes.length === 0) return;
+    for (const i of faltantes) setPackedFor(i, true);
+    setTripPackedAll(tripId, faltantes);
+  }
+
   // "Ya lo tengo" sobre un faltante: lo suma a tu clóset de verdad + le genera
   // imagen (server, inline) y lo marca cubierto en el viaje. Spinner mientras;
   // al terminar, refresca y la prenda se reubica en "Empaca esto" con su imagen.
@@ -249,7 +260,19 @@ export function TripResult({
               <span className="lg:hidden">Empaca esto</span>
               <span className="hidden lg:inline">Por empacar — palomea al meterla</span>
             </span>
-            <span className="tabular text-[11px] text-muted">{empaca.length}</span>
+            {/* "empacar todo" solo mientras quede algo por palomear: ya completo
+                sería un botón muerto ocupando el lugar del conteo. */}
+            {packedCount < empaca.length ? (
+              <button
+                type="button"
+                onClick={empacarTodo}
+                className="text-[12px] font-semibold text-ink underline underline-offset-2 hover:text-accent"
+              >
+                empacar todo
+              </button>
+            ) : (
+              <span className="tabular text-[11px] text-muted">{empaca.length}</span>
+            )}
           </div>
           {/* El porqué de cada prenda vive tras el tap (y ahí también se cambia) —
               sin esta línea nadie lo descubre. En desktop el porqué ya es visible. */}
