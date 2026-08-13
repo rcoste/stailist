@@ -1,5 +1,6 @@
-import { llamar, type Modelo } from "@/lib/proveedores";
+import { llamar, type Modelo, type Recibo } from "@/lib/proveedores";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
+import { LINEA_REGISTRO, type Registro } from "@/lib/registro";
 import type { Weather } from "@/lib/weather";
 
 // "¿ME VEO BIEN?" — LA AMIGA QUE TE MIRA ANTES DE SALIR.
@@ -56,7 +57,18 @@ export type LecturaEspejo = {
 // Roberto: "siento está muy barbero el feedback". La regla vieja lo pedía sin
 // querer ("siempre hay algo bien en un outfit" + "si el look está bien, dilo y
 // ya"), así que la corrección va en el prompt y no en el tono de la UI.
-export const ESPEJO_VERSION = "espejo-v3";
+//
+// v4: LA VARA. Hasta v3 contestaba "¿me veo bien?" sin saber a dónde vas, que
+// es la mitad escondida de la pregunta — nadie duda del color de su camisa,
+// duda de si va de más o de menos. Roberto: "¿cómo me vas a decir si estoy bien
+// vestido si tienes la mitad de la información o menos?". Ahora el registro
+// viaja (lib/registro) y el modelo mide contra algo.
+//
+// NO SE AÑADIÓ UN CAMPO AL SCHEMA, y es deliberado: la propiedad se acomoda
+// dentro de `ajuste`, que ya era "una cosa que puedas cambiar ahora". Añadir un
+// campo a un lector movió otras lecturas con z = 3.05 (medido el 2026-08-08
+// sobre 425 prendas) — el precio de un campo nuevo se paga en los otros cuatro.
+export const ESPEJO_VERSION = "espejo-v4";
 
 export const SCHEMA_ESPEJO = {
   type: "object",
@@ -81,6 +93,9 @@ LA PRUEBA DEL ELOGIO — la más importante de todas: si la misma frase servirí
 PROHIBIDAS por vacías: "te queda de lujo", "te queda increíble", "se te ve perfecto", "impecable", "te queda muy bien", "se ve genial", "buenísimo", "espectacular". No dicen nada: son la forma de sonar amable sin haber mirado.
 En su lugar, NOMBRA LA DECISIÓN concreta que funciona y POR QUÉ funciona: qué prenda, qué color o qué combinación, y qué le hace. "el blanco junto a tu cara te levanta la piel" dice algo comprobable; "te queda de lujo" no. Si de verdad no encuentras nada específico que elogiar, di lo que ves sin adornarlo — es mejor un "es un básico que funciona" seco que un superlativo hueco.
 
+LA VARA — CONTRA QUÉ MIDES: te voy a decir a dónde va. "¿Me veo bien?" siempre quiere decir "¿me veo bien PARA ESTO", y sin saberlo estarías opinando de una foto en el aire. Si lo que trae va bien para donde va, díselo con esas palabras: es exactamente la respuesta que vino a buscar y vale más que cualquier detalle de estilo. Si va de más o de menos para el plan, DILO — con cariño pero sin rodeos, porque es el único momento en que todavía puede cambiarlo, y callártelo para no incomodarla es dejarla salir mal.
+Si NO te digo a dónde va, no lo adivines: no menciones ocasiones, ni supongas que es un domingo, una oficina o una fiesta. Opina de lo que sí puedes ver.
+
 QUÉ CONTESTAS, cinco campos y ni uno más:
 
 (0) titulo: cómo se llama este look, en DOS O TRES PALABRAS. Es el nombre con el que ella lo va a reconocer meses después en su diario, no una descripción: "Militar y khaki", "Negro sobre negro", "Lino de domingo". Sin punto final y sin repetir la lista de prendas.
@@ -92,6 +107,8 @@ QUÉ CONTESTAS, cinco campos y ni uno más:
 (3) clima: SOLO si te doy datos del clima. Compara lo que trae con lo que va a hacer hoy y avisa de lo que la va a agarrar mal: que va a llover y sale sin nada encima, que va a hacer frío en la noche, que con ese abrigo se va a asar. Si lo que trae va bien con el día, dilo en tres palabras. Si no te doy clima, omite el campo entero.
 
 (4) ajuste: UNA sola cosa, concreta y que pueda hacer AHORA sin cambiarse: fájate la camisa, arremángate, cambia el zapato, quítate el cinturón, sube el dobladillo. Nada de "considera incorporar" ni de comprar nada.
+
+PRIMERO LA VARA, DESPUÉS EL DETALLE: si lo que trae no le sirve para donde va, ESE es el ajuste y no hay discusión — el dobladillo da igual si va a llegar en tenis a una boda. Y aquí sí puede implicar cambiarse una prenda, porque el problema no se arregla arremangándose: dile cuál y por cuál. Sólo cuando el look SÍ le funciona para el plan, el ajuste vuelve a ser el detalle fino de siempre.
 
 ESTE CAMPO NUNCA SE QUEDA VACÍO DE CONTENIDO. Si de verdad no hay nada que tocar, NO contestes solo "así como estás, sales": esa frase sola es un campo en blanco con buenos modales, y medido sobre las lecturas reales salía en 4 de cada 10. Cuando no haya ajuste, usa el hueco para algo que ella pueda usar: hasta dónde le sirve el look ("con esto también entras a una cena, no solo a la oficina"), qué NO tocarle y por qué ("no le metas más color, el interés ya lo pone la textura"), o cómo llevarlo mejor ("mangas dobladas una vez, no dos"). Es información, no un piropo más.
 
@@ -107,9 +124,21 @@ export function contextoEspejo(args: {
   /** Su lista de vetos, ya en etiquetas legibles. */
   vetos: string[];
   momento: "dia" | "noche" | null;
+  /** A dónde va. null = no lo contestó y NO se adivina (ver lib/registro). */
+  registro: Registro | null;
 }): string {
   const lineas: string[] = [];
   if (args.gender) lineas.push(`Es ${args.gender}.`);
+
+  // VA PRIMERO, antes de la colorimetría y del clima. Es lo que decide si el
+  // look sirve; lo demás afina un look que ya sirve. Y si no lo sabemos, se
+  // dice explícitamente: el silencio es lo que hacía que el modelo se inventara
+  // el domingo y el jardín.
+  lineas.push(
+    args.registro
+      ? LINEA_REGISTRO[args.registro]
+      : "NO SÉ a dónde va: no lo adivines, no menciones ninguna ocasión y no midas si va formal o informal de más."
+  );
 
   // La colorimetría se expresa IGUAL que en el motor —favorecen / apagan, y los
   // neutros fuera de la balanza— para que las dos voces del producto no se
@@ -139,11 +168,19 @@ export function contextoEspejo(args: {
   return lineas.join("\n");
 }
 
+/**
+ * Devuelve la lectura Y el recibo de la llamada.
+ *
+ * El recibo (ms, tokens, costo) ya lo calculaba `llamar`; esta función lo tiraba
+ * al devolver sólo la lectura. Se expone porque la ruta lo guarda en `ai_calls`:
+ * sin ese número, "¿cuánto tarda el fit check?" sólo se puede contestar a ojo —
+ * y esa pregunta ya bloqueó una decisión de diseño.
+ */
 export async function mirarEspejo(
   imagen: { mediaType: string; base64: string },
   contexto: string,
   modelo: Modelo
-): Promise<LecturaEspejo> {
+): Promise<{ lectura: LecturaEspejo; recibo: Recibo }> {
   const recibo = await llamar({
     modelo,
     maxTokens: 700,
@@ -158,5 +195,8 @@ export async function mirarEspejo(
   const titulo = (r.titulo ?? "").trim().slice(0, 40) || r.resumen.slice(0, 40);
   // `clima` es opcional en el schema: si el modelo lo omite (porque no le dimos
   // dato) llega undefined, y la UI necesita distinguirlo de un string vacío.
-  return { ...r, titulo, clima: r.clima?.trim() ? r.clima : null };
+  return {
+    lectura: { ...r, titulo, clima: r.clima?.trim() ? r.clima : null },
+    recibo,
+  };
 }

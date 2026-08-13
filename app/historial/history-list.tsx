@@ -40,6 +40,18 @@ const OCASION_LABEL: Record<string, string> = {
   evento: "Evento",
   viaje: "Aeropuerto",
   refrescar: "Refrescar",
+  // Los cuatro del fit check (lib/registro): un fit check guarda en `occasion`
+  // a dónde ibas. Sin estas cuatro, el fallback capitaliza la clave cruda y el
+  // diario dice "Rapido", sin acento.
+  normal: "Día normal",
+  trabajo: "Trabajo",
+  especial: "Algo especial",
+  rapido: "Gym o mandado",
+  // "espejo" NO se traduce a "Me lo puse": los fit checks ya llevan ese sello
+  // como badge, y la fila pinta badge Y ocasión juntas — habría dicho "Me lo
+  // puse · Me lo puse" en las 21 lecturas anteriores a la vara, que son las
+  // únicas con `occasion = 'espejo'`. El fallback las deja en "Espejo", como
+  // hasta ahora.
 };
 export const ocasionLabel = (k: string) =>
   OCASION_LABEL[k] ?? k.charAt(0).toUpperCase() + k.slice(1);

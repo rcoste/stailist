@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.228.0] - 2026-08-12
+
+### Added — el fit check ya sabe a dónde vas
+
+Antes le mandabas la foto y opinaba de tus colores, del clima y de cómo te
+queda. Todo cierto… pero sin saber si ibas a una comida, a la oficina o al gym.
+Y *"¿me veo bien?"* siempre quiere decir **"¿me veo bien para esto"**.
+
+Ahora, mientras la foto se sube, te pregunta una sola cosa: **¿a dónde vas?**
+Cuatro opciones, un tap. Si ya te armó un look hoy, llega marcada la que
+supone — pero no decide por ti.
+
+Con eso puede decirte lo que antes no podía: *"para algo especial este combo se
+queda corto"* o *"con esto entras bien a la oficina"*. La misma foto, dos varas
+distintas, dos respuestas distintas.
+
+Y si vas al gym o a un mandado, no te va a sugerir que te arregles.
+
+### Added — la app ya se acuerda de cuánto tarda
+
+Cada llamada al stylist deja su recibo: cuánto tardó, cuánto costó. No se
+guarda ni tu foto ni lo que dijo — sólo el número. Sirve para que las
+decisiones sobre esperas y costos dejen de tomarse a ojo.
+
 ## [0.2.227.0] - 2026-08-12
 
 ### Added — puedes fijar varias prendas, no sólo una

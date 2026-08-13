@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { MODELO_ESPEJO } from "@/lib/models";
 import { resolveWeather } from "@/lib/weather";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
+import { esRegistro } from "@/lib/registro";
+import { guardarFallo, guardarRecibo } from "@/lib/recibos";
 import {
   contextoEspejo,
   mirarEspejo,
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
     weather?: { temp_c?: number; condition?: string };
     paraguas?: boolean;
     momento?: string;
+    registro?: string;
   } = {};
   try {
     body = await request.json();
@@ -65,6 +68,11 @@ export async function POST(request: NextRequest) {
     resolveWeather(body),
   ]);
 
+  // A DÓNDE VA. Se valida contra el catálogo, y lo que no lo pase entra como
+  // null —que no es "sin dato" sino una instrucción explícita de NO adivinar la
+  // ocasión— en vez de viajar crudo al prompt.
+  const registro = esRegistro(body.registro) ? body.registro : null;
+
   const contexto = contextoEspejo({
     gender: (profile?.gender as "hombre" | "mujer" | null) ?? null,
     season: (profile?.palette_season as string | null) ?? null,
@@ -75,12 +83,40 @@ export async function POST(request: NextRequest) {
     paraguas: body.paraguas === true && !!weather,
     vetos: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
     momento: body.momento === "noche" ? "noche" : body.momento === "dia" ? "dia" : null,
+    registro,
   });
 
   let lectura: LecturaEspejo;
+  const t0 = Date.now();
   try {
-    lectura = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO);
+    const r = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO);
+    lectura = r.lectura;
+    // SE ESPERA, aunque la tentación sea no hacerlo.
+    //
+    // La primera versión lo dejó como promesa suelta ("la persona está en la
+    // puerta"). Está mal en serverless: una vez que la ruta devuelve, la
+    // función se puede congelar y la promesa pendiente muere — o sea que el
+    // recibo se perdería justo en producción, que es donde importa, y en local
+    // funcionaría siempre. Un insert son decenas de milisegundos sobre una
+    // llamada que ya tardó seis mil.
+    await guardarRecibo(supabase, {
+      userId: user.id,
+      tarea: "espejo",
+      modelo: MODELO_ESPEJO,
+      version: ESPEJO_VERSION,
+      recibo: r.recibo,
+    });
   } catch {
+    // El fallo también se registra: un promedio que sólo cuenta los éxitos
+    // miente hacia el lado optimista, y cuánto tarda en tronar es la mitad de
+    // la respuesta a "¿cuánto tarda esto?".
+    await guardarFallo(supabase, {
+      userId: user.id,
+      tarea: "espejo",
+      modelo: MODELO_ESPEJO,
+      version: ESPEJO_VERSION,
+      ms: Date.now() - t0,
+    });
     return NextResponse.json({ error: "no_pude_mirar" }, { status: 502 });
   }
 
@@ -94,7 +130,15 @@ export async function POST(request: NextRequest) {
         // Sin empatar contra el clóset todavía — a propósito (ver lib/espejo).
         item_ids: [],
         source: "espejo",
-        occasion: "espejo",
+        // EL REGISTRO SE GUARDA AQUÍ, en la columna que ya existe. Nada lee
+        // `occasion === 'espejo'` (lo que distingue un fit check es `source`),
+        // así que la columna estaba desperdiciada en una constante.
+        //
+        // Guardarlo no es cosmético: es la única forma de contestar después si
+        // la vara mejoró el consejo, y de saber a qué va la gente de verdad. Sin
+        // esto, la próxima discusión sobre el espejo vuelve a ser de opiniones.
+        // "espejo" queda de respaldo para un request sin registro válido.
+        occasion: registro ?? "espejo",
         // El TÍTULO, no el resumen: el resumen es un párrafo y el diario lo
         // pinta en la serif grande.
         title: lectura.titulo,

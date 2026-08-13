@@ -481,7 +481,14 @@ export function HoyClient({
         ) : null}
 
         {/* Flujos headless: los disparan los tiles de arriba. */}
-        <EspejoFlow userId={userId} headless ref={espejoRef} />
+        <EspejoFlow
+          userId={userId}
+          headless
+          ref={espejoRef}
+          ultimaOcasion={ultimoLook?.ocasion ?? null}
+          ultimoLookCreadoEn={ultimoLook?.creadoEn ?? null}
+          lastObjective={defaultObjective}
+        />
         <AddSheet userId={userId} variant="headless" ref={addRef} />
       </div>
     );
@@ -653,6 +660,9 @@ export function HoyClient({
       // look recién generado arranca sin voto (el key resetea el estado).
       votoInicial={state.outfit.id === lookInicial?.id ? votoInicial : null}
       onOtroLook={otroLook}
+      ultimaOcasion={ultimoLook?.ocasion ?? null}
+      ultimoLookCreadoEn={ultimoLook?.creadoEn ?? null}
+      lastObjective={defaultObjective}
     />
   );
 }
@@ -675,6 +685,9 @@ function ReadyView({
   fechaLabel,
   votoInicial = null,
   onOtroLook,
+  ultimaOcasion = null,
+  ultimoLookCreadoEn = null,
+  lastObjective = null,
 }: {
   outfit: HoyOutfit;
   userId: string;
@@ -684,6 +697,12 @@ function ReadyView({
   fechaLabel: string;
   votoInicial?: "up" | "down" | null;
   onOtroLook: () => void;
+  /** Para la pregunta del fit check: a dónde iba el último look y cuándo se
+   *  armó. Viajan crudos porque "¿es de hoy?" se decide con la hora LOCAL,
+   *  dentro del propio flujo (aquí el server ya habría contestado en UTC). */
+  ultimaOcasion?: string | null;
+  ultimoLookCreadoEn?: string | null;
+  lastObjective?: string | null;
 }) {
   const [skipOpen, setSkipOpen] = useState(false);
   // Hoja de razones: "skip" (desde "otro look") o "down" (desde el 👎). Misma
@@ -762,7 +781,14 @@ function ReadyView({
         />
       </div>
 
-      <EspejoFlow userId={userId} headless ref={espejoRef} />
+      <EspejoFlow
+          userId={userId}
+          headless
+          ref={espejoRef}
+          ultimaOcasion={ultimaOcasion}
+          ultimoLookCreadoEn={ultimoLookCreadoEn}
+          lastObjective={lastObjective}
+        />
 
       {skipOpen ? (
         <SkipReasons
