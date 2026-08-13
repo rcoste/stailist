@@ -200,6 +200,63 @@ export function tripDays(inicio: string, fin: string): number {
   return Math.max(1, Math.round((b - a) / 86_400_000) + 1);
 }
 
+// ---- Presentación de fechas y destino (compartida por lista, detalle y home) ----
+
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+/** "7 dic" — día sin cero a la izquierda + mes corto. */
+export function fmtDiaMes(d: string): string {
+  const [, m, day] = d.split("-");
+  return `${Number(day)} ${MESES_CORTOS[Number(m) - 1] ?? ""}`;
+}
+
+/** "7 – 13 dic" (mismo mes) o "28 nov – 3 dic" (cruza de mes). */
+export function rangoFechas(inicio: string, fin: string): string {
+  const [, mi, di] = inicio.split("-");
+  const [, mf, df] = fin.split("-");
+  if (mi === mf) return `${Number(di)} – ${Number(df)} ${MESES_CORTOS[Number(mf) - 1] ?? ""}`;
+  return `${fmtDiaMes(inicio)} – ${fmtDiaMes(fin)}`;
+}
+
+/** El nombre corto de un viaje para títulos ("Japón", "Nueva York").
+ *
+ *  Una parada → su nombre. Varias → el PAÍS compartido (el label del geocoder
+ *  es "ciudad, región, país", así que el país es la última coma); si las
+ *  paradas cruzan países o no traen país, cae a "Tokio y 2 más". El handoff
+ *  de la lista (viaje 2) pide que lo multi se diga con TEXTO, no con collage:
+ *  una imagen, un nombre corto, y la ruta en el renglón de fechas. */
+export function nombreDeViaje(lugar: string, paradas: Parada[] | null): string {
+  const ps = Array.isArray(paradas) ? paradas : [];
+  if (ps.length <= 1) return lugar;
+  const paises = ps.map((p) => {
+    const partes = (p.lugar ?? "").split(",").map((s) => s.trim());
+    return partes.length > 1 ? partes[partes.length - 1] : "";
+  });
+  const pais = paises[0];
+  if (pais && paises.every((c) => c === pais)) return pais;
+  const primera = (ps[0]?.lugar ?? lugar).split(",")[0].split(" · ")[0].trim();
+  return `${primera} y ${ps.length - 1} más`;
+}
+
+/** "Tokio → Kioto → Osaka" — la ruta multidestino para el renglón de fechas.
+ *  Con 0–1 paradas no hay ruta que contar: devuelve null. */
+export function rutaDeViaje(paradas: Parada[] | null): string | null {
+  const ps = Array.isArray(paradas) ? paradas : [];
+  if (ps.length <= 1) return null;
+  return ps.map((p) => (p.lugar ?? "").split(",")[0].trim()).join(" → ");
+}
+
+/** ¿La revisión de la maleta ya se cerró? — dueño ÚNICO de la llave
+ *  `confirmado` de overrides y de su grandfathering: los viajes de cuando
+ *  confirmar ERA generar cuentan por sus outfits. La escribe
+ *  confirmTripPlan (lib/trip-actions); cualquier lector pasa por aquí. */
+export function tripConfirmado(
+  overrides: Record<string, unknown> | null | undefined,
+  outfits: unknown
+): boolean {
+  return overrides?.confirmado === true || (outfits !== null && outfits !== undefined);
+}
+
 export function occasionLabels(values: Occasion[]): string {
   const set = new Set(values);
   return OCCASIONS.filter((o) => set.has(o.value))

@@ -207,7 +207,7 @@ function DueloCard({
         >
           {tuya.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={tuya.image} alt="" className="absolute inset-0 h-full w-full object-contain" />
+            <img src={tuya.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-contain" />
           ) : (
             <span className="absolute inset-0 flex items-center justify-center">
               <Icon name="gancho" size={22} className="text-ink/25" />
@@ -304,27 +304,25 @@ function DuelOpViaje({
   );
 }
 
-// LA MISMA PANTALLA, DOS FASES — el flujo del handoff de Roberto (2026-08-13):
+// LA MISMA PANTALLA, DOS FASES — desde el handoff viaje 2 (2026-08-13) son dos
+// PESTAÑAS del detalle, pero siguen siendo el mismo componente montado una vez:
 //
-//   1. EL PLAN (antes de confirmar): revisar qué propone la maleta, en SU
-//      orden — lo que te falta y deberías comprar arriba, lo que te sugiero
-//      del clóset y puedes cambiar en medio, lo que ya tienes hasta abajo — y
-//      cerrar con "arma mis looks". SIN cheques ni barra de empacado: todavía
-//      no estás empacando, estás decidiendo.
-//   2. LA MALETA (después): los cheques de empacar + "empacar todo" + el
-//      progreso. Aquí ya no se decide, se mete a la maleta.
+//   1. "PRENDAS" (la revisión): qué propone la maleta, en SU orden — lo que te
+//      falta y deberías comprar arriba, los duelos en medio, lo que ya tienes
+//      abajo. SIN cheques: todavía no estás empacando, estás decidiendo.
+//      Cierra con "✓ listo — a empacar" (confirma SIN generar looks).
+//   2. "EMPACAR" (el checklist): cheques + "empacar todo" + progreso. Cierra
+//      con "✦ generar mis looks" — la generación se movió aquí, al final.
 //
-// La primera versión del candado dejó la pantalla vieja (cheques desde el
-// primer segundo) y Roberto la rebotó con razón: "no se parece nada al flujo
-// del handoff". La frontera entre fases es la misma señal del candado de
-// looks: confirmado ≡ ya generaste alguna vez (trips.outfits !== null) — cero
-// columnas nuevas. Confirmar ES generar; al regresar de los looks, esta
-// pestaña ya amaneció en modo maleta.
+// Qué fase se pinta lo dice la PESTAÑA ACTIVA (context de TripTabs), no el
+// confirmado: tras confirmar puedes volver a "prendas" a cambiar decisiones.
+// "Confirmado" (revisión cerrada) vive en overrides ("confirmado": true) — la
+// derivación vieja outfits !== null quedó de grandfathering para los viajes de
+// cuando confirmar ERA generar.
 export function TripResult({
   tripId,
   rows,
   savedWishKeys = [],
-  confirmado = true,
   candidatasIniciales = {},
   descartadosIniciales = [],
   ganadosIniciales = [],
@@ -332,8 +330,6 @@ export function TripResult({
   tripId: string;
   rows: TripRow[];
   savedWishKeys?: string[];
-  /** false = fase de plan (revisar y confirmar); true = fase de empacar. */
-  confirmado?: boolean;
   /** Candidatas del duelo ya persistidas (overrides "cand:i"). */
   candidatasIniciales?: Record<number, Candidata>;
   /** Duelos ya cerrados con "prefiero la sugerida" ("candNo:i"). */
@@ -344,7 +340,10 @@ export function TripResult({
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
   // (botón muerto). Ver components/trip-gen-context.
-  const { onGenerateLooks, onViewLooks, looksExist, generating } = useTripGen();
+  const { onGenerateLooks, onViewLooks, looksExist, generating, tab, goTo, confirmado, onConfirm } =
+    useTripGen();
+  /** La fase visible: "empacar" solo en su pestaña; el resto pinta la revisión. */
+  const fase: "prendas" | "empacar" = tab === "empacar" ? "empacar" : "prendas";
   // El estado de empacado vive en el context (lo comparte el rail de desktop).
   const { packed, setPackedFor } = useTripPacked();
   const [zoom, setZoom] = useState<(PrendaZoomData & { index: number }) | null>(null);
@@ -607,16 +606,17 @@ export function TripResult({
     <div className="flex flex-col gap-4">
       <Toast message={toast} />
 
-      {/* ══ FASE 1: EL PLAN — el orden del handoff: lo que pide decisión
-          arriba, lo resuelto abajo. REACOMODO 2026-08-13 (segunda ronda de
-          Roberto): las secciones se parten por SIGNIFICADO, no por origen del
-          dato. "No lo tienes" = solo lo que de verdad no hay con qué cubrir
-          (comprar/wishlist). "Decide si te sirve" = TODO lo que compara la
-          sugerida contra algo tuyo — venga del match (parecido) o de la
-          búsqueda de candidatas (falta con candidata). La primera versión puso
-          el duelo dentro de "no lo tienes" porque el dato nace de una falta, y
-          Roberto lo rebotó: para quien mira, si hay comparación, es decisión. ══ */}
-      {!confirmado ? (
+      {/* ══ FASE 1: PRENDAS (la revisión) — el orden del handoff: lo que pide
+          decisión arriba, lo resuelto abajo. REACOMODO 2026-08-13 (segunda
+          ronda de Roberto): las secciones se parten por SIGNIFICADO, no por
+          origen del dato. "No lo tienes" = solo lo que de verdad no hay con
+          qué cubrir (comprar/wishlist). "Decide si te sirve" = TODO lo que
+          compara la sugerida contra algo tuyo — venga del match (parecido) o
+          de la búsqueda de candidatas (falta con candidata). La primera
+          versión puso el duelo dentro de "no lo tienes" porque el dato nace de
+          una falta, y Roberto lo rebotó: para quien mira, si hay comparación,
+          es decisión. ══ */}
+      {fase === "prendas" ? (
         <>
           {planCompras.length > 0 ? (
             <div className="flex flex-col gap-2.5">
@@ -665,7 +665,7 @@ export function TripResult({
                       <span className="relative block h-[52px] w-[40px] shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
                         {tuya.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={tuya.image} alt="" className="h-full w-full object-cover" />
+                          <img src={tuya.image} alt="" loading="lazy" className="h-full w-full object-cover" />
                         ) : (
                           <span className="flex h-full w-full items-center justify-center text-muted">
                             <Icon name="gancho" size={13} />
@@ -700,7 +700,7 @@ export function TripResult({
                           <span className="relative block h-[52px] w-[40px] overflow-hidden rounded-sm border border-line bg-tile">
                             {conRender(r).idealImage ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={conRender(r).idealImage!} alt="" className="h-full w-full object-cover" />
+                              <img src={conRender(r).idealImage!} alt="" loading="lazy" className="h-full w-full object-cover" />
                             ) : (
                               <span className="flex h-full w-full items-center justify-center text-muted">
                                 <Icon name="gancho" size={13} />
@@ -711,7 +711,7 @@ export function TripResult({
                           <span className="relative block h-[52px] w-[40px] overflow-hidden rounded-sm border border-line bg-tile">
                             {tuya.image ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={tuya.image} alt="" className="h-full w-full object-cover" />
+                              <img src={tuya.image} alt="" loading="lazy" className="h-full w-full object-cover" />
                             ) : (
                               <span className="flex h-full w-full items-center justify-center text-muted">
                                 <Icon name="gancho" size={13} />
@@ -827,10 +827,10 @@ export function TripResult({
         </>
       ) : null}
 
-      {/* ══ FASE 2: LA MALETA — cheques, empacar todo y progreso. ══ */}
+      {/* ══ FASE 2: EMPACAR — cheques, empacar todo y progreso. ══ */}
 
       {/* Progreso de empacado (móvil — en desktop vive en el rail izquierdo) */}
-      {confirmado ? (
+      {fase === "empacar" ? (
       <div className="flex items-center gap-2.5 lg:hidden">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
           <div
@@ -844,7 +844,7 @@ export function TripResult({
       </div>
       ) : null}
 
-      {confirmado && empaca.length > 0 ? (
+      {fase === "empacar" && empaca.length > 0 ? (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
@@ -999,7 +999,7 @@ export function TripResult({
         </div>
       ) : null}
 
-      {confirmado && falta.length > 0 ? (
+      {fase === "empacar" && falta.length > 0 ? (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
@@ -1023,8 +1023,21 @@ export function TripResult({
         </div>
       ) : null}
 
-      {/* Cierre del paso "maleta": de aquí se pasa a generar los looks. */}
-      {empaca.length > 0 ? (
+      {/* Cierre de cada fase (flujo del handoff viaje 2): la revisión cierra
+          con "listo — a empacar" (confirma SIN generar — la generación ya no
+          es la confirmación); empacar cierra con "generar mis looks". */}
+      {fase === "prendas" && rows.length > 0 ? (
+        <div className="flex flex-col gap-1.5 pt-1">
+          <button
+            type="button"
+            onClick={() => (confirmado ? goTo("empacar") : onConfirm())}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          >
+            <Icon name="check" size={16} strokeWidth={2.2} /> listo — a empacar
+          </button>
+        </div>
+      ) : null}
+      {fase === "empacar" && empaca.length > 0 ? (
         <div className="flex flex-col gap-1.5 pt-1">
           {looksExist ? (
             <button
@@ -1034,6 +1047,18 @@ export function TripResult({
             >
               ver mis looks
             </button>
+          ) : !confirmado ? (
+            // EL CANDADO también aquí: la pestaña es libre de visitar, pero la
+            // PRIMERA generación (dinero + ~30s) solo vive detrás de la
+            // revisión. Sin este gate, dos taps (empacar → generar) la
+            // brincaban entera (red team del ship).
+            <button
+              type="button"
+              onClick={() => goTo("prendas")}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
+            >
+              revisar prendas primero →
+            </button>
           ) : (
             <button
               type="button"
@@ -1041,13 +1066,10 @@ export function TripResult({
               disabled={generating}
               className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
             >
-              {/* En fase de plan el botón ES la confirmación del handoff:
-                  "me late" = quedó el plan, arma los looks y pasa a empacar. */}
-              <Icon name="destello" size={18} />{" "}
-              {confirmado ? "generar mis looks" : "me late — arma mis looks"}
+              <Icon name="destello" size={18} /> generar mis looks
             </button>
           )}
-          {!looksExist && falta.length > 0 ? (
+          {!looksExist && confirmado && falta.length > 0 ? (
             <p className="text-center text-[11.5px] text-muted">
               Los armo con lo que ya empacas — te {falta.length === 1 ? "falta" : "faltan"}{" "}
               {falta.length} {falta.length === 1 ? "prenda" : "prendas"}.
@@ -1062,7 +1084,7 @@ export function TripResult({
         action={
           zoom ? (
             <div className="flex flex-col gap-2">
-              {confirmado ? (
+              {fase === "empacar" ? (
               <button
                 type="button"
                 onClick={() => {

@@ -10,6 +10,9 @@ import { createContext, useContext } from "react";
 // isValidElement, así que cloneElement los ignoraba y NINGÚN callback se inyectaba
 // (botones muertos: "Rehacer", "Generar más", "Generar mis looks"). El context sí
 // fluye por posición en el árbol, aunque el elemento venga serializado del server.
+/** Las 4 pestañas del detalle (handoff viaje 2): el plan · prendas · empacar · looks. */
+export type TripTab = "plan" | "prendas" | "empacar" | "looks";
+
 export type TripGen = {
   generating: boolean;
   appending: boolean; // "generar más" en curso: conserva los looks + indicador inline
@@ -17,10 +20,19 @@ export type TripGen = {
   genNote: string | null;
   onGenerate: () => void; // generar/rehacer (reemplaza el set)
   onGenerateMore: () => void; // generar más (acumula combinaciones nuevas)
-  onGenerateLooks: () => void; // CTA maleta: genera + cambia a la pestaña de looks
-  onViewLooks: () => void; // CTA maleta: solo ir a los looks (ya existen)
-  onViewMaleta: () => void; // candado de looks: volver a la maleta, donde vive el botón
+  onGenerateLooks: () => void; // CTA de empacar: genera + cambia a la pestaña de looks
+  onViewLooks: () => void; // solo ir a los looks (ya existen)
+  onViewMaleta: () => void; // candado de looks: volver a prendas, donde se revisa
   looksExist: boolean;
+  /** La pestaña activa: TripResult la lee para saber qué fase pintar (prendas
+   *  = revisar, empacar = checklist) sin desmontarse entre las dos. */
+  tab: TripTab;
+  goTo: (tab: TripTab) => void;
+  /** true = la revisión ya se cerró ("listo — a empacar", o looks generados
+   *  en viajes de antes del flujo nuevo). */
+  confirmado: boolean;
+  /** "✓ listo — a empacar": marca confirmado (optimista + server) y brinca a empacar. */
+  onConfirm: () => void;
 };
 
 const noop = () => {};
@@ -35,6 +47,10 @@ const DEFAULT: TripGen = {
   onViewLooks: noop,
   onViewMaleta: noop,
   looksExist: false,
+  tab: "plan",
+  goTo: noop,
+  confirmado: false,
+  onConfirm: noop,
 };
 
 export const TripGenContext = createContext<TripGen>(DEFAULT);

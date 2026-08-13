@@ -3,19 +3,26 @@ import { AppShell } from "@/components/app-shell";
 import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { tripDays, luggageSummary, type Bolsas, type Luggage, type TripWeather } from "@/lib/trip";
+import {
+  tripDays,
+  luggageSummary,
+  fmtDiaMes,
+  rangoFechas,
+  nombreDeViaje,
+  rutaDeViaje,
+  type Bolsas,
+  type Luggage,
+  type Parada,
+  type TripWeather,
+} from "@/lib/trip";
 import { capsuleRows, type CapsuleMatch, type CapsuleOverrides, type CapsuleTarget } from "@/lib/capsule";
 import { fotosDeViajes } from "@/lib/destino-imagen-cache";
 
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const MESES_FULL = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
-function fmt(d: string): string {
-  const [, m, day] = d.split("-");
-  return `${Number(day)} ${MESES[Number(m) - 1] ?? ""}`;
-}
+const fmt = fmtDiaMes;
 
 // Eyebrow del countdown (cards de desktop): cuánto falta para salir.
 function countdown(hoy: string, inicio: string): string {
@@ -206,35 +213,54 @@ export default async function TusViajesPage() {
 
         {rows.length > 0 ? (
           <>
-            {/* Móvil: la lista compacta de siempre, intacta */}
-            <div className="flex flex-col gap-2.5 lg:hidden">
+            {/* Móvil (handoff viaje 2): fila grande — la foto del destino a
+                sangre (96px de ancho, toda la altura) y el destino en serif
+                itálica, único nombre propio de la fila. Lo multidestino se
+                dice con TEXTO: eyebrow "· 3 paradas" y la ruta en el renglón
+                de fechas — nunca collage. */}
+            <div className="flex flex-col gap-3 lg:hidden">
               {rows.map((t) => {
-                const paradas = Array.isArray(t.paradas) ? (t.paradas as unknown[]) : [];
+                const paradas = Array.isArray(t.paradas) ? (t.paradas as Parada[]) : [];
+                const nParadas = paradas.length || 1;
+                // El eyebrow y el estado vienen de derive() — la MISMA regla
+                // que las cards de desktop, no una copia que derive aparte.
+                const d = derive(t, hoy);
+                const ruta = rutaDeViaje(paradas);
                 return (
                   <Link
                     key={t.id}
                     href={`/viaje/${t.id}`}
-                    className="flex items-center gap-3 rounded-md border border-line bg-surface p-[13px] transition-colors hover:border-accent"
+                    className={`flex min-h-[82px] items-stretch overflow-hidden rounded-md border border-line bg-surface transition-colors hover:border-accent ${
+                      d.pasado ? "opacity-65 hover:opacity-100" : ""
+                    }`}
                   >
-                    {/* La foto del destino en vez del maletín genérico: es lo
-                        que distingue un viaje de otro de un vistazo. */}
-                    <span className="relative block h-[52px] w-[52px] shrink-0 overflow-hidden rounded-sm bg-tile">
+                    <span className="relative block w-24 shrink-0 bg-tile">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={fotos.get(t.lugar) ?? "/destinos/ciudad.webp"}
                         alt=""
-                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover"
                       />
                     </span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[13.5px] font-semibold text-ink">{t.lugar}</span>
-                      <span className="tabular text-[11.5px] text-muted">
-                        {fmt(t.fecha_inicio)} – {fmt(t.fecha_fin)} ·{" "}
-                        {tripDays(t.fecha_inicio, t.fecha_fin)} días
-                        {paradas.length > 1 ? ` · ${paradas.length} paradas` : ""}
+                    <span className="flex min-w-0 flex-1 flex-col justify-center px-3.5 py-3">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-faint">
+                        {d.eyebrow}
+                        {nParadas > 1 ? ` · ${nParadas} paradas` : ""}
+                      </span>
+                      <span className="display mt-0.5 truncate text-[22px] italic leading-[1.1] text-ink">
+                        {nombreDeViaje(t.lugar, paradas)}
+                      </span>
+                      <span className="tabular mt-[3px] truncate text-[12.5px] text-muted">
+                        {rangoFechas(t.fecha_inicio, t.fecha_fin)} · {d.dias} días
+                        {ruta ? ` · ${ruta}` : ""}
                       </span>
                     </span>
-                    <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
+                    <Icon
+                      name="chevron"
+                      size={16}
+                      className="mr-3 shrink-0 self-center text-muted"
+                    />
                   </Link>
                 );
               })}

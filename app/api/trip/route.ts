@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { geocodePlace, getWeatherForDates } from "@/lib/weather";
 import { generateTripCapsuleTarget, type TripAncla } from "@/lib/engine/trip-capsule";
 import { matchCapsule } from "@/lib/engine/capsule-match";
 import { loadClosetLite } from "@/lib/capsule-data";
@@ -22,8 +21,15 @@ import {
   type Occasion,
   type Luggage,
   type Parada,
-  type TripWeather,
 } from "@/lib/trip";
+import {
+  TRIP_DATE_RE,
+  MAX_TRIP_DAYS,
+  normalizarRuta,
+  resolverParadas,
+  aggregateWeather,
+  lugarDisplay,
+} from "@/lib/trip-ruta";
 import type { Season } from "@/lib/colorimetria";
 
 export const maxDuration = 60;
@@ -48,31 +54,8 @@ function parseBolsas(raw: unknown): Bolsas | null {
   }
   return any ? out : null;
 }
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_PARADAS = 6;
-
-// Agrega los climas de las paradas a un resumen único (para el header del viaje):
-// temperatura promedio; precipitación SOLO si domina (más de la mitad de las
-// ciudades), distinguiendo nieve de lluvia; estimado si alguna parada lo es.
-function aggregateWeather(paradas: Parada[]): TripWeather | null {
-  const withW = paradas.filter((p) => p.weather);
-  if (withW.length === 0) return null;
-  const avg = Math.round(
-    withW.reduce((s, p) => s + (p.weather as TripWeather).temp_c, 0) / withW.length
-  );
-  const conds = withW.map((p) => (p.weather as TripWeather).condition);
-  const snowN = conds.filter((c) => /nieve/.test(c)).length;
-  const rainN = conds.filter((c) => /lluvia|tormenta|chubasco|llovizna/.test(c)).length;
-  const estimated = withW.some((p) => (p.weather as TripWeather).estimated);
-  // Solo precipitación dominante (mayoría de ciudades) marca el viaje.
-  const condition =
-    snowN + rainN > withW.length / 2 ? (snowN >= rainN ? "nieve" : "lluvia") : conds[0];
-  return {
-    temp_c: avg,
-    condition,
-    ...(estimated ? { estimated: true } : {}),
-  };
-}
+// La validación de fechas y la resolución de paradas (geocode + clima) viven
+// en lib/trip-ruta, compartidas con PATCH /api/trip/[id]/ruta.
 
 // Modo viaje: arma la cápsula del viaje y la cruza con el clóset. Streaming con
 // fases (la generación tarda). Guarda un trip y devuelve su id.
@@ -94,6 +77,7 @@ export async function POST(request: NextRequest) {
     bolsas?: Record<string, unknown>; // multi-maleta: cantidades por tipo
     anclas?: unknown; // ids de prendas que quiere llevar sí o sí (máx 4)
     contexto?: string; // texto libre: qué va a hacer en el viaje (afina cápsula + looks)
+    editId?: string; // rehacer la maleta de un viaje EXISTENTE (editar ruta y fechas)
   } = {};
   try {
     body = await request.json();
@@ -101,37 +85,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  // Multidestino: acepta `lugares[]` o cae al `lugar` único (compat). Normaliza,
-  // quita vacíos/duplicados y limita a MAX_PARADAS.
-  const rawLugares = Array.isArray(body.lugares)
-    ? body.lugares
-    : body.lugar
-      ? [body.lugar]
-      : [];
-  const lugaresNombres = Array.from(
-    new Set(rawLugares.map((l) => String(l ?? "").trim()).filter((l) => l.length > 1))
-  ).slice(0, MAX_PARADAS);
+  // Multidestino: acepta `lugares[]` o cae al `lugar` único (compat). La
+  // normalización va EN PARES con los segmentos (ver lib/trip-ruta).
+  const { lugares: lugaresNombres, segNoches } = normalizarRuta(
+    Array.isArray(body.lugares) ? body.lugares : body.lugar ? [body.lugar] : [],
+    body.segmentos
+  );
 
   const fechaInicio = body.fechaInicio ?? "";
   const fechaFin = body.fechaFin ?? "";
   if (
     lugaresNombres.length === 0 ||
-    !DATE_RE.test(fechaInicio) ||
-    !DATE_RE.test(fechaFin) ||
+    !TRIP_DATE_RE.test(fechaInicio) ||
+    !TRIP_DATE_RE.test(fechaFin) ||
     fechaFin < fechaInicio
   ) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
   const days = tripDays(fechaInicio, fechaFin);
-  if (days > 30) return NextResponse.json({ error: "viaje_largo" }, { status: 400 });
+  if (days > MAX_TRIP_DAYS) return NextResponse.json({ error: "viaje_largo" }, { status: 400 });
 
-  // Noches por parada (modo "por lugar"): empareja por orden con `lugares`.
-  const segNoches =
-    Array.isArray(body.segmentos) && body.segmentos.length === lugaresNombres.length
-      ? body.segmentos.map((s) =>
-          Number.isInteger(s?.noches) && (s!.noches as number) > 0 ? (s!.noches as number) : null
-        )
-      : null;
+  // Rehacer un viaje existente ("editar ruta y fechas" → "rehaz mi maleta"):
+  // misma generación, pero el resultado ACTUALIZA su fila — el id, los looks
+  // guardados en el diario y el link no cambian. La propiedad se verifica aquí,
+  // antes de pagar geocoding + IA.
+  const editId = typeof body.editId === "string" && body.editId.length > 0 ? body.editId : null;
+  // Las paradas ya resueltas del viaje que se rehace: los nombres sin cambios
+  // reusan sus coordenadas (igual que el PATCH) — menos round-trips al
+  // geocoder y cero riesgo de perder coords si un label no re-resuelve.
+  let previas: Parada[] = [];
+  if (editId) {
+    const { data: existing } = await supabase
+      .from("trips")
+      .select("id, paradas")
+      .eq("id", editId)
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!existing) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    previas = Array.isArray(existing.paradas) ? (existing.paradas as Parada[]) : [];
+  }
 
   const ocasiones = (body.ocasiones ?? []).filter((o): o is Occasion =>
     VALID_OCC.has(o as Occasion)
@@ -170,25 +163,15 @@ export async function POST(request: NextRequest) {
               ? `ubicando tus ${lugaresNombres.length} paradas…`
               : "ubicando tu destino…",
         });
-        // Geocodifica cada parada y resuelve su clima en el rango del viaje (en
-        // paralelo). Una parada que no geocodifica conserva su nombre, sin clima.
-        const paradas: Parada[] = await Promise.all(
-          lugaresNombres.map(async (nombre, i) => {
-            const geo = await geocodePlace(nombre);
-            const weather = geo
-              ? await getWeatherForDates(geo.lat, geo.lon, fechaInicio, fechaFin)
-              : null;
-            return {
-              lugar: geo?.label ?? nombre,
-              lat: geo?.lat ?? null,
-              lon: geo?.lon ?? null,
-              ...(segNoches && segNoches[i] ? { noches: segNoches[i] as number } : {}),
-              weather,
-            };
-          })
+        const paradas: Parada[] = await resolverParadas(
+          lugaresNombres,
+          segNoches,
+          fechaInicio,
+          fechaFin,
+          previas
         );
         const aggWeather = aggregateWeather(paradas);
-        const lugarDisplay = paradas.map((p) => p.lugar.split(",")[0].trim()).join(" · ");
+        const lugar = lugarDisplay(paradas);
 
         // Perfil y feedback en paralelo (ambos solo dependen de user.id): evita
         // sumar round-trips en serie a una ruta que ya corre contra los 60s.
@@ -350,24 +333,69 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        const fila = {
+          lugar,
+          lat: paradas[0]?.lat ?? null,
+          lon: paradas[0]?.lon ?? null,
+          paradas,
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin,
+          ocasiones,
+          maleta,
+          bolsas,
+          contexto,
+          weather: aggWeather,
+          capsule_target: target,
+          capsule_match: match,
+        };
+
+        if (editId) {
+          // Rehacer: la maleta nueva reemplaza TODO lo derivado de la vieja —
+          // decisiones de duelo, cheques de empacado y looks pertenecen a una
+          // cápsula que ya no existe. La fila conserva su id.
+          //
+          // PRIMERO se desvinculan las filas de `outfits` del viaje (corazones,
+          // try-ons): se enlazan a los looks POR ÍNDICE (trip_look_index) y con
+          // la maleta rehecha el look nuevo en el índice N heredaría el corazón
+          // de un look de otra cápsula (red team del ship). El orden importa:
+          // si esto falla, se aborta con el viaje viejo intacto — al revés, un
+          // fallo del unlink dejaba el sangrado que dice prevenir. El look
+          // favorito sobrevive en el diario con su propio snapshot.
+          const { error: unlinkError } = await supabase
+            .from("outfits")
+            .update({ trip_look_index: null })
+            .eq("trip_id", editId)
+            .eq("user_id", user.id)
+            .eq("source", "viaje");
+          if (unlinkError) {
+            send({ error: "guardar" });
+            controller.close();
+            return;
+          }
+          const { error } = await supabase
+            .from("trips")
+            .update({
+              ...fila,
+              overrides: {},
+              empacado: {},
+              outfits: null,
+              outfits_stale: false,
+            })
+            .eq("id", editId)
+            .eq("user_id", user.id);
+          if (error) {
+            send({ error: "guardar" });
+            controller.close();
+            return;
+          }
+          send({ done: true, tripId: editId });
+          controller.close();
+          return;
+        }
+
         const { data: inserted, error } = await supabase
           .from("trips")
-          .insert({
-            user_id: user.id,
-            lugar: lugarDisplay,
-            lat: paradas[0]?.lat ?? null,
-            lon: paradas[0]?.lon ?? null,
-            paradas,
-            fecha_inicio: fechaInicio,
-            fecha_fin: fechaFin,
-            ocasiones,
-            maleta,
-            bolsas,
-            contexto,
-            weather: aggWeather,
-            capsule_target: target,
-            capsule_match: match,
-          })
+          .insert({ user_id: user.id, ...fila })
           .select("id")
           .single();
 

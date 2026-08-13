@@ -2,6 +2,47 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.235.0] - 2026-08-13
+
+### Changed — tu viaje se organiza en 4 pestañas, con su portada
+
+- **El detalle de la maleta ahora va por pasos claros**: el plan · prendas ·
+  empacar · looks. "El plan" te recibe con el razonamiento del estilista y lo
+  que vas a hacer; "prendas" es donde decides; "empacar" es puro checklist; y
+  los looks se generan al final, cuando la maleta ya es la buena. Si vuelves
+  con la maleta confirmada, aterrizas directo en empacar.
+- **La portada con la foto de tu viaje** vive en "el plan" — título y fechas
+  sobre la imagen. Al pasar a las pestañas de trabajo se recoge sola con una
+  transición suave, para dejarte el espacio donde lo necesitas.
+- **"✓ listo — a empacar" cierra la revisión sin gastar en looks**: antes
+  confirmar era generar; ahora generas cuando tú digas, desde empacar o desde
+  la pestaña de looks.
+- **La lista de "tus viajes" se ve como viajes**: foto grande del destino, el
+  nombre en serif y cuándo sales. Un viaje multi-ciudad dice su ruta
+  ("Tokio → Kioto") y se nombra por el país ("Japón").
+
+### Added — editar ruta y fechas, sin perder tu maleta
+
+- En el menú "···" del viaje ahora está **"editar ruta y fechas"**: cambia
+  paradas, noches o la salida, y tú decides si la maleta se rehace con la ruta
+  nueva o se queda como está (los looks se marcan para regenerar si cambiaron
+  las fechas). Borrar el viaje también vive ahí.
+- Las rutas redondas ya valen: **"Tokio → Kioto → Tokio"** conserva sus tres
+  paradas con sus noches (antes la vuelta se perdía en silencio).
+
+### Fixed — pulido del pase de revisión
+
+- Rehacer la maleta ya no deja corazones ni try-ons de looks viejos pegados a
+  los looks nuevos.
+- Editar la ruta ya no vuelve a buscar las ciudades que no cambiaste — y un
+  parpadeo del servicio de clima ya no te borra el clima que sí tenías.
+- Los viajes de antes del multi-equipaje conservan su maleta documentada al
+  rehacerse (ya no se degradaban a carry-on).
+- Si tu viaje pasa de 30 días, el aviso ahora te lo dice claro en vez de
+  pedirte reintentar.
+- Botones más fáciles de atinar en el header del viaje, y las fotos de listas
+  largas cargan solo cuando te acercas a ellas.
+
 ## [0.2.234.0] - 2026-08-13
 
 ### Changed — tus esenciales heredan lo que arreglamos en viaje

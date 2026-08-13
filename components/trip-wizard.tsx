@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Icon, type IconName } from "@/components/icon";
+import { Icon } from "@/components/icon";
+import { ACT_ICON, LUG_ICON } from "@/components/trip-icons";
 import { Spinner } from "@/components/spinner";
 import type { ClosetPick } from "@/components/weather-picker";
 import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
@@ -27,20 +28,6 @@ import {
 // + noches; la llegada se encadena (salida de la anterior). El total (días ·
 // noches · ruta) y fechaFin se DERIVAN. Al terminar: POST /api/trip (lugares +
 // segmentos) → stream con fases → /viaje/[id]. No cambia el motor ni el contrato.
-
-const ACT_ICON: Record<Occasion, IconName> = {
-  playa: "playa",
-  ciudad: "ciudad",
-  trabajo: "maletin",
-  noche: "luna",
-  aire: "hoja",
-  traslado: "avion",
-};
-const LUG_ICON: Record<Luggage, IconName> = {
-  mochila: "mochila",
-  mano: "maletin",
-  documentada: "maleta",
-};
 
 type Parada = { lugar: string; noches: number };
 
@@ -139,18 +126,47 @@ function usePlaceSuggestions(draft: string): Sugerencia[] {
 // Con más, ya no empaca el stylist — empacas tú y el motor decora.
 const MAX_ANCLAS = 4;
 
-export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
+// "Editar ruta y fechas" (menú "···" del detalle, handoff viaje 2): el wizard
+// abre PRE-LLENADO y solo con el paso 1. Al guardar se ofrece el contextual
+// del handoff — rehacer la maleta con la ruta nueva (POST con editId, misma
+// fila) o solo guardar ruta/fechas (PATCH, la maleta se respeta).
+export type TripEditInit = {
+  tripId: string;
+  paradas: { lugar: string; noches: number }[];
+  inicio: string;
+  ocasiones: Occasion[];
+  bolsas: Bolsas | null;
+  contexto: string | null;
+};
+
+export function TripWizard({
+  closet = [],
+  edit = null,
+}: {
+  closet?: ClosetPick[];
+  edit?: TripEditInit | null;
+}) {
   const router = useRouter();
+  const isEdit = edit !== null;
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [paradas, setParadas] = useState<Parada[]>([]);
-  const [inicio, setInicio] = useState("");
-  const [ocasiones, setOcasiones] = useState<Set<Occasion>>(new Set());
+  const [paradas, setParadas] = useState<Parada[]>(edit?.paradas ?? []);
+  const [inicio, setInicio] = useState(edit?.inicio ?? "");
+  const [ocasiones, setOcasiones] = useState<Set<Occasion>>(
+    () => new Set(edit?.ocasiones ?? [])
+  );
+  // La decisión "¿rehago la maleta o solo guardo la ruta?" tras guardar en modo
+  // edición. patchBusy/patchError = el camino de "solo guardar" (PATCH).
+  const [choiceOpen, setChoiceOpen] = useState(false);
+  const [patchBusy, setPatchBusy] = useState(false);
+  // null = sin error; el string es el mensaje a mostrar (el 400 permanente de
+  // "viaje_largo" NO lleva el copy de "reintenta" — reintentar nunca serviría).
+  const [patchError, setPatchError] = useState<string | null>(null);
   // Anclas: prendas del clóset que la persona QUIERE llevar sí o sí (opcional).
   const [anclas, setAnclas] = useState<ClosetPick[]>([]);
   const [anclasOpen, setAnclasOpen] = useState(false);
   // Texto libre "¿algo especial de este viaje?" (mismo espíritu que el "¿algo en
   // mente?" de Hoy). Afina la cápsula y los looks a lo que la persona va a hacer.
-  const [contexto, setContexto] = useState("");
+  const [contexto, setContexto] = useState(edit?.contexto ?? "");
   // Itinerario por screenshot: la visión PRE-LLENA la ruta; el wizard es la
   // pantalla de confirmación (nada se genera hasta que la persona sigue).
   const itinRef = useRef<HTMLInputElement>(null);
@@ -196,7 +212,7 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
     }
   }
   // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
-  const [bolsas, setBolsas] = useState<Bolsas>({ mano: 1 });
+  const [bolsas, setBolsas] = useState<Bolsas>(edit?.bolsas ?? { mano: 1 });
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
   // sheet: índice de la parada a capturar (== paradas.length = nueva).
   const [sheet, setSheet] = useState<number | null>(null);
@@ -223,11 +239,53 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
         body: JSON.stringify({ lugar: paradas[0].lugar }),
       }).catch(() => {});
     }
+    // Modo edición: solo existe el paso 1 — "guardar" abre la decisión
+    // (¿rehacer la maleta o solo la ruta?) en vez de avanzar de paso.
+    if (isEdit) {
+      setPatchError(null);
+      setChoiceOpen(true);
+      return;
+    }
     if (step < 3) setStep((s) => (s + 1) as 1 | 2 | 3);
   }
   function back() {
-    if (step === 1) router.push("/viaje/lista");
+    if (step === 1) router.push(isEdit ? `/viaje/${edit.tripId}` : "/viaje/lista");
     else setStep((s) => (s - 1) as 1 | 2 | 3);
+  }
+
+  // "Solo guarda ruta y fechas": PATCH ligero — la maleta y tus decisiones se
+  // respetan; los looks (si hay) quedan marcados como viejos en el server.
+  async function guardarSoloRuta() {
+    if (!edit) return;
+    setPatchBusy(true);
+    setPatchError(null);
+    try {
+      const res = await fetch(`/api/trip/${edit.tripId}/ruta`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lugares,
+          segmentos: paradas.map((p) => ({ lugar: p.lugar, noches: p.noches })),
+          fechaInicio: inicio,
+          fechaFin: fin,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setPatchBusy(false);
+        setPatchError(
+          data?.error === "viaje_largo"
+            ? "Tu viaje pasa de 30 días — recórtalo para poder guardarlo."
+            : "No pude guardar — espera unos segundos y reintenta."
+        );
+        return;
+      }
+      router.push(`/viaje/${edit.tripId}`);
+      router.refresh();
+    } catch {
+      setPatchBusy(false);
+      setPatchError("No pude guardar — espera unos segundos y reintenta.");
+    }
   }
 
   function saveParada(index: number, lugar: string, noches: number, startDate?: string) {
@@ -261,6 +319,8 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
           bolsas,
           anclas: anclas.map((a) => a.id),
           contexto: contexto.trim() || undefined,
+          // Rehacer la maleta de un viaje existente: misma fila, mismo link.
+          ...(edit ? { editId: edit.tripId } : {}),
         }),
       });
       if (!res.ok || !res.body) {
@@ -305,11 +365,21 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
     return <GeneratingScreen phrases={phrases} />;
   }
 
-  const meta = step === 3 ? "Paso 3 de 3 · último" : `Paso ${step} de 3`;
-  const question =
-    step === 1 ? "arma tu ruta" : step === 2 ? "¿qué vas a hacer?" : "¿qué maleta llevas?";
-  const help =
-    step === 1
+  const meta = isEdit
+    ? "editar ruta y fechas"
+    : step === 3
+      ? "Paso 3 de 3 · último"
+      : `Paso ${step} de 3`;
+  const question = isEdit
+    ? "edita tu ruta"
+    : step === 1
+      ? "arma tu ruta"
+      : step === 2
+        ? "¿qué vas a hacer?"
+        : "¿qué maleta llevas?";
+  const help = isEdit
+    ? "Cambia paradas, noches o la salida — al guardar te pregunto si rehago la maleta."
+    : step === 1
       ? "Una parada o varias — la ruta se arma sola y encadenada."
       : step === 2
         ? "Marca todo lo que aplique — combino para cada plan."
@@ -327,21 +397,25 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
               className="flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink"
             >
               <Icon name="chevron" size={15} rotate={180} />
-              {step === 1 ? "tus viajes" : "atrás"}
+              {isEdit ? "tu viaje" : step === 1 ? "tus viajes" : "atrás"}
             </button>
-            <div className="flex items-center gap-1.5">
-              {[0, 1, 2].map((i) => {
-                const idx = step - 1;
-                return (
-                  <span
-                    key={i}
-                    className={`h-[7px] rounded-full transition-all duration-200 ${
-                      i === idx ? "w-5 bg-accent" : i < idx ? "w-[7px] bg-accent" : "w-[7px] bg-line"
-                    }`}
-                  />
-                );
-              })}
-            </div>
+            {/* Los puntos de progreso solo en el wizard completo: editar la
+                ruta es UN paso, no tres. */}
+            {!isEdit ? (
+              <div className="flex items-center gap-1.5">
+                {[0, 1, 2].map((i) => {
+                  const idx = step - 1;
+                  return (
+                    <span
+                      key={i}
+                      className={`h-[7px] rounded-full transition-all duration-200 ${
+                        i === idx ? "w-5 bg-accent" : i < idx ? "w-[7px] bg-accent" : "w-[7px] bg-line"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
           <p className="mt-[18px] text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{meta}</p>
           <h1 className="mt-[7px] text-[26px] font-semibold leading-[1.12] tracking-[-0.01em] text-ink">
@@ -415,7 +489,7 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
                 step > 1 ? "flex-[2]" : "w-full"
               }`}
             >
-              {step === 1 ? "siguiente · actividades" : "siguiente"}
+              {isEdit ? "guardar cambios" : step === 1 ? "siguiente · actividades" : "siguiente"}
             </button>
           ) : (
             <button
@@ -452,6 +526,58 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
           onSave={saveParada}
           onClose={() => setSheet(null)}
         />
+      ) : null}
+
+      {/* La decisión del modo edición (contextual del handoff: "regenerar" NO
+          vive en el menú — se ofrece AQUÍ, al editar la ruta). */}
+      {choiceOpen && edit ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/50 lg:items-center"
+          onClick={() => (patchBusy ? null : setChoiceOpen(false))}
+        >
+          <div
+            className="flex w-full max-w-[430px] flex-col gap-2 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:rounded-[18px]"
+            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-[17px] font-semibold leading-snug text-ink">
+              ¿rehago la maleta con la ruta nueva?
+            </span>
+            {/* Sans a propósito: la serif de acento es solo ≥18px (DESIGN.md). */}
+            <p className="text-sm leading-snug text-muted">
+              otra ruta puede pedir otra ropa. si solo cambiaron las fechas, tu
+              maleta y tus decisiones se quedan como están.
+            </p>
+            {patchError ? <p className="text-sm text-error">{patchError}</p> : null}
+            <button
+              type="button"
+              onClick={() => {
+                setChoiceOpen(false);
+                void armar();
+              }}
+              disabled={patchBusy}
+              className="mt-2 flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+            >
+              <Icon name="destello" size={16} /> sí — rehaz mi maleta
+            </button>
+            <button
+              type="button"
+              onClick={guardarSoloRuta}
+              disabled={patchBusy}
+              className="flex min-h-12 items-center justify-center rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink disabled:opacity-50"
+            >
+              {patchBusy ? "guardando…" : "solo guarda ruta y fechas"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setChoiceOpen(false)}
+              disabled={patchBusy}
+              className="flex min-h-11 items-center justify-center rounded-sm text-sm font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+            >
+              seguir editando
+            </button>
+          </div>
+        </div>
       ) : null}
 
       {anclasOpen ? (
