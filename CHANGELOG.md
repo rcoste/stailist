@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.230.0] - 2026-08-13
+
+### Changed — el viaje ahora sí fluye como el handoff: plan → maleta → looks
+
+Al crear un viaje ya no aterrizas en los cheques de empacado. Primero ves **el
+plan**: qué no tienes y deberías comprar, qué te sugiero de tu clóset y puedes
+cambiar (con el porqué a la vista), y qué ya tienes. Cuando te late, confirmas
+— y ahí se arman tus looks y la pestaña se convierte en **la maleta**, con sus
+cheques y su "empacar todo", para cuando de verdad estés empacando.
+
 ## [0.2.229.0] - 2026-08-12
 
 ### Added — cada viaje con la foto de su destino
