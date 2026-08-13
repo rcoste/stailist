@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.231.1] - 2026-08-13
+
+### Fixed — las prendas sugeridas del viaje ya llegan con foto
+
+Las sugerencias del plan sin imagen se quedaban como recuadros grises hasta
+que picabas una por una. Ahora se dibujan solas al abrir el plan — lo mismo
+que tus esenciales hacen desde julio. Y el duelo nunca compara una foto
+contra un recuadro gris.
+
 ## [0.2.231.0] - 2026-08-13
 
 ### Changed — la cápsula y el viaje hablan el mismo idioma

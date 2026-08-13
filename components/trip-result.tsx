@@ -24,6 +24,7 @@ import { useTripPacked } from "@/components/trip-packed-context";
 import { familiaToHex } from "@/lib/capsule-images";
 import { Toast } from "@/components/toast";
 import { useTripGen } from "@/components/trip-gen-context";
+import { prewarmRenders, type PrewarmJob } from "@/lib/prewarm-renders";
 
 // Una prenda de la cápsula del viaje, ya resuelta contra el clóset (vista plana
 // que arma la página servidor a partir de capsuleRows + el mapa de imágenes).
@@ -281,6 +282,34 @@ export function TripResult({
     () => new Set(descartadosIniciales)
   );
   const propuse = useRef(false);
+  // PRECALENTAR LAS SUGERIDAS SIN IMAGEN — la misma medicina que la cápsula
+  // (lib/prewarm-renders, queja de Alberto 2026-07-30) y la misma queja aquí,
+  // ahora de Roberto: "está medio fea la experiencia de tener que picar uno
+  // por uno". El viaje nunca recibió el mecanismo, y el duelo lo volvió
+  // urgente: un duelo con un lado gris es una comparación rota.
+  //
+  // SOLO las ideales (van a la biblioteca compartida — el segundo usuario con
+  // ese combo no paga nada). Las prendas TUYAS sin foto no se auto-renderizan:
+  // ese render es personal, por prenda, y tiene su propio flujo.
+  const [prewarmed, setPrewarmed] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const jobs: PrewarmJob[] = rows
+      .filter((r) => eff(r) === "falta" && !r.idealImage)
+      .map((r) => ({ key: String(r.index), args: r.renderArgs }));
+    if (jobs.length === 0) return;
+    const abort = new AbortController();
+    void prewarmRenders(jobs, (key, url) => setPrewarmed((m) => ({ ...m, [key]: url })), abort.signal);
+    return () => abort.abort();
+    // Al montar, una vez: si una falta se resuelve a media cola, el render de
+    // más cae igual a la biblioteca compartida — no se pierde.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /** La fila con su render precalentado, si ya llegó. El KEY del card cambia
+   *  con la imagen a propósito: useIdealRender siembra su estado del prop
+   *  inicial y no reacciona a cambios — remontar es lo que lo enciende. */
+  const conRender = (r: TripRow): TripRow =>
+    prewarmed[String(r.index)] ? { ...r, idealImage: prewarmed[String(r.index)] } : r;
+  const renderKey = (r: TripRow) => `${r.index}${prewarmed[String(r.index)] ? ":img" : ""}`;
   useEffect(() => {
     // Solo en fase de plan, solo una vez, y solo si hay faltas sin resolver.
     // proposeTripSubstitutes es idempotente y barato de llamar de más (si no
@@ -420,8 +449,8 @@ export function TripResult({
                   if (cand && !descartados.has(r.index) && !localSub[r.index]) {
                     return (
                       <DueloCard
-                        key={r.index}
-                        row={r}
+                        key={renderKey(r)}
+                        row={conRender(r)}
                         cand={cand}
                         onMia={() => elegirSustituto(r.index, { nombre: cand.nombre, image: cand.image, porque: "" })}
                         onSugerida={() => {
@@ -434,8 +463,8 @@ export function TripResult({
                   }
                   return (
                     <FaltaCard
-                      key={r.index}
-                      row={r}
+                      key={renderKey(r)}
+                      row={conRender(r)}
                       ownBusy={ownBusy.has(r.index)}
                       onBuscar={() => buscarSustituto(r)}
                       onYaLoTengo={() => marcarYaLoTengo(r.index)}
@@ -744,8 +773,8 @@ export function TripResult({
           <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
             {falta.map((r) => (
               <FaltaCard
-                key={r.index}
-                row={r}
+                key={renderKey(r)}
+                row={conRender(r)}
                 ownBusy={ownBusy.has(r.index)}
                 onBuscar={() => buscarSustituto(r)}
                 onYaLoTengo={() => marcarYaLoTengo(r.index)}
