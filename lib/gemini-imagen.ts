@@ -60,8 +60,9 @@ type Parte = { text: string } | { inlineData: { mimeType: string; data: string }
 export async function pedirImagen(
   parts: Parte[],
   opciones: {
-    /** 3:4 retrato y cuerpo · 16:9 el sheet de 3 vistas · 1:1 la prenda. */
-    aspecto?: "3:4" | "16:9" | "1:1";
+    /** 3:4 retrato y cuerpo · 16:9 el sheet de 3 vistas · 1:1 la prenda ·
+     *  4:3 la foto de destino (el recorte que menos pierde en la card). */
+    aspecto?: "3:4" | "16:9" | "1:1" | "4:3";
     /** Por default el bueno. El render de prenda y el catálogo pueden pedir otro. */
     modelo?: string;
     fetchImpl?: typeof fetch;

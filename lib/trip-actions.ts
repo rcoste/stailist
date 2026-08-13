@@ -330,6 +330,47 @@ export async function setTripPacked(
   revalidatePath(`/viaje/${tripId}`);
 }
 
+/**
+ * "Empacar todo": palomea de un golpe todos los índices que la maleta enseña.
+ *
+ * UN SOLO WRITE, no un setTripPacked por prenda: con 15 prendas serían 15
+ * requests en ráfaga leyendo-y-escribiendo el MISMO jsonb — la receta exacta
+ * de la carrera perdida (el último read viejo pisa los writes de en medio).
+ *
+ * Solo AGREGA (merge sobre lo que ya está): no toca lo que otra pestaña haya
+ * palomeado mientras, y correrlo dos veces da lo mismo que una.
+ */
+export async function setTripPackedAll(tripId: string, indexes: number[]): Promise<void> {
+  const limpios = indexes.filter((i) => Number.isInteger(i));
+  if (limpios.length === 0) return;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("empacado")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return;
+
+  const current = ((trip.empacado as Record<string, boolean> | null) ?? {}) as Record<
+    string,
+    boolean
+  >;
+  for (const i of limpios) current[String(i)] = true;
+
+  await supabase
+    .from("trips")
+    .update({ empacado: current })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+  revalidatePath(`/viaje/${tripId}`);
+}
+
 // Voto 👍/👎 sobre un look del viaje. El voto vive dentro del propio look (en
 // trips.outfits) — así se regenera con ellos. Doble tap del mismo voto lo quita.
 // Emite un evento trip_look_vote (señal de si la maleta sirve, separada del

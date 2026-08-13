@@ -211,6 +211,18 @@ export function TripWizard({ closet = [] }: { closet?: ClosetPick[] }) {
   const canGo = step === 1 ? paradas.length >= 1 && !!inicio : true;
 
   function next() {
+    // LA FOTO DEL DESTINO ARRANCA AQUÍ, al salir del paso 1 (la ruta ya está
+    // puesta). Fire-and-forget: los pasos 2 y 3 tapan los ~15s de Gemini, así
+    // que la foto "aparece gratis" cuando el viaje se crea. El server dedupe
+    // por destino (una generación en la vida del producto; el catálogo
+    // estático gana) — disparar de más aquí no cuesta nada.
+    if (step === 1 && paradas[0]?.lugar) {
+      fetch("/api/destino-imagen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lugar: paradas[0].lugar }),
+      }).catch(() => {});
+    }
     if (step < 3) setStep((s) => (s + 1) as 1 | 2 | 3);
   }
   function back() {

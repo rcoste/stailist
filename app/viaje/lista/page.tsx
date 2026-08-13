@@ -5,6 +5,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { tripDays, luggageSummary, type Bolsas, type Luggage, type TripWeather } from "@/lib/trip";
 import { capsuleRows, type CapsuleMatch, type CapsuleOverrides, type CapsuleTarget } from "@/lib/capsule";
+import { fotosDeViajes } from "@/lib/destino-imagen-cache";
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const MESES_FULL = [
@@ -28,6 +29,7 @@ function countdown(hoy: string, inicio: string): string {
 type TripRowDb = {
   id: string;
   lugar: string;
+  ocasiones: string[] | null;
   fecha_inicio: string;
   fecha_fin: string;
   paradas: unknown;
@@ -91,15 +93,22 @@ function derive(t: TripRowDb, hoy: string) {
 
 // Card editorial de desktop (handoff desktop_f3): countdown → título con destino
 // en display italic → meta en una línea → footer con progreso + "abrir maleta".
-function TripCard({ t, hoy }: { t: TripRowDb; hoy: string }) {
+function TripCard({ t, hoy, foto }: { t: TripRowDb; hoy: string; foto: string }) {
   const d = derive(t, hoy);
   return (
     <Link
       href={`/viaje/${t.id}`}
-      className={`group flex flex-col rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink ${
+      className={`group flex flex-col overflow-hidden rounded-md border border-line bg-surface transition-colors hover:border-ink ${
         d.pasado ? "opacity-65 hover:opacity-100" : ""
       }`}
     >
+      {/* La foto del destino, a sangre arriba (B&N editorial — el color es de
+          tu ropa, no del paisaje). El padding vive abajo para que sangre. */}
+      <span className="relative block h-[150px] w-full bg-tile">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={foto} alt="" className="h-full w-full object-cover" />
+      </span>
+      <span className="flex flex-1 flex-col p-6">
       <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
         {d.eyebrow}
       </span>
@@ -125,6 +134,7 @@ function TripCard({ t, hoy }: { t: TripRowDb; hoy: string }) {
           <Icon name="chevron" size={14} />
         </span>
       </span>
+      </span>
     </Link>
   );
 }
@@ -138,7 +148,7 @@ export default async function TusViajesPage() {
   const { data: trips } = await supabase
     .from("trips")
     .select(
-      "id, lugar, fecha_inicio, fecha_fin, paradas, weather, bolsas, maleta, capsule_target, capsule_match, overrides, empacado, outfits"
+      "id, lugar, ocasiones, fecha_inicio, fecha_fin, paradas, weather, bolsas, maleta, capsule_target, capsule_match, overrides, empacado, outfits"
     )
     .eq("user_id", profile.id)
     .is("deleted_at", null)
@@ -147,6 +157,11 @@ export default async function TusViajesPage() {
 
   const hoy = new Date().toISOString().slice(0, 10);
   const rows = (trips ?? []) as TripRowDb[];
+  // Una sola resolución para todas las cards: catálogo → generada → genérica.
+  const fotos = await fotosDeViajes(
+    supabase,
+    rows.map((t) => ({ lugar: t.lugar, ocasiones: t.ocasiones }))
+  );
   const proximos = rows
     .filter((t) => t.fecha_fin >= hoy)
     .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
@@ -201,8 +216,15 @@ export default async function TusViajesPage() {
                     href={`/viaje/${t.id}`}
                     className="flex items-center gap-3 rounded-md border border-line bg-surface p-[13px] transition-colors hover:border-accent"
                   >
-                    <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                      <Icon name="maletin" size={16} />
+                    {/* La foto del destino en vez del maletín genérico: es lo
+                        que distingue un viaje de otro de un vistazo. */}
+                    <span className="relative block h-[52px] w-[52px] shrink-0 overflow-hidden rounded-sm bg-tile">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={fotos.get(t.lugar) ?? "/destinos/ciudad.webp"}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-[13.5px] font-semibold text-ink">{t.lugar}</span>
@@ -227,7 +249,7 @@ export default async function TusViajesPage() {
                   </span>
                   <div className="grid grid-cols-2 gap-4">
                     {proximos.map((t) => (
-                      <TripCard key={t.id} t={t} hoy={hoy} />
+                      <TripCard key={t.id} t={t} hoy={hoy} foto={fotos.get(t.lugar) ?? "/destinos/ciudad.webp"} />
                     ))}
                   </div>
                 </div>
@@ -239,7 +261,7 @@ export default async function TusViajesPage() {
                   </span>
                   <div className="grid grid-cols-2 gap-4">
                     {pasados.map((t) => (
-                      <TripCard key={t.id} t={t} hoy={hoy} />
+                      <TripCard key={t.id} t={t} hoy={hoy} foto={fotos.get(t.lugar) ?? "/destinos/ciudad.webp"} />
                     ))}
                   </div>
                 </div>

@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.229.0] - 2026-08-12
+
+### Added — cada viaje con la foto de su destino
+
+Los viajes ahora se ven: la foto del destino aparece en la lista, en el
+detalle y en la card del home. Los destinos frecuentes ya tenían foto curada;
+los demás (Osaka, Kioto, el pueblo que sea) **se generan solos la primera vez
+que alguien viaja ahí** — en blanco y negro editorial, mientras contestas las
+preguntas del wizard, sin que esperes nada. Si el viaje tiene varias paradas,
+manda la primera: nada de híbridos raros.
+
+### Changed — los looks del viaje esperan tu visto bueno
+
+Antes podías brincarte directo a "tus looks" y generarlos sin haber revisado
+qué te sugerí empacar. Ahora la primera generación vive donde debía: al final
+de tu maleta, después de que aceptaste o cambiaste las sugerencias. No es un
+paso más — es el mismo botón, en el momento correcto.
+
+### Added — empacar todo
+
+Un tap y toda la maleta queda palomeada. Palomear quince prendas de una en
+una era un castigo.
+
 ## [0.2.228.0] - 2026-08-12
 
 ### Added — el fit check ya sabe a dónde vas

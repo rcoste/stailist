@@ -71,6 +71,26 @@ function normalizar(texto: string): string {
     .trim();
 }
 
+/** La primera parada de una ruta, solo el nombre del lugar ("París · Roma" →
+ *  "París"; "Roma, Lacio, Italia" → "Roma"). Es la que nombra el viaje y la
+ *  que decide su foto — la regla vieja de este archivo, ahora con nombre. */
+export function primeraParada(lugar: string): string {
+  return lugar.split("·")[0].split(",")[0].trim();
+}
+
+/**
+ * El slug del destino para la caché de imágenes generadas (destino_imagenes):
+ * la primera parada, normalizada, espacios → guión. "Osaka, Japón" → "osaka".
+ *
+ * LA COLISIÓN CONOCIDA, aceptada a propósito: dos lugares con el mismo nombre
+ * comparten slug (la Córdoba de Argentina y la de España tendrían UNA foto).
+ * Es el mismo trato que ya da el catálogo estático por alias, y resolverlo
+ * pediría país + coordenadas por una esquina que casi no pasa.
+ */
+export function slugDestino(lugar: string): string {
+  return normalizar(primeraParada(lugar)).replace(/\s+/g, "-") || "destino";
+}
+
 /** ¿`frase` contiene `alias` como secuencia de palabras completas? Sin RegExp:
  *  el alias es dato de una tabla, no un patrón. */
 function contienePalabras(frase: string, alias: string): boolean {
@@ -83,18 +103,16 @@ function contienePalabras(frase: string, alias: string): boolean {
 }
 
 /**
- * La imagen del destino, lista para usar en un `src`.
- *
- * `lugar` puede venir como ruta multidestino ("París · Roma"): gana la PRIMERA
- * parada, que es a donde llegas y con lo que la persona nombra el viaje.
+ * La foto del CATÁLOGO estático para este lugar, o null si el catálogo no lo
+ * conoce. El null es información: es la señal de "este destino es de la cola
+ * larga" con la que se decide generar una foto propia (destino_imagenes).
  */
-export function imagenDestino(lugar: string, ocasiones: string[] = []): string {
-  // Primera parada de la ruta, y de ella solo el nombre del lugar: el geocoder
-  // devuelve "Roma, Lacio, Italia" y quien lo guarda ya recorta en la coma,
-  // pero recortar aquí también hace que la función no dependa de eso (y es lo
-  // que deja funcionar el match exacto, que compara el nombre COMPLETO).
-  const primeraParada = lugar.split("·")[0].split(",")[0];
-  const texto = normalizar(primeraParada);
+export function imagenCatalogo(lugar: string): string | null {
+  // De la primera parada, solo el nombre del lugar: el geocoder devuelve
+  // "Roma, Lacio, Italia" y quien lo guarda ya recorta en la coma, pero
+  // recortar aquí también hace que la función no dependa de eso (y es lo que
+  // deja funcionar el match exacto, que compara el nombre COMPLETO).
+  const texto = normalizar(primeraParada(lugar));
 
   for (const destino of DESTINOS) {
     // Exactos primero: el nombre completo y nada más (ver `exactos` arriba).
@@ -110,9 +128,26 @@ export function imagenDestino(lugar: string, ocasiones: string[] = []): string {
       return `/destinos/${destino.slug}.webp`;
     }
   }
+  return null;
+}
 
-  // Sin match por nombre, manda lo que la persona YA nos dijo del viaje. Es
-  // dato suyo, no una suposición nuestra.
-  if (ocasiones.includes("playa")) return "/destinos/playa.webp";
-  return "/destinos/ciudad.webp";
+/** El fallback cuando no hay ni catálogo ni foto generada: manda lo que la
+ *  persona YA nos dijo del viaje (playa vs ciudad). Es dato suyo, no una
+ *  suposición nuestra. */
+export function imagenGenerica(ocasiones: string[] = []): string {
+  return ocasiones.includes("playa") ? "/destinos/playa.webp" : "/destinos/ciudad.webp";
+}
+
+/**
+ * La imagen del destino, lista para usar en un `src`.
+ *
+ * `lugar` puede venir como ruta multidestino ("París · Roma"): gana la PRIMERA
+ * parada, que es a donde llegas y con lo que la persona nombra el viaje.
+ *
+ * Esta es la versión SÍNCRONA y sin base de datos (la usa la card del home,
+ * que es client component). La versión con caché de fotos generadas vive en
+ * lib/destino-imagen-cache (server-only).
+ */
+export function imagenDestino(lugar: string, ocasiones: string[] = []): string {
+  return imagenCatalogo(lugar) ?? imagenGenerica(ocasiones);
 }

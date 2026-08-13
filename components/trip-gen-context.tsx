@@ -19,6 +19,7 @@ export type TripGen = {
   onGenerateMore: () => void; // generar más (acumula combinaciones nuevas)
   onGenerateLooks: () => void; // CTA maleta: genera + cambia a la pestaña de looks
   onViewLooks: () => void; // CTA maleta: solo ir a los looks (ya existen)
+  onViewMaleta: () => void; // candado de looks: volver a la maleta, donde vive el botón
   looksExist: boolean;
 };
 
@@ -32,6 +33,7 @@ const DEFAULT: TripGen = {
   onGenerateMore: noop,
   onGenerateLooks: noop,
   onViewLooks: noop,
+  onViewMaleta: noop,
   looksExist: false,
 };
 

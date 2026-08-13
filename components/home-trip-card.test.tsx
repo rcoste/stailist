@@ -50,6 +50,7 @@ const base: HomeTrip = {
   maletaLista: false,
   faltan: 0,
   fechaInicio: "2026-08-14", // viernes
+  foto: "/destinos/playa.webp",
   ocasiones: ["playa"],
 };
 

@@ -13,10 +13,16 @@ const TRIP_PHRASES: GenPhrase[] = [
   { a: "armando tus ", k: "looks", b: "…" },
 ];
 
-// Tabs del resultado del viaje: "La maleta" / "Tus looks". Flujo secuencial-suave:
-// armas la maleta y desde ahí generas los looks (sin candado). La GENERACIÓN vive
-// aquí (dueño único) para que el CTA de la maleta y los botones de looks la
-// compartan. Un punto en "Tus looks" avisa si quedaron viejos.
+// Tabs del resultado del viaje: "La maleta" / "Tus looks". Flujo secuencial CON
+// candado (decisión de Roberto, 2026-08-12): la PRIMERA generación solo se
+// dispara desde el cierre de la maleta — antes se podía brincar directo a la
+// pestaña de looks y generar sin haber revisado las sugerencias, y esos looks
+// (que cuestan dinero y ~30s) salían de una maleta que estabas a punto de
+// editar. "Confirmar" no es un paso nuevo: es el mismo botón de generar, ya
+// detrás de la revisión. Con looks generados, Rehacer/Generar más siguen
+// viviendo en su pestaña como siempre. Un punto avisa si quedaron viejos.
+// La GENERACIÓN vive aquí (dueño único) para que el CTA de la maleta y los
+// botones de looks la compartan.
 export function TripTabs({
   tripId,
   maletaCount,
@@ -94,6 +100,7 @@ export function TripTabs({
       generar(false);
     },
     onViewLooks: () => setTab("looks"),
+    onViewMaleta: () => setTab("maleta"),
     looksExist,
   };
 

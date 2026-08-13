@@ -6,6 +6,7 @@ import {
   type CapsuleTarget,
 } from "@/lib/capsule";
 import { diasHasta, VENTANA_VIAJE_DIAS } from "@/lib/trip-context";
+import { fotosDeViajes } from "@/lib/destino-imagen-cache";
 
 // La card de viaje del home (rediseño 2026-08-11, handoff design_handoff_inicio).
 // Sustituye a la card contextual de tres variantes (lib/home-card.ts, borrado):
@@ -26,6 +27,10 @@ export type HomeTrip = {
   /** playa/ciudad/trabajo/noche — el fallback de la foto cuando el nombre del
    *  lugar no está en el set (ver lib/destino-imagen). */
   ocasiones: string[];
+  /** La foto del destino ya resuelta en el server (catálogo → generada →
+   *  genérica). La card no puede resolverla sola: la generada vive en la base
+   *  y la card es client component. */
+  foto: string;
 };
 
 // Los faltantes que la card anuncia, con LA MISMA regla que el detalle del
@@ -81,6 +86,12 @@ export async function loadHomeTrip(
   if (dias > VENTANA_VIAJE_DIAS + 1) return null;
 
   const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
+  const ocasiones = ((trip.ocasiones as string[] | null) ?? []).filter(
+    (o): o is string => typeof o === "string"
+  );
+  const fotos = await fotosDeViajes(supabase, [
+    { lugar: trip.lugar as string, ocasiones },
+  ]);
   return {
     lugar: trip.lugar as string,
     dias: Math.max(0, dias),
@@ -93,8 +104,7 @@ export async function loadHomeTrip(
       (trip.empacado as Record<string, boolean> | null) ?? null
     ),
     fechaInicio: trip.fecha_inicio as string,
-    ocasiones: ((trip.ocasiones as string[] | null) ?? []).filter(
-      (o): o is string => typeof o === "string"
-    ),
+    ocasiones,
+    foto: fotos.get(trip.lugar as string) ?? "/destinos/ciudad.webp",
   };
 }

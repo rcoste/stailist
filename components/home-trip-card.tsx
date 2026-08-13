@@ -58,7 +58,9 @@ export function HomeTripCard({ trip }: { trip: HomeTrip }) {
     >
       <span className="relative w-[118px] shrink-0 bg-tile">
         <Image
-          src={imagenDestino(trip.lugar, trip.ocasiones)}
+          // Resuelta en el server (catálogo → generada → genérica); el fallback
+          // local cubre los HomeTrip serializados antes de que `foto` existiera.
+          src={trip.foto ?? imagenDestino(trip.lugar, trip.ocasiones)}
           alt=""
           fill
           sizes="130px"
