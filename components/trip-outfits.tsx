@@ -49,7 +49,7 @@ export function TripOutfits({
   // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
   // botones); aquí solo la consumimos vía context (no por props: cruzan la
   // frontera RSC y la inyección por cloneElement no llegaba — ver trip-gen-context).
-  const { generating, appending, genError, genNote, onGenerate, onGenerateMore } =
+  const { generating, appending, genError, genNote, onGenerate, onGenerateMore, onViewMaleta } =
     useTripGen();
   // Voto optimista por índice (arranca de lo que llegó del server).
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
@@ -106,14 +106,23 @@ export function TripOutfits({
   // TripTabs; aquí no mostramos spinner de pantalla. "Generar más" (appending) SÍ
   // se queda en esta vista: conserva los looks y suma un indicador inline abajo.
 
-  // Nunca generados: invitación.
+  // NUNCA GENERADOS: el candado, no una invitación a generar desde aquí.
+  //
+  // Antes esta rama tenía su propio botón de "Arma mis looks", o sea que se
+  // podía brincar directo a esta pestaña y generar SIN haber revisado las
+  // sugerencias de la maleta — y esos looks (dinero + ~30s) salían de una
+  // maleta que estabas a punto de editar. La primera generación vive en UN
+  // solo lugar: el cierre de la maleta, después de la revisión. Esta pantalla
+  // se ve (que se sepa que existe) pero manda de vuelta.
   if (outfits === null) {
     return (
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium text-ink">¿Y qué me pongo?</span>
           <span className="text-sm text-muted">
-            Te armo los looks que tu maleta hace, listos para cada plan del viaje.
+            Te armo los looks que tu maleta hace — pero primero revísala tú:
+            acepta o cambia lo que te sugerí, y desde ahí me dices &ldquo;genera
+            mis looks&rdquo;.
           </span>
         </div>
         {error ? (
@@ -121,10 +130,10 @@ export function TripOutfits({
         ) : null}
         <button
           type="button"
-          onClick={generar}
-          className="flex min-h-11 items-center justify-center rounded-sm bg-accent px-4 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+          onClick={onViewMaleta}
+          className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
         >
-          Arma mis looks
+          revisar mi maleta
         </button>
       </div>
     );
