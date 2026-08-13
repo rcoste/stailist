@@ -39,17 +39,20 @@ export function TripOutfits({
   ocasiones,
   stale,
   favoritos = [],
+  maletaCount = 0,
 }: {
   tripId: string;
   outfits: ResolvedOutfit[] | null;
   ocasiones: Occasion[];
   stale: boolean;
   favoritos?: number[]; // índices de looks favoriteados (promovidos a outfits)
+  /** Cuántas prendas lleva la maleta — para el "salen de las N prendas" del vacío. */
+  maletaCount?: number;
 }) {
   // La generación vive en TripTabs (la comparten el CTA de la maleta y estos
   // botones); aquí solo la consumimos vía context (no por props: cruzan la
   // frontera RSC y la inyección por cloneElement no llegaba — ver trip-gen-context).
-  const { generating, appending, genError, genNote, onGenerate, onGenerateMore, onViewMaleta } =
+  const { generating, appending, genError, genNote, onGenerate, onGenerateMore, onViewMaleta, confirmado } =
     useTripGen();
   // Voto optimista por índice (arranca de lo que llegó del server).
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
@@ -106,33 +109,61 @@ export function TripOutfits({
   // TripTabs; aquí no mostramos spinner de pantalla. "Generar más" (appending) SÍ
   // se queda en esta vista: conserva los looks y suma un indicador inline abajo.
 
-  // NUNCA GENERADOS: el candado, no una invitación a generar desde aquí.
+  // NUNCA GENERADOS. Dos variantes (handoff viaje 2):
   //
-  // Antes esta rama tenía su propio botón de "Arma mis looks", o sea que se
-  // podía brincar directo a esta pestaña y generar SIN haber revisado las
-  // sugerencias de la maleta — y esos looks (dinero + ~30s) salían de una
-  // maleta que estabas a punto de editar. La primera generación vive en UN
-  // solo lugar: el cierre de la maleta, después de la revisión. Esta pantalla
-  // se ve (que se sepa que existe) pero manda de vuelta.
+  //   · Revisión SIN cerrar → el candado de siempre: nada de generar desde
+  //     aquí (esos looks cuestan dinero + ~30s y saldrían de una maleta que
+  //     estás a punto de editar). Esta pantalla manda de vuelta a "prendas".
+  //   · Revisión cerrada ("listo — a empacar") → el vacío del handoff con el
+  //     CTA de generar: la maleta ya es la buena, generar aquí es legítimo
+  //     (mismo botón que cierra "empacar").
   if (outfits === null) {
-    return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-ink">¿Y qué me pongo?</span>
-          <span className="text-sm text-muted">
-            Te armo los looks que tu maleta hace — pero primero revisa el plan:
-            acepta o cambia lo que te sugerí, y desde ahí me dices que te late.
-          </span>
+    if (!confirmado) {
+      return (
+        <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-ink">¿Y qué me pongo?</span>
+            <span className="text-sm text-muted">
+              Te armo los looks que tu maleta hace — pero primero revisa las
+              prendas: acepta o cambia lo que te sugerí, y dime que estás lista.
+            </span>
+          </div>
+          {error ? (
+            <p className="text-sm text-error">No pude armar tus looks — inténtalo otra vez.</p>
+          ) : null}
+          <button
+            type="button"
+            onClick={onViewMaleta}
+            className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
+          >
+            revisar prendas
+          </button>
         </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
+        <span className="flex h-[52px] w-[52px] items-center justify-center rounded-sm border border-line bg-tile text-muted">
+          <Icon name="gancho" size={24} />
+        </span>
+        <p className="display max-w-[300px] text-[19px] leading-[1.4] text-ink">
+          aún no armo tus looks de viaje — dime y los hago con lo que llevas en la maleta
+        </p>
+        {maletaCount > 0 ? (
+          <p className="text-[12.5px] text-muted">
+            salen de las {maletaCount} prendas · uno por día y plan
+          </p>
+        ) : null}
         {error ? (
           <p className="text-sm text-error">No pude armar tus looks — inténtalo otra vez.</p>
         ) : null}
         <button
           type="button"
-          onClick={onViewMaleta}
-          className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
+          onClick={onGenerate}
+          disabled={generating}
+          className="mt-1 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
         >
-          revisar el plan
+          <Icon name="destello" size={17} /> generar mis looks
         </button>
       </div>
     );
