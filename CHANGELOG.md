@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.230.2] - 2026-08-13
+
+### Fixed — "viajes" en el menú ya lleva a tus viajes
+
+Si tenías un viaje cerca, tocar **viajes** en el menú "más" te metía directo
+dentro de esa maleta en vez de abrir la lista — y desde ahí el resto de tus
+viajes quedaba inalcanzable. Ahora siempre abre modo viaje. El acceso directo a
+la maleta del viaje que se acerca sigue donde debe: la card del inicio.
+
 ## [0.2.230.1] - 2026-08-13
 
 ### Changed — las fotos de destino, ahora claras
