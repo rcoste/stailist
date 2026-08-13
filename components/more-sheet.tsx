@@ -49,8 +49,8 @@ export function MoreSheet({
   active,
 }: {
   userId: string;
-  /** Viaje en curso o a ≤7 días: "armar maleta" va directo a TU maleta y el
-   *  slot lleva un punto de aviso. */
+  /** Viaje en curso o a ≤7 días. SOLO para el punto de aviso del slot: la
+   *  navegación NO depende de él (ver maletaHref). */
   trip: TripContext | null;
   /** La ruta actual vive dentro de la hoja → el slot se pinta como activo. */
   active: boolean;
@@ -73,9 +73,22 @@ export function MoreSheet({
   }
   const go = (href: string) => choose(() => router.push(href));
 
-  // Con un viaje vivo (≤7 días), directo a su maleta; si no, la lista — nunca
-  // el asistente en blanco, que es a donde iba antes y se sentía roto.
-  const maletaHref = trip ? trip.href : "/viaje/lista";
+  // SIEMPRE LA LISTA, tenga o no un viaje vivo.
+  //
+  // Hasta hoy, con un viaje a ≤7 días este atajo se saltaba la lista y entraba
+  // directo a esa maleta. La intención era ahorrar un tap; el efecto es que un
+  // mosaico que dice "viajes" —en plural, el nombre de la sección— te mete
+  // dentro de UNO, y desde el drawer ya no había forma de llegar al resto
+  // (Roberto: "en vez de mandarme a la parte de viajes... me manda dentro de
+  // uno"). Un tap ahorrado no paga volver inalcanzable el hub de la sección.
+  //
+  // Y el atajo directo no se pierde: la card de viaje del HOME ya lleva a la
+  // maleta viva, que es el lugar prominente donde ese acceso tiene sentido.
+  // Aquí sólo se duplicaba, y al duplicarse rompía la lista.
+  //
+  // De paso queda igual que el desktop, que ya apuntaba a /viaje/lista
+  // (components/desktop-header) — las dos navegaciones se contradecían.
+  const maletaHref = "/viaje/lista";
 
   return (
     <>
@@ -281,8 +294,9 @@ function NivelAtajos({
   // con un viaje guardado más lejos te aventaba a un asistente en blanco, como
   // si no existiera (lo vio Roberto con su Tokio a 130 días).
   //
-  // Ahora es uno: la lista, que es el hub honesto. Se conserva lo bueno del
-  // viejo — con un viaje vivo entras directo a su maleta.
+  // Ahora es uno: la lista, que es el hub honesto — y SIEMPRE la lista (el
+  // "entras directo a tu maleta viva" duró un día: rompía la promesa del
+  // plural, ver maletaHref arriba).
   //
   // LA REGLA DE ESTA HOJA (2026-08-12), porque se estaba llenando: un atajo se
   // gana su lugar si AHORRA AL MENOS UN TAP o si es la única forma de descubrir
