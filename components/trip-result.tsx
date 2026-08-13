@@ -10,6 +10,7 @@ import { IdealTileInner, useIdealRender, type RenderArgs } from "@/components/id
 import {
   dismissTripCandidate,
   proposeTripSubstitutes,
+  setTripOverride,
   setTripPacked,
   setTripPackedAll,
   setTripSubstitute,
@@ -127,13 +128,15 @@ function FaltaCard({
 // existe (la misma razón por la que la falta del viaje no tiene "no me va").
 function DueloCard({
   row,
-  cand,
+  tuya,
   onMia,
   onSugerida,
   onOtras,
 }: {
   row: TripRow;
-  cand: Candidata;
+  /** El lado derecho del duelo: la prenda TUYA (candidata de la búsqueda, o
+   *  la que el match emparejó en un "parecido"). */
+  tuya: Candidata;
   onMia: () => void;
   onSugerida: () => void;
   onOtras: () => void;
@@ -143,7 +146,7 @@ function DueloCard({
     <li className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
       <div className="flex flex-col gap-1 p-3.5 pb-2.5">
         <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted">
-          te falta — ¿la cubres con la tuya?
+          ¿te sirve la tuya?
         </span>
         <p className="editorial text-[14.5px] leading-snug text-muted">{row.porque}</p>
       </div>
@@ -171,9 +174,9 @@ function DueloCard({
           className="group flex flex-col text-left transition-colors hover:bg-bg"
         >
           <span className="relative block aspect-[4/5] w-full overflow-hidden bg-tile">
-            {cand.image ? (
+            {tuya.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={cand.image} alt="" className="h-full w-full object-cover" />
+              <img src={tuya.image} alt="" className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center text-muted">
                 <Icon name="gancho" size={22} />
@@ -184,7 +187,7 @@ function DueloCard({
             <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
               en tu clóset
             </span>
-            <span className="text-[13px] font-semibold leading-tight text-ink">{cand.nombre}</span>
+            <span className="text-[13px] font-semibold leading-tight text-ink">{tuya.nombre}</span>
           </span>
         </button>
       </div>
@@ -294,7 +297,7 @@ export function TripResult({
   const [prewarmed, setPrewarmed] = useState<Record<string, string>>({});
   useEffect(() => {
     const jobs: PrewarmJob[] = rows
-      .filter((r) => eff(r) === "falta" && !r.idealImage)
+      .filter((r) => (eff(r) === "falta" || eff(r) === "parecido") && !r.idealImage)
       .map((r) => ({ key: String(r.index), args: r.renderArgs }));
     if (jobs.length === 0) return;
     const abort = new AbortController();
@@ -366,11 +369,38 @@ export function TripResult({
   const empaca = rows.filter((r) => eff(r) !== "falta" || isPacked(r.index));
   const falta = rows.filter((r) => eff(r) === "falta" && !isPacked(r.index));
   const packedCount = empaca.filter((r) => isPacked(r.index)).length;
-  // Los grupos de la fase de PLAN (orden del handoff): los "parecido" son la
-  // sección de en medio ("te sugiero, puedes cambiarla") y el resto de lo
-  // cubierto es "ya lo tienes".
-  const planParecido = rows.filter((r) => eff(r) === "parecido");
-  const planTienes = empaca.filter((r) => eff(r) !== "parecido");
+  // Decisiones de duelo de ESTA sesión (parecido aceptado/rechazado), encima
+  // de lo que el server ya sabe. El server las persiste (setTripOverride);
+  // esto es el espejo optimista.
+  const [localDecide, setLocalDecide] = useState<Record<number, "accept" | "reject">>({});
+  const effLocal = (r: TripRow): TripRow["base"] => {
+    const d = localDecide[r.index];
+    if (d === "accept") return "tienes";
+    if (d === "reject") return "falta";
+    return eff(r);
+  };
+
+  // LOS GRUPOS DE LA FASE DE PLAN, partidos por SIGNIFICADO (segunda ronda de
+  // Roberto): si hay comparación sugerida-vs-tuya, es duelo — venga del match
+  // ("parecido") o de la búsqueda de candidatas (falta con candidata). Lo que
+  // no tiene con qué compararse es compra; lo cubierto es "ya lo tienes".
+  const duelos: { r: TripRow; tuya: Candidata; tipo: "falta" | "parecido" }[] = [];
+  const planCompras: TripRow[] = [];
+  const planTienes: TripRow[] = [];
+  for (const r of rows) {
+    const e = effLocal(r);
+    if (e === "parecido") {
+      const { by, byImage } = ov(r);
+      duelos.push({ r, tuya: { nombre: by ?? r.nombre, image: byImage }, tipo: "parecido" });
+    } else if (e === "falta" && !isPacked(r.index) && !localSub[r.index]) {
+      const cand = candidatas[r.index];
+      if (cand && !descartados.has(r.index)) duelos.push({ r, tuya: cand, tipo: "falta" });
+      else planCompras.push(r);
+    } else if (e !== "pendiente") {
+      planTienes.push(r);
+    }
+  }
+
 
   function togglePacked(index: number, value?: boolean) {
     const next = value ?? !isPacked(index);
@@ -429,105 +459,88 @@ export function TripResult({
     <div className="flex flex-col gap-4">
       <Toast message={toast} />
 
-      {/* ══ FASE 1: EL PLAN — el orden es el del handoff: primero lo que pide
-          decisión (comprar / cambiar), al final lo que ya está resuelto. ══ */}
+      {/* ══ FASE 1: EL PLAN — el orden del handoff: lo que pide decisión
+          arriba, lo resuelto abajo. REACOMODO 2026-08-13 (segunda ronda de
+          Roberto): las secciones se parten por SIGNIFICADO, no por origen del
+          dato. "No lo tienes" = solo lo que de verdad no hay con qué cubrir
+          (comprar/wishlist). "Decide si te sirve" = TODO lo que compara la
+          sugerida contra algo tuyo — venga del match (parecido) o de la
+          búsqueda de candidatas (falta con candidata). La primera versión puso
+          el duelo dentro de "no lo tienes" porque el dato nace de una falta, y
+          Roberto lo rebotó: para quien mira, si hay comparación, es decisión. ══ */}
       {!confirmado ? (
         <>
-          {falta.length > 0 ? (
+          {planCompras.length > 0 ? (
             <div className="flex flex-col gap-2.5">
               <div className="flex items-baseline justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
                   No lo tienes — cómpralo o cúbrelo
                 </span>
-                <span className="tabular text-[11px] text-muted">{falta.length}</span>
+                <span className="tabular text-[11px] text-muted">{planCompras.length}</span>
               </div>
               <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
-                {falta.map((r) => {
-                  const cand = candidatas[r.index];
-                  // Duelo solo si hay candidata viva y el hueco sigue virgen:
-                  // ni descartado ("prefiero la sugerida") ni ya sustituido.
-                  if (cand && !descartados.has(r.index) && !localSub[r.index]) {
-                    return (
-                      <DueloCard
-                        key={renderKey(r)}
-                        row={conRender(r)}
-                        cand={cand}
-                        onMia={() => elegirSustituto(r.index, { nombre: cand.nombre, image: cand.image, porque: "" })}
-                        onSugerida={() => {
-                          setDescartados((d) => new Set(d).add(r.index));
-                          void dismissTripCandidate(tripId, r.index);
-                        }}
-                        onOtras={() => buscarSustituto(r)}
-                      />
-                    );
-                  }
-                  return (
-                    <FaltaCard
-                      key={renderKey(r)}
-                      row={conRender(r)}
-                      ownBusy={ownBusy.has(r.index)}
-                      onBuscar={() => buscarSustituto(r)}
-                      onYaLoTengo={() => marcarYaLoTengo(r.index)}
-                      wishSaved={wishSaved.has(r.faltaKey)}
-                      onToggleWish={() => toggleWish(r)}
-                    />
-                  );
-                })}
+                {planCompras.map((r) => (
+                  <FaltaCard
+                    key={renderKey(r)}
+                    row={conRender(r)}
+                    ownBusy={ownBusy.has(r.index)}
+                    onBuscar={() => buscarSustituto(r)}
+                    onYaLoTengo={() => marcarYaLoTengo(r.index)}
+                    wishSaved={wishSaved.has(r.faltaKey)}
+                    onToggleWish={() => toggleWish(r)}
+                  />
+                ))}
               </ul>
             </div>
           ) : null}
 
-          {planParecido.length > 0 ? (
+          {duelos.length > 0 ? (
             <div className="flex flex-col gap-2.5">
               <div className="flex items-baseline justify-between">
+                {/* El nombre de la cápsula, que Roberto pidió de referencia:
+                    aquí viven TODAS las comparaciones sugerida-vs-tuya. */}
                 <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
-                  Te sugiero — cámbiala si no te late
+                  Decide si te sirve — la sugerida o la tuya
                 </span>
-                <span className="tabular text-[11px] text-muted">{planParecido.length}</span>
+                <span className="tabular text-[11px] text-muted">{duelos.length}</span>
               </div>
-              {/* Con el PORQUÉ visible: en la fase de decidir, esconderlo tras
-                  el tap sería pedirle que confirme a ciegas. */}
-              <ul className="flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-x-6">
-                {planParecido.map((r) => {
-                  const { by, byImage } = ov(r);
-                  return (
-                    <li key={r.index}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setZoom({
-                            index: r.index,
-                            image: byImage,
-                            nombre: by ?? r.nombre,
-                            sub: r.porque,
-                          })
-                        }
-                        className="group flex w-full items-center gap-3 rounded-md border border-line bg-surface p-2.5 text-left transition-colors hover:border-ink"
-                      >
-                        <span className="relative block h-[64px] w-[52px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
-                          {byImage ? (
-                            <Image src={byImage} alt="" fill sizes="52px" className="object-cover" />
-                          ) : (
-                            <span className="flex h-full w-full items-center justify-center text-muted">
-                              <Icon name="gancho" size={16} />
-                            </span>
-                          )}
-                        </span>
-                        <span className="flex min-w-0 flex-1 flex-col">
-                          <b className="truncate text-[13.5px] font-semibold text-ink">
-                            {by ?? r.nombre}
-                          </b>
-                          <span className="line-clamp-2 text-[11.5px] leading-snug text-muted">
-                            {r.porque}
-                          </span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-muted group-hover:text-ink">
-                          <Icon name="repetir" size={13} /> cambiar
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
+              <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
+                {duelos.map(({ r, tuya, tipo }) => (
+                  <DueloCard
+                    key={renderKey(r)}
+                    row={conRender(r)}
+                    tuya={tuya}
+                    onMia={() => {
+                      if (tipo === "falta") {
+                        elegirSustituto(r.index, { nombre: tuya.nombre, image: tuya.image, porque: "" });
+                      } else {
+                        // Parecido: "me quedo con la mía" = aceptar el match.
+                        setLocalDecide((d) => ({ ...d, [r.index]: "accept" }));
+                        void setTripOverride(tripId, r.index, "accept");
+                      }
+                    }}
+                    onSugerida={() => {
+                      if (tipo === "falta") {
+                        setDescartados((d) => new Set(d).add(r.index));
+                        void dismissTripCandidate(tripId, r.index);
+                      } else {
+                        // Parecido: "prefiero la sugerida" = tu prenda no la
+                        // cubre → pasa a compras. El candNo va detrás para que
+                        // el hueco recién nacido no re-abra duelo con OTRA
+                        // candidata: ya dijiste que quieres la sugerida.
+                        // Secuencial a propósito — las dos actions hacen
+                        // read-modify-write del MISMO blob de overrides.
+                        setLocalDecide((d) => ({ ...d, [r.index]: "reject" }));
+                        setDescartados((d) => new Set(d).add(r.index));
+                        void (async () => {
+                          await setTripOverride(tripId, r.index, "reject");
+                          await dismissTripCandidate(tripId, r.index);
+                        })();
+                      }
+                    }}
+                    onOtras={() => buscarSustituto(r, tipo === "parecido" ? "swap" : "falta")}
+                  />
+                ))}
               </ul>
             </div>
           ) : null}

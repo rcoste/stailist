@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.232.0] - 2026-08-13
+
+### Changed — el plan del viaje se parte por lo que significa, no por de dónde viene
+
+"No lo tienes" ahora es solo eso: lo que de verdad no hay con qué cubrir —
+cómpralo, mándalo a wishlist o di que ya lo tienes. Y **toda** comparación
+entre lo sugerido y algo tuyo vive junta en **"Decide si te sirve"**, con el
+mismo duelo de fotos: venga de una prenda parecida que te encontré o de una
+falta que tu clóset puede cubrir. Antes el duelo aparecía dentro de "no lo
+tienes" y los parecidos ni siquiera comparaban.
+
 ## [0.2.231.1] - 2026-08-13
 
 ### Fixed — las prendas sugeridas del viaje ya llegan con foto
