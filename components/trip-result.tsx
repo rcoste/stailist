@@ -144,69 +144,134 @@ function DueloCard({
   onOtras: () => void;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
+  // TOCAS → SE MARCA → BOTÓN QUE NOMBRA LA ELECCIÓN. Es el patrón exacto del
+  // duelo de la cápsula (DecideRow), y llegó tras rebote de Roberto: la v1 puso
+  // abajo una línea de instrucción ("toca la que te quedas") con el MISMO
+  // tratamiento que el botón de "ver otras" — dos filas idénticas donde una era
+  // texto y la otra acción, así que ninguna se leía como lo que era. La
+  // instrucción sobra cuando el gesto se explica solo: el anillo de tinta dice
+  // qué elegiste y el botón dice qué va a pasar.
+  const [sel, setSel] = useState<null | "sugerida" | "tuya">(null);
+  const onTapSugerida = () => {
+    if (render.state === "idle") void render.start();
+    setSel("sugerida");
+  };
   return (
     <li className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
-      <div className="flex flex-col gap-1 p-3.5 pb-2.5">
-        <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted">
+      <div className="flex flex-col gap-1 p-3.5 pb-3">
+        <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
           ¿te sirve la tuya?
         </span>
-        <p className="editorial text-[14.5px] leading-snug text-muted">{row.porque}</p>
+        <div className="mt-0.5 flex items-start gap-[9px]">
+          <span aria-hidden className="display shrink-0 pt-1 text-[14px] leading-none text-ink">
+            ✦
+          </span>
+          <p className="display text-[16px] italic leading-5 text-ink2">{row.porque}</p>
+        </div>
       </div>
-      <div className="grid grid-cols-2 border-t border-line">
-        <button
-          type="button"
-          onClick={onSugerida}
-          className="group flex flex-col border-r border-line text-left transition-colors hover:bg-bg"
+
+      {/* El duelo 50/50. El `gap-px` sobre el fondo ES la hairline que separa
+          las dos mitades (una sola línea, sin bordes duplicados). */}
+      <div className="grid grid-cols-2 gap-px bg-line2">
+        <DuelOpViaje
+          rotulo="la sugerida"
+          nombre={row.nombre}
+          elegida={sel === "sugerida"}
+          onClick={onTapSugerida}
         >
-          <span className="relative block aspect-[4/5] w-full overflow-hidden bg-tile">
+          <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="172px" />
+        </DuelOpViaje>
+        <DuelOpViaje
+          rotulo="en tu clóset"
+          nombre={tuya.nombre}
+          elegida={sel === "tuya"}
+          onClick={() => setSel("tuya")}
+        >
+          {tuya.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={tuya.image} alt="" className="absolute inset-0 h-full w-full object-contain" />
+          ) : (
             <span className="absolute inset-0 flex items-center justify-center">
-              <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="180px" />
+              <Icon name="gancho" size={22} className="text-ink/25" />
             </span>
-          </span>
-          <span className="flex flex-col gap-0.5 p-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
-              la sugerida
-            </span>
-            <span className="text-[13px] font-semibold leading-tight text-ink">{row.nombre}</span>
-          </span>
-        </button>
+          )}
+        </DuelOpViaje>
+      </div>
+
+      {/* El botón aparece AL PICAR y su label nombra la elección. Uno solo y de
+          ancho completo: alineado con una columna se leería como su pie. */}
+      {sel ? (
         <button
           type="button"
-          onClick={onMia}
-          className="group flex flex-col text-left transition-colors hover:bg-bg"
+          onClick={() => (sel === "tuya" ? onMia() : onSugerida())}
+          style={{ animation: "step-in var(--dur-short) var(--ease-enter) both" }}
+          className="flex h-[52px] w-full items-center justify-center border-t border-line bg-accent-soft text-[14.5px] font-bold text-ink transition-colors hover:bg-line2"
         >
-          <span className="relative block aspect-[4/5] w-full overflow-hidden bg-tile">
-            {tuya.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={tuya.image} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-muted">
-                <Icon name="gancho" size={22} />
-              </span>
-            )}
-          </span>
-          <span className="flex flex-col gap-0.5 p-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
-              en tu clóset
-            </span>
-            <span className="text-[13px] font-semibold leading-tight text-ink">{tuya.nombre}</span>
-          </span>
+          elegir {sel === "sugerida" ? "la sugerida" : "la tuya"}
         </button>
-      </div>
-      {/* Tocar la foto ES el veredicto (Roberto sobre la cápsula: "ya nada más
-          le dabas clic a la que querías"). La línea lo dice para que no haya
-          que adivinarlo; los botones de "prefiero/me quedo" de la v1 sobraban. */}
-      <p className="border-t border-line py-2.5 text-center text-[11.5px] text-muted">
-        toca la que te quedas — esa se va a tu maleta
-      </p>
+      ) : null}
+
+      {/* La salida, DENTRO del card (en una lista de duelos, una salida por
+          fuera no se sabría de cuál es) y CON ÍCONO: sin él era una fila de
+          texto centrado igual a la instrucción de arriba — indistinguible de
+          una etiqueta. Mismo peso que el "ninguna de las dos me va" de la
+          cápsula: secundaria, nunca compitiendo con el botón de elegir. */}
       <button
         type="button"
         onClick={onOtras}
-        className="min-h-9 border-t border-line text-[11.5px] font-medium text-muted transition-colors hover:text-ink"
+        className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-line2 text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
       >
-        ver otras de mi clóset
+        <Icon name="lupa" size={13} /> ver otras de mi clóset
       </button>
     </li>
+  );
+}
+
+/** Una mitad del duelo. Elegida = anillo de tinta sobre la foto, SIN relleno:
+ *  ese gris es el del botón de elegir y juntos se funden en un bloque. */
+function DuelOpViaje({
+  rotulo,
+  nombre,
+  elegida,
+  onClick,
+  children,
+}: {
+  rotulo: string;
+  nombre: string;
+  elegida: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button type="button" onClick={onClick} className="flex flex-col bg-surface text-left">
+      {/* Alto FIJO (no aspect-ratio): las dos fotos y los dos pies caen en la
+          misma línea base sin importar la proporción de cada archivo. */}
+      <span className="relative block h-[172px] w-full overflow-hidden bg-tile">
+        {children}
+        {elegida ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30 shadow-[inset_0_0_0_2px_var(--c-ink)]"
+          />
+        ) : null}
+      </span>
+      <span
+        className={`block px-[11px] pt-[9px] text-[9.5px] font-bold uppercase tracking-[0.13em] ${
+          elegida ? "text-ink" : "text-faint"
+        }`}
+      >
+        {rotulo}
+      </span>
+      {/* Dos líneas reservadas: un nombre largo no debe correr el rótulo de su
+          columna respecto al de la otra. */}
+      <span
+        className={`block min-h-12 px-[11px] pb-[11px] pt-[3px] text-[13.5px] leading-[17px] text-ink ${
+          elegida ? "font-bold" : "font-semibold"
+        }`}
+      >
+        {nombre}
+      </span>
+    </button>
   );
 }
 

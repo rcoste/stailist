@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.232.2] - 2026-08-13
+
+### Fixed — el duelo del viaje se entiende solo
+
+Tocas la prenda que te quedas, se marca con un recuadro, y aparece un botón que
+dice exactamente qué va a pasar: **"elegir la tuya"**. Antes había abajo una
+línea de instrucción con el mismo aspecto que el botón de al lado — ninguna de
+las dos se leía como lo que era. Es el mismo duelo de tus esenciales, ahora
+también aquí.
+
 ## [0.2.232.1] - 2026-08-13
 
 ### Changed — los duelos del viaje, uno a la vez
