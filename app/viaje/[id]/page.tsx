@@ -10,6 +10,7 @@ import { faltaKey, catalogStorageKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { tripDays, tripLogicLine, luggageSummary, type Bolsas, type Luggage, type TripOutfit, type Occasion } from "@/lib/trip";
 import { fotosDeViajes } from "@/lib/destino-imagen-cache";
+import { candidatasDeOverrides } from "@/lib/trip-candidatas";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
@@ -229,6 +230,12 @@ export default async function ViajeDetallePage({
   // La frontera de las dos fases del flujo (plan → maleta): confirmado ≡ ya
   // generó looks alguna vez. La misma señal del candado, cero columnas nuevas.
   const confirmado = rawOutfits !== null;
+  // Las candidatas del duelo ya calculadas (overrides "cand:i"), con su imagen
+  // resuelta contra el mismo mapa del clóset que usa todo lo demás.
+  const { candidatas, descartados } = candidatasDeOverrides(
+    overrides as Record<string, unknown> | null,
+    (nombre) => imageMap[nombre] ?? null
+  );
   // Índices de lo empacable (para la barra del rail de desktop — el estado vivo
   // de los checks lo pone el TripPackedProvider).
   const empacaIndices = rows
@@ -330,6 +337,8 @@ export default async function ViajeDetallePage({
               rows={rows}
               savedWishKeys={savedWishKeys}
               confirmado={confirmado}
+              candidatasIniciales={candidatas}
+              descartadosIniciales={descartados}
             />
           }
           looks={

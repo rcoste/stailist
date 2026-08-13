@@ -90,6 +90,147 @@ export async function suggestTripSubstitutes(
   return matches.map((m) => ({ ...m, image: imageMap[m.nombre] ?? null }));
 }
 
+/**
+ * LAS CANDIDATAS DEL DUELO, calculadas solas al abrir el plan (pieza C de la
+ * consistencia cápsula↔viaje, 2026-08-13).
+ *
+ * Antes esta búsqueda vivía detrás de la lupa "en mi clóset" y solo corría si
+ * la tocabas — y quien no la tocaba veía una sección que le decía "cómpralo"
+ * teniendo en su clóset con qué cubrirla. La jugada declarada del módulo
+ * ("cúbrelo con lo que ya tienes") estaba escondida detrás de un tap opcional.
+ *
+ * Corre UNA VEZ por hueco en la vida del viaje: el resultado (aunque sea "no
+ * hay nada") se persiste en overrides con el patrón de llaves de "sub:" —
+ * "cand:i" = el nombre, "cand:i" ausente + "candNo:i" nunca escrito por aquí.
+ * Un hueco sin candidata decente guarda "" para no re-pagar la búsqueda.
+ */
+export async function proposeTripSubstitutes(
+  tripId: string
+): Promise<Record<number, { nombre: string; image: string | null }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  const [{ data: trip }, { data: profile }] = await Promise.all([
+    supabase
+      .from("trips")
+      .select("capsule_target, capsule_match, overrides, outfits")
+      .eq("id", tripId)
+      .eq("user_id", user.id)
+      .single(),
+    supabase.from("profiles").select("gender").eq("id", user.id).single(),
+  ]);
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  if (!target) return {};
+  // El duelo es UI de la fase de plan. Confirmado (looks generados), la lupa
+  // de siempre basta — no se gasta en proponer lo que ya nadie va a revisar.
+  if (trip?.outfits !== null) return {};
+
+  const match = (trip?.capsule_match as CapsuleMatch | null) ?? null;
+  const overrides = ((trip?.overrides as Record<string, unknown> | null) ?? {}) as Record<
+    string,
+    unknown
+  >;
+
+  // Los huecos SIN propuesta previa (ni candidata, ni descarte, ni sustituto).
+  const used = new Set<string>();
+  const huecos: number[] = [];
+  for (const r of capsuleRows(target, match, overrides as CapsuleOverrides)) {
+    if (r.covered && r.by) used.add(r.by);
+    if (
+      r.effective === "falta" &&
+      overrides[`cand:${r.index}`] === undefined &&
+      overrides[`candNo:${r.index}`] === undefined &&
+      overrides[`sub:${r.index}`] === undefined
+    ) {
+      huecos.push(r.index);
+    }
+  }
+  for (const [k, v] of Object.entries(overrides)) {
+    if (k.startsWith("sub:") && typeof v === "string") used.add(v);
+  }
+  if (huecos.length === 0) return {};
+
+  const [closetAll, imageMap] = await Promise.all([
+    loadClosetLite(supabase, user.id),
+    loadClosetImageMap(supabase, user.id),
+  ]);
+  const closet = closetAll.filter((c) => !used.has(c.nombre));
+  if (closet.length === 0) return {};
+
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  // En paralelo: la espera de la persona es la del hueco MÁS lento, no la suma.
+  const resultados = await Promise.all(
+    huecos.map(async (i) => {
+      try {
+        const matches = await matchSubstitutes(target.items[i], closet, gender, null);
+        return { i, top: matches[0] ?? null };
+      } catch {
+        // Un hueco que falla no guarda nada: el próximo abrir lo reintenta.
+        return { i, top: null, fallo: true };
+      }
+    })
+  );
+
+  // Un solo write, sobre overrides RE-LEÍDOS: mientras la IA pensaba, la
+  // persona pudo tocar el plan (decisiones, sustitutos) y escribir sobre el
+  // blob viejo se los pisaría.
+  const { data: fresh } = await supabase
+    .from("trips")
+    .select("overrides")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  const next = ((fresh?.overrides as Record<string, unknown> | null) ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const out: Record<number, { nombre: string; image: string | null }> = {};
+  for (const r of resultados) {
+    if ("fallo" in r && r.fallo) continue;
+    // "" = ya se buscó y no hubo nada decente: no volver a pagar la búsqueda.
+    next[`cand:${r.i}`] = r.top?.nombre ?? "";
+    if (r.top) out[r.i] = { nombre: r.top.nombre, image: imageMap[r.top.nombre] ?? null };
+  }
+  await supabase
+    .from("trips")
+    .update({ overrides: next })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+  revalidatePath(`/viaje/${tripId}`);
+  return out;
+}
+
+/** "Prefiero la sugerida": cierra el duelo del hueco y no se vuelve a abrir. */
+export async function dismissTripCandidate(tripId: string, index: number): Promise<void> {
+  if (!Number.isInteger(index)) return;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("overrides")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  if (!trip) return;
+  const overrides = ((trip.overrides as Record<string, unknown> | null) ?? {}) as Record<
+    string,
+    unknown
+  >;
+  overrides[`candNo:${index}`] = true;
+  await supabase
+    .from("trips")
+    .update({ overrides })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+  revalidatePath(`/viaje/${tripId}`);
+}
+
 // "Ya lo tengo" sobre una prenda que te FALTA en el viaje: la suma a tu clóset
 // de verdad (es tuya, sirve para todos tus outfits) con sus atributos de la
 // cápsula ideal, le genera imagen (prestada del catálogo o, si no hay, su render

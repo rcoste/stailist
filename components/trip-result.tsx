@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
@@ -8,6 +8,8 @@ import { Spinner } from "@/components/spinner";
 import { PrendaZoom, type PrendaZoomData } from "@/components/prenda-zoom";
 import { IdealTileInner, useIdealRender, type RenderArgs } from "@/components/ideal-tile";
 import {
+  dismissTripCandidate,
+  proposeTripSubstitutes,
   setTripPacked,
   setTripPackedAll,
   setTripSubstitute,
@@ -15,6 +17,7 @@ import {
   markTripFaltaOwned,
   type SubstituteCandidate,
 } from "@/lib/trip-actions";
+import type { Candidata } from "@/lib/trip-candidatas";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import { SuggestionCard } from "@/components/suggestion-card";
 import { useTripPacked } from "@/components/trip-packed-context";
@@ -110,6 +113,109 @@ function FaltaCard({
   );
 }
 
+// EL DUELO DE UNA FALTA: la sugerida contra la candidata de TU clóset.
+//
+// Es la interacción de la cápsula ("decide si te sirve") traída al viaje —
+// pieza C de la consistencia (2026-08-13). Antes la candidata vivía detrás de
+// la lupa "en mi clóset" y quien no la tocaba veía "cómpralo" teniendo en su
+// clóset con qué cubrirlo. Decidir viendo, en un tap.
+//
+// SIN "ninguna de las dos me va", a propósito: en la cápsula ese botón guarda
+// un veto con motivo que el motor aprende; el viaje no tiene dónde guardar
+// vetos, y ofrecer el gesto sin la memoria sería prometer aprendizaje que no
+// existe (la misma razón por la que la falta del viaje no tiene "no me va").
+function DueloCard({
+  row,
+  cand,
+  onMia,
+  onSugerida,
+  onOtras,
+}: {
+  row: TripRow;
+  cand: Candidata;
+  onMia: () => void;
+  onSugerida: () => void;
+  onOtras: () => void;
+}) {
+  const render = useIdealRender(row.renderArgs, row.idealImage);
+  return (
+    <li className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="flex flex-col gap-1 p-3.5 pb-2.5">
+        <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted">
+          te falta — ¿la cubres con la tuya?
+        </span>
+        <p className="editorial text-[14.5px] leading-snug text-muted">{row.porque}</p>
+      </div>
+      <div className="grid grid-cols-2 border-t border-line">
+        <button
+          type="button"
+          onClick={onSugerida}
+          className="group flex flex-col border-r border-line text-left transition-colors hover:bg-bg"
+        >
+          <span className="relative block aspect-[4/5] w-full overflow-hidden bg-tile">
+            <span className="absolute inset-0 flex items-center justify-center">
+              <IdealTileInner render={render} colorFamilia={row.renderArgs.colorFamilia} sizes="180px" />
+            </span>
+          </span>
+          <span className="flex flex-col gap-0.5 p-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
+              la sugerida
+            </span>
+            <span className="text-[13px] font-semibold leading-tight text-ink">{row.nombre}</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onMia}
+          className="group flex flex-col text-left transition-colors hover:bg-bg"
+        >
+          <span className="relative block aspect-[4/5] w-full overflow-hidden bg-tile">
+            {cand.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cand.image} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-muted">
+                <Icon name="gancho" size={22} />
+              </span>
+            )}
+          </span>
+          <span className="flex flex-col gap-0.5 p-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
+              en tu clóset
+            </span>
+            <span className="text-[13px] font-semibold leading-tight text-ink">{cand.nombre}</span>
+          </span>
+        </button>
+      </div>
+      {/* El pie NOMBRA los dos veredictos (tocar una foto también decide, pero
+          un pie explícito es lo que hace obvio que esto es una pregunta). */}
+      <div className="grid grid-cols-2 border-t border-line text-[12.5px] font-semibold">
+        <button
+          type="button"
+          onClick={onSugerida}
+          className="min-h-10 border-r border-line text-muted transition-colors hover:text-ink"
+        >
+          prefiero la sugerida
+        </button>
+        <button
+          type="button"
+          onClick={onMia}
+          className="min-h-10 text-ink transition-colors hover:bg-bg"
+        >
+          me quedo con la mía
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onOtras}
+        className="min-h-9 border-t border-line text-[11.5px] font-medium text-muted transition-colors hover:text-ink"
+      >
+        ver otras de mi clóset
+      </button>
+    </li>
+  );
+}
+
 // LA MISMA PANTALLA, DOS FASES — el flujo del handoff de Roberto (2026-08-13):
 //
 //   1. EL PLAN (antes de confirmar): revisar qué propone la maleta, en SU
@@ -131,12 +237,18 @@ export function TripResult({
   rows,
   savedWishKeys = [],
   confirmado = true,
+  candidatasIniciales = {},
+  descartadosIniciales = [],
 }: {
   tripId: string;
   rows: TripRow[];
   savedWishKeys?: string[];
   /** false = fase de plan (revisar y confirmar); true = fase de empacar. */
   confirmado?: boolean;
+  /** Candidatas del duelo ya persistidas (overrides "cand:i"). */
+  candidatasIniciales?: Record<number, Candidata>;
+  /** Duelos ya cerrados con "prefiero la sugerida" ("candNo:i"). */
+  descartadosIniciales?: number[];
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
@@ -161,6 +273,33 @@ export function TripResult({
   } | null>(null);
   const isPacked = (i: number) => !!packed[String(i)];
   const router = useRouter();
+  // EL DUELO (pieza C, 2026-08-13): la candidata de tu clóset para cada falta,
+  // propuesta sola en vez de escondida tras la lupa. Server-first (persistidas
+  // en overrides), y el efecto de abajo completa las que falten UNA vez.
+  const [candidatas, setCandidatas] = useState<Record<number, Candidata>>(candidatasIniciales);
+  const [descartados, setDescartados] = useState<Set<number>>(
+    () => new Set(descartadosIniciales)
+  );
+  const propuse = useRef(false);
+  useEffect(() => {
+    // Solo en fase de plan, solo una vez, y solo si hay faltas sin resolver.
+    // proposeTripSubstitutes es idempotente y barato de llamar de más (si no
+    // hay huecos nuevos regresa vacío sin tocar la IA), pero el guard evita el
+    // doble disparo del strict mode y los re-renders.
+    if (confirmado || propuse.current) return;
+    const hayHuecoSinPropuesta = rows.some(
+      (r) =>
+        eff(r) === "falta" &&
+        candidatasIniciales[r.index] === undefined &&
+        !descartadosIniciales.includes(r.index)
+    );
+    if (!hayHuecoSinPropuesta) return;
+    propuse.current = true;
+    void proposeTripSubstitutes(tripId).then((nuevas) => {
+      setCandidatas((c) => ({ ...nuevas, ...c }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // "Ya lo tengo" en curso por índice (agrega al clóset + genera imagen, ~unos seg).
   const [ownBusy, setOwnBusy] = useState<Set<number>>(new Set());
   // Wishlist in-situ (coherente con la cápsula del clóset): manda/quita una
@@ -274,17 +413,37 @@ export function TripResult({
                 <span className="tabular text-[11px] text-muted">{falta.length}</span>
               </div>
               <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
-                {falta.map((r) => (
-                  <FaltaCard
-                    key={r.index}
-                    row={r}
-                    ownBusy={ownBusy.has(r.index)}
-                    onBuscar={() => buscarSustituto(r)}
-                    onYaLoTengo={() => marcarYaLoTengo(r.index)}
-                    wishSaved={wishSaved.has(r.faltaKey)}
-                    onToggleWish={() => toggleWish(r)}
-                  />
-                ))}
+                {falta.map((r) => {
+                  const cand = candidatas[r.index];
+                  // Duelo solo si hay candidata viva y el hueco sigue virgen:
+                  // ni descartado ("prefiero la sugerida") ni ya sustituido.
+                  if (cand && !descartados.has(r.index) && !localSub[r.index]) {
+                    return (
+                      <DueloCard
+                        key={r.index}
+                        row={r}
+                        cand={cand}
+                        onMia={() => elegirSustituto(r.index, { nombre: cand.nombre, image: cand.image, porque: "" })}
+                        onSugerida={() => {
+                          setDescartados((d) => new Set(d).add(r.index));
+                          void dismissTripCandidate(tripId, r.index);
+                        }}
+                        onOtras={() => buscarSustituto(r)}
+                      />
+                    );
+                  }
+                  return (
+                    <FaltaCard
+                      key={r.index}
+                      row={r}
+                      ownBusy={ownBusy.has(r.index)}
+                      onBuscar={() => buscarSustituto(r)}
+                      onYaLoTengo={() => marcarYaLoTengo(r.index)}
+                      wishSaved={wishSaved.has(r.faltaKey)}
+                      onToggleWish={() => toggleWish(r)}
+                    />
+                  );
+                })}
               </ul>
             </div>
           ) : null}
