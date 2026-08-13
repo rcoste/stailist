@@ -40,6 +40,14 @@ const OCASION_LABEL: Record<string, string> = {
   evento: "Evento",
   viaje: "Aeropuerto",
   refrescar: "Refrescar",
+  // Los cuatro del fit check (lib/registro): un fit check guarda en `occasion`
+  // a dónde ibas. Sin estas cuatro, el fallback capitaliza la clave cruda y el
+  // diario dice "Rapido", sin acento.
+  normal: "Día normal",
+  trabajo: "Trabajo",
+  especial: "Algo especial",
+  rapido: "Gym o mandado",
+  espejo: "Me lo puse",
 };
 export const ocasionLabel = (k: string) =>
   OCASION_LABEL[k] ?? k.charAt(0).toUpperCase() + k.slice(1);

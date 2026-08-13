@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { contextoEspejo } from "@/lib/espejo";
+import { REGISTROS } from "@/lib/registro";
 
 const base = {
   gender: "mujer" as const,
@@ -9,6 +10,7 @@ const base = {
   paraguas: false,
   vetos: [],
   momento: null,
+  registro: null,
 };
 
 describe("contextoEspejo — lo que la amiga sabe antes de opinar", () => {
@@ -55,5 +57,41 @@ describe("contextoEspejo — lo que la amiga sabe antes de opinar", () => {
     expect(contextoEspejo({ ...base, vetos: ["shorts", "tacones"] })).toContain(
       "no se pone: shorts, tacones"
     );
+  });
+});
+
+describe("contextoEspejo — la vara (v4)", () => {
+  it("SIN registro, PROHÍBE adivinar la ocasión", () => {
+    // Es el estado de donde venimos, y no era neutral: sin decir nada el modelo
+    // rellenaba solo. En las lecturas reales tituló "Lino y domingo" y "Café en
+    // el jardín" sin que nadie le dijera qué día era ni dónde estaba.
+    const c = contextoEspejo(base);
+    expect(c).toMatch(/NO SÉ a dónde va/);
+    expect(c).toMatch(/no lo adivines/);
+  });
+
+  it("cada registro manda su vara, y son distintas entre sí", () => {
+    const textos = REGISTROS.map((r) => contextoEspejo({ ...base, registro: r.key }));
+    for (const t of textos) expect(t).not.toMatch(/NO SÉ a dónde va/);
+    // Si dos registros mandaran el mismo texto, la chip sería decorativa.
+    expect(new Set(textos).size).toBe(REGISTROS.length);
+  });
+
+  it("la vara va ANTES que la colorimetría y que el clima", () => {
+    // El orden es el argumento: el registro decide si el look SIRVE; el color y
+    // el clima afinan uno que ya sirve. Si el modelo lee primero la paleta,
+    // contesta de color a alguien que va mal vestida para una boda.
+    const c = contextoEspejo({
+      ...base,
+      registro: "especial",
+      weather: { temp_c: 20, condition: "despejado" },
+    });
+    expect(c.indexOf("A dónde va")).toBeLessThan(c.indexOf("Su colorimetría"));
+    expect(c.indexOf("A dónde va")).toBeLessThan(c.indexOf("El clima de hoy"));
+  });
+
+  it("'gym o un mandado' NO le pide arreglarse", () => {
+    const c = contextoEspejo({ ...base, registro: "rapido" });
+    expect(c).toContain("NO HAY VARA");
   });
 });
