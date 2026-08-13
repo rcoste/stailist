@@ -120,9 +120,8 @@ export function TripOutfits({
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium text-ink">¿Y qué me pongo?</span>
           <span className="text-sm text-muted">
-            Te armo los looks que tu maleta hace — pero primero revísala tú:
-            acepta o cambia lo que te sugerí, y desde ahí me dices &ldquo;genera
-            mis looks&rdquo;.
+            Te armo los looks que tu maleta hace — pero primero revisa el plan:
+            acepta o cambia lo que te sugerí, y desde ahí me dices que te late.
           </span>
         </div>
         {error ? (
@@ -133,7 +132,7 @@ export function TripOutfits({
           onClick={onViewMaleta}
           className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
         >
-          revisar mi maleta
+          revisar el plan
         </button>
       </div>
     );
