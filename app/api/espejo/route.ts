@@ -5,6 +5,7 @@ import { MODELO_ESPEJO } from "@/lib/models";
 import { resolveWeather } from "@/lib/weather";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { esRegistro } from "@/lib/registro";
+import { guardarFallo, guardarRecibo } from "@/lib/recibos";
 import {
   contextoEspejo,
   mirarEspejo,
@@ -86,9 +87,30 @@ export async function POST(request: NextRequest) {
   });
 
   let lectura: LecturaEspejo;
+  const t0 = Date.now();
   try {
-    ({ lectura } = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO));
+    const r = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO);
+    lectura = r.lectura;
+    // El recibo NO se espera: la persona está en la puerta y un insert de
+    // instrumentación no puede meterse en su camino.
+    void guardarRecibo(supabase, {
+      userId: user.id,
+      tarea: "espejo",
+      modelo: MODELO_ESPEJO,
+      version: ESPEJO_VERSION,
+      recibo: r.recibo,
+    });
   } catch {
+    // El fallo también se registra: un promedio que sólo cuenta los éxitos
+    // miente hacia el lado optimista, y cuánto tarda en tronar es la mitad de
+    // la respuesta a "¿cuánto tarda esto?".
+    void guardarFallo(supabase, {
+      userId: user.id,
+      tarea: "espejo",
+      modelo: MODELO_ESPEJO,
+      version: ESPEJO_VERSION,
+      ms: Date.now() - t0,
+    });
     return NextResponse.json({ error: "no_pude_mirar" }, { status: 502 });
   }
 
