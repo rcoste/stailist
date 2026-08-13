@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.230.1] - 2026-08-13
+
+### Changed — las fotos de destino, ahora claras
+
+Las fotos de viaje seguían en blanco y negro, pero la receta pedía "negros
+profundos" y los edificios de piedra oscura salían como una mancha (la catedral
+de Guatemala fue la prueba). La receta nueva es luminosa y aireada — elegida
+comparando seis acabados del mismo edificio al tamaño real de la card. Se
+regeneraron las 19 fotos del catálogo y las 3 ya generadas por viajes reales.
+
 ## [0.2.230.0] - 2026-08-13
 
 ### Changed — el viaje ahora sí fluye como el handoff: plan → maleta → looks
