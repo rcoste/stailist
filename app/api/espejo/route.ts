@@ -106,9 +106,18 @@ export async function POST(request: NextRequest) {
   }
 
   // FALLA HACIA ADELANTE: si el guardado truena, el consejo sale igual.
+  //
+  // PERO NO EN SILENCIO (2026-08-14). Este bloque tragaba TODOS sus errores:
+  // `const { data }` sin leer `error`, y un `catch {}` vacío. Cuando el fit
+  // check se volvió el único escritor de `worn` —la señal de oro del
+  // proyecto— resultó que los dos únicos fit checks posteriores crearon su
+  // outfit y NO escribieron el evento. Y no había forma de saber por qué:
+  // el fallo no dejaba rastro ni en logs ni en la respuesta.
+  //
+  // Ahora cada paso dice qué pasó. Sigue sin romperle el consejo a nadie.
   let outfitId: string | null = null;
   try {
-    const { data } = await supabase
+    const { data, error: errOutfit } = await supabase
       .from("outfits")
       .insert({
         user_id: user.id,
@@ -143,9 +152,11 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
     outfitId = (data?.id as string) ?? null;
+    if (errOutfit) console.error("[espejo] no se guardó el look:", errOutfit.message);
 
-    // DOS eventos, no uno. `espejo_subido` mide el uso del fit check; `worn` es
-    // la señal de comportamiento que el resto del producto ya consumía.
+    // DOS eventos, y ahora en DOS inserts. `espejo_subido` mide el uso del fit
+    // check; `worn` es la señal de comportamiento que el resto del producto ya
+    // consumía.
     //
     // El `worn` lo escribe AQUÍ desde el rediseño del home (2026-08-11), porque
     // ahí murió la card "¿te lo pusiste ayer?" — que era su único escritor. Sin
@@ -154,28 +165,42 @@ export async function POST(request: NextRequest) {
     // el orden del clóset por prendas usadas (lib/loved-items) y el KPI del
     // admin. Y el fit check es MEJOR fuente que la card: la persona no contesta
     // un favor, manda la foto de lo que trae puesto.
-    await supabase.from("events").insert([
-      {
+    //
+    // POR QUÉ SEPARADOS, y no un array de dos como estaban: iban juntos y el
+    // resultado medido fue que se escribía el primero y no el segundo — dos de
+    // dos fit checks con su outfit creado y sin `worn`. La causa no se pudo
+    // reconstruir (el insert de las dos filas juntas funciona al probarlo a
+    // mano contra esta misma base), y eso es justo el argumento para separarlos:
+    // en un solo insert, lo que le pase a una fila decide por la otra, y aquí
+    // las dos filas no valen lo mismo. `worn` es la métrica del experimento;
+    // no puede depender de que su compañera de viaje tenga un buen día.
+    const { error: errEvento } = await supabase.from("events").insert({
+      user_id: user.id,
+      type: "espejo_subido",
+      data: { outfit_id: outfitId, con_clima: !!weather },
+    });
+    if (errEvento) console.error("[espejo] no se registró el uso:", errEvento.message);
+
+    // Sin fila de outfit no hay `worn`: el evento existe para colgarse de un
+    // look concreto (así lo leen el motor y el clóset) y uno suelto sería
+    // ruido que infla el KPI sin enseñarle nada a nadie.
+    if (outfitId) {
+      const { error: errWorn } = await supabase.from("events").insert({
         user_id: user.id,
-        type: "espejo_subido",
-        data: { outfit_id: outfitId, con_clima: !!weather },
-      },
-      // Sin fila de outfit no hay `worn`: el evento existe para colgarse de un
-      // look concreto (así lo leen el motor y el clóset) y uno suelto sería
-      // ruido que infla el KPI sin enseñarle nada a nadie.
-      ...(outfitId
-        ? [
-            {
-              user_id: user.id,
-              type: "worn",
-              outfit_id: outfitId,
-              data: { via: "espejo" },
-            },
-          ]
-        : []),
-    ]);
-  } catch {
-    // el consejo ya está; el registro se pierde
+        type: "worn",
+        outfit_id: outfitId,
+        data: { via: "espejo" },
+      });
+      // A voz en grito: es LA señal del experimento. Si vuelve a fallar,
+      // que quede escrito por qué en vez de descubrirlo tres semanas después
+      // contando filas a mano.
+      if (errWorn) console.error("[espejo] SEÑAL DE ORO PERDIDA:", errWorn.message);
+    } else {
+      console.error("[espejo] sin outfit: no hay señal de oro que registrar");
+    }
+  } catch (e) {
+    // El consejo ya está; el registro se pierde. Pero se dice.
+    console.error("[espejo] el registro del fit check falló:", e);
   }
 
   return NextResponse.json({ ...lectura, outfitId });

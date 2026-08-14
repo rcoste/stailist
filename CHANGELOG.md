@@ -2,6 +2,46 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.238.2] - 2026-08-14
+
+### Fixed — el fit check volvió a registrar "me lo puse"
+
+La señal de oro del experimento —alguien se pone de verdad un outfit— dejó de
+escribirse cuando el fit check se volvió su único escritor (rediseño del home,
+11 de agosto). Los dos fit checks posteriores crearon su fila de look y
+**ninguno** dejó el evento.
+
+Esa señal no es sólo un contador: alimenta la línea más fuerte del prompt del
+motor ("se lo puso de verdad"), el orden del clóset por prendas usadas y el KPI
+del admin.
+
+- **Los dos eventos se escriben por separado.** Iban en un solo insert de dos
+  filas, y lo medido fue que se guardaba el primero y no el segundo. La causa
+  no se pudo reconstruir —las dos filas juntas se insertan bien al probarlas a
+  mano contra la misma base— y eso es justo el argumento para separarlas: la
+  métrica del experimento no puede depender de que su compañera de viaje tenga
+  un buen día.
+- **La ruta ya no se traga sus errores.** Guardaba el look y los eventos con un
+  `catch` vacío y sin leer nunca el `error` de Supabase, así que el fallo no
+  dejaba rastro en ningún sitio. Ahora cada paso dice qué pasó. Sigue sin
+  romperle el consejo a nadie: si el registro falla, la lectura sale igual.
+
+### Added — el dashboard avisa cuando una señal deja de llegar
+
+Un bloque rojo arriba del admin cuando dos eventos que tienen que moverse
+juntos dejan de hacerlo (fit check → "me lo puse"). Hoy diría: *2 de 36
+produjeron worn, 6% llega*.
+
+Existe porque los dos bugs de esta semana —el precalentado que se cancelaba
+solo y este— son el mismo tipo: código que no lanza, no pinta error y deja de
+hacer su trabajo. Los dos se encontraron por casualidad y con semanas de
+retraso. Un KPI en cero se lee como "la gente no lo usa" cuando puede
+significar "dejó de registrarse", y distinguir esas dos cosas es lo que costó
+las semanas.
+
+Sólo se pinta si hay algo roto: un bloque permanente en verde entrena a
+saltárselo.
+
 ## [0.2.238.1] - 2026-08-14
 
 ### Changed — la vuelta sube a la altura del wordmark (handoff de diseño)

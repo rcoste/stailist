@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { LOOKS } from "@/lib/looks";
 import { contarSenalOroPorCercania } from "@/lib/senal-oro";
+import { evaluarSenales, type Veredicto } from "@/lib/senales-vivas";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -17,6 +18,43 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 // Segundos legibles: bajo 2 min se ven como "90s"; arriba, en minutos.
 function fmtDur(s: number): string {
   return s < 120 ? `${s}s` : `${Math.round(s / 60)}min`;
+}
+
+/**
+ * Las señales que dejaron de llegar. SOLO se pinta si hay algo que decir: un
+ * bloque permanente en verde entrena a saltárselo, y el día que se ponga rojo
+ * nadie lo va a mirar.
+ */
+function SenalesRotas({ senales }: { senales: Veredicto[] }) {
+  const rotas = senales.filter((s) => s.estado === "seca" || s.estado === "floja");
+  if (rotas.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-error bg-surface p-4">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-error">
+          Una señal dejó de llegar
+        </h2>
+        <span className="text-xs text-muted">
+          Estos eventos tienen que moverse juntos. Que no lo hagan casi siempre es
+          código roto, no falta de uso.
+        </span>
+      </div>
+      <ul className="flex flex-col gap-2.5">
+        {rotas.map((s) => (
+          <li key={s.nombre} className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-ink">
+              {s.nombre}{" "}
+              <span className={s.estado === "seca" ? "text-error" : "text-warning"}>
+                · {s.estado === "seca" ? "seca" : `${s.cobertura}% llega`}
+              </span>
+            </span>
+            <span className="text-xs text-muted">{s.detalle}</span>
+            <span className="text-xs text-muted">Sin esto se pierde: {s.cuesta}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 // Encabezado de bloque del dashboard. Mantiene el mismo registro visual que el
@@ -130,6 +168,43 @@ export default async function AdminOverview() {
     (estiloViewRes.data ?? []).map((e) => e.user_id as string)
   ).size;
 
+  // ── ¿ALGUNA SEÑAL DEJÓ DE LLEGAR? ────────────────────────────────────────
+  // Pares que TIENEN que moverse juntos. Ver lib/senales-vivas: los dos bugs
+  // de agosto (el precalentado que se cancelaba solo y el fit check que dejó
+  // de escribir `worn`) se descubrieron por casualidad con semanas de retraso,
+  // y los dos se habrían visto aquí a la primera. Ventana de 30 días: con el
+  // volumen de la beta, 7 días casi siempre dice "sin datos".
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: ev30 } = await supabase
+    .from("events")
+    .select("type")
+    .gte("created_at", since30d)
+    .in("type", ["espejo_subido", "worn", "first_outfit_ttv", "onboarding_step"]);
+  const cuenta = (t: string) => (ev30 ?? []).filter((e) => e.type === t).length;
+  const senales = evaluarSenales([
+    {
+      nombre: "fit check → me lo puse",
+      disparador: "espejo_subido",
+      disparos: cuenta("espejo_subido"),
+      consecuencia: "worn",
+      consecuencias: cuenta("worn"),
+      cuesta:
+        "la señal de oro del experimento, la línea más fuerte del prompt del motor y el orden del clóset por prendas usadas",
+    },
+    {
+      nombre: "terminar onboarding → primer look",
+      disparador: "onboarding_step",
+      disparos: (profilesRes.data ?? []).filter((p) => (p.onboarding_step ?? 0) >= 5)
+        .length,
+      consecuencia: "first_outfit_ttv",
+      consecuencias: cuenta("first_outfit_ttv"),
+      // El TTV se mide una vez por persona, así que aquí la cobertura baja no
+      // es un fallo: la mayoría de perfiles terminó onboarding hace meses.
+      minimo: 999,
+      cuesta: "la medición del TTV (la promesa de <2 min)",
+    },
+  ]);
+
   const aFecha = (r: { user_id: unknown; created_at: unknown }) => ({
     userId: String(r.user_id),
     createdAt: String(r.created_at),
@@ -205,6 +280,11 @@ export default async function AdminOverview() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-h2 font-semibold text-ink">Dashboard del experimento</h1>
+
+      {/* ARRIBA DEL TODO cuando hay algo roto: un KPI en cero se lee como "la
+          gente no lo usa" y puede significar "dejó de registrarse". Distinguir
+          esas dos cosas costó dos bugs de semanas en agosto. */}
+      <SenalesRotas senales={senales} />
 
       {/* KPIs principales */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
