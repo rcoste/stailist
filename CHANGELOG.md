@@ -2,6 +2,50 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.241.0] - 2026-08-14
+
+### Fixed — lo que escribes en "¿algo en mente?" ya cuenta como una ocasión
+
+Roberto pidió un look para un fin de semana en un viñedo y salió con **polo,
+lino y mocasines de suela lisa**: country club, no viñedo mexicano. La causa no
+era el modelo — el motor entendió la palabra, escribió *"una tarde de viñedo"* y
+eligió lino. Lo que le faltaba era todo lo demás.
+
+**El campo libre mandaba `objective: "diario"`.** Un fin de semana en el campo
+llegaba al motor como *un día normal en el que además se mencionó un viñedo*,
+con una sola línea de andamiaje. Mientras tanto, elegir un chip ("una boda")
+traía piso de formalidad, el perfil de la ocasión —dónde te sientas, cuánto
+caminas, si hay fotos— y hasta el contexto cultural mexicano que el prompt ya
+tenía escrito. El texto libre era ciudadano de segunda.
+
+Y ahí es justo donde aparecen las necesidades no cubiertas: **el campo libre se
+ha usado tres veces en toda la historia del producto, y las tres son casos que
+la rejilla de chips no tiene** — dos viñedos y un día de gym. Los 8 chips son
+todos urbanos y sociales.
+
+- **`lib/ocasiones.ts`**: cuatro perfiles que se infieren de lo que escribiste —
+  campo (viñedo, rancho, hacienda), naturaleza, playa/alberca y ejercicio. **La
+  rejilla no crece**: no es un chip nuevo, no hay nada más que elegir.
+- **Los perfiles describen la SITUACIÓN, nunca el atuendo**, y hay un test que
+  falla si alguien escribe una prenda dentro de uno. "Se camina sobre grava y
+  refresca al atardecer" es un hecho del lugar; "ponte guayabera y sombrero"
+  sería el estereotipo de quien lo escribe — y en este proyecto ya se colaron
+  tres veces reglas de vestimenta con un default equivocado. Funciona mejor
+  además: de "suela lisa sobre grava" el motor deduce el calzado **con el clóset
+  y el gusto de esa persona delante**, que es información que el catálogo no
+  tiene.
+- **El chip elegido a mano siempre le gana** al perfil inferido.
+- Lo que no se reconoce sigue viajando tal cual: nada se bloquea, nada se
+  reescribe.
+
+Medido con el motor real sobre el clóset de 160 prendas y el mismo plan: dos de
+los tres looks pasaron a **botines que pisan tierra**, citando el frío del
+atardecer y las fotos. El tercero todavía saca mocasines — es una corrida, no
+una medición, y el instrumento para dictaminar sigue siendo el comparador con
+corrida pareada.
+
+Prompt a v52.
+
 ## [0.2.240.0] - 2026-08-14
 
 ### Removed — una sola puerta para subir fotos de ropa

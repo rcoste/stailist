@@ -965,3 +965,68 @@ describe("el ancla: una prenda o varias", () => {
     expect(linea).not.toContain("fantasma");
   });
 });
+
+describe("perfil de ocasión: el texto libre deja de ser ciudadano de segunda", () => {
+  // EL CASO REAL (Roberto, 2026-08-14): escribió "ida a viñedos con mis amigos"
+  // y salió con mocasines de suela lisa para caminar sobre grava. La causa no
+  // era el modelo: el campo libre manda objective "diario", así que TODO el
+  // andamiaje que llegaba era la línea de "tiene en mente". Un chip ("una
+  // boda") sí traía perfil de la ocasión y piso de formalidad.
+  const ctx = (over: Record<string, unknown>): EngineContext =>
+    ({
+      gender: "hombre",
+      objective: "diario",
+      plan: null,
+      formality: null,
+      tipoEvento: null,
+      timeOfDay: "dia",
+      weather: { temp_c: 23, condition: "parcialmente nublado" },
+      items: [],
+      tasteTags: [],
+      vetoes: [],
+      recentCombos: [],
+      lifestyle: null,
+      archetype: null,
+      season: null,
+      flow: null,
+      silueta: null,
+      fitPref: null,
+      ageStyling: null,
+      tasteSignal: EMPTY_TASTE_SIGNAL,
+      seedItemIds: [],
+      styleReference: null,
+      styleWords: null,
+      ...over,
+    }) as unknown as EngineContext;
+
+  it("el viñedo llega al motor con el terreno, no sólo con la palabra", () => {
+    const t = contextBlock(ctx({ plan: "Ida a viñedos con mis amigos" })).join("\n");
+    // Lo que antes ya viajaba.
+    expect(t).toContain("Ida a viñedos con mis amigos");
+    // Lo que faltaba, y es lo que descarta los mocasines de suela lisa.
+    expect(t).toContain("Dónde es:");
+    expect(t).toContain("grava");
+  });
+
+  it("un plan que no reconocemos no gana ni pierde nada", () => {
+    const t = contextBlock(ctx({ plan: "una junta con el contador" })).join("\n");
+    expect(t).toContain("una junta con el contador");
+    expect(t).not.toContain("Dónde es:");
+  });
+
+  // Lo que la persona ELIGIÓ a mano gana sobre lo que nosotros adivinemos de su
+  // texto. Si escribe "boda en una hacienda" y ya marcó el chip de boda, el
+  // catálogo de bodas manda — no le encimamos el perfil de campo.
+  it("el chip elegido a mano le gana al perfil inferido", () => {
+    const t = contextBlock(
+      ctx({ plan: "boda en una hacienda", tipoEvento: "boda", objective: "evento" })
+    ).join("\n");
+    expect(t).not.toContain("Dónde es:");
+  });
+
+  it("la playa hereda el piso que ya estaba medido, sin decirle 'evento'", () => {
+    const t = contextBlock(ctx({ plan: "nos vamos a la playa el sábado" })).join("\n");
+    expect(t).toContain("Nivel que pide el lugar:");
+    expect(t).toContain("arreglarse de más");
+  });
+});
