@@ -39,6 +39,16 @@ valor sin el muro.
 
 ## Estado actual (verificado 2026-06-20)
 
+> **DESACTUALIZADO desde 2026-08-14.** Este documento dice que el carrete
+> "complementa — no reemplaza" el alta de una-foto-una-prenda. Lo reemplazó:
+> `components/add-photo-flow.tsx` se borró. Producía 7 prendas de 1066, dejaba
+> la foto cruda sin render limpio, y cuando detectaba más de una prenda ofrecía
+> un botón para pasarle la misma foto al carrete — la escotilla que delataba
+> cuál de las dos puertas sobraba. Hoy la única puerta de fotos es
+> `import-carrete-flow.tsx`, y recibe igual una prenda que doce. Lo que sí
+> sigue vigente de este doc es lo otro: el checklist de básicos es el piso de
+> cero fricción y no lo reemplaza nadie.
+
 - `AddPhotoFlow` (`components/add-photo-flow.tsx`): 1 foto → comprime a 1280px →
   `POST /api/analizar-prenda` (Claude `claude-opus-4-8`, devuelve **1** objeto
   `PrendaAnalisis`) → modal confirma nombre/tipo/formalidad/temporada

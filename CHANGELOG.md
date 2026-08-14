@@ -2,6 +2,35 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.240.0] - 2026-08-14
+
+### Removed — una sola puerta para subir fotos de ropa
+
+Había dos que hacían lo mismo: "una prenda" (una foto → una prenda) y "varias de
+golpe". La primera era la misma función peor hecha — **no generaba el render
+limpio**, así que dejaba en el clóset la foto cruda del usuario mientras que la
+otra devuelve el flat-lay de catálogo.
+
+Producía **7 prendas de 1066** en toda la vida del producto. Y el propio código
+ya delataba cuál sobraba: cuando la visión detectaba más de una prenda en la
+foto, esa pantalla ofrecía un botón para pasarle la misma foto a la puerta de al
+lado. Una escotilla de escape que existía porque la puerta estaba mal.
+
+Dos puertas que hacen lo mismo son fricción por sí solas: obligan a elegir, y la
+fricción de catalogar es el enemigo declarado del proyecto. El menú pasa de tres
+opciones a dos.
+
+- **La puerta que queda ya no pide un ritual.** Decía "varias de golpe — vacía el
+  clóset en la cama"; siendo la única, tiene que recibir igual de bien a quien
+  trae unos tenis sueltos. Ahora: *"tus fotos — tómale foto a tu ropa, una o
+  muchas, saco cada prenda que vea"*.
+- **Se fue la tercera copia del vocabulario de prendas.** Vivía en el archivo
+  borrado; `TODOS.md` la tenía anotada como deuda. Hoy solo existe en
+  `components/prenda-campos.tsx`.
+- **Las 7 prendas que habían entrado por ahí ya tienen su render limpio**,
+  generado desde su foto original (imagen→imagen, el mismo motor del carrete).
+  Cuatro eran de usuarias reales — entre ellas el corsé de encaje de Andy.
+
 ## [0.2.239.0] - 2026-08-14
 
 ### Added — el correo que rescata a las 48 horas, no a los siete días
