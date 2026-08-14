@@ -32,7 +32,10 @@ export function CapsuleTabs({
   const [tab, setTab] = useState<CapsuleTab>(initialTab);
 
   return (
-    <div className="flex flex-col gap-6">
+    // gap-3 (12px) y no gap-6: con 24px quedaba un colchón muerto entre la
+    // línea de las pestañas y el primer bloque, y la pestaña activa se leía
+    // desconectada de lo que estaba mostrando.
+    <div className="flex flex-col gap-3">
       <div className="-mt-1 flex gap-5 border-b border-line">
         <Tab label="el porqué" on={tab === "porque"} onClick={() => setTab("porque")} />
         <Tab

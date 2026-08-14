@@ -182,20 +182,16 @@ export default async function CapsulaPage({
     : null;
 
   return (
-    <AppShell desktop="wide">
+    // Esenciales es DESTINO, no pestaña del clóset: su vuelta y su menú viven
+    // en el header, a la altura del wordmark (ver AppShell). Antes ocupaban una
+    // fila propia de ~50px justo debajo, que no llevaba nada más.
+    <AppShell
+      desktop="wide"
+      back={{ href: "/closet", label: "clóset" }}
+      accion={<EsencialesMenu />}
+    >
       <section className="flex flex-col gap-6 pt-1">
-        {/* Móvil (mockup 2026-08-13): esenciales es DESTINO, no pestaña del
-            clóset — back a clóset + menú "···". Desktop conserva su nav. */}
-        <div className="flex items-center justify-between lg:hidden">
-          <Link
-            href="/closet"
-            className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink"
-          >
-            <Icon name="chevron" size={15} rotate={180} />
-            clóset
-          </Link>
-          <EsencialesMenu />
-        </div>
+        {/* Desktop conserva su nav: allá no hay header móvil que aproveche. */}
         <div className="hidden lg:block">
           <ClosetNav />
         </div>
@@ -207,7 +203,9 @@ export default async function CapsulaPage({
           vista={!!profile.hints_seen?.["intro:esenciales"]}
           total={target.items.length}
         >
-        <div className="-mt-2 flex flex-col gap-1.5 lg:mt-0">
+        {/* Sin `-mt-2`: ese margen negativo compensaba la fila de back que
+            vivía aquí y ya no existe — dejarlo pegaba el título al wordmark. */}
+        <div className="flex flex-col gap-1.5">
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink lg:text-[38px]">
             tus <em className="display font-normal italic">esenciales</em>
           </h1>
