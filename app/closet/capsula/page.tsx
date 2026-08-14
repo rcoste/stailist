@@ -48,9 +48,12 @@ export default async function CapsulaPage({
 
   const match = profile.capsule_match;
   const supabase = await createClient();
-  const [closet, images] = await Promise.all([
+  // nameToId siempre (antes solo con looks): la lista de esenciales lo usa para
+  // auto-dibujar tus prendas sin foto (render bajo demanda, como en la maleta).
+  const [closet, images, nameToId] = await Promise.all([
     loadClosetLite(supabase, profile.id),
     loadClosetImageMap(supabase, profile.id),
+    loadClosetNameToId(supabase, profile.id),
   ]);
   // Biblioteca compartida: para los combos ideales (tipo+color+género) que ya tienen
   // un render generado, los mostramos al instante. Una sola query por todos los items.
@@ -130,18 +133,13 @@ export default async function CapsulaPage({
   // look — ver migración 0088). Sin esto, el corazón se apagaba al recargar y el
   // try-on se volvía a generar (y a cobrar) cada vez.
   let lookRowByKey = new Map<string, { favorito: boolean; tryon: string | null }>();
-  let nameToId: Record<string, string> = {};
   if (rawLooks?.length) {
-    const [{ data: lookRows }, ids] = await Promise.all([
-      supabase
-        .from("outfits")
-        .select("capsule_look_key, favorited_at, tryon_path")
-        .eq("user_id", profile.id)
-        .eq("source", "capsula")
-        .is("deleted_at", null),
-      loadClosetNameToId(supabase, profile.id),
-    ]);
-    nameToId = ids;
+    const { data: lookRows } = await supabase
+      .from("outfits")
+      .select("capsule_look_key, favorited_at, tryon_path")
+      .eq("user_id", profile.id)
+      .eq("source", "capsula")
+      .is("deleted_at", null);
     const paths = (lookRows ?? [])
       .map((r) => r.tryon_path as string | null)
       .filter((p): p is string => !!p);
@@ -348,6 +346,7 @@ export default async function CapsulaPage({
                     overrides={profile.capsule_overrides}
                     swaps={profile.capsule_swaps}
                     images={images}
+                    nameToId={nameToId}
                     catalogImages={catalogImages}
                     savedWishKeys={savedWishKeys}
                     userId={profile.id}
