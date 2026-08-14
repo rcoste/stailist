@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Icon, type IconName } from "@/components/icon";
 import { markIntroSeen } from "@/lib/intros";
 
@@ -28,11 +29,21 @@ const ARRIBA: IconName[] = ["gancho", "gancho", "gancho"];
 const ABAJO: IconName[] = ["gancho", "gancho", "gancho"];
 
 export function EsencialesIntro({
-  total,
+  total = 0,
+  modo = "lista",
   onListo,
 }: {
-  /** Cuántas piezas tiene su lista, para que el cierre hable de LO SUYO. */
-  total: number;
+  /** Cuántas piezas tiene su lista, para que el cierre hable de LO SUYO.
+   *  Solo lo usa el modo "lista" — antes del quiz todavía no hay lista. */
+  total?: number;
+  /**
+   * "lista" (default): la intro clásica, al ver la lista ya generada.
+   * "previa": ANTES del cuestionario (pedido de Roberto 2026-08-13: sin esto,
+   * quien llega sin cápsula cae directo a las preguntas sin saber qué está
+   * creando ni para qué). Misma idea, cierre y CTA en futuro — lo que sigue
+   * son las preguntas, no la lista.
+   */
+  modo?: "lista" | "previa";
   onListo: () => void;
 }) {
   const [, start] = useTransition();
@@ -79,9 +90,9 @@ export function EsencialesIntro({
           </span>
         </p>
         <p className="text-[14px] leading-relaxed text-ink2">
-          Te armé {total > 0 ? `las ${total} piezas` : "la lista"} que TU vida
-          pide — por tu trabajo, tu clima y tus colores. Ahora te digo cuáles ya
-          tienes, cuáles te faltan y cuántos looks desbloquea cada una.
+          {modo === "previa"
+            ? "Cuéntame de tu vida en unas preguntas rápidas: tu trabajo, tu clima, tus planes. Con eso te armo la lista de piezas que TU vida pide."
+            : `Te armé ${total > 0 ? `las ${total} piezas` : "la lista"} que TU vida pide — por tu trabajo, tu clima y tus colores. Ahora te digo cuáles ya tienes, cuáles te faltan y cuántos looks desbloquea cada una.`}
         </p>
       </div>
 
@@ -92,13 +103,28 @@ export function EsencialesIntro({
           // Si el guardado falla, lo peor que pasa es volver a ver la intro.
           onListo();
           start(async () => {
-            await markIntroSeen("esenciales");
+            // Cada momento gasta SU crédito: la previa no puede consumir el de
+            // la lista, o quien abandone el quiz llegaría después a su lista
+            // sin explicación (ver lib/intros.ts).
+            await markIntroSeen(modo === "previa" ? "esenciales-previa" : "esenciales");
           });
         }}
         className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
       >
-        ver mis esenciales <Icon name="chevron" size={17} />
+        {modo === "previa" ? "empezar" : "ver mis esenciales"} <Icon name="chevron" size={17} />
       </button>
+
+      {/* Salida. La intro previa REEMPLAZA al cuestionario, y el cuestionario es
+          quien trae el "Atrás" — sin esto la pantalla queda sin tab bar y sin
+          vuelta, o sea un callejón sin salida en la PWA. */}
+      {modo === "previa" ? (
+        <Link
+          href="/closet"
+          className="-mt-1 flex min-h-11 items-center justify-center text-sm font-medium text-muted transition-colors hover:text-ink"
+        >
+          ahora no
+        </Link>
+      ) : null}
     </section>
   );
 }
@@ -137,14 +163,16 @@ function Operador({ signo }: { signo: string }) {
  */
 export function EsencialesGate({
   vista,
-  total,
+  total = 0,
+  modo = "lista",
   children,
 }: {
   vista: boolean;
-  total: number;
+  total?: number;
+  modo?: "lista" | "previa";
   children: React.ReactNode;
 }) {
   const [cerrada, setCerrada] = useState(false);
   if (vista || cerrada) return <>{children}</>;
-  return <EsencialesIntro total={total} onListo={() => setCerrada(true)} />;
+  return <EsencialesIntro total={total} modo={modo} onListo={() => setCerrada(true)} />;
 }

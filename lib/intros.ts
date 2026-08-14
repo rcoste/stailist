@@ -15,8 +15,18 @@ import { createClient } from "@/lib/supabase/server";
 // "volver a ver los tips" del Perfil también las reinicia, que es justo lo que
 // alguien espera de ese botón.
 
-export type IntroId = "esenciales";
+// "esenciales" = al ver la lista ya armada (habla de SUS piezas).
+// "esenciales-previa" = antes del cuestionario (qué vas a crear y para qué).
+// Son dos ids y no uno porque marcan momentos distintos: si compartieran
+// crédito, quien abandona el quiz a media pregunta —probable, quedan ~7 más y
+// ~40s de generación— llegaría después a su lista de 30 prendas sin ninguna
+// explicación, que es justo lo que la intro existe para evitar.
+export type IntroId = "esenciales" | "esenciales-previa";
 
+// OJO: este archivo es "use server" — aquí SOLO se pueden exportar funciones
+// async. Un lector puro (`introVista(hints, id)`) que ahorraría a las páginas
+// armar `intro:<id>` a mano tendría que vivir en un módulo aparte; anotado en
+// TODOS.md en vez de crear un archivo a mitad de un ship.
 const KEY = (id: IntroId) => `intro:${id}`;
 
 export async function markIntroSeen(id: IntroId): Promise<void> {
