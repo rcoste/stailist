@@ -1,7 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+// Una sola definición de a dónde va una fila (la usan el onClick y el href).
+const hrefUsuario = (id: string) => `/admin/usuarios/${id}`;
 
 export type UserRow = {
   id: string;
@@ -136,9 +140,32 @@ function Num({ n, suffix }: { n: number; suffix?: string }) {
 }
 
 export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
+  const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("lastActive");
   const [asc, setAsc] = useState(false);
   const [filters, setFilters] = useState<Set<FilterKey>>(new Set());
+  // Fila en la que ya se picó (navegación en vuelo): se atenúa como acuse de
+  // recibo — el detalle tarda en llegar (firma URLs de todo su clóset) y sin
+  // señal el click se leía como "no reaccionó" (Roberto, 2026-08-13).
+  const [yendo, setYendo] = useState<string | null>(null);
+
+  // Volver con Atrás no re-monta este componente (el App Router conserva el
+  // estado del segmento), así que sin esto la tabla entera se quedaba atenuada
+  // e inerte al regresar — la misma regresión que el cambio venía a matar.
+  useEffect(() => {
+    setYendo(null);
+  }, [rows]);
+
+  // TODA la fila navega, no solo el texto del correo: picarle a cualquier
+  // celda era exactamente el "le pico y no pasa nada" reportado.
+  //
+  // El candado es POR FILA (`=== id`) y no global: si el detalle tarda y la
+  // persona se arrepiente y pica otra, esa otra tiene que responder.
+  const abrir = (id: string) => {
+    if (yendo === id) return;
+    setYendo(id);
+    router.push(hrefUsuario(id));
+  };
 
   const toggleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -255,11 +282,17 @@ export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
               return (
                 <tr
                   key={r.id}
-                  className="border-b border-line last:border-0 transition-colors duration-200 hover:bg-bg"
+                  onClick={() => abrir(r.id)}
+                  className={`cursor-pointer border-b border-line last:border-0 transition-colors duration-200 hover:bg-bg ${
+                    yendo === r.id ? "opacity-50" : ""
+                  }`}
                 >
                   <td className="px-3 py-2.5 text-left">
+                    {/* El Link se queda por accesibilidad y abrir-en-pestaña;
+                        navega a lo mismo que la fila. */}
                     <Link
-                      href={`/admin/usuarios/${r.id}`}
+                      href={hrefUsuario(r.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="font-medium text-ink hover:text-accent"
                     >
                       <span className="truncate">{r.email}</span>
