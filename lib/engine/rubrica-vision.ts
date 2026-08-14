@@ -1,4 +1,5 @@
-import { llamar, parsearJson, type Recibo } from "@/lib/proveedores";
+import { parsearJson, type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { VISION_MODEL } from "@/lib/models";
 import {
   briefParaRubrica,
@@ -73,7 +74,9 @@ export type LookVision = {
  */
 export async function evaluarLookConVision(
   brief: BriefRubrica,
-  look: LookVision
+  look: LookVision,
+  /** Igual que en la rúbrica de texto: hoy siempre `null` (evales y scripts). */
+  quien: QuienMide | null = null
 ): Promise<{ nota: NotaRubrica; recibo: Recibo }> {
   const conFoto = look.prendas.filter((p) => p.imagen);
   const sinFoto = look.prendas.filter((p) => !p.imagen);
@@ -94,15 +97,18 @@ export async function evaluarLookConVision(
     .filter(Boolean)
     .join("\n");
 
-  const recibo = await llamar({
-    modelo: VISION_MODEL,
-    system: SYSTEM_RUBRICA_VISION,
-    texto,
-    imagenes: conFoto.map((p) => p.imagen!),
-    schema: SCHEMA_RUBRICA as unknown as Record<string, unknown>,
-    // 1100: con rv2 el análisis describe además el registro de estilo que ve.
-    maxTokens: 1100,
-  });
+  const recibo = await medir(
+    quien && { ...quien, tarea: "rubrica-vision", version: RUBRICA_VISION_VERSION },
+    {
+      modelo: VISION_MODEL,
+      system: SYSTEM_RUBRICA_VISION,
+      texto,
+      imagenes: conFoto.map((p) => p.imagen!),
+      schema: SCHEMA_RUBRICA as unknown as Record<string, unknown>,
+      // 1100: con rv2 el análisis describe además el registro de estilo que ve.
+      maxTokens: 1100,
+    }
+  );
   if (recibo.truncada) throw new Error("RUBRICA_VISION_TRUNCADA");
   return { nota: normalizarNota(parsearJson<NotaRubrica>(recibo.texto)), recibo };
 }

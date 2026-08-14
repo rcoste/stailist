@@ -32,6 +32,9 @@ export async function POST(request: NextRequest) {
 
   // contarPersonas ya falla hacia 0 por dentro: esta ruta nunca es un 502 que
   // el cliente tenga que manejar. El aviso es una ayuda, la carga es el trabajo.
-  const personas = await contarPersonas({ mediaType, base64: b64 }, VISION_MODEL);
+  const personas = await contarPersonas({ mediaType, base64: b64 }, VISION_MODEL, {
+    supabase,
+    userId: user.id,
+  });
   return NextResponse.json({ personas });
 }

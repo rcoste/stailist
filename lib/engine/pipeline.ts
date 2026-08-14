@@ -4,6 +4,7 @@ import type { EngineContext } from "./prompt";
 import { alcanceDeFormalidad, type Alcance } from "./alcance";
 import type { Formalidad } from "@/lib/formalidad";
 import type { Recibo } from "@/lib/proveedores";
+import type { QuienMide } from "@/lib/recibos";
 
 // El pipeline COMPLETO del motor diario: generar candidatos → juez por outfit
 // (reparar/rechazar) → piso de 2 looks. Vivía dentro de /api/generate,
@@ -60,7 +61,17 @@ export type HooksPipeline = {
 export async function armarLooks(
   ctx: EngineContext,
   opciones: OpcionesGeneracion = {},
-  hooks: HooksPipeline = {}
+  hooks: HooksPipeline = {},
+  /**
+   * De quién es esta generación, para que cada llamada deje su recibo. Viaja
+   * igual al generador y al juez; cada uno le pone su nombre de tarea.
+   *
+   * `null` — que es el default y lo que pasan a propósito el comparador y los
+   * evales — significa NO registrar: son corridas de laboratorio, no de una
+   * persona, y contarlas como uso real movería los promedios que este mismo
+   * pipeline sirve para vigilar.
+   */
+  quien: QuienMide | null = null
 ): Promise<ResultadoPipeline> {
   // ANTES DE GASTAR UN TOKEN: ¿este clóset da para el código que se pidió? Es
   // una consulta al clóset, no una opinión — así que se contesta aquí y no en
@@ -76,7 +87,7 @@ export async function armarLooks(
     return { finalized: [], reviews: [], recibos: [], noAlcanza: alcance };
   }
 
-  const { outfits: candidates, recibo } = await generarConRecibo(ctx, opciones);
+  const { outfits: candidates, recibo } = await generarConRecibo(ctx, opciones, quien);
   const recibos: Recibo[] = [recibo];
   hooks.alCandidatos?.(candidates.length);
 
@@ -97,7 +108,7 @@ export async function armarLooks(
   // final si nos quedaríamos con menos de 2 looks.
   for (let i = 0; i < candidates.length; i++) {
     hooks.alRevisar?.(i);
-    const result = await reviewOutfit(ctx, candidates[i], finalized, false, opciones);
+    const result = await reviewOutfit(ctx, candidates[i], finalized, false, opciones, quien);
     if (result.recibo) recibos.push(result.recibo);
     const review: RevisionDeLook = {
       before: candidates[i].item_ids,

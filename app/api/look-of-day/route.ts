@@ -538,8 +538,13 @@ async function generateInto(
     }
 
     const startedAt = Date.now();
-    const candidates = await generateOutfits(ctx);
-    const result = await reviewOutfit(ctx, candidates[0], []);
+    // Con recibo: el look de hoy NO pasa por el pipeline (genera uno solo y lo
+    // revisa), así que su instrumentación se cablea aquí a mano. Es el camino
+    // que corre solo, en background y todos los días — o sea el que más barato
+    // sale de olvidar y más caro sale de no ver.
+    const quien = { supabase, userId };
+    const candidates = await generateOutfits(ctx, {}, quien);
+    const result = await reviewOutfit(ctx, candidates[0], [], false, {}, quien);
     const elegido = result.outfit;
 
     const { error: upErr } = await supabase

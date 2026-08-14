@@ -1,5 +1,6 @@
 import { PATRONES, type Patron } from "@/lib/prenda-atributos";
-import { llamar, type Modelo } from "@/lib/proveedores";
+import { type Modelo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import type { Recibo } from "@/lib/proveedores";
 
 // Leer UNA prenda de una foto: el prompt, el schema y la llamada, en un solo
@@ -182,9 +183,17 @@ export type LecturaPrenda = { analisis: PrendaAnalisis; recibo: Recibo };
  */
 export async function leerPrenda(
   imagen: { mediaType: string; base64: string },
-  modelo: Modelo
+  modelo: Modelo,
+  /**
+   * De quién es la prenda que se está leyendo. `null` = comparador o script.
+   *
+   * Ésta es la llamada que más veces corre en el producto (436 prendas leídas
+   * en un mes contra ~34 generaciones de looks), así que es donde más pesa que
+   * no dejara rastro: el gasto real del proyecto se decide aquí.
+   */
+  quien: QuienMide | null = null
 ): Promise<LecturaPrenda> {
-  const recibo = await llamar({
+  const recibo = await medir(quien && { ...quien, tarea: "vision-prenda" }, {
     modelo,
     maxTokens: 500,
     system: SYSTEM_PRENDA,
@@ -229,10 +238,14 @@ const SCHEMA_CONTAR = {
 /** ¿Hay más de una prenda en la foto? Falla hacia false: sin dato, no se avisa. */
 export async function contarPrendas(
   imagen: { mediaType: string; base64: string },
-  modelo: Modelo
+  modelo: Modelo,
+  quien: QuienMide | null = null
 ): Promise<boolean> {
   try {
-    const recibo = await llamar({
+    // TAREA PROPIA, no "vision-prenda": son 40 tokens de salida contra 500, y
+    // metidas en el mismo cubo el promedio de "leer una prenda" saldría a la
+    // mitad de lo que de verdad cuesta. Corren juntas pero no son la misma cosa.
+    const recibo = await medir(quien && { ...quien, tarea: "vision-contar-prendas" }, {
       modelo,
       maxTokens: 40,
       system: SYSTEM_CONTAR,

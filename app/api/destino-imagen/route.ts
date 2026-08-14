@@ -3,8 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { imagenCatalogo, primeraParada, slugDestino } from "@/lib/destino-imagen";
 import { elegirMotivo, promptDestino } from "@/lib/destino-gen";
 import { pedirImagen } from "@/lib/gemini-imagen";
-import { MODELO_MOTIVO_DESTINO } from "@/lib/models";
-import { guardarRecibo } from "@/lib/recibos";
 
 // LA FOTO DE UN DESTINO NUEVO, generada en background durante el wizard.
 //
@@ -95,13 +93,11 @@ export async function POST(request: NextRequest) {
   // fallo marca la fila 'fallo' (no se borra: guarda el motivo del intento y
   // el próximo viaje a este destino lo reintenta).
   try {
-    const { sujeto: motivo, recibo } = await elegirMotivo(lugar);
-    await guardarRecibo(supabase, {
-      userId: user.id,
-      tarea: "destino-motivo",
-      modelo: MODELO_MOTIVO_DESTINO,
-      recibo,
-    });
+    // El recibo lo deja `elegirMotivo` (por `medir`). Antes se guardaba aquí a
+    // mano y sólo el éxito: si la llamada tronaba no quedaba ni el intento, y
+    // este camino falla en silencio a propósito (la foto genérica es el
+    // fallback), así que era justo el que más falta hacía medir.
+    const { sujeto: motivo } = await elegirMotivo(lugar, { supabase, userId: user.id });
 
     const img = await pedirImagen([{ text: promptDestino(motivo) }], { aspecto: "4:3" });
     if ("motivo" in img) throw new Error(img.motivo);

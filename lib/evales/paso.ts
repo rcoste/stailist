@@ -73,7 +73,12 @@ export async function pasoEval(opciones: {
       const ctx = construirContexto(carga.base, peticionDeBrief(brief));
 
       const t0 = Date.now();
-      const { finalized, reviews, recibos } = await armarLooks(ctx);
+      // SIN RECIBO EN ai_calls, y a propósito (el `null` del final). Un eval
+      // dispara decenas de generaciones seguidas contra el clóset de otra
+      // persona: contarlas como uso real inflaría el costo y el volumen de la
+      // tarea "motor" justo en la tabla que existe para vigilarlos. El costo de
+      // la corrida sí se guarda — en `eval_briefs`, que es su sitio.
+      const { finalized, reviews, recibos } = await armarLooks(ctx, {}, {}, null);
       const ms = Date.now() - t0;
       const costo = recibos.reduce<number | null>(
         (a, r) => (r.costoUsd == null ? a : (a ?? 0) + r.costoUsd),
@@ -167,16 +172,21 @@ export async function pasoEval(opciones: {
 
     if (!texto) {
       try {
-        const r = await evaluarLook(briefRubrica, {
-          nombre: look.nombre,
-          explicacion: look.explicacion,
-          tip: look.tip ?? null,
-          prendas: its.map((it) => ({
-            nombre: it.attrs.nombre ?? "Prenda",
-            color: it.attrs.color ?? null,
-            material: (it.attrs as { material?: string }).material ?? null,
-          })),
-        });
+        const r = await evaluarLook(
+          briefRubrica,
+          {
+            nombre: look.nombre,
+            explicacion: look.explicacion,
+            tip: look.tip ?? null,
+            prendas: its.map((it) => ({
+              nombre: it.attrs.nombre ?? "Prenda",
+              color: it.attrs.color ?? null,
+              material: (it.attrs as { material?: string }).material ?? null,
+            })),
+          },
+          // Laboratorio: no se registra (ver arriba).
+          null
+        );
         texto = r.nota;
         costoNotas += r.recibo.costoUsd ?? 0;
       } catch (e) {
@@ -186,15 +196,20 @@ export async function pasoEval(opciones: {
 
     if (!vision) {
       try {
-        const r = await evaluarLookConVision(briefRubrica, {
-          nombre: look.nombre,
-          explicacion: look.explicacion,
-          tip: look.tip ?? null,
-          prendas: look.item_ids.map((id) => ({
-            nombre: porId.get(id)?.attrs.nombre ?? "Prenda",
-            imagen: imagenes.get(id) ?? null,
-          })),
-        });
+        const r = await evaluarLookConVision(
+          briefRubrica,
+          {
+            nombre: look.nombre,
+            explicacion: look.explicacion,
+            tip: look.tip ?? null,
+            prendas: look.item_ids.map((id) => ({
+              nombre: porId.get(id)?.attrs.nombre ?? "Prenda",
+              imagen: imagenes.get(id) ?? null,
+            })),
+          },
+          // Laboratorio: no se registra (ver arriba).
+          null
+        );
         vision = r.nota;
         costoNotas += r.recibo.costoUsd ?? 0;
       } catch (e) {

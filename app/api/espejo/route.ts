@@ -5,7 +5,6 @@ import { MODELO_ESPEJO } from "@/lib/models";
 import { resolveWeather } from "@/lib/weather";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { esRegistro } from "@/lib/registro";
-import { guardarFallo, guardarRecibo } from "@/lib/recibos";
 import {
   contextoEspejo,
   mirarEspejo,
@@ -87,36 +86,22 @@ export async function POST(request: NextRequest) {
   });
 
   let lectura: LecturaEspejo;
-  const t0 = Date.now();
   try {
-    const r = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO);
-    lectura = r.lectura;
-    // SE ESPERA, aunque la tentación sea no hacerlo.
+    // EL RECIBO LO DEJA `mirarEspejo` (por `medir`), no esta ruta.
     //
-    // La primera versión lo dejó como promesa suelta ("la persona está en la
-    // puerta"). Está mal en serverless: una vez que la ruta devuelve, la
-    // función se puede congelar y la promesa pendiente muere — o sea que el
-    // recibo se perdería justo en producción, que es donde importa, y en local
-    // funcionaría siempre. Un insert son decenas de milisegundos sobre una
-    // llamada que ya tardó seis mil.
-    await guardarRecibo(supabase, {
+    // Aquí vivían dos bloques a mano —guardarRecibo en el try, guardarFallo en
+    // el catch— y eran correctos: se ESPERABAN los dos, porque en serverless una
+    // promesa suelta muere cuando la función se congela tras responder, así que
+    // el recibo se perdería justo en producción y en local funcionaría siempre.
+    // Eso no cambió; sólo se mudó adentro de `medir`, que espera igual. Lo que
+    // se gana es que ya no hay dos estilos de instrumentar en el repo, y que el
+    // registro del FALLO —lo que este sitio hacía y ningún otro— viene de serie.
+    const r = await mirarEspejo({ mediaType, base64: b64 }, contexto, MODELO_ESPEJO, {
+      supabase,
       userId: user.id,
-      tarea: "espejo",
-      modelo: MODELO_ESPEJO,
-      version: ESPEJO_VERSION,
-      recibo: r.recibo,
     });
+    lectura = r.lectura;
   } catch {
-    // El fallo también se registra: un promedio que sólo cuenta los éxitos
-    // miente hacia el lado optimista, y cuánto tarda en tronar es la mitad de
-    // la respuesta a "¿cuánto tarda esto?".
-    await guardarFallo(supabase, {
-      userId: user.id,
-      tarea: "espejo",
-      modelo: MODELO_ESPEJO,
-      version: ESPEJO_VERSION,
-      ms: Date.now() - t0,
-    });
     return NextResponse.json({ error: "no_pude_mirar" }, { status: 502 });
   }
 

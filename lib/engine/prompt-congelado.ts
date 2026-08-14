@@ -1,4 +1,5 @@
-import { llamar, parsearJson, type Modelo, type Recibo } from "@/lib/proveedores";
+import { parsearJson, type Modelo, type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { modeloPorId } from "@/lib/proveedores/catalogo";
 import { buildOutfitSchema } from "./schema";
 import type { GeneratedOutfit } from "./generate";
@@ -67,7 +68,14 @@ export type ResultadoCongelado =
 export async function correrCongelado(
   congelado: PromptCongelado,
   etiqueta: string,
-  opciones: { modeloId?: string; idsVigentes: Set<string> }
+  opciones: { modeloId?: string; idsVigentes: Set<string> },
+  /**
+   * Correr una versión vieja del prompt es, por definición, laboratorio: esto
+   * lo dispara `scripts/prompt-comparar.ts` y nunca una persona. Va en `null`
+   * siempre, y el parámetro está para que la llamada pase por `medir` como
+   * todas las demás.
+   */
+  quien: QuienMide | null = null
 ): Promise<ResultadoCongelado> {
   const brief = congelado.briefs.find((b) => b.etiqueta === etiqueta);
   if (!brief) return { error: "sin_brief" };
@@ -85,13 +93,18 @@ export async function correrCongelado(
     : modeloPorId(congelado.modelo);
   if (!modelo) return { error: "modelo_desconocido" };
 
-  const recibo = await llamar({
-    modelo,
-    system: congelado.system,
-    texto: brief.texto,
-    schema: buildOutfitSchema(ids),
-    maxTokens: 3072,
-  });
+  // La versión que se anota es la CONGELADA, no la vigente: el punto entero de
+  // este camino es correr el prompt de entonces.
+  const recibo = await medir(
+    quien && { ...quien, tarea: "motor-congelado", version: congelado.version },
+    {
+      modelo,
+      system: congelado.system,
+      texto: brief.texto,
+      schema: buildOutfitSchema(ids),
+      maxTokens: 3072,
+    }
+  );
   if (recibo.truncada) throw new Error("TRUNCATED_RESPONSE");
 
   const parsed = parsearJson<{ outfits: GeneratedOutfit[] }>(recibo.texto);

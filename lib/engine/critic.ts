@@ -1,4 +1,5 @@
-import { llamar, type Recibo } from "@/lib/proveedores";
+import { type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { repararEnCodigo } from "./reparar";
 import { MODELO_JUEZ } from "@/lib/models";
 import { buildCriticSchema } from "./schema";
@@ -229,7 +230,16 @@ export async function reviewOutfit(
   /** Interno: esta llamada YA es el segundo intento, no encadenar otro. */
   esReintento = false,
   /** Los flags del arnés. Solo se lee `sinRepararEnCodigo` (ver más abajo). */
-  opciones: { sinRepararEnCodigo?: boolean } = {}
+  opciones: { sinRepararEnCodigo?: boolean } = {},
+  /**
+   * De quién es esta revisión, para el recibo. `null` = comparador, eval o
+   * script: sin sesión y sin ganas de ensuciar los promedios de uso real.
+   *
+   * El juez se mide APARTE del generador aunque corran pegados: es otro modelo,
+   * corre una vez POR outfit y la mitad del costo de una generación sale de
+   * aquí — junto con el motor, ese número no se puede ver.
+   */
+  quien: QuienMide | null = null
 ): Promise<CriticResult> {
   // Sin juez (no hay API key): pasa el outfit tal cual, veredicto neutro.
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -241,7 +251,11 @@ export async function reviewOutfit(
     // Por la puerta común (lib/proveedores): mismo recibo que el generador, y
     // el thinking lo apaga el adaptador. El modelo es FIJO (MODELO_JUEZ)
     // también en el comparador: la variable bajo prueba es el generador.
-    const recibo = await llamar({
+    //
+    // Sin `version`: el prompt del juez no se versiona hoy (PROMPT_VERSION es
+    // del generador y ponerlo aquí diría una versión que no describe este
+    // texto). Cuando el juez tenga la suya, va en esta línea.
+    const recibo = await medir(quien && { ...quien, tarea: "juez" }, {
       modelo: MODELO_JUEZ,
       system: CRITIC_SYSTEM_TEXT,
       texto: buildCriticMessage(ctx, outfit, priorOutfits),
@@ -327,7 +341,11 @@ export async function reviewOutfit(
       // resuelve eligiendo "otro pantalón cualquiera": hay que ver cuál, y eso
       // es criterio.
       if (roto.length > 0 && !esReintento) {
-        const segunda = await reviewOutfit(ctx, look, priorOutfits, true, opciones);
+        // `quien` viaja también al segundo intento: son DOS llamadas y cada una
+        // deja su fila. `sumarRecibos` junta el costo para quien llama, pero en
+        // la tabla tienen que verse las dos — si no, "el juez cuesta X" se
+        // quedaría corto justo en los looks que dieron más lata.
+        const segunda = await reviewOutfit(ctx, look, priorOutfits, true, opciones, quien);
         // Se queda con el segundo intento sólo si de verdad mejoró: si dejó el
         // look igual de roto (o peor), nos quedamos con el primero y no
         // pagamos el cambio.

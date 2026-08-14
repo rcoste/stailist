@@ -61,7 +61,10 @@ export async function POST(request: NextRequest) {
   // Confundir "esta foto no se deja leer" con "el servicio falló" quita lo
   // único accionable: volver a intentar.
   const [lectura, { closet, filas }] = await Promise.all([
-    leerPrendas({ mediaType, base64: b64 }, VISION_MODEL).catch((e) => {
+    leerPrendas({ mediaType, base64: b64 }, VISION_MODEL, {
+      supabase,
+      userId: user.id,
+    }).catch((e) => {
       console.error("[espejo/prendas] no se pudo leer:", e?.message ?? e);
       return null;
     }),

@@ -69,10 +69,21 @@ export async function POST(request: NextRequest) {
   // y hoy uno de los Gemini truena si le apagas el pensamiento.
   try {
     const imagen = { mediaType, base64 };
+    // `null` EXPLÍCITO: esto es el comparador de modelos. La misma foto se lee
+    // con cinco modelos seguidos y el recibo de cada lectura ya se guarda donde
+    // toca (comparador_lecturas, justo abajo). Meterlas además en ai_calls
+    // multiplicaría por cinco el volumen de "vision-prenda" con lecturas que
+    // ningún clóset recibió.
     const { salida, recibo } =
       corrida.modo === "varias"
-        ? await leerPrendas(imagen, modelo).then((r) => ({ salida: r.prendas, recibo: r.recibo }))
-        : await leerPrenda(imagen, modelo).then((r) => ({ salida: r.analisis, recibo: r.recibo }));
+        ? await leerPrendas(imagen, modelo, null).then((r) => ({
+            salida: r.prendas,
+            recibo: r.recibo,
+          }))
+        : await leerPrenda(imagen, modelo, null).then((r) => ({
+            salida: r.analisis,
+            recibo: r.recibo,
+          }));
 
     await supabase.from("comparador_lecturas").insert({
       corrida_id: corridaId,

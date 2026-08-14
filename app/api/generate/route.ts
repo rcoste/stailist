@@ -269,14 +269,25 @@ export async function POST(request: NextRequest) {
         // El pipeline compartido: generar → juez por outfit → piso de 2. Cada
         // look se guarda y streamea apenas se aprueba (hook alAprobar), para
         // esconder la latencia del juez detrás del reveal.
-        const { finalized, reviews, noAlcanza } = await armarLooks(ctx, {}, {
-          alCandidatos: (n) => send({ total: n }),
-          alRevisar: (i) =>
-            send({
-              phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
-            }),
-          alAprobar: saveAndStream,
-        });
+        //
+        // El último argumento es el recibo: de quién son estas llamadas. El
+        // pipeline se lo pasa al generador y al juez, y cada uno anota su tarea
+        // ("motor", "juez") en ai_calls. Va aquí y no dentro del pipeline
+        // porque el comparador corre este MISMO código sin sesión — él manda
+        // null y no ensucia los promedios de uso real.
+        const { finalized, reviews, noAlcanza } = await armarLooks(
+          ctx,
+          {},
+          {
+            alCandidatos: (n) => send({ total: n }),
+            alRevisar: (i) =>
+              send({
+                phase: i === 0 ? "afinando el styling…" : "armando el siguiente…",
+              }),
+            alAprobar: saveAndStream,
+          },
+          { supabase, userId: user.id }
+        );
 
         // El clóset no da para el código pedido: NO es un fallo, es la
         // respuesta. Va con lo que falta para que la pantalla lo pueda decir.

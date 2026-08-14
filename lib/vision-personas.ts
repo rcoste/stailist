@@ -1,4 +1,5 @@
-import { llamar, type Modelo } from "@/lib/proveedores";
+import { type Modelo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 
 // ¿CUÁNTAS PERSONAS SALEN EN LA FOTO?
 //
@@ -56,10 +57,16 @@ const SCHEMA_PERSONAS = {
  */
 export async function contarPersonas(
   imagen: { mediaType: string; base64: string },
-  modelo: Modelo
+  modelo: Modelo,
+  /** De quién es la foto. `null` = script (scripts/personas-en-foto.ts). */
+  quien: QuienMide | null = null
 ): Promise<number> {
   try {
-    const recibo = await llamar({
+    // El fallo se registra aunque aquí se trague: `medir` lo anota ANTES de
+    // relanzar, y el catch de abajo devuelve 0 como siempre. Justo en una
+    // función que falla hacia adelante importa el doble — si se rompiera del
+    // todo, la única señal sería que el aviso dejó de salir.
+    const recibo = await medir(quien && { ...quien, tarea: "vision-personas" }, {
       modelo,
       maxTokens: 40,
       system: SYSTEM_PERSONAS,
