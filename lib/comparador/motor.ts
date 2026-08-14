@@ -56,6 +56,23 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     modeloId: RETADORES_MOTOR.geminiFlash,
   },
   {
+    clave: "gemini-37",
+    etiqueta: "Gemini 3.7 Flash",
+    // El retador natural de hoy: producción YA es Gemini 3.5 Flash, así que
+    // esto compara generación contra generación del mismo proveedor y con el
+    // mismo prompt — la variable queda limpia.
+    //
+    // OJO CON LO QUE PROMETE EL ANUNCIO (2026-08-14): las mejoras que Google
+    // presume son de ingeniería de software, flujos agénticos y fidelidad a
+    // mockups. NINGUNA de esas es lo que este motor hace. Lo que sí es
+    // verificable y grande es el precio: $0.75/$3.75 contra $1.50/$9 de 3.5
+    // —la mitad de entrada y 2.4× menos de salida— pero es INTRODUCTORIO hasta
+    // el 31 de diciembre de 2026. Si gana por costo, esa fecha es parte de la
+    // decisión.
+    ayuda: "la generación siguiente del motor que ya corre (mitad de precio, intro hasta dic-2026)",
+    modeloId: RETADORES_MOTOR.gemini37,
+  },
+  {
     clave: "kimi",
     etiqueta: "Kimi K2.6",
     ayuda: "OTRO proveedor (vía OpenRouter, prepago): misma lectura de traje prestado",

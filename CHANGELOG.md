@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.241.1] - 2026-08-14
+
+### Added — Gemini 3.7 Flash entra al comparador como retador
+
+Google lo lanzó hoy. **No cambia nada de producción**: el motor sigue armando
+outfits con 3.5 Flash. Lo único nuevo es una opción más en la pantalla de
+admin, para poder decidir midiendo en vez de de oído — que es la regla escrita
+en `lib/models.ts`.
+
+Lo que el anuncio promete (ingeniería de software, flujos agénticos, fidelidad
+a mockups) **no es lo que este motor hace**, así que no cuenta como evidencia.
+Lo que sí es verificable es el precio: **$0.75/$3.75 por millón contra
+$1.50/$9 de 3.5** — la mitad de entrada y 2.4× menos de salida.
+
+- Precio **introductorio hasta el 31 de diciembre de 2026**, anotado en
+  `lib/proveedores/precios.ts`. Si 3.7 gana por costo, esa fecha es parte de la
+  decisión: en enero hay que volver a la tabla o el panel de IA reportará de
+  menos.
+- **Pasó el smoke antes de entrar** (3 looks, 21s, $0.19): no rechaza el schema
+  del motor. No era trámite — Haiku 4.5 está fuera del comparador justamente
+  porque su compilador no traga el enum de UUIDs del clóset, y se cazó así.
+- Se verificó contra la API de Google qué modelos existen de verdad, en vez de
+  confiar en el nombre del anuncio: están `gemini-3.6-flash` (ya estaba en el
+  catálogo, nunca probado) y `gemini-3.7-flash`.
+
+Decidir cuesta $9.50 (20 pares, veredicto). La comparación se vota a ciegas y
+con la regla escrita ANTES del primer par.
+
 ## [0.2.241.0] - 2026-08-14
 
 ### Fixed — lo que escribes en "¿algo en mente?" ya cuenta como una ocasión
