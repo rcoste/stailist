@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.236.0] - 2026-08-13
+
+### Changed — tus esenciales se leen como los viajes
+
+- **Tres pestañas: el porqué · esenciales · looks.** "El porqué" te recibe con
+  el razonamiento del estilista —tu sello en una frase y las razones detrás de
+  la lista— y cierra con **"revisar esenciales →"**. Antes ese razonamiento
+  vivía apretado junto a la lista en móvil; ahora tiene su lugar.
+- **El encabezado dice de un vistazo dónde estás**: "tus *esenciales*" con
+  cuántas piezas son, cuántas ya tienes en tu clóset y tu estilo. Y arriba, el
+  regreso a tu clóset con las acciones raras (editar) juntas en el "···".
+- Si llegas con la lista recién armada te recibe el porqué; si ya la conocías,
+  aterrizas directo en tus piezas.
+
+### Fixed
+
+- El estilista ya no usa la palabra "cápsula" al explicarte tu lista — en la
+  app se llaman **tus esenciales**, y ahora su texto también. (Las
+  explicaciones ya escritas conservan la palabra hasta que rearmes tu lista.)
+
 ## [0.2.235.0] - 2026-08-13
 
 ### Changed — tu viaje se organiza en 4 pestañas, con su portada
