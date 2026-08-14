@@ -160,6 +160,11 @@ export function HistoryList({
   const [rewearing, setRewearing] = useState<string | null>(null);
   // Look pendiente de confirmar borrado (se pregunta antes de quitarlo).
   const [porBorrar, setPorBorrar] = useState<HistoryOutfit | null>(null);
+  // Borrado OPTIMISTA: el look sale de la lista al confirmar, no cuando vuelve
+  // el server — antes seguía visible hasta el refresh, sin ninguna señal, y se
+  // leía como "no reaccionó" (reporte de Roberto 2026-08-13). Si el server
+  // falla, reaparece.
+  const [borrados, setBorrados] = useState<Set<string>>(() => new Set());
 
   // Ocasiones presentes en el historial (para el dropdown de filtro).
   const ocasiones = useMemo(() => {
@@ -169,6 +174,7 @@ export function HistoryList({
   }, [outfits]);
 
   const visibles = outfits.filter((o) => {
+    if (borrados.has(o.id)) return false;
     const e = estado[o.id];
     if (filtro === "fav") return e?.fav;
     if (filtro === "liked") return e?.voto === "up";
@@ -368,8 +374,22 @@ export function HistoryList({
           if (!id) return;
           // Cierra el detalle primero: si no, queda abierto sobre un look que ya no existe.
           setAbierto(null);
-          const res = await deleteOutfit(id);
-          if (res.ok) router.refresh();
+          // Sale de la lista YA (optimista); si el server falla, vuelve.
+          // El catch NO es de adorno: sin él, una action que LANZA (sin red,
+          // deploy en curso) deja el look oculto para siempre y la persona se
+          // va creyendo que borró algo que sigue vivo.
+          setBorrados((s) => new Set(s).add(id));
+          try {
+            const res = await deleteOutfit(id);
+            if (!res.ok) throw new Error("no se borró");
+            router.refresh();
+          } catch {
+            setBorrados((s) => {
+              const n = new Set(s);
+              n.delete(id);
+              return n;
+            });
+          }
         }}
       />
     </div>

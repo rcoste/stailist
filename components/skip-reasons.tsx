@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Icon } from "@/components/icon";
 import { saveDownReason, saveSkipReason } from "@/lib/outfit-actions";
 
@@ -22,7 +23,12 @@ export function SkipReasons({
   onProceed: () => void;
   onClose: () => void;
 }) {
+  // Candado anti-doble-tap: la hoja cierra en el mismo frame, pero dos taps
+  // rápidos sobre el mismo chip alcanzaban a disparar DOS escrituras.
+  const picked = useRef(false);
   function pick(reason: string) {
+    if (picked.current) return;
+    picked.current = true;
     if (mode === "down") {
       saveDownReason(outfitId, reason); // etiqueta el 👎; fire-and-forget
       onClose(); // el voto ya quedó — no regenera salvo que lo pida

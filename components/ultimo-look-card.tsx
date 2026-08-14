@@ -15,10 +15,14 @@ import type { UltimoLook } from "@/lib/ultimo-look";
 export function UltimoLookCard({
   look,
   onVer,
+  cargando = false,
 }: {
   look: UltimoLook;
   /** Abre el look (vista ready). El fetch y el estado viven en hoy-client. */
   onVer: () => void;
+  /** Abriendo (fetch en vuelo): el CTA lo dice y el botón se bloquea — sin
+   *  esto la card quedaba muerta durante el request y provocaba el doble tap. */
+  cargando?: boolean;
 }) {
   // "hoy" / "ayer" / "vie 14" se calculan DESPUÉS de montar, no en el render.
   // Son relativos a la fecha del dispositivo y este componente también se pinta
@@ -47,7 +51,11 @@ export function UltimoLookCard({
             {fechas.sub} &nbsp;·&nbsp;{" "}
           </>
         ) : null}
-        <b className="font-bold text-ink">ver el look →</b>
+        {/* shimmer-txt mientras abre: el cambio de dos palabras chicas al pie
+            de una card de 150px casi no se ve, y el punto era que se NOTARA. */}
+        <b className={cargando ? "shimmer-txt font-bold" : "font-bold text-ink"}>
+          {cargando ? "abriendo…" : "ver el look →"}
+        </b>
       </span>
     </>
   );
@@ -58,6 +66,8 @@ export function UltimoLookCard({
       <button
         type="button"
         onClick={onVer}
+        disabled={cargando}
+        aria-busy={cargando}
         className="flex min-h-[150px] w-full overflow-hidden rounded-lg border border-line bg-surface text-left transition-colors hover:border-ink"
       >
         <span className="relative w-[120px] shrink-0 bg-tile">
@@ -81,6 +91,8 @@ export function UltimoLookCard({
     <button
       type="button"
       onClick={onVer}
+      disabled={cargando}
+      aria-busy={cargando}
       className="flex w-full flex-col overflow-hidden rounded-lg border border-line bg-surface text-left transition-colors hover:border-ink"
     >
       {look.prendas.length > 0 ? (

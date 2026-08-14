@@ -24,6 +24,7 @@ import { useTryon } from "@/lib/use-tryon";
 import { AddSheet, type AddSheetHandle } from "@/components/add-sheet";
 import { EspejoFlow, type EspejoHandle } from "@/components/espejo-flow";
 import { UltimoLookCard } from "@/components/ultimo-look-card";
+import { Toast } from "@/components/toast";
 import type { UltimoLook } from "@/lib/ultimo-look";
 import { HomeTripCard } from "@/components/home-trip-card";
 import type { HomeTrip } from "@/lib/home-trip";
@@ -175,6 +176,17 @@ export function HoyClient({
   const lastForceAnchor = useRef(false);
   // Cancela el polling en curso (al desmontar o al arrancar otro).
   const cancelPoll = useRef<(() => void) | null>(null);
+  // La card del último look mientras trae el outfit: "abriendo…" + candado
+  // anti-doble-tap; si falla, un aviso — antes el tap fallido no producía NADA.
+  const [abriendoUltimo, setAbriendoUltimo] = useState(false);
+  const [avisoUltimoMsg, setAvisoUltimoMsg] = useState<string | null>(null);
+  const avisoTimer = useRef(0);
+  useEffect(() => () => clearTimeout(avisoTimer.current), []);
+  const avisarUltimo = () => {
+    setAvisoUltimoMsg("no pude abrir el look — inténtalo otra vez");
+    clearTimeout(avisoTimer.current);
+    avisoTimer.current = window.setTimeout(() => setAvisoUltimoMsg(null), 3200);
+  };
   // Los flujos headless de la zona de recurrentes (los tiles los disparan).
   const espejoRef = useRef<EspejoHandle>(null);
   const addRef = useRef<AddSheetHandle>(null);
@@ -333,7 +345,10 @@ export function HoyClient({
   // devuelve el outfit shaped (es lo que usa el polling) — un fetch y a la
   // vista ready, con su fecha como etiqueta para no mentir con "hoy".
   async function verUltimoLook() {
-    if (!ultimoLook) return;
+    // El candado y el "abriendo…" existen porque la card quedaba MUERTA durante
+    // el fetch (reporte de Roberto 2026-08-13: "le pico y no reacciona, le
+    // quiero picar varias veces") — y si fallaba, el tap no producía nada.
+    if (!ultimoLook || abriendoUltimo) return;
     const hoyLocal = fmtFechaLocal(new Date());
     const paraFecha =
       ultimoLook.fecha && ultimoLook.fecha !== hoyLocal ? ultimoLook.fecha : null;
@@ -348,17 +363,22 @@ export function HoyClient({
       setState({ kind: "ready", outfit: lookInicial });
       return;
     }
+    setAbriendoUltimo(true);
     try {
       const res = await fetch(`/api/look-of-day?id=${ultimoLook.id}`, {
         cache: "no-store",
       });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.status === "ready" && data.outfit) {
+      const data = res.ok ? await res.json() : null;
+      if (data?.status === "ready" && data.outfit) {
         setState({ kind: "ready", outfit: data.outfit, paraFecha });
+      } else {
+        avisarUltimo();
       }
     } catch {
-      /* sin red, la card simplemente no navega */
+      // Sin red: la card vuelve a la vida y el aviso dice qué pasó.
+      avisarUltimo();
+    } finally {
+      setAbriendoUltimo(false);
     }
   }
 
@@ -414,7 +434,12 @@ export function HoyClient({
             prendas — lo decide el dato). Tocarla lo ABRE, nunca genera. */}
         {ultimoLook ? (
           <div className="mt-4" style={anim(2)}>
-            <UltimoLookCard look={ultimoLook} onVer={verUltimoLook} />
+            <UltimoLookCard
+              look={ultimoLook}
+              onVer={verUltimoLook}
+              cargando={abriendoUltimo}
+            />
+            <Toast message={avisoUltimoMsg} />
           </div>
         ) : null}
 

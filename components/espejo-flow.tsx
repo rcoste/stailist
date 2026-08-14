@@ -676,11 +676,22 @@ export function EspejoFlow({
    * cuando la persona dice "salió mal" sobre una sola.
    */
   async function dibujarUna(n: { id: string; attrs: PrendaDetectada }, preview: string) {
+    // Candado por prenda: "rehacer" no se deshabilitaba y taps repetidos
+    // apilaban renders superpuestos de la misma prenda (dinero tirado).
+    if (dibujandoIds.current.has(n.id)) return;
+    dibujandoIds.current.add(n.id);
     // "En curso" también al reintentar suelta (la primera vez ya viene así).
+    // url:null al rehacer: sin esto la imagen vieja se quedaba puesta y el tap
+    // parecía no hacer nada — el spinner ES el acuse de recibo.
     setSumar((sm) =>
       sm.paso !== "dibujando"
         ? sm
-        : { ...sm, items: sm.items.map((x) => (x.id === n.id ? { ...x, listo: false } : x)) }
+        : {
+            ...sm,
+            items: sm.items.map((x) =>
+              x.id === n.id ? { ...x, listo: false, url: null } : x
+            ),
+          }
     );
     let url: string | null = null;
     for (let intento = 0; intento < 2 && !url; intento++) {
@@ -704,6 +715,7 @@ export function EspejoFlow({
         ? sm
         : { ...sm, items: sm.items.map((x) => (x.id === n.id ? { ...x, url, listo: true } : x)) }
     );
+    dibujandoIds.current.delete(n.id);
     router.refresh();
   }
 
@@ -721,6 +733,10 @@ export function EspejoFlow({
   /** Ya se disparó el dibujo de esta tanda (guarda contra el doble arranque en
    *  un re-render). */
   const dibujoLanzado = useRef<string | null>(null);
+  /** Prendas con render en vuelo ("rehacer") y con borrado en vuelo ("no es
+   *  mía"): candados anti-doble-tap por id. */
+  const dibujandoIds = useRef<Set<string>>(new Set());
+  const quitandoIds = useRef<Set<string>>(new Set());
   // ARRANCA SOLO al terminar de guardar. El segundo clic era de mi diseño —
   // guardar y dibujar como dos decisiones— y Roberto lo reportó como falta de
   // respuesta: "le tengo que picar nuevamente… o que se procese la acción".
@@ -778,20 +794,30 @@ export function EspejoFlow({
     yaEstan: YaEsta[],
     outfitId: string | null
   ) {
+    // Candado: la card desaparece al instante, pero un doble tap en el mismo
+    // frame disparaba dos borrados + dos re-colgadas del look.
+    if (quitandoIds.current.has(item.id)) return;
+    quitandoIds.current.add(item.id);
     setSumar((sm) =>
       sm.paso !== "dibujando"
         ? sm
         : { ...sm, items: sm.items.filter((x) => x.id !== item.id) }
     );
-    await removeItem(item.id);
-    if (outfitId) {
-      const quedan = [
-        ...yaEstan.map((y) => y.id),
-        ...(sumar.paso === "dibujando"
-          ? sumar.items.filter((x) => x.id !== item.id).map((x) => x.id)
-          : []),
-      ];
-      await ligarPrendasAlEspejo(outfitId, quedan);
+    // finally: si el borrado truena, el id tiene que soltarse o la prenda queda
+    // bloqueada para siempre — sin forma de reintentar y ya fuera de la lista.
+    try {
+      await removeItem(item.id);
+      if (outfitId) {
+        const quedan = [
+          ...yaEstan.map((y) => y.id),
+          ...(sumar.paso === "dibujando"
+            ? sumar.items.filter((x) => x.id !== item.id).map((x) => x.id)
+            : []),
+        ];
+        await ligarPrendasAlEspejo(outfitId, quedan);
+      }
+    } finally {
+      quitandoIds.current.delete(item.id);
     }
     router.refresh();
   }

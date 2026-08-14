@@ -34,10 +34,15 @@ export function FavoriteButton({
   const [fav, setFav] = useState(initialFavorited);
   const [toast, setToast] = useState<string | null>(null);
   const timer = useRef(0);
+  // Un toggle a la vez: taps rápidos encolaban varias server actions contra el
+  // mismo look y solo la última decidía — el corazón podía quedar mintiendo.
+  const enVuelo = useRef(false);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
   async function toggle() {
+    if (enVuelo.current) return;
+    enVuelo.current = true;
     const next = !fav;
     setFav(next);
     onChange?.(next);
@@ -48,11 +53,20 @@ export function FavoriteButton({
       clearTimeout(timer.current);
       timer.current = window.setTimeout(() => setToast(null), 3200);
     }
-    const res = await toggleFavorite(outfitId, next);
-    if (!res.ok) {
+    // finally OBLIGATORIO: si la action revienta (sin red, deploy en curso), un
+    // `enVuelo.current = false` suelto al final nunca corre y el corazón queda
+    // muerto para siempre — el mismo "le pico y no reacciona" que el candado
+    // venía a evitar, pero peor. Y el catch revierte: sin él, el corazón se
+    // queda encendido mostrando algo que nunca se guardó.
+    try {
+      const res = await toggleFavorite(outfitId, next);
+      if (!res.ok) throw new Error("no se guardó");
+    } catch {
       setFav(!next);
       onChange?.(!next);
       setToast(null);
+    } finally {
+      enVuelo.current = false;
     }
   }
 
