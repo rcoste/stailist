@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ClosetNav } from "@/components/closet-nav";
+import { EsencialesMenu } from "@/components/esenciales-menu";
 import { CapsuleList } from "@/components/capsule-list";
 import { Hint } from "@/components/hint";
 import { CapsuleLooks } from "@/components/capsule-looks";
@@ -44,7 +45,6 @@ export default async function CapsulaPage({
   if (!target) redirect("/closet/capsula/editar");
 
   const { tab } = await searchParams;
-  const initialTab = tab === "looks" ? "looks" : "capsula";
 
   const match = profile.capsule_match;
   const supabase = await createClient();
@@ -96,6 +96,30 @@ export default async function CapsulaPage({
   const done = !!view && !stale && view.coveragePct >= 100;
   // Escalada (issue #89): descartó ≥ 1/3 → afinar el estilo en vez de dejarla coja.
   const escalated = capsuleEscalated(target, profile.capsule_swaps);
+
+  // ¿Hay porqué que contar? Las cápsulas muy viejas no traen firma ni pilares
+  // ni resumen — su pestaña ofrece rearmar en vez de un hueco.
+  const tienePorque = !!(target.firma || target.pilares?.length || target.resumen);
+  // Default contextual (patrón del viaje): el porqué recibe a la lista recién
+  // armada; con el match ya corriendo aterrizas en la lista de trabajo.
+  const initialTab =
+    tab === "looks"
+      ? ("looks" as const)
+      : tab === "capsula"
+        ? ("capsula" as const)
+        : tab === "porque" && tienePorque
+          ? ("porque" as const)
+          : match || !tienePorque
+            ? ("capsula" as const)
+            : ("porque" as const);
+
+  // La línea de meta del header (mockup): "38 piezas · 3 en tu clóset · clásica
+  // de base". Cada segmento solo si su dato existe.
+  const totalPiezas = view ? view.totalCount : target.items.length;
+  const metaPartes = [
+    view ? `${view.haveCount} en tu clóset` : null,
+    profile.style_archetype?.nombre?.toLowerCase() ?? null,
+  ].filter(Boolean) as string[];
 
   // Pestaña "tus looks": outfits ya generados con lo que tienes de la cápsula.
   const rawLooks = (profile.capsule_outfits as TripOutfit[] | null) ?? null;
@@ -162,46 +186,80 @@ export default async function CapsulaPage({
   return (
     <AppShell desktop="wide">
       <section className="flex flex-col gap-6 pt-1">
-        <ClosetNav />
+        {/* Móvil (mockup 2026-08-13): esenciales es DESTINO, no pestaña del
+            clóset — back a clóset + menú "···". Desktop conserva su nav. */}
+        <div className="flex items-center justify-between lg:hidden">
+          <Link
+            href="/closet"
+            className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink"
+          >
+            <Icon name="chevron" size={15} rotate={180} />
+            clóset
+          </Link>
+          <EsencialesMenu />
+        </div>
+        <div className="hidden lg:block">
+          <ClosetNav />
+        </div>
         {/* La primera visita explica la idea antes de soltar la lista: sin eso,
             15 prendas que no compraste se leen como una lista de compras que la
-            app se sacó de la manga. La navegación del clóset se queda arriba —
-            la intro informa, no secuestra. */}
+            app se sacó de la manga. La navegación se queda arriba — la intro
+            informa, no secuestra. */}
         <EsencialesGate
           vista={!!profile.hints_seen?.["intro:esenciales"]}
           total={target.items.length}
         >
-        <div className="flex items-center justify-between gap-3">
+        <div className="-mt-2 flex flex-col gap-1.5 lg:mt-0">
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink lg:text-[38px]">
-            tus esenciales
+            tus <em className="display font-normal italic">esenciales</em>
           </h1>
-          <Link
-            href="/closet/capsula/editar"
-            className="shrink-0 text-sm font-semibold text-accent hover:underline lg:hidden"
-          >
-            editar
-          </Link>
+          <p className="text-[13px] text-muted">
+            <b className="tabular font-bold text-ink">{totalPiezas} piezas</b>
+            {metaPartes.length > 0 ? ` · ${metaPartes.join(" · ")}` : ""}
+          </p>
         </div>
 
         <CapsuleTabs
-          capsulaCount={view ? view.totalCount : target.items.length}
+          esencialesCount={totalPiezas}
           looksCount={resolvedLooks?.length ?? 0}
           looksStale={looksStale}
           initialTab={initialTab}
+          porque={
+            tienePorque ? (
+              <PorQueEsTuya
+                firma={target.firma}
+                subline={target.subline}
+                pilares={target.pilares}
+                resumen={target.resumen}
+                eyebrow={false}
+              />
+            ) : (
+              // Cápsula de antes de que el estilista explicara su porqué:
+              // ofrecer estrenarlo en vez de un hueco.
+              <div className="flex flex-col gap-3">
+                <p className="text-sm leading-relaxed text-muted">
+                  Esta lista se armó antes de que el estilista contara su
+                  razonamiento. Reármala y aquí te explico por qué cada pieza
+                  es tuya.
+                </p>
+                <form action={regenerateCapsuleTarget}>
+                  <button
+                    type="submit"
+                    className="flex min-h-11 items-center gap-2 rounded-sm border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-ink"
+                  >
+                    <Icon name="destello" size={15} /> rearmar mi lista
+                  </button>
+                </form>
+              </div>
+            )
+          }
           capsula={
             // Desktop (F3): 2 columnas — "por qué es tuya" + avisos sticky a la
             // izquierda, la lista de prendas a la derecha. Móvil: una columna.
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
             <div className="flex flex-col gap-6 lg:sticky lg:top-20 lg:w-[38%] lg:shrink-0">
-              {/* Por qué esta cápsula es tuya: sello en serif + pilares cortos (sin caja). */}
-              {target.firma || target.pilares?.length || target.resumen ? (
-                <PorQueEsTuya
-                  firma={target.firma}
-                  subline={target.subline}
-                  pilares={target.pilares}
-                  resumen={target.resumen}
-                />
-              ) : null}
+              {/* El "por qué es tuya" ya vive en su pestaña (el porqué) — este
+                  rail conserva los avisos y el editar de desktop. */}
 
               {/* Un solo nudge "está vieja" cuando cambió el estilo: regenerar ya
                   pone capsule_match=null, así que el recálculo del clóset (abajo)
