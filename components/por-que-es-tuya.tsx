@@ -32,18 +32,23 @@ export function PorQueEsTuya({
   subline,
   pilares,
   resumen,
+  eyebrow = true,
 }: {
   firma?: string;
   subline?: string;
   pilares?: CapsulePilar[];
   resumen?: string;
+  /** false cuando vive en la pestaña "el porqué" — el nombre ya lo pone la pestaña. */
+  eyebrow?: boolean;
 }) {
   return (
     <section className="flex flex-col">
-      <span className="flex w-fit items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-accent">
-        <Icon name="destello" size={13} />
-        Por qué es tuya
-      </span>
+      {eyebrow ? (
+        <span className="flex w-fit items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-accent">
+          <Icon name="destello" size={13} />
+          Por qué es tuya
+        </span>
+      ) : null}
 
       {firma ? (
         <p className="display mt-3 text-[22px] font-medium leading-[1.28] tracking-[-0.006em] text-ink lg:text-[26px] lg:before:content-['“'] lg:after:content-['”']">
