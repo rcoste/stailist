@@ -2,6 +2,49 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.238.0] - 2026-08-14
+
+### Added — ya se puede ver qué hace la IA (`/admin/ia`)
+
+Cuánto tarda cada tarea, qué cuesta y cada cuánto truena. Antes eso se
+contestaba de oído.
+
+Lo que lo detonó fue concreto: el día anterior se descubrió que el
+precalentado de imágenes de esenciales llevaba **dos semanas roto en
+producción**, pagando renders que se cancelaban solos. No lo cazó ninguna
+alerta — lo cazó una revisión de código, de casualidad. La tabla `ai_calls`
+existía desde hacía días y **nadie la leía**.
+
+- **`medir()`** reemplaza a "llamar y luego acordarse de registrar". Registra
+  el éxito **y el fallo** en el mismo sitio; el fallo era justo lo que se
+  perdía (de los dos únicos caminos instrumentados, sólo uno anotaba errores).
+- **Diez tareas instrumentadas** donde antes había dos: motor, juez, espejo,
+  las tres de visión, rúbrica, rúbrica visual, motivo de destino y el motor
+  congelado. Los caminos de laboratorio (comparador, evales) pasan `null`
+  explícito: medir una corrida de prueba como si fuera uso real ensuciaría
+  los promedios.
+- **El panel confiesa sus huecos** en la parte de arriba. Una pantalla de
+  observabilidad que calla lo que no mira se lee como "todo bien" cuando en
+  realidad dice "no estoy mirando", y ése es justo el malentendido que costó
+  las dos semanas.
+- **Un candado** (`lib/cobertura-recibos.test.ts`) barre el disco y exige que
+  todo camino que hable con un modelo mida o esté declarado exento con su
+  razón escrita. Ya sirvió de algo el primer día: la lista de caminos sin
+  medir se había escrito a mano con nueve y el barrido encontró **catorce** —
+  el modo Viaje entero faltaba, y también la puerta de las imágenes.
+
+### Notas
+
+- **Lo más caro sigue sin medirse, y ahora se sabe**: `lib/gemini-imagen.ts`
+  (try-on, avatar, arquetipos, renders, destinos — siete consumidores) no deja
+  recibo, porque una imagen no se cobra por token y la tabla de precios sólo
+  sabe de tokens. Hace falta una tarifa por imagen antes que su
+  instrumentación. Está declarado en el panel y anotado en `TODOS.md`.
+- Los tiempos se calculan **sólo sobre las llamadas que salieron bien**, y los
+  fallos se reportan aparte: mezclarlos miente en las dos direcciones a la vez
+  (un timeout de 60s infla una tarea sana; un fallo instantáneo la hace ver
+  rápida).
+
 ## [0.2.237.0] - 2026-08-13
 
 ### Fixed — cuando le picas, responde
