@@ -1,4 +1,5 @@
-import { llamar, type Modelo, type Recibo } from "@/lib/proveedores";
+import { type Modelo, type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimetria";
 import { LINEA_REGISTRO, type Registro } from "@/lib/registro";
 import type { Weather } from "@/lib/weather";
@@ -172,16 +173,23 @@ export function contextoEspejo(args: {
  * Devuelve la lectura Y el recibo de la llamada.
  *
  * El recibo (ms, tokens, costo) ya lo calculaba `llamar`; esta función lo tiraba
- * al devolver sólo la lectura. Se expone porque la ruta lo guarda en `ai_calls`:
- * sin ese número, "¿cuánto tarda el fit check?" sólo se puede contestar a ojo —
- * y esa pregunta ya bloqueó una decisión de diseño.
+ * al devolver sólo la lectura. Se sigue devolviendo porque quien llama lo usa,
+ * pero el GUARDADO ya no es cosa suya: pasa por `medir`.
+ *
+ * ANTES LO GUARDABA LA RUTA, a mano, con dos bloques (recibo en el try, fallo en
+ * el catch). Funcionaba —era el único sitio del proyecto que registraba también
+ * los fallos— pero era el patrón que nadie más copió: de ~20 caminos de IA, éste
+ * y el motivo de destino eran los dos únicos instrumentados. Metido aquí, medir
+ * el fit check deja de depender de que alguien se acuerde.
  */
 export async function mirarEspejo(
   imagen: { mediaType: string; base64: string },
   contexto: string,
-  modelo: Modelo
+  modelo: Modelo,
+  /** De quién es el fit check. `null` sólo tendría sentido desde un script. */
+  quien: QuienMide | null = null
 ): Promise<{ lectura: LecturaEspejo; recibo: Recibo }> {
-  const recibo = await llamar({
+  const recibo = await medir(quien && { ...quien, tarea: "espejo", version: ESPEJO_VERSION }, {
     modelo,
     maxTokens: 700,
     system: SYSTEM_ESPEJO,

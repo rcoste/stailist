@@ -1,9 +1,11 @@
 import { MODELO_MOTOR } from "@/lib/models";
-import { llamar, parsearJson, type Modelo, type Recibo } from "@/lib/proveedores";
+import { parsearJson, type Modelo, type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { buildOutfitSchema } from "./schema";
 import type { BlueprintEmparejado } from "./blueprint";
 import {
   buildUserMessage,
+  PROMPT_VERSION,
   SYSTEM_PROMPT,
   type EngineContext,
 } from "./prompt";
@@ -48,7 +50,15 @@ export type OpcionesGeneracion = {
  */
 export async function generarConRecibo(
   ctx: EngineContext,
-  opciones: OpcionesGeneracion = {}
+  opciones: OpcionesGeneracion = {},
+  /**
+   * De quién es esta generación, para dejar el recibo en `ai_calls`.
+   *
+   * `null` (o ausente) = NO se registra: es el comparador, un eval o un script
+   * de terminal. Ninguno de los tres tiene sesión con la que insertar, y medir
+   * una corrida de laboratorio junto al uso real ensuciaría los promedios.
+   */
+  quien: QuienMide | null = null
 ): Promise<{ outfits: GeneratedOutfit[]; recibo: Recibo }> {
   const modelo = opciones.modelo ?? MODELO_MOTOR;
   // El error histórico del motor, distinguible: la ruta lo traduce a
@@ -75,7 +85,13 @@ export async function generarConRecibo(
   // ya obliga a razonar en el campo "analisis" antes de comprometer los
   // outfits. Y esto corre dentro del límite de 60s de Vercel CON los jueces
   // detrás.
-  const recibo = await llamar({
+  //
+  // Va por `medir` y no por `llamar`: es la llamada que define la promesa del
+  // producto (el look en menos de 30s) y hasta ahora salía sin recibo — ni
+  // cuánto tarda de verdad, ni cuánto cuesta, ni cada cuánto truena. La tarea
+  // se sella AQUÍ ("motor") porque este archivo es el único que sabe que esta
+  // llamada es la del generador.
+  const recibo = await medir(quien && { ...quien, tarea: "motor", version: PROMPT_VERSION }, {
     modelo,
     system: SYSTEM_PROMPT,
     texto: buildUserMessage(ctx, opciones),
@@ -134,8 +150,9 @@ export async function generarConRecibo(
 /** La firma histórica, para quien no necesita el recibo. */
 export async function generateOutfits(
   ctx: EngineContext,
-  opciones: OpcionesGeneracion = {}
+  opciones: OpcionesGeneracion = {},
+  quien: QuienMide | null = null
 ): Promise<GeneratedOutfit[]> {
-  const { outfits } = await generarConRecibo(ctx, opciones);
+  const { outfits } = await generarConRecibo(ctx, opciones, quien);
   return outfits;
 }

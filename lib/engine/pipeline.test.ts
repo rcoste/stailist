@@ -129,10 +129,13 @@ describe("armarLooks", () => {
     reviewOutfit.mockImplementation(async (_c, o) => okResult(o));
 
     await armarLooks(ctx, { sinBlueprint: true, sinRotacion: true });
-    expect(generarConRecibo).toHaveBeenCalledWith(ctx, {
-      sinBlueprint: true,
-      sinRotacion: true,
-    });
+    // El tercer argumento es el contexto del recibo (lib/recibos): `null`
+    // porque quien corre variantes es el comparador, que no mide.
+    expect(generarConRecibo).toHaveBeenCalledWith(
+      ctx,
+      { sinBlueprint: true, sinRotacion: true },
+      null
+    );
   });
 
   it("los hooks reciben lo que la ruta streamea: total de candidatos y fase por índice", async () => {

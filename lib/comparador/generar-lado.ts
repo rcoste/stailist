@@ -117,7 +117,12 @@ export async function generarLadoYGuardar(opciones: {
     const ctx = construirContexto(carga.base, peticionDeBrief(brief));
 
     const t0 = Date.now();
-    const { finalized, reviews, recibos } = await armarLooks(ctx, opcionesGen);
+    // El `null` del final NO es descuido: el comparador corre el pipeline de
+    // producción a propósito, pero sus llamadas no son de nadie. Registrarlas
+    // en ai_calls mezclaría corridas de laboratorio —modelos raros, prompts
+    // viejos, variantes que perdieron— con lo que la gente pide de verdad, y la
+    // tabla existe justo para contestar cuánto cuesta y tarda ESO.
+    const { finalized, reviews, recibos } = await armarLooks(ctx, opcionesGen, {}, null);
     const ms = Date.now() - t0;
 
     const tokens = recibos.reduce(

@@ -1,4 +1,5 @@
-import { llamar, parsearJson, type Recibo } from "@/lib/proveedores";
+import { parsearJson, type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { MODELO_JUEZ } from "@/lib/models";
 import { queSePoneA } from "./prompt";
 import { lineaDressCode } from "@/lib/dress-code";
@@ -326,9 +327,16 @@ export const SCHEMA_RUBRICA = {
  */
 export async function evaluarLook(
   brief: BriefRubrica,
-  look: LookRubrica
+  look: LookRubrica,
+  /**
+   * HOY siempre es `null`: la rúbrica solo la corren los evales y los scripts,
+   * que no son de una persona. El parámetro existe igual para que esta llamada
+   * pase por `medir` como todas — si mañana alguien la usa desde una ruta con
+   * sesión, medir es pasarle el contexto, no acordarse de instrumentar.
+   */
+  quien: QuienMide | null = null
 ): Promise<{ nota: NotaRubrica; recibo: Recibo }> {
-  const recibo = await llamar({
+  const recibo = await medir(quien && { ...quien, tarea: "rubrica", version: RUBRICA_VERSION }, {
     modelo: MODELO_JUEZ,
     system: SYSTEM_RUBRICA,
     texto: `EL PEDIDO:\n${briefParaRubrica(brief)}\n\nEL LOOK A CALIFICAR:\n${lookParaRubrica(look)}`,

@@ -1,5 +1,6 @@
 import { PATRONES } from "@/lib/prenda-atributos";
-import { llamar, type Modelo, type Recibo } from "@/lib/proveedores";
+import { type Modelo, type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import type { PrendaAnalisis } from "@/lib/vision-prenda";
 
 // Leer VARIAS prendas de UNA foto: el prompt, el schema y la llamada.
@@ -96,9 +97,11 @@ export type LecturaPrendas = { prendas: PrendaDetectada[]; recibo: Recibo };
  */
 export async function leerPrendas(
   imagen: { mediaType: string; base64: string },
-  modelo: Modelo
+  modelo: Modelo,
+  /** De quién es la foto. `null` = comparador o script. */
+  quien: QuienMide | null = null
 ): Promise<LecturaPrendas> {
-  const recibo = await llamar({
+  const recibo = await medir(quien && { ...quien, tarea: "vision-prendas" }, {
     modelo,
     maxTokens: 2800,
     system: SYSTEM_PRENDAS,

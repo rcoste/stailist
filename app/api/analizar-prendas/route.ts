@@ -44,7 +44,11 @@ export async function POST(request: NextRequest) {
   try {
     const { prendas } = await leerPrendas(
       { mediaType, base64: b64 },
-      VISION_MODEL
+      VISION_MODEL,
+      // Con recibo: es la vía principal de alta del clóset (303 de las 953
+      // prendas de la base entraron por aquí), así que su costo y su tiempo son
+      // los que hay que poder consultar.
+      { supabase, userId: user.id }
     );
     // Tope duro: nunca más de 8 aunque el modelo se exceda.
     return NextResponse.json({ prendas: prendas.slice(0, 8) });

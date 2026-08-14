@@ -1,4 +1,5 @@
-import { llamar, type Recibo } from "@/lib/proveedores";
+import { type Recibo } from "@/lib/proveedores";
+import { medir, type QuienMide } from "@/lib/recibos";
 import { MODELO_MOTIVO_DESTINO } from "@/lib/models";
 
 // LA FOTO DE UN DESTINO NUEVO: qué se dibuja y con qué fórmula.
@@ -59,9 +60,15 @@ REGLAS:
  * modelo barato — y porque la elección fue de Roberto ("hacemos ahí un haiku").
  */
 export async function elegirMotivo(
-  lugar: string
+  lugar: string,
+  /**
+   * Quién está creando el viaje. El recibo lo guardaba la ruta a mano y sólo en
+   * el camino feliz: cuando esta llamada tronaba —y su fallo tiene red, así que
+   * truena sin que nadie lo note— no quedaba nada. Aquí se registran las dos.
+   */
+  quien: QuienMide | null = null
 ): Promise<{ sujeto: string; recibo: Recibo }> {
-  const recibo = await llamar({
+  const recibo = await medir(quien && { ...quien, tarea: "destino-motivo" }, {
     modelo: MODELO_MOTIVO_DESTINO,
     maxTokens: 300,
     system: SYSTEM_MOTIVO,

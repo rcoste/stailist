@@ -48,9 +48,14 @@ export async function POST(request: NextRequest) {
     // Las dos preguntas van EN PARALELO y por separado: mezclar "¿cuántas
     // prendas hay?" dentro del schema de lectura movía `subtipo` y `temporada`
     // (z = 3.05 sobre 425 prendas). Ver contarPrendas.
+    //
+    // Las dos dejan recibo, y con tarea SEPARADA (ver lib/vision-prenda): son
+    // dos llamadas de precio muy distinto y juntarlas escondería justo lo que
+    // se quiere ver.
+    const quien = { supabase, userId: user.id };
     const [{ analisis }, varias] = await Promise.all([
-      leerPrenda({ mediaType, base64: b64 }, VISION_MODEL),
-      contarPrendas({ mediaType, base64: b64 }, VISION_MODEL),
+      leerPrenda({ mediaType, base64: b64 }, VISION_MODEL, quien),
+      contarPrendas({ mediaType, base64: b64 }, VISION_MODEL, quien),
     ]);
     return NextResponse.json({ analisis: { ...analisis, varias } });
   } catch {
