@@ -3,38 +3,46 @@
 import { useState, type ReactNode } from "react";
 import { CapsuleTabsContext } from "@/components/capsule-tabs-context";
 
-// Pestañas de los esenciales: "tus esenciales" (el plan + cobertura) / "tus looks"
-// (outfits con lo que ya tienes). Mismo lenguaje visual que el viaje
-// ("la maleta" / "tus looks"). La generación de looks vive dentro de <CapsuleLooks/>
-// (server action), así que aquí no hay estado de generación — solo el switch.
+// Pestañas de tus esenciales (mockup de Roberto, 2026-08-13 — el gemelo del
+// detalle de viaje): "el porqué" (el razonamiento del estilista) · "esenciales"
+// (la lista con cobertura) · "looks" (outfits con lo que ya tienes).
+//
+// El CTA "revisar esenciales →" del porqué vive AQUÍ (necesita setTab), igual
+// que el "revisar prendas →" del plan en TripTabs. La generación de looks vive
+// dentro de <CapsuleLooks/> (server action) — aquí no hay estado de generación.
+export type CapsuleTab = "porque" | "capsula" | "looks";
+
 export function CapsuleTabs({
-  capsulaCount,
+  esencialesCount,
   looksCount,
   looksStale = false,
-  initialTab = "capsula",
+  initialTab = "porque",
+  porque,
   capsula,
   looks,
 }: {
-  capsulaCount: number;
+  esencialesCount: number;
   looksCount: number;
   looksStale?: boolean;
-  initialTab?: "capsula" | "looks";
+  initialTab?: CapsuleTab;
+  porque: ReactNode;
   capsula: ReactNode;
   looks: ReactNode;
 }) {
-  const [tab, setTab] = useState<"capsula" | "looks">(initialTab);
+  const [tab, setTab] = useState<CapsuleTab>(initialTab);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="-mt-1 flex gap-6 border-b border-line">
+      <div className="-mt-1 flex gap-5 border-b border-line">
+        <Tab label="el porqué" on={tab === "porque"} onClick={() => setTab("porque")} />
         <Tab
-          label="tus esenciales"
-          count={capsulaCount}
+          label="esenciales"
+          count={esencialesCount}
           on={tab === "capsula"}
           onClick={() => setTab("capsula")}
         />
         <Tab
-          label="tus looks"
+          label="looks"
           count={looksCount}
           on={tab === "looks"}
           dot={looksStale && looksCount > 0}
@@ -42,7 +50,22 @@ export function CapsuleTabs({
         />
       </div>
       <CapsuleTabsContext.Provider value={{ onViewLooks: () => setTab("looks") }}>
-        {tab === "capsula" ? capsula : looks}
+        {tab === "porque" ? (
+          <div className="flex flex-col gap-6 lg:max-w-[560px]">
+            {porque}
+            <button
+              type="button"
+              onClick={() => setTab("capsula")}
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            >
+              revisar esenciales →
+            </button>
+          </div>
+        ) : tab === "capsula" ? (
+          capsula
+        ) : (
+          looks
+        )}
       </CapsuleTabsContext.Provider>
     </div>
   );
@@ -56,7 +79,8 @@ function Tab({
   onClick,
 }: {
   label: string;
-  count: number;
+  /** Sin `count` la pestaña va sin caja de conteo (el porqué). */
+  count?: number;
   on: boolean;
   dot?: boolean;
   onClick: () => void;
@@ -78,13 +102,15 @@ function Tab({
           />
         ) : null}
       </span>
-      <span
-        className={`tabular rounded-sm border px-1.5 py-px text-[11px] font-bold ${
-          on ? "border-accent bg-accent-soft text-accent" : "border-line bg-bg text-muted"
-        }`}
-      >
-        {count}
-      </span>
+      {count !== undefined ? (
+        <span
+          className={`tabular rounded-sm border px-1.5 py-px text-[11px] font-bold ${
+            on ? "border-accent bg-accent-soft text-accent" : "border-line bg-bg text-muted"
+          }`}
+        >
+          {count}
+        </span>
+      ) : null}
     </button>
   );
 }
