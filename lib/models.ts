@@ -67,6 +67,32 @@ export const ENGINE_MODEL = "claude-opus-5";
  * Para revertir: cambiar proveedor/id de vuelta a "anthropic" / ENGINE_MODEL.
  * Es una línea y no arrastra nada más.
  */
+/**
+ * GEMINI 3.7 FLASH LO RETÓ Y PERDIÓ (2026-08-14). Se queda 3.5.
+ *
+ * Google lo lanzó ese día a mitad de precio y la pregunta obvia era si tocaba
+ * subirse. Se midió como manda la casa: 20 pares ciegos, regla escrita antes
+ * del primer voto, mismo prompt (v52), mismo clóset, mismo juez.
+ *
+ *     preferencia   Producción 9 · 3.7 CUATRO · 7 empates   (p = 0.267)
+ *     costo         $0.1954 vs $0.1900 por generación       (-2.7%)
+ *     latencia      27.2s vs 27.1s                          (empate)
+ *
+ * LO QUE ESTO DICE, con cuidado: p = 0.267 NO es significativo, así que la
+ * lectura honesta es que son difíciles de distinguir — lo confirman el 35% de
+ * empates y que uno de los dos espejos salió inconsistente. Pero 3.7 nunca
+ * estuvo adelante, y la regla pedía que empatara o mejorara. No lo hizo.
+ *
+ * Y EL DESEMPATE POR COSTO NO APLICÓ, que era el argumento entero: la lista de
+ * precios decía -58% de salida y lo medido fue **-2.7%**. La razón está en la
+ * forma del pipeline y no en el modelo — la mitad del costo de cada generación
+ * son las TRES llamadas del juez, que no cambian al cambiar el generador.
+ * Abaratar el generador abarata poco; esa es la lección transferible.
+ *
+ * LO QUE NO SE PROBÓ: la visión (VISION_MODEL) y la cápsula/viaje siguen sin
+ * retar contra 3.7. Extrapolar de aquí sería el error que este archivo repite
+ * que no hay que cometer.
+ */
 export const MODELO_MOTOR: Modelo = {
   proveedor: "gemini",
   id: "gemini-3.5-flash",

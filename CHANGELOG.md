@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.241.2] - 2026-08-14
+
+### Changed — Gemini 3.7 Flash retó al motor y perdió: se queda 3.5
+
+Veredicto de 20 pares ciegos, con la regla escrita antes del primer voto, mismo
+prompt (v52), mismo clóset y mismo juez:
+
+| | |
+|---|---|
+| preferencia | Producción **9** · 3.7 **4** · 7 empates (p = 0.267) |
+| costo | $0.1954 → $0.1900 por generación (**−2.7%**) |
+| latencia | 27.2s → 27.1s (empate) |
+
+**El argumento entero del cambio era el precio, y se desinfló al medirlo.** La
+lista decía −58% de salida; lo medido fue **−2.7%**. La causa está en la forma
+del pipeline, no en el modelo: **la mitad del costo de cada generación son las
+tres llamadas del juez**, que no cambian al cambiar el generador. Es la lección
+que se lleva a la próxima: abaratar el generador abarata poco.
+
+Con p = 0.267 la lectura honesta es que los dos modelos cuestan trabajo de
+distinguir — lo confirman el 35% de empates y que uno de los dos espejos salió
+inconsistente. Pero 3.7 nunca estuvo adelante y la regla pedía empatar o
+mejorar. Queda escrito en `lib/models.ts` con sus números, para que el próximo
+lanzamiento no se decida de oído.
+
+No se probó contra la visión ni contra la cápsula/viaje: extrapolar de aquí
+sería justo el error que ese archivo advierte.
+
 ## [0.2.241.1] - 2026-08-14
 
 ### Added — Gemini 3.7 Flash entra al comparador como retador
