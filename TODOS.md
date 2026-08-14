@@ -2,6 +2,11 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Diferido del header de pantalla interna (2026-08-14)
+
+- [ ] **¿El detalle de viaje adopta el header interno?**: el handoff de diseño (`claude-design-handoffs-stailist/design_handoff_esenciales`) lo declara PATRÓN GLOBAL "incluido el detalle de viaje", y se aplicó sólo a esenciales y biblioteca. *Por qué viaje quedó fuera*: tiene un header de DOS capas que ya funciona —la portada con la foto del destino y el back circular flotando encima, más una capa compacta al hacer scroll— y ese diseño existe PORQUE hay portada; el propio handoff dice "SIN portada de imagen, a diferencia de viaje" dos líneas antes de meterlo en el mismo saco. Rediseñar un header que se shippeó hace días y resuelve otro caso es riesgo sin retorno. *Trigger*: cuando se toque el detalle de viaje por otra razón, evaluar si la capa compacta (la que ya enseña "‹ modo viaje" + "···") puede ser directamente el header interno.
+- [ ] **Biblioteca en desktop se quedó sin back propio**: su link "‹ clóset" no llevaba `lg:hidden` y ahora vive en el header móvil, que sí lo lleva. En desktop el destino sigue a un clic (el nav persistente tiene "Clóset"), así que no hay callejón — pero es un grado menos de explícito que antes. *Trigger*: si alguien reporta que en desktop no encuentra la vuelta.
+
 ## Diferido de la observabilidad de IA (2026-08-14, v0.2.238.0)
 
 - [ ] **Tarifa por imagen + medir `lib/gemini-imagen.ts`** (EL HUECO MÁS CARO): un archivo, siete consumidores — try-on, avatar, arquetipos, renders de prenda y fotos de destino pasan todos por ahí y ninguno deja recibo. No se olvidó: una imagen no se cobra por token y `lib/proveedores/precios.ts` sólo sabe de tokens, así que hace falta una tarifa por imagen ANTES de poder instrumentarlo. Con el gasto de imágenes sin medir, el total de `/admin/ia` es un piso, no el costo real. *Trigger*: el siguiente susto de factura, o antes de cualquier decisión de "¿nos conviene generar menos imágenes?".

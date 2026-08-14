@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.238.1] - 2026-08-14
+
+### Changed — la vuelta sube a la altura del wordmark (handoff de diseño)
+
+En tus esenciales y en la biblioteca, el "‹ clóset" y el menú "···" dejaron su
+fila propia y se mudaron al header: el back flota a la izquierda del wordmark y
+el menú ocupa el sitio del perfil. Son **~50px recuperados** que antes no
+llevaban nada, justo debajo de otros 52px de header. Las dos esquinas estaban
+libres porque el wordmark va centrado, y el patrón ya vivía en la app (el
+detalle del diario sustituye el wordmark por "‹ historial").
+
+El perfil cede su sitio a propósito: dentro de una sección no hace falta, y
+vuelve con dar atrás. Donde la pantalla no trae menú —la biblioteca— el perfil
+se queda donde siempre.
+
+- **El colchón bajo las pestañas** de esenciales pasa de 24px a **12px**. Con
+  24 la pestaña activa se leía desconectada de lo que estaba mostrando.
+- El menú "···" ahora **cuelga del botón** en vez de a una distancia fija del
+  borde de la pantalla: con el aviso de "hay una versión nueva" puesto, el
+  desplegable tapaba el botón que lo abría.
+
+**El detalle de viaje NO adopta el patrón**, aunque el handoff lo pedía: tiene
+un header de dos capas construido alrededor de su portada, resuelve otro caso y
+funciona. Queda anotado en `TODOS.md` para evaluarlo cuando se toque.
+
 ## [0.2.238.0] - 2026-08-14
 
 ### Added — ya se puede ver qué hace la IA (`/admin/ia`)
