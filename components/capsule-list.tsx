@@ -28,6 +28,7 @@ import {
 } from "@/app/closet/capsula/actions";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import { prewarmRenders, type PrewarmJob } from "@/lib/prewarm-renders";
+import { requestItemRender } from "@/lib/render-on-demand";
 import { SuggestionCard } from "@/components/suggestion-card";
 import { MotivoSheet } from "@/components/motivo-sheet";
 import {
@@ -49,6 +50,17 @@ import {
   VETO_REASON_LABEL,
 } from "@/lib/capsule";
 
+// Tope y concurrencia del auto-dibujo de TUS prendas sin foto.
+//
+// El tope es más bajo que el del prewarm de prendas ideales (40) a propósito, y
+// la diferencia es de dinero: un render ideal se guarda en la biblioteca
+// COMPARTIDA y lo hereda quien venga después, pero el de tu prenda es tuyo y no
+// se amortiza con nadie. 12 cubre los duelos —que se ven grandes— y las
+// primeras miniaturas; el resto se queda en su swatch, que es exactamente donde
+// estábamos antes de este cambio.
+const TOPE_DIBUJO = 12;
+const CONCURRENCIA_DIBUJO = 2;
+
 // Pantalla completa de la cápsula, "enfocada en lo que falta" (handoff Screen 4):
 // lo faltante al frente con su porqué (bigcard), lo que hay que decidir, y lo que
 // ya tienes en una fila de miniaturas. Las decisiones sobre las "parecido" son
@@ -59,6 +71,7 @@ export function CapsuleList({
   overrides,
   swaps = null,
   images,
+  nameToId = {},
   catalogImages = {},
   savedWishKeys = [],
   userId,
@@ -68,6 +81,9 @@ export function CapsuleList({
   overrides: CapsuleOverrides | null;
   swaps?: CapsuleSwaps | null;
   images: Record<string, string>;
+  // nombre → id del clóset (incluye prendas SIN imagen): para auto-dibujar las
+  // tuyas que no tienen foto, con el mismo render bajo demanda de la maleta.
+  nameToId?: Record<string, string>;
   // Imágenes de la biblioteca compartida (combos ideales ya rendereados), por faltaKey.
   catalogImages?: Record<string, string>;
   // faltaKeys de prendas de cápsula ya guardadas en la wishlist (para el estado del botón).
@@ -105,6 +121,14 @@ export function CapsuleList({
     [catalogImages, rendered]
   );
 
+  // TUS prendas sin imagen, auto-dibujadas (pedido de Roberto 2026-08-13): las
+  // filas "ya lo tienes" y el lado "la tuya" de los duelos caían al swatch
+  // aunque la prenda tuviera id — el render bajo demanda ya existía (maleta,
+  // Hoy) y aquí nadie lo conectaba. El server cachea en items.render_path, así
+  // que cada prenda se paga una sola vez.
+  const [ownImgs, setOwnImgs] = useState<Record<string, string>>({});
+  const imgs = useMemo(() => ({ ...images, ...ownImgs }), [images, ownImgs]);
+
   // "Ya la tengo" sobre una prenda que te falta: el server la suma al clóset y la
   // marca cubierta; al resolver, Next refresca la página y la prenda se reubica
   // sola en "Ya lo tienes" con el progreso al día. Solo llevamos un spinner por
@@ -138,7 +162,7 @@ export function CapsuleList({
   // PrendaZoom de la maleta/looks en vez de inventar otro visor.
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
   const zoomDe = (r: CapsuleRow): PrendaZoomData => {
-    const { src, kind } = rowImageKind(r, images, catImgs);
+    const { src, kind } = rowImageKind(r, imgs, catImgs);
     // La foto manda: se etiqueta con lo que SE VE. Cuando es tu prenda, el
     // título es TU prenda y abajo qué pieza de la cápsula cubre — al revés se
     // leía como un error de la app (la foto de un traje de baño titulada "Short
@@ -258,7 +282,7 @@ export function CapsuleList({
         capsuleKey: key,
         name: row.item.nombre,
         colorHex: familiaToHex(row.item.colorFamilia),
-        imageUrl: rowImage(row, images, catImgs),
+        imageUrl: rowImage(row, imgs, catImgs),
         porque: row.item.porque,
       });
     });
@@ -315,20 +339,79 @@ export function CapsuleList({
     jobsRef.current = porPrecalentar;
   });
 
-  // Dispara el precalentado UNA vez por visita. La firma en las deps es de
-  // strings (no del array) para que un re-render no lo relance, y el ref
-  // `lanzado` es el cinturón: pagar dos veces el mismo render sería tirar dinero.
+  // Salir de la cápsula cancela la fila: no tiene sentido seguir pagando
+  // renders de tiles que ya nadie está viendo. El abort vive en su PROPIO
+  // efecto de desmontaje, y esto no es cosmético — ver abajo.
+  const acPrewarm = useRef<AbortController | null>(null);
+  useEffect(() => () => acPrewarm.current?.abort(), []);
+
+  // Dispara el precalentado UNA vez por visita; el ref `lanzado` es el cinturón
+  // (pagar dos veces el mismo render sería tirar dinero).
+  //
+  // La dep es un BOOLEANO ("¿queda algo por precalentar?") y no la firma de las
+  // llaves, porque la firma era un lazo: se derivaba de `catImgs`, que este
+  // mismo efecto engorda vía `onRendered`. Al aterrizar el PRIMER render la
+  // firma cambiaba, React corría el cleanup del efecto viejo —que abortaba la
+  // fila entera— y el efecto nuevo salía por `lanzado.current`. O sea: se
+  // precalentaba UNA imagen por visita, las que iban en vuelo se pagaban y se
+  // tiraban, y el resto de la pantalla seguía en gris. Es el bug que el
+  // prewarm existía para matar (Alberto: "salía sin imagen… se ve medio mal
+  // todo vacío"), vivo desde entonces y escondido detrás de la subida del tope
+  // de 8 a 40. Cazado por la review de ship del 2026-08-13.
   const lanzado = useRef(false);
-  const firmaPrewarm = porPrecalentar.map((j) => j.key).join("|");
+  const hayQuePrecalentar = porPrecalentar.length > 0;
   useEffect(() => {
-    if (lanzado.current || !firmaPrewarm) return;
+    if (lanzado.current || !hayQuePrecalentar) return;
     lanzado.current = true;
-    const ac = new AbortController();
-    void prewarmRenders(jobsRef.current, onRendered, ac.signal);
-    // Salir de la cápsula cancela la fila: no tiene sentido seguir pagando
-    // renders de tiles que ya nadie está viendo.
-    return () => ac.abort();
-  }, [firmaPrewarm, onRendered]);
+    acPrewarm.current = new AbortController();
+    void prewarmRenders(jobsRef.current, onRendered, acPrewarm.current.signal);
+  }, [hayQuePrecalentar, onRendered]);
+
+  // La cola de TUS prendas sin imagen, en orden de visibilidad: el duelo enseña
+  // la tuya en grande, "ya lo tienes" en miniatura. Misma mecánica que el
+  // prewarm de arriba (ref + firma + un solo disparo por visita, concurrencia 2).
+  const porDibujar: { nombre: string; id: string }[] = [];
+  {
+    const vistos = new Set<string>();
+    for (const r of [...decidir, ...tienes, ...falta]) {
+      const nombre = r.by;
+      if (!nombre || vistos.has(nombre) || imgs[nombre] || !nameToId[nombre]) continue;
+      vistos.add(nombre);
+      porDibujar.push({ nombre, id: nameToId[nombre] });
+    }
+  }
+  const dibujarRef = useRef(porDibujar);
+  useEffect(() => {
+    dibujarRef.current = porDibujar;
+  });
+  // Vivo mientras la pantalla lo esté: se apaga al DESMONTAR y nunca por un
+  // re-render (la trampa que se documenta arriba, en el prewarm).
+  const dibujoVivo = useRef(true);
+  useEffect(() => {
+    dibujoVivo.current = true;
+    return () => {
+      dibujoVivo.current = false;
+    };
+  }, []);
+  const dibujoLanzado = useRef(false);
+  const hayQueDibujar = porDibujar.length > 0;
+  useEffect(() => {
+    if (dibujoLanzado.current || !hayQueDibujar) return;
+    dibujoLanzado.current = true;
+    const cola = dibujarRef.current.slice(0, TOPE_DIBUJO);
+    const worker = async () => {
+      for (let j = cola.shift(); j && dibujoVivo.current; j = cola.shift()) {
+        const res = await requestItemRender(j.id);
+        const url = res.url;
+        if (res.ok && url && dibujoVivo.current) {
+          setOwnImgs((m) => ({ ...m, [j.nombre]: url }));
+        }
+      }
+    };
+    void Promise.all(
+      Array.from({ length: Math.min(CONCURRENCIA_DIBUJO, cola.length) }, worker)
+    );
+  }, [hayQueDibujar]);
 
   return (
     <div className="flex flex-col gap-7">
@@ -404,7 +487,7 @@ export function CapsuleList({
               <BigCard
                 key={rowKey(r)}
                 row={r}
-                images={images}
+                images={imgs}
                 catalogImages={catImgs}
                 onRendered={(url) => onRendered(faltaKey(r.item), url)}
               />
@@ -427,7 +510,7 @@ export function CapsuleList({
                 <DecideRow
                   key={rowKey(r)}
                   row={r}
-                  images={images}
+                  images={imgs}
                   catalogImages={catImgs}
                   onRendered={(url) => onRendered(faltaKey(r.item), url)}
                   onDecide={decide}
@@ -494,7 +577,7 @@ export function CapsuleList({
               <DecideRow
                 key={rowKey(r)}
                 row={r}
-                images={images}
+                images={imgs}
                 catalogImages={catImgs}
                 onRendered={(url) => onRendered(faltaKey(r.item), url)}
                 onDecide={decidirYSeguir}
@@ -520,7 +603,7 @@ export function CapsuleList({
         <Section title="Ya lo tienes" count={tienes.length}>
           <TienesSection
             rows={tienes}
-            images={images}
+            images={imgs}
             catalogImages={catImgs}
             onNoCubre={(index) => decide(index, "reject")}
             onZoom={(r) => setZoom(zoomDe(r))}

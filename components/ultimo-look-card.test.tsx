@@ -73,3 +73,48 @@ describe("UltimoLookCard", () => {
     expect(screen.getByText(/ver el look/i)).toBeTruthy();
   });
 });
+
+// Abrir el look es un fetch de segundos. Mientras iba en vuelo la card quedaba
+// idéntica y muda, así que la lectura correcta era "no reaccionó" y la reacción
+// natural, picarle otra vez (Roberto, 2026-08-13: "le pico y no reacciona, le
+// quiero picar varias veces"). El acuse es DOBLE y los dos importan: el CTA dice
+// que está abriendo, y el botón se bloquea para que el segundo tap no exista.
+// Probar sólo el texto dejaría pasar que alguien quite el `disabled`, que es la
+// mitad que cuesta dinero — cada tap extra es otro request.
+describe("UltimoLookCard — abriendo (candado anti-doble-tap)", () => {
+  const boton = () => screen.getByRole("button") as HTMLButtonElement;
+
+  it("en reposo el botón responde y el CTA invita", () => {
+    const onVer = vi.fn();
+    render(<UltimoLookCard look={base} onVer={onVer} />);
+    expect(boton().disabled).toBe(false);
+    expect(boton().textContent).toContain("ver el look");
+  });
+
+  it("cargando: el CTA dice «abriendo…», el botón se bloquea y el tap no pasa", () => {
+    const onVer = vi.fn();
+    render(<UltimoLookCard look={base} onVer={onVer} cargando />);
+
+    expect(boton().textContent).toContain("abriendo…");
+    expect(boton().getAttribute("aria-busy")).toBe("true");
+    expect(boton().disabled).toBe(true);
+
+    fireEvent.click(boton());
+    expect(onVer).not.toHaveBeenCalled(); // el segundo request no ocurre
+  });
+
+  it("el candado también aplica a la variante con retrato (try-on)", () => {
+    const onVer = vi.fn();
+    render(
+      <UltimoLookCard
+        look={{ ...base, retrato: "https://x/retrato.jpg" }}
+        onVer={onVer}
+        cargando
+      />
+    );
+
+    expect(boton().disabled).toBe(true);
+    fireEvent.click(boton());
+    expect(onVer).not.toHaveBeenCalled();
+  });
+});

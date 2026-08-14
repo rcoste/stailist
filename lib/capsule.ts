@@ -26,6 +26,18 @@ export type Formalidad = (typeof FORMALIDADES)[number];
 export type AssessmentQuestion = {
   id: string;
   label: string;
+  /** Cómo se le cuenta esta pregunta AL MOTOR, cuando decirla en voz de
+   *  producto le quita señal.
+   *
+   *  El label viaja al prompt (`- ${label} → ${respuestas}`, ver
+   *  lib/engine/capsule-target.ts), así que la redacción que le queda clara a
+   *  la persona y la que le rinde al modelo no siempre son la misma frase.
+   *  Caso que lo estrenó (2026-08-13): "¿qué pide ropa especial?" confundía a
+   *  la gente, pero ESA era justo la instrucción que el motor necesitaba
+   *  ("súmale piezas para esto"); "¿qué haces seguido?" es claro y neutro.
+   *  Con este campo la pantalla pregunta claro y el prompt sigue pidiendo lo
+   *  mismo. Sin `promptLabel`, el motor usa `label` como siempre. */
+  promptLabel?: string;
   help?: string;
   multi?: boolean; // opción múltiple (respuesta = valores separados por coma)
   /** Pregunta CONDICIONAL: solo se muestra si otra respuesta incluye `value`.
@@ -70,8 +82,13 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   },
   {
     id: "actividades",
-    label: "Fuera del trabajo, ¿qué pide ropa especial?",
-    help: "Marca todo lo que aplique.",
+    // "¿qué pide ropa especial?" confundía (2026-08-13, dos reportes): la
+    // pregunta es por sus PLANES, no por su ropa — el motor deduce las piezas.
+    // La frase vieja se conserva para el prompt (ver promptLabel): ahí sí
+    // rendía, porque le dice al motor que esas actividades suman piezas.
+    label: "Fuera del trabajo, ¿qué haces seguido?",
+    promptLabel: "Fuera del trabajo, ¿qué actividades le piden ropa especial?",
+    help: "Marca todo lo que aplique — así tu clóset también cubre esos planes.",
     multi: true,
     options: [
       { value: "gym", label: "Gym o deporte" },

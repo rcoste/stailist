@@ -37,6 +37,31 @@ export type CapsuleInputs = {
   ageStyling?: string | null; // orientación por edad (life-stage) — señal suave, solo extremos
 };
 
+/**
+ * El bloque "vida" del prompt: una línea por pregunta contestada, con la
+ * pregunta y lo que eligió. Pura y exportada para poder probarla — lo que
+ * blinda no es el formato sino QUÉ frase le llega al motor: cuando una
+ * pregunta trae `promptLabel`, manda esa y no la de la pantalla (ver el porqué
+ * en lib/capsule.ts). Las preguntas sin contestar no ocupan línea.
+ */
+export function bloqueVida(
+  questions: AssessmentQuestion[],
+  answers: LifestyleAnswers
+): string {
+  return questions
+    .map((q) => {
+      const raw = answers[q.id];
+      if (!raw) return null;
+      const vals = q.multi ? raw.split(",").filter(Boolean) : [raw];
+      const labels = vals
+        .map((v) => q.options.find((o) => o.value === v)?.label)
+        .filter(Boolean);
+      return labels.length ? `- ${q.promptLabel ?? q.label} → ${labels.join(", ")}` : null;
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
 // CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
 // ESA persona debería tener, mezclando lo que su vida exige con quién es cuando
 // elige, y aterrizada a su paleta de color. Libre del catálogo (puede pedir
@@ -48,17 +73,7 @@ export async function generateCapsuleTarget(
 
   const client = new Anthropic();
 
-  const vida = (inputs.questions ?? ASSESSMENT_QUESTIONS).map((q) => {
-    const raw = inputs.answers[q.id];
-    if (!raw) return null;
-    const vals = q.multi ? raw.split(",").filter(Boolean) : [raw];
-    const labels = vals
-      .map((v) => q.options.find((o) => o.value === v)?.label)
-      .filter(Boolean);
-    return labels.length ? `- ${q.label} → ${labels.join(", ")}` : null;
-  })
-    .filter(Boolean)
-    .join("\n");
+  const vida = bloqueVida(inputs.questions ?? ASSESSMENT_QUESTIONS, inputs.answers);
 
   let paletaTxt = "No definida (usa neutros versátiles).";
   if (inputs.season) {

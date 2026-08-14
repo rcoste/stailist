@@ -12,11 +12,15 @@ import { useWakeLock } from "@/lib/use-wake-lock";
 const INITIAL: CapsuleState = { status: "idle" };
 
 // Frases de "armando" de la cápsula (mismo lenguaje-como-progreso que Hoy/Viaje):
-// reflejan que considera tu vida, tus colores y tu cuerpo — no solo un spinner.
+// además de reflejar el proceso, EXPLICAN qué se está creando y qué resuelve
+// (pedido de Roberto 2026-08-13: la espera de ~40s es el mejor momento para
+// contar la idea — pocas piezas que combinan entre sí, adiós crisis de clóset).
 const CAPSULE_PHRASES: GenPhrase[] = [
   { a: "leyendo tu ", k: "vida", b: "…" },
+  { a: "eligiendo ", k: "pocas piezas", b: " que combinan entre sí…" },
   { a: "cruzando tus ", k: "colores", b: "…" },
-  { a: "afinando tu ", k: "silueta", b: "…" },
+  { a: "pensando en ", k: "tu clima", b: " y tus planes…" },
+  { a: "apuntando a menos ", k: "«no sé qué ponerme»", b: "…" },
   { a: "armando tus ", k: "esenciales", b: "…" },
 ];
 
