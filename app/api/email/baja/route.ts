@@ -34,5 +34,8 @@ export async function GET(request: NextRequest) {
   if (rows === 0) {
     return page("No encontramos tu suscripción. Puede que ya te hayas dado de baja.");
   }
-  return page("Listo, ya no te mandaremos el correo semanal. Puedes volver a activarlo desde la app cuando quieras.");
+  // Dice "correos" en plural desde que existe el reenganche de 48h: una sola
+  // preferencia (`email_semanal`) apaga los dos, y prometer solo el semanal
+  // dejaría a alguien creyendo que apagó menos de lo que apagó.
+  return page("Listo, ya no te mandaremos correos. Puedes volver a activarlos desde la app cuando quieras.");
 }

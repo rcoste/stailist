@@ -2,6 +2,92 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.240.0] - 2026-08-14
+
+### Removed — una sola puerta para subir fotos de ropa
+
+Había dos que hacían lo mismo: "una prenda" (una foto → una prenda) y "varias de
+golpe". La primera era la misma función peor hecha — **no generaba el render
+limpio**, así que dejaba en el clóset la foto cruda del usuario mientras que la
+otra devuelve el flat-lay de catálogo.
+
+Producía **7 prendas de 1066** en toda la vida del producto. Y el propio código
+ya delataba cuál sobraba: cuando la visión detectaba más de una prenda en la
+foto, esa pantalla ofrecía un botón para pasarle la misma foto a la puerta de al
+lado. Una escotilla de escape que existía porque la puerta estaba mal.
+
+Dos puertas que hacen lo mismo son fricción por sí solas: obligan a elegir, y la
+fricción de catalogar es el enemigo declarado del proyecto. El menú pasa de tres
+opciones a dos.
+
+- **La puerta que queda ya no pide un ritual.** Decía "varias de golpe — vacía el
+  clóset en la cama"; siendo la única, tiene que recibir igual de bien a quien
+  trae unos tenis sueltos. Ahora: *"tus fotos — tómale foto a tu ropa, una o
+  muchas, saco cada prenda que vea"*.
+- **Se fue la tercera copia del vocabulario de prendas.** Vivía en el archivo
+  borrado; `TODOS.md` la tenía anotada como deuda. Hoy solo existe en
+  `components/prenda-campos.tsx`.
+- **Las 7 prendas que habían entrado por ahí ya tienen su render limpio**,
+  generado desde su foto original (imagen→imagen, el mismo motor del carrete).
+  Cuatro eran de usuarias reales — entre ellas el corsé de encaje de Andy.
+
+## [0.2.239.0] - 2026-08-14
+
+### Added — el correo que rescata a las 48 horas, no a los siete días
+
+Las tres usuarias reales duran entre 1 y 3 días. Andy hizo **todo** bien —78
+prendas, 22 con foto propia, avatar, esenciales, 8 looks y 3 con 👍, primer look
+en 9 minutos— y no volvió. Eso descarta que el problema sea el onboarding o la
+calidad del primer look: no había nada que la llamara de vuelta al día
+siguiente.
+
+El correo semanal existía y ella tenía opt-in, pero **nunca lo recibió**: se dio
+de alta el lunes 10 después del envío, se fue el 12, y su primer correo habría
+llegado el 17. La gente se apaga a los 2-3 días y el rescate llegaba a los 7.
+
+- **Cron diario a las 01:00 UTC** (7pm de CDMX), que es cuando uno piensa "¿qué
+  me pongo mañana?". Una ventana de 48h no se pilla corriendo una vez por
+  semana — ése es exactamente el bug.
+- **Ventana, no umbral: de 48h a 7 días.** Sin techo, la primera corrida le
+  escribe "hace poco estuviste aquí" a quien se fue hace dos meses, y ese correo
+  miente. Quien lleva más de una semana fuera necesita un win-back, que es otro
+  correo con otro texto.
+- **Una sola vez por persona, para siempre** (columna propia
+  `email_reenganche_sent_at`, que no toca la idempotencia del semanal). Es un
+  empujón, no una campaña: si un correo no la trajo de vuelta, el segundo
+  tampoco.
+- **Va personalizado con su propio look.** «Corsé Rebelde de Noche, el que te
+  gustó hace 3 días» es imposible de confundir con publicidad, porque nadie más
+  pudo haberlo escrito. Con escalera de respaldos, porque solo 5 de las 13
+  personas con opt-in tienen algún 👍: look con 👍 → último look → clóset.
+- **Nunca usa un look que la persona rechazó con 👎.** Islam se fue justo
+  después de dar uno; recordarle precisamente ese look sería decirle "vuelve por
+  lo que no te gustó".
+- **Modo ensayo** (`?ensayo=1`): calcula a quién le tocaría, con qué gancho y
+  qué asunto, sin mandar ni escribir nada. Mandar correos es irreversible; la
+  lista se revisa antes, no después.
+
+El fit check va como nota al pie y no como botón: pedirlo de frente es el mismo
+favor que ya mató a la card "¿te lo pusiste ayer?".
+
+### Changed — un solo membrete para todos los correos
+
+El wordmark, los font stacks, la paleta y el pie de baja vivían dibujados a mano
+dentro del correo semanal. Al nacer el segundo correo tocaba copiarlos, y una
+copia de marca es una copia que se despega. Ahora viven en `lib/email-marca.ts`
+(el pendiente que `TODOS.md` tenía anotado con este disparador exacto).
+Verificado generando el semanal antes y después del cambio: **no cambió ni un
+carácter**.
+
+### Fixed — el pie de los correos ya no dice que pediste algo que nunca pediste
+
+`email_semanal` viene encendido por defecto desde la migración 0076, así que
+casi nadie "activó" nada. El reenganche dice "recibes esto porque tienes una
+cuenta en stailist". Decirle a alguien que pidió algo que no pidió es la clase
+de frase que se contesta con el botón de spam, y con 13 personas una queja pesa.
+La página de baja también dejó de prometer que solo apagaba el semanal: una sola
+preferencia apaga los dos.
+
 ## [0.2.238.2] - 2026-08-14
 
 ### Fixed — el fit check volvió a registrar "me lo puse"

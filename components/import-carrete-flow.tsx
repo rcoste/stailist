@@ -17,9 +17,17 @@ import { paresDeTraje } from "@/lib/par-de-traje";
 import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import { mismoHex } from "@/components/prenda-campos";
 import { yaLaTienes, type PrendaExistente } from "@/lib/ya-la-tienes";
-import type { AddFlowHandle } from "@/components/add-photo-flow";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
+
+// Mango imperativo para disparar el flujo desde fuera (la hoja "Agregar", el
+// drawer de "Más", el bloque del clóset vacío). Vivía en add-photo-flow, que se
+// borró el 2026-08-14 al quedar una sola puerta de fotos.
+export type AddFlowHandle = {
+  start: () => void;
+  /** Recibe una foto ya elegida y salta directo al recorte. */
+  startConFoto?: (dataUrl: string) => void;
+};
 
 const MAX_FOTOS = 12;
 
@@ -190,10 +198,10 @@ export function ImportCarreteFlow({
 
   // El explainer va ANTES del picker: el valor del carrete (1 foto → la IA separa
   // cada prenda) hay que contarlo primero. "elegir fotos" abre el picker nativo.
-  // `startConFoto` es la puerta desde el flujo de UNA prenda: cuando la visión
-  // avisa que en la foto hay varias, se pasa la misma foto aquí en vez de hacer
-  // que la persona vuelva a empezar. Entra directo al recorte —ya está
-  // comprimida y ya la eligió— y se salta el explainer y el picker.
+  // `startConFoto` recibe una foto ya elegida y comprimida y entra directo al
+  // recorte, saltándose el explainer y el picker. La usaba el flujo de UNA
+  // prenda para pasar aquí una foto con varias; hoy queda para el mismo salto
+  // desde cualquier otra superficie que ya tenga la imagen en la mano.
   useImperativeHandle(
     ref,
     () => ({

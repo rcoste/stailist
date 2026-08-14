@@ -11,8 +11,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 import { AddOptions } from "@/components/add-options";
-import { AddPhotoFlow, type AddFlowHandle } from "@/components/add-photo-flow";
-import { ImportCarreteFlow } from "@/components/import-carrete-flow";
+import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import type { TripContext } from "@/lib/trip-context";
 
 // El 4º slot de la tab bar. No es un destino: levanta una PALETA DE ATAJOS.
@@ -57,8 +56,7 @@ export function MoreSheet({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  // Nivel 2 (agregar al clóset) reusa estos flujos headless (foto · carrete).
-  const photoRef = useRef<AddFlowHandle>(null);
+  // Nivel 2 (agregar al clóset) reusa este flujo headless.
   const carreteRef = useRef<AddFlowHandle>(null);
 
   // Cierra la hoja antes de navegar o de disparar un flujo (nadie queda con la
@@ -116,15 +114,7 @@ export function MoreSheet({
         </button>
       </div>
 
-      {/* Flujos de añadir en modo headless: los dispara el nivel 2. */}
-      <AddPhotoFlow
-        userId={userId}
-        headless
-        ref={photoRef}
-        // Las tres puertas que montan este flujo lo cablean igual: si no, el
-        // aviso de "veo más de una prenda" aparece en una y en las otras no.
-        onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
-      />
+      {/* Flujo de añadir en modo headless: lo dispara el nivel 2. */}
       <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
       <AtajosSheet
@@ -132,7 +122,6 @@ export function MoreSheet({
         onClose={() => setOpen(false)}
         maletaHref={maletaHref}
         go={go}
-        onAddPhoto={() => choose(() => photoRef.current?.start())}
         onAddCarrete={() => choose(() => carreteRef.current?.start())}
         onAddBiblioteca={() => go("/closet/biblioteca")}
       />
@@ -147,7 +136,6 @@ function AtajosSheet({
   onClose,
   maletaHref,
   go,
-  onAddPhoto,
   onAddCarrete,
   onAddBiblioteca,
 }: {
@@ -155,7 +143,6 @@ function AtajosSheet({
   onClose: () => void;
   maletaHref: string;
   go: (href: string) => void;
-  onAddPhoto: () => void;
   onAddCarrete: () => void;
   onAddBiblioteca: () => void;
 }) {
@@ -267,7 +254,6 @@ function AtajosSheet({
             <NivelAgregar
               key="agregar"
               onBack={() => cambiaNivel("atajos")}
-              onAddPhoto={onAddPhoto}
               onAddCarrete={onAddCarrete}
               onAddBiblioteca={onAddBiblioteca}
             />
@@ -332,7 +318,10 @@ function NivelAtajos({
         <Icon name="camara" size={22} className="shrink-0" />
         <span className="flex min-w-0 flex-col">
           <span className="text-[15px] font-bold">añadir prendas</span>
-          <span className="text-[12.5px] font-medium opacity-70">foto, carrete o básicos</span>
+          {/* "foto, carrete o básicos" enumeraba las TRES puertas de antes. Al
+              quedar dos (y llamarse una de ellas "tus fotos"), la lista dejó de
+              coincidir con lo que hay detrás. */}
+          <span className="text-[12.5px] font-medium opacity-70">tus fotos o los básicos</span>
         </span>
       </button>
 
@@ -347,12 +336,10 @@ function NivelAtajos({
 
 function NivelAgregar({
   onBack,
-  onAddPhoto,
   onAddCarrete,
   onAddBiblioteca,
 }: {
   onBack: () => void;
-  onAddPhoto: () => void;
   onAddCarrete: () => void;
   onAddBiblioteca: () => void;
 }) {
@@ -378,7 +365,6 @@ function NivelAgregar({
         <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">agregar al clóset</h3>
       </div>
       <AddOptions
-        onFoto={onAddPhoto}
         onCarrete={onAddCarrete}
         onBiblioteca={onAddBiblioteca}
       />

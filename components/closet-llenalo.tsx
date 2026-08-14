@@ -3,10 +3,9 @@
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AddOptions } from "@/components/add-options";
-import { AddPhotoFlow, type AddFlowHandle } from "@/components/add-photo-flow";
-import { ImportCarreteFlow } from "@/components/import-carrete-flow";
+import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 
-// Las tres formas de sumar ropa, DESPLEGADAS en el clóset — no escondidas en una
+// Las formas de sumar ropa, DESPLEGADAS en el clóset — no escondidas en una
 // hoja detrás de un botón que dice "agregar".
 //
 // El razonamiento (Roberto, 2026-07-29, a partir de lo que le contaron quienes
@@ -20,8 +19,8 @@ import { ImportCarreteFlow } from "@/components/import-carrete-flow";
 // autodestruye con la primera—, misma lógica que el checklist de Hoy: existe
 // mientras el hueco existe.
 //
-// Monta sus propios flujos headless. Ya hay otros dos juegos en /closet (la hoja
-// de "agregar" y el drawer de la tab bar), así que no es un patrón nuevo: son
+// Monta su propio flujo headless. Ya hay otros dos juegos en /closet (la hoja
+// de "agregar" y el drawer de la tab bar), así que no es un patrón nuevo: es
 // un input oculto y su estado, sin listeners globales.
 export function ClosetLlenalo({
   userId,
@@ -34,7 +33,6 @@ export function ClosetLlenalo({
   oculto?: boolean;
 }) {
   const router = useRouter();
-  const photoRef = useRef<AddFlowHandle>(null);
   const carreteRef = useRef<AddFlowHandle>(null);
 
   return (
@@ -43,14 +41,6 @@ export function ClosetLlenalo({
         oculto ? "contents" : "flex flex-col gap-2.5 rounded-lg border border-line bg-bg p-3.5"
       }
     >
-      <AddPhotoFlow
-        userId={userId}
-        headless
-        ref={photoRef}
-        // Las tres puertas que montan este flujo lo cablean igual: si no, el
-        // aviso de "veo más de una prenda" aparece en una y en las otras no.
-        onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
-      />
       <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
       {oculto ? null : (
@@ -69,7 +59,6 @@ export function ClosetLlenalo({
 
       <div className="-mb-2.5">
         <AddOptions
-          onFoto={() => photoRef.current?.start()}
           onCarrete={() => carreteRef.current?.start()}
           onBiblioteca={() => router.push("/closet/biblioteca")}
         />
