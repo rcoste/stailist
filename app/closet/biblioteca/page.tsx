@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { BibliotecaPicker } from "./biblioteca-picker";
@@ -46,16 +44,12 @@ export default async function BibliotecaPage() {
   // Sin tab bar: esta pantalla tiene una barra de acción fija abajo (Agregar) y
   // el handoff prohíbe que CTA y tab bar coexistan.
   return (
-    <AppShell hideTabBar desktop="wide">
+    // La vuelta sube al header, a la altura del wordmark (ver AppShell): aquí
+    // no hay menú de pantalla, así que la esquina derecha se queda con el
+    // perfil de siempre.
+    <AppShell hideTabBar desktop="wide" back={{ href: "/closet", label: "clóset" }}>
       <section className="flex flex-col gap-4 pt-1">
         <div className="flex flex-col gap-1.5">
-          <Link
-            href="/closet"
-            className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
-          >
-            <Icon name="chevron" size={15} rotate={180} />
-            clóset
-          </Link>
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
             la biblioteca
           </h1>
