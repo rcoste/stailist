@@ -4,20 +4,19 @@ import { useImperativeHandle, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { AddOptions } from "@/components/add-options";
-import { AddPhotoFlow, type AddFlowHandle } from "@/components/add-photo-flow";
-import { ImportCarreteFlow } from "@/components/import-carrete-flow";
+import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import { Sheet } from "@/components/sheet";
 
 // Punto único de entrada para sumar ropa (handoff: hoja "Agregar al clóset").
-// Reemplaza los 3 botones sueltos: el botón "+ Agregar" abre una hoja con las 3
-// formas (foto · carrete · biblioteca). Foto y carrete viven aquí en modo
-// headless y se disparan vía ref; biblioteca navega a su pantalla.
+// Reemplaza los botones sueltos: el botón "+ Agregar" abre una hoja con las dos
+// formas (fotos · biblioteca). El lector de fotos vive aquí en modo headless y
+// se dispara vía ref; biblioteca navega a su pantalla.
 // variant: "chip" = el botón compacto de acento del Clóset (default).
 // "ghost" = acción secundaria a lo ancho, con borde y sin relleno — vive bajo
 // el CTA del home (Hoy idle): añadir prendas es la acción #2 por frecuencia,
 // pero JAMÁS debe competir visualmente con "armar mi look de hoy".
 // "headless" = sin botón propio: la hoja "Más" de la tab bar la abre por ref,
-// para reusar ESTA hoja en vez de repetir sus 3 formas allá (una fila, no tres).
+// para reusar ESTA hoja en vez de repetir sus formas allá (una fila, no dos).
 export type AddSheetHandle = { open: () => void };
 
 export function AddSheet({
@@ -31,7 +30,6 @@ export function AddSheet({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const photoRef = useRef<AddFlowHandle>(null);
   const carreteRef = useRef<AddFlowHandle>(null);
 
   useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
@@ -63,15 +61,7 @@ export function AddSheet({
         </button>
       )}
 
-      {/* Flujos en modo headless: sin botón propio, los dispara la hoja. */}
-      <AddPhotoFlow
-        userId={userId}
-        headless
-        ref={photoRef}
-        // "Veo más de una prenda aquí": en vez de mandar a empezar de nuevo, la
-        // misma foto pasa al lector que sí sabe separarlas.
-        onSepararFoto={(dataUrl) => carreteRef.current?.startConFoto?.(dataUrl)}
-      />
+      {/* Flujo en modo headless: sin botón propio, lo dispara la hoja. */}
       <ImportCarreteFlow userId={userId} headless ref={carreteRef} />
 
       <Sheet open={open} onClose={() => setOpen(false)}>
@@ -79,7 +69,6 @@ export function AddSheet({
           agregar al clóset
         </h3>
         <AddOptions
-          onFoto={() => choose(() => photoRef.current?.start())}
           onCarrete={() => choose(() => carreteRef.current?.start())}
           onBiblioteca={() => choose(() => router.push("/closet/biblioteca"))}
         />

@@ -2,22 +2,29 @@
 
 import { Icon, type IconName } from "@/components/icon";
 
-// Las TRES formas de sumar ropa, en un solo lugar.
+// Las DOS formas de sumar ropa, en un solo lugar.
 //
 // Estaban duplicadas: la hoja de "agregar" (add-sheet) y el nivel 2 del drawer
-// de "más" (more-sheet) listaban las mismas tres acciones con textos DISTINTOS
+// de "más" (more-sheet) listaban las mismas acciones con textos DISTINTOS
 // —"sube varias de golpe / fotos de tu ropa o con la ropa puesta" contra
 // "varias de golpe / sube varias fotos del carrete"—, así que mejorar la
 // claridad costaba escribirlo dos veces y siempre quedaba una versión atrás.
 // Ahora la copy vive aquí y las tres superficies la consumen.
 //
-// La frase de cada una carga el trabajo pesado: el nombre solo ("una prenda",
+// ERAN TRES hasta el 2026-08-14. La tercera ("una prenda": una foto suelta) se
+// borró porque era la misma función, peor hecha: no generaba el render limpio,
+// dejaba la foto cruda del usuario en el clóset, y cuando la visión detectaba
+// más de una prenda en la foto tenía que ofrecer un botón para pasarle la misma
+// foto a la puerta de al lado. Producía 7 prendas de 1066 en toda la vida del
+// producto. Dos puertas que hacen lo mismo son fricción por sí solas: obligan a
+// elegir, y la fricción de catalogar es el enemigo declarado del proyecto.
+//
+// La frase de cada una carga el trabajo pesado: el nombre solo ("tus fotos",
 // "la biblioteca") no distingue subir una foto de marcar un básico del catálogo.
 // La de la biblioteca dice lo único que de verdad importa —que llenas el clóset
-// SIN tomar fotos—, porque la fricción de catalogar es el enemigo del proyecto y
-// ese es el atajo que lo esquiva.
+// SIN tomar fotos—, porque ese es el atajo que esquiva la tarde de catalogar.
 export const ADD_OPTIONS: {
-  id: "foto" | "carrete" | "biblioteca";
+  id: "carrete" | "biblioteca";
   icon: IconName;
   title: string;
   sub: string;
@@ -25,8 +32,11 @@ export const ADD_OPTIONS: {
   {
     id: "carrete",
     icon: "destello",
-    title: "varias de golpe",
-    sub: "vacía el clóset en la cama, tómale fotos y saco cada prenda",
+    // Ya no dice "varias de golpe" ni pide vaciar el clóset en la cama: al ser
+    // la ÚNICA puerta de fotos tiene que recibir igual de bien a quien trae una
+    // sola prenda. Pedir un ritual de mudanza para subir unos tenis espantaba.
+    title: "tus fotos",
+    sub: "tómale foto a tu ropa — una o muchas, saco cada prenda que vea",
   },
   {
     id: "biblioteca",
@@ -34,32 +44,20 @@ export const ADD_OPTIONS: {
     title: "la biblioteca",
     sub: "llena tu clóset sin tomar una sola foto",
   },
-  {
-    id: "foto",
-    icon: "camara",
-    title: "una prenda",
-    sub: "una foto de algo suelto, tipo unos tenis",
-  },
 ];
 
 /**
- * Las tres formas como filas tocables. Sirve dentro de una hoja y desplegada en
+ * Las dos formas como filas tocables. Sirve dentro de una hoja y desplegada en
  * la pantalla — es la misma lista, no dos componentes que hay que mantener a la par.
- *
- * El orden NO es el histórico (foto suelta primero): arriba va la carga en
- * bulto y luego la biblioteca, que son las dos que evitan la tarde de catalogar
- * una prenda a la vez. La foto suelta es la excepción, no el camino.
  */
 export function AddOptions({
-  onFoto,
   onCarrete,
   onBiblioteca,
 }: {
-  onFoto: () => void;
   onCarrete: () => void;
   onBiblioteca: () => void;
 }) {
-  const handler = { foto: onFoto, carrete: onCarrete, biblioteca: onBiblioteca };
+  const handler = { carrete: onCarrete, biblioteca: onBiblioteca };
   return (
     <>
       {ADD_OPTIONS.map((o) => (

@@ -23,11 +23,8 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/hoy",
 }));
 
-// Los flujos de añadir arrastran server actions (y con ellas `server-only`).
-// Se simulan enteros: esta hoja se mira por sus destinos, no por sus flujos.
-vi.mock("@/components/add-photo-flow", () => ({
-  AddPhotoFlow: () => null,
-}));
+// El flujo de añadir arrastra server actions (y con ellas `server-only`).
+// Se simula entero: esta hoja se mira por sus destinos, no por sus flujos.
 vi.mock("@/components/import-carrete-flow", () => ({
   ImportCarreteFlow: () => null,
 }));
