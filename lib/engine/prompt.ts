@@ -20,6 +20,7 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
 import { lineaTipoEvento } from "@/lib/eventos";
+import { reconocerOcasion } from "@/lib/ocasiones";
 import { alcanceDeFormalidad, lineaAlcance } from "./alcance";
 import {
   type TasteSignal,
@@ -307,7 +308,7 @@ import {
 // él la primera EXCEPCIÓN a la escalada de formalidad. Para los cuatro niveles
 // de la escalera el texto sale byte a byte igual que v50 — la versión sube
 // porque el prompt ya no es el mismo para todos los casos.
-export const PROMPT_VERSION = "v51";
+export const PROMPT_VERSION = "v52";
 
 export type EngineItem = {
   id: string;
@@ -689,6 +690,27 @@ export function contextBlock(
   if (queEvento) lines.push(`Es ${queEvento}.`);
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);
+    // Y SI ESAS PALABRAS NOMBRAN UN LUGAR QUE SABEMOS DESCRIBIR, va también la
+    // situación. Nace de un caso real (Roberto, 2026-08-14): "ida a viñedos con
+    // mis amigos" salía con mocasines de suela lisa para caminar sobre grava,
+    // porque el campo libre manda `objective: "diario"` y esa línea de arriba
+    // era TODO el andamiaje que el motor recibía — mientras un chip ("una
+    // boda") trae piso de formalidad y perfil de la ocasión.
+    //
+    // Sólo cuando NO hay chip: el chip es lo que la persona eligió a mano y
+    // gana siempre sobre lo que nosotros infiramos de su texto.
+    const perfil = ctx.tipoEvento ? null : reconocerOcasion(ctx.plan);
+    if (perfil) {
+      lines.push(`Dónde es: ${perfil.situacion}.`);
+      // El piso sólo existe donde el vocabulario que ya teníamos lo describe
+      // bien (hoy: playa). No se dice "evento" porque puede no serlo.
+      const piso = perfil.formalidadPiso && lineaFormalidad(perfil.formalidadPiso);
+      if (piso && !ctx.formality) {
+        lines.push(
+          `Nivel que pide el lugar: ${piso} — aquí el error caro es arreglarse de más, no de menos.`
+        );
+      }
+    }
   }
   // EL ANCLA, EN SINGULAR O EN PLURAL.
   //
