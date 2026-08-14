@@ -2,6 +2,64 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.237.0] - 2026-08-13
+
+### Fixed — cuando le picas, responde
+
+Cinco lugares donde tocar algo no producía ninguna señal y la app se sentía
+muerta (reporte de Roberto: "le pico y como que no reacciona, hace que la gente
+le quiera picar varias veces"):
+
+- **La card del último look**, en Inicio: traer el look tarda, y mientras tanto
+  la card quedaba idéntica. Ahora dice **"abriendo…"** con barrido, se bloquea
+  contra el segundo tap y, si falla, te avisa — antes un tap fallido no
+  producía absolutamente nada.
+- **Borrar un look del diario**: sale de la lista al instante en vez de
+  esperar al servidor. Si el borrado truena, regresa a su sitio.
+- **El listado de usuarios del admin**: sólo el correo era clickeable, así que
+  picarle a cualquier otra columna no hacía nada. Ahora navega la fila entera,
+  se atenúa como acuse de recibo y el detalle abre con su propia pantalla de
+  carga (tarda: firma las imágenes de todo el clóset de esa persona).
+- **Los chips de "¿qué no te lató?" y el corazón de favorito**: un doble tap
+  escribía dos veces.
+- **El fit check**: "rehacer" y "no es mía" no se bloqueaban, así que taps
+  repetidos apilaban renders de la misma prenda — y "rehacer" dejaba puesta la
+  imagen vieja, con lo que parecía que no había pasado nada.
+
+### Fixed — el precalentado de imágenes moría en la primera
+
+Las imágenes de tus esenciales se precalientan al abrir la pantalla, pero la
+fila se **cancelaba a sí misma**: la lista de pendientes se recalculaba con las
+imágenes ya listas, así que al aterrizar la primera, React cancelaba el resto.
+Se precalentaba **una** imagen por visita, las que iban en vuelo se pagaban y
+se tiraban, y el resto de la pantalla seguía en gris — justo lo que el
+precalentado existía para evitar. Vivía ahí desde que nació (2026-07-30) y
+quedó escondido tras la subida del tope de 8 a 40.
+
+### Added — tus prendas sin foto también se dibujan
+
+En tus esenciales, las prendas **tuyas** que no tienen foto ya no se quedan en
+un cuadro de color: se dibujan solas al abrir la pantalla, con el mismo motor
+que usa la maleta. Con tope de 12 y de dos en dos, porque a diferencia de las
+prendas ideales —que se guardan en la biblioteca compartida y las hereda quien
+venga después— el dibujo de tu prenda es tuyo y no se amortiza con nadie.
+
+### Changed — se entiende qué son "tus esenciales" antes de contestar el quiz
+
+- **Una pantalla previa** explica qué se va a crear y por qué antes de la
+  primera pregunta. Sin ella se caía directo a un cuestionario de diez pasos
+  sin saber para qué. Lleva su propia salida ("ahora no") y su propio crédito:
+  quien abandona el quiz sigue teniendo derecho a la explicación que acompaña
+  a la lista terminada.
+- **La espera de ~40s ahora cuenta la idea** en vez de sólo anunciar el
+  proceso: pocas piezas que combinan entre sí, tu clima y tus planes, menos
+  "no sé qué ponerme".
+- **"Fuera del trabajo, ¿qué pide ropa especial?" → "¿qué haces seguido?"**.
+  Dos personas reportaron no entender la anterior: preguntaba por la ropa
+  cuando lo que se necesita saber son tus planes; deducir las piezas es
+  trabajo del motor. El motor sigue recibiendo la frase vieja (`promptLabel`),
+  que ahí sí rendía: le dice que esas actividades suman piezas.
+
 ## [0.2.236.0] - 2026-08-13
 
 ### Changed — tus esenciales se leen como los viajes
