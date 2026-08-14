@@ -1,21 +1,30 @@
-// Plantilla del correo semanal. v3 "Gen-Z monocromo" — clavada al lenguaje de la
-// landing: sans grande y apretada + UNA palabra en serif itálica de acento, papel
-// hueso, hairlines, tinta negra. Los correos NO cargan fuentes propias con
-// fiabilidad (Gmail ignora Arimo/Instrument Serif) NI SVG (Gmail lo borra → el
-// isotipo no viaja): reproducimos la dualidad con fuentes web-safe (Helvetica/Arial
-// + Georgia itálica como sustituta del serif de acento).
+// Las CARTAS. El membrete (wordmark, paleta, font stacks, pie de baja) vive en
+// lib/email-marca.ts; aquí solo va lo que cambia entre un correo y otro.
 //
-// Es un EMPUJÓN de regreso, no el producto: el look se genera fresco al abrir /hoy
-// (con el clima real del día), no lo pre-generamos aquí.
+// Dos correos, dos momentos distintos y deliberadamente separados:
+//   · semanal — el lunes, para quien sigue viniendo. Ritmo.
+//   · reenganche — una sola vez, a las ~48-72h de que alguien se apagó. Rescate.
+//
+// Ninguno de los dos pre-genera el look: son un EMPUJÓN de regreso, no el
+// producto. El look se arma fresco al abrir /hoy, con el clima real del día.
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://stailist.co";
+import {
+  SERIF,
+  SITE,
+  bloque,
+  boton,
+  cardNegra,
+  documento,
+  filas,
+  kicker,
+  notaHairline,
+  serifItalica,
+  urlBaja,
+} from "@/lib/email-marca";
 
-const SANS =
-  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif";
-const SERIF = "Georgia,'Times New Roman',serif";
-
-// Wordmark st·ai·list con el "ai" en serif itálica (la firma de la marca).
-const wordmark = `<span style="font-size:22px;font-weight:700;letter-spacing:-0.045em;color:#141414;line-height:1;">st<span style="font-family:${SERIF};font-style:italic;font-weight:400;letter-spacing:0;">ai</span>list</span>`;
+// ─────────────────────────────────────────────────────────────────────────────
+// SEMANAL
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Banner de descubrimiento al pie: cada apertura invita a probar un feature.
 // Rota por semana (mismo tip para todos en un envío dado). Nota editorial
@@ -55,22 +64,8 @@ function weeklyFeature(): Feature {
   return FEATURES[week % FEATURES.length];
 }
 
-function featureBannerHtml(): string {
-  const f = weeklyFeature();
-  return `<tr><td style="padding:30px 6px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e4e3e0;">
-        <tr><td style="padding:22px 0 0;font-family:${SANS};">
-          <span style="font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#9a9a9a;">Para sacarle más</span>
-          <div style="margin:12px 0 0;font-size:17px;font-weight:700;letter-spacing:-0.02em;color:#141414;">${f.title}</div>
-          <p style="margin:6px 0 0;font-size:14px;line-height:1.55;color:#363636;">${f.desc}</p>
-          <a href="${SITE}${f.path}" style="display:inline-block;margin:12px 0 0;font-size:14px;font-weight:700;letter-spacing:-0.01em;color:#141414;text-decoration:none;border-bottom:1.5px solid #141414;padding-bottom:1px;">${f.cta} &rarr;</a>
-        </td></tr>
-      </table>
-    </td></tr>`;
-}
-
 export function weeklyEmail(opts: { unsubToken: string }) {
-  const bajaUrl = `${SITE}/api/email/baja?token=${opts.unsubToken}`;
+  const bajaUrl = urlBaja(opts.unsubToken);
   const hoyUrl = `${SITE}/hoy`;
   const f = weeklyFeature();
 
@@ -93,62 +88,142 @@ export function weeklyEmail(opts: { unsubToken: string }) {
     `Recibes esto porque pediste tu look semanal. Date de baja: ${bajaUrl}`,
   ].join("\n");
 
-  const html = `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f3f1;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3f1;">
-    <tr><td align="center" style="padding:44px 20px 40px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:480px;font-family:${SANS};">
+  const cuerpo = filas([
+    bloque("32px 6px 0", kicker("Tu look de la semana")),
+    bloque(
+      "14px 6px 0",
+      `<h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">El lunes es más fácil con el look ya ${serifItalica(
+        "resuelto"
+      )}.</h1>`
+    ),
+    bloque(
+      "18px 6px 0",
+      `<p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">Abre la app y en segundos tienes un outfit con la ropa que <b style="color:#141414;font-weight:700;">ya tienes</b> — pensado para tu día y el clima de tu ciudad. Tú solo eliges.</p>`
+    ),
+    bloque(
+      "28px 6px 0",
+      cardNegra({
+        kicker: "Tu look de hoy",
+        frase: "Lo de siempre, pero bien pensado.",
+        pie: "con tu ropa &nbsp;&middot;&nbsp; para tu día &nbsp;&middot;&nbsp; con el clima de hoy",
+      })
+    ),
+    bloque("28px 6px 0", boton({ href: hoyUrl, texto: "Armar mi look de hoy" })),
+    bloque(
+      "32px 6px 0",
+      `<p style="margin:0;font-family:${SERIF};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Nos vemos en tu clóset.</p>
+          <p style="margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#141414;">&mdash; stailist</p>`
+    ),
+    notaHairline({
+      kicker: "Para sacarle más",
+      titulo: f.title,
+      desc: f.desc,
+      cta: f.cta,
+      href: `${SITE}${f.path}`,
+    }),
+  ]);
 
-        <tr><td style="padding:0 6px 20px;border-bottom:1px solid #e4e3e0;">${wordmark}</td></tr>
-
-        <tr><td style="padding:32px 6px 0;">
-          <span style="font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#6f6f6f;">Tu look de la semana</span>
-        </td></tr>
-
-        <tr><td style="padding:14px 6px 0;">
-          <h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">El lunes es más fácil con el look ya <span style="font-family:${SERIF};font-style:italic;font-weight:400;letter-spacing:0;">resuelto</span>.</h1>
-        </td></tr>
-
-        <tr><td style="padding:18px 6px 0;">
-          <p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">Abre la app y en segundos tienes un outfit con la ropa que <b style="color:#141414;font-weight:700;">ya tienes</b> — pensado para tu día y el clima de tu ciudad. Tú solo eliges.</p>
-        </td></tr>
-
-        <tr><td style="padding:28px 6px 0;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;border-radius:6px;">
-            <tr><td style="padding:24px 22px;">
-              <span style="font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Tu look de hoy</span>
-              <div style="margin:11px 0 0;font-family:${SERIF};font-style:italic;font-size:23px;line-height:1.25;color:#ffffff;">Lo de siempre, pero bien pensado.</div>
-              <div style="margin:16px 0 0;padding-top:15px;border-top:1px solid rgba(255,255,255,0.16);font-size:12.5px;letter-spacing:0.02em;color:rgba(255,255,255,0.66);">con tu ropa &nbsp;&middot;&nbsp; para tu día &nbsp;&middot;&nbsp; con el clima de hoy</div>
-            </td></tr>
-          </table>
-        </td></tr>
-
-        <tr><td style="padding:28px 6px 0;">
-          <a href="${hoyUrl}" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:-0.01em;padding:15px 26px;border-radius:3px;">Armar mi look de hoy &rarr;</a>
-        </td></tr>
-
-        <tr><td style="padding:32px 6px 0;">
-          <p style="margin:0;font-family:${SERIF};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Nos vemos en tu clóset.</p>
-          <p style="margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#141414;">&mdash; stailist</p>
-        </td></tr>
-
-        ${featureBannerHtml()}
-
-      </table>
-
-      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:480px;">
-        <tr><td style="padding:28px 6px 0;">
-          <p style="margin:0;font-size:12px;line-height:1.55;color:#9a9a9a;font-family:${SANS};">
-            Recibes esto porque pediste tu look semanal.
-            <a href="${bajaUrl}" style="color:#9a9a9a;text-decoration:underline;">Date de baja</a> cuando quieras.
-          </p>
-        </td></tr>
-      </table>
-
-    </td></tr>
-  </table>
-</body></html>`;
+  const html = documento({
+    cuerpo,
+    motivo: "Recibes esto porque pediste tu look semanal.",
+    bajaUrl,
+  });
 
   return { subject, text, html };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REENGANCHE DE 48 HORAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * El correo que trae de vuelta a quien probó stailist y se está apagando.
+ *
+ * POR QUÉ NO ES EL SEMANAL CON OTRO TEXTO: el semanal llega los lunes y a Andy
+ * —78 prendas, avatar, 8 looks, 3 con 👍— le habría llegado el día 17, cinco
+ * días después de irse el 12. La gente abandona a los 2-3 días; un rescate que
+ * llega a los 7 no rescata a nadie. Ese hueco es toda la razón de este archivo.
+ *
+ * POR QUÉ VA PERSONALIZADO CON SU PROPIO LOOK: lo que descarta la hipótesis del
+ * onboarding es que Andy hizo todo bien Y le gustaron sus looks. No le faltó
+ * entender el producto ni tener un buen primer resultado: le faltó una razón
+ * para volver. Un boletín genérico no es una razón; "«Corsé Rebelde de Noche»,
+ * el que te gustó el martes" sí — es imposible confundirlo con publicidad,
+ * porque nadie más pudo haberlo escrito.
+ *
+ * SIN IMÁGENES, a propósito: las fotos y renders viven en Storage privado y se
+ * sirven con URLs FIRMADAS que expiran. Un correo se abre tres días después —
+ * las imágenes llegarían rotas. La plantilla es tipográfica y esa es su fuerza.
+ *
+ * EL FIT CHECK VA AL PIE, NUNCA COMO BOTÓN: pedir "enséñame la foto" de frente
+ * es exactamente el favor que ya mató a la card "¿te lo pusiste ayer?" (se
+ * quedó bajo el 10% de respuesta). Primero se da valor, luego se pide.
+ */
+export function reengagementEmail(opts: {
+  unsubToken: string;
+  gancho: import("@/lib/reenganche").Gancho;
+}) {
+  const bajaUrl = urlBaja(opts.unsubToken);
+  // `?generar=1` abre el wizard de "armar look" ya desplegado. Es un tap para
+  // ARRANCAR, no para tener el look: el wizard sigue preguntando ocasión,
+  // momento y clima. Cerrar ese hueco (precargar su objetivo de siempre) toca
+  // el wizard, que es superficie probada — se decide aparte.
+  const hoyUrl = `${SITE}/hoy?generar=1`;
+  const g = opts.gancho;
+
+  const text = [
+    g.titularTexto,
+    "",
+    g.cuerpoTexto,
+    "",
+    `Armar mi look de hoy → ${hoyUrl}`,
+    "",
+    "Nos vemos en tu clóset.",
+    "— stailist",
+    "",
+    "¿Ya te lo pusiste? Enséñame la foto y te digo cómo te queda — y de paso me aprendo tu clóset solito.",
+    "",
+    // "porque tienes una cuenta", NO "porque activaste los correos": la
+    // preferencia `email_semanal` viene en 'semanal' POR DEFECTO desde la
+    // migración 0076, así que casi nadie la activó a mano. Decirle a alguien
+    // que pidió algo que nunca pidió es la clase de frase que se contesta con
+    // un botón de "esto es spam", y una queja pesa mucho con 13 personas.
+    `Recibes esto porque tienes una cuenta en stailist. Date de baja: ${bajaUrl}`,
+  ].join("\n");
+
+  const cuerpo = filas([
+    bloque("32px 6px 0", kicker(g.kicker)),
+    bloque(
+      "14px 6px 0",
+      `<h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">${g.titularHtml}</h1>`
+    ),
+    ...(g.card
+      ? [bloque("28px 6px 0", cardNegra(g.card))]
+      : []),
+    bloque(
+      "22px 6px 0",
+      `<p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">${g.parrafoHtml}</p>`
+    ),
+    bloque("28px 6px 0", boton({ href: hoyUrl, texto: "Armar mi look de hoy" })),
+    bloque(
+      "32px 6px 0",
+      `<p style="margin:0;font-family:${SERIF};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Nos vemos en tu clóset.</p>
+          <p style="margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#141414;">&mdash; stailist</p>`
+    ),
+    notaHairline({
+      kicker: "Una cosa más",
+      titulo: "¿Ya te lo pusiste?",
+      desc: `Enséñame la foto y te digo cómo te queda — y de paso <b style="font-weight:700;color:#141414;">me aprendo tu clóset</b> solito.`,
+      cta: "Hacer un fit check",
+      href: `${SITE}/hoy`,
+    }),
+  ]);
+
+  const html = documento({
+    cuerpo,
+    motivo: "Recibes esto porque tienes una cuenta en stailist.",
+    bajaUrl,
+  });
+
+  return { subject: g.asunto, text, html };
 }
