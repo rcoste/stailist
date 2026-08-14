@@ -33,6 +33,7 @@ export const CATALOGO: Modelo[] = [
   { proveedor: "anthropic", id: "claude-opus-5", etiqueta: "Opus 5" },
   { proveedor: "anthropic", id: "claude-sonnet-5", etiqueta: "Sonnet 5" },
   { proveedor: "anthropic", id: "claude-haiku-4-5-20251001", etiqueta: "Haiku 4.5" },
+  { proveedor: "gemini", id: "gemini-3.7-flash", etiqueta: "Gemini 3.7 Flash" },
   { proveedor: "gemini", id: "gemini-3.6-flash", etiqueta: "Gemini 3.6 Flash" },
   { proveedor: "gemini", id: "gemini-3.5-flash", etiqueta: "Gemini 3.5 Flash" },
   { proveedor: "gemini", id: "gemini-3.5-flash-lite", etiqueta: "Gemini 3.5 Flash-Lite" },
@@ -83,6 +84,7 @@ export const RETADOR_MOTOR = "claude-sonnet-5";
 export const RETADORES_MOTOR = {
   sonnet: RETADOR_MOTOR,
   geminiFlash: "gemini-3.5-flash",
+  gemini37: "gemini-3.7-flash",
   kimi: "moonshotai/kimi-k2.6",
 } as const;
 

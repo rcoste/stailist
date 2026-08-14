@@ -47,6 +47,11 @@ export const PRECIOS: Record<string, Precio> = {
 
   // Google. Los precios de entrada de Gemini son por texto/imagen/video; el
   // audio cuesta más y aquí no lo usamos.
+  // Precio INTRODUCTORIO: la mitad de 3.6 Flash hasta el 31 de diciembre de
+  // 2026 (anuncio de Google del 2026-08-14). Después sube — si 3.7 gana la
+  // comparación y se queda, hay que volver aquí en enero o el recibo del
+  // panel de IA empezará a mentir hacia abajo.
+  "gemini-3.7-flash": { entrada: 0.75, salida: 3.75 },
   "gemini-3.6-flash": { entrada: 1.5, salida: 7.5 },
   "gemini-3.5-flash": { entrada: 1.5, salida: 9 },
   "gemini-3.5-flash-lite": { entrada: 0.3, salida: 2.5 },
