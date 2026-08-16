@@ -722,6 +722,45 @@ export function revisarEjecucion(
     });
   }
 
+  // 9b. EL CUELLO ALTO **DE PUNTO** TAMBIÉN PIDE BASE.
+  //
+  //     ESTO CORRIGE LA REGLA DE ARRIBA, que excluía el cuello alto a propósito
+  //     con este argumento escrito: "es cerrado y se lleva a piel por diseño".
+  //     El argumento vale para un cuello alto DELGADO y no para uno de punto, y
+  //     lo desmintió Roberto en el veredicto de Gemini 3.7 — tres veces, en
+  //     pares distintos y VOTANDO A CIEGAS, que es la evidencia más limpia que
+  //     este proyecto puede producir sobre un gusto:
+  //
+  //         "falta una playera abajo del cuello de tortuga"
+  //         "falta algo abajo del cuello de tortuga..."
+  //         "falta algo abajo del cuello de tortuga, SOBRE TODO PORQUE ES UN SUÉTER"
+  //
+  //     Esa última frase es la que fija el alcance y por eso la regla no aplica
+  //     a todo cuello alto: la lana pica y se lava peor, y ahí la base hace el
+  //     mismo trabajo que bajo cualquier suéter. Un cuello alto fino de algodón
+  //     sí está diseñado para ir a piel y se queda fuera.
+  //
+  //     LA BASE AQUÍ NO PUEDE SER OTRO CUELLO ALTO, a diferencia de la regla 9:
+  //     allá el cuello alto es una base válida bajo un suéter de pico (y sigue
+  //     siéndolo). Lo que se pide es lo que va DEBAJO del cuello alto mismo.
+  const esCuelloAlto = (i: EngineItem) => /cuello (alto|tortuga)|turtleneck/.test(TIPO(i));
+  //     Sin material declarado, `familiaMaterial` cae en el nombre y "cuello
+  //     alto" ya mapea a punto. Es conservador en la dirección correcta: de las
+  //     9 prendas así en la base, todas son de punto ("de lana merino",
+  //     "suéter de cuello alto"). Un cuello alto fino declarará su algodón.
+  const esDePunto = (i: EngineItem) =>
+    familiaMaterial(i.attrs.material, i.attrs.nombre) === "punto" ||
+    /su[eé]ter|lana|merino|cachemir|cashmere|alpaca/.test(TIPO(i));
+  const esBaseFina = (i: EngineItem) =>
+    /camiseta|playera|camisa|polo|t-?shirt|blusa|top b[aá]sico/.test(TIPO(i));
+  const cuellosDePunto = items.filter((i) => esCuelloAlto(i) && esDePunto(i));
+  if (ctx.gender === "hombre" && cuellosDePunto.length && !items.some(esBaseFina)) {
+    v.push({
+      regla: "cuello-alto-sin-base",
+      detalle: `"${nombre(cuellosDePunto[0])}" es de punto y va directo sobre la piel: pide una camiseta debajo — la lana pica, y con base se ve mejor y se lava menos. Añade una del clóset.`,
+    });
+  }
+
   // 10. MANGA CORTA CON SACO, NUNCA. Roberto, dos veces en el mismo veredicto
   //     y con signos de admiración: "Manga corta con saco jamás!!" y "Camisa
   //     de manga corta en traje jamás!!". Es una regla de código de vestir, no
