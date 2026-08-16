@@ -1042,3 +1042,63 @@ describe("cuello alto de punto — la corrección que Roberto pidió tres veces"
     expect(v).not.toContain("cuello-alto-sin-base");
   });
 });
+
+describe("funeral — el esmoquin que Roberto llamó 'terrible'", () => {
+  const enFuneral = (items: EngineItem[]) =>
+    revisarEjecucion(items, { tipoEvento: "funeral", formality: "formal" }).map((x) => x.regla);
+
+  // El caso real del veredicto de 3.7. La ironía: el catálogo ya gritaba "EL
+  // COLOR ES NEGRO" y la prenda más negra del clóset era el esmoquin, así que
+  // la regla del color empujó justo hacia el error.
+  it("un esmoquin en un funeral se marca, por muy negro que sea", () => {
+    const v = enFuneral([
+      p("Saco de esmoquin negro", "#111111"),
+      p("Pantalón negro", "#1A1A1A"),
+      p("Camisa blanca", "#FFFFFF"),
+    ]);
+    expect(v).toContain("funeral-etiqueta");
+  });
+
+  it("un traje negro normal NO se marca", () => {
+    const v = enFuneral([
+      p("Saco de traje negro", "#141414", { conjunto: "t1" }),
+      p("Pantalón de traje negro", "#141414", { conjunto: "t1" }),
+      p("Camisa blanca", "#FFFFFF"),
+      p("Corbata negra", "#111111"),
+    ]);
+    expect(v).not.toContain("funeral-etiqueta");
+    expect(v).not.toContain("funeral-corbata-color");
+  });
+
+  it("la corbata de color se marca; la negra pasa", () => {
+    const conVino = enFuneral([p("Corbata de seda vino", "#6B2233"), p("Camisa blanca", "#FFFFFF")]);
+    expect(conVino).toContain("funeral-corbata-color");
+    const conNegra = enFuneral([p("Corbata negra", "#121212"), p("Camisa blanca", "#FFFFFF")]);
+    expect(conNegra).not.toContain("funeral-corbata-color");
+  });
+
+  // "la corbata gris no va" — Roberto, en el mismo par. Un gris medio tiene
+  // poca saturación pero demasiada luz: no es negro.
+  it("una corbata gris clara tampoco pasa", () => {
+    expect(enFuneral([p("Corbata gris", "#9A9A9A")])).toContain("funeral-corbata-color");
+  });
+
+  // Sin hex no se inventa el error: es la regla de toda esta casa.
+  it("sin color declarado no se marca la corbata", () => {
+    const v = revisarEjecucion([{ id: "x", attrs: { nombre: "Corbata" } } as EngineItem], {
+      tipoEvento: "funeral",
+    }).map((x) => x.regla);
+    expect(v).not.toContain("funeral-corbata-color");
+  });
+
+  // Y NADA de esto aplica fuera de un funeral: el esmoquin en una boda de gala
+  // es exactamente lo correcto.
+  it("en una boda el esmoquin y la corbata de color no se tocan", () => {
+    const v = revisarEjecucion(
+      [p("Saco de esmoquin negro", "#111111"), p("Corbata de seda vino", "#6B2233")],
+      { tipoEvento: "boda", formality: "gala" }
+    ).map((x) => x.regla);
+    expect(v).not.toContain("funeral-etiqueta");
+    expect(v).not.toContain("funeral-corbata-color");
+  });
+});

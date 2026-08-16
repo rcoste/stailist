@@ -65,6 +65,11 @@ export type ContextoReglas = {
   /** La formalidad del evento, cuando el wizard la preguntó. */
   formality?: string | null;
   /**
+   * QUÉ evento es (lib/eventos.ts). La formalidad no basta: un funeral y una
+   * boda comparten "formal" y no comparten nada de lo que hay que acertar.
+   */
+  tipoEvento?: string | null;
+  /**
    * Para quién. Hoy solo lo usa la regla del suéter, y por una razón medida:
    * "el suéter pide algo debajo" es una convención del guardarropa MASCULINO.
    * En el femenino, llevar el punto a piel es una elección normal y frecuente —
@@ -308,6 +313,43 @@ export function revisarEjecucion(
       regla: "saco-de-traje-suelto",
       detalle: `"${nombre(saco)}" es un saco de TRAJE, no un blazer: está cortado y entelado para su pantalón, así que con otro se ve parchado. Ponlo con el pantalón de su traje, o cámbialo por un blazer o saco desestructurado, que sí se llevan sueltos.`,
     });
+  }
+
+  // 2c. FUNERAL: NADA DE ETIQUETA, Y LA CORBATA NEGRA.
+  //
+  //     El motor sacó un ESMOQUIN para un funeral en el veredicto de Gemini 3.7
+  //     y Roberto lo calificó con una palabra: "terrible". Más una corbata de
+  //     color en el mismo look — "tendría que ser negra".
+  //
+  //     LA IRONÍA, y por eso hacía falta código y no más prompt: el catálogo ya
+  //     gritaba "EL COLOR ES NEGRO — el AZUL MARINO NO", y la prenda más negra
+  //     y más formal de ese clóset era justamente el esmoquin. La regla del
+  //     color EMPUJÓ hacia el error. Que algo sea negro no lo vuelve luto: el
+  //     esmoquin es ropa de celebración.
+  //
+  //     Va como regla comprobable porque las dos condiciones son verificables
+  //     (¿hay una prenda de etiqueta?, ¿el hex de la corbata es negro?) y
+  //     porque una línea de prompt se puede ignorar; ésta la repara el juez.
+  if (ctx.tipoEvento === "funeral") {
+    for (const et of items.filter((i) => /esmoquin|smoking|chaqu[eé]\b|frac|pajarita|mo[nñ]o/.test(TIPO(i)))) {
+      v.push({
+        regla: "funeral-etiqueta",
+        detalle: `"${nombre(et)}" es ropa de etiqueta, o sea de CELEBRACIÓN: en un funeral se lee como una falta de respeto por muy negro que sea. Cámbialo por un traje o piezas sueltas en negro o gris muy oscuro.`,
+      });
+    }
+    // La corbata: negra o nada. Se juzga en OKLCH —oscura Y sin color— porque
+    // en RGB un vino y un carbón oscuros se parecen y aquí la diferencia es
+    // exactamente la que importa. Sin hex NO se marca: inventar el error es
+    // peor que no verlo.
+    for (const c of items.filter((i) => /corbata/.test(TIPO(i)))) {
+      const o = oklch(c.attrs.color_hex);
+      if (!o) continue;
+      if (o.L <= 0.42 && o.C <= 0.05) continue; // negra o carbón sin color: pasa
+      v.push({
+        regla: "funeral-corbata-color",
+        detalle: `"${nombre(c)}" no va en un funeral: la corbata tiene que ser NEGRA. Si no hay una negra, es mejor ir sin corbata que con una de color.`,
+      });
+    }
   }
 
   // 3. Los cueros del look se hablan entre sí. Ya está escrito en dos recetas
