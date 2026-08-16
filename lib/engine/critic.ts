@@ -398,6 +398,9 @@ function contextoDeReglas(ctx: EngineContext): ContextoReglas {
     // La formalidad del evento: sin ella, "separates en boda formal" no se
     // puede distinguir de "separates en la oficina", que es correcto.
     formality: ctx.formality,
+    // Y QUÉ evento es: la formalidad sola no distingue un funeral de una boda,
+    // y el esmoquin es correcto en una y una falta de respeto en la otra.
+    tipoEvento: ctx.tipoEvento,
     // Para quién: la regla del suéter es convención MASCULINA, y aplicarla a
     // una mujer marca como error el punto a piel, que ahí es normal.
     gender: ctx.gender,
