@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.243.0] - 2026-08-14
+
+### Fixed — el cuello alto de punto también pide algo debajo
+
+Segunda regla salida de los comentarios del veredicto de Gemini 3.7. Roberto lo
+anotó **tres veces, en pares distintos y votando a ciegas**, que es la evidencia
+más limpia que este proyecto puede producir sobre un gusto.
+
+**Corrige una decisión anterior escrita a propósito.** La regla del suéter
+excluía el cuello alto con este argumento: *"es cerrado y se lleva a piel por
+diseño"*. El argumento vale para un cuello alto delgado y no para uno de punto,
+y lo fija la tercera frase de Roberto: *"falta algo abajo del cuello de tortuga,
+**sobre todo porque es un suéter**"*.
+
+- **Sólo los de punto.** Un cuello alto fino de algodón sí está diseñado para ir
+  a piel y se queda fuera. Era la opción que Roberto eligió entre las tres que
+  se le plantearon.
+- **La base no puede ser otro cuello alto**, a diferencia de la regla del
+  suéter: lo que se pide es lo que va DEBAJO del cuello alto mismo. El cuello
+  alto sigue valiendo como base bajo un suéter de pico — esa regla no cambió, y
+  hay un test que lo fija.
+- Como la regla del suéter, **sólo aplica al guardarropa masculino**: llevar el
+  punto a piel es una elección normal en el femenino.
+
+Verificada contra los 107 looks reales de la corrida: dispara en 8 (7.5%),
+incluidos los tres que Roberto marcó a mano, y los cinco restantes se revisaron
+uno por uno — todos son cuello tortuga de lana merino sin base.
+
 ## [0.2.242.0] - 2026-08-14
 
 ### Added — el saco de traje va con su pantalón, o no va
