@@ -177,6 +177,46 @@ const esCapaAbierta = (i: EngineItem) =>
 const esBase = (i: EngineItem) =>
   /camiseta|playera|polo|su[eé]ter|top|blusa|cuello alto/.test(TIPO(i));
 const esSaco = (i: EngineItem) => /saco|blazer/.test(TIPO(i));
+
+/**
+ * SACO DE TRAJE contra BLAZER — la distinción que pidió Roberto, con sus
+ * palabras: "una cosa es un blazer y otra es un saco traje. El saco de traje
+ * debe ir con su pantalón de traje, y el pantalón de traje sí podría ir solo".
+ *
+ * DOS SEÑALES, y el orden importa:
+ *
+ * 1. `attrs.conjunto` — el lazo que la persona pone al dar de alta un traje.
+ *    Es la señal DURA: si existe, esa prenda vino de un traje y tiene un par
+ *    concreto. Cero falsos positivos.
+ * 2. El nombre y el subtipo. Hace falta porque la señal dura casi no existe
+ *    todavía: al escribir esto había 6 prendas con `conjunto` en toda la base
+ *    —las 6 de un solo usuario— contra 46 sacos sin él. Sin esta segunda capa
+ *    la regla nacería correcta e inerte para 17 de 18 personas.
+ *
+ * LO QUE **NO** ES SACO DE TRAJE, y por eso no basta con buscar "saco": el
+ * blazer, el desestructurado, el sport y los de patrón (cuadros, pata de gallo,
+ * príncipe de Gales) se llevan sueltos POR DISEÑO. Marcarlos sería el error
+ * contrario y más caro — prohibir combinaciones correctas.
+ */
+const esSacoDeTraje = (i: EngineItem) => {
+  const t = TIPO(i);
+  // 0. Tiene que ser una prenda de esa familia. Esto es lo que deja FUERA al
+  //    pantalón del traje, que también lleva `conjunto` — la asimetría que pidió
+  //    Roberto ("el pantalón de traje sí podría ir solo") y que se rompía al
+  //    mirar `conjunto` antes que la prenda. Lo cazó su test.
+  //    El \\b de "chaqué" NO es decorativo: sin él "chaqueta negra con cierre"
+  //    entraba por el "chaque" de dentro, y la regla marcaba una chamarra
+  //    normal. Lo cazó la verificación contra los 107 looks de la corrida.
+  if (!/saco|esmoquin|smoking|chaqu[eé]\b/.test(t)) return false;
+  // 1. El nombre lo dice: es de traje, pase lo que pase con el material.
+  if (/traje|esmoquin|smoking|chaqu[eé]\b/.test(t)) return true;
+  // 2. O lo dice el lazo que la persona puso al dar de alta su traje.
+  if (i.attrs.conjunto) return true;
+  // 3. El resto de los sacos —blazer, desestructurado, sport, de cuadros— se
+  //    llevan sueltos por diseño. En la duda NO se marca: prohibir una
+  //    combinación correcta es el error caro.
+  return false;
+};
 const esPantalonVestir = (i: EngineItem) =>
   /pantal[oó]n de vestir|pantal[oó]n de traje|pantal[oó]n formal/.test(TIPO(i));
 const esCuero = (i: EngineItem) =>
@@ -235,6 +275,39 @@ export function revisarEjecucion(
         detalle: `"${nombre(saco)}" y "${nombre(pant)}" son del mismo color sin ser un traje: se lee como un traje mal conjuntado, no como un look armado. Cambia el pantalón por uno de otro color.`,
       });
     }
+  }
+
+  // 2b. EL SACO DE TRAJE VA CON SU PANTALÓN, O NO VA.
+  //
+  //     Salió del veredicto de Gemini 3.7 (2026-08-14), donde Roberto lo anotó
+  //     en CUATRO pares distintos y pidió que fuera regla con esas palabras:
+  //     "no podemos poner los sacos de traje así como por sí solos, o tienen
+  //     que ir con su par. Eso es una regla". Y el diagnóstico de por qué se ve
+  //     mal: "se ve parchado" — el saco de traje está cortado y entelado para
+  //     su pantalón, así que junto a otro se lee como un traje mal apareado, no
+  //     como un look armado.
+  //
+  //     NO LA CUBRÍA LA REGLA 2 (`traje-desparejado`): aquella sólo dispara
+  //     cuando saco y pantalón son del MISMO color, o sea dos piezas fingiendo
+  //     ser un traje. Ésta es más fuerte y al revés — un saco de traje con
+  //     CUALQUIER pantalón que no sea el suyo.
+  //
+  //     LA ASIMETRÍA ES DELIBERADA Y ES DE ÉL: el pantalón de traje suelto SÍ
+  //     se puede usar. Sólo el saco queda atado a su par.
+  //
+  //     Cuando el lazo `conjunto` existe se exige el par EXACTO; cuando no
+  //     existe (la mayoría de los clósets hoy) sólo se puede exigir que haya
+  //     algún pantalón de vestir, que es lo que el dato permite afirmar sin
+  //     inventar.
+  for (const saco of items.filter(esSacoDeTraje)) {
+    const par = saco.attrs.conjunto
+      ? items.find((i) => i !== saco && i.attrs.conjunto === saco.attrs.conjunto)
+      : items.find(esPantalonVestir);
+    if (par) continue;
+    v.push({
+      regla: "saco-de-traje-suelto",
+      detalle: `"${nombre(saco)}" es un saco de TRAJE, no un blazer: está cortado y entelado para su pantalón, así que con otro se ve parchado. Ponlo con el pantalón de su traje, o cámbialo por un blazer o saco desestructurado, que sí se llevan sueltos.`,
+    });
   }
 
   // 3. Los cueros del look se hablan entre sí. Ya está escrito en dos recetas
