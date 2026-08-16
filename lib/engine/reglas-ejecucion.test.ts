@@ -973,3 +973,72 @@ it("una chaqueta NO es un chaqué", () => {
   ]).map((x) => x.regla);
   expect(v).not.toContain("saco-de-traje-suelto");
 });
+
+describe("cuello alto de punto — la corrección que Roberto pidió tres veces", () => {
+  const reglas = (items: EngineItem[], gender = "hombre") =>
+    revisarEjecucion(items, { gender }).map((x) => x.regla);
+
+  // Los tres comentarios salieron votando A CIEGAS en el veredicto de 3.7.
+  it("un cuello tortuga de lana sin nada debajo se marca", () => {
+    const v = reglas([
+      p("Cuello tortuga negro de lana merino", "#1A1A1A", { material: "lana" }),
+      p("Pantalón de vestir gris", "#6B6B6B"),
+      p("Zapato formal negro", "#111111"),
+    ]);
+    expect(v).toContain("cuello-alto-sin-base");
+  });
+
+  it("con camiseta debajo, no se queja", () => {
+    const v = reglas([
+      p("Cuello tortuga negro de lana merino", "#1A1A1A", { material: "lana" }),
+      p("Camiseta blanca", "#FFFFFF"),
+      p("Pantalón de vestir gris", "#6B6B6B"),
+    ]);
+    expect(v).not.toContain("cuello-alto-sin-base");
+  });
+
+  // La opción B, que es la que eligió Roberto: sólo los de punto. Un cuello alto
+  // fino de algodón sí está diseñado para ir a piel.
+  it("un cuello alto FINO de algodón NO se marca", () => {
+    const v = reglas([
+      p("Playera de cuello alto negra", "#1A1A1A", { material: "algodón" }),
+      p("Jeans azul oscuro", "#2C3E50"),
+    ]);
+    expect(v).not.toContain("cuello-alto-sin-base");
+  });
+
+  // Otro cuello alto NO cuenta como base: lo que se pide es lo que va debajo de
+  // este. (En la regla 9 sí sirve de base bajo un suéter de pico — eso no cambia.)
+  it("dos cuellos altos no se resuelven entre sí", () => {
+    const v = reglas([
+      p("Suéter de cuello alto", "#1A1A1A", { material: "lana" }),
+      p("Cuello tortuga negro", "#333333", { material: "punto" }),
+      p("Jeans azul oscuro", "#2C3E50"),
+    ]);
+    expect(v).toContain("cuello-alto-sin-base");
+  });
+
+  // Mismo motivo que la regla del suéter: la base bajo el punto es convención
+  // del guardarropa masculino, no del femenino.
+  it("no aplica sin género declarado ni en mujer", () => {
+    const items = [
+      p("Cuello tortuga negro de lana merino", "#1A1A1A", { material: "lana" }),
+      p("Jeans azul oscuro", "#2C3E50"),
+    ];
+    expect(reglas(items, "mujer")).not.toContain("cuello-alto-sin-base");
+    expect(revisarEjecucion(items).map((x) => x.regla)).not.toContain("cuello-alto-sin-base");
+  });
+
+  // El cuello alto sigue valiendo como base de un suéter de pico: la regla 9 no
+  // cambió, y esta no la contradice.
+  it("el cuello alto sigue siendo base válida bajo un suéter de pico", () => {
+    const v = reglas([
+      p("Suéter de pico marino", "#26334D", { material: "lana" }),
+      p("Cuello tortuga negro", "#1A1A1A", { material: "punto" }),
+      p("Camiseta blanca", "#FFFFFF"),
+      p("Chinos carbón", "#3B3B3B"),
+    ]);
+    expect(v).not.toContain("sueter-sin-base");
+    expect(v).not.toContain("cuello-alto-sin-base");
+  });
+});
