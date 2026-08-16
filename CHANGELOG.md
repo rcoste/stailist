@@ -2,6 +2,43 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.244.0] - 2026-08-14
+
+### Fixed — el generador de imágenes nunca supo si una prenda era lisa o estampada
+
+Cuatro comentarios del veredicto de Gemini 3.7 no eran sobre el look sino sobre
+**la imagen mintiendo**: *"los pantalones se renderían como con cuadros y no son
+así"*, *"se renderió también como el pocket square"*, *"está engañoso"*.
+
+Al abrir las imágenes se vio que el try-on no inventaba nada: **copiaba
+fielmente un render del clóset que ya estaba mal**. El pantalón gris —`patron:
+liso` en la base— estaba dibujado con príncipe de Gales, y el saco de traje con
+un pañuelo de bolsillo que nadie pidió.
+
+La causa: el tipo que arma la descripción para el generador de imágenes llevaba
+nombre, color, categoría, formalidad, temporada, largo, corte y manga — **pero
+no el patrón ni el material**. Al pedir "pantalón de vestir gris, formal" sin
+más, el modelo rellenaba con lo más fotogénico para esa frase.
+
+- **El patrón viaja, y en los dos sentidos.** Decir "liso" no es redundante: es
+  la única forma de que el modelo NO invente un estampado. El silencio no se lee
+  como "sin patrón", se lee como "tú decides". Sin patrón declarado no se
+  afirma nada — las 447 prendas sin ese dato no empiezan a decir "liso" por
+  nuestra cuenta.
+- **El material también** ("lana fría" y "lino" no se dibujan igual).
+- **Fuera el `slightly styled` del prompt**, que era la puerta abierta al
+  estilismo que nadie pidió, y las prohibiciones ahora nombran lo que de verdad
+  se colaba: pañuelos de bolsillo, accesorios y patrones inventados. El
+  "no props, no labels" que había no cubría ninguno de los dos.
+
+**Escala del bug**: 609 prendas están marcadas `liso` y 326 de ellas tienen
+render generado — todas dibujadas sin que nadie dijera "sin estampado". Las 41
+con patrón real tampoco se lo dijeron.
+
+Verificado regenerando las dos prendas del caso: el pantalón sale liso y el saco
+sin pañuelo. **Los renders viejos NO se regeneraron** — eso es una decisión
+aparte, con su costo.
+
 ## [0.2.243.0] - 2026-08-14
 
 ### Fixed — el cuello alto de punto también pide algo debajo
