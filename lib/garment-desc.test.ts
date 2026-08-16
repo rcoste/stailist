@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { descripcionObsoleta, garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
+import { buildImagePrompt } from "@/lib/archetype-image";
 
 // La descripción de una prenda tiene DOS consumidores con necesidades opuestas
 // y por eso se partió en dos funciones. Lo que estos tests fijan es el contrato
@@ -106,5 +107,63 @@ describe("descripcionObsoleta — corregir la prenda invalida su descripción", 
       descripcionObsoleta({ nombreViejo: "Camisa blanca", nombreNuevo: "  Camisa Blanca " })
     ).toBe(false);
     expect(descripcionObsoleta({ hexViejo: "#1b1b1b", hexNuevo: "#1B1B1B" })).toBe(false);
+  });
+});
+
+describe("patrón y material — lo que el generador de imágenes nunca supo", () => {
+  // EL CASO REAL (Roberto, veredicto de 3.7): "los pantalones se renderían como
+  // con cuadros y no son así". La prenda tiene patron: liso en la base; la
+  // descripción que llegaba al modelo no lo mencionaba, y el modelo rellenó con
+  // un príncipe de Gales.
+  it("dice LISO explícitamente para que el modelo no invente un estampado", () => {
+    const d = garmentDescPlain({
+      nombre: "Pantalón de vestir gris",
+      categoria: "bottom",
+      formalidad: "formal",
+      patron: "liso",
+    });
+    expect(d).toContain("SIN estampado");
+  });
+
+  it("un patrón real sí viaja", () => {
+    const d = garmentDescPlain({ nombre: "Camisa", patron: "rayas" });
+    expect(d).toContain("patrón rayas");
+  });
+
+  it("el material también, que no se dibuja igual la lana que el lino", () => {
+    const d = garmentDescPlain({ nombre: "Saco de traje gris", material: "lana fría" });
+    expect(d).toContain("lana fría");
+  });
+
+  // Sin patrón declarado NO se inventa una afirmación: las 447 prendas sin ese
+  // dato no deben empezar a decir "liso" por nuestra cuenta.
+  it("sin patrón declarado, no afirma nada", () => {
+    const d = garmentDescPlain({ nombre: "Camisa blanca" });
+    expect(d).not.toContain("SIN estampado");
+    expect(d).not.toContain("patrón");
+  });
+
+  // La Capa 2 sigue mandando: si el estilista escribió la descripción visual,
+  // esa gana entera y no se le encima nada.
+  it("la descripción del estilista sigue ganando", () => {
+    const d = garmentDescPlain({
+      nombre: "Pantalón",
+      patron: "liso",
+      visual: "chino carbón de algodón, corte recto",
+    });
+    expect(d).toBe("chino carbón de algodón, corte recto");
+  });
+});
+
+describe("el prompt del flat-lay prohíbe lo que de verdad se colaba", () => {
+  it("nombra el pañuelo de bolsillo y los patrones inventados", () => {
+    const p = buildImagePrompt("Saco de traje gris", "flat", "hombre");
+    expect(p).toContain("no pocket squares");
+    expect(p).toContain("do NOT add any pattern");
+  });
+
+  // "slightly styled" era la puerta abierta al estilismo que nadie pidió.
+  it("ya no pide la prenda 'slightly styled'", () => {
+    expect(buildImagePrompt("Camisa blanca", "flat")).not.toContain("slightly styled");
   });
 });
