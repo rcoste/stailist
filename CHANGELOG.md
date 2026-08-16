@@ -2,6 +2,33 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.245.0] - 2026-08-14
+
+### Fixed — nada de etiqueta en un funeral, y la corbata negra
+
+El motor sacó un **esmoquin** para un funeral en el veredicto de Gemini 3.7.
+Roberto lo calificó con una palabra: *"terrible"*. Más una corbata de color en el
+mismo look — *"tendría que ser negra"* — y una gris en el siguiente.
+
+**La ironía es la parte que importa**: el catálogo YA gritaba *"EL COLOR ES
+NEGRO — el AZUL MARINO NO"*, y la prenda más negra y más formal de ese clóset
+era justamente el esmoquin. **La regla del color empujó hacia el error.** Que
+algo sea negro no lo vuelve luto: la etiqueta es ropa de celebración.
+
+- Va como **regla comprobable en código**, no como otra línea de prompt: las dos
+  condiciones son verificables (¿hay una prenda de etiqueta?, ¿el hex de la
+  corbata es negro?) y una línea de prompt se puede ignorar — ésta la repara el
+  juez.
+- **La corbata se juzga en OKLCH** (oscura Y sin color). En RGB un vino y un
+  carbón oscuros se parecen, y aquí esa es exactamente la diferencia que
+  importa. Sin hex declarado no se marca nada.
+- El tipo de evento ahora llega a las reglas de ejecución: la formalidad sola no
+  distinguía un funeral de una boda, y el esmoquin es correcto en una y una
+  falta de respeto en la otra. En una boda de gala nada de esto aplica.
+
+Verificado contra el par real de la corrida: marca los 3 looks que Roberto
+señaló y deja limpio el cuarto — que es justo el que votó ganador.
+
 ## [0.2.244.0] - 2026-08-14
 
 ### Fixed — el generador de imágenes nunca supo si una prenda era lisa o estampada
