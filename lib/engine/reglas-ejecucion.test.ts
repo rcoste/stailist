@@ -896,3 +896,80 @@ describe("bota-de-montana-en-la-calle", () => {
     ).toBeDefined();
   });
 });
+
+describe("saco de traje suelto — la regla que Roberto pidió cuatro veces", () => {
+  // Del veredicto de Gemini 3.7 (2026-08-14): "no podemos poner los sacos de
+  // traje así como por sí solos, o tienen que ir con su par. Eso es una regla."
+  const reglas = (items: EngineItem[]) => revisarEjecucion(items).map((x) => x.regla);
+
+  it("con el lazo del traje puesto, exige SU pantalón — no cualquiera", () => {
+    const v = reglas([
+      p("Saco de traje gris", "#6B6B6B", { conjunto: "traje-1" }),
+      p("Pantalón de vestir marino", "#26334D"), // de vestir, pero de otro traje
+      p("Camisa blanca", "#FFFFFF"),
+    ]);
+    expect(v).toContain("saco-de-traje-suelto");
+  });
+
+  it("con su par exacto, no se queja", () => {
+    const v = reglas([
+      p("Saco de traje gris", "#6B6B6B", { conjunto: "traje-1" }),
+      p("Pantalón de traje gris", "#6B6B6B", { conjunto: "traje-1" }),
+      p("Camisa blanca", "#FFFFFF"),
+    ]);
+    expect(v).not.toContain("saco-de-traje-suelto");
+  });
+
+  // Sin el lazo (la mayoría de los clósets hoy) sólo se puede exigir lo que el
+  // dato permite afirmar: que haya algún pantalón de vestir.
+  it("sin lazo, un saco de traje con jeans se marca", () => {
+    const v = reglas([
+      p("Saco de traje marino de lana", "#26334D"),
+      p("Jeans azul oscuro", "#2C3E50"),
+      p("Camisa blanca", "#FFFFFF"),
+    ]);
+    expect(v).toContain("saco-de-traje-suelto");
+  });
+
+  it("el esmoquin cuenta como saco de traje", () => {
+    const v = reglas([p("Saco de esmoquin negro", "#111111"), p("Jeans negros", "#1A1A1A")]);
+    expect(v).toContain("saco-de-traje-suelto");
+  });
+
+  // EL ERROR CONTRARIO, que sería más caro: prohibir lo que sí se lleva suelto.
+  // Estos cuatro salen de nombres reales de la base.
+  for (const suelto of [
+    "Blazer marino",
+    "Saco desestructurado café",
+    "Saco sport gris carbón",
+    "Saco de cuadros príncipe de Gales",
+  ]) {
+    it(`"${suelto}" se lleva solo y NO se marca`, () => {
+      const v = reglas([p(suelto, "#26334D"), p("Jeans azul oscuro", "#2C3E50")]);
+      expect(v).not.toContain("saco-de-traje-suelto");
+    });
+  }
+
+  // La asimetría es de Roberto: "el pantalón de traje sí podría ir solo".
+  it("el pantalón de traje SUELTO no se marca", () => {
+    const v = reglas([
+      p("Pantalón de traje gris", "#6B6B6B", { conjunto: "traje-1" }),
+      p("Camiseta blanca", "#FFFFFF"),
+      p("Tenis blancos", "#F5F5F5"),
+    ]);
+    expect(v).not.toContain("saco-de-traje-suelto");
+  });
+});
+
+// La trampa del español: "chaqueta" contiene "chaque". Sin frontera de palabra,
+// una chamarra con cierre entraba como si fuera un chaqué de etiqueta. Salió de
+// verificar la regla contra los 107 looks reales de la corrida, no de un test
+// imaginado.
+it("una chaqueta NO es un chaqué", () => {
+  const v = revisarEjecucion([
+    p("Chaqueta negra con cierre", "#1A1A1A"),
+    p("Chinos carbón", "#3B3B3B"),
+    p("Tenis blancos urbanos", "#F5F5F5"),
+  ]).map((x) => x.regla);
+  expect(v).not.toContain("saco-de-traje-suelto");
+});

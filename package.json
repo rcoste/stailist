@@ -1,6 +1,6 @@
 {
   "name": "stailist-scaffold",
-  "version": "0.2.241.2",
+  "version": "0.2.242.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
