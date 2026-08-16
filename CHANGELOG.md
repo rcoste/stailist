@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.242.0] - 2026-08-14
+
+### Added — el saco de traje va con su pantalón, o no va
+
+La primera regla que sale de los COMENTARIOS del veredicto de Gemini 3.7, no de
+sus votos. Roberto lo anotó en cuatro pares distintos y pidió que fuera regla
+con esas palabras: *"no podemos poner los sacos de traje así como por sí solos,
+o tienen que ir con su par. Eso es una regla."* Y el diagnóstico de por qué se
+ve mal: *"se ve parchado"*.
+
+La regla `traje-desparejado` que ya existía **no lo cubría**: aquella sólo
+dispara cuando saco y pantalón son del mismo color (dos piezas fingiendo ser un
+traje). Ésta es al revés y más fuerte — un saco de traje con *cualquier*
+pantalón que no sea el suyo.
+
+- **La asimetría es deliberada**: el pantalón de traje suelto **sí** se puede
+  usar. Sólo el saco queda atado a su par. Un test lo fija.
+- **Dos señales para distinguir saco de traje de blazer**: el lazo `conjunto`
+  que la persona pone al dar de alta un traje (señal dura, cero falsos
+  positivos) y el nombre/subtipo. La segunda hace falta porque la primera casi
+  no existe todavía: 6 prendas con `conjunto` en toda la base contra 46 sacos
+  sin él. Sin ella la regla nacería correcta e inerte para 17 de 18 personas.
+- **Lo que NO se marca**: blazer, saco desestructurado, saco sport y los de
+  patrón (cuadros, pata de gallo, príncipe de Gales) se llevan sueltos por
+  diseño. Prohibir una combinación correcta es el error caro.
+
+**Verificada contra los 107 looks reales de la corrida**, no sólo con tests
+inventados: dispara en 6 (5.6%), y los 6 son exactamente los que Roberto marcó
+a mano. Esa verificación cazó dos bugs que los tests no habían visto — el
+pantalón del traje entraba como saco (rompiendo la asimetría) y **"chaqueta"
+hacía match dentro del patrón de "chaqué"**, marcando chamarras normales.
+
 ## [0.2.241.2] - 2026-08-14
 
 ### Changed — Gemini 3.7 Flash retó al motor y perdió: se queda 3.5
