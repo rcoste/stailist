@@ -51,6 +51,8 @@ export async function renderItemImage(
     largo?: string;
     corte?: string;
     manga?: string;
+    patron?: string;
+    material?: string;
     visual?: string;
     /** De qué foto salió (espejo): permite dibujarla igual que en el carrete. */
     origen_foto?: string;
@@ -89,6 +91,8 @@ export async function renderItemImage(
     largo: attrs.largo,
     corte: attrs.corte,
     manga: attrs.manga,
+    patron: attrs.patron,
+    material: attrs.material,
     visual: attrs.visual,
   };
   const conColor = garmentRenderDesc(rasgos);

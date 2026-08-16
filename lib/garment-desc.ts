@@ -17,6 +17,20 @@ export type GarmentAttrs = {
   largo?: string | null;
   corte?: string | null;
   manga?: string | null;
+  /**
+   * EL PATRÓN. Faltaba, y no era un olvido inocuo: el generador de imágenes
+   * NUNCA supo si una prenda era lisa o estampada. Al dibujar "Pantalón de
+   * vestir gris — formal, de lana" sin más, el modelo rellena con lo más
+   * fotogénico para esa descripción y devolvió un príncipe de Gales; la prenda
+   * real de Roberto es lisa. Lo cazó él mismo votando el veredicto de 3.7
+   * ("los pantalones se renderían como con cuadros y no son así").
+   *
+   * Al escribirlo había 609 prendas `liso` en la base, 326 de ellas con render
+   * generado — todas dibujadas sin que nadie dijera "sin estampado".
+   */
+  patron?: string | null;
+  /** El material también faltaba: "lana fría" y "lino" no se dibujan igual. */
+  material?: string | null;
   visual?: string | null; // descripción visual precisa del estilista (Capa 2)
 };
 
@@ -51,6 +65,14 @@ export function garmentDescPlain(g: GarmentAttrs): string {
 
   const ctx: string[] = [];
   if (g.categoria && CAT_EN[g.categoria]) ctx.push(CAT_EN[g.categoria]);
+  // EL PATRÓN VA EXPLÍCITO EN LOS DOS SENTIDOS. Decir "liso" no es redundante:
+  // es la única forma de que el modelo NO invente un estampado, que es
+  // exactamente lo que hacía. El silencio no se lee como "sin patrón", se lee
+  // como "tú decides".
+  if (g.patron) {
+    ctx.push(g.patron === "liso" ? "liso, SIN estampado ni cuadros ni rayas" : `patrón ${g.patron}`);
+  }
+  if (g.material) ctx.push(`en ${g.material}`);
   if (g.largo) ctx.push(String(g.largo));
   if (g.corte) ctx.push(`corte ${g.corte}`);
   if (g.manga) ctx.push(`manga ${g.manga}`);
