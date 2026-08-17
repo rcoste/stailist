@@ -368,13 +368,18 @@ export function TripTabs({
                   </div>
                 </div>
               ) : null}
-              <button
-                type="button"
-                onClick={() => setTab("prendas")}
-                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-              >
-                revisar prendas →
-              </button>
+              {/* Sticky sobre la tab bar (57px + safe-area, como el detalle del
+                  historial): era el último elemento del scroll y en móvil se
+                  perdía bajo el fold (feedback de Alberto en toda la maleta). */}
+              <div className="sticky bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-line bg-bg px-4 pb-2 pt-2.5 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+                <button
+                  type="button"
+                  onClick={() => setTab("prendas")}
+                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+                >
+                  revisar prendas →
+                </button>
+              </div>
             </div>
           ) : null}
           {/* prendas y empacar comparten EL MISMO nodo (TripResult decide su
