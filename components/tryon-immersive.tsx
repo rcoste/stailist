@@ -92,17 +92,33 @@ export function TryonImmersive({
   }
 
   // --- Estado 8 · ampliar (fullscreen, chrome oculto) ---
+  // La foto va COMPLETA (object-contain sobre la misma foto blurreada, el patrón
+  // del split de desktop). En cover cortaba los pies, y "ampliar" sin poder ver
+  // el look entero es no ampliar nada: el zoom de la PWA está apagado
+  // (userScalable: false), así que esta pantalla es la única oportunidad de ver
+  // el cuerpo completo (feedback de Alberto).
   if (expanded) {
     return (
       <div className="fixed inset-0 z-[60] bg-accent">
         <Image
           src={image}
-          alt={lookName ? `Tú con ${lookName}` : "Tú con este look"}
+          alt=""
+          aria-hidden
           fill
-          sizes="(max-width: 430px) 100vw, 430px"
-          className="object-cover object-[50%_14%]"
+          sizes="100vw"
+          className="object-cover blur-3xl brightness-50"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/85" />
+        <div className="absolute inset-0 flex items-center justify-center px-3 pb-32 pt-[max(3.5rem,env(safe-area-inset-top))]">
+          <span className="relative block h-full w-full">
+            <Image
+              src={image}
+              alt={lookName ? `Tú con ${lookName}` : "Tú con este look"}
+              fill
+              sizes="(max-width: 430px) 100vw, 430px"
+              className="object-contain"
+            />
+          </span>
+        </div>
         <div className="absolute inset-x-0 top-0 z-[5] flex justify-end px-[22px] pt-[max(1rem,env(safe-area-inset-top))]">
           <button
             type="button"
@@ -118,8 +134,10 @@ export function TryonImmersive({
             Así te queda
           </p>
           <p className="mt-1.5 font-display text-[30px] italic">{lookName}</p>
+          {/* Sin "pellizca para acercar": el zoom de la PWA está deshabilitado
+              y el hint prometía algo que no funcionaba. */}
           <p className="mt-3 text-xs text-on-accent/60">
-            pellizca para acercar · toca la ✕ para cerrar
+            toca la ✕ para cerrar
           </p>
         </div>
       </div>
