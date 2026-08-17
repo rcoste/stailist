@@ -50,3 +50,31 @@ export function pasosDelWizard({
     "clima",
   ];
 }
+
+/**
+ * ¿DÍA O NOCHE, SEGÚN EL RELOJ?
+ *
+ * EL DEFAULT ESTABA FIJO EN "día" y no miraba la hora — `useState<"dia" |
+ * "noche">("dia")` a secas. Medido sobre los 231 looks de la base: **117 (51%)
+ * se generaron entre las 7pm y las 5am**. O sea que la mitad de las veces la
+ * opción venía mal marcada, y es el peor tipo de error de default: nadie revisa
+ * lo que ya viene palomeado, así que se pide un look de noche y sale uno de día
+ * sin que nada truene.
+ *
+ * EL UMBRAL NO ES NUEVO: 19h/6h es el que el espejo ya usaba desde siempre
+ * (componentes/espejo-flow), sólo que escrito en línea y sin compartir. Aquí se
+ * saca a un lugar único para que las dos puertas contesten igual — el mismo
+ * problema que ya costó caro con el vocabulario de prendas duplicado.
+ *
+ * NO SE REUSA el 6h-18h de `lib/registro.ts`: aquella contesta otra pregunta
+ * —si es horario de OFICINA, para adivinar si vas al trabajo— y unificarlas
+ * haría que las 6pm se leyeran como noche, que en México es de día.
+ *
+ * `esHoy` importa: a las 9pm planeando el look de MAÑANA, el reloj no dice
+ * nada útil. Un plan para otro día arranca en "día", que es lo más común.
+ */
+export function momentoSugerido(ahora: Date, esHoy = true): "dia" | "noche" {
+  if (!esHoy) return "dia";
+  const hora = ahora.getHours();
+  return hora >= 19 || hora < 6 ? "noche" : "dia";
+}

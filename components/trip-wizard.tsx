@@ -11,6 +11,7 @@ import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { comprimir } from "@/lib/image-compress";
 import { toUsableImage } from "@/lib/image-file";
+import { usePlaceSuggestions } from "@/lib/place-suggestions";
 import {
   OCCASIONS,
   LUGGAGE,
@@ -75,51 +76,6 @@ function stopRangeLabel(inicio: string, paradas: Parada[], idx: number, noches: 
   const arr = arrivalOf(inicio, paradas, idx);
   if (!arr) return "";
   return rangeLabel(arr, addDaysYmd(arr, Math.max(1, noches)));
-}
-
-// ---- Sugerencias de lugar (Open-Meteo geocoding, público con CORS, debounced) ----
-type Sugerencia = { nombre: string; tipo: "ciudad" | "pais"; label: string };
-function usePlaceSuggestions(draft: string): Sugerencia[] {
-  const [sugs, setSugs] = useState<Sugerencia[]>([]);
-  useEffect(() => {
-    const q = draft.trim();
-    const t = setTimeout(async () => {
-      if (q.length < 2) {
-        setSugs([]);
-        return;
-      }
-      try {
-        const res = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-            q
-          )}&count=5&language=es&format=json`,
-          { signal: AbortSignal.timeout(4000) }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const results = (data?.results ?? []) as {
-          name: string;
-          admin1?: string;
-          country?: string;
-          feature_code?: string;
-        }[];
-        setSugs(
-          results.map((r) => {
-            const esPais = (r.feature_code ?? "").startsWith("PCL") || r.country === r.name;
-            return {
-              nombre: r.name,
-              tipo: esPais ? "pais" : "ciudad",
-              label: [r.name, r.admin1, r.country].filter(Boolean).join(", "),
-            };
-          })
-        );
-      } catch {
-        /* sin sugerencias — el usuario puede escribir a mano */
-      }
-    }, 280);
-    return () => clearTimeout(t);
-  }, [draft]);
-  return sugs;
 }
 
 // Tope de anclas: el valor es que el motor complete ALREDEDOR de tus elegidas.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pasosDelWizard } from "./wizard-pasos";
+import { pasosDelWizard, momentoSugerido } from "./wizard-pasos";
 
 // Base: día normal desde Hoy, sin nada que acotar.
 const base = {
@@ -89,5 +89,37 @@ describe("pasos del wizard", () => {
         codigoEfectivo: "casual", // acaba de tocarlo en esta pantalla
       })
     ).toEqual(["detalle", "cuando", "clima"]);
+  });
+});
+
+describe("momentoSugerido — el default que ignoraba el reloj", () => {
+  const alas = (h: number) => new Date(2026, 7, 17, h, 30);
+
+  it("de noche sugiere noche", () => {
+    expect(momentoSugerido(alas(21))).toBe("noche");
+    expect(momentoSugerido(alas(23))).toBe("noche");
+    expect(momentoSugerido(alas(2))).toBe("noche");
+  });
+
+  it("de día sugiere día", () => {
+    expect(momentoSugerido(alas(9))).toBe("dia");
+    expect(momentoSugerido(alas(15))).toBe("dia");
+  });
+
+  // Las fronteras exactas del umbral que el espejo ya usaba.
+  it("las 19:00 ya son noche; las 18:59 todavía no", () => {
+    expect(momentoSugerido(new Date(2026, 7, 17, 19, 0))).toBe("noche");
+    expect(momentoSugerido(new Date(2026, 7, 17, 18, 59))).toBe("dia");
+  });
+
+  it("las 6:00 ya son día; las 5:59 todavía no", () => {
+    expect(momentoSugerido(new Date(2026, 7, 17, 6, 0))).toBe("dia");
+    expect(momentoSugerido(new Date(2026, 7, 17, 5, 59))).toBe("noche");
+  });
+
+  // A las 9pm planeando MAÑANA, el reloj no dice nada útil: arranca en día.
+  it("para otro día arranca en día aunque sea de noche", () => {
+    expect(momentoSugerido(alas(22), false)).toBe("dia");
+    expect(momentoSugerido(alas(2), false)).toBe("dia");
   });
 });
