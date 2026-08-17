@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.10] - 2026-08-17
+
+### Fixed — el "pantalón de vestir gris" ya no enseña el traje completo
+
+Alberto: *"la prenda de 'pantalón de vestir gris' debería ser solo pantalón
+pero la imagen muestra todo el conjunto con saco, eso saca de onda"*. Tenía
+razón, y el culpable no era su prenda: era la **imagen del catálogo** que su
+prenda tomó prestada.
+
+El arquetipo "Pantalón de traje gris claro" (categoría `bottom`) se generó en
+julio con el saco puesto encima. Sus cinco hermanos —carbón, marino, arena,
+azul claro, smoking— están bien: es un defecto aislado, de antes de que el
+prompt de arquetipos prohibiera explícitamente las prendas extra (agosto).
+Regenerada con ese prompt, ahora es lo que su nombre promete.
+
+Lo que hizo falta para encontrarlo fue el screenshot: la prenda de Alberto no
+tenía render propio, así que buscar por su nombre no llevaba a ninguna imagen
+defectuosa — la pista estaba en `attrs.image_path`, la imagen prestada.
+
 ## [0.2.249.9] - 2026-08-17
 
 ### Added — 25 prendas reales entran a la biblioteca
