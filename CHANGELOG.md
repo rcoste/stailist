@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.9] - 2026-08-17
+
+### Added — 25 prendas reales entran a la biblioteca
+
+Primera cosecha del principio nuevo (spec: `docs/designs/corpus-de-prendas.md`):
+las prendas renderizadas son un activo que sobrevive a las cuentas. Antes de
+borrar las cuentas de prueba de Roberto se rescataron sus renders únicos —
+flat-lays ya dibujados por el pipeline de la casa — y entran a la biblioteca
+con el visto bueno dado.
+
+- 22 de hombre (blazer marrón, botas de senderismo, gafas, bufanda vino,
+  camisa de lino esmeralda, el jersey de México…) y 3 de mujer (vestido de
+  gala negro, guantes largos, tacones).
+- Curadas contra duplicados DOS veces: 8 fuera por nombre exacto contra los
+  408 arquetipos, 2 más por concepto (ya había 6 pantalones marinos y una
+  camiseta blanca), y las copias internas (la sandalia ×5) a una.
+- Nombres genéricos sin marca (regla Carla): "Botas de senderismo negras",
+  sin el Columbia.
+
 ## [0.2.249.8] - 2026-08-17
 
 ### Fixed — segunda tanda de botones que se escondían bajo el scroll
