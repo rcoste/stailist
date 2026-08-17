@@ -19,6 +19,16 @@ export type PrendaUI = {
   nombre: string;
   swatch: string;
   imagen: string | null;
+  /**
+   * El lazo del traje, si la prenda viene de uno.
+   *
+   * Lo pidió Roberto votando el veredicto de Gemini 3.7: "debería haber algún
+   * tipo de indicador visual para saber qué machea el pantalón con el saco,
+   * porque si no está cabrón, no puedo saber si sí o no va". Y tenía razón — en
+   * ese par había un saco de un traje con el pantalón de OTRO, y desde la
+   * pantalla los dos grises se veían plausibles.
+   */
+  conjunto?: string | null;
 };
 
 export type CorridaMotorCargada = {
@@ -170,12 +180,13 @@ export async function cargarCorridaMotor(
     }
     for (const i of list) {
       const arch = i.archetypes as { name?: string; image_path?: string | null } | null;
-      const attrs = (i.attrs ?? {}) as { nombre?: string; color_hex?: string };
+      const attrs = (i.attrs ?? {}) as { nombre?: string; color_hex?: string; conjunto?: string };
       prendas[i.id as string] = {
         id: i.id as string,
         nombre: arch?.name ?? attrs.nombre ?? "Prenda",
         swatch: attrs.color_hex ?? "#E5E1DD",
         imagen: itemImageUrlSync(i as unknown as ItemImageRow, (p) => firmadas.get(p)),
+        conjunto: attrs.conjunto ?? null,
       };
     }
   }

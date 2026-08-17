@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.247.1] - 2026-08-17
+
+### Added — al votar se ve qué prenda machea con cuál
+
+Lo pidió Roberto votando el veredicto de Gemini 3.7, y era el último pendiente de
+esa corrida: *"debería haber algún tipo de indicador visual para saber qué machea
+el pantalón con el saco, porque si no está cabrón, no puedo saber si sí o no
+va"*. Tenía razón — en ese par había un saco de un traje con el pantalón de OTRO,
+y en pantalla los dos grises se veían plausibles.
+
+Cada prenda que viene de un traje ahora dice **"mismo traje"** (su pareja está en
+el look) o **"de otro traje"** (no está). La pregunta que contesta no es "¿esta
+prenda viene de un traje?" sino "¿su pareja está aquí?", así que se resuelve
+mirando el look entero — la decisión vive en `lazoDeTraje`, con tests.
+
 ## [0.2.247.0] - 2026-08-17
 
 ### Fixed — lino de arriba abajo no es ropa de oficina

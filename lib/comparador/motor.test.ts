@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  lazoDeTraje,
   VARIANTES_MOTOR,
   variantePorClave,
   briefsPara,
@@ -518,5 +519,36 @@ describe("los briefs de trabajo dicen si ve cliente", () => {
     expect(peticionDeBrief(conCliente).veCliente).toBe(true);
     const diario = pool.find((b) => b.objective === "diario")!;
     expect(peticionDeBrief(diario).veCliente).toBeNull();
+  });
+});
+
+describe("lazoDeTraje — el indicador que Roberto pidió al votar", () => {
+  // "Debería haber algún tipo de indicador visual para saber qué machea el
+  // pantalón con el saco, porque si no está cabrón, no puedo saber si sí o no
+  // va." En ese par había un saco de un traje con el pantalón de OTRO.
+  const saco = { id: "saco", conjunto: "traje-A" };
+  const pantA = { id: "pantA", conjunto: "traje-A" };
+  const pantB = { id: "pantB", conjunto: "traje-B" };
+  const camisa = { id: "camisa" };
+
+  it("con su pareja en el look dice 'par'", () => {
+    expect(lazoDeTraje(saco, [saco, pantA, camisa])).toBe("par");
+    expect(lazoDeTraje(pantA, [saco, pantA, camisa])).toBe("par");
+  });
+
+  // EL CASO REAL: saco del traje A con el pantalón del traje B. Los dos vienen
+  // de un traje, y ninguno está con el suyo.
+  it("con el pantalón de OTRO traje dice 'solo' para los dos", () => {
+    expect(lazoDeTraje(saco, [saco, pantB, camisa])).toBe("solo");
+    expect(lazoDeTraje(pantB, [saco, pantB, camisa])).toBe("solo");
+  });
+
+  it("una prenda que no viene de ningún traje no dice nada", () => {
+    expect(lazoDeTraje(camisa, [saco, pantA, camisa])).toBeNull();
+  });
+
+  // No se empareja consigo misma: sin el filtro por id, un saco solo diría "par".
+  it("no se empareja consigo misma", () => {
+    expect(lazoDeTraje(saco, [saco])).toBe("solo");
   });
 });

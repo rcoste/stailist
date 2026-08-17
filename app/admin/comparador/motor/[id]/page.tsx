@@ -91,6 +91,7 @@ export default async function CorridaMotor({
                 nombre: "Prenda",
                 swatch: "#E5E1DD",
                 imagen: null,
+                conjunto: null,
               }
           ),
         }));
