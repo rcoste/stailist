@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.4] - 2026-08-17
+
+### Fixed — los botones de avanzar ya no se entierran bajo el scroll
+
+Alberto reportó la clase entera: *"en general hay que cuidar que los botones
+para guardar o avanzar no se oculten debajo del scroll de la pantalla"* — y la
+señaló en el espejo ("Terminar aquí" de las fichas) y en toda la maleta.
+
+Una auditoría de los flujos móviles encontró 23 pantallas con el CTA como
+último elemento del scroll. Esta tanda arregla las reportadas y sus gemelas:
+
+- **Espejo (te veo)**: "terminar aquí" / "gracias" / "vi N prendas que no
+  tienes" y los botones de "sale alguien más" viven ahora en el pie fijo de la
+  pantalla, fuera del scroll. La ranura `pie` existía desde el rediseño del
+  espejo — nadie la había conectado.
+- **Viaje**: "revisar prendas →", "listo — a empacar" y "generar mis looks"
+  van sticky sobre la tab bar (mismo patrón que el detalle del historial).
+- **Cápsula** (gemela declarada del viaje): "revisar esenciales →" igual.
+
+Quedan radareadas para una segunda tanda: los pasos del wizard de avatar y
+tres pantallas de onboarding (edad, colorimetría, reveal de gustos).
+
 ## [0.2.249.3] - 2026-08-17
 
 ### Fixed — "ajustar" la foto del avatar ya no acumula zoom
