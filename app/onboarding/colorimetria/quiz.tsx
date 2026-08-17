@@ -234,7 +234,9 @@ export function Quiz() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2.5 pt-4">
+        {/* Sticky (patrón del checklist): en pantallas cortas la lista de "el
+            test te entrega" empujaba estos botones bajo el fold. */}
+        <div className="sticky bottom-0 flex flex-col gap-2.5 bg-bg pb-4 pt-4">
           <button
             type="button"
             onClick={() => setStarted(true)}
