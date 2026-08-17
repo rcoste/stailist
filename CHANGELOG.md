@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.248.1] - 2026-08-17
+
+### Fixed — "de día / de noche" ya no viene mal marcado la mitad de las veces
+
+El default estaba fijo: `useState<"dia" | "noche">("dia")`, sin mirar el reloj.
+Medido sobre los 231 looks de la base: **117 (51%) se generaron entre las 7pm y
+las 5am**, con la opción equivocada pre-seleccionada en todos.
+
+Es el peor tipo de error de default — **nadie revisa lo que ya viene
+palomeado**, así que se pedía un look de noche y salía uno de día sin que nada
+tronara.
+
+- **El umbral no es nuevo**: 19h/6h es el que el espejo ya usaba desde siempre,
+  escrito en línea. Ahora vive en un solo lugar (`momentoSugerido`) y las dos
+  puertas contestan igual.
+- **NO se reusó el 6h-18h de `lib/registro.ts`**: aquél contesta otra pregunta
+  —si es horario de oficina— y unificarlos haría que las 6pm se leyeran como
+  noche, que en México es de día.
+- **Eligiendo otro día arranca en "día"**: a las 9pm planeando mañana, el reloj
+  de hoy no dice nada útil. Y si la persona ya tocó la opción a mano, deja de
+  re-sugerirse — cambiarle la elección bajo los pies sería peor que el default
+  equivocado.
+
 ## [0.2.248.0] - 2026-08-17
 
 ### Added — "traje completo" también en la app, no sólo en el comparador
