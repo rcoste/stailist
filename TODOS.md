@@ -2,6 +2,20 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Corpus de prendas + aprobación a biblioteca (2026-08-17)
+
+- **Qué**: cada render de prenda que nace se copia a un bucket compartido y
+  entra como candidata `pendiente` (`library_candidates` extendida); pantalla
+  de aprobación en /admin con señal de duplicado; al aprobar nace el arquetipo
+  en la biblioteca; al borrar/resetear una cuenta las candidatas se desligan
+  (`user_id = null`), no se borran. Spec completa:
+  `docs/designs/corpus-de-prendas.md`.
+- **Por qué ahora no**: toca base + pipeline de renders → va con ship
+  completo (eng review), y el paso previo es sembrar a biblioteca los ~27
+  renders curados del archivo de las cuentas de prueba de Roberto.
+- **Trigger**: al terminar la siembra manual, o cuando el siguiente usuario
+  real borre/resetee su cuenta (ahí se pierde dato de verdad).
+
 ## Diferido del header de pantalla interna (2026-08-14)
 
 - [ ] **¿El detalle de viaje adopta el header interno?**: el handoff de diseño (`claude-design-handoffs-stailist/design_handoff_esenciales`) lo declara PATRÓN GLOBAL "incluido el detalle de viaje", y se aplicó sólo a esenciales y biblioteca. *Por qué viaje quedó fuera*: tiene un header de DOS capas que ya funciona —la portada con la foto del destino y el back circular flotando encima, más una capa compacta al hacer scroll— y ese diseño existe PORQUE hay portada; el propio handoff dice "SIN portada de imagen, a diferencia de viaje" dos líneas antes de meterlo en el mismo saco. Rediseñar un header que se shippeó hace días y resuelve otro caso es riesgo sin retorno. *Trigger*: cuando se toque el detalle de viaje por otra razón, evaluar si la capa compacta (la que ya enseña "‹ modo viaje" + "···") puede ser directamente el header interno.
