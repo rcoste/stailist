@@ -876,3 +876,29 @@ export function estimadoMotor(
   }
   return porPar * nPares;
 }
+
+/**
+ * ¿EL PAR DE ESTA PRENDA ESTÁ EN EL LOOK?
+ *
+ * Contesta lo que Roberto no podía ver votando el veredicto de 3.7: "debería
+ * haber algún tipo de indicador visual para saber qué machea el pantalón con el
+ * saco, porque si no está cabrón, no puedo saber si sí o no va". En ese par
+ * había un saco de un traje con el pantalón de OTRO, y en pantalla los dos
+ * grises se veían plausibles.
+ *
+ * La pregunta NO es "¿esta prenda viene de un traje?" sino "¿su pareja está
+ * aquí?" — por eso se resuelve mirando el look entero y no la prenda sola.
+ *
+ * · null  → no viene de ningún traje, no hay nada que decir.
+ * · "par" → su pareja está en el look: es un traje de verdad.
+ * · "solo" → viene de un traje y su pareja NO está: es la mezcla que engaña.
+ */
+export function lazoDeTraje(
+  prenda: { id: string; conjunto?: string | null },
+  look: { id: string; conjunto?: string | null }[]
+): "par" | "solo" | null {
+  if (!prenda.conjunto) return null;
+  return look.some((o) => o.id !== prenda.id && o.conjunto === prenda.conjunto)
+    ? "par"
+    : "solo";
+}
