@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.6] - 2026-08-17
+
+### Added — puerta de salida del tinder de estilos a las 12 cartas
+
+Alberto: *"25 opciones para el tinder inicial de estilo lo sentí repetitivo…
+permitir skippear después de 10 selecciones"*. Tenía el número casi exacto: el
+mazo creció de los ~15 del spec a 27 estilos y nadie ajustó la experiencia —
+mientras el TTV ya falla la promesa de los 2 minutos por 4-5×.
+
+Tras 12 decisiones aparece un link discreto ("con estas ya te leo — seguir")
+que corta al reveal del estilo con lo swipeado hasta ahí. Doce no es al azar:
+el orden del mazo reparte por familias en round-robin, así que a esa altura ya
+pasaron todas las familias al menos dos veces — la señal se adelgaza, no se
+sesga. Quien está a gusto barajando puede seguir hasta el final, como siempre.
+
 ## [0.2.249.5] - 2026-08-17
 
 ### Fixed — la app ya no se queda muda cuando trabaja
