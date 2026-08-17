@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.7] - 2026-08-17
+
+### Changed — el probador agrupa tus prendas por categoría
+
+Alberto: *"en la vista de 'pruébate un look' las prendas deberían estar
+agrupadas por top, bottom, shoes — ahorita están mezcladas"*. Con 40+ prendas,
+armar "top + pantalón + zapatos" era pescar en una sopa.
+
+El picker del probador ahora agrupa el clóset por categoría en el orden del
+vocabulario de la casa (top, saco, pantalón, abrigo, vestido, calzado,
+accesorio); lo que la visión no reconoció va al final como "lo demás" — nunca
+desaparece una prenda por un dato faltante. Aplica en el probador del clóset
+y en el de la wishlist.
+
 ## [0.2.249.0] - 2026-08-17
 
 ### Fixed — la ciudad del wizard ya se autocompleta, como en el viaje
