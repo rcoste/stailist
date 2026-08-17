@@ -22,6 +22,7 @@ import {
 } from "@/lib/eventos";
 import { pasosDelWizard, momentoSugerido } from "@/lib/wizard-pasos";
 import { MAX_ANCLAS, motivoBloqueo } from "@/lib/anclas";
+import { usePlaceSuggestions } from "@/lib/place-suggestions";
 // Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
 // del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
 import {
@@ -560,6 +561,25 @@ export function LookRequest({
     }
   }, [ciudadGeo, fecha, donde, aquiCoords]);
 
+  // Sugerencias mientras escribe — el MISMO hook que el viaje (lib/place-
+  // suggestions). Se apagan en cuanto hay ciudad resuelta: la lista debajo de
+  // una ciudad ya elegida sólo estorba.
+  const sugerenciasCiudad = usePlaceSuggestions(ciudadGeo ? "" : ciudadTexto);
+
+  // Tocar una sugerencia resuelve la ciudad sin escribir el nombre completo.
+  // Se geocodifica igual —hace falta lat/lon para el clima— pero contra un
+  // nombre que la API ACABA de devolver, así que no puede fallar por formato,
+  // que era justo lo que producía el "no encontré esa ciudad".
+  async function elegirSugerencia(nombre: string) {
+    setCiudadTexto(nombre);
+    setCiudadBuscando(true);
+    setCiudadFallo(false);
+    const geo = await geocodePlace(nombre);
+    setCiudadBuscando(false);
+    if (geo) setCiudadGeo(geo);
+    else setCiudadFallo(true);
+  }
+
   async function buscarCiudad() {
     const q = ciudadTexto.trim();
     if (!q) return;
@@ -859,6 +879,8 @@ export function LookRequest({
                 ciudadBuscando={ciudadBuscando}
                 ciudadFallo={ciudadFallo}
                 onBuscarCiudad={buscarCiudad}
+                sugerencias={sugerenciasCiudad}
+                onElegirSugerencia={elegirSugerencia}
               />
             ) : (
               <StepClima
@@ -1543,6 +1565,8 @@ function StepCuando({
   ciudadBuscando,
   ciudadFallo,
   onBuscarCiudad,
+  sugerencias,
+  onElegirSugerencia,
 }: {
   fecha: string | null;
   onFecha: (f: string | null) => void;
@@ -1565,7 +1589,31 @@ function StepCuando({
   ciudadBuscando: boolean;
   ciudadFallo: boolean;
   onBuscarCiudad: () => void;
+  sugerencias: { nombre: string; tipo: "ciudad" | "pais"; label: string }[];
+  onElegirSugerencia: (nombre: string) => void;
 }) {
+  // LA LISTA SE TRAE A LA VISTA AL APARECER.
+  //
+  // Sin esto la sugerencia nace FUERA del scroll y no la ve nadie: medido en el
+  // navegador, con el paso "cuándo" completo (día/noche + ¿dónde?) las cinco
+  // sugerencias caían entre y=616 y y=841 dentro de un contenedor que termina
+  // en 650. La que Roberto quería —Tequisquiapan— era la tercera.
+  //
+  // `block: "nearest"` es deliberado: no hace nada si ya se ve, así que no da
+  // tirones en cada tecla.
+  //
+  // Y SIN `behavior: "smooth"`, que no es un detalle de gusto: medido en el
+  // navegador, con smooth el scroll NO OCURRÍA — scrollTop se quedaba en 0
+  // indefinidamente, mientras que sin él saltaba a 205 al instante. Además el
+  // salto seco es mejor aquí: la lista aparece usable de inmediato en vez de
+  // pedirte que esperes una animación para poder tocarla.
+  const listaSugs = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (sugerencias.length > 0) {
+      listaSugs.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [sugerencias.length]);
+
   // "Otro día" despliega la rejilla completa (wrap, sin scroll horizontal —
   // pedido de Roberto: hoy/mañana/otro día, y solo si eliges "otro" ves todo).
   const [otroDiaOpen, setOtroDiaOpen] = useState(false);
@@ -1744,15 +1792,36 @@ function StepCuando({
                   placeholder="¿en qué ciudad es el plan?"
                   className="min-w-0 flex-1 bg-transparent text-[14px] text-ink caret-accent outline-none placeholder:text-muted"
                 />
-                <button
-                  type="button"
-                  onClick={onBuscarCiudad}
-                  disabled={ciudadBuscando || !ciudadTexto.trim()}
-                  className="shrink-0 text-[13px] font-bold text-ink disabled:opacity-40"
-                >
-                  {ciudadBuscando ? <Spinner className="h-4 w-4" /> : "buscar"}
-                </button>
+                {/* El botón "buscar" se fue: ahora las sugerencias salen solas
+                    mientras escribes, igual que en el viaje. El spinner se
+                    queda para el Enter, que sigue valiendo (y para quien
+                    escriba algo que la lista no ofrece). */}
+                {ciudadBuscando ? <Spinner className="h-4 w-4 shrink-0" /> : null}
               </label>
+              {/* MISMA LISTA QUE EL VIAJE, no una parecida: el hook es el mismo
+                  módulo. Tocar una sugerencia resuelve la ciudad sin que nadie
+                  tenga que escribir el nombre completo ni adivinar el formato. */}
+              {sugerencias.length > 0 ? (
+                <div ref={listaSugs} className="overflow-hidden rounded-sm border border-line">
+                  {sugerencias.map((sug, i) => (
+                    <button
+                      key={`${sug.label}-${i}`}
+                      type="button"
+                      onClick={() => onElegirSugerencia(sug.nombre)}
+                      className="flex w-full items-center gap-2.5 border-b border-line bg-surface px-[13px] py-3 text-left last:border-b-0"
+                    >
+                      <Icon
+                        name={sug.tipo === "pais" ? "globo" : "ubicacion"}
+                        size={16}
+                        className="shrink-0 text-muted"
+                      />
+                      <b className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-ink">
+                        {sug.label}
+                      </b>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               {ciudadFallo ? (
                 <span className="text-[12px] text-error">
                   no encontré esa ciudad — inténtalo con el nombre completo
