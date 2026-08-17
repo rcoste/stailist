@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { DEFECTOS_MOTOR, lazoDeTraje } from "@/lib/comparador/motor";
+import { DEFECTOS_MOTOR, veredictoDeTraje } from "@/lib/comparador/motor";
 import { formalidadLegible } from "@/lib/formalidad";
 import { votarParMotor, completarMarcas } from "../../motor-actions";
 
@@ -142,15 +142,30 @@ function Lado({
             </span>
           </div>
 
-          {/* ¿QUÉ PRENDA MACHEA CON QUÉ? Lo pidió Roberto votando el veredicto
-              de 3.7: "debería haber algún tipo de indicador visual para saber
-              qué machea el pantalón con el saco, porque si no está cabrón, no
-              puedo saber si sí o no va". En ese par había un saco de un traje
-              con el pantalón de OTRO y desde la pantalla los dos grises se
-              veían plausibles.
-
-              Se resuelve por LOOK y no por prenda: lo que hay que contestar no
-              es "¿esta viene de un traje?" sino "¿su par está aquí?". */}
+          {/* ¿EL TRAJE ESTÁ BIEN APAREADO? Roberto: "esto es para identificar
+              visualmente que si el AI propone un traje completo, tipo para un
+              abogado, sí está haciendo el match correcto y no lo está haciendo
+              parchado". Va por LOOK y no por prenda — lo que se juzga al votar
+              es el traje, no la pieza. Solo aparece si hay piezas de traje. */}
+          {(() => {
+            const vt = veredictoDeTraje(look.prendas);
+            if (!vt) return null;
+            const texto =
+              vt.tipo === "completo"
+                ? "traje completo"
+                : vt.tipo === "parchado"
+                  ? "traje parchado: saco y pantalón de trajes distintos"
+                  : `${vt.prenda} sin su par`;
+            return (
+              <p
+                className={`mb-1.5 text-[11px] font-semibold leading-tight ${
+                  vt.tipo === "completo" ? "text-muted" : "text-accent"
+                }`}
+              >
+                {texto}
+              </p>
+            );
+          })()}
           {/* Las prendas, EN GRANDE. Dos por fila dentro de la columna: con un
               solo look en pantalla caben al doble que antes. */}
           <div className="grid grid-cols-2 gap-1.5">
@@ -177,19 +192,6 @@ function Lado({
                 <span className="line-clamp-2 text-center text-[11px] leading-tight text-muted">
                   {p.nombre}
                 </span>
-                {(() => {
-                  const lazo = lazoDeTraje(p, look.prendas);
-                  if (!lazo) return null;
-                  return (
-                    <span
-                      className={`text-[10px] font-semibold leading-none ${
-                        lazo === "par" ? "text-ink" : "text-accent"
-                      }`}
-                    >
-                      {lazo === "par" ? "mismo traje" : "de otro traje"}
-                    </span>
-                  );
-                })()}
               </div>
             ))}
           </div>
