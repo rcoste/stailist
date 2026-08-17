@@ -146,6 +146,16 @@ export function AvatarWizard({
   // Foto de cara en recorte (dataURL). Reusa ImageCrop (mismo del carrete de
   // prendas): sirve para aislarte si la foto trae más de una persona.
   const [cropFaceSrc, setCropFaceSrc] = useState<string | null>(null);
+  // La foto de cara ORIGINAL, tal cual salió de la cámara/carrete. "ajustar"
+  // recorta SIEMPRE sobre ella, nunca sobre el recorte anterior: recortando el
+  // recorte cada pasada acumulaba zoom y hacía imposible abrir el encuadre —
+  // los pixeles de afuera ya se habían tirado (bug cazado por Alberto: "el
+  // preview se acerca una y otra vez aunque el ajuste haya sido hacia afuera").
+  const faceOriginalRef = useRef<string | null>(null);
+  function setFaceOriginal(file: File) {
+    if (faceOriginalRef.current) URL.revokeObjectURL(faceOriginalRef.current);
+    faceOriginalRef.current = URL.createObjectURL(file);
+  }
   // Input ÚNICO de la foto de cara: lo dispara el recuadro (que ahora es el
   // control) y el enlace de "cambiar la foto".
   const faceInputRef = useRef<HTMLInputElement>(null);
@@ -207,6 +217,7 @@ export function AvatarWizard({
   useEffect(() => {
     return () => {
       Object.values(previews).forEach((u) => u && URL.revokeObjectURL(u));
+      if (faceOriginalRef.current) URL.revokeObjectURL(faceOriginalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -506,14 +517,18 @@ export function AvatarWizard({
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null;
               if (faceInputRef.current) faceInputRef.current.value = "";
-              if (f) setSlot("face", f);
+              if (f) {
+                // Foto nueva = nuevo original para el recorte.
+                setFaceOriginal(f);
+                setSlot("face", f);
+              }
             }}
           />
           <button
             type="button"
             onClick={() =>
               previews.face
-                ? setCropFaceSrc(previews.face)
+                ? setCropFaceSrc(faceOriginalRef.current ?? previews.face)
                 : faceInputRef.current?.click()
             }
             aria-label={previews.face ? "Ajustar tu foto" : "Agregar tu foto"}
