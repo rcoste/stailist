@@ -2,6 +2,40 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.246.0] - 2026-08-14
+
+### Added — con lluvia, el calzado escotado pierde contra el que cubre el tobillo
+
+Última regla salida del veredicto de Gemini 3.7, y la que más costó acertar: dos
+propuestas anteriores se descartaron por medirlas antes de escribirlas.
+
+**Es preferencia, no prohibición**, y eso lo decidió releer los comentarios
+completos. En el MISMO par Roberto escribió las dos cosas: *"Gana por el
+calzado"* (sobre unos botines Chelsea) y *"calzado no ideal para lluvia"* (sobre
+unos tenis). Eso es un ORDEN, no un veto — ninguna prohibición encajaba con sus
+dos frases a la vez.
+
+- **El eje es el tobillo, no la suela.** Se leyeron 161 zapatos para conseguir el
+  dato de la suela y no servía: sus tenis de piel (que marcó mal) y sus tenis
+  blancos (que aprobó *"por la suela gruesa"*) salieron los dos `gruesa`, con
+  ~12% de ruido. El tobillo sí es observable y sí es el mecanismo que él
+  describió: el agua entra por arriba.
+- **El guardia de formalidad no es un parche, es la regla**: no se baja el nivel
+  del look para resolver el clima. Sin él —simulado contra su clóset ANTES de
+  escribir nada— la regla hacía reprobar todos los zapatos de vestir bajo
+  lluvia, y en un evento formal habría bloqueado el único calzado correcto.
+- **La alternativa también tiene que aguantar el agua**: cambiar unos tenis por
+  unos botines de gamuza sería reparar hacia atrás.
+- Generaliza con un principio la lista fija de tres formas (`mocasín, náutico,
+  sandalia`) que estaba escrita a mano.
+
+**Lo que se acepta a sabiendas**: marca también unos tenis que Roberto aprobó. No
+existe dato que separe esos dos pares, y el costo es cero — la reparación pone
+justo las botas que él llamó ganadoras.
+
+Verificada contra los 107 looks de la corrida: dispara en 4 (3.7%), todos dentro
+de los pares de lluvia.
+
 ## [0.2.245.0] - 2026-08-14
 
 ### Fixed — nada de etiqueta en un funeral, y la corbata negra
