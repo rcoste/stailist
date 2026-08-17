@@ -16,6 +16,44 @@ abrir, porque los pixeles de afuera ya se habían tirado. Ahora el wizard
 guarda la foto original aparte y "ajustar" siempre recorta sobre ella: puedes
 abrir y cerrar el encuadre las veces que quieras sin perder nada.
 
+## [0.2.249.2] - 2026-08-17
+
+### Fixed — el sheet de "¿a dónde vas?" ya no te deja atorado con el teclado
+
+Alberto: *"el teclado sube la pantalla para seleccionar en el calendario pero
+se pierde el primer campo que es la ciudad y no permite avanzar si no se ha
+llenado ese campo"*.
+
+Dos arreglos en el mismo sheet:
+
+- **Tocar el calendario cierra el teclado.** Antes el campo de ciudad (con
+  autofocus) dejaba el teclado abierto, el sheet quedaba a media altura y
+  elegías fechas a ciegas mientras la ciudad se perdía en el scroll.
+- **El botón muerto ahora explica y lleva.** Con fechas puestas pero sin
+  ciudad, "añadir a mi ruta" se quedaba deshabilitado sin decir por qué.
+  Ahora avisa "solo falta la ciudad" y al tocarlo te regresa al campo y lo
+  enfoca.
+
+## [0.2.249.1] - 2026-08-17
+
+### Fixed — "así te queda" ya enseña el look completo, pies incluidos
+
+Alberto (feedback de UX, probando el flujo completo): *"al entrar a la pantalla
+de 'así te queda' se está cortando los pies de la imagen y no hay forma de
+hacer zoom"*.
+
+Tenía razón dos veces:
+
+- **Las dos pantallas de ampliar** (la lupa del detalle y el "ampliar" del
+  try-on inmersivo) usaban `object-cover` anclado a la cara — los zapatos
+  morían fuera del marco. Para una app cuya promesa es "así te queda el look",
+  cortar los zapatos es cortar el look. Ahora la foto va **completa**
+  (`object-contain`) sobre la misma foto blurreada de fondo — el patrón que el
+  try-on de desktop ya tenía validado.
+- **El hint "pellizca para acercar" mentía**: el zoom de la PWA está apagado
+  a propósito desde el fix del zoom accidental (#14), así que ese pellizco
+  nunca funcionó. El hint ya no promete lo que la app no hace.
+
 ## [0.2.249.0] - 2026-08-17
 
 ### Fixed — la ciudad del wizard ya se autocompleta, como en el viaje

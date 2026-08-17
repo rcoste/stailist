@@ -825,6 +825,8 @@ function ParadaSheet({
   // Llegada encadenada (no primera): salida de la parada anterior.
   const arrival = isFirst ? startDate : arrivalOf(inicio, paradas, index);
   const lugarOk = q.trim().length >= 2;
+  // Para volver al campo de ciudad cuando quedó fuera de vista (ver abajo).
+  const lugarRef = useRef<HTMLInputElement>(null);
   // Noches efectivas: en la 1ª parada salen del calendario (rango = diff, días =
   // stepper); en las encadenadas, del stepper de noches.
   const rangoOk = !!startDate && !!endDate && endDate > startDate;
@@ -833,13 +835,12 @@ function ParadaSheet({
     : modo === "rango"
       ? (rangoOk ? diffDays(startDate, endDate) : 0)
       : noches;
-  const canSave =
-    lugarOk &&
-    (!isFirst
-      ? true
-      : modo === "rango"
-        ? rangoOk
-        : !!startDate && effNoches >= 1);
+  const fechasOk = !isFirst
+    ? true
+    : modo === "rango"
+      ? rangoOk
+      : !!startDate && effNoches >= 1;
+  const canSave = lugarOk && fechasOk;
 
   function pick(nombre: string) {
     setQ(nombre);
@@ -886,6 +887,7 @@ function ParadaSheet({
             >
               <Icon name="lupa" size={17} className="shrink-0 text-muted" />
               <input
+                ref={lugarRef}
                 value={q}
                 autoFocus={!editing}
                 onChange={(e) => {
@@ -922,7 +924,18 @@ function ParadaSheet({
             ) : null}
           </div>
 
-          {/* Fecha: calendario de 2 formas (1ª parada) o llegada encadenada */}
+          {/* Fecha: calendario de 2 formas (1ª parada) o llegada encadenada.
+              Al tocar esta zona se cierra el teclado (blur del campo de ciudad):
+              con el teclado abierto el sheet queda a media altura, la ciudad se
+              pierde en el scroll interno y el calendario se usa a ciegas
+              (feedback de Alberto probando en teléfono real). */}
+          <div
+            className="contents"
+            onPointerDownCapture={() => {
+              const el = document.activeElement;
+              if (el instanceof HTMLInputElement) el.blur();
+            }}
+          >
           {isFirst ? (
             <StopDatePicker
               modo={modo}
@@ -969,16 +982,34 @@ function ParadaSheet({
               </div>
             </>
           )}
+          </div>
 
-          <button
-            type="button"
-            disabled={!canSave}
-            onClick={() => onSave(index, q.trim(), effNoches, isFirst ? startDate : undefined)}
-            className="mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+          {/* El wrapper atrapa el tap cuando el botón está deshabilitado
+              (disabled:pointer-events-none) y lleva de vuelta al campo que
+              falta: con fechas puestas pero sin ciudad, el botón muerto sin
+              explicación dejaba a la gente atorada (feedback de Alberto). */}
+          <div
+            onClick={() => {
+              if (canSave || !fechasOk || lugarOk) return;
+              lugarRef.current?.scrollIntoView({ block: "center" });
+              lugarRef.current?.focus();
+            }}
           >
-            <Icon name="check" size={17} />
-            {editing ? "guardar cambios" : "añadir a mi ruta"}
-          </button>
+            <button
+              type="button"
+              disabled={!canSave}
+              onClick={() => onSave(index, q.trim(), effNoches, isFirst ? startDate : undefined)}
+              className="mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-deep disabled:pointer-events-none disabled:opacity-50"
+            >
+              <Icon name="check" size={17} />
+              {editing ? "guardar cambios" : "añadir a mi ruta"}
+            </button>
+            {!lugarOk && fechasOk ? (
+              <p className="mt-2 text-center text-xs text-muted">
+                solo falta la ciudad — toca aquí y te llevo al campo
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
