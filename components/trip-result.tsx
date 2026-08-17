@@ -1026,8 +1026,10 @@ export function TripResult({
       {/* Cierre de cada fase (flujo del handoff viaje 2): la revisión cierra
           con "listo — a empacar" (confirma SIN generar — la generación ya no
           es la confirmación); empacar cierra con "generar mis looks". */}
+      {/* Los cierres de fase van sticky sobre la tab bar: eran el último
+          elemento del scroll y se perdían bajo el fold (feedback de Alberto). */}
       {fase === "prendas" && rows.length > 0 ? (
-        <div className="flex flex-col gap-1.5 pt-1">
+        <div className="sticky bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 -mx-4 flex flex-col gap-1.5 border-t border-line bg-bg px-4 pb-2 pt-2.5 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:pt-1">
           <button
             type="button"
             onClick={() => (confirmado ? goTo("empacar") : onConfirm())}
@@ -1038,7 +1040,7 @@ export function TripResult({
         </div>
       ) : null}
       {fase === "empacar" && empaca.length > 0 ? (
-        <div className="flex flex-col gap-1.5 pt-1">
+        <div className="sticky bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 -mx-4 flex flex-col gap-1.5 border-t border-line bg-bg px-4 pb-2 pt-2.5 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:pt-1">
           {looksExist ? (
             <button
               type="button"

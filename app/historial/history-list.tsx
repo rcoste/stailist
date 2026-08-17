@@ -8,6 +8,7 @@ import { fmtFechaLocal } from "@/components/weather-picker";
 import { notifyFirstLike } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { Heart } from "@/components/heart";
+import { Spinner } from "@/components/spinner";
 import { HistorialLookDetail } from "./historial-look-detail";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { deleteOutfit } from "@/lib/delete-actions";
@@ -80,21 +81,44 @@ function monthLabel(iso: string) {
   return m.charAt(0).toUpperCase() + m.slice(1);
 }
 
+// La foto del look con estado de DESCARGA: la URL firmada ya existe pero los
+// bytes tardan (~7s medidos por Alberto tras un 👍) y el tile quedaba en blanco
+// sin señal alguna. Mientras baja: bg-tile + spinner; al llegar: el blur-up de
+// la casa (gen-reveal), ahora disparado por onLoad — antes esa animación corría
+// por reloj y se gastaba antes de que hubiera imagen que revelar.
+// `ref` con `complete`: si la imagen ya estaba en caché, onLoad puede no
+// disparar tras la hidratación y el tile se quedaría en spinner eterno.
+function FotoLook({ src }: { src: string }) {
+  const [cargada, setCargada] = useState(false);
+  return (
+    <span className="relative block h-full w-full bg-tile">
+      {!cargada ? (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <Spinner className="h-5 w-5 text-muted" />
+        </span>
+      ) : null}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        ref={(el) => {
+          if (el?.complete && el.naturalWidth > 0) setCargada(true);
+        }}
+        onLoad={() => setCargada(true)}
+        className={`h-full w-full object-cover ${cargada ? "gen-reveal" : "opacity-0"}`}
+        style={{ objectPosition: "50% 10%" }}
+      />
+    </span>
+  );
+}
+
 // Imagen del look a tamaño grande: la foto "cómo se me ve" (object-cover) o, si
 // no se generó avatar, el collage 2×2 de los flat-lays de sus prendas (3 prendas
 // → 4ª celda lienzo limpio). Se usa en destacado, tile y detalle, siempre grande.
 function LookImage({ o }: { o: HistoryOutfit }) {
   if (o.tryonImage) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={o.tryonImage}
-        alt=""
-        loading="lazy"
-        className="h-full w-full object-cover"
-        style={{ objectPosition: "50% 10%" }}
-      />
-    );
+    return <FotoLook src={o.tryonImage} />;
   }
   return (
     <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-px bg-line">

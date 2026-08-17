@@ -174,8 +174,22 @@ export function SwipeDeck({
     });
   }
 
+  // ESCAPE A LOS 12: el mazo creció de los ~15 del spec a 27 estilos y se
+  // siente repetitivo (feedback de Alberto; el TTV ya falla la promesa de los
+  // 2 minutos por 4-5×). El orden porContraste() reparte por familias en
+  // round-robin, así que a las 12 cartas ya pasaron TODAS las familias al
+  // menos dos veces — cortar ahí adelgaza la señal, no la sesga. Quien quiere
+  // seguir, sigue: el link no interrumpe, solo abre la puerta.
+  const ESCAPE_TRAS = 12;
+  const [salida, setSalida] = useState(false);
+  function salirAntes() {
+    if (pending || leaving) return;
+    setSalida(true);
+    finalizar(results);
+  }
+
   const look = looks[index];
-  const done = index >= looks.length;
+  const done = salida || index >= looks.length;
 
   function decide(liked: boolean) {
     if (done || leaving) return;
@@ -574,9 +588,23 @@ export function SwipeDeck({
         </button>
       </div>
 
-      <p className="tabular pb-2 text-center text-[12px] text-muted">
+      <p className="tabular text-center text-[12px] text-muted">
         {index + 1} de {looks.length}
       </p>
+      {/* La puerta de salida tras ESCAPE_TRAS decisiones: discreta (un link,
+          no un botón) para que quien está a gusto siga barajando. */}
+      {results.length >= ESCAPE_TRAS ? (
+        <button
+          type="button"
+          onClick={salirAntes}
+          disabled={pending}
+          className="mx-auto min-h-11 pb-2 text-[13px] font-semibold text-muted underline decoration-line underline-offset-4 transition-colors hover:text-ink disabled:opacity-50"
+        >
+          con estas ya te leo — seguir
+        </button>
+      ) : (
+        <span className="pb-2" aria-hidden />
+      )}
     </div>
   );
 }

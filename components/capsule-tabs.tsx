@@ -56,13 +56,17 @@ export function CapsuleTabs({
         {tab === "porque" ? (
           <div className="flex flex-col gap-6 lg:max-w-[560px]">
             {porque}
-            <button
-              type="button"
-              onClick={() => setTab("capsula")}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-            >
-              revisar esenciales →
-            </button>
+            {/* Sticky sobre la tab bar, como su gemelo de viaje (trip-tabs):
+                el CTA era el último elemento del scroll y se perdía en móvil. */}
+            <div className="sticky bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-line bg-bg px-4 pb-2 pt-2.5 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+              <button
+                type="button"
+                onClick={() => setTab("capsula")}
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-semibold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+              >
+                revisar esenciales →
+              </button>
+            </div>
           </div>
         ) : tab === "capsula" ? (
           capsula
