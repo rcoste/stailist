@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.247.0] - 2026-08-17
+
+### Fixed — lino de arriba abajo no es ropa de oficina
+
+Roberto lo marcó en dos pares del veredicto de Gemini 3.7, los dos con signos de
+admiración: *"Full lino para trabajo no está bien! Full lino es más para eventos,
+playa, etc."* y *"full lino en trabajo está mal!"*.
+
+**El alcance lo fija su otra frase**: *"el look está cool, pero te fuiste FULL
+lino"*. El problema no es el lino, es el lino en todo — así que la regla cuenta
+prendas estructurales (torso, pierna, capa) y pide DOS. Una camisa de lino sola
+es correcta en una oficina de calor, y marcarla sería prohibir el lino, que no es
+lo que dijo.
+
+- **No es formalidad, es contexto.** El look puede estar impecable de nivel y
+  seguir leyéndose como vacaciones; por eso hizo falta pasarle el objetivo a las
+  reglas de ejecución y no bastaba con `formality`.
+- Fuera de la oficina no se toca: él mismo dijo que el lino completo es para
+  eventos y playa.
+- Accesorios y calzado no cuentan para el conteo.
+
+Verificada contra los 107 looks de la corrida: dispara en 6, **todos dentro de
+los dos briefs de "trabajo · calor"**. Los cuatro que Roberto no alcanzó a
+comentar se revisaron uno por uno — camisa de lino con pantalón de lino en todos.
+
+### Nota — un pendiente que no existía
+
+Se había anotado como suelto el *"se ve parchado, distintos tipos de gris entre
+el saco y el pantalón"*. No lo era: el saco es de un traje y el pantalón de
+OTRO, así que `saco-de-traje-suelto` (v0.2.242.0) ya lo caza, y
+`funeral-corbata-color` (v0.2.245.0) caza la otra mitad de ese mismo comentario.
+
 ## [0.2.246.0] - 2026-08-14
 
 ### Added — con lluvia, el calzado escotado pierde contra el que cubre el tobillo

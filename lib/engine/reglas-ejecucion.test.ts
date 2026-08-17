@@ -1166,3 +1166,65 @@ describe("lluvia: el escotado pierde contra el que cubre el tobillo", () => {
     expect(v.map((x) => x.regla)).not.toContain("lluvia-mejor-calzado");
   });
 });
+
+describe("full lino en oficina — dos veces con signos de admiración", () => {
+  const enOficina = (items: EngineItem[]) =>
+    revisarEjecucion(items, { objective: "oficina", gender: "hombre" }).map((x) => x.regla);
+
+  // Los DOS looks reales que lo dispararon eran idénticos: camisa de lino +
+  // pantalón de lino, objetivo oficina.
+  it("camisa de lino + pantalón de lino en la oficina se marca", () => {
+    const v = enOficina([
+      p("Camisa de lino azul", "#8FA8C4", { material: "lino" }),
+      p("Pantalón de lino beige", "#D9CDB8", { material: "lino" }),
+      p("Mocasines café", "#6B4A2F", { material: "piel" }),
+    ]);
+    expect(v).toContain("full-lino-en-oficina");
+  });
+
+  // "El look está cool, pero te fuiste FULL lino" — el problema es el lino en
+  // TODO, no el lino. Una sola pieza es correcta en una oficina de calor.
+  it("UNA sola prenda de lino NO se marca", () => {
+    const v = enOficina([
+      p("Camisa de lino azul", "#8FA8C4", { material: "lino" }),
+      p("Chinos azul marino", "#26334D", { material: "algodón" }),
+    ]);
+    expect(v).not.toContain("full-lino-en-oficina");
+  });
+
+  // Fuera de la oficina el lino completo es exactamente lo correcto: él mismo
+  // dijo "full lino es más para eventos, playa".
+  it("en un evento o en la playa no se toca", () => {
+    const look = [
+      p("Camisa de lino azul", "#8FA8C4", { material: "lino" }),
+      p("Pantalón de lino beige", "#D9CDB8", { material: "lino" }),
+    ];
+    expect(revisarEjecucion(look, { objective: "evento" }).map((x) => x.regla)).not.toContain(
+      "full-lino-en-oficina"
+    );
+    expect(revisarEjecucion(look, { objective: "diario" }).map((x) => x.regla)).not.toContain(
+      "full-lino-en-oficina"
+    );
+  });
+
+  // Los accesorios y el calzado no cuentan: son "estructural" torso/pierna/capa.
+  it("un cinturón y unos zapatos no hacen 'full lino'", () => {
+    const v = enOficina([
+      p("Camisa de lino azul", "#8FA8C4", { material: "lino" }),
+      p("Chinos carbón", "#3B3B3B", { material: "algodón" }),
+      p("Cinturón de lino", "#D9CDB8", { material: "lino" }),
+    ]);
+    expect(v).not.toContain("full-lino-en-oficina");
+  });
+
+  it("sin objetivo declarado no dispara", () => {
+    const v = revisarEjecucion(
+      [
+        p("Camisa de lino azul", "#8FA8C4", { material: "lino" }),
+        p("Pantalón de lino beige", "#D9CDB8", { material: "lino" }),
+      ],
+      {}
+    ).map((x) => x.regla);
+    expect(v).not.toContain("full-lino-en-oficina");
+  });
+});

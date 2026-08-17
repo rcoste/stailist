@@ -70,6 +70,12 @@ export type ContextoReglas = {
    */
   tipoEvento?: string | null;
   /**
+   * PARA QUÉ es el look ("oficina", "diario", "evento"…). Distinto de la
+   * formalidad: hay prendas correctas de nivel y equivocadas de contexto — el
+   * lino de arriba abajo es impecable y no es ropa de oficina.
+   */
+  objective?: string | null;
+  /**
    * Para quién. Hoy solo lo usa la regla del suéter, y por una razón medida:
    * "el suéter pide algo debajo" es una convención del guardarropa MASCULINO.
    * En el femenino, llevar el punto a piel es una elección normal y frecuente —
@@ -348,6 +354,40 @@ export function revisarEjecucion(
       v.push({
         regla: "funeral-corbata-color",
         detalle: `"${nombre(c)}" no va en un funeral: la corbata tiene que ser NEGRA. Si no hay una negra, es mejor ir sin corbata que con una de color.`,
+      });
+    }
+  }
+
+  // 2d. LINO DE ARRIBA ABAJO NO ES ROPA DE OFICINA.
+  //
+  //     Roberto lo marcó en dos pares del veredicto de 3.7, los dos con signos
+  //     de admiración: "Full lino para trabajo no está bien! Full lino es más
+  //     para eventos, playa, etc." y "full lino en trabajo está mal!". Y la
+  //     frase que fija el alcance: "el look está cool, pero te fuiste FULL
+  //     lino" — el problema no es el lino, es el lino en todo.
+  //
+  //     LOS DOS CASOS ERAN IDÉNTICOS: camisa de lino + pantalón de lino. Por eso
+  //     la regla cuenta prendas ESTRUCTURALES (torso, pierna, capa) y pide DOS:
+  //     una camisa de lino sola es correcta en una oficina de calor, y marcarla
+  //     sería prohibir el lino, que no es lo que dijo.
+  //
+  //     No es formalidad: el look puede estar impecable de nivel y seguir
+  //     leyéndose como vacaciones. Por eso hace falta el objetivo y no basta con
+  //     `formality`.
+  if (/oficina|trabajo/.test(norm(ctx.objective ?? undefined))) {
+    const estructural = (i: EngineItem) => {
+      const z = tipoDePrenda(nombre(i))?.zona;
+      return z === "torso" || z === "pierna" || z === "capa";
+    };
+    const deLino = items
+      .filter(estructural)
+      .filter((i) => familiaMaterial(i.attrs.material, i.attrs.nombre) === "lino");
+    if (deLino.length >= 2) {
+      v.push({
+        regla: "full-lino-en-oficina",
+        detalle: `El look es lino de arriba abajo ("${deLino
+          .map(nombre)
+          .join('", "')}") y esto es para la oficina: el lino completo se lee como evento o vacaciones, y además se arruga sentado toda la mañana. Deja UNA pieza de lino y cambia la otra por algodón, lana fría o mezclilla.`,
       });
     }
   }
