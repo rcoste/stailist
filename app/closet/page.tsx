@@ -288,7 +288,12 @@ export default async function ClosetPage() {
         {/* EL PROBADOR, desde donde está tu ropa. Vivía sólo en la wishlist
             —tres taps y un scroll— que es donde guardas lo que NO tienes. */}
         <ProbadorEntry
-          closet={items.map((i) => ({ id: i.id, image: i.imagen, nombre: i.nombre }))}
+          closet={items.map((i) => ({
+            id: i.id,
+            image: i.imagen,
+            nombre: i.nombre,
+            categoria: i.category,
+          }))}
           wishlist={wishlistProbador}
         />
 

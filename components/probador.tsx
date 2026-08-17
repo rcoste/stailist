@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
+import { CATEGORIAS } from "@/components/prenda-campos";
 import Link from "next/link";
 import { Spinner } from "@/components/spinner";
 /**
@@ -13,7 +14,14 @@ import { Spinner } from "@/components/spinner";
  * desde el clóset había que arrastrar los tipos de la wishlist. Ahora cada
  * pantalla mapea lo suyo a esto, que es lo único que se pinta.
  */
-export type PrendaProbador = { id: string; image: string | null; nombre: string };
+export type PrendaProbador = {
+  id: string;
+  image: string | null;
+  nombre: string;
+  /** Para agrupar el picker por categoría (vocabulario de prenda-campos).
+   *  Opcional: la wishlist no la trae y va en su propia sección. */
+  categoria?: string | null;
+};
 
 type Sel = { kind: "w" | "c"; id: string };
 type Phase = "pick" | "gen" | "result" | "sin_avatar" | "error";
@@ -61,6 +69,21 @@ export function Probador({
 
   const isSel = (kind: "w" | "c", id: string) =>
     sel.some((s) => s.kind === kind && s.id === id);
+
+  // El clóset por categoría en el orden del vocabulario; lo no reconocido va
+  // al final como "lo demás" (nunca desaparece una prenda por dato faltante).
+  const gruposCloset = (() => {
+    const porCat = new Map<string, PrendaProbador[]>();
+    for (const p of closet) {
+      const k = CATEGORIAS.some((c) => c.v === p.categoria) ? (p.categoria as string) : "otros";
+      if (!porCat.has(k)) porCat.set(k, []);
+      porCat.get(k)!.push(p);
+    }
+    return [
+      ...CATEGORIAS.map((c) => ({ key: c.v as string, label: c.l.toLowerCase(), items: porCat.get(c.v) ?? [] })),
+      { key: "otros", label: "lo demás", items: porCat.get("otros") ?? [] },
+    ].filter((g) => g.items.length > 0);
+  })();
 
   function toggle(kind: "w" | "c", id: string) {
     setSel((prev) => {
@@ -210,13 +233,21 @@ export function Probador({
             onToggle={toggle}
           />
         ) : null}
-        <Section
-          title="de mi clóset"
-          items={closet}
-          kind="c"
-          isSel={isSel}
-          onToggle={toggle}
-        />
+        {/* El clóset AGRUPADO por categoría, en el orden del vocabulario
+            (prenda-campos — importado, no redeclarado). Con 40+ prendas
+            mezcladas, armar "top + pantalón + zapatos" era pescar en una sopa
+            (feedback de Alberto). Sin categoría → "lo demás", al final:
+            lo que la visión no reconoce nunca bloquea. */}
+        {gruposCloset.map((g) => (
+          <Section
+            key={g.key}
+            title={`de mi clóset · ${g.label}`}
+            items={g.items}
+            kind="c"
+            isSel={isSel}
+            onToggle={toggle}
+          />
+        ))}
       </div>
 
       <div className="absolute inset-x-0 bottom-0 flex flex-none items-center gap-3 border-t border-line bg-bg px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
