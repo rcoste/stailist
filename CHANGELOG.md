@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.5] - 2026-08-17
+
+### Fixed — la app ya no se queda muda cuando trabaja
+
+Dos silencios reportados por Alberto, mismo diagnóstico: la app tiene un
+lenguaje rico para "estoy generando" y no lo usaba en dos esperas reales.
+
+- **Guardar el avatar ("¿Quedó?")**: al tocar "quedó, usar este" podían pasar
+  15-45 segundos mudos — el guardado espera el sheet de 3 vistas en vuelo, sube
+  3 imágenes y toca la base dos veces, y lo único que cambiaba era la etiqueta
+  del botón. Ahora tapa la pantalla el GeneratingScreen de la casa, con su
+  aviso de "quédate en la app" a los 8s.
+- **La foto del look en el diario**: la imagen tardaba ~7s en bajar y el tile
+  quedaba en blanco sin señal. Ahora: fondo + spinner mientras baja, y el
+  blur-up de la casa al llegar — disparado por la carga real, no por reloj
+  (la animación vieja corría y se gastaba antes de que hubiera imagen).
+
 ## [0.2.249.0] - 2026-08-17
 
 ### Fixed — la ciudad del wizard ya se autocompleta, como en el viaje
