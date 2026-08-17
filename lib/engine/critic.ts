@@ -401,6 +401,9 @@ function contextoDeReglas(ctx: EngineContext): ContextoReglas {
     // Y QUÉ evento es: la formalidad sola no distingue un funeral de una boda,
     // y el esmoquin es correcto en una y una falta de respeto en la otra.
     tipoEvento: ctx.tipoEvento,
+    // Para qué es el look: "full lino" es correcto de nivel y equivocado de
+    // contexto, y sin esto la regla no puede distinguir oficina de evento.
+    objective: ctx.objective,
     // Para quién: la regla del suéter es convención MASCULINA, y aplicarla a
     // una mujer marca como error el punto a piel, que ahí es normal.
     gender: ctx.gender,
