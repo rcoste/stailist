@@ -260,6 +260,7 @@ export async function POST(request: NextRequest) {
                 nombre: itemById.get(id)?.nombre ?? "Prenda",
                 swatch: itemById.get(id)?.color_hex ?? "#E5E1DD",
                 imagen: itemById.get(id)?.imagen ?? null,
+                conjunto: itemById.get(id)?.conjunto ?? null,
               })),
             },
           });

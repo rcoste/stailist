@@ -666,13 +666,14 @@ async function shape(
   const byId = new Map(
     list.map((i) => {
       const arch = i.archetypes as { name?: string; image_path?: string | null } | null;
-      const attrs = (i.attrs ?? {}) as { nombre?: string; color_hex?: string };
+      const attrs = (i.attrs ?? {}) as { nombre?: string; color_hex?: string; conjunto?: string };
       return [
         i.id as string,
         {
           nombre: arch?.name ?? attrs.nombre ?? "Prenda",
           swatch: attrs.color_hex ?? "#E5E1DD",
           imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
+          conjunto: attrs.conjunto ?? null,
         },
       ];
     })

@@ -13,6 +13,17 @@ export type TryonPrenda = {
   nombre: string;
   swatch: string;
   imagen?: string | null;
+  /**
+   * El lazo del traje: mismo id en el saco y en el pantalón que vienen del
+   * mismo traje (lo pone la persona al darlo de alta, ver EngineItem.conjunto).
+   *
+   * Habilita el aviso de "traje completo" sobre las prendas. Roberto lo pidió
+   * para el comparador y luego aclaró que va TAMBIÉN en la app: "es para
+   * identificar visualmente que si el AI propone un traje completo, tipo para
+   * un abogado, sí está haciendo el match correcto y no lo está haciendo
+   * parchado". Opcional — sin el dato, no se pinta nada.
+   */
+  conjunto?: string | null;
 };
 
 const firstWord = (n: string) => n.trim().split(" ")[0] || n;

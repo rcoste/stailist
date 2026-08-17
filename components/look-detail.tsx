@@ -6,6 +6,7 @@ import { Icon } from "@/components/icon";
 import { FavoriteButton } from "@/components/favorite-button";
 import { CoachPie } from "@/components/coach-pie";
 import { PrendasGrid } from "@/components/prendas-grid";
+import { veredictoDeTraje } from "@/lib/traje";
 import { TryonView, type TryonPrenda } from "@/components/tryon-view";
 
 // Detalle del look (handoff design_handoff_look_detalle + design_handoff_try_on).
@@ -209,9 +210,31 @@ export function LookDetail({
         </div>
 
         {tab === "look" ? (
-          <div className="mt-2.5 min-h-0 flex-1">
+          <div className="mt-2.5 flex min-h-0 flex-1 flex-col">
+            {/* "TRAJE COMPLETO": la confirmación de que las dos piezas son del
+                MISMO traje y no una mezcla que parece un traje.
+
+                Roberto lo pidió primero para el comparador y luego aclaró que
+                va también aquí: "es para identificar visualmente que si el AI
+                propone un traje completo, tipo para un abogado, sí está
+                haciendo el match correcto y no lo está haciendo parchado".
+
+                SÓLO SE PINTA LA CONFIRMACIÓN, nunca el aviso de parchado. Aquí
+                no estás evaluando el motor, estás por vestirte: un cartel que
+                diga "esto está mal" sin nada que puedas hacer con él sólo
+                quita confianza. El caso malo lo ataja antes la regla
+                `saco-de-traje-suelto` (v0.2.242.0), y el comparador —que sí es
+                para evaluar— sigue enseñando las tres respuestas. */}
+            {veredictoDeTraje(prendas.map((p, i) => ({ ...p, id: String(i) })))?.tipo ===
+            "completo" ? (
+              <p className="mb-2 shrink-0 text-center text-[12px] font-semibold tracking-tight text-muted">
+                traje completo
+              </p>
+            ) : null}
             {/* La retícula toma el alto flexible y se ajusta para que quepa. */}
-            <PrendasGrid prendas={prendas} />
+            <div className="min-h-0 flex-1">
+              <PrendasGrid prendas={prendas} />
+            </div>
           </div>
         ) : (
           <div className="mt-3 flex min-h-0 flex-1 flex-col">

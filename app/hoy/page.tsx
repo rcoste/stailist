@@ -121,12 +121,14 @@ export default async function HoyPage({
           nombre?: string;
           color_hex?: string;
           image_path?: string | null;
+          conjunto?: string;
         };
         return [
           i.id as string,
           {
             nombre: arch?.name ?? attrs.nombre ?? "Prenda",
             swatch: attrs.color_hex ?? SWATCH_VACIO,
+            conjunto: attrs.conjunto ?? null,
             imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
           },
         ];
@@ -151,6 +153,7 @@ export default async function HoyPage({
           nombre: p?.nombre ?? "Prenda",
           swatch: p?.swatch ?? SWATCH_VACIO,
           imagen: p?.imagen ?? null,
+          conjunto: p?.conjunto ?? null,
         };
       }),
     };
