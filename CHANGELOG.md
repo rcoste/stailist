@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.248.0] - 2026-08-17
+
+### Added — "traje completo" también en la app, no sólo en el comparador
+
+Roberto lo aclaró: el indicador no era para evaluar el motor, era para el
+usuario. *"Es para identificar visualmente que si el AI propone un traje
+completo, tipo para un abogado, sí está haciendo el match correcto y no lo está
+haciendo parchado."*
+
+Ahora, cuando el look trae un traje de verdad —dos o más piezas del MISMO
+traje—, sobre las prendas aparece **traje completo**.
+
+- **Sólo se pinta la confirmación, nunca el aviso de parchado.** En la app no
+  estás evaluando el motor, estás por vestirte: un cartel que diga "esto está
+  mal" sin nada que puedas hacer con él sólo quita confianza. El caso malo lo
+  ataja antes la regla `saco-de-traje-suelto` (v0.2.242.0), y el comparador —que
+  sí es para evaluar— sigue enseñando las tres respuestas.
+- **El dato viaja por los cuatro caminos que pintan un look**: `/hoy`, el look
+  del día, la generación en vivo y el historial. Hacer sólo uno habría dejado el
+  mismo look con aviso en una pantalla y sin él en otra.
+- **`veredictoDeTraje` se mudó a `lib/traje.ts`.** Vivía en el comparador, e
+  importarlo desde un componente de usuario arrastraba al bundle las variantes,
+  el catálogo de modelos y la tabla de precios. Es vocabulario del dominio (qué
+  es un traje), no del banco de pruebas.
+
 ## [0.2.247.2] - 2026-08-17
 
 ### Changed — el indicador de traje ahora contesta la pregunta del look, no de la prenda

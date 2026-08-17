@@ -80,13 +80,17 @@ export default async function HistorialPage({
     });
   }
 
-  const imgById = new Map<string, { nombre: string; swatch: string; imagen: string | null }>(
+  const imgById = new Map<
+    string,
+    { nombre: string; swatch: string; imagen: string | null; conjunto: string | null }
+  >(
     (items ?? []).map((i) => {
       const arch = i.archetypes as { name?: string; image_path?: string | null } | null;
       const attrs = (i.attrs ?? {}) as {
         nombre?: string;
         color_hex?: string;
         image_path?: string | null;
+        conjunto?: string;
       };
       return [
         i.id as string,
@@ -94,6 +98,7 @@ export default async function HistorialPage({
           nombre: arch?.name ?? attrs.nombre ?? "Prenda",
           swatch: attrs.color_hex ?? SWATCH_VACIO,
           imagen: itemImageUrlSync(i as ItemImageRow, (p) => signed.get(p)),
+          conjunto: attrs.conjunto ?? null,
         },
       ];
     })
@@ -136,7 +141,13 @@ export default async function HistorialPage({
         ? signed.get(o.photo_path as string) ?? null
         : null,
     prendas: (o.item_ids as string[]).map(
-      (id) => imgById.get(id) ?? { nombre: "Prenda", swatch: SWATCH_VACIO, imagen: null }
+      (id) =>
+        imgById.get(id) ?? {
+          nombre: "Prenda",
+          swatch: SWATCH_VACIO,
+          imagen: null,
+          conjunto: null,
+        }
     ),
     voto: votoByOutfit.get(o.id) ?? null,
     worn: wornOutfits.has(o.id),

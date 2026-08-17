@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { DEFECTOS_MOTOR, veredictoDeTraje } from "@/lib/comparador/motor";
+import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
+import { veredictoDeTraje } from "@/lib/traje";
 import { formalidadLegible } from "@/lib/formalidad";
 import { votarParMotor, completarMarcas } from "../../motor-actions";
 
