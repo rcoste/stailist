@@ -614,26 +614,31 @@ export function AvatarWizard({
             />
           ) : null}
 
-          <button
-            type="button"
-            disabled={!canContinue}
-            onClick={empezar}
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent px-5 text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
-          >
-            <Icon name="destello" size={16} />
-            {/* Ya no lleva al retrato: lleva a las preguntas mientras el
-                retrato se dibuja. Dejar "ver mi retrato" sería el mismo tipo de
-                mentira que el CTA de los pares del onboarding. */}
-            empezar
-          </button>
-          {skipHref ? (
-            <Link
-              href={skipHref}
-              className="flex min-h-11 items-center justify-center rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-ink"
+          {/* CTA sticky (patrón del checklist de onboarding): con las reglas de
+              la foto y el segundo ángulo, "empezar" caía bajo el fold en
+              teléfonos cortos (auditoría de CTAs, tanda 2). */}
+          <div className="sticky bottom-0 z-10 flex flex-col bg-bg pb-4 pt-2">
+            <button
+              type="button"
+              disabled={!canContinue}
+              onClick={empezar}
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent px-5 text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
             >
-              ahora no, seguir sin avatar
-            </Link>
-          ) : null}
+              <Icon name="destello" size={16} />
+              {/* Ya no lleva al retrato: lleva a las preguntas mientras el
+                  retrato se dibuja. Dejar "ver mi retrato" sería el mismo tipo de
+                  mentira que el CTA de los pares del onboarding. */}
+              empezar
+            </button>
+            {skipHref ? (
+              <Link
+                href={skipHref}
+                className="flex min-h-11 items-center justify-center rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-ink"
+              >
+                ahora no, seguir sin avatar
+              </Link>
+            ) : null}
+          </div>
         </div>
       )}
 
@@ -674,14 +679,19 @@ export function AvatarWizard({
           {/* Camino feliz: siempre manda. Y ahora dispara el cuerpo DIRECTO —
               complexión y estatura ya se contestaron mientras se dibujaba este
               retrato, así que no queda nada que preguntar en medio. */}
-          <button
-            type="button"
-            onClick={generateBody}
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-          >
-            <Icon name="check" size={16} />
-            sí, soy yo — sigamos
-          </button>
+          {/* Sticky: con el retrato 4/5 a ancho completo, este CTA nacía bajo
+              el fold. Los ajustes colapsados de abajo pasan por detrás al
+              scrollear — el camino feliz nunca se pierde. */}
+          <div className="sticky bottom-0 z-10 bg-bg pb-4 pt-2">
+            <button
+              type="button"
+              onClick={generateBody}
+              className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+            >
+              <Icon name="check" size={16} />
+              sí, soy yo — sigamos
+            </button>
+          </div>
 
           {/* Correcciones COLAPSADAS tras "algo no cuadra": no compiten con el
               camino feliz. Al abrir, los chips (un tap = una corrección) + el texto
@@ -895,19 +905,23 @@ export function AvatarWizard({
             </span>
           </div>
 
-          <button
-            type="button"
-            disabled={!puedeGenerar}
-            onClick={continuarDesdeCuerpo}
-            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent px-5 text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
-          >
-            <Icon name="destello" size={16} />
-            {generated
-              ? "generar mi avatar"
-              : caraEstado === "lista"
-                ? "listo — ver mi retrato"
-                : "siguiente"}
-          </button>
+          {/* Sticky: la retícula de siluetas es larga y este CTA caía fuera
+              casi siempre (auditoría de CTAs, tanda 2). */}
+          <div className="sticky bottom-0 z-10 bg-bg pb-2 pt-2">
+            <button
+              type="button"
+              disabled={!puedeGenerar}
+              onClick={continuarDesdeCuerpo}
+              className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent px-5 text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:bg-accent-soft disabled:text-faint"
+            >
+              <Icon name="destello" size={16} />
+              {generated
+                ? "generar mi avatar"
+                : caraEstado === "lista"
+                  ? "listo — ver mi retrato"
+                  : "siguiente"}
+            </button>
+          </div>
 
           {/* La bifurcación, ahora como link (no como pantalla): sin costar un paso. */}
           {metodo === "foto" ? (
@@ -980,7 +994,7 @@ export function AvatarWizard({
               adivina (le pasó a Roberto y a Pablo). Ahora cada botón dice lo
               que hace: otra toma con lo mismo, cambiar lo que describe el
               cuerpo, o volver a la cara. */}
-          <div className="flex flex-col gap-1 pt-1">
+          <div className="sticky bottom-0 z-10 flex flex-col gap-1 bg-bg pb-2 pt-1">
             <button
               type="button"
               disabled={saving}

@@ -77,13 +77,17 @@ export function EdadPicker() {
       <input type="hidden" name="age_range" value={sel ?? ""} />
       <input type="hidden" name="minor_ack" value={menor && ack ? "1" : ""} />
       <input type="hidden" name="parent_email" value={menor ? parentEmail.trim() : ""} />
-      <button
-        type="submit"
-        disabled={!puedeSeguir}
-        className="mt-3 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-40"
-      >
-        seguir <Icon name="flecha" size={19} />
-      </button>
+      {/* CTA sticky (mismo patrón que el checklist del clóset): con el bloque
+          de consentimiento parental abierto, "seguir" caía bajo el fold. */}
+      <div className="sticky bottom-0 mt-3 bg-bg pb-4 pt-2">
+        <button
+          type="submit"
+          disabled={!puedeSeguir}
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-40"
+        >
+          seguir <Icon name="flecha" size={19} />
+        </button>
+      </div>
     </form>
   );
 }

@@ -194,7 +194,9 @@ export function SiluetaFlow({
           ) : null}
         </div>
       </div>
-      <div className="flex gap-3">
+      {/* Sticky sobre la tab bar (patrón del PR #284): era el último elemento
+          del scroll y en móvil quedaba bajo el fold (auditoría de CTAs). */}
+      <div className="sticky bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 -mx-4 flex gap-3 border-t border-line bg-bg px-4 pb-2 pt-2.5 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
         <button
           type="button"
           onClick={() => setStep("build")}

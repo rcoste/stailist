@@ -420,26 +420,32 @@ export function SwipeDeck({
           <p className="mt-3 max-w-[300px] text-[18px] leading-snug text-muted">
             {archetype.descripcion}
           </p>
-          {calibracion || soloPares ? (
-            // Con calibración: el botón consulta si las preguntas ya están
-            // calientes (sin esperar a la IA) — si no, navega directo.
-            <button
-              type="button"
-              disabled={pending}
-              onClick={continuar}
-              className="mt-7 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-70"
-            >
-              {pending ? <Spinner className="h-5 w-5" /> : null}
-              {doneLabel} <Icon name="flecha" size={19} />
-            </button>
-          ) : (
-            <Link
-              href={doneHref}
-              className="mt-7 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-            >
-              {doneLabel} <Icon name="flecha" size={19} />
-            </Link>
-          )}
+          {/* CTA sticky: con el tríptico + nombre + descripción, en pantallas
+              cortas caía bajo el fold (auditoría de CTAs, tanda 2). OJO: sticky
+              y NO fixed — el contenedor del paso anima transform (step-in) y un
+              fixed quedaría confinado a su caja. */}
+          <div className="sticky bottom-0 mt-7 w-full bg-bg pb-2 pt-2">
+            {calibracion || soloPares ? (
+              // Con calibración: el botón consulta si las preguntas ya están
+              // calientes (sin esperar a la IA) — si no, navega directo.
+              <button
+                type="button"
+                disabled={pending}
+                onClick={continuar}
+                className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-70"
+              >
+                {pending ? <Spinner className="h-5 w-5" /> : null}
+                {doneLabel} <Icon name="flecha" size={19} />
+              </button>
+            ) : (
+              <Link
+                href={doneHref}
+                className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+              >
+                {doneLabel} <Icon name="flecha" size={19} />
+              </Link>
+            )}
+          </div>
         </div>
       );
     }
