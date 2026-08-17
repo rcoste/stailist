@@ -657,6 +657,52 @@ export function revisarEjecucion(
         });
       }
     }
+
+    // 6b. Y AUNQUE AGUANTE: con lluvia el calzado escotado PIERDE contra el que
+    //     cubre el tobillo, si el clóset tiene uno de formalidad igual o mayor.
+    //
+    //     POR QUÉ ES PREFERENCIA Y NO PROHIBICIÓN. Roberto no dijo que los tenis
+    //     estén prohibidos; en el mismo par escribió las dos cosas: "Gana por el
+    //     calzado" (sobre unos botines Chelsea) y "calzado no ideal para lluvia"
+    //     (sobre unos tenis). Eso es un ORDEN, no un veto — y ninguna
+    //     prohibición encajaba con sus dos frases a la vez.
+    //
+    //     POR QUÉ EL TOBILLO Y NO LA SUELA. Se leyó la suela de 161 zapatos para
+    //     esto y NO servía: sus tenis de piel (que marcó mal) y sus tenis
+    //     blancos (que aprobó "por la suela gruesa") salieron los dos gruesa, y
+    //     el dato trae ~12% de ruido. El tobillo sí es observable y sí es el
+    //     mecanismo que él mismo describió: el agua entra por arriba. Esto
+    //     generaliza con un principio la lista fija FORMA_NO_AGUANTA.
+    //
+    //     EL GUARDIA DE FORMALIDAD NO ES UN PARCHE, es la regla: no se baja el
+    //     nivel del look para resolver el clima. Sin él, la propuesta hacía
+    //     reprobar TODOS los zapatos de vestir bajo lluvia — se simuló contra su
+    //     clóset antes de escribirla y por eso existe esta línea.
+    //
+    //     LO QUE SÍ SE ACEPTA: marca también unos tenis que Roberto aprobó. No
+    //     hay dato que separe esos dos pares, y el costo del falso positivo es
+    //     cero — la reparación pone justo las botas que él llamó ganadoras.
+    const NIVEL: Record<string, number> = { casual: 0, "formal-casual": 1, formal: 2 };
+    const nivelDe = (i: EngineItem) => NIVEL[norm(i.attrs.formalidad)] ?? 0;
+    const cubre = (i: EngineItem) => i.attrs.cubre_tobillo === true;
+    for (const z of items.filter(esPie)) {
+      // `=== false` y no `!cubre`: sin el dato no se inventa el error.
+      if (z.attrs.cubre_tobillo !== false) continue;
+      if (noAguanta(z)) continue; // ya lo marcó la regla de arriba
+      const mejores = ctx.closet
+        .filter(esPie)
+        .filter(cubre)
+        .filter((i) => !noAguanta(i))
+        .filter((i) => nivelDe(i) >= nivelDe(z));
+      if (!mejores.length) continue;
+      v.push({
+        regla: "lluvia-mejor-calzado",
+        detalle: `Va a llover y "${nombre(z)}" es escotado: el agua entra por arriba. Tienes calzado que cubre el tobillo y sirve igual para este look — cámbialo por ${mejores
+          .slice(0, 2)
+          .map(nombre)
+          .join(" o ")}.`,
+      });
+    }
   }
 
   // 7. LLUVIA Y LA CAPA DE ARRIBA — pero solo SIN paraguas.
