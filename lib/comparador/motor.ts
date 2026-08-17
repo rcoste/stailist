@@ -878,20 +878,11 @@ export function estimadoMotor(
 }
 
 /**
- * ¿EL PAR DE ESTA PRENDA ESTÁ EN EL LOOK?
+ * ¿EL PAR DE ESTA PRENDA ESTÁ EN EL LOOK? Bloque de `veredictoDeTraje`.
  *
- * Contesta lo que Roberto no podía ver votando el veredicto de 3.7: "debería
- * haber algún tipo de indicador visual para saber qué machea el pantalón con el
- * saco, porque si no está cabrón, no puedo saber si sí o no va". En ese par
- * había un saco de un traje con el pantalón de OTRO, y en pantalla los dos
- * grises se veían plausibles.
- *
- * La pregunta NO es "¿esta prenda viene de un traje?" sino "¿su pareja está
- * aquí?" — por eso se resuelve mirando el look entero y no la prenda sola.
- *
- * · null  → no viene de ningún traje, no hay nada que decir.
- * · "par" → su pareja está en el look: es un traje de verdad.
- * · "solo" → viene de un traje y su pareja NO está: es la mezcla que engaña.
+ * · null   → no viene de ningún traje.
+ * · "par"  → su pareja está en el look.
+ * · "solo" → viene de un traje y su pareja NO está.
  */
 export function lazoDeTraje(
   prenda: { id: string; conjunto?: string | null },
@@ -901,4 +892,41 @@ export function lazoDeTraje(
   return look.some((o) => o.id !== prenda.id && o.conjunto === prenda.conjunto)
     ? "par"
     : "solo";
+}
+
+export type VeredictoTraje =
+  | { tipo: "completo" }
+  | { tipo: "parchado" }
+  | { tipo: "suelto"; prenda: string };
+
+/**
+ * ¿EL TRAJE DE ESTE LOOK ESTÁ BIEN APAREADO?
+ *
+ * Es la pregunta de Roberto, en sus palabras (2026-08-17): "esto es para
+ * identificar visualmente que si el AI propone un traje completo, tipo para un
+ * abogado, sí está haciendo el match correcto y no lo está haciendo parchado".
+ *
+ * SE CONTESTA POR LOOK Y NO POR PRENDA, y esa es la corrección: la primera
+ * versión ponía una etiqueta en cada prenda y obligaba a leer dos y deducir. Lo
+ * que se juzga al votar es el traje, no la pieza.
+ *
+ * Y NO NECESITA SABER QUÉ ES SACO Y QUÉ ES PANTALÓN: basta con cuántas piezas
+ * del look vienen de un traje y si vienen del MISMO.
+ *
+ * · "completo" → dos o más piezas y todas del mismo traje. Es un traje de verdad.
+ * · "parchado" → dos o más piezas de TRAJES DISTINTOS. El error que engaña: en
+ *   pantalla dos grises se ven plausibles.
+ * · "suelto"   → una sola pieza de traje; su par no está. OJO: no es "de otro
+ *   traje" —el pantalón puede ser un chino perfectamente correcto— sino que a
+ *   esa pieza le falta el suyo. Decirlo mal fue el error de la v1.
+ * · null       → no hay piezas de traje y no hay nada que informar.
+ */
+export function veredictoDeTraje(
+  look: { id: string; nombre: string; conjunto?: string | null }[]
+): VeredictoTraje | null {
+  const piezas = look.filter((p) => p.conjunto);
+  if (piezas.length === 0) return null;
+  if (piezas.length === 1) return { tipo: "suelto", prenda: piezas[0].nombre };
+  const conjuntos = new Set(piezas.map((p) => p.conjunto));
+  return conjuntos.size === 1 ? { tipo: "completo" } : { tipo: "parchado" };
 }

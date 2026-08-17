@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.247.2] - 2026-08-17
+
+### Changed — el indicador de traje ahora contesta la pregunta del look, no de la prenda
+
+Roberto aclaró para qué era: *"esto es para identificar visualmente que si el AI
+propone un traje completo, tipo para un abogado, sí está haciendo el match
+correcto y no lo está haciendo parchado"*. Esa pregunta es **del look**, y la
+versión anterior ponía una etiqueta en cada prenda — obligaba a leer dos y
+deducir.
+
+Ahora, una sola línea sobre las prendas: **traje completo**, **traje parchado**
+(saco y pantalón de trajes distintos) o **"X sin su par"**.
+
+**Y corrige una afirmación falsa.** La v1 etiquetaba "de otro traje" a un saco
+que iba con chinos — pero los chinos pueden ser perfectamente correctos; lo que
+pasa es que a ESE saco le falta el suyo. Decirlo mal no era un matiz: afirmaba
+algo que no era cierto.
+
+No necesita saber qué es saco y qué es pantalón: le basta con cuántas piezas del
+look vienen de un traje y si vienen del mismo.
+
 ## [0.2.247.1] - 2026-08-17
 
 ### Added — al votar se ve qué prenda machea con cuál
