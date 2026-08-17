@@ -19,6 +19,80 @@ lenguaje rico para "estoy generando" y no lo usaba en dos esperas reales.
   blur-up de la casa al llegar — disparado por la carga real, no por reloj
   (la animación vieja corría y se gastaba antes de que hubiera imagen).
 
+## [0.2.249.4] - 2026-08-17
+
+### Fixed — los botones de avanzar ya no se entierran bajo el scroll
+
+Alberto reportó la clase entera: *"en general hay que cuidar que los botones
+para guardar o avanzar no se oculten debajo del scroll de la pantalla"* — y la
+señaló en el espejo ("Terminar aquí" de las fichas) y en toda la maleta.
+
+Una auditoría de los flujos móviles encontró 23 pantallas con el CTA como
+último elemento del scroll. Esta tanda arregla las reportadas y sus gemelas:
+
+- **Espejo (te veo)**: "terminar aquí" / "gracias" / "vi N prendas que no
+  tienes" y los botones de "sale alguien más" viven ahora en el pie fijo de la
+  pantalla, fuera del scroll. La ranura `pie` existía desde el rediseño del
+  espejo — nadie la había conectado.
+- **Viaje**: "revisar prendas →", "listo — a empacar" y "generar mis looks"
+  van sticky sobre la tab bar (mismo patrón que el detalle del historial).
+- **Cápsula** (gemela declarada del viaje): "revisar esenciales →" igual.
+
+Quedan radareadas para una segunda tanda: los pasos del wizard de avatar y
+tres pantallas de onboarding (edad, colorimetría, reveal de gustos).
+
+## [0.2.249.3] - 2026-08-17
+
+### Fixed — "ajustar" la foto del avatar ya no acumula zoom
+
+Alberto: *"si doy click a ajustar y posiciono la cuadrícula, al guardar y
+volver al paso anterior, el preview de la imagen que ajusté se acerca una y
+otra vez aunque el ajuste haya sido hacia afuera"*.
+
+El diagnóstico exacto: cada "ajustar" abría el recortador sobre la imagen **ya
+recortada** de la vez anterior — recortar el recorte solo puede acercar, nunca
+abrir, porque los pixeles de afuera ya se habían tirado. Ahora el wizard
+guarda la foto original aparte y "ajustar" siempre recorta sobre ella: puedes
+abrir y cerrar el encuadre las veces que quieras sin perder nada.
+
+## [0.2.249.2] - 2026-08-17
+
+### Fixed — el sheet de "¿a dónde vas?" ya no te deja atorado con el teclado
+
+Alberto: *"el teclado sube la pantalla para seleccionar en el calendario pero
+se pierde el primer campo que es la ciudad y no permite avanzar si no se ha
+llenado ese campo"*.
+
+Dos arreglos en el mismo sheet:
+
+- **Tocar el calendario cierra el teclado.** Antes el campo de ciudad (con
+  autofocus) dejaba el teclado abierto, el sheet quedaba a media altura y
+  elegías fechas a ciegas mientras la ciudad se perdía en el scroll.
+- **El botón muerto ahora explica y lleva.** Con fechas puestas pero sin
+  ciudad, "añadir a mi ruta" se quedaba deshabilitado sin decir por qué.
+  Ahora avisa "solo falta la ciudad" y al tocarlo te regresa al campo y lo
+  enfoca.
+
+## [0.2.249.1] - 2026-08-17
+
+### Fixed — "así te queda" ya enseña el look completo, pies incluidos
+
+Alberto (feedback de UX, probando el flujo completo): *"al entrar a la pantalla
+de 'así te queda' se está cortando los pies de la imagen y no hay forma de
+hacer zoom"*.
+
+Tenía razón dos veces:
+
+- **Las dos pantallas de ampliar** (la lupa del detalle y el "ampliar" del
+  try-on inmersivo) usaban `object-cover` anclado a la cara — los zapatos
+  morían fuera del marco. Para una app cuya promesa es "así te queda el look",
+  cortar los zapatos es cortar el look. Ahora la foto va **completa**
+  (`object-contain`) sobre la misma foto blurreada de fondo — el patrón que el
+  try-on de desktop ya tenía validado.
+- **El hint "pellizca para acercar" mentía**: el zoom de la PWA está apagado
+  a propósito desde el fix del zoom accidental (#14), así que ese pellizco
+  nunca funcionó. El hint ya no promete lo que la app no hace.
+
 ## [0.2.249.0] - 2026-08-17
 
 ### Fixed — la ciudad del wizard ya se autocompleta, como en el viaje
