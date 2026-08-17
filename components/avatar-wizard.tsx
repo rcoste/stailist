@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { ImageCrop } from "@/components/image-crop";
+import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { toUsableImage } from "@/lib/image-file";
 import { comprimir } from "@/lib/image-compress";
 import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
@@ -48,6 +49,17 @@ const AJUSTES_BASE = [
   "piel más oscura",
 ];
 const AJUSTES_HOMBRE = ["sin barba", "más barba"];
+
+// Guardar el avatar NO es instantáneo: puede esperar el character sheet en
+// vuelo (hasta 45s) + 3 subidas + 2 server actions. Antes ese tramo era un
+// botón que decía "Guardando…" y nada más — 15s de pantalla muerta que se
+// leían como cuelgue (feedback de Alberto). GeneratingScreen es el patrón de
+// la casa para esperas largas, con su aviso de "quédate en la app" a los 8s.
+const SAVE_PHRASES: GenPhrase[] = [
+  { a: "guardando tu ", k: "avatar", b: "…" },
+  { a: "afinando sus ", k: "vistas", b: "…" },
+  { a: "dejando todo ", k: "listo", b: "…" },
+];
 
 function blobToB64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -457,6 +469,9 @@ export function AvatarWizard({
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
+      {/* La espera de guardar (sheet en vuelo + subidas + server actions) tapa
+          la pantalla con el patrón de generación de la casa — ver SAVE_PHRASES. */}
+      {saving ? <GeneratingScreen phrases={SAVE_PHRASES} /> : null}
       {/* Header único (back + progreso + "paso N de 3") en las cuatro pantallas
           reales. El back navega al paso anterior; en la primera, sale del wizard.
           En "generando"/"error" (transitorias) no va. */}
