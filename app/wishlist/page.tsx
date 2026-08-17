@@ -58,7 +58,7 @@ export default async function WishlistPage() {
   const { data: itemRows } = await supabase
     .from("items")
     .select(
-      "id, source, photo_path, render_status, render_path, attrs, archetypes(name, image_path)"
+      "id, source, photo_path, render_status, render_path, attrs, archetypes(name, image_path, category)"
     )
     .eq("user_id", profile.id)
     .is("deleted_at", null);
@@ -77,12 +77,14 @@ export default async function WishlistPage() {
     });
   }
   const closet: ClosetPick[] = (itemRows ?? []).map((r) => {
-    const arch = r.archetypes as { name?: string } | null;
-    const attrs = (r.attrs ?? {}) as { nombre?: string };
+    const arch = r.archetypes as { name?: string; category?: string } | null;
+    const attrs = (r.attrs ?? {}) as { nombre?: string; categoria?: string };
     return {
       id: r.id as string,
       nombre: arch?.name ?? attrs.nombre ?? "Prenda",
       image: itemImageUrlSync(r as ItemImageRow, (p) => itemSigned.get(p)),
+      // Mismo fallback que el clóset: lo editado (attrs) manda sobre el arquetipo.
+      categoria: attrs.categoria ?? arch?.category ?? null,
     };
   });
 

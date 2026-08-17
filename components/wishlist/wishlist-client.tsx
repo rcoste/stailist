@@ -27,7 +27,13 @@ export type WishlistItem = {
   puedeAlCloset?: boolean;
 };
 
-export type ClosetPick = { id: string; nombre: string; image: string | null };
+export type ClosetPick = {
+  id: string;
+  nombre: string;
+  image: string | null;
+  /** Para que el probador agrupe por categoría (vocabulario de prenda-campos). */
+  categoria?: string | null;
+};
 
 // Comprime a 1280px JPEG antes de mandarla al análisis (mismo tamaño que usa el
 // import del clóset: suficiente para que la IA lea la tela, y no revienta el
