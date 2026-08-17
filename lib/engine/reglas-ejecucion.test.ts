@@ -1102,3 +1102,67 @@ describe("funeral — el esmoquin que Roberto llamó 'terrible'", () => {
     expect(v).not.toContain("funeral-corbata-color");
   });
 });
+
+describe("lluvia: el escotado pierde contra el que cubre el tobillo", () => {
+  const bota = (n: string, hex: string, extra = {}) =>
+    p(n, hex, { cubre_tobillo: true, material: "piel", ...extra });
+  const bajo = (n: string, hex: string, extra = {}) =>
+    p(n, hex, { cubre_tobillo: false, material: "piel", ...extra });
+
+  const conLluvia = (look: EngineItem[], closet: EngineItem[]) =>
+    revisarEjecucion(look, { lluvia: true, closet, gender: "hombre" }).map((x) => x.regla);
+
+  // El caso real: tres veces marcó "calzado no ideal para lluvia" sobre unos
+  // tenis, teniendo botines Chelsea en el clóset.
+  it("unos tenis pierden contra los botines Chelsea que ya tiene", () => {
+    const tenis = bajo("Tenis de piel negros", "#1A1A1A", { formalidad: "casual" });
+    const chelsea = bota("Botines Chelsea negros", "#1A1A1A", { formalidad: "formal-casual" });
+    expect(conLluvia([tenis], [tenis, chelsea])).toContain("lluvia-mejor-calzado");
+  });
+
+  // EL GUARDIA QUE SALVÓ LA REGLA. Sin él, la primera versión hacía reprobar
+  // todos los zapatos de vestir con lluvia — se cazó simulando contra el clóset
+  // real antes de escribirla.
+  it("un derby NO pierde contra una bota de menor formalidad", () => {
+    const derby = bajo("Zapatos derby negros", "#141414", { formalidad: "formal" });
+    const chelsea = bota("Botines Chelsea negros", "#1A1A1A", { formalidad: "formal-casual" });
+    const botas = bota("Botas negras", "#141414", { formalidad: "casual" });
+    expect(conLluvia([derby], [derby, chelsea, botas])).not.toContain("lluvia-mejor-calzado");
+  });
+
+  it("sin bota en el clóset no se marca nada: es carencia, no fallo", () => {
+    const tenis = bajo("Tenis blancos", "#F5F5F5", { formalidad: "casual" });
+    expect(conLluvia([tenis], [tenis])).not.toContain("lluvia-mejor-calzado");
+  });
+
+  // La alternativa también tiene que aguantar el agua: cambiar unos tenis por
+  // unos botines de gamuza sería "reparar" hacia atrás.
+  it("una bota de gamuza no cuenta como alternativa", () => {
+    const tenis = bajo("Tenis de piel negros", "#1A1A1A", { formalidad: "casual" });
+    const gamuza = bota("Botines Chelsea de gamuza", "#6B5844", {
+      formalidad: "formal-casual",
+      material: "gamuza",
+    });
+    expect(conLluvia([tenis], [tenis, gamuza])).not.toContain("lluvia-mejor-calzado");
+  });
+
+  it("si el look YA trae bota, no se queja", () => {
+    const chelsea = bota("Botines Chelsea negros", "#1A1A1A", { formalidad: "formal-casual" });
+    expect(conLluvia([chelsea], [chelsea])).not.toContain("lluvia-mejor-calzado");
+  });
+
+  // Sin el dato no se inventa el error: 900+ prendas se guardaron antes de que
+  // existiera `cubre_tobillo`.
+  it("sin el dato de tobillo no dispara", () => {
+    const sinDato = p("Tenis viejos", "#333333", { material: "piel", formalidad: "casual" });
+    const chelsea = bota("Botines Chelsea negros", "#1A1A1A", { formalidad: "formal-casual" });
+    expect(conLluvia([sinDato], [sinDato, chelsea])).not.toContain("lluvia-mejor-calzado");
+  });
+
+  it("sin lluvia la regla no existe", () => {
+    const tenis = bajo("Tenis de piel negros", "#1A1A1A", { formalidad: "casual" });
+    const chelsea = bota("Botines Chelsea negros", "#1A1A1A", { formalidad: "formal-casual" });
+    const v = revisarEjecucion([tenis], { closet: [tenis, chelsea], gender: "hombre" });
+    expect(v.map((x) => x.regla)).not.toContain("lluvia-mejor-calzado");
+  });
+});

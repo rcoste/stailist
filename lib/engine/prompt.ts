@@ -369,6 +369,16 @@ export type EngineItem = {
      * al motor. Opcional: las 953 prendas guardadas antes de esto no lo tienen.
      */
     subtipo?: string;
+    /**
+     * ¿La caña llega al tobillo? (bota, botín, Chelsea = sí).
+     *
+     * Lo lee la visión (scripts/leer-suela.ts) y hoy sólo lo usa la regla de
+     * lluvia. Es el mecanismo físico que describió Roberto — el agua entra por
+     * ARRIBA, no por el material — y por eso reemplaza a la lista fija de tres
+     * formas que había a mano. Opcional: sin el dato la regla no dispara, que
+     * es el default correcto.
+     */
+    cubre_tobillo?: boolean;
     material?: string; // tela aparente ("lana", "lino"…) — clima y combinación
     patron?: string; // liso/rayas/cuadros/… — evita dos estampados que pelean
     color_secundario?: string; // segundo color si es bicolor/estampada
