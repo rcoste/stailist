@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { ImageCrop } from "@/components/image-crop";
+import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen";
 import { toUsableImage } from "@/lib/image-file";
 import { comprimir } from "@/lib/image-compress";
 import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
@@ -48,6 +49,17 @@ const AJUSTES_BASE = [
   "piel más oscura",
 ];
 const AJUSTES_HOMBRE = ["sin barba", "más barba"];
+
+// Guardar el avatar NO es instantáneo: puede esperar el character sheet en
+// vuelo (hasta 45s) + 3 subidas + 2 server actions. Antes ese tramo era un
+// botón que decía "Guardando…" y nada más — 15s de pantalla muerta que se
+// leían como cuelgue (feedback de Alberto). GeneratingScreen es el patrón de
+// la casa para esperas largas, con su aviso de "quédate en la app" a los 8s.
+const SAVE_PHRASES: GenPhrase[] = [
+  { a: "guardando tu ", k: "avatar", b: "…" },
+  { a: "afinando sus ", k: "vistas", b: "…" },
+  { a: "dejando todo ", k: "listo", b: "…" },
+];
 
 function blobToB64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -146,6 +158,16 @@ export function AvatarWizard({
   // Foto de cara en recorte (dataURL). Reusa ImageCrop (mismo del carrete de
   // prendas): sirve para aislarte si la foto trae más de una persona.
   const [cropFaceSrc, setCropFaceSrc] = useState<string | null>(null);
+  // La foto de cara ORIGINAL, tal cual salió de la cámara/carrete. "ajustar"
+  // recorta SIEMPRE sobre ella, nunca sobre el recorte anterior: recortando el
+  // recorte cada pasada acumulaba zoom y hacía imposible abrir el encuadre —
+  // los pixeles de afuera ya se habían tirado (bug cazado por Alberto: "el
+  // preview se acerca una y otra vez aunque el ajuste haya sido hacia afuera").
+  const faceOriginalRef = useRef<string | null>(null);
+  function setFaceOriginal(file: File) {
+    if (faceOriginalRef.current) URL.revokeObjectURL(faceOriginalRef.current);
+    faceOriginalRef.current = URL.createObjectURL(file);
+  }
   // Input ÚNICO de la foto de cara: lo dispara el recuadro (que ahora es el
   // control) y el enlace de "cambiar la foto".
   const faceInputRef = useRef<HTMLInputElement>(null);
@@ -207,6 +229,7 @@ export function AvatarWizard({
   useEffect(() => {
     return () => {
       Object.values(previews).forEach((u) => u && URL.revokeObjectURL(u));
+      if (faceOriginalRef.current) URL.revokeObjectURL(faceOriginalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -457,6 +480,9 @@ export function AvatarWizard({
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
+      {/* La espera de guardar (sheet en vuelo + subidas + server actions) tapa
+          la pantalla con el patrón de generación de la casa — ver SAVE_PHRASES. */}
+      {saving ? <GeneratingScreen phrases={SAVE_PHRASES} /> : null}
       {/* Header único (back + progreso + "paso N de 3") en las cuatro pantallas
           reales. El back navega al paso anterior; en la primera, sale del wizard.
           En "generando"/"error" (transitorias) no va. */}
@@ -506,14 +532,18 @@ export function AvatarWizard({
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null;
               if (faceInputRef.current) faceInputRef.current.value = "";
-              if (f) setSlot("face", f);
+              if (f) {
+                // Foto nueva = nuevo original para el recorte.
+                setFaceOriginal(f);
+                setSlot("face", f);
+              }
             }}
           />
           <button
             type="button"
             onClick={() =>
               previews.face
-                ? setCropFaceSrc(previews.face)
+                ? setCropFaceSrc(faceOriginalRef.current ?? previews.face)
                 : faceInputRef.current?.click()
             }
             aria-label={previews.face ? "Ajustar tu foto" : "Agregar tu foto"}

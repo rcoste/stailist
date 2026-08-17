@@ -270,12 +270,24 @@ function Lupa({
           contraste a la barra de estado cuando la foto sangra hasta el borde
           superior — en el teléfono real la foto NO llega ahí, y el velo solo se
           veía como una mancha gris (feedback de Roberto). */}
+      {/* La foto va COMPLETA (object-contain), nunca en cover: el cover anclaba
+          al 15% superior y cortaba los pies — y como el zoom de la PWA está
+          apagado (userScalable: false, el fix del zoom accidental), no había
+          forma de recuperarlos (feedback de Alberto). El fondo es la misma foto
+          blurreada, el patrón ya validado del try-on de desktop (f3). */}
       <div className="absolute inset-x-0 top-0 h-[64%] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover blur-3xl brightness-50"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
           alt={`tú con ${nombre}`}
-          className="h-full w-full object-cover object-[50%_15%]"
+          className="relative h-full w-full object-contain"
         />
       </div>
 
