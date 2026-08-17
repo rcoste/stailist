@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.8] - 2026-08-17
+
+### Fixed — segunda tanda de botones que se escondían bajo el scroll
+
+La primera tanda (v0.2.249.4) cubrió espejo, viaje y cápsula. Esta cierra lo
+que la auditoría dejó radareado:
+
+- **Wizard de avatar** (los 4 pasos): "empezar", "sí, soy yo — sigamos",
+  "siguiente / generar mi avatar" y "quedó, usar este" van sticky al fondo —
+  la retícula de siluetas y el retrato a ancho completo los empujaban fuera.
+- **Onboarding**: "seguir" de edad (se perdía con el bloque de permiso
+  parental abierto), "encontrar mis colores" de colorimetría, y el CTA del
+  reveal de tu estilo en los gustos.
+- **Silueta**: "Cambiar / Listo" sticky sobre la tab bar, como el resto.
+
+Con esto, todos los flujos móviles de la app tienen su botón de avance
+siempre a la vista.
+
 ## [0.2.249.7] - 2026-08-17
 
 ### Changed — el probador agrupa tus prendas por categoría
