@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.2] - 2026-08-17
+
+### Fixed — el sheet de "¿a dónde vas?" ya no te deja atorado con el teclado
+
+Alberto: *"el teclado sube la pantalla para seleccionar en el calendario pero
+se pierde el primer campo que es la ciudad y no permite avanzar si no se ha
+llenado ese campo"*.
+
+Dos arreglos en el mismo sheet:
+
+- **Tocar el calendario cierra el teclado.** Antes el campo de ciudad (con
+  autofocus) dejaba el teclado abierto, el sheet quedaba a media altura y
+  elegías fechas a ciegas mientras la ciudad se perdía en el scroll.
+- **El botón muerto ahora explica y lleva.** Con fechas puestas pero sin
+  ciudad, "añadir a mi ruta" se quedaba deshabilitado sin decir por qué.
+  Ahora avisa "solo falta la ciudad" y al tocarlo te regresa al campo y lo
+  enfoca.
+
 ## [0.2.249.1] - 2026-08-17
 
 ### Fixed — "así te queda" ya enseña el look completo, pies incluidos
