@@ -20,7 +20,7 @@ import {
   formalidadDeEvento,
   reconocerPlanEscrito,
 } from "@/lib/eventos";
-import { pasosDelWizard } from "@/lib/wizard-pasos";
+import { pasosDelWizard, momentoSugerido } from "@/lib/wizard-pasos";
 import { MAX_ANCLAS, motivoBloqueo } from "@/lib/anclas";
 // Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
 // del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
@@ -310,7 +310,18 @@ export function LookRequest({
     hasDefaultObj ? normObjective : null
   );
   const [openText, setOpenText] = useState("");
-  const [momento, setMomento] = useState<"dia" | "noche">("dia");
+  // EL DEFAULT SALE DEL RELOJ, no de "dia" a secas. Medido: 117 de 231 looks
+  // (51%) se generaron entre las 7pm y las 5am, y la opción venía mal marcada
+  // en todos. Es el peor tipo de error de default — nadie revisa lo que ya
+  // viene palomeado, así que se pedía un look de noche y salía uno de día.
+  const [momento, setMomento] = useState<"dia" | "noche">(() =>
+    momentoSugerido(new Date())
+  );
+  // ¿Lo tocó a mano? Sólo entonces deja de re-sugerirse al cambiar de día: a
+  // las 9pm eligiendo "mañana", el reloj de HOY ya no dice nada útil, pero si
+  // la persona ya eligió noche a propósito, cambiarle la opción bajo los pies
+  // sería peor que el default equivocado.
+  const [momentoTocado, setMomentoTocado] = useState(false);
   // SIN clima por defecto, y es importante que no lo haya.
   //
   // Venía en "Templado" preseleccionado, con su borde de tinta y su bolita
@@ -819,10 +830,17 @@ export function LookRequest({
             ) : paso === "cuando" ? (
               <StepCuando
                 fecha={fecha}
-                onFecha={setFecha}
+                onFecha={(f) => {
+                  setFecha(f);
+                  // Re-sugiere sólo si no lo eligió a mano (ver momentoTocado).
+                  if (!momentoTocado) setMomento(momentoSugerido(new Date(), f === null));
+                }}
                 sinFecha={skip}
                 momento={momento}
-                onMomento={setMomento}
+                onMomento={(m) => {
+                  setMomentoTocado(true);
+                  setMomento(m);
+                }}
                 donde={donde}
                 onAqui={elegirAqui}
                 onOtra={() => setDonde("otra")}

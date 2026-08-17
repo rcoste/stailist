@@ -19,6 +19,7 @@ import { DraftCard, type DraftLeida } from "@/components/prenda-draft-card";
 import type { PrendaDetectada } from "@/app/api/analizar-prendas/route";
 import type { LecturaEspejo } from "@/lib/espejo";
 import { REGISTROS, esDeHoy, registroSugerido, type Registro } from "@/lib/registro";
+import { momentoSugerido } from "@/lib/wizard-pasos";
 
 /** Envuelve una capa a pantalla completa y la cuelga del `body`.
  *
@@ -488,7 +489,6 @@ export function EspejoFlow({
       // el consejo aparece, la lista ya está.
       //
       // Y son independientes: si el reconocimiento falla, el consejo sale igual.
-      const hora = new Date().getHours();
       const reconocer = fetch("/api/espejo/prendas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -504,7 +504,7 @@ export function EspejoFlow({
           image: dataUrl,
           photoPath: ruta,
           ...(donde ?? {}),
-          momento: hora >= 19 || hora < 6 ? "noche" : "dia",
+          momento: momentoSugerido(new Date()),
           registro: reg,
         }),
       });
