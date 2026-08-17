@@ -944,7 +944,30 @@ export function EspejoFlow({
   // que se lea la ropa de otro EN SILENCIO.
   if (state.kind === "acompanada") {
     return (
-      <Pantalla>
+      <Pantalla
+        // Las dos salidas del paso van en el pie, fuera del scroll: con la foto
+        // a 46dvh, en teléfonos cortos quedaban enterradas (misma clase de bug
+        // que el "terminar aquí" de las fichas — feedback de Alberto).
+        pie={
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setRecortando(true)}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent"
+            >
+              <Icon name="camara" size={16} />
+              recortar
+            </button>
+            <button
+              type="button"
+              onClick={() => mirar(state.preview, state.blob, registro)}
+              className="min-h-11 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              salgo solo yo — sigue así
+            </button>
+          </div>
+        }
+      >
           <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <h2 className="text-[22px] font-semibold leading-tight text-ink">
@@ -961,23 +984,6 @@ export function EspejoFlow({
             <div className="overflow-hidden rounded-xl border border-warning bg-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={state.preview} alt="" className="max-h-[46dvh] w-full object-contain" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setRecortando(true)}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-sm bg-accent text-sm font-semibold text-on-accent"
-              >
-                <Icon name="camara" size={16} />
-                recortar
-              </button>
-              <button
-                type="button"
-                onClick={() => mirar(state.preview, state.blob, registro)}
-                className="min-h-11 rounded-sm border border-line text-[13px] font-medium text-muted transition-colors hover:border-accent hover:text-accent"
-              >
-                salgo solo yo — sigue así
-              </button>
             </div>
           </div>
           {recortando ? (
@@ -1039,8 +1045,41 @@ export function EspejoFlow({
       pasoWizard === 2 ? "¿son tuyas?" : pasoWizard === 3 ? "sus fichas" : "te veo";
     // En el paso 1 el veredicto ES la pantalla; a partir del 2 estorba.
     const verVeredicto = pasoWizard === 1;
+    // LOS CTAs DE SALIDA/AVANCE VAN EN EL `pie` DE LA PANTALLA, fuera del
+    // scroll. Vivían al final del contenido y en el paso de las fichas el
+    // "terminar aquí" quedaba enterrado bajo el scroll del teléfono (feedback
+    // de Alberto). La ranura `pie` existía desde el rediseño y nadie la usaba.
+    // La jerarquía se conserva: "vi N prendas" manda en el paso 1; "gracias"
+    // es sólido sólo cuando es la única acción; fuera de ahí, salida discreta.
+    const pieEspejo = lista ? (
+      <div className="flex flex-col gap-2">
+        {verVeredicto && sumar.paso === "elegir" ? (
+          <button
+            type="button"
+            onClick={() => setAvanzado(true)}
+            className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          >
+            vi {sumar.prendas.length}{" "}
+            {sumar.prendas.length === 1 ? "prenda que no tienes" : "prendas que no tienes"}
+            <Icon name="flecha" size={17} />
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={cerrar}
+          className={
+            verVeredicto && sumar.paso !== "elegir"
+              ? "min-h-12 w-full rounded-sm bg-accent text-sm font-semibold text-on-accent"
+              : "min-h-11 w-full text-sm font-semibold text-muted transition-colors hover:text-ink"
+          }
+        >
+          {verVeredicto && sumar.paso !== "elegir" ? "gracias" : "terminar aquí"}
+        </button>
+      </div>
+    ) : undefined;
     return (
       <Pantalla
+        pie={pieEspejo}
         sangre={
           // El hero SOLO en el veredicto: en los pasos de prendas la foto ya no
           // es el tema, y ocupando media pantalla empujaba el trabajo fuera.
@@ -1170,18 +1209,6 @@ export function EspejoFlow({
                     entero de prendas vivía aquí debajo y era la mitad de la
                     sensación de "largo" — el veredicto y el trabajo de
                     catalogar, apilados. */}
-                {verVeredicto && sumar.paso === "elegir" ? (
-                  <button
-                    type="button"
-                    onClick={() => setAvanzado(true)}
-                    className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-                  >
-                    vi {sumar.prendas.length}{" "}
-                    {sumar.prendas.length === 1 ? "prenda que no tienes" : "prendas que no tienes"}
-                    <Icon name="flecha" size={17} />
-                  </button>
-                ) : null}
-
                 <div
                   className={
                     verVeredicto && sumar.paso === "elegir" ? "hidden" : verVeredicto ? "border-t border-line pt-3" : ""
@@ -1452,23 +1479,6 @@ export function EspejoFlow({
                     pantalla ENTERA es sumar prendas, y el botón más fuerte
                     invitaba a abandonar el paso que estás haciendo.
                     Fuera del paso 1 pasa a salida discreta. */}
-                {/* UN SOLO BOTÓN FUERTE POR PANTALLA. "gracias" es sólido sólo
-                    cuando es la ÚNICA acción — o sea, en el veredicto sin
-                    prendas que ofrecer: ahí cerrar es a lo que viniste. En
-                    cuanto aparece "vi N prendas que no tienes", dos negros
-                    apilados dejan de decir cuál es el camino (cazado en QA, con
-                    la pantalla delante). */}
-                <button
-                  type="button"
-                  onClick={cerrar}
-                  className={
-                    verVeredicto && sumar.paso !== "elegir"
-                      ? "min-h-12 rounded-sm bg-accent text-sm font-semibold text-on-accent"
-                      : "min-h-11 text-sm font-semibold text-muted transition-colors hover:text-ink"
-                  }
-                >
-                  {verVeredicto && sumar.paso !== "elegir" ? "gracias" : "terminar aquí"}
-                </button>
                 <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
               </div>
             ) : (
