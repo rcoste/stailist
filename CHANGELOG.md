@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.249.3] - 2026-08-17
+
+### Fixed — "ajustar" la foto del avatar ya no acumula zoom
+
+Alberto: *"si doy click a ajustar y posiciono la cuadrícula, al guardar y
+volver al paso anterior, el preview de la imagen que ajusté se acerca una y
+otra vez aunque el ajuste haya sido hacia afuera"*.
+
+El diagnóstico exacto: cada "ajustar" abría el recortador sobre la imagen **ya
+recortada** de la vez anterior — recortar el recorte solo puede acercar, nunca
+abrir, porque los pixeles de afuera ya se habían tirado. Ahora el wizard
+guarda la foto original aparte y "ajustar" siempre recorta sobre ella: puedes
+abrir y cerrar el encuadre las veces que quieras sin perder nada.
+
 ## [0.2.249.2] - 2026-08-17
 
 ### Fixed — el sheet de "¿a dónde vas?" ya no te deja atorado con el teclado
