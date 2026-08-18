@@ -2,6 +2,61 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.256.0] - 2026-08-18
+
+### Fixed — el motor era ciego a una de cada cinco prendas de mujer
+
+Salió tirando del hilo de un hallazgo del juez stylist. Medido sobre las **842
+prendas reales** de la base:
+
+| Clóset | Prendas que el vocabulario reconoce |
+|---|---|
+| hombre | **306/306 = 100%** |
+| mujer | **437/536 = 81.5%** |
+
+`lib/engine/vocabulario.ts` nació masculino —camisa, polo, chino, mocasín— y
+nunca se le agregó el guardarropa femenino. Faltaban categorías **enteras**:
+blusa, top, crop top, body, corsé, tacón, flats, bailarinas, Mary Janes, mules,
+arracadas, brazalete, gargantilla, clutch.
+
+**Por qué no es cosmético.** `zona-duplicada` y otras reglas preguntan por
+ZONA (`tipoDePrenda(...)?.zona`). Cuando devuelve `null`, la prenda **no existe**
+para esas reglas. Demostrado con el mismo error de estilismo en dos clósets:
+
+```
+dos calzados · hombre  →  ✅ la caza      dos de torso · hombre  →  ✅ la caza
+dos calzados · mujer   →  ❌ NO la caza   dos de torso · mujer   →  ❌ NO la caza
+```
+
+Dos pares de tacones en un look pasaban sin marcarse. Dos blusas también.
+
+**Después del arreglo: mujer 535/536 = 99.8%.** Lo único que queda sin
+reconocer es "Funda amarilla de teléfono", que no es ropa — es una funda de
+celular dada de alta como prenda.
+
+### Added — el candado, con nombres reales de la base
+
+`lib/engine/vocabulario-genero.test.ts` prueba 24 nombres tal cual los escribió
+la visión al leer las fotos, verifica que cada uno caiga en su zona correcta, y
+—lo que de verdad importa— que **el mismo error dispare la misma regla en los
+dos guardarropas**.
+
+También blinda las trampas de orden que el archivo ya resolvía: que "Zapatilla
+deportiva" no la reclame el tacón, que "Camisa oxford" no la reclame el zapato
+oxford, que "Vestido camisero" no la reclame la camisa, y que "Topsider" no se
+lea como un top.
+
+Y una decisión de clasificación: el **top deportivo** entra como `no-calle`,
+igual que el short de baño. Contarlo como torso haría creer que hay con qué
+armar un look de calle.
+
+### Nota sobre el sesgo
+
+Es la **quinta vez** que este proyecto tropieza con un default masculino en las
+reglas de vestir. Las cuatro anteriores se cazaron leyendo código; ésta se cazó
+**midiendo contra clósets reales**, que es la única forma que ha funcionado —
+y por eso el candado prueba nombres de la base y no ejemplos inventados.
+
 ## [0.2.255.0] - 2026-08-18
 
 ### Fixed — el mismo color te favorecía y te apagaba al mismo tiempo
