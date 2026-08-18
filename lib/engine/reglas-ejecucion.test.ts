@@ -1283,3 +1283,89 @@ describe("colores-que-no-se-leen: el cableado", () => {
     expect(v.map((x) => x.regla)).not.toContain("colores-que-no-se-leen");
   });
 });
+
+// La regla espejo de zona-duplicada: que no FALTE una zona.
+//
+// El motor validaba que el look trajera ≥2 prendas reales y nada más, así que
+// "Suéter gris + Camisa blanca" —sin pantalón— pasaba entero. Sobre los 153
+// looks reales de la base marca 14 (9.2%) con CERO falsos positivos.
+describe("zona-sin-cubrir: el look tiene que vestir a alguien", () => {
+  const closet = [
+    p("Camisa blanca", "#F2F0EB"),
+    p("Suéter gris", "#8A8A8A"),
+    p("Pantalón de vestir gris", "#555555"),
+    p("Mocasín negro", "#1A1A1A"),
+    p("Traje de baño negro", "#1A1A1A"),
+    p("Sandalias negras", "#1A1A1A"),
+  ];
+  const reglas = (look: EngineItem[], ctx = { closet }) =>
+    revisarEjecucion(look, ctx).map((x) => x.regla);
+
+  it("un look sin nada que cubra las piernas se marca", () => {
+    // Los tres casos reales de la base tienen esta forma exacta.
+    expect(reglas([p("Suéter gris", "#8A8A8A"), p("Camisa blanca", "#F2F0EB")])).toContain(
+      "zona-sin-cubrir"
+    );
+  });
+
+  it("un look sin nada de torso también", () => {
+    expect(
+      reglas([p("Chaqueta de piel", "#2A2A2A"), p("Botas negras", "#1A1A1A")])
+    ).toContain("zona-sin-cubrir");
+  });
+
+  it("el vestido resuelve torso Y pierna: no se marca", () => {
+    expect(
+      reglas([p("Vestido negro", "#1A1A1A"), p("Tacón nude", "#D9BFA8")])
+    ).not.toContain("zona-sin-cubrir");
+  });
+
+  it("el traje trae su pantalón: no se marca", () => {
+    expect(
+      reglas([p("Traje marino", "#1F2A44"), p("Camisa blanca", "#F2F0EB")])
+    ).not.toContain("zona-sin-cubrir");
+  });
+
+  it("en la alberca el traje de baño ES la prenda de abajo", () => {
+    // Los dos looks de viaje de la base están bien y no se pueden marcar.
+    expect(
+      reglas([
+        p("Sandalias negras", "#1A1A1A"),
+        p("Traje de baño negro", "#1A1A1A"),
+        p("Camisa azul claro", "#A8C4E0"),
+      ])
+    ).not.toContain("zona-sin-cubrir");
+  });
+
+  it("CARENCIA, no fallo: sin la prenda en el clóset no acusa", () => {
+    // Misma distinción que la regla del frío. Mandar al juez a reparar lo que
+    // no se puede es peor que callar.
+    const soloTorso = [p("Camisa blanca", "#F2F0EB"), p("Suéter gris", "#8A8A8A")];
+    expect(reglas(soloTorso, { closet: soloTorso })).not.toContain("zona-sin-cubrir");
+  });
+
+  it("el CALZADO no se marca, y eso se midió", () => {
+    // Fue la única zona con falso positivo: "Lino y campo" no lleva calzado en
+    // la fila y tiene un evento `worn` — alguien SE LO PUSO. El calzado es la
+    // zona que la gente rellena sola.
+    expect(
+      reglas([p("Camisa blanca", "#F2F0EB"), p("Pantalón de vestir gris", "#555555")])
+    ).not.toContain("zona-sin-cubrir");
+  });
+
+  it("si una prenda no se reconoce, no juzga", () => {
+    // Podría estar cubriendo la zona. Callar es lo que separa esta regla de una
+    // que marque de más.
+    expect(
+      reglas([p("Camisa blanca", "#F2F0EB"), p("Chunchurria espacial", "#333333")])
+    ).not.toContain("zona-sin-cubrir");
+  });
+
+  it('"Pantalón técnico" cuenta como pierna, no como abrigo', () => {
+    // Caía en la regla de prendas técnicas (capa) y su look aparecía sin nada
+    // que cubriera las piernas. "Técnico" es adjetivo; el sustantivo manda.
+    expect(
+      reglas([p("Camiseta blanca", "#F2F0EB"), p("Pantalón técnico", "#333333")])
+    ).not.toContain("zona-sin-cubrir");
+  });
+});

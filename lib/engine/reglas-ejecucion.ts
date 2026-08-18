@@ -36,7 +36,7 @@
 
 import type { EngineItem } from "./prompt";
 import type { Clima } from "./recetario";
-import { tipoDePrenda } from "./vocabulario";
+import { tipoDePrenda, type Zona } from "./vocabulario";
 import { mismoColorAOjo, oklch } from "./color-perceptual";
 import { medirCoherencia, rompeCoherencia } from "./coherencia-cromatica";
 
@@ -823,6 +823,68 @@ export function revisarEjecucion(
     porTipo.set(t.tipo, [...(porTipo.get(t.tipo) ?? []), i]);
   }
   for (const [, cuales] of porTipo) dup(cuales, "prendas del mismo tipo");
+
+  // 8b. Y EL ESPEJO DE LA ANTERIOR: QUE NO FALTE UNA ZONA.
+  //
+  //     La 8 caza que SOBRE una prenda en una zona; nadie cazaba que FALTE. El
+  //     motor valida que el look traiga ≥2 prendas reales y nada más, así que
+  //     "Suéter gris + Camisa blanca" —sin pantalón y sin zapatos— pasaba
+  //     entero. Medido sobre los 153 looks reales de la base: 3 sin nada que
+  //     cubra las piernas y 6 sin calzado. Eso es un look roto llegando a una
+  //     persona que preguntó qué ponerse.
+  //
+  //     FALLO CONTRA CARENCIA, la distinción que este archivo ya usa: sólo se
+  //     marca si el clóset TIENE con qué cubrir la zona. Quien no tiene un solo
+  //     par de zapatos dados de alta no está ante un error reparable, y mandar
+  //     al juez a arreglar lo que no se puede es peor que callar.
+  //
+  //     EL TRAJE DE BAÑO CUENTA COMO ABAJO. Un look de alberca es sandalias +
+  //     traje de baño + camisa, y ahí la prenda de abajo ES el traje de baño
+  //     aunque su zona sea "no-calle". Sin esta excepción la regla marcaba los
+  //     dos looks de viaje de la base, que están bien.
+  //
+  //     Y SI ALGO NO SE RECONOCE, NO SE JUZGA: una prenda que el vocabulario no
+  //     sabe leer podría estar cubriendo la zona. Callar ahí es lo que separa
+  //     esta regla de una que marque de más. (Hoy el vocabulario reconoce el
+  //     99.8% del catálogo real, así que casi nunca aplica.)
+  //     EL CALZADO NO ENTRA, Y ESO SE MIDIÓ. La primera versión pedía también
+  //     zapatos y fue la única zona que produjo un falso positivo sobre los 153
+  //     looks reales: torso marcó 7 con 0 aprobados, pierna 13 con 0, y pie 7
+  //     con UNO — "Lino y campo" (camisa de lino + camisa de mezclilla + chinos
+  //     oliva), que no lleva calzado en la fila y tiene un evento `worn`: una
+  //     persona real SE LO PUSO. Obviamente con zapatos; la app no los nombró y
+  //     a ella no le estorbó.
+  //
+  //     La lectura de producto es que el calzado es la zona que la gente rellena
+  //     sola, y el pantalón no. Marcar el calzado mandaría al juez a reparar
+  //     looks que alguien ya se puso — el peor tipo de falso positivo que puede
+  //     tener este archivo.
+  const ZONAS_QUE_VISTEN: { zona: Zona; que: string; pide: string }[] = [
+    { zona: "torso", que: "nada de la cintura para arriba", pide: "una prenda de torso" },
+    { zona: "pierna", que: "nada que cubra las piernas", pide: "un pantalón, falda o short" },
+  ];
+  const tiposDe = (its: EngineItem[]) => its.map((i) => tipoDePrenda(nombre(i)));
+  const tiposLook = tiposDe(items);
+  const todoReconocido = tiposLook.every(Boolean);
+  const hayBano = tiposLook.some((t) => t?.zona === "no-calle" && t.tipo === "bano");
+  if (todoReconocido && items.length > 0) {
+    const cubiertas = new Set(tiposLook.flatMap((t) => t!.zonas));
+    for (const { zona, que, pide } of ZONAS_QUE_VISTEN) {
+      if (cubiertas.has(zona)) continue;
+      if (zona === "pierna" && hayBano) continue;
+      // Carencia, no fallo: sin clóset que consultar tampoco se acusa.
+      const enClosetHay = (ctx.closet ?? []).some((i) =>
+        tipoDePrenda(nombre(i))?.zonas.includes(zona)
+      );
+      if (!enClosetHay) continue;
+      v.push({
+        regla: "zona-sin-cubrir",
+        detalle: `El look sale ${que}: ${items
+          .map(nombre)
+          .join(", ")}. Añade ${pide} de su clóset, que sí lo tiene.`,
+      });
+    }
+  }
 
   // 9. EL SUÉTER PIDE ALGO DEBAJO. La observación más repetida de Roberto en
   //    todo el veredicto: SIETE comentarios de "falta t-shirt abajo", en los

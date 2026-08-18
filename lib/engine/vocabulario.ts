@@ -149,7 +149,16 @@ const REGLAS: [RegExp, string, Zona][] = [
   [/puffer|acolchad|plumas/, "puffer", "capa"],
   [/\bbomber\b/, "bomber", "capa"],
   [/(chamarra|chaqueta).*(mezclilla|denim)|chamarra denim/, "chamarra-mezclilla", "capa"],
-  [/parka|softshell|impermeable|rompevientos|t[eé]cnic|de montaña/, "tecnica", "capa"],
+  // "técnico" es un ADJETIVO, no un sustantivo: parka, softshell y rompevientos
+  // nombran la prenda, "técnico" solo describe la tela. Sin el guard, "Pantalón
+  // técnico" —que existe en la base— caía aquí y se leía como ABRIGO en vez de
+  // como prenda de pierna, con lo que su look aparecía sin nada que cubriera
+  // las piernas. Mismo tipo de trampa que resuelve el guard de "traje" arriba.
+  [
+    /parka|softshell|impermeable|rompevientos|(?<!pantal[oó]n |short |legging |jean )t[eé]cnic|de montaña/,
+    "tecnica",
+    "capa",
+  ],
   [/gabardina|trench/, "gabardina", "capa"],
   [/abrigo/, "abrigo", "capa"],
   [/chamarra|chaqueta|cazadora|varsity|de campo/, "chamarra", "capa"],
