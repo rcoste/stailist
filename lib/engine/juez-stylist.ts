@@ -35,7 +35,24 @@ import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
 // MIRA LAS FOTOS, como el juez visual y por lo mismo: el color real, la textura
 // y la proporción viven en la imagen y no en el nombre. NO el try-on, que lo
 // inventa un modelo de imagen que alucina.
-export const JUEZ_STYLIST_VERSION = "js1";
+// js1 → js2 (2026-08-18), tras la PRIMERA corrida real. Dos fallos medidos, no
+// supuestos:
+//
+//   1. ENCONTRÓ ALGO EN EL 100% DE LOS LOOKS (14/14 y 15/15). El prompt ya le
+//      decía que devolviera lista vacía si el look estaba bien resuelto y no lo
+//      hizo ni una vez. Un revisor que siempre encuentra algo no prioriza nada.
+//      El arreglo no es repetirle la instrucción más fuerte: es DARLE LA TASA
+//      BASE. Sobre los 62 looks que Roberto calificó a mano en los evales,
+//      aprobó 54 — el 87%. Un juez que marca el 100% no está viendo lo que ve
+//      la persona para la que trabaja.
+//
+//   2. REPITIÓ UN MITO QUE ESTA CASA YA DESMINTIÓ. Marcó en rojo "blazer marino
+//      con pantalón negro es un error de paleta". Esa regla se metió al prompt
+//      del motor en v5 y se REVIRTIÓ en v6 tras investigarla. Un juez que trae
+//      sabiduría convencional sin medir vale menos que no tener juez: manda a
+//      arreglar lo que está bien. Por eso ahora lleva la lista de lo que aquí
+//      YA se midió y resultó falso.
+export const JUEZ_STYLIST_VERSION = "js2";
 
 /** El vocabulario de defectos es el MISMO que Roberto usa al votar
  *  (DEFECTOS_MOTOR). Reusarlo es lo que hace que los hallazgos del juez y sus
@@ -84,8 +101,21 @@ Algo que un stylist bueno señalaría en voz alta. Cada hallazgo lleva:
 - gravedad: "rompe" si por eso solo no saldrías así; "resta" si lo empeora pero se sostiene; "detalle" si es afinar.
 - defecto: UNA etiqueta de esta lista cerrada: ${DEFECTOS_MOTOR.map((d) => `${d.clave} (${d.label})`).join(", ")}.
 
+LA VARA, Y ES LA PARTE QUE MÁS IMPORTA
+La persona para la que trabajas aprueba alrededor del 85% de los looks que ve. Eso es el dato, no una forma de hablar: de 62 looks calificados a mano, aprobó 54. Si tú marcas algo en todos, no estás viendo lo que ella ve — estás inventando trabajo.
+
+Así que la pregunta no es "¿qué le mejoraría?" sino "¿qué le diría a un colega EN VOZ ALTA?". A un look correcto no se le dice nada. La mayoría de los looks no tienen ningún hallazgo, y devolver la lista vacía es la respuesta correcta y frecuente.
+
+Y reserva "rompe" para lo que de verdad lo tira: saldrías a detener a la persona en la puerta. Un look que se sostiene aunque mejorable NO tiene un hallazgo que rompe.
+
 LO QUE NO ES UN HALLAZGO
-Gusto personal tuyo. Que no sea el look que TÚ habrías armado no lo hace un error. Tampoco inventes problemas para tener algo que decir: si el look está bien resuelto, devuelve la lista vacía. Un revisor que siempre encuentra tres cosas enseña a ignorarlo.
+Gusto personal tuyo. Que no sea el look que TÚ habrías armado no lo hace un error.
+
+Y ESTO EN PARTICULAR, que aquí YA SE MIDIÓ y resultó falso. No lo marques:
+- Marino con negro combinan, incluso en formal. Se probó como regla dura y se revirtió por mito.
+- Café o cuero marrón con gris y carbón es una combinación clásica y correcta.
+- Un neutro cerca de la cara (marino, gris, camel, blanco, caqui, negro) está bien y no apaga a nadie.
+- Vestir tonal —todo en una misma banda de color— es un recurso deliberado, no un descuido: ahí el contraste lo hace la textura.
 
 Y AL REVÉS, no seas barbero. Si algo está mal, dilo aunque el resto esté bien. "loQueFunciona" es UNA línea sobre la decisión que sí está tomada — si no hay ninguna, dilo también. Nada de superlativos genéricos ni de "así como está, sale".
 
