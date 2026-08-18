@@ -235,8 +235,12 @@ export default async function HoyPage({
       // v3 (handoff design_handoff_inicio): fuera el tour de tres acciones
       // ("hoy-casa") — el home nuevo se explica solo. UN spotlight a la acción
       // que nadie conoce y más trabaja: el fit check.
+      //
+      // "me aprendo tu clóset solito" murió (Roberto: "no se entiende"). La
+      // frase pedía que adivinaras el mecanismo; ésta dice el RESULTADO: las
+      // prendas de la foto acaban en tu clóset sin que las cargues tú.
       children:
-        "enséñame tu outfit de hoy — te digo cómo se ve y me aprendo tu clóset solito",
+        "mándame una foto de tu outfit: te doy mi opinión y guardo esas prendas en tu clóset — tú no cargas nada",
     });
   }
   if (lookInicial && !seen["fab-generar"]) {
