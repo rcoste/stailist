@@ -2,6 +2,48 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.258.0] - 2026-08-18
+
+### Fixed — los trajes del catálogo no eran del mismo tejido
+
+Cuando el motor te arma un traje, ahora el saco y el pantalón se ven de la misma
+tela. Antes no: seis de los nueve trajes de la biblioteca tenían las dos piezas
+en tonos distintos, y dos de ellos por tanto que se leía como un traje mal
+apareado — que es justo lo que la app promete evitar.
+
+Lo cazó Roberto a ojo mirando un look ("algo me dice que no van así"), y la
+medición le dio la razón, aunque no por donde él creía: **el emparejamiento
+estaba bien; las fotos eran las que no empataban.** Medido como la luminancia
+media del tejido descartando el fondo, contra los trajes sanos que miden Δ2:
+
+| Traje | Antes | Ahora |
+|---|---|---|
+| gris carbón | Δ26 | Δ4 |
+| azul marino | Δ26 | Δ8 |
+| smoking negro | Δ24 | Δ16 (la solapa de satín sube el promedio; validado a la vista) |
+| arena | Δ18 | Δ12 |
+| sastre negro de mujer | Δ15 | Δ2 |
+| azul claro | Δ13 | Δ10 |
+
+La causa no era el prompt: cada pieza se generaba en una llamada independiente a
+partir de una descripción de texto, y "charcoal grey wool" no es una instrucción
+reproducible — dos llamadas dan dos grises. Que era deriva y no física de la
+prenda lo prueba que el traje negro y el gris claro salieron con Δ2 del mismo
+pipeline.
+
+### Changed — el catálogo genera los conjuntos como par, no como dos prendas
+
+`scripts/gen-archetypes.mjs --conjuntos`. El saco se genera con texto y el
+pantalón **pasándole la imagen del saco como referencia**, para que el modelo
+copie un tejido que ya existe en vez de interpretar un adjetivo. Como la
+generación no es determinista, intenta hasta tres veces y conserva el intento
+cuyo tejido quede más cerca del saco: la elección es por medición, no por gusto.
+Los dos archivos se escriben juntos al final, porque guardar el saco antes de
+tener su pantalón dejaba el catálogo con la pieza nueva y la vieja — el mismo
+descuadre que este código existe para evitar.
+
+Sin esto, el próximo traje que se agregue nace descuadrado otra vez.
+
 ## [0.2.257.3] - 2026-08-18
 
 ### Added — medir si el juez repara lo que las reglas encuentran, en producción
