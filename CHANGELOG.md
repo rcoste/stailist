@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.250.1] - 2026-08-17
+
+### Added — los tres trajes que faltaban
+
+Los dos huecos que dejó abierta la pestaña "Trajes" el día que se shippeó,
+cerrados el mismo día.
+
+- **Traje negro de hombre.** Roberto lo pidió por nombre y no existía: el
+  catálogo tenía marino, carbón, gris claro, arena, azul claro y esmoquin —
+  y el esmoquin no lo sustituye (para un velorio, la app exige negro y
+  prohíbe el esmoquin explícitamente). Con él, el onboarding de hombre queda
+  con los tres que pidió: marino, gris y negro.
+- **Dos trajes sastre de mujer** (negro y marino), y con esto la pestaña
+  Trajes por fin le aparece a las usuarias: había once blazers de mujer y
+  cero pares saco+pantalón. **Con corte de mujer, no un traje de hombre en
+  otra talla** — solapa angosta, cintura entrada con pinzas, hombro estrecho,
+  largo a la cadera, pantalón de tiro alto y caída fluida. El corte va
+  descrito pieza por pieza en el prompt (en positivo y en negativo, porque el
+  default del generador para "suit" es masculino) y los seis renders se
+  revisaron uno por uno antes de sembrarlos.
+
 ## [0.2.250.0] - 2026-08-17
 
 Tanda del recorrido de Roberto por el flujo desde cero: una feature (los
