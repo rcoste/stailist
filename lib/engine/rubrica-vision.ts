@@ -1,6 +1,7 @@
 import { parsearJson, type Recibo } from "@/lib/proveedores";
 import { medir, type QuienMide } from "@/lib/recibos";
 import { VISION_MODEL } from "@/lib/models";
+import type { Modelo } from "@/lib/proveedores";
 import {
   briefParaRubrica,
   normalizarNota,
@@ -76,7 +77,15 @@ export async function evaluarLookConVision(
   brief: BriefRubrica,
   look: LookVision,
   /** Igual que en la rúbrica de texto: hoy siempre `null` (evales y scripts). */
-  quien: QuienMide | null = null
+  quien: QuienMide | null = null,
+  /**
+   * Con qué modelo mirar. Default: el de producción (VISION_MODEL).
+   *
+   * Existe SOLO para retarlo (scripts/rubrica-vision-modelo.ts). Cambiarlo aquí
+   * NO cambia producción — eso sigue siendo la línea de lib/models.ts y sólo se
+   * mueve cuando una medición lo gana, igual que en el motor.
+   */
+  modelo: Modelo = VISION_MODEL
 ): Promise<{ nota: NotaRubrica; recibo: Recibo }> {
   const conFoto = look.prendas.filter((p) => p.imagen);
   const sinFoto = look.prendas.filter((p) => !p.imagen);
@@ -100,7 +109,7 @@ export async function evaluarLookConVision(
   const recibo = await medir(
     quien && { ...quien, tarea: "rubrica-vision", version: RUBRICA_VISION_VERSION },
     {
-      modelo: VISION_MODEL,
+      modelo,
       system: SYSTEM_RUBRICA_VISION,
       texto,
       imagenes: conFoto.map((p) => p.imagen!),

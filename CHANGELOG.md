@@ -2,6 +2,62 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.257.2] - 2026-08-18
+
+### Added — medir si el juez que MIRA falla por el modelo o por la tarea
+
+`scripts/rubrica-vision-modelo.ts`. La rúbrica de visión corre en
+`VISION_MODEL` (Gemini 3.1 Flash-Lite), un modelo que ganó a ciegas la prueba de
+**leer** prendas. Criticar estilo es otra tarea y más difícil, y nunca se midió
+— y coincide con Roberto el 84% cuando **aprobar todo daría 87%**.
+
+**No hizo falta un concurso nuevo.** El comparador de visión ya existe pero mide
+leer, que es la tarea equivocada para esta pregunta. El instrumento ya estaba en
+la base: los 62 looks que Roberto marcó 👍/👎 a mano en los evales. Se vuelven a
+juzgar LOS MISMOS con otro modelo y se compara el acuerdo.
+
+### El resultado, que va contra la sospecha que originó el script
+
+| modelo | acuerdo | caza 👎 | rechaza buenos | acierta al rechazar |
+|---|---|---|---|---|
+| aprobar todo *(vara)* | 87% | 0/8 | 0/54 | — |
+| **Gemini 3.1 Flash-Lite** *(hoy)* | 84% | 2/8 | 4/54 | **33%** |
+| Gemini 3.5 Flash | 79% | 2/8 | 7/54 | 22% |
+| Gemini 3.7 Flash | 85% | 1/8 | 2/54 | 33% |
+| Sonnet 5 | 79% | 4/8 | 9/54 | 31% |
+
+**No era el modelo.** Subir de tier (3.5 Flash) no cazó ni un rechazo más y
+encima empeoró la precisión.
+
+Y lo que de verdad cierra la pregunta está en la última columna: Flash-Lite,
+3.7 y Sonnet **aciertan casi lo mismo cuando rechazan —1 de cada 3—** y lo único
+que cambia entre ellos es cuántas veces se atreven. Eso es la firma de modelos
+que saben lo mismo de la tarea con el umbral en distinto lugar: cambiar de
+modelo te mueve por la misma curva, no te da un juez mejor.
+
+3.7 parece el mejor en acuerdo global sólo porque es el **más complaciente** —se
+acerca a aprobar todo, que es justo lo que la vara desenmascara. Roberto lo pidió
+probar porque había perdido armando outfits (9-4 en pares ciegos) y valía ver si
+juzgando se comportaba distinto; se comporta distinto, pero no mejor.
+
+**Se queda Flash-Lite**, que era la decisión de Roberto antes de medir. La
+palanca para que los jueces cacen más no es el modelo: es darles más de lo que ve
+el humano — hoy juzgan una cuadrícula de prendas sueltas y él vota con el
+contexto entero.
+
+**Peso de la evidencia, dicho:** son OCHO rechazos humanos. Alcanza para
+descartar el tier (ahí la mejora fue cero, no pequeña) y no para coronar a nadie.
+
+### Changed — el juez visual acepta con qué modelo mirar
+
+`evaluarLookConVision` toma un `modelo` opcional que por defecto es
+`VISION_MODEL`. Existe sólo para retarlo: cambiarlo NO cambia producción, igual
+que en el motor.
+
+Los ids de los retadores viven en `RETADORES_VISION` dentro del catálogo, no en
+el script. El candado de `lib/models.test.ts` me cazó al escribirlos a mano —
+funcionando exactamente como debe.
+
 ## [0.2.257.1] - 2026-08-18
 
 ### Fixed — los thumbnails del look ya abren la ficha de la prenda
