@@ -13,7 +13,7 @@ NO es "combinar ropa" — es la fricción de setup. Las apps de clóset existent
 **→ Flujo de valor paso a paso + estado actual de la build: `docs/USER-JOURNEY.md` (leer al retomar).**
 **La promesa: primer outfit en <2 minutos desde que abres el link.**
 
-- Onboarding ~90s: objetivo ("¿qué necesitas hoy?") → swipes de looks (el mazo real vive en `lib/looks.ts` — creció de los ~15 del spec a 27, y desde v0.2.249.6 hay escape opcional a las 12 decisiones) → quiz de colorimetría de 5-6 preguntas (4 estaciones, sin selfie) → checklist de ~15 prendas básicas. Cada paso se persiste (interrumpir y retomar).
+- Onboarding ~90s: objetivo (desde v0.2.250.0 la pantalla es "tu primer look" — anuncia el look del día en vez de preguntar "¿qué necesitas hoy?" con una sola opción posible) → swipes de looks (el mazo real vive en `lib/looks.ts` — creció de los ~15 del spec a 27, y desde v0.2.249.6 hay escape opcional a las 12 decisiones) → quiz de colorimetría de 5-6 preguntas (4 estaciones, sin selfie) → checklist de ~15 prendas básicas. Cada paso se persiste (interrumpir y retomar).
 - Motor de outfits: 2-3 outfits con justificación de una línea, generados en <30s con progreso por fases, voto 👍/👎 persistente.
 - "Tu look de hoy": al regresar, la app te recibe con un outfit generado para tu día (1 por día, considera el clima).
 - Clóset: 15 básicos con imágenes de arquetipo (generadas con IA una vez); fotos propias opcionales con confirmación editable del análisis.
