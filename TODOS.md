@@ -18,8 +18,8 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 
 ## Huecos del corpus que dejó la pestaña de Trajes (2026-08-17)
 
-- [ ] **Falta un traje NEGRO** (y Roberto lo pidió por nombre: "un traje azul marino, uno gris y uno negro"). Hoy los seis pares del catálogo son marino, gris carbón, gris claro, arena, azul claro y esmoquin — el esmoquin NO es el traje negro de oficina/funeral y no lo sustituye. Va con el pipeline de la casa (`scripts/gen-archetypes.mjs`, dos renders: saco y pantalón) + una fila en cada tabla con su `attrs.conjunto` compartido (ver migración 0137). *Trigger*: la siguiente tanda de renders del catálogo.
-- [ ] **Ninguna mujer tiene traje**: en `segment='mujer'` hay sacos sueltos (Le smoking, blazer estructurado, saco de boda) y CERO pares saco+pantalón, así que la pestaña "Trajes" no le aparece a ninguna usuaria. Es el mismo sesgo que ya se documentó en `docs/decisiones` sobre reglas con default masculino. *Trigger*: el mismo que el anterior — se generan juntos.
+- [x] ~~**Falta un traje NEGRO**~~ — HECHO (migración 0139, v0.2.250.1). Saco + pantalón negros de hombre; el onboarding de hombre queda con los tres que pidió Roberto: marino, gris carbón y negro.
+- [x] ~~**Ninguna mujer tiene traje**~~ — HECHO (migración 0139, v0.2.250.1). Dos trajes sastre de mujer (negro y marino) con corte femenino descrito pieza por pieza —solapa angosta, cintura con pinzas, hombro estrecho, tiro alto— y revisados uno por uno: "que no parezca traje de hombre sobre mujer". La pestaña Trajes ya le aparece a las usuarias. Sigue abierto el hueco mayor del audit de género (la biblioteca formal completa, 22H/7M).
 - [ ] **El traje entra completo o no entra**: la tarjeta marca las dos piezas de un tap y no hay "sólo el saco". Quien tenga el saco y no el pantalón tiene que borrar el pantalón después desde el clóset. Se dejó así porque un segundo control en la tarjeta paga complejidad en el minuto más caro del onboarding. *Trigger*: si alguien reporta que le entró una prenda que no tiene.
 
 ## Diferido del header de pantalla interna (2026-08-14)
