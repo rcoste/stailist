@@ -1,7 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { LOOKS } from "@/lib/looks";
 import { contarSenalOroPorCercania } from "@/lib/senal-oro";
-import { evaluarSenales, type Veredicto } from "@/lib/senales-vivas";
+import { contarEventos, evaluarSenales, type Veredicto } from "@/lib/senales-vivas";
+
+/**
+ * El día en que el fit check se volvió el escritor de `worn`.
+ *
+ * El rediseño del home (2026-08-11) mató la card "¿te lo pusiste ayer?", que
+ * era el único escritor de la señal de oro, y el fit check tomó su lugar. Antes
+ * de esta fecha un fit check sin `worn` es lo esperado, no un fallo.
+ */
+const FIT_CHECK_ESCRIBE_WORN = "2026-08-11";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -177,30 +186,42 @@ export default async function AdminOverview() {
   const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data: ev30 } = await supabase
     .from("events")
-    .select("type")
+    .select("type, created_at, data")
     .gte("created_at", since30d)
     .in("type", ["espejo_subido", "worn", "first_outfit_ttv", "onboarding_step"]);
-  const cuenta = (t: string) => (ev30 ?? []).filter((e) => e.type === t).length;
+  const eventos = (ev30 ?? []).map((e) => ({
+    type: String(e.type),
+    created_at: String(e.created_at),
+    data: e.data as { step?: number | string } | null,
+  }));
   const senales = evaluarSenales([
     {
       nombre: "fit check → me lo puse",
       disparador: "espejo_subido",
-      disparos: cuenta("espejo_subido"),
+      // DESDE EL RECABLEADO, no desde hace 30 días. El fit check se volvió el
+      // escritor de `worn` el 2026-08-11 (ahí murió la card que lo preguntaba);
+      // los fit checks anteriores no escribían `worn` POR DISEÑO, y contarlos
+      // como fallos tenía este bloque en rojo permanente con el vínculo sano.
+      desde: FIT_CHECK_ESCRIBE_WORN,
+      disparos: contarEventos(eventos, "espejo_subido", FIT_CHECK_ESCRIBE_WORN),
       consecuencia: "worn",
-      consecuencias: cuenta("worn"),
+      consecuencias: contarEventos(eventos, "worn", FIT_CHECK_ESCRIBE_WORN),
       cuesta:
         "la señal de oro del experimento, la línea más fuerte del prompt del motor y el orden del clóset por prendas usadas",
     },
     {
       nombre: "terminar onboarding → primer look",
       disparador: "onboarding_step",
-      disparos: (profilesRes.data ?? []).filter((p) => (p.onboarding_step ?? 0) >= 5)
-        .length,
+      // LOS DOS LADOS EN LA MISMA VENTANA. Antes el disparador contaba perfiles
+      // de TODA la historia (24) contra eventos de 30 días (11): peras contra
+      // manzanas, 46% eterno. El hack de `minimo: 999` existía para tapar eso
+      // —sólo silenciaba el veredicto "seca", así que el bloque seguía saliendo
+      // en rojo como "floja"— y con la comparación bien hecha sobra.
+      disparos: eventos.filter(
+        (e) => e.type === "onboarding_step" && Number(e.data?.step) === 5
+      ).length,
       consecuencia: "first_outfit_ttv",
-      consecuencias: cuenta("first_outfit_ttv"),
-      // El TTV se mide una vez por persona, así que aquí la cobertura baja no
-      // es un fallo: la mayoría de perfiles terminó onboarding hace meses.
-      minimo: 999,
+      consecuencias: contarEventos(eventos, "first_outfit_ttv"),
       cuesta: "la medición del TTV (la promesa de <2 min)",
     },
   ]);
