@@ -2,6 +2,63 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.257.0] - 2026-08-18
+
+### Fixed — el motor entregaba looks que no visten a nadie
+
+El motor validaba que un look trajera **≥2 prendas reales y nada más**. Así que
+*"Suéter gris + Camisa blanca"* —sin pantalón— pasaba entero y llegaba a una
+persona que había preguntado qué ponerse. Y *"Chaqueta de piel + Botas negras"*
+también: una chamarra y unas botas, sin torso ni piernas.
+
+Medido sobre los 153 looks reales de la base: **14 (9.2%)** no cubrían el
+cuerpo.
+
+Había regla para que SOBRE una prenda en una zona (`zona-duplicada`) y ninguna
+para que FALTE. Ahora existe `zona-sin-cubrir`, su espejo.
+
+**Falso positivo: cero** sobre los 153 looks, incluidos los 31 con voto humano.
+
+### Cómo se calibró, que es donde estuvo el trabajo
+
+**El calzado NO entra, y eso se midió.** La primera versión pedía también
+zapatos, y fue la única zona que produjo un falso positivo:
+
+| Zona | Marca | De ésos, con 👍 o "me lo puse" |
+|---|---|---|
+| torso | 7 | **0** |
+| pierna | 13 | **0** |
+| ~~pie~~ | 7 | **1** ← |
+
+Ese uno es *"Lino y campo"* (camisa de lino + camisa de mezclilla + chinos
+oliva), que no lleva calzado en la fila y tiene un evento **`worn`**: una
+persona real **se lo puso**. Obviamente con zapatos; la app no los nombró y a
+ella no le estorbó.
+
+La lectura de producto es que **el calzado es la zona que la gente rellena
+sola** y el pantalón no. Marcarlo mandaría al juez a reparar looks que alguien
+ya se puso — el peor falso positivo que puede tener este archivo. Como
+consecuencia asumida, 6 looks sin calzado se quedan sin marcar.
+
+**Otras dos decisiones, con su porqué:**
+
+- **Fallo contra carencia**, la distinción que este archivo ya usa: sólo marca
+  si el clóset TIENE con qué cubrir la zona. Quien no tiene un solo pantalón
+  dado de alta no está ante un error reparable.
+- **El traje de baño cuenta como abajo.** Un look de alberca es sandalias +
+  traje de baño + camisa, y ahí la prenda de abajo ES el traje de baño aunque su
+  zona sea `no-calle`. Sin la excepción, los dos looks de viaje de la base
+  salían marcados estando bien.
+- **Si una prenda no se reconoce, no se juzga**: podría estar cubriendo la zona.
+
+### Fixed — "Pantalón técnico" se leía como abrigo
+
+Caía en la regla de prendas técnicas (`parka|softshell|rompevientos|técnic`) y
+se clasificaba como **capa**, así que su look aparecía sin nada que cubriera las
+piernas. "Técnico" es un adjetivo: parka y softshell nombran la prenda, técnico
+sólo describe la tela. Ahora el sustantivo manda, con el mismo tipo de guard que
+ya protegía a "traje" de "saco de traje".
+
 ## [0.2.256.0] - 2026-08-18
 
 ### Fixed — el motor era ciego a una de cada cinco prendas de mujer
