@@ -2,6 +2,72 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.257.3] - 2026-08-18
+
+### Added — medir si el juez repara lo que las reglas encuentran, en producción
+
+`scripts/reglas-en-produccion.ts`. La regla de coherencia cromática (v53) se
+shipeó **sin poder validarla**: el comparador arma looks con generación no
+determinista, así que la diferencia entre "con regla" y "sin regla" queda
+ahogada por el ruido de dos corridas distintas.
+
+Roberto lo advirtió antes de que yo lo viera: *"al usar o meter arneses,
+terminaban fallando otras cosas al no dejar que replique de una manera más
+realista la generación"*. Fijar los looks para aislar la reparación habría sido
+exactamente eso, y era mi propuesta. Se retiró.
+
+**La salida es medir donde la realidad ya pasa**, y no hacía falta instrumentar
+nada: el evento `critic_review` ya guarda, por look, los ids de las prendas
+`before` y `after` de la reparación del juez. Correr `revisarEjecucion` sobre los
+dos contesta las tres preguntas de cualquier regla:
+
+1. ¿dispara en looks reales, y cuánto? (antes)
+2. ¿el juez la repara? (desapareció en el después)
+3. **¿la reparación rompe otra cosa?** (violaciones nuevas en el después)
+
+### Lo que midió en la primera corrida
+
+```
+regla                          disparó   sobrevivió   la metió el juez
+colores-que-no-se-leen              6            2            5
+mocasin-en-frio                     5            1            0
+saco-de-traje-suelto                5            4            2
+blazer-no-es-abrigo                 4            1            2
+frio-sin-abrigo                     4            1            0
+zona-sin-cubrir                     3            3            2
+traje-desparejado                   2            0            0
+zona-duplicada                      2            0            0
+```
+
+**El juez estaba CREANDO el problema de color en 5 looks** mientras arreglaba
+otra cosa: no existían antes de su reparación y aparecieron después. Sumado, la
+incoherencia cromática era más frecuente *después* de reparar (2 supervivientes
++ 5 nuevas) que antes (6). Y en 2 looks dejó el cuerpo sin cubrir, quitando
+prendas.
+
+**Ese es el mejor argumento que existe para la regla de v53, y es evidencia que
+el comparador no podía dar.** Ahora que el juez recibe el hallazgo, debería
+dejar de introducirlas.
+
+`saco-de-traje-suelto` es la que peor sale de las viejas: dispara 5 veces y
+sobreviven 4 (20% reparadas). O es carencia o el juez no sabe atenderla; queda
+apuntado, sin investigar.
+
+### Dos límites, dichos
+
+- **Para las reglas nuevas, "sobrevivió" no mide el efecto de la regla**: el juez
+  nunca fue informado de ellas en esos looks. Lo que sí vale de esa aplicación
+  retroactiva es cuánto ocurre el problema y cuántas veces el juez lo crea.
+- **El clóset del contexto es el de hoy**, no el del día que se generó el look.
+  Sólo afecta a las reglas que distinguen fallo de carencia, y con clósets que
+  casi sólo crecen el sesgo es hacia marcar de más.
+
+### Y sobre v53 en concreto
+
+Cero looks generados con `v53` todavía: la regla dispara en ~9% de los looks, así
+que hacen falta ~100 looks para decir algo. El script lo dice al correrlo con el
+disparador escrito, en vez de dejar el pendiente en la cabeza de alguien.
+
 ## [0.2.257.2] - 2026-08-18
 
 ### Added — medir si el juez que MIRA falla por el modelo o por la tarea
