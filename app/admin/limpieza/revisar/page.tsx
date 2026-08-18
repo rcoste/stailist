@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { porRevisar } from "@/lib/revisar-closet";
 import { RevisarClient } from "./revisar-client";
+import { LimpiezaTabs } from "../limpieza-tabs";
 
 // Confirmar prenda por prenda que el clóset existe de verdad.
 //
@@ -15,5 +16,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminRevisar() {
   const perfil = await requireAdmin();
   const prendas = await porRevisar(perfil.id);
-  return <RevisarClient prendas={prendas} />;
+  return (
+    <div className="flex flex-col gap-4">
+      <LimpiezaTabs />
+      <RevisarClient prendas={prendas} />
+    </div>
+  );
 }

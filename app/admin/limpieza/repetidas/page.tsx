@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { duplicadosDe, cualConservar } from "@/lib/duplicados";
 import { DuplicadosClient } from "./duplicados-client";
+import { LimpiezaTabs } from "../limpieza-tabs";
 
 // Revisión de prendas repetidas, sobre el clóset de quien entra.
 //
@@ -20,5 +21,10 @@ export default async function AdminDuplicados() {
     grupos.map((g) => [g.clave, cualConservar(g.filas)])
   );
 
-  return <DuplicadosClient grupos={grupos} conservarPorGrupo={conservarPorGrupo} />;
+  return (
+    <div className="flex flex-col gap-4">
+      <LimpiezaTabs />
+      <DuplicadosClient grupos={grupos} conservarPorGrupo={conservarPorGrupo} />
+    </div>
+  );
 }

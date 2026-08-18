@@ -2,6 +2,70 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.251.0] - 2026-08-17
+
+### Changed — el admin deja de ser una fiesta de 17 pestañas
+
+Roberto: "el admin es un desmadre, hay unas que no sé qué hacen o cuál es la
+diferencia entre unas y otras". Tenía razón y el problema no era solo el orden:
+sobraban pantallas. El menú era una fila de 17 chips iguales sin agrupar, y
+había tres pantallas muertas, dos pares casi idénticos y dos nombres que no
+decían su ámbito.
+
+**El menú queda en 12 entradas, en tres grupos por PARA QUÉ entras:**
+
+- **Pulso** — Dashboard · IA · Usuarias · Acceso. Cómo va el experimento y
+  quién lo usa; lo que se mira seguido.
+- **Motor** — Comparador · Evales · Destilador · Recetas. El laboratorio de
+  IA: decidir un cambio, vigilar el nivel, y curar lo que alimenta al motor.
+- **Contenido** — Catálogo · Onboarding · Looks · Limpieza. Las prendas y
+  looks que la app enseña.
+
+### Removed — tres pantallas que ya habían contestado su pregunta
+
+Barrido, A/B e Inspo nacieron la misma semana (4-5 de agosto) para responder
+una pregunta puntual cada una, y las tres ya la contestaron — está escrito en
+sus propios docblocks: el revisor automático marcaba el 94% y no discriminaba;
+el recetario v28 quedó comparado; el selector no filtra por ocasión. Leían
+JSONs congelados que nadie regeneró desde entonces (167 KB que además entraban
+al bundle por import estático).
+
+Se van con ellas los cinco scripts que solo existían para alimentarlas
+(`ab-pares`, `ab-tryon`, `barrido-a-revision`, `barrido-tryon`,
+`inspo-revision`). El arnés de medición en sí (`barrido-correr`,
+`barrido-motor`, `barrido-comparar`) se queda: escribe a `docs_para_claude/` e
+imprime su resumen, así que sigue en pie solo.
+
+**Por qué borrar y no esconder:** una pantalla que lee datos congelados de hace
+dos semanas parece información viva y no lo es. Ese es justo el tipo de mentira
+silenciosa que costó dos bugs de semanas en agosto. El historial de git las
+guarda, y la versión buena de A/B ya existe (el comparador, con datos en base y
+proceso repetible).
+
+### Changed — dos fusiones y un nombre honesto
+
+- **Acceso** (`/admin/acceso`) se come Allowlist y Waitlist. Eran dos momentos
+  del mismo embudo (pidieron entrar → invitadas → activas) y ya compartían la
+  acción que las une: "Invitar" mete el correo a la allowlist y dispara el
+  correo. Ahora es una pantalla con las dos listas.
+- **Limpieza** (`/admin/limpieza`) se come Revisar y Repetidas, que quedan como
+  pestañas "¿Existe?" y "¿Repetida?". Nacieron el mismo día, sobre la misma
+  tabla, con la misma mecánica de una-decisión-a-la-vez y hasta el mismo
+  párrafo de justificación. Solo cambiaba la pregunta.
+- **Básicos se llama Onboarding** en el menú: dice lo que de verdad controla
+  (qué prendas ve alguien nuevo) y deja de confundirse con Catálogo, que edita
+  las mismas prendas pero para otra cosa.
+
+### Added — el candado contra "el menú apunta a donde ya no está"
+
+`lib/contrato-admin-nav.test.ts`, con el mismo patrón que
+`contrato-wizard-rutas`: cada href del nav tiene que existir en disco con su
+`page.tsx`, y cada sección en disco tiene que estar en el menú o declarar por
+qué no (`ver-como` es una acción, no una pantalla). Un link muerto no truena
+nada — se ve bien y da 404 al hacer clic — y esta reorganización movió seis
+secciones de lugar, o sea seis oportunidades de dejar uno. Verificado por
+mutación: al apuntar un link a una carpeta inexistente, el test se pone rojo.
+
 ## [0.2.250.1] - 2026-08-17
 
 ### Added — los tres trajes que faltaban

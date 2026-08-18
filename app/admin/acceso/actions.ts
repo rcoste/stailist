@@ -41,9 +41,9 @@ export async function addToAllowlist(formData: FormData) {
   const sent = await sendInviteEmail(email, token);
   if (!sent.ok) console.error(`invite_email_failed: ${email} · ${sent.error}`);
 
-  revalidatePath("/admin/allowlist");
-  // La vista de waitlist deriva un badge "ya invitado" de la allowlist.
-  revalidatePath("/admin/waitlist");
+  // Refresca las dos listas de la pantalla: la de espera deriva su badge
+  // "ya invitado" de la allowlist.
+  revalidatePath("/admin/acceso");
 }
 
 // Reenvía la invitación a un correo que ya está en la allowlist (si el link se
@@ -73,7 +73,7 @@ export async function resendInvite(formData: FormData) {
   const sent = await sendInviteEmail(email, token);
   if (!sent.ok) console.error(`invite_resend_failed: ${email} · ${sent.error}`);
 
-  revalidatePath("/admin/allowlist");
+  revalidatePath("/admin/acceso");
 }
 
 export async function removeFromAllowlist(formData: FormData) {
@@ -83,5 +83,5 @@ export async function removeFromAllowlist(formData: FormData) {
 
   const supabase = await createClient();
   await supabase.from("allowlist").delete().eq("email", email);
-  revalidatePath("/admin/allowlist");
+  revalidatePath("/admin/acceso");
 }
