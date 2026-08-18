@@ -14,6 +14,8 @@ export default async function ClosetOnboardingPage() {
     .select("id, name, category, attrs, image_path")
     .in("segment", ["unisex", profile.gender ?? "hombre"])
     .eq("onboarding_subset", true)
+    // Las retiradas del catálogo (borrado suave, migración 0137) no se ofrecen.
+    .is("deleted_at", null)
     .order("sort_order");
 
   return (

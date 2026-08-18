@@ -388,6 +388,9 @@ export async function addArchetypes(
   const { data: archetypes } = await supabase
     .from("archetypes")
     .select("id, name, attrs, image_path, segment")
+    // Retiradas fuera, también aquí: la pantalla ya no las muestra, pero el id
+    // viaja por el cliente y esta es la puerta que de verdad inserta.
+    .is("deleted_at", null)
     .in("id", ids);
   if (!archetypes || archetypes.length === 0) return { ok: false, added: 0 };
 

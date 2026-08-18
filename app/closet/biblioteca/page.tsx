@@ -15,6 +15,8 @@ export default async function BibliotecaPage() {
       .from("archetypes")
       .select("id, name, category, attrs, image_path")
       .in("segment", ["unisex", profile.gender ?? "hombre"])
+      // Las retiradas del catálogo (borrado suave, migración 0137) no se ofrecen.
+      .is("deleted_at", null)
       .order("sort_order"),
     supabase
       .from("items")

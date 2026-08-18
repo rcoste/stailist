@@ -55,6 +55,9 @@ export async function borrowArchetypeImage(
     .from("archetypes")
     .select("name, image_path, attrs, segment")
     .eq("category", category)
+    // Una prenda retirada tampoco presta su foto: se retiró justamente porque
+    // la foto no está bien (migración 0137).
+    .is("deleted_at", null)
     .in("segment", ["unisex", gender ?? "hombre"]);
   if (!data?.length) return null;
 
