@@ -2,6 +2,56 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.251.1] - 2026-08-17
+
+### Fixed — el panel gritaba por historia, no por un bug
+
+El dashboard llevaba días con "fit check → me lo puse · 13% llega" en rojo. No
+había ningún bug: el fit check escribe `worn` perfecto (2 de 2 desde el arreglo
+del 13 de agosto). Lo roto era el medidor.
+
+**La causa:** `evaluarSenales` no sabía DESDE CUÁNDO existe el vínculo que
+vigila. Comparaba conteos crudos en una ventana fija de 30 días, y esa ventana
+llegaba hasta el 19 de julio. El fit check se volvió el escritor de `worn` el
+2026-08-11 (ahí murió la card "¿te lo pusiste ayer?", su único escritor previo),
+así que los 19 fit checks del 9 y 10 de agosto —que por diseño nunca escribieron
+`worn`— entraban como fallos.
+
+Los datos de producción, día por día: 9 ago 3/0 · 10 ago 16/0 · 13 ago 2/0 (el
+bug real, arreglado ese mismo día) · 17 ago 2/2 ✅.
+
+Se muerde la cola: el panel nació en el MISMO commit que aquel arreglo
+(`3e3fada`), o sea que llevaba en rojo desde que nació, y habría seguido hasta
+el 10 de septiembre.
+
+**Por qué importa arreglarlo aunque no hubiera bug:** el panel existe para que
+un fallo silencioso no viva semanas. Un rojo permanente entrena a ignorarlo, y
+entonces el día que grite de verdad ya nadie lo mira. El docblock del propio
+panel advertía del riesgo inverso ("un bloque permanente en verde entrena a
+saltárselo") sin ver que el rojo es la misma trampa, peor.
+
+**El arreglo:** cada par declara `desde`, la fecha en que su vínculo empezó a
+existir; los disparos anteriores no cuentan. Y el veredicto ahora dice sobre qué
+tramo se calculó ("desde el 11 ago"), porque un número que no dice qué periodo
+midió es el que hace pensar que mide otra cosa.
+
+La señal queda en 50% (2 de 4 desde el 11 ago), no en 100%: los dos fallos del
+13 de agosto fueron fallos reales del vínculo y merecen contarse. Salen solos de
+la ventana alrededor del 12 de septiembre.
+
+### Fixed — la segunda señal comparaba peras con manzanas
+
+"terminar onboarding → primer look · 46%" era la misma enfermedad con otra cara:
+contaba **perfiles de toda la historia** (24) contra **eventos de 30 días** (11).
+Medido con los dos lados en la misma ventana da **79%**.
+
+Con eso se cae el hack de `minimo: 999` que existía para taparlo — y que además
+no funcionaba: sólo silenciaba el veredicto "seca", así que el bloque seguía
+saliendo en rojo como "floja".
+
+Lo que la comparación honesta deja a la vista, y antes se escondía bajo el ruido:
+3 personas terminaron onboarding sin que se les midiera el primer look.
+
 ## [0.2.251.0] - 2026-08-17
 
 ### Changed — el admin deja de ser una fiesta de 17 pestañas
