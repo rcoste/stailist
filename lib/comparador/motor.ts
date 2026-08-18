@@ -226,6 +226,21 @@ const CLIMAS = {
  * medía. Salió del veredicto de Gemini: 4 de sus 6 defectos de clima fueron
  * lluvia, y producción también falló ahí.
  *
+ * v6 → v7 (2026-08-18): entran los TRES planes que la app ofrece de un toque y
+ * el pool nunca midió — una cita, una fiesta y una comida de trabajo. No es un
+ * refinamiento: la pantalla de "¿qué plan tienes?" ofrece seis planes sociales
+ * (PLANES_VISIBLES en components/weather-picker) y el pool sólo probaba tres,
+ * o sea que la MITAD de lo que se puede pedir con un dedo jamás se había
+ * medido. Y el pool sí medía `funeral`, que ni siquiera está en esa pantalla.
+ *
+ * Los tres que faltaban son además la franja con MÁS margen de error: no hay
+ * código de vestimenta duro que proteja al motor, así que un fallo ahí no rompe
+ * una regla, entrega algo aburrido — la nota que ya sale más baja (wow).
+ *
+ * Van al FINAL del pool a propósito: el vistazo toma los primeros 6 y ésos
+ * están curados como prueba de humo de los caminos diarios. Estos se miden en
+ * el veredicto, que es donde se decide.
+ *
  * v5 → v6 (2026-08-07, el mismo día): la boda de noche vuelve a "formal". En
  * v5 la subí a "gala" por el default de subeDeNoche y la primera corrida lo
  * cazó: el juez exigía esmoquin con moño y charol en los DOS looks de boda. En
@@ -248,7 +263,7 @@ const CLIMAS = {
  * criterio. Y entra un PAR ESPEJO a mismo clima (templado con cliente / sin
  * cliente): solo cambia el flag, así que mide directo si el motor distingue.
  */
-export const POOL_VERSION = "v6";
+export const POOL_VERSION = "v7";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -341,6 +356,52 @@ const POOL_BRIEFS: BriefMotor[] = [
     formality: "formal",
   },
   {
+    // LOS TRES PLANES QUE LA APP OFRECE DE UN TOQUE Y EL POOL NUNCA MIDIÓ (v7).
+    // La pantalla de "¿qué plan tienes?" ofrece seis planes sociales y el pool
+    // sólo probaba tres. Los otros tres no son un hueco cualquiera: son la
+    // franja donde el motor tiene MÁS margen de error, porque no hay código de
+    // vestimenta duro que lo proteja. Si se equivoca aquí no rompe una regla —
+    // entrega algo aburrido, que es justo la nota que sale más baja (wow).
+    //
+    // Y al revés: el pool sí medía `funeral`, que ni siquiera está en esa
+    // pantalla (sólo se alcanza escribiéndolo). Se queda, porque su valor está
+    // escrito arriba y es real, pero deja de ser el único evento raro medido
+    // mientras tres de un toque no lo estaban.
+    //
+    // La formalidad de cada uno NO se inventa aquí: es la del catálogo
+    // (lib/eventos.ts), la misma que producción le pasa al motor.
+    etiqueta: "cita · noche templada",
+    objective: "evento",
+    momento: "noche",
+    weather: CLIMAS.templado,
+    plan: "una cita en un restaurante",
+    tipoEvento: "cita",
+    formality: "semiformal",
+  },
+  {
+    // La fiesta es el permiso para arriesgar, y por eso mide lo contrario que
+    // el funeral: ahí se castiga destacar, aquí se castiga no atreverse.
+    etiqueta: "fiesta · noche fría",
+    objective: "evento",
+    momento: "noche",
+    weather: CLIMAS.frio,
+    plan: "una fiesta en casa de un amigo",
+    tipoEvento: "fiesta",
+    formality: "semiformal",
+  },
+  {
+    // La frontera exacta entre oficina y social: el registro de trabajo subido
+    // un escalón. Un motor que aquí entregue el mismo look que en "trabajo ·
+    // templado" no entendió el escalón.
+    etiqueta: "comida de trabajo · templado",
+    objective: "evento",
+    momento: "dia",
+    weather: CLIMAS.templado,
+    plan: "una comida con un cliente",
+    tipoEvento: "comida-trabajo",
+    formality: "semiformal",
+  },
+  {
     etiqueta: "comida familiar · calor",
     objective: "evento",
     momento: "dia",
@@ -358,6 +419,11 @@ const POOL_BRIEFS: BriefMotor[] = [
  * deja un brief sin medir sin que nadie lo note.
  */
 export const N_POOL = POOL_BRIEFS.length;
+
+/** El pool, expuesto SÓLO para el candado de cobertura (pool-cobertura.test).
+ *  No lo consumas en producción: los briefs se piden con `briefsPara`, que es
+ *  quien sabe cuántos van y cómo se etiquetan las vueltas. */
+export const POOL_BRIEFS_PARA_TEST: readonly BriefMotor[] = POOL_BRIEFS;
 
 export const N_VISTAZO = 6;
 export const MIN_VEREDICTO = 20;
