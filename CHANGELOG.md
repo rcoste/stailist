@@ -2,6 +2,94 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.253.0] - 2026-08-18
+
+### Added — los jueces hacen la revisión que se hacía a mano
+
+Roberto: *"los jueces van a hacer el trabajo que yo hacía manual, y ya después
+de la ronda ven qué motor fue mejor y hacen ajustes que puedan ayudar a
+resolver los issues que los jueces detectaron… es importante que alguno de los
+jueces se ponga el gorro de stylist también"*.
+
+**Un tercer juez, el stylist** (`lib/engine/juez-stylist.ts`). No califica:
+por cada look dice qué pieza falla, por qué, y **qué cambiarías**. Esa última
+parte es la que ninguna rúbrica daba — las dos que ya existían están escritas
+con gorro de stylist, pero su salida son seis números y una línea que justifica
+el aprobado. Lo que se hace a mano es otra cosa: *"la camisa negra es la pieza
+que rompe todo; cámbiala por blanca"*.
+
+Tres decisiones que sostienen el diseño:
+
+- **No lleva puntaje, a propósito.** En cuanto tenga una nota que subir,
+  alguien optimiza contra ella y el motor aprende a complacer al juez en vez de
+  a la persona. La casa ya lo tiene escrito: *"un juez Claude prefiere looks
+  escritos por Claude"*. Entrega hallazgos; el puntaje lo dan las otras dos.
+- **La voz sale del espejo, no se inventó.** `lib/espejo.ts` ya contesta "¿me
+  veo bien?" con un ajuste concreto, y ya pasó por la corrección de la v3
+  (*"siento está muy barbero el feedback"*) contra el elogio hueco.
+- **Usa el vocabulario de `DEFECTOS_MOTOR`** — las mismas etiquetas que se usan
+  al votar a mano. Así los hallazgos del juez y las marcas humanas se cuentan en
+  el mismo idioma, que es la única forma de saber si el juez ve lo que vería una
+  persona.
+
+### Added — el resumen de ronda: de 240 notas a "estos son los temas"
+
+`lib/engine/resumen-ronda.ts` agrupa los hallazgos de una corrida en temas
+recurrentes. Es la parte que de verdad ahorra el trabajo manual: una corrida de
+40 pares son ~240 looks juzgados, y hasta hoy las notas se veían de una en una.
+Una pila que nadie lee es lo mismo que no tenerla — es exactamente lo que pasó
+con `ai_calls`, que existía, nadie leía, y por eso el precalentado roto vivió
+dos semanas.
+
+**El orden es la parte útil**, y no es alfabético ni por frecuencia a secas:
+primero lo que **ROMPE** looks (aunque salga poco: un fallo que tira el look es
+más caro que uno que lo desluce), y dentro de eso, por en cuántos looks
+apareció. Un tema en 14 de 40 looks es una regla que falta; en 1 es una
+anécdota. Va partido **por variante**, porque la pregunta no es sólo cuál ganó
+sino EN QUÉ difieren — que es lo que se convierte en el ajuste.
+
+### Added — pantalla para auditar a los jueces
+
+`/admin/comparador/motor/[id]/jueces`. El orden de la página es la tesis:
+primero **los temas** (lo que se repite), después **el detalle look por look**
+(la auditoría). Al revés obligaría a leer 240 notas para descubrir lo que el
+conteo dice de una.
+
+Las tres capas se enseñan juntas **y sin promediar**: si la que lee aprueba y
+la que mira reprueba, esa discrepancia es el dato — casi siempre significa que
+el fallo está en la imagen y no en el nombre, que es justo lo que un promedio
+escondería.
+
+### Added — la rúbrica que MIRA entra al instrumento pareado
+
+`scripts/comparador-juzgar.ts` llamaba sólo a la rúbrica de texto, que ve
+nombres de prenda y no tonos. Para una iteración de regla de COLOR eso es
+preguntarle por matices a alguien que lee etiquetas. Ahora corre las tres capas
+y saca **dos marcadores separados** (el que lee y el que mira), sin promediar.
+
+Las fotos se descargan **una vez por look** y las comparten el juez visual y el
+stylist: bajarlas dos veces sería pagar el ancho de banda doble para mandar
+exactamente las mismas imágenes.
+
+Migraciones `0140` y `0141`: columnas aditivas `notas_vision` y `criticas`.
+Aditivas a propósito — cambiar la forma de lo ya guardado rompería la
+comparabilidad del histórico, que es lo único que un instrumento de medición no
+puede permitirse perder.
+
+### Lo que todavía no está probado
+
+El juez stylist **no ha visto una sola foto**. Los tests cubren la agregación y
+el candado del vocabulario (un defecto fuera de la lista se descarta, o el
+conteo de temas se rompería en silencio), pero si sus hallazgos son buenos —o si
+es barbero pese al prompt— lo dice la primera corrida y no antes.
+
+Y una hipótesis anotada, no resuelta: corre en `VISION_MODEL`
+(**Gemini 3.1 Flash-Lite**), un modelo elegido a ciegas para LEER prendas, que
+es tarea más fácil que criticar estilo. La rúbrica de visión corre en el mismo
+modelo y coincide con el humano el 84%, por debajo del 87% de aprobar-todo.
+Puede que no sea que "la visión no aporta" sino que es un modelo lite en una
+tarea que le queda grande. Se mide, no se cambia de oído.
+
 ## [0.2.252.0] - 2026-08-17
 
 ### Added — la primera regla de armonía de color del motor
