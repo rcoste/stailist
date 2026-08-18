@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import {
@@ -332,9 +332,26 @@ function Tile({
 // tappable por prenda (ver en grande, podar lo asumido, corregir lo que la IA leyó).
 export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   const router = useRouter();
+  const params = useSearchParams();
   const [filter, setFilter] = useState<string | null>(null); // null = Todos
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ClosetItem | null>(null);
+  // LLEGAR CON LA FICHA ABIERTA. Los thumbnails del detalle de un look enlazan
+  // a `/closet?prenda=<id>`: la ficha ya vive aquí, con sus chips y su borrado,
+  // y duplicarla en el detalle habría sido la tercera copia de un vocabulario
+  // que este repo ya tuvo que unificar una vez.
+  //
+  // El id se limpia de la URL al abrir para que el "atrás" del teléfono regrese
+  // al look y no reabra la misma ficha. Y si la prenda ya no está (se borró
+  // desde otro lado), no pasa nada: no hay ficha que abrir y el clóset se ve
+  // normal.
+  const prendaEnlazada = params.get("prenda");
+  useEffect(() => {
+    if (!prendaEnlazada) return;
+    const p = items.find((i) => i.id === prendaEnlazada);
+    if (p) setSelected(p);
+    router.replace("/closet", { scroll: false });
+  }, [prendaEnlazada, items, router]);
   // Prenda pendiente de confirmar antes de quitarla del clóset.
   const [porQuitar, setPorQuitar] = useState<ClosetItem | null>(null);
   // Auto-sanado: prendas que el usuario agregó por descripción y nunca tuvieron

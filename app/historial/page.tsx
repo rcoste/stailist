@@ -140,15 +140,15 @@ export default async function HistorialPage({
       : o.photo_path
         ? signed.get(o.photo_path as string) ?? null
         : null,
-    prendas: (o.item_ids as string[]).map(
-      (id) =>
-        imgById.get(id) ?? {
-          nombre: "Prenda",
-          swatch: SWATCH_VACIO,
-          imagen: null,
-          conjunto: null,
-        }
-    ),
+    prendas: (o.item_ids as string[]).map((id) => ({
+      id,
+      ...(imgById.get(id) ?? {
+        nombre: "Prenda",
+        swatch: SWATCH_VACIO,
+        imagen: null,
+        conjunto: null,
+      }),
+    })),
     voto: votoByOutfit.get(o.id) ?? null,
     worn: wornOutfits.has(o.id),
     favorited: !!o.favorited_at,
