@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.260.2] - 2026-08-18
+
+### Fixed — el cruce enseña para qué se pidió cada look
+
+Cada tarjeta lleva ahora su brief: la ocasión, el clima, la formalidad traducida
+y el evento en las palabras de quien pidió ("una cita en un restaurante"). Sin
+eso no se puede calificar un hallazgo — "rompe el clima" es justo con 8°C y
+lluvia e injusto con 24°C despejado. Va por tarjeta y no en el encabezado porque
+el cruce agrupa por caja y no por par: dos tarjetas vecinas pueden venir de
+briefs opuestos. Roberto: "no quitaste esa información, entonces me es
+complicado el evaluar sin ese contexto completo".
+
 ## [0.2.260.1] - 2026-08-18
 
 ### Fixed — las prendas del cruce se ven, y dicen cómo se llaman

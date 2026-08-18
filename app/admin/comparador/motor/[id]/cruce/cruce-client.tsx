@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useTransition } from "react";
 import type { CajaCruce, LookCruzado, ResumenCruce } from "@/lib/comparador/cruce";
 import type { PrendaUI } from "@/lib/comparador/motor-servidor";
+import { formalidadLegible } from "@/lib/formalidad";
 import { calificarJuez } from "../../../motor-actions";
 
 // CALIFICAR AL JUEZ, look por look, con el look a la vista.
@@ -34,10 +35,13 @@ function Tarjeta({
   look,
   prendas,
   etiqueta,
+  gender,
 }: {
   look: LookCruzado;
   prendas: Record<string, PrendaUI>;
   etiqueta: string;
+  /** El ancla concreta de la formalidad es por género (ver lib/formalidad). */
+  gender: "hombre" | "mujer" | null;
 }) {
   const [v, setV] = useState(look.veredicto?.v ?? null);
   const [nota, setNota] = useState(look.veredicto?.nota ?? "");
@@ -72,6 +76,32 @@ function Tarjeta({
         <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted">
           par {look.parN} · {etiqueta}
         </span>
+      </div>
+
+      {/* PARA QUÉ SE PIDIÓ ESTE LOOK. Sin esto no se puede calificar un
+          hallazgo: "rompe el clima" es justo con 8°C y lluvia e injusto con
+          24°C despejado. Va en cada tarjeta y no en un encabezado porque el
+          cruce agrupa por caja, no por par — dos tarjetas vecinas pueden venir
+          de briefs opuestos. Roberto: "no quitaste esa información, entonces me
+          es complicado el evaluar sin ese contexto completo". */}
+      <div className="flex flex-col gap-0.5 rounded-sm bg-tile px-2 py-1.5">
+        <p className="text-[11px] font-semibold leading-tight text-ink">
+          {look.brief.etiqueta}
+          {formalidadLegible(look.brief.formality ?? null, gender) ? (
+            <span className="font-normal text-muted">
+              {" · "}
+              {formalidadLegible(look.brief.formality ?? null, gender)}
+            </span>
+          ) : null}
+        </p>
+        {look.brief.plan ? (
+          <p className="text-[11px] leading-tight text-muted">
+            Pidió: “{look.brief.plan}”
+          </p>
+        ) : null}
+        {look.brief.paraguas ? (
+          <p className="text-[11px] leading-tight text-muted">lleva paraguas</p>
+        ) : null}
       </div>
 
       {/* Las prendas EN GRANDE y con su nombre al pasar el mouse. A 56px no se
@@ -207,10 +237,12 @@ export function CruceClient({
   resumen,
   prendas,
   etiquetas,
+  gender,
 }: {
   resumen: ResumenCruce;
   prendas: Record<string, PrendaUI>;
   etiquetas: Record<string, string>;
+  gender: "hombre" | "mujer" | null;
 }) {
   const { conteo } = resumen;
   return (
@@ -257,6 +289,7 @@ export function CruceClient({
                     look={l}
                     prendas={prendas}
                     etiqueta={etiquetas[l.variante] ?? l.variante}
+                    gender={gender}
                   />
                 ))}
               </div>

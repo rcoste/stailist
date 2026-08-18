@@ -87,7 +87,12 @@ export default async function CruceDeCorrida({
           </p>
         </div>
       ) : (
-        <CruceClient resumen={resumen} prendas={corrida.prendas} etiquetas={etiquetas} />
+        <CruceClient
+          resumen={resumen}
+          prendas={corrida.prendas}
+          etiquetas={etiquetas}
+          gender={corrida.closetGender}
+        />
       )}
     </div>
   );

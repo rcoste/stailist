@@ -1,3 +1,4 @@
+import type { BriefMotor } from "./motor";
 import type { CorridaMotorCargada } from "./motor-servidor";
 
 // ¿EL JUEZ VE LO QUE VE ROBERTO? El cruce que ningún juez puede hacer solo.
@@ -29,6 +30,15 @@ export type LookCruzado = {
   indice: number;
   nombre: string;
   itemIds: string[];
+  /**
+   * EL BRIEF QUE PIDIÓ ESTE LOOK, en la tarjeta. Sin él no se puede calificar
+   * un hallazgo: "rompe el clima" es justo o injusto según si el brief decía
+   * 8°C con lluvia o 24°C despejado, y las tarjetas del cruce están agrupadas
+   * por caja, no por par — así que el contexto no se puede leer del encabezado
+   * como en la pantalla de votar. Roberto: "no quitaste esa información,
+   * entonces me es complicado el evaluar sin ese contexto completo".
+   */
+  brief: BriefMotor;
   caja: CajaCruce;
   /** Lo que puso la persona. */
   humano: {
@@ -103,6 +113,7 @@ export function cruzarCorrida(corrida: CorridaMotorCargada): ResumenCruce {
           indice: i,
           nombre: lk.nombre,
           itemIds: lk.item_ids ?? [],
+          brief: par.brief,
           caja,
           humano: { marca, defectos, comentario },
           juez: {
