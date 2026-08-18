@@ -6,7 +6,6 @@ import { Icon } from "@/components/icon";
 import { FavoriteButton } from "@/components/favorite-button";
 import { CoachPie } from "@/components/coach-pie";
 import { PrendasGrid } from "@/components/prendas-grid";
-import { veredictoDeTraje } from "@/lib/traje";
 import { TryonView, type TryonPrenda } from "@/components/tryon-view";
 
 // Detalle del look (handoff design_handoff_look_detalle + design_handoff_try_on).
@@ -224,13 +223,14 @@ export function LookDetail({
                 diga "esto está mal" sin nada que puedas hacer con él sólo
                 quita confianza. El caso malo lo ataja antes la regla
                 `saco-de-traje-suelto` (v0.2.242.0), y el comparador —que sí es
-                para evaluar— sigue enseñando las tres respuestas. */}
-            {veredictoDeTraje(prendas.map((p, i) => ({ ...p, id: String(i) })))?.tipo ===
-            "completo" ? (
-              <p className="mb-2 shrink-0 text-center text-[12px] font-semibold tracking-tight text-muted">
-                traje completo
-              </p>
-            ) : null}
+                para evaluar— sigue enseñando las tres respuestas.
+
+                Y DESDE QUE EL PAR SE DIBUJA JUNTO, esa confirmación ya no se
+                escribe: `PrendasGrid` agrupa las dos piezas en una celda con su
+                pie ("Traje gris carbón"), así que la etiqueta repetía en texto
+                lo que la retícula enseña. Era además la parte que no funcionaba
+                — Roberto: "ya se ve que sí son del mismo color, pero quedamos
+                que los ibas a englobar". */}
             {/* La retícula toma el alto flexible y se ajusta para que quepa. */}
             <div className="min-h-0 flex-1">
               <PrendasGrid prendas={prendas} />

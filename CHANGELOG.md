@@ -2,6 +2,43 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.259.0] - 2026-08-18
+
+### Changed — el traje se ve como un traje, no como dos prendas que combinan
+
+Cuando un look lleva saco y pantalón del mismo traje, las dos piezas ahora
+comparten una sola celda con un pie común ("Traje gris carbón"). El look deja de
+enseñarte cinco cosas sueltas: te enseña cuatro, y una de ellas es un traje.
+
+Sale de Roberto mirando un look y sin poder contestarse la pregunta obvia:
+"ahí dice que son de traje los dos, pero… me gustaría ver si sí son del par que
+corresponden". La etiqueta "traje completo" ya lo decía y era correcta, pero es
+texto flotante encima de una cuadrícula: el ojo no la conecta con QUÉ dos fotos.
+De tres tratamientos prototipados —recuadro alrededor del par, marca compartida
+en cada pieza, y el par en una celda— se eligió el tercero: es el único que no
+agrega adorno. Un traje ES una prenda.
+
+Con eso, la etiqueta "traje completo" se retiró: repetía en texto lo que la
+retícula ya enseña. Los avisos de "traje parchado" y "X sin su par" siguen donde
+estaban — esos no se ven solos y son el error que engaña, dos grises plausibles.
+
+Sale en las cuatro pantallas de una vez (detalle del look, cápsula, viaje y el
+comparador) porque las cuatro comparten la misma retícula.
+
+Dos decisiones que se ven poco y sostienen el resto:
+
+- **El nombre del par sale de lo que las dos piezas comparten**, sin plantilla
+  ni lista: "Saco de traje gris carbón" + "Pantalón de traje gris carbón" dan
+  "Traje gris carbón", y el smoking y el traje sastre de mujer funcionan igual
+  sin nombrarlos. Con menos de dos palabras en común se rinde y dice "Traje
+  completo" — las prendas de foto llevan el nombre que la persona quiso, y
+  titular una celda "Azul" es peor que no titularla.
+- **Afirma, nunca niega.** Sólo 12 de 870 prendas de la base traen el lazo del
+  traje (lo tienen las de catálogo; las de foto lo ponen a mano al darlas de
+  alta). Sin lazo todo se dibuja igual que siempre, así que la AUSENCIA de
+  agrupación significa "no sabemos" y no "no son del mismo traje". Un traje a
+  medias tampoco se agrupa: sin su pantalón, el saco es una prenda suelta.
+
 ## [0.2.258.0] - 2026-08-18
 
 ### Fixed — los trajes del catálogo no eran del mismo tejido
