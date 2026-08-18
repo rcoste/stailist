@@ -3,6 +3,7 @@
 // Salida: public/archetypes/<slug>.png. Secuencial para no chocar con el
 // rate limit de Gemini. Reusa el mismo wrapper que scripts/gen-image.mjs.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import sharp from "sharp";
 
 const envLine = readFileSync(".env.local", "utf8")
   .split("\n")
@@ -386,6 +387,158 @@ function buildPrompt({ desc, type }) {
     return `Professional e-commerce flat lay photograph of ${desc}, neatly laid flat and slightly styled, shot directly from above. Soft, even, neutral diffused lighting. The garment casts a soft but clearly defined contact shadow that gently separates its silhouette from the background. Plain de-warmed off-white paper background, exact hex F4F3F1, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The garment fills about 70% of the frame, centered. No people, no props, no text, no labels.`;
   }
   return `Professional e-commerce flat lay photograph of ${desc}, neatly laid flat and slightly styled, shot directly from above. Soft natural diffused lighting, subtle soft shadow. Plain warm off-white paper background, exact hex F5F3F0, completely clean and empty. Premium minimalist editorial catalog style, like COS or Arket product photography. The garment fills about 70% of the frame, centered. No people, no props, no text, no labels.`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOS CONJUNTOS: un traje se genera COMO PAR, no como dos prendas sueltas.
+//
+// EL DEFECTO QUE ARREGLA, cazado por Roberto a ojo el 2026-08-18 mirando un
+// look del comparador: su saco y su pantalón "gris carbón" no se veían del
+// mismo traje. Medido —promedio de luminancia del tejido, descartando el
+// fondo— seis de los nueve conjuntos del catálogo estaban descuadrados, y dos
+// de ellos por 26 puntos. Los conjuntos sanos miden 2.
+//
+// LA CAUSA no era el prompt: era que cada pieza se generaba en una llamada
+// INDEPENDIENTE a partir de una descripción de texto. "charcoal grey wool"
+// no es una instrucción reproducible — dos llamadas dan dos grises. Y no es
+// física de la prenda (un saco tiene más sombra que un pantalón): el traje
+// negro y el gris claro salieron con Δ2 del mismo pipeline.
+//
+// LA SOLUCIÓN es quitar el texto de en medio: el saco se genera normal, y el
+// PANTALÓN se genera pasándole la imagen del saco como referencia. El modelo
+// copia un tejido que ya existe en vez de interpretar un adjetivo.
+//
+// Y LA ELECCIÓN ES POR MEDICIÓN, NO POR GUSTO: la generación no es
+// determinista, así que se intenta hasta 3 veces y se conserva el intento cuyo
+// tejido quede más cerca del saco. Sin esto habría que elegir a ojo, que es
+// justo el trabajo que este script existe para no hacer.
+//
+// OJO CON EL SMOKING: su Δ no se puede leer igual. La solapa de satín es un
+// área grande y brillante que sube el promedio del saco, mientras el pantalón
+// sólo lleva el galón. Ese par se valida mirando, no midiendo.
+//
+// Se corre APARTE (`--conjuntos`) por lo mismo que existe `flat-sombra`: las
+// imágenes ya curadas no se regeneran de rebote, porque Gemini no es
+// determinista y algunas saldrían peor.
+const CONJUNTOS = [
+  { saco: "saco-traje-carbon", pant: "pantalon-traje-carbon",
+    tela: "charcoal grey wool with a fine subtle weave",
+    dSaco: "a charcoal grey men's wool suit jacket, single-breasted with notch lapels and two buttons, tailored",
+    dPant: "a pair of charcoal grey men's wool suit trousers, straight leg with a crisp centre crease" },
+  { saco: "saco-traje-marino", pant: "pantalon-traje-marino",
+    tela: "navy blue wool with a fine subtle weave",
+    dSaco: "a navy blue men's wool suit jacket, single-breasted with notch lapels and two buttons, tailored",
+    dPant: "a pair of navy blue men's wool suit trousers, straight leg with a crisp centre crease" },
+  { saco: "saco-traje-arena", pant: "pantalon-traje-arena",
+    tela: "sand beige lightweight wool with a fine subtle weave",
+    dSaco: "a sand beige men's suit jacket, single-breasted with notch lapels and two buttons, tailored",
+    dPant: "a pair of sand beige men's suit trousers, straight leg with a crisp centre crease" },
+  { saco: "saco-traje-azul-claro", pant: "pantalon-traje-azul-claro",
+    tela: "light blue lightweight wool with a fine subtle weave",
+    dSaco: "a light blue men's suit jacket, single-breasted with notch lapels and two buttons, tailored",
+    dPant: "a pair of light blue men's suit trousers, straight leg with a crisp centre crease" },
+  { saco: "saco-smoking-negro", pant: "pantalon-smoking-negro",
+    tela: "black wool tuxedo cloth with satin facings",
+    dSaco: "a black men's tuxedo dinner jacket, single-button, with black satin peak lapels, tailored",
+    dPant: "a pair of black men's tuxedo trousers with a black satin stripe (galón) running down the outer side of each leg" },
+  { saco: "saco-traje-sastre-negro-m", pant: "pantalon-traje-sastre-negro-m",
+    tela: "black wool suiting with a fine subtle weave",
+    dSaco: "a black WOMEN'S tailored suit blazer, distinctly feminine tailoring: slim narrow notch lapels, a clearly nipped-in waist shaped by bust and waist darts, narrow softly rounded shoulders, single-button closure, short hip-length hem. It is unmistakably a woman's blazer, NOT a men's suit jacket and not oversized or boxy",
+    dPant: "a pair of black WOMEN'S tailored suit trousers, distinctly feminine tailoring: high waist, fitted through the hip, fluid straight wide leg falling to a cropped ankle length. Unmistakably women's tailoring, NOT men's dress trousers" },
+];
+
+// El pantalón VERTICAL: ya fue un arreglo del catálogo — uno horizontal entre
+// veinte verticales se lee como un error de la app, no como una prenda.
+const VERTICAL =
+  ", laid flat VERTICALLY and oriented from top to bottom of the frame: waistband at the top, both legs together pointing straight down, hems at the bottom";
+
+/** La luminancia media del TEJIDO, descartando el fondo (claro y uniforme).
+ *  Sin descartarlo, el pantalón siempre mide más claro que el saco: ocupa
+ *  menos cuadro y el promedio se llena de papel. */
+async function lumTejido(buf) {
+  const { data, info } = await sharp(buf).removeAlpha()
+    .resize(300, 300, { fit: "inside" }).raw().toBuffer({ resolveWithObject: true });
+  const px = [];
+  for (let i = 0; i < data.length; i += info.channels) px.push([data[i], data[i + 1], data[i + 2]]);
+  const lum = (q) => 0.2126 * q[0] + 0.7152 * q[1] + 0.0722 * q[2];
+  const ordenadas = px.map(lum).sort((a, b) => a - b);
+  const fondo = ordenadas[Math.floor(ordenadas.length * 0.9)];
+  const tejido = px.filter((q) => lum(q) < fondo - 18);
+  if (!tejido.length) return null;
+  const medio = [0, 1, 2].map((c) => Math.round(tejido.reduce((a, q) => a + q[c], 0) / tejido.length));
+  return Math.round(lum(medio));
+}
+
+async function generarImagen(prompt, refB64) {
+  const parts = [{ text: prompt }];
+  if (refB64) parts.unshift({ inlineData: { mimeType: "image/png", data: refB64 } });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
+    { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: "1:1" } } }) }
+  );
+  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 150)}`);
+  const data = await res.json();
+  const part = data?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
+  if (!part) throw new Error("sin imagen");
+  return part.inlineData.data;
+}
+
+async function generarConjuntos() {
+  for (const c of CONJUNTOS) {
+    try {
+      const saco = await generarImagen(buildPrompt({ desc: c.dSaco, type: "flat" }));
+      const objetivo = await lumTejido(Buffer.from(saco, "base64"));
+      // Sin medida del saco no hay contra qué comparar el pantalón, y seguir
+      // sería pagar tres llamadas para elegir al azar: la resta daría NaN y
+      // `d < mejor.d` es falso para NaN, así que "el mejor intento" quedaría
+      // vacío. Se aborta este conjunto y se conserva el par viejo del catálogo.
+      if (objetivo === null) throw new Error("no pude medir el tejido del saco");
+      console.log(`OK ${c.saco} (tejido ${objetivo})`);
+
+      const promptPant =
+        `The attached image shows the matching jacket. Produce the trousers of that SAME suit: ${c.dPant}${VERTICAL}. ` +
+        `CRITICAL: fabric colour, tone, weave texture and lighting must be IDENTICAL to the attached jacket — same bolt of cloth (${c.tela}), same exposure, same shadow depth. Do not lighten the fabric. ` +
+        buildPrompt({ desc: "the garment", type: "flat" });
+
+      let mejor = null;
+      for (let i = 1; i <= 3; i++) {
+        const buf = Buffer.from(await generarImagen(promptPant, saco), "base64");
+        const medida = await lumTejido(buf);
+        // Un intento que no se puede medir no compite: entra sólo si no hay
+        // nada mejor, y con Infinity para que cualquier medida real lo gane.
+        const d = medida === null ? Infinity : Math.abs(medida - objetivo);
+        console.log(`   ${c.pant} intento ${i}: ${d === Infinity ? "sin medida" : `Δ${d}`}`);
+        if (!mejor || d < mejor.d) mejor = { buf, d };
+        if (d <= 8) break;
+      }
+
+      // LOS DOS SE ESCRIBEN JUNTOS, AL FINAL. Guardar el saco antes de tener su
+      // pantalón deja el catálogo con el saco NUEVO y el pantalón VIEJO si la
+      // segunda mitad falla — que es exactamente el descuadre que este código
+      // existe para evitar, causado por el código que lo evita.
+      await guardarCatalogo(`public/archetypes/${c.saco}.png`, saco);
+      await guardarCatalogo(`public/archetypes/${c.pant}.png`, mejor.buf);
+      console.log(`   → ${c.pant} con ${mejor.d === Infinity ? "sin medida" : `Δ${mejor.d}`}`);
+    } catch (e) {
+      console.error(`FALLÓ ${c.saco}: ${e.message} (el par viejo se queda intacto)`);
+    }
+  }
+}
+
+/** El formato del catálogo: PNG de 900px con paleta de 8 bits. El modelo
+ *  devuelve JPEG de 1024 y sin esto pesaría 6 veces más — ancho de banda que
+ *  se le sirve a todo el mundo por un tono que el ojo no distingue. */
+async function guardarCatalogo(ruta, entrada) {
+  const buf = typeof entrada === "string" ? Buffer.from(entrada, "base64") : entrada;
+  await sharp(buf).resize(900, 900, { fit: "inside" })
+    .png({ palette: true, quality: 92, effort: 9 }).toFile(ruta);
+}
+
+if (process.argv.includes("--conjuntos")) {
+  await generarConjuntos();
+  console.log("LISTO: conjuntos regenerados");
+  process.exit(0);
 }
 
 mkdirSync("public/archetypes", { recursive: true });
