@@ -74,20 +74,27 @@ function Tarjeta({
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-1">
+      {/* Las prendas EN GRANDE y con su nombre al pasar el mouse. A 56px no se
+          distinguía un mocasín de un botín, que es justo lo que hay que ver
+          para calificar un hallazgo sobre el calzado. Y el nombre iba en el
+          `title` del navegador: tarda ~1s en salir y la mitad de las veces no
+          aparece — o sea, el dato existía y no se leía. */}
+      <div className="flex flex-wrap gap-1.5">
         {look.itemIds.map((id) => {
           const p = prendas[id];
           return (
             <span
               key={id}
-              title={p?.nombre}
-              className="relative block h-14 w-14 overflow-hidden rounded-sm border border-line bg-tile"
+              className="group relative block h-24 w-24 overflow-hidden rounded-sm border border-line bg-tile"
             >
               {p?.imagen ? (
-                <Image src={p.imagen} alt={p.nombre} fill sizes="56px" className="object-cover" />
+                <Image src={p.imagen} alt={p.nombre} fill sizes="96px" className="object-cover" />
               ) : (
                 <span className="absolute inset-0" style={{ backgroundColor: p?.swatch }} aria-hidden />
               )}
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/[0.72] via-black/[0.4] to-transparent px-1.5 pb-1 pt-4 text-[10px] font-semibold leading-tight text-white opacity-0 transition-opacity group-hover:opacity-100">
+                {p?.nombre ?? "sin nombre"}
+              </span>
             </span>
           );
         })}

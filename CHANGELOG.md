@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.260.1] - 2026-08-18
+
+### Fixed — las prendas del cruce se ven, y dicen cómo se llaman
+
+En la pantalla de calificar al juez los thumbnails medían 56px: a ese tamaño no
+se distingue un mocasín de un botín, que es exactamente lo que hay que ver para
+calificar un hallazgo sobre el calzado. Ahora miden 96px. Y el nombre de la
+prenda vivía en el `title` del navegador —tarda ~1s en salir y la mitad de las
+veces no aparece—; ahora es una etiqueta propia que aparece sobre la foto al
+pasar el mouse. Roberto: "están demasiado chicos… sería lo ideal que si le hago
+el hover pudiera ver que diga 'zapatos cafés'".
+
 ## [0.2.260.0] - 2026-08-18
 
 ### Added — calificar al juez, no al look
