@@ -71,7 +71,7 @@ const REGLAS: [RegExp, string, Zona][] = [
   [/traje de bano|banador|bikini|trikini|de bano|short(s)? de playa/, "bano", "no-calle"],
   [/pijama|piyama|camison|bata de bano|albornoz/, "dormir", "no-calle"],
   [/calzon|calzoncillo|boxer|brasier|sosten|tanga|bralette/, "interior", "no-calle"],
-  [/\bgym\b|gimnasio|entrenamiento|running|para correr|de yoga|sports bra/, "gym", "no-calle"],
+  [/\bgym\b|gimnasio|entrenamiento|running|para correr|de yoga|sports bra|top deportivo/, "gym", "no-calle"],
 
   // --- CUERPO ENTERO: resuelven dos zonas. Van antes que torso y capa porque
   // "traje" cazaría "saco de traje" y "vestido camisero" cazaría "camisa".
@@ -114,6 +114,28 @@ const REGLAS: [RegExp, string, Zona][] = [
   // camiseta va primero por si algún nombre trae las dos palabras.
   [/camiseta|playera|\btee\b|\bt-shirt/, "camiseta", "torso"],
   [/\btank\b|sin manga/, "tank", "torso"],
+
+  // --- TORSO DEL GUARDARROPA FEMENINO. Faltaba ENTERO, y no era un hueco
+  // menor: sobre 842 prendas reales el vocabulario reconocía el 100% de la ropa
+  // de hombre y el 81.5% de la de mujer. Las 99 que fallaban eran casi todas
+  // esto — blusa, top, body, corsé — más los tacones y las bailarinas de abajo.
+  //
+  // LO QUE ROMPÍA, y está medido: `zona-duplicada` pregunta por ZONA, así que
+  // dos "Tacón" en el mismo look pasaban sin marcarse y dos "Blusa" también. El
+  // MISMO error de estilismo se cazaba en un clóset de hombre y se ignoraba en
+  // uno de mujer.
+  //
+  // ORDEN: van antes de "camisa" porque "Blusa negra de seda con cuello
+  // camisero" trae las dos ideas y manda la blusa. Y "top" va después de "tank"
+  // por si un nombre trae "tank top".
+  [/\bblusa\b/, "blusa", "torso"],
+  [/crop top|top corto/, "crop-top", "torso"],
+  [/\bbody\b|bodysuit|leotardo/, "body", "torso"],
+  [/cors[eé]|bustier/, "corse", "torso"],
+  // `\btop\b` con frontera a los dos lados: sin ella "topsider" (el náutico, más
+  // abajo) se leería como torso. Con ella no casa — después de "top" viene una
+  // letra, no un límite de palabra.
+  [/\btop\b/, "top", "torso"],
   [/camisa .*(oxford)|oxford.*camisa|camisa oxford/, "camisa-oxford", "torso"],
   [/camisa de (mezclilla|denim)/, "camisa-mezclilla", "torso"],
   [/camisa|\bshirt\b/, "camisa", "torso"],
@@ -149,6 +171,11 @@ const REGLAS: [RegExp, string, Zona][] = [
   [/n[aá]utico|boat shoe|topsider/, "nautico", "pie"],
   [/sandalia|hurache|huarache/, "sandalia", "pie"],
   [/bota|bot[ií]n|chelsea|chukka|desert/, "bota", "pie"],
+  // Calzado femenino, que faltaba completo. Va ANTES de "tenis" porque
+  // "Zapatillas de tacón" trae "zapatilla" y sin esto caía en tenis.
+  [/tac[oó]n|tacones|stiletto/, "tacon", "pie"],
+  [/\bflats\b|bailarina|ballerina|mary ?jane/, "flats", "pie"],
+  [/\bmule/, "mule", "pie"],
   [/tenis|sneaker|zapatilla deportiva/, "tenis", "pie"],
   [/oxford|derby|brogue|zapato (formal|de vestir)|charol/, "zapato-formal", "pie"],
   [/zapato/, "zapato-formal", "pie"],
@@ -166,10 +193,10 @@ const REGLAS: [RegExp, string, Zona][] = [
   // "riñonera" no se reconocían hasta que se corrió contra el catálogo real.
   // ("mono" no colisiona con el mono/jumpsuit: no existe en el catálogo.)
   [/corbata|\bmono\b|pajarita/, "corbata", "accesorio"],
-  [/bolsa|bolso|mochila|tote|rinonera|crossbody|bandolera|portafolio|maletin/, "bolsa", "accesorio"],
+  [/bolsa|bolso|mochila|tote|rinonera|crossbody|bandolera|portafolio|maletin|clutch/, "bolsa", "accesorio"],
   [/calcet|medias/, "calcetin", "accesorio"],
   [/guante/, "guantes", "accesorio"],
-  [/collar|arete|anillo|pulsera|cadena/, "joyeria", "accesorio"],
+  [/collar|arete|anillo|pulsera|cadena|arracada|brazalete|gargantilla|choker/, "joyeria", "accesorio"],
 ];
 
 const normaliza = (s: string) =>
