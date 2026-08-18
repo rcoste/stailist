@@ -332,6 +332,37 @@ const ITEMS = [
   { slug: "top-deportivo-olivo-m", desc: "a sage olive green women's athletic sports bra top, wide supportive straps, scoop neckline, buttery matte performance fabric, neatly laid flat", type: "flat-sombra" },
   { slug: "top-deportivo-lavanda-m", desc: "a soft lavender lilac women's athletic sports bra top, wide supportive straps, scoop neckline, buttery matte performance fabric, neatly laid flat", type: "flat-sombra" },
   { slug: "top-deportivo-crema-m", desc: "a warm cream ivory women's athletic sports bra top, wide supportive straps, scoop neckline, buttery matte performance fabric, neatly laid flat", type: "flat-sombra" },
+  // === LOS TRAJES QUE FALTABAN (2026-08-17) — los dos huecos que dejó abierta
+  // la pestaña "Trajes" el día que se shippeó.
+  //
+  // 1) EL NEGRO DE HOMBRE. Roberto lo pidió por nombre ("un traje azul marino,
+  //    uno gris y uno negro") y no existía: el catálogo tenía marino, carbón,
+  //    gris claro, arena, azul claro y esmoquin. El esmoquin NO lo sustituye —
+  //    es ropa de celebración, y para un velorio `lib/eventos.ts` exige negro y
+  //    prohíbe explícitamente el esmoquin. Sin traje negro, ese evento se
+  //    resolvía con piezas sueltas.
+  //
+  // 2) LOS DE MUJER. Había once blazers sueltos y CERO pares saco+pantalón, así
+  //    que la pestaña Trajes no le aparecía a ninguna usuaria — y las que de
+  //    verdad usan la app son mujeres. Es el mismo sesgo que ya documentó el
+  //    audit de género de julio (22 formales de hombre contra 7 de mujer).
+  //
+  // EL CORTE VA DESCRITO, no asumido. Roberto: "que no parezca traje de hombre
+  // sobre mujer". Un flat-lay no tiene cuerpo que corrija la silueta, así que
+  // lo femenino tiene que estar en la prenda misma o no está: solapa angosta,
+  // cintura entrada con pinzas de busto, hombro estrecho, largo a la cadera, y
+  // el pantalón de tiro alto con caída fluida. Va dicho en positivo Y en
+  // negativo ("not a men's...") porque el default del generador para "suit" es
+  // masculino — el mismo default que ya me han corregido tres veces.
+  { slug: "saco-traje-negro", desc: "a black men's tailored suit jacket, single-breasted with a notch lapel and two buttons, structured shoulder, wool, neatly laid flat", type: "flat" },
+  // La orientación va DICHA. "laid flat lengthwise" —que basta para el resto
+  // del catálogo— salió acostado de lado en este, y un pantalón horizontal
+  // entre veinte verticales se ve como un error de la app, no como una prenda.
+  { slug: "pantalon-traje-negro", desc: "a pair of black men's wool suit trousers, straight leg with a crisp crease, laid flat VERTICALLY and oriented from top to bottom of the frame: waistband at the top, both legs together pointing straight down, hems at the bottom", type: "flat" },
+  { slug: "saco-traje-sastre-negro-m", desc: "a black WOMEN'S tailored suit blazer, distinctly feminine tailoring: slim narrow notch lapels, a clearly nipped-in waist shaped by bust and waist darts, narrow softly rounded shoulders, single-button closure, short hip-length hem. It is unmistakably a woman's blazer, NOT a men's suit jacket and not oversized or boxy. Neatly laid flat", type: "flat" },
+  { slug: "pantalon-traje-sastre-negro-m", desc: "a pair of black WOMEN'S tailored suit trousers, distinctly feminine tailoring: high waist, fitted through the hip, fluid straight wide leg falling to a cropped ankle length. Unmistakably women's tailoring, NOT men's dress trousers. Neatly laid flat lengthwise", type: "flat" },
+  { slug: "saco-traje-sastre-marino-m", desc: "a navy blue WOMEN'S tailored suit blazer, distinctly feminine tailoring: slim narrow notch lapels, a clearly nipped-in waist shaped by bust and waist darts, narrow softly rounded shoulders, single-button closure, short hip-length hem. It is unmistakably a woman's blazer, NOT a men's suit jacket and not oversized or boxy. Neatly laid flat", type: "flat" },
+  { slug: "pantalon-traje-sastre-marino-m", desc: "a pair of navy blue WOMEN'S tailored suit trousers, distinctly feminine tailoring: high waist, fitted through the hip, fluid straight wide leg falling to a cropped ankle length. Unmistakably women's tailoring, NOT men's dress trousers. Neatly laid flat lengthwise", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
