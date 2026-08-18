@@ -2,6 +2,82 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.254.0] - 2026-08-18
+
+### Fixed — el juez stylist encontraba algo en el 100% de los looks
+
+La primera corrida real (vistazo de 6 pares, $1.25) midió dos fallos del juez
+que nació ayer. Ninguno era supuesto:
+
+**1. Marcaba todo.** 14 de 14 looks en un lado y 15 de 15 en el otro. El prompt
+ya le decía que devolviera lista vacía si el look estaba bien resuelto, y no lo
+hizo ni una vez. Un revisor que siempre encuentra algo no prioriza nada.
+
+El arreglo no fue repetirle la instrucción más fuerte, sino **darle la tasa
+base**: sobre los 62 looks que Roberto calificó a mano en los evales, aprobó 54
+— el 87%. Un juez que marca el 100% no está viendo lo que ve la persona para la
+que trabaja. Ahora la vara dice eso con el número, reserva "rompe" para lo que
+haría detener a alguien en la puerta, y declara que devolver la lista vacía es
+la respuesta correcta y frecuente.
+
+**2. Repetía un mito que esta casa ya desmintió.** Marcó en rojo *"blazer marino
+con pantalón negro es un error de paleta"*. Esa regla se metió al prompt del
+motor en `v5` y se **revirtió en `v6`** tras investigarla. Un juez que trae
+sabiduría convencional sin medir vale menos que no tener juez: manda a arreglar
+lo que está bien. Ahora lleva la lista de lo que aquí ya se midió y resultó
+falso — marino con negro, café con gris, un neutro cerca de la cara, y el
+vestir tonal.
+
+**El resultado, sobre los MISMOS looks** (se volvió a juzgar la misma corrida,
+así que la comparación es limpia):
+
+| | js1 | js2 |
+|---|---|---|
+| Producción, looks con hallazgos | 14/14 (100%) | **9/14** |
+| Producción, fallos que rompen | 4 | **0** |
+| Ablación, looks con hallazgos | 15/15 (100%) | **11/15** |
+| Ablación, fallos que rompen | 4 | **3** |
+
+Y el mito quedó corregido con precisión: la única mención que sobrevive es
+naranja, no roja, y critica la combinación de tres piezas (blazer marino +
+pantalón negro + zapato café) en un evento formal de noche — que es un error
+real y ya tiene regla propia.
+
+### Fixed — el laboratorio medía la mitad del producto (pool v7)
+
+La pantalla de "¿qué plan tienes?" ofrece **seis planes sociales de un toque** y
+el pool del comparador sólo medía **tres**. Una cita, una fiesta y una comida de
+trabajo **nunca se habían medido**, aunque el motor lleva días sabiéndolas
+resolver. Y al revés: el pool sí medía `funeral`, que ni siquiera está en esa
+pantalla — sólo se alcanza escribiéndolo en el texto libre.
+
+Los tres que faltaban son además la franja con más margen de error: no hay
+código de vestimenta duro que proteja al motor, así que un fallo ahí no rompe
+una regla, entrega algo aburrido — la nota que ya sale más baja (`wow`). El
+vistazo que se corrió salió sesgado a lo formal (boda, funeral), y de ahí que
+los hallazgos más graves fueran corbatas y zapatos de vestir.
+
+Van al **final** del pool a propósito: el vistazo toma los primeros 6 y ésos
+están curados como prueba de humo de los caminos diarios. Los nuevos se miden
+en el veredicto, que es donde se decide.
+
+`POOL_VERSION` sube a `v7`, con el costo dicho: las corridas nuevas dejan de
+compararse con las viejas. Es el precio correcto — seguir midiendo con un pool
+que ignora la mitad de la pantalla es peor que perder comparabilidad con
+corridas de un motor que ya cambió.
+
+### Added — el candado para que el pool no vuelva a quedarse atrás
+
+`lib/comparador/pool-cobertura.test.ts` compara los planes que la app ofrece
+(`PLANES_VISIBLES`) contra los que el pool mide. Nadie cazó este hueco porque
+no había nada que lo cazara: agregar un plan a la app y no agregarlo al pool no
+rompe ningún test, no truena el build y no se ve en ninguna pantalla — sólo hace
+que las corridas midan un motor que no es el que corre.
+
+Verificado por mutación: al apuntar un brief a un tipo inexistente, el test se
+pone rojo nombrando el plan que falta y diciendo que hay que subir
+`POOL_VERSION`.
+
 ## [0.2.253.0] - 2026-08-18
 
 ### Added — los jueces hacen la revisión que se hacía a mano
