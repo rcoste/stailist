@@ -226,6 +226,21 @@ const CLIMAS = {
  * medía. Salió del veredicto de Gemini: 4 de sus 6 defectos de clima fueron
  * lluvia, y producción también falló ahí.
  *
+ * v7 → v8 (2026-08-18, el mismo día): la CITA entra al vistazo, en el lugar
+ * de "diario · templado".
+ *
+ * POR QUÉ SE PUEDE TOCAR EL VISTAZO Y NO EL VEREDICTO: la comparabilidad
+ * histórica que esta versión protege es la de la tabla "qué modelo usamos", y
+ * esa la alimenta el veredicto. El vistazo NUNCA declara ganador — existe para
+ * encontrar defectos, y un vistazo de hace dos semanas no se compara con uno de
+ * hoy. Dejarle un slot muerto por conservadurismo era proteger algo que no
+ * existe.
+ *
+ * Y el slot estaba muerto: de los seis del vistazo, cinco ejercitan algo
+ * (oficina, boda, frío, calor, lluvia) y "diario · templado" no ejercitaba
+ * nada — sin plan, sin formalidad, sin regla de clima. Baja al 14, donde el
+ * veredicto lo sigue corriendo.
+ *
  * v6 → v7 (2026-08-18): entran los TRES planes que la app ofrece de un toque y
  * el pool nunca midió — una cita, una fiesta y una comida de trabajo. No es un
  * refinamiento: la pantalla de "¿qué plan tienes?" ofrece seis planes sociales
@@ -263,7 +278,7 @@ const CLIMAS = {
  * criterio. Y entra un PAR ESPEJO a mismo clima (templado con cliente / sin
  * cliente): solo cambia el flag, así que mide directo si el motor distingue.
  */
-export const POOL_VERSION = "v7";
+export const POOL_VERSION = "v8";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -286,7 +301,37 @@ export const POOL_VERSION = "v7";
  * que nunca se había medido.
  */
 const POOL_BRIEFS: BriefMotor[] = [
-  { etiqueta: "diario · templado", objective: "diario", momento: "dia", weather: CLIMAS.templado },
+  {
+    // EN EL LUGAR 1 A PROPÓSITO (v8), o sea DENTRO del vistazo: este slot lo
+    // ocupaba "diario · templado", el único de los seis que no ejercitaba nada.
+    // Los otros cinco sí ganan su lugar (oficina, boda, frío, calor, lluvia) y
+    // las otras dos ranuras de diario del vistazo siguen intactas.
+    //
+    // La cita es la más valiosa de las que nunca se medían: arreglarse ES el
+    // punto y no hay código de vestimenta duro que proteja al motor. Si falla
+    // aquí no rompe una regla, entrega algo aburrido.
+    // LOS TRES PLANES QUE LA APP OFRECE DE UN TOQUE Y EL POOL NUNCA MIDIÓ (v7).
+    // La pantalla de "¿qué plan tienes?" ofrece seis planes sociales y el pool
+    // sólo probaba tres. Los otros tres no son un hueco cualquiera: son la
+    // franja donde el motor tiene MÁS margen de error, porque no hay código de
+    // vestimenta duro que lo proteja. Si se equivoca aquí no rompe una regla —
+    // entrega algo aburrido, que es justo la nota que sale más baja (wow).
+    //
+    // Y al revés: el pool sí medía `funeral`, que ni siquiera está en esa
+    // pantalla (sólo se alcanza escribiéndolo). Se queda, porque su valor está
+    // escrito arriba y es real, pero deja de ser el único evento raro medido
+    // mientras tres de un toque no lo estaban.
+    //
+    // La formalidad de cada uno NO se inventa aquí: es la del catálogo
+    // (lib/eventos.ts), la misma que producción le pasa al motor.
+    etiqueta: "cita · noche templada",
+    objective: "evento",
+    momento: "noche",
+    weather: CLIMAS.templado,
+    plan: "una cita en un restaurante",
+    tipoEvento: "cita",
+    formality: "semiformal",
+  },
   {
     etiqueta: "trabajo · templado, día normal",
     objective: "oficina",
@@ -356,27 +401,15 @@ const POOL_BRIEFS: BriefMotor[] = [
     formality: "formal",
   },
   {
-    // LOS TRES PLANES QUE LA APP OFRECE DE UN TOQUE Y EL POOL NUNCA MIDIÓ (v7).
-    // La pantalla de "¿qué plan tienes?" ofrece seis planes sociales y el pool
-    // sólo probaba tres. Los otros tres no son un hueco cualquiera: son la
-    // franja donde el motor tiene MÁS margen de error, porque no hay código de
-    // vestimenta duro que lo proteja. Si se equivoca aquí no rompe una regla —
-    // entrega algo aburrido, que es justo la nota que sale más baja (wow).
-    //
-    // Y al revés: el pool sí medía `funeral`, que ni siquiera está en esa
-    // pantalla (sólo se alcanza escribiéndolo). Se queda, porque su valor está
-    // escrito arriba y es real, pero deja de ser el único evento raro medido
-    // mientras tres de un toque no lo estaban.
-    //
-    // La formalidad de cada uno NO se inventa aquí: es la del catálogo
-    // (lib/eventos.ts), la misma que producción le pasa al motor.
-    etiqueta: "cita · noche templada",
-    objective: "evento",
-    momento: "noche",
+    // Bajó del lugar 1 al 14 (v8). Era el único de los seis del vistazo que no
+    // ejercitaba NADA: sin plan, sin formalidad y sin regla de clima que
+    // morder. Sigue en el pool porque el caso sin restricciones es donde el
+    // estilo tiene que hablar solo — pero ese es trabajo del veredicto, no de
+    // una prueba de humo de seis pares.
+    etiqueta: "diario · templado",
+    objective: "diario",
+    momento: "dia",
     weather: CLIMAS.templado,
-    plan: "una cita en un restaurante",
-    tipoEvento: "cita",
-    formality: "semiformal",
   },
   {
     // La fiesta es el permiso para arriesgar, y por eso mide lo contrario que
