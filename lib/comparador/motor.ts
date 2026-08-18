@@ -497,6 +497,10 @@ export type LadoMotor = {
   /** Las notas de la rúbrica, una por look (scripts/comparador-juzgar.ts).
    * null = esta corrida todavía no se juzgó automáticamente. */
   notas?: import("@/lib/engine/rubrica").NotaRubrica[] | null;
+  /** Lo mismo, de la rúbrica que MIRA las fotos (rv3). */
+  notasVision?: import("@/lib/engine/rubrica").NotaRubrica[] | null;
+  /** Los hallazgos del juez stylist (js1): qué pieza falla y qué cambiarías. */
+  criticas?: import("@/lib/engine/juez-stylist").CriticaStylist[] | null;
   error: string | null;
   costoUsd: number | null;
   ms: number | null;
