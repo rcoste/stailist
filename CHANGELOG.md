@@ -2,6 +2,79 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.255.0] - 2026-08-18
+
+### Fixed — el mismo color te favorecía y te apagaba al mismo tiempo
+
+Lo encontró el loop de jueces haciendo exactamente lo que se le pidió. El juez
+stylist marcó *"el tono oliva está listado explícitamente como uno que apaga la
+cara según su colorimetría"*, y al ir a verificarlo apareció que la paleta se
+contradecía sola:
+
+```
+PRESTADOS: Oliva #6B7A4C, Vino, Chocolate
+EVITA:     Camel, Mostaza, Oliva apagado #6B7A4C, Beige amarillento
+```
+
+**El mismo hex en los dos lados.** El motor leía "te funciona" y el juez
+castigaba "te apaga la cara"; ninguno de los dos se equivocaba — el dato se
+contradecía. `seasonPalette` devolvía la evita de la estación base **sin restar
+lo que el guiño ya había regalado**.
+
+Pasa en tres combinaciones y le tocaba a **6 de 24 perfiles reales**: el oliva
+en invierno+otoño (4 personas) y el **negro** en primavera+invierno y
+verano+invierno (2). El negro pesa más: es el color más usado de cualquier
+clóset y el eje de la identidad de la app.
+
+### Cómo se resolvió, y por qué así
+
+**Sale de las dos listas y queda sin marcar.** Ni "gana el guiño" ni "gana la
+base".
+
+El porqué lo dio Roberto al recordar que la colorimetría de este producto tiene
+**tres** grupos, no dos: los que favorecen, los que juegan en contra, y **los
+que ni una cosa ni la otra, que no están vetados**. Evidencia contradictoria es
+la definición exacta del tercero. Elegir un ganador exigiría saber teoría que
+este archivo no documenta y adivinar la intención de quien capturó el dato;
+dejarlo sin marcar no le afirma al motor nada que no se pueda sostener.
+
+**Por qué NO se arregló con `transfiere: false`**, que es el mecanismo que ya
+existe y que alguien ya usó bien para Camel y Mostaza: ese flag es **global** y
+el conflicto no lo es. El negro está en los colores de invierno y en la evita de
+primavera y verano, pero **no en la de otoño** — marcarlo sin cruce se lo
+quitaría a los cuatro perfiles de otoño+invierno que lo reciben con razón. El
+conflicto depende del par {base, guiño}, así que la resolución depende de él
+también. `transfiere: false` sigue siendo lo correcto para un color que de
+verdad no cruza hacia nadie.
+
+### Added — el candado, sobre TODAS las combinaciones
+
+`lib/colorimetria-coherencia.test.ts` recorre las 16 combinaciones de base y
+guiño, no sólo las que hoy tienen usuarias: la que no existe hoy es la que se
+descubre en producción. Y separa los dos tipos de fallo — una estación que se
+contradice **a sí misma** no es una frontera, es un error de captura, y ahí el
+arreglo va en el dato.
+
+Nadie lo había cazado porque no había nada que lo cazara: las dos listas se
+escriben en bloques distintos del archivo, a cientos de líneas de distancia, y
+agregar un color a una estación sin revisar la evita de sus vecinas no rompe
+nada. Verificado por mutación: al quitar la resolución, 7 tests truenan
+nombrando los colores.
+
+### Changed — la cita entra al vistazo (pool v8)
+
+El vistazo corría seis briefs y uno —"diario · templado"— no ejercitaba nada:
+sin plan, sin formalidad, sin regla de clima que morder. Los otros cinco sí
+ganan su lugar (oficina, boda, frío, calor, lluvia). Ese slot lo toma ahora
+**una cita**, la más valiosa de las ocasiones que nunca se medían: arreglarse ES
+el punto y no hay código de vestimenta duro que proteja al motor.
+
+**Por qué se puede tocar el vistazo y no el veredicto:** la comparabilidad
+histórica que `POOL_VERSION` protege es la de la tabla "qué modelo usamos", y
+esa la alimenta el veredicto. El vistazo nunca declara ganador — existe para
+encontrar defectos, y uno de hace dos semanas no se compara con uno de hoy.
+Dejarle un slot muerto por conservadurismo era proteger algo que no existe.
+
 ## [0.2.254.0] - 2026-08-18
 
 ### Fixed — el juez stylist encontraba algo en el 100% de los looks
