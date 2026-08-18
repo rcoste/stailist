@@ -371,11 +371,51 @@ export function seasonPalette(primary: Season, flow: Season | null) {
   const base = SEASONS[normSeason(primary) ?? primary];
   const flwKey = normSeason(flow);
   const flw = flwKey ? SEASONS[flwKey] : null;
-  return {
-    mejores: base ? base.colores : [],
-    prestados: flw ? flw.colores.filter((c) => c.transfiere !== false) : [],
-    evita: base ? base.evita : [],
-  };
+
+  const mejores = base ? base.colores : [];
+  const prestados = flw ? flw.colores.filter((c) => c.transfiere !== false) : [];
+  const evita = base ? base.evita : [];
+
+  // EL COLOR QUE EL GUIÑO REGALA Y LA BASE EVITA NO ES BUENO NI MALO: SALE DE
+  // LAS DOS LISTAS.
+  //
+  // El caso que lo destapó: un invierno con guiño de otoño recibía "Oliva"
+  // #6B7A4C entre sus prestados Y "Oliva apagado" #6B7A4C en su evita — el
+  // MISMO hex en los dos lados. El motor leía "te funciona" y el juez castigaba
+  // "te apaga la cara"; ninguno de los dos se equivocaba, el dato se
+  // contradecía. Pasa en tres combinaciones y le tocaba a 6 de 24 perfiles
+  // reales: el oliva en invierno+otoño y el NEGRO en primavera+invierno y
+  // verano+invierno.
+  //
+  // POR QUÉ NEUTRO Y NO "GANA UNO DE LOS DOS": porque la colorimetría de este
+  // producto tiene TRES grupos, no dos — los que favorecen, los que juegan en
+  // contra, y los que ni una cosa ni la otra, que no están vetados (Roberto,
+  // 2026-08-18). Evidencia contradictoria es la definición del tercero. Elegir
+  // un ganador exigiría saber teoría que este archivo no documenta y adivinar
+  // la intención de quien capturó el dato; dejarlo sin marcar no afirma nada
+  // que no se pueda sostener, que es lo único seguro con datos en conflicto.
+  //
+  // POR QUÉ NO SE ARREGLA CON `transfiere: false`, que es el mecanismo que ya
+  // existe y que alguien YA usó bien para Camel y Mostaza (los dos están en
+  // otoño y en la evita de invierno): ese flag es GLOBAL, y el conflicto no lo
+  // es. El negro está en los colores de invierno y en la evita de primavera y
+  // verano, pero NO en la de otoño — marcarlo sin cruce se lo quitaría a los
+  // cuatro perfiles de otoño+invierno que lo reciben con razón. El conflicto
+  // depende del par {base, guiño}, así que la resolución tiene que depender de
+  // él también. `transfiere: false` sigue siendo lo correcto para un color que
+  // de verdad no cruza hacia nadie.
+  const hex = (c: { hex: string }) => c.hex.trim().toUpperCase();
+  const buenos = new Set([...mejores, ...prestados].map(hex));
+  const enConflicto = new Set(evita.map(hex).filter((h) => buenos.has(h)));
+  if (enConflicto.size === 0) return { mejores, prestados, evita };
+
+  const limpio = <T extends { hex: string }>(cs: T[]) =>
+    cs.filter((c) => !enConflicto.has(hex(c)));
+  // `mejores` también se limpia aunque hoy ninguna estación se contradiga a sí
+  // misma: el contrato de esta función es no devolver NUNCA una paleta que se
+  // contradiga. Que ese caso no exista lo vigila el test, y a gritos — ahí sí
+  // sería un error de dato, no una frontera.
+  return { mejores: limpio(mejores), prestados: limpio(prestados), evita: limpio(evita) };
 }
 
 // El quiz no es binario: si un eje queda en la frontera (|valor| <= 1), la
