@@ -21,9 +21,11 @@ export default async function ObjetivoPage({
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
           paso 4 de 5
         </p>
+        {/* Ya no es pregunta: con una sola opción posible, preguntar era
+            fingir. Título genérico, como pidió Roberto — anuncia lo que viene. */}
         <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
-          ¿qué necesitas{" "}
-          <em className="font-display font-normal italic tracking-normal">hoy</em>?
+          tu primer{" "}
+          <em className="font-display font-normal italic tracking-normal">look</em>
         </h1>
       </div>
 

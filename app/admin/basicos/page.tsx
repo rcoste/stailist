@@ -25,6 +25,9 @@ export default async function BasicosPage() {
   const { data } = await supabase
     .from("archetypes")
     .select("id, name, category, segment, attrs, image_path, onboarding_subset")
+    // Una prenda retirada no se puede meter al onboarding: el toggle la
+    // marcaría y la pantalla no la mostraría nunca (migración 0137).
+    .is("deleted_at", null)
     .order("segment")
     .order("sort_order");
 

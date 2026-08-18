@@ -397,7 +397,9 @@ export function HoyClient({
       animationDelay: `${i * 70}ms`,
     });
     return (
-      <div className="flex min-h-[calc(100dvh-12.5rem)] flex-col pb-2 lg:mx-auto lg:min-h-0 lg:max-w-md">
+      // El min-h de 100dvh murió con el ancla del checklist: solo existía
+      // para que el mt-auto tuviera contra qué empujar.
+      <div className="flex flex-col pb-2 lg:mx-auto lg:max-w-md">
         {/* ─── ZONA 1: CREAR (el hero nunca asume "hoy") ─── */}
         <div className="pt-1" style={anim(0)}>
           <h1 className="text-[34px] font-bold leading-[1.06] tracking-[-0.03em] text-ink">
@@ -466,8 +468,16 @@ export function HoyClient({
                 </em>{" "}
                 hoy?
               </b>
-              <span className="truncate text-[13px] text-muted">
-                enséñame tu outfit y te digo — y me aprendo tus prendas
+              {/* SIN truncate y con las DOS promesas dichas en concreto. El
+                  copy anterior ("…y me aprendo tus prendas") salía cortado por
+                  el truncate ("y me apr…") y aun completo no se entendía qué
+                  ganabas (Roberto). Lo que hace el fit check son dos cosas:
+                  opinión + las prendas de la foto entran al clóset sin cargarlas
+                  a mano. Eso es lo que tiene que decir, en dos líneas si hace
+                  falta — para la card protagonista, una línea ambigua es más
+                  cara que dos claras. */}
+              <span className="line-clamp-2 text-[13px] leading-snug text-muted">
+                te digo cómo se ve — y esas prendas se suman solas a tu clóset
               </span>
             </span>
             <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
@@ -497,10 +507,16 @@ export function HoyClient({
           </div>
         ) : null}
 
-        {/* ─── ZONA 4: QUÉ SIGUE (hairline, sin caja, pegado abajo; colapsa a
-            una línea cuando ya hay look creado) ─── */}
+        {/* ─── ZONA 4: QUÉ SIGUE (hairline, sin caja; colapsa a una línea
+            cuando ya hay look creado) ───
+            YA NO SE ANCLA ABAJO. El handoff decía "pegado abajo" (mt-auto), pero
+            en pantallas reales eso lo dejaba encajonado contra la tab bar con un
+            hueco muerto arriba — Roberto: "todo se ve como apretado hacia
+            abajo, y justo los pasos pendientes". El checklist es un accionable,
+            no un pie de página: fluye tras la última card y el aire sobrante
+            queda al final, donde no estorba a nada. */}
         {checklist ? (
-          <div className="mt-auto pt-6" style={anim(5)}>
+          <div className="pt-7" style={anim(5)}>
             <HomeChecklist checklist={checklist} colapsado={!!ultimoLook} />
           </div>
         ) : null}

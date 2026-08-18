@@ -101,8 +101,19 @@ export function UltimoLookCard({
           style={{ gridTemplateColumns: `repeat(${look.prendas.length}, 1fr)` }}
         >
           {look.prendas.map((src, i) => (
-            <span key={i} className="relative h-[70px] bg-tile">
-              <Image src={src} alt="" fill sizes="88px" className="object-cover" />
+            // LA ALTURA DEPENDE DE CUÁNTAS SON. Los 70px vienen del handoff,
+            // pero su mock tenía CINCO prendas — celdas de ~68×70, casi
+            // cuadradas, y los flat-lays (cuadrados) entraban enteros. Con las
+            // 3 de un look real la celda quedaba 113×70 y el object-cover
+            // decapitaba la prenda ("se ven cortadas, rectangulares hacia los
+            // lados" — Roberto, seguro de que el diseño no era así; tenía
+            // razón: el diseño nunca se probó con 3). Con 96px para tiras de
+            // ≤3 el recorte baja de ~40% a ~15% y la tira sigue full-bleed.
+            <span
+              key={i}
+              className={`relative bg-tile ${look.prendas.length <= 3 ? "h-24" : "h-[70px]"}`}
+            >
+              <Image src={src} alt="" fill sizes="128px" className="object-cover" />
             </span>
           ))}
         </span>

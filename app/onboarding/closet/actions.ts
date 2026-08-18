@@ -22,10 +22,24 @@ export async function saveCloset(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // El género, para validar el segmento (paridad con addArchetypes: "defensa
+  // contra IDs manipulados"). Esta puerta validaba contra el catálogo pero
+  // aceptaba ids de cualquier segmento.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("gender")
+    .eq("id", user.id)
+    .single();
+  const gender = profile?.gender ?? "hombre";
+
   // Valida contra el catálogo real y hereda sus atributos.
   const { data: archetypes, error: catError } = await supabase
     .from("archetypes")
     .select("id, name, attrs, image_path")
+    // Retiradas fuera (borrado suave, migración 0137): el id viaja por el
+    // cliente y esta es la puerta que inserta.
+    .is("deleted_at", null)
+    .in("segment", ["unisex", gender])
     .in("id", ids);
   if (catError || !archetypes || archetypes.length === 0) {
     return { error: "No pude leer el catálogo — inténtalo otra vez." };

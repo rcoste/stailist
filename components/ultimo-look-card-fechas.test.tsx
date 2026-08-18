@@ -49,6 +49,30 @@ const base: UltimoLook = {
   prendas: [],
 };
 
+describe("la tira de prendas de UltimoLookCard", () => {
+  // La decisión medida del fix de 2026-08-17: los 70px del handoff se
+  // diseñaron con CINCO prendas (celdas casi cuadradas); con 3, la celda
+  // quedaba 113×70 y el object-cover decapitaba la prenda (~40% de recorte).
+  // Con ≤3 la tira crece a 96px (h-24) y el recorte baja a ~15%.
+  const prendas = (n: number) => Array.from({ length: n }, (_, i) => `/p${i}.png`);
+
+  it("con 3 prendas o menos, la celda es alta (h-24)", () => {
+    const { container } = render(
+      <UltimoLookCard look={{ ...base, prendas: prendas(3) }} onVer={() => {}} />
+    );
+    expect(container.querySelectorAll(".h-24").length).toBe(3);
+    expect(container.querySelectorAll(".h-\\[70px\\]").length).toBe(0);
+  });
+
+  it("con 4 o más, la celda del handoff (70px)", () => {
+    const { container } = render(
+      <UltimoLookCard look={{ ...base, prendas: prendas(5) }} onVer={() => {}} />
+    );
+    expect(container.querySelectorAll(".h-\\[70px\\]").length).toBe(5);
+    expect(container.querySelectorAll(".h-24").length).toBe(0);
+  });
+});
+
 describe("las fechas de UltimoLookCard", () => {
   it("dice ayer cuando fue ayer, y el día del mes cuando fue antes", () => {
     const ayer = render(<UltimoLookCard look={base} onVer={() => {}} />);

@@ -164,6 +164,15 @@ export function AvatarWizard({
   // los pixeles de afuera ya se habían tirado (bug cazado por Alberto: "el
   // preview se acerca una y otra vez aunque el ajuste haya sido hacia afuera").
   const faceOriginalRef = useRef<string | null>(null);
+  // ¿El preview actual ES un recorte? El tercer bug de esta pantalla, y el que
+  // hacía parecer que los dos fixes anteriores no sirvieron: el recorte SÍ se
+  // aplicaba, pero el preview pintaba el recuadro blanco decorativo y la
+  // viñeta oscura encima de CUALQUIER foto — recortada o no — y el object-cover
+  // volvía a cortar el recorte para llenar la caja. Resultado en los ojos de
+  // Roberto: "te aparece la misma imagen y el recuadro", o sea, como si nada.
+  // Con esta bandera el recorte se muestra tal cual quedó (entero, sin marco
+  // fingido) y la foto fresca conserva el marco como invitación a ajustar.
+  const [faceRecortada, setFaceRecortada] = useState(false);
   function setFaceOriginal(file: File) {
     if (faceOriginalRef.current) URL.revokeObjectURL(faceOriginalRef.current);
     faceOriginalRef.current = URL.createObjectURL(file);
@@ -533,8 +542,9 @@ export function AvatarWizard({
               const f = e.target.files?.[0] ?? null;
               if (faceInputRef.current) faceInputRef.current.value = "";
               if (f) {
-                // Foto nueva = nuevo original para el recorte.
+                // Foto nueva = nuevo original para el recorte, y sin recortar.
                 setFaceOriginal(f);
+                setFaceRecortada(false);
                 setSlot("face", f);
               }
             }}
@@ -551,19 +561,38 @@ export function AvatarWizard({
           >
             {previews.face ? (
               <>
+                {/* Recortada: se muestra ENTERA (contain), que es la prueba de
+                    que el ajuste se aplicó. Con cover, el preview volvía a
+                    cortar el recorte para llenar la caja y parecía la foto de
+                    antes. Fresca: cover, como siempre. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previews.face} alt="Tu foto" className="h-full w-full object-cover" />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-[16%] rounded-sm border-2 border-white/90"
-                  style={{ boxShadow: "0 0 0 9999px rgb(20 20 20 / 0.34)" }}
+                <img
+                  src={previews.face}
+                  alt="Tu foto"
+                  className={`h-full w-full ${faceRecortada ? "object-contain" : "object-cover"}`}
                 />
+                {/* El marco de "aquí va tu cara" SOLO sobre la foto fresca: es
+                    la invitación a ajustar. Sobre un recorte ya hecho era el
+                    bug — decía "esto sigue pendiente" de algo ya resuelto. */}
+                {!faceRecortada ? (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-[16%] rounded-sm border-2 border-white/90"
+                    style={{ boxShadow: "0 0 0 9999px rgb(20 20 20 / 0.34)" }}
+                  />
+                ) : null}
                 <span
                   className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-3.5 py-3 text-[12.5px] font-medium text-white"
                   style={{ backgroundColor: "rgb(20 20 20 / 0.78)" }}
                 >
-                  <span>¿sale alguien más? déjate solo a ti</span>
-                  <span className="shrink-0 font-bold underline underline-offset-2">ajustar</span>
+                  <span>
+                    {faceRecortada
+                      ? "recortada — así la uso"
+                      : "¿sale alguien más? déjate solo a ti"}
+                  </span>
+                  <span className="shrink-0 font-bold underline underline-offset-2">
+                    {faceRecortada ? "volver a ajustar" : "ajustar"}
+                  </span>
                 </span>
               </>
             ) : (
@@ -851,6 +880,11 @@ export function AvatarWizard({
                     : "Elige la que más se te parezca — para que la ropa te quede fiel."}
                 </p>
               </div>
+
+              {/* La estatura ANTES de la retícula: con el CTA sticky, lo que
+                  vive después de una retícula larga puede no verse nunca. */}
+              <FilaEstatura value={alturaTxt} onChange={setAlturaTxt} />
+
               {/* Retícula: mismo fondo (bg-tile) en todas; selección = borde 2px
                   ink + surface. Los renders del producto van dentro sin cambiar. */}
               <div className="grid grid-cols-3 gap-2">
@@ -884,26 +918,11 @@ export function AvatarWizard({
             </>
           )}
 
-          {/* Estatura en una fila (no en tarjeta): aplica a los dos caminos. */}
-          <div className="flex items-center justify-between gap-3">
-            <span className="flex min-w-0 flex-col">
-              <span className="text-sm font-medium text-ink">¿cuánto mides?</span>
-              <span className="text-xs text-muted">opcional — afina las proporciones</span>
-            </span>
-            <span className="flex shrink-0 items-center gap-1.5">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={100}
-                max={230}
-                value={alturaTxt}
-                onChange={(e) => setAlturaTxt(e.target.value)}
-                placeholder="170"
-                className="min-h-11 w-[70px] rounded-sm border border-line bg-bg px-2 text-center text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
-              />
-              <span className="text-xs text-muted">cm</span>
-            </span>
-          </div>
+          {/* Estatura del camino de FOTOS (el de silueta la pone antes de su
+              retícula): aquí los tiles son cortos y sí se llega a verla. */}
+          {metodo === "foto" ? (
+            <FilaEstatura value={alturaTxt} onChange={setAlturaTxt} />
+          ) : null}
 
           {/* Sticky: la retícula de siluetas es larga y este CTA caía fuera
               casi siempre (auditoría de CTAs, tanda 2). */}
@@ -1073,6 +1092,7 @@ export function AvatarWizard({
           onDone={async (dataUrl) => {
             setCropFaceSrc(null);
             setSlot("face", await dataUrlToFile(dataUrl, "cara-recortada.jpg"));
+            setFaceRecortada(true);
           }}
         />
       ) : null}
@@ -1082,6 +1102,49 @@ export function AvatarWizard({
 
 // Enlace discreto para elegir del carrete (sin `capture`, o sea SÍ abre la
 // galería) — el secundario del "tómate una foto" cámara-primero.
+// LA ESTATURA, COMO CARD Y ARRIBA DE LA RETÍCULA — no como fila perdida abajo.
+//
+// Antes era una fila delgadita DESPUÉS de la retícula de siluetas, y la gente
+// se la saltaba sin verla (Roberto: "se ve muy chiquita, no la ven"). No es que
+// no quisieran contestarla: es que el CTA es sticky —siempre visible— así que
+// se puede picar "siguiente" sin haber scrolleado nunca hasta donde vivía la
+// pregunta. Una fila que solo existe debajo del fold, con un botón que no te
+// obliga a pasar por ella, es una pregunta que no se hizo.
+//
+// Card con borde (peso visual de pregunta de verdad) y colocada ANTES de la
+// retícula en el camino de silueta: se ve sin scroll. Vive como componente
+// porque los dos caminos de la pantalla (silueta / fotos) la necesitan y las
+// dos copias inline es como nacen las derivas.
+function FilaEstatura({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3.5">
+      <span className="flex min-w-0 flex-col">
+        <span className="text-[15px] font-semibold text-ink">¿cuánto mides?</span>
+        <span className="text-xs text-muted">afina las proporciones — opcional</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1.5">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={100}
+          max={230}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="170"
+          className="min-h-12 w-20 rounded-sm border border-line bg-bg px-2 text-center text-base font-semibold text-ink placeholder:font-normal placeholder:text-faint focus:border-ink focus:outline-none"
+        />
+        <span className="text-sm text-muted">cm</span>
+      </span>
+    </div>
+  );
+}
+
 function PickLink({
   label,
   onPick,

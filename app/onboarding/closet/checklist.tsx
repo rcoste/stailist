@@ -1,20 +1,27 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
+import { agruparTrajes, type TrajeDeCatalogo } from "@/lib/trajes-catalogo";
 import { saveCloset } from "./actions";
 
 export type CatalogItem = {
   id: number;
   name: string;
   category: string;
-  attrs: { color_hex?: string };
+  attrs: { color_hex?: string; conjunto?: string };
   image_path: string | null;
 };
 
-const CATEGORY_ORDER = ["top", "saco", "vestido", "bottom", "abrigo", "calzado"];
+// "traje" NO es una categoría de la base: es una pestaña que junta las dos
+// piezas atadas por `attrs.conjunto` (ver lib/trajes-catalogo.ts). Va pegada a
+// Sacos porque es donde la persona la busca — y porque es justo la confusión
+// que viene a quitar: antes "Blazer marino" y "Saco de traje gris carbón"
+// vivían uno al lado del otro sin que nada dijera que el segundo tiene pantalón.
+const CAT_TRAJE = "traje";
+const CATEGORY_ORDER = ["top", "saco", CAT_TRAJE, "vestido", "bottom", "abrigo", "calzado"];
 // Mínimo para armar un outfit: algo de arriba, algo de abajo y zapatos.
 // Un vestido cuenta como arriba+abajo; sacos y abrigos son opcionales.
 const REQUIRED = ["top", "bottom", "calzado"];
@@ -22,10 +29,11 @@ const REQUIRED = ["top", "bottom", "calzado"];
 // tras los 3 obligatorios): así el motor se enteraba de la ropa de abrigo solo
 // si la persona tocaba el chip a mano. Ahora el CTA pasa por estas si están
 // presentes y no las ha visto — con opción de saltar (no todos las tienen).
-const OPTIONAL = ["saco", "abrigo", "vestido"];
+const OPTIONAL = ["saco", CAT_TRAJE, "abrigo", "vestido"];
 const CATEGORY_LABELS: Record<string, string> = {
   top: "Arriba",
   saco: "Sacos",
+  [CAT_TRAJE]: "Trajes",
   vestido: "Vestidos",
   bottom: "Abajo",
   abrigo: "Abrigos",
@@ -37,11 +45,17 @@ const CATEGORY_LABELS: Record<string, string> = {
 // selección se marca con el check tinta + un marco fino (ring interior) para
 // que la distinción sea obvia sin apagar las no seleccionadas.
 export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
+  // Los trajes salen del catálogo plano y se muestran como una sola tarjeta;
+  // `sueltas` es todo lo demás (ya sin sus piezas, para no marcarlas dos veces).
+  const { trajes, sueltas } = useMemo(() => agruparTrajes(catalog), [catalog]);
+
   // Categorías presentes, en orden; las no contempladas van al final.
   const known = new Set(CATEGORY_ORDER);
+  const hayEnCat = (c: string) =>
+    c === CAT_TRAJE ? trajes.length > 0 : sueltas.some((i) => i.category === c);
   const cats = [
-    ...CATEGORY_ORDER.filter((c) => catalog.some((i) => i.category === c)),
-    ...[...new Set(catalog.filter((i) => !known.has(i.category)).map((i) => i.category))],
+    ...CATEGORY_ORDER.filter(hayEnCat),
+    ...[...new Set(sueltas.filter((i) => !known.has(i.category)).map((i) => i.category))],
   ];
 
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -49,11 +63,22 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const visible = catalog.filter((i) => i.category === activeCat);
+  const visible = sueltas.filter((i) => i.category === activeCat);
 
   // Cobertura de categorías esenciales (para guiar el botón y los chips).
+  //
+  // Cuenta sobre el catálogo COMPLETO, piezas de traje incluidas: marcar el
+  // traje gris ya te da un pantalón, y el botón no tiene por qué mandarte a
+  // "Abajo" a marcar otro. El contador del chip, en cambio, cuenta sólo lo
+  // suelto (ver `countChip`) — un número en una pestaña donde no hay ninguna
+  // tarjeta marcada se lee como un error de la app.
   const countIn = (cat: string) =>
     catalog.filter((i) => i.category === cat && selected.has(i.id)).length;
+  const trajesMarcados = trajes.filter((t) => t.piezas.every((p) => selected.has(p.id)));
+  const countChip = (cat: string) =>
+    cat === CAT_TRAJE
+      ? trajesMarcados.length
+      : sueltas.filter((i) => i.category === cat && selected.has(i.id)).length;
   const hasDress = countIn("vestido") > 0;
   const isSatisfied = (cat: string) =>
     cat === "top" || cat === "bottom"
@@ -113,6 +138,19 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
     setSelected(next);
   }
 
+  // El traje entra y sale COMPLETO: un tap marca saco y pantalón. Siguen siendo
+  // dos prendas en el clóset (el motor las necesita separadas para poder usar
+  // el saco suelto), pero marcarlas es un solo gesto.
+  function toggleTraje(traje: TrajeDeCatalogo<CatalogItem>) {
+    const todas = traje.piezas.every((p) => selected.has(p.id));
+    const next = new Set(selected);
+    for (const p of traje.piezas) {
+      if (todas) next.delete(p.id);
+      else next.add(p.id);
+    }
+    setSelected(next);
+  }
+
   function submit() {
     startTransition(async () => {
       setError(null);
@@ -127,7 +165,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {cats.map((cat) => {
           const on = cat === activeCat;
-          const selCount = countIn(cat);
+          const selCount = countChip(cat);
           // Punto recordatorio: categoría esencial que aún no marcas.
           const pending = REQUIRED.includes(cat) && !isSatisfied(cat);
           return (
@@ -158,11 +196,84 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
 
       {/* Recordatorio de que hay que cubrir varias categorías */}
       <p className="-mt-1 text-[12.5px] text-muted">
-        Marca lo que tengas de cada tipo — al menos arriba, abajo y zapatos.
+        {activeCat === CAT_TRAJE
+          ? "Un tap marca el traje completo — saco y pantalón, para que también te los pueda poner por separado."
+          : "Marca lo que tengas de cada tipo — al menos arriba, abajo y zapatos."}
       </p>
 
       {/* Grid de la categoría activa */}
       <div className="grid grid-cols-2 gap-3">
+        {activeCat === CAT_TRAJE
+          ? trajes.map((traje) => {
+              const on = traje.piezas.every((p) => selected.has(p.id));
+              const acompanante = traje.piezas.find((p) => p.id !== traje.portada.id);
+              return (
+                <button
+                  key={traje.conjunto}
+                  type="button"
+                  onClick={() => toggleTraje(traje)}
+                  aria-pressed={on}
+                  className={`relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg text-left transition-shadow duration-200 focus-visible:outline-none ${
+                    on ? "ring-2 ring-inset ring-accent" : ""
+                  }`}
+                >
+                  {traje.portada.image_path ? (
+                    <Image
+                      src={traje.portada.image_path}
+                      alt={traje.nombre}
+                      fill
+                      sizes="(max-width: 430px) 50vw, 215px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="absolute inset-0"
+                      style={{ backgroundColor: traje.portada.attrs.color_hex ?? "#E5E1DD" }}
+                      aria-hidden
+                    />
+                  )}
+
+                  {/* La segunda pieza, encimada: es lo que hace que la tarjeta se
+                      lea como CONJUNTO y no como un saco más. Sin ella, "Traje
+                      gris carbón" con la foto de un saco es indistinguible de
+                      "Saco de traje gris carbón", que es justo lo que confundía. */}
+                  {acompanante?.image_path ? (
+                    <span className="absolute bottom-11 left-2 block h-[30%] w-[38%] overflow-hidden rounded-sm border border-line bg-surface">
+                      <Image
+                        src={acompanante.image_path}
+                        alt=""
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    </span>
+                  ) : null}
+
+                  <span
+                    className={`absolute right-2 top-2 flex h-[25px] w-[25px] items-center justify-center rounded-full border transition-colors ${
+                      on
+                        ? "border-accent bg-accent text-on-accent"
+                        : "border-line bg-surface/85 text-transparent"
+                    }`}
+                    aria-hidden
+                  >
+                    <Icon name="check" size={14} strokeWidth={2.6} />
+                  </span>
+
+                  <span
+                    className={`absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-surface/95 via-surface/80 to-transparent px-2.5 pb-2 pt-6 text-[11px] font-semibold ${
+                      on ? "text-ink" : "text-muted"
+                    }`}
+                  >
+                    {traje.nombre}
+                    <span className="text-[10px] font-medium text-muted">
+                      saco + pantalón
+                    </span>
+                  </span>
+                </button>
+              );
+            })
+          : null}
         {visible.map((item) => {
           const on = selected.has(item.id);
           return (

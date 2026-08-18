@@ -2,6 +2,59 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.250.0] - 2026-08-17
+
+Tanda del recorrido de Roberto por el flujo desde cero: una feature (los
+trajes se añaden como trajes) y seis fricciones que solo se ven probando.
+
+### Added — el traje es UNA tarjeta, no dos piezas que hay que cazar
+
+- Pestaña **Trajes** en el checklist del onboarding y en la biblioteca: un tap
+  marca saco y pantalón juntos (siguen siendo dos prendas en el clóset — el
+  saco se puede usar suelto). En el onboarding entran dos trajes completos
+  (marino y gris carbón); antes solo estaba el saco carbón, sin su pantalón.
+- El lazo `conjunto` ahora viene del catálogo y viaja hasta el motor: marcar
+  tu traje ya no hacía que la regla de "traje desparejado" te lo prohibiera.
+  Con backfill para las prendas que ya existían (4 en la base) — sin él, a
+  esos clósets el motor les seguiría vetando su propio traje.
+- La wishlist del traje guarda las dos piezas, revierte si el server falla, y
+  un índice único blinda contra el doble tap que duplicaba filas.
+
+### Changed
+
+- **"Cómo te queda"** (pares de corte): la foto se acerca a la zona que cambia
+  (pantalón / parte de arriba) y una pista dice dónde mirar — antes la
+  diferencia eran unos píxeles en una foto de cuerpo entero.
+- **"Tu primer look"** (onboarding): fuera la rejilla de ocasiones bloqueadas
+  que referenciaba un layout que ya no existe; la pantalla dice lo que va a
+  pasar en vez de fingir que se elige.
+- **"¿Dónde?"** del wizard: la opción preseleccionada arranca sola (ya no hay
+  que volver a picarle para que pida la ubicación) y la app dice QUÉ ciudad
+  detectó — en la card ("listo — estás en Querétaro") y en el clima. Las
+  coordenadas viajan redondeadas a ~1 km: para nombrar la ciudad no hace
+  falta el punto exacto.
+- **"¿Cuánto mides?"**: ahora es una card visible ANTES de la retícula de
+  siluetas — con el CTA sticky se podía avanzar sin haberla visto nunca.
+- **Home**: el checklist de "qué sigue" fluye tras las cards en vez de vivir
+  encajonado contra la tab bar; el hint del fit check dice en concreto qué
+  ganas (opinión + tus prendas se cargan solas).
+- **Camisa de lino** del onboarding: la beige lavada se retiró del catálogo
+  (borrado suave — las 5 prendas de usuarios que la referencian siguen
+  intactas) y entra la blanca en su lugar.
+
+### Fixed
+
+- **El crop del avatar por fin se VE aplicado**: el recorte siempre funcionó,
+  pero el preview pintaba el recuadro decorativo y la viñeta encima de
+  cualquier foto — recortada o no — y re-cortaba el recorte para llenar la
+  caja. Ahora el recorte se muestra entero, sin marco, con "recortada — así
+  la uso".
+- **Thumbnails del último look**: con 3 prendas la celda era el doble de ancha
+  que alta y decapitaba la prenda (~40% de recorte); la tira crece con pocas
+  prendas y el recorte baja a ~15%. El diseño original se validó con 5.
+- Una llegada tardía de la ubicación ya no borra el pronóstico recién
+  resuelto en el wizard.
+
 ## [0.2.249.10] - 2026-08-17
 
 ### Fixed — el "pantalón de vestir gris" ya no enseña el traje completo

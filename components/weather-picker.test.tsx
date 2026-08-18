@@ -28,6 +28,10 @@ vi.mock("@/lib/weather", async (importOriginal) => ({
   getWeather: vi.fn(async () => null),
   getWeatherForDates: vi.fn(async () => null),
   geocodePlace: vi.fn(async () => null),
+  // Sin este mock, los tests con permiso "granted" disparaban un fetch REAL a
+  // BigDataCloud (el spread de importOriginal trae la función de verdad):
+  // flakiness de red dentro de la suite. Cazado por la auditoría de cobertura.
+  reverseGeocode: vi.fn(async () => "Querétaro"),
 }));
 
 /** Avanza al paso siguiente del wizard. */
@@ -382,6 +386,54 @@ describe("la ubicación no se pide de sorpresa", () => {
 
     await waitFor(() => expect(getCurrentPosition).toHaveBeenCalled());
     expect(screen.queryByText(/te lo pide el navegador solo una vez/i)).toBeNull();
+  });
+
+  it("la card preseleccionada arranca SOLA: el reveal sale sin segundo tap", async () => {
+    // El bug de Roberto (2026-08-17): "en esta ciudad" venía marcada por
+    // default, pero su lógica solo corría en el TAP — había que volver a picar
+    // lo ya elegido para que apareciera "compartir mi ubicación". Ahora el
+    // paso llega y el reveal se abre solo. El prompt del navegador sigue SIN
+    // salir: eso queda reservado al botón (un gesto), como siempre.
+    const getCurrentPosition = vi.fn();
+    stubNavigator({
+      permissions: { query: async () => ({ state: "prompt" }) },
+      geolocation: { getCurrentPosition },
+    });
+
+    const u = userEvent.setup();
+    render(<LookRequest {...props} />);
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+
+    // SIN tocar la card:
+    expect(await screen.findByText(/te lo pide el navegador solo una vez/i)).toBeTruthy();
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+  });
+
+  it("con permiso dado DICE qué ciudad detectó — en la card y en el clima", async () => {
+    // "listo — ya sé dónde" sin decir dónde no deja verificar nada: un clima
+    // de la ciudad equivocada se ve idéntico a uno de la correcta.
+    const { getWeather } = await import("@/lib/weather");
+    vi.mocked(getWeather).mockResolvedValue({ temp_c: 22, condition: "despejado" });
+    stubNavigator({
+      permissions: { query: async () => ({ state: "granted" }) },
+      geolocation: {
+        getCurrentPosition: (ok: PositionCallback) =>
+          ok({ coords: { latitude: 20.6, longitude: -100.4 } } as GeolocationPosition),
+      },
+    });
+
+    const u = userEvent.setup();
+    render(<LookRequest {...props} />);
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+
+    expect(await screen.findByText(/estás en Querétaro/i)).toBeTruthy();
+
+    // Y el banner del clima nombra la ciudad detectada (aquiLabel), no solo
+    // cuando se escribió una "otra ciudad" (ciudadGeo).
+    await siguiente(u);
+    expect(await screen.findByText(/en Querétaro/i)).toBeTruthy();
   });
 });
 
