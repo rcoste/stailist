@@ -22,7 +22,10 @@ import { evaluarLook, RUBRICA_VERSION, type BriefRubrica, type NotaRubrica } fro
 import { estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
 import { marcadorPareado, paresNecesarios } from "../lib/comparador/juez-pareado";
 import type { BriefMotor, VarianteMotor } from "../lib/comparador/motor";
-import { conCategoria, ITEM_IMAGE_SELECT, type ItemImageRow } from "../lib/item-image";
+import { conCategoria, ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "../lib/item-image";
+import { evaluarLookConVision, RUBRICA_VISION_VERSION } from "../lib/engine/rubrica-vision";
+import { criticarLook, JUEZ_STYLIST_VERSION, type CriticaStylist } from "../lib/engine/juez-stylist";
+import { resumirPorVariante } from "../lib/engine/resumen-ronda";
 import type { EngineItem } from "../lib/engine/prompt";
 
 for (const l of readFileSync(".env.local", "utf8").split("\n")) {
@@ -32,6 +35,22 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
 }
 
 type Look = { nombre: string; item_ids: string[]; explicacion: string; tip?: string | null };
+
+/** Mismo helper que scripts/rubrica-vision-acuerdo.ts: la foto como la ve el
+ *  humano al votar. Sin imagen, la prenda viaja sólo por nombre y el juez lo
+ *  sabe (la rúbrica lo dice explícito para que no dé por visto lo que no vio). */
+async function comoBase64(url: string) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const buf = Buffer.from(await r.arrayBuffer());
+    const mediaType = r.headers.get("content-type")?.split(";")[0] ?? "image/jpeg";
+    if (!/^image\//.test(mediaType)) return null;
+    return { mediaType, base64: buf.toString("base64") };
+  } catch {
+    return null;
+  }
+}
 
 async function main() {
   const corridaId = process.argv[2];
@@ -64,6 +83,24 @@ async function main() {
   const closet = conCategoria((items ?? []) as unknown as ItemImageRow[]) as unknown as EngineItem[];
   const porId = new Map(closet.map((i) => [i.id, i]));
 
+  // Las URLs de las fotos, firmadas donde toque (el bucket es privado). Mismo
+  // paso que scripts/rubrica-vision-acuerdo.ts — sin esto el juez visual
+  // recibiría prendas sin imagen y calificaría a ciegas creyendo que vio.
+  const filasImg = (items ?? []) as unknown as (ItemImageRow & { id: string })[];
+  const firmadas = new Map<string, string>();
+  for (const f of filasImg) {
+    for (const path of [f.photo_path, f.render_path].filter(Boolean) as string[]) {
+      const { data } = await s.storage.from("prendas").createSignedUrl(path, 3600);
+      if (data?.signedUrl) firmadas.set(path, data.signedUrl);
+    }
+  }
+  const urlPorItem = new Map(
+    filasImg.map((f) => [
+      f.id,
+      itemImageUrlSync(f, (path) => firmadas.get(path), "https://stailist.co"),
+    ])
+  );
+
   const [{ data: pares }, { data: lados }] = await Promise.all([
     s.from("comparador_motor_pares").select("*").eq("corrida_id", corridaId).order("n"),
     s.from("comparador_motor_lados").select("*").eq("corrida_id", corridaId),
@@ -72,7 +109,9 @@ async function main() {
   console.log(
     `Juzgando ${corridaId.slice(0, 8)} · ${variantes.map((v) => v.etiqueta).join(" contra ")}`
   );
-  console.log(`  prompt ${corrida.prompt_version} · pool ${corrida.pool_version} · rúbrica ${RUBRICA_VERSION}`);
+  console.log(
+    `  prompt ${corrida.prompt_version} · pool ${corrida.pool_version} · rúbricas ${RUBRICA_VERSION} + ${RUBRICA_VISION_VERSION} + ${JUEZ_STYLIST_VERSION}`
+  );
 
   // EL AVISO QUE EVITA QUE ESTE NÚMERO SE USE MAL. Si las dos variantes cambian
   // de MODELO, la rúbrica no puede decidir: un juez Claude tiende a preferir
@@ -97,13 +136,36 @@ async function main() {
   let costo = 0;
   let fallos = 0;
 
-  const trabajo: { ladoId: string; brief: BriefMotor; looks: Look[]; previas: NotaRubrica[] }[] = [];
+  const trabajo: {
+    ladoId: string;
+    brief: BriefMotor;
+    looks: Look[];
+    previas: NotaRubrica[];
+    previasVision: NotaRubrica[];
+    previasCriticas: CriticaStylist[];
+  }[] = [];
   for (const par of reales) {
     for (const l of (lados ?? []).filter((x) => x.par_id === par.id)) {
       const looks = (l.looks as Look[] | null) ?? [];
       const previas = (l.notas as NotaRubrica[] | null) ?? [];
-      if (!looks.length || previas.length >= looks.length) continue; // ya juzgado
-      trabajo.push({ ladoId: l.id as string, brief: par.brief as BriefMotor, looks, previas });
+      const previasVision = (l.notas_vision as NotaRubrica[] | null) ?? [];
+      const previasCriticas = (l.criticas as CriticaStylist[] | null) ?? [];
+      // Falta trabajo si CUALQUIERA de las dos rúbricas va incompleta: al
+      // entrar visión, los lados juzgados sólo con texto tienen que completarse
+      // sin volver a pagar el texto.
+      const listo =
+        previas.length >= looks.length &&
+        previasVision.length >= looks.length &&
+        previasCriticas.length >= looks.length;
+      if (!looks.length || listo) continue;
+      trabajo.push({
+        ladoId: l.id as string,
+        brief: par.brief as BriefMotor,
+        looks,
+        previas,
+        previasVision,
+        previasCriticas,
+      });
     }
   }
   console.log(`${trabajo.length} lados por juzgar (los ya juzgados no se re-pagan)`);
@@ -128,6 +190,69 @@ async function main() {
         estilo: estiloDelPerfil(p),
         color: colorDelPerfil(p),
       };
+      // ── La rúbrica que MIRA, en paralelo a la que lee ──────────────────
+      // Cuesta $0.002 por look contra $0.011 la de texto: 5× más barata, y ve
+      // lo único que el texto no puede ver — el tono real, la textura y si dos
+      // piezas se pelean a la vista. En un instrumento PAREADO su sesgo no
+      // estorba: los dos lados corren el mismo juez y se cancela.
+      // La cuadrícula de fotos, UNA vez por look: la comparten el juez que mira
+      // y el stylist. Bajarla dos veces sería pagar el ancho de banda doble
+      // para mandar exactamente las mismas imágenes.
+      const fotosDe = async (look: Look) =>
+        Promise.all(
+          look.item_ids.map(async (id) => {
+            const it = porId.get(id);
+            const url = urlPorItem.get(id) ?? null;
+            return {
+              nombre: it?.attrs.nombre ?? "Prenda",
+              imagen: url ? await comoBase64(url) : null,
+            };
+          })
+        );
+
+      const notasVision: NotaRubrica[] = [...t.previasVision];
+      const criticas: CriticaStylist[] = [...t.previasCriticas];
+      for (let i = notasVision.length; i < t.looks.length; i++) {
+        const look = t.looks[i];
+        try {
+          const prendas = await fotosDe(look);
+          const rv = await evaluarLookConVision(brief, {
+            nombre: look.nombre,
+            explicacion: look.explicacion,
+            tip: look.tip ?? null,
+            prendas,
+          });
+          notasVision.push(rv.nota);
+          costo += rv.recibo.costoUsd ?? 0;
+        } catch (e) {
+          fallos++;
+          if (fallos <= 3) console.error(`  fallo visión: ${e instanceof Error ? e.message : e}`);
+          break; // se guarda lo que haya; el siguiente pase completa
+        }
+      }
+
+      // ── El juez que CRITICA ────────────────────────────────────────────
+      // No puntúa: dice qué pieza falla, por qué y qué cambiarías. Es el que
+      // hace el trabajo de revisión que Roberto hacía a mano, y su salida es la
+      // que alimenta el resumen de la ronda.
+      for (let i = criticas.length; i < t.looks.length; i++) {
+        const look = t.looks[i];
+        try {
+          const rc = await criticarLook(brief, {
+            nombre: look.nombre,
+            explicacion: look.explicacion,
+            tip: look.tip ?? null,
+            prendas: await fotosDe(look),
+          });
+          criticas.push(rc.critica);
+          costo += rc.recibo.costoUsd ?? 0;
+        } catch (e) {
+          fallos++;
+          if (fallos <= 3) console.error(`  fallo stylist: ${e instanceof Error ? e.message : e}`);
+          break;
+        }
+      }
+
       const notas: NotaRubrica[] = [...t.previas];
       for (let i = notas.length; i < t.looks.length; i++) {
         const look = t.looks[i];
@@ -153,7 +278,10 @@ async function main() {
           break; // se guarda lo que haya; el siguiente pase completa
         }
       }
-      await s.from("comparador_motor_lados").update({ notas }).eq("id", t.ladoId);
+      await s
+        .from("comparador_motor_lados")
+        .update({ notas, notas_vision: notasVision, criticas })
+        .eq("id", t.ladoId);
       if (++hechos % 10 === 0) console.log(`  ${hechos}/${trabajo.length}…`);
     }
   };
@@ -162,28 +290,42 @@ async function main() {
   // ── El marcador, releyendo TODO (incluidos los lados ya juzgados antes) ──
   const { data: finales } = await s
     .from("comparador_motor_lados")
-    .select("par_id, variante, notas")
+    .select("par_id, variante, notas, notas_vision, criticas")
     .eq("corrida_id", corridaId);
-  const porPar = new Map<string, { variante: string; notas: NotaRubrica[] }[]>();
-  for (const l of finales ?? []) {
-    const k = l.par_id as string;
-    if (!porPar.has(k)) porPar.set(k, []);
-    porPar.get(k)!.push({
-      variante: l.variante as string,
-      notas: (l.notas as NotaRubrica[] | null) ?? [],
-    });
-  }
-  const juzgados = reales.map((par) => ({
-    n: par.n as number,
-    etiqueta: (par.brief as BriefMotor).etiqueta,
-    lados: porPar.get(par.id as string) ?? [],
-  }));
 
-  const r = marcadorPareado(juzgados, claves);
+  // DOS marcadores, uno por rúbrica, y NO se promedian: cuando la que lee y la
+  // que mira discrepan, eso es el dato — promediarlas lo escondería detrás de
+  // un número intermedio que no describe a ninguna de las dos.
+  const armarPorPar = (campo: "notas" | "notas_vision") => {
+    const m = new Map<string, { variante: string; notas: NotaRubrica[] }[]>();
+    for (const l of finales ?? []) {
+      const k = l.par_id as string;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push({
+        variante: l.variante as string,
+        notas: ((l as Record<string, unknown>)[campo] as NotaRubrica[] | null) ?? [],
+      });
+    }
+    return m;
+  };
+  const juzgadosDe = (campo: "notas" | "notas_vision") => {
+    const m = armarPorPar(campo);
+    return reales.map((par) => ({
+      n: par.n as number,
+      etiqueta: (par.brief as BriefMotor).etiqueta,
+      lados: m.get(par.id as string) ?? [],
+    }));
+  };
+  const juzgados = juzgadosDe("notas");
+
   const et = (c: string) => variantes.find((v) => v.clave === c)?.etiqueta ?? c;
 
+  const imprimirMarcador = (
+    r: ReturnType<typeof marcadorPareado>,
+    titulo: string
+  ) => {
   console.log(`\n${"=".repeat(66)}`);
-  console.log(`MARCADOR PAREADO (la rúbrica, sobre los MISMOS briefs)`);
+  console.log(titulo);
   console.log(`  ${r.comparables} pares comparables\n`);
   console.log(`  ${et(claves[0]).padEnd(24)} gana ${r.gana[claves[0]]}`);
   console.log(`  ${et(claves[1]).padEnd(24)} gana ${r.gana[claves[1]]}`);
@@ -212,6 +354,64 @@ async function main() {
     const flecha = Math.abs(a - b) < 0.05 ? "  " : a > b ? "←" : "→";
     console.log(`  ${d.padEnd(14)} ${a.toFixed(2).padStart(5)}  ${flecha}  ${b.toFixed(2).padStart(5)}`);
   }
+  };
+
+  imprimirMarcador(
+    marcadorPareado(juzgados, claves),
+    "MARCADOR PAREADO · rúbrica que LEE (nombres de prenda)"
+  );
+  // La que mira sólo si hay notas: las corridas juzgadas antes de rv3 entrar
+  // aquí no las tienen, y un marcador de cero pares se lee como empate.
+  const juzgadosVision = juzgadosDe("notas_vision");
+  const hayVision = juzgadosVision.some((j) => j.lados.some((l) => l.notas.length));
+  if (hayVision) {
+    imprimirMarcador(
+      marcadorPareado(juzgadosVision, claves),
+      "MARCADOR PAREADO · rúbrica que MIRA (fotos de las prendas)"
+    );
+    console.log(
+      `\n  Los dos marcadores NO se promedian a propósito. Si discrepan, eso es\n` +
+        `  el dato: el texto ve nombres y la visión ve tonos y texturas.`
+    );
+  } else {
+    console.log(`\n(sin notas de visión en esta corrida — vuelve a correr el script)`);
+  }
+
+  // ── EL RESUMEN DE LA RONDA ───────────────────────────────────────────────
+  // La parte que reemplaza el trabajo manual: 240 notas sueltas convertidas en
+  // "estos son los problemas, ordenados por lo que más duele". Por variante,
+  // porque la pregunta no es sólo cuál ganó sino EN QUÉ difieren.
+  const criticasPorVariante: Record<string, CriticaStylist[]> = {};
+  for (const l of finales ?? []) {
+    const cs = (l.criticas as CriticaStylist[] | null) ?? [];
+    if (!cs.length) continue;
+    const k = l.variante as string;
+    (criticasPorVariante[k] ??= []).push(...cs);
+  }
+  if (Object.keys(criticasPorVariante).length) {
+    const porVar = resumirPorVariante(criticasPorVariante);
+    console.log(`\n${"=".repeat(66)}`);
+    console.log(`LO QUE VIO EL JUEZ STYLIST (${JUEZ_STYLIST_VERSION})`);
+    for (const clave of claves) {
+      const r = porVar[clave];
+      if (!r) continue;
+      console.log(`\n  ${et(clave)}`);
+      console.log(
+        `  ${r.conHallazgos}/${r.looks} looks con algo que decir · ${r.conRotos} con un fallo que ROMPE`
+      );
+      for (const t of r.temas) {
+        const marca = t.peor === "rompe" ? "🔴" : t.peor === "resta" ? "🟠" : "· ";
+        console.log(`  ${marca} ${t.label.padEnd(22)} ${t.looks} looks (${t.hallazgos} hallazgos)`);
+        for (const e of t.ejemplos.slice(0, 2)) {
+          console.log(`       "${e.pieza}": ${e.problema}`);
+          console.log(`        → ${e.arreglo}`);
+        }
+      }
+    }
+    console.log(`\n  Los temas de arriba son la lista de qué ajustar en el motor.`);
+    console.log(`  Cada uno que se repita es candidato a regla en código.`);
+  }
+
   console.log(`\ncosto $${costo.toFixed(2)}${fallos ? ` · ${fallos} fallos` : ""}`);
   if (compararModelos) {
     console.log(
