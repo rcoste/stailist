@@ -16,6 +16,12 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 - **Trigger**: al terminar la siembra manual, o cuando el siguiente usuario
   real borre/resetee su cuenta (ahí se pierde dato de verdad).
 
+## Huecos del corpus que dejó la pestaña de Trajes (2026-08-17)
+
+- [ ] **Falta un traje NEGRO** (y Roberto lo pidió por nombre: "un traje azul marino, uno gris y uno negro"). Hoy los seis pares del catálogo son marino, gris carbón, gris claro, arena, azul claro y esmoquin — el esmoquin NO es el traje negro de oficina/funeral y no lo sustituye. Va con el pipeline de la casa (`scripts/gen-archetypes.mjs`, dos renders: saco y pantalón) + una fila en cada tabla con su `attrs.conjunto` compartido (ver migración 0137). *Trigger*: la siguiente tanda de renders del catálogo.
+- [ ] **Ninguna mujer tiene traje**: en `segment='mujer'` hay sacos sueltos (Le smoking, blazer estructurado, saco de boda) y CERO pares saco+pantalón, así que la pestaña "Trajes" no le aparece a ninguna usuaria. Es el mismo sesgo que ya se documentó en `docs/decisiones` sobre reglas con default masculino. *Trigger*: el mismo que el anterior — se generan juntos.
+- [ ] **El traje entra completo o no entra**: la tarjeta marca las dos piezas de un tap y no hay "sólo el saco". Quien tenga el saco y no el pantalón tiene que borrar el pantalón después desde el clóset. Se dejó así porque un segundo control en la tarjeta paga complejidad en el minuto más caro del onboarding. *Trigger*: si alguien reporta que le entró una prenda que no tiene.
+
 ## Diferido del header de pantalla interna (2026-08-14)
 
 - [ ] **¿El detalle de viaje adopta el header interno?**: el handoff de diseño (`claude-design-handoffs-stailist/design_handoff_esenciales`) lo declara PATRÓN GLOBAL "incluido el detalle de viaje", y se aplicó sólo a esenciales y biblioteca. *Por qué viaje quedó fuera*: tiene un header de DOS capas que ya funciona —la portada con la foto del destino y el back circular flotando encima, más una capa compacta al hacer scroll— y ese diseño existe PORQUE hay portada; el propio handoff dice "SIN portada de imagen, a diferencia de viaje" dos líneas antes de meterlo en el mismo saco. Rediseñar un header que se shippeó hace días y resuelve otro caso es riesgo sin retorno. *Trigger*: cuando se toque el detalle de viaje por otra razón, evaluar si la capa compacta (la que ya enseña "‹ modo viaje" + "···") puede ser directamente el header interno.
