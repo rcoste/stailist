@@ -38,6 +38,7 @@ import type { EngineItem } from "./prompt";
 import type { Clima } from "./recetario";
 import { tipoDePrenda } from "./vocabulario";
 import { mismoColorAOjo, oklch } from "./color-perceptual";
+import { medirCoherencia, rompeCoherencia } from "./coherencia-cromatica";
 
 export type Violacion = { regla: string; detalle: string };
 
@@ -83,6 +84,12 @@ export type ContextoReglas = {
    * error algo correcto en la mitad de los clósets.
    */
   gender?: string | null;
+  /**
+   * Apaga la regla de coherencia cromática. SOLO para el comparador: es la
+   * variante que mide si la regla suma o estorba, corriendo el motor real con
+   * el flag en vez de una imitación (misma disciplina que `sinRepararEnCodigo`).
+   */
+  sinCoherenciaCromatica?: boolean;
 };
 
 /**
@@ -958,6 +965,30 @@ export function revisarEjecucion(
         });
       }
     }
+  }
+
+  // 23. El look se lee como una decisión, no como cinco cosas oscuras juntas.
+  //
+  //     LA ÚNICA REGLA DE ARMONÍA DE COLOR QUE EXISTE AQUÍ. Las otras dos que
+  //     tocan color son puntuales (que los cueros dialoguen; la corbata de un
+  //     funeral), así que hasta hoy el color general era enteramente criterio
+  //     del modelo — y el prompt sólo sabía contar SATURACIÓN, nunca contraste.
+  //     Con esa aritmética un look de cinco neutros oscuros sacaba nota
+  //     perfecta. Ver lib/engine/coherencia-cromatica para el caso que lo pidió
+  //     y para el porqué de exigir DOS señales de tres.
+  //
+  //     Medida antes de cablearla contra los 148 looks reales con hex: marca el
+  //     6.8%, y CERO de los 25 que tienen 👍 o "me lo puse".
+  const medida = ctx.sinCoherenciaCromatica
+    ? null
+    : medirCoherencia(items.map((i) => ({ nombre: nombre(i), hex: i.attrs.color_hex })));
+  if (rompeCoherencia(medida)) {
+    v.push({
+      regla: "colores-que-no-se-leen",
+      detalle: `Los colores del look no se leen como una decisión: ${medida!.senales.join(
+        "; "
+      )}. Dale un punto de descanso al ojo —una pieza que rompa el tono, o quita la que va sola en su temperatura— en vez de apilar oscuros distintos.`,
+    });
   }
 
   return v;

@@ -31,6 +31,11 @@ export type OpcionesGeneracion = {
    * llamada de más ayuda o estorba.
    */
   sinRepararEnCodigo?: boolean;
+  /**
+   * Apaga la regla de coherencia cromática (v53). Solo para el comparador: es
+   * la variante que mide si la regla mejora el look o rechaza looks buenos.
+   */
+  sinCoherenciaCromatica?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

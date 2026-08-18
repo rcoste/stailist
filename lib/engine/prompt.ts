@@ -308,7 +308,18 @@ import {
 // él la primera EXCEPCIÓN a la escalada de formalidad. Para los cuatro niveles
 // de la escalera el texto sale byte a byte igual que v50 — la versión sube
 // porque el prompt ya no es el mismo para todos los casos.
-export const PROMPT_VERSION = "v52";
+// v53: la primera regla de ARMONÍA DE COLOR del motor (colores-que-no-se-leen,
+// lib/engine/coherencia-cromatica). Hasta hoy este prompt sabía contar
+// SATURACIÓN —"máximo 1-2 colores protagonistas; el resto neutros"— pero no
+// medir CONTRASTE, y además declara que gris, negro y marino "funcionan
+// siempre". Con esa aritmética un look de cinco neutros oscuros sacaba nota
+// perfecta: cero colores compitiendo. Salió de un look real ("Carbón bajo
+// cero": traje carbón + camisa negra + suéter marino + botín café) y de la
+// queja de Roberto, "al usar tantos colores es cuando ya se rompe".
+// La versión sube porque el bloque de reglas verificadas que lee el juez ya no
+// es el mismo. Como toda regla nueva aquí, va con su variante de ablación en
+// el comparador (sin-coherencia-cromatica): si apagarla gana, se revierte.
+export const PROMPT_VERSION = "v53";
 
 export type EngineItem = {
   id: string;
