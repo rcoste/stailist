@@ -26,9 +26,38 @@ import type { Gender } from "@/lib/auth";
 type Opcion = "recta" | "holgada";
 export type Corte = Opcion | "mixta";
 
+// CADA PAR DICE DÓNDE MIRAR, y la foto se acerca a esa zona.
+//
+// Roberto, probando el flujo desde cero (2026-08-17): "no está tan claro lo que
+// tiene que ver la persona… está muy chiquito y no se alcanza a ver". Tenía
+// razón y el número lo explica: son fotos de cuerpo entero, de la cabeza a los
+// pies, metidas en media pantalla de teléfono. La persona mide ~200 px de alto,
+// el pantalón ~80, y la diferencia entre pierna recta y pierna amplia son unos
+// pocos píxeles. La pregunta era honesta y la imagen la hacía imposible.
+//
+// Se arregla por los dos lados: `pista` dice en palabras qué cambia (par 1 el
+// pantalón, par 2 la parte de arriba — es lo que generó el script, ver
+// scripts/gen-pares-corte.mjs) y `zona` acerca la foto a esa mitad del cuerpo.
+// Sin la pista, el acercamiento deja a la persona adivinando qué mira; sin el
+// acercamiento, la pista señala algo que sigue sin verse.
+//
+// LO QUE NO SE HACE: poner "ajustado" y "suelto" debajo de cada foto. Sería lo
+// más "claro" y arruinaría el dato — la pantalla existe porque esas palabras no
+// significan nada para quien no piensa en ropa, y etiquetarlas convierte
+// "¿cuál te gusta?" en "¿cuál crees que es la respuesta correcta?".
 const PARES = [
-  { par: 1, titulo: "¿cuál te late más?" },
-  { par: 2, titulo: "¿y de estas dos?" },
+  {
+    par: 1,
+    titulo: "¿cuál te late más?",
+    pista: "fíjate en el pantalón — es lo único que cambia",
+    zona: "abajo",
+  },
+  {
+    par: 2,
+    titulo: "¿y de estas dos?",
+    pista: "ahora fíjate en la parte de arriba",
+    zona: "arriba",
+  },
 ] as const;
 
 export function ParesDeCorte({
@@ -91,6 +120,11 @@ export function ParesDeCorte({
           Es la misma ropa — cambia cómo queda. Con esto sé si buscarte cortes
           ajustados o sueltos en cada look que te arme.
         </p>
+        {/* LA PISTA VA REMARCADA, no como pie de foto en gris: es la
+            instrucción para poder contestar, no un detalle de contexto. */}
+        <p className="mt-0.5 self-start rounded-full bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-ink">
+          {actual.pista}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -111,7 +145,15 @@ export function ParesDeCorte({
               alt=""
               fill
               sizes="(min-width: 640px) 240px, 45vw"
-              className="object-cover"
+              // EL ACERCAMIENTO. 1.5× anclado en la mitad del cuerpo que cambia:
+              // en el par del pantalón se ancla abajo (se ve de la cintura a los
+              // zapatos) y en el de la parte de arriba, arriba (de la cabeza al
+              // muslo). Las dos fotos del par se recortan IGUAL — si una se
+              // acercara más que la otra, la comparación dejaría de ser honesta,
+              // que es toda la razón de ser de estos pares.
+              className={`object-cover scale-[1.5] ${
+                actual.zona === "abajo" ? "origin-bottom" : "origin-top"
+              }`}
               // Las cuatro imágenes del par siguiente ya están pedidas por el
               // navegador cuando se llega a él: entre par y par no debe haber
               // espera, o se siente un paso más y no la cola del swipe.
