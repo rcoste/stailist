@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
-import { veredictoDeTraje } from "@/lib/traje";
+import { agruparConjuntos, veredictoDeTraje } from "@/lib/traje";
 import { formalidadLegible } from "@/lib/formalidad";
 import { votarParMotor, completarMarcas } from "../../motor-actions";
 
@@ -143,58 +143,91 @@ function Lado({
             </span>
           </div>
 
-          {/* ¿EL TRAJE ESTÁ BIEN APAREADO? Roberto: "esto es para identificar
-              visualmente que si el AI propone un traje completo, tipo para un
-              abogado, sí está haciendo el match correcto y no lo está haciendo
-              parchado". Va por LOOK y no por prenda — lo que se juzga al votar
-              es el traje, no la pieza. Solo aparece si hay piezas de traje. */}
+          {/* SÓLO SE AVISA CUANDO ALGO ESTÁ MAL. El "traje completo" ya no se
+              escribe: desde que el par se dibuja junto (agruparConjuntos), la
+              etiqueta repetía en texto lo que la retícula enseña. Roberto lo
+              pidió así — "englobarlos, los que son del saco y el traje" — y una
+              confirmación redundante encima de cinco fotos es justo lo que no
+              se leía. El parchado y el suelto SÍ siguen, en acento: esos no se
+              ven solos, y son el error que engaña (dos grises plausibles). */}
           {(() => {
             const vt = veredictoDeTraje(look.prendas);
-            if (!vt) return null;
+            if (!vt || vt.tipo === "completo") return null;
             const texto =
-              vt.tipo === "completo"
-                ? "traje completo"
-                : vt.tipo === "parchado"
-                  ? "traje parchado: saco y pantalón de trajes distintos"
-                  : `${vt.prenda} sin su par`;
+              vt.tipo === "parchado"
+                ? "traje parchado: saco y pantalón de trajes distintos"
+                : `${vt.prenda} sin su par`;
             return (
-              <p
-                className={`mb-1.5 text-[11px] font-semibold leading-tight ${
-                  vt.tipo === "completo" ? "text-muted" : "text-accent"
-                }`}
-              >
+              <p className="mb-1.5 text-[11px] font-semibold leading-tight text-accent">
                 {texto}
               </p>
             );
           })()}
           {/* Las prendas, EN GRANDE. Dos por fila dentro de la columna: con un
-              solo look en pantalla caben al doble que antes. */}
+              solo look en pantalla caben al doble que antes. El traje va en UNA
+              celda a todo lo ancho, con las dos piezas dentro y un pie común. */}
           <div className="grid grid-cols-2 gap-1.5">
-            {look.prendas.map((p) => (
-              <div key={p.id} className="flex flex-col items-center gap-1">
-                <span className="relative block aspect-square w-full overflow-hidden rounded-lg border border-line">
-                  {p.imagen ? (
-                    <Image
-                      src={p.imagen}
-                      alt={p.nombre}
-                      fill
-                      sizes="(max-width: 430px) 22vw, 120px"
-                      loading="eager"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span
-                      className="absolute inset-0"
-                      style={{ backgroundColor: p.swatch }}
-                      aria-hidden
-                    />
-                  )}
-                </span>
-                <span className="line-clamp-2 text-center text-[11px] leading-tight text-muted">
-                  {p.nombre}
-                </span>
-              </div>
-            ))}
+            {/* El traje va PRIMERO. Ocupa las dos columnas, así que dejarlo en
+                su lugar de origen parte la fila anterior y deja un hueco a
+                media retícula; arriba, el hueco cae al final, que es como se ve
+                cualquier última fila incompleta. Y es la lectura correcta: si
+                hay traje, el look ES el traje. */}
+            {[...agruparConjuntos(look.prendas)]
+              .sort((a, b) => Number(b.tipo === "conjunto") - Number(a.tipo === "conjunto"))
+              .map((celda, ci) =>
+              celda.tipo === "conjunto" ? (
+                <div key={ci} className="col-span-2 flex flex-col items-center gap-1 rounded-lg border border-line bg-tile p-1.5">
+                  <div
+                    className="grid w-full gap-1.5"
+                    style={{ gridTemplateColumns: `repeat(${celda.piezas.length}, minmax(0,1fr))` }}
+                  >
+                    {celda.piezas.map((p) => (
+                      <span key={p.id} className="relative block aspect-square w-full overflow-hidden rounded-md border border-line bg-surface">
+                        {p.imagen ? (
+                          <Image
+                            src={p.imagen}
+                            alt={p.nombre}
+                            fill
+                            sizes="(max-width: 430px) 22vw, 120px"
+                            loading="eager"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="absolute inset-0" style={{ backgroundColor: p.swatch }} aria-hidden />
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-center text-[11px] font-semibold leading-tight text-ink">
+                    {celda.nombre}
+                  </span>
+                </div>
+              ) : (
+                <div key={ci} className="flex flex-col items-center gap-1">
+                  <span className="relative block aspect-square w-full overflow-hidden rounded-lg border border-line">
+                    {celda.prenda.imagen ? (
+                      <Image
+                        src={celda.prenda.imagen}
+                        alt={celda.prenda.nombre}
+                        fill
+                        sizes="(max-width: 430px) 22vw, 120px"
+                        loading="eager"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="absolute inset-0"
+                        style={{ backgroundColor: celda.prenda.swatch }}
+                        aria-hidden
+                      />
+                    )}
+                  </span>
+                  <span className="line-clamp-2 text-center text-[11px] leading-tight text-muted">
+                    {celda.prenda.nombre}
+                  </span>
+                </div>
+              )
+            )}
           </div>
 
           {tryon?.image ? (
