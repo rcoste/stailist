@@ -149,7 +149,10 @@ export function rubricFor(gender: "hombre" | "mujer" | null): string {
 function buildCriticMessage(
   ctx: EngineContext,
   outfit: GeneratedOutfit,
-  priorOutfits: GeneratedOutfit[]
+  priorOutfits: GeneratedOutfit[],
+  /** Los flags del arnés, para que el bloque de reglas que ve el juez sea el
+   *  mismo conjunto con el que se generó. */
+  opciones: { sinCoherenciaCromatica?: boolean } = {}
 ): string {
   // El juez ve las MISMAS marcas de estilo que el generador. Si solo las viera
   // uno, el juez "repararía" el look quitando justo la prenda que lo hacía de su
@@ -172,7 +175,7 @@ function buildCriticMessage(
   lines.push(
     ...bloqueEjecucion(
       ctx.items.filter((i) => outfit.item_ids.includes(i.id)),
-      contextoDeReglas(ctx)
+      contextoDeReglas(ctx, opciones)
     )
   );
 
@@ -229,8 +232,9 @@ export async function reviewOutfit(
   priorOutfits: GeneratedOutfit[],
   /** Interno: esta llamada YA es el segundo intento, no encadenar otro. */
   esReintento = false,
-  /** Los flags del arnés. Solo se lee `sinRepararEnCodigo` (ver más abajo). */
-  opciones: { sinRepararEnCodigo?: boolean } = {},
+  /** Los flags del arnés que el juez lee: la reparación en código y la regla
+   *  de coherencia cromática (las dos son variantes del comparador). */
+  opciones: { sinRepararEnCodigo?: boolean; sinCoherenciaCromatica?: boolean } = {},
   /**
    * De quién es esta revisión, para el recibo. `null` = comparador, eval o
    * script: sin sesión y sin ganas de ensuciar los promedios de uso real.
@@ -258,7 +262,7 @@ export async function reviewOutfit(
     const recibo = await medir(quien && { ...quien, tarea: "juez" }, {
       modelo: MODELO_JUEZ,
       system: CRITIC_SYSTEM_TEXT,
-      texto: buildCriticMessage(ctx, outfit, priorOutfits),
+      texto: buildCriticMessage(ctx, outfit, priorOutfits, opciones),
       schema: buildCriticSchema(itemIds),
       // 1536: el tokenizer de Sonnet 5 emite ~30% más tokens que 4.6 para el
       // mismo texto — con 1024 un veredicto largo truncaba y el catch devolvía
@@ -314,7 +318,7 @@ export async function reviewOutfit(
       // exacta y se le da UN intento más — no dos: a la tercera el problema ya
       // no es de atención sino de que este clóset no da, y ahí insistir sólo
       // quema tiempo del usuario que está esperando su look.
-      let roto = loQueSigueRoto(ctx, reparado);
+      let roto = loQueSigueRoto(ctx, reparado, opciones);
 
       // PRIMERO EL CÓDIGO. La idea es de Roberto: "muchas de las cosas que
       // fallaban era nada más 'ay, te faltó esto'. Es como decir 'te faltó
@@ -329,11 +333,11 @@ export async function reviewOutfit(
         const arreglo = repararEnCodigo(
           reparado.item_ids,
           ctx.items,
-          contextoDeReglas(ctx)
+          contextoDeReglas(ctx, opciones)
         );
         if (arreglo.hechas.length > 0) {
           look = keepAnchor({ ...reparado, item_ids: arreglo.itemIds }, ctx.seedItemIds ?? []);
-          roto = loQueSigueRoto(ctx, look);
+          roto = loQueSigueRoto(ctx, look, opciones);
         }
       }
 
@@ -349,7 +353,7 @@ export async function reviewOutfit(
         // Se queda con el segundo intento sólo si de verdad mejoró: si dejó el
         // look igual de roto (o peor), nos quedamos con el primero y no
         // pagamos el cambio.
-        const rotoDespues = loQueSigueRoto(ctx, segunda.outfit);
+        const rotoDespues = loQueSigueRoto(ctx, segunda.outfit, opciones);
         if (rotoDespues.length < roto.length) {
           return {
             ...segunda,
@@ -387,8 +391,14 @@ export async function reviewOutfit(
  * armara por su cuenta, el juez podría reparar contra una vara distinta de la
  * que lo verifica — y eso es justo lo que este archivo no puede permitirse.
  */
-function contextoDeReglas(ctx: EngineContext): ContextoReglas {
+function contextoDeReglas(
+  ctx: EngineContext,
+  opciones: { sinCoherenciaCromatica?: boolean } = {}
+): ContextoReglas {
   return {
+    // Flag del comparador: apagar la regla de color es correr el motor real
+    // con ella apagada, no una imitación.
+    sinCoherenciaCromatica: opciones.sinCoherenciaCromatica,
     clima: bandaDeClima(ctx.weather),
     closet: ctx.items,
     // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado son la
@@ -422,11 +432,14 @@ function contextoDeReglas(ctx: EngineContext): ContextoReglas {
  */
 export function loQueSigueRoto(
   ctx: EngineContext,
-  outfit: GeneratedOutfit
+  outfit: GeneratedOutfit,
+  /** Los mismos flags con los que se generó: medir contra una regla que la
+   *  variante tiene apagada contaría como "roto" lo que ella no vigila. */
+  opciones: { sinCoherenciaCromatica?: boolean } = {}
 ): Violacion[] {
   return revisarEjecucion(
     ctx.items.filter((i) => outfit.item_ids.includes(i.id)),
-    contextoDeReglas(ctx)
+    contextoDeReglas(ctx, opciones)
   );
 }
 

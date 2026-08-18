@@ -109,6 +109,21 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     ayuda: "sin la aclaración de que los neutros no compiten con la paleta (v37)",
     opciones: { sinNeutros: true },
   },
+  {
+    clave: "sin-coherencia-cromatica",
+    etiqueta: "Sin coherencia cromática",
+    // LA VARIANTE ES EL CONTROL VIEJO, no la regla nueva: producción ya la
+    // lleva, así que el retador es apagarla. Si el retador GANA, la regla
+    // estorba y se revierte — que es exactamente lo que pasó con la regla dura
+    // de marino+negro (prompt v5 → v6), y por eso se mide antes de creerle.
+    //
+    // Lo que hay que mirar en el marcador no es solo quién gana: la regla marca
+    // el 6.8% de los looks históricos, así que la mayoría de los pares van a
+    // salir IDÉNTICOS. La señal está en los pares donde difieren.
+    ayuda:
+      "sin la regla de color de v53 (4+ familias en una sola banda con una pieza cálida sola)",
+    opciones: { sinCoherenciaCromatica: true },
+  },
 ];
 
 /**
