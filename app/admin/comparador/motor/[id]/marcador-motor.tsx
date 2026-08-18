@@ -165,6 +165,19 @@ export function MarcadorMotorView({
         Lo que vieron los jueces
       </Link>
 
+      {/* Y el cruce, DESPUÉS del voto: la pregunta que ni el marcador ni los
+          jueces contestan —¿el juez ve lo que veo yo?— y la única que recalibra
+          al juez. Sin voto no se ofrece: la pantalla se abre vacía y el enlace
+          sería una invitación a leer los hallazgos con el voto abierto. */}
+      {resultado.votados > 0 ? (
+        <Link
+          href={`/admin/comparador/motor/${corridaId}/cruce`}
+          className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
+        >
+          Tu voto contra el juez
+        </Link>
+      ) : null}
+
       {esVistazo && sinGenerar > 0 ? (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">

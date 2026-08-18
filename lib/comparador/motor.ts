@@ -624,6 +624,12 @@ export type ParMotor = {
    * marcador global ya alcanzable. Se lee aparte, etiquetada.
    */
   prefsLook: Record<string, Record<string, string>> | null;
+  /** La calificación AL JUEZ por look (migración 0142): mide al juez, no al
+   *  look. {"<variante>": {"<índice>": {v, nota}}} */
+  veredictosJuez: Record<
+    string,
+    Record<string, { v?: "acuerdo" | "exagero"; nota?: string }>
+  > | null;
   nota: string | null;
   lados: LadoMotor[];
 };

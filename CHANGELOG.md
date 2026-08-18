@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.260.0] - 2026-08-18
+
+### Added — calificar al juez, no al look
+
+Pantalla nueva `/admin/comparador/motor/<id>/cruce`: "Tu voto contra el juez".
+Reparte los looks de una corrida votada en cuatro cajas —coincidieron, sólo tú
+lo viste, sólo el juez lo vio, los dos limpios— y en cada uno deja marcar si el
+juez **tiene razón** o **se pasó**, con una nota.
+
+Es la única medición que el juez no puede hacer solo. El primer cruce (hecho a
+mano sobre la ronda 283d8d44) dio: 5 coincidencias, **0** looks donde Roberto
+marcara algo que el juez no viera, y **20** donde el juez marcó y él no. Ese 20
+es ambiguo por definición —o ve lo que Roberto pasa por alto, o inventa
+problemas— y sin una opinión humana encima no se desempata.
+
+Vivía en un script suelto y llegaba como un archivo por chat. Roberto: "no nada
+más el HTML, sino poder poner yo ahí comentarios para que sea más fácil que lo
+proceses". Una medición que sólo existe cuando alguien la pide a mano es una
+medición que no se hace.
+
+Se abre DESPUÉS del voto y nunca antes: el cálculo se salta los pares sin votar
+y la acción los rechaza. Guarda en `veredictos_juez` (migración 0142), aparte de
+`voto` y de `prefs_look` — mide al juez, no al look, y no toca la regla
+pre-registrada.
+
 ## [0.2.259.0] - 2026-08-18
 
 ### Changed — el traje se ve como un traje, no como dos prendas que combinan

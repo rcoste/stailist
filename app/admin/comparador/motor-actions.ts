@@ -541,3 +541,77 @@ export async function reintentarFallidos(
   revalidatePath(`/admin/comparador/motor/${corridaId}`);
   return { ok: true, borrados: borrados?.length ?? 0 };
 }
+
+/**
+ * CALIFICAR AL JUEZ, no al look.
+ *
+ * Roberto, después de votar su primera ronda: "estoy viendo que muchos sí le
+ * pegó el juez, pero me gustaría poner yo ahí comentarios para que sea más
+ * fácil que lo proceses". El objeto que se juzga aquí NO es el outfit —para eso
+ * están `marcas_look` y `defectos_look`— sino el HALLAZGO: si el juez tenía
+ * razón o se pasó.
+ *
+ * ES LA ÚNICA MEDICIÓN QUE EL JUEZ NO PUEDE HACER SOLO, y el número que la pide
+ * salió del primer cruce: 20 de 32 looks los marcó el juez y Roberto no. Ese 20
+ * es ambiguo por definición —o ve lo que Roberto pasa por alto, o inventa
+ * problemas— y sin una opinión humana encima no se puede desempatar.
+ *
+ * NO TOCA `voto` NI LA REGLA PRE-REGISTRADA. Igual que `prefs_look` (0116), es
+ * una lectura posterior, con todo a la vista, sobre un objeto distinto. Exige
+ * que el par ya esté votado: calificar al juez antes de votar sería leer sus
+ * hallazgos con el voto todavía abierto, que es justo lo que el ciego evita.
+ */
+export async function calificarJuez(
+  parId: string,
+  variante: string,
+  lookIndex: number,
+  veredicto: "acuerdo" | "exagero" | null,
+  nota?: string
+): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: par } = await supabase
+    .from("comparador_motor_pares")
+    .select("id, corrida_id, voto, veredictos_juez")
+    .eq("id", parId)
+    .maybeSingle();
+  if (!par) return { ok: false, error: "no existe ese par" };
+  if (!par.voto) {
+    return {
+      ok: false,
+      error: "ese par no se ha votado — el cruce se abre después del voto",
+    };
+  }
+
+  const previo = (par.veredictos_juez ?? {}) as Record<
+    string,
+    Record<string, { v?: string; nota?: string }>
+  >;
+  const deVariante = { ...(previo[variante] ?? {}) };
+  const notaLimpia = (nota ?? "").trim();
+
+  // Sin veredicto y sin nota, la entrada se borra en vez de guardarse vacía:
+  // una calificación en blanco contaría como "revisado" en el conteo.
+  if (!veredicto && !notaLimpia) delete deVariante[String(lookIndex)];
+  else {
+    deVariante[String(lookIndex)] = {
+      ...(veredicto ? { v: veredicto } : {}),
+      ...(notaLimpia ? { nota: notaLimpia } : {}),
+    };
+  }
+
+  const siguiente = { ...previo, [variante]: deVariante };
+  if (!Object.keys(deVariante).length) delete siguiente[variante];
+
+  const { error } = await supabase
+    .from("comparador_motor_pares")
+    .update({
+      veredictos_juez: Object.keys(siguiente).length ? siguiente : null,
+    })
+    .eq("id", parId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/admin/comparador/motor/${par.corrida_id}/cruce`);
+  return { ok: true };
+}

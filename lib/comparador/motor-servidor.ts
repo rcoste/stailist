@@ -117,6 +117,8 @@ export async function cargarCorridaMotor(
     comentariosLook:
       (p.comentarios_look as Record<string, Record<string, string>> | null) ?? null,
     prefsLook: (p.prefs_look as Record<string, Record<string, string>> | null) ?? null,
+    veredictosJuez:
+      (p.veredictos_juez as ParMotor["veredictosJuez"]) ?? null,
     nota: (p.nota as string | null) ?? null,
     lados: porPar.get(p.id as string) ?? [],
   }));
