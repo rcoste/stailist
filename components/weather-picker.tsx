@@ -29,6 +29,7 @@ import {
   getWeather,
   getWeatherForDates,
   geocodePlace,
+  reverseGeocode,
   hayLluvia,
   type Weather,
 } from "@/lib/weather";
@@ -389,6 +390,17 @@ export function LookRequest({
   // permiso EN ese tap (gesto del usuario, no un prompt sorpresa al montar).
   const [donde, setDonde] = useState<"aqui" | "otra">("aqui");
   const [aquiCoords, setAquiCoords] = useState<{ lat: number; lon: number } | null>(null);
+  // El NOMBRE de la ciudad detectada ("Querétaro"). "listo — ya sé dónde" no
+  // le dice a la persona QUÉ detectó, y sin eso no puede verificar que el
+  // clima que sigue es del lugar correcto (Roberto). Best-effort: si el
+  // geocoding inverso falla, queda null y el copy genérico de siempre.
+  const [aquiLabel, setAquiLabel] = useState<string | null>(null);
+  function resolverNombreDeAqui(c: { lat: number; lon: number }) {
+    // Fire-and-forget: el nombre es informativo, nunca bloquea el flujo.
+    void reverseGeocode(c.lat, c.lon).then((n) => {
+      if (n) setAquiLabel(n);
+    });
+  }
   // El permiso tiene TRES finales, no dos, y el tercero era el "raro" que vivió
   // Roberto: si el navegador ya lo tiene BLOQUEADO (un "no permitir" viejo), el
   // prompt no vuelve a salir jamás — falla en silencio. Se distingue y se dice.
@@ -530,6 +542,7 @@ export function LookRequest({
         }
       }
       if (!coords || muerto) return;
+      if (donde === "aqui" && !aquiLabel) resolverNombreDeAqui(coords);
       await resolverClima(coords);
     })();
     return () => {
@@ -541,7 +554,20 @@ export function LookRequest({
 
   // Cambiar de dónde, ciudad o fecha invalida lo pre-resuelto (se re-lee al
   // volver a entrar al paso de clima).
+  //
+  // EXCEPTO la primera llegada de las coordenadas (null → valor) en modo
+  // "aquí". Con el auto-arranque del paso anterior puede haber DOS lecturas de
+  // ubicación en vuelo (la del arranque, lenta, y la silenciosa del paso de
+  // clima): si la lenta aterriza después de que el clima ya se resolvió,
+  // invalidar aquí borraría un banner correcto — mismas coordenadas, solo que
+  // tardías — y nada volvería a pedirlo. Cambiar de coords DE VERDAD (un valor
+  // por otro) sigue invalidando, que es para lo que este efecto existe.
+  const prevAquiCoords = useRef(aquiCoords);
   useEffect(() => {
+    const primeraLlegada =
+      donde === "aqui" && prevAquiCoords.current === null && aquiCoords !== null;
+    prevAquiCoords.current = aquiCoords;
+    if (primeraLlegada) return;
     autoClimaIntentado.current = false;
     setClimaAuto(null);
     // Y CADUCA TAMBIÉN LO QUE EL PRONÓSTICO DEJÓ CONTESTADO. Borrar solo el
@@ -615,10 +641,28 @@ export function LookRequest({
     if (c) {
       setAquiCoords(c);
       setAquiEstado("listo");
+      resolverNombreDeAqui(c);
     } else {
       setAquiEstado((await permisoBloqueado()) ? "bloqueado" : "fallo");
     }
   }
+
+  // EL DEFAULT SE COMPORTA COMO ELEGIDO. "En esta ciudad" viene preseleccionada,
+  // pero su lógica solo corría en el TAP — o sea que para activar lo que ya
+  // estaba marcado había que volver a picarle (Roberto: "ya viene marcado, pero
+  // para que me aparezca compartir mi ubicación le tengo que picar otra vez").
+  // Al entrar al paso, la opción marcada arranca sola: permiso dado → lee en
+  // silencio; nunca preguntado → muestra el reveal que explica y ofrece el
+  // botón. El prompt del navegador sigue saliendo SOLO desde ese botón (un
+  // gesto), nunca por montar la pantalla — esa regla no se toca.
+  const arranqueAqui = useRef(false);
+  useEffect(() => {
+    if (paso !== "cuando" || arranqueAqui.current) return;
+    if (donde !== "aqui" || aquiCoords || aquiEstado !== "idle") return;
+    arranqueAqui.current = true;
+    void elegirAqui();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paso]);
 
   // "En esta ciudad": el tap ya NO dispara el prompt del navegador. Si el
   // permiso ya está dado, lee en silencio (responde en <1s); si está bloqueado,
@@ -656,6 +700,7 @@ export function LookRequest({
     }
     setAquiCoords(c);
     setAquiEstado("listo");
+    resolverNombreDeAqui(c);
     autoClimaIntentado.current = true; // ya estamos resolviendo — que el efecto no doble
     await resolverClima(c);
   }
@@ -866,6 +911,7 @@ export function LookRequest({
                 onOtra={() => setDonde("otra")}
                 onPedirUbicacion={pedirUbicacion}
                 aquiEstado={aquiCoords ? "listo" : aquiEstado}
+                aquiLabel={aquiLabel}
                 ciudadTexto={ciudadTexto}
                 onCiudadTexto={(v) => {
                   setCiudadTexto(v);
@@ -898,7 +944,11 @@ export function LookRequest({
                 fechaLabel={fecha ? fechaLegible(fecha) : null}
                 climaAuto={climaAuto}
                 resolviendo={resolviendo}
-                ciudadLabel={ciudadGeo?.label ?? null}
+                // La ciudad del banner: la que escribió ("otra") o la detectada
+                // ("aqui") — así "22° despejado" siempre dice DE DÓNDE es.
+                ciudadLabel={
+                  donde === "otra" ? (ciudadGeo?.label ?? null) : aquiLabel
+                }
               />
             )}
           </div>
@@ -1558,6 +1608,7 @@ function StepCuando({
   onOtra,
   onPedirUbicacion,
   aquiEstado,
+  aquiLabel,
   ciudadTexto,
   onCiudadTexto,
   ciudadGeo,
@@ -1582,6 +1633,9 @@ function StepCuando({
   /** El resultado del tap de "aquí": el permiso se pide AHÍ y se dice cómo
    *  quedó — leyendo / listo / bloqueado por el navegador / falló. */
   aquiEstado: "idle" | "pedir" | "leyendo" | "listo" | "bloqueado" | "fallo";
+  /** La ciudad detectada ("Querétaro") — la prueba de que el "ya sé dónde" es
+   *  verdad. null mientras se resuelve o si el geocoding inverso falló. */
+  aquiLabel: string | null;
   ciudadTexto: string;
   onCiudadTexto: (v: string) => void;
   ciudadGeo: { lat: number; lon: number; label: string } | null;
@@ -1703,7 +1757,12 @@ function StepCuando({
             <span className="text-[14px] font-semibold">en esta ciudad</span>
             <span className={`text-[12px] ${donde === "aqui" ? "opacity-80" : "text-muted"}`}>
               {aquiEstado === "listo"
-                ? "listo — ya sé dónde"
+                ? // Con nombre, se DICE: "ya sé dónde" sin decir dónde no deja
+                  // verificar nada (Roberto). Sin nombre (geocoding falló o
+                  // sigue en vuelo), el copy de siempre.
+                  aquiLabel
+                  ? `listo — estás en ${aquiLabel}`
+                  : "listo — ya sé dónde"
                 : aquiEstado === "leyendo"
                   ? "leyendo tu ubicación…"
                   : "tu ubicación de referencia"}

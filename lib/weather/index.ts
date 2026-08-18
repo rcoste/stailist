@@ -105,6 +105,40 @@ export async function getWeather(
   }
 }
 
+// Coords → nombre de ciudad ("Querétaro"). Open-Meteo no tiene geocoding
+// inverso, así que esto va por BigDataCloud — misma clase de servicio (gratis,
+// sin API key, CORS abierto, pensado para llamarse desde el navegador).
+//
+// PARA QUÉ EXISTE (Roberto, probando el flujo): "dice listo, ya sé dónde…
+// pero no me está diciendo qué ciudad es la que está detectando". Sin el
+// nombre, la persona no puede verificar que la detección es correcta — y un
+// clima de la ciudad equivocada se ve idéntico a uno de la correcta.
+//
+// Fail-open como todo el clima: si falla, null, y la UI dice lo de siempre.
+export async function reverseGeocode(
+  lat: number,
+  lon: number
+): Promise<string | null> {
+  try {
+    // A DOS DECIMALES (~1 km): para nombrar la ciudad no hace falta el punto
+    // exacto, y las coordenadas crudas del GPS (precisión de metros) no tienen
+    // por qué salir hacia un tercero. Mismo principio que la etiqueta del
+    // wizard: "no importa el punto exacto, la uso de referencia".
+    const la = lat.toFixed(2);
+    const lo = lon.toFixed(2);
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${la}&longitude=${lo}&localityLanguage=es`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // city = la ciudad; locality puede ser la colonia (más chico). Para el
+    // clima la ciudad es el nivel correcto — y el que la persona reconoce.
+    const name = data?.city || data?.locality || data?.principalSubdivision;
+    return typeof name === "string" && name.trim() ? name.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 // Modo viaje: ciudad → coords vía Open-Meteo geocoding (gratis, sin key).
 export async function geocodePlace(
   name: string
