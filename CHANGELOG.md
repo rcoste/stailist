@@ -2,6 +2,83 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.252.0] - 2026-08-17
+
+### Added — la primera regla de armonía de color del motor
+
+Roberto, sobre un look real ("Carbón bajo cero": traje gris carbón + camisa
+negra + suéter marino + botines café): *"al usar tantos colores es cuando ya se
+rompe y se ve no combinando"*.
+
+Tenía razón, y la causa estaba en el prompt. El motor tenía **22 reglas de
+ejecución y ninguna de armonía de color** — las dos que tocaban color eran
+puntuales (que los cueros dialoguen entre sí; la corbata de un funeral). Todo
+lo demás quedaba a criterio del modelo, y el prompt sólo sabía contar
+SATURACIÓN (*"máximo 1-2 colores protagonistas; el resto neutros"*), nunca
+contraste. Encima declara que gris, negro y marino *"son el FONDO del
+guardarropa, funcionan siempre"*.
+
+Léelo junto: **un look de cinco neutros oscuros sacaba nota perfecta.** Cero
+colores compitiendo. El modelo no desobedeció — obedeció una regla incompleta.
+
+La regla popular de "máximo 3 colores" tiene el MISMO agujero y casi con las
+mismas palabras: exime a los neutros. Esa exención está escrita para outfits
+donde los neutros son el telón de fondo de uno o dos colores de verdad, no como
+licencia para construir el look entero de neutros.
+
+**La regla mide tres señales y exige DOS de tres:**
+
+1. **≥4 familias de color, contando neutros** — el arreglo a la exención.
+2. **Una sola banda de valor** (todo profundo, todo medio o todo claro).
+3. **Una pieza cálida solitaria** entre piezas frías.
+
+Exigir dos es lo que evita que sea otro mito como el de "marino con negro
+nunca" (que este repo metió en v5 y revirtió en v6 tras investigarlo). Cada
+señal por separado rechaza looks buenos: la banda única la incumple el vestir
+tonal, y la cálida solitaria, el clásico traje marino con zapato café. Las tres
+juntas no tienen uso legítimo.
+
+Reusa `banda()` y `oklch()`, que ya existían y estaban probadas: no se
+inventaron matemáticas de color.
+
+### Medida ANTES de cablearla, contra 148 looks reales
+
+- Marca **10 looks (6.8%)**.
+- De los **25 con 👍 o "me lo puse"**: marca **0**.
+- "Carbón bajo cero" es el único look de toda la historia con las tres señales.
+
+Honestidad sobre ese cero: sólo 30 de los 148 looks tienen algún voto, así que
+"0 falsos positivos sobre 25 aprobados" significa *sin evidencia de falsos
+positivos*, no *probado seguro*.
+
+### Fixed — dos cosas que salieron al medir
+
+- **El sesgo de género, cuarta vez.** La regla se diseñó sobre un look de
+  hombre y sus dos únicos falsos positivos aparecieron en clósets de mujer, los
+  dos por un **tacón nude** (marino + blusa esmeralda + tacón nude + arracadas
+  doradas: un look de noche perfectamente bueno). Un tacón nude no es una
+  decisión de color — es una pieza hecha para DESAPARECER contra la piel, igual
+  que los metales, que la regla popular ya exime. Nudes y metales quedan
+  exentos, con test que verifica que un **camel del mismo hex sí cuenta**.
+- **`mismoColorAOjo` no sirve para contar familias**, aunque lo parezca: trata
+  a los acromáticos con benevolencia (`distanciaMatiz` devuelve 0 en cuanto uno
+  tiene croma bajo, porque el ángulo de un gris es ruido) y hacía que "gris
+  carbón + burdeos" contara como UNA familia.
+
+### Added — la variante de ablación
+
+`sin-coherencia-cromatica` entra a la banca del comparador. **Producción ya
+lleva la regla, así que el retador es apagarla**: si apagarla gana, la regla
+estorba y se revierte. Hay un test que verifica que el flag de verdad apaga la
+regla y no sólo existe — una variante que declare un flag sin cablearlo mediría
+dos veces lo mismo y empataría por accidente.
+
+Aviso sobre el poder del instrumento: la regla dispara entre 0% y 18% por
+usuario, así que en una corrida de 40 pares sólo 4-7 saldrán distintos. El
+formato "veredicto" está hecho para cambios que tocan todos los looks; aquí la
+señal vive sólo en los pares donde difieren, y así está escrita la regla
+pre-registrada.
+
 ## [0.2.251.1] - 2026-08-17
 
 ### Fixed — el panel gritaba por historia, no por un bug
