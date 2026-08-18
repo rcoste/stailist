@@ -88,6 +88,25 @@ export const RETADORES_MOTOR = {
   kimi: "moonshotai/kimi-k2.6",
 } as const;
 
+/**
+ * Los retadores de la RÚBRICA QUE MIRA (scripts/rubrica-vision-modelo.ts).
+ *
+ * Producción juzga con VISION_MODEL —Gemini 3.1 Flash-Lite—, que ganó a ciegas
+ * la prueba de LEER prendas. Criticar estilo es otra tarea y más difícil, y
+ * nunca se midió: sobre los looks calificados a mano coincide con el humano el
+ * 84%, y aprobar todo daría 87%.
+ *
+ * Los dos contestan preguntas DISTINTAS y por eso son dos:
+ *   · `tier` — mismo proveedor, un escalón arriba. Si sube, era el modelo.
+ *   · `tarea` — el que ya saca 89% juzgando por TEXTO. Si mirando también se
+ *     queda en 84%, el problema no es el modelo sino que juzgar estilo desde
+ *     fotos es difícil.
+ */
+export const RETADORES_VISION = {
+  tier: "gemini-3.5-flash",
+  tarea: RETADOR_MOTOR,
+} as const;
+
 /** Qué proveedores tienen llave puesta. Lo usa la pantalla para no ofrecer lo que no corre. */
 export function proveedoresListos(): Record<string, boolean> {
   return {
