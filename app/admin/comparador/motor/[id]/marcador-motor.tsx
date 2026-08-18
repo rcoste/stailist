@@ -156,6 +156,15 @@ export function MarcadorMotorView({
         </div>
       ) : null}
 
+      {/* La ronda de los jueces, antes de que el voto humano entre. Va aquí y
+          no escondido en el detalle: es el paso que ahorra el trabajo manual. */}
+      <Link
+        href={`/admin/comparador/motor/${corridaId}/jueces`}
+        className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
+      >
+        Lo que vieron los jueces
+      </Link>
+
       {esVistazo && sinGenerar > 0 ? (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">
