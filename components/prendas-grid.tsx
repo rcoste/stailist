@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { TryonPrenda } from "@/components/tryon-view";
 
 // Retícula de prendas del detalle del look — COMPARTIDA por Hoy/wow e Historial
@@ -15,9 +16,22 @@ import type { TryonPrenda } from "@/components/tryon-view";
 // - Alturas flexibles (60/40): la retícula llena el alto disponible y se encoge
 //   en pantallas cortas — decisión de Roberto: todo cabe sin scroll.
 
+// El tile ABRE LA FICHA de la prenda, que es lo que Roberto esperaba al tocarlo
+// ("no puedo ver el detalle de la prenda al picarle a alguno de los
+// thumbnails"). No estaba roto: nunca se construyó — la retícula pintaba divs y
+// el tipo ni siquiera cargaba el id.
+//
+// LLEVA AL CLÓSET Y NO ABRE UNA HOJA AQUÍ, y es a propósito: la ficha de una
+// prenda ya existe, con sus chips de edición y su borrado, dentro de
+// closet-grid. Duplicarla aquí sería la tercera copia de un vocabulario que
+// este repo ya tuvo que unificar una vez. El clóset la abre solo al recibir
+// `?prenda=<id>`.
+//
+// Sin id (comparador, evales, clósets ajenos) el tile sigue siendo un div, como
+// era antes: no hay ficha que abrir.
 function Tile({ prenda }: { prenda: TryonPrenda }) {
-  return (
-    <div className="relative h-full w-full overflow-hidden rounded-sm border border-line bg-tile">
+  const cuerpo = (
+    <>
       {prenda.imagen ? (
         <Image
           src={prenda.imagen}
@@ -40,7 +54,20 @@ function Tile({ prenda }: { prenda: TryonPrenda }) {
       >
         {prenda.nombre}
       </span>
-    </div>
+    </>
+  );
+
+  const marco =
+    "relative block h-full w-full overflow-hidden rounded-sm border border-line bg-tile";
+  if (!prenda.id) return <div className={marco}>{cuerpo}</div>;
+  return (
+    <Link
+      href={`/closet?prenda=${prenda.id}`}
+      aria-label={`ver ${prenda.nombre} en tu clóset`}
+      className={`${marco} transition-opacity active:opacity-80`}
+    >
+      {cuerpo}
+    </Link>
   );
 }
 

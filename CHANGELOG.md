@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.257.1] - 2026-08-18
+
+### Fixed — los thumbnails del look ya abren la ficha de la prenda
+
+Roberto: *"no puedo ver el detalle de la prenda al picarle a alguno de los
+thumbnails"*.
+
+**No estaba roto: nunca se construyó.** La retícula pintaba `<div>` puros —sin
+`Link`, sin `onClick`— y el tipo `TryonPrenda` ni siquiera cargaba el id de la
+prenda. El dato sí existía aguas arriba (`app/hoy/page.tsx` ya lo tenía) y se
+perdía en el camino.
+
+**Son DOS superficies, y las dos enlazan ahora**: la retícula de "las prendas" y
+la columna de miniaturas de "así te queda". Arreglar una sola habría sido peor
+que ninguna — la persona no sabría cuál responde.
+
+**Lleva al clóset y no abre una hoja nueva.** La ficha de una prenda ya existe,
+con sus chips de edición, su conjunto y su borrado, dentro de `closet-grid`.
+Duplicarla en el detalle del look habría sido la tercera copia de un vocabulario
+que este repo ya tuvo que unificar una vez. El clóset la abre al recibir
+`?prenda=<id>`, y el id se limpia de la URL al abrir para que el "atrás" del
+teléfono regrese al look en vez de reabrir la misma ficha.
+
+**Sin id no enlaza**, que es el caso del comparador y los evales: arman looks
+sobre clósets ajenos o sintéticos y ahí no hay ficha que abrir. Ahí el tile
+sigue siendo un `<div>`, exactamente como era.
+
+Verificado a mano en el navegador, el viaje entero: tocar el blazer en el
+detalle del look abre su ficha en el clóset, con nombre, chips y acciones, y la
+URL queda limpia.
+
 ## [0.2.257.0] - 2026-08-18
 
 ### Fixed — el motor entregaba looks que no visten a nadie

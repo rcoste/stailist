@@ -139,6 +139,9 @@ export function LookCard({
             generating={t.mode === "gen"}
             error={t.mode === "error" ? t.errMsg : null}
             prendas={look.prendas.map((p) => ({
+              // El id viaja para que la miniatura abra la ficha de la prenda,
+              // igual que en la retícula del detalle.
+              id: p.id,
               nombre: p.nombre,
               swatch: "var(--c-tile)",
               imagen: (p.id ? rendered[p.id] : null) ?? p.image,

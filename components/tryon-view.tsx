@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 
@@ -10,6 +11,14 @@ import { Spinner } from "@/components/spinner";
 // del coach, la tira de prendas y la lupa a pantalla completa. Compartida por el
 // detalle del look (Hoy/wow) y el detalle del Historial — misma pieza en todos.
 export type TryonPrenda = {
+  /**
+   * El id de la prenda en el clóset, para poder abrir su ficha desde el look.
+   *
+   * OPCIONAL a propósito: el comparador y los evales arman looks sobre clósets
+   * ajenos o sintéticos, y ahí no hay ficha que abrir. Sin id, el tile no
+   * enlaza a ningún lado — que es exactamente lo que hacía antes.
+   */
+  id?: string | null;
   nombre: string;
   swatch: string;
   imagen?: string | null;
@@ -164,27 +173,42 @@ export function TryonView({
             aplica — ahí el alto es fijo y el ancho no mueve nada. */}
         {hasRender || (anchoManda && generating) ? (
           <div className="flex w-14 shrink-0 flex-col gap-1.5 overflow-y-auto">
-            {(hasRender ? prendas : []).map((p, i) => (
-              <div
-                key={i}
-                className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-sm border border-line bg-tile"
-              >
-                {p.imagen ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.imagen}
-                    alt={p.nombre}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <span
-                    className="absolute inset-0"
-                    style={{ backgroundColor: p.swatch }}
-                    aria-hidden
-                  />
-                )}
-              </div>
-            ))}
+            {/* Estas miniaturas también abren la ficha, igual que la retícula de
+                "las prendas". Son DOS superficies para la misma prenda y tocar
+                una y no la otra es peor que ninguna: la persona no sabe cuál
+                responde. Sin id (comparador, evales) siguen siendo divs. */}
+            {(hasRender ? prendas : []).map((p, i) => {
+              const marco =
+                "relative block aspect-[4/5] w-full shrink-0 overflow-hidden rounded-sm border border-line bg-tile";
+              const cuerpo = p.imagen ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.imagen}
+                  alt={p.nombre}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <span
+                  className="absolute inset-0"
+                  style={{ backgroundColor: p.swatch }}
+                  aria-hidden
+                />
+              );
+              return p.id ? (
+                <Link
+                  key={i}
+                  href={`/closet?prenda=${p.id}`}
+                  aria-label={`ver ${p.nombre} en tu clóset`}
+                  className={`${marco} transition-opacity active:opacity-80`}
+                >
+                  {cuerpo}
+                </Link>
+              ) : (
+                <div key={i} className={marco}>
+                  {cuerpo}
+                </div>
+              );
+            })}
           </div>
         ) : null}
       </div>
