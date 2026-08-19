@@ -59,7 +59,7 @@ type State =
   | { kind: "generating"; outfitId: string } // outfitId "" = aún sin id (POST en vuelo)
   // paraFecha: el look recién generado es para OTRO día (plannedFor) — la vista
   // lo dice ("mañana") en vez de mentir con "hoy". Ausente = look de hoy.
-  | { kind: "ready"; outfit: HoyOutfit; paraFecha?: string | null }
+  | { kind: "ready"; outfit: HoyOutfit; alternos?: HoyOutfit[]; paraFecha?: string | null }
   // El ancla no va con la ocasión: el stylist avisa y la usuaria decide.
   | { kind: "anchor_warning"; note: string; seedItemName: string; input: LookInput }
   // NO es un error: es la respuesta. El clóset no da para el código de
@@ -191,6 +191,42 @@ export function HoyClient({
   const espejoRef = useRef<EspejoHandle>(null);
   const addRef = useRef<AddSheetHandle>(null);
 
+  // Cuál del trío estás viendo. Se resetea al llegar una generación nueva —
+  // sin esto, "otro look" te dejaría parado en la pestaña 3 de un trío que ya
+  // no existe.
+  const [lookVisible, setLookVisible] = useState(0);
+  const principalId = state.kind === "ready" ? state.outfit.id : null;
+  useEffect(() => {
+    setLookVisible(0);
+  }, [principalId]);
+
+  const alternosRestantes = useRef(0);
+  const pollAlternos = useCallback((outfitId: string) => {
+    const tick = async () => {
+      if (alternosRestantes.current-- <= 0) return;
+      try {
+        const res = await fetch(`/api/look-of-day?id=${outfitId}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          const alternos = (data.alternos as HoyOutfit[] | undefined) ?? [];
+          if (alternos.length) {
+            setState((prev) =>
+              prev.kind === "ready" && prev.outfit.id === outfitId
+                ? { ...prev, alternos }
+                : prev
+            );
+          }
+          if (alternos.length >= 2) return;
+        }
+      } catch {
+        /* red intermitente — el próximo tick lo intenta */
+      }
+      setTimeout(tick, 2500);
+    };
+    setTimeout(tick, 2500);
+  }, []);
+
+
   // Polling del estado del look hasta que esté listo o falle. Sobrevive el
   // backgrounding: cuando vuelves a la app (o iOS la recarga), reanuda y encuentra
   // el resultado que el server siguió cocinando.
@@ -208,11 +244,27 @@ export function HoyClient({
           const data = await res.json();
           if (stopped) return;
           if (data.status === "ready" && data.outfit) {
+            const alternos = (data.alternos as HoyOutfit[] | undefined) ?? [];
             setState({
               kind: "ready",
               outfit: data.outfit,
+              alternos,
               paraFecha: lastInput.current?.plannedFor ?? null,
             });
+            // El principal se pinta YA; los otros dos del trío siguen
+            // cocinándose en background. Se re-pregunta un rato por ellos y las
+            // pestañas aparecen cuando llegan — sin bloquear la primera
+            // pantalla. Tope de intentos porque el server no avisa "trío
+            // completo": 2 alternos o ~30s, lo que pase primero. (Un look
+            // planeado no trae trío: ahí no se insiste.)
+            if (alternos.length < 2 && !lastInput.current?.plannedFor) {
+              // 24 ticks × 2.5s ≈ 60s: cada alterno paga su propia llamada al
+              // juez (~10-20s), así que 30s se quedaba corto — medido en la
+              // primera prueba real: el trío llegó a la base y la pantalla ya
+              // no preguntaba.
+              alternosRestantes.current = 24;
+              pollAlternos(outfitId);
+            }
             return;
           }
           if (data.status === "no_alcanza") {
@@ -270,6 +322,36 @@ export function HoyClient({
       muerto = true;
     };
     // Solo al montar: es un check de apertura, no una suscripción.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Al abrir con el look del día ya listo, preguntar por su trío: el server
+  // component solo carga el principal. Si esta generación no tuvo alternos
+  // (looks viejos, planeados), la respuesta viene vacía y no cambia nada.
+  useEffect(() => {
+    if (!lookInicial) return;
+    let muerto = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/look-of-day?id=${lookInicial.id}`, { cache: "no-store" });
+        if (!res.ok || muerto) return;
+        const data = await res.json();
+        const alternos = (data.alternos as HoyOutfit[] | undefined) ?? [];
+        if (!muerto && alternos.length) {
+          setState((prev) =>
+            prev.kind === "ready" && prev.outfit.id === lookInicial.id
+              ? { ...prev, alternos }
+              : prev
+          );
+        }
+      } catch {
+        /* sin red no hay pestañas — el look principal sigue intacto */
+      }
+    })();
+    return () => {
+      muerto = true;
+    };
+    // Solo al montar: es hidratación de apertura, no una suscripción.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -690,20 +772,28 @@ export function HoyClient({
     );
   }
 
+  // El trío: el principal + sus alternos. Las pestañas viven DENTRO de
+  // ReadyView (su raíz tiene el alto acotado y un row externo se lo rompería).
+  const trio = [state.outfit, ...(state.alternos ?? [])];
+  const idxVisible = Math.min(lookVisible, trio.length - 1);
+  const visible = trio[idxVisible];
   return (
     <ReadyView
-      key={state.outfit.id}
-      outfit={state.outfit}
+      key={visible.id}
+      outfit={visible}
       userId={userId}
       paraFecha={state.paraFecha ?? null}
       fechaLabel={fechaLabel}
       // El voto persistido solo aplica al look con el que cargó la página; un
       // look recién generado arranca sin voto (el key resetea el estado).
-      votoInicial={state.outfit.id === lookInicial?.id ? votoInicial : null}
+      votoInicial={visible.id === lookInicial?.id ? votoInicial : null}
       onOtroLook={otroLook}
       ultimaOcasion={ultimoLook?.ocasion ?? null}
       ultimoLookCreadoEn={ultimoLook?.creadoEn ?? null}
       lastObjective={defaultObjective}
+      lookIndex={idxVisible}
+      lookCount={trio.length}
+      onVerLook={setLookVisible}
     />
   );
 }
@@ -729,6 +819,9 @@ function ReadyView({
   ultimaOcasion = null,
   ultimoLookCreadoEn = null,
   lastObjective = null,
+  lookIndex = 0,
+  lookCount = 1,
+  onVerLook,
 }: {
   outfit: HoyOutfit;
   userId: string;
@@ -742,6 +835,12 @@ function ReadyView({
    *  armó. Viajan crudos porque "¿es de hoy?" se decide con la hora LOCAL,
    *  dentro del propio flujo (aquí el server ya habría contestado en UTC). */
   ultimaOcasion?: string | null;
+  /** El trío (decisión de Roberto, 2026-08-19: "lo generado se muestra, no se
+   *  tira"): cuál de los looks estás viendo, cuántos hay y cómo cambiar. Con
+   *  lookCount 1 (planeados, looks viejos) las pestañas no se pintan. */
+  lookIndex?: number;
+  lookCount?: number;
+  onVerLook?: (i: number) => void;
   ultimoLookCreadoEn?: string | null;
   lastObjective?: string | null;
 }) {
@@ -798,6 +897,35 @@ function ReadyView({
         className="mx-auto -mb-28 flex h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[440px] flex-col lg:mb-0 lg:h-auto lg:min-h-[calc(100dvh-9rem)]"
         style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
       >
+        {/* Las pestañas del trío. Van AQUÍ y no fuera: la raíz tiene el alto
+            calculado para caber sin scroll, y LookDetail (alturas flexibles)
+            absorbe el renglón. El voto, el try-on y el fit check son del look
+            visible — cada pestaña es un outfit completo con su fila propia. */}
+        {lookCount > 1 && onVerLook ? (
+          <div className="flex items-center gap-2 pb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-faint">
+              te armé {lookCount} looks
+            </span>
+            <div className="ml-auto flex gap-1">
+              {Array.from({ length: lookCount }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onVerLook(i)}
+                  aria-pressed={i === lookIndex}
+                  aria-label={`ver el look ${i + 1}`}
+                  className={`h-7 w-7 rounded-sm border text-xs font-bold transition-colors ${
+                    i === lookIndex
+                      ? "border-ink bg-ink text-bg"
+                      : "border-line text-muted hover:border-ink hover:text-ink"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <LookDetail
           nombre={outfit.nombre}
           prendas={outfit.prendas}
