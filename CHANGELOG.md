@@ -2,6 +2,45 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.261.0] - 2026-08-19
+
+### Fixed — el motor ya no entrega looks que él mismo sabe que están rotos
+
+El hallazgo que lo motivó, medido en la primera ronda calificada por Roberto:
+la regla del cinturón (`cueros-que-no-se-hablan`) disparó en 7 looks, el juez
+de producción reparó 3, y **4 se entregaron rotos** — los mismos 4 que el juez
+stylist cazó después y Roberto confirmó cinco veces ("Agree, no va café con
+negro"). El motor detectaba el fallo, lo anotaba, y lo entregaba igual.
+
+Tres arreglos, del más chico al más profundo:
+
+- **El reparador en código aprendió la regla de cueros.** El calzado es el
+  ancla (los pies no se quedan descalzos); el cinturón o el reloj se cambia por
+  uno del color del calzado y, si el clóset no lo tiene, se retira. Un look sin
+  cinturón está bien; uno con el cinturón que choca, no. Validado contra los 4
+  looks reales entregados rotos: ahora se arreglan los 4.
+- **El reparador reconoce el calzado por nombre, no sólo por categoría.** Las
+  prendas nacidas del catálogo no traen `categoria` en attrs, y la primera
+  versión de este arreglo trató unos mocasines como "accesorio movible" y los
+  quitó del look. Lo cazó la validación contra datos reales — los tests con
+  fixtures no lo veían. El mismo hueco afectaba a la reparación de calzado de
+  lluvia, que llevaba semanas sin poder encontrar el calzado que debía cambiar.
+- **El reparador ya ve el look que él mismo va cambiando.** `enLook()` cerraba
+  sobre los ids originales: en la segunda vuelta buscaba prendas que ya habían
+  salido y se rendía sin terminar el arreglo que su primera vuelta dejó a
+  medias. Bug pre-existente, afectaba a todas las reglas con reparación.
+
+Además, `mismoColorAOjo` ya no declara que un neutro y un color son el mismo
+color (un cinturón gris carbón y unos mocasines burdeos medían "iguales" y la
+regla se los saltaba). Con seis tests de los hexes reales del catálogo.
+
+### Changed — el prompt pide EXACTAMENTE 3 outfits (v54)
+
+Decía "2 o 3", y Roberto: "si dejamos las cosas tan abiertas, inducimos a que
+el modelo tirite". Medido, tenía razón: en la última ronda el reparto fue
+3,3,3,2,3,3,2,3,3,2,2,3. El piso de 2 del pipeline se queda como red, pero
+pedirlo ambiguo era invitar al modelo a entregar menos.
+
 ## [0.2.260.2] - 2026-08-18
 
 ### Fixed — el cruce enseña para qué se pidió cada look
