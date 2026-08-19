@@ -93,8 +93,21 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     preguntaDetalle:
       "que se note el esfuerzo, no el intento — dime a dónde apunta la cita",
     formalidadesQueAplican: ["casual", "semiformal", "formal"],
+    // EL REGISTRO DE LA CITA, con la línea que Roberto dibujó calificando la
+    // ronda 8f3647f3 (2026-08-19). El motor le entregó tres trajes completos
+    // para "una cita en un restaurante" y su lectura fue la misma tres veces:
+    // "para una cita no suele ser así: si acaso un blazer, pero no el traje
+    // sin corbata — ese es el look más cóctel para un evento más formal". Y su
+    // excepción, también textual: "depende de cómo se vista la persona… si en
+    // el diario se viste de traje, pues está bien".
+    //
+    // VA AQUÍ Y NO EN UNA REGLA DE CÓDIGO a propósito: "traje en cita" no es
+    // verificable como un choque de cueros — depende del estilo de la persona
+    // y del plan. Este texto lo comparten el generador, las tres rúbricas y
+    // producción (lineaTipoEvento), así que la misma vara guía al que arma y
+    // al que califica.
     paraElMotor:
-      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento",
+      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento. El registro es coctel relajado: un saco o blazer con pantalón de OTRO juego queda mejor que un traje completo — el traje entero se lee a evento u oficina, no a cita. La excepción: si su marca de estilo es de sastre o su plan pide algo muy formal, el traje sí va",
   },
   {
     key: "comida-trabajo",

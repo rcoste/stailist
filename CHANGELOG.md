@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.265.0] - 2026-08-19
+
+### Changed — la cita tiene registro: coctel relajado, no traje entero (v56)
+
+El motor entregó tres trajes completos para "una cita en un restaurante" y
+Roberto marcó el mismo desajuste tres veces calificando la ronda: "para una
+cita no suele ser así: si acaso un blazer, pero no el traje sin corbata — ese
+es el look más cóctel para un evento más formal". El brief "cita" era demasiado
+ambiguo para que nadie —motor, jueces o él— pudiera decidir si un traje era
+correcto.
+
+La línea quedó escrita en el catálogo de eventos (lib/eventos.ts), que es el
+punto de palanca: `paraElMotor` de "cita" lo comparten el generador, las tres
+rúbricas y producción. Una sola edición y la misma vara guía al que arma y al
+que califica. Con la excepción de Roberto de fábrica: "depende de cómo se vista
+la persona — si en el diario se viste de traje, pues está bien" (si su marca de
+estilo es de sastre o su plan pide algo muy formal, el traje sí va).
+
+A propósito NO es una regla de código: "traje en cita" no es verificable como
+un choque de cueros — depende del estilo y del plan. Es guía compartida, y el
+cruce de la próxima ronda mide si alcanzó.
+
 ## [0.2.264.1] - 2026-08-19
 
 ### Fixed — el brief dice los grados, no sólo "frío"
