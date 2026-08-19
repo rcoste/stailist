@@ -59,6 +59,16 @@ export function oklch(hex?: string | null): { L: number; C: number; h: number } 
   return { L, C, h };
 }
 
+/** Por debajo de este croma, un color no tiene matiz: es un neutro (negro,
+ *  gris, blanco) y su ángulo de matiz es ruido numérico. */
+export const CROMA_ACROMATICO = 0.02;
+
+/** ¿Es un neutro? Un gris no tiene matiz que comparar, sólo claridad. */
+export function esAcromatico(hex: string | null | undefined): boolean | null {
+  const o = oklch(hex);
+  return o ? o.C < CROMA_ACROMATICO : null;
+}
+
 /** La diferencia de matiz en grados, por el arco corto (0-180). */
 export function distanciaMatiz(a: string | null | undefined, b: string | null | undefined): number | null {
   const x = oklch(a);
@@ -67,8 +77,11 @@ export function distanciaMatiz(a: string | null | undefined, b: string | null | 
   // Un color casi acromático NO tiene matiz significativo: el ángulo de un gris
   // es ruido numérico, y compararlo produciría diferencias enormes entre dos
   // grises idénticos. Por debajo de este croma, se declara "sin matiz".
-  const CROMA_MINIMO = 0.02;
-  if (x.C < CROMA_MINIMO || y.C < CROMA_MINIMO) return 0;
+  //
+  // OJO A QUIEN LLAME ESTO: el 0 significa "no hay matiz que comparar", NO
+  // "comparten matiz". Confundir las dos cosas es exactamente el bug que vivió
+  // en `mismoColorAOjo` hasta el 2026-08-18 — ver ahí.
+  if (x.C < CROMA_ACROMATICO || y.C < CROMA_ACROMATICO) return 0;
   const d = Math.abs(x.h - y.h) % 360;
   return d > 180 ? 360 - d : d;
 }
@@ -114,6 +127,23 @@ export function distanciaPerceptual(
  * El umbral de matiz (20°) sale del caso que originó todo esto: café (25°) y
  * burdeos (355°) están a 30° y son colores distintos; dos cafés reales del
  * catálogo caen dentro de 10°.
+ *
+ * UN NEUTRO Y UN COLOR NUNCA SON EL MISMO COLOR, y ese renglón arregla un falso
+ * negativo que vivió meses. `distanciaMatiz` devuelve 0 cuando alguno de los dos
+ * es acromático —correcto: el ángulo de un gris es ruido— pero aquí ese 0 se
+ * leía como "comparten matiz", así que la decisión quedaba sólo en la distancia
+ * de luminosidad y croma. Medido con los hexes reales del catálogo: un cinturón
+ * gris carbón `#3A3A3C` y unos mocasines burdeos `#5E2A33` daban distancia
+ * 0.074 —por debajo del umbral— y salían como EL MISMO COLOR, así que la regla
+ * `cueros-que-no-se-hablan` los dejaba pasar.
+ *
+ * Lo confirmó Roberto calificando los hallazgos del juez el 2026-08-18: cinco
+ * veces le dio la razón al juez sobre este tema, con estas palabras — "Agree,
+ * no va café con negro", "Agree con la observación del negro con café". El juez
+ * lo veía mirando la foto; la regla no podía verlo mirando el hex.
+ *
+ * Dos neutros entre sí (negro con gris) SÍ se siguen comparando por claridad y
+ * croma: ahí la benevolencia era correcta y se queda.
  */
 export function mismoColorAOjo(
   a: string | null | undefined,
@@ -123,6 +153,7 @@ export function mismoColorAOjo(
   const x = oklch(a);
   const y = oklch(b);
   if (!x || !y) return null;
+  if (x.C < CROMA_ACROMATICO !== (y.C < CROMA_ACROMATICO)) return false;
   const dist = Math.hypot(x.L - y.L, x.C - y.C);
   const matiz = distanciaMatiz(a, b) ?? 0;
   return dist <= (opciones.distanciaMax ?? 0.09) && matiz <= (opciones.matizMax ?? 20);

@@ -68,11 +68,17 @@ const MISMA_FAMILIA_MATIZ = 25;
  *
  * NO REUSA `mismoColorAOjo` AUNQUE PAREZCA LO MISMO, y la razón vale escribirla
  * porque yo caí en ella primero: esa función pregunta "¿son el mismo color a
- * ojo?" para decidir si dos CUEROS dialogan, y para eso trata a los acromáticos
- * con benevolencia — `distanciaMatiz` devuelve 0 en cuanto uno de los dos tiene
- * croma bajo, porque el ángulo de matiz de un gris es ruido numérico. Correcto
- * allá; aquí hacía que "gris carbón + burdeos" contara como UNA familia y el
- * look que originó la regla midiera 3 familias en vez de 4.
+ * ojo?" para decidir si dos CUEROS dialogan, y trataba a los acromáticos con
+ * benevolencia — `distanciaMatiz` devuelve 0 en cuanto uno de los dos tiene
+ * croma bajo, porque el ángulo de matiz de un gris es ruido numérico. Eso hacía
+ * que "gris carbón + burdeos" contara como UNA familia y el look que originó la
+ * regla midiera 3 familias en vez de 4.
+ *
+ * ESE COMENTARIO DECÍA "correcto allá" Y ESTABA MAL: el 2026-08-18 se midió que
+ * el mismo atajo dejaba pasar un cinturón carbón con mocasines burdeos en
+ * `cueros-que-no-se-hablan`, y Roberto confirmó cinco veces que ese par sí
+ * choca. `mismoColorAOjo` ya no mezcla neutros con colores. Aun así este
+ * archivo sigue sin reusarla, por la razón de abajo, que es otra.
  *
  * Aquí la pregunta es otra: ¿cuántas decisiones de color distintas ve alguien?
  * Y para eso un negro, un gris y un blanco son tres cosas distintas aunque los
