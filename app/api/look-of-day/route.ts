@@ -5,6 +5,7 @@ import { createClient, createTokenClient } from "@/lib/supabase/server";
 import { generateOutfits } from "@/lib/engine/generate";
 import { alcanceDeFormalidad } from "@/lib/engine/alcance";
 import { reviewOutfit } from "@/lib/engine/critic";
+import { armarLooks } from "@/lib/engine/pipeline";
 import {
   cargarBaseDelMotor,
   construirContexto,
@@ -204,6 +205,7 @@ export async function POST(request: NextRequest) {
           outfitId: existing.id,
           status: "ready",
           outfit: await shape(supabase, existing),
+          alternos: await alternosDe(supabase, user.id, existing.id as string),
         });
       }
       if (status === "generating" && !isStale(existing.created_at as string)) {
@@ -356,7 +358,82 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ status: "generating" });
   }
-  return NextResponse.json({ status: "ready", outfit: await shape(supabase, o) });
+  return NextResponse.json({
+    status: "ready",
+    outfit: await shape(supabase, o),
+    alternos: await alternosDe(supabase, user.id, o.id as string),
+  });
+}
+
+/** Los dos eventos de instrumentación de una generación del look de hoy. Es el
+ *  camino que corre solo, en background y todos los días — o sea el que más
+ *  barato sale de olvidar y más caro sale de no ver. Compartido por el camino
+ *  single (plannedFor) y el del trío para que ninguno se quede sin recibo. */
+async function registrarEventos(
+  supabase: SupabaseClient,
+  userId: string,
+  gender: string | null,
+  d: {
+    ms: number;
+    anclas: number;
+    plannedFor: string | null;
+    planLibre: boolean;
+    reviews: {
+      before: string[];
+      after: string[];
+      changed: boolean;
+      verdict: string;
+      razon: string | null;
+      shown: boolean;
+    }[];
+  }
+) {
+  await supabase.from("events").insert([
+    {
+      user_id: userId,
+      type: "generation_timing",
+      data: {
+        ms: d.ms,
+        prompt_version: PROMPT_VERSION,
+        look_of_day: true,
+        anchored: d.anclas > 0, // ¿usó ancla? (medir adopción)
+        anclas: d.anclas, // cuántas — para ver si el plural se usa
+        // Los dos gates pre-registrados del rediseño del wizard (2026-08-10):
+        // planned_for ≥1/usuaria activa en 2 semanas → se construye la agenda;
+        // % con plan_libre → se construye el parser del campo abierto.
+        planned_for: d.plannedFor,
+        plan_libre: d.planLibre,
+      },
+    },
+    {
+      user_id: userId,
+      type: "critic_review",
+      data: {
+        gender,
+        prompt_version: PROMPT_VERSION,
+        look_of_day: true,
+        repaired: d.reviews.filter((r) => r.verdict === "reparado").length,
+        rejected: d.reviews.filter((r) => r.verdict === "rechazado").length,
+        regenerated: 0,
+        changes: d.reviews,
+      },
+    },
+  ]);
+}
+
+/** Los looks ALTERNOS de una generación: el resto del trío, ya listos. El lazo
+ *  es grupo_generacion = id del principal (migración 0143) — adivinar por
+ *  look_date confundiría los alternos con los descartes de "otro look". */
+async function alternosDe(supabase: SupabaseClient, userId: string, principalId: string) {
+  const { data } = await supabase
+    .from("outfits")
+    .select("id, item_ids, title, explanation, tip, gen_status, created_at")
+    .eq("user_id", userId)
+    .eq("grupo_generacion", principalId)
+    .eq("gen_status", "ready")
+    .is("deleted_at", null)
+    .order("created_at");
+  return Promise.all((data ?? []).map((a) => shape(supabase, a)));
 }
 
 function isStale(createdAt: string): boolean {
@@ -538,81 +615,122 @@ async function generateInto(
     }
 
     const startedAt = Date.now();
-    // Con recibo: el look de hoy NO pasa por el pipeline (genera uno solo y lo
-    // revisa), así que su instrumentación se cablea aquí a mano. Es el camino
-    // que corre solo, en background y todos los días — o sea el que más barato
-    // sale de olvidar y más caro sale de no ver.
     const quien = { supabase, userId };
-    const candidates = await generateOutfits(ctx, {}, quien);
-    const result = await reviewOutfit(ctx, candidates[0], [], false, {}, quien);
-    const elegido = result.outfit;
 
-    const { error: upErr } = await supabase
-      .from("outfits")
-      .update({
-        item_ids: elegido.item_ids,
-        occasion: objective ?? "diario",
-        // Lo que escribió con sus palabras, con el MISMO recorte que vio el
-        // motor. Sin esto no hay forma de leer la cola larga de planes: el
-        // texto viajaba al modelo y se evaporaba, así que nadie sabía qué se le
-        // pide de verdad al stylist (ver migración 0132).
-        plan: recortarPlan(body.plan),
-        // El clima REAL (llovió), más la marca de que se pidió bajo techo.
-        // OJO: hoy la marca NO se muestra en ningún lado — es para DIAGNÓSTICO
-        // (consultar la tabla cuando un look de día lluvioso traiga mocasines y
-        // parezca defecto del motor). Enseñarla en el historial es pendiente
-        // aparte; sin este aviso el comentario prometía una UI que no existe.
-        weather:
-          techado && hayLluvia(weather?.condition) ? { ...weather, techado: true } : weather,
-        title: elegido.nombre,
-        explanation: elegido.explicacion,
-        tip: elegido.tip ?? null,
-        gen_status: "ready",
-        gen_error: null,
-      })
-      .eq("id", outfitId)
-      .eq("user_id", userId);
-    if (upErr) throw new GenError("no_pude_guardar");
+    // Los campos que comparten el principal y sus alternos: son la MISMA
+    // generación, así que llevan el mismo plan, clima y ocasión.
+    const camposComunes = {
+      occasion: objective ?? "diario",
+      plan: recortarPlan(body.plan),
+      weather:
+        techado && hayLluvia(weather?.condition) ? { ...weather, techado: true } : weather,
+      prompt_version: PROMPT_VERSION,
+    };
 
-    await supabase.from("events").insert([
+    // ── EL TRÍO. Desde v54 el generador produce EXACTAMENTE 3 outfits en una
+    //    sola llamada — ya pagados. Esta ruta revisaba el primero y TIRABA los
+    //    otros dos; Roberto: "si estamos generando dos o tres, no perdemos
+    //    nada… sino es desperdiciar lo que ya se hizo". Ahora corre el pipeline
+    //    COMPARTIDO (armarLooks — el mismo de /api/generate y el comparador):
+    //    el primer look aprobado se escribe al placeholder (el cliente lo está
+    //    polleando: la primera pantalla no espera al trío) y los siguientes se
+    //    guardan como alternos ligados por grupo_generacion (0143).
+    //
+    //    Los looks para OTRO día (plannedFor) siguen generando UNO: sus
+    //    alternos ensuciarían promoverPlaneado, que promovería cualquiera de
+    //    los tres al amanecer.
+    if (plannedFor) {
+      const candidates = await generateOutfits(ctx, {}, quien);
+      const result = await reviewOutfit(ctx, candidates[0], [], false, {}, quien);
+      const elegido = result.outfit;
+
+      const { error: upErr } = await supabase
+        .from("outfits")
+        .update({
+          item_ids: elegido.item_ids,
+          ...camposComunes,
+          title: elegido.nombre,
+          explanation: elegido.explicacion,
+          tip: elegido.tip ?? null,
+          gen_status: "ready",
+          gen_error: null,
+        })
+        .eq("id", outfitId)
+        .eq("user_id", userId);
+      if (upErr) throw new GenError("no_pude_guardar");
+
+      await registrarEventos(supabase, userId, profile.gender as string | null, {
+        ms: Date.now() - startedAt,
+        anclas: seedItemIds.length,
+        plannedFor,
+        planLibre: typeof body.plan === "string" && body.plan.trim().length > 0,
+        reviews: [
+          {
+            before: candidates[0].item_ids,
+            after: elegido.item_ids,
+            changed: elegido.item_ids.join(",") !== candidates[0].item_ids.join(","),
+            verdict: result.verdict,
+            razon: result.razon,
+            shown: true,
+          },
+        ],
+      });
+      return;
+    }
+
+    // El camino de HOY: el trío completo.
+    let principalListo = false;
+    const { finalized, reviews } = await armarLooks(
+      ctx,
+      {},
       {
-        user_id: userId,
-        type: "generation_timing",
-        data: {
-          ms: Date.now() - startedAt,
-          prompt_version: PROMPT_VERSION,
-          look_of_day: true,
-          anchored: seedItemIds.length > 0, // ¿usó ancla? (medir adopción)
-          anclas: seedItemIds.length, // cuántas — para ver si el plural se usa
-          // Los dos gates pre-registrados del rediseño del wizard (2026-08-10):
-          // planned_for ≥1/usuaria activa en 2 semanas → se construye la agenda;
-          // % con plan_libre → se construye el parser del campo abierto.
-          planned_for: plannedFor ?? null,
-          plan_libre: typeof body.plan === "string" && body.plan.trim().length > 0,
+        alAprobar: async (outfit) => {
+          if (!principalListo) {
+            const { error } = await supabase
+              .from("outfits")
+              .update({
+                item_ids: outfit.item_ids,
+                ...camposComunes,
+                title: outfit.nombre,
+                explanation: outfit.explicacion,
+                tip: outfit.tip ?? null,
+                gen_status: "ready",
+                gen_error: null,
+              })
+              .eq("id", outfitId)
+              .eq("user_id", userId);
+            if (error) return false;
+            principalListo = true;
+            return true;
+          }
+          // Alterno: fila propia, ligada al principal. NO es look del día — es
+          // la otra opción del trío, visible en las pestañas y en el diario.
+          const { error } = await supabase.from("outfits").insert({
+            user_id: userId,
+            item_ids: outfit.item_ids,
+            ...camposComunes,
+            title: outfit.nombre,
+            explanation: outfit.explicacion,
+            tip: outfit.tip ?? null,
+            is_look_of_day: false,
+            look_date: fechaLocalDe(body),
+            gen_status: "ready",
+            grupo_generacion: outfitId,
+          });
+          return !error;
         },
       },
-      {
-        user_id: userId,
-        type: "critic_review",
-        data: {
-          gender: profile.gender,
-          prompt_version: PROMPT_VERSION,
-          look_of_day: true,
-          rejected: result.verdict === "rechazado" ? 1 : 0,
-          regenerated: 0,
-          changes: [
-            {
-              before: candidates[0].item_ids,
-              after: elegido.item_ids,
-              changed: elegido.item_ids.join(",") !== candidates[0].item_ids.join(","),
-              verdict: result.verdict,
-              razon: result.razon,
-              shown: true,
-            },
-          ],
-        },
-      },
-    ]);
+      quien
+    );
+    if (!finalized.length) throw new GenError("generacion");
+
+    await registrarEventos(supabase, userId, profile.gender as string | null, {
+      ms: Date.now() - startedAt,
+      anclas: seedItemIds.length,
+      plannedFor: null,
+      planLibre: typeof body.plan === "string" && body.plan.trim().length > 0,
+      reviews,
+    });
   } catch (err) {
     const code =
       err instanceof GenError
