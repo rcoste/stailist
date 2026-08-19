@@ -180,10 +180,22 @@ export default async function JuecesDeCorrida({
         : null}
 
       {hayStylist ? (
-        <p className="text-xs text-muted">
-          Los temas de arriba son la lista de qué ajustar en el motor. Cada uno que
-          se repita es candidato a regla comprobable en código.
-        </p>
+        <div className="flex flex-col gap-3">
+          <p className="text-xs text-muted">
+            Los temas de arriba son la lista de qué ajustar en el motor. Cada uno que
+            se repita es candidato a regla comprobable en código.
+          </p>
+          {/* LA SALIDA. Esta pantalla es de LECTURA y no tenía a dónde ir:
+              Roberto votó una ronda, entró aquí buscando dónde opinar sobre los
+              hallazgos, y se quedó sin salida más que el "volver". Lo que sigue
+              a leerlos es calificarlos — y eso vive en el cruce. */}
+          <Link
+            href={`/admin/comparador/motor/${id}/cruce`}
+            className="rounded-xl bg-ink py-3 text-center text-sm font-semibold text-bg active:opacity-80"
+          >
+            ¿Estás de acuerdo? Califícalos uno por uno
+          </Link>
+        </div>
       ) : null}
 
       {/* ── LA AUDITORÍA: look por look ─────────────────────────────────── */}

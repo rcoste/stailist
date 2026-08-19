@@ -36,6 +36,7 @@ export function MarcadorMotorView({
   etiquetas,
   sinGenerar,
   marcasPendientes,
+  cruceporCalificar = 0,
 }: {
   corridaId: string;
   tamano: string;
@@ -67,6 +68,8 @@ export function MarcadorMotorView({
   sinGenerar: number;
   /** Pares ya votados a los que les falta el diagnóstico por look. */
   marcasPendientes: number;
+  /** Hallazgos del juez sin calificar (pantalla /cruce). */
+  cruceporCalificar?: number;
 }) {
   const router = useRouter();
   const [notaCierre, setNotaCierre] = useState("");
@@ -156,6 +159,29 @@ export function MarcadorMotorView({
         </div>
       ) : null}
 
+      {/* EL CRUCE VA PRIMERO Y EN NEGRO, y los dos enlaces ya no se ven igual.
+          Antes eran dos botones idénticos ("Lo que vieron los jueces" / "Tu
+          voto contra el juez"): Roberto votó la ronda entera, entró al primero
+          —que es LECTURA, sin dónde opinar ni salida— y se quedó sin poder
+          calificar. El de arriba es lo que hay que HACER ahora; el de abajo es
+          consulta. Sin voto el cruce no se ofrece: se abriría vacío, y sería
+          una invitación a leer los hallazgos con el voto abierto. */}
+      {resultado.votados > 0 ? (
+        <Link
+          href={`/admin/comparador/motor/${corridaId}/cruce`}
+          className="flex flex-col items-center gap-0.5 rounded-xl bg-ink py-3 text-center text-sm font-semibold text-bg active:opacity-80"
+        >
+          Tu voto contra el juez
+          {cruceporCalificar > 0 ? (
+            <span className="text-xs font-normal opacity-80">
+              te faltan {cruceporCalificar} hallazgos por calificar
+            </span>
+          ) : (
+            <span className="text-xs font-normal opacity-80">ya los calificaste todos</span>
+          )}
+        </Link>
+      ) : null}
+
       {/* La ronda de los jueces, antes de que el voto humano entre. Va aquí y
           no escondido en el detalle: es el paso que ahorra el trabajo manual. */}
       <Link
@@ -164,19 +190,6 @@ export function MarcadorMotorView({
       >
         Lo que vieron los jueces
       </Link>
-
-      {/* Y el cruce, DESPUÉS del voto: la pregunta que ni el marcador ni los
-          jueces contestan —¿el juez ve lo que veo yo?— y la única que recalibra
-          al juez. Sin voto no se ofrece: la pantalla se abre vacía y el enlace
-          sería una invitación a leer los hallazgos con el voto abierto. */}
-      {resultado.votados > 0 ? (
-        <Link
-          href={`/admin/comparador/motor/${corridaId}/cruce`}
-          className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
-        >
-          Tu voto contra el juez
-        </Link>
-      ) : null}
 
       {esVistazo && sinGenerar > 0 ? (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">

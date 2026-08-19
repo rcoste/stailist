@@ -10,6 +10,7 @@ import { marcadorPareado, type ResultadoPareado } from "@/lib/comparador/juez-pa
 import { GenerarClient } from "./generar-client";
 import { VotarClient, type ParParaVotar } from "./votar-client";
 import { MarcadorMotorView } from "./marcador-motor";
+import { cruzarCorrida } from "@/lib/comparador/cruce";
 
 export const dynamic = "force-dynamic";
 
@@ -185,6 +186,12 @@ export default async function CorridaMotor({
       cambiaModelo={cambiaModelo}
       etiquetas={Object.fromEntries(corrida.variantes.map((v) => [v.clave, v.etiqueta]))}
       sinGenerar={Math.ceil(trabajos.length / 2)}
+      // Cuántos hallazgos del juez faltan por calificar. Va al marcador para
+      // que el enlace al cruce diga QUÉ falta en vez de ser un botón más:
+      // Roberto votó una ronda entera, entró a "lo que vieron los jueces"
+      // (que es lectura, sin dónde opinar) y no encontró el cruce — los dos
+      // enlaces se veían idénticos.
+      cruceporCalificar={cruzarCorrida(corrida).porCalificar}
       marcasPendientes={
         corrida.pares.filter(
           (p) =>

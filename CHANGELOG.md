@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.263.1] - 2026-08-19
+
+### Fixed — después de votar una ronda, calificar al juez ya no está escondido
+
+Roberto votó la ronda entera y no encontró dónde opinar sobre los hallazgos.
+No era un problema de datos —los 6 pares votados y las 12 críticas estaban
+ahí— sino de camino: el marcador ofrecía **dos botones idénticos**, "Lo que
+vieron los jueces" y "Tu voto contra el juez", con exactamente el mismo estilo.
+El primero se llama justo como lo que él quería hacer, es LECTURA, y no tenía
+ni dónde comentar ni salida: callejón sin salida.
+
+Ahora el cruce va primero, en negro, y dice qué falta ("te faltan 27 hallazgos
+por calificar" / "ya los calificaste todos"); la pantalla de lectura queda
+debajo en gris. Y desde esa pantalla de lectura hay salida al cruce: "¿Estás de
+acuerdo? Califícalos uno por uno".
+
 ## [0.2.263.0] - 2026-08-19
 
 ### Added — el look de hoy te enseña sus tres opciones, no una
