@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import type { CajaCruce, LookCruzado, ResumenCruce } from "@/lib/comparador/cruce";
 import type { PrendaUI } from "@/lib/comparador/motor-servidor";
 import { formalidadLegible } from "@/lib/formalidad";
+import { hayLluvia } from "@/lib/weather";
 import { calificarJuez } from "../../../motor-actions";
 
 // CALIFICAR AL JUEZ, look por look, con el look a la vista.
@@ -87,6 +88,19 @@ function Tarjeta({
       <div className="flex flex-col gap-0.5 rounded-sm bg-tile px-2 py-1.5">
         <p className="text-[11px] font-semibold leading-tight text-ink">
           {look.brief.etiqueta}
+          {/* LOS GRADOS, no sólo la banda. Roberto, calificando un hallazgo de
+              clima: "cuando dices 'frío' es ambiguo — pon grados, porque no sé
+              si me estás diciendo este look para los 8°". Los jueces siempre
+              recibieron la temperatura exacta; el que veía "frío" a secas era
+              él — así que calificaba con menos contexto que el juez al que
+              calificaba. */}
+          {look.brief.weather ? (
+            <span className="font-normal text-muted">
+              {" · "}
+              {Math.round(look.brief.weather.temp_c)}°C
+              {hayLluvia(look.brief.weather.condition) ? " · con lluvia" : ""}
+            </span>
+          ) : null}
           {formalidadLegible(look.brief.formality ?? null, gender) ? (
             <span className="font-normal text-muted">
               {" · "}

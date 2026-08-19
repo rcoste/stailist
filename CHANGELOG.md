@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.264.1] - 2026-08-19
+
+### Fixed — el brief dice los grados, no sólo "frío"
+
+Roberto, calificando un hallazgo de clima: "cuando dices 'frío' es ambiguo —
+pon grados, porque no sé si me estás diciendo este look para los 8°". Lo
+notable: los jueces SIEMPRE recibieron la temperatura exacta (por eso sus
+hallazgos citan "para 8°C") — el que veía la banda a secas era él. O sea que
+calificaba al juez con menos contexto del que el juez tuvo para juzgar.
+
+Ahora el brief muestra los grados y la lluvia en las tres pantallas donde él
+evalúa: el cruce ("cita · noche templada · 18°C"), la votación y las marcas.
+
 ## [0.2.264.0] - 2026-08-19
 
 ### Fixed — el juez stylist ya conoce las reglas de la casa (js3)

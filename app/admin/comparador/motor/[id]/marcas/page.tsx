@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import { hayLluvia } from "@/lib/weather";
 import { cargarCorridaMotor } from "@/lib/comparador/motor-servidor";
 import { VotarClient, type ParParaVotar } from "../votar-client";
 
@@ -90,6 +91,12 @@ export default async function CompletarMarcas({
       n: p.n,
       etiqueta: p.brief.etiqueta,
       plan: p.brief.plan ?? null,
+      clima: p.brief.weather
+        ? {
+            temp: Math.round(p.brief.weather.temp_c),
+            lluvia: hayLluvia(p.brief.weather.condition),
+          }
+        : null,
       formalidad: p.brief.formality ?? null,
       gender: corrida.closetGender,
       izq: lado(izqClave),

@@ -44,6 +44,8 @@ export type ParParaVotar = {
   etiqueta: string;
   /** El evento concreto del brief (pool v2 en adelante). */
   plan: string | null;
+  /** Los grados exactos del brief: "frío" a secas no se puede calificar. */
+  clima: { temp: number; lluvia: boolean } | null;
   formalidad: string | null;
   /** Del dueño del clóset: el ancla concreta de la formalidad es por género. */
   gender: "hombre" | "mujer" | null;
@@ -476,6 +478,11 @@ export function VotarClient({
         </div>
         <p className="text-sm text-muted">
           Brief: <span className="font-semibold text-ink">{par.etiqueta}</span>
+          {par.clima ? (
+            <span>
+              {" · "}{par.clima.temp}°C{par.clima.lluvia ? " · con lluvia" : ""}
+            </span>
+          ) : null}
           {tamano === "vistazo" && modo === "votar"
             ? " · vistazo: caza defectos, aquí no se corona a nadie"
             : ""}

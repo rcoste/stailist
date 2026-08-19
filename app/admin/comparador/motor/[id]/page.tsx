@@ -11,6 +11,7 @@ import { GenerarClient } from "./generar-client";
 import { VotarClient, type ParParaVotar } from "./votar-client";
 import { MarcadorMotorView } from "./marcador-motor";
 import { cruzarCorrida } from "@/lib/comparador/cruce";
+import { hayLluvia } from "@/lib/weather";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,12 @@ export default async function CorridaMotor({
         // calificar: sin saber si es boda o cena con amigos, "no va para la
         // ocasión" es una marca que no se puede emitir.
         plan: p.brief.plan ?? null,
+        clima: p.brief.weather
+          ? {
+              temp: Math.round(p.brief.weather.temp_c),
+              lluvia: hayLluvia(p.brief.weather.condition),
+            }
+          : null,
         formalidad: p.brief.formality ?? null,
         gender: corrida.closetGender,
         izq: lado(izqClave),
