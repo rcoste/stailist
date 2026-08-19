@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.263.0] - 2026-08-19
+
+### Added — el look de hoy te enseña sus tres opciones, no una
+
+Al generar un look, la pantalla ahora dice "te armé 3 looks" con pestañas 1·2·3:
+tres outfits completos, cada uno con su voto, su try-on y su fit check. Antes
+veías uno — y los otros dos ya estaban pagados y se tiraban.
+
+El desperdicio era literal. Desde v54 el generador produce EXACTAMENTE 3
+outfits en una sola llamada, y la ruta del look de hoy revisaba el primero y
+descartaba el resto. Roberto: "si estamos generando dos o tres, no perdemos
+nada… sino es desperdiciar lo que ya se hizo".
+
+Cómo quedó por dentro:
+
+- **El look de hoy corre por fin el pipeline compartido** (`armarLooks`) — el
+  mismo camino de /api/generate y el comparador, con juez y reparador en código
+  incluidos. Era la única ruta que no pasaba por él.
+- **La primera pantalla no espera al trío**: el primer look aprobado se
+  entrega ya (mismo tiempo-a-look de siempre) y los otros dos llegan en
+  background; las pestañas aparecen cuando están.
+- Los alternos viven ligados a su principal por `grupo_generacion` (migración
+  0143) y aparecen también en el diario.
+- Los looks PLANEADOS para otro día siguen generando uno: sus alternos
+  confundirían la promoción del amanecer.
+- Costo: el juez corre por look, ~2× por generación. Decidido con ese dato a la
+  vista — el gasto real de la app está en leer prendas, no en armar looks.
+
+Verificado en el navegador con una generación real: trío en la base (principal
++ 2 alternos), pestañas al recargar, y cada pestaña con su look completo.
+
 ## [0.2.262.0] - 2026-08-19
 
 ### Added — dos reglas nacidas de calificar al juez, y nacen con reparación (v55)
