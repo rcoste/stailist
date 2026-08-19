@@ -2,6 +2,35 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.262.0] - 2026-08-19
+
+### Added — dos reglas nacidas de calificar al juez, y nacen con reparación (v55)
+
+Las primeras reglas que salen del cruce voto-contra-juez completo: el juez
+stylist las encontró, Roberto las confirmó calificando los hallazgos, y entran
+al motor ya con su arreglo en código — el orden que faltó en todas las
+anteriores, que se escribieron sin reparación y el motor entregaba roto lo que
+sabía roto.
+
+- **El reloj deportivo no va con sastre.** Confirmado con la nota más
+  contundente de la ronda: "Tiene toda la razón el reloj. Este 100% rompe con
+  el look". Dispara con piezas de sastre en el look o formalidad formal/gala, y
+  lleva la excepción de Roberto de fábrica: "podría hacer una excepción para
+  smart watch en un día normal" — en diario, oficina y casual no dispara. Se
+  repara cambiando a un reloj de vestir o quitándolo: la muñeca desnuda es más
+  elegante que la muñeca equivocada.
+- **La corbata de punto no va a ceremonia.** Confirmado dos veces ("Sí, no va
+  la corbata de punto"): textura tejida y punta cuadrada son registro
+  casual-elegante, no de boda en salón. Se repara cambiando a una corbata lisa;
+  si el clóset no tiene otra, NO se quita — la ceremonia pide corbata, y
+  quitarla arreglaría esta regla rompiendo el pedido.
+
+Validadas contra los 32 looks reales de la ronda calificada: disparan
+exactamente en los 4 que el juez marcó y Roberto confirmó (incluida la cita,
+que entra por las piezas de sastre y no por formalidad), los 4 se reparan en
+código, y los looks casuales con smart watch pasan limpios — que era la
+excepción pedida.
+
 ## [0.2.261.0] - 2026-08-19
 
 ### Fixed — el motor ya no entrega looks que él mismo sabe que están rotos

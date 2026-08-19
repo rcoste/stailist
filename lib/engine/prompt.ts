@@ -326,7 +326,13 @@ import {
 // (el modelo puede desobedecer), pero pedirlo ambiguo era invitarlo a entregar
 // menos. Los 3 se muestran (o se mostrarán: hoy el flujo diario genera 1 — la
 // prioridad G del plan es llevarle los 3).
-export const PROMPT_VERSION = "v54";
+// v55: dos reglas nuevas, las dos nacidas del cruce voto-contra-juez del
+// 2026-08-19 y confirmadas por Roberto calificando hallazgos: el reloj
+// deportivo no va con sastre ("100% rompe con el look"; con SU excepción — en
+// diario el smart watch pasa) y la corbata de punto no va a ceremonia ("Sí, no
+// va la corbata de punto"). Nacen CON reparación en código — las anteriores se
+// escribieron sin ella y el motor entregaba roto lo que sabía roto.
+export const PROMPT_VERSION = "v55";
 
 export type EngineItem = {
   id: string;
