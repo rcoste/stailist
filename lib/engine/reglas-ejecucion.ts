@@ -1110,6 +1110,39 @@ export function revisarEjecucion(
 }
 
 /** Bloque para el mensaje del juez. Vacío si el look está limpio. */
+/**
+ * LAS REGLAS DE LA CASA, en una lista que un juez puede leer.
+ *
+ * VIVE JUNTO AL CÓDIGO QUE LAS EJECUTA a propósito: si agregas o cambias una
+ * regla arriba, actualiza su línea aquí EN EL MISMO COMMIT. Es el precio de
+ * que los jueces las conozcan — y es barato comparado con lo que costó no
+ * pagarlo: el juez stylist recomendó tres veces "quita la camiseta de abajo
+ * del suéter" contradiciendo `sueter-sin-base`, Roberto lo calificó de
+ * exagerado en cada una ("es de las reglas que hemos puesto"), y el acierto
+ * del juez cayó a 47% con el tema de capas dominando los desacuerdos
+ * (2026-08-19). Un juez que no conoce las reglas de la casa manda a deshacer
+ * lo que la casa decidió.
+ *
+ * Son PRINCIPIOS con su mecanismo, no incidentes: la línea dice cuándo aplica
+ * y cuándo no, porque la mitad de las calificaciones de Roberto fueron
+ * excepciones ("en diario el smart watch pasa").
+ */
+export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; el motor las ejecuta y las repara solo):
+- En clóset de HOMBRE, un suéter o cuello alto de punto lleva base debajo (camiseta/camisa). Que la traiga NO es un defecto — es la regla; nunca recomiendes quitarla. En mujer, el punto a piel es elección normal.
+- Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita.
+- El reloj deportivo (caucho, smart) no va con piezas de sastre ni en formal/gala. En un día casual sí pasa — no lo marques ahí.
+- La corbata de punto no va a ceremonia (formal/gala). En cita u oficina es elección correcta.
+- En evento formal el traje va completo; saco y pantalón de juegos distintos son separates: bien para oficina, cortos para una boda.
+- El smoking es código: su pantalón, camisa blanca, moño. Una pieza suelta no es variedad.
+- Manga corta con saco, nunca.
+- El mocasín escotado no va en frío ni lluvia; con lluvia manda el calzado que aguanta agua y cubre el tobillo.
+- Una prenda por zona, ninguna zona del cuerpo sin cubrir.
+- Un blazer no es abrigo: con frío real va un abrigo de verdad encima.
+- Lino de pies a cabeza no es de oficina: una pieza de lino sí.
+- Máximo 1-2 colores protagonistas y el resto neutros; las familias de color del look se tienen que leer como decisión, no como accidente.
+
+Si tu arreglo contradice una de estas, NO lo propongas: propón el que la respete.`;
+
 export function bloqueEjecucion(
   items: EngineItem[],
   ctx: ContextoReglas = {}

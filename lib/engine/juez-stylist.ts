@@ -3,6 +3,7 @@ import { medir, type QuienMide } from "@/lib/recibos";
 import { VISION_MODEL } from "@/lib/models";
 import { briefParaRubrica, type BriefRubrica } from "./rubrica";
 import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
+import { REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
 
 // EL JUEZ QUE CRITICA, no el que califica.
 //
@@ -52,7 +53,15 @@ import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
 //      sabiduría convencional sin medir vale menos que no tener juez: manda a
 //      arreglar lo que está bien. Por eso ahora lleva la lista de lo que aquí
 //      YA se midió y resultó falso.
-export const JUEZ_STYLIST_VERSION = "js2";
+// js2 → js3 (2026-08-19), tras la segunda ronda calificada por Roberto. El
+// acierto cayó de 88% a 47% y al leer los desacuerdos uno por uno casi todos
+// eran EL MISMO: el juez recomendando quitar la base de abajo del suéter — en
+// contra de `sueter-sin-base`, una regla que nació de Roberto votando a ciegas.
+// El juez no conocía las reglas de la casa: sólo veía las violaciones del look
+// que miraba, así que un look que CUMPLÍA una regla le parecía mejorable
+// rompiéndola. Ahora las recibe completas (REGLAS_DE_LA_CASA, co-ubicada con el
+// código que las ejecuta) con la orden de no proponer arreglos que las rompan.
+export const JUEZ_STYLIST_VERSION = "js3";
 
 /** El vocabulario de defectos es el MISMO que Roberto usa al votar
  *  (DEFECTOS_MOTOR). Reusarlo es lo que hace que los hallazgos del juez y sus
@@ -116,6 +125,8 @@ Y ESTO EN PARTICULAR, que aquí YA SE MIDIÓ y resultó falso. No lo marques:
 - Café o cuero marrón con gris y carbón es una combinación clásica y correcta.
 - Un neutro cerca de la cara (marino, gris, camel, blanco, caqui, negro) está bien y no apaga a nadie.
 - Vestir tonal —todo en una misma banda de color— es un recurso deliberado, no un descuido: ahí el contraste lo hace la textura.
+
+${REGLAS_DE_LA_CASA}
 
 Y AL REVÉS, no seas barbero. Si algo está mal, dilo aunque el resto esté bien. "loQueFunciona" es UNA línea sobre la decisión que sí está tomada — si no hay ninguna, dilo también. Nada de superlativos genéricos ni de "así como está, sale".
 

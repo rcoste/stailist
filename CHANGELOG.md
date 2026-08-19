@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.264.0] - 2026-08-19
+
+### Fixed — el juez stylist ya conoce las reglas de la casa (js3)
+
+El acierto del juez cayó de 88% a 47% en la segunda ronda calificada, y al leer
+los desacuerdos uno por uno casi todos eran EL MISMO: recomendaba quitar la
+camiseta de abajo del suéter — en contra de `sueter-sin-base`, una regla que
+nació de Roberto votando a ciegas. No era terquedad: el juez sólo veía las
+violaciones del look que miraba, así que un look que CUMPLÍA una regla le
+parecía mejorable rompiéndola.
+
+Ahora recibe la lista completa (`REGLAS_DE_LA_CASA`) con la orden de no
+proponer arreglos que las rompan. La lista vive junto al código que ejecuta las
+reglas — si una cambia, su línea se actualiza en el mismo commit — y cada línea
+lleva su mecanismo y su excepción ("en diario el smart watch pasa"), porque la
+mitad de las calificaciones de Roberto fueron precisamente excepciones.
+
 ## [0.2.263.2] - 2026-08-19
 
 ### Fixed — el juez sí dice cómo arreglarlo, y ahora se ve
