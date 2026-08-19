@@ -237,7 +237,10 @@ const esSacoDeTraje = (i: EngineItem) => {
 };
 const esPantalonVestir = (i: EngineItem) =>
   /pantal[oó]n de vestir|pantal[oó]n de traje|pantal[oó]n formal/.test(TIPO(i));
-const esCuero = (i: EngineItem) =>
+// Exportado porque el reparador en código (reparar.ts) necesita LA MISMA vara
+// que la regla: decidir qué es un cuero con otro predicado repararía contra un
+// criterio distinto del que detecta.
+export const esCuero = (i: EngineItem) =>
   familiaMaterial(i.attrs.material, i.attrs.nombre) === "piel" ||
   /cintur[oó]n|zapato|mocas[ií]n|bot[ií]n|bota|reloj de piel|correa/.test(TIPO(i));
 

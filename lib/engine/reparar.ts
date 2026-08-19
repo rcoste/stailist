@@ -1,5 +1,6 @@
 import type { EngineItem } from "./prompt";
-import { revisarEjecucion, type ContextoReglas, type Violacion } from "./reglas-ejecucion";
+import { esCuero, revisarEjecucion, type ContextoReglas, type Violacion } from "./reglas-ejecucion";
+import { distanciaPerceptual } from "./color-perceptual";
 import { categoriaDeItem } from "@/lib/item-image";
 
 // REPARACIÓN EN CÓDIGO: arreglar lo que se puede arreglar sin preguntarle a nadie.
@@ -27,16 +28,30 @@ import { categoriaDeItem } from "@/lib/item-image";
 /** Qué se hizo, para poder medirlo (y para que el flywheel lo registre). */
 export type Reparacion = {
   regla: string;
-  /** "anadida" = se sumó una prenda; "sustituida" = se cambió una por otra. */
-  como: "anadida" | "sustituida";
-  /** Nombre de la prenda que entró. */
-  entro: string;
-  /** Nombre de la que salió (solo en sustitución). */
+  /** "anadida" = se sumó una prenda; "sustituida" = se cambió una por otra;
+   *  "quitada" = se retiró (sólo accesorios — nada estructural sale del look). */
+  como: "anadida" | "sustituida" | "quitada";
+  /** Nombre de la prenda que entró (no aplica al quitar). */
+  entro?: string;
+  /** Nombre de la que salió (sustitución o retiro). */
   salio?: string;
 };
 
 const nombre = (i: EngineItem) => i.attrs.nombre ?? i.attrs.tipo ?? i.id;
 const cat = (i: EngineItem) => (categoriaDeItem(i as never) ?? "").toLowerCase();
+
+/** ¿Es calzado? POR NOMBRE ADEMÁS DE POR CATEGORÍA, y el orden importa: las
+ *  prendas nacidas del catálogo no traen `categoria` en attrs (la categoría es
+ *  columna del arquetipo, no viaja en la copia), así que confiar sólo en cat()
+ *  dejó una vez que el reparador tratara unos mocasines como "accesorio
+ *  movible" y los quitara del look. Cazado validando contra los looks reales
+ *  de la ronda 283d8d44 — los tests con fixtures no lo veían porque los
+ *  fixtures sí traían categoría. */
+const esCalzado = (i: EngineItem) =>
+  cat(i) === "calzado" ||
+  /zapat|mocas[ií]n|bot[ií]n|\bbota|tenis|sandalia|derby|oxford|loafer|flats|tac[oó]n|bailarina/.test(
+    texto(i)
+  );
 const texto = (i: EngineItem) =>
   `${i.attrs.nombre ?? ""} ${i.attrs.tipo ?? ""}`.toLowerCase();
 
@@ -73,7 +88,6 @@ export function repararEnCodigo(
   ctx: ContextoReglas
 ): { itemIds: string[]; hechas: Reparacion[] } {
   const porId = new Map(closet.map((i) => [i.id, i]));
-  const enLook = () => itemIds.map((id) => porId.get(id)).filter((x): x is EngineItem => !!x);
 
   const violacionesDe = (ids: string[]) =>
     revisarEjecucion(
@@ -91,7 +105,7 @@ export function repararEnCodigo(
     if (v.length === 0) break;
 
     const antes = v.length;
-    const intento = intentarUna(v, ids, closet, porId, enLook);
+    const intento = intentarUna(v, ids, closet, porId, violacionesDe);
     if (!intento) break; // ninguna de las que quedan se arregla en código
 
     // LA GUARDA: el arreglo solo vale si de verdad deja menos roto. Sin esto,
@@ -112,10 +126,19 @@ function intentarUna(
   ids: string[],
   closet: EngineItem[],
   porId: Map<string, EngineItem>,
-  enLook: () => EngineItem[]
+  /** Contar violaciones de un look hipotético — para pre-comprobar arreglos
+   *  que tienen plan B (si el reemplazo no sirve, se intenta el retiro). */
+  violacionesDe: (ids: string[]) => Violacion[]
 ): { ids: string[]; hecha: Reparacion } | null {
   const puestas = new Set(ids);
   const disponibles = closet.filter((i) => !puestas.has(i.id));
+  // El look VIGENTE, de los ids de esta vuelta. Antes esto era un closure
+  // sobre los ids ORIGINALES ("enLook"), y en la segunda vuelta el reparador
+  // buscaba prendas que ya habían salido del look — se rendía sin arreglar lo
+  // que su propia primera vuelta había dejado pendiente. Cazado con "Casual
+  // con Filo" (283d8d44): cambió café→negro, y el negro-que-también-chocaba ya
+  // no lo pudo ni ver.
+  const enLook = () => ids.map((id) => porId.get(id)).filter((x): x is EngineItem => !!x);
 
   for (const v of violaciones) {
     // ── AÑADIR: la clase de "te faltó ponerte X". Es la reparación más segura
@@ -165,8 +188,10 @@ function intentarUna(
     //    reemplazo tiene que cumplir una condición comprobable (aguantar el
     //    agua, o no ser mocasín en frío), no una de criterio.
     if (v.regla === "lluvia-calzado" || v.regla === "mocasin-en-frio") {
-      const actual = enLook().find((i) => cat(i) === "calzado");
-      const otro = disponibles.filter((i) => cat(i) === "calzado")[0];
+      // esCalzado y no cat(): mismo hueco que cazó la rama de cueros — las
+      // prendas de catálogo no traen categoria en attrs.
+      const actual = enLook().find(esCalzado);
+      const otro = disponibles.filter(esCalzado)[0];
       if (actual && otro) {
         const nuevos = ids.map((id) => (id === actual.id ? otro.id : id));
         return {
@@ -180,11 +205,76 @@ function intentarUna(
         };
       }
     }
+
+    // ── EL CUERO ACCESORIO SE ALINEA CON EL CALZADO, O SE VA. Esta regla
+    //    vivió meses en la lista de "criterio, que la vea el juez" de abajo —
+    //    y medido en la primera ronda calificada (283d8d44), el juez la reparó
+    //    3 de 7 veces y entregó 4 looks que él mismo veía rotos. Roberto
+    //    confirmó el fallo CINCO veces calificando esos hallazgos ("Agree, no
+    //    va café con negro").
+    //
+    //    Y para el par cinturón/zapato NO es criterio: el calzado es
+    //    estructural (los pies no se quedan descalzos), así que lo único
+    //    movible es el accesorio — se cambia por uno del color del calzado y,
+    //    si el clóset no lo tiene, se retira. Un look sin cinturón está bien;
+    //    uno con el cinturón que choca, no.
+    if (v.regla === "cueros-que-no-se-hablan") {
+      const cueros = enLook().filter((i) => esCuero(i) && i.attrs.color_hex);
+      const calzado = cueros.find(esCalzado);
+      // Sólo accesorios de cuero se mueven (cinturón, reloj, correa): una
+      // chamarra de piel también es cuero, pero quitarla no es quirúrgico.
+      const moviles = cueros.filter(
+        (i) => !esCalzado(i) && /cintur[oó]n|reloj|correa/.test(texto(i))
+      );
+      const actuales = violaciones.length;
+      for (const movil of moviles) {
+        // Mismo rol, otra pieza: cinturón por cinturón, reloj por reloj. La
+        // clase sale del nombre, que es como la propia regla reconoce cueros.
+        const clase = [/cintur[oó]n/, /reloj/, /correa/].find((r) => r.test(texto(movil)));
+        const candidatos = clase
+          ? disponibles
+              .filter((i) => clase.test(texto(i)))
+              // Primero el más cercano al color del calzado: "café con café,
+              // negro con negro", que es la receta que la regla cita.
+              .sort(
+                (a, b) =>
+                  (distanciaPerceptual(a.attrs.color_hex, calzado?.attrs.color_hex) ?? 9) -
+                  (distanciaPerceptual(b.attrs.color_hex, calzado?.attrs.color_hex) ?? 9)
+              )
+          : [];
+        for (const cand of candidatos) {
+          const nuevos = ids.map((id) => (id === movil.id ? cand.id : id));
+          // Se pre-comprueba AQUÍ y no sólo en la guarda de afuera, para poder
+          // caer al retiro si ningún reemplazo sirve: la guarda exterior corta
+          // el bucle al primer intento fallido.
+          if (violacionesDe(nuevos).length < actuales) {
+            return {
+              ids: nuevos,
+              hecha: {
+                regla: v.regla,
+                como: "sustituida",
+                entro: nombre(cand),
+                salio: nombre(movil),
+              },
+            };
+          }
+        }
+        // Plan B: retirarlo. Con tope de 3 prendas — por debajo, quitar deja
+        // de ser quirúrgico y el look ya tiene un problema más grande.
+        const sin = ids.filter((id) => id !== movil.id);
+        if (sin.length >= 3 && violacionesDe(sin).length < actuales) {
+          return {
+            ids: sin,
+            hecha: { regla: v.regla, como: "quitada", salio: nombre(movil) },
+          };
+        }
+      }
+    }
   }
 
-  // El resto (traje-desparejado, cueros-que-no-se-hablan, capa-invisible,
-  // codigo-de-smoking…) NO se toca aquí a propósito: elegir "otro pantalón
-  // cualquiera" no arregla un traje desparejado — hay que ver CUÁL, y eso es
-  // criterio. Esas siguen su camino al juez.
+  // El resto (traje-desparejado, capa-invisible, codigo-de-smoking…) NO se
+  // toca aquí a propósito: elegir "otro pantalón cualquiera" no arregla un
+  // traje desparejado — hay que ver CUÁL, y eso es criterio. Esas siguen su
+  // camino al juez.
   return null;
 }

@@ -120,3 +120,87 @@ describe("lo que NO toca, a propósito", () => {
     expect(r.hechas).toHaveLength(0);
   });
 });
+
+describe("cueros-que-no-se-hablan — el accesorio se alinea con el calzado, o se va", () => {
+  // El caso que Roberto confirmó CINCO veces calificando al juez ("Agree, no
+  // va café con negro"): cinturón negro con mocasines burdeos. El juez de
+  // producción lo reparaba 3 de 7 veces; ahora lo arregla el código.
+  const CAMISA = it_("ca", "top", "Camisa de lino blanca", { color_hex: "#FAFAF7" });
+  const CHINOS = it_("ch", "bottom", "Chinos azul marino", { color_hex: "#27425F" });
+  const MOCASINES = it_("mo", "calzado", "Mocasines burdeos", {
+    color_hex: "#5C2A2E",
+    material: "piel",
+  });
+  const CINT_NEGRO = it_("cn", "accesorio", "Cinturón negro", {
+    color_hex: "#1A1A1A",
+    material: "piel",
+  });
+  const CINT_CAFE = it_("cc", "accesorio", "Cinturón café", {
+    color_hex: "#5A3826",
+    material: "piel",
+  });
+
+  it("cambia el cinturón por el del color del calzado si el clóset lo tiene", () => {
+    // Mocasines negros con cinturón café: el clóset tiene el cinturón negro,
+    // así que "negro con negro" — la receta que la regla cita.
+    const MOCASINES_NEGROS = it_("mn", "calzado", "Mocasines negros", {
+      color_hex: "#1A1A1E",
+      material: "piel",
+    });
+    const look = [CAMISA.id, CHINOS.id, MOCASINES_NEGROS.id, CINT_CAFE.id];
+    const closet = [CAMISA, CHINOS, MOCASINES_NEGROS, CINT_CAFE, CINT_NEGRO];
+    const r = repararEnCodigo(look, closet, HOMBRE);
+    expect(r.hechas).toEqual([
+      {
+        regla: "cueros-que-no-se-hablan",
+        como: "sustituida",
+        entro: "Cinturón negro",
+        salio: "Cinturón café",
+      },
+    ]);
+    expect(r.itemIds).toContain(CINT_NEGRO.id);
+    expect(r.itemIds).not.toContain(CINT_CAFE.id);
+  });
+
+  it("sin otro cinturón, lo retira: un look sin cinturón está bien", () => {
+    const look = [CAMISA.id, CHINOS.id, MOCASINES.id, CINT_NEGRO.id];
+    const closet = [CAMISA, CHINOS, MOCASINES, CINT_NEGRO];
+    const r = repararEnCodigo(look, closet, HOMBRE);
+    expect(r.hechas).toEqual([
+      { regla: "cueros-que-no-se-hablan", como: "quitada", salio: "Cinturón negro" },
+    ]);
+    expect(r.itemIds).toEqual([CAMISA.id, CHINOS.id, MOCASINES.id]);
+  });
+
+  it("el calzado NUNCA es lo que se toca", () => {
+    const look = [CAMISA.id, CHINOS.id, MOCASINES.id, CINT_NEGRO.id];
+    const r = repararEnCodigo(look, [CAMISA, CHINOS, MOCASINES, CINT_NEGRO, CINT_CAFE], HOMBRE);
+    expect(r.itemIds).toContain(MOCASINES.id);
+  });
+
+  // Dos calzados chocando entre sí (raro, pero posible) sí es criterio: no hay
+  // accesorio que mover. Sigue su camino al juez.
+  it("un choque entre dos calzados no se toca en código", () => {
+    const BOTAS = it_("bo", "calzado", "Botines de cuero marrón", {
+      color_hex: "#5A3826",
+      material: "piel",
+    });
+    const NEGROS = it_("zn", "calzado", "Zapato formal negro", {
+      color_hex: "#1A1A1E",
+      material: "piel",
+    });
+    const r = repararEnCodigo([CAMISA.id, CHINOS.id, BOTAS.id, NEGROS.id], [CAMISA, CHINOS, BOTAS, NEGROS], HOMBRE);
+    expect(r.hechas).toEqual([]);
+  });
+
+  it("cinturón que SÍ va con el calzado no se toca", () => {
+    // Dos cafés reales del catálogo: derby chocolate con cinturón café.
+    const DERBY = it_("de", "calzado", "Zapato derby de piel chocolate", {
+      color_hex: "#4B3526",
+      material: "piel",
+    });
+    const look = [CAMISA.id, CHINOS.id, DERBY.id, CINT_CAFE.id];
+    const r = repararEnCodigo(look, [CAMISA, CHINOS, DERBY, CINT_CAFE, CINT_NEGRO], HOMBRE);
+    expect(r.hechas).toEqual([]);
+  });
+});
