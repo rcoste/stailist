@@ -204,3 +204,79 @@ describe("cueros-que-no-se-hablan — el accesorio se alinea con el calzado, o s
     expect(r.hechas).toEqual([]);
   });
 });
+
+describe("reloj deportivo y corbata de punto — nacen con reparación", () => {
+  const CAMISA = it_("cb", "top", "Camisa blanca", { color_hex: "#FFFFFF" });
+  const SACO = it_("st", "saco", "Saco de traje negro", { color_hex: "#1A1A1E" });
+  const PANT = it_("pt", "bottom", "Pantalón de traje negro", { color_hex: "#1A1A1E" });
+  const ZAPATO = it_("zf", "calzado", "Zapato formal negro", { color_hex: "#1A1A1E", material: "piel" });
+  const RELOJ_DEP = it_("rd", "accesorio", "Reloj negro", { formalidad: "casual", color_hex: "#1A1A1A" });
+  // Plateado y no "de piel café": con zapatos negros, un reloj de correa café
+  // metería una violación de cueros — y el guard del reparador lo rechaza
+  // (comprobado: la primera versión de este fixture usaba el café y el
+  // reparador, correctamente, prefería quitar el deportivo a ese cambio).
+  const RELOJ_VESTIR = it_("rv", "accesorio", "Reloj plateado", {
+    formalidad: "formal-casual",
+    color_hex: "#B9BDC1",
+  });
+  const C_PUNTO = it_("cp", "accesorio", "Corbata de punto marino", { color_hex: "#26344F" });
+  const C_SEDA = it_("cs", "accesorio", "Corbata de seda marino", { color_hex: "#26344F" });
+  const FORMAL = { gender: "hombre" as const, formality: "formal" };
+
+  it("cambia el reloj deportivo por el de vestir si existe", () => {
+    const look = [CAMISA.id, SACO.id, PANT.id, ZAPATO.id, RELOJ_DEP.id];
+    const closet = [CAMISA, SACO, PANT, ZAPATO, RELOJ_DEP, RELOJ_VESTIR];
+    const r = repararEnCodigo(look, closet, FORMAL);
+    expect(r.hechas).toContainEqual({
+      regla: "reloj-deportivo-con-sastre",
+      como: "sustituida",
+      entro: "Reloj plateado",
+      salio: "Reloj negro",
+    });
+  });
+
+  it("sin reloj de vestir, lo quita: muñeca desnuda antes que equivocada", () => {
+    const look = [CAMISA.id, SACO.id, PANT.id, ZAPATO.id, RELOJ_DEP.id];
+    const r = repararEnCodigo(look, [CAMISA, SACO, PANT, ZAPATO, RELOJ_DEP], FORMAL);
+    expect(r.hechas).toContainEqual({
+      regla: "reloj-deportivo-con-sastre",
+      como: "quitada",
+      salio: "Reloj negro",
+    });
+  });
+
+  // LA EXCEPCIÓN DE ROBERTO: "podría hacer una excepción para smart watch en
+  // un día normal". Sin sastre y sin formalidad formal, el reloj se queda.
+  it("en un look casual el reloj deportivo NO se toca", () => {
+    const CHINOS = it_("chb", "bottom", "Chinos beige", { color_hex: "#C4B393" });
+    const TENIS = it_("tb", "calzado", "Tenis blancos", { color_hex: "#F5F5F5" });
+    const r = repararEnCodigo(
+      [CAMISA.id, CHINOS.id, TENIS.id, RELOJ_DEP.id],
+      [CAMISA, CHINOS, TENIS, RELOJ_DEP, RELOJ_VESTIR],
+      { gender: "hombre" }
+    );
+    expect(r.hechas).toEqual([]);
+  });
+
+  it("cambia la corbata de punto por la de seda en ceremonia", () => {
+    const look = [CAMISA.id, SACO.id, PANT.id, ZAPATO.id, C_PUNTO.id];
+    const closet = [CAMISA, SACO, PANT, ZAPATO, C_PUNTO, C_SEDA];
+    const r = repararEnCodigo(look, closet, FORMAL);
+    expect(r.hechas).toContainEqual({
+      regla: "corbata-de-punto-en-ceremonia",
+      como: "sustituida",
+      entro: "Corbata de seda marino",
+      salio: "Corbata de punto marino",
+    });
+  });
+
+  // La ceremonia PIDE corbata: sin otra en el clóset, quitarla arreglaría la
+  // regla rompiendo el pedido. Se queda y el hallazgo sigue su camino al juez.
+  it("sin otra corbata NO la quita", () => {
+    const look = [CAMISA.id, SACO.id, PANT.id, ZAPATO.id, C_PUNTO.id];
+    const r = repararEnCodigo(look, [CAMISA, SACO, PANT, ZAPATO, C_PUNTO], FORMAL);
+    const deCorbata = r.hechas.filter((h) => h.regla === "corbata-de-punto-en-ceremonia");
+    expect(deCorbata).toEqual([]);
+    expect(r.itemIds).toContain(C_PUNTO.id);
+  });
+});

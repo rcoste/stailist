@@ -270,6 +270,57 @@ function intentarUna(
         }
       }
     }
+
+    // ── EL RELOJ DEPORTIVO SE CAMBIA POR UNO DE VESTIR, O SE VA. Nace ya con
+    //    reparación a propósito: las reglas anteriores se escribieron sin ella
+    //    y el motor entregaba roto lo que sabía roto. La muñeca desnuda es más
+    //    elegante que la muñeca equivocada, así que el retiro es plan B legal.
+    if (v.regla === "reloj-deportivo-con-sastre") {
+      const esReloj = (i: EngineItem) => /reloj|\bwatch/.test(texto(i));
+      const movil = enLook().find(esReloj);
+      if (movil) {
+        const candidatos = disponibles.filter(esReloj);
+        for (const cand of candidatos) {
+          const nuevos = ids.map((id) => (id === movil.id ? cand.id : id));
+          if (violacionesDe(nuevos).length < violaciones.length) {
+            return {
+              ids: nuevos,
+              hecha: { regla: v.regla, como: "sustituida", entro: nombre(cand), salio: nombre(movil) },
+            };
+          }
+        }
+        const sin = ids.filter((id) => id !== movil.id);
+        if (sin.length >= 3 && violacionesDe(sin).length < violaciones.length) {
+          return { ids: sin, hecha: { regla: v.regla, como: "quitada", salio: nombre(movil) } };
+        }
+      }
+    }
+
+    // ── LA CORBATA DE PUNTO SE CAMBIA POR UNA LISA — Y NO SE QUITA. La
+    //    diferencia con el reloj es deliberada: en una ceremonia el código
+    //    pide corbata, así que retirarla arreglaría esta regla rompiendo el
+    //    pedido. Si el clóset no tiene otra corbata, esto se queda como está
+    //    y el hallazgo sigue su camino al juez.
+    if (v.regla === "corbata-de-punto-en-ceremonia") {
+      const movil = enLook().find(
+        (i) => /corbata/.test(texto(i)) && /punto|tejid|knit/.test(texto(i))
+      );
+      if (movil) {
+        const candidatos = disponibles.filter(
+          (i) => /corbata/.test(texto(i)) && !/punto|tejid|knit/.test(texto(i))
+        );
+        for (const cand of candidatos) {
+          const nuevos = ids.map((id) => (id === movil.id ? cand.id : id));
+          if (violacionesDe(nuevos).length < violaciones.length) {
+            return {
+              ids: nuevos,
+              hecha: { regla: v.regla, como: "sustituida", entro: nombre(cand), salio: nombre(movil) },
+            };
+          }
+        }
+      }
+    }
+
   }
 
   // El resto (traje-desparejado, capa-invisible, codigo-de-smoking…) NO se

@@ -1032,6 +1032,56 @@ export function revisarEjecucion(
     }
   }
 
+  // 13. EL RELOJ DEPORTIVO NO VA CON SASTRE. Salió del cruce del 2026-08-19:
+  //     el juez stylist lo marcó en CUATRO looks y Roberto lo confirmó con la
+  //     nota más contundente de la ronda — "Tiene toda la razón el reloj. Este
+  //     100% rompe con el look" (un reloj de caucho con traje completo).
+  //
+  //     EL GATE LLEVA SU EXCEPCIÓN, dicha por él en la misma ronda: "podría
+  //     hacer una excepción para temas de smart watch en un día normal". Por
+  //     eso dispara SOLO con piezas de sastre en el look o formalidad
+  //     formal/gala — en diario, oficina y casual el smart watch pasa.
+  //
+  //     "Deportivo" se decide por dato, no por adivinanza: la formalidad
+  //     `casual` del catálogo, o palabras del nombre/material (caucho,
+  //     silicona, smart, garmin, digital). Un reloj sin formalidad ni señas no
+  //     se juzga — sin dato no se inventa el error.
+  {
+    const esReloj = (i: EngineItem) => /reloj|\bwatch/.test(TIPO(i));
+    const esDeportivo = (i: EngineItem) =>
+      norm(i.attrs.formalidad) === "casual" ||
+      /deportiv|smart ?watch|garmin|caucho|silicona|digital/.test(
+        `${TIPO(i)} ${norm(i.attrs.material)}`
+      );
+    const esSastre = (i: EngineItem) => /traje|esmoquin|smoking|tuxedo/.test(TIPO(i));
+    const esFormal = ctx.formality === "formal" || ctx.formality === "gala";
+    if (esFormal || items.some(esSastre)) {
+      for (const r of items.filter((i) => esReloj(i) && esDeportivo(i))) {
+        v.push({
+          regla: "reloj-deportivo-con-sastre",
+          detalle: `"${nombre(r)}" es un reloj deportivo (correa de caucho, caja de uso rudo) y este look es de sastre o de evento formal: desentona con todo lo demás. Cámbialo por un reloj de vestir (piel o metal) o quítalo — la muñeca desnuda es más elegante que la muñeca equivocada.`,
+        });
+      }
+    }
+  }
+
+  // 14. LA CORBATA DE PUNTO NO VA A CEREMONIA. Del mismo cruce: el juez la
+  //     marcó en una boda elegante de salón y Roberto lo confirmó dos veces
+  //     ("Sí, no va la corbata de punto"). La textura tejida y la punta
+  //     cuadrada son de registro casual-elegante — cita, oficina con corbata —
+  //     no de ceremonia. SOLO dispara en formal/gala: en los demás contextos
+  //     la corbata de punto es justo la elección correcta.
+  if (ctx.formality === "formal" || ctx.formality === "gala") {
+    const esCorbataDePunto = (i: EngineItem) =>
+      /corbata/.test(TIPO(i)) && /punto|tejid|knit/.test(TIPO(i));
+    for (const c of items.filter(esCorbataDePunto)) {
+      v.push({
+        regla: "corbata-de-punto-en-ceremonia",
+        detalle: `"${nombre(c)}" es de punto: textura tejida y punta cuadrada, registro casual-elegante. Para una ceremonia va una corbata de seda con acabado liso. Cámbiala si el clóset tiene una; la de punto guárdala para una cita u oficina.`,
+      });
+    }
+  }
+
   // 23. El look se lee como una decisión, no como cinco cosas oscuras juntas.
   //
   //     LA ÚNICA REGLA DE ARMONÍA DE COLOR QUE EXISTE AQUÍ. Las otras dos que
