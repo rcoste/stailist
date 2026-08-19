@@ -319,7 +319,14 @@ import {
 // La versión sube porque el bloque de reglas verificadas que lee el juez ya no
 // es el mismo. Como toda regla nueva aquí, va con su variante de ablación en
 // el comparador (sin-coherencia-cromatica): si apagarla gana, se revierte.
-export const PROMPT_VERSION = "v53";
+// v54: "EXACTAMENTE 3 outfits", no "2 o 3". Decisión de Roberto (2026-08-19):
+// "si dejamos las cosas tan abiertas, inducimos a que el modelo tirite" — y
+// medido en la ronda 283d8d44 tenía razón: el reparto fue 3,3,3,2,3,3,2,3,3,
+// 2,2,3. El modelo titubeaba. El piso de 2 del pipeline se queda como red
+// (el modelo puede desobedecer), pero pedirlo ambiguo era invitarlo a entregar
+// menos. Los 3 se muestran (o se mostrarán: hoy el flujo diario genera 1 — la
+// prioridad G del plan es llevarle los 3).
+export const PROMPT_VERSION = "v54";
 
 export type EngineItem = {
   id: string;
@@ -485,12 +492,12 @@ export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga coo
 
 ${ESCALERA_DE_PRIORIDADES}
 
-Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 2-3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.
+Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.
 
 Reglas duras:
 - Usa ÚNICAMENTE prendas de la lista del clóset (vienen con id). Jamás menciones prendas que no estén ahí.
 - Cada outfit lleva 3 a 5 prendas y debe tener lógica: un top (o vestido), un bottom (salvo con vestido), calzado siempre; un saco/blazer va SOBRE el top cuando la ocasión es formal o de evento (no depende del clima); un abrigo solo si el clima lo pide.
-- Devuelve 2 o 3 outfits DISTINTOS entre sí.
+- Devuelve EXACTAMENTE 3 outfits DISTINTOS entre sí.
 - Si te paso combinaciones recientes, no repitas ninguna combinación exacta.
 - Ropa de baño y de entrenar NO es ropa de calle, y aquí no hay ocasión de playa ni de gym: un traje de baño o bikini jamás es un look (aunque el catálogo los liste como "vestido") y un short de baño no sustituye un short normal — déjalos fuera. Un top deportivo tipo bra (crop de entrenar, sin manga) no va como ÚNICO top: úsalo solo con una capa encima que lo vuelva look de calle (sudadera, camisa o chamarra abierta).
 

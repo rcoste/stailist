@@ -83,7 +83,7 @@ export function buildOutfitSchema(itemIds: string[]) {
       },
       outfits: {
         type: "array",
-        description: "Exactamente 2 o 3 outfits.",
+        description: "Exactamente 3 outfits.",
         items: {
           type: "object",
           properties: {

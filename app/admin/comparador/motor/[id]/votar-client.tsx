@@ -98,16 +98,16 @@ function Lado({
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{titulo}</p>
 
       {!look ? (
-        // NO es un fallo, y decirlo importa: el prompt pide "2 o 3 outfits",
-        // así que entregar 2 es una respuesta legal. Roberto abrió esta
-        // pestaña, encontró un lado vacío y la leyó como error. Medido sobre
-        // 93 lados: producción entregó 3 el 100% de las veces, Gemini el 94%.
-        // La diferencia es real y se mide en el marcador; aquí solo se explica.
+        // Hasta v53 el prompt pedía "2 o 3 outfits" y entregar 2 era legal;
+        // desde v54 pide EXACTAMENTE 3, así que en corridas nuevas un lado con
+        // 2 es el modelo desobedeciendo (el marcador lo cuenta). Este texto
+        // existe porque Roberto abrió esta pestaña, encontró un lado vacío y
+        // lo leyó como error de la pantalla.
         <p className="text-xs leading-relaxed text-muted">
           Este lado entregó menos looks: armó {indice} y el otro {indice + 1}.
           <span className="mt-0.5 block">
-            No es un fallo — el motor puede dar 2 o 3. Este look no se puede
-            comparar, así que no cuenta para el voto del par.
+            Hasta v53 el prompt aceptaba 2 o 3; desde v54 pide 3. Este look no
+            se puede comparar, así que no cuenta para el voto del par.
           </span>
         </p>
       ) : (
