@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.263.2] - 2026-08-19
+
+### Fixed — el juez sí dice cómo arreglarlo, y ahora se ve
+
+Roberto, calificando hallazgos: "yo le preguntaría al juez: ¿cómo lo mejor
+harías tú? No nada más criticar". Ya lo hacía — cada hallazgo trae su campo
+`arreglo` ("cinturón burdeos que iguale el tono exacto de los mocasines") — pero
+la pantalla del cruce sólo pintaba el problema. El juez parecía un crítico y era
+un stylist con propuesta.
+
 ## [0.2.263.1] - 2026-08-19
 
 ### Fixed — después de votar una ronda, calificar al juez ya no está escondido

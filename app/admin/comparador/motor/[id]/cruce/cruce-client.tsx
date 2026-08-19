@@ -159,10 +159,20 @@ function Tarjeta({
                   <Chip key={d} tono={look.juez.rompe > 0 ? "rojo" : "gris"}>{d}</Chip>
                 ))}
               </span>
+              {/* EL ARREGLO QUE PROPONE, no sólo la crítica. Roberto,
+                  calificando: "yo le preguntaría al juez: ¿cómo lo mejor
+                  harías tú? No nada más criticar". El dato SIEMPRE estuvo en
+                  el hallazgo; esta pantalla no lo pintaba — así que el juez
+                  parecía un crítico y era un stylist con propuesta. */}
               {look.juez.hallazgos.slice(0, 2).map((h, i) => (
-                <p key={i} className="text-ink">
-                  <span className="font-medium">{h.pieza}:</span> {h.problema}
-                </p>
+                <div key={i} className="flex flex-col">
+                  <p className="text-ink">
+                    <span className="font-medium">{h.pieza}:</span> {h.problema}
+                  </p>
+                  {h.arreglo ? (
+                    <p className="text-muted">→ {h.arreglo}</p>
+                  ) : null}
+                </div>
               ))}
             </>
           ) : (
