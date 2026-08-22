@@ -59,7 +59,7 @@ describe("reviewOutfit", () => {
   it("sin API key: pasa el look tal cual, sin llamar ni recibo", async () => {
     delete process.env.ANTHROPIC_API_KEY;
     const r = await reviewOutfit(ctx, original, []);
-    expect(r).toEqual({ outfit: original, verdict: "ok", razon: null, recibo: null });
+    expect(r).toMatchObject({ outfit: original, verdict: "ok", razon: null, recibo: null });
     expect(llamar).not.toHaveBeenCalled();
   });
 
@@ -267,5 +267,69 @@ describe("sinCoherenciaCromatica — la variante que mide la regla de color de v
     }).map((x) => x.regla);
     expect(con).toContain("colores-que-no-se-leen");
     expect(sin).not.toContain("colores-que-no-se-leen");
+  });
+});
+
+describe("conversación B — código antes que juez, y el juez sólo repara", () => {
+  const item = (id: string, nombre: string, extra: Record<string, unknown> = {}) =>
+    ({ id, attrs: { nombre, tipo: nombre, ...extra } }) as unknown as EngineItem;
+  const ctxCon = (items: EngineItem[]) =>
+    ({
+      items,
+      weather: { temp_c: 18, condition: "nublado" },
+      gender: "hombre",
+      paraguas: false,
+      formality: null,
+      seedItemIds: [],
+    }) as unknown as EngineContext;
+
+  // Medido el 2026-08-22 (docs/improvement-loop-del-motor.md §9): el juez
+  // reescribía el 75% de los looks y 3 de cada 4 reescrituras respondían a una
+  // violación que el código ya detectaba — porque corría ANTES del reparador.
+  it("las dos variantes existen, cada una con UN solo flag", async () => {
+    const { VARIANTES_MOTOR } = await import("@/lib/comparador/motor");
+    const a = VARIANTES_MOTOR.find((x) => x.clave === "reparar-primero")!;
+    const b = VARIANTES_MOTOR.find((x) => x.clave === "juez-solo-repara")!;
+    expect(Object.keys(a.opciones ?? {})).toEqual(["repararPrimero"]);
+    expect(Object.keys(b.opciones ?? {})).toEqual(["juezSoloRepara"]);
+    expect(a.modeloId ?? b.modeloId).toBeUndefined();
+  });
+
+  const items = [
+    item("a", "Camiseta blanca", { categoria: "top", color_hex: "#FFFFFF" }),
+    item("b", "Suéter marino", { categoria: "top", color_hex: "#27425F" }),
+    item("c", "Jeans negros", { categoria: "bottom", color_hex: "#111111" }),
+    item("d", "Botines Chelsea negros", { categoria: "calzado", color_hex: "#111111", material: "piel" }),
+  ];
+  const sinBase = { nombre: "x", item_ids: ["b", "c", "d"], explicacion: "x" };
+
+  it("sin flag, el juez recibe el look tal cual y la violación sigue ahí para él", async () => {
+    const { prepararParaElJuez } = await import("./critic");
+    const r = prepararParaElJuez(ctxCon(items), sinBase, {});
+    expect(r.hechas).toEqual([]);
+    expect(r.outfit.item_ids).toEqual(["b", "c", "d"]);
+    expect(r.violaciones.map((v) => v.regla)).toContain("sueter-sin-base");
+  });
+
+  it("con repararPrimero, el código añade la camiseta ANTES y al juez ya no le queda nada que reparar", async () => {
+    const { prepararParaElJuez } = await import("./critic");
+    const r = prepararParaElJuez(ctxCon(items), sinBase, { repararPrimero: true });
+    expect(r.hechas.map((h) => h.regla)).toEqual(["sueter-sin-base"]);
+    expect(r.outfit.item_ids).toContain("a");
+    expect(r.violaciones).toEqual([]);
+  });
+
+  it("juezSoloRepara implica reparar primero, y sinRepararEnCodigo lo apaga", async () => {
+    const { prepararParaElJuez } = await import("./critic");
+    expect(prepararParaElJuez(ctxCon(items), sinBase, { juezSoloRepara: true }).hechas.length).toBe(1);
+    expect(
+      prepararParaElJuez(ctxCon(items), sinBase, { juezSoloRepara: true, sinRepararEnCodigo: true }).hechas
+    ).toEqual([]);
+  });
+
+  it("el candado se lo dice al juez con todas sus letras", async () => {
+    const { instruccionSoloRepara } = await import("./critic");
+    expect(instruccionSoloRepara(false).join(" ")).toMatch(/TAL CUAL/);
+    expect(instruccionSoloRepara(true).join(" ")).toMatch(/sólo puedes cambiar/);
   });
 });

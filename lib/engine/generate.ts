@@ -37,6 +37,26 @@ export type OpcionesGeneracion = {
    * la variante que mide si la regla mejora el look o rechaza looks buenos.
    */
   sinCoherenciaCromatica?: boolean;
+  /**
+   * CONVERSACIÓN B (docs/improvement-loop-del-motor.md §9). Medido el
+   * 2026-08-22: el juez de producción reescribe el 75% de los looks, y 3 de
+   * cada 4 reescrituras responden a una violación que el código ya detectaba —
+   * porque el juez corre ANTES que el reparador en código y hace a mano,
+   * moviendo 2.3 prendas, lo que el código haría tocando una.
+   *
+   * `repararPrimero`: el reparador en código corre ANTES del juez; el juez
+   * recibe el look ya reparado y sólo lo que el código no pudo. Cambio de
+   * ORDEN, no de lógica.
+   */
+  repararPrimero?: boolean;
+  /**
+   * `juezSoloRepara`: además de reparar primero, el juez sólo puede cambiar
+   * prendas para resolver violaciones verificadas; si no queda ninguna,
+   * devuelve el look TAL CUAL (se impone en código, no sólo en el prompt).
+   * Mide si el 25% de reescrituras "por criterio propio" suma o resta.
+   * Implica `repararPrimero` (una variante = un flag).
+   */
+  juezSoloRepara?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

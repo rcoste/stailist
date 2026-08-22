@@ -2,6 +2,41 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.271.0] - 2026-08-22
+
+### Added — conversación B, medible: dos variantes del juez de producción
+
+Lo medido primero (docs/improvement-loop-del-motor.md §9, 59 looks de las
+dos rondas con el clóset actual): el juez de producción **reescribe el 75% de
+los looks**, moviendo 2.3 prendas por reescritura — pero 3 de cada 4 de esas
+reescrituras responden a una violación que el código ya había detectado. Y la
+causa es de orden: el juez LLM corre **antes** que el reparador en código y
+hace a mano lo que el código haría tocando una prenda. El "mete 5 por cada 3
+que arregla" de hace tres días ya no es cierto: arregla 43, mete 3. Lo que sí
+es criterio propio (25%) es casi todo registro — territorio del dial por
+persona, hoy decidido con el gusto del juez.
+
+Dos variantes nuevas del comparador, un flag cada una, sin tocar el generador:
+
+- **`reparar-primero`** (`repararPrimero`): el reparador en código corre
+  ANTES del juez; el juez recibe el look ya reparado y sólo lo que el código
+  no pudo. Cambio de orden, no de lógica.
+- **`juez-solo-repara`** (`juezSoloRepara`, implica el anterior): el juez sólo
+  puede cambiar prendas para resolver violaciones verificadas; sin ninguna
+  pendiente, el look se devuelve TAL CUAL — impuesto en código, no sólo en el
+  prompt (su razón se conserva como dato).
+
+Cómo está hecho: `prepararParaElJuez` (pura, con test) decide el orden y
+calcula lo que queda; `RevisionDeLook.entradaJuez` registra lo que el juez
+recibió, para separar en el cruce qué cambió el código y qué el juez. Si el
+código reparó antes, el veredicto dice "reparado" aunque el juez no toque
+nada — una reparación fuera del registro es lo que el flywheel no perdona.
+
+Pre-registrado: se corre `reparar-primero` contra producción; si gana o
+empata, entra. `juez-solo-repara` después: si gana, el criterio de registro
+pasa al dial por persona; si pierde, el criterio del juez vale y lo que hay
+que darle es el dial, no quitárselo.
+
 ## [0.2.270.5] - 2026-08-22
 
 ### Fixed — el clóset de referencia v1, y el retador que se había quedado sin poder correr

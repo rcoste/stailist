@@ -1,6 +1,6 @@
 import { type Recibo } from "@/lib/proveedores";
 import { medir, type QuienMide } from "@/lib/recibos";
-import { repararEnCodigo } from "./reparar";
+import { repararEnCodigo, type Reparacion } from "./reparar";
 import { MODELO_JUEZ } from "@/lib/models";
 import { buildCriticSchema } from "./schema";
 import {
@@ -67,7 +67,57 @@ export type CriticResult = {
   razon: string | null;
   /** El recibo de la llamada (tokens/costo/ms). null si el juez no corrió o falló. */
   recibo: Recibo | null;
+  /** Lo que el juez RECIBIÓ (con `repararPrimero`, el look ya reparado en
+   *  código). Sirve para separar qué cambió el código y qué cambió el juez. */
+  entradaJuez?: string[];
 };
+
+export type OpcionesJuez = {
+  sinRepararEnCodigo?: boolean;
+  sinCoherenciaCromatica?: boolean;
+  repararPrimero?: boolean;
+  juezSoloRepara?: boolean;
+};
+
+/**
+ * Lo que pasa ANTES de llamar al juez, en puro: con `repararPrimero` (o
+ * `juezSoloRepara`, que lo implica) el reparador en código corre primero y el
+ * juez recibe el look ya arreglado; y se calcula qué violaciones le quedan,
+ * que es lo que decide —con `juezSoloRepara`— si el juez puede tocar algo.
+ *
+ * Es función aparte para poder probarla sin API: el orden y el candado son la
+ * lógica de la conversación B, y tienen que blindarse con test.
+ */
+export function prepararParaElJuez(
+  ctx: EngineContext,
+  outfit: GeneratedOutfit,
+  opciones: OpcionesJuez = {}
+): { outfit: GeneratedOutfit; hechas: Reparacion[]; violaciones: Violacion[] } {
+  const primero = (opciones.repararPrimero || opciones.juezSoloRepara) && !opciones.sinRepararEnCodigo;
+  let look = outfit;
+  let hechas: Reparacion[] = [];
+  if (primero) {
+    const arreglo = repararEnCodigo(outfit.item_ids, ctx.items, contextoDeReglas(ctx, opciones));
+    if (arreglo.hechas.length > 0) {
+      look = keepAnchor({ ...outfit, item_ids: arreglo.itemIds }, ctx.seedItemIds ?? []);
+      hechas = arreglo.hechas;
+    }
+  }
+  return { outfit: look, hechas, violaciones: loQueSigueRoto(ctx, look, opciones) };
+}
+
+/** El candado de `juezSoloRepara`, en palabras para el juez. */
+export function instruccionSoloRepara(hayViolaciones: boolean): string[] {
+  return hayViolaciones
+    ? [
+        "",
+        "LÍMITE DE ESTA REVISIÓN: sólo puedes cambiar prendas para resolver los PROBLEMAS YA VERIFICADOS de arriba. Todo lo demás se queda exactamente como está — aunque tú lo armarías distinto. Si el problema no se puede resolver con este clóset, devuelve el look tal cual con veredicto ok y dilo en la razón.",
+      ]
+    : [
+        "",
+        "NO HAY PROBLEMAS VERIFICADOS en este look. Devuelve veredicto ok y el look TAL CUAL, sin cambiar ninguna prenda: en esta revisión el gusto no repara nada.",
+      ];
+}
 
 // La MISMA escalera que usa la stylist para armar. Sin esto el juez trabaja con
 // otro orden de prioridades y "repara" decisiones correctas: cambia el top que
@@ -152,7 +202,7 @@ function buildCriticMessage(
   priorOutfits: GeneratedOutfit[],
   /** Los flags del arnés, para que el bloque de reglas que ve el juez sea el
    *  mismo conjunto con el que se generó. */
-  opciones: { sinCoherenciaCromatica?: boolean } = {}
+  opciones: OpcionesJuez = {}
 ): string {
   // El juez ve las MISMAS marcas de estilo que el generador. Si solo las viera
   // uno, el juez "repararía" el look quitando justo la prenda que lo hacía de su
@@ -212,6 +262,13 @@ function buildCriticMessage(
   }
 
   lines.push("", rubricFor(ctx.gender));
+  if (opciones.juezSoloRepara) {
+    lines.push(
+      ...instruccionSoloRepara(
+        loQueSigueRoto(ctx, outfit, opciones).length > 0
+      )
+    );
+  }
   lines.push(
     "",
     "Devuelve tu veredicto (ok / reparado / rechazado), la razón, y el look final (arreglado o tal cual)."
@@ -234,7 +291,7 @@ export async function reviewOutfit(
   esReintento = false,
   /** Los flags del arnés que el juez lee: la reparación en código y la regla
    *  de coherencia cromática (las dos son variantes del comparador). */
-  opciones: { sinRepararEnCodigo?: boolean; sinCoherenciaCromatica?: boolean } = {},
+  opciones: OpcionesJuez = {},
   /**
    * De quién es esta revisión, para el recibo. `null` = comparador, eval o
    * script: sin sesión y sin ganas de ensuciar los promedios de uso real.
@@ -249,6 +306,17 @@ export async function reviewOutfit(
   if (!process.env.ANTHROPIC_API_KEY) {
     return { outfit, verdict: "ok", razon: null, recibo: null };
   }
+
+  // CONVERSACIÓN B: con `repararPrimero` el código va antes. `outfit` pasa a
+  // ser el look ya reparado; `hechasAntes` es lo que el código movió (para
+  // que el veredicto no diga "ok" sobre un look que sí cambió).
+  const prep = esReintento ? null : prepararParaElJuez(ctx, outfit, opciones);
+  if (prep) outfit = prep.outfit;
+  const entradaJuez = outfit.item_ids;
+  const hechasAntes = prep?.hechas.length ?? 0;
+  // El candado de `juezSoloRepara`: sin violaciones pendientes, el juez no
+  // puede tocar nada — se impone aquí, no sólo en el prompt.
+  const candado = !!opciones.juezSoloRepara && (prep?.violaciones.length ?? 0) === 0 && !esReintento;
 
   try {
     const itemIds = ctx.items.map((i) => i.id);
@@ -272,7 +340,15 @@ export async function reviewOutfit(
 
     // Truncado = veredicto ilegible → fail-forward igual que siempre, pero con
     // el recibo (la llamada SÍ costó).
-    if (recibo.truncada) return { outfit, verdict: "ok", razon: null, recibo };
+    if (recibo.truncada)
+      return { outfit, verdict: hechasAntes ? "reparado" : "ok", razon: null, recibo, entradaJuez };
+
+    if (candado) {
+      // Sin nada verificado que reparar, lo que diga el juez es gusto: se
+      // conserva la razón (es dato) y se devuelve el look intacto.
+      const dicho = (JSON.parse(recibo.texto) as { razon?: string }).razon?.trim() || null;
+      return { outfit, verdict: hechasAntes ? "reparado" : "ok", razon: dicho, recibo, entradaJuez };
+    }
 
     const parsed = JSON.parse(recibo.texto) as GeneratedOutfit & {
       veredicto?: CriticVerdict;
@@ -289,7 +365,7 @@ export async function reviewOutfit(
     // quien llama decide descartarlo o mostrarlo como último recurso. El original
     // ya trae el ancla (los candidatos vienen anclados del generador).
     if (verdict === "rechazado") {
-      return { outfit, verdict, razon, recibo };
+      return { outfit, verdict, razon, recibo, entradaJuez };
     }
 
     // ok / reparado: usamos el look del juez solo si es válido; si no, el original.
@@ -363,22 +439,24 @@ export async function reviewOutfit(
             // El recibo de la PRIMERA pasada se pierde para quien llama, así
             // que se suma aquí: el costo real fueron dos llamadas.
             recibo: sumarRecibos(recibo, segunda.recibo),
+            entradaJuez,
           };
         }
       }
 
       return {
         outfit: look,
-        // Si el código tuvo que meter mano, el look CAMBIÓ: decir "ok" ahí
-        // dejaría la reparación fuera del registro del flywheel.
-        verdict: look === reparado ? verdict : "reparado",
+        // Si el código tuvo que meter mano (antes o después), el look CAMBIÓ:
+        // decir "ok" ahí dejaría la reparación fuera del registro del flywheel.
+        verdict: look === reparado && !hechasAntes ? verdict : "reparado",
         razon,
         recibo,
+        entradaJuez,
       };
     }
-    return { outfit, verdict: "ok", razon: null, recibo };
+    return { outfit, verdict: hechasAntes ? "reparado" : "ok", razon: null, recibo, entradaJuez };
   } catch {
-    return { outfit, verdict: "ok", razon: null, recibo: null };
+    return { outfit, verdict: hechasAntes ? "reparado" : "ok", razon: null, recibo: null, entradaJuez };
   }
 }
 

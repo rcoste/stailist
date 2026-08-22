@@ -128,6 +128,28 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     opciones: { sinCoherenciaCromatica: true },
   },
   {
+    clave: "reparar-primero",
+    etiqueta: "Código antes que juez",
+    // CONVERSACIÓN B, variante 1 (docs §9). El juez de producción reescribe el
+    // 75% de los looks y 3 de cada 4 reescrituras responden a una violación
+    // que el código ya detectaba: corre ANTES que el reparador y hace a mano
+    // lo que el código haría tocando una prenda. Aquí el orden se invierte.
+    ayuda:
+      "el reparador en código corre ANTES del juez; el juez recibe el look ya reparado y sólo lo que el código no pudo",
+    opciones: { repararPrimero: true },
+  },
+  {
+    clave: "juez-solo-repara",
+    etiqueta: "El juez sólo repara",
+    // CONVERSACIÓN B, variante 2. Además del orden, el juez sólo puede tocar
+    // prendas para resolver violaciones verificadas; sin ninguna pendiente,
+    // devuelve el look tal cual (candado en código). Mide si el 25% de
+    // reescrituras "por criterio propio" suma o resta — con el voto.
+    ayuda:
+      "código primero, y el juez sólo cambia lo que una violación verificada pide; sin violación, no toca nada",
+    opciones: { juezSoloRepara: true },
+  },
+  {
     clave: "prompt-anterior",
     etiqueta: "Prompt anterior",
     // EL FRENO. La semana del 19 de agosto salieron nueve versiones del motor

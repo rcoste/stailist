@@ -25,6 +25,9 @@ export type RevisionDeLook = {
   verdict: CriticVerdict;
   razon: string | null;
   shown: boolean;
+  /** Lo que recibió el juez (≠ before cuando el código reparó primero). Con
+   *  esto se separa cuánto cambió el código y cuánto el juez. */
+  entradaJuez?: string[];
 };
 
 export type ResultadoPipeline = {
@@ -118,6 +121,7 @@ export async function armarLooks(
       verdict: result.verdict,
       razon: result.razon,
       shown: false,
+      entradaJuez: result.entradaJuez,
     };
 
     if (result.verdict === "rechazado") {
