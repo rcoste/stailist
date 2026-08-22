@@ -2,12 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cargarBaseDelMotor, construirContexto } from "@/lib/engine/contexto";
 import { armarLooks } from "@/lib/engine/pipeline";
 import { PROMPT_VERSION } from "@/lib/engine/prompt";
+import { idsDelMensaje, type PromptCongelado } from "@/lib/engine/prompt-congelado";
 import { MODELO_MOTOR, MODELO_JUEZ } from "@/lib/models";
 import { modeloPorId } from "@/lib/proveedores/catalogo";
 import { ErrorProveedor } from "@/lib/proveedores";
 import {
   opcionesDeVariante,
   peticionDeBrief,
+  POOL_VERSION,
   type BriefMotor,
   type VarianteMotor,
 } from "./motor";
@@ -116,6 +118,16 @@ export async function generarLadoYGuardar(opciones: {
     // formalidad y paraguas viajan por los mismos campos que usa producción.
     const ctx = construirContexto(carga.base, peticionDeBrief(brief));
 
+    // "Prompt anterior": la última versión congelada de ESTE clóset que no sea
+    // la vigente, resuelta para este brief. Sin congelado, o con el clóset
+    // cambiado, se falla claro — un lado que midiera otra cosa sería peor que
+    // un lado vacío.
+    if (v.opciones?.promptAnterior) {
+      const r = await resolverPromptAnterior(supabase, closetUserId, brief.etiqueta);
+      if ("error" in r) throw new Error(r.error);
+      opcionesGen.congelado = r.congelado;
+    }
+
     const t0 = Date.now();
     // El `null` del final NO es descuido: el comparador corre el pipeline de
     // producción a propósito, pero sus llamadas no son de nadie. Registrarlas
@@ -189,4 +201,66 @@ export function conNombres<L extends { item_ids: string[] }>(
     ...l,
     prendas: l.item_ids.map((id) => ({ id, nombre: porId.get(id) ?? "Prenda" })),
   }));
+}
+
+/**
+ * Elige qué congelado es "el anterior" y lo resuelve para un brief. Puro: la
+ * consulta la hace resolverPromptAnterior; esto es lo que se puede probar.
+ *
+ * - El más reciente cuya versión NO sea la vigente (congelar la vigente antes
+ *   de subir es parte del proceso, así que normalmente hay exactamente uno).
+ * - Mismo pool (las etiquetas de brief tienen que coincidir).
+ * - Todas las prendas del mensaje congelado siguen en el clóset.
+ */
+export function elegirPromptAnterior(
+  congelados: Pick<PromptCongelado, "version" | "poolVersion" | "system" | "briefs">[],
+  etiqueta: string,
+  idsVigentes: Set<string>,
+  versionVigente = PROMPT_VERSION,
+  poolVigente = POOL_VERSION
+):
+  | { congelado: { version: string; system: string; texto: string } }
+  | { error: string } {
+  const candidatos = congelados.filter(
+    (c) => c.version !== versionVigente && c.poolVersion === poolVigente
+  );
+  if (!candidatos.length)
+    return {
+      error: `sin_prompt_congelado: no hay una versión anterior a ${versionVigente} congelada para este clóset (corre scripts/prompt-congelar.ts ANTES de subir de versión)`,
+    };
+  const c = candidatos[0];
+  const brief = c.briefs.find((b) => b.etiqueta === etiqueta);
+  if (!brief) return { error: `sin_brief_congelado: ${c.version} no tiene "${etiqueta}"` };
+  const faltan = idsDelMensaje(brief.texto).filter((id) => !idsVigentes.has(id));
+  if (faltan.length)
+    return {
+      error: `prendas_desaparecidas: el congelado ${c.version} pide ${faltan.length} prendas que ya no están en el clóset — el clóset cambió y la comparación ya no mediría el prompt`,
+    };
+  return { congelado: { version: c.version, system: c.system, texto: brief.texto } };
+}
+
+async function resolverPromptAnterior(
+  supabase: SupabaseClient,
+  closetUserId: string,
+  etiqueta: string
+) {
+  const [{ data: filas }, { data: items }] = await Promise.all([
+    supabase
+      .from("prompts_congelados")
+      .select("version, pool_version, system, briefs")
+      .eq("closet_user_id", closetUserId)
+      .order("creado", { ascending: false }),
+    supabase.from("items").select("id").eq("user_id", closetUserId).is("deleted_at", null),
+  ]);
+  const congelados = (filas ?? []).map((f) => ({
+    version: f.version as string,
+    poolVersion: f.pool_version as string,
+    system: f.system as string,
+    briefs: f.briefs as PromptCongelado["briefs"],
+  }));
+  return elegirPromptAnterior(
+    congelados,
+    etiqueta,
+    new Set((items ?? []).map((i) => i.id as string))
+  );
 }

@@ -130,6 +130,10 @@ describe("votoDelPar (deriva el par de los votos por look)", () => {
 });
 
 describe("opcionesDeVariante (el traductor que comparten ruta y smoke)", () => {
+  it("'prompt-anterior' no le pasa nada al motor: el congelado lo resuelve generar-lado", () => {
+    expect(opcionesDeVariante(variantePorClave("prompt-anterior")!, () => null)).toEqual({});
+  });
+
   const catalogo = (id: string) =>
     id === "modelo-x" ? { proveedor: "anthropic" as const, id, etiqueta: "X" } : null;
 

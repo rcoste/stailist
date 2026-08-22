@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.268.0] - 2026-08-22
+
+### Added — el retador "prompt anterior": lo nuevo tiene que ganarle a lo de ayer
+
+Nueva variante del comparador, `prompt-anterior`: corre la **última versión
+congelada del prompt de este clóset** (`prompts_congelados`) dentro del
+pipeline completo de hoy — mismo juez, misma reparación en código para los dos
+lados, así que lo único que difiere es el prompt. Es el freno que faltó la
+semana del 19 de agosto, cuando nueve versiones salieron medidas cada una por
+su propio termómetro y la aprobación de Roberto cayó de 91% a 52% sin que
+ningún instrumento lo viera.
+
+Cómo está hecho, y por qué así:
+
+- `OpcionesGeneracion.congelado` (`{version, system, texto}`): el generador usa
+  ese system y ese mensaje ya renderizado en vez de construir el de hoy, y
+  anota en el recibo la versión que corrió de verdad. Solo lo resuelve
+  `generar-lado.ts`; producción no lo toca.
+- `elegirPromptAnterior` (pura, con test): el congelado más reciente cuya
+  versión no sea la vigente, del mismo pool, y con todas sus prendas todavía
+  en el clóset. Si falta cualquiera de las tres, el lado **falla claro** con
+  el script a correr — un lado que midiera otra cosa es peor que uno vacío.
+  Verificado contra la base: hoy se rehúsa (no hay anterior a v57) y, simulando
+  el código en v58, los 6 briefs del vistazo resuelven v57 intactos.
+- Congelar antes de subir de versión pasa de "buena práctica" a **paso
+  obligatorio** del proceso (`docs/improvement-loop-del-motor.md`, paso 5).
+  v57 queda congelado como primera línea base (17 briefs, 298 KB).
+
+Al leer una ronda con este retador: **"Producción" es lo nuevo** y "Prompt
+anterior" es el control. Si el control gana, lo nuevo no sale.
+
 ## [0.2.267.0] - 2026-08-22
 
 ### Added — los looks del comparador congelan el nombre de sus prendas

@@ -26,7 +26,10 @@ export type VarianteMotor = {
   ayuda: string;
   /** id del catálogo de proveedores. Ausente = el motor de producción. */
   modeloId?: string;
-  opciones?: Omit<OpcionesGeneracion, "modelo" | "blueprint">;
+  opciones?: Omit<OpcionesGeneracion, "modelo" | "blueprint" | "congelado"> & {
+    /** Resolver el último prompt congelado de este clóset (generar-lado). */
+    promptAnterior?: boolean;
+  };
 };
 
 /**
@@ -123,6 +126,22 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     ayuda:
       "sin la regla de color de v53 (4+ familias en una sola banda con una pieza cálida sola)",
     opciones: { sinCoherenciaCromatica: true },
+  },
+  {
+    clave: "prompt-anterior",
+    etiqueta: "Prompt anterior",
+    // EL FRENO. La semana del 19 de agosto salieron nueve versiones del motor
+    // medidas cada una por su termómetro (reparto de 3, disparos de regla,
+    // trajes en cita) y ninguna contra la anterior: la aprobación de Roberto
+    // cayó de 91% a 52% sin que nadie lo viera. Esta variante corre la ÚLTIMA
+    // versión congelada de este clóset (prompts_congelados) dentro del
+    // pipeline de hoy. La regla: ningún cambio del motor sale sin ganarle —o
+    // empatarle— a esto. Exige haber congelado ANTES de subir de versión
+    // (scripts/prompt-congelar.ts); si no hay congelado o el clóset cambió, el
+    // lado falla claro en vez de medir otra cosa.
+    ayuda:
+      "la última versión congelada del prompt, con el juez y el reparador de hoy — para que lo nuevo tenga que ganarle a lo de ayer",
+    opciones: { promptAnterior: true },
   },
 ];
 
@@ -574,8 +593,11 @@ export function opcionesDeVariante(
 ): OpcionesGeneracion | null {
   const modelo = v.modeloId ? modeloPorId(v.modeloId) : null;
   if (v.modeloId && !modelo) return null;
+  // `promptAnterior` no es una opción del motor: es una instrucción para
+  // generar-lado, que la cambia por el `congelado` ya resuelto.
+  const { promptAnterior: _pa, ...opciones } = v.opciones ?? {};
   return {
-    ...(v.opciones ?? {}),
+    ...opciones,
     ...(modelo ? { modelo } : {}),
   };
 }

@@ -2,6 +2,7 @@ import { MODELO_MOTOR } from "@/lib/models";
 import { parsearJson, type Modelo, type Recibo } from "@/lib/proveedores";
 import { medir, type QuienMide } from "@/lib/recibos";
 import { buildOutfitSchema } from "./schema";
+import { idsDelMensaje } from "./prompt-congelado";
 import type { BlueprintEmparejado } from "./blueprint";
 import {
   buildUserMessage,
@@ -44,6 +45,19 @@ export type OpcionesGeneracion = {
    * línea de lib/models.ts, y solo se mueve cuando una corrida lo gana.
    */
   modelo?: Modelo;
+  /**
+   * EL PROMPT ANTERIOR, ya resuelto para este brief: el `system` de aquella
+   * versión y su mensaje de usuario tal cual se renderizó el día que se
+   * congeló (prompts_congelados). Con esto el generador corre la versión de
+   * AYER dentro del pipeline de HOY (juez + reparación en código iguales para
+   * los dos lados — lo que se compara es el prompt).
+   *
+   * Solo lo pasa el comparador (variante "prompt-anterior"), y lo resuelve
+   * generar-lado.ts: ni producción ni ningún otro camino lo tocan. Es el
+   * freno que faltó la semana del 19 de agosto: nueve versiones medidas por su
+   * propio termómetro y ninguna contra la anterior (91% → 52%).
+   */
+  congelado?: { version: string; system: string; texto: string };
 };
 
 /**
@@ -84,6 +98,17 @@ export async function generarConRecibo(
 
   const itemIds = ctx.items.map((i) => i.id);
 
+  // Con un prompt congelado, los ids que el modelo puede usar son los del
+  // MENSAJE de entonces, no los del clóset de hoy: si difieren, el clóset
+  // cambió y la comparación ya no mide el prompt. generar-lado lo valida antes
+  // de llegar aquí; esto es el cinturón.
+  if (opciones.congelado) {
+    const deEntonces = idsDelMensaje(opciones.congelado.texto);
+    const vivos = new Set(itemIds);
+    const faltan = deEntonces.filter((id) => !vivos.has(id));
+    if (faltan.length) throw new Error(`PRENDAS_DESAPARECIDAS:${faltan.length}`);
+  }
+
   // Thinking APAGADO (lo apaga el adaptador para todos los proveedores): en los
   // modelos 5 viene encendido por default y en el motor cuesta ~50% más de
   // latencia (32s contra 21s, medido) sin que se vea en los looks — el schema
@@ -96,10 +121,17 @@ export async function generarConRecibo(
   // cuánto tarda de verdad, ni cuánto cuesta, ni cada cuánto truena. La tarea
   // se sella AQUÍ ("motor") porque este archivo es el único que sabe que esta
   // llamada es la del generador.
-  const recibo = await medir(quien && { ...quien, tarea: "motor", version: PROMPT_VERSION }, {
+  // La versión que se anota es la que CORRE: con congelado, la de entonces.
+  const recibo = await medir(
+    quien && {
+      ...quien,
+      tarea: "motor",
+      version: opciones.congelado?.version ?? PROMPT_VERSION,
+    },
+    {
     modelo,
-    system: SYSTEM_PROMPT,
-    texto: buildUserMessage(ctx, opciones),
+    system: opciones.congelado?.system ?? SYSTEM_PROMPT,
+    texto: opciones.congelado?.texto ?? buildUserMessage(ctx, opciones),
     schema: buildOutfitSchema(itemIds),
     // 3072: el campo "analisis" (borrador de razonamiento del schema) consume
     // tokens antes de los outfits; 2048 quedaba justo.

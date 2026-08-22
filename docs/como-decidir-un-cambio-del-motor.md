@@ -79,7 +79,11 @@ del pool. Con eso —y el schema, que se reconstruye del clóset— la llamada q
 reproducible exactamente. `lib/engine/prompt-congelado.ts` la ejecuta.
 
 **Congelar el día que la versión está viva es trivial; reconstruirla después es
-arqueología.** Hacerlo es parte de subir de versión, no un extra.
+arqueología.** Hacerlo es parte de subir de versión, no un extra — y desde
+v0.2.268.0 es además lo que alimenta al retador `prompt-anterior` del
+comparador, que corre la versión congelada dentro del pipeline completo de hoy
+(juez + reparación), a diferencia de `scripts/prompt-comparar.ts`, que corre
+solo el generador.
 
 Lo que el congelado NO reproduce, y hay que saberlo al leer un resultado:
 

@@ -160,15 +160,21 @@ uno o dos por día.
 4. **La regla pre-registrada, ANTES de generar.** Qué cuenta como ganar y qué se
    hace si pierde. Explicar la derrota después de verla es lo que el
    pre-registro mata.
-5. **Congelar el prompt vigente** si se va a subir de versión:
+5. **Congelar el prompt vigente ANTES de subir de versión — obligatorio:**
    `npx tsx scripts/prompt-congelar.ts roberto@kublau.com --nota "qué cambió"`.
+   Es lo que alimenta al retador `prompt-anterior` (paso 6): sin congelado de la
+   versión de ayer, ese lado falla claro y la ronda no se puede correr.
    Hacerlo el día que la versión está viva es trivial; reconstruirla después es
    arqueología.
-6. **Generar y juzgar:**
+6. **Generar y juzgar.** Para un cambio del motor el retador es
+   `prompt-anterior` (la versión de ayer con el juez y el reparador de hoy);
+   los demás retadores (apagar un flag, otro modelo) son para ablaciones:
    ```
-   npx tsx scripts/correr-vistazo.ts <retador> roberto@kublau.com
+   npx tsx scripts/correr-vistazo.ts prompt-anterior roberto@kublau.com
    npx tsx scripts/comparador-juzgar.ts <corridaId>
    ```
+   Ojo al leer: en este retador **"Producción" es lo nuevo** y "Prompt
+   anterior" es el control. Si el control gana, lo nuevo no sale.
 7. **Roberto vota** en `/admin/comparador/motor/<id>` (10 min). Sólo 👍/👎 por
    look. Calificar al juez es opcional y sólo cuando se esté calibrando al juez.
 8. **Decidir contra la regla pre-registrada.** Cruce en `/<id>/cruce`.
@@ -180,9 +186,8 @@ uno o dos por día.
 
 1. **Ningún cambio del motor sale sin una ronda "nuevo vs anterior" con
    aprobación de Roberto igual o mayor.** La que faltó esta semana.
-   *Bloqueador conocido: hoy no existe un retador "prompt anterior" en
-   `VARIANTES_MOTOR` — sólo se puede apagar un flag o cambiar de modelo.
-   Construirlo es prerrequisito de esta regla.*
+   El retador `prompt-anterior` existe desde v0.2.268.0; exige congelar antes
+   de subir de versión (paso 5 del proceso).
 2. **El termómetro de un arreglo no es el termómetro del motor.** "La regla
    dispara" no es "el motor mejoró".
 3. **Un vistazo de 6 pares tiene ±12 puntos de ruido** (medido: 76% y 88% con el
@@ -273,8 +278,10 @@ casa) y los grados en el brief.
 
 **La fila, en orden, uno a la vez y cada uno medido:**
 
-1. **Retador "prompt anterior"** en el comparador — es el freno de la regla #1.
-   No toca el motor.
+1. ✅ **Retador "prompt anterior"** — HECHO v0.2.268.0. Variante
+   `prompt-anterior`: corre la última versión congelada de este clóset dentro
+   del pipeline de hoy; se rehúsa si no hay congelado, si el pool cambió o si
+   el clóset cambió. v57 ya está congelado como primera línea base.
 2. ✅ **Guardar el nombre de las prendas en los looks del comparador** — HECHO
    v0.2.267.0: `LookMotor.prendas` se congela al generar (`conNombres`), el
    script que juzga lo usa de respaldo, y los 102 lados vivos se rellenaron. Los
