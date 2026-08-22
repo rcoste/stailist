@@ -183,7 +183,7 @@ function Lado({
           {/* Las prendas, EN GRANDE. Dos por fila dentro de la columna: con un
               solo look en pantalla caben al doble que antes. El traje va en UNA
               celda a todo lo ancho, con las dos piezas dentro y un pie común. */}
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-4">
             {/* El traje va PRIMERO. Ocupa las dos columnas, así que dejarlo en
                 su lugar de origen parte la fila anterior y deja un hueco a
                 media retícula; arriba, el hueco cae al final, que es como se ve
@@ -394,9 +394,26 @@ export function VotarClient({
   const [verNota, setVerNota] = useState(false);
   const arriba = useRef<HTMLDivElement>(null);
 
+  // DESKTOP ES OTRA PANTALLA, no la de celular estirada. Roberto vota en
+  // desktop ("para las evaluaciones lo hago en desktop") y ahí la queja era
+  // exacta: "pongo los thumbs y luego tengo que dar scroll para escoger A,
+  // empate o B". En un contenedor de 1024px caben los tres looks en filas, y
+  // en cada fila el voto va EN MEDIO de las dos tarjetas, a la altura de los
+  // pulgares — sin pestañas y sin scroll entre una decisión y la otra. En
+  // celular se queda el look-por-pestaña con la barra fija.
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const al = () => setDesktop(mq.matches);
+    al();
+    mq.addEventListener("change", al);
+    return () => mq.removeEventListener("change", al);
+  }, []);
+
   // Al cambiar de look, la pantalla vuelve arriba: las prendas del look nuevo
   // tienen que quedar a la vista sin que haya que subir a mano.
   useEffect(() => {
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
     arriba.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [look, idx]);
 
@@ -506,20 +523,42 @@ export function VotarClient({
   const listo =
     faltan.length === 0 && (modo === "marcar" || Object.keys(votos).length > 0);
 
-  // EL VOTO AVANZA SOLO. Votar el look 1 y tener que buscar la pestaña del 2
-  // era la mitad del trabajo de la pantalla: ahora al votar se pasa al
-  // siguiente look sin votar, y cuando ya no queda ninguno la barra de abajo
-  // ofrece guardar. Volver atrás sigue siendo una pestaña.
-  const votarLook = (op: "izq" | "der" | "empate") => {
-    setVotos((prev) => {
-      const next = { ...prev };
-      if (next[look] === op) delete next[look];
-      else next[look] = op;
-      return next;
-    });
-    const siguiente = comparables.find((i) => i > look && !votos[i]);
-    if (siguiente !== undefined) setLook(siguiente);
-  };
+  // EL VOTO AVANZA SOLO (en celular). Votar el look 1 y tener que buscar la
+  // pestaña del 2 era la mitad del trabajo: al votar se pasa al siguiente look
+  // sin voto; cuando no queda ninguno, la barra ofrece guardar.
+  /** Los botones de voto de UN look. En celular viven en la barra fija; en
+   *  desktop, en medio de la fila de ese look. El mismo control. (Función de
+   *  render, no componente: un componente creado dentro del render se
+   *  desmonta en cada pintado.) */
+  const botonesVoto = (i: number, vertical?: boolean) => (
+    <div className={vertical ? "flex flex-col gap-2" : "grid grid-cols-3 gap-2"}>
+      {(["izq", "empate", "der"] as const).map((op) => (
+        <button
+          key={op}
+          onClick={() => {
+            if (i !== look) setLook(i);
+            setVotos((prev) => {
+              const next = { ...prev };
+              if (next[i] === op) delete next[i];
+              else next[i] = op;
+              return next;
+            });
+            if (!desktop) {
+              const siguiente = comparables.find((j) => j > i && !votos[j]);
+              if (siguiente !== undefined) setLook(siguiente);
+            }
+          }}
+          className={`rounded-xl border py-3 text-sm font-semibold ${
+            votos[i] === op
+              ? "border-ink bg-ink text-bg"
+              : "border-line bg-surface text-ink active:bg-tile"
+          }`}
+        >
+          {op === "izq" ? "Gana A" : op === "der" ? "Gana B" : "Empate"}
+        </button>
+      ))}
+    </div>
+  );
   const votable = !!(par.izq[look] && par.der[look]);
 
   return (
@@ -570,7 +609,7 @@ export function VotarClient({
 
       {/* Pestañas por look: cada lado muestra UNO a la vez, y así las prendas
           caben grandes. El punto marca los que ya llevan 👍/👎. */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 lg:hidden">
         {Array.from({ length: nLooks }, (_, i) => (
           <button
             key={i}
@@ -596,6 +635,69 @@ export function VotarClient({
         ))}
       </div>
 
+      {desktop ? (
+        <div className="flex flex-col gap-6">
+          {Array.from({ length: nLooks }, (_, i) => (
+            <section
+              key={i}
+              className="grid grid-cols-[minmax(0,1fr)_10rem_minmax(0,1fr)] items-start gap-4 border-t border-line pt-4 first:border-t-0 first:pt-0"
+            >
+              <Lado
+                titulo={`Look ${i + 1} · A`}
+                look={par.izq[i]}
+                indice={i}
+                marca={marcIzq[i]}
+                setMarca={(m) => {
+                  const next = { ...marcIzq };
+                  if (m) next[i] = m;
+                  else delete next[i];
+                  setMarcIzq(next);
+                }}
+                defectos={defIzq[i] ?? []}
+                setDefectos={(d) => setDefIzq({ ...defIzq, [i]: d })}
+                comentario={comIzq[i]}
+                setComentario={(c) => setComIzq({ ...comIzq, [i]: c })}
+                tryon={tryon[par.claveIzq]?.[i]}
+                pedirTryon={() => verEnAvatar(i)}
+                rendereando={renderizando === i}
+              />
+              {/* El voto, en medio y a la altura de los pulgares: "pongo los
+                  thumbs y luego tengo que dar scroll para escoger" era esto. */}
+              <div className="sticky top-20 flex flex-col gap-2 pt-16">
+                <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Look {i + 1}
+                </p>
+                {par.izq[i] && par.der[i] ? (
+                  botonesVoto(i, true)
+                ) : (
+                  <p className="text-center text-[11px] leading-relaxed text-muted">
+                    no se vota: solo un lado lo armó
+                  </p>
+                )}
+              </div>
+              <Lado
+                titulo={`Look ${i + 1} · B`}
+                look={par.der[i]}
+                indice={i}
+                marca={marcDer[i]}
+                setMarca={(m) => {
+                  const next = { ...marcDer };
+                  if (m) next[i] = m;
+                  else delete next[i];
+                  setMarcDer(next);
+                }}
+                defectos={defDer[i] ?? []}
+                setDefectos={(d) => setDefDer({ ...defDer, [i]: d })}
+                comentario={comDer[i]}
+                setComentario={(c) => setComDer({ ...comDer, [i]: c })}
+                tryon={tryon[par.claveDer]?.[i]}
+                pedirTryon={() => verEnAvatar(i)}
+                rendereando={renderizando === i}
+              />
+            </section>
+          ))}
+        </div>
+      ) : (
       <div className="flex gap-3">
         <Lado
           titulo="Look A"
@@ -636,6 +738,7 @@ export function VotarClient({
           rendereando={renderizando === look}
         />
       </div>
+      )}
 
       {/* LA BARRA FIJA. El voto del look visible vivía al final de la página,
           después de dos columnas de prendas, explicación, tip y chips: un
@@ -700,6 +803,13 @@ export function VotarClient({
                   ? `Guardar el par ${yaHechos + idx + 1} → siguiente`
                   : "Guardar el último par"}
           </button>
+        ) : desktop ? (
+          <p className="py-2 text-center text-xs text-muted">
+            {faltan.length === 1
+              ? `Falta votar el look ${faltan[0] + 1}`
+              : `Faltan los looks ${listaEnEspanol(faltan.map((i) => i + 1))}`}
+            {modo === "marcar" ? " (👍/👎 de los dos lados y tu preferencia)" : ""}
+          </p>
         ) : !votable ? (
           <p className="py-2 text-center text-xs text-muted">
             Este look no se vota: solo un lado lo armó. Pasa al siguiente.
@@ -710,21 +820,7 @@ export function VotarClient({
               Look {look + 1} · ¿cuál te late más?
               {modo === "marcar" ? " (no cambia el voto del par)" : ""}
             </p>
-            <div className="grid grid-cols-3 gap-2">
-              {(["izq", "empate", "der"] as const).map((op) => (
-                <button
-                  key={op}
-                  onClick={() => votarLook(op)}
-                  className={`rounded-xl border py-3 text-sm font-semibold ${
-                    votos[look] === op
-                      ? "border-ink bg-ink text-bg"
-                      : "border-line bg-surface text-ink active:bg-tile"
-                  }`}
-                >
-                  {op === "izq" ? "Gana A" : op === "der" ? "Gana B" : "Empate"}
-                </button>
-              ))}
-            </div>
+            {botonesVoto(look)}
             {faltan.length ? (
               <p className="text-center text-[11px] text-muted">
                 {faltan.length === 1

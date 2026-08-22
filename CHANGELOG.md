@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.269.2] - 2026-08-22
+
+### Changed — votar en desktop: los tres looks en filas, el voto en medio
+
+Roberto: "donde yo normalmente lleno esto es en desktop… pongo los thumbs y
+luego tengo que dar scroll para escoger A, empate o B. Está de hueva". En
+desktop la pantalla era la de celular estirada: dos columnas con fotos de
+póster, pestañas por look y el voto lejos de los pulgares.
+
+A partir de 1024px la pantalla es otra: **una fila por look**, con la tarjeta
+A a la izquierda, la B a la derecha y los botones Gana A / Empate / Gana B en
+medio, **a la altura de los pulgares** — sin pestañas y sin scroll entre una
+decisión y la otra. Las fotos pasan a cuatro por fila (tamaño de ficha). La
+barra fija de abajo sólo dice qué falta y guarda. En celular no cambia nada:
+look por pestaña, auto-avance y barra fija.
+
 ## [0.2.269.1] - 2026-08-22
 
 ### Changed — votar y cruzar, con menos trabajo por look
