@@ -1,5 +1,10 @@
 # Cómo decidir si un cambio del motor mejora
 
+> **Documento canónico del loop completo: `docs/improvement-loop-del-motor.md`**
+> (qué evaluamos, el universo de votos, las reglas duras y la bitácora).
+> Este archivo es la parte técnica: por qué el instrumento es pareado y cómo se
+> arma una variante. Sigue vigente.
+
 Escrito el 2026-08-07, después de shippear ocho versiones del motor en un día
 sin poder demostrar que ninguna mejorara. Esto es lo que se aprendió y lo que
 hay que hacer en su lugar.

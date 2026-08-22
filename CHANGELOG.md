@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.266.1] - 2026-08-22
+
+### Added — el improvement loop del motor, escrito
+
+`docs/improvement-loop-del-motor.md`: qué evaluamos, con qué, y qué tiene que
+pasar para que un cambio del motor salga. Pedido de Roberto tras la regresión
+de v56: "que tengamos esto como un proceso bien documentado… que no sea 'si
+probamos algo, ya no entiendo cómo nos va a funcionar'".
+
+Lo que el documento fija y antes sólo existía en la cabeza de quien corría la
+ronda:
+
+- **El universo de evaluación, con números**: 520 looks marcados por Roberto
+  (430 👍 / 90 👎) en 9 rondas, 105 pares votados, 138 comentarios, 43
+  calificaciones al juez. Y lo que NO hay: 0 votos suyos en producción, 22 en
+  toda la app. Con las trampas de leerlo — el universo es 83% positivo, así que
+  la cifra que importa es el recall sobre los 90 👎, nunca el acierto global.
+- **Las cuatro varas y quién sostiene cada una** (reglas de código / eval /
+  juez / voto de Roberto), y por qué hoy sólo la última decide: el juez lleva
+  0 rechazos en 64 looks y no vio la regresión. Corregido de paso el "47% de
+  acierto": "exageró" no es "erróneo" — 30 de sus 43 calificaciones fueron
+  acuerdo.
+- **Las 8 reglas duras**, incluida la que faltó (nada sale sin ronda
+  nuevo-vs-anterior con aprobación ≥) y su bloqueador: no existe un retador
+  "prompt anterior" en `VARIANTES_MOTOR`.
+- **La bitácora de rondas** con la aprobación de cada una, que es donde se ve
+  una regresión de un vistazo.
+- **El plan del loop automático** en 3 etapas, con la vara para soltar al juez.
+
+`docs/como-decidir-un-cambio-del-motor.md` (la parte técnica del instrumento
+pareado) sigue vigente y ahora apunta al canónico. CLAUDE.md manda a leerlo
+antes de tocar el motor.
+
 ## [0.2.266.0] - 2026-08-19
 
 ### Changed — reversión: el generador vuelve al prompt de v53 (v57)
