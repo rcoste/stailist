@@ -30,8 +30,9 @@ export function CarteraClient({
 }: {
   subLabel: string;
   reveal: string;
-  metal: "oro" | "plata";
-  metalHex: string;
+  metal: "oro" | "plata" | "ambos";
+  /** Uno o dos puntos: la persona de frontera lleva los dos metales. */
+  metalHex: string[];
   familias: SubPalette["familias"];
   guinos: Swatch[];
   guinoLabel: string;
@@ -76,8 +77,10 @@ export function CarteraClient({
         </h1>
         <p className="editorial text-[15px] leading-relaxed text-muted">{reveal}</p>
         <span className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-sm border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink">
-          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: metalHex }} aria-hidden />
-          tu metal: {metal}
+          {metalHex.map((h) => (
+            <span key={h} className="h-3 w-3 rounded-full" style={{ backgroundColor: h }} aria-hidden />
+          ))}
+          {metal === "ambos" ? "tus metales: oro y plata" : `tu metal: ${metal}`}
         </span>
       </div>
 

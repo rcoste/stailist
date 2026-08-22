@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.270.2] - 2026-08-22
+
+### Fixed — la cartera de colores decía otra cosa que el perfil, y ensuciaba los blancos
+
+Roberto, con las dos pantallas en la mano: "está raro que en una parte tengo
+los dos metales y en otra solo uno". Dos defectos:
+
+- **Dos sistemas para la misma persona.** El perfil nombraba por inclinación
+  ("Invierno profundo · oro y plata", `metalForSeason`); la cartera por
+  profundidad ("Invierno oscuro · tu metal: oro", `seasonMetal`, que daba oro
+  si cualquiera de los dos lados era cálido). Ahora la cartera usa el mismo
+  nombre y el mismo metal que el perfil; la profundidad sigue mandando sólo en
+  qué tan hondos son los colores de la paleta. La persona de frontera ve sus
+  dos metales, con los dos puntos.
+- **El "oscuro" oscurecía todo.** El shift de profundidad se aplicaba también a
+  blancos y grises —el "Blanco puro" #FAFAF7 salía #E2E2CC, un verdoso sucio—
+  y hundía en negro lo que ya era profundo ("Pino" #030907, "Berenjena"
+  #110812). Un invierno profundo no tiene blancos sucios: tiene contraste. Los
+  neutros ya no se mueven y la luminosidad tiene piso. Con test.
+
 ## [0.2.270.1] - 2026-08-22
 
 ### Changed — pool v9: los planes de los eventos dicen lo que diría una persona

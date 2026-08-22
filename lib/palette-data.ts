@@ -100,12 +100,24 @@ const clamp = (v: number) => Math.max(0, Math.min(100, v));
 // Shift de profundidad: medium = master tal cual; light = más claro y un pelo
 // menos saturado; dark = más profundo y un pelo más saturado. Modesto a propósito
 // (la sub-estación es sutil; no queremos que "invierno claro" se vuelva pastel).
+//
+// LOS NEUTROS NO SE MUEVEN, y los cromáticos no se hunden hasta el negro.
+// Roberto (2026-08-22), viendo su cartera de "Invierno oscuro": el "Blanco
+// puro" salía #E2E2CC —un verdoso sucio— y "Pino" y "Berenjena" quedaban en
+// #030907 y #110812, negros con nombre de color. Un invierno profundo no tiene
+// blancos sucios: tiene CONTRASTE, y el blanco puro es justo lo suyo. Por eso
+// el shift se salta blancos/cremas/grises (ver subPalette) y, en oscuro, la
+// luminosidad tiene piso: un color que ya era profundo se queda como está.
 function depthShift(hex: string, depth: Depth): string {
   if (depth === "medium") return hex;
   const [h, s, l] = hexToHsl(hex);
-  if (depth === "light") return hslToHex(h, clamp(s - 7), clamp(l + 11));
+  if (depth === "light") return hslToHex(h, clamp(s - 7), Math.min(88, clamp(l + 11)));
+  if (l - 13 < 14) return hex; // ya es profundo: oscurecerlo lo vuelve negro
   return hslToHex(h, clamp(s + 5), clamp(l - 13)); // dark
 }
+
+/** Familias que no cambian con la profundidad: un blanco es blanco. */
+const NEUTRAS: ReadonlySet<HueFamily> = new Set(["blancos", "cremas", "grises"]);
 
 // ───────────── MASTERS por estación (medium) ─────────────
 const LIBRARY: Record<Season, SeasonLib> = {
@@ -318,7 +330,7 @@ export function subPalette(season: Season, depth: Depth): SubPalette {
   const familias: Hues = {};
   for (const fam of FAMILY_ORDER) {
     const items = lib.hues[fam];
-    if (items && items.length) familias[fam] = shiftAll(items, depth);
+    if (items && items.length) familias[fam] = NEUTRAS.has(fam) ? [...items] : shiftAll(items, depth);
   }
   return {
     reveal: lib.reveal,

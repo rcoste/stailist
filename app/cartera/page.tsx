@@ -5,7 +5,8 @@ import { requireOnboarded } from "@/lib/auth";
 import {
   carteraDepth,
   subSeasonLabel,
-  seasonMetal,
+  seasonDisplayLabel,
+  metalForSeason,
   normSeason,
   METAL_HEX,
 } from "@/lib/colorimetria";
@@ -54,8 +55,16 @@ export default async function CarteraPage() {
   }
 
   const depth = carteraDepth(profile.palette_quiz, season, profile.palette_flow);
-  const subLabel = subSeasonLabel(season, depth);
-  const metal = seasonMetal(season, profile.palette_flow);
+  // EL MISMO NOMBRE Y EL MISMO METAL QUE EL PERFIL. Aquí decía "Invierno
+  // oscuro · tu metal: oro" mientras el perfil decía "Invierno profundo · oro y
+  // plata" — dos sistemas (profundidad / inclinación) para la misma persona, y
+  // Roberto lo vio: "está raro que en una parte tengo los dos metales y en otro
+  // solo uno". La profundidad sigue mandando en la PALETA (qué tan hondos los
+  // colores); el nombre y el metal salen de la inclinación, como en todos lados.
+  const subLabel = profile.palette_flow
+    ? seasonDisplayLabel(season, profile.palette_flow)
+    : subSeasonLabel(season, depth);
+  const metal = metalForSeason(season, profile.palette_flow);
   const palette = carteraPalette(season, depth, profile.palette_flow);
 
   // Palabra del guiño para la fila ("tus guiños de otoño").
@@ -73,7 +82,7 @@ export default async function CarteraPage() {
         subLabel={subLabel}
         reveal={palette.reveal}
         metal={metal}
-        metalHex={METAL_HEX[metal]}
+        metalHex={metal === "ambos" ? [METAL_HEX.oro, METAL_HEX.plata] : [METAL_HEX[metal]]}
         familias={palette.familias}
         guinos={palette.guinos}
         guinoLabel={guinoLabel}
