@@ -373,6 +373,59 @@ entre sí — la bitácora arranca línea base nueva; (2) hay que **re-congelar 
 bajo pool v9** (`scripts/prompt-congelar.ts`) antes de la siguiente ronda con
 `prompt-anterior`, porque el congelado de v8 ya no casa.
 
-**Conversaciones abiertas** (no son tareas): el rol del juez de producción
-(¿recompone o sólo detecta? mete 5 violaciones por 3 que arregla), versionar el
-prompt del juez (hoy no se versiona), y el contexto por persona.
+## 9. Conversación B — el rol del juez de producción (medido 2026-08-22)
+
+**La pregunta de Roberto:** "se está volviendo el stylist cuando debería
+corregir". ¿El juez de producción repara lo detectado, o recompone el look?
+
+**Lo medido** (2 rondas sobre el clóset/pool actual, 59 looks):
+
+| | |
+|---|---|
+| looks reescritos por el juez | **44 de 59 (75%)** — 2.3 prendas movidas por reescritura |
+| reescritos que tenían una violación de regla de código antes | 33 (75% de las reescrituras) |
+| reescritos **sin** ninguna violación previa — criterio propio | **11 (25%)** |
+| violaciones de código antes → después | 55 → 15: **arregló 43, metió 3** |
+| de qué habla al reescribir | frío/capas 9 · cueros 9 · formalidad 7 · lluvia 5 · mezclilla 5 · corbata 4 |
+
+Dos correcciones al diagnóstico anterior: (1) el "mete 5 por cada 3 que
+arregla" del 19 de agosto **ya no es cierto** — hoy arregla 43 y mete 3; (2)
+el juez NO está recomponiendo a su gusto en la mayoría de los casos: 3 de cada
+4 reescrituras responden a una violación que el código ya había detectado.
+
+**El hallazgo de arquitectura que lo explica.** El orden del pipeline es
+generador → **juez LLM** (recibe el bloque de violaciones y tiene libertad
+sobre las cinco prendas) → reparador en código (sólo lo que el juez dejó) →
+segundo intento LLM. O sea: el juez hace a mano, con 2.3 prendas movidas y una
+llamada de ~$0.02, lo que el reparador en código haría tocando UNA prenda y
+gratis. La lógica "primero el código" está escrita en `critic.ts`, pero se
+aplica DESPUÉS de que el juez ya reescribió.
+
+**Lo que sí es criterio propio (el 25%)**, leído uno por uno: casi todo es
+*registro* — "pantalón de vestir con pinzas es demasiado sastre para un polo
+casual", "tortuga bajo saco cruzado es choque de formalidades". Son llamadas
+de stylist plausibles, no errores; pero son exactamente el territorio del
+**dial por plan** (sección 3 capas), y hoy las decide el juez con su propio
+gusto, sin leer el de la persona. Y al menos una vez la razón que da no
+coincide con lo que hizo ("cambié por un chino en carbón" → metió el pantalón
+técnico).
+
+**Propuesta, medible, sin tocar el prompt del generador** — dos variantes del
+comparador, UNA cosa cada una, con el voto de Roberto como árbitro:
+
+1. `reparar-primero`: correr `repararEnCodigo` ANTES del juez y darle al juez
+   el look ya reparado + sólo lo que el código no pudo. Hipótesis: las
+   reescrituras bajan de 75% a ~30% sin perder aprobación, y el juez queda
+   para lo que es criterio. Es un cambio de ORDEN, no de lógica.
+2. `juez-solo-repara`: además, el juez sólo puede tocar las prendas que el
+   bloque de violaciones nombra; sin violación pendiente, devuelve "ok" sin
+   cambios. Mide si el 25% de criterio propio suma o resta — con el voto, no
+   con opinión.
+
+Si 1 gana o empata → entra. Si 2 gana → el juez deja de ser stylist y las
+decisiones de registro pasan al dial por persona, que es donde Roberto las
+quiere. Si 2 pierde → el criterio propio del juez vale, y lo que hay que
+hacer es darle el dial de la persona en vez de quitárselo.
+
+**Conversaciones abiertas** (no son tareas): versionar el prompt del juez
+(hoy no se versiona), y el contexto por persona (sección 9 y las tres capas).
