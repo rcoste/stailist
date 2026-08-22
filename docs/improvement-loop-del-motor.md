@@ -58,6 +58,32 @@ votadas por Roberto**. Números reales al 2026-08-19:
 Más: **105 pares votados** (qué lado ganó), **849 looks** guardados con sus
 **252 críticas del juez**.
 
+### ⚠️ De esos 520 votos, sólo 95 son utilizables
+
+**El clóset de Roberto se recreó el 2026-08-18** (sus 65 prendas tienen esa
+fecha de alta; ver `corpus-de-prendas-y-cuentas`). Los looks del comparador
+guardan **sólo `item_ids`**, no los nombres de las prendas — así que los 393
+votos de las rondas del 6 al 14 de agosto apuntan a prendas que ya no existen:
+**0 de sus ids resuelven**. El voto sobrevivió; el look que lo motivó, no.
+
+| | votos | ¿se puede reconstruir el look? |
+|---|---|---|
+| rondas 08-06 a 08-14 (v38–v52) | 393 | ❌ ninguna prenda viva |
+| rondas 08-18 y 08-19 (v53, v55, v56) | **95** | ✅ todas |
+
+Consecuencias, y las tres importan:
+
+1. **La base real para calibrar al juez son 95 looks (27 👎), no 520.** Cualquier
+   porcentaje sobre esa base se mueve varios puntos con un solo caso.
+2. **Deuda a pagar antes de la próxima ronda:** que `comparador_motor_lados.looks`
+   guarde el **nombre** de cada prenda junto al id. Es aditivo y barato, y hace
+   que el histórico sobreviva al siguiente reseteo de clóset. Sin eso, cada
+   limpieza de cuentas borra la base de evaluación en silencio.
+3. **Los 138 comentarios de Roberto NO se perdieron** — son texto, no ids. Siguen
+   sirviendo como corpus de sus criterios ("no van los mocasines negros con
+   chinos beige"), que es de donde salen las reglas. Lo que se perdió es la
+   capacidad de reproducir el look.
+
 ### Cómo leer esa tabla sin engañarse
 
 - **Los vistazos son comparables entre sí**: siempre los mismos 6 briefs (cita,
@@ -79,6 +105,8 @@ Más: **105 pares votados** (qué lado ganó), **849 looks** guardados con sus
 - **Entre TODAS las usuarias hay 22 votos** en la app real (16 👍 / 6 👎) y
   11 "me lo puse". La señal de producto es casi inexistente — ver
   `experimento-quien-usa-de-verdad`.
+- **De los 520 votos, 393 quedaron huérfanos** al recrearse el clóset (ver el
+  recuadro arriba). Utilizables: 95.
 - **Es un solo clóset y una sola persona.** Un juez calibrado aquí replica a
   Roberto (hombre, su colorimetría, sus 65 prendas). Para Tatiana o Andy no
   está probado, y hoy no hay con qué probarlo (3 y 4 votos).
@@ -181,7 +209,7 @@ uno o dos por día.
 La meta de Roberto: A vs B corriendo solo, el juez decidiendo, retadores que se
 suceden. Tres etapas, y la primera es la que habilita todo:
 
-**Etapa 1 — calibrar el juez contra los 520 votos.** El juez lee un look y
+**Etapa 1 — calibrar el juez contra los votos utilizables (95, no 520).** El juez lee un look y
 predice 👍/👎; se mide contra el voto real de Roberto en looks que no vio al
 afinarlo. Vara para soltarlo: **≥85% de acuerdo, y recall alto sobre los 90 👎**
 (la primera ronda calificada dio 88%, así que es alcanzable). Sin tocar el motor.
@@ -196,6 +224,28 @@ gana se vuelve el actual y aparece un retador nuevo. Sólo cuando la etapa 2
 acumule varias vueltas sin que la auditoría la desmienta.
 
 ---
+
+## 6-bis. El examen del juez (2026-08-22, sobre los 95 utilizables)
+
+Para cada look se cruzó el voto de Roberto con la crítica que el juez stylist
+ya tenía guardada. Base: 27 👎 y 68 👍. *(Un juez que dijera "todo bien" siempre
+acertaría 72% — por eso la cifra que importa es la primera columna.)*
+
+| umbral del juez | caza de los 27 👎 | falsa alarma sobre los 68 👍 |
+|---|---|---|
+| sólo "rompe" | 6 (22%) | 5 (7%) |
+| "rompe" o "resta" | 19 (70%) | 38 (56%) |
+| cualquier hallazgo | 23 (85%) | 47 (69%) |
+
+**Diagnóstico: el juez ve, pero no pesa.** Ejemplos textuales: "camisa negra
+para una boda es como de cholo… fatal, fatal, fatal" → el juez lo puso
+`color/resta`. "Camisa de mezclilla con blazer, hazme el puto favor" →
+`plano/resta`. Dos 👎 pasaron sin **ningún** hallazgo: el lino en la oficina y
+la camisa de vestir bajo la overshirt.
+
+Recalibrar un umbral es mucho más barato que enseñar a ver — pero la validación
+tiene que ser sobre rondas NUEVAS, porque estos 95 looks son también los que se
+usarían para afinar.
 
 ## 7. Bitácora de rondas
 
@@ -225,17 +275,26 @@ casa) y los grados en el brief.
 
 1. **Retador "prompt anterior"** en el comparador — es el freno de la regla #1.
    No toca el motor.
-2. **Calibrar el juez** contra los 520 votos (etapa 1). No toca el motor.
-3. **Abrigo de verdad para el frío.** Validado por sus votos: los 3 looks con el
+2. **Guardar el nombre de las prendas en los looks del comparador.** Deuda
+   descubierta el 08-22: sin esto, el próximo reseteo de clóset vuelve a borrar
+   la base de evaluación. Va antes de la próxima ronda.
+3. **Calibrar la GRAVEDAD del juez** (etapa 1). El examen del 08-22 sobre los 95
+   looks utilizables ya dio su diagnóstico: el juez **ve pero no pesa**.
+   Con "cualquier hallazgo" caza 23 de 27 👎 (85%), pero con su "rompe" sólo 6
+   (22%) — y "rompe o resta" marcaría el 56% de los looks que a Roberto le
+   gustaron. Lo que falla es el umbral, no la vista. Además gasta su severidad
+   en `plano` (21 hallazgos, el defecto más frecuente y el que a propósito NO
+   es defecto).
+4. **Abrigo de verdad para el frío.** Validado por sus votos: los 3 looks con el
    abrigo de lana → 👍👍👍; los de chaqueta ligera a 8° → "ninguno está bien
    para ese frío". Las prendas ya traen `temporada`.
-4. **Lino en oficina con UNA sola pieza.** Dicho 4 veces el 08-19.
+5. **Lino en oficina con UNA sola pieza.** Dicho 4 veces el 08-19.
    `full-lino-en-oficina` está acotada a lino arriba **y** abajo y ese recorte
    quedó refutado.
-5. **Manga corta bajo chamarra** (2 👎).
-6. **Calzado que choca con la base** (tenis rojos con traje, bota café con
+6. **Manga corta bajo chamarra** (2 👎).
+7. **Calzado que choca con la base** (tenis rojos con traje, bota café con
    pantalón negro, derby chocolate en total black).
-7. **Quitar la coherencia cromática** — 4 rondas sin ganarse el lugar. Baja
+8. **Quitar la coherencia cromática** — 4 rondas sin ganarse el lugar. Baja
    prioridad: quita ruido, no sube calidad.
 
 **Conversaciones abiertas** (no son tareas): el rol del juez de producción

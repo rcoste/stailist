@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.266.2] - 2026-08-22
+
+### Fixed — el doc del loop decía 520 votos; utilizables son 95
+
+Al ir a correr el examen del juez sobre el histórico salió que **el clóset de
+Roberto se recreó el 2026-08-18** (sus 65 prendas tienen esa fecha de alta) y
+que los looks del comparador guardan **sólo `item_ids`, no nombres**. Resultado:
+los 393 votos de las rondas del 6 al 14 de agosto apuntan a prendas que ya no
+existen — 0 de sus ids resuelven. El voto sobrevivió; el look que lo motivó, no.
+Se evitó gastar $4.88 juzgando looks que habrían llegado al juez como "Prenda,
+Prenda, Prenda".
+
+Corregido en `docs/improvement-loop-del-motor.md` antes de que el documento se
+volviera la próxima fuente de verdad equivocada. Añadido también el resultado
+del examen sobre los 95 looks que sí se reconstruyen (sección 6-bis): el juez
+**ve pero no pesa** — caza 85% de los 👎 con "cualquier hallazgo", pero sólo 22%
+con su "rompe".
+
+**Deuda que sale de aquí, antes de la próxima ronda:** que los looks del
+comparador guarden el nombre de cada prenda junto al id. Es aditivo y barato, y
+sin eso la próxima limpieza de cuentas vuelve a borrar la base de evaluación en
+silencio. Los 138 comentarios de Roberto sí sobrevivieron (son texto).
+
 ## [0.2.266.1] - 2026-08-22
 
 ### Added — el improvement loop del motor, escrito
