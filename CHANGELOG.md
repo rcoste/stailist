@@ -2,6 +2,35 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.270.3] - 2026-08-22
+
+### Added — los polos básicos que faltaban en la biblioteca (migración 0144)
+
+Seis polos de hombre, con su render del pipeline de la casa. Cuatro de manga
+corta —**negro**, azul claro, verde botella y arena— y dos de **manga larga**,
+marino y negro, que Roberto pidió por nombre.
+
+Qué decidió la lista, y es un dato incómodo del catálogo: había ocho polos y
+**no había negro**, que es de los tres colores con los que un guardarropa
+empieza. Y de esos ocho, **cinco no los ha marcado nadie** en toda la base
+(gris, rojo, coral, salvia, amarillo); los que sí se usan son marino, blanco y
+oliva. Al catálogo no le faltaban colores: le faltaban básicos. Por eso entran
+los cuatro que un clóset real tiene y no estaban, y no se amplía la gama
+exótica que ya demostró no usarse.
+
+La manga larga va como prenda APARTE, no como variante: es otra temporada
+(`templado` contra `calor`) y otro registro, y el motor tiene que poder elegir
+una y no la otra.
+
+Los dos claros (azul claro y arena) se generaron con el tipo `flat-sombra` —el
+prompt validado con sombra de contacto— para que no se laven contra el fondo
+papel en el tile. El optimizador se corrió y se revirtieron las 101 imágenes
+ajenas que tocó de paso: sólo entran las 6 nuevas.
+
+Pendiente anotado, sin tocar: **el catálogo no tiene NI UN polo de mujer** (247
+arquetipos de mujer, cero polos), y el polo femenino es otro corte, no el mismo
+con otra etiqueta. Es el mismo sesgo del audit de género de julio.
+
 ## [0.2.270.2] - 2026-08-22
 
 ### Fixed — la cartera de colores decía otra cosa que el perfil, y ensuciaba los blancos

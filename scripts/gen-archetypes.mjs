@@ -364,6 +364,25 @@ const ITEMS = [
   { slug: "pantalon-traje-sastre-negro-m", desc: "a pair of black WOMEN'S tailored suit trousers, distinctly feminine tailoring: high waist, fitted through the hip, fluid straight wide leg falling to a cropped ankle length. Unmistakably women's tailoring, NOT men's dress trousers. Neatly laid flat lengthwise", type: "flat" },
   { slug: "saco-traje-sastre-marino-m", desc: "a navy blue WOMEN'S tailored suit blazer, distinctly feminine tailoring: slim narrow notch lapels, a clearly nipped-in waist shaped by bust and waist darts, narrow softly rounded shoulders, single-button closure, short hip-length hem. It is unmistakably a woman's blazer, NOT a men's suit jacket and not oversized or boxy. Neatly laid flat", type: "flat" },
   { slug: "pantalon-traje-sastre-marino-m", desc: "a pair of navy blue WOMEN'S tailored suit trousers, distinctly feminine tailoring: high waist, fitted through the hip, fluid straight wide leg falling to a cropped ankle length. Unmistakably women's tailoring, NOT men's dress trousers. Neatly laid flat lengthwise", type: "flat" },
+  // === POLOS: LOS BÁSICOS QUE FALTABAN (2026-08-22) ===
+  // El catálogo tenía OCHO polos de hombre —marino, blanco, gris, rojo, oliva,
+  // coral, salvia, amarillo— y NO tenía negro. Cinco de esos ocho no los ha
+  // marcado nadie (0 prendas en toda la base); marino, blanco y oliva sí. La
+  // lectura es que al catálogo no le faltaban colores, le faltaban BÁSICOS: se
+  // añaden los cuatro que un guardarropa real tiene y no estaban, y no se
+  // amplía la gama exótica que ya demostró no usarse.
+  //
+  // Los claros van en `flat-sombra` (el prompt validado con sombra de
+  // contacto): un polo blanco o arena sobre fondo papel se lava en el tile.
+  { slug: "polo-negro-hombre", desc: "a plain black short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-azul-claro-hombre", desc: "a light sky blue short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  { slug: "polo-verde-botella-hombre", desc: "a deep bottle green short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-arena-hombre", desc: "a warm sand beige short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  // MANGA LARGA. Roberto: "el azul marino y negro también tienen una versión de
+  // manga larga". Es otra prenda, no una variante: el polo de manga larga es de
+  // otra temporada y otro registro, y el motor lo elige distinto.
+  { slug: "polo-manga-larga-marino-hombre", desc: "a navy blue LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-manga-larga-negro-hombre", desc: "a black LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {
