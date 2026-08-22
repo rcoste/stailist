@@ -58,6 +58,34 @@ votadas por Roberto**. Números reales al 2026-08-19:
 Más: **105 pares votados** (qué lado ganó), **849 looks** guardados con sus
 **252 críticas del juez**.
 
+### El clóset de referencia (v1, 2026-08-22)
+
+**Todas las corridas se generan sobre el clóset vivo de `roberto@kublau.com`.**
+Roberto lo curó el 22 de agosto y decidió que ese sea la base de las pruebas:
+
+| categoría | prendas | con foto suya |
+|---|---|---|
+| top | 48 | 12 |
+| bottom | 27 | 1 |
+| accesorio | 18 | 4 |
+| calzado | 17 | 0 |
+| abrigo | 12 | 3 |
+| saco | 7 | 1 |
+| **total** | **129** | **21** |
+
+Perfil que lee el motor: hombre, 35-44, 183 cm, complexión promedio, corte
+recto, **Invierno profundo** (base invierno con inclinación a otoño; prestados
+vino y chocolate; evita camel, mostaza, beige amarillento), arquetipo "Pulido
+con filo", dress code de trabajo *variable*, sin vetos declarados.
+
+**LA REGLA QUE SALE DE AQUÍ: cambiar el clóset es abrir línea base nueva.** Ya
+pasó dos veces — el reseteo del 18 de agosto dejó 393 votos huérfanos, y el
+curado del 22 dejó al congelado de v57 sin 5 de sus prendas, o sea el retador
+`prompt-anterior` rehusándose a correr. Cada vez que el clóset cambie hay que
+**re-congelar** (`scripts/prompt-congelar.ts`) y anotar el corte en la bitácora;
+las aprobaciones de antes y después no se comparan. Mientras se mida, conviene
+dejarlo quieto.
+
 ### ⚠️ De esos 520 votos, sólo 95 son utilizables
 
 **El clóset de Roberto se recreó el 2026-08-18** (sus 65 prendas tienen esa
@@ -287,6 +315,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-19 | 8559ec99 | v56 | sin-coherencia-cromatica | **52%** | **regresión**: revertido a v53 (prompt v57). La regla de color pierde 3-1 (4ª ronda sin ganar) |
 | 08-22 | 2bba08e0 | v58 | prompt-anterior (v57) | **100%** vs 82% | pre-registrado "≥": **v58 sale** (pares 3-1, 2 empates). Ruido ±12: dice "no empeoró". js6 fuera de muestra: sólo 2 👎 en la ronda, rompe 0/2, falsa alarma 1/17 — muestra chica, se sigue midiendo |
 | — | — | — | — | — | **POOL v9 desde aquí: los planes dicen lo que diría una persona. Las aprobaciones de arriba (v8) y las de abajo (v9) NO se comparan.** |
+| — | — | — | — | — | **CLÓSET DE REFERENCIA v1 desde aquí (129 prendas, 2026-08-22). v58 re-congelado sobre él. Corte de línea base otra vez.** |
 
 ---
 

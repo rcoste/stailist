@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.270.5] - 2026-08-22
+
+### Fixed — el clóset de referencia v1, y el retador que se había quedado sin poder correr
+
+Roberto curó su clóset (de 60 a **129 prendas**, 21 con foto propia) y pidió
+que ése sea la base de las pruebas. Al verificarlo salió un fallo silencioso:
+**borró 5 prendas que el congelado de v57 todavía pedía**, así que el retador
+`prompt-anterior` se estaba rehusando a correr — la siguiente ronda habría
+fallado sin explicación obvia. Se re-congeló v58 sobre el clóset nuevo (149
+prendas ofrecidas, 0 muertas, verificado).
+
+`docs/improvement-loop-del-motor.md` documenta el clóset de referencia v1 con
+su composición y el perfil que lee el motor, y fija la regla que faltaba:
+**cambiar el clóset es abrir línea base nueva** — re-congelar y anotar el corte;
+las aprobaciones de antes y después no se comparan. Ya había pasado dos veces
+sin que nadie lo anotara (el reseteo del 18 dejó 393 votos huérfanos).
+
 ## [0.2.270.4] - 2026-08-22
 
 ### Added — la rueda completa de polos (migración 0145): 27 en total
