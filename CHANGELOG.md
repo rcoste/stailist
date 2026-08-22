@@ -2,6 +2,54 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.270.0] - 2026-08-22
+
+### Changed — v58: dos reglas nuevas y un reparador, nacidos de la ablación contra los votos
+
+Primera versión del motor que sale por el proceso completo de
+`docs/improvement-loop-del-motor.md`: ablación contra los looks votados →
+ronda contra `prompt-anterior` (v57 congelado) → voto de Roberto → main sólo
+si no empeora. **Resultado de la ronda 2bba08e0: v58 100% de aprobación
+(8 👍 / 0 👎) contra 82% de v57 (9 / 2); pares 3-1, 2 empates.** Pasa la regla
+pre-registrada (≥) y sale. Con la honestidad de siempre: 6 pares tienen ±12
+puntos de ruido — esto dice "no empeoró", no "mejoró 18 puntos".
+
+`scripts/ablacion-votos.ts` (nuevo, permanente): corre las reglas de código y
+el reparador —por el mismo camino que producción— sobre los 95 looks que
+Roberto votó. Lo que dijo:
+
+- **24 de sus 27 👎 no disparaban ninguna regla.** Y la que iba a entrar
+  ("abrigo de verdad para el frío") no estaba validada: chaqueta ligera a 8°
+  tiene 1 👎 y 1 👍. Se descartó antes de escribirla.
+- El único 👎 de frío con regla (`blazer-no-es-abrigo`) llegó entregado roto:
+  la regla detectaba y **el reparador no tenía arreglo**.
+
+Lo que entró, cada uno con su medición:
+
+- **`negro-con-beige`**: zapato o cinturón negro con chinos beige/caqui/camel.
+  3 👎 / 0 👍 ("los zapatos negros con chinos beige… estoy casi seguro de que
+  no va" — y el consenso de sastrería le da la razón). Reparación: el calzado
+  pasa a café/burdeos/marrón de formalidad parecida y el cinturón lo sigue
+  (o sale), en un solo paso.
+- **`mezclilla-con-saco`**: camisa de mezclilla con saco, blazer o traje.
+  3 👎 / 0 👍 ("es como camisa de mezclilla con blazer, hazme el favor").
+  Bajo suéter o chaqueta sigue siendo correcta. Reparación: camisa lisa de
+  manga larga, probando candidatas hasta que una deje el look limpio.
+- **Reparador de `blazer-no-es-abrigo`**: abrigo encima (el de lana primero)
+  o punto debajo — las dos salidas que Roberto nombró — recorriendo candidatos.
+
+Resultado sobre los datos reales: los 7 👎 que disparan regla se reparan
+**7/7** (antes 1/7). El texto del generador no cambia (sigue siendo el de
+v53); la versión sube porque el bloque de reglas que lee el juez cambió.
+
+También: js6 corrige a js5 — cinturón negro con mocasín burdeos NO es ruido
+(Roberto lo confirmó cinco veces), es "detalle"; REGLAS_DE_LA_CASA dice lo
+mismo y lleva las dos reglas nuevas. `contextoDeReglas` se exporta para que
+los scripts corran el mismo contexto que producción.
+
+Descubierto de paso y anotado, sin tocar: `colores-que-no-se-leen` (2 👎 /
+4 👍, sin reparador) **vetaba** arreglos buenos — rechazaba la camisa blanca y
+el abrigo marino. Es la primera candidata a salir.
 ## [0.2.269.3] - 2026-08-22
 
 ### Added — atajos de comentario al votar

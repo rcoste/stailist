@@ -146,7 +146,17 @@ optimizar contra una moneda al aire.
 ## 4. El proceso, paso a paso
 
 **Una cosa por vuelta.** Nueve cambios en 48h fue el error; el ritmo sano es
-uno o dos por día.
+uno o dos por día. *Matiz (2026-08-22): un cambio de PROMPT por vuelta, sin
+excepción. Varias reglas de CÓDIGO pueden ir juntas en una versión si cada una
+ya pasó sola su ablación (dispara en 👎, cero en 👍) — la ablación es la medición
+individual; la ronda mide que el conjunto no empeore.*
+
+**Cómo leer la ablación, aprendido a golpes:** que una regla dispare en looks
+👍 sólo es ruido si la regla es de nivel "rompe". `cueros-que-no-se-hablan`
+dispara en 7 👍 y 0 👎 — y aun así es correcta: Roberto confirmó cinco veces
+"no va" para cinturón negro con mocasín burdeos, y aprueba el look igual. Un
+👍 es "sale a la calle", no "no tiene detalles". Lo que NO puede pasar es que
+una regla que tira looks dispare en 👍.
 
 1. **Elegir UN cambio.** Si toca dos cosas, el resultado no dice cuál causó qué.
 2. **Clasificarlo** — y esto decide el resto del camino:
@@ -275,6 +285,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-18 | 283d8d44 | v53 | sin-coherencia-cromatica | **91%** | empate; la regla de color no se gana el lugar (1ª vez) |
 | 08-19 | 8f3647f3 | v55 | sin-reparar-codigo | 72% | el reparador se queda (cueros rotos 3 → 0) |
 | 08-19 | 8559ec99 | v56 | sin-coherencia-cromatica | **52%** | **regresión**: revertido a v53 (prompt v57). La regla de color pierde 3-1 (4ª ronda sin ganar) |
+| 08-22 | (pendiente) | v58 | prompt-anterior (v57) | — | **pre-registrado:** v58 sale si su aprobación ≥ la de v57 en la misma ronda; si pierde, se ablaciona regla por regla |
 
 ---
 
@@ -298,17 +309,28 @@ casa) y los grados en el brief.
    Pendiente de VALIDAR en la próxima ronda votada: si "rompe" se sostiene
    cerca de 45-50% de caza con ≤15% de falsa alarma sobre looks que no vio,
    el juez puede empezar a votar con correa (etapa 2).
-4. **Abrigo de verdad para el frío.** Validado por sus votos: los 3 looks con el
-   abrigo de lana → 👍👍👍; los de chaqueta ligera a 8° → "ninguno está bien
-   para ese frío". Las prendas ya traen `temporada`.
-5. **Lino en oficina con UNA sola pieza.** Dicho 4 veces el 08-19.
-   `full-lino-en-oficina` está acotada a lino arriba **y** abajo y ese recorte
-   quedó refutado.
-6. **Manga corta bajo chamarra** (2 👎).
-7. **Calzado que choca con la base** (tenis rojos con traje, bota café con
-   pantalón negro, derby chocolate en total black).
-8. **Quitar la coherencia cromática** — 4 rondas sin ganarse el lugar. Baja
-   prioridad: quita ruido, no sube calidad.
+4. 🔄 **v58 — EN RONDA (rama `motor-v58`, no está en main).** Lo que la
+   ablación dijo de verdad (`scripts/ablacion-votos.ts`, 2026-08-22): **24 de
+   sus 27 👎 no disparaban ninguna regla**, y la regla del abrigo NO estaba
+   validada (chaqueta ligera a 8°: 1 👎 y 1 👍 — moneda al aire; lo que te
+   dije antes estaba mal contado). Lo que sí salió limpio, y entró:
+   - `negro-con-beige` (zapato/cinturón negro con chinos beige/caqui): 3 👎 /
+     0 👍, reparable cambiando el calzado a café/burdeos y el cinturón detrás.
+   - `mezclilla-con-saco` (camisa de mezclilla con saco/blazer/traje): 3 👎 /
+     0 👍, reparable cambiando a camisa lisa de manga larga.
+   - El reparador aprende `blazer-no-es-abrigo` (1 👎 entregado roto porque
+     la regla detectaba y nadie reparaba).
+   Tras v58 los 7 👎 que disparan regla se reparan 7/7 (antes 1/7). El texto
+   del generador no cambia. Ronda: v58 contra `prompt-anterior` (v57).
+5. ⬜ **Lino en oficina con UNA sola pieza.** Dicho 4 veces el 08-19 — pero la
+   ablación también enseñó 7 👍 con una camisa de lino en oficina. No es regla
+   de código (sería 4 👎 / 7 👍); quedó como "resta" en el juez (js5+).
+6. ⬜ **Manga corta bajo chamarra** (2 👎 / 1 👍). Y sin dato: `manga` viene
+   vacío en sus prendas de lino; el juez lo ve en la foto, el código no.
+7. ⬜ **Café en total black** (2 👎 / ~1 👍). Candidata, aún floja.
+8. ⬜ **`colores-que-no-se-leen`**: 2 👎 / 4 👍 y sin reparador; además VETA
+   reparaciones buenas (rechazaba la camisa blanca y el abrigo marino). La
+   coherencia cromática lleva 4 rondas sin ganar. Primera candidata a salir.
 
 **Conversaciones abiertas** (no son tareas): el rol del juez de producción
 (¿recompone o sólo detecta? mete 5 violaciones por 3 que arregla), versionar el

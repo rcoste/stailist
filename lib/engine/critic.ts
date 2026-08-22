@@ -391,7 +391,7 @@ export async function reviewOutfit(
  * armara por su cuenta, el juez podría reparar contra una vara distinta de la
  * que lo verifica — y eso es justo lo que este archivo no puede permitirse.
  */
-function contextoDeReglas(
+export function contextoDeReglas(
   ctx: EngineContext,
   opciones: { sinCoherenciaCromatica?: boolean } = {}
 ): ContextoReglas {

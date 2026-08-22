@@ -349,7 +349,13 @@ import {
 // código de v55 se quedan: no tocan el prompt, sólo reparan lo detectado, y se
 // validaron sin falsos. Desde aquí, ningún cambio del motor sale sin ronda
 // "nuevo vs anterior" con aprobación igual o mayor.
-export const PROMPT_VERSION = "v57";
+// v58 (2026-08-22): el texto del generador NO cambia (sigue siendo el de v53).
+// Sube porque el bloque de reglas verificadas que lee el juez ya no es el
+// mismo: entran `negro-con-beige` (3 👎 / 0 👍 en la ablación contra los votos)
+// y `mezclilla-con-saco` (2 👎 / 0 👍), y el reparador aprende
+// `blazer-no-es-abrigo`. Primera versión que sale por el proceso completo:
+// ablación → ronda "prompt-anterior" (v57 congelado) → voto de Roberto.
+export const PROMPT_VERSION = "v58";
 
 export type EngineItem = {
   id: string;

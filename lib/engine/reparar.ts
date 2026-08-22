@@ -1,5 +1,11 @@
 import type { EngineItem } from "./prompt";
-import { esCuero, revisarEjecucion, type ContextoReglas, type Violacion } from "./reglas-ejecucion";
+import {
+  ABRIGA_DE_VERDAD,
+  esCuero,
+  revisarEjecucion,
+  type ContextoReglas,
+  type Violacion,
+} from "./reglas-ejecucion";
 import { distanciaPerceptual } from "./color-perceptual";
 import { categoriaDeItem } from "@/lib/item-image";
 
@@ -63,6 +69,14 @@ const texto = (i: EngineItem) =>
  * look ya armado sería reparar una regla rompiendo el criterio de otra — y eso
  * es exactamente lo que esta pieza existe para no hacer.
  */
+/** Cuánto abriga una capa, por nombre: el abrigo de lana antes que la chaqueta. */
+function pesoAbrigo(i: EngineItem): number {
+  const t = texto(i);
+  if (/abrigo|parka|plumas|puffer|acolchad|lana/.test(t)) return 3;
+  if (/gab(a|á)rdina|trench|anorak/.test(t)) return 2;
+  return 1;
+}
+
 function puntuarBase(i: EngineItem): number {
   const t = texto(i);
   let p = 0;
@@ -163,6 +177,119 @@ function intentarUna(
           ids: [...ids, abrigo.id],
           hecha: { regla: v.regla, como: "anadida", entro: nombre(abrigo) },
         };
+      }
+    }
+
+    // UN BLAZER NO ES ABRIGO → se le pone un abrigo encima (o punto debajo).
+    // La regla existía desde v47 y NO tenía reparación: en la ronda 8559ec99
+    // el único look de frío que la disparó ("Camisa blanca + saco y pantalón
+    // de traje + tenis" a 8°) llegó entregado tal cual y Roberto lo marcó 👎.
+    // Las dos salidas son las que él nombró; el abrigo primero porque los tres
+    // looks de frío que aprobó ese día llevaban el abrigo de lana.
+    if (v.regla === "blazer-no-es-abrigo") {
+      const abrigos = disponibles
+        .filter((i) => cat(i) === "abrigo" || ABRIGA_DE_VERDAD.test(texto(i)))
+        // Lo que más abriga primero: un abrigo de lana antes que una chaqueta.
+        .sort((a, b) => pesoAbrigo(b) - pesoAbrigo(a));
+      const puntos = disponibles.filter((i) =>
+        /su[eé]ter|sweater|jersey|cardigan|c[aá]rdigan|cuello alto/.test(texto(i))
+      );
+      // Se recorren candidatos (no sólo el primero): el abrigo marino sobre
+      // unos tenis rojos disparaba `colores-que-no-se-leen`, y la guarda de
+      // "nunca empeora" tiraba el arreglo entero cuando el siguiente candidato
+      // sí servía. Mismo patrón que el reparador de cueros.
+      for (const cand of [...abrigos.map((a) => ({ a, al: "final" })), ...puntos.map((a) => ({ a, al: "inicio" }))]) {
+        const nuevos = cand.al === "final" ? [...ids, cand.a.id] : [cand.a.id, ...ids];
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "anadida", entro: nombre(cand.a) } };
+        }
+      }
+    }
+
+    // CAMISA DE MEZCLILLA BAJO SACO → otra camisa, lisa y de manga larga. El
+    // saco se queda: es la pieza que fija la ocasión; la camisa es la que se
+    // equivocó de registro. Sin camisa lisa no se inventa nada (va al juez).
+    if (v.regla === "mezclilla-con-saco") {
+      const camisa = enLook().find((i) =>
+        /camisa/.test(texto(i)) && /mezclilla|denim|chambray/.test(texto(i))
+      );
+      const lisas = disponibles
+        .filter((i) => /camisa/.test(texto(i)) && !/mezclilla|denim|chambray|lino|manga corta/.test(texto(i)))
+        .filter((i) => !/manga corta/.test(String(i.attrs.manga ?? "").toLowerCase()))
+        .sort((a, b) => puntuarBase(b) - puntuarBase(a));
+      // Varios candidatos, no el primero: la blanca puede disparar la regla de
+      // color donde la azul claro pasa limpia (medido contra los looks reales).
+      for (const lisa of camisa ? lisas : []) {
+        const nuevos = ids.map((id) => (id === camisa!.id ? lisa.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return {
+            ids: nuevos,
+            hecha: { regla: v.regla, como: "sustituida", entro: nombre(lisa), salio: nombre(camisa!) },
+          };
+        }
+      }
+    }
+
+    // NEGRO CON BEIGE → el calzado pasa a café/burdeos/marrón y el cinturón lo
+    // sigue. Van JUNTOS en un solo paso: cambiar sólo el zapato dejaría un
+    // cinturón negro contra un zapato café —otra violación— y la guarda de
+    // "nunca empeora" rechazaría el arreglo a medias.
+    if (v.regla === "negro-con-beige") {
+      const esNegro = (i: EngineItem) => /negr|black/.test(`${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase());
+      const calido = (i: EngineItem) =>
+        /caf[eé]|marr[oó]n|burdeos|chocolate|cognac|tabaco|ante|gamuza|tan\b|miel/.test(
+          `${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase()
+        );
+      const zapato = enLook().find((i) => esCalzado(i) && esNegro(i));
+      const cinturon = enLook().find((i) => /cintur[oó]n/.test(texto(i)) && esNegro(i));
+      let nuevos = [...ids];
+      const hechaBase = { regla: v.regla };
+      if (zapato) {
+        const NIVEL: Record<string, number> = { casual: 0, "formal-casual": 1, formal: 2 };
+        const nivel = (i: EngineItem) => NIVEL[String(i.attrs.formalidad ?? "").toLowerCase()] ?? 0;
+        const cand = disponibles
+          .filter((i) => esCalzado(i) && calido(i) && !/bota de (monta|senderismo)|sandalia/.test(texto(i)))
+          // De formalidad parecida primero: no bajar un mocasín a un tenis.
+          .sort((a, b) => Math.abs(nivel(a) - nivel(zapato)) - Math.abs(nivel(b) - nivel(zapato)))[0];
+        if (!cand) return null;
+        nuevos = nuevos.map((id) => (id === zapato.id ? cand.id : id));
+        // El cinturón sigue al calzado: primero el más cercano al color del
+        // zapato nuevo (burdeos con burdeos antes que burdeos con café, que
+        // dispara cueros-que-no-se-hablan), y si ninguno deja el look limpio,
+        // fuera el cinturón — un look sin cinturón está bien.
+        const opciones: string[][] = cinturon
+          ? [
+              ...disponibles
+                .filter((i) => /cintur[oó]n/.test(texto(i)) && !esNegro(i))
+                .sort(
+                  (a, b) =>
+                    (distanciaPerceptual(a.attrs.color_hex, cand.attrs.color_hex) ?? 9) -
+                    (distanciaPerceptual(b.attrs.color_hex, cand.attrs.color_hex) ?? 9)
+                )
+                .map((c) => nuevos.map((id) => (id === cinturon.id ? c.id : id))),
+              nuevos.filter((id) => id !== cinturon.id),
+            ]
+          : [nuevos];
+        for (const intento of opciones) {
+          if (violacionesDe(intento).length < violaciones.length) {
+            return {
+              ids: intento,
+              hecha: { ...hechaBase, como: "sustituida", entro: nombre(cand), salio: nombre(zapato) },
+            };
+          }
+        }
+      } else if (cinturon) {
+        // Sólo el cinturón es negro (el zapato ya va café): cinturón café, o fuera.
+        const cint = disponibles.find((i) => /cintur[oó]n/.test(texto(i)) && calido(i));
+        nuevos = cint ? ids.map((id) => (id === cinturon.id ? cint.id : id)) : ids.filter((id) => id !== cinturon.id);
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return {
+            ids: nuevos,
+            hecha: cint
+              ? { ...hechaBase, como: "sustituida", entro: nombre(cint), salio: nombre(cinturon) }
+              : { ...hechaBase, como: "quitada", salio: nombre(cinturon) },
+          };
+        }
       }
     }
 

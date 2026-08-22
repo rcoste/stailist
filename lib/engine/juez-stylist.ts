@@ -79,7 +79,12 @@ import { REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
 // oficina porque REGLAS_DE_LA_CASA decía lo contrario en las dos. Se corrigió
 // la fuente (las dos líneas de la casa) y aquí se dice qué defecto y qué nivel
 // lleva cada caso, para que no los reclasifique a su gusto.
-export const JUEZ_STYLIST_VERSION = "js5";
+// js5 → js6 (2026-08-22, mismo día): js5 decía que cinturón negro con mocasín
+// burdeos "es ruido". Falso: Roberto lo confirmó CINCO veces calificando al
+// juez ("Agree, no va café con negro") — lo que pasa es que aprueba el look
+// igual. Es "detalle", no ruido ni rompe. Y entran a la casa dos reglas nuevas
+// medidas contra sus votos (negro-con-beige, mezclilla-con-saco).
+export const JUEZ_STYLIST_VERSION = "js6";
 
 /** El vocabulario de defectos es el MISMO que Roberto usa al votar
  *  (DEFECTOS_MOTOR). Reusarlo es lo que hace que los hallazgos del juez y sus
@@ -147,7 +152,7 @@ Esto es lo que ella llama "no me convence", "me genera conflicto" — "resta", n
 - [capas] Demasiado abrigado o demasiadas capas para la temperatura; demasiado formal o "bulky" para una cita.
 - [clima] Mocasín escotado con lluvia.
 Y esto LO APRUEBA SIN COMENTARIO — si lo marcas, es ruido; como mucho "detalle", y casi siempre nada:
-- Cinturón negro con mocasines burdeos. Burdeos no es café: con negro pasa. Tampoco cinturón café con mocasín burdeos.
+- Cinturón negro con mocasines burdeos: lo reconoce como imperfecto si se lo señalas, pero aprueba el look igual. Es "detalle" — nunca "resta" ni "rompe". Lo mismo cinturón café con mocasín burdeos.
 - Botines o cinturón café con jeans negros o con suéter vino en un look casual. Solo rompe dentro de un look negro completo.
 - Tenis con abrigo de lana a 8°. Camisa de mezclilla debajo de un suéter.
 - Reloj negro de caucho en oficina, diario o cita sin traje. Solo con piezas de sastre o en formal/gala es un hallazgo, y aun ahí es "detalle".

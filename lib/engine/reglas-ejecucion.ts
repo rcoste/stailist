@@ -240,6 +240,15 @@ const esPantalonVestir = (i: EngineItem) =>
 // Exportado porque el reparador en código (reparar.ts) necesita LA MISMA vara
 // que la regla: decidir qué es un cuero con otro predicado repararía contra un
 // criterio distinto del que detecta.
+/**
+ * Lo que abriga de verdad a 8°C, por nombre. Exportado porque el reparador
+ * (reparar.ts) necesita LA MISMA vara que `blazer-no-es-abrigo`: añadir "una
+ * capa" con otro predicado repararía contra un criterio distinto del que
+ * detecta — y la regla volvería a disparar sobre su propio arreglo.
+ */
+export const ABRIGA_DE_VERDAD =
+  /abrigo|gab(a|á)rdina|parka|puffer|acolchad|plumas|trench|anorak|chamarra|cazadora|chaqueta/;
+
 export const esCuero = (i: EngineItem) =>
   familiaMaterial(i.attrs.material, i.attrs.nombre) === "piel" ||
   /cintur[oó]n|zapato|mocas[ií]n|bot[ií]n|bota|reloj de piel|correa/.test(TIPO(i));
@@ -430,6 +439,43 @@ export function revisarEjecucion(
     }
   }
 
+  // 3b. NEGRO CON BEIGE. Roberto, tres veces en la ronda 8559ec99 (2026-08-19),
+  //     sobre chinos beige con mocasín y cinturón negros: "no van los mocasines
+  //     y cinturón negros con esos pantalones", "otra vez es un error que ya
+  //     habías cometido antes: los zapatos negros con chinos beige… estoy casi
+  //     seguro de que no va". Y pidió confirmarlo: es la pareja más discutida
+  //     del guardarropa masculino, y el consenso de sastrería es el suyo — el
+  //     café, el burdeos o el ante con caqui; el negro corta el tono cálido del
+  //     pantalón y se lee como zapato de oficina con ropa de fin de semana.
+  //
+  //     MEDIDA ANTES DE CABLEARLA (scripts/ablacion-votos.ts): dispara en 3 de
+  //     sus 27 👎 y en 0 de sus 68 👍. Los chinos beige que aprobó llevaban
+  //     mocasín burdeos y cinturón café.
+  //
+  //     Va por NOMBRE de color y no por hex: "beige", "caqui", "camel" son
+  //     familias que la persona nombra; medir tono en OKLCH aquí inventaría un
+  //     umbral para lo que ya viene dicho.
+  {
+    const ES_CALIDO_CLARO = /beige|caqui|khaki|camel|arena|crudo|hueso|crema|tostado/;
+    const esBottomBeige = (i: EngineItem) =>
+      /pantal[oó]n|chino|bermuda|short/.test(TIPO(i)) &&
+      ES_CALIDO_CLARO.test(`${norm(i.attrs.color)} ${TIPO(i)}`);
+    const esNegro = (i: EngineItem) =>
+      /negr|black/.test(norm(i.attrs.color)) || /negr/.test(TIPO(i));
+    const esPieOCinturon = (i: EngineItem) =>
+      tipoDePrenda(nombre(i))?.zona === "pie" || /cintur[oó]n/.test(TIPO(i));
+    const bottom = items.find(esBottomBeige);
+    const negros = bottom ? items.filter((i) => esPieOCinturon(i) && esNegro(i)) : [];
+    if (bottom && negros.length) {
+      v.push({
+        regla: "negro-con-beige",
+        detalle: `"${negros.map(nombre).join('" y "')}" en negro con "${nombre(
+          bottom
+        )}": el negro corta el tono cálido del pantalón y se lee como zapato de oficina con ropa de fin de semana. Con beige o caqui van café, marrón, burdeos o ante — y el cinturón sigue al calzado.`,
+      });
+    }
+  }
+
   // 4. Prenda de código: hay atuendos que no admiten piezas sueltas. Un smoking
   //    no es "un saco negro elegante" — es un conjunto con reglas (pantalón del
   //    mismo juego con galón, camisa blanca, moño), y una pieza fuera del código
@@ -552,7 +598,6 @@ export function revisarEjecucion(
   //     capa de punto debajo. Con cualquiera de las dos, el look aguanta.
   if (ctx.clima === "frio" && ctx.closet?.length) {
     const SOLO_SASTRE = /blazer|saco|americana|chaleco/;
-    const ABRIGA_DE_VERDAD = /abrigo|gab(a|á)rdina|parka|puffer|acolchad|plumas|trench|anorak|chamarra|cazadora|chaqueta/;
     // La CATEGORÍA manda sobre el nombre. Un "Blazer marrón de lana" del
     // catálogo viene con categoría "abrigo" —es una pieza pesada que sí hace de
     // capa exterior— y juzgarlo por su nombre lo tiraba: la primera versión de
@@ -977,6 +1022,32 @@ export function revisarEjecucion(
     });
   }
 
+  // 10b. CAMISA DE MEZCLILLA CON SACO. Roberto, dos veces en la ronda 8559ec99
+  //      (2026-08-19): "camisa de mezclilla, blazer marino, pantalón negro —
+  //      se ve culerísimo… es como camisa de mezclilla con blazer, hazme el
+  //      favor" y "esa camisa de mezclilla no va con ese traje… es algo más
+  //      informal, no va con traje". Dos registros que no se hablan: la
+  //      mezclilla es tela de trabajo y el saco es sastrería; juntos se leen
+  //      como dos looks a medias.
+  //
+  //      MEDIDA ANTES DE CABLEARLA (scripts/ablacion-votos.ts): 2 de sus 27 👎,
+  //      0 de sus 68 👍. Una camisa de mezclilla bajo un suéter o una chaqueta
+  //      sí la aprueba — por eso la regla es con SACO, no con cualquier capa.
+  {
+    const esCamisaMezclilla = (i: EngineItem) =>
+      /camisa/.test(TIPO(i)) && /mezclilla|denim|chambray/.test(`${TIPO(i)} ${norm(i.attrs.material)}`);
+    const camisa = items.find(esCamisaMezclilla);
+    const saco = camisa ? items.find((i) => esSaco(i) || /traje/.test(TIPO(i))) : undefined;
+    if (camisa && saco) {
+      v.push({
+        regla: "mezclilla-con-saco",
+        detalle: `"${nombre(camisa)}" bajo "${nombre(
+          saco
+        )}": la mezclilla es tela de trabajo y el saco es sastrería — juntos se leen como dos looks a medias. Cámbiala por una camisa lisa de manga larga (blanca, azul claro) y deja la de mezclilla para un suéter o una chaqueta.`,
+      });
+    }
+  }
+
   // 11. MOCASÍN EN FRÍO. Medido sobre los 309 looks marcados de Roberto: el
   //     mocasín en general va bien (16% de 👎, igual que la línea base), pero
   //     EN FRÍO se dispara a 44% contra 6% del resto del calzado en frío
@@ -1129,7 +1200,9 @@ export function revisarEjecucion(
  */
 export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; el motor las ejecuta y las repara solo):
 - En clóset de HOMBRE, un suéter o cuello alto de punto lleva base debajo (camiseta/camisa). Que la traiga NO es un defecto — es la regla; nunca recomiendes quitarla. En mujer, el punto a piel es elección normal.
-- Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita. Dos excepciones medidas con votos: burdeos NO es café (cinturón negro con mocasín burdeos pasa), y un botín café con jeans negros en un look casual pasa — lo que rompe es el café dentro de un look NEGRO de arriba abajo.
+- Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita. Cinturón negro con mocasín burdeos es un DETALLE (él lo reconoce cuando se lo señalan, y aprueba el look igual): se repara, no tira el look. Y un botín café con jeans negros en un look casual pasa — lo que rompe es el café dentro de un look NEGRO de arriba abajo.
+- Con chinos beige, caqui o camel el calzado y el cinturón NO van en negro: van café, marrón, burdeos o ante.
+- Camisa de mezclilla con saco, blazer o traje, nunca: bajo un suéter o una chaqueta sí.
 - El reloj deportivo (caucho, smart) no va con piezas de sastre ni en formal/gala. En un día casual sí pasa — no lo marques ahí.
 - La corbata de punto no va a ceremonia (formal/gala). En cita u oficina es elección correcta.
 - En evento formal el traje va completo; saco y pantalón de juegos distintos son separates: bien para oficina, cortos para una boda.

@@ -280,3 +280,67 @@ describe("reloj deportivo y corbata de punto — nacen con reparación", () => {
     expect(r.itemIds).toContain(C_PUNTO.id);
   });
 });
+
+describe("las tres reparaciones de v58 — nacidas de la ablación contra los votos", () => {
+  const FRIO = { ...HOMBRE, clima: "frio" as const };
+  const CAMISA_B = it_("cb", "top", "Camisa blanca", { color: "blanco", color_hex: "#FAFAF7", manga: "larga" });
+  const CAMISA_AZ = it_("caz", "top", "Camisa azul claro", { color: "azul claro", color_hex: "#A9C4E0", manga: "larga" });
+  const MEZCLILLA = it_("mz", "top", "Camisa de mezclilla", { color: "azul mezclilla", color_hex: "#7D9BB5" });
+  const SACO = it_("sc", "saco", "Saco de traje gris carbón", { color_hex: "#3A3A3A" });
+  const PANT = it_("pt", "bottom", "Pantalón de traje gris carbón", { color_hex: "#3A3A3A" });
+  const TENIS = it_("tn", "calzado", "Tenis rojos", { color: "rojo", color_hex: "#D62222" });
+  const ABRIGO = it_("ab", "abrigo", "Abrigo de lana marino", { color: "azul marino", color_hex: "#1F2A44" });
+  const SUETER = it_("su", "top", "Suéter de lana negro", { color: "negro", color_hex: "#111111" });
+  const BOTINES = it_("bt", "calzado", "Botines Chelsea", { color: "café", color_hex: "#6B4A33", formalidad: "formal-casual" });
+
+  it("blazer-no-es-abrigo: a 8° se le pone el abrigo de lana encima", () => {
+    const look = [CAMISA_B.id, SACO.id, PANT.id, BOTINES.id];
+    const closet = [CAMISA_B, SACO, PANT, BOTINES, ABRIGO, SUETER];
+    const r = repararEnCodigo(look, closet, { ...FRIO, closet });
+    // Las dos salidas que Roberto nombró: abrigo encima o punto debajo. Cuál
+    // entra lo decide la guarda de "nunca empeora" contra las demás reglas.
+    expect(r.hechas.length).toBe(1);
+    expect(r.hechas[0]).toMatchObject({ regla: "blazer-no-es-abrigo", como: "anadida" });
+    expect([ABRIGO.id, SUETER.id].some((id) => r.itemIds.includes(id))).toBe(true);
+    expect(r.itemIds.length).toBe(5);
+  });
+
+  it("blazer-no-es-abrigo: si el primer abrigo dispara otra regla, prueba el siguiente candidato", () => {
+    // Abrigo marino sobre tenis rojos disparaba colores-que-no-se-leen y la
+    // guarda tiraba el arreglo entero; el suéter negro sí deja el look limpio.
+    const look = [CAMISA_B.id, SACO.id, PANT.id, TENIS.id];
+    const closet = [CAMISA_B, SACO, PANT, TENIS, ABRIGO, SUETER];
+    const r = repararEnCodigo(look, closet, { ...FRIO, closet });
+    expect(r.hechas.length).toBe(1);
+    expect(r.hechas[0].regla).toBe("blazer-no-es-abrigo");
+    expect(r.itemIds.length).toBe(5);
+  });
+
+  it("mezclilla-con-saco: cambia la camisa por una lisa de manga larga y deja el saco", () => {
+    const look = [MEZCLILLA.id, SACO.id, PANT.id, BOTINES.id];
+    const closet = [MEZCLILLA, SACO, PANT, BOTINES, CAMISA_AZ, CAMISA_B];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, closet });
+    expect(r.hechas[0]).toMatchObject({ regla: "mezclilla-con-saco", como: "sustituida", salio: "Camisa de mezclilla" });
+    expect(r.itemIds).toContain(SACO.id);
+    expect(r.itemIds).not.toContain(MEZCLILLA.id);
+  });
+
+  it("negro-con-beige: el calzado pasa a café y el cinturón lo sigue, en UN paso", () => {
+    const CHINOS = it_("ch", "bottom", "Chinos beige", { color: "beige", color_hex: "#C8B89A" });
+    const MOC_NEGROS = it_("mn", "calzado", "Mocasines negros", { color: "negro", color_hex: "#1A1A1A", formalidad: "formal" });
+    const MOC_BURD = it_("mb", "calzado", "Mocasines burdeos", { color: "burdeos", color_hex: "#5C2A2E", formalidad: "formal-casual" });
+    const CINT_N = it_("cn", "accesorio", "Cinturón negro", { color: "negro", color_hex: "#1A1A1A" });
+    const CINT_C = it_("cc", "accesorio", "Cinturón café", { color: "café", color_hex: "#5C4433" });
+    const look = [CAMISA_AZ.id, CHINOS.id, MOC_NEGROS.id, CINT_N.id];
+    const closet = [CAMISA_AZ, CHINOS, MOC_NEGROS, CINT_N, MOC_BURD, CINT_C];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, closet });
+    expect(r.hechas[0]).toMatchObject({ regla: "negro-con-beige", como: "sustituida", salio: "Mocasines negros" });
+    expect(r.itemIds).toContain(MOC_BURD.id);
+    expect(r.itemIds).not.toContain(CINT_N.id);
+    // Burdeos con café dispara cueros-que-no-se-hablan (Roberto dejó esa regla
+    // disparando), así que aquí el cinturón se va en vez de cambiarse: un look
+    // sin cinturón está bien. Con un cinturón burdeos en el clóset, entraría.
+    expect(r.itemIds).not.toContain(CINT_C.id);
+    expect(r.itemIds.length).toBe(3);
+  });
+});
