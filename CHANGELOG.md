@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.267.0] - 2026-08-22
+
+### Added — los looks del comparador congelan el nombre de sus prendas
+
+`LookMotor.prendas` (`{id, nombre}[]`, mismo orden que `item_ids`) se escribe al
+generar cada lado (`conNombres` en `lib/comparador/generar-lado.ts`). El script
+que juzga usa el nombre vivo y, si la prenda ya no existe, el congelado — nunca
+"Prenda" a secas si hay forma de saber qué era.
+
+Por qué: el 08-18 se recreó el clóset de Roberto y 393 de sus 520 votos del
+comparador quedaron apuntando a ids muertos. Un look que sólo guarda ids muere
+con la siguiente limpieza de cuentas; uno que guarda nombres sigue siendo
+legible para un juez o una persona. `scripts/backfill-nombres-comparador.ts`
+rellenó los 102 lados cuyas prendas siguen vivas; los 203 huérfanos no se
+tocan (no hay de dónde sacar el nombre).
+
+Las pantallas del comparador siguen resolviendo por id contra el clóset vivo —
+pasarlas al nombre congelado es el siguiente paso si se vuelve a necesitar leer
+una ronda vieja.
+
 ## [0.2.266.2] - 2026-08-22
 
 ### Fixed — el doc del loop decía 520 votos; utilizables son 95

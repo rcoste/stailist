@@ -587,6 +587,17 @@ export type LookMotor = {
   item_ids: string[];
   explicacion: string;
   tip?: string | null;
+  /**
+   * El NOMBRE de cada prenda, congelado al generar (mismo orden que item_ids).
+   *
+   * Existe desde el 2026-08-22, el día que se descubrió que el clóset de
+   * Roberto se había recreado el 08-18 y que los 393 votos de las rondas
+   * anteriores apuntaban a ids que ya no resolvían: el voto sobrevivió, el look
+   * que lo motivó no. Un look que sólo guarda ids muere con la siguiente
+   * limpieza de cuentas; uno que guarda nombres sigue siendo legible para un
+   * juez o para una persona. Ausente en lados anteriores a esa fecha.
+   */
+  prendas?: { id: string; nombre: string }[];
 };
 
 export type LadoMotor = {

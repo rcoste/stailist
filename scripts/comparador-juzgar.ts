@@ -34,7 +34,13 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
     process.env[l.slice(0, i)] ??= l.slice(i + 1).trim().replace(/^"|"$/g, "");
 }
 
-type Look = { nombre: string; item_ids: string[]; explicacion: string; tip?: string | null };
+type Look = {
+  nombre: string;
+  item_ids: string[];
+  explicacion: string;
+  tip?: string | null;
+  prendas?: { id: string; nombre: string }[];
+};
 
 /** Mismo helper que scripts/rubrica-vision-acuerdo.ts: la foto como la ve el
  *  humano al votar. Sin imagen, la prenda viaja sólo por nombre y el juez lo
@@ -200,11 +206,14 @@ async function main() {
       // para mandar exactamente las mismas imágenes.
       const fotosDe = async (look: Look) =>
         Promise.all(
-          look.item_ids.map(async (id) => {
+          look.item_ids.map(async (id, i) => {
             const it = porId.get(id);
             const url = urlPorItem.get(id) ?? null;
             return {
-              nombre: it?.attrs.nombre ?? "Prenda",
+              // Vivo primero; si la prenda ya no existe, el nombre congelado
+              // al generar (LookMotor.prendas). Nunca "Prenda" a secas si hay
+              // forma de saber qué era.
+              nombre: it?.attrs.nombre ?? look.prendas?.[i]?.nombre ?? "Prenda",
               imagen: url ? await comoBase64(url) : null,
             };
           })

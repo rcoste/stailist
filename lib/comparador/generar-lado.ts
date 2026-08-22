@@ -141,7 +141,7 @@ export async function generarLadoYGuardar(opciones: {
       corrida_id: corridaId,
       par_id: parId,
       variante,
-      looks: finalized,
+      looks: conNombres(finalized, ctx.items),
       reviews,
       // El modelo RESUELTO, congelado en la fila: sin esto, un cambio a
       // lib/models.ts a media corrida mezclaría dos motores sin dejar rastro.
@@ -173,4 +173,20 @@ export async function generarLadoYGuardar(opciones: {
     }
     return { ok: true, fallo: detalle.slice(0, 200) };
   }
+}
+
+/**
+ * Congela el nombre de cada prenda dentro del look guardado. Ver
+ * LookMotor.prendas: sin esto, el histórico del comparador muere con el
+ * siguiente reseteo de clóset (pasó el 2026-08-18: 393 votos huérfanos).
+ */
+export function conNombres<L extends { item_ids: string[] }>(
+  looks: L[],
+  items: { id: string; attrs: { nombre?: string | null } }[]
+): (L & { prendas: { id: string; nombre: string }[] })[] {
+  const porId = new Map(items.map((i) => [i.id, i.attrs.nombre ?? "Prenda"]));
+  return looks.map((l) => ({
+    ...l,
+    prendas: l.item_ids.map((id) => ({ id, nombre: porId.get(id) ?? "Prenda" })),
+  }));
 }

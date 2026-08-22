@@ -275,9 +275,10 @@ casa) y los grados en el brief.
 
 1. **Retador "prompt anterior"** en el comparador — es el freno de la regla #1.
    No toca el motor.
-2. **Guardar el nombre de las prendas en los looks del comparador.** Deuda
-   descubierta el 08-22: sin esto, el próximo reseteo de clóset vuelve a borrar
-   la base de evaluación. Va antes de la próxima ronda.
+2. ✅ **Guardar el nombre de las prendas en los looks del comparador** — HECHO
+   v0.2.267.0: `LookMotor.prendas` se congela al generar (`conNombres`), el
+   script que juzga lo usa de respaldo, y los 102 lados vivos se rellenaron. Los
+   203 huérfanos quedan como están: no hay de dónde sacar el nombre.
 3. **Calibrar la GRAVEDAD del juez** (etapa 1). El examen del 08-22 sobre los 95
    looks utilizables ya dio su diagnóstico: el juez **ve pero no pesa**.
    Con "cualquier hallazgo" caza 23 de 27 👎 (85%), pero con su "rompe" sólo 6
