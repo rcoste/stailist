@@ -383,6 +383,31 @@ const ITEMS = [
   // otra temporada y otro registro, y el motor lo elige distinto.
   { slug: "polo-manga-larga-marino-hombre", desc: "a navy blue LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
   { slug: "polo-manga-larga-negro-hombre", desc: "a black LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
+  // === LA RUEDA COMPLETA (2026-08-22, misma tarde) ===
+  // El primer corte se limitó a cuatro básicos con el argumento de que cinco de
+  // los ocho polos viejos tenían CERO usos. El argumento era malo y el dato lo
+  // desmiente: los dos únicos polos con uso son los dos que están en el
+  // onboarding (marino y oliva). El cero de los demás es falta de EXPOSICIÓN,
+  // no de interés — nadie los ha visto. Así que el catálogo de polos se
+  // completa como el de un tienda real: la rueda entera, no una muestra.
+  { slug: "polo-vino-hombre", desc: "a deep burgundy wine red short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-gris-carbon-hombre", desc: "a dark charcoal grey short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  // "laid completely flat and unfolded, sleeves spread out": el primer intento
+  // salió DOBLADO como en un anaquel de tienda, y un polo plegado entre veinte
+  // extendidos se lee como error de la app. El resto del catálogo no lo necesita
+  // porque su descripción no evoca retail; "royal blue polo" sí.
+  { slug: "polo-azul-rey-hombre", desc: "a vivid royal cobalt blue short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar, laid completely flat and fully unfolded with both sleeves spread out to the sides, NOT folded, NOT stacked", type: "flat" },
+  { slug: "polo-chocolate-hombre", desc: "a rich chocolate brown short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-oxido-hombre", desc: "a burnt rust orange short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-turquesa-hombre", desc: "a bright turquoise teal short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-rosa-palo-hombre", desc: "a soft dusty pink short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  { slug: "polo-crudo-hombre", desc: "an off-white ecru cream short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  { slug: "polo-lavanda-hombre", desc: "a soft lavender lilac short-sleeve pique cotton polo shirt with a two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  // Manga larga: se completa con los cuatro que un guardarropa repite.
+  { slug: "polo-manga-larga-blanco-hombre", desc: "a white LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  { slug: "polo-manga-larga-gris-hombre", desc: "a heather grey LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat-sombra" },
+  { slug: "polo-manga-larga-verde-botella-hombre", desc: "a deep bottle green LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
+  { slug: "polo-manga-larga-vino-hombre", desc: "a deep burgundy wine red LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {

@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.270.4] - 2026-08-22
+
+### Added — la rueda completa de polos (migración 0145): 27 en total
+
+Trece polos más: **vino, gris carbón, azul rey, chocolate, óxido, turquesa,
+rosa palo, crudo y lavanda** de manga corta, y **blanco, gris, verde botella y
+vino** de manga larga. El catálogo pasa de 8 a 27 polos.
+
+**Por qué se amplió después de haber dicho que no.** 0144 se limitó a cuatro
+básicos con el argumento de que cinco de los ocho polos viejos tenían cero
+usos. Roberto no lo compró ("te faltaron varios colores") y al verificarlo el
+argumento se cayó: los dos únicos polos con uso son exactamente los dos que
+están en el onboarding (marino y oliva). El cero de los demás mide **falta de
+exposición**, no falta de interés — nadie los ha visto nunca. Un catálogo no se
+poda con datos de un catálogo que nadie recorre.
+
+Detalles del render: los claros (rosa palo, crudo, lavanda, y blanco y gris de
+manga larga) usan el prompt `flat-sombra`. El azul rey salió **doblado** como
+en anaquel de tienda en el primer intento y se regeneró con la orientación
+dicha explícitamente — un polo plegado entre veintiséis extendidos se lee como
+error de la app, no como prenda. Se revirtieron las 114 imágenes ajenas que el
+optimizador tocó de paso.
+
+Sigue pendiente: **cero polos de mujer** en un catálogo con 247 arquetipos
+femeninos.
+
 ## [0.2.270.3] - 2026-08-22
 
 ### Added — los polos básicos que faltaban en la biblioteca (migración 0144)
