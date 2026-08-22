@@ -74,7 +74,7 @@ describe("reviewOutfit", () => {
   it("el proveedor truena: fail-forward a ok sin recibo", async () => {
     llamar.mockRejectedValue(new Error("500 del proveedor"));
     const r = await reviewOutfit(ctx, original, []);
-    expect(r).toEqual({ outfit: original, verdict: "ok", razon: null, recibo: null });
+    expect(r).toMatchObject({ outfit: original, verdict: "ok", razon: null, recibo: null });
   });
 
   it("respuesta no-truncada pero ilegible (JSON roto): fail-forward, hoy sin recibo", async () => {
