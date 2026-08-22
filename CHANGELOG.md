@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.269.1] - 2026-08-22
+
+### Changed — votar y cruzar, con menos trabajo por look
+
+Roberto: "¿puedes mejorar el UX del votar y cruce para que sea más fácil?".
+Se midió primero qué se usa de verdad en 105 pares votados: el 👍/👎 en el
+97%, el comentario por look en el 57%, los chips de defecto en el 21%, la
+nota del par en el 13%. Lo que más pantalla ocupaba era lo que menos se
+tocaba, y el control que decide el experimento (Gana A / Empate / Gana B)
+estaba al fondo de un scroll largo, tres veces por par, seis pares.
+
+**Votar** (`votar-client.tsx`):
+- Barra fija abajo con el voto del look visible; al votar avanza solo al
+  siguiente look sin voto, y cuando el par está completo la misma barra
+  ofrece "Guardar el par N → siguiente". Las pestañas muestran el voto dado
+  (Look 1 · A).
+- Pulgares al tamaño de un dedo, en su propia fila bajo el nombre del look.
+- Chips de defecto plegados tras "marcar un pero"; el comentario se abre solo
+  al dar 👎 (o con "comentar"). La nota del par, plegada.
+- El pie explicativo de seis líneas, a una.
+
+**Cruce** (`cruce-client.tsx`):
+- El nombre de cada prenda va debajo de la foto, siempre visible: iba en un
+  overlay al pasar el mouse y en el celular no hay mouse.
+- Barra fija arriba con "X de N calificados" que se mueve sin recargar, y
+  "siguiente sin calificar →" que salta a la tarjeta pendiente. Pendientes
+  primero dentro de cada caja, con borde marcado.
+- "tiene razón / se pasó" como dos botones a todo lo ancho; "tú" y "el juez"
+  apilados en celular en vez de dos columnas estrechas.
+
+Verificado en móvil (375px) contra la ronda 2bba08e0 sin guardar ningún voto.
+
 ## [0.2.269.0] - 2026-08-22
 
 ### Changed — el juez stylist aprende la vara de Roberto (js5) + el examen del juez

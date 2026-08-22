@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
 import { agruparConjuntos, veredictoDeTraje } from "@/lib/traje";
 import { formalidadLegible } from "@/lib/formalidad";
@@ -94,6 +94,16 @@ function Lado({
     setDefectos(
       defectos.includes(clave) ? defectos.filter((x) => x !== clave) : [...defectos, clave]
     );
+  // LO QUE SE USA VA A LA VISTA; LO QUE NO, PLEGADO. Medido sobre 105 pares
+  // votados: el 👍/👎 se usa en el 97%, el comentario por look en el 57%, los
+  // chips de defecto en el 21%. Siete chips por lado y por look eran la mitad
+  // del scroll de la pantalla para un control que se toca una de cada cinco
+  // veces. El comentario se abre solo con el 👎 (es cuando Roberto escribe) y
+  // los chips sólo si él los pide.
+  const [verPeros, setVerPeros] = useState(false);
+  const [verComentario, setVerComentario] = useState(false);
+  const comentarioAbierto = verComentario || marca === "abajo" || !!comentario;
+  const perosAbiertos = verPeros || defectos.length > 0;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -119,15 +129,20 @@ function Lado({
               comparación prenda-contra-prenda deja de ser posible de un
               vistazo. Es una pantalla de comparar: las dos columnas tienen que
               arrancar a la misma altura. */}
-          <div className="flex min-h-[2.6rem] items-start justify-between gap-2">
+          <div className="flex min-h-[2.6rem] items-start">
             <p className="line-clamp-2 text-sm font-semibold leading-tight text-ink">
               {look.nombre}
             </p>
-            <span className="flex shrink-0 gap-1">
+          </div>
+          {/* Pulgares al tamaño de un dedo y en su propia fila: es el control
+              que más se toca, y al lado del nombre lo dejaba en "Cena con…". */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-muted">¿sale?</span>
+            <span className="flex shrink-0 gap-1.5">
               <button
                 onClick={() => setMarca(marca === "arriba" ? undefined : "arriba")}
                 aria-label="este look sí"
-                className={`rounded-full border px-2 py-0.5 text-sm ${
+                className={`rounded-full border px-3 py-1.5 text-base leading-none ${
                   marca === "arriba" ? "border-ink bg-ink text-bg" : "border-line text-muted"
                 }`}
               >
@@ -136,8 +151,8 @@ function Lado({
               <button
                 onClick={() => setMarca(marca === "abajo" ? undefined : "abajo")}
                 aria-label="este look no"
-                className={`rounded-full border px-2 py-0.5 text-sm ${
-                  marca === "abajo" ? "border-error text-error" : "border-line text-muted"
+                className={`rounded-full border px-3 py-1.5 text-base leading-none ${
+                  marca === "abajo" ? "border-error bg-error text-on-accent" : "border-line text-muted"
                 }`}
               >
                 👎
@@ -279,31 +294,50 @@ function Lado({
             <p className="text-xs leading-relaxed text-muted">✦ {look.tip}</p>
           ) : null}
 
-          {/* Los defectos, DENTRO del look. Antes vivían al fondo de la columna,
-              después de los tres, y se leían como si aplicaran a todos. */}
-          <div className="flex flex-wrap gap-1">
-            {DEFECTOS_MOTOR.map((d) => (
-              <button
-                key={d.clave}
-                onClick={() => alternar(d.clave)}
-                className={`rounded-full border px-2 py-1 text-[11px] font-medium ${
-                  defectos.includes(d.clave)
-                    ? "border-error text-error"
-                    : "border-line text-muted"
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
+          {comentarioAbierto ? (
+            <textarea
+              value={comentario ?? ""}
+              onChange={(e) => setComentario(e.target.value)}
+              rows={2}
+              autoFocus={verComentario && !comentario}
+              placeholder={marca === "abajo" ? "qué no te late de este" : "qué le viste a este"}
+              className="rounded-lg border border-line bg-bg p-2 text-sm text-ink placeholder:text-muted"
+            />
+          ) : null}
 
-          <textarea
-            value={comentario ?? ""}
-            onChange={(e) => setComentario(e.target.value)}
-            rows={2}
-            placeholder="qué le viste a este (opcional)"
-            className="rounded-lg border border-line bg-bg p-2 text-xs text-ink placeholder:text-muted"
-          />
+          {/* Los defectos, DENTRO del look y plegados. Antes vivían al fondo de
+              la columna y se leían como si aplicaran a los tres; ahora además
+              se esconden hasta que hacen falta (21% de uso). */}
+          {perosAbiertos ? (
+            <div className="flex flex-wrap gap-1">
+              {DEFECTOS_MOTOR.map((d) => (
+                <button
+                  key={d.clave}
+                  onClick={() => alternar(d.clave)}
+                  className={`rounded-full border px-2 py-1 text-[11px] font-medium ${
+                    defectos.includes(d.clave)
+                      ? "border-error text-error"
+                      : "border-line text-muted"
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+            {!comentarioAbierto ? (
+              <button type="button" onClick={() => setVerComentario(true)} className="underline underline-offset-2">
+                comentar
+              </button>
+            ) : null}
+            {!perosAbiertos ? (
+              <button type="button" onClick={() => setVerPeros(true)} className="underline underline-offset-2">
+                marcar un pero
+              </button>
+            ) : null}
+          </div>
         </div>
       )}
     </div>
@@ -357,6 +391,14 @@ export function VotarClient({
 
   const par = pares[idx];
   const nLooks = Math.max(par.izq.length, par.der.length);
+  const [verNota, setVerNota] = useState(false);
+  const arriba = useRef<HTMLDivElement>(null);
+
+  // Al cambiar de look, la pantalla vuelve arriba: las prendas del look nuevo
+  // tienen que quedar a la vista sin que haya que subir a mano.
+  useEffect(() => {
+    arriba.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [look, idx]);
 
   // Pide el look `indice` de LOS DOS lados. Nunca uno solo: si un lado tuviera
   // render y el otro no, la comparación mediría el formato, no el look.
@@ -436,7 +478,6 @@ export function VotarClient({
     else router.refresh();
   };
 
-  const marcados = Object.keys(marcIzq).length + Object.keys(marcDer).length;
 
   // Los looks que SE PUEDEN comparar: los dos lados armaron uno con ese índice.
   // Si un lado solo trajo dos looks, el tercero no tiene contra qué medirse y
@@ -465,8 +506,24 @@ export function VotarClient({
   const listo =
     faltan.length === 0 && (modo === "marcar" || Object.keys(votos).length > 0);
 
+  // EL VOTO AVANZA SOLO. Votar el look 1 y tener que buscar la pestaña del 2
+  // era la mitad del trabajo de la pantalla: ahora al votar se pasa al
+  // siguiente look sin votar, y cuando ya no queda ninguno la barra de abajo
+  // ofrece guardar. Volver atrás sigue siendo una pestaña.
+  const votarLook = (op: "izq" | "der" | "empate") => {
+    setVotos((prev) => {
+      const next = { ...prev };
+      if (next[look] === op) delete next[look];
+      else next[look] = op;
+      return next;
+    });
+    const siguiente = comparables.find((i) => i > look && !votos[i]);
+    if (siguiente !== undefined) setLook(siguiente);
+  };
+  const votable = !!(par.izq[look] && par.der[look]);
+
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={arriba} className="flex flex-col gap-4 scroll-mt-4">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-ink">
@@ -528,9 +585,13 @@ export function VotarClient({
                 que no existe. */}
             {!par.izq[i] || !par.der[i]
               ? " –"
-              : faltan.includes(i)
-                ? ""
-                : " ✓"}
+              : votos[i]
+                ? votos[i] === "izq"
+                  ? " · A"
+                  : votos[i] === "der"
+                    ? " · B"
+                    : " · ="
+                : ""}
           </button>
         ))}
       </div>
@@ -576,120 +637,110 @@ export function VotarClient({
         />
       </div>
 
-      {/* El voto del LOOK visible, pegado a lo que se está viendo. Antes los
-          botones estaban al final de la página y se leían como si aplicaran al
-          look en pantalla cuando en realidad cubrían los tres: Roberto votó 16
-          pares guiándose solo por el primero sin saberlo.
+      {/* LA BARRA FIJA. El voto del look visible vivía al final de la página,
+          después de dos columnas de prendas, explicación, tip y chips: un
+          scroll largo por look, tres looks por par, seis pares. Ahora el voto
+          —el control que decide el experimento— está siempre a la vista, y
+          cuando el par ya está completo la misma barra ofrece guardarlo.
 
           Marcando también se pregunta, pero NO reescribe el voto del par: se
           guarda aparte (prefs_look). El voto salió a ciegas y antes de que el
-          marcador fuera alcanzable —es lo que lee la regla pre-registrada— y
-          esto se anota después, con el marcador global ya visible. Sigue
-          siendo ciego por par (las columnas nunca dicen qué variante son),
-          así que es dato bueno; solo es dato MÁS DÉBIL, y por eso se lee
-          aparte en vez de mezclarse. */}
-      {/* NO se vota un look que solo un lado armó: no hay qué comparar, y ese
-          voto contaba igual para la mayoría del par. Pasó en el veredicto — el
-          par 6 salió "empate" y su espejo "gana Gemini", y la ÚNICA diferencia
-          era un voto emitido contra un lado vacío. Se leyó como que Roberto fue
-          inconsistente cuando el inconsistente era yo. */}
-      {!par.izq[look] || !par.der[look] ? (
-        <p className="rounded-xl border border-dashed border-line p-3 text-xs leading-relaxed text-muted">
-          Este look no se vota: solo un lado lo armó, así que no hay contra qué
-          compararlo. La diferencia de entrega se mide aparte, en el marcador.
-        </p>
-      ) : (
-      <div className="flex flex-col gap-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          ¿Cuál te late más en el look {look + 1}?
-        </p>
-        {modo === "marcar" ? (
-          <p className="text-xs text-muted">
-            Esto NO cambia el resultado del par —ya está votado y sellado—; se
-            guarda como lectura aparte.
-          </p>
-        ) : null}
-        <div className="grid grid-cols-3 gap-2">
-          {(["izq", "empate", "der"] as const).map((op) => (
-            <button
-              key={op}
-              onClick={() =>
-                setVotos((prev) => {
-                  const next = { ...prev };
-                  if (next[look] === op) delete next[look];
-                  else next[look] = op;
-                  return next;
-                })
-              }
-              className={`rounded-xl border py-3 text-sm font-semibold ${
-                votos[look] === op
-                  ? "border-ink bg-ink text-bg"
-                  : "border-line text-ink active:bg-tile"
-              }`}
-            >
-              {op === "izq" ? "Gana A" : op === "der" ? "Gana B" : "Empate"}
-            </button>
-          ))}
-        </div>
-      </div>
-      )}
+          marcador fuera alcanzable —es lo que lee la regla pre-registrada—;
+          esto se anota después, con el marcador ya visible. Sigue siendo
+          ciego por par, así que es dato bueno; solo es dato MÁS DÉBIL.
 
+          NO se vota un look que solo un lado armó: no hay qué comparar, y ese
+          voto contaba igual para la mayoría del par. Pasó en el veredicto —
+          el par 6 salió "empate" y su espejo "gana Gemini", y la ÚNICA
+          diferencia era un voto contra un lado vacío. */}
       {modo === "votar" ? (
-      <div className="flex flex-col gap-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          ¿Por qué? (opcional, de todo el par)
-        </p>
-        <textarea
-          value={nota}
-          onChange={(e) => setNota(e.target.value)}
-          rows={3}
-          placeholder="qué te decidió, qué te chocó, qué le faltó al otro — con tus palabras"
-          className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
-        />
-      </div>
+        <div className="flex flex-col gap-1">
+          {verNota || nota ? (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Nota de todo el par (opcional)
+              </p>
+              <textarea
+                value={nota}
+                onChange={(e) => setNota(e.target.value)}
+                rows={2}
+                autoFocus={!nota}
+                placeholder="qué te decidió, qué te chocó, qué le faltó al otro"
+                className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+              />
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setVerNota(true)}
+              className="self-start text-xs text-muted underline underline-offset-2"
+            >
+              agregar una nota de todo el par
+            </button>
+          )}
+        </div>
       ) : null}
 
       {error ? <p className="text-sm text-error">{error}</p> : null}
 
-      <button
-        disabled={guardando || !listo}
-        onClick={votar}
-        className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
-      >
-        {guardando
-          ? "Guardando…"
-          : faltan.length === 1
-            ? `Falta ${modo === "marcar" ? "calificar" : "votar"} el look ${faltan[0] + 1}`
-            : faltan.length
-              ? `Faltan los looks ${listaEnEspanol(faltan.map((i) => i + 1))}`
+      <div className="sticky bottom-0 z-30 -mx-4 flex flex-col gap-2 border-t border-line bg-bg px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2.5">
+        {listo ? (
+          <button
+            disabled={guardando}
+            onClick={votar}
+            className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+          >
+            {guardando
+              ? "Guardando…"
               : modo === "marcar"
                 ? idx + 1 < pares.length
                   ? "Guardar y siguiente"
                   : "Guardar y terminar"
-                : "Guardar el par"}
-      </button>
-      <p className="text-xs text-muted">
-        {modo === "marcar" ? (
-          <>
-            Dos cosas por look: el 👍/👎 de cada lado ({marcados} de{" "}
-            {nLooks * 2}) y cuál de los dos te late más. Los dos hacen falta
-            para guardar — una marca a medias deja el marcador diciendo “0 👎”
-            cuando lo que pasó es que nadie los miró. <strong>El voto de este
-            par no se toca</strong>: ya está emitido y su corrida ya se puede
-            leer, así que tu preferencia se guarda como lectura aparte y no
-            entra en el veredicto.
-          </>
+                : idx + 1 < pares.length
+                  ? `Guardar el par ${yaHechos + idx + 1} → siguiente`
+                  : "Guardar el último par"}
+          </button>
+        ) : !votable ? (
+          <p className="py-2 text-center text-xs text-muted">
+            Este look no se vota: solo un lado lo armó. Pasa al siguiente.
+          </p>
         ) : (
           <>
-            Votas look contra look, y para guardar hay que votar{" "}
-            {comparables.length === 1 ? "el que hay" : `los ${comparables.length}`}:
-            el resultado del PAR sale por mayoría, así que un par decidido solo
-            por el primero deja los otros sin mirar. La unidad de la prueba
-            sigue siendo el par, porque los looks de un lado salen de una sola
-            llamada al motor y no son votos independientes. El 👍/👎 es aparte y
-            sigue siendo opcional — llevas {marcados} en este par.
+            <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted">
+              Look {look + 1} · ¿cuál te late más?
+              {modo === "marcar" ? " (no cambia el voto del par)" : ""}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {(["izq", "empate", "der"] as const).map((op) => (
+                <button
+                  key={op}
+                  onClick={() => votarLook(op)}
+                  className={`rounded-xl border py-3 text-sm font-semibold ${
+                    votos[look] === op
+                      ? "border-ink bg-ink text-bg"
+                      : "border-line bg-surface text-ink active:bg-tile"
+                  }`}
+                >
+                  {op === "izq" ? "Gana A" : op === "der" ? "Gana B" : "Empate"}
+                </button>
+              ))}
+            </div>
+            {faltan.length ? (
+              <p className="text-center text-[11px] text-muted">
+                {faltan.length === 1
+                  ? `falta el look ${faltan[0] + 1}`
+                  : `faltan los looks ${listaEnEspanol(faltan.map((i) => i + 1))}`}
+                {modo === "marcar" ? " (👍/👎 de los dos lados y tu preferencia)" : ""}
+              </p>
+            ) : null}
           </>
         )}
+      </div>
+
+      <p className="text-[11px] leading-relaxed text-muted">
+        {modo === "marcar"
+          ? "El voto de este par ya está emitido y no se toca; aquí sólo se completa el 👍/👎 de cada look y tu preferencia, que se guarda aparte."
+          : "Se vota look contra look y el par sale por mayoría. El 👍/👎 y los comentarios son aparte y opcionales — son lo que más se lee después."}
       </p>
     </div>
   );
