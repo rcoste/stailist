@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.269.3] - 2026-08-22
+
+### Added — atajos de comentario al votar
+
+Tres chips de un toque bajo cada look, con el texto de Roberto: "bien, pero
+muy formal para la ocasión", "bien, pero muy casual para la ocasión" y
+"depende del tipo de plan — así no puedo decidir". Un toque lo pone en el
+comentario (y se puede seguir escribiendo); otro lo quita. El tercero es su
+duda convertida en dato: si se repite en un brief, el problema es el brief,
+no el motor.
+
+Anotado, sin tocar: "cita · semiformal" le resulta ambiguo al votar ("¿cena o
+trabajo?") — y es exactamente lo que recibe el motor. Reescribir el pool con
+el contexto que daría una persona real es pool v9 y rompe la comparabilidad
+con las rondas de v8; va después de que se vote la ronda en curso, si Roberto
+lo pide.
+
 ## [0.2.269.2] - 2026-08-22
 
 ### Changed — votar en desktop: los tres looks en filas, el voto en medio

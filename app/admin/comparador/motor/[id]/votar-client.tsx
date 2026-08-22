@@ -57,6 +57,13 @@ export type ParParaVotar = {
 
 type PorLook<T> = Record<number, T>;
 
+/** Lo que Roberto escribe una y otra vez, a un toque. El texto es el suyo. */
+const ATAJOS_COMENTARIO = [
+  "bien, pero muy formal para la ocasión",
+  "bien, pero muy casual para la ocasión",
+  "depende del tipo de plan — así no puedo decidir",
+];
+
 /** "1, 2 y 3" — el botón nombra lo que falta, no cuenta cuántos faltan. */
 function listaEnEspanol(ns: number[]): string {
   if (ns.length <= 1) return String(ns[0] ?? "");
@@ -325,6 +332,37 @@ function Lado({
               ))}
             </div>
           ) : null}
+
+          {/* ATAJOS DE COMENTARIO. Roberto, votando: "ponme algún atajo de
+              comentario que sea 'bien, pero muy formal'" — el outfit se
+              sostiene y lo que falla es el registro frente a la ocasión. Y el
+              tercero es su duda convertida en dato: "es una cita, ¿qué tipo de
+              cita? hay muchísimos contextos que influyen". Si ese chip se
+              repite en un brief, el problema es el brief, no el motor. Un
+              toque lo pone en el comentario; se puede seguir escribiendo. */}
+          <div className="flex flex-wrap gap-1">
+            {ATAJOS_COMENTARIO.map((a) => {
+              const puesto = (comentario ?? "").includes(a);
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() =>
+                    setComentario(
+                      puesto
+                        ? (comentario ?? "").replace(a, "").replace(/^[\s·]+|[\s·]+$/g, "")
+                        : [comentario?.trim(), a].filter(Boolean).join(" · ")
+                    )
+                  }
+                  className={`rounded-full border px-2 py-1 text-[11px] font-medium ${
+                    puesto ? "border-ink bg-ink text-bg" : "border-line text-muted"
+                  }`}
+                >
+                  {a}
+                </button>
+              );
+            })}
+          </div>
 
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
             {!comentarioAbierto ? (
