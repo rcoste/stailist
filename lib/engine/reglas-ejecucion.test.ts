@@ -1369,3 +1369,68 @@ describe("zona-sin-cubrir: el look tiene que vestir a alguien", () => {
     ).not.toContain("zona-sin-cubrir");
   });
 });
+
+describe("negro-con-beige — tres veces en la ronda 8559ec99", () => {
+  const CHINOS = p("Chinos beige", "#C8B89A", { color: "beige" });
+  it("mocasín y cinturón negros con chinos beige: dispara y nombra a los dos", () => {
+    const v = revisarEjecucion([
+      p("Camisa azul rey de manga corta", "#2A4D9B", { color: "azul" }),
+      CHINOS,
+      p("Mocasines negros", "#1A1A1A", { color: "negro" }),
+      p("Cinturón negro", "#1A1A1A", { color: "negro" }),
+    ]);
+    const r = v.find((x) => x.regla === "negro-con-beige");
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Mocasines negros");
+    expect(r!.detalle).toContain("Cinturón negro");
+  });
+  it("con mocasín burdeos y cinturón café NO dispara (los chinos beige que aprobó)", () => {
+    const v = revisarEjecucion([
+      p("Camisa de lino esmeralda", "#1F6B4A", { color: "esmeralda" }),
+      CHINOS,
+      p("Mocasines burdeos", "#5C2A2E", { color: "burdeos" }),
+      p("Cinturón café", "#5C4433", { color: "café" }),
+    ]);
+    expect(v.find((x) => x.regla === "negro-con-beige")).toBeUndefined();
+  });
+  it("zapato negro con pantalón negro o marino no es asunto de esta regla", () => {
+    const v = revisarEjecucion([
+      p("Camisa blanca", "#FAFAF7", { color: "blanco" }),
+      p("Chinos azul marino", "#27425F", { color: "azul marino" }),
+      p("Mocasines negros", "#1A1A1A", { color: "negro" }),
+    ]);
+    expect(v.find((x) => x.regla === "negro-con-beige")).toBeUndefined();
+  });
+});
+
+describe("mezclilla-con-saco — 'hazme el favor'", () => {
+  const MEZCLILLA = p("Camisa de mezclilla", "#7D9BB5", { color: "azul mezclilla" });
+  it("camisa de mezclilla bajo blazer: dispara", () => {
+    const v = revisarEjecucion([
+      MEZCLILLA,
+      p("Blazer marino", "#27425F"),
+      p("Pantalón negro", "#1A1A1A"),
+      p("Mocasines negros", "#1A1A1A"),
+    ]);
+    expect(v.map((x) => x.regla)).toContain("mezclilla-con-saco");
+  });
+  it("y bajo saco de traje también", () => {
+    const v = revisarEjecucion([
+      MEZCLILLA,
+      p("Saco de traje gris carbón", "#3A3A3A"),
+      p("Pantalón de traje gris carbón", "#3A3A3A"),
+      p("Botines Chelsea", "#6B4A33"),
+    ]);
+    expect(v.map((x) => x.regla)).toContain("mezclilla-con-saco");
+  });
+  it("bajo un suéter o una chaqueta la mezclilla es correcta (los que aprobó)", () => {
+    const v = revisarEjecucion([
+      MEZCLILLA,
+      p("Suéter de lana negro", "#111111"),
+      p("Jeans negros", "#1A1A1A"),
+      p("Chaqueta negra con cierre", "#1a1a1a"),
+      p("Botines de cuero marrón", "#5a3826"),
+    ]);
+    expect(v.find((x) => x.regla === "mezclilla-con-saco")).toBeUndefined();
+  });
+});
