@@ -61,7 +61,25 @@ import { REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
 // que miraba, así que un look que CUMPLÍA una regla le parecía mejorable
 // rompiéndola. Ahora las recibe completas (REGLAS_DE_LA_CASA, co-ubicada con el
 // código que las ejecuta) con la orden de no proponer arreglos que las rompan.
-export const JUEZ_STYLIST_VERSION = "js3";
+// js3 → js4 (2026-08-22), tras el primer EXAMEN contra los votos de Roberto
+// (scripts/examen-juez.ts, 95 looks: 27 👎 / 68 👍). El diagnóstico: VE PERO NO
+// PESA. Con cualquier hallazgo cazaba el 85% de sus 👎; con "rompe", el 22%.
+// "Camisa negra para una boda es como de cholo… fatal" era color/resta;
+// "mezclilla con blazer, hazme el puto favor" era plano/resta. Y al revés,
+// marcaba con "resta" el 56% de los looks que él aprobó — casi siempre por lo
+// mismo: cinturón negro con mocasín burdeos (lo aprueba siempre), reloj de
+// caucho en oficina, traje entero en cita, "plano" (18 de 21 veces en looks
+// que le gustaron). El arreglo no es un umbral numérico: es darle SU vara —
+// qué le hace decir "ni al caso" y qué deja pasar sin comentario— con los
+// casos reales, y sacar "plano" de la lista de lo que pesa.
+// js4 → js5 (2026-08-22, mismo día). js4 subió "rompe" de 22% a 44% de sus 👎
+// pero las falsas alarmas graves pasaron de 7% a 25%, y al leerlas eran dos
+// cosas: generalizó "café en total black" a "café con jeans negros" (que él
+// aprueba siempre), y siguió marcando negro+burdeos y dejando pasar el lino en
+// oficina porque REGLAS_DE_LA_CASA decía lo contrario en las dos. Se corrigió
+// la fuente (las dos líneas de la casa) y aquí se dice qué defecto y qué nivel
+// lleva cada caso, para que no los reclasifique a su gusto.
+export const JUEZ_STYLIST_VERSION = "js5";
 
 /** El vocabulario de defectos es el MISMO que Roberto usa al votar
  *  (DEFECTOS_MOTOR). Reusarlo es lo que hace que los hallazgos del juez y sus
@@ -107,7 +125,7 @@ Algo que un stylist bueno señalaría en voz alta. Cada hallazgo lleva:
 - pieza: la prenda que falla, por su nombre tal como te la di. Si el problema es del conjunto y no de una pieza, escribe "el conjunto".
 - problema: qué está mal, concreto. "La camisa negra deja el cuello sin contraste contra el suéter marino", no "los colores no combinan".
 - arreglo: qué cambiarías. UNA cosa, ejecutable. "Camisa blanca o azul claro en su lugar."
-- gravedad: "rompe" si por eso solo no saldrías así; "resta" si lo empeora pero se sostiene; "detalle" si es afinar.
+- gravedad: "rompe" si por eso solo no saldrías así; "resta" si lo empeora pero se sostiene; "detalle" si es afinar. Abajo está LA VARA DE LA PERSONA para cada nivel — úsala, no la tuya.
 - defecto: UNA etiqueta de esta lista cerrada: ${DEFECTOS_MOTOR.map((d) => `${d.clave} (${d.label})`).join(", ")}.
 
 LA VARA, Y ES LA PARTE QUE MÁS IMPORTA
@@ -116,6 +134,27 @@ La persona para la que trabajas aprueba alrededor del 85% de los looks que ve. E
 Así que la pregunta no es "¿qué le mejoraría?" sino "¿qué le diría a un colega EN VOZ ALTA?". A un look correcto no se le dice nada. La mayoría de los looks no tienen ningún hallazgo, y devolver la lista vacía es la respuesta correcta y frecuente.
 
 Y reserva "rompe" para lo que de verdad lo tira: saldrías a detener a la persona en la puerta. Un look que se sostiene aunque mejorable NO tiene un hallazgo que rompe.
+
+LA VARA DE LA PERSONA, medida con sus propios votos. Esto es lo que ELLA llama "ni al caso", "terrible", "no va" — y por tanto es "rompe" con el defecto que se indica, aunque a ti te parezca un detalle. Esta lista MANDA sobre tu criterio general:
+- [ocasion] Registros que no se hablan: camisa de mezclilla con blazer, saco o pantalón de vestir; camisa de vestir (popelina, cuello) debajo de una overshirt; overshirt encima de un suéter; tenis de color o deportivos con piezas de traje.
+- [capas] Manga corta debajo de chamarra, bomber o chaqueta.
+- [color] Zapato o cinturón NEGRO con chinos beige o caqui. Botín, cinturón o derby CAFÉ/chocolate en un look negro de arriba abajo (pantalón negro + capa negra).
+- [ocasion] En boda o ceremonia: camisa negra, o traje sin corbata.
+- [clima] Con 8° o menos: blazer, chaqueta ligera, softshell o bomber como ÚNICA capa exterior. Si lleva abrigo de lana o acolchado, el frío está resuelto aunque los tenis no te gusten.
+- [clima] Con lluvia sin paraguas: tenis de tela o malla.
+Esto es lo que ella llama "no me convence", "me genera conflicto" — "resta", nunca "rompe":
+- [ocasion] Lino en la oficina, aunque sea una sola pieza. Márcalo SIEMPRE; no lo dejes pasar.
+- [capas] Demasiado abrigado o demasiadas capas para la temperatura; demasiado formal o "bulky" para una cita.
+- [clima] Mocasín escotado con lluvia.
+Y esto LO APRUEBA SIN COMENTARIO — si lo marcas, es ruido; como mucho "detalle", y casi siempre nada:
+- Cinturón negro con mocasines burdeos. Burdeos no es café: con negro pasa. Tampoco cinturón café con mocasín burdeos.
+- Botines o cinturón café con jeans negros o con suéter vino en un look casual. Solo rompe dentro de un look negro completo.
+- Tenis con abrigo de lana a 8°. Camisa de mezclilla debajo de un suéter.
+- Reloj negro de caucho en oficina, diario o cita sin traje. Solo con piezas de sastre o en formal/gala es un hallazgo, y aun ahí es "detalle".
+- Traje completo en una cita, incluso con camisa negra. Le gusta; no lo llames "demasiado formal" ni "error de etiqueta".
+- Corbata de punto en boda: "detalle" como mucho.
+- Un look "plano", "monótono" o "sin punto de atención". Para esta persona el tonal y el total black son decisiones, no defectos: NO es un hallazgo.
+- Lana o pantalón de vestir con lluvia templada; camiseta de algodón bajo un suéter "que no abriga". Nada de eso le importa.
 
 LO QUE NO ES UN HALLAZGO
 Gusto personal tuyo. Que no sea el look que TÚ habrías armado no lo hace un error.

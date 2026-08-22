@@ -236,11 +236,19 @@ Para cada look se cruzó el voto de Roberto con la crítica que el juez stylist
 ya tenía guardada. Base: 27 👎 y 68 👍. *(Un juez que dijera "todo bien" siempre
 acertaría 72% — por eso la cifra que importa es la primera columna.)*
 
-| umbral del juez | caza de los 27 👎 | falsa alarma sobre los 68 👍 |
+| umbral del juez | js3 (guardado) | **js5** (2026-08-22) |
 |---|---|---|
-| sólo "rompe" | 6 (22%) | 5 (7%) |
-| "rompe" o "resta" | 19 (70%) | 38 (56%) |
-| cualquier hallazgo | 23 (85%) | 47 (69%) |
+| sólo "rompe" — caza 👎 / falsa alarma 👍 | 22% / 7% | **48% / 12%** |
+| "rompe" o "resta" — caza 👎 / falsa alarma 👍 | 70% / 56% | **85% / 40%** |
+| cualquier hallazgo — caza 👎 / falsa alarma 👍 | 85% / 69% | 89% / 66% |
+
+Se mide con `npx tsx scripts/examen-juez.ts` (en seco, $0) o `--correr` (el
+juez vigente sobre los mismos looks, ~$0.08). **js5 se afinó mirando estos 95
+looks, así que su número es optimista: el que vale es el de la próxima ronda
+votada.** Lo que cambió de js3 a js5: la vara de Roberto escrita con sus casos
+(qué le hace decir "ni al caso" y qué aprueba sin comentario), "plano" fuera de
+lo que pesa, y dos líneas de REGLAS_DE_LA_CASA que sus votos refutaron
+(burdeos no es café; una pieza de lino en oficina ya resta).
 
 **Diagnóstico: el juez ve, pero no pesa.** Ejemplos textuales: "camisa negra
 para una boda es como de cholo… fatal, fatal, fatal" → el juez lo puso
@@ -286,13 +294,10 @@ casa) y los grados en el brief.
    v0.2.267.0: `LookMotor.prendas` se congela al generar (`conNombres`), el
    script que juzga lo usa de respaldo, y los 102 lados vivos se rellenaron. Los
    203 huérfanos quedan como están: no hay de dónde sacar el nombre.
-3. **Calibrar la GRAVEDAD del juez** (etapa 1). El examen del 08-22 sobre los 95
-   looks utilizables ya dio su diagnóstico: el juez **ve pero no pesa**.
-   Con "cualquier hallazgo" caza 23 de 27 👎 (85%), pero con su "rompe" sólo 6
-   (22%) — y "rompe o resta" marcaría el 56% de los looks que a Roberto le
-   gustaron. Lo que falla es el umbral, no la vista. Además gasta su severidad
-   en `plano` (21 hallazgos, el defecto más frecuente y el que a propósito NO
-   es defecto).
+3. ✅ **Calibrar la GRAVEDAD del juez** — HECHO v0.2.269.0 (js5), ver 6-bis.
+   Pendiente de VALIDAR en la próxima ronda votada: si "rompe" se sostiene
+   cerca de 45-50% de caza con ≤15% de falsa alarma sobre looks que no vio,
+   el juez puede empezar a votar con correa (etapa 2).
 4. **Abrigo de verdad para el frío.** Validado por sus votos: los 3 looks con el
    abrigo de lana → 👍👍👍; los de chaqueta ligera a 8° → "ninguno está bien
    para ese frío". Las prendas ya traen `temporada`.

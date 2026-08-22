@@ -1129,7 +1129,7 @@ export function revisarEjecucion(
  */
 export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; el motor las ejecuta y las repara solo):
 - En clóset de HOMBRE, un suéter o cuello alto de punto lleva base debajo (camiseta/camisa). Que la traiga NO es un defecto — es la regla; nunca recomiendes quitarla. En mujer, el punto a piel es elección normal.
-- Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita.
+- Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita. Dos excepciones medidas con votos: burdeos NO es café (cinturón negro con mocasín burdeos pasa), y un botín café con jeans negros en un look casual pasa — lo que rompe es el café dentro de un look NEGRO de arriba abajo.
 - El reloj deportivo (caucho, smart) no va con piezas de sastre ni en formal/gala. En un día casual sí pasa — no lo marques ahí.
 - La corbata de punto no va a ceremonia (formal/gala). En cita u oficina es elección correcta.
 - En evento formal el traje va completo; saco y pantalón de juegos distintos son separates: bien para oficina, cortos para una boda.
@@ -1138,7 +1138,7 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - El mocasín escotado no va en frío ni lluvia; con lluvia manda el calzado que aguanta agua y cubre el tobillo.
 - Una prenda por zona, ninguna zona del cuerpo sin cubrir.
 - Un blazer no es abrigo: con frío real va un abrigo de verdad encima.
-- Lino de pies a cabeza no es de oficina: una pieza de lino sí.
+- Lino de pies a cabeza en oficina rompe. Una sola pieza de lino en oficina se sostiene, pero a esta persona ya le incomoda ("habíamos quedado que lino no para el trabajo", cuatro veces): márcala como resta.
 - Máximo 1-2 colores protagonistas y el resto neutros; las familias de color del look se tienen que leer como decisión, no como accidente.
 
 Si tu arreglo contradice una de estas, NO lo propongas: propón el que la respete.`;

@@ -2,6 +2,44 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.269.0] - 2026-08-22
+
+### Changed — el juez stylist aprende la vara de Roberto (js5) + el examen del juez
+
+`scripts/examen-juez.ts`: cruza cada look del comparador que Roberto marcó
+👍/👎 con la crítica del juez, y reporta por umbral de gravedad cuántos 👎 caza
+y cuántos 👍 marca. En seco usa las críticas guardadas ($0); con `--correr`
+corre el juez vigente sobre los mismos looks (~$0.08 por 95). Es la medición
+que el doc del loop dice que se repite cada vez que el juez cambia.
+
+Primer examen (js3, 95 looks: 27 👎 / 68 👍): **ve pero no pesa** — con
+cualquier hallazgo cazaba el 85% de los 👎, con "rompe" el 22%. "Camisa negra
+para una boda es como de cholo… fatal" era `color/resta`. Y "plano" —el
+defecto que a propósito no es defecto— era su hallazgo más frecuente, 18 de 21
+veces en looks que a él le gustaron.
+
+js4 → js5, dos vueltas el mismo día:
+
+- El system lleva ahora LA VARA DE LA PERSONA con sus casos reales: qué le hace
+  decir "ni al caso" (mezclilla con blazer, negro con chinos beige, camisa
+  negra en boda, blazer como única capa a 8°…) y con qué defecto y nivel va
+  cada uno; qué es "resta" (lino en oficina, demasiadas capas); y qué aprueba
+  sin comentario (negro con burdeos, traje entero en cita, reloj de caucho en
+  diario, "plano").
+- Dos líneas de REGLAS_DE_LA_CASA que sus votos refutaron: burdeos no es café
+  (cinturón negro con mocasín burdeos pasa, y café con jeans negros en casual
+  también — lo que rompe es café en un look negro completo), y una sola pieza
+  de lino en oficina ya resta. js4 falló justo ahí porque la casa le decía lo
+  contrario.
+
+| umbral | js3 | js5 |
+|---|---|---|
+| "rompe": caza 👎 / falsa alarma 👍 | 22% / 7% | 48% / 12% |
+| "rompe o resta" | 70% / 56% | 85% / 40% |
+
+Se paró en dos vueltas a propósito: una tercera sobre los mismos 95 sería
+ajustar al examen. El número que vale es el de la próxima ronda votada.
+
 ## [0.2.268.0] - 2026-08-22
 
 ### Added — el retador "prompt anterior": lo nuevo tiene que ganarle a lo de ayer
