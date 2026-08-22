@@ -1235,50 +1235,17 @@ describe("full lino en oficina — dos veces con signos de admiración", () => {
 // que lee el juez. Una regla que mide bien y no se cablea es una regla que no
 // existe, y este repo ya perdió una así (la del tono repetido, borrada del
 // prompt sin que nada tronara).
-describe("colores-que-no-se-leen: el cableado", () => {
-  // "Carbón bajo cero" (2026-08-17), hex reales de producción.
-  const carbonBajoCero = [
-    p("Camisa negra", "#1A1A1A"),
-    p("Saco de traje gris carbón", "#3A3C42"),
-    p("Pantalón de vestir gris carbón", "#3A3C42"),
-    p("Suéter marino", "#1F2A44"),
-    p("Botines Chelsea café", "#6B4A33"),
-  ];
-
-  it("el look que originó la regla sale en las violaciones", () => {
-    const v = revisarEjecucion(carbonBajoCero);
-    expect(v.map((x) => x.regla)).toContain("colores-que-no-se-leen");
-  });
-
-  it("el detalle nombra las señales, para que el juez sepa qué reparar", () => {
-    const violacion = revisarEjecucion(carbonBajoCero).find(
-      (x) => x.regla === "colores-que-no-se-leen"
-    )!;
-    expect(violacion.detalle).toContain("4 familias de color");
-    expect(violacion.detalle).toContain("Botines Chelsea café");
-  });
-
-  it("y viaja al bloque que lee el juez", () => {
-    const bloque = bloqueEjecucion(carbonBajoCero).join("\n");
-    expect(bloque).toContain("[colores-que-no-se-leen]");
-  });
-
-  it("un look tonal legítimo NO la dispara", () => {
-    // El guardarraíl contra el falso positivo: una sola señal no basta.
+describe("colores-que-no-se-leen: retirada (2026-08-22)", () => {
+  // "Carbón bajo cero" fue el look que la originó. Hoy NO dispara: la regla se
+  // midió cinco rondas con su ablación y nunca se ganó el lugar. Si alguien la
+  // vuelve a cablear, este test lo dice — y pide su ronda.
+  it("el look que la originó ya no la dispara", () => {
     const v = revisarEjecucion([
-      p("Suéter negro", "#1A1A1A"),
-      p("Pantalón carbón", "#3A3C42"),
-      p("Abrigo gris oscuro", "#4A4C52"),
-      p("Botines negros", "#171717"),
-    ]);
-    expect(v.map((x) => x.regla)).not.toContain("colores-que-no-se-leen");
-  });
-
-  it("sin hex no inventa la violación", () => {
-    const v = revisarEjecucion([
-      { id: "a", attrs: { nombre: "Camisa" } },
-      { id: "b", attrs: { nombre: "Pantalón" } },
-      { id: "c", attrs: { nombre: "Zapato" } },
+      p("Camisa negra", "#1A1A1A"),
+      p("Saco de traje gris carbón", "#3A3C42"),
+      p("Pantalón de vestir gris carbón", "#3A3C42"),
+      p("Suéter marino", "#1F2A44"),
+      p("Botines Chelsea café", "#6B4A33"),
     ]);
     expect(v.map((x) => x.regla)).not.toContain("colores-que-no-se-leen");
   });

@@ -316,6 +316,8 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-22 | 2bba08e0 | v58 | prompt-anterior (v57) | **100%** vs 82% | pre-registrado "≥": **v58 sale** (pares 3-1, 2 empates). Ruido ±12: dice "no empeoró". js6 fuera de muestra: sólo 2 👎 en la ronda, rompe 0/2, falsa alarma 1/17 — muestra chica, se sigue midiendo |
 | — | — | — | — | — | **POOL v9 desde aquí: los planes dicen lo que diría una persona. Las aprobaciones de arriba (v8) y las de abajo (v9) NO se comparan.** |
 | — | — | — | — | — | **CLÓSET DE REFERENCIA v1 desde aquí (129 prendas, 2026-08-22). v58 re-congelado sobre él. Corte de línea base otra vez.** |
+| 08-22 | 075a3f12 | v58 | sin-coherencia-cromatica | 64% vs **79%** | **línea base con el clóset v1: 72%** (25 looks). La regla de color, 5ª ronda: 2-2, 2 empates, y el lado SIN ella aprobó más → **retirada en v59** (pre-registrado desde v53) |
+| 08-22 | 08f46d3e | v58 | reparar-primero | (a voto) | pre-registrado: `reparar-primero` entra si ≥. Medido sin voto: el juez reescribió 80% en producción vs 47% con el código primero |
 
 ---
 
@@ -358,9 +360,18 @@ casa) y los grados en el brief.
 6. ⬜ **Manga corta bajo chamarra** (2 👎 / 1 👍). Y sin dato: `manga` viene
    vacío en sus prendas de lino; el juez lo ve en la foto, el código no.
 7. ⬜ **Café en total black** (2 👎 / ~1 👍). Candidata, aún floja.
-8. ⬜ **`colores-que-no-se-leen`**: 2 👎 / 4 👍 y sin reparador; además VETA
-   reparaciones buenas (rechazaba la camisa blanca y el abrigo marino). La
-   coherencia cromática lleva 4 rondas sin ganar. Primera candidata a salir.
+8. ✅ **`colores-que-no-se-leen` RETIRADA** (v59, v0.2.272.0): cinco rondas sin
+   ganar; en la quinta el lado sin ella aprobó más (79% vs 64%).
+9. ⬜ **Candidatas nuevas de la ronda 075a3f12** (sus comentarios, sin medir
+   todavía): camisa azul en boda de noche (3×: "sería mejor blanco"); cuello
+   de tortuga con camisa debajo ("no va… o al menos no así"); mocasín café con
+   traje negro ("ya te lo había dicho" — 3ª vez de café-en-total-black);
+   charol fuera de smoking/jaquet/frac ("investiga": tiene razón — el charol
+   es de etiqueta, no de traje de calle); traje cruzado sin corbata ("se ve
+   raro… investigar": el problema que él vio es que iba ABIERTO — un cruzado
+   se lleva abotonado; sin corbata pasa si va cerrado); abrigo impermeable
+   técnico a 17° "demasiado caluroso". Y uno de dial, no de regla: "está
+   abusado el traje completo + algo; mejor blazers para smart casual".
 
 **Pool v9 — EN MAIN desde v0.2.270.1 (2026-08-22), tras votarse 2bba08e0.
 v58 quedó congelado bajo v9 como línea base del retador `prompt-anterior`.** Los `plan` de los eventos pasan de

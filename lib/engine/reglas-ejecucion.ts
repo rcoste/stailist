@@ -38,7 +38,6 @@ import type { EngineItem } from "./prompt";
 import type { Clima } from "./recetario";
 import { tipoDePrenda, type Zona } from "./vocabulario";
 import { mismoColorAOjo, oklch } from "./color-perceptual";
-import { medirCoherencia, rompeCoherencia } from "./coherencia-cromatica";
 
 export type Violacion = { regla: string; detalle: string };
 
@@ -1153,29 +1152,16 @@ export function revisarEjecucion(
     }
   }
 
-  // 23. El look se lee como una decisión, no como cinco cosas oscuras juntas.
-  //
-  //     LA ÚNICA REGLA DE ARMONÍA DE COLOR QUE EXISTE AQUÍ. Las otras dos que
-  //     tocan color son puntuales (que los cueros dialoguen; la corbata de un
-  //     funeral), así que hasta hoy el color general era enteramente criterio
-  //     del modelo — y el prompt sólo sabía contar SATURACIÓN, nunca contraste.
-  //     Con esa aritmética un look de cinco neutros oscuros sacaba nota
-  //     perfecta. Ver lib/engine/coherencia-cromatica para el caso que lo pidió
-  //     y para el porqué de exigir DOS señales de tres.
-  //
-  //     Medida antes de cablearla contra los 148 looks reales con hex: marca el
-  //     6.8%, y CERO de los 25 que tienen 👍 o "me lo puse".
-  const medida = ctx.sinCoherenciaCromatica
-    ? null
-    : medirCoherencia(items.map((i) => ({ nombre: nombre(i), hex: i.attrs.color_hex })));
-  if (rompeCoherencia(medida)) {
-    v.push({
-      regla: "colores-que-no-se-leen",
-      detalle: `Los colores del look no se leen como una decisión: ${medida!.senales.join(
-        "; "
-      )}. Dale un punto de descanso al ojo —una pieza que rompa el tono, o quita la que va sola en su temperatura— en vez de apilar oscuros distintos.`,
-    });
-  }
+  // 23. RETIRADA (2026-08-22): `colores-que-no-se-leen`, la regla de armonía
+  //     de color de v53. Se midió cinco rondas con su ablación
+  //     (sin-coherencia-cromatica) y NUNCA se ganó el lugar: empate, empate,
+  //     empate, perdió 3-1, y en la quinta —ya con el clóset de referencia—
+  //     el lado sin ella aprobó más (79% contra 64%). Estaba pre-registrado
+  //     desde que nació: "si apagarla gana, se revierte". Además vetaba
+  //     reparaciones correctas (rechazaba la camisa blanca y el abrigo marino
+  //     como arreglos) y no tenía reparador. La medición (lib/engine/
+  //     coherencia-cromatica.ts) se queda como biblioteca, por si vuelve con
+  //     otra forma; aquí ya no dispara nada.
 
   return v;
 }
@@ -1212,7 +1198,6 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - Una prenda por zona, ninguna zona del cuerpo sin cubrir.
 - Un blazer no es abrigo: con frío real va un abrigo de verdad encima.
 - Lino de pies a cabeza en oficina rompe. Una sola pieza de lino en oficina se sostiene, pero a esta persona ya le incomoda ("habíamos quedado que lino no para el trabajo", cuatro veces): márcala como resta.
-- Máximo 1-2 colores protagonistas y el resto neutros; las familias de color del look se tienen que leer como decisión, no como accidente.
 
 Si tu arreglo contradice una de estas, NO lo propongas: propón el que la respete.`;
 

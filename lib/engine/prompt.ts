@@ -355,7 +355,13 @@ import {
 // y `mezclilla-con-saco` (2 👎 / 0 👍), y el reparador aprende
 // `blazer-no-es-abrigo`. Primera versión que sale por el proceso completo:
 // ablación → ronda "prompt-anterior" (v57 congelado) → voto de Roberto.
-export const PROMPT_VERSION = "v58";
+// v59 (2026-08-22): se RETIRA `colores-que-no-se-leen` (la regla de armonía de
+// color de v53) del bloque de reglas verificadas. Cinco rondas con su ablación
+// y nunca se ganó el lugar; en la quinta, el lado sin ella aprobó más (79% vs
+// 64%). Pre-registrado en v53: "si apagarla gana, se revierte". El texto del
+// generador sigue siendo el de v53; sube la versión porque lo que lee el juez
+// cambió.
+export const PROMPT_VERSION = "v59";
 
 export type EngineItem = {
   id: string;

@@ -227,32 +227,16 @@ describe("sinRepararEnCodigo — la variante que mide el cambio de v47", () => {
   });
 });
 
-describe("sinCoherenciaCromatica — la variante que mide la regla de color de v53", () => {
-  // La regla nació de un look real ("Carbón bajo cero") y de una queja concreta:
-  // "al usar tantos colores es cuando ya se rompe". Marca el 6.8% de los looks
-  // históricos y CERO de los 25 que tienen 👍 — pero eso es evidencia de que no
-  // hace daño, no de que ayude. Eso lo dice el comparador, no yo.
-  //
-  // OJO CON LA DIRECCIÓN: producción ya lleva la regla, así que el RETADOR es
-  // apagarla. Si el retador gana, la regla estorba y se revierte — igual que la
-  // regla dura de marino+negro (v5 → v6), que era mito.
-  it("la variante existe en el catálogo con su flag", async () => {
+describe("colores-que-no-se-leen — retirada tras cinco rondas sin ganarse el lugar", () => {
+  // Nació en v53 con su ablación pre-registrada ("si apagarla gana, se
+  // revierte"). Cinco rondas: empate, empate, empate, 3-1 en contra y, con el
+  // clóset de referencia, 79% de aprobación sin ella contra 64% con ella.
+  it("la variante ya no está en el catálogo", async () => {
     const { VARIANTES_MOTOR } = await import("@/lib/comparador/motor");
-    const v = VARIANTES_MOTOR.find((x) => x.clave === "sin-coherencia-cromatica");
-    expect(v).toBeDefined();
-    expect(v!.opciones).toMatchObject({ sinCoherenciaCromatica: true });
+    expect(VARIANTES_MOTOR.find((x) => x.clave === "sin-coherencia-cromatica")).toBeUndefined();
   });
 
-  it("cambia UNA sola cosa: no toca modelo ni otros flags", async () => {
-    const { VARIANTES_MOTOR } = await import("@/lib/comparador/motor");
-    const v = VARIANTES_MOTOR.find((x) => x.clave === "sin-coherencia-cromatica")!;
-    expect(v.modeloId).toBeUndefined();
-    expect(Object.keys(v.opciones ?? {})).toEqual(["sinCoherenciaCromatica"]);
-  });
-
-  it("el flag de verdad apaga la regla, no solo existe", async () => {
-    // El candado que importa: una variante que declare el flag y no lo cablee
-    // mediría dos veces lo mismo y el marcador saldría empatado por accidente.
+  it("el look que la originó ya no dispara nada de color", async () => {
     const { revisarEjecucion } = await import("./reglas-ejecucion");
     const carbonBajoCero = [
       { id: "1", attrs: { nombre: "Camisa negra", color_hex: "#1A1A1A" } },
@@ -261,12 +245,7 @@ describe("sinCoherenciaCromatica — la variante que mide la regla de color de v
       { id: "4", attrs: { nombre: "Suéter marino", color_hex: "#1F2A44" } },
       { id: "5", attrs: { nombre: "Botines café", color_hex: "#6B4A33" } },
     ];
-    const con = revisarEjecucion(carbonBajoCero).map((x) => x.regla);
-    const sin = revisarEjecucion(carbonBajoCero, {
-      sinCoherenciaCromatica: true,
-    }).map((x) => x.regla);
-    expect(con).toContain("colores-que-no-se-leen");
-    expect(sin).not.toContain("colores-que-no-se-leen");
+    expect(revisarEjecucion(carbonBajoCero).map((x) => x.regla)).not.toContain("colores-que-no-se-leen");
   });
 });
 

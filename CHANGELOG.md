@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.272.0] - 2026-08-22
+
+### Removed — `colores-que-no-se-leen`: la regla de color se retira tras cinco rondas (v59)
+
+Nació en v53 con su ablación pre-registrada: "si apagarla gana, se revierte".
+Cinco rondas con la variante `sin-coherencia-cromatica`: empate, empate,
+empate, 3-1 en contra, y en la quinta —la primera con el clóset de referencia
+de 129 prendas— **el lado sin la regla aprobó más: 79% contra 64%**. Nunca se
+ganó el lugar. Además vetaba reparaciones correctas (rechazaba la camisa
+blanca y el abrigo marino como arreglos del reparador) y no tenía reparación
+propia.
+
+Se retira del bloque de reglas verificadas y de REGLAS_DE_LA_CASA; la variante
+sale del catálogo (las corridas viejas conservan su copia). La medición
+(`lib/engine/coherencia-cromatica.ts`) se queda como biblioteca. El texto del
+generador sigue siendo el de v53; la versión sube a v59 porque lo que lee el
+juez cambió. v58 ya está congelado sobre el clóset v1 como "prompt anterior".
+
+**Línea base con el clóset de referencia v1: 72%** (ronda 075a3f12, 25 looks
+marcados), contra el 91-100% del clóset de 60. Más prendas, más formas de
+equivocarse: ésta es la vara de aquí en adelante. Las candidatas nuevas que
+dejaron sus comentarios están en el doc (§8, punto 9).
+
 ## [0.2.271.0] - 2026-08-22
 
 ### Added — conversación B, medible: dos variantes del juez de producción
