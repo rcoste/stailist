@@ -332,6 +332,17 @@ casa) y los grados en el brief.
    reparaciones buenas (rechazaba la camisa blanca y el abrigo marino). La
    coherencia cromática lleva 4 rondas sin ganar. Primera candidata a salir.
 
+**Pool v9, preparado en la rama `pool-v9` (2026-08-22), se mergea DESPUÉS
+de que Roberto vote la ronda 2bba08e0.** Los `plan` de los eventos pasan de
+etiqueta de catálogo ("una cita en un restaurante") a lo que diría una persona
+en el wizard ("una cita para cenar con alguien que me gusta — es la segunda
+vez que salimos; restaurante de mantel, viernes a las 9"). Roberto: "¿qué tipo
+de cita? hay muchísimos contextos que influyen" — y el motor recibía el mismo
+texto que él. Consecuencias: (1) las aprobaciones de v8 y v9 no se comparan
+entre sí — la bitácora arranca línea base nueva; (2) hay que **re-congelar v57
+bajo pool v9** (`scripts/prompt-congelar.ts`) antes de la siguiente ronda con
+`prompt-anterior`, porque el congelado de v8 ya no casa.
+
 **Conversaciones abiertas** (no son tareas): el rol del juez de producción
 (¿recompone o sólo detecta? mete 5 violaciones por 3 que arregla), versionar el
 prompt del juez (hoy no se versiona), y el contexto por persona.
