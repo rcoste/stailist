@@ -297,7 +297,19 @@ const CLIMAS = {
  * criterio. Y entra un PAR ESPEJO a mismo clima (templado con cliente / sin
  * cliente): solo cambia el flag, así que mide directo si el motor distingue.
  */
-export const POOL_VERSION = "v8";
+/**
+ * v8 → v9 (2026-08-22): LOS PLANES DICEN LO QUE DIRÍA UNA PERSONA. Roberto,
+ * votando: "pone 'cita' — ¿qué tipo de cita? ¿para cenar o de trabajo? Hay
+ * muchísimos contextos que influyen en si el outfit es correcto". Y tenía
+ * razón dos veces: él no podía decidir, y el motor recibía exactamente el
+ * mismo texto, así que tampoco. El wizard de producción pregunta el detalle
+ * ("dime a dónde apunta la cita", "dime cuánto pesa la mesa", "dime qué tipo
+ * de fiesta es") y el pool mandaba una etiqueta de catálogo. Ahora cada `plan`
+ * es la respuesta que una persona real daría a esa pregunta: con quién, dónde,
+ * a qué hora, qué hay en juego. Las etiquetas y el resto del brief no cambian;
+ * las rondas de v8 y v9 NO son comparables entre sí en aprobación absoluta.
+ */
+export const POOL_VERSION = "v9";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -347,7 +359,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     objective: "evento",
     momento: "noche",
     weather: CLIMAS.templado,
-    plan: "una cita en un restaurante",
+    plan: "una cita para cenar con alguien que me gusta — es la segunda vez que salimos; restaurante de mantel, viernes a las 9",
     tipoEvento: "cita",
     formality: "semiformal",
   },
@@ -363,7 +375,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     objective: "evento",
     momento: "noche",
     weather: CLIMAS.templado,
-    plan: "una boda de noche, en salón",
+    plan: "la boda de un amigo cercano, de noche en un salón; la invitación no trae dress code; voy como invitado, no de la familia",
     tipoEvento: "boda",
     formality: "formal",
   },
@@ -381,7 +393,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     objective: "evento",
     momento: "noche",
     weather: CLIMAS.frio,
-    plan: "cena con amigos en un restaurante",
+    plan: "cena con mis amigos de siempre en un restaurante casual, sábado en la noche; nadie a quien impresionar",
     tipoEvento: "cena-amigos",
     formality: "semiformal",
   },
@@ -415,7 +427,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     objective: "evento",
     momento: "dia",
     weather: CLIMAS.templado,
-    plan: "un funeral",
+    plan: "el funeral del papá de un amigo: misa y velorio por la tarde",
     tipoEvento: "funeral",
     formality: "formal",
   },
@@ -437,7 +449,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     objective: "evento",
     momento: "noche",
     weather: CLIMAS.frio,
-    plan: "una fiesta en casa de un amigo",
+    plan: "la fiesta de cumpleaños de un amigo en su casa; gente de mi edad, música y baile hasta tarde",
     tipoEvento: "fiesta",
     formality: "semiformal",
   },
@@ -449,7 +461,7 @@ const POOL_BRIEFS: BriefMotor[] = [
     objective: "evento",
     momento: "dia",
     weather: CLIMAS.templado,
-    plan: "una comida con un cliente",
+    plan: "comida con un cliente importante en el restaurante de un hotel, entre semana a las 2; él siempre va de traje",
     tipoEvento: "comida-trabajo",
     formality: "semiformal",
   },
