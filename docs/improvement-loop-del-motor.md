@@ -285,7 +285,8 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-18 | 283d8d44 | v53 | sin-coherencia-cromatica | **91%** | empate; la regla de color no se gana el lugar (1ª vez) |
 | 08-19 | 8f3647f3 | v55 | sin-reparar-codigo | 72% | el reparador se queda (cueros rotos 3 → 0) |
 | 08-19 | 8559ec99 | v56 | sin-coherencia-cromatica | **52%** | **regresión**: revertido a v53 (prompt v57). La regla de color pierde 3-1 (4ª ronda sin ganar) |
-| 08-22 | (pendiente) | v58 | prompt-anterior (v57) | — | **pre-registrado:** v58 sale si su aprobación ≥ la de v57 en la misma ronda; si pierde, se ablaciona regla por regla |
+| 08-22 | 2bba08e0 | v58 | prompt-anterior (v57) | **100%** vs 82% | pre-registrado "≥": **v58 sale** (pares 3-1, 2 empates). Ruido ±12: dice "no empeoró". js6 fuera de muestra: sólo 2 👎 en la ronda, rompe 0/2, falsa alarma 1/17 — muestra chica, se sigue midiendo |
+| — | — | — | — | — | **POOL v9 desde aquí: los planes dicen lo que diría una persona. Las aprobaciones de arriba (v8) y las de abajo (v9) NO se comparan.** |
 
 ---
 
@@ -309,7 +310,7 @@ casa) y los grados en el brief.
    Pendiente de VALIDAR en la próxima ronda votada: si "rompe" se sostiene
    cerca de 45-50% de caza con ≤15% de falsa alarma sobre looks que no vio,
    el juez puede empezar a votar con correa (etapa 2).
-4. 🔄 **v58 — EN RONDA (rama `motor-v58`, no está en main).** Lo que la
+4. ✅ **v58 — EN MAIN (v0.2.270.0)**, ganó la ronda 2bba08e0: 100% vs 82%. Lo que la
    ablación dijo de verdad (`scripts/ablacion-votos.ts`, 2026-08-22): **24 de
    sus 27 👎 no disparaban ninguna regla**, y la regla del abrigo NO estaba
    validada (chaqueta ligera a 8°: 1 👎 y 1 👍 — moneda al aire; lo que te
@@ -332,8 +333,8 @@ casa) y los grados en el brief.
    reparaciones buenas (rechazaba la camisa blanca y el abrigo marino). La
    coherencia cromática lleva 4 rondas sin ganar. Primera candidata a salir.
 
-**Pool v9, preparado en la rama `pool-v9` (2026-08-22), se mergea DESPUÉS
-de que Roberto vote la ronda 2bba08e0.** Los `plan` de los eventos pasan de
+**Pool v9 — EN MAIN desde v0.2.270.1 (2026-08-22), tras votarse 2bba08e0.
+v58 quedó congelado bajo v9 como línea base del retador `prompt-anterior`.** Los `plan` de los eventos pasan de
 etiqueta de catálogo ("una cita en un restaurante") a lo que diría una persona
 en el wizard ("una cita para cenar con alguien que me gusta — es la segunda
 vez que salimos; restaurante de mantel, viernes a las 9"). Roberto: "¿qué tipo

@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.270.1] - 2026-08-22
+
+### Changed — pool v9: los planes de los eventos dicen lo que diría una persona
+
+Roberto, votando: "pone 'cita' — ¿qué tipo de cita? ¿para cenar o de trabajo?
+Hay muchísimos contextos que influyen en si el outfit es correcto". Tenía
+razón dos veces: él no podía decidir, y el motor recibía exactamente el mismo
+texto. El wizard de producción pregunta el detalle; el pool mandaba una
+etiqueta de catálogo. Cada `plan` de evento es ahora la respuesta que daría
+una persona ("una cita para cenar con alguien que me gusta — es la segunda vez
+que salimos; restaurante de mantel, viernes a las 9"). Etiquetas, clima y
+formalidad no cambian.
+
+Consecuencias: las aprobaciones de rondas v8 y v9 no se comparan entre sí (la
+bitácora arranca línea base nueva), y v58 queda congelado bajo v9 para el
+retador `prompt-anterior`. Mergeado después de votarse la ronda 2bba08e0, como
+se acordó.
+
 ## [0.2.270.0] - 2026-08-22
 
 ### Changed — v58: dos reglas nuevas y un reparador, nacidos de la ablación contra los votos
