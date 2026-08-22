@@ -2,6 +2,47 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.266.0] - 2026-08-19
+
+### Changed — reversión: el generador vuelve al prompt de v53 (v57)
+
+Roberto votó las tres rondas del día con el mismo clóset, los mismos 6 briefs
+y el mismo retador. Aprobación de looks: v53 **91%** → v55 72% → v56 **52%**.
+"La peor que ha salido". Nueve versiones en 48 horas, cada una medida por su
+termómetro local (reparto de 3, disparos de regla, trajes en la cita) y
+ninguna contra la aprobación de la versión anterior — que es la única métrica
+que importa. El loop destapó la regresión en un día; lo que faltó fue el
+freno.
+
+Se retiran los dos cambios que tocaban el texto del generador:
+
+- **v54 ("EXACTAMENTE 3 outfits")**: forzar el tercero cuando el clóset no da
+  mete relleno. Vuelve "2 o 3"; el piso de 2 del pipeline sigue de red y las
+  pestañas del trío muestran los que haya.
+- **v56 (la línea de cita)**: los trajes enteros desaparecieron (0/3), pero lo
+  que los sustituyó fue peor — mezclilla + blazer ("culerísimo"), lino
+  esmeralda + blazer ("Terrible!!"), camisa negra + blazer azul ("ni al caso").
+  Decirle al motor qué NO sin decirle qué SÍ va con un blazer lo obligó a
+  improvisar. La nota queda en `lib/eventos.ts` para cuando vuelva, con lo que
+  tiene que traer.
+
+Se quedan: las reglas de código de v55 (reloj deportivo / corbata de punto) y
+el reparador de cueros — viven fuera del prompt, sólo reparan lo detectado y
+se validaron sin falsos en casual. También js3 y los grados en el brief (son
+del comparador, no del motor).
+
+Regla nueva del loop, a partir de aquí: ningún cambio del motor sale sin una
+ronda "nuevo vs anterior" del comparador con aprobación igual o mayor.
+
+Lo que los 15 👎 de hoy dejan validado para la siguiente vuelta, UNO a la vez:
+abrigo de verdad a 8° (los 3 looks con el abrigo de lana: 👍👍👍; los de
+chaqueta ligera: "ninguno está bien para ese frío"); lino en oficina con UNA
+sola pieza ya molesta (4 veces "habíamos quedado que lino no para el
+trabajo" — la regla `full-lino-en-oficina` se acotó a lino arriba Y abajo y
+eso quedó refutado); manga corta bajo chamarra ("ni al caso", 2 veces);
+calzado que choca con la base (tenis rojos con traje, bota café con pantalón
+negro, derby chocolate en total black).
+
 ## [0.2.265.0] - 2026-08-19
 
 ### Changed — la cita tiene registro: coctel relajado, no traje entero (v56)

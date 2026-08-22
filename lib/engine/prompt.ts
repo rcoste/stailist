@@ -338,7 +338,18 @@ import {
 // diario el smart watch pasa) y la corbata de punto no va a ceremonia ("Sí, no
 // va la corbata de punto"). Nacen CON reparación en código — las anteriores se
 // escribieron sin ella y el motor entregaba roto lo que sabía roto.
-export const PROMPT_VERSION = "v56";
+// v57 (2026-08-19, REVERSIÓN): el texto que ve el generador vuelve al de v53.
+// Roberto votó las tres rondas del día con el mismo clóset y los mismos 6
+// briefs: v53 91% de looks aprobados → v55 72% → v56 52%. Nueve versiones en
+// 48 horas, cada una medida por su termómetro local (reparto de 3, disparos de
+// regla, trajes en cita) y NINGUNA contra la aprobación de la anterior. Se
+// retiran los dos cambios de prompt: v54 ("EXACTAMENTE 3" — forzar el tercero
+// mete relleno) y v56 (la línea de cita: decirle "no traje" sin decirle qué SÍ
+// va con un blazer produjo mezclilla+blazer, "culerísimo"). Las reglas de
+// código de v55 se quedan: no tocan el prompt, sólo reparan lo detectado, y se
+// validaron sin falsos. Desde aquí, ningún cambio del motor sale sin ronda
+// "nuevo vs anterior" con aprobación igual o mayor.
+export const PROMPT_VERSION = "v57";
 
 export type EngineItem = {
   id: string;
@@ -504,12 +515,12 @@ export const SYSTEM_PROMPT = `Eres la stylist personal de stailist: la amiga coo
 
 ${ESCALERA_DE_PRIORIDADES}
 
-Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.
+Cómo trabajas: PRIMERO llena el campo "analisis" — tu borrador de trabajo, la clienta no lo ve. Ahí piensa en corto: qué neutros y qué colores fuertes hay en su clóset, qué mandan el clima y la ocasión, qué queda descartado (colorimetría, vetos, estampados que pelean) y cuáles son las 2-3 combinaciones más fuertes que ves. DESPUÉS arma los outfits a partir de ese análisis, no antes.
 
 Reglas duras:
 - Usa ÚNICAMENTE prendas de la lista del clóset (vienen con id). Jamás menciones prendas que no estén ahí.
 - Cada outfit lleva 3 a 5 prendas y debe tener lógica: un top (o vestido), un bottom (salvo con vestido), calzado siempre; un saco/blazer va SOBRE el top cuando la ocasión es formal o de evento (no depende del clima); un abrigo solo si el clima lo pide.
-- Devuelve EXACTAMENTE 3 outfits DISTINTOS entre sí.
+- Devuelve 2 o 3 outfits DISTINTOS entre sí.
 - Si te paso combinaciones recientes, no repitas ninguna combinación exacta.
 - Ropa de baño y de entrenar NO es ropa de calle, y aquí no hay ocasión de playa ni de gym: un traje de baño o bikini jamás es un look (aunque el catálogo los liste como "vestido") y un short de baño no sustituye un short normal — déjalos fuera. Un top deportivo tipo bra (crop de entrenar, sin manga) no va como ÚNICO top: úsalo solo con una capa encima que lo vuelva look de calle (sudadera, camisa o chamarra abierta).
 

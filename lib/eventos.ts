@@ -93,6 +93,13 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     preguntaDetalle:
       "que se note el esfuerzo, no el intento — dime a dónde apunta la cita",
     formalidadesQueAplican: ["casual", "semiformal", "formal"],
+    // LA LÍNEA DE CITA DE v56 SE RETIRÓ EN v57 (2026-08-19): decía "coctel
+    // relajado, saco con pantalón de otro juego, no traje entero". Medida con
+    // el voto de Roberto: los trajes desaparecieron, pero lo que los sustituyó
+    // fue peor (mezclilla + blazer, lino esmeralda + blazer) y la aprobación de
+    // la ronda cayó de 91% a 52%. Si vuelve, tiene que decir qué SÍ va con un
+    // blazer, no sólo qué no — y salir medida contra la versión anterior.
+    //
     // EL REGISTRO DE LA CITA, con la línea que Roberto dibujó calificando la
     // ronda 8f3647f3 (2026-08-19). El motor le entregó tres trajes completos
     // para "una cita en un restaurante" y su lectura fue la misma tres veces:
@@ -107,7 +114,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     // producción (lineaTipoEvento), así que la misma vara guía al que arma y
     // al que califica.
     paraElMotor:
-      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento. El registro es coctel relajado: un saco o blazer con pantalón de OTRO juego queda mejor que un traje completo — el traje entero se lee a evento u oficina, no a cita. La excepción: si su marca de estilo es de sastre o su plan pide algo muy formal, el traje sí va",
+      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento",
   },
   {
     key: "comida-trabajo",

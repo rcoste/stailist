@@ -100,16 +100,16 @@ function Lado({
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{titulo}</p>
 
       {!look ? (
-        // Hasta v53 el prompt pedía "2 o 3 outfits" y entregar 2 era legal;
-        // desde v54 pide EXACTAMENTE 3, así que en corridas nuevas un lado con
-        // 2 es el modelo desobedeciendo (el marcador lo cuenta). Este texto
+        // El prompt pide "2 o 3 outfits" (v54-v56 pidieron EXACTAMENTE 3 y se
+        // revirtió en v57: forzar el tercero metía relleno), así que un lado
+        // con 2 es legal aunque deje este hueco (el marcador lo cuenta). Este texto
         // existe porque Roberto abrió esta pestaña, encontró un lado vacío y
         // lo leyó como error de la pantalla.
         <p className="text-xs leading-relaxed text-muted">
           Este lado entregó menos looks: armó {indice} y el otro {indice + 1}.
           <span className="mt-0.5 block">
-            Hasta v53 el prompt aceptaba 2 o 3; desde v54 pide 3. Este look no
-            se puede comparar, así que no cuenta para el voto del par.
+            El prompt acepta 2 o 3 looks. Este look no tiene pareja, así que
+            no cuenta para el voto del par.
           </span>
         </p>
       ) : (
