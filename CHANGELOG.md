@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.272.1] - 2026-08-22
+
+### Changed — conversación B cerrada con voto: el juez se queda como stylist; y el cuello tortuga ya cuenta
+
+**Ronda 08f46d3e (producción vs `reparar-primero`): 57% contra 50%, pares 2-1
+con 3 empates.** Pre-registrado "entra si ≥": no entra. Está dentro del ruido
+de 6 pares, pero la regla es la regla. Y el dato que decide la conversación:
+con el código primero, los looks que el juez NO tocó aprobaron 43% contra 57%
+los que sí tocó — el criterio propio del juez **suma**. `juez-solo-repara`
+queda sin correr: su hipótesis ya perdió aquí. Conclusión: el juez se queda
+como stylist, y lo que falta es que lea el dial de la persona (tres capas),
+no quitarle el criterio. Las variantes siguen en el catálogo.
+
+**`cuello-alto-sin-base` no reconocía "Cuello tortuga negro".** La regla
+exigía "suéter/lana/merino" en el nombre o material declarado; un cuello
+tortuga sin apellido pasaba sin base, y Roberto por cuarta vez: "falta algo
+abajo del cuello de tortuga, inclusive una playera como ropa interior…
+batallamos con esto seguido". El comentario del código decía que el nombre ya
+mapeaba a punto; no mapeaba. Ahora un cuello alto o tortuga es de punto salvo
+que declare algodón/fino. Con test.
+
 ## [0.2.272.0] - 2026-08-22
 
 ### Removed — `colores-que-no-se-leen`: la regla de color se retira tras cinco rondas (v59)

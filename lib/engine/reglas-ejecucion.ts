@@ -992,9 +992,18 @@ export function revisarEjecucion(
   //     alto" ya mapea a punto. Es conservador en la dirección correcta: de las
   //     9 prendas así en la base, todas son de punto ("de lana merino",
   //     "suéter de cuello alto"). Un cuello alto fino declarará su algodón.
+  //     CUARTA VEZ (2026-08-22, ronda 08f46d3e): "Cuello tortuga negro" —sin
+  //     material y sin 'suéter' en el nombre— pasó sin base y Roberto: "falta
+  //     algo abajo del cuello de tortuga, inclusive una playera como ropa
+  //     interior… batallamos con esto seguido". El comentario de arriba decía
+  //     que el nombre ya mapeaba a punto; no mapeaba. Ahora un cuello alto o
+  //     tortuga ES de punto salvo que declare lo contrario (algodón, fino).
+  const declaraFino = (i: EngineItem) =>
+    /algod[oó]n|fino|delgado|modal|lycra|el[aá]stic/.test(`${TIPO(i)} ${norm(i.attrs.material)}`);
   const esDePunto = (i: EngineItem) =>
     familiaMaterial(i.attrs.material, i.attrs.nombre) === "punto" ||
-    /su[eé]ter|lana|merino|cachemir|cashmere|alpaca/.test(TIPO(i));
+    /su[eé]ter|lana|merino|cachemir|cashmere|alpaca/.test(TIPO(i)) ||
+    (esCuelloAlto(i) && !declaraFino(i));
   const esBaseFina = (i: EngineItem) =>
     /camiseta|playera|camisa|polo|t-?shirt|blusa|top b[aá]sico/.test(TIPO(i));
   const cuellosDePunto = items.filter((i) => esCuelloAlto(i) && esDePunto(i));

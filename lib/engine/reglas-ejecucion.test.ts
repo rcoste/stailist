@@ -1401,3 +1401,32 @@ describe("mezclilla-con-saco — 'hazme el favor'", () => {
     expect(v.find((x) => x.regla === "mezclilla-con-saco")).toBeUndefined();
   });
 });
+
+
+describe("cuello-alto-sin-base — el cuello tortuga sin apellido también es de punto", () => {
+  // Cuarta vez de Roberto (2026-08-22): "Cuello tortuga negro" sin material y
+  // sin "suéter" en el nombre pasaba sin base. Un cuello tortuga es de punto
+  // por construcción, salvo que declare lo contrario.
+  const ctx = { gender: "hombre" as const };
+  it("'Cuello tortuga negro' a piel dispara", () => {
+    const v = revisarEjecucion(
+      [p("Cuello tortuga negro", "#111111"), p("Jeans negros", "#1A1A1A"), p("Botines Chelsea negros", "#111111")],
+      ctx
+    );
+    expect(v.map((x) => x.regla)).toContain("cuello-alto-sin-base");
+  });
+  it("con una playera debajo, no", () => {
+    const v = revisarEjecucion(
+      [p("Cuello tortuga negro", "#111111"), p("Camiseta blanca", "#FFFFFF"), p("Jeans negros", "#1A1A1A")],
+      ctx
+    );
+    expect(v.map((x) => x.regla)).not.toContain("cuello-alto-sin-base");
+  });
+  it("un cuello alto que declara algodón fino sigue fuera", () => {
+    const v = revisarEjecucion(
+      [p("Cuello alto fino de algodón", "#111111", { material: "algodón" }), p("Jeans negros", "#1A1A1A")],
+      ctx
+    );
+    expect(v.map((x) => x.regla)).not.toContain("cuello-alto-sin-base");
+  });
+});

@@ -317,7 +317,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | — | — | — | — | — | **POOL v9 desde aquí: los planes dicen lo que diría una persona. Las aprobaciones de arriba (v8) y las de abajo (v9) NO se comparan.** |
 | — | — | — | — | — | **CLÓSET DE REFERENCIA v1 desde aquí (129 prendas, 2026-08-22). v58 re-congelado sobre él. Corte de línea base otra vez.** |
 | 08-22 | 075a3f12 | v58 | sin-coherencia-cromatica | 64% vs **79%** | **línea base con el clóset v1: 72%** (25 looks). La regla de color, 5ª ronda: 2-2, 2 empates, y el lado SIN ella aprobó más → **retirada en v59** (pre-registrado desde v53) |
-| 08-22 | 08f46d3e | v58 | reparar-primero | (a voto) | pre-registrado: `reparar-primero` entra si ≥. Medido sin voto: el juez reescribió 80% en producción vs 47% con el código primero |
+| 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
 ---
 
@@ -437,6 +437,15 @@ Si 1 gana o empata → entra. Si 2 gana → el juez deja de ser stylist y las
 decisiones de registro pasan al dial por persona, que es donde Roberto las
 quiere. Si 2 pierde → el criterio propio del juez vale, y lo que hay que
 hacer es darle el dial de la persona en vez de quitárselo.
+
+**Resultado (ronda 08f46d3e, 2026-08-22): la 1 NO entró** — 57% producción vs
+50% código-primero, pares 2-1 con 3 empates. Y el dato que cierra la
+conversación: con el código primero, los looks que el juez no tocó aprobaron
+**43%**, contra 57% los que sí tocó. El juez reescribiendo con criterio
+propio **suma**; "sólo reparar" perdería. Conclusión B: el juez se queda como
+stylist; lo que falta es que lea el dial de la persona (tres capas), no
+quitarle el criterio. Las dos variantes quedan en el catálogo por si se
+re-mide con más pares.
 
 **Conversaciones abiertas** (no son tareas): versionar el prompt del juez
 (hoy no se versiona), y el contexto por persona (sección 9 y las tres capas).
