@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.273.2] - 2026-08-24
+
+### Added — dos atajos de clima al votar
+
+Pedidos por Roberto viendo la matriz de cómo votar: "el look está bien, pero
+muy abrigado para el clima" y su espejo "…desabrigado". Cubren la fila de la
+matriz donde la ropa no es el problema y la temperatura sí. Son señal de
+REGLA (física, aplica a todos), a diferencia de los de "muy formal/casual",
+que son señal de DIAL (de la persona) y por eso alimentan el registro por
+plan; los de clima alimentan la fila de candidatas a regla de código.
+
 ## [0.2.273.1] - 2026-08-24
 
 ### Added — los atajos del votar alimentan tu dial (chips → registro)

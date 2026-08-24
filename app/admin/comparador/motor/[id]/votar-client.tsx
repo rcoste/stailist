@@ -61,6 +61,11 @@ type PorLook<T> = Record<number, T>;
 const ATAJOS_COMENTARIO = [
   "bien, pero muy formal para la ocasión",
   "bien, pero muy casual para la ocasión",
+  // Los dos del CLIMA (pedidos viendo la matriz de votar): el look se sostiene
+  // y lo que falla es la temperatura. Señal de REGLA (física, para todos), a
+  // diferencia de los de registro, que son señal de DIAL (de la persona).
+  "el look está bien, pero muy abrigado para el clima",
+  "el look está bien, pero desabrigado para el clima",
   "depende del tipo de plan — así no puedo decidir",
 ];
 
