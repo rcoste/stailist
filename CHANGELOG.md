@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.278.0] - 2026-08-24
+
+### Changed — prompt v66: "LA PIEZA primero", el ataque a estilo (3.13) con diagnóstico en números
+
+Del eval 919c2f53 salió el porqué del estilo bajo: el motor viste un uniforme
+seguro. 14 de 45 looks sin una sola prenda con carácter (estilo 3.29 vs 3.81
+con exactamente una, y 3.45 con dos — una es el punto dulce), calzado negro en
+62%, 59 de 130 prendas jamás usadas, y el juez repitiendo "correcto pero
+previsible/sin filo". La instrucción de "decisión visible" (v45) no bastó
+porque pedía nombrar el gesto DESPUÉS de armar; la lección documentada era que
+el cuello de botella es la elección de prendas. v66 invierte el orden: el
+análisis elige LA PIEZA con carácter de cada look antes que los neutros
+(qué SÍ — la lección de v56), exactamente una, con la sobriedad del funeral
+como excepción nombrada. Pre-registrado: entra solo si la aprobación de
+Roberto ≥ control en la ronda `prompt-anterior` (v65 congelado antes de subir).
+
 ## [0.2.277.1] - 2026-08-24
 
 ### Added — la corbata negra delgada (migración 0148), y el funeral por fin puede vestirse
