@@ -1505,3 +1505,21 @@ describe("boda-de-noche-sin-corbata — el decreto", () => {
     expect(revisarEjecucion(TRAJE, { tipoEvento: "boda", momento: "noche", formality: "semiformal", closet: CLOSET }).map((x) => x.regla)).not.toContain("boda-de-noche-sin-corbata");
   });
 });
+
+describe("lluvia-sin-impermeable, estrechada — sólo la capa que empapa", () => {
+  const closet = [p("Chaqueta impermeable negra", "#1A1A1A", { material: "sintético" })];
+  it("chamarra casual con cierre SIN material declarado ya no dispara (Roberto la aprobó una y otra vez)", () => {
+    const v = revisarEjecucion(
+      [p("Camisa de mezclilla", "#7D9BB5"), p("Jeans negros", "#1A1A1A"), p("Chaqueta negra con cierre", "#1a1a1a")],
+      { lluvia: true, closet }
+    );
+    expect(v.map((x) => x.regla)).not.toContain("lluvia-sin-impermeable");
+  });
+  it("sin capa alguna tampoco: llovizna templada sin chamarra es elección, no error", () => {
+    const v = revisarEjecucion(
+      [p("Suéter de cuello redondo vino", "#5E2A33"), p("Pantalón de vestir gris", "#6A6A6A"), p("Mocasines negros", "#111111")],
+      { lluvia: true, closet }
+    );
+    expect(v.map((x) => x.regla)).not.toContain("lluvia-sin-impermeable");
+  });
+});

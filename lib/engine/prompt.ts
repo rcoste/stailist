@@ -386,7 +386,11 @@ import {
 // ser") — con sus excepciones: coctel explícito la relaja; etiqueta rigurosa
 // pide moño. Entra sin ronda propia por orden suya, con ablación limpia
 // (2 👎 / 0 👍); el siguiente vistazo la vigila. v62 congelado antes.
-export const PROMPT_VERSION = "v63";
+// v64 (2026-08-24): lluvia-sin-impermeable ESTRECHADA. Marcaba 5 👎 / 6 👍 y
+// en los cinco 👎 la queja era otra cosa. Ahora dispara sólo cuando la capa
+// exterior EMPAPA (lana/punto/ante); la chamarra casual con cierre pasa, y
+// salir sin capa con llovizna templada es elección, no error.
+export const PROMPT_VERSION = "v64";
 
 export type EngineItem = {
   id: string;

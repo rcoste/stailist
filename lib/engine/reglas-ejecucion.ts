@@ -815,22 +815,35 @@ export function revisarEjecucion(
   //    así que con paraguas la capa se elige por estilo. Sin él, tiene que
   //    repeler agua. Sin la distinción, cada día de lluvia colapsaría a la
   //    misma chamarra impermeable durante toda la temporada.
+  //    ESTRECHADA (2026-08-24) con los votos en la mano: marcaba 5 👎 / 6 👍,
+  //    y en los CINCO 👎 la queja de Roberto era otra cosa (calzado, cinturón,
+  //    layering) — ni una vez "le falta impermeable". Aprobó bomber, chaqueta
+  //    con cierre y acolchada bajo lluvia templada una y otra vez. Lo que la
+  //    regla puede afirmar sin pelearse con sus votos: una capa que EMPAPA
+  //    (lana, punto, ante) bajo lluvia sin paraguas sí es un fallo — el caso
+  //    que la fundó ("Charcoal en la llovizna", abrigo de lana). Una chamarra
+  //    casual con cierre aguanta una lluvia de ciudad aunque su nombre no diga
+  //    "impermeable", y salir sin capa a 17° con llovizna es elección, no
+  //    error. La regla ahora dispara SOLO contra la capa que empapa.
   if (ctx.lluvia && !ctx.paraguas && ctx.closet?.length) {
     const esCapa = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "capa";
     const repele = (i: EngineItem) =>
       familiaMaterial(i.attrs.material, i.attrs.nombre) === "tecnico" ||
       /impermeable|gabardina|chubasquero|rompevientos|parka/.test(TIPO(i));
+    const empapa = (i: EngineItem) => {
+      const fam = familiaMaterial(i.attrs.material, i.attrs.nombre);
+      return fam === "punto" || /lana|ante|gamuza|pana|tweed/.test(`${norm(i.attrs.material)} ${TIPO(i)}`);
+    };
     const capas = items.filter(esCapa);
-    if (!capas.some(repele)) {
+    if (capas.some(empapa) && !capas.some(repele)) {
       const disponibles = ctx.closet.filter(esCapa).filter(repele);
       if (disponibles.length) {
         v.push({
           regla: "lluvia-sin-impermeable",
-          detalle: `Va a llover, no lleva paraguas, y ${
-            capas.length
-              ? `"${capas.map(nombre).join('", "')}" no repele agua`
-              : "el look no lleva capa de abrigo"
-          }. Su clóset sí tiene con qué: ${disponibles
+          detalle: `Va a llover, no lleva paraguas, y "${capas
+            .filter(empapa)
+            .map(nombre)
+            .join('", "')}" se empapa (lana/punto/ante no aguantan agua). Su clóset sí tiene con qué: ${disponibles
             .slice(0, 3)
             .map(nombre)
             .join(", ")}.`,

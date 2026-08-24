@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.275.1] - 2026-08-24
+
+### Changed — `lluvia-sin-impermeable` se estrecha: sólo la capa que empapa (v64)
+
+La única regla activa que marcaba casi igual los 👍 (6) que los 👎 (5) de
+Roberto — y en los CINCO 👎 su queja era otra cosa (calzado, cinturón,
+layering); ni una vez "le falta impermeable". Aprobó bomber, chaqueta con
+cierre y acolchada bajo lluvia templada repetidamente.
+
+Ahora dispara sólo cuando la capa exterior EMPAPA (lana, punto, ante, pana) —
+el caso que la fundó ("Charcoal en la llovizna", abrigo de lana, sigue
+disparando y su test lo blinda). La chamarra casual con cierre aguanta lluvia
+de ciudad aunque su nombre no diga "impermeable", y salir sin capa a 17° con
+llovizna es elección, no error. Ablación tras el cambio: 0 👎 / 0 👍 sobre el
+histórico — la regla queda de guardia para el caso real sin meter ruido.
+v63 congelado antes.
+
 ## [0.2.275.0] - 2026-08-24
 
 ### Added — boda de noche sin corbata: la regla del decreto (v63)
