@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.274.1] - 2026-08-24
+
+### Fixed — dos reglas ya medidas estaban mudas a medias; los votos de la ronda las destaparon
+
+Los comentarios de la ronda 7abd9c9c señalaron dos looks que una regla
+existente debió parar y no paró. Diagnóstico y arreglo, con ablación:
+
+- **`full-lino-en-oficina` no reconocía "Pantalón de lino marino"**: el
+  fallback de material por nombre clasificaba cualquier "pantalón" como
+  "liso" ANTES de buscar el lino. Roberto: "full lino no debe usarse para
+  trabajo!! Lo he dicho muchas veces" — tercera ronda con el mismo reclamo, y
+  la regla existía desde julio. Ahora el lino se busca primero. Ablación:
+  3 👎 / 0 👍.
+- **El saco de traje recupera su pantalón.** `saco-de-traje-suelto` y
+  `traje-desparejado` detectaban pero se dejaban enteras al juez ("elegir cuál
+  pantalón es criterio") — pero cuando el saco trae su lazo `conjunto`, no hay
+  criterio: su pantalón es UNO y está en el clóset. El motor usó el saco de
+  traje marino como blazer (2 👎: "habíamos puesto una regla…"), la regla
+  disparó y nadie reparó. Ahora el reparador lo cambia por el pantalón del
+  conjunto; sin lazo, sigue siendo del juez. Prompt v62 (texto sin cambios).
+
+De paso, una lección de herramienta: el primer intento del arreglo del lino
+escribió `\b` sin escapar en un heredoc de Python — el regex quedó con
+backspaces invisibles y se veía `/lino/` sin matchear nada. Se cazó porque el
+test nuevo falló: el test que parece redundante es el que ve lo invisible.
+
 ## [0.2.274.0] - 2026-08-24
 
 ### Added — v61: las cuatro reglas que dictaron los comentarios de Roberto

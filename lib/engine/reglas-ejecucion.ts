@@ -167,6 +167,13 @@ const norm = (s?: string) => (s ?? "").toLowerCase().trim();
 // no detectar.
 function materialPorNombre(nombre: string): string | null {
   const s = norm(nombre);
+  // EL LINO VA ANTES que la línea genérica de prendas: "Pantalón de lino
+  // marino" caía en /pantal[oó]n/ → "liso" y full-lino-en-oficina quedaba MUDA
+  // — el motor entregó camisa de lino + pantalón de lino a una oficina y
+  // Roberto: "full lino no debe usarse para trabajo!! Lo he dicho muchas
+  // veces" (2026-08-24, tercera ronda con el mismo reclamo). La regla existía;
+  // el orden del fallback la apagaba.
+  if (/\blino\b/.test(s)) return "lino";
   if (/jeans|mezclilla|denim/.test(s)) return "mezclilla";
   if (/su[eé]ter|cardigan|c[aá]rdigan|cuello alto|jersey/.test(s)) return "punto";
   if (/cintur[oó]n|zapato|mocas[ií]n|bot[ií]n|bota|reloj de piel/.test(s)) return "piel";

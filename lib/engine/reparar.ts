@@ -343,6 +343,34 @@ function intentarUna(
       }
     }
 
+    // EL SACO DE TRAJE RECUPERA SU PANTALÓN. traje-desparejado y saco-de-
+    // traje-suelto se dejaban enteros al juez ("elegir CUÁL pantalón es
+    // criterio") — pero cuando el saco trae el lazo `conjunto`, no hay
+    // criterio que elegir: su pantalón es UNO y está en el clóset. Cazado en
+    // la ronda 7abd9c9c: el motor usó el saco de traje marino como blazer
+    // (2 looks 👎, "habíamos puesto una regla…"), la regla disparó y nadie
+    // reparó. Sin lazo, sigue siendo del juez.
+    if (v.regla === "saco-de-traje-suelto" || v.regla === "traje-desparejado") {
+      const saco = enLook().find((i) => /saco|esmoquin|smoking/.test(texto(i)) && i.attrs.conjunto);
+      const par = saco
+        ? disponibles.find((i) => i.attrs.conjunto === saco.attrs.conjunto && /pantal[oó]n/.test(texto(i)))
+        : undefined;
+      if (saco && par) {
+        const abajo = enLook().find((i) => /pantal[oó]n|chino|jeans|bermuda|falda/.test(texto(i)));
+        const nuevos = abajo
+          ? ids.map((id) => (id === abajo.id ? par.id : id))
+          : [...ids, par.id];
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return {
+            ids: nuevos,
+            hecha: abajo
+              ? { regla: v.regla, como: "sustituida", entro: nombre(par), salio: nombre(abajo) }
+              : { regla: v.regla, como: "anadida", entro: nombre(par) },
+          };
+        }
+      }
+    }
+
     // Llueve y no hay capa que repela: es el mismo "te faltó ponerte X" que el
     // frío, con otra condición. Se busca una capa exterior que aguante agua —
     // si el clóset no la tiene, no es fallo reparable sino carencia, y la regla
@@ -500,9 +528,9 @@ function intentarUna(
 
   }
 
-  // El resto (traje-desparejado, capa-invisible, codigo-de-smoking…) NO se
-  // toca aquí a propósito: elegir "otro pantalón cualquiera" no arregla un
-  // traje desparejado — hay que ver CUÁL, y eso es criterio. Esas siguen su
-  // camino al juez.
+  // El resto (capa-invisible, codigo-de-smoking, y el traje desparejado SIN
+  // lazo `conjunto`…) NO se toca aquí a propósito: elegir "otro pantalón
+  // cualquiera" es criterio, y eso sigue su camino al juez. Con lazo, el
+  // pantalón correcto está determinado y se repara arriba.
   return null;
 }

@@ -344,3 +344,26 @@ describe("las tres reparaciones de v58 — nacidas de la ablación contra los vo
     expect(r.itemIds.length).toBe(3);
   });
 });
+
+describe("el saco de traje recupera su pantalón (lazo conjunto)", () => {
+  const SACO = it_("st", "saco", "Saco de traje azul marino", { color_hex: "#27425F", conjunto: "traje-1" });
+  const SU_PANT = it_("sp", "bottom", "Pantalón de traje azul marino", { color_hex: "#27425F", conjunto: "traje-1" });
+  const AJENO = it_("aj", "bottom", "Pantalón de vestir marino", { color_hex: "#25405C" });
+  const CAMISA = it_("cm", "top", "Camisa blanca", { color_hex: "#FAFAF7", manga: "larga" });
+  const ZAPATO = it_("zp", "calzado", "Zapato formal negro", { color_hex: "#111111" });
+  it("cambia el pantalón ajeno por el del conjunto, y sólo ese", () => {
+    const look = [CAMISA.id, SACO.id, AJENO.id, ZAPATO.id];
+    const closet = [CAMISA, SACO, AJENO, ZAPATO, SU_PANT];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, closet });
+    expect(r.hechas[0]).toMatchObject({ como: "sustituida", entro: "Pantalón de traje azul marino", salio: "Pantalón de vestir marino" });
+    expect(r.itemIds).toContain(SU_PANT.id);
+    expect(r.itemIds).toContain(SACO.id);
+  });
+  it("sin lazo conjunto, se queda para el juez (criterio)", () => {
+    const SUELTO = it_("ss", "saco", "Saco de traje gris", { color_hex: "#3A3E46" });
+    const look = [CAMISA.id, SUELTO.id, AJENO.id, ZAPATO.id];
+    const closet = [CAMISA, SUELTO, AJENO, ZAPATO, SU_PANT];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, closet });
+    expect(r.hechas.find((h) => h.regla === "saco-de-traje-suelto" || h.regla === "traje-desparejado")).toBeUndefined();
+  });
+});

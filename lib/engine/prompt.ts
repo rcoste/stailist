@@ -375,7 +375,13 @@ import {
 // generador no cambia; sube porque el bloque que lee el juez cambió. Medidas
 // con ablación contra los looks votados antes de salir, y con ronda
 // prompt-anterior (v60 congelado) antes de main.
-export const PROMPT_VERSION = "v61";
+// v62 (2026-08-24): dos reglas ya medidas que estaban MUDAS a medias, arregladas.
+// full-lino-en-oficina no reconocía "pantalón de lino" (el fallback por nombre
+// lo clasificaba "liso" antes de buscar el lino), y saco-de-traje-suelto /
+// traje-desparejado detectaban sin reparar — ahora, si el saco trae su lazo
+// `conjunto`, recupera SU pantalón (determinista, no criterio). Texto del
+// generador sin cambios; v61 congelado.
+export const PROMPT_VERSION = "v62";
 
 export type EngineItem = {
   id: string;

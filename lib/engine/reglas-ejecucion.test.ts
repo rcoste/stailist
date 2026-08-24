@@ -1473,3 +1473,20 @@ describe("sinReglasV61 — la ablación apaga las cuatro como grupo", () => {
     expect(revisarEjecucion(look, { ...ctx, sinReglasV61: true }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
   });
 });
+
+describe("full-lino-en-oficina — el pantalón de lino cuenta aunque el material venga vacío", () => {
+  // "full lino no debe usarse para trabajo!! Lo he dicho muchas veces"
+  // (2026-08-24). El fallback por nombre clasificaba "Pantalón de lino" como
+  // "liso" antes de buscar el lino, y la regla quedaba muda.
+  it("camisa de lino + pantalón de lino (sin material declarado) dispara en oficina", () => {
+    const v = revisarEjecucion(
+      [
+        p("Camisa de lino azul claro", "#A9C4E0", { material: "lino" }),
+        p("Pantalón de lino marino", "#27425F"),
+        p("Mocasines negros", "#1A1A1A"),
+      ],
+      { objective: "oficina" }
+    );
+    expect(v.map((x) => x.regla)).toContain("full-lino-en-oficina");
+  });
+});
