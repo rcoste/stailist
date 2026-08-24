@@ -13,6 +13,9 @@ import {
 import {
   bloqueEjecucion,
   revisarEjecucion,
+  tieneSacoCruzado,
+  tipAbreElSaco,
+  TIP_CRUZADO_ABOTONADO,
   type ContextoReglas,
   type Violacion,
 } from "./reglas-ejecucion";
@@ -76,6 +79,7 @@ export type OpcionesJuez = {
   sinRepararEnCodigo?: boolean;
   sinCoherenciaCromatica?: boolean;
   sinReglasV61?: boolean;
+  sinReglasV67?: boolean;
   repararPrimero?: boolean;
   juezSoloRepara?: boolean;
 };
@@ -360,7 +364,19 @@ export async function reviewOutfit(
         ? parsed.veredicto
         : "ok";
     const razon = parsed.razon?.trim() ? parsed.razon.trim() : null;
-    const tip = parsed.tip?.trim() ? parsed.tip.trim() : null;
+    const tipCrudo = parsed.tip?.trim() ? parsed.tip.trim() : null;
+    // EL TIP DEL SACO CRUZADO (v67). El tip lo escribe ESTE juez, así que su
+    // arreglo vive aquí y no en el revisor de prendas: si el look trae un
+    // cruzado y el tip manda abrirlo, entra la línea correcta (el cruzado se
+    // lleva abotonado — Roberto lo marcó en dos rondas distintas). Es el único
+    // punto donde nace un tip, y el segundo intento vuelve a pasar por aquí.
+    const itemsDelJuez = Array.isArray(parsed.item_ids)
+      ? ctx.items.filter((i) => parsed.item_ids.includes(i.id))
+      : [];
+    const tip =
+      !opciones.sinReglasV67 && tipAbreElSaco(tipCrudo) && tieneSacoCruzado(itemsDelJuez)
+        ? TIP_CRUZADO_ABOTONADO
+        : tipCrudo;
 
     // Rechazado: devolvemos el outfit ORIGINAL (sin la "reparación" fallida);
     // quien llama decide descartarlo o mostrarlo como último recurso. El original
@@ -472,13 +488,14 @@ export async function reviewOutfit(
  */
 export function contextoDeReglas(
   ctx: EngineContext,
-  opciones: { sinCoherenciaCromatica?: boolean; sinReglasV61?: boolean } = {}
+  opciones: { sinCoherenciaCromatica?: boolean; sinReglasV61?: boolean; sinReglasV67?: boolean } = {}
 ): ContextoReglas {
   return {
     // Flag del comparador: apagar la regla de color es correr el motor real
     // con ella apagada, no una imitación.
     sinCoherenciaCromatica: opciones.sinCoherenciaCromatica,
     sinReglasV61: opciones.sinReglasV61,
+    sinReglasV67: opciones.sinReglasV67,
     clima: bandaDeClima(ctx.weather),
     closet: ctx.items,
     // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado son la

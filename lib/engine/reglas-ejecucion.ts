@@ -93,6 +93,9 @@ export type ContextoReglas = {
   momento?: "dia" | "noche" | null;
   /** Ablación del comparador: apaga las 4 reglas de v61 como grupo. */
   sinReglasV61?: boolean;
+  /** Ablación del comparador: apaga las reglas de v67 (chelsea-en-calor y el
+   *  arreglo del tip del saco cruzado, que vive en critic.ts). */
+  sinReglasV67?: boolean;
   /** Si el código del trabajo es "variable": si HOY ve cliente. */
   veCliente?: boolean | null;
 };
@@ -1345,8 +1348,86 @@ export function revisarEjecucion(
 
   } // fin de las reglas de v61 (ablación: sinReglasV61)
 
+  if (!ctx.sinReglasV67) {
+  // 30. EL BOTÍN NO VA EN CALOR. Roberto, dos veces: la candidata nació en la
+  //     ronda 7abd9c9c y la confirmó en 8130c381 ("falla el calzado, la
+  //     Chelsea no va tan bien para algo tan caluroso" — brief de oficina en
+  //     calor). Es la misma física que lana-en-calor, en el pie: caña cerrada
+  //     hasta el tobillo con 26°+ da calor y pesa visualmente en el look.
+  //     Con LLUVIA no dispara a propósito: ahí la bota es justo el calzado
+  //     correcto (lluvia-calzado la prefiere) y las dos reglas chocarían.
+  if (ctx.clima === "calor" && !ctx.lluvia && ctx.closet?.length) {
+    const esBotin = (i: EngineItem) =>
+      tipoDePrenda(nombre(i))?.zona === "pie" && /chelsea|bot[ií]n|\bbota\b/.test(TIPO(i));
+    const puesta = items.find(esBotin);
+    if (puesta) {
+      const puestas = new Set(items.map((i) => i.id));
+      const frescos = ctx.closet
+        .filter((i) => !puestas.has(i.id))
+        .filter((i) => tipoDePrenda(nombre(i))?.zona === "pie")
+        .filter((i) => !esBotin(i) && !/senderismo|hiking|trekking|monta[nñ]a|sandalia/.test(TIPO(i)));
+      if (frescos.length) {
+        v.push({
+          regla: "chelsea-en-calor",
+          detalle: `"${nombre(puesta)}" es un botín y hace CALOR: la caña cerrada da calor y pesa en el look. Cámbialo por un calzado bajo (${frescos.slice(0, 2).map(nombre).join(" o ")}).`,
+        });
+      }
+    }
+  }
+  // El otro cambio de v67 —el tip que manda abrir el saco cruzado— no puede
+  // vivir aquí (las reglas ven prendas, el tip lo escribe el juez): son las
+  // funciones de abajo, aplicadas en critic.ts bajo el mismo flag.
+  } // fin de las reglas de v67 (ablación: sinReglasV67)
+
   return v;
 }
+
+// ── EL SACO CRUZADO SE LLEVA ABOTONADO (v67) ────────────────────────────────
+//
+// Roberto, dos veces en rondas distintas (075a3f12: "se ve raro… investiga
+// cómo se debe de usar un traje cruzado"; 8130c381: "lo que luce es que esté
+// cruzado, no que se vea abierto"). La sastrería le da la razón: el cruzado
+// depende del cruce de las solapas para tener línea — abotonado del botón
+// medio incluso de pie, a diferencia del saco recto que sí se abre al andar.
+//
+// El defecto NO está en las prendas sino en el TIP, que escribe el JUEZ: dos
+// tips reales mandaron abrirlo ("Abre el saco cruzado al sentarte…", "Deja el
+// saco cruzado café abierto…") y dos lo mandaron cerrado y salieron 👍 ("Deja
+// el saco cruzado cerrado como manda su corte…"). Por eso esto son funciones
+// puras que critic.ts aplica al tip (bajo sinReglasV67), no una regla del
+// revisor de prendas.
+
+/** ¿El look trae un saco/blazer cruzado? Por subtipo o por nombre. */
+export const tieneSacoCruzado = (items: EngineItem[]) =>
+  items.some(
+    (i) =>
+      /saco|blazer|esmoquin|smoking/.test(TIPO(i)) &&
+      /cruzad/.test(`${TIPO(i)} ${norm(i.attrs.subtipo)}`)
+  );
+
+/**
+ * ¿El tip manda llevar el saco abierto? Se evalúa por FRASE (cortes en punto,
+ * coma, guion largo y "pero"): "deja el saco cruzado cerrado, pero abre el
+ * cuello de la camisa" es un tip correcto — el "abre" de la segunda frase no
+ * habla del saco. Validado contra los 4 tips reales de saco cruzado del
+ * comparador: caza los 2 que Roberto marcó y calla en los 2 aprobados.
+ */
+export function tipAbreElSaco(tip: string | null | undefined): boolean {
+  if (!tip) return false;
+  return tip
+    .toLowerCase()
+    .split(/[.;,—]|\bpero\b/)
+    .some(
+      (f) =>
+        /saco|blazer|cruzado|esmoquin|smoking/.test(f) &&
+        /abiert[oa]|desabroch|desaboton|[aá]brel[oe]|\babre\b|\babrir(lo)?\b/.test(f)
+    );
+}
+
+/** El tip que entra en lugar del que mandaba abrirlo. Determinista a
+ *  propósito: la corrección es una sola y no pide criterio. */
+export const TIP_CRUZADO_ABOTONADO =
+  "Lleva el saco cruzado abotonado del botón de en medio, también de pie — el cruce cerrado es lo que le da la línea; abierto pierde su gracia.";
 
 /** Bloque para el mensaje del juez. Vacío si el look está limpio. */
 /**
@@ -1385,6 +1466,8 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - Una prenda por zona, ninguna zona del cuerpo sin cubrir.
 - Un blazer no es abrigo: con frío real va un abrigo de verdad encima.
 - Lino de pies a cabeza en oficina rompe. Una sola pieza de lino en oficina se sostiene, pero a esta persona ya le incomoda ("habíamos quedado que lino no para el trabajo", cuatro veces): márcala como resta.
+- El saco CRUZADO se lleva abotonado (botón de en medio), también de pie — abierto pierde la línea del cruce. Nunca recomiendes abrirlo; sin corbata pasa si va cerrado. El saco recto sí se abre al andar, como siempre.
+- Con CALOR el botín (chelsea incluido) da calor y pesa: va calzado bajo (mocasín, tenis, zapato). Con lluvia esta regla calla — ahí la bota es lo correcto.
 
 Si tu arreglo contradice una de estas, NO lo propongas: propón el que la respete.`;
 

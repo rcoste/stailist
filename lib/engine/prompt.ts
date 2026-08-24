@@ -406,7 +406,19 @@ import {
 // compitiendo), con la sobriedad del funeral como excepción nombrada.
 // Pre-registrado: entra solo si la aprobación de Roberto ≥ control en ronda
 // prompt-anterior (v65 congelado). v65 congelado antes de subir.
-export const PROMPT_VERSION = "v66";
+// GANÓ la ronda 8130c381 (93% vs 71%, pares 2-1-3) — en main. Ojo: el
+// mecanismo (más piezas con carácter) NO quedó probado en esa ronda; lo mide
+// el próximo eval absoluto.
+// v67 (2026-08-24): dos reglas de código con 2 menciones de Roberto cada una,
+// en rondas distintas (su guardrail de ≥2): chelsea-en-calor (7abd9c9c +
+// 8130c381 — "la Chelsea no va tan bien para algo tan caluroso"; con
+// reparador, calla con lluvia donde la bota es lo correcto) y el tip del saco
+// cruzado (075a3f12 "investiga cómo se usa" + 8130c381 "lo que luce es que
+// esté cruzado, no que se vea abierto" — el cruzado va abotonado también de
+// pie; el tip lo escribe el juez, así que el arreglo vive en critic.ts). El
+// texto del generador no cambia; sube porque REGLAS_DE_LA_CASA (el bloque que
+// leen los jueces) cambió. Ablación sin-reglas-v67; v66 congelado antes.
+export const PROMPT_VERSION = "v67";
 
 export type EngineItem = {
   id: string;

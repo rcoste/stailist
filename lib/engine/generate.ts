@@ -61,6 +61,9 @@ export type OpcionesGeneracion = {
    *  bajo-overshirt, calzado-cafe-con-traje-negro, charol-solo-etiqueta).
    *  Sólo para el comparador: es la ablación que las mide como grupo. */
   sinReglasV61?: boolean;
+  /** Apaga las reglas de v67 (chelsea-en-calor + el arreglo del tip del saco
+   *  cruzado). Sólo para el comparador: su ablación como grupo. */
+  sinReglasV67?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.279.0] - 2026-08-24
+
+### Added — v67: chelsea-en-calor y el tip del saco cruzado, las dos con ≥2 menciones de Roberto
+
+Dos reglas de código, cada una confirmada en dos rondas distintas (el
+guardrail de ≥2). **chelsea-en-calor**: el botín con 26°+ da calor y pesa en
+el look ("la Chelsea no va tan bien para algo tan caluroso"); con reparador
+que baja a calzado fresco de formalidad parecida, y calla con lluvia — ahí la
+bota es lo correcto. Ablación: 1 👎 cazado, y el único 👍 donde dispara lleva
+su comentario confirmando el principio ("la chelsea boot no es tan adhoc para
+clima de calor") — el patrón cueros: se repara, no tira el look. **El tip del
+saco cruzado**: dos tips reales mandaron abrirlo y los dos salieron marcados
+("investiga cómo se usa un traje cruzado", "lo que luce es que esté cruzado");
+el cruzado va abotonado también de pie. El tip lo escribe el juez, así que el
+arreglo vive en critic.ts (funciones puras validadas contra los 4 tips reales:
+caza los 2 malos, calla en los 2 buenos — incluido el que abre "otra cosa").
+Ablación 2 👎 / 0 👍. REGLAS_DE_LA_CASA aprende las dos (prompt v67); texto del
+generador sin cambios. Variante `sin-reglas-v67`; pre-registrado: main solo si
+la aprobación ≥ en la ronda contra esa ablación.
+
 ## [0.2.278.0] - 2026-08-24
 
 ### Changed — prompt v66: "LA PIEZA primero", el ataque a estilo (3.13) con diagnóstico en números
