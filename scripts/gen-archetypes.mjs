@@ -408,6 +408,17 @@ const ITEMS = [
   { slug: "polo-manga-larga-gris-hombre", desc: "a heather grey LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat-sombra" },
   { slug: "polo-manga-larga-verde-botella-hombre", desc: "a deep bottle green LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
   { slug: "polo-manga-larga-vino-hombre", desc: "a deep burgundy wine red LONG-SLEEVE pique cotton polo shirt, long sleeves reaching the wrist with ribbed cuffs, two-button placket and a flat ribbed collar", type: "flat" },
+  // === POLOS DE MUJER (2026-08-24): el catálogo tenía 27 de hombre y CERO de
+  // mujer — el mismo sesgo del audit de género de julio, y las usuarias reales
+  // son mujeres. EL CORTE VA DESCRITO en positivo y negativo ("NOT a men's"):
+  // el default del generador para "polo shirt" es masculino, igual que con los
+  // trajes sastre. Claros en flat-sombra.
+  { slug: "polo-blanco-mujer", desc: "a white WOMEN'S pique cotton polo shirt with distinctly feminine tailoring: slim fitted cut shaped at the waist, shorter sleeves, narrow shoulders, a softer smaller collar and a short two-button placket. Unmistakably a woman's polo, NOT a men's boxy polo shirt. Neatly laid flat", type: "flat-sombra" },
+  { slug: "polo-negro-mujer", desc: "a black WOMEN'S pique cotton polo shirt with distinctly feminine tailoring: slim fitted cut shaped at the waist, shorter sleeves, narrow shoulders, a softer smaller collar and a short two-button placket. Unmistakably a woman's polo, NOT a men's boxy polo shirt. Neatly laid flat", type: "flat" },
+  { slug: "polo-marino-mujer", desc: "a navy blue WOMEN'S pique cotton polo shirt with distinctly feminine tailoring: slim fitted cut shaped at the waist, shorter sleeves, narrow shoulders, a softer smaller collar and a short two-button placket. Unmistakably a woman's polo, NOT a men's boxy polo shirt. Neatly laid flat", type: "flat" },
+  { slug: "polo-rojo-mujer", desc: "a classic red WOMEN'S pique cotton polo shirt with distinctly feminine tailoring: slim fitted cut shaped at the waist, shorter sleeves, narrow shoulders, a softer smaller collar and a short two-button placket. Unmistakably a woman's polo, NOT a men's boxy polo shirt. Neatly laid flat", type: "flat" },
+  { slug: "polo-manga-larga-blanco-mujer", desc: "a white WOMEN'S LONG-SLEEVE pique cotton polo shirt, distinctly feminine tailoring: slim fitted cut shaped at the waist, long slim sleeves with ribbed cuffs, narrow shoulders, a softer smaller collar. Unmistakably a woman's polo, NOT a men's polo shirt. Neatly laid flat", type: "flat-sombra" },
+  { slug: "polo-manga-larga-marino-mujer", desc: "a navy blue WOMEN'S LONG-SLEEVE pique cotton polo shirt, distinctly feminine tailoring: slim fitted cut shaped at the waist, long slim sleeves with ribbed cuffs, narrow shoulders, a softer smaller collar. Unmistakably a woman's polo, NOT a men's polo shirt. Neatly laid flat", type: "flat" },
 ];
 
 function buildPrompt({ desc, type }) {

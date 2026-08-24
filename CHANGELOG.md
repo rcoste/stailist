@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.276.0] - 2026-08-24
+
+### Added — los primeros polos de mujer del catálogo (migración 0147)
+
+Seis básicos: blanco, negro, marino y rojo de manga corta, y blanco y marino
+de manga larga. El catálogo tenía 27 polos de hombre y CERO de mujer — el
+mismo sesgo del audit de género de julio, con el agravante de que las usuarias
+reales de la app son mujeres.
+
+El corte femenino va DESCRITO en el prompt, en positivo y en negativo
+("entallado al talle, hombro estrecho, cuello suave… NOT a men's boxy polo"):
+el default del generador para "polo shirt" es masculino, igual que pasó con
+los trajes sastre. Verificado a ojo: los seis salieron con silueta claramente
+femenina. Claros con flat-sombra; sólo se optimizaron las 6 nuevas.
+
 ## [0.2.275.1] - 2026-08-24
 
 ### Changed — `lluvia-sin-impermeable` se estrecha: sólo la capa que empapa (v64)
