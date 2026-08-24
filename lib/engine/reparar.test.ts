@@ -381,3 +381,17 @@ describe("boda de noche: la corbata que entra es la sobria, no la estampada", ()
     expect(r.hechas[0]).toMatchObject({ regla: "boda-de-noche-sin-corbata", como: "anadida", entro: "Corbata de seda marino" });
   });
 });
+
+describe("full-lino-en-oficina por fin repara — y cambia el pantalón, no la camisa", () => {
+  const CAMISA = it_("cl", "top", "Camisa de lino blanca", { material: "lino", color_hex: "#FAFAF7" });
+  const PANT_LINO = it_("pl", "bottom", "Pantalón de lino marino", { color_hex: "#27425F" });
+  const CHINOS = it_("chn", "bottom", "Chinos azul marino", { color_hex: "#27425F" });
+  const MOC = it_("mn", "calzado", "Mocasines negros", { color_hex: "#111111", material: "piel" });
+  it("deja la camisa de lino (tiene 👍 con chinos) y cambia el pantalón", () => {
+    const look = [CAMISA.id, PANT_LINO.id, MOC.id];
+    const closet = [CAMISA, PANT_LINO, CHINOS, MOC];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, objective: "oficina", closet });
+    expect(r.hechas[0]).toMatchObject({ regla: "full-lino-en-oficina", como: "sustituida", salio: "Pantalón de lino marino", entro: "Chinos azul marino" });
+    expect(r.itemIds).toContain(CAMISA.id);
+  });
+});

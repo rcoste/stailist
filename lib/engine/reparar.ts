@@ -319,6 +319,37 @@ function intentarUna(
       }
     }
 
+    // FULL LINO EN OFICINA → SE CAMBIA EL PANTALÓN, NO LA CAMISA. La regla
+    // detectaba desde julio y nunca tuvo reparador (cazado en vivo el
+    // 2026-08-24 verificando "¿sigue regándola con el lino?"). La dirección la
+    // dieron los votos: "camisa de lino + chinos marino" tiene 👍 de Roberto —
+    // la camisa de lino sola en oficina de calor es correcta; el pantalón de
+    // lino es lo que vuelve el look "de boda en la playa".
+    if (v.regla === "full-lino-en-oficina") {
+      const esLino = (i: EngineItem) => /lino/.test(`${texto(i)} ${String(i.attrs.material ?? "").toLowerCase()}`);
+      const abajo = enLook().find((i) => /pantal[oó]n|chino|bermuda|falda/.test(texto(i)) && esLino(i));
+      const cands = disponibles
+        .filter((i) => /pantal[oó]n|chino|jeans/.test(texto(i)) && !esLino(i))
+        // Fresco primero para el calor: chino/algodón antes que lana de vestir.
+        .sort((a, b) => (/chino|algod[oó]n|t[eé]cnico/.test(texto(b)) ? 1 : 0) - (/chino|algod[oó]n|t[eé]cnico/.test(texto(a)) ? 1 : 0));
+      for (const cand of abajo ? cands : []) {
+        const nuevos = ids.map((id) => (id === abajo!.id ? cand.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "sustituida", entro: nombre(cand), salio: nombre(abajo!) } };
+        }
+      }
+      // Sin pantalón que cambiar (dos linos arriba): cambia la camisa por una
+      // que no sea de lino.
+      const arriba = enLook().find((i) => /camisa/.test(texto(i)) && esLino(i));
+      const otra = disponibles.find((i) => /camisa|polo/.test(texto(i)) && !esLino(i) && !/manga corta/.test(texto(i)));
+      if (arriba && otra) {
+        const nuevos = ids.map((id) => (id === arriba.id ? otra.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "sustituida", entro: nombre(otra), salio: nombre(arriba) } };
+        }
+      }
+    }
+
     // BODA DE NOCHE → LA CAMISA SE CAMBIA POR LA BLANCA. Quirúrgico: una prenda.
     if (v.regla === "boda-de-noche-camisa-blanca") {
       const esCamisaVestir = (i: EngineItem) =>

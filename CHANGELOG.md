@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.276.1] - 2026-08-24
+
+### Fixed — `full-lino-en-oficina` por fin repara (y cambia el pantalón, no la camisa)
+
+Cazado en vivo verificando la pregunta de Roberto ("¿la sigue regando con el
+lino?"): la regla detectaba desde julio pero nunca tuvo reparador — el mismo
+patrón "detecta sin reparar" ya pagado con blazer-no-es-abrigo y el saco de
+traje. La dirección de la reparación la dieron sus votos: "camisa de lino +
+chinos marino" tiene 👍, así que la camisa de lino se queda y lo que sale es
+el pantalón de lino (por chinos o algodón, fresco primero). Verificado sobre
+el look real: "Camisa de lino azul claro + Pantalón de lino marino" → ahora
+sale con chinos. Sin subir versión del prompt: es reparador puro (precedente
+v0.2.261.0), y además hay un eval de v64 corriendo que la exige quieta.
+
 ## [0.2.276.0] - 2026-08-24
 
 ### Added — los primeros polos de mujer del catálogo (migración 0147)
