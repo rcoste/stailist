@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { revisarEjecucion, bloqueEjecucion } from "./reglas-ejecucion";
+import { revisarEjecucion, bloqueEjecucion, tipAbreElSaco, tieneSacoCruzado } from "./reglas-ejecucion";
 import type { EngineItem } from "./prompt";
 
 const p = (
@@ -1534,5 +1534,50 @@ describe("oxford-en-registro-formal — el cuello abotonado es casual", () => {
   it("en comida de trabajo dispara; sin camisa lisa en el clóset, calla (carencia)", () => {
     expect(revisarEjecucion(LOOK, { tipoEvento: "comida-trabajo", closet: CLOSET }).map((x) => x.regla)).toContain("oxford-en-registro-formal");
     expect(revisarEjecucion(LOOK, { tipoEvento: "comida-trabajo", closet: [] }).map((x) => x.regla)).not.toContain("oxford-en-registro-formal");
+  });
+});
+
+describe("chelsea-en-calor — el botín no va con calor (v67)", () => {
+  const CLOSET = [
+    p("Mocasines burdeos", "#5C2A2E", { color: "burdeos", formalidad: "formal-casual" }),
+    p("Tenis blancos", "#FFFFFF", { color: "blanco", formalidad: "casual" }),
+  ];
+  const LOOK = [
+    p("Polo negro", "#111111"),
+    p("Chinos beige", "#C8B394"),
+    p("Botines Chelsea negros", "#1A1A1A", { formalidad: "formal-casual" }),
+  ];
+  it("con calor dispara; en templado no; con lluvia calla (ahí la bota es lo correcto)", () => {
+    expect(revisarEjecucion(LOOK, { clima: "calor", closet: CLOSET }).map((x) => x.regla)).toContain("chelsea-en-calor");
+    expect(revisarEjecucion(LOOK, { clima: "templado", closet: CLOSET }).map((x) => x.regla)).not.toContain("chelsea-en-calor");
+    expect(revisarEjecucion(LOOK, { clima: "calor", lluvia: true, closet: CLOSET }).map((x) => x.regla)).not.toContain("chelsea-en-calor");
+  });
+  it("sin recambio bajo en el clóset calla (carencia), y la ablación sinReglasV67 la apaga", () => {
+    expect(revisarEjecucion(LOOK, { clima: "calor", closet: [] }).map((x) => x.regla)).not.toContain("chelsea-en-calor");
+    expect(revisarEjecucion(LOOK, { clima: "calor", closet: CLOSET, sinReglasV67: true }).map((x) => x.regla)).not.toContain("chelsea-en-calor");
+  });
+});
+
+describe("el tip del saco cruzado (v67) — validado contra los 4 tips reales del comparador", () => {
+  // Los DOS que Roberto marcó (075a3f12 "investiga cómo se usa" y 8130c381
+  // "lo que luce es que esté cruzado"): mandan abrirlo → cazan.
+  it("caza los dos tips que mandaban abrirlo", () => {
+    expect(tipAbreElSaco("Abre el saco cruzado al sentarte para que se vea el blanco de la camisa contra el café — ese contraste es lo que va a hacer que se note el esfuerzo sin gritarlo.")).toBe(true);
+    expect(tipAbreElSaco("Deja el saco cruzado café abierto para que se vea el cuello del suéter vino asomando debajo, así el contraste de color hace todo el trabajo.")).toBe(true);
+  });
+  // Los DOS aprobados: lo mandan cerrado (uno incluso dice "pero abre el
+  // cuello de la camisa" — el corte por frase evita ese falso positivo).
+  it("calla en los dos tips correctos, incluido el que abre OTRA cosa", () => {
+    expect(tipAbreElSaco("Deja el saco cruzado cerrado como manda su corte, pero saca un poco el cuello del suéter esmeralda por encima de la camisa para que se note esa capa de color.")).toBe(false);
+    expect(tipAbreElSaco("Deja el saco cruzado cerrado como se lleva siempre, pero abre el cuello de la camisa un botón para que se note relajado, no acartonado.")).toBe(false);
+    expect(tipAbreElSaco(null)).toBe(false);
+  });
+  it("ábrelo al caminar también caza (la forma del tip de la cita)", () => {
+    expect(tipAbreElSaco("Deja el saco cerrado con un solo botón al sentarte y ábrelo al caminar.")).toBe(true);
+  });
+  it("tieneSacoCruzado: por nombre y por subtipo; el saco recto no", () => {
+    expect(tieneSacoCruzado([p("saco cruzado café", "#6B4A2B")])).toBe(true);
+    expect(tieneSacoCruzado([p("Blazer marino", "#27425F", { subtipo: "cruzado" })])).toBe(true);
+    expect(tieneSacoCruzado([p("Saco de traje gris carbón", "#3A3C42")])).toBe(false);
   });
 });

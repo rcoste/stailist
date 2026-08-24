@@ -129,6 +129,15 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     opciones: { sinReglasV61: true },
   },
   {
+    clave: "sin-reglas-v67",
+    etiqueta: "Sin las reglas de v67",
+    // Mismo patrón que sin-reglas-v61: un cambio de REGLAS se mide apagándolas,
+    // no con prompt-anterior (el congelado sólo fija el texto del generador).
+    ayuda:
+      "sin las reglas de v67 (chelsea en calor + el tip del saco cruzado que mandaba abrirlo) — si gana, se revierten",
+    opciones: { sinReglasV67: true },
+  },
+  {
     clave: "reparar-primero",
     etiqueta: "Código antes que juez",
     // CONVERSACIÓN B, variante 1 (docs §9). El juez de producción reescribe el

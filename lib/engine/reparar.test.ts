@@ -409,3 +409,29 @@ describe("la oxford con cliente se cambia por la camisa de vestir lisa", () => {
     expect(r.itemIds).toContain(LISA.id);
   });
 });
+
+describe("chelsea-en-calor — el botín se baja a calzado fresco de formalidad parecida (v67)", () => {
+  it("con calor cambia la chelsea por el mocasín (no el tenis: formalidad más cercana)", () => {
+    const chelsea = it_("ch", "calzado", "Botines Chelsea negros", {
+      color_hex: "#111111", color: "negro", formalidad: "formal-casual",
+    });
+    const mocasin = it_("mo", "calzado", "Mocasines burdeos", {
+      color_hex: "#5C2A2E", color: "burdeos", formalidad: "formal-casual",
+    });
+    const tenis = it_("te", "calzado", "Tenis blancos", {
+      color_hex: "#FFFFFF", color: "blanco", formalidad: "casual",
+    });
+    const polo = it_("po", "top", "Polo negro", { color: "negro", color_hex: "#111111" });
+    // Marino y no beige: chinos beige + chelsea negra dispararía negro-con-beige
+    // (regla real) antes que la que este test aísla.
+    const chinos = it_("chi", "bottom", "Pantalón técnico marino", { color: "azul marino", color_hex: "#27425F" });
+    const closet = [chelsea, mocasin, tenis, polo, chinos];
+
+    const r = repararEnCodigo(["po", "chi", "ch"], closet, { closet, clima: "calor", ...HOMBRE });
+    expect(r.hechas[0]).toMatchObject({ regla: "chelsea-en-calor", como: "sustituida" });
+    expect(r.itemIds).toContain("mo");
+    expect(r.itemIds).not.toContain("ch");
+    expect(r.itemIds).toContain("po");
+    expect(r.itemIds).toContain("chi");
+  });
+});

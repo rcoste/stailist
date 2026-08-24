@@ -484,6 +484,33 @@ function intentarUna(
       }
     }
 
+    // EL BOTÍN EN CALOR → calzado bajo de formalidad parecida. Mecánico como
+    // lluvia-calzado (la condición es comprobable: caña cerrada con calor),
+    // pero con el sort de formalidad de negro-con-beige: la chelsea de una
+    // oficina no se baja a tenis si hay mocasín o derby a la mano.
+    if (v.regla === "chelsea-en-calor") {
+      const esBotin = (i: EngineItem) =>
+        esCalzado(i) && /chelsea|bot[ií]n|\bbota\b/.test(texto(i));
+      const actual = enLook().find(esBotin);
+      if (actual) {
+        const NIVEL: Record<string, number> = { casual: 0, "formal-casual": 1, formal: 2 };
+        const nivel = (i: EngineItem) => NIVEL[String(i.attrs.formalidad ?? "").toLowerCase()] ?? 0;
+        const cands = disponibles
+          .filter((i) => esCalzado(i) && !esBotin(i))
+          .filter((i) => !/sandalia|senderismo|hiking|monta[nñ]a/.test(texto(i)))
+          .sort((a, b) => Math.abs(nivel(a) - nivel(actual)) - Math.abs(nivel(b) - nivel(actual)));
+        for (const cand of cands) {
+          const nuevos = ids.map((id) => (id === actual.id ? cand.id : id));
+          if (violacionesDe(nuevos).length < violaciones.length) {
+            return {
+              ids: nuevos,
+              hecha: { regla: v.regla, como: "sustituida", entro: nombre(cand), salio: nombre(actual) },
+            };
+          }
+        }
+      }
+    }
+
     // ── EL CUERO ACCESORIO SE ALINEA CON EL CALZADO, O SE VA. Esta regla
     //    vivió meses en la lista de "criterio, que la vea el juez" de abajo —
     //    y medido en la primera ronda calificada (283d8d44), el juez la reparó
