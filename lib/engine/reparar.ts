@@ -326,7 +326,7 @@ function intentarUna(
     // la camisa de lino sola en oficina de calor es correcta; el pantalón de
     // lino es lo que vuelve el look "de boda en la playa".
     if (v.regla === "full-lino-en-oficina") {
-      const esLino = (i: EngineItem) => /lino/.test(`${texto(i)} ${String(i.attrs.material ?? "").toLowerCase()}`);
+      const esLino = (i: EngineItem) => /\blino\b/.test(`${texto(i)} ${String(i.attrs.material ?? "").toLowerCase()}`);
       const abajo = enLook().find((i) => /pantal[oó]n|chino|bermuda|falda/.test(texto(i)) && esLino(i));
       const cands = disponibles
         .filter((i) => /pantal[oó]n|chino|jeans/.test(texto(i)) && !esLino(i))
