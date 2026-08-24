@@ -57,6 +57,10 @@ export type OpcionesGeneracion = {
    * Implica `repararPrimero` (una variante = un flag).
    */
   juezSoloRepara?: boolean;
+  /** Apaga las 4 reglas de v61 (boda-de-noche-camisa-blanca, camisa-de-vestir-
+   *  bajo-overshirt, calzado-cafe-con-traje-negro, charol-solo-etiqueta).
+   *  Sólo para el comparador: es la ablación que las mide como grupo. */
+  sinReglasV61?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

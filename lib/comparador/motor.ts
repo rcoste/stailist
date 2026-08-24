@@ -117,6 +117,18 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
   // ella aprobó más. La regla se retiró; las corridas viejas conservan su copia
   // de la variante en la fila, así que siguen leyéndose.
   {
+    clave: "sin-reglas-v61",
+    etiqueta: "Sin las reglas de v61",
+    // LA ABLACIÓN DE v61 — y la lección de la ronda 6868a52b (cerrada sin
+    // votar): un cambio de REGLAS no se mide con prompt-anterior, porque el
+    // congelado sólo fija el texto del generador y las reglas corren en el
+    // pipeline de hoy para los dos lados. Aquí el control es apagarlas: si
+    // este lado gana, las reglas estorban y se revierten.
+    ayuda:
+      "sin las 4 reglas nacidas de los comentarios (boda de noche/overshirt/café con traje negro/charol) — si gana, se revierten",
+    opciones: { sinReglasV61: true },
+  },
+  {
     clave: "reparar-primero",
     etiqueta: "Código antes que juez",
     // CONVERSACIÓN B, variante 1 (docs §9). El juez de producción reescribe el

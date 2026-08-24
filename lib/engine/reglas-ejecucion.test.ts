@@ -1430,3 +1430,46 @@ describe("cuello-alto-sin-base — el cuello tortuga sin apellido también es de
     expect(v.map((x) => x.regla)).not.toContain("cuello-alto-sin-base");
   });
 });
+
+describe("las cuatro reglas de las rondas 075a3f12 y 08f46d3e", () => {
+  const CLOSET = [
+    p("Camisa blanca", "#FAFAF7", { color: "blanco" }),
+    p("Camiseta blanca", "#FFFFFF", { color: "blanco" }),
+    p("Zapato formal negro", "#111111", { color: "negro", formalidad: "formal" }),
+  ];
+  it("boda de NOCHE con camisa azul dispara; de día no; sin blanca en el clóset, tampoco", () => {
+    const look = [p("camisa de vestir azul claro", "#A9C4E0", { color: "azul claro" }), p("Saco de traje negro", "#111111"), p("Pantalón de traje negro", "#111111")];
+    const base = { tipoEvento: "boda", closet: CLOSET };
+    expect(revisarEjecucion(look, { ...base, momento: "noche" }).map((x) => x.regla)).toContain("boda-de-noche-camisa-blanca");
+    expect(revisarEjecucion(look, { ...base, momento: "dia" }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
+    expect(revisarEjecucion(look, { tipoEvento: "boda", momento: "noche", closet: [] }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
+  });
+  it("camisa oxford bajo overshirt dispara; la de mezclilla no (así votó)", () => {
+    const over = p("Overshirt oliva", "#5E6B43");
+    expect(revisarEjecucion([p("Camisa oxford azul", "#A9C4E0"), over, p("Jeans azul oscuro", "#2C3E50")]).map((x) => x.regla)).toContain("camisa-de-vestir-bajo-overshirt");
+    expect(revisarEjecucion([p("Camisa de mezclilla", "#7D9BB5"), over, p("Jeans negros", "#1A1A1A")]).map((x) => x.regla)).not.toContain("camisa-de-vestir-bajo-overshirt");
+  });
+  it("mocasín burdeos con traje NEGRO dispara; con traje gris no (el café ahí es correcto)", () => {
+    const moc = p("Mocasines burdeos", "#5C2A2E", { color: "burdeos" });
+    const negro = [p("Saco de traje negro", "#111111", { color: "negro" }), p("Pantalón de traje negro", "#111111"), p("Camisa blanca", "#FAFAF7"), moc];
+    const gris = [p("Saco de traje gris carbón", "#3A3C42", { color: "gris carbón" }), p("Pantalón de traje gris carbón", "#3A3C42"), p("Camisa blanca", "#FAFAF7"), moc];
+    expect(revisarEjecucion(negro, { closet: CLOSET }).map((x) => x.regla)).toContain("calzado-cafe-con-traje-negro");
+    expect(revisarEjecucion(gris, { closet: CLOSET }).map((x) => x.regla)).not.toContain("calzado-cafe-con-traje-negro");
+  });
+  it("charol con traje de calle dispara; con esmoquin o gala, no", () => {
+    const charol = p("Oxford negro de charol", "#0A0A0A", { color: "negro", formalidad: "formal" });
+    const traje = [p("Saco de traje negro", "#111111"), p("Pantalón de traje negro", "#111111"), p("Camisa blanca", "#FAFAF7"), charol];
+    expect(revisarEjecucion(traje, { formality: "formal", closet: CLOSET }).map((x) => x.regla)).toContain("charol-solo-etiqueta");
+    expect(revisarEjecucion(traje, { formality: "gala", closet: CLOSET }).map((x) => x.regla)).not.toContain("charol-solo-etiqueta");
+    expect(revisarEjecucion([p("Saco de esmoquin negro", "#0A0A0A"), charol], { formality: "formal", closet: CLOSET }).map((x) => x.regla)).not.toContain("charol-solo-etiqueta");
+  });
+});
+
+describe("sinReglasV61 — la ablación apaga las cuatro como grupo", () => {
+  it("con el flag, el look de boda con camisa azul no dispara la regla nueva", () => {
+    const look = [p("camisa de vestir azul claro", "#A9C4E0", { color: "azul claro" }), p("Saco de traje negro", "#111111")];
+    const ctx = { tipoEvento: "boda", momento: "noche" as const, closet: [p("Camisa blanca", "#FAFAF7", { color: "blanco" })] };
+    expect(revisarEjecucion(look, ctx).map((x) => x.regla)).toContain("boda-de-noche-camisa-blanca");
+    expect(revisarEjecucion(look, { ...ctx, sinReglasV61: true }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
+  });
+});

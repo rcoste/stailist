@@ -75,6 +75,7 @@ export type CriticResult = {
 export type OpcionesJuez = {
   sinRepararEnCodigo?: boolean;
   sinCoherenciaCromatica?: boolean;
+  sinReglasV61?: boolean;
   repararPrimero?: boolean;
   juezSoloRepara?: boolean;
 };
@@ -471,12 +472,13 @@ export async function reviewOutfit(
  */
 export function contextoDeReglas(
   ctx: EngineContext,
-  opciones: { sinCoherenciaCromatica?: boolean } = {}
+  opciones: { sinCoherenciaCromatica?: boolean; sinReglasV61?: boolean } = {}
 ): ContextoReglas {
   return {
     // Flag del comparador: apagar la regla de color es correr el motor real
     // con ella apagada, no una imitación.
     sinCoherenciaCromatica: opciones.sinCoherenciaCromatica,
+    sinReglasV61: opciones.sinReglasV61,
     clima: bandaDeClima(ctx.weather),
     closet: ctx.items,
     // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado son la
@@ -492,6 +494,8 @@ export function contextoDeReglas(
     // Para qué es el look: "full lino" es correcto de nivel y equivocado de
     // contexto, y sin esto la regla no puede distinguir oficina de evento.
     objective: ctx.objective,
+    // Día o noche: la regla de la camisa en boda distingue por esto.
+    momento: ctx.timeOfDay,
     // Para quién: la regla del suéter es convención MASCULINA, y aplicarla a
     // una mujer marca como error el punto a piel, que ahí es normal.
     gender: ctx.gender,

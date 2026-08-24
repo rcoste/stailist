@@ -2,6 +2,41 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.274.0] - 2026-08-24
+
+### Added — v61: las cuatro reglas que dictaron los comentarios de Roberto
+
+Todas nacidas de comentarios con ≥3 menciones en las rondas 075a3f12 y
+08f46d3e, todas con reparador, todas medidas por ablación contra los looks
+votados ANTES de salir (cero falsos en 👍):
+
+- **`boda-de-noche-camisa-blanca`** (7 👎 / 0 👍): "boda de noche no va con
+  camisa azul, sería mejor blanco" — cinco veces. De noche el registro sube;
+  la camisa de color es de día. Repara cambiando a la blanca del clóset.
+- **`camisa-de-vestir-bajo-overshirt`** (3 👎 / 0 👍): "camisa oxford con
+  sobrecamisa? ni al caso". Cuello sobre cuello; debajo va camiseta. La de
+  mezclilla o franela sí pasa — así votó él. Repara cambiando a playera lisa.
+- **`calzado-cafe-con-traje-negro`** (2 👎 / 0 👍): "fallan los mocasines
+  cafés, ya te lo había dicho". El traje NEGRO es el único que no admite
+  calzado café/burdeos; con marino o gris el café es correcto y no se toca.
+- **`charol-solo-etiqueta`** (1 👎 / 0 👍): el charol es de etiqueta (smoking,
+  jaquet, frac) — la investigación que pidió le dio la razón. Con traje de
+  calle se cambia por el formal negro liso.
+
+**Resultado de la ronda 7abd9c9c (v61 con reglas vs sin ellas): 75% contra
+71%, pares 2-2 con 2 empates — cumple el "≥" pre-registrado y SALE.** En el
+camino se cerró sin votar una ronda inválida (6868a52b): prompt-anterior no
+aísla cambios de reglas; nació la variante de ablación `sin-reglas-v61` y la
+regla de proceso "cambio de prompt → prompt-anterior; cambio de reglas →
+ablación".
+
+`ContextoReglas.momento` entra para distinguir boda de día y de noche. Prompt
+v61 (el texto del generador no cambia); v60 congelado antes como línea base.
+
+El instrumento también mejoró: la ablación DESCARTA los looks con prendas
+borradas del clóset (35 de 202) — medían "zona sin cubrir" sobre huecos que el
+look nunca tuvo. Anotado de paso: `lluvia-sin-impermeable` marca 5 👎 / 6 👍 —
+candidata a revisión.
 ## [0.2.273.2] - 2026-08-24
 
 ### Added — dos atajos de clima al votar

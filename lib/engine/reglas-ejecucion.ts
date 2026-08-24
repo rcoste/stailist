@@ -89,6 +89,10 @@ export type ContextoReglas = {
    * el flag en vez de una imitación (misma disciplina que `sinRepararEnCodigo`).
    */
   sinCoherenciaCromatica?: boolean;
+  /** Día o noche: "boda de noche" y "boda de día" no comparten camisa. */
+  momento?: "dia" | "noche" | null;
+  /** Ablación del comparador: apaga las 4 reglas de v61 como grupo. */
+  sinReglasV61?: boolean;
 };
 
 /**
@@ -1172,6 +1176,95 @@ export function revisarEjecucion(
   //     coherencia-cromatica.ts) se queda como biblioteca, por si vuelve con
   //     otra forma; aquí ya no dispara nada.
 
+  if (!ctx.sinReglasV61) {
+  // 24. BODA DE NOCHE → CAMISA BLANCA. Roberto, CINCO veces en dos rondas
+  //     (075a3f12 y 08f46d3e): "boda de noche no va con camisa azul, sería
+  //     mejor blanco", "este es más look para boda de día por el color de la
+  //     camisa". La etiqueta le da la razón: de noche el registro sube y la
+  //     camisa blanca es el estándar; la de color es de día. Sólo dispara si
+  //     el clóset TIENE una camisa blanca (sin recambio es carencia).
+  if (ctx.tipoEvento === "boda" && ctx.momento === "noche" && ctx.closet?.length) {
+    const esCamisaVestir = (i: EngineItem) =>
+      /camisa/.test(TIPO(i)) && !/mezclilla|denim|chambray|lino|manga corta|franela|cuadros/.test(TIPO(i));
+    const esBlanca = (i: EngineItem) => /blanc/.test(`${norm(i.attrs.color)} ${TIPO(i)}`);
+    const deColor = items.filter((i) => esCamisaVestir(i) && !esBlanca(i));
+    const blancas = ctx.closet.filter((i) => esCamisaVestir(i) && esBlanca(i));
+    if (deColor.length && blancas.length) {
+      v.push({
+        regla: "boda-de-noche-camisa-blanca",
+        detalle: `"${nombre(deColor[0])}" en una boda de NOCHE: la camisa de color es de día — de noche el registro sube y va camisa blanca (${blancas.slice(0, 2).map(nombre).join(" o ")}). Cámbiala.`,
+      });
+    }
+  }
+
+  // 25. CAMISA DE VESTIR BAJO OVERSHIRT. Tres veces, dos rondas: "camisa
+  //     oxford con sobrecamisa? ni al caso", "no va la camisa esa de vestir
+  //     abajo de la overshirt, se ve rarísimo". La overshirt ES una camisa:
+  //     cuello sobre cuello y registro contra registro. La de mezclilla o
+  //     franela (casual, se lleva como capa media) sí pasa — y así votó él.
+  {
+    const esOvershirt = (i: EngineItem) => /overshirt|sobrecamisa/.test(TIPO(i));
+    const esCamisaVestir = (i: EngineItem) =>
+      /camisa/.test(TIPO(i)) && !/mezclilla|denim|chambray|franela|cuadros|manga corta/.test(TIPO(i));
+    const over = items.find(esOvershirt);
+    const camisa = over ? items.find(esCamisaVestir) : undefined;
+    if (over && camisa) {
+      v.push({
+        regla: "camisa-de-vestir-bajo-overshirt",
+        detalle: `"${nombre(camisa)}" debajo de "${nombre(over)}": la overshirt ya es una camisa — cuello sobre cuello se ve amontonado y los registros pelean. Debajo va una camiseta o playera lisa; la camisa de vestir, sola o bajo un suéter.`,
+      });
+    }
+  }
+
+  // 26. CALZADO CAFÉ/BURDEOS CON TRAJE NEGRO. Tres veces ("fallan los
+  //     mocasines cafés, ya te lo había dicho" — él llama café al burdeos, y
+  //     en esto la sastrería le da la razón: el traje NEGRO es el único que no
+  //     admite calzado café; con marino o gris el café es correcto y no se
+  //     toca). Sólo con SACO de traje negro puesto: pantalón negro suelto es
+  //     otra cosa (y botín café con jeans negros casual él lo aprueba).
+  {
+    const esSacoNegro = (i: EngineItem) =>
+      /saco|esmoquin|smoking/.test(TIPO(i)) && /traje|esmoquin|smoking/.test(TIPO(i)) && /negr/.test(`${norm(i.attrs.color)} ${TIPO(i)}`);
+    const esPie = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "pie";
+    const esCalido = (i: EngineItem) =>
+      /caf[eé]|marr[oó]n|chocolate|burdeos|cognac|tabaco|miel/.test(`${norm(i.attrs.color)} ${TIPO(i)}`);
+    const saco = items.find(esSacoNegro);
+    const calzado = saco ? items.filter((i) => esPie(i) && esCalido(i)) : [];
+    if (saco && calzado.length && ctx.closet?.length) {
+      const negros = ctx.closet.filter((i) => esPie(i) && /negr/.test(`${norm(i.attrs.color)} ${TIPO(i)}`));
+      if (negros.length) {
+        v.push({
+          regla: "calzado-cafe-con-traje-negro",
+          detalle: `"${nombre(calzado[0])}" con traje NEGRO: el negro es el único traje que no admite calzado café o burdeos — se lee como error, no como decisión. Va calzado negro (${negros.slice(0, 2).map(nombre).join(" o ")}); con traje marino o gris el café sí es correcto.`,
+        });
+      }
+    }
+  }
+
+  // 27. CHAROL SÓLO CON ETIQUETA. Roberto: "el charol según yo va para
+  //     jaquet, smoking o frac (investiga)" — y la investigación le da la
+  //     razón: el charol es calzado de ETIQUETA. Con un traje de calle, aunque
+  //     sea una boda formal, desentona. Pasa sólo si el look trae esmoquin o
+  //     la formalidad es gala.
+  {
+    const esCharol = (i: EngineItem) => /charol|patent/.test(TIPO(i));
+    const charol = items.find(esCharol);
+    const esEtiqueta = ctx.formality === "gala" || items.some((i) => /esmoquin|smoking|tuxedo|frac|jaquet/.test(TIPO(i)));
+    if (charol && !esEtiqueta && ctx.closet?.length) {
+      const otros = ctx.closet.filter(
+        (i) => tipoDePrenda(nombre(i))?.zona === "pie" && !esCharol(i) && /negr/.test(`${norm(i.attrs.color)} ${TIPO(i)}`) && norm(i.attrs.formalidad) === "formal"
+      );
+      if (otros.length) {
+        v.push({
+          regla: "charol-solo-etiqueta",
+          detalle: `"${nombre(charol)}" es de charol: calzado de ETIQUETA (smoking, jaquet, frac). Con traje de calle desentona aunque el evento sea formal. Cámbialo por un formal negro liso (${otros.slice(0, 2).map(nombre).join(" o ")}).`,
+        });
+      }
+    }
+  }
+
+  } // fin de las reglas de v61 (ablación: sinReglasV61)
+
   return v;
 }
 
@@ -1198,6 +1291,10 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita. Cinturón negro con mocasín burdeos es un DETALLE (él lo reconoce cuando se lo señalan, y aprueba el look igual): se repara, no tira el look. Y un botín café con jeans negros en un look casual pasa — lo que rompe es el café dentro de un look NEGRO de arriba abajo.
 - Con chinos beige, caqui o camel el calzado y el cinturón NO van en negro: van café, marrón, burdeos o ante.
 - Camisa de mezclilla con saco, blazer o traje, nunca: bajo un suéter o una chaqueta sí.
+- En boda de NOCHE la camisa es blanca; la de color es de día.
+- La camisa de vestir no va debajo de una overshirt (cuello sobre cuello): ahí va camiseta o playera. La de mezclilla o franela sí pasa.
+- Con traje NEGRO el calzado es negro — es el único traje que no admite café ni burdeos. Con marino o gris, el café es correcto.
+- El charol es de etiqueta (smoking, jaquet, frac): con traje de calle no va.
 - El reloj deportivo (caucho, smart) no va con piezas de sastre ni en formal/gala. En un día casual sí pasa — no lo marques ahí.
 - La corbata de punto no va a ceremonia (formal/gala). En cita u oficina es elección correcta.
 - En evento formal el traje va completo; saco y pantalón de juegos distintos son separates: bien para oficina, cortos para una boda.

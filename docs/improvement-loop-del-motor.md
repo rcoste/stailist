@@ -204,9 +204,13 @@ una regla que tira looks dispare en 👍.
    versión de ayer, ese lado falla claro y la ronda no se puede correr.
    Hacerlo el día que la versión está viva es trivial; reconstruirla después es
    arqueología.
-6. **Generar y juzgar.** Para un cambio del motor el retador es
-   `prompt-anterior` (la versión de ayer con el juez y el reparador de hoy);
-   los demás retadores (apagar un flag, otro modelo) son para ablaciones:
+6. **Generar y juzgar — CON EL RETADOR QUE MIDE ESE CAMBIO.** La lección de
+   la ronda 6868a52b (cerrada sin votar): `prompt-anterior` congela sólo el
+   TEXTO del generador, así que mide cambios de prompt; un cambio de REGLAS o
+   REPARADOR corre en el pipeline de hoy para los dos lados y esa ronda sale
+   idéntica-contra-idéntica (puro ruido). **Cambio de prompt → `prompt-
+   anterior`. Cambio de reglas/reparador → variante de ablación que las
+   apague** (como `sin-reglas-v61`):
    ```
    npx tsx scripts/correr-vistazo.ts prompt-anterior roberto@kublau.com
    npx tsx scripts/comparador-juzgar.ts <corridaId>
@@ -317,6 +321,8 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | — | — | — | — | — | **POOL v9 desde aquí: los planes dicen lo que diría una persona. Las aprobaciones de arriba (v8) y las de abajo (v9) NO se comparan.** |
 | — | — | — | — | — | **CLÓSET DE REFERENCIA v1 desde aquí (129 prendas, 2026-08-22). v58 re-congelado sobre él. Corte de línea base otra vez.** |
 | 08-22 | 075a3f12 | v58 | sin-coherencia-cromatica | 64% vs **79%** | **línea base con el clóset v1: 72%** (25 looks). La regla de color, 5ª ronda: 2-2, 2 empates, y el lado SIN ella aprobó más → **retirada en v59** (pre-registrado desde v53) |
+| 08-24 | 6868a52b | v61 | prompt-anterior (v60) | — | **CERRADA SIN VOTAR: inválida.** v61 sólo cambió reglas; prompt-anterior no las aísla (corren en ambos lados). Nace la regla del paso 6 |
+| 08-24 | 7abd9c9c | v61 | sin-reglas-v61 | (a voto) | **pre-registrado:** las 4 reglas de v61 entran a main si "Producción" ≥ que el lado sin ellas; si el lado sin ellas gana, se revierten |
 | 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
 ---
