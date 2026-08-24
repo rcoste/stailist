@@ -48,6 +48,7 @@ async function main() {
   const carga = await cargarBaseDelMotor(s as never, dueno);
   if ("error" in carga) throw new Error("closet_vacio");
 
+  let descartados = 0;
   const porRegla: Record<string, { dn: number; up: number }> = {};
   const sinRegla: typeof casos = [];
   const rotosEntregados: { c: (typeof casos)[0]; v: string[]; tras: string[] }[] = [];
@@ -57,6 +58,11 @@ async function main() {
     // contaría como roto lo que ese lado no vigilaba.
     const cr = contextoDeReglas(ctx, { sinCoherenciaCromatica: c.variante === "sin-coherencia-cromatica" });
     const items = ctx.items.filter((i) => c.look.item_ids.includes(i.id));
+    // Un look con prendas BORRADAS del clóset no se puede medir: las reglas de
+    // ausencia (zona-sin-cubrir, frío, lluvia) verían un hueco que el look no
+    // tenía. Cazado el 2026-08-24: las 5 prendas borradas del curado inflaban
+    // esas tres reglas con falsos en 👍. Fuera del instrumento, y se cuenta.
+    if (items.length !== c.look.item_ids.length) { descartados++; continue; }
     const v = revisarEjecucion(items, cr);
     for (const x of v) {
       const e = (porRegla[x.regla] ??= { dn: 0, up: 0 });
@@ -70,7 +76,7 @@ async function main() {
     }
   }
   const dn = casos.filter((c) => c.marca === "abajo").length, up = casos.length - dn;
-  console.log(`ABLACIÓN · ${casos.length} looks votados (${dn} 👎 / ${up} 👍)\n`);
+  console.log(`ABLACIÓN · ${casos.length} looks votados (${dn} 👎 / ${up} 👍) · ${descartados} descartados por prendas borradas\n`);
   console.log(`regla                           en 👎   en 👍`);
   for (const [r, e] of Object.entries(porRegla).sort((a, b) => b[1].dn + b[1].up - (a[1].dn + a[1].up)))
     console.log(`  ${r.padEnd(30)} ${String(e.dn).padStart(4)}   ${String(e.up).padStart(4)}`);

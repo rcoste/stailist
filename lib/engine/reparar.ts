@@ -293,6 +293,56 @@ function intentarUna(
       }
     }
 
+    // BODA DE NOCHE → LA CAMISA SE CAMBIA POR LA BLANCA. Quirúrgico: una prenda.
+    if (v.regla === "boda-de-noche-camisa-blanca") {
+      const esCamisaVestir = (i: EngineItem) =>
+        /camisa/.test(texto(i)) && !/mezclilla|denim|chambray|lino|manga corta|franela|cuadros/.test(texto(i));
+      const puesta = enLook().find((i) => esCamisaVestir(i) && !/blanc/.test(`${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase()));
+      const blanca = disponibles.find((i) => esCamisaVestir(i) && /blanc/.test(`${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase()));
+      if (puesta && blanca) {
+        const nuevos = ids.map((id) => (id === puesta.id ? blanca.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "sustituida", entro: nombre(blanca), salio: nombre(puesta) } };
+        }
+      }
+    }
+
+    // CAMISA DE VESTIR BAJO OVERSHIRT → camiseta/playera lisa en su lugar.
+    if (v.regla === "camisa-de-vestir-bajo-overshirt") {
+      const esCamisaVestir = (i: EngineItem) =>
+        /camisa/.test(texto(i)) && !/mezclilla|denim|chambray|franela|cuadros|manga corta/.test(texto(i));
+      const camisa = enLook().find(esCamisaVestir);
+      const bases = disponibles
+        .filter((i) => /camiseta|playera|t-?shirt/.test(texto(i)))
+        .sort((a, b) => puntuarBase(b) - puntuarBase(a));
+      for (const base of camisa ? bases : []) {
+        const nuevos = ids.map((id) => (id === camisa!.id ? base.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "sustituida", entro: nombre(base), salio: nombre(camisa!) } };
+        }
+      }
+    }
+
+    // CALZADO CAFÉ CON TRAJE NEGRO y CHAROL FUERA DE ETIQUETA → formal negro.
+    if (v.regla === "calzado-cafe-con-traje-negro" || v.regla === "charol-solo-etiqueta") {
+      const esNegroLiso = (i: EngineItem) =>
+        /negr/.test(`${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase()) && !/charol|patent/.test(texto(i));
+      const malo = enLook().find((i) =>
+        esCalzado(i) && (v.regla === "charol-solo-etiqueta" ? /charol|patent/.test(texto(i)) : /caf[eé]|marr[oó]n|chocolate|burdeos/.test(`${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase()))
+      );
+      const NIVEL: Record<string, number> = { casual: 0, "formal-casual": 1, formal: 2 };
+      const nivel = (i: EngineItem) => NIVEL[String(i.attrs.formalidad ?? "").toLowerCase()] ?? 0;
+      const cands = malo
+        ? disponibles.filter((i) => esCalzado(i) && esNegroLiso(i)).sort((a, b) => nivel(b) - nivel(a))
+        : [];
+      for (const cand of cands) {
+        const nuevos = ids.map((id) => (id === malo!.id ? cand.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "sustituida", entro: nombre(cand), salio: nombre(malo!) } };
+        }
+      }
+    }
+
     // Llueve y no hay capa que repela: es el mismo "te faltó ponerte X" que el
     // frío, con otra condición. Se busca una capa exterior que aguante agua —
     // si el clóset no la tiene, no es fallo reparable sino carencia, y la regla

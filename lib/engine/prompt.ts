@@ -368,7 +368,14 @@ import {
 // jueces (lineaTipoEvento es el punto de palanca). Sin dial movido, el texto
 // es IDÉNTICO a v59. A diferencia de v56, la línea dice hacia dónde Y qué sí
 // (blazer/separates o traje bienvenido), no sólo qué no.
-export const PROMPT_VERSION = "v60";
+// v61 (2026-08-24): cuatro reglas nuevas, TODAS nacidas de comentarios de
+// Roberto con ≥3 menciones (dos con ≥5) en las rondas 075a3f12 y 08f46d3e, y
+// todas con reparador: boda-de-noche-camisa-blanca, camisa-de-vestir-bajo-
+// overshirt, calzado-cafe-con-traje-negro, charol-solo-etiqueta. El texto del
+// generador no cambia; sube porque el bloque que lee el juez cambió. Medidas
+// con ablación contra los looks votados antes de salir, y con ronda
+// prompt-anterior (v60 congelado) antes de main.
+export const PROMPT_VERSION = "v61";
 
 export type EngineItem = {
   id: string;

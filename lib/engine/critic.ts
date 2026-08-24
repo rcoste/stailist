@@ -492,6 +492,8 @@ export function contextoDeReglas(
     // Para qué es el look: "full lino" es correcto de nivel y equivocado de
     // contexto, y sin esto la regla no puede distinguir oficina de evento.
     objective: ctx.objective,
+    // Día o noche: la regla de la camisa en boda distingue por esto.
+    momento: ctx.timeOfDay,
     // Para quién: la regla del suéter es convención MASCULINA, y aplicarla a
     // una mujer marca como error el punto a piel, que ahí es normal.
     gender: ctx.gender,
