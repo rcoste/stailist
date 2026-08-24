@@ -367,3 +367,17 @@ describe("el saco de traje recupera su pantalón (lazo conjunto)", () => {
     expect(r.hechas.find((h) => h.regla === "saco-de-traje-suelto" || h.regla === "traje-desparejado")).toBeUndefined();
   });
 });
+
+describe("boda de noche: la corbata que entra es la sobria, no la estampada", () => {
+  const SACO = it_("s1", "saco", "Saco de traje negro", { color_hex: "#111111" });
+  const PANT = it_("p1", "bottom", "Pantalón de traje negro", { color_hex: "#111111" });
+  const CAMISA = it_("c1", "top", "Camisa blanca", { color_hex: "#FAFAF7" });
+  const AMARILLA = it_("a1", "accesorio", "Corbata amarilla estampada", { color: "amarillo", color_hex: "#F2C14E" });
+  const SEDA = it_("s2", "accesorio", "Corbata de seda marino", { color: "azul marino", color_hex: "#27425F" });
+  it("añade la de seda marino, no la amarilla estampada", () => {
+    const look = [SACO.id, PANT.id, CAMISA.id];
+    const closet = [SACO, PANT, CAMISA, AMARILLA, SEDA];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, tipoEvento: "boda", momento: "noche", formality: "formal", closet });
+    expect(r.hechas[0]).toMatchObject({ regla: "boda-de-noche-sin-corbata", como: "anadida", entro: "Corbata de seda marino" });
+  });
+});

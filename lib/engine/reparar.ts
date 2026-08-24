@@ -293,6 +293,32 @@ function intentarUna(
       }
     }
 
+    // BODA DE NOCHE SIN CORBATA → SE AÑADE LA CORBATA, y CUÁL importa: lisa y
+    // sobria antes que estampada o de punto (la de punto en ceremonia tiene su
+    // propia regla y añadirla aquí sería reparar rompiendo). Con esmoquin en
+    // el look, el moño gana. Decreto de Roberto, 2026-08-24.
+    if (v.regla === "boda-de-noche-sin-corbata") {
+      const esCuello = (i: EngineItem) => /corbata|mo[ñn]o|pajarita|corbat[ií]n/.test(texto(i));
+      const conEsmoquin = enLook().some((i) => /esmoquin|smoking|tuxedo/.test(texto(i)));
+      const puntua = (i: EngineItem) => {
+        const t = texto(i);
+        let n = 0;
+        if (conEsmoquin && /mo[ñn]o|pajarita/.test(t)) n += 10;
+        if (!conEsmoquin && /corbata/.test(t)) n += 4;
+        if (/seda|lisa/.test(t)) n += 3;
+        if (/marino|burdeos|negr|vino|granate/.test(`${i.attrs.color ?? ""} ${t}`.toLowerCase())) n += 2;
+        if (/estampad|rayas|cuadros|amarill|lavanda|punto|tejid/.test(t)) n -= 5;
+        return n;
+      };
+      const cand = disponibles.filter(esCuello).sort((a, b) => puntua(b) - puntua(a))[0];
+      if (cand) {
+        const nuevos = [...ids, cand.id];
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "anadida", entro: nombre(cand) } };
+        }
+      }
+    }
+
     // BODA DE NOCHE → LA CAMISA SE CAMBIA POR LA BLANCA. Quirúrgico: una prenda.
     if (v.regla === "boda-de-noche-camisa-blanca") {
       const esCamisaVestir = (i: EngineItem) =>

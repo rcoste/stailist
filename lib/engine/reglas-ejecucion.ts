@@ -1270,6 +1270,34 @@ export function revisarEjecucion(
     }
   }
 
+  // 28. BODA DE NOCHE SIN CORBATA. Por DECRETO de Roberto (2026-08-24), tras
+  //     tres menciones: "las bodas de noche deben de ser de corbata… no
+  //     necesitas más cosas mías para que la vuelva a cagar para hacerlo
+  //     regla". Con SUS dos excepciones de fábrica: si el dress code dice
+  //     coctel (semiformal explícito) se relaja, y en etiqueta rigurosa manda
+  //     el smoking con moño — el moño cuenta como corbata aquí, y el código
+  //     completo del smoking lo vigila su propia regla.
+  if (
+    ctx.tipoEvento === "boda" &&
+    ctx.momento === "noche" &&
+    ctx.formality !== "semiformal" &&
+    ctx.formality !== "casual" &&
+    ctx.formality !== "playa" &&
+    ctx.closet?.length
+  ) {
+    const esCuello = (i: EngineItem) => /corbata|mo[ñn]o|pajarita|corbat[ií]n/.test(TIPO(i));
+    const conSaco = items.some((i) => /saco|esmoquin|smoking|blazer/.test(TIPO(i)));
+    if (conSaco && !items.some(esCuello)) {
+      const corbatas = ctx.closet.filter(esCuello);
+      if (corbatas.length) {
+        v.push({
+          regla: "boda-de-noche-sin-corbata",
+          detalle: `Boda de NOCHE con saco y sin corbata: de noche la corbata no es opcional — sólo un dress code de coctel explícito la relaja, y la etiqueta rigurosa pide moño. Ponle una (${corbatas.slice(0, 2).map(nombre).join(" o ")}).`,
+        });
+      }
+    }
+  }
+
   } // fin de las reglas de v61 (ablación: sinReglasV61)
 
   return v;
@@ -1298,7 +1326,7 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - Los cueros del look dialogan: café con café, negro con negro. Un cinturón o reloj que choca con el calzado se cambia al color del calzado o se quita. Cinturón negro con mocasín burdeos es un DETALLE (él lo reconoce cuando se lo señalan, y aprueba el look igual): se repara, no tira el look. Y un botín café con jeans negros en un look casual pasa — lo que rompe es el café dentro de un look NEGRO de arriba abajo.
 - Con chinos beige, caqui o camel el calzado y el cinturón NO van en negro: van café, marrón, burdeos o ante.
 - Camisa de mezclilla con saco, blazer o traje, nunca: bajo un suéter o una chaqueta sí.
-- En boda de NOCHE la camisa es blanca; la de color es de día.
+- En boda de NOCHE la camisa es blanca; la de color es de día. Y de noche la corbata NO es opcional: sólo un dress code de coctel explícito la relaja (en etiqueta rigurosa, moño).
 - La camisa de vestir no va debajo de una overshirt (cuello sobre cuello): ahí va camiseta o playera. La de mezclilla o franela sí pasa.
 - Con traje NEGRO el calzado es negro — es el único traje que no admite café ni burdeos. Con marino o gris, el café es correcto.
 - El charol es de etiqueta (smoking, jaquet, frac): con traje de calle no va.

@@ -381,7 +381,12 @@ import {
 // traje-desparejado detectaban sin reparar — ahora, si el saco trae su lazo
 // `conjunto`, recupera SU pantalón (determinista, no criterio). Texto del
 // generador sin cambios; v61 congelado.
-export const PROMPT_VERSION = "v62";
+// v63 (2026-08-24): boda-de-noche-sin-corbata, por DECRETO de Roberto tras
+// tres menciones ("las bodas de noche deben de ser de corbata… eso debe de
+// ser") — con sus excepciones: coctel explícito la relaja; etiqueta rigurosa
+// pide moño. Entra sin ronda propia por orden suya, con ablación limpia
+// (2 👎 / 0 👍); el siguiente vistazo la vigila. v62 congelado antes.
+export const PROMPT_VERSION = "v63";
 
 export type EngineItem = {
   id: string;

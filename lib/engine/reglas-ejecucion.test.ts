@@ -1490,3 +1490,18 @@ describe("full-lino-en-oficina — el pantalón de lino cuenta aunque el materia
     expect(v.map((x) => x.regla)).toContain("full-lino-en-oficina");
   });
 });
+
+describe("boda-de-noche-sin-corbata — el decreto", () => {
+  const CLOSET = [p("Corbata de seda marino", "#27425F"), p("Moño negro", "#111111")];
+  const TRAJE = [p("Saco de traje negro", "#111111"), p("Pantalón de traje negro", "#111111"), p("Camisa blanca", "#FAFAF7"), p("Zapato formal negro", "#111111")];
+  it("boda de noche formal, saco y sin corbata: dispara", () => {
+    const v = revisarEjecucion(TRAJE, { tipoEvento: "boda", momento: "noche", formality: "formal", closet: CLOSET });
+    expect(v.map((x) => x.regla)).toContain("boda-de-noche-sin-corbata");
+  });
+  it("con corbata (o moño) no dispara; de día tampoco; en coctel explícito tampoco", () => {
+    const conCorbata = [...TRAJE, p("Corbata burdeos", "#5C2A2E")];
+    expect(revisarEjecucion(conCorbata, { tipoEvento: "boda", momento: "noche", formality: "formal", closet: CLOSET }).map((x) => x.regla)).not.toContain("boda-de-noche-sin-corbata");
+    expect(revisarEjecucion(TRAJE, { tipoEvento: "boda", momento: "dia", formality: "formal", closet: CLOSET }).map((x) => x.regla)).not.toContain("boda-de-noche-sin-corbata");
+    expect(revisarEjecucion(TRAJE, { tipoEvento: "boda", momento: "noche", formality: "semiformal", closet: CLOSET }).map((x) => x.regla)).not.toContain("boda-de-noche-sin-corbata");
+  });
+});

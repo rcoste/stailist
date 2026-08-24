@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.275.0] - 2026-08-24
+
+### Added — boda de noche sin corbata: la regla del decreto (v63)
+
+Roberto, a la tercera mención y con todas sus letras: "las bodas de noche
+deben de ser de corbata… no necesitas más cosas mías para que la vuelva a
+cagar para hacerlo regla. Eso debe de ser". Entra por decreto, con sus dos
+excepciones de fábrica: un dress code de coctel explícito (semiformal) la
+relaja, y en etiqueta rigurosa manda el moño — que aquí cuenta como corbata;
+el código completo del smoking lo vigila su propia regla.
+
+El reparador añade LA corbata correcta, no una cualquiera: lisa y sobria
+antes que estampada o de punto (la de punto en ceremonia tiene su propia
+regla — repararía rompiendo), y con esmoquin en el look gana el moño. Probado:
+con corbata amarilla estampada y seda marino disponibles, entra la marino.
+
+Ablación: 2 👎 / 0 👍. Sale sin ronda propia por orden explícita de Roberto —
+anotado como decreto en la bitácora; el siguiente vistazo la vigila como a
+todas. v62 congelado antes de subir, como manda el proceso.
+
 ## [0.2.274.1] - 2026-08-24
 
 ### Fixed — dos reglas ya medidas estaban mudas a medias; los votos de la ronda las destaparon
