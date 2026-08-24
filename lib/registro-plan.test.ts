@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lineaRegistro, registroDe } from "./registro-plan";
+import { lineaRegistro, registroDe, senalesDeDial } from "./registro-plan";
 import { lineaTipoEvento } from "./eventos";
 
 // La capa 2: el dial es de la persona y viaja DENTRO de la línea del evento,
@@ -30,5 +30,20 @@ describe("el dial de registro por plan", () => {
     expect(registroDe({ cita: "x" as never }, "cita")).toBeNull();
     expect(registroDe({ cita: "arreglado" }, "boda")).toBeNull();
     expect(registroDe(null, "cita")).toBeNull();
+  });
+});
+
+describe("senalesDeDial — los atajos del votar como señal direccional", () => {
+  const c = (plan: string, comentario: string) => ({ plan, comentario });
+  it("dos 'muy formal' netos en el mismo plan sugieren relajado", () => {
+    expect(
+      senalesDeDial([c("cita", "bien, pero muy formal para la ocasión"), c("cita", "muy formal para la ocasión, como te dije")])
+    ).toEqual([{ plan: "cita", hacia: "relajado", n: 2 }]);
+  });
+  it("una sola señal, o señales opuestas, no sugieren nada", () => {
+    expect(senalesDeDial([c("cita", "muy formal para la ocasión")])).toEqual([]);
+    expect(
+      senalesDeDial([c("cita", "muy formal para la ocasión"), c("cita", "x"), c("cita", "bien, pero muy casual para la ocasión"), c("cita", "muy formal para la ocasión")])
+    ).toEqual([]);
   });
 });

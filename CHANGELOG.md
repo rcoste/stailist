@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.273.1] - 2026-08-24
+
+### Added — los atajos del votar alimentan tu dial (chips → registro)
+
+"bien, pero muy formal para la ocasión" es señal direccional — a diferencia
+del 👎, dice hacia dónde. Con ≥2 señales netas en un mismo plan dentro de una
+ronda, el cruce lo muestra arriba y ofrece fijar el dial del perfil de un
+toque ("en cita marcaste 'muy formal' 2 veces — ¿vas un paso más relajado?").
+Nunca lo mueve solo: mover el perfil en silencio desde un comentario sería
+decidir por la persona, y el manual siempre gana. Cierra la capa 2.
+
 ## [0.2.273.0] - 2026-08-24
 
 ### Added — el dial de registro por plan (v60 + js7): tu "muy formal" ya no es el de todos

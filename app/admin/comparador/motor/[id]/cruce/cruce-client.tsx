@@ -7,6 +7,9 @@ import type { PrendaUI } from "@/lib/comparador/motor-servidor";
 import { formalidadLegible } from "@/lib/formalidad";
 import { hayLluvia } from "@/lib/weather";
 import { calificarJuez } from "../../../motor-actions";
+import { guardarRegistroPlan } from "@/app/perfil/actions";
+import { senalesDeDial, type RegistroPlan } from "@/lib/registro-plan";
+import { tipoEventoPorClave } from "@/lib/eventos";
 
 // CALIFICAR AL JUEZ, look por look, con el look a la vista.
 //
@@ -308,8 +311,54 @@ export function CruceClient({
   const onCalificado = (llave: string, v: "acuerdo" | "exagero" | null) =>
     setVeredictos((prev) => ({ ...prev, [llave]: v }));
 
+  // CHIPS → DIAL. Los atajos "muy formal/casual para la ocasión" son señal
+  // direccional; con ≥2 netas en un plan, el cruce ofrece fijar el dial del
+  // perfil de UN toque. Nunca lo mueve solo: el manual gana.
+  const senales = useMemo(
+    () =>
+      senalesDeDial(
+        resumen.looks.map((l) => ({ plan: l.brief.tipoEvento, comentario: l.humano.comentario }))
+      ),
+    [resumen]
+  );
+  const [dialFijado, setDialFijado] = useState<Record<string, boolean>>({});
+  const fijarDial = (plan: string, hacia: RegistroPlan) => {
+    setDialFijado((prev) => ({ ...prev, [plan]: true }));
+    void guardarRegistroPlan(plan, hacia);
+  };
+
   return (
     <div className="flex flex-col gap-8">
+      {senales.length ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-ink bg-surface p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Tus atajos dicen algo de tu dial
+          </p>
+          {senales.map((sig) => (
+            <div key={sig.plan} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-ink">
+                En <b>{tipoEventoPorClave(sig.plan)?.label ?? sig.plan}</b> marcaste “muy{" "}
+                {sig.hacia === "relajado" ? "formal" : "casual"}” {sig.n} veces — ¿vas un paso más{" "}
+                {sig.hacia === "relajado" ? "relajado" : "arreglado"} que la norma?
+              </span>
+              {dialFijado[sig.plan] ? (
+                <span className="text-xs font-semibold text-ink">✓ fijado en tu perfil</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fijarDial(sig.plan, sig.hacia)}
+                  className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-bg active:opacity-80"
+                >
+                  sí, fíjalo
+                </button>
+              )}
+            </div>
+          ))}
+          <p className="text-[11px] text-muted">
+            Esto ajusta cómo el motor y los jueces leen ese plan PARA TI. Se cambia cuando quieras en Perfil → estilo.
+          </p>
+        </div>
+      ) : null}
       {/* La barra de avance, fija arriba: dice cuánto falta y lleva a lo que falta. */}
       <div className="sticky top-0 z-30 -mx-4 flex items-center justify-between gap-3 border-b border-line bg-bg px-4 py-2 text-xs">
         <span className="text-ink">

@@ -45,3 +45,34 @@ export function lineaRegistro(valor: RegistroPlan | null): string {
     return "SU REGISTRO PARA ESTE PLAN (dicho por la persona, manda sobre la norma): le gusta ir un paso MÁS ARREGLADO que lo típico — de lo más puesto del lugar, y el traje o la pieza de sastre son bienvenidos aunque nadie más los lleve. No la sub-vistas; quedarse corto aquí es el error.";
   return "";
 }
+
+/**
+ * LAS SEÑALES DE DIAL QUE DEJAN LOS ATAJOS DEL VOTAR. "bien, pero muy formal
+ * para la ocasión" sobre un look de un plan es una señal DIRECCIONAL (a
+ * diferencia del 👎, que no dice hacia dónde): si se repite, el dial de esa
+ * persona para ese plan probablemente no está donde el consenso.
+ *
+ * NO mueve el dial solo: el cruce lo muestra y la persona lo fija de un toque.
+ * Mover el perfil en silencio desde un comentario sería decidir por ella — y
+ * el manual siempre gana (una señal no distingue "hoy" de "siempre").
+ */
+export function senalesDeDial(
+  looks: { plan: string | null | undefined; comentario: string | null }[]
+): { plan: string; hacia: RegistroPlan; n: number }[] {
+  const cuenta: Record<string, { relajado: number; arreglado: number }> = {};
+  for (const l of looks) {
+    if (!l.plan || !l.comentario) continue;
+    const c = l.comentario.toLowerCase();
+    const e = (cuenta[l.plan] ??= { relajado: 0, arreglado: 0 });
+    if (/muy formal para la ocasi/.test(c)) e.relajado++;
+    if (/muy casual para la ocasi/.test(c)) e.arreglado++;
+  }
+  const out: { plan: string; hacia: RegistroPlan; n: number }[] = [];
+  for (const [plan, e] of Object.entries(cuenta)) {
+    const neto = e.relajado - e.arreglado;
+    // ≥2 señales netas en la MISMA dirección: una sola puede ser el look, no
+    // la persona; dos ya son un patrón dentro de la ronda.
+    if (Math.abs(neto) >= 2) out.push({ plan, hacia: neto > 0 ? "relajado" : "arreglado", n: Math.abs(neto) });
+  }
+  return out;
+}
