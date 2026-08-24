@@ -60,7 +60,7 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { evaluarLookConVision, RUBRICA_VISION_VERSION } from "../lib/engine/rubrica-vision";
-import { estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
+import { registroDelPerfil, estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
 import { modeloPorId, RETADORES_VISION } from "../lib/proveedores/catalogo";
 import { VISION_MODEL } from "../lib/models";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "../lib/item-image";
@@ -190,6 +190,7 @@ async function main() {
           weather: raw.weather as BriefRubrica["weather"],
           paraguas: raw.paraguas === true,
           estilo: estiloDelPerfil(p),
+        registro: registroDelPerfil(p),
           color: colorDelPerfil(p),
         },
       });

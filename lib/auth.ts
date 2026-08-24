@@ -58,6 +58,8 @@ export type Profile = {
   body_build: Build | null;
   body_volume: Volume | null;
   style_vetoes: { chips: string[]; free: string[] };
+  /** Dial de registro por plan (lib/registro-plan.ts): default consenso. */
+  registro_por_plan: import("@/lib/registro-plan").RegistroPorPlan | null;
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;
   // Preguntas de estilo personalizadas (IA) cacheadas: { sig, questions }. sig = firma

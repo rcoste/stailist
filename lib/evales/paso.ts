@@ -9,7 +9,7 @@ import { evaluarLookConVision } from "@/lib/engine/rubrica-vision";
 import { ErrorProveedor } from "@/lib/proveedores";
 import { peticionDeBrief, type BriefMotor, type LookMotor } from "@/lib/comparador/motor";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
-import { estiloDelPerfil, colorDelPerfil, type NotaDeLook } from "./evales";
+import { registroDelPerfil, estiloDelPerfil, colorDelPerfil, type NotaDeLook } from "./evales";
 import { hayLluvia } from "@/lib/weather";
 
 // UN PASO del eval: generar un brief (motor de producción completo) o
@@ -118,6 +118,7 @@ export async function pasoEval(opciones: {
   if ("error" in carga) return { error: "closet_vacio", status: 400 };
   const { profile, items: closet } = carga.base;
   const estilo = estiloDelPerfil(profile);
+  const registro = registroDelPerfil(profile);
   const color = colorDelPerfil(profile);
   // Coherencia con lo CONGELADO: si la corrida se abrió sin señal y el perfil
   // ya la tiene (o al revés), la dimensión mediría a medias. Se manda lo que la
@@ -139,6 +140,7 @@ export async function pasoEval(opciones: {
     weather: brief.weather,
     paraguas: brief.paraguas === true,
     estilo: conEstilo ? estilo : null,
+    registro,
     color: conColor ? color : null,
   };
 

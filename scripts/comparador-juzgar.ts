@@ -19,7 +19,7 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { evaluarLook, RUBRICA_VERSION, type BriefRubrica, type NotaRubrica } from "../lib/engine/rubrica";
-import { estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
+import { registroDelPerfil, estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
 import { marcadorPareado, paresNecesarios } from "../lib/comparador/juez-pareado";
 import type { BriefMotor, VarianteMotor } from "../lib/comparador/motor";
 import { conCategoria, ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "../lib/item-image";
@@ -194,6 +194,7 @@ async function main() {
         weather: b.weather,
         paraguas: b.paraguas === true,
         estilo: estiloDelPerfil(p),
+        registro: registroDelPerfil(p),
         color: colorDelPerfil(p),
       };
       // ── La rúbrica que MIRA, en paralelo a la que lee ──────────────────

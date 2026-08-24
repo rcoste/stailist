@@ -1,3 +1,4 @@
+import { lineaRegistro, registroDe, type RegistroPorPlan } from "@/lib/registro-plan";
 import type { Formalidad } from "@/lib/formalidad";
 
 // LOS TIPOS DE EVENTO: un solo lugar para qué eventos existen, qué formalidad
@@ -228,6 +229,14 @@ export function formalidadDeEvento(
 }
 
 /** La línea que va al prompt y a la rúbrica. Vacía si no se eligió un tipo. */
-export function lineaTipoEvento(k: string | null | undefined): string {
-  return tipoEventoPorClave(k)?.paraElMotor ?? "";
+export function lineaTipoEvento(
+  k: string | null | undefined,
+  /** El dial de la persona para este plan (lib/registro-plan.ts). Va DENTRO de esta
+   *  línea a propósito: todo el que sabe qué evento es, sabe cómo va ella. */
+  registro?: RegistroPorPlan | null
+): string {
+  const base = tipoEventoPorClave(k)?.paraElMotor ?? "";
+  if (!base) return base;
+  const dial = lineaRegistro(registroDe(registro, k));
+  return dial ? `${base}. ${dial}` : base;
 }

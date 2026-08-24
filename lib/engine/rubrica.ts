@@ -87,6 +87,9 @@ export type BriefRubrica = {
   /** Su colorimetría, la MISMA que recibió el motor. Sin ella, "color" queda
    * neutra (3): no se puede juzgar qué le enciende la cara sin saber su paleta. */
   color?: ColorRubrica | null;
+  /** Su dial de registro por plan (lib/registro-plan.ts), el MISMO que recibió el
+   * motor: "muy formal para la ocasión" depende de cómo va ELLA a ese plan. */
+  registro?: import("@/lib/registro-plan").RegistroPorPlan | null;
 };
 
 /** La paleta de la persona, en los mismos tres grupos que consume el motor. */
@@ -170,7 +173,7 @@ export function briefParaRubrica(b: BriefRubrica): string {
   }
   // El MISMO catálogo que recibe el motor: una boda y una graduación son las
   // dos "formal" y no se califican igual.
-  const queEvento = lineaTipoEvento(b.tipoEvento);
+  const queEvento = lineaTipoEvento(b.tipoEvento, b.registro);
   if (queEvento) lineas.push(`Es ${queEvento}.`);
   if (b.plan?.trim()) lineas.push(`Pidió, en sus palabras: "${b.plan.trim()}".`);
   // La MISMA tabla que ve la pantalla y recibe el motor (lib/formalidad.ts):

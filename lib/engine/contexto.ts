@@ -257,6 +257,8 @@ export function construirContexto(
     formality: typeof p.formality === "string" ? p.formality : null,
     styleReference: styleReferenceForEngine(profile.style_reference),
     styleWords: (profile.style_words as string | null) ?? null,
+    registroPorPlan:
+      (profile.registro_por_plan as import("@/lib/registro-plan").RegistroPorPlan | null) ?? null,
     // De la PERSONA, no de la petición: dónde trabajas no cambia cada mañana.
     workDressCode: (profile.work_dress_code as string | null) ?? null,
     // Del DÍA, no del perfil: quien eligió "depende del día" está diciendo

@@ -84,7 +84,18 @@ import { REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
 // juez ("Agree, no va café con negro") — lo que pasa es que aprueba el look
 // igual. Es "detalle", no ruido ni rompe. Y entran a la casa dos reglas nuevas
 // medidas contra sus votos (negro-con-beige, mezclilla-con-saco).
-export const JUEZ_STYLIST_VERSION = "js6";
+// js6 → js7 (2026-08-24): LA VARA DEJA DE SER DE ROBERTO. El system llevaba
+// su vara personal escrita en prosa ("traje completo en una cita: le gusta") —
+// deuda dicha el día que se escribió: funcionaba mientras el comparador sólo
+// juzgara su clóset, y juzgando a cualquier otra persona la vara era la
+// equivocada. Lo PERSONAL ahora llega por el brief: el dial de registro por
+// plan (lib/registro.ts) viaja dentro de la línea del evento, y la instrucción
+// del system es leerlo y juzgar contra ÉL. Se quedan aquí sólo las
+// calibraciones de la CASA (universales, medidas con votos): qué pesa un
+// registro que no se habla, qué no es defecto (tonal/total black), la tasa
+// base. Los umbrales finos personales (burdeos=detalle) se quedan porque son
+// de mecánica de cueros, no de gusto — están también en REGLAS_DE_LA_CASA.
+export const JUEZ_STYLIST_VERSION = "js7";
 
 /** El vocabulario de defectos es el MISMO que Roberto usa al votar
  *  (DEFECTOS_MOTOR). Reusarlo es lo que hace que los hallazgos del juez y sus
@@ -140,26 +151,27 @@ Así que la pregunta no es "¿qué le mejoraría?" sino "¿qué le diría a un c
 
 Y reserva "rompe" para lo que de verdad lo tira: saldrías a detener a la persona en la puerta. Un look que se sostiene aunque mejorable NO tiene un hallazgo que rompe.
 
-LA VARA DE LA PERSONA, medida con sus propios votos. Esto es lo que ELLA llama "ni al caso", "terrible", "no va" — y por tanto es "rompe" con el defecto que se indica, aunque a ti te parezca un detalle. Esta lista MANDA sobre tu criterio general:
+EL REGISTRO ES DE LA PERSONA, NO TUYO. Si el pedido trae "SU REGISTRO PARA ESTE PLAN", esa frase manda: lo que para la norma sería "demasiado formal" o "demasiado casual" NO es hallazgo si va en la dirección de su dial — y quedarse del lado contrario de su dial SÍ lo es. Sin esa frase, juzga contra la norma del evento y sé prudente con "demasiado formal/casual": es la llamada más personal que existe, y márcala como "detalle" salvo que el desfase sea de dos escalones.
+
+CALIBRACIÓN DE LA CASA, medida con votos reales a ciegas. Esto se marca "rompe" con el defecto indicado, aunque a ti te parezca un detalle:
 - [ocasion] Registros que no se hablan: camisa de mezclilla con blazer, saco o pantalón de vestir; camisa de vestir (popelina, cuello) debajo de una overshirt; overshirt encima de un suéter; tenis de color o deportivos con piezas de traje.
 - [capas] Manga corta debajo de chamarra, bomber o chaqueta.
 - [color] Zapato o cinturón NEGRO con chinos beige o caqui. Botín, cinturón o derby CAFÉ/chocolate en un look negro de arriba abajo (pantalón negro + capa negra).
 - [ocasion] En boda o ceremonia: camisa negra, o traje sin corbata.
 - [clima] Con 8° o menos: blazer, chaqueta ligera, softshell o bomber como ÚNICA capa exterior. Si lleva abrigo de lana o acolchado, el frío está resuelto aunque los tenis no te gusten.
 - [clima] Con lluvia sin paraguas: tenis de tela o malla.
-Esto es lo que ella llama "no me convence", "me genera conflicto" — "resta", nunca "rompe":
+Esto es "resta", nunca "rompe":
 - [ocasion] Lino en la oficina, aunque sea una sola pieza. Márcalo SIEMPRE; no lo dejes pasar.
-- [capas] Demasiado abrigado o demasiadas capas para la temperatura; demasiado formal o "bulky" para una cita.
+- [capas] Demasiado abrigado o demasiadas capas para la temperatura.
 - [clima] Mocasín escotado con lluvia.
-Y esto LO APRUEBA SIN COMENTARIO — si lo marcas, es ruido; como mucho "detalle", y casi siempre nada:
-- Cinturón negro con mocasines burdeos: lo reconoce como imperfecto si se lo señalas, pero aprueba el look igual. Es "detalle" — nunca "resta" ni "rompe". Lo mismo cinturón café con mocasín burdeos.
+Y esto NO es hallazgo — si lo marcas, es ruido; como mucho "detalle", y casi siempre nada:
+- Cinturón negro con mocasines burdeos, o café con burdeos: burdeos dialoga con los dos. "Detalle" como mucho.
 - Botines o cinturón café con jeans negros o con suéter vino en un look casual. Solo rompe dentro de un look negro completo.
 - Tenis con abrigo de lana a 8°. Camisa de mezclilla debajo de un suéter.
 - Reloj negro de caucho en oficina, diario o cita sin traje. Solo con piezas de sastre o en formal/gala es un hallazgo, y aun ahí es "detalle".
-- Traje completo en una cita, incluso con camisa negra. Le gusta; no lo llames "demasiado formal" ni "error de etiqueta".
 - Corbata de punto en boda: "detalle" como mucho.
-- Un look "plano", "monótono" o "sin punto de atención". Para esta persona el tonal y el total black son decisiones, no defectos: NO es un hallazgo.
-- Lana o pantalón de vestir con lluvia templada; camiseta de algodón bajo un suéter "que no abriga". Nada de eso le importa.
+- Un look "plano", "monótono" o "sin punto de atención". El tonal y el total black son decisiones de estilo, no defectos: NO es un hallazgo, salvo que su estilo declarado pida color.
+- Lana o pantalón de vestir con lluvia templada; camiseta de algodón bajo un suéter "que no abriga".
 
 LO QUE NO ES UN HALLAZGO
 Gusto personal tuyo. Que no sea el look que TÚ habrías armado no lo hace un error.

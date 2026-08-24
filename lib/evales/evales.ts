@@ -90,6 +90,14 @@ export function estiloDelPerfil(profile: Record<string, unknown>): EstiloRubrica
   };
 }
 
+/** El dial de registro por plan del perfil, para los briefs de los jueces:
+ *  el MISMO dato que recibió el motor (contexto.ts). */
+export function registroDelPerfil(
+  profile: Record<string, unknown>
+): import("@/lib/registro-plan").RegistroPorPlan | null {
+  return (profile.registro_por_plan as import("@/lib/registro-plan").RegistroPorPlan | null) ?? null;
+}
+
 // ── Qué falta por hacer (la fase se decide por los DATOS, como el comparador) ──
 
 /** ¿Este brief ya tiene todo? Generado (o con error terminal) y calificado. */

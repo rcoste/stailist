@@ -170,6 +170,7 @@ export default async function PerfilPage() {
         gender={profile.gender}
         styleVetoes={profile.style_vetoes}
         siluetaLabel={siluetaLabel}
+        registroPorPlan={profile.registro_por_plan}
         dressCodeLabel={dressCodeLabel}
         banner={banner}
         styleReference={styleReference}

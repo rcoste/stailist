@@ -361,7 +361,14 @@ import {
 // 64%). Pre-registrado en v53: "si apagarla gana, se revierte". El texto del
 // generador sigue siendo el de v53; sube la versión porque lo que lee el juez
 // cambió.
-export const PROMPT_VERSION = "v59";
+// v60 (2026-08-24): entra EL DIAL DE REGISTRO POR PLAN (lib/registro-plan.ts) — la
+// capa 2 de las tres capas. Si la persona movió el dial de un plan, la línea
+// del evento lleva su registro ("va un paso más relajado/arreglado que la
+// norma… manda sobre la norma"), y la MISMA línea la leen las rúbricas y los
+// jueces (lineaTipoEvento es el punto de palanca). Sin dial movido, el texto
+// es IDÉNTICO a v59. A diferencia de v56, la línea dice hacia dónde Y qué sí
+// (blazer/separates o traje bienvenido), no sólo qué no.
+export const PROMPT_VERSION = "v60";
 
 export type EngineItem = {
   id: string;
@@ -480,6 +487,9 @@ export type EngineContext = {
   // NO se re-enumeran aquí: esta lista ya se quedó corta cuando entró "playa".
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
   styleWords?: string | null; // su estilo EN SUS PALABRAS (texto libre del perfil)
+  /** El dial de registro por plan (lib/registro-plan.ts): default consenso; la
+   *  persona mueve un paso. Viaja dentro de lineaTipoEvento. */
+  registroPorPlan?: import("@/lib/registro-plan").RegistroPorPlan | null;
 };
 
 // PRENDAS QUE DE VERDAD EXISTEN — regla compartida por los DOS motores que
@@ -749,7 +759,7 @@ export function contextBlock(
   }
   // QUÉ evento es, antes que sus palabras: el catálogo trae lo que la
   // formalidad no captura (postura, fotos, qué se ve mal ahí).
-  const queEvento = lineaTipoEvento(ctx.tipoEvento);
+  const queEvento = lineaTipoEvento(ctx.tipoEvento, ctx.registroPorPlan);
   if (queEvento) lines.push(`Es ${queEvento}.`);
   if (ctx.plan?.trim()) {
     lines.push(`Tiene en mente: "${ctx.plan.trim()}" — afina el look a ese plan.`);

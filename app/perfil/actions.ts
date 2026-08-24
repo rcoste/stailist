@@ -189,3 +189,35 @@ export async function logEstiloTabView(): Promise<void> {
     // silencio a propósito
   }
 }
+
+// ── El dial de registro por plan (lib/registro-plan.ts) ──────────────────────
+// Guarda UN paso a la vez y mergea: el jsonb sólo lleva los planes movidos;
+// volver a "normal" borra la llave (el default es el consenso, no un valor).
+export async function guardarRegistroPlan(
+  planKey: string,
+  valor: "relajado" | "arreglado" | null
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("registro_por_plan")
+    .eq("id", user.id)
+    .single();
+  const actual = (prof?.registro_por_plan ?? {}) as Record<string, string>;
+  const siguiente = { ...actual };
+  if (valor === "relajado" || valor === "arreglado") siguiente[planKey] = valor;
+  else delete siguiente[planKey];
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ registro_por_plan: Object.keys(siguiente).length ? siguiente : null })
+    .eq("id", user.id);
+  if (error) return { ok: false };
+  revalidatePath("/perfil");
+  return { ok: true };
+}

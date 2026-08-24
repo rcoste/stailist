@@ -23,7 +23,7 @@ import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { criticarLook, JUEZ_STYLIST_VERSION, type CriticaStylist, type Gravedad } from "../lib/engine/juez-stylist";
 import type { BriefRubrica } from "../lib/engine/rubrica";
-import { estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
+import { registroDelPerfil, estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
 import { conCategoria, ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "../lib/item-image";
 import type { BriefMotor, LookMotor } from "../lib/comparador/motor";
 
@@ -177,7 +177,8 @@ async function main() {
         objective: b.objective, workDressCode: (p.work_dress_code as string | null) ?? null,
         veCliente: typeof b.veCliente === "boolean" ? b.veCliente : null, plan: b.plan ?? null,
         tipoEvento: b.tipoEvento ?? null, formality: b.formality ?? null, momento: b.momento,
-        weather: b.weather, paraguas: b.paraguas === true, estilo: estiloDelPerfil(p), color: colorDelPerfil(p),
+        weather: b.weather, paraguas: b.paraguas === true, estilo: estiloDelPerfil(p),
+        registro: registroDelPerfil(p), color: colorDelPerfil(p),
       };
       try {
         const prendas = await Promise.all((c.look.prendas ?? []).map(async (pr) => ({ nombre: pr.nombre, imagen: await imagenDe(pr.id) })));

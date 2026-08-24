@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.273.0] - 2026-08-24
+
+### Added — el dial de registro por plan (v60 + js7): tu "muy formal" ya no es el de todos
+
+Roberto: "para mí algo puede ser muy formal y para alguien más no… no podemos
+generalizar para todos los usuarios sobre lo que yo diga". Las tres capas
+quedaron así: lo verificable en reglas de código, el REGISTRO en un dial por
+persona y por plan, y el gusto puro en la señal de taste.
+
+- **`lib/registro-plan.ts` + migración 0146** (`profiles.registro_por_plan`):
+  para cada plan social (cita, boda, cena, fiesta, comidas) la persona mueve
+  UN paso — "más relajado" o "más arreglado" — y el default es el consenso del
+  catálogo de eventos. La línea viaja DENTRO de `lineaTipoEvento`, así que la
+  leen el generador, las tres rúbricas, el juez de producción y el juez
+  stylist con una sola edición (la lección de v56: el punto de palanca). Y a
+  diferencia de v56, dice hacia dónde Y qué sí (blazer/separates, o traje
+  bienvenido), no sólo qué no. Prompt v60: sin dial movido, idéntico a v59
+  (v59 congelado antes, como manda el proceso).
+- **Perfil → estilo → "Cómo vas a cada plan"**: seis planes, tres posiciones,
+  guarda al tocar. Verificado de punta a punta: tap en la UI → jsonb en la
+  base → la línea aparece en el mensaje del motor.
+- **js7 — la vara de Roberto SALE del prompt del juez stylist.** La deuda
+  dicha el día que se creó: "traje completo en una cita: le gusta" era su vara
+  personal hardcodeada, correcta sólo mientras el comparador juzgara su
+  clóset. Ahora lo personal llega por el brief (`BriefRubrica.registro`, el
+  MISMO dato que recibió el motor) con la instrucción de juzgar contra el dial
+  de la persona; en el system quedan sólo las calibraciones de la casa,
+  medidas con votos a ciegas. "Demasiado formal/casual" sin dial declarado
+  baja a "detalle" salvo desfase de dos escalones.
+
+Pendiente de la capa (anotado): los chips "muy formal / muy casual" del
+comparador alimentando el dial de quien vota.
+
 ## [0.2.272.1] - 2026-08-22
 
 ### Changed — conversación B cerrada con voto: el juez se queda como stylist; y el cuello tortuga ya cuenta

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
+import { RegistroPlanCard } from "@/components/registro-plan-card";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
@@ -32,6 +33,7 @@ export type PerfilTabsProps = {
   gender: Gender | null;
   styleVetoes: StyleVetoes;
   siluetaLabel: string | null; // "Promedio · Parejo" o null si no hay
+  registroPorPlan: import("@/lib/registro-plan").RegistroPorPlan | null;
   dressCodeLabel: string | null; // "camisa o polo, sin saco" o null si no lo ha dicho
   styleReference: StyleRef | null; // estilo de referencia (foto de inspiración)
   styleWords: string | null; // su estilo en sus palabras (texto libre)
@@ -206,6 +208,7 @@ function EstiloTab({
   tasteTags,
   gender,
   siluetaLabel,
+  registroPorPlan,
   dressCodeLabel,
   banner,
   styleReference,
@@ -332,6 +335,8 @@ function EstiloTab({
           </div>
           <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
         </Link>
+
+        <RegistroPlanCard inicial={registroPorPlan} />
       </div>
 
       {/* UNA sola card de "cuál es tu estilo": las fotos mandan y el texto libre
