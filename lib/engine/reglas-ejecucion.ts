@@ -91,6 +91,8 @@ export type ContextoReglas = {
   sinCoherenciaCromatica?: boolean;
   /** Día o noche: "boda de noche" y "boda de día" no comparten camisa. */
   momento?: "dia" | "noche" | null;
+  /** Ablación del comparador: apaga las 4 reglas de v61 como grupo. */
+  sinReglasV61?: boolean;
 };
 
 /**
@@ -1174,6 +1176,7 @@ export function revisarEjecucion(
   //     coherencia-cromatica.ts) se queda como biblioteca, por si vuelve con
   //     otra forma; aquí ya no dispara nada.
 
+  if (!ctx.sinReglasV61) {
   // 24. BODA DE NOCHE → CAMISA BLANCA. Roberto, CINCO veces en dos rondas
   //     (075a3f12 y 08f46d3e): "boda de noche no va con camisa azul, sería
   //     mejor blanco", "este es más look para boda de día por el color de la
@@ -1259,6 +1262,8 @@ export function revisarEjecucion(
       }
     }
   }
+
+  } // fin de las reglas de v61 (ablación: sinReglasV61)
 
   return v;
 }

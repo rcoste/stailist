@@ -1464,3 +1464,12 @@ describe("las cuatro reglas de las rondas 075a3f12 y 08f46d3e", () => {
     expect(revisarEjecucion([p("Saco de esmoquin negro", "#0A0A0A"), charol], { formality: "formal", closet: CLOSET }).map((x) => x.regla)).not.toContain("charol-solo-etiqueta");
   });
 });
+
+describe("sinReglasV61 — la ablación apaga las cuatro como grupo", () => {
+  it("con el flag, el look de boda con camisa azul no dispara la regla nueva", () => {
+    const look = [p("camisa de vestir azul claro", "#A9C4E0", { color: "azul claro" }), p("Saco de traje negro", "#111111")];
+    const ctx = { tipoEvento: "boda", momento: "noche" as const, closet: [p("Camisa blanca", "#FAFAF7", { color: "blanco" })] };
+    expect(revisarEjecucion(look, ctx).map((x) => x.regla)).toContain("boda-de-noche-camisa-blanca");
+    expect(revisarEjecucion(look, { ...ctx, sinReglasV61: true }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
+  });
+});
