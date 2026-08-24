@@ -395,3 +395,17 @@ describe("full-lino-en-oficina por fin repara — y cambia el pantalón, no la c
     expect(r.itemIds).toContain(CAMISA.id);
   });
 });
+
+describe("la oxford con cliente se cambia por la camisa de vestir lisa", () => {
+  const OXFORD = it_("ox", "top", "Camisa oxford azul", { color_hex: "#A9C4E0" });
+  const LISA = it_("li", "top", "camisa de vestir azul claro", { color: "azul claro", color_hex: "#A9C4E0", manga: "larga" });
+  const PANT = it_("pv", "bottom", "Pantalón de vestir gris", { color_hex: "#6A6A6A" });
+  const MOC = it_("mo", "calzado", "Mocasines negros", { color_hex: "#111111", material: "piel" });
+  it("sale la oxford, entra la lisa", () => {
+    const look = [OXFORD.id, PANT.id, MOC.id];
+    const closet = [OXFORD, LISA, PANT, MOC];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, objective: "oficina", veCliente: true, closet });
+    expect(r.hechas[0]).toMatchObject({ regla: "oxford-en-registro-formal", como: "sustituida", salio: "Camisa oxford azul" });
+    expect(r.itemIds).toContain(LISA.id);
+  });
+});

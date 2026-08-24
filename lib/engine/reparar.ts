@@ -350,6 +350,22 @@ function intentarUna(
       }
     }
 
+    // OXFORD EN REGISTRO FORMAL → camisa de vestir lisa, blanca o azul claro
+    // primero. La oxford se queda para la oficina sin cliente.
+    if (v.regla === "oxford-en-registro-formal") {
+      const esOxford = (i: EngineItem) => /oxford|button.?down/.test(texto(i));
+      const puesta = enLook().find(esOxford);
+      const lisas = disponibles
+        .filter((i) => /camisa/.test(texto(i)) && !esOxford(i) && !/mezclilla|denim|chambray|lino|manga corta|franela|cuadros/.test(texto(i)))
+        .sort((a, b) => (/blanc|azul claro/.test(`${b.attrs.color ?? ""} ${texto(b)}`.toLowerCase()) ? 1 : 0) - (/blanc|azul claro/.test(`${a.attrs.color ?? ""} ${texto(a)}`.toLowerCase()) ? 1 : 0));
+      for (const lisa of puesta ? lisas : []) {
+        const nuevos = ids.map((id) => (id === puesta!.id ? lisa.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return { ids: nuevos, hecha: { regla: v.regla, como: "sustituida", entro: nombre(lisa), salio: nombre(puesta!) } };
+        }
+      }
+    }
+
     // BODA DE NOCHE → LA CAMISA SE CAMBIA POR LA BLANCA. Quirúrgico: una prenda.
     if (v.regla === "boda-de-noche-camisa-blanca") {
       const esCamisaVestir = (i: EngineItem) =>

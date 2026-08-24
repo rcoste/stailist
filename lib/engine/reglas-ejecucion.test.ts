@@ -1523,3 +1523,16 @@ describe("lluvia-sin-impermeable, estrechada — sólo la capa que empapa", () =
     expect(v.map((x) => x.regla)).not.toContain("lluvia-sin-impermeable");
   });
 });
+
+describe("oxford-en-registro-formal — el cuello abotonado es casual", () => {
+  const CLOSET = [p("Camisa blanca", "#FAFAF7", { color: "blanco" }), p("camisa de vestir azul claro", "#A9C4E0", { color: "azul claro" })];
+  const LOOK = [p("Camisa oxford azul", "#A9C4E0"), p("Pantalón de vestir gris", "#6A6A6A"), p("Mocasines negros", "#111111")];
+  it("con cliente dispara; sin cliente NO (la oxford en oficina normal es correcta)", () => {
+    expect(revisarEjecucion(LOOK, { objective: "oficina", veCliente: true, closet: CLOSET }).map((x) => x.regla)).toContain("oxford-en-registro-formal");
+    expect(revisarEjecucion(LOOK, { objective: "oficina", veCliente: false, closet: CLOSET }).map((x) => x.regla)).not.toContain("oxford-en-registro-formal");
+  });
+  it("en comida de trabajo dispara; sin camisa lisa en el clóset, calla (carencia)", () => {
+    expect(revisarEjecucion(LOOK, { tipoEvento: "comida-trabajo", closet: CLOSET }).map((x) => x.regla)).toContain("oxford-en-registro-formal");
+    expect(revisarEjecucion(LOOK, { tipoEvento: "comida-trabajo", closet: [] }).map((x) => x.regla)).not.toContain("oxford-en-registro-formal");
+  });
+});

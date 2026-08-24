@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.277.0] - 2026-08-24
+
+### Added — el eval absoluto de v64 (78%), y lo que dejaron los 10 👎 de Roberto
+
+**Eval 919c2f53**: 45 looks de producción tal cual, 17 escenarios, calificados
+todos por Roberto: **35 👍 / 10 👎 = 78% absoluto** con el clóset de referencia.
+Lo mecánico quedó arriba (ocasión 4.51, clima 4.42 según jueces); lo bajo sigue
+siendo estilo (3.13) y wow (2.84) — correcto pero previsible.
+
+Sus 10 👎, repartidos en las tres capas:
+
+- **Regla nueva → `oxford-en-registro-formal` (v65)**: "camisa tipo oxford no
+  va [con cliente], es más casual" + "está mal la oxford ahí [comida de
+  trabajo], debería ser camisa de vestir normal". El cuello abotonado nació
+  casual; con cliente, en comida de trabajo o en formal va camisa de vestir
+  lisa — y en la oficina sin cliente la oxford sigue siendo correcta. Con
+  reparador (entra la lisa, blanca o azul claro primero). Cero contradicciones
+  en su historial; el próximo vistazo la vigila.
+- **Dial (capa personal)**: "no me pondría eso para una date, muy formal" (5ª
+  mención) y "nunca me he vestido de traje para una cena con amigos". Sus
+  diales de **cita** y **cena-amigos** quedaron en "más relajado" — sembrados
+  con sus palabras, reversibles de un toque en Perfil → estilo.
+- **Anotadas, aún sin regla**: chaqueta técnica como única capa a 8° (3ª
+  mención pero con 2 👍 contradictorios), suéter+chaqueta "demasiado abrigado"
+  a 17° (1 👍 contradictorio), polo bajo crewneck con traje (1ª), corbata de
+  punto en comida de trabajo (chocaría con sus 2 👍 de punto en boda — huele a
+  veto personal, no a regla).
+
+v64 congelado antes de subir. `ContextoReglas.veCliente` entra para que la
+regla distinga el día con cliente.
+
 ## [0.2.276.1] - 2026-08-24
 
 ### Fixed — `full-lino-en-oficina` por fin repara (y cambia el pantalón, no la camisa)

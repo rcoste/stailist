@@ -390,7 +390,12 @@ import {
 // en los cinco 👎 la queja era otra cosa. Ahora dispara sólo cuando la capa
 // exterior EMPAPA (lana/punto/ante); la chamarra casual con cierre pasa, y
 // salir sin capa con llovizna templada es elección, no error.
-export const PROMPT_VERSION = "v64";
+// v65 (2026-08-24): oxford-en-registro-formal — la camisa de cuello abotonado
+// es casual; con cliente, en comida de trabajo o en formal va camisa de vestir
+// lisa. Dos menciones de Roberto en el eval 919c2f53, cero contradicciones en
+// su historial, y el consenso de sastrería. Con reparador. El próximo vistazo
+// la vigila. v64 congelado antes.
+export const PROMPT_VERSION = "v65";
 
 export type EngineItem = {
   id: string;

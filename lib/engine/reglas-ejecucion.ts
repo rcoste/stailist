@@ -93,6 +93,8 @@ export type ContextoReglas = {
   momento?: "dia" | "noche" | null;
   /** Ablación del comparador: apaga las 4 reglas de v61 como grupo. */
   sinReglasV61?: boolean;
+  /** Si el código del trabajo es "variable": si HOY ve cliente. */
+  veCliente?: boolean | null;
 };
 
 /**
@@ -1311,6 +1313,36 @@ export function revisarEjecucion(
     }
   }
 
+  // 29. LA OXFORD NO VA EN REGISTRO FORMAL. Roberto, dos veces en el eval
+  //     919c2f53 (2026-08-24): "camisa tipo oxford no va [con cliente], es más
+  //     casual — debería ser una camisa normal sin los botones en el cuello o
+  //     el chest pocket" y "está mal la camisa oxford ahí [comida de trabajo],
+  //     debería ser camisa de vestir normal". La sastrería le da la razón: el
+  //     cuello abotonado nació prenda deportiva; con cliente, en comida de
+  //     trabajo o en formal/gala va camisa de vestir lisa. Cero contradicciones
+  //     en su historial (ningún 👍 a oxford en esos contextos). En oficina sin
+  //     cliente y en lo casual, la oxford es correcta y no se toca.
+  {
+    const esOxford = (i: EngineItem) => /oxford|button.?down/.test(TIPO(i));
+    const contextoFormal =
+      (norm(ctx.objective ?? undefined) === "oficina" && ctx.veCliente === true) ||
+      ctx.tipoEvento === "comida-trabajo" ||
+      ctx.formality === "formal" ||
+      ctx.formality === "gala";
+    const puesta = contextoFormal ? items.find(esOxford) : undefined;
+    if (puesta && ctx.closet?.length) {
+      const lisas = ctx.closet.filter(
+        (i) => /camisa/.test(TIPO(i)) && !esOxford(i) && !/mezclilla|denim|chambray|lino|manga corta|franela|cuadros/.test(TIPO(i))
+      );
+      if (lisas.length) {
+        v.push({
+          regla: "oxford-en-registro-formal",
+          detalle: `"${nombre(puesta)}" es una oxford (cuello abotonado, registro casual) y este contexto pide camisa de vestir lisa. Cámbiala (${lisas.slice(0, 2).map(nombre).join(" o ")}).`,
+        });
+      }
+    }
+  }
+
   } // fin de las reglas de v61 (ablación: sinReglasV61)
 
   return v;
@@ -1343,6 +1375,7 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - La camisa de vestir no va debajo de una overshirt (cuello sobre cuello): ahí va camiseta o playera. La de mezclilla o franela sí pasa.
 - Con traje NEGRO el calzado es negro — es el único traje que no admite café ni burdeos. Con marino o gris, el café es correcto.
 - El charol es de etiqueta (smoking, jaquet, frac): con traje de calle no va.
+- La camisa oxford (cuello abotonado) es casual: con cliente, en comida de trabajo o en formal va camisa de vestir lisa. En oficina sin cliente y en lo casual es correcta.
 - El reloj deportivo (caucho, smart) no va con piezas de sastre ni en formal/gala. En un día casual sí pasa — no lo marques ahí.
 - La corbata de punto no va a ceremonia (formal/gala). En cita u oficina es elección correcta.
 - En evento formal el traje va completo; saco y pantalón de juegos distintos son separates: bien para oficina, cortos para una boda.
