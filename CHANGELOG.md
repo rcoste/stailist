@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.277.1] - 2026-08-24
+
+### Added — la corbata negra delgada (migración 0148), y el funeral por fin puede vestirse
+
+El catálogo de eventos exige corbata NEGRA para el funeral y no existía ni en
+el catálogo ni en el clóset de referencia — el motor mandaba el luto sin
+corbata y el juez lo marcaba, con razón. Roberto: "sí tengo una corbata negra
+delgadita". Render del pipeline (tipo accesorio), alta en su clóset con
+certeza "genérica" (la prenda es real y confirmada; la imagen es de catálogo),
+y v65 re-congelado: cambio de clóset = re-congelar, la regla que ya nos
+mordió dos veces.
+
 ## [0.2.277.0] - 2026-08-24
 
 ### Added — el eval absoluto de v64 (78%), y lo que dejaron los 10 👎 de Roberto

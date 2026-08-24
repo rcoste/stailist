@@ -419,6 +419,9 @@ const ITEMS = [
   { slug: "polo-rojo-mujer", desc: "a classic red WOMEN'S pique cotton polo shirt with distinctly feminine tailoring: slim fitted cut shaped at the waist, shorter sleeves, narrow shoulders, a softer smaller collar and a short two-button placket. Unmistakably a woman's polo, NOT a men's boxy polo shirt. Neatly laid flat", type: "flat" },
   { slug: "polo-manga-larga-blanco-mujer", desc: "a white WOMEN'S LONG-SLEEVE pique cotton polo shirt, distinctly feminine tailoring: slim fitted cut shaped at the waist, long slim sleeves with ribbed cuffs, narrow shoulders, a softer smaller collar. Unmistakably a woman's polo, NOT a men's polo shirt. Neatly laid flat", type: "flat-sombra" },
   { slug: "polo-manga-larga-marino-mujer", desc: "a navy blue WOMEN'S LONG-SLEEVE pique cotton polo shirt, distinctly feminine tailoring: slim fitted cut shaped at the waist, long slim sleeves with ribbed cuffs, narrow shoulders, a softer smaller collar. Unmistakably a woman's polo, NOT a men's polo shirt. Neatly laid flat", type: "flat" },
+  // La corbata negra (2026-08-24): el funeral la exige y ni el catálogo ni el
+  // clóset de Roberto la tenían — él sí ("una corbata negra delgadita").
+  { slug: "corbata-negra-delgada", desc: "a black slim skinny silk tie, matte black, neatly coiled in a loose spiral", type: "accesorio" },
 ];
 
 function buildPrompt({ desc, type }) {
