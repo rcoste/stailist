@@ -50,7 +50,7 @@ export async function saveLifestyle(
   const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
     supabase
       .from("profiles")
-      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range")
+      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range, acento_apetito, acento_apetito_fuente")
       .eq("id", user.id)
       .single(),
     loadTasteSignal(supabase, user.id),
@@ -117,6 +117,12 @@ export async function saveLifestyle(
       styleWords: (profile?.style_words as string | null) ?? null,
       tasteSignal,
       ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
+      // Sólo si lo ELIGIÓ: la semilla de swipes no decide dónde va su color
+      // (mide afinidad estética, no volumen — ver lib/looks.ts).
+      acentoApetito:
+        profile?.acento_apetito_fuente === "elegido"
+          ? ((profile?.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
+          : null,
     });
     // Firma del estilo COMPLETO (referencia + sus palabras): si cualquiera
     // cambia después, la cápsula se ofrece a regenerar.
@@ -434,7 +440,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     supabase
       .from("profiles")
       .select(
-        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range"
+        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range, acento_apetito, acento_apetito_fuente"
       )
       .eq("id", user.id)
       .single(),
@@ -467,6 +473,12 @@ export async function regenerateCapsuleTarget(): Promise<void> {
       styleWords: (profile?.style_words as string | null) ?? null,
       tasteSignal,
       ageStyling: ageStylingLine((profile?.age_range as AgeRange | null) ?? null),
+      // Sólo si lo ELIGIÓ: la semilla de swipes no decide dónde va su color
+      // (mide afinidad estética, no volumen — ver lib/looks.ts).
+      acentoApetito:
+        profile?.acento_apetito_fuente === "elegido"
+          ? ((profile?.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
+          : null,
     });
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
   } catch (e) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bloqueVida } from "./capsule-target";
+import { bloqueVida, lineaAcentosCapsula } from "./capsule-target";
 import { ASSESSMENT_QUESTIONS, type AssessmentQuestion } from "@/lib/capsule";
 
 // Lo que se blinda: QUÉ frase le llega al motor por cada respuesta del quiz.
@@ -51,5 +51,24 @@ describe("bloqueVida — qué le llega al motor del quiz de vida", () => {
     const real = ASSESSMENT_QUESTIONS.find((x) => x.id === "actividades")!;
     expect(real.label).not.toMatch(/ropa especial/);
     expect(bloqueVida([real], { actividades: "gym" })).toMatch(/ropa especial/);
+  });
+});
+
+describe("lineaAcentosCapsula — dónde vive el color en la cápsula", () => {
+  it("sin apetito elegido no dice nada: la cápsula de los 24 con semilla no cambia", () => {
+    expect(lineaAcentosCapsula(null)).toBe("");
+  });
+  it("discreto empuja los acentos a piezas chicas y acota las grandes a UNA", () => {
+    const l = lineaAcentosCapsula("discreto");
+    expect(l).toContain("piezas chicas");
+    expect(l).toMatch(/UNA pieza grande/);
+  });
+  it("protagonista sí pide piezas grandes de color, sin soltar la regla de 3", () => {
+    const l = lineaAcentosCapsula("protagonista");
+    expect(l).toMatch(/GRANDES/);
+    expect(l).toContain("regla de 3");
+  });
+  it("medio reparte entre chicas y medianas", () => {
+    expect(lineaAcentosCapsula("medio")).toMatch(/chicas y UNA o DOS medianas/);
   });
 });

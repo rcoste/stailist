@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.286.0] - 2026-08-25
+
+### Added — la cápsula aprende DÓNDE vive el color, no sólo cuánto
+
+La cápsula ya repartía 70% neutros / 30% acentos, pero no distinguía en qué
+CLASE de prenda caían: podía darte tres suéteres de color y ninguna bufanda.
+Ésa es la causa raíz medida en el clóset de Roberto — **12 acentos en piezas
+grandes contra 6 en chicas** (y de esas 6, tres corbatas que casi no salen y
+unos tenis rojos que nunca) — o sea que el motor no puede cumplir el
+60-30-10 porque no tiene con qué: si quiere darle color a un look, la única
+vía es un suéter entero.
+
+Dos cambios en el prompt de la cápsula: (1) una restricción dura para todos —
+al menos DOS acentos tienen que ir en piezas chicas (bufanda, calzado,
+cinturón, bolso, corbata); (2) una línea por apetito, que decide dónde caen
+los demás — discreto los manda casi todos a piezas chicas y acota a UNA la
+pieza grande de color; protagonista pide 2-3 grandes; medio reparte.
+
+Como en el motor, la línea **sólo entra si la persona ELIGIÓ** su nivel: sin
+eso, la cápsula sale idéntica. El type-check cazó de paso un bug silencioso —
+las dos queries del perfil no pedían las columnas nuevas.
+
 ## [0.2.285.0] - 2026-08-25
 
 ### Added — el paso de acentos en el ONBOARDING, justo después del reveal de colores

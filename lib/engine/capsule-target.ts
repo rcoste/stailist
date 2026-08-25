@@ -35,7 +35,32 @@ export type CapsuleInputs = {
   styleWords?: string | null; // su estilo en sus palabras (perfil)
   tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
   ageStyling?: string | null; // orientación por edad (life-stage) — señal suave, solo extremos
+  /** Cuánto color quiere llevar, si lo ELIGIÓ (lib/looks.ts). Decide DÓNDE
+   *  viven sus acentos en la cápsula, no cuántos. */
+  acentoApetito?: import("@/lib/looks").ApetitoAcentos | null;
 };
+
+/**
+ * DÓNDE deben caer los acentos de la cápsula, según lo que la persona ELIGIÓ
+ * en el grid de acentos (docs/designs/pantalla-apetito-acentos.md).
+ *
+ * NO cambia CUÁNTOS acentos lleva la cápsula —eso es el 70/30 de la paleta—
+ * sino en qué CLASE de prenda viven, que es lo que decide si sus looks salen
+ * discretos o con el color mandando. Pura y exportada para poder probarla: lo
+ * que blinda no es el formato sino que un "discreto" no reciba tres suéteres
+ * de color.
+ */
+export function lineaAcentosCapsula(
+  apetito: import("@/lib/looks").ApetitoAcentos | null
+): string {
+  if (apetito === "discreto")
+    return "\n- ELLA PREFIERE EL COLOR EN DOSIS CHICAS (lo eligió viendo fotos): sus acentos van CASI TODOS en piezas chicas; los tops, abrigos y pantalones de la cápsula van en neutros o en tonos profundos y apagados. Como mucho UNA pieza grande de color en toda la lista.";
+  if (apetito === "protagonista")
+    return "\n- ELLA QUIERE QUE EL COLOR SE VEA (lo eligió viendo fotos): además de las piezas chicas, dale 2-3 piezas GRANDES de color (un suéter, un abrigo, un pantalón) — son las que van a mandar en sus looks. Siguen valiendo la regla de 3 y sus neutros como base.";
+  if (apetito === "medio")
+    return "\n- ELLA QUIERE UNA PIEZA DE COLOR POR LOOK (lo eligió viendo fotos): reparte los acentos entre piezas chicas y UNA o DOS medianas cerca de la cara (suéter, camisa, polo).";
+  return "";
+}
 
 /**
  * El bloque "vida" del prompt: una línea por pregunta contestada, con la
@@ -111,6 +136,8 @@ export async function generateCapsuleTarget(
     inputs.tasteSignal && hasTasteSignal(inputs.tasteSignal)
       ? `\n${tasteSignalLines(inputs.tasteSignal).join("\n")}`
       : "";
+  const acentoTxt = lineaAcentosCapsula(inputs.acentoApetito ?? null);
+
   const generoTxt =
     inputs.gender === "hombre"
       ? "La persona es HOMBRE: TODA la cápsula es ropa de hombre. Jamás propongas prendas de mujer (faldas, vestidos, blusas, tacones, etc.)."
@@ -148,6 +175,7 @@ Los tops son la categoría más grande y el principal multiplicador (se ven más
 - Cada acento debe combinar con AL MENOS 3 de los neutros; si un color no pega con sus neutros, fuera.
 - NUNCA uses un color de su lista de EVITA.
 - Apunta a que un outfit típico use ≤3 colores.
+- DÓNDE VIVE EL COLOR, no sólo cuánto: al menos DOS de sus acentos tienen que ir en piezas CHICAS —bufanda, calzado, cinturón, bolso, corbata, calcetín—, no todos en tops y abrigos. Sin piezas chicas de color, el único modo de darle color a un look es un suéter entero, y la persona acaba llevando color en dosis que no pidió. (Medido en un clóset real: 12 acentos en piezas grandes contra 6 en chicas, y de esas 6 casi ninguna salía.)${acentoTxt}
 
 == COHESIÓN (regla de 3) ==
 Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo pega con 1-2, no se ganó su lugar: cámbiala por algo más versátil. ÚNICA excepción: las piezas que entran por CLIMA DE VIAJE (abajo) están exentas de esta regla — un traje de baño no combina con nada y aun así hace falta. Ancla todo en los neutros para que casi cada top funcione con casi cada bottom. Básicos primero; permite 2-3 piezas "héroe" con carácter, pero cada una debe seguir entrando en ≥3 outfits.
