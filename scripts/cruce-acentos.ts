@@ -130,12 +130,23 @@ async function main() {
     `\nguardia — aprobado por el juez de texto: ${pct(c.aprob, c.de)}% → ${pct(t.aprob, t.de)}%`
   );
 
-  const subeChico = pct(t.soloChico, t.looks) > pct(c.soloChico, c.looks);
-  const bajaGrande = pct(t.conGrande, t.looks) < pct(c.conGrande, c.looks);
+  // LOS DELTAS EN CRUDO Y EL RUIDO, no un veredicto fijo. La primera versión
+  // imprimía "la línea FUNCIONA / NO mueve" con la regla del PRIMER
+  // experimento hardcodeada, y en el segundo (v70, cuyo pre-registro era otro:
+  // que bajara el tonal) dio una lectura engañosa. El veredicto lo pone quien
+  // corre esto contra SU pre-registro; el script sólo entrega los números y
+  // avisa cuándo un movimiento cabe dentro del ruido.
+  const delta = (a: number, b: number) => {
+    const d = pct(b, t.looks) - pct(a, c.looks);
+    const looksDif = Math.abs(b - a);
+    return `${d > 0 ? "+" : ""}${d} pts (${looksDif} look${looksDif === 1 ? "" : "s"})${looksDif <= 2 ? " ← dentro del ruido" : ""}`;
+  };
+  console.log("\nDELTAS — compáralos contra TU pre-registro:");
+  console.log(`  acento en pieza chica  ${delta(c.soloChico, t.soloChico)}`);
+  console.log(`  acento en pieza grande ${delta(c.conGrande, t.conGrande)}`);
+  console.log(`  tonal                  ${delta(c.sinAcento, t.sinAcento)}`);
   console.log(
-    `\nPRE-REGISTRO: sube el acento chico ${subeChico ? "SÍ" : "NO"} · baja el grande ${bajaGrande ? "SÍ" : "NO"} → ${
-      subeChico && bajaGrande ? "la línea FUNCIONA" : "la línea NO mueve lo que debía"
-    }`
+    "\nCon ~50 looks por lado, un movimiento de 1-2 looks (≈2-4 pts) NO distingue señal de ruido."
   );
 }
 

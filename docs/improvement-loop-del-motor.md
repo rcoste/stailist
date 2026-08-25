@@ -341,6 +341,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-24 | eval ba8f4caa | v67 | — (absoluto, POOL v10 + hilo) | ❌ ANULADA (instrumento) | primera báscula del pool v10 (52 looks, 21 briefs, 0 errores). Los 4 briefs nuevos salieron BIEN según rúbricas: boda de día = traje con corbata (y camisa azul claro pasa de día — el comportamiento diurno por fin medido, correcto); boda playa = full lino + mocasín + lentes (y full-lino NO disparó: es de oficina, no de playa — correcto); citas nuevas = lino/polo relajado-cuidado. El 👎 de rúbrica: OTRA VEZ traje completo en cita relajada ("Vino con Filo", drinks) — 5ª señal de la candidata `traje-con-dial-relajado` (dial verificado LLEGANDO al mensaje; es el generador que lo ignora ~1/6) + explicación que menciona prendas que no están. ROTACIÓN con hilo: 76/130 usadas (58%, antes 52-55%), abrigos 8/12 (antes 6/12), calzado 13/17, prenda más repetida 10× en 52 looks (antes 12× en 45) — mejora modesta, no resuelto. Jueces: estilo 3.10 / wow 2.96 (subconjunto de 17: 3.14/3.00 ≈ plano vs v9). Hallazgo del juez de prod: razón "cambié el pantalón" con changed:false, y llamó "traje desarmado" a un conjunto real — no ve el lazo `conjunto` (investigar) |
 | 08-24 | bc989511 | v68 | sin-reglas-v68 | ❌ CERRADA SIN VOTAR (inválida) | **la variante aislaba bien; el VISTAZO no dio el caso.** Ninguno de los 6 briefs produjo un look con polo+traje ni un funeral (que no está en el vistazo), así que las dos reglas de v68 estuvieron inactivas en LOS DOS lados y toda diferencia es ruido del modelo. Votarla habría metido un número sin significado a esta tabla. **LECCIÓN NUEVA, hermana de la de 6868a52b:** antes de correr una ronda para una regla hay que preguntarse *¿algún brief del vistazo puede PRODUCIR el caso que vigila?* — si la regla cubre un evento que el vistazo no tiene (funeral) o un armado que el motor saca ~1 de cada 6 veces (polo+traje en cita), la ronda no puede decidir y el dinero se tira. Para esas reglas la vigilancia correcta es el EVAL (21 briefs, con funeral y tres citas). $2 de generación gastados; el juez se detuvo antes de cobrar |
 | 08-25 | eval 2ec16c63 | v68 | — (absoluto, verificación) | **verificada** (jueces 49/53 = 92%) | la báscula que la ronda no pudo ser. **Las dos reglas de v68 hicieron su trabajo, y se ve en los looks entregados:** polo+traje **0 casos** (en el histórico salía 6 veces) y el funeral entregó SUS DOS looks con el uniforme completo —traje negro + camisa blanca + corbata negra— variando sólo el calzado (zapato formal / mocasines), que es exactamente lo que Roberto pidió: "el núcleo se repite y lo que varía es el calzado". El texto del catálogo del luto funcionó a la primera. Estilo 3.15 / wow 2.85 (planos, consistente). 53 looks, 0 errores, $4.05. **NO se pidió el voto de Roberto: la verificación automática ya era concluyente y su tiempo estaba mejor puesto en las entrevistas** (ver abajo) |
+| 08-25 | evales cead58b5 / 31ef11bb | v69 → v70 | — (cruce de acentos) | v69 SÍ, v70 plano | el experimento del apetito de acentos, pre-registrado y cruzado con `scripts/cruce-acentos.ts` (métrica SIN juez: dónde cae el color). **v69 funcionó**: acento en pieza grande 36%→16%, en chica 19%→25%. **v70 (afinar "discreto") salió PLANO**: 1-2 looks de movimiento, dentro del ruido — se queda porque no daña y aclara la intención, pero SIN efecto demostrado. Dos lecciones de instrumento: (1) mi primera explicación del tonal era falsa y comprobarla la tumbó (el motor SÍ tenía vehículos chicos y los usaba: mocasín 10×, corbata 3×, bufanda 2×) — una métrica que se mueve bien no valida la historia que uno se cuenta sobre ella; (2) el script imprimía un veredicto con la regla del PRIMER experimento fija y dio una lectura engañosa en el segundo: ahora entrega deltas y marca lo que cabe en el ruido, y el veredicto lo pone quien tiene el pre-registro |
 | 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
 ---
@@ -446,6 +447,20 @@ casa) y los grados en el brief.
     ("mejor unos loafers o mocasines"), pero la ablación da **4 👎 / 3 👍**:
     moneda al aire, como la chaqueta técnica a 8°. Es preferencia de gusto,
     no regla — territorio del dial, no de `reglas-ejecucion`.
+
+11-bis. 🔴 **LA CAPA INTERMEDIA A 8° — la candidata más sostenida que queda,
+    y ninguna regla la caza.** En las tres básculas del 25 de agosto los
+    reprobados por frío son **4 de 4, 3 de 7 y 5 de 10** — el motivo dominante
+    de reprobación del motor hoy — y **CERO de ellos disparó una regla**. El
+    patrón no es "salió sin abrigo" (eso ya lo cubre `frio-sin-abrigo`): es que
+    lleva abrigo y debajo sólo una camisa o un polo fino, sin capa de punto
+    intermedia. Textual del juez: "el polo de manga larga bajo el abrigo no
+    alcanza para 8°C — falta una capa de punto grueso o térmica intermedia";
+    "a 8°C una overshirt de tela no es abrigo suficiente". Roberto lo dijo el
+    19 de agosto ("abrigo de verdad a 8°") y se descartó por ablación floja
+    (1 👎 / 1 👍); hoy hay 12 casos en 150 looks y el juez los caza solo.
+    Es reparable en código (añadir la capa de punto que el clóset ya tiene) y
+    es el primer candidato cuando el loop despierte.
 
 12. 🔴 **`camisa-negra-en-solemne` (funeral, boda, formal, gala): 2 👎 / 0 👍.**
     Sus dos comentarios son de los más fuertes del corpus: "camisa negra para
