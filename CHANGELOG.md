@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.279.1] - 2026-08-24
+
+### Fixed — calificar el eval ya no es un acto de fe: atrás visible, marca corregible, y la muestra dice su total
+
+Tres fricciones reales de Roberto calificando el eval de v67. (1) "No hay
+botón de back": el atajo ⌫ existía pero vivía escondido en la leyenda — ahora
+hay botón ← junto a 👎/👍. (2) Al regresar no se veía qué habías marcado: ahora
+lo dice ("ya lo marcaste 👍 — vuelve a marcar para corregirlo"; la marca nueva
+sobreescribe). (3) "Salen 30, no salen 40": la muestra de 30 es a propósito
+(que la sesión no se sienta infinita) pero nunca decía el total — ahora el
+contador dice "muestra de N" y, al terminar, un botón ofrece "seguir con los
+que faltan (N)" recargando con los pendientes primero.
+
 ## [0.2.279.0] - 2026-08-24
 
 ### Added — v67: chelsea-en-calor y el tip del saco cruzado, las dos con ≥2 menciones de Roberto

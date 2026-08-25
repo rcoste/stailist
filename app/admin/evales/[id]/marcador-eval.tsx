@@ -287,6 +287,24 @@ function Calibrador({
       .slice(0, 30)
   );
 
+  // El total real detrás de la muestra. La muestra de 30 existe para que la
+  // sesión no se sienta infinita, pero SIN decir el total confunde: Roberto
+  // vio "30" en un eval de 40 looks y concluyó que la pantalla estaba rota
+  // ("salen 30, no salen 40"). El tope se queda; lo que cambia es que ahora
+  // se dice, y al terminar se ofrece seguir con los que faltan.
+  const [totales] = useState(() => {
+    const todos = filas.flatMap((f) =>
+      (f.looks ?? []).map((_, i) => ({
+        nota: f.notas?.[i] ?? null,
+        marca: f.marcas?.[String(i)] ?? null,
+      }))
+    );
+    return {
+      conNota: todos.filter((t) => t.nota).length,
+      marcadosAntes: todos.filter((t) => t.nota && t.marca).length,
+    };
+  });
+
   const [idx, setIdx] = useState(0);
   const [marcas, setMarcas] = useState<Record<number, "arriba" | "abajo">>({});
   const [porques, setPorques] = useState<Record<number, string>>({});
@@ -493,6 +511,23 @@ function Calibrador({
           ) : null}
         </div>
 
+        {(() => {
+          // Lo que sigue SIN marcar en toda la corrida (no solo en esta
+          // muestra de 30): las marcas de antes + las nuevas de esta sesión
+          // sobre looks que no tenían. La recarga rearma la muestra con los
+          // pendientes primero — así se terminó el eval de 45 sin saberlo, y
+          // así se termina éste a propósito.
+          const nuevas = casos.filter((x, i) => marcas[i] && !x.marcaPrevia).length;
+          const faltan = Math.max(0, totales.conNota - totales.marcadosAntes - nuevas);
+          return faltan > 0 ? (
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80"
+            >
+              seguir con los que faltan ({faltan})
+            </button>
+          ) : null;
+        })()}
         <button
           onClick={() => router.refresh()}
           className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile"
@@ -527,6 +562,7 @@ function Calibrador({
         </div>
         <span className="shrink-0 text-xs text-muted">
           {idx + 1} de {casos.length}
+          {totales.conNota > casos.length ? ` (muestra de ${totales.conNota})` : ""}
         </span>
       </div>
 
@@ -537,6 +573,14 @@ function Calibrador({
           {f.weather ? ` · ${f.weather.temp_c}°C ${f.weather.condition}` : ""}
         </p>
         <p className="text-base font-semibold text-ink">{c.look.nombre}</p>
+        {/* Al REGRESAR (botón ← o ⌫) se ve qué habías puesto: sin esto,
+            corregir una marca era un acto de fe. Marcar de nuevo sobreescribe. */}
+        {(marcas[idx] ?? c.marcaPrevia) ? (
+          <p className="text-xs text-muted">
+            ya lo marcaste {(marcas[idx] ?? c.marcaPrevia) === "arriba" ? "👍" : "👎"} — vuelve a
+            marcar para corregirlo
+          </p>
+        ) : null}
 
         {/* Prendas GRANDES: se está juzgando ropa, no leyendo una lista. */}
         {/* Cada prenda CON SU NOMBRE debajo. Roberto: "si hay un pantalón o
@@ -636,6 +680,18 @@ function Calibrador({
         </div>
       ) : (
         <div className="flex gap-2">
+          {/* El atrás VISIBLE. El atajo ⌫ existía desde el inicio, pero vivía
+              solo en la leyenda de atajos y nadie lo encontró cuando lo
+              necesitó (Roberto, con una marca equivocada: "no hay botón de
+              back"). */}
+          <button
+            onClick={() => setIdx((i) => Math.max(0, i - 1))}
+            disabled={idx === 0}
+            aria-label="regresar al look anterior"
+            className="rounded-xl border border-line px-4 py-4 text-base font-semibold text-muted active:bg-tile disabled:opacity-40"
+          >
+            ←
+          </button>
           <button
             onClick={() => marcar("abajo")}
             className="flex-1 rounded-xl border border-line py-4 text-base font-semibold text-ink active:bg-tile"
