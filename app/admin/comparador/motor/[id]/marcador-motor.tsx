@@ -140,7 +140,7 @@ export function MarcadorMotorView({
           resultado, concluyó "ya está" y nunca llegó a ellas. El marcador es
           lectura; esto es trabajo pendiente. */}
       {marcasPendientes > 0 ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">
             {marcasPendientes} {marcasPendientes === 1 ? "par votado" : "pares votados"} sin
             marcas por look
@@ -152,7 +152,7 @@ export function MarcadorMotorView({
           </p>
           <Link
             href={`/admin/comparador/motor/${corridaId}/marcas`}
-            className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
+            className="rounded-sm border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
           >
             Marcar los looks que faltan
           </Link>
@@ -169,7 +169,7 @@ export function MarcadorMotorView({
       {resultado.votados > 0 ? (
         <Link
           href={`/admin/comparador/motor/${corridaId}/cruce`}
-          className="flex flex-col items-center gap-0.5 rounded-xl bg-ink py-3 text-center text-sm font-semibold text-bg active:opacity-80"
+          className="flex flex-col items-center gap-0.5 rounded-sm bg-ink py-3 text-center text-sm font-semibold text-bg active:opacity-80"
         >
           Tu voto contra el juez
           {cruceporCalificar > 0 ? (
@@ -186,13 +186,13 @@ export function MarcadorMotorView({
           no escondido en el detalle: es el paso que ahorra el trabajo manual. */}
       <Link
         href={`/admin/comparador/motor/${corridaId}/jueces`}
-        className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
+        className="rounded-sm border border-line py-3 text-center text-sm font-semibold text-ink active:bg-tile"
       >
         Lo que vieron los jueces
       </Link>
 
       {esVistazo && sinGenerar > 0 ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">
             Faltan {sinGenerar} {sinGenerar === 1 ? "par" : "pares"} por generar
           </p>
@@ -205,7 +205,7 @@ export function MarcadorMotorView({
           <button
             disabled={retomando}
             onClick={retomar}
-            className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
+            className="rounded-sm bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
           >
             {retomando ? "Retomando…" : `Generar los ${sinGenerar} que faltan`}
           </button>
@@ -213,7 +213,7 @@ export function MarcadorMotorView({
       ) : null}
 
       {esVistazo ? (
-        <div className="rounded-xl border border-line bg-surface p-4">
+        <div className="rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">El vistazo no declara ganador.</p>
           <p className="text-sm text-muted">
             Sirve para dos cosas: convertir defectos en reglas, o decidir si
@@ -221,7 +221,7 @@ export function MarcadorMotorView({
           </p>
         </div>
       ) : regla ? (
-        <div className="rounded-xl border border-line bg-surface p-4">
+        <div className="rounded-lg border border-line bg-surface p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             La regla, escrita antes de votar
           </p>
@@ -231,7 +231,7 @@ export function MarcadorMotorView({
 
       <div className="grid grid-cols-2 gap-3">
         {resultado.variantes.map((v) => (
-          <div key={v.clave} className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+          <div key={v.clave} className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
             <p className="text-sm font-semibold text-ink">{v.etiqueta}</p>
             {!esVistazo ? (
               <p className="text-3xl font-semibold text-ink">{v.victorias}</p>
@@ -286,7 +286,7 @@ export function MarcadorMotorView({
       </div>
 
       {!esVistazo && a && b ? (
-        <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">¿Puede ser azar?</p>
           <p className="text-sm text-muted">
             {resultado.p == null
@@ -317,7 +317,7 @@ export function MarcadorMotorView({
       {resultado.variantes.some(
         (v) => v.looksTotales > 0 && v.looksArriba + v.looksAbajo < v.looksTotales / 2
       ) ? (
-        <p className="rounded-xl border border-line bg-surface p-4 text-xs text-muted">
+        <p className="rounded-lg border border-line bg-surface p-4 text-xs text-muted">
           <span className="font-semibold text-ink">Cobertura parcial:</span> se
           marcó menos de la mitad de los looks. Los que no tienen 👍/👎{" "}
           <span className="font-semibold text-ink">no se revisaron</span> — no
@@ -343,13 +343,13 @@ export function MarcadorMotorView({
             eval con el mismo código llegaron a diferir 12 puntos.
           </p>
           {cambiaModelo ? (
-            <p className="rounded-xl border border-line bg-surface p-3 text-xs text-warning">
+            <p className="rounded-lg border border-line bg-surface p-3 text-xs text-warning">
               Estas variantes cambian de MODELO. La rúbrica no corona modelos —
               un juez Claude prefiere looks de Claude. Esto dice DÓNDE difieren,
               no cuál usar: eso lo decide el voto ciego.
             </p>
           ) : null}
-          <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4 text-sm">
+          <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4 text-sm">
             {Object.entries(pareado.gana).map(([clave, n]) => (
               <div key={clave} className="flex justify-between">
                 <span className="text-muted">{etiquetas[clave] ?? clave}</span>
@@ -389,7 +389,7 @@ export function MarcadorMotorView({
           {/* DÓNDE está la diferencia: sin esto el número es un veredicto sin
               diagnóstico, y lo que sirve para iterar es saber qué dimensión se
               movió. */}
-          <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+          <div className="overflow-x-auto rounded-lg border border-line bg-surface">
             <table className="w-full min-w-[380px] text-xs">
               <thead>
                 <tr className="border-b border-line text-left text-muted">
@@ -419,7 +419,7 @@ export function MarcadorMotorView({
       ) : null}
 
       {preferencias.filas.some((f) => f.gana > 0) || preferencias.empates ? (
-        <section className="flex flex-col gap-2 rounded-xl border border-dashed border-line p-4">
+        <section className="flex flex-col gap-2 rounded-lg border border-dashed border-line p-4">
           <h2 className="text-sm font-semibold text-ink">
             Preferencia look por look (no cuenta para el veredicto)
           </h2>
@@ -443,7 +443,7 @@ export function MarcadorMotorView({
       ) : null}
 
       {comentarios.length ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             Qué le viste a cada look
           </p>
@@ -464,7 +464,7 @@ export function MarcadorMotorView({
       ) : null}
 
       {notas.length ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             Por qué votaste lo que votaste
           </p>
@@ -488,7 +488,7 @@ export function MarcadorMotorView({
       ) : null}
 
       {conErrores && estado !== "cerrada" ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">Lados que fallaron</p>
           <p className="text-xs text-muted">
             Un fallo del proveedor (sobrecarga, límite de ritmo) no es un
@@ -498,7 +498,7 @@ export function MarcadorMotorView({
           <button
             disabled={reintentando}
             onClick={reintentar}
-            className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
+            className="rounded-sm border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
           >
             {reintentando ? "Reabriendo…" : "Reintentar los lados fallidos"}
           </button>
@@ -506,7 +506,7 @@ export function MarcadorMotorView({
       ) : null}
 
       {estado !== "cerrada" ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">Cerrar la corrida</p>
           <input
             value={notaCierre}
@@ -516,13 +516,13 @@ export function MarcadorMotorView({
                 ? "qué se encontró y qué sigue (regla nueva / subir a veredicto)"
                 : "la decisión, aplicando la regla de arriba"
             }
-            className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+            className="rounded-sm border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
           />
           {errorCierre ? <p className="text-sm text-error">{errorCierre}</p> : null}
           <button
             disabled={cerrando}
             onClick={cerrar}
-            className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
+            className="rounded-sm bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
           >
             {cerrando ? "Cerrando…" : "Cerrar"}
           </button>

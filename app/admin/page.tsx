@@ -14,7 +14,7 @@ const FIT_CHECK_ESCRIBE_WORN = "2026-08-11";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
       <span className="text-xs font-medium uppercase tracking-wide text-muted">
         {label}
       </span>
@@ -38,7 +38,7 @@ function SenalesRotas({ senales }: { senales: Veredicto[] }) {
   const rotas = senales.filter((s) => s.estado === "seca" || s.estado === "floja");
   if (rotas.length === 0) return null;
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-error bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-error bg-surface p-4">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-error">
           Una señal dejó de llegar
@@ -345,7 +345,7 @@ export default async function AdminOverview() {
       {/* Señal de oro: el "me lo puse" explícito + la cercanía (fit check ≤24h
           después de un look generado). La segunda es la que queda viva tras el
           rediseño del home — la pregunta explícita ya no existe. */}
-      <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
         <span className="text-xs font-medium uppercase tracking-wide text-muted">
           Señal de oro
         </span>
@@ -373,7 +373,7 @@ export default async function AdminOverview() {
         {totalUsers === 0 ? (
           <p className="text-sm text-muted">Sin usuarias todavía.</p>
         ) : (
-          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
             {FUNNEL_STEPS.map(({ step, label }) => {
               const count = reached(step);
               const prev = step === 0 ? count : reached(step - 1);
@@ -447,7 +447,7 @@ export default async function AdminOverview() {
         {skipReasons.length === 0 ? (
           <p className="text-sm text-muted">Nadie ha dejado una razón todavía.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
             {skipReasons.map((reason, i) => (
               <li key={i} className="px-4 py-2.5 text-sm text-ink">
                 “{reason}”

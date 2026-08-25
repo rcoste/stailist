@@ -131,7 +131,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
   if (avance) {
     const pct = Math.round((avance.hechas / avance.total) * 100);
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
         <p className="text-sm font-semibold text-ink">
           {avance.etapa === "subiendo" ? "Subiendo fotos" : "Leyendo"}… {avance.hechas} de{" "}
           {avance.total}
@@ -148,7 +148,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
       <h2 className="text-sm font-semibold text-ink">Nueva corrida</h2>
 
       <div className="flex flex-col gap-2">
@@ -158,7 +158,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
             <button
               key={m.modo}
               onClick={() => setModo(m.modo)}
-              className={`rounded-xl border p-3 text-left ${
+              className={`rounded-sm border p-3 text-left ${
                 modo === m.modo ? "border-accent bg-accent-soft" : "border-line"
               }`}
             >
@@ -182,7 +182,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
         <button
           disabled={preparando}
           onClick={() => input.current?.click()}
-          className="rounded-xl border border-dashed border-line py-6 text-sm font-medium text-muted disabled:opacity-50"
+          className="rounded-sm border border-dashed border-line py-6 text-sm font-medium text-muted disabled:opacity-50"
         >
           {preparando
             ? "Preparando las fotos…"
@@ -231,7 +231,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
         ) : null}
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-bg p-3">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-bg p-3">
         <span className="text-sm text-muted">Cuesta más o menos</span>
         <span className="text-base font-semibold text-ink">
           {elegidos.length < 2 || !fotos.length ? "—" : formatoUsd(costo)}
@@ -243,7 +243,7 @@ export function NuevaCorrida({ modelos }: { modelos: ModeloUI[] }) {
       <button
         disabled={pendiente || preparando || elegidos.length < 2 || !fotos.length}
         onClick={lanzar}
-        className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+        className="rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
       >
         {pendiente ? "Subiendo…" : "Correr"}
       </button>

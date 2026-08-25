@@ -120,7 +120,7 @@ export function TripOutfits({
   if (outfits === null) {
     if (!confirmado) {
       return (
-        <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium text-ink">¿Y qué me pongo?</span>
             <span className="text-sm text-muted">
@@ -172,7 +172,7 @@ export function TripOutfits({
   // Generados pero ninguno armable.
   if (outfits.length === 0) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
         <span className="text-sm text-muted">
           Con lo que empacas todavía no alcanza para un look completo. Acepta algún
           &quot;parecido&quot; o agrega prendas y vuelve a intentar.

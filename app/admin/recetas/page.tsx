@@ -48,7 +48,7 @@ export default async function AdminRecetas() {
                       página salta bajo el cursor mientras se lee.
                       loading lazy porque son 30 fotos y solo se ven 3 a la vez:
                       cargarlas todas de golpe era lo que hacía la espera. */}
-                  <div className="aspect-[3/4] overflow-hidden rounded-xl border border-line bg-tile">
+                  <div className="aspect-[3/4] overflow-hidden rounded-lg border border-line bg-tile">
                     {/* eslint-disable-next-line @next/next/no-img-element -- URL firmada de Storage */}
                     <img
                       src={url}
@@ -65,7 +65,7 @@ export default async function AdminRecetas() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 text-sm">
+            <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 text-sm">
               <p>
                 <span className="font-semibold text-ink">Silueta.</span>{" "}
                 <span className="text-muted">{f.receta.silueta}</span>

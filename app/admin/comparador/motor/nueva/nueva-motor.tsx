@@ -71,7 +71,7 @@ export function NuevaCorridaMotor() {
     );
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">Tamaño</p>
         <div className="flex flex-col gap-2">
@@ -79,7 +79,7 @@ export function NuevaCorridaMotor() {
             <button
               key={t.tamano}
               onClick={() => setTamano(t.tamano)}
-              className={`rounded-xl border p-3 text-left ${
+              className={`rounded-sm border p-3 text-left ${
                 tamano === t.tamano ? "border-accent bg-accent-soft" : "border-line"
               }`}
             >
@@ -89,7 +89,7 @@ export function NuevaCorridaMotor() {
           ))}
         </div>
         {tamano === "veredicto" ? (
-          <label className="flex items-center justify-between gap-3 rounded-xl bg-bg p-3">
+          <label className="flex items-center justify-between gap-3 rounded-sm bg-bg p-3">
             <span className="text-sm text-muted">
               Pares: <span className="font-semibold text-ink">{n}</span> + {nRepetidos("veredicto", n)} espejo
             </span>
@@ -117,7 +117,7 @@ export function NuevaCorridaMotor() {
               <button
                 key={v.clave}
                 onClick={() => elegirVariante(v.clave)}
-                className={`rounded-xl border p-3 text-left ${
+                className={`rounded-sm border p-3 text-left ${
                   elegida ? "border-accent bg-accent-soft" : "border-line"
                 }`}
               >
@@ -144,7 +144,7 @@ export function NuevaCorridaMotor() {
             onChange={(e) => setRegla(e.target.value)}
             rows={3}
             placeholder={`Ej: si la variante nueva no gana con p<0.05, se queda producción tal cual.`}
-            className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+            className="rounded-sm border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
           />
           <p className="text-xs text-muted">
             Qué cuenta como ganar y qué haces si no gana. Se escribe ahora
@@ -153,7 +153,7 @@ export function NuevaCorridaMotor() {
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-bg p-3">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-bg p-3">
         <span className="text-sm text-muted">Cuesta más o menos</span>
         <span className="text-base font-semibold text-ink">
           {costo === null ? "—" : formatoUsd(costo)}
@@ -165,7 +165,7 @@ export function NuevaCorridaMotor() {
       <button
         disabled={pendiente || elegidos.length !== 2}
         onClick={lanzar}
-        className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+        className="rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
       >
         {pendiente ? "Abriendo…" : "Abrir la corrida"}
       </button>

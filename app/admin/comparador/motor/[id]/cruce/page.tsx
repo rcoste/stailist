@@ -66,7 +66,7 @@ export default async function CruceDeCorrida({
       </div>
 
       {votados === 0 ? (
-        <div className="rounded-xl border border-line bg-surface p-4">
+        <div className="rounded-lg border border-line bg-surface p-4">
           <p className="text-sm text-ink">Esta corrida todavía no se vota.</p>
           <p className="mt-1 text-xs text-muted">
             El cruce se abre después del voto — leer los hallazgos del juez con el
@@ -77,7 +77,7 @@ export default async function CruceDeCorrida({
           </p>
         </div>
       ) : sinJuez ? (
-        <div className="rounded-xl border border-line bg-surface p-4">
+        <div className="rounded-lg border border-line bg-surface p-4">
           <p className="text-sm text-ink">Esta corrida no ha pasado por los jueces.</p>
           <p className="mt-1 text-xs text-muted">
             Córrelos con{" "}

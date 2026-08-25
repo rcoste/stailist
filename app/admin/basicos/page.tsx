@@ -52,7 +52,7 @@ export default async function BasicosPage() {
         {(["hombre", "mujer"] as const).map((g) => (
           <div
             key={g}
-            className="flex flex-1 flex-col gap-1 rounded-xl border border-line bg-surface p-4"
+            className="flex flex-1 flex-col gap-1 rounded-lg border border-line bg-surface p-4"
           >
             <span className="text-xs font-medium uppercase tracking-wide text-muted">
               Ve {g === "hombre" ? "un hombre" : "una mujer"}

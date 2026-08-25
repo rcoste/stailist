@@ -46,7 +46,7 @@ function Stat({
 }) {
   return (
     <div
-      className={`flex flex-col gap-1 rounded-xl border bg-surface p-4 ${
+      className={`flex flex-col gap-1 rounded-lg border bg-surface p-4 ${
         alerta ? "border-error" : "border-line"
       }`}
     >
@@ -88,7 +88,7 @@ export default async function AdminIA() {
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-error bg-surface p-4 text-sm text-error">
+        <p className="rounded-lg border border-error bg-surface p-4 text-sm text-error">
           No pude leer los recibos: {error.message}
         </p>
       ) : null}
@@ -96,7 +96,7 @@ export default async function AdminIA() {
       {/* El hueco, ARRIBA y no al pie: mientras queden tareas sin medir, este
           panel es una vista parcial y decir eso es parte del dato. */}
       {TAREAS_SIN_MEDIR.length > 0 ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-warning bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-warning bg-surface p-4">
           <span className="text-xs font-semibold uppercase tracking-wide text-ink">
             Esto todavía no se ve aquí
           </span>
@@ -148,7 +148,7 @@ export default async function AdminIA() {
       </div>
 
       {filas.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface p-6 text-center text-sm text-muted">
+        <p className="rounded-lg border border-line bg-surface p-6 text-center text-sm text-muted">
           Todavía no hay recibos. Aparecen solos en cuanto alguien use la app.
         </p>
       ) : (
@@ -170,7 +170,7 @@ function TablaTareas({ filas }: { filas: ResumenTarea[] }) {
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
         Por tarea
       </h2>
-      <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-line bg-surface">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-line text-muted">
@@ -241,7 +241,7 @@ function TablaFallos({ filas }: { filas: AiCall[] }) {
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
         Últimos fallos
       </h2>
-      <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-line bg-surface">
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-line text-muted">

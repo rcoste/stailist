@@ -2,6 +2,53 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.7] - 2026-08-25
+
+### Fixed — los radios vuelven a la escala del design system (163 sitios)
+
+`rounded-xl` son 12px de Tailwind por defecto y la escala v2 de `globals.css`
+termina en `lg`=6px ("crispado y editorial, NO pill"). Estaba usado en **163
+sitios**, de los cuales **145 en `app/admin/`** — la señal de que el admin
+nunca pasó por el rebrand v3 que sí barrió la app.
+
+Se saldó de una pasada, no de a una: la vez anterior corregir una sola tarjeta
+la habría dejado en 6px rodeada de nueve de 12, peor que el error.
+
+**El reparto salió del rol del elemento, no del tag** (DESIGN.md: `sm`=3px para
+inputs, chips, botones y badges; `lg`=6px para cards y superficies grandes):
+
+| destino | n | qué |
+|---|---|---|
+| `rounded-sm` | 52 | `<button>`, `<input>`, `<textarea>`, `<label>` de campo, y los `<Link>` que son botón (`text-center` + `py-3`, sin `bg-surface`) |
+| `rounded-lg` | 111 | cards, secciones, banners, listas, y los `<Link>` que son tarjeta tocable |
+
+La frontera de `<Link>` importaba porque el archivo mezcla las dos cosas: en
+`comparador/page.tsx` es una tarjeta de corrida (`bg-surface p-4`), en
+`marcador-motor.tsx` es un botón de navegación.
+
+**Contra qué se validó el reparto:** no contra el gusto, sino contra lo que la
+app rebrandeada ya hace. Las "option cards" de `components/add-options.tsx`
+—mismo patrón que los selectores del comparador: botón ancho, título y línea de
+ayuda— usan `rounded-sm`; el mazo de swipe y las tarjetas del quiz usan
+`rounded-lg`. El admin ahora dice lo mismo.
+
+Diff limpio: 162 líneas, todas de clase. Verificado en `/admin`,
+`/admin/evales`, el calibrador y `/admin/comparador/motor/nueva`.
+
+### Lo que NO se tocó, y por qué
+
+- **`rounded-full`: 186 sitios (49 en admin).** DESIGN.md lo reserva "solo para
+  puntos/indicadores circulares", pero se usa de facto para píldoras de nav,
+  chips y barras de progreso en TODA la app, no sólo en admin. Con esa
+  proporción la pregunta no es limpiar el admin, es si el contrato está
+  desactualizado — y eso lo decide Roberto, no una pasada mecánica.
+- **`rounded-t-[18px]`: el radio de las hojas/drawers**, usado consistente en 7
+  componentes de usuario. Es un token sin declarar, no un descuido; declararlo
+  en `globals.css` es otra conversación.
+- **`rounded-2xl`: 3 sitios**, todos en pantallas de usuario (login, quiz,
+  modal del clóset). Mismo error de clase, pero cambiarlos altera la app real
+  que Roberto ve a diario — fuera del encargo, que era el admin.
+
 ## [0.2.288.6] - 2026-08-25
 
 ### Fixed — el brief del calibrador estaba escrito como pie de foto

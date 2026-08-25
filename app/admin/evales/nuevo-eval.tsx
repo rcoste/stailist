@@ -43,7 +43,7 @@ export function NuevoEval() {
             <button
               key={v}
               onClick={() => setVueltas(v)}
-              className={`flex-1 rounded-xl border py-2 text-sm font-semibold transition-colors ${
+              className={`flex-1 rounded-sm border py-2 text-sm font-semibold transition-colors ${
                 vueltas === v
                   ? "border-accent bg-accent text-on-accent"
                   : "border-line text-ink active:bg-tile"
@@ -60,7 +60,7 @@ export function NuevoEval() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-bg p-3">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-bg p-3">
         <span className="text-sm text-muted">Cuesta más o menos</span>
         <span className="text-base font-semibold text-ink">
           {estimado === null ? "—" : formatoUsd(estimado)}
@@ -72,7 +72,7 @@ export function NuevoEval() {
       <button
         onClick={crear}
         disabled={creando}
-        className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
+        className="rounded-sm bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
       >
         {creando ? "Abriendo…" : "Correr un eval"}
       </button>

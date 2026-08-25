@@ -119,7 +119,7 @@ export function GenerarClient({
         </p>
       </header>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
         <p className="text-sm font-semibold text-ink">
           {avance} de {total} lados (~{paresListos} pares listos)
         </p>
@@ -129,7 +129,7 @@ export function GenerarClient({
 
         {fase === "listo" ? (
           <>
-            <div className="flex items-center justify-between gap-3 rounded-xl bg-bg p-3">
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-bg p-3">
               <span className="text-sm text-muted">Lo que falta cuesta más o menos</span>
               <span className="text-base font-semibold text-ink">
                 {estimado === null ? "—" : formatoUsd(estimado)}
@@ -137,7 +137,7 @@ export function GenerarClient({
             </div>
             <button
               onClick={correrBloque}
-              className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+              className="rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
             >
               Generar {hechos > 0 ? "los siguientes" : "los primeros"}{" "}
               {Math.ceil(Math.min(LADOS_POR_BLOQUE, trabajos.length) / 2)} pares
@@ -166,7 +166,7 @@ export function GenerarClient({
             </p>
             <button
               onClick={correrBloque}
-              className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+              className="rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
             >
               Generar {Math.min(LADOS_POR_BLOQUE / 2, paresPendientes)} más
             </button>
@@ -182,7 +182,7 @@ export function GenerarClient({
       </div>
 
       {fallos.length ? (
-        <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-error">Lados que fallaron</p>
           {fallos.map((f, i) => (
             <p key={i} className="text-xs text-muted">
@@ -199,7 +199,7 @@ export function GenerarClient({
       {/* Detrás de un disclosure: parar es la EXCEPCIÓN, no el siguiente paso.
           Abierto y en negrita se lee como "ya acabé, sigue aquí". */}
       {fase !== "listo" ? (
-        <details className="rounded-xl border border-line bg-surface p-4">
+        <details className="rounded-lg border border-line bg-surface p-4">
           <summary className="cursor-pointer text-sm font-semibold text-muted">
             Parar antes de tiempo
           </summary>
@@ -213,12 +213,12 @@ export function GenerarClient({
             value={notaAborto}
             onChange={(e) => setNotaAborto(e.target.value)}
             placeholder="por qué se corta (ej: la variante B rompe clima en todos)"
-            className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+            className="rounded-sm border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
           />
           <button
             disabled={abortando}
             onClick={abortar}
-            className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
+            className="rounded-sm border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
           >
             {abortando ? "Cerrando…" : "Parar y votar con lo que hay"}
           </button>

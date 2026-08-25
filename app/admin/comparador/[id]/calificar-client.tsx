@@ -150,7 +150,7 @@ export function CalificarClient({
     // pb-24: el botón de avanzar va fijo abajo y sin este colchón tapa el
     // contador de "prendas que se le fueron" de la última columna.
     <div className="flex flex-col gap-4 pb-24">
-      <header className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+      <header className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
         <h1 className="text-lg font-semibold text-ink">
           {modo === "varias" ? "¿Qué le sobra, qué le falta, qué leyó mal?" : "¿Qué leyó mal?"}
         </h1>
@@ -169,7 +169,7 @@ export function CalificarClient({
           subir y bajar por cada prenda convierte la revisión en un acto de
           memoria. En celular se apilan, que es donde ya funcionaba. */}
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start">
-        <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border border-line bg-bg lg:sticky lg:top-4">
+        <div className="mx-auto w-full max-w-sm overflow-hidden rounded-lg border border-line bg-bg lg:sticky lg:top-4">
           {foto.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={foto.url} alt="" className="h-auto w-full object-contain" />
@@ -192,7 +192,7 @@ export function CalificarClient({
           return (
             <div
               key={l.modeloId}
-              className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4"
+              className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4"
             >
               <div className="flex items-baseline justify-between">
                 <p className="text-sm font-semibold text-ink">Modelo {LETRAS[n] ?? n + 1}</p>
@@ -343,7 +343,7 @@ export function CalificarClient({
       <button
         disabled={pendiente}
         onClick={siguiente}
-        className="sticky bottom-4 rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+        className="sticky bottom-4 rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
       >
         {pendiente
           ? "Guardando…"

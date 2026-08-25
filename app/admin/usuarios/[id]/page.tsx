@@ -195,7 +195,7 @@ export default async function AdminUserDetail({
       {/* Cabecera: avatar real + perfil */}
       <div className="flex flex-col gap-4 sm:flex-row">
         {avatarUrl ? (
-          <div className="relative aspect-[3/4] w-32 shrink-0 overflow-hidden rounded-xl border border-line bg-surface sm:w-40">
+          <div className="relative aspect-[3/4] w-32 shrink-0 overflow-hidden rounded-lg border border-line bg-surface sm:w-40">
             <Image
               src={avatarUrl}
               alt="Avatar del usuario"
@@ -206,7 +206,7 @@ export default async function AdminUserDetail({
             />
           </div>
         ) : (
-          <div className="flex aspect-[3/4] w-32 shrink-0 items-center justify-center rounded-xl border border-dashed border-line bg-surface text-xs text-muted sm:w-40">
+          <div className="flex aspect-[3/4] w-32 shrink-0 items-center justify-center rounded-lg border border-dashed border-line bg-surface text-xs text-muted sm:w-40">
             sin avatar
           </div>
         )}
@@ -231,7 +231,7 @@ export default async function AdminUserDetail({
               </a>
             ) : null}
           </div>
-          <div className="grid grid-cols-2 gap-4 rounded-xl border border-line bg-surface p-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 rounded-lg border border-line bg-surface p-4 sm:grid-cols-3">
             <Field label="Género" value={profile.gender ?? "—"} />
             <Field
               label="Edad"
@@ -283,7 +283,7 @@ export default async function AdminUserDetail({
               return (
                 <figure
                   key={it.id}
-                  className="flex flex-col gap-1 overflow-hidden rounded-xl border border-line bg-surface"
+                  className="flex flex-col gap-1 overflow-hidden rounded-lg border border-line bg-surface"
                 >
                   <div className="relative aspect-square w-full">
                     {p.imagen ? (
@@ -337,7 +337,7 @@ export default async function AdminUserDetail({
               return (
                 <div
                   key={o.id}
-                  className="flex gap-3 rounded-xl border border-line bg-surface p-3"
+                  className="flex gap-3 rounded-lg border border-line bg-surface p-3"
                 >
                   {tryon ? (
                     <div className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-lg border border-line sm:w-24">
@@ -415,7 +415,7 @@ export default async function AdminUserDetail({
         {(actividad ?? []).length === 0 ? (
           <span className="text-sm text-muted">Sin actividad registrada.</span>
         ) : (
-          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
             {(actividad ?? []).map((e, k) => {
               const extra =
                 e.type === "first_outfit_ttv"

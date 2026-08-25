@@ -49,7 +49,7 @@ export function AcentosGrid({
             type="button"
             onClick={() => onPick(n.valor)}
             aria-pressed={activo}
-            className={`flex flex-col gap-1.5 rounded-xl border p-2 text-left transition-colors ${
+            className={`flex flex-col gap-1.5 rounded-sm border p-2 text-left transition-colors ${
               activo ? "border-ink bg-tile" : "border-line active:bg-tile"
             }`}
           >

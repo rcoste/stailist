@@ -31,7 +31,7 @@ export function RevisarClient({ prendas }: { prendas: PrendaRevisar[] }) {
 
   if (!p) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-5">
         <h1 className="text-lg font-semibold text-ink">Listo</h1>
         <p className="text-sm leading-relaxed text-muted">
           Revisaste {hechas.length} prendas y quitaste {quitadas}.
@@ -45,7 +45,7 @@ export function RevisarClient({ prendas }: { prendas: PrendaRevisar[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
         <h1 className="text-lg font-semibold text-ink">¿Tienes esta prenda?</h1>
         <p className="text-sm leading-relaxed text-muted">
           Las que salieron de una foto con varias prendas las leyó un modelo, y
@@ -58,8 +58,8 @@ export function RevisarClient({ prendas }: { prendas: PrendaRevisar[] }) {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-        <div className="mx-auto w-full max-w-xs overflow-hidden rounded-xl border border-line bg-bg">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
+        <div className="mx-auto w-full max-w-xs overflow-hidden rounded-lg border border-line bg-bg">
           {p.url ? (
             <Image
               src={p.url}
@@ -102,14 +102,14 @@ export function RevisarClient({ prendas }: { prendas: PrendaRevisar[] }) {
           <button
             disabled={pendiente}
             onClick={() => decidir(false)}
-            className="flex-1 rounded-xl border border-line py-4 text-base font-semibold text-ink active:bg-tile disabled:opacity-50"
+            className="flex-1 rounded-sm border border-line py-4 text-base font-semibold text-ink active:bg-tile disabled:opacity-50"
           >
             No la tengo
           </button>
           <button
             disabled={pendiente}
             onClick={() => decidir(true)}
-            className="flex-1 rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+            className="flex-1 rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
           >
             Sí la tengo
           </button>

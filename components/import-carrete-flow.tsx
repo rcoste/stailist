@@ -889,7 +889,7 @@ export function ImportCarreteFlow({
               return (
                 <div
                   key={`conj-${c}`}
-                  className="flex flex-col gap-3 rounded-xl border border-accent p-2.5"
+                  className="flex flex-col gap-3 rounded-lg border border-accent p-2.5"
                 >
                   <div className="flex items-center justify-between gap-2 px-0.5">
                     <span className="flex items-center gap-1.5 text-[12px] font-semibold text-ink">
@@ -937,7 +937,7 @@ export function ImportCarreteFlow({
                 patchItem(par.saco, { conjunto: id });
                 patchItem(par.pantalon, { conjunto: id });
               }}
-              className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+              className={`flex items-center gap-3 rounded-sm border p-3 text-left transition-colors ${
                 atado ? "border-accent bg-accent-soft" : "border-line bg-bg"
               }`}
             >
@@ -1002,7 +1002,7 @@ export function ImportCarreteFlow({
           {state.items.map((it) => (
             <div
               key={it.id}
-              className="flex flex-col gap-2 rounded-xl border border-line bg-bg p-2"
+              className="flex flex-col gap-2 rounded-lg border border-line bg-bg p-2"
             >
               <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-surface">
                 {it.status === "done" && it.url ? (
@@ -1361,7 +1361,7 @@ function RenderCard({
   onZoom: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-line bg-bg p-2">
+    <div className="flex flex-col gap-2 rounded-lg border border-line bg-bg p-2">
       <button
         type="button"
         onClick={item.url ? onZoom : undefined}

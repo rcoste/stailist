@@ -101,7 +101,7 @@ export default async function AdminEvales() {
         </p>
       </header>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
         <p className="text-sm font-semibold text-ink">El motor de hoy</p>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           {[
@@ -134,7 +134,7 @@ export default async function AdminEvales() {
               corridas del mismo pool — resolvieron los mismos días.
             </p>
           ) : null}
-          <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+          <div className="overflow-x-auto rounded-lg border border-line bg-surface">
             <table className="w-full min-w-[640px] text-xs">
               <thead>
                 <tr className="border-b border-line text-left text-muted">
@@ -215,7 +215,7 @@ export default async function AdminEvales() {
             <Link
               key={f.id}
               href={`/admin/evales/${f.id}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3 active:bg-tile"
+              className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 active:bg-tile"
             >
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-semibold text-ink">

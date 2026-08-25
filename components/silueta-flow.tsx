@@ -102,7 +102,7 @@ export function SiluetaFlow({
                 setBuild(b.id);
                 setStep("volume");
               }}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-2.5 transition-colors ${
+              className={`flex flex-col items-center gap-2 rounded-sm border p-2.5 transition-colors ${
                 build === b.id ? "border-accent bg-accent-soft" : "border-line bg-surface hover:border-ink"
               }`}
             >
@@ -144,7 +144,7 @@ export function SiluetaFlow({
                 key={v.id}
                 type="button"
                 onClick={() => pickVolume(v.id)}
-                className={`flex flex-col items-center gap-1 rounded-xl border p-2 transition-colors ${
+                className={`flex flex-col items-center gap-1 rounded-sm border p-2 transition-colors ${
                   volume === v.id ? "border-accent bg-accent-soft" : "border-line bg-surface hover:border-ink"
                 }`}
               >
@@ -176,7 +176,7 @@ export function SiluetaFlow({
         <span className="text-xs font-medium uppercase tracking-wide text-muted">Tu silueta</span>
         <h2 className="text-2xl font-semibold text-ink">Lo que te equilibra</h2>
       </div>
-      <div className="flex gap-4 rounded-xl border border-line bg-surface p-4">
+      <div className="flex gap-4 rounded-lg border border-line bg-surface p-4">
         {img ? (
           <div className="w-24 shrink-0">
             <ZoneBody img={img} zones={vOpt?.zones} band={vOpt?.band} sizes="96px" />

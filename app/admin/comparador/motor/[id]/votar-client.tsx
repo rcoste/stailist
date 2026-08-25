@@ -135,7 +135,7 @@ function Lado({
           </span>
         </p>
       ) : (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
           {/* min-h de dos renglones: sin esto un nombre que envuelve a 3
               líneas empuja sus prendas más abajo que las del otro lado, y la
               comparación prenda-contra-prenda deja de ser posible de un
@@ -591,7 +591,7 @@ export function VotarClient({
               if (siguiente !== undefined) setLook(siguiente);
             }
           }}
-          className={`rounded-xl border py-3 text-sm font-semibold ${
+          className={`rounded-lg border py-3 text-sm font-semibold ${
             votos[i] === op
               ? "border-ink bg-ink text-bg"
               : "border-line bg-surface text-ink active:bg-tile"
@@ -657,7 +657,7 @@ export function VotarClient({
           <button
             key={i}
             onClick={() => setLook(i)}
-            className={`flex-1 rounded-xl border py-2 text-sm font-semibold ${
+            className={`flex-1 rounded-sm border py-2 text-sm font-semibold ${
               look === i ? "border-accent bg-accent-soft text-ink" : "border-line text-muted"
             }`}
           >
@@ -812,7 +812,7 @@ export function VotarClient({
                 rows={2}
                 autoFocus={!nota}
                 placeholder="qué te decidió, qué te chocó, qué le faltó al otro"
-                className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+                className="rounded-sm border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
               />
             </>
           ) : (
@@ -834,7 +834,7 @@ export function VotarClient({
           <button
             disabled={guardando}
             onClick={votar}
-            className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
+            className="rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80 disabled:opacity-50"
           >
             {guardando
               ? "Guardando…"

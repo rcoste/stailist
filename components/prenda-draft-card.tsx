@@ -159,7 +159,7 @@ export function DraftCard({
   const mostrar = todosLosColores ? PALETA : cercanos;
   return (
     <div
-      className={`flex flex-col gap-3 rounded-xl border p-3 transition-opacity ${
+      className={`flex flex-col gap-3 rounded-lg border p-3 transition-opacity ${
         item.on ? "border-line bg-bg" : "border-line bg-bg opacity-50"
       }`}
     >

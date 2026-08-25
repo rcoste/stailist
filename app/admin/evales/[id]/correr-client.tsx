@@ -76,7 +76,7 @@ export function CorrerClient({
   const pct = total ? Math.round((avance / total) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
       <p className="text-sm font-semibold text-ink">
         {avance} de {total} briefs listos
       </p>
@@ -86,7 +86,7 @@ export function CorrerClient({
 
       {fase !== "corriendo" ? (
         <>
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-bg p-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-bg p-3">
             <span className="text-sm text-muted">Lo que falta cuesta más o menos</span>
             <span className="text-base font-semibold text-ink">
               {estimado === null ? "—" : formatoUsd(estimado)}
@@ -94,7 +94,7 @@ export function CorrerClient({
           </div>
           <button
             onClick={correrBloque}
-            className="rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+            className="rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
           >
             Correr {Math.min(PASOS_POR_BLOQUE, pendientes.length)} pasos
           </button>

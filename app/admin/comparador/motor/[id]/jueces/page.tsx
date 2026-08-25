@@ -108,7 +108,7 @@ export default async function JuecesDeCorrida({
       </div>
 
       {!hayStylist ? (
-        <div className="rounded-xl border border-line bg-surface p-4">
+        <div className="rounded-lg border border-line bg-surface p-4">
           <p className="text-sm text-ink">Esta corrida todavía no pasó por los jueces.</p>
           <p className="mt-1 text-xs text-muted">
             Córrelos con{" "}
@@ -136,11 +136,11 @@ export default async function JuecesDeCorrida({
                   </span>
                 </div>
                 {r.temas.length === 0 ? (
-                  <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
+                  <p className="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-muted">
                     El stylist no marcó nada en este lado.
                   </p>
                 ) : (
-                  <div className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+                  <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
                     {r.temas.map((t) => (
                       <div key={t.defecto} className="flex flex-col gap-2 px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -191,7 +191,7 @@ export default async function JuecesDeCorrida({
               a leerlos es calificarlos — y eso vive en el cruce. */}
           <Link
             href={`/admin/comparador/motor/${id}/cruce`}
-            className="rounded-xl bg-ink py-3 text-center text-sm font-semibold text-bg active:opacity-80"
+            className="rounded-sm bg-ink py-3 text-center text-sm font-semibold text-bg active:opacity-80"
           >
             ¿Estás de acuerdo? Califícalos uno por uno
           </Link>
@@ -222,7 +222,7 @@ export default async function JuecesDeCorrida({
                   return (
                     <div
                       key={clave}
-                      className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-3"
+                      className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3"
                     >
                       <span className="text-xs font-semibold text-ink">
                         {etiqueta(clave)}

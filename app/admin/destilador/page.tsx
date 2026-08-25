@@ -60,7 +60,7 @@ export default async function AdminDestilador({
     <div className="flex flex-col gap-4">
       {/* Estado de un vistazo. Sin esto había que acordarse de qué estilo estaba
           cerrado y cuál no, y eso no es un estado del sistema — es memoria. */}
-      <div className="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface">
+      <div className="flex flex-col divide-y divide-line rounded-lg border border-line bg-surface">
         {resumen.map((r) => {
           const pendientes = r.total - r.juzgadas;
           const validado = VALIDADOS.has(r.estilo);
@@ -104,7 +104,7 @@ export default async function AdminDestilador({
       </div>
 
       {faltan === 0 && pendientesRevision.length === 0 && (
-        <p className="rounded-xl border border-line bg-surface p-3 text-sm text-muted">
+        <p className="rounded-lg border border-line bg-surface p-3 text-sm text-muted">
           No queda nada por curar. Avísame y destilo lo que falte.
         </p>
       )}

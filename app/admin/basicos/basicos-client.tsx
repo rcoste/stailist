@@ -76,7 +76,7 @@ export function BasicosClient({ filas }: { filas: BasicoRow[] }) {
                     type="button"
                     onClick={() => toggle(a.id)}
                     aria-pressed={activo}
-                    className={`flex flex-col overflow-hidden rounded-xl border text-left transition ${
+                    className={`flex flex-col overflow-hidden rounded-sm border text-left transition ${
                       activo
                         ? "border-accent bg-accent-soft"
                         : "border-line bg-surface opacity-60"

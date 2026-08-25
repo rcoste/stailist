@@ -196,7 +196,7 @@ export function DestiladorClient({
       <div className="relative h-[44vh] w-full select-none sm:h-[82vh]">
         {/* La siguiente, atrás, para que se sienta una pila y no una foto suelta. */}
         {fotos[i + 1]?.url && (
-          <div className="absolute inset-0 scale-95 overflow-hidden rounded-xl border border-line bg-tile opacity-40">
+          <div className="absolute inset-0 scale-95 overflow-hidden rounded-lg border border-line bg-tile opacity-40">
             {/* eslint-disable-next-line @next/next/no-img-element -- URL firmada de Storage */}
             <img
               src={fotos[i + 1].url!}
@@ -215,7 +215,7 @@ export function DestiladorClient({
             transform: `translate(${x}px, ${drag.y}px) rotate(${rot}deg)`,
             transition: drag.activo ? "none" : "transform 200ms ease-out",
           }}
-          className="absolute inset-0 touch-none overflow-hidden rounded-xl border border-line bg-tile"
+          className="absolute inset-0 touch-none overflow-hidden rounded-lg border border-line bg-tile"
         >
           {foto.url ? (
             /* eslint-disable-next-line @next/next/no-img-element -- URL firmada de Storage */
@@ -305,13 +305,13 @@ export function DestiladorClient({
       <div className="flex gap-3">
         <button
           onClick={() => decidir(false)}
-          className="flex-1 rounded-xl border border-line py-4 text-base font-semibold text-ink active:bg-tile"
+          className="flex-1 rounded-sm border border-line py-4 text-base font-semibold text-ink active:bg-tile"
         >
           No va
         </button>
         <button
           onClick={() => decidir(true)}
-          className="flex-1 rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+          className="flex-1 rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
         >
           Sirve
         </button>
@@ -328,7 +328,7 @@ export function DestiladorClient({
       </button>
 
       {pidiendoMotivo ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
           <span className="text-xs text-muted">¿Por qué no? (opcional)</span>
           <div className="flex flex-wrap gap-2">
             {MOTIVOS.map((m) => (

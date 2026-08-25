@@ -166,7 +166,7 @@ function DueloCard({
     setSel("sugerida");
   };
   return (
-    <li className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
+    <li className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface">
       <div className="flex flex-col gap-1 p-3.5 pb-3">
         <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
           ¿te sirve la tuya?

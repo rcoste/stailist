@@ -55,7 +55,7 @@ export function DuplicadosClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
         <h1 className="text-lg font-semibold text-ink">
           Prendas que podrían estar repetidas
         </h1>
@@ -77,7 +77,7 @@ export function DuplicadosClient({
         return (
           <section
             key={g.clave}
-            className={`flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 ${hecho ? "opacity-50" : ""}`}
+            className={`flex flex-col gap-3 rounded-lg border border-line bg-surface p-4 ${hecho ? "opacity-50" : ""}`}
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-base font-semibold text-ink">
@@ -138,14 +138,14 @@ export function DuplicadosClient({
                 <button
                   disabled={pendiente}
                   onClick={() => decidir(g, false)}
-                  className="flex-1 rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
+                  className="flex-1 rounded-sm border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
                 >
                   Son distintas
                 </button>
                 <button
                   disabled={pendiente}
                   onClick={() => decidir(g, true)}
-                  className="flex-1 rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
+                  className="flex-1 rounded-sm bg-ink py-3 text-sm font-semibold text-bg active:opacity-80 disabled:opacity-50"
                 >
                   Es la misma
                 </button>
@@ -156,7 +156,7 @@ export function DuplicadosClient({
       })}
 
       {grupos.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+        <p className="rounded-lg border border-line bg-surface p-4 text-sm text-muted">
           No hay prendas repetidas por revisar.
         </p>
       ) : null}

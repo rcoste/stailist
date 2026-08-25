@@ -43,7 +43,7 @@ export function Marcador({
           return (
             <div
               key={r.modeloId}
-              className={`flex flex-col gap-3 rounded-xl border bg-surface p-4 ${
+              className={`flex flex-col gap-3 rounded-lg border bg-surface p-4 ${
                 n === 0 ? "border-accent" : "border-line"
               }`}
             >
@@ -122,7 +122,7 @@ export function Marcador({
         })}
       </div>
 
-      <p className="rounded-xl border border-line bg-bg p-4 text-xs leading-relaxed text-muted">
+      <p className="rounded-lg border border-line bg-bg p-4 text-xs leading-relaxed text-muted">
         Esto compara modelos con el mismo prompt y el mismo schema que corre en
         producción — no una copia. Lo que ganó aquí, gana allá. Cambiar de modelo
         es una línea en <span className="font-mono text-ink">lib/models.ts</span>.
@@ -132,7 +132,7 @@ export function Marcador({
 
       <Link
         href="/admin/comparador"
-        className="rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink"
+        className="rounded-sm border border-line py-3 text-center text-sm font-semibold text-ink"
       >
         Volver · corrida {corridaId.slice(0, 8)}
       </Link>

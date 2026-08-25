@@ -173,7 +173,7 @@ export function Quiz() {
         <div className="my-auto flex flex-col gap-4">
           <p className="text-sm text-muted">mira lo que hace un color equivocado:</p>
 
-          <div className="flex flex-col gap-2.5 rounded-xl border border-line bg-surface p-3">
+          <div className="flex flex-col gap-2.5 rounded-lg border border-line bg-surface p-3">
             <div className="grid grid-cols-2 gap-2.5">
               <ColorFace color={TONO_CALIDO} ilumina label="te enciende" />
               <ColorFace color={TONO_FRIO} ilumina={false} label="te apaga" />

@@ -58,7 +58,7 @@ export function RevisionClient({ items }: { items: Discrepancia[] }) {
       {/* 34vh: las tres opciones hay que LEERLAS, y con la foto más grande se
           salían de la pantalla en el celular. Aquí la foto es contexto, no el
           protagonista — ya se juzgó una vez. */}
-      <div className="relative h-[34vh] w-full overflow-hidden rounded-xl border border-line bg-tile sm:h-[48vh]">
+      <div className="relative h-[34vh] w-full overflow-hidden rounded-lg border border-line bg-tile sm:h-[48vh]">
         {foto.url ? (
           /* eslint-disable-next-line @next/next/no-img-element -- URL firmada de Storage */
           <img
@@ -85,7 +85,7 @@ export function RevisionClient({ items }: { items: Discrepancia[] }) {
           <button
             key={r.id}
             onClick={() => resolver(r.id)}
-            className="flex flex-col items-start gap-0.5 rounded-xl border border-line px-4 py-3 text-left active:bg-tile"
+            className="flex flex-col items-start gap-0.5 rounded-sm border border-line px-4 py-3 text-left active:bg-tile"
           >
             <span className="text-base font-semibold text-ink">{r.label}</span>
             <span className="text-xs text-muted">{r.pista}</span>

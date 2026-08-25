@@ -110,7 +110,7 @@ export function CapsuleLooks({
     return (
       <>
         {pending ? <GeneratingScreen phrases={PHRASES} /> : null}
-        <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium text-ink">¿Y qué armo con esto?</span>
             <span className="text-sm text-muted">
@@ -135,7 +135,7 @@ export function CapsuleLooks({
   // Generados pero ninguno armable (poca base cubierta).
   if (outfits.length === 0) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
         <span className="text-sm text-muted">
           Con lo que ya tienes todavía no alcanza para un look completo.
           Completa tus esenciales y vuelve.

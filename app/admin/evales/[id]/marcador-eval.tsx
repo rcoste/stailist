@@ -103,7 +103,7 @@ export function MarcadorEvalView({
           cuando difieren, esa diferencia es el dato. */}
       <section className="flex flex-col gap-2">
         <h2 className="text-base font-semibold text-ink">El nivel</h2>
-        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
           <table className="w-full min-w-[420px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-xs text-muted">
@@ -151,7 +151,7 @@ export function MarcadorEvalView({
       {/* Las reglas de código y el juez de producción: los dos números que
           tienen que BAJAR con cada versión. */}
       <section className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3">
+        <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3">
           <span className="text-xs text-muted">looks con violación de regla</span>
           <span className="text-lg font-semibold text-ink">
             {pct(m.violaciones.looksConViolacion, m.looks)}
@@ -168,7 +168,7 @@ export function MarcadorEvalView({
               </span>
             ))}
         </div>
-        <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3">
+        <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3">
           <span className="text-xs text-muted">el juez de producción reparó</span>
           <span className="text-lg font-semibold text-ink">
             {pct(m.reparacion.reparados, m.reparacion.candidatos)}
@@ -184,7 +184,7 @@ export function MarcadorEvalView({
         </div>
       </section>
 
-      <section className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3">
+      <section className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3">
         <div className="flex justify-between text-sm">
           <span className="text-muted">costo de la corrida</span>
           <span className="font-semibold text-ink">{formatoUsd(m.costoTotal)}</span>
@@ -215,7 +215,7 @@ export function MarcadorEvalView({
         </p>
 
         {acuerdo.marcados > 0 ? (
-          <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3 text-sm">
+          <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted">acuerdo del juez de texto</span>
               <span className="font-semibold text-ink">
@@ -244,7 +244,7 @@ export function MarcadorEvalView({
 
         <button
           onClick={() => setAbierto((a) => !a)}
-          className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile"
+          className="rounded-sm border border-line py-3 text-sm font-semibold text-ink active:bg-tile"
         >
           {abierto ? "Cerrar" : "Calibrar a mano"}
         </button>
@@ -469,7 +469,7 @@ function Calibrador({
 
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <p className="text-sm font-semibold text-ink">
             Calibraste {juzgados.length} looks
           </p>
@@ -502,7 +502,7 @@ function Calibrador({
               reglas-ejecucion.ts; las de criterio, al prompt.
             </p>
             {conMotivo.map((x, k) => (
-              <div key={k} className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3">
+              <div key={k} className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3">
                 <p className="text-xs text-muted">
                   {x.fila.brief.etiqueta} · {x.look.nombre}
                 </p>
@@ -521,7 +521,7 @@ function Calibrador({
             tú ves algo que a la rúbrica le falta decir.
           </p>
           {discrepan.map((x, k) => (
-            <div key={k} className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3">
+            <div key={k} className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3">
               <p className="text-xs text-muted">{x.fila.brief.etiqueta}</p>
               <p className="text-sm font-semibold text-ink">
                 {x.look.nombre} — tú {x.mia === "arriba" ? "👍" : "👎"}
@@ -556,7 +556,7 @@ function Calibrador({
           return faltan > 0 ? (
             <button
               onClick={() => window.location.reload()}
-              className="rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80"
+              className="rounded-sm bg-ink py-3 text-sm font-semibold text-bg active:opacity-80"
             >
               seguir con los que faltan ({faltan})
             </button>
@@ -564,7 +564,7 @@ function Calibrador({
         })()}
         <button
           onClick={() => router.refresh()}
-          className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile"
+          className="rounded-sm border border-line py-3 text-sm font-semibold text-ink active:bg-tile"
         >
           Actualizar el marcador
         </button>
@@ -574,7 +574,7 @@ function Calibrador({
 
   if (!c) {
     return (
-      <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+      <p className="rounded-lg border border-line bg-surface p-4 text-sm text-muted">
         No hay looks calificados que marcar.
       </p>
     );
@@ -608,11 +608,7 @@ function Calibrador({
         </span>
       </div>
 
-      {/* OJO `rounded-xl`: son 12px y la escala del DS termina en lg=6px, así
-          que está fuera de contrato — pero lo está en las 10 tarjetas de esta
-          pantalla. Corregir sólo ésta dejaría una card de 6px entre nueve de
-          12; la deuda se salda de una vez, en todo el archivo, no de a una. */}
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
         {/* EL BRIEF ES LA PREGUNTA, Y ESTABA ESCRITO COMO PIE DE FOTO.
             Roberto, calibrando: "me es muy difícil visualmente ver dónde está
             este texto". El problema no era el tamaño: era la JERARQUÍA
@@ -740,7 +736,7 @@ function Calibrador({
           <button
             onClick={pedirRender}
             disabled={rindiendo}
-            className="rounded-xl border border-line py-2.5 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
+            className="rounded-sm border border-line py-2.5 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
           >
             {rindiendo ? "rindiendo… (~15s)" : "ver cómo queda puesto · R"}
           </button>
@@ -756,7 +752,7 @@ function Calibrador({
       </div>
 
       {pidiendoPorque ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
           <label className="text-sm font-semibold text-ink">¿por qué no?</label>
           <p className="-mt-1 text-xs text-muted">
             Lo concreto es lo que se vuelve regla: qué prenda, qué color, contra
@@ -769,18 +765,18 @@ function Calibrador({
             onChange={(e) => setBorrador(e.target.value)}
             rows={3}
             placeholder="ej: para funeral debe ser negro — el marino se lee como oficina"
-            className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+            className="rounded-sm border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
           />
           <div className="flex gap-2">
             <button
               onClick={guardarPorque}
-              className="flex-1 rounded-xl bg-ink py-3 text-sm font-semibold text-bg active:opacity-80"
+              className="flex-1 rounded-sm bg-ink py-3 text-sm font-semibold text-bg active:opacity-80"
             >
               guardar y seguir
             </button>
             <button
               onClick={avanzar}
-              className="rounded-xl border border-line px-4 py-3 text-sm font-semibold text-muted active:bg-tile"
+              className="rounded-sm border border-line px-4 py-3 text-sm font-semibold text-muted active:bg-tile"
             >
               sin motivo
             </button>
@@ -797,19 +793,19 @@ function Calibrador({
             onClick={() => setIdx((i) => Math.max(0, i - 1))}
             disabled={idx === 0}
             aria-label="regresar al look anterior"
-            className="rounded-xl border border-line px-4 py-4 text-base font-semibold text-muted active:bg-tile disabled:opacity-40"
+            className="rounded-sm border border-line px-4 py-4 text-base font-semibold text-muted active:bg-tile disabled:opacity-40"
           >
             ←
           </button>
           <button
             onClick={() => marcar("abajo")}
-            className="flex-1 rounded-xl border border-line py-4 text-base font-semibold text-ink active:bg-tile"
+            className="flex-1 rounded-sm border border-line py-4 text-base font-semibold text-ink active:bg-tile"
           >
             👎 no
           </button>
           <button
             onClick={() => marcar("arriba")}
-            className="flex-1 rounded-xl bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
+            className="flex-1 rounded-sm bg-ink py-4 text-base font-semibold text-bg active:opacity-80"
           >
             👍 me lo pondría
           </button>
@@ -848,13 +844,13 @@ function CerrarEval({
   const [cerrando, setCerrando] = useState(false);
   if (estado === "cerrada") {
     return nota ? (
-      <p className="rounded-xl border border-line bg-surface p-3 text-xs text-muted">
+      <p className="rounded-lg border border-line bg-surface p-3 text-xs text-muted">
         {nota}
       </p>
     ) : null;
   }
   return (
-    <details className="rounded-xl border border-line bg-surface p-4">
+    <details className="rounded-lg border border-line bg-surface p-4">
       <summary className="cursor-pointer text-sm font-semibold text-muted">
         Cerrar la corrida
       </summary>
@@ -868,7 +864,7 @@ function CerrarEval({
           onChange={(e) => setTexto(e.target.value)}
           rows={3}
           placeholder="ej: el estilo cae en frío — el motor se va a lo funcional y olvida la marca"
-          className="rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
+          className="rounded-sm border border-line bg-bg p-3 text-sm text-ink placeholder:text-muted"
         />
         <button
           disabled={cerrando}
@@ -877,7 +873,7 @@ function CerrarEval({
             await cerrarEval(corridaId, texto);
             router.refresh();
           }}
-          className="rounded-xl border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
+          className="rounded-sm border border-line py-3 text-sm font-semibold text-ink active:bg-tile disabled:opacity-50"
         >
           {cerrando ? "Cerrando…" : "Cerrar"}
         </button>

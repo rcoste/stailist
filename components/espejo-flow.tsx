@@ -897,7 +897,7 @@ export function EspejoFlow({
               con techo: medido en un 375, a 40dvh las cuatro chips y su nota
               caben sin scroll. Empezó en 26dvh y dejaba un tercio de pantalla
               en blanco, que se lee como que falta algo por cargar. */}
-          <div className="overflow-hidden rounded-xl border border-line bg-bg">
+          <div className="overflow-hidden rounded-lg border border-line bg-bg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={state.preview} alt="" className="max-h-[40dvh] w-full object-contain" />
           </div>
@@ -981,7 +981,7 @@ export function EspejoFlow({
               Veo {state.personas} personas en la foto. Si la leo así, te voy a sumar
               su ropa como tuya — recórtala para dejarte solo a ti.
             </p>
-            <div className="overflow-hidden rounded-xl border border-warning bg-bg">
+            <div className="overflow-hidden rounded-lg border border-warning bg-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={state.preview} alt="" className="max-h-[46dvh] w-full object-contain" />
             </div>
@@ -1155,7 +1155,7 @@ export function EspejoFlow({
                 trabajo son las prendas; dejarla arriba empujaba las tarjetas
                 fuera de la pantalla y era la mitad de la sensación de "largo". */}
             {!lista ? (
-            <div className="relative shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
+            <div className="relative shrink-0 overflow-hidden rounded-lg border border-line bg-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={state.preview} alt="" className="max-h-[44dvh] w-full object-contain" />
               {!lista ? (

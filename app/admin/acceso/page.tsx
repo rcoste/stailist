@@ -82,11 +82,11 @@ export default async function AdminAcceso() {
           Pidieron entrar
         </h2>
         {espera.length === 0 ? (
-          <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-sm text-muted">
+          <p className="rounded-lg border border-line bg-surface px-4 py-6 text-center text-sm text-muted">
             Nadie se ha anotado todavía.
           </p>
         ) : (
-          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
             {espera.map((r) => (
               <div
                 key={r.email}
@@ -147,7 +147,7 @@ export default async function AdminAcceso() {
           </button>
         </form>
 
-        <div className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+        <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
           {allowRows.map((row) => {
             const activo = activos.has(row.email.toLowerCase());
             return (

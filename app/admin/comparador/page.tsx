@@ -153,7 +153,7 @@ export default async function AdminComparador() {
               return (
                 <div
                   key={r.clave}
-                  className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4"
+                  className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4"
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-ink">{r.etiqueta}</span>
@@ -218,7 +218,7 @@ export default async function AdminComparador() {
                 <li key={c.id}>
                   <Link
                     href={`/admin/comparador/motor/${c.id}`}
-                    className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+                    className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4 active:bg-tile"
                   >
                     <span className="flex items-center justify-between gap-2">
                       <span className="text-sm font-semibold text-ink">
@@ -271,7 +271,7 @@ export default async function AdminComparador() {
               <li key={c.id}>
                 <Link
                   href={`/admin/comparador/${c.id}`}
-                  className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+                  className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4 active:bg-tile"
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-ink">
