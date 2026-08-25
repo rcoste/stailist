@@ -6,6 +6,7 @@ import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
 import { lineaTipoEvento } from "@/lib/eventos";
 import { hayLluvia } from "@/lib/weather";
+import { lineaApetitoAcentos } from "@/lib/looks";
 
 // LA RÚBRICA: un look calificado contra su brief, por un juez automático.
 //
@@ -90,6 +91,10 @@ export type BriefRubrica = {
   /** Su dial de registro por plan (lib/registro-plan.ts), el MISMO que recibió el
    * motor: "muy formal para la ocasión" depende de cómo va ELLA a ese plan. */
   registro?: import("@/lib/registro-plan").RegistroPorPlan | null;
+  /** Cuánto color quiere llevar, si lo ELIGIÓ (lib/looks.ts). El MISMO dato que
+   *  recibió el motor: si el juez calificara sin él, castigaría por discreto un
+   *  look que la persona pidió discreto. */
+  acentoApetito?: import("@/lib/looks").ApetitoAcentos | null;
 };
 
 /** La paleta de la persona, en los mismos tres grupos que consume el motor. */
@@ -205,6 +210,9 @@ export function briefParaRubrica(b: BriefRubrica): string {
     ].filter(Boolean);
     lineas.push(`SU ESTILO (el motor lo recibió y debía honrarlo):\n${partes.join("\n")}`);
   }
+  // El apetito de acentos, con la MISMA línea que leyó el motor: sin ella el
+  // juez bajaría la nota de color a un look tonal que la persona pidió tonal.
+  if (b.acentoApetito) lineas.push(lineaApetitoAcentos(b.acentoApetito));
   // La paleta, en los mismos tres grupos que recibe el motor. Los hex van
   // porque el look también los trae: sin ellos el juez compararía nombres de
   // color, que es justo donde dos "vino" distintos se leen igual.

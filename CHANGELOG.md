@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.284.0] - 2026-08-25
+
+### Added — v69: el apetito de acentos por fin LLEGA al motor (y a los jueces)
+
+Cierra el círculo que las tres versiones anteriores dejaron abierto: el dato
+se capturaba y no hacía nada. Ahora la línea viaja al generador y a las
+rúbricas — la MISMA, porque si el juez calificara sin ella castigaría por
+soso un look que la persona pidió discreto.
+
+**Sólo viaja si la persona lo ELIGIÓ** (`fuente = 'elegido'`). La semilla
+derivada de los swipes no entra: Roberto la degradó a suposición y actuar
+sobre ella cambiaría los looks de 24 personas por un dato que nadie
+confirmó. Con eso, hoy —24 perfiles en semilla, cero elegidos— el prompt
+sale byte a byte idéntico a v68: **cero regresión posible**. Verificado
+contra el perfil real de Roberto, no sólo con tests: con su semilla el
+mensaje no menciona el apetito; simulando que lo elige, entra la línea.
+
+La línea dice qué SÍ, nunca sólo qué no (lección de v56), e incluye el caso
+de carencia: sin pieza chica de color en el clóset, un look TONAL es la
+respuesta correcta y la decisión visible pasa a textura o proporción — nada
+de forzar el suéter de color porque no había bufanda.
+
+Misma estructura que el dial de registro (v60): sin dato, texto igual; con
+dato, la línea manda.
+
 ## [0.2.283.0] - 2026-08-25
 
 ### Added — la card de acentos en Perfil → estilo: la semilla pasa a medición

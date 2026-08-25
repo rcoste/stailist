@@ -176,6 +176,10 @@ export async function pasoEval(opciones: {
     paraguas: brief.paraguas === true,
     estilo: conEstilo ? estilo : null,
     registro,
+    acentoApetito:
+      profile.acento_apetito_fuente === "elegido"
+        ? ((profile.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
+        : null,
     color: conColor ? color : null,
   };
 

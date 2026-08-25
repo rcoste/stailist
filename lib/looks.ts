@@ -315,3 +315,26 @@ export function apetitoDeAcentos(
   if (discreto - audaz >= 2) return "discreto";
   return "medio";
 }
+
+/**
+ * La línea del apetito que viaja al motor y a los jueces.
+ *
+ * DICE QUÉ SÍ, NO SÓLO QUÉ NO — la lección de v56, que quitó los trajes de la
+ * cita sin decir con qué sustituirlos y trajo mezclilla con blazer. Cada nivel
+ * nombra dónde poner el color, no sólo cuánto.
+ *
+ * Y NO INVENTA PRENDAS: si el clóset no tiene la pieza chica de color que el
+ * nivel discreto preferiría, la línea deja explícito que un look tonal es una
+ * respuesta correcta — forzar el suéter de color porque no había bufanda es el
+ * error que este dial existe para evitar
+ * (docs/designs/acentos-y-colorimetria-por-zona.md §3).
+ */
+export function lineaApetitoAcentos(valor: ApetitoAcentos | null): string {
+  if (valor === "discreto")
+    return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): DISCRETO — el color entra en piezas CHICAS y lejos de la cara: bufanda, calzado, cinturón, bolso, corbata. Las piezas grandes (suéter, camisa, saco, abrigo, pantalón) van en neutros o en tonos profundos y apagados. Si su clóset no tiene una pieza chica de color, un look TONAL es la respuesta correcta y la decisión visible del look pasa a ser la textura, el corte o la proporción — no le metas un suéter de color para compensar.";
+  if (valor === "protagonista")
+    return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): PROTAGONISTA — el color puede mandar en una pieza GRANDE (suéter, abrigo, pantalón, vestido) y ése es el punto del look. Sigue siendo UNA pieza la que manda: dos piezas grandes saturadas compiten entre sí. El resto, neutros que la dejen brillar.";
+  if (valor === "medio")
+    return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): MEDIO — una pieza de color de tamaño medio cerca de la cara (suéter, camisa, polo, top) con el resto en neutros, o un acento chico bien puesto. Ni look tonal ni bloque grande de color.";
+  return "";
+}

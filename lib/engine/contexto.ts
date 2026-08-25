@@ -259,6 +259,14 @@ export function construirContexto(
     styleWords: (profile.style_words as string | null) ?? null,
     registroPorPlan:
       (profile.registro_por_plan as import("@/lib/registro-plan").RegistroPorPlan | null) ?? null,
+    // SÓLO si lo ELIGIÓ. La semilla derivada de los swipes se queda en el
+    // perfil sin viajar: Roberto la degradó a suposición ("estás asumiendo
+    // algo muy importante a partir de las imágenes") y actuar sobre ella
+    // cambiaría los looks de 24 personas por un dato que nadie confirmó.
+    acentoApetito:
+      profile.acento_apetito_fuente === "elegido"
+        ? ((profile.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
+        : null,
     // De la PERSONA, no de la petición: dónde trabajas no cambia cada mañana.
     workDressCode: (profile.work_dress_code as string | null) ?? null,
     // Del DÍA, no del perfil: quien eligió "depende del día" está diciendo

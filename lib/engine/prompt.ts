@@ -16,6 +16,7 @@ import {
   type BlueprintEmparejado,
 } from "@/lib/engine/blueprint";
 import { calcularRotacion, bloqueRotacion } from "@/lib/engine/rotacion";
+import { lineaApetitoAcentos } from "@/lib/looks";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
@@ -435,7 +436,25 @@ import {
 // es sólo lo que sus votos condenan.
 // Ablación sin-reglas-v68. El texto del funeral es local a ese evento (ningún
 // brief del vistazo lo toca): su vigilancia es el próximo eval.
-export const PROMPT_VERSION = "v68";
+// v69 (2026-08-25): EL APETITO DE ACENTOS llega al motor y a los jueces —
+// cuánto color quiere llevar la persona (docs/designs/acentos-y-colorimetria-
+// por-zona.md), la dimensión que faltaba junto a la colorimetría (QUÉ colores)
+// y el arquetipo (qué vibe). Nació de Roberto viendo un suéter cobalto:
+// "probablemente no me lo hubiera puesto; hubiera usado marino".
+//
+// SÓLO VIAJA SI LA PERSONA LO ELIGIÓ en la card de Perfil→estilo
+// (acento_apetito_fuente = 'elegido'). La semilla derivada de los swipes NO
+// entra — él mismo la degradó ("estás asumiendo algo muy importante a partir
+// de las imágenes") — así que hoy, con 24 perfiles en semilla y ninguno
+// elegido, el prompt sale byte a byte idéntico a v68 y no hay regresión
+// posible. Verificado contra su perfil real, no sólo con tests.
+// Misma estructura que el dial de registro (v60): sin dato, texto igual; con
+// dato, la línea dice hacia dónde Y qué SÍ hacer — incluido el caso de
+// carencia (sin pieza chica de color, un look tonal es la respuesta correcta,
+// no un suéter de color forzado). La MISMA línea la leen el generador y las
+// rúbricas: si el juez calificara sin ella, castigaría por soso un look que
+// la persona pidió discreto.
+export const PROMPT_VERSION = "v69";
 
 export type EngineItem = {
   id: string;
@@ -557,6 +576,11 @@ export type EngineContext = {
   /** El dial de registro por plan (lib/registro-plan.ts): default consenso; la
    *  persona mueve un paso. Viaja dentro de lineaTipoEvento. */
   registroPorPlan?: import("@/lib/registro-plan").RegistroPorPlan | null;
+  /** Cuánto color quiere llevar (lib/looks.ts). SÓLO llega si la persona lo
+   *  ELIGIÓ en la card de acentos: la semilla derivada de los swipes no viaja
+   *  —mide afinidad estética, no volumen de color— y con ella el prompt sale
+   *  byte a byte igual que antes. */
+  acentoApetito?: import("@/lib/looks").ApetitoAcentos | null;
 };
 
 // PRENDAS QUE DE VERDAD EXISTEN — regla compartida por los DOS motores que
@@ -986,6 +1010,12 @@ export function contextBlock(
     lines.push(
       `Cómo le gusta que le quede la ropa: NO tiene preferencia fuerte (eligió distinto entre dos pares de fotos). Deja que mande la silueta que la receta de su estilo señale como dominante; no fuerces ni lo amplio ni lo recto.`
     );
+  }
+  // PEGADO al de la silueta porque es su hermano: los dos son gusto puro
+  // elegido viendo fotos, no declarado con palabras. El de arriba dice cómo le
+  // queda la ropa; éste, cuánto color lleva.
+  if (ctx.acentoApetito) {
+    lines.push(lineaApetitoAcentos(ctx.acentoApetito));
   }
   if (ctx.styleWords?.trim()) {
     // slice defensivo: el tope de 280 vive en la app, no en la DB — un valor

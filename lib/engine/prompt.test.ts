@@ -1030,3 +1030,30 @@ describe("perfil de ocasión: el texto libre deja de ser ciudadano de segunda", 
     expect(t).toContain("arreglarse de más");
   });
 });
+
+describe("apetito de acentos — sólo viaja si la persona lo ELIGIÓ (v69)", () => {
+  it("sin apetito el bloque sale IDÉNTICO: los 24 perfiles con semilla no cambian de looks", () => {
+    const sin = contextBlock(baseCtx).join("\n");
+    const conNull = contextBlock({ ...baseCtx, acentoApetito: null }).join("\n");
+    expect(conNull).toBe(sin);
+    expect(sin).not.toContain("CUÁNTO COLOR QUIERE");
+  });
+  it("discreto manda el color a piezas chicas Y dice qué hacer si no las hay", () => {
+    const l = contextBlock({ ...baseCtx, acentoApetito: "discreto" }).join("\n");
+    expect(l).toContain("CUÁNTO COLOR QUIERE");
+    expect(l).toContain("DISCRETO");
+    // Lo que separa esta línea de la de v56: dice qué SÍ, no sólo qué no.
+    expect(l).toMatch(/bufanda|calzado|cintur/);
+    expect(l).toContain("TONAL");
+  });
+  it("protagonista permite la pieza grande pero sigue pidiendo UNA sola", () => {
+    const l = contextBlock({ ...baseCtx, acentoApetito: "protagonista" }).join("\n");
+    expect(l).toContain("PROTAGONISTA");
+    expect(l).toMatch(/UNA pieza/);
+  });
+  it("medio es el punto intermedio, sin tonal ni bloque grande", () => {
+    const l = contextBlock({ ...baseCtx, acentoApetito: "medio" }).join("\n");
+    expect(l).toContain("MEDIO");
+    expect(l).toMatch(/tamaño medio/);
+  });
+});
