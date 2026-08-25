@@ -41,41 +41,50 @@ calzado los EVITA no importan nunca"); lo que NO tiene es la mitad fina: que
 la bufanda y el cuello alto son MÁS sensibles que el resto del torso, y que
 los "mejores" tampoco tienen por qué invadir el pantalón.
 
-## 2. Elegibilidad de acento (punto 2 de Roberto)
+## 2. Qué prenda SÍ es acento y cuál no (revisado 2026-08-25)
 
-La lista, por guardarropa. El criterio detrás: superficie chica + intención
-visible ("se nota que fue decisión") + no romper el registro de la ocasión.
+**El criterio, y es uno solo: VISIBILIDAD × LEGITIMIDAD.** Una prenda sirve
+de acento si (a) se ve puesta, en el uso normal del look, y (b) el color ahí
+se lee como decisión y no como accidente. Falla cualquiera de las dos y no
+sirve — por muy clásica que sea la prenda.
 
-**Hombre** — piezas de acento naturales, de más segura a más audaz:
-1. Corbata / pañuelo de bolsillo (el acento formal por excelencia)
-2. Calcetín (asoma sentado — acento de bajo riesgo)
-3. Bufanda / gorro de punto (ojo: zona de cara — solo colores que favorecen)
-4. Calzado (mocasín burdeos, tenis de color) y cinturón
-5. Reloj/correa, lentes
-6. **La capa que ASOMA**: suéter fino o camisa de color BAJO saco o abrigo
-   CERRADO — la prenda es grande pero la superficie visible es chica. Es la
-   forma legítima de usar un suéter cobalto como acento. ("Cobalto Bajo
-   Cero" falla exactamente aquí: el abrigo va abierto y el statement queda
-   en posición de protagonista con cuatro saltos de valor en el torso.)
+### Hombre — SÍ, en orden de fuerza
 
-**Mujer** — mismo criterio, más superficie disponible:
-1. Bolso (el acento clásico — grande en presencia, separado del cuerpo)
-2. Zapato
-3. Pañuelo / mascada (zona de cara: solo colores que favorecen)
-4. Joyería, cinturón, uñas
-5. Blusa bajo saco / cárdigan; el labial cuenta para una stylist real aunque
-   el motor no lo controle
+| prenda | por qué funciona |
+|---|---|
+| **Bufanda / gorro de punto** | superficie media, junto a la cara, se ve siempre. El mejor acento del frío. Ojo: zona de cara, sólo colores que favorecen (§1) |
+| **Calzado** (mocasín burdeos, tenis de color) | se ve en todo look y ancla la paleta desde abajo. Es el acento del 60-30-10 de manual |
+| **Corbata / pañuelo de bolsillo** | el acento formal por excelencia — pero sólo existe cuando hay saco |
+| **Bolso, mochila, portafolio** | grande en presencia y separado del cuerpo: no compromete la silueta |
+| **La capa que ASOMA** | suéter o camisa de color bajo saco/abrigo CERRADO: la prenda es grande, la superficie visible es chica. Es la forma legítima de llevar un cobalto sin que mande |
 
-**Cuándo sí y cuándo no, por registro:**
-- **Diario / casual:** el acento puede CRECER a pieza grande (statement
-  sweater). Es legítimo y los votos de Roberto lo confirman (78% de
-  aprobación con un acento grande — igual que sin acento). Condición: que
-  sea EL gesto del look (enlaza con "LA PIEZA" de v66 — exactamente una).
-- **Oficina / smart casual:** acento chico o statement amortiguado.
-- **Formal / evento:** el acento se ENCOGE — corbata, pañuelo, calcetín. La
-  pieza grande va en neutro profundo (aquí es donde "lo desaturado se lee
-  más caro" pesa más).
-- **Solemne (funeral):** cero acentos. Ya es regla.
+### Hombre — NO, y por qué (esto es lo que se preguntaba Roberto)
+
+| prenda | por qué NO |
+|---|---|
+| **Calcetín** | sólo asoma al cruzar la pierna, y con tenis o botín desaparece. Es sastrería legítima, pero como VEHÍCULO del color de alguien es casi ausencia de color. De extra sí; de principal nunca |
+| **Cinturón** | casi siempre tapado por la prenda de arriba, y su color no es libre: lo manda el calzado (regla de cueros). No puede ser el acento porque no lo elige |
+| **Reloj / correa** | superficie mínima y atado también a la regla de cueros |
+| **Forro del saco** | se ve al quitárselo. Es un guiño para uno mismo, no un acento del look |
+| **Ropa interior** | la prueba del absurdo, y es de Roberto: "es como si me dijeras «y el calzón que sea esmeralda»". Si no se ve, no es acento |
+| **Lentes** | se ven, pero el color del armazón se lee como rasgo de la persona, no como decisión del outfit del día |
+
+### Mujer
+
+**SÍ:** bolso (el acento clásico), zapato, mascada o pañuelo (zona de cara),
+joyería visible, blusa o knit bajo saco/cárdigan. El labial cuenta para una
+stylist real, aunque el motor no lo controle.
+**NO:** los mismos que arriba — calcetín, cinturón tapado, forro.
+
+### Y el registro modula: el acento ENCOGE cuando sube la formalidad
+
+- **Diario / casual:** el acento puede crecer a pieza grande (statement
+  sweater). Legítimo, y sus votos lo respaldan (78% de aprobación con un
+  acento grande, igual que sin acento). Condición: que sea EL gesto del look.
+- **Oficina / smart casual:** acento chico, o statement amortiguado bajo capa.
+- **Formal / evento:** se encoge a corbata o pañuelo; la pieza grande va en
+  neutro profundo (aquí pesa más "lo desaturado se lee más caro").
+- **Solemne (funeral):** cero acentos. Ya es regla de código.
 
 ## 3. Degradación con gracia (punto 3 de Roberto)
 

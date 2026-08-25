@@ -46,6 +46,38 @@ Lo que un test de componente debe blindar aquí no es el markup: es **qué decis
 ## Voz del producto
 **"Tu amiga cool que se viste increíble"**: cálida, directa, tuteo, cero jerga técnica de moda ("los tonos tierra te encienden la cara", no "eres otoño profundo"). Toda string visible pasa por este filtro. Identidad visual: ✅ definida — la fuente de verdad es DESIGN.md + tokens en app/globals.css (NO copiar valores aquí: ya se desincronizó una vez — el rebrand v3 de 2026-06-26 cambió paleta y fuentes y este archivo siguió describiendo la v1 durante seis semanas). Veto vigente de Roberto: ámbar/terracota/naranja.
 
+## Las decisiones se toman con DOS sombreros: stylist y código
+
+Este es un producto de moda. Casi todo lo que se construye aquí es, en el
+fondo, una decisión de VESTIMENTA ejecutada en software — y el código puede
+estar impecable mientras la decisión de fondo está mal. Cuando eso pasa, los
+tests pasan, el type-check pasa, y el resultado es ropa que nadie se pondría.
+
+**Antes de escribir la línea, contesta las dos preguntas:**
+
+1. **Con sombrero de stylist:** ¿esto es cierto en la vida real? ¿Un stylist
+   profesional lo firmaría? ¿Se ve? ¿Se lo pondría una persona?
+2. **Con sombrero de código:** ¿es verificable, reparable, medible? ¿Dónde
+   vive — regla dura, texto del prompt, dato del perfil, UI?
+
+Si la (1) no tiene respuesta clara, **investígala** (fuentes reales, la
+práctica profesional) o **mídela** contra los votos, pero no la inventes por
+analogía con lo que suena razonable. Y si la evidencia contradice el criterio
+de stylist —o al revés— dilo en voz alta en vez de elegir el que convenga.
+
+**Los errores de esta clase que ya se pagaron** (todos con el código
+correcto): el calcetín listado como vehículo de acento cuando casi no se ve;
+beige con gris medio en una foto de medición, dos neutros que se enlodan;
+esmeralda con burdeos, que Roberto describió como "parecen uvas"; una escala
+de acentos cuyo primer nivel era "sin color", que convertía un eje de
+intensidad en dos preguntas distintas; el polo bajo traje completo, que el
+motor sacó seis veces porque nadie se lo había prohibido.
+
+**La otra mitad de la regla:** el criterio de stylist NO gana por decreto.
+Roberto dictó "en un funeral el traje va negro" y sus propios votos habían
+aprobado dos veces el gris carbón — la regla dura quedó sólo en lo que los
+votos condenaban (la camisa). Ver `docs/improvement-loop-del-motor.md`.
+
 ## Criterios de éxito del experimento
 - TTV: primer outfit en <2 min (medido automático).
 - ≥1 de cada 3 outfits con 👍 de Tatiana/Toño en una semana de uso real.
