@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bloqueVida, lineaAcentosCapsula, partirTrajes } from "./capsule-target";
+import { bloqueVida, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados } from "./capsule-target";
 import { ASSESSMENT_QUESTIONS, type AssessmentQuestion, type CapsuleItem } from "@/lib/capsule";
 
 // Lo que se blinda: QUÉ frase le llega al motor por cada respuesta del quiz.
@@ -131,5 +131,40 @@ describe("partirTrajes — los casos que cazó el dry run del backfill", () => {
   it("limpia el '(saco)' del nombre: la pieza ya se llama saco", () => {
     const r = partirTrajes([it2({ nombre: "Traje negro de lana (saco)", tipo: "traje" })]);
     expect(r[0].nombre).toBe("Saco de traje negro de lana");
+  });
+});
+
+describe("limpiarEmpaquetados — una pieza es UNA prenda de UN color", () => {
+  const it3 = (over: Partial<CapsuleItem>): CapsuleItem =>
+    ({
+      nombre: "x", tipo: "calcetin", hueco: "x", category: "accesorio", colorFamilia: "esmeralda",
+      formalidad: "casual", temporada: "todo-el-año", prioridad: 1, porque: "p",
+      ...over,
+    }) as CapsuleItem;
+
+  it("el caso real de Roberto: dos pares de dos colores en un item", () => {
+    const r = limpiarEmpaquetados([
+      it3({ nombre: "Calcetines de algodón esmeralda y vino (par de pares)" }),
+    ]);
+    expect(r[0].nombre).toBe("Calcetines de algodón esmeralda");
+    expect(r[0].nombre).not.toMatch(/vino|par de pares/);
+  });
+
+  it("no toca los nombres normales, ni los que llevan 'y' legítima", () => {
+    const normal = it3({ nombre: "Bufanda de lana rubí", colorFamilia: "rubi" });
+    expect(limpiarEmpaquetados([normal])).toEqual([normal]);
+    const conY = it3({ nombre: "Reloj de acero con caja dorada y correa negra", colorFamilia: "negro" });
+    expect(limpiarEmpaquetados([conY])[0].nombre).toBe(conY.nombre);
+  });
+});
+
+describe("limpiarEmpaquetados — el falso positivo que cazó el dry run", () => {
+  it("'manga larga y cuello alto' NO se toca: la 'y' une características, no prendas", () => {
+    const top = {
+      nombre: "Top de punto esmeralda de manga larga y cuello alto",
+      tipo: "top-punto", hueco: "x", category: "top", colorFamilia: "esmeralda",
+      formalidad: "casual", temporada: "frio", prioridad: 1, porque: "p",
+    } as CapsuleItem;
+    expect(limpiarEmpaquetados([top])).toEqual([top]);
   });
 });

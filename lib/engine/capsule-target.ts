@@ -41,6 +41,40 @@ export type CapsuleInputs = {
 };
 
 /**
+ * PIEZAS EMPAQUETADAS: "Calcetines de algodón esmeralda y vino (par de pares)".
+ *
+ * Roberto lo cazó en su cápsula (2026-08-25): un solo item con DOS pares de
+ * colores distintos, que además el render dibujó como dos prendas en la misma
+ * foto. El prompt ya pide una prenda por item; esto es el cinturón, por lo
+ * mismo que `partirTrajes`: una regla de prompt se puede ignorar y ésta se
+ * ignoró.
+ *
+ * NO se parte en dos —cuál de los dos colores conservar es criterio, y meter
+ * dos items de calcetines sería peor— sino que se queda con el color que el
+ * modelo declaró en `colorFamilia` y limpia el nombre. Si de verdad hacían
+ * falta dos pares, el prompt corregido los pedirá como dos items la próxima
+ * vez que se genere.
+ */
+export function limpiarEmpaquetados(items: CapsuleItem[]): CapsuleItem[] {
+  // SÓLO actúa si hay marcador explícito de paquete. La primera versión también
+  // cortaba cualquier "… y <palabra>" final y el dry run del backfill la cazó
+  // masacrando "Top de punto esmeralda de manga larga y cuello alto" — donde la
+  // "y" une dos CARACTERÍSTICAS de una misma prenda, no dos prendas. Barato de
+  // arreglar, caro de no haber mirado.
+  const PACK = /\s*\((par de pares|set de [^)]+|pack[^)]*|x\s*\d+)\)\s*/i;
+  return items.map((it) => {
+    if (!PACK.test(it.nombre)) return it;
+    let nombre = it.nombre.replace(PACK, "").trim();
+    // Con el marcador fuera, si el nombre enumera DOS colores se queda con el
+    // que el propio modelo declaró en `colorFamilia`.
+    const j = nombre.toLowerCase().indexOf(it.colorFamilia.toLowerCase());
+    const i = nombre.toLowerCase().indexOf(" y ");
+    if (j >= 0 && i > j) nombre = nombre.slice(0, i).trim();
+    return nombre && nombre !== it.nombre ? { ...it, nombre } : it;
+  });
+}
+
+/**
  * UN TRAJE SON DOS PIEZAS, y el modelo a veces manda una.
  *
  * El prompt lo dice desde siempre ("un traje va como 'saco' + su pantalón
@@ -240,7 +274,7 @@ Los tops son la categoría más grande y el principal multiplicador (se ven más
 - Cada acento debe combinar con AL MENOS 3 de los neutros; si un color no pega con sus neutros, fuera.
 - NUNCA uses un color de su lista de EVITA.
 - Apunta a que un outfit típico use ≤3 colores.
-- DÓNDE VIVE EL COLOR, no sólo cuánto: al menos DOS de sus acentos tienen que ir en piezas CHICAS —bufanda, calzado, cinturón, bolso, corbata, calcetín—, no todos en tops y abrigos. Sin piezas chicas de color, el único modo de darle color a un look es un suéter entero, y la persona acaba llevando color en dosis que no pidió. (Medido en un clóset real: 12 acentos en piezas grandes contra 6 en chicas, y de esas 6 casi ninguna salía.)${acentoTxt}
+- DÓNDE VIVE EL COLOR, no sólo cuánto: al menos DOS de sus acentos tienen que ir en piezas CHICAS QUE SE VEAN —bufanda, calzado, bolso, corbata, gorro—, no todos en tops y abrigos. El CALCETÍN de color NO cuenta como uno de esos dos: es un acento real de sastrería pero se ve sólo al cruzar la pierna, y con jeans o tenis no comunica nada; puede ir de extra, nunca como el vehículo principal del color de alguien. Tampoco cuenta el cinturón como acento por sí solo: casi siempre va tapado y su color lo manda el calzado. Sin piezas chicas de color, el único modo de darle color a un look es un suéter entero, y la persona acaba llevando color en dosis que no pidió. (Medido en un clóset real: 12 acentos en piezas grandes contra 6 en chicas, y de esas 6 casi ninguna salía.)${acentoTxt}
 
 == COHESIÓN (regla de 3) ==
 Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo pega con 1-2, no se ganó su lugar: cámbiala por algo más versátil. ÚNICA excepción: las piezas que entran por CLIMA DE VIAJE (abajo) están exentas de esta regla — un traje de baño no combina con nada y aun así hace falta. Ancla todo en los neutros para que casi cada top funcione con casi cada bottom. Básicos primero; permite 2-3 piezas "héroe" con carácter, pero cada una debe seguir entrando en ≥3 outfits.
@@ -251,6 +285,7 @@ Cada prenda debe combinar con AL MENOS 3 otras de la cápsula. Si una pieza solo
 - COLOR/METAL: nombra colores de su paleta; ${metalTxt}
 
 Devuelve "items". Cada prenda:
+- CADA ITEM ES UNA SOLA PRENDA CON UN SOLO COLOR. Nada de empaquetados: ni "par de pares", ni "set de tres", ni "calcetines esmeralda y vino", ni "x2". Si de verdad hacen falta dos, van como dos items. (Un item empaquetado rompe la cuenta de piezas, el match contra su clóset y su propia foto, que acaba dibujando dos prendas distintas en la misma imagen.)
 - nombre: etiqueta humana y específica, con color y material cuando aporte. Ej: "Cuello tortuga de lana merino azul marino", "Chukka de ante café".
 - tipo: clave corta normalizada, sin color. Ej: "cuello-tortuga", "chukka", "blazer", "jeans".
 - hueco: el ROL que cubre, en 2-4 palabras, minúsculas, sin color ni marca. Ej: "pantalón no denim", "tenis limpio", "abrigo de diario". Lo LEE la persona, así que va en español correcto y con acentos (a diferencia de "tipo", que es una llave interna).
@@ -364,7 +399,7 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
   // Re-ranking limpio 1..n por la prioridad que sugirió el modelo (estable).
   // Los trajes se parten ANTES del re-ranking, para que el pantalón herede su
   // sitio en la lista junto al saco en vez de caer al final.
-  const items = partirTrajes(parsed.items)
+  const items = partirTrajes(limpiarEmpaquetados(parsed.items))
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));

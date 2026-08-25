@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.1] - 2026-08-25
+
+### Fixed — el calcetín no es el vehículo del color, y una pieza no son dos pares
+
+Roberto, viendo su cápsula: "me salió lo de los calcetines y me salieron dos
+pares, en una misma imagen un par vino y un par esmeralda… no sé si sea un
+acento medio forzado; es como si me dijeras «y el calzón que sea esmeralda»".
+Tenía razón por dos motivos distintos.
+
+**El bug:** el item era `"Calcetines de algodón esmeralda y vino (par de
+pares)"` — UNA pieza empaquetando DOS prendas de colores distintos, que el
+render dibujó tal cual. Rompe la cuenta de piezas, el match y su propia foto.
+El prompt ya pedía una prenda por item; ahora lo dice explícito y además hay
+guardia en código (`limpiarEmpaquetados`), por lo mismo que `partirTrajes`:
+una regla de prompt se puede ignorar y ésta se ignoró.
+
+**La incoherencia, que era mía:** para las fotos del grid de acentos descarté
+el calcetín *porque casi no se ve* ("en una miniatura no se ve"), y al mismo
+tiempo la regla de la cápsula lo listaba como vehículo válido de acento. El
+calcetín de color es sastrería legítima, pero se ve sólo al cruzar la pierna
+y con jeans o tenis no comunica nada: puede ir de extra, nunca como el
+vehículo principal del color de alguien. Ahora los dos acentos chicos
+obligatorios tienen que ser piezas que SE VEAN (bufanda, calzado, bolso,
+corbata, gorro) — y el cinturón tampoco cuenta solo: casi siempre va tapado y
+su color lo manda el calzado.
+
+**El dry run volvió a ganarse el sueldo:** la primera versión del guardia
+cortaba cualquier "… y <palabra>" final y masacraba "Top de punto esmeralda
+de manga larga **y cuello alto**", donde la "y" une dos características de
+una misma prenda. Ahora sólo actúa con marcador explícito de paquete.
+
 ## [0.2.288.0] - 2026-08-25
 
 ### Fixed — un traje son DOS piezas, y la cápsula mandaba una
