@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.0] - 2026-08-25
+
+### Fixed — un traje son DOS piezas, y la cápsula mandaba una
+
+Roberto, viendo su lista: "me salió un traje azul marino, pero venía una
+imagen que traía los pantalones y el saco, ¿es correcto?". No lo era. El
+prompt de la cápsula lo dice desde siempre —"un traje va como 'saco' + su
+pantalón 'bottom' aparte"— y el modelo lo ignoró: mandó "Traje de lana azul
+marino" como un solo item de categoría `saco`. El render hizo lo correcto
+para ese item (por eso la foto traía las dos prendas); el error estaba
+arriba.
+
+**Y no es cosmético:** la lista decía 39 piezas cuando eran 40; el pantalón
+del traje no existía como hueco, así que el motor nunca lo iba a tener para
+armar un look formal; y el match comparaba UN item contra las DOS prendas
+reales del clóset (el saco y el pantalón se dan de alta por separado).
+
+`partirTrajes` lo arregla en código en vez de insistirle al prompt, porque
+la partición es determinista: el pantalón de un traje marino es un pantalón
+de traje marino, no hay criterio que elegir. **Dos casos los cazó el dry run
+del backfill, no los tests:** si la lista ya traía el pantalón por separado,
+la partición lo duplicaba; y el "(saco)" que a veces arrastra el nombre
+sobra en cuanto la pieza ya se llama saco. Backfill aplicado a las 3
+cápsulas afectadas (sólo una ganó pieza: 39 → 40), con el match limpiado
+para que se recalcule.
+
 ## [0.2.287.1] - 2026-08-25
 
 ### Fixed — la cápsula: el zoom que faltaba y el tile que mentía

@@ -41,6 +41,71 @@ export type CapsuleInputs = {
 };
 
 /**
+ * UN TRAJE SON DOS PIEZAS, y el modelo a veces manda una.
+ *
+ * El prompt lo dice desde siempre ("un traje va como 'saco' + su pantalón
+ * 'bottom' aparte") y aun así devolvió "Traje de lana azul marino" como un
+ * solo item de categoría `saco` — Roberto lo cazó al ver que su tile traía
+ * saco Y pantalón en la misma foto (2026-08-25).
+ *
+ * NO ES COSMÉTICO, y por eso se arregla en código en vez de insistir en el
+ * prompt: (1) la lista dice 39 piezas cuando en realidad son 40; (2) el
+ * pantalón del traje no existe como hueco, así que el motor nunca lo tendrá
+ * para armar un look formal; (3) el match contra el clóset compara UN item
+ * contra DOS prendas reales (el saco y el pantalón, que se dan de alta por
+ * separado) y no puede cubrirlo bien.
+ *
+ * La partición es DETERMINISTA —el pantalón de un traje marino es un pantalón
+ * de traje marino, no hay criterio que elegir— así que va aquí y no al juez.
+ * Hereda color, formalidad, temporada y prioridad; el `porque` del pantalón
+ * se reescribe para que no repita el del saco palabra por palabra.
+ */
+export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
+  const esTraje = (it: CapsuleItem) =>
+    /(^|[^a-z])traje([^a-z]|$)/i.test(`${it.tipo} ${it.nombre}`) &&
+    !/ba[ñn]o/i.test(`${it.tipo} ${it.nombre}`) && // el traje de BAÑO no se parte
+    it.category === "saco";
+  // ¿La lista YA trae el pantalón de ese traje? Pasa: el modelo a veces manda
+  // el traje entero Y su pantalón por separado. Sin este chequeo la partición
+  // creaba un duplicado — lo cazó el dry run del backfill, no un test.
+  const yaHayPantalon = (color: string) =>
+    items.some(
+      (o) =>
+        o.category === "bottom" &&
+        o.colorFamilia === color &&
+        /pantal[oó]n/i.test(o.nombre) &&
+        /traje|vestir|sastre/i.test(`${o.tipo} ${o.nombre}`)
+    );
+
+  const salida: CapsuleItem[] = [];
+  for (const it of items) {
+    if (!esTraje(it)) {
+      salida.push(it);
+      continue;
+    }
+    const color = it.colorFamilia;
+    salida.push({
+      ...it,
+      // El "(saco)" que a veces trae el nombre sobra en cuanto la pieza YA se
+      // llama saco.
+      nombre: it.nombre.replace(/^traje/i, "Saco de traje").replace(/\s*\(saco\)\s*$/i, ""),
+      tipo: "saco-de-traje",
+      hueco: "saco de traje",
+    });
+    if (yaHayPantalon(color)) continue;
+    salida.push({
+      ...it,
+      nombre: `Pantalón de traje ${color}`,
+      tipo: "pantalon-de-traje",
+      category: "bottom",
+      hueco: "pantalón de traje",
+      porque: `Es la otra mitad del traje ${color}: juntos son tu traje completo, y suelto te sirve de pantalón de vestir.`,
+    });
+  }
+  return salida;
+}
+
+/**
  * DÓNDE deben caer los acentos de la cápsula, según lo que la persona ELIGIÓ
  * en el grid de acentos (docs/designs/pantalla-apetito-acentos.md).
  *
@@ -297,7 +362,9 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
     throw new Error("BAD_CAPSULE_TARGET");
   }
   // Re-ranking limpio 1..n por la prioridad que sugirió el modelo (estable).
-  const items = parsed.items
+  // Los trajes se parten ANTES del re-ranking, para que el pantalón herede su
+  // sitio en la lista junto al saco en vez de caer al final.
+  const items = partirTrajes(parsed.items)
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { bloqueVida, lineaAcentosCapsula } from "./capsule-target";
-import { ASSESSMENT_QUESTIONS, type AssessmentQuestion } from "@/lib/capsule";
+import { bloqueVida, lineaAcentosCapsula, partirTrajes } from "./capsule-target";
+import { ASSESSMENT_QUESTIONS, type AssessmentQuestion, type CapsuleItem } from "@/lib/capsule";
 
 // Lo que se blinda: QUÉ frase le llega al motor por cada respuesta del quiz.
 // El bloque "vida" es la mitad del contexto de la cápsula ideal, y el texto de
@@ -70,5 +70,66 @@ describe("lineaAcentosCapsula — dónde vive el color en la cápsula", () => {
   });
   it("medio reparte entre chicas y medianas", () => {
     expect(lineaAcentosCapsula("medio")).toMatch(/chicas y UNA o DOS medianas/);
+  });
+});
+
+describe("partirTrajes — un traje son DOS piezas", () => {
+  const it_ = (over: Partial<CapsuleItem>): CapsuleItem =>
+    ({
+      nombre: "x", tipo: "x", hueco: "x", category: "saco", colorFamilia: "marino",
+      formalidad: "formal", temporada: "todo-el-año", prioridad: 1, porque: "p",
+      ...over,
+    }) as CapsuleItem;
+
+  it("el caso real: 'Traje de lana azul marino' sale como saco + pantalón", () => {
+    const r = partirTrajes([it_({ nombre: "Traje de lana azul marino", tipo: "traje" })]);
+    expect(r).toHaveLength(2);
+    expect(r[0]).toMatchObject({ category: "saco", tipo: "saco-de-traje" });
+    expect(r[1]).toMatchObject({ category: "bottom", tipo: "pantalon-de-traje" });
+    expect(r[1].nombre).toContain("marino");
+    // El pantalón hereda lo que comparte con el saco…
+    expect(r[1].formalidad).toBe("formal");
+    expect(r[1].colorFamilia).toBe("marino");
+    // …pero no repite su porqué palabra por palabra.
+    expect(r[1].porque).not.toBe(r[0].porque);
+  });
+
+  it("el TRAJE DE BAÑO no se parte (no es sastrería, y además es bottom)", () => {
+    const bano = it_({ nombre: "Traje de baño negro liso", tipo: "traje-de-bano", category: "bottom" });
+    expect(partirTrajes([bano])).toEqual([bano]);
+  });
+
+  it("un blazer suelto se queda como está: no todo saco es traje", () => {
+    const blazer = it_({ nombre: "Saco de lana gris carbón", tipo: "blazer", colorFamilia: "gris" });
+    expect(partirTrajes([blazer])).toEqual([blazer]);
+  });
+
+  it("no toca las demás piezas ni las reordena", () => {
+    const a = it_({ nombre: "Camisa blanca", tipo: "camisa", category: "top" });
+    const b = it_({ nombre: "Jeans", tipo: "jeans", category: "bottom" });
+    expect(partirTrajes([a, b])).toEqual([a, b]);
+  });
+});
+
+describe("partirTrajes — los casos que cazó el dry run del backfill", () => {
+  const it2 = (over: Partial<CapsuleItem>): CapsuleItem =>
+    ({
+      nombre: "x", tipo: "x", hueco: "x", category: "saco", colorFamilia: "negro",
+      formalidad: "formal", temporada: "todo-el-año", prioridad: 1, porque: "p",
+      ...over,
+    }) as CapsuleItem;
+
+  it("si el pantalón del traje YA está en la lista, no se duplica", () => {
+    const r = partirTrajes([
+      it2({ nombre: "Traje negro de lana", tipo: "traje", colorFamilia: "negro" }),
+      it2({ nombre: "Pantalón de traje negro de lana", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "negro" }),
+    ]);
+    expect(r).toHaveLength(2);
+    expect(r.filter((x) => x.category === "bottom")).toHaveLength(1);
+  });
+
+  it("limpia el '(saco)' del nombre: la pieza ya se llama saco", () => {
+    const r = partirTrajes([it2({ nombre: "Traje negro de lana (saco)", tipo: "traje" })]);
+    expect(r[0].nombre).toBe("Saco de traje negro de lana");
   });
 });
