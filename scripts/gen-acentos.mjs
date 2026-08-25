@@ -50,6 +50,11 @@ mkdirSync(SALIDA, { recursive: true });
 
 const onlyArg = process.argv.find((a) => a.startsWith("--only="));
 const ONLY = onlyArg ? onlyArg.slice("--only=".length).split(",") : null;
+// --nivel=medio,protagonista → rehace sólo esos, reusando el discreto que ya
+// está en disco como base. Sirve para iterar UNA celda sin pagar la columna
+// entera ni arriesgar que el discreto salga distinto y rompa la comparación.
+const nivelArg = process.argv.find((a) => a.startsWith("--nivel="));
+const NIVELES = nivelArg ? nivelArg.slice("--nivel=".length).split(",") : null;
 
 const b64 = (p) => readFileSync(p).toString("base64");
 const mime = (p) => (p.endsWith(".png") ? "image/png" : "image/jpeg");
@@ -94,8 +99,13 @@ const COLUMNAS = {
         "a plain WHITE short-sleeve polo shirt tucked loosely into navy blue lightweight chino trousers, with BURGUNDY leather loafers and a matching burgundy leather belt",
       medio:
         "Change ONE thing only: the polo shirt is now EMERALD GREEN, a rich saturated green, same short-sleeve polo shape and same fabric. The loafers and belt become plain dark brown. The navy trousers stay exactly the same.",
+      // Pantalón de color y top neutro, NO polo esmeralda + pantalón burdeos:
+      // esa versión salió complementaria verde/vino y Roberto la mató con la
+      // descripción exacta — "parecen uvas". El criterio que la reemplaza es el
+      // MISMO del frío: la pieza de mayor superficie del look en color, resto
+      // neutro (allá el abrigo, aquí el pantalón).
       protagonista:
-        "Change TWO things and nothing else: the polo shirt is now EMERALD GREEN (rich saturated green, same shape) AND the trousers are now deep BURGUNDY, same lightweight chino cut. The loafers become plain dark brown. Same person, same pose, same background.",
+        "Change ONE thing only: the trousers are now COBALT BLUE, a strong saturated blue, same lightweight chino cut. The polo shirt goes back to plain WHITE and the loafers become plain dark brown. Same person, same pose, same background.",
     },
   ],
   mujer: [
@@ -115,7 +125,7 @@ const COLUMNAS = {
       medio:
         "Change ONE thing only: the knit top is now EMERALD GREEN, a rich saturated green, same short-sleeve shape and same fabric. The bag is gone and the flats become plain dark brown. The navy trousers stay exactly the same.",
       protagonista:
-        "Change TWO things and nothing else: the knit top is now EMERALD GREEN (rich saturated green, same shape) AND the trousers are now deep BURGUNDY, same lightweight cut. The bag is gone and the flats become plain dark brown. Same person, same pose, same background.",
+        "Change ONE thing only: the trousers are now COBALT BLUE, a strong saturated blue, same lightweight cut. The knit top goes back to plain WHITE, the bag is gone and the flats become plain dark brown. Same person, same pose, same background.",
     },
   ],
 };
@@ -168,7 +178,29 @@ for (const genero of ["hombre", "mujer"]) {
   for (const col of COLUMNAS[genero]) {
     const p = (nivel) => `${SALIDA}/${genero}-${col.clima}-${nivel}.png`;
 
-    // 1) DISCRETO, desde el avatar. Es la base de la columna entera.
+    // 1) DISCRETO, desde el avatar. Es la base de la columna entera. Con
+    //    --nivel se salta si ya existe: rehacerlo cambiaría la base y las
+    //    otras dos dejarían de ser el mismo look.
+    if (NIVELES && !NIVELES.includes("discreto") && existsSync(p("discreto"))) {
+      for (const nivel of ["medio", "protagonista"].filter((n) => NIVELES.includes(n))) {
+        await pedir(
+          [
+            {
+              text:
+                `Take the photograph in the reference image and change ONE thing only. ${col[nivel]} ` +
+                `EVERYTHING else must stay pixel-for-pixel the same: the same person with the same face and body, the same pose, ` +
+                `the same framing and camera distance, the same background, the same light. ` +
+                `This is a set where only the colour accent differs. ${COMUN}`,
+            },
+            { inlineData: { mimeType: "image/png", data: b64(p("discreto")) } },
+          ],
+          p(nivel),
+          `${genero} ${col.clima} — ${nivel} (rehecho)`
+        );
+      }
+      continue;
+    }
+
     const ok = await pedir(
       [
         {

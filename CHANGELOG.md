@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.282.4] - 2026-08-25
+
+### Fixed — el "protagonista" de calor ya no parece uvas
+
+Roberto, sobre polo esmeralda + pantalón burdeos: "parecen uvas con esa
+combinación". Verde y vino son complementarios y en tonos profundos se van
+directo a fruta — el riesgo estaba señalado al mandarla, y él lo confirmó.
+Lo reemplaza el MISMO criterio que ya usa el frío: la pieza de mayor
+superficie del look en color y el resto neutro (allá el abrigo, aquí el
+pantalón) → pantalón cobalto + polo blanco. Además `--nivel=` en el
+generador, para rehacer UNA celda reusando el discreto que ya está en disco
+(regenerar la columna entera cambiaría la base y rompería la comparación).
+
 ## [0.2.282.3] - 2026-08-25
 
 ### Changed — v2 del grid de acentos: la escala, la base de calor, el modelo y el fondo
