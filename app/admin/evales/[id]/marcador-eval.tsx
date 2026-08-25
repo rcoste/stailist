@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatoUsd } from "@/lib/proveedores/precios";
-import { formalidadLegible } from "@/lib/formalidad";
+import { formalidadPorClave, ropaDeFormalidad } from "@/lib/formalidad";
+import { tipoEventoPorClave } from "@/lib/eventos";
 import type {
   AcuerdoCalibracion,
   EvalBriefFila,
@@ -580,7 +581,15 @@ function Calibrador({
   }
 
   const f = c.fila.brief;
-  const formal = formalidadLegible(f.formality, gender);
+  // El chip NO usa `formalidadLegible`: esa devuelve la jerga completa ("saco,
+  // sin corbata (semiformal · coctel · cocktail)") porque su trabajo es que
+  // nadie dude de a qué se refiere. En un chip que se lee de un vistazo, los
+  // sinónimos son ruido — se queda la palabra del código de vestimenta y lo
+  // que significa en ropa, que son los dos datos contra los que se juzga.
+  const fm = formalidadPorClave(f.formality);
+  const formal = fm ? `${fm.jerga.split(" · ")[0]} · ${ropaDeFormalidad(fm, gender)}` : null;
+  // "cena-amigos" es la clave, no el nombre. El catálogo ya trae el label.
+  const queEs = tipoEventoPorClave(f.tipoEvento)?.label ?? f.tipoEvento ?? f.objective;
 
   return (
     <div className="flex flex-col gap-3">
@@ -599,13 +608,66 @@ function Calibrador({
         </span>
       </div>
 
+      {/* OJO `rounded-xl`: son 12px y la escala del DS termina en lg=6px, así
+          que está fuera de contrato — pero lo está en las 10 tarjetas de esta
+          pantalla. Corregir sólo ésta dejaría una card de 6px entre nueve de
+          12; la deuda se salda de una vez, en todo el archivo, no de a una. */}
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-        <p className="text-xs text-muted">
-          {f.plan?.trim() || f.etiqueta}
-          {formal ? ` · ${formal}` : ""}
-          {f.weather ? ` · ${f.weather.temp_c}°C ${f.weather.condition}` : ""}
-        </p>
-        <p className="text-base font-semibold text-ink">{c.look.nombre}</p>
+        {/* EL BRIEF ES LA PREGUNTA, Y ESTABA ESCRITO COMO PIE DE FOTO.
+            Roberto, calibrando: "me es muy difícil visualmente ver dónde está
+            este texto". El problema no era el tamaño: era la JERARQUÍA
+            INVERTIDA. Lo que hay que leer para juzgar —qué plan, qué hora,
+            cuántos grados— iba en el texto más chico y más gris de la tarjeta,
+            y el nombre del look —que se lo inventa el modelo y no se juzga—
+            iba en 16px semibold. El ojo aterrizaba en el adorno y luego tenía
+            que ir a buscar el dato.
+
+            Se invierte: los HECHOS que el look tiene que satisfacer van como
+            chips en un bloque fijo (misma posición en los 30 looks, así que el
+            ojo aprende dónde caen), el plan en prosa legible debajo, y el
+            nombre pasa a ser el pie.
+
+            LOS CHIPS PESAN IGUAL A PROPÓSITO. Destacar el del clima habría
+            sido cómodo esta semana —la báscula fría se trata de eso— y habría
+            sesgado el voto hacia el clima. Lo que se mide dejaría de ser el
+            motor y pasaría a ser la pantalla.
+
+            Y aparecen DOS datos que el motor recibe y la pantalla se callaba:
+            `momento` (día/noche cambia qué es apropiado, y sólo se adivinaba
+            si la etiqueta lo decía) y `veCliente`. Calibrar con menos
+            información de la que tiene el juez mide dos cosas distintas — el
+            mismo argumento por el que el material va bajo cada prenda. */}
+        <div className="flex flex-col gap-2 rounded-md bg-tile px-3 py-2.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              queEs,
+              f.momento === "noche" ? "de noche" : f.momento === "dia" ? "de día" : null,
+              f.veCliente === true ? "con cliente" : null,
+              formal,
+              f.weather ? `${f.weather.temp_c}°C ${f.weather.condition}` : null,
+              f.weather?.condition && /lluvia|llovizna/i.test(f.weather.condition)
+                ? f.paraguas === true
+                  ? "con paraguas"
+                  : "sin paraguas"
+                : null,
+            ]
+              .filter((x): x is string => !!x)
+              .map((dato) => (
+                <span
+                  key={dato}
+                  className="rounded-sm border border-line bg-surface px-2 py-1 text-xs font-medium text-ink"
+                >
+                  {dato}
+                </span>
+              ))}
+          </div>
+          {/* El plan sólo existe en los briefs de evento; "diario" y "trabajo"
+              se describen enteros con los chips y no necesitan prosa. */}
+          {f.plan?.trim() ? (
+            <p className="text-sm leading-snug text-ink2">{f.plan.trim()}</p>
+          ) : null}
+        </div>
+        <p className="text-sm text-muted">«{c.look.nombre}»</p>
         {/* Al REGRESAR (botón ← o ⌫) se ve qué habías puesto: sin esto,
             corregir una marca era un acto de fe. Marcar de nuevo sobreescribe. */}
         {(marcas[idx] ?? c.marcaPrevia) ? (

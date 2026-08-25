@@ -2,6 +2,49 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.6] - 2026-08-25
+
+### Fixed — el brief del calibrador estaba escrito como pie de foto
+
+Roberto, calibrando la báscula fría: *"me es muy difícil visualmente ver dónde
+está este texto, debería de ser más readable"*.
+
+**El problema no era el tamaño: era la jerarquía invertida.** Lo que hay que
+leer para juzgar —qué plan, qué hora, cuántos grados— iba en `text-xs
+text-muted`, el texto más chico y más gris de la tarjeta. El nombre del look
+—que se lo inventa el modelo y no se juzga— iba en 16px semibold. El ojo
+aterrizaba en el adorno y luego tenía que ir a buscar el dato, 30 veces
+seguidas.
+
+**Lo que cambió:**
+- Los HECHOS que el look tiene que satisfacer van como chips en un bloque fijo
+  sobre `bg-tile`: misma posición en los 30 looks, así que el ojo aprende dónde
+  caen en vez de rastrear una línea de prosa distinta cada vez.
+- El plan, en prosa legible (`text-sm text-ink2`) debajo de los chips. Sólo
+  existe en los briefs de evento; "diario" y "trabajo" se describen enteros con
+  los chips.
+- El nombre del look pasa a pie de foto, entre comillas.
+- Dos datos que el motor recibe y la pantalla se callaba ahora se ven:
+  **`momento`** (día/noche cambia qué es apropiado, y sólo se adivinaba cuando
+  la etiqueta lo mencionaba) y **`veCliente`**. Calibrar con menos información
+  de la que tiene el juez mide dos cosas distintas — el mismo argumento por el
+  que el material ya iba bajo cada prenda.
+- Dos etiquetas que salían crudas: el evento mostraba su clave (`cena-amigos`)
+  en vez de su label del catálogo ("cena con amigos"), y la formalidad
+  arrastraba los sinónimos completos ("saco, sin corbata (semiformal · coctel ·
+  cocktail)"). En un chip que se lee de un vistazo los sinónimos son ruido.
+
+**Los chips pesan igual a propósito.** Destacar el del clima habría sido cómodo
+esta semana —la báscula fría se trata justo de eso— y habría sesgado el voto.
+Lo que se mide dejaría de ser el motor y pasaría a ser la pantalla.
+
+### Deuda anotada, no saldada
+
+`rounded-xl` son 12px y la escala del DS termina en `lg`=6px, así que está
+fuera de contrato — pero lo está en las 10 tarjetas de esta pantalla. Corregir
+sólo la del look la dejaba en 6px entre nueve de 12, o sea peor. Se salda en
+una pasada por todo `app/admin/`.
+
 ## [0.2.288.5] - 2026-08-25
 
 ### Fixed — el traje se dibuja como un traje también en el eval
