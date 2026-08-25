@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.280.0] - 2026-08-24
+
+### Changed — pool v10 (+4 briefs) e hilo de historial en el eval; y el 90% de v67
+
+Cierre del eval 84586364: **Roberto calificó v67 al 90%** (36👍/4👎 de 40),
+contra el 78% de v64 — un solo eval, pero en la dirección de las dos rondas
+pareadas ganadas hoy. Con eso cerrado, dos arreglos del INSTRUMENTO (no del
+motor), un solo corte de línea base:
+
+**Pool v10** — cuatro briefs que Roberto notó que nunca se medían: boda de
+día (las reglas de boda disparan solo de noche y el comportamiento diurno
+jamás se ejercitó), boda de playa (el código "de playa" existe desde v51 y
+nunca apareció en un brief), y los dos registros de cita que faltaban —
+comida en lugar cool y drinks en bar ("la cita siempre es restaurante de
+mantel… ¿si voy al Contramar a comer, cómo voy?"; llevaba 3 rondas marcando
+"el traje es too much para una date" contra la única cita, la más formal).
+
+**Hilo de historial en el eval** — cada brief veía el mismo "primer día" (las
+generaciones de laboratorio no se guardan como outfits) y la rotación corría
+en vacío: 5 de 12 abrigos y 27 de 48 tops en cero looks, dos evales seguidos.
+Ahora el brief N recibe los looks de los briefs 1..N-1 de su corrida como
+combos recientes: el eval simula días seguidos de uso real.
+
+Las básculas v9 y v10 no se comparan directo (el subconjunto de 17 briefs
+compartidos sí); v67 re-congelado bajo v10.
+
 ## [0.2.279.1] - 2026-08-24
 
 ### Fixed — calificar el eval ya no es un acto de fe: atrás visible, marca corregible, y la muestra dice su total

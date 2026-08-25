@@ -70,7 +70,9 @@ describe("briefs", () => {
     expect(eventos.length).toBeGreaterThan(0);
     for (const b of eventos) {
       expect(b.plan, b.etiqueta).toBeTruthy();
-      expect(["casual", "semiformal", "formal", "gala"]).toContain(b.formality);
+      // "playa" entró con el pool v10 (boda de destino): es Formalidad válida
+      // desde v51 — la lista de aquí estaba atrás de lib/formalidad.ts.
+      expect(["casual", "semiformal", "formal", "gala", "playa"]).toContain(b.formality);
     }
     // Y no todos de noche: pisoDeFormalidad tiene una rama de evento-de-día
     // que hasta el pool v1 nunca se había medido.

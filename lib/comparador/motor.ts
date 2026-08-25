@@ -341,7 +341,12 @@ const CLIMAS = {
  * a qué hora, qué hay en juego. Las etiquetas y el resto del brief no cambian;
  * las rondas de v8 y v9 NO son comparables entre sí en aprobación absoluta.
  */
-export const POOL_VERSION = "v9";
+// v9 → v10 (2026-08-24): +4 briefs al final — boda de día, boda de playa,
+// cita de comida cool y cita de drinks (los porqués, en el comentario sobre
+// esos briefs). Como todo cambio de pool: las aprobaciones de v9 y v10 NO se
+// comparan entre sí, y hay que re-congelar el prompt vigente bajo v10 antes
+// de la siguiente ronda con prompt-anterior.
+export const POOL_VERSION = "v10";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -504,6 +509,60 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.calor,
     plan: "comida en casa de mis papás",
     tipoEvento: "comida-familiar",
+    formality: "casual",
+  },
+  // ── v10 (2026-08-24): los cuatro de abajo, VAN AL FINAL a propósito (el
+  // orden del pool es fijo; el vistazo sigue siendo los primeros 6). Dos
+  // observaciones de Roberto calificando el eval de v67:
+  //
+  // (1) "Nunca ponemos bodas de día o boda en la playa." Tenía razón, y era
+  // grave: boda-de-noche-camisa-blanca y boda-de-noche-sin-corbata disparan
+  // sólo de noche — el comportamiento DIURNO (camisa de color pasa, corbata
+  // se relaja) era una decisión real del motor que ninguna medición ejercitó
+  // jamás. Y el código de vestimenta "de playa" existe desde v51 y nunca
+  // apareció en un brief; cruza con lino, sandalias y mocasín sin calcetín.
+  //
+  // (2) "La cita siempre es 'restaurante de mantel' — ¿si voy al Contramar a
+  // comer, cómo voy?" El pool sólo probaba la cita MÁS formal que existe, y
+  // Roberto llevaba tres rondas marcando "el traje es too much para una
+  // date" — contra el único registro de cita que medíamos. Entran los dos
+  // registros que faltaban: la comida en lugar cool (día, casual) y los
+  // drinks en un bar (noche, casual). Con el de mantel, el espectro queda
+  // completo: bar → comida cool → mantel.
+  {
+    etiqueta: "boda · día templado",
+    objective: "evento",
+    momento: "dia",
+    weather: CLIMAS.templado,
+    plan: "la boda de mi prima, ceremonia en el jardín de una hacienda a mediodía; la invitación dice formal",
+    tipoEvento: "boda",
+    formality: "formal",
+  },
+  {
+    etiqueta: "boda · playa, calor",
+    objective: "evento",
+    momento: "dia",
+    weather: CLIMAS.calor,
+    plan: "boda en la playa en Cancún; la invitación dice 'formal de playa' y la ceremonia es en la arena a las 5 de la tarde",
+    tipoEvento: "boda",
+    formality: "playa",
+  },
+  {
+    etiqueta: "cita · comida, calor",
+    objective: "evento",
+    momento: "dia",
+    weather: CLIMAS.calor,
+    plan: "voy a comer con alguien que me gusta a un restaurante padre pero relajado, de mariscos, de esos con fila — sábado a las 2; es la tercera vez que salimos",
+    tipoEvento: "cita",
+    formality: "casual",
+  },
+  {
+    etiqueta: "cita · drinks, noche templada",
+    objective: "evento",
+    momento: "noche",
+    weather: CLIMAS.templado,
+    plan: "unos drinks en un bar el jueves en la noche — apenas nos estamos conociendo; quiero verme bien sin que se note que me esforcé",
+    tipoEvento: "cita",
     formality: "casual",
   },
 ];

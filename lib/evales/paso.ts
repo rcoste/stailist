@@ -70,7 +70,32 @@ export async function pasoEval(opciones: {
     try {
       const carga = await cargarBaseDelMotor(supabase, actorId);
       if ("error" in carga) throw new Error("closet_vacio");
-      const ctx = construirContexto(carga.base, peticionDeBrief(brief));
+
+      // EL HILO DE HISTORIAL (2026-08-24). Cada brief del eval veía el mismo
+      // "primer día": las generaciones de laboratorio no se guardan como
+      // outfits, así que la rotación corría en vacío y el motor elegía a sus
+      // favoritas 17 veces seguidas — Roberto lo vio en dos evales ("poca
+      // rotación, tiene sus preferidas"; 5 de sus 12 abrigos y 27 de sus 48
+      // tops en CERO looks). Ahora el brief N recibe los looks de los briefs
+      // anteriores de SU corrida como combos recientes: el eval simula N días
+      // seguidos de uso real, que es lo que el producto promete, y la
+      // rotación por fin se ejercita (y se mide). Los combos reales de la
+      // cuenta se conservan detrás.
+      const { data: previos } = await supabase
+        .from("eval_briefs")
+        .select("n, looks")
+        .eq("corrida_id", corridaId)
+        .lt("n", fila.n as number)
+        .not("looks", "is", null)
+        .order("n");
+      const combosDeLaCorrida = (previos ?? []).flatMap((p) =>
+        (((p.looks as LookMotor[] | null) ?? [])).map((l) => l.item_ids)
+      );
+      const base = {
+        ...carga.base,
+        recentCombos: [...combosDeLaCorrida, ...carga.base.recentCombos],
+      };
+      const ctx = construirContexto(base, peticionDeBrief(brief));
 
       const t0 = Date.now();
       // SIN RECIBO EN ai_calls, y a propósito (el `null` del final). Un eval
