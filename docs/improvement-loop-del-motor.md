@@ -327,7 +327,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-24 | 8130c381 | v66 | prompt-anterior (v65) | **93%** vs 71% | pre-registrado "≥" cumplido con 22 pts (más que el ruido ±12): **v66 EN MAIN** (pares 2-1, 3 empates). v66 = "LA PIEZA primero" (el análisis elige la prenda con carácter ANTES que los neutros, exactamente una), del diagnóstico del eval 919c2f53 (14/45 looks sin prenda con carácter → estilo 3.29 vs 3.81 con una; calzado negro 62%; 59/130 prendas jamás usadas). **HONESTIDAD del cruce: el mecanismo NO quedó probado** — piezas con carácter casi iguales por lado (v66: 4 con cero / 8 con una, de 15; v65: 5 / 10, de 16) y los 👎 del control fueron clima/styling, no estilo. La báscula que decide si el estilo subió es el próximo eval absoluto. Candidatas de los comentarios: chelsea-en-calor (2ª mención), saco-cruzado-abierto (2ª — "lo que luce es que esté cruzado, no abierto"), crew-neck-bajo-blazer-abriga-de-más (se suma a "suéter+chaqueta a 17°"). v66 congelado |
 | 08-24 | 2f307042 | v67 | sin-reglas-v67 | **92%** vs 92% | pre-registrado "≥" cumplido: **v67 EN MAIN** (looks empatados 12/13 por lado; pares 4-1, 1 empate — clara preferencia por el lado con reglas). Las reglas: chelsea-en-calor + tip del saco cruzado abotonado (2 menciones cada una; ablación: chelsea 1👎+1👍-confirmatorio, cruzado 2👎/0👍 validado contra los 4 tips reales). La ronda ejercitó chelsea (a 29° el lado sin reglas sacó Chelsea — su juez la metió reparando cueros — y Roberto la marcó OTRA vez: "error de las Chelsea para ese clima", 3ª confirmación); el tip del cruzado no se ejercitó (validación = ablación+tests, precedente reloj/corbata). Candidatas nuevas de sus comentarios: vino+verde ("revisa si se ve bien esa combinación", 1ª) y OTRA VEZ traje-en-cita ("un traje es too much para una date… es más pantalón/jeans/chinos con suéter, chamarra, blazer" — el dial cita=relajado no está bastando; revisar cómo lo lee el motor). v67 congelado |
 | 08-24 | eval 84586364 | v67 | — (absoluto) | **90%** | báscula post-vuelta de estilo (40 looks, $3.09, 0 errores): **36👍/4👎 de Roberto = 90%, contra 78% de v64** — un solo eval, hay ruido, pero la dirección coincide con las 2 rondas pareadas ganadas. Sus 4 👎: capas/calor en cita, "tshirt negra no va" en aeropuerto, comida de trabajo sin comentario, y "mejor mocasines… ¡pero está bien logrado!" (nivel reparación, no estilo). Jueces casi planos vs v64 (estilo texto 3.13→3.25, wow 2.84→2.90); el MECANISMO de LA PIEZA sí se movió: exactamente-una 47%→58%, dos-o-más 22%→15%. Última corrida sobre pool v9; desde aquí POOL v10 (+4 briefs: boda día/playa, cita comida cool, cita drinks — observación de Roberto) + HILO DE HISTORIAL en el eval (el brief N ve los looks de 1..N-1 como combos recientes; la rotación por fin se ejercita). **Las básculas v9 y v10 no se comparan directo; el subconjunto de 17 briefs compartidos sí** |
-| 08-24 | eval c0899d9d | v67 | — (absoluto, POOL v10, hilo DOSIS OK) | ⏳ por calificar | la báscula que REEMPLAZA a ba8f4caa, con la dosis del hilo corregida (1 look/brief, tope 14 = la ventana de producción; v0.2.280.1). 51 looks, 0 errores, $3.94. Los síntomas de acorralamiento DESAPARECIERON: 0 looks sin calzado, 0 con dos camisas. Aprobación del juez de texto en los 17 compartidos: **93%** (40/43) — vs 87.5% sin hilo y 79.5% con sobredosis: la dosis correcta no solo no rompe, queda arriba. Y la ROTACIÓN mejoró más que con la sobredosis: **80/130 usadas (62%)** — la mejor de las 4 básculas (71→68→76→80) — con la más repetida bajando a 9× (Chelsea) en 51 looks; abrigos 7/12. Estilo 3.04 / wow 2.90 (planos). La alerta fue de Roberto ("forzando la rotación quitamos prendas que el look necesita"): el loop del instrumento también necesita su voto |
+| 08-24 | eval c0899d9d | v67 | — (absoluto, POOL v10, hilo DOSIS OK) | **82%** (42👍/9👎) · briefs nuevos 7/1 | la báscula que REEMPLAZA a ba8f4caa, con la dosis del hilo corregida (1 look/brief, tope 14 = la ventana de producción; v0.2.280.1). 51 looks, 0 errores, $3.94. Los síntomas de acorralamiento DESAPARECIERON: 0 looks sin calzado, 0 con dos camisas. Aprobación del juez de texto en los 17 compartidos: **93%** (40/43) — vs 87.5% sin hilo y 79.5% con sobredosis: la dosis correcta no solo no rompe, queda arriba. Y la ROTACIÓN mejoró más que con la sobredosis: **80/130 usadas (62%)** — la mejor de las 4 básculas (71→68→76→80) — con la más repetida bajando a 9× (Chelsea) en 51 looks; abrigos 7/12. Estilo 3.04 / wow 2.90 (planos). La alerta fue de Roberto ("forzando la rotación quitamos prendas que el look necesita"): el loop del instrumento también necesita su voto |
 | 08-24 | eval ba8f4caa | v67 | — (absoluto, POOL v10 + hilo) | ❌ ANULADA (instrumento) | primera báscula del pool v10 (52 looks, 21 briefs, 0 errores). Los 4 briefs nuevos salieron BIEN según rúbricas: boda de día = traje con corbata (y camisa azul claro pasa de día — el comportamiento diurno por fin medido, correcto); boda playa = full lino + mocasín + lentes (y full-lino NO disparó: es de oficina, no de playa — correcto); citas nuevas = lino/polo relajado-cuidado. El 👎 de rúbrica: OTRA VEZ traje completo en cita relajada ("Vino con Filo", drinks) — 5ª señal de la candidata `traje-con-dial-relajado` (dial verificado LLEGANDO al mensaje; es el generador que lo ignora ~1/6) + explicación que menciona prendas que no están. ROTACIÓN con hilo: 76/130 usadas (58%, antes 52-55%), abrigos 8/12 (antes 6/12), calzado 13/17, prenda más repetida 10× en 52 looks (antes 12× en 45) — mejora modesta, no resuelto. Jueces: estilo 3.10 / wow 2.96 (subconjunto de 17: 3.14/3.00 ≈ plano vs v9). Hallazgo del juez de prod: razón "cambié el pantalón" con changed:false, y llamó "traje desarmado" a un conjunto real — no ve el lazo `conjunto` (investigar) |
 | 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
@@ -386,8 +386,8 @@ casa) y los grados en el brief.
    abusado el traje completo + algo; mejor blazers para smart casual".
 
 10. 🔴 **`polo-con-traje-completo` — LA CANDIDATA MÁS SOSTENIDA QUE HAY, y
-    llevaba seis rondas escondida.** Ablación sobre los 361 looks votados con
-    prendas vivas (2026-08-24): **5 👎 / 0 👍**, con SEIS comentarios suyos
+    llevaba seis rondas escondida.** Ablación sobre los 382 looks votados con
+    prendas vivas (2026-08-24, tras completarse c0899d9d): **6 👎 / 0 👍**, con SIETE comentarios suyos
     diciendo lo mismo en cinco rondas distintas — "un traje completo con polo
     está raro", "está raro el polo + crew neck + traje", "más adhoc con un
     blazer que traje completo + algo".
@@ -413,6 +413,36 @@ casa) y los grados en el brief.
     ("mejor unos loafers o mocasines"), pero la ablación da **4 👎 / 3 👍**:
     moneda al aire, como la chaqueta técnica a 8°. Es preferencia de gusto,
     no regla — territorio del dial, no de `reglas-ejecucion`.
+
+12. 🔴 **`camisa-negra-en-solemne` (funeral, boda, formal, gala): 2 👎 / 0 👍.**
+    Sus dos comentarios son de los más fuertes del corpus: "camisa negra para
+    una boda es como de cholo, mafioso italiano — terrible, terrible,
+    terrible" (08-22) y "está horrible" (funeral, c0899d9d). Fuera de lo
+    solemne la camisa negra es normal y la aprueba (7 👎 / 11 👍 en general),
+    así que la regla va ACOTADA al contexto. Reparación: cambiar a la camisa
+    blanca, que es la que él aprobó 5 de 5 veces en funeral.
+
+    ⚠️ **Y LA CORRECCIÓN QUE SÓLO APARECE MIDIENDO:** dictó la regla como
+    "traje negro, corbata negra y camisa blanca… ese es el dress code" — pero
+    sus votos aprobaron **2 de 2 looks de funeral con traje GRIS CARBÓN** y
+    camisa blanca. Escribir la regla como la dictó (traje obligatoriamente
+    negro) tiraría dos looks que él mismo aprobó. Lo que sus votos sostienen
+    es la CAMISA, no el traje. Precedente para la regla 6 de la sección 5:
+    ni siquiera un decreto suyo se escribe sin pasar por la ablación.
+
+13. 🔴 **LA VARIACIÓN FORZADA EN DRESS CODES DUROS — hallazgo de diseño, no
+    de regla.** En el funeral de c0899d9d el look PRINCIPAL salió impecable
+    (traje negro + camisa blanca + corbata negra + zapato formal): 👍. El 👎
+    fue el ALTERNO, que para cumplir "2-3 outfits DISTINTOS entre sí" varió
+    hacia traje carbón + camisa negra y rompió el código. Roberto lo dijo
+    exacto: "**no importa que se repita lo del funeral; ese es el dress code.
+    Sólo si no tienes eso, se ven variaciones**". El motor pide variedad
+    siempre, y hay ocasiones donde la variedad ES el error. Es la misma
+    familia que su advertencia sobre la rotación ("ni modo, hay de que se
+    tengan que repetir"): **entregar UN look correcto es mejor que dos donde
+    el segundo viola la etiqueta.** Pendiente de diseñar: qué ocasiones tienen
+    código duro (funeral seguro; boda de etiqueta probable) y cómo se le dice
+    al motor "aquí prefiero uno bien a dos distintos".
 
 **Pool v9 — EN MAIN desde v0.2.270.1 (2026-08-22), tras votarse 2bba08e0.
 v58 quedó congelado bajo v9 como línea base del retador `prompt-anterior`.** Los `plan` de los eventos pasan de
