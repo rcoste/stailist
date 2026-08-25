@@ -455,7 +455,15 @@ import {
 // no un suéter de color forzado). La MISMA línea la leen el generador y las
 // rúbricas: si el juez calificara sin ella, castigaría por soso un look que
 // la persona pidió discreto.
-export const PROMPT_VERSION = "v69";
+// v70 (2026-08-25): DISCRETO deja de significar "sin color". Medido en el
+// experimento de acentos (cruce-acentos.ts, control 2ec16c63 vs tratamiento
+// cead58b5): la línea funcionó —acento en pieza grande 36%→16%— pero los
+// looks tonales subieron 14 puntos, y NO por falta de vehículo: en los mismos
+// 51 looks el mocasín burdeos salió 10 veces, la corbata 3 y la bufanda 2.
+// El modelo tomaba el permiso de ir tonal aunque tuviera con qué. La foto que
+// la persona elige en la pantalla LLEVA su guiño, así que el tonal pasa a ser
+// el fallback explícito y no el default.
+export const PROMPT_VERSION = "v70";
 
 export type EngineItem = {
   id: string;

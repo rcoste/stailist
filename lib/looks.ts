@@ -331,7 +331,13 @@ export function apetitoDeAcentos(
  */
 export function lineaApetitoAcentos(valor: ApetitoAcentos | null): string {
   if (valor === "discreto")
-    return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): DISCRETO — el color entra en piezas CHICAS y lejos de la cara: bufanda, calzado, cinturón, bolso, corbata. Las piezas grandes (suéter, camisa, saco, abrigo, pantalón) van en neutros o en tonos profundos y apagados. Si su clóset no tiene una pieza chica de color, un look TONAL es la respuesta correcta y la decisión visible del look pasa a ser la textura, el corte o la proporción — no le metas un suéter de color para compensar.";
+    // DISCRETO NO ES AUSENCIA DE COLOR, y la primera versión de esta línea lo
+    // confundía: daba permiso de ir tonal y el modelo lo tomaba aunque el
+    // clóset tuviera con qué (medido: los looks tonales subieron 14 puntos
+    // mientras el mocasín burdeos salía 10 veces — tenía vehículo y elegía no
+    // usarlo). La foto que la persona eligió en la pantalla LLEVA su guiño; el
+    // tonal es el fallback, no el default.
+    return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): DISCRETO — un guiño de color, y ese guiño SÍ aparece: va en una pieza CHICA y lejos de la cara (bufanda, calzado, cinturón, bolso, corbata). Las piezas grandes (suéter, camisa, saco, abrigo, pantalón) van en neutros o en tonos profundos y apagados. Discreto NO quiere decir sin color: si su clóset tiene una pieza chica de color que cuadra con la ocasión y el clima, ÚSALA. Sólo cuando no haya ninguna que cuadre, el look TONAL es la respuesta correcta y la decisión visible pasa a ser la textura, el corte o la proporción — nunca le metas un suéter de color para compensar.";
   if (valor === "protagonista")
     return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): PROTAGONISTA — el color puede mandar en una pieza GRANDE (suéter, abrigo, pantalón, vestido) y ése es el punto del look. Sigue siendo UNA pieza la que manda: dos piezas grandes saturadas compiten entre sí. El resto, neutros que la dejen brillar.";
   if (valor === "medio")

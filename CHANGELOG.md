@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.287.0] - 2026-08-25
+
+### Changed — v70: "discreto" deja de significar "sin color" + el aviso de cobertura de acentos
+
+**Lo que el experimento enseñó de más.** El cruce (control 2ec16c63 vs
+tratamiento cead58b5) confirmó el pre-registro —acento en pieza grande
+36%→16%, en pieza chica 19%→25%— pero los looks tonales subieron 14 puntos.
+La primera explicación que dimos ("el clóset no tiene vehículos chicos") era
+FALSA y comprobarla lo destapó: en esos mismos 51 looks el mocasín burdeos
+salió 10 veces, la corbata burdeos 3 y la bufanda vino 2. Tenía con qué y
+elegía no usarlo — porque la línea daba permiso de ir tonal sin condicionarlo
+a que faltara el vehículo. La foto que la persona elige en la pantalla LLEVA
+su guiño: ahora el guiño SÍ aparece cuando el clóset tiene una pieza chica
+que cuadre con ocasión y clima, y el tonal queda como fallback explícito.
+
+**Y el aviso de cobertura de acentos** (`coberturaDeAcentos` en lib/looks.ts),
+con el patrón del pastel de manzana de `cobertura.ts`: quien pidió el color
+en dosis chicas y NO tiene piezas chicas de color recibe el aviso en el
+prompt — arma tonal y dilo, en vez de compensar en silencio con el suéter de
+color que justamente pidió evitar. Umbral de 2 y no 1: con una sola pieza el
+motor la repetiría en todos los looks, que es la queja de rotación con otro
+nombre. (A Roberto no le aplica: tiene 6.)
+
 ## [0.2.286.0] - 2026-08-25
 
 ### Added — la cápsula aprende DÓNDE vive el color, no sólo cuánto
