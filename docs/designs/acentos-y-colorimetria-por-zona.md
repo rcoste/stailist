@@ -191,13 +191,22 @@ pensado para color discreto" antes de reprobarlo por otra cosa. Con 51 looks,
 —"está bien pensado para 'color discreto'"— sale de la línea que ahora recibe
 la rúbrica. Sin ella habría castigado el look por soso.
 
-**Y el hallazgo que cierra el círculo con §5a:** el tonal subió 14 puntos.
-El motor obedece "discreto", pero como el clóset tiene 12 acentos grandes y
-sólo 6 chicos (de los que apenas salen), se queda sin vehículo y cae en look
-tonal. **La causa raíz no era el motor: era el clóset** — que es exactamente
-lo que la cápsula con acentos chicos obligatorios (v0.2.286.0) viene a
-arreglar. La próxima medición de esto es sobre un clóset ya poblado con
-acentos chicos.
+**El tonal subió 14 puntos, y la primera explicación que di era FALSA.** Dije
+que el motor se quedaba sin vehículo chico y por eso caía en tonal. Fui a
+comprobarlo y no: en los 51 looks del tratamiento usó mocasines burdeos 10
+veces, corbata burdeos 3 y bufanda vino 2. Tiene vehículos y los usa.
+
+**Lo que de verdad pasa es que mi línea es demasiado permisiva.** Dice "si su
+clóset no tiene una pieza chica de color, un look TONAL es la respuesta
+correcta" — y el modelo se toma el permiso aunque el clóset SÍ tenga con qué.
+Pero "discreto" en la pantalla no es *ausencia* de color: la foto que se elige
+lleva su guiño (bufanda burdeos). **El tonal debe ser el fallback, no el
+default.** Corrección pendiente de medir: cuando el clóset tenga piezas chicas
+de color, el guiño APARECE; el tonal sólo cuando no las haya.
+
+Ese error de lectura vale como recordatorio de método: la métrica dijo "la
+línea funciona" (y funciona), pero la explicación de POR QUÉ se movió cada
+número había que comprobarla aparte.
 
 ---
 

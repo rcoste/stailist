@@ -16,7 +16,8 @@ import {
   type BlueprintEmparejado,
 } from "@/lib/engine/blueprint";
 import { calcularRotacion, bloqueRotacion } from "@/lib/engine/rotacion";
-import { lineaApetitoAcentos } from "@/lib/looks";
+import { lineaApetitoAcentos, coberturaDeAcentos, bloqueCoberturaAcentos } from "@/lib/looks";
+import { categoriaDeItem } from "@/lib/item-image";
 import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives";
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
@@ -1016,6 +1017,21 @@ export function contextBlock(
   // queda la ropa; éste, cuánto color lleva.
   if (ctx.acentoApetito) {
     lines.push(lineaApetitoAcentos(ctx.acentoApetito));
+    // Y si pidió el color en dosis chicas SIN tener piezas chicas de color, se
+    // dice — el patrón del pastel de manzana (cobertura.ts): la carencia se
+    // nombra, no se compensa a escondidas metiéndole el suéter de color que
+    // justamente pidió evitar.
+    const aviso = bloqueCoberturaAcentos(
+      coberturaDeAcentos(
+        ctx.items.map((i) => ({
+          nombre: i.attrs.nombre,
+          color: i.attrs.color,
+          categoria: categoriaDeItem(i as never),
+        })),
+        ctx.acentoApetito
+      )
+    );
+    if (aviso) lines.push(aviso);
   }
   if (ctx.styleWords?.trim()) {
     // slice defensivo: el tope de 280 vive en la app, no en la DB — un valor

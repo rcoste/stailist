@@ -338,3 +338,71 @@ export function lineaApetitoAcentos(valor: ApetitoAcentos | null): string {
     return "CUÁNTO COLOR QUIERE (lo eligió viendo fotos, no lo declaró): MEDIO — una pieza de color de tamaño medio cerca de la cara (suéter, camisa, polo, top) con el resto en neutros, o un acento chico bien puesto. Ni look tonal ni bloque grande de color.";
   return "";
 }
+
+// ── ¿Su clóset da para el color que pidió? ──────────────────────────────────
+//
+// EL MISMO PRINCIPIO QUE `cobertura.ts` (el chequeo del pastel de manzana):
+// decir la carencia en voz alta en vez de compensarla en silencio. Aquí el
+// hueco no es de estilo sino de VEHÍCULO: alguien que pidió el color en dosis
+// chicas necesita bufandas, calzado de color, cinturones o corbatas — y si no
+// los tiene, el motor sólo puede darle color con un suéter entero, que es
+// justo lo que pidió evitar.
+//
+// MEDIDO, no supuesto (2026-08-25): el clóset de referencia tiene 12 acentos
+// en piezas grandes y 6 en chicas, y con el apetito "discreto" activo los
+// looks tonales subieron 14 puntos — el motor obedeció y se quedó sin con qué.
+// Ver docs/designs/acentos-y-colorimetria-por-zona.md §6.
+//
+// LO QUE ESTO NO HACE: sugerir la compra concreta. Eso es "compras sugeridas",
+// que está fuera del MVP. Aquí sólo se nombra el hueco.
+
+/** Colores que cuentan como ACENTO: vivos. Los neutros y los básicos de
+ *  guardarropa (marino, beige, café, camel) son fondo, no acento. */
+const COLOR_DE_ACENTO =
+  /cobalto|azul rey|vino|burdeos|granate|esmeralda|verde bosque|verde botella|verde lima|rojo|rosa|lavanda|amarillo|mostaza|coral|olivo|oliva|turquesa|morado|lila|naranja/;
+
+/** Las categorías donde un acento ocupa poca superficie — el 10% del 60-30-10. */
+const CATEGORIAS_CHICAS = ["accesorio", "calzado"];
+
+export type CoberturaAcentos = {
+  /** Piezas chicas de color que sí tiene. */
+  chicas: number;
+  /** Piezas grandes de color. */
+  grandes: number;
+  /** Le falta con qué cumplir el apetito que pidió. */
+  hueco: boolean;
+};
+
+/**
+ * ¿Tiene con qué llevar el color donde dijo que lo quiere?
+ *
+ * Sólo aplica al apetito DISCRETO: es el único que depende de tener piezas
+ * chicas. Quien pidió "protagonista" usa sus suéteres de color y no hay hueco
+ * que avisar; sin apetito elegido, tampoco hay nada que prometer.
+ *
+ * El umbral es 2 y no 1 a propósito: con una sola pieza chica de color, el
+ * motor la repetiría en todos los looks — que es la queja de rotación con otro
+ * nombre.
+ */
+export function coberturaDeAcentos(
+  prendas: { nombre?: string | null; color?: string | null; categoria?: string | null }[],
+  apetito: ApetitoAcentos | null
+): CoberturaAcentos {
+  const esAcento = (p: (typeof prendas)[number]) =>
+    COLOR_DE_ACENTO.test(`${p.color ?? ""} ${p.nombre ?? ""}`.toLowerCase());
+  const acentos = prendas.filter(esAcento);
+  const chicas = acentos.filter((p) =>
+    CATEGORIAS_CHICAS.includes((p.categoria ?? "").toLowerCase())
+  ).length;
+  return {
+    chicas,
+    grandes: acentos.length - chicas,
+    hueco: apetito === "discreto" && chicas < 2,
+  };
+}
+
+/** El aviso para el motor. Vacío si no hay hueco — igual que bloqueCobertura. */
+export function bloqueCoberturaAcentos(c: CoberturaAcentos): string {
+  if (!c.hueco) return "";
+  return `HONESTIDAD — PIDIÓ EL COLOR EN DOSIS CHICAS Y SU CLÓSET NO TIENE CON QUÉ: sólo ${c.chicas === 0 ? "no tiene ninguna" : "tiene una"} pieza chica de color (bufanda, calzado, cinturón, bolso o corbata) contra ${c.grandes} prendas grandes de color. NO compenses metiéndole un suéter o un abrigo de color: eso es exactamente lo que pidió evitar. Arma el look TONAL y que la decisión visible sea la textura, el corte o la proporción. Si viene al caso, dilo en la explicación en UNA frase y sin disculpas: que hoy su clóset da para lo sobrio, y que una bufanda o unos zapatos de color le abrirían el juego.`;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeTasteTags, LOOKS, looksForGender, apetitoDeAcentos } from "./looks";
+import { computeTasteTags, LOOKS, looksForGender, apetitoDeAcentos, coberturaDeAcentos, bloqueCoberturaAcentos } from "./looks";
 
 // Swipe sintético: like a los ids dados, dislike al resto del catálogo.
 const swipeAll = (likedIds: string[]) =>
@@ -96,5 +96,47 @@ describe("apetitoDeAcentos — derivado de los swipes, sin tocar el onboarding",
     const ids = new Set(LOOKS.map((l) => l.id));
     for (const id of ["color-protagonista","glam-noche","y2k","de-salir","edgy","streetwear","minimalista","monocromatico","clasico-elegante","coreano","tonos-tierra"])
       expect(ids.has(id), id).toBe(true);
+  });
+});
+
+describe("coberturaDeAcentos — decir la carencia, no compensarla en silencio", () => {
+  const p = (nombre: string, color: string, categoria: string) => ({ nombre, color, categoria });
+  const CLOSET_SIN_CHICAS = [
+    p("Suéter cobalto", "cobalto", "top"),
+    p("Suéter vino", "vino", "top"),
+    p("Camiseta blanca", "blanco", "top"),
+    p("Mocasines negros", "negro", "calzado"),
+  ];
+  const CLOSET_CON_CHICAS = [
+    ...CLOSET_SIN_CHICAS,
+    p("Bufanda de lana vino", "vino", "accesorio"),
+    p("Mocasines burdeos", "burdeos", "calzado"),
+  ];
+
+  it("discreto SIN piezas chicas de color: hay hueco y se avisa", () => {
+    const c = coberturaDeAcentos(CLOSET_SIN_CHICAS, "discreto");
+    expect(c).toMatchObject({ chicas: 0, grandes: 2, hueco: true });
+    expect(bloqueCoberturaAcentos(c)).toContain("NO compenses");
+  });
+  it("con dos piezas chicas ya no hay hueco: el aviso calla", () => {
+    const c = coberturaDeAcentos(CLOSET_CON_CHICAS, "discreto");
+    expect(c.hueco).toBe(false);
+    expect(bloqueCoberturaAcentos(c)).toBe("");
+  });
+  it("UNA sola pieza chica sigue siendo hueco: el motor la repetiría en todos los looks", () => {
+    const c = coberturaDeAcentos([...CLOSET_SIN_CHICAS, p("Corbata burdeos", "burdeos", "accesorio")], "discreto");
+    expect(c).toMatchObject({ chicas: 1, hueco: true });
+  });
+  it("sólo aplica a discreto: protagonista usa sus piezas grandes y no hay nada que avisar", () => {
+    expect(coberturaDeAcentos(CLOSET_SIN_CHICAS, "protagonista").hueco).toBe(false);
+    expect(coberturaDeAcentos(CLOSET_SIN_CHICAS, "medio").hueco).toBe(false);
+    expect(coberturaDeAcentos(CLOSET_SIN_CHICAS, null).hueco).toBe(false);
+  });
+  it("los neutros y los básicos de guardarropa NO son acentos", () => {
+    const c = coberturaDeAcentos(
+      [p("Chinos beige", "beige", "bottom"), p("Cinturón café", "café", "accesorio"), p("Blazer marino", "azul marino", "saco")],
+      "discreto"
+    );
+    expect(c).toMatchObject({ chicas: 0, grandes: 0 });
   });
 });
