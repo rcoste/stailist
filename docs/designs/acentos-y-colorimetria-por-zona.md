@@ -126,6 +126,43 @@ también — el statement sweater es un gesto válido en casual. El problema
 nunca fue el suéter cobalto: fue el suéter cobalto con el abrigo abierto,
 sobre camiseta blanca, cuatro valores en el torso, tres días seguidos.
 
+## 5. Extensiones de Roberto (2026-08-25, misma conversación)
+
+**a. La cápsula también tiene acentos.** La teoría profesional de cápsulas
+ya es 60-30-10 a nivel clóset: ~80% base neutra + ~20% acentos elegidos
+para cruzar con muchas bases. Nuestra cápsula optimiza combinabilidad, y la
+combinabilidad sola empuja a todo-neutro o mete statements sin declararlos.
+Extensión: que la cápsula etiquete sus acentos y verifique que existan
+acentos CHICOS, no sólo suéteres. (Candidata; toca capsule-target/match.)
+
+**b. ⚠️ EL 👍 SOBRE-REPORTA — corrección de Roberto a la medición de este
+doc.** Sobre los looks de acento grande que aprobó: "no es que se vea mal,
+pero probablemente no me lo hubiera puesto; hubiera usado azul marino". O
+sea: el 78% de aprobación mide "sale a la calle", NO "me lo pondría yo" —
+la advertencia que el doc del loop ya hacía del 👍, confirmada en carne
+propia. Su preferencia revelada es MÁS discreta que sus votos.
+Consecuencia de medición: la ablación de reglas de acento no puede usar el
+👍 como vara única; necesita la señal "me lo pondría" (que es literalmente
+el botón del eval) tomada en serio, o el worn. Y LA HIPÓTESIS DE PRODUCTO
+que abre: la brecha aprobar-vs-ponerse podría ser parte del misterio de la
+retención (75% de 👍 en producción, 1 worn en la historia) — pregunta
+directa para las entrevistas: "de los looks que te gustaron, ¿alguno era de
+los que TÚ te pones un martes?".
+
+**c. El dial de acentos por persona (idea de Roberto).** Dimensión real del
+intake de un stylist profesional: el apetito de color ("¿cuánta atención
+quieres que atraiga tu ropa?"), independiente de colorimetría y de
+arquetipo. Tres posiciones: discreto / con acentos / protagonista — igual
+que el corte (fit_pref), cuyo patrón de pares-de-fotos ya está validado y
+se reutilizaría entero. Es capa 3 (gusto por persona). Además mediría lo
+que la frase del arquetipo inventa: el de Roberto dice "atrevido" y su
+gusto revelado es discreto. FRENOS: (1) el onboarding de 90s no crece a la
+ligera — primero revisar si el mazo de swipes ya varía en audacia de color
+(señal gratis) o sembrar el dial desde votos en Perfil→estilo, como
+registro_por_plan; (2) detrás de las entrevistas, como todo lo demás.
+
+---
+
 **TODO ESTO ESTÁ DETRÁS DE LA PAUSA DEL LOOP (§7-bis del doc del
 improvement loop).** Se retoma cuando el loop se retome, una pieza por
 vuelta, cada una con su medición. Este doc existe para que el criterio no
