@@ -340,9 +340,31 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-24 | eval c0899d9d | v67 | — (absoluto, POOL v10, hilo DOSIS OK) | **82%** (42👍/9👎) · briefs nuevos 7/1 | la báscula que REEMPLAZA a ba8f4caa, con la dosis del hilo corregida (1 look/brief, tope 14 = la ventana de producción; v0.2.280.1). 51 looks, 0 errores, $3.94. Los síntomas de acorralamiento DESAPARECIERON: 0 looks sin calzado, 0 con dos camisas. Aprobación del juez de texto en los 17 compartidos: **93%** (40/43) — vs 87.5% sin hilo y 79.5% con sobredosis: la dosis correcta no solo no rompe, queda arriba. Y la ROTACIÓN mejoró más que con la sobredosis: **80/130 usadas (62%)** — la mejor de las 4 básculas (71→68→76→80) — con la más repetida bajando a 9× (Chelsea) en 51 looks; abrigos 7/12. Estilo 3.04 / wow 2.90 (planos). La alerta fue de Roberto ("forzando la rotación quitamos prendas que el look necesita"): el loop del instrumento también necesita su voto |
 | 08-24 | eval ba8f4caa | v67 | — (absoluto, POOL v10 + hilo) | ❌ ANULADA (instrumento) | primera báscula del pool v10 (52 looks, 21 briefs, 0 errores). Los 4 briefs nuevos salieron BIEN según rúbricas: boda de día = traje con corbata (y camisa azul claro pasa de día — el comportamiento diurno por fin medido, correcto); boda playa = full lino + mocasín + lentes (y full-lino NO disparó: es de oficina, no de playa — correcto); citas nuevas = lino/polo relajado-cuidado. El 👎 de rúbrica: OTRA VEZ traje completo en cita relajada ("Vino con Filo", drinks) — 5ª señal de la candidata `traje-con-dial-relajado` (dial verificado LLEGANDO al mensaje; es el generador que lo ignora ~1/6) + explicación que menciona prendas que no están. ROTACIÓN con hilo: 76/130 usadas (58%, antes 52-55%), abrigos 8/12 (antes 6/12), calzado 13/17, prenda más repetida 10× en 52 looks (antes 12× en 45) — mejora modesta, no resuelto. Jueces: estilo 3.10 / wow 2.96 (subconjunto de 17: 3.14/3.00 ≈ plano vs v9). Hallazgo del juez de prod: razón "cambié el pantalón" con changed:false, y llamó "traje desarmado" a un conjunto real — no ve el lazo `conjunto` (investigar) |
 | 08-24 | bc989511 | v68 | sin-reglas-v68 | ❌ CERRADA SIN VOTAR (inválida) | **la variante aislaba bien; el VISTAZO no dio el caso.** Ninguno de los 6 briefs produjo un look con polo+traje ni un funeral (que no está en el vistazo), así que las dos reglas de v68 estuvieron inactivas en LOS DOS lados y toda diferencia es ruido del modelo. Votarla habría metido un número sin significado a esta tabla. **LECCIÓN NUEVA, hermana de la de 6868a52b:** antes de correr una ronda para una regla hay que preguntarse *¿algún brief del vistazo puede PRODUCIR el caso que vigila?* — si la regla cubre un evento que el vistazo no tiene (funeral) o un armado que el motor saca ~1 de cada 6 veces (polo+traje en cita), la ronda no puede decidir y el dinero se tira. Para esas reglas la vigilancia correcta es el EVAL (21 briefs, con funeral y tres citas). $2 de generación gastados; el juez se detuvo antes de cobrar |
+| 08-25 | eval 2ec16c63 | v68 | — (absoluto, verificación) | **verificada** (jueces 49/53 = 92%) | la báscula que la ronda no pudo ser. **Las dos reglas de v68 hicieron su trabajo, y se ve en los looks entregados:** polo+traje **0 casos** (en el histórico salía 6 veces) y el funeral entregó SUS DOS looks con el uniforme completo —traje negro + camisa blanca + corbata negra— variando sólo el calzado (zapato formal / mocasines), que es exactamente lo que Roberto pidió: "el núcleo se repite y lo que varía es el calzado". El texto del catálogo del luto funcionó a la primera. Estilo 3.15 / wow 2.85 (planos, consistente). 53 looks, 0 errores, $4.05. **NO se pidió el voto de Roberto: la verificación automática ya era concluyente y su tiempo estaba mejor puesto en las entrevistas** (ver abajo) |
 | 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
 ---
+
+## 7-bis. ⏸️ EL LOOP QUEDA EN PAUSA (2026-08-25) — y por qué
+
+**El motor dejó de ser el cuello de botella, y los datos de producción lo
+dicen mejor que los del laboratorio.** Medido el 2026-08-25 sobre las ocho
+usuarias reales: todas catalogaron su clóset (31-81 prendas), todas generaron
+looks, **el 75% de sus votos son 👍** — y todas se fueron entre el día 1 y el
+día 6. En 30 días: 4 outfits en toda la app, 8 días seguidos sin que ningún
+usuario real la abriera, con el correo semanal y el reenganche de 48h ya
+corriendo. **Un solo "me lo puse" en toda la historia del producto.**
+
+Tres versiones del motor salieron el 24 de agosto (v66, v67, v68) y su
+aprobación pasó de 78% a 90% — sobre el clóset y el gusto de UNA persona que
+tiene cero votos en producción. Seguir aquí es pulir lo que ya funciona
+mientras el hueco real —de "me gustó el look" a "me lo puse el martes"— sigue
+sin tocarse.
+
+**Qué se retoma y cuándo:** cuando las entrevistas con Ricardo, Andy e Islam
+digan que el problema ES el motor. Si dicen otra cosa (hábito, recordatorio,
+que el look no se traduce a la vida real), el loop sigue en pausa. Lo que
+queda vivo está en la sección 8 y en las candidatas 10-13; nada se pierde.
 
 ## 8. Estado al 2026-08-19 y qué sigue
 
