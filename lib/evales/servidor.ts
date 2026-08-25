@@ -26,6 +26,15 @@ export type PrendaEvalUI = {
   material: string | null;
   swatch: string;
   imagen: string | null;
+  /**
+   * El lazo del traje (`attrs.conjunto`), para dibujar saco y pantalón en UNA
+   * celda en vez de dos fotos sueltas. Roberto, calibrando la báscula fría:
+   * "recuerda de mostrar de una mejor manera cuando el saco y el traje que se
+   * muestren pertenecen al mismo conjunto". El mecanismo ya existía y estaba
+   * probado (`agruparConjuntos` en lib/traje.ts, usado por el comparador desde
+   * v0.2.xxx); esta pantalla era la que no lo recibía.
+   */
+  conjunto: string | null;
 };
 
 export type EvalCorridaCargada = {
@@ -97,6 +106,7 @@ export async function cargarEvalCorrida(
         nombre?: string;
         color_hex?: string;
         material?: string;
+        conjunto?: string | null;
       };
       const nombre = arch?.name ?? attrs.nombre ?? "Prenda";
       const material = attrs.material?.trim() || null;
@@ -110,6 +120,7 @@ export async function cargarEvalCorrida(
             : null,
         swatch: attrs.color_hex ?? "#E5E1DD",
         imagen: itemImageUrlSync(i as unknown as ItemImageRow, (p) => firmadas.get(p)),
+        conjunto: attrs.conjunto ?? null,
       };
     }
   }

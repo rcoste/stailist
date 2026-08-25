@@ -2,6 +2,35 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.5] - 2026-08-25
+
+### Fixed — el traje se dibuja como un traje también en el eval
+
+Roberto, calibrando la báscula fría sobre «Sastre en Modo Invierno»: *"recuerda
+de mostrar de una mejor manera cuando el saco y el traje que se muestren
+pertenecen al mismo conjunto"*. Tenía razón — y lo revelador es que **el
+mecanismo ya existía y estaba probado**: `agruparConjuntos` (lib/traje.ts, 16
+tests) dibuja el par en UNA celda con su nombre común, y el comparador lo usa
+desde hace semanas. La pantalla del eval era la única que no lo recibía.
+
+Dos pantallas donde él juzga el mismo motor le enseñaban el mismo look de dos
+formas distintas: en el comparador «Traje gris carbón» era una prenda, en el
+eval eran "Saco de traje gris carbón" y "Pantalón de traje gris carbón" como
+dos fotos sueltas sin nada que las ligara.
+
+**Lo que cambió:** `PrendaEvalUI` ahora carga `attrs.conjunto`, y la retícula
+del calibrador pasa por `agruparConjuntos` con el conjunto primero (ocupa dos
+columnas; dejarlo en su lugar de origen parte la fila y deja un hueco a media
+retícula — arriba, el hueco cae al final). Las fotos se extrajeron a `<Foto>` y
+las prendas borradas del clóset entran como huérfanas sin lazo, así que nunca
+se agrupan por accidente.
+
+Sigue valiendo la regla del componente: **afirma, nunca niega.** Sin lazo las
+prendas se dibujan sueltas — la ausencia de agrupación significa "no sabemos",
+no "no son del mismo traje". Verificado en el navegador sobre un look real
+(«Gris Carbono con Filo»: el traje en una celda, camisa/corbata/mocasines
+sueltos).
+
 ## [0.2.288.4] - 2026-08-25
 
 ### Added — básculas temáticas del eval (`--solo`)

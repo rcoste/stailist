@@ -13,7 +13,40 @@ import type {
   PromediosDim,
 } from "@/lib/evales/evales";
 import type { PrendaEvalUI } from "@/lib/evales/servidor";
+import { agruparConjuntos } from "@/lib/traje";
 import { guardarMarcasEval, cerrarEval } from "../actions";
+
+/**
+ * Una prenda que el look nombra y el cargador no trajo (borrada del clóset).
+ * Antes se dibujaba como un cuadro gris con "Prenda" debajo; ahora hay que
+ * darle forma completa porque `agruparConjuntos` recibe objetos, no ids.
+ * Sin `conjunto`, así que nunca se agrupa: no sabemos de qué traje era.
+ */
+const PRENDA_HUERFANA = (id: string): PrendaEvalUI => ({
+  id,
+  nombre: "Prenda",
+  material: null,
+  swatch: "#E5E1DD",
+  imagen: null,
+  conjunto: null,
+});
+
+/** La foto cuadrada de una prenda, o su color si no hay imagen. */
+function Foto({ p }: { p: PrendaEvalUI }) {
+  return p.imagen ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={p.imagen}
+      alt={p.nombre}
+      className="aspect-square w-full rounded-lg border border-line object-cover"
+    />
+  ) : (
+    <div
+      className="aspect-square w-full rounded-lg border border-line"
+      style={{ background: p.swatch }}
+    />
+  );
+}
 
 // El marcador de un eval + la calibración.
 //
@@ -587,33 +620,47 @@ function Calibrador({
             camisa, no sé si es de lino o qué, y eso influye". Y el material va
             porque el juez de texto también lo recibe: calibrar con menos
             información de la que tiene el juez mediría dos cosas distintas. */}
+        {/* EL TRAJE VA EN UNA CELDA, no en dos fotos sueltas. Roberto, viendo
+            «Sastre en Modo Invierno» en la báscula fría: "recuerda de mostrar
+            de una mejor manera cuando el saco y el traje que se muestren
+            pertenecen al mismo conjunto". Mismo componente que el comparador
+            ya usaba (`agruparConjuntos`): la pantalla del eval era la única
+            que dibujaba el par desatado, así que calibrar aquí y votar allá
+            enseñaban dos looks distintos.
+            El conjunto va PRIMERO por lo mismo que allá: ocupa dos columnas,
+            y dejarlo en su lugar de origen parte la fila y deja un hueco a
+            media retícula. Arriba, el hueco cae al final. */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {c.look.item_ids.map((id) => {
-            const p = prendas[id];
-            return (
-              <div key={id} className="flex flex-col gap-1">
-                {p?.imagen ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.imagen}
-                    alt={p.nombre}
-                    className="aspect-square w-full rounded-lg border border-line object-cover"
-                  />
-                ) : (
+          {[...agruparConjuntos(c.look.item_ids.map((id) => prendas[id] ?? PRENDA_HUERFANA(id)))]
+            .sort((a, b) => Number(b.tipo === "conjunto") - Number(a.tipo === "conjunto"))
+            .map((celda, ci) =>
+              celda.tipo === "conjunto" ? (
+                <div
+                  key={ci}
+                  className="col-span-2 flex flex-col gap-1 rounded-lg border border-line bg-tile p-2"
+                >
                   <div
-                    className="aspect-square w-full rounded-lg border border-line"
-                    style={{ background: p?.swatch ?? "#E5E1DD" }}
-                  />
-                )}
-                <p className="text-xs leading-tight text-ink">
-                  {p?.nombre ?? "Prenda"}
-                  {p?.material ? (
-                    <span className="text-muted"> · {p.material}</span>
-                  ) : null}
-                </p>
-              </div>
-            );
-          })}
+                    className="grid w-full gap-2"
+                    style={{ gridTemplateColumns: `repeat(${celda.piezas.length}, minmax(0,1fr))` }}
+                  >
+                    {celda.piezas.map((p) => (
+                      <Foto key={p.id} p={p} />
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold leading-tight text-ink">{celda.nombre}</p>
+                </div>
+              ) : (
+                <div key={ci} className="flex flex-col gap-1">
+                  <Foto p={celda.prenda} />
+                  <p className="text-xs leading-tight text-ink">
+                    {celda.prenda.nombre}
+                    {celda.prenda.material ? (
+                      <span className="text-muted"> · {celda.prenda.material}</span>
+                    ) : null}
+                  </p>
+                </div>
+              )
+            )}
         </div>
 
         {/* El render, DESPUÉS de la cuadrícula y solo si se pide: la
