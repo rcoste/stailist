@@ -480,6 +480,67 @@ casa) y los grados en el brief.
     NINGUNA regla mira hoy — `frio-sin-abrigo` sólo cuenta si hay capa
     exterior, y `blazer-no-es-abrigo` sólo mira el saco.
 
+    ### 🔬 MEDIDO EL 2026-08-25: ninguna de las dos formas califica hoy
+
+    **La premisa se sostiene**: de los 10 looks reprobados por los DOS jueces
+    en las tres básculas, **7 son de briefs a 8°** — y los fríos son sólo 28 de
+    154 (18%). El frío está 4× sobrerrepresentado. Y **cero de los 28 dispara
+    una sola regla de frío**: `frio-sin-abrigo` nunca salta (siempre hay
+    *alguna* pieza de zona "capa") y `blazer-no-es-abrigo` está inerte.
+
+    **Lo que la ablación contra los votos dijo de cada forma:**
+
+    | forma | en los 251 looks votados (27 son de ≤10°) | en las 3 básculas |
+    |---|---|---|
+    | (a) la capa exterior no abriga | **2 👎 / 6 👍** | 6 de los 7 reprobados fríos |
+    | (b) abrigo bueno, sin punto debajo | **0 👎 / 0 👍** | 1 de 7, y 2 más *aprobados* 2/2 |
+
+    - **(b) no tiene un solo caso en el corpus votado**, bajo ninguna
+      definición de "abrigo" que se probó (con y sin contar el técnico). Los 27
+      looks fríos votados llevan TODOS un punto de torso. No está refutada:
+      está **sin medir** — el caso aparece con los 4 briefs fríos del pool v10,
+      que nunca han pasado por el voto de Roberto. Donde sí hay dato (los
+      jueces) no discrimina: 1 caso con clima 2 contra 2 aprobados 2/2 con
+      clima 3 y 4.
+    - **(a) sigue siendo la moneda al aire del 19 de agosto**, y el detalle
+      mata la regla: **5 de esos 6 👍 llevan el "Abrigo impermeable técnico
+      azul marino"** — la prenda que los jueces llaman insuficiente a 8° y que
+      Roberto **aprobó 5 de 5 en frío** y por separado llamó *"demasiado
+      caluroso"* para lluvia a 17°. Juez y Roberto se contradicen de frente
+      sobre esa prenda; la vara que decide es el voto. Además 2 de los 4 👎 que
+      la regla marcaría son por otra cosa (tenis rojos; saco cruzado abierto).
+    - **Sombrero de stylist, dicho en voz alta:** el criterio del juez ("a 8°C
+      falta punto grueso o térmica") es un heurístico de montaña aplicado a
+      ropa de ciudad. 8°C es fresco, no frío: merino + shell ligera es ropa
+      real, y los votos dicen lo mismo. **Y el error contrario está medido**:
+      hay ≥5 👎 de "muy abrigado para el clima" a 18°. Una regla que añade
+      capas por decreto empuja hacia ese lado.
+
+    **Lo que SÍ salió del diagnóstico, y entró (v0.2.288.3):** buscando por qué
+    `blazer-no-es-abrigo` nunca disparaba apareció la fuga — `conPunto` probaba
+    `/punto/` contra cualquier prenda, así que **"Corbata de punto" contaba
+    como capa térmica intermedia**. El look «Blazer Sin Esfuerzo» (camisa
+    oxford + blazer + corbata de punto, cena a 8° de noche) sacó **clima 1/5,
+    la peor nota de los 154**, reprobado por los dos jueces, y salió intacto.
+    Ahora el punto tiene que ser de torso: ablación 1 👎 / 0 👍 (idéntica a hoy,
+    cero colateral), 0 → 1 disparos en las básculas, reparado con el Abrigo
+    charcoal por el reparador que ya existía. No abre línea base: es una regla
+    de v55 que estaba leaking, no una regla de gusto nueva.
+
+    **Estado de cada forma, para no re-proponerlas a ciegas:**
+    - **(a) NO CALIFICA** — como el punto 11. Tercera propuesta, tercera
+      moneda al aire. Se escribe aquí para no volver a gastarla.
+    - **(b) SIN MEDIR** — el paso correcto NO es escribir la regla, es poner
+      los 4 briefs fríos del pool v10 a voto de Roberto (una báscula del eval,
+      ~$2) y decidir con sus 👍/👎, no con la nota `clima` de un juez que ya
+      sabemos que se pasa en este eje (regla dura 7).
+
+    **Y el instrumento, decidido de antemano:** esto NO se vigila con el
+    vistazo de 6. Sí trae el brief frío, pero el caso salió 1 de 28 looks
+    fríos; con ~6 looks fríos por ronda la regla queda inactiva en los dos
+    lados y lo que se vota es ruido (lección de bc989511). Va al **eval**
+    (21 briefs, 4 de ellos fríos).
+
 12. 🔴 **`camisa-negra-en-solemne` (funeral, boda, formal, gala): 2 👎 / 0 👍.**
     Sus dos comentarios son de los más fuertes del corpus: "camisa negra para
     una boda es como de cholo, mafioso italiano — terrible, terrible,

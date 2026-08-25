@@ -630,10 +630,18 @@ export function revisarEjecucion(
       capas.every(esSastreLigero) &&
       !capas.some((i) => ABRIGA_DE_VERDAD.test(TIPO(i)));
     // El punto debajo salva el look: es la otra salida que Roberto nombró.
-    const conPunto = items.some((i) =>
-      /su[eé]ter|sweater|jersey|punto|knit|cardigan|c[aá]rdigan|cuello (alto|tortuga)|turtleneck/.test(
-        TIPO(i)
-      )
+    //
+    // TIENE QUE SER DE TORSO. "Corbata de punto marino" casa con /punto/ y
+    // salvaba el look como si fuera una capa térmica: una corbata no abriga
+    // nada. Cazado el 2026-08-25 en la báscula 31ef11bb — «Blazer Sin
+    // Esfuerzo» (camisa oxford + blazer + corbata de punto a 8° de noche) fue
+    // el peor clima de los 154 looks (1/5, reprobado por los dos jueces) y no
+    // disparaba ninguna regla por esta fuga.
+    const conPunto = items.some(
+      (i) =>
+        /su[eé]ter|sweater|jersey|punto|knit|cardigan|c[aá]rdigan|cuello (alto|tortuga)|turtleneck/.test(
+          TIPO(i)
+        ) && (tipoDePrenda(nombre(i))?.zonas ?? []).includes("torso")
     );
     if (soloSastre && !conPunto) {
       const abrigos = ctx.closet.filter((i) => ABRIGA_DE_VERDAD.test(TIPO(i)));

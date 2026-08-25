@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.3] - 2026-08-25
+
+### Fixed — una corbata de punto no es una capa térmica
+
+`blazer-no-es-abrigo` (regla de v55: a 8°C un saco solo no abriga, hace falta
+un abrigo encima o una capa de punto debajo) tenía una fuga silenciosa: el
+predicado `conPunto` probaba `/punto/` contra CUALQUIER prenda del look, así
+que **"Corbata de punto marino" contaba como capa térmica intermedia** y
+desactivaba la regla. Una corbata no abriga nada.
+
+**Cómo se cazó, y qué costaba.** Diagnosticando la candidata de la capa
+intermedia a 8° (§8 punto 11-bis del improvement loop) salió que **ninguno de
+los 28 looks fríos de las tres básculas del 25 disparaba una sola regla de
+frío**. El caso extremo era «Blazer Sin Esfuerzo» — camisa oxford + pantalón de
+vestir + blazer marino + corbata de punto, cena a 8° de noche —: **clima 1/5,
+la peor nota de los 154 looks**, reprobado por los dos jueces, entregado
+intacto.
+
+Ahora el punto tiene que ser de **torso**. Ablación sobre los 251 looks
+votados: 1 👎 / 0 👍, idéntica a hoy (cero colateral). En las básculas del 25
+pasa de 0 disparos a 1, y es exactamente el look de clima 1. El reparador es
+el que ya existía: le añade el Abrigo charcoal.
+
+No es una regla nueva de gusto — es una regla suya de v55 que estaba leaking,
+así que no abre línea base. El prompt no cambia (sigue v70).
+
 ## [0.2.288.1] - 2026-08-25
 
 ### Fixed — el calcetín no es el vehículo del color, y una pieza no son dos pares

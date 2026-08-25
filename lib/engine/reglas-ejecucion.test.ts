@@ -803,6 +803,17 @@ describe("blazer-no-es-abrigo", () => {
     const closet = [CAMISA, PANT, BLAZER];
     expect(enFrio([CAMISA, PANT, BLAZER], closet)).toBeUndefined();
   });
+
+  it("una CORBATA de punto no salva el look: no es una capa, es un accesorio", () => {
+    // La fuga: `conPunto` probaba /punto/ contra cualquier prenda, así que
+    // "Corbata de punto marino" contaba como capa térmica intermedia. En la
+    // báscula 31ef11bb el look «Blazer Sin Esfuerzo» (camisa oxford + blazer +
+    // corbata de punto, cena a 8° de noche) sacó la PEOR nota de clima de los
+    // 154 looks —1/5, reprobado por los dos jueces— y no disparaba nada.
+    const CORBATA = p_("Corbata de punto marino", { categoria: "accesorio" });
+    const closet = [CAMISA, PANT, BLAZER, ABRIGO, SUETER, CORBATA];
+    expect(enFrio([CAMISA, PANT, BLAZER, CORBATA], closet)).toBeDefined();
+  });
 });
 
 describe("lana-en-calor", () => {
