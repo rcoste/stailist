@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.282.2] - 2026-08-25
+
+### Added — las 12 fotos del grid de acentos (3 niveles × frío/calor × 2 géneros)
+
+`scripts/gen-acentos.mjs`, con la técnica de `gen-pares-corte.mjs`: los tres
+niveles NO se generan por separado — se ENCADENAN desde el discreto, así el
+look base queda idéntico y lo único que cambia es el acento. (Medio y
+protagonista salen los dos DESDE el discreto, no en cascada: encadenar
+medio→protagonista acumularía el error y el tercero acabaría siendo otra
+foto.) Frío: abrigo carbón + crew marino / + bufanda burdeos / crew cobalto
+— el ejemplo literal de Roberto. Calor: polo beige / + mocasín y cinturón
+burdeos / polo esmeralda. Los vehículos se eligen por VISIBILIDAD: el
+calcetín es el acento clásico de nivel medio y en miniatura no se ve.
+
 ## [0.2.282.1] - 2026-08-25
 
 ### Changed — el apetito derivado se degrada a SEMILLA; la medición será su pantalla

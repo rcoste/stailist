@@ -18,36 +18,60 @@ de stylist "¿cuánta atención quieres que atraiga tu ropa?". Tres posiciones:
 Independiente de la colorimetría (QUÉ colores) y del arquetipo (qué vibe).
 Marco: `docs/designs/acentos-y-colorimetria-por-zona.md`.
 
-## El diseño, y las tres decisiones que lo blindan
+## El diseño: grid de 3 niveles × 2 contextos, se elige la FILA
 
-**1. MISMO look base, solo cambia el acento.** Tres fotos del mismo outfit:
-la única diferencia entre ellas es dónde y cuánto color hay. Si cambia la
-silueta o el registro entre fotos, se vuelve a medir "qué estética te
-gusta" — el error exacto de derivar de los swipes.
+Diseño cerrado con Roberto (2026-08-25) después de descartar dos versiones
+peores. La forma final es suya; el aislamiento de la variable es la lección
+de `pares-corte.tsx`.
 
-**2. La pregunta es "¿cuál te pondrías TÚ?"** — no "¿cuál se ve mejor?".
-Es la lección del propio Roberto con el cobalto: aprobar un look ("se ve
-bien") y ponérselo son varas distintas, y esta pantalla existe para medir
+```
+                 frío                        calor
+discreto     abrigo + crew MARINO        polo NEUTRO
+             (todo tonal)                (todo tonal)
+medio        + bufanda burdeos           + tenis/cinturón burdeos
+protagonista abrigo + crew COBALTO       polo ESMERALDA
+```
+
+**Se toca la FILA, no la celda.** La fila es el nivel; las dos columnas son
+el mismo nivel en dos climas. Sin esto la respuesta sería ambigua ("¿eligió
+por el acento o porque le gustó más el look de invierno?") — el error que
+`pares-corte.tsx` documenta y que ya nos costó una vez.
+
+**Dentro de cada columna, el look base es IDÉNTICO entre filas.** Misma
+persona, misma pose, misma luz, mismas prendas: lo único que cambia es el
+color de UNA pieza (o la aparición del acento chico). Ejemplo de Roberto,
+literal: "la primera es el abrigo con un crew neck azul marino, que es más
+neutral; el otro es con el cobalto".
+
+**NO se segmenta por el clima de quien mira** — se le enseñan los dos.
+Decisión de Roberto, y es la correcta: el apetito de acentos es un rasgo
+ESTABLE de la persona; lo que cambia con el clima es el VEHÍCULO del acento
+(bufanda en frío, calzado en calor), no cuánto acento quiere. Mostrar los
+dos contextos calibra el gusto general y de paso enseña qué significa el
+nivel en cada estación. (Se descartó mostrar solo el clima de hoy vía
+Open-Meteo: mediría la situación, no el rasgo.)
+
+**Los vehículos se eligen por VISIBILIDAD, no por ortodoxia.** El acento
+más clásico de nivel medio en hombre es el calcetín, y en una miniatura no
+se ve. Se usan bufanda (frío) y tenis o cinturón (calor), que son igual de
+legítimos y sí se leen. Esto importa: la lección del 2026-08-17 (fotos de
+cuerpo entero ilegibles en media pantalla) aplica al detalle fino, pero el
+COLOR sobrevive a la miniatura mucho mejor que el corte — por eso este grid
+puede tener 6 fotos donde `pares-corte` sólo podía con 2.
+
+**La pregunta es "¿cuál te pondrías TÚ?"** — no "¿cuál se ve mejor?". La
+lección del cobalto: aprobar y ponerse son varas distintas, y aquí medimos
 la segunda.
 
-**3. El color del ejemplo es FIJO y seguro, no personalizado.** La pantalla
-mide volumen, no matiz. Un color que lee bien en casi toda colorimetría y
-no pisa el veto de la casa (nada de ámbar/terracota/naranja): **burdeos** o
-**verde botella**. Personalizar el color por estación de quien mira sería
-ideal pero exige generar imágenes por estación (16+ fotos); v1 no.
+**El color del acento es fijo y seguro** (burdeos/cobalto/esmeralda según
+la pieza): la pantalla mide VOLUMEN, no matiz. Ninguno pisa el veto de la
+casa (ámbar/terracota/naranja). Personalizar el matiz por estación de la
+persona exigiría 16+ fotos; v1 no.
 
-## Los tres niveles, por género
-
-**Hombre** — base: suéter/playera + pantalón + calzado en neutros (carbón,
-marino, crudo):
-1. discreto: la base tal cual, tonal — el interés es la textura
-2. medio: misma base + **calcetín o bufanda burdeos** (o mocasín burdeos)
-3. protagonista: la MISMA silueta con el **suéter en burdeos**
-
-**Mujer** — base: knit + pantalón/falda + zapato en neutros:
-1. discreto: tonal
-2. medio: misma base + **bolso o zapato burdeos**
-3. protagonista: el **top/knit en burdeos**
+**Sin etiquetas de nivel bajo las fotos.** Igual que en `pares-corte`:
+poner "discreto/medio/protagonista" convertiría "¿cuál te pondrías?" en
+"¿cuál es la respuesta correcta?". El texto de cada fila, si acaso, describe
+la escena, no el nivel.
 
 ## Dónde vive
 
@@ -69,7 +93,7 @@ siempre; el backfill de swipes jamás pisa un 'elegido'.
 
 ## Imágenes
 
-6 fotos (3 niveles × 2 géneros), pipeline de la casa (gen-looks-genz.mjs,
+12 fotos (3 niveles × 2 contextos × 2 géneros), pipeline de la casa (gen-looks-genz.mjs,
 concreto frío — mismo lenguaje visual del deck para que no se sienta de
 otra app). Modelos: reglas de siempre (México: piel morena/mestiza).
 Es el long pole del build: generarlas, pasar el ojo de Roberto, y recién
@@ -85,7 +109,7 @@ hacia dónde Y qué sí.
 ## Orden de build
 
 1. ✅ Datos + semilla + fuente (0149, 0150)
-2. Imágenes (6) → ojo de Roberto
+2. Imágenes (12: 3 niveles × frío/calor × 2 géneros) → ojo de Roberto
 3. Card en Perfil → estilo (patrón del dial de registro)
 4. Paso de onboarding (si Roberto decide que entra al flujo)
 5. (con el loop despierto) la línea del motor + su medición
