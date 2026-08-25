@@ -418,7 +418,24 @@ import {
 // pie; el tip lo escribe el juez, así que el arreglo vive en critic.ts). El
 // texto del generador no cambia; sube porque REGLAS_DE_LA_CASA (el bloque que
 // leen los jueces) cambió. Ablación sin-reglas-v67; v66 congelado antes.
-export const PROMPT_VERSION = "v67";
+// v68 (2026-08-24): el POLO y el FUNERAL, las dos de sus votos y con la
+// ablación corrigiendo su propio dictado en el segundo caso.
+// (a) `polo-con-traje-completo` (6 👎 / 0 👍 sobre 382 looks votados): siete
+// comentarios suyos en cinco rondas, perdidos seis veces porque cada uno se
+// archivó por su contexto y ninguno por su prenda. Acotada al TRAJE completo:
+// con blazer y pantalón de otro juego el polo da 3/1 y él lo confirmó —"si
+// acaso con blazer podría funcionar; con traje no hay manera".
+// (b) `funeral-camisa-blanca` (2 👎 / 0 👍 en lo solemne; 11 👍 fuera de ahí,
+// así que va acotada) + el uniforme del luto en el catálogo de eventos, CON
+// permiso explícito de repetirlo: "que alguien lleve el mismo outfit a dos
+// funerales no pasa nada" — el motor entregaba un alterno que rompía el
+// código sólo por dar variedad. Lo que NO entró, y es el punto: pidió que el
+// traje fuera obligatoriamente negro, pero sus votos aprobaron 2 de 2 con
+// gris carbón. El ideal vive en el catálogo como preferencia; la regla dura
+// es sólo lo que sus votos condenan.
+// Ablación sin-reglas-v68. El texto del funeral es local a ese evento (ningún
+// brief del vistazo lo toca): su vigilancia es el próximo eval.
+export const PROMPT_VERSION = "v68";
 
 export type EngineItem = {
   id: string;

@@ -435,3 +435,33 @@ describe("chelsea-en-calor — el botín se baja a calzado fresco de formalidad 
     expect(r.itemIds).toContain("chi");
   });
 });
+
+describe("las dos reparaciones de v68", () => {
+  it("el polo bajo traje se cambia por la camisa de vestir, y el traje se queda", () => {
+    const polo = it_("po", "top", "Polo de manga larga vino", { color: "vino", color_hex: "#5E2A33" });
+    const camisa = it_("ca", "top", "Camisa blanca", { color: "blanco", color_hex: "#FAFAF7" });
+    const saco = it_("sa", "saco", "Saco de traje gris carbón", { color_hex: "#3A3C42", conjunto: "t1" });
+    const pant = it_("pa", "bottom", "Pantalón de traje gris carbón", { color_hex: "#3A3C42", conjunto: "t1" });
+    const zap = it_("za", "calzado", "Mocasines negros", { color: "negro", color_hex: "#111111" });
+    const closet = [polo, camisa, saco, pant, zap];
+    const r = repararEnCodigo(["po", "sa", "pa", "za"], closet, { closet, ...HOMBRE });
+    expect(r.hechas[0]).toMatchObject({ regla: "polo-con-traje-completo", como: "sustituida" });
+    expect(r.itemIds).toContain("ca");
+    expect(r.itemIds).not.toContain("po");
+    expect(r.itemIds).toContain("sa");
+    expect(r.itemIds).toContain("pa");
+  });
+
+  it("en funeral la camisa negra se cambia por la blanca", () => {
+    const negra = it_("cn", "top", "Camisa negra", { color: "negro", color_hex: "#111111" });
+    const blanca = it_("cb", "top", "Camisa blanca", { color: "blanco", color_hex: "#FAFAF7" });
+    const saco = it_("sa", "saco", "Saco de traje negro", { color: "negro", color_hex: "#111111", conjunto: "t2" });
+    const pant = it_("pa", "bottom", "Pantalón de traje negro", { color: "negro", color_hex: "#111111", conjunto: "t2" });
+    const zap = it_("za", "calzado", "Zapato formal negro", { color: "negro", color_hex: "#111111" });
+    const closet = [negra, blanca, saco, pant, zap];
+    const r = repararEnCodigo(["cn", "sa", "pa", "za"], closet, { closet, tipoEvento: "funeral", ...HOMBRE });
+    expect(r.hechas[0]).toMatchObject({ regla: "funeral-camisa-blanca", como: "sustituida" });
+    expect(r.itemIds).toContain("cb");
+    expect(r.itemIds).not.toContain("cn");
+  });
+});

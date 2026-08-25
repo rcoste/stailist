@@ -64,6 +64,9 @@ export type OpcionesGeneracion = {
   /** Apaga las reglas de v67 (chelsea-en-calor + el arreglo del tip del saco
    *  cruzado). Sólo para el comparador: su ablación como grupo. */
   sinReglasV67?: boolean;
+  /** Apaga las reglas de v68 (polo-con-traje-completo, funeral-camisa-blanca).
+   *  Sólo para el comparador: su ablación como grupo. */
+  sinReglasV68?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

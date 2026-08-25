@@ -511,6 +511,52 @@ function intentarUna(
       }
     }
 
+    // EL POLO BAJO TRAJE → camisa de vestir. El traje se queda (fija la
+    // ocasión); el polo es el que se equivocó de registro, igual que la
+    // mezclilla bajo saco. Blanca o azul claro primero, como en la oxford.
+    if (v.regla === "polo-con-traje-completo") {
+      const polo = enLook().find((i) => /\bpolo\b/.test(texto(i)));
+      const camisas = disponibles
+        .filter(
+          (i) =>
+            /camisa/.test(texto(i)) &&
+            !/mezclilla|denim|chambray|lino|manga corta|franela|cuadros|oxford|button.?down/.test(texto(i))
+        )
+        .sort(
+          (a, b) =>
+            (/blanc|azul claro/.test(`${b.attrs.color ?? ""} ${texto(b)}`.toLowerCase()) ? 1 : 0) -
+            (/blanc|azul claro/.test(`${a.attrs.color ?? ""} ${texto(a)}`.toLowerCase()) ? 1 : 0)
+        );
+      for (const camisa of polo ? camisas : []) {
+        const nuevos = ids.map((id) => (id === polo!.id ? camisa.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return {
+            ids: nuevos,
+            hecha: { regla: v.regla, como: "sustituida", entro: nombre(camisa), salio: nombre(polo!) },
+          };
+        }
+      }
+    }
+
+    // FUNERAL → LA CAMISA BLANCA. Determinista: en el luto no hay criterio que
+    // elegir, la camisa correcta es una sola.
+    if (v.regla === "funeral-camisa-blanca") {
+      const esCamisaVestir = (i: EngineItem) =>
+        /camisa/.test(texto(i)) && !/mezclilla|denim|chambray|franela|cuadros/.test(texto(i));
+      const blanca = (i: EngineItem) => /blanc/.test(`${i.attrs.color ?? ""} ${texto(i)}`.toLowerCase());
+      const puesta = enLook().find((i) => esCamisaVestir(i) && !blanca(i));
+      const buenas = disponibles.filter((i) => esCamisaVestir(i) && blanca(i));
+      for (const b of puesta ? buenas : []) {
+        const nuevos = ids.map((id) => (id === puesta!.id ? b.id : id));
+        if (violacionesDe(nuevos).length < violaciones.length) {
+          return {
+            ids: nuevos,
+            hecha: { regla: v.regla, como: "sustituida", entro: nombre(b), salio: nombre(puesta!) },
+          };
+        }
+      }
+    }
+
     // ── EL CUERO ACCESORIO SE ALINEA CON EL CALZADO, O SE VA. Esta regla
     //    vivió meses en la lista de "criterio, que la vea el juez" de abajo —
     //    y medido en la primera ronda calificada (283d8d44), el juez la reparó

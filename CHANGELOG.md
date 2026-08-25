@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.281.0] - 2026-08-24
+
+### Added — v68: el polo bajo traje y el uniforme del luto (y la ablación corrigiendo un decreto)
+
+**`polo-con-traje-completo` (6 👎 / 0 👍 sobre 382 looks votados).** La
+candidata mejor sostenida del corpus, escondida seis rondas: siete comentarios
+suyos en cinco rondas distintas ("un traje completo con polo está raro",
+"está raro el polo + crew neck + traje"). Se perdió seis veces porque cada
+mención se archivó por su CONTEXTO —"traje en cita", "polo cobalto"— y ninguna
+por su PRENDA; sólo apareció al cruzar los 221 comentarios por prenda. Acotada
+al traje completo: con blazer y pantalón de otro juego da 3/1 y él lo
+confirmó — "si acaso con blazer podría funcionar; con traje no hay manera".
+Repara cambiando el polo por camisa de vestir.
+
+**`funeral-camisa-blanca` (2 👎 / 0 👍 en lo solemne)** más el uniforme del
+luto en el catálogo de eventos: traje negro, camisa blanca, corbata negra,
+zapatos negros — **con permiso explícito de repetirlo**. El motor entregó un
+funeral impecable como principal y un alterno que rompía el código sólo para
+ser distinto; Roberto: "no importa que se repita lo del funeral; que alguien
+lleve el mismo outfit a dos funerales no pasa nada". Fuera de lo solemne la
+camisa negra le parece normal (11 👍), así que la regla va acotada.
+
+**Y lo que NO entró, que es el punto de método:** dictó que el traje fuera
+obligatoriamente negro, pero sus propios votos aprobaron 2 de 2 looks de
+funeral con traje gris carbón. Escribirlo como lo dictó habría tirado dos
+looks que él aprobó. El ideal vive en el catálogo como preferencia; la regla
+dura es sólo lo que sus votos condenan. Ni un decreto suyo entra sin ablación.
+
+Variante `sin-reglas-v68`. El texto del funeral es local a ese evento (ningún
+brief del vistazo lo toca): su vigilancia es el próximo eval.
+
 ## [0.2.280.1] - 2026-08-24
 
 ### Fixed — la dosis del hilo de historial: un look por día, tope 14, como producción

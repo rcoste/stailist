@@ -1581,3 +1581,51 @@ describe("el tip del saco cruzado (v67) — validado contra los 4 tips reales de
     expect(tieneSacoCruzado([p("Saco de traje gris carbón", "#3A3C42")])).toBe(false);
   });
 });
+
+describe("polo-con-traje-completo — el traje pide camisa (v68)", () => {
+  const CLOSET = [
+    p("Camisa blanca", "#FAFAF7", { color: "blanco" }),
+    p("camisa de vestir azul claro", "#A9C4E0", { color: "azul claro" }),
+  ];
+  const POLO = p("Polo de manga larga vino", "#5E2A33", { color: "vino" });
+  it("con TRAJE completo dispara", () => {
+    const look = [POLO, p("Saco de traje gris carbón", "#3A3C42"), p("Pantalón de traje gris carbón", "#3A3C42"), p("Mocasines negros", "#111111")];
+    expect(revisarEjecucion(look, { closet: CLOSET }).map((x) => x.regla)).toContain("polo-con-traje-completo");
+  });
+  it("con BLAZER y pantalón de otro juego NO dispara (él lo aprobó: 3👎/1👍, no concluyente)", () => {
+    const look = [POLO, p("Blazer marino", "#27425F"), p("Pantalón negro", "#111111"), p("Botines Chelsea de gamuza", "#6B4A2B")];
+    expect(revisarEjecucion(look, { closet: CLOSET }).map((x) => x.regla)).not.toContain("polo-con-traje-completo");
+  });
+  it("sin camisa lisa en el clóset calla (carencia), y la ablación la apaga", () => {
+    const look = [POLO, p("Saco de traje gris carbón", "#3A3C42"), p("Pantalón de traje gris carbón", "#3A3C42")];
+    expect(revisarEjecucion(look, { closet: [] }).map((x) => x.regla)).not.toContain("polo-con-traje-completo");
+    expect(revisarEjecucion(look, { closet: CLOSET, sinReglasV68: true }).map((x) => x.regla)).not.toContain("polo-con-traje-completo");
+  });
+});
+
+describe("funeral-camisa-blanca — el luto no es fiesta (v68)", () => {
+  const CLOSET = [p("Camisa blanca", "#FAFAF7", { color: "blanco" })];
+  const TRAJE = [p("Saco de traje gris carbón", "#3A3C42"), p("Pantalón de traje gris carbón", "#3A3C42"), p("Corbata negra delgada", "#111111")];
+  it("camisa negra en funeral dispara; la blanca no", () => {
+    const negra = [p("Camisa negra", "#111111", { color: "negro" }), ...TRAJE];
+    expect(revisarEjecucion(negra, { tipoEvento: "funeral", closet: CLOSET }).map((x) => x.regla)).toContain("funeral-camisa-blanca");
+    const blanca = [p("Camisa blanca", "#FAFAF7", { color: "blanco" }), ...TRAJE];
+    expect(revisarEjecucion(blanca, { tipoEvento: "funeral", closet: CLOSET }).map((x) => x.regla)).not.toContain("funeral-camisa-blanca");
+  });
+  it("EL TRAJE GRIS CARBÓN NO SE MARCA: sus votos lo aprobaron 2 de 2 (contra su propio dictado)", () => {
+    // Con el lazo `conjunto` para que sea un traje DE VERDAD: sin él salta
+    // traje-desparejado, que es otra regla y aquí sería ruido del fixture.
+    const carbon = [
+      p("Camisa blanca", "#FAFAF7", { color: "blanco" }),
+      p("Saco de traje gris carbón", "#3A3C42", { conjunto: "traje-carbon" }),
+      p("Pantalón de traje gris carbón", "#3A3C42", { conjunto: "traje-carbon" }),
+      p("Corbata negra delgada", "#111111"),
+      p("Mocasines negros", "#111111"),
+    ];
+    expect(revisarEjecucion(carbon, { tipoEvento: "funeral", closet: CLOSET })).toEqual([]);
+  });
+  it("fuera del funeral la camisa negra no se toca (11 👍 suyos)", () => {
+    const casual = [p("Camisa negra", "#111111", { color: "negro" }), p("Jeans azul oscuro", "#2C3E50"), p("Botines Chelsea negros", "#1A1A1A")];
+    expect(revisarEjecucion(casual, { closet: CLOSET }).map((x) => x.regla)).not.toContain("funeral-camisa-blanca");
+  });
+});

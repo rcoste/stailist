@@ -96,6 +96,9 @@ export type ContextoReglas = {
   /** Ablación del comparador: apaga las reglas de v67 (chelsea-en-calor y el
    *  arreglo del tip del saco cruzado, que vive en critic.ts). */
   sinReglasV67?: boolean;
+  /** Ablación del comparador: apaga las reglas de v68 (polo-con-traje-completo
+   *  y funeral-camisa-blanca). */
+  sinReglasV68?: boolean;
   /** Si el código del trabajo es "variable": si HOY ve cliente. */
   veCliente?: boolean | null;
 };
@@ -1348,6 +1351,76 @@ export function revisarEjecucion(
 
   } // fin de las reglas de v61 (ablación: sinReglasV61)
 
+  if (!ctx.sinReglasV68) {
+  // 31. EL POLO NO VA BAJO TRAJE COMPLETO. La candidata mejor sostenida del
+  //     corpus, y llevaba SEIS rondas escondida: siete comentarios suyos en
+  //     cinco rondas distintas ("un traje completo con polo está raro",
+  //     "está raro el polo + crew neck + traje", "más adhoc con un blazer que
+  //     traje completo + algo"). Se perdió seis veces porque cada mención se
+  //     archivó por su CONTEXTO ("traje en cita", "polo cobalto") y ninguna
+  //     por su PRENDA; sólo apareció al cruzar los 221 comentarios por prenda.
+  //
+  //     ABLACIÓN: 6 👎 / 0 👍 sobre los 382 looks votados con prendas vivas.
+  //
+  //     Y EL LÍMITE, que es lo que la hace correcta: es el TRAJE COMPLETO
+  //     (saco + su pantalón), NO el sastre. Polo con blazer y pantalón de otro
+  //     juego da 3 👎 / 1 👍 — no concluyente — y Roberto lo confirmó al
+  //     dictarla: "si acaso con blazer podría funcionar; con traje no hay
+  //     manera, se ve rarísimo". Escribirla contra "polo + sastre" mataría un
+  //     look que aprobó.
+  if (ctx.closet?.length) {
+    const esPolo = (i: EngineItem) => /\bpolo\b/.test(TIPO(i));
+    const polo = items.find(esPolo);
+    const saco = items.find((i) => /saco|esmoquin|smoking/.test(TIPO(i)));
+    const conPantalonDeTraje = items.some((i) =>
+      /pantal[oó]n de (traje|smoking|esmoquin)/.test(TIPO(i))
+    );
+    if (polo && saco && conPantalonDeTraje) {
+      const camisas = ctx.closet.filter(
+        (i) =>
+          /camisa/.test(TIPO(i)) &&
+          !/mezclilla|denim|chambray|lino|manga corta|franela|cuadros|oxford|button.?down/.test(TIPO(i))
+      );
+      if (camisas.length) {
+        v.push({
+          regla: "polo-con-traje-completo",
+          detalle: `"${nombre(polo)}" es un polo y el look es un TRAJE completo: el traje pide camisa, con o sin corbata — el polo bajo traje se lee raro por muy bueno que sea. Cámbialo por una camisa de vestir (${camisas.slice(0, 2).map(nombre).join(" o ")}). Con blazer y pantalón de otro juego el polo sí funciona; con traje entero, no.`,
+        });
+      }
+    }
+  }
+
+  // 32. EN FUNERAL LA CAMISA ES BLANCA. Sus dos comentarios más fuertes de
+  //     todo el corpus, en dos rondas distintas: "camisa negra para una boda
+  //     es como de cholo, mafioso italiano — terrible, terrible, terrible"
+  //     (08-22) y "está horrible… el dress code es traje negro, corbata negra
+  //     y camisa blanca" (funeral, c0899d9d). Ablación acotada a lo solemne:
+  //     2 👎 / 0 👍. Fuera de ahí la camisa negra le parece normal (11 👍), y
+  //     por eso la regla NO se generaliza.
+  //
+  //     ⚠️ LO QUE LA ABLACIÓN CORRIGIÓ DE SU PROPIO DICTADO: pidió que el
+  //     traje fuera obligatoriamente negro — pero aprobó 2 de 2 looks de
+  //     funeral con traje GRIS CARBÓN y camisa blanca. Lo que sus votos
+  //     sostienen es LA CAMISA, no el traje. El ideal (traje negro) vive en
+  //     el catálogo de eventos como preferencia, que es lo que es; aquí sólo
+  //     va lo que sus votos condenan. Ni un decreto suyo entra sin ablación.
+  if (ctx.tipoEvento === "funeral" && ctx.closet?.length) {
+    const esCamisaVestir = (i: EngineItem) =>
+      /camisa/.test(TIPO(i)) && !/mezclilla|denim|chambray|franela|cuadros/.test(TIPO(i));
+    const esBlanca = (i: EngineItem) => /blanc/.test(`${norm(i.attrs.color)} ${TIPO(i)}`);
+    const puesta = items.find((i) => esCamisaVestir(i) && !esBlanca(i));
+    if (puesta) {
+      const blancas = ctx.closet.filter((i) => esCamisaVestir(i) && esBlanca(i));
+      if (blancas.length) {
+        v.push({
+          regla: "funeral-camisa-blanca",
+          detalle: `"${nombre(puesta)}" no va en un funeral: la camisa es BLANCA. Una camisa oscura bajo traje oscuro se lee como fiesta, no como duelo. Cámbiala (${blancas.slice(0, 2).map(nombre).join(" o ")}).`,
+        });
+      }
+    }
+  }
+  } // fin de las reglas de v68 (ablación: sinReglasV68)
+
   if (!ctx.sinReglasV67) {
   // 30. EL BOTÍN NO VA EN CALOR. Roberto, dos veces: la candidata nació en la
   //     ronda 7abd9c9c y la confirmó en 8130c381 ("falla el calzado, la
@@ -1467,6 +1540,8 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - Un blazer no es abrigo: con frío real va un abrigo de verdad encima.
 - Lino de pies a cabeza en oficina rompe. Una sola pieza de lino en oficina se sostiene, pero a esta persona ya le incomoda ("habíamos quedado que lino no para el trabajo", cuatro veces): márcala como resta.
 - El saco CRUZADO se lleva abotonado (botón de en medio), también de pie — abierto pierde la línea del cruce. Nunca recomiendes abrirlo; sin corbata pasa si va cerrado. El saco recto sí se abre al andar, como siempre.
+- El POLO no va bajo TRAJE completo (saco + su pantalón): el traje pide camisa. Con blazer y pantalón de otro juego el polo sí funciona — no lo marques ahí.
+- En FUNERAL la camisa es BLANCA (una oscura se lee como fiesta). El uniforme ideal es traje negro + camisa blanca + corbata negra + zapatos negros, y REPETIRLO no es defecto: llevar el mismo look a dos funerales es lo correcto. El traje gris carbón pasa si no hay negro.
 - Con CALOR el botín (chelsea incluido) da calor y pesa: va calzado bajo (mocasín, tenis, zapato). Con lluvia esta regla calla — ahí la bota es lo correcto.
 
 Si tu arreglo contradice una de estas, NO lo propongas: propón el que la respete.`;

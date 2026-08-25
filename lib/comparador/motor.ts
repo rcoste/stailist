@@ -138,6 +138,13 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     opciones: { sinReglasV67: true },
   },
   {
+    clave: "sin-reglas-v68",
+    etiqueta: "Sin las reglas de v68",
+    ayuda:
+      "sin polo-con-traje-completo ni funeral-camisa-blanca — si gana, se revierten",
+    opciones: { sinReglasV68: true },
+  },
+  {
     clave: "reparar-primero",
     etiqueta: "Código antes que juez",
     // CONVERSACIÓN B, variante 1 (docs §9). El juez de producción reescribe el
