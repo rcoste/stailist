@@ -161,9 +161,47 @@ ligera — primero revisar si el mazo de swipes ya varía en audacia de color
 (señal gratis) o sembrar el dial desde votos en Perfil→estilo, como
 registro_por_plan; (2) detrás de las entrevistas, como todo lo demás.
 
+## 6. ✅ MEDIDO: la línea de apetito SÍ mueve dónde cae el color (2026-08-25)
+
+Experimento pre-registrado antes de correr el tratamiento. Control =
+báscula 2ec16c63 (v68, byte-idéntica porque entonces nadie tenía `elegido`);
+tratamiento = cead58b5 (v69, con Roberto en `discreto` elegido). Mismo pool
+v10, mismo clóset. Métrica primaria SIN juez —aritmética sobre los looks
+generados, así que optimizar contra ella no la corrompe—; el juez entra sólo
+como guardia. Se cruza con `scripts/cruce-acentos.ts`.
+
+| | control | tratamiento |
+|---|---|---|
+| acento SÓLO en pieza chica | 19% | **25%** |
+| acento en pieza GRANDE | 36% | **16%** |
+| sin acento (tonal) | 45% | 59% |
+| guardia: aprobado por el juez | 92% | 86% |
+
+**Pre-registro cumplido:** sube el chico, baja el grande — y el grande cae a
+menos de la mitad. La línea funciona.
+
+**La guardia bajó 6 puntos y NO es por los acentos**, leídos los 7 reprobados
+uno por uno: dos son falta de abrigo a 8°, uno traje completo en cita, uno
+calzado formal en la arena, uno un tip mal puesto, uno el traje negro leído
+como esmoquin. Sólo uno menciona el tema, y para decir que el look "está bien
+pensado para color discreto" antes de reprobarlo por otra cosa. Con 51 looks,
+6 puntos son ~3 casos: ruido de mezcla, no degradación.
+
+**Evidencia de que el cableado al JUEZ también funciona:** esa frase suya
+—"está bien pensado para 'color discreto'"— sale de la línea que ahora recibe
+la rúbrica. Sin ella habría castigado el look por soso.
+
+**Y el hallazgo que cierra el círculo con §5a:** el tonal subió 14 puntos.
+El motor obedece "discreto", pero como el clóset tiene 12 acentos grandes y
+sólo 6 chicos (de los que apenas salen), se queda sin vehículo y cae en look
+tonal. **La causa raíz no era el motor: era el clóset** — que es exactamente
+lo que la cápsula con acentos chicos obligatorios (v0.2.286.0) viene a
+arreglar. La próxima medición de esto es sobre un clóset ya poblado con
+acentos chicos.
+
 ---
 
-**TODO ESTO ESTÁ DETRÁS DE LA PAUSA DEL LOOP (§7-bis del doc del
+**LO QUE SIGUE DETRÁS DE LA PAUSA DEL LOOP (§7-bis del doc del
 improvement loop).** Se retoma cuando el loop se retome, una pieza por
 vuelta, cada una con su medición. Este doc existe para que el criterio no
 se pierda mientras tanto.
