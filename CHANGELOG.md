@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.287.1] - 2026-08-25
+
+### Fixed — la cápsula: el zoom que faltaba y el tile que mentía
+
+Dos bugs que Roberto encontró armando su cápsula.
+
+**"Si le pico a una imagen no me deja verla en grande".** El zoom existía
+(`PrendaZoom`) y estaba enchufado sólo en `DecideRow` — la sección de duelos.
+`SumaCard` ya aceptaba la prop `onZoom` y el llamador nunca se la pasaba, y
+`BigCard` (la lista completa, lo primero que ve alguien que acaba de generar
+su cápsula) ni siquiera la aceptaba. O sea: la mayoría de la pantalla no
+abría. Ahora los 39 tiles son tappables — verificado en el navegador: 0
+zoomables antes, 39 después, y el zoom abre con imagen, nombre y qué cubre.
+
+**"No se renderean automáticamente las imágenes que faltan".** Aquí lo
+interesante: **sí se renderean** —38 de sus 39 piezas acabaron con imagen en
+la biblioteca— pero mientras el prewarm trabaja (39 piezas a concurrencia 2
+son minutos), el tile muestra el botón "ver prenda", que dice justo lo
+contrario: que hay que tocarlo para que pase algo. La UI contradecía lo que
+la pantalla estaba haciendo sola. Ahora el tile que ya está en la cola
+muestra spinner y "dibujando…"; sigue siendo tocable por si alguien quiere
+adelantar la suya. Va por contexto (`EnColaContext`) y no por props: el tile
+vive cuatro niveles abajo y en seis tarjetas distintas.
+
 ## [0.2.287.0] - 2026-08-25
 
 ### Changed — v70: "discreto" deja de significar "sin color" + el aviso de cobertura de acentos

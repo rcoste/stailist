@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -49,6 +50,21 @@ import {
   type VetoReason,
   VETO_REASON_LABEL,
 } from "@/lib/capsule";
+
+// LAS PIEZAS QUE EL PREWARM YA TIENE EN COLA, para que el tile no mienta.
+//
+// El bug que esto arregla (Roberto, 2026-08-25): "no está lo de que se
+// rendereen automáticamente las imágenes que faltan". El render automático SÍ
+// corría —38 de sus 39 piezas acabaron con imagen— pero mientras trabajaba, el
+// tile mostraba el botón "ver prenda", que dice justo lo contrario: que hay que
+// tocarlo para que pase algo. Con 39 piezas a concurrencia 2 el prewarm tarda
+// minutos, así que lo que la persona ve todo ese rato es una pantalla llena de
+// botones de "genérala tú". Ahora el tile en cola dice que ya viene.
+//
+// Va por contexto y no por props porque el tile vive 4 niveles abajo y en seis
+// tarjetas distintas; enhebrarlo a mano sería tocar seis firmas para un dato
+// que es de la pantalla entera.
+const EnColaContext = createContext<Set<string>>(new Set());
 
 // Tope y concurrencia del auto-dibujo de TUS prendas sin foto.
 //
@@ -334,6 +350,14 @@ export function CapsuleList({
 
   // La lista viva, en un ref, para que el efecto de abajo no dependa de un array
   // que se recrea en cada render (misma técnica que el resto del archivo).
+  // Las llaves en cola, para que el tile muestre "ya viene" en vez del botón
+  // que invita a generarla a mano.
+  const enCola = useMemo(
+    () => new Set(porPrecalentar.map((j) => j.key)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [porPrecalentar.map((j) => j.key).join("|")]
+  );
+
   const jobsRef = useRef<PrewarmJob[]>(porPrecalentar);
   useEffect(() => {
     jobsRef.current = porPrecalentar;
@@ -414,6 +438,7 @@ export function CapsuleList({
   }, [hayQueDibujar]);
 
   return (
+    <EnColaContext.Provider value={enCola}>
     <div className="flex flex-col gap-7">
       <Toast message={toast} />
       <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
@@ -490,6 +515,9 @@ export function CapsuleList({
                 images={imgs}
                 catalogImages={catImgs}
                 onRendered={(url) => onRendered(faltaKey(r.item), url)}
+                onZoom={(url) =>
+                  setZoom({ image: url, nombre: r.item.nombre, sub: r.item.porque })
+                }
               />
             ))}
           </ul>
@@ -544,6 +572,14 @@ export function CapsuleList({
                   onReject={(reason) => rejectItem(r.index, reason)}
                   onQuitar={(reason) => quitarItem(r.index, reason)}
                   resolvedMotivo={resolved.get(r.index) ?? null}
+                  // El zoom faltaba AQUÍ y sólo aquí: SumaCard ya lo aceptaba
+                  // como prop y el llamador no se lo pasaba, así que la sección
+                  // más grande de la pantalla ("no la tienes") era la única sin
+                  // poder abrir la prenda en grande. Roberto: "si le pico a una
+                  // imagen no me deja verla en grande".
+                  onZoom={(url) =>
+                    setZoom({ image: url, nombre: r.item.nombre, sub: r.item.porque })
+                  }
                   // "tienes" desmentido: nota propia + deshacer (por si fue un
                   // mal tap, o si el match tenía razón después de todo).
                   reject={r.base === "tienes"}
@@ -611,6 +647,7 @@ export function CapsuleList({
         </Section>
       ) : null}
     </div>
+    </EnColaContext.Provider>
   );
 }
 
@@ -670,6 +707,7 @@ function Thumb({
 }) {
   const [generated, setGenerated] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const enCola = useContext(EnColaContext);
   const shown = src ?? generated;
   if (shown) return <Image src={shown} alt="" fill sizes={sizes} className="object-cover" />;
 
@@ -706,16 +744,29 @@ function Thumb({
     }
   };
 
+  // ¿Esta pieza ya está en la cola del auto-dibujo? Entonces NO se invita a
+  // generarla a mano: se dice que viene. Sigue siendo tocable —si alguien tiene
+  // prisa, adelanta la suya— pero el mensaje deja de contradecir lo que la
+  // pantalla está haciendo por su cuenta.
+  const viene = !busy && renderArgs ? enCola.has(faltaKey(renderArgs)) : false;
+
   return (
     <button
       type="button"
       onClick={onRender}
       disabled={busy}
       className="relative flex h-full w-full flex-col items-center justify-center gap-1 bg-tile px-1 disabled:opacity-80"
-      title={VER_PRENDA_LABEL}
+      title={viene ? "la estoy dibujando…" : VER_PRENDA_LABEL}
     >
-      {busy ? (
-        <Spinner className={`h-4 w-4 ${tone}`} />
+      {busy || viene ? (
+        <>
+          <Spinner className={`h-4 w-4 ${tone}`} />
+          {viene && !busy ? (
+            <span className={`text-center text-[9px] font-semibold leading-tight ${tone}`}>
+              dibujando…
+            </span>
+          ) : null}
+        </>
       ) : (
         <>
           <Icon name="destello" size={icon} className={tone} />
@@ -792,6 +843,7 @@ function BigCard({
   onRendered,
   right,
   unlock,
+  onZoom,
 }: {
   row: CapsuleRow;
   images: Record<string, string>;
@@ -799,11 +851,19 @@ function BigCard({
   onRendered?: (url: string) => void;
   right?: React.ReactNode;
   unlock?: number;
+  /** Un toque en la miniatura la abre en grande. La de 56×72 no deja ver de
+   *  qué prenda habla — mismo motivo que en el rail de miniaturas. */
+  onZoom?: (url: string) => void;
 }) {
   const src = rowImage(row, images, catalogImages);
   return (
     <li className="flex items-center gap-[13px] rounded-lg border border-line bg-surface p-[13px]">
-      <span className="relative h-[72px] w-[56px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg">
+      <span
+        className="relative h-[72px] w-[56px] shrink-0 overflow-hidden rounded-sm border border-line bg-bg"
+        onClick={src && onZoom ? () => onZoom(src) : undefined}
+        role={src && onZoom ? "button" : undefined}
+        aria-label={src && onZoom ? `Ver ${row.item.nombre} en grande` : undefined}
+      >
         <Thumb
           src={src}
           colorFamilia={row.item.colorFamilia}
