@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeTasteTags, LOOKS, looksForGender } from "./looks";
+import { computeTasteTags, LOOKS, looksForGender, apetitoDeAcentos } from "./looks";
 
 // Swipe sintético: like a los ids dados, dislike al resto del catálogo.
 const swipeAll = (likedIds: string[]) =>
@@ -71,5 +71,30 @@ describe("el mazo arranca contrastando", () => {
     const i = looksForGender("mujer").findIndex((l) => l.id === "de-salir");
     expect(i).toBeGreaterThanOrEqual(0);
     expect(i).toBeLessThan(18);
+  });
+});
+
+describe("apetitoDeAcentos — derivado de los swipes, sin tocar el onboarding", () => {
+  const sw = (ids: string[], liked = true) => ids.map((id) => ({ id, liked }));
+  it("el caso real de Roberto: 2 audaces / 5 discretas → discreto", () => {
+    expect(
+      apetitoDeAcentos([
+        ...sw(["edgy", "streetwear"]),
+        ...sw(["minimalista", "monocromatico", "clasico-elegante", "coreano", "tonos-tierra"]),
+      ])
+    ).toBe("discreto");
+  });
+  it("protagonista pide ventaja de 2; una carta de diferencia es medio (ruido de mazo)", () => {
+    expect(apetitoDeAcentos(sw(["color-protagonista", "glam-noche"]))).toBe("protagonista");
+    expect(apetitoDeAcentos([...sw(["color-protagonista"]), ...sw(["minimalista"], true)])).toBe("medio");
+  });
+  it("los dislikes no cuentan y las cartas neutras tampoco", () => {
+    expect(apetitoDeAcentos([...sw(["glam-noche", "y2k"], false), ...sw(["preppy", "nautico"])])).toBe("medio");
+  });
+  it("las listas solo nombran cartas que existen en el mazo (contrato con ESTILOS)", () => {
+    for (const l of LOOKS) expect(typeof l.id).toBe("string");
+    const ids = new Set(LOOKS.map((l) => l.id));
+    for (const id of ["color-protagonista","glam-noche","y2k","de-salir","edgy","streetwear","minimalista","monocromatico","clasico-elegante","coreano","tonos-tierra"])
+      expect(ids.has(id), id).toBe(true);
   });
 });

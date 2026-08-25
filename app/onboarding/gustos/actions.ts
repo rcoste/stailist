@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { createClient, createTokenClient } from "@/lib/supabase/server";
-import { computeTasteTags, LOOKS, LOOK_IDS } from "@/lib/looks";
+import { computeTasteTags, apetitoDeAcentos, LOOKS, LOOK_IDS } from "@/lib/looks";
 import { generateArchetype, type StyleArchetype } from "@/lib/engine/archetype";
 import { ageStylingLine, ageLabel, type AgeRange } from "@/lib/edad";
 import { generateStyleQuestions } from "@/lib/engine/style-questions";
@@ -63,6 +63,10 @@ export async function saveTastes(
     .update({
       taste_tags: tasteTags,
       style_archetype: archetype,
+      // El apetito de acentos sale de los MISMOS swipes — cero preguntas
+      // extra (docs/designs/acentos-y-colorimetria-por-zona.md). El motor
+      // aún no lo consume; se guarda para el perfil y su UI.
+      acento_apetito: apetitoDeAcentos(clean),
       onboarding_step: 1,
       updated_at: new Date().toISOString(),
     })

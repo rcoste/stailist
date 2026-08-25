@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.282.0] - 2026-08-25
+
+### Added — el apetito de acentos, derivado de los swipes que ya existían
+
+La dimensión que faltaba del intake de stylist: cuánto volumen de color
+quiere la persona (discreto / medio / protagonista) — independiente de la
+colorimetría y del arquetipo. Idea de Roberto tras "Cobalto Bajo Cero"
+("probablemente no me lo hubiera puesto; hubiera usado marino"). El
+descubrimiento que la volvió barata: el mazo de swipes YA varía en audacia
+de color, así que se deriva retroactiva de los swipes existentes — cero
+pantallas nuevas en el onboarding. Verificado sobre las 24 cuentas: 7
+discretos, 2 protagonistas, 15 medios — y los swipes de Roberto ya decían
+"discreto" (2 audaces / 5 discretas) semanas antes de que él lo articulara.
+
+`apetitoDeAcentos` vive pegado al mazo (lib/looks.ts, listas POR CARTA — los
+tags mezclan audacia de color con audacia de actitud), el onboarding lo
+deriva al guardar los swipes, y el backfill pobló los 24 perfiles (solo
+donde NULL: el manual gana). **El motor NO lo consume todavía** — el loop
+está en pausa y su activación es un cambio del motor con su vuelta medida.
+Marco completo: docs/designs/acentos-y-colorimetria-por-zona.md. Siguiente
+incremento: la UI en Perfil → estilo para verlo y corregirlo.
+
 ## [0.2.281.0] - 2026-08-24
 
 ### Added — v68: el polo bajo traje y el uniforme del luto (y la ablación corrigiendo un decreto)

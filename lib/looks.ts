@@ -252,3 +252,66 @@ export function computeTasteTags(
     .slice(0, 8)
     .map((x) => x.tag);
 }
+
+// ── El apetito de acentos: cuánto volumen de color quiere la persona ────────
+//
+// LA DIMENSIÓN ES DE STYLIST, NO NUESTRA: en un intake profesional se pregunta
+// "¿cuánta atención quieres que atraiga tu ropa?" — independiente de la
+// colorimetría (qué colores le van) y del arquetipo (qué vibe es). Nació de
+// Roberto viendo "Cobalto Bajo Cero" (2026-08-25): "abusas de los colores que
+// son acentos… probablemente no me lo hubiera puesto; hubiera usado marino".
+// El marco completo: docs/designs/acentos-y-colorimetria-por-zona.md.
+//
+// SE DERIVA DE LOS SWIPES QUE YA EXISTEN — por eso vive aquí, pegado al mazo:
+// las cartas del deck ya varían en audacia de color, así que el apetito sale
+// retroactivo para todos los usuarios sin añadir ni una pantalla al
+// onboarding. Verificado sobre las 24 cuentas con swipes: 7 discretos, 2
+// protagonistas, 15 medios — y el propio Roberto sale DISCRETO (2 audaces /
+// 5 discretas), consistente con lo que dijo del cobalto semanas después.
+//
+// LAS LISTAS SON POR CARTA, no por tag, a propósito: los tags mezclan audacia
+// de color con audacia de actitud ("atrevido" está en streetwear Y en y2k),
+// y aquí el eje es COLOR. Si el mazo cambia, actualizar estas listas en el
+// mismo commit (mismo contrato que TAG_DF con ESTILOS).
+//
+// EL MOTOR TODAVÍA NO LO CONSUME (2026-08-25): el loop está en pausa y
+// activarlo cambia las generaciones — eso pide su vuelta medida. Hoy esto
+// alimenta el campo del perfil y su UI, donde la persona lo puede corregir
+// (el manual siempre gana, como en registro_por_plan).
+
+export type ApetitoAcentos = "discreto" | "medio" | "protagonista";
+
+/** Cartas donde el COLOR es protagonista o el look pide brillar. */
+const CARTAS_AUDACES = new Set([
+  "color-protagonista",
+  "glam-noche",
+  "y2k",
+  "de-salir",
+  "edgy",
+  "streetwear",
+]);
+
+/** Cartas de paleta contenida: neutros, un tono, elegancia que no grita. */
+const CARTAS_DISCRETAS = new Set([
+  "minimalista",
+  "monocromatico",
+  "clasico-elegante",
+  "coreano",
+  "tonos-tierra",
+]);
+
+/**
+ * Deriva el apetito de los swipes. Umbral de 2 a propósito: una sola carta de
+ * diferencia es ruido de mazo (hay más cartas discretas que audaces); dos ya
+ * es dirección. Con menos señal, "medio" — el default que no rompe nada.
+ */
+export function apetitoDeAcentos(
+  results: { id: string; liked: boolean }[]
+): ApetitoAcentos {
+  const liked = results.filter((r) => r.liked).map((r) => r.id);
+  const audaz = liked.filter((id) => CARTAS_AUDACES.has(id)).length;
+  const discreto = liked.filter((id) => CARTAS_DISCRETAS.has(id)).length;
+  if (audaz - discreto >= 2) return "protagonista";
+  if (discreto - audaz >= 2) return "discreto";
+  return "medio";
+}
