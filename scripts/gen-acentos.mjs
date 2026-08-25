@@ -14,19 +14,26 @@
 // se ENCADENAN desde el discreto, con la instrucción de conservar persona,
 // pose, luz y prendas y cambiar sólo el acento.
 //
-// TRES NIVELES, DOS CLIMAS
-// El nivel es lo que se mide (la persona toca la FILA). Las dos columnas son
-// el MISMO nivel en frío y en calor, y están porque el VEHÍCULO del acento
-// cambia con el clima aunque el apetito no: en frío es la bufanda o el knit,
-// en calor el polo o el calzado. Decisión de Roberto: no se segmenta por el
-// clima de quien mira — ver los dos calibra el gusto general y de paso enseña
-// qué significa el nivel en cada estación.
+// LA ESCALA ES ACUMULATIVA, Y NINGÚN NIVEL ES "SIN COLOR" (corrección de
+// Roberto, 2026-08-25). La v1 puso "discreto = todo neutro, cero acento" y
+// él lo cazó: "lo mínimo de acento sería como una bufanda; medio sería el
+// crew neck y el otro algo más radical". Tiene razón por diseño de medición:
+// con "nada" en el primer escalón, la pantalla pregunta "¿quieres color, sí o
+// no?" en el primer salto y "¿cuánto?" en el segundo — dos preguntas. Así los
+// tres escalones miden lo mismo y cada salto se ve:
+//   1 discreto     — acento CHICO y lejos de la cara (bufanda, calzado)
+//   2 medio        — pieza MEDIANA de color cerca de la cara (crew, polo)
+//   3 protagonista — el color manda: pieza grande de color (abrigo, pantalón)
 //
-// LOS VEHÍCULOS SE ELIGEN POR VISIBILIDAD. El acento clásico de nivel medio en
-// hombre es el calcetín y en una miniatura no se ve; se usan bufanda (frío) y
-// tenis (calor), igual de legítimos y legibles. El color sobrevive a la
-// miniatura mucho mejor que el corte — por eso este grid aguanta 6 fotos donde
-// pares-corte sólo aguantaba 2.
+// DOS CLIMAS. Las columnas son el MISMO nivel en frío y en calor, porque el
+// VEHÍCULO del acento cambia con el clima aunque el apetito no. Decisión de
+// Roberto: no se segmenta por el clima de quien mira — ver los dos calibra el
+// gusto general y enseña qué significa el nivel en cada estación.
+//
+// LOS VEHÍCULOS SE ELIGEN POR VISIBILIDAD: el acento clásico de nivel discreto
+// en hombre es el calcetín y en miniatura no se ve; se usan bufanda (frío) y
+// mocasín + cinturón (calor). El color sobrevive a la miniatura mucho mejor
+// que el corte — por eso este grid aguanta 6 fotos donde pares-corte sólo 2.
 //
 // Uso:  node scripts/gen-acentos.mjs [--only=hombre|mujer]
 // Salida: public/acentos/<genero>-<frio|calor>-<discreto|medio|protagonista>.png
@@ -49,58 +56,66 @@ const mime = (p) => (p.endsWith(".png") ? "image/png" : "image/jpeg");
 
 // Los MISMOS modelos que los pares de corte: el reparto de la app es
 // moreno/mestizo porque la usuaria es mexicana.
+// m2 y no m1: Roberto descartó a m1 al ver la v1 de este grid.
 const AVATAR = {
-  hombre: "docs_para_claude/avatars-hombre/m1.png",
+  hombre: "docs_para_claude/avatars-hombre/m2.png",
   mujer: "docs_para_claude/roster-mujer/av3.png",
 };
 
-// Los colores de acento son FIJOS y seguros: la pantalla mide VOLUMEN, no
-// matiz. Ninguno pisa el veto de la casa (ámbar/terracota/naranja), y los tres
-// funcionan en casi cualquier colorimetría.
+// FONDO CLARO Y LIMPIO, no el concreto gris de los pares de corte: sobre gris
+// medio los colores pierden fuerza, y esta pantalla mide justamente color.
+// Roberto lo preguntó al ver la v1 ("no sé si sea el setting ideal").
 const ESCENA =
-  "A plain light concrete wall in soft even daylight, nothing else in frame.";
+  "A seamless off-white studio backdrop with a pale concrete floor, soft even daylight, nothing else in frame.";
 
+// Los colores de acento son FIJOS y seguros: la pantalla mide VOLUMEN, no
+// matiz. Burdeos, cobalto y esmeralda funcionan en casi cualquier
+// colorimetría y ninguno pisa el veto de la casa (ámbar/terracota/naranja).
 const COLUMNAS = {
   hombre: [
     {
       clima: "frio",
-      // Nivel 1 — el ejemplo literal de Roberto: "el abrigo con un crew neck
-      // azul marino, que es algo más neutral".
+      // Base: abrigo carbón + crew marino + pantalón carbón. El ejemplo de
+      // Roberto ("el abrigo con un crew neck azul marino, más neutral"), aquí
+      // ya con su acento chico encima.
       discreto:
-        "a charcoal grey wool overcoat, open, over a NAVY fine-knit crew-neck sweater, plain dark grey trousers and black leather chelsea boots",
+        "a charcoal grey wool overcoat, open, over a NAVY fine-knit crew-neck sweater, with a deep BURGUNDY wool scarf draped around the neck hanging down the front, plain dark grey trousers and black leather chelsea boots",
       medio:
-        "Add ONE thing only: a deep BURGUNDY wool scarf draped around the neck, hanging down the front over the sweater. Everything else stays exactly as it is — the same coat, the same navy sweater, the same trousers and boots.",
+        "Change ONE thing only: remove the burgundy scarf completely, and the crew-neck sweater is now COBALT BLUE — a strong saturated blue, same fine knit and same shape. The coat, trousers and boots stay exactly the same.",
       protagonista:
-        "Change ONE thing only: the crew-neck sweater is now COBALT BLUE, a strong saturated blue, same fine knit and same shape. Remove the scarf if present. The coat, trousers and boots stay exactly the same.",
+        "Change ONE thing only: the overcoat is now a rich DEEP EMERALD GREEN wool, same cut, same length, still open. The scarf is gone, the sweater underneath is the same NAVY fine knit as in the reference, and the trousers and boots stay exactly the same.",
     },
     {
       clima: "calor",
+      // Base blanca + marino: el beige con gris medio de la v1 se enlodaba
+      // (cálido contra frío) y Roberto lo cazó — "creo que ni siquiera va esa
+      // combinación, está raro".
       discreto:
-        "a plain STONE BEIGE short-sleeve polo shirt, tucked loosely into mid-grey lightweight trousers, with plain white leather sneakers",
+        "a plain WHITE short-sleeve polo shirt tucked loosely into navy blue lightweight chino trousers, with BURGUNDY leather loafers and a matching burgundy leather belt",
       medio:
-        "Change ONE thing only: the sneakers are now BURGUNDY leather loafers, and a matching burgundy leather belt is visible at the waist. The polo, the trousers and everything else stay exactly the same.",
+        "Change ONE thing only: the polo shirt is now EMERALD GREEN, a rich saturated green, same short-sleeve polo shape and same fabric. The loafers and belt become plain dark brown. The navy trousers stay exactly the same.",
       protagonista:
-        "Change ONE thing only: the polo shirt is now EMERALD GREEN, a rich saturated green, same short-sleeve polo shape and same fabric. The shoes go back to plain white sneakers and the belt is plain dark. The trousers stay exactly the same.",
+        "Change TWO things and nothing else: the polo shirt is now EMERALD GREEN (rich saturated green, same shape) AND the trousers are now deep BURGUNDY, same lightweight chino cut. The loafers become plain dark brown. Same person, same pose, same background.",
     },
   ],
   mujer: [
     {
       clima: "frio",
       discreto:
-        "a charcoal grey wool overcoat, open, over a NAVY fine-knit crew-neck sweater, plain dark grey straight trousers and black leather ankle boots",
+        "a charcoal grey wool overcoat, open, over a NAVY fine-knit crew-neck sweater, with a deep BURGUNDY wool scarf draped around the neck hanging down the front, plain dark grey straight trousers and black leather ankle boots",
       medio:
-        "Add ONE thing only: a deep BURGUNDY wool scarf draped around the neck, hanging down the front over the sweater. Everything else stays exactly as it is — the same coat, the same navy sweater, the same trousers and boots.",
+        "Change ONE thing only: remove the burgundy scarf completely, and the crew-neck sweater is now COBALT BLUE — a strong saturated blue, same fine knit and same shape. The coat, trousers and boots stay exactly the same.",
       protagonista:
-        "Change ONE thing only: the crew-neck sweater is now COBALT BLUE, a strong saturated blue, same fine knit and same shape. Remove the scarf if present. The coat, trousers and boots stay exactly the same.",
+        "Change ONE thing only: the overcoat is now a rich DEEP EMERALD GREEN wool, same cut, same length, still open. The scarf is gone, the sweater underneath is the same NAVY fine knit as in the reference, and the trousers and boots stay exactly the same.",
     },
     {
       clima: "calor",
       discreto:
-        "a plain STONE BEIGE short-sleeve knit top, tucked loosely into mid-grey lightweight trousers, with plain white leather sneakers",
+        "a plain WHITE short-sleeve knit top tucked loosely into navy blue lightweight trousers, carrying a BURGUNDY leather shoulder bag and wearing burgundy leather flats",
       medio:
-        "Change ONE thing only: she is now carrying a BURGUNDY leather shoulder bag and wearing burgundy leather flats instead of the sneakers. The top, the trousers and everything else stay exactly the same.",
+        "Change ONE thing only: the knit top is now EMERALD GREEN, a rich saturated green, same short-sleeve shape and same fabric. The bag is gone and the flats become plain dark brown. The navy trousers stay exactly the same.",
       protagonista:
-        "Change ONE thing only: the knit top is now EMERALD GREEN, a rich saturated green, same short-sleeve shape and same fabric. The bag is gone and the shoes go back to plain white sneakers. The trousers stay exactly the same.",
+        "Change TWO things and nothing else: the knit top is now EMERALD GREEN (rich saturated green, same shape) AND the trousers are now deep BURGUNDY, same lightweight cut. The bag is gone and the flats become plain dark brown. Same person, same pose, same background.",
     },
   ],
 };

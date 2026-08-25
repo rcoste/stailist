@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.282.3] - 2026-08-25
+
+### Changed — v2 del grid de acentos: la escala, la base de calor, el modelo y el fondo
+
+Cuatro correcciones de Roberto viendo la v1, y la primera es de fondo:
+
+**La escala estaba mal armada.** La v1 puso "discreto = todo neutro, cero
+acento"; él lo cazó — "lo mínimo sería como una bufanda; medio sería el crew
+neck y el otro algo más radical". Tiene razón por diseño de medición: con
+"nada" en el primer escalón, el primer salto pregunta "¿quieres color, sí o
+no?" y el segundo "¿cuánto?" — dos preguntas distintas. La escala ahora es
+acumulativa y ningún nivel es cero: acento chico (bufanda / mocasín+cinturón)
+→ pieza mediana de color cerca de la cara (crew cobalto / polo esmeralda) →
+el color manda (abrigo verde botella / polo + pantalón de color).
+
+**Beige + gris medio no combinaba** ("creo que ni siquiera va esa
+combinación, está raro") — y es cierto: cálido contra frío se enlodan, justo
+lo que el prompt del motor advierte. La base de calor pasa a blanco + marino.
+
+**Fondo** crudo de estudio en vez del concreto gris de los pares de corte:
+sobre gris medio los colores pierden fuerza, y esta pantalla mide color.
+
+**Modelo** m2 en vez de m1 (descartado por Roberto).
+
 ## [0.2.282.2] - 2026-08-25
 
 ### Added — las 12 fotos del grid de acentos (3 niveles × frío/calor × 2 géneros)
