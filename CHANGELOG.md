@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.280.1] - 2026-08-24
+
+### Fixed — la dosis del hilo de historial: un look por día, tope 14, como producción
+
+Roberto lo predijo calificando ("forzando la rotación quitamos prendas que el
+look necesita — ni modo, hay que repetir") y los datos le dieron la razón: la
+primera versión del hilo pasaba TODOS los looks anteriores (~45 combos al
+final de la corrida, el triple de lo que un usuario real genera), y el motor
+acorralado empezó a romper armados por no repetir — dos camisas juntas,
+camiseta con traje en comida de trabajo. En los mismos 17 briefs: 87.5% de
+aprobación del juez sin hilo → 79.5% con el hilo sobredosificado. Ahora pasa
+UN look por brief anterior (el principal) con tope de 14 — exactamente la
+ventana de producción. La báscula ba8f4caa queda marcada como instrumento
+mal dosificado; la reemplaza una corrida nueva.
+
 ## [0.2.280.0] - 2026-08-24
 
 ### Changed — pool v10 (+4 briefs) e hilo de historial en el eval; y el 90% de v67

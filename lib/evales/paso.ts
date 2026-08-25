@@ -76,11 +76,20 @@ export async function pasoEval(opciones: {
       // outfits, así que la rotación corría en vacío y el motor elegía a sus
       // favoritas 17 veces seguidas — Roberto lo vio en dos evales ("poca
       // rotación, tiene sus preferidas"; 5 de sus 12 abrigos y 27 de sus 48
-      // tops en CERO looks). Ahora el brief N recibe los looks de los briefs
-      // anteriores de SU corrida como combos recientes: el eval simula N días
-      // seguidos de uso real, que es lo que el producto promete, y la
-      // rotación por fin se ejercita (y se mide). Los combos reales de la
-      // cuenta se conservan detrás.
+      // tops en CERO looks). El brief N recibe historial de los briefs
+      // anteriores de SU corrida: el eval simula N días seguidos de uso real.
+      //
+      // LA DOSIS ES LA DE PRODUCCIÓN, y se aprendió a golpes el mismo día que
+      // nació esto: la primera versión pasaba TODOS los looks anteriores (3
+      // por brief ≈ 45 combos al final) — el triple del historial que un
+      // usuario real genera jamás (1 look/día × 14 días), y el motor,
+      // acorralado, empezó a romper looks por no repetir: dos camisas juntas,
+      // camiseta con traje en comida de trabajo (87.5% → 79.5% en los mismos
+      // briefs; Roberto lo predijo: "forzando la rotación quitamos prendas
+      // que el look necesita"). Ahora va UN look por brief anterior (el
+      // principal, que es el que "se puso") con tope de 14 — exactamente la
+      // ventana que produce un usuario real. Los combos reales de la cuenta
+      // se conservan detrás.
       const { data: previos } = await supabase
         .from("eval_briefs")
         .select("n, looks")
@@ -88,9 +97,10 @@ export async function pasoEval(opciones: {
         .lt("n", fila.n as number)
         .not("looks", "is", null)
         .order("n");
-      const combosDeLaCorrida = (previos ?? []).flatMap((p) =>
-        (((p.looks as LookMotor[] | null) ?? [])).map((l) => l.item_ids)
-      );
+      const combosDeLaCorrida = (previos ?? [])
+        .slice(-14)
+        .map((p) => ((p.looks as LookMotor[] | null) ?? [])[0]?.item_ids)
+        .filter((ids): ids is string[] => Array.isArray(ids) && ids.length > 0);
       const base = {
         ...carga.base,
         recentCombos: [...combosDeLaCorrida, ...carga.base.recentCombos],
