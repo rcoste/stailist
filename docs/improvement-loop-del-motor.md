@@ -385,6 +385,35 @@ casa) y los grados en el brief.
    técnico a 17° "demasiado caluroso". Y uno de dial, no de regla: "está
    abusado el traje completo + algo; mejor blazers para smart casual".
 
+10. 🔴 **`polo-con-traje-completo` — LA CANDIDATA MÁS SOSTENIDA QUE HAY, y
+    llevaba seis rondas escondida.** Ablación sobre los 361 looks votados con
+    prendas vivas (2026-08-24): **5 👎 / 0 👍**, con SEIS comentarios suyos
+    diciendo lo mismo en cinco rondas distintas — "un traje completo con polo
+    está raro", "está raro el polo + crew neck + traje", "más adhoc con un
+    blazer que traje completo + algo".
+
+    **La distinción que la hace correcta, medida:** es el TRAJE COMPLETO
+    (saco + su pantalón), no el sastre. Polo con blazer y pantalón de otro
+    juego da **2 👎 / 2 👍**, y los dos 👎 son por otra cosa (uno es de color,
+    "esa polo azul cobalto"; el otro es blazer marino + pantalón marino, que
+    él LEYÓ como traje completo — y eso ya lo cubre `traje-desparejado`).
+    Escribir la regla contra "polo + sastre" mataría dos looks que aprobó.
+
+    **POR QUÉ SE PERDIÓ SEIS VECES, que es la lección de método:** cada
+    mención se archivó por su CONTEXTO —"traje en cita", "polo cobalto",
+    "traje completo + algo", "polo bajo crewneck"— y ninguna por su PRENDA.
+    El patrón común sólo apareció al cruzar los 221 comentarios por prenda en
+    vez de por tema. La revisión de comentarios debe hacerse en los dos ejes.
+
+    Reparación determinista disponible: cambiar el polo por la camisa de
+    vestir mejor puntuada (el traje completo pide camisa, con o sin corbata).
+
+11. ⬜ **Calzado formal en look casual — NO califica, y queda escrito para no
+    volver a proponerla.** Tres menciones suyas seguidas y consistentes
+    ("mejor unos loafers o mocasines"), pero la ablación da **4 👎 / 3 👍**:
+    moneda al aire, como la chaqueta técnica a 8°. Es preferencia de gusto,
+    no regla — territorio del dial, no de `reglas-ejecucion`.
+
 **Pool v9 — EN MAIN desde v0.2.270.1 (2026-08-22), tras votarse 2bba08e0.
 v58 quedó congelado bajo v9 como línea base del retador `prompt-anterior`.** Los `plan` de los eventos pasan de
 etiqueta de catálogo ("una cita en un restaurante") a lo que diría una persona
