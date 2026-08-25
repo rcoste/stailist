@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.285.0] - 2026-08-25
+
+### Added — el paso de acentos en el ONBOARDING, justo después del reveal de colores
+
+Ahí es donde encaja: la persona acaba de ver qué colores le van y esta
+pregunta es la otra mitad — cuánto de ese color quiere llevar encima. El
+reveal de colorimetría ahora lleva a `/onboarding/acentos` en vez de al
+clóset.
+
+**NO es un "step" numerado, y es a propósito:** insertar un paso en
+`ONBOARDING_ROUTES` correría la numeración de todos los siguientes, y quien
+estuviera a media alta —con su `onboarding_step` ya guardado— aterrizaría en
+otra pantalla al volver. La ruta se alcanza desde el reveal, su gate es "ya
+pasó colorimetría" (step ≥ 2, no un step exacto, así recargar no te expulsa)
+y es SKIPPABLE con "mejor luego".
+
+Sin auto-avance al tocar, a diferencia del deck: aquí las tres opciones se
+comparan entre sí y avanzar al primer tap impediría cambiar de opinión. Y la
+semilla NO se pre-selecciona — marcar una opción de entrada sesga hacia ella,
+y esta pantalla existe justamente porque esa derivación no es de fiar.
+
+El grid se extrajo a `components/acentos-grid.tsx`, compartido con la card
+del perfil: si divergiera, la respuesta del onboarding y la del perfil
+dejarían de ser el mismo dato (el error del vocabulario duplicado de las
+fichas de prenda, ya pagado una vez).
+
+Verificado end-to-end en el navegador con una cuenta a media onboarding:
+elegir → guarda con fuente 'elegido' → avanza al clóset. Y dos ajustes que
+salieron de medir la pantalla real a 375×812: el copy a una línea y las fotos
+a 5:4, porque el botón de seguir caía fuera del viewport.
+
 ## [0.2.284.0] - 2026-08-25
 
 ### Added — v69: el apetito de acentos por fin LLEGA al motor (y a los jueces)

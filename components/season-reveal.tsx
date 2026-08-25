@@ -218,7 +218,7 @@ export function SeasonReveal({
 
       <div className="mt-1 flex flex-col gap-3">
         <Link
-          href="/onboarding/closet"
+          href="/onboarding/acentos"
           className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
         >
           guardar mi paleta <Icon name="flecha" size={19} />
