@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.288.4] - 2026-08-25
+
+### Added — básculas temáticas del eval (`--solo`)
+
+`npx tsx scripts/eval-correr.ts 3 --solo "frí"` se queda sólo con los briefs
+del pool cuya etiqueta contenga ese texto, y aplica el filtro DESPUÉS de las
+vueltas (3 vueltas × 4 briefs fríos = 12, no los primeros 4 del pool).
+
+**Para qué nació:** de los 251 looks que Roberto ha votado, sólo **27 son de
+briefs a ≤10°** — el pool v9 tenía UN brief frío y los cuatro de v10 nunca han
+ido a voto. Por eso la forma (b) de la capa intermedia a 8° (abrigo bueno,
+sin punto debajo) tiene **0 👎 / 0 👍**: no está refutada, está sin medir.
+Llegar a ~30 looks fríos con el pool completo cuesta $12 (3 × $4); con el
+filtro cuesta ~$2 y da los mismos 30.
+
+**Dos advertencias, en el docblock del script:** una corrida con `--solo` NO
+da un número absoluto comparable con las básculas completas (mide el tema, no
+el motor), y el hilo de historial queda más corto, así que la presión de
+rotación es menor.
+
 ## [0.2.288.3] - 2026-08-25
 
 ### Fixed — una corbata de punto no es una capa térmica

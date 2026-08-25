@@ -2,6 +2,21 @@
 //
 // Uso:  npx tsx scripts/eval-correr.ts [vueltas] [--nota "texto"]
 //       npx tsx scripts/eval-correr.ts --seguir <corridaId>
+//       npx tsx scripts/eval-correr.ts 3 --solo "frío"     ← báscula temática
+//
+// `--solo <texto>` se queda sólo con los briefs del pool cuya etiqueta contenga
+// ese texto. Nació el 2026-08-25 para una pregunta concreta: de los 251 looks
+// que Roberto ha votado sólo 27 son de briefs a ≤10°, así que las dos formas
+// del fallo de "la capa intermedia a 8°" (§8 punto 11-bis del improvement
+// loop) no se pueden decidir — una de ellas tiene 0 👎 / 0 👍. Correr el pool
+// completo tres veces para llegar a ~30 looks fríos cuesta $12; los 4 briefs
+// fríos por tres vueltas cuestan ~$2 y dan los mismos 30.
+//
+// LEER ANTES DE USARLO, dos veces:
+//  1. Una corrida con `--solo` NO da un número absoluto comparable con las
+//     básculas completas (78% de v64, 90% de v67). Mide el tema, no el motor.
+//  2. El hilo de historial (brief N ve los looks de 1..N-1) queda más corto,
+//     así que la presión de rotación es menor que en una báscula completa.
 //
 // PARA QUÉ: una corrida completa son ~13 briefs × (generar + calificar) y toma
 // media hora. Dejarla corriendo aquí y llegar al marcador ya hecho es el mismo
@@ -52,7 +67,13 @@ function mapear(b: Record<string, unknown>): EvalBriefFila {
   };
 }
 
-async function abrir(s: Cliente, duenoId: string, vueltas: number, nota: string | null) {
+async function abrir(
+  s: Cliente,
+  duenoId: string,
+  vueltas: number,
+  nota: string | null,
+  solo: string | null
+) {
   const { data: perfil } = await s.from("profiles").select("*").eq("id", duenoId).single();
   const pf = (perfil ?? {}) as Record<string, unknown>;
   const conEstilo = tieneEstilo(estiloDelPerfil(pf));
@@ -77,7 +98,12 @@ async function abrir(s: Cliente, duenoId: string, vueltas: number, nota: string 
     .single();
   if (error) throw error;
 
-  const briefs = briefsPara("veredicto", vueltas * N_POOL);
+  const todos = briefsPara("veredicto", vueltas * N_POOL);
+  // El filtro se aplica DESPUÉS de generar las vueltas: así `3 --solo "frío"`
+  // da los 4 briefs fríos tres veces, no los primeros 4 del pool.
+  const norm = (t: string) => t.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  const briefs = solo ? todos.filter((b) => norm(b.etiqueta).includes(norm(solo))) : todos;
+  if (!briefs.length) throw new Error(`--solo "${solo}" no casó con ningún brief del pool`);
   const { error: eb } = await s
     .from("eval_briefs")
     .insert(briefs.map((brief, i) => ({ corrida_id: c.id, n: i + 1, brief })));
@@ -87,7 +113,7 @@ async function abrir(s: Cliente, duenoId: string, vueltas: number, nota: string 
   }
   console.log(
     `corrida ${c.id}\n  ${PROMPT_VERSION} · ${MODELO_MOTOR.id} · pool ${POOL_VERSION} · ${RUBRICA_VERSION}/${RUBRICA_VISION_VERSION}` +
-      `\n  ${briefs.length} briefs · estilo declarado: ${conEstilo ? "sí" : "NO (la dimensión no medirá)"}`
+      `\n  ${briefs.length} briefs${solo ? ` (filtrados por "${solo}", de ${todos.length})` : ""} · estilo declarado: ${conEstilo ? "sí" : "NO (la dimensión no medirá)"}`
   );
   return { id: c.id as string, conEstilo, conColor };
 }
@@ -97,6 +123,8 @@ async function main() {
   const seguir = args.indexOf("--seguir");
   const iNota = args.indexOf("--nota");
   const nota = iNota >= 0 ? args[iNota + 1] ?? null : null;
+  const iSolo = args.indexOf("--solo");
+  const solo = iSolo >= 0 ? args[iSolo + 1] ?? null : null;
 
   const s = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -124,7 +152,7 @@ async function main() {
     console.log(`retomando ${corridaId}`);
   } else {
     const vueltas = Math.max(1, Math.min(3, Number(args[0]) || 1));
-    const abierta = await abrir(s, dueno.id as string, vueltas, nota);
+    const abierta = await abrir(s, dueno.id as string, vueltas, nota, solo);
     corridaId = abierta.id;
     conEstilo = abierta.conEstilo;
     conColor = abierta.conColor;
