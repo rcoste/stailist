@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.282.1] - 2026-08-25
+
+### Changed — el apetito derivado se degrada a SEMILLA; la medición será su pantalla
+
+Corrección de Roberto a la v0.2.282.0, y es de diseño de medición: derivar
+el apetito de las cartas del swipe confunde afinidad estética con volumen
+de color ("estás asumiendo algo muy importante a partir de las imágenes").
+Entra `acento_apetito_fuente` ('swipes' = semilla, 'elegido' = medición):
+los 24 backfilleados quedan marcados como semilla, el onboarding marca su
+derivación igual, y nada con fuente 'elegido' se pisa jamás. La medición
+real queda especificada en docs/designs/pantalla-apetito-acentos.md: mismo
+look, tres niveles de acento (burdeos fijo — el color es seguro entre
+colorimetrías y no pisa el veto), pregunta "¿cuál te pondrías TÚ?" (no
+"¿cuál se ve mejor?" — la lección del cobalto), skippable, con card en
+Perfil → estilo para los existentes.
+
 ## [0.2.282.0] - 2026-08-25
 
 ### Added — el apetito de acentos, derivado de los swipes que ya existían

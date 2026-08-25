@@ -63,10 +63,13 @@ export async function saveTastes(
     .update({
       taste_tags: tasteTags,
       style_archetype: archetype,
-      // El apetito de acentos sale de los MISMOS swipes — cero preguntas
-      // extra (docs/designs/acentos-y-colorimetria-por-zona.md). El motor
-      // aún no lo consume; se guarda para el perfil y su UI.
+      // El apetito de acentos derivado de los swipes es SEMILLA, no medición
+      // (Roberto: "estás asumiendo algo muy importante a partir de las
+      // imágenes"): gustar de una carta mide su estética completa, no el
+      // volumen de color. La pantalla dedicada de acentos lo mide de verdad
+      // y lo sobreescribe con fuente 'elegido'. El motor aún no lo consume.
       acento_apetito: apetitoDeAcentos(clean),
+      acento_apetito_fuente: "swipes",
       onboarding_step: 1,
       updated_at: new Date().toISOString(),
     })
