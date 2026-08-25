@@ -462,6 +462,24 @@ casa) y los grados en el brief.
     Es reparable en código (añadir la capa de punto que el clóset ya tiene) y
     es el primer candidato cuando el loop despierte.
 
+    **Los 12 casos, para no re-descubrirlos** (báscula · brief · look):
+    2ec16c63 — cena fría "Cobalto en Confianza" y "Frío Bajo Control";
+    diario frío "Capas de Concreto"; fiesta fría "Vino y Filo".
+    cead58b5 — fiesta fría "Negro con Filo" y "Sastre de Cumpleaños";
+    trabajo frío con cliente "Saco y Punto".
+    31ef11bb — diario frío "Capas de Creativo" y "Marino Bajo Cero";
+    trabajo frío "Marino de Cliente"; cena fría "Blazer Sin Esfuerzo" y
+    "Café con Filo".
+    Se recuperan con: `select b.brief->>'etiqueta', b.looks, b.notas from
+    eval_briefs b where b.corrida_id::text like '<prefijo>%'`.
+
+    **Las dos formas del fallo, que la regla tiene que distinguir:**
+    (a) la capa exterior no abriga (chamarra ultraligera, overshirt de tela)
+    a 8° teniendo abrigo de verdad en el clóset; (b) hay abrigo bueno pero
+    debajo sólo camisa/polo fino, sin punto intermedio. La (b) es la que
+    NINGUNA regla mira hoy — `frio-sin-abrigo` sólo cuenta si hay capa
+    exterior, y `blazer-no-es-abrigo` sólo mira el saco.
+
 12. 🔴 **`camisa-negra-en-solemne` (funeral, boda, formal, gala): 2 👎 / 0 👍.**
     Sus dos comentarios son de los más fuertes del corpus: "camisa negra para
     una boda es como de cholo, mafioso italiano — terrible, terrible,
