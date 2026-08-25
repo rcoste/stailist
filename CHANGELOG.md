@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.283.0] - 2026-08-25
+
+### Added — la card de acentos en Perfil → estilo: la semilla pasa a medición
+
+El grid de 3 niveles × 2 climas, montado junto al dial de registro (mismo
+patrón: se guarda al tocar, sin botón). **La fila es la unidad, no la
+celda** — las dos fotos son el mismo nivel en frío y en calor, y si se
+pudiera tocar una celda la respuesta sería ambigua ("¿eligió por el acento
+o porque le gustó el look de invierno?"). Sin etiquetas de nivel bajo las
+fotos, por lo mismo que en `pares-corte`: poner "discreto/medio/
+protagonista" convertiría "¿cuál te pondrías?" en "¿cuál es la respuesta
+correcta?". El copy cambia según la fuente: con semilla pide confirmar
+("esto lo deduje de tus swipes"), ya elegido explica qué hace.
+
+Elegir escribe `fuente: 'elegido'` y el backfill jamás vuelve a pisarlo —
+verificado end-to-end en el navegador: tocar la fila movió la selección,
+la base quedó en 'protagonista'/'elegido', y el backfill en seco pasó a 0
+perfiles.
+
+Dos detalles de layout que salieron de verlo corriendo: las fotos van en
+CUADRADO con `object-contain` (a lo ancho, cada fila medía media pantalla;
+y el contain deja ver los zapatos, que en calor SON el acento), y `sizes`
+explícito — sin él el optimizador servía la de 3840px para pintarla a 140.
+
 ## [0.2.282.4] - 2026-08-25
 
 ### Fixed — el "protagonista" de calor ya no parece uvas

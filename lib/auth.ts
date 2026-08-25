@@ -60,6 +60,10 @@ export type Profile = {
   style_vetoes: { chips: string[]; free: string[] };
   /** Dial de registro por plan (lib/registro-plan.ts): default consenso. */
   registro_por_plan: import("@/lib/registro-plan").RegistroPorPlan | null;
+  /** Cuánto color quiere llevar (lib/looks.ts). `fuente` distingue la semilla
+   *  derivada de los swipes de lo que la persona eligió: elegido nunca se pisa. */
+  acento_apetito: import("@/lib/looks").ApetitoAcentos | null;
+  acento_apetito_fuente: "swipes" | "elegido" | null;
   journey_state: JourneyState;
   style_archetype: { nombre: string; descripcion: string } | null;
   // Preguntas de estilo personalizadas (IA) cacheadas: { sig, questions }. sig = firma

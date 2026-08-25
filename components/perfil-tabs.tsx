@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { RegistroPlanCard } from "@/components/registro-plan-card";
+import { AcentosCard } from "@/components/acentos-card";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
@@ -34,6 +35,8 @@ export type PerfilTabsProps = {
   styleVetoes: StyleVetoes;
   siluetaLabel: string | null; // "Promedio · Parejo" o null si no hay
   registroPorPlan: import("@/lib/registro-plan").RegistroPorPlan | null;
+  acentoApetito: import("@/lib/looks").ApetitoAcentos | null;
+  acentoApetitoFuente: string | null;
   dressCodeLabel: string | null; // "camisa o polo, sin saco" o null si no lo ha dicho
   styleReference: StyleRef | null; // estilo de referencia (foto de inspiración)
   styleWords: string | null; // su estilo en sus palabras (texto libre)
@@ -209,6 +212,8 @@ function EstiloTab({
   gender,
   siluetaLabel,
   registroPorPlan,
+  acentoApetito,
+  acentoApetitoFuente,
   dressCodeLabel,
   banner,
   styleReference,
@@ -337,6 +342,12 @@ function EstiloTab({
         </Link>
 
         <RegistroPlanCard inicial={registroPorPlan} />
+
+        <AcentosCard
+          inicial={acentoApetito}
+          fuente={acentoApetitoFuente}
+          gender={gender}
+        />
       </div>
 
       {/* UNA sola card de "cuál es tu estilo": las fotos mandan y el texto libre

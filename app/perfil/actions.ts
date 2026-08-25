@@ -221,3 +221,26 @@ export async function guardarRegistroPlan(
   revalidatePath("/perfil");
   return { ok: true };
 }
+
+// ── El apetito de acentos (lib/looks.ts, docs/designs/pantalla-apetito-acentos.md) ──
+// Elegir aquí SIEMPRE gana sobre la semilla derivada de los swipes: se escribe
+// la fuente 'elegido' y ningún backfill vuelve a pisarlo. Es la misma jerarquía
+// del dial de registro — lo que la persona dice de sí misma manda sobre lo que
+// dedujimos de ella.
+export async function guardarApetitoAcentos(
+  valor: "discreto" | "medio" | "protagonista"
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ acento_apetito: valor, acento_apetito_fuente: "elegido" })
+    .eq("id", user.id);
+  if (error) return { ok: false };
+  revalidatePath("/perfil");
+  return { ok: true };
+}

@@ -171,6 +171,8 @@ export default async function PerfilPage() {
         styleVetoes={profile.style_vetoes}
         siluetaLabel={siluetaLabel}
         registroPorPlan={profile.registro_por_plan}
+        acentoApetito={profile.acento_apetito}
+        acentoApetitoFuente={profile.acento_apetito_fuente}
         dressCodeLabel={dressCodeLabel}
         banner={banner}
         styleReference={styleReference}
