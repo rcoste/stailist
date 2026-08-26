@@ -2,6 +2,51 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.289.0] - 2026-08-25 — rama motor-v71, EN RONDA
+
+### Changed — prompt v71: la formalidad deja de pelear con el dial
+
+Roberto: *"me estás poniendo trajes demasiado formales para eventos…
+overdressed. Jamás me pondría algo así a menos que explícitamente ese fuera
+el código."* Sexta+ mención en rondas distintas del mismo tema.
+
+**El mecanismo, encontrado con el código en la mano:** para una cena con dial
+`relajado`, el prompt decía dos cosas a la vez — el dial ("un paso MÁS
+RELAJADO, blazer sobre traje completo") y la línea de formalidad ("ante la
+duda, sube medio nivel, NUNCA lo bajes", escrita para bodas mexicanas y
+aplicada a TODO evento). La categórica ganaba. Y fiesta ni siquiera tiene dial
+sembrado, así que ahí sólo operaba la escalada: por eso es el peor brief del
+corpus (43% histórico) y por eso salió un traje negro con moño para un
+cumpleaños en casa.
+
+**La evidencia (92 looks votados en cita/cena/fiesta):** traje completo 46%,
+con corbata 25%, sin sastre 85%. Control: traje en boda/funeral 82% — el traje
+no es el problema, el lugar sí. NO es regla de código a propósito: tiene 16 👍
+(casi todos en la cita de mantel) que una regla dura mataría.
+
+Dos ediciones, un solo cambio:
+1. **El empuje respeta el dial** (`prompt.ts`): con dial relajado, la
+   formalidad pasa de meta a TECHO — "piezas sueltas o blazer con pantalón de
+   otro juego antes que traje completo, cuello abierto antes que corbata".
+   Sin dial o con dial arreglado, todo igual que hoy (las bodas no se tocan).
+2. **Semiformal se alinea con su propia pantalla** (`formalidad.ts`): decía
+   "corbata opcional" al motor mientras la pantalla promete "saco, sin
+   corbata" — dos 👎 de la báscula fría citan la contradicción, no el outfit.
+   Ahora: corbata sólo si el plan la pide; el traje completo es el techo del
+   código, no su punto medio. Viaja a las rúbricas por la misma tabla.
+
+### Added — docs/registro-por-ocasion.md
+
+La calibración research que pidió Roberto: qué se pone la gente de verdad en
+una fiesta en casa, una cena con amigos, una cita (por tipo) y una comida de
+trabajo — con fuentes, cruzada contra sus 92 votos, y con el borrador de las
+líneas v72 para el catálogo de eventos (NO escritas: una cosa por vuelta).
+El precedente del método es el funeral: la única línea investigada del
+catálogo, y la única que salió 5/5.
+
+**Pre-registro de la ronda:** v71 vs `prompt-anterior` (v70, congelado hoy).
+Entra a main sólo si aprobación ≥.
+
 ## [0.2.288.7] - 2026-08-25
 
 ### Fixed — los radios vuelven a la escala del design system (163 sitios)

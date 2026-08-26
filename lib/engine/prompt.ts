@@ -22,6 +22,7 @@ import { OBJECTIVES, type Objective } from "@/app/onboarding/objetivo/objectives
 import { lineaDressCode } from "@/lib/dress-code";
 import { lineaFormalidad } from "@/lib/formalidad";
 import { lineaTipoEvento } from "@/lib/eventos";
+import { registroDe } from "@/lib/registro-plan";
 import { reconocerOcasion } from "@/lib/ocasiones";
 import { alcanceDeFormalidad, lineaAlcance } from "./alcance";
 import {
@@ -463,7 +464,19 @@ import {
 // El modelo tomaba el permiso de ir tonal aunque tuviera con qué. La foto que
 // la persona elige en la pantalla LLEVA su guiño, así que el tonal pasa a ser
 // el fallback explícito y no el default.
-export const PROMPT_VERSION = "v70";
+// v71 (2026-08-25): LA FORMALIDAD DEJA DE PELEAR CON EL DIAL, y semiformal
+// deja de contradecir su propia pantalla. Dos ediciones, un solo cambio: (1)
+// el empuje "sube medio nivel, NUNCA lo bajes" —escrito para bodas— se
+// invierte cuando el dial del plan va relajado (la formalidad pasa de meta a
+// techo); (2) semiformal (lib/formalidad.ts) ya no dice "corbata opcional"
+// mientras la pantalla promete "saco, sin corbata" — corbata sólo si el plan
+// la pide, y el traje completo es el techo del código, no su punto medio.
+// La evidencia: 92 looks votados en cita/cena/fiesta — traje completo 46%,
+// corbata 25%, sin sastre 85%; control traje en boda/funeral 82%. Roberto,
+// 6+ menciones en rondas distintas: "overdressed… jamás me pondría algo así
+// a menos que explícitamente ese fuera el código". Y dos de sus 👎 de la
+// báscula fría citaban la contradicción pantalla/motor, no el outfit.
+export const PROMPT_VERSION = "v71";
 
 export type EngineItem = {
   id: string;
@@ -941,10 +954,22 @@ export function contextBlock(
     // "playa" el error barato es el CONTRARIO y el mismo consejo lo produce: la
     // primera corrida con boda de playa devolvió blazer marino y zapato de piel
     // de suela para la arena, empujada por esta misma frase.
+    // v71: LA ESCALADA RESPETA EL DIAL. "Ante la duda sube medio nivel, nunca
+    // lo bajes" se escribió para bodas mexicanas y aplicaba a TODO evento — así
+    // que en una cena con dial relajado el prompt decía dos cosas a la vez: el
+    // dial "un paso MÁS RELAJADO, blazer sobre traje" y esta línea "NUNCA lo
+    // bajes". La categórica ganaba. Medido en 92 looks votados de
+    // cita/cena/fiesta: traje completo 46% de aprobación, corbata 25%, sin
+    // sastre 85% — y el control (traje en boda/funeral) 82%: el traje no es el
+    // problema, el lugar sí. Con dial relajado la formalidad pasa de meta a
+    // TECHO; sin dial (o con dial arreglado) todo queda como estaba.
+    const dialRelajado = registroDe(ctx.registroPorPlan, ctx.tipoEvento) === "relajado";
     const empuje =
       ctx.formality === "playa"
         ? "RESPÉTALA. Y ojo con el reflejo de arreglar de más: AQUÍ pasarse es el error, no quedarse corto — el saco oscuro y el zapato de suela de cuero se leen como no haber entendido dónde es. Si dudas entre dos, gana el más fresco."
-        : "RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.";
+        : dialRelajado
+          ? "RESPÉTALA como TECHO, no como meta: su dial para este plan va relajado, así que DENTRO de esta formalidad elige la lectura más relajada — piezas sueltas o un blazer con pantalón de otro juego antes que el traje completo, y el cuello abierto antes que la corbata. Aquí el error barato es pasarse de arreglado, no quedarse corto."
+          : "RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.";
     lines.push(`Formalidad del evento: ${lineaFormalidad(ctx.formality)} — ${empuje}`);
   } else if (ctx.objective === "evento") {
     lines.push(

@@ -53,7 +53,17 @@ export const FORMALIDADES: {
     mujer: "de coctel",
     neutro: "arreglado, sin llegar a traje",
     jerga: "semiformal · coctel · cocktail",
-    paraElMotor: "semiformal / coctel (saco sí, corbata opcional)",
+    // v71: decía "corbata opcional" mientras la pantalla promete "saco, sin
+    // corbata" — el motor contradecía la definición que la propia app publica,
+    // y Roberto citó la contradicción DOS veces votando la báscula fría
+    // ("¿fiesta semiformal: sacos sin corbata... y le pones una corbata?").
+    // Medido en 92 looks votados de cita/cena/fiesta: corbata 1👍/3👎. Y el
+    // traje completo pasa a ser el TECHO del código, no su punto medio —
+    // coincide con la práctica (coctel = blazer/saco coordinado; el traje es
+    // la lectura más formal, no la default) y con sus votos (traje completo
+    // en esos eventos: 46%).
+    paraElMotor:
+      "semiformal / coctel — saco o blazer SÍ, y el traje completo es el TECHO de este código, no su punto medio: un saco con pantalón de otro juego cumple igual de bien. La corbata NO va por default (el coctel social se lleva con el cuello abierto); póntela sólo si el plan la pide con esas palabras",
   },
   {
     key: "formal",
