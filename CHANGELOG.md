@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.292.0] - 2026-08-25 — norma vs código: el mundo nuevo (pool v11 + etiquetas)
+
+La mitad de INSTRUMENTO del diseño `docs/designs/norma-vs-codigo.md` (pasos
+3, 4 y 6). La mitad de motor (gate del picker + fallback del prompt) viaja en
+la rama `motor-v73` y entra sólo si su ronda sale ≥.
+
+### Changed — pool v11: la formalidad sólo viaja si fue declarada
+
+Los 7 briefs sociales (cita ×3, cena-amigos, fiesta, comida-trabajo,
+comida-familiar) pierden su `formality` estampada. Nadie que pide "cena con
+amigos" declara un código de vestimenta; estampar el default del catálogo le
+decía al motor *"Formalidad del evento: semiformal — RESPÉTALA"*, la misma
+línea que produciría una invitación real. Era la fuente de fondo del
+overdressing que v71/v72 trataban por síntomas (Roberto, votando v73: "con
+esas reglas estamos forzando a que todas las cenas sean de saco").
+Boda ×3 y funeral la CONSERVAN: ahí sí hay invitación o institución — un
+código (un punto), no una norma (un rango con centro).
+
+Como todo cambio de pool: **línea base nueva** — las aprobaciones bajo v10 y
+v11 no se comparan, y v71 quedó **re-congelado bajo v11** para el retador
+`prompt-anterior`.
+
+### Changed — "sin código declarado" en las tres pantallas de calificar
+
+Votar (comparador), cruce y marcador del eval: un evento sin formalidad ya no
+esconde el chip (ni traduce un código fantasma) — dice "sin código
+declarado". Quien califica juzga contra exactamente lo que el motor supo.
+
+### Docs — ronda 50794c69 CERRADA SIN VOTAR
+
+Instrumento sobre mundo viejo (generada bajo pool v10, ~1 par votado,
+precedente ba8f4caa/6868a52b). v73 se re-mide dentro del mundo nuevo.
+
 ## [0.2.291.0] - 2026-08-25 — rama motor-v73, EN RONDA
 
 ### Changed — prompt v73: el eje día/noche en las líneas sociales

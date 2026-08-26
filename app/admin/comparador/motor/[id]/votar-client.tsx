@@ -645,7 +645,13 @@ export function VotarClient({
                 {" "}
                 · {formalidadLegible(par.formalidad, par.gender)}
               </span>
-            ) : null}
+            ) : (
+              /* Desde el pool v11 los eventos sociales viajan SIN formalidad
+                 (nadie declara código para una cena). Antes aquí se traducía
+                 el código fantasma; ahora se dice la verdad del brief, para
+                 que quien vota juzgue contra lo mismo que el motor supo. */
+              <span className="text-muted"> · sin código declarado</span>
+            )}
           </p>
         ) : null}
       </header>

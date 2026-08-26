@@ -587,7 +587,15 @@ function Calibrador({
   // sinónimos son ruido — se queda la palabra del código de vestimenta y lo
   // que significa en ropa, que son los dos datos contra los que se juzga.
   const fm = formalidadPorClave(f.formality);
-  const formal = fm ? `${fm.jerga.split(" · ")[0]} · ${ropaDeFormalidad(fm, gender)}` : null;
+  // Evento SIN formalidad no es un dato faltante: desde el pool v11 es el caso
+  // NORMAL (nadie declara código para una cena). Callarse el chip haría que
+  // quien califica adivine un código que no viajó — se dice explícito, que es
+  // exactamente lo que el motor sabe.
+  const formal = fm
+    ? `${fm.jerga.split(" · ")[0]} · ${ropaDeFormalidad(fm, gender)}`
+    : f.objective === "evento"
+      ? "sin código declarado"
+      : null;
   // "cena-amigos" es la clave, no el nombre. El catálogo ya trae el label.
   const queEs = tipoEventoPorClave(f.tipoEvento)?.label ?? f.tipoEvento ?? f.objective;
 

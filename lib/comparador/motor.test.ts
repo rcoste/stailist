@@ -61,18 +61,32 @@ describe("briefs", () => {
     expect(briefs[segunda].weather).toEqual(briefs[0].weather);
   });
 
-  it("los eventos son eventos concretos: plan y formalidad, como producción", () => {
+  it("los eventos son eventos concretos, y la formalidad sólo viaja donde hay código", () => {
     // Sin esto no se puede calificar "no va para la ocasión": una boda y una
     // cena con amigos comparten la palabra "evento" y no comparten piso.
     const eventos = briefsPara("veredicto", 22).filter(
       (b) => b.objective === "evento"
     );
     expect(eventos.length).toBeGreaterThan(0);
+    // LA DECISIÓN DE PRODUCTO DEL POOL v11 (docs/designs/norma-vs-codigo.md):
+    // la formalidad es un CÓDIGO (invitación o institución: boda, funeral) o
+    // no viaja. Estampar el default del catálogo en una cena le decía al motor
+    // "RESPÉTALA" como si la invitación existiera — la fuente de fondo del
+    // overdressing. Si un brief social vuelve a traer formality, este test se
+    // pone rojo: no es un dato faltante, es la decisión.
+    const CON_CODIGO = new Set(["boda", "funeral", "graduacion"]);
     for (const b of eventos) {
       expect(b.plan, b.etiqueta).toBeTruthy();
-      // "playa" entró con el pool v10 (boda de destino): es Formalidad válida
-      // desde v51 — la lista de aquí estaba atrás de lib/formalidad.ts.
-      expect(["casual", "semiformal", "formal", "gala", "playa"]).toContain(b.formality);
+      if (CON_CODIGO.has(b.tipoEvento ?? "")) {
+        // "playa" entró con el pool v10 (boda de destino): es Formalidad
+        // válida desde v51 — la lista estaba atrás de lib/formalidad.ts.
+        expect(
+          ["casual", "semiformal", "formal", "gala", "playa"],
+          b.etiqueta
+        ).toContain(b.formality);
+      } else {
+        expect(b.formality, `${b.etiqueta} es norma, no código`).toBeUndefined();
+      }
     }
     // Y no todos de noche: pisoDeFormalidad tiene una rama de evento-de-día
     // que hasta el pool v1 nunca se había medido.

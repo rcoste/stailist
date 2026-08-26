@@ -353,7 +353,19 @@ const CLIMAS = {
 // esos briefs). Como todo cambio de pool: las aprobaciones de v9 y v10 NO se
 // comparan entre sí, y hay que re-congelar el prompt vigente bajo v10 antes
 // de la siguiente ronda con prompt-anterior.
-export const POOL_VERSION = "v10";
+//
+// v10 → v11 (2026-08-25): NORMA VS CÓDIGO (docs/designs/norma-vs-codigo.md).
+// Los briefs sociales (cita ×3, cena-amigos, fiesta, comida-trabajo,
+// comida-familiar) pierden su `formality` estampada: nadie que pide "cena con
+// amigos" declara un código de vestimenta, y estamparle el default del
+// catálogo le decía al motor "Formalidad del evento: RESPÉTALA" — la misma
+// línea que produciría una invitación real. Era la fuente de fondo del
+// overdressing (Roberto: "con esas reglas forzamos a que todas las cenas
+// sean de saco"). Boda ×3 y funeral la CONSERVAN: ahí sí hay invitación o
+// institución — un código, no una norma. Mismas reglas de siempre: v10 y v11
+// no se comparan, y re-congelar el prompt vigente bajo v11 antes de la
+// siguiente ronda con prompt-anterior.
+export const POOL_VERSION = "v11";
 
 /**
  * El pool de briefs, fijo y en este orden a propósito: la misma corrida dentro
@@ -367,9 +379,10 @@ export const POOL_VERSION = "v10";
  * LOS EVENTOS VAN CON NOMBRE Y APELLIDO
  * "evento · noche templada" era incalificable: una boda y una cena con amigos
  * caen en esa etiqueta y no comparten piso de formalidad, ni calzado, ni
- * registro. Ahora cada uno lleva su `plan` y su `formality` — los MISMOS dos
- * campos que producción le pasa al motor cuando el wizard los pregunta, no
- * inventos del arnés.
+ * registro. Ahora cada uno lleva su `plan` — y `formality` SOLO los que
+ * tienen código real (boda, funeral): desde v11, los sociales viajan sin
+ * formalidad, que es exactamente lo que producción manda cuando nadie la
+ * declaró. El brief espeja al wizard, no lo mejora.
  *
  * El de día (comida familiar) entró porque no existía: hasta v1, TODO evento
  * era de noche, y pisoDeFormalidad tiene una rama distinta para evento-de-día
@@ -397,15 +410,15 @@ const POOL_BRIEFS: BriefMotor[] = [
     // escrito arriba y es real, pero deja de ser el único evento raro medido
     // mientras tres de un toque no lo estaban.
     //
-    // La formalidad de cada uno NO se inventa aquí: es la del catálogo
-    // (lib/eventos.ts), la misma que producción le pasa al motor.
+    // SIN `formality` desde v11: nadie declara un código para una cita. El
+    // default del catálogo viajaba estampado como si la invitación existiera
+    // ("semiformal — RESPÉTALA") y era la fuente de fondo del overdressing.
     etiqueta: "cita · noche templada",
     objective: "evento",
     momento: "noche",
     weather: CLIMAS.templado,
     plan: "una cita para cenar con alguien que me gusta — es la segunda vez que salimos; restaurante de mantel, viernes a las 9",
     tipoEvento: "cita",
-    formality: "semiformal",
   },
   {
     etiqueta: "trabajo · templado, día normal",
@@ -439,7 +452,6 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.frio,
     plan: "cena con mis amigos de siempre en un restaurante casual, sábado en la noche; nadie a quien impresionar",
     tipoEvento: "cena-amigos",
-    formality: "semiformal",
   },
   { etiqueta: "diario · calor", objective: "diario", momento: "dia", weather: CLIMAS.calor },
   { etiqueta: "trabajo · frío, con cliente", objective: "oficina", momento: "dia", weather: CLIMAS.frio, veCliente: true },
@@ -495,7 +507,6 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.frio,
     plan: "la fiesta de cumpleaños de un amigo en su casa; gente de mi edad, música y baile hasta tarde",
     tipoEvento: "fiesta",
-    formality: "semiformal",
   },
   {
     // La frontera exacta entre oficina y social: el registro de trabajo subido
@@ -507,7 +518,6 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.templado,
     plan: "comida con un cliente importante en el restaurante de un hotel, entre semana a las 2; él siempre va de traje",
     tipoEvento: "comida-trabajo",
-    formality: "semiformal",
   },
   {
     etiqueta: "comida familiar · calor",
@@ -516,7 +526,6 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.calor,
     plan: "comida en casa de mis papás",
     tipoEvento: "comida-familiar",
-    formality: "casual",
   },
   // ── v10 (2026-08-24): los cuatro de abajo, VAN AL FINAL a propósito (el
   // orden del pool es fijo; el vistazo sigue siendo los primeros 6). Dos
@@ -561,7 +570,6 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.calor,
     plan: "voy a comer con alguien que me gusta a un restaurante padre pero relajado, de mariscos, de esos con fila — sábado a las 2; es la tercera vez que salimos",
     tipoEvento: "cita",
-    formality: "casual",
   },
   {
     etiqueta: "cita · drinks, noche templada",
@@ -570,7 +578,6 @@ const POOL_BRIEFS: BriefMotor[] = [
     weather: CLIMAS.templado,
     plan: "unos drinks en un bar el jueves en la noche — apenas nos estamos conociendo; quiero verme bien sin que se note que me esforcé",
     tipoEvento: "cita",
-    formality: "casual",
   },
 ];
 
