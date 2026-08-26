@@ -122,6 +122,12 @@ function Tarjeta({
               {" · "}
               {formalidadLegible(look.brief.formality ?? null, gender)}
             </span>
+          ) : look.brief.objective === "evento" ? (
+            /* Evento sin formalidad = el caso normal desde el pool v11 (nadie
+               declara código para una cena). Se dice explícito en vez de
+               callar el chip: si no, quien lee asume un código que no viajó.
+               Solo en eventos — "diario · frío" sin código no informa nada. */
+            <span className="font-normal text-muted"> · sin código declarado</span>
           ) : null}
         </p>
         {look.brief.plan ? (
