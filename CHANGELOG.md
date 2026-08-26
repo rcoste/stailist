@@ -2,6 +2,57 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.295.0] - 2026-08-26 — el empate deja de ser gratis (instrumento, no motor)
+
+Idea de Roberto: *"sería interesante que ante dos thumbs up, forzar a que yo
+escoja una posición y no poder poner empate, a menos que las prendas que ambos
+lados tienen sean iguales, que pasa seguido"*.
+
+**El diagnóstico era correcto; la frecuencia que suponía, no.** Medido sobre
+las 6 rondas votadas — 78 empates:
+
+| | |
+|---|---|
+| por prendas **idénticas** (su excepción) | **5** (6%) |
+| con 1 prenda de diferencia | 8 |
+| con looks **genuinamente distintos** | **65** |
+| solape medio de prendas entre los dos lados | **28%** |
+| empates entre looks **sin una sola prenda en común** | **27** |
+
+O sea: el empate se estaba usando para outfits completamente diferentes, y con
+eso se tiraba más de la mitad de la señal de cada ronda (62 observaciones
+decididas contra 78 empatadas). **Forzar la elección lleva la muestra útil de
+62 a ~135 sin gastar un dólar más en generación.** Explica de paso por qué las
+últimas rondas terminan todas en empate técnico (v67 92/92, v73 88/88, 4-4).
+
+### Changed — la pantalla de votar
+
+- El empate **desaparece** cuando los dos looks son distintos, con el porqué a
+  la vista ("son looks distintos — elige cuál te pondrías").
+- La pregunta pasa de *"¿cuál quedó mejor?"* a **"¿cuál te pondrías?"**, y los
+  botones a "Me pondría A / B": es la que siempre tiene respuesta.
+- **Dos excepciones, y las dos en código:** mismas prendas en los dos lados
+  (empate automático, ni se pregunta — `mismasPrendas` compara conjuntos de
+  ids, no listas) y los dos con 👎 ("cuál te pondrías" no aplica si no te
+  pondrías ninguno).
+- El comentario sigue **opcional a propósito**: es lo que se convierte en
+  regla, y una justificación obligada sería una racionalización inventada
+  contaminando la cosecha.
+
+**El riesgo que se acepta, escrito:** forzar donde no hay preferencia genuina
+produce volados. No sesga (se reparten 50/50 y el agregado sigue diciendo
+"empate") pero suma varianza. Se acepta porque con 28% de solape los looks no
+son variaciones del mismo outfit.
+
+⚠️ **Corte de línea base en la métrica de PARES**: los pares ganados de antes y
+después no se comparan (los de antes traían 56% de empates artificiales). **La
+aprobación 👍/👎 no cambia** y sigue comparable con todo el histórico — que es
+la métrica primaria de todas formas.
+
+Verificado en la pantalla real con la ronda 50794c69: looks distintos sin
+marcar → sólo A/B; look con las mismas prendas → empate automático con aviso;
+dos 👎 → el empate reaparece. Sin errores de consola.
+
 ## [0.2.294.0] - 2026-08-26 — v73 EN MAIN (ronda 09ed41a1: 88% vs 88% en sociales)
 
 **Pre-registro cumplido en la métrica primaria** (aprobación en los 7 briefs

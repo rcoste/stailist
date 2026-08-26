@@ -659,6 +659,70 @@ export function ladoInvertido(parId: string): boolean {
  * nada.
  */
 /**
+ * ¿Los dos lados armaron EL MISMO look? (mismo conjunto de prendas).
+ *
+ * Es la excepción del empate forzado (ver `empateDisponible`): cuando las dos
+ * variantes entregan exactamente las mismas prendas, pedirle a alguien que
+ * elija una es pedirle que invente una diferencia que no existe.
+ *
+ * Compara CONJUNTOS de ids, no listas: el orden dentro del look es del modelo
+ * y no significa nada. Sin prendas en algún lado devuelve false — no se puede
+ * afirmar una igualdad que no se pudo mirar.
+ */
+export function mismasPrendas(
+  a: { id: string }[] | null | undefined,
+  b: { id: string }[] | null | undefined
+): boolean {
+  if (!a?.length || !b?.length) return false;
+  const A = new Set(a.map((p) => p.id));
+  const B = new Set(b.map((p) => p.id));
+  if (A.size !== B.size) return false;
+  for (const id of A) if (!B.has(id)) return false;
+  return true;
+}
+
+/**
+ * ¿Se le puede ofrecer "empate" en este look, o hay que forzar una preferencia?
+ *
+ * POR QUÉ EXISTE, con el número que lo motivó (2026-08-26). Roberto: "sería
+ * interesante que ante dos thumbs up, forzar a que yo escoja una posición y no
+ * poder poner empate, a menos que las prendas que ambos lados tienen sean
+ * iguales, que pasa seguido".
+ *
+ * Su diagnóstico era correcto y la frecuencia que suponía, no. Medido sobre
+ * las 6 rondas votadas (78 empates):
+ *   - por prendas IDÉNTICAS ................  5 (6%)  ← su excepción
+ *   - con looks genuinamente DISTINTOS .....  65
+ *   - solape medio de prendas entre lados ..  28%
+ *   - empates entre looks SIN una sola prenda en común .. 27
+ * O sea: el empate se estaba usando para outfits completamente diferentes, y
+ * con eso se tiraba más de la mitad de la señal de cada ronda (62 observaciones
+ * decididas contra 78 empatadas). Forzar la elección donde hay diferencia real
+ * lleva la muestra útil de 62 a ~135 sin gastar un dólar más en generación.
+ *
+ * EL RIESGO QUE SE ACEPTA, dicho en voz alta: forzar donde no hay preferencia
+ * genuina produce volados. Eso NO sesga (se reparten 50/50 y el agregado sigue
+ * diciendo "empate"), pero suma varianza. Se acepta porque con 28% de solape
+ * los looks no son variaciones del mismo outfit, y "¿cuál te pondrías?" siempre
+ * tiene respuesta. El comentario sigue siendo OPCIONAL a propósito: es lo que
+ * se convierte en regla, y una justificación obligada sería una racionalización
+ * inventada contaminando la cosecha.
+ *
+ * Las dos excepciones donde el empate SÍ se ofrece:
+ *  1. mismas prendas — no hay nada que preferir;
+ *  2. los DOS con 👎 — "cuál te pondrías" no aplica si no te pondrías ninguno.
+ *     (Marginal: 26 de los 27 empates de la última ronda eran con ambos 👍.)
+ */
+export function empateDisponible(estado: {
+  mismasPrendas: boolean;
+  marcaA: "arriba" | "abajo" | undefined;
+  marcaB: "arriba" | "abajo" | undefined;
+}): boolean {
+  if (estado.mismasPrendas) return true;
+  return estado.marcaA === "abajo" && estado.marcaB === "abajo";
+}
+
+/**
  * El voto del PAR, derivado de los votos por look.
  *
  * Se vota look contra look (comparar dos es mucho más fácil que sostener seis

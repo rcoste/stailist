@@ -8,6 +8,8 @@ import {
   ladoInvertido,
   ordenDelPar,
   votoDelPar,
+  mismasPrendas,
+  empateDisponible,
   opcionesDeVariante,
   pBinomial,
   marcadorMotor,
@@ -539,5 +541,78 @@ describe("los briefs de trabajo dicen si ve cliente", () => {
     expect(peticionDeBrief(conCliente).veCliente).toBe(true);
     const diario = pool.find((b) => b.objective === "diario")!;
     expect(peticionDeBrief(diario).veCliente).toBeNull();
+  });
+});
+
+describe("el empate forzado (2026-08-26)", () => {
+  // LA DECISIÓN QUE SE BLINDA no es el markup de los botones: es CUÁNDO la
+  // pantalla puede aceptar "empate". Se estaba usando para outfits sin una
+  // sola prenda en común (27 casos), y con eso se tiraba más de la mitad de
+  // la señal de cada ronda. El porqué completo vive en el docblock de
+  // `empateDisponible`.
+  const p = (...ids: string[]) => ids.map((id) => ({ id }));
+
+  describe("mismasPrendas", () => {
+    it("el orden no cuenta: es un conjunto, no una lista", () => {
+      // El orden dentro del look lo elige el modelo y no significa nada.
+      expect(mismasPrendas(p("a", "b", "c"), p("c", "a", "b"))).toBe(true);
+    });
+
+    it("una sola prenda distinta ya son looks distintos", () => {
+      expect(mismasPrendas(p("a", "b", "c"), p("a", "b", "z"))).toBe(false);
+    });
+
+    it("un lado con MÁS prendas no es el mismo look aunque contenga al otro", () => {
+      expect(mismasPrendas(p("a", "b"), p("a", "b", "c"))).toBe(false);
+    });
+
+    it("sin prendas NO afirma igualdad (dos vacíos no son 'el mismo look')", () => {
+      // Si afirmara, un lado que falló al generar se auto-empataría y el fallo
+      // entraría a la estadística como si fuera una observación real.
+      expect(mismasPrendas([], [])).toBe(false);
+      expect(mismasPrendas(undefined, p("a"))).toBe(false);
+      expect(mismasPrendas(null, null)).toBe(false);
+    });
+  });
+
+  describe("empateDisponible", () => {
+    it("con DOS 👍 y looks distintos, NO hay empate: hay que elegir", () => {
+      // El caso que motivó todo: 26 de los 27 empates de la ronda 09ed41a1.
+      expect(
+        empateDisponible({ mismasPrendas: false, marcaA: "arriba", marcaB: "arriba" })
+      ).toBe(false);
+    });
+
+    it("con las MISMAS prendas, el empate se ofrece aunque los dos gusten", () => {
+      expect(
+        empateDisponible({ mismasPrendas: true, marcaA: "arriba", marcaB: "arriba" })
+      ).toBe(true);
+    });
+
+    it("con DOS 👎, el empate se ofrece: 'cuál te pondrías' no aplica", () => {
+      expect(
+        empateDisponible({ mismasPrendas: false, marcaA: "abajo", marcaB: "abajo" })
+      ).toBe(true);
+    });
+
+    it("mixto (uno 👍, otro 👎) NO es empate: la preferencia ya está dicha", () => {
+      expect(
+        empateDisponible({ mismasPrendas: false, marcaA: "arriba", marcaB: "abajo" })
+      ).toBe(false);
+      expect(
+        empateDisponible({ mismasPrendas: false, marcaA: "abajo", marcaB: "arriba" })
+      ).toBe(false);
+    });
+
+    it("SIN marcar todavía tampoco hay empate — si no, el forzado se esquiva", () => {
+      // Las marcas son opcionales al votar; si el empate siguiera disponible
+      // mientras no hay 👍/👎, bastaría con no marcar para anular el cambio.
+      expect(
+        empateDisponible({ mismasPrendas: false, marcaA: undefined, marcaB: undefined })
+      ).toBe(false);
+      expect(
+        empateDisponible({ mismasPrendas: false, marcaA: "abajo", marcaB: undefined })
+      ).toBe(false);
+    });
   });
 });

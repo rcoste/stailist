@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
+import { DEFECTOS_MOTOR, empateDisponible, mismasPrendas } from "@/lib/comparador/motor";
 import { agruparConjuntos, veredictoDeTraje } from "@/lib/traje";
 import { formalidadLegible } from "@/lib/formalidad";
 import { votarParMotor, completarMarcas } from "../../motor-actions";
@@ -460,6 +460,33 @@ export function VotarClient({
     arriba.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [look, idx]);
 
+  // LOS GEMELOS SE EMPATAN SOLOS. Si los dos lados armaron el MISMO conjunto de
+  // prendas, no hay nada que preferir — y como el empate manual desapareció
+  // (ver `botonesVoto`), sin esto el par quedaría imposible de cerrar. Es la
+  // excepción que pidió Roberto, resuelta en código y no con su atención: son
+  // el 6% de los empates históricos, no vale la pena que los mire.
+  // Las marcas 👍/👎 se siguen pidiendo: un look idéntico en los dos lados
+  // igual puede estar bien o mal, y esa es la métrica primaria.
+  useEffect(() => {
+    const gemelos = Array.from({ length: Math.max(par.izq.length, par.der.length) }, (_, i) => i)
+      .filter((i) => mismasPrendas(par.izq[i]?.prendas, par.der[i]?.prendas));
+    if (!gemelos.length) return;
+    setVotos((prev) => {
+      const next = { ...prev };
+      let cambio = false;
+      for (const i of gemelos) {
+        if (!next[i]) {
+          next[i] = "empate";
+          cambio = true;
+        }
+      }
+      return cambio ? next : prev;
+    });
+    // Sólo al ENTRAR al par: si dependiera de `votos`, se re-pondría el empate
+    // cada vez que se borrara a mano.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [par.parId]);
+
   // Pide el look `indice` de LOS DOS lados. Nunca uno solo: si un lado tuviera
   // render y el otro no, la comparación mediría el formato, no el look.
   const verEnAvatar = async (indice: number) => {
@@ -573,35 +600,74 @@ export function VotarClient({
    *  desktop, en medio de la fila de ese look. El mismo control. (Función de
    *  render, no componente: un componente creado dentro del render se
    *  desmonta en cada pintado.) */
-  const botonesVoto = (i: number, vertical?: boolean) => (
-    <div className={vertical ? "flex flex-col gap-2" : "grid grid-cols-3 gap-2"}>
-      {(["izq", "empate", "der"] as const).map((op) => (
-        <button
-          key={op}
-          onClick={() => {
-            if (i !== look) setLook(i);
-            setVotos((prev) => {
-              const next = { ...prev };
-              if (next[i] === op) delete next[i];
-              else next[i] = op;
-              return next;
-            });
-            if (!desktop) {
-              const siguiente = comparables.find((j) => j > i && !votos[j]);
-              if (siguiente !== undefined) setLook(siguiente);
-            }
-          }}
-          className={`rounded-lg border py-3 text-sm font-semibold ${
-            votos[i] === op
-              ? "border-ink bg-ink text-bg"
-              : "border-line bg-surface text-ink active:bg-tile"
-          }`}
+  const botonesVoto = (i: number, vertical?: boolean) => {
+    // EL EMPATE YA NO ES GRATIS (2026-08-26). Se estaba usando para outfits sin
+    // una sola prenda en común —27 casos en 6 rondas, 28% de solape medio— y
+    // con eso se tiraba más de la mitad de la señal. La regla vive en
+    // lib/comparador/motor.ts (`empateDisponible`), con su medición; aquí sólo
+    // se pinta. Los gemelos (mismas prendas) se resuelven solos más abajo.
+    const gemelos = mismasPrendas(par.izq[i]?.prendas, par.der[i]?.prendas);
+    const hayEmpate = empateDisponible({
+      mismasPrendas: gemelos,
+      marcaA: marcIzq[i],
+      marcaB: marcDer[i],
+    });
+    if (gemelos) {
+      return (
+        <div className="rounded-lg border border-line bg-tile px-3 py-2.5 text-center text-xs text-muted">
+          Mismas prendas en los dos lados — empate automático. Califica cada uno
+          con 👍/👎 igual: eso sí cuenta.
+        </div>
+      );
+    }
+    const ops = hayEmpate
+      ? (["izq", "empate", "der"] as const)
+      : (["izq", "der"] as const);
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div
+          className={
+            vertical
+              ? "flex flex-col gap-2"
+              : `grid gap-2 ${hayEmpate ? "grid-cols-3" : "grid-cols-2"}`
+          }
         >
-          {op === "izq" ? "Gana A" : op === "der" ? "Gana B" : "Empate"}
-        </button>
-      ))}
-    </div>
-  );
+          {ops.map((op) => (
+            <button
+              key={op}
+              onClick={() => {
+                if (i !== look) setLook(i);
+                setVotos((prev) => {
+                  const next = { ...prev };
+                  if (next[i] === op) delete next[i];
+                  else next[i] = op;
+                  return next;
+                });
+                if (!desktop) {
+                  const siguiente = comparables.find((j) => j > i && !votos[j]);
+                  if (siguiente !== undefined) setLook(siguiente);
+                }
+              }}
+              className={`rounded-lg border py-3 text-sm font-semibold ${
+                votos[i] === op
+                  ? "border-ink bg-ink text-bg"
+                  : "border-line bg-surface text-ink active:bg-tile"
+              }`}
+            >
+              {op === "izq" ? "Me pondría A" : op === "der" ? "Me pondría B" : "Empate"}
+            </button>
+          ))}
+        </div>
+        {/* El porqué, donde se toma la decisión: sin esto, un empate que
+            desaparece se lee como un bug de la pantalla. */}
+        {!hayEmpate ? (
+          <p className="text-center text-[11px] leading-tight text-muted">
+            son looks distintos — elige cuál te pondrías
+          </p>
+        ) : null}
+      </div>
+    );
+  };
   const votable = !!(par.izq[look] && par.der[look]);
 
   return (
@@ -609,7 +675,10 @@ export function VotarClient({
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-ink">
-            {modo === "marcar" ? "Completar las marcas" : "¿Cuál quedó mejor?"}
+            {/* "¿Cuál te pondrías?" y no "¿cuál quedó mejor?": es la pregunta
+                que SIEMPRE tiene respuesta, y la única que le importa al
+                producto. Cambió junto con el empate forzado (2026-08-26). */}
+            {modo === "marcar" ? "Completar las marcas" : "¿Cuál te pondrías?"}
           </h1>
           <span className="rounded-full border border-line px-2 py-0.5 text-xs text-muted">
             {yaHechos + idx + 1} de {total}
