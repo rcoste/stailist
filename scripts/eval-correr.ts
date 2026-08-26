@@ -12,11 +12,26 @@
 // completo tres veces para llegar a ~30 looks fríos cuesta $12; los 4 briefs
 // fríos por tres vueltas cuestan ~$2 y dan los mismos 30.
 //
-// LEER ANTES DE USARLO, dos veces:
-//  1. Una corrida con `--solo` NO da un número absoluto comparable con las
-//     básculas completas (78% de v64, 90% de v67). Mide el tema, no el motor.
-//  2. El hilo de historial (brief N ve los looks de 1..N-1) queda más corto,
-//     así que la presión de rotación es menor que en una báscula completa.
+// LEER ANTES DE USARLO. Un filtro cambia DOS cosas a la vez, y las dos
+// envenenan el porcentaje:
+//  1. **Concentra la mezcla de briefs.** En el pool de 21, `fiesta` es 1 de 21
+//     (5%); con `--solo "frí"` es 3 de 12 (25%). Y `fiesta · noche fría` es el
+//     PEOR brief del corpus (43% histórico en 14 looks) mientras `diario ·
+//     frío` es de los mejores (87% en 107). La báscula 7edc2588 dio 65% y eso
+//     NO fue "el motor en frío": fue la fiesta pesando cinco veces lo normal.
+//  2. **Colapsa el clóset utilizable.** 55 de 146 prendas (38%) contra 62% de
+//     una báscula completa; los botines Chelsea negros salieron en 13 de 31
+//     looks. Con el inventario estrecho los looks se parecen entre sí y las
+//     quejas de repetición y de "total black" se inflan solas.
+//
+// O sea: **una báscula temática contesta "¿existe este defecto?" (sí/no), y su
+// PORCENTAJE no es un número.** Se leyó mal la primera vez que se usó — se citó
+// el 65% y se rankearon los motivos de los 👎 como si fueran los problemas del
+// motor, cuando 3 de esos 👎 salieron de un solo brief en una sola vuelta.
+// Para el nivel absoluto: el pool completo, sin filtro.
+//
+// (El hilo de historial también queda más corto, así que la presión de rotación
+// por brief baja — pero sobre un inventario más estrecho, que es lo que manda.)
 //
 // PARA QUÉ: una corrida completa son ~13 briefs × (generar + calificar) y toma
 // media hora. Dejarla corriendo aquí y llegar al marcador ya hecho es el mismo

@@ -579,6 +579,47 @@ casa) y los grados en el brief.
     son también los más cargados de capas y varios 👎 citan otra cosa);
     queda como señal a investigar, no como regla lista.
 
+    **CORRECCIÓN DE LECTURA (la hizo Roberto: "todos los looks eran de
+    invierno"), y tumba dos cosas que se habían escrito arriba:**
+
+    1. **El 65% no es "el motor en frío".** Desglosado por brief: `diario ·
+       frío` **1 👎 / 8 👍**, `trabajo · frío` 2/5, `cena con amigos` 3/4,
+       y `fiesta · noche fría` **5 👎 / 3 👍**. Un solo brief se llevó 5 de los
+       11 👎, y su tercera vuelta salió 0 de 3. Sin la fiesta, la báscula
+       aprueba 74%.
+    2. **El ranking de motivos era un artefacto de composición, no un
+       diagnóstico.** "Dress code 4" se leyó como el problema dominante del
+       motor; 3 de esos 4 salieron del MISMO brief y de la MISMA vuelta. Con
+       `--solo` la fiesta pesa 25% de la muestra contra el 5% que pesa en el
+       pool de 21.
+
+    **Y el hallazgo de verdad, medido sobre el corpus entero (no sobre esta
+    báscula): el frío no es el problema — la FIESTA sí.**
+
+    | brief | aprobación histórica |
+    |---|---|
+    | `fiesta · noche fría` | **43%** (14 looks) — el peor del corpus |
+    | `comida de trabajo · templado` | 44% (9) |
+    | `funeral · templado` | 55% (11) |
+    | `cita · noche templada` | 59% (56) |
+    | … | |
+    | `diario · frío` | **87%** (107 looks) — de los mejores |
+
+    `diario · frío` lleva 107 looks votados al 87%, por encima del promedio del
+    corpus. **Llevábamos dos días persiguiendo un defecto de clima en el brief
+    que mejor funciona.** Lo que sus tres comentarios de la fiesta piden es otra
+    cosa y es concreta: que el dress code de "semiformal de noche" sea claro
+    (ver el bug de la etiqueta abajo).
+
+    **La lección de instrumento, que ya está en el docblock de
+    `scripts/eval-correr.ts`:** un filtro cambia DOS cosas a la vez — concentra
+    la mezcla de briefs Y colapsa el clóset utilizable (55 de 146 prendas, 38%,
+    contra 62% de una báscula completa; botines Chelsea negros en 13 de 31
+    looks). **Una báscula temática contesta "¿existe el defecto?"; su
+    PORCENTAJE no es un número.** El aviso estaba escrito de antemano y aun así
+    se citó el 65% y se rankearon los motivos — escribir la advertencia no basta
+    si al leer los resultados uno la ignora.
+
     **Cómo se decidió en una vuelta y no en tres:** la ablación previa ya decía
     que (b) tenía 0 👎 / 0 👍 — o sea que el caso no existía en el corpus.
     Correr los 4 briefs fríos aislados (`--solo`, ~$2 contra $12 del pool
