@@ -1,10 +1,21 @@
 # Norma vs código: la formalidad sólo viaja si fue declarada
 
 > Diseño acordado con Roberto la noche del 2026-08-25, para ejecutarse en
-> sesión limpia. Estado APROBADO EN DIRECCIÓN, pendiente su OK final sobre
-> este doc antes de tocar código. Leer junto con
-> `docs/registro-por-ocasion.md` (la investigación que alimenta la capa de
-> norma) y la memoria `improvement-loop-plan-agosto`.
+> sesión limpia. Leer junto con `docs/registro-por-ocasion.md` (la
+> investigación que alimenta la capa de norma) y la memoria
+> `improvement-loop-plan-agosto`.
+>
+> **EJECUTADO el 2026-08-25 (con su OK) — los 6 pasos:** mundo en main
+> (v0.2.292.0: pool v11 + etiquetas "sin código declarado" + 50794c69 cerrada
+> sin votar + v71 re-congelado bajo v11) y motor en la rama `motor-v73`
+> (v0.2.293.0: gate del picker con `conCodigo` + fallback de norma). Dos
+> decisiones que este doc dejaba abiertas, cerradas por Roberto: la comida
+> familiar también es norma (pierde la formalidad estampada), y el gate del
+> picker viaja EN LA RAMA — entra a main sólo si la ronda sale ≥, para que
+> prod nunca quede en la ventana "v71 + gate" con el fallback viejo. Y una
+> desviación pre-registrada: el veredicto es de 21 pares, no 20 — 20 dejaba
+> fuera cita·drinks, que es brief social (la métrica primaria).
+> **Ronda: 09ed41a1, esperando su voto.**
 
 ## El problema, con la línea exacta
 
