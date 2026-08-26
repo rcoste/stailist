@@ -15,7 +15,13 @@
 > prod nunca quede en la ventana "v71 + gate" con el fallback viejo. Y una
 > desviación pre-registrada: el veredicto es de 21 pares, no 20 — 20 dejaba
 > fuera cita·drinks, que es brief social (la métrica primaria).
-> **Ronda: 09ed41a1, esperando su voto.**
+> **CERRADO el 2026-08-26: ronda 09ed41a1 votada — 88% vs 88% en los briefs
+> sociales (métrica primaria), pre-registro "≥" cumplido → v73 EN MAIN
+> (v0.2.294.0), congelado bajo pool v11. Es un empate, no una victoria: el
+> texto no demostró mejora; entra por el ≥ y porque el gate cerraba una
+> divergencia laboratorio-producción ya abierta. El mecanismo sí se vio (el
+> único claro-de-noche lo sacó el control). Detalle y objeción registrada en
+> la bitácora, `docs/improvement-loop-del-motor.md` §7.**
 
 ## El problema, con la línea exacta
 

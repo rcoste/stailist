@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.294.0] - 2026-08-26 — v73 EN MAIN (ronda 09ed41a1: 88% vs 88% en sociales)
+
+**Pre-registro cumplido en la métrica primaria** (aprobación en los 7 briefs
+sociales ≥ v71): 88% contra 88%, 14👍/2👎 por lado. La guardia global pierde
+por un solo look (89% vs 91% = 39👍/5👎 contra 40👍/4👎), dentro del ruido.
+Pares 4-4 con 13 empates; espejos 2/2 consistentes.
+
+**Es un empate, no una victoria, y se escribe así.** El texto de v73 no
+demostró mejora de aprobación. Entra por dos razones: el pre-registro dice
+"≥" y re-interpretarlo después de ver los datos es exactamente lo que el
+pre-registro existe para impedir (precedente v67, 92/92); y el gate del
+picker cierra una divergencia que ya estaba abierta — el pool v11 quitó la
+formalidad estampada del laboratorio, y sin el gate producción seguía
+estampándola.
+
+**El mecanismo sí se vio, aunque el agregado no se moviera:** el único 👎 de
+claro-de-noche fue del CONTROL (v71 sacó chinos beige para la cita de noche —
+*"el color de los pantalones es más de día"*). v73 no entregó un solo claro
+de noche en 21 briefs.
+
+Con esto v73 queda completo en main: carnita por ocasión + eje día/noche +
+gate del picker + fallback de norma. Congelado bajo pool v11.
+
+### Docs — un dato malo del clóset de referencia, encontrado votando
+
+"Pantalón de vestir de lana gris carbón" dice *carbón* en el nombre, `#8A8A8A`
+en el hex (gris medio) y muestra la imagen del pantalón gris **claro**. Una de
+las dos señales que motivaron el eje día/noche era ese artefacto, no un error
+del motor. Verificado que ninguno de los 9 👎 de esta ronda lo lleva, así que
+el resultado está limpio. Detalle en `docs/improvement-loop-del-motor.md` §8-bis.
+
 ## [0.2.293.0] - 2026-08-25 — rama motor-v73: norma vs código, la mitad de motor [EN RONDA]
 
 Los pasos 1 y 2 del diseño `docs/designs/norma-vs-codigo.md`. Con esto v73
