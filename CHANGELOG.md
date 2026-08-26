@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.290.0] - 2026-08-25 — rama motor-v72, EN RONDA
+
+### Changed — prompt v72: la carnita por ocasión llega al catálogo de eventos
+
+La segunda mitad del frente "overdressed" (la primera fue v71). Las líneas
+`paraElMotor` de los cuatro planes sociales dejan de ser genéricas y cargan la
+práctica real investigada en `docs/registro-por-ocasion.md`:
+
+- **fiesta** (peor brief del corpus, 43%): el LUGAR manda — en casa o lugar
+  casual el registro es mezclilla oscura/chino + camisa, polo o punto con
+  carácter; el blazer es el techo y el traje se lee como venir de otro evento.
+- **cena-amigos**: sus palabras casi literales — "nadie se viste de traje para
+  cenar con amigos, salvo que la cena SEA un evento con código formal".
+- **cita**: el punto dulce por tipo — mantel = blazer + cuello abierto;
+  drinks de noche = ahí sí el traje oscuro, sin corbata; día = sin saco.
+  "La corbata en una cita se lee como entrevista."
+- **comida-trabajo** (44%, segundo peor): el centro es el sastre PARTIDO —
+  saco con pantalón de otro juego; el traje sólo si la mesa lo pide.
+
+Cada línea respeta la lección de v56 (decir qué SÍ, nunca sólo qué no) y
+lleva la escotilla del código explícito. El precedente del método es el
+funeral: la única línea investigada del catálogo era la única 5/5.
+
+Antes, en main directo: dial `fiesta: relajado` sembrado en el perfil de
+referencia (pedido por Roberto) y v71 RE-congelado bajo el perfil nuevo —
+cambio de perfil = línea base nueva.
+
+**Pre-registro:** ronda veredicto (~20 pares del pool completo — el vistazo no
+trae fiesta ni cena) v72 vs `prompt-anterior` (v71 re-congelado). Entra a main
+sólo si aprobación ≥.
+
 ## [0.2.289.0] - 2026-08-25 — v71 EN MAIN (ronda 259f284e: 93% vs 75%, pares 3-0-3)
 
 ### Changed — prompt v71: la formalidad deja de pelear con el dial

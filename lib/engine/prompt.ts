@@ -476,7 +476,14 @@ import {
 // 6+ menciones en rondas distintas: "overdressed… jamás me pondría algo así
 // a menos que explícitamente ese fuera el código". Y dos de sus 👎 de la
 // báscula fría citaban la contradicción pantalla/motor, no el outfit.
-export const PROMPT_VERSION = "v71";
+// v72 (2026-08-25): LA CARNITA POR OCASIÓN — el catálogo de eventos deja de
+// ser genérico en los cuatro planes sociales (lib/eventos.ts: fiesta,
+// cena-amigos, cita, comida-trabajo). El precedente del método es el funeral:
+// la única línea investigada del catálogo era la única 5/5. Las nuevas salen
+// de docs/registro-por-ocasion.md (práctica real + 92 votos de Roberto) y
+// respetan la lección de v56: cada una dice qué SÍ, con la escotilla del
+// código explícito. El texto viaja por lineaTipoEvento a generador y jueces.
+export const PROMPT_VERSION = "v72";
 
 export type EngineItem = {
   id: string;

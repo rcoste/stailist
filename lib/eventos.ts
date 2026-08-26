@@ -83,8 +83,13 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     preguntaDetalle:
       "la cena es donde más se nota si te arreglaste — un escalón arriba de lo diario, sin exagerar",
     formalidadesQueAplican: ["casual", "semiformal", "formal"],
+    // v72 (2026-08-25): LA CARNITA INVESTIGADA (docs/registro-por-ocasion.md).
+    // Sus palabras, casi literales: "nunca me he vestido de traje para ir a
+    // una cena con amigos, a menos que sea una cena evento formal". Y la
+    // práctica dice lo mismo: drinks/cena en restaurante casual = smart
+    // casual, blazer opcional. Lección de v56 respetada: se dice qué SÍ.
     paraElMotor:
-      "una cena con amigos en un restaurante: casual pero con intención — es la ocasión donde más se nota si te arreglaste. Un escalón arriba de lo diario, sin llegar a saco obligatorio",
+      "una cena con amigos en un restaurante: casual pero con intención — es la ocasión donde más se nota si te arreglaste. Un escalón arriba de lo diario, no un evento: camisa o punto bueno + pantalón con intención + calzado de piel; el blazer suma si el lugar lo pide, y el traje completo NO va — nadie se viste de traje para cenar con amigos, salvo que la cena SEA un evento con código formal explícito, y entonces el código manda",
     subeDeNoche: true,
   },
   {
@@ -114,8 +119,14 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     // y del plan. Este texto lo comparten el generador, las tres rúbricas y
     // producción (lineaTipoEvento), así que la misma vara guía al que arma y
     // al que califica.
+    //
+    // v72 (2026-08-25): LA LÍNEA VUELVE, esta vez como el comentario de arriba
+    // exige — diciendo qué SÍ por tipo de cita, y medida contra v71
+    // (docs/registro-por-ocasion.md). El punto dulce de todas las guías es
+    // "casual elevado", y la única cita donde el traje entra natural es
+    // drinks de noche, siempre sin corbata.
     paraElMotor:
-      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento",
+      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento. El punto dulce es casual elevado, y depende del plan: cena de mantel = blazer con pantalón de otro juego y cuello abierto; drinks de noche = ahí sí cabe el traje oscuro, SIN corbata; comida o plan de día = camisa o polo de calidad, sin saco. La corbata en una cita se lee como entrevista, no como esfuerzo — sólo si el plan nombra un código formal",
   },
   {
     key: "comida-trabajo",
@@ -124,8 +135,10 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     preguntaDetalle:
       "tu registro de trabajo subido un escalón — serio sin verse rígido; dime cuánto pesa la mesa",
     formalidadesQueAplican: ["casual", "semiformal", "formal"],
+    // v72: aterrizado (el brief está a 44%, el segundo peor del corpus). El
+    // centro del registro es el sastre PARTIDO, no el traje.
     paraElMotor:
-      "una comida o cena con clientes o colegas: el registro es el de trabajo subido un escalón. Tiene que verse serio sin verse rígido, y aguantar que te vean sentado varias horas",
+      "una comida o cena con clientes o colegas: el registro es el de trabajo subido un escalón. Tiene que verse serio sin verse rígido, y aguantar que te vean sentado varias horas. El centro es saco o blazer con pantalón de otro juego + camisa; el traje completo sólo si la mesa o el cliente lo piden — de más se lee rígido, que es justo lo que este plan no quiere",
   },
   {
     key: "fiesta",
@@ -134,8 +147,13 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     preguntaDetalle:
       "es tu permiso para arriesgar — dime qué tipo de fiesta es y qué tanto le entramos",
     formalidadesQueAplican: ["casual", "semiformal", "formal", "gala"],
+    // v72: EL LUGAR MANDA. Fiesta es el peor brief del corpus (43% en 14
+    // looks) y sus tres comentarios piden lo mismo: para un cumpleaños en
+    // casa el traje se lee como venir de otro evento. La regla #1 de todas
+    // las guías: el error no es el nivel, es el contexto ("¿me mezclaría o
+    // destacaría en ese lugar?").
     paraElMotor:
-      "una fiesta: se está de pie y se baila, así que el calzado tiene que aguantar. Es la ocasión con más permiso para arriesgar en color y textura",
+      "una fiesta: se está de pie y se baila, así que el calzado tiene que aguantar. Es la ocasión con más permiso para arriesgar en color y textura. OJO CON EL LUGAR: si es en una casa o un lugar casual, el registro real es mezclilla oscura o chino + camisa, polo o punto con carácter — el blazer es el techo y el traje completo se lee como venir de otro evento. Sólo si el plan nombra un código explícito (coctel formal, etiqueta), el código manda y esto no aplica",
   },
   {
     key: "boda",
