@@ -2,7 +2,7 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
-## [0.2.289.0] - 2026-08-25 — rama motor-v71, EN RONDA
+## [0.2.289.0] - 2026-08-25 — v71 EN MAIN (ronda 259f284e: 93% vs 75%, pares 3-0-3)
 
 ### Changed — prompt v71: la formalidad deja de pelear con el dial
 
@@ -44,8 +44,16 @@ líneas v72 para el catálogo de eventos (NO escritas: una cosa por vuelta).
 El precedente del método es el funeral: la única línea investigada del
 catálogo, y la única que salió 5/5.
 
-**Pre-registro de la ronda:** v71 vs `prompt-anterior` (v70, congelado hoy).
-Entra a main sólo si aprobación ≥.
+**La ronda (259f284e, votada por Roberto el mismo día):** v71 **93%**
+(13👍/1👎) vs v70 75% (12👍/4👎); pares 3-0 con 3 empates; jueces pareados 6-0
+(p=0.031, +0.20 pts). Pre-registro "≥" cumplido con margen sobre el ruido del
+vistazo (±12). Sus 4 👎 del control son exactamente la enfermedad tratada:
+"muy formal para la ocasión" en diario (2×), corbata en día de lluvia ("yo no
+llevaría corbata en un día equis") y la corbata negra de boda leída como
+etiqueta rigurosa. El caso se ejercitó en los armados: v70 sacó traje en cita
+y en diario·frío y corbata en diario·lluvia; v71 cero de esos, y en boda
+(código formal) los dos lados sacaron traje+corbata igual — la escalada quedó
+intacta donde pertenece.
 
 ## [0.2.288.7] - 2026-08-25
 
