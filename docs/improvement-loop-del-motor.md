@@ -342,6 +342,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-24 | bc989511 | v68 | sin-reglas-v68 | ❌ CERRADA SIN VOTAR (inválida) | **la variante aislaba bien; el VISTAZO no dio el caso.** Ninguno de los 6 briefs produjo un look con polo+traje ni un funeral (que no está en el vistazo), así que las dos reglas de v68 estuvieron inactivas en LOS DOS lados y toda diferencia es ruido del modelo. Votarla habría metido un número sin significado a esta tabla. **LECCIÓN NUEVA, hermana de la de 6868a52b:** antes de correr una ronda para una regla hay que preguntarse *¿algún brief del vistazo puede PRODUCIR el caso que vigila?* — si la regla cubre un evento que el vistazo no tiene (funeral) o un armado que el motor saca ~1 de cada 6 veces (polo+traje en cita), la ronda no puede decidir y el dinero se tira. Para esas reglas la vigilancia correcta es el EVAL (21 briefs, con funeral y tres citas). $2 de generación gastados; el juez se detuvo antes de cobrar |
 | 08-25 | eval 2ec16c63 | v68 | — (absoluto, verificación) | **verificada** (jueces 49/53 = 92%) | la báscula que la ronda no pudo ser. **Las dos reglas de v68 hicieron su trabajo, y se ve en los looks entregados:** polo+traje **0 casos** (en el histórico salía 6 veces) y el funeral entregó SUS DOS looks con el uniforme completo —traje negro + camisa blanca + corbata negra— variando sólo el calzado (zapato formal / mocasines), que es exactamente lo que Roberto pidió: "el núcleo se repite y lo que varía es el calzado". El texto del catálogo del luto funcionó a la primera. Estilo 3.15 / wow 2.85 (planos, consistente). 53 looks, 0 errores, $4.05. **NO se pidió el voto de Roberto: la verificación automática ya era concluyente y su tiempo estaba mejor puesto en las entrevistas** (ver abajo) |
 | 08-25 | evales cead58b5 / 31ef11bb | v69 → v70 | — (cruce de acentos) | v69 SÍ, v70 plano | el experimento del apetito de acentos, pre-registrado y cruzado con `scripts/cruce-acentos.ts` (métrica SIN juez: dónde cae el color). **v69 funcionó**: acento en pieza grande 36%→16%, en chica 19%→25%. **v70 (afinar "discreto") salió PLANO**: 1-2 looks de movimiento, dentro del ruido — se queda porque no daña y aclara la intención, pero SIN efecto demostrado. Dos lecciones de instrumento: (1) mi primera explicación del tonal era falsa y comprobarla la tumbó (el motor SÍ tenía vehículos chicos y los usaba: mocasín 10×, corbata 3×, bufanda 2×) — una métrica que se mueve bien no valida la historia que uno se cuenta sobre ella; (2) el script imprimía un veredicto con la regla del PRIMER experimento fija y dio una lectura engañosa en el segundo: ahora entrega deltas y marca lo que cabe en el ruido, y el veredicto lo pone quien tiene el pre-registro |
+| 08-25 | eval 7edc2588 | v70 | — (báscula FRÍA: 4 briefs a 8° × 3 vueltas, `--solo`) | **65%** (20👍/11👎 de 31) | **la báscula que MATÓ a la candidata 11-bis, y el motivo vale más que el número.** Se corrió porque la ablación decía que la forma (b) tenía 0👎/0👍 — el caso no existía en el corpus — y fabricarle 31 casos aislando los 4 briefs fríos costaba ~$2 contra $12 del pool completo tres veces. Resultado: (a) 3👎/1👍, (b) 4👎/3👍 — ninguna califica. **Y NINGUNO de sus 11 👎 habla de frío**: dress code de la fiesta 4, punto que SOBRA bajo el sastre 2, color 2, calzado 1, cuello alto + camisa 1, sin comentario 1. Los jueces reprobaron 7 looks fríos citando la capa que falta; él no la citó una vez. Los tres 👍 de (b) son traje + abrigo de lana + camisa, que es cómo se lleva un traje en invierno. **La regla habría sido DAÑINA, no inútil:** dos 👎 dicen que el punto bajo el sastre está de más, y el reparador habría metido justo eso. Corpus entero: punto bajo sastre aprueba 44% en frío (vs 84%) y 18% en templado (vs 81%). Candidata nueva y limpia: `cuello-alto-con-camisa` 2👎/0👍 en 862 looks (punto 11-ter). Hallazgo de instrumento: la pantalla dice "saco, sin corbata" y al motor se le dice "corbata opcional" — dos 👎 suyos citan esa contradicción, no el outfit |
 | 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
 ---
@@ -540,6 +541,65 @@ casa) y los grados en el brief.
     fríos; con ~6 looks fríos por ronda la regla queda inactiva en los dos
     lados y lo que se vota es ruido (lección de bc989511). Va al **eval**
     (21 briefs, 4 de ellos fríos).
+
+    ### ⚰️ CERRADA — la báscula fría 7edc2588 (2026-08-25), votada
+
+    Los 4 briefs a 8° × 3 vueltas: **31 looks, 20 👍 / 11 👎 = 65%.** (No es
+    número absoluto comparable con las básculas completas: es la rebanada más
+    difícil del pool, corrida a propósito con `--solo`.)
+
+    | forma | ablación en la báscula |
+    |---|---|
+    | (a) la capa exterior no abriga | 3 👎 / 1 👍 |
+    | (b) abrigo bueno, sin punto debajo | 4 👎 / 3 👍 |
+
+    Ninguna califica. Pero **el número no es el hallazgo — el hallazgo es el
+    motivo: NINGUNO de sus 11 👎 habla de frío.** Ni uno. Se repartieron así:
+    dress code de la fiesta 4, punto que SOBRA bajo el sastre 2, color 2,
+    calzado 1, cuello alto + camisa 1, sin comentario 1. Los jueces reprobaron
+    7 looks fríos citando la capa que falta; Roberto reprobó 11 y no la citó
+    una sola vez.
+
+    Y los tres 👍 de la forma (b) son exactamente el patrón que el juez
+    condenaba: **traje + abrigo de lana + camisa de vestir**, que es cómo se
+    lleva un traje en invierno.
+
+    **LA VUELTA COMPLETA, que es lo que hay que recordar:** dos de sus 👎
+    dicen que el punto bajo el sastre **está de más** — *"el suéter con cierre
+    no va, está de más"*, *"too much ahí meter el suéter, o sea, el suéter
+    abajo del blazer"*. Es la dirección CONTRARIA a la regla que el juez pedía.
+    De haberla escrito, el reparador habría metido un suéter bajo el saco en
+    cada look de sastre a 8° y habríamos empeorado justo lo que él señala.
+    **La candidata no sólo era inútil: era dañina.**
+
+    Medido después sobre el corpus entero (862 looks votados), punto bajo
+    sastre aprueba **44% en frío** (contra 84% del resto) y **18% en templado**
+    (contra 81%). Es el patrón más castigado que hay en el corpus — en la
+    dirección opuesta a la candidata. Ojo: correlación, no causa (esos looks
+    son también los más cargados de capas y varios 👎 citan otra cosa);
+    queda como señal a investigar, no como regla lista.
+
+    **Cómo se decidió en una vuelta y no en tres:** la ablación previa ya decía
+    que (b) tenía 0 👎 / 0 👍 — o sea que el caso no existía en el corpus.
+    Correr los 4 briefs fríos aislados (`--solo`, ~$2 contra $12 del pool
+    completo tres veces) puso 31 casos frente a él de golpe. **Cuando una
+    candidata sale de la nota de un juez y no de un voto, lo barato es
+    fabricarle los casos y preguntar, no razonar sobre ella.**
+
+11-ter. 🔴 **`cuello-alto-con-camisa`: 2 👎 / 0 👍 sobre los 862 looks
+    votados.** Cuello de tortuga y camisa de vestir en el mismo look. Sus dos
+    comentarios, en rondas distintas: *"Cuello de tortuga y camisa no va… o al
+    menos no así"* (075a3f12) y *"cuello de tortuga + camisa ni al caso"*
+    (7edc2588). Cumple la regla 6 de la sección 5 (≥2 confirmaciones en rondas
+    distintas) y la ablación sale limpia.
+    **Ojo al escribirla:** la CAMISETA bajo el cuello alto sí va y está
+    aprobada muchas veces — la regla es contra la CAMISA (cuello y puños que no
+    tienen por dónde salir), no contra la base. Un `/camisa/` ingenuo casa con
+    "camiseta" y `/oxford/` casa con el zapato: el predicado tiene que ser
+    `/camisa(?!eta)/` y mirar la zona. Los dos falsos positivos aparecieron al
+    medir esto y se corrigieron antes de contar.
+    Reparación determinista: quitar la camisa (el cuello alto ya cubre el
+    torso) o cambiarla por la camiseta mejor puntuada.
 
 12. 🔴 **`camisa-negra-en-solemne` (funeral, boda, formal, gala): 2 👎 / 0 👍.**
     Sus dos comentarios son de los más fuertes del corpus: "camisa negra para
