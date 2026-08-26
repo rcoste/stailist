@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.291.0] - 2026-08-25 — rama motor-v73, EN RONDA
+
+### Changed — prompt v73: el eje día/noche en las líneas sociales
+
+v72 no entró (ronda 65ded440: 75% vs 87% en los briefs tocados): la carnita
+empujó a casual y el modelo sobre-rotó a claros de día en planes de NOCHE.
+v73 = las mismas líneas + la cláusula que faltaba, quirúrgica y medida:
+
+- **beige/caqui/crema de noche: 2👎/0👍 en el corpus → se veta** ("los claros
+  de día se apagan de noche; casual de noche = tonos profundos").
+- **gris medio de noche: mixto, 3👍 → NO se veta.** Vetarlo habría matado
+  looks aprobados — la lección del gris carbón del funeral.
+- fiesta además: "chino" → "chino oscuro", y "bajar el registro NO significa
+  aclarar la ropa".
+
+**Pre-registro SIN la ambigüedad de la ronda anterior:** métrica primaria =
+aprobación en los briefs tocados (fiesta/cena-amigos/citas/comida-trabajo)
+≥ v71; el global sólo como guardia de no-regresión. Veredicto de 20 pares
+vs prompt-anterior (v71 re-congelado). Roberto vota cuando tenga tiempo.
+
 ## [0.2.290.0] - 2026-08-25 — rama motor-v72, EN RONDA
 
 ### Changed — prompt v72: la carnita por ocasión llega al catálogo de eventos

@@ -483,7 +483,16 @@ import {
 // de docs/registro-por-ocasion.md (práctica real + 92 votos de Roberto) y
 // respetan la lección de v56: cada una dice qué SÍ, con la escotilla del
 // código explícito. El texto viaja por lineaTipoEvento a generador y jueces.
-export const PROMPT_VERSION = "v72";
+// v73 (2026-08-25): EL EJE DÍA/NOCHE en las líneas sociales. v72 (ronda
+// 65ded440, NO entró: 75% vs 87% en los briefs tocados) empujó a casual y el
+// modelo sobre-rotó a claros de día en planes de noche — "para cena no
+// llevaría esos pantalones color claro", "gris demasiado claro para algo de
+// noche". La cláusula es QUIRÚRGICA a propósito, medida contra el corpus:
+// beige/caqui de noche = 2👎/0👍 (se veta); gris medio de noche = mixto con
+// 3👍 (NO se veta — vetarlo mataría looks aprobados, la lección del gris
+// carbón del funeral). El `momento` ya viaja en el brief; las líneas ahora
+// lo usan.
+export const PROMPT_VERSION = "v73";
 
 export type EngineItem = {
   id: string;

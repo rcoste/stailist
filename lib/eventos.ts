@@ -89,7 +89,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     // práctica dice lo mismo: drinks/cena en restaurante casual = smart
     // casual, blazer opcional. Lección de v56 respetada: se dice qué SÍ.
     paraElMotor:
-      "una cena con amigos en un restaurante: casual pero con intención — es la ocasión donde más se nota si te arreglaste. Un escalón arriba de lo diario, no un evento: camisa o punto bueno + pantalón con intención + calzado de piel; el blazer suma si el lugar lo pide, y el traje completo NO va — nadie se viste de traje para cenar con amigos, salvo que la cena SEA un evento con código formal explícito, y entonces el código manda",
+      "una cena con amigos en un restaurante: casual pero con intención — es la ocasión donde más se nota si te arreglaste. Un escalón arriba de lo diario, no un evento: camisa o punto bueno + pantalón con intención + calzado de piel; el blazer suma si el lugar lo pide, y el traje completo NO va — nadie se viste de traje para cenar con amigos, salvo que la cena SEA un evento con código formal explícito, y entonces el código manda. Si es de noche, los tonos profundos mandan: el beige, el caqui y los claros de día son de comida, no de cena",
     subeDeNoche: true,
   },
   {
@@ -126,7 +126,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     // "casual elevado", y la única cita donde el traje entra natural es
     // drinks de noche, siempre sin corbata.
     paraElMotor:
-      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento. El punto dulce es casual elevado, y depende del plan: cena de mantel = blazer con pantalón de otro juego y cuello abierto; drinks de noche = ahí sí cabe el traje oscuro, SIN corbata; comida o plan de día = camisa o polo de calidad, sin saco. La corbata en una cita se lee como entrevista, no como esfuerzo — sólo si el plan nombra un código formal",
+      "una cita: se está cerca y de frente, así que lo que toca la cara y las texturas pesan más que de costumbre. Arreglado sin verse disfrazado — que se note el esfuerzo, no el intento. El punto dulce es casual elevado, y depende del plan: cena de mantel = blazer con pantalón de otro juego y cuello abierto, en tonos profundos (el pantalón beige o caqui es de cita de DÍA, no de cena); drinks de noche = ahí sí cabe el traje oscuro, SIN corbata; comida o plan de día = camisa o polo de calidad, sin saco. La corbata en una cita se lee como entrevista, no como esfuerzo — sólo si el plan nombra un código formal",
   },
   {
     key: "comida-trabajo",
@@ -153,7 +153,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     // las guías: el error no es el nivel, es el contexto ("¿me mezclaría o
     // destacaría en ese lugar?").
     paraElMotor:
-      "una fiesta: se está de pie y se baila, así que el calzado tiene que aguantar. Es la ocasión con más permiso para arriesgar en color y textura. OJO CON EL LUGAR: si es en una casa o un lugar casual, el registro real es mezclilla oscura o chino + camisa, polo o punto con carácter — el blazer es el techo y el traje completo se lee como venir de otro evento. Sólo si el plan nombra un código explícito (coctel formal, etiqueta), el código manda y esto no aplica",
+      "una fiesta: se está de pie y se baila, así que el calzado tiene que aguantar. Es la ocasión con más permiso para arriesgar en color y textura. OJO CON EL LUGAR: si es en una casa o un lugar casual, el registro real es mezclilla oscura o chino oscuro + camisa, polo o punto con carácter — el blazer es el techo y el traje completo se lee como venir de otro evento. Y OJO CON LA HORA: bajar el registro NO significa aclarar la ropa — de noche los claros de día (beige, caqui, crema) se apagan; casual de noche se construye con tonos profundos (negro, marino, carbón, mezclilla oscura). Sólo si el plan nombra un código explícito (coctel formal, etiqueta), el código manda y esto no aplica",
   },
   {
     key: "boda",
