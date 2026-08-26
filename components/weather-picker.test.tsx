@@ -719,6 +719,84 @@ describe("paso 2 — la boda de playa", () => {
   });
 });
 
+describe("norma vs código: la formalidad sólo viaja si fue declarada", () => {
+  // LA DECISIÓN DE PRODUCTO (docs/designs/norma-vs-codigo.md): en las
+  // ocasiones sociales nadie declaró un código — estampar el default del
+  // catálogo le decía al motor "semiformal — RESPÉTALA" para una cena
+  // cualquiera, indistinguible de una invitación real. Era la fuente de fondo
+  // del overdressing. Lo que estos tests blindan es el DATO QUE VIAJA, no el
+  // markup: sin tocar los chips viaja null; tocarlos declara; y las ocasiones
+  // con código real (boda) siguen heredando su default como siempre.
+  it("una cena sin tocar los chips viaja SIN formalidad", async () => {
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} gender="hombre" />);
+    await u.click(screen.getByRole("button", { name: /cena con amigos/i }));
+    await siguiente(u); // al detalle — no se toca nada: la respuesta normal
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    await u.click(await screen.findByRole("button", { name: /templado/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect(input.tipoEvento).toBe("cena-amigos");
+    expect(input.formality).toBeNull();
+  });
+
+  it("declarar un nivel a mano SÍ viaja", async () => {
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} gender="hombre" />);
+    await u.click(screen.getByRole("button", { name: /cena con amigos/i }));
+    await siguiente(u);
+    // La cena SÍ trae código esta vez: la persona lo declara.
+    await u.click(await screen.findByText(/saco, sin corbata/i));
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    await u.click(await screen.findByRole("button", { name: /templado/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect(input.formality).toBe("semiformal");
+  });
+
+  it("el detalle abre en 'sin dress code' con el típico como pista", async () => {
+    const u = userEvent.setup();
+    render(<LookRequest {...props} gender="hombre" />);
+    await u.click(screen.getByRole("button", { name: /cena con amigos/i }));
+    await siguiente(u);
+
+    const sinCodigo = await screen.findByRole("button", { name: /sin dress code/i });
+    expect(sinCodigo.getAttribute("aria-pressed")).toBe("true");
+    // El default del catálogo se ve como pista, no como elección hecha.
+    expect(screen.getByText(/lo típico:/i)).toBeTruthy();
+  });
+
+  it("la boda (ocasión CON código) sigue heredando su default sin tocar nada", async () => {
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} gender="hombre" />);
+    await u.click(screen.getByRole("button", { name: /una boda/i }));
+    await siguiente(u); // detalle sin tocar: la invitación existe, el código manda
+    // Una boda no ofrece la carta "sin dress code": tiene código por naturaleza.
+    expect(screen.queryByRole("button", { name: /sin dress code/i })).toBeNull();
+    await siguiente(u);
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /prefiero decirte yo/i }));
+    await u.click(await screen.findByRole("button", { name: /templado/i }));
+    await u.click(screen.getByRole("button", { name: /armar mi look/i }));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect(input.tipoEvento).toBe("boda");
+    expect(input.formality).toBe("formal");
+  });
+});
+
 describe("el ancla que llega precargada desde el clóset", () => {
   // LA CONVERGENCIA, BLINDADA. La ficha de una prenda manda a
   // /hoy?generar=…&prenda=<id> y el wizard abre con esa prenda ya fijada. No es

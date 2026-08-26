@@ -459,14 +459,29 @@ export function LookRequest({
   const planReady =
     hasOpen || (objective === "evento" ? !!tipoEvento : !!objective);
   const detalleReady = pideDressCode ? !!dressCode : true;
-  // La formalidad: la del catálogo según el tipo y el momento, salvo que la
-  // haya ajustado a mano. El momento importa — una cena no es una comida.
-  // El tipo EFECTIVO: el del chip, o el que se reconoció en el texto libre.
-  // El texto libre no abre el paso de detalle (eso sigue igual) — solo hereda
-  // la formalidad por defecto del catálogo, como cuando esos planes tenían chip.
+  // LA FORMALIDAD SOLO VIAJA SI FUE DECLARADA (norma vs código,
+  // docs/designs/norma-vs-codigo.md). El tipo EFECTIVO: el del chip, o el que
+  // se reconoció en el texto libre (que no abre el paso de detalle — eso sigue
+  // igual).
+  //
+  // Ocasiones CON código (boda, graduación, funeral): hay invitación o
+  // institución — el default del catálogo viaja como siempre, según tipo y
+  // momento, salvo ajuste manual.
+  //
+  // Ocasiones con NORMA (cita, cena, fiesta, comidas): nadie declaró nada.
+  // Antes esta línea estampaba el default del catálogo como si fuera un
+  // código declarado — el motor recibía "semiformal — RESPÉTALA" para una
+  // cena cualquiera, indistinguible de una invitación real, y de ahí venía el
+  // overdressing de fondo. Ahora la formalidad sale SOLO si la persona tocó
+  // los chips; el default queda como pista en la UI (StepDetalle), nunca como
+  // dato que viaja.
   const tipoEfectivo = hasOpen ? planEscrito : tipoEvento;
+  const tipoConCodigo =
+    TIPOS_EVENTO.find((t) => t.key === tipoEfectivo)?.conCodigo === true;
   const formality =
-    formalityManual ?? formalidadDeEvento(tipoEfectivo, momento) ?? null;
+    formalityManual ??
+    (tipoConCodigo ? formalidadDeEvento(tipoEfectivo, momento) : null) ??
+    null;
   const esEvento = objectivePart.objective === "evento";
   const formalityOut = esEvento ? formality : null;
   const tipoEventoOut = esEvento ? tipoEfectivo : null;
@@ -1435,9 +1450,17 @@ function DictadoSheet({
 }
 
 // EL DETALLE del plan — su propio paso, no un long scroll (pedido de Roberto).
-// Qué muestra depende de qué se eligió: la formalidad del evento (con el
-// default del catálogo pre-seleccionado), o la calibración de trabajo (una
-// vez, se edita después en /perfil/trabajo), o el "¿ves cliente?" del día.
+// Qué muestra depende de qué se eligió: la formalidad del evento, o la
+// calibración de trabajo (una vez, se edita después en /perfil/trabajo), o el
+// "¿ves cliente?" del día.
+//
+// NORMA VS CÓDIGO en esta pantalla: en las ocasiones con código (boda,
+// graduación, funeral) el default del catálogo sigue pre-seleccionado — la
+// invitación existe y ese es su punto de partida. En las sociales (norma) ya
+// NO se preselecciona nada: la pregunta real es "¿trae dress code?" y no
+// contestar es la respuesta normal — la carta "sin dress code" va primero,
+// encendida por default, con el típico del catálogo como pista informativa.
+// Tocar un nivel lo declara; regresar a "sin dress code" lo des-declara.
 function StepDetalle({
   gender,
   objective,
@@ -1473,12 +1496,36 @@ function StepDetalle({
     const opciones = plan
       ? FORMALIDAD.filter((f) => plan.formalidadesQueAplican.includes(f.key))
       : FORMALIDAD;
+    const esNorma = plan ? plan.conCodigo !== true : false;
+    // La pista: lo típico del catálogo, en ropa concreta. Informa, no viaja.
+    const tipico = plan ? FORMALIDAD.find((f) => f.key === plan.formalidad) : null;
+    const sinCodigoOn = formality === null;
     return (
       <div className="flex flex-col gap-2.5">
         <span className="-mt-2 text-[13px] text-muted">
-          {plan?.preguntaDetalle ?? "cámbialo si tu caso es distinto"}
+          {esNorma
+            ? "¿trae dress code? si nadie lo pidió, déjalo así"
+            : (plan?.preguntaDetalle ?? "cámbialo si tu caso es distinto")}
         </span>
         <div className="flex flex-col gap-2">
+          {esNorma ? (
+            <button
+              type="button"
+              onClick={() => onFormalityManual(null)}
+              aria-pressed={sinCodigoOn}
+              className={`flex flex-col items-start rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
+                sinCodigoOn
+                  ? "border-accent bg-accent text-on-accent"
+                  : "border-line bg-surface text-ink hover:border-ink"
+              }`}
+            >
+              <span className="text-[14px] font-semibold">sin dress code</span>
+              <span className={`text-[12px] ${sinCodigoOn ? "opacity-80" : "text-muted"}`}>
+                te visto como se viste la gente para esto
+                {tipico ? ` — lo típico: ${ropaDe(tipico, gender)}` : ""}
+              </span>
+            </button>
+          ) : null}
           {opciones.map((f) => {
             const on = formality === f.key;
             return (

@@ -2,6 +2,50 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.293.0] - 2026-08-25 — rama motor-v73: norma vs código, la mitad de motor [EN RONDA]
+
+Los pasos 1 y 2 del diseño `docs/designs/norma-vs-codigo.md`. Con esto v73
+queda completo: carnita por ocasión (v72) + eje día/noche + gate del picker +
+fallback de norma — y se mide DENTRO del mundo nuevo (pool v11).
+
+### Changed — el gate del picker: la formalidad sólo viaja si fue declarada
+
+`weather-picker.tsx` estampaba el default del catálogo como código declarado:
+si nadie tocaba los chips, el motor recibía *"Formalidad del evento:
+semiformal — RESPÉTALA"* para una cena cualquiera — indistinguible de una
+invitación real. Ahora el catálogo distingue ocasiones **con código**
+(`conCodigo` en `lib/eventos.ts`: boda, graduación, funeral — el default
+viaja como siempre) de ocasiones con **norma** (cita, cena, fiesta, comidas —
+la formalidad sale SOLO si la persona la eligió a mano). En el paso de
+detalle, las sociales abren en "sin dress code — te visto como se viste la
+gente para esto", con lo típico del catálogo como pista informativa; declarar
+un nivel sigue a un toque.
+
+### Changed — prompt v73 (2ª pieza): el fallback deja de escalar
+
+La rama de evento SIN formalidad decía *"en México tienden a ser más
+formales… arréglalo más"* — la segunda escalada escondida, que con el gate se
+volvía el caso de TODAS las ocasiones sociales. Ahora: *"sin código
+declarado… viste según cómo se viste la gente para este plan y su registro;
+pasarse de arreglado sin que nadie lo pidiera es tan error como quedarse
+corto"*. La red contra la facha sigue puesta: el piso de evento y las líneas
+de norma del catálogo (que ya cargan piso y techo) no se tocan.
+
+### Tests
+
+`weather-picker.test.tsx` blinda la decisión que viaja: cena sin tocar chips
+→ `formality: null`; declarar un nivel → viaja; boda sin tocar nada → sigue
+heredando "formal"; el detalle social abre en "sin dress code". Y
+`motor.test.ts` blinda el pool v11: brief social con formality = rojo.
+
+**Pre-registro (ronda de v73, escrito antes de generar):** veredicto de 21
+pares (pool completo — los 7 briefs sociales dentro; 20 dejaría fuera
+cita·drinks) v73 vs `prompt-anterior` (v71 re-congelado bajo pool v11).
+**Métrica primaria: aprobación en los briefs sociales ≥ v71. Global como
+guardia de no-regresión.** Honestidad: v73 lleva carnita + eje noche +
+fallback — tres piezas de UN diseño; si gana no se sabrá qué sub-pieza aportó
+cuánto (precedente: v71 llevó dos).
+
 ## [0.2.292.0] - 2026-08-25 — norma vs código: el mundo nuevo (pool v11 + etiquetas)
 
 La mitad de INSTRUMENTO del diseño `docs/designs/norma-vs-codigo.md` (pasos

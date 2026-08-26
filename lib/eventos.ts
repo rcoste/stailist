@@ -49,6 +49,22 @@ export type TipoEvento = {
    */
   formalidadesQueAplican: Formalidad[];
   /**
+   * ¿Esta ocasión tiene CÓDIGO de vestimenta real (invitación o institución)?
+   *
+   * NORMA VS CÓDIGO (docs/designs/norma-vs-codigo.md, 2026-08-25). Boda,
+   * graduación y funeral tienen código: alguien lo declaró (la invitación, el
+   * protocolo) y es un PUNTO que se obedece. Las ocasiones sociales (cita,
+   * cena, fiesta, comidas) tienen NORMA: nadie declaró nada, existe una
+   * costumbre con RANGO — la cena admite desde camisa + jeans oscuros hasta
+   * blazer. Para las de código, el default de `formalidad` viaja al motor
+   * aunque nadie lo toque (como siempre). Para las de norma, la formalidad
+   * viaja SOLO si la persona la eligió a mano: estampar el default como si
+   * fuera código declarado ("semiformal — RESPÉTALA") era la fuente de fondo
+   * del overdressing (Roberto: "con esas reglas estamos forzando a que todas
+   * las cenas sean de saco"). El default sigue sirviendo como PISTA en la UI.
+   */
+  conCodigo?: boolean;
+  /**
    * Si de noche sube un escalón de formalidad.
    *
    * SOLO la cena con amigos, y esa restricción salió de una corrida: la primera
@@ -159,6 +175,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     key: "boda",
     label: "una boda",
     formalidad: "formal",
+    conCodigo: true,
     preguntaDetalle:
       "aquí manda la invitación — si trae dress code, hazle caso; si no, esto es lo normal",
     // La única con "playa": es la boda de destino, que en México es frecuente y
@@ -173,6 +190,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     key: "graduacion",
     label: "una graduación",
     formalidad: "formal",
+    conCodigo: true,
     preguntaDetalle:
       "acto con público y fotos, formal pero de día — se respira más que en una boda",
     formalidadesQueAplican: ["semiformal", "formal"],
@@ -183,6 +201,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
     key: "funeral",
     label: "un funeral",
     formalidad: "formal",
+    conCodigo: true,
     preguntaDetalle:
       "sobrio y discreto — aquí no se destaca; solo dime el nivel",
     formalidadesQueAplican: ["semiformal", "formal"],

@@ -492,6 +492,16 @@ import {
 // 3👍 (NO se veta — vetarlo mataría looks aprobados, la lección del gris
 // carbón del funeral). El `momento` ya viaja en el brief; las líneas ahora
 // lo usan.
+// v73 TAMBIÉN lleva (2026-08-25, norma vs código — docs/designs/
+// norma-vs-codigo.md): el fallback de evento SIN formalidad deja de escalar.
+// Decía "en México tienden a ser más formales… arréglalo más" — una empujada
+// hacia arriba sin código, que con el gate del picker (la formalidad sólo
+// viaja declarada) se volvía el caso de TODAS las ocasiones sociales. Ahora
+// dice la verdad: sin código declarado, la norma del plan manda y pasarse de
+// arreglado es tan error como quedarse corto. Honestidad del pre-registro:
+// v73 = carnita + eje noche + este fallback, tres piezas de UN diseño; la
+// ronda no podrá decir qué sub-pieza aportó cuánto (precedente: v71 llevó
+// dos piezas).
 export const PROMPT_VERSION = "v73";
 
 export type EngineItem = {
@@ -988,8 +998,17 @@ export function contextBlock(
           : "RESPÉTALA, no te quedes corto (subvestir un evento se siente fuera de lugar). Contexto México: los eventos formales y las bodas son más arreglados que el promedio; ante la duda, sube medio nivel, nunca lo bajes.";
     lines.push(`Formalidad del evento: ${lineaFormalidad(ctx.formality)} — ${empuje}`);
   } else if (ctx.objective === "evento") {
+    // v73 (norma vs código): ANTES esta rama era la segunda escalada
+    // escondida — "en México tienden a ser más formales… arréglalo más" — o
+    // sea que hasta SIN formalidad el motor recibía una empujada hacia arriba
+    // sin código. Con el gate del picker, "sin formalidad" dejó de ser un dato
+    // faltante: es el caso NORMAL (nadie declaró código para su cena). La
+    // norma es un rango con centro; el código es un punto — y esta línea
+    // trataba el rango como si fuera un punto alto. El piso de evento (arriba)
+    // y las líneas del catálogo por ocasión son la red de seguridad contra la
+    // facha; aquí sólo se le quita la invitación fantasma.
     lines.push(
-      "Es un evento: en México tienden a ser más formales que el promedio (sobre todo bodas). Ante la duda, arréglalo más, no menos."
+      "Sin código de vestimenta declarado: nadie pidió un nivel, así que NO lo trates como si hubiera invitación. Viste según cómo se viste la gente para ESTE plan (la línea del plan de arriba) y su registro personal. Es una norma con rango, no un código: pasarse de arreglado sin que nadie lo pidiera es tan error como quedarse corto."
     );
   }
 
