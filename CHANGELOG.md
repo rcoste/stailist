@@ -2,6 +2,44 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.296.0] - 2026-08-26 — rama motor-v74: la camiseta entra al piso de formalidad [EN RONDA]
+
+Observación de Roberto: *"¿qué pasó con el criterio de poder sugerir looks con
+t-shirt + algo arriba? casi todo lo que ofrecían así era abajo de una
+overshirt, o abajo de cuello de tortuga o crew neck"*.
+
+**Lo medido (98 looks votados con camiseta), que corrige dos lecturas mías:**
+
+| | |
+|---|---|
+| camiseta **invisible** (bajo punto cerrado o camisa) | 73 — 81% |
+| **visible bajo capa abierta** | 21 — **86%** |
+| **sola** | 4 — **100%** |
+
+O sea que el motor **sí** sabe hacerlo y Roberto lo aprueba **mejor** que la
+media. El hueco es estrecho: en evento/noche el piso de formalidad enumeraba
+qué eleva (saco, camisa de vestir, punto fino, calzado de piel) y **la
+camiseta no estaba**, así que ahí sólo salía de base.
+
+**Y la camiseta de base NO es un defecto — es su propia regla.** `sueter-sin-base`
+existe porque él la pidió textualmente (*"falta algo abajo del cuello de
+tortuga, inclusive una playera"*), y los votos la respaldan: cuello de tortuga
+sin nada debajo aprueba **25%** (1👍/3👎); con camiseta debajo, **78%**.
+
+v74 añade la camiseta al piso **con condiciones y diciendo qué SÍ** (lección de
+v56): pantalón oscuro liso + calzado de piel, mejor aún con capa abierta
+encima. Es la fórmula exacta de sus 4 aprobados. Verificado que la línea
+aparece en los briefs sociales (sin código) y **no** en boda (con código
+declarado, ahí no hay piso).
+
+**Pre-registro, escrito antes de generar:**
+1. **Mecanismo primero, sin juez y sin voto:** si el lado nuevo no entrega más
+   looks con camiseta VISIBLE que el control, el texto no hizo nada — la ronda
+   se cierra sin pedirle el voto (no se le gasta el tiempo).
+2. Si el mecanismo se movió: **métrica primaria = aprobación en los briefs
+   donde el piso aplica (los 7 sociales) ≥ v73**; global como guardia de
+   no-regresión.
+
 ## [0.2.295.0] - 2026-08-26 — el empate deja de ser gratis (instrumento, no motor)
 
 Idea de Roberto: *"sería interesante que ante dos thumbs up, forzar a que yo

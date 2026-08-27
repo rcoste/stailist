@@ -502,7 +502,17 @@ import {
 // v73 = carnita + eje noche + este fallback, tres piezas de UN diseño; la
 // ronda no podrá decir qué sub-pieza aportó cuánto (precedente: v71 llevó
 // dos piezas).
-export const PROMPT_VERSION = "v73";
+// v74 (2026-08-26): LA CAMISETA ENTRA AL PISO DE FORMALIDAD. Observación de
+// Roberto ("¿qué pasó con el criterio de poder sugerir looks con t-shirt +
+// algo arriba? casi todo lo que ofrecían así era abajo de una overshirt, o
+// abajo de cuello de tortuga"). Medido sobre 98 looks votados con camiseta:
+// 73 la llevan INVISIBLE (81%), 21 visible bajo capa abierta (86%) y 4 sola
+// (100%). O sea que el motor SÍ sabe hacerlo y él lo aprueba MEJOR que la
+// media — pero en evento/noche el piso no la listaba como pieza que eleva, y
+// ahí sólo salía de base. OJO con la lectura fácil: la camiseta de base NO es
+// un defecto, es SU regla (`sueter-sin-base`, que él pidió textualmente) y los
+// votos la respaldan — cuello de tortuga sin nada debajo aprueba 25% (1👍/3👎).
+export const PROMPT_VERSION = "v74";
 
 export type EngineItem = {
   id: string;
@@ -768,6 +778,15 @@ export function pisoDeFormalidad(ctx: EngineContext): string {
     return (
       "PISO DE FORMALIDAD (evento / noche) — el look DEBE subir de registro:\n" +
       "- Al menos UNA pieza que lo eleve: saco o blazer, camisa de vestir, punto fino sobre camisa, o calzado de piel. Si el clóset tiene saco o blazer, ése es el camino por default.\n" +
+      // v74: LA CAMISETA TAMBIÉN ELEVA, con condiciones. La lista de arriba la
+      // dejaba fuera, así que en evento/noche el motor sólo la usaba como BASE
+      // invisible bajo un punto. Medido sobre 98 looks votados con camiseta:
+      // invisible 73 (81%), visible con capa abierta 21 (86%), sola 4 (100%) —
+      // o sea que los visibles aprueban MEJOR, y los 4 solos son exactamente
+      // esta fórmula (camiseta gris + pantalón negro + mocasines; playera gris
+      // + pantalón técnico marino + derby de piel). Se escribe diciendo qué SÍ
+      // va, que es la lección de v56.
+      "- LA CAMISETA LISA también eleva, pero SÓLO si el resto sostiene el registro: pantalón oscuro y liso (de vestir, de sastre o chino oscuro) MÁS calzado de piel. Así armada es un look arreglado de verdad. Lo que NO pasa: camiseta con tenis deportivos, con pantalón claro de día, o con estampado grande. Si además lleva una capa abierta encima (blazer, cárdigan, overshirt o chamarra de piel), mejor: esa es su mejor versión.\n" +
       "- FUERA: tenis deportivos o voluminosos, sudadera, hoodie, jogger, bermuda, short, gorra y ropa de entrenar. Un tenis de piel liso y limpio sí pasa, pero solo si no hay calzado de piel.\n" +
       "- Si el clóset NO da para eso, arma con lo MÁS arreglado que haya y dilo en la explicación, sin fingir que es de gala. Jamás inventes prendas que no están.\n" +
       "- Ante la duda, sube medio nivel. Quedarse corto en un evento se siente mal; pasarse un poco, no."
