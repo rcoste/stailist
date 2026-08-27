@@ -2,6 +2,40 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.296.0] - 2026-08-26 — v74 medida y DESCARTADA; el gate de mecanismo funcionó
+
+La rama `motor-v74` (la camiseta entra al piso de formalidad) se midió y **no
+entra**. El gate pre-registrado —correr el conteo del mecanismo ANTES de pagar
+jueces y antes de pedirle el voto— dio **4 looks con camiseta visible en v74
+contra 3 en v73**: un look de diferencia sobre 47, indistinguible del barajeo.
+En los briefs sociales, 1 contra 0.
+
+**Por qué se descarta aunque "pase" mi propio gate:** escribí el umbral como
+"más que el control", sin número, y un delta de 1 lo cumple por accidente. Es
+la misma ambigüedad que la bitácora ya había registrado en 65ded440 y que
+volví a cometer. Meter texto de prompt sin efecto demostrable es acumular
+superficie (lección de v56); a diferencia de v73, aquí no hay ninguna
+divergencia laboratorio-producción que justifique el pase.
+
+**Lo que enseña, y vale más que la ronda:** una viñeta en el piso de
+formalidad **no es la palanca del repertorio** — el arquetipo, el dial y la
+formalidad empujan mucho más fuerte. Si se quiere la camiseta en registro alto
+hay que mover algo con más peso, y eso es otra vuelta con su propia medición.
+
+**La evidencia que sí queda** (98 looks votados con camiseta): visible bajo
+capa abierta 21 looks al **86%**, sola 4 looks al **100%**, invisible 73 al
+81%. El motor ya lo hace y Roberto lo aprueba mejor que la media. Y la
+camiseta de base **no es un defecto**: es `sueter-sin-base`, que él pidió, y
+los votos la respaldan (cuello de tortuga sin nada debajo: **25%**, 1👍/3👎).
+
+Costo: $6.70 de generación. Los jueces no se pagaron y su tiempo tampoco.
+
+### Changed — el proceso, §4 del doc del loop
+
+Dos reglas nuevas, las dos aprendidas hoy: **un umbral sin número no es un
+umbral**, y **cuando el cambio tiene un mecanismo contable, su gate va antes
+del voto** (si el mecanismo no se movió, la ronda se cierra ahí).
+
 ## [0.2.295.0] - 2026-08-26 — el empate deja de ser gratis (instrumento, no motor)
 
 Idea de Roberto: *"sería interesante que ante dos thumbs up, forzar a que yo
