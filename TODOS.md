@@ -2,6 +2,25 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Ver cortes del otro segmento en la biblioteca (2026-08-31)
+
+- **Qué**: un toggle explícito en la biblioteca —"ver también cortes de
+  hombre/mujer"— para quien quiera una oxford de corte masculino o un blazer
+  oversize de hombre. NO fusionar los catálogos por default.
+- **De dónde sale**: feedback de Val. Reportó que las prendas quedan
+  encasilladas por género; el diagnóstico apuntaba al catálogo y el sesgo
+  estaba en el copy del picker (arreglado en v0.2.297.0). Pero debajo de la
+  queja mal ubicada hay un caso real: hoy una mujer NO puede añadir una prenda
+  del segmento hombre, y punto.
+- **Por qué ahora no, y por qué NO como fusión**: los segmentos no son "esta
+  ropa es de hombre" — son cortes distintos con renders distintos (el "Blazer
+  marino" de mujer y el de hombre son dos prendas con dos siluetas y dos
+  fotos). Mezclarlos deja a la persona eligiendo entre dos tarjetas casi
+  idénticas sin manera de saber cuál es cuál, y duplica la biblioteca. El
+  toggle da el mismo acceso sin el ruido.
+- **Trigger**: cuando alguien pida una prenda concreta del otro segmento, o al
+  siguiente rediseño de la biblioteca.
+
 ## Corpus de prendas + aprobación a biblioteca (2026-08-17)
 
 - **Qué**: cada render de prenda que nace se copia a un bucket compartido y

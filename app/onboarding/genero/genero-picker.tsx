@@ -7,9 +7,31 @@ import { saveGender } from "./actions";
 // Selección + CTA "empecemos" (rebrand v3). La server action saveGender lee el
 // hidden input; el estado client solo maneja el resaltado y habilita el CTA.
 type Gender = "mujer" | "hombre";
+// LO QUE ELIGE ESTA PANTALLA ES EL CORTE, NO EL TIPO DE PRENDA.
+//
+// Los descriptores decían "vestidos, faldas, blusas y más" para mujer y
+// "camisas, pantalones, sastre y más" para hombre. Val (usuaria) lo leyó como
+// sexista, y tenía razón — pero el sesgo estaba SOLO aquí, en el texto: en la
+// base, el segmento mujer tiene 35 pantalones (más que los 33 de hombre), 13
+// sacos y dos trajes sastre completos en el subset de onboarding. O sea: la
+// app se describía a sí misma peor de lo que es y la persona la juzgaba por la
+// promesa. Lo único que cambia de verdad al elegir aquí es el CORTE de las
+// prendas (el "Blazer marino" de mujer y el de hombre son dos prendas con dos
+// siluetas y dos renders), así que eso es lo que dice el descriptor.
+//
+// LAS DOS LISTAS ARRANCAN IGUAL, y no es cortesía: es el catálogo real. Ambos
+// segmentos tienen sastrería y pantalón, y por eso van primero — la única
+// diferencia honesta es la cola (mujer tiene categoría `vestido`, hombre no).
+//
+// EL ÍCONO ES EL MISMO EN LAS DOS a propósito, y se decidió mirándolo en
+// pantalla: los glifos de prenda que había aquí no se leen a 24px (el vestido
+// parece peón de ajedrez y la camisa, un vaso), así que no comunicaban prenda
+// — sólo cargaban el estereotipo. `persona` sí se lee y dice lo que de verdad
+// se está eligiendo: la silueta. Que se repita no confunde: la diferencia la
+// cargan la etiqueta en 20px bold y la lista.
 const OPCIONES: { value: Gender; label: string; desc: string; icon: IconName }[] = [
-  { value: "mujer", label: "mujer", desc: "vestidos, faldas, blusas y más", icon: "vestido" },
-  { value: "hombre", label: "hombre", desc: "camisas, pantalones, sastre y más", icon: "camisa" },
+  { value: "mujer", label: "mujer", desc: "sastre, pantalón, vestido y más", icon: "persona" },
+  { value: "hombre", label: "hombre", desc: "sastre, pantalón, camisa y más", icon: "persona" },
 ];
 
 export function GeneroPicker() {

@@ -62,10 +62,15 @@ export const QUIZ: QuizQuestion[] = [
     ],
   },
   {
+    // "CASI negro" y no "negro": el iris negro no existe — lo que se lee como
+    // negro es un café muy oscuro (Val, usuaria, lo cazó aquí). Pero la palabra
+    // no se borra: en México "tengo ojos negros" es como la gente se describe a
+    // sí misma, y sin ella hay quien no se reconoce en ninguna opción. El
+    // puntaje no cambia; esto es precisión, no colorimetría.
     id: "ojos",
     question: "¿Tus ojos?",
     options: [
-      { id: "oscuros", label: "Café oscuro o negro", d: 2 },
+      { id: "oscuros", label: "Café oscuro o casi negro", d: 2 },
       { id: "miel", label: "Café medio o miel", w: 1, d: 1 },
       { id: "verdes", label: "Verdes o avellana", w: 1, d: -1 },
       { id: "azules", label: "Azules o grises", w: -1, d: -1 },

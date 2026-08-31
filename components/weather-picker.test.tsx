@@ -16,7 +16,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { LookRequest, type LookInput, type ClosetPick } from "./weather-picker";
+import {
+  LookRequest,
+  leyendaDeLaFranja,
+  type LookInput,
+  type ClosetPick,
+} from "./weather-picker";
 
 // Solo se simula lo que sale por RED (Open-Meteo). Las funciones puras del
 // módulo —hayLluvia y compañía— se conservan con `importOriginal`: son la
@@ -25,8 +30,20 @@ import { LookRequest, type LookInput, type ClosetPick } from "./weather-picker";
 // not a function` y el fallo apuntaba al test, no al mock).
 vi.mock("@/lib/weather", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/weather")>()),
-  getWeather: vi.fn(async () => null),
-  getWeatherForDates: vi.fn(async () => null),
+  // UNA SOLA puerta desde que el clima se lee por hora: antes eran dos
+  // (getWeather para hoy, getWeatherForDates para otra fecha) y los tests
+  // tenían que saber cuál tocaba. Firma completa a propósito: hay un test que
+  // inspecciona los argumentos, y con `vi.fn(async () => …)` el mock declara
+  // cero parámetros, `mock.calls` queda tipado `[][]` y el TS2493 lo ve el
+  // build pero no vitest (trampa 3 del CLAUDE.md).
+  getWeatherParaMomento: vi.fn(
+    async (
+      _lat: number,
+      _lon: number,
+      _fechaLocal: string,
+      _momento: "dia" | "noche" | null
+    ): Promise<{ temp_c: number; condition: string } | null> => null
+  ),
   geocodePlace: vi.fn(async () => null),
   // Sin este mock, los tests con permiso "granted" disparaban un fetch REAL a
   // BigDataCloud (el spread de importOriginal trae la función de verdad):
@@ -413,8 +430,8 @@ describe("la ubicación no se pide de sorpresa", () => {
   it("con permiso dado DICE qué ciudad detectó — en la card y en el clima", async () => {
     // "listo — ya sé dónde" sin decir dónde no deja verificar nada: un clima
     // de la ciudad equivocada se ve idéntico a uno de la correcta.
-    const { getWeather } = await import("@/lib/weather");
-    vi.mocked(getWeather).mockResolvedValue({ temp_c: 22, condition: "despejado" });
+    const { getWeatherParaMomento } = await import("@/lib/weather");
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 22, condition: "despejado" });
     stubNavigator({
       permissions: { query: async () => ({ state: "granted" }) },
       geolocation: {
@@ -513,8 +530,8 @@ describe("la lluvia AUTOMÁTICA (el camino real de casi todos)", () => {
     // app concluye. Además ejercita la rama `intacto` de armar(): si nadie
     // corrigió el pre-llenado, viaja la condición leída ("chubascos"), no la
     // palabra genérica "lluvia" — y el server necesita reconocerla como agua.
-    const { getWeather } = await import("@/lib/weather");
-    vi.mocked(getWeather).mockResolvedValue({ temp_c: 19, condition: "chubascos" });
+    const { getWeatherParaMomento } = await import("@/lib/weather");
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 19, condition: "chubascos" });
     stubNavigator({
       permissions: { query: async () => ({ state: "granted" }) },
       geolocation: {
@@ -598,6 +615,81 @@ describe("el funeral escrito con tus palabras", () => {
   });
 });
 
+describe("el clima es el de la hora en que se usa el look", () => {
+  // Val (usuaria): "aunque yo especifique que el outfit es para más tarde, la
+  // app toma en cuenta el clima actual y no el pronóstico de la hora objetivo".
+  //
+  // El wizard SIEMPRE supo que el look era de noche —`momento` viaja hasta el
+  // prompt, donde afina la formalidad—; el termómetro era el único que no se
+  // enteraba. Lo que estos tests blindan es que ese dato llegue también a la
+  // lectura del clima, porque en CDMX la diferencia entre las 17:00 y las 22:00
+  // cruza la banda de BUCKETS (Templado → Frío) y cambia la capa que sale.
+  const geoQro = {
+    permissions: { query: async () => ({ state: "granted" }) },
+    geolocation: {
+      getCurrentPosition: (ok: PositionCallback) =>
+        ok({ coords: { latitude: 20.6, longitude: -100.4 } } as GeolocationPosition),
+    },
+  };
+
+  it("el momento elegido viaja a la lectura del clima", async () => {
+    const { getWeatherParaMomento } = await import("@/lib/weather");
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 15, condition: "despejado" });
+    stubNavigator(geoQro);
+
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={vi.fn()} />);
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /de noche/i }));
+    await siguiente(u);
+
+    await waitFor(() => expect(getWeatherParaMomento).toHaveBeenCalled());
+    const args = vi.mocked(getWeatherParaMomento).mock.calls.at(-1)!;
+    expect(args[0]).toBe(20.6);
+    expect(args[1]).toBe(-100.4);
+    // Fecha local en YYYY-MM-DD (nunca la del server en UTC: a las 6pm de CDMX
+    // ya sería mañana) y el momento tal cual lo eligió.
+    expect(args[2]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(args[3]).toBe("noche");
+  });
+
+  it("cambiar de día a noche RE-LEE el clima, no deja pegado el de la otra hora", async () => {
+    // La misma clase de mentira pegada que ya se arregló para la fecha: el
+    // banner mostraba —y al motor le viajaba— la lectura de la hora vieja.
+    const { getWeatherParaMomento } = await import("@/lib/weather");
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 26, condition: "despejado" });
+    stubNavigator(geoQro);
+
+    const onPick = vi.fn();
+    const u = userEvent.setup();
+    render(<LookRequest {...props} onPick={onPick} />);
+    await u.click(screen.getByRole("button", { name: /un día normal/i }));
+    await siguiente(u);
+    await u.click(await screen.findByRole("button", { name: /de día/i }));
+    await siguiente(u);
+    await waitFor(() => expect(getWeatherParaMomento).toHaveBeenCalled());
+
+    // Atrás, me arrepiento: era para la noche, y en la noche hacen 14°.
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 14, condition: "despejado" });
+    await u.click(screen.getByRole("button", { name: /atrás/i }));
+    await u.click(await screen.findByRole("button", { name: /de noche/i }));
+    await siguiente(u);
+
+    await waitFor(() =>
+      expect(vi.mocked(getWeatherParaMomento).mock.calls.at(-1)![3]).toBe("noche")
+    );
+    await u.click(await screen.findByRole("button", { name: /armar mi look/i }));
+    await waitFor(() => expect(onPick).toHaveBeenCalled());
+
+    const input = onPick.mock.calls[0][0] as LookInput;
+    expect(input.momento).toBe("noche");
+    // LOS 14° DE LA NOCHE, no los 26 de la tarde. Si esto vuelve a decir 26,
+    // el look sale en manga corta para una cena a 14°.
+    expect("weather" in input && input.weather.temp_c).toBe(14);
+  });
+});
+
 describe("cambiar de día NO deja pegada la lluvia del día anterior", () => {
   it("un pronóstico nuevo manda sobre la lluvia, el techo y la banda", async () => {
     // El camino que lo rompía, con el botón atrás del propio wizard: resuelvo
@@ -606,8 +698,8 @@ describe("cambiar de día NO deja pegada la lluvia del día anterior", () => {
     // seguía preguntando por el techo y al motor le viajaba la banda VIEJA
     // marcada como techada. Un pronóstico nuevo manda sobre lo que él mismo
     // pre-llenó.
-    const { getWeather } = await import("@/lib/weather");
-    vi.mocked(getWeather).mockResolvedValue({ temp_c: 19, condition: "lluvia" });
+    const { getWeatherParaMomento } = await import("@/lib/weather");
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 19, condition: "lluvia" });
     stubNavigator({
       permissions: { query: async () => ({ state: "granted" }) },
       geolocation: {
@@ -627,9 +719,7 @@ describe("cambiar de día NO deja pegada la lluvia del día anterior", () => {
     await u.click(await screen.findByRole("button", { name: /^techado$/i }));
 
     // Atrás y cambio la fecha: el nuevo día está despejado y más caluroso.
-    // OJO: una fecha futura se lee con getWeatherForDates, no con getWeather.
-    const { getWeatherForDates } = await import("@/lib/weather");
-    vi.mocked(getWeatherForDates).mockResolvedValue({ temp_c: 31, condition: "despejado" });
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 31, condition: "despejado" });
     await u.click(screen.getByRole("button", { name: /atrás/i }));
     await u.click(await screen.findByRole("button", { name: /^mañana$/i }));
     await siguiente(u);
@@ -650,9 +740,8 @@ describe("cambiar de día NO deja pegada la lluvia del día anterior", () => {
     // otra función, y si esa devuelve null (sin red, fuera del horizonte) el
     // `if (!w) return` de resolverClima dejaba intacto todo lo del día anterior
     // — y viajaba un "techado" contestado sobre la lluvia de otro día.
-    const { getWeather, getWeatherForDates } = await import("@/lib/weather");
-    vi.mocked(getWeather).mockResolvedValue({ temp_c: 19, condition: "lluvia" });
-    vi.mocked(getWeatherForDates).mockResolvedValue(null);
+    const { getWeatherParaMomento } = await import("@/lib/weather");
+    vi.mocked(getWeatherParaMomento).mockResolvedValue({ temp_c: 19, condition: "lluvia" });
     stubNavigator({
       permissions: { query: async () => ({ state: "granted" }) },
       geolocation: {
@@ -670,6 +759,8 @@ describe("cambiar de día NO deja pegada la lluvia del día anterior", () => {
     await u.click(await screen.findByRole("button", { name: /^techado$/i }));
 
     await u.click(screen.getByRole("button", { name: /atrás/i }));
+    // El pronóstico del día nuevo NO se puede leer.
+    vi.mocked(getWeatherParaMomento).mockResolvedValue(null);
     await u.click(await screen.findByRole("button", { name: /^mañana$/i }));
     await siguiente(u);
 
@@ -909,5 +1000,32 @@ describe("el ancla que llega precargada desde el clóset", () => {
     render(<LookRequest {...props} closet={closet} defaultSeedItemIds={["de-alguien-mas"]} />);
     expect(screen.queryByText(/vas a usar/i)).toBeNull();
     expect(screen.getByText(/¿algo que te quieras poner\?/i)).toBeTruthy();
+  });
+});
+
+describe("el banner dice QUÉ FRANJA leyó", () => {
+  // El copy decía "así está ahorita", y desde que el clima se lee por ventana
+  // eso es falso: con "de noche" elegido esos grados son los de las 19-23h. Un
+  // banner que miente sobre el CUÁNDO es peor que no tenerlo — la persona ve
+  // 17° a las 5pm de un día de 28° y lo corrige creyendo que la app se
+  // equivocó, que es exactamente la señal que no queremos ensuciar.
+  it("nombra la noche, el resto del día y el día de otra fecha", () => {
+    expect(leyendaDeLaFranja(null, "noche")).toBe("así se ve hoy en la noche");
+    expect(leyendaDeLaFranja("mañana", "noche")).toBe("así se ve mañana en la noche");
+    expect(leyendaDeLaFranja("el sábado 16", "noche")).toBe(
+      "así se ve el sábado 16 en la noche"
+    );
+    // De día y para hoy la ventana arranca AHORA: prometer "hoy de día" sería
+    // vender una mañana que ya pasó.
+    expect(leyendaDeLaFranja(null, "dia")).toBe("así se ve el resto del día");
+    expect(leyendaDeLaFranja("mañana", "dia")).toBe("así se ve mañana de día");
+  });
+
+  it("nunca dice 'ahorita'", () => {
+    for (const f of [null, "mañana", "el sábado 16"]) {
+      for (const m of ["dia", "noche"] as const) {
+        expect(leyendaDeLaFranja(f, m)).not.toMatch(/ahorita/);
+      }
+    }
   });
 });

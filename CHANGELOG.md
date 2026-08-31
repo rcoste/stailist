@@ -2,6 +2,93 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.297.0] - 2026-08-31 — el feedback de Val: el clima de la hora en que te vistes
+
+Val usó la app y reportó tres cosas. Las tres eran ciertas, pero sólo una
+cambia la ropa que sale.
+
+### El clima ya no es el de cuando preguntas
+
+**Lo que reportó:** "aunque yo especifique que el outfit es para más tarde, la
+app toma en cuenta el clima actual y no el pronóstico de la hora objetivo".
+
+Tenía razón por los dos caminos: para HOY se pedía `current` (la temperatura
+de este segundo) y para otro día el promedio `(máxima + mínima) / 2` del día
+entero, que arrastra el mínimo de las 5am. Lo irónico es que el wizard SIEMPRE
+supo que el look era de noche — `momento` viaja hasta el prompt, donde afina
+la formalidad. El termómetro era el único que no se enteraba.
+
+**La decisión de fondo, que es de stylist y no de código:** lo que se lee es
+**la ventana de horas en que vas a traer la ropa puesta** (día 9-19, noche
+19-23), no un instante. La tentación era pedir "la hora del momento" (14:00,
+21:00) y está mal para el día: te vistes una vez y andas fuera de la mañana a
+la tarde, así que vestirte para el pico de las 14:00 te deja con frío a las
+9am. Y si el look es para hoy, la ventana empieza AHORA — pedir algo "de día"
+a las 5pm promedia 17:00-19:00, no la mañana que ya pasaste vestido de otra
+cosa.
+
+Medido en la app corriendo, Querétaro, 5:30pm: **noche 28°, día 31°** — dos
+bandas distintas (Cálido contra Caluroso), o sea otra capa. En CDMX el mismo
+día, 20.6° a las 17:00 contra 15.1° a las 21:00: Templado contra Frío.
+
+También cambia la condición: **basta UNA hora de agua en la ventana** para que
+el look salga con capa. Aquí no aplica la regla de mayoría que usa el modo
+Viaje (esa resume varios días, donde una llovizna suelta no define el
+equipaje). La UI conserva la salida de siempre ("¿la lluvia te toca?").
+
+Dos arreglos que salieron de ahí:
+- **Cambiar de día a noche RE-LEE el pronóstico.** Sin eso quedaba pegada la
+  lectura de la otra franja — la misma mentira que ya se había arreglado para
+  la fecha.
+- **El banner dejó de decir "así está ahorita"**, que desde este cambio es
+  falso. Ahora nombra la franja: "así se ve hoy en la noche", "así se ve el
+  resto del día". Un banner que miente sobre el CUÁNDO es peor que no tenerlo:
+  la persona ve 17° en un día de 28° y lo corrige creyendo que la app se
+  equivocó — justo la señal que no queremos ensuciar.
+
+**Dónde vive el arreglo:** entero en el cliente (`components/weather-picker`),
+que es por donde pasa toda generación — `LookInput` es
+`{...} & ({lat,lon} | {weather})` y el wizard siempre manda `weather`. La
+ruta `look-of-day` se puso al día por consistencia, pero su rama de clima no
+se ejercita hoy; se toca igual para que las dos puertas decidan lo mismo el
+día que alguien mande coords sin clima. El modo Viaje NO se tocó: ahí el
+resumen por rango de días es lo correcto.
+
+### Los ojos negros no existen
+
+"Café oscuro o negro" → **"Café oscuro o casi negro"**. Lo que se percibe como
+negro es un café muy oscuro. La palabra no se borra: en México "tengo ojos
+negros" es como la gente se describe a sí misma, y sin ella hay quien no se
+reconoce en ninguna opción. El puntaje del quiz no cambia.
+
+### La pantalla de género se describía peor de lo que es
+
+**Lo que reportó:** que las prendas quedan encasilladas por género — falda y
+vestido para mujer, pantalón y traje para hombre — y que se lee sexista.
+
+**El catálogo dice lo contrario:** el segmento mujer tiene **35 pantalones**
+(más que los 33 de hombre), 13 sacos y dos trajes sastre completos en el
+subset de onboarding, que trae 49 prendas contra 45. El sesgo estaba entero en
+once palabras del picker, que prometía "vestidos, faldas, blusas y más" contra
+"camisas, pantalones, sastre y más". Val juzgó al producto por su promesa, y
+la promesa estaba mal escrita.
+
+Ahora las dos listas **arrancan igual** —"sastre, pantalón, …"— porque eso es
+el catálogo real; la única diferencia honesta es la cola (mujer tiene
+categoría `vestido`, hombre no). Y el ícono es el mismo en las dos: mirándolo
+en pantalla, los glifos de prenda no se leen a 24px (el vestido parece peón de
+ajedrez y la camisa, un vaso), así que no comunicaban prenda — sólo cargaban
+el estereotipo. `persona` sí se lee y dice lo que de verdad se elige: la
+silueta.
+
+**Lo que NO se hizo, y por qué:** ella propone desligar las prendas del género
+u ofrecer el catálogo completo a todos. Los segmentos no son "esta ropa es de
+hombre": son cortes distintos con renders distintos, y fusionarlos deja a la
+persona eligiendo entre dos tarjetas casi idénticas sin saber cuál es cuál. Su
+caso real —una mujer que quiere una oxford de corte masculino— se atiende con
+un toggle explícito en la biblioteca, no con una fusión por default. Queda en
+el backlog.
+
 ## [0.2.296.0] - 2026-08-26 — v74 medida y DESCARTADA; el gate de mecanismo funcionó
 
 La rama `motor-v74` (la camiseta entra al piso de formalidad) se midió y **no

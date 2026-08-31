@@ -26,8 +26,7 @@ import { usePlaceSuggestions } from "@/lib/place-suggestions";
 // Clima desde el CLIENTE (Open-Meteo permite CORS): pre-resolver el pronóstico
 // del día elegido y geocodificar "la comida es en Irapuato" sin tocar el server.
 import {
-  getWeather,
-  getWeatherForDates,
+  getWeatherParaMomento,
   geocodePlace,
   reverseGeocode,
   hayLluvia,
@@ -223,6 +222,21 @@ const OCASION_LABELS: Record<string, string> = {
 export function ocasionLabel(key: string): string {
   return OCASION_LABELS[key] ?? key;
 }
+// "así se ve hoy en la noche" / "así se ve el resto del día" / "así se ve
+// mañana de día". El clima que muestra el banner es el PROMEDIO DE LA FRANJA en
+// que se va a traer la ropa puesta (ver lib/weather), y el texto tiene que
+// decirlo: si dice "ahorita" y son las 5pm, unos 17° de noche se leen como un
+// error de la app.
+export function leyendaDeLaFranja(
+  fechaLabel: string | null,
+  momento: "dia" | "noche"
+): string {
+  if (momento === "noche") return `así se ve ${fechaLabel ?? "hoy"} en la noche`;
+  // De día y para hoy la ventana arranca AHORA, no a las 9am: nombrar el día
+  // completo prometería una mañana que ya pasó.
+  return fechaLabel ? `así se ve ${fechaLabel} de día` : "así se ve el resto del día";
+}
+
 export function bucketLabel(temp_c: number): string {
   let best = BUCKETS[0];
   for (const b of BUCKETS) {
@@ -505,9 +519,18 @@ export function LookRequest({
   // auto-resuelto al entrar al paso y el botón "compartir mi ubicación".
   async function resolverClima(coords: { lat: number; lon: number }) {
     setResolviendo(true);
-    const w = fecha
-      ? await getWeatherForDates(coords.lat, coords.lon, fecha, fecha)
-      : await getWeather(coords.lat, coords.lon);
+    // EL CLIMA DE LAS HORAS EN QUE SE VA A USAR EL LOOK, no el de ahora. Antes
+    // esto pedía `current` para hoy y el promedio del día entero para otra
+    // fecha, así que pedir algo "para la noche" a las 5pm te daba la
+    // temperatura de las 5pm. El `momento` ya estaba en la mano (se elige en el
+    // paso anterior) — solo no se le pasaba a nadie más que al prompt. El
+    // porqué de la ventana (y no de una hora puntual), en lib/weather.
+    const w = await getWeatherParaMomento(
+      coords.lat,
+      coords.lon,
+      fecha ?? fmtFechaLocal(new Date()),
+      momento
+    );
     setResolviendo(false);
     if (!w) return;
     setClimaAuto(w);
@@ -600,7 +623,11 @@ export function LookRequest({
       setClimaIdx(null);
       autoPrefill.current = null;
     }
-  }, [ciudadGeo, fecha, donde, aquiCoords]);
+    // `momento` ENTRA AQUÍ desde que el clima se lee por ventana: cambiar de día
+    // a noche con el botón atrás mueve el pronóstico igual que cambiar de fecha,
+    // y sin esto el banner seguía mostrando —y mandando al motor— la lectura de
+    // la otra franja. Es la misma mentira pegada que ya se arregló para la fecha.
+  }, [ciudadGeo, fecha, momento, donde, aquiCoords]);
 
   // Sugerencias mientras escribe — el MISMO hook que el viaje (lib/place-
   // suggestions). Se apagan en cuanto hay ciudad resuelta: la lista debajo de
@@ -957,6 +984,7 @@ export function LookRequest({
                 puedeCompartir={donde === "aqui"}
                 aquiEstado={aquiEstado}
                 fechaLabel={fecha ? fechaLegible(fecha) : null}
+                momento={momento}
                 climaAuto={climaAuto}
                 resolviendo={resolviendo}
                 // La ciudad del banner: la que escribió ("otra") o la detectada
@@ -2084,6 +2112,7 @@ function StepClima({
   techado,
   onTechado,
   fechaLabel = null,
+  momento = "dia",
   climaAuto = null,
   resolviendo = false,
   ciudadLabel = null,
@@ -2096,6 +2125,8 @@ function StepClima({
   rain: boolean;
   /** "el sábado 16" cuando el look es para otro día. */
   fechaLabel?: string | null;
+  /** Para nombrar la FRANJA que se leyó (el clima ya no es "el de ahorita"). */
+  momento?: "dia" | "noche";
   /** El clima ya PRE-RESUELTO (del "¿dónde?" del paso anterior): el paso es la
    *  CONCLUSIÓN — "en Cuernavaca va a llover" — y las bandas viven detrás de
    *  "corrígeme". Preguntar lo que la app ya sabe delataba a la máquina. */
@@ -2318,7 +2349,12 @@ function StepClima({
               {climaAuto.temp_c}° · {climaAuto.condition}
             </span>
             <span className="text-[14px] text-muted">
-              {fechaLabel ? `así se ve ${fechaLabel}` : "así está ahorita"}
+              {/* NOMBRA LA FRANJA, no el instante. Decía "así está ahorita",
+                  que desde que el clima se lee por ventana es falso: con "de
+                  noche" elegido, esos grados son los de las 19-23h. Un banner
+                  que miente sobre CUÁNDO es peor que no tenerlo — la persona
+                  lo corrige creyendo que la app se equivocó de temperatura. */}
+              {leyendaDeLaFranja(fechaLabel, momento)}
               {ciudadLabel ? ` en ${ciudadLabel.split(",")[0]}` : ""}
             </span>
             <span className="text-[12px] text-faint">{fuente}</span>

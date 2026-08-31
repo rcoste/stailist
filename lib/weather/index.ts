@@ -161,6 +161,165 @@ export async function geocodePlace(
   }
 }
 
+// EL CLIMA DE LAS HORAS EN QUE SE VA A USAR EL LOOK, no el de cuando lo pides.
+//
+// Val (usuaria): "aunque yo especifique que el outfit es para más tarde, la app
+// toma en cuenta el clima actual y no el pronóstico de la hora objetivo".
+// Tenía razón, y por los dos caminos:
+//   · para HOY se pedía `current` — la temperatura de este segundo;
+//   · para otro día, el promedio (máxima + mínima) / 2 del día ENTERO, que
+//     incluye el mínimo de las 5am aunque nadie ande en la calle a esa hora.
+// El wizard ya sabía que el look era de noche (`momento` viaja hasta el prompt,
+// donde afina la formalidad) — el termómetro era el único que no se enteraba.
+//
+// Medido en Querétaro el 2026-08-31: 25.6° a las 14:00 contra 17.7° a las
+// 21:00. Son DOS bandas de BUCKETS de distancia (Cálido "playera, a gusto" →
+// Templado "manga larga ligera"), o sea que cambia la capa que sale.
+//
+// ES UNA VENTANA, NO UN INSTANTE — y esa es la decisión de stylist.
+// La tentación era pedir "la hora del momento" (14:00, 21:00). Está mal para el
+// día: te vistes UNA vez y andas fuera de la mañana a la tarde, así que
+// vestirte para el pico de las 14:00 te deja con frío a las 9am. Tampoco sirve
+// el promedio del día entero, que arrastra el mínimo de la madrugada. Lo que se
+// promedia son LAS HORAS QUE VAS A TRAER LA ROPA PUESTA.
+//
+// Y si el look es para hoy, la ventana empieza AHORA: pedir algo "de día" a las
+// 5pm promedia 17:00-19:00, no la mañana que ya pasaste vestido de otra cosa.
+const VENTANA = {
+  dia: { desde: 9, hasta: 19 },
+  noche: { desde: 19, hasta: 23 },
+} as const;
+
+export type Momento = keyof typeof VENTANA;
+
+export function esMomento(v: unknown): v is Momento {
+  return v === "dia" || v === "noche";
+}
+
+/**
+ * Clima de `fechaLocal` durante las horas de `momento`.
+ *
+ * `fechaLocal` es "YYYY-MM-DD" y se pide EXPLÍCITA a propósito: esta función la
+ * llaman el navegador (hora local de la persona) y rutas que corren en UTC, y
+ * en UTC a las 6pm de CDMX ya es mañana — la misma trampa que el wizard ya
+ * documenta en su propio `fechaLocal`.
+ *
+ * Sin `momento` no hay ventana que pedir, así que cae al resumen del día.
+ *
+ * Fail-open como todo el clima: si las horas no vienen (fecha fuera del
+ * horizonte de pronóstico, red caída) cae al resumen diario —que a su vez cae
+ * al histórico— y de ahí a null. El clima nunca bloquea (spec E6).
+ */
+export async function getWeatherParaMomento(
+  lat: number,
+  lon: number,
+  fechaLocal: string,
+  momento: Momento | null
+): Promise<Weather | null> {
+  if (momento) {
+    const v = VENTANA[momento];
+    const porHora = await fetchHourlyWeather(lat, lon, fechaLocal, v.desde, v.hasta);
+    if (porHora) return porHora;
+  }
+  return getWeatherForDates(lat, lon, fechaLocal, fechaLocal);
+}
+
+// Una sola llamada trae las horas Y el ahora. El `current` no es adorno: lo usa
+// `pickWindow` para saber qué parte de la ventana ya pasó, y como último
+// recurso cuando la ventana entera quedó atrás (un look "de día" pedido a las
+// 11pm — rarísimo, pero el dato honesto ahí es el de este momento).
+async function fetchHourlyWeather(
+  lat: number,
+  lon: number,
+  fechaLocal: string,
+  desde: number,
+  hasta: number
+): Promise<Weather | null> {
+  try {
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&hourly=temperature_2m,weather_code&current=temperature_2m,weather_code` +
+      `&start_date=${fechaLocal}&end_date=${fechaLocal}&timezone=auto`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return pickWindow(data, fechaLocal, desde, hasta);
+  } catch {
+    return null;
+  }
+}
+
+// Separado del fetch para poder probarlo con respuestas literales de Open-Meteo
+// sin red. Con `timezone=auto` los `time` vienen en hora LOCAL del punto
+// ("2026-08-31T21:00"), que es justo la que la persona tiene en la cabeza.
+export function pickWindow(
+  data: unknown,
+  fechaLocal: string,
+  desde: number,
+  hasta: number
+): Weather | null {
+  const d = (data ?? {}) as {
+    hourly?: { time?: unknown; temperature_2m?: unknown; weather_code?: unknown };
+    current?: { time?: unknown; temperature_2m?: unknown; weather_code?: unknown };
+  };
+  const times = Array.isArray(d.hourly?.time) ? d.hourly.time : [];
+  const temps = Array.isArray(d.hourly?.temperature_2m) ? d.hourly.temperature_2m : [];
+  const codes = Array.isArray(d.hourly?.weather_code) ? d.hourly.weather_code : [];
+
+  // La hora del LUGAR, no la de quien pregunta: `current.time` viene en la
+  // misma zona que `hourly.time` (timezone=auto). Solo recorta si la fecha
+  // objetivo es hoy; para mañana no hay nada que ya haya pasado.
+  const ahora = typeof d.current?.time === "string" ? d.current.time : null;
+  const horaAhora =
+    ahora && ahora.startsWith(fechaLocal) ? Number(ahora.slice(11, 13)) : null;
+  const piso = Number.isFinite(horaAhora) ? Math.max(desde, horaAhora as number) : desde;
+
+  const dentro: number[] = [];
+  for (let i = 0; i < times.length; i++) {
+    const t = times[i];
+    if (typeof t !== "string" || !t.startsWith(fechaLocal)) continue;
+    const h = Number(t.slice(11, 13));
+    if (h >= piso && h <= hasta) dentro.push(i);
+  }
+
+  const grados = dentro
+    .map((i) => temps[i])
+    .filter((t): t is number => typeof t === "number");
+  const claves = dentro
+    .map((i) => codes[i])
+    .filter((c): c is number => typeof c === "number");
+
+  if (grados.length > 0) {
+    const temp_c = Math.round(grados.reduce((a, b) => a + b, 0) / grados.length);
+    return { temp_c, condition: condicionDeLaVentana(claves) };
+  }
+
+  // Ventana vacía (ya pasó entera, o el pronóstico no la cubre): el ahora.
+  const tempAhora = d.current?.temperature_2m;
+  const codeAhora = d.current?.weather_code;
+  if (typeof tempAhora === "number" && typeof codeAhora === "number") {
+    return { temp_c: Math.round(tempAhora), condition: describe(codeAhora) };
+  }
+  return null;
+}
+
+// BASTA UNA HORA DE AGUA PARA MOJARSE. Aquí NO aplica la regla de mayoría de
+// `aggregateDaily` —esa resume un viaje de varios días, donde una llovizna
+// suelta no define el equipaje—: esto son las horas en que traes la ropa
+// puesta, y si llueve en una sola necesitas la capa. La UI conserva la salida
+// ("¿la lluvia te toca?" / "¿llevas paraguas?") para quien no le importe.
+// Se queda con el código MÁS ALTO de los mojados para no degradar una tormenta
+// a llovizna; sin agua, la mediana, como el resumen diario.
+function condicionDeLaVentana(codes: number[]): string {
+  if (codes.length === 0) return describe(0);
+  // 51 hacia arriba es TODA la precipitación de la tabla WMO: llovizna (51-57),
+  // lluvia (61-67), nieve (71-77), chubascos (80-86) y tormenta (95-99). El
+  // tope de 86 que tenía esto dejaba fuera justo la tormenta, que es la peor.
+  const mojado = codes.filter((c) => c >= 51);
+  if (mojado.length > 0) return describe(Math.max(...mojado));
+  return describe([...codes].sort((a, b) => a - b)[Math.floor(codes.length / 2)]);
+}
+
 // Agrega el bloque `daily` de Open-Meteo (forecast o archive — mismo shape) a un
 // solo resumen: temperatura media del rango y condición predominante.
 function aggregateDaily(daily: unknown): { temp_c: number; condition: string } | null {
