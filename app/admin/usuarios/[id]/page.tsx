@@ -3,6 +3,7 @@ import { isMinor } from "@/lib/edad";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { construirFeed, etiqueta } from "@/lib/admin/actividad";
 import {
   ITEM_IMAGE_SELECT,
   itemImageUrlSync,
@@ -42,21 +43,6 @@ function ttvHumano(seconds: number): string {
   return `${Math.round(h / 24)} días`;
 }
 
-// Etiqueta humana por tipo de evento para la línea de actividad. Los tipos de
-// instrumentación interna (jueces, timings) se filtran en la query.
-const EVENTO_LABEL: Record<string, string> = {
-  vote_up: "👍 votó un look",
-  vote_down: "👎 votó un look",
-  worn: "✓ se puso un look",
-  another_look: "🔄 pidió otro look",
-  trip_look_vote: "✈️ votó un look de viaje",
-  avatar_generated: "🪞 generó su avatar",
-  style_vetoes_edit: "🚫 editó sus vetos",
-  onboarding_step: "🚶 avanzó en onboarding",
-  first_outfit_ttv: "⏱️ primer outfit",
-  pwa_installed: "📱 instaló la app",
-};
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -90,7 +76,11 @@ export default async function AdminUserDetail({
     { data: itemsRaw },
     { data: outfits },
     { data: events },
-    { data: actividad },
+    { data: actEvents },
+    { data: actItems },
+    { data: actOutfits },
+    { data: actTrips },
+    { data: actWishlist },
     { data: ttvEvent },
   ] = await Promise.all([
     supabase
@@ -109,14 +99,16 @@ export default async function AdminUserDetail({
       .select("type, outfit_id")
       .eq("user_id", id)
       .in("type", ["vote_up", "vote_down", "worn"]),
-    // Actividad reciente: solo eventos con significado humano (sin instrumentación).
-    supabase
-      .from("events")
-      .select("type, created_at, data")
-      .eq("user_id", id)
-      .in("type", Object.keys(EVENTO_LABEL))
-      .order("created_at", { ascending: false })
-      .limit(15),
+    // ACTIVIDAD: el MISMO cruce de fuentes que /admin/actividad, acotado a esta
+    // persona. Antes esto leía sólo `events` y por eso mentía por omisión: la
+    // acción más común del producto —añadir prendas— no escribe evento (1012
+    // filas en `items`, cero en `events`), así que el clóset entero de alguien
+    // podía no aparecer aquí. Ver el porqué completo en lib/admin/actividad.
+    supabase.from("events").select("user_id, outfit_id, type, data, created_at").eq("user_id", id),
+    supabase.from("items").select("id, user_id, created_at, deleted_at").eq("user_id", id),
+    supabase.from("outfits").select("id, user_id, created_at, deleted_at").eq("user_id", id),
+    supabase.from("trips").select("id, user_id, created_at, deleted_at").eq("user_id", id),
+    supabase.from("wishlist_items").select("user_id, created_at").eq("user_id", id),
     supabase
       .from("events")
       .select("data")
@@ -174,11 +166,19 @@ export default async function AdminUserDetail({
     else voteOf.set(e.outfit_id, e.type === "vote_up" ? "👍" : "👎");
   }
 
+  // El feed de esta persona, con el mismo cruce y el mismo colapso de ráfagas
+  // que /admin/actividad (23 prendas de un carrete = una línea, no 23).
+  const actividad = construirFeed({
+    profiles: [{ id, created_at: profile.created_at }],
+    items: (actItems ?? []) as never,
+    outfits: (actOutfits ?? []) as never,
+    trips: (actTrips ?? []) as never,
+    wishlist: (actWishlist ?? []) as never,
+    events: (actEvents ?? []) as never,
+  }).slice(0, 25);
+
   // Último uso = lo más reciente entre su última actividad y su último outfit.
-  const lastActive = masReciente(
-    actividad?.[0]?.created_at,
-    outfits?.[0]?.created_at
-  );
+  const lastActive = masReciente(actividad[0]?.at, outfits?.[0]?.created_at);
   const ttv = (ttvEvent?.data as { seconds?: number } | null)?.seconds;
 
   const arch = profile.style_archetype as { nombre?: string; descripcion?: string } | null;
@@ -412,29 +412,28 @@ export default async function AdminUserDetail({
         <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
           Actividad reciente
         </h2>
-        {(actividad ?? []).length === 0 ? (
+        {actividad.length === 0 ? (
           <span className="text-sm text-muted">Sin actividad registrada.</span>
         ) : (
           <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-            {(actividad ?? []).map((e, k) => {
+            {actividad.map((m) => {
+              const d = m.data as { seconds?: number; step?: number } | null;
               const extra =
-                e.type === "first_outfit_ttv"
-                  ? ` en ${ttvHumano((e.data as { seconds?: number })?.seconds ?? 0)}`
-                  : e.type === "onboarding_step"
-                    ? ` (paso ${(e.data as { step?: number })?.step ?? "?"})`
+                m.tipo === "ev:first_outfit_ttv" && typeof d?.seconds === "number"
+                  ? ` en ${ttvHumano(d.seconds)}`
+                  : m.tipo === "ev:onboarding_step" && typeof d?.step === "number"
+                    ? ` (paso ${d.step})`
                     : "";
               return (
                 <div
-                  key={k}
+                  key={m.key}
                   className="flex items-center justify-between gap-3 px-4 py-2.5"
                 >
                   <span className="text-sm text-ink">
-                    {EVENTO_LABEL[e.type] ?? e.type}
+                    {etiqueta(m)}
                     {extra}
                   </span>
-                  <span className="shrink-0 text-xs text-muted">
-                    {hace(e.created_at)}
-                  </span>
+                  <span className="shrink-0 text-xs text-muted">{hace(m.at)}</span>
                 </div>
               );
             })}

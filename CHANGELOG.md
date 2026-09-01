@@ -2,6 +2,64 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.299.0] - 2026-09-01 — /admin/actividad: el feed de lo que hace la gente
+
+Pedido de Roberto: *"me gustaría tener un feed de todas las acciones que hacen
+los usuarios… que eventualmente nos ayude a cruzar la información"*. Ataca el
+tapón que el proyecto ya tenía documentado: el problema no es que no haya
+usuarias, es que **nadie las está observando**.
+
+### Por qué NO sale de la tabla `events`, que es lo que uno esperaría
+
+Medido contra producción antes de escribir nada, con 610 eventos:
+
+- **El 76% es instrumentación, no acciones.** `onboarding_step` (144),
+  `generation_timing` (88), `critic_review` (86), `hint_seen` (78) y
+  `avatar_judge` (65) suman 461. Un feed de eso enseña jueces y timings.
+- **La acción más importante del producto no escribe evento.** Añadir prendas
+  son **1012 filas en `items` y cero en `events`**. Los looks, 172 outfits
+  contra 88 `generation_timing`. Los viajes, 9 sin evento.
+
+O sea que `select * from events order by created_at` habría enseñado telemetría
+y escondido lo único que la gente hace de verdad. El feed cruza **6 fuentes**
+(profiles, items, outfits, trips, wishlist, events) — el mismo cruce que
+`admin/usuarios` ya hacía para calcular el "hace 21 horas", ordenado por tiempo
+en vez de agrupado por persona.
+
+### Las ráfagas se colapsan, y por eso el feed se lee
+
+También medido: **el 87% de las prendas (879 de 1012) entra en tandas de 6+ en
+un solo minuto** — importar un carrete son 20-40 filas de un tirón, y 13 tandas
+de 20+ suman 384 prendas ellas solas. Crudo, el feed serían mil líneas de
+"añadió una prenda" tapando todo; colapsado son 126 momentos. La regla —mismo
+usuario, mismo tipo, menos de 10 min— vale igual para los pasos del onboarding,
+que si no se comen otras 144 líneas.
+
+### El borrado salía dos veces (cazado al mirarlo con datos reales)
+
+El primer render enseñaba "borró una prenda" duplicado. Causa: el borrado
+llegaba por `items.deleted_at` **y** por el evento `item_deleted`, que son
+`tipo` distinto y por eso el colapso no los juntaba. Al medirlo: **21 prendas
+con `deleted_at` contra 10 eventos** — o sea que el evento además es
+incompleto, 11 borrados no lo escribieron. Regla que quedó: **el ciclo de vida
+lo cuenta la tabla** (`created_at` / `deleted_at`), y `events` sólo cuenta lo
+que no deja fila. De paso entraron los borrados de looks y viajes, que no se
+veían.
+
+### La lista de eventos es de EXCLUSIÓN, no de inclusión
+
+Un evento nuevo entra solo al feed con su nombre crudo (que es la señal de que
+le falta etiqueta) en vez de quedarse invisible hasta que alguien se acuerde de
+darlo de alta en un diccionario. Es justo el modo de fallo que ya había: la
+"Actividad reciente" del detalle de usuario filtraba `.in("type",
+Object.keys(EVENTO_LABEL))`.
+
+### Y se arregló la "Actividad reciente" que ya existía
+
+Leía sólo `events`, así que **mentía por omisión**: el clóset entero de alguien
+podía no aparecer ahí. Ahora usa la misma función que el feed global. Su
+diccionario de etiquetas duplicado se borró; vive en un solo lugar.
+
 ## [0.2.298.0] - 2026-09-01 — el CTA del duelo estaba pintado de "disabled"
 
 Roberto, sobre la card del duelo ("¿te sirve la tuya?"): *"el CTA apenas y se
