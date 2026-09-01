@@ -1399,14 +1399,30 @@ function DecideRow({
 
       {/* c · el botón de elegir: aparece al picar, y su label NOMBRA la elección.
           Uno solo y de ancho completo — alineado con una columna se leería como
-          el pie de esa columna. No es negro relleno: ese está reservado a
-          "generar" en toda la app. */}
+          el pie de esa columna.
+
+          VA EN NEGRO RELLENO, que es el botón primario de la app. Aquí decía
+          "no es negro relleno: ese está reservado a generar en toda la app" y
+          era FALSO — hay 152 botones `bg-accent`+`text-on-accent` fuera de
+          admin, y dicen "ir a mi perfil", "usar este estilo", "armar mi
+          maleta", "recortar". Esa regla inventada empujó el botón a
+          `bg-accent-soft`, que en este sistema es el relleno de DISABLED
+          (`disabled:bg-accent-soft` en historial-look-detail): por eso Roberto
+          reportó que "apenas se nota, no se siente que es un botón". Sobre
+          card blanca quedaba en #f1f0ee contra un fondo de página #f4f3f1 —
+          y con el mismo peso que la salida de abajo, así que la card cerraba
+          con dos filas grises y ninguna se leía como la acción.
+
+          Comparado en pantalla contra un contorno de tinta: el contorno pierde
+          porque mete un SEGUNDO trazo de tinta y compite con el anillo de la
+          prenda elegida. El negro además cumple lo que este comentario ya
+          quería — el anillo de la prenda y la barra se leen como un bloque. */}
       {sel ? (
         <button
           type="button"
           onClick={() => onDecide(index, sel === "tuya" ? "accept" : "reject")}
           style={{ animation: "step-in var(--dur-short) var(--ease-enter) both" }}
-          className="flex h-[52px] w-full items-center justify-center border-t border-line bg-accent-soft text-[14.5px] font-bold text-ink transition-colors hover:bg-line2"
+          className="flex h-[52px] w-full items-center justify-center border-t border-line bg-accent text-[14.5px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
         >
           elegir {sel === "ideal" ? "la sugerida" : "la tuya"}
         </button>

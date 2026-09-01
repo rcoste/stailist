@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.298.0] - 2026-09-01 — el CTA del duelo estaba pintado de "disabled"
+
+Roberto, sobre la card del duelo ("¿te sirve la tuya?"): *"el CTA apenas y se
+nota, como que no se siente que es un botón y por el color se camuflagea"*.
+
+**La causa, en dos eslabones:**
+
+1. El botón usaba `bg-accent-soft` = `#f1f0ee`, que en este sistema **es el
+   relleno de `disabled`** (`disabled:bg-accent-soft` en
+   `historial-look-detail`). O sea que el CTA estaba pintado con el color que
+   en toda la app significa "no puedes picarle", y sobre el fondo de página
+   `#f4f3f1` la diferencia es de 1.5%. La card cerraba con dos filas grises
+   —"elegir la tuya" y "ninguna de las dos me va"— con el mismo peso, así que
+   ninguna se leía como la acción.
+2. Por qué llegó a eso: un comentario del código decía "no es negro relleno:
+   ese está reservado a 'generar' en toda la app". **Era falso** — hay 152
+   botones `bg-accent` + `text-on-accent` fuera de admin, y dicen "ir a mi
+   perfil", "usar este estilo", "armar mi maleta", "recortar". El negro es el
+   primario de la app, no el de generar. Una regla inventada empujó el CTA al
+   gris de disabled.
+
+**El arreglo** son dos clases (`bg-accent-soft text-ink` → `bg-accent
+text-on-accent`), aplicadas a los DOS gemelos: el duelo del viaje
+(`trip-result`) y el de la cápsula (`capsule-list`). Son la misma interacción
+y las copias que divergen ya han costado caro aquí.
+
+Comparado en pantalla contra un contorno de tinta antes de decidir: el
+contorno pierde porque mete un segundo trazo y compite con el anillo de la
+prenda elegida. El negro además cumple lo que el comentario original ya
+quería y el gris nunca logró — el anillo de la prenda elegida y la barra se
+leen como un solo bloque.
+
 ## [0.2.297.0] - 2026-08-31 — el feedback de Val: el clima de la hora en que te vistes
 
 Val usó la app y reportó tres cosas. Las tres eran ciertas, pero sólo una
