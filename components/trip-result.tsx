@@ -217,13 +217,16 @@ function DueloCard({
       </div>
 
       {/* El botón aparece AL PICAR y su label nombra la elección. Uno solo y de
-          ancho completo: alineado con una columna se leería como su pie. */}
+          ancho completo: alineado con una columna se leería como su pie.
+          Negro relleno = el primario de la app; el porqué (y el gris de
+          disabled que estaba antes) está documentado en el gemelo de la
+          cápsula, capsule-list.tsx. LOS DOS CAMBIAN JUNTOS. */}
       {sel ? (
         <button
           type="button"
           onClick={() => (sel === "tuya" ? onMia() : onSugerida())}
           style={{ animation: "step-in var(--dur-short) var(--ease-enter) both" }}
-          className="flex h-[52px] w-full items-center justify-center border-t border-line bg-accent-soft text-[14.5px] font-bold text-ink transition-colors hover:bg-line2"
+          className="flex h-[52px] w-full items-center justify-center border-t border-line bg-accent text-[14.5px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
         >
           elegir {sel === "sugerida" ? "la sugerida" : "la tuya"}
         </button>
