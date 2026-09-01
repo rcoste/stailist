@@ -17,6 +17,8 @@ import { PROMPT_VERSION, type EngineItem } from "@/lib/engine/prompt";
 import {
   resolveWeather,
   getWeatherForDates,
+  getWeatherParaMomento,
+  esMomento,
   climaParaElMotor,
   hayLluvia,
   type Weather,
@@ -547,9 +549,36 @@ async function generateInto(
     const plannedFor = plannedForDe(body, fechaLocalDe(body));
     const manual =
       !!body.weather && typeof body.weather.temp_c === "number";
+    // Y SI DIJO PARA CUÁNDO, EL CLIMA DE ESAS HORAS. Mismo criterio que el
+    // wizard (ver lib/weather): un look de noche no se arma con el promedio del
+    // día entero.
+    //
+    // OJO — HOY ESTA RAMA NO SE EJERCITA, y se deja a propósito. `LookInput` es
+    // `{...} & ({lat,lon} | {weather})` y el wizard SIEMPRE toma la segunda: su
+    // `armar()` no sale sin banda de clima, así que `manual` llega en true y
+    // todo cae en `resolveWeather`. El arreglo de Val vive entero del lado del
+    // cliente. Esto existe porque la rama de `getWeatherForDates` de aquí abajo
+    // ya existía con la misma condición: si algún día alguien manda coords sin
+    // clima, las dos puertas tienen que decidir IGUAL. Dejar sólo una
+    // actualizada es la divergencia silenciosa que este repo ya pagó con la
+    // lluvia del wizard contra la del motor.
+    //
+    // OJO al escribirlo: `body.lat` / `body.lon` van LITERALES, sin
+    // destructurar. contrato-wizard-rutas.test.ts lee el código de esta ruta
+    // como texto para verificar que ningún campo del wizard se pierda en
+    // silencio, y un `const { lat, lon } = body` lo deja ciego.
     const weather: Weather | null =
-      plannedFor && !manual && typeof body.lat === "number" && typeof body.lon === "number"
-        ? await getWeatherForDates(body.lat, body.lon, plannedFor, plannedFor)
+      !manual && typeof body.lat === "number" && typeof body.lon === "number"
+        ? esMomento(body.momento)
+          ? await getWeatherParaMomento(
+              body.lat,
+              body.lon,
+              plannedFor ?? fechaLocalDe(body),
+              body.momento
+            )
+          : plannedFor
+            ? await getWeatherForDates(body.lat, body.lon, plannedFor, plannedFor)
+            : await resolveWeather(body)
         : await resolveWeather(body);
 
     const seedItemIds = anclasDe(body);
