@@ -65,7 +65,7 @@ export function EdadPicker() {
               onChange={(e) => setAck(e.target.checked)}
               className="mt-[3px] h-[18px] w-[18px] shrink-0 accent-[var(--c-accent)]"
             />
-            <span>Ya hablé con ellos y saben que voy a usar Stailist.</span>
+            <span>Ya hablé con ellos y saben que voy a usar stailist.</span>
           </label>
           <p className="text-[13px] leading-snug text-muted">
             Puedes explorar la app mientras confirman; subir fotos se desbloquea

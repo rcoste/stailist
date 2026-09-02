@@ -69,10 +69,13 @@ export async function loadUltimoLook(
   if (itemIds.length === 0) return { ...base, retrato: null, prendas: [] };
 
   // Misma resolución de imagen que el clóset: arquetipo, render o foto propia.
+  // Filtra borradas: esta card es la portada del home, y enseñar ahí una prenda
+  // que la persona ya borró de su clóset la hace dudar de todo lo demás.
   const { data: items } = await supabase
     .from("items")
     .select("id, photo_path, render_status, render_path, attrs, archetypes(image_path)")
-    .in("id", itemIds);
+    .in("id", itemIds)
+    .is("deleted_at", null);
 
   const paths = (items ?? [])
     .flatMap((i) => [i.photo_path as string | null, i.render_path as string | null])

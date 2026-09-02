@@ -126,9 +126,11 @@ export async function GET(request: NextRequest) {
         const nombres = new Map<string, string>();
         if (ids.length > 0) {
           const n = await c.query<{ id: string; nombre: string | null }>(
+            // Sin borradas: el correo nombraba prendas que la persona ya sacó
+            // de su clóset ("tu chamarra de mezclilla" cuando ya no la tiene).
             `select i.id, coalesce(a.name, i.attrs->>'nombre') as nombre
                from items i left join archetypes a on a.id = i.archetype_id
-              where i.id = any($1::uuid[])`,
+              where i.id = any($1::uuid[]) and i.deleted_at is null`,
             [ids]
           );
           for (const it of n.rows) if (it.nombre) nombres.set(it.id, it.nombre);

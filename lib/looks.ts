@@ -412,3 +412,24 @@ export function bloqueCoberturaAcentos(c: CoberturaAcentos): string {
   if (!c.hueco) return "";
   return `HONESTIDAD — PIDIÓ EL COLOR EN DOSIS CHICAS Y SU CLÓSET NO TIENE CON QUÉ: sólo ${c.chicas === 0 ? "no tiene ninguna" : "tiene una"} pieza chica de color (bufanda, calzado, cinturón, bolso o corbata) contra ${c.grandes} prendas grandes de color. NO compenses metiéndole un suéter o un abrigo de color: eso es exactamente lo que pidió evitar. Arma el look TONAL y que la decisión visible sea la textura, el corte o la proporción. Si viene al caso, dilo en la explicación en UNA frase y sin disculpas: que hoy su clóset da para lo sobrio, y que una bufanda o unos zapatos de color le abrirían el juego.`;
 }
+
+// ─── CÓMO SE ESCRIBE UN TAG CUANDO LA PERSONA LO LEE ─────────────────────────
+//
+// Los tags son llaves internas y viajan al motor sin acentos ("clasico"), a
+// propósito: son identificadores, no texto. Pero la UI los pintaba crudos con
+// `capitalize`, así que en Perfil se leía "Clasico" y "Nautico" — faltas de
+// ortografía en la cara de la usuaria. Aquí viven las que necesitan acento o
+// mayúscula propia; el resto se capitaliza solo.
+const TAG_VISIBLE: Record<string, string> = {
+  calido: "Cálido",
+  clasico: "Clásico",
+  nautico: "Náutico",
+  romantico: "Romántico",
+  versatil: "Versátil",
+  y2k: "Y2K",
+};
+
+/** El tag como se le muestra a la persona. Nunca lo uses para comparar. */
+export function tagVisible(tag: string): string {
+  return TAG_VISIBLE[tag] ?? tag.charAt(0).toUpperCase() + tag.slice(1);
+}

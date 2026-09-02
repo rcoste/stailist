@@ -39,7 +39,7 @@ export async function sendInviteEmail(
   <h1 style="margin:12px 0 0;font-size:32px;line-height:1.1;font-weight:700;letter-spacing:-0.035em;color:#141414;">Estás dentro. Vamos a vestirte <span style="font-family:${serif};font-style:italic;font-weight:400;letter-spacing:0;">increíble</span>.</h1>
 
   <p style="margin:20px 0 0;font-size:17px;line-height:1.55;color:#363636;">Soy tu stylist personal. Con la ropa que <b style="color:#141414;">ya tienes</b>, te armo un look listo para tu día — pensado para ti y para el clima de tu ciudad.</p>
-  <p style="margin:14px 0 0;font-size:17px;line-height:1.55;color:#363636;">Tu primer outfit está a menos de <b style="color:#141414;">2 minutos</b> de aquí. Solo pícale al botón — ya te dejé tu correo puesto.</p>
+  <p style="margin:14px 0 0;font-size:17px;line-height:1.55;color:#363636;">Tu primer outfit está <b style="color:#141414;">a unos minutos</b> de aquí. Solo pícale al botón — ya te dejé tu correo puesto.</p>
 
   <p style="margin:28px 0 0;"><a href="${url}" style="display:inline-block;background:#0a0a0a;color:#fff;font-size:15px;font-weight:700;letter-spacing:-0.01em;text-decoration:none;padding:15px 28px;border-radius:3px;">Entrar y armar mi primer look &rarr;</a></p>
 
@@ -54,7 +54,7 @@ export async function sendInviteEmail(
     "",
     "Soy tu stylist personal. Con la ropa que ya tienes, te armo un look listo",
     "para tu día — pensado para ti y para el clima de tu ciudad. Tu primer outfit",
-    "está a menos de 2 minutos de aquí, con tu correo ya puesto.",
+    "está a unos minutos de aquí, con tu correo ya puesto.",
     "",
     `Entrar y armar mi primer look → ${url}`,
     "",

@@ -2,6 +2,86 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.300.0] - 2026-09-01 — B0 de la auditoría: lo que no requería decidir nada
+
+Primer bloque del plan de ataque post-auditoría (`docs/auditorias/`). Son los
+once arreglos que el informe marcó como correctos sin que nadie tenga que
+elegir entre alternativas. Los bloques con decisiones de producto (cuotas de IA,
+aviso de privacidad, recorte del onboarding) van aparte.
+
+### El stream de `/api/generate` nunca se cerraba
+
+`cerrar()` se llamaba **a sí misma** en vez de llamar a `controller.close()`.
+Entró el 2026-08-09 tapando un "Controller is already closed" y sobrevivió tres
+semanas porque desde el navegador no se nota: el cliente corta al leer `{done}`
+y la persona ve sus looks. Del lado del servidor, en cambio, cada generación se
+quedaba viva hasta que el navegador desconectaba o vencía el `maxDuration` — 60
+segundos de función pagados por cada look, sin que nadie los usara.
+
+Es el ejemplo exacto de lo que el brief de la auditoría advertía: 1592 tests en
+verde y ninguno mira si un stream se cierra.
+
+### Las pantallas rotas salían en inglés
+
+No existía `error.tsx`, `global-error.tsx` ni `not-found.tsx`. Una ruta que no
+existe mostraba *"404 · This page could not be found"* y cualquier excepción en
+render, *"Application error: a client-side exception has occurred"*. En una app
+en español, de invitación, donde `next.config.ts` ya documenta que `<Image>`
+lanza en render y tumba la pantalla completa.
+
+Ahora las tres están en la voz de la casa y con salida ("vuelve a intentar" usa
+`reset()`, que re-renderiza el segmento sin perder la navegación).
+`global-error` lleva sus colores en estilos inline: sustituye al layout raíz, y
+si lo que falló fue justamente la hoja de estilos, `var(--c-bg)` pintaría
+transparente. Es la única excepción a "cero hex en componentes" fuera de los
+correos.
+
+### La promesa de "menos de 2 minutos", fuera hasta que sea cierta
+
+Estaba impresa en seis lugares. Medida contra producción: **mediana de 7 min
+47 s** (n=18) y **nadie por debajo de 4 minutos**. El 77% de ese tiempo es el
+onboarding declarativo, no la IA (el motor tarda entre 13 y 30 segundos).
+
+No se baja la promesa por pesimismo: se baja porque un número que se falla por
+4× en el 100% de los casos gasta la confianza en el primer minuto, y la app la
+necesita para lo que viene después. Vuelve —con el número que sea cierto— cuando
+el recorte del onboarding lo sostenga medido.
+
+### Lo demás
+
+- **`next` 16.2.9 → 16.3.4**: cierra el DoS de Server Actions
+  (GHSA-m99w-x7hq-7vfj), que sí aplicaba: hay siete archivos `"use server"` con
+  IA detrás. `npm audit` pasa de 4 vulnerabilidades altas a 0.
+- **El lint estaba en rojo y nadie podía verlo**: 46 427 problemas, de los que
+  99.9% eran copias de trabajo y handoffs de diseño que `eslint.config.mjs` no
+  ignoraba (vitest sí). Ahora reporta **89**, y los 40 errores reales del
+  proyecto se leen. Arreglarlos es otro bloque.
+- **Cabeceras de seguridad**: sólo estaba HSTS, que lo pone Vercel. La que
+  importaba es `frame-ancestors`: `/api/permiso` —el consentimiento del tutor de
+  una menor— es un `<form>` clásico sin token CSRF, y dentro de un iframe
+  invisible alguien podría hacer que el tutor "dé permiso" creyendo que pulsa
+  otra cosa. Sin CSP completa todavía: a medias son pantallas rotas sin mensaje.
+- **La cuenta de prueba `roberto.dev@stailist.app` era admin en producción** y
+  entra con contraseña, un segundo factor que el producto no diseñó (el gate de
+  `NODE_ENV` sólo tapa el botón; la API de Supabase Auth es pública). Ya no es
+  admin.
+- **Prendas borradas que reaparecían**: la card del último look en el home y el
+  correo de reenganche nombraban prendas que la persona ya había sacado de su
+  clóset. El KPI de viajes del admin contaba los borrados.
+- **Copy**: el error del wow decía "falta la API key de Anthropic" —jerga, y
+  falso desde que el motor corre en Gemini—; "terminé y no salió ningún look" se
+  reportaba como "se cortó la conexión", mandando a revisar el wifi por un fallo
+  del motor; el diario prometía "lo que te has puesto" y lista los looks
+  generados (el botón "me lo puse" murió en v0.2.223.0); "Clasico" y "Nautico"
+  se pintaban sin acento porque la UI capitalizaba la llave interna;
+  "Cena Con Amigos" era Title Case inglés por un `capitalize` de CSS, que
+  capitaliza cada palabra; la marca aparecía como "Stailist" en el flujo de
+  menores; "+1 looks" en plural.
+- **Código muerto**: `EmailOptIn` se montaba en cada página del layout escuchando
+  un evento que nadie emite desde que murió el botón "me lo puse". El opt-in de
+  correos se rehace bien en su propio bloque.
+- `package.json` decía 0.2.265 con `VERSION` en 0.2.299.0; ahora se sincronizan.
+
 ## [0.2.299.0] - 2026-09-01 — /admin/actividad: el feed de lo que hace la gente
 
 Pedido de Roberto: *"me gustaría tener un feed de todas las acciones que hacen

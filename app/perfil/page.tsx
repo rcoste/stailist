@@ -116,7 +116,7 @@ export default async function PerfilPage() {
     : null;
   const waHref = linkPermiso
     ? `https://wa.me/?text=${encodeURIComponent(
-        `Hola 👋 quiero usar Stailist (una app que arma outfits con mi ropa). Como soy menor, necesitan tu permiso — confírmalo aquí porfa: ${linkPermiso}`
+        `Hola 👋 quiero usar stailist (una app que arma outfits con mi ropa). Como soy menor, necesitan tu permiso — confírmalo aquí porfa: ${linkPermiso}`
       )}`
     : null;
 

@@ -72,16 +72,16 @@ export async function sendParentConsentEmail(
 <div style="max-width:480px;margin:0 auto;padding:40px 24px;">
   <div style="font-size:24px;font-weight:700;letter-spacing:-0.045em;">st<span style="font-family:${serif};font-style:italic;font-weight:400;letter-spacing:0;">ai</span>list</div>
   <p style="margin:28px 0 0;font-size:17px;line-height:1.55;">Hola 👋</p>
-  <p style="margin:14px 0 0;font-size:17px;line-height:1.55;">Tu hija o hijo quiere usar <b>Stailist</b>, una app que arma outfits con la ropa que ya tiene. Como es menor de edad, necesitamos tu permiso antes de que pueda subir fotos.</p>
+  <p style="margin:14px 0 0;font-size:17px;line-height:1.55;">Tu hija o hijo quiere usar <b>stailist</b>, una app que arma outfits con la ropa que ya tiene. Como es menor de edad, necesitamos tu permiso antes de que pueda subir fotos.</p>
   <p style="margin:14px 0 0;font-size:15px;line-height:1.55;color:#363636;"><b>Qué datos usaría la app:</b> fotos suyas (cara y cuerpo, para su avatar), fotos de su ropa, y sus gustos de estilo. Todo se guarda en privado, no se comparte con nadie, y tú o él/ella pueden pedirnos borrarlo cuando quieran escribiendo a hola@stailist.co.</p>
   <p style="margin:24px 0 0;"><a href="${url}" style="display:inline-block;background:#141414;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 26px;">Revisar y dar permiso</a></p>
   <p style="margin:18px 0 0;font-size:13px;line-height:1.5;color:#6b6b6b;">Si no reconoces esta solicitud, ignora este correo y no pasa nada — sin tu permiso no podrá subir fotos.</p>
 </div></body></html>`;
-  const text = `Tu hija o hijo quiere usar Stailist, una app que arma outfits con la ropa que ya tiene. Como es menor de edad, necesitamos tu permiso antes de que pueda subir fotos (de su cara, cuerpo y ropa; todo privado, se puede borrar cuando quieran: hola@stailist.co).\n\nRevisar y dar permiso: ${url}\n\nSi no reconoces esta solicitud, ignora este correo — sin tu permiso no podrá subir fotos.`;
+  const text = `Tu hija o hijo quiere usar stailist, una app que arma outfits con la ropa que ya tiene. Como es menor de edad, necesitamos tu permiso antes de que pueda subir fotos (de su cara, cuerpo y ropa; todo privado, se puede borrar cuando quieran: hola@stailist.co).\n\nRevisar y dar permiso: ${url}\n\nSi no reconoces esta solicitud, ignora este correo — sin tu permiso no podrá subir fotos.`;
 
   return sendEmail({
     to,
-    subject: "Permiso para que tu hija/o use Stailist",
+    subject: "Permiso para que tu hija/o use stailist",
     html,
     text,
   });

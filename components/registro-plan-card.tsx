@@ -50,7 +50,10 @@ export function RegistroPlanCard({ inicial }: { inicial: RegistroPorPlan | null 
           const actual = registro[key] ?? null;
           return (
             <div key={key} className="flex flex-col gap-1">
-              <span className="text-sm font-medium capitalize text-ink">{t.label}</span>
+              {/* Sin `capitalize`: CSS capitaliza CADA palabra y convertía
+                  "cena con amigos" en "Cena Con Amigos" — Title Case inglés
+                  contra un sistema que va todo en minúscula. */}
+              <span className="text-sm font-medium text-ink">{t.label}</span>
               <div className="grid grid-cols-3 gap-1">
                 {REGISTRO_OPCIONES.map((op) => (
                   <button

@@ -10,6 +10,7 @@ import { ChangeAvatar } from "@/components/change-avatar";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
 import { resetHints } from "@/lib/hints";
+import { tagVisible } from "@/lib/looks";
 import { logEstiloTabView } from "@/app/perfil/actions";
 import { ColorimetriaSection } from "@/components/colorimetria-section";
 import { StyleVetoesSection } from "@/components/style-vetoes-section";
@@ -292,9 +293,9 @@ function EstiloTab({
                   {tasteTags.map((t) => (
                     <span
                       key={t}
-                      className="rounded-sm border border-line bg-bg px-2.5 py-1 text-xs capitalize text-muted"
+                      className="rounded-sm border border-line bg-bg px-2.5 py-1 text-xs text-muted"
                     >
-                      {t}
+                      {tagVisible(t)}
                     </span>
                   ))}
                 </div>

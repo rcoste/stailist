@@ -121,10 +121,13 @@ export function Landing() {
                 Tu clóset está lleno. Y aun así, no sabes qué{" "}
                 <em className={styles.s}>ponerte</em>.
               </h1>
+              {/* La promesa de tiempo salió de aquí el 2026-09-01: medida, la
+                  mediana real es 7 min 47 s (n=18) y nadie bajó de 4 minutos.
+                  Vuelve —con el número que sea cierto— cuando el recorte del
+                  onboarding lo sostenga. Ver docs/auditorias/. */}
               <p className={styles.sub}>
-                Te armo outfits con la ropa que <b>ya tienes</b> — tu primer
-                look en <b>menos de 2 minutos</b>. Sin subir tu clóset, sin
-                complicarte.
+                Te armo outfits con la ropa que <b>ya tienes</b>. Sin subir tu
+                clóset prenda por prenda, sin complicarte.
               </p>
 
               <div id="sumarme">
@@ -190,7 +193,7 @@ export function Landing() {
                 </div>
               </div>
               <div className={styles.demoFoot}>
-                <span>Armado en 1 min 50 s · con 4 prendas que ya tenías</span>
+                <span>Armado con 4 prendas que ya tenías</span>
               </div>
             </div>
           </div>
@@ -372,7 +375,7 @@ export function Landing() {
               </div>
             </div>
             <p className={styles.stepsClose}>
-              La primera vez, en menos de 2 minutos.
+              La primera vez te tomo unos minutos. Después, ya te conozco.
             </p>
           </div>
         </section>
@@ -829,9 +832,10 @@ export function Landing() {
             <Wordmark />
           </div>
           <p className={styles.fvoice}>Tu amiga cool que se viste increíble.</p>
-          <p className={styles.fmeta}>
-            © 2026 stailist · <a href="#">Aviso de privacidad</a>
-          </p>
+          {/* El link al aviso de privacidad apuntaba a "#" (no existe la
+              página). Un link muerto en el pie es peor que no tenerlo: dice
+              que hay aviso y no lo hay. Vuelve cuando /privacidad exista. */}
+          <p className={styles.fmeta}>© 2026 stailist</p>
         </div>
       </footer>
     </div>
