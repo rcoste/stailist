@@ -1,3 +1,6 @@
+import { guardarReciboImagen, type QuienMide } from "@/lib/recibos";
+import { costoImagenUsd } from "@/lib/proveedores/precios";
+
 // LA PUERTA COMÚN DE LA GENERACIÓN DE IMÁGENES.
 //
 // La usan el try-on ("verme con este") y el avatar. Vivían con una copia cada
@@ -65,6 +68,17 @@ export async function pedirImagen(
     aspecto?: "3:4" | "16:9" | "1:1" | "4:3";
     /** Por default el bueno. El render de prenda y el catálogo pueden pedir otro. */
     modelo?: string;
+    /**
+     * A quién se le apunta la imagen. `null` (o ausente) para los caminos que
+     * NO son de una persona: los scripts de terminal que rellenan el catálogo
+     * no tienen sesión, y medirlos como uso real ensuciaría el gasto por
+     * usuaria. Es explícito a propósito, igual que el `ctx: null` de `medir`.
+     *
+     * Con contexto, cada imagen —salga o no— deja su fila en `ai_calls`. Esto
+     * es lo que llenaba el hueco más caro del panel de IA: 157 imágenes en
+     * veinte días que ningún recibo veía.
+     */
+    ctx?: (QuienMide & { tarea: string }) | null;
     fetchImpl?: typeof fetch;
     ahora?: () => number;
   } = {}
@@ -73,6 +87,22 @@ export async function pedirImagen(
   const modelo = opciones.modelo ?? GEMINI_MODEL;
   const ahora = opciones.ahora ?? (() => Date.now());
   const t0 = ahora();
+  const ctx = opciones.ctx ?? null;
+  // El recibo se escribe en UN solo lugar —aquí— y no en cada `return`: esta
+  // función tiene cinco salidas distintas (imagen, 4xx, 5xx sin reintentos,
+  // filtro de seguridad, timeout) y repartir el registro entre ellas es cómo
+  // se pierde justo el caso raro que se quería medir.
+  const registrar = async (ok: boolean) => {
+    if (!ctx) return;
+    await guardarReciboImagen(ctx.supabase, {
+      userId: ctx.userId,
+      tarea: ctx.tarea,
+      modeloId: modelo,
+      ms: ahora() - t0,
+      ok,
+      costoUsd: costoImagenUsd(modelo),
+    });
+  };
   const cuerpo = JSON.stringify({
     contents: [{ parts }],
     generationConfig: {
@@ -117,7 +147,10 @@ export async function pedirImagen(
       const img = data?.candidates?.[0]?.content?.parts?.find(
         (p: { inlineData?: { data?: string } }) => p.inlineData?.data
       );
-      if (img) return { data: img.inlineData.data as string };
+      if (img) {
+        await registrar(true);
+        return { data: img.inlineData.data as string };
+      }
       // 200 sin imagen: casi siempre el filtro de seguridad. No se reintenta
       // —la misma entrada da lo mismo— pero sí se deja dicho por qué.
       const razon =
@@ -135,6 +168,7 @@ export async function pedirImagen(
       console.error(`[imagen] ${modelo} ${intento}/${INTENTOS} — ${motivo}`);
     }
   }
+  await registrar(false);
   return { motivo };
 }
 

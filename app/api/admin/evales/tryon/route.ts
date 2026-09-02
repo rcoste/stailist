@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
 
   const previos = (fila.tryons as Record<string, string> | null) ?? {};
   const r = await generarTryon({
+    // Laboratorio: no es gasto de una persona ni consume su cuota.
+    tarea: null,
     supabase,
     userId: duenoId,
     itemIds: look.item_ids,

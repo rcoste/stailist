@@ -31,6 +31,7 @@ import {
   lugarDisplay,
 } from "@/lib/trip-ruta";
 import type { Season } from "@/lib/colorimetria";
+import { revisarGasto } from "@/lib/cuotas";
 
 export const maxDuration = 60;
 
@@ -65,6 +66,15 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },
+      { status: 429 }
+    );
+  }
 
   let body: {
     lugar?: string;

@@ -107,17 +107,17 @@ export const CAMINOS_SIN_MEDIR: CaminoSinMedir[] = [
     etiqueta: "juez del avatar",
     razon: "SDK directo en la ruta (la imagen la genera Gemini; esto la juzga)",
   },
-  // EL HUECO MÁS CARO, y el último en aparecer (2026-08-14): un archivo, siete
-  // consumidores. Todo lo que GENERA IMÁGENES pasa por aquí —try-on, avatar,
-  // arquetipos, renders de prenda, fotos de destino— y ninguno deja recibo.
-  // No se olvidó: una imagen no se cobra por token, y el recibo de la puerta
-  // común (y su tabla de precios) sólo sabe de tokens. Hace falta una tarifa
-  // por imagen antes que la instrumentación.
-  {
-    archivo: "lib/gemini-imagen.ts",
-    etiqueta: "generar imágenes (try-on, avatar, arquetipos)",
-    razon: "una imagen no se cobra por token; falta tarifa por imagen antes de poder medirla",
-  },
+  // AQUÍ ESTABA EL HUECO MÁS CARO Y SE CERRÓ (2026-09-02). Todo lo que genera
+  // imágenes —try-on, avatar, arquetipos, renders de prenda, fotos de destino—
+  // pasa por `lib/gemini-imagen.ts` y ninguno dejaba recibo, porque una imagen
+  // no se cobra por token y la tabla de precios sólo sabía de tokens. Ahora hay
+  // tarifa por imagen (`PRECIOS_IMAGEN`, verificada contra la documentación de
+  // Google) y su propio escritor (`guardarReciboImagen`).
+  //
+  // Lo que se veía sin esto: entre el 13 de agosto y el 2 de septiembre se
+  // generaron 157 imágenes, ~$21, contra $2.58 de recibos de texto. El panel
+  // enseñaba el 11% del gasto — y sobre ese 11% se había concluido que la app
+  // costaba ~$18 al mes.
 ];
 
 /** Sólo las etiquetas, que es lo que la pantalla enseña. */

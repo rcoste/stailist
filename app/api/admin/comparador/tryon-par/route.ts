@@ -81,6 +81,8 @@ export async function POST(request: NextRequest) {
       const previos = (l.tryons as Record<string, string> | null) ?? {};
       const cachePath = `${duenoId}/tryons/comparador-${l.id}-${indice}.jpg`;
       const r = await generarTryon({
+        // Laboratorio: no es gasto de una persona ni consume su cuota.
+        tarea: null,
         supabase,
         userId: duenoId,
         itemIds: look.item_ids,

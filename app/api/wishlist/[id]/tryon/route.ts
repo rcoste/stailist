@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { pedirImagen } from "@/lib/gemini-imagen";
+import { revisarCuota } from "@/lib/cuotas";
 
 export const maxDuration = 60;
 
@@ -38,6 +39,16 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
+  // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
+  const cuota = await revisarCuota(supabase, user.id, "tryon");
+  if (!cuota.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },
+      { status: 429 }
+    );
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -89,7 +100,10 @@ export async function POST(
     ];
     // Por la puerta común (lib/gemini-imagen): reintento, timeout y motivo real.
     // Esta era otra copia suelta del mismo fetch — las cazó lib/thinking.test.ts.
-    const r = await pedirImagen(parts, { aspecto: "3:4" });
+    const r = await pedirImagen(parts, {
+      aspecto: "3:4",
+      ctx: { supabase, userId: user.id, tarea: "tryon-wishlist" },
+    });
     if ("motivo" in r) {
       console.error(`[wishlist tryon] ${r.motivo}`);
       return NextResponse.json(

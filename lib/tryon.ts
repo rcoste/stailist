@@ -133,8 +133,17 @@ export async function generarTryon(opciones: {
   yaGenerado?: string | null;
   /** El origin de la petición: las imágenes públicas se piden absolutas. */
   origin: string;
+  /**
+   * Con qué nombre se apunta el gasto de la imagen, o `null` para no apuntarlo.
+   *
+   * `null` lo pasan el comparador y las evales: son corridas de laboratorio y
+   * medirlas como uso real inflaría el gasto de Roberto y movería las cuotas de
+   * una persona que no hizo nada. Mismo criterio que el `ctx: null` de `medir`.
+   */
+  tarea?: string | null;
 }): Promise<ResultadoTryon> {
   const { supabase, userId, itemIds, tip, cachePath, yaGenerado, origin } = opciones;
+  const tarea = opciones.tarea === undefined ? "tryon" : opciones.tarea;
 
   const signFresh = async (path: string) => {
     const { data } = await supabase.storage.from("prendas").createSignedUrl(path, 3600);
@@ -231,7 +240,9 @@ export async function generarTryon(opciones: {
       ...identityB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
       ...prendasB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
     ];
-    const r = await pedirImagen(parts);
+    const r = await pedirImagen(parts, {
+      ctx: tarea ? { supabase, userId, tarea } : null,
+    });
     if ("motivo" in r) {
       return { error: "generacion", status: 502, detalle: r.motivo.slice(0, 200) };
     }

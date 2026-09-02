@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { pedirImagen, GEMINI_MODEL } from "@/lib/gemini-imagen";
 
 // EXTRAER UNA PRENDA DE UNA FOTO — imagen→imagen, en un solo lugar.
@@ -35,7 +36,9 @@ export type PrendaAExtraer = {
  */
 export async function extraerPrendaDeFoto(
   foto: { base64: string; mediaType: string },
-  prenda: PrendaAExtraer
+  prenda: PrendaAExtraer,
+  /** Quién paga el render. null en scripts y catálogo (no son de una persona). */
+  ctx?: { supabase: SupabaseClient; userId: string } | null
 ): Promise<Buffer | null> {
   const encuadre =
     prenda.categoria === "calzado"
@@ -58,7 +61,11 @@ export async function extraerPrendaDeFoto(
 
   const r = await pedirImagen(
     [{ text: prompt }, { inlineData: { mimeType: foto.mediaType, data: foto.base64 } }],
-    { modelo: GEMINI_MODEL, aspecto: prenda.aspecto ?? "1:1" }
+    {
+      modelo: GEMINI_MODEL,
+      aspecto: prenda.aspecto ?? "1:1",
+      ctx: ctx ? { ...ctx, tarea: "render-prenda" } : null,
+    }
   );
   if ("motivo" in r) {
     console.error(`[extraer-prenda] ${r.motivo}`);

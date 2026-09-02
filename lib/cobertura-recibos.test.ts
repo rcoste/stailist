@@ -120,13 +120,12 @@ const EXENTOS: Record<string, string> = {
   "lib/engine/trip-outfits.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
   "lib/engine/trip-substitutes.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
 
-  // LA PUERTA DE LAS IMÁGENES. Caso aparte de todos los de arriba, y el más
-  // caro de la lista: por aquí pasan el try-on, el avatar, los arquetipos, los
-  // renders de prenda y las fotos de destino — siete consumidores. No es que se
-  // olvidara de medir: `Recibo` no le sirve tal cual, porque una imagen no se
-  // cobra por token y `lib/proveedores/precios.ts` sólo sabe de tokens. Medirla
-  // pide su propia tarifa por imagen antes que su instrumentación.
-  "lib/gemini-imagen.ts": "genera IMÁGENES por HTTP; no hay tarifa por imagen todavía — pendiente de migrar (ver TODOS.md)",
+  // LA PUERTA DE LAS IMÁGENES YA NO ESTÁ AQUÍ (2026-09-02). Era el hueco más
+  // caro de la lista —try-on, avatar, arquetipos, renders de prenda y fotos de
+  // destino, siete consumidores— y se cerró poniendo la tarifa por imagen que
+  // le faltaba (`PRECIOS_IMAGEN`) y su propio escritor de recibo
+  // (`guardarReciboImagen`). Medido antes de cerrarlo: 157 imágenes en veinte
+  // días que ningún recibo veía, ~$21 contra los $2.58 que sí se registraban.
 };
 
 /** Los archivos que hablan con un modelo, en rutas relativas con "/". */
@@ -152,7 +151,13 @@ describe("cada camino de IA deja recibo", () => {
   it("ninguno llama al modelo sin medir", () => {
     const ciegos = archivos.filter(
       (rel) =>
-        !EXENTOS[rel] && !/\bmedir\(/.test(sinComentarios(readFileSync(join(RAIZ, rel), "utf8")))
+        !EXENTOS[rel] &&
+        // `medir()` es la puerta de texto; `guardarReciboImagen()` la de
+        // imagen. Las dos escriben en ai_calls, que es lo que este candado
+        // vigila — exigir sólo la primera dejaría fuera todo lo que dibuja.
+        !/\b(medir|guardarReciboImagen)\(/.test(
+          sinComentarios(readFileSync(join(RAIZ, rel), "utf8"))
+        )
     );
     expect(
       ciegos,

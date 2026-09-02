@@ -70,6 +70,13 @@ function uid() {
 // Error tipado del 403 de permiso parental: corta el análisis con el mensaje
 // del server (no es un problema de las fotos).
 class PermisoError extends Error {}
+/**
+ * Tope diario de fotos alcanzado (429). Es su propia clase por lo mismo que
+ * PermisoError: sin ella, un 429 caía en el `if (!res.ok)` de abajo, la foto se
+ * marcaba como "sin prendas", y si el lote entero topaba la persona leía "no
+ * detecté prendas en esas fotos" — culpando a sus fotos por un límite nuestro.
+ */
+class CuotaError extends Error {}
 
 type DraftItem = DraftLeida & {
   /**
@@ -227,7 +234,10 @@ export function ImportCarreteFlow({
     } catch (e) {
       setState({
         kind: "error",
-        msg: e instanceof PermisoError ? e.message : "No pude leer las fotos. Inténtalo otra vez.",
+        msg:
+          e instanceof PermisoError || e instanceof CuotaError
+            ? e.message
+            : "No pude leer las fotos. Inténtalo otra vez.",
       });
     }
   }
@@ -284,6 +294,15 @@ export function ImportCarreteFlow({
             if (err.error === "permiso_pendiente" && err.message) throw new PermisoError(err.message);
             marca([]);
             return [] as DraftItem[];
+          }
+          if (res.status === 429) {
+            // Tope diario: corta el lote con el mensaje del servidor. Las
+            // fotos ya analizadas antes de topar NO se pierden — el error se
+            // pinta sobre el clóset, que se refresca (ver el portal de abajo).
+            const err = (await res.json().catch(() => ({}))) as { mensaje?: string };
+            throw new CuotaError(
+              err.mensaje ?? "por hoy llegué a mi tope de fotos. mañana seguimos."
+            );
           }
           if (!res.ok) {
             marca([]);

@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
+import { revisarCuota } from "@/lib/cuotas";
+import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
 
 export const maxDuration = 60;
 
@@ -25,6 +27,16 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
+  // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
+  const cuota = await revisarCuota(supabase, user.id, "fotos");
+  if (!cuota.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },
+      { status: 429 }
+    );
+  }
 
   // Recibe la foto de la persona (aísla la prenda que trae puesta) → mismo
   // gate de menores que analizar-prenda/s: sin permiso del tutor, no procesa.
@@ -56,12 +68,21 @@ export async function POST(request: NextRequest) {
   let bytes: Buffer | null = null;
 
   // Camino principal: imagen→imagen desde la foto original (lib/extraer-prenda).
-  const match = body.image?.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (match) {
-    const [, mediaType, b64] = match;
+  // La foto es opcional aquí: sin ella hay otro camino (texto→imagen). Cuando
+  // viene, mandan los bytes y no la etiqueta (lib/imagen-entrante.ts).
+  const foto = leerImagenEntrante(body.image);
+  if (!foto.ok && foto.motivo !== "falta") {
+    return NextResponse.json(
+      { error: "bad_image", mensaje: MOTIVO_IMAGEN[foto.motivo] },
+      { status: 400 }
+    );
+  }
+  if (foto.ok) {
+    const { mediaType, b64 } = foto;
     bytes = await extraerPrendaDeFoto(
       { base64: b64, mediaType },
-      { quePrenda, categoria: attrs.categoria, color: attrs.color, aspecto: "1:1" }
+      { quePrenda, categoria: attrs.categoria, color: attrs.color, aspecto: "1:1" },
+      { supabase, userId: user.id }
     );
   }
 

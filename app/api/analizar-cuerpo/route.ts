@@ -4,6 +4,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { photosGate } from "@/lib/consentimiento";
 import { builds, isBuild, type Build, type Gender } from "@/lib/silueta";
+import { revisarGasto } from "@/lib/cuotas";
+import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
 
 export const maxDuration = 60;
 
@@ -29,6 +31,15 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
+  // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },
+      { status: 429 }
+    );
+  }
+
   // Menor (13-17) sin permiso parental confirmado: las fotos quedan bloqueadas.
   const blocked = await photosGate(supabase, user.id);
   if (blocked) return blocked;
@@ -47,9 +58,17 @@ export async function POST(request: NextRequest) {
     body.gender === "mujer" || body.gender === "hombre" ? body.gender : null;
   if (!gender) return NextResponse.json({ error: "bad_request" }, { status: 400 });
 
-  const match = body.image?.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (!match) return NextResponse.json({ error: "bad_image" }, { status: 400 });
-  const [, mediaType, b64] = match;
+  // Los BYTES deciden qué es la foto, no la etiqueta que mandó el cliente
+  // (lib/imagen-entrante.ts). También corta lo que pesa de más antes de
+  // pagarle al modelo por leer basura.
+  const foto = leerImagenEntrante(body.image);
+  if (!foto.ok) {
+    return NextResponse.json(
+      { error: "bad_image", mensaje: MOTIVO_IMAGEN[foto.motivo] },
+      { status: 400 }
+    );
+  }
+  const { mediaType, b64 } = foto;
 
   const opciones = builds(gender);
   const catalogo = opciones.map((b) => `- "${b.id}": ${b.hint}`).join("\n");

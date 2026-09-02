@@ -16,6 +16,7 @@ import {
   type Weather,
 } from "@/lib/weather";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
+import { revisarCuota } from "@/lib/cuotas";
 import {
   itemImageUrlSync,
   itemPrivatePaths,
@@ -42,6 +43,16 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "no_auth" }, { status: 401 });
+  }
+
+  // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
+  // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
+  const cuota = await revisarCuota(supabase, user.id, "looks");
+  if (!cuota.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },
+      { status: 429 }
+    );
   }
 
   let body: {
