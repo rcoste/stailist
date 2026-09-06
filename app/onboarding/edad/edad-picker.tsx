@@ -48,6 +48,8 @@ export function EdadPicker() {
             Como eres menor de edad, necesitamos el permiso de tus papás o
             tutores — sobre todo porque vas a subir fotos tuyas. Danos su correo
             y les mandamos un link para que lo confirmen (les toma un minuto).
+            Qué guardamos y por qué está en el{" "}
+            <a href="/privacidad" target="_blank" className="underline">aviso de privacidad</a>.
           </p>
           <input
             type="email"

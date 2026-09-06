@@ -43,6 +43,13 @@ export default async function LoginPage({
 
       <LoginForm prefillEmail={prefillEmail} />
 
+      {/* Antes de dar el correo, que se pueda leer qué se hace con él. */}
+      <p className="text-center text-xs text-muted">
+        al entrar aceptas los{" "}
+        <a href="/terminos" className="underline hover:text-ink">términos</a> y el{" "}
+        <a href="/privacidad" className="underline hover:text-ink">aviso de privacidad</a>.
+      </p>
+
       {isDev && (
         <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-surface/50 p-4">
           <p className="text-center text-xs font-medium uppercase tracking-wide text-muted">

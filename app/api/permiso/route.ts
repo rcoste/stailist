@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
   <li>Fotos de su ropa, para armarle outfits con lo que tiene.</li>
   <li>Sus gustos de estilo y colores.</li>
 </ul>
-<p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#363636;">Todo se guarda en privado y no se comparte con nadie. Puedes retirar el permiso y pedir que borremos sus datos cuando quieras, escribiendo a <a href="mailto:hola@stailist.co" style="color:#141414;">hola@stailist.co</a>.</p>
+<p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#363636;">Todo se guarda en privado y no se comparte con nadie. Puedes retirar el permiso y pedir que borremos sus datos cuando quieras, escribiendo a <a href="mailto:hola@stailist.co" style="color:#141414;">hola@stailist.co</a>. El detalle completo está en el <a href="https://stailist.co/privacidad" style="color:#141414;">aviso de privacidad</a>.</p>
 <form method="post" action="/api/permiso?token=${token}" style="margin:28px 0 0;">
   <button type="submit" style="display:inline-block;background:#141414;color:#fff;font-size:15px;font-weight:700;border:0;padding:16px 28px;cursor:pointer;font-family:inherit;">Doy mi permiso</button>
 </form>

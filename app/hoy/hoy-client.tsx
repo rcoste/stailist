@@ -29,6 +29,7 @@ import type { UltimoLook } from "@/lib/ultimo-look";
 import { HomeTripCard } from "@/components/home-trip-card";
 import type { HomeTrip } from "@/lib/home-trip";
 import { HomeChecklist } from "@/components/home-checklist";
+import { CorreoOptInCard } from "@/components/correo-opt-in-card";
 import type { HomeChecklist as HomeChecklistData } from "@/lib/home-checklist";
 
 export type HoyOutfit = {
@@ -95,6 +96,7 @@ export function HoyClient({
   homeTrip = null,
   ultimoLook = null,
   checklist = null,
+  correoOptIn = false,
   verInicio = false,
   hayPlaneado = false,
 }: {
@@ -132,6 +134,8 @@ export function HoyClient({
   /** Checklist de activación (home idle): avatar → prendas → estilo → silueta →
    *  cápsula. null = todo hecho (se autodestruye). */
   checklist?: HomeChecklistData | null;
+  /** Mostrar la pregunta del correo semanal (una vez, tras el primer 👍). */
+  correoOptIn?: boolean;
   /** `?inicio=1`: abre la home aunque ya haya look del día (en vez del look). */
   verInicio?: boolean;
   /** Hay un look PLANEADO cerca de hoy (el server no conoce la zona horaria del
@@ -596,6 +600,12 @@ export function HoyClient({
         {homeTrip ? (
           <div className="mt-3.5" style={anim(4)}>
             <HomeTripCard trip={homeTrip} />
+          </div>
+        ) : null}
+
+        {correoOptIn ? (
+          <div className="mt-3.5" style={anim(4)}>
+            <CorreoOptInCard />
           </div>
         ) : null}
 

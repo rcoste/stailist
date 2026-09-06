@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { STYLE_WORDS_MAX } from "@/lib/style-words";
 import { referenciaPreset } from "@/lib/referencias";
 import { registrarEvento } from "@/lib/telemetria";
+import { withDb } from "@/lib/db";
+import { isAgeRange, isMinor } from "@/lib/edad";
+import { guardarEdad } from "@/lib/edad-guardar";
+import { isEmailValido } from "@/lib/valid-email";
+import { sendParentConsentEmail } from "@/lib/consentimiento";
+import { borrarArchivos, borrarFilasYAuth, rutasDeLaPersona } from "@/lib/borrar-cuenta";
 
 type StyleRefPayload = {
   summary: string;
@@ -244,4 +250,107 @@ export async function guardarApetitoAcentos(
   if (error) return { ok: false };
   revalidatePath("/perfil");
   return { ok: true };
+}
+
+// ─── CORREOS: OPT-IN ─────────────────────────────────────────────────────────
+//
+// La respuesta a "¿te mando un look cada lunes?" (card del home tras el primer
+// 👍) y el toggle de Perfil › cuenta. `journey_state.correo_preguntado` es lo
+// que evita volver a preguntar: se marca con cualquiera de las dos respuestas.
+export async function responderCorreoSemanal(
+  quiere: boolean
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data: p } = await supabase
+    .from("profiles")
+    .select("journey_state")
+    .eq("id", user.id)
+    .single();
+  const journey = ((p?.journey_state as Record<string, unknown> | null) ?? {});
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      email_semanal: quiere ? "semanal" : "off",
+      journey_state: { ...journey, correo_preguntado: true },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+  if (error) return { ok: false };
+  if (!quiere) {
+    await registrarEvento(supabase, {
+      user_id: user.id,
+      type: "email_unsubscribed",
+      data: { via: "app" },
+    });
+  }
+  revalidatePath("/hoy");
+  revalidatePath("/perfil");
+  return { ok: true };
+}
+
+// ─── EDAD: CORREGIRLA DESDE PERFIL ───────────────────────────────────────────
+//
+// Hasta el 2026-09-06 la edad era inmutable: quien se equivocaba de rango
+// quedaba atrapado hasta que Roberto lo corrigiera a mano. Ahora se cambia
+// aquí, con la misma regla que el onboarding (lib/edad-guardar.ts): pasar a
+// 13-17 invalida cualquier consentimiento previo y exige correo de tutor.
+export async function cambiarEdad(
+  range: string,
+  parentEmail: string | null
+): Promise<{ ok: boolean; mensaje?: string }> {
+  if (!isAgeRange(range)) return { ok: false, mensaje: "elige un rango." };
+  const menor = isMinor(range);
+  if (menor && !isEmailValido(parentEmail ?? "")) {
+    return { ok: false, mensaje: "para 13-17 necesito el correo de tu papá, mamá o tutor." };
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const r = await withDb((c) =>
+    guardarEdad(c, { uid: user.id, range, parentEmail: menor ? parentEmail : null, soloSiVacia: false })
+  );
+  if (!r) return { ok: false, mensaje: "no se guardó — inténtalo de nuevo." };
+  if (menor && r.token && parentEmail) {
+    const sent = await sendParentConsentEmail(parentEmail, r.token);
+    if (!sent.ok) console.error(`parent_consent_email_failed: ${sent.error}`);
+  }
+  revalidatePath("/perfil");
+  return { ok: true };
+}
+
+// ─── BORRAR MI CUENTA ────────────────────────────────────────────────────────
+//
+// Lo que promete el aviso de privacidad: un botón. El orden importa y está
+// explicado en lib/borrar-cuenta.ts: archivos con la sesión viva, luego filas
+// y usuario de auth en una transacción, luego cerrar sesión.
+export async function borrarMiCuenta(
+  confirmacion: string
+): Promise<{ ok: false; mensaje: string } | never> {
+  if (confirmacion.trim().toLowerCase() !== "borrar") {
+    return { ok: false, mensaje: 'escribe "borrar" para confirmar.' };
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const rutas = await rutasDeLaPersona(user.id);
+  await borrarArchivos(supabase, user.id, rutas);
+  try {
+    await borrarFilasYAuth(user.id);
+  } catch (e) {
+    console.error("[borrar-cuenta] falló la transacción:", e instanceof Error ? e.message : e);
+    return { ok: false, mensaje: "no pude borrar tu cuenta — escríbenos a hola@stailist.co y lo hacemos nosotros." };
+  }
+  await supabase.auth.signOut();
+  redirect("/?adios=1");
 }

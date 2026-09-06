@@ -63,6 +63,9 @@ export default async function proxy(request: NextRequest) {
     pathname.startsWith("/api/email/baja") ||
     // Permiso parental (menores): el tutor llega desde su correo, sin cuenta.
     pathname.startsWith("/api/permiso") ||
+    // Legales: se leen sin cuenta (y antes de crearla).
+    pathname === "/privacidad" ||
+    pathname === "/terminos" ||
     // La versión desplegada: un número, nada más — el mismo que ya va horneado
     // en el JavaScript que cualquiera puede leer. Pedirle sesión lo volvería
     // inútil justo donde más sirve (la pantalla de entrar), y además el aviso

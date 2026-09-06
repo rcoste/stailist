@@ -832,10 +832,10 @@ export function Landing() {
             <Wordmark />
           </div>
           <p className={styles.fvoice}>Tu amiga cool que se viste increíble.</p>
-          {/* El link al aviso de privacidad apuntaba a "#" (no existe la
-              página). Un link muerto en el pie es peor que no tenerlo: dice
-              que hay aviso y no lo hay. Vuelve cuando /privacidad exista. */}
-          <p className={styles.fmeta}>© 2026 stailist</p>
+          <p className={styles.fmeta}>
+            © 2026 stailist · <a href="/privacidad">privacidad</a> ·{" "}
+            <a href="/terminos">términos</a>
+          </p>
         </div>
       </footer>
     </div>

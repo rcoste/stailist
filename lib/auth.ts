@@ -23,6 +23,8 @@ export type Profile = {
   // Rango de edad declarado (tras el género). Contexto de life-stage para el
   // motor + gate del aviso de menores. Ver lib/edad.ts.
   age_range: AgeRange | null;
+  /** 'semanal' | 'off' — opt-in del correo (B2). select("*") lo trae. */
+  email_semanal: string | null;
   // Sello de que el menor DECLARÓ tener permiso (check del onboarding).
   minor_ack_at: string | null;
   // Consentimiento parental VERIFICADO: correo del tutor + token del link +
