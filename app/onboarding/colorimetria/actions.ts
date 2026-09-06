@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/telemetria";
 import {
   computeSeasonWithFlow,
   isQuizComplete,
@@ -39,7 +40,7 @@ export async function savePalette(
     return { error: "No pude guardar tu paleta — inténtalo otra vez." };
   }
 
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: "onboarding_step",
     data: { step: 2, season, flow, answers, source: "quiz" },
@@ -65,7 +66,7 @@ export async function skipColorimetria(): Promise<void> {
     .eq("id", user.id)
     .eq("onboarding_step", 1); // no retrocede a quien ya iba más adelante
 
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: "onboarding_step",
     data: { step: 2, source: "skip_colorimetria" },
@@ -98,7 +99,7 @@ export async function updateColorimetria(
 
   if (error) return { ok: false };
 
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: "colorimetria_edit",
     data: { season, flow },

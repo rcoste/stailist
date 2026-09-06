@@ -10,6 +10,7 @@ import {
   type ItemImageRow,
 } from "@/lib/item-image";
 import { WowClient, type WowOutfit } from "./wow-client";
+import { registrarEvento } from "@/lib/telemetria";
 
 // El momento wow: 2-3 outfits generados con tu clóset, tus gustos y tu paleta.
 // Acepta step 4 (recién terminó checklist) Y step 5 (la generación lo cerró
@@ -129,7 +130,7 @@ export default async function WowPage({
           .eq("onboarding_step", 4);
         // El embudo no puede quedarse ciego: sin este evento, quien llegó a su
         // primer look por esta puerta se vería como quien nunca llegó.
-        await supabase.from("events").insert({
+        await registrarEvento(supabase, {
           user_id: profile.id,
           type: "onboarding_step",
           data: { step: 5, via: "wow_reanudado" },

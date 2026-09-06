@@ -31,6 +31,20 @@ try {
     if (r.rows?.length) console.table(r.rows);
     else console.log(`${r.command} OK (${r.rowCount ?? 0} filas)`);
   }
+  // Deja anotado qué archivo se aplicó (migración 0152). Si la tabla aún no
+  // existe —estás aplicando justo esa o una anterior— no pasa nada.
+  if (flagOrFile !== "-c" && /supabase\/migrations\/.+\.sql$/.test(flagOrFile)) {
+    const nombre = flagOrFile.split("/").pop();
+    try {
+      await client.query(
+        "insert into public.schema_migrations (nombre) values ($1) on conflict (nombre) do nothing",
+        [nombre]
+      );
+      console.log(`anotada en schema_migrations: ${nombre}`);
+    } catch {
+      /* sin tabla todavía */
+    }
+  }
 } finally {
   await client.end();
 }

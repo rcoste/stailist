@@ -6,6 +6,7 @@ import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { revisarCuota } from "@/lib/cuotas";
+import { registrarEvento } from "@/lib/telemetria";
 
 export const maxDuration = 60;
 
@@ -209,7 +210,7 @@ async function registrarFallo(
   ms: number
 ) {
   try {
-    await supabase.from("events").insert({
+    await registrarEvento(supabase, {
       user_id: userId,
       type: "avatar_fallo",
       data: { stage, motivo: motivo?.slice(0, 300) ?? null, ms },
@@ -465,7 +466,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Instrumentación del flywheel: cómo puntúa el juez y cuánto reintenta.
-    await supabase.from("events").insert({
+    await registrarEvento(supabase, {
       user_id: user.id,
       type: "avatar_judge",
       data: {

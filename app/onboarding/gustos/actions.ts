@@ -10,13 +10,17 @@ import { generateStyleQuestions } from "@/lib/engine/style-questions";
 import { styleQuestionsSig } from "@/lib/style-questions-cache";
 import type { AssessmentQuestion, LifestyleAnswers } from "@/lib/capsule";
 import type { Gender } from "@/lib/auth";
+import { registrarEvento } from "@/lib/telemetria";
 
 export type SwipeResult = { id: string; liked: boolean };
 
 // Devuelve el arquetipo para revelarlo en pantalla (no redirige: el reveal
 // vive en el paso de gustos, como el de colorimetría). Error → string.
 export async function saveTastes(
-  results: SwipeResult[]
+  results: SwipeResult[],
+  /** Usó "con estas ya te leo" antes de ver las 27. Sin esto no se podía
+   *  distinguir en los datos si el escape a las 12 se usa o se ignora. */
+  escape = false
 ): Promise<{ archetype: StyleArchetype } | { error: string }> {
   const clean = results.filter(
     (r) => LOOK_IDS.has(r.id) && typeof r.liked === "boolean"
@@ -81,10 +85,10 @@ export async function saveTastes(
   }
 
   // Los swipes crudos quedan en events: sirven para afinar looks y tags después.
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: "onboarding_step",
-    data: { step: 1, swipes: clean, taste_tags: tasteTags, archetype },
+    data: { step: 1, swipes: clean, taste_tags: tasteTags, archetype, escape },
   });
 
   // Calienta las preguntas de calibración EN BACKGROUND (after() corre tras

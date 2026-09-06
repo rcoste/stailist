@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 import type { HintId } from "@/lib/hints-catalog";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Hints contextuales: descubrimiento just-in-time de los módulos. Cada hint se
 // muestra UNA vez (la primera vez que pisas la superficie donde es relevante) y
@@ -31,9 +32,7 @@ export async function dismissHint(id: HintId): Promise<void> {
   seen[id] = new Date().toISOString();
 
   await supabase.from("profiles").update({ hints_seen: seen }).eq("id", user.id);
-  await supabase
-    .from("events")
-    .insert({ user_id: user.id, type: "hint_seen", data: { id } });
+  await registrarEvento(supabase, { user_id: user.id, type: "hint_seen", data: { id } });
 }
 
 // "Volver a ver los tips" (Perfil): resetea todos los hints.

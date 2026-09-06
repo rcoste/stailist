@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Acciones compartidas sobre un outfit (las usan el wow, el historial y Hoy).
 
@@ -157,5 +158,13 @@ export async function toggleFavorite(
     .eq("id", outfitId)
     .eq("user_id", user.id);
 
+  // Sólo el favorito, no el des-favorito: 28 favoritos y ninguna huella.
+  if (!error && favorite) {
+    await registrarEvento(supabase, {
+      user_id: user.id,
+      type: "outfit_favorited",
+      outfit_id: outfitId,
+    });
+  }
   return { ok: !error };
 }

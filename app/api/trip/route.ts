@@ -32,6 +32,7 @@ import {
 } from "@/lib/trip-ruta";
 import type { Season } from "@/lib/colorimetria";
 import { revisarGasto } from "@/lib/cuotas";
+import { registrarEvento } from "@/lib/telemetria";
 
 export const maxDuration = 60;
 
@@ -415,6 +416,11 @@ export async function POST(request: NextRequest) {
           return;
         }
 
+        await registrarEvento(supabase, {
+          user_id: user.id,
+          type: "trip_created",
+          data: { trip_id: inserted.id },
+        });
         send({ done: true, tripId: inserted.id });
         controller.close();
       } catch {

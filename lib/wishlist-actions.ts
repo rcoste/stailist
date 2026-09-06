@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/telemetria";
 
 type Source = "upload" | "capsule" | "gap";
 
@@ -96,6 +97,11 @@ export async function toggleWishlistFromCapsule(input: {
     console.error("[wishlist] toggle insert falló:", error.message);
     return { ok: false, saved: false };
   }
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "wishlist_added",
+    data: { source: "capsule", capsule_key: input.capsuleKey },
+  });
   revalidatePath("/wishlist");
   return { ok: true, saved: true };
 }
@@ -210,6 +216,11 @@ export async function moveWishlistItemToCloset(
     await supabase.storage.from("prendas").remove([row.tryon_path as string]);
   }
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "wishlist", n: 1 },
+  });
   revalidatePath("/wishlist");
   revalidatePath("/closet");
   return { ok: true };

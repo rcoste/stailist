@@ -25,6 +25,7 @@ import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import type { Occasion, TripOutfit } from "@/lib/trip";
+import { registrarEvento } from "@/lib/telemetria";
 
 const MAX_LOOKS = 16;
 const outfitKey = (o: { prendas: string[] }) => capsuleLookKey(o.prendas);
@@ -305,7 +306,7 @@ export async function setCapsuleLookVote(
 
   if (voto) {
     const { outfitId } = await ensureRow(index, null);
-    await supabase.from("events").insert({
+    await registrarEvento(supabase, {
       user_id: user.id,
       type: voto === "up" ? "vote_up" : "vote_down",
       outfit_id: outfitId ?? null,

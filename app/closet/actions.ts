@@ -21,6 +21,7 @@ import {
 import type { PrendaExistente } from "@/lib/ya-la-tienes";
 import { attrsDelPantalon } from "@/lib/pantalon-del-traje";
 import { descripcionObsoleta } from "@/lib/garment-desc";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Frontera de confianza LLM→DB: los campos de texto libre del análisis de
 // visión se normalizan/validan server-side antes de persistir (las server
@@ -122,6 +123,11 @@ export async function addPhotoItem(
   });
   if (error) return { ok: false };
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "foto", n: 1 },
+  });
   revalidatePath("/closet");
   return { ok: true };
 }
@@ -205,9 +211,7 @@ export async function removeItem(id: string): Promise<{ ok: boolean }> {
   if (error || !data || data.length === 0) return { ok: false };
 
   // Deja rastro: qué prendas se van y cuándo es señal de qué le sobra al clóset.
-  await supabase
-    .from("events")
-    .insert({ user_id: user.id, type: "item_deleted", data: { item_id: id } });
+  await registrarEvento(supabase, { user_id: user.id, type: "item_deleted", data: { item_id: id } });
 
   revalidatePath("/closet");
   return { ok: true };
@@ -427,6 +431,11 @@ export async function addArchetypes(
   );
   if (error) return { ok: false, added: 0 };
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "biblioteca", n: toInsert.length },
+  });
   revalidatePath("/closet");
   return { ok: true, added: toInsert.length };
 }
@@ -584,6 +593,11 @@ export async function addPhotoItems(
     .select("id");
   if (error) return { ok: false, added: 0 };
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "carrete", n: items.length },
+  });
   revalidatePath("/closet");
   return {
     ok: true,
@@ -891,6 +905,11 @@ export async function crearPantalonDelTraje(
     .eq("id", sacoId)
     .eq("user_id", user.id);
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "manual", n: 1 },
+  });
   revalidatePath("/closet");
   return { ok: true, id: creado.id as string };
 }

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/telemetria";
 
 export async function saveCloset(
   archetypeIds: number[]
@@ -86,11 +87,11 @@ export async function saveCloset(
       return { error: "No pude guardar tus prendas — inténtalo otra vez." };
     }
 
-    await supabase.from("events").insert({
-      user_id: user.id,
-      type: "onboarding_step",
-      data: { step: 3, items: archetypes.length },
-    });
+    await registrarEvento(supabase, [
+      { user_id: user.id, type: "onboarding_step", data: { step: 3, items: archetypes.length } },
+      // La acción más común del producto no dejaba evento (1026 prendas, 0 filas).
+      { user_id: user.id, type: "item_added", data: { source: "onboarding", n: archetypes.length } },
+    ]);
   }
 
   redirect("/onboarding/objetivo");

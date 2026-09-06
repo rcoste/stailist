@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { VETO_CATALOG } from "@/lib/vetoes";
+import { registrarEvento } from "@/lib/telemetria";
 
 const VALID_IDS = new Set(VETO_CATALOG.map((c) => c.id));
 
@@ -39,7 +40,7 @@ export async function updateVetoes(
     .eq("id", user.id);
   if (error) return { ok: false };
 
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: "style_vetoes_edit",
     data: { chips: cleanChips.length, free: cleanFree.length },

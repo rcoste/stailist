@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { bodyTypeToBuild, isBuild, type Build, type Gender } from "@/lib/silueta";
+import { registrarEvento } from "@/lib/telemetria";
 
 type BodyType = "slim" | "athletic" | "average" | "full";
 
@@ -79,9 +80,7 @@ export async function saveGeneratedAvatar(
   }
 
   await invalidateTryons(supabase, user.id);
-  await supabase
-    .from("events")
-    .insert({ user_id: user.id, type: "avatar_generated", data: { body_type: bodyType } });
+  await registrarEvento(supabase, { user_id: user.id, type: "avatar_generated", data: { body_type: bodyType } });
 
   return { ok: true };
 }

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LOOKS } from "@/lib/looks";
 import { contarSenalOroPorCercania } from "@/lib/senal-oro";
 import { contarEventos, evaluarSenales, type Veredicto } from "@/lib/senales-vivas";
+import { TOPE_TRAMO_S, fmtSegundos, tiemposPorTramo, type EventoPaso } from "@/lib/admin/embudo-tiempos";
 
 /**
  * El día en que el fit check se volvió el escritor de `worn`.
@@ -114,6 +115,7 @@ export default async function AdminOverview() {
     estiloViewRes,
     looksGenRes,
     fitChecksRes,
+    pasosRes,
   ] = await Promise.all([
     // Perfiles completos para embudo + adopción (avatar, cápsula). En beta la
     // tabla es chica; traemos solo las columnas que el dashboard necesita.
@@ -174,6 +176,12 @@ export default async function AdminOverview() {
       .is("deleted_at", null)
       .eq("source", "espejo")
       .gte("created_at", since90d),
+    // Los pasos del onboarding con su reloj, para la tabla de tramos
+    // (lib/admin/embudo-tiempos): dónde se va el tiempo, no sólo cuánto.
+    supabase
+      .from("events")
+      .select("user_id, created_at, type, data")
+      .in("type", ["onboarding_started", "onboarding_step"]),
   ]);
 
   const estiloVisitas = estiloViewRes.data?.length ?? 0;
@@ -247,7 +255,10 @@ export default async function AdminOverview() {
   const ttvs = events
     .filter((e) => e.type === "first_outfit_ttv")
     .map((e) => (e.data as { seconds?: number })?.seconds)
-    .filter((s): s is number => typeof s === "number");
+    .filter((s): s is number => typeof s === "number")
+    // Más de dos horas no es un TTV, es alguien que volvió otro día (5 de 23
+    // eran de horas o de meses por medirse desde created_at). Fuera.
+    .filter((s) => s <= TOPE_TRAMO_S);
 
   const tripVotes = events.filter((e) => e.type === "trip_look_vote");
   const tripUps = tripVotes.filter((e) => (e.data as { vote?: string })?.vote === "up").length;
@@ -296,6 +307,9 @@ export default async function AdminOverview() {
   const totalJudged =
     verdictCounts.ok + verdictCounts.reparado + verdictCounts.rechazado;
   const pctOk = totalJudged > 0 ? Math.round((verdictCounts.ok / totalJudged) * 100) : null;
+
+  // ── Cuánto tarda cada tramo del onboarding ─────────────────────────────
+  const tramos = tiemposPorTramo((pasosRes.data ?? []) as EventoPaso[]);
 
   // ── Razones de "otro look" ─────────────────────────────────────────────
   const skipReasons = (skipRes.data ?? [])
@@ -405,6 +419,24 @@ export default async function AdminOverview() {
             })}
           </div>
         )}
+      </section>
+
+      {/* ── Tiempo por tramo del onboarding ──────────────────────────── */}
+      <section className="flex flex-col gap-3">
+        <SectionTitle hint="mediana por tramo, sólo pasos seguidos en menos de 2 h — dónde se va el tiempo del TTV">
+          Cuánto tarda cada paso
+        </SectionTitle>
+        <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+          {tramos.map((t) => (
+            <div key={t.llave} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+              <span className="text-ink">{t.etiqueta}</span>
+              <span className="shrink-0 tabular-nums text-muted">
+                {fmtSegundos(t.medianaS)}
+                <span className="text-faint"> · n={t.n}</span>
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── Estabilidad del motor ────────────────────────────────────── */}

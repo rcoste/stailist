@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
 import { garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Render limpio (tipo catálogo) de una prenda del clóset SIN imagen, desde sus
 // atributos (texto→imagen con Gemini), subido a Storage y cacheado en el item
@@ -197,5 +198,10 @@ export async function renderItemImage(
     .eq("id", itemId)
     .eq("user_id", userId);
 
+  await registrarEvento(supabase, {
+    user_id: userId,
+    type: "render_generated",
+    data: { item_id: itemId, forzado: forzar },
+  });
   return { ok: true, path };
 }
