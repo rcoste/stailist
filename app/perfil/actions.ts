@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { STYLE_WORDS_MAX } from "@/lib/style-words";
 import { referenciaPreset } from "@/lib/referencias";
+import { registrarEvento } from "@/lib/telemetria";
 
 type StyleRefPayload = {
   summary: string;
@@ -181,7 +182,7 @@ export async function logEstiloTabView(): Promise<void> {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from("events").insert({
+    await registrarEvento(supabase, {
       user_id: user.id,
       type: "perfil_estilo_view",
     });

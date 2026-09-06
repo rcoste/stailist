@@ -20,6 +20,7 @@ import type {
   MatchEntry,
 } from "@/lib/capsule";
 import type { TripOutfit } from "@/lib/trip";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Clave namespaced para guardar un sustituto dentro de overrides (jsonb) sin una
 // columna nueva: capsuleRows solo lee claves numéricas, así que "sub:<i>" no
@@ -347,6 +348,11 @@ export async function markTripFaltaOwned(
     .select("id")
     .single();
   if (insErr || !inserted) return { ok: false, itemId: null };
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "viaje", n: 1 },
+  });
 
   // Sin imagen prestada → genera su render limpio ahora (inline).
   if (!imagePath) {
@@ -435,7 +441,7 @@ export async function setTripSubstitute(
     .eq("user_id", user.id);
 
   if (prevBy && prevBy !== nombre.trim()) {
-    await supabase.from("events").insert({
+    await registrarEvento(supabase, {
       user_id: user.id,
       type: "trip_item_swap",
       data: {
@@ -647,7 +653,7 @@ export async function setTripLookVote(
 
   // Log de la interacción (cada cambio que deja un voto puesto cuenta como señal).
   if (voto) {
-    await supabase.from("events").insert({
+    await registrarEvento(supabase, {
       user_id: user.id,
       type: "trip_look_vote",
       data: { vote: voto, ocasion: outfits[index].ocasion },

@@ -17,6 +17,7 @@ import {
 } from "@/lib/weather";
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { revisarCuota } from "@/lib/cuotas";
+import { registrarEvento, type FilaEvento } from "@/lib/telemetria";
 import {
   itemImageUrlSync,
   itemPrivatePaths,
@@ -329,7 +330,7 @@ export async function POST(request: NextRequest) {
         const elapsedMs = Date.now() - startedAt;
 
         // Instrumentación + cierre del onboarding si éste era el momento wow.
-        const events: Record<string, unknown>[] = [
+        const events: FilaEvento[] = [
           {
             user_id: user.id,
             type: "generation_timing",
@@ -352,9 +353,17 @@ export async function POST(request: NextRequest) {
           },
         ];
         if (profile.onboarding_step === 4) {
-          const ttvSeconds = Math.round(
-            (Date.now() - new Date(profile.created_at as string).getTime()) / 1000
-          );
+          // Desde que ABRIÓ la app, no desde que pidió el código (created_at):
+          // entre lo uno y lo otro está ir al buzón, a veces un día entero, y
+          // 5 de los 23 TTV guardados eran de horas o de meses por eso.
+          // created_at queda como respaldo para perfiles de antes de la columna.
+          const { data: reloj } = await supabase
+            .from("profiles")
+            .select("onboarding_started_at, created_at")
+            .eq("id", user.id)
+            .single();
+          const arranque = (reloj?.onboarding_started_at ?? reloj?.created_at ?? profile.created_at) as string;
+          const ttvSeconds = Math.round((Date.now() - new Date(arranque).getTime()) / 1000);
           events.push(
             {
               user_id: user.id,
@@ -376,7 +385,7 @@ export async function POST(request: NextRequest) {
             .eq("id", user.id)
             .eq("onboarding_step", 4);
         }
-        await supabase.from("events").insert(events);
+        await registrarEvento(supabase, events);
 
         // Los outfits ya se streamearon uno por uno; solo cerramos.
         send({ done: true });
@@ -393,9 +402,7 @@ export async function POST(request: NextRequest) {
         //
         // Best-effort y al final: si esto también truena, no puede tapar el
         // error de verdad que le vamos a mandar a la persona.
-        await supabase
-          .from("events")
-          .insert({
+        await registrarEvento(supabase, {
             user_id: user.id,
             type: "generation_failed",
             data: { message: message.slice(0, 300), paso: pasoOnboarding },

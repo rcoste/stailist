@@ -8,6 +8,7 @@ import { routeForStep } from "@/lib/onboarding";
 import { isAgeRange, isMinor } from "@/lib/edad";
 import { isEmailValido } from "@/lib/valid-email";
 import { sendParentConsentEmail } from "@/lib/consentimiento";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Guarda el rango de edad (ortogonal al onboarding_step, como el género: no
 // avanza el paso, solo desbloquea el flujo). Menor (13-17): además del check,
@@ -62,6 +63,14 @@ export async function saveAge(formData: FormData) {
   if (row && menor && token) {
     const sent = await sendParentConsentEmail(parentEmail, token);
     if (!sent.ok) console.error(`parent_consent_email_failed: ${sent.error}`);
+  }
+
+  if (row) {
+    await registrarEvento(supabase, {
+      user_id: user.id,
+      type: "onboarding_step",
+      data: { step: 0, paso: "edad", age_range: ageRange },
+    });
   }
 
   let step: number = row?.onboarding_step ?? -1;

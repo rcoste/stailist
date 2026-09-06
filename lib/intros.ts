@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Intros de módulo: la explicación que se muestra UNA vez, la primera vez que
 // pisas una superficie cuyo CONCEPTO no es obvio.
@@ -47,7 +48,5 @@ export async function markIntroSeen(id: IntroId): Promise<void> {
 
   await supabase.from("profiles").update({ hints_seen: seen }).eq("id", user.id);
   // Para medir en el admin si la explicación se lee o se salta.
-  await supabase
-    .from("events")
-    .insert({ user_id: user.id, type: "intro_seen", data: { id } });
+  await registrarEvento(supabase, { user_id: user.id, type: "intro_seen", data: { id } });
 }

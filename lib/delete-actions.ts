@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/telemetria";
 
 // Borrado suave de outfits y viajes. La fila se queda con deleted_at; todas las
 // lecturas de producto filtran `deleted_at is null`.
@@ -36,7 +37,7 @@ async function marcarBorrado(
     .select("id");
   if (error || !data || data.length === 0) return { ok: false };
 
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: evento,
     outfit_id: tabla === "outfits" ? id : null,

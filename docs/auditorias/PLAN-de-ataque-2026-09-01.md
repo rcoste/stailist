@@ -8,6 +8,16 @@ resto con el ship ligero.
 Regla del plan: **un bloque no arranca hasta que el anterior está en prod y
 verificado en la app**, salvo donde se marca "en paralelo".
 
+
+> **Decisiones de Roberto (2026-09-06).** Topes de B1 aprobados (20/5/15/120,
+> $5 por persona como backstop). Correos **opt-in**. Texto legal: lo redacta
+> Claude y lo revisa Roberto. **B3 (recorte del onboarding) CANCELADO**: Roberto
+> lo ha recorrido varias veces y lo ve bien —"va generando valor"—; se queda
+> como está. Objeción registrada: la mediana medida es 7 min 47 s contra la
+> promesa de 2, así que la promesa no vuelve al producto. **B5 será apertura
+> total**, no por lotes; los topes de B1 y el cron de vigilancia son la red.
+> B0 (#311) y B1 (#312) hechos, pendientes de merge.
+
 ## Mapa
 
 ```

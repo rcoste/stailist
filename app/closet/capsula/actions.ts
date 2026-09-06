@@ -30,6 +30,7 @@ import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import type { LifestyleAnswers } from "@/lib/capsule";
 import { styleReferenceForEngine, styleSignature } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
+import { registrarEvento } from "@/lib/telemetria";
 
 export type CapsuleState = { status: "idle" } | { status: "error"; message: string };
 
@@ -156,6 +157,11 @@ export async function saveLifestyle(
     return { status: "error", message: "No pude guardar tus esenciales — dale otra vez." };
   }
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "capsule_generated",
+    data: { piezas: target.items?.length ?? null },
+  });
   redirect("/closet/capsula");
 }
 
@@ -559,6 +565,11 @@ export async function markFaltaOwned(
     .select("id")
     .single();
   if (insErr || !inserted) return { ok: false, itemId: null };
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "item_added",
+    data: { source: "capsula", n: 1 },
+  });
 
   // Si no hubo imagen prestada (no había arquetipo cercano — p.ej. un suéter
   // negro), le generamos su render limpio AHORA (inline) para que no quede como

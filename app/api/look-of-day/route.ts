@@ -26,6 +26,7 @@ import {
 import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { revisarCuota } from "@/lib/cuotas";
+import { registrarEvento } from "@/lib/telemetria";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -401,7 +402,7 @@ async function registrarEventos(
     }[];
   }
 ) {
-  await supabase.from("events").insert([
+  await registrarEvento(supabase, [
     {
       user_id: userId,
       type: "generation_timing",

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OBJECTIVES } from "./objectives";
+import { registrarEvento } from "@/lib/telemetria";
 
 export async function saveObjective(formData: FormData) {
   const objective = String(formData.get("objective") ?? "");
@@ -28,7 +29,7 @@ export async function saveObjective(formData: FormData) {
   if (error) redirect("/onboarding/objetivo?error=guardar");
 
   // Instrumentación: cada paso completado deja huella (mide el TTV real).
-  await supabase.from("events").insert({
+  await registrarEvento(supabase, {
     user_id: user.id,
     type: "onboarding_step",
     data: { step: 4, objective },

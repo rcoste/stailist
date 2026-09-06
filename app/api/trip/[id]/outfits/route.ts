@@ -22,6 +22,7 @@ import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import type { Season } from "@/lib/colorimetria";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 import { revisarGasto } from "@/lib/cuotas";
+import { registrarEvento } from "@/lib/telemetria";
 
 export const maxDuration = 60;
 
@@ -196,6 +197,11 @@ export async function POST(
     .eq("user_id", user.id);
   if (error) return NextResponse.json({ error: "guardar" }, { status: 500 });
 
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "trip_outfits_generated",
+    data: { trip_id: id, n: finalOutfits.length, added },
+  });
   return NextResponse.json({ ok: true, count: finalOutfits.length, added });
 }
 

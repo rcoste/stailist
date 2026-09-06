@@ -2,6 +2,68 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.302.0] - 2026-09-06 — B4: el instrumento honesto
+
+Cuarto bloque del plan post-auditoría (el tercero, recortar el onboarding,
+quedó cancelado por decisión de Roberto: lo recorrió varias veces y lo ve
+bien). Éste no cambia lo que la usuaria ve; cambia lo que se puede SABER.
+
+### El criterio #1 del experimento se medía mal
+
+"Primer look en menos de 2 minutos" se calculaba desde `profiles.created_at`,
+que es el momento en que la persona TECLEA su correo — antes de ir al buzón,
+antes del código, a veces un día antes de abrir la app. Cinco de los
+veintitrés valores guardados eran de horas o de meses, y el KPI del admin los
+promediaba sin mirar.
+
+Ahora el reloj arranca cuando pisa la primera pantalla del onboarding
+(`profiles.onboarding_started_at`, escrito una sola vez), el admin descarta
+lo que pase de dos horas, y además de un total hay una tabla por tramo: cuánto
+tarda cada paso, en mediana. Corrida contra producción al escribir esto (n=25):
+gustos → colorimetría 1m 21s · colorimetría → básicos 1m 41s · básicos →
+objetivo 9s · objetivo → primer look 47s. Los tramos anteriores a los swipes
+(abrir la app, género, edad) empiezan a llenarse desde este deploy: hasta hoy
+eran un bloque opaco.
+
+### Los eventos que se perdían en silencio
+
+Había 23 `from("events").insert(...)` sueltos y la mayoría no leía el `error`.
+Si el CHECK rechazaba el tipo, o la RLS decía que no, silencio — y ya había
+pasado con `trip_item_swap` durante semanas. Ahora hay UNA puerta,
+`registrarEvento()` (`lib/telemetria.ts`): inserta, y si falla lo dice en los
+logs. Nunca lanza en producción (un renglón de telemetría perdido no puede
+costarle su look a nadie); con `TELEMETRIA_ESTRICTA=1` sí lanza, y la suite
+corre así para que un tipo nuevo que falte en el CHECK truene en la primera
+prueba y no en producción.
+
+### La acción más común del producto no dejaba huella
+
+1026 prendas en `items` y cero eventos de "añadió una prenda". Igual los
+viajes (9), los favoritos (28), los try-ons (74), las cápsulas (14), la
+wishlist (30) y los renders (384). El feed de `/admin/actividad` lo esquivaba
+cruzando seis tablas, pero cruzar tablas no reconstruye el orden.
+
+Diez tipos nuevos en el CHECK (migración 0152): `onboarding_started`,
+`item_added` (con `source`: onboarding, foto, carrete, biblioteca, manual,
+cápsula, viaje, wishlist), `trip_created`, `trip_outfits_generated`,
+`outfit_favorited`, `tryon_generated`, `capsule_generated`, `wishlist_added`,
+`render_generated`, `email_unsubscribed`. Género y edad emiten `onboarding_step`
+con `step: 0` y su `paso`, y el evento de los swipes dice si usó el escape.
+
+Lo que NO entró, a propósito: `session_open`. Un evento por cada apertura es
+exactamente el ruido que el brief señaló (el 76% de `events` ya era
+instrumentación); la actividad se lee mejor por lo que la persona HACE.
+
+### Y la base sabe qué migraciones lleva
+
+`scripts/db.mjs` ejecutaba el archivo y no anotaba nada; la única forma de
+saber qué había en producción era comparar objetos uno a uno. Ahora hay
+`schema_migrations`: las 152 anteriores se dan por aplicadas (la auditoría
+verificó una por una que sus objetos existen) y cada archivo nuevo deja su
+renglón. De paso, tres columnas de `referencias` que existían en la base sin
+migración quedan declaradas — un entorno recreado desde el repo rompía el
+destilador sin decir por qué.
+
 ## [0.2.301.0] - 2026-09-02 — B1: cuotas, recibos de imagen y freno de mano
 
 Segundo bloque del plan post-auditoría. Sin esto, abrir el registro al público

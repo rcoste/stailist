@@ -28,11 +28,22 @@ export async function GET(request: NextRequest) {
   // aceptaba "------------------------------------" y llegaba a la DB.
   if (!isConsentToken(token)) return page("Link inválido.");
 
-  const rows = await withDb((c) =>
-    c
-      .query(`update profiles set email_semanal = 'off' where email_unsub_token = $1 returning id`, [token])
-      .then((r) => r.rowCount ?? 0)
-  );
+  // Con evento y fecha: antes sólo cambiaba la columna, así que "¿cuántas bajas
+  // reales hubo?" no se podía contestar (13 de los 15 'off' eran altas de antes
+  // del default 'semanal', no bajas).
+  const rows = await withDb(async (c) => {
+    const r = await c.query<{ id: string }>(
+      `update profiles set email_semanal = 'off' where email_unsub_token = $1 returning id`,
+      [token]
+    );
+    for (const row of r.rows) {
+      await c.query(
+        `insert into events (user_id, type, data) values ($1, 'email_unsubscribed', '{"via":"link"}')`,
+        [row.id]
+      );
+    }
+    return r.rowCount ?? 0;
+  });
 
   if (rows === 0) {
     return page("No encontramos tu suscripción. Puede que ya te hayas dado de baja.");

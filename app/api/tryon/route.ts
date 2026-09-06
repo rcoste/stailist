@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generarTryon } from "@/lib/tryon";
 import { revisarCuota } from "@/lib/cuotas";
+import { registrarEvento } from "@/lib/telemetria";
 
 export const maxDuration = 60;
 
@@ -65,6 +66,12 @@ export async function POST(request: NextRequest) {
       .from("outfits")
       .update({ tryon_path: `${user.id}/tryons/${outfitId}.jpg` })
       .eq("id", outfitId);
+    // 74 try-ons generados y ninguno en `events` (la auditoría, 2026-09-01).
+    await registrarEvento(supabase, {
+      user_id: user.id,
+      type: "tryon_generated",
+      outfit_id: outfitId,
+    });
   }
   return NextResponse.json({ image: r.image, cached: r.cached });
 }

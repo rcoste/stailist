@@ -55,7 +55,7 @@ export function SwipeDeck({
   // Acción al terminar (default = onboarding). El Perfil pasa updateTastes.
   save?: (
     results: SwipeResult[]
-  ) => Promise<{ archetype: StyleArchetype } | { error: string }>;
+  , escape?: boolean) => Promise<{ archetype: StyleArchetype } | { error: string }>;
   doneHref?: string;
   doneLabel?: string;
   /** Onboarding: tras el reveal, los pares de corte y luego 2-3 preguntas de
@@ -165,10 +165,10 @@ export function SwipeDeck({
     });
   }
 
-  function finalizar(all: SwipeResult[]) {
+  function finalizar(all: SwipeResult[], escape = false) {
     startTransition(async () => {
       setError(null);
-      const res = await save(all);
+      const res = await save(all, escape);
       if ("error" in res) setError(res.error);
       else setArchetype(res.archetype);
     });
@@ -185,7 +185,7 @@ export function SwipeDeck({
   function salirAntes() {
     if (pending || leaving) return;
     setSalida(true);
-    finalizar(results);
+    finalizar(results, true);
   }
 
   const look = looks[index];
