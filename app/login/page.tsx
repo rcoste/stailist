@@ -1,15 +1,16 @@
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
 import { isInviteToken } from "@/lib/invitacion";
+import { EMAIL_RE } from "@/lib/valid-email";
 import { LoginForm } from "./login-form";
 import { devLogin } from "./dev-actions";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; invite?: string }>;
+  searchParams: Promise<{ error?: string; invite?: string; email?: string }>;
 }) {
-  const { error, invite } = await searchParams;
+  const { error, invite, email } = await searchParams;
   const isDev = process.env.NODE_ENV !== "production";
 
   // Deep-link de invitación: si el token es válido, resolvemos su correo para
@@ -17,6 +18,9 @@ export default async function LoginPage({
   // autentica — solo pre-llena; el código sigue llegando al correo. La función
   // es SECURITY DEFINER porque el invitado llega sin sesión (ver migración 0083).
   let prefillEmail: string | null = null;
+  // Desde la landing (B5): el correo viene en la URL y sólo se pre-llena; el
+  // código se pide con el botón, como siempre. Un valor raro se ignora.
+  const desdeLanding = email && EMAIL_RE.test(email) ? email.trim().toLowerCase() : null;
   if (isInviteToken(invite)) {
     const supabase = await createClient();
     const { data } = await supabase.rpc("email_for_invite", {
@@ -41,7 +45,7 @@ export default async function LoginPage({
         </div>
       </header>
 
-      <LoginForm prefillEmail={prefillEmail} />
+      <LoginForm prefillEmail={prefillEmail ?? desdeLanding} />
 
       {/* Antes de dar el correo, que se pueda leer qué se hace con él. */}
       <p className="text-center text-xs text-muted">

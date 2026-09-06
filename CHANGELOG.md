@@ -2,6 +2,52 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.304.0] - 2026-09-06 — B5: la puerta abierta
+
+Último bloque del plan post-auditoría antes de la deuda. Decisión de Roberto:
+apertura TOTAL, sin lotes. Desde esta versión cualquiera entra a stailist con
+su correo y un código.
+
+### Lo que cae
+
+El candado de la beta cerrada era el trigger `enforce_allowlist_on_signup`
+sobre `auth.users` (migración 0003) más el RPC `is_email_allowed` que el login
+consultaba antes de mandar el código. Los dos salen (migración 0154 y
+`app/login/actions.ts`). La tabla `allowlist` y `/admin/acceso` se quedan: una
+invitación sigue siendo un link que pre-llena el correo, y no hace daño.
+
+La lista de espera de la landing deja de existir. "Armar mi primer look" ahora
+lleva al login con el correo puesto, en vez de anotarte en una tabla y decirte
+"por ahora es beta privada" — prometía un look y entregaba una waitlist. La
+tabla `waitlist` queda como histórico (44 correos a los que ahora sí se les
+puede avisar); `join_waitlist` deja de ser llamable por `anon`.
+
+### Lo que entra en su lugar
+
+- **Ritmo del login** (`lib/ritmo-login.ts`, tabla `login_intentos`): 3
+  códigos por correo y hora, 10 por IP y hora. El cooldown de 60 s que había
+  vivía en el botón, o sea que no contaba; con registro abierto el formulario
+  era una máquina de mandar correos a quien sea desde stailist.co. Al topar,
+  el mensaje dice dónde buscar el código que ya se mandó, no "bloqueado".
+- **Cron diario de limpieza** (`/api/cron/limpieza`): pedir un código crea el
+  usuario antes de que la persona teclee nada; quien se equivocó de correo o
+  se arrepintió deja una cuenta vacía para siempre (los "perfiles sin género
+  que nunca entraron" del brief eran esto). Siete días en paso 0 sin nada
+  dentro y se borra. También tira los intentos de login con más de un día:
+  guardar correos ajenos más de lo necesario es lo que el aviso de privacidad
+  dice que no hacemos.
+- **Compartir el link** por fin muestra algo: `metadataBase`, Open Graph, una
+  imagen generada (`app/opengraph-image.tsx`) con el wordmark y la línea de la
+  landing, `robots.txt` que sólo deja indexar lo público, y `sitemap.xml`.
+- `README.md`: el repo es público y no tenía.
+
+### Copy
+
+La landing ya no dice "beta privada · solo por invitación": dice "sin
+contraseña · sin tarjeta · español". El login pierde el estado "pídele tu lugar
+a Roberto". El correo de invitación deja de hablar de "la beta". CLAUDE.md y el
+USER-JOURNEY dejan de describir un candado que ya no existe.
+
 ## [0.2.303.0] - 2026-09-06 — B2: dueña de sus datos
 
 Bloque legal y de cuenta del plan post-auditoría. Es lo que faltaba para que

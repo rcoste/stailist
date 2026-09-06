@@ -8,7 +8,7 @@
 
 | # | Paso | Qué pasa | Tiempo | Estado |
 |---|------|----------|--------|--------|
-| 1 | **Login** | Correo → si está en la allowlist, llega magic link (sin contraseña). Si no: mensaje "beta por invitación" | — | ✅ construido + QA local (falta prueba con buzón real) |
+| 1 | **Login** | Correo → llega un código de 6 dígitos (sin contraseña). Registro abierto desde 2026-09-06; el freno es 3 códigos por correo y hora | — | ✅ construido + QA local (falta prueba con buzón real) |
 | 2 | **Objetivo** | Desde v0.2.250.0 la pantalla es **"tu primer look"**: anuncia que se arma el look de tu día a día (fija `last_objective` y mide el TTV) — ya no finge que se elige. La rejilla de 5 ocasiones (día a día / oficina / evento / viaje / refrescar, 4 bloqueadas) murió el 2026-08-17: las ocasiones se piden después desde el wizard de "crear un look" | 5s | ✅ construido + QA local |
 | 3 | **Swipes de gustos** | ~15 fotos de looks; ❤️/✕ por gesto O botones (desktop + accesibilidad). Genera el taste vector (tags estéticos → contexto del prompt, sin ML) | 30s | ✅ construido: 25 estilos mujer / 24 hombre (coquette es women-only) con fotos reales en `public/looks/` (49 imágenes) → `computeTasteTags` saca 8 tags calibrados por rareza (√DF), en orden de fuerza |
 | 4 | **Quiz de colorimetría** | 5-6 preguntas (piel, ojos, cabello, qué colores le favorecen) → paleta de 4 estaciones + regla near-face. SIN selfie | 20s | ✅ construido + QA local |
