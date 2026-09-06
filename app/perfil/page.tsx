@@ -178,6 +178,8 @@ export default async function PerfilPage() {
         styleReference={styleReference}
         styleWords={profile.style_words}
         tieneCapsula={tieneCapsula}
+        emailSemanal={(profile.email_semanal as "semanal" | "off" | null) ?? "off"}
+        ageRange={(profile.age_range as import("@/lib/edad").AgeRange | null) ?? null}
         signOut={signOut}
       />
     </AppShell>

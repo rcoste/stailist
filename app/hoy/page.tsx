@@ -43,6 +43,20 @@ export default async function HoyPage({
       ? prenda.split(",").map((x) => x.trim()).filter(Boolean).slice(0, MAX_ANCLAS)
       : [];
   const profile = await requireOnboarded();
+
+  // ¿Le preguntamos ya por el correo semanal? Sólo tras el primer 👍, sólo si
+  // está en 'off', sólo una vez (components/correo-opt-in-card).
+  const journey = (profile.journey_state as Record<string, unknown> | null) ?? {};
+  let correoOptIn = false;
+  if ((profile.email_semanal ?? "off") === "off" && !journey.correo_preguntado) {
+    const supabaseOptIn = await createClient();
+    const { count } = await supabaseOptIn
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("type", "vote_up");
+    correoOptIn = (count ?? 0) > 0;
+  }
   const supabase = await createClient();
   // El server corre en UTC y NO conoce la zona horaria del dispositivo, así que
   // "hoy" aquí es un rango (utc ± 1 día) y gana el look_date más reciente —
@@ -296,6 +310,7 @@ export default async function HoyPage({
           // ya abierto tiene que remontar, o el ancla se quedaría en la primera.
           key={`${nombre}:${generar ?? "view"}:${seedItemIds.join(",")}`}
           lookInicial={lookInicial}
+          correoOptIn={correoOptIn}
           pendingOutfitId={pendingOutfitId}
           votoInicial={votoInicial}
           userId={profile.id}

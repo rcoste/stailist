@@ -2,6 +2,47 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.303.0] - 2026-09-06 — B2: dueña de sus datos
+
+Bloque legal y de cuenta del plan post-auditoría. Es lo que faltaba para que
+un desconocido pudiera entrar sin que la app le prometiera algo que no cumple.
+
+### El aviso de privacidad existía como un link a "#"
+
+Ahora hay `/privacidad` y `/terminos`, públicos (se leen sin cuenta y antes de
+crearla), escritos en la voz de la casa y con lo que la app HACE: qué guarda,
+para qué, quién lo ve (Supabase, Gemini, Claude, Postmark, Vercel, Open-Meteo y
+qué le llega a cada uno), cuánto dura, el flujo de menores, y cómo borrarlo.
+Enlazados desde la landing, el login ("al entrar aceptas…"), la pantalla de
+edad y la página del tutor. Si algo de ahí deja de ser cierto, se cambia en el
+mismo commit — es una página de producto, no un formulario.
+
+### "Borrar mi cuenta" es un botón, no un correo
+
+Hasta hoy la única vía era `scripts/reset-usuario.ts` desde la terminal de
+Roberto, y además CONSERVABA la cuenta por diseño. Ahora vive en Perfil ›
+cuenta, al final y en gris, con doble confirmación (abrir y escribir "borrar").
+Borra en orden: los archivos de Storage con la sesión viva (avatar, cara,
+sheet, fotos de prendas, renders, try-ons, fit checks, referencias), después
+las filas y el usuario de auth en una transacción (`lib/borrar-cuenta.ts`).
+Un test obliga a que esa lista de tablas y la del script de reset no deriven.
+
+### Correos: opt-in
+
+Decisión de Roberto (2026-09-06). El default de `email_semanal` vuelve a 'off'
+(migración 0153; los perfiles existentes no se tocan). La pregunta se hace UNA
+vez, como card del home tras el primer 👍 —no como modal encima del look, que
+es donde ya vive el prompt de instalar la app— y cualquiera de las dos
+respuestas la retira. En Perfil › cuenta hay un interruptor para cambiar de
+idea en los dos sentidos. Decir que no deja evento (`email_unsubscribed`).
+
+### La edad ya no es una trampa
+
+Era inmutable: quien se equivocaba de rango quedaba atrapado hasta que Roberto
+lo corrigiera a mano. Ahora se corrige en Perfil, con el MISMO SQL que el
+onboarding (`lib/edad-guardar.ts`, para que no deriven): pasar a 13-17 invalida
+cualquier permiso previo y pide correo de tutor.
+
 ## [0.2.302.0] - 2026-09-06 — B4: el instrumento honesto
 
 Cuarto bloque del plan post-auditoría (el tercero, recortar el onboarding,

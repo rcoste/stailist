@@ -1,11 +1,11 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { withDb } from "@/lib/db";
 import { routeForStep } from "@/lib/onboarding";
 import { isAgeRange, isMinor } from "@/lib/edad";
+import { guardarEdad } from "@/lib/edad-guardar";
 import { isEmailValido } from "@/lib/valid-email";
 import { sendParentConsentEmail } from "@/lib/consentimiento";
 import { registrarEvento } from "@/lib/telemetria";
@@ -39,26 +39,12 @@ export async function saveAge(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const token = menor ? randomUUID() : null;
-  // `and age_range is null` = inmutabilidad: si ya hay edad, no toca nada
-  // (rowCount 0) y solo redirige al paso actual.
-  const row = await withDb((c) =>
-    c
-      .query(
-        `update profiles set
-           age_range = $2,
-           minor_ack_at = case when $3::boolean then now() else null end,
-           minor_parent_email = $4,
-           minor_consent_token = $5::uuid,
-           minor_consent_verified_at = null,
-           minor_consent_last_sent_at = case when $3::boolean then now() else null end,
-           updated_at = now()
-         where id = $1 and age_range is null
-         returning onboarding_step`,
-        [user.id, ageRange, menor, menor ? parentEmail : null, token]
-      )
-      .then((r) => r.rows[0] as { onboarding_step: number } | undefined)
+  // El SQL vive en lib/edad-guardar.ts, compartido con la edición desde Perfil.
+  const resultado = await withDb((c) =>
+    guardarEdad(c, { uid: user.id, range: ageRange, parentEmail: menor ? parentEmail : null, soloSiVacia: true })
   );
+  const row = resultado ? { onboarding_step: resultado.onboarding_step } : null;
+  const token = resultado?.token ?? null;
 
   if (row && menor && token) {
     const sent = await sendParentConsentEmail(parentEmail, token);

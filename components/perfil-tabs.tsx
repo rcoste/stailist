@@ -9,6 +9,9 @@ import { AcentosCard } from "@/components/acentos-card";
 import { ChangeAvatar } from "@/components/change-avatar";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
+import { CorreoSemanalToggle } from "@/components/correo-semanal-toggle";
+import { EdadEditar } from "@/components/edad-editar";
+import { CuentaBorrar } from "@/components/cuenta-borrar";
 import { resetHints } from "@/lib/hints";
 import { tagVisible } from "@/lib/looks";
 import { logEstiloTabView } from "@/app/perfil/actions";
@@ -42,6 +45,8 @@ export type PerfilTabsProps = {
   styleReference: StyleRef | null; // estilo de referencia (foto de inspiración)
   styleWords: string | null; // su estilo en sus palabras (texto libre)
   tieneCapsula: boolean; // para avisar que cambiar el estilo la deja vieja
+  emailSemanal: "semanal" | "off"; // opt-in del correo semanal (B2)
+  ageRange: import("@/lib/edad").AgeRange | null; // editable desde aquí (B2)
   banner: {
     title: string; // estación o fallback
     sub: string | null; // "Pulido versátil · metal oro"
@@ -123,7 +128,7 @@ export function PerfilTabs(props: PerfilTabsProps) {
   );
 }
 
-function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
+function CuentaTab({ name, email, avatarUrl, signOut, emailSemanal, ageRange }: PerfilTabsProps) {
   const [zoom, setZoom] = useState(false);
   return (
     <div className="flex flex-col gap-3">
@@ -160,6 +165,10 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
       />
 
       <InstallAppRow />
+
+      {/* Opt-in del correo y edad editable (B2 de la auditoría). */}
+      <CorreoSemanalToggle inicial={emailSemanal} />
+      <EdadEditar inicial={ageRange} />
 
       <a
         href="mailto:hola@stailist.co?subject=Mi%20opini%C3%B3n%20de%20stailist"
@@ -201,6 +210,9 @@ function CuentaTab({ name, email, avatarUrl, signOut }: PerfilTabsProps) {
           cerrar sesión
         </button>
       </form>
+
+      {/* Lo que promete el aviso de privacidad: un botón, no un correo. */}
+      <CuentaBorrar />
     </div>
   );
 }
