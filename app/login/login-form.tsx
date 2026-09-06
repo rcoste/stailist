@@ -45,12 +45,6 @@ export function LoginForm({ prefillEmail }: { prefillEmail?: string | null }) {
       {state.status === "error" && (
         <p className="text-sm text-error">{state.message}</p>
       )}
-      {state.status === "not_allowed" && (
-        <p className="text-sm text-ink">
-          Por ahora la beta es por invitación. ¿Quieres entrar? Pídele tu lugar
-          a Roberto.
-        </p>
-      )}
 
       <button
         type="submit"

@@ -6,7 +6,7 @@
 // (hero, pasos, paso 4, galería, sección 04, cápsula, viaje). Modelo de hombre M-1
 // = el modelo consistente de public/looks/*-hombre.
 import { useEffect, useState } from "react";
-import { WaitlistForm } from "./waitlist-form";
+import { EntrarForm } from "./entrar-form";
 import { TryDemo } from "./try-demo";
 import styles from "./landing.module.css";
 
@@ -131,7 +131,7 @@ export function Landing() {
               </p>
 
               <div id="sumarme">
-                <WaitlistForm source="landing-hero" trust />
+                <EntrarForm trust />
               </div>
             </div>
 
@@ -815,10 +815,7 @@ export function Landing() {
                 ¿Lista para abrir el clóset sin{" "}
                 <em className={styles.s}>pelearte</em> con él?
               </h2>
-              <WaitlistForm
-                source="landing-cta"
-                fineline="Beta privada. Si aún no tienes invitación, te anoto en la lista."
-              />
+              <EntrarForm fineline="Sin tarjeta. Tus fotos y tu clóset se borran cuando tú quieras." />
             </div>
           </div>
         </section>

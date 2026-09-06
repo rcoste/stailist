@@ -27,9 +27,22 @@ const instrument = Instrument_Serif({
 // falla por 4× quema la confianza en el primer minuto, así que la promesa baja
 // a algo cierto hasta que el recorte del onboarding la sostenga MEDIDA.
 export const metadata: Metadata = {
+  // Desde la apertura (B5): sin metadataBase y openGraph, compartir el link en
+  // WhatsApp o iMessage no mostraba imagen ni título propio. La imagen la
+  // genera app/opengraph-image.tsx.
+  metadataBase: new URL("https://stailist.co"),
   title: "stailist",
   description:
     "Tu stylist personal — un look listo para tu día, con la ropa que ya tienes.",
+  openGraph: {
+    title: "stailist — tu stylist personal con IA",
+    description: "Te armo outfits con la ropa que ya tienes. Sin subir tu clóset prenda por prenda.",
+    url: "https://stailist.co",
+    siteName: "stailist",
+    locale: "es_MX",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
   appleWebApp: { capable: true, title: "stailist", statusBarStyle: "default" },
 };
 

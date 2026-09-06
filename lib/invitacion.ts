@@ -1,6 +1,6 @@
 import { sendEmail, type SendResult } from "@/lib/email";
 
-// Correo de invitación a la beta. Se manda al agregar a alguien a la allowlist
+// Correo de invitación (desde /admin/acceso). Se manda al agregar a alguien a la allowlist
 // (o al reenviar desde admin). NO lleva código ni magic link: solo un deep-link
 // que cae en el login con el correo pre-llenado. El código de 6 dígitos se
 // genera fresco cuando la persona le pica a "mándame el código" — así nada
@@ -46,7 +46,7 @@ export async function sendInviteEmail(
   <p style="margin:30px 0 0;font-family:${serif};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Nos vemos en tu clóset.</p>
   <p style="margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#141414;">&mdash; stailist</p>
 
-  <p style="margin:30px 0 0;font-size:12px;line-height:1.55;color:#9a9a9a;">Recibes esto porque te invitaron a la beta de stailist. Si no la reconoces, ignora este correo y no pasa nada.</p>
+  <p style="margin:30px 0 0;font-size:12px;line-height:1.55;color:#9a9a9a;">Recibes esto porque te invitaron a stailist. Si no la reconoces, ignora este correo y no pasa nada.</p>
 </div></body></html>`;
 
   const text = [
@@ -61,7 +61,7 @@ export async function sendInviteEmail(
     "Nos vemos en tu clóset.",
     "— stailist",
     "",
-    "Recibes esto porque te invitaron a la beta de stailist. Si no la reconoces, ignora este correo.",
+    "Recibes esto porque te invitaron a stailist. Si no la reconoces, ignora este correo.",
   ].join("\n");
 
   return sendEmail({ to, subject, html, text });

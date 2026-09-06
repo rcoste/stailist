@@ -2,12 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { EMAIL_RE } from "@/lib/valid-email";
+import { MENSAJE_RITMO, anotarIntento, intentosUltimaHora, ipDe, permitirCodigo } from "@/lib/ritmo-login";
 
 export type LoginState =
   | { status: "idle" }
   | { status: "sent"; email: string }
-  | { status: "not_allowed" }
   | { status: "error"; message: string };
 
 export type VerifyState =
@@ -15,7 +16,7 @@ export type VerifyState =
   | { status: "error"; email: string; message: string };
 
 
-// Paso 1: valida correo + allowlist y dispara el código de 6 dígitos.
+// Paso 1: valida el correo, revisa el ritmo y dispara el código de 6 dígitos.
 // signInWithOtp genera el OTP; el template del correo lo muestra ({{ .Token }}).
 // Sin emailRedirectTo: ya no hay link, solo código.
 export async function sendCode(
@@ -33,22 +34,18 @@ export async function sendCode(
     };
   }
 
-  const supabase = await createClient();
-
-  // Allowlist server-side: la función SECURITY DEFINER corre en la DB,
-  // el cliente nunca ve la lista ni puede saltársela.
-  const { data: allowed, error: rpcError } = await supabase.rpc(
-    "is_email_allowed",
-    { check_email: email }
-  );
-  if (rpcError) {
-    return {
-      status: "error",
-      message: "Algo se atoró de nuestro lado. Inténtalo de nuevo.",
-    };
+  // Registro ABIERTO desde la apertura (B5, 2026-09-06): ya no hay allowlist
+  // que consultar. El freno es el ritmo: 3 códigos por correo y hora, 10 por
+  // IP y hora (lib/ritmo-login). Sin esto, este formulario es una máquina de
+  // mandar correos a quien sea desde stailist.co.
+  const ip = ipDe(await headers());
+  const intentos = await intentosUltimaHora(email, ip);
+  if (!permitirCodigo(intentos)) {
+    return { status: "error", message: MENSAJE_RITMO };
   }
-  if (!allowed) return { status: "not_allowed" };
+  await anotarIntento(email, ip);
 
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { shouldCreateUser: true },
