@@ -13,9 +13,8 @@ import { Logo } from "@/components/logo";
 // cierta: si algo cambia (un modelo nuevo, un proveedor nuevo, otra retención),
 // se cambia aquí en el mismo commit. Es una página pública (proxy.ts).
 //
-// Lo que Roberto tiene que confirmar antes de que salga: el nombre del
-// responsable (hoy va "stailist", operada por Roberto Coste) — si hay razón
-// social, va aquí.
+// El responsable es la razón social que opera stailist (confirmada por Roberto
+// el 2026-09-06); nunca un nombre de persona.
 
 export const metadata: Metadata = {
   title: "aviso de privacidad — stailist",
@@ -59,8 +58,10 @@ export default function PrivacidadPage() {
 
       <H2>quién es responsable</H2>
       <P>
-        stailist, operada por Roberto Coste desde México. Para cualquier cosa
-        sobre tus datos escríbenos a{" "}
+        <b>FREIGHTNOW SA DE CV</b>, con domicilio en Av. Insurgentes Sur 1824,
+        int. 302, col. Florida, C.P. 01030, Ciudad de México, es quien opera
+        stailist y responde por tus datos. Para cualquier cosa sobre ellos
+        escríbenos a{" "}
         <a href="mailto:hola@stailist.co" className="font-medium text-ink underline">
           hola@stailist.co
         </a>
