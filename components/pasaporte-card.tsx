@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { METAL_HEX } from "@/lib/colorimetria";
+import { tagVisible } from "@/lib/looks";
 import type { PasaporteData } from "@/lib/pasaporte";
 
 // Etiqueta de sección sobre la tarjeta OSCURA (rebrand v3): blanco a baja opacidad.
@@ -146,9 +147,9 @@ export const PasaporteCard = forwardRef<HTMLDivElement, { data: PasaporteData }>
                 {data.vibe.map((t) => (
                   <span
                     key={t}
-                    className="rounded-sm border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs capitalize text-white"
+                    className="rounded-sm border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs text-white"
                   >
-                    {t}
+                    {tagVisible(t)}
                   </span>
                 ))}
               </div>

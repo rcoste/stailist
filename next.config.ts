@@ -23,6 +23,38 @@ const nextConfig: NextConfig = {
   // Va al cliente a propósito: es lo que permite comparar "el JavaScript que
   // estoy corriendo" contra "lo que el servidor tiene ahora".
   env: { NEXT_PUBLIC_APP_VERSION: VERSION },
+  // CABECERAS DE SEGURIDAD.
+  //
+  // Vercel pone HSTS solo; todo lo demás faltaba. La que de verdad importa aquí
+  // es frame-ancestors: /api/permiso (el consentimiento del tutor de una menor)
+  // es un <form> clásico sin token CSRF, así que dentro de un iframe invisible
+  // alguien podría hacer que el tutor "dé permiso" creyendo que pulsa otra cosa.
+  //
+  // NO hay CSP completa todavía: la app usa estilos inline en varios sitios y
+  // una CSP a medias se convierte en pantallas rotas sin mensaje. Se hace
+  // aparte, midiendo con Report-Only primero.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // Nadie puede meter la app en un iframe.
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Frame-Options", value: "DENY" },
+          // Un .txt subido no se puede servir como HTML ejecutable.
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Al salir a otro sitio no se filtra la ruta interna en que estaba.
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // La app SÍ usa cámara (fotos de prendas) y ubicación (clima): se
+          // permiten para el propio origen y se niegan a terceros incrustados.
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), geolocation=(self), microphone=(self), payment=()",
+          },
+        ],
+      },
+    ];
+  },
   // El servidor de desarrollo bloquea por seguridad los recursos internos
   // (HMR, stack frames) pedidos desde un host que no sea localhost. Sin esto,
   // abrir la app desde el celular en la misma red pinta la página pero el

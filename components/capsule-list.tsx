@@ -886,7 +886,8 @@ function BigCard({
         </span>
         {unlock && unlock > 0 ? (
           <span className="mt-1 flex w-fit items-center gap-1 rounded-sm bg-accent-soft px-1.5 py-[2px] text-[10.5px] font-semibold text-accent">
-            <Icon name="destello" size={11} /> desbloquea ~{unlock} looks
+            <Icon name="destello" size={11} /> desbloquea{" "}
+            {unlock === 1 ? "1 look" : `~${unlock} looks`}
           </span>
         ) : null}
         <span className="mt-1 text-[11.5px] leading-snug text-muted">{row.item.porque}</span>
@@ -965,7 +966,7 @@ function SumaCard({
     : reject
       ? (note ?? "preferiste la sugerida")
       : unlock && unlock > 0
-        ? `+${unlock} looks`
+        ? `+${unlock} ${unlock === 1 ? "look" : "looks"}`
         : "te falta este básico";
 
   // "deshacer" = revertir tu decisión entre tu prenda y la sugerida. NUNCA

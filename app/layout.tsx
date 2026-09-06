@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Arimo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
-import { EmailOptIn } from "@/components/email-optin";
 import { ViewAsBanner } from "@/components/view-as-banner";
 
 // Dirección "Gen-Z monocromo" (rebrand v3): Arimo (sans variable, estilo Mango)
@@ -21,10 +20,16 @@ const instrument = Instrument_Serif({
   subsets: ["latin"],
 });
 
+// LA PROMESA DE TIEMPO, MEDIDA (2026-09-01). Decía "en menos de 2 minutos" —
+// aquí y en otros cinco lugares. El TTV real de las 18 personas que terminaron
+// el onboarding tiene una mediana de 7 min 47 s y ninguna bajó de 4 minutos, y
+// el 77 % de ese tiempo es el onboarding, no la IA. Prometer un número que se
+// falla por 4× quema la confianza en el primer minuto, así que la promesa baja
+// a algo cierto hasta que el recorte del onboarding la sostenga MEDIDA.
 export const metadata: Metadata = {
   title: "stailist",
   description:
-    "Tu stylist personal — un look listo para tu día en menos de 2 minutos.",
+    "Tu stylist personal — un look listo para tu día, con la ropa que ya tienes.",
   appleWebApp: { capable: true, title: "stailist", statusBarStyle: "default" },
 };
 
@@ -53,7 +58,6 @@ export default function RootLayout({
         <ViewAsBanner />
         {children}
         <PwaInstall />
-        <EmailOptIn />
       </body>
     </html>
   );

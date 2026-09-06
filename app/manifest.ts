@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "stailist — tu stylist personal",
     short_name: "stailist",
     description:
-      "Tu stylist personal: un look listo para tu día en menos de 2 minutos.",
+      "Tu stylist personal: un look listo para tu día, con la ropa que ya tienes.",
     start_url: "/hoy",
     scope: "/",
     display: "standalone",

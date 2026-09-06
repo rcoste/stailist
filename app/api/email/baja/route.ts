@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { withDb } from "@/lib/db";
+import { isConsentToken } from "@/lib/consentimiento";
 
 // Baja de un clic desde el link del correo — SIN login. El token es el secreto
 // (único por usuario); con él ponemos email_semanal='off'. Página de confirmación
@@ -22,8 +23,10 @@ export async function GET(request: NextRequest) {
 
   // Validación de forma (UUID) antes de tocar la DB — el token viene de un query
   // param arbitrario. La query es parametrizada (sin riesgo de inyección) pero un
-  // UUID mal formado la haría fallar; lo cortamos antes.
-  if (!/^[0-9a-f-]{36}$/i.test(token)) return page("Link inválido.");
+  // UUID mal formado la haría fallar; lo cortamos antes. Se usa el mismo
+  // validador que el consentimiento: el regex suelto de antes ([0-9a-f-]{36})
+  // aceptaba "------------------------------------" y llegaba a la DB.
+  if (!isConsentToken(token)) return page("Link inválido.");
 
   const rows = await withDb((c) =>
     c

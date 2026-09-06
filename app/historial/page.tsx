@@ -166,7 +166,10 @@ export default async function HistorialPage({
           <h1 className="text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">
             diario
           </h1>
-          <p className="mt-1.5 text-sm text-muted">lo que te has puesto, día por día.</p>
+          {/* Decía "lo que te has puesto": el botón "me lo puse" murió en
+              v0.2.223.0 y esta lista son los looks que te armé, se hayan usado
+              o no. Prometer un diario de uso y enseñar otra cosa confunde. */}
+          <p className="mt-1.5 text-sm text-muted">tus looks, día por día.</p>
         </div>
 
         {list.length === 0 ? (

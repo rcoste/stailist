@@ -36,7 +36,7 @@ export default async function LoginPage({
           <p className="text-base text-muted">
             {prefillEmail
               ? "Confírmame tu correo y te mando el código para entrar."
-              : "Tu stylist personal — un look listo para tu día en menos de 2 minutos."}
+              : "Tu stylist personal — un look listo para tu día, con la ropa que ya tienes."}
           </p>
         </div>
       </header>

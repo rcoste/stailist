@@ -42,13 +42,18 @@ type State =
   | { kind: "error"; code: string };
 
 const ERROR_COPY: Record<string, string> = {
-  sin_api_key:
-    "El stylist todavía no está conectado (falta la API key de Anthropic). En cuanto esté, aquí nacen tus looks.",
+  // Nada de nombres de proveedores aquí: además de ser jerga, decía "Anthropic"
+  // cuando el motor corre en Gemini desde 2026-08-07. A quien está esperando su
+  // primer look no le sirve saber de quién es la API que falta.
+  sin_api_key: "El stylist no está disponible ahora mismo. Vuelve en un rato.",
   closet_vacio:
     "Tu clóset quedó muy vacío para armar looks — vuelve y marca al menos 3 básicos.",
   generacion: "El stylist está ocupado — dale otra oportunidad en un momento.",
   no_pude_guardar:
     "Armé tus looks pero no pude guardarlos — inténtalo de nuevo.",
+  // "Terminé y no salió nada" NO es "se cortó la conexión": mandar a alguien a
+  // revisar su wifi cuando el problema fue el motor es una pista falsa.
+  sin_looks: "No me salió ningún look con eso — dale otra vez.",
   red: "Se cortó la conexión — inténtalo de nuevo.",
 };
 
@@ -141,10 +146,12 @@ export function WowClient({
             return;
           } else if (evt.done) {
             // Listos los 3 (o los que haya): se revelan juntos para elegir uno.
+            // Si el servidor cerró bien pero no llegó ninguno, el fallo es del
+            // motor, no de la red (ver sin_looks arriba).
             setState((s) =>
               s.kind === "loading" && s.outfits.length > 0
                 ? { kind: "choosing", outfits: s.outfits, chosenId: s.outfits[0].id }
-                : { kind: "error", code: "red" }
+                : { kind: "error", code: "sin_looks" }
             );
             return;
           }

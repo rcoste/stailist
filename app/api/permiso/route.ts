@@ -3,7 +3,7 @@ import { withDb } from "@/lib/db";
 import { isConsentToken } from "@/lib/consentimiento";
 
 // Permiso parental para menores (13-17) — SIN login: el tutor llega desde el
-// link del correo. GET muestra qué es Stailist y qué datos usa (informar antes
+// link del correo. GET muestra qué es stailist y qué datos usa (informar antes
 // de consentir); POST confirma. La confirmación va por POST a propósito: los
 // escáneres de links de los clientes de correo siguen GETs y darían el permiso
 // solos.
@@ -19,7 +19,7 @@ const shell = (inner: string) =>
 
 const invalid = () =>
   shell(
-    `<p style="margin:26px 0 0;font-size:18px;line-height:1.5;color:#363636;">Este link no es válido o ya no está activo. Pídele a tu hija/o que te lo reenvíe desde su perfil de Stailist.</p>`
+    `<p style="margin:26px 0 0;font-size:18px;line-height:1.5;color:#363636;">Este link no es válido o ya no está activo. Pídele a tu hija/o que te lo reenvíe desde su perfil de stailist.</p>`
   );
 
 // UUID estricto (lib/consentimiento): un 36-chars no-UUID reventaría el cast
@@ -71,8 +71,8 @@ export async function GET(request: NextRequest) {
   }
 
   return shell(`
-<h1 style="margin:26px 0 0;font-size:24px;line-height:1.2;letter-spacing:-0.02em;">Tu hija o hijo quiere usar Stailist</h1>
-<p style="margin:16px 0 0;font-size:16px;line-height:1.55;color:#363636;">Stailist es una app que arma outfits con la ropa que ya tiene, con ayuda de inteligencia artificial. Como es menor de edad, te pedimos permiso antes de que pueda subir fotos.</p>
+<h1 style="margin:26px 0 0;font-size:24px;line-height:1.2;letter-spacing:-0.02em;">Tu hija o hijo quiere usar stailist</h1>
+<p style="margin:16px 0 0;font-size:16px;line-height:1.55;color:#363636;">stailist es una app que arma outfits con la ropa que ya tiene, con ayuda de inteligencia artificial. Como es menor de edad, te pedimos permiso antes de que pueda subir fotos.</p>
 <p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#363636;"><b>Si das tu permiso, la app podrá guardar:</b></p>
 <ul style="margin:8px 0 0;padding-left:20px;font-size:15px;line-height:1.6;color:#363636;">
   <li>Fotos suyas (cara y cuerpo) para crear su avatar.</li>
@@ -108,6 +108,6 @@ export async function POST(request: NextRequest) {
   }
 
   return shell(
-    `<p style="margin:26px 0 0;font-size:18px;line-height:1.5;color:#363636;">Listo, permiso confirmado. Tu hija/o ya puede usar Stailist completa — gracias por tomarte el minuto.</p>`
+    `<p style="margin:26px 0 0;font-size:18px;line-height:1.5;color:#363636;">Listo, permiso confirmado. Tu hija/o ya puede usar stailist completa — gracias por tomarte el minuto.</p>`
   );
 }

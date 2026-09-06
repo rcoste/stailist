@@ -1,4 +1,6 @@
-// Spinner reutilizable con los tokens del DS (anillo hairline + arco burdeos).
+// Spinner reutilizable: hereda el color del texto (`currentColor`), así que en
+// el DS v3 monocromo sale en tinta o en muted según dónde se monte. El comentario
+// decía "arco burdeos" — paleta v1, muerta desde el rebrand de 2026-06-26.
 // Tamaño por className (ej. "h-8 w-8" en pantallas, "h-4 w-4" en botones).
 export function Spinner({ className = "h-5 w-5" }: { className?: string }) {
   return (

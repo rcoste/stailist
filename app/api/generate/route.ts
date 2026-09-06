@@ -122,12 +122,19 @@ export async function POST(request: NextRequest) {
           cerrado = true;
         }
       };
-      /** Cerrar dos veces también lanza; el finally no puede ser quien rompa. */
+      /**
+       * Cerrar dos veces también lanza; el finally no puede ser quien rompa.
+       *
+       * OJO: esta función se llamaba a sí misma en vez de cerrar el stream
+       * (2026-08-09 → 2026-09-01). No se notaba porque el cliente corta al leer
+       * `{done}`, pero del lado del servidor la invocación se quedaba viva
+       * hasta que el navegador desconectaba o vencía el maxDuration.
+       */
       const cerrar = () => {
         if (cerrado) return;
         cerrado = true;
         try {
-          cerrar();
+          controller.close();
         } catch {
           /* ya estaba cerrado por el cliente */
         }

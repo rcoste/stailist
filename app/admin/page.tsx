@@ -140,7 +140,11 @@ export default async function AdminOverview() {
       .limit(40),
     // Activos 7d: usuarias distintas con cualquier evento en la ventana.
     supabase.from("events").select("user_id").gte("created_at", since7d),
-    supabase.from("trips").select("*", { count: "exact", head: true }),
+    // Sin borrados: el KPI contaba los 2 viajes que alguien tiró a la basura.
+    supabase
+      .from("trips")
+      .select("*", { count: "exact", head: true })
+      .is("deleted_at", null),
     // ¿Alguien ABRE perfil → estilo? Sus dos campos (referencia y palabras)
     // llevan semanas vacíos y sin esto no se puede distinguir "la petición no
     // convence" de "nadie llega". user_id para contar PERSONAS, no visitas.
