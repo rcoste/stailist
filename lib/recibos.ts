@@ -163,3 +163,50 @@ export async function guardarFallo(
     // ni recibo ni nada que hacer
   }
 }
+
+// ─── EL RECIBO DE UNA IMAGEN ─────────────────────────────────────────────────
+//
+// Aparte de `medir()` porque una imagen no pasa por `llamar()`: `pedirImagen`
+// habla con Gemini por fetch directo (tiene su propio reintento, su timeout y
+// su presupuesto) y no produce un `Recibo` con tokens. Lo que sí produce es lo
+// único que importa para el costo: qué modelo, cuánto tardó, y si salió.
+//
+// Los tokens quedan en null a propósito. Poner 1120 —los que Google dice que
+// consume una imagen de 1K— haría que el panel sumara "tokens" comparables con
+// los de texto y el promedio de tokens por llamada dejaría de significar nada.
+// El costo, que es la pregunta real, sí se guarda.
+
+/** Escribe el recibo de una imagen generada. NUNCA lanza (ver guardarRecibo). */
+export async function guardarReciboImagen(
+  supabase: SupabaseClient,
+  args: {
+    userId: string;
+    /** 'tryon', 'avatar', 'render-prenda', 'destino'… */
+    tarea: string;
+    /** El id del modelo de imagen, tal cual se le pidió a Gemini. */
+    modeloId: string;
+    ms: number;
+    ok: boolean;
+    /** null si el modelo no tiene tarifa conocida. */
+    costoUsd: number | null;
+  }
+): Promise<void> {
+  try {
+    await supabase.from("ai_calls").insert({
+      user_id: args.userId,
+      tarea: args.tarea,
+      proveedor: "google",
+      modelo: args.modeloId,
+      version: null,
+      ms: args.ms,
+      tokens_entrada: null,
+      tokens_salida: null,
+      // Una imagen que no salió no se cobra: el costo de un fallo es 0, no null
+      // (null significa "no sé cuánto costó" y ensuciaría los promedios).
+      costo_usd: args.ok ? args.costoUsd : 0,
+      ok: args.ok,
+    });
+  } catch {
+    // sin recibo, pero con imagen
+  }
+}

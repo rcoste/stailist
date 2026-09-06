@@ -144,7 +144,8 @@ export async function renderItemImage(
             quePrenda: garmentDescPlain(rasgos),
             categoria,
             aspecto: "3:4",
-          }
+          },
+          { supabase, userId }
         );
       }
     } catch {

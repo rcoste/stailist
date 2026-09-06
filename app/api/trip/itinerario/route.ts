@@ -2,6 +2,8 @@ import { EXTRACT_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { revisarGasto } from "@/lib/cuotas";
+import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
 
 // Lee el SCREENSHOT del itinerario de vuelo y saca la ruta (paradas + noches +
 // fecha de salida) para PRE-LLENAR el paso 1 del wizard. No arma nada: el
@@ -19,6 +21,15 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
+  // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },
+      { status: 429 }
+    );
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "sin_api_key" }, { status: 503 });
   }
@@ -29,12 +40,17 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const match = body.image?.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (!match) return NextResponse.json({ error: "bad_image" }, { status: 400 });
-  const [, mediaType, b64] = match;
-  if (!["image/jpeg", "image/png", "image/webp"].includes(mediaType)) {
-    return NextResponse.json({ error: "bad_image" }, { status: 400 });
+  // Ésta ya tenía lista blanca de tipos —la única de las nueve— pero sobre el
+  // tipo DECLARADO. Ahora manda lo que dicen los bytes, y de paso hereda el
+  // tope de tamaño (lib/imagen-entrante.ts).
+  const foto = leerImagenEntrante(body.image);
+  if (!foto.ok) {
+    return NextResponse.json(
+      { error: "bad_image", mensaje: MOTIVO_IMAGEN[foto.motivo] },
+      { status: 400 }
+    );
   }
+  const { mediaType, b64 } = foto;
 
   // El itinerario puede no traer año ("16 JUL"): el modelo necesita saber hoy
   // para inferir el año correcto (el próximo que caiga en el futuro).

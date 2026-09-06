@@ -1,9 +1,11 @@
 import { GUARD_MODEL } from "@/lib/models";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { pedirImagen } from "@/lib/gemini-imagen";
 import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { revisarCuota } from "@/lib/cuotas";
 
 export const maxDuration = 60;
 
@@ -163,11 +165,14 @@ function buildPrompt(build: string, nFaces: number): string {
 // imposible saber por qué "tardó muchísimo" la primera vez que pasó.
 async function generarAvatar(
   parts: unknown[],
-  aspect: "3:4" | "16:9" = "3:4"
+  aspect: "3:4" | "16:9" = "3:4",
+  // Quién paga la imagen. Se pasa desde el handler porque aquí no hay sesión.
+  ctx?: { supabase: SupabaseClient; userId: string } | null
 ): Promise<{ image: string | null; motivo: string | null; ms: number }> {
   const t0 = Date.now();
   const r = await pedirImagen(parts as Parameters<typeof pedirImagen>[0], {
     aspecto: aspect,
+    ctx: ctx ? { ...ctx, tarea: "avatar" } : null,
   });
   return "data" in r
     ? { image: r.data, motivo: null, ms: Date.now() - t0 }
@@ -289,6 +294,16 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
+  // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
+  // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
+  const cuota = await revisarCuota(supabase, user.id, "avatar");
+  if (!cuota.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },
+      { status: 429 }
+    );
+  }
+
   // Menor (13-17) sin permiso parental confirmado: las fotos quedan bloqueadas.
   const blocked = await photosGate(supabase, user.id);
   if (blocked) return blocked;
@@ -328,7 +343,8 @@ export async function POST(request: NextRequest) {
       const img = (d: string) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } });
       const r = await generarAvatar(
         [{ text: buildSheetPrompt() }, img(body.headshotB64), img(body.avatarB64)],
-        "16:9"
+        "16:9",
+        { supabase, userId: user.id }
       );
       if (!r.image) {
         await registrarFallo(supabase, user.id, "sheet", r.motivo, r.ms);
@@ -412,7 +428,7 @@ export async function POST(request: NextRequest) {
       ];
     }
 
-    const primera = await generarAvatar(parts);
+    const primera = await generarAvatar(parts, "3:4", { supabase, userId: user.id });
     let image = primera.image;
     let msGen = primera.ms;
     if (!image) {
@@ -435,7 +451,7 @@ export async function POST(request: NextRequest) {
     const cabeOtra = Date.now() - t0Req < LIMITE_SEGUNDA_MS;
     if (veredicto && veredicto.score < JUDGE_MIN && cabeOtra) {
       reintento = true;
-      const otra = await generarAvatar(parts);
+      const otra = await generarAvatar(parts, "3:4", { supabase, userId: user.id });
       msGen += otra.ms;
       if (otra.image) {
         const t2 = Date.now();

@@ -99,6 +99,50 @@ export function costoUsd(
   );
 }
 
+// ─── LO QUE CUESTA UNA IMAGEN ────────────────────────────────────────────────
+//
+// POR QUÉ NO CABE EN LA TABLA DE ARRIBA: un modelo de imagen no cobra por token
+// de texto. Cobra por imagen generada, y el precio depende del tamaño. Por eso
+// `lib/gemini-imagen.ts` estuvo declarado exento de recibo desde que existe el
+// candado de cobertura, con la razón escrita: "falta tarifa por imagen antes de
+// poder medirla". Esta es esa tarifa.
+//
+// Y ERA EL HUECO GRANDE, no un detalle. Medido el 2026-09-02 contra producción:
+// entre el 13 de agosto y hoy se generaron 157 imágenes (120 renders de prenda,
+// 26 try-ons, 6 destinos, 5 avatares) = ~$21. En la misma ventana, TODOS los
+// recibos de texto que sí se guardaban suman $2.58. O sea que el panel de IA
+// veía el 11% del gasto y la conclusión "la app cuesta ~$18 al mes" estaba
+// hecha sobre esa novena parte.
+//
+// VERIFICADO el 2026-09-02 en ai.google.dev/gemini-api/docs/pricing. Google lo
+// publica como tokens de salida (1120 tokens por imagen de 1K/2K) y da el
+// equivalente por imagen; se guarda el equivalente porque es lo que se puede
+// comprobar contra la factura.
+export const PRECIOS_IMAGEN: Record<string, number> = {
+  // Nano Banana Pro. Es el que usan try-on, avatar, render de prenda, destinos
+  // y los try-on de wishlist — o sea, casi todo.
+  "gemini-3-pro-image": 0.134,
+  // Nano Banana 2. Sólo los arquetipos del catálogo (lib/archetype-image.ts).
+  "gemini-3.1-flash-image": 0.067,
+  // No se usan hoy; quedan para que un cambio de modelo no nazca sin precio.
+  "gemini-3.1-flash-lite-image": 0.0336,
+  "gemini-2.5-flash-image": 0.039,
+};
+
+/**
+ * Lo que costó generar UNA imagen, en dólares. null si el modelo no tiene
+ * tarifa conocida — misma regla que arriba: inventar un precio es peor que no
+ * tenerlo, porque se ve igual de creíble y decide mal.
+ *
+ * OJO con el 4K: `gemini-3-pro-image` cobra $0.24 en 4K en vez de $0.134. La
+ * app no pide 4K en ningún camino (los aspectos son 3:4, 16:9, 1:1 y 4:3 a
+ * resolución por default), así que se cobra la tarifa de 1K/2K. Si algún día se
+ * pide 4K, este número se queda corto y hay que partirlo por tamaño.
+ */
+export function costoImagenUsd(modeloId: string): number | null {
+  return PRECIOS_IMAGEN[modeloId] ?? null;
+}
+
 /** Para la pantalla: "$0.0031" y no "$0.00" ni "$0.003100000000001". */
 export function formatoUsd(v: number | null): string {
   if (v === null) return "—";

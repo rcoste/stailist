@@ -9,6 +9,8 @@ import { buildLabel, volumeLabel } from "@/lib/silueta";
 import { vetoLabels } from "@/lib/vetoes";
 import type { Build, Volume } from "@/lib/silueta";
 import type { StyleVetoes } from "@/lib/vetoes";
+import { revisarGasto } from "@/lib/cuotas";
+import { leerImagenEntrante } from "@/lib/imagen-entrante";
 
 export const maxDuration = 60;
 
@@ -22,6 +24,15 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },
+      { status: 429 }
+    );
+  }
 
   // Un solo fetch de perfil sirve al gate de menores Y a la evaluación de FIT
   // de más abajo (antes eran dos selects a la misma fila por request).
@@ -74,9 +85,15 @@ export async function POST(request: NextRequest) {
   const raw = Array.isArray(body.images)
     ? body.images.slice(0, Math.max(0, MAX_FOTOS - keep.length))
     : [];
+  // Cada foto pasa por la misma puerta que el resto (lib/imagen-entrante.ts):
+  // aquí importaba especialmente, porque el tipo declarado por el cliente se
+  // guardaba TAL CUAL en el bucket — un archivo podía quedar almacenado
+  // diciendo ser algo que no era. Las que no pasan se descartan en silencio:
+  // es un lote, y tumbar las cuatro por una mala sería peor.
   const parsed = raw
-    .map((d) => d.match(/^data:(image\/\w+);base64,(.+)$/))
-    .filter((m): m is RegExpMatchArray => !!m);
+    .map((d) => leerImagenEntrante(d))
+    .filter((r): r is Extract<typeof r, { ok: true }> => r.ok)
+    .map((r) => ["", r.mediaType, r.b64] as unknown as RegExpMatchArray);
   if (parsed.length === 0 && keep.length === 0) {
     return NextResponse.json({ error: "bad_image" }, { status: 400 });
   }

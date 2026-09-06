@@ -66,7 +66,11 @@ type State =
   // vestimenta que pidió, y decírselo hoy vale más que un look que la deja mal
   // en la puerta. Por eso tiene estado propio y no un ERROR_COPY más.
   | { kind: "no_alcanza"; faltan: string[] }
-  | { kind: "error"; code: string };
+  // `mensaje` gana sobre ERROR_COPY cuando el servidor manda uno propio. Hoy
+  // sólo lo manda la cuota diaria (429): ese texto vive en lib/cuotas.ts junto
+  // al número que lo provoca, y duplicarlo aquí lo condenaría a desincronizarse
+  // el día que cambie un tope.
+  | { kind: "error"; code: string; mensaje?: string };
 
 const ERROR_COPY: Record<string, string> = {
   sin_api_key: "El stylist todavía no está conectado. Vuelve en un momento.",
@@ -367,6 +371,12 @@ export function HoyClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...input, force, forceAnchor }),
         });
+        // 429 = tope diario, no fallo. Trae su propio mensaje ya redactado.
+        if (res.status === 429) {
+          const d = await res.json().catch(() => null);
+          setState({ kind: "error", code: "cuota", mensaje: d?.mensaje });
+          return;
+        }
         if (!res.ok) {
           setState({ kind: "error", code: "generacion" });
           return;
@@ -696,7 +706,7 @@ export function HoyClient({
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center lg:mx-auto lg:max-w-md">
         <p className="text-base text-ink">
-          {ERROR_COPY[state.code] ?? ERROR_COPY.generacion}
+          {state.mensaje ?? ERROR_COPY[state.code] ?? ERROR_COPY.generacion}
         </p>
         {state.code === "closet_vacio" ? (
           // Reintentar con el mismo clóset vacío daría el mismo error → mándala a

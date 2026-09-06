@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { imagenCatalogo, primeraParada, slugDestino } from "@/lib/destino-imagen";
 import { elegirMotivo, promptDestino } from "@/lib/destino-gen";
 import { pedirImagen } from "@/lib/gemini-imagen";
+import { revisarGasto } from "@/lib/cuotas";
 
 // LA FOTO DE UN DESTINO NUEVO, generada en background durante el wizard.
 //
@@ -33,6 +34,15 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },
+      { status: 429 }
+    );
+  }
 
   let body: { lugar?: string } = {};
   try {
@@ -99,7 +109,10 @@ export async function POST(request: NextRequest) {
     // fallback), así que era justo el que más falta hacía medir.
     const { sujeto: motivo } = await elegirMotivo(lugar, { supabase, userId: user.id });
 
-    const img = await pedirImagen([{ text: promptDestino(motivo) }], { aspecto: "4:3" });
+    const img = await pedirImagen([{ text: promptDestino(motivo) }], {
+      aspecto: "4:3",
+      ctx: { supabase, userId: user.id, tarea: "destino-imagen" },
+    });
     if ("motivo" in img) throw new Error(img.motivo);
 
     // A webp como el catálogo estático (~40 KB contra ~700 del PNG crudo, para

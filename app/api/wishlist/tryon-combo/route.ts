@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
 import { pedirImagen } from "@/lib/gemini-imagen";
 import { llaveDeCombo } from "@/lib/tryon-combo";
+import { revisarCuota } from "@/lib/cuotas";
 
 export const maxDuration = 60;
 
@@ -48,6 +49,16 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
+
+  // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
+  // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
+  const cuota = await revisarCuota(supabase, user.id, "tryon");
+  if (!cuota.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },
+      { status: 429 }
+    );
+  }
 
   let body: { wishlistIds?: string[]; itemIds?: string[] } = {};
   try {
@@ -147,7 +158,10 @@ export async function POST(request: NextRequest) {
     ];
     // Por la puerta común (lib/gemini-imagen): reintento, timeout y motivo real.
     // Esta era otra copia suelta del mismo fetch — las cazó lib/thinking.test.ts.
-    const r = await pedirImagen(parts, { aspecto: "3:4" });
+    const r = await pedirImagen(parts, {
+      aspecto: "3:4",
+      ctx: { supabase, userId: user.id, tarea: "tryon-wishlist" },
+    });
     if ("motivo" in r) {
       console.error(`[wishlist combo] ${r.motivo}`);
       return NextResponse.json(

@@ -2,6 +2,90 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.301.0] - 2026-09-02 — B1: cuotas, recibos de imagen y freno de mano
+
+Segundo bloque del plan post-auditoría. Sin esto, abrir el registro al público
+es firmar una factura abierta: hasta hoy **ninguna** de las 18 rutas de IA tenía
+tope, y una sola cuenta con un bucle podía gastar sin límite.
+
+### El panel de IA veía el 11% del gasto
+
+`lib/gemini-imagen.ts` estaba declarado exento de recibo desde que existe el
+candado de cobertura, con la razón escrita: *"falta tarifa por imagen antes de
+poder medirla"*. Una imagen no se cobra por token y la tabla de precios sólo
+sabía de tokens.
+
+Medido antes de cerrarlo: entre el 13 de agosto y hoy se generaron **157
+imágenes** (120 renders de prenda, 26 try-ons, 6 destinos, 5 avatares) ≈ **$21**.
+En la misma ventana, todos los recibos de texto que sí se guardaban suman
+**$2.58**. O sea que la conclusión "la app cuesta ~$18 al mes" estaba hecha
+sobre una novena parte del gasto.
+
+Ahora hay tarifa por imagen (verificada el 2026-09-02 contra la documentación de
+Google: $0.134 la de Nano Banana Pro, que es la que usan try-on, avatar, render
+de prenda, destinos y wishlist) y cada imagen —salga o no— deja su fila. El
+comparador y las evales pasan `tarea: null` a propósito: son laboratorio, y
+medirlas como uso real inflaría el gasto y movería la cuota de alguien que no
+hizo nada.
+
+### Las cuotas salen de lo medido, no de una corazonada
+
+El día más pesado de la usuaria más activa fueron 3 generaciones, 28 fotos y 7
+llamadas al juez. Los topes quedan entre 4 y 7 veces eso: **20 looks, 5
+avatares, 15 try-ons y 120 fotos** por persona y día.
+
+**El tope de fotos estuvo a punto de ser un error.** La primera propuesta fue 40
+contando PRENDAS. Contra producción: cuatro usuarias reales metieron más de 40
+prendas en su primer día (Tatiana 67, Mariana 61, Val 43), así que ese tope
+habría cortado el alta del clóset justo en el peor momento. Contando FOTOS —que
+es lo que cuesta— el máximo real es 28, porque una foto trae varias prendas.
+
+El freno de dinero ($5 por persona y día) va **por encima** de agotar las cuatro
+cuotas (~$3.80) a propósito: si fuera menor saltaría antes que los topes por
+recurso, y la persona recibiría el mensaje genérico en vez del que explica qué
+se acabó.
+
+### Un tope no es un error, y no debe leerse como uno
+
+Los mensajes viven junto al número que los provoca (`lib/cuotas.ts`) y el
+servidor los manda en el 429; el cliente los pinta tal cual. Ninguno culpa a la
+persona y todos dicen cuándo vuelve: *"ya te armé 20 looks hoy. mañana seguimos
+— el stylist también duerme."*
+
+Lo que NO se hace: enseñar el contador en la app. "Te quedan 14 looks" convierte
+un límite generoso en uno que se siente escaso e invita a gastarlo.
+
+En la importación de fotos el 429 tiene su propia clase de error: sin eso caía
+en el "no detecté prendas en esas fotos" y le echaba la culpa a las fotos de la
+persona por un límite nuestro.
+
+### Freno de mano y vigilancia
+
+- `MOTOR_PAUSADO=1` en Vercel deja toda la IA respondiendo "el stylist está de
+  descanso" sin llamar a nadie. Antes, parar el gasto exigía revertir un deploy.
+- Cron horario nuevo (`/api/cron/vigilancia`): avisa por correo si 5+ llamadas
+  fallan en una hora o si el gasto de todos llega al 80% del tope global. Sólo
+  manda correo cuando hay algo que hacer — un "todo bien" cada hora se aprende a
+  ignorar. Cierra el hueco que `lib/senales-vivas.ts` admitía de sí mismo: *"NO
+  es monitoreo de verdad (no avisa solo)"*.
+
+### Las fotos que entran: mandan los bytes, no la etiqueta
+
+Ocho rutas aceptaban cualquier cosa que dijera `image/\w+`, sin mirar los bytes
+ni el tamaño. En `estilo-referencia` ese tipo declarado por el cliente se
+guardaba tal cual en el bucket. Ahora hay una sola puerta
+(`lib/imagen-entrante.ts`): JPG, PNG o WebP comprobados por sus primeros bytes,
+3 MB de tope, y el mismo límite puesto en los cinco buckets (migración 0151),
+que no tenían ninguno.
+
+### Y de paso
+
+- Índice `(user_id, created_at)` en `ai_calls`: la cuota pregunta eso en cada
+  llamada y el único índice que había era por tarea.
+- `anon` podía ejecutar las ocho funciones de `public`, incluidas cinco que son
+  maquinaria interna (`is_admin`, los disparadores). Quedan las tres que de
+  verdad se llaman sin sesión.
+
 ## [0.2.300.0] - 2026-09-01 — B0 de la auditoría: lo que no requería decidir nada
 
 Primer bloque del plan de ataque post-auditoría (`docs/auditorias/`). Son los

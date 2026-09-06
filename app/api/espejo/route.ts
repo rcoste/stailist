@@ -5,6 +5,8 @@ import { MODELO_ESPEJO } from "@/lib/models";
 import { resolveWeather } from "@/lib/weather";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { esRegistro } from "@/lib/registro";
+import { revisarGasto } from "@/lib/cuotas";
+import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
 import {
   contextoEspejo,
   mirarEspejo,
@@ -30,6 +32,15 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
+  // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) {
+    return NextResponse.json(
+      { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },
+      { status: 429 }
+    );
+  }
+
   // Mismo gate de menores que el resto de lo que mira fotos.
   const blocked = await photosGate(supabase, user.id);
   if (blocked) return blocked;
@@ -49,9 +60,17 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const match = body.image?.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (!match) return NextResponse.json({ error: "bad_image" }, { status: 400 });
-  const [, mediaType, b64] = match;
+  // Los BYTES deciden qué es la foto, no la etiqueta que mandó el cliente
+  // (lib/imagen-entrante.ts). También corta lo que pesa de más antes de
+  // pagarle al modelo por leer basura.
+  const foto = leerImagenEntrante(body.image);
+  if (!foto.ok) {
+    return NextResponse.json(
+      { error: "bad_image", mensaje: MOTIVO_IMAGEN[foto.motivo] },
+      { status: 400 }
+    );
+  }
+  const { mediaType, b64 } = foto;
 
   // La ruta de la foto viene del cliente (la subió con su RLS). Defensa extra:
   // tiene que estar dentro de su propia carpeta.
