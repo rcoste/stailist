@@ -11,10 +11,11 @@ import { buildGenFrases } from "@/lib/gen-frases";
 import {
   LookRequest,
   type LookInput,
+  fmtFechaLocal,
   ocasionLabel,
   bucketLabel,
 } from "@/components/weather-picker";
-import { voteOutfit, registrarWowOtroLook } from "@/lib/outfit-actions";
+import { voteOutfit, registrarWowOtroLook, elegirLookDelWow } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -247,9 +248,10 @@ export function WowClient({
         // regresar en vez de avanzar"). Los otros dos del trío aparecen bajo
         // el 👎 y elegir uno cambia el look aquí mismo, sin volver al picker.
         alternativas={state.outfits.filter((o) => o.id !== outfit.id)}
-        onElegir={(id) =>
-          setState({ kind: "viewing", outfits: state.outfits, chosenId: id })
-        }
+        onElegir={(id) => {
+          void elegirLookDelWow(id, fmtFechaLocal(new Date()));
+          setState({ kind: "viewing", outfits: state.outfits, chosenId: id });
+        }}
         // Fin del onboarding: la puerta a la app es explícita ("entrar a la app").
         // El 👍/👎 ya no navega — registra en el lugar y nadie se lleva la sorpresa
         // de que un voto lo saque de la pantalla. "afinar tu estilo" ahora vive en
@@ -354,7 +356,13 @@ export function WowClient({
       <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3">
         <button
           type="button"
-          onClick={() => setState({ kind: "viewing", outfits, chosenId })}
+          onClick={() => {
+            // La elección se PERSISTE: sin esto los tres del trío eran iguales
+            // ante la base y el home coronaba al último generado como "último
+            // look" (Roberto, 08-09). No bloquea la pantalla.
+            void elegirLookDelWow(chosenId, fmtFechaLocal(new Date()));
+            setState({ kind: "viewing", outfits, chosenId });
+          }}
           className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
         >
           empezar con «{chosen.nombre}»

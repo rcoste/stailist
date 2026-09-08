@@ -140,6 +140,33 @@ export async function saveSkipReason(
   return { ok: true };
 }
 
+// El wow: al tocar "empezar con «X»" (y al cambiar de look bajo el 👎) la
+// elección se PERSISTE con `look_date` = el día que lo hiciste tuyo. Sin esto
+// los tres del trío eran iguales ante la base y el home coronaba al último
+// generado como "último look" (Roberto, 08-09; ver lib/ultimo-look.ts).
+//
+// SÓLO look_date, NO is_look_of_day, a propósito: con is_look_of_day el home
+// deja de abrir en el hub y abre directo en el look (hoy-client, estado
+// inicial "ready"), justo lo contrario de lo que el wow quiere al decir
+// "entrar a la app". Ninguna lectura de look_date va sin is_look_of_day (ruta
+// y home), y el índice único sólo cubre is_look_of_day, así que esta marca no
+// choca con nada. `fechaLocal` viene del dispositivo: el server corre en UTC y
+// a las 6pm de CDMX ya cree que es mañana (misma trampa que LookInput).
+export async function elegirLookDelWow(outfitId: string, fechaLocal: string): Promise<{ ok: boolean }> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaLocal)) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  const { error } = await supabase
+    .from("outfits")
+    .update({ look_date: fechaLocal })
+    .eq("user_id", user.id)
+    .eq("id", outfitId);
+  return { ok: !error };
+}
+
 // El wow: bajo el 👎 aparecen los otros dos looks del trío y la persona elige
 // uno. Este evento es la ÚNICA huella de "quiero otro" en el primer look — el
 // botón "otro look" de antes regresaba al picker sin registrar nada, y la
