@@ -380,11 +380,13 @@ function intentarUna(
       }
     }
 
-    // CAMISA DE VESTIR BAJO OVERSHIRT → camiseta/playera lisa en su lugar.
-    if (v.regla === "camisa-de-vestir-bajo-overshirt") {
-      const esCamisaVestir = (i: EngineItem) =>
-        /camisa/.test(texto(i)) && !/mezclilla|denim|chambray|franela|cuadros|manga corta/.test(texto(i));
-      const camisa = enLook().find(esCamisaVestir);
+    // CAMISA BAJO OVERSHIRT → camiseta/playera lisa en su lugar. Es la
+    // alternativa que sus votos aprueban (camiseta bajo overshirt: 8 👍 / 1 👎),
+    // no una adivinada. Desde v74 aplica a CUALQUIER camisa (antes exentaba la
+    // de mezclilla/franela, contra su único voto sobre eso — ver la regla 25).
+    if (v.regla === "camisa-bajo-overshirt") {
+      const esOvershirt = (i: EngineItem) => /overshirt|sobrecamisa/.test(texto(i));
+      const camisa = enLook().find((i) => !esOvershirt(i) && /camisa/.test(texto(i)));
       const bases = disponibles
         .filter((i) => /camiseta|playera|t-?shirt/.test(texto(i)))
         .sort((a, b) => puntuarBase(b) - puntuarBase(a));

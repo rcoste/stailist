@@ -57,8 +57,8 @@ export type OpcionesGeneracion = {
    * Implica `repararPrimero` (una variante = un flag).
    */
   juezSoloRepara?: boolean;
-  /** Apaga las 4 reglas de v61 (boda-de-noche-camisa-blanca, camisa-de-vestir-
-   *  bajo-overshirt, calzado-cafe-con-traje-negro, charol-solo-etiqueta).
+  /** Apaga las 4 reglas de v61 (boda-de-noche-camisa-blanca, camisa-bajo-
+   *  overshirt, calzado-cafe-con-traje-negro, charol-solo-etiqueta).
    *  Sólo para el comparador: es la ablación que las mide como grupo. */
   sinReglasV61?: boolean;
   /** Apaga las reglas de v67 (chelsea-en-calor + el arreglo del tip del saco
@@ -67,6 +67,9 @@ export type OpcionesGeneracion = {
   /** Apaga las reglas de v68 (polo-con-traje-completo, funeral-camisa-blanca).
    *  Sólo para el comparador: su ablación como grupo. */
   sinReglasV68?: boolean;
+  /** Deshace lo que v74 amplió en camisa-bajo-overshirt (vuelve a exentar
+   *  mezclilla/franela/manga corta). Sólo para el comparador. */
+  sinReglasV74?: boolean;
   blueprint?: BlueprintEmparejado | null;
   /**
    * Con qué modelo generar. Default: el de producción (MODELO_MOTOR).

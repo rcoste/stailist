@@ -325,6 +325,24 @@ describe("las tres reparaciones de v58 — nacidas de la ablación contra los vo
     expect(r.itemIds).not.toContain(MEZCLILLA.id);
   });
 
+  it("camisa-bajo-overshirt (v74): la de mezclilla sale, entra una camiseta lisa y la overshirt se queda", () => {
+    const OVER = it_("ov", "abrigo", "Overshirt oliva", { color: "oliva", color_hex: "#5E6B43" });
+    const CAMISETA_B = it_("ctb", "top", "Camiseta blanca", { color: "blanco", color_hex: "#FFFFFF" });
+    const TECNICO = it_("tc", "bottom", "Pantalón técnico", { color: "carbón", color_hex: "#3A3A3A" });
+    const TENIS_B = it_("tb", "calzado", "Tenis blancos", { color: "blanco", color_hex: "#FFFFFF" });
+    // El wow de Roberto del 08-09-2026, tal cual lo sacó producción con v73.
+    const look = [MEZCLILLA.id, TECNICO.id, OVER.id, TENIS_B.id];
+    const closet = [MEZCLILLA, TECNICO, OVER, TENIS_B, CAMISETA_B, CAMISA_AZ];
+    const r = repararEnCodigo(look, closet, { ...HOMBRE, closet });
+    const hecha = r.hechas.find((h) => h.regla === "camisa-bajo-overshirt");
+    expect(hecha).toMatchObject({ como: "sustituida", salio: "Camisa de mezclilla", entro: "Camiseta blanca" });
+    expect(r.itemIds).toContain(OVER.id);
+    expect(r.itemIds).toContain(CAMISETA_B.id);
+    expect(r.itemIds).not.toContain(MEZCLILLA.id);
+    // No la cambia por OTRA camisa: eso sería repetir el error con otro cuello.
+    expect(r.itemIds).not.toContain(CAMISA_AZ.id);
+  });
+
   it("negro-con-beige: el calzado pasa a café y el cinturón lo sigue, en UN paso", () => {
     const CHINOS = it_("ch", "bottom", "Chinos beige", { color: "beige", color_hex: "#C8B89A" });
     const MOC_NEGROS = it_("mn", "calzado", "Mocasines negros", { color: "negro", color_hex: "#1A1A1A", formalidad: "formal" });

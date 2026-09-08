@@ -99,6 +99,10 @@ export type ContextoReglas = {
   /** Ablación del comparador: apaga las reglas de v68 (polo-con-traje-completo
    *  y funeral-camisa-blanca). */
   sinReglasV68?: boolean;
+  /** Ablación del comparador: deshace lo que v74 amplió en
+   *  `camisa-bajo-overshirt` (vuelve a exentar mezclilla/franela/manga corta,
+   *  la regla de v61 tal cual). */
+  sinReglasV74?: boolean;
   /** Si el código del trabajo es "variable": si HOY ve cliente. */
   veCliente?: boolean | null;
 };
@@ -1233,21 +1237,38 @@ export function revisarEjecucion(
     }
   }
 
-  // 25. CAMISA DE VESTIR BAJO OVERSHIRT. Tres veces, dos rondas: "camisa
-  //     oxford con sobrecamisa? ni al caso", "no va la camisa esa de vestir
-  //     abajo de la overshirt, se ve rarísimo". La overshirt ES una camisa:
-  //     cuello sobre cuello y registro contra registro. La de mezclilla o
-  //     franela (casual, se lleva como capa media) sí pasa — y así votó él.
+  // 25. CAMISA BAJO OVERSHIRT — cualquier camisa con cuello. La overshirt ES
+  //     una camisa: cuello sobre cuello y registro contra registro.
+  //
+  //     Nació en v61 (24-08) como "camisa DE VESTIR bajo overshirt", con una
+  //     excepción escrita a mano: "la de mezclilla o franela sí pasa — y así
+  //     votó él". No había votado eso. El único voto que existe sobre
+  //     mezclilla + overshirt (ronda 2bba08e0, par 6, 22-08 — dos días ANTES
+  //     de escribir la excepción) es un 👎 textual: "para mí no va esa camisa
+  //     mezclilla con esa over shirt". Y el 08-09 producción le sacó ese
+  //     mismo look en su primer wow (mezclilla + overshirt oliva + pantalón
+  //     técnico + tenis blancos): "friteó, propuso algo que ni al caso".
+  //
+  //     Sus votos sobre "algo con cuello bajo la overshirt", contados en el
+  //     comparador (marcas + pares perdidos con comentario): 6 señales en 5
+  //     rondas, 0 👍 — azul claro, oxford ×3, mezclilla, lino de manga corta.
+  //     Y el SÍ está medido, no supuesto: camiseta bajo overshirt, 8 👍 / 1 👎.
+  //     El polo (1 señal, "no sé si me gusta o si es correcto, INVESTIGA")
+  //     se queda fuera hasta la segunda confirmación.
+  //
+  //     `sinReglasV74` restaura la excepción de v61: es la ablación de v74.
   {
     const esOvershirt = (i: EngineItem) => /overshirt|sobrecamisa/.test(TIPO(i));
-    const esCamisaVestir = (i: EngineItem) =>
-      /camisa/.test(TIPO(i)) && !/mezclilla|denim|chambray|franela|cuadros|manga corta/.test(TIPO(i));
+    const exentaV61 = ctx.sinReglasV74 ? /mezclilla|denim|chambray|franela|cuadros|manga corta/ : null;
+    // "Sobrecamisa" contiene "camisa": la capa no se acusa a sí misma.
+    const esCamisa = (i: EngineItem) =>
+      !esOvershirt(i) && /camisa/.test(TIPO(i)) && !(exentaV61 && exentaV61.test(TIPO(i)));
     const over = items.find(esOvershirt);
-    const camisa = over ? items.find(esCamisaVestir) : undefined;
+    const camisa = over ? items.find(esCamisa) : undefined;
     if (over && camisa) {
       v.push({
-        regla: "camisa-de-vestir-bajo-overshirt",
-        detalle: `"${nombre(camisa)}" debajo de "${nombre(over)}": la overshirt ya es una camisa — cuello sobre cuello se ve amontonado y los registros pelean. Debajo va una camiseta o playera lisa; la camisa de vestir, sola o bajo un suéter.`,
+        regla: "camisa-bajo-overshirt",
+        detalle: `"${nombre(camisa)}" debajo de "${nombre(over)}": la overshirt ya es una camisa — cuello sobre cuello se ve amontonado y los registros pelean. Debajo va una camiseta o playera lisa; la camisa, sola o bajo un suéter.`,
       });
     }
   }
@@ -1534,7 +1555,7 @@ export const REGLAS_DE_LA_CASA = `REGLAS DE LA CASA (ya verificadas en código; 
 - Con chinos beige, caqui o camel el calzado y el cinturón NO van en negro: van café, marrón, burdeos o ante.
 - Camisa de mezclilla con saco, blazer o traje, nunca: bajo un suéter o una chaqueta sí.
 - En boda de NOCHE la camisa es blanca; la de color es de día. Y de noche la corbata NO es opcional: sólo un dress code de coctel explícito la relaja (en etiqueta rigurosa, moño).
-- La camisa de vestir no va debajo de una overshirt (cuello sobre cuello): ahí va camiseta o playera. La de mezclilla o franela sí pasa.
+- Ninguna camisa va debajo de una overshirt — de vestir, oxford, mezclilla o franela: cuello sobre cuello. Debajo va camiseta o playera lisa (o un suéter ligero).
 - Con traje NEGRO el calzado es negro — es el único traje que no admite café ni burdeos. Con marino o gris, el café es correcto.
 - El charol es de etiqueta (smoking, jaquet, frac): con traje de calle no va.
 - La camisa oxford (cuello abotonado) es casual: con cliente, en comida de trabajo o en formal va camisa de vestir lisa. En oficina sin cliente y en lo casual es correcta.

@@ -502,7 +502,19 @@ import {
 // v73 = carnita + eje noche + este fallback, tres piezas de UN diseño; la
 // ronda no podrá decir qué sub-pieza aportó cuánto (precedente: v71 llevó
 // dos piezas).
-export const PROMPT_VERSION = "v73";
+// v74 (2026-09-08): UNA regla de código, ampliada — `camisa-bajo-overshirt`
+// (antes `camisa-de-vestir-bajo-overshirt`, v61). La versión de v61 exentaba
+// la camisa de mezclilla/franela "porque así votó él"; el único voto que
+// existe sobre mezclilla + overshirt (2bba08e0 par 6, 22-08) es un 👎 textual
+// y la excepción se escribió dos días después. Detonante: producción le sacó
+// ese mismo look a Roberto en su primer wow (cuenta de prueba, 08-09). Cuenta
+// en el comparador: cuello bajo overshirt 6 señales / 0 👍 en 5 rondas;
+// camiseta bajo overshirt 8 👍 / 1 👎 (la alternativa del reparador). El texto
+// del generador no cambia; sube porque REGLAS_DE_LA_CASA y la calibración del
+// juez cambiaron. Ablación: sin-reglas-v74. v73 congelado desde el 26-08. NO
+// pasó por ronda votada: el loop está en pausa (§7-bis) y el caso aparece ~2
+// veces en 460 looks — se vigila en el eval, no en un vistazo de 6.
+export const PROMPT_VERSION = "v74";
 
 export type EngineItem = {
   id: string;

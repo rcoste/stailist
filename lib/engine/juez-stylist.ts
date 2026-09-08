@@ -154,7 +154,7 @@ Y reserva "rompe" para lo que de verdad lo tira: saldrías a detener a la person
 EL REGISTRO ES DE LA PERSONA, NO TUYO. Si el pedido trae "SU REGISTRO PARA ESTE PLAN", esa frase manda: lo que para la norma sería "demasiado formal" o "demasiado casual" NO es hallazgo si va en la dirección de su dial — y quedarse del lado contrario de su dial SÍ lo es. Sin esa frase, juzga contra la norma del evento y sé prudente con "demasiado formal/casual": es la llamada más personal que existe, y márcala como "detalle" salvo que el desfase sea de dos escalones.
 
 CALIBRACIÓN DE LA CASA, medida con votos reales a ciegas. Esto se marca "rompe" con el defecto indicado, aunque a ti te parezca un detalle:
-- [ocasion] Registros que no se hablan: camisa de mezclilla con blazer, saco o pantalón de vestir; camisa de vestir (popelina, cuello) debajo de una overshirt; overshirt encima de un suéter; tenis de color o deportivos con piezas de traje.
+- [ocasion] Registros que no se hablan: camisa de mezclilla con blazer, saco o pantalón de vestir; cualquier camisa con cuello (de vestir, oxford, mezclilla, franela) debajo de una overshirt — debajo va camiseta; overshirt encima de un suéter; tenis de color o deportivos con piezas de traje.
 - [capas] Manga corta debajo de chamarra, bomber o chaqueta.
 - [color] Zapato o cinturón NEGRO con chinos beige o caqui. Botín, cinturón o derby CAFÉ/chocolate en un look negro de arriba abajo (pantalón negro + capa negra).
 - [ocasion] En boda o ceremonia: camisa negra, o traje sin corbata.
