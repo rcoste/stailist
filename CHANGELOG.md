@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.310.2] - 2026-09-08 — el loader decía "el clima de hoy" en looks para mañana
+
+Val reportó que si pedía un look para mañana, la app le tomaba el clima de hoy.
+Revisando sus datos el dato estaba BIEN: sus tres looks planeados llevaban 19°
+con tormenta, que es el pronóstico de mañana en Querétaro, no los 22° de hoy.
+Ella misma encontró de dónde venía la confusión: "me confundí con los mensajes
+que salen cuando te está preparando el look... dice clima de hoy".
+
+Y tenía razón. La frase del "generando" estaba escrita a mano en
+`lib/gen-frases.ts`: `checando el clima de hoy: 19°, con lluvia…`. El número
+salía del pronóstico correcto y la etiqueta de al lado lo desmentía. La app le
+enseñó el dato bueno y le dijo que era el malo.
+
+Ahora la frase toma el día del look: "de hoy", "de mañana", "del sábado 12" —
+con la contracción resuelta, porque `fechaLegible()` ya devuelve el artículo.
+La etiqueta viaja desde `hoy-client` con `plannedFor`, que existía desde que se
+construyeron los looks por adelantado y esta línea nunca leyó. El default de la
+frase de ocasión ("armando algo a tu medida para hoy…") va con la misma
+etiqueta.
+
+**El blindaje importa más que el fix.** El parámetro nuevo lleva default `null`,
+así que un llamador futuro puede olvidarlo — que es exactamente cómo nació este
+bug. Por eso, si el look ES para otro día pero nadie pasó la etiqueta, la frase
+dice "de ese día" en vez de "de hoy": vago, pero nunca falso. Hay un test que lo
+fija, junto con los de "mañana" y la contracción.
+
+El wow del onboarding no cambia: ese look es de hoy por definición.
+
 ## [0.2.310.1] - 2026-09-08 — la prenda propuesta que no salía en el render
 
 Roberto, sobre el paso 4 de hombre: la tarjeta "te propongo" listaba una
