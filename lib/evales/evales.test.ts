@@ -1,3 +1,4 @@
+import { REFERENCIA_DE_ESTILO_ACTIVA } from "@/lib/estilo-referencia";
 import { describe, it, expect } from "vitest";
 import {
   acuerdoDeCalibracion,
@@ -192,15 +193,19 @@ describe("acuerdoDeCalibracion — la defensa anti-Goodhart", () => {
 });
 
 describe("estiloDelPerfil — el juez lee lo MISMO que el motor", () => {
-  it("junta marca, palabras y arquetipo", () => {
+  it("junta palabras y arquetipo; la MARCA sigue al motor", () => {
     const e = estiloDelPerfil({
       style_reference: { summary: "minimalismo cálido", tags: ["neutros"] },
       style_words: "sencillo con intención",
       style_archetype: { nombre: "El arquitecto", descripcion: "líneas limpias" },
     });
-    expect(e.marca).toContain("minimalismo cálido");
     expect(e.palabras).toBe("sencillo con intención");
     expect(e.arquetipo).toBe("El arquitecto — líneas limpias");
+    // El título de este describe es el contrato: el juez lee lo MISMO que el
+    // motor. Con "afina tu estilo" apagado (2026-09-08) el motor no ve la
+    // referencia, así que el juez tampoco — si aquí llegara, el juez estaría
+    // calificando contra un criterio que el generador nunca recibió.
+    expect(e.marca).toBe(REFERENCIA_DE_ESTILO_ACTIVA ? expect.stringContaining("minimalismo cálido") : null);
   });
 
   it("un perfil vacío no inventa estilo", () => {

@@ -26,7 +26,39 @@ export function styleSignature(sr: unknown, styleWords: string | null): string |
   return `${ref ?? ""}|${words ?? ""}`;
 }
 
-export function styleReferenceForEngine(sr: unknown): string | null {
+/**
+ * EL "AFINA TU ESTILO" ESTÁ APAGADO PARA EL RELEASE (2026-09-08).
+ *
+ * Roberto: "es algo que he probado muy poco, o sea, casi nada. Eventualmente
+ * sí nos va a funcionar, pero ahorita no sé ni cómo afecta la parte de los
+ * estilos — nos puede afectar más de lo que ayudar".
+ *
+ * Los números al apagarlo: 3 perfiles de 26 tenían referencia (alberto,
+ * ricardomc888, tatiana) y NINGUNO estaba activo — el más reciente llevaba 10
+ * días sin abrir la app y Tatiana 39. Así que apagar el efecto no le cambia
+ * los looks a nadie que la esté usando.
+ *
+ * Y lo que NO se puede alegar: el A/B ciego que perdió (2026-08-04, "fotos de
+ * inspiración") era de `elegirInspiracion` —la biblioteca curada que usa el
+ * motor— no de esta función. Esta feature nunca se midió. Ése es justamente el
+ * motivo de apagarla: mete una línea al prompt del generador que empuja el vibe
+ * de los looks, y nadie sabe hacia dónde.
+ *
+ * QUÉ HACE `false`: el dato guardado se CONSERVA (no se borra ninguna foto ni
+ * ningún resumen), pero deja de llegar al motor y las tres puertas de entrada
+ * se esconden (checklist del home, tarjeta de Perfil, y /perfil/referencia
+ * redirige). Volver a encenderlo es cambiar esta constante a `true`.
+ */
+export const REFERENCIA_DE_ESTILO_ACTIVA = false;
+
+export function styleReferenceForEngine(
+  sr: unknown,
+  /** Igual que en buildHomeChecklist: el default es la constante real y el
+   *  parámetro deja probado el camino de vuelta. */
+  activa: boolean = REFERENCIA_DE_ESTILO_ACTIVA
+): string | null {
+  // Apagada: el motor no la ve, aunque la persona la tenga guardada.
+  if (!activa) return null;
   const ref = (sr ?? null) as StyleReferenceStored;
   const summary = ref?.summary?.trim();
   if (!summary) return null;

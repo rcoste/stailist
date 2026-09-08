@@ -22,6 +22,8 @@
 // hacer"). No lo llevan /closet (es una pestaña de la barra: nunca pierdes el
 // hilo) ni la cápsula (al guardarla te lleva a verla, que es lo que quieres).
 
+import { REFERENCIA_DE_ESTILO_ACTIVA } from "@/lib/estilo-referencia";
+
 export type ChecklistStepId = "estilo" | "silueta" | "capsula";
 
 export type ChecklistStep = {
@@ -45,16 +47,32 @@ export type ChecklistSignals = {
   hasSilueta: boolean; // ya marcó complexión o dónde carga volumen
 };
 
-// El checklist a mostrar, o null cuando ya no hay nada que hacer (todo completo).
-export function buildHomeChecklist(s: ChecklistSignals): HomeChecklist | null {
+/**
+ * El checklist a mostrar, o null cuando ya no hay nada que hacer (todo completo).
+ *
+ * `conEstilo` existe para que el día que "afina tu estilo" se vuelva a encender
+ * el camino ya esté probado: el default es la constante real, y el test cubre
+ * los dos estados. Sin el parámetro habría que borrar las pruebas del paso y
+ * reescribirlas al volver.
+ */
+export function buildHomeChecklist(
+  s: ChecklistSignals,
+  conEstilo: boolean = REFERENCIA_DE_ESTILO_ACTIVA
+): HomeChecklist | null {
   const steps: ChecklistStep[] = [
-    {
-      id: "estilo",
-      label: "afina tu estilo",
-      hint: "sube un look que te encante",
-      href: "/perfil/referencia?return=%2Fhoy",
-      done: s.hasStyleReference,
-    },
+    // "afina tu estilo" está apagado para el release: el paso no se ofrece
+    // mientras REFERENCIA_DE_ESTILO_ACTIVA sea false (ver lib/estilo-referencia).
+    ...(conEstilo
+      ? [
+          {
+            id: "estilo" as const,
+            label: "afina tu estilo",
+            hint: "sube un look que te encante",
+            href: "/perfil/referencia?return=%2Fhoy",
+            done: s.hasStyleReference,
+          },
+        ]
+      : []),
     // Silueta solo para géneros con contenido propio (hombre/mujer).
     ...(s.siluetaApplies
       ? [

@@ -1,3 +1,4 @@
+import { REFERENCIA_DE_ESTILO_ACTIVA } from "@/lib/estilo-referencia";
 import { AppShell } from "@/components/app-shell";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -36,7 +37,9 @@ export default async function PerfilPage() {
     images: string[];
     paths?: string[];
   } | null = null;
-  if (sr) {
+  // Apagada para el release: no se le pasa al cliente, así la tarjeta de
+  // "estilo de referencia" no se dibuja. El dato guardado no se toca.
+  if (sr && REFERENCIA_DE_ESTILO_ACTIVA) {
     const paths = Array.isArray(sr.image_paths)
       ? sr.image_paths
       : sr.image_path
