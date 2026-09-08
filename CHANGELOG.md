@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.312.0] - 2026-09-08 — en el primer look, pedir otro vive bajo el 👎
+
+Roberto, revisando el wow: "siento que mucha gente le va a empezar a picar lo
+de 'otro look' y los va a mandar a las tres opciones; en vez de avanzar, van a
+regresar". Dos cosas que el código y la base dijeron al revisarlo:
+
+- **El miedo no estaba medido, ni se podía medir.** El "otro look" del wow no
+  emitía ningún evento — los 5 `another_look` de la base son de Hoy, con razón.
+  Nadie sabía si lo tocaba el 5 % o el 50 %.
+- **"Mandarlo directo a la app" ya se probó y se quitó.** El 👍/👎 navegaba
+  ("me gusta / no me gustó → siguiente") y se revirtió porque *"un voto lo
+  sacaba de la pantalla, lo cual sorprendía"*. Auto-avanzar tras el render es
+  la misma clase de cosa. El botón negro es la puerta; se queda.
+
+**Lo que cambia:** el botón "otro look" se va del wow. Al tocar 👎 se registra
+el voto y aparece, ahí mismo, *"¿probamos otro de los tres?"* con los otros dos
+looks del trío (ya generados, no cuesta) — un tap y cambia el look sin volver al
+picker. Con 👍 no aparece nada más: el único camino que queda es entrar a la
+app. Es lo mismo que Hoy hizo el 2026-08-12 al quitar su "otro look": el atajo
+de pedir otro sin decir por qué es sospechoso número uno de que el feedback
+esté seco — hoy sólo **5 de 24** personas votan su primer look. El que quiere
+otro, primero dice que no le gustó.
+
+**Y la medición que faltaba:** evento nuevo `wow_otro_look` (`{de, a}`) cada
+vez que alguien elige uno de los otros dos. Migración 0155 (añade el tipo al
+CHECK de `events`, ya aplicada). Con la cohorte de 10 la hipótesis tendrá
+número.
+
+`LookDetail`: `onOtroLook` pasa a opcional (el historial lo conserva) y gana el
+slot `bajoVotoNegativo`. Test de componente con la decisión: sin botón suelto
+en el wow, alternativas sólo tras 👎, nada tras 👍, el 👎 sigue votando.
+
 ## [0.2.311.1] - 2026-09-08 — la landing prometía "~90 s" para un paso que mide 4 minutos
 
 En "Cómo funciona", el paso 1 (likes de estilo + quiz de color) llevaba la
