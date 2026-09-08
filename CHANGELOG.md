@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.310.1] - 2026-09-08 — la prenda propuesta que no salía en el render
+
+Roberto, sobre el paso 4 de hombre: la tarjeta "te propongo" listaba una
+camiseta BLANCA y el try-on de al lado enseña al hombre con una camiseta GRIS
+bajo el saco. La landing promete "los ves puestos en ti" y ahí mismo se
+contradecía. `public/landing/h/prop-tee.png` pasa a ser la playera gris, que
+ya existía en el hero (`hero-p2.png`, la misma prenda del mismo look). Las
+otras tres (jeans oscuros, saco marino, loafers café) ya coincidían, y la
+versión de mujer estaba bien y no se toca.
+
+El desajuste es viejo, no lo trajo el rediseño: sólo se volvió visible al poner
+el "antes" en camiseta blanca (v0.2.308.2), porque el ojo ya no tenía la
+sobrecamisa gris distrayendo.
+
 ## [0.2.310.0] - 2026-09-08 — tres secciones en negro: la landing agarra ritmo
 
 Roberto, mirando la página entera: "todo es del mismo tono, te pierdes cuando
