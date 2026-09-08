@@ -250,7 +250,12 @@ export function Landing() {
                     gusto y los tonos que te quedan — de una vez, no te lo vuelvo
                     a preguntar.
                   </p>
-                  <span className={styles.once}>Una sola vez · ~90 s</span>
+                  {/* Sin número. Decía "~90 s" y lo medido para likes + quiz es
+                      ~2½ min (Roberto, 08-09: 52 s + 106 s). El h2 de arriba ya
+                      dice "en minutos"; repetirlo aquí sobra, y un número que no
+                      se cumple es la promesa que la auditoría del 09-01 mató. Lo
+                      que esta píldora vende es "una sola vez": eso se queda. */}
+                  <span className={styles.once}>Una sola vez</span>
                 </div>
                 <div className={styles.stepVisual}>
                   <div className={styles.swipes} aria-hidden="true">
