@@ -429,6 +429,18 @@
   padding: 64px 0;
   border-top: 1px solid var(--c-line);
 }
+/* Sección oscura: sin la hairline de separación (el cambio de fondo YA separa,
+   y una línea clara justo en el borde se lee como un marco suelto) y con más
+   aire, porque sobre negro el mismo espacio se ve más apretado. */
+.oscura {
+  /* `tema-oscuro` (globals.css) sólo redefine los tokens; pintar es cosa de
+     quien usa el tema. Sin la hairline de separación: el cambio de fondo YA
+     separa. Y más aire, porque sobre negro el mismo espacio se ve apretado. */
+  background: var(--c-bg);
+  color: var(--c-ink);
+  border-top-color: transparent;
+  padding: 76px 0;
+}
 .kicker {
   font-size: 11px;
   font-weight: 700;
@@ -954,6 +966,9 @@
   letter-spacing: 0;
 }
 .s2card {
+  /* Isla clara dentro de la sección oscura (lleva `tema-claro`): fija el color
+     heredado, que si no baja en blanco desde la sección. */
+  color: var(--c-ink);
   flex: 1;
   border: 1px solid var(--c-line);
   border-radius: 6px;

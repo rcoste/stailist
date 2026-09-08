@@ -6,20 +6,56 @@
  * bg-accent, border-line, etc. Dark mode: diferido (ver DESIGN.md).
  */
 :root {
-  /* Color — v3 "Gen-Z monocromo" (B&N): de-warmed, acento = tinta casi negra */
-  --c-bg: #f4f3f1;          /* papel neutro */
-  --c-surface: #ffffff;     /* cards */
-  --c-ink: #141414;         /* texto principal */
-  --c-ink2: #363636;        /* cuerpo / leads (un punto más claro que ink) */
-  --c-muted: #6f6f6f;       /* texto secundario */
-  --c-faint: #9a9a9a;       /* numerales serif, placeholders, marcas terciarias */
-  --c-line: #e4e3e0;        /* hairlines */
-  --c-line2: #efeeec;       /* hairlines internas más sutiles */
-  --c-tile: #f7f6f4;        /* fondo de celdas de prenda (editorial) */
-  --c-accent: #0a0a0a;      /* tinta (casi negro) — CTAs, el "ai", énfasis */
-  --c-accent-deep: #000000; /* hover/pressed del acento — negro puro */
-  --c-accent-soft: #f1f0ee; /* gris neutro para chips/fondos suaves */
-  --c-on-accent: #ffffff;
+  /* Color — v3 "Gen-Z monocromo" (B&N): de-warmed, acento = tinta casi negra.
+     Los HEX viven en los tokens `--claro-*` y los tokens de USO (`--c-*`)
+     apuntan a ellos. La indirección existe por `.tema-claro` (abajo): para
+     devolver el tema claro dentro de una sección oscura sin volver a escribir
+     un solo valor — que es exactamente como esta paleta ya se rompió una vez. */
+  --claro-bg: #f4f3f1;          /* papel neutro */
+  --claro-surface: #ffffff;     /* cards */
+  --claro-ink: #141414;         /* texto principal */
+  --claro-ink2: #363636;        /* cuerpo / leads (un punto más claro que ink) */
+  --claro-muted: #6f6f6f;       /* texto secundario */
+  --claro-faint: #9a9a9a;       /* numerales serif, placeholders, terciarias */
+  --claro-line: #e4e3e0;        /* hairlines */
+  --claro-line2: #efeeec;       /* hairlines internas más sutiles */
+  --claro-tile: #f7f6f4;        /* fondo de celdas de prenda (editorial) */
+  --claro-accent: #0a0a0a;      /* tinta (casi negro) — CTAs, el "ai", énfasis */
+  --claro-accent-deep: #000000; /* hover/pressed del acento — negro puro */
+  --claro-accent-soft: #f1f0ee; /* gris neutro para chips/fondos suaves */
+  --claro-on-accent: #ffffff;
+
+  --c-bg: var(--claro-bg);
+  --c-surface: var(--claro-surface);
+  --c-ink: var(--claro-ink);
+  --c-ink2: var(--claro-ink2);
+  --c-muted: var(--claro-muted);
+  --c-faint: var(--claro-faint);
+  --c-line: var(--claro-line);
+  --c-line2: var(--claro-line2);
+  --c-tile: var(--claro-tile);
+  --c-accent: var(--claro-accent);
+  --c-accent-deep: var(--claro-accent-deep);
+  --c-accent-soft: var(--claro-accent-soft);
+  --c-on-accent: var(--claro-on-accent);
+  /* Fuentes del tema oscuro (ver `.tema-oscuro`). El fondo es el MISMO negro
+     que ya usaba el try-on de la app (#0a0a0a): no es un negro nuevo, es el
+     que el sistema ya tenía escrito a mano en un solo sitio. Los grises de
+     texto y hairline van en blanco translúcido para que respiren el fondo. */
+  --oscuro-bg: #0a0a0a;
+  --oscuro-surface: #171717;
+  --oscuro-ink: #ffffff;
+  --oscuro-ink2: rgb(255 255 255 / 0.78);
+  --oscuro-muted: rgb(255 255 255 / 0.6);
+  --oscuro-faint: rgb(255 255 255 / 0.42);
+  --oscuro-line: rgb(255 255 255 / 0.16);
+  --oscuro-line2: rgb(255 255 255 / 0.1);
+  --oscuro-tile: #1f1f1f;
+  --oscuro-accent: #ffffff;
+  --oscuro-accent-deep: #f2f2f2;
+  --oscuro-accent-soft: #1f1f1f;
+  --oscuro-on-accent: #0a0a0a;
+
   --c-success: #4c7a5e;
   --c-error: #b3261e;
   --c-warning: #8a6d1f;
@@ -36,6 +72,58 @@
   --dur-micro: 100ms;
   --dur-short: 200ms;
   --dur-medium: 300ms;
+}
+
+/* ── TEMA POR ÁMBITO ────────────────────────────────────────────────────────
+   Un contenedor con `.tema-oscuro` redefine los tokens de superficie y texto
+   para todo lo que cuelga de él: los hijos siguen pidiendo var(--c-ink),
+   var(--c-line), bg-surface… y no se enteran de que están sobre negro. Nació
+   para las dos secciones oscuras de la landing (el try-on y el cierre) —
+   ver DESIGN.md, "Superficie oscura".
+
+   NO es dark mode: la app sigue siendo clara y esto no se activa por
+   preferencia del sistema. Es un ámbito que se pide a mano, sección por
+   sección, y sólo donde el negro significa algo.
+
+   `.tema-claro` es la vuelta: una isla clara dentro de una oscura. Hace falta
+   de verdad, no por gusto — las fotos de prenda traen su fondo crema quemado
+   en el pixel y se integran con `mix-blend-mode: multiply`; sobre un fondo
+   oscuro, multiply las apaga por completo y la prenda desaparece.
+
+   Las dos clases declaran SÓLO tokens, nunca `background` ni `color`: pintar
+   desde aquí competiría en la cascada con las utilidades de Tailwind (bg-*,
+   text-*) y les ganaría en silencio, que es una trampa que este repo ya pagó
+   con las clases globales de tipografía. Quien use el tema decide cómo pinta. */
+.tema-oscuro {
+  --c-bg: var(--oscuro-bg);
+  --c-surface: var(--oscuro-surface);
+  --c-ink: var(--oscuro-ink);
+  --c-ink2: var(--oscuro-ink2);
+  --c-muted: var(--oscuro-muted);
+  --c-faint: var(--oscuro-faint);
+  --c-line: var(--oscuro-line);
+  --c-line2: var(--oscuro-line2);
+  --c-tile: var(--oscuro-tile);
+  /* El acento se invierte: sobre negro, el botón "de tinta" es blanco. */
+  --c-accent: var(--oscuro-accent);
+  --c-accent-deep: var(--oscuro-accent-deep);
+  --c-accent-soft: var(--oscuro-accent-soft);
+  --c-on-accent: var(--oscuro-on-accent);
+}
+.tema-claro {
+  --c-bg: var(--claro-bg);
+  --c-surface: var(--claro-surface);
+  --c-ink: var(--claro-ink);
+  --c-ink2: var(--claro-ink2);
+  --c-muted: var(--claro-muted);
+  --c-faint: var(--claro-faint);
+  --c-line: var(--claro-line);
+  --c-line2: var(--claro-line2);
+  --c-tile: var(--claro-tile);
+  --c-accent: var(--claro-accent);
+  --c-accent-deep: var(--claro-accent-deep);
+  --c-accent-soft: var(--claro-accent-soft);
+  --c-on-accent: var(--claro-on-accent);
 }
 
 @theme inline {

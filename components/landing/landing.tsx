@@ -204,7 +204,7 @@ export function Landing() {
         </section>
 
         {/* 01 · REFRAME */}
-        <section className={`${styles.blk} ${styles.reframe}`}>
+        <section className={`${styles.blk} ${styles.reframe} ${styles.oscura} tema-oscuro`}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
               <span className={styles.n}>01</span> El verdadero problema
@@ -540,8 +540,12 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 05 · TRY-ON */}
-        <section className={styles.blk}>
+        {/* 05 · TRY-ON — SECCIÓN OSCURA. No es decoración: en la app, ver el look
+            puesto ES el único momento oscuro del sistema (DESIGN.md, fondo
+            #0a0a0a). La landing enseña ese momento tal como se ve. Las dos
+            tarjetas de dentro llevan `tema-claro` porque las fotos de prenda se
+            integran con multiply y sobre negro desaparecerían. */}
+        <section className={`${styles.blk} ${styles.oscura} tema-oscuro`}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
               <span className={styles.n}>05</span> No solo te lo armo
@@ -577,7 +581,7 @@ export function Landing() {
                   <div className={styles.s2head}>
                     <span className={styles.d}>1</span> te propongo
                   </div>
-                  <div className={styles.s2card}>
+                  <div className={`${styles.s2card} tema-claro`}>
                     <div className={styles.p1top}>
                       <div className={styles.nm}>
                         Limpio y sin <em>esfuerzo</em>
@@ -610,7 +614,7 @@ export function Landing() {
                   <div className={styles.s2head}>
                     <span className={styles.d}>2</span> en ti
                   </div>
-                  <div className={`${styles.s2card} ${styles.p2card}`}>
+                  <div className={`${styles.s2card} ${styles.p2card} tema-claro`}>
                     <span className={styles.tag}>probado en ti</span>
                     <div className={styles.p2fill}>
                       <img src={img("en-ti-clasico")} alt="El outfit puesto en ti" />
@@ -917,7 +921,7 @@ export function Landing() {
         </section>
 
         {/* 10 · CTA FINAL */}
-        <section className={`${styles.blk} ${styles.final}`}>
+        <section className={`${styles.blk} ${styles.final} ${styles.oscura} tema-oscuro`}>
           <div className={styles.wrap}>
             <div className={styles.inner}>
               <div className={styles.kicker}>

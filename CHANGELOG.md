@@ -2,6 +2,51 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.310.0] - 2026-09-08 — tres secciones en negro: la landing agarra ritmo
+
+Roberto, mirando la página entera: "todo es del mismo tono, te pierdes cuando
+empieza una sección u otra". Cierto, y con causa doble. Las once secciones eran
+idénticas — mismo papel, mismo relleno de 64 px y una hairline de 1 px como
+única separación — y el 2026-09-07 se borró el bloque de objeción al meter la
+sección del carrete: era el ÚNICO respiro oscuro que le quedaba a la landing.
+
+**Las tres, elegidas por significado y no por alternancia** (alternar una sí y
+una no es lo que hace que una página se lea como plantilla):
+
+- **01 · el reframe** ("decidir, cada mañana, agota"): es la sección más corta,
+  un titular y un párrafo. En negro se lee como manifiesto. Entró después de
+  ver la página completa en tira: con sólo dos negros el primer tercio seguía
+  plano — cinco secciones claras seguidas, tres columnas de scroll en móvil.
+- **05 · try-on**: la que casi se justifica sola. En la app, ver el look puesto
+  ES el único momento oscuro del sistema; la landing enseña ese momento tal
+  como se ve.
+- **10 · el cierre**: cerrar en negro marca el final y el botón blanco pega.
+
+Descartadas las de texto largo con listas ("para quién es"), que en negro pesan
+y cuestan legibilidad.
+
+**Cómo está hecho — tema por ámbito, no repintado a mano.** `.tema-oscuro` en
+`globals.css` redefine los tokens `--c-*` para todo lo que cuelga de él: los
+hijos siguen pidiendo `var(--c-ink)` o `bg-surface` y no se enteran de que
+están sobre negro (el botón del cierre se volvió blanco solo). Detalles que
+importan:
+
+- El negro es el MISMO `#0a0a0a` del try-on. No es un negro nuevo: es el que el
+  sistema ya tenía escrito a mano en un solo sitio.
+- Los tokens de uso ahora apuntan a tokens fuente (`--claro-*` / `--oscuro-*`).
+  La indirección existe para que `.tema-claro` devuelva el tema claro sin
+  repetir un solo hex — que es exactamente como esta paleta ya se rompió una vez.
+- `.tema-claro` no es adorno: las dos tarjetas del try-on lo llevan porque las
+  fotos de prenda traen su fondo crema quemado y se integran con
+  `mix-blend-mode: multiply`; sobre negro, multiply las apaga por completo.
+- Las clases de tema declaran SÓLO tokens, nunca `background` ni `color`:
+  pintar desde ahí le ganaría en silencio a las utilidades de Tailwind. Pinta
+  quien usa el tema (`.oscura`, en el módulo de la landing).
+
+NO es dark mode: sigue diferido y no responde a la preferencia del sistema.
+DESIGN.md actualizado (la frase "el try-on es la única superficie oscura" ya no
+era cierta). El pie de página se queda claro por ahora.
+
 ## [0.2.309.0] - 2026-09-08 — el toggle mujer/hombre, pegado a lo que cambia
 
 Estaba ENCIMA del header: una barra suelta, lo primerísimo de la página, antes
