@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.310.3] - 2026-09-08 — el header tenía dos botones para la misma puerta
+
+Roberto, viendo el header de la landing: "¿cuál es la diferencia entre estos dos
+botones? Debería de haber solo uno". Tenía razón, y el código lo confirma:
+"Entrar" iba a `/login` y "Armar mi look" bajaba al formulario del hero, que
+hace `router.push("/login?email=…")`. Los dos terminaban en el mismo lugar.
+
+**El patrón de dos botones existe para separar dos audiencias** —quien ya tiene
+cuenta y quien no— y con código al correo esa separación no existe: es el mismo
+formulario y el sistema decide solo si eres nueva o vuelves. Dos puertas
+idénticas le pedían al visitante una decisión que no cambia nada, en la primera
+pantalla, que es justo donde el TTV ya va perdiendo.
+
+Es residuo de la waitlist: hasta el 2026-09-06 "armar mi look" sí llevaba a otro
+lado (te anotaba en una tabla). Se abrió el registro (bloque B5), el formulario
+cambió de destino y el header se quedó con la forma de cuando eran dos cosas.
+
+Queda un botón, el CTA. La única duda que deja —"¿y si ya tengo cuenta?"— la
+tapa una línea fina bajo el campo del hero: *¿ya tienes cuenta? es el mismo
+correo*. Seis palabras en vez de un segundo botón.
+
+Se fue también `.hlogin` del CSS, que ya no tenía dueño.
+
 ## [0.2.310.2] - 2026-09-08 — el loader decía "el clima de hoy" en looks para mañana
 
 Val reportó que si pedía un look para mañana, la app le tomaba el clima de hoy.
