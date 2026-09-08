@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildHomeChecklist, type ChecklistSignals } from "./home-checklist";
+import { REFERENCIA_DE_ESTILO_ACTIVA } from "./estilo-referencia";
 
 const nada: ChecklistSignals = {
   hasStyleReference: false,
@@ -8,9 +9,35 @@ const nada: ChecklistSignals = {
   hasSilueta: false,
 };
 
-describe("buildHomeChecklist (v2 — solo one-time sin otra casa)", () => {
+// "afina tu estilo" está APAGADO para el release (2026-09-08, ver
+// lib/estilo-referencia): Roberto lo probó casi nada y no sabe cómo empuja los
+// looks. El segundo parámetro de buildHomeChecklist deja probar los dos
+// caminos, para que volver a encenderlo no llegue sin red.
+describe("buildHomeChecklist — con 'afina tu estilo' APAGADO (el release)", () => {
+  it("hombre/mujer sin nada: 2 pasos — silueta y cápsula, sin estilo", () => {
+    const c = buildHomeChecklist(nada, false);
+    expect(c).not.toBeNull();
+    expect(c!.steps.map((s) => s.id)).toEqual(["silueta", "capsula"]);
+    expect(c!.total).toBe(2);
+  });
+
+  it("tener referencia guardada NO reaparece el paso ni cuenta como hecho", () => {
+    // Las 3 personas que la tenían conservan su dato; el paso no vuelve.
+    const c = buildHomeChecklist({ ...nada, hasStyleReference: true }, false);
+    expect(c!.steps.map((s) => s.id)).not.toContain("estilo");
+    expect(c!.doneCount).toBe(0);
+  });
+
+  it("el default de la función es la constante real", () => {
+    const conDefault = buildHomeChecklist(nada);
+    const explicito = buildHomeChecklist(nada, REFERENCIA_DE_ESTILO_ACTIVA);
+    expect(conDefault!.steps.map((s) => s.id)).toEqual(explicito!.steps.map((s) => s.id));
+  });
+});
+
+describe("buildHomeChecklist — con 'afina tu estilo' ENCENDIDO (cuando vuelva)", () => {
   it("hombre/mujer sin nada: 3 pasos — estilo, silueta, cápsula al final", () => {
-    const c = buildHomeChecklist(nada);
+    const c = buildHomeChecklist(nada, true);
     expect(c).not.toBeNull();
     expect(c!.steps.map((s) => s.id)).toEqual(["estilo", "silueta", "capsula"]);
     expect(c!.steps.every((s) => !s.done)).toBe(true);
@@ -22,19 +49,19 @@ describe("buildHomeChecklist (v2 — solo one-time sin otra casa)", () => {
   // Avatar: su empujón es el CTA del try-on (look-detail). Prendas: es acción
   // RECURRENTE con tile permanente en el home — aquí duplicaría la pantalla.
   it("ni avatar ni prendas son pasos del checklist", () => {
-    const ids = buildHomeChecklist(nada)!.steps.map((s) => s.id as string);
+    const ids = buildHomeChecklist(nada, true)!.steps.map((s) => s.id as string);
     expect(ids).not.toContain("avatar");
     expect(ids).not.toContain("prendas");
   });
 
   it("silueta se omite cuando no aplica (género sin contenido de silueta)", () => {
-    const c = buildHomeChecklist({ ...nada, siluetaApplies: false });
+    const c = buildHomeChecklist({ ...nada, siluetaApplies: false }, true);
     expect(c!.steps.map((s) => s.id)).toEqual(["estilo", "capsula"]);
     expect(c!.total).toBe(2);
   });
 
   it("refleja el estado de cada señal", () => {
-    const c = buildHomeChecklist({ ...nada, hasStyleReference: true });
+    const c = buildHomeChecklist({ ...nada, hasStyleReference: true }, true);
     expect(c!.doneCount).toBe(1);
     const byId = Object.fromEntries(c!.steps.map((s) => [s.id, s.done]));
     expect(byId.estilo).toBe(true);
@@ -52,12 +79,15 @@ describe("buildHomeChecklist (v2 — solo one-time sin otra casa)", () => {
   });
 
   it("no se completa si falta la silueta (cuando aplica)", () => {
-    const c = buildHomeChecklist({
-      hasStyleReference: true,
-      hasCapsule: true,
-      siluetaApplies: true,
-      hasSilueta: false,
-    });
+    const c = buildHomeChecklist(
+      {
+        hasStyleReference: true,
+        hasCapsule: true,
+        siluetaApplies: true,
+        hasSilueta: false,
+      },
+      true
+    );
     expect(c).not.toBeNull();
     expect(c!.doneCount).toBe(2);
     expect(c!.total).toBe(3);

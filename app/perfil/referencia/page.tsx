@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { REFERENCIA_DE_ESTILO_ACTIVA } from "@/lib/estilo-referencia";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { returnLabel, safeReturn } from "@/lib/return-to";
@@ -16,6 +18,11 @@ export default async function PerfilReferenciaPage({
   searchParams: Promise<{ return?: string }>;
 }) {
   const profile = await requireOnboarded();
+  // Apagada para el release (ver lib/estilo-referencia). La ruta sigue
+  // existiendo —el trabajo no se borra— pero no se puede llegar a ella: dejar
+  // la pantalla viva prometería "afino tus outfits hacia ese estilo" mientras
+  // el motor la ignora, que es peor que no ofrecerla.
+  if (!REFERENCIA_DE_ESTILO_ACTIVA) redirect("/perfil");
   // `?return=/hoy` cuando se llega desde el checklist de Home (ver lib/return-to).
   const { return: ret } = await searchParams;
   const returnTo = safeReturn(ret);
