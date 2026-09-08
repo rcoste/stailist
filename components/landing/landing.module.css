@@ -1480,13 +1480,13 @@
   position: relative;
   height: 28px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 .links::before {
   content: "";
   position: absolute;
-  left: 16.6%;
-  right: 16.6%;
+  left: 10%;
+  right: 10%;
   top: 0;
   height: 1px;
   background: var(--c-faint);
@@ -1509,7 +1509,7 @@
 }
 .reel .out {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
 .t {
@@ -1687,6 +1687,8 @@
     aspect-ratio: auto;
     min-height: 420px;
   }
+  /* cinco tiles de 120 apilados miden ~625px: la foto se estira a esa altura
+     (align-items: stretch) y el retrato cabe entero sin recorte raro. */
   .links {
     height: auto;
     display: block;
@@ -1700,8 +1702,8 @@
   }
   .links::after {
     left: 50%;
-    top: 16%;
-    bottom: 16%;
+    top: 10%;
+    bottom: 10%;
     width: 1px;
     height: auto;
   }
@@ -1713,9 +1715,11 @@
     height: 1px;
     margin: 0;
   }
-  .links i:nth-child(1) { top: 16%; }
-  .links i:nth-child(2) { top: 50%; }
-  .links i:nth-child(3) { top: 84%; }
+  .links i:nth-child(1) { top: 10%; }
+  .links i:nth-child(2) { top: 30%; }
+  .links i:nth-child(3) { top: 50%; }
+  .links i:nth-child(4) { top: 70%; }
+  .links i:nth-child(5) { top: 90%; }
   .reel .out {
     grid-template-columns: 1fr;
   }

@@ -11,12 +11,15 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
   sirve la foto del clóset abierto" en dos sitios. Roberto lo frenó antes de
   que llegara a nadie: "si tomas una foto así del clóset a la mala, no se van
   a cargar las cosas". Las dos frases se quitaron en v0.2.307.1.
-- **Por qué no es gratis**: el lector de prendas (`lib/vision-prendas.ts`) se
-  midió sobre fotos de gente vestida; una prenda colgada se ve de perfil,
-  encimada y a media luz, y el render limpio se genera con la foto como
-  referencia. Hay que medirlo con 5-10 fotos reales de clósets antes de
-  prometerlo, en `/admin/comparador` (modo visión), y probablemente pedir un
-  recorte por prenda o un prompt distinto.
+- **Por qué no es gratis**: el prompt del lector (`lib/vision-prendas.ts`) SÍ
+  contempla "prendas sueltas: extendidas, colgadas en ganchos o apiladas",
+  pero sólo se MIDIÓ sobre fotos de gente vestida (once modelos a ciegas,
+  `docs/decisiones/vision-2026-08-05.md`) y Roberto lo ha visto fallar con una
+  foto de clóset "a la mala": ropa de perfil, encimada, a media luz. Además el
+  render limpio se dibuja usando la foto como referencia, así que lo que el
+  lector ve mal, el render lo dibuja mal. Hay que medirlo con 5-10 fotos reales
+  de clósets en `/admin/comparador` (modo visión) antes de prometerlo, y
+  probablemente pedir un recorte por prenda o un prompt aparte.
 - **Trigger**: que alguien lo intente y salga mal (la foto original se guarda
   desde v0.2.237.0, así que se puede revisar), o cuando el carrete se toque
   por otra razón.

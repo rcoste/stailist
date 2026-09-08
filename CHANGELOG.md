@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.308.0] - 2026-09-08 — "de esa foto salen estas 5": fotos reales y renders del pipeline
+
+Roberto no quiso una foto de stock en "03 · Tu ropa de verdad": pasó dos fotos
+de Instagram reales (una de hombre, una de mujer) y pidió que se extrajeran
+TODAS las prendas, "para que se sienta la funcionalidad".
+
+- `scripts/landing-ig-tiles.ts`: lee la foto con `leerPrendas` (la misma
+  visión que el carrete) y dibuja cada prenda con `extraerPrendaDeFoto` (el
+  mismo extractor imagen→imagen). Cero retoque a mano; lo que se ve en la
+  landing es lo que la app hace. Costó ~$1.35 (10 renders + 2 lecturas).
+- Mujer: body blanco de escote cuadrado, pantalón de vestir negro, cinturón de
+  piel café, tenis blancos con estoperoles, bolsa hobo de piel. Hombre: abrigo
+  de lana gris oscuro, suéter de cuello alto negro, pantalón de vestir negro,
+  botas Chelsea negras, gafas de sol. La visión leyó las 10 bien a la primera.
+- La sección pasa de 3 a 5 tiles por género (fila de 5 en móvil, columna en
+  desktop; la foto se estira a la altura de la columna). El pie dice "salen
+  estas 5". Los assets van en JPG (~65 KB por tile, ~450 KB por foto) en vez
+  de los PNG de 500 KB que salen del extractor; a la foto de mujer se le cortó
+  la franja superior con el ícono de recorte del screenshot de iOS.
+- Ajuste de UI pendiente por decisión de Roberto ("luego vemos"): en móvil los
+  cinco tiles quedan de ~60 px.
+
 ## [0.2.307.1] - 2026-09-08 — la landing deja de prometer el clóset abierto
 
 Roberto, al revisar v0.2.307.0: "si tomas una foto así del clóset a la mala,

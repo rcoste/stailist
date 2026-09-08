@@ -402,7 +402,9 @@ export function Landing() {
         {/* 03 · TU ROPA DE VERDAD — el carrete: fotos donde ya sales vestida →
             la IA separa cada prenda. Sustituye al bloque de objeción ("¿tengo
             que subir foto de cada prenda?") que vivía después del try-on. La
-            foto y los tres tiles son EL MISMO outfit por género. */}
+            foto y los cinco tiles son EL MISMO outfit por género: fotos reales
+            de Instagram y renders sacados con el pipeline del carrete
+            (scripts/landing-ig-tiles.ts), sin retoque. */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
@@ -457,26 +459,27 @@ export function Landing() {
                 <div className={styles.reel} aria-hidden="true">
                   <div className={styles.photo}>
                     <span className={styles.tag}>una foto tuya · IG</span>
-                    <img src={img(men ? "b1-normal" : "look-casual")} alt="" />
+                    <img src={men ? "/landing/ig-h-foto.jpg" : "/landing/ig-m-foto.jpg"} alt="" />
                   </div>
                   <div className={styles.links}>
                     <i />
                     <i />
                     <i />
+                    <i />
+                    <i />
                   </div>
                   <div className={styles.out}>
-                    <div className={styles.t}>
-                      <img src={img("camiseta-blanca")} alt="" />
-                    </div>
-                    <div className={styles.t}>
-                      <img src={img("jeans-claros")} alt="" />
-                    </div>
-                    <div className={styles.t}>
-                      <img src={img("tenis-blancos-urbanos")} alt="" />
-                    </div>
+                    {(men
+                      ? ["1-abrigo", "2-top", "3-bottom", "4-calzado", "5-accesorio"]
+                      : ["1-top", "2-bottom", "3-accesorio", "4-calzado", "5-accesorio"]
+                    ).map((t) => (
+                      <div key={t} className={styles.t}>
+                        <img src={`/landing/ig-${men ? "h" : "m"}-${t}.jpg`} alt="" />
+                      </div>
+                    ))}
                   </div>
                   <div className={styles.cap}>
-                    <b>de esa foto salen estas 3</b> · ya son parte de tu clóset
+                    <b>de esa foto salen estas 5</b> · ya son parte de tu clóset
                   </div>
                 </div>
               </div>
