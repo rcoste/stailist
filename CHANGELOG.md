@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.307.0] - 2026-09-07 — la landing cuenta lo que la app ya hace
+
+Salió de cruzar stailist.co contra producción: tres funciones que existen
+desde hace semanas no aparecían, y una estaba contada al revés. Diseño en
+`claude-design-handoffs-stailist/design_handoff_landing_bloques` (Claude
+Design, a partir de `docs/designs/landing-prompt-cd-2026-09.md`).
+
+- **Nueva sección "03 · Tu ropa de verdad"**: el carrete. La landing decía "le
+  tomas una foto a esa prenda especial" y "¿tengo que subir foto de cada
+  prenda?", que suena a una foto por prenda. La puerta real es al revés: fotos
+  donde ya sales vestida (carrete, Instagram, espejo) y la IA separa cada
+  prenda. Un tercio de las prendas de la base entró así. Visual "de esa foto
+  salen estas 3" con el MISMO outfit en foto y tiles, por género (mujer:
+  `look-casual`; hombre: `b1-normal`). El bloque de objeción que vivía después
+  del try-on se elimina: esta sección lo responde. Las secciones siguientes
+  renumeran 04-10.
+- **Paso 3 de "02 Cómo funciona" → "Me dices qué necesitas. Hoy o el sábado."**
+  Vendía sólo el día; el wizard planea cualquier día con el clima de la hora
+  en que te vistes. Visual: chips de ocasión (+ "una boda"), fila de días con
+  el sábado en tinta y la línea "te vistes a las 7 pm · 22° · despejado".
+- **Bloque C de "08 Y se queda contigo" → fit check** ("Te digo cómo se ve").
+  No aparecía ni una vez y es la única fuente de la señal de oro. La tarjeta
+  enseña sólo el ajuste, como responde de verdad `lib/espejo.ts`: nunca una
+  nota, nunca un check. La fila pasa de 2 a 3 columnas.
+- Paso 2: "una foto de tu clóset abierto: yo saco las prendas por ti, no una
+  por una".
+
+CSS nuevo sólo con tokens existentes (`.reel`, `.days`, `.reply`); el gris del
+día activo sale de `color-mix` sobre `--c-on-accent`, no de un hex nuevo. Se
+borran las 6 reglas huérfanas de la objeción.
+
 ## [0.2.306.0] - 2026-09-07 — B6 replanteado y los docs dejan de mentir
 
 Primer paso de B6 (la deuda que no bloqueaba abrir). Antes de tocar código se

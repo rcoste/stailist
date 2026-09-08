@@ -1,5 +1,12 @@
 # Landing — contenido, estructura y copy (borrador)
 
+> **2026-09-07 (v0.2.307.0):** la landing en prod ya NO sigue este borrador al pie de
+> la letra. Cambios posteriores: sección nueva "03 · Tu ropa de verdad" (el
+> carrete sustituye a la objeción), paso 3 "hoy o el sábado" y bloque C de fit
+> check en "08". La fuente de verdad es `components/landing/landing.tsx`; el
+> diseño de esos tres bloques, `claude-design-handoffs-stailist/design_handoff_landing_bloques`.
+
+
 > **Qué es esto:** la carnita de la landing — secciones, jerarquía y copy
 > borrador en la voz del producto. El diseño visual lo refina Claude Design
 > encima de esto. Aquí NO hay estilos; hay *qué se dice y en qué orden*.

@@ -274,9 +274,9 @@ export function Landing() {
                 <div className={styles.stepText}>
                   <h3>Marcas lo que ya tienes.</h3>
                   <p>
-                    Eliges tus básicos del clóset con un toque — sin fotografiar
-                    prenda por prenda. Y si quieres, le tomas una foto a esa
-                    prenda especial.
+                    Eliges tus básicos con un toque. Y para lo demás, una foto
+                    de tu clóset abierto: yo saco las prendas por ti, no una
+                    por una.
                   </p>
                 </div>
                 <div className={styles.stepVisual}>
@@ -314,22 +314,41 @@ export function Landing() {
                 </div>
               </div>
 
-              {/* 3 · Qué necesitas hoy: chips de ocasión */}
+              {/* 3 · Qué necesitas — hoy o el sábado: chips de ocasión + día + hora/clima.
+                  El wizard real planea cualquier día con el clima de la hora en
+                  que te vistes (handoff design_handoff_landing_bloques, pieza 3). */}
               <div className={styles.step}>
                 <span className={styles.sn}>3</span>
                 <div className={styles.stepText}>
-                  <h3>Me dices qué necesitas hoy.</h3>
+                  <h3>Me dices qué necesitas. Hoy o el sábado.</h3>
                   <p>
-                    ¿Día normal? ¿Junta? ¿Una cita? Un toque y ya. Lo único que
-                    cambia cada día.
+                    ¿Junta mañana? ¿Boda el sábado? Un toque y te lo armo desde
+                    ya, con el clima de ese día y esa hora. Lo único que cambia
+                    cada vez.
                   </p>
                 </div>
                 <div className={styles.stepVisual}>
                   <div className={styles.chips} aria-hidden="true">
-                    <span className={`${styles.chip} ${styles.on}`}>oficina</span>
+                    <span className={styles.chip}>oficina</span>
                     <span className={styles.chip}>de día</span>
-                    <span className={styles.chip}>un evento</span>
+                    <span className={`${styles.chip} ${styles.on}`}>un evento</span>
                     <span className={styles.chip}>una cita</span>
+                    <span className={styles.chip}>una boda</span>
+                  </div>
+                  <div className={styles.days} aria-hidden="true">
+                    <div className={`${styles.day} ${styles.past}`}>l<span>1</span></div>
+                    <div className={`${styles.day} ${styles.past}`}>m<span>2</span></div>
+                    <div className={styles.day}>m<span>3</span></div>
+                    <div className={styles.day}>j<span>4</span></div>
+                    <div className={styles.day}>v<span>5</span></div>
+                    <div className={`${styles.day} ${styles.on}`}>s<span>6</span></div>
+                    <div className={styles.day}>d<span>7</span></div>
+                  </div>
+                  <div className={styles.plan} aria-hidden="true">
+                    <span>
+                      <b>sábado</b> · te vistes a las 7 pm
+                    </span>
+                    <span>22° · despejado</span>
                   </div>
                 </div>
               </div>
@@ -380,11 +399,96 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 03 · POR QUÉ TE QUEDAN */}
+        {/* 03 · TU ROPA DE VERDAD — el carrete: fotos donde ya sales vestida →
+            la IA separa cada prenda. Sustituye al bloque de objeción ("¿tengo
+            que subir foto de cada prenda?") que vivía después del try-on. La
+            foto y los tres tiles son EL MISMO outfit por género. */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>03</span> Por qué te quedan
+              <span className={styles.n}>03</span> Tu ropa de verdad
+            </div>
+            <div className={styles.banner}>
+              <div className={styles.bannerCopy}>
+                <h2 className={styles.h2}>
+                  Sube fotos tuyas. Yo saco la <em className={styles.s}>ropa</em>.
+                </h2>
+                <p className={styles.lead}>
+                  Las otras apps te hacen fotografiar cada prenda, una por una,
+                  hasta que te rindes. Aquí es al revés: me pasas{" "}
+                  <b>fotos donde ya sales vestida</b> — las de tu carrete, las
+                  de Instagram — y de cada una saco las prendas que traes
+                  puestas.
+                </p>
+                <ul className={styles.bpoints}>
+                  <li>
+                    <span className={styles.bk}>01</span>
+                    <div>
+                      <b>Me pasas fotos tuyas. </b>
+                      <span>
+                        Las que ya tienes: del carrete, de Instagram, del
+                        espejo. No hay que producir nada.
+                      </span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className={styles.bk}>02</span>
+                    <div>
+                      <b>Yo leo lo que traes puesto. </b>
+                      <span>
+                        Cada prenda por separado — tipo, color, material, corte
+                        — lista en tarjetas.
+                      </span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className={styles.bk}>03</span>
+                    <div>
+                      <b>Tú confirmas con un toque. </b>
+                      <span>
+                        Y si un día quieres, también me sirve la foto del clóset
+                        abierto. Opcional, nunca obligatorio.
+                      </span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div className={styles.bannerMedia}>
+                <div className={styles.reel} aria-hidden="true">
+                  <div className={styles.photo}>
+                    <span className={styles.tag}>una foto tuya · IG</span>
+                    <img src={img(men ? "b1-normal" : "look-casual")} alt="" />
+                  </div>
+                  <div className={styles.links}>
+                    <i />
+                    <i />
+                    <i />
+                  </div>
+                  <div className={styles.out}>
+                    <div className={styles.t}>
+                      <img src={img("camiseta-blanca")} alt="" />
+                    </div>
+                    <div className={styles.t}>
+                      <img src={img("jeans-claros")} alt="" />
+                    </div>
+                    <div className={styles.t}>
+                      <img src={img("tenis-blancos-urbanos")} alt="" />
+                    </div>
+                  </div>
+                  <div className={styles.cap}>
+                    <b>de esa foto salen estas 3</b> · ya son parte de tu clóset
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 04 · POR QUÉ TE QUEDAN */}
+        <section className={styles.blk}>
+          <div className={styles.wrap}>
+            <div className={styles.kicker}>
+              <span className={styles.n}>04</span> Por qué te quedan
             </div>
             <h2 className={styles.h2}>
               Ningún outfit es <em className={styles.s}>al azar</em>.
@@ -429,11 +533,11 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 04 · TRY-ON */}
+        {/* 05 · TRY-ON */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>04</span> No solo te lo armo
+              <span className={styles.n}>05</span> No solo te lo armo
             </div>
             <div className={styles.tryonGrid}>
               <div className={styles.tryonCopy}>
@@ -548,28 +652,11 @@ export function Landing() {
           </div>
         </section>
 
-        {/* OBJECIÓN */}
-        <section className={styles.blk}>
-          <div className={styles.wrap}>
-            <div className={styles.obj}>
-              <div className={styles.objQ}>
-                “¿Tengo que subir <em>foto</em> de cada prenda?”
-              </div>
-              <p className={styles.objA}>
-                <span className={styles.no}>No.</span> Arrancas con unos básicos
-                que casi todo el mundo tiene — los marcas con un toque y ya
-                tienes con qué empezar. ¿Quieres meter esa chamarra que amas?
-                Tómale una foto cuando quieras. <b>Opcional, nunca obligatorio.</b>
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* 05 · ESENCIALES */}
+        {/* 06 · ESENCIALES */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>05</span> Tus esenciales
+              <span className={styles.n}>06</span> Tus esenciales
             </div>
             <div className={styles.banner}>
               <div className={styles.bannerCopy}>
@@ -641,11 +728,11 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 06 · VIAJE */}
+        {/* 07 · VIAJE */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>06</span> Modo viaje
+              <span className={styles.n}>07</span> Modo viaje
             </div>
             <div className={`${styles.banner} ${styles.rev}`}>
               <div className={styles.bannerCopy}>
@@ -736,14 +823,14 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 07 · Y SE QUEDA CONTIGO */}
+        {/* 08 · Y SE QUEDA CONTIGO */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>07</span> Y se queda contigo
+              <span className={styles.n}>08</span> Y se queda contigo
             </div>
             <h2 className={styles.h2}>No es de un solo uso.</h2>
-            <div className={`${styles.featList} ${styles.two}`}>
+            <div className={styles.featList}>
               <div className={styles.fl}>
                 <span className={styles.fn}>A</span>
                 <div>
@@ -764,15 +851,33 @@ export function Landing() {
                   </p>
                 </div>
               </div>
+              {/* C · Fit check: la respuesta real del espejo es resumen +
+                  colores cerca de la cara + UN ajuste (lib/espejo.ts). Aquí se
+                  enseña sólo el ajuste; nunca una nota ni un check. */}
+              <div className={styles.fl}>
+                <span className={styles.fn}>C</span>
+                <div>
+                  <h3>Te digo cómo se ve.</h3>
+                  <p>
+                    Te pones el look, me mandas la foto del espejo y te
+                    contesto: qué funciona y la única cosa que cambiaría. Sin
+                    filtros.
+                  </p>
+                  <div className={styles.reply} aria-hidden="true">
+                    <span className={styles.k}>un ajuste</span>
+                    <span className={styles.v}>Fájate la camisa. Lo demás, así sí.</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* 08 · PARA QUIÉN */}
+        {/* 09 · PARA QUIÉN */}
         <section className={styles.blk}>
           <div className={styles.wrap}>
             <div className={styles.kicker}>
-              <span className={styles.n}>08</span> Para quién es
+              <span className={styles.n}>09</span> Para quién es
             </div>
             <h2 className={styles.h2}>
               ¿Te suena <em className={styles.s}>familiar</em>?
@@ -804,12 +909,12 @@ export function Landing() {
           </div>
         </section>
 
-        {/* 09 · CTA FINAL */}
+        {/* 10 · CTA FINAL */}
         <section className={`${styles.blk} ${styles.final}`}>
           <div className={styles.wrap}>
             <div className={styles.inner}>
               <div className={styles.kicker}>
-                <span className={styles.n}>09</span> Tu turno
+                <span className={styles.n}>10</span> Tu turno
               </div>
               <h2 className={styles.h2}>
                 ¿Lista para abrir el clóset sin{" "}
