@@ -249,8 +249,10 @@ export default async function HoyPage({
   if (!seen["hoy-prendas"]) {
     candidatos.push({
       id: "hoy-prendas",
-      children:
-        "empieza por aquí: sube fotos de tu ropa de golpe — las reconozco y las guardo yo; con tu ropa real, los looks son tuyos de verdad",
+      // Roberto (08-09), viendo el tip en prod: "aquí pondría 'sube una o
+      // varias prendas de golpe'". Tres líneas de serif eran demasiado para un
+      // coach-mark; queda su frase más el remate de qué gana.
+      children: "sube una o varias prendas de golpe — yo las reconozco y las guardo",
     });
   }
   if (!seen["hoy-fitcheck"]) {

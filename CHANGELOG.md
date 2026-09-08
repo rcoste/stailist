@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.313.2] - 2026-09-08 — el tip de "añadir prendas", en una línea
+
+Verificado en prod por Roberto que la nota ya se ve (v0.2.313.1). Su nota
+sobre el texto: "aquí pondría 'sube una o varias prendas de golpe'". Tres
+líneas de serif eran demasiado para un coach-mark. Queda su frase con el
+remate de qué gana: *sube una o varias prendas de golpe — yo las reconozco y
+las guardo*.
+
 ## [0.2.313.1] - 2026-09-08 — el hint marcaba el tile pero no decía nada
 
 Roberto, con el home recién desplegado: "nada más se marcó lo de añadir
