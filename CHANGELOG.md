@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.305.0] - 2026-09-07 — el nombre del look, en nuestro alfabeto
+
+Salió de mirar el uso de Val: el 3 de septiembre un look de producción se
+tituló "商务 Fluida y moderna". El modelo se fue a otro idioma en la primera
+palabra y nada lo detuvo — el juez mira las prendas, no el título, y el schema
+sólo exige un string. Es un fallo visible en la pantalla más importante y
+ningún test lo iba a ver.
+
+`lib/engine/titulo.ts` limpia el nombre antes de guardarlo, en las cuatro
+rutas que lo escriben: conserva letras latinas con acentos, dígitos y la
+puntuación de un título en español; quita ideogramas, emojis y símbolos; si no
+queda nada legible, "tu look". No es un cambio del motor (regla 4 del
+improvement loop: lo comprobable va en código): no cambia qué look sale.
+
+Lo que NO se toca todavía, y por qué: 23 de los últimos 139 títulos dicen "con
+actitud" (17%) y 8 "bajo la lluvia". Es un tic del modelo, no del arquetipo ni
+del prompt (medido: la tasa es igual con y sin la palabra en el perfil). Quitarlo
+es tocar el prompt, y eso exige una ronda medida contra la versión anterior —
+el loop está en pausa desde el 2026-08-25 por decisión documentada. Queda
+anotado como candidata.
+
 ## [0.2.304.0] - 2026-09-06 — B5: la puerta abierta
 
 Último bloque del plan post-auditoría antes de la deuda. Decisión de Roberto:

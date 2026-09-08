@@ -18,6 +18,7 @@ import {
 import { OBJECTIVES } from "@/app/onboarding/objetivo/objectives";
 import { revisarCuota } from "@/lib/cuotas";
 import { registrarEvento, type FilaEvento } from "@/lib/telemetria";
+import { tituloLimpio } from "@/lib/engine/titulo";
 import {
   itemImageUrlSync,
   itemPrivatePaths,
@@ -259,7 +260,7 @@ export async function POST(request: NextRequest) {
                 techado && hayLluvia(weather?.condition)
                   ? { ...weather, techado: true }
                   : weather,
-              title: outfit.nombre,
+              title: tituloLimpio(outfit.nombre),
               explanation: outfit.explicacion,
               tip: outfit.tip ?? null,
               prompt_version: PROMPT_VERSION,
