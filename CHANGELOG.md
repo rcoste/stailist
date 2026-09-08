@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.308.3] - 2026-09-08 — el hero de hombre también arranca en camiseta blanca
+
+Cierra el paralelo con la versión de mujer, cuyo "antes" del hero es camiseta
+blanca lisa + jeans. El de hombre arrancaba en camiseta gris, que además es
+casi la misma playera gris que el look propuesto pone debajo del saco: el
+antes y el después compartían prenda. Ahora el antes es camiseta blanca y el
+salto se lee — blanca sola → saco marino sobre playera gris, jeans oscuros y
+mocasines café, que es exactamente lo que listan las cuatro prendas de al lado.
+
+Editada con el modelo de imagen del producto: sólo cambia el color de la
+playera; misma persona, corte, pliegues, pose, jeans, tenis, muro y luz.
+
 ## [0.2.308.2] - 2026-09-08 — el "antes" del try-on de hombre, sin la capa
 
 En la demo "pruébatelo" del paso 4, el antes de hombre traía una sobrecamisa
