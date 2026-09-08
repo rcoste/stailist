@@ -2,6 +2,44 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.315.0] - 2026-09-08 — "afina tu estilo" se apaga para el release
+
+Roberto: *"es algo que he probado muy poco, o sea, casi nada. Eventualmente sí
+nos va a funcionar, pero ahorita no sé ni cómo afecta la parte de los estilos —
+nos puede afectar más de lo que ayudar"*.
+
+**Lo que hacía:** metía una línea al prompt del generador — *"empuja los looks
+hacia ese aire"* — con el resumen de las fotos que subiste y, si el veredicto
+era "ajustes" u "ojo", la nota honesta. Un empujón al vibe de TODOS tus looks.
+
+**Lo que se sabe de si ayuda: nada.** Nunca pasó por un A/B ni por una ronda.
+
+**Y una confusión que vale la pena dejar dicha, porque casi la cometo:** existe
+un A/B ciego de 2026-08-04 donde "fotos de inspiración" perdió (2-5-5) — pero
+ése era de `elegirInspiracion`, la biblioteca curada que el motor usa como
+referencia, NO de esta feature. Citarlo aquí habría sido exactamente el error
+que hoy quedó como regla 9 del improvement loop: evidencia que suena aplicable y
+no lo es.
+
+**Los números al apagarla:** 3 perfiles de 26 tenían referencia guardada
+(alberto, ricardomc888, tatiana) y **ninguno está activo** — el más reciente
+llevaba 10 días sin abrir la app, Tatiana 39. Apagar el efecto no le cambia los
+looks a nadie que la esté usando.
+
+**Qué se apaga, exactamente:**
+- El motor deja de recibirla (`styleReferenceForEngine` → null). El juez del
+  eval también, por el mismo camino: si el juez la viera y el generador no,
+  estaría calificando contra un criterio que nunca recibió.
+- Las tres puertas se cierran: el paso "afina tu estilo" del checklist del home,
+  la tarjeta en Perfil, y `/perfil/referencia` redirige a Perfil.
+- **El dato NO se borra.** Ni una foto, ni un resumen. Volver a encenderlo es
+  cambiar `REFERENCIA_DE_ESTILO_ACTIVA` a `true` en `lib/estilo-referencia.ts`.
+
+**El camino de vuelta queda probado.** `buildHomeChecklist` y
+`styleReferenceForEngine` reciben el interruptor como parámetro (default: la
+constante real), así los tests cubren encendido Y apagado. Sin eso habría que
+borrar las pruebas del paso y reescribirlas el día que vuelva.
+
 ## [0.2.314.0] - 2026-09-08 — el clóset se ordena por dentro, en todas las categorías
 
 Roberto, viendo su clóset: *"está muy cabrón que tengo una chamarra de mezclilla
