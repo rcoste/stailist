@@ -770,7 +770,12 @@
 .genderToggle {
   display: flex;
   justify-content: center;
-  padding: 12px 0 4px;
+  padding: 20px 0 0;
+}
+/* El hero trae su propio aire arriba (46px); tras el toggle sobra, o los dos
+   espacios se suman y el control queda flotando lejos de lo que cambia. */
+.genderToggle + .hero {
+  padding-top: 22px;
 }
 .genderToggle > div {
   display: inline-flex;

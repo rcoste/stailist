@@ -82,17 +82,6 @@ export function Landing() {
 
   return (
     <div className={styles.page}>
-      {/* Toggle Mujer/Hombre: el contenido se adapta al género. */}
-      <div className={styles.genderToggle}>
-        <div aria-label="Ver contenido para">
-          <button type="button" aria-pressed={!men} onClick={() => choose("mujer")}>
-            mujer
-          </button>
-          <button type="button" aria-pressed={men} onClick={() => choose("hombre")}>
-            hombre
-          </button>
-        </div>
-      </div>
       {/* HEADER */}
       <header className={styles.header}>
         <div className={`${styles.wrap} ${styles.hrow}`}>
@@ -112,6 +101,21 @@ export function Landing() {
       </header>
 
       <main id="top">
+        {/* Toggle Mujer/Hombre: el contenido de toda la página se adapta al
+            género. Vivía ENCIMA del header —una barra suelta antes de la marca,
+            lo primero de la página, sin contexto de qué cambiaba—; desde
+            v0.2.309.0 va debajo del header y pegado al hero, que es lo que
+            modifica. El header sigue sticky; el toggle se va con el scroll. */}
+        <div className={styles.genderToggle}>
+          <div aria-label="Ver contenido para">
+            <button type="button" aria-pressed={!men} onClick={() => choose("mujer")}>
+              mujer
+            </button>
+            <button type="button" aria-pressed={men} onClick={() => choose("hombre")}>
+              hombre
+            </button>
+          </div>
+        </div>
         {/* HERO */}
         <section className={styles.hero}>
           <div className={`${styles.wrap} ${styles.heroGrid}`}>

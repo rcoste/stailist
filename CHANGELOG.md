@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.309.0] - 2026-09-08 — el toggle mujer/hombre, pegado a lo que cambia
+
+Estaba ENCIMA del header: una barra suelta, lo primerísimo de la página, antes
+de la marca. Dos problemas: aparecía antes de que hubiera algo que cambiar, y
+empujaba el header y el hero hacia abajo en el primer pantallazo, que es donde
+se decide si alguien se queda.
+
+Ahora va debajo del header y pegado al hero, que es lo que modifica. El header
+sigue sticky y el toggle se va con el scroll. Espaciado: 20 px arriba y el hero
+que le sigue baja su padding a 22 px (`.genderToggle + .hero`), porque los dos
+aires se sumaban y el control quedaba flotando lejos de lo que controla.
+
 ## [0.2.308.3] - 2026-09-08 — el hero de hombre también arranca en camiseta blanca
 
 Cierra el paralelo con la versión de mujer, cuyo "antes" del hero es camiseta
