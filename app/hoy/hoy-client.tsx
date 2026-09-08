@@ -583,6 +583,7 @@ export function HoyClient({
           <button
             type="button"
             onClick={() => addRef.current?.open()}
+            data-hint-target="hoy-prendas"
             className="flex items-center gap-3 rounded-md border border-line bg-surface px-3.5 py-[11px] text-left transition-colors hover:border-ink"
           >
             <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-md bg-tile text-ink">

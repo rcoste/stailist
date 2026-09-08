@@ -2,6 +2,46 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.313.0] - 2026-09-08 — lo que Roberto vio al llegar al home desde cero
+
+Cuatro comentarios tras el wow con la cuenta de prueba; tres cambios y un
+"no, y aquí está el porqué".
+
+**"El último look creado" no era el que creé.** Cierto: eligió "Sutileza en
+Burdeos" y el home le enseñó "Negro con Actitud". `loadUltimoLook` ordenaba por
+`created_at` y el wow genera tres en 17 segundos: ganaba el último del trío,
+no el elegido. Dos arreglos que se necesitan mutuamente:
+- El wow **persiste la elección** ("empezar con «X»" y cambiar de look bajo el
+  👎) con `look_date` = el día que lo hiciste tuyo. Sólo `look_date`, NO
+  `is_look_of_day`, a propósito: con esa bandera el home deja de abrir en el
+  hub y abre directo en el look — lo contrario de "entrar a la app". Ninguna
+  lectura de `look_date` va sin `is_look_of_day`, así que no choca con nada.
+- **El último look es el que hiciste tuyo**, no el último que se generó:
+  look del día, marcado por el wow, planeado, favorito o ya probado puesto. Lo
+  que no tiene ninguna marca es una alternativa que nunca elegiste. Sin marcas
+  (looks viejos), el más reciente, como siempre. Regla pura con test — incluido
+  el caso de Roberto, que se arregla solo porque su elegido tiene try-on.
+
+**Los hints "descuadrados".** No era el rediseño: el banner "hay una versión
+nueva" monta DESPUÉS de que el spotlight midió su elemento y corre todo ~90 px
+hacia abajo — el hoyo iluminaba el pie de la card de arriba y la nota tapaba
+el tile. El coach-mark ahora re-mide con un `ResizeObserver` sobre `<body>`;
+el resize de ventana no veía ese salto.
+
+**El orden de los hints.** Roberto: "lo primero debería incentivar a que carguen
+fotos de su multi upload, no el fit check; en ese momento no lo van a hacer".
+Los datos le dan la razón a medias, y bastan: de 6 usuarias reales que vieron el
+tip del fit check en su primera visita, **3 subieron ropa propia en las 24 h
+siguientes sin que nada las llevara ahí** (7, 3 y 9 prendas) y 2 hicieron fit
+check. Subir ropa es lo que ya quieren hacer; el tip les ahorra buscar dónde.
+Hint nuevo `hoy-prendas` (spotlight al tile "añadir prendas"), primero. El fit
+check pasa a la segunda visita — un tip por visita — no desaparece: 4 de 7 lo
+hicieron alguna vez.
+
+**Cuáles hay y en qué orden, para que quede claro:** en el home, `hoy-prendas`
+→ `hoy-fitcheck` → (con look de hoy) `fab-generar` → `hoy-tryon` → (a los 3
+días) `viaje`. Uno por visita; el primero que encuentre su elemento.
+
 ## [0.2.312.0] - 2026-09-08 — en el primer look, pedir otro vive bajo el 👎
 
 Roberto, revisando el wow: "siento que mucha gente le va a empezar a picar lo

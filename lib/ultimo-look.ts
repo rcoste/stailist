@@ -20,6 +20,30 @@ export type UltimoLook = {
 // La tira del canvas trae 5 tiles; más se vuelven confeti a 390px.
 const MAX_TILES = 5;
 
+/** Lo mínimo que la regla necesita de una fila de `outfits`. */
+export type MarcasDeLook = {
+  is_look_of_day?: boolean | null;
+  look_date?: string | null;
+  planned_for?: string | null;
+  favorited_at?: string | null;
+  tryon_path?: string | null;
+};
+
+/**
+ * De las filas más recientes (ya ordenadas por created_at desc), la primera
+ * que la persona hizo suya; si ninguna, la más reciente. Pura, para probarla
+ * con el trío del wow tal cual salió el 08-09.
+ */
+export function elegirUltimoLook<T extends MarcasDeLook>(filas: T[]): T | null {
+  const esTuyo = (o: MarcasDeLook) =>
+    o.is_look_of_day === true ||
+    o.look_date != null || // el wow marca así al elegido (sin is_look_of_day, ver outfit-actions)
+    o.planned_for != null ||
+    o.favorited_at != null ||
+    o.tryon_path != null;
+  return filas.find(esTuyo) ?? filas[0] ?? null;
+}
+
 export async function loadUltimoLook(
   supabase: SupabaseClient,
   userId: string
@@ -33,16 +57,29 @@ export async function loadUltimoLook(
   //     NO salgan en Historial. Colarlas aquí las volvería el titular del home.
   const { data } = await supabase
     .from("outfits")
-    .select("id, title, occasion, planned_for, look_date, created_at, tryon_path, item_ids")
+    .select(
+      "id, title, occasion, planned_for, look_date, created_at, tryon_path, item_ids, is_look_of_day, favorited_at"
+    )
     .eq("user_id", userId)
     .is("deleted_at", null)
     .eq("source", "daily")
     // gen_status null = look completo de antes de la generación en background.
     .or("gen_status.is.null,gen_status.eq.ready")
     .order("created_at", { ascending: false })
-    .limit(1);
+    .limit(5);
 
-  const look = data?.[0];
+  // EL ÚLTIMO LOOK ES EL QUE HICISTE TUYO, no el último que se generó. El wow
+  // genera tres en 17 segundos y la persona elige uno; Hoy genera alternos.
+  // Ordenar por created_at a secas coronaba al último del trío: Roberto eligió
+  // "Sutileza en Burdeos" y el home le enseñó "Negro con Actitud" como "último
+  // look · creado hoy" (08-09). Un look es tuyo si es el look del día (Hoy lo
+  // marca al generar), si el wow lo marcó al elegirlo (look_date), si lo
+  // planeaste para una fecha, si lo guardaste en favoritos o si ya te lo
+  // probaste puesto. Lo que no tiene ninguna de esas
+  // marcas es una alternativa que nunca elegiste. Si ninguno califica (looks
+  // viejos de antes de esta marca), el más reciente, como siempre.
+  type Fila = NonNullable<typeof data>[number];
+  const look = elegirUltimoLook((data ?? []) as (Fila & MarcasDeLook)[]);
   if (!look) return null;
 
   const base = {

@@ -243,6 +243,16 @@ export default async function HoyPage({
   // perdido su target se quedaba con el turno para siempre (y sin marcarse
   // visto), enterrando a los de abajo.
   const candidatos: HintCandidato[] = [];
+  // ORDEN (2026-09-08): añadir prendas PRIMERO, fit check después. Un tip por
+  // visita, así que esto sólo mueve el fit check a la segunda. El porqué y los
+  // números están en lib/hints-catalog.ts ("hoy-prendas").
+  if (!seen["hoy-prendas"]) {
+    candidatos.push({
+      id: "hoy-prendas",
+      children:
+        "empieza por aquí: sube fotos de tu ropa de golpe — las reconozco y las guardo yo; con tu ropa real, los looks son tuyos de verdad",
+    });
+  }
   if (!seen["hoy-fitcheck"]) {
     candidatos.push({
       id: "hoy-fitcheck",
