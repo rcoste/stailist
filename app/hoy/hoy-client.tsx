@@ -660,7 +660,10 @@ export function HoyClient({
 
   if (state.kind === "generating") {
     const li = lastInput.current;
-    let ocasionFrase = "armando algo a tu medida para hoy…";
+    // El día del look en palabras: null = hoy. Viaja a la frase del clima para
+    // que no diga "de hoy" cuando el pronóstico es el de otro día.
+    const fechaLabel = li?.plannedFor ? fechaLegible(li.plannedFor) : null;
+    let ocasionFrase = `armando algo a tu medida para ${fechaLabel ?? "hoy"}…`;
     let plan: GenPlan | null = null;
     if (li) {
       ocasionFrase = li.plan
@@ -672,7 +675,7 @@ export function HoyClient({
         clima: "weather" in li ? bucketLabel(li.weather.temp_c) : null,
       };
     }
-    const frases = buildGenFrases(li, closet.length, ocasionFrase);
+    const frases = buildGenFrases(li, closet.length, ocasionFrase, fechaLabel);
     return <StylistGenerating frases={frases} plan={plan} />;
   }
 

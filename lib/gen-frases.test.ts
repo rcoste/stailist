@@ -33,6 +33,32 @@ describe("buildGenFrases — frases reales del generando", () => {
     expect(f).toContain("checando el clima de hoy: 18°, con lluvia…");
   });
 
+  it("look para mañana: la frase dice mañana, NO hoy", () => {
+    const f = buildGenFrases(
+      { ...liClima(19, "lluvia"), plannedFor: "2026-09-09" },
+      0,
+      null,
+      "mañana"
+    );
+    expect(f).toContain("checando el clima de mañana: 19°, con lluvia…");
+    expect(f.some((x) => x.includes("de hoy"))).toBe(false);
+  });
+
+  it("look para un día con artículo: 'de el sábado' se contrae a 'del sábado'", () => {
+    const f = buildGenFrases(
+      { ...liClima(24, "despejado"), plannedFor: "2026-09-12" },
+      0,
+      null,
+      "el sábado 12"
+    );
+    expect(f).toContain("checando el clima del sábado 12: 24°…");
+  });
+
+  it("plannedFor sin etiqueta (el llamador la olvidó): vago, pero nunca dice 'hoy'", () => {
+    const f = buildGenFrases({ ...liClima(19, "despejado"), plannedFor: "2026-09-09" }, 0, null);
+    expect(f).toContain("checando el clima de ese día: 19°…");
+  });
+
   it("input por lat/lon (sin weather): sin frase de clima", () => {
     const f = buildGenFrases(liGeo, 5, null);
     expect(f.some((x) => x.includes("clima"))).toBe(false);
