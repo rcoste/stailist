@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.307.1] - 2026-09-08 — la landing deja de prometer el clóset abierto
+
+Roberto, al revisar v0.2.307.0: "si tomas una foto así del clóset a la mala,
+no se van a cargar las cosas". El lector de prendas se midió sobre fotos de
+gente vestida, nunca sobre ropa colgada. Se quitan las dos frases que lo
+prometían (paso 2 y punto 03 de "Tu ropa de verdad") y en su lugar se cuenta
+lo que sí pasa: la ropa entra con fotos donde ya sales vestida y cada prenda
+queda con su foto limpia. Leer un clóset abierto queda en TODOS.md como
+función por construir y medir.
+
 ## [0.2.307.0] - 2026-09-07 — la landing cuenta lo que la app ya hace
 
 Salió de cruzar stailist.co contra producción: tres funciones que existen

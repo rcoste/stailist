@@ -2,6 +2,25 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Leer una foto del clóset abierto (2026-09-08)
+
+- **Qué**: que una foto del clóset abierto (ropa colgada en ganchos, doblada en
+  repisas) entre por el carrete y salga como prendas separadas, igual que hoy
+  pasa con las fotos donde la persona sale vestida.
+- **De dónde sale**: el handoff de la landing (2026-09-07) prometía "también me
+  sirve la foto del clóset abierto" en dos sitios. Roberto lo frenó antes de
+  que llegara a nadie: "si tomas una foto así del clóset a la mala, no se van
+  a cargar las cosas". Las dos frases se quitaron en v0.2.307.1.
+- **Por qué no es gratis**: el lector de prendas (`lib/vision-prendas.ts`) se
+  midió sobre fotos de gente vestida; una prenda colgada se ve de perfil,
+  encimada y a media luz, y el render limpio se genera con la foto como
+  referencia. Hay que medirlo con 5-10 fotos reales de clósets antes de
+  prometerlo, en `/admin/comparador` (modo visión), y probablemente pedir un
+  recorte por prenda o un prompt distinto.
+- **Trigger**: que alguien lo intente y salga mal (la foto original se guarda
+  desde v0.2.237.0, así que se puede revisar), o cuando el carrete se toque
+  por otra razón.
+
 ## Corte como dimensión de cada segmento (2026-08-31, replanteado 2026-09-07)
 
 - **Qué**: que cada segmento (hombre / mujer) tenga sus tres cortes

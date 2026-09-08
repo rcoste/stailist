@@ -274,9 +274,9 @@ export function Landing() {
                 <div className={styles.stepText}>
                   <h3>Marcas lo que ya tienes.</h3>
                   <p>
-                    Eliges tus básicos con un toque. Y para lo demás, una foto
-                    de tu clóset abierto: yo saco las prendas por ti, no una
-                    por una.
+                    Eliges tus básicos con un toque. Y tu ropa de verdad entra
+                    con fotos donde ya sales vestida: yo saco las prendas por
+                    ti, no una por una.
                   </p>
                 </div>
                 <div className={styles.stepVisual}>
@@ -446,8 +446,8 @@ export function Landing() {
                     <div>
                       <b>Tú confirmas con un toque. </b>
                       <span>
-                        Y si un día quieres, también me sirve la foto del clóset
-                        abierto. Opcional, nunca obligatorio.
+                        Cada prenda queda en tu clóset con su foto limpia, lista
+                        para tus looks. Opcional, nunca obligatorio.
                       </span>
                     </div>
                   </li>
