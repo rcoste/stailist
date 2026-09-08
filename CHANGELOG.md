@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.311.1] - 2026-09-08 — la landing prometía "~90 s" para un paso que mide 4 minutos
+
+En "Cómo funciona", el paso 1 (likes de estilo + quiz de color) llevaba la
+píldora `Una sola vez · ~90 s`. Lo medido en la auditoría del 09-01 para ese
+tramo es **~4 min de mediana** (143 s + 105 s, n = 18); Roberto hoy, 2 min 38 s.
+Estaba mal por 2.5× — la misma clase de promesa que la auditoría mató en el
+hero ("en menos de 2 minutos"), sobreviviendo en letra chica.
+
+Queda `Una sola vez`. Sin número: el h2 de arriba ya dice "en minutos" y
+repetirlo sobra; lo que esa píldora vende es que no se vuelve a preguntar. Un
+número que no se cumple no vende nada.
+
 ## [0.2.311.0] - 2026-09-08 — motor v74: ninguna camisa bajo la overshirt
 
 Roberto, probando el flujo desde cero con la cuenta de prueba: el segundo look
