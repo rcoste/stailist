@@ -579,7 +579,16 @@ export function HoyClient({
             <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
           </button>
           {/* Añadir prendas: tile delgado (el "planear otro día" murió — el CTA
-              de arriba ya crea para cualquier día). */}
+              de arriba ya crea para cualquier día).
+
+              EL COPY, corregido el 2026-09-08 por dos razones:
+              · "sube varias de golpe" es la frase que la hoja de adentro YA
+                había desechado (ver ADD_OPTIONS en components/add-options.tsx:
+                "pedir un ritual de mudanza para subir unos tenis espantaba").
+                El tile se quedó pidiendo el ritual que la puerta ya no pide.
+              · Y hablaba sólo de subir, cuando detrás hay DOS caminos y uno no
+                usa fotos: marcar básicos de la biblioteca. El subtítulo decía
+                la mitad. */}
           <button
             type="button"
             onClick={() => addRef.current?.open()}
@@ -590,8 +599,8 @@ export function HoyClient({
               <Icon name="mas" size={18} />
             </span>
             <span className="flex min-w-0 flex-col">
-              <b className="text-[14.5px] font-bold text-ink">añadir prendas</b>
-              <span className="text-[12.5px] text-muted">sube varias de golpe</span>
+              <b className="text-[14.5px] font-bold text-ink">añadir prendas a tu clóset</b>
+              <span className="text-[12.5px] text-muted">una o varias — con foto o sin ella</span>
             </span>
             <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
           </button>

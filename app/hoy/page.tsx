@@ -249,10 +249,11 @@ export default async function HoyPage({
   if (!seen["hoy-prendas"]) {
     candidatos.push({
       id: "hoy-prendas",
-      // Roberto (08-09), viendo el tip en prod: "aquí pondría 'sube una o
-      // varias prendas de golpe'". Tres líneas de serif eran demasiado para un
-      // coach-mark; queda su frase más el remate de qué gana.
-      children: "sube una o varias prendas de golpe — yo las reconozco y las guardo",
+      // El copy original, restaurado (Roberto, 08-09: "el texto del hint estaba
+      // bien como lo teníamos originalmente"). Su nota sobre "sube una o varias
+      // prendas de golpe" era para el TILE, no para el tip — ahí está aplicada.
+      children:
+        "empieza por aquí: sube fotos de tu ropa de golpe — las reconozco y las guardo yo; con tu ropa real, los looks son tuyos de verdad",
     });
   }
   if (!seen["hoy-fitcheck"]) {
