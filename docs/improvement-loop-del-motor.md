@@ -704,6 +704,27 @@ entre sí — la bitácora arranca línea base nueva; (2) hay que **re-congelar 
 bajo pool v9** (`scripts/prompt-congelar.ts`) antes de la siguiente ronda con
 `prompt-anterior`, porque el congelado de v8 ya no casa.
 
+## 8-bis. Candidatas que salieron del uso real de Val (2026-09-07, sin medir)
+
+Val es la única usuaria nueva que se ha puesto looks de la app (2 fit checks a
+<24 h de un look) y la que más looks pide: 46 en 10 días, en ráfagas de 10 en
+nueve minutos, votando casi ninguno. Sus 7 👎 dejan dos candidatas. **Las dos
+son cambios del motor y NO salen sin ronda** (regla 1).
+
+- ⬜ **El guiño presta demasiado.** Val es invierno con flow a otoño. Hoy
+  `seasonPalette` mete en "le favorecen cerca de la cara" TODOS los colores de
+  la estación del guiño (camel, cuero, mostaza, oliva, musgo, terracota…) y los
+  quita de "evita". 4 de sus 5 👎 con motivo dicen "los colores", y son justo
+  looks con oliva, crema, camel y verde+azul; sus 3 👍 son negro/blanco/gris.
+  Hipótesis: el guiño debería prestar 2-3 colores, no la estación entera, o
+  entrar sólo como "puedes" y no como "te favorece". Antes de tocar nada:
+  preguntarle a Val si su paleta le suena (Perfil › "¿no te suena? ajústala").
+- ⬜ **La muletilla del título.** 23 de los últimos 139 looks se llaman "… con
+  actitud" (17%) y 8 "… bajo la lluvia". No viene del arquetipo (misma tasa
+  con y sin la palabra en el perfil): es el modelo. Lo comprobable ya está en
+  código (v0.2.305.0 limpia el alfabeto); quitar el tic es prompt y va con
+  ronda.
+
 ## 9. Conversación B — el rol del juez de producción (medido 2026-08-22)
 
 **La pregunta de Roberto:** "se está volviendo el stylist cuando debería
