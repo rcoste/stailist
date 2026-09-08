@@ -170,6 +170,28 @@ function CoachMark({
   const [noteH, setNoteH] = useState(0);
   const okRef = useRef<HTMLButtonElement>(null);
   const noteRef = useRef<HTMLDivElement>(null);
+  // La nota se mide EN CUANTO EXISTE el nodo (callback ref), no en un efecto
+  // que dependa de adivinar en qué render apareció. Lo que se vio en producción
+  // (Roberto, 08-09: "nada más se marcó lo de añadir prendas, pero no sale el
+  // textito"): la nota en el DOM con 163px de alto y `noteH` en 0 → visibility
+  // hidden con el hoyo ya dibujado. En jsdom no se reproduce (React aplana los
+  // efectos), así que el arreglo no apuesta a UNA causa: el callback ref cubre
+  // cualquier orden de efectos, y `offsetHeight` (alto de layout, ignora
+  // transforms) cubre una animación de entrada que arranque en escala 0, donde
+  // getBoundingClientRect() mide 0 y el ResizeObserver —que sólo ve cambios de
+  // layout— nunca avisaría.
+  const medirNota = useCallback((el: HTMLElement | null) => {
+    if (!el) return;
+    const h = el.offsetHeight || el.getBoundingClientRect().height;
+    if (h > 0) setNoteH(h);
+  }, []);
+  const setNoteRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      noteRef.current = el;
+      medirNota(el);
+    },
+    [medirNota]
+  );
   // Por ref y no en las deps del efecto: el callback llega inline desde
   // HintChain, así que cambia de identidad en cada render y volvería a lanzar la
   // búsqueda del target una y otra vez.
@@ -278,17 +300,19 @@ function CoachMark({
     };
   }, [id, center]);
 
-  // Mide la nota (y la vuelve a medir si el texto reflowea, p.ej. al girar el
-  // teléfono). Sin esto la colocación tendría que adivinar el alto.
+  // Vuelve a medir la nota si el texto reflowea (p.ej. al girar el teléfono).
+  // La PRIMERA medida la hace el callback ref (ver `medirNota`); esto es el
+  // seguimiento. Depende también de `mounted` por si el nodo aparece en un
+  // render distinto al de `ready`.
   useLayoutEffect(() => {
     const el = noteRef.current;
     if (!el) return;
-    const medir = () => setNoteH(el.getBoundingClientRect().height);
+    const medir = () => medirNota(el);
     medir();
     const ro = new ResizeObserver(medir);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [ready]);
+  }, [ready, mounted, medirNota]);
 
   // Bloquea el scroll del body + Escape para cerrar + foco inicial en "entendido".
   useEffect(() => {
@@ -378,7 +402,7 @@ function CoachMark({
           es "la app te habla", no "tócame". El fondo sólido sigue haciendo que
           el contraste del texto no dependa NUNCA de qué haya debajo. */}
       <div
-        ref={noteRef}
+        ref={setNoteRef}
         className="hint-note absolute"
         // `visibility` y no `opacity`: la animación de entrada anima opacity y
         // gana sobre el estilo inline, así que ocultarla por ahí no funciona.
