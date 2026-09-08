@@ -140,6 +140,26 @@ export async function saveSkipReason(
   return { ok: true };
 }
 
+// El wow: bajo el 👎 aparecen los otros dos looks del trío y la persona elige
+// uno. Este evento es la ÚNICA huella de "quiero otro" en el primer look — el
+// botón "otro look" de antes regresaba al picker sin registrar nada, y la
+// hipótesis de Roberto ("van a regresar en vez de avanzar") no tenía número.
+// `de` es el look que rechazó, `a` el que eligió. No bloquea el cambio de look.
+export async function registrarWowOtroLook(de: string, a: string): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  const r = await registrarEvento(supabase, {
+    user_id: user.id,
+    outfit_id: de,
+    type: "wow_otro_look",
+    data: { de, a },
+  });
+  return { ok: r.ok };
+}
+
 // Bookmark: guarda/quita un look de favoritos (distinto del 👍). Sella o limpia
 // outfits.favorited_at del look del propio usuario (RLS).
 export async function toggleFavorite(

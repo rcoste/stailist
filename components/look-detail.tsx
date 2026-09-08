@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -94,6 +94,7 @@ export function LookDetail({
   voto,
   onVote,
   onOtroLook,
+  bajoVotoNegativo,
   enterApp,
   disabled,
   // — try-on —
@@ -114,7 +115,15 @@ export function LookDetail({
   initialFavorited: boolean;
   voto: "up" | "down" | null;
   onVote: (up: boolean) => void;
-  onOtroLook: () => void;
+  /** "otro look" a la izquierda de la fila de votos. Sin él (y sin fit check)
+   *  la izquierda queda vacía: el wow ya no lo ofrece como botón suelto —
+   *  pedir otro vive bajo el 👎 (`bajoVotoNegativo`). */
+  onOtroLook?: () => void;
+  /** Lo que aparece justo debajo de la fila de votos cuando el voto es 👎.
+   *  El wow mete aquí "¿probamos otro de los tres?" con los otros dos looks:
+   *  la persona dice que no le gustó ANTES de pedir otro, que es la señal que
+   *  el botón suelto se saltaba (Hoy lo quitó por lo mismo, 2026-08-12). */
+  bajoVotoNegativo?: ReactNode;
   /** Solo el wow: salida explícita a la app (el voto registra en el lugar). */
   enterApp?: () => void;
   disabled?: boolean;
@@ -312,8 +321,9 @@ export function LookDetail({
               <Icon name="camara" size={16} className="shrink-0" />
               te digo cómo te queda
             </button>
-          ) : (
-            // El wow y el historial no ofrecen fit check: ahí sigue "otro look".
+          ) : onOtroLook ? (
+            // El historial no ofrece fit check: ahí sigue "otro look". (El wow
+            // ya no lo pasa: pedir otro vive bajo el 👎.)
             <button
               type="button"
               onClick={onOtroLook}
@@ -322,6 +332,8 @@ export function LookDetail({
             >
               <Icon name="repetir" size={16} /> otro look
             </button>
+          ) : (
+            <span aria-hidden />
           )}
           <div className="flex shrink-0 items-center gap-2">
             <span className="mr-0.5 text-[13px] font-semibold text-muted">¿te gusta?</span>
@@ -329,6 +341,8 @@ export function LookDetail({
             <VoteButton up={true} active={voto === "up"} onClick={() => onVote(true)} disabled={disabled} />
           </div>
         </div>
+
+        {voto === "down" && bajoVotoNegativo ? bajoVotoNegativo : null}
 
         {/* LA SALIDA DEL ONBOARDING, con peso de botón.
             Era texto gris de 14px al fondo de la pantalla: el elemento MÁS
