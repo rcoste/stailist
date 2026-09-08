@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.308.1] - 2026-09-08 — las tarjetas del paso 1 salen del mazo real
+
+Las tres tarjetas "sí / sí / no" de "Me dices quién eres" eran fotos viejas
+(calle cálida, otro casting). Roberto pidió usar las del mazo nuevo del
+onboarding (`public/looks/`, pipeline `gen-looks-genz.mjs`), que son las que
+la persona va a ver de verdad al entrar. Mujer: minimalista y casual sin
+esfuerzo como "sí", Y2K como "no". Hombre: smart casual (pedido explícito) y
+minimalista como "sí", Y2K como "no". Misma proporción 3:4, mismos nombres de
+archivo, sin tocar código.
+
 ## [0.2.308.0] - 2026-09-08 — "de esa foto salen estas 5": fotos reales y renders del pipeline
 
 Roberto no quiso una foto de stock en "03 · Tu ropa de verdad": pasó dos fotos
