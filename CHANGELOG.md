@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.306.0] - 2026-09-07 — B6 replanteado y los docs dejan de mentir
+
+Primer paso de B6 (la deuda que no bloqueaba abrir). Antes de tocar código se
+revisó el bloque punto por punto con Roberto, contra el código y la base:
+
+- **El toggle de "cortes cruzados" muere**. Oversize y slim no son cortes "de
+  hombre" ni "de mujer": son una dimensión dentro de cada segmento. La oxford
+  holgada que pidió Val es una "camisa oxford oversize" del catálogo de mujer.
+  Medido: mujer 62/43/27 (entallado/recto/holgado) y 121 sin corte; hombre
+  10/81/4 y 104 sin corte. Ese es el B6.2 nuevo.
+- **El hallazgo de accesibilidad no se sostiene**: 6 de los 9 botones que la
+  auditoría citaba tienen texto visible y un conteo sobre toda la app da 0
+  botones de sólo ícono sin etiqueta. El bloqueo del zoom es a propósito (#14).
+  Fuera del bloque.
+- **Las dos escalas de formalidad NO se fusionan** (prenda: 3 niveles; evento:
+  5). Se renombran y se protege el puente. Sigue en el bloque.
+- Trajes en onboarding: cerrado sin código (Trajes = las dos piezas).
+
+Lo que sí cambió en este commit:
+
+- `docs/USER-JOURNEY.md` reescrito de cero contra el código: 9 pantallas, OTP,
+  27 cartas, 57/53 básicos, motor v73 en Gemini 3.5 Flash con juez Sonnet 5,
+  PWA hecha, 25 perfiles reales, promesa de 2 minutos retirada. Llevaba desde
+  junio describiendo un producto que no existía.
+- La spec `docs/designs/mvp-onboarding-90s.md` pasa a `status: HISTORICO`.
+- CLAUDE.md: salvedad de los modelos de imagen (`lib/gemini-imagen.ts`).
+- Comentario de `onboarding-progress.tsx` que hablaba de burdeos.
+- Base: el pantalón de traje de Ricardo (`638824a8`) nació del render del saco
+  y decía `source='archetype'` sin arquetipo; ahora `photo`, como los otros dos
+  pares generados igual. Los 2 pantalones de franela de Roberto sin imagen
+  siguen ahí: falta su decisión (foto o render).
+
 ## [0.2.305.0] - 2026-09-07 — el nombre del look, en nuestro alfabeto
 
 Salió de mirar el uso de Val: el 3 de septiembre un look de producción se

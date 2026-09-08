@@ -178,18 +178,64 @@ hoy, 20/día ya es 50× el ritmo actual.
 
 ## B6 — Deuda que no bloquea (después de abrir, ship ligero)
 
+Replanteado con Roberto el 2026-09-07, punto por punto, contra el código y la
+base de producción. Lo que se cayó y por qué queda anotado para que nadie lo
+"recupere" por leer la auditoría original.
+
 En orden de lo que más ve la usuaria:
 
-1. **Trajes en onboarding**: el traje entra completo o pregunta por el pantalón (hoy regala una prenda inexistente).
-2. **Toggle de cortes cruzados** en la biblioteca (caso real del brief).
-3. **Catálogo de básicos mujer**: cruzar qué arquetipos marcan las 14 mujeres reales vs el set actual (posible sesgo Gen-Z); revisar con sombrero de stylist.
-4. **Design system**: decidir tokens nuevos vs reemplazo de los 1 287 px arbitrarios; los 226 textos <12 px primero.
+1. **Docs que mienten**: reescribir USER-JOURNEY contra el código (flujo real
+   de 9 pantallas, OTP, 27 cartas, 57 básicos de mujer, motor v73 en Gemini,
+   PWA ✅); marcar la spec original como histórica; CLAUDE.md con la salvedad
+   de los modelos `*-image`. Va primero porque es lo único de la lista que
+   cobra cada vez que alguien retoma el proyecto.
+2. **Corte como dimensión de cada segmento** (antes "toggle de cortes
+   cruzados"). Decisión de Roberto: oversize/slim NO es "corte de hombre" ni
+   "de mujer"; cada segmento tiene los tres cortes (entallado/recto/holgado)
+   y la oxford holgada que pidió Val es una "camisa oxford oversize" del
+   catálogo de MUJER, no un toggle al de hombre. Medido en la base
+   (2026-09-07): mujer 62/43/27 y 121 sin corte; hombre 10/81/4 y 104 sin
+   corte; unisex 1/9/1. Tres tareas: (a) rellenar el corte de los 225
+   arquetipos sin marcar; (b) variantes holgado y entallado de los básicos
+   clave de hombre; (c) mostrar el corte al elegir en biblioteca y checklist.
+3. **Catálogo de básicos de mujer: sólo análisis, sin quitar nada** (Roberto,
+   2026-09-07). Cruzar qué arquetipos marcan las 14 mujeres reales vs los 57
+   del onboarding. Verificado que sí hay tank top ("Camiseta de tirantes"),
+   crop top y top corset. El rediseño propuesto (chaleco, vestido camisero,
+   cárdigan, lino, sandalias) sigue APARCADO por Roberto.
+4. **Design system**: decidir tokens nuevos vs reemplazo de los 1 287 px
+   arbitrarios; los 226 textos <12 px primero.
 5. **40 errores de lint**: los 10 `ref` en render de `hoy-client.tsx` primero.
-6. **20 `aria-label`**; quitar `userScalable: false`.
-7. **`FORMALIDADES` duplicado** con dos escalas → uno solo.
-8. **Docs que mienten**: reescribir USER-JOURNEY contra el código (flujo real de 9 pantallas, OTP, 27 cartas, 57 básicos, v73, Gemini, PWA ✅); marcar la spec como histórica; CLAUDE.md con la salvedad de los modelos `*-image`.
-9. `public/sw.js` a paleta v3; `#E5E1DD` → `var(--c-line)` en 17 sitios; token `--c-scrim`.
-10. Items rotos: `638824a8` sin `archetype_id`; 2 pantalones sin imagen.
+6. **Dos escalas de formalidad con el mismo nombre** (antes "FORMALIDADES
+   duplicado"). NO se fusionan: la de la PRENDA (casual / casual-formal /
+   formal, `lib/capsule.ts`, repetida como chips en
+   `components/prenda-campos.tsx`) y la del EVENTO (casual / semiformal /
+   formal / gala / playa, `lib/formalidad.ts`) son conceptos distintos con
+   sombrero de stylist. El puente de 5→3 lo hace a mano `lib/engine/alcance.ts`
+   y nada lo protege. Arreglo: renombrar para que no choquen
+   (`FORMALIDAD_PRENDA` / `FORMALIDAD_EVENTO`), derivar los chips de la
+   constante, y un test que fije el puente.
+7. **Restos de la paleta vieja**: `public/sw.js` (la página "sin conexión"
+   usa fondo y tinta del rebrand anterior; nadie la ve desde junio);
+   `#E5E1DD` → `var(--c-line)` en 22 sitios de 18 archivos (4 en rutas del
+   servidor → constante en `lib/`); token `--c-scrim` para el velo de los
+   sheets. Invisible al ojo, pero viola "cero hex en componentes".
+8. **Datos rotos** (3 registros, ninguno visible en la app): `638824a8` es el
+   pantalón de traje de Ricardo, generado a partir del saco, con render y en
+   1 look; `source='archetype'` sin `archetype_id` porque nació del render del
+   saco, no de la biblioteca → corregir el `source`. Los 2 pantalones de
+   franela sin imagen son de Roberto (25-26 ago, 0 looks, probablemente del
+   clóset de referencia): foto suya o render generado ($0.13 c/u) — pendiente
+   su decisión.
+
+**Fuera del bloque, con evidencia:**
+- ~~Trajes en onboarding~~: no es problema (Roberto, 2026-09-06). Trajes = las
+  dos piezas; sólo saco va en Sacos.
+- ~~20 `aria-label` + `userScalable`~~: el hallazgo 2.11 no se sostiene. 6 de
+  los 9 botones citados tienen texto visible ("seguir", "atrás", "compartir
+  mi pasaporte"); un conteo automático sobre toda la app de usuario da 0
+  botones de sólo ícono sin etiqueta. El bloqueo del zoom es a propósito
+  (fix #14 del PWA, tradeoff documentado en `app/layout.tsx`).
 
 ---
 

@@ -2,24 +2,22 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
-## Ver cortes del otro segmento en la biblioteca (2026-08-31)
+## Corte como dimensión de cada segmento (2026-08-31, replanteado 2026-09-07)
 
-- **Qué**: un toggle explícito en la biblioteca —"ver también cortes de
-  hombre/mujer"— para quien quiera una oxford de corte masculino o un blazer
-  oversize de hombre. NO fusionar los catálogos por default.
-- **De dónde sale**: feedback de Val. Reportó que las prendas quedan
-  encasilladas por género; el diagnóstico apuntaba al catálogo y el sesgo
-  estaba en el copy del picker (arreglado en v0.2.297.0). Pero debajo de la
-  queja mal ubicada hay un caso real: hoy una mujer NO puede añadir una prenda
-  del segmento hombre, y punto.
-- **Por qué ahora no, y por qué NO como fusión**: los segmentos no son "esta
-  ropa es de hombre" — son cortes distintos con renders distintos (el "Blazer
-  marino" de mujer y el de hombre son dos prendas con dos siluetas y dos
-  fotos). Mezclarlos deja a la persona eligiendo entre dos tarjetas casi
-  idénticas sin manera de saber cuál es cuál, y duplica la biblioteca. El
-  toggle da el mismo acceso sin el ruido.
-- **Trigger**: cuando alguien pida una prenda concreta del otro segmento, o al
-  siguiente rediseño de la biblioteca.
+- **Qué**: que cada segmento (hombre / mujer) tenga sus tres cortes
+  —entallado, recto, holgado— en los básicos clave, que los 225 arquetipos
+  sin corte lo tengan marcado, y que el corte se vea al elegir en biblioteca
+  y checklist.
+- **De dónde sale**: feedback de Val (una oxford holgada). La primera lectura
+  fue "un toggle para ver cortes de hombre desde mujer". Roberto la corrigió:
+  oversize y slim NO son cortes "de hombre" ni "de mujer", son una dimensión
+  dentro de cada segmento. La oxford de Val es una "camisa oxford oversize"
+  del catálogo de mujer (hoy sólo existe la recta), no un préstamo del de
+  hombre. Nada de fusionar catálogos ni de toggles cruzados.
+- **Medido en la base (2026-09-07)**: mujer 62 entallado / 43 recto / 27
+  holgado / 121 sin corte; hombre 10 / 81 / 4 / 104 sin corte. El de hombre
+  casi no tiene oversize ni slim.
+- **Trigger**: es el B6.2 del plan post-auditoría; entra después de los docs.
 
 ## Corpus de prendas + aprobación a biblioteca (2026-08-17)
 

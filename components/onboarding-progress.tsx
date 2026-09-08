@@ -1,5 +1,5 @@
 // Indicador de progreso del onboarding: 5 segmentos hairline, los completados
-// en burdeos. Discreto a propósito — el protagonista es la pregunta, no el meter.
+// en tinta (`bg-accent`, paleta v3). Discreto a propósito — el protagonista es la pregunta, no el meter.
 export function OnboardingProgress({ step }: { step: 1 | 2 | 3 | 4 | 5 }) {
   return (
     <div
