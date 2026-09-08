@@ -14,7 +14,7 @@ import {
   ocasionLabel,
   bucketLabel,
 } from "@/components/weather-picker";
-import { voteOutfit } from "@/lib/outfit-actions";
+import { voteOutfit, registrarWowOtroLook } from "@/lib/outfit-actions";
 import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -243,8 +243,12 @@ export function WowClient({
         userId={userId}
         hasAvatar={hasAvatar}
         autoTryon={state.autoTryon ?? false}
-        onOtroLook={() =>
-          setState({ kind: "choosing", outfits: state.outfits, chosenId: state.chosenId })
+        // "otro look" ya no es un botón suelto (Roberto, 2026-09-08: "van a
+        // regresar en vez de avanzar"). Los otros dos del trío aparecen bajo
+        // el 👎 y elegir uno cambia el look aquí mismo, sin volver al picker.
+        alternativas={state.outfits.filter((o) => o.id !== outfit.id)}
+        onElegir={(id) =>
+          setState({ kind: "viewing", outfits: state.outfits, chosenId: id })
         }
         // Fin del onboarding: la puerta a la app es explícita ("entrar a la app").
         // El 👍/👎 ya no navega — registra en el lugar y nadie se lleva la sorpresa
@@ -361,6 +365,49 @@ export function WowClient({
   );
 }
 
+// Bajo el 👎 del primer look: los otros dos del trío, con la misma tarjeta
+// chica del picker (nombre + 4 prendas). Un tap y cambia el look en el lugar.
+function OtrosDelTrio({
+  alternativas,
+  onElegir,
+}: {
+  alternativas: WowOutfit[];
+  onElegir: (id: string) => void;
+}) {
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      <p className="text-[13px] font-semibold text-muted">¿probamos otro de los tres?</p>
+      {alternativas.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          onClick={() => onElegir(o.id)}
+          className="flex w-full items-center gap-3 rounded-md border border-line bg-surface p-2.5 text-left transition-colors hover:border-ink"
+        >
+          <span className="flex w-[104px] shrink-0 gap-1">
+            {o.prendas.slice(0, 4).map((p, i) => (
+              <span
+                key={`${o.id}-${i}`}
+                className="relative aspect-[3/4] flex-1 overflow-hidden rounded-sm border border-line bg-bg"
+              >
+                {p.imagen ? (
+                  <Image src={p.imagen} alt={p.nombre} fill sizes="32px" className="object-cover" />
+                ) : (
+                  <span className="absolute inset-0" style={{ backgroundColor: p.swatch }} aria-hidden />
+                )}
+              </span>
+            ))}
+          </span>
+          <span className="min-w-0 flex-1 text-[15px] font-bold leading-tight tracking-[-0.02em] text-ink">
+            <EditorialName name={o.nombre} />
+          </span>
+          <Icon name="flecha" size={16} className="shrink-0 text-muted" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Nombre del look con la última palabra en serif itálica (acento editorial v3).
 function EditorialName({ name }: { name: string }) {
   const parts = name.trim().split(/\s+/);
@@ -375,15 +422,19 @@ function EditorialName({ name }: { name: string }) {
 }
 
 // El look elegido, en el MISMO patrón que ReadyView de Hoy: header "hoy · nombre"
-// + grid de prendas (OutfitCard) + "verme con este look" + otro look / me lo pongo.
+// + grid de prendas (OutfitCard) + "verme con este look" + voto / entrar.
 // Diferencias del onboarding: aún no hay avatar (el "verme" abre el wizard) y
-// "otro look" no regenera (cuesta) — vuelve a elegir entre los 3 ya generados.
+// no hay botón "otro look": pedir otro vive bajo el 👎, que enseña los otros
+// dos del trío (ya generados, no cuesta) y cambia el look aquí mismo. Así la
+// persona dice que NO le gustó antes de pedir otro — la señal que el botón
+// suelto se saltaba — y no regresa al picker, que es hacia atrás.
 function ModoHoyView({
   outfit,
   userId,
   hasAvatar,
   autoTryon,
-  onOtroLook,
+  alternativas,
+  onElegir,
   onEnter,
 }: {
   outfit: WowOutfit;
@@ -391,7 +442,10 @@ function ModoHoyView({
   hasAvatar: boolean;
   /** Al retomar tras el avatar: abrir el try-on solo (sin pedir otro tap). */
   autoTryon: boolean;
-  onOtroLook: () => void;
+  /** Los otros looks del trío, para ofrecerlos bajo el 👎. */
+  alternativas: WowOutfit[];
+  /** Cambiar a otro look del trío (sin regenerar). */
+  onElegir: (id: string) => void;
   /** Salida explícita a la app (/hoy). El voto NO navega — esta es la puerta. */
   onEnter: () => void;
 }) {
@@ -456,7 +510,18 @@ function ModoHoyView({
         initialFavorited={false}
         voto={voto}
         onVote={decidir}
-        onOtroLook={onOtroLook}
+        bajoVotoNegativo={
+          alternativas.length ? (
+            <OtrosDelTrio
+              alternativas={alternativas}
+              onElegir={(id) => {
+                // Registra y cambia; el evento no bloquea el cambio de look.
+                void registrarWowOtroLook(outfit.id, id);
+                onElegir(id);
+              }}
+            />
+          ) : null
+        }
         enterApp={onEnter}
         disabled={voting}
         tryonImage={t.image}
