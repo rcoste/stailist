@@ -38,6 +38,7 @@
 //   Id nuevo a propósito: quien ya vio "hoy-casa" también debe ver este.
 export type HintId =
   // Orientación (dónde estás / para qué sirve la sección)
+  | "hoy-prendas"
   | "fab-generar"
   | "closet-tabs"
   | "wishlist-cartera"
@@ -53,6 +54,16 @@ export type HintModo = "centrado" | "spotlight";
 
 export const HINT_MODO: Record<HintId, HintModo> = {
   // Señalan un elemento concreto.
+  // "hoy-prendas" (2026-09-08): el PRIMER tip del home señala el tile de
+  // "añadir prendas". Roberto: "lo primero debería incentivar a que carguen
+  // fotos de su multi upload". Los datos le dan la razón a medias y bastan:
+  // de 6 usuarias reales que vieron el tip del fit check en su primera visita,
+  // 3 subieron ropa propia en las 24 h siguientes SIN que nada las llevara
+  // ahí (7, 3 y 9 prendas) y 2 hicieron fit check. Subir ropa es lo que ya
+  // quieren hacer; el tip les ahorra buscar dónde. El fit check pasa a la
+  // segunda visita (un tip por visita), no desaparece: 4 de 7 lo hicieron
+  // alguna vez.
+  "hoy-prendas": "spotlight",
   "fab-generar": "spotlight",
   "closet-tabs": "spotlight",
   "wishlist-cartera": "spotlight",

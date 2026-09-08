@@ -253,18 +253,29 @@ function CoachMark({
     return () => clearTimeout(timer);
   }, [id, center]);
 
-  // Reposiciona en resize (el scroll está bloqueado mientras el coach-mark vive).
+  // Reposiciona en resize (el scroll está bloqueado mientras el coach-mark vive)
+  // Y cuando la página cambia de alto sin resize: el banner de "hay una versión
+  // nueva" monta DESPUÉS de que el tip midió y corre todo ~90px hacia abajo —
+  // el hoyo se quedaba iluminando el pie de la card de arriba y la nota
+  // tapaba el tile que señalaba (Roberto, 08-09: "los hints quedaron
+  // descuadrados"). Un ResizeObserver sobre <body> ve ese salto; el resize
+  // de ventana no.
   useEffect(() => {
     if (center) return;
-    const onResize = () => {
+    const remedir = () => {
       const el = findTarget(id);
       if (!el) return;
       const r = el.getBoundingClientRect();
       const radius = getComputedStyle(el).borderRadius || "8px";
       setRect({ top: r.top, left: r.left, width: r.width, height: r.height, radius });
     };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.addEventListener("resize", remedir);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(remedir) : null;
+    ro?.observe(document.body);
+    return () => {
+      window.removeEventListener("resize", remedir);
+      ro?.disconnect();
+    };
   }, [id, center]);
 
   // Mide la nota (y la vuelve a medir si el texto reflowea, p.ej. al girar el
