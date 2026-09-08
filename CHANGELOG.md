@@ -2,6 +2,33 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.313.1] - 2026-09-08 — el hint marcaba el tile pero no decía nada
+
+Roberto, con el home recién desplegado: "nada más se marcó lo de añadir
+prendas, pero no sale ahí un textito explicando". Reproducido en local: la nota
+SÍ estaba en el DOM —texto correcto, 163 px de alto, colocada bajo el tile—
+pero `visibility: hidden`. El coach-mark esconde la nota hasta medir su alto
+(`noteH`) para colocarla sin salto, y esa medida se quedó en 0.
+
+**Lo honesto:** la causa exacta no quedó demostrada. La hipótesis de una
+carrera entre `ready` y `mounted` no se reproduce en jsdom con ni sin `act()`
+(React aplana los efectos), así que el arreglo no apuesta a una sola causa:
+
+- La nota se mide **en cuanto existe el nodo** (callback ref), sin depender de
+  en qué render apareció. Cubre cualquier orden de efectos.
+- Se mide con **`offsetHeight`** (alto de layout, ignora transforms). Cubre una
+  animación de entrada que arranque en escala 0, donde
+  `getBoundingClientRect()` mide 0 y el ResizeObserver —que sólo ve cambios de
+  layout— nunca avisaría.
+- El efecto de seguimiento depende también de `mounted`.
+
+Test de componente sin `act()` que monta el target antes que el hint y exige
+hoyo + nota visible + texto; y "entendido" marca visto y quita el tip.
+
+No verificado en pantalla: el dev server local sirvió `/hoy` en 2-3 s pero la
+pestaña del panel (oculta) nunca terminó de hidratar la página. Se verifica en
+producción: Perfil → "volver a ver los tips" → home.
+
 ## [0.2.313.0] - 2026-09-08 — lo que Roberto vio al llegar al home desde cero
 
 Cuatro comentarios tras el wow con la cuenta de prueba; tres cambios y un
