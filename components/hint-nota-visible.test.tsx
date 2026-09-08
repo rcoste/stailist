@@ -25,6 +25,8 @@ vi.mock("@/lib/hints", () => ({ dismissHint: (id: string) => dismissHint(id) }))
 
 let root: Root | null = null;
 let host: HTMLDivElement | null = null;
+let rectOriginal: typeof Element.prototype.getBoundingClientRect | null = null;
+let offsetParentOriginal: PropertyDescriptor | undefined;
 
 const tick = (ms = 80) => new Promise((r) => setTimeout(r, ms));
 
@@ -44,6 +46,10 @@ beforeEach(() => {
       unobserve() {}
     }
   );
+  // Se restauran en afterEach: un test que deja el prototipo parcheado
+  // envenena a los demás si algún día se apaga el aislamiento por archivo.
+  rectOriginal = Element.prototype.getBoundingClientRect;
+  offsetParentOriginal = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetParent");
   Element.prototype.getBoundingClientRect = () =>
     ({ top: 400, left: 10, width: 300, height: 60, right: 310, bottom: 460, x: 10, y: 400, toJSON() {} }) as DOMRect;
   Object.defineProperty(HTMLElement.prototype, "offsetParent", { configurable: true, get: () => document.body });
@@ -61,6 +67,9 @@ afterEach(async () => {
   root = null;
   host = null;
   vi.unstubAllGlobals();
+  if (rectOriginal) Element.prototype.getBoundingClientRect = rectOriginal;
+  if (offsetParentOriginal) Object.defineProperty(HTMLElement.prototype, "offsetParent", offsetParentOriginal);
+  else delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetParent;
   dismissHint.mockClear();
   (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 });

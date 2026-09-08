@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.313.3] - 2026-09-08 — el tile de añadir prendas dice a dónde van y qué acepta
+
+Roberto, precisando: su nota sobre "sube una o varias prendas de golpe" era
+para el TILE del home, no para el tip. **El tip vuelve a su copy original** (él:
+"estaba bien como lo teníamos"), y el tile cambia — con dos problemas propios
+que salieron al mirarlo:
+
+- **"Sube varias de golpe" era la frase que la hoja de adentro ya había
+  desechado.** En `ADD_OPTIONS` (components/add-options.tsx) está escrito el
+  porqué: *"pedir un ritual de mudanza para subir unos tenis espantaba"*. La
+  puerta dejó de pedir el ritual; el tile de afuera se quedó pidiéndolo.
+- **Y hablaba sólo de subir fotos, cuando detrás hay DOS caminos** y uno no usa
+  la cámara: marcar básicos de la biblioteca — justo el atajo que esquiva la
+  tarde de catalogar. El subtítulo decía la mitad de lo que hay.
+
+Queda: **añadir prendas a tu clóset** · *una o varias — con foto o sin ella*.
+El título dice el destino (que antes se adivinaba), el subtítulo dice qué
+acepta sin exigir un lote. Medidos con la fuente real a 375 px: 180 px y 185 px
+de 273 disponibles — una línea cada uno, sin partirse.
+
 ## [0.2.313.2] - 2026-09-08 — el tip de "añadir prendas", en una línea
 
 Verificado en prod por Roberto que la nota ya se ve (v0.2.313.1). Su nota
