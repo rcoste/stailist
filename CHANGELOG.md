@@ -2,6 +2,45 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.311.0] - 2026-09-08 — motor v74: ninguna camisa bajo la overshirt
+
+Roberto, probando el flujo desde cero con la cuenta de prueba: el segundo look
+del wow fue camisa de mezclilla + overshirt oliva + pantalón técnico + tenis
+blancos, con el tip "deja la overshirt abierta para que se vea el cuello de la
+camisa de mezclilla". "Friteó, propuso algo que ni al caso, y que ya habíamos
+detectado en las pruebas que no debía ir."
+
+Cierto, y peor de lo que sonaba. La regla 25 del motor (v61, 24 de agosto)
+cazaba la camisa "de vestir" bajo la overshirt y exentaba la de mezclilla y
+franela con el comentario "así votó él". **No había votado eso.** El único voto
+que existe sobre mezclilla + overshirt es del 22 de agosto —dos días ANTES de
+escribir la excepción— y es un 👎 textual: "para mí no va esa camisa mezclilla
+con esa over shirt". Contados en el comparador, sus votos sobre algo con cuello
+bajo la overshirt son 0 👍 / 6 👎 en cinco rondas; con camiseta debajo, 8 👍 / 1
+👎. La excepción se escribió contra la única evidencia que había.
+
+Y la razón de que nadie lo viera es de instrumento: ese 👎 no tiene marca
+(votó el par y comentó, sin marcar el look), y la ablación sólo cuenta marcas.
+Queda como regla 9 del loop: "así votó él" se cita con ronda y par, o no se
+escribe.
+
+**v74, una sola regla de código:** `camisa-bajo-overshirt` dispara con
+cualquier camisa — de vestir, oxford, mezclilla, franela, lino de manga corta —
+y el reparador mete una camiseta lisa, que es la alternativa que sus votos
+aprueban, no una adivinada. "Sobrecamisa" contiene "camisa" y ya no se acusa a
+sí misma. El polo (1 señal, "INVESTIGA") queda fuera hasta la segunda. Los
+jueces reciben el texto nuevo; el del generador no cambia. Ablación
+`sin-reglas-v74` en el comparador, por si un día hay que medirla al revés.
+
+**Medido con la báscula temática del eval (884fb900, `--solo "templado"`, 51
+looks, sin voto de Roberto, precedente de v68):** 0 looks entregados con camisa
++ overshirt; los 4 que llevan overshirt llevan camiseta. Ablación: dispara en 0
+de sus 372 👍. Honestidad: el eval guarda las violaciones del look ENTREGADO,
+no lo que el generador propuso, así que no dice si la regla reparó algo o si el
+generador ya no lo armó; y costó $6.36, no los ~$2 estimados — "templado"
+agarró 7 briefs, no 3. Los tests reproducen los dos looks reales: el del 👎 y el
+del wow.
+
 ## [0.2.310.3] - 2026-09-08 — el header tenía dos botones para la misma puerta
 
 Roberto, viendo el header de la landing: "¿cuál es la diferencia entre estos dos

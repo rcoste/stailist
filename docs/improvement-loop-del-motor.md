@@ -271,6 +271,16 @@ una regla que tira looks dispare en 👍.
    juez contra el que se optimiza deja de medir.
 8. **Los reportes de rondas viven en pantallas de la app, nunca en archivos
    HTML** — un archivo no captura su opinión (`rondas-en-la-app-no-html`).
+9. **"Así votó él" se cita con ronda y par, o no se escribe.** La regla 25
+   (v61, 24-08) exentó la camisa de mezclilla bajo overshirt "porque así votó
+   él"; el único voto que existía (2bba08e0 par 6, 22-08, dos días ANTES) era
+   un 👎 textual contra esa combinación exacta, y el 08-09 producción se la
+   sirvió a Roberto en su primer wow. Y la razón de que nadie lo viera: **la
+   ablación sólo cuenta MARCAS 👍/👎 por look** — un par votado con comentario
+   pero sin marca, o un look con una prenda borrada después, no existen para
+   ella. Antes de afirmar qué dicen sus votos sobre una combinación, consultar
+   `comparador_motor_pares` directamente (marcas + `votos_look` +
+   `comentarios_look`), no sólo la tabla de la ablación.
 
 ---
 
@@ -367,6 +377,7 @@ Una fila por ronda. **Se llena el día que se corre**, no después.
 | 08-22 | 08f46d3e | v58 | reparar-primero | 57% vs 50% | **no entra** (pre-registrado "≥"; pares 2-1, 3 empates). Dentro del ruido, pero la regla es la regla. Dato que importa: con código-primero, los looks que el juez NO tocó aprobaron 43% — el criterio propio del juez SÍ aporta. `juez-solo-repara` queda sin correr: su hipótesis ya perdió aquí |
 
 ---
+| 09-08 | eval 884fb900 | v74 | — (báscula temática `--solo "templado"`: 7 briefs × 3 vueltas, sin voto) | **gate contable cumplido**: 0/51 entregados con camisa + overshirt; los 4 looks con overshirt llevan camiseta | v74 = `camisa-bajo-overshirt` ampliada a CUALQUIER camisa (regla de código). La de v61 exentaba mezclilla/franela "porque así votó él" — contra el único voto que existía (2bba08e0 par 6: "no va esa camisa mezclilla con esa over shirt"). Detonante: el wow de la cuenta de prueba (08-09) sirvió mezclilla + overshirt oliva, ese mismo look. Ablación 3👎/0👍, igual que v61: los dos 👎 que motivaron esto están FUERA de su universo (uno votado como par sin marca, otro con prenda borrada) — ver regla 9. **Lo que el instrumento NO dice:** el eval guarda las violaciones del look ENTREGADO (`paso.ts:202`), no lo que el generador propuso, y los recibos no traen la respuesta cruda; así que no se sabe si la regla reparó algo aquí o si el generador ya no lo armó. Jueces 96%/94% (temática: no es un número). 51 looks, 0 errores, **$6.36 — no los ~$2 estimados: "templado" agarró 7 briefs, no 3**. Sin voto de Roberto (precedente 2ec16c63). Polo bajo overshirt (1 señal, "INVESTIGA") queda fuera |
 
 ## 7-bis. ⏸️ EL LOOP QUEDA EN PAUSA (2026-08-25) — y por qué
 
@@ -724,6 +735,43 @@ son cambios del motor y NO salen sin ronda** (regla 1).
   con y sin la palabra en el perfil): es el modelo. Lo comprobable ya está en
   código (v0.2.305.0 limpia el alfabeto); quitar el tic es prompt y va con
   ronda.
+
+## 8-ter. v74 — `camisa-bajo-overshirt`, del uso real de Roberto (2026-09-08)
+
+Probando el flujo desde cero con la cuenta de prueba (roberto@playrobix.com),
+el segundo look del wow fue "Sobrecamisa en Modo Ligero": camisa de mezclilla +
+pantalón técnico + overshirt oliva + tenis blancos, con el tip "deja la
+overshirt abierta para que se vea el cuello de la camisa de mezclilla". Roberto:
+"friteó, propuso algo que ni al caso, y que ya habíamos detectado en las pruebas
+que no debía ir".
+
+**Lo que decían sus votos, contado en `comparador_motor_pares` (marcas + pares
+perdidos con comentario), no en la ablación:**
+
+| debajo de la overshirt | 👍 | 👎 / perdido con comentario | rondas |
+|---|---|---|---|
+| camisa (azul claro, oxford ×3, mezclilla, lino manga corta) | 0 | 6 | 8f3647f3, 2bba08e0, 08f46d3e, 7abd9c9c |
+| polo de manga larga | 0 | 1 ("no sé si me gusta o si es correcto, INVESTIGA") | 09ed41a1 |
+| camiseta | 8 | 1 | 65ded440, 8559ec99, 09ed41a1, 259f284e, 2f307042 |
+
+La regla 25 de v61 sólo cazaba la camisa "de vestir" y exentaba mezclilla y
+franela con el comentario "así votó él". No había votado eso: el único voto
+sobre mezclilla + overshirt era el 👎 de 2bba08e0, dos días anterior. Lo que
+nadie vio es que ese voto no tiene MARCA (Roberto votó el par y comentó, sin
+marcar el look), y la ablación sólo cuenta marcas — de ahí la regla 9 de §5.
+
+**Qué cambió (v74, una sola regla de código):** cualquier camisa bajo overshirt
+dispara; el reparador mete una camiseta lisa (la alternativa medida: 8👍/1👎).
+"Sobrecamisa" contiene "camisa" y ya no se acusa a sí misma. El polo queda
+fuera hasta la segunda señal — lectura de stylist para cuando llegue: también
+es cuello sobre cuello; Massimo Dutti lo estila, pero en el registro
+minimalista estorba igual. Ablación `sin-reglas-v74` en el comparador.
+
+**Cómo se midió:** eval 884fb900 (fila en §7). Y lo que NO se midió, en voz
+alta: si el generador propuso el caso y la regla lo reparó, o si simplemente no
+lo armó — el eval no guarda la propuesta cruda. La evidencia de que la regla
+hace lo que dice son los tests con los dos looks reales (el del 👎 y el del
+wow) y la ablación en 0 de 372 👍.
 
 ## 9. Conversación B — el rol del juez de producción (medido 2026-08-22)
 

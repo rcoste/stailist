@@ -1455,10 +1455,27 @@ describe("las cuatro reglas de las rondas 075a3f12 y 08f46d3e", () => {
     expect(revisarEjecucion(look, { ...base, momento: "dia" }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
     expect(revisarEjecucion(look, { tipoEvento: "boda", momento: "noche", closet: [] }).map((x) => x.regla)).not.toContain("boda-de-noche-camisa-blanca");
   });
-  it("camisa oxford bajo overshirt dispara; la de mezclilla no (así votó)", () => {
+  it("camisa bajo overshirt dispara con CUALQUIER camisa (v74): oxford, mezclilla, lino de manga corta", () => {
     const over = p("Overshirt oliva", "#5E6B43");
-    expect(revisarEjecucion([p("Camisa oxford azul", "#A9C4E0"), over, p("Jeans azul oscuro", "#2C3E50")]).map((x) => x.regla)).toContain("camisa-de-vestir-bajo-overshirt");
-    expect(revisarEjecucion([p("Camisa de mezclilla", "#7D9BB5"), over, p("Jeans negros", "#1A1A1A")]).map((x) => x.regla)).not.toContain("camisa-de-vestir-bajo-overshirt");
+    const reglas = (look: Parameters<typeof revisarEjecucion>[0], ctx?: Parameters<typeof revisarEjecucion>[1]) =>
+      revisarEjecucion(look, ctx).map((x) => x.regla);
+    expect(reglas([p("Camisa oxford azul", "#A9C4E0"), over, p("Jeans azul oscuro", "#2C3E50")])).toContain("camisa-bajo-overshirt");
+    // El 👎 del 22-08 (ronda 2bba08e0, par 6): "para mí no va esa camisa
+    // mezclilla con esa over shirt". v61 lo exentó diciendo "así votó él".
+    expect(reglas([p("Camisa de mezclilla", "#7D9BB5"), over, p("Jeans negros", "#1A1A1A")])).toContain("camisa-bajo-overshirt");
+    // El wow de Roberto del 08-09-2026, tal cual lo sacó producción con v73.
+    expect(reglas([p("Camisa de mezclilla", "#7D9BB5"), p("Pantalón técnico", "#3A3A3A"), over, p("Tenis blancos", "#FFFFFF")])).toContain("camisa-bajo-overshirt");
+    // "Manga corta con una over shirt, esa camisa de lino: fatal" (2bba08e0, par 2).
+    expect(reglas([p("Camisa de lino esmeralda", "#2E8B57", { manga: "corta" }), over, p("Jeans azul oscuro", "#2C3E50")])).toContain("camisa-bajo-overshirt");
+  });
+  it("bajo la overshirt la camiseta es el SÍ (8 👍 / 1 👎); y 'sobrecamisa' no se acusa a sí misma", () => {
+    const reglas = (look: Parameters<typeof revisarEjecucion>[0], ctx?: Parameters<typeof revisarEjecucion>[1]) =>
+      revisarEjecucion(look, ctx).map((x) => x.regla);
+    expect(reglas([p("Camiseta negra", "#1A1A1A"), p("Overshirt oliva", "#5E6B43"), p("Jeans negros", "#1A1A1A")])).not.toContain("camisa-bajo-overshirt");
+    expect(reglas([p("Camiseta blanca", "#FFFFFF"), p("Sobrecamisa oliva", "#5E6B43"), p("Jeans negros", "#1A1A1A")])).not.toContain("camisa-bajo-overshirt");
+    // La ablación de v74 restaura la excepción de v61.
+    expect(reglas([p("Camisa de mezclilla", "#7D9BB5"), p("Overshirt oliva", "#5E6B43"), p("Jeans negros", "#1A1A1A")], { sinReglasV74: true })).not.toContain("camisa-bajo-overshirt");
+    expect(reglas([p("Camisa oxford azul", "#A9C4E0"), p("Overshirt oliva", "#5E6B43"), p("Jeans negros", "#1A1A1A")], { sinReglasV74: true })).toContain("camisa-bajo-overshirt");
   });
   it("mocasín burdeos con traje NEGRO dispara; con traje gris no (el café ahí es correcto)", () => {
     const moc = p("Mocasines burdeos", "#5C2A2E", { color: "burdeos" });

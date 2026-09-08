@@ -81,6 +81,7 @@ export type OpcionesJuez = {
   sinReglasV61?: boolean;
   sinReglasV67?: boolean;
   sinReglasV68?: boolean;
+  sinReglasV74?: boolean;
   repararPrimero?: boolean;
   juezSoloRepara?: boolean;
 };
@@ -489,7 +490,13 @@ export async function reviewOutfit(
  */
 export function contextoDeReglas(
   ctx: EngineContext,
-  opciones: { sinCoherenciaCromatica?: boolean; sinReglasV61?: boolean; sinReglasV67?: boolean; sinReglasV68?: boolean } = {}
+  opciones: {
+    sinCoherenciaCromatica?: boolean;
+    sinReglasV61?: boolean;
+    sinReglasV67?: boolean;
+    sinReglasV68?: boolean;
+    sinReglasV74?: boolean;
+  } = {}
 ): ContextoReglas {
   return {
     // Flag del comparador: apagar la regla de color es correr el motor real
@@ -498,6 +505,7 @@ export function contextoDeReglas(
     sinReglasV61: opciones.sinReglasV61,
     sinReglasV67: opciones.sinReglasV67,
     sinReglasV68: opciones.sinReglasV68,
+    sinReglasV74: opciones.sinReglasV74,
     clima: bandaDeClima(ctx.weather),
     closet: ctx.items,
     // La lluvia es su propia dimensión: 17°C con lluvia y 17°C despejado son la

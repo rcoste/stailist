@@ -145,6 +145,13 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     opciones: { sinReglasV68: true },
   },
   {
+    clave: "sin-reglas-v74",
+    etiqueta: "Sin la ampliación de v74",
+    ayuda:
+      "camisa-bajo-overshirt vuelve a exentar mezclilla/franela/manga corta (la regla de v61 tal cual) — si gana, se revierte",
+    opciones: { sinReglasV74: true },
+  },
+  {
     clave: "reparar-primero",
     etiqueta: "Código antes que juez",
     // CONVERSACIÓN B, variante 1 (docs §9). El juez de producción reescribe el
