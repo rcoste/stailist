@@ -2,6 +2,58 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.314.0] - 2026-09-08 — el clóset se ordena por dentro, en todas las categorías
+
+Roberto, viendo su clóset: *"está muy cabrón que tengo una chamarra de mezclilla
+junto a un abrigo de lana. Entiendo que todos caen en abrigo, pero podría haber
+sus categorías"*. Y al rato: *"esto duele en todos — en los pantalones tengo
+juntos pantalones, shorts, trajes de baño y pantalones de ejercicio"*.
+
+Tenía razón dos veces, y la segunda era la grande.
+
+**Existía, pero casi nadie lo veía.** La subdivisión estaba sólo para Abrigos
+(Chamarras · Sobrecamisas · Chalecos) y **únicamente al filtrar la categoría**.
+Quien abre el clóset —el caso normal— veía el grid plano. Ahora los subgrupos
+salen siempre; al filtrar siguen igual.
+
+**Y donde existía, no alcanzaba.** Su cajón "Chamarras" acababa con siete
+prendas donde conviven la de piel y la impermeable técnica. Se parte el grupo
+que importa: **Parkas y plumas** aparte de **Chamarras**. La ultraligera y la
+de piel no se ponen el mismo día ni con el mismo look — ése es el corte que
+pidió, dicho con sombrero de stylist: en abrigos la línea que decide es cuánto
+abriga.
+
+**La taxonomía completa, medida contra sus 147 prendas reales:**
+
+| Categoría | Subgrupos |
+|---|---|
+| Arriba (49) | Camisas 9 · Polos 9 · Playeras y camisetas 19 · Suéteres y punto 11 · Sudaderas 1 |
+| Abajo (31) | **Trajes de baño 4** · De vestir 11 · Shorts y bermudas 3 · Chinos y casuales 8 · Jeans 3 · Deportivos 1 |
+| Calzado (20) | De vestir 5 · Mocasines 3 · Botines y botas 4 · Tenis 7 · Sandalias 1 |
+| Abrigos (14) | Parkas y plumas 3 · Abrigos y gabardinas 3 · Chamarras 7 · Sobrecamisas 1 |
+| Accesorios (24) | Corbatas y moños 10 · Cinturones 3 · Bufandas 3 · Lentes 6 · Gorras 1 · Relojes 1 |
+| Sacos (9) | sin partir — nueve prendas caben en una pantalla |
+
+**Una sola prenda de 147 no encaja** ("Pantalón negro", ambiguo de por sí) y cae
+al cajón "Otros", al final.
+
+**El traje de baño va primero en Abajo**, a propósito: es lo único que nunca
+entra en un look de diario, y si cae al cajón general la categoría entera se lee
+como revuelta.
+
+**Por nombre y no por `subtipo`, midiendo.** El dato bueno sería `subtipo`, pero
+está lleno en 4 de sus 14 abrigos, mientras que los nombres son descriptivos al
+100%. Hoy el nombre acierta más; el día que la visión llene el campo, el único
+archivo que cambia es `lib/closet-subgrupos.ts`.
+
+**Lo que cazó el test** (con sus nombres reales, no inventados): "caqui" y
+"lino" se robaban las bermudas y el short para el cajón de chinos, y "Abrigo
+impermeable técnico" caía en abrigos en vez de parkas. Los dos eran errores de
+orden en mi taxonomía, encontrados antes de llegar a la pantalla.
+
+Y el catch-all se llama **"Otros"** cuando el encabezado de la categoría ya está
+a la vista: sin eso quedaba "PANTALONES › Pantalones".
+
 ## [0.2.313.3] - 2026-09-08 — el tile de añadir prendas dice a dónde van y qué acepta
 
 Roberto, precisando: su nota sobre "sube una o varias prendas de golpe" era

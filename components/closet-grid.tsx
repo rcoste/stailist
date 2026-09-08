@@ -16,6 +16,7 @@ import { Toast } from "@/components/toast";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { ejemploDeTalla } from "@/lib/prenda-atributos";
 import { PALETA, coloresCercanos } from "@/lib/paleta-colores";
+import { norm, subgroupsFor } from "@/lib/closet-subgrupos";
 import { SiluetaCorte } from "@/components/silueta-corte";
 import { EL_CORTE_IMPORTA } from "@/lib/afinar-prendas";
 import { distanciaPerceptual } from "@/lib/engine/color-perceptual";
@@ -136,45 +137,6 @@ const PESO_FORMALIDAD: Record<string, number> = {
 // conjunto de dos piezas con short existe y es perfectamente normal.
 const IMPOSIBLE_EN_UN_TRAJE =
   /short|bermuda|jogger|legging|deportiv|mezclilla|denim|jean|cargo|palazzo|bikini/i;
-
-const norm = (s: string) =>
-  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-
-// Sub-agrupación VISUAL dentro de una categoría (solo la vista del clóset; no toca
-// el motor). "Abrigo" mete cosas de uso distinto (chamarra, sobrecamisa, chaleco,
-// abrigo) — al filtrar la categoría, las separamos por tipo leyendo el nombre. Lo
-// que no encaja cae al catch-all (la etiqueta de la propia categoría). Ampliable a
-// otras categorías agregando entradas aquí.
-const SUBGROUPS: Record<string, { label: string; test: (n: string) => boolean }[]> = {
-  abrigo: [
-    { label: "Chamarras", test: (n) => /mezclilla|denim|bomber|chamarra|chaqueta|cazadora|biker|moto/.test(n) },
-    { label: "Sobrecamisas", test: (n) => /sobrecamisa|overshirt|shacket|camisola/.test(n) },
-    { label: "Chalecos", test: (n) => /chaleco|gilet/.test(n) },
-  ],
-};
-
-// Parte las prendas de una categoría en subgrupos (en orden; catch-all al final con
-// la etiqueta de la categoría). Devuelve null si la categoría no sub-agrupa o si al
-// final todo cayó en un solo grupo (no vale la pena partir).
-function subgroupsFor(
-  cat: string,
-  prendas: ClosetItem[],
-  catLabel: string
-): { label: string; prendas: ClosetItem[] }[] | null {
-  const defs = SUBGROUPS[cat];
-  if (!defs) return null;
-  const rest = [...prendas];
-  const out: { label: string; prendas: ClosetItem[] }[] = [];
-  for (const d of defs) {
-    const hit = rest.filter((p) => d.test(norm(p.nombre)));
-    if (hit.length) {
-      out.push({ label: d.label, prendas: hit });
-      for (const p of hit) rest.splice(rest.indexOf(p), 1);
-    }
-  }
-  if (rest.length) out.push({ label: catLabel, prendas: rest });
-  return out.length > 1 ? out : null;
-}
 
 // Chip de categoría: cantos crispados (radius-sm, NO pill). Activo = acento.
 function Chip({
@@ -595,9 +557,19 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
               ))}
             </ul>
           );
-          // Al filtrar una categoría con subgrupos (p. ej. Abrigos), la partimos por
-          // tipo. En "Todos" se mantiene el grid plano por categoría.
-          const subs = activeFilter ? subgroupsFor(g.key, g.prendas, g.label) : null;
+          // Los subgrupos van SIEMPRE, no sólo al filtrar (2026-09-08). Antes
+          // "Todos" era un grid plano por categoría, así que quien abría el
+          // clóset —el caso normal— veía el cajón revuelto que Roberto
+          // reportó: sus 31 prendas de abajo con los trajes de baño entre los
+          // pantalones de traje. La pantalla queda más larga y MÁS navegable:
+          // cada bloque tiene nombre. subgroupsFor devuelve null si todo cae
+          // en un grupo, así que una categoría homogénea no gana encabezados
+          // de más.
+          // El catch-all se llama "Otros" cuando el encabezado de categoría está
+          // a la vista (sin filtro), y con el nombre de la categoría cuando no
+          // lo está (al filtrar, el H2 no se dibuja). Sin esto quedaba
+          // "PANTALONES › Pantalones", que es el encabezado repitiéndose.
+          const subs = subgroupsFor(g.key, g.prendas, activeFilter ? g.label : "Otros");
           return (
             <div key={g.key} className="flex flex-col gap-3">
               {!activeFilter ? (
