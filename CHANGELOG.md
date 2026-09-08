@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.308.2] - 2026-09-08 — el "antes" del try-on de hombre, sin la capa
+
+En la demo "pruébatelo" del paso 4, el antes de hombre traía una sobrecamisa
+gris abierta sobre la camiseta. Dos problemas: rompía el paralelo con la
+versión de mujer, que arranca en ropa base (camiseta lisa + jeans), y la capa
+gris abierta compite visualmente con el blazer marino del después — el
+crossfade casi no se leía. Ahora el antes es camiseta blanca + jeans + tenis,
+misma persona, misma pose, mismo muro.
+
+La imagen se editó con el mismo modelo de imagen del producto
+(`lib/gemini-imagen.ts`), pidiéndole quitar SOLO la sobrecamisa y conservar
+cara, cuerpo, pose, encuadre, fondo y luz. El hero de hombre ya estaba bien
+(camiseta gris lisa) y no se tocó.
+
 ## [0.2.308.1] - 2026-09-08 — las tarjetas del paso 1 salen del mazo real
 
 Las tres tarjetas "sí / sí / no" de "Me dices quién eres" eran fotos viejas
