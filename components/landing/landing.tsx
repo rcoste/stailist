@@ -89,10 +89,15 @@ export function Landing() {
             <Isotipo className={styles.iso} />
             <Wordmark />
           </a>
+          {/* UN solo botón, no dos. "Entrar" vivía aquí junto al CTA, pero los
+              dos terminaban en /login: con código al correo no hay registro
+              separado del inicio de sesión — es el mismo formulario y el
+              sistema decide si eres nueva o vuelves. Dos puertas idénticas le
+              pedían al visitante una decisión que no cambia nada. Es residuo de
+              la waitlist (hasta el 2026-09-06 "armar mi look" sí llevaba a otro
+              lado). Quien vuelve escribe su correo en el mismo campo; la línea
+              fina bajo el formulario del hero se lo dice. */}
           <div className={styles.headerRight}>
-            <a className={styles.hlogin} href="/login">
-              Entrar
-            </a>
             <a className={styles.hcta} href="#sumarme">
               Armar mi look
             </a>
@@ -135,7 +140,10 @@ export function Landing() {
               </p>
 
               <div id="sumarme">
-                <EntrarForm trust />
+                <EntrarForm
+                  trust
+                  fineline="¿ya tienes cuenta? es el mismo correo."
+                />
               </div>
             </div>
 
