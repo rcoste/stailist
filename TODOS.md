@@ -39,7 +39,7 @@ Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trig
 
 - [x] ~~**Falta un traje NEGRO**~~ — HECHO (migración 0139, v0.2.250.1). Saco + pantalón negros de hombre; el onboarding de hombre queda con los tres que pidió Roberto: marino, gris carbón y negro.
 - [x] ~~**Ninguna mujer tiene traje**~~ — HECHO (migración 0139, v0.2.250.1). Dos trajes sastre de mujer (negro y marino) con corte femenino descrito pieza por pieza —solapa angosta, cintura con pinzas, hombro estrecho, tiro alto— y revisados uno por uno: "que no parezca traje de hombre sobre mujer". La pestaña Trajes ya le aparece a las usuarias. Sigue abierto el hueco mayor del audit de género (la biblioteca formal completa, 22H/7M).
-- [ ] **El traje entra completo o no entra**: la tarjeta marca las dos piezas de un tap y no hay "sólo el saco". Quien tenga el saco y no el pantalón tiene que borrar el pantalón después desde el clóset. Se dejó así porque un segundo control en la tarjeta paga complejidad en el minuto más caro del onboarding. *Trigger*: si alguien reporta que le entró una prenda que no tiene.
+- [x] ~~**El traje entra completo o no entra**~~ — NO ES UN PROBLEMA, es la separación (Roberto, 2026-09-06): la pestaña Trajes es para quien tiene las DOS piezas; quien sólo tiene el saco lo marca en Sacos, que para eso existe (blazer ≠ traje). La auditoría pre-release lo listó como riesgo y estaba mal leído.
 
 ## Diferido del header de pantalla interna (2026-08-14)
 

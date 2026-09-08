@@ -27,6 +27,7 @@ import { checkAnchorFit } from "@/lib/engine/anchor-fit";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { revisarCuota } from "@/lib/cuotas";
 import { registrarEvento } from "@/lib/telemetria";
+import { tituloLimpio } from "@/lib/engine/titulo";
 
 // La generación corre en background (Next after(), que en Vercel Pro + Fluid
 // Compute sigue tras la respuesta), así que le damos holgura.
@@ -690,7 +691,7 @@ async function generateInto(
         .update({
           item_ids: elegido.item_ids,
           ...camposComunes,
-          title: elegido.nombre,
+          title: tituloLimpio(elegido.nombre),
           explanation: elegido.explicacion,
           tip: elegido.tip ?? null,
           gen_status: "ready",
@@ -732,7 +733,7 @@ async function generateInto(
               .update({
                 item_ids: outfit.item_ids,
                 ...camposComunes,
-                title: outfit.nombre,
+                title: tituloLimpio(outfit.nombre),
                 explanation: outfit.explicacion,
                 tip: outfit.tip ?? null,
                 gen_status: "ready",
@@ -750,7 +751,7 @@ async function generateInto(
             user_id: userId,
             item_ids: outfit.item_ids,
             ...camposComunes,
-            title: outfit.nombre,
+            title: tituloLimpio(outfit.nombre),
             explanation: outfit.explicacion,
             tip: outfit.tip ?? null,
             is_look_of_day: false,
