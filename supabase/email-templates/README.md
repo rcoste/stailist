@@ -1,11 +1,18 @@
 # Email templates — Stailist (Supabase Auth)
 
 Plantillas de los correos de auth que manda Supabase. **Llevan un código OTP de
-6 dígitos (`{{ .Token }}`), no un link.** Diseñadas con los tokens del design
-system (burdeos `#722F37` + neutros cálidos, Bodoni Moda + Hanken Grotesk con
-fallbacks email-safe). El hex va literal porque los clientes de correo (Gmail)
-borran las variables CSS — **son los mismos tokens de `globals.css`, no colores
-nuevos**.
+6 dígitos (`{{ .Token }}`), no un link.** Diseñadas con los tokens del branding
+v3 "Gen-Z monocromo": papel hueso `#f4f3f1`, tinta `#141414`, wordmark
+st·ai·list con el "ai" en Georgia itálica NEGRA, código en caja negra. Sin
+burdeos, sin Bodoni Moda, sin Hanken Grotesk — eso era la v2 y está muerta.
+
+El hex va literal porque los clientes de correo (Gmail) borran las variables
+CSS: **son los mismos tokens de `globals.css` traducidos a mano**, no colores
+nuevos. Cuando cambie la paleta hay que traducirlos otra vez.
+
+(Este párrafo describió la paleta v2 hasta el 2026-09-08 — seis semanas después
+de que las plantillas pasaran a v3. La misma clase de desincronía que el
+problema que documenta la sección de abajo.)
 
 ## Por qué código OTP y no magic link
 
@@ -42,13 +49,33 @@ Ya **no** existe la ruta `app/auth/confirm` (era para los links).
 
 ## Cómo aplicarlos en Supabase
 
-**Por Management API** (`PATCH /v1/projects/{ref}/config/auth`): campos
-`mailer_templates_magic_link_content` / `mailer_templates_confirmation_content`
-y `mailer_subjects_magic_link` / `mailer_subjects_confirmation`. El curl necesita
-`User-Agent: curl/*` o Cloudflare tira 403 (code 1010).
+**Con el script — las DOS a la vez, que es el punto:**
 
-**Por dashboard:** Authentication → Emails → Templates → pestañas "Magic Link" y
-"Confirm signup" → pegar el HTML.
+```bash
+SUPABASE_PAT=sbp_xxx node scripts/aplicar-email-templates.mjs
+```
+
+El PAT se crea en https://supabase.com/dashboard/account/tokens, se usa y **se
+revoca** (es de cuenta completa, no hay scope por proyecto). `--dry-run` valida
+sin enviar.
+
+### Por qué existe el script, y no un curl a mano
+
+**Editar el HTML aquí NO cambia nada en producción.** Son dos pasos, y el
+segundo se puede olvidar a medias — se olvidó:
+
+El 2026-07-23 los commits `8596e38` y `1695a05` pasaron las dos plantillas al
+branding v3. En Supabase se aplicó **una**: el Magic Link. La de bienvenida se
+quedó **47 días** con el diseño v2 (burdeos, Bodoni, caja rosa) mientras el
+archivo de este directorio estaba correcto. Se descubrió el 2026-09-08, cuando
+Roberto se registró desde cero y vio los dos correos uno al lado del otro.
+
+El script manda las dos en una sola llamada y se planta antes de enviar si a
+alguna le falta `{{ .Token }}` (el correo quedaría inservible para entrar) o si
+trae rastros del branding v2.
+
+**Por dashboard** (si prefieres a mano): Authentication → Emails → Templates →
+pestañas "Magic Link" y "Confirm signup" → pegar el HTML. **Las dos.**
 
 ## Subjects (asunto)
 
