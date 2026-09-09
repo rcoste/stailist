@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { registrarPwa } from "@/lib/pwa-actions";
 
 // Prompt de instalación de la PWA. Se monta una vez (en el layout) y:
 // 1. Registra el service worker.
@@ -32,6 +33,8 @@ function isIOS(): boolean {
 
 export function PwaInstall() {
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
+  // Qué momento abrió el prompt, para que la instalación herede su motivo.
+  const motivoRef = useRef<string | null>(null);
   const [mode, setMode] = useState<"hidden" | "android" | "ios">("hidden");
 
   useEffect(() => {
@@ -48,25 +51,36 @@ export function PwaInstall() {
         localStorage.setItem(SEEN_KEY, "1");
       } catch {}
       setMode("hidden");
+      // El único momento en que se sabe de verdad que la app quedó instalada:
+      // `appinstalled` lo dispara el navegador, no nosotros.
+      void registrarPwa("pwa_installed", motivoRef.current ?? undefined);
     };
-    const onFirstLike = () => {
+    const onMomento = (e: Event) => {
       let seen = false;
       try {
         seen = localStorage.getItem(SEEN_KEY) === "1";
       } catch {}
       if (seen || isStandalone()) return;
+      // El motivo dice CUÁL de los dos momentos disparó la oferta ("like" o
+      // "look"). Sin él no se puede saber cuál convierte, que es lo que este
+      // cambio existe para medir.
+      const motivo = (e as CustomEvent<string>).detail ?? "like";
       if (deferred.current) setMode("android");
       else if (isIOS()) setMode("ios");
-      // Sin evento capturado y no-iOS: el navegador no permite instalar → nada.
+      // Sin evento capturado y no-iOS: el navegador no permite instalar → nada,
+      // y tampoco se registra un "se mostró" que no se mostró.
+      else return;
+      motivoRef.current = motivo;
+      void registrarPwa("pwa_prompt_shown", motivo);
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onInstalled);
-    window.addEventListener("stailist:first-like", onFirstLike);
+    window.addEventListener("stailist:pwa-momento", onMomento);
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
-      window.removeEventListener("stailist:first-like", onFirstLike);
+      window.removeEventListener("stailist:pwa-momento", onMomento);
     };
   }, []);
 

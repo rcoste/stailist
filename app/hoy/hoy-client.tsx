@@ -18,7 +18,7 @@ import {
 } from "@/components/weather-picker";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { voteOutfit } from "@/lib/outfit-actions";
-import { notifyFirstLike } from "@/lib/pwa";
+import { notifyFirstLike, notifyLookListo } from "@/lib/pwa";
 import { Icon } from "@/components/icon";
 import { useTryon } from "@/lib/use-tryon";
 import { AddSheet, type AddSheetHandle } from "@/components/add-sheet";
@@ -259,6 +259,12 @@ export function HoyClient({
               alternos,
               paraFecha: lastInput.current?.plannedFor ?? null,
             });
+            // EL SEGUNDO MOMENTO PARA OFRECER LA PWA (2026-09-09). El primero
+            // —el 👍— casi no ocurre: 9 personas en toda la vida del producto
+            // de 24 que generaron un look. Aquí la persona acaba de recibir un
+            // look YA fuera del onboarding: tiene el valor en la mano y no está
+            // recién llegada. El prompt sigue saliendo una sola vez.
+            notifyLookListo();
             // El principal se pinta YA; los otros dos del trío siguen
             // cocinándose en background. Se re-pregunta un rato por ellos y las
             // pestañas aparecen cuando llegan — sin bloquear la primera
