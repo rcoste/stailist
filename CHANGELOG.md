@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.319.1] - 2026-09-09 — "inténtalo de nuevo" sobre un fallo que no se arregla repitiendo
+
+Salió de una auditoría de otra cosa. **Val intentó verse un look puesto CUATRO
+veces hoy** —12:19, 12:47, 12:49 y 12:50— y las cuatro fallaron con timeout a
+los **52 segundos exactos**. Casi tres minutos y medio esperando, cuatro
+pantallas de error, la única persona que usa la app a diario.
+
+**De quién fue.** El modelo de imagen de Google se cayó en esa ventana:
+comprobado con una llamada directa media hora después, respondió en 18s con la
+imagen correcta. No es nuestro código, y el sistema hizo lo suyo bien — 2
+intentos de 30s, presupuesto total de 52s, se rinde antes de que Vercel corte a
+los 60.
+
+**Lo que SÍ era nuestro:** el mensaje. Decía *"No pude crear tu look. Inténtalo
+de nuevo."* con un botón de reintentar. Sobre un fallo del proveedor que dura
+minutos, eso es pedirle que repita algo que todavía no puede funcionar — y ella
+obedeció tres veces más, 52 segundos cada una.
+
+El código `generacion` ya venía distinguido desde `lib/tryon.ts` (502, con el
+motivo real que costó trabajo capturar). Lo único que faltaba era decirlo:
+
+> Ahorita no puedo con tu imagen, y es de mi lado — no tuyo. Dame un par de
+> minutos y vuelve a intentar.
+
+Dice las dos cosas que importan: que espere, y que **no es culpa suya** — sin
+eso, la persona asume que algo hizo mal con sus fotos. El botón de reintentar se
+queda: si quiere insistir es su decisión, pero informada.
+
+`mensajeDeErrorTryon` sale como función pura y con test. Lo que blinda no es el
+texto sino la decisión: un fallo de ellos no se anuncia como uno que se arregla
+repitiendo. Y un test de que ningún mensaje diga "proveedor", "API", "timeout"
+ni "502" — la voz del producto no habla así.
+
 ## [0.2.319.0] - 2026-09-09 — la cápsula ya tiene juez, y el equivalente femenino del traje NO es atarlo
 
 Dos pedidos de Roberto: el juez que faltaba, y *"con lo de las mujeres, en vez
