@@ -2,6 +2,34 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.315.1] - 2026-09-08 — el correo de bienvenida llevaba 47 días con el diseño muerto
+
+Roberto, registrándose desde cero y viendo los dos correos juntos: *"está
+chistoso y mal que el OTP de bienvenida trae el diseño viejo"*. El de acceso
+llegaba en v3 (monocromo, caja negra); el de bienvenida en v2 — burdeos, Bodoni,
+caja rosa.
+
+**El repo estaba bien.** Los commits `8596e38` y `1695a05` (2026-07-23) pasaron
+las **dos** plantillas al branding v3. Lo que falló fue el paso manual de
+aplicarlas a Supabase: se aplicó una, el Magic Link. La de bienvenida se quedó
+47 días correcta en el archivo y vieja en producción, y sólo se ve si te
+registras de cero — cosa que nadie hacía.
+
+**El arreglo va a la causa, no al síntoma:** `scripts/aplicar-email-templates.mjs`
+manda las dos en una sola llamada, así "aplicar" vuelve a ser una acción
+atómica. Antes de enviar se planta si a alguna plantilla le falta `{{ .Token }}`
+(el correo quedaría inservible para entrar) o si trae rastros del branding v2.
+Tiene `--dry-run`.
+
+**De paso, la misma desincronía en el README** del directorio: su primer párrafo
+describía la paleta v2 —"burdeos #722F37, Bodoni Moda + Hanken Grotesk"— seis
+semanas después de que las plantillas dejaran de usarla. Corregido, con la nota
+de por qué.
+
+**Pendiente de Roberto** (necesita un token que sólo él puede crear): correr el
+script con un PAT de Supabase y revocarlo. Hasta entonces el correo de
+bienvenida sigue saliendo en v2 — el código de este release no lo cambia solo.
+
 ## [0.2.315.0] - 2026-09-08 — "afina tu estilo" se apaga para el release
 
 Roberto: *"es algo que he probado muy poco, o sea, casi nada. Eventualmente sí
