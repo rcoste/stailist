@@ -2,6 +2,45 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.317.0] - 2026-09-09 — la cápsula sí ponía un traje; el problema era cuál, y con qué lo daba por cubierto
+
+Roberto, sobre la cápsula de su cuenta de prueba: *"me llamó la atención que
+no me puso al menos un traje, o sea yo ya tengo uno marcado en el clóset… me
+deja pensando que no está tan bien cómo se saca el clóset cápsula"*.
+
+**Sí puso un traje. Negro.** "Saco de traje negro de lana fría" + "Pantalón de
+vestir negro" (hueco: saco de traje / pantalón de traje), con el porqué *"el
+traje que te pide un evento muy formal o de gala"*. Y el match lo dio por
+**cubierto** — el saco con su **"Saco de smoking negro"**, el pantalón con
+"Pantalón negro". Así que el traje no salía en "te falta", y sus dos trajes
+reales de ese clóset (marino y gris carbón) no cubrían nada. Dos defectos, uno
+por lado:
+
+**1. El match: un smoking no es un traje.** El guard de contexto de uso ya
+existía (baño, dormir, interior, gym) y la etiqueta no estaba. Un saco de
+smoking —solapa de satín, un botón, de noche y con moño— en una boda de día o
+en una oficina es un disfraz. Entra `etiqueta` como contexto propio (smoking,
+esmoquin, tuxedo, frac, jaquet, chaqué), en código y en la regla 4 del prompt:
+si el ideal es traje de calle y el clóset tiene uno marino o gris, ESE es el
+"parecido", nunca el smoking. Versión del match **m6 → m7**: los matches
+cacheados se recalculan en la próxima visita (una llamada por persona) — sin
+eso, el suyo seguiría diciendo "tienes".
+
+**2. El generador: el negro no es "el" traje.** El modelo razonó *formal → gala
+→ negro*, que es al revés de como se arma un guardarropa masculino. Práctica
+profesional, no gusto: el primer traje es **marino** (oficina, boda de día,
+cena — todo), el segundo **gris carbón**; el **negro es de etiqueta y luto**, de
+día se ve fúnebre y no sustituye al marino; y la gala la hace mejor el smoking,
+que es pieza aparte. Regla nueva `REGLA_SASTRERIA` en el prompt de la cápsula,
+acotada a HOMBRE a propósito — para mujer no se inventa una regla que no se
+midió (el sesgo masculino en mis reglas ya se pagó tres veces). No hay caché
+que invalidar: sólo cambia lo que se genere de aquí en adelante.
+
+**Lo que este release NO hace:** regenerar su cápsula ni su match. Lo primero es
+una llamada a Opus (~40 s) que reemplaza la lista y sus decisiones; lo segundo
+pasa solo al abrir esenciales. La verificación real es que él regenere y vea el
+traje marino en "ya lo tienes" y el negro fuera de la lista.
+
 ## [0.2.316.0] - 2026-09-09 — los tres del módulo de esenciales, y la raíz común de dos
 
 Roberto, revisando esenciales, reportó tres cosas. Dos resultaron ser el mismo
