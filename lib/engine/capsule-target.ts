@@ -94,6 +94,28 @@ export function limpiarEmpaquetados(items: CapsuleItem[]): CapsuleItem[] {
  * Hereda color, formalidad, temporada y prioridad; el `porque` del pantalón
  * se reescribe para que no repita el del saco palabra por palabra.
  */
+/**
+ * QUÉ TRAJE VA PRIMERO — y por qué el negro no es "el" traje.
+ *
+ * El caso (Roberto, 2026-09-09, cuenta de prueba): vida con "eventos seguido" y
+ * techo "formal". La cápsula puso UN traje… negro, "de gala", más dos blazers
+ * (marino y gris). Él tiene traje marino y traje gris carbón en ese clóset, y
+ * su reacción fue "no me puso ni un traje": los suyos no cubrían al negro, y
+ * el negro lo cubría (mal) su smoking. El modelo razonó "formal → gala →
+ * negro", que es al revés de como se arma un guardarropa masculino.
+ *
+ * Práctica profesional, no gusto: el primer traje de un hombre es MARINO
+ * (oficina, boda de día, cena, entrevista — todo), el segundo GRIS CARBÓN. El
+ * traje negro es de etiqueta y luto; de día y en oficina se ve fúnebre, y su
+ * papel de gala ya lo hace mejor el smoking. Pedirlo como único traje deja a
+ * la persona sin el traje que sí usa.
+ *
+ * Exportada para el test, como lineaAcentosCapsula: el prompt es un template
+ * literal y las reglas que importan se fijan por su texto.
+ */
+export const REGLA_SASTRERIA = `== SASTRERÍA (hombre) ==
+Si su vida pide UN traje (oficina con código, eventos, bodas), ese traje es AZUL MARINO: sirve de día y de noche, en oficina y en boda. Si pide DOS, el segundo es GRIS CARBÓN. El traje NEGRO es de etiqueta y luto: de día se ve fúnebre y NO sustituye al marino — sólo entra como TERCERO, y sólo si su vida tiene ceremonias de noche muy formales. Si además necesita gala, eso es un SMOKING (pieza aparte, de ceremonia), no un traje negro. Un blazer suelto (marino o gris) NO reemplaza al traje: es otra pieza, con otro uso. Cada traje va como saco + su pantalón, del mismo color y tela.`;
+
 export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
   const esTraje = (it: CapsuleItem) =>
     /(^|[^a-z])traje([^a-z]|$)/i.test(`${it.tipo} ${it.nombre}`) &&
@@ -268,6 +290,8 @@ No hay número fijo. Dimensiona la cápsula al ideal REAL de ESTA persona: típi
 
 == ESTRUCTURA POR CATEGORÍA ==
 Los tops son la categoría más grande y el principal multiplicador (se ven más, se lavan más, varían barato): apunta a ~2 tops por cada bottom. Reparte el resto en calzado, sacos/sastrería (si su vida tiene códigos formales o eventos), abrigos (solo si el clima lo pide) y accesorios. En mujer, los vestidos cuentan como multiplicador; en hombre, ese presupuesto va a más camisas/pantalones/sastrería.
+
+${REGLA_SASTRERIA}
 
 == PALETA (restricción dura, no sugerencia) ==
 - 2-4 NEUTROS como espina dorsal (la mayoría del clóset, ~70%) + 2-3 ACENTOS de su paleta (~30%).

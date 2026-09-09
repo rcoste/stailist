@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bloqueVida, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados } from "./capsule-target";
+import { bloqueVida, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados, REGLA_SASTRERIA } from "./capsule-target";
 import { ASSESSMENT_QUESTIONS, type AssessmentQuestion, type CapsuleItem } from "@/lib/capsule";
 
 // Lo que se blinda: QUÉ frase le llega al motor por cada respuesta del quiz.
@@ -166,5 +166,33 @@ describe("limpiarEmpaquetados — el falso positivo que cazó el dry run", () =>
       formalidad: "casual", temporada: "frio", prioridad: 1, porque: "p",
     } as CapsuleItem;
     expect(limpiarEmpaquetados([top])).toEqual([top]);
+  });
+});
+
+// LA REGLA DE SASTRERÍA (2026-09-09). El caso: vida con "eventos seguido" y
+// techo "formal", y la cápsula puso UN traje… negro, "de gala". Roberto tiene
+// traje marino y gris carbón en ese clóset y su reacción fue "no me puso ni un
+// traje". La práctica profesional es marino primero, gris carbón segundo; el
+// negro es etiqueta y luto, y la gala la hace el smoking. Se fija por texto
+// porque el prompt es un template literal (mismo patrón que lineaAcentosCapsula).
+describe("REGLA_SASTRERIA — qué traje va primero", () => {
+  it("el primer traje es marino y el segundo gris carbón", () => {
+    expect(REGLA_SASTRERIA).toMatch(/UN traje[^.]*AZUL MARINO/);
+    expect(REGLA_SASTRERIA).toMatch(/DOS[^.]*GRIS CARBÓN/);
+  });
+
+  it("el negro es etiqueta y luto, no sustituye al marino, y la gala es smoking", () => {
+    expect(REGLA_SASTRERIA).toMatch(/NEGRO es de etiqueta y luto/);
+    expect(REGLA_SASTRERIA).toMatch(/NO sustituye al marino/);
+    expect(REGLA_SASTRERIA).toMatch(/SMOKING/);
+  });
+
+  it("un blazer suelto no reemplaza al traje, y el traje son dos piezas del mismo color", () => {
+    expect(REGLA_SASTRERIA).toMatch(/blazer suelto[^.]*NO reemplaza al traje/);
+    expect(REGLA_SASTRERIA).toMatch(/saco \+ su pantalón/);
+  });
+
+  it("es de hombre y lo dice: no inventa una regla para mujer", () => {
+    expect(REGLA_SASTRERIA).toMatch(/^== SASTRERÍA \(hombre\) ==/);
   });
 });
