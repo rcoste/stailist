@@ -330,6 +330,13 @@ export type CapsuleTarget = {
   // Resumen del estilo de referencia con el que se generó (o null si ninguno).
   // Si el del perfil difiere → la cápsula quedó "outdated" y se ofrece regenerar.
   styleSig?: string | null;
+  /**
+   * LO QUE EL JUEZ ENCONTRÓ al generarla (ver lib/engine/capsule-revision).
+   * Vacío o ausente = sin huecos. Viaja CON la cápsula en vez de en un evento
+   * aparte para que se pueda leer el hallazgo junto a la lista que lo produjo:
+   * un hueco sin la lista al lado no se puede juzgar.
+   */
+  revision?: { regla: string; detalle: string }[];
 };
 
 // --- Capa 2: el match contra el clóset ------------------------------------

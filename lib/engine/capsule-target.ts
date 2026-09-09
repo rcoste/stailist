@@ -1,3 +1,4 @@
+import { revisarCapsula } from "@/lib/engine/capsule-revision";
 import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import {
@@ -520,9 +521,21 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));
+  // EL JUEZ, al final de la generación: deja por escrito lo que la lista NO
+  // cubre. No bloquea ni reintenta — llenar un hueco pide criterio de stylist y
+  // su paleta, no es determinista como partir un traje. Registrarlo es lo que
+  // convierte "se me hace que falta algo" en un dato que se puede mirar.
+  const vidaDeclarada = (inputs.answers ?? {}) as Record<string, string | undefined>;
+  const revision = revisarCapsula(items, {
+    gender: inputs.gender,
+    techo: vidaDeclarada.formalidad_techo ?? null,
+    clima: vidaDeclarada.clima ?? null,
+  });
+
   return {
     version: 2,
     items,
+    ...(revision.length ? { revision } : {}),
     firma: parsed.firma?.trim() || undefined,
     subline: parsed.subline?.trim() || undefined,
     pilares: parsed.pilares?.filter((p) => p.titulo && p.detalle) || undefined,
