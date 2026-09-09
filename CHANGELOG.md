@@ -2,6 +2,71 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.318.0] - 2026-09-09 — el traje de la cápsula es UNA cosa, no dos piezas que coinciden
+
+Roberto, después del arreglo del smoking: *"no se trata nada más de parchear el
+traje, sino de la lógica general para evitar omitir cosas así… una regla que
+teníamos era que, para los trajes, venían las dos cosas. Los blazers son los que
+pueden venir separados. Aunque sean dos cards, no sea como que este saco
+separado y este pantalón separado"*.
+
+**Su modelo mental del flujo era correcto**, y está escrito en el prompt: *"Partes
+de cero (no miras lo que ya tiene); después la app le dirá qué ya tiene y qué le
+falta"*. La lista SIEMPRE trae lo que tienes y lo que no; el cruce es al final.
+
+**Lo que se midió antes de tocar nada.** El primer número que saqué era falso
+—"4 de 7 cápsulas sin pantalón de traje"— porque la consulta buscaba
+`pantalon-de-traje` y el modelo escribe `pantalon-traje` o `pantalon-vestir`
+según le toca. Los pares SÍ estaban en las 5 cápsulas con traje. El problema
+real es peor y más callado:
+
+| Cápsula | Saco | Su pantalón |
+|---|---|---|
+| hugomora | "Saco de traje azul marino" | "Pantalón **de vestir** azul marino" |
+| r_ortega | "Saco de traje marino de lana" | "Pantalón **de vestir** marino" |
+| alberto | "Saco de traje negro de lana" | "Pantalón **de traje** negro de lana" |
+| playrobix | "Saco de traje negro" | "Pantalón **de vestir** negro" |
+
+Un traje era **dos piezas sueltas que coincidían en color por suerte**. El
+`hueco` decía "pantalón del traje" en una, "pantalón formal base" en otra y
+`null` en otra. Nada legible por máquina: nadie garantizaba que el pantalón
+existiera, la UI no podía agruparlos, y marcar "ya la tengo" en el saco dejaba
+el pantalón en "te falta" con la cobertura mintiendo.
+
+**Y estaban dispersas.** En la cápsula de r_ortega el saco marino salía en la
+posición 5 y su pantalón en la 11; el saco gris carbón en la 13 y su pantalón en
+la 3. Ver "pantalón de vestir marino" seis tarjetas después del saco, sin nada
+que los una, ES el "saco separado y pantalón separado".
+
+**Lo que entra:**
+- `CapsuleItem.conjunto` — el mismo lazo que el clóset tiene desde siempre
+  (`ClosetItem.conjunto`). La asimetría era el hueco de fondo.
+- `enlazarTrajes` — enlaza el saco de traje con su pantalón sastre del mismo
+  color, uno a uno (dos sacos marinos no se llevan el mismo pantalón), y **crea
+  el que falte**. `partirTrajes` sólo cubría el caso de que el modelo mandara el
+  traje como UNA pieza; el caso normal —saco y pantalón por separado— no tenía
+  nada.
+- **Juntas en la lista**: el pantalón toma la prioridad del saco + 0.5, así el
+  re-ranking los deja contiguos sin alterar el orden del resto.
+- **Las acciones van por par**: "ya la tengo" y "la quiero" tocan las dos
+  piezas. Secuencial y no en paralelo — las dos escriben el mismo
+  `capsule_overrides` y en paralelo la segunda pisaría a la primera.
+- El eyebrow de la tarjeta dice **"traje marino · 1 de 2"** en vez de "te falta
+  este básico".
+
+**Lo que NO se ata, a propósito:** los blazers y los pantalones de vestir sueltos.
+Un blazer marino con jeans es la pieza más rentable de un clóset masculino;
+atarlo a un pantalón sería quitarle justo lo que lo hace útil. El límite es el
+mismo del clóset: `conjunto` significa "se lleva como una pieza".
+
+**El hallazgo que sigue abierto, y es más grande que el traje:** el motor de
+outfits tiene juez, reglas de ejecución y reparador. La cápsula tiene un prompt
+y ahora tres guardias en código, las tres nacidas de bugs que Roberto vio a ojo.
+Nada verifica que la lista pueda vestir las ocasiones que la persona declaró.
+Y las 7 cápsulas de mujer tienen 1-2 sacos y **cero trajes** — la
+`REGLA_SASTRERIA` de v0.2.317.0 es sólo de hombre, acotada a propósito para no
+inventar. Las dos cosas quedan como trabajo con nombre, no como sorpresa.
+
 ## [0.2.317.0] - 2026-09-09 — la cápsula sí ponía un traje; el problema era cuál, y con qué lo daba por cubierto
 
 Roberto, sobre la cápsula de su cuenta de prueba: *"me llamó la atención que
