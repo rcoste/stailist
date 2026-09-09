@@ -2,6 +2,68 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.316.0] - 2026-09-09 — los tres del módulo de esenciales, y la raíz común de dos
+
+Roberto, revisando esenciales, reportó tres cosas. Dos resultaron ser el mismo
+problema de fondo: **el `tipo` de una pieza lo escribe un LLM en texto libre, y
+ese texto es a la vez la clave de la biblioteca de imágenes y el detalle que el
+prompt nunca recibió.**
+
+### 1. La explicación salía dos veces, y la segunda tapaba el resultado
+
+*"Una vez que ya se genera me aparece esa página… creo que sería mejor si te
+manda a la del por qué".*
+
+Son dos hints distintos —`intro:esenciales-previa` antes del cuestionario e
+`intro:esenciales` al ver la lista— y ninguno sabía del otro: explicación →
+preguntas → esperar a que se arme → **la misma explicación otra vez**. Ahora la
+previa cuenta como vista y se aterriza en la lista, con "por qué es tuya" arriba
+(esa pantalla ya existía). Quien llega sin haber pasado por el cuestionario
+sigue viendo la intro una vez.
+
+### 2. "No se auto generan las imágenes": sí se generan, pero no se encontraban
+
+El prewarm corre —de hecho corrió mientras él tomaba las capturas: 9 renders
+entre las 11:18:37 y las 11:21:36— y **37 de sus 40 piezas ya tenían imagen**.
+Lo que falló es la búsqueda: su calcetín esmeralda tenía render **desde el 26 de
+agosto** bajo `calcetines__esmeralda__hombre`, y esa corrida de la cápsula
+escribió el tipo `calcetin`. Clave distinta, imagen invisible, y la pantalla
+ofreciendo generar de nuevo algo ya pagado.
+
+Medido en las 316 imágenes de la biblioteca: **7 combos están duplicados** —
+`short`/`shorts`, `chino`/`chinos`, `botin`/`botines` (×2), `sandalia`/`sandalias`,
+`bailarina`/`balerina`, `aretes`/`arracadas`. Siete imágenes pagadas dos veces
+por una `s`.
+
+El tipo se canoniza antes de hacer la clave (`tipoCanonico`), y se BUSCA con la
+canónica **y** con la cruda: las 316 existentes se guardaron con el tipo tal
+cual, y canonizar a secas las habría dejado huérfanas para volverse a pagar.
+
+**Lo que NO se toca:** los modificadores que sí cambian la prenda —
+`sueter-grueso`, `camisa-lino`, `chamarra-piel`. Ahí la clave específica es una
+virtud, y es justo lo que pide el punto 3.
+
+### 3. El suéter con trenza: el modelo no se la inventó, nadie le dijo nada
+
+*"No estoy seguro si el AI se inventó cosas… si era originalmente un crew neck
+esmeralda o si estaba pensado con textura."*
+
+La imagen está guardada bajo `sueter-grueso__esmeralda__hombre`: esa corrida
+puso el detalle en el TIPO, y **el tipo llegaba a la API y ahí moría** — al
+prompt sólo iba el nombre ("Suéter de lana esmeralda profundo", que no dice
+grueso). Un suéter grueso se dibuja canónicamente con trenza.
+
+Roberto eligió la opción A: *"si viene en el nombre o en un campo adicional el
+detalle, va a ser más preciso el render y no va a inventar o tomar una imagen
+que no es por ahorrarse"*. Dos cambios:
+
+- **El tipo entra al prompt** cuando dice algo que el nombre calla.
+- **Sin patrón declarado se pide tejido liso explícito.** Es el mismo argumento
+  que el código ya tenía escrito para los estampados y que aquí faltaba: *"el
+  silencio no se lee como 'sin patrón', se lee como 'tú decides'"*. Una cápsula
+  quiere la versión más combinable de cada pieza, y ésa es la lisa. Si algún día
+  la pieza declara su tejido, el default se calla solo.
+
 ## [0.2.315.1] - 2026-09-08 — el correo de bienvenida llevaba 47 días con el diseño muerto
 
 Roberto, registrándose desde cero y viendo los dos correos juntos: *"está
