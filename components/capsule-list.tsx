@@ -213,13 +213,31 @@ export function CapsuleList({
       return n;
     });
 
-  const markOwned = (index: number, nombre: string) => {
+  // "La quiero" también va por par: media wishlist de traje no sirve de nada
+  // parada en una tienda. El toast lo pone el toggleWish del saco; las
+  // compañeras van sin repetirlo.
+  const toggleWishPar = (r: CapsuleRow) => {
+    toggleWish(r);
+    for (const o of companeras(r)) toggleWish(o);
+  };
+
+  const markOwned = (index: number, nombre: string, tambien: number[] = []) => {
     // setBusy FUERA del transition → update urgente: el spinner aparece al
     // instante. Dentro del transition era baja prioridad y se sentía muerto.
     setBusy(index, true);
+    for (const i of tambien) setBusy(i, true);
     startTransition(async () => {
       const res = await markFaltaOwned(index);
       setBusy(index, false);
+      // EL PAR VA JUNTO: un traje se tiene completo o no se tiene. Marcar sólo
+      // el saco dejaba el pantalón en "te falta" y la cobertura mintiendo.
+      // SECUENCIAL y no en paralelo: las dos escriben el MISMO
+      // capsule_overrides (leer-modificar-escribir) y en paralelo la segunda
+      // pisaría a la primera.
+      for (const i of tambien) {
+        await markFaltaOwned(i);
+        setBusy(i, false);
+      }
       // Ofrece subir la foto real (opcional) de la prenda recién agregada.
       if (res.ok && res.itemId) setLastOwned({ itemId: res.itemId, nombre });
     });
@@ -306,6 +324,44 @@ export function CapsuleList({
 
   // Los slots retirados ("quitar"/tope) salen de la lista y de los conteos.
   const rows = capsuleRows(target, match, optOverrides, swaps).filter((r) => !r.dismissed);
+
+  // EL TRAJE COMO UNIDAD (2026-09-09). Roberto: "cuando se generen y se marquen
+  // como que ya lo tengo o lo quiero, sea el par". El lazo vive en el dato
+  // (CapsuleItem.conjunto); aquí se traduce a las dos cosas que se ven: el
+  // badge que dice con quién va, y que las acciones toquen a las dos piezas.
+  const porConjunto = useMemo(() => {
+    const m = new Map<string, CapsuleRow[]>();
+    for (const r of rows) {
+      const cj = r.item.conjunto;
+      if (!cj) continue;
+      if (!m.has(cj)) m.set(cj, []);
+      m.get(cj)!.push(r);
+    }
+    // Un conjunto de UNA pieza no es conjunto: no se marca ni se agrupa.
+    for (const [k, v] of m) if (v.length < 2) m.delete(k);
+    return m;
+  }, [rows]);
+
+  /** Lo que la tarjeta necesita saber del traje: su nombre y qué pieza es.
+   *  null cuando la pieza va suelta (un blazer, un pantalón de vestir). */
+  const parDe = (r: CapsuleRow): { con: string; n: number; de: number } | null => {
+    const cj = r.item.conjunto;
+    const piezas = cj ? (porConjunto.get(cj) ?? []) : [];
+    if (piezas.length < 2) return null;
+    // "traje marino" — el id ya es `traje-<color>`, así que se lee solo.
+    return {
+      con: cj!.replace(/-/g, " "),
+      n: piezas.findIndex((o) => o.index === r.index) + 1,
+      de: piezas.length,
+    };
+  };
+
+  /** Las OTRAS piezas del mismo traje (vacío si la pieza va suelta). */
+  const companeras = (r: CapsuleRow): CapsuleRow[] =>
+    (r.item.conjunto ? (porConjunto.get(r.item.conjunto) ?? []) : []).filter(
+      (o) => o.index !== r.index
+    );
+
   const total = rows.length;
   const have = rows.filter((r) => r.covered).length;
   const pct = total ? Math.round((100 * have) / total) : 0;
@@ -544,9 +600,9 @@ export function CapsuleList({
                   onDecide={decide}
                   unlock={unlockOf(r)}
                   ownBusy={ownBusy.has(r.index)}
-                  onOwn={() => markOwned(r.index, r.item.nombre)}
+                  onOwn={() => markOwned(r.index, r.item.nombre, companeras(r).map((o) => o.index))}
                   wishSaved={wishSaved.has(faltaKey(r.item))}
-                  onToggleWish={() => toggleWish(r)}
+                  onToggleWish={() => toggleWishPar(r)}
                   swapBusy={swapBusy.has(r.index)}
                   swapErrored={swapError.has(r.index)}
                   onReject={(reason) => rejectItem(r.index, reason)}
@@ -564,9 +620,10 @@ export function CapsuleList({
                   onRendered={(url) => onRendered(faltaKey(r.item), url)}
                   unlock={unlockOf(r)}
                   ownBusy={ownBusy.has(r.index)}
-                  onOwn={() => markOwned(r.index, r.item.nombre)}
+                  onOwn={() => markOwned(r.index, r.item.nombre, companeras(r).map((o) => o.index))}
                   wishSaved={wishSaved.has(faltaKey(r.item))}
-                  onToggleWish={() => toggleWish(r)}
+                  onToggleWish={() => toggleWishPar(r)}
+                  par={parDe(r)}
                   swapBusy={swapBusy.has(r.index)}
                   swapErrored={swapError.has(r.index)}
                   onReject={(reason) => rejectItem(r.index, reason)}
@@ -618,9 +675,9 @@ export function CapsuleList({
                 onRendered={(url) => onRendered(faltaKey(r.item), url)}
                 onDecide={decidirYSeguir}
                 ownBusy={ownBusy.has(r.index)}
-                onOwn={() => markOwned(r.index, r.item.nombre)}
+                onOwn={() => markOwned(r.index, r.item.nombre, companeras(r).map((o) => o.index))}
                 wishSaved={wishSaved.has(faltaKey(r.item))}
-                onToggleWish={() => toggleWish(r)}
+                onToggleWish={() => toggleWishPar(r)}
                 unlock={unlockOf(r)}
                 swapBusy={swapBusy.has(r.index)}
                 swapErrored={swapError.has(r.index)}
@@ -918,6 +975,7 @@ function SumaCard({
   onQuitar,
   resolvedMotivo,
   onZoom,
+  par,
 }: {
   row: CapsuleRow;
   catalogImages: Record<string, string>;
@@ -941,6 +999,8 @@ function SumaCard({
   resolvedMotivo?: string | null;
   /** Con imagen ya lista, el toque la amplía (sin imagen sigue generándola). */
   onZoom?: (url: string) => void;
+  /** El traje al que pertenece: cómo se llama y qué pieza es de cuántas. */
+  par?: { con: string; n: number; de: number } | null;
 }) {
   const { item } = row;
   const swapped = row.swapCount > 0;
@@ -961,13 +1021,19 @@ function SumaCard({
   // El eyebrow es contexto de una línea — nunca la razón (esa es la serif).
   // Orden: lo que acaba de pasar (swap) > tu decisión (le da sentido al
   // "deshacer" de al lado) > lo que la prenda desbloquea > el caso base.
-  const eyebrow = swapped
-    ? "te la cambié"
-    : reject
-      ? (note ?? "preferiste la sugerida")
-      : unlock && unlock > 0
-        ? `+${unlock} ${unlock === 1 ? "look" : "looks"}`
-        : "te falta este básico";
+  // El PAR manda sobre todo lo demás cuando existe: es lo que cambia cómo se
+  // lee la pieza ("no es un saco suelto, es medio traje"), y sin eso ver dos
+  // tarjetas donde se espera un traje se siente un error — la misma razón por
+  // la que el clóset marca el lazo en el mosaico.
+  const eyebrow = par
+    ? `${par.con} · ${par.n} de ${par.de}`
+    : swapped
+      ? "te la cambié"
+      : reject
+        ? (note ?? "preferiste la sugerida")
+        : unlock && unlock > 0
+          ? `+${unlock} ${unlock === 1 ? "look" : "looks"}`
+          : "te falta este básico";
 
   // "deshacer" = revertir tu decisión entre tu prenda y la sugerida. NUNCA
   // "búscame otra" (corrección de Roberto, 2026-07-29: el primer corte lo usó
