@@ -25,7 +25,7 @@ import {
   loadClosetImageMap,
   loadClosetNameToId,
 } from "@/lib/capsule-data";
-import { catalogStorageKey, faltaKey } from "@/lib/capsule-images";
+import { catalogLookupKeys, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { regenerateCapsuleTarget } from "./actions";
 import { MatchRecalc } from "@/components/match-recalc";
@@ -58,21 +58,22 @@ export default async function CapsulaPage({
   // Biblioteca compartida: para los combos ideales (tipo+color+género) que ya tienen
   // un render generado, los mostramos al instante. Una sola query por todos los items.
   const gender = profile.gender;
+  // Se busca con la clave canónica Y con la cruda: las imágenes viejas quedaron
+  // guardadas con el tipo tal cual lo escribió el LLM, y pedir sólo la canónica
+  // las dejaría invisibles — que es justo lo que Roberto vio con su calcetín
+  // (render desde agosto bajo `calcetines__…`, la corrida decía `calcetin__…`).
   const skByItem = target.items.map((it) => ({
     fk: faltaKey(it),
-    sk: catalogStorageKey(it.tipo, it.colorFamilia, gender),
+    sks: catalogLookupKeys(it.tipo, it.colorFamilia, gender),
   }));
   const { data: crows } = await supabase
     .from("catalog_renders")
     .select("key, path")
-    .in(
-      "key",
-      skByItem.map((s) => s.sk)
-    );
+    .in("key", [...new Set(skByItem.flatMap((s) => s.sks))]);
   const pathBySk = new Map((crows ?? []).map((r) => [r.key as string, r.path as string]));
   const catalogImages: Record<string, string> = {};
-  for (const { fk, sk } of skByItem) {
-    const path = pathBySk.get(sk);
+  for (const { fk, sks } of skByItem) {
+    const path = sks.map((k) => pathBySk.get(k)).find(Boolean);
     if (path) catalogImages[fk] = catalogPublicUrl(supabase, path);
   }
 
@@ -199,8 +200,22 @@ export default async function CapsulaPage({
             15 prendas que no compraste se leen como una lista de compras que la
             app se sacó de la manga. La navegación se queda arriba — la intro
             informa, no secuestra. */}
+        {/* LA PREVIA CUENTA COMO VISTA (2026-09-09). Son dos hints distintos
+            —`intro:esenciales-previa` antes del cuestionario, `intro:esenciales`
+            al ver la lista— y ninguno sabía del otro, así que quien armaba su
+            cápsula veía la MISMA explicación dos veces: antes de las preguntas
+            y otra vez justo al terminar de generar. Roberto: "una vez que ya se
+            genera me aparece esa página… creo que sería mejor si te manda a la
+            del por qué". Y tiene razón por dónde cae: después de esperar a que
+            se arme tu lista, lo que quieres ver es POR QUÉ es tuya —que ya está
+            en esta pantalla— no la explicación que acabas de leer.
+            Quien llega a la lista sin haber pasado por el cuestionario (cápsula
+            heredada) sigue viendo la intro una vez. */}
         <EsencialesGate
-          vista={!!profile.hints_seen?.["intro:esenciales"]}
+          vista={
+            !!profile.hints_seen?.["intro:esenciales"] ||
+            !!profile.hints_seen?.["intro:esenciales-previa"]
+          }
           total={target.items.length}
         >
         {/* Sin `-mt-2`: ese margen negativo compensaba la fila de back que

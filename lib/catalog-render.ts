@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
-import { catalogStorageKey } from "@/lib/capsule-images";
+import { catalogLookupKeys, catalogStorageKey } from "@/lib/capsule-images";
 import { garmentRenderDesc } from "@/lib/garment-desc";
 
 const BUCKET = "catalog";
@@ -26,24 +26,32 @@ export async function ensureCatalogRender(
     visual?: string | null;
   }
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
+  // Se GUARDA con la clave canónica; se BUSCA con la canónica y la cruda, para
+  // no volver a pagar las 316 imágenes que se guardaron con el tipo tal cual
+  // venía del LLM (ver catalogLookupKeys).
   const key = catalogStorageKey(args.tipo, args.colorFamilia, args.gender);
-
   const { data: existing } = await supabase
     .from("catalog_renders")
-    .select("path")
-    .eq("key", key)
-    .maybeSingle();
-  if (existing?.path) return { ok: true, url: catalogPublicUrl(supabase, existing.path) };
+    .select("key, path")
+    .in("key", catalogLookupKeys(args.tipo, args.colorFamilia, args.gender));
+  const hit = (existing ?? []).find((r) => r.path);
+  if (hit?.path) return { ok: true, url: catalogPublicUrl(supabase, hit.path as string) };
 
   // Descripción rica para el generador: usa el detalle visual del estilista si
   // existe, o lo arma con los atributos estructurados de la prenda.
   const desc = garmentRenderDesc({
     nombre: args.nombre,
+    // El tipo lleva el detalle que el nombre calla ("sueter-grueso"), y hasta
+    // hoy se quedaba en la firma sin llegar al prompt.
+    tipo: args.tipo,
     color: args.colorFamilia,
     categoria: args.categoria,
     formalidad: args.formalidad,
     temporada: args.temporada,
     visual: args.visual,
+    // Una pieza ideal nunca trae patrón: pedir "liso" es lo que evita que el
+    // modelo elija la superficie por su cuenta.
+    sinPatronDeclarado: true,
   });
   const type = args.categoria === "calzado" ? "shoes" : "flat";
   const bytes = await generateArchetypeImage(desc, type, args.gender ?? undefined, "3:4");
