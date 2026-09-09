@@ -97,6 +97,36 @@ describe("contextoUso — lo que no es ropa de calle no cubre ropa de calle", ()
     expect(contextosCompatibles("Short de lino marino", "Traje de baño marino")).toBe(false);
   });
 
+  // ETIQUETA (2026-09-09). El caso de Roberto: la cápsula pidió "Saco de traje
+  // negro de lana fría" y el match lo dio por cubierto con su "Saco de smoking
+  // negro" — solapa de satín, de noche, con moño. No es un traje. Y con eso sus
+  // dos trajes reales (marino, gris carbón) no cubrían nada: "no me puso ni un
+  // traje".
+  it("el caso de Roberto: su smoking NO cubre el saco de traje negro de la cápsula", () => {
+    expect(contextoUso("Saco de smoking negro")).toBe("etiqueta");
+    expect(contextoUso("Saco de traje negro de lana fría saco-de-traje")).toBeNull();
+    expect(contextosCompatibles("Saco de traje negro de lana fría saco-de-traje", "Saco de smoking negro")).toBe(false);
+  });
+
+  it("el pantalón de smoking tampoco cubre un pantalón de vestir", () => {
+    expect(contextosCompatibles("Pantalón de vestir negro pantalon-vestir", "Pantalón de smoking negro")).toBe(false);
+  });
+
+  it("un smoking sí cubre un smoking, y el esmoquin/frac/jaquet son etiqueta", () => {
+    expect(contextosCompatibles("Saco de smoking negro", "Esmoquin negro de solapa de satín")).toBe(true);
+    expect(contextoUso("Frac negro")).toBe("etiqueta");
+    expect(contextoUso("Jaquet gris")).toBe("etiqueta");
+    expect(contextoUso("Chaqué gris oscuro")).toBe("etiqueta");
+  });
+
+  it("'chaqueta' NO es chaqué: una chaqueta de piel sigue siendo ropa de calle", () => {
+    expect(contextoUso("Chaqueta de piel negra")).toBeNull();
+  });
+
+  it("el traje marino de calle sigue cubriendo sastrería de calle (no se rompe lo que funcionaba)", () => {
+    expect(contextosCompatibles("Saco de traje negro de lana fría", "Saco de traje azul marino")).toBe(true);
+  });
+
   it("dos prendas de baño sí se cubren entre ellas", () => {
     expect(contextosCompatibles("Traje de baño marino", "Short de baño negro")).toBe(true);
     expect(contextoUso("Bikini de dos piezas")).toBe("bano");
@@ -135,7 +165,11 @@ describe("matchSignature — una sola firma para el match Y los looks", () => {
     // El banner "cambiaste tu clóset — actualiza tus looks" quedaba pegado porque
     // los looks se guardaban con closetSignature() y la página comparaba contra
     // matchSignature(): nunca coincidían. Si vuelven a divergir, esto lo caza.
-    expect(matchSignature(closet)).toBe(`m6|${closetSignature(closet)}`);
+    // El literal es a propósito: subir la versión recalcula el match de TODOS
+    // (una llamada a Opus por persona en su próxima visita), así que el bump
+    // tiene que ser deliberado y este test lo obliga a serlo. m7 (2026-09-09):
+    // la etiqueta dejó de cubrir sastrería de calle.
+    expect(matchSignature(closet)).toBe(`m7|${closetSignature(closet)}`);
     expect(matchSignature(closet)).not.toBe(closetSignature(closet));
   });
 

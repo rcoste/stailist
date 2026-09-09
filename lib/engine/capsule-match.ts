@@ -42,7 +42,14 @@ export function closetItemLine(c: ClosetItemLite): string {
 // looks de la cápsula usan ESTA MISMA firma (matchSignature), así que subirla
 // también los marca viejos — correcto (cambió qué tienes), pero no es gratis:
 // el usuario ve el aviso y decide regenerar. No la subas por gusto.
-const MATCH_PROMPT_VERSION = "m6";
+// m7 (2026-09-09): la etiqueta (smoking, esmoquin, frac, jaquet) es su propio
+// contexto de uso y NO cubre sastrería de calle. Le pasó a Roberto: la cápsula
+// pidió "Saco de traje negro" y el match lo dio por cubierto con su "Saco de
+// smoking negro" — así que sus dos trajes reales (marino, gris carbón) no
+// cubrían nada y la lista se leía como "no me puso un traje". Un smoking en una
+// boda de día o en una oficina es un disfraz. Subir la versión recalcula los
+// matches cacheados: sin esto el suyo seguiría diciendo "tienes".
+const MATCH_PROMPT_VERSION = "m7";
 
 // CONTEXTO DE USO: hay prendas que NO son ropa de calle y por eso jamás cubren
 // una pieza de calle, aunque compartan zona, color y hasta el tipo. Le pasó a
@@ -59,6 +66,12 @@ const MATCH_PROMPT_VERSION = "m6";
 // "ya lo tienes". Exportada para test.
 const CLASES_CONTEXTO: [string, RegExp][] = [
   ["bano", /traje de bano|banador|bikini|trikini|de bano|short(s)? de playa/],
+  // ETIQUETA: el smoking y sus parientes son ropa de ceremonia, no de calle. Un
+  // saco de smoking no es un saco de traje negro (solapa de satín, un botón, se
+  // lleva de noche y con moño), y el pantalón con galón tampoco es un pantalón
+  // de vestir. "de gala" NO entra a propósito: un "vestido de gala" ideal sí
+  // puede cubrirlo un vestido de noche real, y meterlo aquí lo bloquearía.
+  ["etiqueta", /smoking|esmoquin|tuxedo|\bfrac\b|jaquet|chaque\b|solapa de satin/],
   ["dormir", /pijama|piyama|camison|bata de bano|albornoz/],
   ["interior", /calzon|calzoncillo|boxer|brasier|brassiere|sosten|tanga|bralette/],
   ["gym", /gym|gimnasio|entrenamiento|running|para correr|de yoga|sports bra/],
@@ -221,7 +234,7 @@ REGLAS (en orden de prioridad):
 1. La CLASE de prenda manda por encima de TODO. "by" DEBE ser de la MISMA clase que la prenda ideal: un pantalón solo lo cubre otro pantalón; un zapato, otro zapato; un reloj, otro reloj. NUNCA cruces clases por color o material parecido — un chino NO lo cubren unos mocasines; un reloj NO lo cubren unos lentes; un cinturón NO lo cubre una cartera. Entre accesorios distingue la clase fina (reloj ≠ lentes ≠ cinturón ≠ bufanda ≠ gorra). Si NINGUNA prenda del clóset es de la misma clase, es "falta" con by="". Prohibido emparejar prendas de categorías distintas (top, bottom, calzado, abrigo, vestido, accesorio).
 2. Dentro de la misma clase, el TIPO FINO manda: si el rasgo que DEFINE a la prenda ideal (la botonadura de un henley o un polo, el cuello de un cuello tortuga, los botones de una camisa) no existe en la prenda real, es "falta" — una camiseta lisa NO cubre un henley ni un polo; un crewneck NO cubre un cuello tortuga. El USO también manda: una capa térmica/base de invierno no cubre una camiseta de diario (ni al revés). La manga (corta vs larga) baja a "parecido" si TODO lo demás coincide; sumada a otro rasgo distinto, es "falta".
 3. LARGO DE PIERNA: en pantalones, el largo NO es un matiz como la manga — es otra prenda. Un pantalón largo NUNCA cubre un short o una bermuda, ni al revés, aunque compartan tela y color; y una falda no cubre un pantalón. Si el ideal pide un short y solo tienes pantalones largos, es "falta".
-4. CONTEXTO DE USO: lo que no es ropa de calle NUNCA cubre ropa de calle, ni al revés, aunque sea el mismo tipo y color. Un short de baño NO cubre un short de lino; una playera de gym NO cubre una camiseta de diario; una pijama, un bikini o la ropa interior no cubren nada de calle. Y si la prenda ideal ES de baño (traje de baño), solo la cubre otra prenda de baño.
+4. CONTEXTO DE USO: lo que no es ropa de calle NUNCA cubre ropa de calle, ni al revés, aunque sea el mismo tipo y color. La ETIQUETA es contexto aparte: un saco de smoking NO cubre un saco de traje (ni negro), un pantalón de smoking NO cubre un pantalón de vestir — son de ceremonia, con solapa de satín y galón, y se llevan con moño; si el ideal es un traje de calle y el clóset tiene un traje marino o gris, ESE es el "parecido", nunca el smoking. Un short de baño NO cubre un short de lino; una playera de gym NO cubre una camiseta de diario; una pijama, un bikini o la ropa interior no cubren nada de calle. Y si la prenda ideal ES de baño (traje de baño), solo la cubre otra prenda de baño.
 5. Solo cuando YA es la misma clase, el COLOR desempata: neutros oscuros (negro, marino, gris, carbón, azul oscuro) son intercambiables — mismo neutro → "tienes", neutro distinto → "parecido". Colores statement o cálidos específicos (camel, oliva, vino, mostaza, etc.) sí importan: si el ideal pide uno y no lo tienes en esa clase, es "falta".
 6. Material, temporada, corte y estampado AFINAN entre "tienes" y "parecido" DENTRO de la misma clase y color — nunca crean un "falta". Si la prenda real difiere del ideal en peso/uso de forma que importe (el ideal pide un suéter fino de verano y el tuyo es de lana gruesa de invierno; o el ideal es liso y el tuyo tiene un estampado protagonista), baja de "tienes" a "parecido". Si coinciden o la diferencia es menor, déjalo en "tienes". Ante la duda, "tienes": estos atributos refinan, no castigan.
 
