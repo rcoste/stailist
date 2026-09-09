@@ -11,6 +11,14 @@
 export type GarmentAttrs = {
   nombre: string;
   color?: string | null;
+  /** El tipo de la pieza tal como lo escribe la cápsula ("sueter-grueso"). Suele
+   *  llevar el detalle que el nombre no dice, y hasta 2026-09-09 no llegaba al
+   *  prompt. */
+  tipo?: string | null;
+  /** La prenda NO declara patrón ni tejido (las piezas ideales de la cápsula no
+   *  los tienen). Pide "liso" explícito: el silencio se lee como "tú decides" y
+   *  el modelo inventa la superficie. */
+  sinPatronDeclarado?: boolean;
   categoria?: string | null; // top | saco | bottom | calzado | abrigo | vestido | accesorio
   formalidad?: string | null;
   temporada?: string | null;
@@ -59,6 +67,17 @@ export function garmentDescPlain(g: GarmentAttrs): string {
 
   // Capa 1: arma con los atributos estructurados que la prenda ya carga.
   const parts: string[] = [g.nombre.trim()];
+  // EL TIPO, cuando dice algo que el nombre no dice. Las piezas de la cápsula
+  // llevan el detalle en el tipo ("sueter-grueso", "camisa-lino") y ese campo
+  // llegaba hasta la API y ahí se quedaba: al prompt sólo iba el nombre.
+  // Resultado real (Roberto, 2026-09-09): la pieza "Suéter de lana esmeralda
+  // profundo" con tipo `sueter-grueso` se dibujó con trenza, y él no sabía si
+  // el modelo la había inventado. No la inventó — nadie le dijo nada, y el
+  // silencio no se lee como "liso" (ver el patrón, tres líneas abajo).
+  if (g.tipo) {
+    const t = g.tipo.replace(/-/g, " ").trim();
+    if (t && !g.nombre.toLowerCase().includes(t.toLowerCase())) parts.push(`(${t})`);
+  }
   if (g.color && !g.nombre.toLowerCase().includes(g.color.toLowerCase())) {
     parts.push(`en color ${g.color}`);
   }
@@ -71,6 +90,14 @@ export function garmentDescPlain(g: GarmentAttrs): string {
   // como "tú decides".
   if (g.patron) {
     ctx.push(g.patron === "liso" ? "liso, SIN estampado ni cuadros ni rayas" : `patrón ${g.patron}`);
+  } else if (g.sinPatronDeclarado) {
+    // MISMO ARGUMENTO QUE ARRIBA, aplicado al tejido. Las piezas ideales de la
+    // cápsula no tienen `patron` —el generador no lo escribe— así que el modelo
+    // decidía la superficie por su cuenta: trenzas, canalés, texturas que nadie
+    // pidió y que cambian la prenda. Una cápsula quiere la versión MÁS
+    // combinable de cada pieza, y ésa es la lisa. Si algún día la pieza declara
+    // su tejido, este default se calla solo (es el `else`).
+    ctx.push("tejido liso y uniforme, SIN trenzas ni canalé ni estampado");
   }
   if (g.material) ctx.push(`en ${g.material}`);
   if (g.largo) ctx.push(String(g.largo));

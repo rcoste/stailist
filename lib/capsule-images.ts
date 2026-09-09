@@ -30,6 +30,52 @@ export function faltaKey(item: { tipo: string; colorFamilia: string }): string {
   return `${slug(item.tipo)}|${slug(item.colorFamilia)}`;
 }
 
+// SINÓNIMOS Y PLURALES DEL TIPO, porque el tipo ES la clave de la biblioteca.
+//
+// El `tipo` de una pieza de la cápsula lo escribe un LLM en texto libre, y la
+// biblioteca de imágenes se indexa por él. Dos corridas que dicen lo mismo con
+// otra palabra producen dos entradas — y la imagen ya pagada no se encuentra.
+// Medido en la tabla el 2026-09-09: `calcetin`/`calcetines`, `chino`/`chinos`,
+// `botin`/`botines`, `bolsa`/`bolso`, `bailarina`/`balerina` conviven como
+// claves distintas. Roberto lo vio como "no se auto generan las imágenes": su
+// calcetín esmeralda tenía render desde agosto bajo `calcetines__…`, y esa
+// corrida dijo `calcetin__…`, así que la pantalla le ofreció generarla de nuevo.
+//
+// Sólo se normaliza lo que es LA MISMA PRENDA con otro nombre. Los modificadores
+// que cambian lo que ves —`sueter-grueso`, `camisa-lino`, `chamarra-piel`— se
+// respetan: ahí la clave más específica es una virtud, no ruido (ver el punto 3
+// del mismo día, la trenza del suéter).
+const TIPO_CANONICO: Record<string, string> = {
+  calcetines: "calcetin",
+  chinos: "chino",
+  botines: "botin",
+  botas: "bota",
+  bolso: "bolsa",
+  balerina: "bailarina",
+  aretes: "arete",
+  arracadas: "arete",
+  tenis: "tenis", // ya es plural invariable — explícito para que nadie lo "arregle"
+  jeans: "jean",
+  shorts: "short",
+  bermudas: "bermuda",
+  mocasines: "mocasin",
+  sandalias: "sandalia",
+  guantes: "guante",
+  lentes: "lentes",
+  gafas: "lentes",
+};
+
+/** El tipo, en su forma canónica: plurales y sinónimos a UNA sola palabra. */
+export function tipoCanonico(tipo: string): string {
+  const base = slug(tipo)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  // Sólo la primera palabra se canoniza; los modificadores se conservan tal
+  // cual ("calcetines-lana" → "calcetin-lana").
+  const [cabeza, ...resto] = base.split("-");
+  return [TIPO_CANONICO[cabeza] ?? cabeza, ...resto].join("-");
+}
+
 // Clave/segmento de ruta para la biblioteca compartida (storage + tabla registro).
 // Incluye género (un blazer de hombre ≠ uno de mujer) y es segura para path
 // (solo a-z0-9 y guiones).
@@ -42,7 +88,29 @@ export function catalogStorageKey(
     slug(s)
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-  return `${safe(tipo)}__${safe(colorFamilia)}__${gender ?? "u"}`;
+  return `${tipoCanonico(tipo)}__${safe(colorFamilia)}__${gender ?? "u"}`;
+}
+
+/**
+ * Las claves con las que BUSCAR una imagen ya hecha: la canónica y la cruda.
+ *
+ * Las 316 imágenes de la biblioteca se guardaron con el tipo tal cual venía, así
+ * que canonizar a secas dejaría huérfanas las que están bajo la forma vieja
+ * (`calcetines__esmeralda__hombre`) y se volverían a pagar. Se busca con las
+ * dos; lo que se GUARDA de aquí en adelante siempre es la canónica.
+ */
+export function catalogLookupKeys(
+  tipo: string,
+  colorFamilia: string,
+  gender: string | null
+): string[] {
+  const safe = (s: string) =>
+    slug(s)
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  const cruda = `${safe(tipo)}__${safe(colorFamilia)}__${gender ?? "u"}`;
+  const canonica = catalogStorageKey(tipo, colorFamilia, gender);
+  return canonica === cruda ? [canonica] : [canonica, cruda];
 }
 
 // Familia de color (texto de la cápsula ideal, p. ej. "marino", "neutro claro")

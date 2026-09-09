@@ -167,3 +167,69 @@ describe("el prompt del flat-lay prohíbe lo que de verdad se colaba", () => {
     expect(buildImagePrompt("Camisa blanca", "flat")).not.toContain("slightly styled");
   });
 });
+
+// EL TIPO Y EL TEJIDO, al prompt del render (2026-09-09). Roberto, viendo la
+// imagen de una pieza de su cápsula: "me generó este suéter y no estoy seguro
+// si el AI se inventó cosas... si era originalmente un crew neck esmeralda o
+// si estaba pensado con textura". No se lo inventó: la pieza traía el detalle
+// en el TIPO (`sueter-grueso`) y ese campo llegaba a la API y ahí moría — al
+// prompt sólo iba el nombre. Y sin patrón declarado, el modelo elegía la
+// superficie por su cuenta, que es el mismo error que el comentario del patrón
+// ya documentaba: "el silencio no se lee como 'sin patrón', se lee como 'tú
+// decides'".
+describe("el tipo y el tejido llegan al prompt del render", () => {
+  it("el tipo entra cuando dice algo que el nombre calla", () => {
+    const d = garmentRenderDesc({
+      nombre: "Suéter de lana esmeralda profundo",
+      tipo: "sueter-grueso",
+      color: "esmeralda",
+      categoria: "top",
+    });
+    expect(d).toContain("sueter grueso");
+  });
+
+  it("el tipo NO se repite si el nombre ya lo dice", () => {
+    const d = garmentRenderDesc({
+      nombre: "Camisa de lino blanca",
+      tipo: "camisa",
+      color: "blanco",
+      categoria: "top",
+    });
+    expect(d.match(/camisa/gi)?.length).toBe(1);
+  });
+
+  it("sin patrón declarado pide tejido liso — es lo que evita la trenza", () => {
+    const d = garmentRenderDesc({
+      nombre: "Suéter de lana esmeralda profundo",
+      tipo: "sueter",
+      color: "esmeralda",
+      categoria: "top",
+      sinPatronDeclarado: true,
+    });
+    expect(d).toMatch(/liso/i);
+    expect(d).toMatch(/SIN trenzas/);
+  });
+
+  it("con patrón declarado manda el patrón, no el default", () => {
+    const d = garmentRenderDesc({
+      nombre: "Camisa a cuadros",
+      color: "azul",
+      categoria: "top",
+      patron: "cuadros",
+      sinPatronDeclarado: true,
+    });
+    expect(d).toContain("patrón cuadros");
+    expect(d).not.toMatch(/SIN trenzas/);
+  });
+
+  it("la descripción del estilista (capa 2) sigue mandando sobre todo lo demás", () => {
+    const d = garmentRenderDesc({
+      nombre: "Suéter",
+      tipo: "sueter-grueso",
+      visual: "suéter de punto trenzado color esmeralda profundo",
+      sinPatronDeclarado: true,
+    });
+    expect(d).toContain("trenzado");
+    expect(d).not.toMatch(/SIN trenzas/);
+  });
+});
