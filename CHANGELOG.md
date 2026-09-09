@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.320.0] - 2026-09-09 — la PWA se ofrecía a 9 personas de 24, y nadie lo sabía
+
+Salió de la auditoría del patrón "construido y olvidado". El hueco parecía de
+medición —`pwa_prompt_shown` y `pwa_installed` llevan desde siempre en el CHECK
+de `events`, el admin tiene la etiqueta "instaló la app" esperándolos, y hay
+CERO filas en toda la vida del producto— pero al mirar el código el problema
+resultó ser de producto.
+
+**El prompt de instalar vive detrás del primer 👍.** Como teoría está bien: el
+pico emocional. El problema es que el 👍 casi no ocurre — **9 personas** han
+dado al menos uno, de 24 que llegaron a generar un look. A las otras **15 nunca
+se les ofreció instalar la app**, y como no había instrumentación, nadie podía
+verlo.
+
+**Se AÑADE un segundo momento, no se quita el primero:** cuando el look queda
+listo en `/hoy`, o sea ya fuera del onboarding. No se dispara en el wow a
+propósito — ahí la persona acaba de llegar y todavía no sabe si la app le sirve;
+pedirle instalar antes del valor es pedirle un compromiso que no tiene por qué
+dar. El prompt sigue apareciendo UNA sola vez (flag en localStorage), así que
+quien vota 👍 primero lo ve en su pico y no lo ve dos veces.
+
+**Y ahora deja huella.** `pwa_prompt_shown` al mostrarse y `pwa_installed`
+cuando el navegador confirma la instalación (evento `appinstalled`, que lo
+dispara él, no nosotros). Los dos llevan `motivo` — "like" o "look" — porque sin
+eso no se puede saber cuál de los dos momentos convierte, que es justo lo que
+este cambio existe para medir.
+
+Detalle que importa: si el navegador no permite instalar (ni capturó
+`beforeinstallprompt` ni es iOS), no se registra un "se mostró" que no se
+mostró. Un evento que miente es peor que ninguno.
+
 ## [0.2.319.1] - 2026-09-09 — "inténtalo de nuevo" sobre un fallo que no se arregla repitiendo
 
 Salió de una auditoría de otra cosa. **Val intentó verse un look puesto CUATRO
