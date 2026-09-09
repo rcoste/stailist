@@ -287,6 +287,28 @@ export type CapsuleItem = {
   // largo, corte, detalles). NO se muestra en la UI; solo alimenta el generador.
   // Opcional: las cápsulas viejas no la traen → el render cae a los atributos.
   visual?: string | null;
+  /**
+   * EL LAZO DEL TRAJE: mismo id en el saco y en su pantalón.
+   *
+   * Existe en el clóset desde siempre (`ClosetItem.conjunto`) y en la cápsula
+   * NO existía — asimetría que Roberto cazó el 2026-09-09: "una regla que
+   * teníamos era que, para los trajes, venían las dos cosas… no sea como que
+   * este saco separado y este pantalón separado".
+   *
+   * Sin el lazo, un traje en la cápsula era DOS piezas sueltas que coincidían
+   * en color por suerte: nadie garantizaba que el pantalón existiera, la UI no
+   * podía agruparlas y marcar "ya la tengo" en el saco no hacía nada con el
+   * pantalón. Medido sobre las 5 cápsulas con traje: los pares estaban, pero el
+   * pantalón se llamaba "de traje" en unas y "de vestir" en otras, y el `hueco`
+   * oscilaba entre "pantalón del traje", "pantalón formal base" y null. No hay
+   * forma de leer el dato y saber si son un traje.
+   *
+   * Se llama `conjunto` y no `traje` por lo mismo que en el clóset: el
+   * mecanismo sirve igual para un pants set. Un traje es un conjunto, no al
+   * revés. Los blazers y los pantalones de vestir van SUELTOS a propósito —
+   * ésa es justo la pieza que se lleva con jeans.
+   */
+  conjunto?: string | null;
 };
 
 // Un "pilar" del por qué: una razón corta con ícono (paleta, vida, cuerpo, metal).

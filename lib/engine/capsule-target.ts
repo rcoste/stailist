@@ -140,6 +140,9 @@ export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
       continue;
     }
     const color = it.colorFamilia;
+    // El lazo va en las DOS mitades: sin él, partir el traje sigue dejando dos
+    // piezas sueltas que sólo coinciden en color (ver CapsuleItem.conjunto).
+    const cj = idDeConjunto(color);
     salida.push({
       ...it,
       // El "(saco)" que a veces trae el nombre sobra en cuanto la pieza YA se
@@ -147,7 +150,10 @@ export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
       nombre: it.nombre.replace(/^traje/i, "Saco de traje").replace(/\s*\(saco\)\s*$/i, ""),
       tipo: "saco-de-traje",
       hueco: "saco de traje",
+      conjunto: cj,
     });
+    // Si el pantalón ya venía por separado, `enlazarTrajes` le pone el lazo:
+    // aquí sólo hay que no duplicarlo.
     if (yaHayPantalon(color)) continue;
     salida.push({
       ...it,
@@ -156,9 +162,96 @@ export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
       category: "bottom",
       hueco: "pantalón de traje",
       porque: `Es la otra mitad del traje ${color}: juntos son tu traje completo, y suelto te sirve de pantalón de vestir.`,
+      conjunto: cj,
     });
   }
   return salida;
+}
+
+/** Id estable del conjunto, derivado del color: el traje marino es UNO. */
+const idDeConjunto = (color: string) =>
+  `traje-${color.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}`;
+
+/** ¿Esta pieza es el SACO de un traje? (no un blazer, no un saco suelto) */
+const esSacoDeTraje = (it: CapsuleItem) =>
+  it.category === "saco" &&
+  /traje|sastre/i.test(`${it.tipo} ${it.nombre} ${it.hueco ?? ""}`) &&
+  !/blazer|desestructurad|sport/i.test(`${it.tipo} ${it.nombre}`);
+
+/** ¿Y ésta es un pantalón que puede ser su mitad de abajo? */
+const esPantalonSastre = (it: CapsuleItem) =>
+  it.category === "bottom" &&
+  /pantal[oó]n/i.test(it.nombre) &&
+  /traje|vestir|sastre/i.test(`${it.tipo} ${it.nombre} ${it.hueco ?? ""}`);
+
+/**
+ * EL TRAJE COMO UNIDAD: enlaza el saco con su pantalón, y crea el que falte.
+ *
+ * `partirTrajes` sólo cubría UN caso — que el modelo mandara "Traje marino"
+ * como una pieza. El caso NORMAL es que mande el saco y el pantalón por
+ * separado, y ahí no había nada: quedaban dos piezas que coincidían en color
+ * por suerte. Medido en las 5 cápsulas con traje (2026-09-09): los pares
+ * estaban, pero el pantalón se llamaba "de vestir" en tres de ellas y "de
+ * traje" en una, con `hueco` distinto en cada una. Nada legible por máquina.
+ *
+ * QUÉ HACE, en orden:
+ * 1. Por cada saco de traje sin lazo, busca un pantalón sastre del MISMO color
+ *    que tampoco lo tenga y los enlaza. Uno a uno: dos sacos marinos no se
+ *    llevan el mismo pantalón.
+ * 2. Si no encontró pantalón, lo CREA — heredando color, formalidad, temporada
+ *    y prioridad del saco, igual que hace `partirTrajes`.
+ *
+ * LO QUE NO TOCA, a propósito: los blazers y los pantalones de vestir que no
+ * son de nadie se quedan sueltos. Un blazer marino con jeans es la pieza más
+ * rentable de un clóset masculino; atarlo a un pantalón sería quitarle justo
+ * lo que lo hace útil. El límite es el mismo del clóset: `conjunto` significa
+ * "se vende y se lleva como una pieza".
+ */
+export function enlazarTrajes(items: CapsuleItem[]): CapsuleItem[] {
+  const out = items.map((it) => ({ ...it }));
+  const tomados = new Set<number>();
+  const extra: CapsuleItem[] = [];
+
+  for (const saco of out) {
+    if (!esSacoDeTraje(saco) || saco.conjunto) continue;
+    const cj = idDeConjunto(saco.colorFamilia);
+    saco.conjunto = cj;
+    // Su pantalón: mismo color, sastre, todavía sin dueño.
+    const i = out.findIndex(
+      (p, idx) =>
+        !tomados.has(idx) &&
+        !p.conjunto &&
+        esPantalonSastre(p) &&
+        p.colorFamilia.toLowerCase() === saco.colorFamilia.toLowerCase()
+    );
+    if (i >= 0) {
+      tomados.add(i);
+      out[i].conjunto = cj;
+      // JUNTAS EN LA LISTA. Medido en la cápsula de r_ortega (2026-09-09): el
+      // saco marino salía en la posición 5 y su pantalón en la 11; el saco gris
+      // carbón en la 13 y su pantalón en la 3. Ver "pantalón de vestir marino"
+      // seis tarjetas después del saco, sin nada que los una, es exactamente el
+      // "saco separado y pantalón separado" que Roberto no quiere. Medio punto
+      // arriba del saco: el re-ranking (1..n por prioridad, estable) los deja
+      // contiguos sin alterar el orden que el modelo eligió para lo demás.
+      out[i].prioridad = saco.prioridad + 0.5;
+      continue;
+    }
+    // No existe: se crea. Un saco de traje sin pantalón no es un traje, y el
+    // motor nunca podría armar el look formal que la cápsula promete.
+    extra.push({
+      ...saco,
+      nombre: `Pantalón de traje ${saco.colorFamilia}`,
+      tipo: "pantalon-de-traje",
+      category: "bottom",
+      hueco: "pantalón de traje",
+      porque: `Es la otra mitad del traje ${saco.colorFamilia}: juntos son tu traje completo, y suelto te sirve de pantalón de vestir.`,
+      conjunto: cj,
+      visual: null,
+      prioridad: saco.prioridad + 0.5,
+    });
+  }
+  return [...out, ...extra];
 }
 
 /**
@@ -423,7 +516,7 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
   // Re-ranking limpio 1..n por la prioridad que sugirió el modelo (estable).
   // Los trajes se parten ANTES del re-ranking, para que el pantalón herede su
   // sitio en la lista junto al saco en vez de caer al final.
-  const items = partirTrajes(limpiarEmpaquetados(parsed.items))
+  const items = enlazarTrajes(partirTrajes(limpiarEmpaquetados(parsed.items)))
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
     .map((it, i) => ({ ...it, prioridad: i + 1 }));

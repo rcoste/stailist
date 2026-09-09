@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bloqueVida, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados, REGLA_SASTRERIA } from "./capsule-target";
+import { bloqueVida, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados, enlazarTrajes, REGLA_SASTRERIA } from "./capsule-target";
 import { ASSESSMENT_QUESTIONS, type AssessmentQuestion, type CapsuleItem } from "@/lib/capsule";
 
 // Lo que se blinda: QUÉ frase le llega al motor por cada respuesta del quiz.
@@ -194,5 +194,117 @@ describe("REGLA_SASTRERIA — qué traje va primero", () => {
 
   it("es de hombre y lo dice: no inventa una regla para mujer", () => {
     expect(REGLA_SASTRERIA).toMatch(/^== SASTRERÍA \(hombre\) ==/);
+  });
+});
+
+// EL TRAJE COMO UNIDAD (2026-09-09). Roberto: "una regla que teníamos era que,
+// para los trajes, venían las dos cosas… no sea como que este saco separado y
+// este pantalón separado". Los nombres son los REALES de las cápsulas en
+// producción: el pantalón se llama "de vestir" en tres de las cinco y "de
+// traje" en una, con `hueco` distinto en cada una — por eso el enlace no puede
+// depender del nombre exacto.
+const pieza = (p: Partial<Parameters<typeof enlazarTrajes>[0][number]>) => ({
+  nombre: "x", tipo: "x", category: "top" as const, colorFamilia: "negro",
+  formalidad: "casual" as const, temporada: "todo-el-año", prioridad: 1, porque: "x",
+  ...p,
+});
+
+describe("enlazarTrajes — el saco y su pantalón son UNA cosa", () => {
+  it("el caso de hugomora: saco de traje + pantalón DE VESTIR del mismo color quedan enlazados", () => {
+    const r = enlazarTrajes([
+      pieza({ nombre: "Saco de traje azul marino", tipo: "saco-traje", category: "saco", colorFamilia: "marino" }),
+      pieza({ nombre: "Pantalón de vestir azul marino", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "marino" }),
+    ]);
+    expect(r).toHaveLength(2);
+    expect(r[0].conjunto).toBe("traje-marino");
+    expect(r[1].conjunto).toBe("traje-marino");
+  });
+
+  it("saco de traje SIN pantalón: se crea la mitad que falta, con el lazo", () => {
+    const r = enlazarTrajes([
+      pieza({ nombre: "Saco de traje gris carbón", tipo: "saco-de-traje", category: "saco", colorFamilia: "gris carbón", prioridad: 7 }),
+    ]);
+    expect(r).toHaveLength(2);
+    expect(r[1].nombre).toBe("Pantalón de traje gris carbón");
+    expect(r[1].category).toBe("bottom");
+    expect(r[1].conjunto).toBe(r[0].conjunto);
+    // MEDIO punto arriba del saco, no el mismo: el re-ranking (1..n por
+    // prioridad, estable) los deja contiguos en la lista. Con la misma
+    // prioridad el orden dependería de dónde cayó cada uno, y medido en la
+    // cápsula de r_ortega el saco salía en la posición 5 y su pantalón en la 11.
+    expect(r[1].prioridad).toBe(7.5);
+  });
+
+  it("el caso de r_ortega: DOS trajes no se llevan el mismo pantalón", () => {
+    const r = enlazarTrajes([
+      pieza({ nombre: "Saco de traje gris carbón de lana", tipo: "saco-de-traje", category: "saco", colorFamilia: "gris carbón" }),
+      pieza({ nombre: "Saco de traje marino de lana", tipo: "saco-de-traje", category: "saco", colorFamilia: "marino" }),
+      pieza({ nombre: "Pantalón de vestir gris carbón", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "gris carbón" }),
+      pieza({ nombre: "Pantalón de vestir marino", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "marino" }),
+      pieza({ nombre: "Pantalón de vestir negro", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "negro" }),
+    ]);
+    expect(r).toHaveLength(5); // no se creó ninguno de más
+    const porNombre = Object.fromEntries(r.map((x) => [x.nombre, x.conjunto ?? null]));
+    expect(porNombre["Saco de traje gris carbón de lana"]).toBe("traje-gris-carbon");
+    expect(porNombre["Pantalón de vestir gris carbón"]).toBe("traje-gris-carbon");
+    expect(porNombre["Saco de traje marino de lana"]).toBe("traje-marino");
+    expect(porNombre["Pantalón de vestir marino"]).toBe("traje-marino");
+    // El tercer pantalón no es de nadie: se queda suelto.
+    expect(porNombre["Pantalón de vestir negro"]).toBeNull();
+  });
+
+  it("un BLAZER no ata a nadie: es la pieza que se lleva con jeans", () => {
+    const r = enlazarTrajes([
+      pieza({ nombre: "Blazer de lana azul marino", tipo: "blazer", category: "saco", colorFamilia: "marino" }),
+      pieza({ nombre: "Pantalón de vestir marino", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "marino" }),
+    ]);
+    expect(r).toHaveLength(2);
+    expect(r[0].conjunto).toBeUndefined();
+    expect(r[1].conjunto).toBeUndefined();
+  });
+
+  it("el saco desestructurado tampoco: es un saco suelto, no medio traje", () => {
+    const r = enlazarTrajes([
+      pieza({ nombre: "Saco de algodón azul marino sin forro", tipo: "saco-desestructurado", category: "saco", colorFamilia: "marino" }),
+    ]);
+    expect(r).toHaveLength(1);
+    expect(r[0].conjunto).toBeUndefined();
+  });
+
+  it("partirTrajes + enlazarTrajes: el traje entero sale como par YA enlazado", () => {
+    const r = enlazarTrajes(partirTrajes([
+      pieza({ nombre: "Traje de lana azul marino", tipo: "traje", category: "saco", colorFamilia: "marino" }),
+    ]));
+    expect(r).toHaveLength(2);
+    expect(r[0].conjunto).toBe("traje-marino");
+    expect(r[1].conjunto).toBe("traje-marino");
+    expect(r[1].nombre).toBe("Pantalón de traje marino");
+  });
+
+  it("no re-enlaza lo ya enlazado (correr dos veces no duplica)", () => {
+    const una = enlazarTrajes([
+      pieza({ nombre: "Saco de traje marino", tipo: "saco-de-traje", category: "saco", colorFamilia: "marino" }),
+    ]);
+    expect(enlazarTrajes(una)).toHaveLength(2);
+  });
+});
+
+describe("el traje queda JUNTO en la lista, no disperso", () => {
+  it("tras el re-ranking por prioridad, el pantalón va justo después del saco", () => {
+    // El re-ranking real del generador: ordenar por prioridad y renumerar 1..n.
+    const rerank = (items: ReturnType<typeof enlazarTrajes>) =>
+      items.slice().sort((a, b) => a.prioridad - b.prioridad).map((it, i) => ({ ...it, prioridad: i + 1 }));
+    // Las posiciones REALES de la cápsula de r_ortega: saco marino en 5, su
+    // pantalón en 11, saco gris carbón en 13, su pantalón en 3.
+    const lista = rerank(enlazarTrajes([
+      pieza({ nombre: "Camisa blanca", prioridad: 1 }),
+      pieza({ nombre: "Pantalón de vestir gris carbón", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "gris carbón", prioridad: 3 }),
+      pieza({ nombre: "Saco de traje marino de lana", tipo: "saco-de-traje", category: "saco", colorFamilia: "marino", prioridad: 5 }),
+      pieza({ nombre: "Pantalón de vestir marino", tipo: "pantalon-vestir", category: "bottom", colorFamilia: "marino", prioridad: 11 }),
+      pieza({ nombre: "Saco de traje gris carbón de lana", tipo: "saco-de-traje", category: "saco", colorFamilia: "gris carbón", prioridad: 13 }),
+    ]));
+    const pos = (n: string) => lista.findIndex((x) => x.nombre === n);
+    expect(pos("Pantalón de vestir marino")).toBe(pos("Saco de traje marino de lana") + 1);
+    expect(pos("Pantalón de vestir gris carbón")).toBe(pos("Saco de traje gris carbón de lana") + 1);
   });
 });
