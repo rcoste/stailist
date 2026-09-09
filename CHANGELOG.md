@@ -2,6 +2,70 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.319.0] - 2026-09-09 — la cápsula ya tiene juez, y el equivalente femenino del traje NO es atarlo
+
+Dos pedidos de Roberto: el juez que faltaba, y *"con lo de las mujeres, en vez
+de poner un traje sólo porque sí, mejor haz un análisis de cuál sería el
+equivalente, ya que habrá casos donde aplique un traje sastre, pero no siempre"*.
+
+### El análisis de mujer: la respuesta es NO atarlo, y está medida
+
+Mi premisa anterior ("las 7 cápsulas de mujer tienen cero trajes") **era falsa**:
+la consulta buscaba la palabra *traje*, y en mujer eso se llama blazer +
+pantalón sastre. **5 de las 7 ya lo traen**, del mismo color:
+
+| Quien | Blazer | Su mitad de abajo |
+|---|---|---|
+| islamhusein | Blazer negro entallado | Pantalón de vestir **negro** |
+| marianacoste24 | Blazer estructurado negro | Pantalón sastre de pinzas **negro** |
+| mleomarti94 | Blazer estructurado negro | Pantalón de sastre **negro** |
+| healthofficeteam | Blazer negro entallado | Pantalón de vestir **negro** |
+| andy.alcala05 | Blazer negro entallado | Pantalón sastre **negro** |
+
+Y el dato que decide: **en sus clósets reales hay 14 piezas de sastrería y CERO
+conjuntos marcados**. Ninguna mujer ató su blazer negro con su pantalón sastre,
+porque no son un traje: el blazer va con jeans y el pantalón va con blusa.
+
+En hombre el traje es una unidad porque saco y pantalón salen del mismo rollo
+de tela y mezclarlos se nota. En mujer la sastrería se diseña para combinarse.
+**Atarla le quitaría justo la versatilidad que la hace útil**, así que
+`enlazarTrajes` sigue sin tocar blazers, en hombre y en mujer.
+
+Lo que sí cambia con el género es **cuántos caminos** hacen falta: en hombre un
+traje cubre junta, boda y funeral; en mujer son dos huecos que no se sustituyen
+—el de TRABAJO formal (blazer + bottom formal) y el de NOCHE (vestido formal)—
+y por eso el juez los mira por separado.
+
+### El juez: cinco reglas, elegidas corriéndolas contra las 15 cápsulas reales
+
+`revisarCapsula` (lib/engine/capsule-revision.ts). No es un juez con IA: son
+reglas de código sobre la lista, como `revisarEjecucion` para los looks. Una
+regla que no caza nada no gana su sitio, y una que caza todo tampoco.
+
+**Cazó 2 huecos que nadie había visto:**
+- **Tatiana**, techo "formal": blazer estructurado gris perla, vestido de gala…
+  y **cero bottoms formales**. Su blazer no tiene con qué abajo para un look de
+  trabajo formal.
+- **mleomarti94**: pantalón sastre y blazer formales, **cero calzado formal**.
+  Sastrería que se cae en los zapatos.
+
+**Y cazó una alarma FALSA en sí mismo, antes de llegar a producción.** La
+primera versión decía que el "Smoking negro de solapa de satín" de Roberto no
+tenía pantalón — y su cápsula trae "Pantalón de smoking negro". El patrón
+buscaba *traje|vestir|sastre* y ese nombre no dice ninguna de las tres. Ahora
+empareja por CLASE (etiqueta con etiqueta, calle con calle), la misma distinción
+que el match aprendió en m7. Correr el juez contra datos reales lo encontró; los
+tests no lo habrían hecho. A la tercera alarma falsa nadie le cree al juez.
+
+Las cinco: `categoria-vacia`, `traje-sin-pantalon`, `sin-camino-formal`,
+`sin-calzado-formal`, `sin-abrigo-en-frio`. Y `smart` NO exige traje — es
+business casual, y pedirlo sería inventarle la vida a quien no la declaró.
+
+**Qué hace con lo que encuentra:** lo deja por escrito en `capsule_target.revision`,
+junto a la lista que lo produjo. NO bloquea ni reintenta: llenar un hueco pide
+criterio de stylist y su paleta, no es determinista como partir un traje.
+Registrarlo es lo que convierte "se me hace que falta algo" en un dato mirable.
+
 ## [0.2.318.0] - 2026-09-09 — el traje de la cápsula es UNA cosa, no dos piezas que coinciden
 
 Roberto, después del arreglo del smoking: *"no se trata nada más de parchear el
