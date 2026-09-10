@@ -28,6 +28,7 @@ import { renderItemImage } from "@/lib/render-item";
 import type { Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
+import { photosBlockedForUser } from "@/lib/consentimiento";
 import type { LifestyleAnswers } from "@/lib/capsule";
 import { styleReferenceForEngine, styleSignature } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
@@ -661,6 +662,11 @@ export async function attachOwnPhoto(
   if (!user) return { ok: false };
   // La foto debe estar dentro de la carpeta del usuario (defensa además de RLS).
   if (!photoPath.startsWith(`${user.id}/`)) return { ok: false };
+  // Menor sin permiso del tutor: sin fotos, como en las otras rutas de fotos
+  // (lib/consentimiento.ts). Esta era la única puerta que no pasaba por el
+  // candado — la cazó la revisión legal del 2026-09-10 — y el aviso de
+  // privacidad promete que sin permiso no se sube ninguna.
+  if (await photosBlockedForUser(supabase, user.id)) return { ok: false };
 
   const { error } = await supabase
     .from("items")

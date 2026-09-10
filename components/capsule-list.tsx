@@ -91,6 +91,7 @@ export function CapsuleList({
   catalogImages = {},
   savedWishKeys = [],
   userId,
+  fotosBloqueadas = false,
 }: {
   target: CapsuleTarget;
   match: CapsuleMatch | null;
@@ -105,6 +106,13 @@ export function CapsuleList({
   // faltaKeys de prendas de cápsula ya guardadas en la wishlist (para el estado del botón).
   savedWishKeys?: string[];
   userId: string;
+  /**
+   * Menor de 13-17 sin permiso del tutor (lib/edad.ts): no se le ofrece subir
+   * la foto de lo que acaba de agregar. El banner sube directo a Storage antes
+   * de llamar al servidor, así que el candado de attachOwnPhoto llegaría tarde
+   * para la foto: tiene que no ofrecerse.
+   */
+  fotosBloqueadas?: boolean;
 }) {
   const router = useRouter();
   const [optOverrides, applyOpt] = useOptimistic(
@@ -499,7 +507,7 @@ export function CapsuleList({
       <Toast message={toast} />
       <PrendaZoom data={zoom} onClose={() => setZoom(null)} />
 
-      {lastOwned ? (
+      {lastOwned && !fotosBloqueadas ? (
         <OwnedPhotoBanner
           itemId={lastOwned.itemId}
           nombre={lastOwned.nombre}
