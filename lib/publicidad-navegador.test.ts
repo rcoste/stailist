@@ -176,7 +176,7 @@ describe("registrarVista", () => {
     expect(vistas()[0][2]).toMatchObject({ send_to: "G-ABC123XYZ", page_location: "http://localhost:3000/?utm_source=tiktok" });
     expect(ttq.page).toHaveBeenCalledTimes(1);
 
-    ir("/onboarding/gustos");
+    ir("/onboarding/objetivo");
     m.registrarVista(IDS);
     expect(vistas()).toHaveLength(2);
     expect(ttq.page).toHaveBeenCalledTimes(2);
@@ -236,7 +236,7 @@ describe("lo que TikTok no ve, la menor declarada y la marca sin envío", () => 
   it("la cookie de menor apaga la carga aunque la ruta sea medible", async () => {
     const m = await fresco();
     document.cookie = `${m.COOKIE_MENOR}=1; path=/`;
-    ir("/onboarding/gustos");
+    ir("/onboarding/objetivo");
 
     expect(m.cargarEtiquetas(IDS)).toBe(false);
     expect(document.querySelectorAll("script")).toHaveLength(0);
@@ -244,7 +244,7 @@ describe("lo que TikTok no ve, la menor declarada y la marca sin envío", () => 
 
   it("sin comandos (el ID de Ads puesto antes que sus labels) no queda marcada: si no, nunca se contaría", async () => {
     const m = await fresco();
-    ir("/onboarding/gustos");
+    ir("/onboarding/objetivo");
 
     expect(m.registrarConversion("registro", { googleAds: "AW-123456789" })).toBe(false);
     expect(localStorage.getItem("st_conv_registro")).toBeNull();

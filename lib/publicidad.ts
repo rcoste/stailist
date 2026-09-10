@@ -12,11 +12,9 @@ import { isMinor, type AgeRange } from "@/lib/edad";
 // porque Next las hornea en el bundle) se prende.
 //
 // DÓNDE CARGAN, Y DÓNDE NO (rutaMedible)
-// En la landing (donde cae el anuncio) y en el onboarding DESPUÉS de la edad.
-// No en el login ni en /onboarding/edad (tienen campos de correo, y la de edad
-// el del tutor de una menor: una etiqueta con recolección automática de
-// formularios lo leería), ni en /onboarding/genero (va antes de saber si es
-// menor). Dentro de la app (clóset, looks, perfil) tampoco — y eso lo promete el
+// En la landing (donde cae el anuncio) y en dos pantallas del onboarding: el
+// objetivo y el wow (ver ZONA_MEDIDA). No en el login, género, edad, swipes,
+// colores ni clóset. Dentro de la app (clóset, looks, perfil) tampoco — y eso lo promete el
 // aviso de privacidad, así que no puede quedar en buena intención: toda salida
 // de la zona con etiquetas vivas es una navegación completa (salirSinEtiquetas,
 // y components/tags-publicidad.tsx convierte los links), con una recarga como
@@ -94,18 +92,22 @@ export const hayEtiquetas = (ids: IdsPublicidad): boolean =>
   !!(ids.googleAds || ids.ga4 || ids.tiktok);
 
 /**
- * Pantallas del onboarding sin etiquetas:
- * - genero: va ANTES de la edad; todavía no se sabe si es menor.
- * - edad: tiene el campo del correo del tutor.
- * De paso, que la zona empiece después de las dos evita recargar a media
- * entrada (genero → edad era salir de la zona y volver a entrar).
+ * LA ZONA MEDIDA, como lista de lo PERMITIDO (no de lo prohibido):
+ * - `/`: la landing, donde cae el anuncio.
+ * - `/onboarding/objetivo`: la primera pantalla medida después de la edad; ahí
+ *   sale el registro que se decidió al guardarla.
+ * - `/onboarding/wow`: donde llega el primer look.
+ * Fuera, además del login y la app: género (va antes de saber si es menor),
+ * edad (correo del tutor) y — desde la revisión legal del 2026-09-10 — los
+ * swipes, el quiz de color y el checklist del clóset: ahí se contestan gustos y
+ * rasgos (venas, cabello, ojos), y la captura automática de clics del píxel de
+ * TikTok no se puede apagar desde el código. Una pantalla nueva del onboarding
+ * NO queda medida hasta que alguien la agregue aquí a propósito.
  */
-const ONBOARDING_SIN_ETIQUETAS = ["/onboarding/genero", "/onboarding/edad"];
+const ZONA_MEDIDA = ["/", "/onboarding/objetivo", "/onboarding/wow"];
 
 export function rutaMedible(pathname: string): boolean {
-  if (pathname === "/") return true;
-  if (pathname !== "/onboarding" && !pathname.startsWith("/onboarding/")) return false;
-  return !ONBOARDING_SIN_ETIQUETAS.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  return ZONA_MEDIDA.some((r) => pathname === r || (r !== "/" && pathname.startsWith(`${r}/`)));
 }
 
 /** ¿Un link del propio sitio lleva fuera de la zona medida? (Los externos ya son navegación completa.) */
