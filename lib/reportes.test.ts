@@ -65,6 +65,26 @@ describe("el reporte no se pierde si falla el correo", () => {
 });
 
 describe("dónde se puede reportar", () => {
+  // NACIÓ ESCONDIDO. Primero vivía sólo al pie del menú "más", y Roberto —que
+  // sabía que existía porque lo acabábamos de hacer— no lo encontró: "no vi
+  // justo dónde pusiste lo de reportar". Si el autor no da con él, nadie va a
+  // dar. Subió al header, del lado IZQUIERDO: la derecha ya la ocupan el perfil
+  // o el menú de la pantalla, y un segundo icono ahí chocaría en la mitad de
+  // las pantallas.
+  it("desde el header, siempre a la vista", () => {
+    const shell = readFileSync("components/app-shell.tsx", "utf8");
+    const boton = readFileSync("components/boton-reportar.tsx", "utf8");
+    expect(shell).toContain("BotonReportar");
+    expect(boton).toContain("left-4");
+    // Cede su sitio cuando hay "atrás": ahí volver importa más, y el buzón
+    // sigue en el menú y en las pantallas de error.
+    // El botón vive en la rama ELSE del "atrás": aparece sólo cuando no hay.
+    const iBack = shell.indexOf("{back ?");
+    const iBoton = shell.indexOf("<BotonReportar");
+    expect(iBack).toBeGreaterThan(-1);
+    expect(iBoton).toBeGreaterThan(iBack);
+  });
+
   it("desde el menú, junto al sello de beta", () => {
     expect(drawer).toContain("onReportar");
     expect(drawer).toMatch(/>\s*beta\s*</);

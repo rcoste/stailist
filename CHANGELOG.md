@@ -31,10 +31,20 @@ texto.
 avisar, y el correo al admin va en `void` con catch: un Postmark caído no puede
 costar un reporte.
 
-**Dónde se reporta.** En el menú "más", al pie — y también **desde la pantalla
-de error del try-on**, que es donde duele. El momento en que alguien tiene el
-problema enfrente y ganas de contarlo es ése, no tres taps después en otra
-pantalla.
+**Dónde se reporta.** Tres lugares, y el principal cambió a media construcción.
+Primero vivía sólo al pie del menú "más" — y Roberto, que sabía que existía
+porque lo acabábamos de hacer, **no lo encontró**: *"no vi justo dónde pusiste
+lo de reportar"*. Si el autor no da con él, nadie va a dar.
+
+Subió al **header**, con un sobre a la izquierda, simétrico con el perfil. Del
+lado IZQUIERDO y no junto al perfil (que fue lo que él propuso) porque la
+esquina derecha ya está ocupada: el perfil, o el menú de la pantalla cuando lo
+hay. Un segundo icono ahí chocaría en la mitad de las pantallas. Cede su sitio
+cuando hay "atrás" — dentro de un detalle, volver importa más.
+
+Y sigue estando **al pie del menú** y **en la pantalla de error del try-on**,
+que es donde duele: el momento en que alguien tiene el problema enfrente y ganas
+de contarlo es ése, no tres taps después.
 
 **Sobre la captura de pantalla automática** (que Roberto pidió): se descartó a
 propósito. `html2canvas` pesa ~200 KB y falla con imágenes de otro dominio y con
