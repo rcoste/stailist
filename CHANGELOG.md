@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.322.0] - 2026-09-09 — el juez de la cápsula ya tiene quién lo lea
+
+`/admin/capsulas`. El juez existe desde v0.2.319.0 y escribía sus hallazgos en
+`capsule_target.revision`, donde nadie los veía sin consultar la base a mano. Un
+juez sin lector es medio juez.
+
+**Corre EN VIVO, no lee la revisión guardada**, y ésa es la decisión que hace
+útil la pantalla: el juez sólo se ejecuta al GENERAR, así que las 15 cápsulas
+que ya existen no tienen revisión ninguna. Ejecutarlo aquí sobre lo que hay
+enseña los huecos de hoy sin esperar a que nadie regenere.
+
+Lo que muestra al abrirla, verificado en el navegador:
+
+> **2 de 15 con huecos**
+> · `mleomarti94` — hay sastrería o vestido formal y ningún calzado formal
+> · `tatiana` — "Blazer estructurado gris perla" no tiene un pantalón ni falda
+>   formal con qué armarse
+
+Las que tienen huecos van primero (es a lo que se entra), con el conteo por
+regla arriba para ver de un vistazo si algo se repite entre personas.
+
+**Es de lectura pura:** no escribe, no repara, no regenera. Llenar un hueco pide
+criterio de stylist y su paleta — esa decisión es de Roberto, no de una pantalla
+de admin.
+
 ## [0.2.321.1] - 2026-09-09 — las imágenes de cápsula y clóset no dejaban recibo
 
 El hueco salió de la auditoría del patrón "construido y olvidado": hoy no se
