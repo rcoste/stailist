@@ -2,6 +2,49 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.325.0] - 2026-09-09 — limpieza: 12 ramas fantasma y una trampa de 66 líneas
+
+Roberto, sobre las ramas viejas: *"evalúa tú si hace sentido o no, o si podemos
+romper algo que ya funciona o perder algo que es importante"*.
+
+### Las ramas
+
+`git branch --no-merged` mostraba **15 ramas pendientes**. Doce de ellas ya
+estaban en main: los PR se mergean con squash, que reescribe el commit, así que
+git no puede saber que el contenido llegó. No era una lista de trabajo
+pendiente — era ruido que **cuesta tiempo real**: hoy `motor-v74` hizo dudar de
+si había trabajo del motor sin shipear.
+
+Se comprobó una por una antes de borrar: su versión está en el CHANGELOG, y
+**ninguna guarda un archivo que main haya perdido**. La única candidata
+(`app/historial/look-detail.tsx`) resultó ser un renombre del mismo commit.
+
+Cada SHA quedó anotado en `docs/ramas-archivadas.md`, así que nada es
+irrecuperable: `git fetch origin <sha>` los trae de vuelta.
+
+### El código muerto
+
+`lib/color/extract.ts` exportaba `dominantColor`, y **su único importador era su
+propio test**. 66 líneas que existían para probarse a sí mismas.
+
+Pero no era sólo ruido, era una **trampa**: el archivo se llama `color/extract` y
+parece la forma sancionada de sacar el color de una foto. No lo es, y se
+abandonó por una razón concreta que sigue documentada en
+`components/cartera/chequear-client.tsx`: descarta lo casi-blanco por encima de
+244, y los fondos de foto de producto andan en 242 — así que en la foto de una
+prenda de tienda el "color de la prenda" era el fondo del estudio. Alberto lo
+reportó como *"me abrió una pantalla blanca que dice blanco puro"*.
+
+Borrarla evita que alguien la importe pensando que es la buena.
+
+### Lo que NO se hizo
+
+El glifo de camisa redibujado de `claude/laughing-mayer-d9999e` sigue sin
+mergear. El actual se pinta a 18 px en "un día normal" —la primera pantalla de
+armar un look— y el comentario del arreglo dice que a ese tamaño se lee como un
+vaso. Es una decisión visual, el veto de diseño es de Roberto, y la rama espera
+a que la vea.
+
 ## [0.2.324.0] - 2026-09-09 — el tenis que te moja los calcetines
 
 Roberto, sobre por qué unos tenis sí y otros no bajo la lluvia: *"el tema es el
