@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.326.1] - 2026-09-10 — que ChatGPT y Claude sepan qué es stailist
+
+Roberto: *"¿hay manera de que optimicemos cosas en la página para hacerla agent
+friendly, por si alguien está buscando algo en ChatGPT o Claude sobre el tema?"*
+
+- **La landing le dice a las máquinas qué es stailist, sin ambigüedad:** datos
+  estructurados (schema.org) con lo que hace, idioma español y precio: gratis y
+  sin tarjeta (cierto hoy; cambia el día que se cobre algo).
+- **`/llms.txt`:** un resumen en texto plano para asistentes de IA. Antes esa
+  dirección mandaba al login.
+- Los dos salen de una sola ficha (`lib/ficha-publica.ts`), con un test que
+  impide prometer lo que la app no hace (por ejemplo, leer prendas de una foto
+  del clóset abierto).
+
+Lo que ya estaba bien, probado: los rastreadores de OpenAI, Anthropic,
+Perplexity y Google entran a la landing y leen el texto sin ejecutar JavaScript.
+Lo que más pesa para que un asistente recomiende stailist no es código: las
+menciones fuera de la página (directorios de apps de IA, listas, foros) y unas
+preguntas frecuentes visibles, que están en revisión con Roberto.
+
 ## [0.2.326.0] - 2026-09-10 — listo para prender los anuncios
 
 Roberto: *"el lunes voy a arrancar una campaña de Adwords y probablemente después
