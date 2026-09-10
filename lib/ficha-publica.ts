@@ -1,24 +1,29 @@
-// LA FICHA PÚBLICA DE STAILIST: lo que se le cuenta a una máquina que lee la
-// landing (buscadores, asistentes como ChatGPT, Claude o Perplexity).
+// LA FICHA PÚBLICA DE STAILIST: lo que se le cuenta a una persona que llega a la
+// landing y a una máquina que la lee (buscadores, asistentes como ChatGPT,
+// Claude o Perplexity).
 //
 // POR QUÉ EXISTE
 // Roberto, 2026-09-10: "¿hay manera de que optimicemos cosas en la página para
 // hacerla agent friendly, por si alguien está buscando algo en ChatGPT o Claude
 // sobre el tema?". Los rastreadores de IA ya leían la landing completa, pero no
-// había ningún dato sin ambigüedad (qué es, cuánto cuesta, en qué idioma) ni un
-// resumen en texto plano. Esto alimenta dos cosas desde UNA sola fuente:
-// - el JSON-LD de la landing (app/page.tsx), y
-// - /llms.txt (app/llms.txt/route.ts).
-// Si viven en dos lugares, un día dicen cosas distintas.
+// había ningún dato sin ambigüedad (qué es, cuánto cuesta, en qué idioma), ni un
+// resumen en texto plano, ni preguntas frecuentes. Esto alimenta desde UNA sola
+// fuente:
+// - el JSON-LD de la landing (app/page.tsx),
+// - /llms.txt (app/llms.txt/route.ts), y
+// - la sección de preguntas frecuentes visible (components/landing/faq.tsx).
+// Si vivieran en tres lugares, un día dirían cosas distintas.
 //
 // LA REGLA: cada frase de aquí tiene que ser cierta HOY en producción. Una IA la
-// va a repetir tal cual a gente que nunca vio la app. Dos trampas ya pagadas:
+// va a repetir tal cual a gente que nunca vio la app. Trampas ya pagadas:
 // - La landing llegó a prometer "también me sirve la foto del clóset abierto" y
 //   Roberto la frenó: el lector de prendas sólo se midió con fotos de gente
 //   vestida. Aquí tampoco se promete (hay test).
-// - GRATIS es cierto hoy (2026-09-10), pero Roberto ya dijo que "eventualmente
-//   vamos a cobrar por algo, por uso, para limitar try-ons o funciones
-//   premium". El día que se cobre, esto cambia en el mismo commit.
+// - La selfie: la colorimetría NO la pide; el avatar SÍ, y es opcional
+//   (corrección de Roberto al borrador).
+// - GRATIS es cierto hoy (2026-09-10). Roberto: "eventualmente vamos a cobrar
+//   por uso, para limitar try-ons o funciones premium (...) no te pedimos
+//   tarjeta ni nada". El día que se cobre, esto cambia en el mismo commit.
 
 export const FICHA = {
   nombre: "stailist",
@@ -50,7 +55,63 @@ export const FICHA = {
   ],
 } as const;
 
-/** Los datos estructurados (schema.org) de la landing. */
+/**
+ * Las preguntas frecuentes, en la voz de la landing ("te armo"). Aprobadas por
+ * Roberto el 2026-09-10. Se pintan en la landing y viajan al JSON-LD y a
+ * /llms.txt tal cual.
+ */
+export const PREGUNTAS_FRECUENTES: readonly { pregunta: string; respuesta: string }[] = [
+  {
+    pregunta: "¿Cuánto cuesta?",
+    respuesta:
+      "Nada. stailist es gratis y no te pedimos tarjeta ni ningún método de pago, así que nadie te puede cobrar por sorpresa. Si algún día agregamos funciones de pago, te avisamos antes.",
+  },
+  {
+    pregunta: "¿Tengo que subir mi clóset prenda por prenda?",
+    respuesta:
+      "No. Marcas tus básicos de una lista con fotos, y si quieres sumar lo tuyo, subes fotos tuyas vestido: de cada foto saco varias prendas.",
+  },
+  {
+    pregunta: "¿Qué me arma exactamente?",
+    respuesta:
+      "Looks completos con tu propia ropa, para hoy o para el sábado, con el clima de ese día y según la ocasión: oficina, cita, boda, viaje. Y te digo en una línea por qué funcionan.",
+  },
+  {
+    pregunta: "¿Sirve para hombre?",
+    respuesta:
+      "Sí. Al entrar eliges si usas ropa de hombre o de mujer, y todo se ajusta: las prendas, los looks y los ejemplos.",
+  },
+  {
+    pregunta: "¿Cómo sabe qué colores me quedan?",
+    respuesta: "Con un quiz corto de 6 preguntas. Para tus colores no necesitas selfie.",
+  },
+  {
+    pregunta: "¿Puedo ver cómo se me ve?",
+    respuesta:
+      "Sí, si quieres. Con una selfie y una foto de cuerpo entero te hago un avatar y te pruebo los looks encima. Es opcional: la app funciona sin fotos.",
+  },
+  {
+    pregunta: "¿Qué pasa con mis fotos?",
+    respuesta:
+      "Viven en un espacio privado, no en internet abierto. Los servicios de IA que usamos no las usan para entrenar sus modelos, y puedes borrar tu cuenta con todo lo tuyo desde la app.",
+  },
+  {
+    pregunta: "¿Tengo que descargar algo?",
+    respuesta:
+      "No. Funciona desde el navegador de tu celular y, si quieres, la instalas en tu pantalla de inicio.",
+  },
+  {
+    pregunta: "¿Desde qué edad se puede usar?",
+    respuesta:
+      "Desde los 13. Si tienes entre 13 y 17, necesitas el permiso de tu mamá, papá o tutor para subir fotos.",
+  },
+  {
+    pregunta: "¿Está en inglés?",
+    respuesta: "Por ahora solo en español.",
+  },
+];
+
+/** Los datos estructurados (schema.org) de la app. */
 export function datosEstructurados() {
   return {
     "@context": "https://schema.org",
@@ -64,6 +125,20 @@ export function datosEstructurados() {
     isAccessibleForFree: true,
     offers: { "@type": "Offer", price: "0", priceCurrency: "MXN" },
     featureList: [...FICHA.funciones],
+  };
+}
+
+/** Las preguntas frecuentes como FAQPage de schema.org. */
+export function preguntasEstructuradas() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    inLanguage: FICHA.idioma,
+    mainEntity: PREGUNTAS_FRECUENTES.map((f) => ({
+      "@type": "Question",
+      name: f.pregunta,
+      acceptedAnswer: { "@type": "Answer", text: f.respuesta },
+    })),
   };
 }
 
@@ -96,6 +171,9 @@ export function textoLlms(): string {
     `- Dónde: en el navegador del celular o la computadora; se puede instalar en la pantalla de inicio, sin tienda de apps.`,
     `- Edad: ${f.edad}`,
     `- Privacidad: ${f.privacidad}`,
+    "",
+    "## Preguntas frecuentes",
+    ...PREGUNTAS_FRECUENTES.flatMap((p) => ["", `### ${p.pregunta}`, p.respuesta]),
     "",
     "## Páginas",
     ...f.paginas.map((p) => `- [${p.titulo}](${f.url}${p.ruta === "/" ? "" : p.ruta}): ${p.nota}`),

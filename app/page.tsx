@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { routeForStep } from "@/lib/onboarding";
 import { Landing } from "@/components/landing/landing";
-import { datosEstructurados, serializarParaScript } from "@/lib/ficha-publica";
+import { datosEstructurados, preguntasEstructuradas, serializarParaScript } from "@/lib/ficha-publica";
 
 // Lo que Google lee de la landing — y lo que Google Ads usa para calificar si la
 // página corresponde al anuncio. El título del layout ("stailist") no decía qué
@@ -42,7 +42,9 @@ export default async function RootPage({
             (lib/ficha-publica.ts). Invisible para la persona. */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializarParaScript(datosEstructurados()) }}
+          dangerouslySetInnerHTML={{
+            __html: serializarParaScript([datosEstructurados(), preguntasEstructuradas()]),
+          }}
         />
         <Landing generoInicial={g === "hombre" || g === "mujer" ? g : null} />
       </>
