@@ -34,7 +34,7 @@ export const FICHA = {
     "Looks para ocasiones: oficina, cita, cena, boda, graduación y más",
     "Clóset rápido: marcas tus básicos de una lista con imágenes, o subes fotos tuyas vestido y de cada foto salen varias prendas",
     "Colorimetría con un quiz corto, sin selfie",
-    "Avatar opcional para ver los looks puestos en ti",
+    "Avatar opcional, con una selfie y una foto de cuerpo entero, para ver los looks puestos en ti",
     "Maleta para viajes con el clima de cada parada",
     "Aprende de lo que te gusta y lo que no",
   ],
