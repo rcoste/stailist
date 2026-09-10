@@ -2,6 +2,63 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.326.0] - 2026-09-10 — listo para prender los anuncios
+
+Roberto: *"el lunes voy a arrancar una campaña de Adwords y probablemente después
+creo campañas en TikTok (...) quiero que tengamos todo preparado para que
+funcione"*. No había ni una etiqueta, nada guardaba de qué anuncio llegaba
+alguien, y el aviso de privacidad decía literal *"No los compartimos con
+anunciantes. No hay publicidad."*
+
+### Lo que ya se puede hacer
+
+- **Prender Google Ads, Google Analytics y TikTok sin tocar código.** Cada
+  etiqueta carga sólo si su ID existe en Vercel (`NEXT_PUBLIC_*`, ver
+  `.env.example`). Sin IDs, la app se comporta exactamente igual que antes.
+- **Saber de qué anuncio llegó cada cuenta y si VOLVIÓ.** Admin → Pulso →
+  Adquisición agrupa por fuente y campaña: cuentas (hombres/mujeres), primer look
+  y "volvió en 7 días", que es la columna que decide si una campaña sirve. El
+  origen se guarda en el perfil desde la primera visita del anuncio.
+- **Mandar cada anuncio a su landing.** `stailist.co/?g=hombre` abre la versión
+  de hombre desde el servidor; antes un hombre que llegaba de un anuncio para
+  hombres veía a una modelo mujer.
+- **Darle a Google y TikTok con qué optimizar:** dos momentos, `registro`
+  (después de la edad) y `primer_look`.
+- Título, descripción y canonical de la landing para Google; verificación de
+  Search Console por variable.
+
+### Privacidad
+
+- El aviso explica qué ven las etiquetas, qué no, qué pasa con menores, y trae un
+  botón para apagarlas. Global Privacy Control se respeta.
+- Las etiquetas viven sólo en la landing y en el onboarding después de la edad:
+  nunca en el login, en las pantallas de género y edad (correo del tutor), ni
+  dentro de la app. Toda salida de esa zona es una navegación completa.
+- Una cuenta de 13-17 no carga etiquetas en ningún navegador donde siga su
+  onboarding, ni al cerrar sesión o borrar su cuenta, y no manda ningún momento.
+- El correo que se teclea en la landing ya no viaja en la URL (`/login?email=`
+  ya no se acepta).
+- A TikTok no se le carga nada si la dirección trae algo más que etiquetas de
+  campaña (su píxel lee la URL cruda). Un admin en "ver como" no se mide.
+
+### Base
+
+- Migración 0158 (ya aplicada en producción): `profiles.origen` jsonb con tope
+  de 4 KB.
+
+### Cómo se revisó
+
+Ship completo: revisión adversarial, siete especialistas y red team. Salieron
+más de veinte hallazgos y se arreglaron antes del PR — incluido uno que metió un
+arreglo anterior: con etiquetas vivas, el correo de la landing llegaba en blanco
+al login. Probado en el navegador con IDs falsos.
+
+### Lo que falta y no es código
+
+Crear las cuentas y pasar los IDs; apagar en cada plataforma la recolección
+automática de datos (la landing sí tiene campo de correo); agregar DMARC al
+dominio. Todo en `docs/designs/adwords-readiness.md`.
+
 ## [0.2.325.0] - 2026-09-09 — limpieza: 12 ramas fantasma y una trampa de 66 líneas
 
 Roberto, sobre las ramas viejas: *"evalúa tú si hace sentido o no, o si podemos
