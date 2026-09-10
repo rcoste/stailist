@@ -2,6 +2,60 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.323.0] - 2026-09-09 — el prompt y el razonamiento, para poder depurar
+
+Roberto: *"me gustaría en el admin tener de alguna manera el prompt que se manda
+para generar el clóset cápsula, y el reasoning de por qué eligió lo que eligió,
+esto eventualmente nos puede servir para debug"*.
+
+**El razonamiento ya se generaba y se tiraba a la basura.** El schema de la
+cápsula tiene un campo `plan` —el borrador donde el modelo decide los neutros,
+los acentos y cuántas piezas por categoría ANTES de listar prendas— y está
+primero a propósito, para que razone antes de comprometerse. El código lo
+pedía, lo pagaba, y el comentario decía literalmente *"el caller lo ignora"*.
+Ahora se guarda. No cuesta un peso más: ya estaba en la respuesta.
+
+**Dónde vive, y por qué no en los dos sitios obvios:**
+
+- **No en `ai_calls`.** Esa tabla dice explícitamente que no guarda contenido, y
+  la razón sigue siendo buena: es un recibo por llamada de todo el mundo, y
+  meterle el texto la convertiría en una copia de los datos de la gente para
+  contestar preguntas de ingeniería.
+- **No en `profiles.capsule_target`.** Ese jsonb lo lee la persona para pintar
+  su pantalla de esenciales. El prompt de sistema es el criterio de stylist del
+  producto entero — ahí sería legible desde el cliente de cualquier cuenta.
+
+Va en `ai_trazas` (migración 0157): **una fila por persona y tarea**, con RLS
+asimétrica — la persona escribe la suya y NO la lee; sólo el admin lee. Una fila
+y no un histórico porque `capsule_target` se sobreescribe al regenerar: una
+traza vieja quedaría huérfana de la lista que produjo y no se podría juzgar.
+
+**Se guarda el string exacto que se mandó, no los ingredientes.** El prompt es
+un template que cambia; reconstruirlo con el código de hoy mentiría sobre lo que
+recibió la cápsula de ayer.
+
+**De paso, el prompt salió de la función.** Vivía embebido como un template
+literal de ~60 líneas dentro de la llamada, y eso tenía dos costos: ningún test
+podía leerlo sin exportar a mano cada regla suelta (de ahí que `REGLA_SASTRERIA`
+y `lineaAcentosCapsula` estén exportadas), y para guardarlo había que
+reconstruirlo fuera. Ahora `construirPromptCapsula` es una función pura con
+cinco tests que blindan las señales que no se pueden perder: la regla de
+sastrería completa, el género como regla innegociable, los vetos, y qué viaja en
+el mensaje de sistema contra el de usuario.
+
+Un detalle que quedó escrito porque invita a la conclusión equivocada: **los
+vetos son lo único suyo que se cuela al mensaje de sistema.** Todo lo demás de
+ella viaja en el de usuario. O sea que el system NO es genérico y no se puede
+guardar una sola vez para todos.
+
+**En `/admin/capsulas`**, cada tarjeta abre tres bloques plegados: razonamiento
+primero (al abrir una cápsula rara la pregunta es "¿qué estaba pensando?"),
+luego el prompt de sistema, luego lo que se le mandó de ella. El juez dice QUÉ
+falta; la traza dice POR QUÉ.
+
+**Las cápsulas de hoy no tienen traza** — el `plan` de todas ellas ya se tiró.
+Se llenan solas cuando alguien regenere sus esenciales.
+
 ## [0.2.322.1] - 2026-09-09 — una preposición estaba pagando imágenes dobles
 
 El último punto de la limpieza, y otra vez el hallazgo no era el que yo había
