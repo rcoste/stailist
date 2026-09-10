@@ -34,6 +34,7 @@ const GROUPS: { label: string; links: { href: string; label: string }[] }[] = [
       { href: "/admin/evales", label: "Evales" },
       { href: "/admin/destilador", label: "Destilador" },
       { href: "/admin/recetas", label: "Recetas" },
+      { href: "/admin/capsulas", label: "Cápsulas" },
     ],
   },
   {
