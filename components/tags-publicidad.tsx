@@ -21,11 +21,13 @@ export function TagsPublicidad() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Una conversión que pidió el servidor (hoy: el registro, que se decide al
-    // guardar la edad) se consume SIEMPRE, aunque no se pueda medir: si no, se
-    // quedaría esperando y saldría en otra visita.
-    const pendiente = tomarConversionPendiente();
     const fuera = !rutaMedible(pathname);
+    // Una conversión que pidió el servidor (hoy: el registro, que se decide al
+    // guardar la edad) espera en su cookie hasta la primera pantalla medida (el
+    // objetivo): las de en medio — swipes, colores, clóset — están fuera de la
+    // zona. Ya dentro, se consume SIEMPRE, se pueda medir o no, para que no
+    // salga en otra visita.
+    const pendiente = fuera ? null : tomarConversionPendiente();
 
     // RED DE SEGURIDAD. Si las etiquetas siguen vivas donde ya no deben —se
     // salió de la zona por un camino que no fue navegación completa, o esta

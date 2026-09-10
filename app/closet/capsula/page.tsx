@@ -30,6 +30,7 @@ import { catalogPublicUrl } from "@/lib/catalog-render";
 import { regenerateCapsuleTarget } from "./actions";
 import { MatchRecalc } from "@/components/match-recalc";
 import { styleSignature } from "@/lib/estilo-referencia";
+import { fotosBloqueadas } from "@/lib/edad";
 
 // recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
 export const maxDuration = 60;
@@ -363,6 +364,7 @@ export default async function CapsulaPage({
                     catalogImages={catalogImages}
                     savedWishKeys={savedWishKeys}
                     userId={profile.id}
+                    fotosBloqueadas={fotosBloqueadas(profile)}
                   />
                 </>
               )}

@@ -72,7 +72,9 @@ export async function saveAge(formData: FormData) {
   if (row && !menor) {
     (await cookies()).set(COOKIE_CONVERSION, "registro", {
       path: "/",
-      maxAge: 60 * 30,
+      // Un día: espera, sin leerse, a la primera pantalla medida (el objetivo),
+      // que llega después de los swipes, los colores y el clóset.
+      maxAge: 60 * 60 * 24,
       sameSite: "lax",
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",

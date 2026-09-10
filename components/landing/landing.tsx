@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { EntrarForm } from "./entrar-form";
 import { TryDemo } from "./try-demo";
+import { PreguntasFrecuentes } from "./faq";
 import styles from "./landing.module.css";
 
 // Isotipo "gancho-destello": percha que se vuelve destello. Color por
@@ -951,12 +952,25 @@ export function Landing({
           </div>
         </section>
 
-        {/* 10 · CTA FINAL */}
+        {/* 10 · PREGUNTAS FRECUENTES (texto en lib/ficha-publica.ts) */}
+        <section className={styles.blk}>
+          <div className={styles.wrap}>
+            <div className={styles.kicker}>
+              <span className={styles.n}>10</span> Preguntas
+            </div>
+            <h2 className={styles.h2}>
+              Antes de que <em className={styles.s}>preguntes</em>.
+            </h2>
+            <PreguntasFrecuentes />
+          </div>
+        </section>
+
+        {/* 11 · CTA FINAL */}
         <section className={`${styles.blk} ${styles.final} ${styles.oscura} tema-oscuro`}>
           <div className={styles.wrap}>
             <div className={styles.inner}>
               <div className={styles.kicker}>
-                <span className={styles.n}>10</span> Tu turno
+                <span className={styles.n}>11</span> Tu turno
               </div>
               <h2 className={styles.h2}>
                 ¿Lista para abrir el clóset sin{" "}

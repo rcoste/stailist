@@ -73,7 +73,7 @@ describe("TagsPublicidad", () => {
   });
 
   it("en la zona medida, si ya no se permite (acaba de declarar 13-17 años): recarga para soltarlas y no mide", () => {
-    nav.ruta = "/onboarding/gustos";
+    nav.ruta = "/onboarding/objetivo";
     pub.etiquetasCargadas.mockReturnValue(true);
     pub.permitidoEnEsteNavegador.mockReturnValue(false);
     render(<TagsPublicidad />);
@@ -82,13 +82,13 @@ describe("TagsPublicidad", () => {
     expect(pub.registrarVista).not.toHaveBeenCalled();
   });
 
-  it("dentro de la app sin etiquetas cargadas no recarga (no hay bucle), y la conversión pendiente se consume igual", () => {
-    nav.ruta = "/closet";
+  it("fuera de la zona sin etiquetas cargadas no recarga (no hay bucle), y la conversión pendiente espera a la zona medida", () => {
+    nav.ruta = "/onboarding/gustos";
     pub.tomarConversionPendiente.mockReturnValue("registro");
     render(<TagsPublicidad />);
 
     expect(reload).not.toHaveBeenCalled();
-    expect(pub.tomarConversionPendiente).toHaveBeenCalledTimes(1);
+    expect(pub.tomarConversionPendiente).not.toHaveBeenCalled();
     expect(pub.registrarConversion).not.toHaveBeenCalled();
   });
 
@@ -117,7 +117,7 @@ describe("TagsPublicidad", () => {
       <>
         <TagsPublicidad />
         <a href="/perfil/avatar?return=%2Fonboarding%2Fwow">avatar</a>
-        <a href="/onboarding/gustos">gustos</a>
+        <a href="/onboarding/objetivo">objetivo</a>
       </>
     );
 
@@ -126,7 +126,7 @@ describe("TagsPublicidad", () => {
     expect(pub.salirSinEtiquetas).toHaveBeenCalledWith("/perfil/avatar?return=%2Fonboarding%2Fwow");
 
     pub.salirSinEtiquetas.mockClear();
-    fireEvent.click(screen.getByText("gustos"));
+    fireEvent.click(screen.getByText("objetivo"));
     expect(pub.salirSinEtiquetas).not.toHaveBeenCalled();
   });
 

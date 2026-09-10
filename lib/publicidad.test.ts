@@ -53,14 +53,25 @@ describe("limpiarIds — el switch", () => {
 });
 
 describe("rutaMedible — el aviso promete que dentro de la app no hay etiquetas", () => {
-  it("la landing y el onboarding después de la edad sí", () => {
-    for (const p of ["/", "/onboarding/objetivo", "/onboarding/gustos", "/onboarding/wow"]) {
+  it("sólo la landing, el objetivo y el wow", () => {
+    for (const p of ["/", "/onboarding/objetivo", "/onboarding/wow"]) {
       expect(rutaMedible(p), p).toBe(true);
     }
   });
 
-  it("donde se teclea un correo o aún no se sabe la edad no: login, género y edad", () => {
-    for (const p of ["/login", "/login/x", "/onboarding/genero", "/onboarding/edad"]) {
+  it("nunca donde se teclea un correo, antes de saber la edad, ni donde se contestan gustos y rasgos", () => {
+    for (const p of [
+      "/login",
+      "/login/x",
+      "/onboarding/genero",
+      "/onboarding/edad",
+      "/onboarding/gustos",
+      "/onboarding/colorimetria",
+      "/onboarding/closet",
+      "/onboarding/acentos",
+      "/onboarding",
+      "/onboarding/pantalla-nueva",
+    ]) {
       expect(rutaMedible(p), p).toBe(false);
     }
   });
@@ -78,7 +89,8 @@ describe("linkSaleDeZona — qué links se vuelven navegación completa", () => 
   it("un link propio a la app o a las legales sale; uno al onboarding o a la misma landing, no", () => {
     expect(linkSaleDeZona(new URL("https://stailist.co/perfil/avatar?return=x"), origen)).toBe(true);
     expect(linkSaleDeZona(new URL("https://stailist.co/privacidad"), origen)).toBe(true);
-    expect(linkSaleDeZona(new URL("https://stailist.co/onboarding/gustos"), origen)).toBe(false);
+    expect(linkSaleDeZona(new URL("https://stailist.co/onboarding/wow?look=1"), origen)).toBe(false);
+    expect(linkSaleDeZona(new URL("https://stailist.co/onboarding/gustos"), origen)).toBe(true);
     expect(linkSaleDeZona(new URL("https://stailist.co/#sumarme"), origen)).toBe(false);
   });
 

@@ -103,6 +103,9 @@ export default async function proxy(request: NextRequest) {
     // proxy los mandaba a /login y WhatsApp mostraba el login como imagen.
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
+    // El resumen para asistentes de IA (app/llms.txt/route.ts): sin esto el
+    // proxy lo mandaba a /login, igual que le pasaba antes a robots.txt.
+    pathname === "/llms.txt" ||
     pathname.startsWith("/opengraph-image") ||
     // La versión desplegada: un número, nada más — el mismo que ya va horneado
     // en el JavaScript que cualquiera puede leer. Pedirle sesión lo volvería
