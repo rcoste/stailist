@@ -32,6 +32,28 @@
 // que él aprobó POR la suela gruesa. O sea que la suela no separa sus dos casos
 // y el motivo real de su objeción sigue sin saberse.
 //
+// ─── CORRECCIÓN, 2026-09-09: LA PREMISA DE ARRIBA ESTABA MAL ─────────────────
+// Roberto NUNCA marcó los "Tenis de piel negros" como no aptos. Sus comentarios
+// sobre ese zapato son "Podría mejorar el calzado, pero no está mal" (×3) y
+// "Quedaría mejor otro calzado" (×2) — preferencia tibia, no falla. Lo que sí
+// condenó fueron los "Tenis grises": "Terrible calzado para lluvia sin
+// paraguas", "mal calzado para lluvia!! Error fuerte", "Falla calzado".
+//
+// O sea que NUNCA hubo contradicción. Leer un "podría mejorar" como un rechazo
+// fabricó un caso imposible y dejó esto parado semanas.
+//
+// Y el eje real siempre fue el MATERIAL, el que la regla ya usa. Roberto lo dijo
+// en una frase: "los tenis grises son como de telita… unos tenis más de
+// ejercicio, tipo ultra boost, están mal; un tenis de piel blanco está menos
+// peor y sobre todo tiene suela gruesa". La visión lo separa limpio (leído el
+// 2026-09-09, 3 corridas idénticas): grises / rojos / de entrenamiento →
+// `sintético`; de piel negros / blancos urbanos → `piel`. Exactamente su corte.
+//
+// LO QUE FALLABA ERA EL DATO, NO EL CRITERIO: sus tenis no tienen `material`
+// registrado, y el código dice explícitamente que sin material no juzga. 124 de
+// los 175 pares de la base están igual, 105 de ellos heredados de 35 arquetipos
+// de la biblioteca que nadie leyó nunca.
+//
 // Y LA GENERALIZACIÓN OBVIA ES PEOR QUE LA REGLA DE HOY. Se simuló "escotado +
 // suela fina = falla" sobre su clóset: haría reprobar TODOS los zapatos de
 // vestir con lluvia (derby, oxford, charol, formal). Un derby de piel bajo la

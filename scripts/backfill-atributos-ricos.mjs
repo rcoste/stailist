@@ -16,7 +16,7 @@
 //   node scripts/backfill-atributos-ricos.mjs --vision           → dry-run visión
 //   node scripts/backfill-atributos-ricos.mjs --vision --validate 8
 //   node scripts/backfill-atributos-ricos.mjs --vision --apply
-//   (ambos modos aceptan --limit N)
+//   (ambos modos aceptan --limit N y --solo <regex sobre el nombre>)
 //
 // Seguridad:
 // - material y color_secundario solo se escriben donde faltan (nunca pisan
@@ -58,6 +58,12 @@ const VALIDATE = args.includes("--validate")
 const LIMIT = args.includes("--limit")
   ? parseInt(args[args.indexOf("--limit") + 1] ?? "0", 10)
   : 0;
+// Filtro por NOMBRE, para poder atacar un hueco concreto sin pagar el resto.
+// Nació el 2026-09-09: la regla de lluvia juzga por material y 124 de los 175
+// pares de calzado de la base no lo tenían — no porque el criterio fallara sino
+// porque nadie había mirado esos zapatos. Correr el backfill entero para
+// arreglar el calzado sería pagar por todo el clóset.
+const SOLO = args.includes("--solo") ? args[args.indexOf("--solo") + 1] ?? "" : "";
 
 const env = Object.fromEntries(
   readFileSync(path.join(REPO_ROOT, ".env.local"), "utf8")
@@ -245,9 +251,12 @@ if (VISION) {
     where i.deleted_at is null
       and i.attrs->>'nombre' is not null
       and i.attrs->>'material' is null
+      ${SOLO ? `and i.attrs->>'nombre' ~* ${db.escapeLiteral(SOLO)}` : ""}
     order by i.created_at
     ${LIMIT ? `limit ${LIMIT}` : ""}`);
-  console.log(`Candidatas al pase de VISIÓN (sin material): ${rows.length} prendas`);
+  console.log(
+    `Candidatas al pase de VISIÓN (sin material${SOLO ? `, sólo /${SOLO}/i` : ""}): ${rows.length} prendas`
+  );
 
   // --- Validación visión: Haiku vs Opus sobre la MISMA imagen ---
   if (VALIDATE) {
@@ -353,6 +362,7 @@ const { rows } = await db.query(`
     and attrs->>'nombre' is not null
     and attrs->>'material' is null
     and attrs->>'patron' is null
+    ${SOLO ? `and attrs->>'nombre' ~* ${db.escapeLiteral(SOLO)}` : ""}
   order by source, created_at
   ${LIMIT ? `limit ${LIMIT}` : ""}`);
 console.log(`Candidatas al backfill: ${rows.length} prendas`);
