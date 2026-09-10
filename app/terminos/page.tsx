@@ -95,8 +95,12 @@ export default function TerminosPage() {
         y procesarlo con los servicios que la app usa para darte el servicio,
         cuidar la seguridad y mejorar stailist, como explica el aviso de
         privacidad — incluido que el dibujo de una prenda que nos digas que no
-        es tuya pueda proponerse para el catálogo. Puedes borrarlo cuando
-        quieras; el aviso de privacidad explica qué pasa al borrar.
+        es tuya pueda proponerse para el catálogo. Salvo que te opongas, también
+        nos das permiso para usar los datos y dibujos de tus prendas, tus looks
+        y tus votos, sin nada que te identifique, para entrenar y mejorar la
+        inteligencia artificial de stailist; nunca tus fotos ni los datos de
+        menores. Puedes borrarlo cuando quieras; el aviso de privacidad explica
+        qué pasa al borrar.
       </P>
 
       <H2>lo que es nuestro</H2>

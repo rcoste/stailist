@@ -167,6 +167,16 @@ export default function PrivacidadPage() {
         abusos. Y para mejorar stailist mirando qué se usa y qué no.
       </P>
       <P>
+        <b>Para entrenar y mejorar nuestra inteligencia artificial</b>, y solo si
+        no te opones: usamos los datos y los dibujos de tus prendas, tus looks,
+        tus votos y cómo usas la app — sin tu nombre ni tu correo — para
+        entrenar y mejorar los modelos de stailist y el catálogo compartido.
+        Nunca usamos para eso ninguna de tus fotos ni los datos de menores de
+        edad. Esto no hace falta para darte el servicio: si no quieres, escríbenos
+        a hola@stailist.co y lo dejamos de hacer con lo tuyo, sin que cambie nada
+        de la app.
+      </P>
+      <P>
         No vendemos tus datos y dentro de la app no hay anuncios. Lo que sí
         hacemos es anunciar stailist en Google y en TikTok, y para saber si esos
         anuncios funcionan usamos sus etiquetas de medición. Más abajo te
@@ -191,9 +201,8 @@ export default function PrivacidadPage() {
           <b>Google (Gemini)</b> y <b>Anthropic (Claude)</b> son los modelos de
           inteligencia artificial que leen tus prendas, arman los looks y generan
           tu avatar y las pruebas de ropa. Les mandamos las fotos y los datos
-          necesarios para cada tarea. Usamos sus servicios de pago para
-          empresas, cuyos términos establecen que lo que les mandamos no se usa
-          para entrenar sus modelos.
+          necesarios para cada tarea. Lo que hagan con esos datos, incluido si
+          los usan para mejorar sus propios modelos, se rige por sus términos.
         </Li>
         <Li>
           <b>Postmark</b> manda los correos: el código de entrada, el aviso al
@@ -323,11 +332,14 @@ export default function PrivacidadPage() {
         reportes, los registros de uso de la IA y tu correo. Lo único que puede
         quedar fuera de la app es la copia en nuestro correo de los reportes y
         alertas que te mencionen y, si te invitamos, tu correo en la lista de
-        invitaciones; si quieres que también lo borremos, escríbenos.
+        invitaciones; si quieres que también lo borremos, escríbenos. Lo que ya
+        forme parte del catálogo compartido o de mediciones sin nada que te
+        identifique puede quedarse.
       </P>
       <P>
         Ojo: cuando borras una prenda, un look o un viaje sin borrar la cuenta,
-        deja de verse, pero lo guardamos hasta que borres la cuenta. Y si pides
+        deja de verse, pero lo guardamos hasta que borres la cuenta y lo podemos
+        seguir usando como explicamos en “para qué” (nunca sus fotos). Y si pides
         el código pero no pasas del primer paso, esa cuenta a medias se borra
         sola en una semana más o menos.
       </P>
@@ -356,9 +368,7 @@ export default function PrivacidadPage() {
         Solo te escribimos si nos dices que sí. Los únicos correos que llegan
         sin preguntar son el código para entrar y, si eres menor, el aviso a tu
         tutor. Todo lo demás se activa desde la app y se apaga con un clic en
-        el propio correo o en Perfil. Si creaste tu cuenta antes del 6 de
-        septiembre de 2026, puede que ya estuvieras suscrita al correo semanal:
-        lo apagas igual, con un clic.
+        el propio correo o en Perfil.
       </P>
 
       <H2>tu consentimiento</H2>

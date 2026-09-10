@@ -47,6 +47,20 @@ Y tres arreglos de código que no eran de texto:
   automática de clics de TikTok no se puede apagar desde el código. Quedan en la
   landing, el objetivo y el wow; el registro se manda al llegar al objetivo.
 
+Y tres decisiones de Roberto:
+
+- **Entrenamiento:** el aviso y los términos reservan usar los datos y dibujos
+  de prendas, looks y votos, sin nada que identifique, para entrenar y mejorar
+  la IA de stailist — con derecho a oponerse y nunca con fotos ni datos de
+  menores. Sobre los proveedores ya no se afirma que no entrenan: se rige por
+  sus términos.
+- **Correo semanal:** las 10 cuentas de antes del 6 de septiembre que quedaron
+  suscritas sin pedirlo se apagaron (dato en producción, no código). Desde ya
+  sólo lo recibe quien lo activa.
+- **Borrado suave:** se queda. Borrar una prenda, un look o un viaje la oculta,
+  se guarda y se puede seguir usando como dice el aviso (nunca sus fotos).
+  Borrar la cuenta sigue borrando todo.
+
 El resto:
 
 - El aviso decía que nadie puede abrir tus fotos sin tu sesión; el equipo de

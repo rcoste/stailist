@@ -25,6 +25,12 @@ describe("preguntas frecuentes", () => {
     expect(avatar.respuesta).toMatch(/opcional/);
   });
 
+  it("no afirman que los proveedores de IA no entrenan: sólo lo que stailist hace con las fotos", () => {
+    const todo = `${JSON.stringify(PREGUNTAS_FRECUENTES)} ${FICHA.privacidad}`;
+    expect(todo).not.toMatch(/no las usan para entrenar/);
+    expect(todo).toMatch(/nunca las usamos para entrenar/);
+  });
+
   it("viajan al JSON-LD como FAQPage y a /llms.txt tal cual", () => {
     const faq = preguntasEstructuradas();
     expect(faq["@type"]).toBe("FAQPage");

@@ -21,6 +21,11 @@
 //   vestida. Aquí tampoco se promete (hay test).
 // - La selfie: la colorimetría NO la pide; el avatar SÍ, y es opcional
 //   (corrección de Roberto al borrador).
+// - ENTRENAMIENTO (Roberto, 2026-09-10: "prefiero que nos cubramos"): el aviso
+//   reserva usar datos y dibujos de prendas, looks y votos para entrenar, con
+//   derecho a oponerse, y NUNCA fotos ni datos de menores. Sobre los
+//   proveedores ya no se afirma que no entrenan ("se rige por sus términos").
+//   Aquí sólo se puede decir lo que stailist hace con las fotos: no usarlas.
 // - GRATIS es cierto hoy (2026-09-10). Roberto: "eventualmente vamos a cobrar
 //   por uso, para limitar try-ons o funciones premium (...) no te pedimos
 //   tarjeta ni nada". El día que se cobre, esto cambia en el mismo commit.
@@ -45,7 +50,7 @@ export const FICHA = {
   ],
   paraQuien: "Personas que tienen el clóset lleno y aun así no saben qué ponerse, o que no saben combinar lo que ya tienen.",
   privacidad:
-    "Tus fotos viven en un espacio privado, los proveedores de IA no las usan para entrenar sus modelos, y puedes borrar tu cuenta y todo lo tuyo desde la app.",
+    "Tus fotos viven en un espacio privado, stailist nunca las usa para entrenar su inteligencia artificial, y puedes borrar tu cuenta y todo lo tuyo desde la app.",
   edad: "Desde los 13 años; entre 13 y 17 se necesita el permiso de un tutor para subir fotos.",
   paginas: [
     { titulo: "Inicio", ruta: "/", nota: "qué es stailist y cómo empezar" },
@@ -93,7 +98,7 @@ export const PREGUNTAS_FRECUENTES: readonly { pregunta: string; respuesta: strin
   {
     pregunta: "¿Qué pasa con mis fotos?",
     respuesta:
-      "Viven en un espacio privado, no en internet abierto. Los servicios de IA que usamos no las usan para entrenar sus modelos, y puedes borrar tu cuenta con todo lo tuyo desde la app.",
+      "Viven en un espacio privado, no en internet abierto, y nunca las usamos para entrenar nuestra inteligencia artificial. Puedes borrar tu cuenta con todo lo tuyo desde la app.",
   },
   {
     pregunta: "¿Tengo que descargar algo?",

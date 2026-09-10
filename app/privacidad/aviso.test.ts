@@ -42,6 +42,17 @@ describe("aviso de privacidad", () => {
     expect(aviso).toMatch(/lista de espera/);
   });
 
+  it("entrenamiento: se reserva con derecho a oponerse, nunca con fotos ni menores, y no afirma lo que hacen los proveedores", () => {
+    expect(aviso).toMatch(/solo si\s+no te opones/);
+    expect(aviso).toMatch(/Nunca usamos para eso ninguna de tus fotos ni los datos de menores/);
+    expect(aviso).not.toMatch(/no se usa\s+para entrenar sus modelos/);
+    expect(terminos).toMatch(/Salvo que te opongas/);
+  });
+
+  it("ya no dice que las cuentas viejas siguen suscritas: se apagaron el 2026-09-10", () => {
+    expect(aviso).not.toMatch(/puede que ya estuvieras suscrita/);
+  });
+
   it("sigue nombrando al responsable y las etiquetas de anuncios", () => {
     expect(aviso).toMatch(/FREIGHTNOW SA DE CV/);
     expect(aviso).toMatch(/anuncios y etiquetas de medición/);
