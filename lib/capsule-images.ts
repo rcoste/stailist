@@ -70,9 +70,22 @@ export function tipoCanonico(tipo: string): string {
   const base = slug(tipo)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  // Sólo la primera palabra se canoniza; los modificadores se conservan tal
-  // cual ("calcetines-lana" → "calcetin-lana").
-  const [cabeza, ...resto] = base.split("-");
+  // Fuera las partículas de enlace. El modelo escribe "pantalón de vestir" o
+  // "pantalón vestir" según le toca, y sin esto son DOS claves distintas: se
+  // genera —y se paga— la misma imagen dos veces, y la biblioteca compartida
+  // deja de compartir. Medido en producción (2026-09-09): tres pares reales,
+  // `traje-bano`/`traje-de-bano` en los dos géneros y
+  // `pantalon-vestir`/`pantalon-de-vestir`.
+  //
+  // Ninguna prenda se distingue de otra por una preposición, así que quitarlas
+  // no puede fundir dos cosas distintas — que es el riesgo que tendría hacer
+  // esto con un adjetivo.
+  const ENLACES = new Set(["de", "del", "la", "el", "los", "las", "con", "y", "a"]);
+  const partes = base.split("-").filter((x) => x && !ENLACES.has(x));
+  // Sólo la primera palabra se canoniza en singular; los modificadores se
+  // conservan tal cual ("calcetines-lana" → "calcetin-lana").
+  const [cabeza, ...resto] = partes;
+  if (!cabeza) return base;
   return [TIPO_CANONICO[cabeza] ?? cabeza, ...resto].join("-");
 }
 

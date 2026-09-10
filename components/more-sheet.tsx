@@ -339,8 +339,12 @@ function NivelAtajos({
           <span className="text-[15px] font-bold">añadir prendas</span>
           {/* "foto, carrete o básicos" enumeraba las TRES puertas de antes. Al
               quedar dos (y llamarse una de ellas "tus fotos"), la lista dejó de
-              coincidir con lo que hay detrás. */}
-          <span className="text-[12.5px] font-medium opacity-70">tus fotos o los básicos</span>
+              coincidir con lo que hay detrás.
+              Y desde 2026-09-09 dice LO MISMO que el tile del home: eran dos
+              frases distintas para la misma acción ("tus fotos o los básicos"
+              contra "una o varias — con foto o sin ella"), y la de aquí
+              enumeraba las puertas en vez de decir qué acepta. */}
+          <span className="text-[12.5px] font-medium opacity-70">una o varias — con foto o sin ella</span>
         </span>
       </button>
 
@@ -403,7 +407,10 @@ function NivelAgregar({
         >
           <Icon name="chevron" size={16} className="rotate-180" />
         </button>
-        <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">agregar al clóset</h3>
+        {/* "añadir" y no "agregar": eran dos verbos para la misma acción en
+            cuatro puertas distintas (el tile del home, este drawer, la hoja y
+            su botón). El de los botones principales siempre fue "añadir". */}
+        <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">añadir al clóset</h3>
       </div>
       <AddOptions
         onCarrete={onAddCarrete}

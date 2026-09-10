@@ -2,6 +2,48 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.322.1] - 2026-09-09 — una preposición estaba pagando imágenes dobles
+
+El último punto de la limpieza, y otra vez el hallazgo no era el que yo había
+apuntado.
+
+**Los "7 duplicados" de la biblioteca eran falsos.** Todos eran pares
+`X__hombre` / `X__mujer` del mismo tipo, y eso es correcto por diseño: la clave
+incluye género a propósito porque un blazer de hombre no es uno de mujer. Mi
+consulta agrupaba mal.
+
+**Los duplicados REALES eran otros tres, y los tres por la partícula "de":**
+
+| | |
+|---|---|
+| `traje-bano__negro__hombre` | `traje-**de**-bano__negro__hombre` |
+| `traje-bano__negro__mujer` | `traje-**de**-bano__negro__mujer` |
+| `pantalon-vestir__negro__hombre` | `pantalon-**de**-vestir__negro__hombre` |
+
+Y eso importa más que los 20 centavos que costaron: **la canonización del tipo
+que entró hoy (v0.2.316.0) no cubría el caso.** Sólo normaliza el plural de la
+primera palabra y conserva los modificadores tal cual, así que "pantalón de
+vestir" y "pantalón vestir" seguían siendo dos claves — la misma imagen
+generada y pagada dos veces, y la biblioteca compartida dejando de compartir.
+
+Ahora `tipoCanonico` quita las partículas de enlace (de, del, la, el, con, y).
+Ninguna prenda se distingue de otra por una preposición, así que esto no puede
+fundir dos cosas distintas — el riesgo que sí tendría hacerlo con un adjetivo, y
+por eso los adjetivos no se tocan (`saco-cruzado` ≠ `saco-desestructurado`).
+
+**Las tres filas huérfanas NO se borran.** Nadie las usa (verificado: 0 prendas
+apuntan a ellas), pero son tres archivos sin impacto en nada, y borrarlas sería
+una operación destructiva en producción a cambio de cero beneficio. Lo que
+importaba era cerrar el hueco que las produce.
+
+### Y un solo verbo en las cuatro puertas de "añadir"
+
+Había dos verbos para la misma acción —"añadir" en los botones, "agregar" en
+los títulos de las hojas— y dos subtítulos distintos para lo mismo: el tile del
+home decía *"una o varias — con foto o sin ella"* y el drawer *"tus fotos o los
+básicos"*, que además enumeraba las puertas en vez de decir qué acepta. Todo
+queda como el tile del home, que es el que se decidió con Roberto esta mañana.
+
 ## [0.2.322.0] - 2026-09-09 — el juez de la cápsula ya tiene quién lo lea
 
 `/admin/capsulas`. El juez existe desde v0.2.319.0 y escribía sus hallazgos en
