@@ -24,6 +24,8 @@ export async function ensureCatalogRender(
     formalidad?: string | null;
     temporada?: string | null;
     visual?: string | null;
+    /** Quién la pidió: sin esto la imagen no deja recibo (ver archetype-image). */
+    userId?: string | null;
   }
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
   // Se GUARDA con la clave canónica; se BUSCA con la canónica y la cruda, para
@@ -54,7 +56,16 @@ export async function ensureCatalogRender(
     sinPatronDeclarado: true,
   });
   const type = args.categoria === "calzado" ? "shoes" : "flat";
-  const bytes = await generateArchetypeImage(desc, type, args.gender ?? undefined, "3:4");
+  // `tarea: "capsula-ideal"` distingue estas imágenes de las del clóset en el
+  // panel: son la misma llamada pero responden preguntas distintas (cuánto
+  // cuesta enseñar lo que te falta vs. dibujar lo que ya tienes).
+  const bytes = await generateArchetypeImage(
+    desc,
+    type,
+    args.gender ?? undefined,
+    "3:4",
+    args.userId ? { supabase, userId: args.userId, tarea: "capsula-ideal" } : null
+  );
   if (!bytes) return { ok: false, error: "render_fallo" };
 
   const path = `${key}.jpg`;

@@ -153,7 +153,15 @@ export async function renderItemImage(
       // sin foto utilizable → texto→imagen
     }
   }
-  if (!bytes) bytes = await generateArchetypeImage(conColor, type, gender, "3:4");
+  // `tarea: "render-prenda"` — la imagen de UNA prenda del clóset, distinta de
+  // "capsula-ideal" (lo que te falta). Sin el ctx no dejaba recibo, así que el
+  // camino que más imágenes genera era invisible en el panel y en la vigilancia.
+  if (!bytes)
+    bytes = await generateArchetypeImage(conColor, type, gender, "3:4", {
+      supabase,
+      userId,
+      tarea: "render-prenda",
+    });
   if (!bytes) {
     await supabase
       .from("items")
