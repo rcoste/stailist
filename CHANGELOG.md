@@ -56,8 +56,9 @@ al login. Probado en el navegador con IDs falsos.
 ### Lo que falta y no es código
 
 Crear las cuentas y pasar los IDs; apagar en cada plataforma la recolección
-automática de datos (la landing sí tiene campo de correo); agregar DMARC al
-dominio. Todo en `docs/designs/adwords-readiness.md`.
+automática de datos (la landing sí tiene campo de correo). El DMARC del dominio
+ya se agregó (fuera del código, en Vercel DNS). Todo en
+`docs/designs/adwords-readiness.md`.
 
 ## [0.2.325.0] - 2026-09-09 — limpieza: 12 ramas fantasma y una trampa de 66 líneas
 

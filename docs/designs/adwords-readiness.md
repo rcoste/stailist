@@ -4,7 +4,7 @@
 análisis del 2026-07-13, cuyo bloqueador #1 (la allowlist) dejó de existir con
 el registro abierto (B5, 2026-09-06).
 **Decisión de Roberto:** Google Ads arranca el lunes 2026-09-14; TikTok con
-video después. Campaña principal enfocada a hombres (evaluándose).
+video después. Campaña principal enfocada a hombres (decidido por Roberto el 2026-09-10).
 
 ## La objeción, registrada
 
@@ -20,10 +20,14 @@ nuevo; los anuncios son la única fuente de desconocidos. **Es compra de
 aprendizaje, no de crecimiento**, y se lee con la columna "volvió en 7 días"
 de `/admin/adquisicion`, no con el costo por registro.
 
-Criterio de parada propuesto por Claude (Roberto no lo ha aprobado): de las
-primeras 30 personas que lleguen a su primer look, si menos de 6 (20%)
-vuelven otro día en su primera semana, se para y no se escala. Referencia: los
-amigos volvieron 47%.
+**Criterio de parada acordado con Roberto (2026-09-10):** de las primeras 30
+personas que lleguen a su primer look, si menos de 6 (20%) vuelven otro día en
+su primera semana, se para y no se escala. Referencia: los amigos volvieron 47%.
+
+La hipótesis que la campaña pone a prueba (Roberto): los usuarios de hoy no
+volvían porque eran amigos sin el dolor; Val, que sí lo tenía, volvió. Si gente
+que BUSCA la solución tampoco llega al 20%, la hipótesis cae y el problema es la
+recurrencia del producto, no la audiencia.
 
 ## Qué quedó construido
 
@@ -77,6 +81,12 @@ amigos volvieron 47%.
 - México, español, **18+**.
 - **Campañas separadas por género** (hombre principal; mujer chica o pausada).
   Mezcladas no se pueden leer.
+- **Dentro de hombres, separadas por intención**, cada una con su
+  `utm_campaign` (así `/admin/adquisicion` las separa sola):
+  `hombres-diario` ("cómo combinar ropa hombre", "outfits hombre casual") y
+  `hombres-eventos` ("qué ponerme para una boda hombre", "outfit cita hombre").
+  El uso por evento es episódico: "volvió en 7 días" sólo es la vara justa para
+  la de diario; la de eventos se lee también a 30 días.
 - URLs finales con utm explícitas, p. ej.
   `https://stailist.co/?g=hombre&utm_source=google&utm_medium=cpc&utm_campaign=hombres-search`
   (el gclid lo añade Google solo).
@@ -87,10 +97,10 @@ amigos volvieron 47%.
 
 ## Pendientes conocidos
 
-- **DMARC**: stailist.co no tiene registro `_dmarc` (DKIM y Return-Path sí, en
-  Postmark). Con correos Hotmail/Outlook de desconocidos sube el riesgo de que
-  el código caiga en spam. Propuesta: `v=DMARC1; p=none;` (no bloquea nada,
-  sólo declara la política).
+- ~~DMARC~~ **Hecho el 2026-09-10** con permiso de Roberto: `_dmarc.stailist.co`
+  TXT `v=DMARC1; p=none;` en Vercel DNS (DKIM y Return-Path ya estaban, de
+  Postmark). No bloquea nada, sólo declara la política. Sin `rua`: `hola@`
+  manda pero no recibe, así que no hay a dónde mandar los reportes.
 - El hero de la landing habla del dolor de mujer ("tu clóset está lleno…"); el
   de hombre suele ser "no sé combinar / me visto igual / tengo una cita".
   Decisión de copy de Roberto.
