@@ -52,6 +52,7 @@ export function TryonView({
   prendas,
   nombre,
   onGenerar,
+  onReportar,
   fit = "alto",
 }: {
   image: string | null;
@@ -60,6 +61,8 @@ export function TryonView({
   prendas: TryonPrenda[];
   nombre: string;
   onGenerar?: () => void;
+  /** Abre el buzón desde la pantalla de error (ver el comentario en el bloque). */
+  onReportar?: () => void;
   /**
    * Quién manda la geometría. "alto" (default): el render llena el alto
    * disponible y de ahí sale su ancho — es el detalle a pantalla completa, donde
@@ -148,6 +151,20 @@ export function TryonView({
         {error && !generating && !hasRender ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-tile px-6 text-center">
             <p className="text-[13px] font-medium text-ink">{error}</p>
+            {/* REPORTAR DESDE EL ERROR (2026-09-09), no sólo desde el menú.
+                Val falló cuatro veces con el try-on y no reportó nada: se
+                rindió. El momento en que alguien tiene el problema enfrente y
+                ganas de contarlo es ÉSTE, no tres taps después en otra
+                pantalla. */}
+            {onReportar ? (
+              <button
+                type="button"
+                onClick={onReportar}
+                className="text-[12px] font-medium text-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                contarle a Roberto qué pasó
+              </button>
+            ) : null}
             {onGenerar ? (
               <button
                 type="button"
