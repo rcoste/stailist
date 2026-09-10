@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./logo";
+import { BotonReportar } from "./boton-reportar";
 import { TabBar } from "./tab-bar";
 import { DesktopHeader } from "./desktop-header";
 import { Icon } from "./icon";
@@ -77,7 +78,11 @@ export async function AppShell({
               <Icon name="chevron" size={15} rotate={180} />
               {back.label}
             </Link>
-          ) : null}
+          ) : (
+            // Sin "atrás", la izquierda está libre: ahí vive el buzón. Ver el
+            // porqué de este lado (y no junto al perfil) en BotonReportar.
+            <BotonReportar />
+          )}
           <Logo className="h-7" />
           {/* La esquina derecha: el menú de la pantalla si lo hay, y si no, el
               perfil de siempre. Misma caja de 36px en los dos casos, para que

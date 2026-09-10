@@ -10,6 +10,7 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
+import { ReporteSheet } from "@/components/reporte-sheet";
 import { AddOptions } from "@/components/add-options";
 import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import type { TripContext } from "@/lib/trip-context";
@@ -149,7 +150,7 @@ function AtajosSheet({
   const reduce = useReduceMotion();
   const [mounted, setMounted] = useState(false);
   const [shown, setShown] = useState(false);
-  const [nivel, setNivel] = useState<"atajos" | "agregar">("atajos");
+  const [nivel, setNivel] = useState<"atajos" | "agregar" | "reportar">("atajos");
 
   // Montaje/desmontaje con animación de salida (la base Sheet solo desmonta).
   // El patrón mount-on-open + desmontaje diferido NECESITA setState aquí (montar
@@ -189,7 +190,7 @@ function AtajosSheet({
   // alto fijo + overflow deja scrollHeight clampado y salta en un frame).
   const contentRef = useRef<HTMLDivElement>(null);
   const h0Ref = useRef<number | null>(null);
-  function cambiaNivel(next: "atajos" | "agregar") {
+  function cambiaNivel(next: "atajos" | "agregar" | "reportar") {
     h0Ref.current = contentRef.current?.offsetHeight ?? null;
     setNivel(next);
   }
@@ -249,7 +250,22 @@ function AtajosSheet({
               maletaHref={maletaHref}
               go={go}
               onAgregar={() => cambiaNivel("agregar")}
+              onReportar={() => cambiaNivel("reportar")}
             />
+          ) : nivel === "reportar" ? (
+            <div key="reportar">
+              <div className="mb-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => cambiaNivel("atajos")}
+                  aria-label="Volver a los atajos"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-ink"
+                >
+                  <Icon name="chevron" size={16} className="rotate-180" />
+                </button>
+              </div>
+              <ReporteSheet onClose={onClose} />
+            </div>
           ) : (
             <NivelAgregar
               key="agregar"
@@ -268,11 +284,14 @@ function AtajosSheet({
 function NivelAtajos({
   maletaHref,
   go,
+  onReportar,
   onAgregar,
 }: {
   maletaHref: string;
   go: (href: string) => void;
   onAgregar: () => void;
+  /** Abre el buzón (3er nivel). */
+  onReportar: () => void;
 }) {
   // "armar maleta" y "viajes" eran dos mosaicos donde uno CONTENÍA al otro: la
   // lista de viajes ya abre con "armar una maleta nueva" como acción principal.
@@ -330,6 +349,28 @@ function NivelAtajos({
           <TileAtajo key={t.label} icon={t.icon} label={t.label} onClick={t.onClick} />
         ))}
       </div>
+
+      {/* EL BUZÓN Y EL SELLO DE BETA, juntos y al pie (2026-09-09).
+          Juntos a propósito: el sello explica por qué el buzón importa, y el
+          buzón hace que el sello no sea sólo una excusa. Al pie porque ninguno
+          de los dos es de uso diario — y arriba competirían con lo que sí.
+          El "beta" NO va en la landing ni en el onboarding: ahí se está
+          pidiendo que invierta siete minutos y catalogue su clóset, y anunciar
+          fragilidad justo ahí es darle permiso para no volver. */}
+      <button
+        type="button"
+        onClick={onReportar}
+        className="mt-3 flex min-h-11 w-full items-center gap-2.5 rounded-sm border border-line bg-surface px-3.5 py-2.5 text-left transition-colors hover:border-ink"
+      >
+        <Icon name="destello" size={16} className="shrink-0 text-muted" />
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[13.5px] font-semibold text-ink">cuéntame algo</span>
+          <span className="text-[12px] text-muted">algo que no jaló o que te gustaría</span>
+        </span>
+        <span className="ml-auto shrink-0 rounded-sm bg-tile px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
+          beta
+        </span>
+      </button>
     </div>
   );
 }

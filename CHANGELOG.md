@@ -2,6 +2,75 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.321.0] - 2026-09-09 — un buzón que sí se encuentra, y el sello de beta donde no estorba
+
+Roberto: *"sería bueno poner algún botón para que los usuarios puedan reportar
+algún problema o sugerencia… es más fácil que durante el mismo uso se vayan
+reportando las cosas, que de memoria me lo expliquen"*. Y un disclaimer de beta.
+
+**Hasta hoy el único canal era `hola@stailist.co`, escondido en la página de
+términos.** En la práctica el feedback llegaba por WhatsApp, o no llegaba: Val
+intentó verse un look CUATRO veces este mismo día, falló las cuatro por una
+caída del proveedor de imágenes, y no reportó nada — se rindió.
+
+### El buzón
+
+Tres decisiones que no son cosméticas:
+
+**El contexto viaja solo.** No se le pregunta en qué pantalla estaba ni con qué
+versión: van la ruta, la versión, sus últimos 10 eventos y sus fallos de IA de
+las últimas 2 horas. Pedírselo es pedirle que haga de soporte técnico, y quien
+está molesto porque algo falló no escribe informes. Con esto, un "no me sale el
+look" de Val habría llegado con sus cuatro fallos de `tryon` adjuntos.
+
+**Nada frena el impulso.** El tipo (algo falló / una idea) tiene default, así
+que se puede mandar sin clasificar. La única condición para enviar es que haya
+texto.
+
+**El reporte no se pierde si falla el correo.** Se guarda en `reportes` ANTES de
+avisar, y el correo al admin va en `void` con catch: un Postmark caído no puede
+costar un reporte.
+
+**Dónde se reporta.** Tres lugares, y el principal cambió a media construcción.
+Primero vivía sólo al pie del menú "más" — y Roberto, que sabía que existía
+porque lo acabábamos de hacer, **no lo encontró**: *"no vi justo dónde pusiste
+lo de reportar"*. Si el autor no da con él, nadie va a dar.
+
+Subió al **header**, con un sobre a la izquierda, simétrico con el perfil. Del
+lado IZQUIERDO y no junto al perfil (que fue lo que él propuso) porque la
+esquina derecha ya está ocupada: el perfil, o el menú de la pantalla cuando lo
+hay. Un segundo icono ahí chocaría en la mitad de las pantallas. Cede su sitio
+cuando hay "atrás" — dentro de un detalle, volver importa más.
+
+Y sigue estando **al pie del menú** y **en la pantalla de error del try-on**,
+que es donde duele: el momento en que alguien tiene el problema enfrente y ganas
+de contarlo es ése, no tres taps después.
+
+**Sobre la captura de pantalla automática** (que Roberto pidió): se descartó a
+propósito. `html2canvas` pesa ~200 KB y falla con imágenes de otro dominio y con
+las fuentes; y el contexto de arriba reconstruye mejor que una imagen — hoy el
+caso de Val se reconstruyó con datos, no con un screenshot. La foto queda como
+campo opcional que la persona sube si quiere mostrar algo.
+
+### El sello de beta, y dónde NO va
+
+Va junto al buzón, al pie del menú. Juntos a propósito: el sello explica por qué
+el buzón importa, y el buzón hace que el sello no sea sólo una excusa.
+
+**NO va en la landing ni en el onboarding**, y hay un test que lo impide. Ahí se
+está pidiendo que invierta siete minutos y catalogue su clóset; anunciar
+fragilidad justo en ese momento es darle permiso para no volver. Las ocho
+usuarias que se fueron ya habían cargado entre 31 y 81 prendas — un "beta" les
+habría dado la excusa antes de llegar ahí.
+
+(Ojo con el precedente: la auditoría del 09-01 marcó el copy de beta como
+bloqueante, pero era **"beta CERRADA"** — *"solo por invitación"*, *"pídele tu
+lugar a Roberto"*. Eso es una puerta cerrada, no una expectativa. Son cosas
+distintas.)
+
+Migración `0156_reportes` (aplicada): tabla con RLS por persona; el admin lee
+por service role como el resto del panel.
+
 ## [0.2.320.1] - 2026-09-09 — la vigilancia no avisó por UN fallo de margen
 
 Iba a construir una alerta diaria de fallos de IA. **Ya existía**: el cron
