@@ -140,6 +140,33 @@ const MATERIAL_SE_ARRUINA =
  */
 const FORMA_NO_AGUANTA = new Set(["mocasin", "nautico", "sandalia"]);
 
+/**
+ * EL TENIS QUE DEJA PASAR EL AGUA — y por qué no es lo mismo que arruinarse.
+ *
+ * `MATERIAL_SE_ARRUINA` responde "¿se echa a perder el zapato?". Roberto dijo
+ * la otra pregunta, que es la que a la persona le importa (2026-09-09): "el
+ * tema es el de los sintéticos, que se te mete el agua y se mojan los
+ * calcetines. Horrible". Un tenis de malla no se arruina — te empapa.
+ *
+ * Por eso NO se metió "sintético" en la lista de arriba: una bota sintética o
+ * un impermeable de goma aguantan la lluvia perfecto. Es la combinación TENIS
+ * + empeine que no sea piel la que falla.
+ *
+ * Sus palabras, textuales: "unos tenis más de ejercicio, como pueden ser unos
+ * Ultraboost o los de On, están mal. Un tenis de piel blanco está menos peor,
+ * y sobre todo tiene suela gruesa". O sea: bota bien, tenis de piel tolerable,
+ * tenis de tela o malla no.
+ *
+ * `piel sintética` pasa a propósito (contiene "piel"): un empeine liso de
+ * piel sintética no absorbe. Lo que empapa es el tejido.
+ *
+ * POR QUÉ SE PUDO ESCRIBIR HASTA HOY: no faltaba criterio, faltaba DATO. Sus
+ * tenis grises —los que llamó "terrible calzado para lluvia"— no tenían
+ * material registrado, y la regla no juzga sin material. 124 de los 175 pares
+ * de la base estaban igual; se leyeron con visión el 2026-09-09.
+ */
+const TENIS_QUE_AGUANTA = /piel|cuero|charol/;
+
 /** #rrggbb → [r,g,b]. null si no hay hex o viene mal escrito. */
 function rgb(hex?: string): [number, number, number] | null {
   if (!hex) return null;
@@ -276,6 +303,31 @@ export const esCuero = (i: EngineItem) =>
   /cintur[oó]n|zapato|mocas[ií]n|bot[ií]n|bota|reloj de piel|correa/.test(TIPO(i));
 
 const nombre = (i: EngineItem) => i.attrs.nombre ?? i.attrs.tipo ?? i.id;
+
+/**
+ * ¿ESTE ZAPATO AGUANTA LA LLUVIA? Una sola respuesta, para las dos reglas.
+ *
+ * Vivía duplicada: la regla `lluvia-calzado` decidía a quién marcar y
+ * `bota-de-montana-en-la-calle` decidía qué recambio ofrecer bajo lluvia, cada
+ * una con su copia del criterio. Al añadir el caso del tenis (2026-09-09) las
+ * dos copias se habrían separado en silencio: la segunda habría ofrecido un
+ * tenis de malla como recambio "seguro" para una bota impermeable.
+ *
+ * Tres capas, en este orden:
+ *   1. FORMA — un mocasín es un mocasín aunque sea de piel.
+ *   2. Sin material NO se juzga: aguanta por defecto. Una regla que dispara con
+ *      datos incompletos manda al juez a "arreglar" lo que estaba bien.
+ *   3. TENIS aparte del resto: ahí el empeine que no es piel te mete el agua
+ *      adentro; en botas y zapatos el criterio sigue siendo si se arruinan.
+ */
+function aguantaElAgua(i: EngineItem): boolean {
+  const t = tipoDePrenda(nombre(i))?.tipo;
+  if (t && FORMA_NO_AGUANTA.has(t)) return false;
+  const m = norm(i.attrs.material);
+  if (!m) return true;
+  if (t === "tenis") return TENIS_QUE_AGUANTA.test(m);
+  return !MATERIAL_SE_ARRUINA.test(m);
+}
 
 /**
  * Revisa un look ya armado. Devuelve las violaciones encontradas (vacío = limpio).
@@ -722,14 +774,7 @@ export function revisarEjecucion(
         .filter((i) => !esDeMontana(i));
       // Con lluvia, el recambio además tiene que aguantar el agua: cambiar una
       // bota impermeable por un mocasín sería "arreglar" hacia atrás.
-      const aptos = ctx.lluvia
-        ? otros.filter((i) => {
-            const t = tipoDePrenda(nombre(i))?.tipo;
-            if (t && FORMA_NO_AGUANTA.has(t)) return false;
-            const m = norm(i.attrs.material);
-            return !m || !MATERIAL_SE_ARRUINA.test(m);
-          })
-        : otros;
+      const aptos = ctx.lluvia ? otros.filter(aguantaElAgua) : otros;
       if (aptos.length) {
         v.push({
           regla: "bota-de-montana-en-la-calle",
@@ -755,16 +800,7 @@ export function revisarEjecucion(
   if (ctx.lluvia && ctx.closet?.length) {
     const esPie = (i: EngineItem) => tipoDePrenda(nombre(i))?.zona === "pie";
     // Abierto (sandalia, huarache) o de un material que el agua arruina.
-    const noAguanta = (i: EngineItem) => {
-      const t = tipoDePrenda(nombre(i))?.tipo;
-      // La FORMA manda sobre el material: un mocasín de piel sigue siendo un
-      // mocasín. Este orden importa — al revés, la piel lo absolvía.
-      if (t && FORMA_NO_AGUANTA.has(t)) return true;
-      const m = norm(i.attrs.material);
-      // Sin material no se juzga: una regla que dispara por datos incompletos
-      // manda al juez a "arreglar" lo que estaba bien.
-      return !!m && MATERIAL_SE_ARRUINA.test(m);
-    };
+    const noAguanta = (i: EngineItem) => !aguantaElAgua(i);
     const malos = items.filter(esPie).filter(noAguanta);
     if (malos.length) {
       const alternativas = ctx.closet.filter(esPie).filter((i) => !noAguanta(i));

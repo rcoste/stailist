@@ -178,6 +178,20 @@ const schemaVision = {
 
 const MEDIA = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
 
+// LOS BYTES MANDAN, NO LA EXTENSIÓN — misma regla que lib/imagen-entrante.ts
+// (`tipoRealDe`), que no se puede importar aquí porque esto es .mjs suelto.
+//
+// Cazado el 2026-09-09: cuatro zapatos se saltaban con "The image was specified
+// using the image/png media type, but the image appears to be a image/jpeg
+// image". En public/archetypes hay JPEGs guardados con extensión .png, y el
+// tipo salía de la extensión. Es el mismo bug que ya se pagó una vez en el juez
+// del avatar.
+const tipoRealDe = (b64) =>
+  b64.startsWith("/9j/") ? "image/jpeg"
+  : b64.startsWith("iVBOR") ? "image/png"
+  : b64.startsWith("UklGR") ? "image/webp"
+  : null;
+
 // Resuelve los bytes de la imagen de una prenda siguiendo el orden canónico de
 // lib/item-image.ts: arquetipo (public/ en disco) → render limpio (bucket
 // privado) → foto cruda (bucket privado) → prestada (public/ en disco).
@@ -187,14 +201,16 @@ async function imagenDePrenda(row) {
     if (!existsSync(abs)) return null;
     const ext = path.extname(abs).toLowerCase();
     if (!MEDIA[ext]) return null;
-    return { data: readFileSync(abs).toString("base64"), mediaType: MEDIA[ext] };
+    const data = readFileSync(abs).toString("base64");
+    return { data, mediaType: tipoRealDe(data) ?? MEDIA[ext] };
   };
   const privada = async (p) => {
     const { data, error } = await supabase.storage.from("prendas").download(p);
     if (error || !data) return null;
     const ext = path.extname(p).toLowerCase();
     const buf = Buffer.from(await data.arrayBuffer());
-    return { data: buf.toString("base64"), mediaType: MEDIA[ext] ?? "image/jpeg" };
+    const b64 = buf.toString("base64");
+    return { data: b64, mediaType: tipoRealDe(b64) ?? MEDIA[ext] ?? "image/jpeg" };
   };
   if (row.arch_image) return local(row.arch_image);
   if (row.render_status === "done" && row.render_path) return privada(row.render_path);

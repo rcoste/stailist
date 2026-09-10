@@ -2,6 +2,68 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.324.0] - 2026-09-09 — el tenis que te moja los calcetines
+
+Roberto, sobre por qué unos tenis sí y otros no bajo la lluvia: *"el tema es el
+de los sintéticos, que se te mete el agua y se mojan los calcetines. Horrible"*.
+
+**No faltaba criterio: faltaba dato.** Sus "Tenis grises" —los que condenó tres
+veces ("Terrible calzado para lluvia sin paraguas", "Error fuerte", "Falla
+calzado")— **no tenían material registrado**, y la regla de lluvia dice
+explícitamente que sin material no juzga, para no reprobar por datos
+incompletos. Se leyeron con visión y salieron `sintético`.
+
+**Y la premisa que archivó esto durante semanas era falsa.** El comentario de
+`scripts/leer-suela.ts` afirmaba que Roberto había marcado sus "Tenis de piel
+negros" como no aptos tres veces, lo que fabricaba una contradicción
+irresoluble (mismo material, mismo grosor de suela, veredictos opuestos). Sus
+tres comentarios reales sobre ese zapato son **"Podría mejorar el calzado, pero
+no está mal"**. Una preferencia tibia leída como un rechazo. Corregido.
+
+### El dato
+
+124 de los 175 pares de calzado de la base no tenían material — 105 de ellos
+heredados de arquetipos de la biblioteca, que nadie había mirado nunca (la
+visión de alta SÍ pide material; las prendas del checklist no pasan por ella).
+Se leyeron con `backfill-atributos-ricos --vision`: **quedan 174 de 175**.
+
+De paso, dos arreglos en ese script:
+- `--solo <regex>` sobre el nombre, para atacar un hueco concreto sin pagar el
+  clóset entero.
+- **Los bytes mandan, no la extensión.** Cuatro zapatos se saltaban con "the
+  image appears to be a image/jpeg image": hay JPEGs guardados como `.png` en
+  `public/archetypes`. Es el mismo bug que ya se pagó una vez en el juez del
+  avatar.
+
+### La regla
+
+`sintético` **no** entró en `MATERIAL_SE_ARRUINA`, y esa es la decisión: una
+bota sintética o un impermeable de goma aguantan la lluvia perfecto. Lo que
+falla es la combinación **tenis + empeine que no sea piel**. Son dos preguntas
+distintas: la lista vieja contesta "¿se echa a perder el zapato?" y ésta
+contesta "¿se te mojan los pies?".
+
+`piel sintética` pasa a propósito: lo que empapa es el tejido, no el sintético.
+
+**De paso, el criterio dejó de estar duplicado.** `lluvia-calzado` decidía a
+quién marcar y `bota-de-montana-en-la-calle` decidía qué recambio ofrecer bajo
+lluvia, cada una con su copia. Al añadir el tenis se habrían separado en
+silencio: la segunda habría ofrecido un tenis de malla como recambio "seguro"
+para una bota impermeable. Ahora las dos llaman a `aguantaElAgua`, con un test
+que lo blinda.
+
+### Medido contra sus votos
+
+| | |
+|---|---|
+| condenas suyas que la regla caza | **3 de 3** (antes 0) |
+| condenas que se le escapan | 0 |
+| marcas sobre looks que él no condenó | **0** de 14 |
+
+Los siete looks donde dijo "podría mejorar, pero no está mal" siguen pasando
+—todos con calzado de piel—, que es exactamente lo que pidió: eso es
+preferencia, no falla.
+
 ## [0.2.323.0] - 2026-09-09 — el prompt y el razonamiento, para poder depurar
 
 Roberto: *"me gustaría en el admin tener de alguna manera el prompt que se manda
