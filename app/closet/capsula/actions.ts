@@ -18,7 +18,8 @@ import {
   visibleQuestions,
 } from "@/lib/capsule";
 import { EMPTY_VETOES, type StyleVetoes, vetoLabels } from "@/lib/vetoes";
-import { generateCapsuleTarget } from "@/lib/engine/capsule-target";
+import { generateCapsuleTarget, type TrazaCapsula } from "@/lib/engine/capsule-target";
+import { guardarTraza } from "@/lib/trazas";
 import { generateCapsuleSwap } from "@/lib/engine/capsule-swap";
 import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
 import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
@@ -101,8 +102,9 @@ export async function saveLifestyle(
     .eq("id", user.id);
 
   let target: CapsuleTarget;
+  let traza: TrazaCapsula;
   try {
-    target = await generateCapsuleTarget({
+    const generado = await generateCapsuleTarget({
       answers,
       questions: allQ,
       gender,
@@ -125,6 +127,8 @@ export async function saveLifestyle(
           ? ((profile?.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
           : null,
     });
+    target = generado.target;
+    traza = generado.traza;
     // Firma del estilo COMPLETO (referencia + sus palabras): si cualquiera
     // cambia después, la cápsula se ofrece a regenerar.
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
@@ -156,6 +160,19 @@ export async function saveLifestyle(
   if (error) {
     return { status: "error", message: "No pude guardar tus esenciales — dale otra vez." };
   }
+
+  // La traza (prompt + razonamiento) va a su propia tabla, NO al target: el
+  // target lo lee la persona para pintar su pantalla y el prompt de sistema no
+  // puede viajar ahí. No bloquea nada — si falla, sólo pierdo material de
+  // depuración, no sus esenciales.
+  await guardarTraza(supabase, {
+    user_id: user.id,
+    tarea: "capsula-ideal",
+    modelo: traza.modelo,
+    promptSystem: traza.system,
+    promptUsuario: traza.usuario,
+    razonamiento: traza.razonamiento,
+  });
 
   await registrarEvento(supabase, {
     user_id: user.id,
@@ -462,8 +479,9 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
 
   let target: CapsuleTarget;
+  let traza: TrazaCapsula;
   try {
-    target = await generateCapsuleTarget({
+    const generado = await generateCapsuleTarget({
       answers,
       questions: [...assessmentQuestions(gender), ...dynamicQ],
       gender,
@@ -486,6 +504,8 @@ export async function regenerateCapsuleTarget(): Promise<void> {
           ? ((profile?.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
           : null,
     });
+    target = generado.target;
+    traza = generado.traza;
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);
   } catch (e) {
     console.error(
@@ -501,6 +521,16 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     .update({ capsule_target: target, capsule_match: null, capsule_overrides: null })
     .eq("id", user.id);
   if (error) return;
+  // Misma traza que en saveLifestyle: una fila por persona, la de la cápsula
+  // que está viva ahora (ver migración 0157).
+  await guardarTraza(supabase, {
+    user_id: user.id,
+    tarea: "capsula-ideal",
+    modelo: traza.modelo,
+    promptSystem: traza.system,
+    promptUsuario: traza.usuario,
+    razonamiento: traza.razonamiento,
+  });
   revalidatePath("/closet/capsula");
   revalidatePath("/closet");
 }

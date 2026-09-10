@@ -18,22 +18,60 @@ import type { CapsuleItem, CapsuleTarget } from "@/lib/capsule";
 // Es de lectura pura: no escribe, no repara, no regenera. Llenar un hueco pide
 // criterio de stylist y su paleta, y esa decisión es de Roberto, no de una
 // pantalla de admin.
+//
+// DESDE v0.2.323.0 también enseña LA TRAZA: el prompt exacto que se le mandó al
+// modelo y el razonamiento con el que contestó (`ai_trazas`). El juez dice QUÉ
+// falta; la traza dice POR QUÉ. Las dos preguntas se hacen juntas —"le faltó un
+// traje" sólo se contesta viendo si el prompt se lo pidió y qué se contestó él
+// mismo antes de listar— así que viven en la misma pantalla, plegadas.
+//
+// Las cápsulas generadas ANTES de esto no tienen traza: el `plan` se producía y
+// se tiraba. Se llenan solas al regenerar.
 export const dynamic = "force-dynamic";
 
+type Traza = {
+  modelo: string | null;
+  version: string | null;
+  prompt_system: string | null;
+  prompt_usuario: string | null;
+  razonamiento: string | null;
+  created_at: string;
+};
+
 type Fila = {
+  id: string;
   correo: string;
   gender: string | null;
   techo: string | null;
   piezas: number;
   hallazgos: HallazgoCapsula[];
+  traza: Traza | null;
 };
 
 export default async function AdminCapsulas() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("email, gender, lifestyle, capsule_target")
-    .not("capsule_target", "is", null);
+  const [{ data }, { data: trazasRaw }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, email, gender, lifestyle, capsule_target")
+      .not("capsule_target", "is", null),
+    // La tabla guarda una fila por generación (no se puede hacer upsert: la
+    // persona escribe pero no lee — ver migración 0157). La que importa es la
+    // MÁS NUEVA, que es la que produjo la cápsula que está viva ahora.
+    supabase
+      .from("ai_trazas")
+      .select("user_id, modelo, version, prompt_system, prompt_usuario, razonamiento, created_at")
+      .eq("tarea", "capsula-ideal")
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const porUsuario = new Map<string, Traza>();
+  // Vienen de la más nueva a la más vieja: la primera de cada persona gana.
+  for (const t of trazasRaw ?? []) {
+    if (!porUsuario.has(t.user_id as string)) {
+      porUsuario.set(t.user_id as string, t as unknown as Traza);
+    }
+  }
 
   const filas: Fila[] = (data ?? [])
     .map((p) => {
@@ -41,6 +79,8 @@ export default async function AdminCapsulas() {
       const items = (target?.items ?? []) as CapsuleItem[];
       const vida = (p.lifestyle ?? {}) as Record<string, string | undefined>;
       return {
+        id: p.id as string,
+        traza: porUsuario.get(p.id as string) ?? null,
         correo: (p.email as string) ?? "—",
         gender: (p.gender as string) ?? null,
         techo: vida.formalidad_techo ?? null,
@@ -73,6 +113,11 @@ export default async function AdminCapsulas() {
           aquí en vivo, así que esto incluye las cápsulas viejas — que no tienen
           revisión guardada porque se generaron antes de que existiera.
         </p>
+        <p className="text-sm text-muted">
+          <b className="tabular text-ink">{filas.filter((f) => f.traza).length}</b> con
+          traza: el prompt que se le mandó al modelo y el razonamiento con el que
+          contestó, dentro de cada tarjeta.
+        </p>
       </div>
 
       {porRegla.size > 0 ? (
@@ -93,7 +138,7 @@ export default async function AdminCapsulas() {
       <div className="flex flex-col gap-2">
         {filas.map((f) => (
           <div
-            key={f.correo}
+            key={f.id}
             className={`rounded-md border bg-surface p-4 ${
               f.hallazgos.length ? "border-ink" : "border-line"
             }`}
@@ -120,9 +165,73 @@ export default async function AdminCapsulas() {
                 ))}
               </ul>
             ) : null}
+
+            {f.traza ? (
+              <div className="mt-3 flex flex-col gap-2 border-t border-line pt-3">
+                {/* El razonamiento primero y el prompt después, en ese orden a
+                    propósito: al abrir una cápsula rara la pregunta es "¿qué
+                    estaba pensando?", y sólo si eso no explica nada se baja a
+                    revisar qué se le pidió. */}
+                <Plegado
+                  titulo="Razonamiento"
+                  pista={
+                    f.traza.razonamiento
+                      ? `${f.traza.razonamiento.length} caracteres`
+                      : "no lo devolvió"
+                  }
+                  texto={f.traza.razonamiento}
+                />
+                <Plegado
+                  titulo="Prompt de sistema"
+                  pista={f.traza.modelo ?? "—"}
+                  texto={f.traza.prompt_system}
+                />
+                <Plegado
+                  titulo="Lo que se le mandó de ella"
+                  pista={new Date(f.traza.created_at).toLocaleString("es-MX")}
+                  texto={f.traza.prompt_usuario}
+                />
+              </div>
+            ) : (
+              <p className="mt-3 border-t border-line pt-3 text-xs text-muted">
+                Sin traza — se generó antes de que se guardara el prompt. Se llena
+                sola cuando regenere sus esenciales.
+              </p>
+            )}
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+
+// Un bloque plegado de texto largo. `pre` con `whitespace-pre-wrap` porque el
+// prompt tiene saltos y sangrías que SON el contenido: aplanarlos lo vuelve
+// ilegible justo cuando se está buscando qué línea falló. `overflow-x-auto`
+// para que una línea larga no empuje la página entera.
+function Plegado({
+  titulo,
+  pista,
+  texto,
+}: {
+  titulo: string;
+  pista: string;
+  texto: string | null;
+}) {
+  return (
+    <details className="rounded-sm border border-line bg-bg">
+      <summary className="cursor-pointer px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted hover:text-ink">
+        {titulo}{" "}
+        <span className="font-medium normal-case tracking-normal opacity-70">· {pista}</span>
+      </summary>
+      {texto ? (
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap px-3 pb-3 text-[12px] leading-relaxed text-ink">
+          {texto}
+        </pre>
+      ) : (
+        <p className="px-3 pb-3 text-xs text-muted">Vacío.</p>
+      )}
+    </details>
   );
 }

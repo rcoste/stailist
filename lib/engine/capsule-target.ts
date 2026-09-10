@@ -302,17 +302,20 @@ export function bloqueVida(
     .join("\n");
 }
 
-// CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
-// ESA persona debería tener, mezclando lo que su vida exige con quién es cuando
-// elige, y aterrizada a su paleta de color. Libre del catálogo (puede pedir
-// prendas que no tenemos). Se llama una vez al guardar/editar el assessment.
-export async function generateCapsuleTarget(
-  inputs: CapsuleInputs
-): Promise<CapsuleTarget> {
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
+/**
+ * EL PROMPT DE LA CÁPSULA, aparte de la llamada.
+ *
+ * Estaba embebido dentro de `generateCapsuleTarget` como un template literal de
+ * ~60 líneas, y eso tenía dos costos: (1) ningún test podía leerlo sin exportar
+ * a mano cada regla suelta —de ahí que `REGLA_SASTRERIA` y `lineaAcentosCapsula`
+ * vivan exportadas—; (2) para GUARDAR lo que se mandó había que reconstruirlo
+ * fuera, y una reconstrucción con el código de hoy miente sobre lo que recibió
+ * la cápsula de ayer. Separado, el mismo string que se manda es el que se
+ * guarda: no hay copia que pueda derivar.
+ */
+export type PromptCapsula = { system: string; usuario: string };
 
-  const client = new Anthropic();
-
+export function construirPromptCapsula(inputs: CapsuleInputs): PromptCapsula {
   const vida = bloqueVida(inputs.questions ?? ASSESSMENT_QUESTIONS, inputs.answers);
 
   let paletaTxt = "No definida (usa neutros versátiles).";
@@ -360,18 +363,7 @@ export async function generateCapsuleTarget(
         ? "La persona es MUJER: TODA la cápsula es ropa de mujer. Jamás propongas prendas pensadas solo para hombre."
         : "Género no definido: usa prendas neutras/unisex.";
 
-  const response = await client.messages.create({
-    model: ENGINE_MODEL,
-    // ~25-40 prendas con material + por qué cada una, más el "plan" (borrador
-    // de razonamiento del schema): la cápsula nueva es grande y ya corría cerca
-    // del tope viejo (8000) — margen holgado; solo se paga lo que se emite.
-    max_tokens: 10000,
-    // Thinking OFF: en los modelos 5 viene ON por default y se come el
-    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
-    // esenciales muerta). El schema ya obliga a razonar en un campo antes de
-    // comprometer la respuesta, que es la misma idea dentro del presupuesto.
-    thinking: { type: "disabled" },
-    system: `Eres la stylist senior de stailist — del nivel de una asesora de imagen que cobra una fortuna, pero mejor y más honesta. Defines el CLÓSET CÁPSULA IDEAL de una persona: las prendas concretas que DEBERÍA tener para vivir bien vestida según su vida real, su cuerpo y su color. Partes de cero (no miras lo que ya tiene); después la app le dirá qué ya tiene y qué le falta, así que tu trabajo es definir el deber-ser, completo y honesto.
+  const system = `Eres la stylist senior de stailist — del nivel de una asesora de imagen que cobra una fortuna, pero mejor y más honesta. Defines el CLÓSET CÁPSULA IDEAL de una persona: las prendas concretas que DEBERÍA tener para vivir bien vestida según su vida real, su cuerpo y su color. Partes de cero (no miras lo que ya tiene); después la app le dirá qué ya tiene y qué le falta, así que tu trabajo es definir el deber-ser, completo y honesto.
 
 REGLA INNEGOCIABLE DE GÉNERO: ${generoTxt}
 
@@ -425,13 +417,59 @@ ${REGLA_PRENDAS_REALES}
 CLIMA DE VIAJE: su ciudad define el centro de gravedad del clóset, pero no puede empacar lo que no tiene. Si dice que viaja a un clima DISTINTO al suyo, súmale las piezas de ese clima aunque su ciudad no las pida, integradas a su paleta y su estilo (un abrigo de lana camel o carbón sirve igual en su ciudad para una noche fría). No es un guardarropa paralelo, pero SÍ tiene que alcanzar para vestirse de pies a cabeza allá:
 - FRÍO (y su clima no es frío): 1 o 2 piezas bastan, porque el frío se resuelve por CAPAS ENCIMA de lo que ya tiene. Un abrigo real (lana, largo), no una chamarra ligera; suma un suéter grueso si su clima es de plano cálido.
 - CALOR o playa (y su clima no es de calor): aquí NO alcanza con una pieza. Un viaje de calor le cambia el outfit COMPLETO — su ropa de diario no sirve. Dale un SET mínimo de 3 a 4: traje de baño (obligatorio si mencionó playa; no lo omitas por combinable que no sea), al menos un short o bermuda de calle (de lino o algodón — NO de baño: son prendas distintas y necesita las dos), y 1 o 2 tops frescos (camisa de lino, playera ligera). Si su clima ya es de calor, esto ya está cubierto por su día a día y no lo dupliques.
-Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`,
-    messages: [
-      {
-        role: "user",
-        content: `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto (en orden de fuerza): ${tags}${refTxt}${palabrasTxt}${feedbackTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}${inputs.ageStyling ? `\n${inputs.ageStyling}` : ""}\n\nDefine su cápsula ideal (items).`,
-      },
-    ],
+Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. Nada de ropa de gym salvo que el deporte sea claramente central en su vida.${vetosTxt}`;
+
+  const usuario = `VIDA:\n${vida}\n\nESTILO: ${estilo}\nTags de gusto (en orden de fuerza): ${tags}${refTxt}${palabrasTxt}${feedbackTxt}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\nSILUETA: ${siluetaLine}${inputs.ageStyling ? `\n${inputs.ageStyling}` : ""}\n\nDefine su cápsula ideal (items).`;
+
+  return { system, usuario };
+}
+
+/**
+ * LO QUE PRODUJO ESTA CÁPSULA, para poder depurarla después.
+ *
+ * Roberto, 2026-09-09: "me gustaría en el admin tener el prompt que se manda
+ * para generar el clóset cápsula, y el reasoning de por qué eligió lo que
+ * eligió". El `razonamiento` es el campo "plan" del schema — el borrador que el
+ * modelo escribe ANTES de listar prendas (por eso va primero en el schema) y
+ * que hasta hoy se generaba, se pagaba y se tiraba a la basura.
+ *
+ * Viaja aparte del `CapsuleTarget` a propósito: el target se guarda en
+ * `profiles.capsule_target`, que la persona lee para pintar su pantalla. El
+ * prompt de sistema es el criterio de stylist del producto y no puede viajar
+ * ahí (ver la migración 0157).
+ */
+export type TrazaCapsula = {
+  modelo: string;
+  system: string;
+  usuario: string;
+  razonamiento: string | null;
+};
+
+// CAPA 1 — la cápsula IDEAL: una lista de prendas concretas y nombradas que
+// ESA persona debería tener, mezclando lo que su vida exige con quién es cuando
+// elige, y aterrizada a su paleta de color. Libre del catálogo (puede pedir
+// prendas que no tenemos). Se llama una vez al guardar/editar el assessment.
+export async function generateCapsuleTarget(
+  inputs: CapsuleInputs
+): Promise<{ target: CapsuleTarget; traza: TrazaCapsula }> {
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
+
+  const client = new Anthropic();
+  const { system, usuario } = construirPromptCapsula(inputs);
+
+  const response = await client.messages.create({
+    model: ENGINE_MODEL,
+    // ~25-40 prendas con material + por qué cada una, más el "plan" (borrador
+    // de razonamiento del schema): la cápsula nueva es grande y ya corría cerca
+    // del tope viejo (8000) — margen holgado; solo se paga lo que se emite.
+    max_tokens: 10000,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+    // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+    thinking: { type: "disabled" },
+    system,
+    messages: [{ role: "user", content: usuario }],
     output_config: {
       format: {
         type: "json_schema",
@@ -439,7 +477,9 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
           type: "object",
           properties: {
             // PRIMERO en el schema a propósito: el modelo genera el plan antes
-            // que los items → espacio de razonamiento. El caller lo ignora.
+            // que los items → espacio de razonamiento. Desde v0.2.323.0 el
+            // caller SÍ lo guarda (ai_trazas): es la única explicación que
+            // existe de por qué eligió lo que eligió.
             plan: {
               type: "string",
               description:
@@ -506,6 +546,7 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
   // Truncado por tope de tokens = JSON incompleto; error distinguible.
   if (response.stop_reason === "max_tokens") throw new Error("TRUNCATED_RESPONSE");
   const parsed = JSON.parse(text) as {
+    plan?: string;
     items: CapsuleItem[];
     firma?: string;
     subline?: string;
@@ -533,11 +574,14 @@ Si contestó que no viaja a nada distinto, NO agregues nada por este concepto. N
   });
 
   return {
-    version: 2,
-    items,
-    ...(revision.length ? { revision } : {}),
-    firma: parsed.firma?.trim() || undefined,
-    subline: parsed.subline?.trim() || undefined,
-    pilares: parsed.pilares?.filter((p) => p.titulo && p.detalle) || undefined,
+    target: {
+      version: 2,
+      items,
+      ...(revision.length ? { revision } : {}),
+      firma: parsed.firma?.trim() || undefined,
+      subline: parsed.subline?.trim() || undefined,
+      pilares: parsed.pilares?.filter((p) => p.titulo && p.detalle) || undefined,
+    },
+    traza: { modelo: ENGINE_MODEL, system, usuario, razonamiento: parsed.plan?.trim() || null },
   };
 }

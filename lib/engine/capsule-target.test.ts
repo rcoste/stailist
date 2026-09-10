@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bloqueVida, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados, enlazarTrajes, REGLA_SASTRERIA } from "./capsule-target";
+import { bloqueVida, construirPromptCapsula, lineaAcentosCapsula, partirTrajes, limpiarEmpaquetados, enlazarTrajes, REGLA_SASTRERIA, type CapsuleInputs } from "./capsule-target";
 import { ASSESSMENT_QUESTIONS, type AssessmentQuestion, type CapsuleItem } from "@/lib/capsule";
 
 // Lo que se blinda: QUÉ frase le llega al motor por cada respuesta del quiz.
@@ -306,5 +306,81 @@ describe("el traje queda JUNTO en la lista, no disperso", () => {
     const pos = (n: string) => lista.findIndex((x) => x.nombre === n);
     expect(pos("Pantalón de vestir marino")).toBe(pos("Saco de traje marino de lana") + 1);
     expect(pos("Pantalón de vestir gris carbón")).toBe(pos("Saco de traje gris carbón de lana") + 1);
+  });
+});
+
+// EL PROMPT COMPLETO, ahora que se puede leer sin llamar al modelo.
+//
+// Antes vivía dentro de la función async y sólo se podía blindar exportando a
+// mano cada regla suelta. Lo que importa aquí no es el markup del texto: es que
+// las señales que el prompt DEBE llevar sigan llegando — porque cada una de
+// éstas costó un error real, y una edición del template puede tirarlas sin que
+// nada truene.
+
+const inputsBase: CapsuleInputs = {
+  answers: {},
+  gender: "hombre",
+  tasteTags: ["minimalista"],
+  archetype: null,
+  season: null,
+  flow: null,
+  build: null,
+  volume: null,
+};
+
+describe("construirPromptCapsula — las señales que no se pueden perder", () => {
+  it("lleva la regla de sastrería entera", () => {
+    const { system } = construirPromptCapsula(inputsBase);
+    expect(system).toContain(REGLA_SASTRERIA);
+  });
+
+  it("el género es una regla innegociable, no una sugerencia", () => {
+    const h = construirPromptCapsula(inputsBase).system;
+    expect(h).toContain("La persona es HOMBRE");
+    const m = construirPromptCapsula({ ...inputsBase, gender: "mujer" }).system;
+    expect(m).toContain("La persona es MUJER");
+  });
+
+  it("los vetos entran como regla dura y sólo si los hay", () => {
+    const sin = construirPromptCapsula(inputsBase).system;
+    expect(sin).not.toContain("VETOS DUROS");
+    const con = construirPromptCapsula({ ...inputsBase, vetoes: ["naranja", "mocasín"] }).system;
+    expect(con).toContain("VETOS DUROS");
+    expect(con).toContain("naranja, mocasín");
+  });
+
+  it("sus palabras y su vida van en el mensaje de ella, no en el de sistema", () => {
+    const { system, usuario } = construirPromptCapsula({
+      ...inputsBase,
+      styleWords: "me gusta andar cómodo pero que se vea caro",
+      answers: { actividades: "oficina" },
+      questions: [
+        {
+          id: "actividades",
+          label: "¿En qué se te va la semana?",
+          options: [{ value: "oficina", label: "Oficina" }],
+        },
+      ],
+    });
+    expect(usuario).toContain("me gusta andar cómodo");
+    expect(usuario).toContain("Oficina");
+    expect(system).not.toContain("me gusta andar cómodo");
+  });
+
+  // Los vetos son la ÚNICA cosa suya que va en el mensaje de sistema, y es a
+  // propósito: ahí es donde viven las reglas innegociables. Todo lo demás de
+  // ella (sus palabras, su referencia, su paleta) viaja en el mensaje de
+  // usuario. Vale la pena tenerlo escrito porque invita a la conclusión
+  // equivocada — "el system es genérico, guárdalo una vez" — y no lo es.
+  it("los vetos son lo único suyo que se cuela al mensaje de sistema", () => {
+    const { system } = construirPromptCapsula({
+      ...inputsBase,
+      styleWords: "palabras-de-ella",
+      styleReference: "referencia-de-ella",
+      vetoes: ["veto-de-ella"],
+    });
+    expect(system).toContain("veto-de-ella");
+    expect(system).not.toContain("palabras-de-ella");
+    expect(system).not.toContain("referencia-de-ella");
   });
 });
