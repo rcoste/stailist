@@ -27,20 +27,46 @@ export async function GET(request: NextRequest) {
   // Una sola consulta para las tres cifras. Va por `withDb` (Postgres directo)
   // y no por el cliente con sesión a propósito: esto mira el gasto de TODA la
   // app, que ninguna sesión de usuario puede ver por RLS.
-  const m = await withDb((c) =>
-    c
-      .query<{ fallos: string; llamadas: string; gasto: string }>(
-        `select
-           count(*) filter (where not ok and created_at >= now() - interval '1 hour') as fallos,
-           count(*) filter (where created_at >= now() - interval '1 hour') as llamadas,
-           coalesce(sum(costo_usd) filter (where created_at >= now() - interval '24 hours'), 0) as gasto
-         from ai_calls
-         where created_at >= now() - interval '24 hours'`
-      )
-      .then((r) => r.rows[0])
-  );
+  const m = await withDb(async (c) => {
+    const [tot, peor] = await Promise.all([
+      c
+        .query<{ fallos: string; llamadas: string; gasto: string }>(
+          `select
+             count(*) filter (where not ok and created_at >= now() - interval '1 hour') as fallos,
+             count(*) filter (where created_at >= now() - interval '1 hour') as llamadas,
+             coalesce(sum(costo_usd) filter (where created_at >= now() - interval '24 hours'), 0) as gasto
+           from ai_calls
+           where created_at >= now() - interval '24 hours'`
+        )
+        .then((r) => r.rows[0]),
+      // LA PERSONA CON MÁS FALLOS de la última hora. Va en su propia consulta y
+      // no como otro `filter` de la de arriba porque necesita agrupar por
+      // usuario, y mezclarlo obligaría a traer una fila por persona para
+      // quedarse con una. El correo se saca aquí (withDb ve toda la app; una
+      // sesión con RLS no podría).
+      c
+        .query<{ correo: string; fallos: string; tarea: string | null }>(
+          `select coalesce(u.email, a.user_id::text) as correo,
+                  count(*) as fallos,
+                  case when count(distinct a.tarea) = 1 then min(a.tarea) else null end as tarea
+             from ai_calls a
+             left join auth.users u on u.id = a.user_id
+            where not a.ok
+              and a.created_at >= now() - interval '1 hour'
+              and a.user_id is not null
+            group by 1
+            order by 2 desc
+            limit 1`
+        )
+        .then((r) => r.rows[0] ?? null),
+    ]);
+    return { ...tot, peor };
+  });
 
   const alarmas = decidirAlarmas({
+    peorPersona: m?.peor
+      ? { correo: m.peor.correo, fallos: Number(m.peor.fallos), tarea: m.peor.tarea }
+      : null,
     fallosUltimaHora: Number(m?.fallos ?? 0),
     llamadasUltimaHora: Number(m?.llamadas ?? 0),
     gastoUltimasHoras: Number(m?.gasto ?? 0),

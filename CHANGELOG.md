@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.320.1] - 2026-09-09 — la vigilancia no avisó por UN fallo de margen
+
+Iba a construir una alerta diaria de fallos de IA. **Ya existía**: el cron
+`vigilancia` corre cada hora desde hace tiempo y manda correo cuando la IA
+falla. No avisó del caso de Val por un fallo de diferencia:
+
+```
+/** Fallos en una hora a partir de los cuales ya no es mala suerte. */
+export const FALLOS_PARA_AVISAR = 5;
+```
+
+Val tuvo **cuatro**. Cuatro intentos de verse un look puesto entre 12:19 y
+12:50, los cuatro fallidos porque el modelo de imagen de Google estaba caído esa
+media hora. Se rindió y no volvió a intentarlo. Se supo tres horas después, por
+casualidad, auditando otra cosa.
+
+**El umbral no está mal pensado, está pensado para otro volumen.** Cinco fallos
+sueltos entre cientos de llamadas sí son señal y dos no son nada — eso sigue
+siendo cierto. Pero ese día hubo **ocho llamadas en total**: los cuatro fallos
+eran el 50%, y todos de la misma persona.
+
+**Segundo disparador, que no mira el total sino a la PERSONA:** tres fallos de
+la misma en una hora. Tres y no dos porque dos pueden ser un reintento con mala
+suerte; a la tercera la persona ya está viendo que "no funciona" y decidiendo si
+vuelve. El aviso va PRIMERO entre las alarmas — es el único que tiene a alguien
+real esperando del otro lado — y nombra la tarea cuando todos los fallos son de
+la misma ("todos en tryon"), que es lo que dice si el problema es una función o
+la app entera.
+
+El correo cierra con lo que de verdad hay que hacer: si el fallo fue del
+proveedor, **escribirle** — desde su lado la app falló sin explicación.
+
 ## [0.2.320.0] - 2026-09-09 — la PWA se ofrecía a 9 personas de 24, y nadie lo sabía
 
 Salió de la auditoría del patrón "construido y olvidado". El hueco parecía de
