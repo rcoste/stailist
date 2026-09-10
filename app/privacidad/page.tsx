@@ -14,18 +14,25 @@ import { InterruptorMedicion } from "@/components/interruptor-medicion";
 // cierta: si algo cambia (un modelo nuevo, un proveedor nuevo, otra retención),
 // se cambia aquí en el mismo commit. Es una página pública (proxy.ts).
 //
+// "ROBUSTO" = EXACTO, NO AMPLIO (2026-09-10). Roberto pidió dejarlo "suficiente-
+// mente robusto para estar cubierto". Lo que cubre es que no haya huecos entre
+// lo que dice y lo que pasa; una cláusula que dice "podemos hacer cualquier
+// cosa" no cubre a nadie. Ese día una revisión cruzó CADA frase con el código y
+// cazó frases falsas (el admin sí abre fotos, migración 0070; Open-Meteo recibe
+// coordenadas exactas y BigDataCloud no aparecía, lib/weather/index.ts; borrar
+// una prenda es borrado suave, lib/delete-actions.ts) y omisiones (IP del
+// login, reportes, datos del cuerpo, fotos de referencia, correos de gente sin
+// cuenta). app/privacidad/aviso.test.ts vigila que no regresen. Antes de tocar
+// datos, releer esto.
+//
 // El responsable es la razón social que opera stailist (confirmada por Roberto
 // el 2026-09-06); nunca un nombre de persona.
 
 export const metadata: Metadata = {
   title: "aviso de privacidad — stailist",
-  description: "Qué datos guarda stailist, para qué, y cómo borrarlos.",
+  description: "Qué datos guarda stailist, para qué, quién los ve y cómo borrarlos.",
 };
 
-// 2026-09-10: entran las etiquetas de Google Ads, Google Analytics y TikTok
-// (lib/publicidad.ts) y el origen de cada cuenta (lib/origen.ts). Hasta esta
-// fecha el aviso decía "No los compartimos con anunciantes. No hay
-// publicidad." — con los anuncios prendidos habría sido falso.
 const ACTUALIZADO = "10 de septiembre de 2026";
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -36,6 +43,16 @@ function P({ children }: { children: React.ReactNode }) {
 }
 function Li({ children }: { children: React.ReactNode }) {
   return <li className="text-base leading-relaxed text-ink2">{children}</li>;
+}
+function Ul({ children }: { children: React.ReactNode }) {
+  return <ul className="mt-3 list-disc space-y-2 pl-5">{children}</ul>;
+}
+function Enlace({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a href={href} className="font-medium text-ink underline" target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
 }
 
 export default function PrivacidadPage() {
@@ -74,10 +91,15 @@ export default function PrivacidadPage() {
       </P>
 
       <H2>qué guardamos</H2>
-      <ul className="mt-3 list-disc space-y-2 pl-5">
+      <Ul>
         <Li>
           <b>Tu correo.</b> Es tu forma de entrar (te mandamos un código, no hay
           contraseña) y la única forma que tenemos de escribirte.
+        </Li>
+        <Li>
+          <b>Cuando pides el código para entrar:</b> tu correo y la dirección IP
+          desde la que lo pides, para frenar a quien intente abusar del
+          formulario. Se borran en uno o dos días.
         </Li>
         <Li>
           <b>Lo que nos cuentas al arrancar:</b> qué ropa usas (mujer u hombre),
@@ -92,9 +114,12 @@ export default function PrivacidadPage() {
         </Li>
         <Li>
           <b>Tus fotos, si decides subirlas.</b> Para el avatar te pedimos una
-          foto de tu cara y una de cuerpo entero; con ellas generamos una imagen
-          tuya para probarte los looks. Para el fit check subes una foto con la
-          ropa puesta. Nada de esto es obligatorio: la app funciona sin fotos.
+          selfie y una foto de cuerpo entero; con ellas generamos una imagen tuya
+          para probarte los looks, y la IA lee la de cuerpo entero para calcular
+          tu complexión, que guardamos junto con tu estatura si nos la das. Para
+          el fit check subes una foto con la ropa puesta, y en tu estilo puedes
+          subir fotos de looks que te inspiran. Nada de esto es obligatorio: la
+          app funciona sin fotos.
         </Li>
         <Li>
           <b>Lo que haces en la app:</b> los looks que te armamos, tus votos,
@@ -102,24 +127,44 @@ export default function PrivacidadPage() {
           usamos para que el stylist aprenda de ti y para entender qué funciona.
         </Li>
         <Li>
-          <b>Tu ubicación aproximada, solo si la das.</b> Sirve para saber el
-          clima de tu ciudad. La usamos en el momento y no la guardamos como
+          <b>Registros del uso de la inteligencia artificial:</b> qué función se
+          usó, cuánto tardó y cuánto costó, para vigilar fallas y gastos. En
+          algunas funciones, como el clóset cápsula, guardamos también la
+          instrucción que se le mandó a la IA y su explicación, para revisar que
+          esté funcionando bien.
+        </Li>
+        <Li>
+          <b>Si nos reportas un problema:</b> lo que escribes, la pantalla en la
+          que estabas, la versión de la app, lo último que hiciste en ella y las
+          fallas recientes de la IA en tu cuenta. Nos llega también por correo,
+          con tu dirección, para poder contestarte.
+        </Li>
+        <Li>
+          <b>Tu ubicación, solo si la compartes.</b> Sirve para saber el clima y
+          el nombre de tu ciudad. La usamos en el momento y no la guardamos como
           historial.
         </Li>
         <Li>
           <b>Por dónde llegaste.</b> Si entraste desde un anuncio o un link con
           etiquetas de campaña, guardamos esas etiquetas (qué campaña, qué
-          anuncio) y el sitio del que venías, sin la página exacta. Sirve para
+          anuncio, el identificador del clic), la primera página de stailist que
+          abriste y el sitio del que venías, sin su página exacta. Sirve para
           saber qué anuncios traen a gente a la que stailist le sirve de verdad,
           y se borra con tu cuenta.
         </Li>
-      </ul>
+        <Li>
+          <b>Si alguien te invitó o te anotaste en la lista de espera</b>,
+          guardamos tu correo aunque todavía no tengas cuenta. Si quieres que lo
+          borremos, escríbenos.
+        </Li>
+      </Ul>
 
       <H2>para qué</H2>
       <P>
         Para armarte looks que te queden: con tu ropa, tus gustos, tus colores y
         el clima. Para probártelos en tu avatar. Para escribirte, solo si nos
-        dices que sí. Y para mejorar la app mirando qué se usa y qué no.
+        dices que sí. Para darte soporte, cuidar la seguridad de la app y evitar
+        abusos. Y para mejorar stailist mirando qué se usa y qué no.
       </P>
       <P>
         No vendemos tus datos y dentro de la app no hay anuncios. Lo que sí
@@ -129,15 +174,18 @@ export default function PrivacidadPage() {
       </P>
 
       <H2>quién más los ve</H2>
-      <P>
-        Para funcionar, la app usa servicios de terceros. Cada uno ve solo lo
-        que necesita para su parte:
-      </P>
-      <ul className="mt-3 list-disc space-y-2 pl-5">
+      <Ul>
         <Li>
-          <b>Supabase</b> guarda la base de datos y tus archivos. Tus fotos viven
-          en un espacio privado: nadie puede abrirlas sin una sesión tuya, y los
-          links que la app genera para mostrártelas caducan en una hora.
+          <b>El equipo de stailist.</b> Las personas que operamos la app podemos
+          ver los datos de las cuentas, fotos incluidas, cuando hace falta para
+          darte soporte, atender un problema que reportaste, cuidar la seguridad
+          o mejorar la app. Tus fotos no son públicas: fuera de ti, de ese equipo
+          y de los servicios de inteligencia artificial que las procesan, nadie
+          puede abrirlas, y los links con los que la app te las muestra caducan
+          en una hora o menos.
+        </Li>
+        <Li>
+          <b>Supabase</b> guarda la base de datos y tus archivos.
         </Li>
         <Li>
           <b>Google (Gemini)</b> y <b>Anthropic (Claude)</b> son los modelos de
@@ -148,36 +196,66 @@ export default function PrivacidadPage() {
           para entrenar sus modelos.
         </Li>
         <Li>
-          <b>Postmark</b> manda los correos (el código de entrada, el aviso al
-          tutor si eres menor, y el correo semanal si lo pediste).
+          <b>Postmark</b> manda los correos: el código de entrada, el aviso al
+          tutor si eres menor, las invitaciones, el correo semanal y el de “te
+          extrañamos” si están activos para ti, y los reportes y alertas que nos
+          llegan a nosotros.
         </Li>
         <Li>
-          <b>Vercel</b> aloja la app. <b>Open-Meteo</b> nos da el clima; a ellos
-          solo les llegan coordenadas aproximadas, sin nada tuyo.
+          <b>Open-Meteo</b> nos da el clima y <b>BigDataCloud</b> le pone nombre
+          a tu ciudad. Si compartes tu ubicación, tu navegador les manda tus
+          coordenadas (a BigDataCloud, redondeadas a como 1 km) y, como pasa con
+          cualquier sitio, tu dirección IP. Si escribes una ciudad, a Open-Meteo
+          le llega lo que escribes. No les mandamos tu correo ni nada de tu
+          cuenta.
+        </Li>
+        <Li>
+          <b>Vercel</b> aloja la app y, como cualquier servidor, ve tu dirección
+          IP.
         </Li>
         <Li>
           <b>Google (Google Ads y Google Analytics)</b> y <b>TikTok</b> miden
           nuestros anuncios, como te explicamos aquí abajo.
         </Li>
-      </ul>
+        <Li>
+          <b>Autoridades</b>, solo si una ley o una orden nos obliga.
+        </Li>
+      </Ul>
+      <P>
+        Cada servicio ve solo lo que necesita para su parte, y varios de ellos
+        guardan o procesan datos fuera de México, por ejemplo en Estados Unidos.
+        Si algún día stailist pasa a manos de otra empresa (una venta o una
+        fusión), tus datos pasarían con ella y seguirían protegidos por este
+        aviso; te lo diríamos antes.
+      </P>
+
+      <H2>el catálogo de prendas</H2>
+      <P>
+        Cuando la IA dibuja una prenda a partir de tu foto y nos dices que no es
+        tuya, ese dibujo — nunca tu foto — puede quedar en revisión para el
+        catálogo de prendas de stailist. Solo entraría si lo aprobamos, y ya en
+        el catálogo no llevaría nada que te identifique. Si borras tu cuenta
+        antes, se borra con ella.
+      </P>
 
       <H2>anuncios y etiquetas de medición</H2>
       <P>
-        En la página de inicio y en los primeros pasos de la app cargamos
-        etiquetas de Google y de TikTok: pedacitos de código suyos que guardan
-        cookies en tu navegador.
+        En la página de inicio y en dos pantallas del arranque — justo antes de
+        tus primeros looks y cuando llegan — cargamos etiquetas de Google y de
+        TikTok: pedacitos de código suyos que guardan cookies en tu navegador.
       </P>
-      <ul className="mt-3 list-disc space-y-2 pl-5">
+      <Ul>
         <Li>
           <b>Qué ven:</b> que visitaste esas páginas, desde qué anuncio
-          llegaste, datos técnicos de tu navegador y tu dispositivo, y dos
-          momentos: cuando empiezas a usar stailist y cuando llega tu primer
-          look.
+          llegaste, datos técnicos de tu navegador y tu dispositivo (incluida tu
+          dirección IP), y dos momentos: cuando empiezas a usar stailist y
+          cuando llega tu primer look.
         </Li>
         <Li>
-          <b>Qué no ven:</b> tu correo, tus fotos, tu ropa, tus looks, tus
-          gustos, ni nada de lo que haces dentro de la app. Cuando entras a la
-          app, las etiquetas se apagan.
+          <b>Qué no ven:</b> tu correo, tus fotos, tu ropa, tus looks, lo que
+          contestas sobre tus gustos y tus colores, ni nada de lo que haces
+          dentro de la app. En esas pantallas no cargan, y cuando entras a la
+          app se apagan.
         </Li>
         <Li>
           <b>Si nos dices que tienes entre 13 y 17 años</b>, dejamos de
@@ -186,26 +264,10 @@ export default function PrivacidadPage() {
         <Li>
           Lo que Google y TikTok hacen con esa información se rige por sus
           propios avisos:{" "}
-          <a
-            href="https://policies.google.com/privacy?hl=es"
-            className="font-medium text-ink underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Google
-          </a>{" "}
-          y{" "}
-          <a
-            href="https://www.tiktok.com/legal/page/row/privacy-policy/es"
-            className="font-medium text-ink underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            TikTok
-          </a>
-          .
+          <Enlace href="https://policies.google.com/privacy?hl=es">Google</Enlace> y{" "}
+          <Enlace href="https://www.tiktok.com/legal/page/row/privacy-policy/es">TikTok</Enlace>.
         </Li>
-      </ul>
+      </Ul>
       <P>
         <b>Cómo apagarlas.</b> Si tu navegador manda la señal Global Privacy
         Control, no las cargamos nunca. Siempre puedes borrar o bloquear las
@@ -213,6 +275,36 @@ export default function PrivacidadPage() {
         para este navegador:
       </P>
       <InterruptorMedicion />
+
+      <H2>nuestras cookies</H2>
+      <P>
+        Además de las de Google y TikTok, la app guarda en tu navegador unas
+        pocas cosas suyas:
+      </P>
+      <Ul>
+        <Li>
+          <b>Tu sesión</b>, para que no tengas que pedir un código cada vez.
+          Dura hasta que cierres sesión (como máximo, unos 13 meses).
+        </Li>
+        <Li>
+          <b>De dónde llegaste</b> (etiquetas de campaña y el sitio anterior),
+          hasta 90 días, para poder guardarlo en tu cuenta cuando la abras.
+        </Li>
+        <Li>
+          <b>Un aviso de un solo uso</b> para medir que empezaste a usar
+          stailist; se borra en cuanto se lee, o al día.
+        </Li>
+        <Li>
+          <b>Una marca que apaga las etiquetas</b> si una cuenta de 13 a 17
+          años se usó en ese navegador; dura un año.
+        </Li>
+        <Li>
+          <b>Preferencias y marcas pequeñas:</b> la versión de la página de
+          inicio que elegiste, si apagaste la medición, si ya se midió un
+          momento (para no contarlo dos veces) y, hasta que llegas a la pantalla
+          de entrar, el correo que escribiste en la página de inicio.
+        </Li>
+      </Ul>
 
       <H2>si tienes entre 13 y 17 años</H2>
       <P>
@@ -226,19 +318,37 @@ export default function PrivacidadPage() {
 
       <H2>cuánto tiempo</H2>
       <P>
-        Mientras tu cuenta exista. Al borrarla se borra todo: tus fotos, tu
-        avatar, tus prendas, tus looks, tus viajes, tus votos y tu correo. No
-        hay papelera ni copia que se quede.
+        Mientras tu cuenta exista. Al borrarla se borra de la app todo lo tuyo:
+        tus fotos, tu avatar, tus prendas, tus looks, tus viajes, tus votos, tus
+        reportes, los registros de uso de la IA y tu correo. Lo único que puede
+        quedar fuera de la app es la copia en nuestro correo de los reportes y
+        alertas que te mencionen y, si te invitamos, tu correo en la lista de
+        invitaciones; si quieres que también lo borremos, escríbenos.
+      </P>
+      <P>
+        Ojo: cuando borras una prenda, un look o un viaje sin borrar la cuenta,
+        deja de verse, pero lo guardamos hasta que borres la cuenta. Y si pides
+        el código pero no pasas del primer paso, esa cuenta a medias se borra
+        sola en una semana más o menos.
+      </P>
+
+      <H2>cómo los cuidamos</H2>
+      <P>
+        Tus datos viajan cifrados, las fotos viven en espacios privados y cada
+        cuenta solo puede ver lo suyo. Ningún sistema es infalible: si pasa algo
+        que afecte tus datos de forma importante, te lo decimos.
       </P>
 
       <H2>tus derechos y cómo borrar todo</H2>
       <P>
-        Puedes ver, corregir y borrar tus datos, y oponerte a que los usemos.
-        Lo más importante lo haces tú sola desde la app: en{" "}
-        <b>Perfil › cuenta</b> hay un botón para borrar tu cuenta entera, y
-        desde ahí también decides si quieres correos o no. Para cualquier otra
-        cosa — o si prefieres que lo hagamos nosotros — escríbenos a
-        hola@stailist.co y lo resolvemos en menos de una semana.
+        Puedes ver tus datos, corregirlos, borrarlos u oponerte a que los usemos
+        (lo que la ley llama derechos ARCO), y también retirar tu consentimiento
+        o pedirnos que limitemos su uso. Lo más importante lo haces tú sola
+        desde la app: en <b>Perfil › cuenta</b> hay un botón para borrar tu
+        cuenta entera, y desde ahí también decides si quieres correos o no. Para
+        cualquier otra cosa — o si prefieres que lo hagamos nosotros —
+        escríbenos a hola@stailist.co desde el correo de tu cuenta, dinos qué
+        necesitas, y lo resolvemos en menos de una semana.
       </P>
 
       <H2>correos</H2>
@@ -246,14 +356,23 @@ export default function PrivacidadPage() {
         Solo te escribimos si nos dices que sí. Los únicos correos que llegan
         sin preguntar son el código para entrar y, si eres menor, el aviso a tu
         tutor. Todo lo demás se activa desde la app y se apaga con un clic en
-        el propio correo o en Perfil.
+        el propio correo o en Perfil. Si creaste tu cuenta antes del 6 de
+        septiembre de 2026, puede que ya estuvieras suscrita al correo semanal:
+        lo apagas igual, con un clic.
+      </P>
+
+      <H2>tu consentimiento</H2>
+      <P>
+        Al crear tu cuenta y usar stailist aceptas este aviso. Usarla es
+        decisión tuya: si no estás de acuerdo con algo, no la uses, o borra tu
+        cuenta cuando quieras.
       </P>
 
       <H2>cambios a este aviso</H2>
       <P>
         Si cambiamos algo que te afecte — un proveedor nuevo, otro uso de tus
-        datos — actualizamos la fecha de arriba y te lo decimos en la app antes
-        de que entre en vigor.
+        datos — actualizamos la fecha de arriba y, si el cambio es importante,
+        te lo decimos en la app o por correo.
       </P>
 
       <footer className="mt-10 border-t border-line pt-6 text-sm text-muted">
