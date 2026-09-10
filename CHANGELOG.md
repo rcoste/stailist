@@ -25,10 +25,23 @@ Ahora se guarda. No cuesta un peso más: ya estaba en la respuesta.
   su pantalla de esenciales. El prompt de sistema es el criterio de stylist del
   producto entero — ahí sería legible desde el cliente de cualquier cuenta.
 
-Va en `ai_trazas` (migración 0157): **una fila por persona y tarea**, con RLS
-asimétrica — la persona escribe la suya y NO la lee; sólo el admin lee. Una fila
-y no un histórico porque `capsule_target` se sobreescribe al regenerar: una
-traza vieja quedaría huérfana de la lista que produjo y no se podría juzgar.
+Va en `ai_trazas` (migración 0157), con RLS asimétrica: **la persona escribe una
+fila que no puede leer**. Es el único caso así en el proyecto y es a propósito.
+
+**Y ahí estuvo la trampa, cazada probando contra la base antes de shipear.** El
+primer diseño tenía `unique (user_id, tarea)` y hacía upsert, para quedarse sólo
+con la traza de la cápsula viva. La base lo rechazó, y la razón vale la pena
+dejarla escrita: **`ON CONFLICT DO UPDATE` necesita LEER la fila en conflicto,
+así que exige política de SELECT además de la de UPDATE.** O sea que el upsert
+era incompatible con el punto entero de la tabla: la primera generación habría
+pasado y **las regeneraciones habrían fallado en silencio** — el modo de fallo
+favorito de este proyecto. Sin llave única, sólo se inserta y la más nueva manda;
+el histórico queda de pilón y deja ver cómo derivó el prompt entre una
+regeneración y otra.
+
+Las cuatro conductas quedaron verificadas contra la base de producción: inserta
+la suya, regenera sin conflicto, no ve ninguna fila, y el insert de la traza
+ajena se rechaza. El admin sí lee.
 
 **Se guarda el string exacto que se mandó, no los ingredientes.** El prompt es
 un template que cambia; reconstruirlo con el código de hoy mentiría sobre lo que

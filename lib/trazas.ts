@@ -13,7 +13,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // falla, la persona igual se queda con sus esenciales. Falla ruidoso en los
 // logs y sigue.
 //
-// UNA FILA POR (persona, tarea): ver el porqué en la migración 0157.
+// SÓLO INSERTA. La versión que hacía upsert para dejar una sola fila por
+// persona no podía existir: ON CONFLICT DO UPDATE necesita leer la fila en
+// conflicto, y aquí la persona escribe pero no lee. La más nueva manda; el
+// histórico queda de pilón. Ver la migración 0157.
 
 export type FilaTraza = {
   user_id: string;
@@ -32,19 +35,15 @@ export async function guardarTraza(
   fila: FilaTraza
 ): Promise<{ ok: boolean }> {
   try {
-    const { error } = await supabase.from("ai_trazas").upsert(
-      {
-        user_id: fila.user_id,
-        tarea: fila.tarea,
-        modelo: fila.modelo ?? null,
-        version: fila.version ?? null,
-        prompt_system: fila.promptSystem ?? null,
-        prompt_usuario: fila.promptUsuario ?? null,
-        razonamiento: fila.razonamiento ?? null,
-        created_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,tarea" }
-    );
+    const { error } = await supabase.from("ai_trazas").insert({
+      user_id: fila.user_id,
+      tarea: fila.tarea,
+      modelo: fila.modelo ?? null,
+      version: fila.version ?? null,
+      prompt_system: fila.promptSystem ?? null,
+      prompt_usuario: fila.promptUsuario ?? null,
+      razonamiento: fila.razonamiento ?? null,
+    });
     if (error) {
       console.error(`[trazas] no se guardó la traza (${fila.tarea}): ${error.message}`);
       return { ok: false };

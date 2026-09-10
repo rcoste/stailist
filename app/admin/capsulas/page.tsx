@@ -55,16 +55,23 @@ export default async function AdminCapsulas() {
       .from("profiles")
       .select("id, email, gender, lifestyle, capsule_target")
       .not("capsule_target", "is", null),
-    // Una fila por persona (unique user_id+tarea), así que no hay que ordenar
-    // ni deduplicar: la traza que existe es la de la cápsula que está viva.
+    // La tabla guarda una fila por generación (no se puede hacer upsert: la
+    // persona escribe pero no lee — ver migración 0157). La que importa es la
+    // MÁS NUEVA, que es la que produjo la cápsula que está viva ahora.
     supabase
       .from("ai_trazas")
       .select("user_id, modelo, version, prompt_system, prompt_usuario, razonamiento, created_at")
-      .eq("tarea", "capsula-ideal"),
+      .eq("tarea", "capsula-ideal")
+      .order("created_at", { ascending: false }),
   ]);
 
   const porUsuario = new Map<string, Traza>();
-  for (const t of trazasRaw ?? []) porUsuario.set(t.user_id as string, t as unknown as Traza);
+  // Vienen de la más nueva a la más vieja: la primera de cada persona gana.
+  for (const t of trazasRaw ?? []) {
+    if (!porUsuario.has(t.user_id as string)) {
+      porUsuario.set(t.user_id as string, t as unknown as Traza);
+    }
+  }
 
   const filas: Fila[] = (data ?? [])
     .map((p) => {
