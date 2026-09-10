@@ -16,11 +16,54 @@ friendly, por si alguien está buscando algo en ChatGPT o Claude sobre el tema?"
   impide prometer lo que la app no hace (por ejemplo, leer prendas de una foto
   del clóset abierto).
 
+- **Preguntas frecuentes en la landing** (sección 10): cuánto cuesta, si hay
+  que subir el clóset prenda por prenda, si sirve para hombre, qué pasa con las
+  fotos, desde qué edad… Aprobadas por Roberto. Las mismas respuestas viajan a
+  los datos estructurados y a `/llms.txt`.
+
+### El aviso de privacidad y los términos, exactos
+
+Roberto: *"corrígelo (...) suficientemente robusto para estar cubierto"*.
+Robusto quiso decir exacto: una revisión cruzó cada frase del aviso, los
+términos y las preguntas con el código, y encontró frases falsas que ya
+estaban en producción:
+
+- Decía que al servicio del clima sólo le llegan coordenadas aproximadas: le
+  llegan las exactas, y BigDataCloud (el nombre de tu ciudad) no aparecía.
+- Decía que al borrar no queda copia: borrar una prenda, un look o un viaje
+  sólo los oculta, y los reportes quedan en el correo del equipo.
+- Decía que un reporte guarda tu navegador y una foto: no guarda ninguna.
+- El correo al tutor y la página de permiso decían "no se comparte con nadie":
+  ahora dicen que sólo lo procesan los servicios que la app necesita.
+- La pregunta del quiz decía "5 o 6 preguntas": son 6.
+
+Y tres arreglos de código que no eran de texto:
+
+- **Menores:** el botón de "agregar tu foto" del clóset cápsula dejaba subir
+  una foto sin el permiso del tutor. Ahora pasa por el mismo candado que las
+  demás.
+- **Etiquetas de anuncios:** ya no cargan en los swipes, el quiz de color ni el
+  checklist del clóset — ahí se contestan gustos y rasgos, y la captura
+  automática de clics de TikTok no se puede apagar desde el código. Quedan en la
+  landing, el objetivo y el wow; el registro se manda al llegar al objetivo.
+
+El resto:
+
+- El aviso decía que nadie puede abrir tus fotos sin tu sesión; el equipo de
+  stailist sí puede (para soporte). Ahora lo dice.
+- Ahora también declara lo que la app ya hacía y callaba: el correo y la IP de
+  quien pide el código (se borran al día), lo que llega en un reporte de
+  problema, los registros de uso de la IA, las propuestas de prendas para el
+  catálogo, que algunos servicios procesan datos fuera de México, las cookies
+  propias, cómo se cuidan los datos, derechos ARCO y consentimiento.
+- Los términos agregan precio (gratis, sin tarjeta, aviso antes de cobrar),
+  que la IA recomienda y no garantiza ajuste ni talla, de quién es qué, y cómo
+  cambian; y ya no dicen que lo que subes sólo sirve para darte el servicio.
+
 Lo que ya estaba bien, probado: los rastreadores de OpenAI, Anthropic,
 Perplexity y Google entran a la landing y leen el texto sin ejecutar JavaScript.
 Lo que más pesa para que un asistente recomiende stailist no es código: las
-menciones fuera de la página (directorios de apps de IA, listas, foros) y unas
-preguntas frecuentes visibles, que están en revisión con Roberto.
+menciones fuera de la página (directorios de apps de IA, listas, foros).
 
 ## [0.2.326.0] - 2026-09-10 — listo para prender los anuncios
 
