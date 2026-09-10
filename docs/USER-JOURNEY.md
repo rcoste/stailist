@@ -62,7 +62,10 @@ clima histórico, looks, empacar) · Esenciales/cápsula ideal · Colorimetría 
 foto · Vetos, silueta, "tu estilo en tus palabras" · Wizard de planes con look por
 adelantado · Compartir el pasaporte y el render del look · Wishlist · Privacidad,
 términos, borrar cuenta, editar edad (B2) · Panel `/admin` (actividad, IA,
-comparador, evales, "ver como").
+adquisición, comparador, evales, "ver como") · Listo para anuncios (v0.2.326.0):
+etiquetas de Google Ads/GA4/TikTok apagadas hasta tener ID, origen por cuenta,
+landing `?g=hombre` y aviso de privacidad con botón para apagarlas
+(`docs/designs/adwords-readiness.md`).
 
 **Fuera del MVP, sigue fuera:** compras sugeridas, scraping de catálogos, pagos.
 
