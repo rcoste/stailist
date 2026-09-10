@@ -1,5 +1,8 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getProfile } from "@/lib/auth";
+import { enVerComo, getProfile } from "@/lib/auth";
+import { COOKIE_ORIGEN } from "@/lib/origen";
+import { guardarOrigenEnPerfil } from "@/lib/origen-perfil";
 import { routeForStep } from "@/lib/onboarding";
 import { GeneroPicker } from "./genero-picker";
 import { registrarEvento } from "@/lib/telemetria";
@@ -24,6 +27,22 @@ export default async function GeneroPage() {
     .select("id");
   if (arrancado && arrancado.length > 0) {
     await registrarEvento(supabase, { user_id: profile.id, type: "onboarding_started" });
+  }
+
+  // DE DÓNDE LLEGÓ: la cookie que dejó proxy.ts pasa al perfil
+  // (lib/origen-perfil.ts). En CADA carga de esta pantalla mientras el perfil no
+  // tenga origen, no sólo en la primera: si ese único intento fallaba, la
+  // cuenta quedaba para siempre como tráfico directo.
+  // app/onboarding/layout.tsx lo reintenta en las demás pantallas, porque ésta
+  // redirige en cuanto hay género. Nunca en "ver como": sería el navegador del
+  // admin hablando por otra cuenta.
+  if (!(await enVerComo())) {
+    await guardarOrigenEnPerfil(
+      supabase,
+      profile.id,
+      (profile as { origen?: unknown }).origen,
+      (await cookies()).get(COOKIE_ORIGEN)?.value
+    );
   }
 
   return (

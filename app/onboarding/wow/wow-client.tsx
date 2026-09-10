@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { registrarConversion, salirSinEtiquetas } from "@/lib/publicidad";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { LookDetail } from "@/components/look-detail";
@@ -80,6 +81,7 @@ export function WowClient({
   hasAvatar,
   closetCount,
   resumeLookId,
+  medirPrimerLook = false,
 }: {
   initialOutfits: WowOutfit[] | null;
   userId: string;
@@ -94,6 +96,8 @@ export function WowClient({
   closetCount: number;
   /** Al volver del wizard de avatar: retomar ESTE look, no el selector. */
   resumeLookId?: string | null;
+  /** Avisar a las etiquetas de publicidad cuando llegue el primer look. */
+  medirPrimerLook?: boolean;
 }) {
   const router = useRouter();
   const [state, setState] = useState<State>(() => {
@@ -110,9 +114,25 @@ export function WowClient({
   });
   const lastInput = useRef<LookInput | null>(null);
 
+  // Sus primeros looks ya estaban guardados (la corrida murió antes de avisar,
+  // o cerró la pestaña a media generación): el primer look se mide al volver.
+  // registrarConversion no deja contarlo dos veces en el mismo navegador.
+  useEffect(() => {
+    if (medirPrimerLook && initialOutfits && initialOutfits.length > 0) {
+      registrarConversion("primer_look");
+    }
+  }, [medirPrimerLook, initialOutfits]);
+
   const generate = useCallback(async (input: LookInput) => {
     lastInput.current = input;
     setState({ kind: "loading", outfits: [], phase: "preparando al stylist…", input });
+    // Cuántos looks llegaron de verdad: el "primer look" sólo se mide si hubo
+    // al menos uno, no por cerrar el stream. Vive fuera del try para que un
+    // corte de red DESPUÉS de que llegaron (ya están guardados) también cuente.
+    let llegaron = 0;
+    const alTerminar = () => {
+      if (llegaron > 0 && medirPrimerLook) registrarConversion("primer_look");
+    };
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -143,6 +163,7 @@ export function WowClient({
           if (!line.trim()) continue;
           const evt = JSON.parse(line);
           if (evt.outfit) {
+            llegaron++;
             setState((s) =>
               s.kind === "loading"
                 ? { ...s, outfits: [...s.outfits, evt.outfit as WowOutfit] }
@@ -153,9 +174,13 @@ export function WowClient({
               s.kind === "loading" ? { ...s, phase: evt.phase } : s
             );
           } else if (evt.error) {
+            // Un error DESPUÉS de que llegaron looks (el juez que truena): esos
+            // looks ya están guardados, así que su primer look sí existió.
+            alTerminar();
             setState({ kind: "error", code: evt.error });
             return;
           } else if (evt.done) {
+            alTerminar();
             // Listos los 3 (o los que haya): se revelan juntos para elegir uno.
             // Si el servidor cerró bien pero no llegó ninguno, el fallo es del
             // motor, no de la red (ver sin_looks arriba).
@@ -168,15 +193,17 @@ export function WowClient({
           }
         }
       }
+      alTerminar();
       setState((s) =>
         s.kind === "loading" && s.outfits.length > 0
           ? { kind: "choosing", outfits: s.outfits, chosenId: s.outfits[0].id }
           : { kind: "error", code: "red" }
       );
     } catch {
+      alTerminar();
       setState({ kind: "error", code: "red" });
     }
-  }, []);
+  }, [medirPrimerLook]);
 
   // ─── ask: ocasión/clima (la ocasión ya se eligió antes → skipObjective) ───
   // Sin OnboardingProgress aquí: LookRequest trae su propio progreso de 2 pasos
@@ -256,7 +283,11 @@ export function WowClient({
         // El 👍/👎 ya no navega — registra en el lugar y nadie se lleva la sorpresa
         // de que un voto lo saque de la pantalla. "afinar tu estilo" ahora vive en
         // el checklist de Home, no como un paso más aquí.
-        onEnter={() => router.push("/hoy")}
+        // Con etiquetas vivas, a la app se entra con navegación completa: así ni
+        // Google ni TikTok alcanzan a ver /hoy (el aviso de privacidad lo promete).
+        onEnter={() => {
+          if (!salirSinEtiquetas("/hoy")) router.push("/hoy");
+        }}
       />
     );
   }

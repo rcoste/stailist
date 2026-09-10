@@ -3,6 +3,7 @@ import { Arimo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
 import { ViewAsBanner } from "@/components/view-as-banner";
+import { TagsPublicidad } from "@/components/tags-publicidad";
 
 // Dirección "Gen-Z monocromo" (rebrand v3): Arimo (sans variable, estilo Mango)
 // en TODO el UI + titulares; Instrument Serif solo de acento mínimo (itálica).
@@ -44,6 +45,11 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   appleWebApp: { capable: true, title: "stailist", statusBarStyle: "default" },
+  // Search Console: verificar el dominio con la etiqueta HTML en vez de un
+  // registro DNS. Sin la variable no se pinta nada.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export const viewport: Viewport = {
@@ -71,6 +77,10 @@ export default function RootLayout({
         <ViewAsBanner />
         {children}
         <PwaInstall />
+        {/* Etiquetas de publicidad: apagadas sin sus variables, y sólo donde
+            lo diga rutaMedible (lib/publicidad.ts). Va después de {children}
+            a propósito: la marca de menor del onboarding corre antes. */}
+        <TagsPublicidad />
       </body>
     </html>
   );

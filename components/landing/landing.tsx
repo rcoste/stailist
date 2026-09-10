@@ -43,17 +43,35 @@ function Wordmark() {
   );
 }
 
-export function Landing() {
-  const [gender, setGender] = useState<"mujer" | "hombre">("mujer");
+export function Landing({
+  generoInicial = null,
+}: {
+  /** De `?g=` (app/page.tsx): el anuncio manda. Se pinta desde el servidor, sin parpadeo. */
+  generoInicial?: "mujer" | "hombre" | null;
+}) {
+  const [gender, setGender] = useState<"mujer" | "hombre">(generoInicial ?? "mujer");
   useEffect(() => {
-    // Lectura única de la preferencia guardada al montar (no es cascada real).
-    const g = localStorage.getItem("landing-gender");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (g === "hombre" || g === "mujer") setGender(g);
-  }, []);
+    try {
+      // Si llegó de un anuncio segmentado, eso gana y se recuerda.
+      if (generoInicial) {
+        localStorage.setItem("landing-gender", generoInicial);
+        return;
+      }
+      // Lectura única de la preferencia guardada al montar (no es cascada real).
+      const g = localStorage.getItem("landing-gender");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (g === "hombre" || g === "mujer") setGender(g);
+    } catch {
+      /* sin storage: se queda el default */
+    }
+  }, [generoInicial]);
   const choose = (g: "mujer" | "hombre") => {
     setGender(g);
-    localStorage.setItem("landing-gender", g);
+    try {
+      localStorage.setItem("landing-gender", g);
+    } catch {
+      /* sin storage */
+    }
   };
   const men = gender === "hombre";
   // Try-on de la card "ejemplo real": arranca con la modelo en básicos

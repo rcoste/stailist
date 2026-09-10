@@ -12,6 +12,7 @@ import { guardarEdad } from "@/lib/edad-guardar";
 import { isEmailValido } from "@/lib/valid-email";
 import { sendParentConsentEmail } from "@/lib/consentimiento";
 import { borrarArchivos, borrarFilasYAuth, rutasDeLaPersona } from "@/lib/borrar-cuenta";
+import { marcarNavegadorSiEsMenor } from "@/lib/marca-menor-servidor";
 
 type StyleRefPayload = {
   summary: string;
@@ -164,6 +165,9 @@ export async function saveStyleWords(words: string): Promise<{ ok: boolean }> {
 // con el código OTP), por eso no pide confirmación.
 export async function signOut() {
   const supabase = await createClient();
+  // Una cuenta de 13-17 sale con la marca que apaga las etiquetas de la landing
+  // (lib/marca-menor-servidor.ts). Antes del signOut: después ya no hay sesión.
+  await marcarNavegadorSiEsMenor(supabase);
   await supabase.auth.signOut();
   redirect("/login");
 }
@@ -343,6 +347,9 @@ export async function borrarMiCuenta(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Antes de borrar: después ya no hay perfil que diga la edad, y "/?adios=1"
+  // es zona medida (lib/marca-menor-servidor.ts).
+  await marcarNavegadorSiEsMenor(supabase, user.id);
   const rutas = await rutasDeLaPersona(user.id);
   await borrarArchivos(supabase, user.id, rutas);
   try {

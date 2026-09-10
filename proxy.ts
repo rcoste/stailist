@@ -1,5 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  COOKIE_ORIGEN,
+  ORIGEN_MAX_AGE_S,
+  decidirOrigen,
+  leerOrigen,
+  parseOrigen,
+  serializarOrigen,
+} from "@/lib/origen";
 
 // El "portero" de la app: refresca la sesión en cada request y manda a /login
 // a quien no esté autenticado. La lógica fina de onboarding (¿en qué paso vas?)
@@ -51,6 +59,31 @@ export default async function proxy(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+
+  // DE DÓNDE LLEGÓ (lib/origen.ts). Se evalúa en cada visita (qué visita gana lo
+  // decide decidirOrigen) y aquí porque es el único punto que ve la URL del
+  // anuncio antes de cualquier redirección;
+  // /onboarding/genero la copia al perfil. Cookie de primera parte y httpOnly:
+  // la lee el servidor, no hace falta que la vea el JavaScript de nadie.
+  const origen =
+    request.method === "GET" && !pathname.startsWith("/api")
+      ? decidirOrigen(
+          parseOrigen(request.cookies.get(COOKIE_ORIGEN)?.value),
+          leerOrigen(request.nextUrl, request.headers.get("referer"), new Date())
+        )
+      : null;
+  const conOrigen = (res: NextResponse) => {
+    if (origen) {
+      res.cookies.set(COOKIE_ORIGEN, serializarOrigen(origen), {
+        path: "/",
+        maxAge: ORIGEN_MAX_AGE_S,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+    return res;
+  };
   // La raíz "/" es pública: muestra la landing a deslogueados (la propia page
   // redirige a la app si SÍ hay sesión). Login/auth también públicos.
   const isPublic =
@@ -80,16 +113,16 @@ export default async function proxy(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    return conOrigen(NextResponse.redirect(url));
   }
 
   if (user && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    return NextResponse.redirect(url);
+    return conOrigen(NextResponse.redirect(url));
   }
 
-  return response;
+  return conOrigen(response);
 }
 
 export const config = {

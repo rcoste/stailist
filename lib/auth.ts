@@ -137,7 +137,7 @@ export async function getProfile(opts?: { real?: boolean }): Promise<Profile> {
 // La cookie sola NO basta: un usuario podría ponérsela a mano para saltarse la
 // pantalla de edad — se exige que el usuario REAL sea admin (query extra solo
 // cuando la cookie existe, i.e. sesiones de admin).
-async function enVerComo(): Promise<boolean> {
+export async function enVerComo(): Promise<boolean> {
   if (!(await cookies()).get(VIEW_AS_COOKIE)?.value) return false;
   const real = await getProfile({ real: true });
   return real.is_admin;
