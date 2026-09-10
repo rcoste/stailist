@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.321.1] - 2026-09-09 — las imágenes de cápsula y clóset no dejaban recibo
+
+El hueco salió de la auditoría del patrón "construido y olvidado": hoy no se
+pudo saber si el modelo de imagen ya fallaba antes de las 12:19 porque los 9
+renders de catálogo de las 11:18 no aparecían en `ai_calls`.
+
+**El mecanismo existía y nadie lo enhebró.** `pedirImagen` escribe recibo desde
+siempre — pero sólo si recibe `ctx`, y `generateArchetypeImage` **ni lo aceptaba
+ni lo pasaba**. El `ctx: null` está pensado para los scripts de terminal que
+rellenan el catálogo, que no son de nadie; el problema es que por esa misma
+función pasan las piezas ideales de la cápsula y los renders del clóset, y esas
+sí son de una persona real.
+
+**Lo que costaba:** el panel de IA no las veía, el gasto por usuaria mentía, y
+—desde v0.2.320.1— la vigilancia que avisa cuando alguien se atora tenía un
+punto ciego justo en el camino que más imágenes genera.
+
+Ahora dejan recibo, con la tarea que las distingue:
+- `capsula-ideal` — la pieza que te falta
+- `render-prenda` — la prenda de tu clóset
+- `render-prenda-fallback` — **el detalle fino**: en `/api/render-prenda` el
+  camino con foto YA dejaba recibo y el fallback de texto→imagen no. O sea que
+  la llamada que ocurre justo cuando algo ya salió mal era la única invisible, y
+  ése es precisamente el caso raro que se quiere medir.
+
+El del admin (`/admin/catalogo`) se queda SIN contexto a propósito: ahí se
+puebla la biblioteca, no es uso de nadie, y medirlo como tal ensuciaría el gasto
+por usuaria.
+
+**Verificado generando una imagen de verdad**: dejó su fila con `capsula-ideal`,
+modelo, 25 s y **$0.067**. Ese número es el que faltaba — con 316 renders en la
+biblioteca compartida, son ~$21 que el gasto por usuaria nunca vio.
+
 ## [0.2.321.0] - 2026-09-09 — un buzón que sí se encuentra, y el sello de beta donde no estorba
 
 Roberto: *"sería bueno poner algún botón para que los usuarios puedan reportar
