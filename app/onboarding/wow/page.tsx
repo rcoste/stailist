@@ -1,4 +1,4 @@
-import { getProfile } from "@/lib/auth";
+import { enVerComo, getProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { routeForStep } from "@/lib/onboarding";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +11,7 @@ import {
 } from "@/lib/item-image";
 import { WowClient, type WowOutfit } from "./wow-client";
 import { registrarEvento } from "@/lib/telemetria";
+import { debeMedirPrimerLook } from "@/lib/publicidad";
 
 // El momento wow: 2-3 outfits generados con tu clóset, tus gustos y tu paleta.
 // Acepta step 4 (recién terminó checklist) Y step 5 (la generación lo cerró
@@ -174,6 +175,11 @@ export default async function WowPage({
       .filter(Boolean)
       .join(" / ") || null;
 
+  // "Ver como": el admin mira el wow de otra cuenta desde SU navegador. Si esa
+  // cuenta está en el paso 4 con looks guardados (justo el caso que un admin
+  // viene a revisar), se mandaría un primer look falso a Google y TikTok.
+  const verComo = await enVerComo();
+
   return (
     <section className="flex flex-1 flex-col pt-4">
       {/* El chrome (barra de progreso + encabezados) lo controla el cliente por
@@ -189,6 +195,11 @@ export default async function WowPage({
         hasAvatar={!!profile.avatar_path}
         closetCount={(await countPromise).count ?? 0}
         resumeLookId={resumeLookId ?? null}
+        // El "primer look" que se le avisa a Google/TikTok (lib/publicidad.ts).
+        // Se lee `profile` de ANTES de que el bloque de arriba cierre el paso:
+        // si los looks ya estaban guardados de una corrida que murió antes de
+        // avisar, también es su primer look y se mide al llegar.
+        medirPrimerLook={!verComo && debeMedirPrimerLook(profile.onboarding_step, profile.age_range)}
       />
     </section>
   );

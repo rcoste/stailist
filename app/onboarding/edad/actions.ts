@@ -1,7 +1,9 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { COOKIE_CONVERSION, COOKIE_MENOR } from "@/lib/publicidad";
 import { withDb } from "@/lib/db";
 import { routeForStep } from "@/lib/onboarding";
 import { isAgeRange, isMinor } from "@/lib/edad";
@@ -56,6 +58,37 @@ export async function saveAge(formData: FormData) {
       user_id: user.id,
       type: "onboarding_step",
       data: { step: 0, paso: "edad", age_range: ageRange },
+    });
+  }
+
+  // EL REGISTRO SE LE AVISA A GOOGLE Y TIKTOK AQUÍ, no al crear la cuenta.
+  // Es la primera pantalla donde se sabe la edad, y a una persona de 13-17 no
+  // se le manda ningún momento a una plataforma de anuncios (el aviso de
+  // privacidad lo promete). Cuesta una pantalla de retraso, que para optimizar
+  // una campaña no es nada. `row` sólo existe la primera vez que se guarda la
+  // edad, así que no se repite. El servidor no puede disparar la etiqueta: deja
+  // la cookie y components/tags-publicidad.tsx la consume en la pantalla
+  // siguiente (y la borra aunque las etiquetas estén apagadas).
+  if (row && !menor) {
+    (await cookies()).set(COOKIE_CONVERSION, "registro", {
+      path: "/",
+      maxAge: 60 * 30,
+      sameSite: "lax",
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+  // Y si es menor, este navegador deja de cargar etiquetas desde ya, no sólo
+  // los dos momentos (lib/publicidad.ts lee la cookie antes de cargar nada).
+  // Un año: en un dispositivo compartido también apaga la medición para quien
+  // venga después, que es el lado bueno del error.
+  if (row && menor) {
+    (await cookies()).set(COOKIE_MENOR, "1", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
     });
   }
 

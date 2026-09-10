@@ -3,6 +3,8 @@
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./landing.module.css";
+import { EMAIL_LANDING_KEY } from "@/lib/email-landing";
+import { salirSinEtiquetas } from "@/lib/publicidad";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -34,7 +36,17 @@ export function EntrarForm({ fineline, trust }: Props) {
       inputRef.current?.focus();
       return;
     }
-    router.push(`/login?email=${encodeURIComponent(val)}`);
+    // El correo NO va en la URL: con las etiquetas de publicidad cargadas aquí,
+    // la dirección es lo que ven Google y TikTok (ver lib/email-landing.ts).
+    try {
+      sessionStorage.setItem(EMAIL_LANDING_KEY, val);
+    } catch {
+      /* sin storage: el login pide el correo otra vez, nada más */
+    }
+    // El login está fuera de la zona medida. Con etiquetas vivas se sale con
+    // navegación completa: si fuera con el router, el login leería (y borraría)
+    // el correo y DESPUÉS la recarga de seguridad lo dejaría en blanco.
+    if (!salirSinEtiquetas("/login")) router.push("/login");
   }
 
   return (
