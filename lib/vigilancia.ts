@@ -18,7 +18,7 @@
 // otra cosa tampoco se lee.
 
 export type Alarma = {
-  clave: "fallos" | "gasto";
+  clave: "fallos" | "gasto" | "persona";
   titulo: string;
   detalle: string;
 };
@@ -27,20 +27,61 @@ export type Alarma = {
 export const FALLOS_PARA_AVISAR = 5;
 
 /**
+ * Fallos DE UNA MISMA PERSONA en una hora: alguien atorado, no ruido.
+ *
+ * EL CASO QUE LO PIDIÓ (2026-09-09). Val —la única persona que usa la app a
+ * diario— intentó verse un look puesto CUATRO veces entre 12:19 y 12:50 y las
+ * cuatro fallaron: el modelo de imagen de Google estaba caído esa media hora.
+ * Se rindió y no volvió a intentarlo.
+ *
+ * La vigilancia ya corría cada hora y NO avisó: cuatro fallos, uno menos que
+ * `FALLOS_PARA_AVISAR`. El umbral absoluto está bien pensado para volumen alto
+ * —cinco fallos sueltos entre cientos de llamadas sí son señal— pero ese día
+ * hubo OCHO llamadas en total: los cuatro fallos eran el 50%, y todos de la
+ * misma persona.
+ *
+ * Tres es el corte porque dos pueden ser un reintento con mala suerte; a la
+ * tercera la persona ya está viendo que "no funciona" y decidiendo irse. Se
+ * enteró tres horas después, por casualidad, auditando otra cosa.
+ */
+export const FALLOS_MISMA_PERSONA = 3;
+
+/**
  * Decide qué hay que avisar. Función pura: recibe los números ya contados para
  * poder probar los bordes sin base de datos.
  *
  * `tasa` no se usa como disparador y `fallos` sí, a propósito: dos fallos de
  * dos llamadas son 100% y no significan nada; cinco fallos en una hora sí,
  * pasen las que pasen. La tasa entra en el texto porque ayuda a leerlo.
+ *
+ * Y desde 2026-09-09 hay un SEGUNDO disparador que no mira el total sino a la
+ * PERSONA: tres fallos de la misma en una hora es alguien atorado ahora mismo,
+ * y eso importa aunque el total no llegue a cinco (ver FALLOS_MISMA_PERSONA).
  */
 export function decidirAlarmas(m: {
   fallosUltimaHora: number;
   llamadasUltimaHora: number;
   gastoUltimasHoras: number;
   topeGasto: number;
+  /** La persona con MÁS fallos en la última hora, si alguna tuvo. */
+  peorPersona?: { correo: string; fallos: number; tarea?: string | null } | null;
 }): Alarma[] {
   const alarmas: Alarma[] = [];
+
+  // Alguien atorado AHORA: va primero porque es el único aviso que tiene a una
+  // persona real esperando del otro lado.
+  const p = m.peorPersona;
+  if (p && p.fallos >= FALLOS_MISMA_PERSONA) {
+    alarmas.push({
+      clave: "persona",
+      titulo: `${p.correo} lleva ${p.fallos} intentos fallidos en una hora`,
+      detalle:
+        `${p.tarea ? `Todos en "${p.tarea}". ` : ""}` +
+        `No es ruido: la misma persona reintentando es alguien viendo que "no funciona" ` +
+        `y decidiendo si vuelve. Mira /admin/ia y, si el fallo es del proveedor, ` +
+        `escríbele — desde su lado la app falló sin explicación.`,
+    });
+  }
 
   if (m.fallosUltimaHora >= FALLOS_PARA_AVISAR) {
     const tasa = m.llamadasUltimaHora

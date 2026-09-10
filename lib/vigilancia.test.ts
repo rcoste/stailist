@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { FALLOS_PARA_AVISAR, correoDeAlarmas, decidirAlarmas } from "./vigilancia";
+import { FALLOS_MISMA_PERSONA, FALLOS_PARA_AVISAR, correoDeAlarmas, decidirAlarmas } from "./vigilancia";
 
 const sano = {
   fallosUltimaHora: 0,
@@ -85,5 +85,55 @@ describe("el correo", () => {
   it("siempre lleva el link del panel", () => {
     const a = decidirAlarmas({ ...sano, fallosUltimaHora: 7 });
     expect(correoDeAlarmas(a).text).toContain("/admin/ia");
+  });
+});
+
+// EL CASO DE VAL (2026-09-09), que la vigilancia NO cazó por UN fallo de
+// margen. Intentó verse un look puesto cuatro veces entre 12:19 y 12:50 —el
+// modelo de imagen de Google estaba caído esa media hora— y se rindió. Ese día
+// hubo OCHO llamadas en total: sus cuatro fallos eran el 50%, todos suyos, y el
+// umbral absoluto (5) no disparó. Se supo tres horas después, por casualidad.
+describe("alguien atorado AHORA — el segundo disparador", () => {
+  const val = { correo: "val@ejemplo.com", fallos: 4, tarea: "tryon" };
+
+  it("el día de Val: 4 fallos de 8 llamadas NO llegan al umbral absoluto…", () => {
+    expect(decidirAlarmas({ ...sano, fallosUltimaHora: 4, llamadasUltimaHora: 8 })).toEqual([]);
+  });
+
+  it("…pero con la persona identificada, sí avisa", () => {
+    const a = decidirAlarmas({ ...sano, fallosUltimaHora: 4, llamadasUltimaHora: 8, peorPersona: val });
+    expect(a.map((x) => x.clave)).toContain("persona");
+    expect(a.find((x) => x.clave === "persona")!.titulo).toContain("val@ejemplo.com");
+  });
+
+  it("nombra la tarea cuando todos los fallos son de la misma", () => {
+    const a = decidirAlarmas({ ...sano, peorPersona: val });
+    expect(a[0].detalle).toContain("tryon");
+  });
+
+  it("y no la nombra cuando los fallos están repartidos entre tareas", () => {
+    const a = decidirAlarmas({ ...sano, peorPersona: { ...val, tarea: null } });
+    expect(a[0].detalle).not.toMatch(/Todos en/);
+  });
+
+  it("dos fallos NO avisan: pueden ser un reintento con mala suerte", () => {
+    expect(decidirAlarmas({ ...sano, peorPersona: { ...val, fallos: 2 } })).toEqual([]);
+    expect(FALLOS_MISMA_PERSONA).toBe(3);
+  });
+
+  it("sin persona identificada, se comporta como antes", () => {
+    expect(decidirAlarmas({ ...sano, peorPersona: null })).toEqual([]);
+    expect(decidirAlarmas(sano)).toEqual([]);
+  });
+
+  it("el aviso de la persona va PRIMERO: es el único con alguien esperando", () => {
+    const a = decidirAlarmas({
+      ...sano,
+      fallosUltimaHora: FALLOS_PARA_AVISAR,
+      llamadasUltimaHora: 20,
+      peorPersona: val,
+    });
+    expect(a[0].clave).toBe("persona");
+    expect(a.map((x) => x.clave)).toContain("fallos");
   });
 });
