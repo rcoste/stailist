@@ -28,7 +28,12 @@ describe("tipoCanonico — plurales y sinónimos a una sola forma", () => {
   });
 
   it("canoniza la cabeza y conserva el modificador", () => {
-    expect(tipoCanonico("Calcetines de lana")).toBe("calcetin-de-lana");
+    // Este test decía "calcetin-de-lana" hasta el 2026-09-09. Cambió a
+    // propósito: las partículas de enlace se quitan, porque el modelo escribe
+    // "de lana" o "lana" según le toca y eso creaba DOS claves para la misma
+    // prenda (ver el describe de las partículas, abajo). El modificador que
+    // importa —"lana"— se sigue conservando.
+    expect(tipoCanonico("Calcetines de lana")).toBe("calcetin-lana");
   });
 
   it("acentos y mayúsculas no hacen claves nuevas", () => {
@@ -59,5 +64,35 @@ describe("catalogLookupKeys — no volver a pagar lo ya generado", () => {
     expect(catalogStorageKey("blazer", "marino", "hombre")).not.toBe(
       catalogStorageKey("blazer", "marino", "mujer")
     );
+  });
+});
+
+// LAS PARTÍCULAS DE ENLACE (2026-09-09). El modelo escribe "pantalón de vestir"
+// o "pantalón vestir" según le toca, y sin canonizarlas son DOS claves: la
+// misma imagen se genera y se paga dos veces, y la biblioteca compartida deja
+// de compartir. Medido en producción: tres pares reales.
+describe("tipoCanonico — las partículas no crean prendas nuevas", () => {
+  it("el caso real: 'traje de baño' y 'traje baño' son la MISMA clave", () => {
+    expect(tipoCanonico("traje de baño")).toBe(tipoCanonico("traje baño"));
+    expect(tipoCanonico("traje de baño")).toBe("traje-bano");
+  });
+
+  it("el otro caso real: 'pantalón de vestir' y 'pantalón vestir'", () => {
+    expect(tipoCanonico("pantalón de vestir")).toBe(tipoCanonico("pantalon vestir"));
+    expect(tipoCanonico("pantalón de vestir")).toBe("pantalon-vestir");
+  });
+
+  it("sigue canonizando el plural de la cabeza", () => {
+    expect(tipoCanonico("calcetines de lana")).toBe("calcetin-lana");
+    expect(tipoCanonico("botines de piel")).toBe("botin-piel");
+  });
+
+  it("un adjetivo NO se toca: ahí sí distingue prendas", () => {
+    expect(tipoCanonico("saco desestructurado")).toBe("saco-desestructurado");
+    expect(tipoCanonico("saco cruzado")).not.toBe(tipoCanonico("saco desestructurado"));
+  });
+
+  it("un tipo que es sólo una partícula no revienta ni devuelve vacío", () => {
+    expect(tipoCanonico("de")).toBe("de");
   });
 });

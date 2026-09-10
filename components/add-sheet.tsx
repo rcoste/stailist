@@ -57,7 +57,8 @@ export function AddSheet({
           }
         >
           <Icon name="mas" size={18} strokeWidth={2} />
-          {variant === "ghost" ? "añadir prendas" : "agregar"}
+          {/* Un solo verbo en las cuatro puertas: "añadir" (2026-09-09). */}
+          {variant === "ghost" ? "añadir prendas" : "añadir"}
         </button>
       )}
 
@@ -66,7 +67,7 @@ export function AddSheet({
 
       <Sheet open={open} onClose={() => setOpen(false)}>
         <h3 className="mx-1 mb-3 text-[19px] font-semibold text-ink">
-          agregar al clóset
+          añadir al clóset
         </h3>
         <AddOptions
           onCarrete={() => choose(() => carreteRef.current?.start())}
