@@ -87,9 +87,19 @@ export async function POST(request: NextRequest) {
   }
 
   // Fallback: texto→imagen (si no llegó foto o falló la extracción).
+  //
+  // CON RECIBO, igual que el camino de arriba. Lo tenía el principal y no éste,
+  // así que la llamada que ocurre JUSTO cuando algo ya salió mal era la única
+  // invisible — el caso raro que se quiere medir es precisamente ése. `tarea`
+  // lo distingue del camino con foto para poder ver cuántas veces se cae al
+  // plan B.
   if (!bytes) {
     const type = attrs.categoria === "calzado" ? "shoes" : "flat";
-    bytes = await generateArchetypeImage(conColor, type);
+    bytes = await generateArchetypeImage(conColor, type, undefined, "1:1", {
+      supabase,
+      userId: user.id,
+      tarea: "render-prenda-fallback",
+    });
   }
   if (!bytes) return NextResponse.json({ error: "render_fallo" }, { status: 502 });
 

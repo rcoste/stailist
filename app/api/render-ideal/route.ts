@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
 
   const r = await ensureCatalogRender(supabase, {
+    userId: user.id,
     tipo,
     colorFamilia,
     nombre,

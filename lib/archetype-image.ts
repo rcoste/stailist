@@ -1,4 +1,5 @@
 import { pedirImagen, GEMINI_MODEL_RAPIDO } from "@/lib/gemini-imagen";
+import type { QuienMide } from "@/lib/recibos";
 // Generación de la imagen flat-lay de un básico (estilo A) con Gemini.
 //
 // LAS PROHIBICIONES EXPLÍCITAS NO SON PARANOIA (2026-08-14). El prompt decía
@@ -49,7 +50,22 @@ export async function generateArchetypeImage(
   desc: string,
   type: ImageType,
   gender?: Gender,
-  aspect: ImageAspect = "1:1"
+  aspect: ImageAspect = "1:1",
+  /**
+   * A QUIÉN se le apunta esta imagen, si es de alguien.
+   *
+   * Sin esto, NINGUNA imagen que pase por aquí dejaba recibo en `ai_calls`
+   * (auditoría 2026-09-09): ni las piezas ideales de la cápsula ni los renders
+   * del clóset — y las dos son de una persona real. El `ctx: null` de
+   * `pedirImagen` está pensado para los scripts de terminal que rellenan el
+   * catálogo, no para estos caminos; sencillamente nadie enhebró el contexto
+   * hasta aquí.
+   *
+   * Lo que costaba: el panel de IA no las veía, el gasto por usuaria mentía, y
+   * —desde v0.2.320.1— la vigilancia que avisa cuando alguien se atora tenía un
+   * punto ciego justo en el camino que más imágenes genera.
+   */
+  ctx?: (QuienMide & { tarea: string }) | null
 ): Promise<Buffer | null> {
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) return null;
   // Por la puerta común (lib/gemini-imagen): tenía SU propia copia del fetch y
@@ -58,7 +74,7 @@ export async function generateArchetypeImage(
   // que se quedaba sin imagen.
   const r = await pedirImagen(
     [{ text: buildImagePrompt(desc, type, gender) }],
-    { modelo: GEMINI_MODEL_RAPIDO, aspecto: aspect }
+    { modelo: GEMINI_MODEL_RAPIDO, aspecto: aspect, ctx: ctx ?? null }
   );
   if ("motivo" in r) {
     console.error(`[archetype-image] ${r.motivo}`);
