@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { InterruptorMedicion } from "@/components/interruptor-medicion";
 
 // EL AVISO DE PRIVACIDAD.
 //
@@ -21,7 +22,11 @@ export const metadata: Metadata = {
   description: "Qué datos guarda stailist, para qué, y cómo borrarlos.",
 };
 
-const ACTUALIZADO = "6 de septiembre de 2026";
+// 2026-09-10: entran las etiquetas de Google Ads, Google Analytics y TikTok
+// (lib/publicidad.ts) y el origen de cada cuenta (lib/origen.ts). Hasta esta
+// fecha el aviso decía "No los compartimos con anunciantes. No hay
+// publicidad." — con los anuncios prendidos habría sido falso.
+const ACTUALIZADO = "10 de septiembre de 2026";
 
 function H2({ children }: { children: React.ReactNode }) {
   return <h2 className="mt-8 text-h2 font-semibold text-ink">{children}</h2>;
@@ -101,6 +106,13 @@ export default function PrivacidadPage() {
           clima de tu ciudad. La usamos en el momento y no la guardamos como
           historial.
         </Li>
+        <Li>
+          <b>Por dónde llegaste.</b> Si entraste desde un anuncio o un link con
+          etiquetas de campaña, guardamos esas etiquetas (qué campaña, qué
+          anuncio) y el sitio del que venías, sin la página exacta. Sirve para
+          saber qué anuncios traen a gente a la que stailist le sirve de verdad,
+          y se borra con tu cuenta.
+        </Li>
       </ul>
 
       <H2>para qué</H2>
@@ -110,8 +122,10 @@ export default function PrivacidadPage() {
         dices que sí. Y para mejorar la app mirando qué se usa y qué no.
       </P>
       <P>
-        No vendemos tus datos. No los compartimos con anunciantes. No hay
-        publicidad.
+        No vendemos tus datos y dentro de la app no hay anuncios. Lo que sí
+        hacemos es anunciar stailist en Google y en TikTok, y para saber si esos
+        anuncios funcionan usamos sus etiquetas de medición. Más abajo te
+        contamos exactamente qué ven y cómo apagarlas.
       </P>
 
       <H2>quién más los ve</H2>
@@ -141,7 +155,64 @@ export default function PrivacidadPage() {
           <b>Vercel</b> aloja la app. <b>Open-Meteo</b> nos da el clima; a ellos
           solo les llegan coordenadas aproximadas, sin nada tuyo.
         </Li>
+        <Li>
+          <b>Google (Google Ads y Google Analytics)</b> y <b>TikTok</b> miden
+          nuestros anuncios, como te explicamos aquí abajo.
+        </Li>
       </ul>
+
+      <H2>anuncios y etiquetas de medición</H2>
+      <P>
+        En la página de inicio y en los primeros pasos de la app cargamos
+        etiquetas de Google y de TikTok: pedacitos de código suyos que guardan
+        cookies en tu navegador.
+      </P>
+      <ul className="mt-3 list-disc space-y-2 pl-5">
+        <Li>
+          <b>Qué ven:</b> que visitaste esas páginas, desde qué anuncio
+          llegaste, datos técnicos de tu navegador y tu dispositivo, y dos
+          momentos: cuando empiezas a usar stailist y cuando llega tu primer
+          look.
+        </Li>
+        <Li>
+          <b>Qué no ven:</b> tu correo, tus fotos, tu ropa, tus looks, tus
+          gustos, ni nada de lo que haces dentro de la app. Cuando entras a la
+          app, las etiquetas se apagan.
+        </Li>
+        <Li>
+          <b>Si nos dices que tienes entre 13 y 17 años</b>, dejamos de
+          cargarlas y no les contamos nada más de ti.
+        </Li>
+        <Li>
+          Lo que Google y TikTok hacen con esa información se rige por sus
+          propios avisos:{" "}
+          <a
+            href="https://policies.google.com/privacy?hl=es"
+            className="font-medium text-ink underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Google
+          </a>{" "}
+          y{" "}
+          <a
+            href="https://www.tiktok.com/legal/page/row/privacy-policy/es"
+            className="font-medium text-ink underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            TikTok
+          </a>
+          .
+        </Li>
+      </ul>
+      <P>
+        <b>Cómo apagarlas.</b> Si tu navegador manda la señal Global Privacy
+        Control, no las cargamos nunca. Siempre puedes borrar o bloquear las
+        cookies desde los ajustes de tu navegador. Y puedes apagarlas aquí mismo,
+        para este navegador:
+      </P>
+      <InterruptorMedicion />
 
       <H2>si tienes entre 13 y 17 años</H2>
       <P>
