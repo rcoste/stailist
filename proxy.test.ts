@@ -71,3 +71,12 @@ describe("proxy — la cookie de origen", () => {
     expect(segunda.cookies.get(COOKIE_ORIGEN)).toBeUndefined();
   });
 });
+
+describe("proxy — lo que leen máquinas sin sesión", () => {
+  it("robots.txt, sitemap.xml y llms.txt no mandan a /login", async () => {
+    for (const ruta of ["/robots.txt", "/sitemap.xml", "/llms.txt"]) {
+      const res = await pedir(`https://stailist.co${ruta}`);
+      expect(res.headers.get("location"), ruta).toBeNull();
+    }
+  });
+});
