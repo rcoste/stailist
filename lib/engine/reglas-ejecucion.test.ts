@@ -324,6 +324,68 @@ describe("lluvia-calzado", () => {
     ).toBeUndefined();
   });
 
+  // EL CASO QUE SE TARDÓ SEMANAS. Roberto condenó tres veces sus "Tenis grises"
+  // ("Terrible calzado para lluvia sin paraguas", "Error fuerte") y la regla no
+  // se disparaba: esos tenis no tenían material registrado. Al leerlos con
+  // visión salieron `sintético`, que no estaba en ninguna lista.
+  //
+  // Su razón no era que el zapato se arruine sino que "se te mete el agua y se
+  // mojan los calcetines". Por eso el tenis se juzga aparte del resto.
+  it("el tenis sintético NO pasa: el agua se mete aunque el zapato no se arruine", () => {
+    const sintetico = [
+      ...look.slice(0, 3),
+      p("Tenis grises", "#8A8A8A", { material: "sintético" }),
+    ];
+    const r = revisarEjecucion(sintetico, { lluvia: true, closet }).find(
+      (x) => x.regla === "lluvia-calzado"
+    );
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Tenis grises");
+  });
+
+  it("y sin embargo una BOTA sintética sí pasa: no es el material, es el tenis", () => {
+    // La razón de no meter "sintético" en MATERIAL_SE_ARRUINA: un impermeable
+    // de goma o una bota sintética aguantan la lluvia perfecto.
+    const bota = [
+      ...look.slice(0, 3),
+      p("Botas de lluvia negras", "#111111", { material: "sintético" }),
+    ];
+    expect(
+      revisarEjecucion(bota, { lluvia: true, closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeUndefined();
+  });
+
+  it("un tenis de piel sintética pasa: lo que empapa es el tejido, no el sintético", () => {
+    const pielSint = [
+      ...look.slice(0, 3),
+      p("Tenis blancos", "#F0F0F0", { material: "piel sintética" }),
+    ];
+    expect(
+      revisarEjecucion(pielSint, { lluvia: true, closet }).find((x) => x.regla === "lluvia-calzado")
+    ).toBeUndefined();
+  });
+
+  // Las dos reglas de lluvia comparten criterio (`aguantaElAgua`). Vivían
+  // duplicadas, y al añadir el caso del tenis se habrían separado en silencio.
+  it("el recambio de una bota de montaña bajo lluvia no puede ser un tenis de malla", () => {
+    const conMontanera = [
+      p("Camiseta carbón", "#3A3A3A"),
+      p("Chinos carbón", "#3A3A3A"),
+      p("Botas de senderismo negras", "#111111", { material: "piel" }),
+    ];
+    const closetConMalla = [
+      ...conMontanera,
+      p("Tenis de malla grises", "#8A8A8A", { material: "sintético" }),
+      p("Botines Chelsea negros", "#111111", { material: "piel" }),
+    ];
+    const r = revisarEjecucion(conMontanera, { lluvia: true, closet: closetConMalla }).find(
+      (x) => x.regla === "bota-de-montana-en-la-calle"
+    );
+    expect(r).toBeDefined();
+    expect(r!.detalle).toContain("Botines Chelsea negros");
+    expect(r!.detalle).not.toContain("Tenis de malla grises");
+  });
+
   it("la gamuza NO pasa aunque sea un botín", () => {
     const gamuza = [...look.slice(0, 3), p("Botín chukka de gamuza", "#8A6B4F", { material: "gamuza" })];
     expect(
