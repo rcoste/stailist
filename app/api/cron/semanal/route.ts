@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       .query<{ id: string; email: string; email_unsub_token: string }>(
         `select id, email, email_unsub_token
          from profiles
-         where email_semanal = 'semanal'
+         where email_semanal = 'semanal' and borrado_programado_para is null
            and onboarding_step >= 5
            and (email_semanal_last_sent is null
                 or email_semanal_last_sent < now() - interval '6 days')`

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { routeForStep } from "@/lib/onboarding";
 import { Landing } from "@/components/landing/landing";
 import { datosEstructurados, preguntasEstructuradas, serializarParaScript } from "@/lib/ficha-publica";
+import { RUTA_CUENTA_PROGRAMADA } from "@/lib/borrado-programado";
 
 // Lo que Google lee de la landing — y lo que Google Ads usa para calificar si la
 // página corresponde al anuncio. El título del layout ("stailist") no decía qué
@@ -53,12 +54,15 @@ export default async function RootPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("gender, onboarding_step")
+    .select("gender, onboarding_step, borrado_programado_para")
     .eq("id", user.id)
     .single();
 
   // Sesión sin profile (caso borde): que login lo resuelva.
   if (!profile) redirect("/login");
+  // Cuenta con borrado programado: decide primero si la recupera
+  // (lib/borrado-programado.ts). Entrar no la recupera sola.
+  if (profile.borrado_programado_para) redirect(RUTA_CUENTA_PROGRAMADA);
   if (!profile.gender) redirect("/onboarding/genero");
   redirect(routeForStep(profile.onboarding_step));
 }

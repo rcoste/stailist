@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { TABLAS_EN_CASCADA, TABLAS_SIN_CASCADA, listarCarpeta, type ListaStorage } from "./borrar-cuenta";
+import { TABLAS_EN_CASCADA, TABLAS_SIN_CASCADA, listarCarpeta, rutasPropias, type ListaStorage } from "./borrar-cuenta";
 
 // El script de reset (terminal) y el borrado de cuenta (app) tienen que
 // conocer las MISMAS tablas. Si alguien agrega una tabla con user_id y la
@@ -37,6 +37,39 @@ function bucketFalso(arbol: Record<string, string[]>): ListaStorage {
   };
 }
 
+describe("rutasPropias: la llave de servicio sólo borra lo de la dueña", () => {
+  const UID = "c815fe5a-1111-4222-8333-944455556666";
+
+  it("deja pasar lo que vive bajo la carpeta de la persona", () => {
+    expect(rutasPropias(UID, [`${UID}/items/a.jpg`, `${UID}/style-ref/b.png`])).toEqual([
+      `${UID}/items/a.jpg`,
+      `${UID}/style-ref/b.png`,
+    ]);
+  });
+
+  it("descarta rutas ajenas: catálogo, presets, otra persona, prefijo parecido", () => {
+    const otra = "7a6a2796-1111-4222-8333-944455556666";
+    expect(
+      rutasPropias(UID, [
+        "catalog/camisa.jpg",
+        "presets/minimal.png",
+        `${otra}/items/a.jpg`,
+        `${UID}-copia/items/a.jpg`,
+        UID,
+      ])
+    ).toEqual([]);
+  });
+
+  it("descarta rutas que intentan salirse con ..", () => {
+    expect(rutasPropias(UID, [`${UID}/../${"7a6a2796-1111-4222-8333-944455556666"}/a.jpg`])).toEqual([]);
+  });
+
+  it("lanza con un uid que no es uuid: vacío sería la raíz del bucket", () => {
+    expect(() => rutasPropias("", [])).toThrow(/uid inválido/);
+    expect(() => rutasPropias("catalog", ["catalog/a.jpg"])).toThrow(/uid inválido/);
+  });
+});
+
 describe("listarCarpeta: la carpeta es el inventario, no las filas", () => {
   it("entra en subcarpetas (tryons, style-ref, comparador/…)", async () => {
     const b = bucketFalso({
@@ -61,6 +94,19 @@ describe("listarCarpeta: la carpeta es el inventario, no las filas", () => {
     const r = await listarCarpeta(bucketFalso({ u1: muchos }), "u1");
     expect(r).toHaveLength(250);
     expect(r).toContain("u1/f249.jpg");
+  });
+
+  it("estricto: un error en una subcarpeta lanza, no se lee como vacío", async () => {
+    const bucket: ListaStorage = {
+      list: async (carpeta) =>
+        carpeta === "u"
+          ? { data: [{ name: "tryons", id: null }, { name: "a.jpg", id: "1" }], error: null }
+          : { data: null, error: { message: "timeout" } },
+    };
+    // Sin estricto se traga el error (así borra lo que puede)...
+    expect(await listarCarpeta(bucket, "u")).toEqual(["u/a.jpg"]);
+    // ...pero para verificar que no quedó nada, un error es un error.
+    await expect(listarCarpeta(bucket, "u", { estricto: true })).rejects.toThrow(/u\/tryons: timeout/);
   });
 
   it("una carpeta que no existe devuelve vacío, no lanza", async () => {
