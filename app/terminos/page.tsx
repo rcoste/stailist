@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { DIAS_PARA_BORRAR } from "@/lib/borrado-programado";
 
 // LOS TÉRMINOS, CORTOS. Lo que hace falta decir para que usar stailist tenga
 // reglas claras — sin veinte páginas que nadie lee. Página pública (proxy.ts).
@@ -142,9 +143,11 @@ export default function TerminosPage() {
 
       <H2>borrar tu cuenta</H2>
       <P>
-        Cuando quieras, desde <b>Perfil › cuenta</b>. Se borra de la app todo lo
-        tuyo y no hay vuelta atrás; el aviso de privacidad explica lo poco que
-        puede quedar fuera de ella.
+        Cuando quieras, desde <b>Perfil › cuenta</b>. Tu cuenta se desactiva ese
+        día y se borra a los {DIAS_PARA_BORRAR} días; si entras antes, la
+        recuperas. Pasado ese plazo se borra de la app todo lo tuyo y no hay
+        vuelta atrás; el aviso de privacidad explica lo poco que puede quedar
+        fuera de ella.
       </P>
 
       <H2>cambios a estos términos</H2>

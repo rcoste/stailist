@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: ["/", "/login", "/privacidad", "/terminos"],
-      disallow: ["/hoy", "/closet", "/historial", "/perfil", "/viaje", "/wishlist", "/cartera", "/onboarding", "/admin", "/api"],
+      disallow: ["/hoy", "/closet", "/historial", "/perfil", "/viaje", "/wishlist", "/cartera", "/onboarding", "/admin", "/api", "/cuenta"],
     },
     sitemap: "https://stailist.co/sitemap.xml",
   };

@@ -13,6 +13,7 @@ import type {
 import type { JourneyState } from "@/lib/journey";
 import type { AgeRange } from "@/lib/edad";
 import type { Build, Volume } from "@/lib/silueta";
+import { RUTA_CUENTA_PROGRAMADA } from "@/lib/borrado-programado";
 
 export type Gender = "hombre" | "mujer";
 
@@ -32,6 +33,8 @@ export type Profile = {
   minor_parent_email: string | null;
   minor_consent_token: string | null;
   minor_consent_verified_at: string | null;
+  /** Fecha de borrado programado (lib/borrado-programado.ts); null = cuenta normal. */
+  borrado_programado_para: string | null;
   // Último envío del correo al tutor (cooldown de reenvío + feedback en la card).
   minor_consent_last_sent_at: string | null;
   taste_tags: string[];
@@ -111,6 +114,12 @@ export async function getProfile(opts?: { real?: boolean }): Promise<Profile> {
     .eq("id", user.id)
     .single();
   if (!profile) redirect("/login");
+
+  // CUENTA CON BORRADO PROGRAMADO: ninguna pantalla de la app abre mientras
+  // corren sus 30 días — la persona decide primero si la recupera
+  // (lib/borrado-programado.ts). Con { real: true } no se aplica: es el admin
+  // operando como sí mismo.
+  if (profile.borrado_programado_para && !opts?.real) redirect(RUTA_CUENTA_PROGRAMADA);
 
   // "Ver como": si un admin trae la cookie, las pantallas de la app cargan el
   // perfil del usuario objetivo en vez del propio (las lecturas pasan por las

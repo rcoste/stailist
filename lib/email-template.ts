@@ -159,6 +159,55 @@ export function weeklyEmail(opts: { unsubToken: string }) {
  * es exactamente el favor que ya mató a la card "¿te lo pusiste ayer?" (se
  * quedó bajo el 10% de respuesta). Primero se da valor, luego se pide.
  */
+/**
+ * El aviso de que la cuenta se borra en 30 días (lib/borrado-programado.ts).
+ * Llega aunque los correos estén apagados: es transaccional, lo pidió la
+ * persona, y es la única forma de decirle la fecha y que puede volver.
+ */
+export function borradoProgramadoEmail(opts: { fecha: string; unsubToken: string | null }) {
+  const entrarUrl = `${SITE}/login`;
+  const bajaUrl = opts.unsubToken ? urlBaja(opts.unsubToken) : `${SITE}/perfil`;
+  const subject = `Tu cuenta de stailist se borra el ${opts.fecha}`;
+
+  const text = [
+    `Tu cuenta se borra el ${opts.fecha}.`,
+    "",
+    "Pediste borrar tu cuenta de stailist. Ya está desactivada, y ese día se borra todo: tus fotos, tu avatar, tus prendas, tus looks, tus viajes y tu correo.",
+    "",
+    `Si fue un error o cambias de opinión, entra antes con tu correo y elige "recuperar mi cuenta": todo sigue ahí, tal cual → ${entrarUrl}`,
+    "",
+    "Si sí te quieres ir, no tienes que hacer nada.",
+    "— stailist",
+  ].join("\n");
+
+  const cuerpo = filas([
+    bloque("32px 6px 0", kicker("Tu cuenta")),
+    bloque(
+      "14px 6px 0",
+      `<h1 style="margin:0;font-size:32px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">Se borra el ${opts.fecha}.</h1>`
+    ),
+    bloque(
+      "22px 6px 0",
+      `<p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">Pediste borrar tu cuenta. Ya está desactivada, y ese día se borra todo: tus fotos, tu avatar, tus prendas, tus looks, tus viajes y tu correo.</p>
+          <p style="margin:14px 0 0;font-size:16px;line-height:1.6;color:#363636;">Si fue un error o cambias de opinión, entra antes y elige <b style="font-weight:700;color:#141414;">recuperar mi cuenta</b>: todo sigue ahí, tal cual.</p>`
+    ),
+    bloque("28px 6px 0", boton({ href: entrarUrl, texto: "Recuperar mi cuenta" })),
+    bloque(
+      "32px 6px 0",
+      `<p style="margin:0;font-family:${SERIF};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Si sí te quieres ir, no tienes que hacer nada.</p>
+          <p style="margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#141414;">&mdash; stailist</p>`
+    ),
+  ]);
+
+  const html = documento({
+    cuerpo,
+    motivo: "Recibes esto porque pediste borrar tu cuenta de stailist.",
+    bajaUrl,
+  });
+
+  return { subject, text, html };
+}
+
 export function reengagementEmail(opts: {
   unsubToken: string;
   gancho: import("@/lib/reenganche").Gancho;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { InterruptorMedicion } from "@/components/interruptor-medicion";
+import { DIAS_PARA_BORRAR } from "@/lib/borrado-programado";
 
 // EL AVISO DE PRIVACIDAD.
 //
@@ -327,7 +328,10 @@ export default function PrivacidadPage() {
 
       <H2>cuánto tiempo</H2>
       <P>
-        Mientras tu cuenta exista. Al borrarla se borra de la app todo lo tuyo:
+        Mientras tu cuenta exista. Cuando pides borrarla, se desactiva ese mismo
+        día y se borra por completo a los {DIAS_PARA_BORRAR} días: en ese tiempo
+        no te escribimos ni usamos tus datos para nada, y si entras antes, la
+        recuperas con todo. Pasado el plazo se borra de la app todo lo tuyo:
         tus fotos, tu avatar, tus prendas, tus looks, tus viajes, tus votos, tus
         reportes, los registros de uso de la IA y tu correo. Lo único que puede
         quedar fuera de la app es la copia en nuestro correo de los reportes y
@@ -357,7 +361,8 @@ export default function PrivacidadPage() {
         (lo que la ley llama derechos ARCO), y también retirar tu consentimiento
         o pedirnos que limitemos su uso. Lo más importante lo haces tú sola
         desde la app: en <b>Perfil › cuenta</b> hay un botón para borrar tu
-        cuenta entera, y desde ahí también decides si quieres correos o no. Para
+        cuenta entera (se borra a los {DIAS_PARA_BORRAR} días, por si te
+        arrepientes), y desde ahí también decides si quieres correos o no. Para
         cualquier otra cosa — o si prefieres que lo hagamos nosotros —
         escríbenos a hola@stailist.co desde el correo de tu cuenta, dinos qué
         necesitas, y lo resolvemos en menos de una semana.

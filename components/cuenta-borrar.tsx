@@ -2,10 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { borrarMiCuenta } from "@/app/perfil/actions";
+import { DIAS_PARA_BORRAR } from "@/lib/borrado-programado";
 
 // Perfil › cuenta: borrar la cuenta entera. Dos pasos a propósito —abrir y
-// escribir "borrar"— porque no hay vuelta atrás y un tap accidental aquí
-// cuesta un clóset entero. Sin modal: se despliega en la misma fila, en gris,
+// escribir "borrar"— porque un tap accidental aquí cuesta un clóset entero. Y
+// desde el 2026-09-10 no borra en el acto: programa el borrado a 30 días
+// (lib/borrado-programado.ts), para que arrepentirse sea posible. Sin modal: se despliega en la misma fila, en gris,
 // al final de la pestaña, donde nadie llega por accidente.
 export function CuentaBorrar() {
   const [abierto, setAbierto] = useState(false);
@@ -35,9 +37,10 @@ export function CuentaBorrar() {
       {abierto ? (
         <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4">
           <p className="text-sm leading-snug text-ink">
-            se borra todo: tus fotos, tu avatar, tus prendas, tus looks, tus
-            viajes y tu correo. no hay papelera. para confirmar, escribe{" "}
-            <b>borrar</b>.
+            tu cuenta se desactiva hoy y se borra por completo en{" "}
+            {DIAS_PARA_BORRAR} días: tus fotos, tu avatar, tus prendas, tus
+            looks, tus viajes y tu correo. si cambias de opinión, entra antes y
+            la recuperas. para confirmar, escribe <b>borrar</b>.
           </p>
           <input
             type="text"
@@ -54,7 +57,7 @@ export function CuentaBorrar() {
             disabled={pending || texto.trim().toLowerCase() !== "borrar"}
             className="flex min-h-11 w-full items-center justify-center rounded-sm border border-error bg-surface text-sm font-bold text-error transition-colors hover:bg-error hover:text-on-accent disabled:opacity-40"
           >
-            {pending ? "borrando…" : "sí, borrar mi cuenta"}
+            {pending ? "programando…" : "sí, borrar mi cuenta"}
           </button>
         </div>
       ) : null}

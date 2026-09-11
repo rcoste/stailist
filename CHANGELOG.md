@@ -2,6 +2,41 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.327.0] - 2026-09-10 — borrar la cuenta tiene 30 días de arrepentimiento
+
+Roberto: *"el borrado programado que sea de 30 días o 90 días, algo así, algo
+más amplio"* y, para borrar las fotos cuando la persona ya no tiene sesión,
+*"vamos con la opción A"* (la llave de servicio, encerrada en un solo archivo).
+
+- **El botón de Perfil › cuenta ya no borra en el acto: programa el borrado a
+  30 días.** La cuenta se desactiva ese día, llega un correo con la fecha y
+  cómo recuperarla, y se cierra la sesión.
+- **Si la persona entra antes, decide ella:** cualquier pantalla la lleva a
+  `/cuenta/programada`, con "recuperar mi cuenta" (vuelve todo tal cual) o
+  "seguir con el borrado". Entrar no recupera la cuenta sola.
+- **Mientras tanto no le escribimos:** el correo semanal y el de reenganche se
+  saltan las cuentas programadas, y la limpieza de cuentas que nunca entraron
+  tampoco las toca.
+- **La limpieza diaria borra lo vencido** (hasta 25 cuentas por corrida, al
+  azar para que ninguna tape a las demás): primero los archivos; luego
+  verifica con una lista estricta que no quedó ninguno (un error de Storage
+  cuenta como "no sé", nunca como "vacío"), y sólo entonces borra las filas y
+  el usuario, si la cuenta sigue vencida en ese instante. Si algo falla, se
+  reintenta al día siguiente.
+- **Pasado el plazo ya no se recupera:** la pantalla lo dice y el servidor lo
+  impide, porque la limpieza puede ir a media tarea (fotos borradas, filas
+  todavía no).
+- **La llave de servicio vive en un solo archivo** (`lib/supabase/servicio.ts`)
+  y sólo la importa la limpieza; un test lo impide en cualquier otro lado. Sin
+  la llave, el paso no corre (falla cerrado). Además, antes de borrar, cada
+  ruta tiene que estar dentro de la carpeta de la dueña y el id tiene que ser
+  un uuid: la llave se salta los permisos, así que el candado vive en el código.
+- **Aviso de privacidad y términos** dicen el plazo con la misma constante que
+  usa el código (`DIAS_PARA_BORRAR`), con un test que lo exige.
+- Migración `0159`: columna `profiles.borrado_programado_para` y dos eventos
+  nuevos (`cuenta_borrado_programado`, `cuenta_recuperada`). Aditiva, ya
+  aplicada en producción.
+
 ## [0.2.326.1] - 2026-09-10 — que ChatGPT y Claude sepan qué es stailist
 
 Roberto: *"¿hay manera de que optimicemos cosas en la página para hacerla agent

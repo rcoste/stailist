@@ -72,6 +72,8 @@ export async function GET(request: NextRequest) {
               (select count(*) from items   i where i.user_id = p.id and i.deleted_at is null) as prendas
          from profiles p
         where p.email_semanal = 'semanal'
+          -- Una cuenta con borrado programado no recibe nada (lib/borrado-programado.ts).
+          and p.borrado_programado_para is null
           and p.onboarding_step >= 5
           and p.email_reenganche_sent_at is null`
     );

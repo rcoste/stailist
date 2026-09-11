@@ -11,7 +11,9 @@ import { isAgeRange, isMinor } from "@/lib/edad";
 import { guardarEdad } from "@/lib/edad-guardar";
 import { isEmailValido } from "@/lib/valid-email";
 import { sendParentConsentEmail } from "@/lib/consentimiento";
-import { borrarArchivos, borrarFilasYAuth, rutasDeLaPersona } from "@/lib/borrar-cuenta";
+import { fechaDeBorrado, fechaLegible } from "@/lib/borrado-programado";
+import { sendEmail } from "@/lib/email";
+import { borradoProgramadoEmail } from "@/lib/email-template";
 import { marcarNavegadorSiEsMenor } from "@/lib/marca-menor-servidor";
 
 type StyleRefPayload = {
@@ -332,9 +334,11 @@ export async function cambiarEdad(
 
 // ─── BORRAR MI CUENTA ────────────────────────────────────────────────────────
 //
-// Lo que promete el aviso de privacidad: un botón. El orden importa y está
-// explicado en lib/borrar-cuenta.ts: archivos con la sesión viva, luego filas
-// y usuario de auth en una transacción, luego cerrar sesión.
+// Lo que promete el aviso de privacidad: un botón. Desde el 2026-09-10 el botón
+// PROGRAMA el borrado (lib/borrado-programado.ts): la cuenta se bloquea hoy y
+// la limpieza diaria la borra entera a los 30 días — archivos, filas y usuario
+// de auth, en el orden de lib/borrar-cuenta.ts. Si la persona entra antes,
+// elige recuperarla.
 export async function borrarMiCuenta(
   confirmacion: string
 ): Promise<{ ok: false; mensaje: string } | never> {
@@ -347,17 +351,43 @@ export async function borrarMiCuenta(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Antes de borrar: después ya no hay perfil que diga la edad, y "/?adios=1"
-  // es zona medida (lib/marca-menor-servidor.ts).
+  // Antes de cerrar la sesión: "/?adios=1" es zona medida
+  // (lib/marca-menor-servidor.ts).
   await marcarNavegadorSiEsMenor(supabase, user.id);
-  const rutas = await rutasDeLaPersona(user.id);
-  await borrarArchivos(supabase, user.id, rutas);
-  try {
-    await borrarFilasYAuth(user.id);
-  } catch (e) {
-    console.error("[borrar-cuenta] falló la transacción:", e instanceof Error ? e.message : e);
-    return { ok: false, mensaje: "no pude borrar tu cuenta — escríbenos a hola@stailist.co y lo hacemos nosotros." };
+
+  const para = fechaDeBorrado(new Date());
+  const { data: fila, error } = await supabase
+    .from("profiles")
+    .update({ borrado_programado_para: para.toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", user.id)
+    .select("email, email_unsub_token")
+    .single();
+  if (error || !fila) {
+    console.error(`[borrado-programado] no se pudo programar ${user.id}: ${error?.message ?? "sin fila"}`);
+    return { ok: false, mensaje: "no pude programar el borrado — inténtalo de nuevo o escríbenos a hola@stailist.co." };
   }
+
+  await registrarEvento(supabase, {
+    user_id: user.id,
+    type: "cuenta_borrado_programado",
+    data: { para: para.toISOString() },
+  });
+
+  // El correo es la única forma de avisarle la fecha y que puede volver. Best-
+  // effort: si Postmark falla, el borrado sigue programado y la pantalla de
+  // cuenta programada le dice la fecha en cuanto entre.
+  const correo = (fila.email as string | null) ?? user.email ?? null;
+  if (correo) {
+    const r = await sendEmail({
+      to: correo,
+      ...borradoProgramadoEmail({
+        fecha: fechaLegible(para),
+        unsubToken: (fila.email_unsub_token as string | null) ?? null,
+      }),
+    });
+    if (!r.ok) console.error(`[borrado-programado] no salió el correo: ${r.error}`);
+  }
+
   await supabase.auth.signOut();
   redirect("/?adios=1");
 }

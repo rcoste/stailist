@@ -53,6 +53,14 @@ describe("aviso de privacidad", () => {
     expect(aviso).not.toMatch(/puede que ya estuvieras suscrita/);
   });
 
+  it("borrado programado: el plazo sale de la constante, no de un número escrito a mano", () => {
+    for (const texto of [aviso, terminos]) {
+      expect(texto).toMatch(/import \{ DIAS_PARA_BORRAR \} from "@\/lib\/borrado-programado"/);
+      expect(texto).toMatch(/\{DIAS_PARA_BORRAR\} días/);
+    }
+    expect(aviso).toMatch(/la\s+recuperas con todo/);
+  });
+
   it("sigue nombrando al responsable y las etiquetas de anuncios", () => {
     expect(aviso).toMatch(/FREIGHTNOW SA DE CV/);
     expect(aviso).toMatch(/anuncios y etiquetas de medición/);

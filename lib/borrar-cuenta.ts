@@ -13,9 +13,11 @@ import { withDb } from "@/lib/db";
 //
 // QUÉ SE BORRA, EN ORDEN:
 //   1. Los archivos de Storage (avatar, cara, sheet, fotos de prendas, renders,
-//      try-ons, fit checks, referencias de estilo). Van PRIMERO y con la sesión
-//      de la persona —la RLS de Storage permite borrar lo propio— porque después
-//      de tirar la fila de auth ya no hay con qué firmar nada.
+//      try-ons, fit checks, referencias de estilo). Van PRIMERO porque sin la
+//      fila de perfil ya no sabemos qué rutas eran suyas. Desde el 2026-09-10
+//      el botón PROGRAMA el borrado a 30 días (lib/borrado-programado.ts) y
+//      esto lo corre la limpieza diaria con la llave de servicio: la dueña ya
+//      no tiene sesión. Por eso cada ruta pasa por rutasPropias.
 //   2. Las filas, en una sola transacción: lo que no cascadea (wishlist,
 //      ai_calls) explícito, y el perfil, que arrastra por FK todo lo demás
 //      (items, outfits, events, trips, library_candidates).
@@ -25,7 +27,8 @@ import { withDb } from "@/lib/db";
 // LO QUE NO SE TOCA: la fila de `allowlist`. Es una invitación, no un dato de
 // la persona, y quitársela cerraría la puerta a quien se arrepiente.
 //
-// NO SE PUEDE DESHACER. La confirmación vive en la UI (escribir "borrar").
+// NO SE PUEDE DESHACER. Lo que da margen es el plazo de 30 días antes de
+// llegar aquí, no esta función.
 
 /**
  * Las tablas con `user_id` que NO cascadean desde `profiles`. Si aparece una
@@ -103,17 +106,28 @@ export type ListaStorage = {
  */
 export async function listarCarpeta(
   bucket: ListaStorage,
-  carpeta: string
+  carpeta: string,
+  opts: { estricto?: boolean } = {}
 ): Promise<string[]> {
   const out: string[] = [];
   const PAGINA = 100;
   let offset = 0;
   for (;;) {
     const { data, error } = await bucket.list(carpeta, { limit: PAGINA, offset });
-    if (error || !data) break;
+    if (error || !data) {
+      // Estricto: la limpieza diaria VERIFICA con esto que la carpeta quedó
+      // vacía antes de borrar las filas. Un error a media recorrida (una
+      // subcarpeta, una página) no puede leerse como "no queda nada": dejaría
+      // fotos sin dueña en el bucket.
+      if (opts.estricto) {
+        const motivo = (error as { message?: string } | null)?.message ?? "sin datos";
+        throw new Error(`no pude listar ${carpeta}: ${motivo}`);
+      }
+      break;
+    }
     for (const f of data) {
       const ruta = `${carpeta}/${f.name}`;
-      if (f.id === null) out.push(...(await listarCarpeta(bucket, ruta)));
+      if (f.id === null) out.push(...(await listarCarpeta(bucket, ruta, opts)));
       else out.push(ruta);
     }
     if (data.length < PAGINA) break;
@@ -122,22 +136,43 @@ export async function listarCarpeta(
   return out;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
- * Borra los archivos con la sesión de la persona (la RLS de Storage permite
- * listar y borrar lo propio). Se une lo que dice la carpeta con lo que dicen
- * las filas: cinturón y tirantes. Best-effort por bucket: un archivo que ya no
- * existe no debe frenar el borrado de la cuenta.
+ * Sólo lo que vive bajo `${uid}/`. Replica en código la regla de la RLS de
+ * Storage ("own folder delete"): con la sesión de la persona sobra, pero la
+ * limpieza diaria borra con la llave de servicio, que se salta la RLS — y ahí
+ * una ruta ajena en una fila (una imagen prestada del catálogo, un preset de
+ * referencia) borraría un archivo de todos. Al 2026-09-10, 0 de las 680 rutas
+ * de la base salen de la carpeta de su dueña; esto es para que siga así.
+ *
+ * Y el uid tiene que ser un uuid: un uid vacío haría que listar "su carpeta"
+ * fuera listar la RAÍZ del bucket, con las carpetas de todo el mundo.
+ */
+export function rutasPropias(uid: string, rutas: string[]): string[] {
+  if (!UUID.test(uid)) throw new Error(`uid inválido para borrar archivos: "${uid}"`);
+  return rutas.filter((r) => r.startsWith(`${uid}/`) && !r.split("/").includes(".."));
+}
+
+/**
+ * Borra los archivos de la persona. Se une lo que dice la carpeta con lo que
+ * dicen las filas: cinturón y tirantes. Best-effort por bucket: un archivo que
+ * ya no existe no debe frenar el borrado de la cuenta. Desde el 2026-09-10 lo
+ * llama la limpieza diaria con la llave de servicio (lib/borrado-programado.ts),
+ * por eso todo pasa por rutasPropias antes de tocar nada.
  */
 export async function borrarArchivos(
   supabase: SupabaseClient,
   uid: string,
   rutas: { prendas: string[]; referencias: string[] }
 ): Promise<{ prendas: number; referencias: number }> {
+  // Antes de listar: listarCarpeta(b, "") recorrería el bucket entero.
+  rutasPropias(uid, []);
   const borrados = { prendas: 0, referencias: 0 };
   for (const bucket of ["prendas", "referencias"] as const) {
     const b = supabase.storage.from(bucket);
     const enCarpeta = await listarCarpeta(b as unknown as ListaStorage, uid);
-    const todas = Array.from(new Set([...enCarpeta, ...rutas[bucket]]));
+    const todas = rutasPropias(uid, Array.from(new Set([...enCarpeta, ...rutas[bucket]])));
     if (!todas.length) continue;
     // remove() acepta lotes; 100 por llamada para no pasarse del cuerpo.
     for (let i = 0; i < todas.length; i += 100) {
@@ -150,11 +185,22 @@ export async function borrarArchivos(
   return borrados;
 }
 
-/** Las filas y el usuario de auth, en una transacción. Lanza si algo falla. */
+/**
+ * Las filas y el usuario de auth, en una transacción. Lanza si algo falla.
+ *
+ * Sólo borra si la cuenta SIGUE programada y vencida en este instante, con la
+ * fila bloqueada (for update) mientras tanto: si alguien quitó el borrado
+ * entre que la limpieza la eligió y este paso, no se borra nada.
+ */
 export async function borrarFilasYAuth(uid: string): Promise<void> {
   await withDb(async (c) => {
     try {
       await c.query("begin");
+      const sigue = await c.query(
+        `select 1 from public.profiles where id = $1 and borrado_programado_para <= now() for update`,
+        [uid]
+      );
+      if (!sigue.rowCount) throw new Error("la cuenta ya no está programada o no ha vencido");
       for (const t of TABLAS_SIN_CASCADA) {
         await c.query(`delete from public.${t} where user_id = $1`, [uid]);
       }
