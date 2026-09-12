@@ -10,6 +10,8 @@
 //   · el 76% es INSTRUMENTACIÓN, no acciones: onboarding_step (144),
 //     generation_timing (88), critic_review (86), hint_seen (78) y
 //     avatar_judge (65) suman 461. Un feed de eso enseña jueces y timings.
+//     (Desde el 2026-09-12 esa instrumentación tampoco se tira: se resume en
+//     una línea "abrió la app" por vuelta — ver EVENTOS_PASIVOS.)
 //   · y la acción más importante del producto NO ESCRIBE EVENTO: añadir
 //     prendas son 1012 filas en `items` y cero en `events`. Los looks son 172
 //     outfits contra 88 generation_timing. Los viajes, 9 sin evento.
@@ -39,6 +41,7 @@ export type Momento = {
 
 export type TipoMomento =
   | "alta"
+  | "visita"
   | "prenda_add"
   | "prenda_del"
   | "look"
@@ -48,20 +51,27 @@ export type TipoMomento =
   | "cartera"
   | `ev:${string}`;
 
-// EVENTOS QUE NO ENTRAN AL FEED. Dos familias, y las dos por la misma razón:
-// no son algo que una persona haya decidido hacer.
-//   · instrumentación del motor y de la IA (timings, jueces, revisiones);
-//   · "vio" un elemento de UI, que ocurre sin intención.
-// Todo lo demás entra: la lista es de EXCLUSIÓN a propósito, para que un
-// evento nuevo aparezca solo en el feed en vez de quedarse invisible hasta que
-// alguien se acuerde de darlo de alta en un diccionario.
-export const EVENTOS_FUERA = new Set([
+// EVENTOS QUE NO SON UNA ACCIÓN, pero SÍ PRUEBAN QUE LA PERSONA ESTABA AHÍ:
+// instrumentación del motor y de la IA (timings, jueces, revisiones) y los
+// tips, que se escriben cuando alguien CIERRA la burbuja.
+//
+// Hasta el 2026-09-12 se tiraban y el feed perdía algo que importa. Roberto:
+// "abrir la app puede contar como una acción, y es importante ver eso". Tenía
+// razón: `ricardomc888` entró el 10 de septiembre, cerró un tip y se fue sin
+// hacer nada — volver y no hacer nada es el hallazgo, y el feed lo escondía.
+// Ahora no se tiran: se vuelven UNA línea "abrió la app" por sesión.
+export const EVENTOS_PASIVOS = new Set([
   "generation_timing",
   "critic_review",
   "avatar_judge",
   "hint_seen",
   "intro_seen",
-  // Y LOS BORRADOS, que son un duplicado INCOMPLETO de la tabla. Medido:
+]);
+
+// ESTOS SÍ SE TIRAN, y no son visita: son un duplicado INCOMPLETO de la tabla
+// (la fila ya trae su deleted_at, y el evento sólo lo escribieron algunos).
+export const EVENTOS_DUPLICADOS = new Set([
+  // Medido:
   // 21 prendas con `deleted_at` contra 10 eventos `item_deleted` — o sea que
   // 11 borrados no escribieron evento. Con los dos dentro, cada borrado que sí
   // lo escribió salía DOS VECES en el feed (son `tipo` distinto, así que el
@@ -72,12 +82,27 @@ export const EVENTOS_FUERA = new Set([
   "trip_deleted",
 ]);
 
+/** Los que no salen como acción propia. Unión de los dos de arriba. */
+export const EVENTOS_FUERA = new Set([...EVENTOS_PASIVOS, ...EVENTOS_DUPLICADOS]);
+
+/**
+ * Cuánto dura "una visita". Una sola vuelta por la app deja varios rastros
+ * sueltos (cerrar un tip, los timings de una generación), y pintar cinco
+ * líneas de "abrió la app" para una sesión sería igual de inútil que pintar
+ * mil "añadió una prenda" para un carrete. Una hora, no diez minutos: la
+ * gente deja la pestaña abierta y vuelve a ella.
+ */
+export const VENTANA_VISITA_MIN = 60;
+
 /** Etiqueta humana de cada línea. `n` la pluraliza cuando hubo ráfaga. */
 export function etiqueta(m: Momento): string {
   const n = m.n;
   switch (m.tipo) {
     case "alta":
       return "se dio de alta";
+    // Sin plural: `n` aquí son rastros de la MISMA vuelta, no visitas.
+    case "visita":
+      return "abrió la app";
     case "prenda_add":
       return n === 1 ? "añadió una prenda" : `añadió ${n} prendas`;
     case "prenda_del":
@@ -119,6 +144,8 @@ export const EVENTO_LABEL: Record<string, string> = {
   onboarding_step: "avanzó en el onboarding",
   first_outfit_ttv: "llegó a su primer look",
   pwa_installed: "instaló la app",
+  cuenta_borrado_programado: "pidió borrar su cuenta",
+  cuenta_recuperada: "recuperó su cuenta",
   generation_failed: "se le falló una generación",
 };
 
@@ -225,12 +252,30 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
     const w = f.wishlist[i];
     push(w.user_id, w.created_at, "cartera", `w:${i}`);
   }
+  // Los pasivos no son una decisión, pero prueban presencia: se juntan aparte
+  // en "abrió la app" con su propia ventana, y se mezclan al final para que
+  // una visita quede en su lugar exacto de la línea de tiempo.
+  const visitas: Momento[] = [];
   for (let i = 0; i < f.events.length; i++) {
     const e = f.events[i];
-    if (EVENTOS_FUERA.has(e.type)) continue;
+    if (EVENTOS_DUPLICADOS.has(e.type)) continue;
+    if (EVENTOS_PASIVOS.has(e.type)) {
+      if (e.user_id && e.created_at) {
+        visitas.push({
+          key: `v:${i}`,
+          userId: e.user_id,
+          at: e.created_at,
+          tipo: "visita",
+          n: 1,
+          refId: null,
+          data: null,
+        });
+      }
+      continue;
+    }
     push(e.user_id, e.created_at, `ev:${e.type}`, `e:${i}`, e.outfit_id, e.data);
   }
-  return colapsar(m, ventanaMin);
+  return colapsar([...m, ...colapsar(visitas, VENTANA_VISITA_MIN)], ventanaMin);
 }
 
 /** Lo mínimo que necesita ultimoUsoPorUsuario de cada tabla. */

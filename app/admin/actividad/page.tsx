@@ -64,7 +64,8 @@ export default async function ActividadPage({
         <h1 className="text-2xl font-bold text-ink">Actividad</h1>
         <p className="text-sm text-muted">
           Todo lo que hace la gente, en orden: prendas, looks, votos, viajes,
-          espejos y altas. Las tandas del mismo minuto se cuentan como una.
+          espejos y altas. “Abrió la app” es una vuelta sin nada más. Las
+          tandas del mismo rato se cuentan como una.
         </p>
       </header>
 

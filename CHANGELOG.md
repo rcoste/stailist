@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.327.3] - 2026-09-12 — "abrió la app" ya es una línea del feed
+
+Roberto: *"no entiendo si sí había abierto la app o no… eso puede contar como
+una acción, y es importante ver eso"*. Comprobado en la base: `ricardomc888`
+**sí entró** — su sesión se renovó el 10 de septiembre y ese día cerró un tip
+(el evento se escribe al CERRAR la burbuja, no al mostrarla). Y tenía razón en
+lo otro: si entrar es lo que se quiere ver, tiene que salir en el feed.
+
+- La instrumentación ya no se tira: se resume en **"abrió la app"**, una línea
+  por vuelta (ventana de una hora, para no pintar cinco por una sola sesión).
+- Su historial ahora se lee entero: abrió hace 2 días, abrió hace 14, y sus
+  acciones se paran hace 26. Eso es lo que había que ver.
+- "Última acción" salta las visitas — si no, los dos campos de la ficha
+  volverían a decir lo mismo.
+- Etiquetas para los dos eventos nuevos del borrado programado ("pidió borrar
+  su cuenta", "recuperó su cuenta"), que salían con su nombre crudo.
+
+**Lo que todavía NO se ve:** una vuelta que no deja ningún evento (entrar,
+mirar y salir) es invisible para el feed, porque la sesión de auth no escribe
+en `events`. La prueba: ese día hubo otra visita a las 19:56 que sólo consta
+en `auth.sessions`. Se arregla escribiendo un evento de visita al cargar la
+app, una vez al día; no entra en este cambio.
+
 ## [0.2.327.2] - 2026-09-12 — "último uso" y "última acción" no son lo mismo
 
 Roberto: *"no me cuadra… la lista dice hace 2 días y el detalle sale de hace
