@@ -184,7 +184,10 @@ export default async function AdminUserDetail({
       wishlist: (actWishlist ?? []) as never,
       events: (actEvents ?? []) as never,
     }).get(id) ?? null;
-  const ultimaAccion = actividad[0]?.at ?? null;
+  // Saltando las visitas: "abrió la app" es presencia, no acción — si contara,
+  // los dos campos volverían a decir lo mismo y perderíamos justo la distancia
+  // que enseña a quien entra y no hace nada.
+  const ultimaAccion = actividad.find((x) => x.tipo !== "visita")?.at ?? null;
   const ttv = (ttvEvent?.data as { seconds?: number } | null)?.seconds;
 
   const arch = profile.style_archetype as { nombre?: string; descripcion?: string } | null;
@@ -295,8 +298,8 @@ export default async function AdminUserDetail({
           </Link>
         </div>
         <p className="text-xs text-muted">
-          Sólo acciones. Abrir la app o ver un tip no sale aquí: eso cuenta en
-          “último uso”.
+          “Abrió la app” es una vuelta sin nada más: si aparece sola, entró y no
+          hizo nada. Las tandas del mismo rato se cuentan como una.
         </p>
         {actividad.length === 0 ? (
           <span className="text-sm text-muted">Sin actividad registrada.</span>

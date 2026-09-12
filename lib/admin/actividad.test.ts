@@ -121,7 +121,7 @@ describe("construirFeed", () => {
     expect(feed.map((x) => x.tipo)).toEqual(["viaje", "look", "prenda_add", "alta"]);
   });
 
-  it("tira la instrumentación y deja las acciones", () => {
+  it("la instrumentación no sale como acción: los tres rastros son UNA visita", () => {
     const feed = construirFeed({
       ...base,
       events: [
@@ -131,9 +131,34 @@ describe("construirFeed", () => {
         { user_id: "a", outfit_id: "o9", type: "worn", data: null, created_at: "2026-08-10T10:00:03Z" },
       ],
     });
-    expect(feed).toHaveLength(1);
-    expect(feed[0].tipo).toBe("ev:worn");
+    expect(feed.map((x) => x.tipo)).toEqual(["ev:worn", "visita"]);
     expect(feed[0].refId).toBe("o9");
+    expect(etiqueta(feed[1])).toBe("abrió la app");
+  });
+
+  it("dos vueltas separadas son dos visitas; la misma vuelta, una", () => {
+    // El caso real (ricardomc888, 2026-09-10): cerró un tip de madrugada y
+    // volvió por la tarde. Son dos vueltas y el feed tiene que enseñar dos.
+    const feed = construirFeed({
+      ...base,
+      events: [
+        { user_id: "a", outfit_id: null, type: "hint_seen", data: null, created_at: "2026-09-10T03:02:00Z" },
+        { user_id: "a", outfit_id: null, type: "avatar_judge", data: null, created_at: "2026-09-10T19:20:00Z" },
+        { user_id: "a", outfit_id: null, type: "generation_timing", data: null, created_at: "2026-09-10T19:56:00Z" },
+      ],
+    });
+    expect(feed.map((x) => x.tipo)).toEqual(["visita", "visita"]);
+    expect(feed.map((x) => x.at)).toEqual(["2026-09-10T19:56:00Z", "2026-09-10T03:02:00Z"]);
+  });
+
+  it("un borrado sigue sin ser visita: se tira del todo", () => {
+    const feed = construirFeed({
+      ...base,
+      events: [
+        { user_id: "a", outfit_id: null, type: "item_deleted", data: null, created_at: "2026-08-20T14:00:00Z" },
+      ],
+    });
+    expect(feed).toHaveLength(0);
   });
 
   it("un evento NUEVO entra solo al feed en vez de quedarse invisible", () => {
@@ -228,7 +253,7 @@ describe("ultimoUsoPorUsuario", () => {
     expect(ultimoUsoPorUsuario(fuentes).get("rica")).toBe("2026-09-10T03:02:00Z");
   });
 
-  it("y el feed, que sólo trae acciones, se queda en la última de verdad", () => {
+  it("el feed abre con la visita, y la última ACCIÓN se busca saltándola", () => {
     const feed = construirFeed({
       profiles: [],
       items: fuentes.items.map((i) => ({ id: "i1", ...i })),
@@ -240,7 +265,15 @@ describe("ultimoUsoPorUsuario", () => {
         { user_id: "rica", outfit_id: null, type: "hint_seen", data: null, created_at: "2026-09-10T03:02:00Z" },
       ],
     });
-    expect(feed[0].at).toBe("2026-08-17T02:59:00Z"); // borró el viaje
+    // Lo de arriba del todo es la vuelta del 10 de septiembre…
+    expect(feed[0].tipo).toBe("visita");
+    expect(feed[0].at).toBe("2026-09-10T03:02:00Z");
+    // …y la última acción, saltando visitas, sigue siendo el viaje borrado.
+    // Es exactamente lo que hace la ficha del usuario para el campo
+    // "última acción": si contara la visita, los dos campos dirían lo mismo.
+    const accion = feed.find((x) => x.tipo !== "visita");
+    expect(accion?.at).toBe("2026-08-17T02:59:00Z");
+    expect(etiqueta(accion!)).toBe("borró un viaje");
   });
 
   it("el borrado también es uso: la fecha más reciente puede ser un deleted_at", () => {
