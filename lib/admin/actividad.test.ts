@@ -151,6 +151,20 @@ describe("construirFeed", () => {
     expect(feed.map((x) => x.at)).toEqual(["2026-09-10T19:56:00Z", "2026-09-10T03:02:00Z"]);
   });
 
+  it("un alta tampoco sale dos veces (item_added junto a la prenda de la tabla)", () => {
+    // Medido el 2026-09-12: el feed enseñaba 16 líneas crudas de `item_added`
+    // ADEMÁS de las prendas que ya salen de `items` (1012 filas contra 16
+    // eventos). Misma regla que los borrados.
+    const feed = construirFeed({
+      ...base,
+      items: [{ id: "i1", user_id: "a", created_at: "2026-09-09T05:25:00Z", deleted_at: null }],
+      events: [
+        { user_id: "a", outfit_id: null, type: "item_added", data: null, created_at: "2026-09-09T05:25:01Z" },
+      ],
+    });
+    expect(feed.map((x) => x.tipo)).toEqual(["prenda_add"]);
+  });
+
   it("un borrado sigue sin ser visita: se tira del todo", () => {
     const feed = construirFeed({
       ...base,
