@@ -61,11 +61,17 @@ export type TipoMomento =
 // hacer nada — volver y no hacer nada es el hallazgo, y el feed lo escondía.
 // Ahora no se tiran: se vuelven UNA línea "abrió la app" por sesión.
 export const EVENTOS_PASIVOS = new Set([
+  // El evento propio de visita (lib/visitas.ts, uno al día por persona). Va
+  // con los pasivos para que una vuelta con acciones no pinte además su línea
+  // suelta de "abrió la app": el colapso los junta en una sola.
+  "visita",
   "generation_timing",
   "critic_review",
   "avatar_judge",
   "hint_seen",
   "intro_seen",
+  // "Se le mostró el cartel de instalar la app": ocurre sin que nadie decida.
+  "pwa_prompt_shown",
 ]);
 
 // ESTOS SÍ SE TIRAN, y no son visita: son un duplicado INCOMPLETO de la tabla
@@ -80,6 +86,14 @@ export const EVENTOS_DUPLICADOS = new Set([
   // sólo cuenta lo que no deja fila.
   "item_deleted",
   "trip_deleted",
+  // Y LAS ALTAS, por lo mismo y comprobado el 2026-09-12: el feed enseñaba 16
+  // líneas crudas de `item_added` ADEMÁS de las prendas que ya salen de la
+  // tabla (1012 filas en `items` contra 16 eventos). La regla no cambia: el
+  // ciclo de vida lo cuenta la tabla, y `events` sólo lo que no deja fila.
+  "item_added",
+  "wishlist_added",
+  "trip_created",
+  "outfit_deleted",
 ]);
 
 /** Los que no salen como acción propia. Unión de los dos de arriba. */
@@ -146,6 +160,15 @@ export const EVENTO_LABEL: Record<string, string> = {
   pwa_installed: "instaló la app",
   cuenta_borrado_programado: "pidió borrar su cuenta",
   cuenta_recuperada: "recuperó su cuenta",
+  capsule_generated: "armó su cápsula",
+  tryon_generated: "se probó un look",
+  render_generated: "pidió el dibujo de una prenda",
+  trip_outfits_generated: "armó los looks de un viaje",
+  outfit_favorited: "guardó un look",
+  wow_otro_look: "pidió otro look en el onboarding",
+  onboarding_started: "empezó el onboarding",
+  email_unsubscribed: "se dio de baja de los correos",
+  avatar_fallo: "se le falló el avatar",
   generation_failed: "se le falló una generación",
 };
 
