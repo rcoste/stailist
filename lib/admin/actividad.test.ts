@@ -4,6 +4,7 @@ import {
   construirFeed,
   etiqueta,
   porDia,
+  ultimoUsoPorUsuario,
   EVENTOS_FUERA,
   type FuentesCrudas,
   type Momento,
@@ -204,6 +205,72 @@ describe("etiqueta", () => {
     expect(etiqueta({ ...m("a", "2026-08-10T14:00:00Z", "ev:vote_up"), n: 3 })).toBe(
       "votó 👍 un look ×3"
     );
+  });
+});
+
+describe("ultimoUsoPorUsuario", () => {
+  // EL CASO REAL (2026-09-12, ricardomc888): entró el 10 de septiembre y sólo
+  // dejó un hint_seen; su última ACCIÓN fue borrar un viaje el 17 de agosto.
+  // La lista decía "hace 2 días" y la ficha "hace 26 días", las dos ciertas.
+  // Este test fija que son dos preguntas distintas, no un error a "corregir".
+  const fuentes = {
+    items: [{ user_id: "rica", created_at: "2026-08-15T10:00:00Z", deleted_at: null }],
+    outfits: [{ user_id: "rica", created_at: "2026-08-17T02:11:00Z", deleted_at: null }],
+    trips: [{ user_id: "rica", created_at: "2026-08-15T23:46:00Z", deleted_at: "2026-08-17T02:59:00Z" }],
+    wishlist: [{ user_id: "rica", created_at: "2026-08-15T23:47:00Z" }],
+    events: [
+      { user_id: "rica", created_at: "2026-08-17T02:58:00Z" },
+      { user_id: "rica", created_at: "2026-09-10T03:02:00Z" }, // hint_seen
+    ],
+  };
+
+  it("cuenta hasta la instrumentación: abrir la app ES uso", () => {
+    expect(ultimoUsoPorUsuario(fuentes).get("rica")).toBe("2026-09-10T03:02:00Z");
+  });
+
+  it("y el feed, que sólo trae acciones, se queda en la última de verdad", () => {
+    const feed = construirFeed({
+      profiles: [],
+      items: fuentes.items.map((i) => ({ id: "i1", ...i })),
+      outfits: fuentes.outfits.map((o) => ({ id: "o1", ...o })),
+      trips: fuentes.trips.map((t) => ({ id: "t1", ...t })),
+      wishlist: fuentes.wishlist,
+      events: [
+        { user_id: "rica", outfit_id: null, type: "vote_up", data: null, created_at: "2026-08-17T02:58:00Z" },
+        { user_id: "rica", outfit_id: null, type: "hint_seen", data: null, created_at: "2026-09-10T03:02:00Z" },
+      ],
+    });
+    expect(feed[0].at).toBe("2026-08-17T02:59:00Z"); // borró el viaje
+  });
+
+  it("el borrado también es uso: la fecha más reciente puede ser un deleted_at", () => {
+    const uso = ultimoUsoPorUsuario({
+      items: [{ user_id: "a", created_at: "2026-08-01T10:00:00Z", deleted_at: "2026-08-30T10:00:00Z" }],
+      outfits: [],
+      trips: [],
+      wishlist: [],
+      events: [],
+    });
+    expect(uso.get("a")).toBe("2026-08-30T10:00:00Z");
+  });
+
+  it("compara por tiempo real, no por texto (las fuentes traen Z y +00:00)", () => {
+    const uso = ultimoUsoPorUsuario({
+      items: [],
+      outfits: [],
+      trips: [],
+      wishlist: [],
+      events: [
+        { user_id: "a", created_at: "2026-09-10T03:02:53.245566+00:00" },
+        { user_id: "a", created_at: "2026-08-17T02:59:00Z" },
+      ],
+    });
+    expect(uso.get("a")).toBe("2026-09-10T03:02:53.245566+00:00");
+  });
+
+  it("sin rastro, sin fila: quien nunca hizo nada no aparece", () => {
+    const uso = ultimoUsoPorUsuario({ items: [], outfits: [], trips: [], wishlist: [], events: [] });
+    expect(uso.has("a")).toBe(false);
   });
 });
 

@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.327.2] - 2026-09-12 — "último uso" y "última acción" no son lo mismo
+
+Roberto: *"no me cuadra… la lista dice hace 2 días y el detalle sale de hace
+mucho más tiempo"*. Las dos eran ciertas, y ahí estaba el problema: llevaban
+la misma etiqueta. `ricardomc888` abrió la app el 10 de septiembre (dejó un
+`hint_seen`, que sólo se escribe con la app abierta) y su última acción fue
+borrar un viaje el 17 de agosto. Volvió y no hizo nada — que es justo la señal
+que este experimento vino a medir, y estaba escondida detrás de "hace 2 días".
+
+- La ficha ahora dice **las dos cosas por separado**: "último uso" (estuvo
+  aquí) y "última acción" (hizo algo). Cuando la distancia entre las dos es
+  grande, eso ES el hallazgo.
+- El feed lleva una línea que lo aclara: abrir la app o ver un tip no cuenta
+  como acción.
+- El cálculo de "último uso" pasa a `lib/admin/actividad.ts` y lo usan LAS DOS
+  pantallas. Discrepaban porque cada una lo hacía por su cuenta; ahora no
+  pueden. De paso, la lista cuenta también los borrados, que antes se le
+  escapaban: borrar es uso.
+- Tests con el caso real que lo destapó.
+
 ## [0.2.327.1] - 2026-09-12 — la actividad de cada persona, donde sí se ve
 
 Roberto, al abrir a alguien en el admin: *"además de ver el resumen de ellos,

@@ -3,7 +3,7 @@ import { isMinor } from "@/lib/edad";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { construirFeed, etiqueta } from "@/lib/admin/actividad";
+import { construirFeed, etiqueta, ultimoUsoPorUsuario } from "@/lib/admin/actividad";
 import {
   ITEM_IMAGE_SELECT,
   itemImageUrlSync,
@@ -23,13 +23,6 @@ function hace(iso: string | null | undefined): string {
   if (d < 30) return `hace ${d} ${d === 1 ? "día" : "días"}`;
   const mo = Math.floor(d / 30);
   return `hace ${mo} ${mo === 1 ? "mes" : "meses"}`;
-}
-
-// Devuelve el ISO más reciente entre dos (o null si ambos faltan).
-function masReciente(a?: string | null, b?: string | null): string | null {
-  if (!a) return b ?? null;
-  if (!b) return a;
-  return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
 }
 
 // TTV en lenguaje humano. La promesa es <2 min; cuentas viejas traen valores de
@@ -177,8 +170,21 @@ export default async function AdminUserDetail({
     events: (actEvents ?? []) as never,
   }).slice(0, 25);
 
-  // Último uso = lo más reciente entre su última actividad y su último outfit.
-  const lastActive = masReciente(actividad[0]?.at, outfits?.[0]?.created_at);
+  // DOS COSAS DISTINTAS, y la ficha las dice por separado desde el 2026-09-12.
+  // El caso que lo destapó está contado en lib/admin/actividad.ts:
+  //   · último uso     = cuándo estuvo aquí, aunque sólo abriera la app;
+  //   · última acción  = cuándo hizo algo (lo que sale en el feed de abajo).
+  // Cuando la distancia entre los dos es grande, eso ES el hallazgo: volvió y
+  // no hizo nada.
+  const ultimoUso =
+    ultimoUsoPorUsuario({
+      items: (actItems ?? []) as never,
+      outfits: (actOutfits ?? []) as never,
+      trips: (actTrips ?? []) as never,
+      wishlist: (actWishlist ?? []) as never,
+      events: (actEvents ?? []) as never,
+    }).get(id) ?? null;
+  const ultimaAccion = actividad[0]?.at ?? null;
   const ttv = (ttvEvent?.data as { seconds?: number } | null)?.seconds;
 
   const arch = profile.style_archetype as { nombre?: string; descripcion?: string } | null;
@@ -256,7 +262,8 @@ export default async function AdminUserDetail({
               label="Gustos"
               value={(profile.taste_tags ?? []).slice(0, 6).join(", ") || "—"}
             />
-            <Field label="Último uso" value={hace(lastActive)} />
+            <Field label="Último uso" value={hace(ultimoUso)} />
+            <Field label="Última acción" value={hace(ultimaAccion)} />
             <Field
               label="TTV (1er outfit)"
               value={ttv != null ? ttvHumano(ttv) : "—"}
@@ -287,6 +294,10 @@ export default async function AdminUserDetail({
             ver todo →
           </Link>
         </div>
+        <p className="text-xs text-muted">
+          Sólo acciones. Abrir la app o ver un tip no sale aquí: eso cuenta en
+          “último uso”.
+        </p>
         {actividad.length === 0 ? (
           <span className="text-sm text-muted">Sin actividad registrada.</span>
         ) : (
