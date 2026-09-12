@@ -233,6 +233,57 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
   return colapsar(m, ventanaMin);
 }
 
+/** Lo mínimo que necesita ultimoUsoPorUsuario de cada tabla. */
+type FilaConFecha = {
+  user_id?: string | null;
+  created_at: string | null;
+  deleted_at?: string | null;
+};
+
+/**
+ * ÚLTIMO USO ≠ ÚLTIMA ACCIÓN. Confundirlos ya costó una lectura equivocada.
+ *
+ * Roberto, 2026-09-12: la lista decía "hace 2 días" y el detalle "hace 26
+ * días" de la misma persona. Las dos eran ciertas y ese era el problema — la
+ * etiqueta era la misma. Entró el 10 de septiembre (dejó un `hint_seen`, que
+ * sólo se escribe con la app abierta) y su última ACCIÓN fue borrar un viaje
+ * el 17 de agosto. Alguien que abre y no hace nada es justo la señal que este
+ * experimento vino a medir: esconderla detrás de "hace 2 días" la borra.
+ *
+ * Esta función contesta "¿cuándo estuvo aquí?": cuenta TODO rastro, incluida
+ * la instrumentación que el feed excluye a propósito (ver EVENTOS_FUERA), y
+ * también los borrados, que son uso aunque resten cosas. La otra pregunta,
+ * "¿cuándo hizo algo?", la contesta el primer momento del feed.
+ *
+ * Vive aquí, y no en cada pantalla, porque nació duplicada: la lista lo
+ * calculaba en su bucle de conteos y el detalle por su cuenta. Por eso
+ * pudieron discrepar sin que nada se rompiera.
+ */
+export function ultimoUsoPorUsuario(f: {
+  items: FilaConFecha[];
+  outfits: FilaConFecha[];
+  trips: FilaConFecha[];
+  wishlist: FilaConFecha[];
+  events: { user_id: string | null; created_at: string | null }[];
+}): Map<string, string> {
+  const out = new Map<string, string>();
+  const marca = (uid: string | null | undefined, at: string | null | undefined) => {
+    if (!uid || !at) return;
+    const prev = out.get(uid);
+    // Por tiempo real, no por texto: las fechas llegan con formatos distintos
+    // según la fuente ("…Z" y "…+00:00") y comparar strings los ordenaría mal.
+    if (!prev || new Date(at).getTime() > new Date(prev).getTime()) out.set(uid, at);
+  };
+  for (const grupo of [f.items, f.outfits, f.trips, f.wishlist]) {
+    for (const fila of grupo) {
+      marca(fila.user_id, fila.created_at);
+      marca(fila.user_id, fila.deleted_at);
+    }
+  }
+  for (const e of f.events) marca(e.user_id, e.created_at);
+  return out;
+}
+
 /** Agrupa el feed por día local, conservando el orden. */
 export function porDia(momentos: Momento[]): { dia: string; momentos: Momento[] }[] {
   const out: { dia: string; momentos: Momento[] }[] = [];

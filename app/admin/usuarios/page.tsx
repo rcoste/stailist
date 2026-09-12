@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE } from "@/lib/onboarding";
+import { ultimoUsoPorUsuario } from "@/lib/admin/actividad";
 import { UsuariosTable, type UserRow } from "./usuarios-table";
 
 type Profile = {
@@ -44,7 +45,6 @@ export default async function AdminUsuarios() {
     cartera: number;
     worn: number;
     votes: number;
-    lastActive: number | null;
   };
   const empty = (): Agg => ({
     closet: 0,
@@ -54,7 +54,6 @@ export default async function AdminUsuarios() {
     cartera: 0,
     worn: 0,
     votes: 0,
-    lastActive: null,
   });
   const agg = new Map<string, Agg>();
   const bump = (uid: string): Agg => {
@@ -65,46 +64,43 @@ export default async function AdminUsuarios() {
     }
     return a;
   };
-  const touch = (a: Agg, iso: string | null | undefined) => {
-    if (!iso) return;
-    const t = new Date(iso).getTime();
-    if (a.lastActive === null || t > a.lastActive) a.lastActive = t;
-  };
-
   // Clóset: cuenta solo prendas vivas; las fotos propias son señal de esfuerzo.
   for (const it of itemsRes.data ?? []) {
     if (!it.user_id) continue;
     const a = bump(it.user_id);
-    touch(a, it.created_at);
     if (it.deleted_at) continue;
     a.closet++;
     if (it.source === "photo") a.closetPhotos++;
   }
   for (const o of outfitsRes.data ?? []) {
     if (!o.user_id) continue;
-    const a = bump(o.user_id);
-    a.looks++;
-    touch(a, o.created_at);
+    bump(o.user_id).looks++;
   }
   for (const t of tripsRes.data ?? []) {
     if (!t.user_id) continue;
-    const a = bump(t.user_id);
-    a.viaje++;
-    touch(a, t.created_at);
+    bump(t.user_id).viaje++;
   }
   for (const w of wishlistRes.data ?? []) {
     if (!w.user_id) continue;
-    const a = bump(w.user_id);
-    a.cartera++;
-    touch(a, w.created_at);
+    bump(w.user_id).cartera++;
   }
   for (const e of eventsRes.data ?? []) {
     if (!e.user_id) continue;
     const a = bump(e.user_id);
-    touch(a, e.created_at);
     if (e.type === "vote_up" || e.type === "vote_down") a.votes++;
     else if (e.type === "worn") a.worn++;
   }
+
+  // "Último uso" sale del MISMO cálculo que el detalle de cada persona
+  // (lib/admin/actividad.ts): esta columna y esa ficha discreparon hasta el
+  // 2026-09-12 porque cada una lo hacía por su cuenta.
+  const uso = ultimoUsoPorUsuario({
+    items: (itemsRes.data ?? []) as never,
+    outfits: (outfitsRes.data ?? []) as never,
+    trips: (tripsRes.data ?? []) as never,
+    wishlist: (wishlistRes.data ?? []) as never,
+    events: (eventsRes.data ?? []) as never,
+  });
 
   const rows: UserRow[] = profiles.map((p) => {
     const a = agg.get(p.id) ?? empty();
@@ -124,7 +120,7 @@ export default async function AdminUsuarios() {
       cartera: a.cartera,
       worn: a.worn,
       votes: a.votes,
-      lastActive: a.lastActive,
+      lastActive: uso.has(p.id) ? new Date(uso.get(p.id)!).getTime() : null,
     };
   });
 
