@@ -269,6 +269,61 @@ export default async function AdminUserDetail({
         <p className="editorial text-sm text-muted">“{arch.descripcion}”</p>
       ) : null}
 
+      {/* ACTIVIDAD RECIENTE, ARRIBA. Es lo primero que uno quiere saber al
+          abrir a alguien: qué hizo y cuándo. Vivía al final de la página y
+          nadie llegaba: un clóset de 57 prendas y 20 outfits la empujaban
+          fuera de la pantalla (Roberto, 2026-09-12: pidió "ver sus últimas
+          actividades" sin saber que ya existía). El feed completo de esta
+          persona, sin recortar a 25, está a un clic. */}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
+            Actividad reciente
+          </h2>
+          <Link
+            href={`/admin/actividad?u=${id}`}
+            className="shrink-0 text-xs text-muted underline decoration-line underline-offset-2 hover:text-ink"
+          >
+            ver todo →
+          </Link>
+        </div>
+        {actividad.length === 0 ? (
+          <span className="text-sm text-muted">Sin actividad registrada.</span>
+        ) : (
+          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+            {actividad.map((m) => {
+              const d = m.data as { seconds?: number; step?: number } | null;
+              const extra =
+                m.tipo === "ev:first_outfit_ttv" && typeof d?.seconds === "number"
+                  ? ` en ${ttvHumano(d.seconds)}`
+                  : m.tipo === "ev:onboarding_step" && typeof d?.step === "number"
+                    ? ` (paso ${d.step})`
+                    : "";
+              return (
+                <div
+                  key={m.key}
+                  className="flex items-center justify-between gap-3 px-4 py-2.5"
+                >
+                  <span className="text-sm text-ink">
+                    {etiqueta(m)}
+                    {extra}
+                  </span>
+                  {/* "hace 3 días" para leer de un vistazo; la fecha exacta al
+                      pasar el cursor, que es lo que hace falta al cruzar con
+                      un correo o con una queja. */}
+                  <span
+                    className="shrink-0 text-xs text-muted"
+                    title={new Date(m.at).toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}
+                  >
+                    {hace(m.at)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {/* Clóset visual */}
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
@@ -407,39 +462,6 @@ export default async function AdminUserDetail({
         )}
       </section>
 
-      {/* Actividad reciente */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold font-sans uppercase tracking-wide text-muted">
-          Actividad reciente
-        </h2>
-        {actividad.length === 0 ? (
-          <span className="text-sm text-muted">Sin actividad registrada.</span>
-        ) : (
-          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-            {actividad.map((m) => {
-              const d = m.data as { seconds?: number; step?: number } | null;
-              const extra =
-                m.tipo === "ev:first_outfit_ttv" && typeof d?.seconds === "number"
-                  ? ` en ${ttvHumano(d.seconds)}`
-                  : m.tipo === "ev:onboarding_step" && typeof d?.step === "number"
-                    ? ` (paso ${d.step})`
-                    : "";
-              return (
-                <div
-                  key={m.key}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5"
-                >
-                  <span className="text-sm text-ink">
-                    {etiqueta(m)}
-                    {extra}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted">{hace(m.at)}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
