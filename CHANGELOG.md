@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.327.1] - 2026-09-12 — la actividad de cada persona, donde sí se ve
+
+Roberto, al abrir a alguien en el admin: *"además de ver el resumen de ellos,
+también pueda ver sus últimas actividades"*. Ya estaban — el detalle cruza las
+mismas seis fuentes que el feed general, con las ráfagas colapsadas. El
+problema era el lugar: iban al final, después de un clóset de 57 prendas y de
+20 outfits, así que nadie llegaba hasta ahí.
+
+- La sección sube a justo debajo de la ficha, antes del clóset.
+- **"ver todo →"** abre el feed completo de esa persona
+  (`/admin/actividad?u=…`), sin el corte de 25 momentos.
+- La fecha y hora exactas salen al pasar el cursor sobre el "hace 26 días".
+
 ## [0.2.327.0] - 2026-09-10 — borrar la cuenta tiene 30 días de arrepentimiento
 
 Roberto: *"el borrado programado que sea de 30 días o 90 días, algo así, algo
