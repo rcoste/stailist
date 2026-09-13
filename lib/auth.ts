@@ -14,6 +14,7 @@ import type { JourneyState } from "@/lib/journey";
 import type { AgeRange } from "@/lib/edad";
 import type { Build, Volume } from "@/lib/silueta";
 import { RUTA_CUENTA_PROGRAMADA } from "@/lib/borrado-programado";
+import { registrarVisita } from "@/lib/visitas";
 
 export type Gender = "hombre" | "mujer";
 
@@ -35,6 +36,8 @@ export type Profile = {
   minor_consent_verified_at: string | null;
   /** Fecha de borrado programado (lib/borrado-programado.ts); null = cuenta normal. */
   borrado_programado_para: string | null;
+  /** Última vez que abrió la app, con precisión de día (lib/visitas.ts). */
+  ultima_visita: string | null;
   // Último envío del correo al tutor (cooldown de reenvío + feedback en la card).
   minor_consent_last_sent_at: string | null;
   taste_tags: string[];
@@ -121,12 +124,22 @@ export async function getProfile(opts?: { real?: boolean }): Promise<Profile> {
   // operando como sí mismo.
   if (profile.borrado_programado_para && !opts?.real) redirect(RUTA_CUENTA_PROGRAMADA);
 
+  const viewAs = opts?.real ? null : (await cookies()).get(VIEW_AS_COOKIE)?.value ?? null;
+
+  // VISITA: que se sepa que entró aunque no haga nada (lib/visitas.ts). Una al
+  // día y por persona; el candado vive en la propia función. Aquí porque es el
+  // paso por el que pasan TODAS las pantallas de la app.
+  //
+  // No se registra con { real: true } (eso es /admin operando, no usar la app)
+  // ni en modo "ver como": esa vuelta es del admin, y apuntarla en la persona
+  // observada ensuciaría justo el dato que se está mirando.
+  if (!opts?.real && !viewAs) await registrarVisita(supabase, profile);
+
   // "Ver como": si un admin trae la cookie, las pantallas de la app cargan el
   // perfil del usuario objetivo en vez del propio (las lecturas pasan por las
   // policies "admin reads *"). /admin usa { real: true } para seguir operando
   // como el admin real aunque la cookie exista.
   if (!opts?.real && profile.is_admin) {
-    const viewAs = (await cookies()).get(VIEW_AS_COOKIE)?.value;
     if (viewAs && viewAs !== user.id) {
       const { data: target } = await supabase
         .from("profiles")

@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.328.0] - 2026-09-12 — entrar y no hacer nada ya deja huella
+
+Faltaba la mitad de la respuesta: "abrió la app" sólo se veía si la vuelta
+dejaba algún rastro de rebote (un tip cerrado, los timings de una generación).
+Quien entraba, miraba y se iba seguía siendo invisible — y ése es justo el
+patrón que el experimento vino a medir antes de los anuncios del lunes.
+
+- **Evento propio de visita** (`lib/visitas.ts`): se escribe al cargar
+  cualquier pantalla de la app, **una vez al día por persona**, en día natural
+  de CDMX ("volvió el jueves" tiene que ser su jueves, no el de UTC).
+- **No cuenta el admin:** ni `/admin` ni el modo "ver como" registran visita —
+  mirar a alguien no puede ensuciar el dato que se está mirando.
+- **Sin filas de más:** el candado (`profiles.ultima_visita`) va dentro del
+  propio update, así que dos pestañas a la vez siguen siendo una visita.
+  Probado: tres cargas seguidas, un solo evento.
+- Migración `0160` (columna + tipo de evento). Aditiva, ya aplicada.
+
+### De paso, dos cosas que el feed venía enseñando mal
+
+- **Las altas salían dos veces:** 16 líneas crudas de `item_added` además de
+  las prendas que ya cuenta la tabla. Mismo error que ya estaba documentado
+  para los borrados; ahora la regla cubre altas, cartera y viajes.
+- **Nombres crudos con etiqueta:** cápsula, try-on, dibujo de prenda, baja de
+  correos, avatar fallido y cinco más. El feed pasó de 622 a 596 momentos, y
+  ya no queda ningún nombre técnico a la vista.
+
 ## [0.2.327.3] - 2026-09-12 — "abrió la app" ya es una línea del feed
 
 Roberto: *"no entiendo si sí había abierto la app o no… eso puede contar como
