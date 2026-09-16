@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.335.0] - 2026-09-16 — el voto es el continuar
+
+Con el render listo, el look se quedaba sin siguiente paso: la primaria negra
+desaparecía y los pulgares chicos no llevaban a ningún lado.
+
+- **Con render y sin voto, el voto ocupa la primaria:** "no es para mí" y "me
+  encanta", grandes. El 👍 confirma ("¡anotado!") y regresa a Inicio; el 👎 abre
+  la hoja de razones de siempre.
+- **No hay "continuar" que se salte el voto.** Roberto lo propuso; se descartó
+  por el dato del wow, que sí tiene esa salida grande ("entrar a la app") y
+  donde sólo 5 de 24 votan su primer look. Salir sin calificar sigue siendo
+  posible con "‹ inicio" arriba.
+- Sin render nada cambia: la primaria sigue siendo "verme con este look". Si
+  el look ya venía votado, vuelve la fila chica.
+- **Qué vigilar:** la tasa de voto en Hoy de looks con render. Si no sube, la
+  hipótesis estaba mal.
+
 ## [0.2.334.0] - 2026-09-16 — el look ya tiene salida
 
 Roberto, viendo un look en su teléfono: si me quisiera salir, "no sabría qué
