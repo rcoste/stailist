@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { withDb } from "@/lib/db";
 import { origenDesdeDato } from "@/lib/origen";
 import { OPCIONES_CONOCIO, etiquetaConocio } from "@/lib/como-nos-conocio";
+import { SQL_MAZO, resumirMazo, type FilaMazo } from "@/lib/admin/mazo";
 import {
   DIAS_VENTANA,
   EVENTOS_QUE_NO_SON_VOLVER,
@@ -41,6 +42,9 @@ function pct(n: number, d: number): string {
 export default async function AdminAdquisicion() {
   await requireAdmin();
   const crudas = await withDb(async (c) => (await c.query(SQL_ADQUISICION, [EVENTOS_QUE_NO_SON_VOLVER])).rows);
+  const mazo = resumirMazo(
+    (await withDb(async (c) => (await c.query(SQL_MAZO)).rows)) as FilaMazo[]
+  );
   const app = (await withDb(async (c) => (await c.query(SQL_APP_INSTALADA)).rows[0])) as
     | { cuentas: number; instaladas: number; activas: number; activas_instaladas: number }
     | undefined;
@@ -171,6 +175,53 @@ export default async function AdminAdquisicion() {
         ) : (
           <p className="text-sm text-muted">Todavía nadie la ha contestado.</p>
         )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          El mazo de swipes
+        </h2>
+        <p className="max-w-3xl text-sm text-muted">
+          ¿Las cartas atrevidas del arranque espantan a alguien? Si hay abandono o escape temprano
+          en hombres, se cambia sólo la primera vuelta (una carta clásica por Streetwear o
+          Hipster). Si no, el orden se queda: rechazar una carta también mide. Llegó = ya dio su
+          edad, que se pide justo antes. Medido el 2026-09-16: 7 de 7 hombres terminaron, 1 usó el
+          escape; vale la pena repetirlo con ~20 hombres de la campaña.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {mazo.map((g) => (
+            <div key={g.genero} className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
+              <p className="text-sm text-ink">
+                <b className="capitalize">{g.genero === "hombre" ? "hombres" : "mujeres"}</b> ·
+                terminaron <span className="tabular">{pct(g.terminaron, g.llegaron)}</span> · escape{" "}
+                <span className="tabular">{pct(g.escape, g.conVotos)}</span> · likes{" "}
+                <span className="tabular">{g.pctLikes === null ? "—" : `${g.pctLikes}%`}</span>
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-line text-muted">
+                      <th className={`${th} text-left`}>#</th>
+                      <th className={`${th} text-left`}>Carta</th>
+                      <th className={`${th} text-center`}>Likes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.cartas.map((c) => (
+                      <tr key={c.id} className="border-b border-line last:border-0">
+                        <td className={`${td} text-left tabular text-muted`}>{c.posicion}</td>
+                        <td className={`${td} text-left text-ink`}>{c.nombre}</td>
+                        <td className={`${td} text-center tabular text-ink`}>
+                          {c.votos ? `${c.likes} de ${c.votos}` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
