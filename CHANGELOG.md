@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.334.0] - 2026-09-16 — el look ya tiene salida
+
+Roberto, viendo un look en su teléfono: si me quisiera salir, "no sabría qué
+picarle para irme al inicio".
+
+- **"‹ inicio" arriba a la izquierda dentro del look.** La pestaña "inicio" de
+  la barra ya regresaba, pero dentro del look no se leía como salida.
+- **Sin título.** "Saco y Mocasín de Domingo" ocupaba dos renglones y no
+  ayudaba a decidir nada; ese alto regresa a la foto. El nombre sigue en el
+  diario y para lectores de pantalla.
+- **Se fue "te digo cómo te queda" de la fila del voto.** Se leía desconectado
+  (recién generado todavía no te lo has puesto), rimaba con la pestaña "así te
+  queda", y de verdad estaba desconectado: el fit check arma un look nuevo con
+  la foto, no marca ESTE como puesto. El fit check sigue en Inicio.
+- **El buzón pasa a la derecha, junto al perfil, con globo de diálogo.** A la
+  izquierda se leía como "atrás", y el sobre como "correo". La izquierda queda
+  sólo para volver.
+
 ## [0.2.333.0] - 2026-09-16 — ¿las cartas atrevidas espantan a alguien?
 
 En Aesty, los primeros looks de hombre se sentían "para alguien muy fashion" y

@@ -29,6 +29,7 @@ import type { UltimoLook } from "@/lib/ultimo-look";
 import { HomeTripCard } from "@/components/home-trip-card";
 import type { HomeTrip } from "@/lib/home-trip";
 import { HomeChecklist } from "@/components/home-checklist";
+import { VolverEnHeader } from "@/components/volver-en-header";
 import { CorreoOptInCard } from "@/components/correo-opt-in-card";
 import type { HomeChecklist as HomeChecklistData } from "@/lib/home-checklist";
 
@@ -843,9 +844,7 @@ export function HoyClient({
       // look recién generado arranca sin voto (el key resetea el estado).
       votoInicial={visible.id === lookInicial?.id ? votoInicial : null}
       onOtroLook={otroLook}
-      ultimaOcasion={ultimoLook?.ocasion ?? null}
-      ultimoLookCreadoEn={ultimoLook?.creadoEn ?? null}
-      lastObjective={defaultObjective}
+      onInicio={() => setState({ kind: "inicio" })}
       lookIndex={idxVisible}
       lookCount={trio.length}
       onVerLook={setLookVisible}
@@ -871,9 +870,7 @@ function ReadyView({
   fechaLabel,
   votoInicial = null,
   onOtroLook,
-  ultimaOcasion = null,
-  ultimoLookCreadoEn = null,
-  lastObjective = null,
+  onInicio,
   lookIndex = 0,
   lookCount = 1,
   onVerLook,
@@ -885,30 +882,22 @@ function ReadyView({
   /** "MARTES · 15 JUL" — para el eyebrow del spread de desktop. */
   fechaLabel: string;
   votoInicial?: "up" | "down" | null;
+  /** Lo que hace la hoja del 👎 al elegir "ver otro look". */
   onOtroLook: () => void;
-  /** Para la pregunta del fit check: a dónde iba el último look y cuándo se
-   *  armó. Viajan crudos porque "¿es de hoy?" se decide con la hora LOCAL,
-   *  dentro del propio flujo (aquí el server ya habría contestado en UTC). */
-  ultimaOcasion?: string | null;
+  /** Vuelta a la home ("‹ inicio" en el header). */
+  onInicio: () => void;
   /** El trío (decisión de Roberto, 2026-08-19: "lo generado se muestra, no se
    *  tira"): cuál de los looks estás viendo, cuántos hay y cómo cambiar. Con
    *  lookCount 1 (planeados, looks viejos) las pestañas no se pintan. */
   lookIndex?: number;
   lookCount?: number;
   onVerLook?: (i: number) => void;
-  ultimoLookCreadoEn?: string | null;
-  lastObjective?: string | null;
 }) {
+  // Hoja de razones del 👎. Tenía una segunda entrada ("otro look", modo skip)
+  // que se fue con el botón: hoy sólo se abre desde el voto.
   const [skipOpen, setSkipOpen] = useState(false);
-  // Hoja de razones: "skip" (desde "otro look") o "down" (desde el 👎). Misma
-  // hoja, dos entradas — el 👎 captura el disgusto aunque no regenere.
-  const [sheetMode, setSheetMode] = useState<"skip" | "down">("skip");
   // Voto ligero (etapa 1 del embudo): un tap, sin compromiso de ponérselo.
   const [voto, setVoto] = useState<"up" | "down" | null>(votoInicial);
-  // La promesa del fit check ("cuando te lo pongas, enséñamelo") dispara el
-  // mismo flujo headless del home. Etapa 2 del embudo: reemplaza a la card
-  // "¿te lo pusiste ayer?" — la señal de oro ahora se mide por cercanía.
-  const espejoRef = useRef<EspejoHandle>(null);
 
   async function votar(up: boolean) {
     const prev = voto;
@@ -925,7 +914,6 @@ function ReadyView({
     if (up) {
       notifyFirstLike(); // MVP: el prompt de instalar la PWA vive tras el primer 👍
     } else {
-      setSheetMode("down");
       setSkipOpen(true);
     }
   }
@@ -990,10 +978,6 @@ function ReadyView({
           initialFavorited={outfit.favorited ?? false}
           voto={voto}
           onVote={votar}
-          onOtroLook={() => {
-            setSheetMode("skip");
-            setSkipOpen(true);
-          }}
           tryonImage={t.image}
           generating={t.mode === "gen"}
           tryonError={t.mode === "error" ? t.errMsg : null}
@@ -1001,23 +985,20 @@ function ReadyView({
           avatarHref={t.mode === "sin_avatar" ? t.avatarHref : null}
           vermeSub="~20 s"
           seccionLabel={paraFecha ? fechaLegible(paraFecha) : undefined}
-          onFitCheck={() => espejoRef.current?.start()}
         />
       </div>
 
-      <EspejoFlow
-          userId={userId}
-          headless
-          ref={espejoRef}
-          ultimaOcasion={ultimaOcasion}
-          ultimoLookCreadoEn={ultimoLookCreadoEn}
-          lastObjective={lastObjective}
-        />
+      {/* LA SALIDA A INICIO, donde se busca un "atrás": arriba a la izquierda.
+          Existía sólo la pestaña "inicio" de la barra, que funciona pero no se
+          lee como salida estando dentro del look — Roberto: "si me quisiera
+          salir no sabría qué picarle". Va al header por portal (el header lo
+          pinta el AppShell del server y no sabe en qué estado está /hoy). */}
+      <VolverEnHeader label="inicio" onClick={onInicio} />
 
       {skipOpen ? (
         <SkipReasons
           outfitId={outfit.id}
-          mode={sheetMode}
+          mode="down"
           onProceed={onOtroLook}
           onClose={() => setSkipOpen(false)}
         />

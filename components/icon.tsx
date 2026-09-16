@@ -12,6 +12,7 @@ export type IconName =
   | "check"
   | "destello"
   | "sobre"
+  | "burbuja"
   | "mas"
   | "camara"
   | "pulgar"
@@ -92,6 +93,8 @@ const GLYPHS: Record<IconName, JSX.Element> = {
       <path d="M3.5 6.5L12 13l8.5-6.5" />
     </>
   ),
+  // Globo de diálogo: el buzón de "cuéntame algo" (el sobre se leía como correo).
+  burbuja: <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V17H6.5A2.5 2.5 0 0 1 4 14.5z" />,
   mas: <path d="M12 5v14M5 12h14" />,
   // "Más opciones" del 4º slot de la tab bar. Puntos rellenos (no aro) para que
   // se lean a 24px; mismo tamaño que los círculos de `paleta`.

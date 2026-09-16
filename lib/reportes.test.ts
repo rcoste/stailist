@@ -68,21 +68,22 @@ describe("dónde se puede reportar", () => {
   // NACIÓ ESCONDIDO. Primero vivía sólo al pie del menú "más", y Roberto —que
   // sabía que existía porque lo acabábamos de hacer— no lo encontró: "no vi
   // justo dónde pusiste lo de reportar". Si el autor no da con él, nadie va a
-  // dar. Subió al header, del lado IZQUIERDO: la derecha ya la ocupan el perfil
-  // o el menú de la pantalla, y un segundo icono ahí chocaría en la mitad de
-  // las pantallas.
-  it("desde el header, siempre a la vista", () => {
+  // dar. Subió al header, primero a la izquierda — y ahí se leyó como "atrás"
+  // (Roberto, dentro de un look, 2026-09-16). Hoy va a la DERECHA junto al
+  // perfil; la izquierda queda sólo para volver.
+  it("desde el header, junto al perfil y nunca en el lado de volver", () => {
     const shell = readFileSync("components/app-shell.tsx", "utf8");
     const boton = readFileSync("components/boton-reportar.tsx", "utf8");
-    expect(shell).toContain("BotonReportar");
-    expect(boton).toContain("left-4");
-    // Cede su sitio cuando hay "atrás": ahí volver importa más, y el buzón
-    // sigue en el menú y en las pantallas de error.
-    // El botón vive en la rama ELSE del "atrás": aparece sólo cuando no hay.
-    const iBack = shell.indexOf("{back ?");
+    expect(shell).toContain("<BotonReportar");
+    expect(boton).not.toContain("left-4");
+    // Vive en el mismo grupo que el link al perfil, en la rama sin menú de
+    // pantalla: con "···" cede su sitio y sigue en "más".
+    const iAccion = shell.indexOf("{accion ?");
     const iBoton = shell.indexOf("<BotonReportar");
-    expect(iBack).toBeGreaterThan(-1);
-    expect(iBoton).toBeGreaterThan(iBack);
+    const iPerfil = shell.indexOf('href="/perfil"');
+    expect(iAccion).toBeGreaterThan(-1);
+    expect(iBoton).toBeGreaterThan(iAccion);
+    expect(iPerfil).toBeGreaterThan(iBoton);
   });
 
   it("desde el menú, junto al sello de beta", () => {

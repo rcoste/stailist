@@ -93,7 +93,6 @@ export function LookDetail({
   initialFavorited,
   voto,
   onVote,
-  onOtroLook,
   bajoVotoNegativo,
   enterApp,
   disabled,
@@ -105,7 +104,6 @@ export function LookDetail({
   avatarHref = null,
   vermeSub,
   seccionLabel,
-  onFitCheck,
 }: {
   nombre: string;
   prendas: LookDetailPrenda[];
@@ -115,10 +113,6 @@ export function LookDetail({
   initialFavorited: boolean;
   voto: "up" | "down" | null;
   onVote: (up: boolean) => void;
-  /** "otro look" a la izquierda de la fila de votos. Sin él (y sin fit check)
-   *  la izquierda queda vacía: el wow ya no lo ofrece como botón suelto —
-   *  pedir otro vive bajo el 👎 (`bajoVotoNegativo`). */
-  onOtroLook?: () => void;
   /** Lo que aparece justo debajo de la fila de votos cuando el voto es 👎.
    *  El wow mete aquí "¿probamos otro de los tres?" con los otros dos looks:
    *  la persona dice que no le gustó ANTES de pedir otro, que es la señal que
@@ -142,13 +136,6 @@ export function LookDetail({
   /** Eyebrow de fecha, SOLO cuando el look no es de hoy ("el jueves 13"). Sin
    *  él no se pinta nada: sobre el look de hoy, "hoy" es ruido. */
   seccionLabel?: string;
-  /** LA PROMESA FIJA del fit check (decisión de Roberto, 2026-08-11): abre el
-   *  espejo. Reemplaza a la card "¿te lo pusiste ayer?" — oferta en vez de
-   *  favor, y sin hora: justo al generar todavía no te lo has puesto, que era
-   *  la trampa de preguntarlo. Solo la pasa el /hoy (en el wow y el historial
-   *  no aplica). La señal de oro se mide por cercanía: fit check ≤24h después
-   *  de un look generado (lib/senal-oro). */
-  onFitCheck?: () => void;
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
@@ -165,35 +152,27 @@ export function LookDetail({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* TÍTULO (v3): el nombre del look manda, a todo el ancho.
-          Antes la etiqueta de sección ("hoy" / "el jueves 13") iba a su lado en
-          29px bold, o sea al mismo peso visual que el nombre — y encima le
-          robaba el ancho, partiendo "Esmeralda a prueba de lluvia" en dos
-          líneas. La jerarquía estaba invertida: el nombre es el contenido, la
-          fecha es un dato al margen.
-          Ahora la fecha es un eyebrow y SOLO aparece cuando el look NO es de
-          hoy: decir "hoy" sobre el look de hoy no le dice nada a nadie.
-          (Roberto, viendo la pantalla en prod: "la fecha tan grande no aporta
-          en nada, y solo se vuelve relevante si se genera para X día".)
-          Se fue con ella el atajo de tocar la sección para ir a Inicio: la
-          pestaña Inicio de la barra hace exactamente eso, y era la única razón
-          por la que el bloque existía como botón. */}
-      <div className="flex flex-col pb-1">
-        {seccionLabel ? (
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-faint">
-            {seccionLabel}
-          </span>
-        ) : null}
-        <h1 className="font-display text-[27px] italic leading-[30px] text-ink">
-          {nombre}
-        </h1>
-      </div>
+      {/* SIN TÍTULO VISIBLE (2026-09-16). El nombre del look ("Saco y Mocasín
+          de Domingo") ocupaba dos renglones de 27px y no le decía nada a nadie:
+          las prendas ya están a la vista y el "por qué" explica el look mejor
+          que un apodo. Roberto: "no agrega nada de valor y quita bastante
+          espacio". Esos ~40px regresan a la foto.
+          Se queda como h1 para lectores de pantalla (la página necesita un
+          titular) y el nombre sigue vivo donde SÍ identifica algo: el diario,
+          el render compartido. La fecha, cuando el look no es de hoy, sigue
+          como eyebrow — ésa sí es información. */}
+      <h1 className="sr-only">{nombre}</h1>
+      {seccionLabel ? (
+        <span className="pb-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-faint">
+          {seccionLabel}
+        </span>
+      ) : null}
 
       {/* Cuerpo */}
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Pestañas (vistas del look) + corazón a la derecha. El coach ya NO vive
             aquí: es una voz, no una vista — se fue al pie (CoachPie). */}
-        <div className="mt-2 flex items-center gap-1 border-b border-line">
+        <div className="flex items-center gap-1 border-b border-line">
           <SegTab
             label="las prendas"
             active={tab === "look"}
@@ -297,44 +276,21 @@ export function LookDetail({
           )
         ) : null}
 
-        {/* UNA fila de acciones, no dos.
-            "otro look" ocupaba esta izquierda y se fue (Roberto, 2026-08-12):
-            · Regenerar sigue a la mano por DOS caminos — el 👎 abre la hoja de
-              razones, que remata con "Ver otro look", y el botón ✦ de la barra
-              genera desde cualquier pantalla.
-            · Y lo que se pierde es justamente lo que conviene perder: el atajo
-              de pedir otro sin decir por qué. Ese atajo es sospechoso número
-              uno de que el feedback esté seco (<10% de votos) — si puedes
-              saltar sin explicar, no explicas.
-            En su lugar sube la promesa del fit check, que antes vivía en una
-            tercera fila al pie leyéndose como letra chica. Es la única puerta
-            a la señal de oro: merece la posición, no el sótano. */}
+        {/* La fila del voto, sola.
+            Su izquierda la ocupó primero "otro look" (se fue el 2026-08-12:
+            pedir otro vive bajo el 👎, que obliga a decir por qué) y después
+            "te digo cómo te queda", la puerta al fit check. Esa también se fue
+            (2026-09-16), por dos razones:
+            · Se leía desconectada del look. Recién generado todavía no te lo
+              has puesto, así que ofrecer feedback de cómo te queda no tiene
+              con qué — y encima rimaba con la pestaña "así te queda", que es
+              otra cosa (el render).
+            · Y no estaba conectada: el fit check crea un look NUEVO a partir
+              de la foto, no marca ESTE como puesto.
+            La puerta al fit check sigue en Inicio, donde es la protagonista. */}
         <div
-          className={`flex min-h-11 items-center justify-between gap-2 ${!hasRender ? "mt-1.5" : ""}`}
+          className={`flex min-h-11 items-center justify-end gap-2 ${!hasRender ? "mt-1.5" : ""}`}
         >
-          {onFitCheck ? (
-            <button
-              type="button"
-              onClick={onFitCheck}
-              className="flex min-h-11 items-center gap-2 text-left text-[14px] font-semibold text-muted transition-colors hover:text-ink"
-            >
-              <Icon name="camara" size={16} className="shrink-0" />
-              te digo cómo te queda
-            </button>
-          ) : onOtroLook ? (
-            // El historial no ofrece fit check: ahí sigue "otro look". (El wow
-            // ya no lo pasa: pedir otro vive bajo el 👎.)
-            <button
-              type="button"
-              onClick={onOtroLook}
-              disabled={disabled}
-              className="flex min-h-11 items-center gap-2 text-[14px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
-            >
-              <Icon name="repetir" size={16} /> otro look
-            </button>
-          ) : (
-            <span aria-hidden />
-          )}
           <div className="flex shrink-0 items-center gap-2">
             <span className="mr-0.5 text-[13px] font-semibold text-muted">¿te gusta?</span>
             <VoteButton up={false} active={voto === "down"} onClick={() => onVote(false)} disabled={disabled} />
