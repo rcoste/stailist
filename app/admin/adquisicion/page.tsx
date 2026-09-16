@@ -8,6 +8,7 @@ import {
   EVENTOS_QUE_NO_SON_VOLVER,
   MINIMO_PARA_VOLVER_TEXTO,
   SQL_ADQUISICION,
+  SQL_APP_INSTALADA,
   ZONA,
   campanaDe,
   fuenteDe,
@@ -40,6 +41,9 @@ function pct(n: number, d: number): string {
 export default async function AdminAdquisicion() {
   await requireAdmin();
   const crudas = await withDb(async (c) => (await c.query(SQL_ADQUISICION, [EVENTOS_QUE_NO_SON_VOLVER])).rows);
+  const app = (await withDb(async (c) => (await c.query(SQL_APP_INSTALADA)).rows[0])) as
+    | { cuentas: number; instaladas: number; activas: number; activas_instaladas: number }
+    | undefined;
   const filas: FilaPerfilAdquisicion[] = crudas.map((r) => ({
     id: r.id,
     email: r.email,
@@ -126,6 +130,25 @@ export default async function AdminAdquisicion() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          App instalada
+        </h2>
+        <p className="max-w-3xl text-sm text-muted">
+          Quién abre stailist desde su ícono y no desde el navegador. Decide si vale la pena
+          mandar notificaciones: en iPhone sólo le llegan a quien la instaló. Se mide desde el
+          2026-09-16 y cuenta a quien la ABRIÓ instalada desde entonces, así que los primeros
+          días sube sin que nadie instale nada.
+        </p>
+        {app ? (
+          <p className="text-sm text-ink">
+            <b className="tabular">{pct(app.activas_instaladas, app.activas)}</b> de las activas en
+            30 días · <span className="tabular">{pct(app.instaladas, app.cuentas)}</span> de todas
+            las cuentas
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2">

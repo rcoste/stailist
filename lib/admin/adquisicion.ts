@@ -187,3 +187,38 @@ export function resumirAdquisicion(filas: FilaPerfilAdquisicion[], ahora: Date):
     return b.cuentas - a.cuentas;
   });
 }
+
+
+/**
+ * ¿CUÁNTOS TIENEN LA APP INSTALADA? — 2026-09-16.
+ *
+ * Decide si vale la pena construir notificaciones: en iPhone sólo le llegan a
+ * quien instaló la app. "Instalada" = hay un `pwa_installed`, que desde
+ * v0.2.332.0 se escribe también al abrir la app desde su ícono (funciona en
+ * iPhone; antes sólo lo emitía Chrome/Android y nunca hubo una fila). Mismas
+ * exclusiones que el resto del panel. "Activas" = con algún evento en 30 días.
+ *
+ * OJO al leerlo: sólo cuenta a quien ABRIÓ la app instalada después de este
+ * cambio. Durante los primeros días el número sube solo, sin que nadie instale.
+ */
+export const SQL_APP_INSTALADA = `
+with cuentas as (
+  select p.id
+  from public.profiles p
+  where (p.onboarding_started_at is not null or p.gender is not null)
+    and coalesce(p.is_admin, false) = false
+    and coalesce(p.email, '') not ilike '%@stailist.app'
+),
+activas as (
+  select distinct e.user_id as id from public.events e
+  where e.created_at >= now() - interval '30 days'
+),
+instaladas as (
+  select distinct e.user_id as id from public.events e where e.type = 'pwa_installed'
+)
+select
+  (select count(*) from cuentas)::int as cuentas,
+  (select count(*) from cuentas c join instaladas i using (id))::int as instaladas,
+  (select count(*) from cuentas c join activas a using (id))::int as activas,
+  (select count(*) from cuentas c join activas a using (id) join instaladas i using (id))::int as activas_instaladas
+`;
