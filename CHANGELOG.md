@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.332.0] - 2026-09-16 — saber quién tiene la app instalada
+
+Antes de construir notificaciones hay que saber a quién le llegarían: en
+iPhone sólo a quien instaló la app. Y ese número no existía. El registro de
+instalación sólo se escribía con el evento `appinstalled`, que Safari de
+iPhone nunca manda y que sólo sale si la instalación pasó por nuestro aviso:
+cero filas en toda la vida del producto.
+
+- **Abrir stailist desde su ícono cuenta como instalada.** Si la app corre sin
+  barra de navegador, está instalada, en cualquier teléfono. Se registra una vez
+  por teléfono y el servidor deduplica por persona, así `appinstalled` y esto
+  no cuentan dos veces.
+- **En `/admin/adquisicion`:** "App instalada", en % de las cuentas activas en
+  30 días y de todas. Hoy: 24 cuentas, 5 activas, 0 registradas. Cuenta sólo a
+  quien la abra instalada desde hoy, así que los primeros días sube sin que
+  nadie instale nada.
+
 ## [0.2.331.0] - 2026-09-16 — arma tu semana
 
 Ricardo ya le pedía a un chatbot "estas son mis prendas, ármame la semana". La

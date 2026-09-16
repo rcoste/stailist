@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { registrarPwa } from "@/lib/pwa-actions";
+import { registrarAppAbiertaInstalada, registrarPwa } from "@/lib/pwa-actions";
 
 // Prompt de instalación de la PWA. Se monta una vez (en el layout) y:
 // 1. Registra el service worker.
@@ -11,6 +11,8 @@ import { registrarPwa } from "@/lib/pwa-actions";
 // iOS Safari no soporta beforeinstallprompt: ahí mostramos instrucciones manuales.
 
 const SEEN_KEY = "stailist:pwa-seen";
+/** Ya se avisó al servidor que este teléfono abre la app instalada. */
+const REPORTADA_KEY = "stailist:pwa-reportada";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -40,6 +42,23 @@ export function PwaInstall() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+
+    // Abierta desde su ícono = instalada, también en iPhone (ver
+    // registrarAppAbiertaInstalada). Una vez por teléfono; el servidor además
+    // deduplica por persona.
+    if (isStandalone()) {
+      let reportada = false;
+      try {
+        reportada = localStorage.getItem(REPORTADA_KEY) === "1";
+      } catch {}
+      if (!reportada) {
+        void registrarAppAbiertaInstalada().then(() => {
+          try {
+            localStorage.setItem(REPORTADA_KEY, "1");
+          } catch {}
+        });
+      }
     }
 
     const onBeforeInstall = (e: Event) => {

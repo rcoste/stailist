@@ -28,9 +28,40 @@ export async function registrarPwa(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
+  // Una sola instalación por persona: la de `appinstalled` y la de "abrió en
+  // modo app" (abajo) describen el mismo hecho, y contarla dos veces inflaría
+  // el porcentaje del panel.
+  if (evento === "pwa_installed" && (await yaInstalo(supabase, user.id))) return;
   await registrarEvento(supabase, {
     user_id: user.id,
     type: evento,
     data: motivo ? { motivo } : {},
   });
+}
+
+async function yaInstalo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("events")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("type", "pwa_installed")
+    .limit(1);
+  return (data?.length ?? 0) > 0;
+}
+
+/**
+ * LA APP SE ABRIÓ DESDE SU ÍCONO (display-mode standalone) — 2026-09-16.
+ *
+ * `appinstalled` sólo lo dispara Chrome/Android, y sólo si la instalación pasó
+ * por nuestro aviso. Safari de iPhone —casi todo el público— nunca lo manda, y
+ * quien instaló antes del 2026-09-09 tampoco dejó huella: cero eventos en toda
+ * la vida del producto. Abrir la app en modo standalone es la prueba que sí
+ * funciona en todos lados: si se abre sin barra de navegador, está instalada.
+ * Se registra como `pwa_installed` (via: "standalone"), una vez por persona.
+ */
+export async function registrarAppAbiertaInstalada(): Promise<void> {
+  await registrarPwa("pwa_installed", "standalone");
 }
