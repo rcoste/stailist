@@ -2,6 +2,7 @@ import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Checklist, type CatalogItem } from "./checklist";
+import { IntroCloset } from "./intro-closet";
 
 export default async function ClosetOnboardingPage() {
   const profile = await requireStep(2);
@@ -22,29 +23,27 @@ export default async function ClosetOnboardingPage() {
     <section className="flex flex-1 flex-col gap-6 pt-4">
       <OnboardingProgress step={3} />
 
-      <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
-          paso 3 de 5
-        </p>
-        <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
-          ¿qué{" "}
-          <em className="font-display font-normal italic tracking-normal">ya tienes</em>?
-        </h1>
-        {/* QUÉ SON Y POR QUÉ SE PREGUNTAN.
-            Roberto: "debería quedar más claro… explicar que se le mostrarán
-            algunos básicos que probablemente ya tenga, para que los añada
-            fácil y se pueda hacer el primer look, y que más adelante podrá
-            añadir más de la biblioteca o de sus propias fotos".
-            Sin esto, la pantalla se lee como un catálogo que hay que llenar
-            entero — y son 15 taps justo antes del único momento que paga. */}
-        <p className="text-[15px] leading-snug text-muted">
-          Son básicos que mucha gente tiene. Marca los tuyos —así de rápido— y
-          con eso te armo tu primer outfit. Después le sumas lo demás: de mi
-          biblioteca o con fotos de tu propia ropa.
-        </p>
-      </div>
+      <IntroCloset gender={profile.gender ?? "hombre"}>
+        <div className="flex flex-1 flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+              paso 3 de 5
+            </p>
+            <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
+              ¿qué{" "}
+              <em className="font-display font-normal italic tracking-normal">ya tienes</em>?
+            </h1>
+            {/* La explicación larga (qué son, por qué, que luego subes tu ropa)
+                vive ahora en IntroCloset, con título e imagen: aquí abajo nadie
+                la leía. Queda solo la instrucción del momento. */}
+            <p className="text-[15px] leading-snug text-muted">
+              Marca los que tengas. No hace falta que estén todos.
+            </p>
+          </div>
 
-      <Checklist catalog={(catalog ?? []) as CatalogItem[]} />
+          <Checklist catalog={(catalog ?? []) as CatalogItem[]} />
+        </div>
+      </IntroCloset>
     </section>
   );
 }
