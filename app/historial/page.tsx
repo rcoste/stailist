@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { diaLocal } from "@/lib/visitas";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
@@ -36,6 +37,9 @@ export default async function HistorialPage({
     // Un look en fila de "arma mi semana" o uno que falló no tiene prendas, y
     // aquí se pintaba como una tarjeta en blanco.
     .or("gen_status.is.null,gen_status.eq.ready")
+    // El diario es lo que ya pasó: un look planeado para un día que no ha
+    // llegado vive en /semana, no arriba del diario como si ya te lo pusiste.
+    .or(`planned_for.is.null,planned_for.lte.${diaLocal(new Date())}`)
     .order("created_at", { ascending: false });
 
   // Resolver prendas (una sola lectura de items) y votos/worn (una de events).

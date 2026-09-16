@@ -20,7 +20,12 @@ export default async function SemanaPage() {
 
   return (
     <AppShell back={{ href: "/hoy", label: "inicio" }}>
-      <SemanaMontaje prendas={count ?? 0} minimo={MIN_PRENDAS_SEMANA} />
+      <SemanaMontaje
+        prendas={count ?? 0}
+        minimo={MIN_PRENDAS_SEMANA}
+        gender={profile.gender ?? "hombre"}
+        tieneCodigoTrabajo={!!profile.work_dress_code}
+      />
     </AppShell>
   );
 }

@@ -72,6 +72,8 @@ export type Body = {
   fechaLocal?: string;
   /** Look pedido por adelantado: fecha futura (≤ ~16 días). */
   plannedFor?: string;
+  /** Sólo /api/semana: la ocasión es de ESE día, no se guarda en el perfil. */
+  noPersistirObjetivo?: boolean;
 };
 
 
@@ -251,13 +253,15 @@ export async function generateInto(
 
     const seedItemIds = anclasDe(body);
 
-    const objective = await resolverYPersistirObjetivo(
-      supabase,
-      profile,
-      body.objective,
-      userId,
-      OBJECTIVES
-    );
+    // "Arma mi semana" manda una ocasión POR DÍA: si cada día se guardara como
+    // last_objective, el wizard de Inicio amanecería con la del último día de
+    // la fila (un viernes de trabajo), no con la que la persona eligió.
+    const objective =
+      body.noPersistirObjetivo === true
+        ? typeof body.objective === "string" && body.objective in OBJECTIVES
+          ? body.objective
+          : null
+        : await resolverYPersistirObjetivo(supabase, profile, body.objective, userId, OBJECTIVES);
 
     // BAJO TECHO LA LLUVIA NO EXISTE PARA EL MOTOR. Dijo que va a estar
     // entechado: se le quita el dato del agua y queda solo la temperatura (el
@@ -353,6 +357,9 @@ export async function generateInto(
         if (!esCombinacionRepetida(result.outfit.item_ids, ctx.recentCombos)) break;
         if (esCombinacionRepetida(otro.item_ids, ctx.recentCombos)) continue;
         const intento = await reviewOutfit(ctx, otro, [], false, {}, quien);
+        // Un look que el juez rechazó no le gana a uno aprobado sólo por ser
+        // nuevo: repetir un buen look es mejor que estrenar uno malo.
+        if (intento.verdict === "rechazado" && result.verdict !== "rechazado") continue;
         if (!esCombinacionRepetida(intento.outfit.item_ids, ctx.recentCombos)) {
           candidato = otro;
           result = intento;

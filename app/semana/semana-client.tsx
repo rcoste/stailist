@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
 import { fmtFechaLocal } from "@/components/weather-picker";
+import { WORK_DRESS_CODES, type WorkDressCode } from "@/lib/dress-code";
 import {
   OCASIONES_SEMANA,
   diasOfrecidos,
@@ -37,9 +38,15 @@ function Hueco() {
   return <span aria-hidden className="w-6 shrink-0" />;
 }
 
-async function leerSemana(hoy: string): Promise<Record<string, DiaServidor> | null> {
+async function leerSemana(
+  hoy: string,
+  donde: { lat: number; lon: number } | null
+): Promise<Record<string, DiaServidor> | null> {
+  // La ubicación viaja también aquí: si la fila se cortó, esta lectura la
+  // retoma y los días que faltan necesitan su pronóstico.
+  const coords = donde ? `&lat=${donde.lat}&lon=${donde.lon}` : "";
   try {
-    const r = await fetch(`/api/semana?fechaLocal=${hoy}`, { cache: "no-store" });
+    const r = await fetch(`/api/semana?fechaLocal=${hoy}${coords}`, { cache: "no-store" });
     if (!r.ok) return null;
     return ((await r.json()) as { dias: Record<string, DiaServidor> }).dias;
   } catch {
@@ -52,7 +59,17 @@ async function leerSemana(hoy: string): Promise<Record<string, DiaServidor> | nu
  * fecha local del teléfono, que el servidor no conoce. Por eso hoy y las
  * elecciones iniciales se calculan en el primer render, sin efectos.
  */
-export function SemanaClient({ prendas, minimo }: { prendas: number; minimo: number }) {
+export function SemanaClient({
+  prendas,
+  minimo,
+  gender,
+  tieneCodigoTrabajo,
+}: {
+  prendas: number;
+  minimo: number;
+  gender: "hombre" | "mujer";
+  tieneCodigoTrabajo: boolean;
+}) {
   const [hoy] = useState(() => fmtFechaLocal(new Date()));
   const dias = useMemo(() => diasOfrecidos(hoy), [hoy]);
 
@@ -64,16 +81,20 @@ export function SemanaClient({ prendas, minimo }: { prendas: number; minimo: num
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [vuelta, setVuelta] = useState(0);
+  const [donde, setDonde] = useState<{ lat: number; lon: number } | null>(null);
+  // "Trabajo" sin código de vestimenta arma una oficina genérica: se pregunta
+  // una vez, aquí mismo, como lo hace el wizard la primera vez.
+  const [codigo, setCodigo] = useState<WorkDressCode | null>(null);
 
   useEffect(() => {
     let vivo = true;
-    void leerSemana(hoy).then((d) => {
+    void leerSemana(hoy, donde).then((d) => {
       if (vivo && d) setServidor(d);
     });
     return () => {
       vivo = false;
     };
-  }, [hoy, vuelta]);
+  }, [hoy, vuelta, donde]);
 
   const enCamino = Object.values(servidor).some(
     (d) => d.estado === "en_fila" || d.estado === "generando"
@@ -90,12 +111,14 @@ export function SemanaClient({ prendas, minimo }: { prendas: number; minimo: num
     return !e || e === "error";
   };
   const porPedir = dias.filter((d) => libre(d.fecha) && elecciones[d.fecha]?.activo);
+  const pideCodigo = !tieneCodigoTrabajo && porPedir.some((d) => elecciones[d.fecha].ocasion === "oficina");
 
   async function armar() {
     if (porPedir.length === 0) return;
     setEnviando(true);
     setAviso(null);
-    const donde = await dondeEstoy();
+    const aqui = await dondeEstoy();
+    setDonde(aqui);
     try {
       const r = await fetch("/api/semana", {
         method: "POST",
@@ -103,7 +126,8 @@ export function SemanaClient({ prendas, minimo }: { prendas: number; minimo: num
         body: JSON.stringify({
           fechaLocal: hoy,
           dias: porPedir.map((d) => ({ fecha: d.fecha, ocasion: elecciones[d.fecha].ocasion })),
-          ...(donde ?? {}),
+          ...(aqui ?? {}),
+          ...(pideCodigo && codigo ? { workDressCode: codigo } : {}),
         }),
       });
       const data = (await r.json().catch(() => ({}))) as { error?: string; mensaje?: string };
@@ -254,6 +278,32 @@ export function SemanaClient({ prendas, minimo }: { prendas: number; minimo: num
         })}
       </ul>
 
+      {pideCodigo ? (
+        <div className="flex flex-col gap-2.5">
+          <p className="text-[15px] font-bold text-ink">¿cómo te vistes para trabajar?</p>
+          <div className="flex flex-col gap-2" role="radiogroup" aria-label="código de vestimenta del trabajo">
+            {WORK_DRESS_CODES.map((c) => {
+              const on = codigo === c.key;
+              return (
+                <button
+                  key={c.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setCodigo(c.key)}
+                  className={`flex flex-col rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
+                    on ? "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]" : "border-line hover:border-ink"
+                  } bg-surface`}
+                >
+                  <b className="text-[15px] text-ink">{c[gender]}</b>
+                  <span className="text-[12.5px] text-muted">{c.ejemplos}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {aviso ? <p className="text-[14px] text-ink">{aviso}</p> : null}
       {enCamino ? (
         <p className="text-[14px] leading-snug text-muted">
@@ -265,7 +315,7 @@ export function SemanaClient({ prendas, minimo }: { prendas: number; minimo: num
         <button
           type="button"
           onClick={() => void armar()}
-          disabled={enviando || faltan > 0 || porPedir.length === 0}
+          disabled={enviando || faltan > 0 || porPedir.length === 0 || (pideCodigo && !codigo)}
           className="flex min-h-14 w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-40"
         >
           {enviando

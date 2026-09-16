@@ -11,7 +11,7 @@
 // · los siguientes 7 días a partir de MAÑANA (hoy ya tiene su look), con lunes
 //   a viernes marcados y el fin de semana a un toque — es otro plan y no hay
 //   que gastar looks que nadie pidió;
-// · todos en "día a día", cambiables por día a trabajo o evento. Pedir ocasión
+// · todos en "día a día", cambiables por día a trabajo. Pedir ocasión
 //   obligatoria convierte la pantalla en un formulario;
 // · mínimo de prendas: con poca ropa, cinco looks seguidos salen repetidos y
 //   la función se quema la primera vez que alguien la usa.
@@ -31,7 +31,9 @@ export const MIN_PRENDAS_SEMANA = 10;
 export const OCASIONES_SEMANA = [
   { id: "diario", label: "día a día" },
   { id: "oficina", label: "trabajo" },
-  { id: "evento", label: "evento" },
+  // SIN "evento", a propósito: un evento sin tipo ni formalidad ("¿boda o
+  // cumpleaños?") arma un look genérico, y el chequeo de si el clóset alcanza
+  // (alcanceDeFormalidad) no corre. Para eso está "crear un look", que pregunta.
 ] as const satisfies ReadonlyArray<{ id: keyof typeof OBJECTIVES; label: string }>;
 
 export type OcasionSemana = (typeof OCASIONES_SEMANA)[number]["id"];
@@ -118,8 +120,6 @@ export type EstadoDia = (typeof ESTADOS_DIA)[number];
 
 /** Marca en gen_error de un día que todavía espera su turno (ver app/api/semana). */
 export const EN_FILA = "en_fila";
-/** Si un día sigue en fila después de esto, el background murió. */
-export const FILA_MUERTA_MS = 10 * 60_000;
 
 /**
  * El estado de un día a partir de su fila. Lo usan el GET (qué pintar) y el
@@ -132,11 +132,11 @@ export function estadoDelDia(
   staleMs: number
 ): EstadoDia {
   const st = fila.gen_status ?? "ready";
-  const edad = ahora - new Date(fila.created_at).getTime();
   if (st === "ready") return "listo";
-  if (st === "generating" && fila.gen_error === EN_FILA) {
-    return edad > FILA_MUERTA_MS ? "error" : "en_fila";
-  }
+  const edad = ahora - new Date(fila.created_at).getTime();
+  // En fila no muere por edad: si el proceso que la corría se cortó, la
+  // siguiente lectura de la semana la retoma (ver app/api/semana).
+  if (st === "generating" && fila.gen_error === EN_FILA) return "en_fila";
   if (st === "generating") return edad > staleMs ? "error" : "generando";
   return "error";
 }

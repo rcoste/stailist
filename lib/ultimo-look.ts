@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
+import { diaLocal } from "@/lib/visitas";
 
 // La card del último look (zona 1 del home, bajo el CTA). Es el acceso fijo a lo
 // último que el motor armó — cubre lo que antes hacían el CTA "ver mi look" y
@@ -34,7 +35,14 @@ export type MarcasDeLook = {
  * que la persona hizo suya; si ninguna, la más reciente. Pura, para probarla
  * con el trío del wow tal cual salió el 08-09.
  */
-export function elegirUltimoLook<T extends MarcasDeLook>(filas: T[]): T | null {
+export function elegirUltimoLook<T extends MarcasDeLook>(filas: T[], hoy?: string): T | null {
+  // Un look planeado para un día que no ha llegado no es "tu último look": tras
+  // "arma mi semana" el más reciente por created_at es el del domingo que viene,
+  // y tapaba el look de hoy. Sólo gana si no hay otra cosa.
+  if (hoy) {
+    const presentes = filas.filter((o) => !(o.planned_for && o.planned_for > hoy));
+    if (presentes.length) return elegirUltimoLook(presentes);
+  }
   const esTuyo = (o: MarcasDeLook) =>
     o.is_look_of_day === true ||
     o.look_date != null || // el wow marca así al elegido (sin is_look_of_day, ver outfit-actions)
@@ -66,7 +74,8 @@ export async function loadUltimoLook(
     // gen_status null = look completo de antes de la generación en background.
     .or("gen_status.is.null,gen_status.eq.ready")
     .order("created_at", { ascending: false })
-    .limit(5);
+    // 12 y no 5: una semana armada mete hasta 7 looks futuros al frente.
+    .limit(12);
 
   // EL ÚLTIMO LOOK ES EL QUE HICISTE TUYO, no el último que se generó. El wow
   // genera tres en 17 segundos y la persona elige uno; Hoy genera alternos.
@@ -79,7 +88,7 @@ export async function loadUltimoLook(
   // marcas es una alternativa que nunca elegiste. Si ninguno califica (looks
   // viejos de antes de esta marca), el más reciente, como siempre.
   type Fila = NonNullable<typeof data>[number];
-  const look = elegirUltimoLook((data ?? []) as (Fila & MarcasDeLook)[]);
+  const look = elegirUltimoLook((data ?? []) as (Fila & MarcasDeLook)[], diaLocal(new Date()));
   if (!look) return null;
 
   const base = {

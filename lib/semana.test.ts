@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   EN_FILA,
-  FILA_MUERTA_MS,
   MIN_PRENDAS_SEMANA,
   diasOfrecidos,
   estadoDelDia,
@@ -62,6 +61,8 @@ describe("validarPeticion", () => {
       ).ok
     ).toBe(false);
     expect(validarPeticion([{ fecha: "2026-09-17", ocasion: "boda" }], HOY).ok).toBe(false);
+    // Evento no se ofrece en la semana (necesita tipo y formalidad).
+    expect(validarPeticion([{ fecha: "2026-09-17", ocasion: "evento" }], HOY).ok).toBe(false);
   });
 
   it("sin días no es una semana", () => {
@@ -84,8 +85,8 @@ describe("el estado de un día", () => {
     expect(estadoDelDia({ gen_status: "generating", gen_error: EN_FILA, created_at: hace(4 * 60_000) }, AHORA, STALE)).toBe("en_fila");
   });
 
-  it("una fila que no avanzó en 10 minutos es un background muerto", () => {
-    expect(estadoDelDia({ gen_status: "generating", gen_error: EN_FILA, created_at: hace(FILA_MUERTA_MS + 1) }, AHORA, STALE)).toBe("error");
+  it("en fila no muere por edad: se retoma en la siguiente lectura", () => {
+    expect(estadoDelDia({ gen_status: "generating", gen_error: EN_FILA, created_at: hace(60 * 60_000) }, AHORA, STALE)).toBe("en_fila");
   });
 
   it("generando usa el mismo reloj que el look del día", () => {
