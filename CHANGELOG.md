@@ -2,6 +2,42 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.329.0] - 2026-09-16 — verte con el look ya no es posar contra una pared
+
+Roberto, viéndose con un look: "el fondo es muy sencillo, la pose muy estándar,
+se siente maniquí". El try-on seguía usando la pared gris lisa que el mazo de
+swipes abandonó el 3 de agosto porque "se lee como catálogo". Nació del
+assessment de Aesty, igual que la pantalla nueva del clóset.
+
+- **El lugar sale de lo que vas a hacer** (`lib/tryon-escena.ts`): primero el
+  plan escrito ("comida con la familia", "cine", "cita médica"), luego la
+  ocasión, y si no hay nada, una de 6 escenas cotidianas que rota por look.
+  El plan manda porque 149 looks de producción dicen `occasion = diario`
+  aunque su plan diga a dónde iban.
+- **En movimiento, no parado existiendo:** tres de cuatro poses caminan. Fue
+  lo que más le gustó a Roberto de la primera prueba.
+- **Las reglas son de fidelidad, no de estética:** luz de día o interior bien
+  iluminado (nunca atardecer ni noche, que cambian el color de la ropa), fondo
+  desenfocado, sin letreros, la bolsa agarrada al cuerpo.
+- **Ciudad de México con sus barrios:** Polanco, la Roma, Condesa, Coyoacán,
+  San Ángel, el Centro y Santa Fe, cada uno con las escenas que le quedan
+  (nadie va a la oficina en San Ángel). Se detecta con las coordenadas del
+  clima y se guarda sólo "Ciudad de México" en el look, nunca la colonia. Al
+  motor no le llega. Fuera de CDMX, escenas genéricas; un viaje con un solo
+  destino se ubica en esa ciudad. Regla anti-cliché: sin folclor ni filtro
+  amarillo.
+- **Medido antes de salir:** 4 looks de Roberto, 7 barrios y 3 looks de mujer
+  (cuenta playrobix de Tatiana), antes contra después. Misma ropa en todos,
+  sin prendas inventadas. Los try-ons que ya existían no cambian.
+
+### La pantalla antes del checklist del clóset
+
+"tu clóset, *sin pasar horas*": una foto real y las prendas que salieron de
+ella, y tres líneas (marca tus básicos → te armo tu primer look → después, de
+cada foto salen varias prendas). La explicación ya existía como texto gris
+bajo el título y nadie la leía; tampoco nombraba que una foto trae varias
+prendas. No es un paso numerado: vive dentro de `/onboarding/closet`.
+
 ## [0.2.328.0] - 2026-09-12 — entrar y no hacer nada ya deja huella
 
 Faltaba la mitad de la respuesta: "abrió la app" sólo se veía si la vuelta

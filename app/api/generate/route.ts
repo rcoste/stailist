@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ciudadDeCoordenadas, conCiudad } from "@/lib/tryon-escena";
 import { createClient } from "@/lib/supabase/server";
 import { armarLooks } from "@/lib/engine/pipeline";
 import type { GeneratedOutfit } from "@/lib/engine/generate";
@@ -256,10 +257,12 @@ export async function POST(request: NextRequest) {
               // El clima REAL, con la marca de que se pidió bajo techo. La marca
               // es para DIAGNÓSTICO (consultar la tabla), no se muestra todavía
               // en ninguna pantalla — mismo caso que en /api/look-of-day.
-              weather:
+              weather: conCiudad(
                 techado && hayLluvia(weather?.condition)
                   ? { ...weather, techado: true }
                   : weather,
+                ciudadDeCoordenadas(body.lat, body.lon)
+              ),
               title: tituloLimpio(outfit.nombre),
               explanation: outfit.explicacion,
               tip: outfit.tip ?? null,

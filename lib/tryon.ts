@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
 import { pedirImagen } from "@/lib/gemini-imagen";
+import { escenaParaPrompt, type ContextoEscena } from "@/lib/tryon-escena";
 
 // El NÚCLEO del try-on: vestir el avatar de una persona con unas prendas
 // concretas. Vivía dentro de /api/tryon, atado a la tabla `outfits` en tres
@@ -27,19 +28,33 @@ import { pedirImagen } from "@/lib/gemini-imagen";
 const COMO_SE_LLEVA =
   " Style the garments the way a well-dressed person actually wears them, never like a shop mannequin: leave a shirt's top button undone (two if the look is casual), and a polo's placket open or with a single button fastened. EXCEPTION: if the outfit includes a tie, or is clearly formal (a suit worn with a dress shirt), button the shirt all the way up. If the styling note below says otherwise, the note wins.";
 
-const PROMPT_TAIL =
-  " Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments." +
-  COMO_SE_LLEVA +
-  " Plain flat light-grey wall, cool neutral daylight (no warm golden tones), crisp and clear. Candid Gen-Z street-style: a relaxed off-axis three-quarter pose looking slightly away, NOT a stiff straight-on catalog pose. Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text.";
+// La escena (lugar, luz, pose) ya no es una constante: sale del plan y la
+// ocasión del look (lib/tryon-escena.ts). Lo que sigue fijo es la identidad.
+function promptTail(escena: string): string {
+  return (
+    " Keep the person's face, facial expression, apparent age, body type, skin tone and hair identical. Replace only their outfit with the provided garments." +
+    COMO_SE_LLEVA +
+    ` ${escena}` +
+    " Keep the person's natural facial expression from the first image — do NOT change or neutralize it (if they are smiling, keep the smile). Full body head to feet. No text."
+  );
+}
 
-const PROMPT =
-  "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images." +
-  PROMPT_TAIL;
+function promptSimple(escena: string): string {
+  return (
+    "Generate a photorealistic full-body image of the PERSON in the first image wearing the exact clothing items shown in the following images." +
+    promptTail(escena)
+  );
+}
 
 // Variante multi-vista (A2): cuando existen el retrato aprobado y/o el sheet de
 // 3 vistas del avatar, van como referencias de identidad ANTES de las prendas —
 // la identidad se copia (consistente entre try-ons) en vez de re-interpretarse.
-function promptMultiVista(nIdentity: number, hasFace: boolean, hasSheet: boolean): string {
+function promptMultiVista(
+  nIdentity: number,
+  hasFace: boolean,
+  hasSheet: boolean,
+  escena: string
+): string {
   const refs = [
     "their full-body reference",
     ...(hasFace ? ["a close-up approved portrait"] : []),
@@ -48,7 +63,7 @@ function promptMultiVista(nIdentity: number, hasFace: boolean, hasSheet: boolean
   return (
     `Generate a photorealistic full-body image of the PERSON shown in the first ${nIdentity} images (${refs} — all the SAME person; use them to keep the face, hair and identity perfectly consistent) wearing the exact clothing items shown in the remaining images. ` +
     "The plain white t-shirt and blue jeans worn in the person references are just their base clothing — do NOT include them in the outfit unless they appear among the garment images." +
-    PROMPT_TAIL
+    promptTail(escena)
   );
 }
 
@@ -66,13 +81,14 @@ function mediaTypeOf(b64: string): string {
 function buildPrompt(
   tip: string | null,
   garments: string[],
-  identity?: { n: number; hasFace: boolean; hasSheet: boolean },
-  sinImagen: string[] = []
+  identity: { n: number; hasFace: boolean; hasSheet: boolean } | undefined,
+  sinImagen: string[],
+  escena: string
 ): string {
   let p =
     identity && identity.n > 1
-      ? promptMultiVista(identity.n, identity.hasFace, identity.hasSheet)
-      : PROMPT;
+      ? promptMultiVista(identity.n, identity.hasFace, identity.hasSheet, escena)
+      : promptSimple(escena);
   // Ancla de texto (red de seguridad): nombra las prendas (en español; Gemini las
   // entiende). Si por lo que sea una imagen no llega, el modelo no inventa una
   // prenda genérica — sabe que es "un suéter esmeralda", no una t-shirt blanca.
@@ -141,6 +157,12 @@ export async function generarTryon(opciones: {
    * una persona que no hizo nada. Mismo criterio que el `ctx: null` de `medir`.
    */
   tarea?: string | null;
+  /**
+   * De dónde sale el lugar de la foto (plan, ocasión, ciudad del viaje, clima).
+   * Sin contexto —comparador, evales— rota una escena cotidiana con la ruta
+   * del caché como semilla: el laboratorio usa las MISMAS escenas que prod.
+   */
+  escena?: Omit<ContextoEscena, "semilla"> & { semilla?: string };
 }): Promise<ResultadoTryon> {
   const { supabase, userId, itemIds, tip, cachePath, yaGenerado, origin } = opciones;
   const tarea = opciones.tarea === undefined ? "tryon" : opciones.tarea;
@@ -235,7 +257,7 @@ export async function generarTryon(opciones: {
           n: identityB64.length,
           hasFace: !!faceRefB64,
           hasSheet: !!sheetRefB64,
-        }, sinImagen),
+        }, sinImagen, escenaParaPrompt({ ...opciones.escena, semilla: opciones.escena?.semilla ?? cachePath })),
       },
       ...identityB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
       ...prendasB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ciudadDeCoordenadas, conCiudad } from "@/lib/tryon-escena";
 import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, createTokenClient } from "@/lib/supabase/server";
@@ -664,8 +665,10 @@ async function generateInto(
     const camposComunes = {
       occasion: objective ?? "diario",
       plan: recortarPlan(body.plan),
-      weather:
+      weather: conCiudad(
         techado && hayLluvia(weather?.condition) ? { ...weather, techado: true } : weather,
+        ciudadDeCoordenadas(body.lat, body.lon)
+      ),
       prompt_version: PROMPT_VERSION,
     };
 
