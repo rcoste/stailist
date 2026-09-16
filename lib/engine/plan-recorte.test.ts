@@ -40,7 +40,9 @@ describe("recortarPlan — lo que se guarda es lo que el motor vio", () => {
 
 describe("las rutas guardan el plan con esa misma función", () => {
   const RAIZ = join(import.meta.dirname, "..", "..");
-  const RUTAS = ["app/api/look-of-day/route.ts", "app/api/generate/route.ts"];
+  // El look del día escribe desde su núcleo (lib/look-del-dia/nucleo.ts), que
+  // comparten /api/look-of-day y /api/semana.
+  const RUTAS = ["lib/look-del-dia/nucleo.ts", "app/api/generate/route.ts"];
 
   for (const ruta of RUTAS) {
     it(`${ruta} escribe plan: recortarPlan(...)`, () => {

@@ -2,6 +2,38 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.331.0] - 2026-09-16 — arma tu semana
+
+Ricardo ya le pedía a un chatbot "estas son mis prendas, ármame la semana". La
+gente planea por semana, y la app la obligaba a volver cada día a pedir un
+look. Ahora se pide una vez: marcas los días y cada uno queda listo, y cuando
+llega amanece como tu look de hoy (eso ya funcionaba para looks planeados).
+
+- **`/semana`**: los 7 días desde mañana, lunes a viernes marcados y el fin de
+  semana a un toque. Cada día en "día a día" o "trabajo"; si eliges trabajo y
+  no tienes código de vestimenta, se pregunta ahí mismo. Sin "evento": un
+  evento sin tipo ni formalidad arma un look genérico, y para eso está "crear
+  un look".
+- **Mínimo 10 prendas.** Con menos, cinco looks seguidos salen repetidos.
+- **Un día tras otro, no en paralelo**, con el mismo núcleo que el look
+  planeado (`lib/look-del-dia/nucleo.ts`, separado de la ruta para no copiar
+  el motor). Cada día ve los anteriores y el pronóstico de su fecha. Medido:
+  ~10 s por día.
+- **No repite un look reciente, en código.** La regla vivía sólo en el prompt y
+  la primera prueba sacó el mismo look viernes y martes. Ahora se toma el
+  primer candidato que no repita el conjunto (la prenda sí puede repetirse), y
+  nunca uno rechazado por el juez en vez de uno aprobado. Aplica también al look
+  planeado del wizard.
+- **Resistente a cortes:** si el proceso de fondo se corta, la siguiente
+  lectura de la semana retoma los días en fila. Cada día se reclama de forma
+  atómica y un duplicado por fecha se borra sin gastar IA. Probado forzando un
+  día colgado.
+- **Tile "arma tu semana"** en Inicio, y el correo del lunes ahora lleva a
+  armar la semana (el asunto ya lo prometía y el botón sólo armaba el de hoy).
+- **De paso:** el diario y la tarjeta de último look ya no enseñan looks de
+  días que no han llegado, ni tarjetas en blanco de looks sin terminar. Y la
+  semana no pisa la última ocasión que elegiste en el wizard.
+
 ## [0.2.330.0] - 2026-09-16 — ¿cómo nos conociste?
 
 La campaña corre desde el 14 y el panel ya sabía qué cuentas llegaron por un

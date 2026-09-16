@@ -48,3 +48,24 @@ describe("elegirUltimoLook — el que hiciste tuyo", () => {
     expect(elegirUltimoLook([])).toBeNull();
   });
 });
+
+describe("elegirUltimoLook — después de armar la semana", () => {
+  const HOY = "2026-09-16";
+  it("los días que no han llegado no tapan el look de hoy", () => {
+    const filas = [
+      fila("domingo", { planned_for: "2026-09-20" }),
+      fila("viernes", { planned_for: "2026-09-18" }),
+      fila("hoy", { is_look_of_day: true, look_date: HOY }),
+    ];
+    expect(elegirUltimoLook(filas, HOY)?.id).toBe("hoy");
+  });
+
+  it("si sólo hay looks futuros, se muestra uno antes que nada", () => {
+    expect(elegirUltimoLook([fila("viernes", { planned_for: "2026-09-18" })], HOY)?.id).toBe("viernes");
+  });
+
+  it("un look planeado para hoy ya es presente", () => {
+    const filas = [fila("hoy-planeado", { planned_for: HOY }), fila("ayer", { look_date: "2026-09-15" })];
+    expect(elegirUltimoLook(filas, HOY)?.id).toBe("hoy-planeado");
+  });
+});
