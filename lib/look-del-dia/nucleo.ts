@@ -24,6 +24,7 @@ import {
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { registrarEvento } from "@/lib/telemetria";
 import { tituloLimpio } from "@/lib/engine/titulo";
+import { esCombinacionRepetida } from "@/lib/engine/combinacion-repetida";
 
 // EL NÚCLEO DEL LOOK DEL DÍA (y del look planeado para otra fecha).
 //
@@ -339,7 +340,24 @@ export async function generateInto(
     //    los tres al amanecer.
     if (plannedFor) {
       const candidates = await generateOutfits(ctx, {}, quien);
-      const result = await reviewOutfit(ctx, candidates[0], [], false, {}, quien);
+      // NO REPETIR UN LOOK RECIENTE, en código (lib/engine/combinacion-repetida).
+      // El generador devuelve 2-3 candidatos y antes se tomaba siempre el
+      // primero; ahora el primero que no repita un conjunto de los últimos 14
+      // días. Se revisa DESPUÉS del juez, que puede cambiar prendas. Si todos
+      // repiten, se queda el primero, como antes: un look repetido es mejor
+      // que ninguno. "Arma mi semana" depende de esto: cada día ve los
+      // anteriores en recentCombos.
+      let candidato = candidates[0];
+      let result = await reviewOutfit(ctx, candidato, [], false, {}, quien);
+      for (const otro of candidates.slice(1)) {
+        if (!esCombinacionRepetida(result.outfit.item_ids, ctx.recentCombos)) break;
+        if (esCombinacionRepetida(otro.item_ids, ctx.recentCombos)) continue;
+        const intento = await reviewOutfit(ctx, otro, [], false, {}, quien);
+        if (!esCombinacionRepetida(intento.outfit.item_ids, ctx.recentCombos)) {
+          candidato = otro;
+          result = intento;
+        }
+      }
       const elegido = result.outfit;
 
       const { error: upErr } = await supabase
@@ -364,9 +382,9 @@ export async function generateInto(
         planLibre: typeof body.plan === "string" && body.plan.trim().length > 0,
         reviews: [
           {
-            before: candidates[0].item_ids,
+            before: candidato.item_ids,
             after: elegido.item_ids,
-            changed: elegido.item_ids.join(",") !== candidates[0].item_ids.join(","),
+            changed: elegido.item_ids.join(",") !== candidato.item_ids.join(","),
             verdict: result.verdict,
             razon: result.razon,
             shown: true,
