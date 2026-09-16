@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { withDb } from "@/lib/db";
 import { origenDesdeDato } from "@/lib/origen";
+import { OPCIONES_CONOCIO, etiquetaConocio } from "@/lib/como-nos-conocio";
 import {
   DIAS_VENTANA,
   EVENTOS_QUE_NO_SON_VOLVER,
@@ -48,11 +49,17 @@ export default async function AdminAdquisicion() {
     dia_inicio: r.dia_inicio,
     dias: r.dias,
     origen: r.origen,
+    como_nos_conocio: r.como_nos_conocio ?? null,
   }));
   const ahora = new Date();
   const resumen = resumirAdquisicion(filas, ahora);
   const recientes = filas.slice(0, 30);
   const conRastro = filas.filter((f) => origenDesdeDato(f.origen)).length;
+  // Lo que dicen: sólo quien vio la pregunta (existe desde v0.2.330.0).
+  const contestaron = filas.filter((f) => f.como_nos_conocio);
+  const porRespuesta = [...OPCIONES_CONOCIO.map((o) => o.id), "omitido"]
+    .map((id) => ({ id, n: contestaron.filter((f) => f.como_nos_conocio === id).length }))
+    .filter((r) => r.n > 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,6 +130,28 @@ export default async function AdminAdquisicion() {
 
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          Lo que dicen que las trajo
+        </h2>
+        <p className="max-w-3xl text-sm text-muted">
+          La pregunta del onboarding, que ve lo que el link no: la amiga que pasó el
+          nombre, el video que alguien vio y escribió a mano. {contestaron.length} de{" "}
+          {filas.length} cuentas la vieron (existe desde el 2026-09-16).
+        </p>
+        {porRespuesta.length > 0 ? (
+          <ul className="flex flex-wrap gap-2">
+            {porRespuesta.map((r) => (
+              <li key={r.id} className="rounded-full border border-line bg-surface px-3 py-1 text-sm text-ink">
+                {etiquetaConocio(r.id)} <b className="tabular">{r.n}</b>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">Todavía nadie la ha contestado.</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
           Últimas 30 cuentas
         </h2>
         <div className="overflow-x-auto rounded-lg border border-line bg-surface">
@@ -133,6 +162,7 @@ export default async function AdminAdquisicion() {
                 <th className={`${th} text-left`}>Cuenta</th>
                 <th className={`${th} text-left`}>Fuente</th>
                 <th className={`${th} text-left`}>Campaña</th>
+                <th className={`${th} text-left`}>Dijo</th>
                 <th className={`${th} text-center`}>Primer look</th>
                 <th className={`${th} text-center`}>Volvió</th>
               </tr>
@@ -159,6 +189,7 @@ export default async function AdminAdquisicion() {
                     </td>
                     <td className={`${td} text-left text-ink`}>{fuenteDe(o)}</td>
                     <td className={`${td} text-left text-muted`}>{campanaDe(o)}</td>
+                    <td className={`${td} text-left text-ink`}>{etiquetaConocio(f.como_nos_conocio)}</td>
                     <td className={`${td} text-center`}>{f.onboarding_step >= 5 ? "sí" : "—"}</td>
                     <td className={`${td} text-center`}>
                       {volvio ? "sí" : cerrada ? "no" : <span className="text-muted">en su semana</span>}

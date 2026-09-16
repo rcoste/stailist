@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.330.0] - 2026-09-16 — ¿cómo nos conociste?
+
+La campaña corre desde el 14 y el panel ya sabía qué cuentas llegaron por un
+anuncio, porque el link trae etiqueta. Lo que no veía era la otra mitad: la
+amiga que pasó el nombre, el video que alguien vio y escribió a mano. Todo eso
+entraba como "directo". Idea sacada del onboarding de Aesty.
+
+- **Una pantalla de un toque** justo después de la edad (`/onboarding/conocio`):
+  me lo recomendó alguien · instagram · tiktok · facebook · google · otro lado,
+  y "prefiero no decir". Tocar una opción la guarda y sigue; no hay "seguir".
+- **Sólo cuentas nuevas:** la ve quien guarda su edad por primera vez. Quien ya
+  iba a media alta no la ve nunca, y quien la salta no vuelve a verla.
+- **En `/admin/adquisicion`:** la columna "Dijo" junto a fuente y campaña, y el
+  conteo por respuesta. Cuando el link dice Google y la persona dice "me lo
+  recomendó alguien", las dos son ciertas.
+- Migración `0161` (columna `profiles.como_nos_conocio` con CHECK de valores).
+  Aditiva, ya aplicada. Una prueba falla si la lista del código y la del CHECK
+  se separan.
+
 ## [0.2.329.1] - 2026-09-16 — el checklist ya no pide un render de más
 
 El lint marcaba `set-state-in-effect` en el checklist del clóset: la categoría

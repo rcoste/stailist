@@ -84,3 +84,17 @@ describe("saveAge — la cookie de conversión", () => {
     expect(h.setCookie).not.toHaveBeenCalled();
   });
 });
+
+// "¿cómo nos conociste?" va justo después de la edad, SÓLO para cuentas nuevas:
+// quien ya tenía edad cuando esto salió sigue directo a su paso real.
+describe("saveAge — a dónde sigue", () => {
+  it("primera vez que guarda la edad → la pregunta de cómo nos conoció", async () => {
+    h.resultado = { onboarding_step: 0, token: null };
+    await expect(saveAge(form({ age_range: "25-34" }))).rejects.toThrow("REDIRECT /onboarding/conocio");
+  });
+
+  it("la edad ya estaba → a su paso real, sin la pregunta", async () => {
+    h.resultado = null;
+    await expect(saveAge(form({ age_range: "25-34" }))).rejects.toThrow("REDIRECT /onboarding/colorimetria");
+  });
+});

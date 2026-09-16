@@ -24,8 +24,9 @@ function fila(p: Partial<FilaPerfilAdquisicion>): FilaPerfilAdquisicion {
     dia_inicio: "2026-09-14",
     dias: ["2026-09-14"],
     origen: null,
+    como_nos_conocio: null,
     ...p,
-  };
+  } as FilaPerfilAdquisicion;
 }
 
 describe("fuenteDe", () => {
