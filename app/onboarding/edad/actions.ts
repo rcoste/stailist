@@ -94,15 +94,16 @@ export async function saveAge(formData: FormData) {
     });
   }
 
-  let step: number = row?.onboarding_step ?? -1;
-  if (step === -1) {
-    // Edad ya estaba puesta (o el perfil no existe): redirige a su paso real.
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("onboarding_step")
-      .eq("id", user.id)
-      .single();
-    step = profile?.onboarding_step ?? 0;
-  }
-  redirect(routeForStep(step));
+  // Primera vez que se guarda la edad (cuenta nueva): la antesala siguiente es
+  // "¿cómo nos conociste?", que luego manda al paso real. Quien ya tenía edad
+  // no pasa por ahí (ver app/onboarding/conocio/page.tsx).
+  if (row) redirect("/onboarding/conocio");
+
+  // Edad ya estaba puesta (o el perfil no existe): redirige a su paso real.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("onboarding_step")
+    .eq("id", user.id)
+    .single();
+  redirect(routeForStep(profile?.onboarding_step ?? 0));
 }
