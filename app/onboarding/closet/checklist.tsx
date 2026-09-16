@@ -92,11 +92,12 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   // obligatorios, en vez de saltar directo a enviar). La activa inicial ya
   // cuenta como vista.
   const [visited, setVisited] = useState<Set<string>>(() => new Set([cats[0] ?? ""]));
-  // Al cambiar de categoría: márcala vista Y sube al inicio. El scroll va AQUÍ
-  // (efecto, tras el render de la categoría nueva) y no en el handler: llamarlo
-  // antes del re-render, con la altura cambiando, dejaba la página abajo.
+  // Al cambiar de categoría sube al inicio. El scroll va AQUÍ (efecto, tras el
+  // render de la categoría nueva) y no en el handler: llamarlo antes del
+  // re-render, con la altura cambiando, dejaba la página abajo. Marcarla como
+  // vista NO va aquí sino en goToCat: un setState dentro de un efecto provoca
+  // un render extra en cascada (react-hooks/set-state-in-effect).
   useEffect(() => {
-    setVisited((v) => (v.has(activeCat) ? v : new Set(v).add(activeCat)));
     // Instantáneo, no smooth: la categoría nueva puede ser más corta y el cambio
     // de altura cancela la animación smooth a media subida (quedaba a medias).
     window.scrollTo(0, 0);
@@ -124,6 +125,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   function goToCat(cat: string) {
     // El scroll al inicio lo hace el efecto de arriba (tras el render).
     setActiveCat(cat);
+    setVisited((v) => (v.has(cat) ? v : new Set(v).add(cat)));
   }
 
   function handleCta() {
@@ -172,7 +174,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
             <button
               key={cat}
               type="button"
-              onClick={() => setActiveCat(cat)}
+              onClick={() => goToCat(cat)}
               aria-pressed={on}
               className={`flex shrink-0 items-center rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
                 on

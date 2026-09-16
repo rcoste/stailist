@@ -122,3 +122,28 @@ describe("la pestaña Trajes del checklist", () => {
     expect(screen.queryByRole("button", { name: /trajes/i })).toBeNull();
   });
 });
+
+// Las categorías VISTAS deciden a dónde guía el CTA tras lo obligatorio. Se
+// marcan en goToCat (chip Y botón), no en un efecto: el lint prohibía el
+// setState dentro del efecto, y moverlo no puede dejar el CTA en un bucle
+// ofreciendo una opcional que ya visitaste.
+describe("el CTA te pasea por las opcionales antes de enviar", () => {
+  it("cubierto lo obligatorio, ofrece Trajes; al entrar por el botón, ya deja enviar", async () => {
+    const u = userEvent.setup();
+    render(<Checklist catalog={CATALOGO} />);
+
+    await u.click(screen.getByRole("button", { name: /camiseta blanca/i }));
+    await u.click(chip("Abajo"));
+    await u.click(screen.getByRole("button", { name: /jeans azul oscuro/i }));
+    await u.click(chip("Zapatos"));
+    await u.click(screen.getByRole("button", { name: /tenis blancos/i }));
+
+    // Trajes no se ha visto: el CTA pregunta por ella en vez de enviar.
+    const ofrece = screen.getByRole("button", { name: /¿tienes trajes\?/i });
+    expect(screen.queryByRole("button", { name: /armar mi primer look/i })).toBeNull();
+
+    // Entrar por el botón (no por el chip) también la marca como vista.
+    await u.click(ofrece);
+    expect(screen.getByRole("button", { name: /armar mi primer look/i })).toBeTruthy();
+  });
+});
