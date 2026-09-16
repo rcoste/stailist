@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.329.1] - 2026-09-16 — el checklist ya no pide un render de más
+
+El lint marcaba `set-state-in-effect` en el checklist del clóset: la categoría
+se marcaba como "vista" dentro de un efecto, lo que forzaba un render extra en
+cascada cada vez que cambiabas de pestaña. Ahora se marca en el mismo toque que
+cambia la categoría (chip o botón); el efecto sólo sube la página al inicio.
+
+- Sin cambio visible: el botón sigue llevándote por las opcionales antes de
+  dejarte enviar.
+- Prueba nueva que lo blinda por el camino del botón ("¿tienes trajes?"). Se
+  comprobó que falla si se quita el marcado.
+
 ## [0.2.329.0] - 2026-09-16 — verte con el look ya no es posar contra una pared
 
 Roberto, viéndose con un look: "el fondo es muy sencillo, la pose muy estándar,
