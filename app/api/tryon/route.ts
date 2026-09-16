@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generarTryon } from "@/lib/tryon";
+import { ciudadDelViaje } from "@/lib/tryon-escena";
 import { revisarCuota } from "@/lib/cuotas";
 import { registrarEvento } from "@/lib/telemetria";
 
@@ -44,11 +45,34 @@ export async function POST(request: NextRequest) {
   // Outfit (y cache si ya se generó antes)
   const { data: outfit } = await supabase
     .from("outfits")
-    .select("id, item_ids, tryon_path, tip")
+    .select("id, item_ids, tryon_path, tip, occasion, plan, weather, trip_id, trip_look_index")
     .eq("id", outfitId)
     .eq("user_id", user.id)
     .single();
   if (!outfit) return NextResponse.json({ error: "no_outfit" }, { status: 404 });
+
+  // Dónde se toma la foto: el plan y la ocasión del look; si es de un viaje con
+  // un solo destino, esa ciudad y la ocasión del look del viaje. Solo se
+  // consulta el viaje cuando de verdad se va a generar (no con caché).
+  let ocasion = (outfit.occasion as string | null) ?? null;
+  let clima = (outfit.weather as { condition?: string | null; ciudad?: string | null } | null) ?? null;
+  // Día a día: la ciudad detectada al generar (hoy solo CDMX). Un viaje la pisa.
+  let ciudad: string | null = clima?.ciudad ?? null;
+  if (outfit.trip_id && !outfit.tryon_path) {
+    const { data: viaje } = await supabase
+      .from("trips")
+      .select("lugar, paradas, outfits")
+      .eq("id", outfit.trip_id)
+      .maybeSingle();
+    if (viaje) {
+      const paradas = (viaje.paradas as Array<{ lugar?: string; weather?: { condition?: string } }> | null) ?? null;
+      ciudad = ciudadDelViaje(paradas, viaje.lugar as string | null);
+      const idx = outfit.trip_look_index as number | null;
+      const lookViaje = idx != null ? ((viaje.outfits as Array<{ ocasion?: string }> | null) ?? [])[idx] : null;
+      ocasion = lookViaje?.ocasion ?? ocasion;
+      if (!clima && paradas?.length === 1) clima = paradas[0].weather ?? null;
+    }
+  }
 
   const r = await generarTryon({
     supabase,
@@ -58,6 +82,13 @@ export async function POST(request: NextRequest) {
     cachePath: `${user.id}/tryons/${outfitId}.jpg`,
     yaGenerado: (outfit.tryon_path as string | null) ?? null,
     origin: request.nextUrl.origin,
+    escena: {
+      plan: (outfit.plan as string | null) ?? null,
+      ocasion,
+      ciudad,
+      clima,
+      semilla: outfitId,
+    },
   });
 
   if ("error" in r) return NextResponse.json({ error: r.error }, { status: r.status });
