@@ -913,6 +913,11 @@ function ReadyView({
     }
     if (up) {
       notifyFirstLike(); // MVP: el prompt de instalar la PWA vive tras el primer 👍
+      // Con el render a la vista, el 👍 es el "continuar": deja ver el
+      // "¡anotado!" un instante y regresa a Inicio. Sin render NO se va — ahí
+      // la invitación pendiente es verse con el look. (Ver votoPrincipal en
+      // LookDetail.)
+      if (t.image && t.mode !== "gen") setTimeout(onInicio, 900);
     } else {
       setSkipOpen(true);
     }

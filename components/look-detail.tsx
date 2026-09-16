@@ -139,11 +139,27 @@ export function LookDetail({
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
+  // ¿Llegó sin voto? Se fija al abrir y no se recalcula al votar: si el voto
+  // grande desapareciera en cuanto lo tocas, el "¡anotado!" no alcanzaría a
+  // verse y un 👎 → 👍 no tendría dónde corregirse.
+  const [llegoSinVoto] = useState(voto === null);
 
   const hasRender = !!tryonImage && !generating;
   const canMe = generating || hasRender;
   // Generando fuerza "así te queda"; con render, default "así te queda" salvo
   // que el usuario haya tocado "las prendas".
+  // EL VOTO ES EL CONTINUAR (2026-09-16). Con el render listo la pantalla se
+  // quedaba sin siguiente paso: la primaria negra desaparecía y lo único que
+  // quedaba eran dos pulgares chicos que, al tocarlos, no llevaban a ningún
+  // lado. Roberto propuso un "continuar" grande que regresara a Inicio aun sin
+  // calificar. No se hizo así por un dato: el wow ya tiene esa salida grande
+  // ("entrar a la app") y sólo 5 de 24 votan su primer look — con un botón para
+  // saltarse el voto, se lo saltan. Aquí el voto ocupa la primaria y el 👍 es
+  // el que continúa (lo decide quien pasa `onVote`); la salida sin calificar
+  // existe, pero es el "‹ inicio" de arriba, sin competir con el voto.
+  // No aplica al wow: ahí la primaria es "entrar a la app".
+  const votoPrincipal = hasRender && llegoSinVoto && !enterApp;
+
   const tab: "look" | "me" = generating
     ? "me"
     : hasRender
@@ -274,6 +290,39 @@ export function LookDetail({
               ) : null}
             </button>
           )
+        ) : votoPrincipal ? (
+          <div className="flex gap-2.5">
+            <button
+              type="button"
+              onClick={() => onVote(false)}
+              disabled={disabled}
+              aria-pressed={voto === "down"}
+              className={`flex h-[54px] flex-1 items-center justify-center gap-2 rounded-sm border text-[15px] font-semibold transition-colors disabled:opacity-50 ${
+                voto === "down"
+                  ? "border-ink bg-tile text-ink"
+                  : "border-line bg-surface text-ink hover:border-ink"
+              }`}
+            >
+              <Icon name="pulgar" size={17} className="rotate-180" /> no es para mí
+            </button>
+            <button
+              type="button"
+              onClick={() => onVote(true)}
+              disabled={disabled}
+              aria-pressed={voto === "up"}
+              className="flex h-[54px] flex-1 items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep disabled:opacity-50"
+            >
+              {voto === "up" ? (
+                <>
+                  <Icon name="check" size={17} /> ¡anotado!
+                </>
+              ) : (
+                <>
+                  <Icon name="pulgar" size={17} /> me encanta
+                </>
+              )}
+            </button>
+          </div>
         ) : null}
 
         {/* La fila del voto, sola.
@@ -288,15 +337,17 @@ export function LookDetail({
             · Y no estaba conectada: el fit check crea un look NUEVO a partir
               de la foto, no marca ESTE como puesto.
             La puerta al fit check sigue en Inicio, donde es la protagonista. */}
-        <div
-          className={`flex min-h-11 items-center justify-end gap-2 ${!hasRender ? "mt-1.5" : ""}`}
-        >
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="mr-0.5 text-[13px] font-semibold text-muted">¿te gusta?</span>
-            <VoteButton up={false} active={voto === "down"} onClick={() => onVote(false)} disabled={disabled} />
-            <VoteButton up={true} active={voto === "up"} onClick={() => onVote(true)} disabled={disabled} />
+        {votoPrincipal ? null : (
+          <div
+            className={`flex min-h-11 items-center justify-end gap-2 ${!hasRender ? "mt-1.5" : ""}`}
+          >
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="mr-0.5 text-[13px] font-semibold text-muted">¿te gusta?</span>
+              <VoteButton up={false} active={voto === "down"} onClick={() => onVote(false)} disabled={disabled} />
+              <VoteButton up={true} active={voto === "up"} onClick={() => onVote(true)} disabled={disabled} />
+            </div>
           </div>
-        </div>
+        )}
 
         {voto === "down" && bajoVotoNegativo ? bajoVotoNegativo : null}
 
