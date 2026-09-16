@@ -73,6 +73,11 @@ const EXENTOS: Record<string, Record<string, string>> = {
 
 const RUTAS = Object.keys(EXENTOS);
 
+/** Archivos que leen el body EN NOMBRE de una ruta. */
+const ARCHIVOS_EXTRA: Record<string, string[]> = {
+  "app/api/look-of-day/route.ts": ["lib/look-del-dia/nucleo.ts"],
+};
+
 describe("el contrato del wizard llega entero a las rutas", () => {
   const campos = camposDeLookInput();
 
@@ -85,7 +90,10 @@ describe("el contrato del wizard llega entero a las rutas", () => {
 
   for (const ruta of RUTAS) {
     it(`${ruta} lee cada campo que el wizard manda`, () => {
-      const fuente = leer(ruta);
+      // El look del día vive repartido: la ruta recibe el body y el núcleo
+      // (lib/look-del-dia/nucleo.ts, separado el 2026-09-16 para "arma mi
+      // semana") lo consume. Se leen juntos: el contrato es de la puerta entera.
+      const fuente = [leer(ruta), ...(ARCHIVOS_EXTRA[ruta] ?? []).map(leer)].join("\n");
       const exentos = EXENTOS[ruta];
       const sordos = campos.filter(
         (c) => !exentos[c] && !new RegExp(`\\bbody\\.${c}\\b`).test(fuente)

@@ -91,7 +91,7 @@ async function main() {
   // Barajarlo una sola vez y reusar el orden en las 40 llamadas es exactamente
   // lo que orderClosetForEngine existe para evitar —los modelos sobre-eligen lo
   // de arriba de la lista— y hace que salgan SIEMPRE las mismas prendas.
-  // Producción lo llama por generación (generate/route.ts, look-of-day/route.ts);
+  // Producción lo llama por generación (generate/route.ts, lib/look-del-dia/nucleo.ts);
   // este arnés no, y por eso Roberto vio los mismos dos looks una y otra vez.
   const items = applyVetoes((crudas ?? []) as never, vetoes).items as never as EngineItem[];
   const tags = (profile.taste_tags as string[]) ?? [];
