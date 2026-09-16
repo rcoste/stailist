@@ -38,6 +38,8 @@ export type Profile = {
   borrado_programado_para: string | null;
   /** Última vez que abrió la app, con precisión de día (lib/visitas.ts). */
   ultima_visita: string | null;
+  /** Lo que dijo que la trajo (lib/como-nos-conocio.ts); null = no ha visto la pregunta. */
+  como_nos_conocio: string | null;
   // Último envío del correo al tutor (cooldown de reenvío + feedback en la card).
   minor_consent_last_sent_at: string | null;
   taste_tags: string[];
