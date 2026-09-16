@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "./logo";
 import { BotonReportar } from "./boton-reportar";
+import { HEADER_IZQ_ID } from "./volver-en-header";
 import { TabBar } from "./tab-bar";
 import { DesktopHeader } from "./desktop-header";
 import { Icon } from "./icon";
@@ -79,26 +80,33 @@ export async function AppShell({
               {back.label}
             </Link>
           ) : (
-            // Sin "atrás", la izquierda está libre: ahí vive el buzón. Ver el
-            // porqué de este lado (y no junto al perfil) en BotonReportar.
-            <BotonReportar />
+            // Sin `back` del server, la izquierda queda como hueco para el
+            // "atrás" que decide el cliente (el look de /hoy). Ver
+            // VolverEnHeader. La izquierda es SÓLO de volver: ahí la busca el
+            // pulgar, y cualquier otro icono se lee como back (el buzón vivió
+            // aquí y a Roberto le pasó justo eso).
+            <div id={HEADER_IZQ_ID} className="absolute left-4 flex items-center" />
           )}
           <Logo className="h-7" />
           {/* La esquina derecha: el menú de la pantalla si lo hay, y si no, el
-              perfil de siempre. Misma caja de 36px en los dos casos, para que
-              la fila no cambie de altura entre pantallas. */}
+              buzón + el perfil. Misma caja de 36px, para que la fila no cambie
+              de altura entre pantallas. Con menú el buzón cede su sitio: sigue
+              en "más". (Hoy sólo una pantalla trae menú: tus esenciales.) */}
           {accion ? (
             <div className="absolute right-4 flex h-9 w-9 items-center justify-center">
               {accion}
             </div>
           ) : (
-            <Link
-              href="/perfil"
-              aria-label="Tu perfil"
-              className="absolute right-4 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors duration-200 hover:text-ink"
-            >
-              <Icon name="persona" size={18} />
-            </Link>
+            <div className="absolute right-4 flex items-center gap-2">
+              <BotonReportar />
+              <Link
+                href="/perfil"
+                aria-label="Tu perfil"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors duration-200 hover:text-ink"
+              >
+                <Icon name="persona" size={18} />
+              </Link>
+            </div>
           )}
         </header>
         <main

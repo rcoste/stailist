@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { LookDetail } from "@/components/look-detail";
 
 vi.mock("next/image", () => ({
@@ -17,15 +17,12 @@ vi.mock("@/components/favorite-button", () => ({
 
 afterEach(cleanup);
 
-// LA PROMESA DEL FIT CHECK es, desde el rediseño del home (2026-08-11), el
-// único camino vivo hacia la señal de oro: la card "¿te lo pusiste ayer?" murió
-// y la medición pasó a ser por cercanía (un fit check ≤24h después de un look).
-// Si esta fila deja de dibujarse o de disparar el espejo, la métrica se va a
-// cero en silencio — nada truena, simplemente deja de haber evidencia.
-//
-// Es OPCIONAL a propósito: el wow del onboarding y el historial pintan el mismo
-// componente y ahí la oferta no aplica (en el wow todavía no hay app; en el
-// historial el look ya pasó).
+// LA FILA DEL VOTO, SOLA (2026-09-16). Aquí vivió "te digo cómo te queda", la
+// puerta al fit check. Se fue porque se leía desconectada: recién generado el
+// look todavía no te lo has puesto, rimaba con la pestaña "así te queda" (que
+// es el render), y el fit check ni siquiera marca ESTE look — arma uno nuevo
+// con la foto. La puerta sigue en Inicio. Si alguien la regresa aquí, que sea
+// a propósito y conectada al look.
 
 const base = {
   nombre: "Sastre Suelto de Noche",
@@ -35,56 +32,30 @@ const base = {
   initialFavorited: false,
   voto: null,
   onVote: () => {},
-  onOtroLook: () => {},
 };
 
-describe("LookDetail — la promesa del fit check", () => {
-  it("ocupa la acción principal y dispara el espejo al tocarla", () => {
-    const onFitCheck = vi.fn();
-    render(<LookDetail {...base} onFitCheck={onFitCheck} />);
-    fireEvent.click(screen.getByRole("button", { name: /te digo cómo te queda/i }));
-    expect(onFitCheck).toHaveBeenCalledTimes(1);
-  });
-
-  it("es una OFERTA, no un favor: no pregunta si ya te lo pusiste", () => {
-    // La card vieja preguntaba "¿te lo pusiste?" — un favor que casi nadie
-    // contestaba, y encima justo al generar el look la respuesta ni existía.
-    // El copy promete algo a cambio; si alguien lo revierte a pregunta o a
-    // petición ("enséñame…"), esto truena.
-    render(<LookDetail {...base} onFitCheck={() => {}} />);
-    expect(screen.queryByText(/¿te lo pusiste/i)).toBeNull();
-    expect(screen.getByText(/te digo cómo te queda/i)).toBeTruthy();
-  });
-
-  it("con fit check, 'otro look' cede su lugar", () => {
-    // Regenerar no se pierde: el 👎 abre la hoja de razones que remata con
-    // "Ver otro look", y el ✦ de la barra genera desde cualquier pantalla. Lo
-    // que se quita es el atajo de pedir otro SIN decir por qué.
-    render(<LookDetail {...base} onFitCheck={() => {}} />);
-    expect(screen.queryByRole("button", { name: /otro look/i })).toBeNull();
-    // El voto sigue en su sitio: es la otra mitad de la fila.
-    expect(screen.getByRole("button", { name: /no me gusta este look/i })).toBeTruthy();
-  });
-
-  it("sin fit check (wow e historial) se conserva 'otro look'", () => {
+describe("LookDetail — la fila de acciones", () => {
+  it("no ofrece el fit check ni 'otro look': sólo el voto", () => {
     render(<LookDetail {...base} />);
-    expect(screen.getByRole("button", { name: /otro look/i })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /te digo cómo te queda/i })).toBeNull();
+    expect(screen.queryByText(/te digo cómo te queda/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /otro look/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /no me gusta este look/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^me gusta este look/i })).toBeTruthy();
   });
 });
 
 describe("LookDetail — el encabezado", () => {
-  it("sin fecha, el nombre del look es el único titular", () => {
-    // "hoy" sobre el look de hoy no le dice nada a nadie, y en 29px bold le
-    // robaba el ancho al nombre hasta partirlo en dos líneas.
+  it("el nombre del look no se pinta: sólo queda para lectores de pantalla", () => {
+    // "Saco y Mocasín de Domingo" en dos renglones de 27px no aportaba nada y
+    // le quitaba alto a la foto (Roberto, 2026-09-16).
     render(<LookDetail {...base} />);
-    expect(screen.getByRole("heading").textContent).toBe(base.nombre);
-    expect(screen.queryByText(/^hoy$/i)).toBeNull();
+    const h1 = screen.getByRole("heading");
+    expect(h1.textContent).toBe(base.nombre);
+    expect(h1.className).toContain("sr-only");
   });
 
-  it("con fecha, va como eyebrow — el titular sigue siendo el nombre", () => {
+  it("con fecha, la fecha SÍ se ve (es información, el apodo no)", () => {
     render(<LookDetail {...base} seccionLabel="el jueves 13" />);
-    expect(screen.getByRole("heading").textContent).toBe(base.nombre);
     expect(screen.getByText("el jueves 13")).toBeTruthy();
   });
 });

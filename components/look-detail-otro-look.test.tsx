@@ -61,11 +61,4 @@ describe("LookDetail — pedir otro look vive bajo el 👎", () => {
     fireEvent.click(screen.getByRole("button", { name: /no me gusta este look/i }));
     expect(onVote).toHaveBeenCalledWith(false);
   });
-
-  it("el historial (con onOtroLook y sin fit check) conserva su botón", () => {
-    const onOtroLook = vi.fn();
-    render(<LookDetail {...base} voto={null} onOtroLook={onOtroLook} />);
-    fireEvent.click(screen.getByRole("button", { name: /otro look/i }));
-    expect(onOtroLook).toHaveBeenCalledTimes(1);
-  });
 });

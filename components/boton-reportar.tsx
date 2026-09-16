@@ -13,12 +13,15 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 // mejor prueba de que estaba mal puesto: si el autor no da con él, nadie va a
 // dar.
 //
-// POR QUÉ A LA IZQUIERDA y no junto al perfil, que fue lo que él propuso: la
-// esquina DERECHA ya está ocupada — el perfil, o el menú de la pantalla cuando
-// lo hay (ver AppShell). Poner un segundo icono ahí lo haría chocar en la mitad
-// de las pantallas. La izquierda está vacía salvo cuando hay "atrás", y ahí
-// este botón cede su sitio: dentro de una pantalla de detalle, volver importa
-// más, y el buzón sigue estando en el menú y en las pantallas de error.
+// DE LA IZQUIERDA A LA DERECHA (2026-09-16). Vivió arriba a la izquierda
+// porque la derecha "ya estaba ocupada" por el perfil o el menú. Pero la
+// izquierda es donde el pulgar busca VOLVER: Roberto, dentro de un look, lo
+// relacionó con un back. Y el menú de pantalla lo usa una sola pantalla, así
+// que la colisión que justificaba la izquierda casi no existe. Ahora va junto
+// al perfil; donde hay menú, cede su lugar (sigue en "más").
+//
+// Y SIN SOBRE: el sobre se lee como "tus mensajes" o "enviar un correo", no
+// como "cuéntame algo". El globo de diálogo dice conversación.
 //
 // El sheet va por portal a <body>: la tab bar tiene transform y confinaría un
 // `fixed` hijo suyo (la trampa que ya se documentó en sheets-portal-a-body).
@@ -39,9 +42,9 @@ export function BotonReportar() {
         type="button"
         onClick={() => setAbierto(true)}
         aria-label="Cuéntame algo"
-        className="absolute left-4 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors duration-200 hover:border-ink hover:text-ink"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors duration-200 hover:border-ink hover:text-ink"
       >
-        <Icon name="sobre" size={17} />
+        <Icon name="burbuja" size={17} />
       </button>
 
       {montado && abierto
