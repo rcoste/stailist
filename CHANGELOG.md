@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.333.0] - 2026-09-16 — ¿las cartas atrevidas espantan a alguien?
+
+En Aesty, los primeros looks de hombre se sentían "para alguien muy fashion" y
+daban ganas de irse. El mazo de stailist arranca parecido (Streetwear es la 2,
+Hipster la 5, Glam de noche la 9), así que antes de moverlo se midió.
+
+- **Resultado, hombres:** 7 de 7 terminaron el swipe y 1 de 9 usó el escape.
+  Las atrevidas se rechazan (Hipster 0 de 9, Streetwear 1 de 9) pero nadie se
+  va. Las que más gustan: Tonos tierra 10 de 10, Casual sin esfuerzo 9 de 9,
+  Sastre 8 de 9. **No se cambia el orden:** rechazar una carta también mide, y
+  son 9 hombres de antes de la campaña.
+- **Nueva sección "El mazo de swipes" en `/admin/adquisicion`:** por género,
+  quién llegó y terminó, el escape, el % de likes y los likes de cada carta en
+  el orden actual del mazo. Es para repetir la medición cuando la campaña traiga
+  ~20 hombres. Si ahí aparece abandono, se cambia sólo la primera vuelta.
+
 ## [0.2.332.0] - 2026-09-16 — saber quién tiene la app instalada
 
 Antes de construir notificaciones hay que saber a quién le llegarían: en
