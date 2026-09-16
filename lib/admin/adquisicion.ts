@@ -49,7 +49,7 @@ const DESDE = `b.inicio + interval '${MINIMO_PARA_VOLVER}'`;
 const HASTA = `b.inicio + interval '${DIAS_VENTANA + 1} days'`;
 export const SQL_ADQUISICION = `
 with base as (
-  select p.id, p.email, p.gender, p.onboarding_step, p.origen,
+  select p.id, p.email, p.gender, p.onboarding_step, p.origen, p.como_nos_conocio,
     coalesce(p.onboarding_started_at, p.created_at) as inicio
   from public.profiles p
   where (p.onboarding_started_at is not null or p.gender is not null)
@@ -83,7 +83,8 @@ select
           and i.created_at < ${HASTA}
     ) a
   ) as dias,
-  b.origen
+  b.origen,
+  b.como_nos_conocio
 from base b
 order by b.inicio desc
 `;
@@ -100,6 +101,8 @@ export type FilaPerfilAdquisicion = {
   /** Días (YYYY-MM-DD, CDMX) con actividad que cuenta para "volvió". */
   dias: string[] | null;
   origen: unknown;
+  /** Lo que dijo que la trajo (lib/como-nos-conocio.ts); null = no vio la pregunta. */
+  como_nos_conocio: string | null;
 };
 
 export type ResumenOrigen = {
