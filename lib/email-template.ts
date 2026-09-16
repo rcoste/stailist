@@ -66,19 +66,21 @@ function weeklyFeature(): Feature {
 
 export function weeklyEmail(opts: { unsubToken: string }) {
   const bajaUrl = urlBaja(opts.unsubToken);
-  const hoyUrl = `${SITE}/hoy`;
+  // Desde v0.2.331.0 el lunes lleva a "arma tu semana" (app/semana): el
+  // asunto ya prometía "tu look de la semana" y el botón sólo armaba el de hoy.
+  const semanaUrl = `${SITE}/semana`;
   const f = weeklyFeature();
 
   const subject = "Ya te tengo tu look de la semana";
 
   const text = [
-    "Tu look de la semana",
+    "Tu semana",
     "",
-    "El lunes es más fácil con el look ya resuelto. Abre la app y en segundos",
-    "tienes un outfit con la ropa que ya tienes — pensado para tu día y el clima",
-    "de tu ciudad. Tú solo eliges.",
+    "El lunes es más fácil con la semana ya resuelta. Marca los días y te dejo",
+    "un look listo para cada uno, con la ropa que ya tienes y el clima de cada",
+    "día. Cuando llegue el día, amanece como tu look de hoy.",
     "",
-    `Armar mi look de hoy → ${hoyUrl}`,
+    `Armar mi semana → ${semanaUrl}`,
     "",
     "Nos vemos en tu clóset.",
     "— stailist",
@@ -89,26 +91,26 @@ export function weeklyEmail(opts: { unsubToken: string }) {
   ].join("\n");
 
   const cuerpo = filas([
-    bloque("32px 6px 0", kicker("Tu look de la semana")),
+    bloque("32px 6px 0", kicker("Tu semana")),
     bloque(
       "14px 6px 0",
-      `<h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">El lunes es más fácil con el look ya ${serifItalica(
-        "resuelto"
+      `<h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">El lunes es más fácil con la semana ya ${serifItalica(
+        "resuelta"
       )}.</h1>`
     ),
     bloque(
       "18px 6px 0",
-      `<p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">Abre la app y en segundos tienes un outfit con la ropa que <b style="color:#141414;font-weight:700;">ya tienes</b> — pensado para tu día y el clima de tu ciudad. Tú solo eliges.</p>`
+      `<p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">Marca los días y te dejo un look listo para cada uno, con la ropa que <b style="color:#141414;font-weight:700;">ya tienes</b> y el clima de cada día. Cuando llegue el día, amanece como tu look de hoy.</p>`
     ),
     bloque(
       "28px 6px 0",
       cardNegra({
-        kicker: "Tu look de hoy",
-        frase: "Lo de siempre, pero bien pensado.",
-        pie: "con tu ropa &nbsp;&middot;&nbsp; para tu día &nbsp;&middot;&nbsp; con el clima de hoy",
+        kicker: "Tu semana",
+        frase: "Siete días sin pensar qué ponerte.",
+        pie: "con tu ropa &nbsp;&middot;&nbsp; un look por día &nbsp;&middot;&nbsp; con el clima de cada día",
       })
     ),
-    bloque("28px 6px 0", boton({ href: hoyUrl, texto: "Armar mi look de hoy" })),
+    bloque("28px 6px 0", boton({ href: semanaUrl, texto: "Armar mi semana" })),
     bloque(
       "32px 6px 0",
       `<p style="margin:0;font-family:${SERIF};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Nos vemos en tu clóset.</p>

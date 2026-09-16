@@ -610,6 +610,22 @@ export function HoyClient({
             </span>
             <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
           </button>
+          {/* Arma mi semana (app/semana): un look planeado por día, de una vez.
+              Mismo tile delgado que "añadir prendas" — es otra acción
+              recurrente, no una card de contenido. */}
+          <Link
+            href="/semana"
+            className="flex items-center gap-3 rounded-md border border-line bg-surface px-3.5 py-[11px] text-left transition-colors hover:border-ink"
+          >
+            <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-md bg-tile text-ink">
+              <Icon name="calendario" size={18} />
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <b className="text-[14.5px] font-bold text-ink">arma tu semana</b>
+              <span className="text-[12.5px] text-muted">un look listo para cada día, de una vez</span>
+            </span>
+            <Icon name="chevron" size={16} className="ml-auto shrink-0 text-muted" />
+          </Link>
         </div>
 
         {/* ─── ZONA 3: EL VIAJE (solo a ≤7 días — lo único contextual) ─── */}

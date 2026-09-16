@@ -32,6 +32,10 @@ export default async function HistorialPage({
     // Diarios siempre; los promovidos del viaje solo mientras sigan favoriteados
     // (quitar el favorito los saca del historial sin borrar la fila).
     .or("source.eq.daily,favorited_at.not.is.null")
+    // Sólo looks terminados (null = de antes de la generación en background).
+    // Un look en fila de "arma mi semana" o uno que falló no tiene prendas, y
+    // aquí se pintaba como una tarjeta en blanco.
+    .or("gen_status.is.null,gen_status.eq.ready")
     .order("created_at", { ascending: false });
 
   // Resolver prendas (una sola lectura de items) y votos/worn (una de events).
