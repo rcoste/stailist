@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.335.1] - 2026-09-16 — el render del look 2 ya no se pierde
+
+Roberto generó el render del segundo look "varias veces" y cada vez que volvía
+tenía que picarle otra vez.
+
+- **Los alternos del trío llegan con su render y su corazón.** Salían de
+  `shape`, que sólo daba prendas y textos; la carga inicial de /hoy firma el
+  render, pero sólo del look principal. Ahora `shape` lo firma y lo devuelve
+  para cualquier look (y las consultas de `/api/look-of-day` lo piden).
+- **Cambiar entre "1" y "2" ya no borra el render recién hecho.** La vista del
+  look se desmontaba y el render vivía sólo en ella; ahora se anota en el trío.
+- No se pagaba de más: `/api/tryon` ya devolvía el render existente cacheado.
+
 ## [0.2.335.0] - 2026-09-16 — el voto es el continuar
 
 Con el render listo, el look se quedaba sin siguiente paso: la primaria negra
