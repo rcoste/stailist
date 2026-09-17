@@ -12,6 +12,7 @@ import { loadHomeTrip } from "@/lib/home-trip";
 import { loadUltimoLook } from "@/lib/ultimo-look";
 import { buildHomeChecklist } from "@/lib/home-checklist";
 import { ASSESSMENT_QUESTIONS } from "@/lib/capsule";
+import { shape } from "@/lib/look-del-dia/nucleo";
 
 /** Color de relleno cuando una prenda no tiene ni imagen ni color leído.
  *
@@ -25,9 +26,10 @@ export default async function HoyPage({
 }: {
   // `inicio`: pedir la home aunque ya haya look del día (pestaña "Hoy" activa,
   // o el título "hoy" del propio look).
-  searchParams: Promise<{ generar?: string; inicio?: string; prenda?: string }>;
+  // `look` + `desde`: abrir ESE look (ver lookAbierto abajo).
+  searchParams: Promise<{ generar?: string; inicio?: string; prenda?: string; look?: string; desde?: string }>;
 }) {
-  const { generar, inicio, prenda } = await searchParams;
+  const { generar, inicio, prenda, look: lookParam, desde } = await searchParams;
   // El botón ✨ manda ?generar=<timestamp> (cualquier valor presente cuenta).
   const autoAsk = generar != null;
   // `?prenda=<id>` o `?prenda=<id>,<id>`: llegaste desde el clóset con "arma un
@@ -177,6 +179,39 @@ export default async function HoyPage({
     }
   }
 
+  // `?look=<id>`: ABRIR UN LOOK CONCRETO en el detalle de siempre (render,
+  // voto, corazón). Nació con "arma tu semana": los días listos se veían como
+  // una fila de miniaturas que no se podía tocar — Roberto: "no puedo ver el
+  // detalle de los días que creé ni el try on". En vez de una pantalla nueva,
+  // la semana manda aquí: es el mismo detalle que el look de hoy, así que el
+  // render, el voto y el 👍-que-continúa se heredan sin copiarlos.
+  // Se resuelve en el servidor para no pintar la home un instante antes.
+  let lookAbierto: { outfit: HoyOutfit; paraFecha: string | null; voto: "up" | "down" | null } | null =
+    null;
+  if (typeof lookParam === "string" && lookParam) {
+    const { data: fila } = await supabase
+      .from("outfits")
+      .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, planned_for")
+      .eq("id", lookParam)
+      .eq("user_id", profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (fila && ((fila.gen_status as string | null) ?? "ready") === "ready") {
+      const [outfit, { data: votos }] = await Promise.all([
+        shape(supabase, fila as Parameters<typeof shape>[1]),
+        supabase
+          .from("events")
+          .select("type")
+          .eq("user_id", profile.id)
+          .eq("outfit_id", fila.id as string)
+          .in("type", ["vote_up", "vote_down"]),
+      ]);
+      let voto: "up" | "down" | null = null;
+      for (const ev of votos ?? []) voto = ev.type === "vote_up" ? "up" : "down";
+      lookAbierto = { outfit, paraFecha: (fila.planned_for as string | null) ?? null, voto };
+    }
+  }
+
   // ¿Hay un look PLANEADO por estrenar cerca de hoy? Aquí solo se decide si
   // vale la pena que el cliente pregunte (con SU fecha local) — un día de
   // colchón por el desfase UTC/local. Cero costo para quien nunca planea.
@@ -318,10 +353,12 @@ export default async function HoyPage({
         ) : null}
         <HoyClient
           verInicio={inicio === "1"}
+          lookAbierto={lookAbierto}
+          volverA={lookAbierto && desde === "semana" ? { label: "tu semana", href: "/semana" } : null}
           hayPlaneado={hayPlaneado}
           // La prenda entra a la llave: llegar desde OTRA prenda con el wizard
           // ya abierto tiene que remontar, o el ancla se quedaría en la primera.
-          key={`${nombre}:${generar ?? "view"}:${seedItemIds.join(",")}`}
+          key={`${nombre}:${generar ?? "view"}:${seedItemIds.join(",")}:${lookAbierto?.outfit.id ?? ""}`}
           lookInicial={lookInicial}
           correoOptIn={correoOptIn}
           pendingOutfitId={pendingOutfitId}

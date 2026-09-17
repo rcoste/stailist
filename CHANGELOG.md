@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.336.1] - 2026-09-16 — los días de la semana se abren
+
+Roberto, con su semana armada: "no puedo ver el detalle de los días que creé
+ni el try on". Los días listos eran una fila de miniaturas sin salida.
+
+- **Tocar un día listo abre su look** en el detalle de siempre: las prendas,
+  "así te queda", el voto y el corazón. No es una pantalla nueva: `/hoy?look=`
+  abre ese look concreto, resuelto en el servidor (sin parpadeo de la home).
+- **El "‹" dice "tu semana"** y regresa a la semana; el 👍 que continúa también.
+
 ## [0.2.336.0] - 2026-09-16 — cada día de la semana con su plan
 
 Roberto vio "arma tu semana" corta: "no especifica qué tipo de outfit, si con

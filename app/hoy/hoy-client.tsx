@@ -100,6 +100,8 @@ export function HoyClient({
   correoOptIn = false,
   verInicio = false,
   hayPlaneado = false,
+  lookAbierto = null,
+  volverA = null,
 }: {
   lookInicial: HoyOutfit | null;
   /** Look del día que está generándose en background (del server) → retomar polling. */
@@ -143,9 +145,16 @@ export function HoyClient({
    *  dispositivo, así que solo avisa "pregunta tú"). El cliente hace el check
    *  con su fecha local y, si el planeado es de hoy, amanece como look del día. */
   hayPlaneado?: boolean;
+  /** `?look=<id>`: un look concreto que se abre directo en su detalle (hoy lo
+   *  manda "arma tu semana"). Gana sobre el look del día. */
+  lookAbierto?: { outfit: HoyOutfit; paraFecha: string | null; voto: "up" | "down" | null } | null;
+  /** A dónde vuelve el "‹" del detalle cuando no es a Inicio. */
+  volverA?: { label: string; href: string } | null;
 }) {
   const [state, setState] = useState<State>(
-    pendingOutfitId && !autoAsk
+    lookAbierto && !autoAsk
+      ? { kind: "ready", outfit: lookAbierto.outfit, paraFecha: lookAbierto.paraFecha }
+      : pendingOutfitId && !autoAsk
       ? { kind: "generating", outfitId: pendingOutfitId }
       : autoAsk
         ? { kind: "ask" } // el botón ✨ sí abre el wizard de una
@@ -316,7 +325,7 @@ export function HoyClient({
   // hoy, se promueve a look del día y aparece — sin generar ni pagar nada.
   useEffect(() => {
     if (!hayPlaneado) return;
-    if (lookInicial || pendingOutfitId || autoAsk) return;
+    if (lookInicial || pendingOutfitId || autoAsk || lookAbierto) return;
     let muerto = false;
     (async () => {
       try {
@@ -858,9 +867,18 @@ export function HoyClient({
       fechaLabel={fechaLabel}
       // El voto persistido solo aplica al look con el que cargó la página; un
       // look recién generado arranca sin voto (el key resetea el estado).
-      votoInicial={visible.id === lookInicial?.id ? votoInicial : null}
+      votoInicial={
+        visible.id === lookAbierto?.outfit.id
+          ? lookAbierto.voto
+          : visible.id === lookInicial?.id
+            ? votoInicial
+            : null
+      }
       onOtroLook={otroLook}
-      onInicio={() => setState({ kind: "inicio" })}
+      // Abierto desde la semana, volver (y el 👍 que continúa) regresa a la
+      // semana: ahí estaba, y ahí están los otros días.
+      onInicio={volverA ? () => router.push(volverA.href) : () => setState({ kind: "inicio" })}
+      volverLabel={volverA?.label ?? "inicio"}
       onTryon={anotarTryon}
       lookIndex={idxVisible}
       lookCount={trio.length}
@@ -888,6 +906,7 @@ function ReadyView({
   votoInicial = null,
   onOtroLook,
   onInicio,
+  volverLabel,
   onTryon,
   lookIndex = 0,
   lookCount = 1,
@@ -904,6 +923,8 @@ function ReadyView({
   onOtroLook: () => void;
   /** Vuelta a la home ("‹ inicio" en el header). */
   onInicio: () => void;
+  /** Qué dice el "‹" del header ("inicio", "tu semana"). */
+  volverLabel: string;
   /** Guarda el render recién generado en el trío (ver anotarTryon). */
   onTryon: (outfitId: string, url: string) => void;
   /** El trío (decisión de Roberto, 2026-08-19: "lo generado se muestra, no se
@@ -1029,7 +1050,7 @@ function ReadyView({
           lee como salida estando dentro del look — Roberto: "si me quisiera
           salir no sabría qué picarle". Va al header por portal (el header lo
           pinta el AppShell del server y no sabe en qué estado está /hoy). */}
-      <VolverEnHeader label="inicio" onClick={onInicio} />
+      <VolverEnHeader label={volverLabel} onClick={onInicio} />
 
       {skipOpen ? (
         <SkipReasons

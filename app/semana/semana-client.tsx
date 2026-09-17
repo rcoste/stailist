@@ -217,25 +217,35 @@ export function SemanaClient({
 
           if (s && s.estado === "listo" && s.look) {
             return (
-              <li key={d.fecha} className="flex items-center gap-3 border-b border-line py-3.5">
-                <Hueco />
-                {etiqueta}
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <span className="flex items-baseline gap-2">
-                    <b className="truncate text-[15px] text-ink">{s.look.nombre}</b>
-                    <span className="shrink-0 text-[12px] text-muted">{etiquetaPlan(s.ocasion)}</span>
-                  </span>
-                  <span className="flex gap-1.5">
-                    {s.look.prendas.slice(0, 5).map((p) => (
-                      <span key={p.id} className="h-11 w-11 overflow-hidden rounded-md bg-tile">
-                        {p.imagen ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.imagen} alt={p.nombre} className="h-full w-full object-cover mix-blend-multiply" />
-                        ) : null}
-                      </span>
-                    ))}
-                  </span>
-                </div>
+              <li key={d.fecha} className="border-b border-line">
+                {/* El día listo SE ABRE: el detalle de siempre, con render y voto
+                    (Roberto: "no puedo ver el detalle de los días que creé ni el
+                    try on"). Va a /hoy?look= y no a una pantalla nueva — el
+                    detalle ya existe; su "‹" dice "tu semana" y regresa aquí. */}
+                <Link
+                  href={`/hoy?look=${s.look.id}&desde=semana`}
+                  className="flex items-center gap-3 py-3.5 transition-opacity hover:opacity-80"
+                >
+                  <Hueco />
+                  {etiqueta}
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <span className="flex items-baseline gap-2">
+                      <b className="truncate text-[15px] text-ink">{s.look.nombre}</b>
+                      <span className="shrink-0 text-[12px] text-muted">{etiquetaPlan(s.ocasion)}</span>
+                    </span>
+                    <span className="flex gap-1.5">
+                      {s.look.prendas.slice(0, 5).map((p) => (
+                        <span key={p.id} className="h-11 w-11 overflow-hidden rounded-md bg-tile">
+                          {p.imagen ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.imagen} alt={p.nombre} className="h-full w-full object-cover mix-blend-multiply" />
+                          ) : null}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                  <Icon name="chevron" size={15} className="shrink-0 text-faint" />
+                </Link>
               </li>
             );
           }
