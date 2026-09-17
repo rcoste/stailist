@@ -9,7 +9,9 @@ import { STALE_MS, fechaLocalDe, generateInto, shape } from "@/lib/look-del-dia/
 import {
   EN_FILA,
   MIN_PRENDAS_SEMANA,
+  cuerpoDelPlan,
   diasOfrecidos,
+  planPorId,
   estadoDelDia,
   ocupaLaFecha,
   validarPeticion,
@@ -79,7 +81,7 @@ async function trabajar(db: SupabaseClient, userId: string, coords: Coordenadas)
   while (Date.now() - inicio < PRESUPUESTO_MS) {
     const { data: siguiente } = await db
       .from("outfits")
-      .select("id, planned_for, occasion")
+      .select("id, planned_for, occasion, plan_semana")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .eq("gen_status", "generating")
@@ -148,8 +150,11 @@ async function trabajar(db: SupabaseClient, userId: string, coords: Coordenadas)
       return;
     }
 
+    // El plan del día viaja con la misma forma que manda el wizard (tipo de
+    // evento, momento, ve cliente). Filas de la v1 no tienen plan_semana: su
+    // `occasion` ("diario" / "oficina") es también un id de plan válido.
     await generateInto(db, userId, siguiente.id as string, {
-      objective: (siguiente.occasion as string | null) ?? "diario",
+      ...cuerpoDelPlan((siguiente.plan_semana as string | null) ?? (siguiente.occasion as string | null)),
       plannedFor: fecha,
       fechaLocal: hoy,
       noPersistirObjetivo: true,
@@ -251,7 +256,10 @@ export async function POST(request: NextRequest) {
     porArmar.map((d) => ({
       user_id: user.id,
       item_ids: [],
-      occasion: d.ocasion,
+      // occasion es la ocasión del motor (lo que lee el resto de la app);
+      // plan_semana, el plan fino que eligió para ese día.
+      occasion: planPorId(d.ocasion)?.objective ?? "diario",
+      plan_semana: d.ocasion,
       explanation: "",
       prompt_version: PROMPT_VERSION,
       is_look_of_day: false,
@@ -288,7 +296,7 @@ export async function GET(request: NextRequest) {
   const fechas = diasOfrecidos(hoy).map((d) => d.fecha);
   const { data: filas } = await supabase
     .from("outfits")
-    .select("id, item_ids, title, explanation, tip, occasion, gen_status, gen_error, created_at, planned_for")
+    .select("id, item_ids, title, explanation, tip, occasion, plan_semana, gen_status, gen_error, created_at, planned_for")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .in("planned_for", fechas)
@@ -319,7 +327,8 @@ export async function GET(request: NextRequest) {
     if (previo && rango[previo.estado] >= rango[estado]) continue;
     dias[fecha] = {
       estado,
-      ocasion: (o.occasion as string | null) ?? null,
+      // El id del plan (con fallback a la ocasión de las filas de la v1).
+      ocasion: (o.plan_semana as string | null) ?? (o.occasion as string | null) ?? null,
       ...(estado === "listo" ? { look: await shape(supabase, o as Parameters<typeof shape>[1]) } : {}),
     };
   }

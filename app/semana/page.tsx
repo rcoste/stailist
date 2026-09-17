@@ -24,7 +24,7 @@ export default async function SemanaPage() {
         prendas={count ?? 0}
         minimo={MIN_PRENDAS_SEMANA}
         gender={profile.gender ?? "hombre"}
-        tieneCodigoTrabajo={!!profile.work_dress_code}
+        codigoTrabajo={profile.work_dress_code ?? null}
       />
     </AppShell>
   );

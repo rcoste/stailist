@@ -6,10 +6,12 @@ import { Icon } from "@/components/icon";
 import { fmtFechaLocal } from "@/components/weather-picker";
 import { WORK_DRESS_CODES, type WorkDressCode } from "@/lib/dress-code";
 import {
-  OCASIONES_SEMANA,
   diasOfrecidos,
+  planInicial,
+  planPorId,
+  planesDelDia,
   type EstadoDia,
-  type OcasionSemana,
+  type PlanSemanaId,
 } from "@/lib/semana";
 
 type Prenda = { id: string; nombre: string; imagen: string | null };
@@ -17,9 +19,10 @@ type Look = { id: string; nombre: string; prendas: Prenda[] };
 type DiaServidor = { estado: EstadoDia; ocasion: string | null; look?: Look };
 
 /** Lo que la persona eligió para un día que todavía no tiene look. */
-type Eleccion = { activo: boolean; ocasion: OcasionSemana };
+type Eleccion = { activo: boolean; ocasion: PlanSemanaId };
 
-const ETIQUETA_OCASION = Object.fromEntries(OCASIONES_SEMANA.map((o) => [o.id, o.label]));
+/** El nombre del plan de un día ya pedido (filas viejas: su ocasión). */
+const etiquetaPlan = (id: string | null) => planPorId(id)?.label ?? "";
 
 /** La ubicación, para el pronóstico de cada día. Sin permiso se arma sin clima. */
 function dondeEstoy(): Promise<{ lat: number; lon: number } | null> {
@@ -63,21 +66,28 @@ export function SemanaClient({
   prendas,
   minimo,
   gender,
-  tieneCodigoTrabajo,
+  codigoTrabajo,
 }: {
   prendas: number;
   minimo: number;
   gender: "hombre" | "mujer";
-  tieneCodigoTrabajo: boolean;
+  /** Su código de vestimenta del trabajo; null = nunca se le ha preguntado. */
+  codigoTrabajo: string | null;
 }) {
   const [hoy] = useState(() => fmtFechaLocal(new Date()));
   const dias = useMemo(() => diasOfrecidos(hoy), [hoy]);
 
   const [servidor, setServidor] = useState<Record<string, DiaServidor>>({});
-  // Lunes a viernes marcados; el fin de semana, a un toque.
+  // Lunes a viernes marcados; el fin de semana, a un toque. Cada día con su
+  // plan por defecto (lib/semana: planInicial).
   const [elecciones, setElecciones] = useState<Record<string, Eleccion>>(() =>
-    Object.fromEntries(dias.map((d) => [d.fecha, { activo: !d.finDeSemana, ocasion: "diario" as OcasionSemana }]))
+    Object.fromEntries(
+      dias.map((d) => [d.fecha, { activo: !d.finDeSemana, ocasion: planInicial(d.finDeSemana, codigoTrabajo) }])
+    )
   );
+  // El día cuya lista de planes está abierta. Una a la vez: con todas abiertas
+  // la semana vuelve a ser el formulario que se quiso evitar.
+  const [abierto, setAbierto] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [vuelta, setVuelta] = useState(0);
@@ -85,6 +95,7 @@ export function SemanaClient({
   // "Trabajo" sin código de vestimenta arma una oficina genérica: se pregunta
   // una vez, aquí mismo, como lo hace el wizard la primera vez.
   const [codigo, setCodigo] = useState<WorkDressCode | null>(null);
+  const codigoEfectivo = codigoTrabajo ?? codigo;
 
   useEffect(() => {
     let vivo = true;
@@ -111,7 +122,22 @@ export function SemanaClient({
     return !e || e === "error";
   };
   const porPedir = dias.filter((d) => libre(d.fecha) && elecciones[d.fecha]?.activo);
-  const pideCodigo = !tieneCodigoTrabajo && porPedir.some((d) => elecciones[d.fecha].ocasion === "oficina");
+  const pideCodigo =
+    !codigoTrabajo && porPedir.some((d) => planPorId(elecciones[d.fecha].ocasion)?.objective === "oficina");
+
+  function elegirCodigo(c: WorkDressCode) {
+    setCodigo(c);
+    // "con cliente" sólo existe para "depende del día": si eligió otro código,
+    // esos días vuelven a ser trabajo normal en vez de quedar con un plan que
+    // el motor ignoraría.
+    if (c !== "variable") {
+      setElecciones((p) =>
+        Object.fromEntries(
+          Object.entries(p).map(([f, e]) => [f, e.ocasion === "cliente" ? { ...e, ocasion: "oficina" } : e])
+        )
+      );
+    }
+  }
 
   async function armar() {
     if (porPedir.length === 0) return;
@@ -150,15 +176,16 @@ export function SemanaClient({
   const faltan = minimo - prendas;
 
   return (
-    <div className="flex flex-col gap-6 pb-28 pt-2">
+    // pb-44: la barra fija del botón (+ la tab bar) tapaba el último párrafo.
+    <div className="flex flex-col gap-6 pb-44 pt-2">
       <div className="flex flex-col gap-2">
         <h1 className="text-[32px] font-bold leading-[1.04] tracking-[-0.025em] text-ink">
           tu semana,{" "}
           <em className="font-display font-normal italic tracking-normal">armada</em>
         </h1>
         <p className="text-[15px] leading-snug text-muted">
-          marca los días y te dejo un look listo para cada uno. cuando llegue el día,
-          amanece como tu look de hoy.
+          dime qué te toca cada día y te dejo un look listo para ese plan. cuando
+          llegue el día, amanece como tu look de hoy.
         </p>
       </div>
 
@@ -196,9 +223,7 @@ export function SemanaClient({
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <span className="flex items-baseline gap-2">
                     <b className="truncate text-[15px] text-ink">{s.look.nombre}</b>
-                    <span className="shrink-0 text-[12px] text-muted">
-                      {ETIQUETA_OCASION[s.ocasion ?? ""] ?? ""}
-                    </span>
+                    <span className="shrink-0 text-[12px] text-muted">{etiquetaPlan(s.ocasion)}</span>
                   </span>
                   <span className="flex gap-1.5">
                     {s.look.prendas.slice(0, 5).map((p) => (
@@ -220,14 +245,20 @@ export function SemanaClient({
               <li key={d.fecha} className="flex items-center gap-3 border-b border-line py-3.5">
                 <Hueco />
                 {etiqueta}
-                <span className={`text-[15px] ${s.estado === "generando" ? "shimmer-txt" : "text-muted"}`}>
-                  {s.estado === "generando" ? "armando tu look…" : "en fila"}
+                <span className="flex min-w-0 flex-col">
+                  <span className={`text-[15px] ${s.estado === "generando" ? "shimmer-txt" : "text-muted"}`}>
+                    {s.estado === "generando" ? "armando tu look…" : "en fila"}
+                  </span>
+                  {/* Qué pidió: sin esto, "en fila" no decía para qué. */}
+                  <span className="text-[12px] text-muted">{etiquetaPlan(s.ocasion)}</span>
                 </span>
               </li>
             );
           }
 
           const activo = !!el?.activo;
+          const planes = planesDelDia(d.finDeSemana, codigoEfectivo);
+          const listaAbierta = abierto === d.fecha;
           return (
             <li key={d.fecha} className="flex flex-col gap-2.5 border-b border-line py-3.5">
               <div className="flex items-center gap-3">
@@ -236,9 +267,10 @@ export function SemanaClient({
                   role="checkbox"
                   aria-checked={activo}
                   aria-label={`${d.dia} ${d.numero}`}
-                  onClick={() =>
-                    setElecciones((p) => ({ ...p, [d.fecha]: { ...p[d.fecha], activo: !activo } }))
-                  }
+                  onClick={() => {
+                    setElecciones((p) => ({ ...p, [d.fecha]: { ...p[d.fecha], activo: !activo } }));
+                    if (activo && listaAbierta) setAbierto(null);
+                  }}
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border transition-colors ${
                     activo ? "border-ink bg-accent text-on-accent" : "border-line bg-surface"
                   }`}
@@ -249,20 +281,43 @@ export function SemanaClient({
                 {s?.estado === "error" ? (
                   <span className="text-[13px] text-muted">no salió — vuelve a pedirlo</span>
                 ) : null}
+                {/* EL PLAN DEL DÍA, a un toque. Marcado: su plan como etiqueta
+                    que se cambia. Sin marcar el fin de semana: la pregunta, que
+                    es lo que no quedaba claro ("¿qué pasa el fin de semana?").
+                    Entre semana sin marcar no se pregunta nada: lo apagó. */}
+                {activo || d.finDeSemana ? (
+                  <button
+                    type="button"
+                    onClick={() => setAbierto(listaAbierta ? null : d.fecha)}
+                    aria-expanded={listaAbierta}
+                    className={`ml-auto flex min-h-10 items-center gap-1.5 rounded-sm border px-3 text-[13.5px] font-semibold transition-colors ${
+                      activo ? "border-line bg-surface text-ink hover:border-ink" : "border-transparent text-muted hover:text-ink"
+                    }`}
+                  >
+                    {activo ? planPorId(el.ocasion)?.label : "¿tienes plan?"}
+                    <Icon name="chevron" size={13} rotate={listaAbierta ? 270 : 90} />
+                  </button>
+                ) : null}
               </div>
-              {activo ? (
-                <div className="flex gap-2 pl-9" role="radiogroup" aria-label={`ocasión del ${d.dia}`}>
-                  {OCASIONES_SEMANA.map((o) => {
-                    const on = el?.ocasion === o.id;
+              {listaAbierta ? (
+                <div className="flex flex-wrap gap-2 pl-9" role="radiogroup" aria-label={`plan del ${d.dia}`}>
+                  {planes.map((o) => {
+                    const on = activo && el?.ocasion === o.id;
                     return (
                       <button
                         key={o.id}
                         type="button"
                         role="radio"
                         aria-checked={on}
-                        onClick={() =>
-                          setElecciones((p) => ({ ...p, [d.fecha]: { ...p[d.fecha], ocasion: o.id } }))
-                        }
+                        onClick={() => {
+                          // Elegir un plan también marca el día: nadie elige
+                          // "cena con amigos" para que no se arme.
+                          setElecciones((p) => ({
+                            ...p,
+                            [d.fecha]: { activo: true, ocasion: o.id as PlanSemanaId },
+                          }));
+                          setAbierto(null);
+                        }}
                         className={`rounded-sm border px-3 py-1.5 text-[13px] font-semibold transition-colors ${
                           on ? "border-ink bg-accent text-on-accent" : "border-line bg-surface text-ink hover:border-ink"
                         }`}
@@ -290,7 +345,7 @@ export function SemanaClient({
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  onClick={() => setCodigo(c.key)}
+                  onClick={() => elegirCodigo(c.key)}
                   className={`flex flex-col rounded-sm border px-3.5 py-2.5 text-left transition-colors ${
                     on ? "border-ink shadow-[inset_0_0_0_1px_var(--c-ink)]" : "border-line hover:border-ink"
                   } bg-surface`}

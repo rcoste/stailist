@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.336.0] - 2026-09-16 — cada día de la semana con su plan
+
+Roberto vio "arma tu semana" corta: "no especifica qué tipo de outfit, si con
+cliente o no, e igual no me queda claro qué pasa los fines de semana". Una
+stylist no pregunta "¿trabajas?": pregunta "¿qué te toca ese día?".
+
+- **Cada día tiene un plan a un toque.** Entre semana: trabajo, con cliente,
+  comida de trabajo, día a día, cena con amigos, una cita. Fin de semana: día a
+  día, comida familiar, cena con amigos, una cita, una fiesta.
+- **El fin de semana pregunta "¿tienes plan?"** y al elegir uno el día se
+  marca solo. Entre semana arranca en "trabajo" si ya dijiste cómo te vistes
+  para trabajar; si no, en "día a día".
+- **Sólo lo que el motor ya sabe, sin tocarlo.** "Con cliente" usa el texto ya
+  medido del código "depende del día", así que sólo aparece con ese código
+  (en los otros tres el motor no tiene instrucción de "hoy ve cliente":
+  escribirla va con medición). Las comidas, cenas, cita y fiesta son el
+  catálogo de eventos del wizard, sin formalidad declarada. Boda, graduación y
+  funeral siguen en "crear un look", que pregunta el código.
+- **Fuera por ahora:** home office y día de pendientes (necesitan texto nuevo
+  del motor → fase 2, medida).
+- **Base:** `outfits.plan_semana` (migración 0162, aditiva, ya aplicada). Las
+  filas de la v1 siguen funcionando: su ocasión es también un plan válido.
+- **De paso:** "en fila" dice para qué plan, y el último párrafo ya no queda
+  tapado por el botón.
+
 ## [0.2.335.1] - 2026-09-16 — el look 2 ya no pierde su render ni su pie
 
 Roberto generó el render del segundo look "varias veces" y cada vez que volvía
