@@ -19,7 +19,7 @@
 // AFINAR Y VALIDAR SOBRE LOS MISMOS LOOKS ES TRAMPA. Si el juez se ajusta
 // mirando estos 95, el número de aquí es optimista; el que vale es el de la
 // siguiente ronda votada. El script lo imprime para que no se olvide.
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { criticarLook, JUEZ_STYLIST_VERSION, type CriticaStylist, type Gravedad } from "../lib/engine/juez-stylist";
 import type { BriefRubrica } from "../lib/engine/rubrica";
@@ -35,14 +35,22 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
 
 type Caso = {
   ladoId: string;
+  /** El par y la variante: para medir si el juez prefiere el MISMO lado que Roberto. */
+  parId: string;
+  variante: string;
   indice: number;
   ronda: string;
+  /** Cuándo se creó la ronda: separa lo que el juez vio al afinarse de lo que no. */
+  creada: string;
   brief: BriefMotor;
   look: LookMotor;
   marca: "arriba" | "abajo";
   comentario: string | null;
   critica: CriticaStylist | null;
 };
+
+/** Último día de votos que se usaron para afinar el juez vigente (js5). */
+const FIN_DEL_AFINADO = "2026-08-23T00:00:00Z";
 
 const pct = (a: number, b: number) => (b ? `${Math.round((a * 100) / b)}%` : "—");
 const tiene = (c: CriticaStylist | null, niveles: Gravedad[]) =>
@@ -119,7 +127,7 @@ async function main() {
           // murieron con el clóset del 08-18): fuera del examen, y se dice.
           if (!look.prendas) return;
           casos.push({
-            ladoId: l.id, indice: i, ronda: c.id.slice(0, 8), brief: p.brief as BriefMotor, look,
+            ladoId: l.id, parId: p.id as string, variante: l.variante as string, indice: i, ronda: c.id.slice(0, 8), creada: c.creada as string, brief: p.brief as BriefMotor, look,
             marca, comentario: coms[String(i)] ?? null, critica: criticas[i] ?? null,
           });
         });
@@ -197,6 +205,11 @@ async function main() {
 
   const evaluados = casos.filter((c) => nuevas.has(c));
   tabla(`VIGENTE ${JUEZ_STYLIST_VERSION} (recién corrido)`, evaluados, (c) => nuevas.get(c)!);
+  // LA CIFRA QUE VALE. js5 se afinó el 2026-08-22 mirando los votos de hasta
+  // ese día; las rondas posteriores son looks que nunca vio. Sin este corte el
+  // examen mezcla tarea con prueba y sale optimista.
+  const limpios = evaluados.filter((c) => c.creada > FIN_DEL_AFINADO);
+  tabla(`VIGENTE ${JUEZ_STYLIST_VERSION} · SÓLO rondas posteriores al afinado (${FIN_DEL_AFINADO.slice(0, 10)})`, limpios, (c) => nuevas.get(c)!);
 
   console.log(`\n👎 que ${JUEZ_STYLIST_VERSION} deja pasar sin "rompe":`);
   for (const c of evaluados.filter((x) => x.marca === "abajo" && !tiene(nuevas.get(x)!, ["rompe"])))
@@ -204,6 +217,26 @@ async function main() {
   console.log(`\n👍 que ${JUEZ_STYLIST_VERSION} marca con "rompe" (falsas alarmas graves):`);
   for (const c of evaluados.filter((x) => x.marca === "arriba" && tiene(nuevas.get(x)!, ["rompe"])))
     console.log(`  · [${c.brief.etiqueta}] ${c.look.prendas!.map((x) => x.nombre).join(" + ")}\n      juez: ${nuevas.get(c)!.hallazgos.filter((h) => h.gravedad === "rompe").map((h) => `${h.defecto}: ${h.problema}`).join(" | ")}`);
+
+  // --volcar=<ruta>: cada caso con su crítica nueva, para analizar fuera del
+  // script (qué se le escapa, falsas alarmas, acuerdo por par) sin volver a
+  // pagar la corrida.
+  const volcar = process.argv.find((a) => a.startsWith("--volcar="))?.slice("--volcar=".length);
+  if (volcar) {
+    writeFileSync(
+      volcar,
+      JSON.stringify(
+        evaluados.map((c) => ({
+          ronda: c.ronda, creada: c.creada, parId: c.parId, variante: c.variante, indice: c.indice,
+          etiqueta: c.brief.etiqueta, prendas: c.look.prendas!.map((x) => x.nombre), marca: c.marca,
+          comentario: c.comentario, hallazgos: nuevas.get(c)!.hallazgos,
+        })),
+        null,
+        1
+      )
+    );
+    console.log(`volcado en ${volcar}`);
+  }
 
   console.log(`\n⚠ Si ${JUEZ_STYLIST_VERSION} se afinó mirando estos looks, este número es optimista: el que vale es el de la próxima ronda votada.`);
 

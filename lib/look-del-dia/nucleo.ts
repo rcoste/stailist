@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ciudadDeCoordenadas, conCiudad } from "@/lib/tryon-escena";
-import { generateOutfits } from "@/lib/engine/generate";
+import { generateOutfits, type GeneratedOutfit } from "@/lib/engine/generate";
+import type { EngineContext } from "@/lib/engine/prompt";
+import type { QuienMide } from "@/lib/recibos";
 import { alcanceDeFormalidad } from "@/lib/engine/alcance";
 import { reviewOutfit } from "@/lib/engine/critic";
 import { armarLooks } from "@/lib/engine/pipeline";
@@ -343,28 +345,7 @@ export async function generateInto(
     //    alternos ensuciarían promoverPlaneado, que promovería cualquiera de
     //    los tres al amanecer.
     if (plannedFor) {
-      const candidates = await generateOutfits(ctx, {}, quien);
-      // NO REPETIR UN LOOK RECIENTE, en código (lib/engine/combinacion-repetida).
-      // El generador devuelve 2-3 candidatos y antes se tomaba siempre el
-      // primero; ahora el primero que no repita un conjunto de los últimos 14
-      // días. Se revisa DESPUÉS del juez, que puede cambiar prendas. Si todos
-      // repiten, se queda el primero, como antes: un look repetido es mejor
-      // que ninguno. "Arma mi semana" depende de esto: cada día ve los
-      // anteriores en recentCombos.
-      let candidato = candidates[0];
-      let result = await reviewOutfit(ctx, candidato, [], false, {}, quien);
-      for (const otro of candidates.slice(1)) {
-        if (!esCombinacionRepetida(result.outfit.item_ids, ctx.recentCombos)) break;
-        if (esCombinacionRepetida(otro.item_ids, ctx.recentCombos)) continue;
-        const intento = await reviewOutfit(ctx, otro, [], false, {}, quien);
-        // Un look que el juez rechazó no le gana a uno aprobado sólo por ser
-        // nuevo: repetir un buen look es mejor que estrenar uno malo.
-        if (intento.verdict === "rechazado" && result.verdict !== "rechazado") continue;
-        if (!esCombinacionRepetida(intento.outfit.item_ids, ctx.recentCombos)) {
-          candidato = otro;
-          result = intento;
-        }
-      }
+      const { candidato, result } = await elegirLookPlaneado(ctx, quien);
       const elegido = result.outfit;
 
       const { error: upErr } = await supabase
@@ -468,6 +449,44 @@ export async function generateInto(
       .eq("id", outfitId)
       .eq("user_id", userId);
   }
+}
+
+/**
+ * EL LOOK DE UN DÍA PLANEADO: genera candidatos, los pasa por el juez y se
+ * queda con el primero que no repita un conjunto reciente.
+ *
+ * Vive como función —y no dentro de generateInto— para que el script que mide
+ * la repetición de "arma tu semana" (scripts/medir-semana.ts) corra EXACTAMENTE
+ * este camino sin copiarlo: una copia en el script dejaría de medir producción
+ * en cuanto alguien tocara esto.
+ *
+ * NO REPETIR UN LOOK RECIENTE, en código (lib/engine/combinacion-repetida).
+ * El generador devuelve 2-3 candidatos y antes se tomaba siempre el primero;
+ * ahora el primero que no repita un conjunto de los últimos 14 días. Se revisa
+ * DESPUÉS del juez, que puede cambiar prendas. Si todos repiten, se queda el
+ * primero, como antes: un look repetido es mejor que ninguno. "Arma mi semana"
+ * depende de esto: cada día ve los anteriores en recentCombos.
+ */
+export async function elegirLookPlaneado(
+  ctx: EngineContext,
+  quien: QuienMide | null
+): Promise<{ candidato: GeneratedOutfit; result: Awaited<ReturnType<typeof reviewOutfit>> }> {
+  const candidates = await generateOutfits(ctx, {}, quien);
+  let candidato = candidates[0];
+  let result = await reviewOutfit(ctx, candidato, [], false, {}, quien);
+  for (const otro of candidates.slice(1)) {
+    if (!esCombinacionRepetida(result.outfit.item_ids, ctx.recentCombos)) break;
+    if (esCombinacionRepetida(otro.item_ids, ctx.recentCombos)) continue;
+    const intento = await reviewOutfit(ctx, otro, [], false, {}, quien);
+    // Un look que el juez rechazó no le gana a uno aprobado sólo por ser
+    // nuevo: repetir un buen look es mejor que estrenar uno malo.
+    if (intento.verdict === "rechazado" && result.verdict !== "rechazado") continue;
+    if (!esCombinacionRepetida(intento.outfit.item_ids, ctx.recentCombos)) {
+      candidato = otro;
+      result = intento;
+    }
+  }
+  return { candidato, result };
 }
 
 // Da forma a un outfit + sus prendas (con imagen resuelta y firmada) para el
