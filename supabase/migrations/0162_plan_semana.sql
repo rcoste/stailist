@@ -1,0 +1,17 @@
+-- 0162 · outfits.plan_semana: el plan fino de un día de "arma tu semana".
+--
+-- La v1 de la semana sólo tenía "día a día" y "trabajo", y eso cabía en
+-- `occasion`. Ahora cada día tiene un plan ("con cliente", "cena con amigos",
+-- "comida familiar"…) que se traduce a lo que el motor ya entiende: ocasión +
+-- tipo de evento + momento + si ve cliente (lib/semana.ts). `occasion` sigue
+-- guardando la ocasión del motor —la leen el diario, el admin y generateInto,
+-- que además la reescribe al terminar—, así que el plan necesita su columna:
+-- el trabajador de fondo la lee cuando le toca armar ese día, que puede ser
+-- minutos después y en otra función.
+--
+-- Sin CHECK a propósito: el catálogo vive en código y crece (fase 2: home
+-- office, día de pendientes); un valor desconocido cae a "día a día" en
+-- cuerpoDelPlan. La escribe la propia persona sobre su fila (RLS de outfits).
+-- Aditiva y nullable: el código viejo la ignora y las filas viejas usan su
+-- `occasion`, que también es un id de plan válido.
+alter table public.outfits add column if not exists plan_semana text;

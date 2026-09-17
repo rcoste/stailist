@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { tipoEventoPorClave } from "./eventos";
 import {
   EN_FILA,
   MIN_PRENDAS_SEMANA,
+  PLANES_SEMANA,
+  cuerpoDelPlan,
   diasOfrecidos,
+  planInicial,
+  planesDelDia,
   estadoDelDia,
   ocupaLaFecha,
   validarPeticion,
@@ -99,5 +104,67 @@ describe("el estado de un día", () => {
     expect(ocupaLaFecha(colgado)).toBe(false);
     expect(ocupaLaFecha("listo")).toBe(true);
     expect(ocupaLaFecha("en_fila")).toBe(true);
+  });
+});
+
+describe("el plan de cada día (v2, 2026-09-16)", () => {
+  // Roberto: "en lo de trabajo no especifica qué tipo de outfit, si con cliente
+  // o no, e igual no me queda claro qué pasa los fines de semana".
+  const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
+
+  it("entre semana manda el trabajo; el fin de semana, los planes de fin de semana", () => {
+    expect(ids(planesDelDia(false, "business_casual"))).toEqual([
+      "oficina", "comida-trabajo", "diario", "cena-amigos", "cita",
+    ]);
+    expect(ids(planesDelDia(true, "business_casual"))).toEqual([
+      "diario", "comida-familiar", "cena-amigos", "cita", "fiesta",
+    ]);
+  });
+
+  it("'con cliente' sólo existe para el código 'depende del día'", () => {
+    // Es el único código con texto medido para "hoy ve cliente". En los otros
+    // tres el motor lo ignoraría: ofrecerlo sería una opción que no hace nada.
+    expect(ids(planesDelDia(false, "variable"))).toContain("cliente");
+    for (const c of ["formal", "business_casual", "casual", null]) {
+      expect(ids(planesDelDia(false, c))).not.toContain("cliente");
+    }
+  });
+
+  it("entre semana arranca en trabajo sólo si ya dijo cómo se viste para trabajar", () => {
+    expect(planInicial(false, "formal")).toBe("oficina");
+    expect(planInicial(false, null)).toBe("diario");
+    expect(planInicial(true, "formal")).toBe("diario");
+  });
+
+  it("trabajo y con cliente llegan al motor como el wizard: oficina + veCliente", () => {
+    expect(cuerpoDelPlan("oficina")).toEqual({ objective: "oficina", veCliente: false });
+    expect(cuerpoDelPlan("cliente")).toEqual({ objective: "oficina", veCliente: true });
+  });
+
+  it("los planes de evento usan el catálogo, SIN formalidad y sin eventos con código", () => {
+    // Boda, graduación y funeral tienen invitación o código y el clóset puede
+    // no alcanzar: esos van por "crear un look", que pregunta.
+    for (const p of PLANES_SEMANA) {
+      const cuerpo = cuerpoDelPlan(p.id);
+      expect(cuerpo).not.toHaveProperty("formality");
+      if (cuerpo.objective !== "evento") continue;
+      const tipo = tipoEventoPorClave((cuerpo as { tipoEvento?: string }).tipoEvento);
+      expect(tipo, p.id).not.toBeNull();
+      expect(tipo!.conCodigo ?? false, p.id).toBe(false);
+    }
+  });
+
+  it("de noche las cenas, la cita y la fiesta; de día las comidas", () => {
+    expect(cuerpoDelPlan("cena-amigos")).toMatchObject({ momento: "noche" });
+    expect(cuerpoDelPlan("fiesta")).toMatchObject({ momento: "noche" });
+    expect(cuerpoDelPlan("comida-familiar")).toMatchObject({ momento: "dia" });
+  });
+
+  it("un plan desconocido o una fila vieja caen a lo de siempre", () => {
+    expect(cuerpoDelPlan(null)).toEqual({ objective: "diario" });
+    expect(cuerpoDelPlan("home-office")).toEqual({ objective: "diario" });
+    // Las filas de la v1 guardaban "diario"/"oficina": siguen siendo planes.
+    expect(validarPeticion([{ fecha: "2026-09-17", ocasion: "oficina" }], HOY).ok).toBe(true);
+    expect(validarPeticion([{ fecha: "2026-09-19", ocasion: "cena-amigos" }], HOY).ok).toBe(true);
   });
 });
