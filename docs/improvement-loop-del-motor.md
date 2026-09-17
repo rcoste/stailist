@@ -335,6 +335,26 @@ Recalibrar un umbral es mucho más barato que enseñar a ver — pero la validac
 tiene que ser sobre rondas NUEVAS, porque estos 95 looks son también los que se
 usarían para afinar.
 
+### ¿La semana repite de más? (2026-09-16, `scripts/medir-semana.ts`)
+
+Nació del blazer marino en 5 de 7 días de la semana de claude.dev, un clóset de
+otoño con paleta de invierno y 5 planes arreglados: no era evidencia. Se armó
+una semana realista (L-V trabajo o día a día, con cliente mar/jue si el código
+es "depende del día", sáb cena con amigos, dom comida familiar, 20° fijos) en 6
+clósets reales, sin escribir nada, por el mismo camino que producción.
+
+**Regla escrita antes de correr:** capa o calzado en ≥4/7 días con ≥2
+alternativas de su zona = repetición de más; problema del motor si ≥3 clósets.
+**Resultado: 2 de 6 → no se toca el motor.**
+- Roberto (149 prendas, 20 calzados): mocasines burdeos en 5/7.
+- Ricardo (56, formal): mocasines negros en 4/7.
+- Ninguna CAPA repitió de más: lo del blazer fue artefacto del clóset de prueba.
+
+**Lo que la regla no miraba** (hipótesis para la próxima, NO veredicto): en
+dos clósets de mujer la pieza que más se repite es la de arriba, la que más se
+ve — "blusa manga larga negra" ×4 (Val) y "blusa de crepé esmeralda" ×4
+(Andy). Si una usuaria real lo nota, se pre-registra con torso incluido.
+
 ## 7. Bitácora de rondas
 
 Una fila por ronda. **Se llena el día que se corre**, no después.
