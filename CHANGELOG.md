@@ -2,7 +2,7 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
-## [0.2.335.1] - 2026-09-16 — el render del look 2 ya no se pierde
+## [0.2.335.1] - 2026-09-16 — el look 2 ya no pierde su render ni su pie
 
 Roberto generó el render del segundo look "varias veces" y cada vez que volvía
 tenía que picarle otra vez.
@@ -14,6 +14,11 @@ tenía que picarle otra vez.
 - **Cambiar entre "1" y "2" ya no borra el render recién hecho.** La vista del
   look se desmontaba y el render vivía sólo en ella; ahora se anota en el trío.
 - No se pagaba de más: `/api/tryon` ya devolvía el render existente cacheado.
+- **Mismo pie en todos los looks con render.** "No es para mí / me encanta"
+  salían sólo si el look llegaba sin votar; si ya tenía voto volvía la fila
+  chica, y el trío quedaba con el look 1 y el 2 con pies distintos (se leía
+  como falla). Ahora siempre son los botones grandes con el voto marcado, y
+  tocar "te encanta" ya marcado también regresa a Inicio.
 
 ## [0.2.335.0] - 2026-09-16 — el voto es el continuar
 

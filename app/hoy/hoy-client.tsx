@@ -922,7 +922,13 @@ function ReadyView({
   async function votar(up: boolean) {
     const prev = voto;
     const next = up ? "up" : "down";
-    if (voto === next) return; // mismo voto = no-op (la action es idempotente)
+    // Con render, el 👍 es el continuar (ver votoPrincipal en LookDetail): si
+    // ya estaba marcado, tocarlo otra vez no re-vota, pero sí te lleva a Inicio.
+    const conRender = !!t.image && t.mode !== "gen";
+    if (voto === next) {
+      if (up && conRender) onInicio();
+      return; // mismo voto = no-op (la action es idempotente)
+    }
     setVoto(next);
     // El voto se persiste ANTES de abrir la hoja del 👎: saveDownReason etiqueta
     // el evento del voto, así que el evento debe existir cuando elija la razón.
@@ -937,7 +943,7 @@ function ReadyView({
       // "¡anotado!" un instante y regresa a Inicio. Sin render NO se va — ahí
       // la invitación pendiente es verse con el look. (Ver votoPrincipal en
       // LookDetail.)
-      if (t.image && t.mode !== "gen") setTimeout(onInicio, 900);
+      if (conRender) setTimeout(onInicio, 900);
     } else {
       setSkipOpen(true);
     }

@@ -139,10 +139,6 @@ export function LookDetail({
 }) {
   // Vista elegida a mano; si es null, el default sale del estado del render.
   const [manual, setManual] = useState<"look" | "me" | null>(null);
-  // ¿Llegó sin voto? Se fija al abrir y no se recalcula al votar: si el voto
-  // grande desapareciera en cuanto lo tocas, el "¡anotado!" no alcanzaría a
-  // verse y un 👎 → 👍 no tendría dónde corregirse.
-  const [llegoSinVoto] = useState(voto === null);
 
   const hasRender = !!tryonImage && !generating;
   const canMe = generating || hasRender;
@@ -158,7 +154,13 @@ export function LookDetail({
   // el que continúa (lo decide quien pasa `onVote`); la salida sin calificar
   // existe, pero es el "‹ inicio" de arriba, sin competir con el voto.
   // No aplica al wow: ahí la primaria es "entrar a la app".
-  const votoPrincipal = hasRender && llegoSinVoto && !enterApp;
+  //
+  // SIEMPRE que hay render, voten o no. La primera versión sólo lo ponía si el
+  // look llegaba sin voto ("no pedir votar dos veces") y el resultado fue un
+  // trío con dos pies distintos: el look 1 ya votado con la fila chica, el 2
+  // con los botones grandes. Roberto lo leyó como falla. Ahora el voto hecho se
+  // ve marcado en el mismo botón, y el 👍 marcado sigue sirviendo de continuar.
+  const votoPrincipal = hasRender && !enterApp;
 
   const tab: "look" | "me" = generating
     ? "me"
@@ -314,7 +316,7 @@ export function LookDetail({
             >
               {voto === "up" ? (
                 <>
-                  <Icon name="check" size={17} /> ¡anotado!
+                  <Icon name="check" size={17} /> te encanta
                 </>
               ) : (
                 <>
