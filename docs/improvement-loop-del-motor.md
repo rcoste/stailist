@@ -335,6 +335,45 @@ Recalibrar un umbral es mucho más barato que enseñar a ver — pero la validac
 tiene que ser sobre rondas NUEVAS, porque estos 95 looks son también los que se
 usarían para afinar.
 
+### El segundo examen (2026-09-16, js7, 460 looks) — y la cifra que faltaba medir
+
+`npx tsx scripts/examen-juez.ts --correr --volcar=<ruta>` ($1.02 por corrida).
+Dos corridas idénticas del mismo juez dieron "rompe" en 42% y 35% de los 👎:
+**el juez tiene ±7 puntos de ruido entre corridas**, antes de cualquier cambio.
+
+| | caza 👎 (rompe o resta) | falsa alarma 👍 |
+|---|---|---|
+| todo (88 👎 / 372 👍) | 79% | 32% |
+| sólo rondas desde 08-25, que js7 no vio (24 👎 / 185 👍) | 75% | 27% |
+
+**Lo que cambia el plan: el acuerdo POR PAR y POR RONDA.** La vara del 85%
+de recall de la etapa 1 mide si el juez ve errores; la etapa 2 necesita otra
+cosa — que prefiera el MISMO lado que Roberto. Y ahí:
+- **Por par** (lado con menos rompe×2+resta vs. el voto del par): coincide en
+  **24 de 50 (48%)**. Moneda al aire.
+- **Por ronda** (aprobación del juez vs. la de Roberto por variante): en las 7
+  rondas donde sus votos separan a los lados por >5 puntos, apunta al mismo
+  lado en **4**. Y falla justo donde importa: la 8f3647f3 (Roberto 56% vs
+  88%, la regresión grande) la leyó al revés.
+- El juez aprueba 50-70% de lo que Roberto aprueba en 85-90%: es duro de
+  fondo, y 12 de sus 19 "rompe" falsos del entreno son el mismo error —
+  "insuficiente para 8°" con abrigo de lana o acolchado puesto, aunque su
+  calibración dice lo contrario.
+
+**Conclusión:** afinar el umbral de gravedad (js8) puede bajar falsas alarmas,
+pero no hay con qué CERTIFICARLO para decidir A vs B: en las rondas que js7 no
+vio sólo hay 1 con diferencia real entre lados. La etapa 2 no se puede encender
+con los votos que existen; cada ronda nueva que Roberto vote es a la vez
+decisión y calibración.
+
+**Ablación del mismo día — `calzado-calido-en-look-negro`, NO entró.**
+Candidata nacida de tres comentarios ("si ya es full black podría ser otro
+color de mocasines", "no debería de ir con bota café", "ni al caso"): pierna
+negra + otra pieza negra arriba + calzado café/burdeos, sin traje negro.
+Disparó **5 👎 / 7 👍** sobre los 460. Los 👍 son casi todos gamuza café o
+mocasín burdeos con negro — que Roberto aprueba. Estrecharla quitando gamuza y
+burdeos deja 3 👎 / 2 👍: muestra chica y afinada sobre los mismos looks. No
+se reintenta sin votos nuevos sobre calzado liso café con look negro.
 ### ¿La semana repite de más? (2026-09-16, `scripts/medir-semana.ts`)
 
 Nació del blazer marino en 5 de 7 días de la semana de claude.dev, un clóset de
