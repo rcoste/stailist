@@ -828,6 +828,22 @@ export function HoyClient({
     );
   }
 
+  // EL RENDER SE ANOTA EN EL TRÍO, no sólo en la vista. ReadyView va keyed por
+  // look: al pasar del "2" al "1" se desmonta y su render recién generado se
+  // iba con ella; al volver, arrancaba otra vez con el `tryon` viejo del estado
+  // (vacío) y había que picarle de nuevo.
+  function anotarTryon(outfitId: string, url: string) {
+    setState((prev) => {
+      if (prev.kind !== "ready") return prev;
+      const conRender = (o: HoyOutfit) => (o.id === outfitId ? { ...o, tryon: url } : o);
+      return {
+        ...prev,
+        outfit: conRender(prev.outfit),
+        alternos: prev.alternos?.map(conRender),
+      };
+    });
+  }
+
   // El trío: el principal + sus alternos. Las pestañas viven DENTRO de
   // ReadyView (su raíz tiene el alto acotado y un row externo se lo rompería).
   const trio = [state.outfit, ...(state.alternos ?? [])];
@@ -845,6 +861,7 @@ export function HoyClient({
       votoInicial={visible.id === lookInicial?.id ? votoInicial : null}
       onOtroLook={otroLook}
       onInicio={() => setState({ kind: "inicio" })}
+      onTryon={anotarTryon}
       lookIndex={idxVisible}
       lookCount={trio.length}
       onVerLook={setLookVisible}
@@ -871,6 +888,7 @@ function ReadyView({
   votoInicial = null,
   onOtroLook,
   onInicio,
+  onTryon,
   lookIndex = 0,
   lookCount = 1,
   onVerLook,
@@ -886,6 +904,8 @@ function ReadyView({
   onOtroLook: () => void;
   /** Vuelta a la home ("‹ inicio" en el header). */
   onInicio: () => void;
+  /** Guarda el render recién generado en el trío (ver anotarTryon). */
+  onTryon: (outfitId: string, url: string) => void;
   /** El trío (decisión de Roberto, 2026-08-19: "lo generado se muestra, no se
    *  tira"): cuál de los looks estás viendo, cuántos hay y cómo cambiar. Con
    *  lookCount 1 (planeados, looks viejos) las pestañas no se pintan. */
@@ -902,7 +922,13 @@ function ReadyView({
   async function votar(up: boolean) {
     const prev = voto;
     const next = up ? "up" : "down";
-    if (voto === next) return; // mismo voto = no-op (la action es idempotente)
+    // Con render, el 👍 es el continuar (ver votoPrincipal en LookDetail): si
+    // ya estaba marcado, tocarlo otra vez no re-vota, pero sí te lleva a Inicio.
+    const conRender = !!t.image && t.mode !== "gen";
+    if (voto === next) {
+      if (up && conRender) onInicio();
+      return; // mismo voto = no-op (la action es idempotente)
+    }
     setVoto(next);
     // El voto se persiste ANTES de abrir la hoja del 👎: saveDownReason etiqueta
     // el evento del voto, así que el evento debe existir cuando elija la razón.
@@ -917,7 +943,7 @@ function ReadyView({
       // "¡anotado!" un instante y regresa a Inicio. Sin render NO se va — ahí
       // la invitación pendiente es verse con el look. (Ver votoPrincipal en
       // LookDetail.)
-      if (t.image && t.mode !== "gen") setTimeout(onInicio, 900);
+      if (conRender) setTimeout(onInicio, 900);
     } else {
       setSkipOpen(true);
     }
@@ -931,6 +957,11 @@ function ReadyView({
   });
   // Pantalla despierta mientras se genera el try-on (~30s con Gemini).
   useWakeLock(t.mode === "gen");
+  useEffect(() => {
+    if (t.image && t.image !== outfit.tryon) onTryon(outfit.id, t.image);
+    // Sólo cuando cambia el render: outfit y onTryon cambian en cada render del padre.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t.image]);
 
   return (
     <>

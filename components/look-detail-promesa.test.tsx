@@ -83,13 +83,16 @@ describe("LookDetail — con el render listo, el voto es el continuar", () => {
   it("al votar 👍 se confirma en el mismo botón (no desaparece antes de verse)", () => {
     const { rerender } = render(<LookDetail {...conRender} />);
     rerender(<LookDetail {...conRender} voto="up" />);
-    expect(screen.getByRole("button", { name: /anotado/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /te encanta/i })).toBeTruthy();
   });
 
-  it("si ya venía votado, vuelve la fila chica: no se le pide votar otra vez", () => {
+  it("si ya venía votado, el MISMO pie con su voto marcado (no la fila chica)", () => {
+    // La primera versión cambiaba a la fila chica y el trío quedaba con dos
+    // pies distintos entre el look 1 y el 2: se leía como falla.
     render(<LookDetail {...conRender} voto="up" />);
-    expect(screen.queryByRole("button", { name: /me encanta/i })).toBeNull();
-    expect(screen.getByRole("button", { name: /no me gusta este look/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /te encanta/i }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: /no es para mí/i })).toBeTruthy();
+    expect(screen.queryByText(/¿te gusta\?/i)).toBeNull();
   });
 
   it("sin render, la primaria sigue siendo verse con el look", () => {

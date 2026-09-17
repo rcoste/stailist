@@ -482,6 +482,10 @@ export async function shape(
     title: string | null;
     explanation: string;
     tip?: string | null;
+    /** Pídelos en el select. Sin ellos el look llega sin render y sin corazón:
+     *  así se perdía el render del look 2 (ver el comentario del return). */
+    tryon_path?: string | null;
+    favorited_at?: string | null;
   }
 ) {
   const itemIds = (o.item_ids as string[]) ?? [];
@@ -493,6 +497,7 @@ export async function shape(
 
   const paths = list
     .flatMap((i) => [i.photo_path as string | null, i.render_path as string | null])
+    .concat(o.tryon_path ?? null)
     .filter((p): p is string => !!p);
   const signed = new Map<string, string>();
   if (paths.length > 0) {
@@ -525,6 +530,15 @@ export async function shape(
     nombre: o.title ?? "Tu look",
     explicacion: o.explanation,
     tip: o.tip ?? null,
+    // EL RENDER Y EL CORAZÓN VIAJAN AQUÍ (2026-09-16). Antes `shape` sólo daba
+    // prendas y textos, y el render lo firmaba aparte la carga inicial de /hoy
+    // — que sólo carga el look principal. Los alternos (el "2" de "te armé 2
+    // looks") salen de aquí, así que llegaban SIEMPRE sin render: Roberto
+    // generó el del look 2 "varias veces" y cada vez que volvía tenía que
+    // picarle otra vez. (No se pagaba de más: /api/tryon ve que el render ya
+    // existe y lo devuelve cacheado. Lo que se perdía era la pantalla.)
+    tryon: o.tryon_path ? signed.get(o.tryon_path) ?? null : null,
+    favorited: !!o.favorited_at,
     prendas: itemIds.map((id) => ({
       id,
       nombre: byId.get(id)?.nombre ?? "Prenda",

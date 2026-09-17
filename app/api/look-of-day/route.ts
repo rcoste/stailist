@@ -29,7 +29,7 @@ async function promoverPlaneado(
   userId: string,
   today: string
 ): Promise<Record<string, unknown> | null> {
-  const CAMPOS = "id, item_ids, title, explanation, tip, gen_status, created_at";
+  const CAMPOS = "id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at";
   const { data: plan } = await supabase
     .from("outfits")
     .select(CAMPOS)
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
   if (!force && !seedItemIds.length && !plannedFor) {
     const { data: existing } = await supabase
       .from("outfits")
-      .select("id, item_ids, title, explanation, tip, gen_status, created_at")
+      .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at")
       .eq("user_id", user.id)
       // Si borraste el look de hoy, no cuenta como cacheado: te armamos otro.
       .is("deleted_at", null)
@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
     const today = fechaLocalDe({ fechaLocal: promover });
     const { data: existing } = await supabase
       .from("outfits")
-      .select("id, item_ids, title, explanation, tip, gen_status, created_at")
+      .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at")
       .eq("user_id", user.id)
       .is("deleted_at", null)
       .eq("is_look_of_day", true)
@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
 
   const { data: o } = await supabase
     .from("outfits")
-    .select("id, item_ids, title, explanation, tip, gen_status, gen_error, created_at")
+    .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, gen_error, created_at")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -308,7 +308,7 @@ export async function GET(request: NextRequest) {
 async function alternosDe(supabase: SupabaseClient, userId: string, principalId: string) {
   const { data } = await supabase
     .from("outfits")
-    .select("id, item_ids, title, explanation, tip, gen_status, created_at")
+    .select("id, item_ids, title, explanation, tip, tryon_path, favorited_at, gen_status, created_at")
     .eq("user_id", userId)
     .eq("grupo_generacion", principalId)
     .eq("gen_status", "ready")
