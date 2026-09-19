@@ -3,7 +3,7 @@ import { medir, type QuienMide } from "@/lib/recibos";
 import { VISION_MODEL } from "@/lib/models";
 import { briefParaRubrica, type BriefRubrica } from "./rubrica";
 import { DEFECTOS_MOTOR } from "@/lib/comparador/motor";
-import { REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
+import { resuelveElFrio, REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
 
 // EL JUEZ QUE CRITICA, no el que califica.
 //
@@ -95,7 +95,30 @@ import { REGLAS_DE_LA_CASA } from "./reglas-ejecucion";
 // registro que no se habla, qué no es defecto (tonal/total black), la tasa
 // base. Los umbrales finos personales (burdeos=detalle) se quedan porque son
 // de mecánica de cueros, no de gusto — están también en REGLAS_DE_LA_CASA.
-export const JUEZ_STYLIST_VERSION = "js7";
+// js7 → js8 (2026-09-18): "plano" deja de ser hallazgo EN CÓDIGO, no en el
+// prompt — ahí ya estaba prohibido desde js5 y el juez lo ignoraba 36 veces de
+// cada 254 looks aprobados. El porqué completo y las dos mediciones que lo
+// sostienen están en NO_ES_HALLAZGO, junto al filtro. La lección general, que
+// es más grande que esta etiqueta: cuando el examen muestra que el modelo
+// desobedece una instrucción que ya lleva escrita, repetírsela más fuerte es la
+// respuesta equivocada — lo que se puede ejecutar en código se ejecuta.
+// js8 → js9 (2026-09-18), las dos del mismo examen de 536 hallazgos:
+//
+//   1. LA CONTRADICCIÓN DE LOS TENIS. El prompt mandaba marcar "tenis
+//      deportivos con piezas de traje" como [ocasion]/rompe Y prohibía marcar
+//      "tenis con abrigo de lana a 8°". Un look con las dos cosas caía en las
+//      dos, y el juez no podía acertar. Roberto decidió el fondo ("no va"), y
+//      la resolución separa los ejes en vez de borrar una línea: con abrigo, el
+//      frío está resuelto (sigue siendo cierto); el REGISTRO no queda absuelto
+//      por el abrigo. Eran dos temas, no dos opiniones.
+//
+//   2. EL FRÍO CON ABRIGO PUESTO, que es el mismo patrón de js8: la
+//      instrucción existía y se ignoraba. Aquí no se puede filtrar a la salida
+//      —habría que adivinar de qué habla un hallazgo leyendo su prosa— así que
+//      se ejecuta lo que sí se puede: comprobar el abrigo y entregarle el HECHO
+//      junto al look. Ver ABRIGO_QUE_RESUELVE_EL_FRIO y por qué NO es la vara
+//      ancha que ya estaba exportada.
+export const JUEZ_STYLIST_VERSION = "js9";
 
 /** El vocabulario de defectos es el MISMO que Roberto usa al votar
  *  (DEFECTOS_MOTOR). Reusarlo es lo que hace que los hallazgos del juez y sus
@@ -158,7 +181,7 @@ CALIBRACIÓN DE LA CASA, medida con votos reales a ciegas. Esto se marca "rompe"
 - [capas] Manga corta debajo de chamarra, bomber o chaqueta.
 - [color] Zapato o cinturón NEGRO con chinos beige o caqui. Botín, cinturón o derby CAFÉ/chocolate en un look negro de arriba abajo (pantalón negro + capa negra).
 - [ocasion] En boda o ceremonia: camisa negra, o traje sin corbata.
-- [clima] Con 8° o menos: blazer, chaqueta ligera, softshell o bomber como ÚNICA capa exterior. Si lleva abrigo de lana o acolchado, el frío está resuelto aunque los tenis no te gusten.
+- [clima] Con 8° o menos: blazer, chaqueta ligera, softshell o bomber como ÚNICA capa exterior. Si lleva abrigo de lana o acolchado, el frío está resuelto: NO marques [clima] por el calzado. Eso no absuelve el registro — unos tenis deportivos con piezas de sastre siguen siendo [ocasion], con o sin abrigo.
 - [clima] Con lluvia sin paraguas: tenis de tela o malla.
 Esto es "resta", nunca "rompe":
 - [ocasion] Lino en la oficina, aunque sea una sola pieza. Márcalo SIEMPRE; no lo dejes pasar.
@@ -167,7 +190,7 @@ Esto es "resta", nunca "rompe":
 Y esto NO es hallazgo — si lo marcas, es ruido; como mucho "detalle", y casi siempre nada:
 - Cinturón negro con mocasines burdeos, o café con burdeos: burdeos dialoga con los dos. "Detalle" como mucho.
 - Botines o cinturón café con jeans negros o con suéter vino en un look casual. Solo rompe dentro de un look negro completo.
-- Tenis con abrigo de lana a 8°. Camisa de mezclilla debajo de un suéter.
+- Camisa de mezclilla debajo de un suéter.
 - Reloj negro de caucho en oficina, diario o cita sin traje. Solo con piezas de sastre o en formal/gala es un hallazgo, y aun ahí es "detalle".
 - Corbata de punto en boda: "detalle" como mucho.
 - Un look "plano", "monótono" o "sin punto de atención". El tonal y el total black son decisiones de estilo, no defectos: NO es un hallazgo, salvo que su estilo declarado pida color.
@@ -223,6 +246,42 @@ export type LookStylist = {
 const ORDEN_GRAVEDAD: Record<Gravedad, number> = { rompe: 0, resta: 1, detalle: 2 };
 
 /**
+ * "plano" NO ES UN HALLAZGO, y desde 2026-09-18 eso se ejecuta en código.
+ *
+ * POR QUÉ NO BASTÓ DECÍRSELO. El prompt se lo prohíbe desde js5, con todas sus
+ * letras ("Un look 'plano', 'monótono' o 'sin punto de atención'… NO es un
+ * hallazgo"). El examen sobre los 460 looks votados dice que lo ignora: en las
+ * rondas POSTERIORES a esa instrucción marcó "plano" 3 veces en los 👎 de
+ * Roberto y 36 veces en los 👍. Doce veces más seguido en los looks que él
+ * aprobó que en los que reprobó — es una etiqueta que no mide su gusto, y
+ * gastarla le roba atención a la que sí.
+ *
+ * Y LO CONFIRMÓ UN SEGUNDO INSTRUMENTO que no comparte nada con éste: el
+ * retador de Jev (preguntas atómicas, otro proveedor, sin fotos) midió "plano"
+ * con la probabilidad media MÁS ALTA de las siete preguntas y la separación más
+ * baja — 0.40 en los 👎 contra 0.41 en los 👍. Dos jueces que no se parecen en
+ * nada coinciden en que esa palabra no dice nada de él.
+ *
+ * QUÉ SE PIERDE: nada. La idea de "correcto pero plano" no desaparece del
+ * sistema, se queda donde siempre debió vivir — en la nota de `wow` de la
+ * rúbrica, que es una ESCALA. Como hallazgo era una acusación con la que no se
+ * puede hacer nada; como nota es una medición que baja o sube.
+ *
+ * OJO CON DÓNDE SE APLICA: sólo a los hallazgos del JUEZ. "plano" sigue en
+ * DEFECTOS_VALIDOS porque es el vocabulario con el que ROBERTO vota, y él sí
+ * puede marcar un look así — lo que se descarta es que un modelo se lo diga.
+ */
+const NO_ES_HALLAZGO = ["plano"];
+
+/**
+ * ¿Este defecto es ruido de la casa? Exportado para que CUALQUIER juez que se
+ * mida contra js9 aplique el MISMO filtro: si uno emite "plano" y el otro no, la
+ * fila de "cualquier hallazgo" compara vocabularios distintos y la tabla miente
+ * en las dos direcciones a la vez.
+ */
+export const esRuidoDeLaCasa = (defecto: string): boolean => NO_ES_HALLAZGO.includes(defecto);
+
+/**
  * Normaliza lo que devolvió el modelo. Defensivo a propósito: un hallazgo con
  * un defecto inventado rompería el conteo del resumen de ronda en silencio —
  * saldría un tema que no existe y nadie sabría de dónde salió.
@@ -231,7 +290,11 @@ export function normalizarCritica(c: Partial<CriticaStylist>): CriticaStylist {
   const hallazgos = (c.hallazgos ?? [])
     .filter(
       (h): h is Hallazgo =>
-        !!h?.pieza && !!h?.problema && !!h?.arreglo && DEFECTOS_VALIDOS.includes(h.defecto)
+        !!h?.pieza &&
+        !!h?.problema &&
+        !!h?.arreglo &&
+        DEFECTOS_VALIDOS.includes(h.defecto) &&
+        !NO_ES_HALLAZGO.includes(h.defecto)
     )
     .map((h) => ({
       ...h,
@@ -248,6 +311,21 @@ export function normalizarCritica(c: Partial<CriticaStylist>): CriticaStylist {
 }
 
 /** Critica un look MIRANDO las fotos de sus prendas. */
+/**
+ * EL HECHO DEL ABRIGO (js9), o cadena vacía si el look no trae uno.
+ *
+ * Exportado para que el test pruebe la CONDUCTA —qué línea llega al modelo— y
+ * no sólo la regex que hay debajo. Era el único cambio de comportamiento del
+ * juez sin test propio, y el que se ejecuta es el texto, no el predicado.
+ */
+export function hechoDelAbrigo(prendas: { nombre: string }[]): string {
+  // `nombre` viene de una columna JSON de la base: una prenda sin nombre sería
+  // un TypeError que TS no ve y que convierte un look en un fallo contado.
+  const abrigo = prendas.find((p) => resuelveElFrio(p?.nombre ?? ""));
+  if (!abrigo) return "";
+  return `HECHO YA VERIFICADO DE ESTE LOOK (comprobado en código, no es opinión): lleva ${abrigo.nombre}, que es abrigo de verdad. El frío está RESUELTO: no marques [clima] por abrigo insuficiente.`;
+}
+
 export async function criticarLook(
   brief: BriefRubrica,
   look: LookStylist,
@@ -271,6 +349,21 @@ export async function criticarLook(
     ``,
     `Lo que le dijeron a la persona: ${look.explicacion}`,
     look.tip ? `Tip de styling: ${look.tip}` : "Sin tip de styling.",
+    // EL HECHO CALCULADO, no la regla general. El prompt ya dice desde js5 que
+    // con abrigo de lana o acolchado "el frío está resuelto", y el examen de
+    // los 536 hallazgos guardados encontró NUEVE que lo ignoran ("con 8°C, una
+    // camiseta, un suéter de lana y un abrigo no son suficientes"). La lección
+    // de js8 dice que repetir la instrucción más fuerte no sirve; lo que aquí
+    // se puede ejecutar es COMPROBAR el hecho y ponérselo delante del look que
+    // está mirando, como `bloqueEjecucion` hace con el juez de producción.
+    //
+    // SÓLO SUPRIME, NUNCA INVITA — y esto se aprendió pagando. El primer
+    // intento cerraba con "si te parece demasiada capa, eso sí es hallazgo y va
+    // como [capas]/resta": quitaba un motivo para marcar y regalaba otro. Medido
+    // sobre los mismos 150 looks, las falsas alarmas subieron de 27% a 38%. Un
+    // hecho verificado que termina sugiriendo dónde más mirar deja de ser un
+    // hecho.
+    hechoDelAbrigo(look.prendas),
   ]
     .filter(Boolean)
     .join("\n");

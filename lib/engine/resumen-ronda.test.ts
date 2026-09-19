@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { resumirRonda, resumirPorVariante } from "./resumen-ronda";
 import { normalizarCritica, DEFECTOS_VALIDOS } from "./juez-stylist";
+import { hechoDelAbrigo } from "./juez-stylist";
+import { ABRIGA_DE_VERDAD, resuelveElFrio } from "./reglas-ejecucion";
 import type { CriticaStylist, Gravedad } from "./juez-stylist";
 
 // Lo que se blinda: que el orden de los temas sirva para DECIDIR qué arreglar.
@@ -120,9 +122,33 @@ describe("normalizarCritica: el candado del vocabulario", () => {
     expect(c.hallazgos).toEqual([]);
   });
 
+  it("tira 'plano': no es un hallazgo aunque el modelo insista (js8)", () => {
+    // El prompt se lo prohíbe desde js5 y el examen de los 460 looks votados
+    // muestra que lo ignoraba: 3 veces en los 👎 de Roberto contra 36 en sus
+    // 👍. Un segundo instrumento que no comparte nada con éste (el retador de
+    // Jev) le midió la separación más baja de las siete preguntas.
+    const c = normalizarCritica({ hallazgos: [h("plano", "rompe")] });
+    expect(c.hallazgos).toEqual([]);
+  });
+
+  it("tirar 'plano' no se lleva los demás hallazgos del look", () => {
+    const c = normalizarCritica({
+      hallazgos: [h("plano", "resta"), h("color", "rompe")],
+    });
+    expect(c.hallazgos.map((x) => x.defecto)).toEqual(["color"]);
+  });
+
+  it("'plano' sigue en el vocabulario: es con el que Roberto vota", () => {
+    // El filtro es sobre lo que dice el JUEZ, no sobre lo que puede marcar él.
+    expect(DEFECTOS_VALIDOS).toContain("plano");
+  });
+
   it("ordena por gravedad aunque el modelo los devuelva revueltos", () => {
     const c = normalizarCritica({
-      hallazgos: [h("plano", "detalle"), h("color", "rompe"), h("clima", "resta")],
+      // "plano" era el ejemplo de "detalle" aquí hasta js8, que lo filtra.
+      // El test es sobre el ORDEN, así que el ejemplo se cambia por uno que
+      // sobreviva — si usara uno filtrado mediría dos cosas a la vez.
+      hallazgos: [h("capas", "detalle"), h("color", "rompe"), h("clima", "resta")],
     });
     expect(c.hallazgos.map((x) => x.gravedad)).toEqual(["rompe", "resta", "detalle"]);
   });
@@ -133,5 +159,72 @@ describe("normalizarCritica: el candado del vocabulario", () => {
     expect(DEFECTOS_VALIDOS).toContain("color");
     expect(DEFECTOS_VALIDOS).toContain("proporcion");
     expect(DEFECTOS_VALIDOS.length).toBeGreaterThanOrEqual(7);
+  });
+});
+
+describe("la vara del abrigo que cierra la discusión del frío (js9)", () => {
+  it("reconoce las capas que SÍ resuelven el frío", () => {
+    for (const n of ["Abrigo de lana camel", "Parka verde", "Puffer negro", "Gabardina beige", "Trench", "Chamarra acolchada azul"])
+      expect(resuelveElFrio(n.toLowerCase()), n).toBe(true);
+  });
+
+  it("NO absuelve las que el prompt condena a 8° como única capa", () => {
+    // Éste es el bug que se habría metido reusando ABRIGA_DE_VERDAD, que sí
+    // las incluye: un bomber a 8° dejaría de marcarse.
+    for (const n of ["Blazer marino", "Chaqueta ligera", "Bomber negro", "Cazadora de piel", "Softshell gris"])
+      expect(resuelveElFrio(n.toLowerCase()), n).toBe(false);
+  });
+
+  it("un CHALECO acolchado NO resuelve el frío: va sin mangas", () => {
+    // El catálogo tiene "chaleco acolchado marino" y "chaleco acolchado mujer",
+    // los dos sin mangas. `acolchad` los cazaba y el juez recibía "el frío está
+    // resuelto" para alguien con los brazos al aire a 8°.
+    for (const n of ["Chaleco acolchado marino", "Chaleco acolchado mujer", "Gilet negro"])
+      expect(resuelveElFrio(n.toLowerCase()), n).toBe(false);
+  });
+
+  it("es estrictamente más estrecha que la vara ancha, no otra cosa", () => {
+    // Si algún día divergen por otro lado, esto lo caza: todo lo que resuelve
+    // el frío tiene que seguir contando como "algo más que sastre".
+    for (const n of ["abrigo de lana", "parka", "puffer", "gabardina", "trench", "anorak", "acolchada"]) {
+      expect(resuelveElFrio(n)).toBe(true);
+      expect(ABRIGA_DE_VERDAD.test(n), n).toBe(true);
+    }
+  });
+});
+
+describe("el hecho del abrigo que llega al juez (js9)", () => {
+  const p = (...ns: string[]) => ns.map((nombre) => ({ nombre }));
+
+  it("sin abrigo no manda nada: una línea vacía se filtra del mensaje", () => {
+    expect(hechoDelAbrigo(p("Camisa blanca", "Jeans negros", "Tenis grises"))).toBe("");
+  });
+
+  it("con abrigo manda el hecho, lo NOMBRA y prohíbe marcar clima", () => {
+    // Nombrar la prenda es el punto: una regla general ya estaba en el prompt
+    // desde js5 y el juez la ignoraba. Un dato sobre el look que tiene enfrente
+    // es más difícil de ignorar que una instrucción abstracta.
+    const linea = hechoDelAbrigo(p("Camiseta gris", "Abrigo de lana camel", "Botines"));
+    expect(linea).toContain("Abrigo de lana camel");
+    expect(linea).toContain("[clima]");
+    expect(linea).toContain("RESUELTO");
+  });
+
+  it("SÓLO SUPRIME, NUNCA INVITA", () => {
+    // El primer intento cerraba sugiriendo marcar [capas] en su lugar: quitaba
+    // un motivo y regalaba otro, y las falsas alarmas subieron de 27% a 38%.
+    const linea = hechoDelAbrigo(p("Parka verde", "Jeans"));
+    expect(linea).not.toContain("[capas]");
+    expect(linea.toLowerCase()).not.toContain("sí es hallazgo");
+  });
+
+  it("un blazer, un bomber o un chaleco NO cierran la discusión del frío", () => {
+    expect(hechoDelAbrigo(p("Blazer marino", "Pantalón de vestir"))).toBe("");
+    expect(hechoDelAbrigo(p("Bomber negro", "Jeans"))).toBe("");
+    expect(hechoDelAbrigo(p("Chaleco acolchado marino", "Camisa"))).toBe("");
+  });
+
+  it("una prenda sin nombre no truena: la base guarda JSON, no promesas", () => {
+    expect(hechoDelAbrigo([{ nombre: undefined as unknown as string }])).toBe("");
   });
 });

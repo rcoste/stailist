@@ -74,6 +74,11 @@ function sinComentarios(fuente: string): string {
  *     arquetipos, renders de prendas— entra por aquí. Es, con mucha
  *     probabilidad, el mayor gasto de IA del proyecto, y era el único que podía
  *     crecer sin que nada lo delatara.
+ *   · por HTTP CRUDO al endpoint de TypeSafe (Jev). Cuarta forma, agregada el
+ *     2026-09-18 el día que nació `lib/jev.ts`: no usa la puerta, no es el SDK
+ *     de Anthropic y no es Gemini, así que las tres primeras lo dejaban pasar
+ *     en silencio. Hoy nadie lo llama desde una ruta y por eso está exento —
+ *     pero el candado tiene que poder VERLO, que es distinto de permitirlo.
  */
 function hablaConUnModelo(fuente: string): boolean {
   const codigo = sinComentarios(fuente);
@@ -81,7 +86,8 @@ function hablaConUnModelo(fuente: string): boolean {
   return (
     porLaPuerta ||
     /new Anthropic\(/.test(codigo) ||
-    /generativelanguage\.googleapis\.com/.test(codigo)
+    /generativelanguage\.googleapis\.com/.test(codigo) ||
+    /api\.typesafe\.ai/.test(codigo)
   );
 }
 
@@ -91,6 +97,15 @@ function hablaConUnModelo(fuente: string): boolean {
  * razón (string vacío) hace fallar el test igual que un archivo sin instrumentar.
  */
 const EXENTOS: Record<string, string> = {
+  // HERRAMIENTA DE MEDICIÓN, no producto. Ninguna ruta la llama: sólo los
+  // scripts de examen, que corren a mano y sin sesión. Su cabecera explica por
+  // qué no pasa por la puerta común (Jev no habla el idioma de un modelo de
+  // chat: no hay mensajes ni schema) y trae el veredicto de las cuatro
+  // mediciones. Si algún día una ruta importa `preguntarJev`, esta línea sale y
+  // el archivo se instrumenta como todos los demás.
+  "lib/jev.ts":
+    "cliente de Jev (TypeSafe) para los scripts de examen; ninguna ruta lo llama y no pasa por la puerta común a propósito — ver la cabecera del archivo",
+
   // Las dos piezas de la instrumentación misma.
   "lib/proveedores/index.ts":
     "ES la puerta común: aquí vive `llamar`. Medir aquí adentro fue lo primero que se pensó y no se puede — la usan scripts y el comparador, que no tienen sesión ni cliente de Supabase (ver la cabecera de lib/recibos.ts).",
