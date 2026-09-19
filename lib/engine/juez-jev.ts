@@ -32,6 +32,44 @@ import type { PreguntaJev, RespuestaJev } from "@/lib/jev";
 
 export const JUEZ_JEV_VERSION = "jv1";
 
+/**
+ * jv2 — EL MISMO EXAMEN CON EL ESTADO LIMPIO (2026-09-19).
+ *
+ * jv1 perdió, pero su estado llevaba el pedido, el look Y las ~20 reglas de la
+ * casa completas en cada llamada. La propia documentación de TypeSafe (Jev 1.13
+ * jaggedness) dice que "la precisión cae conforme el estado crece con contenido
+ * no relacionado con la decisión", y para cualquier pregunta la mayoría de esas
+ * reglas no tenía nada que ver. O sea: el examen metía justo lo que el
+ * proveedor dice que lo degrada. jv2 quita esa duda.
+ *
+ * Qué cambia: el estado lleva el pedido y las prendas CON SUS ATRIBUTOS (color,
+ * corte, material, formalidad), y nada más. Las preguntas y su `criteria` son
+ * las MISMAS de jv1 — ahí ya viven los mitos medidos que le tocan a cada una
+ * (marino con negro, café con jeans negros…), que es la parte de las reglas que
+ * sí es de la decisión. Una sola variable cambia: el estado.
+ */
+export const JUEZ_JEV_VERSION_LIMPIO = "jv2";
+
+type Attrs = Record<string, unknown>;
+
+/**
+ * Una prenda como texto, con los atributos que la base sí tiene medidos.
+ *
+ * Compartida entre el examen del juez (jv2) y el de gusto, para que "describir
+ * una prenda" signifique lo mismo en los dos: si uno le diera el material y el
+ * otro no, compararlos mediría la descripción, no el modelo.
+ *
+ * El hex NO va, a propósito: la misma documentación dice que Jev no sabe leer
+ * números, y que los colores se le pasan por nombre.
+ */
+export function describirPrenda(nombre: string, attrs: Attrs | undefined): string {
+  const a = attrs ?? {};
+  const partes = ["color", "corte", "largo", "material", "patron", "formalidad"]
+    .map((k) => (a[k] ? `${k}: ${a[k]}` : ""))
+    .filter(Boolean);
+  return partes.length ? `${nombre} [${partes.join("; ")}]` : nombre;
+}
+
 /** El look tal como lo puede leer un modelo sin ojos. */
 export type LookEnTexto = {
   nombre: string;
@@ -149,6 +187,20 @@ export function preguntasDelJuez(): Record<string, PreguntaJev> {
  * "recomendar" nada, pero sí marcar como defecto algo que la casa ya decidió
  * que es correcto — que es el mismo error por la otra cara.
  */
+/** El estado de jv2: el pedido y las prendas descritas. Sin reglas de la casa. */
+export function estadoLimpioParaJev(
+  brief: BriefRubrica,
+  prendas: { nombre: string; attrs?: Attrs }[]
+): string {
+  return [
+    "PEDIDO DE LA PERSONA",
+    briefParaRubrica(brief),
+    "",
+    "PRENDAS DEL LOOK",
+    ...prendas.map((p) => `- ${describirPrenda(p.nombre, p.attrs)}`),
+  ].join("\n");
+}
+
 export function estadoParaJev(brief: BriefRubrica, look: LookEnTexto): string {
   return [
     "PEDIDO DE LA PERSONA",

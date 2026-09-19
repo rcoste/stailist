@@ -6,6 +6,12 @@
 //   npx tsx scripts/examen-jev.ts --control        # + el juez vigente SIN fotos (el control que importa)
 //   npx tsx scripts/examen-jev.ts --limite=20      # una cata barata antes de pagar la corrida entera
 //   npx tsx scripts/examen-jev.ts --volcar=/tmp/jev.json
+//   npx tsx scripts/examen-jev.ts --estado=limpio  # jv2: sin las reglas de la casa en el estado
+//
+// jv2, REGLA ESCRITA ANTES DE CORRERLA (2026-09-19): cambia el veredicto sólo si
+// jv2 pasa la MISMA regla de abajo contra el campeón. Si mejora su separación
+// pero sigue perdiendo, el veredicto se queda y se anota cuánto explicaba la
+// contaminación del estado. Una sola variable cambia respecto a jv1: el estado.
 //
 // QUÉ COMPARA, y son TRES columnas a propósito:
 //   1. GUARDADO — la crítica que ya corrió en su ronda, CON las fotos de las
@@ -36,7 +42,9 @@ import { tabla, tiene, pct } from "../lib/evales/tabla-examen";
 import { preguntarJev, type RespuestaJev } from "../lib/jev";
 import {
   CLAVE_GRAVEDAD,
-  JUEZ_JEV_VERSION,
+  JUEZ_JEV_VERSION as VERSION_JV1,
+  JUEZ_JEV_VERSION_LIMPIO,
+  estadoLimpioParaJev,
   PESOS_INICIALES,
   criticaDesdeJev,
   curvaDeUmbral,
@@ -70,6 +78,9 @@ function mejorUmbral(casos: CasoMedible[]) {
     return j(p) > j(mejor) ? p : mejor;
   }, curva[0]);
 }
+
+const LIMPIO = arg("estado") === "limpio";
+const JUEZ_JEV_VERSION = LIMPIO ? JUEZ_JEV_VERSION_LIMPIO : VERSION_JV1;
 
 async function main() {
   const limite = Number(arg("limite") ?? 0);
@@ -109,6 +120,19 @@ async function main() {
     color: colorDelPerfil(p),
   });
 
+  // Los atributos de las prendas, sólo para jv2. Se cuenta cuántas resolvieron:
+  // los ids de algunas rondas murieron con el clóset del 08-18, y una prenda sin
+  // atributos cae al nombre pelado — la desventaja que jv2 dice quitar.
+  const { data: items } = LIMPIO ? await s.from("items").select("id, attrs").eq("user_id", dueno) : { data: [] };
+  const attrsDe = new Map<string, Record<string, unknown>>(
+    (items ?? []).map((i) => [i.id as string, (i.attrs ?? {}) as Record<string, unknown>])
+  );
+  if (LIMPIO) {
+    const todas = casos.flatMap((c) => c.look.prendas ?? []);
+    const con = todas.filter((p) => attrsDe.has(p.id)).length;
+    console.log(`\nESTADO LIMPIO (jv2) · prendas con atributos: ${con}/${todas.length}`);
+  }
+
   // ── La corrida de Jev ──────────────────────────────────────────────────────
   const preguntas = preguntasDelJuez();
   const respuestas = new Map<CasoVotado, Record<string, RespuestaJev>>();
@@ -119,7 +143,9 @@ async function main() {
       const c = cola.shift();
       if (!c) return;
       try {
-        const estado = estadoParaJev(briefDe(c), {
+        const estado = LIMPIO
+          ? estadoLimpioParaJev(briefDe(c), c.look.prendas!.map((x) => ({ nombre: x.nombre, attrs: attrsDe.get(x.id) })))
+          : estadoParaJev(briefDe(c), {
           nombre: c.look.nombre,
           explicacion: c.look.explicacion,
           tip: c.look.tip ?? null,

@@ -24,6 +24,13 @@
 //      contra 460 looks votados: sólo `ocasion` separó algo (+0.15); color,
 //      proporción y capas fueron ruido. Empató al juez vigente en el punto más
 //      estricto y perdió en todos los demás. No tiene ojo.
+//      ¿Y SI EL ESTADO LO ESTORBABA? Su propia documentación dice que la
+//      precisión cae con contenido ajeno a la decisión, y jv1 llevaba las ~20
+//      reglas de la casa en cada llamada. jv2 (2026-09-19) lo corrió con estado
+//      limpio —pedido + prendas con atributos, nada más— y salió PEOR: la
+//      separación de `ocasion` bajó de +0.16 a +0.08 y la curva quedó sobre la
+//      diagonal (a 0.60 caza 58% de los 👎 marcando 55% de los 👍: no separa
+//      nada). Las reglas no eran ruido para él. La duda quedó cerrada.
 //   2. ENTENDER TEXTO LIBRE (scripts/examen-jev-comentarios.ts) — GANÓ. 82%
 //      contra 45% de piso clasificando comentarios de 👎, y su confianza avisa:
 //      16/16 con confianza ≥ 0.70, 2/6 por debajo.

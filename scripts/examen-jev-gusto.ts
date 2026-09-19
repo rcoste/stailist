@@ -42,6 +42,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { cargarCasosVotados } from "../lib/evales/casos-votados";
 import { preguntarJev, type PreguntaJev } from "../lib/jev";
+import { describirPrenda } from "../lib/engine/juez-jev";
 
 for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   const i = l.indexOf("=");
@@ -88,13 +89,7 @@ async function main() {
   // El estado lleva los ATRIBUTOS, no sólo el nombre: es la desventaja que el
   // primer examen cargó ("Camisa azul rey" sin corte ni material) y aquí se
   // quita, para que si pierde no sea por falta de información.
-  const describir = (id: string, nombre: string) => {
-    const a = attrsDe.get(id) ?? {};
-    const partes = ["color", "corte", "largo", "material", "patron", "formalidad"]
-      .map((k) => (a[k] ? `${k}: ${a[k]}` : ""))
-      .filter(Boolean);
-    return partes.length ? `${nombre} [${partes.join("; ")}]` : nombre;
-  };
+  const describir = (id: string, nombre: string) => describirPrenda(nombre, attrsDe.get(id));
 
   const preguntas: Record<string, PreguntaJev> = Object.fromEntries(
     Object.entries(RASGOS).map(([k, instructions]) => [k, { type: "noul" as const, instructions }])

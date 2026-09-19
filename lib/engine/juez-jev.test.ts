@@ -5,6 +5,8 @@ import {
   PESOS_INICIALES,
   PREGUNTAS_DEFECTO,
   criticaDesdeJev,
+  describirPrenda,
+  estadoLimpioParaJev,
   curvaDeUmbral,
   discriminacion,
   gravedadDeEscala,
@@ -148,5 +150,31 @@ describe("qué pregunta sirve", () => {
     // "plano" dice lo mismo de todos: no está midiendo su gusto.
     expect(d[1].defecto).toBe("plano");
     expect(d[1].separacion).toBeCloseTo(0, 5);
+  });
+});
+
+describe("el estado limpio (jv2)", () => {
+  const brief = { objective: "oficina", weather: null } as Parameters<typeof estadoLimpioParaJev>[0];
+
+  it("NO lleva las reglas de la casa: es lo único que cambia respecto a jv1", () => {
+    // La documentación de TypeSafe: la precisión cae cuando el estado crece con
+    // contenido que no es de la decisión. Si las reglas se colaran, jv2 no
+    // estaría probando nada.
+    const e = estadoLimpioParaJev(brief, [{ nombre: "Camisa blanca" }]);
+    expect(e).not.toContain("REGLAS DE LA CASA");
+    expect(e).toContain("Camisa blanca");
+  });
+
+  it("describe cada prenda con sus atributos, y SIN el hex", () => {
+    // Jev no sabe leer números: el color va por nombre.
+    const d = describirPrenda("Chinos", { color: "beige", corte: "recto", color_hex: "#D2B48C" });
+    expect(d).toContain("color: beige");
+    expect(d).toContain("corte: recto");
+    expect(d).not.toContain("#D2B48C");
+  });
+
+  it("una prenda sin atributos cae a su nombre, sin corchetes vacíos", () => {
+    expect(describirPrenda("Tenis grises", undefined)).toBe("Tenis grises");
+    expect(describirPrenda("Tenis grises", {})).toBe("Tenis grises");
   });
 });
