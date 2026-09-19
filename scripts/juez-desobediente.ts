@@ -1,7 +1,13 @@
 // ¿EL JUEZ OBEDECE SU PROPIA LISTA DE PROHIBICIONES?
 //
-// Uso:  npx tsx scripts/juez-desobediente.ts            # la corrida completa
+// Uso:  npx tsx scripts/juez-desobediente.ts            # lo guardado en las rondas
 //       npx tsx scripts/juez-desobediente.ts --limite=50
+//       npx tsx scripts/juez-desobediente.ts --volcado=/tmp/js10.json
+//
+// --volcado lee los hallazgos de un `examen-juez.ts --correr --volcar=<ruta>`:
+// es lo que permite auditar una versión NUEVA del juez antes de que exista una
+// sola ronda guardada con ella. Es el paso fijo del loop cuando se toca el juez
+// (docs/improvement-loop-del-motor.md, sección 6-bis).
 //
 // DE DÓNDE SALE ESTA PREGUNTA. js8 (2026-09-18) arregló "plano" en código
 // porque el examen de los 460 looks votados mostró que el juez lo marcaba 36
@@ -33,7 +39,7 @@
 // lo que Jev marque con confianza ≥ 0.70. Es el corte donde su calibración se
 // midió limpia (16/16 acertados arriba, 2/6 abajo). Lo dudoso se reporta
 // aparte, nunca sumado.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { SYSTEM_JUEZ_STYLIST, type CriticaStylist } from "../lib/engine/juez-stylist";
 import { preguntarJev, type PreguntaChoice } from "../lib/jev";
@@ -77,12 +83,22 @@ async function main() {
   console.log(`LISTA DE PROHIBICIONES leída del prompt vigente · ${reglas.length} reglas`);
   reglas.forEach((r, i) => console.log(`  r${i + 1}. ${r.slice(0, 100)}`));
 
-  const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-  const { data: lados } = await s.from("comparador_motor_lados").select("criticas");
+  const volcado = arg("volcado");
   const hallazgos: Hallazgo[] = [];
-  for (const l of lados ?? [])
-    for (const c of ((l.criticas as CriticaStylist[] | null) ?? []))
-      for (const h of c?.hallazgos ?? []) if (h?.problema) hallazgos.push(h as Hallazgo);
+  if (volcado) {
+    if (!existsSync(volcado)) {
+      console.error(`No existe ${volcado}. Se genera con: npx tsx scripts/examen-juez.ts --correr --volcar=${volcado}`);
+      process.exit(1);
+    }
+    const casos = JSON.parse(readFileSync(volcado, "utf8")) as { hallazgos?: Hallazgo[] }[];
+    for (const c of casos) for (const h of c.hallazgos ?? []) if (h?.problema) hallazgos.push(h);
+  } else {
+    const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    const { data: lados } = await s.from("comparador_motor_lados").select("criticas");
+    for (const l of lados ?? [])
+      for (const c of ((l.criticas as CriticaStylist[] | null) ?? []))
+        for (const h of c?.hallazgos ?? []) if (h?.problema) hallazgos.push(h as Hallazgo);
+  }
 
   const limite = Number(arg("limite") ?? 0);
   const lote = limite > 0 ? hallazgos.slice(0, limite) : hallazgos;
@@ -90,7 +106,7 @@ async function main() {
     console.error("No hay hallazgos guardados que analizar. Sin datos no hay análisis.");
     process.exit(1);
   }
-  console.log(`\n${hallazgos.length} hallazgos guardados por el juez${limite ? ` · midiendo ${lote.length}` : ""}`);
+  console.log(`\n${hallazgos.length} hallazgos ${volcado ? `del volcado ${volcado}` : "guardados en las rondas"}${limite ? ` · midiendo ${lote.length}` : ""}`);
 
   const pregunta: PreguntaChoice = {
     type: "choice",
@@ -145,8 +161,17 @@ async function main() {
 
   // EL CONTROL. "plano" es la prohibición que js8 ya demostró que se
   // desobedecía. Si no aparece, el método no está viendo lo que debería.
+  //
+  // OJO: desde js8 "plano" se filtra EN CÓDIGO al normalizar la crítica, así
+  // que en el volcado de un juez nuevo no puede aparecer — y que no aparezca
+  // ahí no dice nada del método. El control sólo vale sobre lo guardado antes
+  // de js8, donde sí está (132 detectados en la validación del 2026-09-18).
   const iPlano = reglas.findIndex((r) => r.includes("plano"));
-  if (iPlano >= 0) {
+  if (iPlano >= 0 && volcado) {
+    console.log(
+      `\nCONTROL · no aplica a un volcado: "plano" se filtra en código desde js8. La validez del método se estableció sobre lo guardado: 132 "plano" detectados en la corrida del 2026-09-18.`
+    );
+  } else if (iPlano >= 0) {
     const n = (porRegla[`r${iPlano + 1}`] ?? []).length;
     console.log(
       `\nCONTROL · "plano" (r${iPlano + 1}) es la desobediencia que YA conocíamos: ${n} detectadas.` +
