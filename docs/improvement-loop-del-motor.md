@@ -394,6 +394,54 @@ dos clósets de mujer la pieza que más se repite es la de arriba, la que más s
 ve — "blusa manga larga negra" ×4 (Val) y "blusa de crepé esmeralda" ×4
 (Andy). Si una usuaria real lo nota, se pre-registra con torso incluido.
 
+### El tercer examen (2026-09-18/19, js7 → js9) y la AUDITORÍA DE OBEDIENCIA
+
+**La lección que lo cambia todo: el juez puede pasar meses desobedeciendo una
+instrucción que ya lleva escrita, y ningún número lo delata.** "plano" estaba
+prohibido desde js5 y seguía siendo el 78% de sus hallazgos inútiles (3 en los
+👎 de Roberto contra 36 en sus 👍). Nadie lo vio porque ningún instrumento leía
+lo que el juez ESCRIBE contra lo que su prompt le PROHÍBE. Se encontró leyendo
+los 536 hallazgos guardados con Jev (`lib/jev.ts`), un clasificador de texto
+que cuesta centavos. De esa lectura salieron js8 ("plano" filtrado en código) y
+js9 (el frío con abrigo puesto, y una contradicción del prompt con los tenis).
+
+**Desde entonces, cuando se toca el juez —prompt, reglas o normalización— la
+auditoría es un paso fijo, igual que el examen:**
+
+```
+npx tsx scripts/examen-juez.ts --correr --limite=150 --volcar=/tmp/jsN.json   # ~$0.33
+npx tsx scripts/juez-desobediente.ts --volcado=/tmp/jsN.json                  # ~$0.01
+```
+
+1. **El examen** dice cuánto caza y cuánto ensucia. Con **±7 de ruido** entre
+   corridas idénticas (medido de nuevo con js9: `capas` pasó de 6 a 13 en los
+   👍 sin cambiar una línea), una sola corrida NO decide entre dos versiones:
+   si hay que decidir, 3-5 corridas y promedio.
+2. **La auditoría** dice si el juez nuevo obedece la lista "Y esto NO es
+   hallazgo" de SU PROPIO prompt. La lista se lee del prompt vigente, no se
+   copia. Sólo cuentan las marcas con confianza ≥ 0.70.
+3. **Las marcas se leen a mano antes de creerlas.** Jev propone dónde mirar;
+   no decide si hubo bug. En la primera corrida ~15 de 169 marcas eran del
+   juez teniendo razón (botines cafés dentro de un look negro completo, que
+   es justo la excepción de la regla).
+4. **Si una prohibición se desobedece, NO se repite más fuerte en el prompt.**
+   Lo que se puede ejecutar en código se ejecuta: filtro en
+   `normalizarCritica`, o un hecho calculado por look que **sólo suprime,
+   nunca invita** (el primer intento del frío invitaba a marcar [capas] en su
+   lugar y las falsas alarmas subieron de 27% a 38%).
+
+**Lo que la primera auditoría de js9 ya encontró (2026-09-19, sin actuar
+todavía):** de 94 hallazgos, 9 contradicen la lista. Cinco son **"plano"
+disfrazado con otra etiqueta** — "el conjunto pierde fuerza visual" como
+`color/detalle`, "un monocromo muy plano" como `color/detalle`. El filtro de
+js8 quita la ETIQUETA, no la IDEA: el juez la reubica. Dos son reloj de caucho
+con mocasines de piel marcado como "resta" cuando la casa dice "detalle como
+mucho". Candidatos para js10, con esta misma auditoría como medición.
+
+Límite de la herramienta, dicho para que nadie lo estire: Jev sirve para LEER
+Y CLASIFICAR TEXTO. Como juez de looks se midió en tres exámenes y perdió en
+los tres (ver la cabecera de `lib/jev.ts`) — no tiene ojo.
+
 ## 7. Bitácora de rondas
 
 Una fila por ronda. **Se llena el día que se corre**, no después.

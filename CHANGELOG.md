@@ -2,6 +2,57 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.337.0] - 2026-09-19 — el juez deja de marcar lo que a Roberto no le importa
+
+Roberto vio Jev (TypeSafe) en Twitter y pidió evaluarlo: un modelo que no
+escribe, sólo contesta preguntas de respuesta acotada. Se midió contra datos
+reales en cuatro pruebas por **$0.19 en total**. Perdió como juez de looks, ganó
+leyendo texto — y leyendo nuestros propios hallazgos encontró tres bugs del juez
+que llevaban meses ahí.
+
+**El juez de rondas, js7 → js9.** Las tres salieron del examen de los 536
+hallazgos guardados:
+
+- **"plano" deja de ser hallazgo, y ahora EN CÓDIGO.** El prompt se lo prohibía
+  desde js5 y el juez lo ignoraba: 3 veces en los 👎 de Roberto contra 36 en sus
+  👍, en rondas posteriores al arreglo. Era el 78% de todo el ruido. La lección
+  es más grande que la etiqueta: cuando el examen muestra que el modelo
+  desobedece una instrucción que ya lleva escrita, repetírsela más fuerte es la
+  respuesta equivocada.
+- **Ya no inventa frío con abrigo puesto.** Marcaba "con 8°C esto no abriga"
+  sobre looks que traían abrigo, contra su propia regla. Ahora recibe el hecho
+  comprobado en código junto al look. Medido: los hallazgos de clima en los 👍
+  bajaron de 14 a 8-10, y los graves de 4-6 a 2-3. Y el hecho **sólo suprime,
+  nunca invita**: el primer intento sugería marcar [capas] en su lugar y las
+  falsas alarmas subieron de 27% a 38%.
+- **Se resolvió una contradicción del prompt.** Mandaba marcar "tenis
+  deportivos con piezas de traje" y a la vez prohibía marcar "tenis con abrigo
+  de lana a 8°". Un look con las dos cosas caía en las dos. Roberto decidió el
+  fondo ("no va") y se separaron los ejes: con abrigo el frío está resuelto, el
+  registro no queda absuelto.
+
+**El arnés de exámenes, compartido.** El universo de looks votados y la
+aritmética de la tabla salieron de dentro de `scripts/examen-juez.ts` a
+`lib/evales/`: dos exámenes que carguen o cuenten distinto producen la peor
+clase de resultado, uno que se lee como comparación y no lo es. Y `--guardar`
+ya no se puede combinar con `--limite` — habría dejado la línea base mezclada
+entre dos versiones del juez, sin forma de saber cuál escribió cuál fila.
+
+**El veredicto de Jev**, escrito en la cabecera de `lib/jev.ts` para no volver a
+evaluarlo de oído: juzgar looks **perdió** (de siete preguntas, sólo "ocasión"
+separó algo); entender texto libre **ganó** (82% contra 45% de piso, y 16 de 16
+cuando dijo estar seguro); leer 536 hallazgos en masa **sirvió**; describir
+looks para aprender gusto **perdió contra el código** (AUC 0.700 del código
+contra 0.623 suyo). No entra al producto: queda como herramienta de medición.
+
+**Y lo que más vale del día, que no es de Jev:** la curva de aprendizaje. Con
+rasgos calculados por código, predecir el voto de Roberto necesita **80-150
+votos** para despegar del azar (20 → 0.531, 80 → 0.636, 300 → 0.696), y una
+usuaria normal da ocho. El mazo de 27 looks del onboarding deja el modelo en
+~0.55. La promesa "mientras más la usas, más le atina" tiene pendiente medida y
+es plana. Además: de 21 looks que Roberto votó dos veces, votó distinto en 3
+(14%) — ningún juez puede pasar de ~93% de acierto contra él.
+
 ## [0.2.336.1] - 2026-09-16 — los días de la semana se abren
 
 Roberto, con su semana armada: "no puedo ver el detalle de los días que creé

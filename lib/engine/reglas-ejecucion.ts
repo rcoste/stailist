@@ -298,6 +298,37 @@ const esPantalonVestir = (i: EngineItem) =>
 export const ABRIGA_DE_VERDAD =
   /abrigo|gab(a|á)rdina|parka|puffer|acolchad|plumas|trench|anorak|chamarra|cazadora|chaqueta/;
 
+/**
+ * EL ABRIGO QUE CIERRA LA DISCUSIÓN DEL FRÍO — la hermana ESTRECHA de
+ * ABRIGA_DE_VERDAD, y la diferencia entre las dos es a propósito.
+ *
+ * ABRIGA_DE_VERDAD contesta "¿esta capa es algo más que sastre?" y por eso
+ * incluye chamarra, cazadora y chaqueta. Esta contesta otra cosa: "¿con esto
+ * puesto el frío YA ESTÁ RESUELTO y no hay nada que marcar?". El prompt del
+ * juez dice que no, justo para esas tres: "blazer, chaqueta ligera, softshell o
+ * bomber como ÚNICA capa exterior" a 8° o menos es un hallazgo. Si esta vara
+ * las incluyera, absolvería looks que la casa condena.
+ *
+ * Usar la ancha aquí era el error fácil —está exportada y a la mano— y habría
+ * metido un bug silencioso: un bomber a 8° dejaría de marcarse.
+ *
+ * Y EL CHALECO QUEDA FUERA, con el gorro de stylist puesto: el catálogo tiene
+ * "chaleco acolchado marino" y "chaleco acolchado mujer", los dos SIN MANGAS.
+ * `acolchad` los cazaba y el juez recibía "el frío está resuelto" como hecho
+ * verificado para alguien con los brazos al aire a 8°. Un chaleco es una capa
+ * de torso, no el abrigo que cierra la discusión — se excluye por nombre ANTES
+ * de mirar el resto.
+ */
+const NO_ES_ABRIGO = /chaleco|gilet|body ?warmer/;
+
+export const ABRIGO_QUE_RESUELVE_EL_FRIO_RE =
+  /abrigo|gab(a|á)rdina|parka|puffer|acolchad|plumas|trench|anorak/;
+
+export const resuelveElFrio = (nombre: string): boolean => {
+  const n = (nombre ?? "").toLowerCase();
+  return !NO_ES_ABRIGO.test(n) && ABRIGO_QUE_RESUELVE_EL_FRIO_RE.test(n);
+};
+
 export const esCuero = (i: EngineItem) =>
   familiaMaterial(i.attrs.material, i.attrs.nombre) === "piel" ||
   /cintur[oó]n|zapato|mocas[ií]n|bot[ií]n|bota|reloj de piel|correa/.test(TIPO(i));
