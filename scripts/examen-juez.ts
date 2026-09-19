@@ -25,7 +25,8 @@ import { criticarLook, JUEZ_STYLIST_VERSION, type CriticaStylist, type Gravedad 
 import type { BriefRubrica } from "../lib/engine/rubrica";
 import { registroDelPerfil, estiloDelPerfil, colorDelPerfil } from "../lib/evales/evales";
 import { conCategoria, ITEM_IMAGE_SELECT, itemImageUrlSync, type ItemImageRow } from "../lib/item-image";
-import type { BriefMotor, LookMotor } from "../lib/comparador/motor";
+import { cargarCasosVotados, muestrearParaExamen, FIN_DEL_AFINADO, type CasoVotado } from "../lib/evales/casos-votados";
+import { tabla, tiene } from "../lib/evales/tabla-examen";
 
 for (const l of readFileSync(".env.local", "utf8").split("\n")) {
   const i = l.indexOf("=");
@@ -33,58 +34,9 @@ for (const l of readFileSync(".env.local", "utf8").split("\n")) {
     process.env[l.slice(0, i)] ??= l.slice(i + 1).trim().replace(/^"|"$/g, "");
 }
 
-type Caso = {
-  ladoId: string;
-  /** El par y la variante: para medir si el juez prefiere el MISMO lado que Roberto. */
-  parId: string;
-  variante: string;
-  indice: number;
-  ronda: string;
-  /** Cuándo se creó la ronda: separa lo que el juez vio al afinarse de lo que no. */
-  creada: string;
-  brief: BriefMotor;
-  look: LookMotor;
-  marca: "arriba" | "abajo";
-  comentario: string | null;
-  critica: CriticaStylist | null;
-};
-
-/** Último día de votos que se usaron para afinar el juez vigente (js5). */
-const FIN_DEL_AFINADO = "2026-08-23T00:00:00Z";
-
-const pct = (a: number, b: number) => (b ? `${Math.round((a * 100) / b)}%` : "—");
-const tiene = (c: CriticaStylist | null, niveles: Gravedad[]) =>
-  !!c?.hallazgos.some((h) => niveles.includes(h.gravedad));
-
-function tabla(titulo: string, casos: Caso[], critica: (c: Caso) => CriticaStylist | null) {
-  const dn = casos.filter((c) => c.marca === "abajo");
-  const up = casos.filter((c) => c.marca === "arriba");
-  console.log(`\n${titulo} · ${casos.length} looks (${dn.length} 👎 / ${up.length} 👍)`);
-  console.log(`  ${"umbral".padEnd(22)} caza de los 👎      falsa alarma en 👍`);
-  for (const [etq, niveles] of [
-    ["sólo 'rompe'", ["rompe"]],
-    ["'rompe' o 'resta'", ["rompe", "resta"]],
-    ["cualquier hallazgo", ["rompe", "resta", "detalle"]],
-  ] as [string, Gravedad[]][]) {
-    const caza = dn.filter((c) => tiene(critica(c), niveles)).length;
-    const fa = up.filter((c) => tiene(critica(c), niveles)).length;
-    console.log(
-      `  ${etq.padEnd(22)} ${String(caza).padStart(3)}/${dn.length} (${pct(caza, dn.length).padStart(4)})      ${String(fa).padStart(3)}/${up.length} (${pct(fa, up.length).padStart(4)})`
-    );
-  }
-  // De qué son los hallazgos, separando 👍 y 👎: lo que aparece mucho en 👍 es
-  // severidad gastada en lo que a Roberto no le importa.
-  const m: Record<string, { up: number; dn: number; rompeUp: number; rompeDn: number }> = {};
-  for (const c of casos)
-    for (const h of critica(c)?.hallazgos ?? []) {
-      const e = (m[h.defecto] ??= { up: 0, dn: 0, rompeUp: 0, rompeDn: 0 });
-      if (c.marca === "arriba") { e.up++; if (h.gravedad === "rompe") e.rompeUp++; }
-      else { e.dn++; if (h.gravedad === "rompe") e.rompeDn++; }
-    }
-  console.log(`  hallazgos por defecto (en 👎 / en 👍; entre paréntesis los "rompe"):`);
-  for (const [d, e] of Object.entries(m).sort((a, b) => b[1].up + b[1].dn - (a[1].up + a[1].dn)))
-    console.log(`    ${d.padEnd(12)} 👎 ${String(e.dn).padStart(2)} (${e.rompeDn})   👍 ${String(e.up).padStart(2)} (${e.rompeUp})`);
-}
+/** El caso lo define `lib/evales/casos-votados.ts`: los dos exámenes leen el
+ *  MISMO universo o la comparación entre jueces no significa nada. */
+type Caso = CasoVotado;
 
 async function comoBase64(url: string) {
   try {
@@ -102,37 +54,20 @@ async function comoBase64(url: string) {
 async function main() {
   const correr = process.argv.includes("--correr");
   const guardar = process.argv.includes("--guardar");
+  // --limite CON --guardar sobreescribiría UNA DE CADA `paso` críticas, dejando
+  // la columna "guardado" mezclada entre dos versiones del juez y sin forma de
+  // saber cuál escribió cuál fila. Esa columna es el campeón contra el que se
+  // miden los dos exámenes: mezclarla es destruir la línea base en silencio, y
+  // el update es destructivo (no hay historial). Se prohíbe la combinación.
+  if (guardar && process.argv.some((a) => a.startsWith("--limite="))) {
+    console.error(
+      "--guardar NO se puede combinar con --limite: dejaría la columna guardada mezclada entre dos versiones del juez.\nCorre la muestra sin --guardar, o guarda la corrida COMPLETA."
+    );
+    process.exit(1);
+  }
   const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  const { data: corridas } = await s
-    .from("comparador_motor_corridas")
-    .select("id, closet_user_id, creada")
-    .order("creada");
-  const casos: Caso[] = [];
-  for (const c of corridas ?? []) {
-    const [{ data: pares }, { data: lados }] = await Promise.all([
-      s.from("comparador_motor_pares").select("id, brief, marcas_look, comentarios_look").eq("corrida_id", c.id),
-      s.from("comparador_motor_lados").select("id, par_id, variante, looks, criticas").eq("corrida_id", c.id),
-    ]);
-    for (const p of pares ?? [])
-      for (const l of (lados ?? []).filter((x) => x.par_id === p.id)) {
-        const looks = (l.looks as LookMotor[] | null) ?? [];
-        const criticas = (l.criticas as CriticaStylist[] | null) ?? [];
-        const marcas = (p.marcas_look as Record<string, Record<string, string>> | null)?.[l.variante] ?? {};
-        const coms = (p.comentarios_look as Record<string, Record<string, string>> | null)?.[l.variante] ?? {};
-        looks.forEach((look, i) => {
-          const marca = marcas[String(i)];
-          if (marca !== "arriba" && marca !== "abajo") return;
-          // Sin nombres congelados no hay cómo reconstruir el look (los ids
-          // murieron con el clóset del 08-18): fuera del examen, y se dice.
-          if (!look.prendas) return;
-          casos.push({
-            ladoId: l.id, parId: p.id as string, variante: l.variante as string, indice: i, ronda: c.id.slice(0, 8), creada: c.creada as string, brief: p.brief as BriefMotor, look,
-            marca, comentario: coms[String(i)] ?? null, critica: criticas[i] ?? null,
-          });
-        });
-      }
-  }
+  const { casos, corridas } = await cargarCasosVotados(s);
   const conCritica = casos.filter((c) => c.critica);
   console.log(`EXAMEN DEL JUEZ · ${casos.length} looks votados y reconstruibles · ${conCritica.length} con crítica guardada`);
   tabla("GUARDADO (la crítica que se corrió en su ronda)", conCritica, (c) => c.critica);
@@ -152,8 +87,17 @@ async function main() {
 
   if (!correr) return;
 
+  // --limite=N: correr el juez sobre una MUESTRA, para no pagar los 460 cada
+  // vez. La muestra sale de las rondas POSTERIORES al afinado (las que el juez
+  // no vio) y se toma a paso fijo, no al azar: dos corridas del mismo N miden
+  // los mismos looks, que es lo que permite comparar una versión con otra.
+  const limite = Number(process.argv.find((a) => a.startsWith("--limite="))?.slice(9) ?? 0);
+  const aCorrer = muestrearParaExamen(casos, limite);
+  if (limite > 0)
+    console.log(`\nMUESTRA: ${aCorrer.length} looks de las rondas posteriores al afinado (${FIN_DEL_AFINADO.slice(0, 10)}).`);
+
   // ── Correr el juez vigente sobre los mismos looks ─────────────────────────
-  const dueno = (corridas ?? [])[0]?.closet_user_id as string;
+  const dueno = corridas[0]?.closet_user_id;
   const { data: perfil } = await s.from("profiles").select("*").eq("id", dueno).single();
   const p = (perfil ?? {}) as Record<string, unknown>;
   const { data: items } = await s.from("items").select(`id, ${ITEM_IMAGE_SELECT}`).eq("user_id", dueno).is("deleted_at", null);
@@ -172,10 +116,10 @@ async function main() {
     return imagenes.get(id) ?? null;
   };
 
-  console.log(`\nCorriendo ${JUEZ_STYLIST_VERSION} sobre ${casos.length} looks…`);
+  console.log(`\nCorriendo ${JUEZ_STYLIST_VERSION} sobre ${aCorrer.length} looks…`);
   const nuevas = new Map<Caso, CriticaStylist>();
   let costo = 0, fallos = 0, hechos = 0;
-  const cola = [...casos];
+  const cola = [...aCorrer];
   const obrero = async () => {
     for (;;) {
       const c = cola.shift();
@@ -197,19 +141,36 @@ async function main() {
         fallos++;
         if (fallos <= 3) console.error(`  fallo: ${e instanceof Error ? e.message : e}`);
       }
-      if (++hechos % 20 === 0) console.log(`  ${hechos}/${casos.length}`);
+      if (++hechos % 20 === 0) console.log(`  ${hechos}/${aCorrer.length}`);
     }
   };
   await Promise.all(Array.from({ length: 4 }, obrero));
   console.log(`  listo · costo $${costo.toFixed(2)} · fallos ${fallos}`);
 
-  const evaluados = casos.filter((c) => nuevas.has(c));
+  const evaluados = aCorrer.filter((c) => nuevas.has(c));
+  // LA COMPARACIÓN PAREADA: los MISMOS looks, con la crítica vieja que quedó
+  // guardada y con la recién corrida. Sin esto sólo habría dos números sobre
+  // universos distintos, que es como se fabrica una mejora que no existe.
+  // PAREADO DE VERDAD: los dos lados sobre EXACTAMENTE los mismos looks. Un
+  // look sin crítica guardada no tiene "antes", así que sale de los dos lados —
+  // si saliera sólo de uno, la comparación volvería a ser dos números sobre
+  // universos distintos, que es lo que esta tabla existe para evitar.
+  const pareados = evaluados.filter((c) => c.critica);
+  if (limite > 0) {
+    tabla(`ANTES (lo guardado) · los MISMOS ${pareados.length} looks`, pareados, (c) => c.critica);
+    tabla(`DESPUÉS ${JUEZ_STYLIST_VERSION} · los MISMOS ${pareados.length} looks`, pareados, (c) => nuevas.get(c)!);
+  }
   tabla(`VIGENTE ${JUEZ_STYLIST_VERSION} (recién corrido)`, evaluados, (c) => nuevas.get(c)!);
   // LA CIFRA QUE VALE. js5 se afinó el 2026-08-22 mirando los votos de hasta
   // ese día; las rondas posteriores son looks que nunca vio. Sin este corte el
   // examen mezcla tarea con prueba y sale optimista.
-  const limpios = evaluados.filter((c) => c.creada > FIN_DEL_AFINADO);
-  tabla(`VIGENTE ${JUEZ_STYLIST_VERSION} · SÓLO rondas posteriores al afinado (${FIN_DEL_AFINADO.slice(0, 10)})`, limpios, (c) => nuevas.get(c)!);
+  // Con --limite el universo YA es post-afinado, así que esta tabla sería un
+  // duplicado exacto de la anterior bajo otro título — y dos veces el mismo
+  // número se lee como corroboración.
+  if (limite === 0) {
+    const limpios = evaluados.filter((c) => c.creada > FIN_DEL_AFINADO);
+    tabla(`VIGENTE ${JUEZ_STYLIST_VERSION} · SÓLO rondas posteriores al afinado (${FIN_DEL_AFINADO.slice(0, 10)})`, limpios, (c) => nuevas.get(c)!);
+  }
 
   console.log(`\n👎 que ${JUEZ_STYLIST_VERSION} deja pasar sin "rompe":`);
   for (const c of evaluados.filter((x) => x.marca === "abajo" && !tiene(nuevas.get(x)!, ["rompe"])))
