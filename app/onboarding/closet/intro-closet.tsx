@@ -46,7 +46,7 @@ export function IntroCloset({
       <div className="flex items-stretch gap-3" aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`/landing/ig-${g}-foto.jpg`}
+          src={`/landing/ig-${g}-foto.webp`}
           alt=""
           className="w-[42%] rounded-2xl object-cover"
         />
@@ -54,7 +54,7 @@ export function IntroCloset({
           {prendas.map((p) => (
             <div key={p} className="overflow-hidden rounded-xl bg-tile">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/landing/ig-${g}-${p}.jpg`} alt="" className="h-full w-full object-cover" />
+              <img src={`/landing/ig-${g}-${p}.webp`} alt="" className="h-full w-full object-cover" />
             </div>
           ))}
         </div>

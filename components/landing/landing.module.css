@@ -207,6 +207,17 @@
 .btn:hover .arr {
   transform: translateX(3px);
 }
+/* El botón solo (sin campo de correo al lado, desde 2026-09-23): es un <a>,
+   así que sin subrayado; a lo ancho en móvil, a su tamaño en pantallas grandes. */
+.btnSolo {
+  width: 100%;
+  text-decoration: none;
+}
+@media (min-width: 760px) {
+  .btnSolo {
+    width: auto;
+  }
+}
 .errmsg {
   font-size: 13px;
   color: var(--c-error);

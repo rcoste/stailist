@@ -8,29 +8,14 @@ import {
   type VerifyState,
 } from "./actions";
 import { Spinner } from "@/components/spinner";
-import { EMAIL_LANDING_KEY } from "@/lib/email-landing";
 
 const SEND_INITIAL: LoginState = { status: "idle" };
 
 export function LoginForm({ prefillEmail }: { prefillEmail?: string | null }) {
   const [state, sendAction, sending] = useActionState(sendCode, SEND_INITIAL);
-  const [emailLanding, setEmailLanding] = useState<string | null>(null);
-
-  // El correo que se tecleó en la landing llega por sessionStorage, no por la
-  // URL (lib/email-landing.ts). Se lee una vez y se borra. Va a ESTADO y de ahí
-  // a defaultValue —no se escribe directo en el input— porque React 19 resetea
-  // el formulario al terminar la acción: tras un error (correo mal escrito,
-  // ritmo) el campo volvía vacío. El `key` remonta el input cuando llega.
-  useEffect(() => {
-    try {
-      const e = sessionStorage.getItem(EMAIL_LANDING_KEY);
-      sessionStorage.removeItem(EMAIL_LANDING_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única del navegador al montar
-      if (e && !prefillEmail) setEmailLanding(e);
-    } catch {
-      /* sin storage */
-    }
-  }, [prefillEmail]);
+  // El correo se teclea aquí y sólo aquí. Hasta el 2026-09-23 la landing tenía
+  // su propio campo y lo pasaba por sessionStorage; el campo se quitó (ver
+  // components/landing/entrar-boton.tsx) y con él la tubería.
 
   if (state.status === "sent") {
     return (
@@ -48,12 +33,11 @@ export function LoginForm({ prefillEmail }: { prefillEmail?: string | null }) {
           Tu correo
         </label>
         <input
-          key={emailLanding ?? "sin-correo-de-landing"}
           id="email"
           name="email"
           type="email"
           required
-          defaultValue={prefillEmail ?? emailLanding ?? undefined}
+          defaultValue={prefillEmail ?? undefined}
           autoComplete="email"
           inputMode="email"
           placeholder="tu@correo.com"

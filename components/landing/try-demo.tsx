@@ -14,13 +14,17 @@ export function TryDemo({ gender = "mujer" }: { gender?: "mujer" | "hombre" }) {
       <div className={styles.tryShot}>
         <span className={styles.tryTag}>en ti</span>
         <img
-          src={`${dir}/b1-normal.png`}
+          loading="lazy"
+          decoding="async"
+          src={`${dir}/b1-normal.webp`}
           alt="La modelo con su ropa"
           className={styles.tdImg}
           style={{ opacity: tried ? 0 : 1 }}
         />
         <img
-          src={`${dir}/b1-tryon.png`}
+          loading="lazy"
+          decoding="async"
+          src={`${dir}/b1-tryon.webp`}
           alt="La modelo con el outfit propuesto"
           className={styles.tdImg}
           style={{ opacity: tried ? 1 : 0 }}
