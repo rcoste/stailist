@@ -199,7 +199,7 @@ describe("correoDiario", () => {
       ayer: "2026-10-29",
       iaAyerUsd: 1.234,
       iaAyerLlamadas: 42,
-      iaTop: { correo: "val@x.com", usd: 0.9 },
+      iaTop: { correo: "alguien@ejemplo.test", usd: 0.9 },
       nuevasAyer: 3,
       nuevasAyerDeCampana: 2,
       primerLookAyer: 1,
@@ -209,7 +209,7 @@ describe("correoDiario", () => {
     });
     expect(subject).toBe("stailist · 2026-10-29: $1.23 de IA · 3 cuentas nuevas (2 de anuncios)");
     expect(text).toContain("faltan datos");
-    expect(text).toContain("val@x.com");
+    expect(text).toContain("alguien@ejemplo.test");
     expect(text).toContain("https://stailist.co/admin/campana");
   });
 });
