@@ -2,9 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { EMAIL_RE } from "@/lib/valid-email";
 import { MENSAJE_RITMO, anotarIntento, intentosUltimaHora, ipDe, permitirCodigo } from "@/lib/ritmo-login";
+import { COOKIE_ORIGEN } from "@/lib/origen";
+import { contarPeticionDeCodigo } from "@/lib/campana-codigos";
 
 export type LoginState =
   | { status: "idle" }
@@ -43,6 +45,9 @@ export async function sendCode(
   if (!permitirCodigo(intentos)) {
     return { status: "error", message: MENSAJE_RITMO };
   }
+  // Primero el conteo de la campaña y DESPUÉS el intento: el conteo mira si
+  // este correo ya había pedido código hoy, y el intento de ahora lo taparía.
+  await contarPeticionDeCodigo(email, (await cookies()).get(COOKIE_ORIGEN)?.value);
   await anotarIntento(email, ip);
 
   const supabase = await createClient();

@@ -236,6 +236,18 @@ tiene al crear la cuenta).
 
 ### 2.6 Cómo se lee y cuándo se apaga
 
+**Dónde se lee (construido el 2026-09-23, v0.2.339.0):** `/admin/campana` junta
+en una fila por campaña clics y costo (capturados a mano desde Google Ads, un
+renglón por día), personas nuevas que pidieron su código, entraron, registro
+(edad, mayor), cada paso del onboarding, primer look, TTV, volvió en 7 días, se
+lo puso, IA de sus primeros 7 días y costo por primer look. Arriba, el
+criterio de paro con su veredicto. El mismo resumen llega cada día a las 8 am
+(CDMX) a `ADMIN_EMAIL`, con el gasto de IA del día anterior aunque no haya
+campaña. **Rutina diaria de Roberto: capturar los clics, el costo y los
+registros de Google de ayer, por campaña. Sin eso, las columnas de costo
+salen vacías.**
+
+
 Tres niveles, del más rápido al que importa:
 
 **Nivel 1 — mecánica (días 1–5).** Si falla, se pausa y se arregla, no se
