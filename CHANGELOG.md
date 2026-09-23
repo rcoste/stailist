@@ -2,6 +2,50 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.339.0] - 2026-09-23 — la campaña en una pantalla y en un correo
+
+Roberto: "que la parte de estadísticas, métricas, uso, gastos lo tengamos
+súper bien". La respuesta no fue medir más cosas sino juntar las ocho que
+deciden la campaña en un solo lugar y mandarlas cada mañana, porque un panel
+con cuarenta cifras se deja de abrir y el TTV ya falló 4× durante meses con el
+número a la vista de nadie.
+
+- **`/admin/campana`**, primera pestaña de Pulso. Una fila por campaña, del
+  clic a "volvió": clics y costo de Google Ads, personas nuevas que pidieron su
+  código, entraron, registro (edad, mayor: lo mismo que cuenta Google), cada
+  paso del onboarding con el % del anterior, primer look, TTV mediano, volvió
+  en 7 días, se lo puso, IA de sus primeros 7 días y costo por primer look y
+  por quien volvió. Arriba, el **criterio de paro** acordado el 2026-09-10 con
+  su veredicto: se decide en cuanto la respuesta ya no puede cambiar (6 que
+  volvieron pasan; más de 24 que cerraron su semana sin volver, no). Una
+  campaña con gasto y nadie adentro también sale, porque ése es el caso malo.
+  No redefine nada: "volvió", "ventana cerrada", fuente y campaña salen de
+  `lib/admin/adquisicion.ts`.
+- **Lo de Google se captura a mano** desde la misma pantalla: clics, costo y
+  registros de Google, uno por día y campaña, y corregir es volver a capturar.
+  Los registros de Google están para reconciliar: si Google ve muchos menos
+  que el panel, la atribución se pierde entre navegadores y se decide con el
+  panel.
+- **Quién pidió su código.** Era la punta invisible del embudo. `login_intentos`
+  se borra cada noche y guarda el correo, así que no servía: ahora la acción
+  del login suma un contador por día y campaña (`campana_codigos`), sin correo
+  ni IP, una vez por persona al día, separando a quien no tenía cuenta. Probado
+  contra la base dentro de una transacción deshecha: nuevo, recurrente y
+  segundo pedido del día se cuentan como deben.
+- **El correo diario** a `ADMIN_EMAIL` a las 8 am de la CDMX
+  (`/api/cron/campana`): gasto de IA de ayer y quién gastó más, cuentas nuevas
+  y de anuncios, el criterio de paro y el acumulado por campaña. Se manda
+  aunque no haya campaña: es el pulso, no una alarma (la alarma sigue siendo
+  `/api/cron/vigilancia`, callada salvo incendio). La pantalla y el correo
+  llaman el mismo cargador (`lib/admin/campana-datos.ts`) para que nunca
+  digan cosas distintas.
+- El costo suma la IA (en dólares) al anuncio (en pesos) a 18 MXN por dólar.
+  Es un supuesto, la pantalla lo dice y se cambia con `MXN_POR_USD`.
+
+Migración 0163 (dos tablas nuevas con RLS y sin políticas: sólo se leen por
+Postgres directo desde código que exige admin, el secreto del cron o la
+acción del login). Ya aplicada.
+
 ## [0.2.338.0] - 2026-09-23 — la landing, lista para tráfico pagado
 
 Antes de prender Google Ads se recorrió la landing como la ve quien llega de
