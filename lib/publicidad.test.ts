@@ -188,13 +188,13 @@ describe("esTipoConversion — la cookie viene del navegador", () => {
 describe("contrato: el correo nunca viaja en la URL", () => {
   // Con las etiquetas cargadas en la landing, un router.push a /login?email=…
   // le entregaba el correo a Google y a TikTok en el historial de la página.
-  it("el formulario de la landing no arma /login?email=", () => {
-    const fuente = readFileSync(join(import.meta.dirname, "../components/landing/entrar-form.tsx"), "utf8");
+  // Desde el 2026-09-23 la landing ya no tiene campo de correo: la puerta es
+  // un link a /login, que está fuera de la zona medida y es navegación
+  // completa por sí solo. El contrato sigue: nada arma ?email=.
+  it("la puerta de la landing es un link limpio a /login, sin correo", () => {
+    const fuente = readFileSync(join(import.meta.dirname, "../components/landing/entrar-boton.tsx"), "utf8");
     expect(fuente).not.toMatch(/\?email=/);
-  });
-
-  it("la landing sale al login con salirSinEtiquetas: con el router, la recarga de seguridad dejaba el correo en blanco", () => {
-    const fuente = readFileSync(join(import.meta.dirname, "../components/landing/entrar-form.tsx"), "utf8");
-    expect(fuente).toMatch(/salirSinEtiquetas\("\/login"\)/);
+    expect(fuente).toMatch(/href="\/login"/);
+    expect(fuente).not.toMatch(/<input/);
   });
 });

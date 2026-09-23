@@ -38,7 +38,7 @@ recurrencia del producto, no la audiencia.
 | Origen por cuenta | `proxy.ts`, `lib/origen.ts`, `app/onboarding/genero/page.tsx`, migración 0158 | Cookie de primera parte `st_origen` con utm/gclid/gbraid/wbraid/ttclid/fbclid y el dominio de referencia; se copia a `profiles.origen` cuando la persona abre la app. El último anuncio gana; el orgánico no borra un anuncio. |
 | Panel | `/admin/adquisicion` | Por fuente y campaña: cuentas (H/M), primer look, volvió en 7 días (sólo ventanas cerradas). Últimas 30 cuentas con link a su ficha. |
 | Landing segmentada | `app/page.tsx`, `components/landing/landing.tsx` | `stailist.co/?g=hombre` abre la versión de hombre desde el servidor (antes el default mujer le enseñaba una modelo mujer a un hombre que venía de un anuncio de hombre). Título, descripción y canonical para Google. |
-| Correo fuera de la URL | `components/landing/entrar-form.tsx`, `app/login/login-form.tsx`, `lib/email-landing.ts` | La landing mandaba `/login?email=…`; con etiquetas cargadas, esa URL la veían Google y TikTok. Ahora viaja por sessionStorage y la landing sale al login con navegación completa. Contratos en `app/login/login-form.test.tsx` (lo lee, lo borra, sobrevive a un error) y `lib/publicidad.test.ts` (nada arma `?email=`). `/login` ya no acepta `?email=`. |
+| Sin campo de correo en la landing | `components/landing/entrar-boton.tsx` | Hasta el 2026-09-23 la landing tenía campo de correo (residuo de la waitlist) que viajaba al login por sessionStorage para no exponerlo en la URL a Google y TikTok. **Se quitó**: era el único campo de correo dentro de la zona medida y obligaba a la tubería de sessionStorage, a prohibir `?email=` y a apagar la captura de formularios. Ahora la puerta es un link limpio a `/login` (fuera de la zona, navegación completa). Contrato en `lib/publicidad.test.ts` (sin `?email=`, sin `<input>`). `/login` sigue sin aceptar `?email=`. |
 | Aviso de privacidad | `app/privacidad/page.tsx` | Decía "No los compartimos con anunciantes. No hay publicidad." Ahora explica qué ven las etiquetas, qué no, menores, links a los avisos de Google y TikTok, y el botón para apagarlas. |
 | Search Console | `app/layout.tsx` | Verificación por etiqueta HTML con `GOOGLE_SITE_VERIFICATION`. |
 
@@ -52,6 +52,8 @@ recurrencia del producto, no la audiencia.
    **etiqueta** de cada acción.
    Dejar **apagadas** las *conversiones mejoradas* y la *recopilación de datos
    proporcionados por el usuario*: el aviso dice que no se les manda el correo.
+   (Desde el 2026-09-23 la landing ya no tiene campo de correo, así que la
+   captura de formularios tampoco tendría qué leer; se apaga igual.)
 2. **Google Analytics 4.** Crear propiedad + flujo web `https://stailist.co`,
    copiar el `G-…`. En *Medición mejorada* apagar **"Cambios de página según
    eventos del historial de navegación"** (las vistas las manda el código con

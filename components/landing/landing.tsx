@@ -6,7 +6,7 @@
 // (hero, pasos, paso 4, galería, sección 04, cápsula, viaje). Modelo de hombre M-1
 // = el modelo consistente de public/looks/*-hombre.
 import { useEffect, useState } from "react";
-import { EntrarForm } from "./entrar-form";
+import { EntrarBoton } from "./entrar-boton";
 import { TryDemo } from "./try-demo";
 import { PreguntasFrecuentes } from "./faq";
 import styles from "./landing.module.css";
@@ -81,7 +81,7 @@ export function Landing({
   const [heroTried, setHeroTried] = useState(false);
   // Imágenes gender-aware: hombre → /landing/h/<name>.png (Fase 1: solo los names
   // con set de hombre — hero, prop, gal-*; el resto vive en secciones ocultas).
-  const img = (n: string) => (men ? `/landing/h/${n}.png` : `/landing/${n}.png`);
+  const img = (n: string) => (men ? `/landing/h/${n}.webp` : `/landing/${n}.webp`);
 
   // Look "wow" del hero (ejemplo real), por género. La foto puesta vive en
   // hero-worn y las 4 prendas en hero-p1..p4 (ambas gender-aware vía img()).
@@ -114,10 +114,12 @@ export function Landing({
               sistema decide si eres nueva o vuelves. Dos puertas idénticas le
               pedían al visitante una decisión que no cambia nada. Es residuo de
               la waitlist (hasta el 2026-09-06 "armar mi look" sí llevaba a otro
-              lado). Quien vuelve escribe su correo en el mismo campo; la línea
-              fina bajo el formulario del hero se lo dice. */}
+              lado). Quien vuelve entra por el mismo botón; la línea fina bajo
+              el botón del hero se lo dice. Desde el 2026-09-23 la landing ya no
+              tiene campo de correo (ver entrar-boton.tsx), así que este link va
+              directo a /login en vez de bajar al hero. */}
           <div className={styles.headerRight}>
-            <a className={styles.hcta} href="#sumarme">
+            <a className={styles.hcta} href="/login">
               Armar mi look
             </a>
           </div>
@@ -159,9 +161,9 @@ export function Landing({
               </p>
 
               <div id="sumarme">
-                <EntrarForm
+                <EntrarBoton
                   trust
-                  fineline="¿ya tienes cuenta? es el mismo correo."
+                  fineline="¿ya tienes cuenta? entra por aquí mismo."
                 />
               </div>
             </div>
@@ -175,12 +177,14 @@ export function Landing({
               <div className={styles.demoStage}>
                 <div className={styles.demoShot}>
                   <img
+                    fetchPriority="high"
                     src={img("hero-normal")}
                     alt="La modelo con su ropa de siempre"
                     className={styles.tdImg}
                     style={{ opacity: heroTried ? 0 : 1 }}
                   />
                   <img
+                    decoding="async"
                     src={img("hero-worn")}
                     alt="El look que le armó stailist"
                     className={styles.tdImg}
@@ -199,19 +203,19 @@ export function Landing({
                   <div className={styles.tiles}>
                     <div className={styles.tile}>
                       <span className={styles.tnum}>01</span>
-                      <img src={img("hero-p1")} alt={heroLook.pieces[0]} />
+                      <img loading="lazy" decoding="async" src={img("hero-p1")} alt={heroLook.pieces[0]} />
                     </div>
                     <div className={styles.tile}>
                       <span className={styles.tnum}>02</span>
-                      <img src={img("hero-p2")} alt={heroLook.pieces[1]} />
+                      <img loading="lazy" decoding="async" src={img("hero-p2")} alt={heroLook.pieces[1]} />
                     </div>
                     <div className={styles.tile}>
                       <span className={styles.tnum}>03</span>
-                      <img src={img("hero-p3")} alt={heroLook.pieces[2]} />
+                      <img loading="lazy" decoding="async" src={img("hero-p3")} alt={heroLook.pieces[2]} />
                     </div>
                     <div className={styles.tile}>
                       <span className={styles.tnum}>04</span>
-                      <img src={img("hero-p4")} alt={heroLook.pieces[3]} />
+                      <img loading="lazy" decoding="async" src={img("hero-p4")} alt={heroLook.pieces[3]} />
                     </div>
                   </div>
                   <div className={styles.demoWhy}>
@@ -279,15 +283,15 @@ export function Landing({
                 <div className={styles.stepVisual}>
                   <div className={styles.swipes} aria-hidden="true">
                     <div className={styles.swipe}>
-                      <img src={img("swipe-si-1")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("swipe-si-1")} alt="" />
                       <span className={`${styles.mk} ${styles.y}`}>sí</span>
                     </div>
                     <div className={styles.swipe}>
-                      <img src={img("swipe-si-2")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("swipe-si-2")} alt="" />
                       <span className={`${styles.mk} ${styles.y}`}>sí</span>
                     </div>
                     <div className={styles.swipe}>
-                      <img src={img("swipe-no")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("swipe-no")} alt="" />
                       <span className={`${styles.mk} ${styles.n}`}>no</span>
                     </div>
                   </div>
@@ -318,33 +322,33 @@ export function Landing({
                 <div className={styles.stepVisual}>
                   <div className={styles.closet} aria-hidden="true">
                     <div className={styles.closetItem}>
-                      <img src={img("camiseta-blanca")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("camiseta-blanca")} alt="" />
                       <span className={styles.closetCheck}>&#10003;</span>
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("hero-top")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("hero-top")} alt="" />
                       <span className={styles.closetCheck}>&#10003;</span>
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("cap-top")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("cap-top")} alt="" />
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("maleta-flat-1")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("maleta-flat-1")} alt="" />
                       <span className={styles.closetCheck}>&#10003;</span>
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("jeans-claros")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("jeans-claros")} alt="" />
                       <span className={styles.closetCheck}>&#10003;</span>
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("cap-bottom")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("cap-bottom")} alt="" />
                       <span className={styles.closetCheck}>&#10003;</span>
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("tenis-blancos-urbanos")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("tenis-blancos-urbanos")} alt="" />
                     </div>
                     <div className={styles.closetItem}>
-                      <img src={img("cap-shoe")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("cap-shoe")} alt="" />
                     </div>
                   </div>
                 </div>
@@ -407,19 +411,19 @@ export function Landing({
                       <div className={styles.tryHd}>te propongo</div>
                       <div className={styles.tryMini} aria-hidden="true">
                         <span className={styles.tCell}>
-                          <img src={img("prop-tee")} alt="" />
+                          <img loading="lazy" decoding="async" src={img("prop-tee")} alt="" />
                           <span className={styles.tn}>01</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src={img("prop-jeans")} alt="" />
+                          <img loading="lazy" decoding="async" src={img("prop-jeans")} alt="" />
                           <span className={styles.tn}>02</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src={img("prop-cinturon")} alt="" />
+                          <img loading="lazy" decoding="async" src={img("prop-cinturon")} alt="" />
                           <span className={styles.tn}>03</span>
                         </span>
                         <span className={styles.tCell}>
-                          <img src={img("prop-flats")} alt="" />
+                          <img loading="lazy" decoding="async" src={img("prop-flats")} alt="" />
                           <span className={styles.tn}>04</span>
                         </span>
                       </div>
@@ -495,7 +499,7 @@ export function Landing({
                 <div className={styles.reel} aria-hidden="true">
                   <div className={styles.photo}>
                     <span className={styles.tag}>una foto tuya · IG</span>
-                    <img src={men ? "/landing/ig-h-foto.jpg" : "/landing/ig-m-foto.jpg"} alt="" />
+                    <img loading="lazy" decoding="async" src={men ? "/landing/ig-h-foto.webp" : "/landing/ig-m-foto.webp"} alt="" />
                   </div>
                   <div className={styles.links}>
                     <i />
@@ -510,7 +514,7 @@ export function Landing({
                       : ["1-top", "2-bottom", "3-accesorio", "4-calzado", "5-accesorio"]
                     ).map((t) => (
                       <div key={t} className={styles.t}>
-                        <img src={`/landing/ig-${men ? "h" : "m"}-${t}.jpg`} alt="" />
+                        <img loading="lazy" decoding="async" src={`/landing/ig-${men ? "h" : "m"}-${t}.webp`} alt="" />
                       </div>
                     ))}
                   </div>
@@ -622,15 +626,15 @@ export function Landing({
                     <div className={styles.grid2}>
                       <div className={styles.t}>
                         <span className={styles.n}>01</span>
-                        <img src={img("clasico-abrigo")} alt="Abrigo" />
+                        <img loading="lazy" decoding="async" src={img("clasico-abrigo")} alt="Abrigo" />
                       </div>
                       <div className={styles.t}>
                         <span className={styles.n}>02</span>
-                        <img src={img("clasico-pantalon")} alt="Pantalón" />
+                        <img loading="lazy" decoding="async" src={img("clasico-pantalon")} alt="Pantalón" />
                       </div>
                       <div className={styles.t}>
                         <span className={styles.n}>03</span>
-                        <img src={img("clasico-loafers")} alt="Zapatos" />
+                        <img loading="lazy" decoding="async" src={img("clasico-loafers")} alt="Zapatos" />
                       </div>
                       <div className={`${styles.t} ${styles.meta}`}>
                         <b>Tu día, resuelto</b>
@@ -649,7 +653,7 @@ export function Landing({
                   <div className={`${styles.s2card} ${styles.p2card} tema-claro`}>
                     <span className={styles.tag}>probado en ti</span>
                     <div className={styles.p2fill}>
-                      <img src={img("en-ti-clasico")} alt="El outfit puesto en ti" />
+                      <img loading="lazy" decoding="async" src={img("en-ti-clasico")} alt="El outfit puesto en ti" />
                     </div>
                     <div className={styles.p2foot}>
                       <b>Así te queda</b>
@@ -688,7 +692,7 @@ export function Landing({
                 "gal-8",
               ].map((g) => (
                 <div key={g} className={styles.galItem}>
-                  <img src={img(g)} alt="" />
+                  <img loading="lazy" decoding="async" src={img(g)} alt="" />
                 </div>
               ))}
             </div>
@@ -749,13 +753,13 @@ export function Landing({
                 <div className={styles.capsuleVis} aria-hidden="true">
                   <div className={styles.grid}>
                     <div className={styles.cell}>
-                      <img src={img("cap-top")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("cap-top")} alt="" />
                     </div>
                     <div className={styles.cell}>
-                      <img src={img("cap-bottom")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("cap-bottom")} alt="" />
                     </div>
                     <div className={styles.cell}>
-                      <img src={img("cap-shoe")} alt="" />
+                      <img loading="lazy" decoding="async" src={img("cap-shoe")} alt="" />
                     </div>
                     <div className={`${styles.cell} ${styles.count}`}>
                       <span className={styles.num}>12</span>
@@ -834,19 +838,19 @@ export function Landing({
                     </div>
                     <div className={styles.caseGrid}>
                       <div className={styles.pk}>
-                        <img src={img("maleta-flat-1")} alt="" />
+                        <img loading="lazy" decoding="async" src={img("maleta-flat-1")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img src={img("maleta-flat-2")} alt="" />
+                        <img loading="lazy" decoding="async" src={img("maleta-flat-2")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img src={img("maleta-flat-3")} alt="" />
+                        <img loading="lazy" decoding="async" src={img("maleta-flat-3")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img className={styles.worn} src={img("maleta-look-1")} alt="" />
+                        <img loading="lazy" decoding="async" className={styles.worn} src={img("maleta-look-1")} alt="" />
                       </div>
                       <div className={styles.pk}>
-                        <img className={styles.worn} src={img("maleta-look-2")} alt="" />
+                        <img loading="lazy" decoding="async" className={styles.worn} src={img("maleta-look-2")} alt="" />
                       </div>
                       <div className={`${styles.pk} ${styles.cnt}`}>
                         <span className={styles.num}>6</span>
@@ -973,10 +977,10 @@ export function Landing({
                 <span className={styles.n}>11</span> Tu turno
               </div>
               <h2 className={styles.h2}>
-                ¿Lista para abrir el clóset sin{" "}
+                {men ? "¿Listo" : "¿Lista"} para abrir el clóset sin{" "}
                 <em className={styles.s}>pelearte</em> con él?
               </h2>
-              <EntrarForm fineline="Sin tarjeta. Tus fotos y tu clóset se borran cuando tú quieras." />
+              <EntrarBoton fineline="Sin tarjeta. Tus fotos y tu clóset se borran cuando tú quieras." />
             </div>
           </div>
         </section>
