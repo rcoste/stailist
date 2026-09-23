@@ -2,6 +2,44 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.338.0] - 2026-09-23 — la landing, lista para tráfico pagado
+
+Antes de prender Google Ads se recorrió la landing como la ve quien llega de
+un anuncio: desde un navegador sin sesión, en móvil, con `?g=hombre`. Tres
+cosas salieron de ahí; ninguna toca el motor ni la base.
+
+- **Pesaba 10.6 MB y lo principal se veía a los 16 segundos.** Lighthouse
+  móvil con 4G simulada: LCP 16.3 s, 49 imágenes = 10.1 MB. Las 36 `<img>` de
+  la landing iban en PNG sin comprimir (el hero, 684 KiB a 600×804), todas
+  ansiosas, sin `next/image`. Ahora las 104 imágenes de `public/landing` están
+  también en WebP calidad 85 (22 MB → 3.6 MB en disco), la landing, la demo
+  del try-on y la intro del clóset las piden en ese formato, todo lo que está
+  bajo el pliegue carga diferido y el hero lleva prioridad alta. Medido en
+  local: al abrir en móvil se piden 9 imágenes en vez de 49. Los PNG
+  originales se quedan porque varios scripts de generación los usan de
+  referencia (`scripts/gen-landing-fix.mjs`, `scripts/landing-ig-tiles.ts`,
+  `scripts/personas-en-foto.ts`).
+- **Se quitó el campo de correo de la landing.** Nació con la lista de espera y
+  desde la apertura del registro sólo pre-llenaba el login, pero era el único
+  campo de correo dentro de la zona con etiquetas de anuncios: por él existía
+  la tubería de `sessionStorage` hacia `/login`, la prohibición de `?email=`
+  y la preocupación de que Google o TikTok lo leyeran. La puerta es ahora un
+  link limpio a `/login` (`components/landing/entrar-boton.tsx`), a lo ancho
+  en móvil; el header también va directo a `/login` en vez de bajar al hero.
+  Murieron `entrar-form.tsx`, `lib/email-landing.ts` y el test del login que
+  cubría esa tubería; el contrato de `lib/publicidad.test.ts` ahora exige que
+  la puerta no tenga `<input>` ni arme `?email=`.
+- **El cierre ya no le dice "¿Lista…?" a un hombre.** Con `?g=hombre` la
+  sección 11 decía "¿Lista para abrir el clóset…?" justo antes del segundo
+  botón. Ahora concuerda con el toggle.
+
+También entra `docs/designs/campana-ads-2026-09.md`: la decisión de segmento
+(los evales y el comparador no tienen ni una corrida con clóset de mujer, así
+que la hipótesis "el motor arma peor para mujer" no se puede contestar con lo
+que hay), las tres campañas de búsqueda con su copy, el presupuesto estimado,
+los tres niveles de lectura y cuándo se apaga, y por qué Meta y TikTok pagados
+esperan.
+
 ## [0.2.337.0] - 2026-09-19 — el juez deja de marcar lo que a Roberto no le importa
 
 Roberto vio Jev (TypeSafe) en Twitter y pidió evaluarlo: un modelo que no
