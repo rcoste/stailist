@@ -91,6 +91,8 @@ describe("esDeCampana", () => {
     expect(esDeCampana({ landing: "/", at: "x", utm_campaign: "a" })).toBe(true);
     expect(esDeCampana({ landing: "/", at: "x", gclid: "a" })).toBe(true);
     expect(esDeCampana({ landing: "/", at: "x", referer: "instagram.com" })).toBe(false);
+    // Instagram pega fbclid a cualquier link, también al de una publicación orgánica.
+    expect(esDeCampana({ landing: "/", at: "x", fbclid: "a", referer: "l.instagram.com" })).toBe(false);
     expect(esDeCampana(null)).toBe(false);
   });
 });

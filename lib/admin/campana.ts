@@ -83,8 +83,14 @@ export type ResumenCampana = {
   iaUsd: number;
 };
 
+/**
+ * ¿Vino de un anuncio? Una etiqueta de campaña o un id de clic de anuncio.
+ * `fbclid` NO basta: Facebook e Instagram se lo pegan a CUALQUIER link en que
+ * alguien toque, también a una publicación orgánica, y contarlo metería
+ * tráfico gratis en el criterio de paro. Un anuncio de Meta trae su utm.
+ */
 export function esDeCampana(o: Origen | null): boolean {
-  return !!(o && (o.utm_campaign || o.gclid || o.gbraid || o.wbraid || o.ttclid || o.fbclid));
+  return !!(o && (o.utm_campaign || o.gclid || o.gbraid || o.wbraid || o.ttclid));
 }
 
 const vacio = (fuente: string, campana: string): ResumenCampana => ({

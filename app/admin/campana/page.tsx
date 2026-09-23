@@ -174,7 +174,7 @@ export default async function AdminCampana({
               ))}
               {d.resumen.length === 0 ? (
                 <tr>
-                  <td colSpan={16} className={`${td} text-center text-muted`}>
+                  <td colSpan={10 + PASOS.length} className={`${td} text-center text-muted`}>
                     Nadie entró desde {d.desde} y no hay gasto capturado.
                   </td>
                 </tr>
