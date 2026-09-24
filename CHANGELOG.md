@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.339.1] - 2026-09-23 — el favicon.ico enseña el gancho
+
+El `favicon.ico` estaba roto en producción desde el rebrand v3 y nadie lo había
+visto: el de 16 px era un cuadro negro y los de 32 y 48 sólo enseñaban el
+destello, sin el gancho. Los navegadores que usan `icon.svg` se veían bien, y
+por eso a ojo pasaba; pero Google usa el `.ico` junto a los resultados de
+búsqueda, justo antes de prender Google Ads. Lo cazó el material del
+portafolio. Probable causa: se había rasterizado desde `icon.svg`, cuyo
+`transform-origin:center` el rasterizador ignoró.
+
+- Los tamaños de 32 y 48 px salen de `public/icon-512.png`, que siempre estuvo
+  bien. El de 16 px sale de una versión con trazo de 4.4 hecha sólo para ese
+  tamaño: reducido del de 512, el trazo quedaba gris y de medio pixel. El
+  destello no sobrevive a 16 px con ningún grosor; el gancho sí.
+- `app/favicon.test.ts` lo vigila sin dependencias (Node trae zlib para leer
+  los PNG de dentro del `.ico`): cada tamaño tiene que traer al menos 3% de
+  píxeles claros. El roto tenía 0% / 0.4% / 0.5%; el nuevo, 10.5% / 5.2% /
+  5.9%. Se comprobó que el test sale rojo con el archivo viejo.
+- `icon.svg` y los PNG no se tocaron.
+
 ## [0.2.339.0] - 2026-09-23 — la campaña en una pantalla y en un correo
 
 Roberto: "que la parte de estadísticas, métricas, uso, gastos lo tengamos
