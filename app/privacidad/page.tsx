@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FirmaRaicode } from "@/components/firma-raicode";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { InterruptorMedicion } from "@/components/interruptor-medicion";
@@ -390,10 +391,11 @@ export default function PrivacidadPage() {
         te lo decimos en la app o por correo.
       </P>
 
-      <footer className="mt-10 border-t border-line pt-6 text-sm text-muted">
+      <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-sm text-muted">
         <Link href="/" className="font-medium text-ink underline">
           volver a stailist
         </Link>
+        <FirmaRaicode />
       </footer>
     </div>
   );

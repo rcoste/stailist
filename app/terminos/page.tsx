@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FirmaRaicode } from "@/components/firma-raicode";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { DIAS_PARA_BORRAR } from "@/lib/borrado-programado";
@@ -162,10 +163,11 @@ export default function TerminosPage() {
         Estos términos se rigen por las leyes de México.
       </P>
 
-      <footer className="mt-10 border-t border-line pt-6 text-sm text-muted">
+      <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-sm text-muted">
         <Link href="/" className="font-medium text-ink underline">
           volver a stailist
         </Link>
+        <FirmaRaicode />
       </footer>
     </div>
   );
