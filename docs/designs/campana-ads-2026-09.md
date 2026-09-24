@@ -344,9 +344,10 @@ B&N con la ropa a color):
    tienes." Alimenta la campaña de eventos.
 
 Orden de producción: 2 → 1 → 3 (el 2 no necesita IA y es el más honesto).
-Especificar a Flow/Veo el casting (piel morena/mestiza, no afrodescendiente;
-ver `memory/modelos-mexicanos-no-afrodescendientes`), luz neutra fría, sin
-naranjas, y pedir el clip sin texto (el texto se pone después, con la fuente
+Especificar a Flow/Veo el casting vigente (europeo-latino aspiracional,
+tipo español o argentino, 20-32 años, NO afrodescendiente; decidido por
+Roberto el 2026-06-27, ver `memory/modelos-mexicanos-no-afrodescendientes`),
+luz neutra fría, sin naranjas, y pedir el clip sin texto (el texto se pone después, con la fuente
 de la marca).
 
 ---
