@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.339.2] - 2026-09-24 — la firma "Hecho con raicode.ai"
+
+- La pastilla de raicode (`components/firma-raicode.tsx`), tal cual la entrega
+  raicode, con `utm_campaign=stailist`. Va en el pie de la landing, en el login,
+  en el pie de privacidad y términos, y al final de Perfil › Cuenta. En las
+  pantallas de la app con barra de abajo no va; "Más" es una hoja, no una
+  pantalla. Toma el gris secundario de cada lugar por `currentColor`.
+- Rompe DESIGN.md a propósito (forma de pastilla, px fuera de la escala): es
+  la marca de raicode, no un componente de stailist. Lo dice el comentario del
+  componente para que un review no la "corrija".
+- La imagen se carga desde raicode.ai, así que su servidor ve la IP de quien
+  visita esas páginas (nada de la cuenta viaja). El aviso de privacidad no lo
+  menciona todavía; queda a decisión de Roberto servirla desde stailist.co.
+- Verificado en local, a 390 y 1440 px de ancho, en las cinco pantallas:
+  color #6F6F6F, imagen cargada, link correcto en pestaña nueva; en Inicio no
+  aparece. El interceptor de links de la landing no la toca (otra pestaña,
+  otro dominio).
+
 ## [0.2.339.1] - 2026-09-23 — el favicon.ico enseña el gancho
 
 El `favicon.ico` estaba roto en producción desde el rebrand v3 y nadie lo había

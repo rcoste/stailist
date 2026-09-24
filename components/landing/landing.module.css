@@ -1507,6 +1507,12 @@
 .fmeta a:hover {
   color: var(--c-ink);
 }
+/* La firma de raicode toma su color de aquí (currentColor): el gris secundario
+   del pie, el mismo de los links de arriba. Fuera de .fmeta a propósito: su
+   regla de links le pondría un subrayado a la pastilla. */
+.ffirma {
+  color: var(--c-muted);
+}
 
 /* ── RESPONSIVE ───────────────────────────── */
 

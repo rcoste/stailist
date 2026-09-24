@@ -7,6 +7,7 @@
 // = el modelo consistente de public/looks/*-hombre.
 import { useEffect, useState } from "react";
 import { EntrarBoton } from "./entrar-boton";
+import { FirmaRaicode } from "@/components/firma-raicode";
 import { TryDemo } from "./try-demo";
 import { PreguntasFrecuentes } from "./faq";
 import styles from "./landing.module.css";
@@ -998,6 +999,9 @@ export function Landing({
             © 2026 stailist · <a href="/privacidad">privacidad</a> ·{" "}
             <a href="/terminos">términos</a>
           </p>
+          <div className={styles.ffirma}>
+            <FirmaRaicode />
+          </div>
         </div>
       </footer>
     </div>

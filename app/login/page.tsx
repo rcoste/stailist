@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isInviteToken } from "@/lib/invitacion";
 import { LoginForm } from "./login-form";
 import { devLogin } from "./dev-actions";
+import { FirmaRaicode } from "@/components/firma-raicode";
 
 export default async function LoginPage({
   searchParams,
@@ -52,6 +53,10 @@ export default async function LoginPage({
         <a href="/terminos" className="underline hover:text-ink">términos</a> y el{" "}
         <a href="/privacidad" className="underline hover:text-ink">aviso de privacidad</a>.
       </p>
+
+      <div className="flex justify-center text-muted">
+        <FirmaRaicode />
+      </div>
 
       {isDev && (
         <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-surface/50 p-4">

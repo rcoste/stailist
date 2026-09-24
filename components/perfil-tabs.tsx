@@ -12,6 +12,7 @@ import { InstallAppRow } from "@/components/install-app-row";
 import { CorreoSemanalToggle } from "@/components/correo-semanal-toggle";
 import { EdadEditar } from "@/components/edad-editar";
 import { CuentaBorrar } from "@/components/cuenta-borrar";
+import { FirmaRaicode } from "@/components/firma-raicode";
 import { resetHints } from "@/lib/hints";
 import { tagVisible } from "@/lib/looks";
 import { logEstiloTabView } from "@/app/perfil/actions";
@@ -213,6 +214,10 @@ function CuentaTab({ name, email, avatarUrl, signOut, emailSemanal, ageRange }: 
 
       {/* Lo que promete el aviso de privacidad: un botón, no un correo. */}
       <CuentaBorrar />
+
+      <div className="flex justify-center pt-4 text-muted">
+        <FirmaRaicode />
+      </div>
     </div>
   );
 }
