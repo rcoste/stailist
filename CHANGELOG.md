@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.340.1] - 2026-09-29 — el tope de la campaña sube a 15,000
+
+- El objetivo "Gasto contra el tope" de `/admin/campana` pasa de 13,500 a
+  15,000 MXN. Roberto decidió gastar 7,000 en Google (lo que pide el crédito
+  promocional de Google Ads para nuevos anunciantes, que devuelve 7,000 unos
+  35 días después) y mantener Instagram y TikTok a 1,500 por semana cada uno.
+
 ## [0.2.340.0] - 2026-09-29 — los objetivos del plan P-03, al lado de lo que pasa
 
 - `/admin/campana` tiene arriba del embudo la tabla **Objetivos del plan P-03**:

@@ -124,7 +124,7 @@ describe("evaluarObjetivos", () => {
     const r = [fila({ costoMxn: 8000 })];
     expect(linea(r, "tope", "2026-10-09")!.estado).toBe("vigilar"); // 8000/9*18 = 16,000
     expect(linea([fila({ costoMxn: 6000 })], "tope", "2026-10-09")!.estado).toBe("bien");
-    expect(linea([fila({ costoMxn: 14000 })], "tope", "2026-10-30")!.estado).toBe("alarma");
+    expect(linea([fila({ costoMxn: 16000 })], "tope", "2026-10-30")!.estado).toBe("alarma");
   });
 });
 

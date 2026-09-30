@@ -24,8 +24,8 @@ import {
 // Funciones puras: la carga vive en campana-datos.ts.
 
 export const OBJETIVOS = {
-  /** Tope de pauta de los tres canales juntos (1,500 MXN por semana por canal). */
-  topeMxn: 13_500,
+  /** Tope de pauta de los tres canales juntos: Google 7,000 (el crédito promocional pide gastar eso) + Instagram y TikTok a 1,500 por semana. */
+  topeMxn: 15_000,
   /** Días con anuncios: del 1 al 18 de octubre (18 días). */
   anunciosDesde: "2026-10-01",
   anunciosHasta: "2026-10-18",
