@@ -24,6 +24,7 @@ import AdminCampana from "./page";
 const fila = {
   fuente: "google",
   campana: "hombres-eventos",
+  impresiones: null,
   clics: 80,
   costoMxn: 600,
   registrosGoogle: 0,
@@ -47,6 +48,14 @@ async function html(d: Partial<DatosCampana>): Promise<string> {
     paro: { estado: "faltan-datos", conPrimerLook: 0, cerradas: 0, volvieron: 0 },
     gasto: [],
     campanasConocidas: [],
+    objetivos: [],
+    uso: {
+      personas: 0,
+      conRopaPropia: 0,
+      ropaPropiaMediana: null,
+      looksMediana: null,
+      modulos: { viaje: 0, capsula: 0, prueba: 0, fitcheck: 0, adelantado: 0 },
+    },
     ...d,
   };
   const el = await AdminCampana({ searchParams: Promise.resolve({}) });
@@ -71,6 +80,21 @@ describe("/admin/campana", () => {
   it("dice el tipo de cambio que supone al sumar la IA al anuncio", async () => {
     const h = await html({});
     expect(h).toMatch(/MXN por dólar \(supuesto/);
+  });
+
+  it("cada objetivo del plan sale con su estado en palabras, no sólo en color", async () => {
+    const h = await html({
+      objetivos: [
+        { clave: "costo-registro", objetivo: "Costo por registro", meta: "$200 o menos", real: "$500", estado: "alarma" },
+      ],
+    });
+    expect(h).toContain("Objetivos del plan P-03");
+    expect(h).toContain("Costo por registro");
+    expect(h).toMatch(/text-error[^>]*>alarma</);
+  });
+
+  it("el uso de la primera semana dice cuando todavía no hay a quién medir", async () => {
+    expect(await html({})).toContain("Todavía nadie de anuncios llegó a su primer look");
   });
 
   it("sin nada todavía, lo dice en vez de enseñar una tabla vacía muda", async () => {
