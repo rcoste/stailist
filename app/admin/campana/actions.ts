@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { withDb } from "@/lib/db";
 
-// CAPTURAR LO QUE DICE GOOGLE ADS, un día y una campaña a la vez (migración
-// 0163). Upsert: volver a capturar el mismo día y campaña CORRIGE, no duplica.
+// CAPTURAR LO QUE DICE CADA PLATAFORMA DE ANUNCIOS, un día y una campaña a la
+// vez (migración 0163; la 0164 agrega las impresiones, para el CTR del plan
+// P-03). Upsert: volver a capturar el mismo día y campaña CORRIGE, no duplica.
 // La campaña se guarda tal como el utm_campaign de la URL final del anuncio;
 // si no coincide, el gasto aparece en su propia fila sin nadie adentro y se
 // nota a simple vista.
@@ -34,20 +35,22 @@ export async function guardarGasto(formData: FormData) {
   const clics = entero(formData.get("clics"));
   const costo = pesos(formData.get("costo_mxn"));
   const registros = entero(formData.get("registros_google"));
+  const impresiones = entero(formData.get("impresiones"));
   const nota = String(formData.get("nota") ?? "").trim().slice(0, 300) || null;
   if (!DIA.test(dia) || !CAMPANA.test(campana) || clics == null || costo == null) return;
 
   await withDb((c) =>
     c.query(
-      `insert into public.campana_gasto (dia, campana, clics, costo_mxn, registros_google, nota, actualizado)
-       values ($1::date, $2, $3, $4, $5, $6, now())
+      `insert into public.campana_gasto (dia, campana, clics, costo_mxn, registros_google, impresiones, nota, actualizado)
+       values ($1::date, $2, $3, $4, $5, $6, $7, now())
        on conflict (dia, campana) do update set
          clics = excluded.clics,
          costo_mxn = excluded.costo_mxn,
          registros_google = excluded.registros_google,
+         impresiones = excluded.impresiones,
          nota = excluded.nota,
          actualizado = now()`,
-      [dia, campana, clics, costo, registros, nota]
+      [dia, campana, clics, costo, registros, impresiones, nota]
     )
   );
   revalidatePath("/admin/campana");

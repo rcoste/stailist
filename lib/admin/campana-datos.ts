@@ -20,6 +20,14 @@ import {
   type FilaGasto,
   type ResumenCampana,
 } from "@/lib/admin/campana";
+import {
+  evaluarObjetivos,
+  resumirUso,
+  textoObjetivos,
+  type LineaObjetivo,
+  type ResumenUso,
+  type UsoCuenta,
+} from "@/lib/admin/objetivos";
 
 // LA CARGA DE LA CAMPAÑA: la usan la pantalla (/admin/campana) y el correo
 // diario (/api/cron/campana), para que los dos cuenten EXACTAMENTE lo mismo.
@@ -42,6 +50,36 @@ from public.profiles p
 where p.id = any ($1::uuid[])
 `;
 
+/**
+ * Lo que hizo cada persona en sus primeros DIAS_VENTANA días (el uso del plan
+ * P-03). "Ropa propia" = prendas de foto (source 'photo'), no los básicos del
+ * checklist. Los looks cuentan todos, también los que luego borró: se
+ * generaron. Los módulos salen de dónde queda huella de cada uno.
+ */
+export const SQL_USO = `
+with b as (
+  select p.id, coalesce(p.onboarding_started_at, p.created_at) as inicio
+  from public.profiles p where p.id = any ($1::uuid[])
+)
+select b.id,
+  (select count(*) from public.items i where i.user_id = b.id and i.source = 'photo'
+     and i.created_at >= b.inicio and i.created_at < b.inicio + interval '${DIAS_VENTANA} days')::int as ropa_propia,
+  (select count(*) from public.outfits o where o.user_id = b.id
+     and o.created_at >= b.inicio and o.created_at < b.inicio + interval '${DIAS_VENTANA} days')::int as looks,
+  exists (select 1 from public.outfits o where o.user_id = b.id and o.trip_id is not null
+     and o.created_at >= b.inicio and o.created_at < b.inicio + interval '${DIAS_VENTANA} days') as viaje,
+  exists (select 1 from public.events e where e.user_id = b.id and e.type = 'capsule_generated'
+     and e.created_at >= b.inicio and e.created_at < b.inicio + interval '${DIAS_VENTANA} days') as capsula,
+  exists (select 1 from public.events e where e.user_id = b.id and e.type = 'tryon_generated'
+     and e.created_at >= b.inicio and e.created_at < b.inicio + interval '${DIAS_VENTANA} days') as prueba,
+  exists (select 1 from public.events e where e.user_id = b.id and e.type = 'espejo_subido'
+     and e.created_at >= b.inicio and e.created_at < b.inicio + interval '${DIAS_VENTANA} days') as fitcheck,
+  exists (select 1 from public.outfits o where o.user_id = b.id
+     and (o.planned_for is not null or o.plan_semana is not null)
+     and o.created_at >= b.inicio and o.created_at < b.inicio + interval '${DIAS_VENTANA} days') as adelantado
+from b
+`;
+
 /** El primer día con gasto capturado, o hace 30 días si todavía no hay. */
 export async function desdePorDefecto(ahora: Date = new Date()): Promise<string> {
   const r = await withDb((c) =>
@@ -57,6 +95,9 @@ export type DatosCampana = {
   paro: EstadoParo;
   gasto: FilaGasto[];
   campanasConocidas: string[];
+  /** Los objetivos del plan P-03 contra lo real (lib/admin/objetivos.ts). */
+  objetivos: LineaObjetivo[];
+  uso: ResumenUso;
 };
 
 export async function cargarCampana(desde: string, ahora: Date = new Date()): Promise<DatosCampana> {
@@ -76,7 +117,11 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
 
   // En serie y no con Promise.all: una conexión de pg corre una consulta a la
   // vez, y encimarlas está deprecado (pg@9 lo quita).
-  const [extrasRows, codigos, gasto] = await withDb(async (c) => {
+  // El uso mira a TODA la gente de anuncios con primer look, como el criterio
+  // de paro: no depende del rango de fechas de la pantalla.
+  const deAnuncio = todas.filter((f) => f.onboarding_step >= 5 && esDeCampana(origenDesdeDato(f.origen)));
+
+  const [extrasRows, codigos, gasto, usoRows] = await withDb(async (c) => {
     const extras = (await c.query(SQL_EXTRAS, [filas.map((f) => f.id)])).rows;
     const cods = (
       await c.query(
@@ -88,13 +133,31 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     const gas = (
       await c.query(
         `select to_char(dia, 'YYYY-MM-DD') as dia, campana, clics, costo_mxn::float as costo_mxn,
-                registros_google, nota
+                registros_google, impresiones, nota
            from public.campana_gasto where dia >= $1::date order by dia desc, campana`,
         [desde]
       )
     ).rows as FilaGasto[];
-    return [extras, cods, gas] as const;
+    const us = deAnuncio.length ? (await c.query(SQL_USO, [deAnuncio.map((f) => f.id)])).rows : [];
+    return [extras, cods, gas, us] as const;
   });
+
+  const uso = new Map<string, UsoCuenta>(
+    usoRows.map((r) => [
+      r.id as string,
+      {
+        ropaPropia: Number(r.ropa_propia ?? 0),
+        looks: Number(r.looks ?? 0),
+        modulos: {
+          viaje: !!r.viaje,
+          capsula: !!r.capsula,
+          prueba: !!r.prueba,
+          fitcheck: !!r.fitcheck,
+          adelantado: !!r.adelantado,
+        },
+      },
+    ])
+  );
 
   const extras = new Map<string, ExtraCuenta>(
     extrasRows.map((r) => [
@@ -116,15 +179,19 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     ]),
   ].sort();
 
+  const resumen = resumirCampana({ filas, extras, codigos, gasto, ahora });
+  // El criterio mira TODAS las cuentas de campaña, no sólo las de la ventana
+  // elegida en pantalla: las primeras 30 son las primeras 30.
+  const paro = criterioDeParo(todas, ahora);
   return {
     desde,
     filas,
-    resumen: resumirCampana({ filas, extras, codigos, gasto, ahora }),
-    // El criterio mira TODAS las cuentas de campaña, no sólo las de la ventana
-    // elegida en pantalla: las primeras 30 son las primeras 30.
-    paro: criterioDeParo(todas, ahora),
+    resumen,
+    paro,
     gasto,
     campanasConocidas,
+    objetivos: evaluarObjetivos({ resumen, paro, hoy: diaEnZona(ahora) }),
+    uso: resumirUso(todas, uso),
   };
 }
 
@@ -169,5 +236,6 @@ export async function datosCorreoDiario(ahora: Date = new Date()): Promise<Datos
     campanas: d.resumen,
     paro: d.paro,
     desde,
+    objetivos: textoObjetivos(d.objetivos, d.uso),
   };
 }

@@ -49,6 +49,8 @@ export type FilaGasto = {
   clics: number;
   costo_mxn: number;
   registros_google: number | null;
+  /** Veces que se mostró el anuncio (migración 0164). Opcional: sin ella no hay CTR. */
+  impresiones?: number | null;
   nota?: string | null;
 };
 
@@ -64,7 +66,8 @@ export const PASOS = [
 export type ResumenCampana = {
   fuente: string;
   campana: string;
-  /** De Google, capturado a mano. null = nadie capturó nada para esta campaña. */
+  /** De la plataforma, capturado a mano. null = nadie capturó nada para esta campaña. */
+  impresiones: number | null;
   clics: number | null;
   costoMxn: number | null;
   registrosGoogle: number | null;
@@ -96,6 +99,7 @@ export function esDeCampana(o: Origen | null): boolean {
 const vacio = (fuente: string, campana: string): ResumenCampana => ({
   fuente,
   campana,
+  impresiones: null,
   clics: null,
   costoMxn: null,
   registrosGoogle: null,
@@ -112,6 +116,19 @@ const vacio = (fuente: string, campana: string): ResumenCampana => ({
 });
 
 const SIN_RASTRO = "directo / sin rastro";
+
+/**
+ * EL CANAL DE UN GASTO QUE TODAVÍA NO TRAJO A NADIE. El gasto se captura por
+ * campaña (utm_campaign), sin fuente. Si alguien ya entró por esa campaña, su
+ * fila dice la fuente; si no, se lee del nombre: la convención del plan P-03 es
+ * `ig-<enfoque>` para Instagram y `tt-<enfoque>` para TikTok, porque el mismo
+ * enfoque corre en los dos y con el mismo nombre su gasto se mezclaría.
+ */
+export function fuenteDeCampana(campana: string): string {
+  if (/^ig[-_]/.test(campana)) return "instagram";
+  if (/^tt[-_]/.test(campana)) return "tiktok";
+  return "google";
+}
 
 export function resumirCampana(input: {
   filas: FilaPerfilAdquisicion[];
@@ -156,12 +173,14 @@ export function resumirCampana(input: {
     grupo(c.fuente, c.campana).g.pidieronCodigo += c.nuevos;
   }
 
-  // Lo de Google trae sólo la campaña. Se pega a la fila que ya tenga esa
-  // campaña; si todavía nadie entró por ella, nace una fila "google" para que
-  // el gasto se vea aunque no haya traído a nadie — ése es justo el caso malo.
+  // Lo capturado trae sólo la campaña. Se pega a la fila que ya tenga esa
+  // campaña; si todavía nadie entró por ella, nace una fila con el canal que
+  // dice su nombre (fuenteDeCampana) para que el gasto se vea aunque no haya
+  // traído a nadie — ése es justo el caso malo.
   for (const s of input.gasto) {
     const existente = [...grupos.values()].find((g) => g.campana === s.campana);
-    const g = existente ?? grupo("google", s.campana).g;
+    const g = existente ?? grupo(fuenteDeCampana(s.campana), s.campana).g;
+    if (s.impresiones != null) g.impresiones = (g.impresiones ?? 0) + s.impresiones;
     g.clics = (g.clics ?? 0) + s.clics;
     g.costoMxn = (g.costoMxn ?? 0) + Number(s.costo_mxn);
     if (s.registros_google != null) g.registrosGoogle = (g.registrosGoogle ?? 0) + s.registros_google;
@@ -241,6 +260,8 @@ export type DatosCorreoDiario = {
   campanas: ResumenCampana[];
   paro: EstadoParo;
   desde: string;
+  /** Los objetivos del plan P-03 ya escritos en texto (lib/admin/objetivos.ts). */
+  objetivos?: string[];
 };
 
 const usd = (n: number) => `$${n.toFixed(2)}`;
@@ -263,6 +284,7 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
     `CRITERIO DE PARO`,
     `- ${textoParo(d.paro)}`,
     "",
+    ...(d.objetivos?.length ? [...d.objetivos, ""] : []),
   ];
   if (deCampana.length === 0) {
     lineas.push("CAMPAÑAS: todavía no hay nada con origen de campaña ni gasto capturado.");

@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.340.0] - 2026-09-29 — los objetivos del plan P-03, al lado de lo que pasa
+
+- `/admin/campana` tiene arriba del embudo la tabla **Objetivos del plan P-03**:
+  cada objetivo que el plan escribió antes de gastar, junto a su número real y
+  un estado en palabras (va bien, vigilar, alarma, faltan datos). El color sólo
+  acompaña. Objetivos: el criterio de paro (6 de las primeras 30 vuelven),
+  registro → primer look, costo por registro, CTR y costo por primer look por
+  canal (con la regla de apagar un canal) y el gasto contra el tope de 13,500
+  MXN con proyección al ritmo del día. Lógica pura y umbrales en un solo lugar:
+  `lib/admin/objetivos.ts`, con test.
+- Bloque **Uso en su primera semana** para la gente de anuncios con primer
+  look: cuántos subieron ropa propia (prendas de foto, no los básicos), looks
+  por persona y qué módulos usaron (viaje, cápsula, prueba puesta, fit check,
+  look por adelantado). Sin meta a propósito: la primera semana fija la
+  referencia.
+- El correo de las 8 am trae los mismos objetivos y el uso.
+- La captura diaria acepta **impresiones** (migración 0164, columna opcional,
+  ya aplicada) para calcular el CTR, y ya no dice sólo "Google Ads": sirve para
+  Meta y TikTok. Un gasto sin nadie adentro toma el canal del nombre de la
+  campaña: `ig-…` Instagram, `tt-…` TikTok, lo demás Google.
+- Verificado contra la base real con consultas de sólo lectura: la carga, la
+  consulta de uso sobre ocho cuentas recientes y el texto del correo.
+
 ## [0.2.339.2] - 2026-09-24 — la firma "Hecho con raicode.ai"
 
 - La pastilla de raicode (`components/firma-raicode.tsx`), tal cual la entrega

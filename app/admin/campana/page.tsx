@@ -11,6 +11,7 @@ import {
   type ResumenCampana,
 } from "@/lib/admin/campana";
 import { cargarCampana, desdePorDefecto } from "@/lib/admin/campana-datos";
+import { MODULOS, OBJETIVOS, TEXTO_ESTADO, type Estado } from "@/lib/admin/objetivos";
 import { borrarGasto, guardarGasto } from "./actions";
 
 // LA CAMPAÑA: del clic a "volvió", por campaña. Las definiciones viven en
@@ -45,6 +46,14 @@ function Paso({ n, de }: { n: number; de: number | null }) {
     </td>
   );
 }
+
+/** El estado siempre en palabras; el color sólo acompaña. */
+const TONO: Record<Estado, string> = {
+  bien: "text-success",
+  vigilar: "text-warning",
+  alarma: "text-error",
+  "sin-datos": "text-muted",
+};
 
 function Fila({ r }: { r: ResumenCampana }) {
   const pasos = r.pasos;
@@ -133,6 +142,89 @@ export default async function AdminCampana({
       </div>
 
       <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Objetivos del plan P-03</h2>
+        <p className="max-w-3xl text-xs text-muted">
+          Lo que el plan escribió antes de gastar, contra lo que va pasando. Salvo el criterio
+          de paro (un acuerdo), los umbrales son estimados de confianza baja: la primera
+          semana de datos los pone a prueba. Anuncios del {OBJETIVOS.anunciosDesde} al{" "}
+          {OBJETIVOS.anunciosHasta}. El CTR necesita las impresiones del día, abajo.
+        </p>
+        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-muted">
+                <th className={`${th} text-left`}>Objetivo</th>
+                <th className={`${th} text-left`}>Meta</th>
+                <th className={`${th} text-left`}>Real</th>
+                <th className={`${th} text-left`}>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.objetivos.map((o) => (
+                <tr key={o.clave} className="border-b border-line last:border-0">
+                  <td className={`${td} text-left`}>
+                    <span className="font-medium text-ink">{o.objetivo}</span>
+                    {o.nota ? <span className="block text-xs text-muted">{o.nota}</span> : null}
+                  </td>
+                  <td className={`${td} text-left text-muted`}>{o.meta}</td>
+                  <td className={`${td} text-left tabular text-ink`}>{o.real}</td>
+                  <td className={`${td} text-left font-medium ${TONO[o.estado]}`}>{TEXTO_ESTADO[o.estado]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          Uso en su primera semana
+        </h2>
+        <p className="max-w-3xl text-xs text-muted">
+          Gente de anuncios que llegó a su primer look, en sus primeros {DIAS_VENTANA} días. Sin
+          meta a propósito: la primera semana fija la referencia. Se lee junto a “volvió”: si no
+          vuelven, ¿subieron su ropa, vieron más de un look, descubrieron algo más?{" "}
+          <b className="text-ink">Ropa propia</b> = prendas de foto, no los básicos del checklist.
+        </p>
+        {d.uso.personas === 0 ? (
+          <p className="rounded-lg border border-line bg-surface p-4 text-sm text-muted">
+            Todavía nadie de anuncios llegó a su primer look.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-line bg-surface p-4">
+              <p className="text-xs text-muted">Personas</p>
+              <p className="text-h2 font-semibold tabular text-ink">{d.uso.personas}</p>
+            </div>
+            <div className="rounded-lg border border-line bg-surface p-4">
+              <p className="text-xs text-muted">Subieron ropa propia</p>
+              <p className="text-h2 font-semibold tabular text-ink">
+                {d.uso.conRopaPropia}{" "}
+                <span className="text-sm font-normal text-muted">{pct(d.uso.conRopaPropia, d.uso.personas)}</span>
+              </p>
+              <p className="text-xs text-muted">mediana: {d.uso.ropaPropiaMediana ?? "—"} prendas</p>
+            </div>
+            <div className="rounded-lg border border-line bg-surface p-4">
+              <p className="text-xs text-muted">Looks por persona</p>
+              <p className="text-h2 font-semibold tabular text-ink">{d.uso.looksMediana ?? "—"}</p>
+              <p className="text-xs text-muted">mediana</p>
+            </div>
+            <div className="rounded-lg border border-line bg-surface p-4">
+              <p className="text-xs text-muted">Módulos que usaron</p>
+              <ul className="mt-1 flex flex-col gap-0.5 text-sm text-ink">
+                {MODULOS.map((m) => (
+                  <li key={m.clave} className="flex justify-between gap-3">
+                    <span>{m.etiqueta}</span>
+                    <span className="tabular">{d.uso.modulos[m.clave]}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">El embudo</h2>
         <p className="max-w-3xl text-xs text-muted">
           Bajo cada número, el % del paso anterior. <b className="text-ink">Pidieron código</b> =
@@ -186,11 +278,13 @@ export default async function AdminCampana({
 
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-          Capturar lo de Google Ads
+          Capturar lo de cada plataforma
         </h2>
         <p className="max-w-3xl text-xs text-muted">
-          Un renglón por día y campaña. La campaña se escribe igual que el{" "}
-          <code>utm_campaign</code> de la URL del anuncio. Capturar otra vez el mismo día y
+          Un renglón por día y campaña, de Google Ads, Meta y TikTok. La campaña se escribe
+          igual que el <code>utm_campaign</code> de la URL del anuncio; en Instagram empieza con{" "}
+          <code>ig-</code> y en TikTok con <code>tt-</code>, para que el mismo enfoque no mezcle
+          su gasto entre canales. Capturar otra vez el mismo día y
           campaña corrige lo anterior. <b className="text-ink">Registros de Google</b> es
           opcional y sirve para comparar: si Google ve muchos menos que la columna Registro, la
           atribución se está perdiendo entre navegadores y se decide con este panel.
@@ -214,6 +308,10 @@ export default async function AdminCampana({
                 <option key={c} value={c} />
               ))}
             </datalist>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            impresiones
+            <input name="impresiones" inputMode="numeric" className={`${inputCls} w-24`} />
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted">
             clics
@@ -246,6 +344,7 @@ export default async function AdminCampana({
                 <tr className="border-b border-line text-muted">
                   <th className={`${th} text-left`}>Día</th>
                   <th className={`${th} text-left`}>Campaña</th>
+                  <th className={`${th} text-center`}>Impresiones</th>
                   <th className={`${th} text-center`}>Clics</th>
                   <th className={`${th} text-center`}>MXN</th>
                   <th className={`${th} text-center`}>Registros Google</th>
@@ -258,6 +357,7 @@ export default async function AdminCampana({
                   <tr key={`${g.dia}|${g.campana}`} className="border-b border-line last:border-0">
                     <td className={`${td} text-left tabular text-muted`}>{g.dia}</td>
                     <td className={`${td} text-left text-ink`}>{g.campana}</td>
+                    <td className={`${td} text-center tabular text-ink`}>{g.impresiones ?? "—"}</td>
                     <td className={`${td} text-center tabular text-ink`}>{g.clics}</td>
                     <td className={`${td} text-center tabular text-ink`}>{mxn(g.costo_mxn)}</td>
                     <td className={`${td} text-center tabular text-ink`}>{g.registros_google ?? "—"}</td>
