@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { enVerComo, getProfile } from "@/lib/auth";
 import { COOKIE_ORIGEN } from "@/lib/origen";
@@ -8,6 +8,7 @@ import { GeneroPicker } from "./genero-picker";
 import { registrarEvento } from "@/lib/telemetria";
 import { createClient } from "@/lib/supabase/server";
 import { COLUMNA } from "../ancho";
+import { dispositivoDesdeUA } from "@/lib/dispositivo";
 
 // Primer paso del onboarding: define qué clóset armamos. No lleva barra de
 // progreso porque es la antesala (define el resto). Si ya lo elegiste, te
@@ -27,7 +28,13 @@ export default async function GeneroPage() {
     .is("onboarding_started_at", null)
     .select("id");
   if (arrancado && arrancado.length > 0) {
-    await registrarEvento(supabase, { user_id: profile.id, type: "onboarding_started" });
+    // Con el aparato desde el que entró (una palabra, no el user-agent): es lo
+    // que deja contestar cuánta gente llega por computadora y si termina.
+    await registrarEvento(supabase, {
+      user_id: profile.id,
+      type: "onboarding_started",
+      data: { dispositivo: dispositivoDesdeUA((await headers()).get("user-agent")) },
+    });
   }
 
   // DE DÓNDE LLEGÓ: la cookie que dejó proxy.ts pasa al perfil

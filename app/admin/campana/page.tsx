@@ -7,6 +7,7 @@ import {
   PARO_MUESTRA,
   PASOS,
   costoPor,
+  textoDispositivos,
   textoParo,
   type ResumenCampana,
 } from "@/lib/admin/campana";
@@ -226,6 +227,13 @@ export default async function AdminCampana({
 
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">El embudo</h2>
+        {/* La pregunta por la que las campañas incluyen computadoras. */}
+        {textoDispositivos(d.dispositivos) ? (
+          <p className="max-w-3xl text-sm text-ink">
+            <b>Por aparato</b> (cuentas de anuncios): {textoDispositivos(d.dispositivos)}.{" "}
+            <span className="text-xs text-muted">Se guarda desde el 2026-10-01.</span>
+          </p>
+        ) : null}
         <p className="max-w-3xl text-xs text-muted">
           Bajo cada número, el % del paso anterior. <b className="text-ink">Pidieron código</b> =
           personas nuevas, una vez al día (se cuenta desde el 2026-09-23).{" "}

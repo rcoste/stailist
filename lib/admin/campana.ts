@@ -1,6 +1,7 @@
 import { origenDesdeDato, type Origen } from "@/lib/origen";
 import { isMinor, type AgeRange } from "@/lib/edad";
 import { mediana, fmtSegundos } from "@/lib/admin/embudo-tiempos";
+import type { Dispositivo } from "@/lib/dispositivo";
 import {
   campanaDe,
   fuenteDe,
@@ -40,6 +41,11 @@ export type ExtraCuenta = {
   se_lo_puso: boolean;
   /** Gasto de IA de esa persona en sus primeros DIAS_VENTANA días. */
   ia_usd_7d: number;
+  /** Desde qué aparato arrancó el onboarding (se guarda desde el 2026-10-01). */
+  dispositivo?: Dispositivo | null;
+  /** Prendas en su clóset hoy, y cuántas de ellas son de foto propia. */
+  prendas?: number;
+  fotos?: number;
 };
 
 export type FilaCodigos = { dia: string; fuente: string; campana: string; nuevos: number; recurrentes: number };
@@ -262,7 +268,90 @@ export type DatosCorreoDiario = {
   desde: string;
   /** Los objetivos del plan P-03 ya escritos en texto (lib/admin/objetivos.ts). */
   objetivos?: string[];
+  /** Una fila por cuenta que arrancó ayer: quién, de dónde y hasta dónde llegó. */
+  quienAyer?: QuienLlego[];
+  /** Cuentas de anuncios por aparato, acumulado (ver resumirDispositivos). */
+  dispositivos?: ResumenDispositivos;
 };
+
+/** De dónde llegó, en un renglón: la campaña si la hay; si no, la fuente y lo que contestó. */
+export function origenEnPalabras(o: Origen | null, comoNosConocio: string | null): string {
+  const campana = campanaDe(o);
+  const base = campana !== "—" ? `${campana} (${fuenteDe(o)})` : fuenteDe(o);
+  return comoNosConocio && comoNosConocio !== "omitido" ? `${base}, dijo: ${comoNosConocio}` : base;
+}
+
+/** Una persona nueva, en lo que cabe en un renglón del correo. */
+export type QuienLlego = {
+  correo: string;
+  /** "hombres-diario (google)", "directo", o lo que contestó en ¿cómo nos conociste? */
+  origen: string;
+  dispositivo: Dispositivo | null;
+  /** Hasta dónde llegó, en palabras (pasoEnPalabras). */
+  paso: string;
+  prendas: number;
+  fotos: number;
+};
+
+/**
+ * Dónde se quedó, dicho como lo diría Roberto. `onboarding_step` es el paso que
+ * le TOCA, así que "paso 2" significa "terminó colores y se quedó en el clóset".
+ */
+export function pasoEnPalabras(step: number, gender: string | null): string {
+  if (!gender) return "se quedó en la primera pantalla (género)";
+  if (step >= 5) return "llegó a su primer look";
+  return (
+    [
+      "se quedó en los swipes",
+      "se quedó en los colores",
+      "se quedó en el clóset",
+      "se quedó antes de pedir su look",
+      "se quedó esperando su primer look",
+    ][Math.max(0, step)] ?? "se quedó en el onboarding"
+  );
+}
+
+export type ConteoDispositivo = { cuentas: number; primerLook: number };
+export type ResumenDispositivos = Record<Dispositivo | "sinDato", ConteoDispositivo>;
+
+/**
+ * Cuántas cuentas de ANUNCIOS arrancaron en cada aparato y cuántas de ellas
+ * llegaron a su primer look. Es la pregunta por la que las campañas incluyen
+ * computadoras. "Sin dato" son las de antes del 2026-10-01 (no se guardaba).
+ */
+export function resumirDispositivos(
+  filas: FilaPerfilAdquisicion[],
+  extras: Map<string, ExtraCuenta>
+): ResumenDispositivos {
+  const r: ResumenDispositivos = {
+    computadora: { cuentas: 0, primerLook: 0 },
+    celular: { cuentas: 0, primerLook: 0 },
+    tablet: { cuentas: 0, primerLook: 0 },
+    sinDato: { cuentas: 0, primerLook: 0 },
+  };
+  for (const f of filas) {
+    if (!esDeCampana(origenDesdeDato(f.origen))) continue;
+    const g = r[extras.get(f.id)?.dispositivo ?? "sinDato"];
+    g.cuentas++;
+    if (f.onboarding_step >= 5) g.primerLook++;
+  }
+  return r;
+}
+
+/** "computadora 4 (2 con primer look) · celular 9 (5) · sin dato 1 (0)". Vacío si no hay nadie. */
+export function textoDispositivos(r: ResumenDispositivos): string {
+  const partes = (
+    [
+      ["computadora", r.computadora],
+      ["celular", r.celular],
+      ["tablet", r.tablet],
+      ["sin dato", r.sinDato],
+    ] as const
+  )
+    .filter(([, c]) => c.cuentas > 0)
+    .map(([n, c], i) => `${n} ${c.cuentas} (${c.primerLook}${i === 0 ? " con primer look" : ""})`);
+  return partes.join(" · ");
+}
 
 const usd = (n: number) => `$${n.toFixed(2)}`;
 const mxn = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocaleString("es-MX")}`);
@@ -284,6 +373,20 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
     `CRITERIO DE PARO`,
     `- ${textoParo(d.paro)}`,
     "",
+    ...(d.quienAyer?.length
+      ? [
+          "QUIÉN LLEGÓ AYER",
+          ...d.quienAyer.map(
+            (q) =>
+              `- ${q.correo} · ${q.origen} · ${q.dispositivo ?? "aparato sin dato"} · ${q.paso} · ` +
+              `${q.prendas} ${q.prendas === 1 ? "prenda" : "prendas"}${q.fotos ? ` (${q.fotos} de foto propia)` : ""}`
+          ),
+          "",
+        ]
+      : []),
+    ...(d.dispositivos && textoDispositivos(d.dispositivos)
+      ? ["POR APARATO (cuentas de anuncios, acumulado)", `- ${textoDispositivos(d.dispositivos)}`, ""]
+      : []),
     ...(d.objetivos?.length ? [...d.objetivos, ""] : []),
   ];
   if (deCampana.length === 0) {
