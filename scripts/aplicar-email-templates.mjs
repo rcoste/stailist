@@ -50,7 +50,9 @@ const PLANTILLAS = [
     archivo: "supabase/email-templates/confirm-signup.html",
     campoContenido: "mailer_templates_confirmation_content",
     campoAsunto: "mailer_subjects_confirmation",
-    asunto: "Bienvenida a Stailist",
+    // Sin género: "Bienvenida a Stailist" le hablaba en femenino a quien llega de
+    // la campaña de hombres (2026-10-01).
+    asunto: "Tu código para entrar a Stailist",
     cuando: "primer correo de alguien que se registra",
   },
 ];
