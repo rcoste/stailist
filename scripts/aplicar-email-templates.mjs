@@ -55,17 +55,6 @@ const PLANTILLAS = [
     asunto: "Tu código para entrar a Stailist",
     cuando: "primer correo de alguien que se registra",
   },
-  {
-    // Desde la entrada sin correo (lib/borrador.ts): quien empezó sin
-    // registrarse recibe ÉSTE al dejar su correo antes del primer look. Si se
-    // queda la plantilla de fábrica de Supabase llega un link y no un código, y
-    // esa pantalla sólo sabe recibir códigos.
-    archivo: "supabase/email-templates/email-change.html",
-    campoContenido: "mailer_templates_email_change_content",
-    campoAsunto: "mailer_subjects_email_change",
-    asunto: "Tu código para entrar a Stailist",
-    cuando: "quien empezó sin registrarse y deja su correo antes del primer look",
-  },
 ];
 
 const body = {};

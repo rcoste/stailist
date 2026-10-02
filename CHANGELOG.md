@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.345.0] - 2026-10-02 — empezar sin registrarse: el correo se pide antes del primer look
+
+- Con `NEXT_PUBLIC_ENTRADA_SIN_CORREO=1`, "Armar mi primer look" ya no manda a
+  `/login`: abre un **borrador** (sesión anónima de Supabase) y entra directo al
+  onboarding. El correo y su código se piden en `/onboarding/correo`, justo antes
+  de armar el primer look, cuando la persona ya eligió estilo, colores y básicos.
+- Al verificar el código, lo que el borrador contestó pasa a la cuenta de ese
+  correo (`lib/borrador-adoptar.ts`). Si el correo ya tenía cuenta, la persona
+  entra a su cuenta y el borrador se descarta. Se verifica con el login de
+  siempre, así que salen las plantillas de correo que ya existían.
+- Sin correo no hay app: las rutas de IA rechazan al borrador, Storage no le
+  deja subir nada (migración 0167) y no puede pasar del paso 3.
+- La landing gana una puerta aparte para quien ya tiene cuenta.
+- Paneles: "usuarias" y la lista de usuarios cuentan sólo cuentas con correo;
+  el embudo de campaña y el correo diario sí muestran a los borradores, como
+  "(sin correo todavía)" y con el paso donde se quedaron.
+- La limpieza nocturna borra los borradores con más de 7 días.
+- Con el interruptor apagado no cambia nada: la landing sigue yendo a `/login`.
+
 ## [0.2.344.2] - 2026-10-02 — sin correo verificado no hay IA
 
 - Las rutas de IA rechazan a una sesión anónima (`lib/cuotas.ts`). Es el

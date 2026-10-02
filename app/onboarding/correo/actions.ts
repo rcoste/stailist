@@ -10,18 +10,17 @@ import { contarPeticionDeCodigo } from "@/lib/campana-codigos";
 import { COOKIE_CONVERSION } from "@/lib/publicidad";
 import { isMinor, type AgeRange } from "@/lib/edad";
 import { registrarEvento } from "@/lib/telemetria";
+import { adoptarBorrador } from "@/lib/borrador-adoptar";
 
-// EL CORREO, AL FINAL (ver lib/borrador.ts). Dos pasos, como el login: pedir el
-// código y teclearlo. La diferencia es que aquí YA hay sesión (el borrador), así
-// que no se crea una cuenta nueva: se le pone correo a la que ya existe
-// (`updateUser`) y Supabase manda el código de "cambio de correo".
+// EL CORREO, AL FINAL (ver lib/borrador.ts). Dos pasos, como el login, y con el
+// MISMO mecanismo del login (signInWithOtp + verifyOtp): así el correo sale con
+// las plantillas de siempre. Al verificar, lo que el borrador contestó se le
+// pasa a la cuenta de ese correo (lib/borrador-adoptar.ts, ahí está el porqué).
 
 export type CorreoState =
   | { status: "idle" }
   | { status: "sent"; email: string; message?: string }
-  | { status: "error"; message: string; email?: string }
-  /** Ese correo ya es de una cuenta: se le manda a entrar por /login. */
-  | { status: "existe"; email: string };
+  | { status: "error"; message: string; email?: string };
 
 export async function pedirCodigo(_prev: CorreoState, formData: FormData): Promise<CorreoState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -45,12 +44,10 @@ export async function pedirCodigo(_prev: CorreoState, formData: FormData): Promi
   await contarPeticionDeCodigo(email, (await cookies()).get(COOKIE_ORIGEN)?.value);
   await anotarIntento(email, ip);
 
-  const { error } = await supabase.auth.updateUser({ email });
+  // shouldCreateUser: si el correo es nuevo nace su cuenta (correo de
+  // bienvenida); si ya existía, le llega el código de acceso de siempre.
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   if (error) {
-    // Ese correo ya tiene cuenta: su clóset está allá, no en este borrador.
-    if (error.code === "email_exists" || /already|registered|exists/i.test(error.message)) {
-      return { status: "existe", email };
-    }
     return { status: "error", message: "No pude mandar el código. Inténtalo en unos segundos.", email };
   }
   return { status: "sent", email };
@@ -64,19 +61,35 @@ export async function verificarCodigo(_prev: CorreoState, formData: FormData): P
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email_change" });
+  // El borrador se lee ANTES de verificar: después la sesión ya es la de la
+  // cuenta del correo. Sale de la sesión validada, nunca del formulario.
+  const {
+    data: { user: antes },
+  } = await supabase.auth.getUser();
+  const borradorId = antes?.is_anonymous ? antes.id : null;
+
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
   if (error || !data.user) {
     return { status: "sent", email, message: "Código incorrecto o caducado. Pide uno nuevo." };
   }
 
-  // El correo ya está en auth.users y el trigger de la 0167 lo copia al perfil;
-  // se escribe también aquí por si el trigger no corrió (cinturón y tirantes: el
-  // perfil con correo NULL seguiría viéndose como borrador en los paneles).
+  let adopcion: Awaited<ReturnType<typeof adoptarBorrador>> = "nada";
+  if (borradorId) {
+    try {
+      adopcion = await adoptarBorrador(borradorId, data.user.id);
+    } catch (e) {
+      // La cuenta ya existe y ya entró; lo que falló fue traerle lo contestado.
+      // Que quede en los registros: es un onboarding perdido, no un login roto.
+      console.error(`[borrador] no se pudo pasar ${borradorId} a ${data.user.id}: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+  // Ya tenía cuenta (o no había nada que pasar): "/" sabe a dónde mandarla.
+  if (adopcion !== "adoptado") redirect("/");
+
   const { data: perfil } = await supabase
     .from("profiles")
-    .update({ email, updated_at: new Date().toISOString() })
-    .eq("id", data.user.id)
     .select("age_range")
+    .eq("id", data.user.id)
     .maybeSingle();
 
   await registrarEvento(supabase, {

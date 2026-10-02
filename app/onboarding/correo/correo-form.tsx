@@ -15,25 +15,6 @@ export function CorreoForm() {
   });
   const [correo, setCorreo] = useState("");
 
-  if (pedido.status === "existe") {
-    return (
-      <div className="flex flex-col gap-4 border border-line bg-surface p-5">
-        <p className="text-base text-ink">
-          <span className="font-semibold">{pedido.email}</span> ya tiene cuenta en stailist. Entra con ese correo y
-          ahí está tu clóset.
-        </p>
-        {/* <a> y no Link: /login redirige a quien trae sesión con correo, y con
-            el borrador hay que llegar de verdad a la página. */}
-        <a
-          href="/login"
-          className="flex min-h-[54px] items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
-        >
-          entrar con mi cuenta <Icon name="flecha" size={19} />
-        </a>
-      </div>
-    );
-  }
-
   if (pedido.status === "sent") {
     return (
       <Codigo
