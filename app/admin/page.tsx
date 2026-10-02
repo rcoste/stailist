@@ -196,12 +196,21 @@ export default async function AdminOverview() {
   // y los dos se habrían visto aquí a la primera. Ventana de 30 días: con el
   // volumen de la beta, 7 días casi siempre dice "sin datos".
   const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  // SIN LAS CUENTAS DE PRUEBA (@stailist.app). El 2026-10-01 recorrí el
+  // onboarding varias veces con claude.dev para revisar la versión de
+  // escritorio; esa cuenta ya tenía looks, así que el wow cerró el paso por
+  // "wow_reanudado" sin generar nada —y sin TTV, que es lo correcto—. Siete
+  // disparos sin consecuencia pintaron esta alarma en rojo ("30% llega") con el
+  // vínculo real sano: 3 personas terminaron y las 3 dejaron su TTV. Una alarma
+  // que se prende con las pruebas de quien la mantiene deja de leerse.
+  const { data: dePrueba } = await supabase.from("profiles").select("id").ilike("email", "%@stailist.app");
+  const idsDePrueba = new Set((dePrueba ?? []).map((p) => String(p.id)));
   const { data: ev30 } = await supabase
     .from("events")
-    .select("type, created_at, data")
+    .select("user_id, type, created_at, data")
     .gte("created_at", since30d)
     .in("type", ["espejo_subido", "worn", "first_outfit_ttv", "onboarding_step"]);
-  const eventos = (ev30 ?? []).map((e) => ({
+  const eventos = (ev30 ?? []).filter((e) => !idsDePrueba.has(String(e.user_id))).map((e) => ({
     type: String(e.type),
     created_at: String(e.created_at),
     data: e.data as { step?: number | string } | null,
