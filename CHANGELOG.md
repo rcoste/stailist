@@ -8,7 +8,8 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   teléfono. Las pantallas que enseñan fotos usan el ancho: swipes (texto a la
   izquierda, carta más grande a la derecha), pares de corte (fotos grandes),
   acentos (tres opciones lado a lado, sin scroll), checklist de básicos (6 por
-  fila: de 2,828 px de scroll a 1,048) y los tres primeros looks en fila.
+  fila: de 2,828 px de scroll a 1,048) y los tres primeros looks en fila, con
+  sus prendas en 2×2 para que se vean grandes.
 - Las pantallas de pregunta quedan en una columna centrada, con el botón junto
   al contenido en vez de pegado al piso del monitor.
 - **Flechas del teclado**: ← no va / → me gusta en los swipes, y ← → para

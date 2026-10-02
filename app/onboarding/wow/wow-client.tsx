@@ -356,7 +356,10 @@ export function WowClient({
                     <EditorialName name={o.nombre} />
                   </span>
                 </span>
-                <span className="flex gap-2">
+                {/* En escritorio las prendas van 2×2: en fila de cuatro cada una
+                    medía ~65px en una tarjeta de 310, con media pantalla vacía
+                    debajo (Roberto, 2026-10-01). */}
+                <span className="flex gap-2 lg:grid lg:grid-cols-2">
                   {o.prendas.slice(0, 4).map((p, i) => (
                     <span
                       key={`${o.id}-${i}`}
@@ -367,7 +370,7 @@ export function WowClient({
                           src={p.imagen}
                           alt={p.nombre}
                           fill
-                          sizes="80px"
+                          sizes="(min-width: 1024px) 150px, 80px"
                           className="object-cover"
                         />
                       ) : (
@@ -380,14 +383,14 @@ export function WowClient({
                     </span>
                   ))}
                 </span>
-                <span className="editorial text-sm text-muted">{o.explicacion}</span>
+                <span className="editorial text-sm text-muted lg:text-base">{o.explicacion}</span>
               </button>
             </div>
           );
         })}
       </div>
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3 lg:static lg:mx-0 lg:mt-8 lg:border-t-0 lg:px-0">
+      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3 lg:mx-0 lg:mt-6 lg:border-t-0 lg:px-0 lg:pb-4">
         <button
           type="button"
           onClick={() => {
