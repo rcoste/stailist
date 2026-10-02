@@ -7,6 +7,7 @@ import {
   motorPausado,
   restanteDe,
   revisarCuota,
+  revisarGasto,
   type Recurso,
 } from "./cuotas";
 
@@ -187,5 +188,24 @@ describe("los mensajes", () => {
 
   it("todos dicen cuándo vuelve", () => {
     for (const r of recursos) expect(MENSAJE_CUOTA[r]).toMatch(/mañana/);
+  });
+});
+
+describe("sin correo verificado no hay IA", () => {
+  const conSesion = (anonima: boolean) => ({
+    ...fakeSupabase([]),
+    auth: { getUser: async () => ({ data: { user: { id: "u", is_anonymous: anonima } } }) },
+  });
+
+  it("una sesión anónima no pasa ni la cuota ni el freno de gasto", async () => {
+    const a = await revisarCuota(conSesion(true), "u", "looks");
+    const b = await revisarGasto(conSesion(true), "u");
+    expect(a).toMatchObject({ permitido: false, motivo: "correo" });
+    expect(b).toMatchObject({ permitido: false, motivo: "correo" });
+  });
+
+  it("una sesión con correo pasa, y si no se puede leer la sesión falla abierto", async () => {
+    expect((await revisarCuota(conSesion(false), "u", "looks")).permitido).toBe(true);
+    expect((await revisarGasto(fakeSupabase([]), "u")).permitido).toBe(true);
   });
 });
