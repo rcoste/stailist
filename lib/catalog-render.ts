@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import { catalogLookupKeys, catalogStorageKey } from "@/lib/capsule-images";
 import { garmentRenderDesc } from "@/lib/garment-desc";
+import { guardarRenderDeCatalogo } from "@/lib/supabase/biblioteca-compartida";
 
 const BUCKET = "catalog";
 
@@ -11,8 +12,10 @@ export function catalogPublicUrl(supabase: SupabaseClient, path: string): string
 
 // Biblioteca general compartida: genera (si no existe) la imagen ideal de un combo
 // tipo+color+género y la registra para que TODOS los usuarios la reusen. Idempotente
-// (si ya está en el registro, devuelve esa). La escritura usa el cliente del usuario
-// logueado contra el bucket público `catalog` (política acotada, sin service-role).
+// (si ya está en el registro, devuelve esa). La LECTURA va con la sesión de la
+// persona; la ESCRITURA la hace el servidor (lib/supabase/biblioteca-compartida.ts):
+// antes escribía el cliente de cada quien y cualquier cuenta podía subir o
+// registrar lo que quisiera en una biblioteca que ven todos.
 export async function ensureCatalogRender(
   supabase: SupabaseClient,
   args: {
@@ -68,15 +71,7 @@ export async function ensureCatalogRender(
   );
   if (!bytes) return { ok: false, error: "render_fallo" };
 
-  const path = `${key}.jpg`;
-  const up = await supabase.storage
-    .from(BUCKET)
-    .upload(path, bytes, { contentType: "image/jpeg", upsert: false });
-  // Carrera: si otro usuario subió el mismo combo en paralelo, el objeto ya existe
-  // → no es error, seguimos a registrar.
-  if (up.error && !/exist|dupl/i.test(up.error.message)) {
-    return { ok: false, error: up.error.message };
-  }
-  await supabase.from("catalog_renders").upsert({ key, path }, { onConflict: "key" });
-  return { ok: true, url: catalogPublicUrl(supabase, path) };
+  const guardado = await guardarRenderDeCatalogo(key, bytes);
+  if (!guardado.ok) return { ok: false, error: guardado.error };
+  return { ok: true, url: catalogPublicUrl(supabase, guardado.path) };
 }

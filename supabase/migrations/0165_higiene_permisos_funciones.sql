@@ -1,0 +1,22 @@
+-- HIGIENE DE PERMISOS (2026-10-01), a raíz del asesor de seguridad de Supabase.
+--
+-- Dos funciones SECURITY DEFINER seguían abiertas a cualquiera y el código ya
+-- no las llama:
+--
+-- · is_email_allowed(text): con la llave pública, sin cuenta, cualquiera podía
+--   preguntar si un correo está en la lista de invitados (`allowlist`). Era del
+--   login de la beta cerrada; el registro está abierto desde el 2026-09-06.
+--   La sigue usando enforce_allowlist(), que corre como su dueño y no necesita
+--   este permiso.
+-- · join_waitlist(text, text): escribía en `waitlist`. La landing dejó de tener
+--   campo de correo el 2026-09-23.
+--
+-- NO se tocan a propósito: email_for_invite (la usa /login con el token de la
+-- invitación), is_admin y es_mi_clienta (las llaman las políticas RLS y sólo
+-- contestan sobre quien pregunta). Las funciones de trigger que el asesor
+-- también lista no se pueden invocar por RPC: son falsa alarma.
+--
+-- Se revoca también a PUBLIC: en Postgres toda función nace ejecutable por
+-- PUBLIC, y revocar sólo a anon/authenticated no quita nada mientras exista.
+revoke execute on function public.is_email_allowed(text) from public, anon, authenticated;
+revoke execute on function public.join_waitlist(text, text) from public, anon, authenticated;
