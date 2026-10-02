@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.344.2] - 2026-10-02 — sin correo verificado no hay IA
+
+- Las rutas de IA rechazan a una sesión anónima (`lib/cuotas.ts`). Es el
+  candado previo a permitir cuentas anónimas en Supabase: los topes de gasto
+  son por cuenta, y sin esto quien creara cuentas anónimas en serie estrenaría
+  cuota en cada una.
+
 ## [0.2.344.1] - 2026-10-02 — la alarma de señales ignora las cuentas de prueba
 
 - El aviso "una señal dejó de llegar" del dashboard contaba también los

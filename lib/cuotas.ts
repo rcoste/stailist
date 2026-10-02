@@ -113,7 +113,32 @@ export function motorPausado(): boolean {
 
 export type Veredicto =
   | { permitido: true }
-  | { permitido: false; motivo: "pausa" | "cuota" | "gasto"; mensaje: string };
+  | { permitido: false; motivo: "pausa" | "cuota" | "gasto" | "correo"; mensaje: string };
+
+/** Lo que oye una sesión sin correo que llega a una ruta de IA. */
+export const MENSAJE_SIN_CORREO = "antes de armarte algo necesito tu correo — así te lo guardo.";
+
+/**
+ * SIN CORREO VERIFICADO NO HAY IA (2026-10-02).
+ *
+ * Desde que Supabase admite sesiones anónimas (el correo se pide al final del
+ * onboarding, no al principio), una cuenta anónima entra con el rol
+ * `authenticated`, igual que cualquiera. Y todos los frenos de este archivo son
+ * POR CUENTA: quien cree cuentas anónimas en serie estrena cuota en cada una.
+ * El correo verificado era, sin que nadie lo hubiera escrito, el costo de
+ * entrada que hacía que "por cuenta" significara "por persona".
+ *
+ * Falla ABIERTO como el resto: si no se puede leer la sesión, no se castiga a
+ * quien sí tiene correo. (Los tests y los crons no traen `auth`.)
+ */
+async function sesionSinCorreo(supabase: SupabaseClient): Promise<boolean> {
+  try {
+    const { data } = await supabase.auth.getUser();
+    return data?.user?.is_anonymous === true;
+  } catch {
+    return false;
+  }
+}
 
 /** La ventana: 24 horas móviles hacia atrás. */
 export function desdeHace24h(ahora: Date = new Date()): string {
@@ -136,6 +161,9 @@ export async function revisarCuota(
 ): Promise<Veredicto> {
   if (motorPausado()) {
     return { permitido: false, motivo: "pausa", mensaje: MENSAJE_PAUSA };
+  }
+  if (await sesionSinCorreo(supabase)) {
+    return { permitido: false, motivo: "correo", mensaje: MENSAJE_SIN_CORREO };
   }
   const desde = desdeHace24h(ahora);
   try {
@@ -187,6 +215,9 @@ export async function revisarGasto(
 ): Promise<Veredicto> {
   if (motorPausado()) {
     return { permitido: false, motivo: "pausa", mensaje: MENSAJE_PAUSA };
+  }
+  if (await sesionSinCorreo(supabase)) {
+    return { permitido: false, motivo: "correo", mensaje: MENSAJE_SIN_CORREO };
   }
   try {
     const { data, error } = await supabase
