@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/icon";
+import { COLUMNA } from "../ancho";
 
 // LA PANTALLA ANTES DEL CHECKLIST (2026-09-16).
 //
@@ -36,14 +37,16 @@ export function IntroCloset({
       : ["1-top", "2-bottom", "3-accesorio", "4-calzado"];
 
   return (
-    <div className="flex flex-1 flex-col gap-6 pt-4">
+    <div className={`flex flex-1 flex-col gap-6 pt-4 ${COLUMNA}`}>
       <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
         tu clóset,{" "}
         <em className="font-display font-normal italic tracking-normal">sin pasar horas</em>
       </h1>
 
       {/* Una foto → sus prendas. Es la idea entera en una imagen. */}
-      <div className="flex items-stretch gap-3" aria-hidden="true">
+      {/* Alto fijo en escritorio: suelta, la foto crece con el ancho y en una
+          laptop de 768 de alto empujaba "empezar" bajo el borde. */}
+      <div className="flex items-stretch gap-3 lg:h-72" aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`/landing/ig-${g}-foto.webp`}
@@ -75,7 +78,7 @@ export function IntroCloset({
       <button
         type="button"
         onClick={() => setVisto(true)}
-        className="mt-auto flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+        className="mt-auto flex min-h-12 items-center lg:mt-2 justify-center gap-2 rounded-full bg-accent px-8 text-base font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
       >
         empezar <Icon name="flecha" size={17} />
       </button>

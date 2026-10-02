@@ -21,6 +21,7 @@ import { notifyFirstLike } from "@/lib/pwa";
 import { useTryon } from "@/lib/use-tryon";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { Icon } from "@/components/icon";
+import { COLUMNA } from "../ancho";
 
 export type WowOutfit = {
   id: string;
@@ -240,7 +241,7 @@ export function WowClient({
   // ─── error ───
   if (state.kind === "error") {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
+      <div className={`flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center ${COLUMNA}`}>
         <p className="text-base text-ink">
           {state.mensaje ?? ERROR_COPY[state.code] ?? ERROR_COPY.generacion}
         </p>
@@ -311,7 +312,9 @@ export function WowClient({
         </p>
       </div>
 
-      <div className="mt-5 flex flex-col gap-3">
+      {/* En escritorio los tres se comparan LADO A LADO, que es como se elige
+          uno de tres; apilados pedían scroll para ver el tercero. */}
+      <div className="mt-5 flex flex-col gap-3 lg:grid lg:grid-cols-3 lg:gap-4">
         {outfits.map((o) => {
           const sel = o.id === chosenId;
           return (
@@ -353,7 +356,10 @@ export function WowClient({
                     <EditorialName name={o.nombre} />
                   </span>
                 </span>
-                <span className="flex gap-2">
+                {/* En escritorio las prendas van 2×2: en fila de cuatro cada una
+                    medía ~65px en una tarjeta de 310, con media pantalla vacía
+                    debajo (Roberto, 2026-10-01). */}
+                <span className="flex gap-2 lg:grid lg:grid-cols-2">
                   {o.prendas.slice(0, 4).map((p, i) => (
                     <span
                       key={`${o.id}-${i}`}
@@ -364,7 +370,7 @@ export function WowClient({
                           src={p.imagen}
                           alt={p.nombre}
                           fill
-                          sizes="80px"
+                          sizes="(min-width: 1024px) 150px, 80px"
                           className="object-cover"
                         />
                       ) : (
@@ -377,14 +383,14 @@ export function WowClient({
                     </span>
                   ))}
                 </span>
-                <span className="editorial text-sm text-muted">{o.explicacion}</span>
+                <span className="editorial text-sm text-muted lg:text-base">{o.explicacion}</span>
               </button>
             </div>
           );
         })}
       </div>
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3">
+      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-bg px-4 pb-2 pt-3 lg:mx-0 lg:mt-6 lg:border-t-0 lg:px-0 lg:pb-4">
         <button
           type="button"
           onClick={() => {
@@ -394,7 +400,7 @@ export function WowClient({
             void elegirLookDelWow(chosenId, fmtFechaLocal(new Date()));
             setState({ kind: "viewing", outfits, chosenId });
           }}
-          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep lg:mx-auto lg:max-w-md"
         >
           empezar con «{chosen.nombre}»
           <Icon name="flecha" size={18} />
@@ -539,7 +545,7 @@ function ModoHoyView({
     // Acotado al alto visible para que el primer look quepa sin scroll (la fila
     // de acciones nunca escondida). -mb-8 cancela el pb-8 del <main> del
     // onboarding; sin tab bar fija, sólo se descuenta el header.
-    <div className="-mb-8 flex h-[calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-0 flex-col">
+    <div className={`-mb-8 flex h-[calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-0 flex-col ${COLUMNA}`}>
       <LookDetail
         nombre={outfit.nombre}
         prendas={outfit.prendas}

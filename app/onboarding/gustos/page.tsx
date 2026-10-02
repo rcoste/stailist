@@ -26,6 +26,7 @@ export default async function GustosPage() {
       <SwipeDeck
         looks={looks}
         soloPares
+        ancho
         gender={profile.gender ?? "hombre"}
         cabecera={
           <div className="flex flex-col gap-2">

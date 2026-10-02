@@ -7,6 +7,7 @@ import { routeForStep } from "@/lib/onboarding";
 import { GeneroPicker } from "./genero-picker";
 import { registrarEvento } from "@/lib/telemetria";
 import { createClient } from "@/lib/supabase/server";
+import { COLUMNA } from "../ancho";
 
 // Primer paso del onboarding: define qué clóset armamos. No lleva barra de
 // progreso porque es la antesala (define el resto). Si ya lo elegiste, te
@@ -46,7 +47,7 @@ export default async function GeneroPage() {
   }
 
   return (
-    <section className="flex flex-1 flex-col justify-center gap-7 pb-10">
+    <section className={`flex flex-1 flex-col justify-center gap-7 pb-10 ${COLUMNA}`}>
       <div className="flex flex-col gap-3">
         <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
           ¿qué ropa{" "}

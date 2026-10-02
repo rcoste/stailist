@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { routeForStep } from "@/lib/onboarding";
 import { ConocioPicker } from "./conocio-picker";
+import { COLUMNA } from "../ancho";
 
 // Tercera antesala (tras género y edad): "¿cómo nos conociste?". Sin barra de
 // progreso, como las otras dos. NO es un candado: requireStep no la exige, así
@@ -15,7 +16,7 @@ export default async function ConocioPage() {
   if (profile.como_nos_conocio) redirect(routeForStep(profile.onboarding_step));
 
   return (
-    <section className="flex flex-1 flex-col justify-center gap-7 pb-10">
+    <section className={`flex flex-1 flex-col justify-center gap-7 pb-10 ${COLUMNA}`}>
       <div className="flex flex-col gap-3">
         <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
           ¿cómo nos{" "}

@@ -1,6 +1,7 @@
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
 import { ObjetivoPicker } from "./objetivo-picker";
+import { COLUMNA } from "../ancho";
 
 // Objetivo del momento — va casi al final (paso 4 de 5), justo antes de generar,
 // para que la petición quede fresca. (El diseño lo dibuja como "paso 1" pero el
@@ -14,7 +15,7 @@ export default async function ObjetivoPage({
   const { error } = await searchParams;
 
   return (
-    <section className="flex flex-1 flex-col gap-6 pt-4">
+    <section className={`flex flex-1 flex-col gap-6 pt-4 ${COLUMNA}`}>
       <OnboardingProgress step={4} />
 
       <div className="flex flex-col gap-2">

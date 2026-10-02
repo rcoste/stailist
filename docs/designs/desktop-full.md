@@ -80,7 +80,7 @@ DESIGN.md en el mismo commit de la Fase 1):
 | **Viaje · lista** | Cards de maletas en grid de 2-3. |
 | **Viaje · detalle** | 2 columnas: izquierda resumen del viaje/clima; derecha outfits por día. |
 | **Perfil** | Columna centrada un poco más ancha (`lg:max-w-2xl`), tabs iguales. |
-| **Onboarding completo** | Columna centrada enmarcada (`desktop="column"`). El flujo enfocado ES el diseño; solo se ve intencional. |
+| **Onboarding completo** | ~~Columna centrada enmarcada.~~ **Cambiado el 2026-10-01:** las pantallas de fotos usan el ancho y las de pregunta van en columna `lg:max-w-md`; flechas ← → en swipes y pares. Detalle en DESIGN.md → "Onboarding en escritorio". |
 | **Cartera / chequear** | Columna centrada (uso real es en tienda = teléfono; en desktop basta que sea digno). |
 | **Admin** | Ya usa `max-w-5xl` propio — fuera de alcance. |
 

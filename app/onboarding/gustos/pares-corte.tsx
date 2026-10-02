@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Gender } from "@/lib/auth";
 
 // Los pares de corte: dos fotos, eliges una. Se contestan dos veces.
@@ -63,8 +63,14 @@ const PARES = [
 export function ParesDeCorte({
   gender,
   onDone,
+  ancho = false,
 }: {
   gender: Gender;
+  /** Escritorio: texto a la izquierda y las dos fotos, grandes, a la derecha.
+   *  Aquí el ancho no es adorno: la diferencia entre los dos cortes son pocos
+   *  píxeles, y en la columna del teléfono cada foto medía 200px en un monitor
+   *  con media pantalla vacía debajo. */
+  ancho?: boolean;
   /** Recibe la preferencia ya resuelta; el padre decide cuándo guardarla. */
   onDone: (corte: Corte) => void;
 }) {
@@ -95,8 +101,29 @@ export function ParesDeCorte({
     }, 220);
   }
 
+  // ← la de la izquierda, → la de la derecha: mismo gesto que en los swipes,
+  // que es de donde viene la persona. `elegir` cambia en cada render.
+  const elegirRef = useRef(elegir);
+  useEffect(() => {
+    elegirRef.current = elegir;
+  });
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      elegirRef.current(e.key === "ArrowLeft" ? "recta" : "holgada");
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div
+      className={`flex flex-1 flex-col gap-5 ${
+        ancho ? "lg:flex-row lg:items-center lg:gap-16" : ""
+      }`}
+    >
       {/* CON SU PROPIA IDENTIDAD, no como cola del swipe.
           Roberto, probando desde cero: "esto que obvio es importante… debería
           ser su propia sección dentro del onboarding, al igual que la
@@ -106,7 +133,7 @@ export function ParesDeCorte({
           Se le da cabecera propia y el porqué; lo que no se hace es partirlo a
           otra pantalla, porque son dos taps y una navegación entera para cuatro
           segundos sería cobrar más de lo que cuesta. */}
-      <div className="flex flex-col gap-2">
+      <div className={`flex flex-col gap-2 ${ancho ? "lg:w-80 lg:shrink-0" : ""}`}>
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
           cómo te queda · {idx + 1} de {PARES.length}
         </p>
@@ -125,9 +152,20 @@ export function ParesDeCorte({
         <p className="mt-0.5 self-start rounded-full bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-ink">
           {actual.pista}
         </p>
+        {ancho ? (
+          <p className="mt-4 hidden items-center gap-2 text-[13px] text-muted lg:flex">
+            <kbd className="flex h-7 w-7 items-center justify-center rounded-sm border border-line bg-surface font-sans text-ink">
+              ←
+            </kbd>
+            <kbd className="flex h-7 w-7 items-center justify-center rounded-sm border border-line bg-surface font-sans text-ink">
+              →
+            </kbd>
+            también con las flechas
+          </p>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className={`grid grid-cols-2 gap-3 ${ancho ? "lg:flex-1 lg:gap-4" : ""}`}>
         {(["recta", "holgada"] as const).map((opcion) => (
           <button
             key={opcion}
@@ -144,7 +182,7 @@ export function ParesDeCorte({
               src={`/corte/${gender}-${actual.par}-${opcion}.png`}
               alt=""
               fill
-              sizes="(min-width: 640px) 240px, 45vw"
+              sizes="(min-width: 1024px) 300px, (min-width: 640px) 240px, 45vw"
               // EL ACERCAMIENTO. 1.5× anclado en la mitad del cuerpo que cambia:
               // en el par del pantalón se ancla abajo (se ve de la cintura a los
               // zapatos) y en el de la parte de arriba, arriba (de la cabeza al

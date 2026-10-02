@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.341.0] - 2026-10-01 — el onboarding, también para computadora
+
+- De 1024 px de ancho para arriba el onboarding deja de ser la columna del
+  teléfono. Las pantallas que enseñan fotos usan el ancho: swipes (texto a la
+  izquierda, carta más grande a la derecha), pares de corte (fotos grandes),
+  acentos (tres opciones lado a lado, sin scroll), checklist de básicos (6 por
+  fila: de 2,828 px de scroll a 1,048) y los tres primeros looks en fila, con
+  sus prendas en 2×2 para que se vean grandes.
+- Las pantallas de pregunta quedan en una columna centrada, con el botón junto
+  al contenido en vez de pegado al piso del monitor.
+- **Flechas del teclado**: ← no va / → me gusta en los swipes, y ← → para
+  elegir en los pares de corte. El aviso sólo se pinta en pantalla ancha.
+- En teléfono no cambia nada. `SwipeDeck` y `AcentosGrid`, que también usa el
+  Perfil, reciben el ancho por un prop opt-in (`ancho`).
+- DESIGN.md y `docs/designs/desktop-full.md` actualizados: este patrón
+  sustituye a "onboarding = columna enmarcada".
+
 ## [0.2.340.0] - 2026-09-29 — los objetivos del plan P-03, al lado de lo que pasa
 
 - `/admin/campana` tiene arriba del embudo la tabla **Objetivos del plan P-03**:

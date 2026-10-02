@@ -8,7 +8,8 @@ import { guardarOrigenEnPerfil } from "@/lib/origen-perfil";
 import { createClient } from "@/lib/supabase/server";
 
 // Cascarón del onboarding: sin tabs (todavía no hay a dónde ir), logo arriba,
-// columna única móvil-first como el resto de la app.
+// columna única móvil-first como el resto de la app. En escritorio (lg) se abre
+// a max-w-5xl y cada pantalla decide su ancho — ver ./ancho.ts.
 //
 // Y dos cosas de la campaña de anuncios, con lo que sabe el PERFIL y no lo que
 // recuerde el navegador:
@@ -47,12 +48,12 @@ export default async function OnboardingLayout({
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg lg:max-w-5xl">
       {menor || verComo ? <MarcaMenor /> : null}
       <header className="flex items-center justify-center px-4 pt-4 pb-2">
         <Logo className="h-7" />
       </header>
-      <main className="flex flex-1 flex-col px-4 pb-8">{children}</main>
+      <main className="flex flex-1 flex-col px-4 pb-8 lg:px-8">{children}</main>
     </div>
   );
 }

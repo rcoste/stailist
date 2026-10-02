@@ -46,7 +46,9 @@ export function ObjetivoPicker() {
       </div>
 
       <input type="hidden" name="objective" value="diario" />
-      <div className="mt-auto pt-6">
+      {/* En escritorio el botón va junto a la tarjeta, no pegado al piso de un
+          monitor: 350px de vacío entre lo que lees y lo que pulsas. */}
+      <div className="mt-auto pt-6 lg:mt-0">
         <button
           type="submit"
           className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors hover:bg-accent-deep"

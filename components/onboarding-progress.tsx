@@ -3,7 +3,10 @@
 export function OnboardingProgress({ step }: { step: 1 | 2 | 3 | 4 | 5 }) {
   return (
     <div
-      className="flex gap-2"
+      // En escritorio la barra mide lo mismo en TODOS los pasos (la columna de
+      // pregunta), aunque la pantalla use el ancho completo: una barra que se
+      // estira y se encoge entre pasos se lee como otra cosa.
+      className="flex gap-2 lg:mx-auto lg:w-full lg:max-w-md"
       role="progressbar"
       aria-valuemin={1}
       aria-valuemax={5}

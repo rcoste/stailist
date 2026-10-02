@@ -30,17 +30,28 @@ export function AcentosGrid({
   valor,
   gender,
   onPick,
+  ancho = false,
 }: {
   valor: ApetitoAcentos | null;
   gender: Gender | null;
   onPick: (nivel: ApetitoAcentos) => void;
+  /**
+   * Escritorio (sólo el paso del onboarding lo pide): los tres niveles LADO A
+   * LADO, y dentro de cada uno las dos fotos apiladas.
+   *
+   * Apiladas y no en fila a propósito: con tres columnas, dos fotos en fila
+   * dejarían cada figura más chica que en el teléfono — y aquí el acento a
+   * veces son los zapatos. La fila sigue siendo la unidad que se toca; sólo
+   * gira 90°. La card del Perfil no lo pide y se queda como está.
+   */
+  ancho?: boolean;
 }) {
   // Sin género declarado se muestran las fotos de hombre (el mismo default que
   // el resto del catálogo unisex); nadie se queda sin ver el grid.
   const g = gender === "mujer" ? "mujer" : "hombre";
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${ancho ? "lg:grid lg:grid-cols-3 lg:gap-3" : ""}`}>
       {NIVELES.map((n) => {
         const activo = valor === n.valor;
         return (
@@ -60,7 +71,7 @@ export function AcentosGrid({
                 ~135px, que es lo que hace que las tres opciones Y el botón de
                 seguir quepan sin scroll en un teléfono. Medido en el navegador
                 a 375×812, no a ojo. */}
-            <div className="flex gap-1.5">
+            <div className={`flex gap-1.5 ${ancho ? "lg:flex-col" : ""}`}>
               {(["frio", "calor"] as const).map((clima) => (
                 <div
                   key={clima}
@@ -72,7 +83,7 @@ export function AcentosGrid({
                     fill
                     // Sin esto el optimizador servía la de 3840px (600 KB) para
                     // pintarla a ~140.
-                    sizes="(max-width: 640px) 46vw, 220px"
+                    sizes={ancho ? "(max-width: 640px) 46vw, 260px" : "(max-width: 640px) 46vw, 220px"}
                     className="object-contain"
                   />
                 </div>

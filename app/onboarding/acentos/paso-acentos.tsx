@@ -46,13 +46,13 @@ export function PasoAcentos({
 
   return (
     <div className="flex flex-col gap-4">
-      <AcentosGrid valor={valor} gender={gender} onPick={setValor} />
+      <AcentosGrid valor={valor} gender={gender} onPick={setValor} ancho />
 
       {error ? (
         <p className="text-xs text-error">no se guardó — intenta de nuevo</p>
       ) : null}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 lg:mx-auto lg:mt-2 lg:w-full lg:max-w-md">
         <button
           type="button"
           onClick={seguir}
