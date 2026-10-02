@@ -80,4 +80,4 @@ pestañas "Magic Link" y "Confirm signup" → pegar el HTML. **Las dos.**
 ## Subjects (asunto)
 
 - Magic Link → `Tu acceso a Stailist`
-- Confirm signup → `Bienvenida a Stailist`
+- Confirm signup → `Tu código para entrar a Stailist`

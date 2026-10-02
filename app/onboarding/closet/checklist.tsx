@@ -21,7 +21,15 @@ export type CatalogItem = {
 // que viene a quitar: antes "Blazer marino" y "Saco de traje gris carbón"
 // vivían uno al lado del otro sin que nada dijera que el segundo tiene pantalón.
 const CAT_TRAJE = "traje";
-const CATEGORY_ORDER = ["top", "saco", CAT_TRAJE, "vestido", "bottom", "abrigo", "calzado"];
+//
+// EL ORDEN DE LAS PESTAÑAS ES EL ORDEN EN QUE TE LLEVA EL BOTÓN (2026-10-01).
+// Antes iban por "zona del cuerpo" (Arriba · Sacos · Trajes · Abajo · Abrigos ·
+// Zapatos) mientras el botón recorría primero lo obligatorio: al terminar
+// "Arriba" brincaba dos pestañas hasta "Abajo" y se leía como que la app se
+// había saltado Sacos y Trajes (Roberto, en su recorrido en frío). Ahora van
+// primero las tres que hacen falta para armar un look y después las
+// opcionales, en el mismo orden en que el botón pregunta por ellas.
+const CATEGORY_ORDER = ["top", "bottom", "calzado", "vestido", "saco", CAT_TRAJE, "abrigo"];
 // Mínimo para armar un outfit: algo de arriba, algo de abajo y zapatos.
 // Un vestido cuenta como arriba+abajo; sacos y abrigos son opcionales.
 const REQUIRED = ["top", "bottom", "calzado"];
@@ -29,7 +37,7 @@ const REQUIRED = ["top", "bottom", "calzado"];
 // tras los 3 obligatorios): así el motor se enteraba de la ropa de abrigo solo
 // si la persona tocaba el chip a mano. Ahora el CTA pasa por estas si están
 // presentes y no las ha visto — con opción de saltar (no todos las tienen).
-const OPTIONAL = ["saco", CAT_TRAJE, "abrigo", "vestido"];
+const OPTIONAL = ["vestido", "saco", CAT_TRAJE, "abrigo"];
 const CATEGORY_LABELS: Record<string, string> = {
   top: "Arriba",
   saco: "Sacos",

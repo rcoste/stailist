@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.343.0] - 2026-10-01 — las pestañas del clóset, en el orden en que avanzas
+
+- En el checklist de básicos las pestañas van ahora Arriba · Abajo · Zapatos y
+  después las opcionales (Vestidos · Sacos · Trajes · Abrigos), que es el orden
+  en que el botón te lleva. Antes el botón brincaba de "Arriba" a "Abajo" por
+  encima de Sacos y Trajes y parecía que se los saltaba.
+- El correo de cuenta nueva cambia su asunto a "Tu código para entrar a
+  Stailist": "Bienvenida a Stailist" le hablaba en femenino a quien llega de la
+  campaña de hombres. (La plantilla se aplica en Supabase, no con el deploy.)
+
 ## [0.2.342.0] - 2026-10-01 — el correo diario dice quién llegó y desde qué aparato
 
 - El correo de las 8 am trae **Quién llegó ayer**: un renglón por cuenta nueva
