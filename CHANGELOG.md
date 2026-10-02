@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.344.1] - 2026-10-02 — la alarma de señales ignora las cuentas de prueba
+
+- El aviso "una señal dejó de llegar" del dashboard contaba también los
+  eventos de las cuentas `@stailist.app`. Recorrer el onboarding con la cuenta
+  de prueba lo ponía en rojo ("30% llega") con el vínculo real sano (3 de 3).
+
 ## [0.2.344.0] - 2026-10-01 — la biblioteca compartida de imágenes la escribe sólo el servidor
 
 - Los depósitos públicos `catalog` y `destinos` y sus tablas (`catalog_renders`,
