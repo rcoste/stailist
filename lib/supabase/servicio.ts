@@ -10,9 +10,11 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 // borraban las fotos el mismo día (recuperar devolvía una cuenta a medias) o se
 // quedaban huérfanas para siempre.
 //
-// LA REGLA: sólo la importa app/api/cron/limpieza/route.ts, protegida por
-// CRON_SECRET. lib/contrato-llave-servicio.test.ts lo impide en cualquier otro
-// archivo. Esta llave se salta TODA la RLS: nunca en un componente, nunca en una
+// LA REGLA: sólo la importan app/api/cron/limpieza/route.ts, protegida por
+// CRON_SECRET, y —desde el 2026-10-01— lib/supabase/biblioteca-compartida.ts,
+// que escribe la biblioteca compartida de imágenes sin dejar salir el cliente
+// (ahí está el porqué de la excepción). lib/contrato-llave-servicio.test.ts lo
+// impide en cualquier otro archivo. Esta llave se salta TODA la RLS: nunca en un componente, nunca en una
 // ruta que responda a una persona, nunca en el navegador.
 //
 // Riesgo marginal, dicho claro: en Vercel ya vive DATABASE_URL, que abre toda la

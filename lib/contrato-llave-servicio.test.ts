@@ -11,7 +11,13 @@ import { join, relative } from "node:path";
 // datos de todos. Este test lo impide antes de que llegue a producción.
 
 const RAIZ = join(import.meta.dirname, "..");
-const PERMITIDOS_IMPORTAR = new Set(["app/api/cron/limpieza/route.ts"]);
+// Desde el 2026-10-01 hay un segundo importador: lib/supabase/biblioteca-compartida.ts,
+// que escribe la biblioteca compartida de imágenes (depósitos `catalog` y
+// `destinos`). Ese archivo NO expone el cliente: sólo funciones de un depósito y
+// una tabla fijos. Y a su vez sólo lo pueden importar los dos archivos de abajo.
+const BIBLIOTECA = "lib/supabase/biblioteca-compartida.ts";
+const PERMITIDOS_IMPORTAR = new Set(["app/api/cron/limpieza/route.ts", BIBLIOTECA]);
+const PERMITIDOS_BIBLIOTECA = new Set(["lib/catalog-render.ts", "app/api/destino-imagen/route.ts"]);
 const DUENO_DE_LA_VARIABLE = "lib/supabase/servicio.ts";
 
 function archivos(dir: string): string[] {
@@ -44,10 +50,27 @@ describe("la llave de servicio vive encerrada", () => {
     expect(importadores).toContain("app/api/cron/limpieza/route.ts");
   });
 
+  it("la biblioteca compartida no deja salir el cliente y sólo la usan sus dos rutas", () => {
+    const biblioteca = fuentes.find((f) => f.rel === BIBLIOTECA);
+    expect(biblioteca, "falta el archivo").toBeTruthy();
+    // Nada de exportar el cliente, ni una función que lo devuelva o que reciba
+    // el nombre del depósito o de la tabla: eso la volvería una llave genérica.
+    expect(biblioteca!.texto).not.toMatch(/export\s+(const|function)\s+\w*(cliente|servicio)/i);
+    expect(biblioteca!.texto).not.toMatch(/\.from\(\s*[a-zA-Z_]/);
+    const depositosYTablas = [...biblioteca!.texto.matchAll(/\.from\("([^"]+)"\)/g)].map((m) => m[1]);
+    expect(new Set(depositosYTablas)).toEqual(new Set(["catalog", "catalog_renders", "destinos", "destino_imagenes"]));
+
+    const importadores = fuentes
+      .filter((f) => /from ["']@\/lib\/supabase\/biblioteca-compartida["']/.test(f.texto))
+      .map((f) => f.rel);
+    expect(importadores.every((r) => PERMITIDOS_BIBLIOTECA.has(r)), importadores.join(", ")).toBe(true);
+    expect(importadores.length).toBe(2);
+  });
+
   it("ningún archivo de cliente la toca", () => {
     const cliente = fuentes.filter((f) => /^["']use client["']/m.test(f.texto));
     for (const f of cliente) {
-      expect(f.texto, f.rel).not.toMatch(/supabase\/servicio|SERVICE_ROLE/);
+      expect(f.texto, f.rel).not.toMatch(/supabase\/servicio|supabase\/biblioteca-compartida|SERVICE_ROLE/);
     }
   });
 });

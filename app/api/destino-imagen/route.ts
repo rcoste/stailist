@@ -4,6 +4,12 @@ import { imagenCatalogo, primeraParada, slugDestino } from "@/lib/destino-imagen
 import { elegirMotivo, promptDestino } from "@/lib/destino-gen";
 import { pedirImagen } from "@/lib/gemini-imagen";
 import { revisarGasto } from "@/lib/cuotas";
+import {
+  crearCandadoDeDestino,
+  guardarFotoDeDestino,
+  marcarDestinoFallido,
+  reclamarDestino,
+} from "@/lib/supabase/biblioteca-compartida";
 
 // LA FOTO DE UN DESTINO NUEVO, generada en background durante el wizard.
 //
@@ -62,11 +68,13 @@ export async function POST(request: NextRequest) {
 
   // EL CANDADO. Insert primero: si la fila ya existe, el conflict nos dice que
   // alguien más ya la tiene (lista, en curso, o fallida) y se decide con calma.
-  const { error: insertErr } = await supabase
-    .from("destino_imagenes")
-    .insert({ slug, lugar, status: "generando" });
+  // Las ESCRITURAS de aquí en adelante las hace el servidor, no la sesión de la
+  // persona (lib/supabase/biblioteca-compartida.ts): la tabla y el depósito son
+  // compartidos y ninguna cuenta debe poder escribirlos por su cuenta.
+  const candado = await crearCandadoDeDestino(slug, lugar);
+  if (!candado.ok) return NextResponse.json({ error: "candado" }, { status: 500 });
 
-  if (insertErr) {
+  if (!candado.creada) {
     const { data: fila } = await supabase
       .from("destino_imagenes")
       .select("status, updated_at")
@@ -87,14 +95,12 @@ export async function POST(request: NextRequest) {
     // el primero lo pone en 'generando' con updated_at fresco, y el segundo lo
     // casaría igual (cualquier updated_at ya es "menor que ahora"). El costo
     // era solo una generación duplicada con upsert — pero cerrado es cerrado.
-    const { data: reclamada } = await supabase
-      .from("destino_imagenes")
-      .update({ status: "generando", updated_at: new Date().toISOString() })
-      .eq("slug", slug)
-      .eq("status", muerto ? "generando" : "fallo")
-      .lt("updated_at", new Date(Date.now() - (muerto ? GENERANDO_VIEJO_MS : 0)).toISOString())
-      .select("slug");
-    if (!reclamada || reclamada.length === 0) {
+    const reclamo = await reclamarDestino(
+      slug,
+      muerto ? "generando" : "fallo",
+      new Date(Date.now() - (muerto ? GENERANDO_VIEJO_MS : 0)).toISOString()
+    );
+    if (!reclamo.ok || !reclamo.reclamado) {
       return NextResponse.json({ ok: true, via: "en_curso" });
     }
   }
@@ -119,38 +125,21 @@ export async function POST(request: NextRequest) {
     // una foto que se ve a 140px). sharp llega como dependencia transitiva de
     // Next; si algún día falta, se sube el PNG tal cual — pesado pero funcional.
     let buffer: Buffer = Buffer.from(img.data, "base64");
-    let contentType = "image/png";
-    let ext = "png";
+    let ext: "webp" | "png" = "png";
     try {
       const sharp = (await import("sharp")).default;
       buffer = await sharp(buffer).resize(900).webp({ quality: 80 }).toBuffer();
-      contentType = "image/webp";
       ext = "webp";
     } catch {
       // sin sharp: PNG crudo
     }
 
-    const path = `${slug}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("destinos")
-      .upload(path, buffer, { contentType, upsert: true });
-    if (upErr) throw new Error(`storage: ${upErr.message}`);
-
-    await supabase
-      .from("destino_imagenes")
-      .update({ status: "listo", path, motivo, updated_at: new Date().toISOString() })
-      .eq("slug", slug);
+    const guardada = await guardarFotoDeDestino(slug, { buffer, ext, motivo });
+    if (!guardada.ok) throw new Error(guardada.error);
 
     return NextResponse.json({ ok: true, via: "generada", motivo });
   } catch (e) {
-    await supabase
-      .from("destino_imagenes")
-      .update({
-        status: "fallo",
-        motivo: `error: ${e instanceof Error ? e.message.slice(0, 200) : "?"}`,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("slug", slug);
+    await marcarDestinoFallido(slug, `error: ${e instanceof Error ? e.message.slice(0, 200) : "?"}`);
     // 200 a propósito: el cliente disparó y se fue (fire-and-forget); el viaje
     // nunca depende de esta foto — la genérica lo cubre.
     return NextResponse.json({ ok: false, via: "fallo" });

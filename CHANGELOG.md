@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.344.0] - 2026-10-01 — la biblioteca compartida de imágenes la escribe sólo el servidor
+
+- Los depósitos públicos `catalog` y `destinos` y sus tablas (`catalog_renders`,
+  `destino_imagenes`) guardan imágenes que ven todas las personas, y cualquier
+  cuenta podía escribir en ellos por su cuenta: subir archivos, sobrescribir la
+  foto de un destino o registrar una imagen falsa para una prenda aún no
+  generada. Ahora esas escrituras las hace el servidor desde
+  `lib/supabase/biblioteca-compartida.ts`.
+- Es una excepción consciente a "la llave de servicio sólo en la limpieza
+  nocturna": el módulo no deja salir el cliente, cada función escribe en un
+  depósito y una tabla fijos, y el nombre del archivo se valida.
+  `lib/contrato-llave-servicio.test.ts` fija quién puede importarlo.
+- Migración 0166 (quita los seis permisos de escritura a las cuentas): se
+  aplica DESPUÉS de este deploy.
+- Migración 0165 (ya aplicada): sin acceso externo a `is_email_allowed` ni a
+  `join_waitlist`.
+
 ## [0.2.343.0] - 2026-10-01 — las pestañas del clóset, en el orden en que avanzas
 
 - En el checklist de básicos las pestañas van ahora Arriba · Abajo · Zapatos y
