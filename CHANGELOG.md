@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.342.0] - 2026-10-01 — el correo diario dice quién llegó y desde qué aparato
+
+- El correo de las 8 am trae **Quién llegó ayer**: un renglón por cuenta nueva
+  con su campaña de origen (y lo que contestó en "¿cómo nos conociste?"), el
+  aparato, dónde se quedó en palabras ("se quedó en el clóset", "llegó a su
+  primer look") y cuántas prendas tiene, con cuántas de foto propia.
+- **Por aparato**: cuentas de anuncios que arrancaron en computadora, celular o
+  tablet y cuántas llegaron a su primer look. En el correo y en
+  `/admin/campana`. Es la pregunta por la que las campañas incluyen
+  computadoras.
+- El aparato se guarda como una palabra en el evento `onboarding_started`
+  (`lib/dispositivo.ts`); no se guarda el user-agent ni hizo falta migración.
+  Sólo cuenta del 2026-10-01 en adelante: lo anterior sale como "sin dato".
+
 ## [0.2.341.0] - 2026-10-01 — el onboarding, también para computadora
 
 - De 1024 px de ancho para arriba el onboarding deja de ser la columna del

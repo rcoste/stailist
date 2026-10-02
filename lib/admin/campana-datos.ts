@@ -9,10 +9,15 @@ import {
   type FilaPerfilAdquisicion,
 } from "@/lib/admin/adquisicion";
 import { origenDesdeDato } from "@/lib/origen";
+import { esDispositivo } from "@/lib/dispositivo";
 import {
   criterioDeParo,
   esDeCampana,
+  origenEnPalabras,
+  pasoEnPalabras,
   resumirCampana,
+  resumirDispositivos,
+  type ResumenDispositivos,
   type DatosCorreoDiario,
   type EstadoParo,
   type ExtraCuenta,
@@ -45,7 +50,11 @@ select p.id,
   coalesce((select sum(a.costo_usd) from public.ai_calls a
      where a.user_id = p.id
        and a.created_at >= coalesce(p.onboarding_started_at, p.created_at)
-       and a.created_at < coalesce(p.onboarding_started_at, p.created_at) + interval '${DIAS_VENTANA} days'), 0)::float as ia_usd_7d
+       and a.created_at < coalesce(p.onboarding_started_at, p.created_at) + interval '${DIAS_VENTANA} days'), 0)::float as ia_usd_7d,
+  (select e.data->>'dispositivo' from public.events e
+     where e.user_id = p.id and e.type = 'onboarding_started' order by e.created_at limit 1) as dispositivo,
+  (select count(*) from public.items i where i.user_id = p.id and i.deleted_at is null)::int as prendas,
+  (select count(*) from public.items i where i.user_id = p.id and i.deleted_at is null and i.source = 'photo')::int as fotos
 from public.profiles p
 where p.id = any ($1::uuid[])
 `;
@@ -98,6 +107,10 @@ export type DatosCampana = {
   /** Los objetivos del plan P-03 contra lo real (lib/admin/objetivos.ts). */
   objetivos: LineaObjetivo[];
   uso: ResumenUso;
+  /** Lo de cada cuenta de la ventana que adquisición no trae (aparato, prendas…). */
+  extras: Map<string, ExtraCuenta>;
+  /** Cuentas de anuncios de la ventana, por aparato. */
+  dispositivos: ResumenDispositivos;
 };
 
 export async function cargarCampana(desde: string, ahora: Date = new Date()): Promise<DatosCampana> {
@@ -167,6 +180,9 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
         ttv_s: r.ttv_s == null ? null : Number(r.ttv_s),
         se_lo_puso: !!r.se_lo_puso,
         ia_usd_7d: Number(r.ia_usd_7d ?? 0),
+        dispositivo: esDispositivo(r.dispositivo) ? r.dispositivo : null,
+        prendas: Number(r.prendas ?? 0),
+        fotos: Number(r.fotos ?? 0),
       },
     ])
   );
@@ -192,6 +208,8 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     campanasConocidas,
     objetivos: evaluarObjetivos({ resumen, paro, hoy: diaEnZona(ahora) }),
     uso: resumirUso(todas, uso),
+    extras,
+    dispositivos: resumirDispositivos(filas, extras),
   };
 }
 
@@ -237,5 +255,17 @@ export async function datosCorreoDiario(ahora: Date = new Date()): Promise<Datos
     paro: d.paro,
     desde,
     objetivos: textoObjetivos(d.objetivos, d.uso),
+    quienAyer: deAyer.map((f) => {
+      const x = d.extras.get(f.id);
+      return {
+        correo: f.email ?? f.id,
+        origen: origenEnPalabras(origenDesdeDato(f.origen), f.como_nos_conocio),
+        dispositivo: x?.dispositivo ?? null,
+        paso: pasoEnPalabras(f.onboarding_step, f.gender),
+        prendas: x?.prendas ?? 0,
+        fotos: x?.fotos ?? 0,
+      };
+    }),
+    dispositivos: d.dispositivos,
   };
 }

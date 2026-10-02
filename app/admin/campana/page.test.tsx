@@ -56,6 +56,13 @@ async function html(d: Partial<DatosCampana>): Promise<string> {
       looksMediana: null,
       modulos: { viaje: 0, capsula: 0, prueba: 0, fitcheck: 0, adelantado: 0 },
     },
+    extras: new Map(),
+    dispositivos: {
+      computadora: { cuentas: 0, primerLook: 0 },
+      celular: { cuentas: 0, primerLook: 0 },
+      tablet: { cuentas: 0, primerLook: 0 },
+      sinDato: { cuentas: 0, primerLook: 0 },
+    },
     ...d,
   };
   const el = await AdminCampana({ searchParams: Promise.resolve({}) });

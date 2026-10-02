@@ -9,6 +9,10 @@ import {
   esDeCampana,
   resumirCampana,
   textoParo,
+  origenEnPalabras,
+  pasoEnPalabras,
+  resumirDispositivos,
+  textoDispositivos,
   type ExtraCuenta,
 } from "./campana";
 import type { FilaPerfilAdquisicion } from "./adquisicion";
@@ -211,5 +215,88 @@ describe("correoDiario", () => {
     expect(text).toContain("faltan datos");
     expect(text).toContain("alguien@ejemplo.test");
     expect(text).toContain("https://stailist.co/admin/campana");
+  });
+});
+
+describe("quién llegó ayer y por qué aparato", () => {
+  it("dice dónde se quedó cada quien en palabras", () => {
+    expect(pasoEnPalabras(0, null)).toContain("género");
+    expect(pasoEnPalabras(0, "hombre")).toContain("swipes");
+    expect(pasoEnPalabras(2, "hombre")).toContain("clóset");
+    expect(pasoEnPalabras(5, "mujer")).toBe("llegó a su primer look");
+  });
+
+  it("el origen nombra la campaña y, si la contestó, lo que dijo", () => {
+    const o = { landing: "/", at: "x", utm_source: "google", utm_campaign: "hombres-diario" };
+    expect(origenEnPalabras(o, null)).toBe("hombres-diario (google)");
+    expect(origenEnPalabras(o, "omitido")).toBe("hombres-diario (google)");
+    expect(origenEnPalabras(null, "instagram")).toContain("dijo: instagram");
+  });
+
+  it("cuenta por aparato sólo a la gente de anuncios, y lo viejo queda sin dato", () => {
+    const origen = { landing: "/", at: "x", utm_source: "google", utm_campaign: "hombres-diario" };
+    const base = {
+      email: null,
+      gender: "hombre",
+      inicio: "2026-10-02T00:00:00Z",
+      dia_inicio: "2026-10-02",
+      dias: [],
+      como_nos_conocio: null,
+    };
+    const filas = [
+      { ...base, id: "a", onboarding_step: 5, origen },
+      { ...base, id: "b", onboarding_step: 1, origen },
+      { ...base, id: "c", onboarding_step: 5, origen },
+      { ...base, id: "organico", onboarding_step: 5, origen: null },
+    ];
+    const extra = (dispositivo: "computadora" | "celular" | null) => ({
+      age_range: null,
+      ttv_s: null,
+      se_lo_puso: false,
+      ia_usd_7d: 0,
+      dispositivo,
+    });
+    const r = resumirDispositivos(
+      filas,
+      new Map([
+        ["a", extra("computadora")],
+        ["b", extra("computadora")],
+        ["c", extra(null)],
+        ["organico", extra("celular")],
+      ])
+    );
+    expect(r.computadora).toEqual({ cuentas: 2, primerLook: 1 });
+    expect(r.celular).toEqual({ cuentas: 0, primerLook: 0 });
+    expect(r.sinDato).toEqual({ cuentas: 1, primerLook: 1 });
+    expect(textoDispositivos(r)).toBe("computadora 2 (1 con primer look) · sin dato 1 (1)");
+  });
+
+  it("el correo lista a cada persona nueva en un renglón", () => {
+    const { text } = correoDiario({
+      ayer: "2026-10-02",
+      iaAyerUsd: 0,
+      iaAyerLlamadas: 0,
+      iaTop: null,
+      nuevasAyer: 1,
+      nuevasAyerDeCampana: 1,
+      primerLookAyer: 0,
+      campanas: [],
+      paro: { estado: "faltan-datos", conPrimerLook: 0, cerradas: 0, volvieron: 0 },
+      desde: "2026-10-01",
+      quienAyer: [
+        {
+          correo: "nuevo@ejemplo.test",
+          origen: "hombres-diario (google)",
+          dispositivo: "computadora",
+          paso: "se quedó en el clóset",
+          prendas: 0,
+          fotos: 0,
+        },
+      ],
+    });
+    expect(text).toContain("QUIÉN LLEGÓ AYER");
+    expect(text).toContain(
+      "- nuevo@ejemplo.test · hombres-diario (google) · computadora · se quedó en el clóset · 0 prendas"
+    );
   });
 });
