@@ -121,7 +121,11 @@ export default async function AdminOverview() {
     // tabla es chica; traemos solo las columnas que el dashboard necesita.
     supabase
       .from("profiles")
-      .select("onboarding_step, avatar_path, capsule_target"),
+      .select("onboarding_step, avatar_path, capsule_target")
+      // Sin los BORRADORES (sesiones sin correo, lib/borrador.ts): "usuarias" es
+      // gente que se registró. Un borrador es alguien que empezó y aún no deja
+      // su correo — o un bot —; contarlos aquí inflaría el número que más se mira.
+      .not("email", "is", null),
     supabase.from("archetypes").select("*", { count: "exact", head: true }),
     supabase
       .from("outfits")

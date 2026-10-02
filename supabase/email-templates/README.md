@@ -81,3 +81,4 @@ pestañas "Magic Link" y "Confirm signup" → pegar el HTML. **Las dos.**
 
 - Magic Link → `Tu acceso a Stailist`
 - Confirm signup → `Tu código para entrar a Stailist`
+- Change Email Address → `Tu código para entrar a Stailist` (`email-change.html`): lo recibe quien empezó sin registrarse y deja su correo antes del primer look (lib/borrador.ts).

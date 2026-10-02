@@ -297,8 +297,11 @@ export type QuienLlego = {
  * Dónde se quedó, dicho como lo diría Roberto. `onboarding_step` es el paso que
  * le TOCA, así que "paso 2" significa "terminó colores y se quedó en el clóset".
  */
-export function pasoEnPalabras(step: number, gender: string | null): string {
+export function pasoEnPalabras(step: number, gender: string | null, sinCorreo = false): string {
   if (!gender) return "se quedó en la primera pantalla (género)";
+  // Con la entrada sin correo (lib/borrador.ts), quien llega al paso 3 sin
+  // correo está detenida justo en la pantalla que se lo pide.
+  if (sinCorreo && step === 3) return "se quedó en la pantalla del correo";
   if (step >= 5) return "llegó a su primer look";
   return (
     [

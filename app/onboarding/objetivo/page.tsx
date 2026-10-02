@@ -1,6 +1,9 @@
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
 import { ObjetivoPicker } from "./objetivo-picker";
+import { redirect } from "next/navigation";
+import { esBorrador } from "@/lib/borrador";
+import { createClient } from "@/lib/supabase/server";
 import { COLUMNA } from "../ancho";
 
 // Objetivo del momento — va casi al final (paso 4 de 5), justo antes de generar,
@@ -12,6 +15,9 @@ export default async function ObjetivoPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   await requireStep(3);
+  // Sin correo todavía (lib/borrador.ts): primero se pide, en su propia pantalla,
+  // que está fuera de la zona medida. Al verificarlo vuelve aquí.
+  if (await esBorrador(await createClient())) redirect("/onboarding/correo");
   const { error } = await searchParams;
 
   return (

@@ -258,10 +258,11 @@ export async function datosCorreoDiario(ahora: Date = new Date()): Promise<Datos
     quienAyer: deAyer.map((f) => {
       const x = d.extras.get(f.id);
       return {
-        correo: f.email ?? f.id,
+        // Sin correo = borrador: empezó sin registrarse y aún no lo deja.
+        correo: f.email ?? "(sin correo todavía)",
         origen: origenEnPalabras(origenDesdeDato(f.origen), f.como_nos_conocio),
         dispositivo: x?.dispositivo ?? null,
-        paso: pasoEnPalabras(f.onboarding_step, f.gender),
+        paso: pasoEnPalabras(f.onboarding_step, f.gender, !f.email),
         prendas: x?.prendas ?? 0,
         fotos: x?.fotos ?? 0,
       };
