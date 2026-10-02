@@ -164,7 +164,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
   return (
     <div className="flex flex-1 flex-col gap-4">
       {/* Chips de categoría (scroll-x); el número = cuántas marcaste ahí */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
         {cats.map((cat) => {
           const on = cat === activeCat;
           const selCount = countChip(cat);
@@ -203,8 +203,10 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
           : "Marca lo que tengas de cada tipo — al menos arriba, abajo y zapatos."}
       </p>
 
-      {/* Grid de la categoría activa */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Grid de la categoría activa. En escritorio, 6 por fila: con 2 columnas
+          la categoría "Arriba" eran 2,800px de scroll en un monitor para marcar
+          17 prendas que caben en tres filas. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         {activeCat === CAT_TRAJE
           ? trajes.map((traje) => {
               const on = traje.piezas.every((p) => selected.has(p.id));
@@ -224,7 +226,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
                       src={traje.portada.image_path}
                       alt={traje.nombre}
                       fill
-                      sizes="(max-width: 430px) 50vw, 215px"
+                      sizes="(min-width: 1024px) 160px, (max-width: 430px) 50vw, 215px"
                       className="object-cover"
                     />
                   ) : (
@@ -293,7 +295,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
                   src={item.image_path}
                   alt={item.name}
                   fill
-                  sizes="(max-width: 430px) 50vw, 215px"
+                  sizes="(min-width: 1024px) 160px, (max-width: 430px) 50vw, 215px"
                   className="object-cover"
                 />
               ) : (
@@ -337,7 +339,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
           type="button"
           onClick={handleCta}
           disabled={pending || ctaMode === "fill"}
-          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-40"
+          className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[16px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-40 lg:mx-auto lg:max-w-md"
         >
           {pending ? (
             <>

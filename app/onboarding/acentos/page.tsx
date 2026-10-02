@@ -25,7 +25,7 @@ export default async function AcentosPage() {
   if (profile.onboarding_step >= ONBOARDING_COMPLETE) redirect("/hoy");
 
   return (
-    <section className="flex flex-1 flex-col gap-5 pt-4">
+    <section className="flex flex-1 flex-col gap-5 pt-4 lg:mx-auto lg:w-full lg:max-w-3xl">
       <OnboardingProgress step={2} />
 
       <div className="flex flex-col gap-1.5">

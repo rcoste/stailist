@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -50,6 +50,7 @@ export function SwipeDeck({
   calibracion = false,
   soloPares = false,
   gender = "hombre",
+  ancho = false,
 }: {
   looks: Look[];
   // Acción al terminar (default = onboarding). El Perfil pasa updateTastes.
@@ -82,6 +83,15 @@ export function SwipeDeck({
   soloPares?: boolean;
   /** Para elegir las fotos de los pares de corte. */
   gender?: Gender;
+  /**
+   * La versión de escritorio: de `lg` para arriba, el texto a la izquierda y la
+   * carta —más grande— a la derecha (ver app/onboarding/ancho.ts).
+   *
+   * Es opt-in porque el Perfil también monta este deck ("Rehaz tus gustos")
+   * dentro de su propia columna, y ahí no hay ancho que repartir. Debajo de
+   * `lg` no cambia nada, lo pida quien lo pida.
+   */
+  ancho?: boolean;
 }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -230,6 +240,34 @@ export function SwipeDeck({
     else setDrag({ x: 0, y: 0, active: false });
   }
 
+  // LAS FLECHAS DEL TECLADO: ← no va, → me gusta.
+  //
+  // En un teléfono se desliza; en una computadora deslizar es arrastrar con el
+  // mouse, que nadie hace 12 veces seguidas, y lo que queda es ir y venir entre
+  // dos botones. Las flechas son el gesto equivalente (Roberto, 2026-10-01).
+  // Se escucha en `window` y no en la carta porque nadie le da foco a la carta
+  // antes de teclear. `decide` cambia en cada render, por eso viaja en un ref.
+  const decideRef = useRef(decide);
+  useEffect(() => {
+    decideRef.current = decide;
+  });
+  useEffect(() => {
+    if (done) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      decideRef.current(e.key === "ArrowRight");
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [done]);
+
+  // La columna de pregunta, para los estados que no enseñan fotos grandes.
+  const columna = ancho ? "lg:mx-auto lg:w-full lg:max-w-md" : "";
+
   if (done) {
     if (error) {
       return (
@@ -255,7 +293,7 @@ export function SwipeDeck({
           className="flex flex-1 flex-col pb-4"
           style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
         >
-          <ParesDeCorte gender={gender} onDone={terminarPares} />
+          <ParesDeCorte gender={gender} onDone={terminarPares} ancho={ancho} />
         </div>
       );
     }
@@ -382,7 +420,7 @@ export function SwipeDeck({
       const last = words.length > 1 ? words.pop() : null;
       const head = words.join(" ");
       return (
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 pb-4 text-center">
+        <div className={`flex flex-1 flex-col items-center justify-center gap-1 pb-4 text-center ${columna}`}>
           {liked.length > 0 ? (
             <div className="relative mx-auto mb-2 h-[230px] w-[262px]">
               {liked[1] ? (
@@ -466,11 +504,39 @@ export function SwipeDeck({
   const behind = [looks[index + 2], looks[index + 1]].filter(Boolean);
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div
+      className={`flex flex-1 flex-col gap-4 ${
+        ancho ? "lg:mx-auto lg:w-full lg:max-w-4xl lg:flex-row lg:items-center lg:gap-16" : ""
+      }`}
+    >
       {/* La cabecera del paso sólo mientras el deck manda. Cuando cede el turno
           a los pares de corte, la suya toma el relevo — antes se apilaban. */}
-      {cabecera}
-      <div className="relative mx-auto aspect-[3/4] max-h-[60dvh] w-full max-w-80">
+      {cabecera ? (
+        <div className={ancho ? "lg:flex lg:flex-1 lg:flex-col lg:gap-6" : undefined}>
+          {cabecera}
+          {/* Sólo en escritorio: en un teléfono no hay flechas que anunciar. */}
+          {ancho ? (
+            <p className="hidden items-center gap-2 text-[13px] text-muted lg:flex">
+              <kbd className="flex h-7 w-7 items-center justify-center rounded-sm border border-line bg-surface font-sans text-ink">
+                ←
+              </kbd>
+              no va
+              <kbd className="ml-3 flex h-7 w-7 items-center justify-center rounded-sm border border-line bg-surface font-sans text-ink">
+                →
+              </kbd>
+              me gusta
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {/* La carta y sus controles viajan juntos: en escritorio son la columna
+          derecha. En teléfono este contenedor no cambia nada (mismo gap). */}
+      <div className={`flex flex-col gap-4 ${ancho ? "lg:flex-1" : ""}`}>
+      <div
+        className={`relative mx-auto aspect-[3/4] max-h-[60dvh] w-full max-w-80 ${
+          ancho ? "lg:max-w-sm" : ""
+        }`}
+      >
         {/* Cartas de atrás (profundidad) — en B&N */}
         {behind.map((b, i) => {
           // i=0 es la más atrás (index+2), i=1 la siguiente (index+1)
@@ -491,7 +557,7 @@ export function SwipeDeck({
                   src={b.image}
                   alt=""
                   fill
-                  sizes="320px"
+                  sizes="(min-width: 1024px) 384px, 320px"
                   className="object-cover grayscale"
                 />
               ) : (
@@ -522,7 +588,7 @@ export function SwipeDeck({
               src={look.image}
               alt={look.nombre}
               fill
-              sizes="320px"
+              sizes="(min-width: 1024px) 384px, 320px"
               className="object-cover"
               priority
             />
@@ -611,6 +677,7 @@ export function SwipeDeck({
       ) : (
         <span className="pb-2" aria-hidden />
       )}
+      </div>
     </div>
   );
 }

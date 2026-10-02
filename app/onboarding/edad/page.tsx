@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { routeForStep } from "@/lib/onboarding";
 import { EdadPicker } from "./edad-picker";
+import { COLUMNA } from "../ancho";
 
 // Segunda antesala del onboarding (tras el género): rango de edad. Da contexto
 // de life-stage al motor y habilita el aviso de menores. Sin barra de progreso
@@ -13,7 +14,7 @@ export default async function EdadPage() {
   if (profile.age_range) redirect(routeForStep(profile.onboarding_step));
 
   return (
-    <section className="flex flex-1 flex-col justify-center gap-7 pb-10">
+    <section className={`flex flex-1 flex-col justify-center gap-7 pb-10 ${COLUMNA}`}>
       <div className="flex flex-col gap-3">
         <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.025em] text-ink">
           ¿cuántos{" "}
