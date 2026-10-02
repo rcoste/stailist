@@ -20,6 +20,10 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   "(sin correo todavía)" y con el paso donde se quedaron.
 - La limpieza nocturna borra los borradores con más de 7 días.
 - Con el interruptor apagado no cambia nada: la landing sigue yendo a `/login`.
+- **El checklist pide dos de arriba, dos de abajo y zapatos** (antes, una de cada
+  una). Con el mínimo anterior sólo existía una combinación y el motor, que
+  entrega 2-3 looks, fallaba con "el stylist está ocupado" al final del
+  onboarding. El servidor exige lo mismo.
 
 ## [0.2.344.2] - 2026-10-02 — sin correo verificado no hay IA
 

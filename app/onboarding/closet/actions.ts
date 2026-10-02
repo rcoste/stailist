@@ -36,7 +36,7 @@ export async function saveCloset(
   // Valida contra el catálogo real y hereda sus atributos.
   const { data: archetypes, error: catError } = await supabase
     .from("archetypes")
-    .select("id, name, attrs, image_path")
+    .select("id, name, category, attrs, image_path")
     // Retiradas fuera (borrado suave, migración 0137): el id viaja por el
     // cliente y esta es la puerta que inserta.
     .is("deleted_at", null)
@@ -44,6 +44,17 @@ export async function saveCloset(
     .in("id", ids);
   if (catError || !archetypes || archetypes.length === 0) {
     return { error: "No pude leer el catálogo — inténtalo otra vez." };
+  }
+
+  // El mismo mínimo que el checklist (ver MINIMO en checklist.tsx): con una de
+  // arriba y una de abajo sólo existe UNA combinación y el motor, que entrega
+  // 2-3 looks, falla. Se repite aquí porque los ids viajan por el cliente.
+  const de = (cat: string) => archetypes.filter((a) => a.category === cat).length;
+  const vestidos = de("vestido");
+  if (de("top") + vestidos < 2 || de("bottom") + vestidos < 2 || de("calzado") < 1) {
+    return {
+      error: "Marca al menos dos de arriba, dos de abajo y unos zapatos — con menos no me alcanza para armarte looks distintos.",
+    };
   }
 
   // Avanza el paso PRIMERO con guard: si esto no afecta filas, otro submit ya
