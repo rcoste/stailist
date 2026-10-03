@@ -532,9 +532,17 @@ export function SwipeDeck({
       {/* La carta y sus controles viajan juntos: en escritorio son la columna
           derecha. En teléfono este contenedor no cambia nada (mismo gap). */}
       <div className={`flex flex-col gap-4 ${ancho ? "lg:flex-1" : ""}`}>
+      {/* La carta se encoge con la pantalla en vez de empujar los botones.
+          En el navegador de Instagram (iPhone 17: ~402×637 útiles) el alto fijo
+          dejaba los botones 70 pt debajo de lo visible y nadie sabía qué hacer.
+          El ancho se ata al alto disponible para que conserve el 3:4 y no
+          recorte cabezas ni zapatos. En escritorio manda el layout de siempre.
+          (380px = todo lo que no es la carta: logo, barra, título, botones y el
+          link de salida; 160px de piso para que en un teléfono chico no sea una
+          estampilla —ahí sí se hace un poco de scroll.) */}
       <div
-        className={`relative mx-auto aspect-[3/4] max-h-[60dvh] w-full max-w-80 ${
-          ancho ? "lg:max-w-sm" : ""
+        className={`relative mx-auto aspect-[3/4] max-h-[60dvh] w-[min(100%,max(160px,calc((100dvh-380px)*0.75)))] max-w-80 ${
+          ancho ? "lg:w-full lg:max-w-sm" : ""
         }`}
       >
         {/* Cartas de atrás (profundidad) — en B&N */}
@@ -638,31 +646,43 @@ export function SwipeDeck({
         </div>
       </div>
 
-      {/* Botones redondos: el sí relleno tinta */}
-      <div className="flex items-center justify-center gap-10 pt-2">
-        <button
-          type="button"
-          onClick={() => decide(false)}
-          disabled={pending}
-          aria-label={`No me gusta ${look.nombre}`}
-          className="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
-        >
-          <Icon name="equis" size={24} />
-        </button>
-        <button
-          type="button"
-          onClick={() => decide(true)}
-          disabled={pending}
-          aria-label={`Me gusta ${look.nombre}`}
-          className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-accent text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
-        >
-          <Icon name="corazon" size={24} />
-        </button>
+      {/* Botones redondos: el sí relleno tinta. Cada uno lleva debajo su
+          dirección ("← no va" / "me gusta →"): sin eso, quien no conoce el
+          gesto de Tinder no sabe que deslizar y tocar hacen lo mismo. El
+          contador va en medio para no gastar otro renglón. */}
+      <div className="flex items-start justify-center gap-8 pt-1">
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => decide(false)}
+            disabled={pending}
+            aria-label={`No me gusta ${look.nombre}`}
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
+          >
+            <Icon name="equis" size={22} />
+          </button>
+          <span className="text-[12px] font-semibold text-muted" aria-hidden>
+            ← no va
+          </span>
+        </div>
+        <p className="tabular flex h-14 items-center text-[12px] text-muted">
+          {index + 1} de {looks.length}
+        </p>
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => decide(true)}
+            disabled={pending}
+            aria-label={`Me gusta ${look.nombre}`}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-on-accent transition-colors duration-200 hover:bg-accent-deep disabled:opacity-50"
+          >
+            <Icon name="corazon" size={22} />
+          </button>
+          <span className="text-[12px] font-semibold text-ink" aria-hidden>
+            me gusta →
+          </span>
+        </div>
       </div>
-
-      <p className="tabular text-center text-[12px] text-muted">
-        {index + 1} de {looks.length}
-      </p>
       {/* La puerta de salida tras ESCAPE_TRAS decisiones: discreta (un link,
           no un botón) para que quien está a gusto siga barajando. */}
       {results.length >= ESCAPE_TRAS ? (

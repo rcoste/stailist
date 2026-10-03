@@ -5,7 +5,7 @@
 // helper img() escoge la carpeta según el género. Set completo para ambos géneros
 // (hero, pasos, paso 4, galería, sección 04, cápsula, viaje). Modelo de hombre M-1
 // = el modelo consistente de public/looks/*-hombre.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EntrarBoton } from "./entrar-boton";
 import { entradaSinCorreo } from "@/lib/borrador";
 import { FirmaRaicode } from "@/components/firma-raicode";
@@ -43,6 +43,60 @@ function Wordmark() {
     <span className={styles.wm}>
       st<em className={styles.s}>ai</em>list
     </span>
+  );
+}
+
+// El video del hero NO puede costar velocidad: en septiembre la landing tardaba
+// 16 s en pintar y se bajó a 2.5 (v0.2.338.0, el embudo en frío del 09-23).
+// Por eso primero pinta el póster (una webp de ~22 KB, igual que la foto que
+// reemplaza) y el video se pide hasta que la página terminó de cargar. Con
+// "reducir movimiento" no arranca solo: queda el póster con controles.
+function DemoVideo() {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      v.controls = true;
+      return;
+    }
+    const arrancar = () => {
+      // React no siempre refleja `muted` en el elemento, y sin él el
+      // navegador bloquea el autoplay (iOS sobre todo). Se fija a mano.
+      v.muted = true;
+      v.preload = "auto";
+      v.play().catch(() => {
+        // Sin autoplay (modo ahorro de datos, navegador estricto): que la
+        // persona lo pueda iniciar.
+        v.controls = true;
+      });
+    };
+    if (document.readyState === "complete") arrancar();
+    else window.addEventListener("load", arrancar, { once: true });
+    return () => window.removeEventListener("load", arrancar);
+  }, []);
+  return (
+    <div className={styles.demo} aria-label="Video de la app armando un look">
+      <div className={styles.demoTop}>
+        <span className={styles.lbl}>Así funciona</span>
+        <span className={styles.pill}>tengo una cita</span>
+      </div>
+      <div className={styles.demoVideo}>
+        <video
+          ref={ref}
+          src="/landing/h/demo-look.mp4"
+          poster="/landing/h/demo-look-poster.webp"
+          preload="none"
+          muted
+          loop
+          playsInline
+          aria-label="Le dice el plan a la app, revisa el clima, busca en su clóset, arma el look y se lo enseña puesto"
+        />
+      </div>
+      <div className={styles.demoFoot}>
+        <span>Grabación real de la app, con un clóset real</span>
+      </div>
+    </div>
   );
 }
 
@@ -190,7 +244,14 @@ export function Landing({
               </div>
             </div>
 
-            {/* DEMO OUTFIT */}
+            {/* DEMO OUTFIT. En hombre va el video de la app funcionando: el
+                2026-10-03 las ~15 visitas de Google Ads se fueron en 0-14 s sin
+                tocar nada, y la foto fija no decía qué hace la app. Mujer
+                conserva el try-on: el demo está grabado con un clóset de
+                hombre. */}
+            {men ? (
+              <DemoVideo />
+            ) : (
             <div className={styles.demo} aria-label="Ejemplo de outfit">
               <div className={styles.demoTop}>
                 <span className={styles.lbl}>Un ejemplo real</span>
@@ -253,6 +314,7 @@ export function Landing({
                 <span>Armado con 4 prendas que ya tenías</span>
               </div>
             </div>
+            )}
           </div>
         </section>
 
