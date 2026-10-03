@@ -2,7 +2,7 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
-## [0.2.346.0] - 2026-10-03 — la landing de hombre enseña la app funcionando
+## [0.2.346.0] - 2026-10-03 — la landing de hombre enseña la app y el swipe cabe en Instagram
 
 - En la versión de hombre, la tarjeta "un ejemplo real" del hero ahora es un
   video de 26 s grabado en la app: le dice el plan, revisa el clima, busca en el
@@ -15,6 +15,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 - La versión de mujer no cambia (el demo está grabado con un clóset de hombre).
 - `proxy.ts` deja pasar los `.mp4` sin sesión, igual que las imágenes: si no,
   el video llegaba redirigido a `/login` y se quedaba en blanco.
+- Swipe del onboarding ("¿te gusta o no?"): dentro del navegador de Instagram
+  (iPhone 17, ~402×637 útiles) los botones quedaban 70 pt debajo de la
+  pantalla. Ahora la carta se encoge con el alto disponible (conserva el 3:4) y
+  los botones, el contador y el link de salida caben sin scroll. Cada botón
+  lleva su dirección debajo ("← no va" / "me gusta →") y el texto de arriba
+  dice el gesto en dos líneas. Escritorio sin cambios.
 
 ## [0.2.345.0] - 2026-10-02 — empezar sin registrarse: el correo se pide antes del primer look
 

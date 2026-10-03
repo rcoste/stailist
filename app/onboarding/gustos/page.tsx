@@ -47,10 +47,13 @@ export default async function GustosPage() {
                 que se sienta más largo de lo que es — fricción de setup con
                 disfraz pedagógico, que es el enemigo declarado del proyecto.
                 La barra ya dice cuánto falta; lo que faltaba era qué ganas. */}
+            {/* Dos líneas, no tres: dentro del navegador de Instagram (iPhone
+                17, 2026-10-03) la barra de abajo de la app se come ~80 pt y el
+                párrafo largo empujaba los botones fuera de la pantalla. Y dice
+                el gesto con todas sus letras: derecha sí, izquierda no. */}
             <p className="text-[15px] leading-snug text-muted">
-              Dile sí a los looks que te laten y no a los que no — deslizando o
-              con los botones. Con esto aprendo tu estilo y en un par de minutos
-              te armo tu primer outfit.
+              Desliza a la derecha lo que te late y a la izquierda lo que no.
+              Así aprendo tu estilo.
             </p>
           </div>
         }
