@@ -137,7 +137,9 @@ export const config = {
   // sw.js y manifest.webmanifest van EXCLUIDOS: el navegador los pide sin
   // sesión (incluso en /login), y si el proxy los redirige a /login el service
   // worker no registra ("script behind a redirect") y la PWA no es instalable.
+  // mp4 también: el video del hero de la landing lo pide alguien sin sesión, y
+  // redirigido a /login el <video> se queda en blanco ("no supported sources").
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?|mp4)$).*)",
   ],
 };

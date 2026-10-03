@@ -363,6 +363,17 @@
   object-position: center;
   display: block;
 }
+/* El demo en video (hero de hombre): cuadrado, como sale de HyperFrames. */
+.demoVideo {
+  aspect-ratio: 1 / 1;
+  background: var(--c-tile);
+}
+.demoVideo video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
 .demoCol {
   display: flex;
   flex-direction: column;
