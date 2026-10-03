@@ -81,7 +81,7 @@ for (const p of PLANTILLAS) {
 }
 
 if (DRY) {
-  console.log("\n--dry-run: nada se envió. Las dos plantillas pasaron las guardias.");
+  console.log("\n--dry-run: nada se envió. Las plantillas pasaron las guardias.");
   process.exit(0);
 }
 
@@ -100,4 +100,4 @@ if (!res.ok) {
   console.error(`✗ ${res.status} ${res.statusText}\n${(await res.text()).slice(0, 600)}`);
   process.exit(1);
 }
-console.log("\n✓ Las DOS plantillas aplicadas. Revoca el PAT ahora.");
+console.log("\n✓ Las plantillas aplicadas. Revoca el PAT ahora.");

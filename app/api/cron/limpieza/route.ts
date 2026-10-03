@@ -47,10 +47,21 @@ export async function GET(request: NextRequest) {
           and not exists (select 1 from public.outfits o where o.user_id = p.id)
         returning u.id`
     );
+    // LOS BORRADORES ABANDONADOS (lib/borrador.ts): sesiones sin correo que
+    // empezaron el onboarding y nunca lo dejaron. A los 7 días ya no vuelven —su
+    // sesión vive en una cookie del navegador— y no tienen archivos (Storage no
+    // deja escribir sin correo), así que basta la fila: perfil, básicos marcados
+    // y eventos se van en cascada.
+    const borradores = await c.query(
+      `delete from auth.users
+        where is_anonymous
+          and created_at < now() - interval '7 days'
+        returning id`
+    );
     const intentos = await c.query(
       `delete from public.login_intentos where created_at < now() - interval '1 day'`
     );
-    return { cuentas: cuentas.rowCount ?? 0, intentos: intentos.rowCount ?? 0 };
+    return { cuentas: cuentas.rowCount ?? 0, borradores: borradores.rowCount ?? 0, intentos: intentos.rowCount ?? 0 };
   });
   if (r.cuentas > 0) console.log(`[limpieza] ${r.cuentas} cuenta(s) que nunca entraron, borradas`);
 

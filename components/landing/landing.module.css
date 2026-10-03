@@ -213,6 +213,16 @@
   width: 100%;
   text-decoration: none;
 }
+/* El botón como <form> (entrada sin correo): el form no pinta caja propia, para
+   que el botón se acomode igual que el <a> al que sustituye. */
+.ctaForm {
+  display: contents;
+}
+.finelineLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 @media (min-width: 760px) {
   .btnSolo {
     width: auto;

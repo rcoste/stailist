@@ -89,6 +89,8 @@ export default async function proxy(request: NextRequest) {
   const isPublic =
     pathname === "/" ||
     pathname.startsWith("/login") ||
+    // La puerta sin correo (app/empezar/route.ts): se llega sin sesión, por POST.
+    pathname === "/empezar" ||
     pathname.startsWith("/auth") ||
     // Cron (auth por CRON_SECRET) y baja de correo (auth por token) llegan SIN
     // sesión — no deben redirigir a /login.
@@ -119,7 +121,9 @@ export default async function proxy(request: NextRequest) {
     return conOrigen(NextResponse.redirect(url));
   }
 
-  if (user && pathname.startsWith("/login")) {
+  // Un BORRADOR (sesión sin correo) sí puede abrir /login: es la única puerta
+  // para quien empezó sin registrarse y resulta que ya tenía cuenta.
+  if (user && !user.is_anonymous && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return conOrigen(NextResponse.redirect(url));

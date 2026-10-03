@@ -12,6 +12,7 @@ import {
 import { WowClient, type WowOutfit } from "./wow-client";
 import { registrarEvento } from "@/lib/telemetria";
 import { debeMedirPrimerLook } from "@/lib/publicidad";
+import { esBorrador } from "@/lib/borrador";
 
 // El momento wow: 2-3 outfits generados con tu clóset, tus gustos y tu paleta.
 // Acepta step 4 (recién terminó checklist) Y step 5 (la generación lo cerró
@@ -35,6 +36,9 @@ export default async function WowPage({
   }
 
   const supabase = await createClient();
+  // Sin correo no hay primer look (lib/borrador.ts). No debería llegar aquí —el
+  // objetivo ya la mandó al correo—, pero esta página es la que dispara el gasto.
+  if (await esBorrador(supabase)) redirect("/onboarding/correo");
 
   // Nº real de prendas del clóset — alimenta las frases del "generando"
   // ("revisando tus N prendas…"). head:true → solo cuenta, no trae filas.

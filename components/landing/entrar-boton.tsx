@@ -1,8 +1,10 @@
+import type { ReactNode } from "react";
+import { entradaSinCorreo } from "@/lib/borrador";
 import styles from "./landing.module.css";
 
 type Props = {
   /** Texto fino opcional bajo el botón. */
-  fineline?: string;
+  fineline?: ReactNode;
   /** La trust line con puntos (solo en el hero). */
   trust?: boolean;
 };
@@ -21,19 +23,37 @@ type Props = {
 // tiene que ser navegación completa para que las etiquetas se suelten
 // (components/tags-publicidad.tsx intercepta los links por lo mismo), y un
 // link lo es siempre, con o sin etiquetas.
+//
+// DESDE EL 2026-10-02 (con NEXT_PUBLIC_ENTRADA_SIN_CORREO=1) el botón ya no
+// lleva a /login: abre un borrador y entra directo al onboarding; el correo se
+// pide antes del primer look (lib/borrador.ts). Es un <form> con POST y no un
+// link: un GET que crea cuentas lo dispara cualquier buscador. Un POST también
+// es navegación completa, así que las etiquetas se sueltan igual.
 export function EntrarBoton({ fineline, trust }: Props) {
+  const sinCorreo = entradaSinCorreo();
   return (
     <div className={styles.cta}>
-      <a className={`${styles.btn} ${styles.btnSolo}`} href="/login">
-        Armar mi primer look
-        <span className={styles.arr} aria-hidden="true">
-          &rarr;
-        </span>
-      </a>
+      {sinCorreo ? (
+        <form method="post" action="/empezar" className={styles.ctaForm}>
+          <button type="submit" className={`${styles.btn} ${styles.btnSolo}`}>
+            Armar mi primer look
+            <span className={styles.arr} aria-hidden="true">
+              &rarr;
+            </span>
+          </button>
+        </form>
+      ) : (
+        <a className={`${styles.btn} ${styles.btnSolo}`} href="/login">
+          Armar mi primer look
+          <span className={styles.arr} aria-hidden="true">
+            &rarr;
+          </span>
+        </a>
+      )}
 
       {trust && (
         <div className={styles.trust}>
-          <span>sin contraseña</span>
+          <span>{sinCorreo ? "sin registro para empezar" : "sin contraseña"}</span>
           <span className={styles.dot} />
           <span>sin tarjeta</span>
           <span className={styles.dot} />

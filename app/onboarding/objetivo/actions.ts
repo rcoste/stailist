@@ -14,6 +14,9 @@ export async function saveObjective(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  // El paso 3 → 4 es el que abre la generación: sin correo no se avanza, se
+  // pulse lo que se pulse (lib/borrador.ts).
+  if (user.is_anonymous) redirect("/onboarding/correo");
 
   // Persiste el paso ANTES de avanzar: si se interrumpe aquí, retoma en gustos.
   const { error } = await supabase

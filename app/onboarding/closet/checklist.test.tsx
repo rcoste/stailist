@@ -55,7 +55,9 @@ const item = (
 // Catálogo mínimo con lo obligatorio + un traje (saco y pantalón atados).
 const CATALOGO: CatalogItem[] = [
   item(1, "Camiseta blanca", "top"),
+  item(2, "Camisa blanca", "top"),
   item(9, "Jeans azul oscuro", "bottom"),
+  item(10, "Chinos beige", "bottom"),
   item(13, "Tenis blancos", "calzado"),
   item(321, "Saco de traje gris carbón", "saco", CARBON),
   item(322, "Pantalón de traje gris carbón", "bottom", CARBON),
@@ -72,6 +74,7 @@ describe("la pestaña Trajes del checklist", () => {
     render(<Checklist catalog={CATALOGO} />);
 
     await u.click(screen.getByRole("button", { name: /camiseta blanca/i }));
+    await u.click(screen.getByRole("button", { name: /camisa blanca/i }));
     await u.click(chip("Abajo"));
     await u.click(screen.getByRole("button", { name: /jeans azul oscuro/i }));
     await u.click(chip("Zapatos"));
@@ -79,28 +82,46 @@ describe("la pestaña Trajes del checklist", () => {
     await u.click(chip("Trajes"));
     await u.click(screen.getByRole("button", { name: /traje gris carbón/i }));
 
-    // Obligatorias cubiertas y la única opcional presente (Trajes) ya visitada
-    // → el CTA es el envío.
+    // Obligatorias cubiertas (el pantalón del traje es el segundo de abajo) y la
+    // única opcional presente (Trajes) ya visitada → el CTA es el envío.
     await u.click(screen.getByRole("button", { name: /armar mi primer look/i }));
 
     const ids = [...saveCloset.mock.calls.at(-1)![0]].sort((a, b) => a - b);
-    expect(ids).toEqual([1, 9, 13, 321, 322]);
+    expect(ids).toEqual([1, 2, 9, 13, 321, 322]);
   });
 
-  it("marcar el traje cubre 'Abajo': el CTA no te manda a marcar otro pantalón", async () => {
+  it("el pantalón del traje CUENTA como uno de abajo: sólo falta uno más", async () => {
     const u = userEvent.setup();
     render(<Checklist catalog={CATALOGO} />);
 
     await u.click(screen.getByRole("button", { name: /camiseta blanca/i }));
+    await u.click(screen.getByRole("button", { name: /camisa blanca/i }));
     await u.click(chip("Zapatos"));
     await u.click(screen.getByRole("button", { name: /tenis blancos/i }));
     await u.click(chip("Trajes"));
     await u.click(screen.getByRole("button", { name: /traje gris carbón/i }));
 
-    // El pantalón del traje satisface el requisito de bottom (countIn lee el
-    // catálogo completo): el CTA ya no dice "sigue con abajo".
-    expect(screen.queryByRole("button", { name: /sigue con abajo/i })).toBeNull();
+    // countIn lee el catálogo completo: el pantalón del traje ya es uno de los
+    // dos de abajo. En "Abajo" el CTA pide UNA MÁS, no "lo que tengas".
+    await u.click(chip("Abajo"));
+    expect(screen.getByRole("button", { name: /marca una más de abajo/i })).toBeTruthy();
+    await u.click(screen.getByRole("button", { name: /jeans azul oscuro/i }));
     expect(screen.getByRole("button", { name: /armar mi primer look/i })).toBeTruthy();
+  });
+
+  // EL MÍNIMO QUE ARMA LOOKS, en plural. Con una de cada uno sólo existe una
+  // combinación y el motor (que entrega 2-3) tronaba con TOO_FEW_OUTFITS.
+  it("con una sola de arriba no deja enviar: pide una más", async () => {
+    const u = userEvent.setup();
+    render(<Checklist catalog={CATALOGO} />);
+
+    await u.click(screen.getByRole("button", { name: /camiseta blanca/i }));
+    const cta = screen.getByRole("button", { name: /marca una más de arriba/i });
+    expect((cta as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: /armar mi primer look/i })).toBeNull();
+
+    await u.click(screen.getByRole("button", { name: /camisa blanca/i }));
+    expect(screen.getByRole("button", { name: /sigue con abajo/i })).toBeTruthy();
   });
 
   it("el chip 'Abajo' NO cuenta la pieza del traje; el de 'Trajes' sí cuenta el traje", async () => {
@@ -133,8 +154,10 @@ describe("el CTA te pasea por las opcionales antes de enviar", () => {
     render(<Checklist catalog={CATALOGO} />);
 
     await u.click(screen.getByRole("button", { name: /camiseta blanca/i }));
+    await u.click(screen.getByRole("button", { name: /camisa blanca/i }));
     await u.click(chip("Abajo"));
     await u.click(screen.getByRole("button", { name: /jeans azul oscuro/i }));
+    await u.click(screen.getByRole("button", { name: /chinos beige/i }));
     await u.click(chip("Zapatos"));
     await u.click(screen.getByRole("button", { name: /tenis blancos/i }));
 

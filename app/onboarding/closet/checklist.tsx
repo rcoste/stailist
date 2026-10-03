@@ -30,9 +30,18 @@ const CAT_TRAJE = "traje";
 // primero las tres que hacen falta para armar un look y después las
 // opcionales, en el mismo orden en que el botón pregunta por ellas.
 const CATEGORY_ORDER = ["top", "bottom", "calzado", "vestido", "saco", CAT_TRAJE, "abrigo"];
-// Mínimo para armar un outfit: algo de arriba, algo de abajo y zapatos.
+// Mínimo para armar LOOKS, en plural: dos de arriba, dos de abajo y zapatos.
 // Un vestido cuenta como arriba+abajo; sacos y abrigos son opcionales.
+//
+// ERA "ALGO DE CADA UNO" Y ESO ROMPÍA EL PRIMER LOOK (2026-10-02). Con una
+// camiseta, un pantalón y unos tenis sólo existe UNA combinación, y el motor
+// entrega 2-3 looks distintos: lanzaba TOO_FEW_OUTFITS y la persona veía "el
+// stylist está ocupado" justo al final del onboarding, después de hacer todo lo
+// que se le pidió. Lo cacé probando la entrada sin correo con el mínimo que el
+// checklist dejaba pasar. Roberto: "no suena descabellado que una persona
+// marque al menos" unas cuantas. Con 2×2 hay cuatro combinaciones.
 const REQUIRED = ["top", "bottom", "calzado"];
+export const MINIMO: Record<string, number> = { top: 2, bottom: 2, calzado: 1 };
 // Opcionales que el flujo guiado ANTES saltaba (el botón iba directo a enviar
 // tras los 3 obligatorios): así el motor se enteraba de la ropa de abrigo solo
 // si la persona tocaba el chip a mano. Ahora el CTA pasa por estas si están
@@ -87,11 +96,10 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
     cat === CAT_TRAJE
       ? trajesMarcados.length
       : sueltas.filter((i) => i.category === cat && selected.has(i.id)).length;
-  const hasDress = countIn("vestido") > 0;
-  const isSatisfied = (cat: string) =>
-    cat === "top" || cat === "bottom"
-      ? countIn(cat) > 0 || hasDress // un vestido cubre arriba y abajo
-      : countIn(cat) > 0;
+  // Un vestido cubre arriba y abajo: cada uno cuenta en las dos.
+  const cuantas = (cat: string) =>
+    cat === "top" || cat === "bottom" ? countIn(cat) + countIn("vestido") : countIn(cat);
+  const isSatisfied = (cat: string) => cuantas(cat) >= (MINIMO[cat] ?? 1);
   const requiredPresent = REQUIRED.filter((c) => cats.includes(c));
   const missing = requiredPresent.filter((c) => !isSatisfied(c));
   const requiredDone = missing.length === 0;
@@ -208,7 +216,7 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
       <p className="-mt-1 text-[12.5px] text-muted">
         {activeCat === CAT_TRAJE
           ? "Un tap marca el traje completo — saco y pantalón, para que también te los pueda poner por separado."
-          : "Marca lo que tengas de cada tipo — al menos arriba, abajo y zapatos."}
+          : "Marca lo que tengas — al menos dos de arriba, dos de abajo y unos zapatos, para poder armarte looks distintos."}
       </p>
 
       {/* Grid de la categoría activa. En escritorio, 6 por fila: con 2 columnas
@@ -366,7 +374,13 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
               <Icon name="flecha" size={18} />
             </>
           ) : (
-            <>marca lo que tengas de {targetLabel.toLowerCase()}</>
+            // Ya marcó una y hacen falta dos: decirle "marca lo que tengas"
+            // se leería como que su toque no contó.
+            <>
+              {target && cuantas(target) > 0
+                ? `marca una más de ${targetLabel.toLowerCase()}`
+                : `marca lo que tengas de ${targetLabel.toLowerCase()}`}
+            </>
           )}
         </button>
         {/* Escape: cubrió lo obligatorio y solo quedan opcionales (saco/abrigo)

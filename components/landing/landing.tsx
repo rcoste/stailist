@@ -7,6 +7,7 @@
 // = el modelo consistente de public/looks/*-hombre.
 import { useEffect, useState } from "react";
 import { EntrarBoton } from "./entrar-boton";
+import { entradaSinCorreo } from "@/lib/borrador";
 import { FirmaRaicode } from "@/components/firma-raicode";
 import { TryDemo } from "./try-demo";
 import { PreguntasFrecuentes } from "./faq";
@@ -120,9 +121,17 @@ export function Landing({
               tiene campo de correo (ver entrar-boton.tsx), así que este link va
               directo a /login en vez de bajar al hero. */}
           <div className={styles.headerRight}>
-            <a className={styles.hcta} href="/login">
-              Armar mi look
-            </a>
+            {/* Con la entrada sin correo, "armar mi look" abre un borrador; quien
+                ya tiene cuenta necesita su propia puerta, y es ésta. */}
+            {entradaSinCorreo() ? (
+              <a className={styles.hcta} href="/login">
+                Ya tengo cuenta
+              </a>
+            ) : (
+              <a className={styles.hcta} href="/login">
+                Armar mi look
+              </a>
+            )}
           </div>
         </div>
       </header>
@@ -164,7 +173,19 @@ export function Landing({
               <div id="sumarme">
                 <EntrarBoton
                   trust
-                  fineline="¿ya tienes cuenta? entra por aquí mismo."
+                  fineline={
+                    entradaSinCorreo() ? (
+                      <>
+                        ¿ya tienes cuenta?{" "}
+                        <a href="/login" className={styles.finelineLink}>
+                          entra aquí
+                        </a>
+                        .
+                      </>
+                    ) : (
+                      "¿ya tienes cuenta? entra por aquí mismo."
+                    )
+                  }
                 />
               </div>
             </div>
