@@ -117,3 +117,12 @@ describe("resumirAdquisicion", () => {
     expect(r[0].fuente).toBe("directo / sin rastro");
   });
 });
+
+describe("horaEnZona", () => {
+  it("da la hora de la Ciudad de México, no la UTC del servidor", async () => {
+    const { horaEnZona } = await import("@/lib/admin/adquisicion");
+    // Las 22:34 del 3 de octubre en CDMX son las 04:34 del 4 en UTC.
+    expect(horaEnZona("2026-10-04T04:34:04Z")).toBe("22:34");
+    expect(horaEnZona(new Date("2026-10-03T12:05:00Z"))).toBe("06:05");
+  });
+});

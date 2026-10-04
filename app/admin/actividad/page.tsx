@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { construirFeed, etiqueta, porDia, type Momento } from "@/lib/admin/actividad";
+import { diaEnZona, horaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { FeedFiltros } from "./feed-filtros";
 
 export const dynamic = "force-dynamic";
@@ -116,7 +117,7 @@ function Fila({ m, email }: { m: Momento; email: string }) {
   return (
     <li className="flex items-baseline gap-3 px-4 py-2.5">
       <span className="w-[52px] shrink-0 tabular-nums text-xs text-faint">
-        {m.at.slice(11, 16)}
+        {horaEnZona(m.at)}
       </span>
       <Link
         href={`/admin/usuarios/${m.userId}`}
@@ -147,8 +148,8 @@ function extra(m: Momento): string | null {
 }
 
 function diaLegible(dia: string): string {
-  const hoy = new Date().toISOString().slice(0, 10);
-  const ayer = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const hoy = diaEnZona(new Date());
+  const ayer = sumarDias(hoy, -1);
   if (dia === hoy) return "hoy";
   if (dia === ayer) return "ayer";
   const d = new Date(dia + "T12:00:00Z");

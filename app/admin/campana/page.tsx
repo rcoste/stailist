@@ -7,6 +7,7 @@ import {
   PARO_MUESTRA,
   PASOS,
   costoPor,
+  textoAvatar,
   textoDispositivos,
   textoParo,
   type ResumenCampana,
@@ -67,6 +68,12 @@ function Fila({ r }: { r: ResumenCampana }) {
       <td className={`${td} text-center tabular text-ink`}>
         {r.clics ?? "—"}
         <span className="block text-xs text-muted">{mxn(r.costoMxn)}</span>
+      </td>
+      <Paso n={r.landing} de={r.clics} />
+      <Paso n={r.boton} de={r.landing} />
+      <td className={`${td} text-center tabular text-ink`}>
+        {r.correoVisto ? `${r.correoOk} de ${r.correoVisto}` : "—"}
+        {r.correoVisto ? <span className="block text-xs text-muted">{pct(r.correoOk, r.correoVisto)}</span> : null}
       </td>
       <Paso n={r.pidieronCodigo} de={r.clics} />
       <Paso n={r.entraron} de={r.pidieronCodigo || r.clics} />
@@ -235,7 +242,11 @@ export default async function AdminCampana({
           </p>
         ) : null}
         <p className="max-w-3xl text-xs text-muted">
-          Bajo cada número, el % del paso anterior. <b className="text-ink">Pidieron código</b> =
+          Bajo cada número, el % del paso anterior. <b className="text-ink">Landing</b>,{" "}
+          <b className="text-ink">Botón</b> y <b className="text-ink">Correo</b> se cuentan desde el
+          2026-10-04, sin datos personales: navegadores que abrieron la landing, borradores que
+          abrió el botón, y cuántos verificaron su código de los que llegaron a pedirles el correo.{" "}
+          <b className="text-ink">Pidieron código</b> =
           personas nuevas, una vez al día (se cuenta desde el 2026-09-23).{" "}
           <b className="text-ink">Registro</b> = dio su edad y es mayor, lo mismo que Google
           cuenta. <b className="text-ink">Volvió</b> = otro día dentro de sus primeros{" "}
@@ -243,12 +254,24 @@ export default async function AdminCampana({
           costó en sus primeros {DIAS_VENTANA} días. <b className="text-ink">Costo</b> = anuncio +
           IA a {MXN_POR_USD} MXN por dólar (supuesto; se cambia con MXN_POR_USD).
         </p>
+        <p className="max-w-3xl text-sm text-ink">
+          <b>Avatar</b> (cuentas desde {d.desde}): {textoAvatar(d.avatar)}.
+        </p>
         <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-          <table className="w-full min-w-[1100px] border-collapse text-sm">
+          <table className="w-full min-w-[1300px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-muted">
                 <th className={`${th} text-left`}>Campaña</th>
                 <th className={`${th} text-center`}>Clics · MXN</th>
+                <th className={`${th} text-center`} title="Navegadores que abrieron la landing">
+                  Landing
+                </th>
+                <th className={`${th} text-center`} title="Tocaron Armar mi primer look">
+                  Botón
+                </th>
+                <th className={`${th} text-center`} title="Verificaron su código de los que llegaron a la pantalla del correo">
+                  Correo
+                </th>
                 <th className={`${th} text-center`}>Pidieron código</th>
                 <th className={`${th} text-center`}>Entraron</th>
                 <th className={`${th} text-center`}>Registro</th>
@@ -274,7 +297,7 @@ export default async function AdminCampana({
               ))}
               {d.resumen.length === 0 ? (
                 <tr>
-                  <td colSpan={10 + PASOS.length} className={`${td} text-center text-muted`}>
+                  <td colSpan={13 + PASOS.length} className={`${td} text-center text-muted`}>
                     Nadie entró desde {d.desde} y no hay gasto capturado.
                   </td>
                 </tr>

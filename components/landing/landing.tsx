@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { EntrarBoton } from "./entrar-boton";
 import { entradaSinCorreo } from "@/lib/borrador";
+import { permitidoEnEsteNavegador } from "@/lib/publicidad";
 import { FirmaRaicode } from "@/components/firma-raicode";
 import { TryDemo } from "./try-demo";
 import { PreguntasFrecuentes } from "./faq";
@@ -122,6 +123,24 @@ export function Landing({
       /* sin storage: se queda el default */
     }
   }, [generoInicial]);
+  // "Abrió la landing" para el embudo del panel (lib/embudo-marcas.ts). Después
+  // de cargar y por sendBeacon: no le cuesta nada a la página. Con un id
+  // aleatorio de este navegador, sin nada que lo identifique, y respetando el
+  // botón de /privacidad y el GPC igual que las etiquetas de anuncios.
+  useEffect(() => {
+    try {
+      if (!permitidoEnEsteNavegador()) return;
+      let sujeto = localStorage.getItem("st_visitante");
+      if (!sujeto) {
+        sujeto = crypto.randomUUID();
+        localStorage.setItem("st_visitante", sujeto);
+      }
+      const cuerpo = new Blob([JSON.stringify({ sujeto })], { type: "application/json" });
+      navigator.sendBeacon?.("/api/embudo", cuerpo);
+    } catch {
+      /* sin storage o sin beacon: esta visita no se cuenta */
+    }
+  }, []);
   const choose = (g: "mujer" | "hombre") => {
     setGender(g);
     try {

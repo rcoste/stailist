@@ -5,6 +5,7 @@ import { CATALOGO, proveedoresListos } from "@/lib/proveedores/catalogo";
 import { resumenPorRetador, LIMITE_VERCEL_MS } from "@/lib/comparador/motor";
 import { formatoUsd } from "@/lib/proveedores/precios";
 import { NuevaCorrida } from "./nueva-corrida";
+import { ZONA } from "@/lib/admin/adquisicion";
 
 // El comparador: poner modelos a competir y decidir con evidencia cuál usar.
 //
@@ -225,6 +226,7 @@ export default async function AdminComparador() {
                         {c.tamano as string} ·{" "}
                         {variantes.map((v) => v.etiqueta).join(" vs ")} ·{" "}
                         {new Date(c.creada as string).toLocaleDateString("es-MX", {
+    timeZone: ZONA,
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
@@ -278,6 +280,7 @@ export default async function AdminComparador() {
                       {c.modo === "varias" ? "varias prendas" : "una prenda"} ·{" "}
                       {(c.modelos as string[]).length} modelos ·{" "}
                       {new Date(c.creada as string).toLocaleDateString("es-MX", {
+    timeZone: ZONA,
                         day: "numeric",
                         month: "short",
                         hour: "2-digit",

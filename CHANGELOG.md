@@ -2,6 +2,43 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.347.0] - 2026-10-04 — el correo diario con formato, y el embudo antes de la cuenta
+
+- El correo de las 8 am deja de ser texto en un `<pre>`. Ahora tiene cuatro
+  cifras arriba (cuentas nuevas, primer look, gasto de IA y cuántos volvieron),
+  el criterio de paro en una card negra con su barra, una ficha por persona
+  nueva, una tarjeta por campaña con su embudo (clics, entraron, primer look,
+  volvieron) y los objetivos del plan con su estado en color. Usa el membrete
+  de los otros correos (`lib/email-marca.ts`). El texto sigue saliendo como
+  alternativa del mismo correo.
+- Nuevo `lib/admin/campana-correo.ts` (funciones puras, con tests). Todo lo que
+  viene de la base se escapa.
+- **El embudo antes de la cuenta** (migración 0168, `lib/embudo-marcas.ts`):
+  cuántos navegadores abrieron la landing, cuántos tocaron "Armar mi primer
+  look", cuántos llegaron a la pantalla del correo y cuántos verificaron ahí,
+  por campaña y día. Nació de los 17 clics con 0 personas del 3 de octubre, que
+  no se podían explicar. Sólo contadores sin datos personales: la landing manda
+  un id aleatorio del navegador (respeta el botón de /privacidad y el GPC), y
+  los demás pasos los marca el servidor con el id del borrador. Cada quien
+  cuenta una vez por paso, y las marcas sobreviven al borrado de los borradores.
+  Las campañas que empiezan con "prueba" no cuentan.
+- **El avatar, paso por paso**: cuántas cuentas generaron la cara, el cuerpo y
+  cuántas lo guardaron (de una usuaria nueva que lo intentó tres veces y se fue).
+- Las dos cosas salen en `/admin/campana` y en el correo diario.
+- **El gasto de Google Ads llega solo**: un script dentro de la cuenta de Ads
+  (`docs/google-ads-script-gasto.js`) manda cada mañana impresiones, clics,
+  costo y conversiones de los últimos 7 días a `/api/campana/gasto`, protegido
+  con `GASTO_ADS_SECRET`. Escribe en la misma tabla que la captura a mano. Se
+  descartó la API de Google Ads: pedía un token que Google aprueba a mano, un
+  proyecto de Google Cloud y una llave que caduca.
+- **Las horas del admin, en hora de la Ciudad de México.** El servidor corre
+  en UTC: `/admin/actividad` mostraba las horas 6 adelantadas y partía los días
+  a las 6 pm; IA, evales, acceso, comparador, cápsulas y el detalle de usuario
+  formateaban sin zona. Ahora todo usa `America/Mexico_City` (nuevo
+  `horaEnZona`).
+- `campanasParaCorreo`: el correo ya no lista campañas sin clics, sin gasto y
+  sin nadie adentro (salía `prueba-borrador`, una etiqueta de pruebas).
+
 ## [0.2.346.0] - 2026-10-03 — la landing de hombre enseña la app y el swipe cabe en Instagram
 
 - En la versión de hombre, la tarjeta "un ejemplo real" del hero ahora es un

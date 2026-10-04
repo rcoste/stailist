@@ -23,6 +23,8 @@ import {
   type ExtraCuenta,
   type FilaCodigos,
   type FilaGasto,
+  type FilaEmbudo,
+  type EmbudoAvatar,
   type ResumenCampana,
 } from "@/lib/admin/campana";
 import {
@@ -111,6 +113,8 @@ export type DatosCampana = {
   extras: Map<string, ExtraCuenta>;
   /** Cuentas de anuncios de la ventana, por aparato. */
   dispositivos: ResumenDispositivos;
+  /** Avatar paso por paso, de las cuentas de la ventana. */
+  avatar: EmbudoAvatar;
 };
 
 export async function cargarCampana(desde: string, ahora: Date = new Date()): Promise<DatosCampana> {
@@ -134,7 +138,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
   // de paro: no depende del rango de fechas de la pantalla.
   const deAnuncio = todas.filter((f) => f.onboarding_step >= 5 && esDeCampana(origenDesdeDato(f.origen)));
 
-  const [extrasRows, codigos, gasto, usoRows] = await withDb(async (c) => {
+  const [extrasRows, codigos, gasto, usoRows, embudo, avatar] = await withDb(async (c) => {
     const extras = (await c.query(SQL_EXTRAS, [filas.map((f) => f.id)])).rows;
     const cods = (
       await c.query(
@@ -152,7 +156,24 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
       )
     ).rows as FilaGasto[];
     const us = deAnuncio.length ? (await c.query(SQL_USO, [deAnuncio.map((f) => f.id)])).rows : [];
-    return [extras, cods, gas, us] as const;
+    const emb = (
+      await c.query(
+        `select fuente, campana, paso, count(*)::int as n
+           from public.embudo_marcas where dia >= $1::date group by 1, 2, 3`,
+        [desde]
+      )
+    ).rows as FilaEmbudo[];
+    const av = (
+      await c.query(
+        `select count(distinct e.user_id) filter (where e.type = 'avatar_judge' and e.data->>'stage' = 'face')::int as cara,
+                count(distinct e.user_id) filter (where e.type = 'avatar_judge' and e.data->>'stage' = 'body')::int as cuerpo,
+                count(distinct e.user_id) filter (where e.type = 'avatar_generated')::int as guardaron
+           from public.events e
+          where e.user_id = any ($1::uuid[]) and e.type in ('avatar_judge', 'avatar_generated')`,
+        [filas.map((f) => f.id)]
+      )
+    ).rows[0] as EmbudoAvatar | undefined;
+    return [extras, cods, gas, us, emb, av ?? { cara: 0, cuerpo: 0, guardaron: 0 }] as const;
   });
 
   const uso = new Map<string, UsoCuenta>(
@@ -195,7 +216,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     ]),
   ].sort();
 
-  const resumen = resumirCampana({ filas, extras, codigos, gasto, ahora });
+  const resumen = resumirCampana({ filas, extras, codigos, gasto, embudo, ahora });
   // El criterio mira TODAS las cuentas de campaña, no sólo las de la ventana
   // elegida en pantalla: las primeras 30 son las primeras 30.
   const paro = criterioDeParo(todas, ahora);
@@ -210,6 +231,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     uso: resumirUso(todas, uso),
     extras,
     dispositivos: resumirDispositivos(filas, extras),
+    avatar,
   };
 }
 
@@ -255,6 +277,9 @@ export async function datosCorreoDiario(ahora: Date = new Date()): Promise<Datos
     paro: d.paro,
     desde,
     objetivos: textoObjetivos(d.objetivos, d.uso),
+    objetivosLineas: d.objetivos,
+    uso: d.uso,
+    avatar: d.avatar,
     quienAyer: deAyer.map((f) => {
       const x = d.extras.get(f.id);
       return {

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { sendEmail } from "@/lib/email";
 import { correoDiario } from "@/lib/admin/campana";
 import { datosCorreoDiario } from "@/lib/admin/campana-datos";
+import { correoDiarioHtml } from "@/lib/admin/campana-correo";
 
 // EL CORREO DIARIO: cuánto costó ayer, quién llegó y cómo va el criterio de
 // paro de la campaña. Corre a las 14:00 UTC = 8:00 de la Ciudad de México (ver
@@ -23,7 +24,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "no_autorizado" }, { status: 401 });
   }
 
-  const { subject, text } = correoDiario(await datosCorreoDiario());
+  const datos = await datosCorreoDiario();
+  const { subject, text } = correoDiario(datos);
 
   const destino = process.env.ADMIN_EMAIL;
   if (!destino) {
@@ -31,11 +33,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "sin_admin_email" });
   }
 
-  const enviado = await sendEmail({ to: destino, subject, text, html: `<pre>${escapar(text)}</pre>` });
+  // El HTML con formato (lib/admin/campana-correo.ts) y el texto como
+  // alternativa del mismo correo: los dos dicen lo mismo.
+  const enviado = await sendEmail({ to: destino, subject, text, html: correoDiarioHtml(datos) });
   return NextResponse.json({ ok: enviado.ok });
-}
-
-/** El texto trae correos y nombres de campaña: nada de eso se interpreta como HTML. */
-function escapar(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

@@ -332,4 +332,10 @@ describe("porDia", () => {
     expect(dias.map((d) => d.dia)).toEqual(["2026-08-31", "2026-08-30"]);
     expect(dias[0].momentos).toHaveLength(2);
   });
+
+  it("el día es el de la Ciudad de México, no el UTC", () => {
+    // 2026-10-04T04:34Z son las 22:34 del 3 de octubre en CDMX.
+    const dias = porDia(colapsar([m("a", "2026-10-04T04:34:00Z", "alta")]));
+    expect(dias[0].dia).toBe("2026-10-03");
+  });
 });

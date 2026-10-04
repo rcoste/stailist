@@ -14,6 +14,7 @@ import {
 } from "@/lib/evales/evales";
 import type { LookMotor, BriefMotor } from "@/lib/comparador/motor";
 import { NuevoEval } from "./nuevo-eval";
+import { ZONA } from "@/lib/admin/adquisicion";
 
 // EL EVAL: la curva del motor contra sí mismo, versión a versión.
 //
@@ -168,6 +169,7 @@ export default async function AdminEvales() {
                         </Link>
                         <span className="ml-1 text-muted">
                           {new Date(f.creada).toLocaleDateString("es-MX", {
+    timeZone: ZONA,
                             day: "numeric",
                             month: "short",
                           })}
@@ -223,6 +225,7 @@ export default async function AdminEvales() {
                 </span>
                 <span className="text-xs text-muted">
                   {new Date(f.creada).toLocaleString("es-MX", {
+    timeZone: ZONA,
                     day: "numeric",
                     month: "short",
                     hour: "2-digit",
