@@ -31,6 +31,11 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   con `GASTO_ADS_SECRET`. Escribe en la misma tabla que la captura a mano. Se
   descartó la API de Google Ads: pedía un token que Google aprueba a mano, un
   proyecto de Google Cloud y una llave que caduca.
+- **Las horas del admin, en hora de la Ciudad de México.** El servidor corre
+  en UTC: `/admin/actividad` mostraba las horas 6 adelantadas y partía los días
+  a las 6 pm; IA, evales, acceso, comparador, cápsulas y el detalle de usuario
+  formateaban sin zona. Ahora todo usa `America/Mexico_City` (nuevo
+  `horaEnZona`).
 - `campanasParaCorreo`: el correo ya no lista campañas sin clics, sin gasto y
   sin nadie adentro (salía `prueba-borrador`, una etiqueta de pruebas).
 

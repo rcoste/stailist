@@ -149,6 +149,20 @@ export function diaEnZona(instante: Date): string {
   }).format(instante);
 }
 
+/**
+ * La hora (HH:mm) que era en la Ciudad de México en ese instante. El servidor
+ * de Vercel corre en UTC: recortar el ISO (`iso.slice(11, 16)`) daba la hora
+ * seis horas adelantada, y así salía en /admin/actividad hasta el 2026-10-04.
+ */
+export function horaEnZona(instante: Date | string): string {
+  return new Intl.DateTimeFormat("es-MX", {
+    timeZone: ZONA,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(typeof instante === "string" ? new Date(instante) : instante);
+}
+
 export function volvioEn7Dias(diaInicio: string, dias: string[] | null): boolean {
   const limite = sumarDias(diaInicio, DIAS_VENTANA);
   return (dias ?? []).some((d) => d > diaInicio && d <= limite);

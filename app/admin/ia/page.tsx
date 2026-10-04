@@ -8,6 +8,7 @@ import {
   type ResumenTarea,
 } from "@/lib/ai-calls";
 import { TAREAS_SIN_MEDIR } from "@/lib/cobertura-recibos";
+import { ZONA } from "@/lib/admin/adquisicion";
 
 // EL PANEL DE LAS LLAMADAS DE IA: cuánto tardan, qué cuestan y cuándo truenan.
 //
@@ -256,6 +257,7 @@ function TablaFallos({ filas }: { filas: AiCall[] }) {
               <tr key={i} className="border-b border-line last:border-0">
                 <td className="whitespace-nowrap px-3 py-2.5 text-left text-muted">
                   {new Date(f.created_at).toLocaleString("es-MX", {
+    timeZone: ZONA,
                     day: "2-digit",
                     month: "short",
                     hour: "2-digit",

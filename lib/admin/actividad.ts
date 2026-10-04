@@ -23,6 +23,8 @@
 // calcular el "hace 21 horas" de cada fila. Esto es el MISMO cruce ordenado
 // por tiempo en vez de agrupado por persona.
 
+import { diaEnZona } from "@/lib/admin/adquisicion";
+
 /** Una línea del feed. `n > 1` = ráfaga colapsada (ver colapsar). */
 export type Momento = {
   /** Clave estable para React y para depurar. */
@@ -352,11 +354,14 @@ export function ultimoUsoPorUsuario(f: {
   return out;
 }
 
-/** Agrupa el feed por día local, conservando el orden. */
+/**
+ * Agrupa el feed por día de la Ciudad de México, conservando el orden. Antes
+ * cortaba el ISO (UTC): lo de las 6 pm en adelante caía en el día siguiente.
+ */
 export function porDia(momentos: Momento[]): { dia: string; momentos: Momento[] }[] {
   const out: { dia: string; momentos: Momento[] }[] = [];
   for (const m of momentos) {
-    const dia = m.at.slice(0, 10);
+    const dia = diaEnZona(new Date(m.at));
     const ultimo = out[out.length - 1];
     if (ultimo && ultimo.dia === dia) ultimo.momentos.push(m);
     else out.push({ dia, momentos: [m] });

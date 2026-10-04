@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revisarCapsula, type HallazgoCapsula } from "@/lib/engine/capsule-revision";
 import type { CapsuleItem, CapsuleTarget } from "@/lib/capsule";
+import { ZONA } from "@/lib/admin/adquisicion";
 
 // LO QUE EL JUEZ DE LA CÁPSULA ENCONTRÓ, en una pantalla.
 //
@@ -188,7 +189,7 @@ export default async function AdminCapsulas() {
                 />
                 <Plegado
                   titulo="Lo que se le mandó de ella"
-                  pista={new Date(f.traza.created_at).toLocaleString("es-MX")}
+                  pista={new Date(f.traza.created_at).toLocaleString("es-MX", { timeZone: ZONA })}
                   texto={f.traza.prompt_usuario}
                 />
               </div>

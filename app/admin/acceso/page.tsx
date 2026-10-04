@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ZONA } from "@/lib/admin/adquisicion";
 import {
   addToAllowlist,
   removeFromAllowlist,
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 // Fecha corta y humana para el estado de invitación ("invitado el 22 jul").
 function fmtFecha(iso: string): string {
   return new Date(iso).toLocaleDateString("es-MX", {
+    timeZone: ZONA,
     day: "numeric",
     month: "short",
   });
@@ -50,6 +52,7 @@ export default async function AdminAcceso() {
     email: r.email as string,
     source: (r.source as string | null) ?? null,
     fecha: new Date(r.created_at as string).toLocaleDateString("es-MX", {
+    timeZone: ZONA,
       day: "numeric",
       month: "short",
       year: "numeric",

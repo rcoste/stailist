@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { construirFeed, etiqueta, ultimoUsoPorUsuario } from "@/lib/admin/actividad";
+import { ZONA } from "@/lib/admin/adquisicion";
 import {
   ITEM_IMAGE_SELECT,
   itemImageUrlSync,
@@ -429,6 +430,7 @@ export default async function AdminUserDetail({
                         </span>
                         <span className="text-xs text-muted">
                           {new Date(o.created_at).toLocaleDateString("es-MX", {
+    timeZone: ZONA,
                             day: "numeric",
                             month: "short",
                           })}
