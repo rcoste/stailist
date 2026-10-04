@@ -28,7 +28,7 @@ const fila = {
   clics: 80,
   costoMxn: 600,
   registrosGoogle: 0,
-  pidieronCodigo: 0,
+  pidieronCodigo: 0, landing: 0, boton: 0, correoVisto: 0, correoOk: 0,
   entraron: 0,
   registro: 0,
   pasos: [0, 0, 0, 0, 0],
@@ -57,6 +57,7 @@ async function html(d: Partial<DatosCampana>): Promise<string> {
       modulos: { viaje: 0, capsula: 0, prueba: 0, fitcheck: 0, adelantado: 0 },
     },
     extras: new Map(),
+    avatar: { cara: 0, cuerpo: 0, guardaron: 0 },
     dispositivos: {
       computadora: { cuentas: 0, primerLook: 0 },
       celular: { cuentas: 0, primerLook: 0 },

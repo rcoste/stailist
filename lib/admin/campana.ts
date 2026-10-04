@@ -2,6 +2,7 @@ import { origenDesdeDato, type Origen } from "@/lib/origen";
 import { isMinor, type AgeRange } from "@/lib/edad";
 import { mediana, fmtSegundos } from "@/lib/admin/embudo-tiempos";
 import type { Dispositivo } from "@/lib/dispositivo";
+import type { LineaObjetivo, ResumenUso } from "@/lib/admin/objetivos";
 import {
   campanaDe,
   fuenteDe,
@@ -49,6 +50,8 @@ export type ExtraCuenta = {
 };
 
 export type FilaCodigos = { dia: string; fuente: string; campana: string; nuevos: number; recurrentes: number };
+/** Cuántos sujetos dieron un paso del embudo previo a la cuenta (migración 0168), por origen. */
+export type FilaEmbudo = { fuente: string; campana: string; paso: string; n: number };
 export type FilaGasto = {
   dia: string;
   campana: string;
@@ -79,6 +82,15 @@ export type ResumenCampana = {
   registrosGoogle: number | null;
   /** Personas nuevas que pidieron su código (sin cuenta previa). */
   pidieronCodigo: number;
+  /**
+   * El embudo antes de la cuenta (lib/embudo-marcas.ts), desde el 2026-10-04:
+   * navegadores que abrieron la landing, borradores que abrió el botón, los que
+   * llegaron a la pantalla del correo y los que verificaron ahí.
+   */
+  landing: number;
+  boton: number;
+  correoVisto: number;
+  correoOk: number;
   entraron: number;
   /** Dio su edad y es adulta: lo mismo que Google cuenta como "registro". */
   registro: number;
@@ -110,6 +122,10 @@ const vacio = (fuente: string, campana: string): ResumenCampana => ({
   costoMxn: null,
   registrosGoogle: null,
   pidieronCodigo: 0,
+  landing: 0,
+  boton: 0,
+  correoVisto: 0,
+  correoOk: 0,
   entraron: 0,
   registro: 0,
   pasos: PASOS.map(() => 0),
@@ -141,6 +157,7 @@ export function resumirCampana(input: {
   extras: Map<string, ExtraCuenta>;
   codigos: FilaCodigos[];
   gasto: FilaGasto[];
+  embudo?: FilaEmbudo[];
   ahora: Date;
 }): ResumenCampana[] {
   const grupos = new Map<string, ResumenCampana>();
@@ -177,6 +194,14 @@ export function resumirCampana(input: {
 
   for (const c of input.codigos) {
     grupo(c.fuente, c.campana).g.pidieronCodigo += c.nuevos;
+  }
+
+  for (const e of input.embudo ?? []) {
+    const g = grupo(e.fuente, e.campana).g;
+    if (e.paso === "landing") g.landing += e.n;
+    else if (e.paso === "boton") g.boton += e.n;
+    else if (e.paso === "correo_visto") g.correoVisto += e.n;
+    else if (e.paso === "correo_ok") g.correoOk += e.n;
   }
 
   // Lo capturado trae sólo la campaña. Se pega a la fila que ya tenga esa
@@ -272,7 +297,24 @@ export type DatosCorreoDiario = {
   quienAyer?: QuienLlego[];
   /** Cuentas de anuncios por aparato, acumulado (ver resumirDispositivos). */
   dispositivos?: ResumenDispositivos;
+  /** Los mismos objetivos, sin aplanar: el correo HTML pinta el estado de cada uno. */
+  objetivosLineas?: LineaObjetivo[];
+  uso?: ResumenUso;
+  /** Dónde se abandona el avatar (ver EmbudoAvatar). */
+  avatar?: EmbudoAvatar;
 };
+
+/**
+ * EL AVATAR, PASO POR PASO: cuántas personas generaron la cara, el cuerpo y
+ * cuántas lo guardaron. Nació de una usuaria nueva (2026-10-03): tres intentos con
+ * 7/10 del juez y se fue sin guardar; el panel no lo dejaba ver.
+ */
+export type EmbudoAvatar = { cara: number; cuerpo: number; guardaron: number };
+
+export function textoAvatar(a: EmbudoAvatar): string {
+  if (a.cara === 0 && a.guardaron === 0) return "nadie lo intentó";
+  return `generaron la cara ${a.cara} · el cuerpo ${a.cuerpo} · lo guardaron ${a.guardaron}`;
+}
 
 /** De dónde llegó, en un renglón: la campaña si la hay; si no, la fuente y lo que contestó. */
 export function origenEnPalabras(o: Origen | null, comoNosConocio: string | null): string {
@@ -360,9 +402,23 @@ const usd = (n: number) => `$${n.toFixed(2)}`;
 const mxn = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocaleString("es-MX")}`);
 const pctTxt = (n: number, d: number) => (d === 0 ? "—" : `${Math.round((n / d) * 100)}%`);
 
+/**
+ * Las campañas que vale la pena leer en el correo: con etiqueta o con gasto, y
+ * con algo adentro. Una campaña que sólo existe porque alguien pidió un código
+ * con una etiqueta de prueba (sin clics, sin gasto y sin nadie que entrara)
+ * es ruido: el 2026-10-04 salía "prueba-borrador" entre las de Google.
+ */
+export function campanasParaCorreo(campanas: ResumenCampana[]): ResumenCampana[] {
+  return campanas.filter(
+    (c) =>
+      (c.campana !== "—" || c.costoMxn != null) &&
+      (c.clics != null || c.costoMxn != null || c.entraron > 0 || c.landing > 0 || c.boton > 0)
+  );
+}
+
 /** Una pantalla de texto. Lo que no se manda no se mira; lo que es largo tampoco. */
 export function correoDiario(d: DatosCorreoDiario): { subject: string; text: string } {
-  const deCampana = d.campanas.filter((c) => c.campana !== "—" || c.costoMxn != null);
+  const deCampana = campanasParaCorreo(d.campanas);
   const subject = `stailist · ${d.ayer}: ${usd(d.iaAyerUsd)} de IA · ${d.nuevasAyer} cuentas nuevas${
     d.nuevasAyerDeCampana ? ` (${d.nuevasAyerDeCampana} de anuncios)` : ""
   }`;
@@ -391,6 +447,7 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
       ? ["POR APARATO (cuentas de anuncios, acumulado)", `- ${textoDispositivos(d.dispositivos)}`, ""]
       : []),
     ...(d.objetivos?.length ? [...d.objetivos, ""] : []),
+    ...(d.avatar ? ["AVATAR (cuentas de la ventana)", `- ${textoAvatar(d.avatar)}`, ""] : []),
   ];
   if (deCampana.length === 0) {
     lineas.push("CAMPAÑAS: todavía no hay nada con origen de campaña ni gasto capturado.");
@@ -399,6 +456,7 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
     for (const c of deCampana) {
       lineas.push(
         `- ${c.campana} (${c.fuente}): ${c.clics ?? "—"} clics, ${mxn(c.costoMxn)} MXN · ` +
+          `landing ${c.landing} · botón ${c.boton} · correo ${c.correoOk}/${c.correoVisto} · ` +
           `pidieron código ${c.pidieronCodigo} · entraron ${c.entraron} · registro ${c.registro}` +
           `${c.registrosGoogle != null ? ` (Google dice ${c.registrosGoogle})` : ""} · ` +
           `primer look ${c.primerLook} · volvieron ${c.volvieron} de ${c.ventanaCerrada} (${pctTxt(c.volvieron, c.ventanaCerrada)}) · ` +

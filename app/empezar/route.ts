@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { MARCA_BORRADOR, TOPE_BORRADORES_POR_IP_HORA, entradaSinCorreo } from "@/lib/borrador";
 import { anotarIntento, intentosUltimaHora, ipDe } from "@/lib/ritmo-login";
+import { marcarPaso } from "@/lib/embudo-marcas";
+import { COOKIE_ORIGEN } from "@/lib/origen";
 
 // LA PUERTA SIN CORREO: el botón de la landing manda aquí por POST y esto abre
 // un borrador (sesión anónima) y entra directo al onboarding. Ver lib/borrador.ts.
@@ -24,11 +26,13 @@ export async function POST(request: NextRequest) {
   const { porIp } = await intentosUltimaHora(MARCA_BORRADOR, ip);
   if (porIp >= TOPE_BORRADORES_POR_IP_HORA) return a("/login");
 
-  const { error } = await supabase.auth.signInAnonymously();
+  const { data, error } = await supabase.auth.signInAnonymously();
   // Si Supabase no deja (apagado, límite propio, caída), el camino de siempre
   // sigue ahí: nadie se queda sin entrar por esto.
   if (error) return a("/login");
   await anotarIntento(MARCA_BORRADOR, ip);
+  // "Tocó el botón", para el embudo del panel (lib/embudo-marcas.ts).
+  if (data.user) await marcarPaso("boton", data.user.id, request.cookies.get(COOKIE_ORIGEN)?.value);
   return a("/onboarding/genero");
 }
 

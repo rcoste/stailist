@@ -11,6 +11,7 @@ import { COOKIE_CONVERSION } from "@/lib/publicidad";
 import { isMinor, type AgeRange } from "@/lib/edad";
 import { registrarEvento } from "@/lib/telemetria";
 import { adoptarBorrador } from "@/lib/borrador-adoptar";
+import { marcarPaso } from "@/lib/embudo-marcas";
 
 // EL CORREO, AL FINAL (ver lib/borrador.ts). Dos pasos, como el login, y con el
 // MISMO mecanismo del login (signInWithOtp + verifyOtp): así el correo sale con
@@ -72,6 +73,10 @@ export async function verificarCodigo(_prev: CorreoState, formData: FormData): P
   if (error || !data.user) {
     return { status: "sent", email, message: "Código incorrecto o caducado. Pide uno nuevo." };
   }
+
+  // "Verificó su código", para el embudo del panel. Con el id del borrador, el
+  // mismo sujeto que "llegó a la pantalla del correo" (lib/embudo-marcas.ts).
+  if (borradorId) await marcarPaso("correo_ok", borradorId, (await cookies()).get(COOKIE_ORIGEN)?.value);
 
   let adopcion: Awaited<ReturnType<typeof adoptarBorrador>> = "nada";
   if (borradorId) {

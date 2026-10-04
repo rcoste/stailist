@@ -24,7 +24,7 @@ function fila(p: Partial<ResumenCampana>): ResumenCampana {
     clics: null,
     costoMxn: null,
     registrosGoogle: null,
-    pidieronCodigo: 0,
+    pidieronCodigo: 0, landing: 0, boton: 0, correoVisto: 0, correoOk: 0,
     entraron: 0,
     registro: 0,
     pasos: [0, 0, 0, 0, 0],

@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { marcarPaso } from "@/lib/embudo-marcas";
+import { COOKIE_ORIGEN } from "@/lib/origen";
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { requireStep } from "@/lib/auth";
 import { esBorrador } from "@/lib/borrador";
@@ -23,7 +26,14 @@ import { CorreoForm } from "./correo-form";
 // sí está medida.
 export default async function CorreoPage() {
   await requireStep(3);
-  if (!(await esBorrador(await createClient()))) redirect("/onboarding/objetivo");
+  const supabase = await createClient();
+  if (!(await esBorrador(supabase))) redirect("/onboarding/objetivo");
+  // "Llegó a la pantalla del correo", para el embudo del panel. Una vez por
+  // borrador aunque recargue (lib/embudo-marcas.ts).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await marcarPaso("correo_visto", user.id, (await cookies()).get(COOKIE_ORIGEN)?.value);
 
   return (
     <section className={`flex flex-1 flex-col gap-6 pt-4 ${COLUMNA}`}>

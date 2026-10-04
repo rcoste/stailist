@@ -113,7 +113,13 @@ export default async function proxy(request: NextRequest) {
     // en el JavaScript que cualquiera puede leer. Pedirle sesión lo volvería
     // inútil justo donde más sirve (la pantalla de entrar), y además el aviso
     // de "hay versión nueva" leería el HTML del login como si fuera JSON.
-    pathname === "/api/version";
+    pathname === "/api/version" ||
+    // La marca "abrió la landing" (lib/embudo-marcas.ts): la manda justo quien
+    // todavía no tiene cuenta. Con sesión obligatoria no contaría a nadie.
+    pathname === "/api/embudo" ||
+    // El gasto que manda el script de Google Ads: llega sin sesión y se
+    // protege con su propio secreto (GASTO_ADS_SECRET), como los crons.
+    pathname === "/api/campana/gasto";
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
