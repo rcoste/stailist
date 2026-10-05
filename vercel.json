@@ -19,6 +19,10 @@
     {
       "path": "/api/cron/campana",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/prendas-pendientes",
+      "schedule": "30 * * * *"
     }
   ]
 }

@@ -3,6 +3,7 @@ import { generateArchetypeImage } from "@/lib/archetype-image";
 import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
 import { garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
 import { registrarEvento } from "@/lib/telemetria";
+import { esRenderPendiente } from "@/lib/renders-pendientes";
 
 // Render limpio (tipo catálogo) de una prenda del clóset SIN imagen, desde sus
 // atributos (texto→imagen con Gemini), subido a Storage y cacheado en el item
@@ -30,7 +31,13 @@ export async function renderItemImage(
    * está; cuando la imagen es la equivocada, esa protección estorba. Sólo se
    * pide desde la ficha, con un tap explícito.
    */
-  forzar = false
+  forzar = false,
+  /**
+   * Terminar una prenda que entró sin imagen limpia por el tope del día
+   * (lib/renders-pendientes.ts). Sólo aplica si la prenda trae esa marca; con
+   * la marca quitada es un no-op, así que no sirve para regenerar a voluntad.
+   */
+  pendiente = false
 ): Promise<RenderItemResult> {
   const { data: item } = await supabase
     .from("items")
@@ -57,7 +64,9 @@ export async function renderItemImage(
     visual?: string;
     /** De qué foto salió (espejo): permite dibujarla igual que en el carrete. */
     origen_foto?: string;
+    render_pendiente?: boolean;
   };
+  const terminar = pendiente && esRenderPendiente({ ...item, attrs });
 
   // Idempotencia: ya tiene imagen (arquetipo, render previo, foto, o prestada) o
   // ya hay un render en curso → no regeneres.
@@ -66,7 +75,7 @@ export async function renderItemImage(
     (item.render_status === "done" && !!item.render_path) ||
     !!item.photo_path ||
     !!attrs.image_path;
-  if ((yaTieneImagen && !forzar) || item.render_status === "pending") {
+  if ((yaTieneImagen && !forzar && !terminar) || item.render_status === "pending") {
     return { ok: true, skipped: true };
   }
 
@@ -75,9 +84,17 @@ export async function renderItemImage(
   const categoria = attrs.categoria ?? attrs.tipo ?? "";
 
   // Marca "en curso" antes del trabajo pesado (guard anti doble-generación).
+  // La marca de "pendiente" se quita AL INTENTAR, no al lograrlo: si este
+  // render falla, la prenda se queda con su foto y no se reintenta en cada
+  // visita.
+  const attrsSinMarca = { ...attrs };
+  delete attrsSinMarca.render_pendiente;
   await supabase
     .from("items")
-    .update({ render_status: "pending" })
+    .update({
+      render_status: "pending",
+      ...(attrs.render_pendiente ? { attrs: attrsSinMarca } : {}),
+    })
     .eq("id", itemId)
     .eq("user_id", userId);
 
@@ -195,13 +212,17 @@ export async function renderItemImage(
   //
   // Se lee y se re-escribe attrs en vez de un update parcial: `attrs` es jsonb y
   // un update del objeto entero es la forma que usa el resto del archivo.
-  const nuevoAttrs = forzar ? { ...attrs, preferir_render: true } : attrs;
+  const nuevoAttrs = forzar ? { ...attrsSinMarca, preferir_render: true } : attrsSinMarca;
   await supabase
     .from("items")
     .update({
       render_path: path,
       render_status: "done",
       ...(forzar ? { attrs: nuevoAttrs } : {}),
+      // La foto que se guardó aparte mientras no había imagen limpia vuelve a
+      // su columna: ya no hace de miniatura (el render gana) y queda como el
+      // original de la prenda, igual que en un alta normal.
+      ...(terminar && !item.photo_path && attrs.origen_foto ? { photo_path: attrs.origen_foto } : {}),
     })
     .eq("id", itemId)
     .eq("user_id", userId);
@@ -209,7 +230,7 @@ export async function renderItemImage(
   await registrarEvento(supabase, {
     user_id: userId,
     type: "render_generated",
-    data: { item_id: itemId, forzado: forzar },
+    data: { item_id: itemId, forzado: forzar, ...(terminar ? { pendiente: true } : {}) },
   });
   return { ok: true, path };
 }

@@ -53,6 +53,8 @@ export type ClosetItem = {
   colorSecundario: string; // "" = sin dato
   source: string; // "archetype" | "photo"
   renderStatus?: string; // "none" | "pending" | "done" | "failed"
+  /** Le falta su imagen limpia por el tope del día (lib/renders-pendientes.ts). */
+  renderPendiente?: boolean;
   corte?: string; // "" = sin dato; entallado | recto | holgado
   corteConfirmado?: boolean; // ¿lo dijo la persona, o lo suponemos nosotros?
   creadoEn?: string; // ISO — para ordenar por lo recién añadido
@@ -359,20 +361,32 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   // cuando lleguen prendas nuevas sin imagen). Una sola vez por prenda: en cuanto
   // se rinde, queda con render_status='done' y deja de ser candidata.
   useEffect(() => {
+    // Dos clases de candidata: la que no tiene NINGUNA imagen, y la que entró
+    // con su foto original porque ese día ya se había usado el tope de imágenes
+    // limpias. Esta segunda es la que hace que el gasto se haga sólo por quien
+    // vuelve: se pule aquí, cuando la persona abre su clóset.
     const pendientes = items.filter(
-      (i) => !i.imagen && i.source === "photo" && (i.renderStatus ?? "none") === "none"
+      (i) =>
+        i.renderPendiente ||
+        (!i.imagen && i.source === "photo" && (i.renderStatus ?? "none") === "none")
     );
     if (pendientes.length === 0) return;
+    const deTope = new Set(pendientes.filter((i) => i.renderPendiente).map((i) => i.id));
     let cancelled = false;
+    // El servidor dijo "por hoy ya no": se deja de pedir. Sin esto, 80
+    // pendientes serían 80 peticiones rechazadas en cada visita.
+    let topeTocado = false;
 
     const renderOne = async (id: string) => {
+      if (topeTocado) return;
       setRendering((s) => new Set(s).add(id));
       try {
         const res = await fetch("/api/render-item", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ itemId: id }),
+          body: JSON.stringify({ itemId: id, ...(deTope.has(id) ? { pendiente: true } : {}) }),
         });
+        if (res.status === 429) topeTocado = true;
         const data = await res.json().catch(() => ({}));
         if (!cancelled && res.ok && data?.url) {
           setRendered((m) => ({ ...m, [id]: data.url as string }));

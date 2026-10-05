@@ -14,6 +14,7 @@ import { fotosBloqueadas } from "@/lib/edad";
 import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { loadLovedCounts, sortLovedFirst } from "@/lib/loved-items";
+import { esRenderPendiente } from "@/lib/renders-pendientes";
 
 export default async function ClosetPage() {
   const profile = await requireOnboarded();
@@ -184,6 +185,13 @@ export default async function ClosetPage() {
       colorSecundario: attrs.color_secundario ?? "",
       source: (r.source as string) ?? "archetype",
       renderStatus: (r.render_status as string) ?? "none",
+      // Entró con su foto por el tope de imágenes del día; se pule al volver.
+      renderPendiente: esRenderPendiente({
+        photo_path: r.photo_path as string | null,
+        render_path: r.render_path as string | null,
+        render_status: r.render_status as string | null,
+        attrs: r.attrs as { render_pendiente?: boolean | null; origen_foto?: string | null } | null,
+      }),
       corte: attrs.corte ?? "",
       // El lazo del traje: mismo id en el saco y en su pantalón.
       conjunto: attrs.conjunto ?? "",

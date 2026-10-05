@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { withDb } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
-import { correoDeAlarmas, decidirAlarmas } from "@/lib/vigilancia";
+import { correoDeAlarmas, decidirAlarmas, AVISO_USD_PERSONA } from "@/lib/vigilancia";
 import { TOPE_USD_DIA_GLOBAL } from "@/lib/cuotas";
 
 // LA VIGILANCIA DE LA IA. Corre cada hora (ver vercel.json).
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   // y no por el cliente con sesión a propósito: esto mira el gasto de TODA la
   // app, que ninguna sesión de usuario puede ver por RLS.
   const m = await withDb(async (c) => {
-    const [tot, peor] = await Promise.all([
+    const [tot, peor, caras] = await Promise.all([
       c
         .query<{ fallos: string; llamadas: string; gasto: string }>(
           `select
@@ -59,8 +59,26 @@ export async function GET(request: NextRequest) {
             limit 1`
         )
         .then((r) => r.rows[0] ?? null),
+      // QUIEN CRUZÓ EL UMBRAL DE GASTO EN ESTA HORA: lleva más de $5 en 24h y
+      // sin lo de la última hora llevaba menos. Así el aviso sale una vez y no
+      // cada hora mientras su gasto siga dentro de la ventana.
+      c
+        .query<{ correo: string; gasto: string }>(
+          `select coalesce(u.email, a.user_id::text) as correo, sum(a.costo_usd) as gasto
+             from ai_calls a
+             left join auth.users u on u.id = a.user_id
+            where a.created_at >= now() - interval '24 hours'
+              and a.user_id is not null
+            group by 1
+           having sum(a.costo_usd) >= $1
+              and coalesce(sum(a.costo_usd) filter (where a.created_at < now() - interval '1 hour'), 0) < $1
+            order by 2 desc
+            limit 5`,
+          [AVISO_USD_PERSONA]
+        )
+        .then((r) => r.rows),
     ]);
-    return { ...tot, peor };
+    return { ...tot, peor, caras };
   });
 
   const alarmas = decidirAlarmas({
@@ -71,6 +89,7 @@ export async function GET(request: NextRequest) {
     llamadasUltimaHora: Number(m?.llamadas ?? 0),
     gastoUltimasHoras: Number(m?.gasto ?? 0),
     topeGasto: TOPE_USD_DIA_GLOBAL,
+    personasCaras: (m?.caras ?? []).map((c) => ({ correo: c.correo, gasto: Number(c.gasto) })),
   });
 
   // Sin nada que decir, no se manda nada. Un "todo bien" cada hora se aprende a

@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.349.0] - 2026-10-05 — los topes de gasto ahora sí frenan, y subir ropa nunca se corta
+
+- **Los topes por persona no aplicaban a nadie.** `lib/cuotas.ts` cuenta los
+  recibos de IA de la persona con su sesión, y la base sólo dejaba leer esos
+  recibos a admins: para cualquier cuenta normal la cuenta daba cero. Salió a la
+  luz cuando una cuenta nueva gastó ~$19 en una tarde con el tope en $5.
+  Migración 0169: cada quien lee sus propios recibos.
+- **Tope de imágenes limpias: 40 al día por persona** (recurso `renders`). La
+  imagen limpia de cada prenda es lo que cuesta del alta por foto ($0.134, contra
+  $0.001 de leer la foto), y el tope de fotos contaba lecturas. Al tocarlo, subir
+  ropa NO se corta: la prenda entra al clóset, sirve para armar looks, y su
+  imagen se pule cuando la persona vuelve a su clóset
+  (`lib/renders-pendientes.ts`). Si de la foto salió una sola prenda, mientras
+  tanto se ve con su foto; si salieron varias, con su color.
+- **Aviso del día siguiente**: cuando ya hay cupo, un correo de "ya puedo seguir
+  con tu clóset" (uno por tanda, de 9 a 21 h; cron cada hora, migración 0170).
+- **Freno global que bloquea**: al llegar la IA de toda la app a $40 en 24 horas
+  se pausan las imágenes de todos (`lib/freno-imagenes.ts`); looks y lectura de
+  fotos siguen. Antes el tope global ($25) sólo mandaba un correo.
+- **Aviso por persona**: la vigilancia avisa en la hora en que una cuenta cruza
+  $5 en 24 horas.
+- **Huecos tapados**: `/api/render-item` (rehacer imagen, auto-sanado) y
+  `/api/render-ideal` (imágenes de esenciales) no tenían ningún tope; armar,
+  regenerar y cruzar los esenciales (Opus) tampoco. El tope de dinero por persona
+  sube de $5 a $10 para quedar por encima de agotar las cinco cuotas.
+
 ## [0.2.348.0] - 2026-10-04 — el gasto de Instagram llega solo
 
 - Cada mañana, antes del correo de las 8, stailist le pregunta a la API de

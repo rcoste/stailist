@@ -134,7 +134,7 @@ describe("el freno de dinero", () => {
     if (!v.permitido) expect(v.motivo).toBe("gasto");
   });
 
-  it("va por encima de agotar las cuatro cuotas: el mensaje útil gana", async () => {
+  it("va por encima de agotar las cinco cuotas: el mensaje útil gana", async () => {
     // Si el tope de dinero fuera menor que este total, saltaría ANTES que los
     // topes por recurso y la persona recibiría "necesita un respiro" en vez de
     // "ya te armé 20 looks hoy".
@@ -142,8 +142,29 @@ describe("el freno de dinero", () => {
       CUOTAS.looks * 0.049 +
       CUOTAS.avatar * 0.134 +
       CUOTAS.tryon * 0.134 +
-      CUOTAS.fotos * 0.0012;
+      CUOTAS.fotos * 0.0012 +
+      CUOTAS.renders * 0.134;
     expect(TOPE_USD_DIA).toBeGreaterThan(peorCaso);
+  });
+});
+
+describe("el tope de renders (la imagen limpia, que es lo que cuesta)", () => {
+  it("cuenta render-prenda y no las lecturas de foto", async () => {
+    const lecturas = repetir("vision-prendas", 100);
+    expect((await revisarCuota(fakeSupabase(lecturas), "u1", "renders")).permitido).toBe(true);
+    const renders = repetir("render-prenda", CUOTAS.renders, 0.134);
+    const v = await revisarCuota(fakeSupabase(renders), "u1", "renders");
+    expect(v.permitido).toBe(false);
+    if (!v.permitido) expect(v.motivo).toBe("cuota");
+  });
+
+  it("al tocarlo, leer más fotos sigue permitido: el clóset entra completo", async () => {
+    const renders = repetir("render-prenda", CUOTAS.renders, 0.134);
+    expect((await revisarCuota(fakeSupabase(renders), "u1", "fotos")).permitido).toBe(true);
+  });
+
+  it("un día entero de renders cuesta menos que el tope de dinero", () => {
+    expect(CUOTAS.renders * 0.134).toBeLessThan(TOPE_USD_DIA);
   });
 });
 
@@ -173,9 +194,9 @@ describe("cuántas quedan (sólo lo usa el lote de fotos)", () => {
 });
 
 describe("los mensajes", () => {
-  const recursos: Recurso[] = ["looks", "avatar", "tryon", "fotos"];
+  const recursos: Recurso[] = ["looks", "avatar", "tryon", "fotos", "renders"];
 
-  it("existen para los cuatro recursos", () => {
+  it("existen para los cinco recursos", () => {
     for (const r of recursos) expect(MENSAJE_CUOTA[r].length).toBeGreaterThan(10);
   });
 

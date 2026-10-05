@@ -26,7 +26,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // El tope sólo aparece cuando se toca.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Recurso = "looks" | "avatar" | "tryon" | "fotos";
+export type Recurso = "looks" | "avatar" | "tryon" | "fotos" | "renders";
 
 /** Cuántas veces al día. Aprobados por Roberto el 2026-09-02. */
 export const CUOTAS: Record<Recurso, number> = {
@@ -34,6 +34,8 @@ export const CUOTAS: Record<Recurso, number> = {
   avatar: 5,
   tryon: 15,
   fotos: 120,
+  // Agregado el 2026-10-05, aprobado por Roberto. Ver RENDERS abajo.
+  renders: 40,
 };
 
 /**
@@ -53,6 +55,15 @@ const TAREAS: Record<Recurso, string[]> = {
   avatar: ["avatar"],
   tryon: ["tryon", "tryon-wishlist"],
   fotos: ["vision-prendas"],
+  // RENDERS: la imagen limpia de cada prenda, que es LO QUE CUESTA del alta por
+  // foto ($0.134 cada una, contra $0.001 de leer la foto). El tope de fotos
+  // contaba lecturas, así que 120 fotos "permitidas" eran ~$16 de imágenes: una
+  // cuenta nueva gastó $19 en su primer día (2026-10-04). Subir y leer fotos
+  // sigue casi libre —es la acción que más se quiere—; al tocar este tope las
+  // prendas entran igual al clóset con su foto original y su imagen limpia se
+  // genera cuando la persona vuelve (ver lib/renders-pendientes.ts). El clóset
+  // típico tiene 27 prendas de foto y el 90% menos de 72.
+  renders: ["render-prenda"],
 };
 
 /**
@@ -67,7 +78,10 @@ export const MENSAJE_CUOTA: Record<Recurso, string> = {
   looks: "ya te armé 20 looks hoy. mañana seguimos — el stylist también duerme.",
   avatar: "por hoy ya no puedo rehacer tu avatar — mañana lo afinamos.",
   tryon: "ya te probé 15 looks hoy. mañana van más.",
-  fotos: "por hoy llegué a mi tope de fotos. mañana seguimos llenando tu clóset.",
+  fotos: "por hoy ya guardé 120 prendas. mañana seguimos con el resto de tu clóset.",
+  // Casi nunca se lee tal cual: el flujo de fotos no lo trata como un alto, deja
+  // la prenda con su foto original y lo cuenta al final.
+  renders: "por hoy ya pulí 40 prendas. mañana sigo con las demás.",
 };
 
 /**
@@ -75,23 +89,30 @@ export const MENSAJE_CUOTA: Record<Recurso, string> = {
  *
  * Va POR ENCIMA de la suma de los topes de arriba a propósito. Con los precios
  * verificados (un look ~$0.049, una imagen $0.134, una foto ~$0.0012), alguien
- * que agote las cuatro cuotas gasta ~$3.80 en el día. Si el tope de dinero
+ * que agote las cinco cuotas gasta ~$9.16 en el día (40 renders son $5.36). Si el tope de dinero
  * fuera menor que eso saltaría ANTES que los topes por recurso, y entonces la
  * persona recibiría el mensaje genérico ("necesita un respiro") en vez del que
  * explica qué se acabó — que es peor información por el mismo precio.
  *
- * Así que $5 sólo salta si algo se salió del guion: un camino de IA que no
+ * Subió de $5 a $10 el 2026-10-05, junto con el tope de renders: agotar las
+ * cinco cuotas son ~$9.16, y con el tope debajo de eso (se pensó en $8) saltaría
+ * a media alta del clóset con el mensaje genérico. cuotas.test.ts lo vigila.
+ *
+ * Así que $10 sólo salta si algo se salió del guion: un camino de IA que no
  * cuenta cuota, un bucle, un modelo que se encareció. Cuando salte, hay que ir
  * a ver, no subirlo.
  */
-export const TOPE_USD_DIA = Number(process.env.TOPE_USD_DIA ?? 5);
+export const TOPE_USD_DIA = Number(process.env.TOPE_USD_DIA ?? 10);
 
 /**
  * El freno global, de toda la app. Hoy el gasto real ronda $1.2 al día entre
- * todo el mundo (medido incluyendo por fin las imágenes), así que $25 es ~20×
- * lo normal: no es un presupuesto, es una alarma de incendio.
+ * todo el mundo (medido incluyendo por fin las imágenes). Con anuncios
+ * corriendo un día bueno ya llegó a $22 (2026-10-04), así que subió de $25 a
+ * $40. Desde ese día además BLOQUEA: al llegar al tope se pausan las imágenes
+ * de todos (lib/freno-imagenes.ts); los looks y la lectura de fotos siguen.
+ * Antes sólo mandaba un correo.
  */
-export const TOPE_USD_DIA_GLOBAL = Number(process.env.TOPE_USD_DIA_GLOBAL ?? 25);
+export const TOPE_USD_DIA_GLOBAL = Number(process.env.TOPE_USD_DIA_GLOBAL ?? 40);
 
 /** El mensaje del freno de dinero — nunca insinúa que la persona hizo algo mal. */
 export const MENSAJE_TOPE_USD = "el stylist necesita un respiro. vuelve en un rato.";

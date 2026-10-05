@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-import { revisarCuota } from "@/lib/cuotas";
+import { revisarImagen } from "@/lib/freno-imagenes";
 import { registrarEvento } from "@/lib/telemetria";
 
 export const maxDuration = 60;
@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
 
   // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
   // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
-  const cuota = await revisarCuota(supabase, user.id, "avatar");
+  const cuota = await revisarImagen(supabase, user.id, "avatar");
   if (!cuota.permitido) {
     return NextResponse.json(
       { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },

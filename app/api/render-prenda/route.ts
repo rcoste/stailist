@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
-import { revisarCuota } from "@/lib/cuotas";
+import { revisarImagen } from "@/lib/freno-imagenes";
 import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
 
 export const maxDuration = 60;
@@ -28,9 +28,11 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
-  // Tope diario de IA (lib/cuotas.ts). 429 y NO 500: no es un fallo, es un
-  // límite, y el cliente lo distingue para enseñar el mensaje tal cual.
-  const cuota = await revisarCuota(supabase, user.id, "fotos");
+  // Tope diario de IMÁGENES LIMPIAS (lib/cuotas.ts, recurso "renders") y freno
+  // global. 429 y NO 500: no es un fallo, es un límite. El flujo de fotos no lo
+  // trata como un alto: guarda la prenda con su foto original y el render se
+  // genera cuando la persona vuelve (lib/renders-pendientes.ts).
+  const cuota = await revisarImagen(supabase, user.id, "renders");
   if (!cuota.permitido) {
     return NextResponse.json(
       { error: "cuota", motivo: cuota.motivo, mensaje: cuota.mensaje },
