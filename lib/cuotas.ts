@@ -308,3 +308,38 @@ export async function gastoGlobal(
     return 0;
   }
 }
+
+/**
+ * LO QUE CORRE ANTES DEL CORREO: el arquetipo (al terminar los swipes) y las
+ * preguntas de estilo. Los frenos de arriba bloquean a toda sesión sin correo
+ * (ver sesionSinCorreo), y aplicarlos aquí rompería el onboarding. Pero sin
+ * ningún freno, quien abra sesiones anónimas en serie podría llamarlas sin
+ * límite. Cada una cuesta menos de un centavo y un onboarding normal las corre
+ * una o dos veces; el tope es por número de veces, por cuenta, en 24 horas.
+ *
+ * Al toparlo NO hay mensaje: el arquetipo cae a su nombre neutro ("Tu estilo")
+ * y las preguntas a las fijas, que es lo mismo que pasa si la IA falla. Falla
+ * ABIERTO, como el resto de este archivo. Aprobado por Roberto el 2026-10-05.
+ */
+export const TOPE_ANTES_DEL_CORREO = 5;
+
+export async function cabeAntesDelCorreo(
+  supabase: SupabaseClient,
+  userId: string,
+  tarea: "arquetipo" | "preguntas-estilo",
+  ahora: Date = new Date()
+): Promise<boolean> {
+  if (motorPausado()) return false;
+  try {
+    const { data, error } = await supabase
+      .from("ai_calls")
+      .select("tarea")
+      .eq("user_id", userId)
+      .eq("tarea", tarea)
+      .gte("created_at", desdeHace24h(ahora));
+    if (error || !data) return true;
+    return data.length < TOPE_ANTES_DEL_CORREO;
+  } catch {
+    return true;
+  }
+}

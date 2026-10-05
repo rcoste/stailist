@@ -11,6 +11,7 @@ import { styleQuestionsSig } from "@/lib/style-questions-cache";
 import type { AssessmentQuestion, LifestyleAnswers } from "@/lib/capsule";
 import type { Gender } from "@/lib/auth";
 import { registrarEvento } from "@/lib/telemetria";
+import { cabeAntesDelCorreo } from "@/lib/cuotas";
 
 export type SwipeResult = { id: string; liked: boolean };
 
@@ -54,6 +55,9 @@ export async function saveTastes(
   );
   let archetype: StyleArchetype;
   try {
+    // Tope por número de veces antes del correo (lib/cuotas.ts): al toparlo
+    // cae al nombre neutro de abajo, igual que si la IA fallara.
+    if (!(await cabeAntesDelCorreo(supabase, user.id, "arquetipo"))) throw new Error("TOPE");
     archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange), { supabase, userId: user.id });
   } catch {
     archetype = {
@@ -99,7 +103,7 @@ export async function saveTastes(
   // ANTES de responder y se escribe con createTokenClient (patrón de la casa).
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token ?? null;
-  if (accessToken) {
+  if (accessToken && (await cabeAntesDelCorreo(supabase, user.id, "preguntas-estilo"))) {
     after(async () => {
       try {
         const sig = styleQuestionsSig({ style_archetype: archetype, taste_tags: tasteTags });
@@ -264,6 +268,9 @@ export async function updateTastes(
   );
   let archetype: StyleArchetype;
   try {
+    // Tope por número de veces antes del correo (lib/cuotas.ts): al toparlo
+    // cae al nombre neutro de abajo, igual que si la IA fallara.
+    if (!(await cabeAntesDelCorreo(supabase, user.id, "arquetipo"))) throw new Error("TOPE");
     archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange), { supabase, userId: user.id });
   } catch {
     archetype = {

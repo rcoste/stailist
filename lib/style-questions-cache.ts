@@ -4,6 +4,7 @@ import type { Profile } from "@/lib/auth";
 import { generateStyleQuestions } from "@/lib/engine/style-questions";
 import { seasonDisplayLabel } from "@/lib/colorimetria";
 import { buildLabel, volumeLabel } from "@/lib/silueta";
+import { cabeAntesDelCorreo } from "@/lib/cuotas";
 
 // Firma del estilo: si cambia el arquetipo o los gustos, las preguntas se regeneran.
 // v-prefix: súbelo cuando cambie el prompt/formato del generador para invalidar las
@@ -33,6 +34,9 @@ export async function ensureStyleQuestions(
   const cached = profile.style_questions;
   if (cached?.sig === sig && Array.isArray(cached.questions)) return cached.questions;
   if (!profile.style_archetype) return [];
+  if (!(await cabeAntesDelCorreo(supabase, profile.id, "preguntas-estilo"))) {
+    return cached?.questions ?? [];
+  }
 
   let questions: AssessmentQuestion[] = [];
   try {

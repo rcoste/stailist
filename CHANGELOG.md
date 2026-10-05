@@ -16,6 +16,10 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 - **Sonnet 5 cuesta $2/$10, no $3/$15.** El aumento anunciado para el 1 de
   septiembre no ocurrió y la tabla de precios lo seguía aplicando: cada recibo
   de Sonnet desde entonces salió 1.5× caro.
+- **Tope antes del correo**: el arquetipo y las preguntas de estilo corren en
+  el onboarding, antes de que la persona deje su correo, y ningún tope las
+  frenaba. Ahora van hasta 5 veces al día por cuenta (`cabeAntesDelCorreo`); al
+  toparlo caen a lo mismo que si la IA fallara (nombre neutro, preguntas fijas).
 
 ## [0.2.349.0] - 2026-10-05 — los topes de gasto ahora sí frenan, y subir ropa nunca se corta
 
