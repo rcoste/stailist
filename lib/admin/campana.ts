@@ -302,6 +302,8 @@ export type DatosCorreoDiario = {
   uso?: ResumenUso;
   /** Dónde se abandona el avatar (ver EmbudoAvatar). */
   avatar?: EmbudoAvatar;
+  /** Lo que falló al preparar el correo (p. ej. traer el gasto de Meta). Va arriba: una falla no debe pasar callada. */
+  avisos?: string[];
 };
 
 /**
@@ -423,6 +425,7 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
     d.nuevasAyerDeCampana ? ` (${d.nuevasAyerDeCampana} de anuncios)` : ""
   }`;
   const lineas = [
+    ...(d.avisos?.length ? ["AVISOS", ...d.avisos.map((a) => `- ${a}`), ""] : []),
     `AYER (${d.ayer}, hora CDMX)`,
     `- IA: ${usd(d.iaAyerUsd)} en ${d.iaAyerLlamadas} llamadas${
       d.iaTop ? `; quien más gastó: ${d.iaTop.correo} (${usd(d.iaTop.usd)})` : ""
