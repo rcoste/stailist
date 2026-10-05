@@ -4,6 +4,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "reac
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toUsableImage } from "@/lib/image-file";
+import { mensajeDePendientes } from "@/lib/renders-pendientes";
 import { createClient } from "@/lib/supabase/client";
 import { addPhotoItems, addLibraryCandidates, prendasParaComparar, esLaMismaPrenda } from "@/app/closet/actions";
 import { Spinner } from "@/components/spinner";
@@ -97,7 +98,9 @@ type RenderItem = {
   attrs: PrendaDetectada;
   tocados: Set<string>;
   photo: string; // dataURL de la foto original (para el render imagen→imagen)
-  status: "pending" | "done" | "failed";
+  // "despues" = el tope de imágenes limpias del día ya se usó: la prenda entra
+  // con su foto y se pule cuando la persona vuelva (lib/renders-pendientes.ts).
+  status: "pending" | "done" | "failed" | "despues";
   path: string | null;
   url: string | null;
   verdict: "keep" | "notmine" | "trash";
@@ -124,6 +127,8 @@ type State =
       added: number;
       conjuntos: number;
       thumbs: { url: string; nombre: string; enConjunto: boolean }[];
+      /** Qué pasó con las que no alcanzaron imagen limpia hoy; null si todas. */
+      aviso: string | null;
     }
   | { kind: "error"; msg: string };
 
@@ -408,10 +413,17 @@ export function ImportCarreteFlow({
     const CONCURRENCY = 4;
     const results: RenderItem[] = base.map((it) => ({ ...it })); // por índice, ordenado
     let done = 0;
+    // En cuanto el servidor dice "por hoy ya no" (tope de imágenes limpias o
+    // freno global), las que faltan ni se piden: entran con su foto.
+    let topeTocado = false;
 
     const renderOne = async (idx: number) => {
       const it = base[idx];
       for (let attempt = 0; ; attempt++) {
+        if (topeTocado) {
+          results[idx] = { ...it, status: "despues" };
+          break;
+        }
         try {
           const res = await fetch("/api/render-prenda", {
             method: "POST",
@@ -422,6 +434,16 @@ export function ImportCarreteFlow({
             const { path, url } = (await res.json()) as { path: string; url: string | null };
             results[idx] = { ...it, status: "done", path, url };
             break;
+          }
+          // 429 con error "cuota" NO es el rate-limit de Gemini: es nuestro
+          // tope del día. No se reintenta y no es un fallo.
+          if (res.status === 429) {
+            const j = (await res.json().catch(() => ({}))) as { error?: string };
+            if (j.error === "cuota") {
+              topeTocado = true;
+              results[idx] = { ...it, status: "despues" };
+              break;
+            }
           }
           // 429 = rate-limit de Gemini → backoff y reintenta (hasta 2 veces).
           if (res.status === 429 && attempt < 2) {
@@ -503,6 +525,9 @@ export function ImportCarreteFlow({
         );
       }
 
+      const porFoto = new Map<string, number>();
+      for (const it of keep) porFoto.set(it.photo, (porFoto.get(it.photo) ?? 0) + 1);
+
       const okItems =
         keep.length === 0
           ? { ok: true, added: 0 }
@@ -513,8 +538,17 @@ export function ImportCarreteFlow({
                 // consulta para saber qué dato es de la persona.
                 attrs: { ...it.attrs, confirmados: [...it.tocados] },
                 renderPath: it.status === "done" ? it.path : null,
-                renderStatus: it.status === "done" ? "done" : "failed",
-                photoPath: rutaDeFoto.get(it.photo) ?? null,
+                // "despues" va como "none" + la marca: "failed" querría decir que
+                // se intentó y no salió, y ése no se reintenta.
+                renderStatus:
+                  it.status === "done" ? "done" : it.status === "despues" ? "none" : "failed",
+                renderPendiente: it.status === "despues",
+                // Una prenda sin pulir de una foto con VARIAS prendas no usa la
+                // foto de miniatura (saldría la misma persona en cada una): la
+                // foto va aparte, sólo para dibujarla después.
+                ...(it.status === "despues" && (porFoto.get(it.photo) ?? 0) > 1
+                  ? { photoPath: null, origenFoto: rutaDeFoto.get(it.photo) ?? null }
+                  : { photoPath: rutaDeFoto.get(it.photo) ?? null }),
               }))
             );
 
@@ -584,6 +618,10 @@ export function ImportCarreteFlow({
           enConjunto:
             !!it.attrs.conjunto && (porConjunto.get(it.attrs.conjunto) ?? 0) >= 2,
         })),
+        aviso: mensajeDePendientes(
+          okItems.added,
+          keep.filter((it) => it.status === "despues" && rutaDeFoto.has(it.photo)).length
+        ),
       });
     } catch {
       setState({ kind: "error", msg: "No pude guardar las prendas. Inténtalo otra vez." });
@@ -1032,6 +1070,9 @@ export function ImportCarreteFlow({
                     className="h-full w-full object-cover"
                     style={{ animation: "var(--dur-short) var(--ease-enter) step-in" }}
                   />
+                ) : it.status === "despues" ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={it.photo} alt={it.attrs.nombre} className="h-full w-full object-cover" />
                 ) : it.status === "failed" ? (
                   <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] text-muted">
                     No se pudo generar
@@ -1127,6 +1168,9 @@ export function ImportCarreteFlow({
                   ? "y guardé tu traje como conjunto — sus piezas quedan relacionadas y las verás marcadas."
                   : `y guardé ${state.conjuntos} conjuntos — sus piezas quedan relacionadas y las verás marcadas.`}
               </p>
+            ) : null}
+            {state.aviso ? (
+              <p className="max-w-[300px] text-sm leading-snug text-muted">{state.aviso}</p>
             ) : null}
           </div>
           <div className="flex flex-wrap justify-center gap-2 px-2">
@@ -1390,6 +1434,14 @@ function RenderCard({
         {item.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.url} alt={item.attrs.nombre} className="h-full w-full object-cover" />
+        ) : item.status === "despues" ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.photo} alt={item.attrs.nombre} className="h-full w-full object-cover" />
+            <span className="absolute inset-x-0 bottom-0 bg-ink/70 px-2 py-1 text-[11px] text-on-accent">
+              entra hoy; mañana pulo su imagen
+            </span>
+          </>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-center text-[11px] text-muted">
             No se pudo generar — se guarda con su color

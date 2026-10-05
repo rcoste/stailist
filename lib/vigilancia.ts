@@ -18,7 +18,7 @@
 // otra cosa tampoco se lee.
 
 export type Alarma = {
-  clave: "fallos" | "gasto" | "persona";
+  clave: "fallos" | "gasto" | "persona" | "persona-gasto";
   titulo: string;
   detalle: string;
 };
@@ -58,6 +58,13 @@ export const FALLOS_MISMA_PERSONA = 3;
  * PERSONA: tres fallos de la misma en una hora es alguien atorado ahora mismo,
  * y eso importa aunque el total no llegue a cinco (ver FALLOS_MISMA_PERSONA).
  */
+/**
+ * A partir de cuánto se avisa del gasto de UNA persona. Nació del 2026-10-04:
+ * una cuenta nueva gastó $19 en una tarde y el dato apareció hasta el día
+ * siguiente, en la factura.
+ */
+export const AVISO_USD_PERSONA = 5;
+
 export function decidirAlarmas(m: {
   fallosUltimaHora: number;
   llamadasUltimaHora: number;
@@ -65,6 +72,11 @@ export function decidirAlarmas(m: {
   topeGasto: number;
   /** La persona con MÁS fallos en la última hora, si alguna tuvo. */
   peorPersona?: { correo: string; fallos: number; tarea?: string | null } | null;
+  /**
+   * Quienes CRUZARON el umbral de gasto en la última hora: llevan más de
+   * AVISO_USD_PERSONA en 24 horas y hace una hora llevaban menos.
+   */
+  personasCaras?: { correo: string; gasto: number }[];
 }): Alarma[] {
   const alarmas: Alarma[] = [];
 
@@ -80,6 +92,20 @@ export function decidirAlarmas(m: {
         `No es ruido: la misma persona reintentando es alguien viendo que "no funciona" ` +
         `y decidiendo si vuelve. Mira /admin/ia y, si el fallo es del proveedor, ` +
         `escríbele — desde su lado la app falló sin explicación.`,
+    });
+  }
+
+  // Una sola cuenta gastando mucho. Se avisa UNA vez, en la hora en que cruza:
+  // la consulta sólo trae a quien hace una hora estaba por debajo.
+  for (const c of m.personasCaras ?? []) {
+    if (c.gasto < AVISO_USD_PERSONA) continue;
+    alarmas.push({
+      clave: "persona-gasto",
+      titulo: `${c.correo} lleva $${c.gasto.toFixed(2)} de IA en 24 horas`,
+      detalle:
+        `Lo normal por persona son centavos. No es necesariamente abuso: suele ser alguien ` +
+        `subiendo su clóset entero, que es justo lo que se quiere. Sus topes la frenan sola ` +
+        `(lib/cuotas.ts); esto es para que te enteres el mismo día. Mira qué hizo en /admin/ia.`,
     });
   }
 
@@ -107,7 +133,8 @@ export function decidirAlarmas(m: {
       detalle:
         `El freno global está en $${m.topeGasto.toFixed(2)} y ya se va por el ` +
         `${Math.round((m.gastoUltimasHoras / m.topeGasto) * 100)}%. ` +
-        `Lo normal ronda $1-2 al día. Antes de subir el tope, mira /admin/ia: ` +
+        `Al llegar al tope se pausan las imágenes de todos (los looks siguen). ` +
+        `Antes de subirlo, mira /admin/ia: ` +
         `si el gasto está en una sola cuenta, es esa cuenta.`,
     });
   }

@@ -25,6 +25,7 @@ import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
 import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
+import { revisarGasto } from "@/lib/cuotas";
 import type { Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
@@ -101,6 +102,11 @@ export async function saveLifestyle(
     .from("profiles")
     .update({ lifestyle: answers, updated_at: new Date().toISOString() })
     .eq("id", user.id);
+
+  // Armar los esenciales es la llamada más cara de texto (Opus, ~40s) y no
+  // tenía ningún freno (2026-10-05). Las respuestas ya quedaron guardadas.
+  const freno = await revisarGasto(supabase, user.id);
+  if (!freno.permitido) return { status: "error", message: freno.mensaje };
 
   let target: CapsuleTarget;
   let traza: TrazaCapsula;
@@ -411,6 +417,7 @@ export async function recalcularMatch(): Promise<{ ok: boolean }> {
     .single();
   const target = profile?.capsule_target as CapsuleTarget | null;
   if (!target) return { ok: false };
+  if (!(await revisarGasto(supabase, user.id)).permitido) return { ok: false };
   const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
   const prev = (profile?.capsule_match as CapsuleMatch | null) ?? null;
   const overrides = ((profile?.capsule_overrides as CapsuleOverrides | null) ?? {}) as CapsuleOverrides;
@@ -478,6 +485,8 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     styleReferenceForEngine(profile?.style_reference);
   const dynamicQ =
     (profile?.style_questions as { questions?: AssessmentQuestion[] } | null)?.questions ?? [];
+
+  if (!(await revisarGasto(supabase, user.id)).permitido) return;
 
   let target: CapsuleTarget;
   let traza: TrazaCapsula;

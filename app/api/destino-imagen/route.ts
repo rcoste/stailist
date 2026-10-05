@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { imagenCatalogo, primeraParada, slugDestino } from "@/lib/destino-imagen";
 import { elegirMotivo, promptDestino } from "@/lib/destino-gen";
 import { pedirImagen } from "@/lib/gemini-imagen";
-import { revisarGasto } from "@/lib/cuotas";
+import { revisarImagen } from "@/lib/freno-imagenes";
 import {
   crearCandadoDeDestino,
   guardarFotoDeDestino,
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
   // Sin cuota propia: sólo el interruptor y el tope de gasto (lib/cuotas.ts).
-  const gasto = await revisarGasto(supabase, user.id);
+  const gasto = await revisarImagen(supabase, user.id, null);
   if (!gasto.permitido) {
     return NextResponse.json(
       { error: "cuota", motivo: gasto.motivo, mensaje: gasto.mensaje },

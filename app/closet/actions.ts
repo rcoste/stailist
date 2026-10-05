@@ -482,6 +482,11 @@ export async function addPhotoItems(
      */
     renderStatus: "done" | "failed" | "none";
     /**
+     * Entró sin imagen limpia por el tope de renders del día: se guarda con su
+     * foto y se pule cuando la persona vuelva. Ver lib/renders-pendientes.ts.
+     */
+    renderPendiente?: boolean;
+    /**
      * La foto ORIGINAL de donde salió la prenda.
      *
      * Se tiraba: de 325 prendas dadas de alta por foto, sólo 5 conservaban el
@@ -568,6 +573,10 @@ export async function addPhotoItems(
         ...(it.attrs.conjunto ? { conjunto: it.attrs.conjunto } : {}),
         // De qué foto salió, para que el dibujo diferido también sea fiel.
         ...(it.origenFoto ? { origen_foto: it.origenFoto } : {}),
+        // Sólo con foto original: sin ella no habría de dónde pulirla después.
+        ...(it.renderPendiente && (it.photoPath || it.origenFoto) && !it.renderPath
+          ? { render_pendiente: true }
+          : {}),
         // La descripción visual, para que el render se pueda rehacer fiel.
         ...(cleanTextAttr(it.attrs.descripcion, MAX_VISUAL_LEN)
           ? { visual: cleanTextAttr(it.attrs.descripcion, MAX_VISUAL_LEN) }
