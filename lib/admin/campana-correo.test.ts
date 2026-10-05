@@ -84,3 +84,16 @@ describe("campanasParaCorreo", () => {
     expect(campanasParaCorreo([vacia, conGente, conGasto]).map((c) => c.campana)).toEqual(["app-neutra", "hombres-eventos"]);
   });
 });
+
+describe("avisos del correo", () => {
+  it("una falla (p. ej. el gasto de Meta) sale arriba en los dos formatos, escapada", async () => {
+    const { correoDiario } = await import("@/lib/admin/campana");
+    const d = { ...base, avisos: ["No se pudo traer el gasto de Meta: <código 190>"] };
+    const { text } = correoDiario(d);
+    expect(text.startsWith("AVISOS\n- No se pudo traer el gasto de Meta")).toBe(true);
+    const html = correoDiarioHtml(d);
+    expect(html).toContain("No se pudo traer el gasto de Meta: &lt;código 190&gt;");
+    expect(html.indexOf("No se pudo traer")).toBeLessThan(html.indexOf("cuentas nuevas"));
+    expect(correoDiario(base).text).not.toContain("AVISOS");
+  });
+});

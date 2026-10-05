@@ -272,6 +272,14 @@ function bloqueAparatos(d: DatosCorreoDiario): string {
   return `${titulo("Por aparato · cuentas de anuncios")}<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${celdas}</tr></table>`;
 }
 
+/** Lo que falló al armar el correo, en el color de alarma y antes que todo lo demás. */
+function bloqueAvisos(avisos: string[]): string {
+  const rojo = COLOR_ESTADO.alarma;
+  return `<div style="border-left:3px solid ${rojo};padding:4px 0 4px 12px;">${avisos
+    .map((a) => `<p style="margin:4px 0;font-size:14px;line-height:1.45;color:${TINTA2};">${esc(a)}</p>`)
+    .join("")}</div>`;
+}
+
 /** El correo diario en HTML. Misma información que `correoDiario().text`, con jerarquía. */
 export function correoDiarioHtml(d: DatosCorreoDiario): string {
   const ia = d.iaTop ? `${d.iaAyerLlamadas} llamadas · más: ${esc(d.iaTop.correo)} (${usd(d.iaTop.usd)})` : `${d.iaAyerLlamadas} llamadas`;
@@ -282,6 +290,7 @@ export function correoDiarioHtml(d: DatosCorreoDiario): string {
         esc(diaEnPalabras(d.ayer))
       )}.</div>`
     ),
+    d.avisos?.length ? fila("18px 6px 0", bloqueAvisos(d.avisos)) : "",
     fila(
       "18px 0 0",
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">

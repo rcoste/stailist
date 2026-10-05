@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.348.0] - 2026-10-04 — el gasto de Instagram llega solo
+
+- Cada mañana, antes del correo de las 8, stailist le pregunta a la API de
+  Marketing de Meta cuánto gastó, cuántas veces se vio y cuántos clics al
+  enlace tuvo cada anuncio en los últimos 7 días, y lo guarda en
+  `campana_gasto` junto a lo de Google. El nombre de cada anuncio es su
+  `utm_campaign` (`ig-etiqueta`, `ig-jeans`…), así que cae en su campaña del
+  panel sin capturar nada a mano.
+- Clics = los que abren el enlace (`inline_link_clicks`), no los likes ni los
+  toques al perfil que Meta también llama "clics": así el CTR se puede poner
+  junto al de Google. Registros van vacíos: Meta no los sabe (no hay píxel).
+- Token de solo lectura (`ads_read`, usuario del sistema con "Ver
+  rendimiento"). Va en un encabezado, nunca en la URL, y ningún mensaje de
+  error lo incluye. Variables nuevas: `META_ADS_TOKEN` y `META_AD_ACCOUNT_ID`.
+- Si Meta falla, el correo sale igual y lo dice arriba, en una sección nueva
+  de avisos. `/api/cron/gasto-meta` jala el gasto a mano sin mandar el correo.
+- El guardado del gasto automático vive en `lib/admin/gasto-guardar.ts`, compartido
+  por el script de Google y la consulta a Meta.
+
 ## [0.2.347.0] - 2026-10-04 — el correo diario con formato, y el embudo antes de la cuenta
 
 - El correo de las 8 am deja de ser texto en un `<pre>`. Ahora tiene cuatro

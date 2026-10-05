@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/email";
 import { correoDiario } from "@/lib/admin/campana";
 import { datosCorreoDiario } from "@/lib/admin/campana-datos";
 import { correoDiarioHtml } from "@/lib/admin/campana-correo";
+import { actualizarGastoMeta, avisoGastoMeta } from "@/lib/admin/gasto-guardar";
 
 // EL CORREO DIARIO: cuánto costó ayer, quién llegó y cómo va el criterio de
 // paro de la campaña. Corre a las 14:00 UTC = 8:00 de la Ciudad de México (ver
@@ -24,7 +25,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "no_autorizado" }, { status: 401 });
   }
 
-  const datos = await datosCorreoDiario();
+  // Primero el gasto de Meta, para que el correo ya lo traiga (el de Google
+  // llega solo a las 6 am con su script). Si falla, el correo sale igual y lo dice.
+  const meta = await actualizarGastoMeta();
+  const aviso = avisoGastoMeta(meta);
+  const datos = { ...(await datosCorreoDiario()), ...(aviso ? { avisos: [aviso] } : {}) };
   const { subject, text } = correoDiario(datos);
 
   const destino = process.env.ADMIN_EMAIL;
