@@ -133,7 +133,8 @@ export async function saveLifestyle(
         profile?.acento_apetito_fuente === "elegido"
           ? ((profile?.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
           : null,
-    });
+    },
+      { supabase, userId: user.id });
     target = generado.target;
     traza = generado.traza;
     // Firma del estilo COMPLETO (referencia + sus palabras): si cualquiera
@@ -306,7 +307,8 @@ export async function rejectCapsuleItem(
         season,
         flow,
         vetoes: vetoLabels(vetoes),
-      });
+      },
+        { supabase, userId: user.id });
     } catch (e) {
       console.error(
         `[capsula] swap falló — ${e instanceof Error ? e.message : String(e)}`
@@ -424,7 +426,7 @@ export async function recalcularMatch(): Promise<{ ok: boolean }> {
 
   try {
     const closet = await loadClosetLite(supabase, user.id);
-    const match = await matchCapsule(target, closet, gender);
+    const match = await matchCapsule(target, closet, gender, [], { supabase, userId: user.id });
 
     // Misma trampa que en "ya la tengo": si un slot pasó a "tienes" y NO lo era,
     // la decisión vieja (tomada sobre un "parecido") cambia de significado y lo
@@ -513,7 +515,8 @@ export async function regenerateCapsuleTarget(): Promise<void> {
         profile?.acento_apetito_fuente === "elegido"
           ? ((profile?.acento_apetito as import("@/lib/looks").ApetitoAcentos | null) ?? null)
           : null,
-    });
+    },
+      { supabase, userId: user.id });
     target = generado.target;
     traza = generado.traza;
     target.styleSig = styleSignature(profile?.style_reference, (profile?.style_words as string | null) ?? null);

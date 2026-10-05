@@ -123,8 +123,8 @@ export async function generateCapsuleOutfits(
 
   let outfits: TripOutfit[];
   try {
-    outfits = await generateTripOutfits(genInputs);
-    outfits = (await reviewTripOutfits(genInputs, outfits)).outfits;
+    outfits = await generateTripOutfits(genInputs, { supabase, userId: user.id });
+    outfits = (await reviewTripOutfits(genInputs, outfits, { supabase, userId: user.id })).outfits;
   } catch (e) {
     // El motivo SE REGISTRA y VIAJA. Este catch mudo es por qué "No pude armar
     // otros looks" no se pudo diagnosticar leyendo los logs: la única pista era

@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.350.0] - 2026-10-05 — todo el gasto de IA deja recibo, y Sonnet cuesta lo que cuesta
+
+- **Los trece caminos que llamaban a Claude directo ya dejan recibo**: armar,
+  cambiar y cruzar los esenciales (incluida la llamada de Opus, la más cara),
+  la maleta, los outfits y el juez del viaje, sustitutos, itinerario,
+  arquetipo, preguntas de estilo, encaje del ancla, silueta, estilo de
+  referencia y el juez del avatar. Antes no aparecían en el panel ni en el
+  correo, y no contaban para los topes por persona. No se tocó cómo le hablan
+  al modelo: `medirAnthropic()` (`lib/recibos.ts`) envuelve la misma llamada y
+  lee los tokens de `usage` (los de caché, con su tarifa). La lista de caminos
+  sin medir del panel quedó vacía.
+- **Sonnet 5 cuesta $2/$10, no $3/$15.** El aumento anunciado para el 1 de
+  septiembre no ocurrió y la tabla de precios lo seguía aplicando: cada recibo
+  de Sonnet desde entonces salió 1.5× caro.
+- **Tope antes del correo**: el arquetipo y las preguntas de estilo corren en
+  el onboarding, antes de que la persona deje su correo, y ningún tope las
+  frenaba. Ahora van hasta 5 veces al día por cuenta (`cabeAntesDelCorreo`); al
+  toparlo caen a lo mismo que si la IA fallara (nombre neutro, preguntas fijas).
+
 ## [0.2.349.0] - 2026-10-05 — los topes de gasto ahora sí frenan, y subir ropa nunca se corta
 
 - **Los topes por persona no aplicaban a nadie.** `lib/cuotas.ts` cuenta los

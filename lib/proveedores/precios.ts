@@ -25,10 +25,9 @@ export type Precio = {
   /** USD por millón de tokens de salida. */
   salida: number;
   /**
-   * Precio que entra en vigor en una fecha futura (ISO). Sonnet 5 está en
-   * precio de lanzamiento hasta el 31 de agosto de 2026 y después sube 50%:
-   * cualquier ahorro calculado hoy con Sonnet vale la mitad en septiembre, y
-   * eso hay que verlo ANTES de decidir, no después.
+   * Precio que entra en vigor en una fecha futura (ISO). Nació para el aumento
+   * anunciado de Sonnet 5 en septiembre de 2026, que al final no ocurrió (ver
+   * abajo). Hoy ningún modelo lo usa; queda para el próximo aumento anunciado.
    */
   sube?: { desde: string; entrada: number; salida: number };
 };
@@ -37,11 +36,12 @@ export const PRECIOS: Record<string, Precio> = {
   // Anthropic
   "claude-opus-5": { entrada: 5, salida: 25 },
   "claude-opus-4-8": { entrada: 5, salida: 25 },
-  "claude-sonnet-5": {
-    entrada: 2,
-    salida: 10,
-    sube: { desde: "2026-09-01", entrada: 3, salida: 15 },
-  },
+  // El aumento a $3/$15 anunciado para el 2026-09-01 NO ocurrió: Anthropic dejó
+  // $2/$10 como precio estándar (verificado el 2026-10-05 en
+  // platform.claude.com/docs/en/about-claude/pricing). Mientras el `sube`
+  // siguió aquí, cada recibo de Sonnet desde septiembre salió 1.5× caro: el
+  // panel y el correo decían ~$2.79 donde la consola de Anthropic decía ~$1.90.
+  "claude-sonnet-5": { entrada: 2, salida: 10 },
   "claude-sonnet-4-6": { entrada: 3, salida: 15 },
   "claude-haiku-4-5-20251001": { entrada: 1, salida: 5 },
 

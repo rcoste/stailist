@@ -364,7 +364,8 @@ async function anchorWarningIfUnfit(
   const fit = await checkAnchorFit(
     items.map((i) => ({ id: i.id as string, attrs: i.attrs as EngineItem["attrs"] })),
     occasion,
-    weatherLine
+    weatherLine,
+    { supabase, userId }
   );
   if (fit.fits) return null;
   return {

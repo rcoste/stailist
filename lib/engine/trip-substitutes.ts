@@ -1,6 +1,7 @@
 import { CLASSIFY_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { CapsuleItem, ClosetItemLite } from "@/lib/capsule";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 // "Buscar en mi clóset": dada UNA prenda que falta para el viaje, propone hasta 3
 // prendas del clóset real que pueden SUSTITUIRLA (misma clase, uso compatible) —
@@ -12,7 +13,9 @@ export async function matchSubstitutes(
   missing: CapsuleItem,
   closet: ClosetItemLite[],
   gender: "hombre" | "mujer" | null = null,
-  rejected: string | null = null
+  rejected: string | null = null,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<{ nombre: string; porque: string }[]> {
   if (closet.length === 0 || !process.env.ANTHROPIC_API_KEY) return [];
 
@@ -29,7 +32,8 @@ export async function matchSubstitutes(
         ? " La persona es mujer."
         : "";
 
-  const res = await client.messages.create({
+  const res = await medirAnthropic(quien && { ...quien, tarea: "viaje-sustitutos" }, CLASSIFY_MODEL, () =>
+    client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 700,
     // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -78,7 +82,8 @@ REGLAS:
         },
       },
     },
-  });
+  })
+  );
 
   const block = res.content.find((b) => b.type === "text");
   if (!block || block.type !== "text") return [];

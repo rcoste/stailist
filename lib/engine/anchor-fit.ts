@@ -1,6 +1,7 @@
 import { GUARD_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { describeItem, type EngineItem } from "./prompt";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 // Chequeo ligero (Haiku) de si las prendas ancladas van con la ocasión. NO bloquea
 // el estilismo: el ancla manda casi siempre; solo cazamos mismatches obvios
@@ -44,13 +45,16 @@ const FIT_SCHEMA = {
 export async function checkAnchorFit(
   items: EngineItem[],
   occasion: string,
-  weatherLine: string | null
+  weatherLine: string | null,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<AnchorFit> {
   if (items.length === 0) return { fits: true, note: "" };
   if (!process.env.ANTHROPIC_API_KEY) return { fits: true, note: "" };
   try {
     const client = new Anthropic();
-    const res = await client.messages.create({
+    const res = await medirAnthropic(quien && { ...quien, tarea: "ancla-encaje" }, FIT_MODEL, () =>
+    client.messages.create({
       model: FIT_MODEL,
       max_tokens: 220,
       // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -74,7 +78,8 @@ export async function checkAnchorFit(
       output_config: {
         format: { type: "json_schema", schema: FIT_SCHEMA },
       },
-    });
+    })
+  );
     const text = res.content.find((b) => b.type === "text")?.text;
     if (!text) return { fits: true, note: "" };
     const parsed = JSON.parse(text) as { fits?: boolean; nota?: string };

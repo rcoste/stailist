@@ -171,10 +171,10 @@ export async function POST(
 
   let outfits;
   try {
-    outfits = await generateTripOutfits(genInputs);
+    outfits = await generateTripOutfits(genInputs, { supabase, userId: user.id });
     // 2ª pasada (juez): repara los looks sub-abrigados para el frío y descarta
     // los que no combinan. Best-effort: si el juez falla, deja los looks tal cual.
-    outfits = (await reviewTripOutfits(genInputs, outfits)).outfits;
+    outfits = (await reviewTripOutfits(genInputs, outfits, { supabase, userId: user.id })).outfits;
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 500 });
   }

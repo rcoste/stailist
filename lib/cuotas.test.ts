@@ -168,6 +168,19 @@ describe("el tope de renders (la imagen limpia, que es lo que cuesta)", () => {
   });
 });
 
+describe("lo que corre antes del correo (arquetipo, preguntas de estilo)", () => {
+  it("deja pasar hasta el tope por número de veces y luego ya no", async () => {
+    const { cabeAntesDelCorreo, TOPE_ANTES_DEL_CORREO } = await import("@/lib/cuotas");
+    expect(await cabeAntesDelCorreo(fakeSupabase(repetir("arquetipo", TOPE_ANTES_DEL_CORREO - 1)), "u1", "arquetipo")).toBe(true);
+    expect(await cabeAntesDelCorreo(fakeSupabase(repetir("arquetipo", TOPE_ANTES_DEL_CORREO)), "u1", "arquetipo")).toBe(false);
+  });
+
+  it("si la consulta truena, deja pasar: el onboarding no se rompe por la tabla", async () => {
+    const { cabeAntesDelCorreo } = await import("@/lib/cuotas");
+    expect(await cabeAntesDelCorreo(fakeSupabase([], true), "u1", "preguntas-estilo")).toBe(true);
+  });
+});
+
 describe("cuando la consulta truena", () => {
   it("deja pasar: nadie se queda sin su look por un fallo de la tabla de cuotas", async () => {
     const v = await revisarCuota(fakeSupabase([], true), "u1", "looks");

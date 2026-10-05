@@ -19,7 +19,7 @@ vi.mock("@/lib/proveedores", async (importOriginal) => ({
   llamar: (...args: unknown[]) => llamar(...args),
 }));
 
-const { medir } = await import("./recibos");
+const { medir, medirAnthropic, entradaEquivalente } = await import("./recibos");
 
 const MODELO = { proveedor: "anthropic" as const, id: "modelo-x", etiqueta: "Modelo X" };
 const PETICION = { modelo: MODELO, system: "eres una stylist", texto: "hola" };
@@ -141,5 +141,51 @@ describe("medir", () => {
       PETICION
     );
     expect(recibo.texto).toBe("{ok}");
+  });
+});
+
+describe("medirAnthropic (los caminos con el SDK directo)", () => {
+  const SONNET = "claude-sonnet-5";
+  const respuesta = (usage: { input_tokens: number }) => ({ content: [], usage: { output_tokens: 100, ...usage } });
+
+  it("devuelve la respuesta tal cual y deja el recibo con tokens y costo", async () => {
+    const { cliente, insertados } = supabaseFalso();
+    const res = respuesta({ input_tokens: 10_000 });
+    const out = await medirAnthropic({ supabase: cliente, userId: "u1", tarea: "capsula-ideal" }, SONNET, async () => res);
+    expect(out).toBe(res);
+    expect(insertados).toHaveLength(1);
+    expect(insertados[0]).toMatchObject({
+      tabla: "ai_calls",
+      user_id: "u1",
+      tarea: "capsula-ideal",
+      proveedor: "anthropic",
+      modelo: SONNET,
+      tokens_entrada: 10_000,
+      tokens_salida: 100,
+      ok: true,
+    });
+    expect(Number(insertados[0].costo_usd)).toBeGreaterThan(0);
+  });
+
+  it("los tokens de caché se cobran con su tarifa, no gratis ni completos", () => {
+    expect(entradaEquivalente({ input_tokens: 1000, output_tokens: 0 })).toBe(1000);
+    expect(
+      entradaEquivalente({ input_tokens: 1000, output_tokens: 0, cache_read_input_tokens: 10_000, cache_creation_input_tokens: 400 })
+    ).toBe(1000 + 1000 + 500);
+  });
+
+  it("si la llamada truena, anota el fallo y deja pasar el error", async () => {
+    const { cliente, insertados } = supabaseFalso();
+    await expect(
+      medirAnthropic({ supabase: cliente, userId: "u1", tarea: "arquetipo" }, SONNET, async () => {
+        throw new Error("529 overloaded");
+      })
+    ).rejects.toThrow("529");
+    expect(insertados).toEqual([expect.objectContaining({ tarea: "arquetipo", ok: false })]);
+  });
+
+  it("sin quién pague (scripts, comparador), no escribe nada", async () => {
+    const res = respuesta({ input_tokens: 5 });
+    expect(await medirAnthropic(null, SONNET, async () => res)).toBe(res);
   });
 });

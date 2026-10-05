@@ -11,6 +11,7 @@ import type { Build, Volume } from "@/lib/silueta";
 import type { StyleVetoes } from "@/lib/vetoes";
 import { revisarGasto } from "@/lib/cuotas";
 import { leerImagenEntrante } from "@/lib/imagen-entrante";
+import { medirAnthropic } from "@/lib/recibos";
 
 export const maxDuration = 60;
 
@@ -157,7 +158,8 @@ export async function POST(request: NextRequest) {
       text: `Estas ${paraVision.length} foto(s) muestran un estilo que le gusta a tu clienta. ${perfil}\n\nDescribe el ESTILO (no a las personas) y, sobre todo, evalúa si le VA a ELLA según su colorimetría, silueta y vetos. Sé honesta — si algo no le favorece, dilo (ese es tu valor como estilista).`,
     });
 
-    const res = await client.messages.create({
+    const res = await medirAnthropic({ supabase, userId: user.id, tarea: "estilo-referencia" }, CLASSIFY_MODEL, () =>
+      client.messages.create({
       model: CLASSIFY_MODEL,
       max_tokens: 800,
       // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -191,7 +193,8 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    });
+    })
+    );
     const text = res.content.find((b) => b.type === "text")?.text;
     if (!text) throw new Error("vacio");
     const out = JSON.parse(text) as {

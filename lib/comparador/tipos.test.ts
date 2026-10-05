@@ -158,13 +158,14 @@ describe("precios", () => {
     expect(costoUsd("claude-opus-5", t)).toBe(costoUsd("claude-opus-4-8", t));
   });
 
-  it("Sonnet 5 sube de precio el 1 de septiembre de 2026", () => {
-    // Está en precio de lanzamiento. Cualquier ahorro calculado hoy con Sonnet
-    // vale la mitad en septiembre, y eso hay que verlo ANTES de decidir.
+  it("Sonnet 5 se quedó en $2/$10: el aumento de septiembre no ocurrió", () => {
+    // Estuvo anotado que subía 50% el 2026-09-01 y Anthropic lo canceló. Con el
+    // aumento todavía aquí, cada recibo de Sonnet salía 1.5× caro.
     const t = { entrada: 8200, salida: 1500 };
     const agosto = costoUsd("claude-sonnet-5", t, new Date("2026-08-15"))!;
-    const septiembre = costoUsd("claude-sonnet-5", t, new Date("2026-09-15"))!;
-    expect(septiembre).toBeCloseTo(agosto * 1.5, 6);
+    const octubre = costoUsd("claude-sonnet-5", t, new Date("2026-10-15"))!;
+    expect(octubre).toBeCloseTo(agosto, 6);
+    expect(octubre).toBeCloseTo((8200 * 2 + 1500 * 10) / 1_000_000, 6);
   });
 
   it("un modelo desconocido no reporta costo cero", () => {
