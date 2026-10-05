@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { routeForStep } from "@/lib/onboarding";
 import { Landing } from "@/components/landing/landing";
+import { tituloParaCampana } from "@/lib/landing-anuncio";
 import { datosEstructurados, preguntasEstructuradas, serializarParaScript } from "@/lib/ficha-publica";
 import { RUTA_CUENTA_PROGRAMADA } from "@/lib/borrado-programado";
 
@@ -28,7 +29,9 @@ export default async function RootPage({
   // `g`: la versión de la landing con la que abre. La usan los anuncios
   // segmentados (stailist.co/?g=hombre): sin esto, un hombre que llega de un
   // anuncio para hombres veía a una modelo mujer, porque el default es mujer.
-  searchParams: Promise<{ g?: string }>;
+  // `utm_campaign`: el anuncio de donde viene. Cambia el título de arriba para
+  // que siga la promesa del anuncio (lib/landing-anuncio.ts).
+  searchParams: Promise<{ g?: string; utm_campaign?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -36,7 +39,7 @@ export default async function RootPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const { g } = await searchParams;
+    const { g, utm_campaign } = await searchParams;
     return (
       <>
         {/* Qué es stailist, sin ambigüedad, para buscadores y asistentes de IA
@@ -47,7 +50,10 @@ export default async function RootPage({
             __html: serializarParaScript([datosEstructurados(), preguntasEstructuradas()]),
           }}
         />
-        <Landing generoInicial={g === "hombre" || g === "mujer" ? g : null} />
+        <Landing
+          generoInicial={g === "hombre" || g === "mujer" ? g : null}
+          titulo={tituloParaCampana(utm_campaign)}
+        />
       </>
     );
   }

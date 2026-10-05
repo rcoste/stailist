@@ -13,6 +13,7 @@ import { FirmaRaicode } from "@/components/firma-raicode";
 import { TryDemo } from "./try-demo";
 import { PreguntasFrecuentes } from "./faq";
 import styles from "./landing.module.css";
+import type { TituloLanding } from "@/lib/landing-anuncio";
 
 // Isotipo "gancho-destello": percha que se vuelve destello. Color por
 // currentColor (= var(--c-accent) vía la clase .iso); cero hex aquí.
@@ -103,9 +104,12 @@ function DemoVideo() {
 
 export function Landing({
   generoInicial = null,
+  titulo = null,
 }: {
   /** De `?g=` (app/page.tsx): el anuncio manda. Se pinta desde el servidor, sin parpadeo. */
   generoInicial?: "mujer" | "hombre" | null;
+  /** El título del anuncio de donde viene (lib/landing-anuncio.ts); null = el de siempre. */
+  titulo?: TituloLanding | null;
 }) {
   const [gender, setGender] = useState<"mujer" | "hombre">(generoInicial ?? "mujer");
   useEffect(() => {
@@ -231,16 +235,32 @@ export function Landing({
             <div>
               <div className={styles.eyebrow}>Tu estilista personal con IA</div>
               <h1 className={styles.h1}>
-                Tu clóset está lleno. Y aun así, no sabes qué{" "}
-                <em className={styles.s}>ponerte</em>.
+                {titulo ? (
+                  <>
+                    {titulo.antes}
+                    <em className={styles.s}>{titulo.enfasis}</em>
+                    {titulo.despues ?? ""}
+                  </>
+                ) : (
+                  <>
+                    Tu clóset está lleno. Y aun así, no sabes qué{" "}
+                    <em className={styles.s}>ponerte</em>.
+                  </>
+                )}
               </h1>
               {/* La promesa de tiempo salió de aquí el 2026-09-01: medida, la
                   mediana real es 7 min 47 s (n=18) y nadie bajó de 4 minutos.
                   Vuelve —con el número que sea cierto— cuando el recorte del
                   onboarding lo sostenga. Ver docs/auditorias/. */}
               <p className={styles.sub}>
-                Te armo outfits con la ropa que <b>ya tienes</b>. Sin subir tu
-                clóset prenda por prenda, sin complicarte.
+                {titulo ? (
+                  titulo.sub
+                ) : (
+                  <>
+                    Te armo outfits con la ropa que <b>ya tienes</b>. Sin subir tu
+                    clóset prenda por prenda, sin complicarte.
+                  </>
+                )}
               </p>
 
               <div id="sumarme">

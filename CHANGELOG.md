@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.351.0] - 2026-10-05 — la landing sigue al anuncio que tocaste
+
+- Quien llega de un anuncio de Instagram ve arriba el título de ESE anuncio
+  (maleta, salgo igual, la etiqueta, jeans) en vez del título genérico; lo
+  demás de la página no cambia. Nació de la primera mañana de Instagram: 42
+  personas llegaron y 1 tocó "Armar mi primer look" (2%), contra 5 de 8 en la
+  campaña de Google que busca una app. Quien tocaba el video de la maleta caía
+  en un título que hablaba de otra cosa.
+- La llave es el utm_campaign sin el prefijo del canal (`lib/landing-anuncio.ts`),
+  así que TikTok hereda los títulos. Google, orgánico y lo desconocido ven el de
+  siempre. Se mide con las marcas del embudo por campaña, antes y después.
+
 ## [0.2.350.0] - 2026-10-05 — todo el gasto de IA deja recibo, y Sonnet cuesta lo que cuesta
 
 - **Los trece caminos que llamaban a Claude directo ya dejan recibo**: armar,
