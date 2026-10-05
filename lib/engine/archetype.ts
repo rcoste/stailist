@@ -2,6 +2,7 @@ import { CLASSIFY_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Look } from "@/lib/looks";
 import type { Gender } from "@/lib/auth";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 export type StyleArchetype = {
   nombre: string;
@@ -31,7 +32,9 @@ export async function generateArchetype(
   gender: Gender | null = null,
   // Orientación por edad (life-stage), señal suave — evita bautizar a una
   // adolescente con un arquetipo "de oficina" o a una señora con slang teen.
-  ageNote: string | null = null
+  ageNote: string | null = null,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<StyleArchetype> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
 
@@ -40,7 +43,8 @@ export async function generateArchetype(
     .map((l) => `- ${l.nombre} (${l.vibe}) · ${l.tags.join(", ")}`)
     .join("\n");
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "arquetipo" }, CLASSIFY_MODEL, () =>
+    client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 512,
     // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -75,7 +79,8 @@ CONCORDANCIA DE GÉNERO (crítico, respétalo en nombre Y descripción): ${gende
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");

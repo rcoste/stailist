@@ -15,6 +15,7 @@ import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorime
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { REGLA_PRENDAS_REALES, tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 export type CapsuleInputs = {
   answers: LifestyleAnswers;
@@ -450,14 +451,17 @@ export type TrazaCapsula = {
 // elige, y aterrizada a su paleta de color. Libre del catálogo (puede pedir
 // prendas que no tenemos). Se llama una vez al guardar/editar el assessment.
 export async function generateCapsuleTarget(
-  inputs: CapsuleInputs
+  inputs: CapsuleInputs,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<{ target: CapsuleTarget; traza: TrazaCapsula }> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
 
   const client = new Anthropic();
   const { system, usuario } = construirPromptCapsula(inputs);
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "capsula-ideal" }, ENGINE_MODEL, () =>
+    client.messages.create({
     model: ENGINE_MODEL,
     // ~25-40 prendas con material + por qué cada una, más el "plan" (borrador
     // de razonamiento del schema): la cápsula nueva es grande y ya corría cerca
@@ -539,7 +543,8 @@ export async function generateCapsuleTarget(
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");

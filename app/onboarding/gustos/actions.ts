@@ -54,7 +54,7 @@ export async function saveTastes(
   );
   let archetype: StyleArchetype;
   try {
-    archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange));
+    archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange), { supabase, userId: user.id });
   } catch {
     archetype = {
       nombre: "Tu estilo",
@@ -110,7 +110,9 @@ export async function saveTastes(
           paletaLabel: null, // la colorimetría aún no existe en este punto
           siluetaLabel: null,
           edadLabel: ageLabel(ageRange),
-        });
+          // Dentro de after() ya no hay cookies: el recibo se escribe con el
+          // mismo cliente de token que guarda las preguntas.
+        }, { supabase: createTokenClient(accessToken), userId: user.id });
         if (questions.length) {
           await createTokenClient(accessToken)
             .from("profiles")
@@ -262,7 +264,7 @@ export async function updateTastes(
   );
   let archetype: StyleArchetype;
   try {
-    archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange));
+    archetype = await generateArchetype(likedLooks, gender, ageStylingLine(ageRange), { supabase, userId: user.id });
   } catch {
     archetype = {
       nombre: "Tu estilo",

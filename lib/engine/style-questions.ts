@@ -2,6 +2,7 @@ import { CLASSIFY_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AssessmentQuestion } from "@/lib/capsule";
 import type { Gender } from "@/lib/auth";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 export type StyleQuestionsInput = {
   archetype: { nombre: string; descripcion: string } | null;
@@ -16,7 +17,9 @@ export type StyleQuestionsInput = {
 // usuario (arquetipo + gustos), para afinar su cápsula sin re-preguntar lo genérico.
 // El Opus da label/help/opciones; aquí asignamos ids/values estables (sq_*/o*).
 export async function generateStyleQuestions(
-  input: StyleQuestionsInput
+  input: StyleQuestionsInput,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<AssessmentQuestion[]> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
   if (!input.archetype) return []; // sin arquetipo no hay de qué partir
@@ -33,7 +36,8 @@ export async function generateStyleQuestions(
     .filter(Boolean)
     .join("\n");
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "preguntas-estilo" }, CLASSIFY_MODEL, () =>
+    client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 1500,
     // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -94,7 +98,8 @@ Devuelve "questions": cada una con "label" (la pregunta), "help" (≤1 línea; "
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");

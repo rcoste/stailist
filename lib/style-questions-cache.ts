@@ -50,7 +50,7 @@ export async function ensureStyleQuestions(
         ]
           .filter(Boolean)
           .join(" · ") || null,
-    });
+    }, { supabase, userId: profile.id });
   } catch {
     return cached?.questions ?? [];
   }

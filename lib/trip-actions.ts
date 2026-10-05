@@ -86,7 +86,8 @@ export async function suggestTripSubstitutes(
     missing,
     closet,
     (profile?.gender as "hombre" | "mujer" | null) ?? null,
-    currentBy
+    currentBy,
+    { supabase, userId: user.id }
   );
   return matches.map((m) => ({ ...m, image: imageMap[m.nombre] ?? null }));
 }
@@ -166,7 +167,7 @@ export async function proposeTripSubstitutes(
   const resultados = await Promise.all(
     huecos.map(async (i) => {
       try {
-        const matches = await matchSubstitutes(target.items[i], closet, gender, null);
+        const matches = await matchSubstitutes(target.items[i], closet, gender, null, { supabase, userId: user.id });
         return { i, top: matches[0] ?? null };
       } catch {
         // Un hueco que falla no guarda nada: el próximo abrir lo reintenta.

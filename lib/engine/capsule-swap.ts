@@ -8,6 +8,7 @@ import {
   type VetoReason,
 } from "@/lib/capsule";
 import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 export type CapsuleSwapInputs = {
   target: CapsuleTarget; // toda la cápsula, para coherencia
@@ -40,7 +41,9 @@ const REASON_HINT: Record<VetoReason, string> = {
 // Proponemos UNA alternativa que cubra el MISMO rol (misma categoría) y combine con
 // el resto de la cápsula, respetando su paleta y sus vetos, evitando lo rechazado.
 export async function generateCapsuleSwap(
-  inputs: CapsuleSwapInputs
+  inputs: CapsuleSwapInputs,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<CapsuleItem> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
   const client = new Anthropic();
@@ -82,7 +85,8 @@ export async function generateCapsuleSwap(
     ? `Ya rechazó (NO repitas ni propongas variantes cercanas): ${inputs.rejectedNames.join("; ")}.`
     : "";
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "capsula-cambio" }, CLASSIFY_MODEL, () =>
+    client.messages.create({
     model: CLASSIFY_MODEL,
     max_tokens: 1500,
     // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -145,7 +149,8 @@ Propón la alternativa (item).`,
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");

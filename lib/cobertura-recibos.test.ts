@@ -111,29 +111,12 @@ const EXENTOS: Record<string, string> = {
     "ES la puerta común: aquí vive `llamar`. Medir aquí adentro fue lo primero que se pensó y no se puede — la usan scripts y el comparador, que no tienen sesión ni cliente de Supabase (ver la cabecera de lib/recibos.ts).",
   "lib/recibos.ts": "ES la implementación de `medir`: la llamada a `llamar` de aquí es la que todos los demás usan.",
 
-  // LOS NUEVE (más cuatro) QUE LLAMAN AL SDK DE ANTHROPIC DIRECTO.
-  //
-  // No pasan por `lib/proveedores`, así que no tienen recibo que guardar: el
-  // tipo `Recibo` (ms, tokens, costo) lo produce la puerta común. Migrarlos es
-  // trabajo aparte —cada uno tiene su propio manejo de streaming, reintentos y
-  // parseo— y se deja anotado aquí a propósito: mientras estén en esta lista,
-  // el proyecto sabe exactamente cuánto de su gasto de IA NO está medido.
-  "app/api/analizar-cuerpo/route.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "app/api/estilo-referencia/route.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/anchor-fit.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/archetype.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/capsule-match.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/capsule-swap.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/capsule-target.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/style-questions.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/trip-capsule.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  // Estos cuatro salieron al barrer el disco y no estaban en la cuenta de nueve
-  // con la que arrancó esta lista. Mismo caso y mismo pendiente: el modo Viaje
-  // entero (itinerario, outfits, sustitutos) y la segunda pasada del avatar.
-  "app/api/avatar/generate/route.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "app/api/trip/itinerario/route.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/trip-outfits.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
-  "lib/engine/trip-substitutes.ts": "usa el SDK directo, no la puerta común — pendiente de migrar (ver TODOS.md)",
+  // LOS TRECE QUE LLAMABAN AL SDK DE ANTHROPIC DIRECTO YA NO ESTÁN AQUÍ
+  // (2026-10-05). Siguen llamando al SDK directo —migrarlos a la puerta común
+  // cambiaría cómo le hablan al modelo— pero ahora envuelven la llamada con
+  // `medirAnthropic()` (lib/recibos.ts), que deja el recibo con los tokens de
+  // `usage`. Se cerró el día que se vio que los topes por persona no podían
+  // contar ese gasto y la consola de Anthropic enseñaba Opus que la base no.
 
   // LA PUERTA DE LAS IMÁGENES YA NO ESTÁ AQUÍ (2026-09-02). Era el hueco más
   // caro de la lista —try-on, avatar, arquetipos, renders de prenda y fotos de
@@ -170,7 +153,9 @@ describe("cada camino de IA deja recibo", () => {
         // `medir()` es la puerta de texto; `guardarReciboImagen()` la de
         // imagen. Las dos escriben en ai_calls, que es lo que este candado
         // vigila — exigir sólo la primera dejaría fuera todo lo que dibuja.
-        !/\b(medir|guardarReciboImagen)\(/.test(
+        // `medirAnthropic()` es la tercera: la de los caminos que llaman al SDK
+        // de Anthropic directo.
+        !/\b(medir|medirAnthropic|guardarReciboImagen)\(/.test(
           sinComentarios(readFileSync(join(RAIZ, rel), "utf8"))
         )
     );
@@ -244,6 +229,21 @@ describe("cada camino de IA deja recibo", () => {
       "destino-motivo": "lib/destino-gen.ts",
       rubrica: "lib/engine/rubrica.ts",
       "rubrica-vision": "lib/engine/rubrica-vision.ts",
+      // Las trece del SDK directo (2026-10-05).
+      "capsula-ideal": "lib/engine/capsule-target.ts",
+      "capsula-match": "lib/engine/capsule-match.ts",
+      "capsula-cambio": "lib/engine/capsule-swap.ts",
+      "viaje-capsula": "lib/engine/trip-capsule.ts",
+      "viaje-outfits": "lib/engine/trip-outfits.ts",
+      "viaje-juez": "lib/engine/trip-outfits.ts",
+      "viaje-sustitutos": "lib/engine/trip-substitutes.ts",
+      "preguntas-estilo": "lib/engine/style-questions.ts",
+      arquetipo: "lib/engine/archetype.ts",
+      "ancla-encaje": "lib/engine/anchor-fit.ts",
+      silueta: "app/api/analizar-cuerpo/route.ts",
+      "viaje-itinerario": "app/api/trip/itinerario/route.ts",
+      "estilo-referencia": "app/api/estilo-referencia/route.ts",
+      "avatar-juez": "app/api/avatar/generate/route.ts",
     };
     const faltantes = Object.entries(esperadas).filter(
       ([tarea, rel]) =>

@@ -7,6 +7,7 @@ import {
   type ClosetItemLite,
   type MatchEntry,
 } from "@/lib/capsule";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 // Una prenda del clóset como línea del prompt del match: color real (con hex),
 // más los atributos ricos que distinguen prendas antes idénticas en texto
@@ -170,7 +171,9 @@ export async function matchCapsule(
   gender: "hombre" | "mujer" | null = null,
   // Prendas que la persona ya rechazó (swaps de maletas anteriores): el match
   // las usa como ÚLTIMO recurso — solo si ninguna otra prenda cubre la ideal.
-  evita: string[] = []
+  evita: string[] = [],
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<CapsuleMatch> {
   const signature = matchSignature(closet);
   const blank: MatchEntry[] = target.items.map(() => ({ status: "falta", by: null }));
@@ -205,7 +208,8 @@ export async function matchCapsule(
       )}. Prefiérelas como ÚLTIMA opción de "by": si otra prenda del clóset también cubre la ideal (aunque sea "parecido"), usa esa otra. Solo usa una rechazada si es la ÚNICA de su clase que cubre la ideal.`
     : "";
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "capsula-match" }, CLASSIFY_MODEL, () =>
+    client.messages.create({
     model: CLASSIFY_MODEL,
     // THINKING APAGADO, y no es una optimización: sin esto la pantalla NO
     // funciona.
@@ -273,7 +277,8 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) {

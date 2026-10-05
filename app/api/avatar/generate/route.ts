@@ -7,6 +7,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { revisarImagen } from "@/lib/freno-imagenes";
 import { registrarEvento } from "@/lib/telemetria";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 export const maxDuration = 60;
 
@@ -225,7 +226,8 @@ async function registrarFallo(
 // el avatar pasa sin juez (nunca rompe la generación).
 async function juzgarParecido(
   faceB64: string,
-  avatarB64: string
+  avatarB64: string,
+  quien: QuienMide
 ): Promise<{ score: number; problema: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
@@ -238,7 +240,8 @@ async function juzgarParecido(
     // quiere. Medido: 3.0s / 3.2s / 2.9s con las dos imágenes reales, así que
     // 15s es holgado.
     const client = new Anthropic({ maxRetries: 1, timeout: 15_000 });
-    const res = await client.messages.create({
+    const res = await medirAnthropic({ ...quien, tarea: "avatar-juez" }, JUDGE_MODEL, () =>
+      client.messages.create({
       model: JUDGE_MODEL,
       max_tokens: 200,
       thinking: { type: "disabled" },
@@ -268,7 +271,8 @@ async function juzgarParecido(
           },
         },
       },
-    });
+    })
+    );
     const text = res.content.find((b) => b.type === "text")?.text;
     if (!text) return null;
     const parsed = JSON.parse(text) as { score: number; problema: string };
@@ -443,7 +447,7 @@ export async function POST(request: NextRequest) {
     // Juez de parecido: si el primer intento sale bajo, UN reintento y nos
     // quedamos con el de mejor score. Best-effort: sin juez, pasa tal cual.
     const tJuez = Date.now();
-    let veredicto = await juzgarParecido(faceB64, image);
+    let veredicto = await juzgarParecido(faceB64, image, { supabase, userId: user.id });
     let msJuez = Date.now() - tJuez;
     let reintento = false;
     // La segunda generación solo sale si CABE. Vercel corta a los 60s: si la
@@ -456,7 +460,7 @@ export async function POST(request: NextRequest) {
       msGen += otra.ms;
       if (otra.image) {
         const t2 = Date.now();
-        const v2 = await juzgarParecido(faceB64, otra.image);
+        const v2 = await juzgarParecido(faceB64, otra.image, { supabase, userId: user.id });
         msJuez += Date.now() - t2;
         if (v2 && v2.score > veredicto.score) {
           image = otra.image;

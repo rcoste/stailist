@@ -5,6 +5,7 @@ import { SEASONS, seasonPalette, normSeason, type Season } from "@/lib/colorimet
 import { JUDGE_MODEL } from "@/lib/engine/critic";
 import { tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 // Una prenda empacable, numerada para el prompt. El LLM referencia prendas por
 // `n` (nunca inventa nombres ni IDs); el motor mapea de vuelta a `nombre`.
@@ -207,7 +208,9 @@ export function climaText(w: TripWeatherInput | null): string {
 // celda; con maletas grandes el tope recorta combinaciones, nunca prendas) y
 // maximiza los looks por prenda — el premio de empacar ligero.
 export async function generateTripOutfits(
-  inputs: TripOutfitInputs
+  inputs: TripOutfitInputs,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<TripOutfit[]> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
   if (inputs.packable.length < 2) return [];
@@ -282,7 +285,8 @@ export async function generateTripOutfits(
         )}\nPrioriza celdas que mezclen las prendas de formas nuevas. AQUÍ SÍ puedes dar VARIOS looks para la MISMA ocasión si son combinaciones realmente distintas — el usuario pidió MÁS opciones, no más variedad de ocasión. Devuelve todas las que de verdad funcionen (color coherente, clima y formalidad ok), aunque repitan ocasión.`
     : "";
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "viaje-outfits" }, ENGINE_MODEL, () =>
+    client.messages.create({
     model: ENGINE_MODEL,
     max_tokens: 4096,
     // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -344,7 +348,8 @@ Para las celdas que SÍ funcionan:
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");
@@ -413,7 +418,9 @@ export type TripReviewResult = {
 
 export async function reviewTripOutfits(
   inputs: TripOutfitInputs,
-  outfits: TripOutfit[]
+  outfits: TripOutfit[],
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<TripReviewResult> {
   if (!process.env.ANTHROPIC_API_KEY || outfits.length === 0) {
     return { outfits, repaired: 0, dropped: 0 };
@@ -482,7 +489,8 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
 
   try {
     const client = new Anthropic({ maxRetries: 3 });
-    const response = await client.messages.create({
+    const response = await medirAnthropic(quien && { ...quien, tarea: "viaje-juez" }, JUDGE_MODEL, () =>
+    client.messages.create({
       // Juez compartido (ver JUDGE_MODEL en critic.ts): rápido y barato para la
       // 2ª pasada (el caso principal, sub-abrigo, no necesita Opus) y deja
       // holgura bajo el límite de 60s de la función.
@@ -523,7 +531,8 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
           },
         },
       },
-    });
+    })
+  );
 
     const text = response.content.find((b) => b.type === "text")?.text;
     if (!text) return { outfits, repaired: 0, dropped: 0 };

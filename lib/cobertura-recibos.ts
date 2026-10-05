@@ -24,100 +24,20 @@ export type CaminoSinMedir = {
 };
 
 /**
- * Los caminos que hablan con un modelo SIN pasar por `lib/proveedores`.
+ * Los caminos que hablan con un modelo y NO dejan recibo.
  *
- * Todos instancian el SDK de Anthropic directo (`new Anthropic()`), así que ni
- * siquiera calculan el `Recibo` que la puerta común produce gratis: no hay ms,
- * ni tokens, ni costo que guardar. Migrarlos es trabajo aparte y con riesgo
- * propio (cada uno tiene su forma de pedir JSON), por eso quedan declarados en
- * vez de arreglados a las carreras.
- *
- * EL MÁS CARO DE LA LISTA es `capsule-target`: armar los esenciales es una
- * llamada larga de Opus (~40s típico, hasta 300s de tope) y es justo la que
- * más se querría medir.
+ * Hasta el 2026-10-05 eran trece, todos con el SDK de Anthropic directo
+ * (`new Anthropic()`); el más caro, `capsule-target` (Opus, ~40s). Se cerraron
+ * envolviendo cada llamada con `medirAnthropic()` en vez de migrarlos a la
+ * puerta común, que habría cambiado cómo le hablan al modelo.
  */
 export const CAMINOS_SIN_MEDIR: CaminoSinMedir[] = [
-  {
-    archivo: "lib/engine/capsule-target.ts",
-    etiqueta: "armar esenciales",
-    razon: "SDK directo; es la llamada más larga del producto (~40s de Opus)",
-  },
-  {
-    archivo: "lib/engine/capsule-match.ts",
-    etiqueta: "cruzar esenciales con tu clóset",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "lib/engine/capsule-swap.ts",
-    etiqueta: "cambiar una pieza de esenciales",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "lib/engine/trip-capsule.ts",
-    etiqueta: "armar maleta",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "lib/engine/style-questions.ts",
-    etiqueta: "preguntas de estilo",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "lib/engine/archetype.ts",
-    etiqueta: "arquetipo de estilo",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "lib/engine/anchor-fit.ts",
-    etiqueta: "encaje de la prenda ancla",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "app/api/analizar-cuerpo/route.ts",
-    etiqueta: "leer silueta",
-    razon: "SDK directo en la ruta",
-  },
-  {
-    archivo: "app/api/estilo-referencia/route.ts",
-    etiqueta: "estilo de referencia",
-    razon: "SDK directo en la ruta",
-  },
-  // ESTOS CUATRO APARECIERON AL BARRER EL DISCO (candado de recibos,
-  // 2026-08-14): la lista se había escrito a mano con nueve y el modo Viaje
-  // entero se había quedado fuera. Cuentan igual —son llamadas de IA sin
-  // recibo— y omitirlos hacía justo lo que este archivo existe para evitar: que
-  // la pantalla enseñe menos huecos de los que hay.
-  {
-    archivo: "lib/engine/trip-outfits.ts",
-    etiqueta: "outfits del viaje",
-    razon: "SDK directo; son dos llamadas (armar y revisar) por viaje",
-  },
-  {
-    archivo: "lib/engine/trip-substitutes.ts",
-    etiqueta: "sustitutos de la maleta",
-    razon: "SDK directo",
-  },
-  {
-    archivo: "app/api/trip/itinerario/route.ts",
-    etiqueta: "leer el itinerario",
-    razon: "SDK directo en la ruta",
-  },
-  {
-    archivo: "app/api/avatar/generate/route.ts",
-    etiqueta: "juez del avatar",
-    razon: "SDK directo en la ruta (la imagen la genera Gemini; esto la juzga)",
-  },
-  // AQUÍ ESTABA EL HUECO MÁS CARO Y SE CERRÓ (2026-09-02). Todo lo que genera
-  // imágenes —try-on, avatar, arquetipos, renders de prenda, fotos de destino—
-  // pasa por `lib/gemini-imagen.ts` y ninguno dejaba recibo, porque una imagen
-  // no se cobra por token y la tabla de precios sólo sabía de tokens. Ahora hay
-  // tarifa por imagen (`PRECIOS_IMAGEN`, verificada contra la documentación de
-  // Google) y su propio escritor (`guardarReciboImagen`).
-  //
-  // Lo que se veía sin esto: entre el 13 de agosto y el 2 de septiembre se
-  // generaron 157 imágenes, ~$21, contra $2.58 de recibos de texto. El panel
-  // enseñaba el 11% del gasto — y sobre ese 11% se había concluido que la app
-  // costaba ~$18 al mes.
+  // VACÍA desde el 2026-10-05. Los trece caminos que llamaban al SDK de
+  // Anthropic directo (esenciales, viaje, arquetipo, preguntas de estilo,
+  // silueta, estilo de referencia, juez del avatar…) ahora envuelven la llamada
+  // con `medirAnthropic()` (lib/recibos.ts) y dejan recibo. Si un camino nuevo
+  // nace sin medir, el candado (lib/cobertura-recibos.test.ts) lo caza y se
+  // declara aquí con su razón mientras se arregla.
 ];
 
 /** Sólo las etiquetas, que es lo que la pantalla enseña. */

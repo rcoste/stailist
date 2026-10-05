@@ -15,6 +15,7 @@ import {
   type Occasion,
   type TripWeather,
 } from "@/lib/trip";
+import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 // Ancla: prenda del clóset que la persona YA decidió llevar. El motor NO la
 // lista (el caller la agrega al target); solo arma el resto alrededor.
@@ -62,7 +63,9 @@ export type TripCapsuleInputs = {
 // como "te falta" en el match). Una llamada; el match es aparte (reusa
 // capsule-match). Mismo shape que CapsuleTarget para reusar match + derivados.
 export async function generateTripCapsuleTarget(
-  inputs: TripCapsuleInputs
+  inputs: TripCapsuleInputs,
+  /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
+  quien: QuienMide | null = null
 ): Promise<CapsuleTarget> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ENGINE_NOT_CONNECTED");
   const client = new Anthropic();
@@ -157,7 +160,8 @@ export async function generateTripCapsuleTarget(
       ? tasteSignalLines(inputs.tasteSignal).join("\n")
       : "";
 
-  const response = await client.messages.create({
+  const response = await medirAnthropic(quien && { ...quien, tarea: "viaje-capsula" }, ENGINE_MODEL, () =>
+    client.messages.create({
     model: ENGINE_MODEL,
     // 4608: el "plan" (borrador de razonamiento) consume tokens antes de los
     // items, y el piso de suficiencia (v24) empuja cápsulas más grandes —
@@ -266,7 +270,8 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
         },
       },
     },
-  });
+  })
+  );
 
   const text = response.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("EMPTY_RESPONSE");

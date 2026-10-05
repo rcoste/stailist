@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { llamar, type Modelo, type Peticion, type Recibo } from "@/lib/proveedores";
+import { costoUsd } from "@/lib/proveedores/precios";
 
 // GUARDAR EL RECIBO DE UNA LLAMADA DE IA.
 //
@@ -208,5 +209,83 @@ export async function guardarReciboImagen(
     });
   } catch {
     // sin recibo, pero con imagen
+  }
+}
+
+// ─── EL RECIBO DE UNA LLAMADA DIRECTA AL SDK DE ANTHROPIC ────────────────────
+//
+// Los caminos del motor que arman esenciales, viajes, arquetipo, preguntas de
+// estilo, silueta, etc. llaman a `client.messages.create` directo y NO pasan
+// por `llamar()`: cada uno tiene su propio manejo de reintentos (`maxRetries`),
+// thinking, tools o parseo, y migrarlos a la puerta común cambiaría cómo le
+// hablan al modelo — o sea, el motor. Hasta el 2026-10-05 por eso no dejaban
+// recibo, y como los topes por persona (lib/cuotas.ts) suman `ai_calls`, ese
+// gasto no contaba para ningún tope. La consola de Anthropic enseñaba gasto de
+// Opus que la base no veía.
+//
+// `medirAnthropic` envuelve la llamada TAL CUAL: el mismo request, la misma
+// respuesta; sólo lee `usage` y escribe el recibo (éxito o fallo).
+//
+// LOS TOKENS DE CACHÉ cuentan. `usage.input_tokens` NO incluye los tokens leídos
+// o escritos en caché; si algún camino prende el caché de prompt, se cobran a
+// 0.1× (lectura) y 1.25× (escritura) del precio de entrada. Hoy ninguno lo
+// prende, pero sin esto el recibo mentiría hacia abajo el día que alguien lo
+// haga.
+
+type UsoAnthropic = {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens?: number | null;
+  cache_read_input_tokens?: number | null;
+};
+
+/** Tokens de entrada "a precio normal": los de caché se convierten con su tarifa. */
+export function entradaEquivalente(u: UsoAnthropic): number {
+  return (
+    u.input_tokens +
+    Math.round((u.cache_creation_input_tokens ?? 0) * 1.25) +
+    Math.round((u.cache_read_input_tokens ?? 0) * 0.1)
+  );
+}
+
+export async function medirAnthropic<R extends { usage: UsoAnthropic }>(
+  ctx: ContextoRecibo | null,
+  modeloId: string,
+  llamada: () => Promise<R>
+): Promise<R> {
+  const modelo: Modelo = { proveedor: "anthropic", id: modeloId, etiqueta: modeloId };
+  const t0 = Date.now();
+  try {
+    const res = await llamada();
+    if (ctx) {
+      const u = res.usage;
+      const entrada =
+        u.input_tokens + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0);
+      await guardarRecibo(ctx.supabase, {
+        userId: ctx.userId,
+        tarea: ctx.tarea,
+        modelo,
+        version: ctx.version,
+        recibo: {
+          texto: "",
+          tokens: { entrada, salida: u.output_tokens },
+          costoUsd: costoUsd(modeloId, { entrada: entradaEquivalente(u), salida: u.output_tokens }),
+          ms: Date.now() - t0,
+          truncada: false,
+        },
+      });
+    }
+    return res;
+  } catch (e) {
+    if (ctx) {
+      await guardarFallo(ctx.supabase, {
+        userId: ctx.userId,
+        tarea: ctx.tarea,
+        modelo,
+        version: ctx.version,
+        ms: Date.now() - t0,
+      });
+    }
+    throw e;
   }
 }

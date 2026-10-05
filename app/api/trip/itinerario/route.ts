@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { revisarGasto } from "@/lib/cuotas";
 import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
+import { medirAnthropic } from "@/lib/recibos";
 
 // Lee el SCREENSHOT del itinerario de vuelo y saca la ruta (paradas + noches +
 // fecha de salida) para PRE-LLENAR el paso 1 del wizard. No arma nada: el
@@ -58,7 +59,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const client = new Anthropic({ maxRetries: 2 });
-    const res = await client.messages.create({
+    const res = await medirAnthropic({ supabase, userId: user.id, tarea: "viaje-itinerario" }, EXTRACT_MODEL, () =>
+      client.messages.create({
       model: EXTRACT_MODEL,
       max_tokens: 1200,
       // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -166,7 +168,8 @@ SI NO PUEDES:
           },
         },
       },
-    });
+    })
+    );
 
     const text = res.content.find((b) => b.type === "text")?.text;
     if (!text) return NextResponse.json({ error: "vacio" }, { status: 502 });

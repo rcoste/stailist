@@ -6,6 +6,7 @@ import { photosGate } from "@/lib/consentimiento";
 import { builds, isBuild, type Build, type Gender } from "@/lib/silueta";
 import { revisarGasto } from "@/lib/cuotas";
 import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
+import { medirAnthropic } from "@/lib/recibos";
 
 export const maxDuration = 60;
 
@@ -75,7 +76,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const client = new Anthropic();
-    const res = await client.messages.create({
+    const res = await medirAnthropic({ supabase, userId: user.id, tarea: "silueta" }, CLASSIFY_MODEL, () =>
+      client.messages.create({
       model: CLASSIFY_MODEL,
       max_tokens: 200,
       // Thinking OFF: en los modelos 5 viene ON por default y se come el
@@ -123,7 +125,8 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    });
+    })
+    );
 
     const text = res.content.find((b) => b.type === "text")?.text;
     if (!text) return NextResponse.json({ error: "vacio" }, { status: 502 });

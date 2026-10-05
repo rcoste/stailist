@@ -287,7 +287,8 @@ export async function POST(request: NextRequest) {
           anclas,
           rechazadas,
           contexto,
-        });
+        },
+          { supabase, userId: user.id });
 
         // Las anclas entran al target COMO ITEMS deterministas (el motor recibió
         // la instrucción de NO listarlas — aquí van al frente, y por si acaso se
@@ -331,7 +332,7 @@ export async function POST(request: NextRequest) {
         const closet = await loadClosetLite(supabase, user.id);
         let match = null;
         try {
-          match = await matchCapsule(target, closet, gender, rechazadas);
+          match = await matchCapsule(target, closet, gender, rechazadas, { supabase, userId: user.id });
         } catch {
           match = null;
         }
