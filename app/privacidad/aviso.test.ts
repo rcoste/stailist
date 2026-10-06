@@ -24,6 +24,10 @@ describe("aviso de privacidad", () => {
     expect(aviso).toMatch(/catálogo de prendas/); // addLibraryCandidates
     expect(aviso).toMatch(/fuera de México/);
     expect(aviso).toMatch(/nuestras cookies/);
+    // País/estado y aparato al arrancar (lib/lugar.ts, migración 0171), y la IP
+    // que Supabase guarda en cada sesión (auth.sessions), que el aviso callaba.
+    expect(aviso).toMatch(/el país \(y el estado, si estás en México\)/);
+    expect(aviso).toMatch(/Supabase guarda\s+la dirección IP y el navegador/);
   });
 
   it("no repite las frases que la revisión legal del 2026-09-10 encontró falsas", () => {

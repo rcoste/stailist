@@ -12,7 +12,9 @@ import {
   origenEnPalabras,
   pasoEnPalabras,
   resumirDispositivos,
+  resumirPaises,
   textoDispositivos,
+  textoPaises,
   type ExtraCuenta,
 } from "./campana";
 import type { FilaPerfilAdquisicion } from "./adquisicion";
@@ -271,6 +273,37 @@ describe("quién llegó ayer y por qué aparato", () => {
     expect(textoDispositivos(r)).toBe("computadora 2 (1 con primer look) · sin dato 1 (1)");
   });
 
+  it("por país cuenta sólo cuentas de anuncios, de más a menos, y sin dato al final", () => {
+    const origen = { landing: "/", at: "x", utm_source: "instagram", utm_campaign: "ig-maleta" };
+    const base = {
+      email: null,
+      gender: "hombre",
+      inicio: "2026-10-05T00:00:00Z",
+      dia_inicio: "2026-10-05",
+      dias: [],
+      como_nos_conocio: null,
+    };
+    const filas = [
+      { ...base, id: "a", onboarding_step: 5, origen },
+      { ...base, id: "b", onboarding_step: 1, origen },
+      { ...base, id: "c", onboarding_step: 5, origen },
+      { ...base, id: "d", onboarding_step: 1, origen },
+      { ...base, id: "organico", onboarding_step: 5, origen: null },
+    ];
+    const extra = (pais: string | null) => ({ age_range: null, ttv_s: null, se_lo_puso: false, ia_usd_7d: 0, pais });
+    const r = resumirPaises(
+      filas,
+      new Map([
+        ["a", extra(null)],
+        ["b", extra("ES")],
+        ["c", extra("MX")],
+        ["d", extra("MX")],
+        ["organico", extra("AR")],
+      ])
+    );
+    expect(textoPaises(r)).toBe("México 2 (1 con primer look) · España 1 (0) · sin dato 1 (1)");
+  });
+
   it("el correo lista a cada persona nueva en un renglón", () => {
     const { text } = correoDiario({
       ayer: "2026-10-02",
@@ -288,6 +321,7 @@ describe("quién llegó ayer y por qué aparato", () => {
           correo: "nuevo@ejemplo.test",
           origen: "hombres-diario (google)",
           dispositivo: "computadora",
+          lugar: "México · Jalisco",
           paso: "se quedó en el clóset",
           prendas: 0,
           fotos: 0,
@@ -296,7 +330,7 @@ describe("quién llegó ayer y por qué aparato", () => {
     });
     expect(text).toContain("QUIÉN LLEGÓ AYER");
     expect(text).toContain(
-      "- nuevo@ejemplo.test · hombres-diario (google) · computadora · se quedó en el clóset · 0 prendas"
+      "- nuevo@ejemplo.test · hombres-diario (google) · computadora · México · Jalisco · se quedó en el clóset · 0 prendas"
     );
   });
 });

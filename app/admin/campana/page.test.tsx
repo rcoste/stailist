@@ -64,6 +64,7 @@ async function html(d: Partial<DatosCampana>): Promise<string> {
       tablet: { cuentas: 0, primerLook: 0 },
       sinDato: { cuentas: 0, primerLook: 0 },
     },
+    paises: [],
     ...d,
   };
   const el = await AdminCampana({ searchParams: Promise.resolve({}) });

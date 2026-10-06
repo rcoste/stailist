@@ -2,6 +2,7 @@ import { origenDesdeDato, type Origen } from "@/lib/origen";
 import { isMinor, type AgeRange } from "@/lib/edad";
 import { mediana, fmtSegundos } from "@/lib/admin/embudo-tiempos";
 import type { Dispositivo } from "@/lib/dispositivo";
+import { paisEnPalabras } from "@/lib/lugar";
 import type { LineaObjetivo, ResumenUso } from "@/lib/admin/objetivos";
 import {
   campanaDe,
@@ -44,6 +45,9 @@ export type ExtraCuenta = {
   ia_usd_7d: number;
   /** Desde qué aparato arrancó el onboarding (se guarda desde el 2026-10-01). */
   dispositivo?: Dispositivo | null;
+  /** País y estado (ISO) que Vercel dedujo de su conexión al arrancar; desde el 2026-10-06 (lib/lugar.ts). */
+  pais?: string | null;
+  region?: string | null;
   /** Prendas en su clóset hoy, y cuántas de ellas son de foto propia. */
   prendas?: number;
   fotos?: number;
@@ -297,6 +301,8 @@ export type DatosCorreoDiario = {
   quienAyer?: QuienLlego[];
   /** Cuentas de anuncios por aparato, acumulado (ver resumirDispositivos). */
   dispositivos?: ResumenDispositivos;
+  /** Cuentas de anuncios por país, acumulado (ver resumirPaises). */
+  paises?: ConteoPais[];
   /** Los mismos objetivos, sin aplanar: el correo HTML pinta el estado de cada uno. */
   objetivosLineas?: LineaObjetivo[];
   uso?: ResumenUso;
@@ -331,6 +337,8 @@ export type QuienLlego = {
   /** "hombres-diario (google)", "directo", o lo que contestó en ¿cómo nos conociste? */
   origen: string;
   dispositivo: Dispositivo | null;
+  /** "México · Jalisco", "España"; null sin dato (lugarEnPalabras). */
+  lugar?: string | null;
   /** Hasta dónde llegó, en palabras (pasoEnPalabras). */
   paso: string;
   prendas: number;
@@ -400,6 +408,38 @@ export function textoDispositivos(r: ResumenDispositivos): string {
   return partes.join(" · ");
 }
 
+export type ConteoPais = { pais: string | null; cuentas: number; primerLook: number };
+
+/**
+ * Cuántas cuentas de ANUNCIOS llegaron de cada país y cuántas de ellas llegaron
+ * a su primer look, de más a menos; "sin dato" al final. Por país y no por
+ * estado: la pregunta es si la campaña se está yendo fuera de México.
+ */
+export function resumirPaises(filas: FilaPerfilAdquisicion[], extras: Map<string, ExtraCuenta>): ConteoPais[] {
+  const r = new Map<string | null, ConteoPais>();
+  for (const f of filas) {
+    if (!esDeCampana(origenDesdeDato(f.origen))) continue;
+    const pais = extras.get(f.id)?.pais ?? null;
+    const g = r.get(pais) ?? { pais, cuentas: 0, primerLook: 0 };
+    g.cuentas++;
+    if (f.onboarding_step >= 5) g.primerLook++;
+    r.set(pais, g);
+  }
+  return [...r.values()].sort(
+    (a, b) => Number(a.pais === null) - Number(b.pais === null) || b.cuentas - a.cuentas
+  );
+}
+
+/** "México 12 (8 con primer look) · España 1 (0) · sin dato 3 (1)". Vacío si no hay nadie. */
+export function textoPaises(r: ConteoPais[]): string {
+  return r
+    .map(
+      (c, i) =>
+        `${c.pais ? paisEnPalabras(c.pais) : "sin dato"} ${c.cuentas} (${c.primerLook}${i === 0 ? " con primer look" : ""})`
+    )
+    .join(" · ");
+}
+
 const usd = (n: number) => `$${n.toFixed(2)}`;
 const mxn = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocaleString("es-MX")}`);
 const pctTxt = (n: number, d: number) => (d === 0 ? "—" : `${Math.round((n / d) * 100)}%`);
@@ -440,7 +480,7 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
           "QUIÉN LLEGÓ AYER",
           ...d.quienAyer.map(
             (q) =>
-              `- ${q.correo} · ${q.origen} · ${q.dispositivo ?? "aparato sin dato"} · ${q.paso} · ` +
+              `- ${q.correo} · ${q.origen} · ${q.dispositivo ?? "aparato sin dato"} · ${q.lugar ?? "país sin dato"} · ${q.paso} · ` +
               `${q.prendas} ${q.prendas === 1 ? "prenda" : "prendas"}${q.fotos ? ` (${q.fotos} de foto propia)` : ""}`
           ),
           "",
@@ -448,6 +488,9 @@ export function correoDiario(d: DatosCorreoDiario): { subject: string; text: str
       : []),
     ...(d.dispositivos && textoDispositivos(d.dispositivos)
       ? ["POR APARATO (cuentas de anuncios, acumulado)", `- ${textoDispositivos(d.dispositivos)}`, ""]
+      : []),
+    ...(d.paises && textoPaises(d.paises)
+      ? ["POR PAÍS (cuentas de anuncios, acumulado)", `- ${textoPaises(d.paises)}`, ""]
       : []),
     ...(d.objetivos?.length ? [...d.objetivos, ""] : []),
     ...(d.avatar ? ["AVATAR (cuentas de la ventana)", `- ${textoAvatar(d.avatar)}`, ""] : []),

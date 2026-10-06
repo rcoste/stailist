@@ -1,4 +1,8 @@
 import Image from "next/image";
+import { origenEnPalabras } from "@/lib/admin/campana";
+import { esDispositivo } from "@/lib/dispositivo";
+import { lugarEnPalabras } from "@/lib/lugar";
+import { origenDesdeDato } from "@/lib/origen";
 import { isMinor } from "@/lib/edad";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -272,6 +276,15 @@ export default async function AdminUserDetail({
               label="TTV (1er outfit)"
               value={ttv != null ? ttvHumano(ttv) : "—"}
             />
+            {/* De dónde llegó y desde dónde entró: una vez por cuenta, al
+                arrancar (migración 0171; las cuentas viejas se rellenaron de
+                sus sesiones). El país sale de la conexión: una VPN lo cambia. */}
+            <Field
+              label="Llegó por"
+              value={origenEnPalabras(origenDesdeDato(profile.origen), profile.como_nos_conocio ?? null)}
+            />
+            <Field label="Aparato" value={esDispositivo(profile.dispositivo) ? profile.dispositivo : "—"} />
+            <Field label="País" value={lugarEnPalabras(profile.pais, profile.region) ?? "—"} />
           </div>
         </div>
       </div>
