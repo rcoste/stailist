@@ -108,10 +108,7 @@ export default function PrivacidadPage() {
           vez, el país (y el estado, si estás en México) que se deduce de tu
           conexión, y si entraste desde celular, tablet o computadora. Lo usamos
           para saber de dónde llega la gente; para esto no guardamos tu
-          dirección IP. Además, mientras tu sesión siga abierta, Supabase guarda
-          la dirección IP y el navegador con los que entraste, como cualquier
-          sistema de cuentas; de ahí sacamos una vez el país de las cuentas que
-          ya existían antes de esto.
+          dirección IP.
         </Li>
         <Li>
           <b>Lo que nos cuentas al arrancar:</b> qué ropa usas (mujer u hombre),

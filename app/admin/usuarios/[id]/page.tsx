@@ -277,8 +277,8 @@ export default async function AdminUserDetail({
               value={ttv != null ? ttvHumano(ttv) : "—"}
             />
             {/* De dónde llegó y desde dónde entró: una vez por cuenta, al
-                arrancar (migración 0171; las cuentas viejas se rellenaron de
-                sus sesiones). El país sale de la conexión: una VPN lo cambia. */}
+                arrancar (migración 0171); las cuentas de antes quedan sin
+                dato. El país sale de la conexión: una VPN lo cambia. */}
             <Field
               label="Llegó por"
               value={origenEnPalabras(origenDesdeDato(profile.origen), profile.como_nos_conocio ?? null)}

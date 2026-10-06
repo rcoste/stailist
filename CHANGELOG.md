@@ -13,12 +13,11 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   país. El panel de campaña y el correo de las 8 suman una línea "por país" y
   el país en cada persona nueva. Nació de una cuenta con correo que parecía de
   fuera de México, sin forma de comprobarlo.
-- Las cuentas viejas se rellenan desde la sesión más antigua que guarda
-  Supabase (`scripts/rellenar-pais-aparato.mts`): el aparato ya quedó en 54 de
-  58; el país espera una base de IP→país local.
-- El aviso de privacidad dice ahora las dos cosas: el país y aparato que
-  guardamos, y la IP y el navegador que Supabase guarda mientras la sesión
-  sigue abierta, que antes callaba.
+- Las cuentas viejas se quedan sin país (y sin aparato las de antes del
+  2026-10-01). Se intentó rellenarlas desde las sesiones de Supabase y no
+  sirve: el login lo hace nuestro servidor, así que esas sesiones guardan la
+  IP de Vercel y "node" como navegador, no los de la persona.
+- El aviso de privacidad dice ahora qué país y aparato guardamos.
 
 ## [0.2.351.0] - 2026-10-05 — la landing sigue al anuncio que tocaste
 

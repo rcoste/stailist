@@ -24,10 +24,12 @@ describe("aviso de privacidad", () => {
     expect(aviso).toMatch(/catálogo de prendas/); // addLibraryCandidates
     expect(aviso).toMatch(/fuera de México/);
     expect(aviso).toMatch(/nuestras cookies/);
-    // País/estado y aparato al arrancar (lib/lugar.ts, migración 0171), y la IP
-    // que Supabase guarda en cada sesión (auth.sessions), que el aviso callaba.
+    // País/estado y aparato al arrancar (lib/lugar.ts, migración 0171).
     expect(aviso).toMatch(/el país \(y el estado, si estás en México\)/);
-    expect(aviso).toMatch(/Supabase guarda\s+la dirección IP y el navegador/);
+    // auth.sessions NO trae la IP de la persona: el login lo hace nuestro
+    // servidor, así que Supabase ve la IP de Vercel y "node" de navegador
+    // (comprobado el 2026-10-06). No decir que la guardamos.
+    expect(aviso).not.toMatch(/Supabase guarda\s+la dirección IP/);
   });
 
   it("no repite las frases que la revisión legal del 2026-09-10 encontró falsas", () => {
