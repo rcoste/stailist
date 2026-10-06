@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   description: "Qué datos guarda stailist, para qué, quién los ve y cómo borrarlos.",
 };
 
-const ACTUALIZADO = "10 de septiembre de 2026";
+const ACTUALIZADO = "6 de octubre de 2026";
 
 function H2({ children }: { children: React.ReactNode }) {
   return <h2 className="mt-8 text-h2 font-semibold text-ink">{children}</h2>;
@@ -102,6 +102,13 @@ export default function PrivacidadPage() {
           <b>Cuando pides el código para entrar:</b> tu correo y la dirección IP
           desde la que lo pides, para frenar a quien intente abusar del
           formulario. Se borran en uno o dos días.
+        </Li>
+        <Li>
+          <b>Desde dónde y con qué entras:</b> al empezar guardamos, una sola
+          vez, el país (y el estado, si estás en México) que se deduce de tu
+          conexión, y si entraste desde celular, tablet o computadora. Lo usamos
+          para saber de dónde llega la gente; para esto no guardamos tu
+          dirección IP.
         </Li>
         <Li>
           <b>Lo que nos cuentas al arrancar:</b> qué ropa usas (mujer u hombre),

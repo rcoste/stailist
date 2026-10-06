@@ -9,6 +9,7 @@ import {
   costoPor,
   textoAvatar,
   textoDispositivos,
+  textoPaises,
   textoParo,
   type ResumenCampana,
 } from "@/lib/admin/campana";
@@ -239,6 +240,14 @@ export default async function AdminCampana({
           <p className="max-w-3xl text-sm text-ink">
             <b>Por aparato</b> (cuentas de anuncios): {textoDispositivos(d.dispositivos)}.{" "}
             <span className="text-xs text-muted">Se guarda desde el 2026-10-01.</span>
+          </p>
+        ) : null}
+        {d.paises && textoPaises(d.paises) ? (
+          <p className="max-w-3xl text-sm text-ink">
+            <b>Por país</b> (cuentas de anuncios): {textoPaises(d.paises)}.{" "}
+            <span className="text-xs text-muted">
+              Sale de la conexión, no de lo que dice la persona; una VPN lo cambia.
+            </span>
           </p>
         ) : null}
         <p className="max-w-3xl text-xs text-muted">

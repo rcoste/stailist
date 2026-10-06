@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.352.0] - 2026-10-06 — de qué país y con qué aparato entra cada cuenta
+
+- Cada cuenta nueva guarda, una sola vez al arrancar, su país (y su estado si
+  es México) y si entró por celular, tablet o computadora. El país sale de los
+  encabezados que Vercel deduce de la conexión (`lib/lugar.ts`); la IP no se
+  guarda. Columnas nuevas en `profiles` (migración 0171), que también reciben el
+  aparato que desde el 2026-10-01 vivía escondido en un evento.
+- La ficha de cada usuaria en el admin enseña de dónde llegó, el aparato y el
+  país. El panel de campaña y el correo de las 8 suman una línea "por país" y
+  el país en cada persona nueva. Nació de una cuenta con correo que parecía de
+  fuera de México, sin forma de comprobarlo.
+- Las cuentas viejas se quedan sin país (y sin aparato las de antes del
+  2026-10-01). Se intentó rellenarlas desde las sesiones de Supabase y no
+  sirve: el login lo hace nuestro servidor, así que esas sesiones guardan la
+  IP de Vercel y "node" como navegador, no los de la persona.
+- El aviso de privacidad dice ahora qué país y aparato guardamos.
+
 ## [0.2.351.0] - 2026-10-05 — la landing sigue al anuncio que tocaste
 
 - Quien llega de un anuncio de Instagram ve arriba el título de ESE anuncio

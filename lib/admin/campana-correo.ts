@@ -6,6 +6,7 @@ import {
   PARO_MUESTRA,
   campanasParaCorreo,
   costoPor,
+  textoPaises,
   type DatosCorreoDiario,
   type EstadoParo,
   type ResumenCampana,
@@ -140,7 +141,7 @@ function bloqueQuien(d: DatosCorreoDiario): string {
     .map(
       (p) => `<tr><td style="padding:12px 0;border-bottom:1px solid ${LINEA};">
           <div style="font-size:14px;font-weight:700;color:${TINTA};word-break:break-all;">${esc(p.correo)}</div>
-          <div style="margin-top:3px;font-size:13px;line-height:1.5;color:${TINTA2};">${esc(p.origen)} · ${esc(p.dispositivo ?? "aparato sin dato")}</div>
+          <div style="margin-top:3px;font-size:13px;line-height:1.5;color:${TINTA2};">${esc(p.origen)} · ${esc(p.dispositivo ?? "aparato sin dato")} · ${esc(p.lugar ?? "país sin dato")}</div>
           <div style="margin-top:2px;font-size:13px;line-height:1.5;color:${GRIS};">${esc(p.paso)} · ${p.prendas} ${p.prendas === 1 ? "prenda" : "prendas"}${
             p.fotos ? ` (${p.fotos} de foto propia)` : ""
           }</div>
@@ -272,6 +273,13 @@ function bloqueAparatos(d: DatosCorreoDiario): string {
   return `${titulo("Por aparato · cuentas de anuncios")}<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${celdas}</tr></table>`;
 }
 
+/** Una línea, no celdas: los países son pocos y de largo variable. */
+function bloquePaises(d: DatosCorreoDiario): string {
+  const t = d.paises ? textoPaises(d.paises) : "";
+  if (!t) return "";
+  return `${titulo("Por país · cuentas de anuncios")}<p style="margin:0;font-size:14px;line-height:1.5;color:${TINTA2};">${esc(t)}</p>`;
+}
+
 /** Lo que falló al armar el correo, en el color de alarma y antes que todo lo demás. */
 function bloqueAvisos(avisos: string[]): string {
   const rojo = COLOR_ESTADO.alarma;
@@ -311,6 +319,7 @@ export function correoDiarioHtml(d: DatosCorreoDiario): string {
     bloqueObjetivos(d) ? fila("30px 6px 0", bloqueObjetivos(d)) : "",
     bloqueAvatar(d) ? fila("30px 6px 0", bloqueAvatar(d)) : "",
     bloqueAparatos(d) ? fila("30px 6px 0", bloqueAparatos(d)) : "",
+    bloquePaises(d) ? fila("30px 6px 0", bloquePaises(d)) : "",
     fila("32px 6px 0", boton({ href: `${SITE}/admin/campana`, texto: "Abrir el panel" })),
   ]
     .filter(Boolean)

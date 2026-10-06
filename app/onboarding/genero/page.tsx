@@ -9,6 +9,7 @@ import { registrarEvento } from "@/lib/telemetria";
 import { createClient } from "@/lib/supabase/server";
 import { COLUMNA } from "../ancho";
 import { dispositivoDesdeUA } from "@/lib/dispositivo";
+import { lugarDesdeEncabezados } from "@/lib/lugar";
 
 // Primer paso del onboarding: define qué clóset armamos. No lleva barra de
 // progreso porque es la antesala (define el resto). Si ya lo elegiste, te
@@ -20,10 +21,23 @@ export default async function GeneroPage() {
   // AQUÍ ARRANCA EL RELOJ DEL TTV. Es la primera pantalla que la persona ve
   // después de teclear el código; escribir en un GET es raro, pero el hecho que
   // se mide es justamente "abrió la app". Idempotente: sólo la primera vez.
+  //
+  // En el mismo update, desde qué aparato y qué país (y estado) entró: una sola
+  // vez por cuenta, para que el admin conteste "¿de dónde llega la gente y con
+  // qué?" (lib/dispositivo.ts, lib/lugar.ts). Nunca en "ver como": serían el
+  // navegador y la conexión del admin.
   const supabase = await createClient();
+  const h = await headers();
+  const dispositivo = dispositivoDesdeUA(h.get("user-agent"));
+  const verComo = await enVerComo();
+  const lugar = verComo ? null : lugarDesdeEncabezados(h);
   const { data: arrancado } = await supabase
     .from("profiles")
-    .update({ onboarding_started_at: new Date().toISOString() })
+    .update({
+      onboarding_started_at: new Date().toISOString(),
+      ...(lugar ? { pais: lugar.pais, region: lugar.region } : {}),
+      ...(dispositivo && !verComo ? { dispositivo } : {}),
+    })
     .eq("id", profile.id)
     .is("onboarding_started_at", null)
     .select("id");
@@ -33,7 +47,7 @@ export default async function GeneroPage() {
     await registrarEvento(supabase, {
       user_id: profile.id,
       type: "onboarding_started",
-      data: { dispositivo: dispositivoDesdeUA((await headers()).get("user-agent")) },
+      data: { dispositivo },
     });
   }
 
@@ -44,7 +58,7 @@ export default async function GeneroPage() {
   // app/onboarding/layout.tsx lo reintenta en las demás pantallas, porque ésta
   // redirige en cuanto hay género. Nunca en "ver como": sería el navegador del
   // admin hablando por otra cuenta.
-  if (!(await enVerComo())) {
+  if (!verComo) {
     await guardarOrigenEnPerfil(
       supabase,
       profile.id,

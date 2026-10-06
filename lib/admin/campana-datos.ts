@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin/adquisicion";
 import { origenDesdeDato } from "@/lib/origen";
 import { esDispositivo } from "@/lib/dispositivo";
+import { esPais, esRegion, lugarEnPalabras } from "@/lib/lugar";
 import {
   criterioDeParo,
   esDeCampana,
@@ -17,7 +18,9 @@ import {
   pasoEnPalabras,
   resumirCampana,
   resumirDispositivos,
+  resumirPaises,
   type ResumenDispositivos,
+  type ConteoPais,
   type DatosCorreoDiario,
   type EstadoParo,
   type ExtraCuenta,
@@ -53,8 +56,10 @@ select p.id,
      where a.user_id = p.id
        and a.created_at >= coalesce(p.onboarding_started_at, p.created_at)
        and a.created_at < coalesce(p.onboarding_started_at, p.created_at) + interval '${DIAS_VENTANA} days'), 0)::float as ia_usd_7d,
-  (select e.data->>'dispositivo' from public.events e
-     where e.user_id = p.id and e.type = 'onboarding_started' order by e.created_at limit 1) as dispositivo,
+  coalesce(p.dispositivo, (select e.data->>'dispositivo' from public.events e
+     where e.user_id = p.id and e.type = 'onboarding_started' order by e.created_at limit 1)) as dispositivo,
+  p.pais,
+  p.region,
   (select count(*) from public.items i where i.user_id = p.id and i.deleted_at is null)::int as prendas,
   (select count(*) from public.items i where i.user_id = p.id and i.deleted_at is null and i.source = 'photo')::int as fotos
 from public.profiles p
@@ -113,6 +118,7 @@ export type DatosCampana = {
   extras: Map<string, ExtraCuenta>;
   /** Cuentas de anuncios de la ventana, por aparato. */
   dispositivos: ResumenDispositivos;
+  paises: ConteoPais[];
   /** Avatar paso por paso, de las cuentas de la ventana. */
   avatar: EmbudoAvatar;
 };
@@ -202,6 +208,8 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
         se_lo_puso: !!r.se_lo_puso,
         ia_usd_7d: Number(r.ia_usd_7d ?? 0),
         dispositivo: esDispositivo(r.dispositivo) ? r.dispositivo : null,
+        pais: esPais(r.pais) ? r.pais : null,
+        region: esRegion(r.region) ? r.region : null,
         prendas: Number(r.prendas ?? 0),
         fotos: Number(r.fotos ?? 0),
       },
@@ -231,6 +239,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     uso: resumirUso(todas, uso),
     extras,
     dispositivos: resumirDispositivos(filas, extras),
+    paises: resumirPaises(filas, extras),
     avatar,
   };
 }
@@ -287,11 +296,13 @@ export async function datosCorreoDiario(ahora: Date = new Date()): Promise<Datos
         correo: f.email ?? "(sin correo todavía)",
         origen: origenEnPalabras(origenDesdeDato(f.origen), f.como_nos_conocio),
         dispositivo: x?.dispositivo ?? null,
+        lugar: lugarEnPalabras(x?.pais, x?.region),
         paso: pasoEnPalabras(f.onboarding_step, f.gender, !f.email),
         prendas: x?.prendas ?? 0,
         fotos: x?.fotos ?? 0,
       };
     }),
     dispositivos: d.dispositivos,
+    paises: d.paises,
   };
 }
