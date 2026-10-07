@@ -100,6 +100,13 @@ export async function adoptarBorrador(borradorId: string, cuentaId: string): Pro
                 -- De dónde llegó: gana lo que ya traía el borrador (ahí se
                 -- guardó el anuncio); si no, lo que tuviera la cuenta.
                 origen = coalesce(b.origen, d.origen),
+                -- Desde dónde y con qué arrancó (migración 0171): se escribe
+                -- al arrancar, o sea en el BORRADOR. Sin estas tres líneas se
+                -- perdían justo en el camino por el que entra casi todo el
+                -- mundo (cazado el 2026-10-06 con la primera cuenta así).
+                dispositivo = coalesce(b.dispositivo, d.dispositivo),
+                pais = coalesce(b.pais, d.pais),
+                region = coalesce(b.region, d.region),
                 updated_at = now()
            from public.profiles b
           where b.id = $1 and d.id = $2`,
