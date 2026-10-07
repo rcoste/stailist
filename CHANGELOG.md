@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.353.1] - 2026-10-06 — el país y el aparato sobreviven al dejar el correo
+
+- Quien empieza sin correo arranca en un borrador; al verificar su correo, el
+  avance pasa a la cuenta (`lib/borrador-adoptar.ts`). País, estado y aparato
+  se escriben al arrancar, o sea en el borrador, y no estaban en lo que se
+  copia: se perdían justo en el camino por el que entra casi todo el mundo.
+  Cazado con la primera cuenta que entró así tras v0.2.352.0.
+- Un test lee la primera pantalla del onboarding y exige que cada columna que
+  escribe en el perfil se copie al adoptar, para que la próxima no se pierda.
+
 ## [0.2.353.0] - 2026-10-06 — el correo de las 8 grita cuando alguien vuelve
 
 - Arriba de todo, una sección "volvieron ayer": quién, de dónde llegó, a los
