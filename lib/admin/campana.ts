@@ -5,8 +5,10 @@ import type { Dispositivo } from "@/lib/dispositivo";
 import { paisEnPalabras } from "@/lib/lugar";
 import type { LineaObjetivo, ResumenUso } from "@/lib/admin/objetivos";
 import {
+  DIAS_VENTANA,
   campanaDe,
   fuenteDe,
+  sumarDias,
   ventanaCerrada,
   volvioEn7Dias,
   type FilaPerfilAdquisicion,
@@ -297,6 +299,8 @@ export type DatosCorreoDiario = {
   desde: string;
   /** Los objetivos del plan P-03 ya escritos en texto (lib/admin/objetivos.ts). */
   objetivos?: string[];
+  /** Quién volvió ayer (quienesVolvieron); va arriba de todo, es el hito del plan. */
+  volvieronAyer?: QuienVolvio[];
   /** Una fila por cuenta que arrancó ayer: quién, de dónde y hasta dónde llegó. */
   quienAyer?: QuienLlego[];
   /** Cuentas de anuncios por aparato, acumulado (ver resumirDispositivos). */
@@ -329,6 +333,59 @@ export function origenEnPalabras(o: Origen | null, comoNosConocio: string | null
   const campana = campanaDe(o);
   const base = campana !== "—" ? `${campana} (${fuenteDe(o)})` : fuenteDe(o);
   return comoNosConocio && comoNosConocio !== "omitido" ? `${base}, dijo: ${comoNosConocio}` : base;
+}
+
+/** Alguien que ayer volvió a abrir la app en un día distinto al que arrancó. */
+export type QuienVolvio = {
+  correo: string;
+  origen: string;
+  /** Días entre su arranque y ayer (1 = al día siguiente). */
+  aLosDias: number;
+  /** Ningún regreso antes de ayer: la primera vez que vuelve. */
+  primeraVez: boolean;
+  /** De anuncios, con primer look y dentro de su semana: suma al criterio de paro. */
+  cuentaParaParo: boolean;
+};
+
+/**
+ * EL HITO DEL PLAN: quién volvió ayer (2026-10-06). El criterio de paro se
+ * mide en regresos, y el correo sólo lo decía como un número dentro de una
+ * cifra ("1/6"): el primer regreso de campaña, sin correo de por medio, pasó
+ * un día entero sin que nadie lo notara. "Volvió" es lo mismo que cuenta el
+ * criterio (`dias` ya trae el piso de horas y las exclusiones de adquisición),
+ * así que la lista y el número nunca se contradicen. Van todos, también lo
+ * orgánico y lo de después de la semana: volver siempre es noticia; sólo
+ * `cuentaParaParo` dice cuál mueve el criterio.
+ */
+export function quienesVolvieron(filas: FilaPerfilAdquisicion[], ayer: string): QuienVolvio[] {
+  return filas
+    .filter((f) => f.dia_inicio < ayer && (f.dias ?? []).includes(ayer))
+    .map((f) => {
+      const o = origenDesdeDato(f.origen);
+      const aLosDias = Math.round(
+        (Date.parse(`${ayer}T00:00:00Z`) - Date.parse(`${f.dia_inicio}T00:00:00Z`)) / 86_400_000
+      );
+      return {
+        correo: f.email ?? "(sin correo todavía)",
+        origen: origenEnPalabras(o, f.como_nos_conocio),
+        aLosDias,
+        primeraVez: !(f.dias ?? []).some((d) => d > f.dia_inicio && d < ayer),
+        cuentaParaParo:
+          esDeCampana(o) && f.onboarding_step >= 5 && ayer <= sumarDias(f.dia_inicio, DIAS_VENTANA),
+      };
+    })
+    .sort((a, b) => Number(b.cuentaParaParo) - Number(a.cuentaParaParo) || a.aLosDias - b.aLosDias);
+}
+
+/** "yo@x.com · app-neutra (google) · a los 2 días · primera vez · cuenta para el criterio". */
+export function textoVolvio(q: QuienVolvio): string {
+  return [
+    q.correo,
+    q.origen,
+    q.aLosDias === 1 ? "al día siguiente" : `a los ${q.aLosDias} días`,
+    q.primeraVez ? "primera vez" : "otra vez",
+    ...(q.cuentaParaParo ? ["cuenta para el criterio"] : []),
+  ].join(" · ");
 }
 
 /** Una persona nueva, en lo que cabe en un renglón del correo. */
@@ -461,11 +518,21 @@ export function campanasParaCorreo(campanas: ResumenCampana[]): ResumenCampana[]
 /** Una pantalla de texto. Lo que no se manda no se mira; lo que es largo tampoco. */
 export function correoDiario(d: DatosCorreoDiario): { subject: string; text: string } {
   const deCampana = campanasParaCorreo(d.campanas);
-  const subject = `stailist · ${d.ayer}: ${usd(d.iaAyerUsd)} de IA · ${d.nuevasAyer} cuentas nuevas${
+  const nVolvieron = d.volvieronAyer?.length ?? 0;
+  const subject = `stailist · ${d.ayer}: ${
+    nVolvieron ? `${nVolvieron === 1 ? "VOLVIÓ 1" : `VOLVIERON ${nVolvieron}`} · ` : ""
+  }${usd(d.iaAyerUsd)} de IA · ${d.nuevasAyer} cuentas nuevas${
     d.nuevasAyerDeCampana ? ` (${d.nuevasAyerDeCampana} de anuncios)` : ""
   }`;
   const lineas = [
     ...(d.avisos?.length ? ["AVISOS", ...d.avisos.map((a) => `- ${a}`), ""] : []),
+    ...(d.volvieronAyer
+      ? [
+          "VOLVIERON AYER",
+          ...(d.volvieronAyer.length ? d.volvieronAyer.map((q) => `- ${textoVolvio(q)}`) : ["- nadie"]),
+          "",
+        ]
+      : []),
     `AYER (${d.ayer}, hora CDMX)`,
     `- IA: ${usd(d.iaAyerUsd)} en ${d.iaAyerLlamadas} llamadas${
       d.iaTop ? `; quien más gastó: ${d.iaTop.correo} (${usd(d.iaTop.usd)})` : ""

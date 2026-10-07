@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.353.0] - 2026-10-06 — el correo de las 8 grita cuando alguien vuelve
+
+- Arriba de todo, una sección "volvieron ayer": quién, de dónde llegó, a los
+  cuántos días, si es la primera vez y si suma al criterio de paro (de
+  anuncios, con primer look y dentro de su semana). Si alguien volvió, el
+  asunto lo dice antes que el gasto. Nació de que el primer regreso de una
+  persona de campaña, sin ningún correo de por medio, pasó un día entero
+  escondido en una cifra "1/6".
+- "Volvió" es exactamente lo que cuenta el criterio (`quienesVolvieron` en
+  `lib/admin/campana.ts` usa los mismos días de actividad), así que la lista y
+  el número no se pueden contradecir. Van también las orgánicas: volver
+  siempre es noticia.
+
 ## [0.2.352.0] - 2026-10-06 — de qué país y con qué aparato entra cada cuenta
 
 - Cada cuenta nueva guarda, una sola vez al arrancar, su país (y su estado si

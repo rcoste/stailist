@@ -13,6 +13,8 @@ import {
   pasoEnPalabras,
   resumirDispositivos,
   resumirPaises,
+  quienesVolvieron,
+  textoVolvio,
   textoDispositivos,
   textoPaises,
   type ExtraCuenta,
@@ -332,5 +334,45 @@ describe("quién llegó ayer y por qué aparato", () => {
     expect(text).toContain(
       "- nuevo@ejemplo.test · hombres-diario (google) · computadora · México · Jalisco · se quedó en el clóset · 0 prendas"
     );
+  });
+
+  it("quién volvió ayer: el hito del plan, con lo que cuenta para el criterio primero", () => {
+    const origen = { landing: "/", at: "x", utm_source: "google", utm_campaign: "app-neutra" };
+    const base = { gender: "mujer", inicio: "x", como_nos_conocio: null };
+    const filas = [
+      // De campaña, con primer look, primera vez que vuelve: cuenta.
+      { ...base, id: "a", email: "a@ejemplo.test", onboarding_step: 5, origen, dia_inicio: "2026-10-04", dias: ["2026-10-04", "2026-10-06"] },
+      // Orgánica que ya había vuelto: va, pero no cuenta.
+      { ...base, id: "b", email: "b@ejemplo.test", onboarding_step: 5, origen: null, como_nos_conocio: "recomendacion", dia_inicio: "2026-10-05", dias: ["2026-10-05", "2026-10-06"] },
+      // Arrancó ayer: no es volver.
+      { ...base, id: "c", email: "c@ejemplo.test", onboarding_step: 5, origen, dia_inicio: "2026-10-06", dias: ["2026-10-06"] },
+      // No entró ayer.
+      { ...base, id: "d", email: "d@ejemplo.test", onboarding_step: 5, origen, dia_inicio: "2026-10-03", dias: ["2026-10-04"] },
+    ];
+    const q = quienesVolvieron(filas, "2026-10-06");
+    expect(q.map((x) => x.correo)).toEqual(["a@ejemplo.test", "b@ejemplo.test"]);
+    expect(textoVolvio(q[0])).toBe("a@ejemplo.test · app-neutra (google) · a los 2 días · primera vez · cuenta para el criterio");
+    expect(textoVolvio(q[1])).toBe("b@ejemplo.test · directo / sin rastro, dijo: recomendacion · al día siguiente · primera vez");
+  });
+
+  it("el correo pone a quien volvió arriba y en el asunto", () => {
+    const { subject, text } = correoDiario({
+      ayer: "2026-10-06",
+      iaAyerUsd: 0,
+      iaAyerLlamadas: 0,
+      iaTop: null,
+      nuevasAyer: 0,
+      nuevasAyerDeCampana: 0,
+      primerLookAyer: 0,
+      campanas: [],
+      paro: { estado: "faltan-datos", conPrimerLook: 1, cerradas: 0, volvieron: 1 },
+      desde: "2026-10-01",
+      volvieronAyer: [
+        { correo: "a@ejemplo.test", origen: "app-neutra (google)", aLosDias: 2, primeraVez: true, cuentaParaParo: true },
+      ],
+    });
+    expect(subject).toContain("VOLVIÓ 1");
+    expect(text.indexOf("VOLVIERON AYER")).toBeLessThan(text.indexOf("AYER (2026-10-06"));
+    expect(text).toContain("- a@ejemplo.test · app-neutra (google) · a los 2 días · primera vez · cuenta para el criterio");
   });
 });

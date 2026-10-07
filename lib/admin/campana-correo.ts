@@ -7,6 +7,7 @@ import {
   campanasParaCorreo,
   costoPor,
   textoPaises,
+  textoVolvio,
   type DatosCorreoDiario,
   type EstadoParo,
   type ResumenCampana,
@@ -280,6 +281,22 @@ function bloquePaises(d: DatosCorreoDiario): string {
   return `${titulo("Por país · cuentas de anuncios")}<p style="margin:0;font-size:14px;line-height:1.5;color:${TINTA2};">${esc(t)}</p>`;
 }
 
+/** Quién volvió ayer, arriba de todo y en el verde de "va bien": es el hito del plan. */
+function bloqueVolvieron(d: DatosCorreoDiario): string {
+  const q = d.volvieronAyer;
+  if (!q?.length) return "";
+  const verde = COLOR_ESTADO.bien;
+  return `<div style="border-left:3px solid ${verde};padding:4px 0 4px 12px;">
+      <div style="font-size:13px;font-weight:700;color:${verde};">${q.length === 1 ? "Volvió 1 persona" : `Volvieron ${q.length} personas`}</div>
+      ${q
+        .map(
+          (p) =>
+            `<p style="margin:6px 0 0;font-size:14px;line-height:1.45;color:${TINTA2};word-break:break-word;">${esc(textoVolvio(p))}</p>`
+        )
+        .join("")}
+    </div>`;
+}
+
 /** Lo que falló al armar el correo, en el color de alarma y antes que todo lo demás. */
 function bloqueAvisos(avisos: string[]): string {
   const rojo = COLOR_ESTADO.alarma;
@@ -299,6 +316,7 @@ export function correoDiarioHtml(d: DatosCorreoDiario): string {
       )}.</div>`
     ),
     d.avisos?.length ? fila("18px 6px 0", bloqueAvisos(d.avisos)) : "",
+    bloqueVolvieron(d) ? fila("18px 6px 0", bloqueVolvieron(d)) : "",
     fila(
       "18px 0 0",
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
