@@ -22,7 +22,9 @@ import { registrarEvento } from "@/lib/telemetria";
 // crédito, quien abandona el quiz a media pregunta —probable, quedan ~7 más y
 // ~40s de generación— llegaría después a su lista de 30 prendas sin ninguna
 // explicación, que es justo lo que la intro existe para evitar.
-export type IntroId = "esenciales" | "esenciales-previa";
+// "tu-ropa" = la pantalla que sigue al primer look (lib/tu-ropa.ts): se marca al
+// mostrarla, no al usarla, porque se ofrece UNA vez aunque la cierren sin tocar nada.
+export type IntroId = "esenciales" | "esenciales-previa" | "tu-ropa";
 
 // OJO: este archivo es "use server" — aquí SOLO se pueden exportar funciones
 // async. Un lector puro (`introVista(hints, id)`) que ahorraría a las páginas

@@ -28,7 +28,13 @@ export type AddFlowHandle = {
   start: () => void;
   /** Recibe una foto ya elegida y salta directo al recorte. */
   startConFoto?: (dataUrl: string) => void;
+  /** Abre el carrete directo, sin el explainer. Llamarlo DENTRO del tap: el
+   *  navegador sólo abre el selector de archivos durante un gesto del usuario. */
+  elegir?: () => void;
 };
+
+/** Lo que entró al clóset, para quien quiera seguir con ello (ver `alTerminar`). */
+export type PrendaGuardada = { id: string; categoria: string };
 
 const MAX_FOTOS = 12;
 
@@ -129,6 +135,7 @@ type State =
       thumbs: { url: string; nombre: string; enConjunto: boolean }[];
       /** Qué pasó con las que no alcanzaron imagen limpia hoy; null si todas. */
       aviso: string | null;
+      guardadas: PrendaGuardada[];
     }
   | { kind: "error"; msg: string };
 
@@ -138,11 +145,18 @@ export function ImportCarreteFlow({
   userId,
   headless = false,
   ref,
+  unaFoto = false,
+  alTerminar,
 }: {
   /** Hace falta para guardar la foto original en la carpeta del usuario. */
   userId?: string;
   headless?: boolean;
   ref?: Ref<AddFlowHandle>;
+  /** Una sola foto (la pantalla "ahora, con tu ropa", lib/tu-ropa.ts): pedir
+   *  doce después del primer look es tarea; una de cuerpo entero trae 3-4 prendas. */
+  unaFoto?: boolean;
+  /** Si viene, el cierre no dice "ver mi clóset": ofrece seguir con lo que entró. */
+  alTerminar?: { label: string; onClick: (guardadas: PrendaGuardada[]) => void };
 } = {}) {
   const [state, setState] = useState<State>({ kind: "idle" });
   /** "sí, es la misma": borrador → id de la prenda del clóset con la que empata.
@@ -220,13 +234,14 @@ export function ImportCarreteFlow({
       start: () => setState({ kind: "explainer" }),
       startConFoto: (dataUrl: string) =>
         setState({ kind: "revisar", fotos: [{ id: uid(), dataUrl }] }),
+      elegir: () => inputRef.current?.click(),
     }),
     []
   );
 
   // --- 1) Selección → comprime y pasa a "revisar" (recorte opcional) ---
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, MAX_FOTOS);
+    const files = Array.from(e.target.files ?? []).slice(0, unaFoto ? 1 : MAX_FOTOS);
     if (inputRef.current) inputRef.current.value = "";
     if (files.length === 0) return;
 
@@ -622,6 +637,13 @@ export function ImportCarreteFlow({
           okItems.added,
           keep.filter((it) => it.status === "despues" && rutaDeFoto.has(it.photo)).length
         ),
+        // addPhotoItems devuelve los ids en el orden en que se insertaron, que
+        // es el de `keep` (un insert de varias filas con RETURNING lo respeta).
+        // Si algo no cuadra se va vacío: el cierre cae en "ver mi clóset".
+        guardadas:
+          okItems.ids && okItems.ids.length === keep.length
+            ? okItems.ids.map((id, i) => ({ id, categoria: keep[i].attrs.categoria }))
+            : [],
       });
     } catch {
       setState({ kind: "error", msg: "No pude guardar las prendas. Inténtalo otra vez." });
@@ -633,7 +655,7 @@ export function ImportCarreteFlow({
       ref={inputRef}
       type="file"
       accept="image/*,.heic,.heif"
-      multiple
+      multiple={!unaFoto}
       onChange={onFiles}
       className="hidden"
     />
@@ -1138,18 +1160,23 @@ export function ImportCarreteFlow({
   }
 
   if (state.kind === "listo") {
+    const seguir = alTerminar && state.guardadas.length > 0 ? alTerminar : null;
     return (
       <Overlay
         pie={
           <button
             type="button"
             onClick={() => {
+              if (seguir) {
+                seguir.onClick(state.guardadas);
+                return;
+              }
               setState({ kind: "idle" });
               router.refresh();
             }}
             className="flex min-h-[54px] w-full items-center justify-center rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors duration-200 hover:bg-accent-deep"
           >
-            ver mi clóset
+            {seguir ? seguir.label : "ver mi clóset"}
           </button>
         }
       >

@@ -286,8 +286,12 @@ export function WowClient({
         // el checklist de Home, no como un paso más aquí.
         // Con etiquetas vivas, a la app se entra con navegación completa: así ni
         // Google ni TikTok alcanzan a ver /hoy (el aviso de privacidad lo promete).
+        //
+        // Y no va directo a /hoy: pasa por "ahora, con tu ropa" (una foto del
+        // carrete → un look con tus prendas, lib/tu-ropa.ts). Esa pantalla se
+        // ofrece una vez y manda a /hoy sola si ya subiste fotos o ya la viste.
         onEnter={() => {
-          if (!salirSinEtiquetas("/hoy")) router.push("/hoy");
+          if (!salirSinEtiquetas("/onboarding/tu-ropa")) router.push("/onboarding/tu-ropa");
         }}
       />
     );

@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.354.0] - 2026-10-07 — después del primer look, tu ropa
+
+- Al tocar "entrar a la app" tras el primer look aparece una pantalla nueva,
+  una sola vez: "ahora, con tu ropa". Pide UNA foto de cuerpo entero del
+  carrete (el carrete ya separa las 3-4 prendas que traes puestas) y, al
+  terminar, en vez de "ver mi clóset" ofrece "armar un look con esto": un look
+  anclado en una de esas prendas (la de arriba; el vestido si hay; nunca el
+  outfit entero, que devolvería tu propia foto). "Ahora no" lleva a la app.
+- Nació de la primera semana de anuncios: de 15 personas con primer look, 3
+  subieron ropa y las 2 únicas que volvieron fueron de esas 3. No se sabe si
+  subir ropa causa volver; la regla escrita antes de prenderla: si de las ~15
+  siguientes al menos la mitad sube su foto el primer día, se queda; si siguen
+  siendo 2 o 3, se quita (`lib/tu-ropa.ts`).
+- Se salta sola si ya tienes fotos propias o ya la viste. Vive fuera de la
+  zona con etiquetas de publicidad: el wow sale hacia ella igual que salía a
+  /hoy. El carrete gana un modo de una foto (`unaFoto`), apertura directa
+  (`elegir`) y un cierre configurable (`alTerminar`).
+
 ## [0.2.353.1] - 2026-10-06 — el país y el aparato sobreviven al dejar el correo
 
 - Quien empieza sin correo arranca en un borrador; al verificar su correo, el
