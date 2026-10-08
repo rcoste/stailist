@@ -119,9 +119,12 @@ export function costoUsd(
 // equivalente por imagen; se guarda el equivalente porque es lo que se puede
 // comprobar contra la factura.
 export const PRECIOS_IMAGEN: Record<string, number> = {
-  // Nano Banana Pro. Es el que usan try-on, avatar, render de prenda, destinos
-  // y los try-on de wishlist — o sea, casi todo.
+  // Nano Banana Pro. Desde el 2026-10-07 sólo avatar, destinos y los try-on de
+  // wishlist: render de prenda y try-on pasaron a Nano Banana 2.1.
   "gemini-3-pro-image": 0.134,
+  // Nano Banana 2.1 (GEMINI_MODEL_ROPA): render de prenda y try-on. $0.0336
+  // por imagen de 1K, según la página de precios de Gemini del 2026-10-07.
+  "gemini-nano-banana-2.1": 0.0336,
   // Nano Banana 2. Sólo los arquetipos del catálogo (lib/archetype-image.ts).
   "gemini-3.1-flash-image": 0.067,
   // No se usan hoy; quedan para que un cambio de modelo no nazca sin precio.

@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.355.0] - 2026-10-07 — la ropa se dibuja con Nano Banana 2.1
+
+- Dibujar una prenda desde tu foto y vestir tu avatar con un look pasan de
+  Nano Banana Pro a Nano Banana 2.1 (`GEMINI_MODEL_ROPA` en
+  `lib/gemini-imagen.ts`). Cuesta la cuarta parte ($0.0336 contra $0.134 por
+  imagen) y tarda menos (13.5 s contra 20 s).
+- Decidido a ciegas: tres rondas, 26 casos con los prompts reales, ropa de
+  hombre y de mujer (tul, estampados, punto, lino, escudos). Pro no ganó
+  ningún caso y falló dos veces por tiempo; 2.1 ganó los 4 donde hubo
+  diferencia y en los otros 22 se veían igual.
+- El avatar, la foto de destino y el probador de la wishlist siguen en Pro:
+  no entraron en la prueba. Un test exige que todo modelo de imagen en uso
+  tenga precio, para que el gasto del panel no se quede corto.
+
 ## [0.2.354.0] - 2026-10-07 — después del primer look, tu ropa
 
 - Al tocar "entrar a la app" tras el primer look aparece una pantalla nueva,

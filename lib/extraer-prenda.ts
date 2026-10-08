@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { pedirImagen, GEMINI_MODEL } from "@/lib/gemini-imagen";
+import { pedirImagen, GEMINI_MODEL_ROPA } from "@/lib/gemini-imagen";
 
 // EXTRAER UNA PRENDA DE UNA FOTO — imagen→imagen, en un solo lugar.
 //
@@ -62,7 +62,7 @@ export async function extraerPrendaDeFoto(
   const r = await pedirImagen(
     [{ text: prompt }, { inlineData: { mimeType: foto.mediaType, data: foto.base64 } }],
     {
-      modelo: GEMINI_MODEL,
+      modelo: GEMINI_MODEL_ROPA,
       aspecto: prenda.aspecto ?? "1:1",
       ctx: ctx ? { ...ctx, tarea: "render-prenda" } : null,
     }
