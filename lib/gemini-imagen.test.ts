@@ -128,3 +128,23 @@ describe("pedirImagen", () => {
     expect("motivo" in r && r.motivo).toContain("The model is overloaded.");
   });
 });
+
+// Cada modelo de imagen que usa la app tiene tarifa: sin ella el recibo se
+// guarda sin costo y el gasto de IA del panel se queda corto sin avisar. Nació
+// con el cambio a Nano Banana 2.1 (2026-10-07), el primer modelo nuevo desde
+// que existe la tabla.
+import { GEMINI_MODEL, GEMINI_MODEL_RAPIDO, GEMINI_MODEL_ROPA } from "./gemini-imagen";
+import { costoImagenUsd } from "./proveedores/precios";
+
+describe("modelos de imagen con precio", () => {
+  it("los tres modelos en uso tienen tarifa por imagen", () => {
+    for (const m of [GEMINI_MODEL, GEMINI_MODEL_RAPIDO, GEMINI_MODEL_ROPA]) {
+      expect(costoImagenUsd(m), m).toBeGreaterThan(0);
+    }
+  });
+
+  it("la ropa va en Nano Banana 2.1 y el avatar sigue en Pro (sólo se probó la ropa)", () => {
+    expect(GEMINI_MODEL_ROPA).toBe("gemini-nano-banana-2.1");
+    expect(GEMINI_MODEL).toBe("gemini-3-pro-image");
+  });
+});

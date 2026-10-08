@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pickItemImage, ITEM_IMAGE_SELECT, type ItemImageRow } from "@/lib/item-image";
-import { pedirImagen } from "@/lib/gemini-imagen";
+import { pedirImagen, GEMINI_MODEL_ROPA } from "@/lib/gemini-imagen";
 import { escenaParaPrompt, type ContextoEscena } from "@/lib/tryon-escena";
 
 // El NÚCLEO del try-on: vestir el avatar de una persona con unas prendas
@@ -263,6 +263,7 @@ export async function generarTryon(opciones: {
       ...prendasB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
     ];
     const r = await pedirImagen(parts, {
+      modelo: GEMINI_MODEL_ROPA,
       ctx: tarea ? { supabase, userId, tarea } : null,
     });
     if ("motivo" in r) {

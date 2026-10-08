@@ -22,6 +22,25 @@ export const GEMINI_MODEL = "gemini-3-pro-image";
  */
 export const GEMINI_MODEL_RAPIDO = "gemini-3.1-flash-image";
 
+/**
+ * EL DE LA ROPA: dibujar una prenda desde tu foto (lib/extraer-prenda.ts) y
+ * vestir tu avatar con un look (lib/tryon.ts). Desde el 2026-10-07.
+ *
+ * Ganado a ciegas: tres rondas, 26 casos con los prompts reales de stailist
+ * (ropa de hombre lisa, prendas difíciles —corbata estampada, punto beige,
+ * saco cruzado, lino— y ropa de mujer —tul, flores, parches, escudos—). Pro
+ * no ganó ni un caso y falló dos veces por tiempo; 2.1 ganó las 4 filas donde
+ * hubo diferencia y en las otras 22 se veían igual. Cuesta la cuarta parte
+ * ($0.0336 contra $0.134 por imagen) y tarda menos (13.5 s contra 20 s).
+ *
+ * Sólo estas dos tareas, que son las que se probaron. El avatar (crear tu
+ * cara y cuerpo), la foto de destino y el probador de la wishlist siguen en
+ * GEMINI_MODEL: no entraron en la prueba, y en el avatar el parecido es lo
+ * que más importa. Lo que nadie dibuja bien con ningún modelo: un logo
+ * repetido (bolso con monograma); ahí la foto original rinde más.
+ */
+export const GEMINI_MODEL_ROPA = "gemini-nano-banana-2.1";
+
 // EL SERVICIO DE IMÁGENES FALLA SOLO, Y HAY QUE CONTARLO CON ESO.
 //
 // Medido el 2026-08-06 contra gemini-3-pro-image con una llave y un prompt
