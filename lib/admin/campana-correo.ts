@@ -1,4 +1,19 @@
-import { SANS, SERIF, SITE, WORDMARK, boton, kicker, serifItalica } from "@/lib/email-marca";
+import { SERIF, SITE, boton, kicker, serifItalica } from "@/lib/email-marca";
+import {
+  GRIS,
+  GRIS_CLARO,
+  LINEA,
+  NEGRO,
+  OCRE,
+  ROJO,
+  SUPERFICIE,
+  TINTA,
+  TINTA2,
+  VERDE,
+  envolturaInterna,
+  esc,
+  fila,
+} from "@/lib/admin/correo-interno";
 import { fmtSegundos } from "@/lib/admin/embudo-tiempos";
 import { MODULOS, type Estado } from "@/lib/admin/objetivos";
 import {
@@ -30,19 +45,12 @@ import {
 // Son la traducción de los tokens de app/globals.css (tinta, papel, líneas y
 // los tres de estado: --c-success, --c-warning, --c-error).
 
-const TINTA = "#141414";
-const TINTA2 = "#363636";
-const GRIS = "#6f6f6f";
-const GRIS_CLARO = "#9a9a9a";
-const LINEA = "#e4e3e0";
-const PAPEL = "#f4f3f1";
-const SUPERFICIE = "#ffffff";
-const NEGRO = "#0a0a0a";
-
+// La paleta, el escape y el sobre viven en lib/admin/correo-interno.ts, que
+// comparte con la alarma de la IA y los reportes de las usuarias.
 const COLOR_ESTADO: Record<Estado, string> = {
-  bien: "#4c7a5e",
-  vigilar: "#8a6d1f",
-  alarma: "#b3261e",
+  bien: VERDE,
+  vigilar: OCRE,
+  alarma: ROJO,
   "sin-datos": GRIS_CLARO,
 };
 const TEXTO_ESTADO: Record<Estado, string> = {
@@ -52,14 +60,7 @@ const TEXTO_ESTADO: Record<Estado, string> = {
   "sin-datos": "faltan datos",
 };
 
-/** Todo lo que viene de la base (correos, campañas) se escapa: nada se interpreta como HTML. */
-export function esc(s: string | number | null | undefined): string {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+export { esc };
 
 const usd = (n: number) => `$${n.toFixed(2)}`;
 const mxn = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocaleString("es-MX")}`);
@@ -77,9 +78,6 @@ export function diaEnPalabras(dia: string): string {
   }).format(d);
 }
 
-function fila(padding: string, contenido: string): string {
-  return `<tr><td style="padding:${padding};">${contenido}</td></tr>`;
-}
 
 function titulo(texto: string): string {
   return `<div style="font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${GRIS};padding-bottom:10px;border-bottom:1px solid ${LINEA};">${texto}</div>`;
@@ -343,19 +341,8 @@ export function correoDiarioHtml(d: DatosCorreoDiario): string {
     .filter(Boolean)
     .join("\n");
 
-  return `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"></head>
-<body style="margin:0;padding:0;background:${PAPEL};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPEL};">
-    <tr><td align="center" style="padding:36px 14px 40px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;font-family:${SANS};">
-        <tr><td style="padding:0 6px 18px;border-bottom:1px solid ${LINEA};">${WORDMARK}</td></tr>
-${cuerpo}
-        <tr><td style="padding:28px 6px 0;font-size:12px;line-height:1.55;color:${GRIS_CLARO};">
-          Reporte interno de stailist, para quien administra la campaña. Hora de la Ciudad de México.
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`;
+  return envolturaInterna(
+    cuerpo,
+    "Reporte interno de stailist, para quien administra la campaña. Hora de la Ciudad de México."
+  );
 }
