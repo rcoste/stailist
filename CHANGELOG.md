@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.356.0] - 2026-10-07 — los correos internos llegan con formato
+
+- La alarma de la IA y el aviso de un reporte de usuaria dejan de llegar como
+  texto plano: usan el mismo sobre que el resumen de las 8
+  (`lib/admin/correo-interno.ts`), con membrete, cada aviso en su bloque con su
+  color (rojo si alguien está atorado o la IA falla, ocre si es gasto) y un
+  botón al panel.
+- Las alarmas de una persona traen el enlace directo a su ficha del admin, y
+  el reporte también. El resumen de las 8 se movió al sobre compartido sin
+  cambiar cómo se ve.
+
 ## [0.2.355.0] - 2026-10-07 — la ropa se dibuja con Nano Banana 2.1
 
 - Dibujar una prenda desde tu foto y vestir tu avatar con un look pasan de

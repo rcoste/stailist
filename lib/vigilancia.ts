@@ -17,11 +17,19 @@
 // "todo bien" se aprende a ignorar en una semana, y entonces el día que diga
 // otra cosa tampoco se lee.
 
+import { SITE, boton, kicker } from "@/lib/email-marca";
+import { OCRE, ROJO, TINTA, bloqueAviso, envolturaInterna, esc, fila } from "@/lib/admin/correo-interno";
+
 export type Alarma = {
   clave: "fallos" | "gasto" | "persona" | "persona-gasto";
   titulo: string;
   detalle: string;
+  /** La ficha de la persona en el admin, cuando la alarma es de una persona. */
+  enlace?: { href: string; texto: string };
 };
+
+const fichaDe = (userId: string | null | undefined) =>
+  userId ? { href: `${SITE}/admin/usuarios/${userId}`, texto: "Ver su ficha" } : undefined;
 
 /** Fallos en una hora a partir de los cuales ya no es mala suerte. */
 export const FALLOS_PARA_AVISAR = 5;
@@ -71,12 +79,12 @@ export function decidirAlarmas(m: {
   gastoUltimasHoras: number;
   topeGasto: number;
   /** La persona con MÁS fallos en la última hora, si alguna tuvo. */
-  peorPersona?: { correo: string; fallos: number; tarea?: string | null } | null;
+  peorPersona?: { correo: string; fallos: number; tarea?: string | null; userId?: string | null } | null;
   /**
    * Quienes CRUZARON el umbral de gasto en la última hora: llevan más de
    * AVISO_USD_PERSONA en 24 horas y hace una hora llevaban menos.
    */
-  personasCaras?: { correo: string; gasto: number }[];
+  personasCaras?: { correo: string; gasto: number; userId?: string | null }[];
 }): Alarma[] {
   const alarmas: Alarma[] = [];
 
@@ -92,6 +100,7 @@ export function decidirAlarmas(m: {
         `No es ruido: la misma persona reintentando es alguien viendo que "no funciona" ` +
         `y decidiendo si vuelve. Mira /admin/ia y, si el fallo es del proveedor, ` +
         `escríbele — desde su lado la app falló sin explicación.`,
+      enlace: fichaDe(p.userId),
     });
   }
 
@@ -106,6 +115,7 @@ export function decidirAlarmas(m: {
         `Lo normal por persona son centavos. No es necesariamente abuso: suele ser alguien ` +
         `subiendo su clóset entero, que es justo lo que se quiere. Sus topes la frenan sola ` +
         `(lib/cuotas.ts); esto es para que te enteres el mismo día. Mira qué hizo en /admin/ia.`,
+      enlace: fichaDe(c.userId),
     });
   }
 
@@ -142,8 +152,19 @@ export function decidirAlarmas(m: {
   return alarmas;
 }
 
-/** El correo. Texto plano a propósito: es una alarma, no un boletín. */
-export function correoDeAlarmas(alarmas: Alarma[]): { subject: string; text: string } {
+const ETIQUETA: Record<Alarma["clave"], { texto: string; color: string }> = {
+  persona: { texto: "Alguien atorado", color: ROJO },
+  fallos: { texto: "Fallas de la IA", color: ROJO },
+  "persona-gasto": { texto: "Gasto de una cuenta", color: OCRE },
+  gasto: { texto: "Gasto total", color: OCRE },
+};
+
+/**
+ * El correo, en texto y con formato. Hasta el 2026-10-07 el HTML era el texto
+ * metido en un <pre>; ahora usa el mismo sobre que el resumen de las 8
+ * (lib/admin/correo-interno.ts), con cada aviso en su bloque y su color.
+ */
+export function correoDeAlarmas(alarmas: Alarma[]): { subject: string; text: string; html: string } {
   const subject =
     alarmas.length === 1
       ? `stailist — ${alarmas[0].titulo}`
@@ -154,5 +175,24 @@ export function correoDeAlarmas(alarmas: Alarma[]): { subject: string; text: str
     ...alarmas.flatMap((a) => [`• ${a.titulo}`, `  ${a.detalle}`, ""]),
     "Panel: https://stailist.co/admin/ia",
   ].join("\n");
-  return { subject, text };
+  const cuerpo = [
+    fila(
+      "26px 6px 0",
+      `${kicker("Vigilancia de la IA")}<div style="margin-top:10px;font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-0.03em;color:${TINTA};">${
+        alarmas.length === 1 ? "Hay algo que mirar" : `Hay ${alarmas.length} cosas que mirar`
+      }</div>`
+    ),
+    ...alarmas.map((a) =>
+      fila(
+        "22px 6px 0",
+        bloqueAviso({ color: ETIQUETA[a.clave].color, etiqueta: ETIQUETA[a.clave].texto, titulo: a.titulo, detalle: a.detalle, enlace: a.enlace })
+      )
+    ),
+    fila("30px 6px 0", boton({ href: `${SITE}/admin/ia`, texto: "Abrir el panel de IA" })),
+  ].join("\n");
+  const html = envolturaInterna(
+    cuerpo,
+    esc("Lo manda la vigilancia de stailist cada hora, sólo cuando hay algo que hacer. Hora de la Ciudad de México.")
+  );
+  return { subject, text, html };
 }

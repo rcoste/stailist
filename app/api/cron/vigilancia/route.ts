@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
       // quedarse con una. El correo se saca aquí (withDb ve toda la app; una
       // sesión con RLS no podría).
       c
-        .query<{ correo: string; fallos: string; tarea: string | null }>(
-          `select coalesce(u.email, a.user_id::text) as correo,
+        .query<{ correo: string; fallos: string; tarea: string | null; user_id: string }>(
+          `select coalesce(u.email, a.user_id::text) as correo, a.user_id,
                   count(*) as fallos,
                   case when count(distinct a.tarea) = 1 then min(a.tarea) else null end as tarea
              from ai_calls a
@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
             where not a.ok
               and a.created_at >= now() - interval '1 hour'
               and a.user_id is not null
-            group by 1
-            order by 2 desc
+            group by 1, 2
+            order by 3 desc
             limit 1`
         )
         .then((r) => r.rows[0] ?? null),
@@ -63,16 +63,16 @@ export async function GET(request: NextRequest) {
       // sin lo de la última hora llevaba menos. Así el aviso sale una vez y no
       // cada hora mientras su gasto siga dentro de la ventana.
       c
-        .query<{ correo: string; gasto: string }>(
-          `select coalesce(u.email, a.user_id::text) as correo, sum(a.costo_usd) as gasto
+        .query<{ correo: string; gasto: string; user_id: string }>(
+          `select coalesce(u.email, a.user_id::text) as correo, a.user_id, sum(a.costo_usd) as gasto
              from ai_calls a
              left join auth.users u on u.id = a.user_id
             where a.created_at >= now() - interval '24 hours'
               and a.user_id is not null
-            group by 1
+            group by 1, 2
            having sum(a.costo_usd) >= $1
               and coalesce(sum(a.costo_usd) filter (where a.created_at < now() - interval '1 hour'), 0) < $1
-            order by 2 desc
+            order by 3 desc
             limit 5`,
           [AVISO_USD_PERSONA]
         )
@@ -83,13 +83,13 @@ export async function GET(request: NextRequest) {
 
   const alarmas = decidirAlarmas({
     peorPersona: m?.peor
-      ? { correo: m.peor.correo, fallos: Number(m.peor.fallos), tarea: m.peor.tarea }
+      ? { correo: m.peor.correo, fallos: Number(m.peor.fallos), tarea: m.peor.tarea, userId: m.peor.user_id }
       : null,
     fallosUltimaHora: Number(m?.fallos ?? 0),
     llamadasUltimaHora: Number(m?.llamadas ?? 0),
     gastoUltimasHoras: Number(m?.gasto ?? 0),
     topeGasto: TOPE_USD_DIA_GLOBAL,
-    personasCaras: (m?.caras ?? []).map((c) => ({ correo: c.correo, gasto: Number(c.gasto) })),
+    personasCaras: (m?.caras ?? []).map((c) => ({ correo: c.correo, gasto: Number(c.gasto), userId: c.user_id })),
   });
 
   // Sin nada que decir, no se manda nada. Un "todo bien" cada hora se aprende a
@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "sin_admin_email", alarmas: alarmas.length });
   }
 
-  const { subject, text } = correoDeAlarmas(alarmas);
-  const enviado = await sendEmail({ to: destino, subject, text, html: `<pre>${text}</pre>` });
+  const { subject, text, html } = correoDeAlarmas(alarmas);
+  const enviado = await sendEmail({ to: destino, subject, text, html });
 
   return NextResponse.json({
     ok: enviado.ok,

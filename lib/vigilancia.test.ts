@@ -137,3 +137,23 @@ describe("alguien atorado AHORA — el segundo disparador", () => {
     expect(a.map((x) => x.clave)).toContain("fallos");
   });
 });
+
+describe("correoDeAlarmas con formato (2026-10-07)", () => {
+  it("cada aviso va en su bloque, escapado, con la ficha de la persona", () => {
+    const { html, text } = correoDeAlarmas(
+      decidirAlarmas({
+        fallosUltimaHora: 0,
+        llamadasUltimaHora: 10,
+        gastoUltimasHoras: 1,
+        topeGasto: 40,
+        personasCaras: [{ correo: "<a@ejemplo.test>", gasto: 8.2, userId: "u-1" }],
+      })
+    );
+    expect(html).toContain("Gasto de una cuenta");
+    expect(html).toContain("&lt;a@ejemplo.test&gt; lleva $8.20 de IA en 24 horas");
+    expect(html).not.toContain("<a@ejemplo.test>");
+    expect(html).toContain("/admin/usuarios/u-1");
+    expect(html).not.toContain("<pre>");
+    expect(text).toContain("lleva $8.20 de IA en 24 horas");
+  });
+});

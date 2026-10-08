@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
+import { correoReporteHtml } from "@/lib/reportes-correo";
 import { readFileSync } from "node:fs";
 
 /** La versión que corre el servidor, igual que /api/version. */
@@ -92,10 +93,15 @@ export async function enviarReporte(datos: {
       text:
         `${texto}\n\n—\nDe: ${user.email ?? user.id}\nPantalla: ${datos.ruta ?? "?"}\n` +
         `Versión: ${APP_VERSION}${fallosTxt}`,
-      // Sin plantilla: es una alarma operativa para el admin, no un correo de
-      // producto. El <pre> conserva los saltos de línea del contexto.
-      html: `<pre style="font-family:ui-monospace,monospace;white-space:pre-wrap">${texto
-        .replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!)}\n\n—\nDe: ${user.email ?? user.id}\nPantalla: ${datos.ruta ?? "?"}\nVersión: ${APP_VERSION}${fallosTxt}</pre>`,
+      html: correoReporteHtml({
+        tipo: datos.tipo === "idea" ? "idea" : "problema",
+        texto,
+        de: user.email ?? user.id,
+        userId: user.id,
+        pantalla: datos.ruta ?? "?",
+        version: APP_VERSION,
+        fallosIa: contexto.fallosIaRecientes,
+      }),
     }).catch(() => {});
   }
   return { ok: true };
