@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.362.0] - 2026-10-09 — la tabla de retención
+
+- Pantalla nueva en el admin, **Retención** (`/admin/retencion`): una fila por
+  persona y una columna por día desde que empezó (0 a 14), con el cuadro
+  relleno los días que entró. Arriba, el porcentaje que vuelve el día 1, 2, 3,
+  7 y 14, y el que vuelve en su primera semana.
+- Mismo criterio de "volver" que el plan (otro día de la Ciudad de México y al
+  menos 4 horas después de empezar). Los porcentajes sólo cuentan a quien ya
+  vivió ese día completo, para que la gente recién llegada no hunda la curva.
+- Filtros por periodo, origen y país, y "sólo las que volvieron". Los filtros
+  de origen y país ahora son los mismos en el embudo y en la retención
+  (`lib/admin/filtro-personas.ts`).
+
 ## [0.2.361.0] - 2026-10-09 — el admin y el freno de gasto leen todas las filas
 
 - Arreglo: Supabase devuelve como mucho 1000 filas por consulta y no avisa.

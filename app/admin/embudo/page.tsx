@@ -2,9 +2,10 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { diaEnZona } from "@/lib/admin/adquisicion";
 import { esCampanaDePrueba } from "@/lib/embudo-marcas";
-import { banderaDe, paisEnPalabras } from "@/lib/lugar";
 import { PASOS, construirEmbudo, duracion, tiemposDe } from "@/lib/admin/embudo";
-import { cargarEmbudo, desdeHace, visitasLanding, type PersonaConOrigen } from "@/lib/admin/embudo-datos";
+import { cargarEmbudo, desdeHace, visitasLanding } from "@/lib/admin/embudo-datos";
+import { opcionesDe, pasaFiltro } from "@/lib/admin/filtro-personas";
+import { Chips, ChipsQuien } from "../_compartido/chips";
 
 // EL EMBUDO POR PASOS (2026-10-09): a dónde llega la gente, cuánto tarda en
 // cada paso y quién se quedó en cuál. La lógica y sus tres reglas (llegar es
@@ -18,19 +19,6 @@ const PERIODOS = [7, 14, 30] as const;
 
 type Filtros = { dias: number; origen: string; pais: string };
 
-function filtrar(personas: PersonaConOrigen[], f: Filtros): PersonaConOrigen[] {
-  return personas.filter((p) => {
-    if (esCampanaDePrueba(p.campana)) return false;
-    if (f.origen === "anuncios" && p.campana === "—") return false;
-    if (f.origen === "organico" && p.campana !== "—") return false;
-    if (f.origen !== "todas" && f.origen !== "anuncios" && f.origen !== "organico" && p.campana !== f.origen)
-      return false;
-    if (f.pais === "sin" && p.pais) return false;
-    if (f.pais !== "todos" && f.pais !== "sin" && p.pais !== f.pais) return false;
-    return true;
-  });
-}
-
 export default async function Embudo({
   searchParams,
 }: {
@@ -43,13 +31,10 @@ export default async function Embudo({
 
   const desde = desdeHace(dias);
   const [todas, landing] = await Promise.all([cargarEmbudo(desde), visitasLanding(diaEnZona(desde))]);
-  const personas = filtrar(todas, f);
+  const personas = todas.filter((p) => pasaFiltro(p, f));
   const filas = construirEmbudo(personas);
 
-  const campanas = [...new Set(todas.map((p) => p.campana))]
-    .filter((c) => c !== "—" && !esCampanaDePrueba(c))
-    .sort();
-  const paises = [...new Set(todas.map((p) => p.pais).filter((p): p is string => !!p))].sort();
+  const { campanas, paises } = opcionesDe(todas);
 
   // La landing no sabe de países: con ese filtro no hay con qué compararla.
   const visitas =
@@ -112,23 +97,7 @@ export default async function Embudo({
           titulo="periodo"
           opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `${d} días`, activo: f.dias === d }))}
         />
-        <Chips
-          titulo="origen"
-          opciones={[
-            { valor: "todas", label: "todas" },
-            { valor: "anuncios", label: "anuncios" },
-            { valor: "organico", label: "sin anuncio" },
-            ...campanas.map((c) => ({ valor: c, label: c })),
-          ].map((o) => ({ href: href({ origen: o.valor }), label: o.label, activo: f.origen === o.valor }))}
-        />
-        <Chips
-          titulo="país"
-          opciones={[
-            { valor: "todos", label: "todos" },
-            ...paises.map((p) => ({ valor: p, label: `${banderaDe(p) ?? ""} ${paisEnPalabras(p)}`.trim() })),
-            { valor: "sin", label: "sin dato" },
-          ].map((o) => ({ href: href({ pais: o.valor }), label: o.label, activo: f.pais === o.valor }))}
-        />
+        <ChipsQuien origen={f.origen} pais={f.pais} campanas={campanas} paises={paises} href={href} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -208,31 +177,6 @@ export default async function Embudo({
         día, 4 horas después de empezar y dentro de 7 días. No cuentan las cuentas de admin ni las de
         prueba.
       </p>
-    </div>
-  );
-}
-
-function Chips({
-  titulo,
-  opciones,
-}: {
-  titulo: string;
-  opciones: { href: string; label: string; activo: boolean }[];
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="w-14 shrink-0 text-xs text-muted">{titulo}</span>
-      {opciones.map((o) => (
-        <Link
-          key={o.href}
-          href={o.href}
-          className={`rounded-full border px-2.5 py-1 text-xs ${
-            o.activo ? "border-ink bg-ink text-on-accent" : "border-line bg-surface text-ink hover:border-ink"
-          }`}
-        >
-          {o.label}
-        </Link>
-      ))}
     </div>
   );
 }
