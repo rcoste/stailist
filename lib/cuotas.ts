@@ -31,7 +31,11 @@ export type Recurso = "looks" | "avatar" | "tryon" | "fotos" | "renders";
 /** Cuántas veces al día. Aprobados por Roberto el 2026-09-02. */
 export const CUOTAS: Record<Recurso, number> = {
   looks: 20,
-  avatar: 5,
+  // Subió de 5 a 10 el 2026-10-08, aprobado por Roberto. Un avatar completo SIN
+  // un solo ajuste ya gasta 3 (cara, cuerpo y la hoja de 3 vistas), y el
+  // redibujo automático de una cara que no se parece cuenta doble: una usuaria
+  // con dos ajustes a su retrato se quedó sin avatar y sin poder reintentar.
+  avatar: 10,
   tryon: 15,
   fotos: 120,
   // Agregado el 2026-10-05, aprobado por Roberto. Ver RENDERS abajo.
@@ -95,7 +99,8 @@ export const MENSAJE_CUOTA: Record<Recurso, string> = {
  * explica qué se acabó — que es peor información por el mismo precio.
  *
  * Subió de $5 a $10 el 2026-10-05, junto con el tope de renders: agotar las
- * cinco cuotas son ~$9.16, y con el tope debajo de eso (se pensó en $8) saltaría
+ * cinco cuotas son ~$9.83 (con el avatar en 10 desde el 2026-10-08, y a
+ * precios de Pro, el peor caso), y con el tope debajo de eso (se pensó en $8) saltaría
  * a media alta del clóset con el mensaje genérico. cuotas.test.ts lo vigila.
  *
  * Así que $10 sólo salta si algo se salió del guion: un camino de IA que no
