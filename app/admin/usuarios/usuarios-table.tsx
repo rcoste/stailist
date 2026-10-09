@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { banderaDe, paisEnPalabras } from "@/lib/lugar";
 
 // Una sola definición de a dónde va una fila (la usan el onClick y el href).
 const hrefUsuario = (id: string) => `/admin/usuarios/${id}`;
@@ -10,6 +11,8 @@ const hrefUsuario = (id: string) => `/admin/usuarios/${id}`;
 export type UserRow = {
   id: string;
   email: string;
+  /** ISO del país (desde 2026-10-06); null en las cuentas anteriores. */
+  pais: string | null;
   isAdmin: boolean;
   onboardingStep: number;
   onboardingDone: boolean;
@@ -295,6 +298,11 @@ export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
                       onClick={(e) => e.stopPropagation()}
                       className="font-medium text-ink hover:text-accent"
                     >
+                      {banderaDe(r.pais) ? (
+                        <span className="mr-1.5" title={paisEnPalabras(r.pais as string)}>
+                          {banderaDe(r.pais)}
+                        </span>
+                      ) : null}
                       <span className="truncate">{r.email}</span>
                       {r.isAdmin ? (
                         <span className="ml-1.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] text-ink">
