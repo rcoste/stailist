@@ -3,88 +3,51 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// El menú del admin, agrupado por PARA QUÉ entras — no por orden de llegada.
-// Antes eran 17 chips iguales en una fila y había que saberse de memoria qué
-// hacía cada uno; la reorganización de 2026-08-17 los dejó en 3 grupos:
+// EL MENÚ DEL ADMIN, POR PREGUNTA (replanteado el 2026-10-09).
 //
-// - Pulso: cómo va el experimento y quién lo usa. Lo que se mira seguido.
-// - Motor: el laboratorio de IA — decidir cambios (comparador), vigilar el
-//   nivel (evales) y curar lo que alimenta al motor (destilador → recetas).
-// - Contenido: las prendas y looks que la app enseña, y la limpieza del clóset.
+// Antes eran 17 entradas en 3 grupos, y la misma pregunta vivía en cuatro o
+// cinco pantallas con nombres distintos ("¿quién volvió?" estaba en Dashboard,
+// Campaña, Adquisición, Actividad y Retención). Roberto: "lo veo complejo,
+// todo all over the place". Ahora hay cinco entradas, una por pregunta:
 //
-// Se fueron del menú (2026-08-17): Barrido, A/B e Inspo — leían JSONs
-// congelados de la semana del 4 de agosto y sus preguntas ya estaban
-// respondidas (el historial de git las guarda). Allowlist + Waitlist se
-// fusionaron en Acceso; Revisar + Repetidas en Limpieza.
-const GROUPS: { label: string; links: { href: string; label: string }[] }[] = [
-  {
-    label: "Pulso",
-    links: [
-      { href: "/admin", label: "Dashboard" },
-      { href: "/admin/campana", label: "Campaña" },
-      { href: "/admin/adquisicion", label: "Adquisición" },
-      { href: "/admin/embudo", label: "Embudo" },
-      { href: "/admin/retencion", label: "Retención" },
-      { href: "/admin/actividad", label: "Actividad" },
-      { href: "/admin/ia", label: "IA" },
-      { href: "/admin/usuarios", label: "Usuarias" },
-      { href: "/admin/acceso", label: "Acceso" },
-    ],
-  },
-  {
-    label: "Motor",
-    links: [
-      { href: "/admin/comparador", label: "Comparador" },
-      { href: "/admin/evales", label: "Evales" },
-      { href: "/admin/destilador", label: "Destilador" },
-      { href: "/admin/recetas", label: "Recetas" },
-      { href: "/admin/capsulas", label: "Cápsulas" },
-    ],
-  },
-  {
-    label: "Contenido",
-    links: [
-      { href: "/admin/catalogo", label: "Catálogo" },
-      { href: "/admin/basicos", label: "Onboarding" },
-      { href: "/admin/looks", label: "Looks" },
-      { href: "/admin/limpieza", label: "Limpieza" },
-    ],
-  },
+//   Hoy                ¿cómo va?
+//   Campañas           ¿sirven los anuncios?
+//   Embudo y retención ¿dónde se pierden y quién vuelve?
+//   Personas           ¿quién es cada quien y qué hace?
+//   Taller             las herramientas de construir, apartadas
+//
+// Cada entrada "es dueña" de varias rutas: la de Personas se queda marcada en
+// la ficha de alguien, la del Taller en cualquiera de sus herramientas.
+const ENTRADAS: { href: string; label: string; rutas: string[] }[] = [
+  { href: "/admin", label: "Hoy", rutas: ["/admin"] },
+  { href: "/admin/campanas", label: "Campañas", rutas: ["/admin/campanas", "/admin/campana", "/admin/adquisicion"] },
+  { href: "/admin/embudo", label: "Embudo y retención", rutas: ["/admin/embudo", "/admin/retencion"] },
+  { href: "/admin/personas", label: "Personas", rutas: ["/admin/personas", "/admin/usuarios", "/admin/actividad", "/admin/ver-como"] },
+  { href: "/admin/taller", label: "Taller", rutas: [] },
 ];
 
+/** A qué entrada pertenece una ruta; lo que no es de nadie es del Taller. */
+export function entradaDe(pathname: string): string {
+  for (const e of ENTRADAS) {
+    if (e.rutas.some((r) => (r === "/admin" ? pathname === r : pathname === r || pathname.startsWith(r + "/")))) return e.href;
+  }
+  return "/admin/taller";
+}
+
 export function AdminNav() {
-  const pathname = usePathname();
+  const activa = entradaDe(usePathname());
   return (
-    // Una sola fila con scroll: en el celular, envolver a dos filas empujaba el
-    // contenido de las pantallas abajo del fold. Los títulos de grupo van
-    // inline, apagados, y el separador marca dónde termina cada grupo.
     <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {GROUPS.map((group, gi) => (
-        <div key={group.label} className="flex shrink-0 items-center gap-1">
-          {gi > 0 ? <span className="mx-2 h-4 w-px bg-line" aria-hidden /> : null}
-          <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted">
-            {group.label}
-          </span>
-          {group.links.map((l) => {
-            const active =
-              l.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(l.href);
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
-                  active
-                    ? "bg-accent text-on-accent"
-                    : "text-muted hover:bg-bg hover:text-ink"
-                }`}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-        </div>
+      {ENTRADAS.map((e) => (
+        <Link
+          key={e.href}
+          href={e.href}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+            activa === e.href ? "bg-ink text-on-accent" : "text-muted hover:bg-bg hover:text-ink"
+          }`}
+        >
+          {e.label}
+        </Link>
       ))}
     </nav>
   );
