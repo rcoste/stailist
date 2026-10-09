@@ -31,6 +31,7 @@ const GRUPOS: { titulo: string; herramientas: { href: string; nombre: string; qu
       { href: "/admin/catalogo", nombre: "Catálogo", que: "Las prendas con imagen de arquetipo que la app enseña." },
       { href: "/admin/basicos", nombre: "Básicos del onboarding", que: "La lista de prendas que se palomean al empezar." },
       { href: "/admin/looks", nombre: "Looks de swipes", que: "Las cartas que se deslizan en el onboarding." },
+      { href: "/admin/mazo", nombre: "El mazo de swipes", que: "¿Las cartas espantan a alguien? Cuántas terminan, cuántas usan el escape y qué carta gusta." },
       { href: "/admin/limpieza", nombre: "Limpieza", que: "Prendas repetidas o mal leídas, para corregirlas." },
     ],
   },
