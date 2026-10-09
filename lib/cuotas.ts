@@ -1,3 +1,4 @@
+import { todasLasFilas } from "@/lib/todas-las-filas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -301,11 +302,20 @@ export async function gastoGlobal(
   ahora: Date = new Date()
 ): Promise<number> {
   try {
-    const { data } = await supabase
-      .from("ai_calls")
-      .select("costo_usd")
-      .gte("created_at", desdeHace24h(ahora));
-    return (data ?? []).reduce(
+    // De mil en mil (lib/todas-las-filas.ts): PostgREST corta en 1000 filas sin
+    // avisar, y este freno existe justo para el día del pico. El día más
+    // cargado hasta el 2026-10-09 fueron 548 llamadas; una cuenta que sube 120
+    // fotos son ~250. Topado en mil, el gasto se quedaría corto y el freno no
+    // saltaría cuando más se necesita.
+    const data = await todasLasFilas((d, h) =>
+      supabase
+        .from("ai_calls")
+        .select("costo_usd")
+        .gte("created_at", desdeHace24h(ahora))
+        .order("id")
+        .range(d, h)
+    );
+    return data.reduce(
       (t, r) => t + Number((r.costo_usd as number | null) ?? 0),
       0
     );

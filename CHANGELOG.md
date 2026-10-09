@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.361.0] - 2026-10-09 — el admin y el freno de gasto leen todas las filas
+
+- Arreglo: Supabase devuelve como mucho 1000 filas por consulta y no avisa.
+  Con events (2129) e items (2319) por encima de eso, la actividad del admin
+  dejaba de enseñar lo más reciente, la tabla de usuarias contaba clósets y
+  última actividad de menos, y el "activos 7 días" del dashboard se topaba en
+  1000 eventos. Lo destapó el filtro de borradores vacíos de v0.2.360.0:
+  personas reales sin correo cuyos eventos quedaban fuera parecían vacías y
+  se escondían (46 en vez de 13).
+- Ahora esas consultas piden de mil en mil hasta traer todo
+  (`lib/todas-las-filas.ts`), y si una página falla la pantalla truena en vez
+  de contar de menos.
+- Lo mismo en el freno global de gasto de IA (`gastoGlobal` en
+  `lib/cuotas.ts`): un día de pico con más de 1000 llamadas habría sumado sólo
+  las primeras mil y el freno no habría saltado.
+
 ## [0.2.360.0] - 2026-10-09 — el embudo por pasos, quién volvió y el botón que avisa
 
 - El botón "Armar mi primer look" de la landing dice "Abriendo…" al primer
