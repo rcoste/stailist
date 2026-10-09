@@ -23,6 +23,7 @@ const GROUPS: { label: string; links: { href: string; label: string }[] }[] = [
       { href: "/admin", label: "Dashboard" },
       { href: "/admin/campana", label: "Campaña" },
       { href: "/admin/adquisicion", label: "Adquisición" },
+      { href: "/admin/embudo", label: "Embudo" },
       { href: "/admin/actividad", label: "Actividad" },
       { href: "/admin/ia", label: "IA" },
       { href: "/admin/usuarios", label: "Usuarias" },

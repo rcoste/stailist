@@ -368,3 +368,72 @@ export function porDia(momentos: Momento[]): { dia: string; momentos: Momento[] 
   }
   return out;
 }
+
+/**
+ * LOS BORRADORES VACÍOS NO SON GENTE (2026-10-09).
+ *
+ * Un borrador nace cuando alguien toca "Armar mi primer look" (app/empezar).
+ * Si no llega a abrir el onboarding no deja ni un evento, y en el feed era una
+ * línea "se dio de alta" sin correo, sin país y sin nada después. Ese día una
+ * persona de Colombia con la conexión lenta tocó el botón 13 veces en 20
+ * segundos: 12 líneas de alta fantasma en el mismo minuto que parecían 12
+ * personas. Aquí se separan: cuenta sin correo cuyo único momento es el alta.
+ * Se cuentan, no se tiran, para que el feed diga cuántas escondió.
+ */
+export function sinBorradoresVacios(
+  feed: Momento[],
+  sinCorreo: Set<string>
+): { feed: Momento[]; vacios: number } {
+  const conAlgoMas = new Set(feed.filter((m) => m.tipo !== "alta").map((m) => m.userId));
+  const esVacio = (m: Momento) => m.tipo === "alta" && sinCorreo.has(m.userId) && !conAlgoMas.has(m.userId);
+  return { feed: feed.filter((m) => !esVacio(m)), vacios: feed.filter(esVacio).length };
+}
+
+/** Las mismas 4 horas que el criterio de paro: abrir a las 11:50 pm y seguir a las 12:10 no es volver. */
+export const HORAS_MIN_VUELTA = 4;
+
+/**
+ * Hasta cuándo un regreso es noticia. Medido contra producción al estrenarlo:
+ * sin tope, las cuentas de siempre salían "volvió a los 115 días" cada día que
+ * abrían la app, y la marca dejaba de distinguir nada. Cuatro semanas cubren
+ * de sobra la ventana de 7 días del criterio.
+ */
+export const DIAS_MAX_VUELTA = 28;
+
+/**
+ * QUIÉN VOLVIÓ, MARCADO EN EL FEED (2026-10-09).
+ *
+ * Volver es la señal que el experimento vino a medir, y el feed la escondía
+ * entre "abrió la app" y "añadió 12 prendas": Roberto tuvo que reclamar que
+ * dos regresos (una de anuncios y una recomendada) no se habían señalado.
+ * Mismo criterio que el correo de las 8 (`quienesVolvieron`): otro día de la
+ * Ciudad de México que el del alta y al menos 4 horas después. Se marca SÓLO el
+ * primer momento de cada día de regreso; marcar todos llenaría la pantalla.
+ *
+ * Devuelve key del momento → días desde el alta (1 = al día siguiente).
+ */
+export function vueltas(
+  feed: Momento[],
+  altaDe: Map<string, string>,
+  /** Cuentas que no cuentan: admin y de prueba. */
+  excluir: Set<string> = new Set()
+): Map<string, number> {
+  const out = new Map<string, number>();
+  const visto = new Set<string>();
+  const asc = [...feed].sort((a, b) => cmpDesc(b.at, a.at));
+  for (const m of asc) {
+    if (m.tipo === "alta" || excluir.has(m.userId)) continue;
+    const alta = altaDe.get(m.userId);
+    if (!alta) continue;
+    const diaAlta = diaEnZona(new Date(alta));
+    const dia = diaEnZona(new Date(m.at));
+    if (dia <= diaAlta) continue;
+    if (new Date(m.at).getTime() - new Date(alta).getTime() < HORAS_MIN_VUELTA * 3_600_000) continue;
+    const clave = `${m.userId}|${dia}`;
+    if (visto.has(clave)) continue;
+    visto.add(clave);
+    const dias = Math.round((Date.parse(`${dia}T00:00:00Z`) - Date.parse(`${diaAlta}T00:00:00Z`)) / 86_400_000);
+    if (dias <= DIAS_MAX_VUELTA) out.set(m.key, dias);
+  }
+  return out;
+}
