@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.359.0] - 2026-10-09 — la bandera de cada quien en el admin
+
+- La actividad y la tabla de usuarios del admin enseñan la bandera del país
+  de cada persona junto a su correo (al pasar el cursor, el nombre del país).
+  Con Colombia y México corriendo a la vez, se ve de un vistazo de dónde es
+  cada alta.
+- Sale del país que ya se guardaba desde v0.2.352.0; las cuentas anteriores
+  al 2026-10-06 y los borradores que nunca abrieron el onboarding no tienen
+  dato y quedan sin bandera (en la actividad, con el hueco para que los
+  correos sigan alineados).
+
 ## [0.2.358.0] - 2026-10-08 — tu primer look ya no te manda al avatar
 
 - En la pantalla del primer look, sin avatar, el botón principal deja de ser

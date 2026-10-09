@@ -12,6 +12,7 @@ type Profile = {
   avatar_path: string | null;
   capsule_target: unknown | null;
   created_at: string;
+  pais: string | null;
 };
 
 export default async function AdminUsuarios() {
@@ -25,7 +26,7 @@ export default async function AdminUsuarios() {
       supabase
         .from("profiles")
         .select(
-          "id, email, is_admin, onboarding_step, palette_season, avatar_path, capsule_target, created_at"
+          "id, email, is_admin, onboarding_step, palette_season, avatar_path, capsule_target, created_at, pais"
         )
         // Los borradores (sin correo, lib/borrador.ts) no son usuarias todavía.
         .not("email", "is", null),
@@ -109,6 +110,7 @@ export default async function AdminUsuarios() {
     return {
       id: p.id,
       email: p.email,
+      pais: p.pais,
       isAdmin: p.is_admin,
       onboardingStep: p.onboarding_step ?? 0,
       onboardingDone: (p.onboarding_step ?? 0) >= ONBOARDING_COMPLETE,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { banderaDe, paisEnPalabras } from "@/lib/lugar";
 import { construirFeed, etiqueta, porDia, type Momento } from "@/lib/admin/actividad";
 import { diaEnZona, horaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { FeedFiltros } from "./feed-filtros";
@@ -25,7 +26,7 @@ export default async function ActividadPage({
 
   const [profilesRes, itemsRes, outfitsRes, tripsRes, wishlistRes, eventsRes] =
     await Promise.all([
-      supabase.from("profiles").select("id, email, created_at"),
+      supabase.from("profiles").select("id, email, created_at, pais"),
       supabase.from("items").select("id, user_id, created_at, deleted_at"),
       supabase.from("outfits").select("id, user_id, created_at, deleted_at"),
       supabase.from("trips").select("id, user_id, created_at, deleted_at"),
@@ -33,8 +34,14 @@ export default async function ActividadPage({
       supabase.from("events").select("user_id, outfit_id, type, data, created_at"),
     ]);
 
-  const perfiles = (profilesRes.data ?? []) as { id: string; email: string | null; created_at: string | null }[];
+  const perfiles = (profilesRes.data ?? []) as {
+    id: string;
+    email: string | null;
+    created_at: string | null;
+    pais: string | null;
+  }[];
   const correo = new Map(perfiles.map((p) => [p.id, p.email ?? p.id.slice(0, 8)]));
+  const paisDe = new Map(perfiles.map((p) => [p.id, p.pais]));
 
   const feed = construirFeed({
     profiles: perfiles.map((p) => ({ id: p.id, created_at: p.created_at })),
@@ -93,7 +100,12 @@ export default async function ActividadPage({
               </h2>
               <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
                 {d.momentos.map((m) => (
-                  <Fila key={m.key} m={m} email={correo.get(m.userId) ?? m.userId.slice(0, 8)} />
+                  <Fila
+                    key={m.key}
+                    m={m}
+                    email={correo.get(m.userId) ?? m.userId.slice(0, 8)}
+                    pais={paisDe.get(m.userId) ?? null}
+                  />
                 ))}
               </ul>
             </section>
@@ -112,12 +124,19 @@ function familia(m: Momento): string {
 }
 
 
-function Fila({ m, email }: { m: Momento; email: string }) {
+function Fila({ m, email, pais }: { m: Momento; email: string; pais: string | null }) {
   const detalle = extra(m);
+  const bandera = banderaDe(pais);
   return (
     <li className="flex items-baseline gap-3 px-4 py-2.5">
       <span className="w-[52px] shrink-0 tabular-nums text-xs text-faint">
         {horaEnZona(m.at)}
+      </span>
+      {/* Ancho fijo aunque no haya dato: las cuentas sin país (anteriores al
+          2026-10-06, o borradores que nunca abrieron el onboarding) quedan con
+          el hueco y los correos siguen alineados. */}
+      <span className="w-5 shrink-0 text-sm" title={pais ? paisEnPalabras(pais) : "sin país"}>
+        {bandera}
       </span>
       <Link
         href={`/admin/usuarios/${m.userId}`}

@@ -95,3 +95,17 @@ export function lugarEnPalabras(pais: string | null | undefined, region?: string
   const estado = pais === "MX" && region ? ESTADOS_MX[region] : undefined;
   return estado ? `${nombre} · ${estado}` : nombre;
 }
+
+/**
+ * La bandera del país como emoji ("CO" → 🇨🇴), o null sin dato.
+ *
+ * Nació el 2026-10-09 para el admin: con Colombia y México corriendo a la vez,
+ * Roberto quería ver de un vistazo de dónde es cada quien en la actividad. Una
+ * bandera ES el código: cada letra se vuelve su "indicador regional" de
+ * Unicode y el sistema pinta el par como bandera. En Windows no hay banderas y
+ * se ven las dos letras, que igual se entienden.
+ */
+export function banderaDe(pais: string | null | undefined): string | null {
+  if (!esPais(pais)) return null;
+  return String.fromCodePoint(...[...pais].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}

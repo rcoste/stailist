@@ -30,6 +30,7 @@ const NOW = 1_760_000_000_000;
 const usuario = (over: Partial<UserRow> = {}): UserRow => ({
   id: "u1",
   email: "tatiana@example.com",
+  pais: null,
   isAdmin: false,
   onboardingStep: 5,
   onboardingDone: true,

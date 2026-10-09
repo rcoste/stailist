@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { esPais, lugarDesdeEncabezados, lugarEnPalabras } from "./lugar";
+import { banderaDe, esPais, lugarDesdeEncabezados, lugarEnPalabras } from "./lugar";
 
 const encabezados = (o: Record<string, string>) => ({ get: (n: string) => o[n] ?? null });
 
@@ -46,5 +46,17 @@ describe("lugarEnPalabras", () => {
   it("México sin estado conocido se queda en el país", () => {
     expect(lugarEnPalabras("MX", null)).toBe("México");
     expect(lugarEnPalabras("MX", "ZZZ")).toBe("México");
+  });
+});
+
+describe("banderaDe", () => {
+  it("convierte el código en la bandera", () => {
+    expect(banderaDe("CO")).toBe("🇨🇴");
+    expect(banderaDe("MX")).toBe("🇲🇽");
+  });
+  it("sin dato o con un código que no es país, nada", () => {
+    expect(banderaDe(null)).toBeNull();
+    expect(banderaDe("XX")).toBeNull();
+    expect(banderaDe("mx")).toBeNull();
   });
 });
