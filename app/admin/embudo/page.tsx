@@ -6,6 +6,7 @@ import { PASOS, construirEmbudo, duracion, tiemposDe } from "@/lib/admin/embudo"
 import { cargarEmbudo, desdeHace, visitasLanding } from "@/lib/admin/embudo-datos";
 import { opcionesDe, pasaFiltro } from "@/lib/admin/filtro-personas";
 import { Chips, ChipsQuien } from "../_compartido/chips";
+import { PESTANAS_EMBUDO, Pestanas } from "../_compartido/pestanas";
 
 // EL EMBUDO POR PASOS (2026-10-09): a dónde llega la gente, cuánto tarda en
 // cada paso y quién se quedó en cuál. La lógica y sus tres reglas (llegar es
@@ -15,7 +16,7 @@ import { Chips, ChipsQuien } from "../_compartido/chips";
 
 export const dynamic = "force-dynamic";
 
-const PERIODOS = [7, 14, 30] as const;
+const PERIODOS = [14, 30, 60] as const;
 
 type Filtros = { dias: number; origen: string; pais: string };
 
@@ -80,8 +81,11 @@ export default async function Embudo({
     return `/admin/embudo?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}`;
   };
 
+  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}`;
+
   return (
     <div className="flex flex-col gap-5">
+      <Pestanas pestanas={PESTANAS_EMBUDO} activa="/admin/embudo" sufijo={sufijo} />
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-ink">Embudo</h1>
         <p className="text-sm text-muted">
@@ -94,8 +98,8 @@ export default async function Embudo({
 
       <div className="flex flex-col gap-2 text-sm">
         <Chips
-          titulo="periodo"
-          opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `${d} días`, activo: f.dias === d }))}
+          titulo="empezó"
+          opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `últimos ${d} días`, activo: f.dias === d }))}
         />
         <ChipsQuien origen={f.origen} pais={f.pais} campanas={campanas} paises={paises} href={href} />
       </div>

@@ -5,6 +5,7 @@ import { DIAS_TABLA, curva, diasEntre, fila, volvieronEnSuSemana, type Celda } f
 import { cargarRetencion, periodo } from "@/lib/admin/retencion-datos";
 import { opcionesDe, pasaFiltro } from "@/lib/admin/filtro-personas";
 import { Chips, ChipsQuien } from "../_compartido/chips";
+import { PESTANAS_EMBUDO, Pestanas } from "../_compartido/pestanas";
 
 // LA TABLA DE RETENCIÓN (2026-10-09): una fila por persona, una columna por día
 // desde que empezó, relleno si ese día entró. Las reglas (qué es "entrar" y por
@@ -46,8 +47,11 @@ export default async function Retencion({
   };
   const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 
+  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}`;
+
   return (
     <div className="flex flex-col gap-5">
+      <Pestanas pestanas={PESTANAS_EMBUDO} activa="/admin/retencion" sufijo={sufijo} />
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-ink">Retención</h1>
         <p className="text-sm text-muted">
