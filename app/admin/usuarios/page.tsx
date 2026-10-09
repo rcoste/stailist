@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE } from "@/lib/onboarding";
 import { ultimoUsoPorUsuario } from "@/lib/admin/actividad";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 import { UsuariosTable, type UserRow } from "./usuarios-table";
 
 type Profile = {
@@ -18,24 +19,37 @@ type Profile = {
 export default async function AdminUsuarios() {
   const supabase = await createClient();
 
-  // En beta cerrada las tablas son diminutas: traemos todo y agregamos en
-  // memoria (mismo patrón que el dashboard). Si esto crece a miles de filas,
-  // se mueve a una vista SQL con conteos por usuario.
-  const [profilesRes, itemsRes, outfitsRes, tripsRes, wishlistRes, eventsRes] =
-    await Promise.all([
+  // Traemos todo y agregamos en memoria. De mil en mil: PostgREST corta en
+  // 1000 sin avisar, y con events e items pasando de dos mil la tabla contaba
+  // clósets de menos sin que nada se viera roto (lib/admin/todas-las-filas.ts).
+  const [perfilesRaw, items, outfits, trips, wishlist, events] = await Promise.all([
+    todasLasFilas((d, h) =>
       supabase
         .from("profiles")
         .select(
           "id, email, is_admin, onboarding_step, palette_season, avatar_path, capsule_target, created_at, pais"
         )
         // Los borradores (sin correo, lib/borrador.ts) no son usuarias todavía.
-        .not("email", "is", null),
-      supabase.from("items").select("user_id, source, created_at, deleted_at"),
-      supabase.from("outfits").select("user_id, created_at").is("deleted_at", null),
-      supabase.from("trips").select("user_id, created_at").is("deleted_at", null),
-      supabase.from("wishlist_items").select("user_id, created_at"),
-      supabase.from("events").select("user_id, type, created_at"),
-    ]);
+        .not("email", "is", null)
+        .order("id")
+        .range(d, h)
+    ),
+    todasLasFilas((d, h) => supabase.from("items").select("user_id, source, created_at, deleted_at").order("id").range(d, h)),
+    todasLasFilas((d, h) =>
+      supabase.from("outfits").select("user_id, created_at").is("deleted_at", null).order("id").range(d, h)
+    ),
+    todasLasFilas((d, h) =>
+      supabase.from("trips").select("user_id, created_at").is("deleted_at", null).order("id").range(d, h)
+    ),
+    todasLasFilas((d, h) => supabase.from("wishlist_items").select("user_id, created_at").order("id").range(d, h)),
+    todasLasFilas((d, h) => supabase.from("events").select("user_id, type, created_at").order("id").range(d, h)),
+  ]);
+  const profilesRes = { data: perfilesRaw };
+  const itemsRes = { data: items };
+  const outfitsRes = { data: outfits };
+  const tripsRes = { data: trips };
+  const wishlistRes = { data: wishlist };
+  const eventsRes = { data: events };
 
   const profiles = (profilesRes.data ?? []) as Profile[];
 

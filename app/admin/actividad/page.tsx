@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { banderaDe, paisEnPalabras } from "@/lib/lugar";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 import { construirFeed, etiqueta, porDia, sinBorradoresVacios, vueltas, type Momento } from "@/lib/admin/actividad";
 import { origenEnPalabras } from "@/lib/admin/campana";
 import { origenDesdeDato } from "@/lib/origen";
@@ -26,17 +27,26 @@ export default async function ActividadPage({
   const { u: filtroUsuario, t: filtroTipo } = await searchParams;
   const supabase = await createClient();
 
-  const [profilesRes, itemsRes, outfitsRes, tripsRes, wishlistRes, eventsRes] =
-    await Promise.all([
-      supabase.from("profiles").select("id, email, created_at, pais, origen, como_nos_conocio, is_admin"),
-      supabase.from("items").select("id, user_id, created_at, deleted_at"),
-      supabase.from("outfits").select("id, user_id, created_at, deleted_at"),
-      supabase.from("trips").select("id, user_id, created_at, deleted_at"),
-      supabase.from("wishlist_items").select("user_id, created_at"),
-      supabase.from("events").select("user_id, outfit_id, type, data, created_at"),
-    ]);
+  // De mil en mil: PostgREST corta en 1000 sin avisar y events/items ya pasan
+  // de dos mil (ver lib/admin/todas-las-filas.ts).
+  const [perfilesRaw, items, outfits, trips, wishlist, events] = await Promise.all([
+    todasLasFilas((d, h) =>
+      supabase
+        .from("profiles")
+        .select("id, email, created_at, pais, origen, como_nos_conocio, is_admin")
+        .order("id")
+        .range(d, h)
+    ),
+    todasLasFilas((d, h) => supabase.from("items").select("id, user_id, created_at, deleted_at").order("id").range(d, h)),
+    todasLasFilas((d, h) => supabase.from("outfits").select("id, user_id, created_at, deleted_at").order("id").range(d, h)),
+    todasLasFilas((d, h) => supabase.from("trips").select("id, user_id, created_at, deleted_at").order("id").range(d, h)),
+    todasLasFilas((d, h) => supabase.from("wishlist_items").select("user_id, created_at").order("id").range(d, h)),
+    todasLasFilas((d, h) =>
+      supabase.from("events").select("user_id, outfit_id, type, data, created_at").order("id").range(d, h)
+    ),
+  ]);
 
-  const perfiles = (profilesRes.data ?? []) as {
+  const perfiles = perfilesRaw as {
     id: string;
     email: string | null;
     created_at: string | null;
@@ -53,11 +63,11 @@ export default async function ActividadPage({
 
   const feedCompleto = construirFeed({
     profiles: perfiles.map((p) => ({ id: p.id, created_at: p.created_at })),
-    items: (itemsRes.data ?? []) as never,
-    outfits: (outfitsRes.data ?? []) as never,
-    trips: (tripsRes.data ?? []) as never,
-    wishlist: (wishlistRes.data ?? []) as never,
-    events: (eventsRes.data ?? []) as never,
+    items: items as never,
+    outfits: outfits as never,
+    trips: trips as never,
+    wishlist: wishlist as never,
+    events: events as never,
   });
   // Los borradores que nunca abrieron el onboarding no son personas: se
   // cuentan arriba y no ocupan líneas (ver sinBorradoresVacios).

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 import { LOOKS } from "@/lib/looks";
 import { contarSenalOroPorCercania } from "@/lib/senal-oro";
 import { contarEventos, evaluarSenales, type Veredicto } from "@/lib/senales-vivas";
@@ -95,6 +96,13 @@ type CriticVerdict = "ok" | "reparado" | "rechazado";
 type CriticChange = { verdict?: CriticVerdict };
 type CriticData = { changes?: CriticChange[] };
 
+/** todasLasFilas con la forma `{ data }` de Supabase, para no tocar quien la lee. */
+async function completas<T>(
+  pedir: Parameters<typeof todasLasFilas<T>>[0]
+): Promise<{ data: T[]; error: null }> {
+  return { data: await todasLasFilas(pedir), error: null };
+}
+
 export default async function AdminOverview() {
   const supabase = await createClient();
 
@@ -119,24 +127,32 @@ export default async function AdminOverview() {
   ] = await Promise.all([
     // Perfiles completos para embudo + adopción (avatar, cápsula). En beta la
     // tabla es chica; traemos solo las columnas que el dashboard necesita.
-    supabase
-      .from("profiles")
-      .select("onboarding_step, avatar_path, capsule_target")
-      // Sin los BORRADORES (sesiones sin correo, lib/borrador.ts): "usuarias" es
-      // gente que se registró. Un borrador es alguien que empezó y aún no deja
-      // su correo — o un bot —; contarlos aquí inflaría el número que más se mira.
-      .not("email", "is", null),
+    completas((d, h) =>
+      supabase
+        .from("profiles")
+        .select("onboarding_step, avatar_path, capsule_target")
+        // Sin los BORRADORES (sesiones sin correo, lib/borrador.ts): "usuarias" es
+        // gente que se registró. Un borrador es alguien que empezó y aún no deja
+        // su correo — o un bot —; contarlos aquí inflaría el número que más se mira.
+        .not("email", "is", null)
+        .order("id")
+        .range(d, h)
+    ),
     supabase.from("archetypes").select("*", { count: "exact", head: true }),
     supabase
       .from("outfits")
       .select("*", { count: "exact", head: true })
       .is("deleted_at", null),
-    supabase
-      .from("events")
-      .select("type, data")
-      .in("type", ["vote_up", "vote_down", "worn", "first_outfit_ttv", "trip_look_vote"]),
+    completas((d, h) =>
+      supabase
+        .from("events")
+        .select("type, data")
+        .in("type", ["vote_up", "vote_down", "worn", "first_outfit_ttv", "trip_look_vote"])
+        .order("id")
+        .range(d, h)
+    ),
     // Estabilidad del motor: veredicto del juez de 2ª pasada por outfit.
-    supabase.from("events").select("data").eq("type", "critic_review"),
+    completas((d, h) => supabase.from("events").select("data").eq("type", "critic_review").order("id").range(d, h)),
     // La carnita: por qué pidieron "otro look" (👎 con razón escrita).
     supabase
       .from("events")
@@ -145,7 +161,8 @@ export default async function AdminOverview() {
       .order("created_at", { ascending: false })
       .limit(40),
     // Activos 7d: usuarias distintas con cualquier evento en la ventana.
-    supabase.from("events").select("user_id").gte("created_at", since7d),
+    // Fue la primera en toparse: 1135 eventos en 7 días el 2026-10-09.
+    completas((d, h) => supabase.from("events").select("user_id").gte("created_at", since7d).order("id").range(d, h)),
     // Sin borrados: el KPI contaba los 2 viajes que alguien tiró a la basura.
     supabase
       .from("trips")
@@ -154,7 +171,9 @@ export default async function AdminOverview() {
     // ¿Alguien ABRE perfil → estilo? Sus dos campos (referencia y palabras)
     // llevan semanas vacíos y sin esto no se puede distinguir "la petición no
     // convence" de "nadie llega". user_id para contar PERSONAS, no visitas.
-    supabase.from("events").select("user_id").eq("type", "perfil_estilo_view"),
+    completas((d, h) =>
+      supabase.from("events").select("user_id").eq("type", "perfil_estilo_view").order("id").range(d, h)
+    ),
     // Señal de oro por cercanía (2026-08-11): looks generados y fit checks, para
     // cruzarlos en lib/senal-oro. La pregunta "¿te lo pusiste?" murió con el
     // rediseño del home; el fit check ≤24h después de un look generado es la
@@ -167,25 +186,37 @@ export default async function AdminOverview() {
     // `source = daily`: los try-on fantasma de viaje/cápsula no son un look
     // sugerido, y colarlos haría que un try-on + un fit check contaran como
     // señal de oro.
-    supabase
-      .from("outfits")
-      .select("user_id, created_at")
-      .is("deleted_at", null)
-      .eq("source", "daily")
-      .gte("created_at", since90d)
-      .or("gen_status.is.null,gen_status.eq.ready"),
-    supabase
-      .from("outfits")
-      .select("user_id, created_at")
-      .is("deleted_at", null)
-      .eq("source", "espejo")
-      .gte("created_at", since90d),
+    completas((d, h) =>
+      supabase
+        .from("outfits")
+        .select("user_id, created_at")
+        .is("deleted_at", null)
+        .eq("source", "daily")
+        .gte("created_at", since90d)
+        .or("gen_status.is.null,gen_status.eq.ready")
+        .order("id")
+        .range(d, h)
+    ),
+    completas((d, h) =>
+      supabase
+        .from("outfits")
+        .select("user_id, created_at")
+        .is("deleted_at", null)
+        .eq("source", "espejo")
+        .gte("created_at", since90d)
+        .order("id")
+        .range(d, h)
+    ),
     // Los pasos del onboarding con su reloj, para la tabla de tramos
     // (lib/admin/embudo-tiempos): dónde se va el tiempo, no sólo cuánto.
-    supabase
-      .from("events")
-      .select("user_id, created_at, type, data")
-      .in("type", ["onboarding_started", "onboarding_step"]),
+    completas((d, h) =>
+      supabase
+        .from("events")
+        .select("user_id, created_at, type, data")
+        .in("type", ["onboarding_started", "onboarding_step"])
+        .order("id")
+        .range(d, h)
+    ),
   ]);
 
   const estiloVisitas = estiloViewRes.data?.length ?? 0;
@@ -209,11 +240,15 @@ export default async function AdminOverview() {
   // que se prende con las pruebas de quien la mantiene deja de leerse.
   const { data: dePrueba } = await supabase.from("profiles").select("id").ilike("email", "%@stailist.app");
   const idsDePrueba = new Set((dePrueba ?? []).map((p) => String(p.id)));
-  const { data: ev30 } = await supabase
-    .from("events")
-    .select("user_id, type, created_at, data")
-    .gte("created_at", since30d)
-    .in("type", ["espejo_subido", "worn", "first_outfit_ttv", "onboarding_step"]);
+  const ev30 = await todasLasFilas((d, h) =>
+    supabase
+      .from("events")
+      .select("user_id, type, created_at, data")
+      .gte("created_at", since30d)
+      .in("type", ["espejo_subido", "worn", "first_outfit_ttv", "onboarding_step"])
+      .order("id")
+      .range(d, h)
+  );
   const eventos = (ev30 ?? []).filter((e) => !idsDePrueba.has(String(e.user_id))).map((e) => ({
     type: String(e.type),
     created_at: String(e.created_at),
