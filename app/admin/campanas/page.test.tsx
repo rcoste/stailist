@@ -19,7 +19,7 @@ vi.mock("@/lib/admin/campana-datos", () => ({
   cargarCampana: vi.fn(async () => datos.actual),
 }));
 
-import AdminCampana from "./page";
+import Campanas from "./page";
 
 const fila = {
   fuente: "google",
@@ -65,19 +65,20 @@ async function html(d: Partial<DatosCampana>): Promise<string> {
       sinDato: { cuentas: 0, primerLook: 0 },
     },
     paises: [],
+    app: null,
     ...d,
   };
-  const el = await AdminCampana({ searchParams: Promise.resolve({}) });
+  const el = await Campanas({ searchParams: Promise.resolve({}) });
   return renderToStaticMarkup(el);
 }
 
-describe("/admin/campana", () => {
+describe("/admin/campanas", () => {
   it("enseña el veredicto del paro en cuanto lo hay", async () => {
     const h = await html({ paro: { estado: "no-pasa", conPrimerLook: 30, cerradas: 30, volvieron: 2 } });
-    expect(h).toContain("NO PASA");
+    expect(h).toMatch(/no pasa: volvieron 2/);
   });
 
-  it("una campaña con gasto y nadie adentro sale en el embudo, con su costo", async () => {
+  it("una campaña con gasto y nadie adentro sale en la tabla, con su gasto", async () => {
     const h = await html({
       resumen: [fila],
       gasto: [{ dia: "2026-09-25", campana: "hombres-eventos", clics: 80, costo_mxn: 600, registros_google: 0 }],

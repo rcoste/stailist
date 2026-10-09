@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.364.0] - 2026-10-09 — el admin replanteado (2 de 4): Campañas
+
+- **Campañas** (`/admin/campanas`) une Campaña y Adquisición, que contestaban
+  la misma pregunta (¿sirven los anuncios?) en dos pantallas. Arriba, el
+  criterio de paro en una frase y una tabla corta por campaña con lo que
+  decide: gasto, entraron, primer look, costo por primer look, volvieron, se
+  lo pusieron, IA. Las filas sin anuncio quedan al final como fondo.
+- Lo demás va plegado debajo: objetivos del plan, uso en la primera semana
+  (con avatar, aparato y app instalada), el embudo paso por paso, lo que dicen
+  que las trajo, y la captura del gasto.
+- El mazo de swipes pasa al Taller (`/admin/mazo`): es una pregunta de
+  construir el onboarding, no de leer la campaña. "Últimas 30 cuentas" se va:
+  Hoy enseña quién llegó y Personas la lista completa.
+- Las rutas viejas (`/admin/campana`, `/admin/adquisicion`) redirigen.
+
 ## [0.2.363.0] - 2026-10-09 — el admin replanteado (1 de 4): Hoy, el menú y el Taller
 
 - Roberto pidió repensar el admin desde cero ("lo veo complejo, todo all over

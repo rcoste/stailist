@@ -53,7 +53,7 @@ export async function guardarGasto(formData: FormData) {
       [dia, campana, clics, costo, registros, impresiones, nota]
     )
   );
-  revalidatePath("/admin/campana");
+  revalidatePath("/admin/campanas");
 }
 
 export async function borrarGasto(formData: FormData) {
@@ -64,5 +64,5 @@ export async function borrarGasto(formData: FormData) {
   await withDb((c) =>
     c.query(`delete from public.campana_gasto where dia = $1::date and campana = $2`, [dia, campana])
   );
-  revalidatePath("/admin/campana");
+  revalidatePath("/admin/campanas");
 }

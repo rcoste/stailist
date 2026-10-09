@@ -3,6 +3,7 @@ import {
   DIAS_VENTANA,
   EVENTOS_QUE_NO_SON_VOLVER,
   SQL_ADQUISICION,
+  SQL_APP_INSTALADA,
   diaEnZona,
   sumarDias,
   ZONA,
@@ -122,7 +123,11 @@ export type DatosCampana = {
   paises: ConteoPais[];
   /** Avatar paso por paso, de las cuentas de la ventana. */
   avatar: EmbudoAvatar;
+  /** Quién abre la app instalada (SQL_APP_INSTALADA); null si la consulta no trajo nada. */
+  app: AppInstalada | null;
 };
+
+export type AppInstalada = { cuentas: number; instaladas: number; activas: number; activas_instaladas: number };
 
 export async function cargarCampana(desde: string, ahora: Date = new Date()): Promise<DatosCampana> {
   const crudas = await withDb(async (c) => (await c.query(SQL_ADQUISICION, [EVENTOS_QUE_NO_SON_VOLVER])).rows);
@@ -145,7 +150,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
   // de paro: no depende del rango de fechas de la pantalla.
   const deAnuncio = todas.filter((f) => f.onboarding_step >= 5 && esDeCampana(origenDesdeDato(f.origen)));
 
-  const [extrasRows, codigos, gasto, usoRows, embudo, avatar] = await withDb(async (c) => {
+  const [extrasRows, codigos, gasto, usoRows, embudo, avatar, app] = await withDb(async (c) => {
     const extras = (await c.query(SQL_EXTRAS, [filas.map((f) => f.id)])).rows;
     const cods = (
       await c.query(
@@ -180,7 +185,8 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
         [filas.map((f) => f.id)]
       )
     ).rows[0] as EmbudoAvatar | undefined;
-    return [extras, cods, gas, us, emb, av ?? { cara: 0, cuerpo: 0, guardaron: 0 }] as const;
+    const ap = (await c.query(SQL_APP_INSTALADA)).rows[0] as AppInstalada | undefined;
+    return [extras, cods, gas, us, emb, av ?? { cara: 0, cuerpo: 0, guardaron: 0 }, ap ?? null] as const;
   });
 
   const uso = new Map<string, UsoCuenta>(
@@ -242,6 +248,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     dispositivos: resumirDispositivos(filas, extras),
     paises: resumirPaises(filas, extras),
     avatar,
+    app,
   };
 }
 
