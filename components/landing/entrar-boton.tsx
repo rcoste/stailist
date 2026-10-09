@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { entradaSinCorreo } from "@/lib/borrador";
 import styles from "./landing.module.css";
+import { FormEmpezar } from "./form-empezar";
 
 type Props = {
   /** Texto fino opcional bajo el botón. */
@@ -34,14 +35,12 @@ export function EntrarBoton({ fineline, trust }: Props) {
   return (
     <div className={styles.cta}>
       {sinCorreo ? (
-        <form method="post" action="/empezar" className={styles.ctaForm}>
-          <button type="submit" className={`${styles.btn} ${styles.btnSolo}`}>
-            Armar mi primer look
-            <span className={styles.arr} aria-hidden="true">
-              &rarr;
-            </span>
-          </button>
-        </form>
+        <FormEmpezar formClassName={styles.ctaForm} buttonClassName={`${styles.btn} ${styles.btnSolo}`}>
+          Armar mi primer look
+          <span className={styles.arr} aria-hidden="true">
+            &rarr;
+          </span>
+        </FormEmpezar>
       ) : (
         <a className={`${styles.btn} ${styles.btnSolo}`} href="/login">
           Armar mi primer look

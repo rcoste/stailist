@@ -4,6 +4,8 @@ import {
   construirFeed,
   etiqueta,
   porDia,
+  sinBorradoresVacios,
+  vueltas,
   ultimoUsoPorUsuario,
   EVENTOS_FUERA,
   type FuentesCrudas,
@@ -337,5 +339,75 @@ describe("porDia", () => {
     // 2026-10-04T04:34Z son las 22:34 del 3 de octubre en CDMX.
     const dias = porDia(colapsar([m("a", "2026-10-04T04:34:00Z", "alta")]));
     expect(dias[0].dia).toBe("2026-10-03");
+  });
+});
+
+describe("sinBorradoresVacios", () => {
+  const mom = (userId: string, tipo: Momento["tipo"], at: string): Momento => ({
+    key: `${tipo}:${userId}:${at}`,
+    userId,
+    at,
+    tipo,
+    n: 1,
+  });
+
+  it("esconde la cuenta sin correo cuyo único momento es el alta, y la cuenta", () => {
+    const feed = [
+      mom("fantasma", "alta", "2026-10-09T19:15:03Z"),
+      mom("real", "alta", "2026-10-09T19:15:23Z"),
+      mom("real", "ev:onboarding_started", "2026-10-09T19:15:30Z"),
+    ];
+    const r = sinBorradoresVacios(feed, new Set(["fantasma", "real"]));
+    expect(r.vacios).toBe(1);
+    expect(r.feed.map((m) => m.userId)).toEqual(["real", "real"]);
+  });
+
+  it("no esconde un alta con correo aunque no haya hecho nada más", () => {
+    const r = sinBorradoresVacios([mom("con-correo", "alta", "2026-10-09T19:00:00Z")], new Set());
+    expect(r.vacios).toBe(0);
+    expect(r.feed).toHaveLength(1);
+  });
+});
+
+describe("vueltas", () => {
+  const mom = (key: string, userId: string, tipo: Momento["tipo"], at: string): Momento => ({
+    key,
+    userId,
+    at,
+    tipo,
+    n: 1,
+  });
+  // Alta el 6 de octubre a las 10 am de la Ciudad de México (16:00 UTC).
+  const altaDe = new Map([["u", "2026-10-06T16:00:00Z"]]);
+
+  it("marca sólo el primer momento de cada día de regreso, con los días desde el alta", () => {
+    const feed = [
+      mom("a", "u", "alta", "2026-10-06T16:00:00Z"),
+      mom("mismo-dia", "u", "visita", "2026-10-06T23:00:00Z"),
+      mom("dia2-primero", "u", "visita", "2026-10-07T15:00:00Z"),
+      mom("dia2-segundo", "u", "prenda_add", "2026-10-07T15:30:00Z"),
+      mom("dia4", "u", "look", "2026-10-09T18:00:00Z"),
+    ];
+    const v = vueltas(feed, altaDe);
+    expect(v.get("dia2-primero")).toBe(1);
+    expect(v.get("dia4")).toBe(3);
+    expect(v.has("mismo-dia")).toBe(false);
+    expect(v.has("dia2-segundo")).toBe(false);
+  });
+
+  it("cambiar de día a medianoche no es volver: hacen falta 4 horas", () => {
+    // Alta 11:30 pm CDMX del 6 (05:30 UTC del 7); sigue a las 12:20 am del 7.
+    const v = vueltas(
+      [mom("madrugada", "u", "visita", "2026-10-07T06:20:00Z")],
+      new Map([["u", "2026-10-07T05:30:00Z"]])
+    );
+    expect(v.size).toBe(0);
+  });
+
+  it("pasadas 4 semanas ya no se marca, ni en las cuentas excluidas", () => {
+    const viejo = vueltas([mom("x", "u", "visita", "2026-11-20T18:00:00Z")], altaDe);
+    expect(viejo.size).toBe(0);
+    const excluida = vueltas([mom("y", "u", "visita", "2026-10-07T18:00:00Z")], altaDe, new Set(["u"]));
+    expect(excluida.size).toBe(0);
   });
 });

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { banderaDe, paisEnPalabras } from "@/lib/lugar";
-import { construirFeed, etiqueta, porDia, type Momento } from "@/lib/admin/actividad";
+import { construirFeed, etiqueta, porDia, sinBorradoresVacios, vueltas, type Momento } from "@/lib/admin/actividad";
+import { origenEnPalabras } from "@/lib/admin/campana";
+import { origenDesdeDato } from "@/lib/origen";
 import { diaEnZona, horaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { FeedFiltros } from "./feed-filtros";
 
@@ -26,7 +28,7 @@ export default async function ActividadPage({
 
   const [profilesRes, itemsRes, outfitsRes, tripsRes, wishlistRes, eventsRes] =
     await Promise.all([
-      supabase.from("profiles").select("id, email, created_at, pais"),
+      supabase.from("profiles").select("id, email, created_at, pais, origen, como_nos_conocio, is_admin"),
       supabase.from("items").select("id, user_id, created_at, deleted_at"),
       supabase.from("outfits").select("id, user_id, created_at, deleted_at"),
       supabase.from("trips").select("id, user_id, created_at, deleted_at"),
@@ -39,11 +41,17 @@ export default async function ActividadPage({
     email: string | null;
     created_at: string | null;
     pais: string | null;
+    origen: unknown;
+    como_nos_conocio: string | null;
+    is_admin: boolean | null;
   }[];
   const correo = new Map(perfiles.map((p) => [p.id, p.email ?? p.id.slice(0, 8)]));
   const paisDe = new Map(perfiles.map((p) => [p.id, p.pais]));
+  const llegoPor = new Map(
+    perfiles.map((p) => [p.id, origenEnPalabras(origenDesdeDato(p.origen), p.como_nos_conocio)])
+  );
 
-  const feed = construirFeed({
+  const feedCompleto = construirFeed({
     profiles: perfiles.map((p) => ({ id: p.id, created_at: p.created_at })),
     items: (itemsRes.data ?? []) as never,
     outfits: (outfitsRes.data ?? []) as never,
@@ -51,6 +59,18 @@ export default async function ActividadPage({
     wishlist: (wishlistRes.data ?? []) as never,
     events: (eventsRes.data ?? []) as never,
   });
+  // Los borradores que nunca abrieron el onboarding no son personas: se
+  // cuentan arriba y no ocupan líneas (ver sinBorradoresVacios).
+  const { feed, vacios } = sinBorradoresVacios(
+    feedCompleto,
+    new Set(perfiles.filter((p) => !p.email).map((p) => p.id))
+  );
+  const regreso = vueltas(
+    feed,
+    new Map(perfiles.filter((p) => p.created_at).map((p) => [p.id, p.created_at as string])),
+    // Admin y cuentas de prueba (@stailist.app): sus vueltas no son señal.
+    new Set(perfiles.filter((p) => p.is_admin || p.email?.endsWith("@stailist.app")).map((p) => p.id))
+  );
 
   // Los filtros se aplican DESPUÉS de colapsar: filtrar antes cambiaría las
   // ráfagas (una tanda de 23 prendas seguiría siendo 23 aunque mires a una
@@ -87,6 +107,9 @@ export default async function ActividadPage({
       <p className="text-xs text-muted">
         {visibles.length} momento{visibles.length === 1 ? "" : "s"}
         {visibles.length !== feed.length ? ` de ${feed.length}` : ""}
+        {vacios > 0
+          ? ` · ${vacios} borrador${vacios === 1 ? "" : "es"} vacío${vacios === 1 ? "" : "s"} sin enseñar (tocaron el botón y nunca abrieron el onboarding)`
+          : ""}
       </p>
 
       {visibles.length === 0 ? (
@@ -105,6 +128,8 @@ export default async function ActividadPage({
                     m={m}
                     email={correo.get(m.userId) ?? m.userId.slice(0, 8)}
                     pais={paisDe.get(m.userId) ?? null}
+                    origen={m.tipo === "alta" ? llegoPor.get(m.userId) ?? null : null}
+                    vuelta={regreso.get(m.key) ?? null}
                   />
                 ))}
               </ul>
@@ -124,8 +149,22 @@ function familia(m: Momento): string {
 }
 
 
-function Fila({ m, email, pais }: { m: Momento; email: string; pais: string | null }) {
-  const detalle = extra(m);
+function Fila({
+  m,
+  email,
+  pais,
+  origen,
+  vuelta,
+}: {
+  m: Momento;
+  email: string;
+  pais: string | null;
+  /** Sólo en la línea del alta: de dónde llegó. */
+  origen: string | null;
+  /** Días desde el alta si este es el primer momento de un día de regreso. */
+  vuelta: number | null;
+}) {
+  const detalle = origen ?? extra(m);
   const bandera = banderaDe(pais);
   return (
     <li className="flex items-baseline gap-3 px-4 py-2.5">
@@ -145,6 +184,11 @@ function Fila({ m, email, pais }: { m: Momento; email: string; pais: string | nu
         {email}
       </Link>
       <span className="min-w-0 flex-1 text-sm text-muted">
+        {vuelta != null ? (
+          <span className="mr-1.5 inline-block rounded-full border border-success px-1.5 text-[11px] font-semibold text-success">
+            volvió · {vuelta === 1 ? "al día siguiente" : `a los ${vuelta} días`}
+          </span>
+        ) : null}
         {etiqueta(m)}
         {detalle ? <span className="text-faint"> · {detalle}</span> : null}
       </span>

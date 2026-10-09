@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.360.0] - 2026-10-09 — el admin marca quién volvió, y el botón de entrada avisa
+
+- El botón "Armar mi primer look" de la landing dice "Abriendo…" al primer
+  toque y no acepta otro. Sin señal, una persona con conexión lenta lo tocó
+  13 veces en 20 segundos y cada toque abrió un borrador nuevo.
+- La actividad del admin:
+  - marca "volvió · a los N días" en el primer momento de cada día de regreso
+    (mismo criterio que el correo de las 8: otro día y 4 horas después; hasta
+    4 semanas; sin cuentas de admin ni de prueba);
+  - dice de dónde llegó cada alta (campaña y fuente, o lo que contestó);
+  - esconde los borradores vacíos (tocaron el botón y nunca abrieron el
+    onboarding) y dice cuántos escondió.
+
 ## [0.2.359.0] - 2026-10-09 — la bandera de cada quien en el admin
 
 - La actividad y la tabla de usuarios del admin enseñan la bandera del país
