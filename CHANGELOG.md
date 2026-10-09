@@ -2,7 +2,7 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
-## [0.2.360.0] - 2026-10-09 — el admin marca quién volvió, y el botón de entrada avisa
+## [0.2.360.0] - 2026-10-09 — el embudo por pasos, quién volvió y el botón que avisa
 
 - El botón "Armar mi primer look" de la landing dice "Abriendo…" al primer
   toque y no acepta otro. Sin señal, una persona con conexión lenta lo tocó
@@ -14,6 +14,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   - dice de dónde llegó cada alta (campaña y fuente, o lo que contestó);
   - esconde los borradores vacíos (tocaron el botón y nunca abrieron el
     onboarding) y dice cuántos escondió.
+- Pantalla nueva en el admin, **Embudo** (`/admin/embudo`): los 12 pasos del
+  onboarding hasta "volvió otro día", con cuántas personas llegan a cada uno,
+  cuánto tardan desde el anterior (mediana), quién se quedó en cada pantalla
+  (con enlace a su ficha) y la mayor fuga marcada. Filtros por periodo, origen
+  (campaña, anuncios, sin anuncio) y país. Arriba: visitas a la landing y
+  tiempo al primer look contra la promesa de 2 minutos.
 
 ## [0.2.359.0] - 2026-10-09 — la bandera de cada quien en el admin
 
