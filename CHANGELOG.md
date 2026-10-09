@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.365.0] - 2026-10-09 — el admin replanteado (3 de 4): Embudo y retención
+
+- Embudo y Retención son dos pestañas de una misma sección, con los mismos
+  periodos (últimos 14, 30 o 60 días) y los mismos filtros de origen y país;
+  cambiar de pestaña conserva los filtros.
+
 ## [0.2.364.0] - 2026-10-09 — el admin replanteado (2 de 4): Campañas
 
 - **Campañas** (`/admin/campanas`) une Campaña y Adquisición, que contestaban
