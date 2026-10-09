@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.363.0] - 2026-10-09 — el admin replanteado (1 de 4): Hoy, el menú y el Taller
+
+- Roberto pidió repensar el admin desde cero ("lo veo complejo, todo all over
+  the place"). Diagnóstico: 17 pantallas nacidas una por una, la misma pregunta
+  en cuatro o cinco lugares con nombres distintos, y el Dashboard de junio. El
+  menú pasa de 17 entradas en 3 grupos a 5, una por pregunta: Hoy (¿cómo va?),
+  Campañas (¿sirven los anuncios?), Embudo y retención (¿dónde se pierden y
+  quién vuelve?), Personas (¿quién es cada quien y qué hace?) y Taller.
+- **Hoy** sustituye al Dashboard: los números del plan (primeros looks de
+  anuncios, quién volvió, costo por primer look, gasto de IA de ayer), el
+  criterio de paro en una frase, qué pasó hoy y ayer, quién volvió y quién
+  llegó (con bandera, hasta dónde llegó y de dónde vino). Es el correo de las 8
+  como página y comparte sus definiciones (`lib/admin/hoy.ts`). Las alarmas de
+  "una señal dejó de llegar" sólo aparecen cuando alguna está mal.
+- **Taller** agrupa las 10 herramientas de construir (IA, Comparador, Evales,
+  Destilador, Recetas, Cápsulas, Catálogo, Básicos, Looks, Limpieza) y las
+  Invitaciones, que ya no se usan. Nada se borra; se aparta.
+- Las fases que siguen: Campañas (unir Campaña y Adquisición), Embudo y
+  retención en una sección, y Personas (lista + actividad + ficha con la línea
+  de tiempo primero).
+
 ## [0.2.362.0] - 2026-10-09 — la tabla de retención
 
 - Pantalla nueva en el admin, **Retención** (`/admin/retencion`): una fila por
