@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.357.0] - 2026-10-08 — el avatar dice por qué no salió
+
+- El tope diario de avatares sube de 5 a 10. Un avatar completo sin ajustes ya
+  gasta 3 dibujos (cara, cuerpo y la hoja de 3 vistas), y el redibujo
+  automático de una cara que no se parece cuenta doble: con dos ajustes al
+  retrato una usuaria se quedó sin avatar y sin poder reintentar. El tope de
+  $10 por persona al día sigue por encima del peor caso.
+- La pantalla de error del avatar deja de decir "No pude generar tu avatar"
+  para todo (`lib/avatar-fallo.ts`). Ahora distingue el límite del día (sin
+  botón de reintentar, que chocaría con el mismo tope), el filtro de Google
+  por la foto (ofrece cambiarla), una falla pasajera del dibujo, un corte de
+  conexión y una falla al guardar.
+- Si falló un ajuste o un redibujo, se puede volver al retrato o al cuerpo que
+  ya estaba dibujado; antes la única salida lo tiraba.
+- Si falla el guardado, el botón guarda otra vez sin volver a dibujar (antes
+  redibujaba y gastaba un intento del tope), y un corte de red al subir ya no
+  deja la pantalla de "guardando" girando para siempre.
+- Reintentar un ajuste al retrato repite ese ajuste en vez de redibujar la
+  cara desde cero.
+
 ## [0.2.356.0] - 2026-10-07 — los correos internos llegan con formato
 
 - La alarma de la IA y el aviso de un reporte de usuaria dejan de llegar como

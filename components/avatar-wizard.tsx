@@ -10,6 +10,7 @@ import { GeneratingScreen, type GenPhrase } from "@/components/generating-screen
 import { toUsableImage } from "@/lib/image-file";
 import { comprimir } from "@/lib/image-compress";
 import { uploadGeneratedAvatar } from "@/lib/avatar-upload";
+import { falloDeRespuesta, textoFallo, type FalloAvatar } from "@/lib/avatar-fallo";
 import { markNudge } from "@/lib/journey-actions";
 import type { Gender } from "@/lib/auth";
 import { builds, buildLabel, buildToBodyType, type Build } from "@/lib/silueta";
@@ -68,6 +69,13 @@ function blobToB64(blob: Blob): Promise<string> {
     r.onerror = () => reject(new Error("b64"));
     r.readAsDataURL(blob);
   });
+}
+
+/** Una respuesta del API que no salió, ya traducida a su causa. */
+class FalloError extends Error {
+  constructor(readonly fallo: FalloAvatar) {
+    super(fallo.tipo);
+  }
 }
 
 // El recortador (ImageCrop) devuelve un dataURL; el wizard trabaja con File.
@@ -134,17 +142,24 @@ export function AvatarWizard({
   const puedeGenerar = metodo === "foto" ? fotosCuerpo > 0 : !!bodyType;
   const [generated, setGenerated] = useState<string | null>(null);
   const [fails, setFails] = useState(0);
-  // Mensaje del 403 de permiso parental (solo alcanzable desde una pestaña
-  // vieja: la página ya gatea server-side). Si está, el paso error lo muestra
-  // en vez del genérico con retry inútil.
-  const [permisoMsg, setPermisoMsg] = useState<string | null>(null);
+  // Por qué no salió, para que la pantalla de error diga la causa y ofrezca
+  // la salida que sí sirve (ver lib/avatar-fallo.ts). Antes todo era "No pude
+  // generar tu avatar", incluido el tope diario, donde reintentar no sirve.
+  const [fallo, setFallo] = useState<FalloAvatar>({ tipo: "dibujo" });
+  // El último ajuste pedido al retrato: "intentar otra vez" debe repetir ESE
+  // ajuste, no redibujar la cara desde cero.
+  const ultimoAjusteRef = useRef<string | undefined>(undefined);
 
   async function failGen(res: Response): Promise<never> {
-    if (res.status === 403) {
-      const err = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
-      if (err.error === "permiso_pendiente" && err.message) setPermisoMsg(err.message);
-    }
-    throw new Error("gen");
+    const cuerpo = await res.json().catch(() => null);
+    throw new FalloError(falloDeRespuesta(res.status, cuerpo));
+  }
+  /** De la excepción a la causa: la respuesta del API, un corte de red, o el dibujo. */
+  function falloDe(e: unknown): FalloAvatar {
+    if (e instanceof FalloError) return e.fallo;
+    // fetch truena con TypeError cuando no hay red (o se cortó a media subida).
+    if (e instanceof TypeError) return { tipo: "red" };
+    return { tipo: "dibujo" };
   }
   const [saving, setSaving] = useState(false);
   const [genMsg, setGenMsg] = useState(GEN_MSGS_CARA[0]);
@@ -331,6 +346,7 @@ export function AvatarWizard({
   // media escritura sería peor que la espera que estamos quitando; el error se
   // guarda en `caraEstado` y sólo se enseña cuando ella pide avanzar.
   async function generateFace(ajuste?: string, fondo = false) {
+    ultimoAjusteRef.current = ajuste;
     setGenKind("cara");
     setCaraEstado("vuelo");
     if (!fondo) {
@@ -364,7 +380,8 @@ export function AvatarWizard({
       // En fondo NO se navega: ella sigue contestando. El efecto de abajo la
       // pasa al retrato sólo si ya está esperándolo.
       if (!fondo) setStep("cara");
-    } catch {
+    } catch (e) {
+      setFallo(falloDe(e));
       setFails((n) => n + 1);
       setCaraEstado("falla");
       if (!fondo) setStep("error");
@@ -449,7 +466,8 @@ export function AvatarWizard({
       setStep("preview");
       // Las 3 vistas se generan en paralelo mientras contempla el avatar.
       if (faceGen) startSheet(data.image, faceGen);
-    } catch {
+    } catch (e) {
+      setFallo(falloDe(e));
       setFails((n) => n + 1);
       setStep("error");
     }
@@ -467,6 +485,9 @@ export function AvatarWizard({
       : null;
     // El retrato aprobado se guarda como ancla de identidad (avatar-face.jpg)
     // y el sheet de 3 vistas como referencia multi-ángulo (avatar-sheet.jpg).
+    // La subida sale desde el celular: un corte de red truena en vez de
+    // devolver ok:false, y sin el catch la pantalla de "guardando" se quedaba
+    // girando para siempre.
     const res = await uploadGeneratedAvatar(
       generated,
       userId,
@@ -475,10 +496,10 @@ export function AvatarWizard({
       sheet,
       build,
       alturaCm
-    );
+    ).catch(() => ({ ok: false }));
     if (!res.ok) {
       setSaving(false);
-      setFails((n) => n + 1);
+      setFallo({ tipo: "guardar" });
       setStep("error");
       return;
     }
@@ -1054,34 +1075,72 @@ export function AvatarWizard({
         </div>
       )}
 
-      {step === "error" && (
-        <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
-            <Icon name="prohibido" size={22} />
-          </span>
-          <p className="text-sm font-medium text-ink">
-            {permisoMsg ??
-              (fails >= 2
-                ? "No está saliendo ahorita. Inténtalo más tarde."
-                : "No pude generar tu avatar.")}
-          </p>
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => (genKind === "cara" ? generateFace() : generateBody())}
-              className="flex min-h-11 items-center justify-center rounded-sm bg-accent px-6 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
-            >
-              Reintentar
-            </button>
-            <Link
-              href={returnTo}
-              className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-6 text-sm font-medium text-muted transition-colors duration-200 hover:border-ink hover:text-ink"
-            >
-              Salir
-            </Link>
+      {step === "error" && (() => {
+        const t = textoFallo(fallo, fails);
+        // Lo que ya estaba dibujado sigue en memoria: si falló un ajuste o un
+        // redibujo (por el tope, por ejemplo), quedarse con el anterior es la
+        // salida más útil. Antes sólo había "reintentar" y "salir", y salir lo
+        // tiraba.
+        const anterior =
+          fallo.tipo === "guardar"
+            ? null
+            : genKind === "cuerpo" && generated
+              ? { label: "Quedarme con el que ya tenía", ir: () => setStep("preview") }
+              : genKind === "cara" && faceGen
+                ? {
+                    label: "Volver a mi retrato",
+                    ir: () => {
+                      setCaraEstado("lista");
+                      setStep("cara");
+                    },
+                  }
+                : null;
+        const principal = t.accion
+          ? () => {
+              if (t.accion?.tipo === "guardar") void confirm();
+              else if (t.accion?.tipo === "fotos") setStep("fotos");
+              else if (genKind === "cara") void generateFace(ultimoAjusteRef.current);
+              else void generateBody();
+            }
+          : null;
+        return (
+          <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+              <Icon name="prohibido" size={22} />
+            </span>
+            <div className="flex max-w-xs flex-col gap-1">
+              <p className="text-sm font-medium text-ink">{t.titulo}</p>
+              <p className="text-sm text-muted">{t.detalle}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {principal && t.accion ? (
+                <button
+                  type="button"
+                  onClick={principal}
+                  className="flex min-h-11 items-center justify-center rounded-sm bg-accent px-6 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+                >
+                  {t.accion.label}
+                </button>
+              ) : null}
+              {anterior ? (
+                <button
+                  type="button"
+                  onClick={anterior.ir}
+                  className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-6 text-sm font-medium text-ink transition-colors duration-200 hover:border-ink"
+                >
+                  {anterior.label}
+                </button>
+              ) : null}
+              <Link
+                href={returnTo}
+                className="flex min-h-11 items-center justify-center rounded-sm border border-line bg-surface px-6 text-sm font-medium text-muted transition-colors duration-200 hover:border-ink hover:text-ink"
+              >
+                Salir
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
       {/* Recorte de la foto de cara (mismo ImageCrop del carrete de prendas):
           aislarte si en la foto sale más de una persona. */}
       {cropFaceSrc ? (
