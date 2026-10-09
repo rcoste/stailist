@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.358.0] - 2026-10-08 — tu primer look ya no te manda al avatar
+
+- En la pantalla del primer look, sin avatar, el botón principal deja de ser
+  "crea tu avatar para verte" y pasa a ser "entrar a la app" (que lleva a
+  subir tu ropa). El avatar queda como enlace chico debajo, con lo que tarda
+  (~3 min).
+- Por qué: 14 de 25 personas entraban al avatar en su primera media hora, 6 lo
+  abandonaban y 5 de esas 6 se iban de la app en ese momento. Era la mayor
+  fuga después del primer look y tapaba la acción que más importa.
+- El avatar se sigue ofreciendo en Inicio ("qué sigue") y como botón principal
+  en el look de cada día. Con avatar, "verme con este look" no cambia.
+
 ## [0.2.357.0] - 2026-10-08 — el avatar dice por qué no salió
 
 - El tope diario de avatares sube de 5 a 10. Un avatar completo sin ajustes ya

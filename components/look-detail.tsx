@@ -161,6 +161,17 @@ export function LookDetail({
   // con los botones grandes. Roberto lo leyó como falla. Ahora el voto hecho se
   // ve marcado en el mismo botón, y el 👍 marcado sigue sirviendo de continuar.
   const votoPrincipal = hasRender && !enterApp;
+  // EL AVATAR DEJA DE SER LA PUERTA DEL PRIMER LOOK (2026-10-08, decisión de
+  // Roberto). En el wow, sin avatar, la primaria negra era "crea tu avatar
+  // para verte": 14 de 25 personas entraron ahí en su primera media hora, 6 lo
+  // abandonaron y 5 de esas 6 se fueron de la app en ese momento. Y tapaba la
+  // acción que más importa después del primer look, subir su ropa, que vive
+  // detrás de "entrar a la app". Ahora "entrar a la app" es la primaria y el
+  // avatar queda como enlace chico debajo; se sigue ofreciendo en Inicio ("qué
+  // sigue") y como primaria en el look de cada día. Sólo aplica al wow (es el
+  // único que pasa `enterApp`); con avatar, "verme con este look" no cambia:
+  // eso son 20 s, no el wizard.
+  const avatarSecundario = !!enterApp && !!avatarHref && !hasRender;
 
   const tab: "look" | "me" = generating
     ? "me"
@@ -264,7 +275,7 @@ export function LookDetail({
           con render desaparece (el voto es la acción del día). */}
       <div className="-mx-4 mt-2 border-t border-line bg-surface px-4 pb-6 pt-3">
         {!hasRender ? (
-          avatarHref ? (
+          avatarSecundario ? null : avatarHref ? (
             <Link
               href={avatarHref}
               data-hint-target="hoy-tryon"
@@ -366,13 +377,22 @@ export function LookDetail({
             type="button"
             onClick={enterApp}
             className={
-              hasRender
+              hasRender || avatarSecundario
                 ? "mt-1.5 flex h-[54px] w-full items-center justify-center gap-2 rounded-sm bg-accent text-[15px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
                 : "mt-1.5 flex h-[48px] w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-[15px] font-semibold text-ink transition-colors hover:border-ink"
             }
           >
             entrar a la app <Icon name="flecha" size={16} />
           </button>
+        ) : null}
+        {avatarSecundario && avatarHref ? (
+          <Link
+            href={avatarHref}
+            data-hint-target="hoy-tryon"
+            className="flex min-h-11 w-full items-center justify-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+          >
+            <Icon name="destello" size={14} /> o crea tu avatar para verte con el look · ~3 min
+          </Link>
         ) : null}
       </div>
     </div>
