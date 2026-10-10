@@ -14,6 +14,11 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   vista en otro día de la Ciudad de México, o cuando el navegador la restaura
   con "atrás". El mismo día no manda nada; el candado de una visita al día
   sigue siendo el de `registrarVisita`. El modo "ver como" no cuenta.
+- Arreglo del replanteo del admin (v0.2.363.0–0.2.366.0): el test que vigila
+  que el menú no apunte a pantallas inexistentes (`lib/contrato-admin-nav.test.ts`)
+  quedó roto un día porque se corrieron sólo los tests del admin. Ahora mira
+  las tres puertas (menú, índice del Taller, pestañas) y declara las dos rutas
+  viejas que redirigen.
 
 ## [0.2.366.0] - 2026-10-09 — el admin replanteado (4 de 4): Personas
 

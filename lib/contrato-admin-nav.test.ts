@@ -14,18 +14,27 @@ import { join } from "node:path";
 // tres (barrido, ab, inspo). Cada uno de esos movimientos era una oportunidad
 // de dejar un link muerto.
 //
+// Desde el replanteo del 2026-10-09 el menú tiene 5 entradas y a una pantalla
+// se llega por tres puertas: el menú, el índice del Taller y las pestañas de
+// una sección (Embudo | Retención, Lista | Actividad). Las tres cuentan como
+// "está en el menú". Este test se quedó vigilando el menú viejo un día entero
+// después del replanteo porque se corrieron sólo los tests de lib/admin y
+// app/admin, no los de lib/: correr la suite completa antes de publicar.
+//
 // La segunda mitad vigila lo contrario, que es el problema que la
 // reorganización venía a resolver: una sección que existe en disco pero no
 // está en el menú es una pantalla que nadie sabe que existe ni para qué sirve.
 // Si se deja fuera a propósito, se declara aquí con su razón.
 
 const RAIZ = join(import.meta.dirname, "..");
-const NAV = "app/admin/admin-nav.tsx";
+/** Las tres puertas por las que se llega a una pantalla del admin. */
+const PUERTAS = ["app/admin/admin-nav.tsx", "app/admin/taller/page.tsx", "app/admin/_compartido/pestanas.tsx"];
 
-/** Los hrefs declarados en el nav, tal cual salen de la fuente. */
+/** Los hrefs declarados en las puertas, tal cual salen de la fuente. */
 function hrefsDelNav(): string[] {
-  const fuente = readFileSync(join(RAIZ, NAV), "utf8");
-  const hrefs = [...fuente.matchAll(/href:\s*"(\/admin[^"]*)"/g)].map((m) => m[1]);
+  const hrefs = PUERTAS.flatMap((f) =>
+    [...readFileSync(join(RAIZ, f), "utf8").matchAll(/href:\s*"(\/admin[^"]*)"/g)].map((m) => m[1])
+  );
   return [...new Set(hrefs)];
 }
 
@@ -34,8 +43,9 @@ function seccionesEnDisco(): string[] {
   const dir = join(RAIZ, "app/admin");
   return readdirSync(dir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
-    // Las carpetas dinámicas ([id]) son hijas de una sección, no secciones.
-    .filter((d) => !d.name.startsWith("["))
+    // Las carpetas dinámicas ([id]) son hijas de una sección, no secciones;
+    // las privadas (_compartido) son código, no rutas.
+    .filter((d) => !d.name.startsWith("[") && !d.name.startsWith("_"))
     .map((d) => d.name);
 }
 
@@ -45,6 +55,8 @@ function seccionesEnDisco(): string[] {
  */
 const FUERA_DEL_MENU: Record<string, string> = {
   "ver-como": "es una acción, no una pantalla: se entra desde la ficha de usuaria",
+  campana: "ruta vieja: redirige a /admin/campanas desde el replanteo del 2026-10-09",
+  adquisicion: "ruta vieja: redirige a /admin/campanas desde el replanteo del 2026-10-09",
 };
 
 describe("el menú del admin apunta a secciones que existen", () => {
