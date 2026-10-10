@@ -19,17 +19,10 @@ import { registrarEvento } from "@/lib/telemetria";
 // la persona. Con días UTC, todo lo que pasa después de las 18:00 de CDMX
 // contaría como el día siguiente.
 
-export const ZONA_VISITA = "America/Mexico_City";
-
-/** El día natural en CDMX, "YYYY-MM-DD" (en-CA da justo ese formato). */
-export function diaLocal(fecha: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: ZONA_VISITA,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(fecha);
-}
+// El día local vive aparte (lib/dia-local.ts) porque también lo usa el
+// navegador (components/visita-al-volver.tsx), y este archivo es de servidor.
+export { ZONA_VISITA, diaLocal } from "@/lib/dia-local";
+import { diaLocal } from "@/lib/dia-local";
 
 /**
  * El instante en que empezó el día de hoy en CDMX, en ISO.

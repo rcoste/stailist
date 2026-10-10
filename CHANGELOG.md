@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.367.0] - 2026-10-10 — volver a una pestaña abierta cuenta como volver
+
+- Arreglo de medición: la visita del día se anotaba sólo cuando el servidor
+  pintaba una pantalla. En el celular, volver a una pestaña que se dejó
+  abierta no recarga nada (el navegador enseña la página que ya tenía y sólo
+  renueva la sesión), así que esos regresos no se contaban. En la primera
+  semana de octubre se perdieron 3 de 8: su última visita se quedó en su
+  primer día aunque la sesión se renovó 1 a 3 días después.
+- Ahora la página avisa al servidor (`/api/visita`) cuando vuelve a estar a la
+  vista en otro día de la Ciudad de México, o cuando el navegador la restaura
+  con "atrás". El mismo día no manda nada; el candado de una visita al día
+  sigue siendo el de `registrarVisita`. El modo "ver como" no cuenta.
+
 ## [0.2.366.0] - 2026-10-09 — el admin replanteado (4 de 4): Personas
 
 - **Personas** une la lista y la actividad como dos pestañas. La lista
