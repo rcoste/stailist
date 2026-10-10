@@ -3,6 +3,18 @@ import { ONBOARDING_COMPLETE } from "@/lib/onboarding";
 import { ultimoUsoPorUsuario } from "@/lib/admin/actividad";
 import { todasLasFilas } from "@/lib/todas-las-filas";
 import { UsuariosTable, type UserRow } from "./usuarios-table";
+import { withDb } from "@/lib/db";
+import {
+  EVENTOS_QUE_NO_SON_VOLVER,
+  SQL_ADQUISICION,
+  campanaDe,
+  fuenteDe,
+  ventanaCerrada,
+  volvioEn7Dias,
+} from "@/lib/admin/adquisicion";
+import { esDeCampana } from "@/lib/admin/campana";
+import { origenDesdeDato } from "@/lib/origen";
+import { PESTANAS_PERSONAS, Pestanas } from "../_compartido/pestanas";
 
 type Profile = {
   id: string;
@@ -119,12 +131,38 @@ export default async function AdminUsuarios() {
     events: (eventsRes.data ?? []) as never,
   });
 
+  // DE DÓNDE LLEGÓ Y SI VOLVIÓ, con las mismas definiciones que Campañas y
+  // Retención (SQL_ADQUISICION): la lista ya no dice una cosa y el resto otra.
+  const ahora = new Date();
+  const adquisicion = new Map(
+    (await withDb(async (c) => (await c.query(SQL_ADQUISICION, [EVENTOS_QUE_NO_SON_VOLVER])).rows)).map((r) => {
+      const o = origenDesdeDato(r.origen);
+      const campana = campanaDe(o);
+      return [
+        r.id as string,
+        {
+          origen: campana !== "—" ? campana : fuenteDe(o),
+          deAnuncio: esDeCampana(o),
+          volvio: volvioEn7Dias(r.dia_inicio, r.dias)
+            ? ("si" as const)
+            : ventanaCerrada(r.dia_inicio, ahora)
+              ? ("no" as const)
+              : ("semana" as const),
+        },
+      ];
+    })
+  );
+
   const rows: UserRow[] = profiles.map((p) => {
     const a = agg.get(p.id) ?? empty();
+    const q = adquisicion.get(p.id);
     return {
       id: p.id,
       email: p.email,
       pais: p.pais,
+      origen: q?.origen ?? "—",
+      deAnuncio: q?.deAnuncio ?? false,
+      volvio: q?.volvio ?? null,
       isAdmin: p.is_admin,
       onboardingStep: p.onboarding_step ?? 0,
       onboardingDone: (p.onboarding_step ?? 0) >= ONBOARDING_COMPLETE,
@@ -142,7 +180,12 @@ export default async function AdminUsuarios() {
     };
   });
 
-  const now = Date.now();
+  const now = ahora.getTime();
 
-  return <UsuariosTable rows={rows} now={now} />;
+  return (
+    <div className="flex flex-col gap-5">
+      <Pestanas pestanas={PESTANAS_PERSONAS} activa="/admin/usuarios" />
+      <UsuariosTable rows={rows} now={now} />
+    </div>
+  );
 }
