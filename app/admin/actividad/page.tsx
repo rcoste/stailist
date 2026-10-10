@@ -8,6 +8,7 @@ import { origenEnPalabras } from "@/lib/admin/campana";
 import { origenDesdeDato } from "@/lib/origen";
 import { diaEnZona, horaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { FeedFiltros } from "./feed-filtros";
+import { PESTANAS_PERSONAS, Pestanas } from "../_compartido/pestanas";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,7 @@ export default async function ActividadPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <Pestanas pestanas={PESTANAS_PERSONAS} activa="/admin/actividad" />
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-ink">Actividad</h1>
         <p className="text-sm text-muted">

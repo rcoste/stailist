@@ -22,7 +22,7 @@ const ENTRADAS: { href: string; label: string; rutas: string[] }[] = [
   { href: "/admin", label: "Hoy", rutas: ["/admin"] },
   { href: "/admin/campanas", label: "Campañas", rutas: ["/admin/campanas", "/admin/campana", "/admin/adquisicion"] },
   { href: "/admin/embudo", label: "Embudo y retención", rutas: ["/admin/embudo", "/admin/retencion"] },
-  { href: "/admin/personas", label: "Personas", rutas: ["/admin/personas", "/admin/usuarios", "/admin/actividad", "/admin/ver-como"] },
+  { href: "/admin/usuarios", label: "Personas", rutas: ["/admin/usuarios", "/admin/actividad", "/admin/ver-como"] },
   { href: "/admin/taller", label: "Taller", rutas: [] },
 ];
 

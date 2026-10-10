@@ -13,6 +13,11 @@ export type UserRow = {
   email: string;
   /** ISO del país (desde 2026-10-06); null en las cuentas anteriores. */
   pais: string | null;
+  /** La campaña si llegó por anuncio; si no, la fuente ("directo / sin rastro", "raicode.ai"…). */
+  origen: string;
+  deAnuncio: boolean;
+  /** Otro día dentro de su primera semana (criterio del plan); "semana" = aún puede; null = sin arranque. */
+  volvio: "si" | "no" | "semana" | null;
   isAdmin: boolean;
   onboardingStep: number;
   onboardingDone: boolean;
@@ -48,6 +53,8 @@ function hace(ts: number | null, now: number): string {
 
 type SortKey =
   | "email"
+  | "origen"
+  | "volvio"
   | "lastActive"
   | "onboarding"
   | "color"
@@ -64,6 +71,10 @@ function sortVal(r: UserRow, key: SortKey): number | string {
   switch (key) {
     case "email":
       return r.email.toLowerCase();
+    case "origen":
+      return r.origen.toLowerCase();
+    case "volvio":
+      return r.volvio === "si" ? 2 : r.volvio === "semana" ? 1 : r.volvio === "no" ? 0 : -1;
     case "lastActive":
       return r.lastActive ?? -1;
     case "onboarding":
@@ -88,9 +99,11 @@ function sortVal(r: UserRow, key: SortKey): number | string {
 }
 
 const COLS: { key: SortKey; label: string; title?: string; left?: boolean }[] = [
-  { key: "email", label: "Usuario", left: true },
+  { key: "email", label: "Persona", left: true },
+  { key: "origen", label: "Llegó por", title: "La campaña del anuncio, o la fuente", left: true },
   { key: "lastActive", label: "Último uso", title: "Actividad más reciente" },
-  { key: "onboarding", label: "Onb.", title: "Paso de onboarding (✓ = completo)" },
+  { key: "volvio", label: "Volvió", title: "Otro día dentro de su primera semana, 4 horas después de empezar" },
+  { key: "onboarding", label: "1er look", title: "Llegó a su primer look (si no, el paso en que va)" },
   { key: "color", label: "Color", title: "Hizo su colorimetría" },
   { key: "closet", label: "Clóset", title: "Prendas activas (📷 = con fotos propias)" },
   { key: "looks", label: "Looks", title: "Outfits generados" },
@@ -102,6 +115,8 @@ const COLS: { key: SortKey; label: string; title?: string; left?: boolean }[] = 
 ];
 
 type FilterKey =
+  | "volvieron"
+  | "anuncios"
   | "active7d"
   | "onbDone"
   | "avatar"
@@ -112,6 +127,8 @@ type FilterKey =
   | "photos";
 
 const FILTERS: { key: FilterKey; label: string; test: (r: UserRow, now: number) => boolean }[] = [
+  { key: "volvieron", label: "Volvieron", test: (r) => r.volvio === "si" },
+  { key: "anuncios", label: "De anuncios", test: (r) => r.deAnuncio },
   { key: "active7d", label: "Activos 7d", test: (r, now) => r.lastActive !== null && now - r.lastActive <= WEEK_MS },
   { key: "onbDone", label: "Onboarding ✓", test: (r) => r.onboardingDone },
   { key: "avatar", label: "Con avatar", test: (r) => r.avatar },
@@ -210,7 +227,7 @@ export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-h2 font-semibold text-ink">Usuarios</h1>
+        <h1 className="text-h2 font-semibold text-ink">Personas</h1>
         <p className="text-sm text-muted">
           {rows.length} {rows.length === 1 ? "perfil" : "perfiles"} · {activos}{" "}
           {activos === 1 ? "activo" : "activos"} esta semana
@@ -311,10 +328,24 @@ export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
                       ) : null}
                     </Link>
                   </td>
+                  <td className="max-w-40 truncate px-3 py-2.5 text-left text-xs text-muted" title={r.origen}>
+                    {r.origen}
+                  </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-center">
                     <span className={recent ? "text-success" : "text-muted"}>
                       {hace(r.lastActive, now)}
                     </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
+                    {r.volvio === "si" ? (
+                      <span className="text-success">✓ volvió</span>
+                    ) : r.volvio === "semana" ? (
+                      <span className="text-xs text-muted">en su semana</span>
+                    ) : r.volvio === "no" ? (
+                      <span className="text-muted">no</span>
+                    ) : (
+                      <span className="text-muted/50">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     {r.onboardingDone ? (

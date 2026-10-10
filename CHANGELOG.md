@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.366.0] - 2026-10-09 — el admin replanteado (4 de 4): Personas
+
+- **Personas** une la lista y la actividad como dos pestañas. La lista
+  (`/admin/usuarios`) trae dos columnas nuevas con las mismas definiciones que
+  Campañas y Retención: "Llegó por" (la campaña o la fuente) y "Volvió" (sí /
+  no / en su semana), con filtros "Volvieron" y "De anuncios". "Onb." pasa a
+  "1er look".
+- La ficha de cada persona abre con lo que se pregunta de alguien: bandera y
+  correo, por dónde llegó, cuándo empezó, país y aparato, y cuatro chips
+  (primer look y en cuánto, prendas con foto, cuántas veces volvió y qué días,
+  último uso). Debajo, la **línea de tiempo** agrupada por día desde que
+  empezó (día 0, 1, 2…) con la marca "volvió" en cada regreso. El perfil, el
+  clóset y los looks quedan plegados con su resumen en el título.
+- Con esto cierra el replanteo: Hoy · Campañas · Embudo y retención · Personas
+  · Taller.
+
 ## [0.2.365.0] - 2026-10-09 — el admin replanteado (3 de 4): Embudo y retención
 
 - Embudo y Retención son dos pestañas de una misma sección, con los mismos
