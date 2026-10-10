@@ -1,3 +1,4 @@
+import { VisitaAlVolver } from "@/components/visita-al-volver";
 import type { Metadata, Viewport } from "next";
 import { Arimo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
@@ -77,6 +78,9 @@ export default function RootLayout({
         <ViewAsBanner />
         {children}
         <PwaInstall />
+        {/* Anota la visita de quien vuelve a una pestaña que dejó abierta,
+            que no recarga la página (components/visita-al-volver.tsx). */}
+        <VisitaAlVolver />
         {/* Etiquetas de publicidad: apagadas sin sus variables, y sólo donde
             lo diga rutaMedible (lib/publicidad.ts). Va después de {children}
             a propósito: la marca de menor del onboarding corre antes. */}
