@@ -32,6 +32,7 @@ function fila(p: Partial<ResumenCampana>): ResumenCampana {
     ttvMedianaS: null,
     ventanaCerrada: 0,
     volvieron: 0,
+    volvieronYa: 0,
     seLoPusieron: 0,
     iaUsd: 0,
     ...p,

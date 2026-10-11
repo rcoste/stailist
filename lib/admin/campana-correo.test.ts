@@ -58,6 +58,7 @@ describe("correoDiarioHtml", () => {
           ttvMedianaS: 480,
           ventanaCerrada: 0,
           volvieron: 0,
+          volvieronYa: 0,
           seLoPusieron: 0,
           iaUsd: 0,
         },
@@ -77,7 +78,7 @@ describe("campanasParaCorreo", () => {
     const vacia = {
       fuente: "google", campana: "prueba-borrador", impresiones: null, clics: null, costoMxn: null,
       registrosGoogle: null, pidieronCodigo: 4, landing: 0, boton: 0, correoVisto: 0, correoOk: 0, entraron: 0, registro: 0, pasos: [0, 0, 0, 0, 0],
-      primerLook: 0, ttvMedianaS: null, ventanaCerrada: 0, volvieron: 0, seLoPusieron: 0, iaUsd: 0,
+      primerLook: 0, ttvMedianaS: null, ventanaCerrada: 0, volvieron: 0, volvieronYa: 0, seLoPusieron: 0, iaUsd: 0,
     };
     const conGente = { ...vacia, campana: "app-neutra", entraron: 2 };
     const conGasto = { ...vacia, campana: "hombres-eventos", costoMxn: 20 };

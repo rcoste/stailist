@@ -105,7 +105,14 @@ export type ResumenCampana = {
   primerLook: number;
   ttvMedianaS: number | null;
   ventanaCerrada: number;
+  /** Volvieron, de quienes ya cerraron su semana (la que puede leerse como %). */
   volvieron: number;
+  /**
+   * Volvieron, contando también a quien sigue dentro de su semana. Es lo que
+   * el criterio de paro llama "ya volvieron": sin esto la tabla decía "0 de 1"
+   * para una campaña cuya persona ya había vuelto dos veces (2026-10-11).
+   */
+  volvieronYa: number;
   seLoPusieron: number;
   iaUsd: number;
 };
@@ -139,6 +146,7 @@ const vacio = (fuente: string, campana: string): ResumenCampana => ({
   ttvMedianaS: null,
   ventanaCerrada: 0,
   volvieron: 0,
+  volvieronYa: 0,
   seLoPusieron: 0,
   iaUsd: 0,
 });
@@ -192,6 +200,9 @@ export function resumirCampana(input: {
     if (x?.ttv_s != null) ttv.push(x.ttv_s);
     if (x?.se_lo_puso) g.seLoPusieron++;
     g.iaUsd += x?.ia_usd_7d ?? 0;
+    // Sólo quien llegó a su primer look, como el criterio de paro: así la suma
+    // de la columna y el "ya volvieron" de Hoy son el mismo número.
+    if (f.onboarding_step >= 5 && volvioEn7Dias(f.dia_inicio, f.dias)) g.volvieronYa++;
     if (ventanaCerrada(f.dia_inicio, input.ahora)) {
       g.ventanaCerrada++;
       if (volvioEn7Dias(f.dia_inicio, f.dias)) g.volvieron++;

@@ -18,6 +18,7 @@ import {
   esDeCampana,
   origenEnPalabras,
   pasoEnPalabras,
+  quienesVolvieron,
   type EstadoParo,
   type ExtraCuenta,
   type ResumenCampana,
@@ -112,4 +113,78 @@ export function nombreDelDia(dia: string, hoy: string): string {
   const ayer = new Date(Date.parse(`${hoy}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
   if (dia === ayer) return "ayer";
   return new Date(`${dia}T12:00:00Z`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+}
+
+// ── LO QUE SE AGREGÓ AL VERLO EN PANTALLA (2026-10-11) ─────────────────────
+// Hasta aquí Hoy se había verificado con números pero nunca mirado. Al verlo:
+// cuatro cuadros del mismo peso y ninguno decía si el experimento va bien; el
+// criterio de paro era una línea densa ("2 cerraron su semana sin cambio
+// posible"); pesos y dólares sin rotular lado a lado; y ninguna tendencia.
+
+/** El veredicto del plan como lo diría una persona, con sus dos barras de avance. */
+export type Veredicto = {
+  titulo: string;
+  detalle: string;
+  muestra: { n: number; de: number };
+  regresos: { n: number; de: number };
+  tono: "bien" | "mal" | "neutro";
+};
+
+export function veredicto(p: EstadoParo): Veredicto {
+  const muestra = { n: Math.min(p.conPrimerLook, PARO_MUESTRA), de: PARO_MUESTRA };
+  const regresos = { n: p.volvieron, de: PARO_MINIMO_VOLVIERON };
+  if (p.estado === "pasa") {
+    return { titulo: "El experimento pasa", detalle: `Ya volvieron ${p.volvieron}; la regla pedía ${PARO_MINIMO_VOLVIERON}. Se puede escalar.`, muestra, regresos, tono: "bien" };
+  }
+  if (p.estado === "no-pasa") {
+    return {
+      titulo: "El experimento no pasa",
+      detalle: `Volvieron ${p.volvieron} y ya no se puede llegar a ${PARO_MINIMO_VOLVIERON}: demasiadas semanas cerraron sin regreso. La regla dice parar y no escalar.`,
+      muestra,
+      regresos,
+      tono: "mal",
+    };
+  }
+  const faltanLooks = Math.max(0, PARO_MUESTRA - p.conPrimerLook);
+  const faltanRegresos = Math.max(0, PARO_MINIMO_VOLVIERON - p.volvieron);
+  const abiertas = Math.max(0, p.conPrimerLook - p.cerradas);
+  const partes = [
+    faltanLooks ? `faltan ${faltanLooks} primer${faltanLooks === 1 ? "" : "os"} look${faltanLooks === 1 ? "" : "s"} para completar la muestra` : "la muestra ya está completa",
+    faltanRegresos ? `y ${faltanRegresos} regreso${faltanRegresos === 1 ? "" : "s"} para pasar` : "y ya hay regresos suficientes",
+  ];
+  return {
+    titulo: "Todavía no se sabe",
+    detalle: `${(() => {
+      const t = partes.join(" ");
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    })()}. ${abiertas} persona${abiertas === 1 ? " sigue" : "s siguen"} dentro de su primera semana: aún pueden volver.`,
+    muestra,
+    regresos,
+    tono: "neutro",
+  };
+}
+
+/** Un día de la tendencia: cuántas llegaron a su primer look y cuántas volvieron. */
+export type DiaTendencia = { dia: string; primerLook: number; volvieron: number };
+
+/**
+ * Los últimos `dias` días, del más viejo al más nuevo. Primer look por el día
+ * en que empezó (la gente llega a su primer look el mismo día casi siempre);
+ * volvieron con quienesVolvieron, la misma cuenta que el correo de las 8.
+ */
+export function tendencia(filas: FilaPerfilAdquisicion[], hoy: string, dias = 14): DiaTendencia[] {
+  return Array.from({ length: dias }, (_, i) => {
+    const dia = new Date(Date.parse(`${hoy}T00:00:00Z`) - (dias - 1 - i) * 86_400_000).toISOString().slice(0, 10);
+    return {
+      dia,
+      primerLook: filas.filter((f) => f.dia_inicio === dia && f.onboarding_step >= 5).length,
+      volvieron: quienesVolvieron(filas, dia).length,
+    };
+  });
+}
+
+/** ¿La campaña gastó en los últimos `dias` días? Una pausada no se lee igual que una viva. */
+export function campanaActiva(gasto: { dia: string; campana: string; costo_mxn: number }[], campana: string, hoy: string, dias = 3): boolean {
+  const desde = new Date(Date.parse(`${hoy}T00:00:00Z`) - dias * 86_400_000).toISOString().slice(0, 10);
+  return gasto.some((g) => g.campana === campana && g.dia >= desde && Number(g.costo_mxn) > 0);
 }

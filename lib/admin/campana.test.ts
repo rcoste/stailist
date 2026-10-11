@@ -186,6 +186,17 @@ describe("resumirCampana — el embudo de punta a punta", () => {
   });
 });
 
+describe("volvieronYa — la columna de Campañas cuenta como el criterio de paro", () => {
+  it("cuenta a quien volvió aunque su semana siga abierta, y sólo si llegó a su primer look", () => {
+    // AHORA del archivo: las semanas que arrancaron el 25 ya cerraron; un arranque
+    // de ayer sigue abierto.
+    const conLook = volvio({ id: "a", onboarding_step: 5 });
+    const sinLook = volvio({ id: "b", onboarding_step: 3 });
+    const [r] = resumirCampana({ filas: [conLook, sinLook], extras: new Map(), codigos: [], gasto: [], ahora: AHORA });
+    expect(r.volvieronYa).toBe(1);
+  });
+});
+
 describe("costoPor", () => {
   it("suma el anuncio y la IA convertida, entre las personas", () => {
     const [r] = resumirCampana({
