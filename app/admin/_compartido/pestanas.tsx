@@ -15,13 +15,15 @@ export function Pestanas({
   sufijo?: string;
 }) {
   return (
-    <nav className="flex gap-1 border-b border-line">
+    <nav className="flex flex-wrap gap-1.5">
       {pestanas.map((p) => (
         <Link
           key={p.href}
           href={`${p.href}${sufijo}`}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-            p.href === activa ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
+          // Como los botones del menú: Roberto no reconocía la pestaña
+          // subrayada como algo que se pica (2026-10-12).
+          className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors duration-200 ${
+            p.href === activa ? "border-ink bg-ink text-on-accent" : "border-line bg-surface text-ink hover:border-ink"
           }`}
         >
           {p.label}
@@ -36,7 +38,8 @@ export const PESTANAS_EMBUDO = [
   { href: "/admin/retencion", label: "Retención" },
 ];
 
+// Actividad primero: es la vista que más se usa.
 export const PESTANAS_PERSONAS = [
-  { href: "/admin/usuarios", label: "Lista" },
   { href: "/admin/actividad", label: "Actividad" },
+  { href: "/admin/usuarios", label: "Lista" },
 ];

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Client } from "pg";
+import type { PoolClient } from "pg";
 import { isMinor, type AgeRange } from "@/lib/edad";
 
 // EL ÚNICO SQL QUE ESCRIBE LA EDAD.
@@ -21,7 +21,7 @@ export type ResultadoEdad = {
 };
 
 export async function guardarEdad(
-  c: Client,
+  c: PoolClient,
   args: {
     uid: string;
     range: AgeRange;

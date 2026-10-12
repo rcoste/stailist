@@ -11,6 +11,8 @@ import { construirFeed, etiqueta, ultimoUsoPorUsuario, vueltas } from "@/lib/adm
 import { DIAS_VENTANA, ZONA, diaEnZona, horaEnZona } from "@/lib/admin/adquisicion";
 import { diasEntre } from "@/lib/admin/retencion";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, itemPrivatePaths, type ItemImageRow } from "@/lib/item-image";
+import { PASOS, tiemposDe } from "@/lib/admin/embudo";
+import { Checkpoints } from "../../_compartido/checkpoints";
 
 // LA FICHA DE UNA PERSONA, con la línea de tiempo primero (replanteo del
 // admin, 2026-10-09). Lo que Roberto pregunta de alguien es siempre lo mismo:
@@ -88,7 +90,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
     // La actividad: el MISMO cruce de fuentes que /admin/actividad, acotado a
     // esta persona (añadir prendas no escribe evento; sale de `items`).
     supabase.from("events").select("user_id, outfit_id, type, data, created_at").eq("user_id", id),
-    supabase.from("items").select("id, user_id, created_at, deleted_at").eq("user_id", id),
+    supabase.from("items").select("id, user_id, source, created_at, deleted_at").eq("user_id", id),
     supabase.from("outfits").select("id, user_id, created_at, deleted_at").eq("user_id", id),
     supabase.from("trips").select("id, user_id, created_at, deleted_at").eq("user_id", id),
     supabase.from("wishlist_items").select("user_id, created_at").eq("user_id", id),
@@ -162,6 +164,24 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
   }
 
   const ultimoUso = ultimoUsoPorUsuario(fuentes).get(id) ?? null;
+
+  // Los checkpoints: los mismos escalones del embudo (lib/admin/embudo.ts),
+  // con la hora en que pasó por cada uno.
+  const tiempos = tiemposDe({
+    id,
+    etiqueta: "",
+    eventos: (actEvents ?? [])
+      .filter((e) => e.created_at)
+      .map((e) => ({ type: String(e.type), data: e.data as Record<string, unknown> | null, at: new Date(e.created_at as string).toISOString() })),
+    primeraFoto:
+      (actItems ?? [])
+        .filter((i) => i.source === "photo" && i.created_at)
+        .map((i) => new Date(i.created_at as string).toISOString())
+        .sort()[0] ?? null,
+    volvio: feed.filter((m) => regresos.has(m.key)).map((m) => m.at).sort()[0] ?? null,
+    ultimaActividad: ultimoUso ?? inicio,
+  });
+  const checkpoints = PASOS.map((p) => ({ id: p.id, label: p.label, cuando: tiempos[p.id] ?? null }));
   const ttv = (ttvEvent?.data as { seconds?: number } | null)?.seconds;
   const fotos = items.filter((i) => i.source === "photo").length;
   const arch = profile.style_archetype as { nombre?: string; descripcion?: string } | null;
@@ -227,6 +247,13 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
       </header>
 
       <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Hasta dónde llegó</h2>
+        <div className="rounded-lg border border-line bg-surface px-4 py-3">
+          <Checkpoints pasos={checkpoints} hora={(iso) => `${fechaCorta(diaEnZona(new Date(iso)))} ${horaEnZona(iso)}`} />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Línea de tiempo</h2>
         <p className="text-xs text-muted">
           Por día desde que empezó (día 0). “Abrió la app” es una vuelta sin nada más. Las tandas del
@@ -274,7 +301,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
         )}
       </section>
 
-      <details className="rounded-lg border border-line bg-surface">
+      <details open className="rounded-lg border border-line bg-surface">
         <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
           Perfil
           <span className="ml-2 text-xs font-normal text-muted">
@@ -312,7 +339,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
         </div>
       </details>
 
-      <details className="rounded-lg border border-line bg-surface">
+      <details open className="rounded-lg border border-line bg-surface">
         <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
           Clóset
           <span className="ml-2 text-xs font-normal text-muted">
@@ -348,7 +375,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
         </div>
       </details>
 
-      <details className="rounded-lg border border-line bg-surface">
+      <details open className="rounded-lg border border-line bg-surface">
         <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
           Looks
           <span className="ml-2 text-xs font-normal text-muted">{outfits?.length ?? 0} (los últimos 20)</span>

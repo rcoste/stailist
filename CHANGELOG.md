@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.370.0] - 2026-10-12 — Personas: rápido, con botones y checkpoints
+
+- Roberto: "le pico en Actividad y no funciona el clic". Sí funcionaba, pero
+  tardaba 3-5 s sin ninguna señal en pantalla. Tres arreglos de fondo:
+  - **Conexión reutilizada** (`lib/db.ts` pasa a un pool): abrir una conexión
+    a la base costaba ~1 s, y cada pantalla del admin abría dos o tres. Ahora
+    la segunda llamada cuesta lo que la consulta (72 ms contra 1.25 s).
+  - **La lista de Personas se suma en la base** (`cargarResumenPersonas`),
+    no en memoria con 6,000 filas; y la Actividad trae una ventana (7 días por
+    defecto, con 14 / 30 / todo) y pinta de a 300 líneas con "ver más".
+  - **Señal al hacer clic**: `app/admin/loading.tsx` enseña "cargando…" en el
+    instante del clic mientras el servidor arma la página.
+- Las pestañas son botones como los del menú (no un subrayado), y Personas
+  abre en Actividad, que es la vista que más se usa; Lista queda al lado.
+- La ficha de cada persona abre con **"Hasta dónde llegó"**: los 12
+  checkpoints del embudo en una línea de puntos (llenos los que pasó, en rojo
+  donde se quedó), y el perfil, el clóset y los looks vienen abiertos, no
+  plegados.
+
 ## [0.2.369.0] - 2026-10-12 — la prueba A/B: tu primer look con tu ropa
 
 - A la mitad de la gente nueva, en vez de la lista de básicos, el onboarding le

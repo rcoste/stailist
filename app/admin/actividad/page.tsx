@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 import { banderaDe, paisEnPalabras } from "@/lib/lugar";
-import { todasLasFilas } from "@/lib/todas-las-filas";
+import { cargarPersonas } from "@/lib/admin/personas-datos";
+import { desdeHace } from "@/lib/admin/embudo-datos";
+import { Chips } from "../_compartido/chips";
 import { construirFeed, etiqueta, porDia, sinBorradoresVacios, vueltas, type Momento } from "@/lib/admin/actividad";
 import { origenEnPalabras } from "@/lib/admin/campana";
 import { origenDesdeDato } from "@/lib/origen";
@@ -22,40 +23,20 @@ export const dynamic = "force-dynamic";
 export default async function ActividadPage({
   searchParams,
 }: {
-  searchParams: Promise<{ u?: string; t?: string }>;
+  searchParams: Promise<{ u?: string; t?: string; dias?: string; n?: string }>;
 }) {
   await requireAdmin();
-  const { u: filtroUsuario, t: filtroTipo } = await searchParams;
-  const supabase = await createClient();
+  const { u: filtroUsuario, t: filtroTipo, dias: diasQ, n: nQ } = await searchParams;
+  // Una ventana, no la historia entera: 7 días por defecto (lo que se mira),
+  // y "todo" a un clic. Pintar 1936 momentos costaba 4 s sin señal.
+  const dias = diasQ === "todo" ? null : [7, 14, 30].includes(Number(diasQ)) ? Number(diasQ) : 7;
+  // Y de a 300 líneas: "ver más" pide el doble. Es lo que pesa en pintar.
+  const tope = Math.max(300, Number(nQ) || 0);
 
-  // De mil en mil: PostgREST corta en 1000 sin avisar y events/items ya pasan
-  // de dos mil (ver lib/admin/todas-las-filas.ts).
-  const [perfilesRaw, items, outfits, trips, wishlist, events] = await Promise.all([
-    todasLasFilas((d, h) =>
-      supabase
-        .from("profiles")
-        .select("id, email, created_at, pais, origen, como_nos_conocio, is_admin")
-        .order("id")
-        .range(d, h)
-    ),
-    todasLasFilas((d, h) => supabase.from("items").select("id, user_id, created_at, deleted_at").order("id").range(d, h)),
-    todasLasFilas((d, h) => supabase.from("outfits").select("id, user_id, created_at, deleted_at").order("id").range(d, h)),
-    todasLasFilas((d, h) => supabase.from("trips").select("id, user_id, created_at, deleted_at").order("id").range(d, h)),
-    todasLasFilas((d, h) => supabase.from("wishlist_items").select("user_id, created_at").order("id").range(d, h)),
-    todasLasFilas((d, h) =>
-      supabase.from("events").select("user_id, outfit_id, type, data, created_at").order("id").range(d, h)
-    ),
-  ]);
-
-  const perfiles = perfilesRaw as {
-    id: string;
-    email: string | null;
-    created_at: string | null;
-    pais: string | null;
-    origen: unknown;
-    como_nos_conocio: string | null;
-    is_admin: boolean | null;
-  }[];
+  // Una sola ida a la base (lib/admin/personas-datos.ts): antes eran ~10
+  // consultas paginadas y 3 s sin señal en pantalla.
+  const { perfiles, fuentes } = await cargarPersonas(dias ? desdeHace(dias) : null);
+  const { items, outfits, trips, wishlist, events } = fuentes;
   const correo = new Map(perfiles.map((p) => [p.id, p.email ?? p.id.slice(0, 8)]));
   const paisDe = new Map(perfiles.map((p) => [p.id, p.pais]));
   const llegoPor = new Map(
@@ -116,6 +97,15 @@ export default async function ActividadPage({
         tipo={filtroTipo ?? ""}
       />
 
+      <Chips
+        titulo="ver"
+        opciones={[7, 14, 30, "todo"].map((d) => ({
+          href: `/admin/actividad?dias=${d}${filtroUsuario ? `&u=${filtroUsuario}` : ""}${filtroTipo ? `&t=${filtroTipo}` : ""}`,
+          label: d === "todo" ? "todo" : `últimos ${d} días`,
+          activo: d === "todo" ? dias === null : dias === d,
+        }))}
+      />
+
       <p className="text-xs text-muted">
         {visibles.length} momento{visibles.length === 1 ? "" : "s"}
         {visibles.length !== feed.length ? ` de ${feed.length}` : ""}
@@ -128,7 +118,7 @@ export default async function ActividadPage({
         <p className="text-sm text-muted">Nada que enseñar con este filtro.</p>
       ) : (
         <div className="flex flex-col gap-5">
-          {porDia(visibles).map((d) => (
+          {porDia(visibles.slice(0, tope)).map((d) => (
             <section key={d.dia} className="flex flex-col gap-2">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
                 {diaLegible(d.dia)}
@@ -147,6 +137,14 @@ export default async function ActividadPage({
               </ul>
             </section>
           ))}
+          {visibles.length > tope ? (
+            <Link
+              href={`/admin/actividad?dias=${dias ?? "todo"}&n=${tope * 2}${filtroUsuario ? `&u=${filtroUsuario}` : ""}${filtroTipo ? `&t=${filtroTipo}` : ""}`}
+              className="self-center rounded-full border border-line bg-surface px-4 py-2 text-sm text-ink hover:border-ink"
+            >
+              ver más ({visibles.length - tope} más)
+            </Link>
+          ) : null}
         </div>
       )}
     </div>
