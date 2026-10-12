@@ -25,16 +25,25 @@ const CELDA: Record<Celda, string> = {
 export default async function Retencion({
   searchParams,
 }: {
-  searchParams: Promise<{ dias?: string; origen?: string; pais?: string; ver?: string }>;
+  searchParams: Promise<{ dias?: string; origen?: string; pais?: string; ver?: string; quienes?: string }>;
 }) {
   await requireAdmin();
   const q = await searchParams;
   const dias = PERIODOS.includes(Number(q.dias) as (typeof PERIODOS)[number]) ? Number(q.dias) : 30;
-  const f = { dias, origen: q.origen || "todas", pais: q.pais || "todos", ver: q.ver === "volvieron" ? "volvieron" : "todas" };
+  const f = {
+    dias,
+    origen: q.origen || "todas",
+    pais: q.pais || "todos",
+    ver: q.ver === "volvieron" ? "volvieron" : "todas",
+    // Por defecto, quien llegó a su primer look: es el universo del criterio
+    // de paro, y sin esto la tabla abría con decenas de borradores que nunca
+    // llegaron a nada (2026-10-11, visto en pantalla).
+    quienes: q.quienes === "todas" ? "todas" : "primer-look",
+  };
 
   const { hoy, desde } = periodo(dias);
   const todas = await cargarRetencion(desde);
-  const personas = todas.filter((p) => pasaFiltro(p, f));
+  const personas = todas.filter((p) => pasaFiltro(p, f) && (f.quienes === "todas" || p.primerLook));
   const { campanas, paises } = opcionesDe(todas);
   const puntos = curva(personas, hoy);
   const semana = volvieronEnSuSemana(personas, hoy);
@@ -43,7 +52,7 @@ export default async function Retencion({
 
   const href = (cambio: Partial<typeof f>) => {
     const n = { ...f, ...cambio };
-    return `/admin/retencion?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}&ver=${n.ver}`;
+    return `/admin/retencion?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}&ver=${n.ver}&quienes=${n.quienes}`;
   };
   const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 
@@ -68,6 +77,13 @@ export default async function Retencion({
         />
         <ChipsQuien origen={f.origen} pais={f.pais} campanas={campanas} paises={paises} href={href} />
         <Chips
+          titulo="quiénes"
+          opciones={[
+            { href: href({ quienes: "primer-look" }), label: "llegaron a su primer look", activo: f.quienes === "primer-look" },
+            { href: href({ quienes: "todas" }), label: "todas, aunque se quedaran en el onboarding", activo: f.quienes === "todas" },
+          ]}
+        />
+        <Chips
           titulo="ver"
           opciones={[
             { href: href({ ver: "todas" }), label: `todas (${personas.length})`, activo: f.ver === "todas" },
@@ -76,21 +92,25 @@ export default async function Retencion({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+      {/* El número grande es "cuántas de cuántas": con muestras de 6 o de 2, un
+          "0%" o un "17%" en grande engaña más de lo que informa. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {puntos.map((p) => (
           <div key={p.dia} className="flex flex-col gap-0.5 rounded-lg border border-line bg-surface px-3 py-2.5">
             <span className="text-xs text-muted">{p.dia === 1 ? "volvieron al día siguiente" : `volvieron el día ${p.dia}`}</span>
-            <span className="text-xl font-bold tabular-nums text-ink">{pct(p.volvieron, p.de)}</span>
-            <span className="text-[11px] text-muted">
-              {p.volvieron} de {p.de}
+            <span className="text-xl font-bold tabular-nums text-ink">
+              {p.volvieron} <span className="text-sm font-normal text-muted">de {p.de}</span>
             </span>
+            <span className="text-[11px] text-muted">{p.de ? pct(p.volvieron, p.de) : "nadie ha llegado a ese día"}</span>
           </div>
         ))}
         <div className="flex flex-col gap-0.5 rounded-lg border border-ink bg-surface px-3 py-2.5">
           <span className="text-xs text-muted">volvieron en su primera semana</span>
-          <span className="text-xl font-bold tabular-nums text-ink">{pct(semana.volvieron, semana.de)}</span>
+          <span className="text-xl font-bold tabular-nums text-ink">
+            {semana.volvieron} <span className="text-sm font-normal text-muted">de {semana.de}</span>
+          </span>
           <span className="text-[11px] text-muted">
-            {semana.volvieron} de {semana.de} con la semana cerrada
+            {semana.de ? `${pct(semana.volvieron, semana.de)} · con la semana cerrada` : "nadie ha cerrado su semana"}
           </span>
         </div>
       </div>

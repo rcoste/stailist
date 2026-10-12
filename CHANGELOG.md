@@ -21,6 +21,10 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   el mismo número. Las campañas sin gasto en 3 días van plegadas como
   pausadas; "Se lo pusieron" (siempre 0) sale de la tabla; MXN y US$
   rotulados; en el celular, una tarjeta por campaña en vez de la tabla.
+- **Retención:** abre con quien llegó a su primer look (el universo del
+  criterio de paro); antes abría con decenas de borradores que nunca llegaron
+  a nada. Hay un chip para ver a todas. Los cuadros dicen "4 de 32" en grande
+  y el porcentaje en chico: con muestras de 6 o de 2, un "0%" en grande engaña.
 - Gráficas sin librería en `app/admin/_compartido/graficas.tsx`.
 
 ## [0.2.367.0] - 2026-10-10 — volver a una pestaña abierta cuenta como volver

@@ -13,7 +13,7 @@ import type { PersonaRetencion } from "@/lib/admin/retencion";
 // interpolaciones son constantes de adquisicion.ts; lo variable va en $1/$2.
 const SQL_RETENCION = `
 with base as (
-  select p.id, p.email, p.pais, p.origen, coalesce(p.is_admin, false) as is_admin,
+  select p.id, p.email, p.pais, p.origen, coalesce(p.is_admin, false) as is_admin, p.onboarding_step,
     (select min(e.created_at) from public.events e
       where e.user_id = p.id and e.type = 'onboarding_started') as inicio
   from public.profiles p
@@ -23,7 +23,7 @@ rastro as (
   union all select i.user_id, i.created_at from public.items i
   union all select o.user_id, o.created_at from public.outfits o
 )
-select b.id, b.email, b.pais, b.origen,
+select b.id, b.email, b.pais, b.origen, b.onboarding_step,
   to_char((b.inicio at time zone '${ZONA}')::date, 'YYYY-MM-DD') as dia_inicio,
   coalesce(
     array_agg(distinct ((r.at at time zone '${ZONA}')::date - (b.inicio at time zone '${ZONA}')::date))
@@ -36,11 +36,16 @@ left join rastro r on r.user_id = b.id
 where b.inicio >= $1::timestamptz
   and not b.is_admin
   and coalesce(b.email, '') not like '%@stailist.app'
-group by b.id, b.email, b.pais, b.origen, b.inicio
+group by b.id, b.email, b.pais, b.origen, b.inicio, b.onboarding_step
 order by b.inicio desc
 `;
 
-export type PersonaRetencionConOrigen = PersonaRetencion & { campana: string; pais: string | null };
+export type PersonaRetencionConOrigen = PersonaRetencion & {
+  campana: string;
+  pais: string | null;
+  /** Llegó a su primer look: el universo del criterio de paro. */
+  primerLook: boolean;
+};
 
 /** Hoy en la Ciudad de México y el inicio del periodo (hace `dias` días). */
 export function periodo(dias: number, ahora: Date = new Date()): { hoy: string; desde: Date } {
@@ -58,5 +63,6 @@ export async function cargarRetencion(desde: Date): Promise<PersonaRetencionConO
     dias: (f.dias as number[]).map(Number).sort((a, b) => a - b),
     campana: campanaDe(origenDesdeDato(f.origen)),
     pais: (f.pais as string | null) ?? null,
+    primerLook: Number(f.onboarding_step ?? 0) >= 5,
   }));
 }
