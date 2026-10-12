@@ -107,6 +107,7 @@ export async function adoptarBorrador(borradorId: string, cuentaId: string): Pro
                 dispositivo = coalesce(b.dispositivo, d.dispositivo),
                 pais = coalesce(b.pais, d.pais),
                 region = coalesce(b.region, d.region),
+                onboarding_variante = coalesce(b.onboarding_variante, d.onboarding_variante),
                 updated_at = now()
            from public.profiles b
           where b.id = $1 and d.id = $2`,

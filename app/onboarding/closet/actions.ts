@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { alcanzaParaLooks } from "@/lib/onboarding-variante";
 import { createClient } from "@/lib/supabase/server";
 import { registrarEvento } from "@/lib/telemetria";
 
@@ -49,9 +50,19 @@ export async function saveCloset(
   // El mismo mínimo que el checklist (ver MINIMO en checklist.tsx): con una de
   // arriba y una de abajo sólo existe UNA combinación y el motor, que entrega
   // 2-3 looks, falla. Se repite aquí porque los ids viajan por el cliente.
-  const de = (cat: string) => archetypes.filter((a) => a.category === cat).length;
-  const vestidos = de("vestido");
-  if (de("top") + vestidos < 2 || de("bottom") + vestidos < 2 || de("calzado") < 1) {
+  // Cuentan también las prendas que ya entraron por foto: en la variante con
+  // fotos esta lista sólo COMPLEMENTA lo que faltó (lib/onboarding-variante.ts).
+  const { data: deFoto } = await supabase
+    .from("items")
+    .select("attrs")
+    .eq("user_id", user.id)
+    .eq("source", "photo")
+    .is("deleted_at", null);
+  const categorias = [
+    ...(deFoto ?? []).map((i) => (i.attrs as { categoria?: string } | null)?.categoria ?? null),
+    ...archetypes.map((a) => a.category),
+  ];
+  if (!alcanzaParaLooks(categorias)) {
     return {
       error: "Marca al menos dos de arriba, dos de abajo y unos zapatos — con menos no me alcanza para armarte looks distintos.",
     };

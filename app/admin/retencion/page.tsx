@@ -25,7 +25,7 @@ const CELDA: Record<Celda, string> = {
 export default async function Retencion({
   searchParams,
 }: {
-  searchParams: Promise<{ dias?: string; origen?: string; pais?: string; ver?: string; quienes?: string }>;
+  searchParams: Promise<{ dias?: string; origen?: string; pais?: string; ver?: string; quienes?: string; onboarding?: string }>;
 }) {
   await requireAdmin();
   const q = await searchParams;
@@ -39,6 +39,7 @@ export default async function Retencion({
     // de paro, y sin esto la tabla abría con decenas de borradores que nunca
     // llegaron a nada (2026-10-11, visto en pantalla).
     quienes: q.quienes === "todas" ? "todas" : "primer-look",
+    onboarding: q.onboarding || "todas",
   };
 
   const { hoy, desde } = periodo(dias);
@@ -52,11 +53,11 @@ export default async function Retencion({
 
   const href = (cambio: Partial<typeof f>) => {
     const n = { ...f, ...cambio };
-    return `/admin/retencion?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}&ver=${n.ver}&quienes=${n.quienes}`;
+    return `/admin/retencion?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}&ver=${n.ver}&quienes=${n.quienes}&onboarding=${n.onboarding}`;
   };
   const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 
-  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}`;
+  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}&onboarding=${f.onboarding}`;
 
   return (
     <div className="flex flex-col gap-5">
@@ -75,7 +76,7 @@ export default async function Retencion({
           titulo="empezó"
           opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `últimos ${d} días`, activo: f.dias === d }))}
         />
-        <ChipsQuien origen={f.origen} pais={f.pais} campanas={campanas} paises={paises} href={href} />
+        <ChipsQuien origen={f.origen} pais={f.pais} onboarding={f.onboarding} campanas={campanas} paises={paises} href={href} />
         <Chips
           titulo="quiénes"
           opciones={[

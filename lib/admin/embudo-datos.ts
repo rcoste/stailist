@@ -20,12 +20,12 @@ import type { PersonaEmbudo } from "@/lib/admin/embudo";
 // constantes; la fecha y la lista de eventos viajan como parámetros.
 const SQL_EMBUDO = `
 with base as (
-  select p.id, p.email, p.pais, p.origen, coalesce(p.is_admin, false) as is_admin,
+  select p.id, p.email, p.pais, p.origen, p.onboarding_variante, coalesce(p.is_admin, false) as is_admin,
     (select min(e.created_at) from public.events e
       where e.user_id = p.id and e.type = 'onboarding_started') as inicio
   from public.profiles p
 )
-select b.id, b.email, b.pais, b.origen, b.inicio,
+select b.id, b.email, b.pais, b.origen, b.onboarding_variante, b.inicio,
   coalesce((select json_agg(json_build_object('type', e.type, 'data', e.data, 'at', e.created_at)
               order by e.created_at)
             from public.events e
@@ -52,7 +52,13 @@ where b.inicio >= $1::timestamptz
   and coalesce(b.email, '') not like '%@stailist.app'
 `;
 
-export type PersonaConOrigen = PersonaEmbudo & { campana: string; fuente: string; pais: string | null };
+export type PersonaConOrigen = PersonaEmbudo & {
+  campana: string;
+  fuente: string;
+  pais: string | null;
+  /** 'basicos' | 'fotos' | null (antes de la prueba A/B). */
+  variante: string | null;
+};
 
 /** Todo instante a ISO con Z: el JSON trae "+00:00" y pg trae Date, y se comparan como texto. */
 const iso = (x: unknown): string | null => (x == null ? null : new Date(x as string).toISOString());
@@ -81,6 +87,7 @@ export async function cargarEmbudo(desde: Date): Promise<PersonaConOrigen[]> {
       campana: campanaDe(o),
       fuente: fuenteDe(o),
       pais: (f.pais as string | null) ?? null,
+      variante: (f.onboarding_variante as string | null) ?? null,
     };
   });
 }

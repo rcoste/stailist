@@ -35,7 +35,7 @@ export const PASOS = [
   { id: "conocio", label: "cómo nos conoció" },
   { id: "swipes", label: "swipes de looks" },
   { id: "colorimetria", label: "colorimetría" },
-  { id: "prendas", label: "prendas básicas" },
+  { id: "prendas", label: "prendas básicas (o las 3 fotos)" },
   { id: "correo", label: "confirmó su correo" },
   { id: "objetivo", label: "objetivo" },
   { id: "primer_look", label: "llegó a su primer look" },
@@ -65,6 +65,9 @@ export function pasoDeEvento(e: EventoPaso): PasoId | null {
   const d = e.data ?? {};
   const paso = typeof d.paso === "string" ? d.paso : null;
   if (paso === "genero" || paso === "edad" || paso === "conocio" || paso === "correo") return paso;
+  // Las 3 fotos reemplazan a la lista de básicos en la variante 'fotos'
+  // (lib/onboarding-variante.ts): es el mismo escalón del embudo.
+  if (paso === "fotos") return "prendas";
   if (paso) return null;
   switch (Number(d.step)) {
     case 1:

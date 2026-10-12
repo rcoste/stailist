@@ -141,6 +141,7 @@ export async function cargarCampana(desde: string, ahora: Date = new Date()): Pr
     dias: r.dias,
     origen: r.origen,
     como_nos_conocio: r.como_nos_conocio ?? null,
+    onboarding_variante: r.onboarding_variante ?? null,
   }));
   const filas = todas.filter((f) => f.dia_inicio >= desde);
 

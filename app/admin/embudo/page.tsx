@@ -18,17 +18,17 @@ export const dynamic = "force-dynamic";
 
 const PERIODOS = [14, 30, 60] as const;
 
-type Filtros = { dias: number; origen: string; pais: string };
+type Filtros = { dias: number; origen: string; pais: string; onboarding: string };
 
 export default async function Embudo({
   searchParams,
 }: {
-  searchParams: Promise<{ dias?: string; origen?: string; pais?: string }>;
+  searchParams: Promise<{ dias?: string; origen?: string; pais?: string; onboarding?: string }>;
 }) {
   await requireAdmin();
   const q = await searchParams;
   const dias = PERIODOS.includes(Number(q.dias) as (typeof PERIODOS)[number]) ? Number(q.dias) : 14;
-  const f: Filtros = { dias, origen: q.origen || "todas", pais: q.pais || "todos" };
+  const f: Filtros = { dias, origen: q.origen || "todas", pais: q.pais || "todos", onboarding: q.onboarding || "todas" };
 
   const desde = desdeHace(dias);
   const [todas, landing] = await Promise.all([cargarEmbudo(desde), visitasLanding(diaEnZona(desde))]);
@@ -78,10 +78,10 @@ export default async function Embudo({
   const base = filas[0].llegaron;
   const href = (cambio: Partial<Filtros>) => {
     const n = { ...f, ...cambio };
-    return `/admin/embudo?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}`;
+    return `/admin/embudo?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}&onboarding=${n.onboarding}`;
   };
 
-  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}`;
+  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}&onboarding=${f.onboarding}`;
 
   return (
     <div className="flex flex-col gap-5">
@@ -101,7 +101,7 @@ export default async function Embudo({
           titulo="empezó"
           opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `últimos ${d} días`, activo: f.dias === d }))}
         />
-        <ChipsQuien origen={f.origen} pais={f.pais} campanas={campanas} paises={paises} href={href} />
+        <ChipsQuien origen={f.origen} pais={f.pais} onboarding={f.onboarding} campanas={campanas} paises={paises} href={href} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

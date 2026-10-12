@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { marcarPaso } from "@/lib/embudo-marcas";
 import { COOKIE_ORIGEN } from "@/lib/origen";
 import { OnboardingProgress } from "@/components/onboarding-progress";
-import { requireStep } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
+import { routeForStep } from "@/lib/onboarding";
 import { esBorrador } from "@/lib/borrador";
 import { createClient } from "@/lib/supabase/server";
 import { COLUMNA } from "../ancho";
@@ -25,7 +26,10 @@ import { CorreoForm } from "./correo-form";
 // anuncios nunca ven uno. Por eso no se pidió en la pantalla del objetivo, que
 // sí está medida.
 export default async function CorreoPage() {
-  await requireStep(3);
+  // Paso 3 (la lista de siempre) o paso 2 en la variante con fotos, que pide
+  // el correo antes de las fotos (lib/onboarding.ts).
+  const perfil = await getProfile();
+  if (perfil.onboarding_step !== 3 && perfil.onboarding_step !== 2) redirect(routeForStep(perfil.onboarding_step, perfil));
   const supabase = await createClient();
   if (!(await esBorrador(supabase))) redirect("/onboarding/objetivo");
   // "Llegó a la pantalla del correo", para el embudo del panel. Una vez por

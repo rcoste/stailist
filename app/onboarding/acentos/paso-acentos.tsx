@@ -17,11 +17,9 @@ import { guardarApetitoAcentos } from "@/app/perfil/actions";
 // opinión viendo las otras dos. Se elige, se ve, y se confirma.
 export function PasoAcentos({
   gender,
-  inicial,
-}: {
+  inicial, siguiente }: {
   gender: Gender;
-  inicial: ApetitoAcentos | null;
-}) {
+  inicial: ApetitoAcentos | null; /** A dónde va al terminar: la lista o las fotos (lib/onboarding.ts). */ siguiente: string }) {
   const router = useRouter();
   const [valor, setValor] = useState<ApetitoAcentos | null>(null);
   const [guardando, empezar] = useTransition();
@@ -40,7 +38,7 @@ export function PasoAcentos({
         setError(true);
         return;
       }
-      router.push("/onboarding/closet");
+      router.push(siguiente);
     });
   };
 
@@ -62,7 +60,7 @@ export function PasoAcentos({
           {guardando ? "guardando…" : "seguir"} <Icon name="flecha" size={19} />
         </button>
         <Link
-          href="/onboarding/closet"
+          href={siguiente}
           className="text-center text-sm text-muted underline underline-offset-4"
         >
           mejor luego

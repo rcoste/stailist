@@ -25,11 +25,11 @@ export default async function TuRopaPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("onboarding_step, hints_seen")
+    .select("onboarding_step, hints_seen, onboarding_variante, email")
     .eq("id", user.id)
     .single();
   if (!profile) redirect("/");
-  if ((profile.onboarding_step ?? 0) < ONBOARDING_COMPLETE) redirect(routeForStep(profile.onboarding_step ?? 0));
+  if ((profile.onboarding_step ?? 0) < ONBOARDING_COMPLETE) redirect(routeForStep(profile.onboarding_step ?? 0, profile));
 
   const { count } = await supabase
     .from("items")

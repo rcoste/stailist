@@ -60,7 +60,7 @@ export default async function RootPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("gender, onboarding_step, borrado_programado_para")
+    .select("gender, onboarding_step, borrado_programado_para, onboarding_variante, email")
     .eq("id", user.id)
     .single();
 
@@ -70,5 +70,5 @@ export default async function RootPage({
   // (lib/borrado-programado.ts). Entrar no la recupera sola.
   if (profile.borrado_programado_para) redirect(RUTA_CUENTA_PROGRAMADA);
   if (!profile.gender) redirect("/onboarding/genero");
-  redirect(routeForStep(profile.onboarding_step));
+  redirect(routeForStep(profile.onboarding_step, profile));
 }

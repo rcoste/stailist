@@ -4,8 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import { Checklist, type CatalogItem } from "./checklist";
 import { IntroCloset } from "./intro-closet";
 
-export default async function ClosetOnboardingPage() {
+export default async function ClosetOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ complemento?: string }>;
+}) {
   const profile = await requireStep(2);
+  // Llega de las 3 fotos con menos de lo que alcanza para looks distintos
+  // (variante 'fotos' de lib/onboarding-variante.ts): la lista sólo complementa.
+  const complemento = (await searchParams).complemento;
 
   const supabase = await createClient();
   // Solo el subset curado del wow-moment (onboarding_subset). El resto de la
@@ -37,7 +44,9 @@ export default async function ClosetOnboardingPage() {
                 vive ahora en IntroCloset, con título e imagen: aquí abajo nadie
                 la leía. Queda solo la instrucción del momento. */}
             <p className="text-[15px] leading-snug text-muted">
-              Marca los que tengas. No hace falta que estén todos.
+              {complemento
+                ? `Con tus fotos me falta ${complemento} para armarte looks distintos. Marca lo que tengas de eso.`
+                : "Marca los que tengas. No hace falta que estén todos."}
             </p>
           </div>
 

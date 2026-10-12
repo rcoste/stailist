@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { getProfile } from "@/lib/auth";
-import { ONBOARDING_COMPLETE } from "@/lib/onboarding";
+import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
 import { PasoAcentos } from "./paso-acentos";
 
 // EL APETITO DE ACENTOS en el onboarding, JUSTO DESPUÉS DEL REVEAL DE COLORES.
@@ -23,6 +23,9 @@ export default async function AcentosPage() {
   if (!profile.gender) redirect("/onboarding/genero");
   if (profile.onboarding_step < 2) redirect("/onboarding/colorimetria");
   if (profile.onboarding_step >= ONBOARDING_COMPLETE) redirect("/hoy");
+  // A dónde sigue: la lista de básicos, o las fotos en la variante de la
+  // prueba A/B (lib/onboarding.ts). Se calcula aquí porque el paso es cliente.
+  const siguiente = routeForStep(2, profile);
 
   return (
     <section className="flex flex-1 flex-col gap-5 pt-4 lg:mx-auto lg:w-full lg:max-w-3xl">
@@ -41,7 +44,7 @@ export default async function AcentosPage() {
         <p className="text-sm text-muted">Ya sé qué colores te van. ¿Cuál de estos te pondrías tú?</p>
       </div>
 
-      <PasoAcentos gender={profile.gender} inicial={profile.acento_apetito} />
+      <PasoAcentos siguiente={siguiente} gender={profile.gender} inicial={profile.acento_apetito} />
     </section>
   );
 }

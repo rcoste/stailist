@@ -34,6 +34,10 @@ describe("pasoDeEvento", () => {
     expect(pasoDeEvento(ev("onboarding_step", "x", { step: 3, items: 32 }))).toBe("prendas");
     expect(pasoDeEvento(ev("onboarding_step", "x", { step: 3, paso: "correo" }))).toBe("correo");
   });
+  it("las 3 fotos de la prueba A/B cuentan como el escalón de las prendas", () => {
+    expect(pasoDeEvento(ev("onboarding_step", "x", { step: 3, paso: "fotos", prendas: 11 }))).toBe("prendas");
+    expect(pasoDeEvento(ev("onboarding_step", "x", { step: 2, paso: "fotos-incompletas" }))).toBeNull();
+  });
   it("las pantallas nuevas se leen por `paso`", () => {
     expect(pasoDeEvento(ev("onboarding_step", "x", { paso: "genero", step: 0 }))).toBe("genero");
     expect(pasoDeEvento(ev("onboarding_started", "x"))).toBe("inicio");
