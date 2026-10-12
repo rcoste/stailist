@@ -13,7 +13,7 @@ import {
   type ResumenCampana,
 } from "@/lib/admin/campana";
 import { cargarCampana, desdePorDefecto } from "@/lib/admin/campana-datos";
-import { estadoDelExperimento } from "@/lib/admin/hoy";
+import { campanaActiva, estadoDelExperimento } from "@/lib/admin/hoy";
 import { MODULOS, OBJETIVOS, TEXTO_ESTADO, esFilaDeCampana, type Estado } from "@/lib/admin/objetivos";
 import { OPCIONES_CONOCIO, etiquetaConocio } from "@/lib/como-nos-conocio";
 import { esCampanaDePrueba } from "@/lib/embudo-marcas";
@@ -71,7 +71,7 @@ function FilaCorta({ r }: { r: ResumenCampana }) {
         <span className="block text-xs text-muted">{r.fuente}</span>
       </td>
       <td className={`${td} text-right tabular text-ink`}>
-        {mxn(r.costoMxn)}
+        {r.costoMxn != null ? `${mxn(r.costoMxn)} MXN` : "—"}
         {r.clics != null ? <span className="block text-xs text-muted">{r.clics} clics</span> : null}
       </td>
       <td className={`${td} text-right tabular text-ink`}>{r.entraron}</td>
@@ -79,18 +79,64 @@ function FilaCorta({ r }: { r: ResumenCampana }) {
         {r.primerLook}
         {r.entraron ? <span className="block text-xs text-muted">{pct(r.primerLook, r.entraron)}</span> : null}
       </td>
-      <td className={`${td} text-right tabular text-ink`}>{mxn(costoPor(r, r.primerLook))}</td>
       <td className={`${td} text-right tabular text-ink`}>
-        {r.ventanaCerrada ? `${r.volvieron} de ${r.ventanaCerrada}` : "—"}
-        {r.ventanaCerrada ? (
-          <span className="block text-xs text-muted">{pct(r.volvieron, r.ventanaCerrada)}</span>
-        ) : r.primerLook ? (
-          <span className="block text-xs text-muted">en su semana</span>
-        ) : null}
+        {costoPor(r, r.primerLook) != null ? `${mxn(costoPor(r, r.primerLook))} MXN` : "—"}
       </td>
-      <td className={`${td} text-right tabular text-ink`}>{r.seLoPusieron}</td>
-      <td className={`${td} text-right tabular text-ink`}>${r.iaUsd.toFixed(2)}</td>
+      <td className={`${td} text-right tabular text-ink`}>
+        <Volvieron r={r} />
+      </td>
+      <td className={`${td} text-right tabular text-ink`}>US${r.iaUsd.toFixed(2)}</td>
     </tr>
+  );
+}
+
+/**
+ * Cuántas volvieron, contadas como el criterio de paro: "ya volvieron" incluye
+ * a quien sigue en su semana. Antes la columna sólo contaba semanas cerradas y
+ * decía "0 de 1" para una campaña cuya persona ya había vuelto dos veces.
+ */
+function Volvieron({ r }: { r: ResumenCampana }) {
+  if (r.entraron === 0) return <>—</>;
+  return (
+    <>
+      <span className={r.volvieronYa ? "font-semibold text-success" : "text-ink"}>{r.volvieronYa}</span>
+      <span className="block text-xs text-muted">
+        {r.ventanaCerrada ? `${r.ventanaCerrada} con su semana cerrada` : "nadie ha cerrado su semana"}
+      </span>
+    </>
+  );
+}
+
+/** En el celular, una tarjeta por campaña en vez de una tabla de ocho columnas. */
+function Tarjeta({ r }: { r: ResumenCampana }) {
+  const costo = costoPor(r, r.primerLook);
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-semibold text-ink">{r.campana === "—" ? "sin anuncio" : r.campana}</span>
+        <span className="text-xs text-muted">{r.fuente}</span>
+      </div>
+      <dl className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <dt className="text-muted">gasto</dt>
+          <dd className="tabular text-sm text-ink">{r.costoMxn != null ? `${mxn(r.costoMxn)}` : "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">primer look</dt>
+          <dd className="tabular text-sm text-ink">
+            {r.primerLook} <span className="text-muted">de {r.entraron}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted">volvieron</dt>
+          <dd className={`tabular text-sm ${r.volvieronYa ? "font-semibold text-success" : "text-ink"}`}>{r.volvieronYa}</dd>
+        </div>
+        <div className="col-span-3">
+          <dt className="text-muted">costo por primer look</dt>
+          <dd className="tabular text-sm text-ink">{costo != null ? `${mxn(costo)} MXN` : "—"}</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 
@@ -137,7 +183,12 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
   const tonoParo = { bien: "border-success", mal: "border-error", neutro: "border-line" }[estado.tono];
   // Sin mis recorridos de prueba (utm_campaign "prueba-…", lib/embudo-marcas.ts).
   const resumen = d.resumen.filter((r) => !esCampanaDePrueba(r.campana));
+  // Las campañas vivas arriba; las pausadas (sin gasto en 3 días) plegadas:
+  // eran seis filas de igual peso que las dos que importan.
+  const hoyDia = diaEnZona(ahora);
   const deAnuncio = resumen.filter(esFilaDeCampana);
+  const activas = deAnuncio.filter((r) => campanaActiva(d.gasto, r.campana, hoyDia));
+  const pausadas = deAnuncio.filter((r) => !campanaActiva(d.gasto, r.campana, hoyDia));
   const organicas = resumen.filter((r) => !esFilaDeCampana(r));
   const contestaron = d.filas.filter((f) => f.como_nos_conocio);
   const porRespuesta = [...OPCIONES_CONOCIO.map((o) => o.id), "omitido"]
@@ -177,7 +228,12 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
             <b>Por país</b> (cuentas de anuncios): {textoPaises(d.paises)}.
           </p>
         ) : null}
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+        <div className="flex flex-col gap-2 sm:hidden">
+          {activas.map((r) => (
+            <Tarjeta key={`${r.fuente}|${r.campana}`} r={r} />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface sm:block">
           <table className="w-full min-w-[760px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-muted">
@@ -190,27 +246,31 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
                 <th className={`${th} text-right`} title={`Anuncio + IA, a ${MXN_POR_USD} MXN por dólar (supuesto; se cambia con MXN_POR_USD)`}>
                   Costo por primer look
                 </th>
-                <th className={`${th} text-right`} title={`Otro día dentro de sus primeros ${DIAS_VENTANA}, de quien ya los cumplió`}>
+                <th className={`${th} text-right`} title={`De quienes llegaron a su primer look: otro día dentro de sus primeros ${DIAS_VENTANA}, contando a quien sigue en su semana (como el criterio de paro)`}>
                   Volvieron
                 </th>
-                <th className={`${th} text-right`} title="Personas con al menos un fit check o 'me lo puse'">
-                  Se lo pusieron
-                </th>
                 <th className={`${th} text-right`} title={`Lo que costó su IA en sus primeros ${DIAS_VENTANA} días`}>
-                  IA (USD)
+                  IA
                 </th>
               </tr>
             </thead>
             <tbody>
-              {deAnuncio.map((r) => (
+              {activas.map((r) => (
                 <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
               ))}
+              {organicas.length > 0 ? (
+                <tr className="border-b border-line bg-bg">
+                  <td colSpan={7} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                    Sin anuncio · el fondo contra el que se lee lo demás
+                  </td>
+                </tr>
+              ) : null}
               {organicas.map((r) => (
                 <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
               ))}
               {resumen.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className={`${td} text-center text-muted`}>
+                  <td colSpan={7} className={`${td} text-center text-muted`}>
                     Nadie entró desde {d.desde} y no hay gasto capturado.
                   </td>
                 </tr>
@@ -218,6 +278,23 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
             </tbody>
           </table>
         </div>
+        {pausadas.length > 0 ? (
+          <details className="rounded-lg border border-line bg-surface">
+            <summary className="cursor-pointer px-4 py-2.5 text-sm text-muted">
+              <b className="text-ink">{pausadas.length} campañas pausadas</b> (sin gasto en 3 días):{" "}
+              {pausadas.map((r) => r.campana).join(", ")}
+            </summary>
+            <div className="overflow-x-auto border-t border-line">
+              <table className="w-full min-w-[760px] border-collapse text-sm">
+                <tbody>
+                  {pausadas.map((r) => (
+                    <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ) : null}
         <p className="max-w-3xl text-xs text-muted">
           <b className="text-ink">Costo por primer look</b> = anuncio + IA a {MXN_POR_USD} MXN por dólar (supuesto; se
           cambia con MXN_POR_USD). Las filas sin anuncio son quien llegó por su cuenta o recomendada: el fondo

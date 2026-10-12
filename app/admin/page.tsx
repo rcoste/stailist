@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { banderaDe } from "@/lib/lugar";
-import { PARO_MINIMO_VOLVIERON, PARO_MUESTRA } from "@/lib/admin/campana";
+import { PARO_MUESTRA } from "@/lib/admin/campana";
 import { OBJETIVOS } from "@/lib/admin/objetivos";
-import { costoPorPrimerLookTotal, diasParaLaLectura, estadoDelExperimento, nombreDelDia } from "@/lib/admin/hoy";
+import { costoPorPrimerLookTotal, diasParaLaLectura, nombreDelDia, veredicto } from "@/lib/admin/hoy";
+import { Avance, BarrasPorDia } from "./_compartido/graficas";
 import { cargarHoy } from "@/lib/admin/hoy-datos";
 
 // HOY: ¿cómo va? La primera pantalla del admin desde el replanteo del
@@ -17,11 +18,12 @@ const mxn = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocal
 export default async function Hoy() {
   await requireAdmin();
   const d = await cargarHoy();
-  const estado = estadoDelExperimento(d.paro);
+  const v = veredicto(d.paro);
   const faltan = diasParaLaLectura(d.hoy);
   const costo = costoPorPrimerLookTotal(d.resumen);
   const [hoy, ayer] = d.dias;
-  const tono = { bien: "border-success", mal: "border-error", neutro: "border-line" }[estado.tono];
+  const tono = { bien: "border-success", mal: "border-error", neutro: "border-ink" }[v.tono];
+  const tonoTitulo = { bien: "text-success", mal: "text-error", neutro: "text-ink" }[v.tono];
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,28 +47,48 @@ export default async function Hoy() {
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">El experimento</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Dato titulo="primeros looks de anuncios" valor={`${d.paro.conPrimerLook} de ${PARO_MUESTRA}`} nota="la muestra del plan" />
-          <Dato
-            titulo="volvieron en su semana"
-            valor={`${d.paro.volvieron} de ${d.paro.conPrimerLook}`}
-            nota={`${d.paro.cerradas} ya cerraron su semana · la regla pide ${PARO_MINIMO_VOLVIERON}`}
-          />
-          <Dato titulo="costo por primer look" valor={mxn(costo)} nota="anuncio + IA, todas las campañas" />
-          <Dato
-            titulo="gasto de IA ayer"
-            valor={`$${d.ia[1].usd.toFixed(2)}`}
-            nota={d.ia[1].top ? `${d.ia[1].llamadas} llamadas · ${d.ia[1].top.correo} $${d.ia[1].top.usd.toFixed(2)}` : `${d.ia[1].llamadas} llamadas`}
+      <section className={`flex flex-col gap-4 rounded-lg border-2 bg-surface p-5 ${tono}`}>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">El experimento</span>
+          <h2 className={`text-xl font-bold ${tonoTitulo}`}>{v.titulo}</h2>
+          <p className="text-sm text-ink">{v.detalle}</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Avance titulo="Primeros looks de anuncios" n={v.muestra.n} de={v.muestra.de} nota="la muestra del plan" />
+          <Avance
+            titulo="Regresos en su primera semana"
+            n={v.regresos.n}
+            de={v.regresos.de}
+            nota="los que pide la regla para seguir"
+            tono="success"
           />
         </div>
-        <p className={`rounded-lg border bg-surface px-4 py-3 text-sm text-ink ${tono}`}>
-          <b>Criterio de paro:</b> {estado.frase}.{" "}
-          <Link href="/admin/campanas" className="text-muted underline underline-offset-2 hover:text-ink">
-            ver por campaña
+        <p className="border-t border-line pt-3 text-sm text-muted">
+          Costo por primer look <b className="tabular-nums text-ink">{mxn(costo)} MXN</b>{" "}
+          <span className="text-xs">(anuncio + IA)</span>
+          {" · "}IA ayer <b className="tabular-nums text-ink">US${d.ia[1].usd.toFixed(2)}</b>{" "}
+          <span className="text-xs">({d.ia[1].llamadas} llamadas)</span>
+          {" · "}
+          <Link href="/admin/campanas" className="underline underline-offset-2 hover:text-ink">
+            ver por campaña →
           </Link>
         </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Los últimos 14 días</h2>
+        <div className="rounded-lg border border-line bg-surface p-4">
+          <BarrasPorDia
+            dias={d.tendencia.map((t) => ({
+              etiqueta: t.dia.slice(8),
+              valores: [t.primerLook, t.volvieron],
+            }))}
+            series={[
+              { nombre: "llegaron a su primer look", tono: "ink" },
+              { nombre: "volvieron", tono: "success" },
+            ]}
+          />
+        </div>
       </section>
 
       <section className="flex flex-col gap-2">
@@ -113,32 +135,91 @@ export default async function Hoy() {
         )}
       </section>
 
-      {d.dias.map((dia) => (
-        <section key={dia.dia} className="flex flex-col gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Quién llegó {nombreDelDia(dia.dia, d.hoy)}
-          </h2>
-          {dia.llegaron.length === 0 ? (
-            <p className="text-sm text-muted">Nadie empezó el onboarding {nombreDelDia(dia.dia, d.hoy)}.</p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-              {dia.llegaron.map((l) => (
-                <li key={l.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5 text-sm">
-                  <span className="w-5 shrink-0" title={l.lugar ?? "sin país"}>
-                    {banderaDe(l.pais)}
-                  </span>
-                  <Link href={`/admin/usuarios/${l.id}`} className="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink">
-                    {l.correo}
-                  </Link>
-                  <span className={l.primerLook ? "text-ink" : "text-muted"}>{l.paso}</span>
-                  {l.fotos > 0 ? <span className="text-muted">· subió {l.fotos} prenda{l.fotos === 1 ? "" : "s"} con foto</span> : null}
-                  <span className="text-xs text-muted">· {l.origen}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ))}
+      {d.dias.map((dia) => {
+        // Quien llegó a su primer look va con nombre; quien se quedó en el
+        // camino se resume por pantalla (con el detalle plegado): eran 21
+        // renglones de "(sin correo todavía)" tapando todo lo demás.
+        const llegaron = dia.llegaron.filter((l) => l.primerLook);
+        const quedaron = dia.llegaron.filter((l) => !l.primerLook);
+        const porPaso = [...new Set(quedaron.map((l) => l.paso))]
+          .map((paso) => ({ paso, n: quedaron.filter((l) => l.paso === paso).length }))
+          .sort((a, b) => b.n - a.n);
+        return (
+          <section key={dia.dia} className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Quién llegó {nombreDelDia(dia.dia, d.hoy)}
+            </h2>
+            {dia.llegaron.length === 0 ? (
+              <p className="text-sm text-muted">Nadie empezó el onboarding {nombreDelDia(dia.dia, d.hoy)}.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+                {llegaron.map((l) => (
+                  <div key={l.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5 text-sm">
+                    <span className="w-5 shrink-0" title={l.lugar ?? "sin país"}>
+                      {banderaDe(l.pais)}
+                    </span>
+                    <Link href={`/admin/usuarios/${l.id}`} className="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink">
+                      {l.correo}
+                    </Link>
+                    <span className="text-ink">primer look</span>
+                    {l.fotos > 0 ? <span className="text-muted">· subió {l.fotos} prenda{l.fotos === 1 ? "" : "s"} con foto</span> : null}
+                    <span className="text-xs text-muted">· {l.origen}</span>
+                  </div>
+                ))}
+                {quedaron.length > 0 ? (
+                  <details className="px-4 py-2.5 text-sm">
+                    <summary className="cursor-pointer text-muted">
+                      <b className="text-ink">
+                        {quedaron.length} se quedaron en el onboarding
+                      </b>
+                      {": "}
+                      {porPaso.map((p) => `${p.n} ${p.paso.replace(/^se quedó /, "")}`).join(" · ")}
+                    </summary>
+                    <ul className="mt-2 flex flex-col gap-1">
+                      {quedaron.map((l) => (
+                        <li key={l.id} className="flex flex-wrap items-baseline gap-x-2 text-xs">
+                          <span className="w-5 shrink-0">{banderaDe(l.pais)}</span>
+                          <Link href={`/admin/usuarios/${l.id}`} className="text-ink underline decoration-line underline-offset-2">
+                            {l.correo}
+                          </Link>
+                          <span className="text-muted">{l.paso} · {l.origen}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Lo que dicen (últimos 7 días)</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Dato titulo="votaron 👍 un look" valor={String(d.voz.meGusta)} />
+          <Dato titulo="votaron 👎 un look" valor={String(d.voz.noMeGusta)} />
+          <Dato titulo="se pusieron un look" valor={String(d.voz.seLoPuso)} />
+          <Dato titulo="mandaron un reporte" valor={String(d.voz.reportes.length)} />
+        </div>
+        {d.voz.reportes.length > 0 ? (
+          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+            {d.voz.reportes.map((r) => (
+              <li key={r.cuando} className="flex flex-col gap-0.5 px-4 py-2.5 text-sm">
+                <span className="text-xs text-muted">
+                  {r.correo} · {r.tipo}
+                </span>
+                <span className="text-ink">“{r.texto}”</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-muted">
+            Nadie mandó un reporte. Casi nadie habla por su cuenta: para saber qué retiene hay que preguntarle a
+            quien volvió.
+          </p>
+        )}
+      </section>
 
       <p className="text-xs text-muted">
         Lo mismo llega por correo a las 8 de la mañana. Sin cuentas de admin ni de prueba. “Volvió” es

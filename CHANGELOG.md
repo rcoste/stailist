@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.368.0] - 2026-10-11 — Hoy y Campañas, vistos en pantalla
+
+- Primera vez que el admin replanteado se miró en el navegador (hasta aquí se
+  había verificado sólo con números). De lo que se vio:
+- **Hoy:** una caja de veredicto que dice en palabras si el experimento va
+  ("Todavía no se sabe: faltan 3 primeros looks y 3 regresos…") con dos barras
+  de avance (muestra 27 de 30, regresos 3 de 6); pesos y dólares rotulados
+  (antes "$123" junto a "$0.75" sin decir cuál era cuál); una gráfica de los
+  últimos 14 días (primeros looks y regresos por día); "Lo que dicen" (👍, 👎,
+  se lo pusieron, reportes de la semana); y "Quién llegó" con nombre sólo a
+  quien llegó a su primer look: las demás, resumidas por la pantalla donde se
+  quedaron (eran 21 renglones de "(sin correo todavía)").
+- **Campañas:** la columna "Volvieron" decía "0 de 1" para app-neutra aunque
+  su persona ya había vuelto dos veces: sólo contaba semanas cerradas. Ahora
+  cuenta como el criterio de paro (quien llegó a su primer look y ya volvió,
+  aunque su semana siga abierta), así que la suma de la columna y Hoy dicen
+  el mismo número. Las campañas sin gasto en 3 días van plegadas como
+  pausadas; "Se lo pusieron" (siempre 0) sale de la tabla; MXN y US$
+  rotulados; en el celular, una tarjeta por campaña en vez de la tabla.
+- **Retención:** abre con quien llegó a su primer look (el universo del
+  criterio de paro); antes abría con decenas de borradores que nunca llegaron
+  a nada. Hay un chip para ver a todas. Los cuadros dicen "4 de 32" en grande
+  y el porcentaje en chico: con muestras de 6 o de 2, un "0%" en grande engaña.
+- Gráficas sin librería en `app/admin/_compartido/graficas.tsx`.
+
 ## [0.2.367.0] - 2026-10-10 — volver a una pestaña abierta cuenta como volver
 
 - Arreglo de medición: la visita del día se anotaba sólo cuando el servidor
