@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.369.0] - 2026-10-12 — la prueba A/B: tu primer look con tu ropa
+
+- A la mitad de la gente nueva, en vez de la lista de básicos, el onboarding le
+  pide **3 fotos de outfits que usa** (de su carrete) y arma el primer look con
+  esa ropa. La otra mitad sigue viendo la lista de siempre. De qué lado cae
+  cada quien lo decide su id, una sola vez, y queda en
+  `profiles.onboarding_variante` (migración 0172) para comparar en el admin.
+- Por qué: desde que hay campaña, quien sube su ropa vuelve (4 de 12) y quien
+  no, no (1 de 24); la lista de básicos es un paso caro (2.4 min) y el primer
+  look que sale de ella no lo vota casi nadie (7 de 36). La apuesta es que un
+  look con SU ropa sí provoque algo. Predicción escrita antes: baja la tasa de
+  primer look, suben los votos y los regresos. Se lee en dos semanas, en
+  Embudo y Retención con el filtro "onboarding".
+- Cómo funciona la variante: colores → correo (subir fotos pide correo) → 3
+  fotos → objetivo → primer look. Se piden outfits, no prendas sueltas (una
+  foto de outfit trae 3-5 prendas; con 3 fotos salen 9-14). Si con las fotos
+  no alcanza para looks distintos, completa con la lista. "No tengo fotos a la
+  mano" lleva a la lista. Quien ya subió fotos no vuelve a ver "ahora, con tu
+  ropa" después del primer look.
+- Apagador: `ONBOARDING_PRUEBA_FOTOS=0` en Vercel deja de asignar la variante
+  a la gente nueva.
+- Admin: Embudo y Retención filtran por onboarding (lista / 3 fotos); Hoy
+  marca "3 fotos" en quién llegó; las 3 fotos cuentan como el escalón de las
+  prendas en el embudo.
+
 ## [0.2.368.0] - 2026-10-11 — Hoy y Campañas, vistos en pantalla
 
 - Primera vez que el admin replanteado se miró en el navegador (hasta aquí se

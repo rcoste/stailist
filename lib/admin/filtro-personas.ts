@@ -5,11 +5,17 @@ import { esCampanaDePrueba } from "@/lib/embudo-marcas";
 // cuando la tabla de retención necesitó los mismos: dos copias de "qué cuenta
 // como anuncio" terminan contando distinto.
 
-export type FiltroQuien = { origen: string; pais: string };
+export type FiltroQuien = { origen: string; pais: string; onboarding?: string };
 
 /** "—" es la campaña de quien no llegó por un anuncio (campanaDe en adquisicion.ts). */
-export function pasaFiltro(p: { campana: string; pais: string | null }, f: FiltroQuien): boolean {
+export function pasaFiltro(
+  p: { campana: string; pais: string | null; variante?: string | null },
+  f: FiltroQuien
+): boolean {
   if (esCampanaDePrueba(p.campana)) return false;
+  // La prueba A/B del onboarding (lib/onboarding-variante.ts): null se lee como básicos.
+  if (f.onboarding === "fotos" && p.variante !== "fotos") return false;
+  if (f.onboarding === "basicos" && p.variante === "fotos") return false;
   if (f.origen === "anuncios" && p.campana === "—") return false;
   if (f.origen === "organico" && p.campana !== "—") return false;
   if (!["todas", "anuncios", "organico"].includes(f.origen) && p.campana !== f.origen) return false;

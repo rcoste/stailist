@@ -65,6 +65,8 @@ export type Llegada = {
   paso: string;
   primerLook: boolean;
   fotos: number;
+  /** 'fotos' si cayó en la prueba del onboarding con fotos; null si no. */
+  variante: string | null;
 };
 
 /** Los números de un día: cuántas llegaron, cuántas al primer look, cuántas subieron ropa. */
@@ -93,6 +95,7 @@ export function resumenDelDia(filas: FilaPerfilAdquisicion[], extras: Map<string
         paso: pasoEnPalabras(f.onboarding_step, f.gender, !f.email),
         primerLook: f.onboarding_step >= 5,
         fotos: x?.fotos ?? 0,
+        variante: f.onboarding_variante ?? null,
       };
     })
     // Primero quien llegó más lejos: lo que importa arriba.

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
+import type { VarianteOnboarding } from "@/lib/onboarding-variante";
 import type {
   AssessmentQuestion,
   CapsuleMatch,
@@ -25,6 +26,8 @@ export type Profile = {
   // Rango de edad declarado (tras el género). Contexto de life-stage para el
   // motor + gate del aviso de menores. Ver lib/edad.ts.
   age_range: AgeRange | null;
+  /** Prueba A/B del onboarding con fotos (lib/onboarding-variante.ts); null = antes de la prueba. */
+  onboarding_variante?: VarianteOnboarding | null;
   /** 'semanal' | 'off' — opt-in del correo (B2). select("*") lo trae. */
   email_semanal: string | null;
   // Sello de que el menor DECLARÓ tener permiso (check del onboarding).
@@ -172,7 +175,7 @@ export async function requireOnboarded(): Promise<Profile> {
   if (!profile.gender) redirect("/onboarding/genero");
   if (!profile.age_range && !(await enVerComo())) redirect("/onboarding/edad");
   if (profile.onboarding_step < ONBOARDING_COMPLETE) {
-    redirect(routeForStep(profile.onboarding_step));
+    redirect(routeForStep(profile.onboarding_step, profile));
   }
   return profile;
 }
@@ -185,7 +188,7 @@ export async function requireStep(step: number): Promise<Profile> {
   if (!profile.gender) redirect("/onboarding/genero");
   if (!profile.age_range && !(await enVerComo())) redirect("/onboarding/edad");
   if (profile.onboarding_step !== step) {
-    redirect(routeForStep(profile.onboarding_step));
+    redirect(routeForStep(profile.onboarding_step, profile));
   }
   return profile;
 }

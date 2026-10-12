@@ -146,6 +146,7 @@ export function ImportCarreteFlow({
   headless = false,
   ref,
   unaFoto = false,
+  maxFotos,
   alTerminar,
 }: {
   /** Hace falta para guardar la foto original en la carpeta del usuario. */
@@ -155,6 +156,8 @@ export function ImportCarreteFlow({
   /** Una sola foto (la pantalla "ahora, con tu ropa", lib/tu-ropa.ts): pedir
    *  doce después del primer look es tarea; una de cuerpo entero trae 3-4 prendas. */
   unaFoto?: boolean;
+  /** Tope de fotos por tanda (las 3 del onboarding con fotos); sin él, MAX_FOTOS. */
+  maxFotos?: number;
   /** Si viene, el cierre no dice "ver mi clóset": ofrece seguir con lo que entró. */
   alTerminar?: { label: string; onClick: (guardadas: PrendaGuardada[]) => void };
 } = {}) {
@@ -241,7 +244,7 @@ export function ImportCarreteFlow({
 
   // --- 1) Selección → comprime y pasa a "revisar" (recorte opcional) ---
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, unaFoto ? 1 : MAX_FOTOS);
+    const files = Array.from(e.target.files ?? []).slice(0, unaFoto ? 1 : (maxFotos ?? MAX_FOTOS));
     if (inputRef.current) inputRef.current.value = "";
     if (files.length === 0) return;
 

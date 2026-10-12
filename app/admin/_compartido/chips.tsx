@@ -31,15 +31,18 @@ export function Chips({
 export function ChipsQuien({
   origen,
   pais,
+  onboarding = "todas",
   campanas,
   paises,
   href,
 }: {
   origen: string;
   pais: string;
+  /** La prueba A/B del onboarding con fotos (desde el 2026-10-12). */
+  onboarding?: string;
   campanas: string[];
   paises: string[];
-  href: (cambio: { origen?: string; pais?: string }) => string;
+  href: (cambio: { origen?: string; pais?: string; onboarding?: string }) => string;
 }) {
   return (
     <>
@@ -59,6 +62,14 @@ export function ChipsQuien({
           ...paises.map((p) => ({ valor: p, label: `${banderaDe(p) ?? ""} ${paisEnPalabras(p)}`.trim() })),
           { valor: "sin", label: "sin dato" },
         ].map((o) => ({ href: href({ pais: o.valor }), label: o.label, activo: pais === o.valor }))}
+      />
+      <Chips
+        titulo="onboarding"
+        opciones={[
+          { valor: "todas", label: "todas" },
+          { valor: "basicos", label: "lista de básicos" },
+          { valor: "fotos", label: "3 fotos (prueba)" },
+        ].map((o) => ({ href: href({ onboarding: o.valor }), label: o.label, activo: onboarding === o.valor }))}
       />
     </>
   );

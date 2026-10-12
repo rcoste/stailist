@@ -9,6 +9,7 @@ import { registrarEvento } from "@/lib/telemetria";
 import { createClient } from "@/lib/supabase/server";
 import { COLUMNA } from "../ancho";
 import { dispositivoDesdeUA } from "@/lib/dispositivo";
+import { elegirVariante } from "@/lib/onboarding-variante";
 import { lugarDesdeEncabezados } from "@/lib/lugar";
 
 // Primer paso del onboarding: define qué clóset armamos. No lleva barra de
@@ -37,6 +38,9 @@ export default async function GeneroPage() {
       onboarding_started_at: new Date().toISOString(),
       ...(lugar ? { pais: lugar.pais, region: lugar.region } : {}),
       ...(dispositivo && !verComo ? { dispositivo } : {}),
+      // La prueba A/B del onboarding con fotos (lib/onboarding-variante.ts) —
+      // de qué lado cae, una sola vez. Nunca en "ver como".
+      ...(verComo ? {} : { onboarding_variante: elegirVariante(profile.id) }),
     })
     .eq("id", profile.id)
     .is("onboarding_started_at", null)
@@ -47,7 +51,7 @@ export default async function GeneroPage() {
     await registrarEvento(supabase, {
       user_id: profile.id,
       type: "onboarding_started",
-      data: { dispositivo },
+      data: { dispositivo, variante: verComo ? null : elegirVariante(profile.id) },
     });
   }
 

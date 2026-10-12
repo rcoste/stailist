@@ -1,3 +1,5 @@
+import { esVarianteFotos } from "@/lib/onboarding-variante";
+
 // Mapa paso → ruta del onboarding. profiles.onboarding_step lleva la cuenta:
 // 0 = sin empezar … 4 = objetivo declarado (falta el wow), 5 = completo.
 // El perfil PERMANENTE va primero (gustos, colores, clóset); el objetivo —que
@@ -13,7 +15,20 @@ export const ONBOARDING_ROUTES = [
 
 export const ONBOARDING_COMPLETE = 5;
 
-export function routeForStep(step: number): string {
+/**
+ * A dónde va alguien en su paso. Con `perfil`, respeta la prueba A/B del
+ * onboarding con fotos (lib/onboarding-variante.ts): en la variante 'fotos' el
+ * paso 2 no es la lista de básicos sino las 3 fotos, y como subir fotos pide
+ * correo (Storage y la IA no abren sin él), un borrador va primero al correo.
+ * Sin `perfil` se asume la lista de siempre.
+ */
+export function routeForStep(
+  step: number,
+  perfil?: { onboarding_variante?: string | null; email?: string | null } | null
+): string {
   if (step >= ONBOARDING_COMPLETE) return "/hoy";
+  if (step === 2 && esVarianteFotos(perfil?.onboarding_variante)) {
+    return perfil?.email ? "/onboarding/fotos" : "/onboarding/correo";
+  }
   return ONBOARDING_ROUTES[Math.max(0, step)];
 }

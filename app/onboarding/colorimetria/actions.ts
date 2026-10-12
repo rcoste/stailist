@@ -1,6 +1,14 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { routeForStep } from "@/lib/onboarding";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Tras los colores: la lista de básicos, o las fotos si cayó en esa variante (lib/onboarding.ts). */
+async function siguienteTrasColores(supabase: SupabaseClient, userId: string): Promise<string> {
+  const { data: p } = await supabase.from("profiles").select("onboarding_variante, email").eq("id", userId).maybeSingle();
+  return routeForStep(2, p);
+}
 import { createClient } from "@/lib/supabase/server";
 import { registrarEvento } from "@/lib/telemetria";
 import {
@@ -72,7 +80,7 @@ export async function skipColorimetria(): Promise<void> {
     data: { step: 2, source: "skip_colorimetria" },
   });
 
-  redirect("/onboarding/closet");
+  redirect(await siguienteTrasColores(supabase, user.id));
 }
 
 // Edición manual del resultado: la usuaria corrige su estación. Actualiza la

@@ -12,6 +12,7 @@ import { isMinor, type AgeRange } from "@/lib/edad";
 import { registrarEvento } from "@/lib/telemetria";
 import { adoptarBorrador } from "@/lib/borrador-adoptar";
 import { marcarPaso } from "@/lib/embudo-marcas";
+import { routeForStep } from "@/lib/onboarding";
 
 // EL CORREO, AL FINAL (ver lib/borrador.ts). Dos pasos, como el login, y con el
 // MISMO mecanismo del login (signInWithOtp + verifyOtp): así el correo sale con
@@ -93,7 +94,7 @@ export async function verificarCodigo(_prev: CorreoState, formData: FormData): P
 
   const { data: perfil } = await supabase
     .from("profiles")
-    .select("age_range")
+    .select("age_range, onboarding_step, onboarding_variante")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -117,5 +118,7 @@ export async function verificarCodigo(_prev: CorreoState, formData: FormData): P
     });
   }
 
-  redirect("/onboarding/objetivo");
+  // La lista de siempre sigue al objetivo (paso 3); la variante con fotos, a
+  // las fotos (paso 2): lib/onboarding.ts decide.
+  redirect(routeForStep(perfil?.onboarding_step ?? 3, { onboarding_variante: perfil?.onboarding_variante, email }));
 }

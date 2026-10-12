@@ -49,7 +49,7 @@ const DESDE = `b.inicio + interval '${MINIMO_PARA_VOLVER}'`;
 const HASTA = `b.inicio + interval '${DIAS_VENTANA + 1} days'`;
 export const SQL_ADQUISICION = `
 with base as (
-  select p.id, p.email, p.gender, p.onboarding_step, p.origen, p.como_nos_conocio,
+  select p.id, p.email, p.gender, p.onboarding_step, p.origen, p.como_nos_conocio, p.onboarding_variante,
     coalesce(p.onboarding_started_at, p.created_at) as inicio
   from public.profiles p
   where (p.onboarding_started_at is not null or p.gender is not null)
@@ -84,7 +84,8 @@ select
     ) a
   ) as dias,
   b.origen,
-  b.como_nos_conocio
+  b.como_nos_conocio,
+  b.onboarding_variante
 from base b
 order by b.inicio desc
 `;
@@ -103,6 +104,8 @@ export type FilaPerfilAdquisicion = {
   origen: unknown;
   /** Lo que dijo que la trajo (lib/como-nos-conocio.ts); null = no vio la pregunta. */
   como_nos_conocio: string | null;
+  /** Prueba A/B del onboarding (lib/onboarding-variante.ts); null = antes de la prueba. */
+  onboarding_variante?: string | null;
 };
 
 export type ResumenOrigen = {

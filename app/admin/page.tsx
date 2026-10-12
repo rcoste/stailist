@@ -164,6 +164,7 @@ export default async function Hoy() {
                     <span className="text-ink">primer look</span>
                     {l.fotos > 0 ? <span className="text-muted">· subió {l.fotos} prenda{l.fotos === 1 ? "" : "s"} con foto</span> : null}
                     <span className="text-xs text-muted">· {l.origen}</span>
+                    {l.variante === "fotos" ? <span className="rounded-full border border-line px-1.5 text-[11px] text-muted">3 fotos</span> : null}
                   </div>
                 ))}
                 {quedaron.length > 0 ? (
