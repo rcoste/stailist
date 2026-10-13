@@ -57,7 +57,8 @@ export const CUOTAS: Record<Recurso, number> = {
   // más caro del día de quien reportó el clóset a medias ($3.66, 53 dibujos):
   // cuando topaba, lo hacía contra el freno de dinero con el mensaje genérico.
   // 40 = una cápsula entera (la más grande medida pide 35), igual que el tope
-  // del precalentado por visita (lib/prewarm-renders.ts).
+  // del precalentado por visita (lib/prewarm-renders.ts). A $0.033 cada uno
+  // (Nano Banana 2.1 desde el 2026-10-13), un día entero son ~$1.30.
   ideal: 40,
 };
 

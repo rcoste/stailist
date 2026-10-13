@@ -35,9 +35,11 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
     era "por hoy ya; mañana sigo".
   - El mensaje del freno de dinero dice qué pasó y cuándo vuelve, en vez de
     "necesita un respiro, vuelve en un rato" (eran 24 horas).
-  - `scripts/ab-dibujo-capsula.ts`: pares a ciegas entre el modelo "rápido"
-    y Nano Banana 2.1 con el prompt real de la cápsula, para decidir el modelo
-    midiendo (el barato cuesta la mitad).
+  - **Los dibujos de prendas desde texto pasan a Nano Banana 2.1** (cápsula
+    ideal, prendas descritas sin foto, arquetipos): la mitad de precio
+    ($0.033 contra $0.067). Decidido a ciegas con el prompt real
+    (`scripts/ab-dibujo-capsula.ts`, 8 pares): 5 empates, 2-1, que con ocho
+    pares es empate; el empate a mitad de precio decide.
   - QA de frenos (2026-10-13): tres caminos de IA no tenían NINGUNO —los
     looks de la cápsula (motor), los sustitutos del viaje (81 llamadas de una
     persona en una noche) y el swap al rechazar una prenda de la cápsula—. Ya

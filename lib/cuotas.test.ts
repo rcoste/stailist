@@ -52,9 +52,9 @@ const repetir = (tarea: string, n: number, costo = 0): Fila[] =>
 // try-on. El avatar sigue en Pro ($0.134). Si el modelo de ropa cambia, este
 // número cambia con él —y el test del freno de dinero dice si el tope de dinero aguanta.
 const PRECIO_IMAGEN_ROPA = 0.034;
-// El dibujo de una prenda ideal de la cápsula con el modelo "rápido" de Gemini
-// ($0.067 medidos). Si la cápsula pasa a Nano Banana 2.1, baja a PRECIO_IMAGEN_ROPA.
-const PRECIO_DIBUJO_IDEAL = 0.067;
+// El dibujo de una prenda ideal de la cápsula: Nano Banana 2.1 desde el
+// 2026-10-13 (antes el "rápido", a $0.067), mismo precio que la ropa.
+const PRECIO_DIBUJO_IDEAL = PRECIO_IMAGEN_ROPA;
 
 afterEach(() => {
   delete process.env.MOTOR_PAUSADO;

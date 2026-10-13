@@ -15,10 +15,11 @@ import { costoImagenUsd } from "@/lib/proveedores/precios";
 export const GEMINI_MODEL = "gemini-3-pro-image";
 
 /**
- * El rápido. Ya se usaba para los arquetipos del catálogo y para el fallback
- * texto→imagen del render de prenda; se nombra aquí para que las dos puertas
- * salgan del mismo lugar. Medido el 2026-08-06 sobre la MISMA foto y el MISMO
- * prompt de extracción: pro 17.3s de promedio, flash 7.7s.
+ * El rápido. Se usó para los arquetipos del catálogo y el fallback
+ * texto→imagen del render de prenda hasta el 2026-10-13 (hoy esas puertas van
+ * en GEMINI_MODEL_ROPA, ver lib/archetype-image.ts). Medido el 2026-08-06
+ * sobre la MISMA foto y el MISMO prompt de extracción: pro 17.3s de promedio,
+ * flash 7.7s.
  */
 export const GEMINI_MODEL_RAPIDO = "gemini-3.1-flash-image";
 
@@ -33,10 +34,13 @@ export const GEMINI_MODEL_RAPIDO = "gemini-3.1-flash-image";
  * hubo diferencia y en las otras 22 se veían igual. Cuesta la cuarta parte
  * ($0.0336 contra $0.134 por imagen) y tarda menos (13.5 s contra 20 s).
  *
- * Sólo estas dos tareas, que son las que se probaron. El avatar (crear tu
- * cara y cuerpo), la foto de destino y el probador de la wishlist siguen en
- * GEMINI_MODEL: no entraron en la prueba, y en el avatar el parecido es lo
- * que más importa. Lo que nadie dibuja bien con ningún modelo: un logo
+ * Sólo las tareas que se probaron: esas dos, y desde el 2026-10-13 también
+ * el dibujo de prendas desde texto (lib/archetype-image.ts: la cápsula ideal,
+ * las prendas descritas sin foto, los arquetipos del catálogo), medido aparte
+ * con scripts/ab-dibujo-capsula.ts porque texto→imagen es otra tarea. El
+ * avatar (crear tu cara y cuerpo), la foto de destino y el probador de la
+ * wishlist siguen en GEMINI_MODEL: no entraron en la prueba, y en el avatar
+ * el parecido es lo que más importa. Lo que nadie dibuja bien con ningún modelo: un logo
  * repetido (bolso con monograma); ahí la foto original rinde más.
  */
 export const GEMINI_MODEL_ROPA = "gemini-nano-banana-2.1";
