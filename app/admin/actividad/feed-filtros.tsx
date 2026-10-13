@@ -17,6 +17,11 @@ const TIPO_LABEL: Record<string, string> = {
   cartera: "cartera",
 };
 
+// El mismo tamaño y estilo que `Control` del kit (app/admin/_ui): h-9, borde
+// de línea, esquina chica. Es un select y no un enlace porque la lista de
+// personas no cabe en chips.
+const SEL = "h-9 max-w-full rounded-sm border border-line bg-surface px-3 text-sm font-medium text-ink2 hover:border-ink hover:text-ink";
+
 export function FeedFiltros({
   gente,
   tipos,
@@ -38,12 +43,9 @@ export function FeedFiltros({
     router.replace(p.size ? `/admin/actividad?${p}` : "/admin/actividad");
   };
 
-  const sel =
-    "rounded-sm border border-line bg-surface px-2.5 py-1.5 text-sm text-ink";
-
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <select className={sel} value={usuario} onChange={(e) => set("u", e.target.value)}>
+      <select className={SEL} value={usuario} onChange={(e) => set("u", e.target.value)}>
         <option value="">todas las personas</option>
         {gente.map((g) => (
           <option key={g.id} value={g.id}>
@@ -51,7 +53,7 @@ export function FeedFiltros({
           </option>
         ))}
       </select>
-      <select className={sel} value={tipo} onChange={(e) => set("t", e.target.value)}>
+      <select className={SEL} value={tipo} onChange={(e) => set("t", e.target.value)}>
         <option value="">todo lo que hacen</option>
         {tipos.map((t) => (
           <option key={t} value={t}>
@@ -63,7 +65,7 @@ export function FeedFiltros({
         <button
           type="button"
           onClick={() => router.replace("/admin/actividad")}
-          className="text-sm font-semibold text-muted underline underline-offset-2 hover:text-ink"
+          className="text-[13px] text-muted hover:text-ink"
         >
           limpiar
         </button>

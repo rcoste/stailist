@@ -1,17 +1,20 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
-import { banderaDe, paisEnPalabras } from "@/lib/lugar";
 import { cargarPersonas } from "@/lib/admin/personas-datos";
 import { desdeHace } from "@/lib/admin/embudo-datos";
-import { Chips } from "../_compartido/chips";
 import { construirFeed, etiqueta, porDia, sinBorradoresVacios, vueltas, type Momento } from "@/lib/admin/actividad";
 import { origenEnPalabras } from "@/lib/admin/campana";
 import { origenDesdeDato } from "@/lib/origen";
 import { diaEnZona, horaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { FeedFiltros } from "./feed-filtros";
-import { PESTANAS_PERSONAS, Pestanas } from "../_compartido/pestanas";
+import { Chip, Control, Encabezado, Filtros, Lista, Panel, Pestanas, Quien, Renglon, Vacio } from "../_ui";
 
 export const dynamic = "force-dynamic";
+
+// Actividad primero: es la vista que más se usa.
+const PESTANAS_PERSONAS = [
+  { href: "/admin/actividad", label: "Actividad" },
+  { href: "/admin/usuarios", label: "Lista" },
+];
 
 // EL FEED: qué hizo la gente, en orden. El porqué del cruce de fuentes (y por
 // qué NO sale de `events`) vive en lib/admin/actividad.ts.
@@ -78,52 +81,45 @@ export default async function ActividadPage({
     .sort((a, b) => a.label.localeCompare(b.label));
   const tipos = [...new Set(feed.map(familia))].sort();
 
+  const sufijo = `${filtroUsuario ? `&u=${filtroUsuario}` : ""}${filtroTipo ? `&t=${filtroTipo}` : ""}`;
+
   return (
-    <div className="flex flex-col gap-5">
+    <>
       <Pestanas pestanas={PESTANAS_PERSONAS} activa="/admin/actividad" />
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">Actividad</h1>
-        <p className="text-sm text-muted">
-          Todo lo que hace la gente, en orden: prendas, looks, votos, viajes,
-          espejos y altas. “Abrió la app” es una vuelta sin nada más. Las
-          tandas del mismo rato se cuentan como una.
-        </p>
-      </header>
+      <Encabezado titulo="Actividad" sub="Todo lo que hace la gente, en orden. Las tandas del mismo rato cuentan como una." />
 
-      <FeedFiltros
-        gente={gente}
-        tipos={tipos}
-        usuario={filtroUsuario ?? ""}
-        tipo={filtroTipo ?? ""}
-      />
+      {/* Los dos selects (persona, tipo) y el periodo, en una sola línea que envuelve. */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 [&>div]:mb-0">
+        <FeedFiltros gente={gente} tipos={tipos} usuario={filtroUsuario ?? ""} tipo={filtroTipo ?? ""} />
+        <Filtros
+          grupos={[
+            {
+              titulo: "ver",
+              opciones: [7, 14, 30, "todo"].map((d) => ({
+                href: `/admin/actividad?dias=${d}${sufijo}`,
+                label: d === "todo" ? "todo" : `últimos ${d} días`,
+                activo: d === "todo" ? dias === null : dias === d,
+              })),
+            },
+          ]}
+        />
+      </div>
 
-      <Chips
-        titulo="ver"
-        opciones={[7, 14, 30, "todo"].map((d) => ({
-          href: `/admin/actividad?dias=${d}${filtroUsuario ? `&u=${filtroUsuario}` : ""}${filtroTipo ? `&t=${filtroTipo}` : ""}`,
-          label: d === "todo" ? "todo" : `últimos ${d} días`,
-          activo: d === "todo" ? dias === null : dias === d,
-        }))}
-      />
-
-      <p className="text-xs text-muted">
+      <p className="mb-4 text-[13px] text-muted">
         {visibles.length} momento{visibles.length === 1 ? "" : "s"}
         {visibles.length !== feed.length ? ` de ${feed.length}` : ""}
-        {vacios > 0
-          ? ` · ${vacios} borrador${vacios === 1 ? "" : "es"} vacío${vacios === 1 ? "" : "s"} sin enseñar (tocaron el botón y nunca abrieron el onboarding)`
-          : ""}
+        {vacios > 0 ? ` · ${vacios} borrador${vacios === 1 ? "" : "es"} vacío${vacios === 1 ? "" : "s"} sin enseñar` : ""}
       </p>
 
       {visibles.length === 0 ? (
-        <p className="text-sm text-muted">Nada que enseñar con este filtro.</p>
+        <Panel sinPadding>
+          <Vacio>Nada que enseñar con este filtro.</Vacio>
+        </Panel>
       ) : (
-        <div className="flex flex-col gap-5">
+        <>
           {porDia(visibles.slice(0, tope)).map((d) => (
-            <section key={d.dia} className="flex flex-col gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
-                {diaLegible(d.dia)}
-              </h2>
-              <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+            <Panel key={d.dia} titulo={diaLegible(d.dia)} sinPadding className="mb-4">
+              <Lista>
                 {d.momentos.map((m) => (
                   <Fila
                     key={m.key}
@@ -134,20 +130,19 @@ export default async function ActividadPage({
                     vuelta={regreso.get(m.key) ?? null}
                   />
                 ))}
-              </ul>
-            </section>
+              </Lista>
+            </Panel>
           ))}
           {visibles.length > tope ? (
-            <Link
-              href={`/admin/actividad?dias=${dias ?? "todo"}&n=${tope * 2}${filtroUsuario ? `&u=${filtroUsuario}` : ""}${filtroTipo ? `&t=${filtroTipo}` : ""}`}
-              className="self-center rounded-full border border-line bg-surface px-4 py-2 text-sm text-ink hover:border-ink"
-            >
-              ver más ({visibles.length - tope} más)
-            </Link>
+            <div className="flex justify-center">
+              <Control href={`/admin/actividad?dias=${dias ?? "todo"}&n=${tope * 2}${sufijo}`}>
+                ver más ({visibles.length - tope} más)
+              </Control>
+            </div>
           ) : null}
-        </div>
+        </>
       )}
-    </div>
+    </>
   );
 }
 
@@ -157,7 +152,6 @@ export default async function ActividadPage({
 function familia(m: Momento): string {
   return m.tipo.startsWith("ev:") ? m.tipo.slice(3) : m.tipo;
 }
-
 
 function Fila({
   m,
@@ -175,34 +169,18 @@ function Fila({
   vuelta: number | null;
 }) {
   const detalle = origen ?? extra(m);
-  const bandera = banderaDe(pais);
   return (
-    <li className="flex items-baseline gap-3 px-4 py-2.5">
-      <span className="w-[52px] shrink-0 tabular-nums text-xs text-faint">
-        {horaEnZona(m.at)}
-      </span>
-      {/* Ancho fijo aunque no haya dato: las cuentas sin país (anteriores al
-          2026-10-06, o borradores que nunca abrieron el onboarding) quedan con
-          el hueco y los correos siguen alineados. */}
-      <span className="w-5 shrink-0 text-sm" title={pais ? paisEnPalabras(pais) : "sin país"}>
-        {bandera}
-      </span>
-      <Link
-        href={`/admin/usuarios/${m.userId}`}
-        className="shrink-0 max-w-[38%] truncate text-sm font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-      >
-        {email}
-      </Link>
-      <span className="min-w-0 flex-1 text-sm text-muted">
-        {vuelta != null ? (
-          <span className="mr-1.5 inline-block rounded-full border border-success px-1.5 text-[11px] font-semibold text-success">
-            volvió · {vuelta === 1 ? "al día siguiente" : `a los ${vuelta} días`}
-          </span>
-        ) : null}
+    <Renglon>
+      <span className="w-12 shrink-0 text-xs tabular-nums text-faint">{horaEnZona(m.at)}</span>
+      {/* Quien ya trae su tope de ancho (55%) y trunca adentro; envolverlo en
+          otro flex lo colapsaba a tres letras. */}
+      <Quien correo={email} pais={pais} href={`/admin/usuarios/${m.userId}`} />
+      {vuelta != null ? <Chip tono="success">volvió · {vuelta === 1 ? "al día siguiente" : `a los ${vuelta} días`}</Chip> : null}
+      <span className="min-w-0 flex-1 text-sm text-ink2">
         {etiqueta(m)}
         {detalle ? <span className="text-faint"> · {detalle}</span> : null}
       </span>
-    </li>
+    </Renglon>
   );
 }
 

@@ -1,24 +1,24 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { diaEnZona } from "@/lib/admin/adquisicion";
 import { esCampanaDePrueba } from "@/lib/embudo-marcas";
-import { PASOS, construirEmbudo, duracion, tiemposDe } from "@/lib/admin/embudo";
+import { construirEmbudo, duracion, tiemposDe } from "@/lib/admin/embudo";
 import { cargarEmbudo, desdeHace, visitasLanding } from "@/lib/admin/embudo-datos";
 import { opcionesDe, pasaFiltro } from "@/lib/admin/filtro-personas";
-import { Chips, ChipsQuien } from "../_compartido/chips";
-import { PESTANAS_EMBUDO, Pestanas } from "../_compartido/pestanas";
+import { gruposDeQuien } from "../_compartido/filtros-quien";
+import { Chip, Cifra, Encabezado, Fila, Filtros, Lista, Panel, Quien, Renglon, Vacio } from "../_ui";
 
-// EL EMBUDO POR PASOS (2026-10-09): a dónde llega la gente, cuánto tarda en
-// cada paso y quién se quedó en cuál. La lógica y sus tres reglas (llegar es
-// monótono, "se quedó" vs "en curso", volver con el criterio del plan) viven en
-// lib/admin/embudo.ts. Sin RLS: se vuelve a exigir admin aunque el layout ya lo
-// haga, como en adquisición.
+// EL EMBUDO POR PASOS (2026-10-09; capa visual con el kit desde 2026-10-13): a
+// dónde llega la gente, cuánto tarda en cada paso y quién se quedó en cuál. La
+// lógica y sus tres reglas (llegar es monótono, "se quedó" vs "en curso",
+// volver con el criterio del plan) viven en lib/admin/embudo.ts; las
+// definiciones en pantalla, en /admin/como-se-cuenta. Sin RLS: se vuelve a
+// exigir admin aunque el layout ya lo haga.
 
 export const dynamic = "force-dynamic";
 
 const PERIODOS = [14, 30, 60] as const;
 
-type Filtros = { dias: number; origen: string; pais: string; onboarding: string };
+type Filtro = { dias: number; origen: string; pais: string; onboarding: string };
 
 export default async function Embudo({
   searchParams,
@@ -28,13 +28,12 @@ export default async function Embudo({
   await requireAdmin();
   const q = await searchParams;
   const dias = PERIODOS.includes(Number(q.dias) as (typeof PERIODOS)[number]) ? Number(q.dias) : 14;
-  const f: Filtros = { dias, origen: q.origen || "todas", pais: q.pais || "todos", onboarding: q.onboarding || "todas" };
+  const f: Filtro = { dias, origen: q.origen || "todas", pais: q.pais || "todos", onboarding: q.onboarding || "todas" };
 
   const desde = desdeHace(dias);
   const [todas, landing] = await Promise.all([cargarEmbudo(desde), visitasLanding(diaEnZona(desde))]);
   const personas = todas.filter((p) => pasaFiltro(p, f));
   const filas = construirEmbudo(personas);
-
   const { campanas, paises } = opcionesDe(todas);
 
   // La landing no sabe de países: con ese filtro no hay con qué compararla.
@@ -76,121 +75,99 @@ export default async function Embudo({
   });
 
   const base = filas[0].llegaron;
-  const href = (cambio: Partial<Filtros>) => {
+  const primerLook = filas.find((x) => x.id === "primer_look")?.llegaron ?? 0;
+  const href = (cambio: Partial<Filtro>) => {
     const n = { ...f, ...cambio };
     return `/admin/embudo?dias=${n.dias}&origen=${encodeURIComponent(n.origen)}&pais=${n.pais}&onboarding=${n.onboarding}`;
   };
 
-  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}&onboarding=${f.onboarding}`;
-
   return (
-    <div className="flex flex-col gap-5">
-      <Pestanas pestanas={PESTANAS_EMBUDO} activa="/admin/embudo" sufijo={sufijo} />
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">Embudo</h1>
-        <p className="text-sm text-muted">
-          Paso por paso, de quienes empezaron el onboarding en el periodo: cuántas llegan a cada
-          pantalla, cuánto tardan desde la anterior y quién se quedó en cuál. Cada paso cuenta a quien
-          lo terminó; “se quedaron en esta pantalla” son quienes terminaron el anterior y no éste, y
-          llevan más de media hora sin moverse.
-        </p>
-      </header>
+    <>
+      <Encabezado titulo="Embudo" sub="Paso por paso: cuántas llegan a cada pantalla, cuánto tardan y quién se quedó en cuál." />
 
-      <div className="flex flex-col gap-2 text-sm">
-        <Chips
-          titulo="empezó"
-          opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `últimos ${d} días`, activo: f.dias === d }))}
-        />
-        <ChipsQuien origen={f.origen} pais={f.pais} onboarding={f.onboarding} campanas={campanas} paises={paises} href={href} />
-      </div>
+      <Filtros
+        grupos={[
+          {
+            titulo: "empezó",
+            opciones: PERIODOS.map((d) => ({ href: href({ dias: d }), label: `${d} días`, activo: f.dias === d })),
+          },
+          ...gruposDeQuien({ origen: f.origen, pais: f.pais, onboarding: f.onboarding, campanas, paises, href }),
+        ]}
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Dato titulo="visitaron la landing" valor={visitas == null ? "—" : String(visitas)} />
-        <Dato titulo="empezaron el onboarding" valor={String(base)} />
-        <Dato
-          titulo="llegaron al primer look"
-          valor={`${filas.find((x) => x.id === "primer_look")?.llegaron ?? 0}`}
+      <Fila cols={4}>
+        <Cifra label="Visitaron la landing" valor={visitas == null ? "—" : visitas} sub={visitas == null ? "la landing no sabe de países" : undefined} />
+        <Cifra label="Empezaron el onboarding" valor={base} />
+        <Cifra
+          label="Llegaron al primer look"
+          valor={primerLook}
+          unidad={base ? `${Math.round((primerLook / base) * 100)}% de los que empezaron` : undefined}
         />
-        <Dato
-          titulo="tardan al primer look (mediana)"
+        <Cifra
+          label="Tardan al primer look"
           valor={duracion(medianaPrimerLook)}
-          nota={alPrimerLook.length ? `promesa: 2 min · ${bajoDosMin} de ${alPrimerLook.length} la cumplen` : undefined}
+          unidad={medianaPrimerLook != null ? "mediana" : undefined}
+          sub={alPrimerLook.length ? `promesa: 2 min · ${bajoDosMin} de ${alPrimerLook.length} la cumplen` : undefined}
         />
-      </div>
+      </Fila>
 
-      {base === 0 ? (
-        <p className="text-sm text-muted">Nadie empezó el onboarding con estos filtros.</p>
-      ) : (
-        <ol className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-          {filas.map((fila, i) => {
-            const previo = i === 0 ? null : filas[i - 1].llegaron;
-            const pctPrevio = previo ? Math.round((fila.llegaron / previo) * 100) : null;
-            const ancho = base ? Math.round((fila.llegaron / base) * 100) : 0;
-            return (
-              <li key={fila.id} className="flex flex-col gap-1.5 px-4 py-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-semibold text-ink">
-                    {i + 1}. {fila.label}
-                    {i === fuga ? (
-                      <span className="ml-2 rounded-full border border-error px-1.5 text-[11px] font-semibold text-error">
-                        la mayor fuga
+      <Panel titulo="Paso por paso" sinPadding>
+        {base === 0 ? (
+          <Vacio>Nadie empezó el onboarding con estos filtros.</Vacio>
+        ) : (
+          <Lista>
+            {filas.map((fila, i) => {
+              const previo = i === 0 ? null : filas[i - 1].llegaron;
+              const pctPrevio = previo ? Math.round((fila.llegaron / previo) * 100) : null;
+              const ancho = Math.round((fila.llegaron / base) * 100);
+              const datos = [
+                i > 0 ? `tardan ${duracion(fila.medianaSeg)} desde el anterior` : null,
+                fila.enCurso ? `${fila.enCurso} en esta pantalla ahora` : null,
+                fila.aunPueden ? `${fila.aunPueden} todavía dentro de su semana` : null,
+              ].filter((x): x is string => x != null);
+              return (
+                <Renglon key={fila.id} className="py-3">
+                  <div className="flex w-full min-w-0 flex-col gap-1.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="flex min-w-0 items-baseline gap-2 text-sm font-bold text-ink">
+                        <span className="truncate">
+                          {i + 1}. {fila.label}
+                        </span>
+                        {i === fuga ? <Chip tono="error">la mayor fuga</Chip> : null}
                       </span>
+                      <span className="shrink-0 text-sm tabular-nums text-ink">
+                        {fila.llegaron}
+                        {pctPrevio != null ? <span className="text-muted"> · {pctPrevio}% del anterior</span> : null}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-tile">
+                      <div className="h-full rounded-full bg-ink" style={{ width: `${ancho}%` }} />
+                    </div>
+                    {datos.length > 0 ? (
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted">
+                        {datos.map((d) => (
+                          <span key={d}>{d}</span>
+                        ))}
+                      </div>
                     ) : null}
-                  </span>
-                  <span className="shrink-0 tabular-nums text-sm text-ink">
-                    {fila.llegaron}
-                    {pctPrevio != null ? <span className="text-muted"> · {pctPrevio}% del anterior</span> : null}
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-tile">
-                  <div className="h-full rounded-full bg-ink" style={{ width: `${ancho}%` }} />
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-                  {i > 0 ? <span>tardan {duracion(fila.medianaSeg)} desde el anterior</span> : null}
-                  {fila.enCurso ? <span>{fila.enCurso} en esta pantalla ahora</span> : null}
-                  {fila.aunPueden ? <span>{fila.aunPueden} todavía dentro de su semana</span> : null}
-                </div>
-                {fila.seQuedaron.length ? (
-                  <details className="text-xs">
-                    <summary className="cursor-pointer font-semibold text-ink">
-                      {fila.seQuedaron.length} se quedaron en esta pantalla
-                    </summary>
-                    <ul className="mt-1.5 flex flex-col gap-1">
-                      {fila.seQuedaron.map((p) => (
-                        <li key={p.id}>
-                          <Link
-                            href={`/admin/usuarios/${p.id}`}
-                            className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-                          >
-                            {p.etiqueta}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      <p className="text-xs text-muted">
-        Los pasos son {PASOS.length}. Quien llegó a uno cuenta como que pasó por los anteriores aunque
-        falte su registro (el onboarding cambió con el tiempo). “Volvió” es el criterio del plan: otro
-        día, 4 horas después de empezar y dentro de 7 días. No cuentan las cuentas de admin ni las de
-        prueba.
-      </p>
-    </div>
-  );
-}
-
-function Dato({ titulo, valor, nota }: { titulo: string; valor: string; nota?: string }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-lg border border-line bg-surface px-3 py-2.5">
-      <span className="text-xs text-muted">{titulo}</span>
-      <span className="text-xl font-bold tabular-nums text-ink">{valor}</span>
-      {nota ? <span className="text-[11px] text-muted">{nota}</span> : null}
-    </div>
+                    {fila.seQuedaron.length > 0 ? (
+                      // La única excepción al "sin acordeones": despliega nombres, no esconde una sección.
+                      <details className="text-[13px] text-muted">
+                        <summary className="cursor-pointer hover:text-ink">{fila.seQuedaron.length} se quedaron aquí</summary>
+                        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                          {fila.seQuedaron.map((p) => (
+                            <Quien key={p.id} correo={p.etiqueta} href={`/admin/usuarios/${p.id}`} />
+                          ))}
+                        </div>
+                      </details>
+                    ) : null}
+                  </div>
+                </Renglon>
+              );
+            })}
+          </Lista>
+        )}
+      </Panel>
+    </>
   );
 }

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import { Encabezado, Fila, Panel } from "../_ui";
 
 // EL TALLER: las herramientas de CONSTRUIR el producto, apartadas de las de
 // LEER el experimento (2026-10-09). Antes compartían la barra con el pulso y
 // eran 10 de las 17 entradas del menú; con Stailist en pausa (opción A) casi
-// no se tocan, pero tampoco se tiran: cada una vale cuando se retome.
+// no se tocan, pero tampoco se tiran: cada una vale cuando se retome. Sus
+// pantallas conservan el diseño viejo a propósito: son instrumentos de uso
+// ocasional y rehacerlos no cambia ninguna lectura.
 
 export const dynamic = "force-dynamic";
 
@@ -46,29 +49,24 @@ const GRUPOS: { titulo: string; herramientas: { href: string; nombre: string; qu
 export default async function Taller() {
   await requireAdmin();
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">Taller</h1>
-        <p className="text-sm text-muted">
-          Las herramientas para construir y afinar el producto. Lo que se mira a diario está en
-          las otras cuatro entradas del menú.
-        </p>
-      </header>
-      {GRUPOS.map((g) => (
-        <section key={g.titulo} className="flex flex-col gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">{g.titulo}</h2>
-          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-            {g.herramientas.map((h) => (
-              <li key={h.href}>
-                <Link href={h.href} className="flex flex-col gap-0.5 px-4 py-3 hover:bg-bg">
-                  <span className="text-sm font-semibold text-ink">{h.nombre}</span>
-                  <span className="text-xs text-muted">{h.que}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
+    <>
+      <Encabezado titulo="Taller" sub="Las herramientas para construir y afinar el producto. Lo de leer el experimento está en el menú." />
+      <Fila cols={2}>
+        {GRUPOS.map((g) => (
+          <Panel key={g.titulo} titulo={g.titulo} sinPadding>
+            <ul className="flex flex-col">
+              {g.herramientas.map((h) => (
+                <li key={h.href} className="border-t border-line2 first:border-t-0">
+                  <Link href={h.href} className="flex flex-col gap-0.5 px-5 py-3 transition-colors duration-200 hover:bg-tile">
+                    <span className="text-sm font-semibold text-ink">{h.nombre}</span>
+                    <span className="text-[13px] text-muted">{h.que}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        ))}
+      </Fila>
+    </>
   );
 }

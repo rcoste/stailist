@@ -1,20 +1,23 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
-import { banderaDe, paisEnPalabras } from "@/lib/lugar";
 import { DIAS_TABLA, curva, diasEntre, fila, volvieronEnSuSemana, type Celda } from "@/lib/admin/retencion";
 import { cargarRetencion, periodo } from "@/lib/admin/retencion-datos";
 import { opcionesDe, pasaFiltro } from "@/lib/admin/filtro-personas";
-import { Chips, ChipsQuien } from "../_compartido/chips";
-import { PESTANAS_EMBUDO, Pestanas } from "../_compartido/pestanas";
+import { gruposDeQuien } from "../_compartido/filtros-quien";
+import { Cifra, Encabezado, Fila, Filtros, Panel, Quien, Tabla, Td, Th, Vacio } from "../_ui";
 
-// LA TABLA DE RETENCIÓN (2026-10-09): una fila por persona, una columna por día
-// desde que empezó, relleno si ese día entró. Las reglas (qué es "entrar" y por
-// qué el denominador es quien ya vivió ese día) viven en lib/admin/retencion.ts.
-// Sin RLS: se vuelve a exigir admin aunque el layout ya lo haga.
+// LA TABLA DE RETENCIÓN (2026-10-09; capa visual con el kit desde 2026-10-13):
+// una fila por persona, una columna por día desde que empezó, relleno si ese
+// día entró. Las reglas (qué es "entrar" y por qué el denominador es quien ya
+// vivió ese día) viven en lib/admin/retencion.ts; las definiciones en
+// pantalla, en /admin/como-se-cuenta. Sin RLS: se vuelve a exigir admin aunque
+// el layout ya lo haga.
 
 export const dynamic = "force-dynamic";
 
 const PERIODOS = [14, 30, 60] as const;
+
+/** Los días que van como cifra grande; el resto de la curva va en una línea apagada. */
+const DIAS_GRANDES = [1, 3, 7];
 
 const CELDA: Record<Celda, string> = {
   entro: "bg-ink",
@@ -57,120 +60,102 @@ export default async function Retencion({
   };
   const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 
-  const sufijo = `?dias=${f.dias}&origen=${encodeURIComponent(f.origen)}&pais=${f.pais}&onboarding=${f.onboarding}`;
+  const grandes = puntos.filter((p) => DIAS_GRANDES.includes(p.dia));
+  const chicos = puntos.filter((p) => !DIAS_GRANDES.includes(p.dia));
 
   return (
-    <div className="flex flex-col gap-5">
-      <Pestanas pestanas={PESTANAS_EMBUDO} activa="/admin/retencion" sufijo={sufijo} />
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">Retención</h1>
-        <p className="text-sm text-muted">
-          Una fila por persona y una columna por día desde que empezó el onboarding (día 0). El
-          cuadro negro es que ese día entró a la app; el gris, que no; el vacío, que ese día todavía no
-          llega. Volver es el criterio del plan: otro día y al menos 4 horas después de empezar.
-        </p>
-      </header>
+    <>
+      <Encabezado titulo="Retención" sub="Una fila por persona, un cuadro por día desde que empezó: negro si entró, gris si no." />
 
-      <div className="flex flex-col gap-2 text-sm">
-        <Chips
-          titulo="empezó"
-          opciones={PERIODOS.map((d) => ({ href: href({ dias: d }), label: `últimos ${d} días`, activo: f.dias === d }))}
-        />
-        <ChipsQuien origen={f.origen} pais={f.pais} onboarding={f.onboarding} campanas={campanas} paises={paises} href={href} />
-        <Chips
-          titulo="quiénes"
-          opciones={[
-            { href: href({ quienes: "primer-look" }), label: "llegaron a su primer look", activo: f.quienes === "primer-look" },
-            { href: href({ quienes: "todas" }), label: "todas, aunque se quedaran en el onboarding", activo: f.quienes === "todas" },
-          ]}
-        />
-        <Chips
-          titulo="ver"
-          opciones={[
-            { href: href({ ver: "todas" }), label: `todas (${personas.length})`, activo: f.ver === "todas" },
-            { href: href({ ver: "volvieron" }), label: `sólo las que volvieron (${volvieron})`, activo: f.ver === "volvieron" },
-          ]}
-        />
-      </div>
+      <Filtros
+        grupos={[
+          {
+            titulo: "empezó",
+            opciones: PERIODOS.map((d) => ({ href: href({ dias: d }), label: `${d} días`, activo: f.dias === d })),
+          },
+          ...gruposDeQuien({ origen: f.origen, pais: f.pais, onboarding: f.onboarding, campanas, paises, href }),
+          {
+            titulo: "quiénes",
+            opciones: [
+              { href: href({ quienes: "primer-look" }), label: "llegaron a su primer look", activo: f.quienes === "primer-look" },
+              { href: href({ quienes: "todas" }), label: "todas", activo: f.quienes === "todas" },
+            ],
+          },
+          {
+            titulo: "ver",
+            opciones: [
+              { href: href({ ver: "todas" }), label: `todas (${personas.length})`, activo: f.ver === "todas" },
+              { href: href({ ver: "volvieron" }), label: `sólo las que volvieron (${volvieron})`, activo: f.ver === "volvieron" },
+            ],
+          },
+        ]}
+      />
 
       {/* El número grande es "cuántas de cuántas": con muestras de 6 o de 2, un
           "0%" o un "17%" en grande engaña más de lo que informa. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {puntos.map((p) => (
-          <div key={p.dia} className="flex flex-col gap-0.5 rounded-lg border border-line bg-surface px-3 py-2.5">
-            <span className="text-xs text-muted">{p.dia === 1 ? "volvieron al día siguiente" : `volvieron el día ${p.dia}`}</span>
-            <span className="text-xl font-bold tabular-nums text-ink">
-              {p.volvieron} <span className="text-sm font-normal text-muted">de {p.de}</span>
-            </span>
-            <span className="text-[11px] text-muted">{p.de ? pct(p.volvieron, p.de) : "nadie ha llegado a ese día"}</span>
-          </div>
+      <Fila cols={4} className="mb-2">
+        {grandes.map((p) => (
+          <Cifra
+            key={p.dia}
+            label={p.dia === 1 ? "Volvieron al día siguiente" : `Volvieron el día ${p.dia}`}
+            valor={p.volvieron}
+            unidad={`de ${p.de}`}
+            sub={p.de ? pct(p.volvieron, p.de) : "nadie ha llegado a ese día"}
+          />
         ))}
-        <div className="flex flex-col gap-0.5 rounded-lg border border-ink bg-surface px-3 py-2.5">
-          <span className="text-xs text-muted">volvieron en su primera semana</span>
-          <span className="text-xl font-bold tabular-nums text-ink">
-            {semana.volvieron} <span className="text-sm font-normal text-muted">de {semana.de}</span>
-          </span>
-          <span className="text-[11px] text-muted">
-            {semana.de ? `${pct(semana.volvieron, semana.de)} · con la semana cerrada` : "nadie ha cerrado su semana"}
-          </span>
-        </div>
-      </div>
+        <Cifra
+          label="Volvieron en su primera semana"
+          valor={semana.volvieron}
+          unidad={`de ${semana.de}`}
+          tono={semana.volvieron > 0 ? "success" : "ink"}
+          barra={{ n: semana.volvieron, de: semana.de }}
+          sub={semana.de ? `${pct(semana.volvieron, semana.de)} · con la semana cerrada` : "nadie ha cerrado su semana"}
+        />
+      </Fila>
+      <p className="mb-4 text-[13px] text-muted">
+        {chicos.map((p) => `día ${p.dia}: ${p.volvieron} de ${p.de}`).join(" · ")}
+      </p>
 
-      {visibles.length === 0 ? (
-        <p className="text-sm text-muted">Nadie con estos filtros.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-          <table className="w-full text-xs">
+      <Panel titulo="Por persona" sinPadding>
+        {visibles.length === 0 ? (
+          <Vacio>Nadie con estos filtros.</Vacio>
+        ) : (
+          <Tabla>
             <thead>
-              <tr className="border-b border-line text-muted">
-                <th className="px-3 py-2 text-left font-medium">persona</th>
-                <th className="px-2 py-2 text-left font-medium">empezó</th>
+              <tr>
+                <Th izq>persona</Th>
+                <Th izq>empezó</Th>
                 {Array.from({ length: DIAS_TABLA + 1 }, (_, d) => (
-                  <th key={d} className="px-0.5 py-2 text-center font-medium tabular-nums">
+                  <Th key={d} className="pl-1 pr-1 text-center tabular-nums">
                     {d}
-                  </th>
+                  </Th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {visibles.map((p) => (
-                <tr key={p.id} className="border-b border-line last:border-0">
-                  <td className="max-w-56 truncate px-3 py-1.5">
-                    <span className="mr-1.5" title={p.pais ? paisEnPalabras(p.pais) : "sin país"}>
-                      {banderaDe(p.pais) ?? ""}
-                    </span>
-                    <Link
-                      href={`/admin/usuarios/${p.id}`}
-                      className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-                    >
-                      {p.etiqueta}
-                    </Link>
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-muted">
+                <tr key={p.id}>
+                  <Td izq className="max-w-56">
+                    <Quien correo={p.etiqueta} pais={p.pais} href={`/admin/usuarios/${p.id}`} />
+                  </Td>
+                  <Td izq className="whitespace-nowrap text-muted">
                     {p.diaInicio.slice(5).split("-").reverse().join("/")}
                     {diasEntre(p.diaInicio, hoy) === 0 ? " · hoy" : ""}
-                  </td>
+                  </Td>
                   {fila(p, hoy).map((c, d) => (
-                    <td key={d} className="px-0.5 py-1.5">
+                    <Td key={d} className="pl-1 pr-1">
                       <span
                         className={`mx-auto block h-4 w-4 rounded-sm ${CELDA[c]}`}
                         title={c === "entro" ? `día ${d}: entró` : c === "no" ? `día ${d}: no entró` : `día ${d}: todavía no llega`}
                       />
-                    </td>
+                    </Td>
                   ))}
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      )}
-
-      <p className="text-xs text-muted">
-        Los porcentajes de arriba sólo cuentan a quien ya vivió ese día completo: quien empezó ayer
-        no puede haber vuelto el día 7. Entrar es cualquier acción en la app (abrirla, subir una
-        prenda, generar un look), en días de la Ciudad de México. No cuentan las cuentas de admin ni
-        las de prueba.
-      </p>
-    </div>
+          </Tabla>
+        )}
+      </Panel>
+    </>
   );
 }

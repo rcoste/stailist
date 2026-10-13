@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { banderaDe, paisEnPalabras } from "@/lib/lugar";
+import { Chip, Panel, Quien, Sub, Tabla, Td, Th } from "../_ui";
 
 // Una sola definición de a dónde va una fila (la usan el onClick y el href).
 const hrefUsuario = (id: string) => `/admin/usuarios/${id}`;
@@ -51,20 +50,7 @@ function hace(ts: number | null, now: number): string {
   return `hace ${mo} ${mo === 1 ? "mes" : "meses"}`;
 }
 
-type SortKey =
-  | "email"
-  | "origen"
-  | "volvio"
-  | "lastActive"
-  | "onboarding"
-  | "color"
-  | "closet"
-  | "looks"
-  | "avatar"
-  | "capsula"
-  | "viaje"
-  | "cartera"
-  | "worn";
+type SortKey = "email" | "origen" | "volvio" | "lastActive" | "onboarding" | "color" | "closet";
 
 // Valor ordenable por columna. Los booleanos van como 0/1.
 function sortVal(r: UserRow, key: SortKey): number | string {
@@ -83,35 +69,19 @@ function sortVal(r: UserRow, key: SortKey): number | string {
       return r.color ? 1 : 0;
     case "closet":
       return r.closet;
-    case "looks":
-      return r.looks;
-    case "avatar":
-      return r.avatar ? 1 : 0;
-    case "capsula":
-      return r.capsula ? 1 : 0;
-    case "viaje":
-      return r.viaje;
-    case "cartera":
-      return r.cartera;
-    case "worn":
-      return r.worn;
   }
 }
 
-const COLS: { key: SortKey; label: string; title?: string; left?: boolean }[] = [
-  { key: "email", label: "Persona", left: true },
-  { key: "origen", label: "Llegó por", title: "La campaña del anuncio, o la fuente", left: true },
+// Siete columnas: lo que se mira de cada persona. El resto (looks, avatar,
+// esenciales, viaje, cartera, puesto) sigue en los filtros y en la ficha.
+const COLS: { key: SortKey; label: string; title?: string; izq?: boolean }[] = [
+  { key: "email", label: "Persona", izq: true },
+  { key: "origen", label: "Llegó por", title: "La campaña del anuncio, o la fuente", izq: true },
   { key: "lastActive", label: "Último uso", title: "Actividad más reciente" },
   { key: "volvio", label: "Volvió", title: "Otro día dentro de su primera semana, 4 horas después de empezar" },
   { key: "onboarding", label: "1er look", title: "Llegó a su primer look (si no, el paso en que va)" },
   { key: "color", label: "Color", title: "Hizo su colorimetría" },
   { key: "closet", label: "Clóset", title: "Prendas activas (📷 = con fotos propias)" },
-  { key: "looks", label: "Looks", title: "Outfits generados" },
-  { key: "avatar", label: "Avatar", title: "Creó su avatar" },
-  { key: "capsula", label: "Esenciales", title: "Calculó sus esenciales" },
-  { key: "viaje", label: "Viaje", title: "Viajes creados" },
-  { key: "cartera", label: "Cartera", title: "Prendas en la cartera / wishlist" },
-  { key: "worn", label: "Puesto", title: 'Marcó "me lo puse"' },
 ];
 
 type FilterKey =
@@ -138,26 +108,6 @@ const FILTERS: { key: FilterKey; label: string; test: (r: UserRow, now: number) 
   { key: "worn", label: "Se puso un look", test: (r) => r.worn > 0 },
   { key: "photos", label: "Fotos propias", test: (r) => r.closetPhotos > 0 },
 ];
-
-// Celda ✓ / — para módulos booleanos.
-function Bool({ on }: { on: boolean }) {
-  return on ? (
-    <span className="text-success">✓</span>
-  ) : (
-    <span className="text-muted/50">—</span>
-  );
-}
-
-// Celda numérica: el 0 se apaga para que la vista respire.
-function Num({ n, suffix }: { n: number; suffix?: string }) {
-  if (n === 0) return <span className="text-muted/50">—</span>;
-  return (
-    <span className="text-ink">
-      {n}
-      {suffix ? <span className="text-muted">{suffix}</span> : null}
-    </span>
-  );
-}
 
 export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
   const router = useRouter();
@@ -220,183 +170,129 @@ export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
     });
   }, [rows, filters, sortKey, asc, now]);
 
-  const activos = rows.filter(
-    (r) => r.lastActive !== null && now - r.lastActive <= WEEK_MS
-  ).length;
-
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-h2 font-semibold text-ink">Personas</h1>
-        <p className="text-sm text-muted">
-          {rows.length} {rows.length === 1 ? "perfil" : "perfiles"} · {activos}{" "}
-          {activos === 1 ? "activo" : "activos"} esta semana
-          {filters.size > 0 ? ` · ${visible.length} en el filtro` : ""}
-        </p>
-      </div>
-
-      {/* Filtros combinables (AND) */}
-      <div className="flex flex-wrap gap-1.5">
-        {FILTERS.map((f) => {
-          const on = filters.has(f.key);
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => toggleFilter(f.key)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors duration-200 ${
-                on
-                  ? "bg-accent text-on-accent"
-                  : "border border-line bg-surface text-muted hover:text-ink"
-              }`}
-            >
-              {f.label}
-            </button>
-          );
-        })}
+    <>
+      {/* Filtros combinables (AND). Son estado del cliente, no enlaces, pero
+          visten igual que `Filtros` del kit. */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+        <span className="inline-flex flex-wrap items-center gap-1">
+          <span className="mr-1 text-faint">filtrar</span>
+          {FILTERS.map((f) => {
+            const on = filters.has(f.key);
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => toggleFilter(f.key)}
+                className={`rounded-sm px-2 py-0.5 transition-colors duration-200 ${
+                  on ? "bg-ink font-medium text-on-accent" : "text-ink2 hover:bg-tile hover:text-ink"
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </span>
         {filters.size > 0 ? (
-          <button
-            type="button"
-            onClick={() => setFilters(new Set())}
-            className="rounded-full px-3 py-1 text-xs font-medium text-muted hover:text-ink"
-          >
-            limpiar
-          </button>
+          <span className="text-muted">
+            {visible.length} en el filtro ·{" "}
+            <button type="button" onClick={() => setFilters(new Set())} className="hover:text-ink">
+              limpiar
+            </button>
+          </span>
         ) : null}
       </div>
 
-      {/* Tabla con scroll horizontal en móvil */}
-      <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
+      <Panel sinPadding>
+        <Tabla minW="min-w-[640px]">
           <thead>
-            <tr className="border-b border-line">
+            <tr>
               {COLS.map((c) => {
                 const active = c.key === sortKey;
                 return (
-                  <th
-                    key={c.key}
-                    title={c.title}
-                    className={`px-3 py-2.5 font-medium ${c.left ? "text-left" : "text-center"}`}
-                  >
+                  <Th key={c.key} izq={c.izq}>
                     <button
                       type="button"
+                      title={c.title}
                       onClick={() => toggleSort(c.key)}
                       className={`inline-flex items-center gap-1 whitespace-nowrap transition-colors duration-200 ${
-                        active ? "text-ink" : "text-muted hover:text-ink"
+                        active ? "text-ink" : "hover:text-ink"
                       }`}
                     >
                       {c.label}
-                      <span className="text-[10px]">
-                        {active ? (asc ? "▲" : "▼") : ""}
-                      </span>
+                      {active ? <span className="text-[11px]">{asc ? "▲" : "▼"}</span> : null}
                     </button>
-                  </th>
+                  </Th>
                 );
               })}
             </tr>
           </thead>
           <tbody>
             {visible.map((r) => {
-              const recent =
-                r.lastActive !== null && now - r.lastActive <= WEEK_MS;
+              const recent = r.lastActive !== null && now - r.lastActive <= WEEK_MS;
               return (
                 <tr
                   key={r.id}
                   onClick={() => abrir(r.id)}
-                  className={`cursor-pointer border-b border-line last:border-0 transition-colors duration-200 hover:bg-bg ${
-                    yendo === r.id ? "opacity-50" : ""
-                  }`}
+                  className={`cursor-pointer transition-colors duration-200 hover:bg-tile ${yendo === r.id ? "opacity-50" : ""}`}
                 >
-                  <td className="px-3 py-2.5 text-left">
-                    {/* El Link se queda por accesibilidad y abrir-en-pestaña;
-                        navega a lo mismo que la fila. */}
-                    <Link
-                      href={hrefUsuario(r.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="font-medium text-ink hover:text-accent"
-                    >
-                      {banderaDe(r.pais) ? (
-                        <span className="mr-1.5" title={paisEnPalabras(r.pais as string)}>
-                          {banderaDe(r.pais)}
-                        </span>
-                      ) : null}
-                      <span className="truncate">{r.email}</span>
-                      {r.isAdmin ? (
-                        <span className="ml-1.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] text-ink">
-                          admin
-                        </span>
-                      ) : null}
-                    </Link>
-                  </td>
-                  <td className="max-w-40 truncate px-3 py-2.5 text-left text-xs text-muted" title={r.origen}>
-                    {r.origen}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
-                    <span className={recent ? "text-success" : "text-muted"}>
-                      {hace(r.lastActive, now)}
+                  <Td izq>
+                    {/* El Link (dentro de Quien) se queda por accesibilidad y
+                        abrir-en-pestaña; navega a lo mismo que la fila. */}
+                    <span className="flex min-w-0 max-w-[220px] items-center gap-2 sm:max-w-none" onClick={(e) => e.stopPropagation()}>
+                      <Quien correo={r.email} pais={r.pais} href={hrefUsuario(r.id)} />
+                      {r.isAdmin ? <Chip tono="ink">admin</Chip> : null}
                     </span>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
+                  </Td>
+                  <Td izq className="max-w-40 truncate text-[13px] text-muted">
+                    <span title={r.origen}>{r.origen}</span>
+                  </Td>
+                  <Td className={`whitespace-nowrap ${recent ? "text-success" : "text-muted"}`}>{hace(r.lastActive, now)}</Td>
+                  <Td className="whitespace-nowrap">
                     {r.volvio === "si" ? (
-                      <span className="text-success">✓ volvió</span>
+                      <Chip tono="success">volvió</Chip>
                     ) : r.volvio === "semana" ? (
                       <span className="text-xs text-muted">en su semana</span>
                     ) : r.volvio === "no" ? (
                       <span className="text-muted">no</span>
                     ) : (
-                      <span className="text-muted/50">—</span>
+                      <span className="text-faint">—</span>
                     )}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
+                  </Td>
+                  <Td>
                     {r.onboardingDone ? (
                       <span className="text-success">✓</span>
                     ) : (
-                      <span className="text-muted">{r.onboardingStep}</span>
+                      <>
+                        <span className="text-muted">no</span>
+                        <Sub>paso {r.onboardingStep}</Sub>
+                      </>
                     )}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Bool on={r.color} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Num n={r.closet} suffix={r.closetPhotos > 0 ? " 📷" : undefined} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Num n={r.looks} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Bool on={r.avatar} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Bool on={r.capsula} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Num n={r.viaje} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Num n={r.cartera} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    {r.worn > 0 ? (
-                      <span className="text-success">✓ {r.worn}</span>
+                  </Td>
+                  <Td>{r.color ? <span className="text-success">✓</span> : <span className="text-faint">—</span>}</Td>
+                  <Td>
+                    {r.closet === 0 ? (
+                      <span className="text-faint">—</span>
                     ) : (
-                      <span className="text-muted/50">—</span>
+                      <>
+                        {r.closet}
+                        {r.closetPhotos > 0 ? <span className="text-muted"> 📷</span> : null}
+                      </>
                     )}
-                  </td>
+                  </Td>
                 </tr>
               );
             })}
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={COLS.length} className="px-3 py-6 text-center text-muted">
-                  {rows.length === 0
-                    ? "Sin usuarios todavía."
-                    : "Ningún usuario cumple el filtro."}
+                <td colSpan={COLS.length} className="px-5 py-6 text-center text-sm text-muted">
+                  {rows.length === 0 ? "Sin usuarios todavía." : "Ningún usuario cumple el filtro."}
                 </td>
               </tr>
             ) : null}
           </tbody>
-        </table>
-      </div>
-    </div>
+        </Tabla>
+      </Panel>
+    </>
   );
 }
