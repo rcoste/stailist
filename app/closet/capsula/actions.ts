@@ -265,13 +265,17 @@ async function persistCapsuleReject(
 export async function rejectCapsuleItem(
   index: number,
   reason: VetoReason | null = null
-): Promise<{ ok: boolean }> {
+): Promise<{ ok: boolean; mensaje?: string }> {
   if (!Number.isInteger(index) || index < 0) return { ok: false };
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
+  // El swap es una llamada a la IA (acotada por SWAP_CAP por slot), y aun así
+  // debe respetar el freno de dinero del día como todo lo demás.
+  const freno = await revisarGasto(supabase, user.id);
+  if (!freno.permitido) return { ok: false, mensaje: freno.mensaje };
 
   const { data: profile } = await supabase
     .from("profiles")

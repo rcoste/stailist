@@ -129,7 +129,7 @@ export function TripOutfits({
             </span>
           </div>
           {error ? (
-            <p className="text-sm text-error">No pude armar tus looks — inténtalo otra vez.</p>
+            <p className="text-sm text-error">{typeof error === "string" ? error : "No pude armar tus looks — inténtalo otra vez."}</p>
           ) : null}
           <button
             type="button"
@@ -155,7 +155,7 @@ export function TripOutfits({
           </p>
         ) : null}
         {error ? (
-          <p className="text-sm text-error">No pude armar tus looks — inténtalo otra vez.</p>
+          <p className="text-sm text-error">{typeof error === "string" ? error : "No pude armar tus looks — inténtalo otra vez."}</p>
         ) : null}
         <button
           type="button"
@@ -178,7 +178,7 @@ export function TripOutfits({
           &quot;parecido&quot; o agrega prendas y vuelve a intentar.
         </span>
         {error ? (
-          <p className="text-sm text-error">No pude armar tus looks — inténtalo otra vez.</p>
+          <p className="text-sm text-error">{typeof error === "string" ? error : "No pude armar tus looks — inténtalo otra vez."}</p>
         ) : null}
         <button
           type="button"

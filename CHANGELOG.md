@@ -38,6 +38,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   - `scripts/ab-dibujo-capsula.ts`: pares a ciegas entre el modelo "rápido"
     y Nano Banana 2.1 con el prompt real de la cápsula, para decidir el modelo
     midiendo (el barato cuesta la mitad).
+  - QA de frenos (2026-10-13): tres caminos de IA no tenían NINGUNO —los
+    looks de la cápsula (motor), los sustitutos del viaje (81 llamadas de una
+    persona en una noche) y el swap al rechazar una prenda de la cápsula—. Ya
+    pasan por la cuota de looks o el freno de dinero. Y tres pantallas más
+    dicen el mensaje del freno en vez de "no pude": looks de cápsula, looks del
+    viaje y try-on de la wishlist.
 
 ## [0.2.370.0] - 2026-10-12 — Personas: rápido, con botones y checkpoints
 

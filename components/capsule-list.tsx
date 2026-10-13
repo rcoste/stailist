@@ -274,8 +274,14 @@ export function CapsuleList({
     startTransition(async () => {
       const res = await rejectCapsuleItem(index, reason);
       setSwap(index, false);
-      if (!res.ok) setSwapError((s) => new Set(s).add(index));
-      else router.refresh();
+      if (!res.ok) {
+        setSwapError((s) => new Set(s).add(index));
+        // Si fue el freno del día, decirlo: "reintentar" no va a servir.
+        if (res.mensaje) {
+          setToast(res.mensaje);
+          setTimeout(() => setToast(null), 5000);
+        }
+      } else router.refresh();
     });
   };
 

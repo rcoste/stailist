@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
@@ -88,7 +89,7 @@ export function TripTabs({
   const [borrando, setBorrando] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [appending, setAppending] = useState(false);
-  const [genError, setGenError] = useState(false);
+  const [genError, setGenError] = useState<boolean | string>(false);
   const [genNote, setGenNote] = useState<string | null>(null);
   const looksExist = looksCount > 0;
 
@@ -108,7 +109,7 @@ export function TripTabs({
       });
       const data = (await res.json().catch(() => ({}))) as { added?: number };
       if (!res.ok) {
-        setGenError(true);
+        setGenError(mensajeDelFreno(res.status, data) ?? true);
         setGenerating(false);
         setAppending(false);
         return;
