@@ -2,6 +2,12 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.372.3] - 2026-10-13 — el visor grande cabe en una laptop
+
+- Visto en producción: en una pantalla de 720 de alto el visor grande se salía
+  por arriba y por abajo (cerrar y nombre cortados). La imagen ahora topa
+  también por la altura de la ventana, y el visor del admin cierra con Escape.
+
 ## [0.2.372.2] - 2026-10-13 — en la ficha, las miniaturas se ven en grande
 
 - Roberto: "a los thumbnails no les puedo picar y verlos grandes, está raro".

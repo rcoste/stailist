@@ -23,6 +23,18 @@ describe("Ampliable", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("se cierra con Escape", () => {
+    render(
+      <Ampliable imagen="https://ejemplo.test/saco.jpg" nombre="Saco azul marino">
+        <span>miniatura</span>
+      </Ampliable>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ver en grande: Saco azul marino" }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("sin imagen se pinta tal cual y no se puede picar", () => {
     render(
       <Ampliable imagen={null} nombre="Prenda sin imagen">

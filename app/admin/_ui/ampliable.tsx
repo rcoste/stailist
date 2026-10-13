@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PrendaZoom } from "@/components/prenda-zoom";
 
 // UNA MINIATURA DEL ADMIN QUE SE PUEDE VER EN GRANDE (2026-10-13). Roberto: "a
@@ -25,6 +25,13 @@ export function Ampliable({
   children: ReactNode;
 }) {
   const [abierta, setAbierta] = useState(false);
+  // En escritorio se cierra con Escape, como cualquier visor.
+  useEffect(() => {
+    if (!abierta) return;
+    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && setAbierta(false);
+    window.addEventListener("keydown", alTeclear);
+    return () => window.removeEventListener("keydown", alTeclear);
+  }, [abierta]);
   if (!imagen) return <div className={className}>{children}</div>;
   return (
     <>

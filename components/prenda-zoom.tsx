@@ -60,7 +60,10 @@ export function PrendaZoom({
 
         <div
           className={`relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-md border border-line bg-bg ${
-            grande ? "lg:max-w-[480px]" : ""
+            // Tope también por la ALTURA de la ventana: a 480px de ancho la
+            // imagen mide 640 de alto y en una laptop de 720 el visor se salía
+            // por arriba y por abajo (botón de cerrar y nombre cortados).
+            grande ? "lg:max-w-[min(480px,52dvh)]" : ""
           }`}
         >
           {data.image ? (
