@@ -13,7 +13,7 @@ import { diasEntre } from "@/lib/admin/retencion";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, itemPrivatePaths, type ItemImageRow } from "@/lib/item-image";
 import { PASOS, tiemposDe } from "@/lib/admin/embudo";
 import { Checkpoints } from "../../_compartido/checkpoints";
-import { AlFinal, Chip, Cifra, Fila, Lista, Panel, Quien, Renglon, Vacio } from "../../_ui";
+import { AlFinal, Ampliable, Chip, Cifra, Fila, Lista, Panel, Quien, Renglon, Vacio } from "../../_ui";
 
 // LA FICHA DE UNA PERSONA (mockup aprobado el 2026-10-13). Lo que Roberto
 // pregunta de alguien es siempre lo mismo: quién es, de dónde llegó, qué hizo
@@ -200,9 +200,9 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
       </Link>
 
       <header className="mb-5 grid grid-cols-[auto_1fr] items-start gap-x-5 gap-y-3 sm:grid-cols-[auto_1fr_auto]">
-        <div className="relative h-24 w-18 overflow-hidden rounded-lg border border-line bg-tile">
+        <Ampliable imagen={avatarUrl} nombre="Su avatar" className="relative block h-24 w-18 overflow-hidden rounded-lg border border-line bg-tile">
           {avatarUrl ? <Image src={avatarUrl} alt="Avatar" fill sizes="72px" className="object-cover" unoptimized /> : null}
-        </div>
+        </Ampliable>
         <div className="min-w-0">
           <Quien correo={profile.email} pais={profile.pais} className="max-w-full text-h2 font-bold tracking-[-0.025em]" />
           <p className="mt-1 text-sm text-muted">
@@ -366,14 +366,20 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
               {items.map((it) => {
                 const p = prendaById.get(it.id)!;
                 return (
-                  <div key={it.id} className="relative aspect-square overflow-hidden rounded-md border border-line bg-tile" title={p.nombre}>
+                  <Ampliable
+                    key={it.id}
+                    imagen={p.imagen}
+                    nombre={p.nombre}
+                    sub={it.source === "photo" ? "subida con foto" : "del catálogo"}
+                    className="relative block aspect-square overflow-hidden rounded-md border border-line bg-tile"
+                  >
                     {p.imagen ? (
                       <Image src={p.imagen} alt={p.nombre} fill sizes="120px" className="object-cover" unoptimized />
                     ) : (
                       <div className="h-full w-full" style={{ backgroundColor: p.swatch }} />
                     )}
                     {it.source === "photo" ? <span className="absolute bottom-0.5 right-1 text-[11px]">📷</span> : null}
-                  </div>
+                  </Ampliable>
                 );
               })}
             </div>
@@ -400,9 +406,14 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                 return (
                   <Renglon key={o.id} className="items-start py-3">
                     {tryon ? (
-                      <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-tile">
+                      <Ampliable
+                        imagen={tryon}
+                        nombre={o.title ?? "Look"}
+                        sub={o.explanation ?? null}
+                        className="relative block h-16 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-tile"
+                      >
                         <Image src={tryon} alt={o.title ?? "Look"} fill sizes="48px" className="object-cover" unoptimized />
-                      </div>
+                      </Ampliable>
                     ) : null}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm">
@@ -419,13 +430,18 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                       {o.explanation ? <p className="truncate text-[13px] text-muted">{o.explanation}</p> : null}
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {prendas.map((p, k) => (
-                          <div key={k} className="relative h-6 w-6 overflow-hidden rounded-sm border border-line bg-tile" title={p.nombre}>
+                          <Ampliable
+                            key={k}
+                            imagen={p.imagen}
+                            nombre={p.nombre}
+                            className="relative block h-6 w-6 overflow-hidden rounded-sm border border-line bg-tile"
+                          >
                             {p.imagen ? (
                               <Image src={p.imagen} alt={p.nombre} fill sizes="24px" className="object-cover" unoptimized />
                             ) : (
                               <div className="h-full w-full" style={{ backgroundColor: p.swatch }} />
                             )}
-                          </div>
+                          </Ampliable>
                         ))}
                       </div>
                     </div>

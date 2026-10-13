@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.372.2] - 2026-10-13 — en la ficha, las miniaturas se ven en grande
+
+- Roberto: "a los thumbnails no les puedo picar y verlos grandes, está raro".
+  En la ficha de cada persona, el avatar, las prendas del clóset, el render
+  de cada look y los cuadritos de sus prendas ahora se pican y abren en
+  grande (`Ampliable` en `app/admin/_ui`).
+- Reusa el visor de la app (`components/prenda-zoom.tsx`) con una variante
+  `grande`: en escritorio la imagen sube de 280 a 480px. En la app no cambia
+  nada.
+
 ## [0.2.372.1] - 2026-10-13 — la fuga, donde de verdad está
 
 - **El paso por paso de Campañas, en el orden real del flujo.** Desde la

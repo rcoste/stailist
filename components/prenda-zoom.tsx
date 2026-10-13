@@ -18,10 +18,17 @@ export function PrendaZoom({
   data,
   onClose,
   action,
+  grande = false,
 }: {
   data: PrendaZoomData | null;
   onClose: () => void;
   action?: ReactNode;
+  /**
+   * Para revisar, no para reconocer (el admin, 2026-10-13): en escritorio la
+   * imagen sube de 280 a 480px. En la app basta con saber qué prenda es; en
+   * el admin hay que ver si el render salió bien. En celular no cambia nada.
+   */
+  grande?: boolean;
 }) {
   if (!data) return null;
   return (
@@ -33,7 +40,9 @@ export function PrendaZoom({
       aria-label={data.nombre}
     >
       <div
-        className="flex w-full max-w-[430px] flex-col gap-4 rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+        className={`flex w-full max-w-[430px] flex-col gap-4 rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 ${
+          grande ? "lg:max-w-[560px]" : ""
+        }`}
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -49,14 +58,19 @@ export function PrendaZoom({
           </button>
         </div>
 
-        <div className="relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-md border border-line bg-bg">
+        <div
+          className={`relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-md border border-line bg-bg ${
+            grande ? "lg:max-w-[480px]" : ""
+          }`}
+        >
           {data.image ? (
             <Image
               src={data.image}
               alt={data.nombre}
               fill
-              sizes="280px"
+              sizes={grande ? "(min-width: 1024px) 480px, 280px" : "280px"}
               className="object-contain"
+              unoptimized={grande}
             />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-muted">
