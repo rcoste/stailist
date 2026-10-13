@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
 import { familiaToHex } from "@/lib/capsule-images";
@@ -68,6 +69,10 @@ export function useIdealRender(
   const [state, setState] = useState<"idle" | "generating" | "ready">(
     initialSrc ? "ready" : "idle"
   );
+  // Lo que dijo el servidor al frenar ("por hoy ya dibujé 40 prendas…"). El
+  // tile lo enseña en la franja donde iba "ver cómo queda": tocar otra vez no
+  // va a servir hasta mañana, y callarlo se leía como imagen rota.
+  const [aviso, setAviso] = useState<string | null>(null);
   const start = async (): Promise<boolean> => {
     if (state === "generating") return false;
     setState("generating");
@@ -85,6 +90,7 @@ export function useIdealRender(
         onReady?.(j.url);
         return true;
       }
+      setAviso(mensajeDelFreno(res.status, j));
       setState("idle");
       return false;
     } catch {
@@ -92,7 +98,7 @@ export function useIdealRender(
       return false;
     }
   };
-  return { src, state, generated, start };
+  return { src, state, generated, aviso, start };
 }
 
 export type IdealRender = ReturnType<typeof useIdealRender>;
@@ -175,8 +181,8 @@ export function IdealTileInner({
             className="pointer-events-none absolute inset-x-0 bottom-0 h-[5px]"
             style={{ background: hex }}
           />
-          <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 px-2 pb-2.5 pt-5 text-[10px] font-semibold text-muted">
-            <Icon name="destello" size={12} /> {restLabel}
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 px-2 pb-2.5 pt-5 text-center text-[10px] font-semibold leading-tight text-muted">
+            {render.aviso ? render.aviso : <><Icon name="destello" size={12} /> {restLabel}</>}
           </span>
         </>
       )}

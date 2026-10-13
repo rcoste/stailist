@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 
 // Estados del try-on (compartidos por la card de Hoy y el TryonButton del wow).
 // La CREACIÓN del avatar ya no vive aquí: si no hay avatar, mandamos al wizard
@@ -102,7 +103,7 @@ export function useTryon({
         return;
       }
       if (!res.ok || !data.image) {
-        setErrMsg(mensajeDeErrorTryon(data.error));
+        setErrMsg(mensajeDelFreno(res.status, data) ?? mensajeDeErrorTryon(data.error));
         setMode("error");
         return;
       }

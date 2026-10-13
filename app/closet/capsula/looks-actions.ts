@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { revisarCuota } from "@/lib/cuotas";
 import {
   capsuleLookKey,
   capsuleRows,
@@ -50,6 +51,10 @@ export async function generateCapsuleOutfits(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, count: 0, added: 0 };
+  // Es el motor de looks, con la cuota de looks: no tenía NINGÚN freno
+  // (2026-10-13). El mensaje viaja en `motivo` y el cliente lo pinta.
+  const freno = await revisarCuota(supabase, user.id, "looks");
+  if (!freno.permitido) return { ok: false, count: 0, added: 0, motivo: freno.mensaje };
 
   // Perfil y feedback en paralelo (independientes): menos latencia serial antes
   // de la llamada al motor.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -279,7 +280,14 @@ type YaEsta = {
 
 type Sumar =
   | { paso: "buscando" }
-  | { paso: "nada"; vistas: number; yaEstan: YaEsta[]; fallo?: boolean }
+  | {
+      paso: "nada";
+      vistas: number;
+      yaEstan: YaEsta[];
+      fallo?: boolean;
+      /** Si fue el freno del día, su texto: reintentar no va a servir. */
+      freno?: string;
+    }
   | {
       paso: "elegir";
       prendas: DraftLeida[];
@@ -513,9 +521,10 @@ export function EspejoFlow({
         setState({
           kind: "error",
           msg:
-            err.error === "permiso_pendiente" && err.message
+            mensajeDelFreno(res.status, err) ??
+            (err.error === "permiso_pendiente" && err.message
               ? err.message
-              : "No pude verte bien. Inténtalo con otra foto.",
+              : "No pude verte bien. Inténtalo con otra foto."),
         });
         return;
       }
@@ -573,7 +582,11 @@ export function EspejoFlow({
       // "Falló ahora" NO es "no se ven prendas": lo primero se reintenta, lo
       // segundo no. Decirle lo segundo cuando pasó lo primero le quita la única
       // salida que tenía.
-      if (!res.ok) return setSumar({ paso: "nada", vistas: 0, yaEstan: [], fallo: true });
+      if (!res.ok) {
+        const cuerpo = await res.json().catch(() => null);
+        const freno = mensajeDelFreno(res.status, cuerpo);
+        return setSumar({ paso: "nada", vistas: 0, yaEstan: [], fallo: !freno, freno: freno ?? undefined });
+      }
       const { prendas, vistas, yaEstan } = (await res.json()) as {
         prendas: PrendaDetectada[];
         vistas: number;
@@ -1238,9 +1251,11 @@ export function EspejoFlow({
                         </button>
                       ) : (
                         <p className="text-[13px] text-muted">
-                          {sumar.vistas > 0
-                            ? "Todo lo que traes ya está en tu clóset."
-                            : "No pude distinguir las prendas en esta foto."}
+                          {sumar.freno
+                            ? sumar.freno
+                            : sumar.vistas > 0
+                              ? "Todo lo que traes ya está en tu clóset."
+                              : "No pude distinguir las prendas en esta foto."}
                         </p>
                       )}
                       <YaEstanLista

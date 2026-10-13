@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +16,8 @@ type State = "gen" | "full" | "sin_avatar" | "error";
 export function WishlistTryon({ itemId, onClose }: { itemId: string; onClose: () => void }) {
   const [state, setState] = useState<State>("gen");
   const [image, setImage] = useState<string | null>(null);
+  // Por qué no se pudo: el freno del día trae su texto; lo demás, el genérico.
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
   // No hace setState síncrono: todos los setState ocurren tras el await (async),
   // así el effect no dispara renders en cascada. El retry resetea a "gen" desde
@@ -28,12 +31,14 @@ export function WishlistTryon({ itemId, onClose }: { itemId: string; onClose: ()
         return;
       }
       if (!res.ok || !data.image) {
+        setErrMsg(mensajeDelFreno(res.status, data));
         setState("error");
         return;
       }
       setImage(data.image);
       setState("full");
     } catch {
+      setErrMsg(null);
       setState("error");
     }
   }
@@ -87,7 +92,7 @@ export function WishlistTryon({ itemId, onClose }: { itemId: string; onClose: ()
   if (state === "error" || !image) {
     return (
       <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-5 bg-accent px-8 text-center">
-        <p className="text-sm font-semibold text-on-accent">No pude crear tu look.</p>
+        <p className="text-sm font-semibold text-on-accent">{errMsg ?? "No pude crear tu look."}</p>
         <div className="flex gap-3">
           <button
             type="button"

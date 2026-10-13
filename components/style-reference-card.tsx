@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
@@ -135,9 +136,10 @@ export function StyleReferenceCard({
         // El 403 de permiso parental trae el mensaje real — mostrarlo en vez
         // del genérico que invita a reintentar con otra foto.
         setErr(
-          e.error === "permiso_pendiente" && e.message
-            ? e.message
-            : "No pude leer el estilo. Prueba con otra(s) foto(s) de cuerpo completo."
+          mensajeDelFreno(res.status, data) ??
+            (e.error === "permiso_pendiente" && e.message
+              ? e.message
+              : "No pude leer el estilo. Prueba con otra(s) foto(s) de cuerpo completo.")
         );
       } else setPreview(data as Preview);
     } catch {

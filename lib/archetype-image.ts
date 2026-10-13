@@ -1,4 +1,4 @@
-import { pedirImagen, GEMINI_MODEL_RAPIDO } from "@/lib/gemini-imagen";
+import { pedirImagen, GEMINI_MODEL_ROPA } from "@/lib/gemini-imagen";
 import type { QuienMide } from "@/lib/recibos";
 // Generación de la imagen flat-lay de un básico (estilo A) con Gemini.
 //
@@ -13,6 +13,14 @@ import type { QuienMide } from "@/lib/recibos";
 // nombran lo que de verdad se colaba. Mismo
 // prompt que scripts/gen-archetypes.mjs, pero on-demand desde el admin. La
 // salida sube a Storage (bucket público), no a public/ (read-only en prod).
+//
+// EL MODELO: Nano Banana 2.1 desde el 2026-10-13, antes el "rápido" (flash).
+// Decidido a ciegas con este mismo prompt (scripts/ab-dibujo-capsula.ts, 8
+// pares, básicos de hombre y de mujer, orden al azar): Roberto votó 5 empates,
+// 2 para flash y 1 para Nano Banana; yo 3 para Nano Banana y 5 empates. Con
+// ocho pares eso es empate, y el empate a la mitad de precio ($0.033 contra
+// $0.067) decide. Este dibujo es texto→imagen (la prueba anterior de Nano
+// Banana fue foto→imagen), por eso hizo falta medirlo aparte.
 
 
 export type ImageType = "flat" | "shoes";
@@ -74,7 +82,7 @@ export async function generateArchetypeImage(
   // que se quedaba sin imagen.
   const r = await pedirImagen(
     [{ text: buildImagePrompt(desc, type, gender) }],
-    { modelo: GEMINI_MODEL_RAPIDO, aspecto: aspect, ctx: ctx ?? null }
+    { modelo: GEMINI_MODEL_ROPA, aspecto: aspect, ctx: ctx ?? null }
   );
   if ("motivo" in r) {
     console.error(`[archetype-image] ${r.motivo}`);

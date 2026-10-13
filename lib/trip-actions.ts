@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { revisarGasto } from "@/lib/cuotas";
 import {
   loadClosetLite,
   loadClosetImageMap,
@@ -41,6 +42,10 @@ export async function suggestTripSubstitutes(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
+  // Llama a la IA por cada hueco: sin esto no tenía freno (81 llamadas de una
+  // persona en una noche, 2026-10-12). Vacío = "no encontré", que es lo que
+  // la pantalla ya sabe decir.
+  if (!(await revisarGasto(supabase, user.id)).permitido) return [];
 
   const [{ data: trip }, { data: profile }] = await Promise.all([
     supabase
@@ -114,6 +119,7 @@ export async function proposeTripSubstitutes(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return {};
+  if (!(await revisarGasto(supabase, user.id)).permitido) return {};
 
   const [{ data: trip }, { data: profile }] = await Promise.all([
     supabase

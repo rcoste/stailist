@@ -1,4 +1,5 @@
 import type { RenderArgs } from "@/components/ideal-tile";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 
 // Precalienta las imágenes de las prendas SUGERIDAS de la cápsula.
 //
@@ -47,14 +48,21 @@ export type PrewarmJob = { key: string; args: RenderArgs };
 export async function prewarmRenders(
   jobs: PrewarmJob[],
   onReady: (key: string, url: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  /**
+   * El servidor dijo "por hoy ya no" (429 con su mensaje). Se avisa UNA vez y
+   * se deja de pedir: sin esto, 39 tiles eran 39 peticiones rechazadas en
+   * silencio y la pantalla se quedaba gris sin explicar por qué.
+   */
+  onFreno?: (mensaje: string) => void
 ): Promise<void> {
   const cola = jobs.slice(0, PREWARM_TOPE);
   let i = 0;
+  let frenado = false;
 
   async function worker() {
     while (i < cola.length) {
-      if (signal?.aborted) return;
+      if (signal?.aborted || frenado) return;
       const job = cola[i++];
       try {
         const res = await fetch("/api/render-ideal", {
@@ -64,6 +72,12 @@ export async function prewarmRenders(
           signal,
         });
         const j = (await res.json().catch(() => null)) as { url?: string } | null;
+        const freno = mensajeDelFreno(res.status, j);
+        if (freno) {
+          if (!frenado) onFreno?.(freno);
+          frenado = true;
+          return;
+        }
         if (j?.url && !signal?.aborted) onReady(job.key, j.url);
       } catch {
         // Silencioso a propósito: esto es una mejora de fondo. Si falla, el tile

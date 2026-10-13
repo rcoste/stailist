@@ -16,7 +16,8 @@ export type TripTab = "plan" | "prendas" | "empacar" | "looks";
 export type TripGen = {
   generating: boolean;
   appending: boolean; // "generar más" en curso: conserva los looks + indicador inline
-  genError: boolean;
+  /** true = falló; un string = el servidor frenó y éste es su mensaje. */
+  genError: boolean | string;
   genNote: string | null;
   onGenerate: () => void; // generar/rehacer (reemplaza el set)
   onGenerateMore: () => void; // generar más (acumula combinaciones nuevas)

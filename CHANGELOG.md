@@ -2,6 +2,51 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.371.0] - 2026-10-13 — el tope de renders ya no deja el clóset a medias
+
+- Reporte real desde /semana: "no cargan las fotos de mi clóset". Alguien metió
+  99 prendas con foto en su primera noche, topó en 40 imágenes limpias, y las
+  30 que salieron de fotos de cuerpo entero quedaron como cuadros de color
+  mudos: en el clóset y en la semana se leían como fotos rotas.
+  - **Tope de renders: 40 → 120** (`lib/cuotas.ts`). El 40 se fijó cuando una
+    imagen costaba $0.134; desde Nano Banana 2.1 cuesta $0.033 medidos, así que
+    120 cuestan ~$4, menos que los 40 de antes. Es el tope de fotos: nunca se
+    pulen más prendas de las que se dejaron entrar (test nuevo lo vigila).
+  - **Freno de dinero por persona: $10 → $15** (`TOPE_USD_DIA`, sigue siendo
+    variable de entorno). Esa misma persona gastó $10.13 sin nada fuera del
+    guion; lo que pesó fue lo que no tiene cuota (cápsula ideal $3.66, viaje).
+  - La casilla de una prenda sin imagen en **/semana** enseña su color, no un
+    hueco; y en el clóset la prenda que se quedó sin pulir por el tope lo dice:
+    "su imagen, mañana".
+  - `scripts/rematar-renders-pendientes.ts <correo>`: remata las pendientes de
+    una persona sin esperar a que vuelva (con recibo en `ai_calls` a su
+    nombre). Corrido para quien reportó.
+- **Frenos que explican** (Roberto: "frenos sí, pero con mensajes con
+  contexto, no que nada más deje de hacer algo la app"):
+  - Cuota propia para los **dibujos de la cápsula ideal** (`ideal`, 40 al
+    día = una cápsula entera). No la tenía: era el rubro más caro de ese día
+    y topaba contra el freno de dinero con el mensaje genérico.
+  - `lib/mensaje-del-freno.ts`: un solo lector del "por hoy ya no" del
+    servidor, conectado en las pantallas que lo callaban o lo disfrazaban de
+    error: tile de cápsula (lo dice en la franja), precalentado (toast y deja
+    de pedir), auto-sanado del clóset (toast), try-on, probador, estilo de
+    referencia, cartera, espejo (fit check y "sumar lo que traes"), viaje
+    (maleta e itinerario). Antes decían "no pude, inténtalo de nuevo" cuando
+    era "por hoy ya; mañana sigo".
+  - El mensaje del freno de dinero dice qué pasó y cuándo vuelve, en vez de
+    "necesita un respiro, vuelve en un rato" (eran 24 horas).
+  - **Los dibujos de prendas desde texto pasan a Nano Banana 2.1** (cápsula
+    ideal, prendas descritas sin foto, arquetipos): la mitad de precio
+    ($0.033 contra $0.067). Decidido a ciegas con el prompt real
+    (`scripts/ab-dibujo-capsula.ts`, 8 pares): 5 empates, 2-1, que con ocho
+    pares es empate; el empate a mitad de precio decide.
+  - QA de frenos (2026-10-13): tres caminos de IA no tenían NINGUNO —los
+    looks de la cápsula (motor), los sustitutos del viaje (81 llamadas de una
+    persona en una noche) y el swap al rechazar una prenda de la cápsula—. Ya
+    pasan por la cuota de looks o el freno de dinero. Y tres pantallas más
+    dicen el mensaje del freno en vez de "no pude": looks de cápsula, looks del
+    viaje y try-on de la wishlist.
+
 ## [0.2.370.0] - 2026-10-12 — Personas: rápido, con botones y checkpoints
 
 - Roberto: "le pico en Actividad y no funciona el clic". Sí funcionaba, pero
