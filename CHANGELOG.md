@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.371.0] - 2026-10-13 — el tope de renders ya no deja el clóset a medias
+
+- Reporte real desde /semana: "no cargan las fotos de mi clóset". Alguien metió
+  99 prendas con foto en su primera noche, topó en 40 imágenes limpias, y las
+  30 que salieron de fotos de cuerpo entero quedaron como cuadros de color
+  mudos: en el clóset y en la semana se leían como fotos rotas.
+  - **Tope de renders: 40 → 120** (`lib/cuotas.ts`). El 40 se fijó cuando una
+    imagen costaba $0.134; desde Nano Banana 2.1 cuesta $0.033 medidos, así que
+    120 cuestan ~$4, menos que los 40 de antes. Es el tope de fotos: nunca se
+    pulen más prendas de las que se dejaron entrar (test nuevo lo vigila).
+  - **Freno de dinero por persona: $10 → $15** (`TOPE_USD_DIA`, sigue siendo
+    variable de entorno). Esa misma persona gastó $10.13 sin nada fuera del
+    guion; lo que pesó fue lo que no tiene cuota (cápsula ideal $3.66, viaje).
+  - La casilla de una prenda sin imagen en **/semana** enseña su color, no un
+    hueco; y en el clóset la prenda que se quedó sin pulir por el tope lo dice:
+    "su imagen, mañana".
+  - `scripts/rematar-renders-pendientes.ts <correo>`: remata las pendientes de
+    una persona sin esperar a que vuelva (con recibo en `ai_calls` a su
+    nombre). Corrido para quien reportó.
+
 ## [0.2.370.0] - 2026-10-12 — Personas: rápido, con botones y checkpoints
 
 - Roberto: "le pico en Actividad y no funciona el clic". Sí funcionaba, pero

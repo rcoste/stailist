@@ -75,9 +75,12 @@ describe("el aviso del día siguiente", () => {
   });
 
   it("el correo no promete que ya están: se pulen cuando entra, y dice el tope del día", () => {
-    const { subject, text, html } = correoPrendasPendientes({ unsubToken: "tok", pendientes: 80 });
+    // Más pendientes que el tope del día, para que el correo tenga que
+    // decir "hoy alcanzo a dejar N; el resto, mañana".
+    const muchas = CUOTAS.renders + 30;
+    const { subject, text, html } = correoPrendasPendientes({ unsubToken: "tok", pendientes: muchas });
     expect(subject).toBe("ya puedo seguir con tu clóset");
-    expect(text).toContain("las 80 prendas que faltaban");
+    expect(text).toContain(`las ${muchas} prendas que faltaban`);
     expect(text).toContain(`Hoy alcanzo a dejar ${CUOTAS.renders}`);
     expect(text).toContain("/closet");
     expect(text).toContain("Date de baja");

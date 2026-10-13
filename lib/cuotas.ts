@@ -39,8 +39,17 @@ export const CUOTAS: Record<Recurso, number> = {
   avatar: 10,
   tryon: 15,
   fotos: 120,
-  // Agregado el 2026-10-05, aprobado por Roberto. Ver RENDERS abajo.
-  renders: 40,
+  // Agregado el 2026-10-05 en 40, aprobado por Roberto. Ver RENDERS abajo.
+  //
+  // SUBIÓ A 120 EL 2026-10-13, por un reporte real: alguien metió 99 prendas con
+  // foto en su primera noche (la clase de persona que más vuelve), topó en 40, y
+  // las 30 que salieron de fotos de cuerpo entero quedaron como cuadros de color
+  // sin ninguna imagen. Reportó "no cargan las fotos de mi clóset" desde
+  // /semana. El 40 se fijó cuando una imagen costaba $0.134 (Pro); desde que la
+  // ropa va en Nano Banana 2.1 cuesta $0.033 medidos, así que 120 renders son
+  // ~$4, menos de lo que costaban 40. Va en 120 porque es el tope de fotos: una
+  // prenda, una imagen limpia, nunca más que lo que se dejó entrar.
+  renders: 120,
 };
 
 /**
@@ -61,7 +70,8 @@ const TAREAS: Record<Recurso, string[]> = {
   tryon: ["tryon", "tryon-wishlist"],
   fotos: ["vision-prendas"],
   // RENDERS: la imagen limpia de cada prenda, que es LO QUE CUESTA del alta por
-  // foto ($0.134 cada una, contra $0.001 de leer la foto). El tope de fotos
+  // foto ($0.033 cada una desde Nano Banana 2.1 —era $0.134 en Pro—, contra
+  // $0.001 de leer la foto). El tope de fotos
   // contaba lecturas, así que 120 fotos "permitidas" eran ~$16 de imágenes: una
   // cuenta nueva gastó $19 en su primer día (2026-10-04). Subir y leer fotos
   // sigue casi libre —es la acción que más se quiere—; al tocar este tope las
@@ -86,7 +96,7 @@ export const MENSAJE_CUOTA: Record<Recurso, string> = {
   fotos: "por hoy ya guardé 120 prendas. mañana seguimos con el resto de tu clóset.",
   // Casi nunca se lee tal cual: el flujo de fotos no lo trata como un alto, deja
   // la prenda con su foto original y lo cuenta al final.
-  renders: "por hoy ya pulí 40 prendas. mañana sigo con las demás.",
+  renders: "por hoy ya pulí 120 prendas. mañana sigo con las demás.",
 };
 
 /**
@@ -104,11 +114,20 @@ export const MENSAJE_CUOTA: Record<Recurso, string> = {
  * precios de Pro, el peor caso), y con el tope debajo de eso (se pensó en $8) saltaría
  * a media alta del clóset con el mensaje genérico. cuotas.test.ts lo vigila.
  *
- * Así que $10 sólo salta si algo se salió del guion: un camino de IA que no
+ * Así que el tope sólo salta si algo se salió del guion: un camino de IA que no
  * cuenta cuota, un bucle, un modelo que se encareció. Cuando salte, hay que ir
  * a ver, no subirlo.
+ *
+ * SALTÓ EL 2026-10-12 Y SE FUE A VER: una persona real gastó $10.13 en su
+ * primera noche sin nada fuera del guion —99 prendas con foto, avatar, cápsula,
+ * un viaje, la semana, 15 try-ons—. Lo que pesó no fueron las cinco cuotas
+ * (~$7 en el peor caso a precios de hoy) sino lo que NO tiene cuota: las
+ * imágenes de la cápsula ideal ($3.66, 53 dibujos de lo que le falta) y el
+ * viaje. Con el tope de renders en 120, un día así llega a ~$13, y cortarlo a
+ * $10 deja el clóset a medias justo a quien más usa la app. Sube a $15: sigue
+ * por encima de las cuotas sumadas y del día real más caro que se ha visto.
  */
-export const TOPE_USD_DIA = Number(process.env.TOPE_USD_DIA ?? 10);
+export const TOPE_USD_DIA = Number(process.env.TOPE_USD_DIA ?? 15);
 
 /**
  * El freno global, de toda la app. Hoy el gasto real ronda $1.2 al día entre

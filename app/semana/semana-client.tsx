@@ -14,7 +14,10 @@ import {
   type PlanSemanaId,
 } from "@/lib/semana";
 
-type Prenda = { id: string; nombre: string; imagen: string | null };
+// `swatch` es el color de la prenda: la miniatura cuando todavía no tiene imagen
+// (entró por el tope de renders del día). Sin él la casilla salía vacía y se
+// leía como "no cargan las fotos" —reporte real del 2026-10-12.
+type Prenda = { id: string; nombre: string; imagen: string | null; swatch?: string };
 type Look = { id: string; nombre: string; prendas: Prenda[] };
 type DiaServidor = { estado: EstadoDia; ocasion: string | null; look?: Look };
 
@@ -235,7 +238,12 @@ export function SemanaClient({
                     </span>
                     <span className="flex gap-1.5">
                       {s.look.prendas.slice(0, 5).map((p) => (
-                        <span key={p.id} className="h-11 w-11 overflow-hidden rounded-md bg-tile">
+                        <span
+                          key={p.id}
+                          className="h-11 w-11 overflow-hidden rounded-md bg-tile"
+                          style={p.imagen ? undefined : { backgroundColor: p.swatch }}
+                          title={p.nombre}
+                        >
                           {p.imagen ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={p.imagen} alt={p.nombre} className="h-full w-full object-cover mix-blend-multiply" />

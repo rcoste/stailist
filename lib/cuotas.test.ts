@@ -47,6 +47,12 @@ function fakeSupabase(filas: Fila[], revienta = false) {
 const repetir = (tarea: string, n: number, costo = 0): Fila[] =>
   Array.from({ length: n }, () => ({ tarea, costo_usd: costo }));
 
+// Lo que cuesta una imagen de ropa (render de prenda o try-on) medido en
+// ai_calls con Nano Banana 2.1 en octubre de 2026: $0.0333 el render, $0.034 el
+// try-on. El avatar sigue en Pro ($0.134). Si el modelo de ropa cambia, este
+// número cambia con él —y el test del freno de dinero dice si el tope de dinero aguanta.
+const PRECIO_IMAGEN_ROPA = 0.034;
+
 afterEach(() => {
   delete process.env.MOTOR_PAUSADO;
 });
@@ -141,9 +147,9 @@ describe("el freno de dinero", () => {
     const peorCaso =
       CUOTAS.looks * 0.049 +
       CUOTAS.avatar * 0.134 +
-      CUOTAS.tryon * 0.134 +
+      CUOTAS.tryon * PRECIO_IMAGEN_ROPA +
       CUOTAS.fotos * 0.0012 +
-      CUOTAS.renders * 0.134;
+      CUOTAS.renders * PRECIO_IMAGEN_ROPA;
     expect(TOPE_USD_DIA).toBeGreaterThan(peorCaso);
   });
 });
@@ -152,19 +158,23 @@ describe("el tope de renders (la imagen limpia, que es lo que cuesta)", () => {
   it("cuenta render-prenda y no las lecturas de foto", async () => {
     const lecturas = repetir("vision-prendas", 100);
     expect((await revisarCuota(fakeSupabase(lecturas), "u1", "renders")).permitido).toBe(true);
-    const renders = repetir("render-prenda", CUOTAS.renders, 0.134);
+    const renders = repetir("render-prenda", CUOTAS.renders, PRECIO_IMAGEN_ROPA);
     const v = await revisarCuota(fakeSupabase(renders), "u1", "renders");
     expect(v.permitido).toBe(false);
     if (!v.permitido) expect(v.motivo).toBe("cuota");
   });
 
   it("al tocarlo, leer más fotos sigue permitido: el clóset entra completo", async () => {
-    const renders = repetir("render-prenda", CUOTAS.renders, 0.134);
+    const renders = repetir("render-prenda", CUOTAS.renders, PRECIO_IMAGEN_ROPA);
     expect((await revisarCuota(fakeSupabase(renders), "u1", "fotos")).permitido).toBe(true);
   });
 
   it("un día entero de renders cuesta menos que el tope de dinero", () => {
-    expect(CUOTAS.renders * 0.134).toBeLessThan(TOPE_USD_DIA);
+    expect(CUOTAS.renders * PRECIO_IMAGEN_ROPA).toBeLessThan(TOPE_USD_DIA);
+  });
+
+  it("nunca pule más prendas de las que deja entrar: el tope de renders no pasa al de fotos", () => {
+    expect(CUOTAS.renders).toBeLessThanOrEqual(CUOTAS.fotos);
   });
 });
 

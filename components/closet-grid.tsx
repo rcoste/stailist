@@ -265,6 +265,14 @@ function Tile({
             <Spinner className="h-5 w-5 text-on-accent" />
           </span>
         ) : null}
+        {/* Se quedó sin su imagen limpia por el tope del día y hoy ya no se
+            pudo seguir: dilo. Un cuadro de color mudo se lee como una foto
+            rota (reporte real: "no cargan las fotos de mi clóset"). */}
+        {!rendering && !item.imagen && item.renderPendiente ? (
+          <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/55 to-transparent px-[9px] py-1.5 text-[9.5px] font-semibold uppercase tracking-[0.04em] text-on-accent">
+            su imagen, mañana
+          </span>
+        ) : null}
         {/* Badge "Tuya": cinta inferior con degradado — solo en fotos propias
             reales (no en prendas sumadas a mano desde la cápsula, que no tienen
             imagen y caen al swatch). */}
