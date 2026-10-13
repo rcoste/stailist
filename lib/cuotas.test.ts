@@ -177,9 +177,6 @@ describe("el tope de renders (la imagen limpia, que es lo que cuesta)", () => {
     expect(CUOTAS.renders * PRECIO_IMAGEN_ROPA).toBeLessThan(TOPE_USD_DIA);
   });
 
-  it("nunca pule más prendas de las que deja entrar: el tope de renders no pasa al de fotos", () => {
-    expect(CUOTAS.renders).toBeLessThanOrEqual(CUOTAS.fotos);
-  });
 });
 
 describe("lo que corre antes del correo (arquetipo, preguntas de estilo)", () => {

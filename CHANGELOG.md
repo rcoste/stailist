@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.372.4] - 2026-10-13 — el remate manual ya no le cobra el cupo a nadie
+
+- `scripts/rematar-renders-pendientes.ts` deja sus recibos como
+  `render-prenda-remate`: el gasto se ve en el panel, pero no cuenta para el
+  cupo de imágenes del día de la persona. La corrida del 2026-10-12 le comió
+  52 de sus 120 imágenes a quien acababa de reportar el problema.
+  (`renderItemImage` y `extraerPrendaDeFoto` aceptan la etiqueta del recibo.)
+- Corregido un razonamiento de v0.2.371.0: el tope de imágenes NO tiene por
+  qué ser igual al de fotos. `fotos` cuenta fotos y una foto trae varias
+  prendas (99 prendas salieron de 54 fotos); el tope que siente quien carga
+  mucho es el de imágenes. Se quitó el test que imponía la igualdad.
+
 ## [0.2.372.3] - 2026-10-13 — el visor grande cabe en una laptop
 
 - Visto en producción: en una pantalla de 720 de alto el visor grande se salía

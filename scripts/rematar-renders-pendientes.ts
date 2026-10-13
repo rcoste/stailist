@@ -17,8 +17,10 @@ import { renderItemImage } from "../lib/render-item";
 // vuelve. Este script es para el caso en que ya sabemos que vale la pena: alguien
 // reportó "no cargan las fotos de mi clóset" y queremos que al abrir la app lo
 // encuentre arreglado, no "mañana". Brinca la cuota de la persona a propósito
-// —corre con la service key— pero deja el recibo en ai_calls a su nombre, así
-// que el gasto se ve en el admin como cualquier otro.
+// —corre con la service key— y deja el recibo en ai_calls a su nombre con la
+// tarea "render-prenda-remate": el gasto se ve en el admin, pero NO cuenta para
+// su cupo del día. La primera corrida (2026-10-12) lo dejó como
+// "render-prenda" y le comió 52 de sus 120 imágenes a quien había reportado.
 //
 // Uso: npx tsx scripts/rematar-renders-pendientes.ts correo@ejemplo.com [--seco] [--conc=2]
 
@@ -59,7 +61,7 @@ async function main() {
       const it = cola.shift()!;
       const nombre = (it.attrs as { nombre?: string }).nombre ?? it.id.slice(0, 8);
       const t0 = Date.now();
-      const r = await renderItemImage(supabase, perfil.id, it.id, false, true);
+      const r = await renderItemImage(supabase, perfil.id, it.id, false, true, "render-prenda-remate");
       const s = ((Date.now() - t0) / 1000).toFixed(1);
       if (r.ok && r.path) {
         ok++;

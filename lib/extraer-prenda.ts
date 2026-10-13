@@ -37,8 +37,12 @@ export type PrendaAExtraer = {
 export async function extraerPrendaDeFoto(
   foto: { base64: string; mediaType: string },
   prenda: PrendaAExtraer,
-  /** Quién paga el render. null en scripts y catálogo (no son de una persona). */
-  ctx?: { supabase: SupabaseClient; userId: string } | null
+  /**
+   * Quién paga el render. null en scripts y catálogo (no son de una persona).
+   * `tarea` cambia la etiqueta del recibo: el remate manual de pendientes usa
+   * otra para no cobrarse del cupo del día de la persona (lib/cuotas.ts).
+   */
+  ctx?: { supabase: SupabaseClient; userId: string; tarea?: string } | null
 ): Promise<Buffer | null> {
   const encuadre =
     prenda.categoria === "calzado"
@@ -64,7 +68,7 @@ export async function extraerPrendaDeFoto(
     {
       modelo: GEMINI_MODEL_ROPA,
       aspecto: prenda.aspecto ?? "1:1",
-      ctx: ctx ? { ...ctx, tarea: "render-prenda" } : null,
+      ctx: ctx ? { supabase: ctx.supabase, userId: ctx.userId, tarea: ctx.tarea ?? "render-prenda" } : null,
     }
   );
   if ("motivo" in r) {
