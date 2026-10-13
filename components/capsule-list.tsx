@@ -452,7 +452,12 @@ export function CapsuleList({
     if (lanzado.current || !hayQuePrecalentar) return;
     lanzado.current = true;
     acPrewarm.current = new AbortController();
-    void prewarmRenders(jobsRef.current, onRendered, acPrewarm.current.signal);
+    void prewarmRenders(jobsRef.current, onRendered, acPrewarm.current.signal, (mensaje) => {
+      // El servidor frenó ("por hoy ya dibujé 40…"): se dice una vez, en el
+      // mismo toast de la pantalla, en vez de dejar los tiles grises y mudos.
+      setToast(mensaje);
+      setTimeout(() => setToast(null), 5000);
+    });
   }, [hayQuePrecalentar, onRendered]);
 
   // La cola de TUS prendas sin imagen, en orden de visibilidad: el duelo enseña

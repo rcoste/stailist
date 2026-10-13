@@ -52,6 +52,9 @@ const repetir = (tarea: string, n: number, costo = 0): Fila[] =>
 // try-on. El avatar sigue en Pro ($0.134). Si el modelo de ropa cambia, este
 // número cambia con él —y el test del freno de dinero dice si el tope de dinero aguanta.
 const PRECIO_IMAGEN_ROPA = 0.034;
+// El dibujo de una prenda ideal de la cápsula con el modelo "rápido" de Gemini
+// ($0.067 medidos). Si la cápsula pasa a Nano Banana 2.1, baja a PRECIO_IMAGEN_ROPA.
+const PRECIO_DIBUJO_IDEAL = 0.067;
 
 afterEach(() => {
   delete process.env.MOTOR_PAUSADO;
@@ -149,7 +152,8 @@ describe("el freno de dinero", () => {
       CUOTAS.avatar * 0.134 +
       CUOTAS.tryon * PRECIO_IMAGEN_ROPA +
       CUOTAS.fotos * 0.0012 +
-      CUOTAS.renders * PRECIO_IMAGEN_ROPA;
+      CUOTAS.renders * PRECIO_IMAGEN_ROPA +
+      CUOTAS.ideal * PRECIO_DIBUJO_IDEAL;
     expect(TOPE_USD_DIA).toBeGreaterThan(peorCaso);
   });
 });
@@ -217,9 +221,9 @@ describe("cuántas quedan (sólo lo usa el lote de fotos)", () => {
 });
 
 describe("los mensajes", () => {
-  const recursos: Recurso[] = ["looks", "avatar", "tryon", "fotos", "renders"];
+  const recursos: Recurso[] = ["looks", "avatar", "tryon", "fotos", "renders", "ideal"];
 
-  it("existen para los cinco recursos", () => {
+  it("existen para los seis recursos", () => {
     for (const r of recursos) expect(MENSAJE_CUOTA[r].length).toBeGreaterThan(10);
   });
 

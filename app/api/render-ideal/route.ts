@@ -16,9 +16,11 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "no_auth" }, { status: 401 });
 
   // Sin esto la ruta generaba una imagen por cada combinación de nombre y color
-  // que le llegara, sin tope de ningún tipo (2026-10-05). No tiene cuota propia:
-  // el precalentado ya se limita solo; lo que faltaba era el freno de dinero.
-  const freno = await revisarImagen(supabase, user.id, null);
+  // que le llegara, sin tope de ningún tipo (2026-10-05). Desde el 2026-10-13
+  // tiene cuota propia (`ideal`, lib/cuotas.ts): antes sólo la paraba el freno
+  // de dinero, con el mensaje genérico, y era el rubro más caro del día de
+  // quien más usó la app.
+  const freno = await revisarImagen(supabase, user.id, "ideal");
   if (!freno.permitido) {
     return NextResponse.json(
       { error: "cuota", motivo: freno.motivo, mensaje: freno.mensaje },

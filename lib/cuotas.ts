@@ -27,7 +27,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // El tope sólo aparece cuando se toca.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Recurso = "looks" | "avatar" | "tryon" | "fotos" | "renders";
+export type Recurso = "looks" | "avatar" | "tryon" | "fotos" | "renders" | "ideal";
 
 /** Cuántas veces al día. Aprobados por Roberto el 2026-09-02. */
 export const CUOTAS: Record<Recurso, number> = {
@@ -50,6 +50,15 @@ export const CUOTAS: Record<Recurso, number> = {
   // ~$4, menos de lo que costaban 40. Va en 120 porque es el tope de fotos: una
   // prenda, una imagen limpia, nunca más que lo que se dejó entrar.
   renders: 120,
+  // IDEAL: los dibujos de las prendas SUGERIDAS de la cápsula y del viaje
+  // (2026-10-13). Van a una biblioteca compartida (lib/catalog-render.ts): cada
+  // combo se dibuja una vez y lo ven todos, así que el gasto se autolimita
+  // conforme la biblioteca crece. Aun así no tenía cuota propia y era el rubro
+  // más caro del día de quien reportó el clóset a medias ($3.66, 53 dibujos):
+  // cuando topaba, lo hacía contra el freno de dinero con el mensaje genérico.
+  // 40 = una cápsula entera (la más grande medida pide 35), igual que el tope
+  // del precalentado por visita (lib/prewarm-renders.ts).
+  ideal: 40,
 };
 
 /**
@@ -79,6 +88,11 @@ const TAREAS: Record<Recurso, string[]> = {
   // genera cuando la persona vuelve (ver lib/renders-pendientes.ts). El clóset
   // típico tiene 27 prendas de foto y el 90% menos de 72.
   renders: ["render-prenda"],
+  // `capsula-ideal` también etiqueta la llamada de TEXTO que arma la cápsula
+  // (lib/engine/capsule-target.ts): una por cápsula, así que el conteo lleva
+  // un +1 por cápsula armada. Se acepta a sabiendas: separar la etiqueta
+  // partiría la historia del panel de IA por un dibujo de diferencia.
+  ideal: ["capsula-ideal"],
 };
 
 /**
@@ -97,6 +111,7 @@ export const MENSAJE_CUOTA: Record<Recurso, string> = {
   // Casi nunca se lee tal cual: el flujo de fotos no lo trata como un alto, deja
   // la prenda con su foto original y lo cuenta al final.
   renders: "por hoy ya pulí 120 prendas. mañana sigo con las demás.",
+  ideal: "por hoy ya dibujé 40 prendas de tu cápsula. las demás las puedes pedir mañana.",
 };
 
 /**
@@ -139,8 +154,16 @@ export const TOPE_USD_DIA = Number(process.env.TOPE_USD_DIA ?? 15);
  */
 export const TOPE_USD_DIA_GLOBAL = Number(process.env.TOPE_USD_DIA_GLOBAL ?? 40);
 
-/** El mensaje del freno de dinero — nunca insinúa que la persona hizo algo mal. */
-export const MENSAJE_TOPE_USD = "el stylist necesita un respiro. vuelve en un rato.";
+/**
+ * El mensaje del freno de dinero — nunca insinúa que la persona hizo algo mal.
+ *
+ * Decía "necesita un respiro. vuelve en un rato", y las dos mitades mentían:
+ * no es un respiro, es el gasto del día; y "un rato" era 24 horas. Ahora dice
+ * qué pasó (hoy ya trabajó mucho para ti) y cuándo vuelve (mañana), sin
+ * mecánica ni números.
+ */
+export const MENSAJE_TOPE_USD =
+  "hoy el stylist ya trabajó muchísimo para ti: looks, fotos e imágenes. mañana seguimos con lo que falte.";
 /** El del freno global y el del interruptor manual: tampoco es culpa suya. */
 export const MENSAJE_PAUSA = "el stylist está de descanso un momento. vuelve en un rato.";
 

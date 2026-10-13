@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
@@ -336,6 +337,13 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
   // apagaría el resaltado del segundo a media vida.
   const [conjResaltado, setConjResaltado] = useState<string | null>(null);
   const [conjToast, setConjToast] = useState<string | null>(null);
+  // Lo que dijo el servidor al frenar el auto-sanado ("por hoy ya pulí…").
+  const [avisoFreno, setAvisoFreno] = useState<string | null>(null);
+  useEffect(() => {
+    if (!avisoFreno) return;
+    const t = window.setTimeout(() => setAvisoFreno(null), 5000);
+    return () => window.clearTimeout(t);
+  }, [avisoFreno]);
   const conjTimer = useRef<number | null>(null);
   function resaltaConjunto(item: ClosetItem) {
     const cj = item.conjunto;
@@ -394,8 +402,14 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ itemId: id, ...(deTope.has(id) ? { pendiente: true } : {}) }),
         });
-        if (res.status === 429) topeTocado = true;
         const data = await res.json().catch(() => ({}));
+        const freno = mensajeDelFreno(res.status, data);
+        if (freno) {
+          // Se dice UNA vez (toast) y se deja de pedir: antes los tiles se
+          // quedaban en su color, mudos, y eso se lee como foto rota.
+          if (!topeTocado && !cancelled) setAvisoFreno(freno);
+          topeTocado = true;
+        }
         if (!cancelled && res.ok && data?.url) {
           setRendered((m) => ({ ...m, [id]: data.url as string }));
         }
@@ -674,7 +688,7 @@ export function ClosetGrid({ items }: { items: ClosetItem[] }) {
 
       {/* El toast del conjunto: "saco azul + pantalón azul", mientras dura el
           resaltado. El componente ya se auto-oculta con message null. */}
-      <Toast message={conjToast} />
+      <Toast message={avisoFreno ?? conjToast} />
     </div>
   );
 }

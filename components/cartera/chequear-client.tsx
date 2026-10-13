@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import type { Swatch } from "@/lib/palette-data";
@@ -86,12 +87,14 @@ export function ChequearClient({ va, evita }: { va: Swatch[]; evita: Swatch[] })
         body: JSON.stringify({ image: dataUrl }),
       });
       // La respuesta viene ENVUELTA: { analisis: {...} }, no plana.
-      const { analisis } = res.ok
-        ? ((await res.json()) as { analisis?: Record<string, unknown> })
-        : { analisis: undefined };
+      const cuerpo = (await res.json().catch(() => ({}))) as { analisis?: Record<string, unknown> };
+      const analisis = res.ok ? cuerpo.analisis : undefined;
       const hex = (analisis?.color_hex as string) ?? null;
       if (!hex) {
-        setError("No pude leer el color de esa foto. Prueba con una más cerrada.");
+        setError(
+          mensajeDelFreno(res.status, cuerpo) ??
+            "No pude leer el color de esa foto. Prueba con una más cerrada."
+        );
         URL.revokeObjectURL(url);
         setBusy(false);
         return;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { CATEGORIAS } from "@/components/prenda-campos";
 import Link from "next/link";
@@ -59,6 +60,8 @@ export function Probador({
   const [sel, setSel] = useState<Sel[]>([]);
   const [phase, setPhase] = useState<Phase>("pick");
   const [image, setImage] = useState<string | null>(null);
+  // Por qué no se pudo: el freno del día trae su propio texto; lo demás, el genérico.
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
   useEffect(() => {
     lockBodyScroll();
@@ -111,12 +114,14 @@ export function Probador({
         return;
       }
       if (!res.ok || !data.image) {
+        setErrMsg(mensajeDelFreno(res.status, data));
         setPhase("error");
         return;
       }
       setImage(data.image);
       setPhase("result");
     } catch {
+      setErrMsg(null);
       setPhase("error");
     }
   }
@@ -188,7 +193,7 @@ export function Probador({
   if (phase === "error") {
     return (
       <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-5 bg-accent px-8 text-center">
-        <p className="text-sm font-semibold text-on-accent">No pude probarte el look.</p>
+        <p className="text-sm font-semibold text-on-accent">{errMsg ?? "No pude probarte el look."}</p>
         <div className="flex gap-3">
           <button
             type="button"

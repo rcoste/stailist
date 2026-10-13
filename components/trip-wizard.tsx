@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
@@ -154,7 +155,8 @@ export function TripWizard({
       const d = await res.json();
       if (!res.ok || !d.ok || !d.paradas?.length) {
         setItinError(
-          d?.problema || "no alcancé a leer esa captura — ¿tienes una más nítida?"
+          mensajeDelFreno(res.status, d) ??
+            (d?.problema || "no alcancé a leer esa captura — ¿tienes una más nítida?")
         );
         return;
       }
@@ -170,6 +172,8 @@ export function TripWizard({
   // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
   const [bolsas, setBolsas] = useState<Bolsas>(edit?.bolsas ?? { mano: 1 });
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
+  // Por qué no salió la maleta: el freno del día trae su texto; lo demás, el genérico.
+  const [errMsg, setErrMsg] = useState<string | null>(null);
   // sheet: índice de la parada a capturar (== paradas.length = nueva).
   const [sheet, setSheet] = useState<number | null>(null);
   useWakeLock(phase === "gen");
@@ -280,6 +284,7 @@ export function TripWizard({
         }),
       });
       if (!res.ok || !res.body) {
+        setErrMsg(mensajeDelFreno(res.status, await res.json().catch(() => null)));
         setPhase("error");
         return;
       }
@@ -561,7 +566,7 @@ export function TripWizard({
             style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm text-error">No pude armar tu maleta — inténtalo de nuevo.</p>
+            <p className="text-sm text-error">{errMsg ?? "No pude armar tu maleta — inténtalo de nuevo."}</p>
             <button
               type="button"
               onClick={() => setPhase("form")}
