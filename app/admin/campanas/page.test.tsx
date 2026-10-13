@@ -9,6 +9,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { DatosCampana } from "@/lib/admin/campana-datos";
+import { diaEnZona } from "@/lib/admin/adquisicion";
 
 vi.mock("@/lib/auth", () => ({ requireAdmin: vi.fn(async () => ({})) }));
 vi.mock("./actions", () => ({ guardarGasto: vi.fn(), borrarGasto: vi.fn() }));
@@ -120,5 +121,38 @@ describe("/admin/campanas", () => {
   it("sin nada todavía, lo dice en vez de enseñar una tabla vacía muda", async () => {
     const h = await html({});
     expect(h).toContain("Nadie entró desde 2026-09-25");
+  });
+});
+
+describe("la fuga del paso por paso", () => {
+  // Una campaña "corre" si tuvo gasto en los últimos 3 días (campanaActiva).
+  const hoy = diaEnZona(new Date());
+  const gastoDe = (campana: string, dia: string) => ({
+    dia, campana, impresiones: null, clics: 0, costo_mxn: 100, registros_google: null, nota: null,
+  });
+
+  it("se marca en una campaña que corre, en el paso con muestra que más pierde", async () => {
+    // De 90 en la landing sólo 9 tocan el botón (10%): ésa es la fuga. Los
+    // pasos de después vienen de 9 personas, bajo la muestra mínima, y no
+    // compiten aunque su porcentaje sea peor.
+    const r = { ...fila, campana: "app-neutra", clics: 100, landing: 90, boton: 9, correoVisto: 9, correoOk: 9, pidieronCodigo: 60, entraron: 9 };
+    const h = await html({ resumen: [r], gasto: [gastoDe("app-neutra", hoy)] } as Partial<DatosCampana>);
+    expect(h).toMatch(/10% · la fuga/);
+    expect(h.match(/la fuga/g)).toHaveLength(1);
+  });
+
+  it("no se marca en una campaña pausada, aunque esté desplegada", async () => {
+    const r = { ...fila, campana: "ig-maleta", clics: 30, landing: 21, boton: 0 };
+    const h = await html({ resumen: [r], gasto: [gastoDe("ig-maleta", "2026-09-25")] } as Partial<DatosCampana>, {
+      pausadas: "1",
+    });
+    expect(h).not.toMatch(/la fuga/);
+    expect(h).toMatch(/0%/); // el porcentaje se sigue viendo
+  });
+
+  it("no se marca cuando el paso anterior trae menos de la muestra mínima", async () => {
+    const r = { ...fila, campana: "app-neutra", clics: 9, landing: 8, boton: 2 };
+    const h = await html({ resumen: [r], gasto: [gastoDe("app-neutra", hoy)] } as Partial<DatosCampana>);
+    expect(h).not.toMatch(/la fuga/);
   });
 });

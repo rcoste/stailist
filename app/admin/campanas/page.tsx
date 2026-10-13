@@ -218,22 +218,8 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
             <thead>
               <tr>
                 <Th izq>Campaña</Th>
-                <Th>
-                  <span title="Navegadores que abrieron la landing (desde el 2026-10-04)">Landing</span>
-                </Th>
-                <Th>
-                  <span title="Borradores que abrió el botón">Botón</span>
-                </Th>
-                <Th>
-                  <span title="Verificaron su correo, de quienes llegaron a esa pantalla">Correo ok</span>
-                </Th>
-                <Th>Pidieron código</Th>
-                <Th>Entraron</Th>
-                <Th>
-                  <span title="Dio su edad y es mayor: lo mismo que Google cuenta como registro">Registro</span>
-                </Th>
-                {PASOS.map((s) => (
-                  <Th key={s.etiqueta}>{s.etiqueta}</Th>
+                {COLUMNAS_EMBUDO.map((c) => (
+                  <Th key={c.etiqueta}>{c.title ? <span title={c.title}>{c.etiqueta}</span> : c.etiqueta}</Th>
                 ))}
                 <Th>
                   <span title="Mediana del tiempo al primer look">TTV</span>
@@ -242,11 +228,11 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
             </thead>
             <tbody>
               {resumen.map((r) => (
-                <FilaLarga key={`${r.fuente}|${r.campana}`} r={r} />
+                <FilaLarga key={`${r.fuente}|${r.campana}`} r={r} pausada={pausadas.includes(r)} />
               ))}
               {resumen.length === 0 ? (
                 <tr>
-                  <td colSpan={8 + PASOS.length} className="px-5 py-4 text-left text-sm text-muted">
+                  <td colSpan={2 + COLUMNAS_EMBUDO.length} className="px-5 py-4 text-left text-sm text-muted">
                     Nadie entró desde {d.desde}.
                   </td>
                 </tr>
@@ -532,22 +518,74 @@ function FilaSinAnuncio({ filas }: { filas: ResumenCampana[] }) {
 }
 
 /**
+ * LAS COLUMNAS DEL PASO POR PASO, EN EL ORDEN EN QUE LA GENTE LAS VIVE.
+ *
+ * Desde la entrada sin correo (v0.2.345.0) el código se pide DENTRO del
+ * onboarding, entre el clóset y el objetivo (app/onboarding/correo). La tabla
+ * seguía con el orden de antes —clic, landing, botón, correo, código,
+ * entraron— y comparaba "pidieron código" contra los clics: "Entraron" salía
+ * en 277% y la fuga de las dos campañas activas caía justo ahí, en un paso que
+ * no está donde la tabla decía. Las cuentas no cambian (lib/admin/campana.ts);
+ * sólo el orden y contra qué paso se saca cada %.
+ *
+ * Cabecera y celdas salen de la misma lista para que no se puedan desalinear.
+ */
+const COLUMNAS_EMBUDO: { etiqueta: string; title?: string }[] = [
+  { etiqueta: "Landing", title: "Navegadores que abrieron la landing (desde el 2026-10-04), contra los clics" },
+  { etiqueta: "Botón", title: "Borradores que abrió el botón, contra la landing" },
+  { etiqueta: "Entraron", title: "Cuentas que empezaron, contra el botón" },
+  { etiqueta: "Registro", title: "Dio su edad y es mayor: lo mismo que Google cuenta como registro" },
+  ...PASOS.filter((p) => p.min <= 3).map((p) => ({ etiqueta: p.etiqueta })),
+  { etiqueta: "Pidieron código", title: "Pidieron su código en la pantalla del correo, contra quienes terminaron el clóset" },
+  { etiqueta: "Correo ok", title: "Verificaron su correo, de quienes llegaron a esa pantalla" },
+  ...PASOS.filter((p) => p.min > 3).map((p, k) => ({
+    etiqueta: p.etiqueta,
+    title: k === 0 ? "Contra quienes terminaron el clóset: incluye la pantalla del correo" : undefined,
+  })),
+];
+
+function pasosDelEmbudo(r: ResumenCampana): { n: number; de: number | null; nota?: string }[] {
+  const antes = PASOS.flatMap((p, i) => (p.min <= 3 ? [i] : []));
+  const despues = PASOS.flatMap((p, i) => (p.min > 3 ? [i] : []));
+  const closet = r.pasos[antes[antes.length - 1]];
+  return [
+    { n: r.landing, de: r.clics },
+    { n: r.boton, de: r.landing },
+    { n: r.entraron, de: r.boton || r.landing || r.clics },
+    { n: r.registro, de: r.entraron, nota: r.registrosGoogle != null ? `Google: ${r.registrosGoogle}` : undefined },
+    ...antes.map((i) => ({ n: r.pasos[i], de: i === 0 ? r.registro : r.pasos[i - 1] })),
+    { n: r.pidieronCodigo, de: closet },
+    { n: r.correoOk, de: r.correoVisto },
+    // El primer paso de después del correo se lee contra el CLÓSET, no contra
+    // "correo ok": el correo se cuenta desde el 2026-10-04 y el objetivo desde
+    // siempre, así que contra el correo salía en 112%. Contra el clóset el %
+    // incluye la pantalla del correo, que es justo lo que hay entre los dos.
+    ...despues.map((i, k) => ({ n: r.pasos[i], de: k === 0 ? closet : r.pasos[i - 1] })),
+  ];
+}
+
+/**
  * La fila larga del embudo. Cada paso trae el % del anterior y el paso con la
  * mayor caída de la fila se marca como "la fuga", para no tener que leer doce
  * porcentajes buscando el más bajo.
+ *
+ * DOS CONDICIONES PARA MARCARLA (2026-10-13). Sin ellas la tabla se llenaba de
+ * rojo que no decía nada: "0% · la fuga" en campañas pausadas con cero
+ * personas, o "25% · la fuga" en una fila de 8 visitas.
+ *   · La campaña está corriendo. Una pausada ya no se va a arreglar; su fuga
+ *     es historia y se lee en su porcentaje, sin pintarla.
+ *   · El paso anterior trae al menos OBJETIVOS.muestraMinima personas, el
+ *     mismo umbral que usa el plan: con menos, un porcentaje no dice nada.
+ * El porcentaje se sigue enseñando en todos los casos; lo único que cambia es
+ * cuál se pinta de rojo.
  */
-function FilaLarga({ r }: { r: ResumenCampana }) {
-  const pasos: { n: number; de: number | null; nota?: string }[] = [
-    { n: r.landing, de: r.clics },
-    { n: r.boton, de: r.landing },
-    { n: r.correoOk, de: r.correoVisto },
-    { n: r.pidieronCodigo, de: r.clics },
-    { n: r.entraron, de: r.pidieronCodigo || r.clics },
-    { n: r.registro, de: r.entraron, nota: r.registrosGoogle != null ? `Google: ${r.registrosGoogle}` : undefined },
-    ...r.pasos.map((n, i) => ({ n, de: i === 0 ? r.registro : r.pasos[i - 1] })),
-  ];
+function FilaLarga({ r, pausada }: { r: ResumenCampana; pausada: boolean }) {
+  const pasos = pasosDelEmbudo(r);
   const tasas = pasos.map((s) => (s.de != null && s.de > 0 ? s.n / s.de : null));
-  const fuga = tasas.reduce<number>((min, t, i) => (t != null && t < 1 && (min < 0 || t < (tasas[min] ?? 1)) ? i : min), -1);
+  const cuenta = (i: number) => (pasos[i].de ?? 0) >= OBJETIVOS.muestraMinima;
+  const fuga = pausada
+    ? -1
+    : tasas.reduce<number>((min, t, i) => (t != null && t < 1 && cuenta(i) && (min < 0 || t < (tasas[min] ?? 1)) ? i : min), -1);
   return (
     <tr>
       <Td izq>

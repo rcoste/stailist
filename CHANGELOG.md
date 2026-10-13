@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.372.1] - 2026-10-13 — la fuga, donde de verdad está
+
+- **El paso por paso de Campañas, en el orden real del flujo.** Desde la
+  entrada sin correo (v0.2.345.0) el código se pide dentro del onboarding,
+  entre el clóset y el objetivo. La tabla seguía con el orden de antes y
+  comparaba "pidieron código" contra los clics: "Entraron" salía en 277% y
+  la fuga de las dos campañas activas caía en un paso que no estaba ahí.
+  Ahora: landing, botón, entraron, registro, gustos, colores, clóset,
+  pidieron código, correo ok, objetivo, primer look. Las cuentas no cambian.
+  Con datos de hoy la fuga de Colombia es el botón de la landing (44%) y la
+  de México la verificación del correo (47%).
+- **"La fuga" sólo se marca cuando dice algo**: en campañas que corren (no en
+  las pausadas) y cuando el paso anterior trae al menos 10 personas, el
+  mismo umbral que usa el plan. El porcentaje se sigue viendo en todas.
+
 ## [0.2.372.0] - 2026-10-13 — el admin, rediseñado
 
 - Roberto, tercera vez en cuatro días: "todo el admin es una mierda, súper
