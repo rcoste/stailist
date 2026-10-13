@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.372.5] - 2026-10-13 — los looks del viaje usan tus sustitutos
+
+- Reporte real: "al momento de hacer la maleta solo me da 8 looks con las
+  mismas 4 prendas, no usa ninguna otra de las que me aparecen". Las prendas
+  que eliges a mano para un hueco que faltaba ("me quedo con la mía", guardadas
+  como `sub:<i>`) se veían en la maleta pero NUNCA llegaban al armador de
+  looks: la ruta tenía su propia copia de la regla sin ellas. En ese viaje (20
+  días, 23 prendas, 8 sustitutos) le llegaban 9 prendas con dos pantalones;
+  con el arreglo le llegan 16.
+- Fuente única `lib/trip-maleta.ts` (`empacablesDelViaje`, `sustitutoDe`),
+  usada por la ruta de looks y por la página del viaje, con su test. La misma
+  prenda cubriendo dos huecos se empaca una vez. El motor no se tocó.
+
 ## [0.2.372.4] - 2026-10-13 — el remate manual ya no le cobra el cupo a nadie
 
 - `scripts/rematar-renders-pendientes.ts` deja sus recibos como

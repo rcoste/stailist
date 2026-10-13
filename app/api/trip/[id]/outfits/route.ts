@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
-  capsuleRows,
   type CapsuleTarget,
   type CapsuleMatch,
   type CapsuleOverrides,
@@ -16,6 +15,7 @@ import {
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { enrichPackable, type RealAttrs } from "@/lib/engine/enrich-packable";
+import { empacablesDelViaje } from "@/lib/trip-maleta";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
@@ -83,21 +83,18 @@ export async function POST(
   const overrides = (trip.overrides as CapsuleOverrides | null) ?? null;
   if (!target) return NextResponse.json({ error: "sin_capsula" }, { status: 400 });
 
-  // Empacable = lo que de verdad tienes en la maleta para combinar: "tienes",
-  // sustitutos, Y los "parecido" (ropa real tuya que la app encontró cercana —
-  // si está en tu maleta, debe contar para los looks aunque no la hayas
-  // "aceptado" formalmente). Solo se excluye lo realmente faltante (effective
-  // "falta") y lo pendiente sin match. Cada pieza se referencia por el NOMBRE de
-  // la prenda del clóset que la cubre.
-  const packable: PackableItem[] = capsuleRows(target, match, overrides)
-    .filter((r) => (r.covered || r.effective === "parecido") && !!r.by)
-    .map((r, i) => ({
-      n: i,
-      nombre: r.by ?? r.item.nombre,
-      category: r.item.category,
-      color: r.item.colorFamilia,
-      formalidad: r.item.formalidad,
-    }));
+  // Empacable = lo que de verdad hay en la maleta para combinar, de la fuente
+  // única lib/trip-maleta.ts: lo que cubre la app ("tienes", "parecido") Y los
+  // sustitutos que la persona eligió a mano ("sub:<i>"). Esta ruta tenía su
+  // propia copia de la regla sin los sustitutos, y un viaje con 8 elegidos a
+  // mano salió con 15 looks de las mismas cuatro prendas (2026-10-13).
+  const packable: PackableItem[] = empacablesDelViaje(target, match, overrides).map((p, i) => ({
+    n: i,
+    nombre: p.nombre,
+    category: p.item.category,
+    color: p.item.colorFamilia,
+    formalidad: p.item.formalidad,
+  }));
 
   if (packable.length < 2) {
     await supabase
