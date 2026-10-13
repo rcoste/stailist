@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { sustitutoDe } from "@/lib/trip-maleta";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Icon } from "@/components/icon";
@@ -108,9 +109,9 @@ export default async function ViajeDetallePage({
   }
 
   // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):
-  // cubren una prenda que faltaba con una real del clóset.
-  const subAt = (i: number) =>
-    (overrides as Record<string, unknown> | null)?.[`sub:${i}`] as string | undefined;
+  // cubren una prenda que faltaba con una real del clóset. Se leen con el mismo
+  // helper que el armador de looks (lib/trip-maleta.ts) para que no diverjan.
+  const subAt = (i: number) => sustitutoDe(overrides, i) ?? undefined;
 
   const rows: TripRow[] = capsuleRows(target, match, overrides).map((r) => {
     const by = subAt(r.index) ?? r.by;
