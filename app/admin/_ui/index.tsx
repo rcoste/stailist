@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { banderaDe, paisEnPalabras } from "@/lib/lugar";
 
+export { Ampliable } from "./ampliable";
+
 // EL KIT DEL ADMIN (2026-10-13). Seis piezas y nada más: toda pantalla de leer
 // el experimento se arma con éstas, y ninguna pantalla declara las suyas.
 //
