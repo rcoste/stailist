@@ -4,23 +4,23 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { origenEnPalabras } from "@/lib/admin/campana";
 import { esDispositivo } from "@/lib/dispositivo";
-import { banderaDe, lugarEnPalabras } from "@/lib/lugar";
+import { lugarEnPalabras } from "@/lib/lugar";
 import { origenDesdeDato } from "@/lib/origen";
 import { isMinor } from "@/lib/edad";
 import { construirFeed, etiqueta, ultimoUsoPorUsuario, vueltas } from "@/lib/admin/actividad";
-import { DIAS_VENTANA, ZONA, diaEnZona, horaEnZona } from "@/lib/admin/adquisicion";
+import { DIAS_VENTANA, ZONA, diaEnZona, horaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { diasEntre } from "@/lib/admin/retencion";
 import { ITEM_IMAGE_SELECT, itemImageUrlSync, itemPrivatePaths, type ItemImageRow } from "@/lib/item-image";
 import { PASOS, tiemposDe } from "@/lib/admin/embudo";
 import { Checkpoints } from "../../_compartido/checkpoints";
+import { AlFinal, Chip, Cifra, Fila, Lista, Panel, Quien, Renglon, Vacio } from "../../_ui";
 
-// LA FICHA DE UNA PERSONA, con la línea de tiempo primero (replanteo del
-// admin, 2026-10-09). Lo que Roberto pregunta de alguien es siempre lo mismo:
-// quién es, de dónde llegó, qué hizo y si volvió. Antes la ficha abría con una
-// retícula de doce campos y el historial venía después; ahora el encabezado
-// contesta "quién y de dónde", la línea de tiempo (agrupada por día desde que
-// empezó, con la marca de cada regreso) contesta "qué hizo y si volvió", y el
-// perfil, el clóset y los looks quedan plegados debajo.
+// LA FICHA DE UNA PERSONA (mockup aprobado el 2026-10-13). Lo que Roberto
+// pregunta de alguien es siempre lo mismo: quién es, de dónde llegó, qué hizo
+// y si volvió. El encabezado contesta "quién y de dónde"; las cuatro cifras,
+// lo que importa del experimento (primer look, ropa propia, volvió, último
+// uso); "hasta dónde llegó" y "qué hizo" contestan el resto; el perfil, el
+// clóset y los looks van abiertos debajo, sin acordeones.
 
 // "Cuándo" en lenguaje humano (mismo criterio que la lista).
 function hace(iso: string | null | undefined): string {
@@ -45,17 +45,14 @@ function ttvHumano(seconds: number): string {
   return `${Math.round(h / 24)} días`;
 }
 
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs uppercase tracking-wide text-muted">{label}</span>
-      <span className="text-sm text-ink">{value}</span>
-    </div>
-  );
-}
-
+/** "lun 12 oct" */
 function fechaCorta(dia: string): string {
   return new Date(`${dia}T12:00:00Z`).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+}
+
+/** "12 oct" */
+function diaMes(dia: string): string {
+  return new Date(`${dia}T12:00:00Z`).toLocaleDateString("es-MX", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
 type ItemRow = ItemImageRow & { id: string; source: string | null };
@@ -150,9 +147,11 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
   const inicio: string = (profile.onboarding_started_at as string | null) ?? (profile.created_at as string);
   const diaInicio = diaEnZona(new Date(inicio));
   const hoy = diaEnZona(new Date());
+  const ayer = sumarDias(hoy, -1);
   const regresos = vueltas(feed, new Map([[id, inicio]]));
   const diasQueVolvio = [...new Set([...regresos.values()])].sort((a, b) => a - b);
-  const enSuSemana = diasEntre(diaInicio, hoy) <= DIAS_VENTANA;
+  const diaDeSuSemana = diasEntre(diaInicio, hoy);
+  const enSuSemana = diaDeSuSemana <= DIAS_VENTANA;
 
   // La línea de tiempo, por día desde que empezó.
   const porDia: { dia: string; n: number; momentos: typeof feed }[] = [];
@@ -164,6 +163,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
   }
 
   const ultimoUso = ultimoUsoPorUsuario(fuentes).get(id) ?? null;
+  const ultimoMomento = feed.reduce<(typeof feed)[number] | null>((u, m) => (!u || m.at > u.at ? m : u), null);
 
   // Los checkpoints: los mismos escalones del embudo (lib/admin/embudo.ts),
   // con la hora en que pasó por cada uno.
@@ -183,243 +183,245 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
   });
   const checkpoints = PASOS.map((p) => ({ id: p.id, label: p.label, cuando: tiempos[p.id] ?? null }));
   const ttv = (ttvEvent?.data as { seconds?: number } | null)?.seconds;
+  const llegoAlLook = profile.onboarding_step >= 5;
   const fotos = items.filter((i) => i.source === "photo").length;
   const arch = profile.style_archetype as { nombre?: string; descripcion?: string } | null;
   const paleta = [profile.palette_season, profile.palette_flow].filter(Boolean).join(" + ");
   const lugar = lugarEnPalabras(profile.pais, profile.region);
+  const aparato = esDispositivo(profile.dispositivo) ? profile.dispositivo : null;
+  const variante = profile.onboarding_variante as string | null;
+  const origen = origenEnPalabras(origenDesdeDato(profile.origen), profile.como_nos_conocio ?? null);
+  const empezo = diaInicio === hoy ? "hoy" : diaInicio === ayer ? "ayer" : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Link href="/admin/usuarios" className="text-sm text-muted hover:text-ink">
+    <>
+      <Link href="/admin/usuarios" className="mb-3 inline-block text-[13px] text-muted hover:text-ink">
         ← Personas
       </Link>
 
-      <header className="flex flex-col gap-4 sm:flex-row">
-        {avatarUrl ? (
-          <div className="relative aspect-[3/4] w-24 shrink-0 overflow-hidden rounded-lg border border-line bg-surface sm:w-28">
-            <Image src={avatarUrl} alt="Avatar" fill sizes="112px" className="object-cover" unoptimized />
-          </div>
-        ) : null}
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <h1 className="text-h2 font-semibold text-ink">
-                {banderaDe(profile.pais) ? <span className="mr-2">{banderaDe(profile.pais)}</span> : null}
-                {profile.email ?? "(sin correo todavía)"}
-              </h1>
-              <p className="text-sm text-muted">
-                Llegó por <b className="text-ink">{origenEnPalabras(origenDesdeDato(profile.origen), profile.como_nos_conocio ?? null)}</b>
-                {" · "}empezó el {fechaCorta(diaInicio)}
-                {lugar ? ` · ${lugar}` : ""}
-                {esDispositivo(profile.dispositivo) ? ` · ${profile.dispositivo}` : ""}
-              </p>
-            </div>
-            {profile.onboarding_step >= 5 ? (
-              <a
-                href={`/admin/ver-como/${profile.id}`}
-                className="flex min-h-9 shrink-0 items-center rounded-sm bg-ink px-4 text-xs font-medium text-bg transition-opacity duration-200 hover:opacity-80"
-              >
-                👁 Ver su app
-              </a>
-            ) : null}
-          </div>
-          <ul className="flex flex-wrap gap-2 text-xs">
-            <li className={`rounded-full border px-2.5 py-1 ${profile.onboarding_step >= 5 ? "border-ink text-ink" : "border-line text-muted"}`}>
-              {profile.onboarding_step >= 5 ? `primer look${ttv != null ? ` en ${ttvHumano(ttv)}` : ""}` : `en el paso ${profile.onboarding_step} del onboarding`}
-            </li>
-            <li className={`rounded-full border px-2.5 py-1 ${fotos > 0 ? "border-ink text-ink" : "border-line text-muted"}`}>
-              {fotos > 0 ? `${fotos} prenda${fotos === 1 ? "" : "s"} con foto` : "sin ropa propia"}
-            </li>
-            <li
-              className={`rounded-full border px-2.5 py-1 ${
-                diasQueVolvio.length ? "border-success text-success" : "border-line text-muted"
-              }`}
-            >
-              {diasQueVolvio.length
-                ? `volvió ${diasQueVolvio.length === 1 ? "una vez" : `${diasQueVolvio.length} veces`} (día${diasQueVolvio.length === 1 ? "" : "s"} ${diasQueVolvio.join(", ")})`
-                : enSuSemana
-                  ? "todavía en su primera semana"
-                  : "no volvió"}
-            </li>
-            <li className="rounded-full border border-line px-2.5 py-1 text-muted">último uso {hace(ultimoUso)}</li>
-          </ul>
+      <header className="mb-5 grid grid-cols-[auto_1fr] items-start gap-x-5 gap-y-3 sm:grid-cols-[auto_1fr_auto]">
+        <div className="relative h-24 w-18 overflow-hidden rounded-lg border border-line bg-tile">
+          {avatarUrl ? <Image src={avatarUrl} alt="Avatar" fill sizes="72px" className="object-cover" unoptimized /> : null}
         </div>
+        <div className="min-w-0">
+          <Quien correo={profile.email} pais={profile.pais} className="max-w-full text-h2 font-bold tracking-[-0.025em]" />
+          <p className="mt-1 text-sm text-muted">
+            {lugar ? `${lugar} · ` : ""}
+            llegó por <b className="font-semibold text-ink2">{origen}</b>
+            {" · "}empezó{" "}
+            <b className="font-semibold text-ink2">{empezo ?? fechaCorta(diaInicio)}</b>
+            {empezo ? ` ${diaMes(diaInicio)}` : ""} a las {horaEnZona(inicio)}
+            {aparato ? ` · ${aparato}` : ""}
+          </p>
+        </div>
+        {llegoAlLook ? (
+          <a
+            href={`/admin/ver-como/${profile.id}`}
+            className="col-start-2 inline-flex h-9 items-center justify-self-start rounded-sm bg-ink px-3.5 text-[13px] font-semibold text-on-accent transition-opacity duration-200 hover:opacity-80 sm:col-start-3 sm:justify-self-end"
+          >
+            Ver su app
+          </a>
+        ) : null}
       </header>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Hasta dónde llegó</h2>
-        <div className="rounded-lg border border-line bg-surface px-4 py-3">
-          <Checkpoints pasos={checkpoints} hora={(iso) => `${fechaCorta(diaEnZona(new Date(iso)))} ${horaEnZona(iso)}`} />
-        </div>
-      </section>
+      <Fila cols={4}>
+        <Cifra
+          label="Primer look"
+          valor={ttv != null ? ttvHumano(ttv) : llegoAlLook ? "sí" : "no llegó"}
+          unidad={llegoAlLook ? "la promesa son 2 min" : undefined}
+          sub={
+            !llegoAlLook
+              ? `se quedó en el paso ${profile.onboarding_step} del onboarding`
+              : variante === "fotos"
+                ? "con 3 fotos del carrete (prueba A/B)"
+                : undefined
+          }
+        />
+        <Cifra label="Ropa propia" valor={fotos} unidad="prendas con foto" sub={`${items.length} en el clóset en total`} />
+        <Cifra
+          label="Volvió"
+          valor={diasQueVolvio.length ? `${diasQueVolvio.length} ${diasQueVolvio.length === 1 ? "vez" : "veces"}` : enSuSemana ? "todavía no" : "no volvió"}
+          unidad={
+            diasQueVolvio.length
+              ? `día${diasQueVolvio.length === 1 ? "" : "s"} ${diasQueVolvio.join(", ")}`
+              : enSuSemana
+                ? `día ${diaDeSuSemana} de ${DIAS_VENTANA}`
+                : undefined
+          }
+          sub={!diasQueVolvio.length && enSuSemana ? `cuenta si entra otro día antes del ${diaMes(sumarDias(diaInicio, DIAS_VENTANA + 1))}` : undefined}
+          tono={diasQueVolvio.length ? "success" : "ink"}
+        />
+        <Cifra
+          label="Último uso"
+          valor={hace(ultimoUso)}
+          sub={ultimoMomento ? `${etiqueta(ultimoMomento)} a las ${horaEnZona(ultimoMomento.at)}` : undefined}
+        />
+      </Fila>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Línea de tiempo</h2>
-        <p className="text-xs text-muted">
-          Por día desde que empezó (día 0). “Abrió la app” es una vuelta sin nada más. Las tandas del
-          mismo rato se cuentan como una.
-        </p>
-        {porDia.length === 0 ? (
-          <p className="text-sm text-muted">Sin actividad registrada.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {porDia.map((d) => {
-              const volvio = d.momentos.find((m) => regresos.has(m.key));
+      <Fila cols="2-3">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Panel titulo="Hasta dónde llegó">
+            <Checkpoints pasos={checkpoints} />
+          </Panel>
+
+          <Panel titulo="Perfil">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 sm:grid-cols-[7rem_1fr]">
+              <dt className="text-[13px] text-muted">Género</dt>
+              <dd className="text-sm text-ink">{profile.gender ?? "—"}</dd>
+              <dt className="text-[13px] text-muted">Edad</dt>
+              <dd className="text-sm text-ink">
+                {profile.age_range
+                  ? `${profile.age_range}${
+                      isMinor(profile.age_range)
+                        ? profile.minor_consent_verified_at
+                          ? " · menor (permiso confirmado vía link ✓)"
+                          : profile.minor_ack_at
+                            ? " · menor (declarado, tutor SIN confirmar)"
+                            : " · menor (sin permiso)"
+                        : ""
+                    }`
+                  : "—"}
+              </dd>
+              <dt className="text-[13px] text-muted">Colorimetría</dt>
+              <dd className="text-sm text-ink">{paleta || "—"}</dd>
+              <dt className="text-[13px] text-muted">Estilo</dt>
+              <dd className="text-sm text-ink">{arch?.nombre ?? "—"}</dd>
+              <dt className="text-[13px] text-muted">Gustos</dt>
+              <dd className="text-sm text-ink">{(profile.taste_tags ?? []).slice(0, 6).join(", ") || "—"}</dd>
+              <dt className="text-[13px] text-muted">Onboarding</dt>
+              <dd className="text-sm text-ink">{variante === "fotos" ? "3 fotos (prueba A/B)" : "lista de básicos"}</dd>
+              <dt className="text-[13px] text-muted">Aparato</dt>
+              <dd className="text-sm text-ink">{aparato ?? "—"}</dd>
+              <dt className="text-[13px] text-muted">País</dt>
+              <dd className="text-sm text-ink">{lugar ?? "—"}</dd>
+              <dt className="text-[13px] text-muted">Avatar</dt>
+              <dd className="text-sm text-ink">{avatarUrl ? "sí" : "no"}</dd>
+            </dl>
+            {arch?.descripcion ? <p className="editorial mt-3 text-sm text-muted">“{arch.descripcion}”</p> : null}
+          </Panel>
+        </div>
+
+        <Panel titulo="Qué hizo" extra="por día desde que empezó" sinPadding>
+          {porDia.length === 0 ? (
+            <Vacio>Sin actividad registrada.</Vacio>
+          ) : (
+            porDia.map((d, k) => {
+              const volvio = d.momentos.some((m) => regresos.has(m.key));
               return (
-                <div key={d.dia} className="flex flex-col gap-1">
-                  <div className="flex items-baseline gap-2 text-xs">
-                    <span className="font-semibold text-ink">día {d.n}</span>
-                    <span className="text-muted">{fechaCorta(d.dia)}</span>
-                    {volvio ? (
-                      <span className="rounded-full border border-success px-1.5 text-[11px] font-semibold text-success">volvió</span>
-                    ) : null}
+                <div key={d.dia} className={k > 0 ? "border-t border-line2" : ""}>
+                  <div className="flex flex-wrap items-baseline gap-2 px-5 pb-1 pt-3 text-xs text-muted">
+                    <b className="text-[13px] text-ink">Día {d.n}</b>
+                    <span>{d.dia === hoy ? `hoy, ${fechaCorta(d.dia)}` : d.dia === ayer ? `ayer, ${fechaCorta(d.dia)}` : fechaCorta(d.dia)}</span>
+                    <Chip>
+                      {d.momentos.length} momento{d.momentos.length === 1 ? "" : "s"}
+                    </Chip>
+                    {volvio ? <Chip tono="success">volvió</Chip> : null}
                   </div>
-                  <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+                  <Lista>
                     {d.momentos.map((m) => {
                       const x = m.data as { seconds?: number; step?: number } | null;
+                      const primerLook = m.tipo === "ev:first_outfit_ttv";
                       const extra =
-                        m.tipo === "ev:first_outfit_ttv" && typeof x?.seconds === "number"
-                          ? ` en ${ttvHumano(x.seconds)}`
+                        primerLook && typeof x?.seconds === "number"
+                          ? `en ${ttvHumano(x.seconds)}`
                           : m.tipo === "ev:onboarding_step" && typeof x?.step === "number"
-                            ? ` (paso ${x.step})`
-                            : "";
+                            ? `paso ${x.step}`
+                            : m.tipo === "alta"
+                              ? origen
+                              : null;
                       return (
-                        <li key={m.key} className="flex items-baseline gap-3 px-4 py-2 text-sm">
-                          <span className="w-12 shrink-0 tabular-nums text-xs text-faint">{horaEnZona(m.at)}</span>
-                          <span className={m.tipo === "visita" ? "text-muted" : "text-ink"}>
+                        <Renglon key={m.key}>
+                          <span className="w-10 shrink-0 text-xs tabular-nums text-faint">{horaEnZona(m.at)}</span>
+                          <span className={`min-w-0 flex-1 text-sm ${m.tipo === "visita" ? "text-muted" : "text-ink"} ${primerLook ? "font-bold" : ""}`}>
                             {etiqueta(m)}
-                            {extra}
+                            {extra ? <span className="font-normal text-muted"> · {extra}</span> : null}
                           </span>
-                        </li>
+                        </Renglon>
                       );
                     })}
-                  </ul>
+                  </Lista>
                 </div>
               );
-            })}
-          </div>
-        )}
-      </section>
+            })
+          )}
+        </Panel>
+      </Fila>
 
-      <details open className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Perfil
-          <span className="ml-2 text-xs font-normal text-muted">
-            {[profile.gender, profile.age_range, paleta || null, arch?.nombre ?? null].filter(Boolean).join(" · ") || "sin datos"}
-          </span>
-        </summary>
-        <div className="grid grid-cols-2 gap-4 border-t border-line p-4 sm:grid-cols-3">
-          <Field label="Género" value={profile.gender ?? "—"} />
-          <Field
-            label="Edad"
-            value={
-              profile.age_range
-                ? `${profile.age_range}${
-                    isMinor(profile.age_range)
-                      ? profile.minor_consent_verified_at
-                        ? " · menor (permiso confirmado vía link ✓)"
-                        : profile.minor_ack_at
-                          ? " · menor (declarado, tutor SIN confirmar)"
-                          : " · menor (sin permiso)"
-                      : ""
-                  }`
-                : "—"
-            }
-          />
-          <Field label="Colorimetría" value={paleta || "—"} />
-          <Field label="Objetivo" value={profile.last_objective ?? "—"} />
-          <Field label="Estilo" value={arch?.nombre ?? "—"} />
-          <Field label="Gustos" value={(profile.taste_tags ?? []).slice(0, 6).join(", ") || "—"} />
-          <Field label="Aparato" value={esDispositivo(profile.dispositivo) ? profile.dispositivo : "—"} />
-          <Field label="País" value={lugar ?? "—"} />
-          <Field label="Avatar" value={avatarUrl ? "sí" : "no"} />
-          {arch?.descripcion ? (
-            <p className="editorial col-span-full text-sm text-muted">“{arch.descripcion}”</p>
-          ) : null}
-        </div>
-      </details>
-
-      <details open className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Clóset
-          <span className="ml-2 text-xs font-normal text-muted">
-            {items.length} prenda{items.length === 1 ? "" : "s"}
-            {fotos ? ` · ${fotos} con foto 📷` : ""}
-          </span>
-        </summary>
-        <div className="border-t border-line p-4">
+      <Fila cols={2}>
+        <Panel
+          titulo={
+            <>
+              Clóset{" "}
+              <span className="font-normal text-muted">
+                · {items.length} prenda{items.length === 1 ? "" : "s"}
+                {fotos ? `, ${fotos} con foto` : ""}
+              </span>
+            </>
+          }
+        >
           {items.length === 0 ? (
-            <span className="text-sm text-muted">Clóset vacío.</span>
+            <p className="text-sm text-muted">Clóset vacío.</p>
           ) : (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-6">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
               {items.map((it) => {
                 const p = prendaById.get(it.id)!;
                 return (
-                  <figure key={it.id} className="flex flex-col gap-1 overflow-hidden rounded-lg border border-line bg-surface">
-                    <div className="relative aspect-square w-full">
-                      {p.imagen ? (
-                        <Image src={p.imagen} alt={p.nombre} fill sizes="120px" className="object-cover" unoptimized />
-                      ) : (
-                        <div className="h-full w-full" style={{ backgroundColor: p.swatch }} />
-                      )}
-                    </div>
-                    <figcaption className="truncate px-2 pb-1.5 text-xs text-ink">
-                      {p.nombre}
-                      {it.source === "photo" ? " 📷" : ""}
-                    </figcaption>
-                  </figure>
+                  <div key={it.id} className="relative aspect-square overflow-hidden rounded-md border border-line bg-tile" title={p.nombre}>
+                    {p.imagen ? (
+                      <Image src={p.imagen} alt={p.nombre} fill sizes="120px" className="object-cover" unoptimized />
+                    ) : (
+                      <div className="h-full w-full" style={{ backgroundColor: p.swatch }} />
+                    )}
+                    {it.source === "photo" ? <span className="absolute bottom-0.5 right-1 text-[11px]">📷</span> : null}
+                  </div>
                 );
               })}
             </div>
           )}
-        </div>
-      </details>
+        </Panel>
 
-      <details open className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Looks
-          <span className="ml-2 text-xs font-normal text-muted">{outfits?.length ?? 0} (los últimos 20)</span>
-        </summary>
-        <div className="border-t border-line p-4">
+        <Panel
+          titulo={
+            <>
+              Looks <span className="font-normal text-muted">· {outfits?.length ?? 0}</span>
+            </>
+          }
+          sinPadding
+        >
           {(outfits ?? []).length === 0 ? (
-            <span className="text-sm text-muted">Sin looks aún.</span>
+            <Vacio>Sin looks aún.</Vacio>
           ) : (
-            <div className="flex flex-col gap-3">
+            <Lista>
               {(outfits ?? []).map((o) => {
                 const tryon = o.tryon_path ? (signed.get(o.tryon_path as string) ?? null) : null;
                 const prendas = (o.item_ids as string[]).map(
                   (pid) => prendaById.get(pid) ?? { nombre: "Prenda", swatch: "#E5E1DD", imagen: null }
                 );
                 return (
-                  <div key={o.id} className="flex gap-3 rounded-lg border border-line bg-surface p-3">
+                  <Renglon key={o.id} className="items-start py-3">
                     {tryon ? (
-                      <div className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-lg border border-line sm:w-24">
-                        <Image src={tryon} alt={o.title ?? "Look"} fill sizes="96px" className="object-cover" unoptimized />
+                      <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-tile">
+                        <Image src={tryon} alt={o.title ?? "Look"} fill sizes="48px" className="object-cover" unoptimized />
                       </div>
                     ) : null}
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-col">
-                          <span className="truncate text-sm font-medium text-ink">
-                            {o.title ?? "Look"}
-                            {(o.source as string | null) === "viaje" ? " ✈️" : ""}
-                          </span>
-                          <span className="text-xs text-muted">
-                            {new Date(o.created_at).toLocaleDateString("es-MX", { timeZone: ZONA, day: "numeric", month: "short" })}
-                            {o.occasion ? ` · ${o.occasion}` : ""}
-                          </span>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5 text-sm">
-                          {voteOf.get(o.id) ?? ""}
-                          {wornSet.has(o.id) ? <span className="text-xs text-success">✓ puesto</span> : null}
-                        </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm">
+                        <b className="text-ink">
+                          {o.title ?? "Look"}
+                          {(o.source as string | null) === "viaje" ? " ✈️" : ""}
+                        </b>
+                        <span className="text-[13px] text-muted">
+                          {" · "}
+                          {new Date(o.created_at).toLocaleDateString("es-MX", { timeZone: ZONA, day: "numeric", month: "short" })}
+                          {o.occasion ? ` · ${o.occasion}` : ""}
+                        </span>
                       </div>
-                      <p className="line-clamp-2 text-xs text-muted">{o.explanation}</p>
-                      <div className="flex flex-wrap gap-1.5">
+                      {o.explanation ? <p className="truncate text-[13px] text-muted">{o.explanation}</p> : null}
+                      <div className="mt-1.5 flex flex-wrap gap-1">
                         {prendas.map((p, k) => (
-                          <div key={k} className="relative h-10 w-10 overflow-hidden rounded-md border border-line" title={p.nombre}>
+                          <div key={k} className="relative h-6 w-6 overflow-hidden rounded-sm border border-line bg-tile" title={p.nombre}>
                             {p.imagen ? (
-                              <Image src={p.imagen} alt={p.nombre} fill sizes="40px" className="object-cover" unoptimized />
+                              <Image src={p.imagen} alt={p.nombre} fill sizes="24px" className="object-cover" unoptimized />
                             ) : (
                               <div className="h-full w-full" style={{ backgroundColor: p.swatch }} />
                             )}
@@ -427,13 +429,17 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                         ))}
                       </div>
                     </div>
-                  </div>
+                    <AlFinal>
+                      {voteOf.get(o.id) ?? ""}
+                      {wornSet.has(o.id) ? <span className="ml-1.5 text-success">✓ puesto</span> : null}
+                    </AlFinal>
+                  </Renglon>
                 );
               })}
-            </div>
+            </Lista>
           )}
-        </div>
-      </details>
-    </div>
+        </Panel>
+      </Fila>
+    </>
   );
 }

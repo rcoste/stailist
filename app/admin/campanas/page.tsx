@@ -1,59 +1,45 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { requireAdmin } from "@/lib/auth";
 import { DIAS_VENTANA, diaEnZona, sumarDias } from "@/lib/admin/adquisicion";
 import { fmtSegundos } from "@/lib/admin/embudo-tiempos";
-import {
-  MXN_POR_USD,
-  PARO_MINIMO_VOLVIERON,
-  PARO_MUESTRA,
-  PASOS,
-  costoPor,
-  textoAvatar,
-  textoDispositivos,
-  textoPaises,
-  type ResumenCampana,
-} from "@/lib/admin/campana";
+import { MXN_POR_USD, PASOS, costoPor, textoAvatar, textoDispositivos, textoPaises, type ResumenCampana } from "@/lib/admin/campana";
 import { cargarCampana, desdePorDefecto } from "@/lib/admin/campana-datos";
-import { campanaActiva, estadoDelExperimento } from "@/lib/admin/hoy";
+import { campanaActiva, costoPorPrimerLookTotal, estadoDelExperimento } from "@/lib/admin/hoy";
 import { MODULOS, OBJETIVOS, TEXTO_ESTADO, esFilaDeCampana, type Estado } from "@/lib/admin/objetivos";
 import { OPCIONES_CONOCIO, etiquetaConocio } from "@/lib/como-nos-conocio";
 import { esCampanaDePrueba } from "@/lib/embudo-marcas";
+import { Chip, Cifra, Encabezado, Fila, Lista, Panel, Pestanas, PieDeLista, Renglon, Sub, Tabla, Td, Th, Vacio } from "../_ui";
 import { borrarGasto, guardarGasto } from "./actions";
 
-// CAMPAÑAS: ¿sirven los anuncios? (replanteo del admin, 2026-10-09). Une lo
-// que eran Campaña y Adquisición, que contestaban lo mismo en dos pantallas.
+// CAMPAÑAS: ¿sirven los anuncios? (replanteo del admin, 2026-10-09; kit visual
+// 2026-10-13). Une lo que eran Campaña y Adquisición, que contestaban lo mismo
+// en dos pantallas.
 //
-// El orden es el de la lectura: primero el veredicto del plan y la tabla
-// corta por campaña (gasto → cuentas → primer look → costo → volvieron), que
-// es lo que decide. Lo demás, debajo y plegado: los objetivos del plan, el uso
-// en la primera semana, el embudo paso por paso, lo que dicen que las trajo y
-// la captura del gasto. Las definiciones viven en lib/admin/campana.ts; la
-// carga en campana-datos.ts, compartida con el correo de las 8 y con Hoy.
-// Postgres directo y sin RLS: se vuelve a exigir admin aquí.
+// La primera vista contesta: cuatro cifras (gasto, primeros looks, costo por
+// look, volvieron) y la tabla corta por campaña. Lo demás va en pestañas
+// visibles, nunca en acordeones: el embudo paso por paso, los objetivos del
+// plan, el uso en la primera semana, lo que dicen que las trajo y la captura
+// del gasto. Las definiciones viven en lib/admin/campana.ts y en Cómo se
+// cuenta; la carga en campana-datos.ts, compartida con el correo de las 8 y
+// con Hoy. Postgres directo y sin RLS: se vuelve a exigir admin aquí.
 
 export const dynamic = "force-dynamic";
 
-const th = "px-3 py-2.5 font-medium";
-const td = "px-3 py-2.5";
-const inputCls =
-  "min-h-10 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus-visible:border-accent";
 const DIA = /^\d{4}-\d{2}-\d{2}$/;
+const input =
+  "h-9 rounded-sm border border-line bg-surface px-3 text-sm text-ink outline-none transition-colors duration-200 focus-visible:border-ink";
+const boton =
+  "inline-flex h-9 items-center rounded-sm border border-line bg-surface px-3 text-sm font-medium text-ink2 transition-colors duration-200 hover:border-ink hover:text-ink";
 
-function pct(n: number, d: number): string {
-  return d === 0 ? "—" : `${Math.round((n / d) * 100)}%`;
-}
-function mxn(n: number | null): string {
-  return n == null ? "—" : `$${Math.round(n).toLocaleString("es-MX")}`;
-}
-
-/** Una celda "n · % del paso anterior". */
-function Paso({ n, de }: { n: number; de: number | null }) {
-  return (
-    <td className={`${td} text-center tabular text-ink`}>
-      {n}
-      {de != null && de > 0 ? <span className="block text-xs text-muted">{pct(n, de)}</span> : null}
-    </td>
-  );
-}
+const VISTAS = [
+  { id: "paso", label: "Paso por paso" },
+  { id: "objetivos", label: "Objetivos del plan" },
+  { id: "semana", label: "Primera semana" },
+  { id: "trajo", label: "Qué las trajo" },
+  { id: "gasto", label: "Gasto capturado" },
+] as const;
+type Vista = (typeof VISTAS)[number]["id"];
 
 const TONO: Record<Estado, string> = {
   bien: "text-success",
@@ -62,129 +48,42 @@ const TONO: Record<Estado, string> = {
   "sin-datos": "text-muted",
 };
 
-/** La fila corta: lo que decide si una campaña sirve. */
-function FilaCorta({ r }: { r: ResumenCampana }) {
-  return (
-    <tr className="border-b border-line last:border-0">
-      <td className={`${td} text-left`}>
-        <span className="font-medium text-ink">{r.campana === "—" ? "sin anuncio" : r.campana}</span>
-        <span className="block text-xs text-muted">{r.fuente}</span>
-      </td>
-      <td className={`${td} text-right tabular text-ink`}>
-        {r.costoMxn != null ? `${mxn(r.costoMxn)} MXN` : "—"}
-        {r.clics != null ? <span className="block text-xs text-muted">{r.clics} clics</span> : null}
-      </td>
-      <td className={`${td} text-right tabular text-ink`}>{r.entraron}</td>
-      <td className={`${td} text-right tabular text-ink`}>
-        {r.primerLook}
-        {r.entraron ? <span className="block text-xs text-muted">{pct(r.primerLook, r.entraron)}</span> : null}
-      </td>
-      <td className={`${td} text-right tabular text-ink`}>
-        {costoPor(r, r.primerLook) != null ? `${mxn(costoPor(r, r.primerLook))} MXN` : "—"}
-      </td>
-      <td className={`${td} text-right tabular text-ink`}>
-        <Volvieron r={r} />
-      </td>
-      <td className={`${td} text-right tabular text-ink`}>US${r.iaUsd.toFixed(2)}</td>
-    </tr>
-  );
+function pct(n: number, d: number): string {
+  return d === 0 ? "—" : `${Math.round((n / d) * 100)}%`;
 }
-
-/**
- * Cuántas volvieron, contadas como el criterio de paro: "ya volvieron" incluye
- * a quien sigue en su semana. Antes la columna sólo contaba semanas cerradas y
- * decía "0 de 1" para una campaña cuya persona ya había vuelto dos veces.
- */
-function Volvieron({ r }: { r: ResumenCampana }) {
-  if (r.entraron === 0) return <>—</>;
-  return (
-    <>
-      <span className={r.volvieronYa ? "font-semibold text-success" : "text-ink"}>{r.volvieronYa}</span>
-      <span className="block text-xs text-muted">
-        {r.ventanaCerrada ? `${r.ventanaCerrada} con su semana cerrada` : "nadie ha cerrado su semana"}
-      </span>
-    </>
-  );
+function mxn(n: number | null): string {
+  return n == null ? "—" : `$${Math.round(n).toLocaleString("es-MX")}`;
 }
+const nombre = (r: ResumenCampana) => (r.campana === "—" ? "sin anuncio" : r.campana);
+const suma = (xs: ResumenCampana[], f: (r: ResumenCampana) => number | null) => xs.reduce((t, r) => t + (f(r) ?? 0), 0);
 
-/** En el celular, una tarjeta por campaña en vez de una tabla de ocho columnas. */
-function Tarjeta({ r }: { r: ResumenCampana }) {
-  const costo = costoPor(r, r.primerLook);
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="font-semibold text-ink">{r.campana === "—" ? "sin anuncio" : r.campana}</span>
-        <span className="text-xs text-muted">{r.fuente}</span>
-      </div>
-      <dl className="grid grid-cols-3 gap-2 text-xs">
-        <div>
-          <dt className="text-muted">gasto</dt>
-          <dd className="tabular text-sm text-ink">{r.costoMxn != null ? `${mxn(r.costoMxn)}` : "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-muted">primer look</dt>
-          <dd className="tabular text-sm text-ink">
-            {r.primerLook} <span className="text-muted">de {r.entraron}</span>
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted">volvieron</dt>
-          <dd className={`tabular text-sm ${r.volvieronYa ? "font-semibold text-success" : "text-ink"}`}>{r.volvieronYa}</dd>
-        </div>
-        <div className="col-span-3">
-          <dt className="text-muted">costo por primer look</dt>
-          <dd className="tabular text-sm text-ink">{costo != null ? `${mxn(costo)} MXN` : "—"}</dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
+type Params = { desde?: string; ver?: string; pausadas?: string };
 
-/** La fila larga del embudo, paso por paso (plegada por defecto). */
-function FilaLarga({ r }: { r: ResumenCampana }) {
-  return (
-    <tr className="border-b border-line last:border-0">
-      <td className={`${td} text-left`}>
-        <span className="font-medium text-ink">{r.campana}</span>
-        <span className="block text-xs text-muted">{r.fuente}</span>
-      </td>
-      <Paso n={r.landing} de={r.clics} />
-      <Paso n={r.boton} de={r.landing} />
-      <td className={`${td} text-center tabular text-ink`}>
-        {r.correoVisto ? `${r.correoOk} de ${r.correoVisto}` : "—"}
-        {r.correoVisto ? <span className="block text-xs text-muted">{pct(r.correoOk, r.correoVisto)}</span> : null}
-      </td>
-      <Paso n={r.pidieronCodigo} de={r.clics} />
-      <Paso n={r.entraron} de={r.pidieronCodigo || r.clics} />
-      <td className={`${td} text-center tabular text-ink`}>
-        {r.registro}
-        {r.registrosGoogle != null ? (
-          <span className="block text-xs text-muted" title="Lo que cuenta Google como registro">
-            Google: {r.registrosGoogle}
-          </span>
-        ) : null}
-      </td>
-      {r.pasos.map((n, i) => (
-        <Paso key={PASOS[i].etiqueta} n={n} de={i === 0 ? r.registro : r.pasos[i - 1]} />
-      ))}
-      <td className={`${td} text-center tabular text-ink`}>{fmtSegundos(r.ttvMedianaS)}</td>
-    </tr>
-  );
-}
-
-export default async function Campanas({ searchParams }: { searchParams: Promise<{ desde?: string }> }) {
+export default async function Campanas({ searchParams }: { searchParams: Promise<Params> }) {
   await requireAdmin();
   const ahora = new Date();
-  const q = (await searchParams).desde;
-  const desde = q && DIA.test(q) ? q : await desdePorDefecto(ahora);
+  const p = await searchParams;
+  const desde = p.desde && DIA.test(p.desde) ? p.desde : await desdePorDefecto(ahora);
+  const ver: Vista = VISTAS.some((v) => v.id === p.ver) ? (p.ver as Vista) : "paso";
+  const conPausadas = p.pausadas === "1";
   const d = await cargarCampana(desde, ahora);
   const ayer = sumarDias(diaEnZona(ahora), -1);
   const estado = estadoDelExperimento(d.paro);
-  const tonoParo = { bien: "border-success", mal: "border-error", neutro: "border-line" }[estado.tono];
+
+  // La URL de esta pantalla con los parámetros vigentes: cambiar de pestaña o
+  // desplegar las pausadas no pierde la fecha elegida.
+  const url = (cambios: Partial<Params>) => {
+    const q = new URLSearchParams();
+    const v = { desde: p.desde, ver, pausadas: conPausadas ? "1" : undefined, ...cambios };
+    if (v.desde) q.set("desde", v.desde);
+    if (v.ver && v.ver !== "paso") q.set("ver", v.ver);
+    if (v.pausadas) q.set("pausadas", v.pausadas);
+    const s = q.toString();
+    return `/admin/campanas${s ? `?${s}` : ""}`;
+  };
+
   // Sin mis recorridos de prueba (utm_campaign "prueba-…", lib/embudo-marcas.ts).
   const resumen = d.resumen.filter((r) => !esCampanaDePrueba(r.campana));
-  // Las campañas vivas arriba; las pausadas (sin gasto en 3 días) plegadas:
-  // eran seis filas de igual peso que las dos que importan.
   const hoyDia = diaEnZona(ahora);
   const deAnuncio = resumen.filter(esFilaDeCampana);
   const activas = deAnuncio.filter((r) => campanaActiva(d.gasto, r.campana, hoyDia));
@@ -195,371 +94,497 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
     .map((id) => ({ id, n: contestaron.filter((f) => f.como_nos_conocio === id).length }))
     .filter((r) => r.n > 0);
 
+  // Las cuatro cifras de arriba: sólo lo que vino de un anuncio.
+  const gasto = suma(deAnuncio, (r) => r.costoMxn);
+  const clics = suma(deAnuncio, (r) => r.clics);
+  const entraron = suma(deAnuncio, (r) => r.entraron);
+  const primerosLooks = suma(deAnuncio, (r) => r.primerLook);
+  const volvieron = suma(deAnuncio, (r) => r.volvieronYa);
+  const cerradas = suma(deAnuncio, (r) => r.ventanaCerrada);
+  const costo = costoPorPrimerLookTotal(d.resumen);
+
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-ink">Campañas</h1>
-        <p className="max-w-3xl text-sm text-muted">
-          Del anuncio a si volvió, por campaña. El gasto y los clics se capturan abajo desde cada
-          plataforma; todo lo demás sale de la base. Sin cuentas de admin ni de prueba.
-        </p>
-        <form className="flex flex-wrap items-center gap-2 text-sm text-muted">
-          <label htmlFor="desde">cuentas desde</label>
-          <input id="desde" type="date" name="desde" defaultValue={d.desde} className={inputCls} />
-          <button type="submit" className="min-h-10 rounded-lg border border-line px-3 text-ink hover:bg-bg">
+    <>
+      <Encabezado titulo="Campañas" sub="¿Sirven los anuncios? Del clic a si volvió, por campaña.">
+        <form className="flex flex-wrap items-center gap-2">
+          {ver !== "paso" ? <input type="hidden" name="ver" value={ver} /> : null}
+          {conPausadas ? <input type="hidden" name="pausadas" value="1" /> : null}
+          <label htmlFor="desde" className="text-sm text-muted">
+            cuentas desde
+          </label>
+          <input id="desde" type="date" name="desde" defaultValue={d.desde} className={input} />
+          <button type="submit" className={boton}>
             ver
           </button>
         </form>
-      </header>
+      </Encabezado>
 
-      <p className={`rounded-lg border bg-surface px-4 py-3 text-sm text-ink ${tonoParo}`}>
-        <b>Criterio de paro:</b> {estado.frase}.{" "}
-        <span className="text-xs text-muted">
-          Acordado el 2026-09-10: de las primeras {PARO_MUESTRA} personas de anuncios con primer look, si
-          menos de {PARO_MINIMO_VOLVIERON} vuelven en su primera semana, se para. Mira todas las
-          cuentas de anuncios, no sólo las de la fecha elegida.
-        </span>
-      </p>
+      <Fila cols={4}>
+        <Cifra label="Gasto en anuncios" valor={mxn(gasto)} unidad="MXN" sub={`de ${mxn(OBJETIVOS.topeMxn)} del plan · ${clics} clics`} />
+        <Cifra
+          label="Primeros looks de anuncios"
+          valor={primerosLooks}
+          unidad={`de ${entraron} que entraron`}
+          sub={`${pct(primerosLooks, entraron)} · ${estado.frase}`}
+        />
+        <Cifra label="Costo por primer look" valor={mxn(costo)} unidad="MXN" sub="anuncio + IA" />
+        <Cifra
+          label="Volvieron en su semana"
+          valor={volvieron}
+          unidad={`de ${primerosLooks}`}
+          tono={volvieron > 0 ? "success" : "ink"}
+          sub={`${cerradas} ya cerraron su semana`}
+        />
+      </Fila>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Por campaña</h2>
-        {textoPaises(d.paises) ? (
-          <p className="max-w-3xl text-sm text-ink">
-            <b>Por país</b> (cuentas de anuncios): {textoPaises(d.paises)}.
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-2 sm:hidden">
-          {activas.map((r) => (
-            <Tarjeta key={`${r.fuente}|${r.campana}`} r={r} />
-          ))}
-        </div>
-        <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface sm:block">
-          <table className="w-full min-w-[760px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-muted">
-                <th className={`${th} text-left`}>Campaña</th>
-                <th className={`${th} text-right`}>Gasto</th>
-                <th className={`${th} text-right`} title="Cuentas que entraron">
-                  Entraron
-                </th>
-                <th className={`${th} text-right`}>Primer look</th>
-                <th className={`${th} text-right`} title={`Anuncio + IA, a ${MXN_POR_USD} MXN por dólar (supuesto; se cambia con MXN_POR_USD)`}>
-                  Costo por primer look
-                </th>
-                <th className={`${th} text-right`} title={`De quienes llegaron a su primer look: otro día dentro de sus primeros ${DIAS_VENTANA}, contando a quien sigue en su semana (como el criterio de paro)`}>
+      <Panel titulo="Por campaña" extra={activas.length > 0 ? "activas · sin anuncio como fondo" : undefined} sinPadding className="mb-4">
+        <Tabla minW="min-w-[760px]">
+          <thead>
+            <tr>
+              <Th izq>Campaña</Th>
+              <Th>Gasto</Th>
+              <Th>
+                <span title="Cuentas que entraron">Entraron</span>
+              </Th>
+              <Th>Primer look</Th>
+              <Th>
+                <span title={`Anuncio + IA, a ${MXN_POR_USD} MXN por dólar (supuesto; se cambia con MXN_POR_USD)`}>Costo por look</span>
+              </Th>
+              <Th>
+                <span
+                  title={`De quienes llegaron a su primer look: otro día dentro de sus primeros ${DIAS_VENTANA}, contando a quien sigue en su semana (como el criterio de paro)`}
+                >
                   Volvieron
-                </th>
-                <th className={`${th} text-right`} title={`Lo que costó su IA en sus primeros ${DIAS_VENTANA} días`}>
-                  IA
-                </th>
+                </span>
+              </Th>
+              <Th>
+                <span title={`Lo que costó su IA en sus primeros ${DIAS_VENTANA} días`}>IA</span>
+              </Th>
+            </tr>
+          </thead>
+          <tbody>
+            {activas.map((r) => (
+              <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
+            ))}
+            {organicas.length > 0 ? <FilaSinAnuncio filas={organicas} /> : null}
+            {conPausadas && pausadas.length > 0 ? (
+              <>
+                <tr>
+                  <td colSpan={7} className="border-t border-line2 bg-tile px-5 py-2 text-left text-xs font-medium text-muted">
+                    Pausadas · sin gasto en 3 días
+                  </td>
+                </tr>
+                {pausadas.map((r) => (
+                  <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
+                ))}
+              </>
+            ) : null}
+            {resumen.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-5 py-4 text-left text-sm text-muted">
+                  Nadie entró desde {d.desde} y no hay gasto capturado.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </Tabla>
+        {pausadas.length > 0 ? (
+          <PieDeLista>
+            <Link href={url({ pausadas: conPausadas ? undefined : "1" })} className="font-semibold text-ink hover:underline">
+              {conPausadas ? `ocultar las ${pausadas.length} pausadas` : `${pausadas.length} campañas pausadas`}
+            </Link>{" "}
+            · {pausadas.map((r) => r.campana).join(", ")}
+          </PieDeLista>
+        ) : null}
+      </Panel>
+
+      <Pestanas
+        activa={url({ ver })}
+        pestanas={VISTAS.map((v) => ({
+          href: url({ ver: v.id }),
+          label: v.label,
+          nota: v.id === "trajo" ? contestaron.length : undefined,
+        }))}
+      />
+
+      {ver === "paso" ? (
+        <Panel titulo="Del clic al primer look" extra="bajo cada número, el % del paso anterior" sinPadding>
+          <Tabla minW="min-w-[1100px]">
+            <thead>
+              <tr>
+                <Th izq>Campaña</Th>
+                <Th>
+                  <span title="Navegadores que abrieron la landing (desde el 2026-10-04)">Landing</span>
+                </Th>
+                <Th>
+                  <span title="Borradores que abrió el botón">Botón</span>
+                </Th>
+                <Th>
+                  <span title="Verificaron su correo, de quienes llegaron a esa pantalla">Correo ok</span>
+                </Th>
+                <Th>Pidieron código</Th>
+                <Th>Entraron</Th>
+                <Th>
+                  <span title="Dio su edad y es mayor: lo mismo que Google cuenta como registro">Registro</span>
+                </Th>
+                {PASOS.map((s) => (
+                  <Th key={s.etiqueta}>{s.etiqueta}</Th>
+                ))}
+                <Th>
+                  <span title="Mediana del tiempo al primer look">TTV</span>
+                </Th>
               </tr>
             </thead>
             <tbody>
-              {activas.map((r) => (
-                <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
-              ))}
-              {organicas.length > 0 ? (
-                <tr className="border-b border-line bg-bg">
-                  <td colSpan={7} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-                    Sin anuncio · el fondo contra el que se lee lo demás
-                  </td>
-                </tr>
-              ) : null}
-              {organicas.map((r) => (
-                <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
+              {resumen.map((r) => (
+                <FilaLarga key={`${r.fuente}|${r.campana}`} r={r} />
               ))}
               {resumen.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className={`${td} text-center text-muted`}>
-                    Nadie entró desde {d.desde} y no hay gasto capturado.
+                  <td colSpan={8 + PASOS.length} className="px-5 py-4 text-left text-sm text-muted">
+                    Nadie entró desde {d.desde}.
                   </td>
                 </tr>
               ) : null}
             </tbody>
-          </table>
-        </div>
-        {pausadas.length > 0 ? (
-          <details className="rounded-lg border border-line bg-surface">
-            <summary className="cursor-pointer px-4 py-2.5 text-sm text-muted">
-              <b className="text-ink">{pausadas.length} campañas pausadas</b> (sin gasto en 3 días):{" "}
-              {pausadas.map((r) => r.campana).join(", ")}
-            </summary>
-            <div className="overflow-x-auto border-t border-line">
-              <table className="w-full min-w-[760px] border-collapse text-sm">
-                <tbody>
-                  {pausadas.map((r) => (
-                    <FilaCorta key={`${r.fuente}|${r.campana}`} r={r} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </details>
-        ) : null}
-        <p className="max-w-3xl text-xs text-muted">
-          <b className="text-ink">Costo por primer look</b> = anuncio + IA a {MXN_POR_USD} MXN por dólar (supuesto; se
-          cambia con MXN_POR_USD). Las filas sin anuncio son quien llegó por su cuenta o recomendada: el fondo
-          contra el que se lee lo demás.
-        </p>
-      </section>
+          </Tabla>
+        </Panel>
+      ) : null}
 
-      <details className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Objetivos del plan P-03
-        </summary>
-        <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
-          <p className="max-w-3xl text-xs text-muted">
-            Lo que el plan escribió antes de gastar, contra lo que va pasando. Salvo el criterio de paro,
-            los umbrales son estimados de confianza baja. Anuncios del {OBJETIVOS.anunciosDesde} al{" "}
-            {OBJETIVOS.anunciosHasta}.
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-line text-muted">
-                  <th className={`${th} text-left`}>Objetivo</th>
-                  <th className={`${th} text-left`}>Meta</th>
-                  <th className={`${th} text-left`}>Real</th>
-                  <th className={`${th} text-left`}>Estado</th>
+      {ver === "objetivos" ? (
+        <Panel
+          titulo="Objetivos del plan P-03"
+          extra={`anuncios del ${OBJETIVOS.anunciosDesde} al ${OBJETIVOS.anunciosHasta}`}
+          sinPadding
+        >
+          <Tabla minW="min-w-[640px]">
+            <thead>
+              <tr>
+                <Th izq>Objetivo</Th>
+                <Th izq>Meta</Th>
+                <Th>Real</Th>
+                <Th>Estado</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.objetivos.map((o) => (
+                <tr key={o.clave}>
+                  <Td izq>
+                    <b className="font-semibold">{o.objetivo}</b>
+                    {o.nota ? <Sub>{o.nota}</Sub> : null}
+                  </Td>
+                  <Td izq className="text-muted">
+                    {o.meta}
+                  </Td>
+                  <Td>{o.real}</Td>
+                  <Td className={`font-medium ${TONO[o.estado]}`}>{TEXTO_ESTADO[o.estado]}</Td>
                 </tr>
-              </thead>
-              <tbody>
-                {d.objetivos.map((o) => (
-                  <tr key={o.clave} className="border-b border-line last:border-0">
-                    <td className={`${td} text-left`}>
-                      <span className="font-medium text-ink">{o.objetivo}</span>
-                      {o.nota ? <span className="block text-xs text-muted">{o.nota}</span> : null}
-                    </td>
-                    <td className={`${td} text-left text-muted`}>{o.meta}</td>
-                    <td className={`${td} text-left tabular text-ink`}>{o.real}</td>
-                    <td className={`${td} text-left font-medium ${TONO[o.estado]}`}>{TEXTO_ESTADO[o.estado]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </details>
+              ))}
+              {d.objetivos.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-4 text-left text-sm text-muted">
+                    Todavía no hay objetivos evaluados.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </Tabla>
+        </Panel>
+      ) : null}
 
-      <details className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Uso en su primera semana
-          <span className="ml-2 text-xs font-normal text-muted">gente de anuncios con primer look</span>
-        </summary>
-        <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
+      {ver === "semana" ? (
+        <>
           {d.uso.personas === 0 ? (
-            <p className="text-sm text-muted">Todavía nadie de anuncios llegó a su primer look.</p>
+            <Panel sinPadding className="mb-4">
+              <Vacio>Todavía nadie de anuncios llegó a su primer look.</Vacio>
+            </Panel>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-lg border border-line p-3">
-                <p className="text-xs text-muted">Personas</p>
-                <p className="text-xl font-semibold tabular text-ink">{d.uso.personas}</p>
-              </div>
-              <div className="rounded-lg border border-line p-3">
-                <p className="text-xs text-muted">Subieron ropa propia</p>
-                <p className="text-xl font-semibold tabular text-ink">
-                  {d.uso.conRopaPropia}{" "}
-                  <span className="text-sm font-normal text-muted">{pct(d.uso.conRopaPropia, d.uso.personas)}</span>
-                </p>
-                <p className="text-xs text-muted">mediana: {d.uso.ropaPropiaMediana ?? "—"} prendas</p>
-              </div>
-              <div className="rounded-lg border border-line p-3">
-                <p className="text-xs text-muted">Looks por persona</p>
-                <p className="text-xl font-semibold tabular text-ink">{d.uso.looksMediana ?? "—"}</p>
-                <p className="text-xs text-muted">mediana</p>
-              </div>
-              <div className="rounded-lg border border-line p-3">
-                <p className="text-xs text-muted">Módulos que usaron</p>
-                <ul className="mt-1 flex flex-col gap-0.5 text-sm text-ink">
-                  {MODULOS.map((m) => (
-                    <li key={m.clave} className="flex justify-between gap-3">
-                      <span>{m.etiqueta}</span>
-                      <span className="tabular">{d.uso.modulos[m.clave]}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            <Fila cols={4}>
+              <Cifra label="Personas" valor={d.uso.personas} sub="de anuncios, con primer look" />
+              <Cifra
+                label="Subieron ropa propia"
+                valor={d.uso.conRopaPropia}
+                unidad={pct(d.uso.conRopaPropia, d.uso.personas)}
+                sub={`mediana: ${d.uso.ropaPropiaMediana ?? "—"} prendas`}
+              />
+              <Cifra label="Looks por persona" valor={d.uso.looksMediana ?? "—"} sub="mediana" />
+              <Panel sinPadding>
+                <div className="flex flex-col gap-0.5 px-5 py-4">
+                  <span className="text-xs text-muted">Módulos que usaron</span>
+                  <ul className="flex flex-col text-sm text-ink">
+                    {MODULOS.map((m) => (
+                      <li key={m.clave} className="flex justify-between gap-3">
+                        <span>{m.etiqueta}</span>
+                        <span className="font-semibold tabular-nums">{d.uso.modulos[m.clave]}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Panel>
+            </Fila>
           )}
-          <p className="text-sm text-ink">
-            <b>Avatar</b> (cuentas desde {d.desde}): {textoAvatar(d.avatar)}.
-          </p>
-          {textoDispositivos(d.dispositivos) ? (
-            <p className="text-sm text-ink">
-              <b>Por aparato</b> (cuentas de anuncios): {textoDispositivos(d.dispositivos)}.
-            </p>
-          ) : null}
-          {d.app ? (
-            <p className="text-sm text-ink">
-              <b>App instalada:</b> {pct(d.app.activas_instaladas, d.app.activas)} de las activas en 30 días la
-              abren desde su ícono.{" "}
-              <span className="text-xs text-muted">Decide si vale la pena mandar notificaciones.</span>
-            </p>
-          ) : null}
-        </div>
-      </details>
+          <Panel sinPadding>
+            <Lista>
+              <Linea rotulo="Avatar" nota={`cuentas desde ${d.desde}`}>
+                {textoAvatar(d.avatar)}
+              </Linea>
+              {textoDispositivos(d.dispositivos) ? (
+                <Linea rotulo="Por aparato" nota="cuentas de anuncios">
+                  {textoDispositivos(d.dispositivos)}
+                </Linea>
+              ) : null}
+              {textoPaises(d.paises) ? (
+                <Linea rotulo="Por país" nota="cuentas de anuncios">
+                  {textoPaises(d.paises)}
+                </Linea>
+              ) : null}
+              {d.app ? (
+                <Linea rotulo="App instalada" nota="activas en 30 días">
+                  {pct(d.app.activas_instaladas, d.app.activas)} la abren desde su ícono ({d.app.activas_instaladas} de {d.app.activas})
+                </Linea>
+              ) : null}
+            </Lista>
+          </Panel>
+        </>
+      ) : null}
 
-      <details className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          El embudo paso por paso
-          <span className="ml-2 text-xs font-normal text-muted">del clic al primer look, por campaña</span>
-        </summary>
-        <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
-          <p className="max-w-3xl text-xs text-muted">
-            Bajo cada número, el % del paso anterior. <b className="text-ink">Landing</b>,{" "}
-            <b className="text-ink">Botón</b> y <b className="text-ink">Correo</b> se cuentan desde el 2026-10-04 sin
-            datos personales. <b className="text-ink">Registro</b> = dio su edad y es mayor, lo mismo que Google
-            cuenta. El embudo de todo el onboarding, paso por paso y con tiempos, está en Embudo y retención.
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-line text-muted">
-                  <th className={`${th} text-left`}>Campaña</th>
-                  <th className={`${th} text-center`}>Landing</th>
-                  <th className={`${th} text-center`}>Botón</th>
-                  <th className={`${th} text-center`}>Correo</th>
-                  <th className={`${th} text-center`}>Pidieron código</th>
-                  <th className={`${th} text-center`}>Entraron</th>
-                  <th className={`${th} text-center`}>Registro</th>
-                  {PASOS.map((p) => (
-                    <th key={p.etiqueta} className={`${th} text-center`}>
-                      {p.etiqueta}
-                    </th>
-                  ))}
-                  <th className={`${th} text-center`} title="Mediana del tiempo al primer look">
-                    TTV
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {resumen.map((r) => (
-                  <FilaLarga key={`${r.fuente}|${r.campana}`} r={r} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <details className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Lo que dicen que las trajo
-          <span className="ml-2 text-xs font-normal text-muted">
-            {contestaron.length} de {d.filas.length} contestaron
-          </span>
-        </summary>
-        <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
-          <p className="max-w-3xl text-xs text-muted">
-            La pregunta del onboarding ve lo que el link no: la amiga que pasó el nombre, el video que
-            alguien vio.
-          </p>
+      {ver === "trajo" ? (
+        <Panel titulo="Qué las trajo" extra={`${contestaron.length} de ${d.filas.length} contestaron`} sinPadding={porRespuesta.length === 0}>
           {porRespuesta.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
               {porRespuesta.map((r) => (
-                <li key={r.id} className="rounded-full border border-line px-3 py-1 text-sm text-ink">
-                  {etiquetaConocio(r.id)} <b className="tabular">{r.n}</b>
+                <li key={r.id}>
+                  <Chip tono="ink">
+                    {etiquetaConocio(r.id)}
+                    <b className="ml-1.5 tabular-nums">{r.n}</b>
+                  </Chip>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted">Todavía nadie la ha contestado.</p>
+            <Vacio>Todavía nadie la ha contestado.</Vacio>
           )}
-        </div>
-      </details>
+        </Panel>
+      ) : null}
 
-      <details className="rounded-lg border border-line bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-          Capturar el gasto de cada plataforma
-        </summary>
-        <div className="flex flex-col gap-3 border-t border-line px-4 py-3">
-          <p className="max-w-3xl text-xs text-muted">
-            Un renglón por día y campaña. La campaña se escribe igual que el <code>utm_campaign</code> del
-            anuncio. Capturar otra vez el mismo día y campaña corrige lo anterior. El gasto de Google y Meta
-            llega solo cada mañana; esto es para corregir o para una plataforma nueva.
-          </p>
-          <form action={guardarGasto} className="flex flex-wrap items-end gap-2">
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              día
-              <input type="date" name="dia" required defaultValue={ayer} className={inputCls} />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              campaña
-              <input name="campana" required list="campanas-conocidas" placeholder="app-neutra" className={`${inputCls} w-44`} />
+      {ver === "gasto" ? (
+        <Panel titulo="Capturar el gasto de cada plataforma" extra="un renglón por día y campaña; repetirlo corrige" sinPadding>
+          <form action={guardarGasto} className="flex flex-wrap items-end gap-2 px-5 pb-4 pt-1">
+            <Campo texto="día">
+              <input type="date" name="dia" required defaultValue={ayer} className={input} />
+            </Campo>
+            <Campo texto="campaña">
+              <input name="campana" required list="campanas-conocidas" placeholder="app-neutra" className={`${input} w-44`} />
               <datalist id="campanas-conocidas">
                 {d.campanasConocidas.map((c) => (
                   <option key={c} value={c} />
                 ))}
               </datalist>
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              impresiones
-              <input name="impresiones" inputMode="numeric" className={`${inputCls} w-24`} />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              clics
-              <input name="clics" inputMode="numeric" required className={`${inputCls} w-20`} />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              costo MXN
-              <input name="costo_mxn" inputMode="decimal" required className={`${inputCls} w-24`} />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              registros de Google
-              <input name="registros_google" inputMode="numeric" className={`${inputCls} w-20`} />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              nota
-              <input name="nota" maxLength={300} className={`${inputCls} w-48`} />
-            </label>
+            </Campo>
+            <Campo texto="impresiones">
+              <input name="impresiones" inputMode="numeric" className={`${input} w-24`} />
+            </Campo>
+            <Campo texto="clics">
+              <input name="clics" inputMode="numeric" required className={`${input} w-20`} />
+            </Campo>
+            <Campo texto="costo MXN">
+              <input name="costo_mxn" inputMode="decimal" required className={`${input} w-24`} />
+            </Campo>
+            <Campo texto="registros de Google">
+              <input name="registros_google" inputMode="numeric" className={`${input} w-20`} />
+            </Campo>
+            <Campo texto="nota">
+              <input name="nota" maxLength={300} className={`${input} w-48`} />
+            </Campo>
             <button
               type="submit"
-              className="min-h-10 rounded-lg bg-accent px-4 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-accent-deep"
+              className="inline-flex h-9 items-center rounded-sm bg-ink px-4 text-sm font-medium text-on-accent transition-colors duration-200 hover:bg-ink2"
             >
               Guardar
             </button>
           </form>
           {d.gasto.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-line text-muted">
-                    <th className={`${th} text-left`}>Día</th>
-                    <th className={`${th} text-left`}>Campaña</th>
-                    <th className={`${th} text-center`}>Impresiones</th>
-                    <th className={`${th} text-center`}>Clics</th>
-                    <th className={`${th} text-center`}>MXN</th>
-                    <th className={`${th} text-center`}>Registros Google</th>
-                    <th className={`${th} text-left`}>Nota</th>
-                    <th className={th} />
+            <Tabla minW="min-w-[640px]">
+              <thead>
+                <tr>
+                  <Th izq>Día</Th>
+                  <Th izq>Campaña</Th>
+                  <Th>Impresiones</Th>
+                  <Th>Clics</Th>
+                  <Th>MXN</Th>
+                  <Th>Registros Google</Th>
+                  <Th izq>Nota</Th>
+                  <Th />
+                </tr>
+              </thead>
+              <tbody>
+                {d.gasto.map((g) => (
+                  <tr key={`${g.dia}|${g.campana}`}>
+                    <Td izq className="text-muted">
+                      {g.dia}
+                    </Td>
+                    <Td izq>{g.campana}</Td>
+                    <Td>{g.impresiones ?? "—"}</Td>
+                    <Td>{g.clics}</Td>
+                    <Td>{mxn(g.costo_mxn)}</Td>
+                    <Td>{g.registros_google ?? "—"}</Td>
+                    <Td izq className="text-muted">
+                      {g.nota ?? ""}
+                    </Td>
+                    <Td>
+                      <form action={borrarGasto}>
+                        <input type="hidden" name="dia" value={g.dia} />
+                        <input type="hidden" name="campana" value={g.campana} />
+                        <button type="submit" className="text-xs text-muted underline hover:text-error">
+                          borrar
+                        </button>
+                      </form>
+                    </Td>
                   </tr>
-                </thead>
-                <tbody>
-                  {d.gasto.map((g) => (
-                    <tr key={`${g.dia}|${g.campana}`} className="border-b border-line last:border-0">
-                      <td className={`${td} text-left tabular text-muted`}>{g.dia}</td>
-                      <td className={`${td} text-left text-ink`}>{g.campana}</td>
-                      <td className={`${td} text-center tabular text-ink`}>{g.impresiones ?? "—"}</td>
-                      <td className={`${td} text-center tabular text-ink`}>{g.clics}</td>
-                      <td className={`${td} text-center tabular text-ink`}>{mxn(g.costo_mxn)}</td>
-                      <td className={`${td} text-center tabular text-ink`}>{g.registros_google ?? "—"}</td>
-                      <td className={`${td} text-left text-muted`}>{g.nota ?? ""}</td>
-                      <td className={`${td} text-right`}>
-                        <form action={borrarGasto}>
-                          <input type="hidden" name="dia" value={g.dia} />
-                          <input type="hidden" name="campana" value={g.campana} />
-                          <button type="submit" className="text-xs text-muted underline hover:text-error">
-                            borrar
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-        </div>
-      </details>
-    </div>
+                ))}
+              </tbody>
+            </Tabla>
+          ) : (
+            <Vacio>Todavía no hay gasto capturado.</Vacio>
+          )}
+        </Panel>
+      ) : null}
+    </>
+  );
+}
+
+/* ───────────────────────── Filas de las tablas ───────────────────────── */
+
+/** La fila corta: lo que decide si una campaña sirve. */
+function FilaCorta({ r }: { r: ResumenCampana }) {
+  const costo = costoPor(r, r.primerLook);
+  return (
+    <tr>
+      <Td izq>
+        <b className="font-semibold">{nombre(r)}</b>
+        <Sub>{r.fuente}</Sub>
+      </Td>
+      <Td>
+        {r.costoMxn != null ? <b className="font-semibold">{mxn(r.costoMxn)}</b> : "—"}
+        {r.clics != null ? <Sub>{r.clics} clics</Sub> : null}
+      </Td>
+      <Td>{r.entraron}</Td>
+      <Td>
+        <b className="font-semibold">{r.primerLook}</b>
+        {r.entraron ? <Sub>{pct(r.primerLook, r.entraron)}</Sub> : null}
+      </Td>
+      <Td>{costo != null ? mxn(costo) : "—"}</Td>
+      <Td className={r.volvieronYa > 0 ? "text-success" : ""}>
+        {r.entraron === 0 ? (
+          "—"
+        ) : (
+          <>
+            <b className="font-semibold">{r.volvieronYa}</b>
+            <Sub>{r.ventanaCerrada ? `${r.ventanaCerrada} semanas cerradas` : "ninguna cerrada"}</Sub>
+          </>
+        )}
+      </Td>
+      <Td>US${r.iaUsd.toFixed(2)}</Td>
+    </tr>
+  );
+}
+
+/** Las que llegaron sin anuncio, sumadas en una fila: el fondo contra el que se lee lo demás. */
+function FilaSinAnuncio({ filas }: { filas: ResumenCampana[] }) {
+  const entraron = suma(filas, (r) => r.entraron);
+  const primerLook = suma(filas, (r) => r.primerLook);
+  const volvieronYa = suma(filas, (r) => r.volvieronYa);
+  const cerradas = suma(filas, (r) => r.ventanaCerrada);
+  const ia = suma(filas, (r) => r.iaUsd);
+  const fuentes = [...new Set(filas.map((r) => r.fuente))].join(", ");
+  const c = "bg-tile";
+  return (
+    <tr>
+      <Td izq className={c}>
+        <b className="font-semibold">Sin anuncio</b>
+        <Sub>{fuentes}</Sub>
+      </Td>
+      <Td className={c}>—</Td>
+      <Td className={c}>{entraron}</Td>
+      <Td className={c}>
+        <b className="font-semibold">{primerLook}</b>
+        {entraron ? <Sub>{pct(primerLook, entraron)}</Sub> : null}
+      </Td>
+      <Td className={c}>—</Td>
+      <Td className={`${c} ${volvieronYa > 0 ? "text-success" : ""}`}>
+        {entraron === 0 ? (
+          "—"
+        ) : (
+          <>
+            <b className="font-semibold">{volvieronYa}</b>
+            <Sub>{cerradas ? `${cerradas} semanas cerradas` : "ninguna cerrada"}</Sub>
+          </>
+        )}
+      </Td>
+      <Td className={c}>US${ia.toFixed(2)}</Td>
+    </tr>
+  );
+}
+
+/**
+ * La fila larga del embudo. Cada paso trae el % del anterior y el paso con la
+ * mayor caída de la fila se marca como "la fuga", para no tener que leer doce
+ * porcentajes buscando el más bajo.
+ */
+function FilaLarga({ r }: { r: ResumenCampana }) {
+  const pasos: { n: number; de: number | null; nota?: string }[] = [
+    { n: r.landing, de: r.clics },
+    { n: r.boton, de: r.landing },
+    { n: r.correoOk, de: r.correoVisto },
+    { n: r.pidieronCodigo, de: r.clics },
+    { n: r.entraron, de: r.pidieronCodigo || r.clics },
+    { n: r.registro, de: r.entraron, nota: r.registrosGoogle != null ? `Google: ${r.registrosGoogle}` : undefined },
+    ...r.pasos.map((n, i) => ({ n, de: i === 0 ? r.registro : r.pasos[i - 1] })),
+  ];
+  const tasas = pasos.map((s) => (s.de != null && s.de > 0 ? s.n / s.de : null));
+  const fuga = tasas.reduce<number>((min, t, i) => (t != null && t < 1 && (min < 0 || t < (tasas[min] ?? 1)) ? i : min), -1);
+  return (
+    <tr>
+      <Td izq>
+        <b className="font-semibold">{nombre(r)}</b>
+        <Sub>{r.fuente}</Sub>
+      </Td>
+      {pasos.map((s, i) => {
+        const tasa = tasas[i];
+        const texto = tasa == null ? s.nota : `${pct(s.n, s.de ?? 0)}${i === fuga ? " · la fuga" : ""}${s.nota ? ` · ${s.nota}` : ""}`;
+        return (
+          <Td key={i}>
+            <b className="font-semibold">{s.n}</b>
+            {texto ? <Sub>{i === fuga ? <span className="text-error">{texto}</span> : texto}</Sub> : null}
+          </Td>
+        );
+      })}
+      <Td>{fmtSegundos(r.ttvMedianaS)}</Td>
+    </tr>
+  );
+}
+
+/* ───────────────────────── Piezas chicas de esta pantalla ───────────────────────── */
+
+/** Un renglón "Rótulo · nota: texto" de la primera semana. */
+function Linea({ rotulo, nota, children }: { rotulo: string; nota?: string; children: ReactNode }) {
+  return (
+    <Renglon>
+      <span className="shrink-0 text-sm">
+        <b className="font-semibold text-ink">{rotulo}</b>
+        {nota ? <span className="text-faint"> · {nota}</span> : null}
+      </span>
+      <span className="min-w-0 text-sm text-ink2">{children}</span>
+    </Renglon>
+  );
+}
+
+/** Un campo del formulario de gasto: rótulo chico arriba del input. */
+function Campo({ texto, children }: { texto: string; children: ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1 text-xs text-muted">
+      {texto}
+      {children}
+    </label>
   );
 }

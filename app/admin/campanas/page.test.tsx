@@ -41,7 +41,9 @@ const fila = {
   iaUsd: 0,
 };
 
-async function html(d: Partial<DatosCampana>): Promise<string> {
+// `params` son los de la URL: `ver` elige la pestaña (paso por paso por
+// defecto) y `pausadas=1` despliega las campañas sin gasto en 3 días.
+async function html(d: Partial<DatosCampana>, params: { ver?: string; pausadas?: string } = {}): Promise<string> {
   datos.actual = {
     desde: "2026-09-25",
     filas: [],
@@ -69,7 +71,7 @@ async function html(d: Partial<DatosCampana>): Promise<string> {
     app: null,
     ...d,
   };
-  const el = await Campanas({ searchParams: Promise.resolve({}) });
+  const el = await Campanas({ searchParams: Promise.resolve(params) });
   return renderToStaticMarkup(el);
 }
 
@@ -80,12 +82,16 @@ describe("/admin/campanas", () => {
   });
 
   it("una campaña con gasto y nadie adentro sale en la tabla, con su gasto", async () => {
-    const h = await html({
+    const datos = {
       resumen: [fila],
       gasto: [{ dia: "2026-09-25", campana: "hombres-eventos", clics: 80, costo_mxn: 600, registros_google: 0 }],
-    });
-    expect(h).toContain("hombres-eventos");
-    expect(h).toContain("$600");
+    };
+    // Sin gasto en 3 días es una pausada: se nombra en el pie y su fila sale al desplegarlas.
+    const plegada = await html(datos);
+    expect(plegada).toContain("1 campañas pausadas");
+    expect(plegada).toContain("hombres-eventos");
+    const desplegada = await html(datos, { pausadas: "1" });
+    expect(desplegada).toContain("$600");
   });
 
   it("dice el tipo de cambio que supone al sumar la IA al anuncio", async () => {
@@ -94,18 +100,21 @@ describe("/admin/campanas", () => {
   });
 
   it("cada objetivo del plan sale con su estado en palabras, no sólo en color", async () => {
-    const h = await html({
-      objetivos: [
-        { clave: "costo-registro", objetivo: "Costo por registro", meta: "$200 o menos", real: "$500", estado: "alarma" },
-      ],
-    });
+    const h = await html(
+      {
+        objetivos: [
+          { clave: "costo-registro", objetivo: "Costo por registro", meta: "$200 o menos", real: "$500", estado: "alarma" },
+        ],
+      },
+      { ver: "objetivos" }
+    );
     expect(h).toContain("Objetivos del plan P-03");
     expect(h).toContain("Costo por registro");
     expect(h).toMatch(/text-error[^>]*>alarma</);
   });
 
   it("el uso de la primera semana dice cuando todavía no hay a quién medir", async () => {
-    expect(await html({})).toContain("Todavía nadie de anuncios llegó a su primer look");
+    expect(await html({}, { ver: "semana" })).toContain("Todavía nadie de anuncios llegó a su primer look");
   });
 
   it("sin nada todavía, lo dice en vez de enseñar una tabla vacía muda", async () => {

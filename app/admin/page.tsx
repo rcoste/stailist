@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
-import { banderaDe } from "@/lib/lugar";
-import { PARO_MUESTRA } from "@/lib/admin/campana";
-import { OBJETIVOS } from "@/lib/admin/objetivos";
-import { costoPorPrimerLookTotal, diasParaLaLectura, nombreDelDia, veredicto } from "@/lib/admin/hoy";
-import { Avance, BarrasPorDia } from "./_compartido/graficas";
+import { OBJETIVOS, esFilaDeCampana } from "@/lib/admin/objetivos";
+import { costoPorPrimerLookTotal, diasParaLaLectura, nombreDelDia, veredicto, type Llegada } from "@/lib/admin/hoy";
 import { cargarHoy } from "@/lib/admin/hoy-datos";
+import { BarrasPorDia } from "./_compartido/graficas";
+import { AlFinal, Chip, Cifra, Encabezado, Fila, Lista, Panel, Quien, Renglon, Vacio } from "./_ui";
 
-// HOY: ¿cómo va? La primera pantalla del admin desde el replanteo del
-// 2026-10-09 (el porqué, en lib/admin/hoy.ts). Postgres directo y sin RLS: se
-// vuelve a exigir admin aunque el layout ya lo haga.
+// HOY: ¿cómo va? La primera pantalla del admin. El porqué de cada número vive
+// en lib/admin/hoy.ts; aquí sólo se acomoda, con el kit de app/admin/_ui.
+// Postgres directo y sin RLS: se vuelve a exigir admin aunque el layout ya lo haga.
 
 export const dynamic = "force-dynamic";
 
@@ -21,232 +20,232 @@ export default async function Hoy() {
   const v = veredicto(d.paro);
   const faltan = diasParaLaLectura(d.hoy);
   const costo = costoPorPrimerLookTotal(d.resumen);
+  const gastoPlan = d.resumen.filter(esFilaDeCampana).reduce((t, r) => t + (r.costoMxn ?? 0), 0);
   const [hoy, ayer] = d.dias;
-  const tono = { bien: "border-success", mal: "border-error", neutro: "border-ink" }[v.tono];
   const tonoTitulo = { bien: "text-success", mal: "text-error", neutro: "text-ink" }[v.tono];
+  const fecha = new Date(`${d.hoy}T12:00:00Z`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const lectura = new Date(`${OBJETIVOS.anunciosHasta}T12:00:00Z`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", timeZone: "UTC" });
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">Hoy</h1>
-        <p className="text-sm text-muted">
-          {new Date(`${d.hoy}T12:00:00Z`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}
-          {" · "}
-          {faltan > 0 ? `la lectura del plan es el ${OBJETIVOS.anunciosHasta.slice(8)} de octubre, en ${faltan} día${faltan === 1 ? "" : "s"}` : "la lectura del plan ya llegó"}
-        </p>
-      </header>
+    <>
+      <Encabezado
+        titulo="Hoy"
+        sub={`${fecha} · ${faltan > 0 ? `la lectura del plan es el ${lectura}, en ${faltan} día${faltan === 1 ? "" : "s"}` : "la lectura del plan ya llegó"}`}
+      />
 
       {d.alarmas.length > 0 ? (
-        <section className="flex flex-col gap-2 rounded-lg border border-error bg-surface p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-error">Una señal dejó de llegar</h2>
-          {d.alarmas.map((a) => (
-            <p key={a.nombre} className="text-sm text-ink">
-              <b>{a.nombre}</b>: {a.detalle} <span className="text-muted">Si está roto se pierde {a.cuesta}.</span>
-            </p>
-          ))}
-        </section>
+        <Panel titulo={<span className="text-error">Una señal dejó de llegar</span>} className="mb-4 border-error">
+          <ul className="flex flex-col gap-1 text-sm text-ink">
+            {d.alarmas.map((a) => (
+              <li key={a.nombre}>
+                <b>{a.nombre}</b>: {a.detalle} <span className="text-muted">Si está roto se pierde {a.cuesta}.</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       ) : null}
 
-      <section className={`flex flex-col gap-4 rounded-lg border-2 bg-surface p-5 ${tono}`}>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">El experimento</span>
-          <h2 className={`text-xl font-bold ${tonoTitulo}`}>{v.titulo}</h2>
-          <p className="text-sm text-ink">{v.detalle}</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Avance titulo="Primeros looks de anuncios" n={v.muestra.n} de={v.muestra.de} nota="la muestra del plan" />
-          <Avance
-            titulo="Regresos en su primera semana"
-            n={v.regresos.n}
-            de={v.regresos.de}
-            nota="los que pide la regla para seguir"
-            tono="success"
+      {/* EL HÉROE: la pregunta de la página contestada en un bloque. */}
+      <Panel hero className="mb-4" sinPadding>
+        <div className="grid gap-6 px-6 py-5 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-8">
+          <div>
+            <span className="text-[11px] uppercase tracking-[0.04em] text-muted">El experimento</span>
+            <h2 className={`mb-1.5 mt-0.5 text-h2 font-bold tracking-[-0.025em] ${tonoTitulo}`}>{v.titulo}</h2>
+            <p className="text-sm text-ink2">{v.detalle}</p>
+          </div>
+          <Cifra
+            enPanel={false}
+            label="Regresos en su primera semana"
+            valor={v.regresos.n}
+            unidad={`de ${v.regresos.de} que pide la regla`}
+            tono={v.tono === "mal" ? "error" : "success"}
+            barra={v.regresos}
           />
+          <Cifra enPanel={false} label="Primeros looks de anuncios" valor={v.muestra.n} unidad={`de ${v.muestra.de} de la muestra`} barra={v.muestra} />
         </div>
-        <p className="border-t border-line pt-3 text-sm text-muted">
-          Costo por primer look <b className="tabular-nums text-ink">{mxn(costo)} MXN</b>{" "}
-          <span className="text-xs">(anuncio + IA)</span>
-          {" · "}IA ayer <b className="tabular-nums text-ink">US${d.ia[1].usd.toFixed(2)}</b>{" "}
-          <span className="text-xs">({d.ia[1].llamadas} llamadas)</span>
-          {" · "}
-          <Link href="/admin/campanas" className="underline underline-offset-2 hover:text-ink">
-            ver por campaña →
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-line2 px-6 py-3 text-[13px] text-muted">
+          <span>
+            Costo por primer look <b className="tabular-nums text-ink">{mxn(costo)} MXN</b>
+          </span>
+          <span>
+            IA ayer <b className="tabular-nums text-ink">US${d.ia[1].usd.toFixed(2)}</b>
+          </span>
+          <span>
+            Gasto en anuncios <b className="tabular-nums text-ink">{mxn(gastoPlan)}</b> de {mxn(OBJETIVOS.topeMxn)}
+          </span>
+          <Link href="/admin/campanas" className="ml-auto font-semibold text-ink hover:underline">
+            Por campaña →
           </Link>
-        </p>
-      </section>
+        </div>
+      </Panel>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Los últimos 14 días</h2>
-        <div className="rounded-lg border border-line bg-surface p-4">
+      <Fila cols="3-2">
+        <Panel titulo="Últimos 14 días" extra="primer look · volvieron">
           <BarrasPorDia
-            dias={d.tendencia.map((t) => ({
-              etiqueta: t.dia.slice(8),
-              valores: [t.primerLook, t.volvieron],
-            }))}
+            dias={d.tendencia.map((t) => ({ etiqueta: t.dia.slice(8), valores: [t.primerLook, t.volvieron] }))}
             series={[
               { nombre: "llegaron a su primer look", tono: "ink" },
               { nombre: "volvieron", tono: "success" },
             ]}
           />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Desde ayer</h2>
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-xs text-muted">
-                <th className="px-4 py-2 text-left font-medium" />
-                <th className="px-3 py-2 text-right font-medium">hoy</th>
-                <th className="px-3 py-2 text-right font-medium">ayer</th>
-              </tr>
-            </thead>
-            <tbody className="tabular-nums">
-              <FilaDia etiqueta="empezaron el onboarding" hoy={`${hoy.nuevas} (${hoy.nuevasDeAnuncio} de anuncios)`} ayer={`${ayer.nuevas} (${ayer.nuevasDeAnuncio} de anuncios)`} />
-              <FilaDia etiqueta="llegaron a su primer look" hoy={String(hoy.primerLook)} ayer={String(ayer.primerLook)} />
-              <FilaDia etiqueta="subieron ropa con foto" hoy={String(hoy.subieronFotos)} ayer={String(ayer.subieronFotos)} />
-              <FilaDia etiqueta="volvieron" hoy={String(d.volvieron[0].quienes.length)} ayer={String(d.volvieron[1].quienes.length)} />
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Quién volvió</h2>
-        {d.volvieron.every((v) => v.quienes.length === 0) ? (
-          <p className="text-sm text-muted">Nadie volvió ni hoy ni ayer.</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-            {d.volvieron.flatMap((v) =>
-              v.quienes.map((q) => (
-                <li key={`${v.dia}|${q.correo}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5 text-sm">
-                  <span className="w-10 shrink-0 text-xs text-muted">{nombreDelDia(v.dia, d.hoy)}</span>
-                  <span className="font-semibold text-ink">{q.correo}</span>
-                  <span className="rounded-full border border-success px-1.5 text-[11px] font-semibold text-success">
-                    {q.primeraVez ? "volvió" : "volvió otra vez"} · {q.aLosDias === 1 ? "al día siguiente" : `a los ${q.aLosDias} días`}
-                  </span>
-                  <span className="text-muted">{q.origen}</span>
-                  {q.cuentaParaParo ? <span className="text-xs text-muted">· cuenta para el criterio</span> : null}
-                </li>
-              ))
-            )}
-          </ul>
-        )}
-      </section>
-
-      {d.dias.map((dia) => {
-        // Quien llegó a su primer look va con nombre; quien se quedó en el
-        // camino se resume por pantalla (con el detalle plegado): eran 21
-        // renglones de "(sin correo todavía)" tapando todo lo demás.
-        const llegaron = dia.llegaron.filter((l) => l.primerLook);
-        const quedaron = dia.llegaron.filter((l) => !l.primerLook);
-        const porPaso = [...new Set(quedaron.map((l) => l.paso))]
-          .map((paso) => ({ paso, n: quedaron.filter((l) => l.paso === paso).length }))
-          .sort((a, b) => b.n - a.n);
-        return (
-          <section key={dia.dia} className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Quién llegó {nombreDelDia(dia.dia, d.hoy)}
-            </h2>
-            {dia.llegaron.length === 0 ? (
-              <p className="text-sm text-muted">Nadie empezó el onboarding {nombreDelDia(dia.dia, d.hoy)}.</p>
-            ) : (
-              <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-                {llegaron.map((l) => (
-                  <div key={l.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5 text-sm">
-                    <span className="w-5 shrink-0" title={l.lugar ?? "sin país"}>
-                      {banderaDe(l.pais)}
-                    </span>
-                    <Link href={`/admin/usuarios/${l.id}`} className="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink">
-                      {l.correo}
-                    </Link>
-                    <span className="text-ink">primer look</span>
-                    {l.fotos > 0 ? <span className="text-muted">· subió {l.fotos} prenda{l.fotos === 1 ? "" : "s"} con foto</span> : null}
-                    <span className="text-xs text-muted">· {l.origen}</span>
-                    {l.variante === "fotos" ? <span className="rounded-full border border-line px-1.5 text-[11px] text-muted">3 fotos</span> : null}
-                  </div>
-                ))}
-                {quedaron.length > 0 ? (
-                  <details className="px-4 py-2.5 text-sm">
-                    <summary className="cursor-pointer text-muted">
-                      <b className="text-ink">
-                        {quedaron.length} se quedaron en el onboarding
-                      </b>
-                      {": "}
-                      {porPaso.map((p) => `${p.n} ${p.paso.replace(/^se quedó /, "")}`).join(" · ")}
-                    </summary>
-                    <ul className="mt-2 flex flex-col gap-1">
-                      {quedaron.map((l) => (
-                        <li key={l.id} className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                          <span className="w-5 shrink-0">{banderaDe(l.pais)}</span>
-                          <Link href={`/admin/usuarios/${l.id}`} className="text-ink underline decoration-line underline-offset-2">
-                            {l.correo}
-                          </Link>
-                          <span className="text-muted">{l.paso} · {l.origen}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : null}
-              </div>
-            )}
-          </section>
-        );
-      })}
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Lo que dicen (últimos 7 días)</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Dato titulo="votaron 👍 un look" valor={String(d.voz.meGusta)} />
-          <Dato titulo="votaron 👎 un look" valor={String(d.voz.noMeGusta)} />
-          <Dato titulo="se pusieron un look" valor={String(d.voz.seLoPuso)} />
-          <Dato titulo="mandaron un reporte" valor={String(d.voz.reportes.length)} />
-        </div>
-        {d.voz.reportes.length > 0 ? (
-          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
-            {d.voz.reportes.map((r) => (
-              <li key={r.cuando} className="flex flex-col gap-0.5 px-4 py-2.5 text-sm">
-                <span className="text-xs text-muted">
-                  {r.correo} · {r.tipo}
-                </span>
-                <span className="text-ink">“{r.texto}”</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-muted">
-            Nadie mandó un reporte. Casi nadie habla por su cuenta: para saber qué retiene hay que preguntarle a
-            quien volvió.
+        </Panel>
+        <Panel titulo="Desde ayer">
+          <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-5">
+            <span />
+            <span className="text-[11px] uppercase tracking-[0.04em] text-faint">hoy</span>
+            <span className="text-[11px] uppercase tracking-[0.04em] text-faint">ayer</span>
+            <Comparada etiqueta="Empezaron el onboarding" nota={`${hoy.nuevasDeAnuncio} de anuncios`} hoy={hoy.nuevas} ayer={ayer.nuevas} />
+            <Comparada etiqueta="Llegaron a su primer look" hoy={hoy.primerLook} ayer={ayer.primerLook} />
+            <Comparada etiqueta="Subieron ropa con foto" hoy={hoy.subieronFotos} ayer={ayer.subieronFotos} />
+            <Comparada etiqueta="Volvieron" hoy={d.volvieron[0].quienes.length} ayer={d.volvieron[1].quienes.length} tono="success" />
+          </div>
+          <p className="mt-3 border-t border-line2 pt-3 text-[13px] text-muted">
+            Últimos 7 días: <b className="text-ink">{d.voz.meGusta}</b> 👍 · <b className="text-ink">{d.voz.noMeGusta}</b> 👎 ·{" "}
+            <b className="text-ink">{d.voz.seLoPuso}</b> se pusieron un look · <b className="text-ink">{d.voz.fitChecks}</b> fit checks ·{" "}
+            <b className="text-ink">{d.voz.reportes.length}</b> reportes
           </p>
-        )}
-      </section>
+        </Panel>
+      </Fila>
 
-      <p className="text-xs text-muted">
-        Lo mismo llega por correo a las 8 de la mañana. Sin cuentas de admin ni de prueba. “Volvió” es
-        otro día de la Ciudad de México y al menos 4 horas después de empezar; el criterio de paro mira
-        a las primeras {PARO_MUESTRA} personas de anuncios con primer look.
-      </p>
-    </div>
+      <Fila cols="2-3">
+        <Panel titulo="Quién volvió" extra={<Link href="/admin/retencion" className="hover:text-ink">Retención →</Link>} sinPadding>
+          {d.volvieron.every((x) => x.quienes.length === 0) ? (
+            <Vacio>Nadie volvió ni hoy ni ayer.</Vacio>
+          ) : (
+            <Lista>
+              {d.volvieron.flatMap((x) =>
+                x.quienes.map((q) => (
+                  <Renglon key={`${x.dia}|${q.correo}`}>
+                    <span className="w-8 shrink-0 text-xs text-faint">{nombreDelDia(x.dia, d.hoy)}</span>
+                    <Quien correo={q.correo} />
+                    <Chip tono="success">
+                      {q.primeraVez ? "" : "otra vez · "}
+                      {q.aLosDias === 1 ? "al día siguiente" : `a los ${q.aLosDias} días`}
+                    </Chip>
+                    <AlFinal>
+                      {q.origen}
+                      {q.cuentaParaParo ? " · cuenta" : ""}
+                    </AlFinal>
+                  </Renglon>
+                ))
+              )}
+            </Lista>
+          )}
+        </Panel>
+
+        <Panel
+          titulo={
+            <>
+              Quién llegó <span className="font-normal text-muted">· hoy y ayer</span>
+            </>
+          }
+          extra={<Link href="/admin/actividad" className="hover:text-ink">Actividad →</Link>}
+          sinPadding
+        >
+          {d.dias.every((dia) => dia.llegaron.length === 0) ? (
+            <Vacio>Nadie empezó el onboarding ni hoy ni ayer.</Vacio>
+          ) : (
+            d.dias.map((dia) => <Llegadas key={dia.dia} dia={dia.dia} hoy={d.hoy} llegaron={dia.llegaron} />)
+          )}
+        </Panel>
+      </Fila>
+
+      {d.voz.reportes.length > 0 ? (
+        <Panel titulo="Lo que escribieron" extra="últimos 7 días" sinPadding>
+          <Lista>
+            {d.voz.reportes.map((r) => (
+              <Renglon key={r.cuando} className="py-3">
+                {/* Un solo hijo en columna: el Renglon es flex-row y sus gap/items
+                    no se sobreescriben desde className (orden de Tailwind 4). */}
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-xs text-muted">
+                    {r.correo} · {r.tipo}
+                  </span>
+                  <span className="text-sm text-ink">“{r.texto}”</span>
+                </div>
+              </Renglon>
+            ))}
+          </Lista>
+        </Panel>
+      ) : null}
+    </>
   );
 }
 
-function Dato({ titulo, valor, nota }: { titulo: string; valor: string; nota?: string }) {
+function Comparada({
+  etiqueta,
+  nota,
+  hoy,
+  ayer,
+  tono = "ink",
+}: {
+  etiqueta: string;
+  nota?: string;
+  hoy: number;
+  ayer: number;
+  tono?: "ink" | "success";
+}) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-lg border border-line bg-surface px-3 py-2.5">
-      <span className="text-xs text-muted">{titulo}</span>
-      <span className="text-xl font-bold tabular-nums text-ink">{valor}</span>
-      {nota ? <span className="text-[11px] text-muted">{nota}</span> : null}
-    </div>
+    <>
+      <span className="border-t border-line2 py-2 text-sm text-ink2">
+        {etiqueta}
+        {nota ? <span className="text-[13px] text-faint"> · {nota}</span> : null}
+      </span>
+      <span className={`border-t border-line2 py-2 text-right text-lg font-bold tabular-nums ${tono === "success" && hoy > 0 ? "text-success" : "text-ink"}`}>
+        {hoy}
+      </span>
+      <span className="min-w-8 border-t border-line2 py-2 text-right text-[13px] tabular-nums text-faint">{ayer}</span>
+    </>
   );
 }
 
-function FilaDia({ etiqueta, hoy, ayer }: { etiqueta: string; hoy: string; ayer: string }) {
+/** Las llegadas de un día: con nombre quien llegó a su primer look; resumido quien se quedó. */
+function Llegadas({ dia, hoy, llegaron }: { dia: string; hoy: string; llegaron: Llegada[] }) {
+  const conLook = llegaron.filter((l) => l.primerLook);
+  const quedaron = llegaron.filter((l) => !l.primerLook);
+  const porPaso = [...new Set(quedaron.map((l) => l.paso))]
+    .map((paso) => ({ paso: paso.replace(/^se quedó /, ""), n: quedaron.filter((l) => l.paso === paso).length }))
+    .sort((a, b) => b.n - a.n);
   return (
-    <tr className="border-b border-line last:border-0">
-      <td className="px-4 py-2 text-ink">{etiqueta}</td>
-      <td className="px-3 py-2 text-right text-ink">{hoy}</td>
-      <td className="px-3 py-2 text-right text-muted">{ayer}</td>
-    </tr>
+    <div>
+      <div className="flex items-baseline gap-2 border-t border-line2 px-5 pb-1 pt-3 text-xs first:border-t-0">
+        <b className="text-ink">{nombreDelDia(dia, hoy)}</b>
+        <span className="text-muted">
+          {conLook.length} con primer look · {quedaron.length} se quedaron
+        </span>
+      </div>
+      {llegaron.length === 0 ? (
+        <Vacio>Nadie empezó el onboarding.</Vacio>
+      ) : (
+        <Lista>
+          {conLook.map((l) => (
+            <Renglon key={l.id}>
+              <Quien correo={l.correo} pais={l.pais} href={`/admin/usuarios/${l.id}`} />
+              {l.fotos > 0 ? <Chip tono="ink">{l.fotos} con foto</Chip> : null}
+              {l.variante === "fotos" ? <Chip>3 fotos</Chip> : null}
+              <AlFinal>{l.origen}</AlFinal>
+            </Renglon>
+          ))}
+          {quedaron.length > 0 ? (
+            <li>
+              <details>
+                <summary className="cursor-pointer border-t border-line2 px-5 py-2.5 text-[13px] text-muted hover:text-ink">
+                  <b className="text-ink">{quedaron.length} se quedaron en el onboarding</b> · {porPaso.map((p) => `${p.n} ${p.paso}`).join(" · ")}
+                </summary>
+                <Lista>
+                  {quedaron.map((l) => (
+                    <Renglon key={l.id} className="bg-tile/60">
+                      <Quien correo={l.correo} pais={l.pais} href={`/admin/usuarios/${l.id}`} />
+                      <span className="text-[13px] text-muted">{l.paso}</span>
+                      <AlFinal>{l.origen}</AlFinal>
+                    </Renglon>
+                  ))}
+                </Lista>
+              </details>
+            </li>
+          ) : null}
+        </Lista>
+      )}
+    </div>
   );
 }

@@ -12,7 +12,15 @@ import {
 } from "@/lib/admin/adquisicion";
 import { esDeCampana } from "@/lib/admin/campana";
 import { origenDesdeDato } from "@/lib/origen";
-import { PESTANAS_PERSONAS, Pestanas } from "../_compartido/pestanas";
+import { Encabezado, Pestanas } from "../_ui";
+
+// Actividad primero: es la vista que más se usa.
+const PESTANAS_PERSONAS = [
+  { href: "/admin/actividad", label: "Actividad" },
+  { href: "/admin/usuarios", label: "Lista" },
+];
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 type Profile = {
   id: string;
@@ -84,11 +92,16 @@ export default async function AdminUsuarios() {
   });
 
   const now = ahora.getTime();
+  const activos = rows.filter((r) => r.lastActive !== null && now - r.lastActive <= WEEK_MS).length;
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
       <Pestanas pestanas={PESTANAS_PERSONAS} activa="/admin/usuarios" />
+      <Encabezado
+        titulo="Personas"
+        sub={`${rows.length} ${rows.length === 1 ? "perfil" : "perfiles"} · ${activos} ${activos === 1 ? "activo" : "activos"} esta semana`}
+      />
       <UsuariosTable rows={rows} now={now} />
-    </div>
+    </>
   );
 }

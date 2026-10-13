@@ -1,8 +1,12 @@
 import { requireAdmin } from "@/lib/auth";
-import { AdminNav } from "./admin-nav";
+import { AdminNavMovil, AdminSidebar } from "./admin-nav";
 
 // Todo /admin pasa por aquí: solo entra is_admin (gate de app). La base además
 // solo deja a admins LEER datos de otras usuarias (RLS) — cinturón y tirantes.
+//
+// El cascarón (2026-10-13): barra lateral fija en escritorio, barra de arriba
+// en celular, y el contenido ancho. El admin es una herramienta de datos, no
+// una pantalla de la app: no cabe en la columna de 430 del producto.
 export default async function AdminLayout({
   children,
 }: {
@@ -10,16 +14,12 @@ export default async function AdminLayout({
 }) {
   await requireAdmin();
   return (
-    <div className="min-h-dvh bg-bg">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-          <span className="text-sm font-semibold text-ink">
-            stailist <span className="text-muted">· admin</span>
-          </span>
-          <AdminNav />
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+    <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[224px_minmax(0,1fr)]">
+      <AdminSidebar />
+      <div className="min-w-0">
+        <AdminNavMovil />
+        <main className="mx-auto w-full max-w-[1180px] px-4 py-5 lg:px-10 lg:py-7">{children}</main>
+      </div>
     </div>
   );
 }

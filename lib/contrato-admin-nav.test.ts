@@ -14,10 +14,11 @@ import { join } from "node:path";
 // tres (barrido, ab, inspo). Cada uno de esos movimientos era una oportunidad
 // de dejar un link muerto.
 //
-// Desde el replanteo del 2026-10-09 el menú tiene 5 entradas y a una pantalla
-// se llega por tres puertas: el menú, el índice del Taller y las pestañas de
-// una sección (Embudo | Retención, Lista | Actividad). Las tres cuentan como
-// "está en el menú". Este test se quedó vigilando el menú viejo un día entero
+// Desde el replanteo del 2026-10-09 el menú tiene pocas entradas y a una
+// pantalla se llega por tres puertas: el menú (desde el rediseño del
+// 2026-10-13, barra lateral + barra móvil en admin-nav.tsx), el índice del
+// Taller y las pestañas de una sección (Actividad | Lista, declaradas en las
+// dos páginas de Personas). Las tres cuentan como "está en el menú". Este test se quedó vigilando el menú viejo un día entero
 // después del replanteo porque se corrieron sólo los tests de lib/admin y
 // app/admin, no los de lib/: correr la suite completa antes de publicar.
 //
@@ -28,7 +29,7 @@ import { join } from "node:path";
 
 const RAIZ = join(import.meta.dirname, "..");
 /** Las tres puertas por las que se llega a una pantalla del admin. */
-const PUERTAS = ["app/admin/admin-nav.tsx", "app/admin/taller/page.tsx", "app/admin/_compartido/pestanas.tsx"];
+const PUERTAS = ["app/admin/admin-nav.tsx", "app/admin/taller/page.tsx", "app/admin/actividad/page.tsx", "app/admin/usuarios/page.tsx"];
 
 /** Los hrefs declarados en las puertas, tal cual salen de la fuente. */
 function hrefsDelNav(): string[] {

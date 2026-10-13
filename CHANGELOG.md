@@ -2,6 +2,33 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.372.0] - 2026-10-13 — el admin, rediseñado
+
+- Roberto, tercera vez en cuatro días: "todo el admin es una mierda, súper
+  poco claro, revuelto, el UI asqueroso". Los dos replanteos anteriores
+  (10-09 y 10-11) reorganizaron qué iba dónde y conservaron la misma página
+  tipo documento: pila de cajas iguales con rótulo gris, un párrafo arriba y
+  otro abajo, acordeones cerrados, seis filas de chips, tablas de 14
+  columnas. Esta vez se aprobó un mockup en imagen ANTES de escribir código.
+- **Cascarón nuevo**: barra lateral fija en escritorio (Leer: Hoy, Campañas,
+  Embudo, Retención, Personas · Construir: Taller · Cómo se cuenta), barra de
+  arriba en celular, contenido ancho.
+- **Kit único** (`app/admin/_ui`): Encabezado, Panel, Fila, Cifra, Quien
+  (correo con el dominio apagado y bandera), Lista/Renglon/Chip,
+  Tabla/Th/Td/Sub, Filtros (todos en una línea), Pestanas, Vacio. Ninguna
+  pantalla declara piezas propias; `chips.tsx` y `pestanas.tsx` se fueron.
+- **Cada pantalla contesta su pregunta en la primera vista**: cifras grandes
+  arriba y una sola vista principal. Sin acordeones: lo secundario de
+  Campañas (paso por paso, objetivos, primera semana, qué las trajo, gasto)
+  son pestañas. Cero párrafos explicativos: las definiciones viven en
+  **/admin/como-se-cuenta**, una sola vez.
+- Hoy, Campañas, Embudo, Retención, Actividad, Lista y la ficha reescritas
+  sobre los MISMOS loaders de `lib/admin/*` (ningún número cambia). La ficha
+  abre con cuatro cifras (primer look, ropa propia, volvió, último uso),
+  checkpoints en vertical y la línea de tiempo al lado. El Taller conserva
+  sus herramientas con el diseño viejo a propósito.
+- Las reglas del admin quedan en DESIGN.md (sección "Admin").
+
 ## [0.2.371.0] - 2026-10-13 — el tope de renders ya no deja el clóset a medias
 
 - Reporte real desde /semana: "no cargan las fotos de mi clóset". Alguien metió

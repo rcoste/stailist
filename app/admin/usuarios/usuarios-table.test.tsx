@@ -53,9 +53,10 @@ const usuario = (over: Partial<UserRow> = {}): UserRow => ({
 
 const otra = usuario({ id: "u2", email: "andy@example.com", worn: 0 });
 
-/** La celda de "clóset" — o sea, cualquier parte de la fila que NO sea el correo. */
+/** La celda de "1er look" — o sea, cualquier parte de la fila que NO sea el correo.
+ *  (La fila se ubica por su enlace: el correo se pinta partido en la arroba.) */
 const celdaCualquiera = (email: string) =>
-  screen.getByText(email).closest("tr")!.querySelectorAll("td")[4];
+  screen.getByRole("link", { name: new RegExp(email.replace(".", "\\.")) }).closest("tr")!.querySelectorAll("td")[4];
 
 beforeEach(() => push.mockClear());
 
