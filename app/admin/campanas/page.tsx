@@ -125,15 +125,20 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
           label="Primeros looks de anuncios"
           valor={primerosLooks}
           unidad={`de ${entraron} que entraron`}
-          sub={`${pct(primerosLooks, entraron)} · ${estado.frase}`}
+          // Sólo el %: la frase del criterio de paro ya vive en el héroe de Hoy
+          // y aquí ocupaba seis líneas en celular.
+          sub={`${pct(primerosLooks, entraron)} de los que entraron`}
         />
         <Cifra label="Costo por primer look" valor={mxn(costo)} unidad="MXN" sub="anuncio + IA" />
         <Cifra
           label="Volvieron en su semana"
           valor={volvieron}
           unidad={`de ${primerosLooks}`}
-          tono={volvieron > 0 ? "success" : "ink"}
-          sub={`${cerradas} ya cerraron su semana`}
+          tono={estado.tono === "mal" ? "error" : volvieron > 0 ? "success" : "ink"}
+          // El veredicto del plan sólo cuando ya existe ("pasa" / "no pasa"):
+          // es corto y decide. Mientras no se sabe, la cuenta de semanas
+          // cerradas dice más que repetir la regla (que vive en Hoy).
+          sub={estado.tono === "neutro" ? `${cerradas} ya cerraron su semana` : estado.frase}
         />
       </Fila>
 

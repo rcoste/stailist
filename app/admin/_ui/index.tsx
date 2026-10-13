@@ -153,9 +153,11 @@ export function Cifra({
   return (
     <div className={`flex min-w-0 flex-col gap-0.5 ${enPanel ? "rounded-lg border border-line bg-surface px-5 py-4" : ""}`}>
       <span className="text-xs text-muted">{label}</span>
-      <span className={`tabular-nums text-[30px] font-bold leading-9 tracking-[-0.03em] ${color}`}>
-        {valor}
-        {unidad ? <span className="ml-1 text-[15px] font-normal tracking-normal text-muted">{unidad}</span> : null}
+      {/* La unidad va como bloque entero: si no cabe al lado del número baja
+          completa a la línea siguiente, en vez de partirse a media frase. */}
+      <span className={`flex flex-wrap items-baseline gap-x-1.5 tabular-nums text-[30px] font-bold leading-9 tracking-[-0.03em] ${color}`}>
+        <span>{valor}</span>
+        {unidad ? <span className="whitespace-nowrap text-[15px] font-normal tracking-normal text-muted">{unidad}</span> : null}
       </span>
       {barra ? (
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-tile">
@@ -191,20 +193,27 @@ export function Quien({
   ) : (
     <span className="font-normal text-faint">{correo || "sin correo todavía"}</span>
   );
+  // El nombre NO cede: en un renglón con chips y origen a la derecha, el
+  // correo era lo primero que se aplastaba (quedaba "(si…"). Tiene su tope y
+  // trunca adentro; lo que cede es AlFinal.
+  // Las clases del ITEM del flex van en lo que sea el hijo directo del
+  // renglón: el Link cuando hay href, el span cuando no. Con ellas en el span
+  // de adentro, el Link era el que se encogía y el correo quedaba en "rafaz…".
+  const item = `inline-flex min-w-0 max-w-[55%] shrink-0 items-baseline gap-2 ${className}`;
   const cuerpo = (
-    <span className={`inline-flex min-w-0 items-baseline gap-2 ${className}`}>
+    <>
       <span className="w-[18px] shrink-0 text-[13px]" title={pais ? paisEnPalabras(pais) : "sin país"}>
         {bandera ?? ""}
       </span>
       <span className="truncate font-semibold text-ink">{nombre}</span>
-    </span>
+    </>
   );
   return href ? (
-    <Link href={href} className="min-w-0 hover:underline hover:decoration-line hover:underline-offset-2">
+    <Link href={href} className={`${item} hover:underline hover:decoration-line hover:underline-offset-2`}>
       {cuerpo}
     </Link>
   ) : (
-    cuerpo
+    <span className={item}>{cuerpo}</span>
   );
 }
 
@@ -248,7 +257,7 @@ export function Chip({
 
 /** Lo que va al final del renglón, apagado (origen, fecha). */
 export function AlFinal({ children }: { children: ReactNode }) {
-  return <span className="ml-auto shrink-0 pl-2 text-[13px] text-muted">{children}</span>;
+  return <span className="ml-auto min-w-0 truncate pl-2 text-right text-[13px] text-muted">{children}</span>;
 }
 
 /* ───────────────────────── Tabla ───────────────────────── */

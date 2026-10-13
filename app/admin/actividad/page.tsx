@@ -172,10 +172,9 @@ function Fila({
   return (
     <Renglon>
       <span className="w-12 shrink-0 text-xs tabular-nums text-faint">{horaEnZona(m.at)}</span>
-      {/* Tope de ancho para que un correo largo no deje sin sitio al texto en celular. */}
-      <span className="flex min-w-0 max-w-[45%] shrink-0">
-        <Quien correo={email} pais={pais} href={`/admin/usuarios/${m.userId}`} />
-      </span>
+      {/* Quien ya trae su tope de ancho (55%) y trunca adentro; envolverlo en
+          otro flex lo colapsaba a tres letras. */}
+      <Quien correo={email} pais={pais} href={`/admin/usuarios/${m.userId}`} />
       {vuelta != null ? <Chip tono="success">volvió · {vuelta === 1 ? "al día siguiente" : `a los ${vuelta} días`}</Chip> : null}
       <span className="min-w-0 flex-1 text-sm text-ink2">
         {etiqueta(m)}
