@@ -21,6 +21,23 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   - `scripts/rematar-renders-pendientes.ts <correo>`: remata las pendientes de
     una persona sin esperar a que vuelva (con recibo en `ai_calls` a su
     nombre). Corrido para quien reportó.
+- **Frenos que explican** (Roberto: "frenos sí, pero con mensajes con
+  contexto, no que nada más deje de hacer algo la app"):
+  - Cuota propia para los **dibujos de la cápsula ideal** (`ideal`, 40 al
+    día = una cápsula entera). No la tenía: era el rubro más caro de ese día
+    y topaba contra el freno de dinero con el mensaje genérico.
+  - `lib/mensaje-del-freno.ts`: un solo lector del "por hoy ya no" del
+    servidor, conectado en las pantallas que lo callaban o lo disfrazaban de
+    error: tile de cápsula (lo dice en la franja), precalentado (toast y deja
+    de pedir), auto-sanado del clóset (toast), try-on, probador, estilo de
+    referencia, cartera, espejo (fit check y "sumar lo que traes"), viaje
+    (maleta e itinerario). Antes decían "no pude, inténtalo de nuevo" cuando
+    era "por hoy ya; mañana sigo".
+  - El mensaje del freno de dinero dice qué pasó y cuándo vuelve, en vez de
+    "necesita un respiro, vuelve en un rato" (eran 24 horas).
+  - `scripts/ab-dibujo-capsula.ts`: pares a ciegas entre el modelo "rápido"
+    y Nano Banana 2.1 con el prompt real de la cápsula, para decidir el modelo
+    midiendo (el barato cuesta la mitad).
 
 ## [0.2.370.0] - 2026-10-12 — Personas: rápido, con botones y checkpoints
 
