@@ -37,7 +37,15 @@ export async function renderItemImage(
    * (lib/renders-pendientes.ts). Sólo aplica si la prenda trae esa marca; con
    * la marca quitada es un no-op, así que no sirve para regenerar a voluntad.
    */
-  pendiente = false
+  pendiente = false,
+  /**
+   * La etiqueta del recibo en ai_calls. "render-prenda" cuenta para el cupo del
+   * día (lib/cuotas.ts); el remate que corremos NOSOTROS a mano
+   * (scripts/rematar-renders-pendientes.ts) usa "render-prenda-remate": se ve
+   * en el costo, pero no le quita cupo a la persona. El 2026-10-12 el remate
+   * le cobró 52 imágenes del cupo a quien acababa de reportar el problema.
+   */
+  tareaRecibo = "render-prenda"
 ): Promise<RenderItemResult> {
   const { data: item } = await supabase
     .from("items")
@@ -163,7 +171,7 @@ export async function renderItemImage(
             categoria,
             aspecto: "3:4",
           },
-          { supabase, userId }
+          { supabase, userId, tarea: tareaRecibo }
         );
       }
     } catch {
@@ -177,7 +185,7 @@ export async function renderItemImage(
     bytes = await generateArchetypeImage(conColor, type, gender, "3:4", {
       supabase,
       userId,
-      tarea: "render-prenda",
+      tarea: tareaRecibo,
     });
   if (!bytes) {
     await supabase

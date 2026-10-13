@@ -47,8 +47,13 @@ export const CUOTAS: Record<Recurso, number> = {
   // sin ninguna imagen. Reportó "no cargan las fotos de mi clóset" desde
   // /semana. El 40 se fijó cuando una imagen costaba $0.134 (Pro); desde que la
   // ropa va en Nano Banana 2.1 cuesta $0.033 medidos, así que 120 renders son
-  // ~$4, menos de lo que costaban 40. Va en 120 porque es el tope de fotos: una
-  // prenda, una imagen limpia, nunca más que lo que se dejó entrar.
+  // ~$4, menos de lo que costaban 40. Se escribió que iba "igual al tope de
+  // fotos, nunca más de lo que se dejó entrar", y eso estaba mal
+  // (corregido el 2026-10-13). `fotos` cuenta FOTOS y una foto de cuerpo entero trae varias
+  // prendas: la misma persona metió 99 prendas con 54 fotos. 120 fotos dan
+  // para ~200 prendas al día, así que el tope que de verdad siente quien
+  // carga mucho es éste, el de imágenes, no el de fotos. Si alguna vez hay
+  // que dar más aire, se sube ESTE.
   renders: 120,
   // IDEAL: los dibujos de las prendas SUGERIDAS de la cápsula y del viaje
   // (2026-10-13). Van a una biblioteca compartida (lib/catalog-render.ts): cada
