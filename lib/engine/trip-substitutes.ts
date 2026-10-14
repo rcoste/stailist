@@ -44,7 +44,9 @@ export async function matchSubstitutes(
   gender: "hombre" | "mujer" | null = null,
   rejected: string | null = null,
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
-  quien: QuienMide | null = null
+  quien: QuienMide | null = null,
+  /** Por qué no le convenció la anterior ("no es práctico para caminar: …"). */
+  motivo: string | null = null
 ): Promise<{ nombre: string; porque: string }[]> {
   // LA REGLA DURA VA EN CÓDIGO, ANTES de la IA (lib/funcion-prenda.ts): misma
   // categoría y, si la pieza tiene una función (lluvia, nadar, frío extremo),
@@ -91,6 +93,10 @@ REGLAS:
         content: `FALTA: ${missing.nombre} (tipo: ${missing.tipo}, ${missing.category}, ${missing.formalidad}, ${missing.colorFamilia}). Para: ${missing.porque}${funcion ? `\nFUNCIÓN QUE TIENE QUE CUMPLIR: ${NOMBRE_FUNCION[funcion]}.` : ""}${
           rejected
             ? `\n\nOJO: para este hueco tenía "${rejected}" pero NO le late — proponle opciones distintas, con otro aire (no la incluyas ni propongas casi lo mismo).`
+            : ""
+        }${
+          motivo?.trim()
+            ? `\nPOR QUÉ NO LE CONVENCIÓ: ${motivo.trim().slice(0, 300)}. Lo que propongas tiene que resolver eso.`
             : ""
         }\n\nCLÓSET REAL:\n${closetTxt}\n\n¿Con qué del clóset lo resuelvo?`,
       },

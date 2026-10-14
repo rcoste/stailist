@@ -8,8 +8,11 @@ import {
   loadClosetImageMap,
   borrowArchetypeImage,
 } from "@/lib/capsule-data";
-import { matchSubstitutes } from "@/lib/engine/trip-substitutes";
-import { capsuleRows } from "@/lib/capsule";
+import { candidatasPosibles, matchSubstitutes } from "@/lib/engine/trip-substitutes";
+import { capsuleRows, fueraKey, VETO_REASON_LABEL, type VetoReason } from "@/lib/capsule";
+import { generateCapsuleSwap } from "@/lib/engine/capsule-swap";
+import { quizMetalDe, type Season } from "@/lib/colorimetria";
+import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { matchSignature } from "@/lib/engine/capsule-match";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
@@ -71,6 +74,7 @@ export async function suggestTripSubstitutes(
   // "parecido" sin decidir — es la prenda que la usuaria está viendo/rechazando.
   let currentBy: string | null = null;
   for (const r of capsuleRows(target, match, overrides)) {
+    if (r.dismissed) continue;
     if (r.covered && r.by) used.add(r.by);
     if (r.index === index && r.by) currentBy = r.by;
   }
@@ -147,6 +151,7 @@ export async function proposeTripSubstitutes(
   const used = new Set<string>();
   const huecos: number[] = [];
   for (const r of capsuleRows(target, match, overrides as CapsuleOverrides)) {
+    if (r.dismissed) continue;
     if (r.covered && r.by) used.add(r.by);
     if (
       r.effective === "falta" &&
@@ -305,7 +310,11 @@ export async function dismissTripCandidate(tripId: string, index: number): Promi
 // la prenda ya está agregada + con imagen (el botón muestra spinner mientras).
 export async function markTripFaltaOwned(
   tripId: string,
-  index: number
+  index: number,
+  /** "Tengo uno parecido": la pieza como es la SUYA (nombre editado, color,
+   *  material). Sin esto, "ya lo tengo" guardaba la sugerida tal cual — un
+   *  cinturón con hebilla dorada en el clóset de quien tiene uno plateado. */
+  variante?: VariantePieza | null
 ): Promise<{ ok: boolean; itemId: string | null }> {
   if (!Number.isInteger(index) || index < 0) return { ok: false, itemId: null };
   const supabase = await createClient();
@@ -325,11 +334,17 @@ export async function markTripFaltaOwned(
   ]);
   const target = trip?.capsule_target as CapsuleTarget | null;
   const match = trip?.capsule_match as CapsuleMatch | null;
-  const item = target?.items[index];
-  if (!target || !match || !item) return { ok: false, itemId: null };
+  const sugerida = target?.items[index];
+  if (!target || !match || !sugerida) return { ok: false, itemId: null };
+  const v = limpiarVariante(variante);
+  const item = v
+    ? { ...sugerida, nombre: v.nombre, colorFamilia: v.color ?? sugerida.colorFamilia }
+    : sugerida;
 
-  // Imagen prestada de un arquetipo de la misma categoría/color parecido.
-  const imagePath = await borrowArchetypeImage(
+  // Imagen prestada de un arquetipo de la misma categoría/color parecido. Con
+  // variante NO: la imagen del catálogo es la de la sugerida (la hebilla
+  // dorada); su prenda se dibuja de su propia descripción.
+  const imagePath = v ? null : await borrowArchetypeImage(
     supabase,
     item.category,
     familiaToHex(item.colorFamilia),
@@ -350,6 +365,7 @@ export async function markTripFaltaOwned(
         color_hex: familiaToHex(item.colorFamilia),
         formalidad: item.formalidad,
         temporada: item.temporada,
+        ...(v?.material ? { material: v.material } : {}),
         ...(imagePath ? { image_path: imagePath } : {}),
       },
     })
@@ -385,6 +401,16 @@ export async function markTripFaltaOwned(
     .update({ capsule_match: newMatch, empacado })
     .eq("id", tripId)
     .eq("user_id", user.id);
+
+  if (v) {
+    await registrarMotivo(supabase, user.id, {
+      trip_id: tripId,
+      index,
+      pieza: sugerida.nombre,
+      accion: "parecido",
+      nota: v.nombre,
+    });
+  }
 
   revalidatePath(`/viaje/${tripId}`);
   return { ok: true, itemId: inserted.id as string };
@@ -912,4 +938,371 @@ async function resolveTripItemIds(
     if (name && !byName.has(name)) byName.set(name, it.id as string);
   }
   return prendas.map((n) => byName.get(n)).filter((id): id is string => !!id);
+}
+
+// ─── Lo que la persona dice de una pieza de su maleta (bloque B, 2026-10-14) ──
+//
+// Nació de una maleta real: "ya lo tengo" no sirve cuando tienes una VARIACIÓN
+// (un cinturón negro, pero con hebilla plateada); no había forma de sacar una
+// pieza que no necesitas; y en el duelo mocasines-contra-tacón no había salida
+// para "ninguna, no son prácticas para caminar". Roberto: "es importante que
+// guardemos todo eso, nos sirve de feedback". Cada acción deja un evento
+// `trip_motivo` con la pieza, la acción, el motivo y lo que escribió.
+
+export type VariantePieza = { nombre: string; color?: string | null; material?: string | null };
+
+function limpiarVariante(v: VariantePieza | null | undefined): VariantePieza | null {
+  const nombre = v?.nombre?.trim().slice(0, 120);
+  if (!nombre) return null;
+  const corto = (t: string | null | undefined) => (t?.trim() ? t.trim().slice(0, 40) : null);
+  return { nombre, color: corto(v?.color), material: corto(v?.material) };
+}
+
+const limpiarNota = (nota: string | null | undefined) => (nota?.trim() ? nota.trim().slice(0, 500) : null);
+
+/** El motivo en palabras, para el prompt: "no es práctico para caminar: me duelen los pies". */
+function motivoEnPalabras(motivo: VetoReason | null, nota: string | null): string | null {
+  const base = motivo && motivo !== "otro" ? VETO_REASON_LABEL[motivo] : null;
+  if (base && nota) return `${base}: ${nota}`;
+  return base ?? nota;
+}
+
+async function registrarMotivo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  data: {
+    trip_id: string;
+    index: number;
+    pieza: string | null;
+    accion: "parecido" | "elegida" | "fuera" | "cambiar" | "duelo-buscar" | "duelo-compras";
+    motivo?: VetoReason | null;
+    nota?: string | null;
+    rechazada?: string | null;
+  }
+) {
+  await registrarEvento(supabase, { user_id: userId, type: "trip_motivo", data });
+}
+
+const esMotivo = (m: unknown): m is VetoReason => typeof m === "string" && m in VETO_REASON_LABEL;
+
+/** Prendas del clóset que ya están en la maleta (no se pueden empacar dos veces). */
+function prendasUsadas(
+  target: CapsuleTarget,
+  match: CapsuleMatch | null,
+  overrides: Record<string, unknown>
+): Set<string> {
+  const used = new Set<string>();
+  for (const r of capsuleRows(target, match, overrides as CapsuleOverrides)) {
+    if (!r.dismissed && r.covered && r.by) used.add(r.by);
+  }
+  for (const [k, v] of Object.entries(overrides)) {
+    if (k.startsWith("sub:") && typeof v === "string") used.add(v);
+  }
+  return used;
+}
+
+/**
+ * "Lo elijo de mi clóset": las prendas suyas que PUEDEN ocupar ese lugar, sin
+ * IA (misma regla dura que el buscador: categoría, función y clases finas).
+ * Elige ella; aquí no se adivina nada, así que tampoco se cobra nada.
+ */
+export async function listTripClosetOptions(
+  tripId: string,
+  index: number
+): Promise<SubstituteCandidate[]> {
+  if (!Number.isInteger(index) || index < 0) return [];
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("capsule_target, capsule_match, overrides")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  const item = target?.items?.[index];
+  if (!target || !item) return [];
+  const overrides = ((trip?.overrides as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+  const used = prendasUsadas(target, (trip?.capsule_match as CapsuleMatch | null) ?? null, overrides);
+  const [closet, imageMap] = await Promise.all([
+    loadClosetLite(supabase, user.id),
+    loadClosetImageMap(supabase, user.id),
+  ]);
+  // Primero las del MISMO tipo (para una camisa, sus camisas; luego el resto
+  // de sus tops). Sin esto, una camisa abría con "Polo marino" por orden
+  // alfabético y sus camisas quedaban abajo de 20 suéteres.
+  const tipoDe = (n: string) =>
+    (n.trim().split(/\s+/)[0] ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/(es|s)$/, "");
+  const mismoTipo = tipoDe(item.nombre);
+  // Una vez por nombre: la maleta elige por nombre (sub:i), y dos prendas que
+  // se llaman igual salían repetidas (y React avisaba de llaves duplicadas).
+  const vistos = new Set<string>();
+  return candidatasPosibles(item, closet.filter((c) => !used.has(c.nombre)))
+    .filter((c) => (vistos.has(c.nombre) ? false : (vistos.add(c.nombre), true)))
+    .map((c) => ({ nombre: c.nombre, porque: "", image: imageMap[c.nombre] ?? null }))
+    .sort(
+      (a, b) =>
+        Number(tipoDe(b.nombre) === mismoTipo) - Number(tipoDe(a.nombre) === mismoTipo) ||
+        a.nombre.localeCompare(b.nombre, "es")
+    );
+}
+
+/** "No lo necesito en este viaje": saca la pieza de la maleta, con su motivo. */
+export async function excludeTripPiece(
+  tripId: string,
+  index: number,
+  motivo: VetoReason,
+  nota?: string | null
+): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(index) || index < 0 || !esMotivo(motivo)) return { ok: false };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("capsule_target, overrides, empacado, outfits")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  if (!trip || !target?.items?.[index]) return { ok: false };
+
+  const overrides = ((trip.overrides as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+  overrides[fueraKey(index)] = motivo;
+  const empacado = { ...((trip.empacado as Record<string, boolean> | null) ?? {}) };
+  delete empacado[String(index)];
+  const hasOutfits = Array.isArray(trip.outfits) && trip.outfits.length > 0;
+  await supabase
+    .from("trips")
+    .update(hasOutfits ? { overrides, empacado, outfits_stale: true } : { overrides, empacado })
+    .eq("id", tripId)
+    .eq("user_id", user.id);
+
+  await registrarMotivo(supabase, user.id, {
+    trip_id: tripId,
+    index,
+    pieza: target.items[index].nombre,
+    accion: "fuera",
+    motivo,
+    nota: limpiarNota(nota),
+  });
+  revalidatePath(`/viaje/${tripId}`);
+  return { ok: true };
+}
+
+/**
+ * "No me gusta esta pieza": la cambia por OTRA pieza ideal para el mismo lugar,
+ * con el motivo en mano. Es el reemplazo de la cápsula del clóset
+ * (generateCapsuleSwap) sobre la cápsula del viaje: mismo motor, misma memoria
+ * de lo rechazado (`rech:i`) para no volver a proponerlo.
+ */
+export async function replaceTripPiece(
+  tripId: string,
+  index: number,
+  motivo: VetoReason,
+  nota?: string | null
+): Promise<{ ok: boolean; error?: "cuota" | "fallo"; mensaje?: string }> {
+  if (!Number.isInteger(index) || index < 0 || !esMotivo(motivo)) return { ok: false, error: "fallo" };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "fallo" };
+  const gasto = await revisarGasto(supabase, user.id);
+  if (!gasto.permitido) return { ok: false, error: "cuota", mensaje: gasto.mensaje };
+
+  const [{ data: trip }, { data: profile }] = await Promise.all([
+    supabase
+      .from("trips")
+      .select("capsule_target, capsule_match, overrides, empacado, outfits")
+      .eq("id", tripId)
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("gender, palette_season, palette_flow, palette_quiz, style_vetoes")
+      .eq("id", user.id)
+      .single(),
+  ]);
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  const actual = target?.items?.[index];
+  if (!trip || !target || !actual) return { ok: false, error: "fallo" };
+
+  const overrides = ((trip.overrides as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+  const rechKey = `rech:${index}`;
+  const previas = Array.isArray(overrides[rechKey]) ? (overrides[rechKey] as string[]) : [];
+  const rechazadas = [...new Set([...previas, actual.nombre])].slice(-6);
+  const notaLimpia = limpiarNota(nota);
+
+  let nueva;
+  try {
+    nueva = await generateCapsuleSwap(
+      {
+        target,
+        index,
+        rejectedNames: rechazadas,
+        reason: motivo,
+        nota: notaLimpia,
+        gender: (profile?.gender as "hombre" | "mujer" | null) ?? null,
+        season: (profile?.palette_season as Season | null) ?? null,
+        flow: (profile?.palette_flow as Season | null) ?? null,
+        metalQuiz: quizMetalDe(profile?.palette_quiz),
+        vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
+      },
+      { supabase, userId: user.id }
+    );
+  } catch (e) {
+    console.error(`[viaje] reemplazo falló — ${e instanceof Error ? e.message : String(e)}`);
+    return { ok: false, error: "fallo" };
+  }
+
+  // La pieza nueva entra como "falta": no se sabe si la tiene. La búsqueda de
+  // candidatas (proposeTripSubstitutes) la revisa sola al volver a la maleta,
+  // porque aquí se limpia todo lo que se había decidido sobre la anterior.
+  const items = target.items.map((it, i) => (i === index ? { ...nueva, porque: nueva.porque || actual.porque } : it));
+  const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
+  const entries: MatchEntry[] = items.map((_, i) =>
+    i === index ? { status: "falta", by: null } : match?.entries[i] ?? { status: "falta", by: null }
+  );
+  for (const k of [String(index), `sub:${index}`, `cand:${index}`, `candNo:${index}`, fueraKey(index)]) delete overrides[k];
+  overrides[rechKey] = rechazadas;
+  const empacado = { ...((trip.empacado as Record<string, boolean> | null) ?? {}) };
+  delete empacado[String(index)];
+  const hasOutfits = Array.isArray(trip.outfits) && trip.outfits.length > 0;
+  const fila = {
+    capsule_target: { ...target, items },
+    capsule_match: match ? { ...match, entries } : match,
+    overrides,
+    empacado,
+    ...(hasOutfits ? { outfits_stale: true } : {}),
+  };
+  await supabase.from("trips").update(fila).eq("id", tripId).eq("user_id", user.id);
+
+  await registrarMotivo(supabase, user.id, {
+    trip_id: tripId,
+    index,
+    pieza: actual.nombre,
+    accion: "cambiar",
+    motivo,
+    nota: notaLimpia,
+    rechazada: actual.nombre,
+  });
+  revalidatePath(`/viaje/${tripId}`);
+  return { ok: true };
+}
+
+/**
+ * "Ninguna de las dos me va" en el duelo sugerida-contra-la-tuya. Rechaza las
+ * dos con su motivo y, según lo que pidió: busca OTRA prenda suya con ese
+ * motivo en mente, o deja la sugerida en compras.
+ *
+ * La "tuya" puede venir del match (un "parecido") o de la búsqueda de
+ * candidatas (`cand:i`). En el primer caso se rechaza el parecido (override
+ * "reject") para que la candidata nueva pueda ocupar el duelo.
+ */
+export async function rejectTripDuel(
+  tripId: string,
+  index: number,
+  motivo: VetoReason,
+  nota: string | null,
+  accion: "buscar" | "compras"
+): Promise<{ ok: boolean; candidata: SubstituteCandidate | null; mensaje?: string }> {
+  const vacio = { ok: false, candidata: null };
+  if (!Number.isInteger(index) || index < 0 || !esMotivo(motivo)) return vacio;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return vacio;
+  const [{ data: trip }, { data: profile }] = await Promise.all([
+    supabase
+      .from("trips")
+      .select("capsule_target, capsule_match, overrides")
+      .eq("id", tripId)
+      .eq("user_id", user.id)
+      .single(),
+    supabase.from("profiles").select("gender").eq("id", user.id).single(),
+  ]);
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  const item = target?.items?.[index];
+  if (!trip || !target || !item) return vacio;
+  const match = (trip.capsule_match as CapsuleMatch | null) ?? null;
+  const overrides = ((trip.overrides as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+
+  // ¿Cuál era "la tuya"? La candidata, o el parecido del match.
+  const fila = capsuleRows(target, match, overrides as CapsuleOverrides).find((r) => r.index === index);
+  const cand = typeof overrides[`cand:${index}`] === "string" ? (overrides[`cand:${index}`] as string) : "";
+  const esParecido = fila?.base === "parecido";
+  const rechazada = (esParecido && overrides[String(index)] !== "reject" ? fila?.by : cand) || fila?.by || null;
+  if (esParecido) overrides[String(index)] = "reject";
+  const rechKey = `candRech:${index}`;
+  const previas = Array.isArray(overrides[rechKey]) ? (overrides[rechKey] as string[]) : [];
+  const rechazadasTuyas = [...new Set([...previas, ...(rechazada ? [rechazada] : [])])];
+  overrides[rechKey] = rechazadasTuyas;
+  const notaLimpia = limpiarNota(nota);
+
+  let candidata: SubstituteCandidate | null = null;
+  let mensaje: string | undefined;
+  if (accion === "compras") {
+    overrides[`candNo:${index}`] = true;
+  } else {
+    const gasto = await revisarGasto(supabase, user.id);
+    if (!gasto.permitido) {
+      mensaje = gasto.mensaje;
+      overrides[`candNo:${index}`] = true;
+    } else {
+      const used = prendasUsadas(target, match, overrides);
+      const [closetAll, imageMap] = await Promise.all([
+        loadClosetLite(supabase, user.id),
+        loadClosetImageMap(supabase, user.id),
+      ]);
+      const closet = closetAll.filter((c) => !used.has(c.nombre) && !rechazadasTuyas.includes(c.nombre));
+      try {
+        const top = (
+          await matchSubstitutes(
+            item,
+            closet,
+            (profile?.gender as "hombre" | "mujer" | null) ?? null,
+            rechazada,
+            { supabase, userId: user.id },
+            motivoEnPalabras(motivo, notaLimpia)
+          )
+        )[0];
+        if (top) candidata = { ...top, image: imageMap[top.nombre] ?? null };
+      } catch {
+        candidata = null;
+      }
+      if (candidata) {
+        overrides[`cand:${index}`] = candidata.nombre;
+        delete overrides[`candNo:${index}`];
+      } else {
+        // Nada más suyo sirve: la sugerida queda en compras.
+        overrides[`cand:${index}`] = "";
+        overrides[`candNo:${index}`] = true;
+      }
+    }
+  }
+  delete overrides[`sub:${index}`];
+
+  await supabase.from("trips").update({ overrides }).eq("id", tripId).eq("user_id", user.id);
+  await registrarMotivo(supabase, user.id, {
+    trip_id: tripId,
+    index,
+    pieza: item.nombre,
+    accion: accion === "buscar" ? "duelo-buscar" : "duelo-compras",
+    motivo,
+    nota: notaLimpia,
+    rechazada,
+  });
+  revalidatePath(`/viaje/${tripId}`);
+  return { ok: true, candidata, mensaje };
 }

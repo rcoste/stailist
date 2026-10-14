@@ -55,3 +55,16 @@ describe("candidatasPosibles (el buscador de sustitutos del viaje)", async () =>
     expect(candidatasPosibles({ nombre: "Trench negro impermeable", tipo: "trench", category: "abrigo" }, closet)).toEqual([]);
   });
 });
+
+describe("'no lo necesito en este viaje' saca la pieza de todo", async () => {
+  const { capsuleRows, fueraKey } = await import("@/lib/capsule");
+  const { empacablesDelViaje } = await import("@/lib/trip-maleta");
+  const item = (nombre: string) => ({ tipo: "x", nombre, porque: "", category: "accesorio", prioridad: 1, temporada: "todo-el-año", formalidad: "casual", colorFamilia: "negro" }) as never;
+  const target = { version: 2, items: [item("Cinturón negro"), item("Bolsa negra")] } as never;
+  const match = { signature: "s", entries: [{ status: "tienes", by: "Mi cinturón" }, { status: "tienes", by: "Mi bolsa" }] } as never;
+  it("queda retirada y no se empaca aunque algo suyo la cubra", () => {
+    const overrides = { [fueraKey(0)]: "no-va-clima" } as never;
+    expect(capsuleRows(target, match, overrides)[0].dismissed).toBe(true);
+    expect(empacablesDelViaje(target, match, overrides).map((p) => p.nombre)).toEqual(["Mi bolsa"]);
+  });
+});

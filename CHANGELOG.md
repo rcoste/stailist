@@ -2,6 +2,36 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.376.0] - 2026-10-14 — en la maleta puedes decir "tengo uno parecido", "no lo necesito" y "ninguna me va"
+
+Bloque B de las notas de una maleta real (boceto aprobado por Roberto).
+
+- **Etiqueta de función** en las piezas que existen para una tarea: "para
+  lluvia", "para nadar", "para frío extremo" (`lib/funcion-prenda.ts`, sale del
+  nombre, no de la IA).
+- **"···" junto a "ya lo tengo" y "wishlist"** (`components/trip-pieza-opciones.tsx`):
+  - *tengo uno parecido*: "¿cómo es el tuyo?" con el nombre ya escrito y
+    atajos que lo reescriben respetando el género (hebilla dorada → plateada,
+    camisa chocolate → negra; `lib/variante-pieza.ts`), material, o "mejor le
+    tomo foto". Se guarda como SUYA y su imagen se dibuja de su descripción,
+    no de la sugerida.
+  - *lo elijo de mi clóset*: sus prendas que pueden ocupar el lugar, sin IA,
+    las del mismo tipo primero.
+  - *no lo necesito en este viaje*: la saca de la maleta con motivo
+    (`fuera:i`, mismo `dismissed` que la cápsula; no se empaca ni se lista).
+  - *no me gusta esta pieza*: motivo y otra pieza ideal en su lugar (el motor
+    de cambio de la cápsula, con memoria de lo rechazado en `rech:i`).
+- **"Ninguna de las dos me va" en el duelo** sugerida-contra-la-tuya: la hoja
+  de motivo de la cápsula con dos motivos de viaje ("no es práctico para
+  caminar", "no va con el clima") y texto libre; busca otra suya con ese
+  motivo o deja la sugerida en compras. Sirve también para los "parecidos".
+- **Todo motivo se guarda**: evento `trip_motivo` (migración 0173, ya
+  aplicada: sin ella el insert fallaba por la regla de tipos) y se lee en la
+  ficha del admin ("Mocasines · ninguna le va, buscar otra suya · no es
+  práctico para caminar") y en el resumen por sesión.
+- Arreglado al probarlo: tras "ya lo tengo" sobre una pieza que perdió un
+  duelo en la misma sesión, seguía en compras hasta recargar.
+
 ## [0.2.375.0] - 2026-10-14 — la maleta respeta su metal, su color y su corte; los sustitutos cumplen la misma función
 
 Notas reales de una usuaria armando una maleta de 27 días (Mineápolis, Seúl,

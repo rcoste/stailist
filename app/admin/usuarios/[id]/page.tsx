@@ -16,6 +16,7 @@ import { Checkpoints } from "../../_compartido/checkpoints";
 import { AlFinal, Ampliable, Chip, Cifra, Fila, Lista, Panel, Quien, Renglon, Vacio } from "../../_ui";
 import { parecidoConSugerido, parecidoEnPalabras } from "@/lib/senal-oro";
 import { duracion, resumir, sesiones, type Resumen } from "@/lib/admin/sesiones";
+import { VETO_REASON_LABEL, type VetoReason } from "@/lib/capsule";
 
 // LA FICHA DE UNA PERSONA (mockup aprobado el 2026-10-13). Lo que Roberto
 // pregunta de alguien es siempre lo mismo: quién es, de dónde llegó, qué hizo
@@ -386,7 +387,9 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                               ? `paso ${x.step}`
                               : m.tipo === "alta"
                                 ? origen
-                                : null;
+                                : m.tipo === "ev:trip_motivo"
+                                  ? motivoDeMaleta(x)
+                                  : null;
                         const apagado = m.tipo === "visita" || m.tipo === "ev:render_auto";
                         return (
                           <Renglon key={m.key}>
@@ -553,4 +556,25 @@ function ResumenEnChips({ resumen }: { resumen: Resumen }) {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Lo que dijo de una pieza de su maleta, en una línea: "Mocasines de piel
+ * chocolate · ninguna le va, buscar otra suya · no es práctico para caminar:
+ * me duelen los pies". El motivo es la señal para afinar (Roberto: "nos sirve
+ * de feedback"), así que se lee en la ficha sin abrir la base.
+ */
+function motivoDeMaleta(data: unknown): string | null {
+  const d = (data ?? {}) as { pieza?: string; accion?: string; motivo?: string; nota?: string };
+  const ACCION: Record<string, string> = {
+    parecido: "tiene uno parecido",
+    elegida: "eligió una suya",
+    fuera: "no la necesita",
+    cambiar: "no le gusta, pidió otra",
+    "duelo-buscar": "ninguna le va, buscar otra suya",
+    "duelo-compras": "ninguna le va, a compras",
+  };
+  const motivo = d.motivo && d.motivo in VETO_REASON_LABEL ? VETO_REASON_LABEL[d.motivo as VetoReason] : null;
+  const partes = [d.pieza, d.accion ? (ACCION[d.accion] ?? d.accion) : null, [motivo, d.nota].filter(Boolean).join(": ")];
+  return partes.filter(Boolean).join(" · ") || null;
 }
