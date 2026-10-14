@@ -25,15 +25,19 @@ import {
   loadClosetImageMap,
   loadClosetNameToId,
 } from "@/lib/capsule-data";
-import { catalogLookupKeys, faltaKey } from "@/lib/capsule-images";
+import { catalogKeysParaBuscar, faltaKey } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import { regenerateCapsuleTarget } from "./actions";
 import { MatchRecalc } from "@/components/match-recalc";
 import { styleSignature } from "@/lib/estilo-referencia";
 import { fotosBloqueadas } from "@/lib/edad";
 
-// recalcularMatch (1 llamada a Opus con el clóset completo) se dispara desde aquí.
-export const maxDuration = 60;
+// recalcularMatch (1 llamada a Opus con el clóset completo) y "rearmar mi
+// lista" (regenerateCapsuleTarget) se disparan desde aquí. 300 s y no 60
+// (2026-10-14): armar la cápsula ya tardaba 65 s de promedio (71 de máximo,
+// medido en ai_calls) y con la descripción visual suma unos 15 más — con 60 s
+// Vercel cortaba el rearmado a la mitad. Mismo valor que /editar.
+export const maxDuration = 300;
 
 export default async function CapsulaPage({
   searchParams,
@@ -65,7 +69,7 @@ export default async function CapsulaPage({
   // (render desde agosto bajo `calcetines__…`, la corrida decía `calcetin__…`).
   const skByItem = target.items.map((it) => ({
     fk: faltaKey(it),
-    sks: catalogLookupKeys(it.tipo, it.colorFamilia, gender),
+    sks: catalogKeysParaBuscar(it.tipo, it.colorFamilia, gender, it.visual),
   }));
   const { data: crows } = await supabase
     .from("catalog_renders")

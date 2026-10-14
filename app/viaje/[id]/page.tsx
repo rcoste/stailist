@@ -7,7 +7,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
 import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
-import { faltaKey, catalogStorageKey } from "@/lib/capsule-images";
+import { faltaKey, catalogKeyDePieza } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import {
   tripDays,
@@ -90,9 +90,11 @@ export default async function ViajeDetallePage({
   // para mostrar al instante la prenda sugerida sin tener que regenerarla. Misma
   // lógica que la cápsula del clóset.
   const gender = profile.gender;
-  const skByItem = target.items.map((it) => ({
-    fk: faltaKey(it),
-    sk: catalogStorageKey(it.tipo, it.colorFamilia, gender),
+  // Por PIEZA y no por tipo+color: dos piezas del mismo tipo y color con
+  // descripciones distintas tienen imágenes distintas (catalogKeyDePieza).
+  const skByItem = target.items.map((it, i) => ({
+    i,
+    sk: catalogKeyDePieza(it.tipo, it.colorFamilia, gender, it.visual),
   }));
   const { data: crows } = await supabase
     .from("catalog_renders")
@@ -102,10 +104,10 @@ export default async function ViajeDetallePage({
       skByItem.map((s) => s.sk)
     );
   const pathBySk = new Map((crows ?? []).map((r) => [r.key as string, r.path as string]));
-  const catalogImages: Record<string, string> = {};
-  for (const { fk, sk } of skByItem) {
+  const catalogImages: Record<number, string> = {};
+  for (const { i, sk } of skByItem) {
     const path = pathBySk.get(sk);
-    if (path) catalogImages[fk] = catalogPublicUrl(supabase, path);
+    if (path) catalogImages[i] = catalogPublicUrl(supabase, path);
   }
 
   // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):
@@ -126,7 +128,7 @@ export default async function ViajeDetallePage({
       by,
       byImage: by ? imageMap[by] ?? null : null,
       faltaKey: fk,
-      idealImage: catalogImages[fk] ?? null,
+      idealImage: catalogImages[r.index] ?? null,
       renderArgs: {
         tipo: r.item.tipo,
         colorFamilia: r.item.colorFamilia,

@@ -178,7 +178,10 @@ export async function generateTripCapsuleTarget(
     // items, y el piso de suficiencia (v24) empuja cápsulas más grandes —
     // 3584 quedaba justo y un truncado tira TODA la creación del viaje. El
     // tope solo se paga si se emite.
-    max_tokens: 4608,
+    // 6656 y no 4608 (2026-10-14): con `visual` cada pieza suma ~25 tokens, y
+    // la maleta más grande medida ya usaba 4028 sin él. Truncar = viaje sin
+    // guardar ("TRUNCATED_RESPONSE").
+    max_tokens: 6656,
     // Thinking OFF: en los modelos 5 viene ON por default y se come el
     // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
     // esenciales muerta). El schema ya obliga a razonar en un campo antes de
@@ -220,6 +223,7 @@ Devuelve "items" (la cápsula). Cada prenda:
 - temporada: "todo-el-año" | "calor" | "frio".
 - prioridad: 1 = imprescindible para el viaje, subiendo a lo opcional.
 - porque: UNA línea cálida (tuteo) de por qué la lleva — específica a ESTE viaje (su ocasión, su clima, con qué se mezcla), no genérica.
+- visual: cómo se VE la pieza, para dibujarla (la persona no lo lee). De 8 a 12 palabras, SIN repetir el nombre ni el color: sólo silueta, tela/textura, largo y el detalle que la hace actual. Ej. "satén fluido, cuello caído, manga recta, caída suelta". Piensa en una tienda contemporánea de hoy, no en un catálogo de hace veinte años. Para un básico sin nada que decir (playera lisa, jeans rectos, medias, calcetines) deja "" vacío: se dibuja con la foto genérica.
 
 Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA de la maleta completa — la estrategia (los neutros que anclan, los acentos), cómo todo se mezcla entre sí, y cómo cubre las ocasiones y el clima. Es lo primero que la persona lee arriba de su maleta. No listes prendas una por una ni repitas números que ya ve (días, conteo).`,
     messages: [
@@ -254,6 +258,13 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
                   temporada: { type: "string" },
                   prioridad: { type: "integer" },
                   porque: { type: "string" },
+                  // DE VUELTA desde 2026-10-14 (se quitó el 2026-06-30 porque
+                  // casi duplicaba la salida y la ruta se cortaba a los 60 s;
+                  // hoy /api/trip tiene 300). Corto a propósito: una línea.
+                  // Sin esto el dibujo salía genérico y compartido por tipo y
+                  // color: la "blusa de satén rubí" de una maleta era la blusa
+                  // recta de cuello redondo que alguien generó en julio.
+                  visual: { type: "string" },
                 },
                 required: [
                   "nombre",
@@ -264,6 +275,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
                   "temporada",
                   "prioridad",
                   "porque",
+                  "visual",
                 ],
                 additionalProperties: false,
               },
@@ -295,7 +307,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
   const items = parsed.items
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
-    .map((it, i) => ({ ...it, prioridad: i + 1 }));
+    .map((it, i) => ({ ...it, prioridad: i + 1, visual: it.visual?.trim() ? it.visual.trim().slice(0, 200) : null }));
   const firma = parsed.firma?.trim();
   return firma ? { version: 2, items, firma } : { version: 2, items };
 }
