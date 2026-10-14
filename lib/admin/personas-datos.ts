@@ -61,7 +61,7 @@ export async function cargarPersonas(desde?: Date | null): Promise<{ perfiles: P
       c.query(q, args).then((r) =>
         r.rows.map((x) => ({ id: x.id, user_id: x.user_id, created_at: iso(x.created_at), deleted_at: iso(x.deleted_at) }))
       );
-    const outfits = await conVida(`select id, user_id, created_at, deleted_at from public.outfits${ventana("created_at", true)}`);
+    const outfits = await conVida(`select id, user_id, created_at, deleted_at, source from public.outfits${ventana("created_at", true)}`);
     const trips = await conVida(`select id, user_id, created_at, deleted_at from public.trips${ventana("created_at", true)}`);
     const wishlist = (await c.query(`select user_id, created_at from public.wishlist_items${ventana("created_at", false)}`, args)).rows.map((w) => ({
       user_id: w.user_id,

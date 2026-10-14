@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.374.0] - 2026-10-14 — "Qué hizo" se lee por sesión, no renglón por renglón
+
+- La ficha de una persona pintaba un renglón por acción: un usuario real llegó a
+  233 renglones (~8,600 px) y el clóset y los looks quedaban al fondo de la
+  página. Ahora cada día abre con su resumen por módulo ("Viaje 26 looks · 28
+  votos…", "Clóset añadió 51 · borró 29") y una línea por sesión con su
+  horario, cuánto duró y qué hizo. Una sesión se corta tras 30 minutos sin
+  actividad. El día más reciente va abierto y los demás plegados; el detalle
+  de siempre queda detrás de "ver los N momentos". Mockup aprobado por Roberto.
+  Lógica pura en `lib/admin/sesiones.ts`, con test.
+- Dos etiquetas del feed que mentían, también en Actividad:
+  - "pidió el dibujo de una prenda" salía para TODO dibujo. Sólo es suyo el
+    que pide con "rehacer imagen" (`forzado`); el resto lo hace la app sola y
+    ahora dice "la app dibujó N prendas", en gris. Un remate nuestro de 52
+    dibujos parecía 52 decisiones de la persona.
+  - Cada espejo salía además como "generó un look". Ya no; y los looks de un
+    viaje dicen "generó N looks de viaje".
+
 ## [0.2.373.0] - 2026-10-14 — los espejos se ven en el admin, y dicen si eran el look
 
 - El primer espejo de una persona de anuncios no se podía ver: la ficha

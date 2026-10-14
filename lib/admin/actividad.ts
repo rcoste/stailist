@@ -47,6 +47,7 @@ export type TipoMomento =
   | "prenda_add"
   | "prenda_del"
   | "look"
+  | "look_viaje"
   | "look_del"
   | "viaje"
   | "viaje_del"
@@ -125,6 +126,8 @@ export function etiqueta(m: Momento): string {
       return n === 1 ? "borró una prenda" : `borró ${n} prendas`;
     case "look":
       return n === 1 ? "generó un look" : `generó ${n} looks`;
+    case "look_viaje":
+      return n === 1 ? "generó un look de viaje" : `generó ${n} looks de viaje`;
     case "look_del":
       return n === 1 ? "borró un look" : `borró ${n} looks`;
     case "viaje":
@@ -135,6 +138,7 @@ export function etiqueta(m: Momento): string {
       return n === 1 ? "guardó algo en su cartera" : `guardó ${n} cosas en su cartera`;
   }
   const t = m.tipo.slice(3);
+  if (t === "render_auto") return n === 1 ? "la app dibujó una prenda" : `la app dibujó ${n} prendas`;
   const base = EVENTO_LABEL[t];
   if (!base) return n === 1 ? t : `${t} ×${n}`;
   return n === 1 ? base : `${base} ×${n}`;
@@ -164,7 +168,9 @@ export const EVENTO_LABEL: Record<string, string> = {
   cuenta_recuperada: "recuperó su cuenta",
   capsule_generated: "armó su cápsula",
   tryon_generated: "se probó un look",
-  render_generated: "pidió el dibujo de una prenda",
+  // Sólo el que pidió con un tap ("rehacer imagen", data.forzado). Los demás
+  // los hace la app sola y salen como `render_auto` (ver construirFeed).
+  render_generated: "rehízo el dibujo de una prenda",
   trip_outfits_generated: "armó los looks de un viaje",
   outfit_favorited: "guardó un look",
   wow_otro_look: "pidió otro look en el onboarding",
@@ -224,7 +230,8 @@ function minutosEntre(a: string, b: string): number {
 export type FuentesCrudas = {
   profiles: { id: string; created_at: string | null }[];
   items: { id: string; user_id: string | null; created_at: string | null; deleted_at: string | null }[];
-  outfits: { id: string; user_id: string | null; created_at: string | null; deleted_at: string | null }[];
+  /** `source` (opcional): 'viaje' sale como look de viaje y 'espejo' no sale como look (ya lo cuenta su evento). */
+  outfits: { id: string; user_id: string | null; created_at: string | null; deleted_at: string | null; source?: string | null }[];
   trips: { id: string; user_id: string | null; created_at: string | null; deleted_at: string | null }[];
   wishlist: { user_id: string | null; created_at: string | null }[];
   events: {
@@ -266,7 +273,11 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
     push(it.user_id, it.deleted_at, "prenda_del", `i-:${it.id}`, it.id);
   }
   for (const o of f.outfits) {
-    push(o.user_id, o.created_at, "look", `o+:${o.id}`, o.id);
+    // Un espejo crea su fila en outfits, pero NO es un look generado: ya sale
+    // como "subió un espejo". Antes salía dos veces y contaba como look.
+    if (o.source !== "espejo") {
+      push(o.user_id, o.created_at, o.source === "viaje" ? "look_viaje" : "look", `o+:${o.id}`, o.id);
+    }
     push(o.user_id, o.deleted_at, "look_del", `o-:${o.id}`, o.id);
   }
   for (const t of f.trips) {
@@ -298,7 +309,12 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
       }
       continue;
     }
-    push(e.user_id, e.created_at, `ev:${e.type}`, `e:${i}`, e.outfit_id, e.data);
+    // EL DIBUJO DE UNA PRENDA casi nunca lo pide la persona: lo hace la app
+    // sola al subir ropa, al abrir el clóset con pendientes o al rematarlos
+    // nosotros. Sólo `forzado` es un tap suyo ("rehacer imagen"). Salía todo
+    // como "pidió el dibujo": 52 de un remate nuestro parecían 52 decisiones.
+    const tipo = e.type === "render_generated" && e.data?.forzado !== true ? "render_auto" : e.type;
+    push(e.user_id, e.created_at, `ev:${tipo}`, `e:${i}`, e.outfit_id, e.data);
   }
   return colapsar([...m, ...colapsar(visitas, VENTANA_VISITA_MIN)], ventanaMin);
 }

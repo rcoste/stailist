@@ -15,6 +15,7 @@ import { PASOS, tiemposDe } from "@/lib/admin/embudo";
 import { Checkpoints } from "../../_compartido/checkpoints";
 import { AlFinal, Ampliable, Chip, Cifra, Fila, Lista, Panel, Quien, Renglon, Vacio } from "../../_ui";
 import { parecidoConSugerido, parecidoEnPalabras } from "@/lib/senal-oro";
+import { duracion, resumir, sesiones, type Resumen } from "@/lib/admin/sesiones";
 
 // LA FICHA DE UNA PERSONA (mockup aprobado el 2026-10-13). Lo que Roberto
 // pregunta de alguien es siempre lo mismo: quién es, de dónde llegó, qué hizo
@@ -89,7 +90,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
     // esta persona (añadir prendas no escribe evento; sale de `items`).
     supabase.from("events").select("user_id, outfit_id, type, data, created_at").eq("user_id", id),
     supabase.from("items").select("id, user_id, source, created_at, deleted_at").eq("user_id", id),
-    supabase.from("outfits").select("id, user_id, created_at, deleted_at").eq("user_id", id),
+    supabase.from("outfits").select("id, user_id, created_at, deleted_at, source").eq("user_id", id),
     supabase.from("trips").select("id, user_id, created_at, deleted_at").eq("user_id", id),
     supabase.from("wishlist_items").select("user_id, created_at").eq("user_id", id),
     supabase.from("events").select("data").eq("user_id", id).eq("type", "first_outfit_ttv").limit(1).maybeSingle(),
@@ -157,13 +158,19 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
   const enSuSemana = diaDeSuSemana <= DIAS_VENTANA;
 
   // La línea de tiempo, por día desde que empezó.
-  const porDia: { dia: string; n: number; momentos: typeof feed }[] = [];
+  const porDiaCrudo: { dia: string; n: number; momentos: typeof feed }[] = [];
   for (const m of feed) {
     const dia = diaEnZona(new Date(m.at));
-    const ultimo = porDia[porDia.length - 1];
+    const ultimo = porDiaCrudo[porDiaCrudo.length - 1];
     if (ultimo && ultimo.dia === dia) ultimo.momentos.push(m);
-    else porDia.push({ dia, n: diasEntre(diaInicio, dia), momentos: [m] });
+    else porDiaCrudo.push({ dia, n: diasEntre(diaInicio, dia), momentos: [m] });
   }
+  // Cada día, resumido por sesión y por módulo (lib/admin/sesiones.ts): la
+  // lista cruda llegó a 212 renglones en una sola ficha.
+  const porDia = porDiaCrudo.map((d) => ({ ...d, sesiones: sesiones(d.momentos), resumen: resumir(d.momentos) }));
+  const sesionesDeLaPersona = porDia.flatMap((d) => d.sesiones.filter((x) => !x.soloSistema));
+  const totalSesiones = sesionesDeLaPersona.length;
+  const totalMinutos = sesionesDeLaPersona.reduce((t, x) => t + x.minutos, 0);
 
   const ultimoUso = ultimoUsoPorUsuario(fuentes).get(id) ?? null;
   const ultimoMomento = feed.reduce<(typeof feed)[number] | null>((u, m) => (!u || m.at > u.at ? m : u), null);
@@ -304,46 +311,96 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
           </Panel>
         </div>
 
-        <Panel titulo="Qué hizo" extra="por día desde que empezó" sinPadding>
+        <Panel
+          titulo="Qué hizo"
+          extra={totalSesiones > 0 ? `${totalSesiones} sesion${totalSesiones === 1 ? "" : "es"} en ${porDia.length} día${porDia.length === 1 ? "" : "s"} · ${duracion(totalMinutos)}` : undefined}
+          sinPadding
+        >
           {porDia.length === 0 ? (
             <Vacio>Sin actividad registrada.</Vacio>
           ) : (
             porDia.map((d, k) => {
               const volvio = d.momentos.some((m) => regresos.has(m.key));
+              const deLaPersona = d.sesiones.filter((x) => !x.soloSistema);
+              const minutos = deLaPersona.reduce((t, x) => t + x.minutos, 0);
+              const sistema = d.sesiones.filter((x) => x.soloSistema);
               return (
-                <div key={d.dia} className={k > 0 ? "border-t border-line2" : ""}>
-                  <div className="flex flex-wrap items-baseline gap-2 px-5 pb-1 pt-3 text-xs text-muted">
-                    <b className="text-[13px] text-ink">Día {d.n}</b>
-                    <span>{d.dia === hoy ? `hoy, ${fechaCorta(d.dia)}` : d.dia === ayer ? `ayer, ${fechaCorta(d.dia)}` : fechaCorta(d.dia)}</span>
-                    <Chip>
-                      {d.momentos.length} momento{d.momentos.length === 1 ? "" : "s"}
-                    </Chip>
-                    {volvio ? <Chip tono="success">volvió</Chip> : null}
-                  </div>
-                  <Lista>
-                    {d.momentos.map((m) => {
-                      const x = m.data as { seconds?: number; step?: number } | null;
-                      const primerLook = m.tipo === "ev:first_outfit_ttv";
-                      const extra =
-                        primerLook && typeof x?.seconds === "number"
-                          ? `en ${ttvHumano(x.seconds)}`
-                          : m.tipo === "ev:onboarding_step" && typeof x?.step === "number"
-                            ? `paso ${x.step}`
-                            : m.tipo === "alta"
-                              ? origen
-                              : null;
-                      return (
-                        <Renglon key={m.key}>
-                          <span className="w-10 shrink-0 text-xs tabular-nums text-faint">{horaEnZona(m.at)}</span>
-                          <span className={`min-w-0 flex-1 text-sm ${m.tipo === "visita" ? "text-muted" : "text-ink"} ${primerLook ? "font-bold" : ""}`}>
-                            {etiqueta(m)}
-                            {extra ? <span className="font-normal text-muted"> · {extra}</span> : null}
-                          </span>
-                        </Renglon>
-                      );
-                    })}
-                  </Lista>
-                </div>
+                // El día más reciente abierto; los demás, cerrados en su resumen.
+                <details key={d.dia} open={k === 0} className={`group ${k > 0 ? "border-t border-line" : ""}`}>
+                  <summary className="cursor-pointer list-none px-5 pb-3 pt-4 [&::-webkit-details-marker]:hidden">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span className="w-2 text-[10px] text-faint transition-transform group-open:rotate-90">▶</span>
+                      <b className="text-sm text-ink">Día {d.n}</b>
+                      <span>
+                        {d.dia === hoy ? `hoy, ${fechaCorta(d.dia)}` : d.dia === ayer ? `ayer, ${fechaCorta(d.dia)}` : fechaCorta(d.dia)}
+                      </span>
+                      {volvio ? <Chip tono="success">volvió</Chip> : null}
+                      <span className="ml-auto tabular-nums">
+                        {deLaPersona.length} sesion{deLaPersona.length === 1 ? "" : "es"} · {duracion(minutos)}
+                      </span>
+                    </div>
+                    <ResumenEnChips resumen={d.resumen} />
+                  </summary>
+                  <ul className="flex flex-col">
+                    {d.sesiones.map((x) => (
+                      <li key={x.desde} className="flex items-baseline gap-3 border-t border-line2 px-5 py-2.5 text-[13px]">
+                        <span className="w-24 shrink-0 text-xs tabular-nums text-faint">
+                          {horaEnZona(x.desde)}
+                          {x.desde === x.hasta ? "" : `–${horaEnZona(x.hasta)}`}
+                        </span>
+                        <span className={`min-w-0 flex-1 ${x.soloSistema || x.soloAbrio ? "text-faint" : "leading-normal text-ink2"}`}>
+                          {x.soloAbrio ? (
+                            "sólo abrió la app"
+                          ) : x.soloSistema ? (
+                            `la app dibujó ${x.resumen.sistema} prenda${x.resumen.sistema === 1 ? "" : "s"} sola, no fue la persona`
+                          ) : (
+                            <>
+                              {x.resumen.modulos.map((mod, j) => (
+                                <span key={mod.modulo}>
+                                  {j > 0 ? " · " : ""}
+                                  <b className="text-ink">{mod.nombre}:</b> {mod.partes.join(", ")}
+                                </span>
+                              ))}
+                              {x.resumen.sistema > 0 ? <span className="text-faint"> · la app dibujó {x.resumen.sistema} sola</span> : null}
+                            </>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted">{x.soloSistema ? "" : duracion(x.minutos)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {/* El detalle de siempre, a un clic: nada se pierde. */}
+                  <details className="border-t border-line2">
+                    <summary className="cursor-pointer list-none py-2.5 pl-32 pr-5 text-xs text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
+                      ver los {d.momentos.length} momento{d.momentos.length === 1 ? "" : "s"}
+                      {sistema.length > 0 ? " (con lo que hizo la app)" : ""}
+                    </summary>
+                    <Lista>
+                      {d.momentos.map((m) => {
+                        const x = m.data as { seconds?: number; step?: number } | null;
+                        const primerLook = m.tipo === "ev:first_outfit_ttv";
+                        const extra =
+                          primerLook && typeof x?.seconds === "number"
+                            ? `en ${ttvHumano(x.seconds)}`
+                            : m.tipo === "ev:onboarding_step" && typeof x?.step === "number"
+                              ? `paso ${x.step}`
+                              : m.tipo === "alta"
+                                ? origen
+                                : null;
+                        const apagado = m.tipo === "visita" || m.tipo === "ev:render_auto";
+                        return (
+                          <Renglon key={m.key}>
+                            <span className="w-10 shrink-0 text-xs tabular-nums text-faint">{horaEnZona(m.at)}</span>
+                            <span className={`min-w-0 flex-1 text-sm ${apagado ? "text-muted" : "text-ink"} ${primerLook ? "font-bold" : ""}`}>
+                              {etiqueta(m)}
+                              {extra ? <span className="font-normal text-muted"> · {extra}</span> : null}
+                            </span>
+                          </Renglon>
+                        );
+                      })}
+                    </Lista>
+                  </details>
+                </details>
               );
             })
           )}
@@ -478,5 +535,22 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
         </Panel>
       </Fila>
     </>
+  );
+}
+
+/** El día en una línea: un chip por módulo con lo que pasó en él. */
+function ResumenEnChips({ resumen }: { resumen: Resumen }) {
+  if (resumen.modulos.length === 0 && resumen.sistema === 0) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5 pl-4">
+      {resumen.modulos.map((mod) => (
+        <span key={mod.modulo} className="rounded-md bg-tile px-2 py-1 text-xs text-ink2">
+          <b className="text-ink">{mod.nombre}</b> {mod.partes.join(" · ")}
+        </span>
+      ))}
+      {resumen.sistema > 0 ? (
+        <span className="rounded-md px-2 py-1 text-xs text-faint">la app dibujó {resumen.sistema} prenda{resumen.sistema === 1 ? "" : "s"}</span>
+      ) : null}
+    </div>
   );
 }
