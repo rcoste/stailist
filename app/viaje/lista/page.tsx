@@ -65,6 +65,7 @@ function derive(t: TripRowDb, hoy: string) {
   let packed = 0;
   if (t.capsule_target) {
     for (const r of capsuleRows(t.capsule_target, t.capsule_match, t.overrides)) {
+      if (r.dismissed) continue; // "no lo necesito en este viaje"
       const eff =
         r.base === "parecido"
           ? r.decision === "accept"

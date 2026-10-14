@@ -178,6 +178,8 @@ export const EVENTO_LABEL: Record<string, string> = {
   email_unsubscribed: "se dio de baja de los correos",
   avatar_fallo: "se le falló el avatar",
   generation_failed: "se le falló una generación",
+  // Bloque B del viaje (2026-10-14): qué dijo de una pieza de su maleta.
+  trip_motivo: "dijo algo de una pieza de su maleta",
 };
 
 /**

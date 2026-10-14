@@ -45,6 +45,8 @@ export function empacablesDelViaje(
   const vistas = new Set<string>();
   const salida: PrendaEmpacable[] = [];
   for (const r of capsuleRows(target, match, overrides)) {
+    // Lo que sacó del viaje no se empaca aunque algo suyo lo cubriera.
+    if (r.dismissed) continue;
     const sub = sustitutoDe(overrides, r.index);
     const cubre = sub ?? ((r.covered || r.effective === "parecido") ? r.by : null);
     if (!cubre || vistas.has(cubre)) continue;

@@ -57,6 +57,7 @@ export function SuggestionCard({
   error,
   /** Recorta la razón a una línea. Para listas de 6+ sugerencias. */
   razonCompacta = false,
+  masOpciones,
 }: {
   /** La categoría del hueco (o lo que vale), NO la razón. Va en versalitas. */
   eyebrow: string;
@@ -92,6 +93,9 @@ export function SuggestionCard({
   busyLabel?: string;
   error?: string | null;
   razonCompacta?: boolean;
+  /** "···" al final del pie: más salidas que no caben como botón (el viaje:
+   *  "tengo uno parecido", "lo elijo de mi clóset", "no lo necesito"…). */
+  masOpciones?: (() => void) | null;
 }) {
   const [preguntando, setPreguntando] = useState(false);
   // Motivo elegido en el paso 1 de la hoja; null = todavía en los chips.
@@ -173,7 +177,7 @@ export function SuggestionCard({
         <div className="flex min-h-[46px] items-center justify-center gap-2 border-t border-line text-[13px] text-muted">
           <Spinner className="h-3.5 w-3.5" /> {busyLabel ?? "un segundo…"}
         </div>
-      ) : footer.length === 0 && !noMeVa ? (
+      ) : footer.length === 0 && !noMeVa && !masOpciones ? (
         // Sin salidas no hay pie: el `border-t` sin botones dejaba una raya
         // suelta bajo el contenido. Pasa en el estado "en tu clóset" del card de
         // duelo, donde la decisión ya no tiene veredictos que ofrecer.
@@ -203,6 +207,16 @@ export function SuggestionCard({
               className="flex h-[46px] min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-l border-line text-[13px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
             >
               <Icon name="equis" size={15} /> no me va
+            </button>
+          ) : null}
+          {masOpciones ? (
+            <button
+              type="button"
+              onClick={masOpciones}
+              aria-label="más opciones"
+              className="flex h-[46px] w-12 shrink-0 items-center justify-center border-l border-line text-ink transition-colors hover:bg-tile"
+            >
+              <Icon name="puntos" size={18} />
             </button>
           ) : null}
         </div>

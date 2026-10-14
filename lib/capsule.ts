@@ -495,7 +495,13 @@ export type VetoReason =
   | "color-no"
   | "ya-tengo-algo-asi"
   | "fuera-de-presupuesto"
-  | "no-lo-uso";
+  | "no-lo-uso"
+  // Del viaje (2026-10-14): unos mocasines y un tacón para 27 días de caminar
+  // Kioto y Tokio. El motivo era de FUNCIÓN, y ninguno de los de la cápsula lo
+  // decía. "otro" existe para quien prefiere escribirlo con sus palabras.
+  | "no-practico"
+  | "no-va-clima"
+  | "otro";
 
 // Etiqueta visible de cada motivo. Vive junto al tipo para que agregar un motivo
 // obligue a escribir su etiqueta y su instrucción para el motor (REASON_HINT).
@@ -507,6 +513,9 @@ export const VETO_REASON_LABEL: Record<VetoReason, string> = {
   "ya-tengo-algo-asi": "ya tengo algo así",
   "fuera-de-presupuesto": "fuera de presupuesto",
   "no-lo-uso": "no lo uso",
+  "no-practico": "no es práctico para caminar",
+  "no-va-clima": "no va con el clima",
+  "otro": "otra razón",
 };
 
 // Los que se ofrecen en la hoja de motivo, en orden. Seis es el tope del handoff:
@@ -519,6 +528,22 @@ export const VETO_REASONS_OFRECIDOS: VetoReason[] = [
   "ya-tengo-algo-asi",
   "fuera-de-presupuesto",
 ];
+
+// Los del VIAJE, en orden: primero los de función (lo que la cápsula no
+// pregunta porque no sabe el plan), luego los de gusto. "otra razón" al final:
+// el campo de texto de la hoja es para eso.
+export const MOTIVOS_VIAJE: VetoReason[] = [
+  "no-practico",
+  "no-va-clima",
+  "no-es-mi-estilo",
+  "muy-formal",
+  "color-no",
+  "ya-tengo-algo-asi",
+  "otro",
+];
+
+/** Override del viaje: "no lo necesito en este viaje" (valor = el motivo). */
+export const fueraKey = (index: number) => `fuera:${index}`;
 
 // Overlay por slot: la alternativa vigente + cuántas ideales se han rechazado en
 // ese slot (tope SWAP_CAP) + la razón del último rechazo. capsule_target NO se muta;
@@ -608,6 +633,11 @@ export function capsuleRows(
         : null;
     const effective = effectiveStatus(e.status, decision);
     const swapCount = swap?.rejectedCount ?? 0;
+    // En el VIAJE, "no lo necesito en este viaje" retira el lugar igual que el
+    // "quitar" de la cápsula: el mismo `dismissed`, para que cada lector que ya
+    // salta los retirados (secciones, empacables, conteos) lo respete sin saber
+    // de viajes.
+    const fuera = typeof (overrides as Record<string, unknown> | null)?.[fueraKey(i)] === "string";
     return {
       item: shown,
       index: i,
@@ -619,7 +649,7 @@ export function capsuleRows(
       difiere: e.difiere ?? null,
       swapCount,
       atSwapCap: swapCount >= SWAP_CAP,
-      dismissed: swap?.dismissed ?? false,
+      dismissed: (swap?.dismissed ?? false) || fuera,
     };
   });
 }

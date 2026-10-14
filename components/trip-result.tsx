@@ -17,8 +17,18 @@ import {
   setTripSubstitute,
   suggestTripSubstitutes,
   markTripFaltaOwned,
+  excludeTripPiece,
+  replaceTripPiece,
+  rejectTripDuel,
+  listTripClosetOptions,
   type SubstituteCandidate,
+  type VariantePieza,
 } from "@/lib/trip-actions";
+import { MotivoSheet } from "@/components/motivo-sheet";
+import { MasOpcionesSheet, ParecidoSheet, type OpcionPieza } from "@/components/trip-pieza-opciones";
+import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
+import { MOTIVOS_VIAJE, type VetoReason } from "@/lib/capsule";
+import { NOMBRE_FUNCION, funcionDe } from "@/lib/funcion-prenda";
 import type { Candidata } from "@/lib/trip-candidatas";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
 import { SuggestionCard } from "@/components/suggestion-card";
@@ -63,6 +73,8 @@ function FaltaCard({
   wishSaved,
   onToggleWish,
   onDeshacer,
+  onMas,
+  busy = false,
 }: {
   row: TripRow;
   ownBusy: boolean;
@@ -71,6 +83,10 @@ function FaltaCard({
   onToggleWish: () => void;
   /** Llegó aquí por un duelo ("preferiste la sugerida") → se puede deshacer. */
   onDeshacer?: () => void;
+  /** "···": tengo uno parecido / lo elijo de mi clóset / no lo necesito / no me gusta. */
+  onMas?: () => void;
+  /** Proponiendo otra pieza en su lugar ("no me gusta esta pieza"). */
+  busy?: boolean;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
   const onTapTile = () => {
@@ -80,13 +96,26 @@ function FaltaCard({
   // slot de arriba, donde la cápsula pone "cambiar": las dos son "enséñame otra
   // cosa", no un veredicto sobre esta prenda — y el pie es solo de veredictos.
   //
-  // Sin "no me va" aquí: el viaje no tiene dónde guardar un veto de este tipo
-  // (la cápsula sí, en capsule_swaps). Ofrecer un botón que solo esconde la fila
-  // sería prometer que aprendemos algo que no aprendemos.
+  // El "no me va" del viaje vive en "···" (no lo necesito / no me gusta esta
+  // pieza), con motivo guardado — ver lib/trip-actions excludeTripPiece y
+  // replaceTripPiece.
+  // La etiqueta de función: sólo en las piezas que existen para una tarea que
+  // otra no cumple (lib/funcion-prenda.ts). Sale del nombre, no de la IA.
+  const funcion = funcionDe(`${row.renderArgs.tipo} ${row.nombre}`);
   return (
     <SuggestionCard
       nombre={row.nombre}
       porque={row.porque}
+      chip={
+        funcion ? (
+          <span className="inline-flex items-center rounded-full border border-ink px-2 text-[11px] font-bold leading-[18px] text-ink">
+            {NOMBRE_FUNCION[funcion]}
+          </span>
+        ) : undefined
+      }
+      masOpciones={onMas ?? null}
+      busy={busy}
+      busyLabel="buscándote otra pieza…"
       foto={
         <button
           type="button"
@@ -135,15 +164,18 @@ function FaltaCard({
 // la lupa "en mi clóset" y quien no la tocaba veía "cómpralo" teniendo en su
 // clóset con qué cubrirlo. Decidir viendo, en un tap.
 //
-// SIN "ninguna de las dos me va", a propósito: en la cápsula ese botón guarda
-// un veto con motivo que el motor aprende; el viaje no tiene dónde guardar
-// vetos, y ofrecer el gesto sin la memoria sería prometer aprendizaje que no
-// existe (la misma razón por la que la falta del viaje no tiene "no me va").
+// "Ninguna de las dos me va" llegó el 2026-10-14. En agosto se dejó fuera
+// porque el viaje no tenía dónde guardar el motivo, y ofrecer el gesto sin la
+// memoria era prometer aprendizaje que no existía. Ahora el motivo se guarda
+// (evento trip_motivo, `candRech:i` para no volver a proponer la rechazada) y
+// la búsqueda nueva lo recibe.
 function DueloCard({
   row,
   tuya,
   onMia,
   onSugerida,
+  onNinguna,
+  busy = false,
 }: {
   row: TripRow;
   /** El lado derecho del duelo: la prenda TUYA (candidata de la búsqueda, o
@@ -151,6 +183,9 @@ function DueloCard({
   tuya: Candidata;
   onMia: () => void;
   onSugerida: () => void;
+  /** "ninguna de las dos me va" (2026-10-14): abre la hoja de motivo. */
+  onNinguna?: () => void;
+  busy?: boolean;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
   // TOCAS → SE MARCA → BOTÓN QUE NOMBRA LA ELECCIÓN. Es el patrón exacto del
@@ -246,6 +281,26 @@ function DueloCard({
           prenda de "ya lo tienes" trae "no me convence — cámbiala" (y ahí SÍ
           filtra bien lo ya usado). Aquí se decide entre lo propuesto; el
           intercambio vive sobre la prenda ya elegida. */}
+
+      {/* "NINGUNA DE LAS DOS ME VA" (2026-10-14): unos mocasines contra un
+          tacón para 27 días de caminar Kioto y Tokio. Antes no había salida y
+          la decisión se forzaba o se quedaba colgada. Ahora pide el motivo
+          (la misma hoja de la cápsula) y con él busca otra suya o deja la
+          sugerida en compras. El motivo se guarda: es la memoria que faltaba
+          cuando esta salida se dejó fuera en agosto. */}
+      {busy ? (
+        <div className="flex min-h-11 items-center justify-center gap-2 border-t border-line2 text-[12.5px] text-muted">
+          <Spinner className="h-3.5 w-3.5" /> buscando otra en tu clóset…
+        </div>
+      ) : onNinguna ? (
+        <button
+          type="button"
+          onClick={onNinguna}
+          className="flex min-h-11 w-full items-center justify-center border-t border-line2 text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
+        >
+          ninguna de las dos me va
+        </button>
+      ) : null}
     </li>
   );
 }
@@ -324,13 +379,16 @@ function DuelOpViaje({
 // cuando confirmar ERA generar.
 export function TripResult({
   tripId,
-  rows,
+  userId,
+  rows: rowsIn,
   savedWishKeys = [],
   candidatasIniciales = {},
   descartadosIniciales = [],
   ganadosIniciales = [],
 }: {
   tripId: string;
+  /** Para "mejor le tomo foto" (el flujo del carrete guarda en su carpeta). */
+  userId?: string;
   rows: TripRow[];
   savedWishKeys?: string[];
   /** Candidatas del duelo ya persistidas (overrides "cand:i"). */
@@ -345,6 +403,10 @@ export function TripResult({
   // (botón muerto). Ver components/trip-gen-context.
   const { onGenerateLooks, onViewLooks, looksExist, generating, tab, goTo, confirmado, onConfirm } =
     useTripGen();
+  // Lo que sacó del viaje en esta sesión ("no lo necesito"): se va de la vista
+  // al instante; el server ya no lo manda en el siguiente refresh.
+  const [fueraLocal, setFueraLocal] = useState<Set<number>>(new Set());
+  const rows = rowsIn.filter((r) => !fueraLocal.has(r.index));
   /** La fase visible: "empacar" solo en su pestaña; el resto pinta la revisión. */
   const fase: "prendas" | "empacar" = tab === "empacar" ? "empacar" : "prendas";
   // El estado de empacado vive en el context (lo comparte el rail de desktop).
@@ -360,7 +422,8 @@ export function TripResult({
   const [subFlow, setSubFlow] = useState<{
     index: number;
     nombre: string;
-    mode: "falta" | "swap";
+    /** "elegir": lista SIN IA de sus prendas que pueden ocupar el lugar (···). */
+    mode: "falta" | "swap" | "elegir";
     status: "loading" | "done" | "empty" | "error";
     candidates: SubstituteCandidate[];
   } | null>(null);
@@ -523,6 +586,14 @@ export function TripResult({
   for (const r of rows) {
     const cand = candidatas[r.index];
     const esParecido = r.base === "parecido";
+    // Un parecido rechazado con "ninguna de las dos me va → búscame otra" se
+    // vuelve un duelo de FALTA contra la candidata nueva (cand:i).
+    const parecidoRechazado =
+      esParecido && (localDecide[r.index] ?? r.decision) === "reject" && !!cand && !descartados.has(r.index);
+    if (parecidoRechazado) {
+      duelos.push({ r, tuya: cand!, tipo: "falta", ganado: ganados.has(r.index) || !!localSub[r.index] });
+      continue;
+    }
     if (!esParecido && !cand) {
       // Nunca fue duelo: el camino de siempre.
       const e = effLocal(r);
@@ -574,12 +645,161 @@ export function TripResult({
   async function marcarYaLoTengo(index: number) {
     setOwnBusy((s) => new Set(s).add(index));
     const res = await markTripFaltaOwned(tripId, index);
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      olvidarDecisionLocal(index);
+      router.refresh();
+    }
     setOwnBusy((s) => {
       const n = new Set(s);
       n.delete(index);
       return n;
     });
+  }
+
+  // ─── Bloque B (2026-10-14): lo que la persona puede decir de una pieza ────
+  /** La pieza con la hoja "···" abierta. */
+  const [opcionesDe, setOpcionesDe] = useState<TripRow | null>(null);
+  /** La pieza con "¿cómo es el tuyo?" abierta. */
+  const [parecidoDe, setParecidoDe] = useState<TripRow | null>(null);
+  /** La hoja de motivo: de qué pieza y para qué ("fuera", "cambiar" o el duelo). */
+  const [motivoFlow, setMotivoFlow] = useState<{
+    r: TripRow;
+    tipo: "fuera" | "cambiar" | "duelo";
+    duelo?: "falta" | "parecido";
+    motivo: VetoReason | null;
+  } | null>(null);
+  const [cambiando, setCambiando] = useState<Set<number>>(new Set());
+  const [dueloBusy, setDueloBusy] = useState<Set<number>>(new Set());
+  const carreteRef = useRef<AddFlowHandle>(null);
+  /** A qué pieza va la foto que está subiendo ("mejor le tomo foto"). */
+  const [fotoPara, setFotoPara] = useState<TripRow | null>(null);
+  const conjunto = (set: (f: (s: Set<number>) => Set<number>) => void, i: number, on: boolean) =>
+    set((s) => {
+      const n = new Set(s);
+      if (on) n.add(i);
+      else n.delete(i);
+      return n;
+    });
+  const avisar = (t: string) => {
+    setToast(t);
+    setTimeout(() => setToast(null), 2600);
+  };
+
+  function elegirOpcion(r: TripRow, o: OpcionPieza) {
+    if (o === "parecido") setParecidoDe(r);
+    else if (o === "elegir") void elegirDeMiCloset(r);
+    else setMotivoFlow({ r, tipo: o, motivo: null });
+  }
+
+  /** "Ya lo tengo" sobre una pieza que perdió un duelo en esta sesión: el
+   *  rechazo local la dejaba en compras aunque el server ya dijera "la
+   *  tienes", hasta recargar. Visto al probarlo, 2026-10-14. */
+  function olvidarDecisionLocal(index: number) {
+    setLocalDecide((d) => {
+      const n = { ...d };
+      delete n[index];
+      return n;
+    });
+    conjunto(setDescartados, index, false);
+  }
+
+  async function elegirDeMiCloset(r: TripRow) {
+    setSubFlow({ index: r.index, nombre: r.nombre, mode: "elegir", status: "loading", candidates: [] });
+    try {
+      const cands = await listTripClosetOptions(tripId, r.index);
+      setSubFlow({ index: r.index, nombre: r.nombre, mode: "elegir", status: cands.length ? "done" : "empty", candidates: cands });
+    } catch {
+      setSubFlow({ index: r.index, nombre: r.nombre, mode: "elegir", status: "error", candidates: [] });
+    }
+  }
+
+  async function guardarParecido(r: TripRow, v: VariantePieza) {
+    conjunto(setOwnBusy, r.index, true);
+    const res = await markTripFaltaOwned(tripId, r.index, v);
+    conjunto(setOwnBusy, r.index, false);
+    setParecidoDe(null);
+    if (res.ok) {
+      olvidarDecisionLocal(r.index);
+      avisar("Guardada en tu clóset como la tuya");
+      router.refresh();
+    } else {
+      avisar("No pude guardarla — inténtalo otra vez.");
+    }
+  }
+
+  async function sacarDelViaje(r: TripRow, motivo: VetoReason, nota: string | null) {
+    conjunto(setFueraLocal, r.index, true);
+    const res = await excludeTripPiece(tripId, r.index, motivo, nota);
+    if (res.ok) {
+      avisar("La saqué de tu maleta");
+      router.refresh(); // el contador de prendas y el plan vienen del server
+    }
+    else {
+      conjunto(setFueraLocal, r.index, false);
+      avisar("No pude sacarla — inténtalo otra vez.");
+    }
+  }
+
+  async function cambiarPieza(r: TripRow, motivo: VetoReason, nota: string | null) {
+    conjunto(setCambiando, r.index, true);
+    const res = await replaceTripPiece(tripId, r.index, motivo, nota);
+    conjunto(setCambiando, r.index, false);
+    if (res.ok) {
+      // Es OTRA pieza: no hereda nada de lo que se decidió sobre la anterior
+      // (visto al probarlo: la nueva salía con "preferiste la sugerida").
+      olvidarDecisionLocal(r.index);
+      conjunto(setGanados, r.index, false);
+      setCandidatas((m) => {
+        const n = { ...m };
+        delete n[r.index];
+        return n;
+      });
+      setLocalSub((m) => {
+        const n = { ...m };
+        delete n[r.index];
+        return n;
+      });
+      router.refresh();
+    }
+    else avisar(res.mensaje ?? "No pude proponerte otra ahorita — inténtalo en un momento.");
+  }
+
+  async function ningunaMeVa(
+    r: TripRow,
+    duelo: "falta" | "parecido",
+    motivo: VetoReason,
+    nota: string | null,
+    accion: "buscar" | "compras"
+  ) {
+    if (duelo === "parecido") setLocalDecide((d) => ({ ...d, [r.index]: "reject" }));
+    if (accion === "compras") {
+      setDescartados((d) => new Set(d).add(r.index));
+      setDuelAbierto(null);
+      void rejectTripDuel(tripId, r.index, motivo, nota, "compras");
+      return;
+    }
+    conjunto(setDueloBusy, r.index, true);
+    const res = await rejectTripDuel(tripId, r.index, motivo, nota, "buscar");
+    conjunto(setDueloBusy, r.index, false);
+    if (res.candidata) {
+      const c = res.candidata;
+      setCandidatas((m) => ({ ...m, [r.index]: { nombre: c.nombre, image: c.image } }));
+      setDescartados((d) => {
+        const n = new Set(d);
+        n.delete(r.index);
+        return n;
+      });
+      setDuelAbierto(r.index);
+    } else {
+      setCandidatas((m) => {
+        const n = { ...m };
+        delete n[r.index];
+        return n;
+      });
+      setDescartados((d) => new Set(d).add(r.index));
+      setDuelAbierto(null);
+      avisar(res.mensaje ?? "No encontré otra en tu clóset — la sugerida queda en compras.");
+    }
   }
 
   async function buscarSustituto(r: TripRow, mode: "falta" | "swap" = "falta") {
@@ -639,6 +859,8 @@ export function TripResult({
                     wishSaved={wishSaved.has(r.faltaKey)}
                     onToggleWish={() => toggleWish(r)}
                     onDeshacer={deDuelo ? () => deshacerDuelo(r.index) : undefined}
+                    onMas={() => setOpcionesDe(r)}
+                    busy={cambiando.has(r.index)}
                   />
                 ))}
               </ul>
@@ -736,6 +958,8 @@ export function TripResult({
                     key={renderKey(r)}
                     row={conRender(r)}
                     tuya={tuya}
+                    busy={dueloBusy.has(r.index)}
+                    onNinguna={() => setMotivoFlow({ r, tipo: "duelo", duelo: tipo, motivo: null })}
                     onMia={() => {
                       setDuelAbierto(null);
                       if (tipo === "falta") {
@@ -1129,6 +1353,74 @@ export function TripResult({
         }
       />
 
+      {/* Bloque B (2026-10-14): las salidas de una pieza que falta y del duelo. */}
+      {opcionesDe ? (
+        <MasOpcionesSheet
+          open
+          onClose={() => setOpcionesDe(null)}
+          nombre={opcionesDe.nombre}
+          categoria={opcionesDe.renderArgs.categoria}
+          onElegir={(o) => elegirOpcion(opcionesDe, o)}
+        />
+      ) : null}
+      {parecidoDe ? (
+        <ParecidoSheet
+          key={parecidoDe.index}
+          open
+          onClose={() => setParecidoDe(null)}
+          sugerida={{ nombre: parecidoDe.nombre, color: parecidoDe.renderArgs.colorFamilia }}
+          busy={ownBusy.has(parecidoDe.index)}
+          onGuardar={(v) => void guardarParecido(parecidoDe, v)}
+          onFoto={() => {
+            setFotoPara(parecidoDe);
+            if (userId) carreteRef.current?.start();
+            else router.push("/closet");
+          }}
+        />
+      ) : null}
+      <MotivoSheet
+        open={!!motivoFlow}
+        onClose={() => setMotivoFlow(null)}
+        motivo={motivoFlow?.motivo ?? null}
+        onMotivo={(m) => setMotivoFlow((f) => (f ? { ...f, motivo: m } : f))}
+        puedeReemplazar={motivoFlow?.tipo !== "fuera"}
+        motivos={MOTIVOS_VIAJE}
+        conNota
+        textoReemplazar={motivoFlow?.tipo === "duelo" ? "búscame otra de mi clóset" : "propónme otra pieza"}
+        textoQuitar={motivoFlow?.tipo === "duelo" ? "déjala en compras" : "mejor quítala del viaje"}
+        pregunta={
+          motivoFlow?.tipo === "duelo"
+            ? "¿te busco otra en tu clóset con eso en mente, o dejo la sugerida en compras?"
+            : "¿te propongo otra pieza con eso en mente, o la quito del viaje?"
+        }
+        onReemplazar={(m, n) => {
+          const f = motivoFlow;
+          if (!f) return;
+          if (f.tipo === "duelo") void ningunaMeVa(f.r, f.duelo ?? "falta", m, n, "buscar");
+          else void cambiarPieza(f.r, m, n);
+        }}
+        onQuitar={(m, n) => {
+          const f = motivoFlow;
+          if (!f) return;
+          if (f.tipo === "duelo") void ningunaMeVa(f.r, f.duelo ?? "falta", m, n, "compras");
+          else void sacarDelViaje(f.r, m, n);
+        }}
+      />
+      {userId ? (
+        <ImportCarreteFlow
+          userId={userId}
+          headless
+          ref={carreteRef}
+          alTerminar={{
+            label: "elegir para esta pieza",
+            onClick: () => {
+              router.refresh();
+              if (fotoPara) void elegirDeMiCloset(fotoPara);
+            },
+          }}
+        />
+      ) : null}
+
       {subFlow ? (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/50"
@@ -1152,7 +1444,7 @@ export function TripResult({
             </div>
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
-                {subFlow.mode === "swap" ? "Cambiar" : "Sustituir"}
+                {subFlow.mode === "swap" ? "Cambiar" : subFlow.mode === "elegir" ? "De tu clóset" : "Sustituir"}
               </span>
               <span className="editorial text-h3 leading-tight text-ink">{subFlow.nombre}</span>
             </div>
@@ -1168,7 +1460,9 @@ export function TripResult({
               <p className="rounded-md border border-line bg-bg px-4 py-6 text-center text-sm text-muted">
                 {subFlow.mode === "swap"
                   ? "No tengo nada más en tu clóset que cubra esto igual de bien — si no te late, quítala de la maleta y listo."
-                  : "Nada de tu clóset lo cubre bien — para esta tendrías que conseguirla."}
+                  : subFlow.mode === "elegir"
+                    ? "No tienes nada de este tipo en tu clóset. Si lo tienes, súbelo con foto y vuelve aquí."
+                    : "Nada de tu clóset lo cubre bien — para esta tendrías que conseguirla."}
               </p>
             ) : null}
 
@@ -1181,7 +1475,8 @@ export function TripResult({
                   type="button"
                   onClick={() => {
                     const r = rows.find((x) => x.index === subFlow.index);
-                    if (r) void buscarSustituto(r, subFlow.mode);
+                    if (r && subFlow.mode === "elegir") void elegirDeMiCloset(r);
+                    else if (r) void buscarSustituto(r, subFlow.mode as "falta" | "swap");
                   }}
                   className="min-h-10 rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink"
                 >

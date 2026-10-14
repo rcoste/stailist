@@ -21,6 +21,8 @@ export type CapsuleSwapInputs = {
   /** Lo que contestó en el quiz (palette_quiz.metal): manda sobre la estación (lib/colorimetria metalDePersona). */
   metalQuiz?: string | null;
   vetoes: string[]; // labels de vetos duros (vetoLabels)
+  /** Lo que escribió con sus palabras, si escribió algo. */
+  nota?: string | null;
 };
 
 // Instrucción por razón: qué debe cambiar la alternativa respecto a lo rechazado.
@@ -37,6 +39,11 @@ const REASON_HINT: Record<VetoReason, string> = {
   // Ya no se ofrece en la UI; sigue aquí porque hay decisiones guardadas con él.
   "no-lo-uso":
     "La persona NO usa ese tipo de prenda. Propón un TIPO de prenda distinto que cubra el mismo rol (misma categoría), no una variante del mismo tipo.",
+  "no-practico":
+    "No le resulta PRÁCTICA para lo que va a hacer (caminar mucho, moverse todo el día). Propón algo del mismo rol que sea cómodo y funcional: suela cómoda, sin tacón alto, tela que aguante el trote, sin perder su estilo.",
+  "no-va-clima":
+    "No va con el CLIMA del viaje. Propón algo del mismo rol adecuado a la temperatura y a la lluvia de los días que te doy.",
+  otro: "Dio otra razón: léela en su nota y propón algo que la resuelva.",
 };
 
 // CAPA A — reemplazo de UN slot: la persona rechazó la prenda ideal de un hueco.
@@ -78,9 +85,12 @@ export async function generateCapsuleSwap(
         ? "La persona es MUJER: solo ropa de mujer."
         : "Género no definido: prenda neutra/unisex.";
 
-  const reasonTxt = inputs.reason
-    ? REASON_HINT[inputs.reason]
-    : "No dio una razón: propón algo del mismo rol que se sienta claramente distinto a lo rechazado.";
+  const nota = inputs.nota?.trim();
+  const reasonTxt =
+    (inputs.reason
+      ? REASON_HINT[inputs.reason]
+      : "No dio una razón: propón algo del mismo rol que se sienta claramente distinto a lo rechazado.") +
+    (nota ? ` En sus palabras: "${nota.slice(0, 300)}".` : "");
 
   const vetosTxt = inputs.vetoes.length
     ? `NUNCA propongas nada que sea o incluya: ${inputs.vetoes.join(", ")}.`
