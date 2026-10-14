@@ -2,6 +2,11 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.374.1] - 2026-10-14 — "1 sesión", con acento
+
+- La ficha decía "1 sesion": el plural se armaba pegando "es" y el singular
+  quedaba sin acento. Visto en producción al revisar v0.2.374.0.
+
 ## [0.2.374.0] - 2026-10-14 — "Qué hizo" se lee por sesión, no renglón por renglón
 
 - La ficha de una persona pintaba un renglón por acción: un usuario real llegó a
