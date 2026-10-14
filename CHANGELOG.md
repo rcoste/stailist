@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.373.0] - 2026-10-14 — los espejos se ven en el admin, y dicen si eran el look
+
+- El primer espejo de una persona de anuncios no se podía ver: la ficha
+  enseñaba el look con "✓ puesto" pero sin la foto (la consulta nunca pedía
+  `photo_path`). Ahora la ficha firma y enseña la foto del espejo (🪞), y Hoy
+  tiene un panel "Espejos" con los de la semana: foto ampliable, quién, el
+  consejo y un enlace a su ficha.
+- Cada espejo dice si lo que trae puesto ES el look sugerido o su propia ropa
+  (`parecidoConSugerido` en `lib/senal-oro.ts`, con test). Con sombrero de
+  stylist: un look es la combinación, así que cuenta como "el look" sólo con
+  2 o más prendas y 2/3 de las del look sugerido en las 24 h previas. El caso
+  que lo destapó compartía 1 de 3 (una camiseta de tirantes) con un look de
+  falda midi generado 8 minutos antes: era su ropa, no el look.
+- La línea de Hoy deja de decir "N se pusieron un look" (contaba cada `worn`,
+  que hoy sólo escribe el espejo, o sea el mismo número que los fit checks) y
+  dice "N espejos, M con el look sugerido". La señal de oro por cercanía y el
+  evento `worn` no se tocaron.
+
 ## [0.2.372.5] - 2026-10-13 — los looks del viaje usan tus sustitutos
 
 - Reporte real: "al momento de hacer la maleta solo me da 8 looks con las

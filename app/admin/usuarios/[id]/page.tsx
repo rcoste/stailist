@@ -14,6 +14,7 @@ import { ITEM_IMAGE_SELECT, itemImageUrlSync, itemPrivatePaths, type ItemImageRo
 import { PASOS, tiemposDe } from "@/lib/admin/embudo";
 import { Checkpoints } from "../../_compartido/checkpoints";
 import { AlFinal, Ampliable, Chip, Cifra, Fila, Lista, Panel, Quien, Renglon, Vacio } from "../../_ui";
+import { parecidoConSugerido, parecidoEnPalabras } from "@/lib/senal-oro";
 
 // LA FICHA DE UNA PERSONA (mockup aprobado el 2026-10-13). Lo que Roberto
 // pregunta de alguien es siempre lo mismo: quién es, de dónde llegó, qué hizo
@@ -78,7 +79,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
     supabase.from("items").select(`id, source, ${ITEM_IMAGE_SELECT}`).eq("user_id", id),
     supabase
       .from("outfits")
-      .select("id, title, explanation, occasion, item_ids, created_at, tryon_path, source")
+      .select("id, title, explanation, occasion, item_ids, created_at, tryon_path, photo_path, source")
       .eq("user_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -100,6 +101,8 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
     ...new Set([
       profile.avatar_path as string | null,
       ...(outfits ?? []).map((o) => o.tryon_path as string | null),
+      // La foto del espejo: lo que la persona se puso, la prueba de la señal de oro.
+      ...(outfits ?? []).map((o) => o.photo_path as string | null),
       ...items.flatMap((i) => itemPrivatePaths(i)),
     ]),
   ].filter((p): p is string => !!p);
@@ -399,7 +402,23 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
           ) : (
             <Lista>
               {(outfits ?? []).map((o) => {
-                const tryon = o.tryon_path ? (signed.get(o.tryon_path as string) ?? null) : null;
+                const esEspejo = (o.source as string | null) === "espejo";
+                // En un espejo la imagen es SU foto; en un look, el try-on si lo pidió.
+                const ruta = (esEspejo ? o.photo_path : o.tryon_path) as string | null;
+                const tryon = ruta ? (signed.get(ruta) ?? null) : null;
+                const parecido = esEspejo
+                  ? parecidoConSugerido(
+                      { itemIds: (o.item_ids as string[]) ?? [], createdAt: new Date(o.created_at).toISOString() },
+                      (outfits ?? [])
+                        .filter((l) => (l.source as string | null) !== "espejo")
+                        .map((l) => ({
+                          id: l.id as string,
+                          titulo: (l.title as string | null) ?? null,
+                          itemIds: (l.item_ids as string[]) ?? [],
+                          createdAt: new Date(l.created_at).toISOString(),
+                        }))
+                    )
+                  : null;
                 const prendas = (o.item_ids as string[]).map(
                   (pid) => prendaById.get(pid) ?? { nombre: "Prenda", swatch: "#E5E1DD", imagen: null }
                 );
@@ -420,6 +439,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                         <b className="text-ink">
                           {o.title ?? "Look"}
                           {(o.source as string | null) === "viaje" ? " ✈️" : ""}
+                          {esEspejo ? " 🪞" : ""}
                         </b>
                         <span className="text-[13px] text-muted">
                           {" · "}
@@ -428,6 +448,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                         </span>
                       </div>
                       {o.explanation ? <p className="truncate text-[13px] text-muted">{o.explanation}</p> : null}
+                      {parecido ? <p className="text-[13px] text-ink2">{parecidoEnPalabras(parecido)}</p> : null}
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {prendas.map((p, k) => (
                           <Ampliable
