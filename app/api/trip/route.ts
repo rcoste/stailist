@@ -34,7 +34,13 @@ import type { Season } from "@/lib/colorimetria";
 import { revisarGasto } from "@/lib/cuotas";
 import { registrarEvento } from "@/lib/telemetria";
 
-export const maxDuration = 60;
+// 300 s, no 60 (2026-10-14). La ruta vivía al filo: ~12 s de preparar
+// (paradas, clima, perfil), la cápsula de la IA (mediana 36 s, máx 48 s
+// medidos) y el match contra el clóset (6-9 s): ~54 s de mediana. Ese día
+// Vercel la cortó a los 60 s justo al terminar la cápsula, antes del insert,
+// y el viaje no se guardó ("No pude armar tu maleta"). Vercel permite 300 s en
+// todos los planes; sólo se paga el tiempo que de verdad corre.
+export const maxDuration = 300;
 
 const VALID_OCC = new Set(OCCASIONS.map((o) => o.value));
 const VALID_LUG = new Set(LUGGAGE.map((l) => l.value));
