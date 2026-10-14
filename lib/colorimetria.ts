@@ -228,10 +228,6 @@ export const SEASONS: Record<
 // La paleta resuelta de una persona: sus mejores (estación base), los tonos
 // PRESTADOS de su flow que sí cruzan, y lo que debe evitar. `flow` null = caso
 // claro, sin prestados.
-// Metal de la persona: oro (cálido) o plata (frío). Las estaciones cálidas
-// (otoño, primavera) van con oro; las frías (invierno, verano) con plata. En la
-// frontera, si la base es fría pero el flow es cálido (o al revés), gana la
-// calidez: el oro favorece y suele ser lo que prefiere la persona cálida-frontera.
 // Hex plano del punto de metal (oro/plata) — DATO de colorimetría (como los
 // swatches), no un token de UI. Único lugar donde vive; los componentes lo
 // referencian en vez de hardcodear el hex.
@@ -241,17 +237,6 @@ export const METAL_HEX: Record<"oro" | "plata", string> = {
 };
 
 const WARM_SEASONS: Season[] = ["otono", "primavera"];
-export function seasonMetal(
-  primary: Season | null,
-  flow: Season | null
-): "oro" | "plata" {
-  const p = normSeason(primary);
-  const f = normSeason(flow);
-  const warm =
-    (p !== null && WARM_SEASONS.includes(p)) ||
-    (f !== null && WARM_SEASONS.includes(f));
-  return warm ? "oro" : "plata";
-}
 
 // Metal con matiz de frontera: si la base y el flow caen en lados OPUESTOS del
 // eje cálido/frío (p. ej. invierno base + otoño flow), los DOS metales le van —
@@ -267,6 +252,46 @@ export function metalForSeason(
   const warmF = f !== null ? WARM_SEASONS.includes(f) : warmP;
   if (warmP !== warmF) return "ambos";
   return warmP ? "oro" : "plata";
+}
+
+// EL METAL DE UNA PERSONA, con su respuesta por delante (2026-10-14).
+//
+// El caso: invierno con flow otoño contestó "plata" en el quiz y dice "yo no
+// uso dorado". La app tenía TRES respuestas distintas para ella: el quiz decía
+// plata, el perfil "ambos" (metalForSeason) y la maleta "Su metal es ORO,
+// accesorios siempre oro" (seasonMetal, donde la calidez gana). La IA le armó
+// cinturón y bolsa con herrajes dorados.
+//
+// Con sombrero de stylist: el metal es la señal más directa del eje
+// cálido/frío Y además es gusto (qué joyería trae puesta). Si la persona lo
+// contestó, eso manda; la estación sólo decide cuando dijo "no sé" o no hay
+// quiz. Y "ambos" no se traduce a un metal: se le dice al modelo que no fuerce.
+export function metalDePersona(
+  primary: Season | null,
+  flow: Season | null,
+  quizMetal: string | null | undefined
+): "oro" | "plata" | "ambos" {
+  if (quizMetal === "oro" || quizMetal === "plata") return quizMetal;
+  return metalForSeason(primary, flow);
+}
+
+/** El metal de una persona leído de su perfil (palette_quiz.metal). */
+export function quizMetalDe(paletteQuiz: unknown): string | null {
+  const m = (paletteQuiz as { metal?: unknown } | null)?.metal;
+  return typeof m === "string" ? m : null;
+}
+
+/**
+ * La línea de prompt del metal, la MISMA para la maleta, la cápsula y el
+ * cambio de prenda. `elegido`: lo contestó en su quiz (se le dice al modelo,
+ * que pesa más que una deducción).
+ */
+export function lineaMetal(metal: "oro" | "plata" | "ambos", elegido: boolean): string {
+  if (metal === "ambos") {
+    return "Le van los dos metales (oro y plata): no conviertas el metal en tema ni lo menciones en la firma; en una pieza con herrajes, elige el que mejor vaya con el resto.";
+  }
+  const otro = metal === "oro" ? "plata" : "oro";
+  return `Su metal es ${metal.toUpperCase()}${elegido ? " (lo eligió en su quiz)" : ""}: en accesorios metálicos (hebillas, herrajes de bolsa, joyería, reloj) usa SIEMPRE ${metal}, NUNCA ${otro}.`;
 }
 
 // Nombre de sub-estación (sistema de 12): estación + hacia qué vecina se

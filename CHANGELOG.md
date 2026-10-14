@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.375.0] - 2026-10-14 — la maleta respeta su metal, su color y su corte; los sustitutos cumplen la misma función
+
+Notas reales de una usuaria armando una maleta de 27 días (Mineápolis, Seúl,
+Kioto, Tokio).
+
+- **El metal que eligió manda.** Contestó "plata" en su quiz (invierno con
+  toques de otoño) y la maleta decía "Su metal es ORO, accesorios siempre oro":
+  cinturón con hebilla dorada, bolsa con herrajes dorados, "el oro los une". La
+  app tenía tres respuestas para ella (quiz plata, perfil "ambos", maleta oro).
+  Ahora una sola, `metalDePersona` en `lib/colorimetria.ts`: la respuesta del
+  quiz manda, la estación decide sólo si dijo "no sé", y "ambos" no fuerza
+  ninguno. La usan la maleta, la cápsula del clóset, el cambio de prenda, el
+  perfil, la cartera y el pasaporte. Se borró `seasonMetal` ("la calidez gana").
+  Medido con su viaje, 4 maletas por versión con los mismos datos: antes 6-12
+  menciones de oro y 0 de plata; ahora 0 de oro y 7-9 de plata. El tamaño de la
+  maleta no cambió (28-31 contra 29-32 piezas, 5-6 accesorios en ambas).
+- **La maleta recibe cuánto color quiere y cómo le gusta que le quede.** La
+  cápsula del clóset ya usaba los acentos y el motor de Hoy el corte; la maleta
+  no. Los acentos sólo cuentan si la persona los ELIGIÓ, como en la cápsula.
+- **Los sustitutos cumplen la misma función.** Para un "Trench negro
+  impermeable" se ofreció un "Blazer estructurado negro" aunque el prompt
+  prohibía cruzar de tipo. Ahora la regla va en código antes de la IA
+  (`lib/funcion-prenda.ts`, `candidatasPosibles`): misma categoría, misma
+  función (lluvia, nadar, frío extremo) y las clases finas del match (largo de
+  pierna, clase de accesorio, contexto de uso). Si nada pasa, no se llama a la
+  IA. Con su clóset: para el trench ya no hay candidatas; para el cinturón ya no
+  aparecen medias ni bufandas.
+- **Esmeralda con vino, no en el mismo look.** En la maleta pueden ir las dos;
+  en un look va un solo color joya protagonista. Los looks del viaje pasan a
+  `viaje-v2` (constante `PROMPT_VIAJE`, antes escrita a mano en dos lugares).
+
 ## [0.2.374.2] - 2026-10-14 — crear un viaje ya no se corta a los 60 segundos
 
 - Reporte real: al crear un viaje la app dijo "No pude armar tu maleta" y el

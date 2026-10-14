@@ -1,4 +1,4 @@
-import { seasonPalette, seasonDisplayLabel, metalForSeason, type Season } from "@/lib/colorimetria";
+import { seasonPalette, seasonDisplayLabel, metalDePersona, quizMetalDe, type Season } from "@/lib/colorimetria";
 import { buildLabel, volumeLabel, siluetaConsejo, type Build, type Volume } from "@/lib/silueta";
 
 // Datos del Pasaporte de estilo: identidad estilística compartible (arquetipo +
@@ -32,6 +32,8 @@ export function buildPasaporte(profile: {
   taste_tags: string[];
   palette_season: Season | null;
   palette_flow: Season | null;
+  /** Lo que contestó en el quiz: su metal manda sobre la estación. */
+  palette_quiz?: unknown;
   body_build: Build | null;
   body_volume: Volume | null;
 }): PasaporteData {
@@ -56,7 +58,7 @@ export function buildPasaporte(profile: {
     archetypeDesc: profile.style_archetype?.descripcion ?? null,
     vibe: (profile.taste_tags ?? []).slice(0, 5),
     seasonLabel: season ? seasonDisplayLabel(season, profile.palette_flow) : null,
-    metal: season ? metalForSeason(season, profile.palette_flow) : null,
+    metal: season ? metalDePersona(season, profile.palette_flow, quizMetalDe(profile.palette_quiz)) : null,
     swatches: all.slice(0, 7).map((c) => c.hex),
     powerColors: (pal?.mejores ?? []).slice(0, 3).map((c) => ({ nombre: c.nombre, hex: c.hex })),
     siluetaLine,

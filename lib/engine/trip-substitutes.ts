@@ -2,6 +2,35 @@ import { CLASSIFY_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import type { CapsuleItem, ClosetItemLite } from "@/lib/capsule";
 import { medirAnthropic, type QuienMide } from "@/lib/recibos";
+import { NOMBRE_FUNCION, funcionDe, sirveComoSustituto } from "@/lib/funcion-prenda";
+import { claseAccesorio, claseBottom, contextosCompatibles } from "@/lib/engine/capsule-match";
+
+/**
+ * Lo que la IA puede ver como sustituto: misma categoría y misma función
+ * (lib/funcion-prenda.ts), y además las tres clases finas que el match ya
+ * vigila — largo de pierna (un short no es un pantalón), clase de accesorio
+ * (unas medias no son un cinturón) y contexto de uso (baño/gimnasio, con el
+ * atributo guardado de la prenda si lo tiene). Largo y accesorio, como en el
+ * match: si una de las dos no se reconoce, no bloquea.
+ */
+export function candidatasPosibles<T extends { nombre: string; category: string; contexto?: string | null }>(
+  missing: Pick<CapsuleItem, "nombre" | "tipo" | "category">,
+  closet: T[]
+): T[] {
+  const ideal = `${missing.nombre} ${missing.tipo}`;
+  const choca = (f: (t: string) => string | null, real: string) => {
+    const a = f(ideal);
+    const b = f(real);
+    return !!a && !!b && a !== b;
+  };
+  return closet.filter(
+    (c) =>
+      sirveComoSustituto(missing, c) &&
+      !(missing.category === "bottom" && choca(claseBottom, c.nombre)) &&
+      !(missing.category === "accesorio" && choca(claseAccesorio, c.nombre)) &&
+      contextosCompatibles(ideal, c.nombre, c.contexto)
+  );
+}
 
 // "Buscar en mi clóset": dada UNA prenda que falta para el viaje, propone hasta 3
 // prendas del clóset real que pueden SUSTITUIRLA (misma clase, uso compatible) —
@@ -17,7 +46,14 @@ export async function matchSubstitutes(
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
   quien: QuienMide | null = null
 ): Promise<{ nombre: string; porque: string }[]> {
+  // LA REGLA DURA VA EN CÓDIGO, ANTES de la IA (lib/funcion-prenda.ts): misma
+  // categoría y, si la pieza tiene una función (lluvia, nadar, frío extremo),
+  // la misma función. El prompt ya prohibía cruzar clases y la IA ofreció un
+  // blazer para un trench impermeable. Lo que no pasa aquí, la IA ni lo ve; y
+  // si nada pasa, no se paga la llamada.
+  closet = candidatasPosibles(missing, closet);
   if (closet.length === 0 || !process.env.ANTHROPIC_API_KEY) return [];
+  const funcion = funcionDe(`${missing.tipo} ${missing.nombre}`);
 
   // maxRetries alto: la búsqueda es a-demanda y el usuario espera, así que vale
   // la pena aguantar un saturón breve de la API (529) con backoff antes de fallar.
@@ -46,12 +82,13 @@ REGLAS:
 - La CLASE manda por encima de todo: solo sirve algo de la MISMA clase/categoría que lo que falta (un pantalón lo sustituye otro pantalón; un calzado, otro calzado; un top, otro top del mismo tipo de uso). NUNCA cruces clases.
 - Debe ser un sustituto USABLE para esa ocasión y clima, no cualquier cosa de la categoría. Un sustituto razonable, aunque no idéntico (otro neutro, un corte parecido), cuenta.
 - Solo prendas que están en el CLÓSET, con su nombre EXACTO. No inventes.
+- Si la prenda que falta cumple una FUNCIÓN (protegerse de la lluvia, nadar, aguantar frío extremo), el sustituto tiene que cumplir esa misma función de verdad, no sólo parecerse.
 - Si NADA del clóset sirve de verdad, devuelve lista vacía. Mejor vacío que un sustituto malo.
 - "porque": media línea cálida (tuteo) de por qué funciona como reemplazo.`,
     messages: [
       {
         role: "user",
-        content: `FALTA: ${missing.nombre} (tipo: ${missing.tipo}, ${missing.category}, ${missing.formalidad}, ${missing.colorFamilia}). Para: ${missing.porque}${
+        content: `FALTA: ${missing.nombre} (tipo: ${missing.tipo}, ${missing.category}, ${missing.formalidad}, ${missing.colorFamilia}). Para: ${missing.porque}${funcion ? `\nFUNCIÓN QUE TIENE QUE CUMPLIR: ${NOMBRE_FUNCION[funcion]}.` : ""}${
           rejected
             ? `\n\nOJO: para este hueco tenía "${rejected}" pero NO le late — proponle opciones distintas, con otro aire (no la incluyas ni propongas casi lo mismo).`
             : ""

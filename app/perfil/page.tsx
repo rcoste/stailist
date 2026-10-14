@@ -6,7 +6,7 @@ import { PerfilTabs } from "@/components/perfil-tabs";
 import { nameFromEmail } from "@/lib/pasaporte";
 import { buildLabel, volumeLabel } from "@/lib/silueta";
 import { dressCodePorClave, ropaDeDressCode } from "@/lib/dress-code";
-import { seasonPalette, seasonDisplayLabel, metalForSeason } from "@/lib/colorimetria";
+import { seasonPalette, seasonDisplayLabel, metalDePersona, quizMetalDe } from "@/lib/colorimetria";
 import { signOut } from "./actions";
 import { resendParentConsent } from "./consentimiento-actions";
 import { isMinor } from "@/lib/edad";
@@ -69,7 +69,7 @@ export default async function PerfilPage() {
   const season = profile.palette_season;
   const pal = season ? seasonPalette(season, profile.palette_flow) : null;
   const seasonLabel = season ? seasonDisplayLabel(season, profile.palette_flow) : null;
-  const metal = season ? metalForSeason(season, profile.palette_flow) : null;
+  const metal = season ? metalDePersona(season, profile.palette_flow, quizMetalDe(profile.palette_quiz)) : null;
   const archetypeNombre = profile.style_archetype?.nombre ?? null;
 
   const subParts = [

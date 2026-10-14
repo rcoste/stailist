@@ -30,7 +30,8 @@ import {
   aggregateWeather,
   lugarDisplay,
 } from "@/lib/trip-ruta";
-import type { Season } from "@/lib/colorimetria";
+import { quizMetalDe, type Season } from "@/lib/colorimetria";
+import type { ApetitoAcentos } from "@/lib/looks";
 import { revisarGasto } from "@/lib/cuotas";
 import { registrarEvento } from "@/lib/telemetria";
 
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
           supabase
             .from("profiles")
             .select(
-              "gender, taste_tags, style_archetype, palette_season, palette_flow, style_vetoes, style_reference, style_words, body_build, body_volume, age_range"
+              "gender, taste_tags, style_archetype, palette_season, palette_flow, palette_quiz, style_vetoes, style_reference, style_words, body_build, body_volume, age_range, acento_apetito, acento_apetito_fuente, fit_pref"
             )
             .eq("id", user.id)
             .single(),
@@ -281,6 +282,14 @@ export async function POST(request: NextRequest) {
             null,
           season: (profile?.palette_season as Season | null) ?? null,
           flow: (profile?.palette_flow as Season | null) ?? null,
+          metalQuiz: quizMetalDe(profile?.palette_quiz),
+          // Sólo si lo ELIGIÓ: la semilla de los swipes no es su gusto (mismo
+          // criterio que la cápsula del clóset, app/closet/capsula/actions.ts).
+          acentoApetito:
+            profile?.acento_apetito_fuente === "elegido"
+              ? ((profile?.acento_apetito as ApetitoAcentos | null) ?? null)
+              : null,
+          fitPref: (profile?.fit_pref as "recta" | "holgada" | "mixta" | null) ?? null,
           vetoes: vetoLabels((profile?.style_vetoes as StyleVetoes | null) ?? null),
           styleReference: styleReferenceForEngine(profile?.style_reference),
           styleWords: (profile?.style_words as string | null) ?? null,
