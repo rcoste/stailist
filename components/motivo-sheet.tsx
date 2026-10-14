@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Sheet } from "@/components/sheet";
 import {
   VETO_REASONS_OFRECIDOS,
@@ -11,15 +12,19 @@ import {
 // sin motivo, porque el motivo es la señal que evita repetir el error
 // (REASON_HINT del motor).
 //
-// Vive aparte del card porque tiene DOS entradas y el handoff del card de duelo
-// es explícito en que las dos abren la misma hoja:
-//   · `ninguna de las dos me va`, la salida del duelo;
-//   · `no me va`, el tercer botón del pie del card ya resuelto.
+// Vive aparte del card porque tiene VARIAS entradas y todas deben verse igual:
+//   · `ninguna de las dos me va`, la salida del duelo (cápsula y viaje);
+//   · `no me va`, el tercer botón del pie del card ya resuelto (cápsula);
+//   · "no lo necesito" y "no me gusta esta pieza" del menú ··· del viaje.
 // Duplicarla era garantizar que se desincronizaran.
 //
 // Dos pasos: el motivo primero y, CON el motivo en mano, la resolución
-// (reemplazo o fuera). Al tope de swaps el paso 2 se salta — no hay reemplazo
-// que ofrecer — y el chip resuelve directo.
+// (reemplazo o fuera). Sin reemplazo que ofrecer, el chip resuelve directo.
+//
+// El VIAJE (2026-10-14) le pasa sus propios motivos (los de función: "no es
+// práctico para caminar", "no va con el clima"), un campo para escribirlo con
+// sus palabras y los nombres de sus dos salidas. Sin esas props, la hoja es
+// exactamente la de la cápsula.
 export function MotivoSheet({
   open,
   onClose,
@@ -28,6 +33,11 @@ export function MotivoSheet({
   puedeReemplazar,
   onReemplazar,
   onQuitar,
+  motivos = VETO_REASONS_OFRECIDOS,
+  conNota = false,
+  textoReemplazar = "búscame un reemplazo",
+  textoQuitar = "solo quítala",
+  pregunta = "¿te busco un reemplazo con eso en mente, o la quito?",
 }: {
   open: boolean;
   onClose: () => void;
@@ -35,13 +45,25 @@ export function MotivoSheet({
    *  padre para que cerrar la hoja lo limpie junto con `open`. */
   motivo: VetoReason | null;
   onMotivo: (r: VetoReason) => void;
-  /** false cuando ya no se ofrecen más reemplazos (tope de swaps). */
+  /** false cuando no hay reemplazo que ofrecer: el chip resuelve directo. */
   puedeReemplazar: boolean;
-  onReemplazar: (reason: VetoReason) => void;
-  onQuitar: (reason: VetoReason) => void;
+  onReemplazar: (reason: VetoReason, nota: string | null) => void;
+  onQuitar: (reason: VetoReason, nota: string | null) => void;
+  motivos?: VetoReason[];
+  /** Campo para escribir el motivo con sus palabras (opcional para la persona). */
+  conNota?: boolean;
+  textoReemplazar?: string;
+  textoQuitar?: string;
+  pregunta?: string;
 }) {
+  const [nota, setNota] = useState("");
+  const notaFinal = () => (conNota && nota.trim() ? nota.trim() : null);
+  const cerrar = () => {
+    setNota("");
+    onClose();
+  };
   return (
-    <Sheet open={open} onClose={onClose}>
+    <Sheet open={open} onClose={cerrar}>
       {motivo === null ? (
         <>
           <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
@@ -51,7 +73,7 @@ export function MotivoSheet({
             me sirve para no repetir el error.
           </p>
           <div className="mt-[15px] flex flex-wrap gap-[7px] pb-1">
-            {VETO_REASONS_OFRECIDOS.map((r) => (
+            {motivos.map((r) => (
               <button
                 key={r}
                 type="button"
@@ -59,8 +81,9 @@ export function MotivoSheet({
                   if (puedeReemplazar) {
                     onMotivo(r);
                   } else {
-                    onClose();
-                    onQuitar(r);
+                    const n = notaFinal();
+                    cerrar();
+                    onQuitar(r, n);
                   }
                 }}
                 className="flex min-h-11 items-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink2 transition-colors hover:border-ink hover:bg-tile"
@@ -69,35 +92,45 @@ export function MotivoSheet({
               </button>
             ))}
           </div>
+          {conNota ? (
+            <textarea
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              maxLength={500}
+              rows={2}
+              placeholder="o escríbelo con tus palabras (opcional)"
+              className="mt-3 w-full resize-none border border-line bg-surface px-3 py-2.5 text-[13px] text-ink placeholder:text-faint focus:border-ink focus:outline-none"
+            />
+          ) : null}
         </>
       ) : (
         <>
           <h3 className="display text-[23px] font-normal italic leading-[27px] text-ink">
             vale — {VETO_REASON_LABEL[motivo]}.
           </h3>
-          <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">
-            ¿te busco un reemplazo con eso en mente, o la quito?
-          </p>
+          <p className="mt-[5px] text-[12.5px] leading-[18px] text-muted">{pregunta}</p>
           <div className="mt-[15px] flex flex-col gap-[7px] pb-1">
             <button
               type="button"
               onClick={() => {
-                onClose();
-                onReemplazar(motivo);
+                const n = notaFinal();
+                cerrar();
+                onReemplazar(motivo, n);
               }}
               className="flex min-h-11 items-center justify-center border border-ink bg-surface px-3.5 text-[13px] font-bold text-ink transition-colors hover:bg-tile"
             >
-              búscame un reemplazo
+              {textoReemplazar}
             </button>
             <button
               type="button"
               onClick={() => {
-                onClose();
-                onQuitar(motivo);
+                const n = notaFinal();
+                cerrar();
+                onQuitar(motivo, n);
               }}
               className="flex min-h-11 items-center justify-center border border-line bg-surface px-3.5 text-[13px] font-semibold text-muted transition-colors hover:border-ink hover:bg-tile hover:text-ink"
             >
-              solo quítala
+              {textoQuitar}
             </button>
           </div>
         </>

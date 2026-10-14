@@ -131,6 +131,8 @@ export function accionDe(m: Momento): Accion | "sistema" | null {
         "1 cambio de prenda",
         (n) => `${n} cambios de prenda`,
       );
+    case "trip_motivo":
+      return a("viaje", "motivos", "dio 1 motivo", (n) => `dio ${n} motivos`);
     case "trip_outfits_generated":
       // Los looks que arma ya salen uno por uno como look de viaje.
       return null;
@@ -225,6 +227,7 @@ const ORDEN_ACCIONES = [
   "looks",
   "votos",
   "cambios",
+  "motivos",
   "tryon",
   "fallo",
   "subio",

@@ -113,7 +113,8 @@ export default async function ViajeDetallePage({
   // helper que el armador de looks (lib/trip-maleta.ts) para que no diverjan.
   const subAt = (i: number) => sustitutoDe(overrides, i) ?? undefined;
 
-  const rows: TripRow[] = capsuleRows(target, match, overrides).map((r) => {
+  // Lo que sacó del viaje ("no lo necesito en este viaje") no se lista.
+  const rows: TripRow[] = capsuleRows(target, match, overrides).filter((r) => !r.dismissed).map((r) => {
     const by = subAt(r.index) ?? r.by;
     const fk = faltaKey(r.item);
     return {
@@ -343,6 +344,7 @@ export default async function ViajeDetallePage({
           maleta={
             <TripResult
               tripId={trip.id}
+              userId={profile.id}
               rows={rows}
               savedWishKeys={savedWishKeys}
               candidatasIniciales={candidatas}
