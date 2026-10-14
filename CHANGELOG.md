@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.374.2] - 2026-10-14 — crear un viaje ya no se corta a los 60 segundos
+
+- Reporte real: al crear un viaje la app dijo "No pude armar tu maleta" y el
+  viaje no se guardó. Vercel cortó `POST /api/trip` a los 60 s justo cuando la
+  IA terminaba la cápsula (48 s), antes de compararla con el clóset y guardar.
+  Medido: la ruta tarda ~54 s de mediana, o sea que vivía al filo del corte.
+  Su `maxDuration` sube a 300 s. No cambia la IA ni el costo.
+
 ## [0.2.374.1] - 2026-10-14 — "1 sesión", con acento
 
 - La ficha decía "1 sesion": el plural se armaba pegando "es" y el singular
