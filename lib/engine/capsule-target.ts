@@ -155,6 +155,10 @@ export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
       tipo: "saco-de-traje",
       hueco: "saco de traje",
       conjunto: cj,
+      // La descripción era del TRAJE entero ("traje de dos piezas…"): dibujada
+      // tal cual, cada mitad saldría como traje completo. Cada mitad cae a sus
+      // atributos (garment-desc, Capa 1), que ya saben dibujar saco y pantalón.
+      visual: null,
     });
     // Si el pantalón ya venía por separado, `enlazarTrajes` le pone el lazo:
     // aquí sólo hay que no duplicarlo.
@@ -167,6 +171,7 @@ export function partirTrajes(items: CapsuleItem[]): CapsuleItem[] {
       hueco: "pantalón de traje",
       porque: `Es la otra mitad del traje ${color}: juntos son tu traje completo, y suelto te sirve de pantalón de vestir.`,
       conjunto: cj,
+      visual: null,
     });
   }
   return salida;
@@ -410,6 +415,7 @@ Devuelve "items". Cada prenda:
 - temporada: "todo-el-año" | "calor" | "frio".
 - prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
 - porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
+- visual: cómo se VE la pieza, para dibujarla (la persona no lo lee). De 8 a 12 palabras, SIN repetir el nombre ni el color: sólo silueta, tela/textura, largo y el detalle que la hace actual. Ej. "satén fluido, cuello caído, manga recta, caída suelta". Piensa en una tienda contemporánea de hoy, no en un catálogo de hace veinte años. Para un básico sin nada que decir (playera lisa, jeans rectos, medias, calcetines) deja "" vacío: se dibuja con la foto genérica.
 
 Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones, aterrizada a SUS datos reales. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada cosa nombra algo concreto suyo (su estación, su trabajo, su cuerpo, su metal) o NO va.
 LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda. En el texto que LEE la persona, nada de "silueta", "cortes", "proporción", "estructura", "statement", "monocromía", "textura" — y tampoco "cápsula" (jerga de moda: en la app esto se llama "tus esenciales"; di "tu lista" o "tus esenciales"); dilo cotidiano (en vez de "corte que estiliza tu silueta" → "que te quede bien y te alargue"). Los conceptos piénsalos tú; las palabras van llanas.
@@ -508,8 +514,13 @@ export async function generateCapsuleTarget(
                   // sin minimum/maximum: el structured output no los soporta.
                   prioridad: { type: "integer" },
                   porque: { type: "string" },
+                  // De vuelta desde 2026-10-14 (ver trip-capsule.ts: se quitó
+                  // en junio por el corte de 60 s). Las pantallas que la arman
+                  // tienen 300 s.
+                  visual: { type: "string" },
                 },
                 required: [
+                  "visual",
                   "nombre",
                   "tipo",
                   "hueco",
@@ -570,7 +581,7 @@ export async function generateCapsuleTarget(
   const items = enlazarTrajes(partirTrajes(limpiarEmpaquetados(parsed.items)))
     .slice()
     .sort((a, b) => a.prioridad - b.prioridad)
-    .map((it, i) => ({ ...it, prioridad: i + 1 }));
+    .map((it, i) => ({ ...it, prioridad: i + 1, visual: it.visual?.trim() ? it.visual.trim().slice(0, 200) : null }));
   // EL JUEZ, al final de la generación: deja por escrito lo que la lista NO
   // cubre. No bloquea ni reintenta — llenar un hueco pide criterio de stylist y
   // su paleta, no es determinista como partir un traje. Registrarlo es lo que

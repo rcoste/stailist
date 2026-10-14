@@ -160,3 +160,51 @@ export function familiaToHex(familia: string): string {
   for (const [name, hex] of FAMILIA_HEX) if (s.includes(name)) return hex;
   return "#C9BFB2"; // neutro cálido por defecto
 }
+
+// ─── La imagen de una pieza CON descripción propia (2026-10-14) ─────────────
+//
+// La biblioteca compartida guarda UNA imagen por tipo + color + género, y la
+// reusa para todas las personas. Sirve para los básicos (una playera blanca es
+// una playera blanca). No sirve cuando la pieza dice cómo es: "blusa de satén
+// con cuello caído y caída fluida" recibía la blusa recta de cuello redondo
+// que alguien generó en julio para "blusa rubí" — y la persona la vio "de
+// viejita". Roberto: "a veces sí se puede reciclar de imágenes compartidas,
+// pero otras no debería".
+//
+// La regla: con `visual`, la llave lleva una huella de esa descripción. La
+// imagen sigue siendo compartida (otra persona con la misma descripción la
+// reusa), pero ya no se confunde con la genérica de su tipo y color.
+
+/** Huella corta y estable de un texto (FNV-1a 32 bits, en hex). */
+function huella(texto: string): string {
+  let h = 0x811c9dc5;
+  const t = texto.trim().toLowerCase();
+  for (let i = 0; i < t.length; i++) {
+    h ^= t.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+/** La llave con la que se GUARDA la imagen de una pieza. */
+export function catalogKeyDePieza(
+  tipo: string,
+  colorFamilia: string,
+  gender: string | null,
+  visual?: string | null
+): string {
+  const base = catalogStorageKey(tipo, colorFamilia, gender);
+  return visual?.trim() ? `${base}__v${huella(visual)}` : base;
+}
+
+/** Las llaves con las que se BUSCA: con descripción, sólo la suya (nunca la genérica). */
+export function catalogKeysParaBuscar(
+  tipo: string,
+  colorFamilia: string,
+  gender: string | null,
+  visual?: string | null
+): string[] {
+  return visual?.trim()
+    ? [catalogKeyDePieza(tipo, colorFamilia, gender, visual)]
+    : catalogLookupKeys(tipo, colorFamilia, gender);
+}

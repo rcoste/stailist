@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.377.0] - 2026-10-14 — las piezas sugeridas dicen cómo se ven, y se dibujan así
+
+Bloque C de las notas de una maleta real: "la blusa de satén rubí está de
+viejita"; "las piezas de viaje no hablan de corte"; "a veces sí se puede
+reciclar la imagen compartida, pero otras no debería".
+
+- **La maleta y la cápsula del clóset describen cada pieza** (`visual`: 8-12
+  palabras de silueta, tela, largo y el detalle que la hace actual; vacío para
+  los básicos). El campo existía y se había quitado el 2026-06-30 porque casi
+  duplicaba la salida y la ruta se cortaba a los 60 s. Medido con datos
+  reales, mismos insumos: maleta 51 → 62-67 s, cápsula 67-72 → 77-87 s; ~9
+  palabras por pieza, 3-5 básicos por lista sin descripción. Ejemplo: "Blusa
+  de satén rubí" → "satén fluido, cuello caído, manga recta, caída suelta".
+- **Imagen propia cuando la pieza trae descripción** (`catalogKeyDePieza`,
+  `lib/capsule-images.ts`): la llave lleva una huella de la descripción, así
+  que ya no recibe la imagen genérica de su tipo y color. Los básicos siguen
+  reusando la compartida. Costo: ~20 dibujos más por maleta o cápsula nueva.
+  La página del viaje busca la imagen por pieza, no por tipo+color.
+- **Tope de salida de la maleta 4608 → 6656 tokens.** Al medir, una de tres
+  maletas SIN el cambio ya se truncaba ("TRUNCATED_RESPONSE": el viaje no se
+  guarda); la más grande medida usaba 4028.
+- **"Rearmar mi lista" de la cápsula: 60 → 300 s.** Armar la cápsula ya
+  tardaba 65 s de promedio (71 de máximo): con 60 s Vercel la cortaba.
+- Al partir un traje en saco y pantalón, la descripción del traje entero no
+  se hereda (cada mitad se dibujaría como traje completo).
+
 ## [0.2.376.0] - 2026-10-14 — en la maleta puedes decir "tengo uno parecido", "no lo necesito" y "ninguna me va"
 
 Bloque B de las notas de una maleta real (boceto aprobado por Roberto).

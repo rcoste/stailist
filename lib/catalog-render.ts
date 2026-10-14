@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
-import { catalogLookupKeys, catalogStorageKey } from "@/lib/capsule-images";
+import { catalogKeyDePieza, catalogKeysParaBuscar } from "@/lib/capsule-images";
 import { garmentRenderDesc } from "@/lib/garment-desc";
 import { guardarRenderDeCatalogo } from "@/lib/supabase/biblioteca-compartida";
 
@@ -34,11 +34,13 @@ export async function ensureCatalogRender(
   // Se GUARDA con la clave canónica; se BUSCA con la canónica y la cruda, para
   // no volver a pagar las 316 imágenes que se guardaron con el tipo tal cual
   // venía del LLM (ver catalogLookupKeys).
-  const key = catalogStorageKey(args.tipo, args.colorFamilia, args.gender);
+  // Con descripción propia (`visual`), la llave lleva su huella: no se reusa
+  // la genérica de su tipo y color (ver catalogKeyDePieza).
+  const key = catalogKeyDePieza(args.tipo, args.colorFamilia, args.gender, args.visual);
   const { data: existing } = await supabase
     .from("catalog_renders")
     .select("key, path")
-    .in("key", catalogLookupKeys(args.tipo, args.colorFamilia, args.gender));
+    .in("key", catalogKeysParaBuscar(args.tipo, args.colorFamilia, args.gender, args.visual));
   const hit = (existing ?? []).find((r) => r.path);
   if (hit?.path) return { ok: true, url: catalogPublicUrl(supabase, hit.path as string) };
 
