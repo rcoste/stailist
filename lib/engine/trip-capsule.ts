@@ -1,7 +1,9 @@
 import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "@/lib/capsule";
-import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
+import { SEASONS, lineaMetal, metalDePersona, seasonPalette, type Season } from "@/lib/colorimetria";
+import { lineaAcentosCapsula } from "@/lib/engine/capsule-target";
+import type { ApetitoAcentos } from "@/lib/looks";
 import { REGLA_PRENDAS_REALES, tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 import {
@@ -53,6 +55,10 @@ export type TripCapsuleInputs = {
   styleReference?: string | null; // estilo de referencia (vibe/siluetas, no color)
   styleWords?: string | null; // su estilo en sus palabras (perfil)
   silueta?: string | null; // orientación de cuerpo — señal suave
+  // 2026-10-14 — tres señales que la cápsula del clóset ya usaba y la maleta no:
+  metalQuiz?: string | null; // lo que contestó en el quiz ("oro" | "plata" | "ambos"): manda sobre la estación
+  acentoApetito?: ApetitoAcentos | null; // SÓLO si lo eligió (no la semilla de los swipes), igual que la cápsula
+  fitPref?: "recta" | "holgada" | "mixta" | null; // cómo le gusta que le quede la ropa (pares de corte)
   ageStyling?: string | null; // orientación por edad (life-stage) — señal suave, solo extremos
   tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
 };
@@ -84,8 +90,8 @@ export async function generateTripCapsuleTarget(
     const avoid = evita.map((c) => c.nombre).join(", ");
     paletaTxt = `Paleta ${SEASONS[inputs.season].label}. Le favorecen: ${favs}. EVITA: ${avoid}.`;
   }
-  const metal = seasonMetal(inputs.season, inputs.flow);
-  const metalTxt = `Su metal es ${metal.toUpperCase()} (accesorios metálicos siempre ${metal}).`;
+  const elegido = inputs.metalQuiz === "oro" || inputs.metalQuiz === "plata";
+  const metalTxt = lineaMetal(metalDePersona(inputs.season, inputs.flow, inputs.metalQuiz), elegido);
 
   const estilo = inputs.archetype
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
@@ -152,6 +158,11 @@ export async function generateTripCapsuleTarget(
     ? `SU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género, piso, clima — siempre están por encima).`
     : "";
   const edadTxt = inputs.ageStyling ?? "";
+  // Cuánto color manda (lo eligió viendo fotos) y cómo le gusta que le quede.
+  // La línea de acentos es la MISMA de la cápsula del clóset: dos módulos
+  // gemelos no deben leer el mismo gusto de dos formas.
+  const acentosTxt = lineaAcentosCapsula(inputs.acentoApetito ?? null).trim();
+  const corteTxt = lineaCorteCapsula(inputs.fitPref ?? null);
   const cuerpoTxt = inputs.silueta
     ? `SU CUERPO (orientación suave para elegir cortes, no regla): ${inputs.silueta}.`
     : "";
@@ -214,7 +225,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${edadTxt ? `\n${edadTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
+        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${edadTxt ? `\n${edadTxt}` : ""}${acentosTxt ? `\n${acentosTxt.replace(/^- /, "")}` : ""}${corteTxt ? `\n${corteTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
       },
     ],
     output_config: {
@@ -287,4 +298,21 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
     .map((it, i) => ({ ...it, prioridad: i + 1 }));
   const firma = parsed.firma?.trim();
   return firma ? { version: 2, items, firma } : { version: 2, items };
+}
+
+/**
+ * CÓMO LE GUSTA QUE LE QUEDE, para una cápsula (2026-10-14). El motor de Hoy
+ * ya lo usaba (lib/engine/prompt.ts); la maleta no, y elegía cortes al azar.
+ * Aquí decide qué cortes PROPONER, no entre prendas de su clóset. 'mixta' no
+ * se traduce a un corte: decir que no hay preferencia es más útil que
+ * inventarle una.
+ */
+export function lineaCorteCapsula(fit: "recta" | "holgada" | "mixta" | null): string {
+  if (fit === "holgada")
+    return "CÓMO LE GUSTA QUE LE QUEDE (lo eligió viendo fotos): HOLGADA — en pantalones, tops y vestidos propón cortes con caída y amplitud (pierna ancha, oversize medido), no prendas que sigan el cuerpo. Sólo UNA zona del look con volumen a la vez.";
+  if (fit === "recta")
+    return "CÓMO LE GUSTA QUE LE QUEDE (lo eligió viendo fotos): RECTA — propón cortes que sigan la línea del cuerpo sin amplitud extra (pierna recta, tops a su medida). Recto no es entallado: nada apretado.";
+  if (fit === "mixta")
+    return "CÓMO LE GUSTA QUE LE QUEDE: sin preferencia fuerte entre recto y holgado; deja que mande la silueta de su estilo.";
+  return "";
 }

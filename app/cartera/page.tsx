@@ -6,7 +6,8 @@ import {
   carteraDepth,
   subSeasonLabel,
   seasonDisplayLabel,
-  metalForSeason,
+  metalDePersona,
+  quizMetalDe,
   normSeason,
   METAL_HEX,
 } from "@/lib/colorimetria";
@@ -64,7 +65,7 @@ export default async function CarteraPage() {
   const subLabel = profile.palette_flow
     ? seasonDisplayLabel(season, profile.palette_flow)
     : subSeasonLabel(season, depth);
-  const metal = metalForSeason(season, profile.palette_flow);
+  const metal = metalDePersona(season, profile.palette_flow, quizMetalDe(profile.palette_quiz));
   const palette = carteraPalette(season, depth, profile.palette_flow);
 
   // Palabra del guiño para la fila ("tus guiños de otoño").

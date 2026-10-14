@@ -11,7 +11,7 @@ import {
   type CapsuleTarget,
   type LifestyleAnswers,
 } from "@/lib/capsule";
-import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
+import { SEASONS, lineaMetal, metalDePersona, seasonPalette, type Season } from "@/lib/colorimetria";
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { REGLA_PRENDAS_REALES, tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
@@ -24,6 +24,8 @@ export type CapsuleInputs = {
   archetype: { nombre: string; descripcion: string } | null;
   season: Season | null;
   flow: Season | null;
+  /** Lo que contestó en el quiz (palette_quiz.metal): manda sobre la estación (lib/colorimetria metalDePersona). */
+  metalQuiz?: string | null;
   build: Build | null;
   volume: Volume | null;
   styleReference?: string | null; // resumen del "estilo de referencia" (vibe/silueta, NO color)
@@ -334,8 +336,10 @@ export function construirPromptCapsula(inputs: CapsuleInputs): PromptCapsula {
     const avoidTxt = avoid.map((c) => c.nombre).join(", ");
     paletaTxt = `Paleta ${SEASONS[inputs.season].label}. Le favorecen: ${favsTxt}. EVITA: ${avoidTxt}.`;
   }
-  const metal = seasonMetal(inputs.season, inputs.flow);
-  const metalTxt = `Su metal es ${metal.toUpperCase()}: en accesorios metálicos (reloj, hebilla, joyería) usa SIEMPRE ${metal}, nunca ${metal === "oro" ? "plata" : "oro"}.`;
+  const metalTxt = lineaMetal(
+    metalDePersona(inputs.season, inputs.flow, inputs.metalQuiz),
+    inputs.metalQuiz === "oro" || inputs.metalQuiz === "plata"
+  );
   const siluetaLine = siluetaPromptLine(inputs.build, inputs.volume);
   const vetosTxt = inputs.vetoes && inputs.vetoes.length
     ? `\n\nVETOS DUROS (regla innegociable): la persona NO quiere estas prendas/colores/detalles — JAMÁS los propongas ni una variante cercana: ${inputs.vetoes.join(", ")}.`

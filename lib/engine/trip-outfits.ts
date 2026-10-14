@@ -7,6 +7,13 @@ import { tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
+/**
+ * La versión del prompt de los looks del viaje, la que se guarda en
+ * outfits.prompt_version. v2 (2026-10-14): un solo color joya protagonista por
+ * look y nunca esmeralda con vino/burdeos. Vivía escrita a mano en dos lugares.
+ */
+export const PROMPT_VIAJE = "viaje-v2";
+
 // Una prenda empacable, numerada para el prompt. El LLM referencia prendas por
 // `n` (nunca inventa nombres ni IDs); el motor mapea de vuelta a `nombre`.
 export type PackableItem = {
@@ -299,6 +306,7 @@ REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. J
 
 Por cada celda decide si es un OUTFIT real:
 - Coherencia de color: los tonos combinan (no choca) — juzga por el hex cuando la prenda lo traiga, es su color real. Máximo UN estampado protagonista por look; dos estampados juntos casi nunca funcionan.
+- Los colores joya intensos (esmeralda, vino, burdeos, rubí, azul rey, mostaza…) pueden convivir en la MALETA, pero en un LOOK va UNO como protagonista y el resto neutros. Esmeralda con vino o burdeos en el mismo look se ve "como uvas": nunca juntos.
 - Si te doy su COLORIMETRÍA: lo que toca la cara (top, abrigo, vestido) debe favorecerla o ser un neutro; JAMÁS un color de su lista EVITA cerca de la cara (en bottom o calzado no importa).
 - Formalidad pareja y apropiada para alguna ocasión del viaje.
 - Respeta el CLIMA (no lana en calor, no lino fresco en frío — usa el material cuando la prenda lo traiga). Si el clima es FRÍO (≤12°C), cada look debe llevar abrigo o capa de verdad — descarta los que queden en una sola capa ligera (camiseta sola, camisa sola sin abrigo). Si hay rango de temperaturas, cada look debe aguantar la MÁS FRÍA.

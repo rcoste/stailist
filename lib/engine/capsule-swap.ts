@@ -7,7 +7,7 @@ import {
   type CapsuleTarget,
   type VetoReason,
 } from "@/lib/capsule";
-import { SEASONS, seasonMetal, seasonPalette, type Season } from "@/lib/colorimetria";
+import { SEASONS, lineaMetal, metalDePersona, seasonPalette, type Season } from "@/lib/colorimetria";
 import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 
 export type CapsuleSwapInputs = {
@@ -18,6 +18,8 @@ export type CapsuleSwapInputs = {
   gender: "hombre" | "mujer" | null;
   season: Season | null;
   flow: Season | null;
+  /** Lo que contestó en el quiz (palette_quiz.metal): manda sobre la estación (lib/colorimetria metalDePersona). */
+  metalQuiz?: string | null;
   vetoes: string[]; // labels de vetos duros (vetoLabels)
 };
 
@@ -64,7 +66,10 @@ export async function generateCapsuleSwap(
     const avoid = evita.map((c) => c.nombre).join(", ");
     paletaTxt = `Paleta ${SEASONS[inputs.season].label}. Le favorecen: ${favs}. EVITA: ${avoid}.`;
   }
-  const metal = seasonMetal(inputs.season, inputs.flow);
+  const metalTxt = lineaMetal(
+    metalDePersona(inputs.season, inputs.flow, inputs.metalQuiz),
+    inputs.metalQuiz === "oro" || inputs.metalQuiz === "plata"
+  );
 
   const generoTxt =
     inputs.gender === "hombre"
@@ -98,7 +103,7 @@ export async function generateCapsuleSwap(
 Reglas:
 - La alternativa DEBE cubrir el MISMO rol: misma "category" (${slot.category}) que la rechazada. No cambies de categoría.
 - Debe combinar con el RESTO de la cápsula (te lo doy): anclada en los mismos neutros, dentro de su paleta.
-- Respeta la colorimetría: usa colores de su paleta, NUNCA de su lista de EVITA. Su metal es ${metal}.
+- Respeta la colorimetría: usa colores de su paleta, NUNCA de su lista de EVITA. ${metalTxt}
 - ${reasonTxt}
 - ${rechazadasTxt}
 - ${vetosTxt}

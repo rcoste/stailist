@@ -22,6 +22,7 @@ import type {
 } from "@/lib/capsule";
 import type { TripOutfit } from "@/lib/trip";
 import { registrarEvento } from "@/lib/telemetria";
+import { PROMPT_VIAJE } from "@/lib/engine/trip-outfits";
 
 // Clave namespaced para guardar un sustituto dentro de overrides (jsonb) sin una
 // columna nueva: capsuleRows solo lee claves numéricas, así que "sub:<i>" no
@@ -795,7 +796,7 @@ export async function favoriteTripLook(
     item_ids: itemIds,
     occasion: look.ocasion,
     explanation,
-    prompt_version: "viaje-v1",
+    prompt_version: PROMPT_VIAJE,
     title: look.titulo,
     source: "viaje",
     trip_id: tripId,
@@ -879,7 +880,7 @@ export async function ensureTripLookOutfit(
       item_ids: itemIds,
       occasion: look.ocasion,
       explanation,
-      prompt_version: "viaje-v1",
+      prompt_version: PROMPT_VIAJE,
       title: look.titulo,
       source: "viaje",
       trip_id: tripId,

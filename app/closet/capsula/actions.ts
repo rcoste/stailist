@@ -26,7 +26,7 @@ import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
 import { revisarGasto } from "@/lib/cuotas";
-import type { Season } from "@/lib/colorimetria";
+import { quizMetalDe, type Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { photosBlockedForUser } from "@/lib/consentimiento";
@@ -54,7 +54,7 @@ export async function saveLifestyle(
   const [{ data: profile, error: profileErr }, tasteSignal] = await Promise.all([
     supabase
       .from("profiles")
-      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range, acento_apetito, acento_apetito_fuente")
+      .select("gender, taste_tags, style_archetype, palette_season, palette_flow, palette_quiz, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range, acento_apetito, acento_apetito_fuente")
       .eq("id", user.id)
       .single(),
     loadTasteSignal(supabase, user.id),
@@ -120,6 +120,7 @@ export async function saveLifestyle(
         (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
       season: (profile?.palette_season as Season | null) ?? null,
       flow: (profile?.palette_flow as Season | null) ?? null,
+      metalQuiz: quizMetalDe(profile?.palette_quiz),
       build: (profile?.body_build as Build | null) ?? null,
       volume: (profile?.body_volume as Volume | null) ?? null,
       styleReference: styleRef,
@@ -279,7 +280,7 @@ export async function rejectCapsuleItem(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("capsule_target, capsule_match, capsule_swaps, gender, palette_season, palette_flow, style_vetoes")
+    .select("capsule_target, capsule_match, capsule_swaps, gender, palette_season, palette_flow, palette_quiz, style_vetoes")
     .eq("id", user.id)
     .single();
   const target = profile?.capsule_target as CapsuleTarget | null;
@@ -310,6 +311,7 @@ export async function rejectCapsuleItem(
         gender,
         season,
         flow,
+        metalQuiz: quizMetalDe(profile?.palette_quiz),
         vetoes: vetoLabels(vetoes),
       },
         { supabase, userId: user.id });
@@ -477,7 +479,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
     supabase
       .from("profiles")
       .select(
-        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range, acento_apetito, acento_apetito_fuente"
+        "lifestyle, gender, taste_tags, style_archetype, palette_season, palette_flow, palette_quiz, body_build, body_volume, style_reference, style_questions, style_vetoes, style_words, age_range, acento_apetito, acento_apetito_fuente"
       )
       .eq("id", user.id)
       .single(),
@@ -506,6 +508,7 @@ export async function regenerateCapsuleTarget(): Promise<void> {
         (profile?.style_archetype as { nombre: string; descripcion: string } | null) ?? null,
       season: (profile?.palette_season as Season | null) ?? null,
       flow: (profile?.palette_flow as Season | null) ?? null,
+      metalQuiz: quizMetalDe(profile?.palette_quiz),
       build: (profile?.body_build as Build | null) ?? null,
       volume: (profile?.body_volume as Volume | null) ?? null,
       styleReference: styleRef,
