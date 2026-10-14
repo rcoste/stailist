@@ -1,10 +1,14 @@
+import Image from "next/image";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { parecidoEnPalabras } from "@/lib/senal-oro";
 import { OBJETIVOS, esFilaDeCampana } from "@/lib/admin/objetivos";
 import { costoPorPrimerLookTotal, diasParaLaLectura, nombreDelDia, veredicto, type Llegada } from "@/lib/admin/hoy";
-import { cargarHoy } from "@/lib/admin/hoy-datos";
+import { cargarHoy, type Espejo } from "@/lib/admin/hoy-datos";
+import { ZONA, diaEnZona } from "@/lib/admin/adquisicion";
 import { BarrasPorDia } from "./_compartido/graficas";
-import { AlFinal, Chip, Cifra, Encabezado, Fila, Lista, Panel, Quien, Renglon, Vacio } from "./_ui";
+import { AlFinal, Ampliable, Chip, Cifra, Encabezado, Fila, Lista, Panel, Quien, Renglon, Vacio } from "./_ui";
 
 // HOY: ¿cómo va? La primera pantalla del admin. El porqué de cada número vive
 // en lib/admin/hoy.ts; aquí sólo se acomoda, con el kit de app/admin/_ui.
@@ -17,6 +21,16 @@ const mxn = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocal
 export default async function Hoy() {
   await requireAdmin();
   const d = await cargarHoy();
+  // Las fotos del espejo son privadas: se firman con la sesión de admin, igual
+  // que en la ficha.
+  const fotos = new Map<string, string>();
+  const rutas = d.voz.espejos.map((e) => e.fotoPath).filter((p): p is string => !!p);
+  if (rutas.length > 0) {
+    const supabase = await createClient();
+    const { data } = await supabase.storage.from("prendas").createSignedUrls(rutas, 3600);
+    data?.forEach((f) => f.path && f.signedUrl && fotos.set(f.path, f.signedUrl));
+  }
+  const seLoPusieron = d.voz.espejos.filter((e) => e.parecido.tipo === "comparte" && e.parecido.esElLook).length;
   const v = veredicto(d.paro);
   const faltan = diasParaLaLectura(d.hoy);
   const costo = costoPorPrimerLookTotal(d.resumen);
@@ -101,7 +115,7 @@ export default async function Hoy() {
           </div>
           <p className="mt-3 border-t border-line2 pt-3 text-[13px] text-muted">
             Últimos 7 días: <b className="text-ink">{d.voz.meGusta}</b> 👍 · <b className="text-ink">{d.voz.noMeGusta}</b> 👎 ·{" "}
-            <b className="text-ink">{d.voz.seLoPuso}</b> se pusieron un look · <b className="text-ink">{d.voz.fitChecks}</b> fit checks ·{" "}
+            <b className="text-ink">{d.voz.fitChecks}</b> espejos, <b className="text-ink">{seLoPusieron}</b> con el look sugerido ·{" "}
             <b className="text-ink">{d.voz.reportes.length}</b> reportes
           </p>
         </Panel>
@@ -150,6 +164,25 @@ export default async function Hoy() {
         </Panel>
       </Fila>
 
+      {d.voz.espejos.length > 0 ? (
+        <Panel
+          titulo={
+            <>
+              Espejos <span className="font-normal text-muted">· {d.voz.espejos.length}</span>
+            </>
+          }
+          extra="últimos 7 días"
+          className="mb-4"
+          sinPadding
+        >
+          <Lista>
+            {d.voz.espejos.map((e) => (
+              <RenglonEspejo key={`${e.userId}|${e.cuando}`} e={e} foto={e.fotoPath ? (fotos.get(e.fotoPath) ?? null) : null} hoy={d.hoy} />
+            ))}
+          </Lista>
+        </Panel>
+      ) : null}
+
       {d.voz.reportes.length > 0 ? (
         <Panel titulo="Lo que escribieron" extra="últimos 7 días" sinPadding>
           <Lista>
@@ -169,6 +202,41 @@ export default async function Hoy() {
         </Panel>
       ) : null}
     </>
+  );
+}
+
+/**
+ * Un espejo: la foto, quién, y si lo que trae puesto ES el look sugerido o su
+ * propia ropa. Esa línea existe porque el primer espejo de anuncios se leyó
+ * como "se puso un look" y no lo era (lib/senal-oro.ts).
+ */
+function RenglonEspejo({ e, foto, hoy }: { e: Espejo; foto: string | null; hoy: string }) {
+  const p = e.parecido;
+  const esElLook = p.tipo === "comparte" && p.esElLook;
+  const dia = diaEnZona(new Date(e.cuando));
+  const hora = new Date(e.cuando).toLocaleTimeString("es-MX", { timeZone: ZONA, hour: "2-digit", minute: "2-digit" });
+  return (
+    <Renglon className="items-start py-3">
+      <Ampliable
+        imagen={foto}
+        nombre={e.titulo ?? "Espejo"}
+        sub={e.consejo}
+        className="relative block h-16 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-tile"
+      >
+        {foto ? <Image src={foto} alt={e.titulo ?? "Espejo"} fill sizes="48px" className="object-cover" unoptimized /> : null}
+      </Ampliable>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <Quien correo={e.correo} pais={e.pais} href={`/admin/usuarios/${e.userId}`} />
+          <span className="shrink-0 text-xs text-faint">
+            {nombreDelDia(dia, hoy)} {hora}
+          </span>
+        </div>
+        <b className="truncate text-sm text-ink">{e.titulo ?? "Espejo"}</b>
+        <span className="text-[13px] text-muted">{parecidoEnPalabras(p)}</span>
+      </div>
+      <Chip tono={esElLook ? "success" : "muted"}>{esElLook ? "el look sugerido" : "su ropa"}</Chip>
+    </Renglon>
   );
 }
 

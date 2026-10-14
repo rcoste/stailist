@@ -4,6 +4,7 @@ import { quienesVolvieron, type EstadoParo, type QuienVolvio, type ResumenCampan
 import { cargarCampana, desdePorDefecto } from "@/lib/admin/campana-datos";
 import { contarEventos, evaluarSenales, type Veredicto } from "@/lib/senales-vivas";
 import { resumenDelDia, tendencia, type DiaTendencia, type ResumenDia } from "@/lib/admin/hoy";
+import { parecidoConSugerido, type LookSugerido, type ParecidoConSugerido } from "@/lib/senal-oro";
 
 // La carga de la pantalla Hoy (lib/admin/hoy.ts). Se apoya en cargarCampana,
 // la MISMA carga del correo de las 8 y de la pantalla de campañas, para que
@@ -39,9 +40,86 @@ export type Voz = {
   seLoPuso: number;
   fitChecks: number;
   reportes: { cuando: string; correo: string; tipo: string; texto: string }[];
+  /**
+   * Los espejos (fit checks) de la semana, con su foto y si lo que trae puesto
+   * es el look sugerido o su propia ropa (lib/senal-oro.ts). Antes sólo había
+   * el conteo: el primero de una persona de anuncios se leyó como "se puso un
+   * look" sin poder ver la foto.
+   */
+  espejos: Espejo[];
 };
 
-async function vozDeLaSemana(): Promise<Voz> {
+export type Espejo = {
+  userId: string;
+  correo: string | null;
+  pais: string | null;
+  cuando: string;
+  titulo: string | null;
+  /** El consejo de color que le dio el espejo. */
+  consejo: string | null;
+  /** Ruta privada en Storage; la página la firma. */
+  fotoPath: string | null;
+  parecido: ParecidoConSugerido;
+};
+
+async function espejosDeLaSemana(): Promise<Espejo[]> {
+  return withDb(async (c) => {
+    const fuera = `coalesce(p.is_admin, false) = false and coalesce(p.email, '') not like '%@stailist.app'`;
+    const espejos = (
+      await c.query<{
+        user_id: string;
+        email: string | null;
+        pais: string | null;
+        created_at: string;
+        title: string | null;
+        explanation: string | null;
+        photo_path: string | null;
+        item_ids: string[] | null;
+      }>(
+        `select o.user_id, p.email, p.pais, o.created_at, o.title, o.explanation, o.photo_path, o.item_ids
+           from public.outfits o join public.profiles p on p.id = o.user_id
+          where o.source = 'espejo' and o.deleted_at is null
+            and o.created_at > now() - interval '7 days' and ${fuera}
+          order by o.created_at desc
+          limit 30`
+      )
+    ).rows;
+    if (espejos.length === 0) return [];
+    // Los looks sugeridos de esas personas, incluso los que luego borraron: lo
+    // que se compara es lo que se le sugirió, no lo que conservó.
+    const looks = (
+      await c.query<{ id: string; user_id: string; title: string | null; item_ids: string[] | null; created_at: string }>(
+        `select o.id, o.user_id, o.title, o.item_ids, o.created_at
+           from public.outfits o
+          where o.user_id = any($1::uuid[])
+            and coalesce(o.source, '') <> 'espejo'
+            and o.created_at > now() - interval '8 days'`,
+        [[...new Set(espejos.map((e) => e.user_id))]]
+      )
+    ).rows;
+    const porPersona = new Map<string, LookSugerido[]>();
+    for (const l of looks) {
+      const lista = porPersona.get(l.user_id) ?? [];
+      lista.push({ id: l.id, titulo: l.title, itemIds: l.item_ids ?? [], createdAt: new Date(l.created_at).toISOString() });
+      porPersona.set(l.user_id, lista);
+    }
+    return espejos.map((e) => {
+      const cuando = new Date(e.created_at).toISOString();
+      return {
+        userId: e.user_id,
+        correo: e.email,
+        pais: e.pais,
+        cuando,
+        titulo: e.title,
+        consejo: e.explanation,
+        fotoPath: e.photo_path,
+        parecido: parecidoConSugerido({ itemIds: e.item_ids ?? [], createdAt: cuando }, porPersona.get(e.user_id) ?? []),
+      };
+    });
+  });
+}
+
+async function vozDeLaSemana(): Promise<Omit<Voz, "espejos">> {
   return withDb(async (c) => {
     const fuera = `coalesce(p.is_admin, false) = false and coalesce(p.email, '') not like '%@stailist.app'`;
     const n = (
@@ -152,7 +230,12 @@ export async function cargarHoy(ahora: Date = new Date()): Promise<DatosHoy> {
   const hoy = diaEnZona(ahora);
   const ayer = sumarDias(hoy, -1);
   const d = await cargarCampana(await desdePorDefecto(ahora), ahora);
-  const [ia, alarmas, voz] = [await gastoIaPorDia([hoy, ayer]), await alarmasDeSalud(), await vozDeLaSemana()];
+  const [ia, alarmas, voz, espejos] = [
+    await gastoIaPorDia([hoy, ayer]),
+    await alarmasDeSalud(),
+    await vozDeLaSemana(),
+    await espejosDeLaSemana(),
+  ];
   return {
     hoy,
     ayer,
@@ -163,6 +246,6 @@ export async function cargarHoy(ahora: Date = new Date()): Promise<DatosHoy> {
     ia,
     alarmas,
     tendencia: tendencia(d.filas, hoy),
-    voz,
+    voz: { ...voz, espejos },
   };
 }
