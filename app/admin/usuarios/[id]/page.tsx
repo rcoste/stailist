@@ -313,7 +313,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
 
         <Panel
           titulo="Qué hizo"
-          extra={totalSesiones > 0 ? `${totalSesiones} sesion${totalSesiones === 1 ? "" : "es"} en ${porDia.length} día${porDia.length === 1 ? "" : "s"} · ${duracion(totalMinutos)}` : undefined}
+          extra={totalSesiones > 0 ? `${totalSesiones} ${totalSesiones === 1 ? "sesión" : "sesiones"} en ${porDia.length} día${porDia.length === 1 ? "" : "s"} · ${duracion(totalMinutos)}` : undefined}
           sinPadding
         >
           {porDia.length === 0 ? (
@@ -336,7 +336,7 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                       </span>
                       {volvio ? <Chip tono="success">volvió</Chip> : null}
                       <span className="ml-auto tabular-nums">
-                        {deLaPersona.length} sesion{deLaPersona.length === 1 ? "" : "es"} · {duracion(minutos)}
+                        {deLaPersona.length} {deLaPersona.length === 1 ? "sesión" : "sesiones"} · {duracion(minutos)}
                       </span>
                     </div>
                     <ResumenEnChips resumen={d.resumen} />
