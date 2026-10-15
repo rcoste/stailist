@@ -23,6 +23,11 @@ describe("applyVetoes", () => {
     expect(r.removed).toBe(1);
   });
 
+  it("la cuña y el stiletto son tacón; la plataforma plana no", () => {
+    const items = [p("Sandalias de cuña metálicas", "calzado"), p("Stilettos rojos", "calzado"), p("Tenis de plataforma", "calzado")];
+    expect(nombres(applyVetoes(items, { chips: ["tacones"], free: [] }))).toEqual(["Tenis de plataforma"]);
+  });
+
   it("acepta plural, acentos y prefijos de largo", () => {
     const items = [
       p("Botines con tacón", "calzado"),

@@ -10,7 +10,11 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   prompt y el juez. Ahora compara contra el nombre, por palabra entera (con
   plural, acentos y minifalda/maxivestido), así que "cap" ya no se lleva la
   "sudadera con capucha". Crop tops sólo aplica a tops: el pantalón cropped es
-  un largo. Hoy ninguna cuenta tiene un veto de prenda activo, así que ningún
+  un largo. La cuña y el stiletto cuentan como tacón (la plataforma plana no), y
+  las prendas mitad falda, mitad short caen en los dos vetos: de frente se leen
+  como falda y dejan la pierna como un short. Medido sobre las 3044 prendas
+  reales: ningún falso positivo; lo único que "cap" deja pasar son capuchas,
+  capas y una capibara. Hoy ninguna cuenta tiene un veto de prenda activo, así que ningún
   look actual cambia. Primeros tests del filtro (`lib/vetoes.test.ts`).
 
 ## [0.2.378.0] - 2026-10-14 — Actividad resalta lo importante y dice desde qué aparato

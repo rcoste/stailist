@@ -27,7 +27,10 @@ export const EMPTY_VETOES: StyleVetoes = { chips: [], free: [] };
 
 export const VETO_CATALOG: VetoChip[] = [
   // Prendas
-  { id: "tacones", label: "Tacones", kind: "garment", genders: ["mujer"], match: ["tacon", "heel"] },
+  // Cuña y stiletto también son tacón: quien los veta casi siempre es porque no
+  // camina en ellos, y una cuña sube el talón igual. La plataforma NO entra: la
+  // "flatform" es plana.
+  { id: "tacones", label: "Tacones", kind: "garment", genders: ["mujer"], match: ["tacon", "heel", "cuna", "stiletto"] },
   { id: "shorts", label: "Shorts", kind: "garment", match: ["short", "bermuda"] },
   { id: "faldas", label: "Faldas", kind: "garment", genders: ["mujer"], match: ["falda"] },
   { id: "vestidos", label: "Vestidos", kind: "garment", genders: ["mujer"], match: ["vestido"] },
