@@ -29,17 +29,24 @@ describe("elegirVariante", () => {
 });
 
 describe("alcanzaParaLooks (la regla de la lista de básicos)", () => {
-  it("dos de arriba, dos de abajo y zapatos", () => {
+  it("dos de arriba, dos de abajo y zapatos (4 combinaciones) alcanza", () => {
     expect(alcanzaParaLooks(["top", "top", "bottom", "bottom", "calzado"])).toBe(true);
     expect(alcanzaParaLooks(["top", "bottom", "bottom", "calzado"])).toBe(false);
     expect(alcanzaParaLooks(["top", "top", "bottom", "bottom"])).toBe(false);
   });
-  it("un vestido cuenta como arriba y abajo", () => {
-    expect(alcanzaParaLooks(["vestido", "vestido", "calzado"])).toBe(true);
-    expect(alcanzaParaLooks(["vestido", "top", "bottom", "calzado"])).toBe(true);
+  it("un vestido es UN look, no arriba y abajo a la vez", () => {
+    // El caso real del 12-oct: blusa, shorts, vestido y tenis = 2 looks posibles.
+    expect(alcanzaParaLooks(["top", "bottom", "vestido", "calzado"])).toBe(false);
+    expect(alcanzaParaLooks(["vestido", "vestido", "calzado"])).toBe(false);
+    expect(alcanzaParaLooks(["vestido", "vestido", "vestido", "calzado"])).toBe(true);
+    expect(alcanzaParaLooks(["top", "top", "bottom", "vestido", "calzado"])).toBe(true);
   });
-  it("dice qué falta en palabras", () => {
+  it("dice qué falta en palabras, pidiendo lo que más combinaciones suma", () => {
     expect(queFalta(["top", "top", "bottom"])).toEqual(["algo de abajo", "unos zapatos"]);
-    expect(queFalta(["vestido", "vestido", "calzado"])).toEqual([]);
+    expect(queFalta(["top", "bottom", "vestido", "calzado"])).toEqual(["algo de arriba"]);
+    expect(queFalta(["top", "bottom", "bottom", "bottom", "calzado"])).toEqual([]);
+    expect(queFalta(["bottom", "bottom", "bottom", "calzado"])).toEqual(["algo de arriba"]);
+    expect(queFalta([])).toEqual(["algo de arriba", "algo de abajo", "unos zapatos"]);
+    expect(queFalta(["vestido", "vestido", "vestido", "calzado"])).toEqual([]);
   });
 });

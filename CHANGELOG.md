@@ -2,6 +2,24 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.379.1] - 2026-10-14 — un vestido es un look, no "arriba y abajo" a la vez
+
+Visto en el primer día de /admin/errores: 5 primeros looks fallaron por
+"muy pocas prendas" (TOO_FEW_OUTFITS), las dos personas de la variante de
+fotos de la prueba A/B, ninguna de la lista de básicos.
+
+- **El mínimo para armar looks cuenta combinaciones reales**
+  (`alcanzaParaLooks`, `lib/onboarding-variante.ts`): (arriba × abajo) +
+  vestidos ≥ 3, más zapatos. Antes cada vestido contaba como prenda de arriba
+  Y de abajo: blusa, shorts, vestido y tenis pasaban como "2 y 2" pero sólo
+  dan dos looks, y el motor necesita dos que además pasen sus filtros. Una
+  persona vio fallar su primer look 4 veces seguidas y se fue.
+- **El checklist usa la misma regla que el servidor** (`queFalta`) y pide lo
+  que más combinaciones suma ("algo de arriba" cuando hay más pantalones que
+  blusas). La lista de básicos completa (2×2 = 4) pasa igual que antes.
+- **Ojo con la lectura de la prueba A/B (~26-oct):** la regla cambia para las
+  dos variantes desde hoy; separar antes y después del 2026-10-14.
+
 ## [0.2.379.0] - 2026-10-14 — /admin/errores: lo que le salió mal a alguien, en un solo lugar
 
 Pedido de Roberto tras el viaje que Vercel cortó a los 60 s sin que nadie se

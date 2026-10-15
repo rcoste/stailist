@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { alcanzaParaLooks } from "@/lib/onboarding-variante";
+import { alcanzaParaLooks, queFalta } from "@/lib/onboarding-variante";
 import { createClient } from "@/lib/supabase/server";
 import { registrarEvento } from "@/lib/telemetria";
 
@@ -47,9 +47,9 @@ export async function saveCloset(
     return { error: "No pude leer el catálogo — inténtalo otra vez." };
   }
 
-  // El mismo mínimo que el checklist (ver MINIMO en checklist.tsx): con una de
-  // arriba y una de abajo sólo existe UNA combinación y el motor, que entrega
-  // 2-3 looks, falla. Se repite aquí porque los ids viajan por el cliente.
+  // El mismo mínimo que el checklist (alcanzaParaLooks/queFalta): al menos 3
+  // combinaciones distintas. Con una de arriba y una de abajo sólo existe UNA y
+  // el motor, que entrega 2-3 looks, falla. Se repite aquí porque los ids viajan por el cliente.
   // Cuentan también las prendas que ya entraron por foto: en la variante con
   // fotos esta lista sólo COMPLEMENTA lo que faltó (lib/onboarding-variante.ts).
   const { data: deFoto } = await supabase
@@ -64,7 +64,7 @@ export async function saveCloset(
   ];
   if (!alcanzaParaLooks(categorias)) {
     return {
-      error: "Marca al menos dos de arriba, dos de abajo y unos zapatos — con menos no me alcanza para armarte looks distintos.",
+      error: `Con lo que marcaste no me alcanza para armarte looks distintos: suma ${queFalta(categorias).join(" y ")}.`,
     };
   }
 

@@ -6,6 +6,7 @@ import { Spinner } from "@/components/spinner";
 import { Icon } from "@/components/icon";
 import { agruparTrajes, type TrajeDeCatalogo } from "@/lib/trajes-catalogo";
 import { saveCloset } from "./actions";
+import { queFalta } from "@/lib/onboarding-variante";
 
 export type CatalogItem = {
   id: number;
@@ -30,8 +31,11 @@ const CAT_TRAJE = "traje";
 // primero las tres que hacen falta para armar un look y después las
 // opcionales, en el mismo orden en que el botón pregunta por ellas.
 const CATEGORY_ORDER = ["top", "bottom", "calzado", "vestido", "saco", CAT_TRAJE, "abrigo"];
-// Mínimo para armar LOOKS, en plural: dos de arriba, dos de abajo y zapatos.
-// Un vestido cuenta como arriba+abajo; sacos y abrigos son opcionales.
+// Mínimo para armar LOOKS, en plural: al menos 3 combinaciones distintas y
+// unos zapatos (2 de arriba y 2 de abajo dan 4). Sacos y abrigos son
+// opcionales. Lo decide `queFalta` (lib/onboarding-variante.ts), la misma regla
+// que el servidor: desde el 2026-10-14 un vestido es UN look, no "arriba y
+// abajo" a la vez.
 //
 // ERA "ALGO DE CADA UNO" Y ESO ROMPÍA EL PRIMER LOOK (2026-10-02). Con una
 // camiseta, un pantalón y unos tenis sólo existe UNA combinación, y el motor
@@ -41,7 +45,6 @@ const CATEGORY_ORDER = ["top", "bottom", "calzado", "vestido", "saco", CAT_TRAJE
 // checklist dejaba pasar. Roberto: "no suena descabellado que una persona
 // marque al menos" unas cuantas. Con 2×2 hay cuatro combinaciones.
 const REQUIRED = ["top", "bottom", "calzado"];
-export const MINIMO: Record<string, number> = { top: 2, bottom: 2, calzado: 1 };
 // Opcionales que el flujo guiado ANTES saltaba (el botón iba directo a enviar
 // tras los 3 obligatorios): así el motor se enteraba de la ropa de abrigo solo
 // si la persona tocaba el chip a mano. Ahora el CTA pasa por estas si están
@@ -96,10 +99,15 @@ export function Checklist({ catalog }: { catalog: CatalogItem[] }) {
     cat === CAT_TRAJE
       ? trajesMarcados.length
       : sueltas.filter((i) => i.category === cat && selected.has(i.id)).length;
-  // Un vestido cubre arriba y abajo: cada uno cuenta en las dos.
-  const cuantas = (cat: string) =>
-    cat === "top" || cat === "bottom" ? countIn(cat) + countIn("vestido") : countIn(cat);
-  const isSatisfied = (cat: string) => cuantas(cat) >= (MINIMO[cat] ?? 1);
+  const cuantas = (cat: string) => countIn(cat);
+  // Lo que falta sale de la MISMA regla que el servidor (saveCloset): antes el
+  // checklist contaba cada vestido como arriba y como abajo, y dejaba pasar
+  // clósets con sólo dos looks posibles (ver alcanzaParaLooks).
+  const FALTA_A_CAT: Record<string, string> = { "algo de arriba": "top", "algo de abajo": "bottom", "unos zapatos": "calzado" };
+  const faltanCats = new Set(
+    queFalta(catalog.filter((i) => selected.has(i.id)).map((i) => i.category)).map((f) => FALTA_A_CAT[f])
+  );
+  const isSatisfied = (cat: string) => !faltanCats.has(cat);
   const requiredPresent = REQUIRED.filter((c) => cats.includes(c));
   const missing = requiredPresent.filter((c) => !isSatisfied(c));
   const requiredDone = missing.length === 0;
