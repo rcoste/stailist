@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.378.1] - 2026-10-14 — vetar una prenda ya la quita de verdad
+
+- **El filtro de vetos de prenda no quitaba nada.** Comparaba contra
+  `attrs.tipo` y ninguna prenda lo trae (0 de 3044 en producción). Tacones,
+  shorts, faldas, vestidos, sandalias, crop tops y gorras sólo los cuidaban el
+  prompt y el juez. Ahora compara contra el nombre, por palabra entera (con
+  plural, acentos y minifalda/maxivestido), así que "cap" ya no se lleva la
+  "sudadera con capucha". Crop tops sólo aplica a tops: el pantalón cropped es
+  un largo. Hoy ninguna cuenta tiene un veto de prenda activo, así que ningún
+  look actual cambia. Primeros tests del filtro (`lib/vetoes.test.ts`).
+
 ## [0.2.378.0] - 2026-10-14 — Actividad resalta lo importante y dice desde qué aparato
 
 Pedido de Roberto: "resaltar las acciones que son más importantes" y "ver

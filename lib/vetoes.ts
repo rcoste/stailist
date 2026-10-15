@@ -13,9 +13,12 @@ export type VetoChip = {
   kind: VetoKind;
   /** Si está, el chip solo se muestra a estos géneros. */
   genders?: Gender[];
-  /** Términos (normalizados) a buscar en attrs.tipo (garment) o attrs.color
-   *  (color). Default: el label normalizado. */
+  /** Términos (normalizados) a buscar en el nombre de la prenda (garment) o
+   *  en attrs.color (color). Default: el label normalizado. */
   match?: string[];
+  /** Garment: sólo aplica a prendas de estas categorías. "cropped" en un top
+   *  es un crop top; en un pantalón es un largo, y vetar uno no veta el otro. */
+  soloCategorias?: string[];
 };
 
 export type StyleVetoes = { chips: string[]; free: string[] };
@@ -29,7 +32,7 @@ export const VETO_CATALOG: VetoChip[] = [
   { id: "faldas", label: "Faldas", kind: "garment", genders: ["mujer"], match: ["falda"] },
   { id: "vestidos", label: "Vestidos", kind: "garment", genders: ["mujer"], match: ["vestido"] },
   { id: "sandalias", label: "Sandalias", kind: "garment", match: ["sandalia", "sandal", "huarache"] },
-  { id: "crop_tops", label: "Crop tops", kind: "garment", genders: ["mujer"], match: ["crop"] },
+  { id: "crop_tops", label: "Crop tops", kind: "garment", genders: ["mujer"], match: ["crop", "cropped"], soloCategorias: ["top"] },
   { id: "gorras", label: "Gorras", kind: "garment", match: ["gorra", "cachucha", "cap"] },
   // Detalles
   { id: "estampados", label: "Estampados", kind: "feature" },
@@ -85,30 +88,54 @@ export function vetoLabels(vetoes: StyleVetoes | null | undefined): string[] {
 }
 
 // Filtro previo (capa 1): quita del clóset las prendas que mapean a un veto de
-// prenda (attrs.tipo) o de color (attrs.color). Los feature y el free NO filtran
-// — los cubre la regla dura + el juez. Objeto vacío = passthrough idéntico.
-export function applyVetoes<T extends { attrs: { tipo?: string; color?: string } }>(
-  items: T[],
-  vetoes: StyleVetoes | null | undefined
-): { items: T[]; removed: number } {
+// prenda (por su NOMBRE) o de color (attrs.color). Los feature y el free NO
+// filtran — los cubre la regla dura + el juez. Objeto vacío = passthrough idéntico.
+//
+// POR QUÉ EL NOMBRE Y NO attrs.tipo (2026-10-14). Comparaba contra attrs.tipo,
+// y ninguna prenda lo trae: 0 de 3044 en producción (los arquetipos no lo
+// llevan y el alta por foto tampoco lo guarda). El filtro de tacones, shorts,
+// faldas, vestidos, sandalias, crop tops y gorras no quitaba nada; sólo los
+// cuidaban el prompt y el juez. Lo encontró Pablo leyendo el código.
+//
+// POR QUÉ PALABRA ENTERA y no `includes`: "cap" (gorra) estaba dentro de
+// "sudadera con capucha", y "short" dentro de cualquier "shortalls". Se acepta
+// el plural (tacones, faldas) y los prefijos de largo (minifalda, maxivestido).
+export function applyVetoes<
+  T extends { attrs: { nombre?: string; tipo?: string; color?: string; categoria?: string } },
+>(items: T[], vetoes: StyleVetoes | null | undefined): { items: T[]; removed: number } {
   const chips = vetoes?.chips ?? [];
-  const garmentTerms: string[] = [];
+  const prendas: VetoChip[] = [];
   const colorTerms: string[] = [];
   for (const id of chips) {
     const chip = CHIP_BY_ID[id];
     if (!chip) continue;
-    if (chip.kind === "garment") garmentTerms.push(...chipTerms(chip));
+    if (chip.kind === "garment") prendas.push(chip);
     else if (chip.kind === "color") colorTerms.push(...chipTerms(chip));
   }
-  if (garmentTerms.length === 0 && colorTerms.length === 0) {
+  if (prendas.length === 0 && colorTerms.length === 0) {
     return { items, removed: 0 };
   }
   const kept = items.filter((it) => {
-    const tipo = normalize(it.attrs.tipo ?? "");
+    const nombre = normalize(`${it.attrs.nombre ?? ""} ${it.attrs.tipo ?? ""}`);
     const color = normalize(it.attrs.color ?? "");
-    if (tipo && garmentTerms.some((t) => tipo.includes(t))) return false;
+    if (nombre && prendas.some((c) => vetaPrenda(c, nombre, it.attrs.categoria ?? null))) return false;
     if (color && colorTerms.some((t) => color.includes(t))) return false;
     return true;
   });
   return { items: kept, removed: items.length - kept.length };
+}
+
+function vetaPrenda(chip: VetoChip, nombre: string, categoria: string | null): boolean {
+  if (chip.soloCategorias && !(categoria && chip.soloCategorias.includes(categoria))) return false;
+  return chipTerms(chip).some((t) => palabra(t).test(nombre));
+}
+
+const PALABRAS = new Map<string, RegExp>();
+function palabra(t: string): RegExp {
+  let re = PALABRAS.get(t);
+  if (!re) {
+    re = new RegExp(`(?<![a-z])(?:mini|midi|maxi)?${t}(?:e?s)?(?![a-z])`);
+    PALABRAS.set(t, re);
+  }
+  return re;
 }
