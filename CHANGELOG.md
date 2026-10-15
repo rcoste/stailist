@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.379.2] - 2026-10-15 — Actividad se lee en el celular
+
+- **En el celular cada línea del feed se parte en dos**: arriba la hora, quién,
+  su aparato y los chips; abajo lo que hizo, a todo lo ancho. En una sola
+  línea el texto quedaba en una columnita ("llegó / a / su / primer / look") y
+  "onboarding" se salía del panel, empujando la página a la derecha. En la
+  compu se ve igual que antes.
+- La línea y la leyenda viven ahora en `app/admin/actividad/fila.tsx`, aparte
+  de la página, para poder pintarlas solas en local.
+
 ## [0.2.379.1] - 2026-10-14 — un vestido es un look, no "arriba y abajo" a la vez
 
 Visto en el primer día de /admin/errores: 5 primeros looks fallaron por
