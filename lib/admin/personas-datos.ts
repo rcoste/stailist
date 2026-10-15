@@ -16,6 +16,8 @@ export type PerfilAdmin = {
   email: string | null;
   created_at: string;
   pais: string | null;
+  /** El aparato del onboarding (lib/dispositivo.ts); null en cuentas de antes del 2026-10-01. */
+  dispositivo: string | null;
   origen: unknown;
   como_nos_conocio: string | null;
   is_admin: boolean;
@@ -45,7 +47,7 @@ export async function cargarPersonas(desde?: Date | null): Promise<{ perfiles: P
   return withDb(async (c) => {
     const perfiles = (
       await c.query(
-        `select id, email, created_at, pais, origen, como_nos_conocio, coalesce(is_admin, false) as is_admin,
+        `select id, email, created_at, pais, dispositivo, origen, como_nos_conocio, coalesce(is_admin, false) as is_admin,
                 coalesce(onboarding_step, 0) as onboarding_step, palette_season, avatar_path, capsule_target, onboarding_variante
            from public.profiles`
       )
@@ -57,9 +59,17 @@ export async function cargarPersonas(desde?: Date | null): Promise<{ perfiles: P
       created_at: iso(r.created_at),
       deleted_at: iso(r.deleted_at),
     }));
+    // `source` viaja cuando el select lo trae (outfits): sin él, un espejo salía
+    // en el feed también como "generó un look" (construirFeed lo necesita).
     const conVida = (q: string) =>
       c.query(q, args).then((r) =>
-        r.rows.map((x) => ({ id: x.id, user_id: x.user_id, created_at: iso(x.created_at), deleted_at: iso(x.deleted_at) }))
+        r.rows.map((x) => ({
+          id: x.id,
+          user_id: x.user_id,
+          created_at: iso(x.created_at),
+          deleted_at: iso(x.deleted_at),
+          ...(x.source !== undefined ? { source: x.source as string | null } : {}),
+        }))
       );
     const outfits = await conVida(`select id, user_id, created_at, deleted_at, source from public.outfits${ventana("created_at", true)}`);
     const trips = await conVida(`select id, user_id, created_at, deleted_at from public.trips${ventana("created_at", true)}`);

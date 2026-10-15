@@ -2,6 +2,27 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.378.0] - 2026-10-14 — Actividad resalta lo importante y dice desde qué aparato
+
+Pedido de Roberto: "resaltar las acciones que son más importantes" y "ver
+desde qué dispositivo estás". Boceto aprobado antes de construir.
+
+- **Cuatro niveles en el feed** (`nivelDe`, `lib/admin/actividad.ts`): lo que
+  buscamos (se puso un look, votó 👍 o 👎, guardó un look, instaló la app) con
+  fondo suave y raya negra; usó el producto en negro; rutina en gris; algo
+  falló con raya roja. Con leyenda arriba. Un tipo sin nivel sale en gris, y
+  un test obliga a decidir el nivel de cada evento con nombre.
+- **"solo lo importante"** esconde la rutina: en los últimos 7 días deja 294
+  de 1324 líneas (1030 eran rutina).
+- **El aparato en cada línea** (celular, compu, tablet). La visita diaria
+  guarda ahora el aparato de la primera vuelta del día (`lib/visitas.ts`,
+  desde `getProfile` y `/api/visita`); los días anteriores caen al aparato
+  del onboarding, que existe desde el 2026-10-01.
+- **El porqué del 👎** y el motivo de una generación fallida salen como
+  detalle de la línea.
+- **Arreglo:** el cargador del admin tiraba el `source` de los looks, así que
+  cada espejo salía también como "generó un look".
+
 ## [0.2.377.0] - 2026-10-14 — las piezas sugeridas dicen cómo se ven, y se dibujan así
 
 Bloque C de las notas de una maleta real: "la blusa de satén rubí está de

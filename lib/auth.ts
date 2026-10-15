@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ONBOARDING_COMPLETE, routeForStep } from "@/lib/onboarding";
@@ -16,6 +16,7 @@ import type { AgeRange } from "@/lib/edad";
 import type { Build, Volume } from "@/lib/silueta";
 import { RUTA_CUENTA_PROGRAMADA } from "@/lib/borrado-programado";
 import { registrarVisita } from "@/lib/visitas";
+import { dispositivoDesdeUA } from "@/lib/dispositivo";
 
 export type Gender = "hombre" | "mujer";
 
@@ -138,7 +139,10 @@ export async function getProfile(opts?: { real?: boolean }): Promise<Profile> {
   // No se registra con { real: true } (eso es /admin operando, no usar la app)
   // ni en modo "ver como": esa vuelta es del admin, y apuntarla en la persona
   // observada ensuciaría justo el dato que se está mirando.
-  if (!opts?.real && !viewAs) await registrarVisita(supabase, profile);
+  if (!opts?.real && !viewAs) {
+    const ua = (await headers()).get("user-agent");
+    await registrarVisita(supabase, profile, new Date(), dispositivoDesdeUA(ua));
+  }
 
   // "Ver como": si un admin trae la cookie, las pantallas de la app cargan el
   // perfil del usuario objetivo en vez del propio (las lecturas pasan por las

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { registrarEvento } from "@/lib/telemetria";
+import type { Dispositivo } from "@/lib/dispositivo";
 
 // UNA VISITA AL DÍA, POR PERSONA.
 //
@@ -51,11 +52,17 @@ export function esVisitaNueva(ultima: string | null | undefined, ahora: Date): b
  *
  * Nada de esto puede tumbar una pantalla: si falla, se ignora — un dato de
  * medición no vale una página rota.
+ *
+ * `dispositivo` (2026-10-14): desde qué aparato llegó ESA vuelta. El del
+ * onboarding (profiles.dispositivo) dice cómo entró la primera vez, no si
+ * después regresó desde la compu; Roberto lo pidió para el feed de Actividad.
+ * Como la visita es una al día, queda el aparato de la PRIMERA vuelta del día.
  */
 export async function registrarVisita(
   supabase: SupabaseClient,
   perfil: { id: string; ultima_visita?: string | null },
-  ahora: Date = new Date()
+  ahora: Date = new Date(),
+  dispositivo: Dispositivo | null = null
 ): Promise<boolean> {
   if (!esVisitaNueva(perfil.ultima_visita, ahora)) return false;
   try {
@@ -69,7 +76,7 @@ export async function registrarVisita(
     await registrarEvento(supabase, {
       user_id: perfil.id,
       type: "visita",
-      data: { dia: diaLocal(ahora) },
+      data: dispositivo ? { dia: diaLocal(ahora), dispositivo } : { dia: diaLocal(ahora) },
     });
     return true;
   } catch (e) {
