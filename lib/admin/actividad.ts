@@ -455,3 +455,74 @@ export function vueltas(
   }
   return out;
 }
+
+/**
+ * LO IMPORTANTE, RESALTADO (2026-10-14, boceto aprobado por Roberto).
+ *
+ * El feed ponía todo al mismo volumen: en una semana normal son ~700 pasos del
+ * onboarding y ~200 prendas contra 2 espejos y 10 votos, y lo que el
+ * experimento vino a medir se perdía en la rutina. Cuatro niveles, por los
+ * criterios de éxito del CLAUDE.md:
+ *  · "oro": la persona le dijo algo al stylist sobre un look — se lo puso,
+ *    lo votó (el 👎 también: es la señal que más le enseña al motor), lo
+ *    guardó — o instaló la app, que es decidir quedarse.
+ *  · "valor": usó lo que el producto promete (looks, viajes, cápsula, probador).
+ *  · "falla": se topó con un error. Una persona ya se fue por un TOO_FEW_OUTFITS
+ *    en el primer look; esto no puede verse igual que "abrió la app".
+ *  · "rutina": todo lo demás, incluido lo que no tenga nivel: un tipo nuevo
+ *    sale en gris hasta que alguien decida que importa.
+ */
+export type Nivel = "oro" | "valor" | "rutina" | "falla";
+
+const NIVEL: Record<string, Nivel> = {
+  "ev:worn": "oro",
+  "ev:espejo_subido": "oro",
+  "ev:vote_up": "oro",
+  "ev:vote_down": "oro",
+  "ev:trip_look_vote": "oro",
+  "ev:outfit_favorited": "oro",
+  "ev:pwa_installed": "oro",
+  look: "valor",
+  look_viaje: "valor",
+  viaje: "valor",
+  cartera: "valor",
+  "ev:first_outfit_ttv": "valor",
+  "ev:another_look": "valor",
+  "ev:wow_otro_look": "valor",
+  "ev:capsule_generated": "valor",
+  "ev:tryon_generated": "valor",
+  "ev:avatar_generated": "valor",
+  "ev:trip_outfits_generated": "valor",
+  "ev:trip_item_swap": "valor",
+  "ev:trip_motivo": "valor",
+  "ev:generation_failed": "falla",
+  "ev:avatar_fallo": "falla",
+};
+
+export function nivelDe(m: Pick<Momento, "tipo">): Nivel {
+  return NIVEL[m.tipo] ?? "rutina";
+}
+
+/** "solo lo importante" esconde la rutina; lo demás se queda. */
+export function esImportante(m: Pick<Momento, "tipo">): boolean {
+  return nivelDe(m) !== "rutina";
+}
+
+/**
+ * DESDE QUÉ APARATO, POR DÍA (2026-10-14). Sale del evento `visita`, que desde
+ * ese día guarda el aparato de la primera vuelta del día (lib/visitas.ts).
+ * Clave `userId|día de CDMX`. Los días sin ese dato caen, en la pantalla, al
+ * aparato del onboarding.
+ */
+export function dispositivoPorDia(
+  events: { user_id: string | null; type: string; data: Record<string, unknown> | null; created_at: string | null }[]
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const e of events) {
+    if (e.type !== "visita" || !e.user_id || !e.created_at) continue;
+    const d = e.data?.dispositivo;
+    if (typeof d !== "string" || !d) continue;
+    out.set(`${e.user_id}|${diaEnZona(new Date(e.created_at))}`, d);
+  }
+  return out;
+}

@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { registrarVisita } from "@/lib/visitas";
 import { VIEW_AS_COOKIE } from "@/lib/auth";
+import { dispositivoDesdeUA } from "@/lib/dispositivo";
 
 // LA VISITA DE QUIEN VUELVE A UNA PESTAÑA ABIERTA (2026-10-10).
 //
@@ -17,7 +18,7 @@ import { VIEW_AS_COOKIE } from "@/lib/auth";
 // Esto lo llama components/visita-al-volver.tsx cuando la pestaña vuelve a la
 // vista en otro día. El candado de una visita al día sigue siendo el de
 // registrarVisita, así que llamarlo de más no duplica nada.
-export async function POST() {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,6 +34,11 @@ export async function POST() {
     .maybeSingle();
   if (!perfil) return new NextResponse(null, { status: 204 });
 
-  const registrada = await registrarVisita(supabase, perfil);
+  const registrada = await registrarVisita(
+    supabase,
+    perfil,
+    new Date(),
+    dispositivoDesdeUA(request.headers.get("user-agent"))
+  );
   return NextResponse.json({ registrada });
 }
