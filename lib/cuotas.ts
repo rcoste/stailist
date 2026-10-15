@@ -1,5 +1,6 @@
 import { todasLasFilas } from "@/lib/todas-las-filas";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { registrarError } from "@/lib/errores";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CUÁNTA IA PUEDE GASTAR UNA PERSONA EN UN DÍA.
@@ -235,7 +236,7 @@ export async function revisarCuota(
   ahora: Date = new Date()
 ): Promise<Veredicto> {
   if (motorPausado()) {
-    return { permitido: false, motivo: "pausa", mensaje: MENSAJE_PAUSA };
+    return frenar(supabase, userId, "pausa", { permitido: false, motivo: "pausa", mensaje: MENSAJE_PAUSA });
   }
   if (await sesionSinCorreo(supabase)) {
     return { permitido: false, motivo: "correo", mensaje: MENSAJE_SIN_CORREO };
@@ -253,7 +254,7 @@ export async function revisarCuota(
       TAREAS[recurso].includes(r.tarea as string)
     ).length;
     if (usadas >= CUOTAS[recurso]) {
-      return { permitido: false, motivo: "cuota", mensaje: MENSAJE_CUOTA[recurso] };
+      return frenar(supabase, userId, recurso, { permitido: false, motivo: "cuota", mensaje: MENSAJE_CUOTA[recurso] });
     }
 
     const gastado = data.reduce(
@@ -261,7 +262,7 @@ export async function revisarCuota(
       0
     );
     if (gastado >= TOPE_USD_DIA) {
-      return { permitido: false, motivo: "gasto", mensaje: MENSAJE_TOPE_USD };
+      return frenar(supabase, userId, "gasto", { permitido: false, motivo: "gasto", mensaje: MENSAJE_TOPE_USD });
     }
     return { permitido: true };
   } catch {
@@ -289,7 +290,7 @@ export async function revisarGasto(
   ahora: Date = new Date()
 ): Promise<Veredicto> {
   if (motorPausado()) {
-    return { permitido: false, motivo: "pausa", mensaje: MENSAJE_PAUSA };
+    return frenar(supabase, userId, "pausa", { permitido: false, motivo: "pausa", mensaje: MENSAJE_PAUSA });
   }
   if (await sesionSinCorreo(supabase)) {
     return { permitido: false, motivo: "correo", mensaje: MENSAJE_SIN_CORREO };
@@ -306,7 +307,7 @@ export async function revisarGasto(
       0
     );
     if (gastado >= TOPE_USD_DIA) {
-      return { permitido: false, motivo: "gasto", mensaje: MENSAJE_TOPE_USD };
+      return frenar(supabase, userId, "gasto", { permitido: false, motivo: "gasto", mensaje: MENSAJE_TOPE_USD });
     }
     return { permitido: true };
   } catch {
@@ -405,4 +406,25 @@ export async function cabeAntesDelCorreo(
   } catch {
     return true;
   }
+}
+
+/**
+ * Un freno deja rastro en /admin/errores (2026-10-14): si alguien topa una
+ * cuota todos los días, el tope está bajo, y antes sólo se sabía si ella lo
+ * reportaba. El de "falta tu correo" no se anota: es un paso del registro, no
+ * un freno.
+ */
+async function frenar(
+  supabase: SupabaseClient,
+  userId: string,
+  cual: string,
+  v: Veredicto
+): Promise<Veredicto> {
+  await registrarError(supabase, {
+    userId,
+    origen: "servidor",
+    clave: `freno:${cual}`,
+    mensaje: v.permitido ? null : v.mensaje,
+  });
+  return v;
 }

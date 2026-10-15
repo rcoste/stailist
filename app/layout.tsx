@@ -1,4 +1,5 @@
 import { VisitaAlVolver } from "@/components/visita-al-volver";
+import { VigiaErrores } from "@/components/vigia-errores";
 import type { Metadata, Viewport } from "next";
 import { Arimo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
@@ -81,6 +82,9 @@ export default function RootLayout({
         {/* Anota la visita de quien vuelve a una pestaña que dejó abierta,
             que no recarga la página (components/visita-al-volver.tsx). */}
         <VisitaAlVolver />
+        {/* Avisa a /admin/errores de las llamadas que truenan o se cortan
+            (lib/avisar-error.ts). No pinta nada. */}
+        <VigiaErrores />
         {/* Etiquetas de publicidad: apagadas sin sus variables, y sólo donde
             lo diga rutaMedible (lib/publicidad.ts). Va después de {children}
             a propósito: la marca de menor del onboarding corre antes. */}

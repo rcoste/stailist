@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 //   Embudo       ¿dónde se pierden?
 //   Retención    ¿quién vuelve?
 //   Personas     ¿quién es cada quien y qué hace?
+//   Errores      ¿a quién le salió algo mal? (globo rojo = tipos sin revisar)
 //   Taller       las herramientas de construir, apartadas
 //
 // Cada entrada "es dueña" de varias rutas: Personas se queda marcada en la
@@ -23,6 +24,7 @@ export const ENTRADAS: { href: string; label: string; rutas: string[]; grupo: "l
   { href: "/admin/retencion", label: "Retención", rutas: ["/admin/retencion"], grupo: "leer" },
   // Personas abre en Actividad: es la vista que más usa Roberto.
   { href: "/admin/actividad", label: "Personas", rutas: ["/admin/usuarios", "/admin/actividad", "/admin/ver-como"], grupo: "leer" },
+  { href: "/admin/errores", label: "Errores", rutas: ["/admin/errores"], grupo: "leer" },
   { href: "/admin/taller", label: "Taller", rutas: [], grupo: "construir" },
 ];
 
@@ -35,8 +37,16 @@ export function entradaDe(pathname: string): string {
   return "/admin/taller";
 }
 
+/** El globo rojo de Errores: tipos de error sin revisar (lib/admin/errores.ts porRevisar). */
+function Globo({ n }: { n: number }) {
+  if (n <= 0) return null;
+  return (
+    <span className="ml-1.5 rounded-full bg-error px-1.5 text-[11px] font-bold leading-[18px] text-on-accent">{n}</span>
+  );
+}
+
 /** La barra lateral (escritorio). */
-export function AdminSidebar() {
+export function AdminSidebar({ errores = 0 }: { errores?: number }) {
   const activa = entradaDe(usePathname());
   const item = (e: { href: string; label: string }) => (
     <Link
@@ -47,6 +57,7 @@ export function AdminSidebar() {
       }`}
     >
       {e.label}
+      {e.href === "/admin/errores" ? <Globo n={errores} /> : null}
     </Link>
   );
   return (
@@ -68,7 +79,7 @@ export function AdminSidebar() {
 }
 
 /** La barra de arriba (celular): el menú en una línea que se desliza. */
-export function AdminNavMovil() {
+export function AdminNavMovil({ errores = 0 }: { errores?: number }) {
   const activa = entradaDe(usePathname());
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-surface lg:hidden">
@@ -86,6 +97,7 @@ export function AdminNavMovil() {
               }`}
             >
               {e.label}
+              {e.href === "/admin/errores" ? <Globo n={errores} /> : null}
             </Link>
           ))}
         </nav>

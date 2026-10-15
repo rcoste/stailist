@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { avisarError } from "@/lib/avisar-error";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 
@@ -26,6 +27,7 @@ export default function Error({
     // A la consola del navegador y a los logs de Vercel: sin esto el fallo se
     // pierde y sólo queda "algo se rompió" sin nada que investigar.
     console.error("[error-boundary]", error);
+    avisarError({ clave: "pantalla-de-error", tecnico: error.digest ? `digest ${error.digest}: ${error.message}` : error.message });
   }, [error]);
 
   return (

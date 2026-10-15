@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { mensajeDelFreno } from "@/lib/mensaje-del-freno";
+import { avisarError } from "@/lib/avisar-error";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon } from "@/components/icon";
@@ -301,6 +302,7 @@ export function TripWizard({
           if (!line.trim()) continue;
           const evt = JSON.parse(line);
           if (evt.error) {
+            avisarError({ clave: `viaje:${String(evt.error).slice(0, 30)}`, tecnico: evt.detalle ?? null });
             setPhase("error");
             return;
           } else if (evt.done) {
@@ -309,8 +311,13 @@ export function TripWizard({
           }
         }
       }
+      // El stream terminó sin "done" ni "error": el servidor se cortó a medias
+      // (el caso del 2026-10-14, Vercel a los 60 s). El servidor no alcanzó a
+      // anotar nada; sólo el navegador lo sabe.
+      avisarError({ clave: "viaje:cortado" });
       setPhase("error");
-    } catch {
+    } catch (e) {
+      avisarError({ clave: "viaje:excepcion", tecnico: e instanceof Error ? e.message : String(e) });
       setPhase("error");
     }
   }
