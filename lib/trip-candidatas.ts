@@ -55,3 +55,34 @@ export function candidatasDeOverrides(
   }
   return { candidatas, descartados, ganados };
 }
+
+// UNA PRENDA, UN LUGAR EN LA MALETA (2026-10-15).
+//
+// Las candidatas del duelo ("¿llevas tu suéter en vez del sugerido?") se
+// buscan para todos los huecos A LA VEZ, y ninguna búsqueda sabía lo que
+// eligieron las otras. Con un clóset chico, la misma prenda salía como la
+// mejor opción de dos huecos: en una maleta real, el mismo "Suéter de cuello
+// alto negro" se propuso y se aceptó para dos piezas distintas, y la maleta lo
+// contó dos veces. En los LOOKS repetir una prenda es la gracia de una
+// cápsula; en la LISTA de lo que se empaca, una prenda física ocupa un lugar.
+//
+// Reparto: hueco por hueco, en el orden de la lista, cada uno se queda con su
+// mejor opción que nadie haya tomado; si sus tres opciones ya están tomadas,
+// se queda sin candidata (y la persona puede elegir de su clóset a mano).
+
+export type ResultadoHueco<T extends { nombre: string }> = { i: number; matches: T[] };
+
+export function repartirCandidatas<T extends { nombre: string }>(
+  resultados: ResultadoHueco<T>[],
+  /** Prendas que ya ocupan un lugar o ya están propuestas para otro hueco. */
+  tomadas: Set<string>
+): Map<number, T | null> {
+  const ocupadas = new Set(tomadas);
+  const out = new Map<number, T | null>();
+  for (const r of [...resultados].sort((a, b) => a.i - b.i)) {
+    const elegida = r.matches.find((m) => !ocupadas.has(m.nombre)) ?? null;
+    if (elegida) ocupadas.add(elegida.nombre);
+    out.set(r.i, elegida);
+  }
+  return out;
+}

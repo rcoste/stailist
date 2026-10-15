@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.379.4] - 2026-10-15 — una prenda, un lugar en la maleta
+
+- **La misma prenda ya no se propone para dos piezas de la maleta**
+  (`repartirCandidatas`, `lib/trip-candidatas.ts`). Las candidatas del duelo
+  se buscaban para todos los huecos a la vez y ninguna búsqueda sabía lo que
+  eligieron las otras: con un clóset chico, el mismo "Suéter de cuello alto
+  negro" salió y se aceptó para dos piezas, y la maleta lo contó dos veces.
+  Ahora cada hueco se queda con su mejor opción que nadie haya tomado (ni
+  aceptada ni propuesta para otro); si no queda ninguna, se queda sin
+  candidata. En los looks repetir prenda sigue siendo la gracia de una
+  cápsula; en la lista de lo que se empaca, una prenda física es un lugar.
+
 ## [0.2.379.3] - 2026-10-15 — el top negro ya no se dibuja beige
 
 - **Las piezas sugeridas con descripción se dibujaban sin su nombre ni su
