@@ -33,23 +33,55 @@ export function esVarianteFotos(v: string | null | undefined): boolean {
 }
 
 /**
- * ¿Con estas prendas alcanza para looks distintos? Un vestido cuenta como
- * arriba y abajo a la vez. Es la regla de app/onboarding/closet/actions.ts,
- * sacada aquí para que la pantalla de fotos y la lista digan lo mismo.
+ * ¿Con estas prendas alcanza para looks distintos? Cuenta COMBINACIONES:
+ * (prendas de arriba × prendas de abajo) + vestidos, y pide al menos 3, más
+ * unos zapatos. Es la regla de app/onboarding/closet/actions.ts, sacada aquí
+ * para que la pantalla de fotos y la lista digan lo mismo.
+ *
+ * ANTES UN VESTIDO CONTABA COMO "ARRIBA" Y COMO "ABAJO" A LA VEZ (hasta el
+ * 2026-10-14), y eso dejaba pasar clósets con sólo dos looks posibles: blusa,
+ * shorts, vestido y tenis sumaban "2 de arriba y 2 de abajo" pero sólo dan
+ * blusa+shorts o vestido+tenis. El motor necesita dos looks distintos que
+ * además pasen sus filtros (clima, ocasión); con dos combinaciones justas
+ * cualquiera lo tumba. Pasó el 12 de octubre en la variante de fotos: una
+ * persona vio fallar su primer look 4 veces seguidas y se fue, otra lo logró
+ * al segundo intento. Con 3 combinaciones hay margen; la lista de básicos
+ * (2×2 = 4) pasa igual que antes.
  */
-export function alcanzaParaLooks(categorias: (string | null | undefined)[]): boolean {
+export const COMBINACIONES_MINIMAS = 3;
+
+function cuenta(categorias: (string | null | undefined)[]) {
   const de = (cat: string) => categorias.filter((c) => c === cat).length;
-  const vestidos = de("vestido");
-  return de("top") + vestidos >= 2 && de("bottom") + vestidos >= 2 && de("calzado") >= 1;
+  return { top: de("top"), bottom: de("bottom"), vestido: de("vestido"), calzado: de("calzado") };
 }
 
-/** Lo que le falta, en palabras, para la pantalla que complementa con la lista. */
+const combinaciones = (c: { top: number; bottom: number; vestido: number }) => c.top * c.bottom + c.vestido;
+
+export function alcanzaParaLooks(categorias: (string | null | undefined)[]): boolean {
+  const c = cuenta(categorias);
+  return combinaciones(c) >= COMBINACIONES_MINIMAS && c.calzado >= 1;
+}
+
+/**
+ * Lo que le falta, en palabras, para la pantalla que complementa con la lista.
+ * Pide lo que MÁS combinaciones suma: con una blusa y tres pantalones, otra
+ * prenda de arriba da tres looks más; otro pantalón, sólo uno.
+ */
 export function queFalta(categorias: (string | null | undefined)[]): string[] {
-  const de = (cat: string) => categorias.filter((c) => c === cat).length;
-  const vestidos = de("vestido");
+  const c = { ...cuenta(categorias) };
   const faltan: string[] = [];
-  if (de("top") + vestidos < 2) faltan.push("algo de arriba");
-  if (de("bottom") + vestidos < 2) faltan.push("algo de abajo");
-  if (de("calzado") < 1) faltan.push("unos zapatos");
+  while (combinaciones(c) < COMBINACIONES_MINIMAS) {
+    // Suma por el lado que multiplica más; si empatan, arriba primero.
+    const porArriba = (c.top + 1) * c.bottom - c.top * c.bottom;
+    const porAbajo = c.top * (c.bottom + 1) - c.top * c.bottom;
+    if (c.top === 0 || porArriba >= porAbajo) {
+      c.top += 1;
+      if (!faltan.includes("algo de arriba")) faltan.push("algo de arriba");
+    } else {
+      c.bottom += 1;
+      if (!faltan.includes("algo de abajo")) faltan.push("algo de abajo");
+    }
+  }
+  if (c.calzado < 1) faltan.push("unos zapatos");
   return faltan;
 }

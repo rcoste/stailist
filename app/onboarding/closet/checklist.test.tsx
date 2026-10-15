@@ -124,6 +124,34 @@ describe("la pestaña Trajes del checklist", () => {
     expect(screen.getByRole("button", { name: /sigue con abajo/i })).toBeTruthy();
   });
 
+  // UN VESTIDO ES UN LOOK, no "arriba y abajo" a la vez (2026-10-14). Con
+  // camiseta, jeans, vestido y tenis sólo salen dos looks; el checklist lo
+  // dejaba pasar y una persona vio fallar su primer look 4 veces y se fue.
+  it("camiseta + jeans + vestido + tenis no alcanza: pide algo más de arriba", async () => {
+    const u = userEvent.setup();
+    const catalogo = [
+      ...CATALOGO.filter((i) => !i.attrs.conjunto),
+      item(40, "Vestido negro", "vestido"),
+    ];
+    render(<Checklist catalog={catalogo} />);
+
+    await u.click(screen.getByRole("button", { name: /camiseta blanca/i }));
+    await u.click(chip("Abajo"));
+    await u.click(screen.getByRole("button", { name: /jeans azul oscuro/i }));
+    await u.click(chip("Zapatos"));
+    await u.click(screen.getByRole("button", { name: /tenis blancos/i }));
+    await u.click(chip("Vestidos"));
+    await u.click(screen.getByRole("button", { name: /vestido negro/i }));
+
+    expect(screen.queryByRole("button", { name: /armar mi primer look/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /sigue con arriba/i })).toBeTruthy();
+
+    // Una de arriba más = 2×1 + 1 = 3 looks posibles: ya alcanza.
+    await u.click(chip("Arriba"));
+    await u.click(screen.getByRole("button", { name: /camisa blanca/i }));
+    expect(screen.getByRole("button", { name: /armar mi primer look/i })).toBeTruthy();
+  });
+
   it("el chip 'Abajo' NO cuenta la pieza del traje; el de 'Trajes' sí cuenta el traje", async () => {
     const u = userEvent.setup();
     render(<Checklist catalog={CATALOGO} />);
