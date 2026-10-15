@@ -25,6 +25,7 @@ import type {
 } from "@/lib/capsule";
 import type { TripOutfit } from "@/lib/trip";
 import { registrarEvento } from "@/lib/telemetria";
+import { repartirCandidatas } from "@/lib/trip-candidatas";
 import { PROMPT_VIAJE } from "@/lib/engine/trip-outfits";
 
 // Clave namespaced para guardar un sustituto dentro de overrides (jsonb) sin una
@@ -165,6 +166,12 @@ export async function proposeTripSubstitutes(
   for (const [k, v] of Object.entries(overrides)) {
     if (k.startsWith("sub:") && typeof v === "string") used.add(v);
   }
+  // Las ya propuestas para OTRO hueco (aún sin decidir) también están tomadas:
+  // una prenda, un lugar (lib/trip-candidatas.ts).
+  const propuestas = new Set<string>();
+  for (const [k, v] of Object.entries(overrides)) {
+    if (k.startsWith("cand:") && typeof v === "string" && v) propuestas.add(v);
+  }
   if (huecos.length === 0) return {};
 
   const [closetAll, imageMap] = await Promise.all([
@@ -180,12 +187,18 @@ export async function proposeTripSubstitutes(
     huecos.map(async (i) => {
       try {
         const matches = await matchSubstitutes(target.items[i], closet, gender, null, { supabase, userId: user.id });
-        return { i, top: matches[0] ?? null };
+        return { i, matches };
       } catch {
         // Un hueco que falla no guarda nada: el próximo abrir lo reintenta.
-        return { i, top: null, fallo: true };
+        return { i, matches: [], fallo: true };
       }
     })
+  );
+  // Cada prenda, para un solo hueco: las búsquedas corrieron a la vez y no
+  // sabían lo que eligieron las otras.
+  const reparto = repartirCandidatas(
+    resultados.filter((r) => !("fallo" in r && r.fallo)),
+    propuestas
   );
 
   // Un solo write, sobre overrides RE-LEÍDOS: mientras la IA pensaba, la
@@ -204,9 +217,10 @@ export async function proposeTripSubstitutes(
   const out: Record<number, { nombre: string; image: string | null }> = {};
   for (const r of resultados) {
     if ("fallo" in r && r.fallo) continue;
+    const top = reparto.get(r.i) ?? null;
     // "" = ya se buscó y no hubo nada decente: no volver a pagar la búsqueda.
-    next[`cand:${r.i}`] = r.top?.nombre ?? "";
-    if (r.top) out[r.i] = { nombre: r.top.nombre, image: imageMap[r.top.nombre] ?? null };
+    next[`cand:${r.i}`] = top?.nombre ?? "";
+    if (top) out[r.i] = { nombre: top.nombre, image: imageMap[top.nombre] ?? null };
   }
   await supabase
     .from("trips")

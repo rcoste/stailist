@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
 import { catalogKeyDePieza, catalogKeysParaBuscar } from "@/lib/capsule-images";
-import { garmentRenderDesc } from "@/lib/garment-desc";
+import { garmentRenderDesc, visualDePieza } from "@/lib/garment-desc";
 import { guardarRenderDeCatalogo } from "@/lib/supabase/biblioteca-compartida";
 
 const BUCKET = "catalog";
@@ -55,7 +55,9 @@ export async function ensureCatalogRender(
     categoria: args.categoria,
     formalidad: args.formalidad,
     temporada: args.temporada,
-    visual: args.visual,
+    // La pieza nombrada y su color primero; la descripción sólo la afina
+    // (ver visualDePieza: sin esto el top negro se dibujó beige).
+    visual: args.visual?.trim() ? visualDePieza(args.nombre, args.colorFamilia, args.visual) : null,
     // Una pieza ideal nunca trae patrón: pedir "liso" es lo que evita que el
     // modelo elija la superficie por su cuenta.
     sinPatronDeclarado: true,
