@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { avisarError } from "@/lib/avisar-error";
 
 // EL ERROR QUE SE COME EL LAYOUT.
 //
@@ -26,6 +27,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("[global-error]", error);
+    avisarError({ clave: "pantalla-de-error", tecnico: error.digest ? `digest ${error.digest}: ${error.message}` : error.message });
   }, [error]);
 
   return (

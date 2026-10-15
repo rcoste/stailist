@@ -439,8 +439,10 @@ export async function POST(request: NextRequest) {
         });
         send({ done: true, tripId: inserted.id });
         controller.close();
-      } catch {
-        send({ error: "generacion" });
+      } catch (e) {
+        // `detalle` viaja para que el navegador lo anote en /admin/errores
+        // (lib/avisar-error.ts): sin él, "la IA no pudo" no decía por qué.
+        send({ error: "generacion", detalle: (e instanceof Error ? e.message : String(e)).slice(0, 200) });
         controller.close();
       }
     },

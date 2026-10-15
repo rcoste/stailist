@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.379.0] - 2026-10-14 — /admin/errores: lo que le salió mal a alguien, en un solo lugar
+
+Pedido de Roberto tras el viaje que Vercel cortó a los 60 s sin que nadie se
+enterara: "cada vez que salga algún error, tengamos esos logs y veamos por
+qué pasa". Boceto aprobado antes de construir.
+
+- **Pantalla nueva `/admin/errores`** en el menú, con globo rojo de cuántos
+  tipos de error están sin revisar. Agrupa por qué falló, dice quién, en qué
+  pantalla, qué vio y la línea técnica; cada grupo se marca "ya lo vi",
+  "arreglado" (con nota de qué se hizo) o se reabre, y si vuelve a pasar
+  después de marcarlo sale como "volvió a pasar". Plegados aparte: frenos de
+  cuota y avisos técnicos.
+- **Junta tres fuentes**: la tabla nueva `errores` (migración 0174), los
+  eventos de fallo que ya existían (`generation_failed`, `avatar_fallo`) y
+  las llamadas a la IA con `ok = false`.
+- **El navegador avisa** (`lib/avisar-error.ts`, `/api/errores`): un vigía
+  mira todas las llamadas de la app a `/api/*` y a las acciones del servidor
+  y anota las que regresan 500+ o pierden la conexión; además la pantalla de
+  "algo se me atoró" y la maleta que no sale (incluido el corte a medias, que
+  el servidor no alcanza a escribir). Una vez por minuto por tipo y 30 por
+  hora por persona como máximo.
+- **Los frenos de cuota y gasto quedan anotados** (`lib/cuotas.ts`): si
+  alguien topa todos los días, el tope está bajo.
+- Hoy ya se ven: 5 looks que no salieron por "muy pocas prendas" (2
+  personas) y 3 dibujos de prenda que fallaron.
+
 ## [0.2.378.1] - 2026-10-14 — vetar una prenda ya la quita de verdad
 
 - **El filtro de vetos de prenda no quitaba nada.** Comparaba contra
