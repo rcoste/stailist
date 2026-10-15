@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { descripcionObsoleta, garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
+import { descripcionObsoleta, garmentDescPlain, garmentRenderDesc, visualDePieza } from "@/lib/garment-desc";
 import { buildImagePrompt } from "@/lib/archetype-image";
 
 // La descripción de una prenda tiene DOS consumidores con necesidades opuestas
@@ -231,5 +231,24 @@ describe("el tipo y el tejido llegan al prompt del render", () => {
     });
     expect(d).toContain("trenzado");
     expect(d).not.toMatch(/SIN trenzas/);
+  });
+});
+
+// EL TOP NEGRO QUE SE DIBUJÓ BEIGE (2026-10-15, maleta real). La descripción
+// de una pieza sugerida no trae ni la prenda ni el color: van en el nombre.
+describe("visualDePieza — la pieza sugerida no pierde su nombre ni su color", () => {
+  it("el caso real llega al generador con 'top' y 'negro'", () => {
+    const d = garmentRenderDesc({
+      nombre: "Top negro de satén de tirantes",
+      visual: visualDePieza("Top negro de satén de tirantes", "negro", "satén fluido, tirantes finos, escote recto, caída suelta"),
+    });
+    expect(d).toContain("Top negro de satén de tirantes");
+    expect(d).toContain("satén fluido");
+  });
+  it("si el nombre no dice el color, lo agrega", () => {
+    expect(visualDePieza("Chamarra de piel", "negro", "biker corta")).toBe("Chamarra de piel, en color negro: biker corta");
+  });
+  it("no repite el color que el nombre ya trae", () => {
+    expect(visualDePieza("Chamarra de piel negra", "negro", "biker corta")).not.toContain("en color");
   });
 });

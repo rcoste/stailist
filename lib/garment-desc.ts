@@ -157,3 +157,25 @@ export function garmentRenderDesc(g: GarmentAttrs): string {
     ? `${desc}. Renderiza exactamente esta prenda, fiel como producto de ropa real.`
     : `${desc}. Renderiza exactamente este tipo de prenda, fiel como producto de ropa real (la prenda nombrada, no otra distinta).`;
 }
+
+/**
+ * LA DESCRIPCIÓN DE UNA PIEZA SUGERIDA, PARA SU DIBUJO (2026-10-15).
+ *
+ * Las piezas de la maleta y de la cápsula traen `visual` desde el 2026-10-14:
+ * 8-12 palabras de silueta, tela, largo y detalle ("satén fluido, tirantes
+ * finos, escote recto"), SIN la prenda ni el color, porque ésos ya van en el
+ * nombre. Y `garmentDescPlain` con `visual` devuelve sólo el `visual` (la regla
+ * de las prendas del clóset, cuya descripción la escribe la visión y sí trae
+ * todo). Juntas, al generador le llegaba "satén fluido, tirantes finos…" sin
+ * decir que era un top ni que era NEGRO: el "Top negro de satén de tirantes"
+ * de una maleta real se dibujó beige. Aquí el nombre va primero, con el color
+ * si el nombre no lo trae, y la descripción lo afina.
+ */
+export function visualDePieza(nombre: string, color: string | null | undefined, visual: string): string {
+  const n = nombre.trim();
+  // "negro" ya está en "Chamarra de piel negra": se compara sin la vocal final
+  // (el color concuerda con la prenda en género).
+  const raiz = (color ?? "").trim().toLowerCase().replace(/[oa]$/, "");
+  const conColor = raiz && !n.toLowerCase().includes(raiz) ? `${n}, en color ${color}` : n;
+  return `${conColor}: ${visual.trim()}`;
+}

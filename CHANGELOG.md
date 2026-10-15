@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.379.3] - 2026-10-15 — el top negro ya no se dibuja beige
+
+- **Las piezas sugeridas con descripción se dibujaban sin su nombre ni su
+  color** (`visualDePieza`, `lib/garment-desc.ts`). Desde v0.2.377.0 las piezas
+  de la maleta traen `visual` ("satén fluido, tirantes finos…"), y el dibujo
+  usaba SÓLO esa descripción: al generador no le llegaba que era un top ni que
+  era negro, y el "Top negro de satén de tirantes" de una maleta real salió
+  beige. Ahora va el nombre (con el color si el nombre no lo trae) y la
+  descripción lo afina. Las prendas del clóset no cambian: su descripción la
+  escribe la visión y ya trae prenda y color. Afectó 16 imágenes, todas de un
+  mismo viaje del 15-oct. Probado: el mismo top, con la descripción corregida,
+  sale negro.
+
 ## [0.2.379.2] - 2026-10-15 — Actividad se lee en el celular
 
 - **En el celular cada línea del feed se parte en dos**: arriba la hora, quién,
