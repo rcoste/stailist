@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.384.2] - 2026-10-16 — quién instaló la app, en Personas
+
+- **Personas › Lista dice cuántos instalaron la app** en su pantalla de inicio
+  (en el subtítulo), con el filtro "Instaló la app" y la etiqueta "app" junto
+  al correo de cada quien. La ficha de la persona suma "App: instalada · 12
+  oct". "Instaló" = hay un `pwa_installed`: abrió la app desde su ícono o el
+  navegador avisó la instalación; quien la instaló en iPhone y nunca la abrió
+  desde ahí no aparece, por eso la ficha dice "—" y no "no".
+
 ## [0.2.384.1] - 2026-10-16 — una publicación ya no rompe la pantalla de quien tenía la app abierta
 
 - **La pestaña de una versión anterior se recarga sola** en vez de enseñar

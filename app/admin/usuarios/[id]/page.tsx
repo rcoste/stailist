@@ -200,6 +200,16 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
   const paleta = [profile.palette_season, profile.palette_flow].filter(Boolean).join(" + ");
   const lugar = lugarEnPalabras(profile.pais, profile.region);
   const aparato = esDispositivo(profile.dispositivo) ? profile.dispositivo : null;
+  // La primera vez que la abrió desde el ícono (o el navegador avisó la
+  // instalación). Sin el evento no se puede decir "no": puede tenerla en
+  // iPhone y nunca haberla abierto desde ahí.
+  const primeraInstalacion = (actEvents ?? [])
+    .filter((e) => e.type === "pwa_installed" && e.created_at)
+    .map((e) => String(e.created_at))
+    .sort()[0];
+  const instaloApp = primeraInstalacion
+    ? new Date(primeraInstalacion).toLocaleDateString("es-MX", { day: "numeric", month: "short", timeZone: "America/Mexico_City" })
+    : null;
   const variante = profile.onboarding_variante as string | null;
   const origen = origenEnPalabras(origenDesdeDato(profile.origen), profile.como_nos_conocio ?? null);
   const empezo = diaInicio === hoy ? "hoy" : diaInicio === ayer ? "ayer" : null;
@@ -307,6 +317,8 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
               <dd className="text-sm text-ink">{lugar ?? "—"}</dd>
               <dt className="text-[13px] text-muted">Avatar</dt>
               <dd className="text-sm text-ink">{avatarUrl ? "sí" : "no"}</dd>
+              <dt className="text-[13px] text-muted">App</dt>
+              <dd className="text-sm text-ink">{instaloApp ? `instalada · ${instaloApp}` : "—"}</dd>
             </dl>
             {arch?.descripcion ? <p className="editorial mt-3 text-sm text-muted">“{arch.descripcion}”</p> : null}
           </Panel>
