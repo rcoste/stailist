@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { curva, diasEntre, fila, volvieronEnSuSemana, type PersonaRetencion } from "./retencion";
+import { curva, diasEntre, fila, lunesDe, maduracion, volvieronEnSuSemana, type PersonaRetencion } from "./retencion";
 import { opcionesDe, pasaFiltro } from "./filtro-personas";
 
 // LO QUE BLINDAN: que la curva no se hunda con gente que todavía no tiene cómo
@@ -43,6 +43,31 @@ describe("volvieronEnSuSemana", () => {
       HOY
     );
     expect(r).toEqual({ volvieron: 1, de: 2 });
+  });
+});
+
+describe("maduracion", () => {
+  it("cada ventana cuenta sólo a quien ya la vivió completa, y dice cuántas faltan", () => {
+    const personas = [
+      p("vieja-tarde", "2026-10-06", [5]), // martes 6: ya vivió hasta el día 13
+      p("vieja-nada", "2026-10-07", []),
+      p("nueva", "2026-10-16", [1, 3]), // vive hoy su día 4: el 3-7 no le ha madurado
+    ];
+    const { grupos, total } = maduracion(personas, HOY);
+    expect(grupos.map((g) => [g.semana, g.n])).toEqual([["2026-10-05", 2], ["2026-10-12", 1]]);
+    const [d12, d37, d814, semana] = total.celdas;
+    expect(d12).toEqual({ volvieron: 1, de: 3, faltan: 0 });
+    // La nueva volvió el día 3, pero su ventana 3-7 no ha cerrado: no cuenta ni a favor ni en contra.
+    expect(d37).toEqual({ volvieron: 1, de: 2, faltan: 1 });
+    // Nadie ha vivido su día 14 completo.
+    expect(d814).toEqual({ volvieron: 0, de: 0, faltan: 3 });
+    expect(semana).toEqual({ volvieron: 1, de: 2, faltan: 1 });
+  });
+
+  it("la semana empieza en lunes", () => {
+    expect(lunesDe("2026-10-12")).toBe("2026-10-12");
+    expect(lunesDe("2026-10-18")).toBe("2026-10-12");
+    expect(lunesDe("2026-10-19")).toBe("2026-10-19");
   });
 });
 

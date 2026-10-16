@@ -4,6 +4,7 @@ import { cargarRetencion, periodo } from "@/lib/admin/retencion-datos";
 import { opcionesDe, pasaFiltro } from "@/lib/admin/filtro-personas";
 import { gruposDeQuien } from "../_compartido/filtros-quien";
 import { Cifra, Encabezado, Fila, Filtros, Panel, Quien, Tabla, Td, Th, Vacio } from "../_ui";
+import { TablaMaduracion } from "./maduracion";
 
 // LA TABLA DE RETENCIÓN (2026-10-09; capa visual con el kit desde 2026-10-13):
 // una fila por persona, una columna por día desde que empezó, relleno si ese
@@ -115,6 +116,8 @@ export default async function Retencion({
       <p className="mb-4 text-[13px] text-muted">
         {chicos.map((p) => `día ${p.dia}: ${p.volvieron} de ${p.de}`).join(" · ")}
       </p>
+
+      <TablaMaduracion personas={personas} hoy={hoy} />
 
       <Panel titulo="Por persona" sinPadding>
         {visibles.length === 0 ? (

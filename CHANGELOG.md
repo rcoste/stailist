@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.380.0] - 2026-10-16 — retención por semana en que empezaron
+
+- **Tabla de maduración en /admin/retencion** (`maduracion`,
+  `lib/admin/retencion.ts`; `app/admin/retencion/maduracion.tsx`). Una fila
+  por semana en que empezaron y una columna por ventana (día 1–2, 3–7, 8–14 y
+  la primera semana completa). Cada celda cuenta sólo a quien ya vivió esa
+  ventana entera; quien todavía no llega queda fuera del denominador y se
+  anota como "faltan". Nació de un error de lectura: decir "casi nadie vuelve
+  después del día 3" con una cifra que dividía entre gente que aún no llegaba
+  a su día 3. Juntar a todos en una curva acumulada tampoco sirve: con grupos
+  que maduran distinto, el porcentaje sube y baja aunque nadie pueda
+  "des-volver". La definición quedó en /admin/como-se-cuenta. Sólo medición:
+  la app no cambia.
+
 ## [0.2.379.4] - 2026-10-15 — una prenda, un lugar en la maleta
 
 - **La misma prenda ya no se propone para dos piezas de la maleta**
