@@ -7,6 +7,7 @@ describe("datosDeCompartido", () => {
   it("acepta lo que existe", () => {
     expect(datosDeCompartido("tryon", "share")).toEqual({ que: "tryon", como: "share" });
     expect(datosDeCompartido("pasaporte", "link")).toEqual({ que: "pasaporte", como: "link" });
+    expect(datosDeCompartido("viaje", "share")).toEqual({ que: "viaje", como: "share" });
   });
   it("rechaza lo desconocido en vez de guardarlo", () => {
     expect(datosDeCompartido("look", "share")).toBeNull();

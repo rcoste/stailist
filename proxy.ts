@@ -91,6 +91,9 @@ export default async function proxy(request: NextRequest) {
     pathname.startsWith("/login") ||
     // La puerta sin correo (app/empezar/route.ts): se llega sin sesión, por POST.
     pathname === "/empezar" ||
+    // El link de invitación a un viaje (app/v/[token]): lo abre quien todavía
+    // no tiene cuenta, desde WhatsApp. Su botón crea la sesión por POST.
+    pathname.startsWith("/v/") ||
     pathname.startsWith("/auth") ||
     // Cron (auth por CRON_SECRET) y baja de correo (auth por token) llegan SIN
     // sesión — no deben redirigir a /login.

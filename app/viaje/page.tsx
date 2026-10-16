@@ -3,7 +3,9 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadClosetPicks } from "@/lib/closet-picks";
 import { tripDays, type Bolsas, type Occasion, type Parada } from "@/lib/trip";
-import { TripWizard, type TripEditInit } from "@/components/trip-wizard";
+import { TripWizard, type TripEditInit, type TripInvitacionInit } from "@/components/trip-wizard";
+import { leerInvitacion, tokenValido, yaPaso } from "@/lib/viaje-invitacion";
+import { diaEnZona } from "@/lib/admin/adquisicion";
 
 export const maxDuration = 60;
 
@@ -17,9 +19,9 @@ export const maxDuration = 60;
 export default async function ViajePage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; invitacion?: string }>;
 }) {
-  const { edit: editId } = await searchParams;
+  const { edit: editId, invitacion: tokenInv } = await searchParams;
   const profile = await requireOnboarded();
   const supabase = await createClient();
   const closet = await loadClosetPicks(supabase, profile.id);
@@ -59,5 +61,22 @@ export default async function ViajePage({
     };
   }
 
-  return <TripWizard closet={closet} edit={edit} />;
+  // ?invitacion=<token>: llegó por el link de alguien (app/v/[token]). Se lee
+  // con la misma función pública que la página del link: sólo ruta, fechas y
+  // actividades. Un token roto o un viaje que ya pasó abre el wizard vacío.
+  let invitacion: TripInvitacionInit | null = null;
+  if (!edit && tokenValido(tokenInv)) {
+    const { data } = await supabase.rpc("viaje_por_invitacion", { p_token: tokenInv });
+    const v = leerInvitacion(data);
+    if (v && !yaPaso(v, diaEnZona(new Date()))) {
+      invitacion = {
+        token: tokenInv,
+        paradas: v.paradas.map((p) => ({ lugar: p.lugar, noches: p.noches })),
+        inicio: v.fechaInicio,
+        ocasiones: v.ocasiones,
+      };
+    }
+  }
+
+  return <TripWizard closet={closet} edit={edit} invitacion={invitacion} />;
 }

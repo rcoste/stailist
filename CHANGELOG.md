@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.383.0] - 2026-10-16 — invitar a alguien a tu viaje
+
+- **"¿Viajas con alguien?"** en el viaje (`components/invitar-viaje.tsx`), en
+  "el plan" y al final de "empacar" (un viaje confirmado abre ahí). Manda un
+  link `/v/<token>` con el menú de compartir del teléfono, o lo copia en
+  escritorio. Debajo, "N personas ya armaron su maleta con tu viaje".
+- **La página del link** (`app/v/[token]`), pública: ruta, noches, clima por
+  parada y actividades, y un solo botón. Nunca la maleta, los looks, el texto
+  libre del viaje ni quién invitó (quien manda el link ya lo dice en su
+  mensaje; la app no guarda nombres). Un viaje que ya pasó o un link roto lo
+  dicen en vez de abrir.
+- **Quien llega**: con cuenta, directo al asistente de viaje pre-llenado
+  (`?invitacion=`); sin cuenta, la misma puerta sin correo de la landing, su
+  primer look como todos, y al llegar a Hoy pasa una sola vez al asistente
+  (`/viaje/unirme`, cookie `st_viaje_inv`). Todo se puede cambiar; al crear,
+  el viaje queda enlazado al de origen.
+- **Base** (migración 0176): `trips.invitacion`, `trips.invitado_de` y tres
+  funciones: la vista pública del link (anon), el id de origen (sólo con
+  sesión) y el contador de unidos (sólo responde al dueño). El evento
+  `compartido` suma `viaje` y `trip_created` lleva `invitacion: true`.
 ## [0.2.382.0] - 2026-10-16 — el try-on se revela y se manda
 
 - **Cuando un try-on termina, se abre solo a pantalla completa**
