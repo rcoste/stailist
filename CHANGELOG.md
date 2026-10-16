@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.384.0] - 2026-10-16 — el correo "¿con quién vas?"
+
+- **Un día después de armar un viaje que todavía no empieza, un correo
+  recuerda que se puede invitar a quien viaja contigo** (cron
+  `/api/cron/invitar-viaje`, diario a las 10 am de CDMX, lejos del reenganche
+  de las 7 pm). Lleva a su viaje, donde está la tarjeta de invitar. Una vez
+  por viaje (`trips.correo_invitar_enviado_at`, migración 0177); nunca a quien
+  ya invitó, a quien llegó invitado, a cuentas de prueba ni a quien no aceptó
+  correos. `?ensayo=1` calcula la lista sin mandar nada. El destino va
+  escapado en el HTML.
+- **Hoy no le llega a nadie, y está bien saberlo**: desde que los correos son
+  opcionales (0153, 2026-09-06) sólo 2 de 103 personas aceptaron, y ninguna de
+  las que tienen un viaje por delante. Lo mismo limita al semanal y al
+  reenganche.
+- `.env.example` suma `ELEVENLABS_API_KEY` (sólo para la voz de los videos).
+
 ## [0.2.383.1] - 2026-10-16 — QA de lo de hoy: la vista previa y las etiquetas
 
 - **La vista previa del link de invitación en WhatsApp dice que es un viaje**
