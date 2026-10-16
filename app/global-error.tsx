@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { avisarError } from "@/lib/avisar-error";
+import { avisarError, esVersionVieja } from "@/lib/avisar-error";
 
 // EL ERROR QUE SE COME EL LAYOUT.
 //
@@ -27,6 +27,24 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("[global-error]", error);
+    // Pestaña de una versión anterior (lib/avisar-error.ts, esVersionVieja):
+    // recargar la pone al día. Una sola vez por minuto, para que un fallo que
+    // NO se arregla recargando no se vuelva un bucle; si vuelve a pasar, se ve
+    // la pantalla de siempre.
+    if (esVersionVieja(error.message)) {
+      avisarError({ clave: "version-vieja", tecnico: error.message });
+      try {
+        const antes = Number(sessionStorage.getItem("st_recarga_version") ?? 0);
+        if (Date.now() - antes > 60_000) {
+          sessionStorage.setItem("st_recarga_version", String(Date.now()));
+          window.location.reload();
+          return;
+        }
+      } catch {
+        /* sin sessionStorage: sólo la pantalla de error */
+      }
+      return;
+    }
     avisarError({ clave: "pantalla-de-error", tecnico: error.digest ? `digest ${error.digest}: ${error.message}` : error.message });
   }, [error]);
 

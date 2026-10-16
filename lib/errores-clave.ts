@@ -86,7 +86,8 @@ export type ClaseError = "error" | "freno" | "tecnico";
 
 export function claseDe(clave: string): ClaseError {
   if (clave.startsWith("freno:")) return "freno";
-  if (clave.startsWith("ia:") || clave.startsWith("red:")) return "tecnico";
+  // La versión vieja se recarga sola: la persona no ve el error.
+  if (clave.startsWith("ia:") || clave.startsWith("red:") || clave === "version-vieja") return "tecnico";
   return "error";
 }
 
@@ -106,6 +107,8 @@ export function tituloDe(clave: string): string {
       return "No se pudo armar la maleta";
     case "pantalla-de-error":
       return 'Le salió la pantalla de "algo se me atoró"';
+    case "version-vieja":
+      return "Tenía abierta una versión vieja y se recargó sola";
     case "http": {
       const i = r.lastIndexOf(":");
       const ruta = r.slice(0, i);
