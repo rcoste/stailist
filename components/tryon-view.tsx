@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
+import { registrarCompartido } from "@/lib/compartir-actions";
 
 // Vista "así te queda": el render del try-on DENTRO del lienzo de papel (no un
 // modal oscuro). Marco 3:4 con la imagen o la animación de generación, la voz
@@ -277,6 +278,8 @@ function Lupa({
       });
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: nombre });
+        // Sólo si el diálogo terminó: cancelar lanza AbortError y no llega aquí.
+        void registrarCompartido("tryon", "share");
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -284,6 +287,7 @@ function Lupa({
         a.download = "stailist-look.jpg";
         a.click();
         URL.revokeObjectURL(url);
+        void registrarCompartido("tryon", "descarga");
       }
     } catch {
       // AbortError (canceló el diálogo) o fetch fallido: sin drama.

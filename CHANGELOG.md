@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.381.0] - 2026-10-16 — saber cuándo alguien comparte
+
+- **Compartir deja rastro** (evento `compartido`, migración 0175;
+  `lib/compartir.ts`, `lib/compartir-actions.ts`). La app tenía dos botones de
+  compartir —el try-on a pantalla completa y el pasaporte de estilo— y ninguno
+  registraba nada: no había forma de saber si alguien mandó algo por WhatsApp.
+  Ahora cada uno guarda qué se compartió (`tryon` | `pasaporte`) y cómo
+  (`share` = el diálogo del teléfono terminó, `descarga`, `link`). Cancelar el
+  diálogo no cuenta. En el admin sale en Actividad como acción importante
+  ("compartió una imagen") y en la ficha de la persona con el detalle. Es
+  medición: lo que ve la persona no cambia.
+
 ## [0.2.380.0] - 2026-10-16 — retención por semana en que empezaron
 
 - **Tabla de maduración en /admin/retencion** (`maduracion`,

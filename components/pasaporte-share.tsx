@@ -5,6 +5,7 @@ import { toBlob } from "html-to-image";
 import { PasaporteCard } from "@/components/pasaporte-card";
 import { Icon } from "@/components/icon";
 import type { PasaporteData } from "@/lib/pasaporte";
+import { registrarCompartido } from "@/lib/compartir-actions";
 
 // Muestra el pasaporte y lo comparte/guarda como imagen. Captura la card con
 // html-to-image (sin imágenes externas → limpio): Web Share con archivo en móvil
@@ -42,8 +43,10 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
       const file = new File([blob], "pasaporte-stailist.png", { type: "image/png" });
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Mi pasaporte de estilo" });
+        void registrarCompartido("pasaporte", "share");
       } else {
         download(blob);
+        void registrarCompartido("pasaporte", "descarga");
       }
     } catch (e) {
       // AbortError = el usuario canceló el diálogo de compartir; no es error.
@@ -58,6 +61,7 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
     setError(false);
     try {
       download(await capture());
+      void registrarCompartido("pasaporte", "descarga");
     } catch {
       setError(true);
     } finally {
@@ -70,6 +74,7 @@ export function PasaporteShare({ data }: { data: PasaporteData }) {
     // que no mostramos ese banner — el botón simplemente no confirma.
     try {
       await navigator.clipboard.writeText(window.location.origin);
+      void registrarCompartido("pasaporte", "link");
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {

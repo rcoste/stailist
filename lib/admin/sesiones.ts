@@ -131,6 +131,13 @@ export function accionDe(m: Momento): Accion | "sistema" | null {
         "1 cambio de prenda",
         (n) => `${n} cambios de prenda`,
       );
+    case "compartido":
+      return a(
+        m.data?.que === "tryon" ? "tryon" : "perfil",
+        "compartido",
+        "compartió 1 imagen",
+        (n) => `compartió ${n} imágenes`,
+      );
     case "trip_motivo":
       return a("viaje", "motivos", "dio 1 motivo", (n) => `dio ${n} motivos`);
     case "trip_outfits_generated":
