@@ -132,12 +132,15 @@ export function accionDe(m: Momento): Accion | "sistema" | null {
         (n) => `${n} cambios de prenda`,
       );
     case "compartido":
-      return a(
-        m.data?.que === "tryon" ? "tryon" : m.data?.que === "viaje" ? "viaje" : "perfil",
-        "compartido",
-        "compartió 1 imagen",
-        (n) => `compartió ${n} imágenes`,
-      );
+      // El viaje se comparte como invitación, no como imagen (QA 2026-10-16).
+      return m.data?.que === "viaje"
+        ? a("viaje", "invitaciones", "mandó 1 invitación", (n) => `mandó ${n} invitaciones`)
+        : a(
+            m.data?.que === "tryon" ? "tryon" : "perfil",
+            "compartido",
+            "compartió 1 imagen",
+            (n) => `compartió ${n} imágenes`,
+          );
     case "trip_motivo":
       return a("viaje", "motivos", "dio 1 motivo", (n) => `dio ${n} motivos`);
     case "trip_outfits_generated":

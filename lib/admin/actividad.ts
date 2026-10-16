@@ -139,6 +139,14 @@ export function etiqueta(m: Momento): string {
   }
   const t = m.tipo.slice(3);
   if (t === "render_auto") return n === 1 ? "la app dibujó una prenda" : `la app dibujó ${n} prendas`;
+  // Qué se compartió (lib/compartir.ts): el try-on y el pasaporte son
+  // imágenes; el viaje es una invitación. Una ráfaga junta varios y no lleva
+  // detalle, así que ahí sólo se cuenta.
+  if (t === "compartido") {
+    if (n > 1) return `compartió ×${n}`;
+    const que = (m.data as { que?: string } | null | undefined)?.que;
+    return que === "tryon" ? "compartió su try-on" : que === "pasaporte" ? "compartió su pasaporte" : que === "viaje" ? "invitó a alguien a su viaje" : "compartió algo";
+  }
   const base = EVENTO_LABEL[t];
   if (!base) return n === 1 ? t : `${t} ×${n}`;
   return n === 1 ? base : `${base} ×${n}`;
@@ -181,7 +189,7 @@ export const EVENTO_LABEL: Record<string, string> = {
   // Bloque B del viaje (2026-10-14): qué dijo de una pieza de su maleta.
   trip_motivo: "dijo algo de una pieza de su maleta",
   // 2026-10-16: el try-on o el pasaporte salieron de la app (data.que, data.como).
-  compartido: "compartió una imagen",
+  compartido: "compartió (try-on, pasaporte o viaje)",
 };
 
 /**
