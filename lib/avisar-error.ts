@@ -67,9 +67,43 @@ export function llamadaVigilada(
   return { ruta: rutaSinIds(url.pathname), accion };
 }
 
+/**
+ * La pestaña es de una versión ANTERIOR a la que está publicada: llamó a una
+ * acción del servidor que ya no existe (cada publicación cambia sus ids). Pasa
+ * a quien tenía la app abierta mientras publicamos; 2026-10-16 le tocó a una
+ * persona de anuncios en pleno onboarding. Recargar lo arregla siempre.
+ */
+export function esVersionVieja(mensaje: string | null | undefined): boolean {
+  if (!mensaje) return false;
+  return /Server Action .*was not found on the server|Failed to find Server Action/i.test(mensaje);
+}
+
+/**
+ * ¿Una llamada que no llegó es un error? Cancelarla a propósito (AbortError) o
+ * irse de la página mientras cargaba (el navegador la corta con un "Failed to
+ * fetch" que no es AbortError) no lo son: llenaban el módulo de falsas alarmas.
+ */
+export function debeAvisarRed(e: unknown, saliendo: boolean): boolean {
+  if (e instanceof DOMException && e.name === "AbortError") return false;
+  return !saliendo;
+}
+
+/** Se prende cuando la página se va (navegación completa, cerrar pestaña). */
+let saliendo = false;
+
 export function instalarVigia(): void {
   if (typeof window === "undefined" || fetchOriginal) return;
   fetchOriginal = window.fetch.bind(window);
+  window.addEventListener("pagehide", () => {
+    saliendo = true;
+  });
+  window.addEventListener("beforeunload", () => {
+    saliendo = true;
+  });
+  // Volver con el botón de atrás (bfcache) revive la página: ya no se está yendo.
+  window.addEventListener("pageshow", () => {
+    saliendo = false;
+  });
   const original = fetchOriginal;
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const vigilada = llamadaVigilada(input, init, window.location.origin);
@@ -82,9 +116,8 @@ export function instalarVigia(): void {
       }
       return res;
     } catch (e) {
-      // Cancelar a propósito (cambiar de pantalla, AbortController) no es un error.
-      const abortado = e instanceof DOMException && e.name === "AbortError";
-      if (!abortado) {
+      // Cancelar a propósito o irse de la página no es un error (debeAvisarRed).
+      if (debeAvisarRed(e, saliendo)) {
         avisarError({ clave: `red:${donde}`, tecnico: e instanceof Error ? e.message : String(e) });
       }
       throw e;

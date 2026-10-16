@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.384.1] - 2026-10-16 — una publicación ya no rompe la pantalla de quien tenía la app abierta
+
+- **La pestaña de una versión anterior se recarga sola** en vez de enseñar
+  "algo se me atoró" (`esVersionVieja`, `lib/avisar-error.ts`; `app/error.tsx`
+  y `app/global-error.tsx`). Cada publicación cambia los ids de las acciones
+  del servidor, y quien tenía la app abierta llamaba a una que ya no existe. El
+  2026-10-16 le pasó a una persona de anuncios en pleno onboarding, 35 minutos
+  después de abrirlo y justo después de publicar; se recuperó sola. Recarga
+  una vez por minuto como máximo (si no se arregla recargando, sale la pantalla
+  de siempre) y queda en /admin/errores como "versión vieja", técnico.
+- **Irse de la página mientras algo carga ya no cuenta como falla de red**
+  (`debeAvisarRed`): el navegador corta esas llamadas con un "Failed to fetch"
+  que no es un AbortError y llenaba el módulo de falsas alarmas.
+
 ## [0.2.384.0] - 2026-10-16 — el correo "¿con quién vas?"
 
 - **Un día después de armar un viaje que todavía no empieza, un correo
