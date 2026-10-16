@@ -37,6 +37,8 @@ describe("nivelDe", () => {
       "trip_deleted", "item_deleted", "style_vetoes_edit", "colorimetria_edit", "perfil_estilo_view",
       "onboarding_step", "cuenta_borrado_programado", "cuenta_recuperada", "render_generated",
       "onboarding_started", "email_unsubscribed",
+      // Decir que no a la prueba de Instagram (lib/interes-instagram.ts): se cuenta, no se resalta.
+      "ig_interes_no",
     ]);
     const sinDecidir = Object.keys(EVENTO_LABEL).filter(
       (t) => nivelDe({ tipo: `ev:${t}` }) === "rutina" && !rutinaAProposito.has(t)

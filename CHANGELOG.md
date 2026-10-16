@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.385.0] - 2026-10-16 — prueba de interés: "¿te armamos tu clóset desde Instagram?"
+
+- **Una tarjeta honesta en el Clóset** ("lo estamos preparando") para quien
+  tiene menos de 10 prendas propias (`components/interes-instagram.tsx`,
+  `lib/interes-instagram.ts`). Enseña el proceso con la foto de ejemplo de la
+  landing y sus prendas (`ig-h-*` / `ig-m-*`, según el género): de tus fotos
+  donde sales sacamos cada prenda y tú eliges. "Avísame" abre una hoja con el
+  usuario de Instagram opcional y una casilla de permiso que arranca SIN
+  marcar; sin permiso el usuario no se guarda (y se le dice). La confirmación
+  manda a subir el carrete, que es lo que hace volver. Se ve en 3 días
+  distintos como máximo; "no, gracias" la quita para siempre. No construye el
+  servicio ni toca el onboarding (la prueba A/B del 26 queda limpia).
+- **Se mide** con `ig_interes_visto` / `_si` / `_no` (migración 0178).
+  **Regla escrita antes de verla:** se lee con 30 personas que la vieron;
+  1 de cada 5 o más toca "avísame" = hay interés; menos de 1 de cada 10 = se
+  descarta.
+
 ## [0.2.384.2] - 2026-10-16 — quién instaló la app, en Personas
 
 - **Personas › Lista dice cuántos instalaron la app** en su pantalla de inicio
