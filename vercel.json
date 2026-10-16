@@ -23,6 +23,10 @@
     {
       "path": "/api/cron/prendas-pendientes",
       "schedule": "30 * * * *"
+    },
+    {
+      "path": "/api/cron/invitar-viaje",
+      "schedule": "0 16 * * *"
     }
   ]
 }

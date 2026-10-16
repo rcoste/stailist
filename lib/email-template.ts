@@ -8,6 +8,7 @@
 // Ninguno de los dos pre-genera el look: son un EMPUJÓN de regreso, no el
 // producto. El look se arma fresco al abrir /hoy, con el clima real del día.
 
+import { escapar } from "@/lib/reenganche";
 import {
   SERIF,
   SITE,
@@ -277,4 +278,55 @@ export function reengagementEmail(opts: {
   });
 
   return { subject: g.asunto, text, html };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "¿CON QUIÉN VAS?" — invitar a quien viaja contigo (2026-10-16)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Una sola vez por viaje, un día después de armarlo y antes de salir (reglas
+// en lib/correo-invitar-viaje.ts). Lleva a SU viaje, donde está la tarjeta de
+// invitar: el correo no comparte nada por sí mismo, sólo recuerda que se puede.
+export function invitarViajeEmail(opts: { unsubToken: string; destino: string; tripId: string; fechas: string }) {
+  const bajaUrl = urlBaja(opts.unsubToken);
+  const viajeUrl = `${SITE}/viaje/${encodeURIComponent(opts.tripId)}`;
+  // El destino lo escribe la persona: escapado en el HTML (el texto plano no lo necesita).
+  const destinoHtml = escapar(opts.destino);
+  const fechasHtml = escapar(opts.fechas);
+  const asunto = `¿con quién vas a ${opts.destino}?`;
+
+  const text = [
+    asunto,
+    "",
+    `tu maleta para ${opts.destino} (${opts.fechas}) ya está lista.`,
+    "si viajas con alguien, mándale el viaje: llega con la ruta y las fechas puestas y arma su maleta con su propia ropa. no ve la tuya.",
+    "",
+    `Invitar a quien viaja conmigo → ${viajeUrl}`,
+    "",
+    "Buen viaje.",
+    "— stailist",
+    "",
+    `Recibes esto porque tienes una cuenta en stailist. Date de baja: ${bajaUrl}`,
+  ].join("\n");
+
+  const cuerpo = filas([
+    bloque("32px 6px 0", kicker(`tu viaje · ${fechasHtml}`)),
+    bloque(
+      "14px 6px 0",
+      `<h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.035em;color:#141414;">¿con quién vas a ${serifItalica(destinoHtml)}?</h1>`
+    ),
+    bloque(
+      "22px 6px 0",
+      `<p style="margin:0;font-size:16px;line-height:1.6;color:#363636;">tu maleta ya está lista. si viajas con alguien, mándale el viaje: llega con la ruta y las fechas puestas y arma su maleta con <b style="font-weight:700;color:#141414;">su propia ropa</b>. no ve la tuya.</p>`
+    ),
+    bloque("28px 6px 0", boton({ href: viajeUrl, texto: "Invitar a quien viaja conmigo" })),
+    bloque(
+      "32px 6px 0",
+      `<p style="margin:0;font-family:${SERIF};font-style:italic;font-size:17px;line-height:1.5;color:#363636;">Buen viaje.</p>
+          <p style="margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#141414;">&mdash; stailist</p>`
+    ),
+  ]);
+
+  const html = documento({ cuerpo, motivo: "Recibes esto porque tienes una cuenta en stailist.", bajaUrl });
+  return { subject: asunto, text, html };
 }

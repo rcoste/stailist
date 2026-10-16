@@ -126,7 +126,7 @@ export type Gancho = {
 };
 
 /** Los títulos y las prendas los escribe la IA y acaban dentro de HTML. */
-function escapar(s: string): string {
+export function escapar(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
