@@ -15,12 +15,14 @@ import { createClient } from "@/lib/supabase/server";
 import { itemImageUrlSync, type ItemImageRow } from "@/lib/item-image";
 import { loadLovedCounts, sortLovedFirst } from "@/lib/loved-items";
 import { esRenderPendiente } from "@/lib/renders-pendientes";
+import { InteresInstagram } from "@/components/interes-instagram";
+import { mostrarTarjetaIg } from "@/lib/interes-instagram";
 
 export default async function ClosetPage() {
   const profile = await requireOnboarded();
 
   const supabase = await createClient();
-  const [{ data: rows }, loved] = await Promise.all([
+  const [{ data: rows }, loved, { data: igEventos }] = await Promise.all([
     supabase
       .from("items")
       .select(
@@ -29,6 +31,13 @@ export default async function ClosetPage() {
       .eq("user_id", profile.id)
       .is("deleted_at", null),
     loadLovedCounts(supabase, profile.id),
+    // La prueba de interés de Instagram (lib/interes-instagram.ts): cuántas
+    // veces la vio y si ya contestó.
+    supabase
+      .from("events")
+      .select("type, created_at")
+      .eq("user_id", profile.id)
+      .in("type", ["ig_interes_visto", "ig_interes_si", "ig_interes_no"]),
   ]);
 
   // QUÉ PRENDAS VALE LA PENA PREGUNTAR. Los usos salen de los looks reales: una
@@ -249,6 +258,20 @@ export default async function ClosetPage() {
   // están bloqueadas: a una menor sin permiso no se le ofrecen dos caminos que
   // no puede tomar (su aviso propio ya está arriba y le deja el catálogo).
   const mostrarLlenalo = !hasOwnPhotos && !fotosBloqueadas(profile);
+  const tiposIg = (igEventos ?? []).map((e) => e.type as string);
+  const mostrarIg = mostrarTarjetaIg({
+    prendasPropias: (rows ?? []).filter((r) => r.source === "photo").length,
+    // DÍAS distintos en que la vio, no montajes: la pantalla puede montarse
+    // varias veces en una visita y la tarjeta se iría antes de su tercer día.
+    vistas: new Set(
+      (igEventos ?? [])
+        .filter((e) => e.type === "ig_interes_visto")
+        .map((e) => new Date(e.created_at as string).toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }))
+    ).size,
+    dijoSi: tiposIg.includes("ig_interes_si"),
+    dijoNo: tiposIg.includes("ig_interes_no"),
+    fotosBloqueadas: fotosBloqueadas(profile),
+  });
 
   return (
     <AppShell desktop="wide">
@@ -319,6 +342,8 @@ export default async function ClosetPage() {
             el mismo frame en que nacía — justo en la primera carga real de un
             usuario nuevo, el momento que más cierre merece. Oculto, el bloque
             no pinta nada, pero sus flujos siguen vivos hasta terminar. */}
+        {mostrarIg ? <InteresInstagram userId={profile.id} hombre={profile.gender === "hombre"} /> : null}
+
         <ClosetLlenalo userId={profile.id} oculto={!mostrarLlenalo} />
 
         {preguntas.length > 0 ? (

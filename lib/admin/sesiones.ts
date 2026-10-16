@@ -202,6 +202,13 @@ export function accionDe(m: Momento): Accion | "sistema" | null {
         "avanzó 1 paso",
         (n) => `avanzó ${n} pasos`,
       );
+    // Prueba de interés de Instagram: verla es estar ahí; contestar sí cuenta.
+    case "ig_interes_visto":
+      return null;
+    case "ig_interes_si":
+      return a("closet", "ig", "pidió que le avisemos de Instagram", () => "pidió que le avisemos de Instagram");
+    case "ig_interes_no":
+      return a("closet", "igno", "dijo que no a Instagram", () => "dijo que no a Instagram");
     case "wow_otro_look":
       return a(
         "onboarding",

@@ -68,6 +68,8 @@ export const EVENTOS_PASIVOS = new Set([
   // con los pasivos para que una vuelta con acciones no pinte además su línea
   // suelta de "abrió la app": el colapso los junta en una sola.
   "visita",
+  // Ver la tarjeta de Instagram es estar ahí, no hacer algo.
+  "ig_interes_visto",
   "generation_timing",
   "critic_review",
   "avatar_judge",
@@ -190,6 +192,9 @@ export const EVENTO_LABEL: Record<string, string> = {
   trip_motivo: "dijo algo de una pieza de su maleta",
   // 2026-10-16: el try-on o el pasaporte salieron de la app (data.que, data.como).
   compartido: "compartió (try-on, pasaporte o viaje)",
+  // Prueba de interés de Instagram (lib/interes-instagram.ts).
+  ig_interes_si: "pidió que le avisemos del clóset desde Instagram",
+  ig_interes_no: "dijo que no al clóset desde Instagram",
 };
 
 /**
@@ -493,6 +498,7 @@ const NIVEL: Record<string, Nivel> = {
   "ev:outfit_favorited": "oro",
   "ev:pwa_installed": "oro",
   "ev:compartido": "oro",
+  "ev:ig_interes_si": "valor",
   look: "valor",
   look_viaje: "valor",
   viaje: "valor",
