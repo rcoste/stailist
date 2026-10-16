@@ -77,3 +77,21 @@ export function textoUnidos(n: number): string | null {
   if (n <= 0) return null;
   return n === 1 ? "1 persona ya armó su maleta con tu viaje" : `${n} personas ya armaron su maleta con tu viaje`;
 }
+
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const dm = (d: string) => `${Number(d.slice(8, 10))} ${MESES[Number(d.slice(5, 7)) - 1]}`;
+
+/**
+ * La vista previa del link en WhatsApp (og:title / og:description). Es lo
+ * primero que ve quien recibe la invitación, antes de abrir nada: sin esto
+ * heredaba la de la landing ("tu stylist personal con IA") y no decía que era
+ * un viaje. QA 2026-10-16.
+ */
+export function vistaPreviaDeInvitacion(v: ViajeInvitacion | null): { titulo: string; descripcion: string } {
+  if (!v) return { titulo: "te invitaron a un viaje · stailist", descripcion: "arma tu maleta con tu propia ropa." };
+  const destino = v.paradas.map((p) => p.lugar.split(",")[0].trim()).filter((x, i, a) => a.indexOf(x) === i).join(" · ");
+  return {
+    titulo: `te invitaron a un viaje a ${destino}`,
+    descripcion: `${dm(v.fechaInicio)} – ${dm(v.fechaFin)}. arma tu maleta con tu propia ropa: la ruta y las fechas ya están puestas.`,
+  };
+}
