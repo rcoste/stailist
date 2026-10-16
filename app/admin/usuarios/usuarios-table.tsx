@@ -31,6 +31,8 @@ export type UserRow = {
   worn: number;
   votes: number;
   lastActive: number | null;
+  /** Instaló la app en su pantalla de inicio (hay un `pwa_installed`: la abrió desde el ícono o el navegador lo avisó). */
+  app: boolean;
 };
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -94,7 +96,8 @@ type FilterKey =
   | "viaje"
   | "cartera"
   | "worn"
-  | "photos";
+  | "photos"
+  | "app";
 
 const FILTERS: { key: FilterKey; label: string; test: (r: UserRow, now: number) => boolean }[] = [
   { key: "volvieron", label: "Volvieron", test: (r) => r.volvio === "si" },
@@ -107,6 +110,7 @@ const FILTERS: { key: FilterKey; label: string; test: (r: UserRow, now: number) 
   { key: "cartera", label: "Usó cartera", test: (r) => r.cartera > 0 },
   { key: "worn", label: "Se puso un look", test: (r) => r.worn > 0 },
   { key: "photos", label: "Fotos propias", test: (r) => r.closetPhotos > 0 },
+  { key: "app", label: "Instaló la app", test: (r) => r.app },
 ];
 
 export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
@@ -242,6 +246,7 @@ export function UsuariosTable({ rows, now }: { rows: UserRow[]; now: number }) {
                     <span className="flex min-w-0 max-w-[220px] items-center gap-2 sm:max-w-none" onClick={(e) => e.stopPropagation()}>
                       <Quien correo={r.email} pais={r.pais} href={hrefUsuario(r.id)} />
                       {r.isAdmin ? <Chip tono="ink">admin</Chip> : null}
+                      {r.app ? <Chip>app</Chip> : null}
                     </span>
                   </Td>
                   <Td izq className="max-w-40 truncate text-[13px] text-muted">

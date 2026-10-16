@@ -48,6 +48,7 @@ const usuario = (over: Partial<UserRow> = {}): UserRow => ({
   worn: 2,
   votes: 4,
   lastActive: NOW - 60_000,
+  app: false,
   ...over,
 });
 
@@ -118,5 +119,16 @@ describe("UsuariosTable — la fila entera abre el perfil", () => {
     // el href de verdad — es ruido esperado, no un fallo.)
     fireEvent.click(link);
     expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe("UsuariosTable — quién instaló la app", () => {
+  it("la etiqueta 'app' sólo va con quien la instaló, y el filtro deja sólo a esas", () => {
+    const conApp = usuario({ id: "u3", email: "val@example.com", app: true });
+    render(<UsuariosTable rows={[usuario(), conApp]} now={NOW} />);
+    expect(screen.getAllByText("app")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Instaló la app" }));
+    expect(screen.queryByRole("link", { name: /tatiana/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /val/ })).toBeTruthy();
   });
 });

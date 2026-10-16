@@ -64,6 +64,12 @@ export default async function AdminUsuarios() {
     })
   );
 
+  // Quién instaló la app en su pantalla de inicio (lib/pwa-actions.ts): la
+  // abrió desde el ícono o el navegador avisó la instalación.
+  const instalaron = new Set(
+    await withDb(async (c) => (await c.query(`select distinct user_id from public.events where type = 'pwa_installed'`)).rows.map((r) => r.user_id as string))
+  );
+
   const rows: UserRow[] = profiles.map((p) => {
     const a = resumen.get(p.id) ?? vacio();
     const q = adquisicion.get(p.id);
@@ -88,18 +94,20 @@ export default async function AdminUsuarios() {
       worn: a.worn,
       votes: a.votes,
       lastActive: a.ultimoUso ? new Date(a.ultimoUso).getTime() : null,
+      app: instalaron.has(p.id),
     };
   });
 
   const now = ahora.getTime();
   const activos = rows.filter((r) => r.lastActive !== null && now - r.lastActive <= WEEK_MS).length;
+  const conApp = rows.filter((r) => r.app).length;
 
   return (
     <>
       <Pestanas pestanas={PESTANAS_PERSONAS} activa="/admin/usuarios" />
       <Encabezado
         titulo="Personas"
-        sub={`${rows.length} ${rows.length === 1 ? "perfil" : "perfiles"} · ${activos} ${activos === 1 ? "activo" : "activos"} esta semana`}
+        sub={`${rows.length} ${rows.length === 1 ? "perfil" : "perfiles"} · ${activos} ${activos === 1 ? "activo" : "activos"} esta semana · ${conApp} ${conApp === 1 ? "instaló" : "instalaron"} la app`}
       />
       <UsuariosTable rows={rows} now={now} />
     </>
