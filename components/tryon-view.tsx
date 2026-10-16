@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Spinner } from "@/components/spinner";
 import { registrarCompartido } from "@/lib/compartir-actions";
+import { conMarca } from "@/lib/marca-de-agua";
 
 // Vista "así te queda": el render del try-on DENTRO del lienzo de papel (no un
 // modal oscuro). Marco 3:4 con la imagen o la animación de generación, la voz
@@ -88,6 +89,20 @@ export function TryonView({
   }, [generating]);
 
   const hasRender = !!image && !generating;
+
+  // LA REVELACIÓN (2026-10-16): cuando un try-on TERMINA de generarse mientras
+  // la persona está viendo, se abre solo a pantalla completa. Sólo en esa
+  // transición (generando → listo): un try-on viejo que se carga al abrir el
+  // look no se abre solo, porque eso sería un modal que nadie pidió.
+  const generabaAntes = useRef(generating);
+  const [revelacion, setRevelacion] = useState(false);
+  useEffect(() => {
+    if (generabaAntes.current && !generating && image) {
+      setRevelacion(true);
+      setFull(true);
+    }
+    generabaAntes.current = generating;
+  }, [generating, image]);
 
   // Layout v2 (handoff design_handoff_look_detalle_v2 §5): el render manda y las
   // miniaturas van en una COLUMNA de 56px al lado (la tira horizontal de abajo
@@ -244,7 +259,11 @@ export function TryonView({
           image={image!}
           nombre={nombre}
           prendas={prendas}
-          onClose={() => setFull(false)}
+          revelacion={revelacion}
+          onClose={() => {
+            setFull(false);
+            setRevelacion(false);
+          }}
         />
       ) : null}
     </div>
@@ -257,42 +276,72 @@ function Lupa({
   image,
   nombre,
   prendas,
+  revelacion = false,
   onClose,
 }: {
   image: string;
   nombre: string;
   prendas: TryonPrenda[];
+  /** Recién generado: la foto entra desenfocándose, como al abrir un regalo. */
+  revelacion?: boolean;
   onClose: () => void;
 }) {
   // Compartir la foto del render (pedido de Roberto 2026-07-26 — sale de la
-  // lista fuera-del-MVP). Mismo patrón que el pasaporte: share con archivo si
-  // el dispositivo puede; si no (desktop), descarga. Cancelar no es error.
-  const [sharing, setSharing] = useState(false);
-  async function compartir() {
-    if (sharing) return;
-    setSharing(true);
+  // lista fuera-del-MVP). Desde 2026-10-16 es el botón principal de la
+  // pantalla y la copia que sale lleva la marca (lib/marca-de-agua.ts).
+  // Mismo patrón que el pasaporte: share con archivo si el dispositivo puede;
+  // si no (escritorio), sólo se ofrece descargar. Cancelar no es error.
+  const [busy, setBusy] = useState<null | "share" | "descarga">(null);
+  const [puedeCompartir, setPuedeCompartir] = useState(false);
+  useEffect(() => {
     try {
-      const blob = await (await fetch(image)).blob();
-      const file = new File([blob], "stailist-look.jpg", {
-        type: blob.type || "image/jpeg",
-      });
-      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: nombre });
-        // Sólo si el diálogo terminó: cancelar lanza AbortError y no llega aquí.
-        void registrarCompartido("tryon", "share");
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "stailist-look.jpg";
-        a.click();
-        URL.revokeObjectURL(url);
-        void registrarCompartido("tryon", "descarga");
-      }
+      const prueba = new File([new Blob(["x"], { type: "image/jpeg" })], "x.jpg", { type: "image/jpeg" });
+      setPuedeCompartir(typeof navigator.canShare === "function" && navigator.canShare({ files: [prueba] }));
+    } catch {
+      setPuedeCompartir(false);
+    }
+  }, []);
+
+  async function imagenConMarca(): Promise<Blob> {
+    const original = await (await fetch(image)).blob();
+    try {
+      return await conMarca(original, getComputedStyle(document.body).fontFamily);
+    } catch {
+      return original; // sin canvas (navegador viejo): sale sin marca, pero sale
+    }
+  }
+
+  async function compartir() {
+    if (busy) return;
+    setBusy("share");
+    try {
+      const blob = await imagenConMarca();
+      const file = new File([blob], "stailist-look.jpg", { type: "image/jpeg" });
+      await navigator.share({ files: [file], title: nombre });
+      // Sólo si el diálogo terminó: cancelar lanza AbortError y no llega aquí.
+      void registrarCompartido("tryon", "share");
     } catch {
       // AbortError (canceló el diálogo) o fetch fallido: sin drama.
     }
-    setSharing(false);
+    setBusy(null);
+  }
+
+  async function descargar() {
+    if (busy) return;
+    setBusy("descarga");
+    try {
+      const blob = await imagenConMarca();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "stailist-look.jpg";
+      a.click();
+      URL.revokeObjectURL(url);
+      void registrarCompartido("tryon", "descarga");
+    } catch {
+      /* sin drama */
+    }
+    setBusy(null);
   }
 
   // Paleta del look: colores dominantes de las prendas (dedup por hex), máx 5.
@@ -332,7 +381,8 @@ function Lupa({
         <img
           src={image}
           alt={`tú con ${nombre}`}
-          className="relative h-full w-full object-contain"
+          className="relative h-full w-full object-contain pb-20"
+          style={revelacion ? { animation: "gen-reveal 900ms var(--ease-enter) both" } : undefined}
         />
       </div>
 
@@ -345,20 +395,35 @@ function Lupa({
         <Icon name="equis" size={20} />
       </button>
 
-      {/* Compartir arriba a la derecha (espejo de la X), sobre la foto. */}
-      <button
-        type="button"
-        onClick={compartir}
-        disabled={sharing}
-        aria-label="compartir el look"
-        className="absolute right-3.5 top-[max(3.5rem,calc(env(safe-area-inset-top)+1rem))] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition-colors hover:bg-white/30 disabled:opacity-60"
-      >
-        {sharing ? (
-          <Spinner className="h-4 w-4 text-white" />
-        ) : (
-          <Icon name="compartir" size={18} />
-        )}
-      </button>
+      {/* MANDAR ES LO PRIMERO (2026-10-16): el botón vive abajo de la foto,
+          grande, en vez del ícono chico arriba a la derecha que casi nadie
+          encontraba. La foto nítida reserva abajo el alto de los botones
+          (pb-20), así que quedan sobre el fondo borroso y nunca tapan los pies
+          (el corte de pies ya se corrigió una vez, feedback de Alberto). */}
+      <div className="absolute inset-x-0 bottom-[36%] z-10 flex gap-2 px-5 pb-4">
+        {puedeCompartir ? (
+          <button
+            type="button"
+            onClick={compartir}
+            disabled={busy !== null}
+            className="flex min-h-[50px] flex-[2] items-center justify-center gap-2 rounded-sm bg-surface text-sm font-medium text-ink transition-opacity disabled:opacity-60"
+          >
+            {busy === "share" ? <Spinner className="h-4 w-4" /> : <Icon name="compartir" size={16} />}
+            mandárselo a alguien
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={descargar}
+          disabled={busy !== null}
+          className={`flex min-h-[50px] items-center justify-center gap-2 rounded-sm text-sm font-medium transition-opacity disabled:opacity-60 ${
+            puedeCompartir ? "flex-1 border border-white/50 text-white backdrop-blur" : "flex-1 bg-surface text-ink"
+          }`}
+        >
+          {busy === "descarga" ? <Spinner className="h-4 w-4" /> : <Icon name="descargar" size={16} />}
+          {puedeCompartir ? "guardar" : "descargar imagen"}
+        </button>
+      </div>
 
       {/* Bloque de papel (no puede quedar vacío): nombre + paleta + tira. */}
       <div className="absolute inset-x-0 bottom-0 top-[64%] flex flex-col px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-5">
