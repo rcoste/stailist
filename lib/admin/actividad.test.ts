@@ -249,6 +249,20 @@ describe("etiqueta", () => {
   });
 });
 
+// Regression: ISSUE-002 — invitar a un viaje salía como "compartió una imagen"
+// Found by /qa on 2026-10-16
+describe("etiqueta de compartido", () => {
+  const c = (que: string, n = 1) => ({ ...m("a", "2026-10-16T14:00:00Z", "ev:compartido"), n, data: { que, como: "share" } });
+  it("dice qué se compartió", () => {
+    expect(etiqueta(c("tryon"))).toBe("compartió su try-on");
+    expect(etiqueta(c("pasaporte"))).toBe("compartió su pasaporte");
+    expect(etiqueta(c("viaje"))).toBe("invitó a alguien a su viaje");
+  });
+  it("una ráfaga sin detalle no inventa cuál fue", () => {
+    expect(etiqueta(c("viaje", 3))).toBe("compartió ×3");
+  });
+});
+
 describe("ultimoUsoPorUsuario", () => {
   // EL CASO REAL (2026-09-12, ricardomc888): entró el 10 de septiembre y sólo
   // dejó un hint_seen; su última ACCIÓN fue borrar un viaje el 17 de agosto.

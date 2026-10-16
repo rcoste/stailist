@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.383.1] - 2026-10-16 — QA de lo de hoy: la vista previa y las etiquetas
+
+- **La vista previa del link de invitación en WhatsApp dice que es un viaje**
+  ("te invitaron a un viaje a Tokio", con fechas). Heredaba la de la landing
+  ("tu stylist personal con IA") y su `og:url` apuntaba a la raíz, así que
+  quien recibía el link no veía de qué se trataba antes de abrirlo. Con su
+  propia vista previa la imagen dejaba de heredarse: va declarada a mano.
+- **El admin dice qué se compartió**: "compartió su try-on", "compartió su
+  pasaporte" o "invitó a alguien a su viaje" en Actividad, y "mandó 1
+  invitación" en el resumen del viaje. Antes todo decía "compartió una
+  imagen", también la invitación, que es un link.
+
 ## [0.2.383.0] - 2026-10-16 — invitar a alguien a tu viaje
 
 - **"¿Viajas con alguien?"** en el viaje (`components/invitar-viaje.tsx`), en

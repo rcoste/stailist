@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { leerInvitacion, textoUnidos, tokenNuevo, tokenValido, yaPaso } from "./viaje-invitacion";
+import { leerInvitacion, textoUnidos, tokenNuevo, tokenValido, vistaPreviaDeInvitacion, yaPaso } from "./viaje-invitacion";
 
 // LO QUE BLINDAN: que el link no se pueda inventar, que la ruta llegue completa
 // aunque el viaje sea viejo, y que un viaje pasado no se ofrezca.
@@ -52,5 +52,24 @@ describe("textoUnidos", () => {
     expect(textoUnidos(0)).toBeNull();
     expect(textoUnidos(1)).toBe("1 persona ya armó su maleta con tu viaje");
     expect(textoUnidos(3)).toBe("3 personas ya armaron su maleta con tu viaje");
+  });
+});
+
+// Regression: ISSUE-001 — la vista previa del link en WhatsApp heredaba la de la landing
+// Found by /qa on 2026-10-16
+describe("vistaPreviaDeInvitacion", () => {
+  it("dice que es un viaje, a dónde y cuándo; una ciudad repetida va una vez", () => {
+    const v = leerInvitacion({
+      lugar: "París · Londres",
+      fecha_inicio: "2026-10-15",
+      fecha_fin: "2026-11-04",
+      paradas: [{ lugar: "París, Isla de Francia, Francia", noches: 5 }, { lugar: "Londres", noches: 4 }, { lugar: "París", noches: 11 }],
+    });
+    const p = vistaPreviaDeInvitacion(v);
+    expect(p.titulo).toBe("te invitaron a un viaje a París · Londres");
+    expect(p.descripcion.startsWith("15 oct – 4 nov.")).toBe(true);
+  });
+  it("sin viaje (link roto) no inventa destino", () => {
+    expect(vistaPreviaDeInvitacion(null).titulo).toBe("te invitaron a un viaje · stailist");
   });
 });

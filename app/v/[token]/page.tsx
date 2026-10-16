@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { leerInvitacion, tokenValido, yaPaso } from "@/lib/viaje-invitacion";
+import { leerInvitacion, tokenValido, vistaPreviaDeInvitacion, yaPaso } from "@/lib/viaje-invitacion";
 import { imagenDestino } from "@/lib/destino-imagen";
 import { diaEnZona } from "@/lib/admin/adquisicion";
 import { OCCASIONS } from "@/lib/trip";
@@ -15,10 +15,29 @@ import { OCCASIONS } from "@/lib/trip";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "te invitaron a un viaje · stailist",
-  description: "arma tu maleta con tu propia ropa. la ruta y las fechas ya están puestas.",
-};
+// La vista previa en WhatsApp: con el destino y las fechas. Sin esto heredaba
+// la de la landing y no decía que era un viaje (QA 2026-10-16).
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  const supabase = await createClient();
+  const { data } = tokenValido(token) ? await supabase.rpc("viaje_por_invitacion", { p_token: token }) : { data: null };
+  const { titulo, descripcion } = vistaPreviaDeInvitacion(leerInvitacion(data));
+  return {
+    title: titulo,
+    description: descripcion,
+    // La imagen se declara a mano: un `openGraph` propio deja de heredar la del
+    // layout, y sin imagen WhatsApp enseña la vista previa vacía.
+    openGraph: {
+      title: titulo,
+      description: descripcion,
+      url: `/v/${token}`,
+      type: "website",
+      siteName: "stailist",
+      locale: "es_MX",
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "stailist" }],
+    },
+  };
+}
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const dm = (d: string) => `${Number(d.slice(8, 10))} ${MESES[Number(d.slice(5, 7)) - 1]}`;

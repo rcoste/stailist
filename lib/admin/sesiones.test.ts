@@ -67,6 +67,21 @@ describe("resumir", () => {
   });
 });
 
+// Regression: ISSUE-002 — invitar a un viaje se resumía como "compartió 1 imagen"
+// Found by /qa on 2026-10-16
+describe("resumir: compartir", () => {
+  it("la invitación va con el viaje; el try-on con el try-on", () => {
+    const r = resumir([
+      m("ev:compartido", "2026-10-16T20:00:00Z", 1, { que: "viaje", como: "share" }),
+      m("ev:compartido", "2026-10-16T20:05:00Z", 1, { que: "tryon", como: "share" }),
+    ]);
+    expect(r.modulos).toEqual([
+      { modulo: "viaje", nombre: "Viaje", partes: ["mandó 1 invitación"] },
+      { modulo: "tryon", nombre: "Try-on", partes: ["compartió 1 imagen"] },
+    ]);
+  });
+});
+
 describe("construirFeed: lo que la persona hizo vs lo que hizo la app", () => {
   const base = { profiles: [], items: [], trips: [], wishlist: [] };
   it("sólo el dibujo forzado es suyo; los demás los hizo la app", () => {
