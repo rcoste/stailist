@@ -180,6 +180,8 @@ export const EVENTO_LABEL: Record<string, string> = {
   generation_failed: "se le falló una generación",
   // Bloque B del viaje (2026-10-14): qué dijo de una pieza de su maleta.
   trip_motivo: "dijo algo de una pieza de su maleta",
+  // 2026-10-16: el try-on o el pasaporte salieron de la app (data.que, data.como).
+  compartido: "compartió una imagen",
 };
 
 /**
@@ -482,6 +484,7 @@ const NIVEL: Record<string, Nivel> = {
   "ev:trip_look_vote": "oro",
   "ev:outfit_favorited": "oro",
   "ev:pwa_installed": "oro",
+  "ev:compartido": "oro",
   look: "valor",
   look_viaje: "valor",
   viaje: "valor",

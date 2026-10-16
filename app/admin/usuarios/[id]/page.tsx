@@ -389,7 +389,9 @@ export default async function FichaPersona({ params }: { params: Promise<{ id: s
                                 ? origen
                                 : m.tipo === "ev:trip_motivo"
                                   ? motivoDeMaleta(x)
-                                  : null;
+                                  : m.tipo === "ev:compartido"
+                                    ? compartidoHumano(m.data)
+                                    : null;
                         const apagado = m.tipo === "visita" || m.tipo === "ev:render_auto";
                         return (
                           <Renglon key={m.key}>
@@ -577,4 +579,13 @@ function motivoDeMaleta(data: unknown): string | null {
   const motivo = d.motivo && d.motivo in VETO_REASON_LABEL ? VETO_REASON_LABEL[d.motivo as VetoReason] : null;
   const partes = [d.pieza, d.accion ? (ACCION[d.accion] ?? d.accion) : null, [motivo, d.nota].filter(Boolean).join(": ")];
   return partes.filter(Boolean).join(" · ") || null;
+}
+
+/** "el try-on · por el teléfono": qué compartió y cómo (lib/compartir.ts). */
+function compartidoHumano(data: unknown): string | null {
+  const d = data as { que?: string; como?: string } | null;
+  if (!d?.que) return null;
+  const que = d.que === "tryon" ? "el try-on" : d.que === "pasaporte" ? "su pasaporte" : d.que;
+  const como = d.como === "share" ? "desde el teléfono" : d.como === "descarga" ? "lo descargó" : d.como === "link" ? "copió el link" : null;
+  return como ? `${que} · ${como}` : que;
 }
