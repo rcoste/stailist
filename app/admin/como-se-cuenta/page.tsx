@@ -32,6 +32,10 @@ const DEFINICIONES: { termino: string; que: string }[] = [
     que: `La persona ya vivió sus ${DIAS_VENTANA} días completos. Los porcentajes de retención sólo cuentan a quien ya vivió el día del que hablan: quien empezó ayer no puede haber vuelto el día 7.`,
   },
   {
+    termino: "Tabla de maduración",
+    que: "En Retención, una fila por semana en que empezaron y una columna por ventana de días (1–2, 3–7, 8–14). Cada celda cuenta sólo a quien ya vivió esa ventana completa; quien todavía no llega queda fuera y se anota como 'faltan'. No se junta a todos en una curva acumulada porque, con grupos que maduran distinto, el porcentaje sube y baja aunque nadie pueda 'des-volver'.",
+  },
+  {
     termino: "Costo por primer look",
     que: `Gasto en anuncios más el costo de IA de esas personas en su primera semana, dividido entre sus primeros looks. Los dólares de IA se convierten a ${MXN_POR_USD} MXN por dólar (supuesto; se cambia con MXN_POR_USD).`,
   },

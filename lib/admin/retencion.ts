@@ -73,3 +73,58 @@ export function volvieronEnSuSemana(personas: PersonaRetencion[], hoy: string): 
   const cerradas = personas.filter((p) => diasEntre(p.diaInicio, hoy) > 7);
   return { volvieron: cerradas.filter((p) => p.dias.some((d) => d >= 1 && d <= 7)).length, de: cerradas.length };
 }
+
+// LA TABLA DE MADURACIÓN (2026-10-16, idea de Roberto): una fila por semana de
+// arranque, una columna por ventana de días. Cada celda cuenta SÓLO a quien
+// ya vivió esa ventana completa; quien todavía no llega queda fuera del
+// denominador y se dice cuántas faltan. Nació de un error real: el video de la
+// segunda lectura dijo "casi nadie aparece después del día 3" con una cifra
+// (4 de 43) que dividía entre gente que aún no llegaba al día 3. Juntar a
+// todos en una sola curva acumulada tampoco sirve: con cohortes que maduran
+// distinto, el porcentaje sube y baja aunque nadie pueda "des-volver".
+
+export type Ventana = { label: string; desde: number; hasta: number };
+
+/** Antes de la semana, el resto de la semana y la semana siguiente. */
+export const VENTANAS: Ventana[] = [
+  { label: "día 1–2", desde: 1, hasta: 2 },
+  { label: "día 3–7", desde: 3, hasta: 7 },
+  { label: "día 8–14", desde: 8, hasta: 14 },
+];
+
+/** Volvió al menos una vez en la ventana, entre quienes ya la vivieron completa. */
+export type CeldaMaduracion = { volvieron: number; de: number; faltan: number };
+
+export type GrupoMaduracion = { semana: string; n: number; celdas: CeldaMaduracion[] };
+
+/** El lunes de la semana de un "YYYY-MM-DD". */
+export function lunesDe(dia: string): string {
+  const d = new Date(`${dia}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+/** Las celdas de un grupo: la última es "volvió en su primera semana" (día 1–7). */
+function celdasDe(personas: PersonaRetencion[], hoy: string): CeldaMaduracion[] {
+  return [...VENTANAS, { label: "semana", desde: 1, hasta: 7 }].map(({ desde, hasta }) => {
+    const maduras = personas.filter((p) => diasEntre(p.diaInicio, hoy) > hasta);
+    return {
+      volvieron: maduras.filter((p) => p.dias.some((d) => d >= desde && d <= hasta)).length,
+      de: maduras.length,
+      faltan: personas.length - maduras.length,
+    };
+  });
+}
+
+/** Una fila por semana de arranque (de la más vieja a la más nueva) y el total. */
+export function maduracion(personas: PersonaRetencion[], hoy: string): { grupos: GrupoMaduracion[]; total: GrupoMaduracion } {
+  const porSemana = new Map<string, PersonaRetencion[]>();
+  for (const p of personas) {
+    const s = lunesDe(p.diaInicio);
+    porSemana.set(s, [...(porSemana.get(s) ?? []), p]);
+  }
+  const grupos = [...porSemana.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([semana, ps]) => ({ semana, n: ps.length, celdas: celdasDe(ps, hoy) }));
+  return { grupos, total: { semana: "total", n: personas.length, celdas: celdasDe(personas, hoy) } };
+}
