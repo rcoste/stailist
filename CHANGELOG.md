@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.382.0] - 2026-10-16 — el try-on se revela y se manda
+
+- **Cuando un try-on termina, se abre solo a pantalla completa**
+  (`components/tryon-view.tsx`). Sólo en la transición "generando → listo":
+  un try-on viejo que se carga al abrir el look no se abre solo. La foto entra
+  desenfocándose, como al abrir un regalo.
+- **Mandar es el botón principal**: "mandárselo a alguien" (el menú de
+  compartir del teléfono, que ya incluye WhatsApp e Instagram) y "guardar",
+  grandes y abajo de la foto, en vez del ícono chico arriba a la derecha. En
+  escritorio, donde no se pueden compartir archivos, sólo "descargar imagen".
+  La foto nítida reserva abajo el alto de los botones: nunca tapan los pies.
+- **La copia que sale lleva la marca** "stailist · stailist.co" en una esquina
+  (`lib/marca-de-agua.ts`), escalada al ancho de la imagen. La imagen guardada
+  en la app no se toca.
+
 ## [0.2.381.0] - 2026-10-16 — saber cuándo alguien comparte
 
 - **Compartir deja rastro** (evento `compartido`, migración 0175;
