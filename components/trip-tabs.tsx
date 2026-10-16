@@ -57,6 +57,7 @@ export function TripTabs({
   confirmado: confirmadoInicial = false,
   maleta,
   looks,
+  invitar = null,
 }: {
   tripId: string;
   /** "Nueva York" / "Japón" — para el título "tu maleta para X". */
@@ -78,6 +79,8 @@ export function TripTabs({
   confirmado?: boolean;
   maleta: ReactNode;
   looks: ReactNode;
+  /** "¿viajas con alguien?" (components/invitar-viaje.tsx), en "el plan". */
+  invitar?: ReactNode;
 }) {
   const router = useRouter();
   // Default contextual del handoff: "el plan" recién generada; "empacar"
@@ -369,6 +372,7 @@ export function TripTabs({
                   </div>
                 </div>
               ) : null}
+              {invitar}
               {/* Sticky sobre la tab bar (57px + safe-area, como el detalle del
                   historial): era el último elemento del scroll y en móvil se
                   perdía bajo el fold (feedback de Alberto en toda la maleta). */}
@@ -387,6 +391,9 @@ export function TripTabs({
               fase con el tab del context); oculto —no desmontado— para que las
               decisiones optimistas de la sesión sobrevivan el cambio de tab. */}
           <div className={tab === "prendas" || tab === "empacar" ? "" : "hidden"}>{maleta}</div>
+          {/* Un viaje ya confirmado abre en "empacar", no en "el plan": sin
+              esto, quien más usa el viaje nunca vería la invitación. */}
+          {tab === "empacar" && invitar ? <div className="mt-6">{invitar}</div> : null}
           {tab === "looks" ? looks : null}
         </TripGenContext.Provider>
       </div>

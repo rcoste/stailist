@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { COOKIE_INVITACION } from "@/lib/viaje-invitacion";
 import { requireOnboarded } from "@/lib/auth";
 import { MAX_ANCLAS } from "@/lib/anclas";
 import { createClient } from "@/lib/supabase/server";
@@ -45,6 +48,11 @@ export default async function HoyPage({
       ? prenda.split(",").map((x) => x.trim()).filter(Boolean).slice(0, MAX_ANCLAS)
       : [];
   const profile = await requireOnboarded();
+  // Llegó por una invitación a un viaje y ya terminó su onboarding (vio su
+  // primer look): ahora el viaje. DESPUÉS de requireOnboarded a propósito:
+  // antes, alguien a medias perdería la invitación (la cookie se borra al
+  // usarla). Ver app/v/[token]/entrar/route.ts.
+  if ((await cookies()).get(COOKIE_INVITACION)) redirect("/viaje/unirme");
 
   // ¿Le preguntamos ya por el correo semanal? Sólo tras el primer 👍, sólo si
   // está en 'off', sólo una vez (components/correo-opt-in-card).

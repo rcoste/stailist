@@ -97,20 +97,32 @@ export type TripEditInit = {
   contexto: string | null;
 };
 
+// Llegó por un link de invitación (app/v/[token]): el wizard abre con la ruta,
+// las fechas y las actividades de quien invitó. Todo se puede cambiar; al
+// crear, el viaje queda enlazado al de origen (trips.invitado_de).
+export type TripInvitacionInit = {
+  token: string;
+  paradas: { lugar: string; noches: number }[];
+  inicio: string;
+  ocasiones: Occasion[];
+};
+
 export function TripWizard({
   closet = [],
   edit = null,
+  invitacion = null,
 }: {
   closet?: ClosetPick[];
   edit?: TripEditInit | null;
+  invitacion?: TripInvitacionInit | null;
 }) {
   const router = useRouter();
   const isEdit = edit !== null;
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [paradas, setParadas] = useState<Parada[]>(edit?.paradas ?? []);
-  const [inicio, setInicio] = useState(edit?.inicio ?? "");
+  const [paradas, setParadas] = useState<Parada[]>(edit?.paradas ?? invitacion?.paradas ?? []);
+  const [inicio, setInicio] = useState(edit?.inicio ?? invitacion?.inicio ?? "");
   const [ocasiones, setOcasiones] = useState<Set<Occasion>>(
-    () => new Set(edit?.ocasiones ?? [])
+    () => new Set(edit?.ocasiones ?? invitacion?.ocasiones ?? [])
   );
   // La decisión "¿rehago la maleta o solo guardo la ruta?" tras guardar en modo
   // edición. patchBusy/patchError = el camino de "solo guardar" (PATCH).
@@ -282,6 +294,7 @@ export function TripWizard({
           contexto: contexto.trim() || undefined,
           // Rehacer la maleta de un viaje existente: misma fila, mismo link.
           ...(edit ? { editId: edit.tripId } : {}),
+          ...(invitacion && !edit ? { invitacion: invitacion.token } : {}),
         }),
       });
       if (!res.ok || !res.body) {
@@ -395,6 +408,11 @@ export function TripWizard({
         {/* Cuerpo scrollable */}
         <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4 pt-4">
           <div key={step} style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}>
+            {step === 1 && invitacion && !isEdit ? (
+              <p className="mb-4 rounded-md border border-line bg-surface px-4 py-3 text-[13.5px] leading-snug text-ink">
+                <b>te invitaron a este viaje.</b> la ruta y las fechas ya están puestas; cámbialas si tu plan es distinto.
+              </p>
+            ) : null}
             {step === 1 ? (
               <StepItinerario
                 paradas={paradas}

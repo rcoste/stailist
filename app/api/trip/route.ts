@@ -34,6 +34,7 @@ import { quizMetalDe, type Season } from "@/lib/colorimetria";
 import type { ApetitoAcentos } from "@/lib/looks";
 import { revisarGasto } from "@/lib/cuotas";
 import { registrarEvento } from "@/lib/telemetria";
+import { tokenValido } from "@/lib/viaje-invitacion";
 
 // 300 s, no 60 (2026-10-14). La ruta vivía al filo: ~12 s de preparar
 // (paradas, clima, perfil), la cápsula de la IA (mediana 36 s, máx 48 s
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
     anclas?: unknown; // ids de prendas que quiere llevar sí o sí (máx 4)
     contexto?: string; // texto libre: qué va a hacer en el viaje (afina cápsula + looks)
     editId?: string; // rehacer la maleta de un viaje EXISTENTE (editar ruta y fechas)
+    invitacion?: string; // llegó por el link de otra persona (lib/viaje-invitacion.ts)
   } = {};
   try {
     body = await request.json();
@@ -420,9 +422,21 @@ export async function POST(request: NextRequest) {
           return;
         }
 
+        // Viene de una invitación: se enlaza al viaje de origen (para el
+        // "N personas ya armaron su maleta" de quien invitó). La función sólo
+        // devuelve el id; un token roto, o el propio viaje, no enlazan nada.
+        let invitadoDe: string | null = null;
+        if (tokenValido(body.invitacion)) {
+          const { data: origen } = await supabase.rpc("viaje_id_por_invitacion", { p_token: body.invitacion });
+          if (typeof origen === "string") {
+            const { data: propio } = await supabase.from("trips").select("id").eq("id", origen).eq("user_id", user.id).maybeSingle();
+            if (!propio) invitadoDe = origen;
+          }
+        }
+
         const { data: inserted, error } = await supabase
           .from("trips")
-          .insert({ user_id: user.id, ...fila })
+          .insert({ user_id: user.id, ...fila, ...(invitadoDe ? { invitado_de: invitadoDe } : {}) })
           .select("id")
           .single();
 
@@ -435,7 +449,7 @@ export async function POST(request: NextRequest) {
         await registrarEvento(supabase, {
           user_id: user.id,
           type: "trip_created",
-          data: { trip_id: inserted.id },
+          data: { trip_id: inserted.id, ...(invitadoDe ? { invitacion: true } : {}) },
         });
         send({ done: true, tripId: inserted.id });
         controller.close();

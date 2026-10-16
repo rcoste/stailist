@@ -133,7 +133,7 @@ export function accionDe(m: Momento): Accion | "sistema" | null {
       );
     case "compartido":
       return a(
-        m.data?.que === "tryon" ? "tryon" : "perfil",
+        m.data?.que === "tryon" ? "tryon" : m.data?.que === "viaje" ? "viaje" : "perfil",
         "compartido",
         "compartió 1 imagen",
         (n) => `compartió ${n} imágenes`,

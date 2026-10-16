@@ -29,6 +29,8 @@ import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
 import { TripTabs } from "@/components/trip-tabs";
 import { TripPackedProvider, TripPackedBar } from "@/components/trip-packed-context";
 import { DeleteTripButton } from "@/components/delete-trip-button";
+import { InvitarViaje } from "@/components/invitar-viaje";
+import { textoUnidos } from "@/lib/viaje-invitacion";
 
 export default async function ViajeDetallePage({
   params,
@@ -158,6 +160,8 @@ export default async function ViajeDetallePage({
   // Título: una parada → su nombre; varias → el país compartido ("Japón") o
   // "Tokio y 2 más" si la ruta cruza países.
   const destino = nombreDeViaje(trip.lugar as string, paradas);
+  // Cuántas personas armaron su maleta desde este viaje (sólo responde al dueño).
+  const { data: unidos } = await supabase.rpc("unidos_a_mi_viaje", { p_trip: trip.id });
 
   // Outfits del viaje (v1.1): resueltos contra el clóset (cada nombre → su imagen).
   const rawOutfits = trip.outfits as TripOutfit[] | null;
@@ -343,6 +347,9 @@ export default async function ViajeDetallePage({
           looksCount={looksCount}
           looksStale={Boolean(trip.outfits_stale)}
           confirmado={confirmado}
+          invitar={
+            <InvitarViaje tripId={trip.id as string} destino={destino} unidos={textoUnidos(unidos ?? 0)} />
+          }
           maleta={
             <TripResult
               tripId={trip.id}

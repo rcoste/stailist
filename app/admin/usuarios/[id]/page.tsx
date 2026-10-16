@@ -585,7 +585,7 @@ function motivoDeMaleta(data: unknown): string | null {
 function compartidoHumano(data: unknown): string | null {
   const d = data as { que?: string; como?: string } | null;
   if (!d?.que) return null;
-  const que = d.que === "tryon" ? "el try-on" : d.que === "pasaporte" ? "su pasaporte" : d.que;
+  const que = d.que === "tryon" ? "el try-on" : d.que === "pasaporte" ? "su pasaporte" : d.que === "viaje" ? "la invitación a su viaje" : d.que;
   const como = d.como === "share" ? "desde el teléfono" : d.como === "descarga" ? "lo descargó" : d.como === "link" ? "copió el link" : null;
   return como ? `${que} · ${como}` : que;
 }
