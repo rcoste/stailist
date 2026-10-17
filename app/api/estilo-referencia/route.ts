@@ -12,6 +12,7 @@ import type { StyleVetoes } from "@/lib/vetoes";
 import { revisarGasto } from "@/lib/cuotas";
 import { leerImagenEntrante } from "@/lib/imagen-entrante";
 import { medirAnthropic } from "@/lib/recibos";
+import { armarReferencias, resumenCompat } from "@/lib/estilo-referencia";
 
 export const maxDuration = 60;
 
@@ -155,20 +156,20 @@ export async function POST(request: NextRequest) {
     }));
     content.push({
       type: "text",
-      text: `Estas ${paraVision.length} foto(s) muestran un estilo que le gusta a tu clienta. ${perfil}\n\nDescribe el ESTILO (no a las personas) y, sobre todo, evalúa si le VA a ELLA según su colorimetría, silueta y vetos. Sé honesta — si algo no le favorece, dilo (ese es tu valor como estilista).`,
+      text: `Estas ${paraVision.length} foto(s) muestran looks que le gustan a tu clienta, EN ESTE ORDEN. ${perfil}\n\nLee CADA foto como un look aparte (no los fundas en un solo estilo: pueden ser estilos distintos y eso está bien) y, por cada uno, evalúa si le VA a ELLA según su colorimetría, silueta y vetos. Sé honesta — si algo no le favorece, dilo (ese es tu valor como estilista).`,
     });
 
     const res = await medirAnthropic({ supabase, userId: user.id, tarea: "estilo-referencia" }, CLASSIFY_MODEL, () =>
       client.messages.create({
       model: CLASSIFY_MODEL,
-      max_tokens: 800,
+      max_tokens: 1400,
       // Thinking OFF: en los modelos 5 viene ON por default y se come el
       // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
       // esenciales muerta). El schema ya obliga a razonar en un campo antes de
       // comprometer la respuesta, que es la misma idea dentro del presupuesto.
         thinking: { type: "disabled" },
       system:
-        "Eres la estilista de la clienta. Miras 1-3 fotos de un estilo que le gusta y haces dos cosas: (1) describes el ESTILO (estética, prendas, siluetas, formalidad, aire de paleta), NUNCA el físico ni la identidad de quien aparece; (2) evalúas honestamente si ese estilo le VA a ELLA según su colorimetría, silueta y vetos. Voz cálida y directa, tuteo, cero jerga técnica de moda. Devuelve: `summary` (1-2 frases del estilo, que un motor de outfits pueda usar para empujar el VIBE y las siluetas, no el color); `tags` (4-6 etiquetas cortas en minúscula); `fit.verdict` ('va' = le queda increíble | 'ajustes' = le va pero hay que adaptarlo | 'ojo' = hay cosas que NO le favorecen); `fit.note` (1-2 frases honestas: por qué le va, o qué adaptar, o qué cuidar — menciona colorimetría/silueta/vetos concretos cuando aplique; ej: 'me encanta el aire sastre para ti; pero su paleta es muy cálida y a ti te lucen los fríos, así que te lo llevo a tus tonos'). Si choca con un veto, dilo claro.",
+        "Eres la estilista de la clienta. Miras 1-3 fotos de looks que le gustan y devuelves UNA referencia POR FOTO, en el mismo orden (`referencias`, tantas como fotos). Describe el LOOK (estética, prendas, siluetas, formalidad), NUNCA el físico ni la identidad de quien aparece. Por cada foto: `resumen` (1 frase del look que un motor de outfits pueda usar para empujar el VIBE, las piezas y las siluetas, no el color); `piezas` (3-5 prendas clave en minúscula, ej. 'blazer oversize', 'jeans rectos'); `siluetas` (media frase: proporciones, largos, volumen); `formalidad` ('casual' | 'arreglado' | 'formal'); `ocasiones` (para qué sirve ese look, de: diario, oficina, noche, evento, finde); `fit.verdict` ('va' = le queda increíble | 'ajustes' = le va pero hay que adaptarlo | 'ojo' = hay cosas que NO le favorecen) y `fit.note` (1 frase honesta: por qué le va, o qué adaptar, o qué cuidar — menciona colorimetría/silueta/vetos concretos cuando aplique). Si un look choca con un veto, dilo claro. Además `tags`: 4-6 etiquetas cortas en minúscula del conjunto. Voz cálida y directa, tuteo, cero jerga técnica de moda.",
       messages: [{ role: "user", content }],
       output_config: {
         format: {
@@ -176,19 +177,33 @@ export async function POST(request: NextRequest) {
           schema: {
             type: "object",
             properties: {
-              summary: { type: "string" },
-              tags: { type: "array", items: { type: "string" } },
-              fit: {
-                type: "object",
-                properties: {
-                  verdict: { type: "string", enum: ["va", "ajustes", "ojo"] },
-                  note: { type: "string" },
+              referencias: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    resumen: { type: "string" },
+                    piezas: { type: "array", items: { type: "string" } },
+                    siluetas: { type: "string" },
+                    formalidad: { type: "string", enum: ["casual", "arreglado", "formal"] },
+                    ocasiones: { type: "array", items: { type: "string", enum: ["diario", "oficina", "noche", "evento", "finde"] } },
+                    fit: {
+                      type: "object",
+                      properties: {
+                        verdict: { type: "string", enum: ["va", "ajustes", "ojo"] },
+                        note: { type: "string" },
+                      },
+                      required: ["verdict", "note"],
+                      additionalProperties: false,
+                    },
+                  },
+                  required: ["resumen", "piezas", "siluetas", "formalidad", "ocasiones", "fit"],
+                  additionalProperties: false,
                 },
-                required: ["verdict", "note"],
-                additionalProperties: false,
               },
+              tags: { type: "array", items: { type: "string" } },
             },
-            required: ["summary", "tags", "fit"],
+            required: ["referencias", "tags"],
             additionalProperties: false,
           },
         },
@@ -198,12 +213,13 @@ export async function POST(request: NextRequest) {
     const text = res.content.find((b) => b.type === "text")?.text;
     if (!text) throw new Error("vacio");
     const out = JSON.parse(text) as {
-      summary: string;
+      referencias: { resumen: string; piezas: string[]; siluetas: string; formalidad: string; ocasiones: string[]; fit: { verdict: string; note: string } }[];
       tags: string[];
-      fit: { verdict: string; note: string };
     };
-    const summary = (out.summary ?? "").trim();
-    if (!summary) throw new Error("vacio");
+    const refsCrudas = Array.isArray(out.referencias) ? out.referencias : [];
+    const referencias = armarReferencias(refsCrudas, image_paths);
+    if (referencias.length === 0) throw new Error("vacio");
+    const { summary, fit } = resumenCompat(referencias);
     const tags = (out.tags ?? []).map((t) => t.toLowerCase().trim()).filter(Boolean).slice(0, 6);
 
     // Firma las fotos para el preview (aún NO se guarda en el perfil).
@@ -215,7 +231,7 @@ export async function POST(request: NextRequest) {
       url: s.signedUrl ?? null,
     }));
 
-    return NextResponse.json({ summary, tags, fit: out.fit, images });
+    return NextResponse.json({ summary, tags, fit, images, referencias });
   } catch {
     // Falló el análisis → limpia solo las fotos NUEVAS. Las conservadas siguen
     // siendo su referencia guardada: borrarlas dejaría el perfil apuntando a

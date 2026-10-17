@@ -355,7 +355,7 @@ export function construirPromptCapsula(inputs: CapsuleInputs): PromptCapsula {
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
   const refTxt = inputs.styleReference
-    ? `\nESTILO DE REFERENCIA que le encanta (inspira el VIBE y las siluetas de la cápsula, NO los colores — la colorimetría de abajo manda el color): ${inputs.styleReference}. Empuja la cápsula hacia ese aire sin copiarlo literal.`
+    ? `\nLOOKS DE REFERENCIA que le encantan (inspiran el VIBE, las piezas y las siluetas de la cápsula, NO los colores — la colorimetría de abajo manda el color): ${inputs.styleReference} Acércate a ellos sin copiarlos literal.`
     : "";
   const palabrasTxt = inputs.styleWords?.trim()
     ? `\nSU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — la señal más directa de quién es; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género — siempre están por encima).`

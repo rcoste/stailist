@@ -107,6 +107,12 @@ export const VARIANTES_MOTOR: VarianteMotor[] = [
     opciones: { sinRepararEnCodigo: true },
   },
   {
+    clave: "sin-referencia",
+    etiqueta: "Sin looks de referencia",
+    ayuda: "producción sin las fotos de referencia de estilo (v3): mide si ayudan o estorban",
+    opciones: { sinReferencia: true },
+  },
+  {
     clave: "sin-neutros",
     etiqueta: "Sin neutros-como-fondo",
     ayuda: "sin la aclaración de que los neutros no compiten con la paleta (v37)",

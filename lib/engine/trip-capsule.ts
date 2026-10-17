@@ -186,7 +186,7 @@ export async function generateTripCapsuleTarget(
     ? `CONTEXTO DEL VIAJE (lo que la persona va a hacer, EN SUS PALABRAS): "${inputs.contexto}". Es la señal MÁS específica del viaje — tenla muy en cuenta: ajusta qué prendas empacas, el nivel de arreglo y el porqué de cada una a esto. Si pide una prenda o pieza concreta para un plan (un jersey para un partido, algo formal para una boda, calzado para caminar), inclúyela o déjale espacio. No la ignores por dimensionar.`
     : "";
   const refTxt = inputs.styleReference
-    ? `ESTILO DE REFERENCIA que le encanta (inspira el vibe y las siluetas de lo que empacas, NO los colores — la colorimetría manda el color): ${inputs.styleReference}.`
+    ? `LOOKS DE REFERENCIA que le encantan (inspiran el vibe, las piezas y las siluetas de lo que empacas, NO los colores — la colorimetría manda el color): ${inputs.styleReference}`
     : "";
   const palabrasTxt = inputs.styleWords?.trim()
     ? `SU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género, piso, clima — siempre están por encima).`

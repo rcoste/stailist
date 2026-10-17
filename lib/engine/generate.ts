@@ -25,6 +25,8 @@ export type OpcionesGeneracion = {
   sinBlueprint?: boolean;
   sinRotacion?: boolean;
   sinNeutros?: boolean;
+  /** Apaga los looks de referencia (v3, 2026-10-17). Solo para el comparador: mide si las referencias ayudan o estorban. */
+  sinReferencia?: boolean;
   /**
    * Apaga la reparación EN CÓDIGO (lib/engine/reparar.ts) y deja que el juez
    * arregle todo, como antes de v47. Solo para el comparador: es la variante
@@ -164,7 +166,8 @@ export async function generarConRecibo(
     {
     modelo,
     system: opciones.congelado?.system ?? SYSTEM_PROMPT,
-    texto: opciones.congelado?.texto ?? buildUserMessage(ctx, opciones),
+    // `sinReferencia` (comparador): la misma persona, sin sus looks de referencia.
+    texto: opciones.congelado?.texto ?? buildUserMessage(opciones.sinReferencia ? { ...ctx, styleReference: null } : ctx, opciones),
     schema: buildOutfitSchema(itemIds),
     // 3072: el campo "analisis" (borrador de razonamiento del schema) consume
     // tokens antes de los outfits; 2048 quedaba justo.

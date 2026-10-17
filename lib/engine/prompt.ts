@@ -1122,7 +1122,7 @@ export function contextBlock(
   }
   if (ctx.styleReference) {
     lines.push(
-      `Estilo de referencia que le encanta (inspira el VIBE y las siluetas, NO los colores — la colorimetría de arriba manda el color): ${ctx.styleReference}. Empuja los looks hacia ese aire sin copiarlo al pie de la letra.`
+      `Looks de referencia que le encantan (inspiran el VIBE, las piezas y las siluetas, NO los colores — la colorimetría de arriba manda el color): ${ctx.styleReference}. Acércate a ellos sin copiarlos al pie de la letra.`
     );
   }
   if (ctx.silueta) {

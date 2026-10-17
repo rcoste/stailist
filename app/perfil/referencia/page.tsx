@@ -46,6 +46,9 @@ export default async function PerfilReferenciaPage({
       tags: sr.tags ?? [],
       fit: sr.fit ?? null,
       images: (data ?? []).map((s) => s.signedUrl).filter((u): u is string => !!u),
+      referencias: Array.isArray((sr as { referencias?: unknown }).referencias)
+        ? ((sr as { referencias?: unknown }).referencias as import("@/components/style-reference-card").RefLook[])
+        : undefined,
       // Sin esto, "sumar foto" desde ESTA página mandaba keep:[] y las fotos que
       // ya tenías se quedaban fuera de la referencia guardada. En /perfil sí
       // viajaban; aquí no, y es justo la página a la que apunta el checklist.

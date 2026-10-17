@@ -205,7 +205,7 @@ describe("estiloDelPerfil — el juez lee lo MISMO que el motor", () => {
     // motor. Con "afina tu estilo" apagado (2026-09-08) el motor no ve la
     // referencia, así que el juez tampoco — si aquí llegara, el juez estaría
     // calificando contra un criterio que el generador nunca recibió.
-    expect(e.marca).toBe(REFERENCIA_DE_ESTILO_ACTIVA ? expect.stringContaining("minimalismo cálido") : null);
+    expect(e.marca).toEqual(REFERENCIA_DE_ESTILO_ACTIVA ? expect.stringContaining("minimalismo cálido") : null);
   });
 
   it("un perfil vacío no inventa estilo", () => {

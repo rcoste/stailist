@@ -16,6 +16,15 @@ import { REFERENCIAS_PRECARGADAS, presetsPara } from "@/lib/referencias";
 import { StyleWordsCard } from "@/components/style-words-card";
 
 type Fit = { verdict: string; note: string };
+/** v3: lo que la visión dijo de UNA foto (lib/estilo-referencia.ts). */
+export type RefLook = {
+  path?: string | null;
+  resumen: string;
+  piezas?: string[];
+  formalidad?: string | null;
+  ocasiones?: string[];
+  fit?: { verdict?: string; note?: string } | null;
+};
 export type StyleRef = {
   summary: string;
   tags: string[];
@@ -23,11 +32,13 @@ export type StyleRef = {
   images: string[];
   /** Rutas de storage de esas fotos — se mandan como `keep` al sumar más. */
   paths?: string[];
+  /** v3: una por foto, en el orden de `paths`. Sin esto (viejo/preset) se muestra el summary. */
+  referencias?: RefLook[];
 };
 
 // Tope de fotos de referencia. Vive aquí y en la API (que lo revalida).
 const MAX_FOTOS = 3;
-type Preview = { summary: string; tags: string[]; fit: Fit; images: { path: string; url: string | null }[] };
+type Preview = { summary: string; tags: string[]; fit: Fit; images: { path: string; url: string | null }[]; referencias?: RefLook[] };
 
 // El atajo "usa el estilo de una de nuestras stylists" se apagó el 2026-07-28
 // porque en pantalla eran dos nombres y un párrafo: le pedías a alguien adoptar
@@ -45,6 +56,38 @@ const VERDICT: Record<string, { label: string; cls: string }> = {
   ajustes: { label: "te va, con ajustes", cls: "bg-accent-soft text-ink" },
   ojo: { label: "ojo con esto", cls: "bg-warning/10 text-warning" },
 };
+
+const OCASION_LABEL: Record<string, string> = { diario: "diario", oficina: "oficina", noche: "noche", evento: "evento", finde: "finde" };
+
+// v3: UNA tarjeta por foto. Cada look se lee aparte (la foto, si le va, y lo
+// que la app sacó de él) para que se vea que no se funden en un híbrido.
+function Looks({ refs, urlDe }: { refs: RefLook[]; urlDe: (path: string | null | undefined) => string | null }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {refs.map((r, i) => {
+        const url = urlDe(r.path);
+        const v = r.fit?.verdict ? (VERDICT[r.fit.verdict] ?? VERDICT.ajustes) : null;
+        return (
+          <div key={i} className="flex gap-3 rounded-md border border-line bg-bg p-2">
+            <div className="relative aspect-[3/4] w-[72px] shrink-0 overflow-hidden rounded-sm border border-line bg-tile">
+              {url ? <Image src={url} alt="" fill sizes="72px" className="object-cover" /> : null}
+            </div>
+            <div className="flex min-w-0 flex-col gap-1">
+              {v ? <span className={`w-fit rounded-sm px-2 py-0.5 text-[11px] font-semibold ${v.cls}`}>{v.label}</span> : null}
+              <p className="text-[12.5px] leading-snug text-ink">{r.resumen}</p>
+              {r.fit?.note && r.fit.verdict !== "va" ? <p className="text-[12px] leading-snug text-muted">{r.fit.note}</p> : null}
+              {(r.ocasiones?.length || r.formalidad) ? (
+                <p className="text-[11px] text-faint">
+                  {[r.formalidad, ...(r.ocasiones ?? []).map((o) => OCASION_LABEL[o] ?? o)].filter(Boolean).join(" · ")}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // "Tu estilo de referencia" (v2): subes 1-3 fotos de un estilo que te gusta; la IA
 // lo describe Y evalúa si te VA (colorimetría/silueta/vetos) → veredicto honesto.
@@ -157,6 +200,7 @@ export function StyleReferenceCard({
         tags: preview.tags,
         fit: preview.fit,
         image_paths: preview.images.map((i) => i.path),
+        referencias: preview.referencias,
       });
       if (r.ok) {
         setSaved({
@@ -165,6 +209,7 @@ export function StyleReferenceCard({
           fit: preview.fit,
           images: preview.images.map((i) => i.url).filter((u): u is string => !!u),
           paths: preview.images.map((i) => i.path),
+          referencias: preview.referencias,
         });
         setPreview(null);
         setTocoElEstilo(true);
@@ -258,28 +303,34 @@ export function StyleReferenceCard({
 
       {busy ? (
         <div className="flex items-center gap-2.5 py-2 text-sm text-muted">
-          <Spinner className="h-4 w-4 text-accent" /> leyendo el estilo y viendo si te va…
+          <Spinner className="h-4 w-4 text-accent" /> leyendo cada look y viendo si te va…
         </div>
       ) : preview ? (
         // PREVIEW: el usuario decide si lo absorbe (pushback).
         <div className="flex flex-col gap-3">
           {/* Mismo formato que el estado guardado: si aquí se vieran chicas y al
               guardar grandes, la transición daría un salto raro. */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {preview.images.map((im, i) =>
-              im.url ? (
-                <div
-                  key={i}
-                  className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg"
-                >
-                  <Image src={im.url} alt="" fill sizes="110px" className="object-cover" />
-                </div>
-              ) : null
-            )}
-          </div>
-          {fitChip(preview.fit)}
-          <p className="text-[13.5px] leading-snug text-ink">{preview.fit.note}</p>
-          <p className="text-[12.5px] leading-snug text-muted">{preview.summary}</p>
+          {preview.referencias?.length ? (
+            <Looks refs={preview.referencias} urlDe={(p) => preview.images.find((im) => im.path === p)?.url ?? null} />
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-1.5">
+                {preview.images.map((im, i) =>
+                  im.url ? (
+                    <div
+                      key={i}
+                      className="relative aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg"
+                    >
+                      <Image src={im.url} alt="" fill sizes="110px" className="object-cover" />
+                    </div>
+                  ) : null
+                )}
+              </div>
+              {fitChip(preview.fit)}
+              <p className="text-[13.5px] leading-snug text-ink">{preview.fit.note}</p>
+              <p className="text-[12.5px] leading-snug text-muted">{preview.summary}</p>
+            </>
+          )}
           <div className="mt-1 flex gap-2.5">
             <button
               type="button"
@@ -308,7 +359,9 @@ export function StyleReferenceCard({
         // etiquetas caían una por fila. En una card cuyo argumento es "tu
         // referencia es visual", las fotos eran lo más chico de la card.
         <div className="flex flex-col gap-3">
-          {saved.images.length > 0 ? (
+          {saved.referencias?.length ? (
+            <Looks refs={saved.referencias} urlDe={(p) => { const i = (saved.paths ?? []).indexOf(p ?? ""); return i >= 0 ? (saved.images[i] ?? null) : null; }} />
+          ) : saved.images.length > 0 ? (
             <div className="grid grid-cols-3 gap-1.5">
               {saved.images.slice(0, MAX_FOTOS).map((u, i) => (
                 <div
@@ -321,11 +374,11 @@ export function StyleReferenceCard({
             </div>
           ) : null}
           <div className="flex min-w-0 flex-col gap-1.5">
-            {saved.fit ? fitChip(saved.fit) : null}
-            {saved.fit ? (
+            {!saved.referencias?.length && saved.fit ? fitChip(saved.fit) : null}
+            {!saved.referencias?.length && saved.fit ? (
               <p className="text-[12.5px] leading-snug text-ink">{saved.fit.note}</p>
             ) : null}
-            <p className="text-[12.5px] leading-snug text-muted">{saved.summary}</p>
+            {!saved.referencias?.length ? <p className="text-[12.5px] leading-snug text-muted">{saved.summary}</p> : null}
             {saved.tags.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {saved.tags.map((t) => (
@@ -352,8 +405,8 @@ export function StyleReferenceCard({
         // VACÍO.
         <>
           <p className="text-[13px] leading-snug text-muted">
-            ¿Te encanta cómo se viste alguien? Sube 1-3 fotos y te digo si te va —
-            y afino tus outfits hacia ese estilo (tus colores no cambian).
+            ¿Hay looks que te encantan? Sube 1-3 fotos y te digo, foto por foto, si te
+            van — y afino tus outfits hacia ellos (tus colores no cambian).
           </p>
           <button
             type="button"
