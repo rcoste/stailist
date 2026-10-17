@@ -15,7 +15,7 @@ import {
 import { siluetaPromptLine, type Build, type Volume } from "@/lib/silueta";
 import { ageStylingLine, type AgeRange } from "@/lib/edad";
 import { enrichPackable, type RealAttrs } from "@/lib/engine/enrich-packable";
-import { empacablesDelViaje } from "@/lib/trip-maleta";
+import { piezasParaLooks } from "@/lib/trip-maleta";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
@@ -27,7 +27,8 @@ import { registrarEvento } from "@/lib/telemetria";
 export const maxDuration = 60;
 
 // Modo viaje v1.1: arma los LOOKS del viaje con lo que de verdad empacas (lo que
-// tienes + los "parecido" que aceptaste). Aparte de la creación del viaje (una
+// tienes + los "parecido" que aceptaste), y desde 2026-10-17 también con lo que
+// falta (marcado), para que se vea cómo quedaría con la pieza. Aparte de la creación del viaje (una
 // sola llamada → cabe en 60s) y DESPUÉS de tus decisiones de empaque, así que
 // refleja exactamente lo que llevas. Cachea el resultado en trips.outfits.
 // Tope de looks guardados por viaje (al acumular con "Generar más").
@@ -88,12 +89,17 @@ export async function POST(
   // sustitutos que la persona eligió a mano ("sub:<i>"). Esta ruta tenía su
   // propia copia de la regla sin los sustitutos, y un viaje con 8 elegidos a
   // mano salió con 15 looks de las mismas cuatro prendas (2026-10-13).
-  const packable: PackableItem[] = empacablesDelViaje(target, match, overrides).map((p, i) => ({
+  //
+  // Desde 2026-10-17 entran también las piezas que FALTAN (marcadas): con
+  // media maleta por comprar, los looks salían de las mismas cuatro prendas
+  // y la persona no podía ver cómo se vería con lo sugerido antes de comprar.
+  const packable: PackableItem[] = piezasParaLooks(target, match, overrides).map((p, i) => ({
     n: i,
     nombre: p.nombre,
     category: p.item.category,
     color: p.item.colorFamilia,
     formalidad: p.item.formalidad,
+    ...(p.falta ? { falta: true } : {}),
   }));
 
   if (packable.length < 2) {
@@ -212,20 +218,23 @@ function tripWeatherWithRange(
 ): TripWeatherInput | null {
   if (!base) return base;
   const arr = Array.isArray(paradas)
-    ? (paradas as { lugar?: string; weather?: { temp_c?: number } | null }[])
+    ? (paradas as { lugar?: string; weather?: { temp_c?: number; temp_min?: number; temp_max?: number } | null }[])
     : [];
+  // La mínima de cada parada (2026-10-17), no su promedio: Mineápolis "6°C"
+  // tiene mañanas de 0°C, y los looks se armaban para 6.
   const temps = arr
-    .map((p) => ({ lugar: p.lugar, t: p.weather?.temp_c }))
-    .filter((x): x is { lugar: string | undefined; t: number } => typeof x.t === "number");
-  if (temps.length < 2) return base;
-  const sorted = [...temps].sort((a, b) => a.t - b.t);
-  const min = sorted[0].t;
-  const max = sorted[sorted.length - 1].t;
+    .map((p) => ({ lugar: p.lugar, min: p.weather?.temp_min ?? p.weather?.temp_c, max: p.weather?.temp_max ?? p.weather?.temp_c }))
+    .filter((x): x is { lugar: string | undefined; min: number; max: number } => typeof x.min === "number" && typeof x.max === "number");
+  if (temps.length === 0) return base;
+  const sorted = [...temps].sort((a, b) => a.min - b.min);
+  const min = sorted[0].min;
+  const max = Math.max(...temps.map((t) => t.max));
   if (max - min < 4) return base; // sin spread relevante, el resumen basta
   return {
     ...base,
     temp_min: min,
     temp_max: max,
-    coldest: sorted[0].lugar?.split(",")[0]?.trim(),
+    // Sólo es "la ciudad más fría" cuando hay varias; con una, el rango es del día.
+    ...(temps.length > 1 ? { coldest: sorted[0].lugar?.split(",")[0]?.trim() } : {}),
   };
 }

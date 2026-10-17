@@ -21,6 +21,7 @@ import {
   normalizarRuta,
   resolverParadas,
   aggregateWeather,
+  ventanasDeParadas,
   lugarDisplay,
 } from "./trip-ruta";
 import type { Parada, TripWeather } from "./trip";
@@ -193,5 +194,39 @@ describe("resolverParadas — geocode + clima con fallbacks", () => {
     expect(parada.lat).toBe(35);
     expect(parada.lon).toBe(139);
     expect(parada.weather).toEqual({ temp_c: 18, condition: "despejado" });
+  });
+});
+
+// 2026-10-17: el clima se pide por las fechas de CADA parada, y el resumen
+// lleva el rango real del viaje (la mínima más baja, la máxima más alta).
+describe("ventanasDeParadas", () => {
+  it("encadena llegada y salida con las noches de cada parada", () => {
+    expect(ventanasDeParadas("2026-10-22", "2026-11-17", [7, 9, 5, 5])).toEqual([
+      { inicio: "2026-10-22", fin: "2026-10-29" },
+      { inicio: "2026-10-29", fin: "2026-11-07" },
+      { inicio: "2026-11-07", fin: "2026-11-12" },
+      { inicio: "2026-11-12", fin: "2026-11-17" },
+    ]);
+  });
+  it("sin noches (viaje viejo) no inventa: null → se usa el rango entero", () => {
+    expect(ventanasDeParadas("2026-10-22", "2026-11-17", null)).toBeNull();
+    expect(ventanasDeParadas("2026-10-22", "2026-11-17", [7, null])).toBeNull();
+  });
+  it("nunca pasa del fin del viaje", () => {
+    expect(ventanasDeParadas("2026-10-22", "2026-10-25", [2, 5])![1]).toEqual({ inicio: "2026-10-24", fin: "2026-10-25" });
+  });
+});
+
+describe("aggregateWeather — el rango del viaje", () => {
+  it("la mínima más baja y la máxima más alta entre paradas", () => {
+    const agg = aggregateWeather([
+      p("Mineápolis", { temp_c: 6, condition: "nublado", temp_min: 1, temp_max: 11 }),
+      p("Tokio", { temp_c: 14, condition: "despejado", temp_min: 9, temp_max: 19 }),
+    ]);
+    expect([agg?.temp_min, agg?.temp_max]).toEqual([1, 19]);
+  });
+  it("una parada sin rango aporta su promedio como mínima y máxima", () => {
+    const agg = aggregateWeather([p("A", w(6, "nublado")), p("B", { temp_c: 14, condition: "x", temp_min: 9, temp_max: 19 })]);
+    expect([agg?.temp_min, agg?.temp_max]).toEqual([6, 19]);
   });
 });

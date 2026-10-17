@@ -26,6 +26,8 @@ export type PackableItem = {
   // no los traen): dejan al motor juzgar color/clima/estampado de verdad.
   hex?: string | null; // color real de la tela (no la familia ideal)
   temporada?: string | null; // "calor" | "frio" | "todo-el-año"…
+  /** Pieza sugerida que la persona todavía no tiene (lib/trip-maleta.ts, piezasParaLooks). */
+  falta?: boolean;
   material?: string | null; // "lana", "lino"… — clima y peso de tela
   patron?: string | null; // liso/rayas/… — evita dos estampados que pelean
   color_secundario?: string | null; // segundo color si es bicolor/estampada
@@ -46,6 +48,7 @@ export function packableDesc(p: PackableItem, withCategory = false): string {
       ? `estampado ${p.patron}`
       : p.patron,
     p.temporada && p.temporada !== "todo-el-año" ? `para ${p.temporada}` : null,
+    p.falta ? "todavía no la tiene" : null,
   ].filter(Boolean);
   return `${p.n}. ${p.nombre} (${detalle.join(", ")})`;
 }
@@ -201,8 +204,10 @@ export function climaText(w: TripWeatherInput | null): string {
     typeof w.temp_max === "number" &&
     w.temp_max - w.temp_min >= 4;
   if (spread) {
-    const fria = w.coldest ? ` (la más fría: ${w.coldest})` : "";
-    return `de ${w.temp_min}°C a ${w.temp_max}°C entre ciudades${fria}${cond}${est}. EMPACA PARA LA MÁS FRÍA: cada look debe aguantar ${w.temp_min}°C — nada de una sola capa ligera; suma abrigo/suéter. En los destinos más cálidos se quitan capas.`;
+    // Con coldest es un rango ENTRE ciudades; sin él, el de un mismo día
+    // (mañanas y noches contra tardes) de un solo destino.
+    const donde = w.coldest ? ` entre ciudades (la más fría: ${w.coldest})` : " entre la mañana y la tarde";
+    return `de ${w.temp_min}°C a ${w.temp_max}°C${donde}${cond}${est}. EMPACA PARA LA MÁS FRÍA: cada look debe aguantar ${w.temp_min}°C — nada de una sola capa ligera; suma abrigo/suéter${(w.temp_min ?? 99) <= 5 ? " de verdad (una impermeable sola no abriga a esa temperatura)" : ""}. En los momentos más cálidos se quitan capas.`;
   }
   return `${w.temp_c}°C${cond}${est}`;
 }
@@ -318,6 +323,7 @@ Para las celdas que SÍ funcionan:
 - titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
 - tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. SOLO sobre prendas que están en ESE look; NUNCA menciones ni sugieras añadir una prenda que no está en él. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
+- Las prendas marcadas "todavía no la tiene" son piezas de la maleta que la persona AÚN NO COMPRÓ: úsalas igual, son parte del plan. Cuando puedas, mézclalas con prendas que SÍ tiene, para que vea qué le suma cada compra; un look hecho sólo de piezas que no tiene vale menos.
 - Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
 - Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
 - COBERTURA (regla dura): CADA ocasión del viaje debe recibir AL MENOS un look si existe alguna celda que funcione para ella. Jamás dejes una ocasión vacía por darle más variedad a otra — un día del viaje sin propuesta es el peor resultado.
