@@ -268,3 +268,11 @@ describe("keepOccasionCoverage — el veto gana a la cobertura (fix de review)",
     expect(out.map((o) => o.titulo)).toEqual(["C1", "N2"]);
   });
 });
+
+// 2026-10-17: las piezas que aún no tiene entran a los looks, marcadas.
+describe("packableDesc — pieza que todavía no tiene", () => {
+  it("lo dice al final de los atributos, para el generador y el juez por igual", () => {
+    const d = packableDesc({ n: 3, nombre: "Abrigo largo de lana negro", category: "abrigo", color: "negro", formalidad: "formal-casual", falta: true });
+    expect(d).toBe("3. Abrigo largo de lana negro (formal-casual, negro, todavía no la tiene)");
+  });
+});
