@@ -218,20 +218,23 @@ function tripWeatherWithRange(
 ): TripWeatherInput | null {
   if (!base) return base;
   const arr = Array.isArray(paradas)
-    ? (paradas as { lugar?: string; weather?: { temp_c?: number } | null }[])
+    ? (paradas as { lugar?: string; weather?: { temp_c?: number; temp_min?: number; temp_max?: number } | null }[])
     : [];
+  // La mínima de cada parada (2026-10-17), no su promedio: Mineápolis "6°C"
+  // tiene mañanas de 0°C, y los looks se armaban para 6.
   const temps = arr
-    .map((p) => ({ lugar: p.lugar, t: p.weather?.temp_c }))
-    .filter((x): x is { lugar: string | undefined; t: number } => typeof x.t === "number");
-  if (temps.length < 2) return base;
-  const sorted = [...temps].sort((a, b) => a.t - b.t);
-  const min = sorted[0].t;
-  const max = sorted[sorted.length - 1].t;
+    .map((p) => ({ lugar: p.lugar, min: p.weather?.temp_min ?? p.weather?.temp_c, max: p.weather?.temp_max ?? p.weather?.temp_c }))
+    .filter((x): x is { lugar: string | undefined; min: number; max: number } => typeof x.min === "number" && typeof x.max === "number");
+  if (temps.length === 0) return base;
+  const sorted = [...temps].sort((a, b) => a.min - b.min);
+  const min = sorted[0].min;
+  const max = Math.max(...temps.map((t) => t.max));
   if (max - min < 4) return base; // sin spread relevante, el resumen basta
   return {
     ...base,
     temp_min: min,
     temp_max: max,
-    coldest: sorted[0].lugar?.split(",")[0]?.trim(),
+    // Sólo es "la ciudad más fría" cuando hay varias; con una, el rango es del día.
+    ...(temps.length > 1 ? { coldest: sorted[0].lugar?.split(",")[0]?.trim() } : {}),
   };
 }
