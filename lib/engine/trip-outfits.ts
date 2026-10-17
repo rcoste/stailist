@@ -204,8 +204,10 @@ export function climaText(w: TripWeatherInput | null): string {
     typeof w.temp_max === "number" &&
     w.temp_max - w.temp_min >= 4;
   if (spread) {
-    const fria = w.coldest ? ` (la más fría: ${w.coldest})` : "";
-    return `de ${w.temp_min}°C a ${w.temp_max}°C entre ciudades${fria}${cond}${est}. EMPACA PARA LA MÁS FRÍA: cada look debe aguantar ${w.temp_min}°C — nada de una sola capa ligera; suma abrigo/suéter. En los destinos más cálidos se quitan capas.`;
+    // Con coldest es un rango ENTRE ciudades; sin él, el de un mismo día
+    // (mañanas y noches contra tardes) de un solo destino.
+    const donde = w.coldest ? ` entre ciudades (la más fría: ${w.coldest})` : " entre la mañana y la tarde";
+    return `de ${w.temp_min}°C a ${w.temp_max}°C${donde}${cond}${est}. EMPACA PARA LA MÁS FRÍA: cada look debe aguantar ${w.temp_min}°C — nada de una sola capa ligera; suma abrigo/suéter${(w.temp_min ?? 99) <= 5 ? " de verdad (una impermeable sola no abriga a esa temperatura)" : ""}. En los momentos más cálidos se quitan capas.`;
   }
   return `${w.temp_c}°C${cond}${est}`;
 }

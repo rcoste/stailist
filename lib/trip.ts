@@ -149,7 +149,14 @@ export function dominantLuggage(bolsas: Bolsas | null | undefined): Luggage | nu
   return present.reduce((a, b) => (b.maxPiezas > a.maxPiezas ? b : a)).value;
 }
 
-export type TripWeather = { temp_c: number; condition: string; estimated?: boolean };
+export type TripWeather = {
+  temp_c: number;
+  condition: string;
+  estimated?: boolean;
+  /** Rango típico del día (lib/weather): mañanas/noches y tardes. Opcional: los viajes de antes del 2026-10-17 no lo traen. */
+  temp_min?: number;
+  temp_max?: number;
+};
 
 // Una parada del viaje (multidestino). `noches` solo aparece en el modo "por
 // lugar"; las fechas por parada se derivan del rango + noches. `weather` es el

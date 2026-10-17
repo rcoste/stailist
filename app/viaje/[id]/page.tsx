@@ -144,7 +144,7 @@ export default async function ViajeDetallePage({
   });
 
   const days = tripDays(trip.fecha_inicio, trip.fecha_fin);
-  const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean } | null;
+  const weather = trip.weather as { temp_c: number; condition: string; estimated?: boolean; temp_min?: number; temp_max?: number } | null;
   // La firma del motor (viajes nuevos) gana; la plantilla determinística es el
   // fallback para maletas generadas antes de que el motor explicara su lógica.
   const logica =
@@ -267,7 +267,11 @@ export default async function ViajeDetallePage({
   const fechas = `${rangoFechas(trip.fecha_inicio, trip.fecha_fin)} · ${days} días`;
   const metaExtra =
     [
-      weather ? `~${weather.temp_c}°C` : null,
+      weather
+        ? typeof weather.temp_min === "number" && typeof weather.temp_max === "number" && weather.temp_max > weather.temp_min
+          ? `${weather.temp_min} a ${weather.temp_max}°C`
+          : `~${weather.temp_c}°C`
+        : null,
       nParadas > 1 ? `${nParadas} paradas` : null,
       equipaje,
     ]

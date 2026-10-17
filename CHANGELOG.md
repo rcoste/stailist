@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.387.0] - 2026-10-17 — la maleta se abriga para la mínima, parada por parada
+
+- **El clima de cada parada se pide por SUS fechas**, no por el rango entero
+  del viaje (`ventanasDeParadas`, `lib/trip-ruta.ts`). En un viaje de cuatro
+  semanas, Tokio a mediados de noviembre salía con el clima de finales de
+  octubre.
+- **El clima lleva su rango**: promedio de las mínimas y de las máximas
+  diarias (`temp_min`/`temp_max` en `lib/weather`, `TripWeather` y el resumen
+  del viaje). Sólo con el promedio día/noche, Mineápolis en octubre era "6°C"
+  y la maleta no llevaba abrigo: las mañanas típicas rondan 0°C. El header del
+  viaje y el link de invitación dicen "1 a 11°C" en vez de "~6°C".
+- **La regla de abrigo** (`reglaDeAbrigo`, `lib/engine/trip-capsule.ts`): el
+  abrigo se dimensiona para la MÍNIMA de la parada más fría; bajo 5°C pide un
+  abrigo de verdad (lana o pluma) y aclara que una impermeable, un bomber o un
+  chaleco no lo sustituyen; con una parada calurosa además (≥24°C), dos
+  bloques que comparten neutros, bottoms y calzado. Los looks del viaje usan la
+  mínima real de la ciudad más fría, y con un solo destino el rango del día.
+- Medido en la maleta real que lo motivó (Mineápolis → Seúl → Kioto → Tokio):
+  la guardada traía parka impermeable + bomber + chaleco. Regenerada hoy, con
+  el prompt viejo Y con el nuevo sale "abrigo largo de lana negro": la mala
+  maleta fue en parte una mala tirada. La regla baja esa varianza; no hay
+  todavía una guardia determinista después de generar.
+- Los viajes de antes no traen rango: lo ganan al "editar ruta y fechas".
+
 ## [0.2.386.0] - 2026-10-17 — los looks del viaje también se arman con lo que te falta
 
 - **Los looks del viaje usan toda la maleta, incluidas las piezas sugeridas

@@ -4,7 +4,17 @@
 // `estimated` = no es pronóstico real (el viaje cae fuera del horizonte de
 // Open-Meteo, ~16 días). Es el clima TÍPICO de la temporada, sacado del histórico
 // del año pasado en esas mismas fechas. La UI lo etiqueta distinto ("clima típico").
-export type Weather = { temp_c: number; condition: string; estimated?: boolean };
+export type Weather = {
+  temp_c: number;
+  condition: string;
+  estimated?: boolean;
+  /** Rango típico del día en el periodo: promedio de las mínimas y de las máximas
+   *  diarias (2026-10-17). Sólo con `temp_c` (promedio día/noche) Mineápolis en
+   *  octubre salía como "6°C" y la maleta no llevaba abrigo: las mañanas
+   *  rondan 0°C. */
+  temp_min?: number;
+  temp_max?: number;
+};
 
 // Grupos de weather_code de Open-Meteo → descripción corta en español.
 function describe(code: number): string {
@@ -322,7 +332,7 @@ function condicionDeLaVentana(codes: number[]): string {
 
 // Agrega el bloque `daily` de Open-Meteo (forecast o archive — mismo shape) a un
 // solo resumen: temperatura media del rango y condición predominante.
-function aggregateDaily(daily: unknown): { temp_c: number; condition: string } | null {
+export function aggregateDaily(daily: unknown): { temp_c: number; condition: string; temp_min?: number; temp_max?: number } | null {
   const d = (daily ?? {}) as {
     temperature_2m_max?: unknown;
     temperature_2m_min?: unknown;
@@ -335,12 +345,18 @@ function aggregateDaily(daily: unknown): { temp_c: number; condition: string } |
 
   let sum = 0;
   let n = 0;
+  let sumMin = 0;
+  let sumMax = 0;
+  let nRango = 0;
   for (let i = 0; i < maxes.length; i++) {
     const mx = maxes[i];
     const mn = Array.isArray(mins) ? mins[i] : undefined;
     if (typeof mx === "number" && typeof mn === "number") {
       sum += (mx + mn) / 2;
       n++;
+      sumMin += mn;
+      sumMax += mx;
+      nRango++;
     } else if (typeof mx === "number") {
       sum += mx;
       n++;
@@ -365,7 +381,11 @@ function aggregateDaily(daily: unknown): { temp_c: number; condition: string } |
   } else {
     condition = describe(valid[Math.floor(valid.length / 2)] ?? 0);
   }
-  return { temp_c: Math.round(sum / n), condition };
+  return {
+    temp_c: Math.round(sum / n),
+    condition,
+    ...(nRango > 0 ? { temp_min: Math.round(sumMin / nRango), temp_max: Math.round(sumMax / nRango) } : {}),
+  };
 }
 
 // Modo viaje: clima agregado para el rango de fechas (resumen único del viaje).
