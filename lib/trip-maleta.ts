@@ -55,3 +55,38 @@ export function empacablesDelViaje(
   }
   return salida;
 }
+
+export type PiezaParaLooks = PrendaEmpacable & {
+  /** Pieza sugerida que la persona todavía no tiene (ni cubierta ni sustituida). */
+  falta: boolean;
+};
+
+/**
+ * LO QUE VE EL ARMADOR DE LOOKS (2026-10-17): la maleta completa, incluidas las
+ * piezas que la app sugirió y la persona aún no tiene. Antes los looks salían
+ * sólo de lo que ya tenía, y con media maleta por comprar se repetían las
+ * mismas cuatro prendas en todos (Roberto, sobre la maleta de su esposa). Con
+ * las faltantes dentro —marcadas— puede VER cómo se vería con la pieza antes
+ * de decidir si la compra. Lo que sacó del viaje ("no lo necesito") no entra.
+ * La persona que ya marcó "ya lo tengo" deja de verla como faltante porque el
+ * match pasa a "tienes" (markTripFaltaOwned).
+ */
+export function piezasParaLooks(
+  target: CapsuleTarget,
+  match: CapsuleMatch | null,
+  overrides: CapsuleOverrides | null
+): PiezaParaLooks[] {
+  const empacables = empacablesDelViaje(target, match, overrides).map((p) => ({ ...p, falta: false }));
+  const vistas = new Set(empacables.map((p) => p.nombre));
+  const faltantes: PiezaParaLooks[] = [];
+  for (const r of capsuleRows(target, match, overrides)) {
+    if (r.dismissed) continue;
+    if (sustitutoDe(overrides, r.index)) continue;
+    if (r.effective !== "falta") continue;
+    const nombre = r.item.nombre.trim();
+    if (!nombre || vistas.has(nombre)) continue;
+    vistas.add(nombre);
+    faltantes.push({ index: r.index, nombre, item: r.item, falta: true });
+  }
+  return [...empacables, ...faltantes];
+}

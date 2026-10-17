@@ -34,6 +34,8 @@ export type LookCardPrenda = {
   image: string | null;
   /** Id del clóset: habilita generar la foto de la prenda al tocarla. */
   id?: string | null;
+  /** Pieza de la maleta que la persona todavía no tiene (viaje): se marca en el tile. */
+  falta?: boolean;
 };
 
 export type LookCardData = {
@@ -77,6 +79,7 @@ export function LookCard({
   tryonImage = null,
   ensureOutfitId,
   returnTo,
+  faltaAlgo = false,
 }: {
   look: LookCardData;
   voto: "up" | "down" | null;
@@ -94,6 +97,9 @@ export function LookCard({
   ensureOutfitId?: () => Promise<string | null>;
   /** A dónde vuelve el wizard de avatar si aún no tiene uno. */
   returnTo: string;
+  /** Algún tile es una pieza que todavía no tiene: sin guardar ni probarse (el
+   *  try-on y el historial sólo saben de prendas reales del clóset). */
+  faltaAlgo?: boolean;
 }) {
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
   const t = useTryon({
@@ -114,7 +120,8 @@ export function LookCard({
         <div className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-accent">
           {OCC_LABEL.get(look.ocasion) ?? look.ocasion}
         </div>
-        <button
+        {faltaAlgo ? null : (
+          <button
           type="button"
           onClick={() => onFavorite(!favorito)}
           aria-pressed={favorito}
@@ -123,6 +130,7 @@ export function LookCard({
         >
           <Heart on={favorito} />
         </button>
+        )}
       </div>
 
       <h3 className="mt-1 text-[18px] font-semibold leading-tight text-ink">
@@ -188,6 +196,11 @@ export function LookCard({
                     <Icon name="gancho" size={18} />
                   </span>
                 )}
+                {p.falta ? (
+                  <span className="absolute inset-x-0 bottom-0 bg-ink/80 px-1 py-0.5 text-center text-[8px] font-bold uppercase tracking-wide text-bg">
+                    te falta
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -210,7 +223,9 @@ export function LookCard({
           nada le compite: el feedback es la señal más escasa que tenemos y no
           puede quedar de sobra visual. */}
       <div className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
-        {mostrarRender || !puedeProbar ? (
+        {faltaAlgo ? (
+          <span className="text-[11.5px] text-muted">con lo que te falta · cuando lo tengas, te lo pruebas</span>
+        ) : mostrarRender || !puedeProbar ? (
           <span className="text-[11.5px] text-muted">¿te gusta?</span>
         ) : t.mode === "sin_avatar" ? (
           <Link

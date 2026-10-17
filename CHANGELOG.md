@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.386.0] - 2026-10-17 — los looks del viaje también se arman con lo que te falta
+
+- **Los looks del viaje usan toda la maleta, incluidas las piezas sugeridas
+  que todavía no tienes** (`piezasParaLooks`, `lib/trip-maleta.ts`). Antes
+  salían sólo de lo que ya tenías: con media maleta por comprar se repetían
+  las mismas cuatro prendas en todos (maleta real, 2026-10-17). Ahora cada
+  pieza que falta lleva la marca **"te falta"** en su tile, y el look dice "con
+  lo que te falta · cuando lo tengas, te lo pruebas". Al marcar "ya lo tengo"
+  la pieza pasa a ser tuya y la marca desaparece en el siguiente armado. Lo
+  que sacaste del viaje no entra. El generador y el juez ven "(todavía no la
+  tiene)" en esas prendas y mezclan, cuando pueden, con lo que sí tienes.
+- **Sin guardar ni probarse un look con piezas que faltan**: el try-on y el
+  historial sólo saben de prendas reales del clóset; un look guardado a medias
+  engañaría. Se habilitan en cuanto la pieza es tuya.
+- Un "parecido" rechazado cuenta como faltante en los looks (conservaba la
+  prenda parecida y no se marcaba).
+
 ## [0.2.385.0] - 2026-10-16 — prueba de interés: "¿te armamos tu clóset desde Instagram?"
 
 - **Una tarjeta honesta en el Clóset** ("lo estamos preparando") para quien
