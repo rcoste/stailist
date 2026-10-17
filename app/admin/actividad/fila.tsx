@@ -1,6 +1,8 @@
+import Image from "next/image";
 import { etiqueta, nivelDe, type Momento, type Nivel } from "@/lib/admin/actividad";
+import type { Miniaturas as MiniaturasDeLinea } from "@/lib/admin/miniaturas-datos";
 import { horaEnZona } from "@/lib/admin/adquisicion";
-import { Chip, Quien, Renglon } from "../_ui";
+import { Ampliable, Chip, Quien, Renglon } from "../_ui";
 
 // UNA LÍNEA DEL FEED DE ACTIVIDAD y la leyenda de sus niveles. Viven aparte de
 // page.tsx para poder pintarlas solas (una página de prueba en local, sin la
@@ -55,6 +57,7 @@ export function Fila({
   aparato,
   origen,
   vuelta,
+  mini = null,
 }: {
   m: Momento;
   email: string;
@@ -65,8 +68,10 @@ export function Fila({
   origen: string | null;
   /** Días desde el alta si este es el primer momento de un día de regreso. */
   vuelta: number | null;
+  /** Lo que tocó, en cuadritos (lib/admin/miniaturas.ts); null si la línea no lleva. */
+  mini?: MiniaturasDeLinea | null;
 }) {
-  const detalle = origen ?? extra(m);
+  const detalle = origen ?? extra(m) ?? mini?.detalle ?? null;
   const nivel = nivelDe(m);
   return (
     // En el celular la fila se parte en dos: arriba quién (hora, correo,
@@ -81,10 +86,15 @@ export function Fila({
       <Quien correo={email} pais={pais} href={`/admin/usuarios/${m.userId}`} />
       {aparato ? <Chip>{APARATO_CORTO[aparato] ?? aparato}</Chip> : null}
       {vuelta != null ? <Chip tono="success">volvió · {vuelta === 1 ? "al día siguiente" : `a los ${vuelta} días`}</Chip> : null}
-      <span className={`min-w-0 flex-1 text-sm max-sm:basis-full max-sm:pl-14 ${TEXTO_NIVEL[nivel]}`}>
-        {etiqueta(m)}
-        {detalle ? <span className="font-normal text-faint"> · {detalle}</span> : null}
-      </span>
+      {/* El texto y sus miniaturas van juntos: las miniaturas pegadas a la
+          acción, no al borde derecho (boceto del 10-17). */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1 max-sm:basis-full max-sm:pl-14">
+        <span className={`text-sm ${TEXTO_NIVEL[nivel]}`}>
+          {etiqueta(m)}
+          {detalle ? <span className="font-normal text-faint"> · {detalle}</span> : null}
+        </span>
+        {mini ? <Miniaturas mini={mini} /> : null}
+      </div>
     </Renglon>
   );
 }
@@ -108,3 +118,43 @@ function extra(m: Momento): string | null {
   return null;
 }
 
+
+// LO QUE TOCÓ, EN CUADRITOS. La foto del look (try-on o espejo) va más alta;
+// las prendas, en cuadrados chicos; y un "+17" cuando no caben. Cada una se
+// amplía con el mismo visor de la ficha de persona.
+function Miniaturas({ mini }: { mini: MiniaturasDeLinea }) {
+  return (
+    <span className="flex items-center gap-1">
+      {mini.foto ? (
+        <Ampliable
+          imagen={mini.foto.url}
+          nombre={mini.foto.nombre}
+          sub={mini.foto.sub}
+          className="relative block h-14 w-10 shrink-0 overflow-hidden rounded-md border border-line bg-tile"
+        >
+          <Image src={mini.foto.url} alt={mini.foto.nombre} fill sizes="40px" className="object-cover" unoptimized />
+        </Ampliable>
+      ) : null}
+      {mini.prendas.map((p, k) => (
+        <Ampliable
+          key={k}
+          imagen={p.imagen}
+          nombre={p.nombre}
+          className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-sm border border-line bg-tile"
+        >
+          {p.imagen ? (
+            <Image src={p.imagen} alt={p.nombre} fill sizes="32px" className="object-cover" unoptimized loading="lazy" />
+          ) : (
+            <div className="h-full w-full" style={{ backgroundColor: p.swatch }} />
+          )}
+        </Ampliable>
+      ))}
+      {mini.mas > 0 ? <span className="pl-0.5 text-xs text-faint">+{mini.mas}</span> : null}
+      {mini.masLooks > 0 ? (
+        <span className="pl-0.5 text-xs text-faint">
+          +{mini.masLooks} look{mini.masLooks === 1 ? "" : "s"}
+        </span>
+      ) : null}
+    </span>
+  );
+}

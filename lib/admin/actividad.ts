@@ -37,6 +37,12 @@ export type Momento = {
   n: number;
   /** Id del objeto tocado (outfit, trip…) cuando la línea es de una sola. */
   refId?: string | null;
+  /**
+   * TODOS los ids que tocó la línea, también en una ráfaga (2026-10-17). Son
+   * lo que pintan las miniaturas: "añadió 23 prendas" enseña las 23 (bueno,
+   * seis y un "+17"). Antes la ráfaga tiraba el id y sólo quedaba el conteo.
+   */
+  refIds: string[];
   /** Detalle libre para la etiqueta (paso del onboarding, segundos del TTV…). */
   data?: Record<string, unknown> | null;
 };
@@ -226,11 +232,13 @@ export function colapsar(momentos: Momento[], ventanaMin = 10): Momento[] {
       minutosEntre(m.at, prev.at) <= ventanaMin;
     if (mismaTanda) {
       prev.n += m.n;
-      // La ráfaga deja de apuntar a UN objeto: ya son varios.
+      // La ráfaga deja de apuntar a UN objeto: ya son varios. Pero se quedan
+      // todos en refIds, que es de donde salen las miniaturas.
       prev.refId = null;
+      prev.refIds = [...prev.refIds, ...m.refIds];
       continue;
     }
-    out.push({ ...m });
+    out.push({ ...m, refIds: [...m.refIds] });
   }
   return out;
 }
@@ -281,7 +289,7 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
     data?: Record<string, unknown> | null
   ) => {
     if (!userId || !at) return;
-    m.push({ key, userId, at, tipo, n: 1, refId: refId ?? null, data: data ?? null });
+    m.push({ key, userId, at, tipo, n: 1, refId: refId ?? null, refIds: refId ? [refId] : [], data: data ?? null });
   };
 
   for (const p of f.profiles) push(p.id, p.created_at, "alta", `alta:${p.id}`);
@@ -321,6 +329,7 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
           tipo: "visita",
           n: 1,
           refId: null,
+          refIds: [],
           data: null,
         });
       }
@@ -331,7 +340,10 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
     // nosotros. Sólo `forzado` es un tap suyo ("rehacer imagen"). Salía todo
     // como "pidió el dibujo": 52 de un remate nuestro parecían 52 decisiones.
     const tipo = e.type === "render_generated" && e.data?.forzado !== true ? "render_auto" : e.type;
-    push(e.user_id, e.created_at, `ev:${tipo}`, `e:${i}`, e.outfit_id, e.data);
+    // El espejo guarda su look en data.outfit_id, no en la columna
+    // (app/api/espejo/route.ts): sin esto su foto no tendría de dónde salir.
+    const outfitId = e.outfit_id ?? (typeof e.data?.outfit_id === "string" ? e.data.outfit_id : null);
+    push(e.user_id, e.created_at, `ev:${tipo}`, `e:${i}`, outfitId, e.data);
   }
   return colapsar([...m, ...colapsar(visitas, VENTANA_VISITA_MIN)], ventanaMin);
 }
@@ -542,4 +554,28 @@ export function dispositivoPorDia(
     out.set(`${e.user_id}|${diaEnZona(new Date(e.created_at))}`, d);
   }
   return out;
+}
+
+/**
+ * CON QUÉ CLÓSET LLEGÓ A ESE MOMENTO (2026-10-17). Para "se le falló una
+ * generación · muy pocas prendas": enseñar las prendas que tenía cuando falló
+ * dice más que el mensaje. Son las creadas antes del momento y no borradas
+ * antes de él, de la más reciente a la más vieja.
+ */
+export function prendasAlMomento(
+  items: { id: string; user_id: string | null; created_at: string | null; deleted_at: string | null }[],
+  userId: string,
+  at: string
+): string[] {
+  const t = new Date(at).getTime();
+  return items
+    .filter(
+      (i) =>
+        i.user_id === userId &&
+        i.created_at &&
+        new Date(i.created_at).getTime() <= t &&
+        (!i.deleted_at || new Date(i.deleted_at).getTime() > t)
+    )
+    .sort((a, b) => cmpDesc(a.created_at as string, b.created_at as string))
+    .map((i) => i.id);
 }

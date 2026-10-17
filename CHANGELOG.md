@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.389.0] - 2026-10-17 — el feed de actividad enseña lo que tocó cada quien
+
+- **Miniaturas en `/admin/actividad`** (boceto aprobado por Roberto: "se ve
+  muy flat"). "añadió 23 prendas" trae seis cuadritos y un "+17", con el
+  detalle "19 con foto, 4 del catálogo" sobre toda la tanda, que es la señal
+  de activación del 10-16 (10 fotos propias el día 0). Un look generado,
+  votado, guardado, puesto o probado enseña su try-on (o la foto, si es
+  espejo) y sus piezas; una ráfaga de looks enseña el primero y cuenta los
+  demás. Una generación que falló por pocas prendas enseña el clóset con el
+  que llegó. Cada cuadrito se amplía con el visor de la ficha de persona.
+  Lo que no toca nada (abrió la app, onboarding, alta) sigue igual. Medido en
+  local: ~0.55 s más por página de 300 líneas.
+- **Las tandas ya no tiran los ids** (`Momento.refIds`, `lib/admin/actividad.ts`):
+  colapsar los junta en vez de dejar sólo el conteo. El espejo, que guarda su
+  look en `data.outfit_id`, también apunta a él.
+- Lo que decide qué enseñar es lógica pura con pruebas
+  (`lib/admin/miniaturas.ts`); las imágenes se traen en tres idas por lotes
+  de 200 y se firman de una vez (`lib/admin/miniaturas-datos.ts`).
+- Sin miniaturas a propósito: el voto de un look de viaje, porque ese evento
+  no guarda el look (vive dentro del viaje, no en `outfits`).
 ## [0.2.388.1] - 2026-10-17 — QA de lo de hoy: el rango del clima también en escritorio
 
 - **El rail de escritorio del viaje seguía diciendo "~20°C"** mientras el

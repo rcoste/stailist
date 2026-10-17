@@ -10,6 +10,7 @@ import {
   vueltas,
   type Momento,
 } from "@/lib/admin/actividad";
+import { cargarMiniaturas } from "@/lib/admin/miniaturas-datos";
 import { origenEnPalabras } from "@/lib/admin/campana";
 import { origenDesdeDato } from "@/lib/origen";
 import { diaEnZona, sumarDias } from "@/lib/admin/adquisicion";
@@ -99,6 +100,11 @@ export default async function ActividadPage({
     .sort((a, b) => a.label.localeCompare(b.label));
   const tipos = [...new Set(feed.map(familia))].sort();
 
+  // Las miniaturas sólo de lo que se va a pintar: looks y prendas de esas
+  // líneas, firmadas de una vez (lib/admin/miniaturas-datos.ts).
+  const mostrados = visibles.slice(0, tope);
+  const minis = await cargarMiniaturas(mostrados, items);
+
   const sufijo = `${filtroUsuario ? `&u=${filtroUsuario}` : ""}${filtroTipo ? `&t=${filtroTipo}` : ""}`;
   const conImp = soloImportante ? "&imp=1" : "";
 
@@ -144,7 +150,7 @@ export default async function ActividadPage({
         </Panel>
       ) : (
         <>
-          {porDia(visibles.slice(0, tope)).map((d) => (
+          {porDia(mostrados).map((d) => (
             <Panel key={d.dia} titulo={diaLegible(d.dia)} sinPadding className="mb-4">
               <Lista>
                 {d.momentos.map((m) => (
@@ -156,6 +162,7 @@ export default async function ActividadPage({
                     aparato={aparato(m)}
                     origen={m.tipo === "alta" ? llegoPor.get(m.userId) ?? null : null}
                     vuelta={regreso.get(m.key) ?? null}
+                    mini={minis.get(m.key) ?? null}
                   />
                 ))}
               </Lista>
