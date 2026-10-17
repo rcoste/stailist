@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.388.0] - 2026-10-17 — "afina tu estilo" vuelve, con una referencia por foto
+
+- **Cada foto de inspiración es un look aparte** (`referencias[]` en
+  `profiles.style_reference`; `/api/estilo-referencia` devuelve una por foto,
+  en orden: resumen, piezas, siluetas, nivel de arreglo, para qué ocasiones
+  sirve y si le va a ELLA). La versión anterior fundía 1-3 fotos en un solo
+  "vibe": dos estilos distintos se volvían un híbrido que no era ninguno de
+  los dos (hipótesis de Roberto; el A/B de agosto perdió justo donde importa
+  el nivel de arreglo). La pantalla muestra una tarjeta por foto, con su
+  veredicto honesto.
+- **El motor las recibe como ejemplos, no como promedio**
+  (`lineaDeReferencias`, `lib/estilo-referencia.ts`): "N looks que le
+  encantan, cada uno es un EJEMPLO APARTE (no los mezcles en un híbrido): 1)…
+  2)… Para cada outfit acércate a UNA sola referencia, la más afín a la
+  ocasión". Lo leen el look de hoy, la cápsula y el viaje (maleta y looks).
+  Las referencias guardadas con el formato viejo y los presets siguen
+  funcionando con su resumen.
+- **Vuelve a estar encendida** (`REFERENCIA_DE_ESTILO_ACTIVA = true`), por
+  decisión de Roberto. Objeción registrada: no está medida en el instrumento
+  pareado. Lo que la acota: sólo cambia los looks de quien sube fotos, y el
+  comparador de motores trae la variante **"Sin looks de referencia"**
+  (`opciones.sinReferencia`) para medirla con votos ciegos.
+
 ## [0.2.387.0] - 2026-10-17 — la maleta se abriga para la mínima, parada por parada
 
 - **El clima de cada parada se pide por SUS fechas**, no por el rango entero

@@ -1,5 +1,7 @@
 "use server";
 
+import { armarReferencias } from "@/lib/estilo-referencia";
+
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +23,8 @@ type StyleRefPayload = {
   tags: string[];
   fit?: { verdict: string; note: string } | null;
   image_paths: string[];
+  /** v3: una referencia por foto, tal cual la devolvió la API; se limpia al guardar (armarReferencias). */
+  referencias?: ({ path?: string | null } & Record<string, unknown>)[];
 };
 
 // Paths de las fotos guardadas en una referencia (tolera el shape viejo image_path).
@@ -53,11 +57,18 @@ export async function saveStyleReference(
   const old = refPaths(prof?.style_reference).filter((p) => !data.image_paths.includes(p));
   if (old.length) await supabase.storage.from("prendas").remove(old);
 
+  // Sólo las referencias cuya foto se guarda (y limpias): el cliente no mete
+  // texto libre al motor por esta vía.
+  const referencias = armarReferencias(
+    (Array.isArray(data.referencias) ? data.referencias : []).filter((r) => r?.path && data.image_paths.includes(r.path)),
+    (Array.isArray(data.referencias) ? data.referencias : []).filter((r) => r?.path && data.image_paths.includes(r.path)).map((r) => r.path as string)
+  );
   const style_reference = {
     summary: data.summary,
     tags: data.tags ?? [],
     fit: data.fit ?? null,
     image_paths: data.image_paths,
+    ...(referencias.length ? { referencias } : {}),
   };
   const { error } = await supabase
     .from("profiles")

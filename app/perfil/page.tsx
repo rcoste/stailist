@@ -36,6 +36,7 @@ export default async function PerfilPage() {
     fit?: { verdict: string; note: string } | null;
     images: string[];
     paths?: string[];
+    referencias?: import("@/components/style-reference-card").RefLook[];
   } | null = null;
   // Apagada para el release: no se le pasa al cliente, así la tarjeta de
   // "estilo de referencia" no se dibuja. El dato guardado no se toca.
@@ -54,6 +55,9 @@ export default async function PerfilPage() {
       tags: sr.tags ?? [],
       fit: sr.fit ?? null,
       images: (data ?? []).map((s) => s.signedUrl).filter((u): u is string => !!u),
+      referencias: Array.isArray((sr as { referencias?: unknown }).referencias)
+        ? ((sr as { referencias?: unknown }).referencias as import("@/components/style-reference-card").RefLook[])
+        : undefined,
       // Las rutas viajan al cliente para poder SUMAR fotos sin perder las que ya
       // hay (la card las manda de vuelta como `keep`).
       paths,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { styleReferenceForEngine, REFERENCIA_DE_ESTILO_ACTIVA } from "./estilo-referencia";
+import { lineaDeReferencias, styleReferenceForEngine, REFERENCIA_DE_ESTILO_ACTIVA } from "./estilo-referencia";
 
 // APAGADO PARA EL RELEASE (2026-09-08, ver la constante en el módulo): estos
 // tests pasan `true` a propósito — cubren el camino de vuelta, cuando se
@@ -78,5 +78,31 @@ describe("styleReferenceForEngine — apagada (lo que corre en el release)", () 
     expect(styleReferenceForEngine(completa)).toBe(
       styleReferenceForEngine(completa, REFERENCIA_DE_ESTILO_ACTIVA)
     );
+  });
+});
+
+// v3 (2026-10-17): una referencia por foto, nunca un híbrido.
+describe("lineaDeReferencias", () => {
+  const refs = [
+    { resumen: "Sastre relajado en neutros", piezas: ["blazer oversize", "pantalón recto"], siluetas: "hombros marcados, pierna recta", formalidad: "arreglado" as const, ocasiones: ["oficina", "noche"], fit: { verdict: "va", note: "te va" } },
+    { resumen: "Boho de fin de semana", piezas: ["vestido fluido"], formalidad: "casual" as const, ocasiones: ["finde"], fit: { verdict: "ojo", note: "es muy cálido para ti; llévalo a tus tonos fríos" } },
+  ];
+  it("cada look va numerado, como ejemplo aparte, con la instrucción de no mezclar", () => {
+    const l = lineaDeReferencias(refs)!;
+    expect(l).toContain("2 looks que le encantan, cada uno es un EJEMPLO APARTE");
+    expect(l).toContain("1) Sastre relajado en neutros; piezas: blazer oversize, pantalón recto; siluetas: hombros marcados, pierna recta; nivel: arreglado; sirve para: oficina, noche");
+    expect(l).toContain("2) Boho de fin de semana; piezas: vestido fluido; nivel: casual; sirve para: finde; OJO, adáptalo así: es muy cálido para ti");
+    expect(l).toContain("acércate a UNA sola referencia");
+  });
+  it("la nota de fit sólo entra con ajustes u ojo", () => {
+    expect(lineaDeReferencias([refs[0]])).not.toContain("OJO");
+  });
+  it("sin referencias con resumen no hay línea; y styleReferenceForEngine cae al summary viejo", () => {
+    expect(lineaDeReferencias([])).toBeNull();
+    expect(lineaDeReferencias([{ resumen: " " }])).toBeNull();
+    expect(styleReferenceForEngine({ summary: "Clásico", referencias: [{ resumen: " " }] }, true)).toBe("Clásico");
+  });
+  it("con referencias, mandan sobre el summary", () => {
+    expect(styleReferenceForEngine({ summary: "viejo", referencias: [refs[0]] }, true)).toContain("un look que le encanta");
   });
 });

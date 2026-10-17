@@ -270,7 +270,7 @@ export async function generateTripOutfits(
     ? `\nCONTEXTO DEL VIAJE (lo que va a hacer, en sus palabras): "${inputs.contexto}". Prioriza y titula looks que sirvan para ese plan; si una prenda es clave para eso (un jersey para un partido, algo pulido para una boda), procura que aparezca en al menos un look y dilo en el porqué.`
     : "";
   const refTxt = inputs.styleReference
-    ? `\nESTILO DE REFERENCIA que le encanta (inspira el vibe y las siluetas, NO los colores): ${inputs.styleReference}.`
+    ? `\nLOOKS DE REFERENCIA que le encantan (inspiran el vibe, las piezas y las siluetas, NO los colores): ${inputs.styleReference}`
     : "";
   const palabrasTxt = inputs.styleWords?.trim()
     ? `\nSU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo al elegir y titular looks (las REGLAS DURAS — vetos, rejilla, clima — siempre están por encima).`
