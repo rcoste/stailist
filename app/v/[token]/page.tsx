@@ -93,7 +93,10 @@ export default async function InvitacionViaje({ params }: { params: Promise<{ to
               </span>
               {p.weather ? (
                 <span className="text-muted">
-                  ~{Math.round(p.weather.temp_c)}°{p.weather.condition && !p.weather.estimated ? ` ${p.weather.condition}` : ""}
+                  {typeof p.weather.temp_min === "number" && typeof p.weather.temp_max === "number"
+                    ? `${Math.round(p.weather.temp_min)} a ${Math.round(p.weather.temp_max)}°`
+                    : `~${Math.round(p.weather.temp_c)}°`}
+                  {p.weather.condition && !p.weather.estimated ? ` ${p.weather.condition}` : ""}
                 </span>
               ) : null}
             </div>

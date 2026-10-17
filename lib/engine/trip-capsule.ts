@@ -68,6 +68,49 @@ export type TripCapsuleInputs = {
 // TECHO. Libre del catálogo (puede pedir prendas que no tienes — eso luego sale
 // como "te falta" en el match). Una llamada; el match es aparte (reusa
 // capsule-match). Mismo shape que CapsuleTarget para reusar match + derivados.
+// EL CLIMA CON SU RANGO (2026-10-17). Un "~6°C" es el promedio entre el día y
+// la noche: no dice que las mañanas rondan 0°C. Con mínima y máxima el motor
+// ve el día completo; sin ellas (viajes viejos) se queda el promedio.
+export function climaDeParada(w: { temp_c: number; temp_min?: number; temp_max?: number }): string {
+  if (typeof w.temp_min === "number" && typeof w.temp_max === "number" && w.temp_max > w.temp_min) {
+    return `de ${w.temp_min}°C a ${w.temp_max}°C (mañanas y noches ~${w.temp_min}°C, tardes ~${w.temp_max}°C)`;
+  }
+  return `~${w.temp_c}°C`;
+}
+
+/** Desde cuántos grados la maleta pide un abrigo de verdad, no una capa. */
+export const FRIO_DE_ABRIGO = 5;
+/** Desde cuántos grados de máxima una parada pide ropa ligera. */
+export const CALOR_DE_LIGERO = 24;
+
+/**
+ * La regla que faltaba (maleta real, 2026-10-17): un viaje Mineápolis → Seúl →
+ * Kioto → Tokio salió con una parka impermeable, un bomber y un chaleco como
+ * únicos abrigos, para mínimas de 0°C. El abrigo se dimensiona para la MÍNIMA
+ * de la parada más fría, y si además hay una parada calurosa, la maleta son
+ * dos bloques que comparten neutros, bottoms y calzado — no un promedio.
+ */
+export function reglaDeAbrigo(climas: ({ temp_c: number; temp_min?: number; temp_max?: number } | null)[]): string {
+  const con = climas.filter((w): w is { temp_c: number; temp_min?: number; temp_max?: number } => !!w);
+  if (con.length === 0) return "";
+  const minima = Math.min(...con.map((w) => w.temp_min ?? w.temp_c));
+  const maxima = Math.max(...con.map((w) => w.temp_max ?? w.temp_c));
+  const partes: string[] = [];
+  if (minima <= FRIO_DE_ABRIGO) {
+    partes.push(
+      `La mínima del viaje es ~${minima}°C: hace falta UN ABRIGO DE VERDAD (lana o pluma, que cubra la cadera) como pieza central; una capa impermeable, un bomber o un chaleco NO sustituyen al abrigo, sólo lo acompañan. Suma lo que protege del frío real (cuello alto, guantes o gorro si baja de 3°C).`
+    );
+  } else if (minima <= 12) {
+    partes.push(`La mínima del viaje es ~${minima}°C: cada día necesita una capa de abrigo real (chamarra o abrigo), no sólo un suéter.`);
+  }
+  if (maxima >= CALOR_DE_LIGERO && minima <= 12) {
+    partes.push(
+      `Y hay una parada calurosa (máximas ~${maxima}°C): empaca también ligero para ella. Piensa en DOS BLOQUES (frío y calor) que comparten los neutros, los bottoms y el calzado; no un término medio que no sirve en ninguna.`
+    );
+  }
+  return partes.length ? ` ${partes.join(" ")}` : "";
+}
+
 export async function generateTripCapsuleTarget(
   inputs: TripCapsuleInputs,
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
@@ -101,21 +144,12 @@ export async function generateTripCapsuleTarget(
   const multiParada = (inputs.paradas?.length ?? 0) > 1;
   const climaTxt = multiParada
     ? `Varias paradas con climas distintos — ${inputs
-        .paradas!.map(
-          (p) =>
-            `${p.lugar}: ${
-              p.weather
-                ? `~${p.weather.temp_c}°C ${p.weather.condition}${p.weather.estimated ? " (típico)" : ""}`
-                : "clima desconocido"
-            }`
-        )
+        .paradas!.map((p) => `${p.lugar}: ${p.weather ? `${climaDeParada(p.weather)} ${p.weather.condition}${p.weather.estimated ? " (típico)" : ""}` : "clima desconocido"}`)
         .join(
           "; "
-        )}. Empaca UNA sola cápsula que funcione para TODAS las paradas: prioriza CAPAS y piezas versátiles que cubran el rango completo (de la más fría a la más calurosa), sin duplicar por parada.`
+        )}. Empaca UNA sola cápsula que funcione para TODAS las paradas: prioriza CAPAS y piezas versátiles que cubran el rango completo (de la más fría a la más calurosa), sin duplicar por parada.${reglaDeAbrigo(inputs.paradas!.map((p) => p.weather))}`
     : inputs.weather
-      ? inputs.weather.estimated
-        ? `~${inputs.weather.temp_c}°C (clima TÍPICO de la temporada, no pronóstico exacto — prioriza versatilidad y capas que aguanten variación)`
-        : `${inputs.weather.temp_c}°C, ${inputs.weather.condition}`
+      ? `${climaDeParada(inputs.weather)}${inputs.weather.estimated ? " (clima TÍPICO de la temporada, no pronóstico exacto — prioriza versatilidad y capas que aguanten variación)" : `, ${inputs.weather.condition}`}${reglaDeAbrigo([inputs.weather])}`
       : "desconocido (usa prendas versátiles, evita extremos)";
   const ocas = inputs.ocasiones.length ? occasionLabels(inputs.ocasiones) : "general";
   const capacidad = luggageCapacity(inputs.bolsas, inputs.maleta);
@@ -201,7 +235,7 @@ Cómo dimensionarla:
 - PIENSA EN JORNADAS, no solo en prendas: el día de TRASLADO (avión/carretera: cómodo, capas), los días DE DÍA (caminar, turistear: pies y bottoms cómodos), y las NOCHES (subir el look). Cada jornada del viaje debe tener con qué vestirse sin forzar una pieza a todo.
 - Dimensiona también a la MEZCLA DE OCASIONES (ej. playa pide trajes de baño y shorts; una noche de arreglarse pide una pieza más formal). Cubre todas las ocasiones que te pasen, pero comparte piezas entre ellas siempre que se pueda.
 - Prendas que se mojan/sudan y necesitan secar entre usos: si el viaje es de PLAYA/ALBERCA/AGUA y dura varios días, lleva 2 trajes de baño (uno se seca mientras usas el otro); para deporte intenso de varios días, 2 piezas técnicas. No apliques esto a prendas normales (ahí manda mezcla-y-combina).
-- Respeta el CLIMA: calor → ligero y fresco; frío → capas y abrigo. No metas abrigo si hace calor ni shorts si hace frío. LLUVIA/HÚMEDO → incluye una capa que repela el agua y evita materiales que se arruinan mojados (gamuza, lino delicado). AIRE LIBRE o clima rudo → prioriza prendas resistentes y calzado práctico (nada de zapato de vestir ni gamuza para caminar o mojarse). Piensa en el RANGO del día, no solo el promedio: mañanas/noches más frescas e interiores con clima artificial piden una capa ligera aunque el día sea cálido.
+- Respeta el CLIMA: calor → ligero y fresco; frío → capas y abrigo. No metas abrigo si hace calor ni shorts si hace frío. LLUVIA/HÚMEDO → incluye una capa que repela el agua y evita materiales que se arruinan mojados (gamuza, lino delicado). AIRE LIBRE o clima rudo → prioriza prendas resistentes y calzado práctico (nada de zapato de vestir ni gamuza para caminar o mojarse). Piensa en el RANGO del día, no solo el promedio: mañanas/noches más frescas e interiores con clima artificial piden una capa ligera aunque el día sea cálido. El ABRIGO se dimensiona para la MÍNIMA (no para el promedio): una impermeable sola no abriga.
 - CALZADO es lo que más pesa y abulta: máximo 2 pares en viajes cortos (3 solo si una ocasión lo exige de verdad), y el segundo par debe cubrir algo que el primero no.
 - La capa más voluminosa (abrigo, chamarra gruesa) se VIAJA PUESTA, no empacada — cuenta para el look del traslado, no para el espacio de la maleta.
 - ${techoTxt}

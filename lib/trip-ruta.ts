@@ -56,6 +56,33 @@ export function normalizarRuta(
  *  lo ya resuelto, y un timeout transitorio de Open-Meteo ya no pisa
  *  coordenadas buenas con null. El clima SIEMPRE se resuelve de nuevo: las
  *  fechas pudieron cambiar. */
+/**
+ * LAS FECHAS DE CADA PARADA (2026-10-17). El clima de una parada se pedía para
+ * el rango COMPLETO del viaje: en un viaje de cuatro semanas, Tokio a mediados
+ * de noviembre salía con el clima de finales de octubre. Con las noches por
+ * parada se reconstruye su ventana: llegada = inicio + noches anteriores,
+ * salida = llegada + sus noches. Sin noches (viajes viejos) se usa el rango
+ * entero, como antes.
+ */
+export function ventanasDeParadas(
+  fechaInicio: string,
+  fechaFin: string,
+  segNoches: (number | null)[] | null
+): { inicio: string; fin: string }[] | null {
+  if (!segNoches || segNoches.some((n) => typeof n !== "number" || n < 1)) return null;
+  const base = Date.parse(`${fechaInicio}T00:00:00Z`);
+  if (!Number.isFinite(base)) return null;
+  const dia = (d: number) => new Date(base + d * 86_400_000).toISOString().slice(0, 10);
+  let acumuladas = 0;
+  return (segNoches as number[]).map((noches) => {
+    const inicio = dia(acumuladas);
+    acumuladas += noches;
+    const fin = dia(acumuladas);
+    // Nunca más allá del fin del viaje (noches que no cuadran con las fechas).
+    return { inicio, fin: fin > fechaFin ? fechaFin : fin };
+  });
+}
+
 export async function resolverParadas(
   lugaresNombres: string[],
   segNoches: (number | null)[] | null,
@@ -63,22 +90,26 @@ export async function resolverParadas(
   fechaFin: string,
   previas: Parada[] = []
 ): Promise<Parada[]> {
+  const ventanas = ventanasDeParadas(fechaInicio, fechaFin, segNoches);
   return Promise.all(
     lugaresNombres.map(async (nombre, i) => {
       const noches = segNoches && segNoches[i] ? { noches: segNoches[i] as number } : {};
+      // Las fechas de ESTA parada (si se pueden reconstruir), no las del viaje entero.
+      const desde = ventanas?.[i]?.inicio ?? fechaInicio;
+      const hasta = ventanas?.[i]?.fin ?? fechaFin;
       const previa = previas.find((p) => p.lugar === nombre);
       if (previa && previa.lat != null && previa.lon != null) {
         // Si Open-Meteo parpadea (timeout → null), se conserva el clima previo:
         // uno aproximado de fechas viejas informa más que un header sin clima.
         const weather =
-          (await getWeatherForDates(previa.lat, previa.lon, fechaInicio, fechaFin)) ??
+          (await getWeatherForDates(previa.lat, previa.lon, desde, hasta)) ??
           previa.weather ??
           null;
         return { lugar: previa.lugar, lat: previa.lat, lon: previa.lon, ...noches, weather };
       }
       const geo = await geocodePlace(nombre);
       const weather = geo
-        ? await getWeatherForDates(geo.lat, geo.lon, fechaInicio, fechaFin)
+        ? await getWeatherForDates(geo.lat, geo.lon, desde, hasta)
         : null;
       return {
         lugar: geo?.label ?? nombre,
@@ -107,9 +138,15 @@ export function aggregateWeather(paradas: Parada[]): TripWeather | null {
   // Solo precipitación dominante (mayoría de ciudades) marca el viaje.
   const condition =
     snowN + rainN > withW.length / 2 ? (snowN >= rainN ? "nieve" : "lluvia") : conds[0];
+  // El rango del viaje entero: la mínima más baja y la máxima más alta entre
+  // paradas (si una parada no trae rango, su promedio hace de ambas).
+  const minimas = withW.map((p) => (p.weather as TripWeather).temp_min ?? (p.weather as TripWeather).temp_c);
+  const maximas = withW.map((p) => (p.weather as TripWeather).temp_max ?? (p.weather as TripWeather).temp_c);
   return {
     temp_c: avg,
     condition,
+    temp_min: Math.min(...minimas),
+    temp_max: Math.max(...maximas),
     ...(estimated ? { estimated: true } : {}),
   };
 }

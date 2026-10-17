@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildTripGrid,
+  climaText,
   keepOccasionCoverage,
   packableDesc,
   type PackableItem,
@@ -274,5 +275,17 @@ describe("packableDesc — pieza que todavía no tiene", () => {
   it("lo dice al final de los atributos, para el generador y el juez por igual", () => {
     const d = packableDesc({ n: 3, nombre: "Abrigo largo de lana negro", category: "abrigo", color: "negro", formalidad: "formal-casual", falta: true });
     expect(d).toBe("3. Abrigo largo de lana negro (formal-casual, negro, todavía no la tiene)");
+  });
+});
+
+// 2026-10-17: el rango viene de la mínima real, y "entre ciudades" sólo cuando lo es.
+describe("climaText — el rango del viaje", () => {
+  it("con varias ciudades nombra la más fría y pide abrigo de verdad bajo 5°C", () => {
+    const t = climaText({ temp_c: 11, condition: "nublado", temp_min: 1, temp_max: 19, coldest: "Mineápolis", estimated: true });
+    expect(t).toContain("de 1°C a 19°C entre ciudades (la más fría: Mineápolis)");
+    expect(t).toContain("una impermeable sola no abriga");
+  });
+  it("con una sola ciudad el rango es del día", () => {
+    expect(climaText({ temp_c: 12, condition: "despejado", temp_min: 7, temp_max: 17 })).toContain("entre la mañana y la tarde");
   });
 });
