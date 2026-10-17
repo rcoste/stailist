@@ -164,7 +164,27 @@ export default async function ViajeDetallePage({
   const { data: unidos } = await supabase.rpc("unidos_a_mi_viaje", { p_trip: trip.id });
 
   // Outfits del viaje (v1.1): resueltos contra el clóset (cada nombre → su imagen).
+  const effInit = (r: TripRow) =>
+    r.base === "parecido"
+      ? r.decision === "accept"
+        ? "tienes"
+        : r.decision === "reject"
+          ? "falta"
+          : "parecido"
+      : r.base;
+
   const rawOutfits = trip.outfits as TripOutfit[] | null;
+  // Las piezas que FALTAN también pueden ir en un look (2026-10-17): se
+  // resuelven por el nombre de la ideal a su render de catálogo y llevan el
+  // índice de la maleta, para que el tile diga "te falta" hasta que la tenga.
+  const faltaPorNombre = new Map<string, { index: number; image: string | null }>();
+  for (const r of rows) {
+    // Un "parecido" rechazado sigue siendo falta aunque conserve `by`: lo que
+    // la descarta como faltante es un sustituto elegido, no el parecido.
+    if (effInit(r) === "falta" && !subAt(r.index) && !empacado[String(r.index)] && !faltaPorNombre.has(r.nombre)) {
+      faltaPorNombre.set(r.nombre, { index: r.index, image: r.idealImage });
+    }
+  }
   const resolvedOutfits: ResolvedOutfit[] | null = rawOutfits
     ? rawOutfits.map((o) => ({
         ocasion: o.ocasion,
@@ -172,11 +192,16 @@ export default async function ViajeDetallePage({
         porque: o.porque,
         tip: o.tip ?? null,
         voto: o.voto ?? null,
-        prendas: o.prendas.map((nombre) => ({
-          nombre,
-          image: imageMap[nombre] ?? null,
-          id: nameToId[nombre] ?? null,
-        })),
+        prendas: o.prendas.map((nombre) => {
+          const id = nameToId[nombre] ?? null;
+          const falta = id ? undefined : faltaPorNombre.get(nombre);
+          return {
+            nombre,
+            image: imageMap[nombre] ?? falta?.image ?? null,
+            id,
+            ...(falta ? { faltaIndex: falta.index } : {}),
+          };
+        }),
       }))
     : null;
 
@@ -220,14 +245,6 @@ export default async function ViajeDetallePage({
   }
 
   // Conteos de las pestañas (estado inicial del server).
-  const effInit = (r: TripRow) =>
-    r.base === "parecido"
-      ? r.decision === "accept"
-        ? "tienes"
-        : r.decision === "reject"
-          ? "falta"
-          : "parecido"
-      : r.base;
   const maletaCount = rows.filter((r) => effInit(r) !== "falta" || empacado[String(r.index)]).length;
   const looksCount = resolvedOutfits?.length ?? 0;
   // Revisión cerrada ("✓ listo — a empacar"): la llave y su grandfathering

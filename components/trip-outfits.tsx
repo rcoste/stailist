@@ -13,6 +13,7 @@ import {
 import { useTripGen } from "@/components/trip-gen-context";
 import { requestItemRender } from "@/lib/render-on-demand";
 import { OCCASIONS, type Occasion } from "@/lib/trip";
+import { useTripPacked } from "@/components/trip-packed-context";
 
 // Un look del viaje ya resuelto contra el clóset (la página servidor mapea cada
 // nombre de prenda a su imagen antes de pasarlo).
@@ -24,7 +25,13 @@ export type ResolvedOutfit = {
   voto: "up" | "down" | null;
   /** Try-on ya generado para este look (URL firmada), si existe. */
   tryonImage?: string | null;
-  prendas: { nombre: string; image: string | null; id?: string | null }[];
+  prendas: {
+    nombre: string;
+    image: string | null;
+    id?: string | null;
+    /** Índice en la maleta de una pieza que todavía no tiene (lib/trip-maleta.ts). */
+    faltaIndex?: number;
+  }[];
 };
 
 const OCC_LABEL = new Map(OCCASIONS.map((o) => [o.value as string, o.label]));
@@ -54,6 +61,7 @@ export function TripOutfits({
   // frontera RSC y la inyección por cloneElement no llegaba — ver trip-gen-context).
   const { generating, appending, genError, genNote, onGenerate, onGenerateMore, onViewMaleta, confirmado } =
     useTripGen();
+  const { packed } = useTripPacked();
   // Voto optimista por índice (arranca de lo que llegó del server).
   const [votos, setVotos] = useState<Record<number, "up" | "down" | null>>(
     Object.fromEntries((outfits ?? []).map((o, i) => [i, o.voto]))
@@ -263,10 +271,19 @@ export function TripOutfits({
 
       {/* Desktop (handoff desktop_f3): cards de look a 2 columnas. */}
       <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
-        {outfits.map((o, i) => (
+        {outfits.map((o, i) => {
+          // Una pieza "te falta" deja de serlo en cuanto la palomea o la marca
+          // "ya lo tengo" (el refresh la vuelve prenda real del clóset).
+          const prendas = o.prendas.map((p) => ({
+            ...p,
+            falta: p.faltaIndex !== undefined && !packed[String(p.faltaIndex)],
+          }));
+          const faltaAlgo = prendas.some((p) => p.falta);
+          return (
           <LookCard
             key={i}
-            look={o}
+            look={{ ...o, prendas }}
+            faltaAlgo={faltaAlgo}
             voto={votos[i] ?? null}
             favorito={favs.has(i)}
             onVote={(up) => votar(i, up)}
@@ -276,13 +293,18 @@ export function TripOutfits({
             rendered={rendered}
             rendering={rendering}
             tryonImage={o.tryonImage ?? null}
-            ensureOutfitId={async () => {
-              const res = await ensureTripLookOutfit(tripId, i);
-              return res.outfitId ?? null;
-            }}
+            ensureOutfitId={
+              faltaAlgo
+                ? undefined
+                : async () => {
+                    const res = await ensureTripLookOutfit(tripId, i);
+                    return res.outfitId ?? null;
+                  }
+            }
             returnTo={`/viaje/${tripId}?tab=looks`}
           />
-        ))}
+          );
+        })}
       </div>
 
       {/* #2 — ocasiones elegidas que no se pudieron armar (no se omiten calladas). */}
