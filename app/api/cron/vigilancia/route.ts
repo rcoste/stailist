@@ -17,6 +17,24 @@ import { TOPE_USD_DIA_GLOBAL } from "@/lib/cuotas";
 // `Authorization: Bearer <CRON_SECRET>`.
 export const maxDuration = 30;
 
+// LO QUE NO ES UN FALLO PARA LA VIGILANCIA (2026-10-17). Avisó "alguien
+// atorado: 8 intentos fallidos" por una persona que estaba perfecta: subió 56
+// prendas, armó looks y compartió su try-on. Eran dos cosas que el aviso
+// confundía con "la app le está fallando":
+//
+//  · EL FILTRO DE GOOGLE (`motivo like 'filtro:%'`, migración 0179): se negó a
+//    dibujar prendas de Mickey y Minnie y fotos con piel. Ninguna llave ni
+//    ningún reintento lo arregla: no hay nada que hacer, y la regla de este
+//    correo es avisar sólo si hay algo que hacer (lib/vigilancia.ts).
+//  · LOS DIBUJOS AUTOMÁTICOS DE PRENDAS (`render-prenda*`): la app los hace
+//    sola al subir fotos, y cuando uno falla lo vuelve a intentar por otro
+//    camino. Cada prenda contaba doble y nadie "reintentaba": no es una
+//    persona atorada. Si el servicio de imágenes se cae, lo sigue cachando el
+//    aviso de fallos totales, que sí los cuenta.
+const NO_ES_FILTRO = `coalesce(motivo, '') not like 'filtro:%'`;
+const NO_ES_FILTRO_A = `coalesce(a.motivo, '') not like 'filtro:%'`;
+const NO_ES_AUTOMATICO_A = `a.tarea not like 'render-prenda%'`;
+
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get("authorization");
@@ -32,7 +50,7 @@ export async function GET(request: NextRequest) {
       c
         .query<{ fallos: string; llamadas: string; gasto: string }>(
           `select
-             count(*) filter (where not ok and created_at >= now() - interval '1 hour') as fallos,
+             count(*) filter (where not ok and ${NO_ES_FILTRO} and created_at >= now() - interval '1 hour') as fallos,
              count(*) filter (where created_at >= now() - interval '1 hour') as llamadas,
              coalesce(sum(costo_usd) filter (where created_at >= now() - interval '24 hours'), 0) as gasto
            from ai_calls
@@ -52,6 +70,8 @@ export async function GET(request: NextRequest) {
              from ai_calls a
              left join auth.users u on u.id = a.user_id
             where not a.ok
+              and ${NO_ES_FILTRO_A}
+              and ${NO_ES_AUTOMATICO_A}
               and a.created_at >= now() - interval '1 hour'
               and a.user_id is not null
             group by 1, 2

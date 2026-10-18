@@ -44,6 +44,20 @@ export async function extraerPrendaDeFoto(
    */
   ctx?: { supabase: SupabaseClient; userId: string; tarea?: string } | null
 ): Promise<Buffer | null> {
+  const r = await extraerPrendaConMotivo(foto, prenda, ctx);
+  return "bytes" in r ? r.bytes : null;
+}
+
+/**
+ * Lo mismo, pero cuando falla dice si fue el filtro de Google y con qué razón.
+ * Quien tiene respaldo texto→imagen lo usa para decidir si vale la pena
+ * pagarlo (ver debeIntentarRespaldo).
+ */
+export async function extraerPrendaConMotivo(
+  foto: Parameters<typeof extraerPrendaDeFoto>[0],
+  prenda: Parameters<typeof extraerPrendaDeFoto>[1],
+  ctx?: Parameters<typeof extraerPrendaDeFoto>[2]
+): Promise<{ bytes: Buffer } | { motivo: string; filtro: string | null }> {
   const encuadre =
     prenda.categoria === "calzado"
       ? "placed neatly side by side, shot from a slight top-down angle, filling about 65% of the frame"
@@ -73,7 +87,26 @@ export async function extraerPrendaDeFoto(
   );
   if ("motivo" in r) {
     console.error(`[extraer-prenda] ${r.motivo}`);
-    return null;
+    return { motivo: r.motivo, filtro: r.filtro };
   }
-  return Buffer.from(r.data, "base64");
+  return { bytes: Buffer.from(r.data, "base64") };
+}
+
+/**
+ * ¿VALE LA PENA EL RESPALDO TEXTO→IMAGEN DESPUÉS DE QUE FALLÓ LA FOTO?
+ *
+ * Casi siempre sí. Medido el 2026-10-17 sobre una persona con 8 rechazos del
+ * filtro: el respaldo rescató 2 de 8 prendas, y al menos una venía de
+ * PROHIBITED_CONTENT. Ese filtro mira la FOTO (piel visible, una selfie
+ * frente al espejo), y el respaldo no manda la foto: sólo el texto.
+ *
+ * La excepción es IMAGE_RECITATION / RECITATION: el filtro reconoció algo con
+ * derechos de autor (los jeans de Mickey, la sudadera de Minnie), y el texto
+ * del respaldo lleva ese mismo nombre, así que se paga una imagen para recibir
+ * el mismo no. Quitar el personaje del texto para que pase NO es la salida:
+ * una sudadera de Minnie dibujada sin Minnie es otra prenda, y el motor
+ * armaría looks con algo que ella no tiene. Su foto es la imagen correcta.
+ */
+export function debeIntentarRespaldo(r: { filtro: string | null } | null): boolean {
+  return !(r?.filtro === "IMAGE_RECITATION" || r?.filtro === "RECITATION");
 }

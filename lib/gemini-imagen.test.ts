@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { pedirImagen } from "./gemini-imagen";
+import { esRazonDelFiltro, motivoDelRecibo, pedirImagen } from "./gemini-imagen";
 
 // El reintento de la puerta de imagen (try-on Y avatar), que existe porque
 // el servicio falla
@@ -92,6 +92,52 @@ describe("pedirImagen", () => {
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect("motivo" in r && r.motivo).toContain("IMAGE_SAFETY");
+    // Y dice aparte que fue el filtro, para que quien llama decida sin parsear.
+    expect("filtro" in r && r.filtro).toBe("IMAGE_SAFETY");
+  });
+
+  it("un 200 sin imagen por una razón desconocida NO cuenta como filtro", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(respuesta(200, { candidates: [{ finishReason: "OTHER" }] }));
+    const r = await pedirImagen([{ text: "x" }], { fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect("filtro" in r && r.filtro).toBeNull();
+  });
+
+  it("el recibo de un rechazo del filtro guarda filtro:<RAZÓN> (lo que la vigilancia ignora)", async () => {
+    const insert = vi.fn(async (_fila: Record<string, unknown>) => ({ error: null }));
+    const supabase = { from: () => ({ insert }) } as never;
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(respuesta(200, { candidates: [{ finishReason: "IMAGE_RECITATION" }] }));
+    await pedirImagen([{ text: "x" }], {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      ctx: { supabase, userId: "u", tarea: "render-prenda" },
+    });
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(insert.mock.calls[0][0]).toMatchObject({ ok: false, motivo: "filtro:IMAGE_RECITATION", costo_usd: 0 });
+  });
+
+  it("el recibo de una caída guarda el motivo real, sin prefijo de filtro", async () => {
+    const insert = vi.fn(async (_fila: Record<string, unknown>) => ({ error: null }));
+    const supabase = { from: () => ({ insert }) } as never;
+    const fetchImpl = vi.fn().mockResolvedValue(respuesta(500, { error: { message: "Internal error encountered." } }));
+    await pedirImagen([{ text: "x" }], {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      ctx: { supabase, userId: "u", tarea: "render-prenda" },
+    });
+    const fila = insert.mock.calls[0][0];
+    expect(fila.motivo).toContain("HTTP 500");
+    expect(String(fila.motivo).startsWith("filtro:")).toBe(false);
+  });
+
+  it("el recibo de una imagen que salió no lleva motivo", async () => {
+    const insert = vi.fn(async (_fila: Record<string, unknown>) => ({ error: null }));
+    const supabase = { from: () => ({ insert }) } as never;
+    const fetchImpl = vi.fn().mockResolvedValue(respuesta(200, IMAGEN));
+    await pedirImagen([{ text: "x" }], {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      ctx: { supabase, userId: "u", tarea: "render-prenda" },
+    });
+    expect(insert.mock.calls[0][0]).not.toHaveProperty("motivo");
   });
 
   it("si ya no queda presupuesto, no arranca un segundo intento", async () => {
@@ -146,5 +192,19 @@ describe("modelos de imagen con precio", () => {
   it("la ropa va en Nano Banana 2.1 y el avatar sigue en Pro (sólo se probó la ropa)", () => {
     expect(GEMINI_MODEL_ROPA).toBe("gemini-nano-banana-2.1");
     expect(GEMINI_MODEL).toBe("gemini-3-pro-image");
+  });
+});
+
+describe("razones del filtro", () => {
+  it("las de seguridad y derechos de autor sí; OTHER, vacío y STOP no", () => {
+    for (const r of ["PROHIBITED_CONTENT", "IMAGE_RECITATION", "IMAGE_SAFETY", "SAFETY", "RECITATION"]) {
+      expect(esRazonDelFiltro(r)).toBe(true);
+    }
+    for (const r of ["OTHER", "STOP", "", null, undefined]) expect(esRazonDelFiltro(r)).toBe(false);
+  });
+
+  it("el motivo del recibo es corto y marca el filtro con su prefijo", () => {
+    expect(motivoDelRecibo("respondió sin imagen (PROHIBITED_CONTENT)", "PROHIBITED_CONTENT")).toBe("filtro:PROHIBITED_CONTENT");
+    expect(motivoDelRecibo("x".repeat(500), null)).toHaveLength(200);
   });
 });

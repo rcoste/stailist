@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.390.0] - 2026-10-17 — la vigilancia ya no confunde el filtro de Google con alguien atorado
+
+- **Falsa alarma corregida.** La vigilancia avisó "alguien atorado: 8 intentos
+  fallidos en una hora" por una persona que estaba perfecta (56 prendas
+  propias, looks, instaló la app, compartió su try-on). Las 8 eran el filtro
+  de contenido de Google negándose a dibujar prendas de Mickey y Minnie
+  (IMAGE_RECITATION) y fotos con piel visible (PROHIBITED_CONTENT), contadas
+  doble porque cada prenda se intenta por dos caminos.
+- **`ai_calls.motivo`** (migración 0179, ya aplicada): por qué falló una
+  llamada de imagen. Los rechazos del filtro van como `filtro:<RAZÓN>`. Antes
+  sólo se guardaba `ok` y para saber el porqué había que ir a los logs de
+  Vercel.
+- **La vigilancia** no cuenta los rechazos del filtro como fallos (nada que
+  hacer), y "alguien atorado" ya no cuenta los dibujos automáticos de prendas
+  (nadie reintenta; si el servicio se cae, lo sigue cachando el aviso de fallos
+  totales).
+- **El respaldo texto→imagen se salta sólo por derechos de autor**
+  (`debeIntentarRespaldo`, `lib/extraer-prenda.ts`): el texto lleva el mismo
+  personaje y da el mismo no. Por contenido prohibido SÍ se intenta: el
+  filtro mira la foto y el respaldo no la manda (medido: rescató 2 de 8). La
+  prenda de Disney se queda con su foto, que es lo correcto: dibujarla sin el
+  personaje sería otra prenda.
 ## [0.2.389.0] - 2026-10-17 — el feed de actividad enseña lo que tocó cada quien
 
 - **Miniaturas en `/admin/actividad`** (boceto aprobado por Roberto: "se ve
