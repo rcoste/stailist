@@ -1,4 +1,5 @@
 import type { CapsuleItem } from "@/lib/capsule";
+import { esAbrigoDeInvierno, esDeNoche, esJeansAzul, esParaLluvia, visualDeNoche } from "@/lib/engine/piezas-tipo";
 
 // EL JUEZ DE LA CÁPSULA.
 //
@@ -49,6 +50,14 @@ export type ContextoRevision = {
   techo?: string | null;
   /** Banda de clima de su ciudad, si se conoce. */
   clima?: string | null;
+  /** A qué clima viaja (lifestyle.viaje_clima, valores separados por coma). */
+  viajeClima?: string | null;
+  /** Cómo llueve donde vive (lifestyle.lluvia, 2026-10-18). */
+  lluvia?: string | null;
+  /** Cómo son sus días (lifestyle.trabajo, valores separados por coma). */
+  trabajo?: string | null;
+  /** Sus vetos, en palabras: un veto de jeans apaga la regla de jeans. */
+  vetos?: string[];
 };
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -148,6 +157,34 @@ export function revisarCapsula(
   // 5. ABRIGO EN CLIMA FRÍO. La capa exterior no se improvisa con lo que hay.
   if (/frio|frío/.test(norm(ctx.clima ?? "")) && de("abrigo").length === 0) {
     v.push({ regla: "sin-abrigo-en-frio", detalle: `Su clima es frío y la cápsula no trae una sola capa de abrigo.` });
+  }
+
+  // 6-9 (2026-10-18), de la cápsula real de una persona en clima templado:
+  //    dos abrigos de invierno, nada para lluvia, sin jeans azules y un vestido
+  //    de gala descrito como de diario. Medidas en seco contra las cápsulas
+  //    guardadas antes de quedarse (ver el CHANGELOG de v0.2.395.0).
+  const clima = norm(ctx.clima ?? "");
+  const viajaAFrio = /frio/.test(norm(ctx.viajeClima ?? ""));
+  if (/templado|calor/.test(clima)) {
+    const permitidos = viajaAFrio ? 1 : 0;
+    const abrigos = items.filter(esAbrigoDeInvierno);
+    if (abrigos.length > permitidos) {
+      v.push({
+        regla: "abrigo-de-mas",
+        detalle: `Su clima es ${clima} y ${viajaAFrio ? "sólo viaja a frío de vez en cuando (le basta uno)" : "no viaja a frío"}, y la lista trae ${abrigos.length} abrigo(s) de invierno: ${abrigos.map((a) => `"${a.nombre}"`).join(", ")}.`,
+      });
+    }
+  }
+  if (/temporada|seguido/.test(norm(ctx.lluvia ?? "")) && !items.some(esParaLluvia)) {
+    v.push({ regla: "sin-lluvia", detalle: `Dijo que llueve ${norm(ctx.lluvia ?? "")} donde vive y no hay nada que aguante la lluvia.` });
+  }
+  const casual = /oficina_casual|remoto|estudio/.test(norm(ctx.trabajo ?? ""));
+  const vetaJeans = (ctx.vetos ?? []).some((x) => /jean|mezclilla|denim/.test(norm(x)));
+  if (casual && !vetaJeans && !items.some(esJeansAzul)) {
+    v.push({ regla: "sin-jeans-azules", detalle: `Su vida tiene días casuales y no hay unos jeans azules.` });
+  }
+  for (const it of items.filter((x) => esDeNoche(x) && x.visual && !visualDeNoche(x.visual))) {
+    v.push({ regla: "noche-sin-noche", detalle: `"${it.nombre}" es de noche pero su descripción ("${it.visual}") no dice qué la hace de noche: se dibuja como de diario.` });
   }
 
   return v;

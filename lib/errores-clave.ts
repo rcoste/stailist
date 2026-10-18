@@ -57,6 +57,8 @@ const TAREA: Record<string, string> = {
   "capsula-match": "cruzar su cápsula con su clóset",
   "capsula-cambio": "cambiar una pieza de su cápsula",
   "viaje-capsula": "armar la maleta",
+  "capsula-reparar": "corregir su cápsula",
+  "viaje-reparar": "corregir la maleta",
   "viaje-outfits": "armar los looks del viaje",
   "viaje-sustitutos": "buscar sustitutos para la maleta",
   "viaje-juez": "revisar los looks del viaje",

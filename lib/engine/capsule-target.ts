@@ -1,4 +1,5 @@
 import { revisarCapsula } from "@/lib/engine/capsule-revision";
+import { repararPorHallazgo } from "@/lib/engine/reparar-lista";
 import { ENGINE_MODEL } from "@/lib/models";
 import Anthropic from "@anthropic-ai/sdk";
 import {
@@ -472,6 +473,40 @@ export type TrazaCapsula = {
 // ESA persona debería tener, mezclando lo que su vida exige con quién es cuando
 // elige, y aterrizada a su paleta de color. Libre del catálogo (puede pedir
 // prendas que no tenemos). Se llama una vez al guardar/editar el assessment.
+/** El schema de UNA prenda de la cápsula: lo comparten la generación y la segunda pasada (lib/engine/reparar-lista.ts). */
+const ITEM_SCHEMA_CAPSULA = {
+                type: "object",
+                properties: {
+                  nombre: { type: "string" },
+                  tipo: { type: "string" },
+                  hueco: { type: "string" },
+                  category: { type: "string", enum: [...CATEGORIES] },
+                  colorFamilia: { type: "string" },
+                  formalidad: { type: "string", enum: [...FORMALIDADES] },
+                  temporada: { type: "string" },
+                  // sin minimum/maximum: el structured output no los soporta.
+                  prioridad: { type: "integer" },
+                  porque: { type: "string" },
+                  // De vuelta desde 2026-10-14 (ver trip-capsule.ts: se quitó
+                  // en junio por el corte de 60 s). Las pantallas que la arman
+                  // tienen 300 s.
+                  visual: { type: "string" },
+                },
+                required: [
+                  "visual",
+                  "nombre",
+                  "tipo",
+                  "hueco",
+                  "category",
+                  "colorFamilia",
+                  "formalidad",
+                  "temporada",
+                  "prioridad",
+                  "porque",
+                ],
+                additionalProperties: false,
+              };
+
 export async function generateCapsuleTarget(
   inputs: CapsuleInputs,
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
@@ -513,38 +548,7 @@ export async function generateCapsuleTarget(
             },
             items: {
               type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  nombre: { type: "string" },
-                  tipo: { type: "string" },
-                  hueco: { type: "string" },
-                  category: { type: "string", enum: [...CATEGORIES] },
-                  colorFamilia: { type: "string" },
-                  formalidad: { type: "string", enum: [...FORMALIDADES] },
-                  temporada: { type: "string" },
-                  // sin minimum/maximum: el structured output no los soporta.
-                  prioridad: { type: "integer" },
-                  porque: { type: "string" },
-                  // De vuelta desde 2026-10-14 (ver trip-capsule.ts: se quitó
-                  // en junio por el corte de 60 s). Las pantallas que la arman
-                  // tienen 300 s.
-                  visual: { type: "string" },
-                },
-                required: [
-                  "visual",
-                  "nombre",
-                  "tipo",
-                  "hueco",
-                  "category",
-                  "colorFamilia",
-                  "formalidad",
-                  "temporada",
-                  "prioridad",
-                  "porque",
-                ],
-                additionalProperties: false,
-              },
+              items: ITEM_SCHEMA_CAPSULA,
             },
             firma: { type: "string" },
             subline: { type: "string" },
@@ -590,26 +594,43 @@ export async function generateCapsuleTarget(
   // Re-ranking limpio 1..n por la prioridad que sugirió el modelo (estable).
   // Los trajes se parten ANTES del re-ranking, para que el pantalón herede su
   // sitio en la lista junto al saco en vez de caer al final.
-  const items = enlazarTrajes(partirTrajes(limpiarEmpaquetados(parsed.items)))
-    .slice()
-    .sort((a, b) => a.prioridad - b.prioridad)
-    .map((it, i) => ({ ...it, prioridad: i + 1, visual: it.visual?.trim() ? it.visual.trim().slice(0, 200) : null }));
-  // EL JUEZ, al final de la generación: deja por escrito lo que la lista NO
-  // cubre. No bloquea ni reintenta — llenar un hueco pide criterio de stylist y
-  // su paleta, no es determinista como partir un traje. Registrarlo es lo que
-  // convierte "se me hace que falta algo" en un dato que se puede mirar.
+  const ordenar = (lista: CapsuleItem[]) =>
+    enlazarTrajes(partirTrajes(limpiarEmpaquetados(lista)))
+      .slice()
+      .sort((a, b) => a.prioridad - b.prioridad)
+      .map((it, i) => ({ ...it, prioridad: i + 1, visual: it.visual?.trim() ? it.visual.trim().slice(0, 200) : null }));
+  let items: CapsuleItem[] = ordenar(parsed.items);
+  // EL JUEZ, al final de la generación (reglas de código, capsule-revision.ts).
+  // Hasta el 2026-10-18 sólo anotaba; ahora, si encontró algo, una SEGUNDA
+  // PASADA con las mismas instrucciones corrige sólo eso (reparar-lista.ts) y se
+  // vuelve a revisar. Lo que siga sin cubrirse se queda anotado.
   const vidaDeclarada = (inputs.answers ?? {}) as Record<string, string | undefined>;
-  const revision = revisarCapsula(items, {
+  const ctxRevision = {
     gender: inputs.gender,
     techo: vidaDeclarada.formalidad_techo ?? null,
     clima: vidaDeclarada.clima ?? null,
-  });
+    viajeClima: vidaDeclarada.viaje_clima ?? null,
+    lluvia: vidaDeclarada.lluvia ?? null,
+    trabajo: vidaDeclarada.trabajo ?? null,
+    vetos: inputs.vetoes ?? [],
+  };
+  let revision = revisarCapsula(items, ctxRevision);
+  let reparacion: { hallazgos: string[]; quitadas: string[]; agregadas: string[] } | undefined;
+  if (revision.length) {
+    const r = await repararPorHallazgo({ system: system, usuario: usuario, items, hallazgos: revision, itemSchema: ITEM_SCHEMA_CAPSULA, quien, tarea: "capsula-reparar", ordenar });
+    if (r.reglas.length) {
+      reparacion = { hallazgos: r.reglas, quitadas: r.quitadas, agregadas: r.agregadas };
+      items = r.items;
+      revision = revisarCapsula(items, ctxRevision);
+    }
+  }
 
   return {
     target: {
       version: 2,
       items,
       ...(revision.length ? { revision } : {}),
+      ...(reparacion ? { reparacion } : {}),
       firma: parsed.firma?.trim() || undefined,
       subline: parsed.subline?.trim() || undefined,
       pilares: parsed.pilares?.filter((p) => p.titulo && p.detalle) || undefined,

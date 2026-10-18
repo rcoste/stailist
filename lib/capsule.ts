@@ -351,6 +351,8 @@ export type CapsuleTarget = {
    * un hueco sin la lista al lado no se puede juzgar.
    */
   revision?: { regla: string; detalle: string }[];
+  /** Qué corrigió la segunda pasada del juez (2026-10-18, lib/engine/reparar-lista.ts): las reglas que se activaron y las piezas que quitó y agregó. */
+  reparacion?: { hallazgos: string[]; quitadas: string[]; agregadas: string[] };
 };
 
 // --- Capa 2: el match contra el clóset ------------------------------------

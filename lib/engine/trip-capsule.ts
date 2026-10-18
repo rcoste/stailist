@@ -1,4 +1,6 @@
 import { ENGINE_MODEL } from "@/lib/models";
+import { revisarMaleta, type ClimaParada } from "@/lib/engine/trip-revision";
+import { repararPorHallazgo } from "@/lib/engine/reparar-lista";
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIES, FORMALIDADES, type CapsuleItem, type CapsuleTarget } from "@/lib/capsule";
 import { SEASONS, lineaMetal, metalDePersona, seasonPalette, type Season } from "@/lib/colorimetria";
@@ -111,6 +113,40 @@ export function reglaDeAbrigo(climas: ({ temp_c: number; temp_min?: number; temp
   return partes.length ? ` ${partes.join(" ")}` : "";
 }
 
+/** El schema de UNA prenda de la maleta: lo comparten la generación y la segunda pasada (lib/engine/reparar-lista.ts). */
+const ITEM_SCHEMA_MALETA = {
+                type: "object",
+                properties: {
+                  nombre: { type: "string" },
+                  tipo: { type: "string" },
+                  category: { type: "string", enum: [...CATEGORIES] },
+                  colorFamilia: { type: "string" },
+                  formalidad: { type: "string", enum: [...FORMALIDADES] },
+                  temporada: { type: "string" },
+                  prioridad: { type: "integer" },
+                  porque: { type: "string" },
+                  // DE VUELTA desde 2026-10-14 (se quitó el 2026-06-30 porque
+                  // casi duplicaba la salida y la ruta se cortaba a los 60 s;
+                  // hoy /api/trip tiene 300). Corto a propósito: una línea.
+                  // Sin esto el dibujo salía genérico y compartido por tipo y
+                  // color: la "blusa de satén rubí" de una maleta era la blusa
+                  // recta de cuello redondo que alguien generó en julio.
+                  visual: { type: "string" },
+                },
+                required: [
+                  "nombre",
+                  "tipo",
+                  "category",
+                  "colorFamilia",
+                  "formalidad",
+                  "temporada",
+                  "prioridad",
+                  "porque",
+                  "visual",
+                ],
+                additionalProperties: false,
+              };
+
 export async function generateTripCapsuleTarget(
   inputs: TripCapsuleInputs,
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
@@ -205,23 +241,7 @@ export async function generateTripCapsuleTarget(
       ? tasteSignalLines(inputs.tasteSignal).join("\n")
       : "";
 
-  const response = await medirAnthropic(quien && { ...quien, tarea: "viaje-capsula" }, ENGINE_MODEL, () =>
-    client.messages.create({
-    model: ENGINE_MODEL,
-    // 4608: el "plan" (borrador de razonamiento) consume tokens antes de los
-    // items, y el piso de suficiencia (v24) empuja cápsulas más grandes —
-    // 3584 quedaba justo y un truncado tira TODA la creación del viaje. El
-    // tope solo se paga si se emite.
-    // 6656 y no 4608 (2026-10-14): con `visual` cada pieza suma ~25 tokens, y
-    // la maleta más grande medida ya usaba 4028 sin él. Truncar = viaje sin
-    // guardar ("TRUNCATED_RESPONSE").
-    max_tokens: 6656,
-    // Thinking OFF: en los modelos 5 viene ON por default y se come el
-    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
-    // esenciales muerta). El schema ya obliga a razonar en un campo antes de
-    // comprometer la respuesta, que es la misma idea dentro del presupuesto.
-    thinking: { type: "disabled" },
-    system: `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar. Al final explicas tu lógica en una "firma" que la persona SÍ lee.
+  const systemMaleta = `Eres la stylist de stailist. Armas la CÁPSULA DE VIAJE: la lista MÍNIMA de prendas que la persona debe llevar para que combinen entre sí y le cubran todos los días, sin sobre-empacar. Al final explicas tu lógica en una "firma" que la persona SÍ lee.
 
 Cómo trabajas: PRIMERO llena el campo "plan" — tu borrador, la persona no lo ve. Ahí decide antes de listar: cuántas piezas pide este viaje (días × ocasiones × clima), qué 2-3 neutros anclan la maleta, qué acentos van, y qué pieza cubre cada ocasión. Verifica ahí la interoperabilidad: cada top debe funcionar con (casi) todos los bottoms — si una pieza solo arma UN look, gana su lugar por ocasión única o sale. DESPUÉS genera los items ejecutando ese plan.
 
@@ -259,11 +279,30 @@ Devuelve "items" (la cápsula). Cada prenda:
 - porque: UNA línea cálida (tuteo) de por qué la lleva — específica a ESTE viaje (su ocasión, su clima, con qué se mezcla), no genérica.
 - visual: cómo se VE la pieza, para dibujarla (la persona no lo lee). De 8 a 12 palabras, SIN repetir el nombre ni el color: sólo silueta, tela/textura, largo y el detalle que la hace actual. Ej. "satén fluido, cuello caído, manga recta, caída suelta". Piensa en una tienda contemporánea de hoy, no en un catálogo de hace veinte años. Para un básico sin nada que decir (playera lisa, jeans rectos, medias, calcetines) deja "" vacío: se dibuja con la foto genérica.
 
-Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA de la maleta completa — la estrategia (los neutros que anclan, los acentos), cómo todo se mezcla entre sí, y cómo cubre las ocasiones y el clima. Es lo primero que la persona lee arriba de su maleta. No listes prendas una por una ni repitas números que ya ve (días, conteo).`,
+Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA de la maleta completa — la estrategia (los neutros que anclan, los acentos), cómo todo se mezcla entre sí, y cómo cubre las ocasiones y el clima. Es lo primero que la persona lee arriba de su maleta. No listes prendas una por una ni repitas números que ya ve (días, conteo).`;
+  const usuarioMaleta = `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${edadTxt ? `\n${edadTxt}` : ""}${acentosTxt ? `\n${acentosTxt.replace(/^- /, "")}` : ""}${corteTxt ? `\n${corteTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`;
+
+  const response = await medirAnthropic(quien && { ...quien, tarea: "viaje-capsula" }, ENGINE_MODEL, () =>
+    client.messages.create({
+    model: ENGINE_MODEL,
+    // 4608: el "plan" (borrador de razonamiento) consume tokens antes de los
+    // items, y el piso de suficiencia (v24) empuja cápsulas más grandes —
+    // 3584 quedaba justo y un truncado tira TODA la creación del viaje. El
+    // tope solo se paga si se emite.
+    // 6656 y no 4608 (2026-10-14): con `visual` cada pieza suma ~25 tokens, y
+    // la maleta más grande medida ya usaba 4028 sin él. Truncar = viaje sin
+    // guardar ("TRUNCATED_RESPONSE").
+    max_tokens: 6656,
+    // Thinking OFF: en los modelos 5 viene ON por default y se come el
+    // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
+    // esenciales muerta). El schema ya obliga a razonar en un campo antes de
+    // comprometer la respuesta, que es la misma idea dentro del presupuesto.
+    thinking: { type: "disabled" },
+    system: systemMaleta,
     messages: [
       {
         role: "user",
-        content: `VIAJE: ${inputs.days} día(s). Ocasiones: ${ocas}. Clima: ${climaTxt}.\n${techoTxt}\n\nESTILO: ${estilo}\nTags (en orden de fuerza): ${tags}\nCOLORIMETRÍA: ${paletaTxt} ${metalTxt}\n${vetoTxt}${refTxt ? `\n${refTxt}` : ""}${palabrasTxt ? `\n${palabrasTxt}` : ""}${cuerpoTxt ? `\n${cuerpoTxt}` : ""}${edadTxt ? `\n${edadTxt}` : ""}${acentosTxt ? `\n${acentosTxt.replace(/^- /, "")}` : ""}${corteTxt ? `\n${corteTxt}` : ""}${feedbackTxt ? `\n${feedbackTxt}` : ""}${contextoTxt ? `\n${contextoTxt}` : ""}${anclasTxt ? `\n${anclasTxt}` : ""}${rechazadasTxt ? `\n${rechazadasTxt}` : ""}\n\nArma su cápsula de viaje (items).`,
+        content: usuarioMaleta,
       },
     ],
     output_config: {
@@ -281,38 +320,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
             },
             items: {
               type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  nombre: { type: "string" },
-                  tipo: { type: "string" },
-                  category: { type: "string", enum: [...CATEGORIES] },
-                  colorFamilia: { type: "string" },
-                  formalidad: { type: "string", enum: [...FORMALIDADES] },
-                  temporada: { type: "string" },
-                  prioridad: { type: "integer" },
-                  porque: { type: "string" },
-                  // DE VUELTA desde 2026-10-14 (se quitó el 2026-06-30 porque
-                  // casi duplicaba la salida y la ruta se cortaba a los 60 s;
-                  // hoy /api/trip tiene 300). Corto a propósito: una línea.
-                  // Sin esto el dibujo salía genérico y compartido por tipo y
-                  // color: la "blusa de satén rubí" de una maleta era la blusa
-                  // recta de cuello redondo que alguien generó en julio.
-                  visual: { type: "string" },
-                },
-                required: [
-                  "nombre",
-                  "tipo",
-                  "category",
-                  "colorFamilia",
-                  "formalidad",
-                  "temporada",
-                  "prioridad",
-                  "porque",
-                  "visual",
-                ],
-                additionalProperties: false,
-              },
+              items: ITEM_SCHEMA_MALETA,
             },
             // DESPUÉS de items a propósito: la firma se escribe con la lista ya
             // decidida (resume la estrategia real, no una intención).
@@ -338,12 +346,37 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
   if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
     throw new Error("BAD_TRIP_CAPSULE");
   }
-  const items = parsed.items
-    .slice()
-    .sort((a, b) => a.prioridad - b.prioridad)
-    .map((it, i) => ({ ...it, prioridad: i + 1, visual: it.visual?.trim() ? it.visual.trim().slice(0, 200) : null }));
+  const ordenar = (lista: CapsuleItem[]) =>
+    lista
+      .slice()
+      .sort((a, b) => a.prioridad - b.prioridad)
+      .map((it, i) => ({ ...it, prioridad: i + 1, visual: it.visual?.trim() ? it.visual.trim().slice(0, 200) : null }));
+  let items: CapsuleItem[] = ordenar(parsed.items);
+  // EL JUEZ DE LA MALETA (2026-10-18, trip-revision.ts) y, si encontró algo,
+  // la segunda pasada que corrige sólo eso (reparar-lista.ts). Lo que siga sin
+  // cubrirse queda anotado en `revision`, igual que en la cápsula.
+  const paradasClima: ClimaParada[] = (inputs.paradas?.length ? inputs.paradas : [{ lugar: "", weather: inputs.weather }])
+    .filter((p) => p.weather)
+    .map((p) => ({ lugar: p.lugar?.split(",")[0], ...(p.weather as TripWeather) }));
+  const ctxMaleta = { paradas: paradasClima, ocasiones: inputs.ocasiones, dias: inputs.days, capacidad: luggageCapacity(inputs.bolsas, inputs.maleta) };
+  let revision = revisarMaleta(items, ctxMaleta);
+  let reparacion: { hallazgos: string[]; quitadas: string[]; agregadas: string[] } | undefined;
+  if (revision.length) {
+    const r = await repararPorHallazgo({ system: systemMaleta, usuario: usuarioMaleta, items, hallazgos: revision, itemSchema: ITEM_SCHEMA_MALETA, quien, tarea: "viaje-reparar", ordenar });
+    if (r.reglas.length) {
+      reparacion = { hallazgos: r.reglas, quitadas: r.quitadas, agregadas: r.agregadas };
+      items = r.items;
+      revision = revisarMaleta(items, ctxMaleta);
+    }
+  }
   const firma = parsed.firma?.trim();
-  return firma ? { version: 2, items, firma } : { version: 2, items };
+  return {
+    version: 2,
+    items,
+    ...(firma ? { firma } : {}),
+    ...(revision.length ? { revision } : {}),
+    ...(reparacion ? { reparacion } : {}),
+  };
 }
 
 /**
