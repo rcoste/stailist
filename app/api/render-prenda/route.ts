@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { photosGate } from "@/lib/consentimiento";
 import { createClient } from "@/lib/supabase/server";
 import { generateArchetypeImage } from "@/lib/archetype-image";
-import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
+import { debeIntentarRespaldo, extraerPrendaConMotivo } from "@/lib/extraer-prenda";
 import type { PrendaAnalisis } from "@/app/api/analizar-prenda/route";
 import { revisarImagen } from "@/lib/freno-imagenes";
 import { leerImagenEntrante, MOTIVO_IMAGEN } from "@/lib/imagen-entrante";
@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
   const conColor = attrs.color ? `${quePrenda}, en color ${attrs.color}` : quePrenda;
 
   let bytes: Buffer | null = null;
+  // Por qué falló la foto, si falló: decide si el respaldo vale la pena.
+  let fallo: { filtro: string | null } | null = null;
 
   // Camino principal: imagen→imagen desde la foto original (lib/extraer-prenda).
   // La foto es opcional aquí: sin ella hay otro camino (texto→imagen). Cuando
@@ -81,11 +83,13 @@ export async function POST(request: NextRequest) {
   }
   if (foto.ok) {
     const { mediaType, b64 } = foto;
-    bytes = await extraerPrendaDeFoto(
+    const r = await extraerPrendaConMotivo(
       { base64: b64, mediaType },
       { quePrenda, categoria: attrs.categoria, color: attrs.color, aspecto: "1:1" },
       { supabase, userId: user.id }
     );
+    if ("bytes" in r) bytes = r.bytes;
+    else fallo = r;
   }
 
   // Fallback: texto→imagen (si no llegó foto o falló la extracción).
@@ -95,6 +99,12 @@ export async function POST(request: NextRequest) {
   // invisible — el caso raro que se quiere medir es precisamente ése. `tarea`
   // lo distingue del camino con foto para poder ver cuántas veces se cae al
   // plan B.
+  // Salvo cuando el filtro ya dijo "derechos de autor": el texto lleva el mismo
+  // personaje y daría el mismo no (lib/extraer-prenda.ts debeIntentarRespaldo).
+  // Se queda con su foto, que es lo correcto para esa prenda.
+  if (!bytes && !debeIntentarRespaldo(fallo)) {
+    return NextResponse.json({ error: "filtro" }, { status: 422 });
+  }
   if (!bytes) {
     const type = attrs.categoria === "calzado" ? "shoes" : "flat";
     bytes = await generateArchetypeImage(conColor, type, undefined, "1:1", {

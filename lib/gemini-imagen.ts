@@ -75,6 +75,35 @@ function vaLaPena(status: number): boolean {
 type Parte = { text: string } | { inlineData: { mimeType: string; data: string } };
 
 /**
+ * LAS RAZONES CON QUE EL FILTRO DE GOOGLE SE NIEGA A DIBUJAR (2026-10-17).
+ * Vienen en `finishReason` o en `promptFeedback.blockReason` de un 200 sin
+ * imagen. No son una caída ni una llave mala: la misma entrada da lo mismo
+ * siempre. La vigilancia no las cuenta como fallos (ver migración 0179).
+ *
+ * Fuera de la lista a propósito: OTHER y el 200 sin razón, que no se sabe qué
+ * son y es mejor que sí despierten a alguien.
+ */
+const RAZONES_DEL_FILTRO = new Set([
+  "SAFETY",
+  "IMAGE_SAFETY",
+  "PROHIBITED_CONTENT",
+  "IMAGE_PROHIBITED_CONTENT",
+  "RECITATION",
+  "IMAGE_RECITATION",
+  "BLOCKLIST",
+  "SPII",
+]);
+
+export function esRazonDelFiltro(razon: string | null | undefined): boolean {
+  return !!razon && RAZONES_DEL_FILTRO.has(razon);
+}
+
+/** Lo que se guarda en `ai_calls.motivo`: corto, y el filtro con su prefijo. */
+export function motivoDelRecibo(motivo: string, filtro: string | null): string {
+  return filtro ? `filtro:${filtro}` : motivo.slice(0, 200);
+}
+
+/**
  * Le pide UNA imagen a Gemini, reintentando lo que es reintentable y sin
  * pasarse del presupuesto de la función.
  *
@@ -105,7 +134,7 @@ export async function pedirImagen(
     fetchImpl?: typeof fetch;
     ahora?: () => number;
   } = {}
-): Promise<{ data: string } | { motivo: string }> {
+): Promise<{ data: string } | { motivo: string; filtro: string | null }> {
   const hacerFetch = opciones.fetchImpl ?? fetch;
   const modelo = opciones.modelo ?? GEMINI_MODEL;
   const ahora = opciones.ahora ?? (() => Date.now());
@@ -115,7 +144,7 @@ export async function pedirImagen(
   // función tiene cinco salidas distintas (imagen, 4xx, 5xx sin reintentos,
   // filtro de seguridad, timeout) y repartir el registro entre ellas es cómo
   // se pierde justo el caso raro que se quería medir.
-  const registrar = async (ok: boolean) => {
+  const registrar = async (ok: boolean, motivo: string | null = null) => {
     if (!ctx) return;
     await guardarReciboImagen(ctx.supabase, {
       userId: ctx.userId,
@@ -124,6 +153,7 @@ export async function pedirImagen(
       ms: ahora() - t0,
       ok,
       costoUsd: costoImagenUsd(modelo),
+      motivo,
     });
   };
   const cuerpo = JSON.stringify({
@@ -135,6 +165,10 @@ export async function pedirImagen(
   });
 
   let motivo = "sin intentos";
+  // La razón del filtro, si fue el filtro. Viaja aparte del texto para que
+  // quien llama decida sin parsear (app/api/render-prenda: no pagar el
+  // respaldo cuando el problema son los derechos de autor).
+  let filtro: string | null = null;
   for (let intento = 1; intento <= INTENTOS; intento++) {
     // Nunca se arranca un intento que no cabe: uno colgado se comería los 60s
     // de Vercel y la persona no vería ni el error.
@@ -179,6 +213,7 @@ export async function pedirImagen(
       const razon =
         data?.candidates?.[0]?.finishReason ?? data?.promptFeedback?.blockReason;
       motivo = `respondió sin imagen${razon ? ` (${razon})` : ""}`;
+      if (esRazonDelFiltro(razon)) filtro = razon as string;
       console.error(`[imagen] ${modelo} — ${motivo}`);
       break;
     } catch (e) {
@@ -191,7 +226,7 @@ export async function pedirImagen(
       console.error(`[imagen] ${modelo} ${intento}/${INTENTOS} — ${motivo}`);
     }
   }
-  await registrar(false);
-  return { motivo };
+  await registrar(false, motivoDelRecibo(motivo, filtro));
+  return { motivo, filtro };
 }
 

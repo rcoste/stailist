@@ -1,0 +1,13 @@
+-- POR QUÉ FALLÓ UNA LLAMADA DE IA (2026-10-17).
+--
+-- La vigilancia mandó "alguien atorado: 8 intentos fallidos en una hora" por
+-- una persona que estaba perfecta: subió 56 prendas, armó looks y compartió su
+-- try-on. Las 8 eran el filtro de contenido de Google negándose a dibujar
+-- prendas de Mickey y Minnie (IMAGE_RECITATION) y fotos con piel visible
+-- (PROHIBITED_CONTENT). Ningún reintento ni ninguna llave lo arregla, y para
+-- saberlo hubo que ir a los logs de Vercel: `ai_calls` sólo guardaba `ok`.
+--
+-- `motivo` es texto corto y sólo se llena cuando la llamada falló. Los
+-- rechazos del filtro van como `filtro:<RAZÓN>` para que la vigilancia los
+-- separe con un LIKE (lib/gemini-imagen.ts motivoDelRecibo).
+alter table public.ai_calls add column if not exists motivo text;

@@ -190,6 +190,8 @@ export async function guardarReciboImagen(
     ok: boolean;
     /** null si el modelo no tiene tarifa conocida. */
     costoUsd: number | null;
+    /** Por qué falló (migración 0179). null cuando salió bien. */
+    motivo?: string | null;
   }
 ): Promise<void> {
   try {
@@ -206,6 +208,9 @@ export async function guardarReciboImagen(
       // (null significa "no sé cuánto costó" y ensuciaría los promedios).
       costo_usd: args.ok ? args.costoUsd : 0,
       ok: args.ok,
+      // Sólo si hay algo que decir: así un insert contra una base sin la
+      // columna (un entorno atrasado) sigue funcionando para los que salen bien.
+      ...(args.motivo ? { motivo: args.motivo } : {}),
     });
   } catch {
     // sin recibo, pero con imagen

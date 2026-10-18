@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateArchetypeImage } from "@/lib/archetype-image";
-import { extraerPrendaDeFoto } from "@/lib/extraer-prenda";
+import { debeIntentarRespaldo, extraerPrendaConMotivo } from "@/lib/extraer-prenda";
 import { garmentDescPlain, garmentRenderDesc } from "@/lib/garment-desc";
 import { registrarEvento } from "@/lib/telemetria";
 import { esRenderPendiente } from "@/lib/renders-pendientes";
@@ -152,11 +152,13 @@ export async function renderItemImage(
   // prenda salía fiel o genérica según quién la dibujara.
   const fuente = item.photo_path ?? attrs.origen_foto ?? null;
   let bytes: Buffer | null = null;
+  // Por qué falló la foto, si falló (ver debeIntentarRespaldo).
+  let fallo: { filtro: string | null } | null = null;
   if (fuente) {
     try {
       const { data: blob } = await supabase.storage.from("prendas").download(fuente);
       if (blob) {
-        bytes = await extraerPrendaDeFoto(
+        const r = await extraerPrendaConMotivo(
           {
             base64: Buffer.from(await blob.arrayBuffer()).toString("base64"),
             mediaType: blob.type || "image/jpeg",
@@ -173,6 +175,8 @@ export async function renderItemImage(
           },
           { supabase, userId, tarea: tareaRecibo }
         );
+        if ("bytes" in r) bytes = r.bytes;
+        else fallo = r;
       }
     } catch {
       // sin foto utilizable → texto→imagen
@@ -181,7 +185,8 @@ export async function renderItemImage(
   // `tarea: "render-prenda"` — la imagen de UNA prenda del clóset, distinta de
   // "capsula-ideal" (lo que te falta). Sin el ctx no dejaba recibo, así que el
   // camino que más imágenes genera era invisible en el panel y en la vigilancia.
-  if (!bytes)
+  // Salvo cuando el filtro dijo "derechos de autor" (debeIntentarRespaldo).
+  if (!bytes && debeIntentarRespaldo(fallo))
     bytes = await generateArchetypeImage(conColor, type, gender, "3:4", {
       supabase,
       userId,
