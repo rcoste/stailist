@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.393.0] - 2026-10-18 — el cruce de esenciales respeta el color
+
+- **Tres reglas después de la IA** (`lib/engine/capsule-match-reglas.ts`), de
+  la cápsula real de una persona: su abrigo NEGRO salía "parecido" del abrigo
+  CHOCOLATE, su camiseta NEGRA "parecido" de una BLANCA, y el "abrigo largo de
+  lana negro" quedaba como que le faltaba, teniéndolo.
+  1. **Color:** entre familias distintas sólo hay "parecido" si son neutros
+     oscuros (negro, gris, marino) o vecinas (camel/café, rubí/vino,
+     blanco/hueso, beige/camel); lo demás es "falta". Un "tienes" entre
+     neutros oscuros distintos baja a "parecido".
+  2. **Una prenda por pieza:** si ya es "tienes" en una, no es "parecido" en
+     otra.
+  3. **La libre se ofrece:** si una pieza quedó en "falta" y hay una prenda tuya
+     sin usar, de la misma categoría y color y con dos palabras de clase en
+     común (sin materiales), se ofrece como "parecido" para que confirmes. La IA
+     dejaba como faltantes prendas que la persona tenía con el MISMO nombre
+     (unas medias opacas negras, un smoking, un traje de baño).
+- **Medido en seco sobre los 32 cruces guardados** (868 piezas): 87 cambios
+  (67 de color, 2 de prenda repetida, 18 rescates), revisados uno por uno. La
+  primera versión de las reglas daba 172 y tenía errores (índigo contado como
+  marino, rescates por una sola palabra como "traje"); se corrigieron antes de
+  conectarlas.
+- **Versión del cruce m8:** los cruces guardados quedan viejos y esenciales
+  ofrece recalcularlos.
 ## [0.2.392.1] - 2026-10-18 — el negro es negro
 
 - **"Creo que ya la tienes" ya reconoce la ropa negra.** La base guarda el

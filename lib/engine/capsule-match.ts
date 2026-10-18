@@ -1,4 +1,5 @@
 import { CLASSIFY_MODEL } from "@/lib/models";
+import { aplicarReglasDelCruce } from "@/lib/engine/capsule-match-reglas";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   closetSignature,
@@ -50,7 +51,10 @@ export function closetItemLine(c: ClosetItemLite): string {
 // cubrían nada y la lista se leía como "no me puso un traje". Un smoking en una
 // boda de día o en una oficina es un disfraz. Subir la versión recalcula los
 // matches cacheados: sin esto el suyo seguiría diciendo "tienes".
-const MATCH_PROMPT_VERSION = "m7";
+// m8 (2026-10-18): las reglas de color, de una prenda por pieza y de rescate
+// (lib/engine/capsule-match-reglas.ts) corren después de la IA. Cambiar la
+// versión marca viejos los cruces guardados, para que se recalculen con ellas.
+const MATCH_PROMPT_VERSION = "m8";
 
 // CONTEXTO DE USO: hay prendas que NO son ropa de calle y por eso jamás cubren
 // una pieza de calle, aunque compartan zona, color y hasta el tipo. Le pasó a
@@ -381,5 +385,7 @@ Devuelve "entries": EXACTAMENTE una entrada por prenda ideal, EN EL MISMO ORDEN 
     return { status: claimed, by, difiere };
   });
 
-  return { signature, entries };
+  // Las reglas que no dependen de la IA: color, una prenda por pieza y la que
+  // quedó libre (medidas en seco sobre los 32 cruces guardados el 2026-10-18).
+  return { signature, entries: aplicarReglasDelCruce(target.items, entries, closet).entries };
 }
