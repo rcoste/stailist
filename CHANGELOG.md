@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.392.1] - 2026-10-18 — el negro es negro
+
+- **"Creo que ya la tienes" ya reconoce la ropa negra.** La base guarda el
+  negro del catálogo (#1A1A1A) y el negro puro que lee la visión (#000000), y
+  entre los dos la distancia era casi cuatro veces el umbral: subir tu suéter
+  negro no avisaba que ya tenías uno. Ahora dos colores casi negros (muy oscuros
+  y sin tinte) son el mismo (`casiNegro`, `lib/ya-la-tienes.ts`).
+- **Medido sobre las 734 prendas negras de la base:** los pares negro-negro
+  que se reconocen pasan de 69% a 97%; la confusión con marino (0.7%) y carbón
+  (0.3%) no cambia.
+
 ## [0.2.392.0] - 2026-10-18 — QA de un día real: subir fotos, looks del viaje y de esenciales
 
 Salió de acompañar a una persona armando su maleta de verdad.

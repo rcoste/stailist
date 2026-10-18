@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { yaLaTienes, palabras, type PrendaExistente } from "./ya-la-tienes";
+import { casiNegro, yaLaTienes, palabras, type PrendaExistente } from "./ya-la-tienes";
 
 const existente = (o: Partial<PrendaExistente> & { id: string }): PrendaExistente => ({
   nombre: "Pantalón negro",
@@ -210,5 +210,37 @@ describe("la marca separa dos prendas que se llaman igual", () => {
         [express]
       )?.id
     ).toBe("1");
+  });
+});
+
+// EL NEGRO ES NEGRO (2026-10-18): el negro del catálogo y el negro puro que lee
+// la visión son el mismo color; el marino y el carbón siguen siendo otros.
+describe("el negro es negro", () => {
+  const camiseta = (hex: string) => ({
+    id: "c",
+    nombre: "Camiseta negra",
+    categoria: "top",
+    colorHex: hex,
+    material: null,
+    corte: null,
+    marca: null,
+    corteDeFiar: false,
+    imagen: null,
+  });
+  const nueva = (hex: string) => ({ nombre: "Camiseta negra", categoria: "top", colorHex: hex });
+
+  it("negro puro contra el negro del catálogo: ya la tienes", () => {
+    expect(yaLaTienes(nueva("#000000") as never, [camiseta("#1A1A1A")] as never)).not.toBeNull();
+    expect(yaLaTienes(nueva("#0A0A0A") as never, [camiseta("#1F1F1F")] as never)).not.toBeNull();
+  });
+
+  it("negro contra marino o carbón: siguen siendo otras", () => {
+    expect(yaLaTienes(nueva("#000000") as never, [camiseta("#1F2A44")] as never)).toBeNull();
+    expect(yaLaTienes(nueva("#000000") as never, [camiseta("#3A3C42")] as never)).toBeNull();
+  });
+
+  it("qué cuenta como casi negro", () => {
+    for (const h of ["#000000", "#0A0A0A", "#1A1A1A", "#1F1F1F", "#1A1A1E"]) expect(casiNegro(h)).toBe(true);
+    for (const h of ["#1F2A44", "#27425F", "#3A3C42", "#5E2A33", "#4A3328", null]) expect(casiNegro(h)).toBe(false);
   });
 });

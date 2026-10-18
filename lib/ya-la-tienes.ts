@@ -40,7 +40,7 @@
 // marino" contra "Pantalón negro"— el color es lo único que las separa. Ver
 // COLOR_CERCA.
 
-import { distanciaPerceptual } from "@/lib/engine/color-perceptual";
+import { distanciaPerceptual, oklch } from "@/lib/engine/color-perceptual";
 
 /** Una prenda que ya está en el clóset, con lo justo para comparar. */
 export type PrendaExistente = {
@@ -139,6 +139,25 @@ export function palabras(nombre: string): Set<string> {
 const COLOR_CERCA = 0.03;
 
 /**
+ * EL NEGRO ES NEGRO (2026-10-18). La base guarda el negro de dos maneras: el
+ * del catálogo (#1A1A1A, 451 prendas) y el que lee la visión de una foto, que a
+ * menudo sale puro (#000000, 126). Entre esos dos la distancia es 0.11 —casi
+ * cuatro veces COLOR_CERCA—, así que la persona que sube su suéter negro no
+ * recibía el "creo que ya la tienes" contra el suéter negro que ya marcó. Medido
+ * sobre las 734 prendas negras de la base: sólo 69% de los pares negro-negro
+ * caían bajo el umbral.
+ *
+ * Casi negro = muy oscuro y sin tinte (L ≤ 0.25, croma ≤ 0.015 en OKLCH). Dos
+ * casi negros son el mismo color. Con esto, 97% de los pares negro-negro
+ * coinciden, y la confusión con marino (0.7%) y carbón (0.3%) no se mueve: el
+ * marino más oscuro medido tiene croma 0.029 y el carbón, luminosidad 0.33.
+ */
+export function casiNegro(hex: string | null | undefined): boolean {
+  const o = oklch(hex);
+  return !!o && o.L <= 0.25 && o.C <= 0.015;
+}
+
+/**
  * ¿Un atributo las separa? Sólo cuenta si AMBAS lo declaran.
  *
  * Que falte no es "distinto": media base no tiene material leído, y tratar la
@@ -187,7 +206,7 @@ export function yaLaTienes(
     // El corte de la nueva SIEMPRE es de fiar (sale de su propia foto); el de
     // la vieja, sólo si lo dice. Ver `corteDeFiar`.
     if (p.corteDeFiar && choca(nueva.corte, p.corte)) continue;
-    const d = distanciaPerceptual(nueva.colorHex, p.colorHex);
+    const d = casiNegro(nueva.colorHex) && casiNegro(p.colorHex) ? 0 : distanciaPerceptual(nueva.colorHex, p.colorHex);
     if (d === null || d > COLOR_CERCA) continue;
     if (!mejor || d < mejor.d) mejor = { p, d };
   }
