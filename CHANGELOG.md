@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.391.0] - 2026-10-18 — cuentas sin tope por persona
+
+- **Tabla `sin_topes`** (migración 0180, ya aplicada): las cuentas que ahí
+  aparecen no topan con la cuota por recurso ni con el tope de dinero por
+  persona (`exentaDeTopes`, `lib/cuotas.ts`). Nació de una persona armando su
+  maleta de verdad que topó con los 40 dibujos de esenciales a media sesión.
+- **Sigue mandando** el interruptor `MOTOR_PAUSADO` y el freno global de dinero
+  de toda la app: la exención es por persona, no un cheque en blanco.
+- **No es columna de `profiles`** a propósito: cada quien puede editar su
+  propio perfil. La tabla no tiene política de escritura (probado: ni una
+  sesión normal ni una anónima pueden insertarse). Falla cerrado: si no se
+  puede leer, la cuenta es normal.
+
 ## [0.2.390.1] - 2026-10-18 — descargar no es compartir
 
 - **El admin separa descargar de compartir** (pedido de Roberto). El evento

@@ -4,6 +4,7 @@ import {
   MENSAJE_CUOTA,
   TOPE_USD_DIA,
   desdeHace24h,
+  exentaDeTopes,
   motorPausado,
   restanteDe,
   revisarCuota,
@@ -252,5 +253,67 @@ describe("sin correo verificado no hay IA", () => {
   it("una sesión con correo pasa, y si no se puede leer la sesión falla abierto", async () => {
     expect((await revisarCuota(conSesion(false), "u", "looks")).permitido).toBe(true);
     expect((await revisarGasto(fakeSupabase([]), "u")).permitido).toBe(true);
+  });
+});
+
+// CUENTAS SIN TOPE (2026-10-18, migración 0180). Lo que se blinda: la exención
+// quita la cuota y el tope de dinero POR PERSONA, no el interruptor; y si no se
+// puede leer, la cuenta se trata como normal (falla cerrado).
+function supabaseConExencion(filas: Fila[], exenta: boolean | "revienta") {
+  const base = fakeSupabase(filas);
+  return {
+    from(tabla: string) {
+      if (tabla !== "sin_topes") return base.from();
+      const q = {
+        select() {
+          return q;
+        },
+        eq() {
+          return q;
+        },
+        maybeSingle() {
+          if (exenta === "revienta") return Promise.resolve({ data: null, error: new Error("boom") });
+          return Promise.resolve({ data: exenta ? { user_id: "u" } : null, error: null });
+        },
+      };
+      return q;
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
+}
+
+describe("cuentas sin tope", () => {
+  const lleno = repetir("capsula-ideal", CUOTAS.ideal + 5, PRECIO_DIBUJO_IDEAL);
+
+  it("una cuenta exenta pasa aunque ya topó la cuota", async () => {
+    const r = await revisarCuota(supabaseConExencion(lleno, true), "u", "ideal");
+    expect(r.permitido).toBe(true);
+  });
+
+  it("una cuenta exenta pasa aunque ya topó el dinero del día", async () => {
+    const caro = repetir("tryon", 3, TOPE_USD_DIA);
+    expect((await revisarGasto(supabaseConExencion(caro, true), "u")).permitido).toBe(true);
+  });
+
+  it("una cuenta normal sigue topando igual", async () => {
+    const r = await revisarCuota(supabaseConExencion(lleno, false), "u", "ideal");
+    expect(r.permitido).toBe(false);
+  });
+
+  it("si la exención no se puede leer, la cuenta se trata como normal (falla cerrado)", async () => {
+    expect(await exentaDeTopes(supabaseConExencion([], "revienta"), "u")).toBe(false);
+    const r = await revisarCuota(supabaseConExencion(lleno, "revienta"), "u", "ideal");
+    expect(r.permitido).toBe(false);
+  });
+
+  it("el interruptor manda incluso sobre una cuenta exenta", async () => {
+    process.env.MOTOR_PAUSADO = "1";
+    const r = await revisarCuota(supabaseConExencion([], true), "u", "ideal");
+    expect(r.permitido).toBe(false);
+  });
+
+  it("a una cuenta exenta le cabe un lote entero de fotos", async () => {
+    const r = await restanteDe(supabaseConExencion(repetir("vision-prendas", CUOTAS.fotos), true), "u", "fotos");
+    expect(r).toBe(CUOTAS.fotos);
   });
 });
