@@ -384,3 +384,37 @@ describe("construirPromptCapsula — las señales que no se pueden perder", () =
     expect(system).not.toContain("referencia-de-ella");
   });
 });
+
+// TRADUCIR EL CLIMA (2026-10-18). Medido en seco sobre 8 cápsulas reales, actual
+// contra nueva: abrigos de invierno en clima templado sin viaje a frío 4 → 1, en
+// calor 1 → 0; jeans azules 6/8 → 8/8; impermeable en las 2 con lluvia en
+// temporada, ninguno en la de "casi nunca". Lo que blinda este test es que las
+// reglas LLEGUEN al prompt, no su efecto (eso lo midió la corrida).
+describe("clima, lluvia, denim e inspiración en el prompt de la cápsula", () => {
+  const base = {
+    answers: { clima: "templado", lluvia: "temporada", trabajo: "oficina_casual" },
+    gender: "mujer" as const,
+    tasteTags: [],
+    archetype: null,
+    season: null,
+    flow: null,
+    build: null,
+    volume: null,
+  };
+  it("templado no lleva abrigo de invierno por su ciudad, y la lluvia y el denim tienen regla", () => {
+    const { system } = construirPromptCapsula(base);
+    expect(system).toContain("TEMPLADO: NADA de abrigo de invierno");
+    expect(system).toContain("LLUVIA (si contestó cómo llueve)");
+    expect(system).toContain("jeans AZULES");
+    expect(system).toContain("Una pieza de NOCHE, GALA o EVENTO");
+  });
+  it("su respuesta de lluvia viaja en el bloque de su vida", () => {
+    const { usuario } = construirPromptCapsula(base);
+    expect(usuario).toMatch(/Lluvia donde vive → En temporada/);
+  });
+  it("la inspiración se traduce, no se trasplanta", () => {
+    const { usuario } = construirPromptCapsula({ ...base, styleReference: "un look que le encanta: abrigo largo de lana" });
+    expect(usuario).toContain("TRADÚCELO a su clima y a su vida");
+    expect(usuario).toContain("NO trasplantes las piezas");
+  });
+});

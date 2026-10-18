@@ -2,6 +2,47 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.394.0] - 2026-10-18 — tus esenciales se visten para tu clima
+
+De la cápsula real de una persona en clima templado: dos abrigos largos de
+invierno, nada para lluvia, sin jeans azules y un vestido de gala dibujado como
+de diario. Cuatro causas, cuatro arreglos (`lib/engine/capsule-target.ts`):
+
+- **La inspiración se traduce, no se trasplanta.** Las fotos le pasaban sus
+  piezas a la IA y las tomaba como lista de compras (el abrigo café de una foto
+  de invierno salió como "abrigo largo de paño chocolate"). Ahora se extrae el
+  estilo —silueta, largos, arreglo, ánimo— y se lleva a su clima: en su caso,
+  un abrigo largo se tradujo en un blazer largo.
+- **Templado no es frío.** El prompt permitía abrigos "si su clima es
+  frío/templado", contra su propia respuesta ("con una chamarra ligera basta").
+  Ahora: frío o dos estaciones, abrigo real; templado, capas ligeras, y el
+  abrigo de invierno sólo entra por viajes a frío (uno); calor, nada.
+- **Pregunta nueva: ¿llueve donde vives?** (casi nunca, en temporada, seguido;
+  `lib/capsule.ts`). Con lluvia, al menos una pieza que la aguante; seguido,
+  también calzado.
+- **Jeans azules** cuando su vida tiene días casuales, salvo veto. Los negros no
+  los sustituyen.
+- **Las piezas de noche dicen qué las hace de noche** en su descripción para el
+  dibujo: el dibujo obedece al pie de la letra, y "crepé mate, tirante ancho"
+  salía como un jumper. Se probó primero arreglarlo en el dibujo y no cambió
+  nada; la causa estaba en la descripción.
+
+**Medido en seco**, versión actual contra nueva, sobre 8 perfiles reales (sin
+guardar nada; la persona del caso, 4 templados más, y de control uno frío, uno de dos
+estaciones y uno de calor):
+
+| | Actual | Nueva |
+|---|---|---|
+| Abrigos de invierno en templado sin viaje a frío (3 perfiles) | 4 | 1 |
+| Abrigo de invierno en clima de calor | 1 | 0 |
+| Con jeans azules | 6 de 8 | 8 de 8 |
+| Impermeable con lluvia "en temporada" (2) | 1 | 2 |
+| Impermeable con lluvia "casi nunca" | 0 | 0 |
+| Frío y dos estaciones conservan su abrigo | sí | sí |
+
+Lo que no resolvió del todo: sigue conservando bastantes piezas de la
+inspiración (las que sí le sirven a su clima), y un perfil templado conservó
+un abrigo de lana. Una muestra por perfil: dirección clara, magnitud con ruido.
 ## [0.2.393.0] - 2026-10-18 — el cruce de esenciales respeta el color
 
 - **Tres reglas después de la IA** (`lib/engine/capsule-match-reglas.ts`), de
