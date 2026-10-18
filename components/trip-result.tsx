@@ -453,7 +453,22 @@ export function TripResult({
       .map((r) => ({ key: String(r.index), args: r.renderArgs }));
     if (jobs.length === 0) return;
     const abort = new AbortController();
-    void prewarmRenders(jobs, (key, url) => setPrewarmed((m) => ({ ...m, [key]: url })), abort.signal);
+    // Al terminar la fila, UN refresh si llegó alguna imagen (2026-10-18): los
+    // looks del viaje arman sus imágenes en el servidor y no ven este estado
+    // local, así que una pieza que te falta salía gris en el look hasta
+    // recargar. Las imágenes ya quedaron en la biblioteca compartida, así que
+    // el servidor las encuentra en el refresh.
+    let llegaron = 0;
+    void prewarmRenders(
+      jobs,
+      (key, url) => {
+        llegaron++;
+        setPrewarmed((m) => ({ ...m, [key]: url }));
+      },
+      abort.signal
+    ).then(() => {
+      if (llegaron > 0 && !abort.signal.aborted) router.refresh();
+    });
     return () => abort.abort();
     // Al montar, una vez: si una falta se resuelve a media cola, el render de
     // más cae igual a la biblioteca compartida — no se pierde.

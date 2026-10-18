@@ -222,6 +222,10 @@ export function CapsuleLooks({
           <LookCard
             key={`${o.titulo}-${i}`}
             look={o}
+            // Con una pieza de tu wishlist que todavía no tienes: sin corazón
+            // ni "verme con este look", igual que en el viaje (no se guarda ni
+            // se prueba algo que no está en tu clóset).
+            faltaAlgo={o.prendas.some((p) => p.falta)}
             voto={votos[i] ?? null}
             favorito={favs.has(i)}
             onVote={(up) => votar(i, up)}
@@ -231,10 +235,14 @@ export function CapsuleLooks({
             rendered={rendered}
             rendering={rendering}
             tryonImage={o.tryonImage}
-            ensureOutfitId={async () => {
-              const res = await ensureCapsuleLookOutfit(i);
-              return res.outfitId ?? null;
-            }}
+            ensureOutfitId={
+              o.prendas.some((p) => p.falta)
+                ? undefined
+                : async () => {
+                    const res = await ensureCapsuleLookOutfit(i);
+                    return res.outfitId ?? null;
+                  }
+            }
             returnTo="/closet/capsula?tab=looks"
           />
         ))}

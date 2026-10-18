@@ -98,6 +98,8 @@ export function DraftCard({
   onToggle,
   onPatch,
   onEsLaMisma,
+  onDupe,
+  fotoConVarias = false,
   compacta = false,
 }: {
   item: DraftLeida;
@@ -107,6 +109,17 @@ export function DraftCard({
   onPatch: (patch: Partial<PrendaDetectada>, campos?: string[]) => void;
   /** "sí, es la misma": el padre le pone esta foto a la prenda que ya existe. */
   onEsLaMisma?: (itemId: string) => void;
+  /**
+   * La pregunta del duplicado se contestó (2026-10-18). El padre la cuenta para
+   * no dejar avanzar con preguntas abiertas: sin contestar, la prenda se
+   * sumaba como NUEVA y se dibujaba — lo contrario de lo que parecía.
+   */
+  onDupe?: (r: "misma" | "otra") => void;
+  /**
+   * La foto trae varias prendas: "es la misma" no le cambia la imagen a la que
+   * ya tienes (sería la foto entera del outfit), sólo evita sumarla dos veces.
+   */
+  fotoConVarias?: boolean;
   /**
    * Arranca cerrada, con un "afinar" que la abre.
    *
@@ -220,7 +233,9 @@ export function DraftCard({
               <p className="flex items-start gap-1.5 rounded-sm bg-accent-soft px-2 py-1.5 text-[11px] leading-snug text-muted">
                 <Icon name="check" size={12} className="mt-px shrink-0 text-success" />
                 {dupe === "misma"
-                  ? "es la misma — le pongo tu foto a la que ya tienes"
+                  ? fotoConVarias
+                    ? "es la misma — no la sumo otra vez"
+                    : "es la misma — le pongo tu foto a la que ya tienes"
                   : `se suma como ${a.categoria ?? "prenda"} nueva`}
               </p>
             ) : (
@@ -256,16 +271,24 @@ export function DraftCard({
                     type="button"
                     onClick={() => {
                       setDupe("misma");
+                      onDupe?.("misma");
                       onEsLaMisma?.(yaEsta.id);
                       onToggle(); // no se suma otra vez: se le pone la foto a la que ya está
                     }}
-                    className="min-h-9 flex-1 rounded-sm bg-accent px-2 text-[12px] font-semibold text-on-accent"
+                    // LOS DOS BOTONES IGUALES (2026-10-18): éste iba en negro,
+                    // como si ya estuviera elegido, y Roberto creyó que la
+                    // prenda ya contaba como "la misma". Ninguna respuesta es
+                    // la de default: la pregunta existe porque no sabemos.
+                    className="min-h-9 flex-1 rounded-sm border border-line bg-surface px-2 text-[12px] font-medium text-ink"
                   >
                     sí, es la misma
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDupe("otra")}
+                    onClick={() => {
+                      setDupe("otra");
+                      onDupe?.("otra");
+                    }}
                     className="min-h-9 flex-1 rounded-sm border border-line bg-surface px-2 text-[12px] font-medium text-ink"
                   >
                     no, es otra

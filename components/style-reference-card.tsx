@@ -303,7 +303,7 @@ export function StyleReferenceCard({
 
       {busy ? (
         <div className="flex items-center gap-2.5 py-2 text-sm text-muted">
-          <Spinner className="h-4 w-4 text-accent" /> leyendo cada look y viendo si te va…
+          <Spinner className="h-4 w-4 text-accent" /> leyendo cada look y cómo llevarlo a ti…
         </div>
       ) : preview ? (
         // PREVIEW: el usuario decide si lo absorbe (pushback).
@@ -461,13 +461,16 @@ export function StyleReferenceCard({
       {/* Aviso de consecuencia: tus esenciales se armaron con el estilo de antes. */}
       {tocoElEstilo && tieneCapsula ? (
         <Link
-          href="/closet/capsula"
+          // A la pestaña de la lista, que es donde vive "ponlos al día". Sin el
+          // ?tab, una cápsula sin cruce con el clóset abre en "el porqué", donde
+          // el botón no está (2026-10-18: ella llegó y no lo encontró).
+          href="/closet/capsula?tab=capsula"
           className="flex items-start gap-2 rounded-sm border border-line bg-bg p-2.5 text-[12px] leading-snug text-muted transition-colors hover:border-ink"
         >
           <Icon name="destello" size={14} className="mt-px shrink-0 text-accent" />
           <span>
             Tus esenciales se armaron con tu estilo de antes —{" "}
-            <span className="font-medium text-ink">ponla al día</span> cuando quieras.
+            <span className="font-medium text-ink">ponlos al día</span> cuando quieras.
           </span>
         </Link>
       ) : null}
