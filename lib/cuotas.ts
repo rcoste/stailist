@@ -216,6 +216,26 @@ async function sesionSinCorreo(supabase: SupabaseClient): Promise<boolean> {
   }
 }
 
+/**
+ * ¿ESTA CUENTA ESTÁ EXENTA DE LOS TOPES POR PERSONA? (2026-10-18, migración 0180)
+ *
+ * Para las cuentas que acompañamos a mano: topar a media sesión estorba más de
+ * lo que protege. Sólo se agregan desde la base (la tabla no tiene política de
+ * escritura). Quita la cuota por recurso y el tope de dinero POR PERSONA; NO
+ * quita el interruptor ni el freno global de toda la app.
+ *
+ * Falla CERRADO, al revés que la cuota: si la consulta truena, la cuenta se
+ * trata como normal. Una exención que se prende por error sería gasto sin tope.
+ */
+export async function exentaDeTopes(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.from("sin_topes").select("user_id").eq("user_id", userId).maybeSingle();
+    return !error && !!data;
+  } catch {
+    return false;
+  }
+}
+
 /** La ventana: 24 horas móviles hacia atrás. */
 export function desdeHace24h(ahora: Date = new Date()): string {
   return new Date(ahora.getTime() - 24 * 60 * 60 * 1000).toISOString();
@@ -241,6 +261,7 @@ export async function revisarCuota(
   if (await sesionSinCorreo(supabase)) {
     return { permitido: false, motivo: "correo", mensaje: MENSAJE_SIN_CORREO };
   }
+  if (await exentaDeTopes(supabase, userId)) return { permitido: true };
   const desde = desdeHace24h(ahora);
   try {
     const { data, error } = await supabase
@@ -295,6 +316,7 @@ export async function revisarGasto(
   if (await sesionSinCorreo(supabase)) {
     return { permitido: false, motivo: "correo", mensaje: MENSAJE_SIN_CORREO };
   }
+  if (await exentaDeTopes(supabase, userId)) return { permitido: true };
   try {
     const { data, error } = await supabase
       .from("ai_calls")
@@ -327,6 +349,9 @@ export async function restanteDe(
   recurso: Recurso,
   ahora: Date = new Date()
 ): Promise<number> {
+  // Exenta: cabe un lote entero. Se dice el máximo del flujo de fotos y no
+  // Infinity porque el número llega a la pantalla ("caben N").
+  if (await exentaDeTopes(supabase, userId)) return CUOTAS[recurso];
   try {
     const { data } = await supabase
       .from("ai_calls")
