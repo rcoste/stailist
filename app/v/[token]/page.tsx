@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { leerInvitacion, tokenValido, vistaPreviaDeInvitacion, yaPaso } from "@/lib/viaje-invitacion";
 import { imagenDestino } from "@/lib/destino-imagen";
 import { diaEnZona } from "@/lib/admin/adquisicion";
-import { OCCASIONS } from "@/lib/trip";
+import { OCCASIONS, textoDeClima } from "@/lib/trip";
 
 // LA PÁGINA DEL LINK DE INVITACIÓN (2026-10-16). Pública: la abre quien
 // recibió el link por WhatsApp, con o sin cuenta. Enseña algo concreto ANTES
@@ -93,9 +93,7 @@ export default async function InvitacionViaje({ params }: { params: Promise<{ to
               </span>
               {p.weather ? (
                 <span className="text-muted">
-                  {typeof p.weather.temp_min === "number" && typeof p.weather.temp_max === "number"
-                    ? `${Math.round(p.weather.temp_min)} a ${Math.round(p.weather.temp_max)}°`
-                    : `~${Math.round(p.weather.temp_c)}°`}
+                  {textoDeClima(p.weather)}
                   {p.weather.condition && !p.weather.estimated ? ` ${p.weather.condition}` : ""}
                 </span>
               ) : null}

@@ -158,6 +158,21 @@ export type TripWeather = {
   temp_max?: number;
 };
 
+/**
+ * El clima como lo lee la persona: "15 a 24°C" cuando hay rango, "~20°C" si
+ * sólo hay promedio (viajes de antes del 2026-10-17), null sin clima. Una sola
+ * función para el header del celular, el rail de escritorio y el link de
+ * invitación: el rail se quedó con "~20°C" cuando el header ya decía el rango
+ * (QA 2026-10-17).
+ */
+export function textoDeClima(w: TripWeather | null | undefined): string | null {
+  if (!w) return null;
+  if (typeof w.temp_min === "number" && typeof w.temp_max === "number" && w.temp_max > w.temp_min) {
+    return `${Math.round(w.temp_min)} a ${Math.round(w.temp_max)}°C`;
+  }
+  return `~${Math.round(w.temp_c)}°C`;
+}
+
 // Una parada del viaje (multidestino). `noches` solo aparece en el modo "por
 // lugar"; las fechas por parada se derivan del rango + noches. `weather` es el
 // clima resuelto en esa parada (para que el motor empaque para el rango).

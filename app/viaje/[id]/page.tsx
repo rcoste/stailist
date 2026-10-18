@@ -20,8 +20,7 @@ import {
   type Luggage,
   type Parada,
   type TripOutfit,
-  type Occasion,
-} from "@/lib/trip";
+  type Occasion, textoDeClima } from "@/lib/trip";
 import { fotosDeViajes } from "@/lib/destino-imagen-cache";
 import { candidatasDeOverrides } from "@/lib/trip-candidatas";
 import { TripResult, type TripRow } from "@/components/trip-result";
@@ -267,11 +266,7 @@ export default async function ViajeDetallePage({
   const fechas = `${rangoFechas(trip.fecha_inicio, trip.fecha_fin)} · ${days} días`;
   const metaExtra =
     [
-      weather
-        ? typeof weather.temp_min === "number" && typeof weather.temp_max === "number" && weather.temp_max > weather.temp_min
-          ? `${weather.temp_min} a ${weather.temp_max}°C`
-          : `~${weather.temp_c}°C`
-        : null,
+      textoDeClima(weather),
       nParadas > 1 ? `${nParadas} paradas` : null,
       equipaje,
     ]
@@ -312,7 +307,7 @@ export default async function ViajeDetallePage({
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
             {weather ? (
               <span className="flex items-center gap-1.5">
-                <Icon name="termo" size={13} />~{weather.temp_c}°C
+                <Icon name="termo" size={13} />{textoDeClima(weather)}
                 {weather.estimated ? ", clima típico" : `, ${weather.condition}`}
               </span>
             ) : null}

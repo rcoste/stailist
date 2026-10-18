@@ -2,6 +2,13 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.388.1] - 2026-10-17 — QA de lo de hoy: el rango del clima también en escritorio
+
+- **El rail de escritorio del viaje seguía diciendo "~20°C"** mientras el
+  header del celular ya decía "15 a 24°C". Una sola función para los tres
+  lugares que lo escriben (`textoDeClima`, `lib/trip.ts`: header, rail y link
+  de invitación), con su prueba. Hallado por el QA de v0.2.386–388.
+
 ## [0.2.388.0] - 2026-10-17 — "afina tu estilo" vuelve, con una referencia por foto
 
 - **Cada foto de inspiración es un look aparte** (`referencias[]` en
