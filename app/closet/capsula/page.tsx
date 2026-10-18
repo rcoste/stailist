@@ -167,6 +167,15 @@ export default async function CapsulaPage({
     );
   }
 
+  // Las piezas de tu wishlist que te faltan, por nombre (las que los looks
+  // pueden usar marcadas "te falta"; lib/capsula-looks-piezas.ts).
+  const wishSet = new Set(savedWishKeys);
+  const wishPorNombre = new Map<string, { image: string | null }>();
+  for (const it of target.items) {
+    const fk = faltaKey(it);
+    if (wishSet.has(fk) && !wishPorNombre.has(it.nombre)) wishPorNombre.set(it.nombre, { image: catalogImages[fk] ?? null });
+  }
+
   const resolvedLooks = rawLooks
     ? rawLooks.map((o) => {
         const row = lookRowByKey.get(capsuleLookKey(o.prendas));
@@ -178,11 +187,19 @@ export default async function CapsulaPage({
           voto: (o.voto ?? null) as "up" | "down" | null,
           favorito: row?.favorito ?? false,
           tryonImage: row?.tryon ?? null,
-          prendas: o.prendas.map((nombre) => ({
-            nombre,
-            image: images[nombre] ?? null,
-            id: nameToId[nombre] ?? null,
-          })),
+          prendas: o.prendas.map((nombre) => {
+            const id = nameToId[nombre] ?? null;
+            // Una pieza de tu wishlist que todavía no tienes (looks-actions):
+            // no está en tu clóset, así que se marca "te falta" y se pinta con
+            // la imagen de la sugerida.
+            const deseada = id ? null : wishPorNombre.get(nombre) ?? null;
+            return {
+              nombre,
+              image: images[nombre] ?? deseada?.image ?? null,
+              id,
+              ...(deseada ? { falta: true } : {}),
+            };
+          }),
         };
       })
     : null;

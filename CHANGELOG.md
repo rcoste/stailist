@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.392.0] - 2026-10-18 — QA de un día real: subir fotos, looks del viaje y de esenciales
+
+Salió de acompañar a una persona armando su maleta de verdad.
+
+- **Los looks del viaje ya no dejan grises las piezas que te faltan.** El
+  viaje buscaba las imágenes de la biblioteca sólo con la llave nueva y no veía
+  las guardadas con la vieja (unos jeans negros con imagen desde agosto); la
+  cápsula ya buscaba con las dos. Y cuando el precalentado termina de dibujar,
+  la página se refresca una vez para que los looks, que se arman en el
+  servidor, también las vean.
+- **Subir fotos: la pregunta "¿es la misma?" ya no se puede saltar.** Sin
+  contestar, la prenda contaba como nueva y se dibujaba y sumaba repetida. El
+  botón dice "contesta N preguntas" hasta que se contesten, y las dos
+  respuestas se ven iguales (el "sí" iba en negro, como si ya estuviera
+  elegido).
+- **"Es la misma" hace lo que dice, y sólo cuando debe.** Nunca aplicaba la
+  foto: buscaba la prenda en el último paso, donde una "es la misma" ya no
+  está. Ahora guarda la foto al contestar, y sólo la pone si la foto era de esa
+  prenda sola: con varias, la imagen sería el outfit entero (en el clóset y en
+  el try-on).
+- **Salir del último paso avisa que se pierde lo dibujado.** Una tanda de 7
+  prendas se dibujó, se pagó y nunca se sumó. Ahora el primer "cancelar" avisa
+  y el segundo ("salir sin sumar") sale.
+- **Los looks de esenciales usan también tu wishlist**
+  (`lib/capsula-looks-piezas.ts`): lo que te falta y ya guardaste entra marcado
+  "te falta", sin corazón ni try-on, como en el viaje. Lo que sigue en
+  comparación no entra. Con menos de 2 prendas tuyas no hay looks.
+- **Textos:** el aviso de esenciales abre en la pestaña donde está "ponlos al
+  día" (abría en "el porqué", donde no está), dice "ponlos" y no "ponla", y
+  leer la inspiración dice "leyendo cada look y cómo llevarlo a ti…" en vez de
+  "viendo si te va", que sonaba a calificar su gusto.
 ## [0.2.391.0] - 2026-10-18 — cuentas sin tope por persona
 
 - **Tabla `sin_topes`** (migración 0180, ya aplicada): las cuentas que ahí

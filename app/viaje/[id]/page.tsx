@@ -7,7 +7,7 @@ import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
 import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
-import { faltaKey, catalogKeyDePieza } from "@/lib/capsule-images";
+import { faltaKey, catalogKeysParaBuscar } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import {
   tripDays,
@@ -93,22 +93,29 @@ export default async function ViajeDetallePage({
   const gender = profile.gender;
   // Por PIEZA y no por tipo+color: dos piezas del mismo tipo y color con
   // descripciones distintas tienen imágenes distintas (catalogKeyDePieza).
+  //
+  // Con TODAS las llaves con que se busca, no sólo la canónica (2026-10-18). La
+  // cápsula ya lo hacía (app/closet/capsula/page.tsx); el viaje buscaba sólo la
+  // nueva y no veía las imágenes guardadas con la llave vieja de antes de
+  // agosto ("Jeans negros de corte recto" existía desde el 7 de agosto). En
+  // "empacar" aparecían tarde, porque el precalentado sí las encontraba; en los
+  // looks, que leen esto, se quedaban grises para siempre.
   const skByItem = target.items.map((it, i) => ({
     i,
-    sk: catalogKeyDePieza(it.tipo, it.colorFamilia, gender, it.visual),
+    sks: catalogKeysParaBuscar(it.tipo, it.colorFamilia, gender, it.visual),
   }));
   const { data: crows } = await supabase
     .from("catalog_renders")
     .select("key, path")
     .in(
       "key",
-      skByItem.map((s) => s.sk)
+      skByItem.flatMap((s) => s.sks)
     );
   const pathBySk = new Map((crows ?? []).map((r) => [r.key as string, r.path as string]));
   const catalogImages: Record<number, string> = {};
-  for (const { i, sk } of skByItem) {
-    const path = pathBySk.get(sk);
-    if (path) catalogImages[i] = catalogPublicUrl(supabase, path);
+  for (const { i, sks } of skByItem) {
+    const sk = sks.find((k) => pathBySk.has(k));
+    if (sk) catalogImages[i] = catalogPublicUrl(supabase, pathBySk.get(sk) as string);
   }
 
   // Sustitutos elegidos del clóset (guardados como "sub:<i>" dentro de overrides):

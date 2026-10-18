@@ -168,7 +168,21 @@ export function ImportCarreteFlow({
    *  la foto todavía no está subida —su ruta se resuelve al guardar— así que
    *  antes no hay a qué apuntar. Y encima es lo correcto: nada se escribe en el
    *  clóset hasta que la persona confirma la pantalla entera. */
-  const esLaMisma = useRef(new Map<string, string>());
+  //
+  //  Guarda la FOTO de origen y si venía sola (2026-10-18): antes guardaba sólo
+  //  el id y buscaba la foto en el paso final, pero ahí sólo quedan las prendas
+  //  que se dibujan, y una "es la misma" se apaga antes de dibujar. O sea que
+  //  la foto nunca se aplicaba: "le pongo tu foto a la que ya tienes" era
+  //  mentira desde siempre, y nadie lo vio porque el duplicado sí se evitaba.
+  const esLaMisma = useRef(new Map<string, { itemId: string; photo: string; sola: boolean }>());
+  /** Las preguntas de duplicado ya contestadas (borrador → respuesta). */
+  const [dupes, setDupes] = useState<Record<string, "misma" | "otra">>({});
+  /**
+   * Ya se le avisó que cancelar tira lo dibujado (2026-10-18). Una tanda de 7
+   * prendas se dibujó, se pagó y nunca se sumó: el "cancelar" del último paso
+   * cerraba sin decir nada.
+   */
+  const [avisoSalir, setAvisoSalir] = useState(false);
   const [cropId, setCropId] = useState<string | null>(null); // foto en recorte
   // EL RENDER, EN GRANDE. Aquí se decide "es mía / salió mal" mirando un
   // recuadro de dos columnas, que es justo donde no se distingue si el dibujo
@@ -351,6 +365,10 @@ export function ImportCarreteFlow({
         });
         return;
       }
+      // Tanda nueva, preguntas nuevas: lo contestado en otra tanda no cuenta.
+      esLaMisma.current.clear();
+      setDupes({});
+      setAvisoSalir(false);
       setState({ kind: "texto", items });
       // El clóset se pide DESPUÉS de mostrar la pantalla y sin await: el aviso
       // de "ya la tienes" es una ayuda, y hacer esperar la confirmación por una
@@ -574,11 +592,30 @@ export function ImportCarreteFlow({
       // sobre el dibujo de catálogo de la prenda que YA tiene. No borra nada
       // (ver esLaMismaPrenda); best-effort, porque fallar aquí no debe tumbar un
       // alta que ya salió bien.
-      for (const [draftId, itemId] of esLaMisma.current) {
-        const draft = state.kind === "visual" ? state.items.find((x) => x.id === draftId) : null;
-        const ruta = draft ? rutaDeFoto.get(draft.photo) : null;
+      //
+      // SÓLO SI LA FOTO ERA DE ESA PRENDA SOLA (2026-10-18). Con una foto de
+      // cuerpo entero, "su foto real" sería el outfit completo: los tenis
+      // blancos pasarían a verse como ella con un abrigo negro, en el clóset y
+      // en el try-on, que usa esa imagen. La misma regla que ya siguen las
+      // prendas nuevas de una foto con varias (no usarla de miniatura, arriba).
+      // La foto de una "es la misma" no siempre se subió (sólo se suben las de
+      // lo que se suma), así que se sube aquí si hace falta.
+      for (const { itemId, photo, sola } of esLaMisma.current.values()) {
+        if (!sola || !userId) continue;
+        let ruta = rutaDeFoto.get(photo) ?? null;
+        if (!ruta) {
+          try {
+            const blob = await (await fetch(photo)).blob();
+            const path = `${userId}/origen-${uid()}.jpg`;
+            const up = await createClient().storage.from("prendas").upload(path, blob, { contentType: "image/jpeg" });
+            if (!up.error) ruta = path;
+          } catch {
+            // sin foto nueva; la prenda que ya tenía se queda como estaba
+          }
+        }
         if (ruta) await esLaMismaPrenda(itemId, ruta).catch(() => null);
       }
+      esLaMisma.current.clear();
 
       if (notmine.length > 0) {
         await addLibraryCandidates(
@@ -905,6 +942,24 @@ export function ImportCarreteFlow({
 
   if (state.kind === "texto") {
     const activos = state.items.filter((it) => it.on);
+    // Cuántas prendas trae cada foto: con varias, "es la misma" no reemplaza la
+    // imagen de la que ya tienes (ver guardar).
+    const enCadaFoto = new Map<string, number>();
+    for (const it of state.items) enCadaFoto.set(it.photoPreview, (enCadaFoto.get(it.photoPreview) ?? 0) + 1);
+    const yaEstaDe = (it: (typeof state.items)[number]) =>
+      yaLaTienes(
+        {
+          nombre: it.attrs.nombre,
+          categoria: it.attrs.categoria,
+          colorHex: it.attrs.color_hex,
+          material: it.attrs.material,
+          corte: it.attrs.corte,
+        },
+        enElCloset
+      );
+    // NO SE AVANZA CON PREGUNTAS ABIERTAS (2026-10-18). Sin contestar, la prenda
+    // contaba como nueva: se dibujaba y se sumaba repetida.
+    const sinContestar = activos.filter((it) => yaEstaDe(it) && !dupes[it.id]).length;
     // ¿Hay un saco y un pantalón formal? Entonces puede ser un traje — y sólo
     // la persona lo sabe. Ver lib/par-de-traje.ts para por qué no se deduce.
     //
@@ -920,8 +975,12 @@ export function ImportCarreteFlow({
         pie={
           <Footer
             cancel={() => setState({ kind: "idle" })}
-            confirmLabel={`generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`}
-            confirmDisabled={activos.length === 0}
+            confirmLabel={
+              sinContestar > 0
+                ? `contesta ${sinContestar} ${sinContestar === 1 ? "pregunta" : "preguntas"}`
+                : `generar ${activos.length} ${activos.length === 1 ? "prenda" : "prendas"}`
+            }
+            confirmDisabled={activos.length === 0 || sinContestar > 0}
             onConfirm={generarRenders}
           />
         }
@@ -944,17 +1003,16 @@ export function ImportCarreteFlow({
               <DraftCard
                 key={it.id}
                 item={it}
-                onEsLaMisma={(itemId) => esLaMisma.current.set(it.id, itemId)}
-                yaEsta={yaLaTienes(
-                  {
-                    nombre: it.attrs.nombre,
-                    categoria: it.attrs.categoria,
-                    colorHex: it.attrs.color_hex,
-                    material: it.attrs.material,
-                    corte: it.attrs.corte,
-                  },
-                  enElCloset
-                )}
+                onEsLaMisma={(itemId) =>
+                  esLaMisma.current.set(it.id, {
+                    itemId,
+                    photo: it.photoPreview,
+                    sola: (enCadaFoto.get(it.photoPreview) ?? 0) === 1,
+                  })
+                }
+                onDupe={(r) => setDupes((d) => ({ ...d, [it.id]: r }))}
+                fotoConVarias={(enCadaFoto.get(it.photoPreview) ?? 0) > 1}
+                yaEsta={yaEstaDe(it)}
                 onToggle={() => toggleItem(it.id)}
                 onPatch={(p, campos) => patchItem(it.id, p, campos)}
               />
@@ -1123,12 +1181,31 @@ export function ImportCarreteFlow({
       <Overlay
         paso={3}
         pie={
-          <Footer
-            cancel={() => setState({ kind: "idle" })}
-            confirmLabel={`sumar ${keep} al clóset`}
-            confirmDisabled={false}
-            onConfirm={guardar}
-          />
+          <>
+            {avisoSalir && keep > 0 ? (
+              <p className="mb-2 rounded-sm border-l-2 border-warning bg-accent-soft px-3 py-2 text-[12.5px] leading-snug text-ink">
+                {keep === 1
+                  ? "Ya dibujé esta prenda. Si sales ahora no se suma a tu clóset y se pierde."
+                  : `Ya dibujé estas ${keep} prendas. Si sales ahora no se suman a tu clóset y se pierden.`}
+              </p>
+            ) : null}
+            <Footer
+              // Cancelar aquí tira lo ya dibujado: primero se avisa, y la
+              // segunda vez sí sale.
+              cancel={() => {
+                if (keep > 0 && !avisoSalir) {
+                  setAvisoSalir(true);
+                  return;
+                }
+                setAvisoSalir(false);
+                setState({ kind: "idle" });
+              }}
+              cancelLabel={avisoSalir && keep > 0 ? "salir sin sumar" : undefined}
+              confirmLabel={`sumar ${keep} al clóset`}
+              confirmDisabled={false}
+              onConfirm={guardar}
+            />
+          </>
         }
       >
         <Header
@@ -1414,11 +1491,13 @@ function Header({ title, sub }: { title: string; sub: string }) {
 
 function Footer({
   cancel,
+  cancelLabel,
   confirmLabel,
   confirmDisabled,
   onConfirm,
 }: {
   cancel: () => void;
+  cancelLabel?: string;
   confirmLabel: string;
   confirmDisabled: boolean;
   onConfirm: () => void;
@@ -1430,7 +1509,7 @@ function Footer({
         onClick={cancel}
         className="min-h-12 flex-1 rounded-sm border border-line bg-surface text-sm font-medium text-ink"
       >
-        cancelar
+        {cancelLabel ?? "cancelar"}
       </button>
       <button
         type="button"

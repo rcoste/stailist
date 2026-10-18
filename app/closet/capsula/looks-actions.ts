@@ -27,6 +27,7 @@ import { styleReferenceForEngine } from "@/lib/estilo-referencia";
 import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 import { registrarEvento } from "@/lib/telemetria";
+import { piezasDeCapsulaParaLooks, propiasEn } from "@/lib/capsula-looks-piezas";
 
 const MAX_LOOKS = 16;
 const outfitKey = (o: { prendas: string[] }) => capsuleLookKey(o.prendas);
@@ -74,18 +75,17 @@ export async function generateCapsuleOutfits(
   const match = (profile?.capsule_match as CapsuleMatch | null) ?? null;
   const overrides = (profile?.capsule_overrides as CapsuleOverrides | null) ?? null;
 
-  const closet = await loadClosetLite(supabase, user.id);
-  // Empacable = lo que de verdad TIENES de tu cápsula (cubierto), por el nombre de
-  // la prenda del clóset que lo cubre.
-  const packable: PackableItem[] = capsuleRows(target, match, overrides)
-    .filter((r) => r.covered && !!r.by)
-    .map((r, i) => ({
-      n: i,
-      nombre: r.by as string,
-      category: r.item.category,
-      color: r.item.colorFamilia,
-      formalidad: r.item.formalidad,
-    }));
+  const [closet, { data: wishRows }] = await Promise.all([
+    loadClosetLite(supabase, user.id),
+    supabase.from("wishlist_items").select("capsule_key").eq("user_id", user.id).eq("source", "capsule"),
+  ]);
+  // Empacable = lo que de verdad TIENES de tu cápsula (cubierto), por el nombre
+  // de la prenda del clóset que lo cubre, MÁS lo que te falta y ya guardaste en
+  // tu wishlist, marcado como falta (lib/capsula-looks-piezas.ts).
+  const wishKeys = new Set(
+    (wishRows ?? []).map((r) => r.capsule_key as string | null).filter((k): k is string => !!k)
+  );
+  const packable: PackableItem[] = piezasDeCapsulaParaLooks(capsuleRows(target, match, overrides), wishKeys);
 
   // OJO: la firma tiene que ser la MISMA que compara la página (matchSignature
   // = versión del prompt + firma del clóset). Cuando aquí se guardaba
@@ -93,7 +93,8 @@ export async function generateCapsuleOutfits(
   // "Cambiaste tu clóset — actualiza tus looks" quedaba pegado para siempre:
   // regenerabas y volvía a salir. Un solo generador de firma, sin excepciones.
   const sig = matchSignature(closet);
-  if (packable.length < 2) {
+  // Con menos de 2 prendas TUYAS no hay looks: la wishlist sola no arma nada.
+  if (propiasEn(packable) < 2) {
     await supabase
       .from("profiles")
       .update({ capsule_outfits: [], capsule_outfits_sig: sig })
