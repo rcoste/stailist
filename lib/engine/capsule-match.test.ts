@@ -169,7 +169,7 @@ describe("matchSignature — una sola firma para el match Y los looks", () => {
     // (una llamada a Opus por persona en su próxima visita), así que el bump
     // tiene que ser deliberado y este test lo obliga a serlo. m7 (2026-09-09):
     // la etiqueta dejó de cubrir sastrería de calle.
-    expect(matchSignature(closet)).toBe(`m7|${closetSignature(closet)}`);
+    expect(matchSignature(closet)).toBe(`m8|${closetSignature(closet)}`);
     expect(matchSignature(closet)).not.toBe(closetSignature(closet));
   });
 
