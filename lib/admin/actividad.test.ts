@@ -4,6 +4,7 @@ import {
   construirFeed,
   etiqueta,
   porDia,
+  prendasAlMomento,
   sinBorradoresVacios,
   vueltas,
   ultimoUsoPorUsuario,
@@ -28,6 +29,7 @@ const m = (userId: string, at: string, tipo: Momento["tipo"], key = `${userId}${
   tipo,
   n: 1,
   refId: key,
+  refIds: [key],
   data: null,
 });
 
@@ -363,6 +365,7 @@ describe("sinBorradoresVacios", () => {
     at,
     tipo,
     n: 1,
+    refIds: [],
   });
 
   it("esconde la cuenta sin correo cuyo único momento es el alta, y la cuenta", () => {
@@ -390,6 +393,7 @@ describe("vueltas", () => {
     at,
     tipo,
     n: 1,
+    refIds: [],
   });
   // Alta el 6 de octubre a las 10 am de la Ciudad de México (16:00 UTC).
   const altaDe = new Map([["u", "2026-10-06T16:00:00Z"]]);
@@ -423,5 +427,56 @@ describe("vueltas", () => {
     expect(viejo.size).toBe(0);
     const excluida = vueltas([mom("y", "u", "visita", "2026-10-07T18:00:00Z")], altaDe, new Set(["u"]));
     expect(excluida.size).toBe(0);
+  });
+});
+
+// MINIATURAS (2026-10-17): la ráfaga ya no tira los ids, los junta; y el
+// espejo, que guarda su look en data.outfit_id, también apunta a él.
+describe("refIds: lo que tocó cada línea", () => {
+  it("la ráfaga junta los ids de todas sus líneas, en orden", () => {
+    const raf = colapsar([
+      m("andy", "2026-08-10T14:00:00Z", "prenda_add", "i1"),
+      m("andy", "2026-08-10T14:01:00Z", "prenda_add", "i2"),
+      m("andy", "2026-08-10T14:02:00Z", "prenda_add", "i3"),
+    ]);
+    expect(raf).toHaveLength(1);
+    expect(raf[0].refId).toBeNull();
+    expect(raf[0].refIds).toEqual(["i3", "i2", "i1"]);
+  });
+
+  it("colapsar no muta las líneas de entrada", () => {
+    const a = m("andy", "2026-08-10T14:00:00Z", "prenda_add", "i1");
+    colapsar([a, m("andy", "2026-08-10T14:01:00Z", "prenda_add", "i2")]);
+    expect(a.refIds).toEqual(["i1"]);
+  });
+
+  it("el espejo apunta a su look desde data.outfit_id; los demás eventos desde la columna", () => {
+    const feed = construirFeed({
+      profiles: [],
+      items: [],
+      outfits: [],
+      trips: [],
+      wishlist: [],
+      events: [
+        { user_id: "u", outfit_id: null, type: "espejo_subido", data: { outfit_id: "o-espejo" }, created_at: "2026-10-17T10:00:00Z" },
+        { user_id: "u", outfit_id: "o-voto", type: "vote_up", data: null, created_at: "2026-10-17T12:00:00Z" },
+      ],
+    });
+    const porTipo = Object.fromEntries(feed.map((f) => [f.tipo, f.refIds]));
+    expect(porTipo["ev:espejo_subido"]).toEqual(["o-espejo"]);
+    expect(porTipo["ev:vote_up"]).toEqual(["o-voto"]);
+  });
+});
+
+describe("prendasAlMomento", () => {
+  const items = [
+    { id: "vieja", user_id: "u", created_at: "2026-10-01T00:00:00Z", deleted_at: null },
+    { id: "borrada-antes", user_id: "u", created_at: "2026-10-02T00:00:00Z", deleted_at: "2026-10-05T00:00:00Z" },
+    { id: "borrada-despues", user_id: "u", created_at: "2026-10-03T00:00:00Z", deleted_at: "2026-10-20T00:00:00Z" },
+    { id: "posterior", user_id: "u", created_at: "2026-10-15T00:00:00Z", deleted_at: null },
+    { id: "de-otra", user_id: "x", created_at: "2026-10-01T00:00:00Z", deleted_at: null },
+  ];
+  it("sólo lo que tenía en ese instante, de la más reciente a la más vieja", () => {
+    expect(prendasAlMomento(items, "u", "2026-10-10T00:00:00Z")).toEqual(["borrada-despues", "vieja"]);
   });
 });
