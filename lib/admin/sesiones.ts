@@ -141,6 +141,14 @@ export function accionDe(m: Momento): Accion | "sistema" | null {
             "compartió 1 imagen",
             (n) => `compartió ${n} imágenes`,
           );
+    case "descargado":
+      // Guardó la imagen: no se cuenta como compartida (lib/admin/actividad.ts).
+      return a(
+        m.data?.que === "tryon" ? "tryon" : "perfil",
+        "descargado",
+        "descargó 1 imagen",
+        (n) => `descargó ${n} imágenes`,
+      );
     case "trip_motivo":
       return a("viaje", "motivos", "dio 1 motivo", (n) => `dio ${n} motivos`);
     case "trip_outfits_generated":

@@ -3,6 +3,7 @@ import {
   colapsar,
   construirFeed,
   etiqueta,
+  nivelDe,
   porDia,
   prendasAlMomento,
   sinBorradoresVacios,
@@ -478,5 +479,38 @@ describe("prendasAlMomento", () => {
   ];
   it("sólo lo que tenía en ese instante, de la más reciente a la más vieja", () => {
     expect(prendasAlMomento(items, "u", "2026-10-10T00:00:00Z")).toEqual(["borrada-despues", "vieja"]);
+  });
+});
+
+// DESCARGAR NO ES COMPARTIR (2026-10-18): la descarga es su propio tipo, con
+// su texto y sin nivel oro; el link copiado tampoco dice "invitó".
+describe("descargar no es compartir", () => {
+  const ev = (como: string, que = "tryon") =>
+    construirFeed({
+      profiles: [],
+      items: [],
+      outfits: [],
+      trips: [],
+      wishlist: [],
+      events: [{ user_id: "u", outfit_id: null, type: "compartido", data: { que, como }, created_at: "2026-10-17T22:26:00Z" }],
+    })[0];
+
+  it("una descarga sale como descargado, dice descargó y no es oro", () => {
+    const d = ev("descarga");
+    expect(d.tipo).toBe("ev:descargado");
+    expect(etiqueta(d)).toBe("descargó su try-on");
+    expect(nivelDe(d)).toBe("valor");
+  });
+
+  it("mandarlo desde el teléfono sigue siendo compartir, y oro", () => {
+    const c = ev("share");
+    expect(c.tipo).toBe("ev:compartido");
+    expect(etiqueta(c)).toBe("compartió su try-on");
+    expect(nivelDe(c)).toBe("oro");
+  });
+
+  it("copiar el link del viaje no dice que invitó a alguien", () => {
+    expect(etiqueta(ev("link", "viaje"))).toBe("copió el link de su viaje");
+    expect(etiqueta(ev("share", "viaje"))).toBe("invitó a alguien a su viaje");
   });
 });
