@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.390.1] - 2026-10-18 — descargar no es compartir
+
+- **El admin separa descargar de compartir** (pedido de Roberto). El evento
+  `compartido` con `como: "descarga"` sale ahora en Actividad como su propio
+  tipo, "descargó su try-on", con nivel "usó el producto" en vez de "lo que
+  buscamos", y se puede filtrar aparte. La primera persona real que
+  "compartió" en realidad descargó su try-on: sabemos que guardó la imagen,
+  no que se la enseñó a nadie.
+- Copiar el link de un viaje dice "copió el link de su viaje" y ya no
+  "invitó a alguien". Mandarlo desde el teléfono sigue siendo compartir.
+- Las sesiones de la ficha de persona dicen "descargó 1 imagen".
+- Nada cambia en la app ni en lo que se guarda: el dato ya distinguía las
+  tres formas (`lib/compartir.ts`); sólo se leía todo como "compartió".
+
 ## [0.2.390.0] - 2026-10-17 — la vigilancia ya no confunde el filtro de Google con alguien atorado
 
 - **Falsa alarma corregida.** La vigilancia avisó "alguien atorado: 8 intentos

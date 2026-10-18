@@ -70,6 +70,14 @@ describe("resumir", () => {
 
 // Regression: ISSUE-002 — invitar a un viaje se resumía como "compartió 1 imagen"
 // Found by /qa on 2026-10-16
+describe("resumir: descargar no es compartir", () => {
+  it("una descarga se resume como descargó, no como compartió", () => {
+    const r = resumir([m("ev:descargado", "2026-10-17T22:26:00Z", 1, { que: "tryon", como: "descarga" })]);
+    expect(JSON.stringify(r)).toContain("descargó 1 imagen");
+    expect(JSON.stringify(r)).not.toContain("compartió");
+  });
+});
+
 describe("resumir: compartir", () => {
   it("la invitación va con el viaje; el try-on con el try-on", () => {
     const r = resumir([

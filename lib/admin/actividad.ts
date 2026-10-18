@@ -152,8 +152,21 @@ export function etiqueta(m: Momento): string {
   // detalle, así que ahí sólo se cuenta.
   if (t === "compartido") {
     if (n > 1) return `compartió ×${n}`;
-    const que = (m.data as { que?: string } | null | undefined)?.que;
+    const d = m.data as { que?: string; como?: string } | null | undefined;
+    // Copiar el link no es lo mismo que mandarlo: el diálogo del teléfono
+    // ("share") sí termina en alguien; el link copiado, quién sabe.
+    if (d?.como === "link") return d.que === "viaje" ? "copió el link de su viaje" : "copió un link";
+    const que = d?.que;
     return que === "tryon" ? "compartió su try-on" : que === "pasaporte" ? "compartió su pasaporte" : que === "viaje" ? "invitó a alguien a su viaje" : "compartió algo";
+  }
+  // DESCARGAR NO ES COMPARTIR (Roberto, 2026-10-18). La primera persona real
+  // que "compartió" su try-on en realidad lo descargó: sabemos que guardó la
+  // imagen, no que se la enseñó a nadie. Sale como su propio tipo
+  // (construirFeed), con su texto y sin el nivel "oro".
+  if (t === "descargado") {
+    if (n > 1) return `descargó ×${n}`;
+    const que = (m.data as { que?: string } | null | undefined)?.que;
+    return que === "tryon" ? "descargó su try-on" : que === "pasaporte" ? "descargó su pasaporte" : "descargó una imagen";
   }
   const base = EVENTO_LABEL[t];
   if (!base) return n === 1 ? t : `${t} ×${n}`;
@@ -198,6 +211,8 @@ export const EVENTO_LABEL: Record<string, string> = {
   trip_motivo: "dijo algo de una pieza de su maleta",
   // 2026-10-16: el try-on o el pasaporte salieron de la app (data.que, data.como).
   compartido: "compartió (try-on, pasaporte o viaje)",
+  // El `compartido` con como="descarga": guardó la imagen, no la mandó.
+  descargado: "descargó (try-on o pasaporte)",
   // Prueba de interés de Instagram (lib/interes-instagram.ts).
   ig_interes_si: "pidió que le avisemos del clóset desde Instagram",
   ig_interes_no: "dijo que no al clóset desde Instagram",
@@ -339,7 +354,12 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
     // sola al subir ropa, al abrir el clóset con pendientes o al rematarlos
     // nosotros. Sólo `forzado` es un tap suyo ("rehacer imagen"). Salía todo
     // como "pidió el dibujo": 52 de un remate nuestro parecían 52 decisiones.
-    const tipo = e.type === "render_generated" && e.data?.forzado !== true ? "render_auto" : e.type;
+    const tipo =
+      e.type === "render_generated" && e.data?.forzado !== true
+        ? "render_auto"
+        : e.type === "compartido" && e.data?.como === "descarga"
+          ? "descargado"
+          : e.type;
     // El espejo guarda su look en data.outfit_id, no en la columna
     // (app/api/espejo/route.ts): sin esto su foto no tendría de dónde salir.
     const outfitId = e.outfit_id ?? (typeof e.data?.outfit_id === "string" ? e.data.outfit_id : null);
@@ -510,6 +530,8 @@ const NIVEL: Record<string, Nivel> = {
   "ev:outfit_favorited": "oro",
   "ev:pwa_installed": "oro",
   "ev:compartido": "oro",
+  // Guardar la imagen es usar el producto, no la prueba de que la enseñó.
+  "ev:descargado": "valor",
   "ev:ig_interes_si": "valor",
   look: "valor",
   look_viaje: "valor",
