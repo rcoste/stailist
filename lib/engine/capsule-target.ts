@@ -354,8 +354,14 @@ export function construirPromptCapsula(inputs: CapsuleInputs): PromptCapsula {
     ? `"${inputs.archetype.nombre}" — ${inputs.archetype.descripcion}`
     : "sin definir";
   const tags = inputs.tasteTags.length ? inputs.tasteTags.join(", ") : "sin tags";
+  // TRADUCIR, NO TRASPLANTAR (2026-10-18). Con "inspiran las piezas", la
+  // cápsula de una persona en clima templado copió casi pieza por pieza sus
+  // tres fotos de invierno: el abrigo café de una foto salió como "abrigo largo
+  // de paño chocolate" encima de su abrigo negro, las botas altas, la bolsa…
+  // Lo que viaja de una foto es el ESTILO; las piezas pasan por su clima y su
+  // vida antes de entrar.
   const refTxt = inputs.styleReference
-    ? `\nLOOKS DE REFERENCIA que le encantan (inspiran el VIBE, las piezas y las siluetas de la cápsula, NO los colores — la colorimetría de abajo manda el color): ${inputs.styleReference} Acércate a ellos sin copiarlos literal.`
+    ? `\nLOOKS DE REFERENCIA que le encantan: ${inputs.styleReference}\nCÓMO USARLOS: son fotos de UNA temporada y UN lugar que no son necesariamente los suyos. Extrae SU ESTILO —silueta, proporciones, largos, nivel de arreglo, ánimo, cómo combina— y TRADÚCELO a su clima y a su vida. NO trasplantes las piezas: una pieza de la foto entra a la lista sólo si su clima y su vida la piden. Ej.: un abrigo largo de invierno, para quien vive en clima templado, se traduce en una gabardina o un blazer largo; unas botas altas de tacón, en un botín si su vida es de caminar. Los colores NO salen de las fotos: los manda la colorimetría de abajo.`
     : "";
   const palabrasTxt = inputs.styleWords?.trim()
     ? `\nSU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — la señal más directa de quién es; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género — siempre están por encima).`
@@ -415,7 +421,7 @@ Devuelve "items". Cada prenda:
 - temporada: "todo-el-año" | "calor" | "frio".
 - prioridad: 1 = la usaría casi diario; sube hacia los caprichos. Ordena con criterio.
 - porque: UNA línea cálida (tuteo, voz amiga); cuando sea natural, menciona con qué se combina o qué desbloquea.
-- visual: cómo se VE la pieza, para dibujarla (la persona no lo lee). De 8 a 12 palabras, SIN repetir el nombre ni el color: sólo silueta, tela/textura, largo y el detalle que la hace actual. Ej. "satén fluido, cuello caído, manga recta, caída suelta". Piensa en una tienda contemporánea de hoy, no en un catálogo de hace veinte años. Para un básico sin nada que decir (playera lisa, jeans rectos, medias, calcetines) deja "" vacío: se dibuja con la foto genérica.
+- visual: cómo se VE la pieza, para dibujarla (la persona no lo lee). De 8 a 12 palabras, SIN repetir el nombre ni el color: sólo silueta, tela/textura, largo y el detalle que la hace actual. Ej. "satén fluido, cuello caído, manga recta, caída suelta". Piensa en una tienda contemporánea de hoy, no en un catálogo de hace veinte años. Para un básico sin nada que decir (playera lisa, jeans rectos, medias, calcetines) deja "" vacío: se dibuja con la foto genérica. Una pieza de NOCHE, GALA o EVENTO tiene que decir en su visual qué la hace de noche —tela con brillo o con caída (satén, crepé de seda, terciopelo), escote, espalda, abertura, tirante fino—: el dibujo hace exactamente lo que dice el visual, y un "crepé mate, tirante ancho, caída recta" sale como un jumper de diario.
 
 Y tres campos que explican POR QUÉ esta cápsula es de ESTA persona — la sustancia detrás de tus decisiones, aterrizada a SUS datos reales. PROHIBIDO el relleno genérico ("consideramos tu estilo de vida"): cada cosa nombra algo concreto suyo (su estación, su trabajo, su cuerpo, su metal) o NO va.
 LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda. En el texto que LEE la persona, nada de "silueta", "cortes", "proporción", "estructura", "statement", "monocromía", "textura" — y tampoco "cápsula" (jerga de moda: en la app esto se llama "tus esenciales"; di "tu lista" o "tus esenciales"); dilo cotidiano (en vez de "corte que estiliza tu silueta" → "que te quede bien y te alargue"). Los conceptos piénsalos tú; las palabras van llanas.
@@ -423,7 +429,13 @@ LENGUAJE (la marca es "cero jerga de moda"): escribe para quien NO sabe de moda.
 - "subline": UNA línea (≤ ~95 chars) que conecte la firma con cómo armaste su lista. Ej: "Así armé tus esenciales para que ese sea tu default, sin pensarlo."
 - "pilares": 3 o 4 razones, cada una con "titulo" (2-3 palabras) + "detalle" (UNA sola línea, ≤ ~90 chars) + "icono". Cubre su PALETA (icono:"paleta"), su VIDA real / versatilidad casa↔noche (icono:"versatilidad" o "vida"), su CUERPO/silueta (icono:"estructura") y su METAL (icono:"metal").
 
-Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte. Abrigos solo si su clima es frío/templado.
+Calidad sobre cantidad: piezas reales y combinables, fibras nobles cuando aporte.
+ABRIGO POR SU CLIMA DE CASA (su respuesta de clima manda):
+- FRÍO o DOS ESTACIONES: abrigo real (lana, largo) y capas de invierno.
+- TEMPLADO: NADA de abrigo de invierno por su ciudad — su propia respuesta dice que con una chamarra ligera basta casi siempre. Su capa es ligera: gabardina, chamarra ligera, cárdigan o blazer. Un abrigo de invierno sólo entra por CLIMA DE VIAJE (abajo), y entonces UNO.
+- CALOR: nada de abrigo; si acaso una capa muy ligera para el aire acondicionado.
+LLUVIA (si contestó cómo llueve): EN TEMPORADA o SEGUIDO → al menos UNA pieza que aguante la lluvia, dentro de su paleta y su estilo (gabardina o chamarra impermeable; puede ser la misma capa ligera de su clima). SEGUIDO → además, calzado que aguante agua. CASI NUNCA o sin respuesta → no agregues nada por esto.
+DENIM: si su vida tiene días casuales (oficina casual, remoto, estudio, fines de semana), lleva al menos unos jeans AZULES —índigo oscuro si su paleta es profunda, azul medio si es suave—, salvo que los haya vetado o sus palabras los excluyan. Unos jeans negros NO sustituyen a los azules: son otra pieza.
 ${REGLA_PRENDAS_REALES}
 CLIMA DE VIAJE: su ciudad define el centro de gravedad del clóset, pero no puede empacar lo que no tiene. Si dice que viaja a un clima DISTINTO al suyo, súmale las piezas de ese clima aunque su ciudad no las pida, integradas a su paleta y su estilo (un abrigo de lana camel o carbón sirve igual en su ciudad para una noche fría). No es un guardarropa paralelo, pero SÍ tiene que alcanzar para vestirse de pies a cabeza allá:
 - FRÍO (y su clima no es frío): 1 o 2 piezas bastan, porque el frío se resuelve por CAPAS ENCIMA de lo que ya tiene. Un abrigo real (lana, largo), no una chamarra ligera; suma un suéter grueso si su clima es de plano cálido.

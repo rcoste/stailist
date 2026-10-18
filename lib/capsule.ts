@@ -125,6 +125,20 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
       },
     ],
   },
+  // LA LLUVIA (2026-10-18). La cápsula de una persona en Ciudad de México salió
+  // sin nada para lluvia: la app no sabe dónde vive ni cuánto llueve, y "clima
+  // templado" no lo dice. Se pregunta en vez de adivinarlo por ubicación (que
+  // no tenemos).
+  {
+    id: "lluvia",
+    label: "¿Llueve donde vives?",
+    promptLabel: "Lluvia donde vive",
+    options: [
+      { value: "casi_nunca", label: "Casi nunca", hint: "Un paraguas de emergencia y ya." },
+      { value: "temporada", label: "En temporada", hint: "Meses de lluvia casi diaria, como el verano en Ciudad de México." },
+      { value: "seguido", label: "Seguido, todo el año", hint: "La lluvia es parte de tu semana." },
+    ],
+  },
   {
     // Condicional (solo si marcó "Viajo seguido"): tu ciudad define el centro de
     // gravedad del clóset, pero no puedes empacar lo que no tienes — si viajas a
