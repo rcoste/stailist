@@ -147,6 +147,21 @@ const ITEM_SCHEMA_MALETA = {
                 additionalProperties: false,
               };
 
+// TRADUCIR, NO TRASPLANTAR (2026-10-19) — la misma regla que la cápsula del
+// clóset estrenó el 18 (capsule-target.ts). Decía "inspiran las piezas", y
+// las referencias son fotos de UNA temporada: con fotos de invierno (abrigo
+// largo, botas altas) y un viaje de calor podía copiar las piezas en vez del
+// estilo: medido en seco, 1 de 6 maletas de Tulum (24-32°C) se llevó unos
+// botines militares; con esta línea, 0 de 6. Ojo con los ejemplos: uno de
+// "cuello alto → top de cuello alto sin mangas" salió copiado en 4 de 4
+// maletas de calor, incluso para quien no tiene un cuello alto en sus fotos.
+// Sólo quedan los dos que nombran el riesgo real (abrigo y botas).
+export function lineaReferenciasMaleta(styleReference: string | null | undefined): string {
+  return styleReference
+    ? `LOOKS DE REFERENCIA que le encantan: ${styleReference}\nCÓMO USARLOS: son fotos de UNA temporada y UN lugar que no son necesariamente los de ESTE viaje. Extrae SU ESTILO —silueta, proporciones, largos, nivel de arreglo, ánimo, cómo combina— y TRADÚCELO al clima y a las ocasiones de este viaje. NO trasplantes las piezas: una pieza de la foto entra a la maleta sólo si el clima y los planes del viaje la piden. Ej.: para un viaje de calor, un abrigo largo de invierno se traduce en una camisa larga de lino o un vestido largo fluido, y unas botas altas en una sandalia de piel o un mocasín. Los colores NO salen de las fotos: los manda la colorimetría.`
+    : "";
+}
+
 export async function generateTripCapsuleTarget(
   inputs: TripCapsuleInputs,
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
@@ -221,9 +236,7 @@ export async function generateTripCapsuleTarget(
   const contextoTxt = inputs.contexto
     ? `CONTEXTO DEL VIAJE (lo que la persona va a hacer, EN SUS PALABRAS): "${inputs.contexto}". Es la señal MÁS específica del viaje — tenla muy en cuenta: ajusta qué prendas empacas, el nivel de arreglo y el porqué de cada una a esto. Si pide una prenda o pieza concreta para un plan (un jersey para un partido, algo formal para una boda, calzado para caminar), inclúyela o déjale espacio. No la ignores por dimensionar.`
     : "";
-  const refTxt = inputs.styleReference
-    ? `LOOKS DE REFERENCIA que le encantan (inspiran el vibe, las piezas y las siluetas de lo que empacas, NO los colores — la colorimetría manda el color): ${inputs.styleReference}`
-    : "";
+  const refTxt = lineaReferenciasMaleta(inputs.styleReference);
   const palabrasTxt = inputs.styleWords?.trim()
     ? `SU ESTILO EN SUS PALABRAS: "${inputs.styleWords.trim().slice(0, 280)}" — respétalo; si contradice los tags, sus palabras mandan (pero las REGLAS DURAS — vetos, género, piso, clima — siempre están por encima).`
     : "";
