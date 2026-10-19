@@ -26,6 +26,7 @@ import {
 } from "@/lib/trip-actions";
 import { MotivoSheet } from "@/components/motivo-sheet";
 import { MasOpcionesSheet, ParecidoSheet, type OpcionPieza } from "@/components/trip-pieza-opciones";
+import type { AvisoMaleta } from "@/lib/trip-avisos";
 import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import { MOTIVOS_VIAJE, type VetoReason } from "@/lib/capsule";
 import { NOMBRE_FUNCION, funcionDe } from "@/lib/funcion-prenda";
@@ -385,6 +386,7 @@ export function TripResult({
   candidatasIniciales = {},
   descartadosIniciales = [],
   ganadosIniciales = [],
+  avisos = [],
 }: {
   tripId: string;
   /** Para "mejor le tomo foto" (el flujo del carrete guarda en su carpeta). */
@@ -397,6 +399,8 @@ export function TripResult({
   descartadosIniciales?: number[];
   /** Duelos ya ganados por TU prenda (cand:i === sub:i). */
   ganadosIniciales?: number[];
+  /** Lo que el juez encuentra en lo que DE VERDAD llevas (lib/trip-avisos.ts). */
+  avisos?: AvisoMaleta[];
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
@@ -843,6 +847,26 @@ export function TripResult({
   return (
     <div className="flex flex-col gap-4">
       <Toast message={toast} />
+
+      {/* El juez sobre lo que de verdad llevas: mismo lenguaje que el tip
+          inline (regla de acento + eyebrow), sin "entendido" — se va solo
+          cuando cubres el hueco. Se calcula en el server con lo guardado:
+          al recargar refleja tus decisiones. */}
+      {avisos.length > 0 ? (
+        <div role="status" className="flex flex-col gap-1 border-l-2 border-accent py-1 pl-3.5">
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-accent">
+            Ojo con tu maleta
+          </span>
+          {avisos.map((a) => (
+            <p key={a.regla} className="text-[13.5px] leading-snug text-ink">
+              {a.texto}
+              {a.loResuelve ? (
+                <span className="text-muted"> Lo resuelve: {a.loResuelve.toLowerCase()}, que te falta.</span>
+              ) : null}
+            </p>
+          ))}
+        </div>
+      ) : null}
 
       {/* ══ FASE 1: PRENDAS (la revisión) — el orden del handoff: lo que pide
           decisión arriba, lo resuelto abajo. REACOMODO 2026-08-13 (segunda

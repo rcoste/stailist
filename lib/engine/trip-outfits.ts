@@ -105,6 +105,18 @@ export type TripOutfitInputs = {
   tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
 };
 
+/**
+ * A LO MÁS UNA PIEZA QUE TE FALTA POR LOOK (2026-10-19). Las faltantes entran
+ * a los looks desde el 10-17 para que veas qué te suma cada compra — pero en
+ * la maleta real de una persona 7 de 16 looks llevaban algo que no tenía, uno
+ * con dos, y el de su cumpleaños iba sobre un vestido que no existe. Un look
+ * con dos o más faltantes ya no enseña una compra: es otra maleta. Regla dura
+ * en código, además de la del prompt, porque el juez también puede sumar una.
+ */
+export function cabeConLoQueTiene(prendas: string[], faltan: Set<string>): boolean {
+  return prendas.filter((n) => faltan.has(n)).length <= 1;
+}
+
 // Tope de celdas de la rejilla que mandamos a validar (una maleta real cae muy
 // por debajo; este es el cinturón para clósets-empacables grandes).
 const MAX_CELLS = 40;
@@ -323,7 +335,8 @@ Para las celdas que SÍ funcionan:
 - titulo: nombre corto y evocador (tuteo, cálido). Ej "Cena junto al mar".
 - porque: UNA línea de por qué funciona.
 - tip ("el toque"): OPCIONAL — UN movimiento de styling para llevar ESE look mejor (medio fajado, mangas arremangadas, capa abierta…), concreto y seguro, una frase. SOLO sobre prendas que están en ESE look; NUNCA menciones ni sugieras añadir una prenda que no está en él. Cadena vacía si el look ya está completo y no hay un toque que lo eleve. NO en todos los looks; mejor sin tip que uno forzado.
-- Las prendas marcadas "todavía no la tiene" son piezas de la maleta que la persona AÚN NO COMPRÓ: úsalas igual, son parte del plan. Cuando puedas, mézclalas con prendas que SÍ tiene, para que vea qué le suma cada compra; un look hecho sólo de piezas que no tiene vale menos.
+- Las prendas marcadas "todavía no la tiene" son piezas de la maleta que la persona AÚN NO COMPRÓ. LO QUE YA TIENE VA PRIMERO: arma la mayoría de los looks sólo con prendas que ya tiene, y usa una pieza que le falta para enseñarle qué le suma esa compra — A LO MÁS UNA por look, siempre con prendas suyas alrededor.
+- Si el CONTEXTO del viaje nombra un momento clave (un cumpleaños, una boda, una cena importante), ese look se arma SÓLO con prendas que ya tiene si alguna celda lo permite: el día que más importa no puede depender de algo que todavía no compró.
 - Evita looks casi idénticos: si dos celdas dan prácticamente el mismo look, deja solo el mejor.
 - Maximiza la VARIEDAD útil entre las ocasiones del viaje (no 6 looks para la misma ocasión si hay otras sin cubrir).
 - COBERTURA (regla dura): CADA ocasión del viaje debe recibir AL MENOS un look si existe alguna celda que funcione para ella. Jamás dejes una ocasión vacía por darle más variedad a otra — un día del viaje sin propuesta es el peor resultado.
@@ -381,6 +394,7 @@ Para las celdas que SÍ funcionan:
   };
 
   const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
+  const faltan = new Set(inputs.packable.filter((p) => p.falta).map((p) => p.nombre));
   const validOcc = new Set(OCCASIONS.map((o) => o.value as string));
   // Siembra el dedup con lo ya mostrado ("generar más") → solo salen combos nuevos.
   const seen = new Set<string>(
@@ -401,6 +415,7 @@ Para las celdas que SÍ funcionan:
     const minOk = cell.kind === "vestido" ? prendas.length >= 1 : prendas.length >= 2;
     const ocasion = l.ocasion as Occasion;
     if (!minOk || !validOcc.has(ocasion) || !(l.titulo ?? "").trim()) continue;
+    if (!cabeConLoQueTiene(prendas, faltan)) continue;
     // Dedup: mismo conjunto exacto de prendas = mismo look, no se repite.
     const key = [...prendas].sort().join("|");
     if (seen.has(key)) continue;
@@ -442,6 +457,7 @@ export async function reviewTripOutfits(
 
   const nByNombre = new Map(inputs.packable.map((p) => [p.nombre, p.n]));
   const byN = new Map(inputs.packable.map((p) => [p.n, p.nombre]));
+  const faltanDelJuez = new Set(inputs.packable.filter((p) => p.falta).map((p) => p.nombre));
   const capas = inputs.packable.filter((p) => p.category === "abrigo");
   const accesorios = inputs.packable.filter((p) => p.category === "accesorio");
 
@@ -585,7 +601,9 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
             .filter((v): v is string => !!v)
         )
       );
-      if (nombres.length >= 2) {
+      // Una reparación que suma una segunda pieza que te falta no se aplica:
+      // se queda el look como estaba (cabeConLoQueTiene).
+      if (nombres.length >= 2 && cabeConLoQueTiene(nombres, faltanDelJuez)) {
         result.push({ ...original, prendas: nombres });
         repaired++;
       } else {
