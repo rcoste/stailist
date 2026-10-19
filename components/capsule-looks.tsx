@@ -223,8 +223,9 @@ export function CapsuleLooks({
             key={`${o.titulo}-${i}`}
             look={o}
             // Con una pieza de tu wishlist que todavía no tienes: sin corazón
-            // ni "verme con este look", igual que en el viaje (no se guarda ni
-            // se prueba algo que no está en tu clóset).
+            // (no entra a tu historial algo que no tienes), pero SÍ te lo
+            // pruebas — verte con la pieza antes de comprarla es para lo que
+            // sirve el try-on (lib/capsula-tryon.ts).
             faltaAlgo={o.prendas.some((p) => p.falta)}
             voto={votos[i] ?? null}
             favorito={favs.has(i)}
@@ -235,14 +236,10 @@ export function CapsuleLooks({
             rendered={rendered}
             rendering={rendering}
             tryonImage={o.tryonImage}
-            ensureOutfitId={
-              o.prendas.some((p) => p.falta)
-                ? undefined
-                : async () => {
-                    const res = await ensureCapsuleLookOutfit(i);
-                    return res.outfitId ?? null;
-                  }
-            }
+            ensureOutfitId={async () => {
+              const res = await ensureCapsuleLookOutfit(i);
+              return res.outfitId ?? null;
+            }}
             returnTo="/closet/capsula?tab=looks"
           />
         ))}

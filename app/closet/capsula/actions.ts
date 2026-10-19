@@ -25,6 +25,7 @@ import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
 import { borrowArchetypeImage, loadClosetLite } from "@/lib/capsule-data";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
+import { visualDePieza } from "@/lib/garment-desc";
 import { revisarGasto } from "@/lib/cuotas";
 import { quizMetalDe, type Season } from "@/lib/colorimetria";
 import type { Build, Volume } from "@/lib/silueta";
@@ -608,7 +609,12 @@ export async function markFaltaOwned(
         color_hex: familiaToHex(item.colorFamilia),
         formalidad: item.formalidad,
         temporada: item.temporada,
-        ...(item.visual ? { visual: item.visual } : {}),
+        // La `visual` de una PIEZA no trae la prenda ni el color (van en el
+        // nombre), pero en una prenda del clóset `visual` es la descripción
+        // COMPLETA que lee garmentRenderDesc. Copiada tal cual, el dibujo salía
+        // sin color: un "Pantalón de vestir gris carbón" se dibujó taupe
+        // (2026-10-19). visualDePieza le antepone nombre y color.
+        ...(item.visual ? { visual: visualDePieza(item.nombre, item.colorFamilia, item.visual) } : {}),
         ...(imagePath ? { image_path: imagePath } : {}),
       },
     })

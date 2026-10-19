@@ -97,8 +97,9 @@ export function LookCard({
   ensureOutfitId?: () => Promise<string | null>;
   /** A dónde vuelve el wizard de avatar si aún no tiene uno. */
   returnTo: string;
-  /** Algún tile es una pieza que todavía no tiene: sin guardar ni probarse (el
-   *  try-on y el historial sólo saben de prendas reales del clóset). */
+  /** Algún tile es una pieza que todavía no tiene: sin corazón (el historial
+   *  sólo guarda lo que tienes). Probárselo depende de quien llama: esenciales
+   *  sí lo ofrece (con `ensureOutfitId`), el viaje todavía no. */
   faltaAlgo?: boolean;
 }) {
   const [zoom, setZoom] = useState<PrendaZoomData | null>(null);
@@ -223,10 +224,12 @@ export function LookCard({
           nada le compite: el feedback es la señal más escasa que tenemos y no
           puede quedar de sobra visual. */}
       <div className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
-        {faltaAlgo ? (
+        {faltaAlgo && !puedeProbar ? (
           <span className="text-[11.5px] text-muted">con lo que te falta · cuando lo tengas, te lo pruebas</span>
         ) : mostrarRender || !puedeProbar ? (
-          <span className="text-[11.5px] text-muted">¿te gusta?</span>
+          <span className="text-[11.5px] text-muted">
+            {faltaAlgo ? "con lo que te falta · ¿te gusta?" : "¿te gusta?"}
+          </span>
         ) : t.mode === "sin_avatar" ? (
           <Link
             href={t.avatarHref}
