@@ -2,6 +2,42 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.395.0] - 2026-10-18 — los jueces de esenciales y de la maleta ya corrigen
+
+- **El juez de esenciales tiene 4 reglas nuevas** (`lib/engine/capsule-revision.ts`):
+  abrigo de invierno de más para su clima (templado o calor: 0, o 1 si viaja a
+  frío), nada para lluvia si dijo que llueve, sin jeans azules con días
+  casuales (salvo veto), y pieza de noche cuya descripción no dice qué la hace
+  de noche.
+- **La maleta estrena juez** (`lib/engine/trip-revision.ts`): abrigo de
+  invierno para la mínima de la parada más fría (capa, si la mínima es de 6 a
+  12°C), calzado cerrado si hace frío, piezas ligeras si también hay calor,
+  algo para la lluvia si la trae alguna parada, algo formal si el viaje es de
+  trabajo, y que quepa en mochila o equipaje de mano.
+- **Y los dos corrigen, no sólo anotan** (`lib/engine/reparar-lista.ts`): si una
+  regla se activa, una segunda pasada con las mismas instrucciones de stylist
+  quita o agrega sólo esas piezas, una regla a la vez sobre la lista ya
+  corregida, y se vuelve a revisar. Lo que no se pudo corregir queda anotado en
+  `revision`; lo que se corrigió, en `reparacion`. Sólo cuesta cuando algo
+  falla (~5 s y ~$0.03 por regla).
+- **Cómo se le pide, y por qué así (medido):** en un solo mensaje ("ya armaste
+  esta lista… un revisor encontró…") el modelo se negó en 17 de 17 llamadas;
+  como conversación (su lista como su respuesta, el hallazgo como pedido) pasó.
+  Con varios hallazgos juntos, una persona se rechazó siempre; uno a la vez,
+  pasaron. Y si el schema completo se rechaza dos veces, un tercer intento pide
+  sólo lo necesario para la prenda.
+- **Medido en seco:**
+  - Juez de esenciales sobre las cápsulas de prueba de hoy: 8 avisos con el
+    prompt viejo, 1 con el nuevo (el abrigo de lana que se había visto a ojo).
+    Sobre las 24 guardadas: abrigo de más en 12 (todas del prompt viejo), sin
+    jeans azules en 2, pieza de noche mal descrita en 1.
+  - Corrección sobre 5 cápsulas con hallazgos: 6 de 8 corregidos, 4 cápsulas
+    quedan limpias (abrigos de lana → gabardina o chamarra ligera, zapato
+    formal agregado). Los 2 sin corregir quedan anotados.
+  - Maletas: 3 avisos en las 12 guardadas, los 3 correctos. Rearmadas 4 con el
+    código nuevo: las 2 de equipaje de mano salían con 12 prendas para 11 y la
+    corrección quitó una en cada una; las otras 2, limpias.
+
 ## [0.2.394.0] - 2026-10-18 — tus esenciales se visten para tu clima
 
 De la cápsula real de una persona en clima templado: dos abrigos largos de
