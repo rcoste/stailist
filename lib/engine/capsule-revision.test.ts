@@ -70,6 +70,19 @@ describe("revisarCapsula — el juez que la cápsula no tenía", () => {
     expect(h).toContain("traje-sin-pantalon");
   });
 
+  it("una chaqueta de piel no es un chaqué: no pide pantalón de smoking", () => {
+    const h = reglas([
+      ...base,
+      p({ category: "saco", nombre: "Chaqueta de piel negra", tipo: "chaqueta-piel", hueco: "capa con actitud" }),
+    ]);
+    expect(h).not.toContain("traje-sin-pantalon");
+  });
+
+  it("el chaqué sí es de etiqueta", () => {
+    const h = reglas([...base, p({ category: "saco", nombre: "Chaqué gris", tipo: "chaque", hueco: "boda de día" })]);
+    expect(h).toContain("traje-sin-pantalon");
+  });
+
   it("saco de traje sin su pantalón del mismo color", () => {
     const h = revisarCapsula(
       [...base, p({ category: "saco", nombre: "Saco de traje marino", tipo: "saco-de-traje", colorFamilia: "marino" })],

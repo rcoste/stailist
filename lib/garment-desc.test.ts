@@ -245,6 +245,16 @@ describe("visualDePieza — la pieza sugerida no pierde su nombre ni su color", 
     expect(d).toContain("Top negro de satén de tirantes");
     expect(d).toContain("satén fluido");
   });
+  it("'ya la tengo' guarda la pieza como prenda: su dibujo sabe que es un pantalón gris", () => {
+    // El caso del 2026-10-19: con la `visual` cruda el generador sólo leyó
+    // "tiro alto con pinzas…" y dibujó un pantalón taupe.
+    const visual = "tiro alto con pinzas, pierna recta, raya marcada, largo al tobillo";
+    const rasgos = { nombre: "Pantalón de vestir gris carbón", color: "gris", categoria: "bottom" };
+    expect(garmentRenderDesc({ ...rasgos, visual })).not.toContain("gris");
+    const d = garmentRenderDesc({ ...rasgos, visual: visualDePieza(rasgos.nombre, rasgos.color, visual) });
+    expect(d).toContain("Pantalón de vestir gris carbón");
+    expect(d).toContain("raya marcada");
+  });
   it("si el nombre no dice el color, lo agrega", () => {
     expect(visualDePieza("Chamarra de piel", "negro", "biker corta")).toBe("Chamarra de piel, en color negro: biker corta");
   });

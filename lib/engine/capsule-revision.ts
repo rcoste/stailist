@@ -96,7 +96,11 @@ export function revisarCapsula(
   //    tenía pantalón, cuando la lista trae "Pantalón de smoking negro" — el
   //    patrón viejo buscaba traje|vestir|sastre y ese nombre no dice ninguna.
   //    Lo cazó correr el juez contra las 15 cápsulas reales, no un test.
-  const esEtiqueta = (t: string) => /smoking|esmoquin|tuxedo|frac|jaquet|chaque/.test(t);
+  //    "chaque" (el chaqué, ya sin acento) va como PALABRA: suelto también
+  //    atrapaba "chaqueta", y una "Chaqueta de piel negra" salía como saco de
+  //    etiqueta sin su pantalón de smoking (2026-10-19) — y la reparación
+  //    habría podido agregarle uno.
+  const esEtiqueta = (t: string) => /smoking|esmoquin|tuxedo|\bfrac\b|jaquet|\bchaque\b/.test(t);
   const sacosDeTraje = items.filter(
     (i) =>
       i.category === "saco" &&

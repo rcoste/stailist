@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.395.1] - 2026-10-19 — "ya la tengo" se dibuja de su color
+
+- **Una pieza de esenciales que marcas "ya la tengo" ya se dibuja con su
+  prenda y su color** (`app/closet/capsula/actions.ts`). La pieza trae una
+  descripción corta sin prenda ni color (esos van en su nombre), y al pasar al
+  clóset se copiaba tal cual: al generador le llegaba "tiro alto con pinzas,
+  pierna recta…" y el color lo adivinaba. Un pantalón gris carbón salió taupe,
+  un vestido rubí dorado, un arete de plata como top plateado: 9 de 10 dibujos
+  desde el 16 de octubre. Ahora se guarda con `visualDePieza`, el mismo
+  arreglo que ya usaban las piezas sugeridas.
+- **El juez de esenciales ya no confunde una chaqueta con un chaqué**
+  (`lib/engine/capsule-revision.ts`): "chaque" suelto atrapaba "chaqueta", y
+  una chaqueta de piel salía como saco de etiqueta sin su pantalón de smoking.
+
 ## [0.2.395.0] - 2026-10-18 — los jueces de esenciales y de la maleta ya corrigen
 
 - **El juez de esenciales tiene 4 reglas nuevas** (`lib/engine/capsule-revision.ts`):
