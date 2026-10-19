@@ -30,6 +30,7 @@ import { TripPackedProvider, TripPackedBar } from "@/components/trip-packed-cont
 import { DeleteTripButton } from "@/components/delete-trip-button";
 import { InvitarViaje } from "@/components/invitar-viaje";
 import { textoUnidos } from "@/lib/viaje-invitacion";
+import { avisosDeLoQueLlevas } from "@/lib/trip-avisos";
 
 export default async function ViajeDetallePage({
   params,
@@ -43,7 +44,7 @@ export default async function ViajeDetallePage({
   const { data: trip } = await supabase
     .from("trips")
     .select(
-      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale"
+      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale, contexto"
     )
     .eq("id", id)
     .eq("user_id", profile.id)
@@ -162,6 +163,17 @@ export default async function ViajeDetallePage({
   );
   const paradas = Array.isArray(trip.paradas) ? (trip.paradas as Parada[]) : [];
   const nParadas = paradas.length || 1;
+  // El juez sobre lo que de verdad lleva (no la lista ideal): la lluvia de
+  // Kioto sin nada que la aguante, porque el trench se quedó en la wishlist.
+  const climaParadas = (paradas.length ? paradas : [{ lugar: trip.lugar as string, weather }])
+    .filter((p) => p.weather)
+    .map((p) => ({ lugar: p.lugar.split(",")[0].trim(), ...p.weather! }));
+  const avisos = avisosDeLoQueLlevas(target, match, overrides, {
+    paradas: climaParadas,
+    ocasiones: (trip.ocasiones as string[] | null) ?? [],
+    dias: days,
+    contexto: (trip.contexto as string | null) ?? null,
+  });
 
   // Título: una parada → su nombre; varias → el país compartido ("Japón") o
   // "Tokio y 2 más" si la ruta cruza países.
@@ -382,6 +394,7 @@ export default async function ViajeDetallePage({
               candidatasIniciales={candidatas}
               descartadosIniciales={descartados}
               ganadosIniciales={ganados}
+              avisos={avisos}
             />
           }
           looks={

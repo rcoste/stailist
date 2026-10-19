@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  cabeConLoQueTiene,
   buildTripGrid,
   climaText,
   keepOccasionCoverage,
@@ -287,5 +288,20 @@ describe("climaText — el rango del viaje", () => {
   });
   it("con una sola ciudad el rango es del día", () => {
     expect(climaText({ temp_c: 12, condition: "despejado", temp_min: 7, temp_max: 17 })).toContain("entre la mañana y la tarde");
+  });
+});
+
+// 2026-10-19: lo que ya tienes va primero — a lo más UNA pieza que te falta por
+// look. Medido sobre 5 maletas reales: looks con 2+ faltantes 15 → 0, mismos looks.
+describe("cabeConLoQueTiene", () => {
+  const faltan = new Set(["Trench impermeable negro", "Pantalón wide leg negro"]);
+  it("una pieza que falta sí (enseña una compra)", () => {
+    expect(cabeConLoQueTiene(["Suéter negro", "Jeans", "Trench impermeable negro"], faltan)).toBe(true);
+  });
+  it("dos ya no: es otra maleta", () => {
+    expect(cabeConLoQueTiene(["Suéter negro", "Pantalón wide leg negro", "Trench impermeable negro"], faltan)).toBe(false);
+  });
+  it("todo suyo, siempre", () => {
+    expect(cabeConLoQueTiene(["Suéter negro", "Jeans"], faltan)).toBe(true);
   });
 });

@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.399.0] - 2026-10-19 — tus looks del viaje van con lo que tienes, y la maleta te avisa del hueco
+
+- **Los looks del viaje (y los de esenciales) ponen primero lo que ya tienes**
+  (`lib/engine/trip-outfits.ts`). Las piezas que te faltan siguen entrando
+  para que veas qué te suma cada compra, pero a lo más UNA por look (regla en
+  el prompt y tope en código, también al reparar). Y si el contexto del viaje
+  nombra un momento clave —un cumpleaños—, ese look va con lo tuyo: en una
+  maleta real el de su cumpleaños iba sobre un vestido que no tenía.
+- **Medido en seco** sobre 5 armados de looks de 4 viajes reales, contra la
+  versión anterior: looks con 2+ piezas que faltan, 15 → 0; con alguna
+  faltante, 38 → 18; looks por viaje casi iguales (76 → 73) y las mismas
+  ocasiones cubiertas. El cumpleaños salió las 2 veces sólo con prendas suyas.
+- **"Ojo con tu maleta"** (`lib/trip-avisos.ts`): el juez de la maleta ahora
+  revisa también lo que DE VERDAD llevas —lo tuyo, lo parecido y lo que
+  elegiste—, no sólo la lista ideal. La lista traía un trench para la lluvia
+  de Kioto, pero el trench le faltaba y nadie le avisó. Si una pieza que te
+  falta lo resuelve, la nombra. En los viajes guardados: 5 de 13 llevan lluvia
+  sin nada para ella. Un viaje de "trabajo" cuyo contexto dice "informal" no
+  recibe el aviso de que no lleva nada formal.
+
 ## [0.2.398.0] - 2026-10-19 — la app ya no te manda a comprar lo que tienes
 
 - **El cruce reconoce tu pantalón aunque se llame distinto**
