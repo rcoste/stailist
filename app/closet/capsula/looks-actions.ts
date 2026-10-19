@@ -28,6 +28,7 @@ import { loadTasteSignal } from "@/lib/engine/taste-signal";
 import type { Occasion, TripOutfit } from "@/lib/trip";
 import { registrarEvento } from "@/lib/telemetria";
 import { piezasDeCapsulaParaLooks, propiasEn } from "@/lib/capsula-looks-piezas";
+import { resolverPrendasDelCloset } from "@/lib/capsula-tryon";
 
 const MAX_LOOKS = 16;
 const outfitKey = (o: { prendas: string[] }) => capsuleLookKey(o.prendas);
@@ -168,29 +169,6 @@ export async function generateCapsuleOutfits(
 // favorited_at) pero suficiente para el try-on, y el render queda cacheado.
 // ————————————————————————————————————————————————————————————————————————
 
-// Resuelve nombre de prenda → id del clóset (mismo criterio que el resto de la
-// app: el nombre es el del arquetipo, o attrs.nombre). Lo que no resuelva se
-// omite: es best-effort y el try-on ya avisa en logs si le faltan prendas.
-async function resolveItemIds(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  prendas: string[]
-): Promise<string[]> {
-  const { data: items } = await supabase
-    .from("items")
-    .select("id, attrs, archetypes(name)")
-    .eq("user_id", userId)
-    .is("deleted_at", null);
-  const byName = new Map<string, string>();
-  for (const it of items ?? []) {
-    const arch = it.archetypes as { name?: string } | null;
-    const attrs = (it.attrs ?? {}) as { nombre?: string };
-    const name = arch?.name ?? attrs.nombre;
-    if (name && !byName.has(name)) byName.set(name, it.id as string);
-  }
-  return prendas.map((n) => byName.get(n)).filter((id): id is string => !!id);
-}
-
 // Crea (o recupera) la fila del look `index`. `favorite`: null = no tocar el
 // corazón (solo asegurar la fila, caso try-on); true/false = ponerlo o quitarlo.
 async function ensureRow(
@@ -235,7 +213,10 @@ async function ensureRow(
     return { ok: true, outfitId: rowId };
   }
 
-  const itemIds = await resolveItemIds(supabase, user.id, look.prendas);
+  // Best-effort: lo que no resuelve (una pieza que te falta) no entra a
+  // item_ids; el try-on la agrega desde la wishlist (lib/capsula-tryon.ts).
+  const enCloset = await resolverPrendasDelCloset(supabase, user.id, look.prendas);
+  const itemIds = look.prendas.map((n) => enCloset.get(n)).filter((id): id is string => !!id);
   if (itemIds.length === 0) return { ok: false };
 
   const { data: inserted, error } = await supabase

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generarTryon } from "@/lib/tryon";
+import { prendasDelLookDeCapsula, type PiezaQueFalta } from "@/lib/capsula-tryon";
 import { ciudadDelViaje } from "@/lib/tryon-escena";
 import { revisarImagen } from "@/lib/freno-imagenes";
 import { registrarEvento } from "@/lib/telemetria";
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
   // Outfit (y cache si ya se generó antes)
   const { data: outfit } = await supabase
     .from("outfits")
-    .select("id, item_ids, tryon_path, tip, occasion, plan, weather, trip_id, trip_look_index")
+    .select("id, item_ids, tryon_path, tip, occasion, plan, weather, trip_id, trip_look_index, source, capsule_look_key")
     .eq("id", outfitId)
     .eq("user_id", user.id)
     .single();
@@ -74,13 +75,34 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Look de esenciales: sus prendas se resuelven HOY (si ya marcó "ya la
+  // tengo", la pieza pasa del catálogo a su clóset) y las que aún le faltan
+  // entran con la imagen del catálogo. Si cambió qué tiene, el try-on viejo ya
+  // no es este look: se rehace, igual que en el viaje (ensureTripLookOutfit).
+  let itemIds = (outfit.item_ids as string[]) ?? [];
+  let yaGenerado = (outfit.tryon_path as string | null) ?? null;
+  let extras: PiezaQueFalta[] = [];
+  if (outfit.source === "capsula" && outfit.capsule_look_key) {
+    const piezas = await prendasDelLookDeCapsula(supabase, user.id, outfit.capsule_look_key as string);
+    if (piezas) {
+      extras = piezas.faltan;
+      const igual = [...piezas.itemIds].sort().join() === [...itemIds].sort().join();
+      if (!igual && piezas.itemIds.length > 0) {
+        itemIds = piezas.itemIds;
+        yaGenerado = null;
+        await supabase.from("outfits").update({ item_ids: itemIds, tryon_path: null }).eq("id", outfitId);
+      }
+    }
+  }
+
   const r = await generarTryon({
     supabase,
     userId: user.id,
-    itemIds: (outfit.item_ids as string[]) ?? [],
+    itemIds,
+    extras,
     tip: (outfit.tip as string | null) ?? null,
     cachePath: `${user.id}/tryons/${outfitId}.jpg`,
-    yaGenerado: (outfit.tryon_path as string | null) ?? null,
+    yaGenerado,
     origin: request.nextUrl.origin,
     escena: {
       plan: (outfit.plan as string | null) ?? null,

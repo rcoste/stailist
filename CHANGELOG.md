@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.396.0] - 2026-10-19 — te pruebas el look aunque te falte una pieza
+
+- **En los looks de tus esenciales, "verme con este look" ya funciona aunque
+  el look lleve una pieza que te falta** (`lib/capsula-tryon.ts`). Verte con
+  la pieza antes de comprarla es justo para lo que sirve el try-on, y el look
+  ya la marca como "te falta". La pieza entra con la misma imagen de catálogo
+  que enseña el look, resuelta en el servidor (el navegador nunca manda la
+  imagen). El corazón sigue apagado en esos looks: tu historial es de lo que
+  tienes.
+- **Si después marcas "ya la tengo", el try-on usa tu prenda**: las prendas
+  del look se resuelven al probarlo, y si cambió qué tienes, el try-on viejo
+  se rehace (`app/api/tryon/route.ts`), igual que en el viaje.
+- El viaje todavía no ofrece esto: sus piezas que faltan siguen sin try-on.
+
 ## [0.2.395.1] - 2026-10-19 — "ya la tengo" se dibuja de su color
 
 - **Una pieza de esenciales que marcas "ya la tengo" ya se dibuja con su

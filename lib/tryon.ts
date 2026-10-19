@@ -163,6 +163,12 @@ export async function generarTryon(opciones: {
    * del caché como semilla: el laboratorio usa las MISMAS escenas que prod.
    */
   escena?: Omit<ContextoEscena, "semilla"> & { semilla?: string };
+  /**
+   * Piezas que NO son del clóset: las que te faltan de un look de esenciales
+   * (lib/capsula-tryon.ts). La URL la resuelve el servidor —nunca viene del
+   * navegador—; sin URL, la pieza se dibuja de su nombre (`sinImagen`).
+   */
+  extras?: { nombre: string; url: string | null }[];
 }): Promise<ResultadoTryon> {
   const { supabase, userId, itemIds, tip, cachePath, yaGenerado, origin } = opciones;
   const tarea = opciones.tarea === undefined ? "tryon" : opciones.tarea;
@@ -220,6 +226,11 @@ export async function generarTryon(opciones: {
       : null;
     if (u) prendaUrls.push(u);
     else sinImagen.push(nm || (it.id as string));
+  }
+  for (const ex of opciones.extras ?? []) {
+    prendaNames.push(ex.nombre);
+    if (ex.url) prendaUrls.push(ex.url);
+    else sinImagen.push(ex.nombre);
   }
   // Guard: si una prenda no aportó imagen, el avatar podría inventarla. Queda
   // en los logs para enterarnos al instante si esto regresa.
