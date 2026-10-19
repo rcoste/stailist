@@ -54,7 +54,11 @@ export function closetItemLine(c: ClosetItemLite): string {
 // m8 (2026-10-18): las reglas de color, de una prenda por pieza y de rescate
 // (lib/engine/capsule-match-reglas.ts) corren después de la IA. Cambiar la
 // versión marca viejos los cruces guardados, para que se recalculen con ellas.
-const MATCH_PROMPT_VERSION = "m8";
+// m9 (2026-10-19): tres reglas más — ni dos "tienes" con la misma prenda, unos
+// jeans son jeans, y el rescate lee el corte y el plural. Su caso: la app le
+// dijo que le faltaba un pantalón wide leg negro que SÍ tenía ("Pantalones de
+// vestir negros", corte holgado) y lo mandó a la wishlist.
+const MATCH_PROMPT_VERSION = "m9";
 
 // CONTEXTO DE USO: hay prendas que NO son ropa de calle y por eso jamás cubren
 // una pieza de calle, aunque compartan zona, color y hasta el tipo. Le pasó a
