@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { climaDeParada, reglaDeAbrigo } from "./trip-capsule";
+import { climaDeParada, lineaReferenciasMaleta, reglaDeAbrigo } from "./trip-capsule";
 
 // Contrato sano sin cobertura hasta hoy (QA 2026-10-17, v0.2.387.0): lo que el
 // motor de la maleta lee del clima y la regla de abrigo.
@@ -30,5 +30,22 @@ describe("reglaDeAbrigo", () => {
   it("templado sin extremos: nada que agregar; sin climas tampoco", () => {
     expect(reglaDeAbrigo([{ temp_c: 20, temp_min: 15, temp_max: 25 }])).toBe("");
     expect(reglaDeAbrigo([null])).toBe("");
+  });
+});
+
+// Las referencias de estilo son fotos de UNA temporada (2026-10-19): la maleta
+// traduce su estilo al clima del viaje en vez de copiar sus piezas.
+describe("lineaReferenciasMaleta", () => {
+  it("pide traducir al clima del viaje, no trasplantar", () => {
+    const r = lineaReferenciasMaleta("abrigo largo de paño y botas altas");
+    expect(r).toContain("abrigo largo de paño y botas altas");
+    expect(r).toContain("TRADÚCELO al clima y a las ocasiones de este viaje");
+    expect(r).toContain("NO trasplantes las piezas");
+  });
+  it("sin el ejemplo del cuello alto, que el motor copiaba en 4 de 4 maletas", () => {
+    expect(lineaReferenciasMaleta("x")).not.toMatch(/cuello alto/i);
+  });
+  it("sin referencias, nada", () => {
+    expect(lineaReferenciasMaleta(null)).toBe("");
   });
 });

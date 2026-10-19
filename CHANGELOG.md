@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.397.0] - 2026-10-19 — la maleta traduce tus referencias al clima del viaje
+
+- **La maleta ya usa tus looks de referencia como la cápsula: traduce el
+  estilo, no copia las piezas** (`lib/engine/trip-capsule.ts`). Las fotos son
+  de una temporada; un viaje de calor con referencias de invierno podía
+  llevarse unos botines militares a Tulum.
+- **Medido en seco** (4 perfiles reales con referencias, viaje de 5 días en
+  Tulum a 24-32°C y de 4 en Nueva York a -1-6°C, sin guardar nada): piezas de
+  invierno en las maletas de calor, 1 de 6 → 0 de 6. En frío, el abrigo largo,
+  el cuello alto y las botas siguen llegando a quien los tiene en sus fotos.
+  El estilo se nota traducido: tops ceñidos y pantalón fluido de talle alto,
+  sneakers en vez de botas militares.
+- **Un ejemplo de la instrucción se copiaba**: "cuello alto → top de cuello
+  alto sin mangas" salió en 4 de 4 maletas de calor, aun para quien no tiene
+  un cuello alto en sus fotos. Se quitó y la segunda medición (4 maletas) ya
+  no lo trae. Límite: una o dos muestras por perfil.
 ## [0.2.396.0] - 2026-10-19 — te pruebas el look aunque te falte una pieza
 
 - **En los looks de tus esenciales, "verme con este look" ya funciona aunque
