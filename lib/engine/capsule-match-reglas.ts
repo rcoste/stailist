@@ -24,6 +24,18 @@
 //     "Parecido" y no "tienes" a propósito: el nombre no ve el tipo fino
 //     (henley vs camiseta) que la IA sí pudo haber visto.
 //
+// Y tres más del 2026-10-19, de la maleta de la misma persona (versión m9):
+//  - "Botas altas negras" y "Botines negros de punta" quedaban las dos como
+//    "tienes" con sus MISMAS botines (2 de 2 corridas): la regla 2 sólo veía
+//    "tienes" contra "parecido". Ahora tampoco dos "tienes".
+//  - Unos jeans son jeans: la IA le dio sus pantalones de vestir negros a unos
+//    "jeans negros" — y así le quitó a la pieza que sí eran (wide leg).
+//  - El rescate no la encontraba: "Pantalones de vestir negros" (corte
+//    holgado) contra "Pantalón wide leg negro" no compartían NI una palabra
+//    ("pantalones" ≠ "pantalón"; "wide leg" vive en el corte, no en el
+//    nombre). La app le dijo que le faltaba y lo mandó a la wishlist. Ahora
+//    las palabras van en singular y el corte cuenta como palabra de clase.
+//
 // Lógica pura y con pruebas; capsule-match.ts la aplica al final.
 
 import type { CapsuleItem, ClosetItemLite, MatchEntry } from "@/lib/capsule";
@@ -90,7 +102,26 @@ function techoPorColor(ideal: string | null, real: string | null): "parecido" | 
 // Materiales: no cuentan como "la misma clase de prenda" (unos tenis de piel no
 // son unas sandalias de piel).
 const MATERIALES = new Set(["piel", "lino", "lana", "algodon", "punto", "seda", "saten", "gamuza", "ante", "mezclilla", "cuero", "sintetica", "sintetico", "merino", "cashmere", "pima", "popelina"]);
-const deClase = (s: string) => new Set([...palabras(s)].filter((w) => !MATERIALES.has(w)));
+// En singular, igual de los dos lados: "pantalones" y "pantalón" son la misma
+// clase (sin esto, su pantalón ancho negro no compartía ni una palabra).
+export const singular = (w: string) =>
+  /(on|in)es$/.test(w) ? w.slice(0, -2) : /[^s]s$/.test(w) && w.length > 4 ? w.slice(0, -1) : w;
+const deClase = (s: string) => new Set([...palabras(s)].filter((w) => !MATERIALES.has(w)).map(singular));
+// El corte que la visión le leyó a la prenda, como las palabras con que una
+// pieza ideal lo nombra. Sólo en bottoms: es donde el nombre de la pieza lo
+// trae ("wide leg", "pierna recta") y el de la prenda real casi nunca.
+const PALABRAS_DE_CORTE: Record<string, string[]> = {
+  holgado: ["holgado", "ancho", "ancha", "wide", "leg", "amplio", "palazzo"],
+  recto: ["recto", "recta", "straight"],
+  entallado: ["entallado", "slim", "skinny", "pitillo", "ajustado"],
+};
+const deClaseReal = (c: ClosetItemLite) => {
+  const w = deClase(c.nombre);
+  if (c.category === "bottom" && c.corte) for (const p of PALABRAS_DE_CORTE[norm(c.corte)] ?? []) w.add(p);
+  return w;
+};
+// Unos jeans son jeans: la mezclilla no la sustituye un pantalón de vestir, ni al revés.
+const esJeans = (s: string) => /\bjeans?\b|mezclilla|denim/.test(norm(s));
 
 const zona = (cat: string) => (cat === "top" || cat === "abrigo" ? "torso" : cat);
 const norm = sinTildes;
@@ -132,6 +163,25 @@ export function aplicarReglasDelCruce(
       cambiar(i, 1, { status: "parecido", by: e.by, difiere: `${familiaDePrenda(real)} en vez de ${familiaDeColor(it.colorFamilia)}` });
   });
 
+  // 1b · unos jeans son jeans
+  items.forEach((it, i) => {
+    const e = out[i];
+    if (!e || e.status === "falta" || it.category !== "bottom") return;
+    const real = prendaDe(e.by);
+    if (!real) return;
+    const realEsJeans = esJeans(`${real.nombre} ${real.material ?? ""}`);
+    if (esJeans(`${it.nombre} ${it.tipo}`) !== realEsJeans) cambiar(i, 1, { status: "falta", by: null, difiere: null });
+  });
+
+  // 2a · ni dos "tienes": la pieza que va primero (la de más prioridad) se la queda
+  const yaTiene = new Set<string>();
+  out.forEach((e, i) => {
+    if (e.status !== "tienes" || !e.by) return;
+    const k = norm(prendaDe(e.by)?.nombre ?? e.by);
+    if (yaTiene.has(k)) cambiar(i, 2, { status: "falta", by: null, difiere: null });
+    else yaTiene.add(k);
+  });
+
   // 2 · una prenda no cubre dos piezas: si ya es "tienes" en una, no es "parecido" en otra
   const enTienes = new Set(out.filter((e) => e.status === "tienes" && e.by).map((e) => norm(e.by!)));
   out.forEach((e, i) => {
@@ -153,7 +203,7 @@ export function aplicarReglasDelCruce(
         !usadas.has(norm(c.nombre)) &&
         c.category === it.category &&
         familiaDePrenda(c) === famIdeal &&
-        [...deClase(c.nombre)].filter((w) => clase.has(w)).length >= 2
+        [...deClaseReal(c)].filter((w) => clase.has(w)).length >= 2
     );
     if (!libre) return;
     usadas.add(norm(libre.nombre));

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { aplicarReglasDelCruce, familiaDeColor } from "./capsule-match-reglas";
+import { aplicarReglasDelCruce, familiaDeColor, singular } from "./capsule-match-reglas";
 import type { CapsuleItem, ClosetItemLite, MatchEntry } from "@/lib/capsule";
 
 // LO QUE BLINDA: los casos reales de la corrida en seco del 2026-10-18 sobre los
@@ -106,5 +106,78 @@ describe("regla 3 · la prenda libre se ofrece", () => {
       [mia("Abrigo largo negro", "abrigo")]
     );
     expect(r.entries[1].status).toBe("falta");
+  });
+});
+
+// 2026-10-19 (m9): la maleta de la misma persona.
+describe("ni dos 'tienes' con la misma prenda", () => {
+  it("sus botines no son también sus botas altas: la pieza que va primero se las queda", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Botines negros de punta", "negro", "calzado"), ideal("Botas altas negras", "negro", "calzado")],
+      [e("tienes", "Botines"), e("tienes", "Botines")],
+      [mia("Botines", "calzado", "negro")]
+    );
+    expect(r.entries[0]).toMatchObject({ status: "tienes", by: "Botines" });
+    expect(r.entries[1].status).toBe("falta");
+  });
+});
+
+describe("unos jeans son jeans", () => {
+  it("unos pantalones de vestir no son 'tienes' de unos jeans negros", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Jeans negros de pierna recta", "negro", "bottom", "jeans")],
+      [e("tienes", "Pantalones de vestir negros")],
+      [mia("Pantalones de vestir negros", "bottom", "negro")]
+    );
+    expect(r.entries[0].status).toBe("falta");
+  });
+  it("ni unos jeans de un pantalón de lino", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Pantalón de lino crudo", "crema", "bottom", "pantalon")],
+      [e("parecido", "Jeans de mezclilla con costura expuesta")],
+      [mia("Jeans de mezclilla con costura expuesta", "bottom", "crema")]
+    );
+    expect(r.entries[0].status).toBe("falta");
+  });
+  it("unos jeans sí cubren unos jeans", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Jeans azul oscuro de tiro alto", "azul", "bottom", "jeans")],
+      [e("tienes", "Jeans azul oscuro rectos")],
+      [mia("Jeans azul oscuro rectos", "bottom", "azul")]
+    );
+    expect(r.entries[0].status).toBe("tienes");
+  });
+});
+
+describe("el rescate lee el corte y el plural", () => {
+  it("su caso: 'Pantalones de vestir negros' de corte holgado se ofrece para el 'Pantalón wide leg negro'", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Pantalón wide leg negro", "negro", "bottom", "pantalon-ancho")],
+      [e("falta")],
+      [{ ...mia("Pantalones de vestir negros", "bottom", "negro"), corte: "holgado" }]
+    );
+    expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Pantalones de vestir negros" });
+  });
+  it("sin el corte, una sola palabra en común no alcanza", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Pantalón wide leg negro", "negro", "bottom", "pantalon-ancho")],
+      [e("falta")],
+      [mia("Pantalones de vestir negros", "bottom", "negro")]
+    );
+    expect(r.entries[0].status).toBe("falta");
+  });
+  it("el corte de un top no cuenta (oversize no es 'wide leg')", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Suéter ancho negro", "negro", "top")],
+      [e("falta")],
+      [{ ...mia("Playera negra", "top", "negro"), corte: "holgado" }]
+    );
+    expect(r.entries[0].status).toBe("falta");
+  });
+  it("singular: pantalones → pantalon, botines → botin, jeans → jean", () => {
+    expect(singular("pantalones")).toBe("pantalon");
+    expect(singular("botines")).toBe("botin");
+    expect(singular("jeans")).toBe("jean");
+    expect(singular("vestir")).toBe("vestir");
   });
 });

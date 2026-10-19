@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.398.0] - 2026-10-19 — la app ya no te manda a comprar lo que tienes
+
+- **El cruce reconoce tu pantalón aunque se llame distinto**
+  (`lib/engine/capsule-match-reglas.ts`). Una maleta pidió un "Pantalón wide
+  leg negro" y la persona tenía unos "Pantalones de vestir negros" de corte
+  holgado. Le dijo que le faltaba y ella lo mandó a la wishlist, para
+  comprarlo. No compartían ni una palabra: "pantalones" no es "pantalón" y el
+  "wide leg" vivía en el corte, no en el nombre. Ahora las palabras se
+  comparan en singular y, en pantalones y faldas, el corte cuenta ("holgado"
+  = ancho / wide leg, "recto", "entallado").
+- **Una prenda ya no cubre dos piezas como "la tienes"**: sus botines salían
+  también como sus "botas altas", en 2 de 2 corridas. La pieza que va primero
+  se la queda y la otra queda como "te falta".
+- **Unos jeans son jeans**: un pantalón de vestir o de lino ya no cuenta como
+  jeans, ni al revés. La IA le había dado sus pantalones de vestir negros a
+  unos "jeans negros", y así se los quitaba a la pieza que sí eran.
+- **Medido sobre los 32 cruces guardados** (868 piezas), contra las reglas
+  anteriores: 6 cambios, los 6 revisados a ojo como correctos. Versión del
+  cruce m8 → m9: los cruces de esenciales se recalculan solos.
+
 ## [0.2.397.0] - 2026-10-19 — la maleta traduce tus referencias al clima del viaje
 
 - **La maleta ya usa tus looks de referencia como la cápsula: traduce el

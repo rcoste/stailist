@@ -168,8 +168,9 @@ describe("matchSignature — una sola firma para el match Y los looks", () => {
     // El literal es a propósito: subir la versión recalcula el match de TODOS
     // (una llamada a Opus por persona en su próxima visita), así que el bump
     // tiene que ser deliberado y este test lo obliga a serlo. m7 (2026-09-09):
-    // la etiqueta dejó de cubrir sastrería de calle.
-    expect(matchSignature(closet)).toBe(`m8|${closetSignature(closet)}`);
+    // la etiqueta dejó de cubrir sastrería de calle. m9 (2026-10-19): reglas
+    // de jeans, ni dos "tienes" y rescate por corte.
+    expect(matchSignature(closet)).toBe(`m9|${closetSignature(closet)}`);
     expect(matchSignature(closet)).not.toBe(closetSignature(closet));
   });
 
