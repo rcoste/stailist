@@ -585,6 +585,10 @@ export type UniqloItem = {
 export type PrendaVitrina = {
   /** Lo que identifica la entrada en los eventos: `<mercado>:<productId>:<displayCode>`. */
   id: string;
+  /** "E488243-000": lo que va en la URL de la ficha. */
+  productId: string;
+  /** "14": el código de color de Uniqlo (sale en la etiqueta y en la ficha). */
+  colorCode: string;
   mercado: Mercado;
   tienda: string;
   nombre: string;
@@ -671,6 +675,8 @@ export function elegirPrendas(
     if (!foto) continue;
     candidatas.push({
       id: `${mercado}:${it.productId}:${color.displayCode}`,
+      productId: it.productId,
+      colorCode: color.displayCode,
       mercado,
       tienda: MERCADOS[mercado].nombre,
       nombre: it.name,
@@ -759,4 +765,92 @@ export function fechaCorta(iso: string | null): string | null {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", timeZone: "America/Mexico_City" }).format(d);
+}
+
+// --- Modo tienda -------------------------------------------------------------
+//
+// En Japón y Corea hay tienda Uniqlo en cada esquina: lo útil ahí no es el
+// enlace sino lo que le enseñas al personal o tecleas en la app de Uniqlo. La
+// etiqueta trae el número de producto de seis dígitos ("No. 488243") y el
+// código de color ("14"); la API los da como "E488243-000" y "14".
+
+/** "E488243-000" → "488243". Lo que no tenga esa forma, tal cual sin prefijo. */
+export function numeroDeProducto(productId: string): string {
+  const m = /^[A-Z]?(\d{6})(?:-\d+)?$/.exec(productId.trim());
+  return m ? m[1] : productId.replace(/^[A-Z]/, "").replace(/-\d+$/, "");
+}
+
+// --- Precio en pesos -----------------------------------------------------------
+//
+// Tipo de cambio del Banco Central Europeo vía Frankfurter (sin llave), una
+// consulta al día en la Data Cache de Next. Si falla, no se enseñan pesos: nunca
+// un tipo de cambio inventado.
+export type TasasMxn = Partial<Record<"USD" | "JPY" | "KRW", number>>;
+
+/** Pesos por una unidad de cada moneda, o null si la consulta falla. */
+export async function tasasAMxn(fetchImpl: typeof fetch = fetch): Promise<TasasMxn | null> {
+  try {
+    const res = await fetchImpl("https://api.frankfurter.dev/v1/latest?base=MXN&symbols=USD,JPY,KRW", {
+      cache: "force-cache",
+      next: { revalidate: 24 * 60 * 60 },
+      signal: AbortSignal.timeout(3000),
+    } as RequestInit);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { rates?: Record<string, number> };
+    const out: TasasMxn = {};
+    for (const k of ["USD", "JPY", "KRW"] as const) {
+      const porPeso = json.rates?.[k];
+      if (typeof porPeso === "number" && porPeso > 0) out[k] = 1 / porPeso;
+    }
+    return Object.keys(out).length ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/** "≈ $550 MXN" redondeado a decenas; null si no hay tasa para esa moneda. */
+export function pesosAprox(moneda: string, valor: number, tasas: TasasMxn | null | undefined): string | null {
+  const tasa = tasas?.[moneda as keyof TasasMxn];
+  if (!tasa || !Number.isFinite(valor)) return null;
+  const pesos = Math.round((valor * tasa) / 10) * 10;
+  return `≈ $${new Intl.NumberFormat("en-US").format(pesos)} MXN`;
+}
+
+/** ¿Se enseñan pesos? México, o país sin dato (cuentas anteriores a que se guardara). */
+export function mostrarPesos(pais: string | null | undefined): boolean {
+  return !pais || pais.toUpperCase() === "MX";
+}
+
+// --- "La compré" ----------------------------------------------------------------
+//
+// La compra era lo único que la prueba no podía ver sin preguntar por WhatsApp.
+// Un toque mete ESA prenda a tu clóset (con su foto de Uniqlo) y cubre la pieza
+// en la maleta. Lo que manda el navegador se valida aquí: la foto sólo de
+// image.uniqlo.com y la ficha sólo de uniqlo.com.
+export type CompraDeTienda = {
+  entrada: string;
+  tienda: string;
+  producto: string;
+  url: string;
+  foto: string;
+  precio: number;
+  moneda: string;
+};
+
+export function validarCompra(c: Partial<CompraDeTienda> | null | undefined): CompraDeTienda | null {
+  if (!c) return null;
+  const foto = fotoSegura(c.foto);
+  const url = typeof c.url === "string" && /^https:\/\/www\.uniqlo\.com\/(us|jp|kr)\//.test(c.url) ? c.url : null;
+  const entrada = typeof c.entrada === "string" && /^(us|jp|kr):[A-Z]?\d+-\d+:\w+$/.test(c.entrada) ? c.entrada : null;
+  if (!foto || !url || !entrada) return null;
+  const texto = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  return {
+    entrada,
+    tienda: texto(c.tienda, 40) || "Uniqlo",
+    producto: texto(c.producto, 120),
+    url,
+    foto,
+    precio: typeof c.precio === "number" && Number.isFinite(c.precio) ? c.precio : 0,
+    moneda: texto(c.moneda, 3).toUpperCase(),
+  };
 }
