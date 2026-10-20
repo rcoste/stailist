@@ -136,6 +136,12 @@ describe("con término (v0.2.402.2): ropa interior y nombre que no dice la prend
     expect(motivoDescarte(bolsa, { segmento: "mujer", colorFamilia: "negro", termino: "crossbody bag", nombre: "Bolsa cruzada de piel negra" })).toBe("material");
   });
 
+  it("tono: el color sí, el código no → motivo 'tono' (distinto de 'sin-color')", () => {
+    const palido = { ...prenda("P", "Crew Neck T-Shirt"), colors: [{ name: "GREEN", displayCode: "51" }], images: { main: { "51": { image: "https://image.uniqlo.com/UQ/p.jpg" } } } };
+    expect(motivoDescarte(palido, { segmento: "hombre", colorFamilia: "verde", nombre: "Camiseta esmeralda", termino: "t-shirt" })).toBe("tono");
+    expect(motivoDescarte(palido, { segmento: "hombre", colorFamilia: "negro", nombre: "Camiseta negra", termino: "t-shirt" })).toBe("sin-color");
+  });
+
   it("sin término (corridas anteriores a v0.2.402.2) no se aplica el filtro de nombre", () => {
     expect(motivoDescarte(items[1], { segmento: "hombre", colorFamilia: "negro" })).toBeNull();
   });

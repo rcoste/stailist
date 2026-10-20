@@ -29,6 +29,7 @@ const MOTIVO: Record<string, string> = {
   material: "no es de piel",
   "sin-precio": "sin precio",
   "sin-color": "fuera del color",
+  tono: "el color sí, el tono no",
   "sin-foto": "sin foto del color",
   rating: "menor calificación",
 };

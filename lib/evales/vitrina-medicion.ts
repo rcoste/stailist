@@ -1,6 +1,7 @@
 import { capsuleRows, type CapsuleMatch, type CapsuleOverrides, type CapsuleTarget } from "@/lib/capsule";
 import { sustitutoDe } from "@/lib/trip-maleta";
 import {
+  colorQueEmpata,
   coloresDe,
   cuelloCompatible,
   elegirPrendas,
@@ -99,6 +100,7 @@ export type MotivoDescarte =
   | "material"
   | "sin-precio"
   | "sin-color"
+  | "tono"
   | "sin-foto"
   | "rating";
 
@@ -152,9 +154,9 @@ export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<
   if (!temporadaCompatible(nombre, hueco)) return "temporada";
   if (!materialCompatible(nombre, hueco.nombre)) return "material";
   if (typeof it.prices?.base?.value !== "number") return "sin-precio";
-  const colores = coloresDe(hueco.colorFamilia);
-  const color = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
-  if (!color?.displayCode) return "sin-color";
+  // Misma puerta que producción: familia por nombre y, si la hay, tono por código.
+  const { color, porNombre } = colorQueEmpata(it.colors, hueco);
+  if (!color?.displayCode) return porNombre ? "tono" : "sin-color";
   if (!fotoSegura(it.images?.main?.[color.displayCode]?.image)) return "sin-foto";
   return null;
 }
@@ -166,11 +168,13 @@ export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<
  */
 export function armarCandidatos(items: UniqloItem[] | null | undefined, hueco: HuecoParaElegir, mercado: Mercado): CandidatoMedicion[] {
   const elegidas = new Set(elegirPrendas(items, hueco, mercado).map((p) => p.id));
-  const colores = coloresDe(hueco.colorFamilia);
   const salida: CandidatoMedicion[] = [];
   (items ?? []).forEach((it, orden) => {
     if (!it?.productId || !it.name) return;
-    const enFamilia = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
+    // El color que se enseña: el que empata (familia y tono); si no, el primero
+    // de la familia por nombre (para ver el tono que se descartó); si no, el primero.
+    const colores = coloresDe(hueco.colorFamilia);
+    const enFamilia = colorQueEmpata(it.colors, hueco).color ?? (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
     const color = enFamilia ?? (it.colors ?? [])[0] ?? null;
     const displayCode = color?.displayCode ?? null;
     const id = `${mercado}:${it.productId}:${displayCode ?? ""}`;

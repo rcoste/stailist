@@ -543,9 +543,15 @@ export const COLORES: Record<string, string[]> = {
   marino: ["NAVY"],
   "azul marino": ["NAVY"],
   "azul rey": ["BLUE"],
-  "azul claro": ["LIGHT BLUE"],
+  cobalto: ["BLUE"],
+  // Los celestes 61-63 se llaman "BLUE" en Uniqlo; el tono (TONOS) los acota.
+  "azul claro": ["LIGHT BLUE", "BLUE"],
+  celeste: ["LIGHT BLUE", "BLUE"],
   verde: ["GREEN", "DARK GREEN"],
   esmeralda: ["GREEN", "DARK GREEN"],
+  botella: ["GREEN", "DARK GREEN"],
+  menta: ["GREEN", "LIGHT GREEN"],
+  salvia: ["GREEN"],
   oliva: ["OLIVE", "KHAKI"],
   chocolate: ["DARK BROWN", "BROWN"],
   cafe: ["DARK BROWN", "BROWN"],
@@ -554,6 +560,7 @@ export const COLORES: Record<string, string[]> = {
   rubi: ["WINE", "RED", "DARK RED"],
   burdeos: ["WINE", "DARK RED"],
   rojo: ["RED"],
+  coral: ["RED"],
   morado: ["PURPLE"],
   lavanda: ["PURPLE", "LIGHT PURPLE"],
   mostaza: ["YELLOW"],
@@ -567,6 +574,88 @@ export function coloresDe(colorFamilia: string | null | undefined): string[] {
   if (!colorFamilia) return [];
   const s = slug(colorFamilia);
   return COLORES[s] ?? COLORES[s.split(" ")[0]] ?? [];
+}
+
+// --- Tono: el código de color de Uniqlo ----------------------------------------
+//
+// El NOMBRE de color de Uniqlo es la familia ("GREEN"), no el tono: bajo "GREEN"
+// conviven el lima, la menta, la salvia y el verde botella. Roberto, votando
+// (2026-10-21): "acepta las t-shirts que sean verdes independientemente del
+// tono… verde deslavado, fosforescente, bosque; por relevancia cae en verde,
+// pero no es verde esmeralda". El CÓDIGO sí va por tono: Uniqlo numera cada
+// familia de claro a oscuro (verdes 50-59, azules 60-69, rojos 13-19…) y el
+// mismo número es el mismo tinte en EE. UU., Japón y Corea.
+//
+// Medido el 2026-10-21 mirando hasta tres prendas por código de las corridas
+// guardadas de la medición (docs/designs/vitrina-de-tienda.md, "Medición en
+// seco"): 51-53 verdes pálidos, 54-55 botella/esmeralda, 56-57 oliva, 58-59
+// verde petróleo y oliva oscuro; 13-15 rojo vivo y coral, 16-17 rojo profundo,
+// 18-19 vino; 60-63 celestes (aunque 61-63 se llamen "BLUE"), 65-66 azul medio,
+// 67 azul rey, 68 azul tinta, 69 marino.
+//
+// Sólo las familias donde el nombre se queda corto llevan tonos; las demás
+// siguen por nombre. Y el tono FINO se lee del nombre de la pieza igual que el
+// tipo lee ahí sus modificadores: la cápsula guarda `colorFamilia: "verde"` y
+// `nombre: "Camiseta esmeralda"`, y lo que pide es esmeralda.
+export const TONOS: Record<string, string[]> = {
+  esmeralda: ["54", "55"],
+  botella: ["55", "58"],
+  verde: ["53", "54", "55", "58"],
+  menta: ["51", "53"],
+  salvia: ["53"],
+  rubi: ["17", "18", "19"],
+  rojo: ["13", "14", "15", "16", "17"],
+  coral: ["14"],
+  "azul claro": ["60", "61", "62", "63"],
+  celeste: ["60", "61", "62", "63"],
+  "azul rey": ["67"],
+  cobalto: ["67"],
+  azul: ["64", "65", "66", "67", "68", "69"],
+};
+
+/** Las familias con tono, de la más específica (dos palabras) a la más general. */
+const FAMILIAS_CON_TONO = Object.keys(TONOS).sort((a, b) => b.length - a.length);
+
+/**
+ * La familia que de verdad pide la pieza: la del nombre si nombra un tono
+ * ("Camiseta esmeralda" → esmeralda, "Suéter azul rey" → azul rey); si no, la
+ * de la cápsula. Sólo se asciende a una familia con tono que quepa en la misma
+ * familia de nombres: "Jeans negros rectos" no se vuelve "rojo" por nada.
+ */
+export function familiaDePieza(colorFamilia: string | null | undefined, nombre?: string | null): string | null {
+  const base = colorFamilia ? slug(colorFamilia) : null;
+  const texto = slug(nombre ?? "");
+  const nombresBase = coloresDe(base);
+  for (const f of FAMILIAS_CON_TONO) {
+    if (!new RegExp(`(^|[^a-z])${f}([^a-z]|$)`).test(texto)) continue;
+    const nombresF = COLORES[f] ?? COLORES[f.split(" ")[0]] ?? [];
+    if (nombresBase.length === 0 || nombresF.some((n) => nombresBase.includes(n))) return f;
+  }
+  return base;
+}
+
+/** Los códigos de tono que valen para una familia; null si esa familia va sólo por nombre. */
+export function tonosDe(familia: string | null | undefined): string[] | null {
+  if (!familia) return null;
+  const s = slug(familia);
+  return TONOS[s] ?? null;
+}
+
+/**
+ * El color del producto que empata con lo que pide la pieza: por NOMBRE de
+ * familia y, si la familia tiene tonos, también por CÓDIGO. Es la única
+ * puerta: la vitrina elige por aquí y la medición explica por aquí.
+ */
+export function colorQueEmpata(
+  colors: UniqloColor[] | null | undefined,
+  pieza: { colorFamilia: string; nombre?: string | null }
+): { color: UniqloColor | null; porNombre: boolean } {
+  const familia = familiaDePieza(pieza.colorFamilia, pieza.nombre);
+  const nombres = coloresDe(familia);
+  const tonos = tonosDe(familia);
+  const porNombre = (colors ?? []).filter((c) => nombres.includes((c.name ?? "").toUpperCase()));
+  const color = porNombre.find((c) => !tonos || tonos.includes(c.displayCode ?? "")) ?? null;
+  return { color, porNombre: porNombre.length > 0 };
 }
 
 // --- La respuesta de la API (sólo lo que se usa) -------------------------------
@@ -647,8 +736,7 @@ export function elegirPrendas(
   maximo = 2
 ): PrendaVitrina[] {
   const generos = new Set([hueco.segmento === "hombre" ? "MEN" : "WOMEN", "UNISEX"]);
-  const colores = coloresDe(hueco.colorFamilia);
-  if (colores.length === 0) return [];
+  if (coloresDe(familiaDePieza(hueco.colorFamilia, hueco.nombre)).length === 0) return [];
   const termino = hueco.termino ?? "";
   const manga = mangaDe(hueco.nombre);
   const candidatas: (PrendaVitrina & { rating: number; puntos: number })[] = [];
@@ -669,7 +757,8 @@ export function elegirPrendas(
     if (!materialCompatible(it.name, hueco.nombre)) continue;
     const precio = it.prices?.base?.value;
     if (typeof precio !== "number") continue;
-    const color = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
+    // En la familia Y en el tono (código): un verde pálido no cubre "esmeralda".
+    const { color } = colorQueEmpata(it.colors, hueco);
     if (!color?.displayCode) continue;
     const foto = fotoSegura(it.images?.main?.[color.displayCode]?.image);
     if (!foto) continue;
