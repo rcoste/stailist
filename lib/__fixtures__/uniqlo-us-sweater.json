@@ -1,0 +1,1229 @@
+{
+ "status": "ok",
+ "result": {
+  "items": [
+   {
+    "productId": "E465734-000",
+    "name": "Cashmere Sweater",
+    "genderCategory": "WOMEN",
+    "colors": [
+     {
+      "code": "COL13",
+      "displayCode": "13",
+      "name": "RED",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "RED"
+     },
+     {
+      "code": "COL01",
+      "displayCode": "01",
+      "name": "OFF WHITE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "WHITE"
+     },
+     {
+      "code": "COL03",
+      "displayCode": "03",
+      "name": "GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL08",
+      "displayCode": "08",
+      "name": "DARK GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL09",
+      "displayCode": "09",
+      "name": "BLACK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLACK"
+     },
+     {
+      "code": "COL10",
+      "displayCode": "10",
+      "name": "PINK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PINK"
+     },
+     {
+      "code": "COL11",
+      "displayCode": "11",
+      "name": "PINK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PINK"
+     },
+     {
+      "code": "COL12",
+      "displayCode": "12",
+      "name": "PINK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PINK"
+     },
+     {
+      "code": "COL19",
+      "displayCode": "19",
+      "name": "WINE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "RED"
+     },
+     {
+      "code": "COL31",
+      "displayCode": "31",
+      "name": "BEIGE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BEIGE"
+     },
+     {
+      "code": "COL32",
+      "displayCode": "32",
+      "name": "BEIGE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BEIGE"
+     },
+     {
+      "code": "COL39",
+      "displayCode": "39",
+      "name": "DARK BROWN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BROWN"
+     },
+     {
+      "code": "COL42",
+      "displayCode": "42",
+      "name": "YELLOW",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "YELLOW"
+     },
+     {
+      "code": "COL50",
+      "displayCode": "50",
+      "name": "LIGHT GREEN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     },
+     {
+      "code": "COL57",
+      "displayCode": "57",
+      "name": "OLIVE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     },
+     {
+      "code": "COL62",
+      "displayCode": "62",
+      "name": "BLUE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL65",
+      "displayCode": "65",
+      "name": "BLUE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL66",
+      "displayCode": "66",
+      "name": "BLUE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL68",
+      "displayCode": "68",
+      "name": "BLUE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL69",
+      "displayCode": "69",
+      "name": "NAVY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL73",
+      "displayCode": "73",
+      "name": "PURPLE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PURPLE"
+     },
+     {
+      "code": "COL99",
+      "displayCode": "99",
+      "name": "Other",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "OTHER"
+     }
+    ],
+    "prices": {
+     "base": {
+      "currency": {
+       "code": "USD",
+       "symbol": "$"
+      },
+      "value": 99.9
+     },
+     "promo": null,
+     "isDualPrice": false
+    },
+    "rating": {
+     "average": 4.3,
+     "count": 216
+    },
+    "images": {
+     "main": {
+      "10": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_10_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "11": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_11_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "12": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_12_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "13": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_13_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "19": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_19_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "31": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_31_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "32": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_32_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "39": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_39_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "42": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_42_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "50": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_50_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "57": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_57_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "62": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_62_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "65": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_65_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "66": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_66_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "68": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_68_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "69": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_69_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "73": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_73_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "99": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_99_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "01": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_01_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "03": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_03_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "08": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_08_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "09": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/465734/item/usgoods_09_465734_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      }
+     }
+    }
+   },
+   {
+    "productId": "E485310-000",
+    "name": "Souffle Yarn Sweater",
+    "genderCategory": "WOMEN",
+    "colors": [
+     {
+      "code": "COL10",
+      "displayCode": "10",
+      "name": "PINK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PINK"
+     },
+     {
+      "code": "COL01",
+      "displayCode": "01",
+      "name": "OFF WHITE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "WHITE"
+     },
+     {
+      "code": "COL04",
+      "displayCode": "04",
+      "name": "GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL08",
+      "displayCode": "08",
+      "name": "DARK GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL19",
+      "displayCode": "19",
+      "name": "WINE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "RED"
+     },
+     {
+      "code": "COL34",
+      "displayCode": "34",
+      "name": "BROWN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BROWN"
+     },
+     {
+      "code": "COL41",
+      "displayCode": "41",
+      "name": "YELLOW",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "YELLOW"
+     },
+     {
+      "code": "COL54",
+      "displayCode": "54",
+      "name": "GREEN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     },
+     {
+      "code": "COL60",
+      "displayCode": "60",
+      "name": "LIGHT BLUE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     }
+    ],
+    "prices": {
+     "base": {
+      "currency": {
+       "code": "USD",
+       "symbol": "$"
+      },
+      "value": 49.9
+     },
+     "promo": null,
+     "isDualPrice": false
+    },
+    "rating": {
+     "average": 5,
+     "count": 11
+    },
+    "images": {
+     "main": {
+      "10": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_10_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "19": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_19_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "34": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_34_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "41": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_41_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "54": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_54_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "60": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_60_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "01": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_01_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "04": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_04_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "08": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485310/item/usgoods_08_485310_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      }
+     }
+    }
+   },
+   {
+    "productId": "E450543-000",
+    "name": "Cashmere Sweater",
+    "genderCategory": "MEN",
+    "colors": [
+     {
+      "code": "COL08",
+      "displayCode": "08",
+      "name": "DARK GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL01",
+      "displayCode": "01",
+      "name": "OFF WHITE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "WHITE"
+     },
+     {
+      "code": "COL03",
+      "displayCode": "03",
+      "name": "GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL09",
+      "displayCode": "09",
+      "name": "BLACK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLACK"
+     },
+     {
+      "code": "COL15",
+      "displayCode": "15",
+      "name": "RED",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "RED"
+     },
+     {
+      "code": "COL27",
+      "displayCode": "27",
+      "name": "ORANGE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "ORANGE"
+     },
+     {
+      "code": "COL31",
+      "displayCode": "31",
+      "name": "BEIGE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BEIGE"
+     },
+     {
+      "code": "COL32",
+      "displayCode": "32",
+      "name": "BEIGE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BEIGE"
+     },
+     {
+      "code": "COL38",
+      "displayCode": "38",
+      "name": "DARK BROWN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BROWN"
+     },
+     {
+      "code": "COL41",
+      "displayCode": "41",
+      "name": "YELLOW",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "YELLOW"
+     },
+     {
+      "code": "COL55",
+      "displayCode": "55",
+      "name": "GREEN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     },
+     {
+      "code": "COL56",
+      "displayCode": "56",
+      "name": "OLIVE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     },
+     {
+      "code": "COL58",
+      "displayCode": "58",
+      "name": "DARK GREEN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     },
+     {
+      "code": "COL66",
+      "displayCode": "66",
+      "name": "BLUE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL69",
+      "displayCode": "69",
+      "name": "NAVY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     },
+     {
+      "code": "COL72",
+      "displayCode": "72",
+      "name": "PURPLE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PURPLE"
+     },
+     {
+      "code": "COL76",
+      "displayCode": "76",
+      "name": "PURPLE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PURPLE"
+     }
+    ],
+    "prices": {
+     "base": {
+      "currency": {
+       "code": "USD",
+       "symbol": "$"
+      },
+      "value": 99.9
+     },
+     "promo": null,
+     "isDualPrice": false
+    },
+    "rating": {
+     "average": 4.5,
+     "count": 226
+    },
+    "images": {
+     "main": {
+      "15": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_15_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "27": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_27_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "31": {
+       "image": "https://image.uniqlo.com/UQ/ST3/WesternCommon/imagesgoods/450543/item/goods_31_450543_3x4.jpg",
+       "model": []
+      },
+      "32": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_32_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "38": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_38_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "41": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_41_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "55": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_55_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "56": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_56_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "58": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_58_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "66": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_66_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "69": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_69_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "72": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_72_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "76": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_76_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "01": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_01_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "03": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_03_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "08": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_08_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "09": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/450543/item/usgoods_09_450543_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      }
+     }
+    }
+   },
+   {
+    "productId": "E487939-000",
+    "name": "Souffle Yarn Polo Sweater",
+    "genderCategory": "UNISEX",
+    "colors": [
+     {
+      "code": "COL31",
+      "displayCode": "31",
+      "name": "BEIGE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BEIGE"
+     },
+     {
+      "code": "COL08",
+      "displayCode": "08",
+      "name": "DARK GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL10",
+      "displayCode": "10",
+      "name": "PINK",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "PINK"
+     },
+     {
+      "code": "COL38",
+      "displayCode": "38",
+      "name": "DARK BROWN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BROWN"
+     },
+     {
+      "code": "COL69",
+      "displayCode": "69",
+      "name": "NAVY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     }
+    ],
+    "prices": {
+     "base": {
+      "currency": {
+       "code": "USD",
+       "symbol": "$"
+      },
+      "value": 49.9
+     },
+     "promo": null,
+     "isDualPrice": false
+    },
+    "rating": {
+     "average": 4.8,
+     "count": 9
+    },
+    "images": {
+     "main": {
+      "10": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/487939/item/usgoods_10_487939_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "31": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/487939/item/usgoods_31_487939_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "38": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/487939/item/usgoods_38_487939_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "69": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/487939/item/usgoods_69_487939_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      },
+      "08": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/487939/item/usgoods_08_487939_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Men"
+        }
+       ]
+      }
+     }
+    }
+   },
+   {
+    "productId": "E486665-000",
+    "name": "Souffle Yarn Sweater",
+    "genderCategory": "KIDS",
+    "colors": [
+     {
+      "code": "COL01",
+      "displayCode": "01",
+      "name": "OFF WHITE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "WHITE"
+     },
+     {
+      "code": "COL17",
+      "displayCode": "17",
+      "name": "RED",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "RED"
+     },
+     {
+      "code": "COL69",
+      "displayCode": "69",
+      "name": "NAVY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "BLUE"
+     }
+    ],
+    "prices": {
+     "base": {
+      "currency": {
+       "code": "USD",
+       "symbol": "$"
+      },
+      "value": 29.9
+     },
+     "promo": null,
+     "isDualPrice": false
+    },
+    "rating": {
+     "average": 0,
+     "count": 0
+    },
+    "images": {
+     "main": {
+      "17": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/486665/item/usgoods_17_486665_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Girls"
+        }
+       ]
+      },
+      "69": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/486665/item/usgoods_69_486665_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Boys"
+        }
+       ]
+      },
+      "01": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/486665/item/usgoods_01_486665_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Boys"
+        },
+        {
+         "modelGender": "Girls"
+        }
+       ]
+      }
+     }
+    }
+   },
+   {
+    "productId": "E485342-000",
+    "name": "Souffle Yarn Skipper Polo Sweater",
+    "genderCategory": "WOMEN",
+    "colors": [
+     {
+      "code": "COL01",
+      "displayCode": "01",
+      "name": "OFF WHITE",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "WHITE"
+     },
+     {
+      "code": "COL08",
+      "displayCode": "08",
+      "name": "DARK GRAY",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GRAY"
+     },
+     {
+      "code": "COL58",
+      "displayCode": "58",
+      "name": "DARK GREEN",
+      "display": {
+       "showFlag": true,
+       "chipType": 0
+      },
+      "filterCode": "GREEN"
+     }
+    ],
+    "prices": {
+     "base": {
+      "currency": {
+       "code": "USD",
+       "symbol": "$"
+      },
+      "value": 49.9
+     },
+     "promo": null,
+     "isDualPrice": false
+    },
+    "rating": {
+     "average": 5,
+     "count": 1
+    },
+    "images": {
+     "main": {
+      "58": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485342/item/usgoods_58_485342_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "01": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485342/item/usgoods_01_485342_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      },
+      "08": {
+       "image": "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/485342/item/usgoods_08_485342_3x4.jpg",
+       "model": [
+        {
+         "modelGender": "Women"
+        }
+       ]
+      }
+     }
+    }
+   }
+  ],
+  "pagination": {
+   "total": 83,
+   "offset": 0,
+   "count": 6
+  }
+ }
+}
