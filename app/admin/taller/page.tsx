@@ -39,6 +39,16 @@ const GRUPOS: { titulo: string; herramientas: { href: string; nombre: string; qu
     ],
   },
   {
+    titulo: "Maleta",
+    herramientas: [
+      {
+        href: "/admin/vitrina-medicion",
+        nombre: "Medición de la vitrina",
+        que: "¿La vitrina de Uniqlo elige bien? Los 20 candidatos de cada hueco, las dos que enseña, el juez y tu voto.",
+      },
+    ],
+  },
+  {
     titulo: "Ya no se usa",
     herramientas: [
       { href: "/admin/acceso", nombre: "Invitaciones", que: "La lista de espera y las invitaciones de la beta cerrada. El registro está abierto desde el 2026-09-06." },

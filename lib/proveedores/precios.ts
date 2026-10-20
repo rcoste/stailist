@@ -44,6 +44,10 @@ export const PRECIOS: Record<string, Precio> = {
   "claude-sonnet-5": { entrada: 2, salida: 10 },
   "claude-sonnet-4-6": { entrada: 3, salida: 15 },
   "claude-haiku-4-5-20251001": { entrada: 1, salida: 5 },
+  // Precio para prompts de hasta 100K tokens (arriba de eso cuesta 5×; aquí
+  // ninguna llamada se acerca). Verificado el 2026-10-21 en la tabla de
+  // modelos de platform.claude.com.
+  "claude-haiku-5-5": { entrada: 0.1, salida: 0.5 },
 
   // Google. Los precios de entrada de Gemini son por texto/imagen/video; el
   // audio cuesta más y aquí no lo usamos.

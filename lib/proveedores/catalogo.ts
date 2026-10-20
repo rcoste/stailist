@@ -33,6 +33,7 @@ export const CATALOGO: Modelo[] = [
   { proveedor: "anthropic", id: "claude-opus-5", etiqueta: "Opus 5" },
   { proveedor: "anthropic", id: "claude-sonnet-5", etiqueta: "Sonnet 5" },
   { proveedor: "anthropic", id: "claude-haiku-4-5-20251001", etiqueta: "Haiku 4.5" },
+  { proveedor: "anthropic", id: "claude-haiku-5-5", etiqueta: "Haiku 5.5" },
   { proveedor: "gemini", id: "gemini-3.7-flash", etiqueta: "Gemini 3.7 Flash" },
   { proveedor: "gemini", id: "gemini-3.6-flash", etiqueta: "Gemini 3.6 Flash" },
   { proveedor: "gemini", id: "gemini-3.5-flash", etiqueta: "Gemini 3.5 Flash" },

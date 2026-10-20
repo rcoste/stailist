@@ -249,3 +249,23 @@ export const MODELO_MOTIVO_DESTINO: Modelo = {
  * aquí no rompe nada, solo deja pasar algo que otro filtro debería cazar.
  */
 export const GUARD_MODEL = "claude-haiku-4-5-20251001";
+
+/**
+ * EL JUEZ DE LA VITRINA DE UNIQLO (medición en seco, 2026-10-21).
+ *
+ * La pregunta es cerrada y chica: "¿esta prenda de Uniqlo (nombre, color,
+ * precio) es la pieza que pide este hueco (nombre, descripción, temporada,
+ * formalidad)?" — sí/no y una línea. Se hace ~2,000 veces por corrida (36
+ * huecos × 3 mercados × 20 candidatos), así que el costo por pregunta manda,
+ * y el error tiene red: Roberto califica lo mismo en /admin/vitrina-medicion
+ * y la pantalla mide el ACUERDO juez↔Roberto antes de fiarse del juez solo.
+ *
+ * Haiku 5.5 ($0.10/$0.50 por millón: diez veces más barato que Haiku 4.5)
+ * porque es el juez barato que ya se aceptó para esta clase de pregunta.
+ * Nunca decide nada en producción: la vitrina no usa IA.
+ */
+export const MODELO_JUEZ_VITRINA: Modelo = {
+  proveedor: "anthropic",
+  id: "claude-haiku-5-5",
+  etiqueta: "Haiku 5.5",
+};
