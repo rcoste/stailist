@@ -21,6 +21,8 @@ import {
 export async function VitrinaHueco({
   tipo,
   nombre,
+  temporada,
+  viajeFrio,
   colorFamilia,
   segmento,
   mercados,
@@ -29,6 +31,10 @@ export async function VitrinaHueco({
   tipo: string;
   /** El nombre de la pieza ("Short de lino negro"): de ahí salen los modificadores de la búsqueda. */
   nombre?: string | null;
+  /** "frio" | "calor" | "todo-el-año": una pieza de frío no recibe lino. */
+  temporada?: string | null;
+  /** Ninguna parada pasa de 20 °C: tampoco entra lino ni AIRism. */
+  viajeFrio?: boolean | null;
   colorFamilia: string;
   segmento: Segmento;
   mercados: Mercado[];
@@ -55,7 +61,7 @@ export async function VitrinaHueco({
   const consultas = await Promise.all(mercados.map((m) => consultarUniqlo(m, q, { onError })));
   let prendas: PrendaVitrina[] = [];
   for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
-    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q }, mercados[i], consultas[i].vistoEl);
+    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q, nombre, temporada, viajeFrio }, mercados[i], consultas[i].vistoEl);
   }
   if (prendas.length === 0) return null;
 

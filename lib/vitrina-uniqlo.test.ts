@@ -16,8 +16,16 @@ import {
   coloresDe,
   consultarUniqlo,
   elegirPrendas,
+  cuelloCompatible,
   esRopaInterior,
+  estampadoNoPedido,
+  funcionCompatible,
+  materialCompatible,
+  temporadaCompatible,
+  viajeEsFrio,
   fotoSegura,
+  mangaCompatible,
+  mangaDe,
   nombreCoincide,
   mercadoDeParada,
   mercadosDeParadas,
@@ -236,7 +244,7 @@ describe("lo que no es la prenda, aunque la búsqueda lo devuelva", () => {
     expect(terminoDe("short", "Short de lino negro")).toBe("linen shorts");
     expect(terminoDe("sueter", "Suéter de punto vino")).toBe("knit sweater");
     expect(terminoDe("short-lino", "Short de lino negro")).toBe("linen shorts"); // no repite
-    expect(terminoDe("jeans", "Jeans negros rectos")).toBe("jeans");
+    expect(terminoDe("jeans", "Jeans negros rectos")).toBe("straight jeans");
   });
 
   it("esRopaInterior saca bóxers, briefs, calcetines y pijama en los tres idiomas, salvo que eso se busque", () => {
@@ -279,5 +287,160 @@ describe("lo que no es la prenda, aunque la búsqueda lo devuelva", () => {
     ];
     const out = elegirPrendas(items, { segmento: "hombre", colorFamilia: "negro", termino: "linen shorts" }, "us");
     expect(out.map((p) => p.nombre)).toEqual(["Linen Blend Shorts | 9.5\"", "Wide Sweat Shorts"]);
+  });
+});
+
+// SEGUNDO CASO REAL DEL 2026-10-21: a "Camisa de manga corta negra" (hombre) la
+// vitrina le ofrecía "Waffle T-Shirt" y "Waffle Henley Neck T-Shirt | Long
+// Sleeve". Tres huecos: "T-Shirt" contaba como camisa, nadie miraba la manga, y
+// la única camisa de manga corta negra que había era ESTAMPADA. Los ítems de
+// abajo son los nombres reales que devolvió la API ese día.
+describe("camisa no es playera; la manga y lo liso se respetan", () => {
+  const item = (id: string, name: string, rating = 4.5): UniqloItem => ({
+    productId: id,
+    name,
+    genderCategory: "UNISEX",
+    colors: [{ name: "BLACK", displayCode: "09" }],
+    prices: { base: { currency: { code: "USD" }, value: 29.9 } },
+    rating: { average: rating },
+    images: { main: { "09": { image: `https://image.uniqlo.com/UQ/ST3/us/imagesgoods/${id}/item/x_09.jpg` } } },
+  });
+
+  it("terminoDe busca la manga cuando contradice la convención de Uniqlo", () => {
+    expect(terminoDe("camisa", "Camisa de manga corta negra")).toBe("short sleeve shirt");
+    expect(terminoDe("camisa", "Camisa blanca de vestir")).toBe("shirt");
+    expect(terminoDe("playera", "Playera de manga larga gris")).toBe("long sleeve t-shirt");
+    expect(terminoDe("playera", "Playera blanca")).toBe("t-shirt");
+  });
+
+  it("mangaDe lee la manga del nombre de la pieza", () => {
+    expect(mangaDe("Camisa de manga corta negra")).toBe("corta");
+    expect(mangaDe("Playera de manga larga")).toBe("larga");
+    expect(mangaDe("Top sin mangas negro")).toBe("sin");
+    expect(mangaDe("Camisa oxford azul")).toBeNull();
+  });
+
+  it("mangaCompatible: lo que la ficha dice en contra descarta; en camisas, la manga corta tiene que estar escrita", () => {
+    expect(mangaCompatible("Waffle Henley Neck T-Shirt | Long Sleeve", "corta", "short sleeve shirt")).toBe(false);
+    expect(mangaCompatible("Super Non-Iron Slim Shirt | Regular Collar", "corta", "short sleeve shirt")).toBe(false);
+    expect(mangaCompatible("Linen Shirt | Short Sleeve", "corta", "short sleeve shirt")).toBe(true);
+    expect(mangaCompatible("Crew Neck T-Shirt", "larga", "long sleeve t-shirt")).toBe(false);
+    expect(mangaCompatible("Crew Neck T-Shirt | Long Sleeve", "larga", "long sleeve t-shirt")).toBe(true);
+    expect(mangaCompatible("リネンシャツ（長袖）", "corta", "short sleeve shirt")).toBe(false);
+    expect(mangaCompatible("リネンシャツ（半袖）", "corta", "short sleeve shirt")).toBe(true);
+    expect(mangaCompatible("Oxford Slim Shirt", null, "shirt")).toBe(true);
+  });
+
+  it("estampadoNoPedido: liso pedido → fuera rayas y estampados; si la pieza los pide, entran", () => {
+    expect(estampadoNoPedido("Open Collar Shirt | Short Sleeve | Printed", "Camisa de manga corta negra")).toBe(true);
+    expect(estampadoNoPedido("Linen Cotton Shorts | Striped", "Short de lino negro")).toBe(true);
+    expect(estampadoNoPedido("Linen Blend Shorts | 9.5\"", "Short de lino negro")).toBe(false);
+    expect(estampadoNoPedido("Linen Cotton Shorts | Striped", "Short de lino a rayas")).toBe(false);
+    expect(estampadoNoPedido("ボーダーTシャツ", "Playera negra")).toBe(true);
+  });
+
+  it("el caso completo con los nombres reales: ni playeras, ni manga larga, ni estampada; la lisa de manga corta sí", () => {
+    const items = [
+      item("E1-000", "Waffle T-Shirt", 4.8),
+      item("E2-000", "Waffle Henley Neck T-Shirt | Long Sleeve", 4.8),
+      item("E3-000", "Super Non-Iron Slim Shirt | Regular Collar", 4.6),
+      item("E4-000", "Open Collar Shirt | Short Sleeve | Printed", 5),
+      item("E5-000", "Sweatshirt", 4.7),
+      item("E6-000", "Linen Shirt | Short Sleeve", 4.2),
+    ];
+    const q = terminoDe("camisa", "Camisa de manga corta negra")!;
+    const out = elegirPrendas(items, { segmento: "hombre", colorFamilia: "negro", termino: q, nombre: "Camisa de manga corta negra" }, "us");
+    expect(out.map((p) => p.nombre)).toEqual(["Linen Shirt | Short Sleeve"]);
+    // Sin la camisa lisa de manga corta, la respuesta honesta es nada.
+    const sinLisa = elegirPrendas(items.slice(0, 5), { segmento: "hombre", colorFamilia: "negro", termino: q, nombre: "Camisa de manga corta negra" }, "us");
+    expect(sinLisa).toEqual([]);
+  });
+});
+
+// TERCERA TANDA (2026-10-21), sacada de correr la vitrina sobre los 50 huecos
+// reales: en Japón y Corea no se juzgaba el nombre y a una boina le salió un
+// cinturón; a unos botines, "Long Boots"; varias palabras no se traducían.
+describe("Japón y Corea también se juzgan; botín no es bota alta; palabras que faltaban", () => {
+  it("en coreano y japonés el nombre tiene que decir la prenda (sin entrada, no pasa)", () => {
+    expect(nombreCoincide("이탈리안레더롱벨트", "wool beret")).toBe(false);
+    expect(nombreCoincide("울 베레모", "wool beret")).toBe(true);
+    expect(nombreCoincide("レースアップシューズ", "ankle boots")).toBe(false);
+    expect(nombreCoincide("ロングブーツ", "ankle boots")).toBe(false);
+    expect(nombreCoincide("ショートブーツ", "ankle boots")).toBe(true);
+    expect(nombreCoincide("ウォッシャブル3Dクルーネックセーター", "sweater")).toBe(true);
+    expect(nombreCoincide("ドライEXクルーネックTシャツ", "shirt")).toBe(false);
+    expect(nombreCoincide("リネンシャツ", "shirt")).toBe(true);
+  });
+
+  it("en inglés un botín excluye 'Long Boots' y acepta 'Booties'", () => {
+    expect(nombreCoincide("Long Boots", "ankle boots")).toBe(false);
+    expect(nombreCoincide("Side Gore Booties", "ankle boots")).toBe(true);
+  });
+
+  it("terminoDe traduce las palabras que faltaban en los huecos reales", () => {
+    expect(terminoDe("botines", "Botines negros resistentes")).toBe("ankle boots");
+    expect(terminoDe("botas-altas", "Botas altas negras de piel")).toBe("long leather boots");
+    expect(terminoDe("vestido", "Vestido camisero negro")).toBe("shirt dress");
+    expect(terminoDe("bolso", "Bolso pequeño de hombro negro")).toBe("mini shoulder bag");
+    expect(terminoDe("chamarra", "Chamarra impermeable negra")).toBe("rain jacket");
+    expect(terminoDe("pantalon", "Pantalón de vestir gris recto")).toBe("smart straight pants");
+  });
+});
+
+// CUARTA TANDA (2026-10-21), de la segunda corrida sobre los 50 huecos reales.
+describe("cuello, impermeable, temporada y patrón pedido", () => {
+  it("la manga en el TIPO tampoco es largo de prenda", () => {
+    expect(terminoDe("playera-manga-larga", "Playera de manga larga rayas blanco y negro")).toBe("long sleeve t-shirt");
+  });
+
+  it("si la pieza pide rayas, una ficha lisa no es esa pieza", () => {
+    expect(estampadoNoPedido("Waffle Henley Neck T-Shirt | Long Sleeve", "Playera de manga larga rayas blanco y negro")).toBe(true);
+    expect(estampadoNoPedido("Soft Ribbed T-Shirt | Long Sleeve | Stripe", "Playera de manga larga rayas blanco y negro")).toBe(false);
+  });
+
+  it("cuello alto exige turtleneck/mock neck; cuello redondo no lo cubre", () => {
+    expect(cuelloCompatible("ダブルフェイスクルーネックセーター", "Suéter de cuello alto negro")).toBe(false);
+    expect(cuelloCompatible("Extra Fine Merino Turtleneck Sweater", "Suéter de cuello alto negro")).toBe(true);
+    expect(cuelloCompatible("スフレヤーンタートルネックセーター", "Suéter de cuello alto negro")).toBe(true);
+    expect(cuelloCompatible("Double Face Knit Sleeveless Dress", "Vestido de punto negro cuello alto")).toBe(false);
+    expect(cuelloCompatible("Crew Neck T-Shirt", "Playera blanca")).toBe(true);
+  });
+
+  it("impermeable exige lluvia o repelente al agua en la ficha", () => {
+    expect(funcionCompatible("ボアフリースコンビネーションジャケット", "Chamarra impermeable negra")).toBe(false);
+    expect(funcionCompatible("BLOCKTECH Parka", "Chamarra impermeable negra")).toBe(true);
+    expect(funcionCompatible("ブロックテックパーカ", "Chamarra impermeable negra")).toBe(true);
+    expect(funcionCompatible("Duffle Coat", "Abrigo largo de lana negro")).toBe(true);
+  });
+
+  it("pieza de frío no recibe lino ni AIRism, salvo que pida lino", () => {
+    expect(temporadaCompatible("Linen Blend Tiered Dress", { nombre: "Vestido midi rubí", temporada: "frio" })).toBe(false);
+    expect(temporadaCompatible("Knitted Polo Dress", { nombre: "Vestido midi rubí", temporada: "frio" })).toBe(true);
+    expect(temporadaCompatible("Linen Blend Tiered Dress", { nombre: "Vestido midi rubí", temporada: "calor" })).toBe(true);
+    expect(temporadaCompatible("Linen Shirt", { nombre: "Camisa de lino", temporada: "frio" })).toBe(true);
+  });
+});
+
+describe("temporada por el clima del viaje, polo no es suéter, piel pedida", () => {
+  it("un vestido 'todo el año' en un viaje de 5-17 °C no recibe lino", () => {
+    expect(viajeEsFrio([{ temp_max: 14 }, { temp_max: 17 }])).toBe(true);
+    expect(viajeEsFrio([{ temp_max: 14 }, { temp_max: 29 }])).toBe(false);
+    expect(viajeEsFrio([])).toBeNull();
+    expect(temporadaCompatible("Linen Blend Tiered Dress", { nombre: "Vestido midi rubí", temporada: "todo-el-año", viajeFrio: true })).toBe(false);
+    expect(temporadaCompatible("Linen Blend Tiered Dress", { nombre: "Vestido midi rubí", temporada: "todo-el-año", viajeFrio: false })).toBe(true);
+  });
+
+  it("un polo no es un suéter tejido tipo polo", () => {
+    expect(nombreCoincide("3D니트폴로스웨터", "polo shirt")).toBe(false);
+    expect(nombreCoincide("에어리즘 코튼 피케 폴로셔츠", "polo shirt")).toBe(true);
+    expect(nombreCoincide("AIRism Cotton Pique Polo Shirt", "polo shirt")).toBe(true);
+    expect(nombreCoincide("3D Knit Polo Sweater", "polo shirt")).toBe(false);
+  });
+
+  it("si la pieza pide piel, la ficha tiene que decir piel", () => {
+    expect(materialCompatible("Coated Cotton Shoulder Bag", "Bolsa cruzada de piel negra")).toBe(false);
+    expect(materialCompatible("Italian Leather Long Belt", "Cinturón de piel negro")).toBe(true);
+    expect(materialCompatible("レザーショルダーバッグ", "Bolsa de piel negra")).toBe(true);
+    expect(materialCompatible("Drawstring Bag", "Bolso pequeño de hombro negro")).toBe(true);
   });
 });

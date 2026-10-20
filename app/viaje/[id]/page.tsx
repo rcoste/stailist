@@ -34,7 +34,7 @@ import { textoUnidos } from "@/lib/viaje-invitacion";
 import { avisosDeLoQueLlevas } from "@/lib/trip-avisos";
 import { Suspense, type ReactNode } from "react";
 import { VitrinaHueco } from "@/components/vitrina-hueco";
-import { mercadosDeParadas } from "@/lib/vitrina-uniqlo";
+import { mercadosDeParadas, viajeEsFrio } from "@/lib/vitrina-uniqlo";
 
 export default async function ViajeDetallePage({
   params,
@@ -180,6 +180,7 @@ export default async function ViajeDetallePage({
   // hueco es un componente async en su propio <Suspense>: la maleta no espera.
   const mercados = mercadosDeParadas(paradas.length ? paradas : [{ lugar: trip.lugar as string }]);
   const vitrina: Record<number, ReactNode> = {};
+  const frioDelViaje = viajeEsFrio(climaParadas);
   if (mercados.length > 0 && gender) {
     for (const r of capsuleRows(target, match, overrides)) {
       if (r.dismissed || r.effective !== "falta" || sustitutoDe(overrides, r.index)) continue;
@@ -188,6 +189,8 @@ export default async function ViajeDetallePage({
           <VitrinaHueco
             tipo={r.item.tipo}
             nombre={r.item.nombre}
+            temporada={r.item.temporada}
+            viajeFrio={frioDelViaje}
             colorFamilia={r.item.colorFamilia}
             segmento={gender}
             mercados={mercados}

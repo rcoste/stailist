@@ -121,7 +121,7 @@ const TERMINOS: Record<string, string> = {
   saco: "blazer",
   blusa: "blouse",
   bota: "boots",
-  botin: "boots",
+  botin: "ankle boots", // un botín no es una bota alta (2026-10-21: salió "Long Boots")
   cardigan: "cardigan",
   chino: "chinos",
   cinturon: "belt",
@@ -171,6 +171,21 @@ const MODIFICADORES: Record<string, string> = {
   cargo: "cargo",
   plisada: "pleated",
   midi: "midi",
+  // Vistos en los 50 huecos reales del 2026-10-21 y que no llegaban a la búsqueda:
+  impermeable: "rain",
+  camisero: "shirt",
+  hombro: "shoulder",
+  cruzada: "crossbody",
+  cruzado: "crossbody",
+  pequeno: "mini",
+  pequena: "mini",
+  recto: "straight",
+  recta: "straight",
+  rectos: "straight",
+  vestir: "smart",
+  altas: "long",
+  oversize: "oversized",
+  chino: "chino",
 };
 
 /**
@@ -182,18 +197,172 @@ const MODIFICADORES: Record<string, string> = {
 export function terminoDe(tipo: string | null | undefined, nombre?: string | null): string | null {
   if (!tipo) return null;
   const canon = tipoCanonico(tipo);
-  const [cabeza, ...resto] = canon.split("-");
+  const [cabeza, ...restoCrudo] = canon.split("-");
   const base = TERMINOS[cabeza];
   if (!base) return null;
   // "cuello-alto" / "cuello-tortuga": la cabeza ya dice turtleneck.
   if (cabeza === "cuello") return base;
-  const palabrasNombre = nombre ? tipoCanonico(nombre).split("-") : [];
+  // El tipo también puede traer la manga ("playera-manga-larga"): no es largo de prenda.
+  const resto = restoCrudo.filter((w, i, arr) => w !== "manga" && arr[i - 1] !== "manga");
+  // "manga corta/larga" habla de la manga, no del largo de la prenda: esas
+  // palabras no entran como modificador ("larga" → "long" es para un abrigo).
+  const palabrasNombre = (nombre ? tipoCanonico(nombre).split("-") : []).filter(
+    (w, i, arr) => w !== "manga" && arr[i - 1] !== "manga"
+  );
   const mods: string[] = [];
   for (const m of [...resto, ...palabrasNombre]) {
     const t = MODIFICADORES[m];
     if (t && !mods.includes(t) && !base.includes(t)) mods.push(t);
   }
+  // "De vestir" es "Smart" sólo en pantalones (Smart Ankle Pants…); en una camisa estorba la búsqueda.
+  if (base !== "pants" && mods.includes("smart")) mods.splice(mods.indexOf("smart"), 1);
+  // La manga va en la búsqueda sólo cuando contradice la convención de Uniqlo
+  // para esa prenda (una camisa sin etiqueta es de manga larga; una playera o
+  // un polo sin etiqueta, de manga corta): "short sleeve shirt" trae camisas
+  // de manga corta; "shirt" a secas trae puras de manga larga.
+  const manga = mangaDe(`${tipo} ${nombre ?? ""}`);
+  if (manga && MANGA_POR_DEFECTO[base] && MANGA_POR_DEFECTO[base] !== manga && manga !== "sin") {
+    mods.unshift(manga === "corta" ? "short sleeve" : "long sleeve");
+  }
   return [...mods, base].join(" ");
+}
+
+// --- Manga ---------------------------------------------------------------------
+//
+// Caso real (2026-10-21): a "Camisa de manga corta negra" la vitrina le ofrecía
+// "Waffle T-Shirt" y "Waffle Henley Neck T-Shirt | Long Sleeve". Uniqlo escribe
+// la manga en el nombre SÓLO cuando no es la de siempre para esa prenda.
+export type Manga = "corta" | "larga" | "sin";
+
+const MANGA_POR_DEFECTO: Record<string, Manga> = {
+  shirt: "larga",
+  overshirt: "larga",
+  "t-shirt": "corta",
+  "polo shirt": "corta",
+};
+
+/** La manga que pide la pieza ("Camisa de manga corta negra" → "corta"), o null si no dice. */
+export function mangaDe(texto: string | null | undefined): Manga | null {
+  const t = slug(texto ?? "");
+  if (/sin mangas?|tirantes|sleeveless/.test(t)) return "sin";
+  if (/manga corta|media manga|short sleeve/.test(t)) return "corta";
+  if (/manga larga|long sleeve/.test(t)) return "larga";
+  return null;
+}
+
+const DICE_CORTA = /short[- ]sleeve|half[- ]sleeve|半袖|반팔/i;
+const DICE_LARGA = /long[- ]sleeve|長袖|긴팔/i;
+const DICE_SIN = /sleeveless|tank|camisole|ノースリーブ|タンク|민소매|나시/i;
+
+/**
+ * ¿La ficha respeta la manga pedida? Lo que la ficha DICE en contra siempre
+ * descarta. Y cuando la manga pedida no es la de siempre para esa prenda, el
+ * nombre (en inglés) tiene que decirla: una "Shirt" a secas es de manga larga.
+ */
+export function mangaCompatible(nombreFicha: string, manga: Manga | null, termino: string): boolean {
+  if (!manga) return true;
+  const contra =
+    manga === "corta" ? DICE_LARGA.test(nombreFicha) || DICE_SIN.test(nombreFicha)
+    : manga === "larga" ? DICE_CORTA.test(nombreFicha) || DICE_SIN.test(nombreFicha)
+    : DICE_CORTA.test(nombreFicha) || DICE_LARGA.test(nombreFicha);
+  if (contra) return false;
+  const latino = /[a-z]/i.test(nombreFicha) && !/[\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]/.test(nombreFicha);
+  if (!latino) return true;
+  // La más larga primero: "t-shirt" y "polo shirt" también terminan en "shirt".
+  const base = Object.keys(MANGA_POR_DEFECTO).sort((a, b) => b.length - a.length).find((b) => termino.endsWith(b)) ?? null;
+  const porDefecto = base ? MANGA_POR_DEFECTO[base] : null;
+  if (!porDefecto || porDefecto === manga) return true;
+  return manga === "corta" ? DICE_CORTA.test(nombreFicha) : manga === "larga" ? DICE_LARGA.test(nombreFicha) : DICE_SIN.test(nombreFicha);
+}
+
+// --- Liso contra estampado -------------------------------------------------------
+//
+// El color de Uniqlo "BLACK" de una camisa estampada es el fondo del estampado.
+// Si la pieza pedida no dice ningún patrón, una prenda a rayas, cuadros o
+// estampada NO es esa pieza ("Open Collar Shirt | Short Sleeve | Printed" para
+// una camisa negra sobria; "Linen Cotton Shorts | Striped" para un short negro).
+const PATRON_PEDIDO = /raya|estampad|cuadro|cuadri|floral|flor|print|animal|lunar|tartan|jacquard|bord|leopard|pata de gallo|gingham|houndstooth|patron/;
+const PATRON_FICHA = [
+  /\b(printed|print|striped|stripes?|checks?|checked|plaid|tartan|gingham|graphic|floral|patterned|pattern|dots?|dotted|leopard|camo|camouflage|houndstooth|jacquard|ut)\b/i,
+  /ボーダー|ストライプ|チェック|プリント|柄|ドット|グラフィック/,
+  /스트라이프|체크|프린트|패턴|도트|그래픽/,
+];
+
+/**
+ * ¿La ficha contradice el patrón de la pieza? Liso pedido → fuera rayas y
+ * estampados. Patrón pedido ("a rayas") → la ficha tiene que decir un patrón:
+ * una playera lisa no es "la de rayas" (2026-10-21).
+ */
+export function estampadoNoPedido(nombreFicha: string, nombrePieza: string | null | undefined): boolean {
+  const tieneP = PATRON_FICHA.some((re) => re.test(nombreFicha));
+  if (PATRON_PEDIDO.test(slug(nombrePieza ?? ""))) return !tieneP;
+  return tieneP;
+}
+
+// --- Cuello -----------------------------------------------------------------
+//
+// "Suéter de cuello alto negro" recibía suéteres de cuello redondo (クルーネック).
+// Si la pieza pide un cuello, la ficha tiene que decirlo.
+const CUELLOS: [RegExp, RegExp][] = [
+  [/cuello (alto|tortuga|de tortuga|vuelto|mock)|turtleneck|mock neck/, /turtle ?neck|mock neck|high neck|タートル|ハイネック|モックネック|터틀넥|하이넥|모크넥/i],
+  [/cuello (en )?v\b|escote (en )?v\b|v-neck/, /v-?neck|Vネック|브이넥|V넥/i],
+  [/cuello redondo|crew neck/, /crew ?neck|クルーネック|크루넥/i],
+];
+
+/** ¿La ficha respeta el cuello que pide la pieza? Sin cuello pedido, siempre. */
+export function cuelloCompatible(nombreFicha: string, nombrePieza: string | null | undefined): boolean {
+  const pieza = slug(nombrePieza ?? "");
+  for (const [pide, dice] of CUELLOS) if (pide.test(pieza)) return dice.test(nombreFicha);
+  return true;
+}
+
+// --- Función: impermeable ------------------------------------------------------
+//
+// "Impermeable" no es un gusto, es para qué existe la pieza (la lluvia de Kioto).
+// Si la pieza lo pide, la ficha tiene que decir lluvia o repelente al agua.
+const DICE_LLUVIA = /\b(rain|blocktech|waterproof|water[- ]repellent)\b|ブロックテック|BLOCKTECH|レイン|撥水|防水|블록테크|레인|발수|방수/i;
+
+export function funcionCompatible(nombreFicha: string, nombrePieza: string | null | undefined): boolean {
+  if (/impermeable|para lluvia|waterproof/.test(slug(nombrePieza ?? ""))) return DICE_LLUVIA.test(nombreFicha);
+  return true;
+}
+
+// --- Temporada ---------------------------------------------------------------
+//
+// Un vestido de lino para un cumpleaños en noviembre (5-17 °C) no es la pieza.
+// Pieza de frío (`temporada: "frio"`) que no pide lino → fuera lino, seersucker
+// y lo que Uniqlo marca de verano (AIRism, DRY-EX).
+const DE_VERANO = /\b(linen|seersucker|airism|dry-ex)\b|リネン|麻|エアリズム|ドライEX|린넨|리넨|에어리즘/i;
+
+export function temporadaCompatible(
+  nombreFicha: string,
+  pieza: { nombre?: string | null; temporada?: string | null; viajeFrio?: boolean | null }
+): boolean {
+  // Frío si la pieza lo es O si el viaje lo es: un vestido "todo el año" para
+  // un viaje de 5-17 °C tampoco va de lino (2026-10-21).
+  const frio = slug(pieza.temporada ?? "") === "frio" || pieza.viajeFrio === true;
+  if (!frio) return true;
+  if (/lino|linen/.test(slug(pieza.nombre ?? ""))) return true;
+  return !DE_VERANO.test(nombreFicha);
+}
+
+/** ¿El viaje es de frío? Ninguna parada pasa de 20 °C de máxima. Sin clima, no se sabe: null. */
+export function viajeEsFrio(paradas: { temp_max?: number | null; temp_c?: number | null }[] | null | undefined): boolean | null {
+  const maxs = (paradas ?? []).map((p) => p.temp_max ?? p.temp_c).filter((t): t is number => typeof t === "number");
+  if (maxs.length === 0) return null;
+  return Math.max(...maxs) <= 20;
+}
+
+// --- Material: piel -------------------------------------------------------------
+//
+// "Bolsa cruzada de piel negra" recibía una bolsa de algodón recubierto. La piel
+// define la pieza (se ve y se toca distinto); si la pide, la ficha tiene que
+// decir piel o piel sintética.
+const DICE_PIEL = /\b(leather|vegan leather|faux leather|suede)\b|レザー|スエード|가죽|레더|스웨이드/i;
+
+export function materialCompatible(nombreFicha: string, nombrePieza: string | null | undefined): boolean {
+  if (/\b(piel|cuero|leather|gamuza|ante)\b/.test(slug(nombrePieza ?? ""))) return DICE_PIEL.test(nombreFicha);
+  return true;
 }
 
 // --- Lo que NO es la prenda, aunque la búsqueda lo devuelva ---------------------
@@ -220,7 +389,8 @@ export function esRopaInterior(nombre: string, termino = ""): boolean {
 // Sleeve" no es un short.
 const NOMBRES_EN: Record<string, RegExp> = {
   sweater: /\b(sweater|pullover|knit|cardigan)\b/i,
-  shirt: /\bshirt\b/i,
+  // Una playera no es una camisa: "T-Shirt", "Sweatshirt" y "Overshirt" no cuentan (2026-10-21).
+  shirt: /(?<![-\w])shirt\b/i,
   scarf: /\b(scarf|stole|muffler)\b/i,
   jacket: /\b(jacket|blouson|parka|anorak|coat)\b/i,
   dress: /\bdress\b/i,
@@ -235,6 +405,7 @@ const NOMBRES_EN: Record<string, RegExp> = {
   blazer: /\b(blazer|jacket)\b/i,
   blouse: /\b(blouse|shirt|top)\b/i,
   boots: /\bboots?\b/i,
+  "ankle boots": /\b(boots?|booties)\b/i,
   cardigan: /\bcardigan\b/i,
   chinos: /\b(chino|chinos|pants|trousers)\b/i,
   belt: /\bbelt\b/i,
@@ -265,12 +436,81 @@ const NOMBRES_EN: Record<string, RegExp> = {
  * nombres vienen en su idioma y aquí no se juzgan (la exclusión sí aplica).
  */
 export function nombreCoincide(nombre: string, termino: string): boolean {
-  if (!/[a-z]/i.test(nombre) || /[\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]/.test(nombre)) return true;
   const partes = termino.trim().split(" ");
   const cabeza = partes.length > 1 && NOMBRES_EN[partes.slice(-2).join(" ")] ? partes.slice(-2).join(" ") : partes.at(-1) ?? "";
+  const asiatico = /[\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]/.test(nombre);
+  if (asiatico) {
+    // Japón y Corea escriben el nombre en su idioma. Antes no se juzgaba y a una
+    // "boina de lana negra" le salió un cinturón coreano (2026-10-21). Sin
+    // entrada en el diccionario, NO pasa: mejor nada que cualquier cosa.
+    const re = NOMBRES_ASIA[cabeza];
+    if (!re) return false;
+    const fuera = EXCLUYE_ASIA[cabeza];
+    return re.test(nombre) && !(fuera && fuera.test(nombre));
+  }
+  if (!/[a-z]/i.test(nombre)) return true;
   const re = NOMBRES_EN[cabeza];
-  return re ? re.test(nombre) : true;
+  const fuera = EXCLUYE_EN[cabeza];
+  return (re ? re.test(nombre) : true) && !(fuera && fuera.test(nombre));
 }
+
+// Lo que el nombre NO puede decir aunque diga la prenda: un botín no es "Long
+// Boots"; una camisa no es una "Shirt Jacket".
+const EXCLUYE_EN: Record<string, RegExp> = {
+  "ankle boots": /\b(long|knee|tall)\b/i,
+  // Un polo no es un suéter tejido tipo polo (2026-10-21, Corea).
+  "polo shirt": /\b(sweater|cardigan|knit polo)\b/i,
+};
+const EXCLUYE_ASIA: Record<string, RegExp> = {
+  shirt: /Tシャツ|T シャツ|スウェットシャツ|티셔츠|T셔츠|맨투맨/,
+  "ankle boots": /ロング|ニーハイ|롱|니하이/,
+  "polo shirt": /セーター|ニットポロ|カーディガン|스웨터|니트폴로|가디건/,
+};
+
+// Cómo nombra Uniqlo Japón (katakana) y Corea (hangul) cada prenda que
+// buscamos. Lista corta a propósito: lo que no está aquí no se ofrece en esos
+// mercados.
+const NOMBRES_ASIA: Record<string, RegExp> = {
+  sweater: /セーター|ニット|カーディガン|스웨터|니트|가디건/,
+  shirt: /シャツ|셔츠/,
+  scarf: /マフラー|ストール|スカーフ|머플러|스톨|스카프/,
+  jacket: /ジャケット|ブルゾン|パーカ|コート|재킷|자켓|블루종|파카|코트/,
+  dress: /ワンピース|ドレス|원피스|드레스/,
+  "polo shirt": /ポロ|폴로/,
+  "t-shirt": /Tシャツ|T シャツ|티셔츠|T셔츠/,
+  jeans: /ジーンズ|デニム|진|데님/,
+  shorts: /ショートパンツ|ハーフパンツ|ショーツ|쇼츠|반바지|쇼트팬츠|하프팬츠/,
+  pants: /パンツ|スラックス|チノ|팬츠|바지|슬랙스|치노/,
+  sweatshirt: /スウェット|パーカ|스웨트|후디|맨투맨/,
+  "trench coat": /トレンチ|コート|트렌치|코트/,
+  beanie: /ニット帽|ビーニー|キャップ|ハット|비니|캡|햇|모자/,
+  blazer: /ジャケット|ブレザー|재킷|자켓|블레이저/,
+  blouse: /ブラウス|シャツ|トップ|블라우스|셔츠|탑/,
+  boots: /ブーツ|부츠/,
+  "ankle boots": /ブーツ|ブーティ|부츠|부티/,
+  cardigan: /カーディガン|가디건/,
+  chinos: /チノ|パンツ|치노|팬츠/,
+  belt: /ベルト|벨트/,
+  coat: /コート|パーカ|ジャケット|코트|파카|재킷/,
+  joggers: /ジョガー|スウェットパンツ|조거|스웨트팬츠/,
+  tights: /タイツ|レギンス|타이츠|레깅스/,
+  "rain jacket": /ジャケット|パーカ|コート|재킷|파카|코트/,
+  windbreaker: /ジャケット|パーカ|ウインドブレーカー|바람막이|재킷|파카/,
+  sandals: /サンダル|샌들/,
+  skirt: /スカート|스커트/,
+  overshirt: /シャツ|셔츠/,
+  sneakers: /スニーカー|シューズ|스니커즈|슈즈/,
+  top: /トップ|タンク|キャミソール|ブラウス|탑|탱크|캐미솔|블라우스/,
+  bag: /バッグ|ショルダー|トート|リュック|백|가방|숄더|토트/,
+  beret: /ベレー|베레/,
+  turtleneck: /タートルネック|ハイネック|モックネック|터틀넥|하이넥|모크넥/,
+  parka: /パーカ|ジャケット|コート|파카|재킷|코트/,
+  vest: /ベスト|베스트|조끼/,
+  leggings: /レギンス|레깅스/,
+  pajamas: /パジャマ|파자마/,
+  socks: /ソックス|靴下|양말|삭스/,
+  gloves: /手袋|グローブ|장갑|글러브/,
+};
 
 /** Cuántos modificadores del término ("linen", "knit") dice el nombre: desempata hacia la prenda más parecida. */
 export function puntosDeModificador(nombre: string, termino: string): number {
@@ -390,7 +630,14 @@ export function precioTexto(mercado: Mercado, valor: number): string {
  */
 export function elegirPrendas(
   items: UniqloItem[] | null | undefined,
-  hueco: { segmento: Segmento; colorFamilia: string; termino?: string | null },
+  hueco: {
+    segmento: Segmento;
+    colorFamilia: string;
+    termino?: string | null;
+    nombre?: string | null;
+    temporada?: string | null;
+    viajeFrio?: boolean | null;
+  },
   mercado: Mercado,
   vistoEl: string | null = null,
   maximo = 2
@@ -399,6 +646,7 @@ export function elegirPrendas(
   const colores = coloresDe(hueco.colorFamilia);
   if (colores.length === 0) return [];
   const termino = hueco.termino ?? "";
+  const manga = mangaDe(hueco.nombre);
   const candidatas: (PrendaVitrina & { rating: number; puntos: number })[] = [];
   for (const it of items ?? []) {
     if (!it?.productId || !it.name || !generos.has(it.genderCategory ?? "")) continue;
@@ -406,6 +654,15 @@ export function elegirPrendas(
     // "short de lino negro" le salió un bóxer a rayas y un short de sudadera).
     if (esRopaInterior(it.name, termino)) continue;
     if (termino && !nombreCoincide(it.name, termino)) continue;
+    // La manga pedida y lo liso se respetan (2026-10-21: a una camisa negra de
+    // manga corta le salían playeras, una de manga larga, y la única camisa de
+    // manga corta disponible era estampada).
+    if (!mangaCompatible(it.name, manga, termino)) continue;
+    if (estampadoNoPedido(it.name, hueco.nombre)) continue;
+    if (!cuelloCompatible(it.name, hueco.nombre)) continue;
+    if (!funcionCompatible(it.name, hueco.nombre)) continue;
+    if (!temporadaCompatible(it.name, hueco)) continue;
+    if (!materialCompatible(it.name, hueco.nombre)) continue;
     const precio = it.prices?.base?.value;
     if (typeof precio !== "number") continue;
     const color = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
