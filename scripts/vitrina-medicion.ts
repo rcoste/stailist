@@ -89,10 +89,6 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
     viajeN++;
     for (const h of hs) huecos.push({ ...h, tripId: v.id, viajeN });
   }
-  if (limiteHuecos) {
-    huecos = muestraDeHuecos(huecos, limiteHuecos);
-    console.log(`muestra de ${huecos.length} huecos: ${huecos.map((h) => `${h.nombre} (${h.segmento})`).join(" · ")}`);
-  }
   const conTermino = huecos.filter((h) => h.termino);
   console.log(`huecos: ${huecos.length} en ${viajeN} viajes; con término de búsqueda: ${conTermino.length}`);
   const sinTermino = huecos.filter((h) => !h.termino).map((h) => h.tipo);
@@ -115,6 +111,18 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
     }
   }
   if (errores.length) console.log(`consultas con error (${errores.length}): ${errores.join(" · ")}`);
+
+  // La muestra chica se elige DESPUÉS de consultar y sólo entre huecos a los
+  // que la vitrina sí les enseña algo en algún mercado: cuatro huecos vacíos no
+  // le dan a Roberto nada que votar (la primera muestra cayó en impermeables y
+  // tenis, justo lo que la API no devuelve).
+  if (limiteHuecos) {
+    const conAlgo = huecos.filter(
+      (h) => h.termino && MERCADOS.some((m) => armarCandidatos(consultas.get(`${m}|${h.termino}`)?.items, h, m).some((k) => k.elegida))
+    );
+    huecos = muestraDeHuecos(conAlgo, limiteHuecos);
+    console.log(`muestra de ${huecos.length} huecos (de ${conAlgo.length} con algo que enseñar): ${huecos.map((h) => `${h.nombre} (${h.segmento})`).join(" · ")}`);
+  }
 
   const corridaId = await withDb(async (c) => {
     await c.query("begin");
