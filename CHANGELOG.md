@@ -2,7 +2,7 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
-## [0.2.403.0] - 2026-10-21 — la vitrina de Uniqlo se mide antes de creerle
+## [0.2.404.0] - 2026-10-21 — la vitrina de Uniqlo se mide antes de creerle
 
 - **Medición en seco de la vitrina** (`scripts/vitrina-medicion.ts`,
   `lib/evales/vitrina-medicion.ts`, migración 0183). Roberto preguntó cómo
@@ -30,6 +30,31 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   próxima vez) y el **techo** — huecos con al menos un candidato correcto
   entre los 20, que separa "elige mal" de "busca mal". Ni cuentas ni ids en
   pantalla: sólo el índice del viaje y del hueco.
+## [0.2.403.0] - 2026-10-21 — "la compré": la prenda de la vitrina entra a tu clóset con su foto
+
+- **"La compré" en cada prenda de la vitrina** (`components/vitrina-franja.tsx`,
+  `markTripFaltaOwned` con la compra). Un toque mete ESA prenda a tu clóset con
+  su foto de Uniqlo (guardada en tu carpeta privada, sin render ni IA), con
+  marca, producto, enlace y precio, y la pieza queda cubierta y empacada en la
+  maleta. La compra era lo único que la prueba de la vitrina no podía ver sin
+  preguntar por WhatsApp: ahora deja el evento `tienda_compra` (migración 0183).
+- **Modo tienda:** bajo cada prenda, "en tienda: No. 488243 · color 14", el
+  número de la etiqueta, para enseñárselo al personal en Japón o Corea, donde
+  sí hay tienda.
+- **Precio en pesos** (≈, redondeado a decenas) junto al de dólares, yenes o
+  wones, con el tipo de cambio del día del Banco Central Europeo
+  (Frankfurter, sin llave, una consulta al día). Si la consulta falla, no se
+  enseñan pesos. Sólo para cuentas de México o sin país guardado.
+- **Arreglo de paso (bug que ya existía):** si en un duelo elegías "la
+  sugerida" y luego la cubrías ("ya lo tengo" o ahora "la compré"), la pieza
+  se quedaba para siempre en "no lo tienes — cómprala" aunque el cruce ya
+  dijera "tienes". Ahora se muda a lo que tienes
+  (`components/trip-result.tsx`, con test).
+- Verificado de punta a punta en local con un viaje de prueba a Los Ángeles:
+  foto en Storage, prenda con marca y producto, pieza cubierta, eventos
+  `vitrina_vista` / `item_added` / `tienda_compra`; los datos de prueba se
+  borraron.
+
 ## [0.2.402.3] - 2026-10-21 — la vitrina deja de ofrecer playeras por camisas y suéteres de cuello redondo por cuello alto
 
 - **Lo que se vio:** a "Camisa de manga corta negra" la vitrina le ofrecía

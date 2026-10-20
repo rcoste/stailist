@@ -34,7 +34,7 @@ import { textoUnidos } from "@/lib/viaje-invitacion";
 import { avisosDeLoQueLlevas } from "@/lib/trip-avisos";
 import { Suspense, type ReactNode } from "react";
 import { VitrinaHueco } from "@/components/vitrina-hueco";
-import { mercadosDeParadas, viajeEsFrio } from "@/lib/vitrina-uniqlo";
+import { mercadosDeParadas, mostrarPesos, viajeEsFrio } from "@/lib/vitrina-uniqlo";
 
 export default async function ViajeDetallePage({
   params,
@@ -181,6 +181,7 @@ export default async function ViajeDetallePage({
   const mercados = mercadosDeParadas(paradas.length ? paradas : [{ lugar: trip.lugar as string }]);
   const vitrina: Record<number, ReactNode> = {};
   const frioDelViaje = viajeEsFrio(climaParadas);
+  const pesosEnVitrina = mostrarPesos((profile as { pais?: string | null }).pais);
   if (mercados.length > 0 && gender) {
     for (const r of capsuleRows(target, match, overrides)) {
       if (r.dismissed || r.effective !== "falta" || sustitutoDe(overrides, r.index)) continue;
@@ -195,6 +196,9 @@ export default async function ViajeDetallePage({
             segmento={gender}
             mercados={mercados}
             userId={profile.id}
+            tripId={trip.id as string}
+            index={r.index}
+            pesos={pesosEnVitrina}
           />
         </Suspense>
       );

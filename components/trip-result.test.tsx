@@ -132,3 +132,36 @@ describe("TripResult — la maleta con y sin vitrina", () => {
     expect(screen.queryByTestId("vitrina-2")).toBeNull();
   });
 });
+
+// "PREFERISTE LA SUGERIDA" Y LUEGO LA CUBRISTE (2026-10-21). Ganó la sugerida
+// en el duelo (candNo) y después tocaste "ya lo tengo" o "la compré": el cruce
+// ya dice "tienes", pero la tarjeta se quedaba en "no lo tienes — cómprala"
+// para siempre. Esto blinda que se mude a lo que tienes.
+describe("TripResult — un duelo que ganó la sugerida y luego se cubrió", () => {
+  function pintarDuelo(base: TripRow["base"]) {
+    const r = fila(0, "Short de lino negro", "short", "negro", base);
+    return render(
+      <TripPackedProvider initial={{}}>
+        <TripResult
+          tripId="t1"
+          userId="u1"
+          rows={[r]}
+          candidatasIniciales={{ 0: { nombre: "Short de lino azul marino", image: null } as never }}
+          descartadosIniciales={[0]}
+        />
+      </TripPackedProvider>
+    );
+  }
+
+  it("mientras falta, sigue en compras con 'ya lo tengo'", () => {
+    pintarDuelo("falta");
+    expect(screen.getByText(/no lo tienes/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /ya lo tengo/i })).toBeTruthy();
+  });
+
+  it("ya cubierta, sale de compras", () => {
+    pintarDuelo("tienes");
+    expect(screen.queryByText(/no lo tienes/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /ya lo tengo/i })).toBeNull();
+  });
+});

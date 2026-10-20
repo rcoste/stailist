@@ -21,6 +21,11 @@ import {
   estampadoNoPedido,
   funcionCompatible,
   materialCompatible,
+  mostrarPesos,
+  numeroDeProducto,
+  pesosAprox,
+  tasasAMxn,
+  validarCompra,
   temporadaCompatible,
   viajeEsFrio,
   fotoSegura,
@@ -442,5 +447,54 @@ describe("temporada por el clima del viaje, polo no es suéter, piel pedida", ()
     expect(materialCompatible("Italian Leather Long Belt", "Cinturón de piel negro")).toBe(true);
     expect(materialCompatible("レザーショルダーバッグ", "Bolsa de piel negra")).toBe(true);
     expect(materialCompatible("Drawstring Bag", "Bolso pequeño de hombro negro")).toBe(true);
+  });
+});
+
+// LO QUE LA VUELVE ÚTIL EN EL VIAJE (2026-10-21): "la compré", modo tienda y pesos.
+describe("modo tienda, pesos y la compra", () => {
+  it("el número de producto es el de la etiqueta (seis dígitos)", () => {
+    expect(numeroDeProducto("E488243-000")).toBe("488243");
+    expect(numeroDeProducto("488243")).toBe("488243");
+  });
+
+  it("pesos aproximados redondeados a decenas; sin tasa, nada (nunca inventado)", () => {
+    const tasas = { USD: 18.52, JPY: 0.1171, KRW: 0.01395 };
+    expect(pesosAprox("USD", 29.9, tasas)).toBe("≈ $550 MXN");
+    expect(pesosAprox("JPY", 3990, tasas)).toBe("≈ $470 MXN");
+    expect(pesosAprox("KRW", 129000, tasas)).toBe("≈ $1,800 MXN");
+    expect(pesosAprox("USD", 29.9, null)).toBeNull();
+    expect(pesosAprox("EUR", 29.9, tasas)).toBeNull();
+  });
+
+  it("pesos para México o país sin dato; no para Colombia", () => {
+    expect(mostrarPesos("MX")).toBe(true);
+    expect(mostrarPesos(null)).toBe(true);
+    expect(mostrarPesos("CO")).toBe(false);
+  });
+
+  it("tasasAMxn invierte la tasa del BCE y falla en silencio", async () => {
+    const ok = vi.fn(async (_u: string, _o?: RequestInit) => ({ ok: true, json: async () => ({ rates: { USD: 0.05399, JPY: 8.5375, KRW: 71.691 } }) }) as unknown as Response);
+    const t = await tasasAMxn(ok as unknown as typeof fetch);
+    expect(t?.USD).toBeCloseTo(18.52, 1);
+    expect(t?.JPY).toBeCloseTo(0.1171, 3);
+    const mal = vi.fn(async () => { throw new Error("red"); });
+    expect(await tasasAMxn(mal as unknown as typeof fetch)).toBeNull();
+  });
+
+  it("validarCompra: sólo foto de image.uniqlo.com, ficha de uniqlo.com y entrada con forma de mercado:producto:color", () => {
+    const buena = {
+      entrada: "us:E482788-000:09",
+      tienda: "Uniqlo EE. UU.",
+      producto: "Linen Blend Easy Shorts",
+      url: "https://www.uniqlo.com/us/en/products/E482788-000/00?colorDisplayCode=09",
+      foto: "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/482788/item/usgoods_09_482788_3x4.jpg",
+      precio: 29.9,
+      moneda: "usd",
+    };
+    expect(validarCompra(buena)?.moneda).toBe("USD");
+    expect(validarCompra({ ...buena, foto: "https://evil.com/x.jpg" })).toBeNull();
+    expect(validarCompra({ ...buena, url: "https://evil.com/products/1" })).toBeNull();
+    expect(validarCompra({ ...buena, entrada: "x" })).toBeNull();
+    expect(validarCompra(null)).toBeNull();
   });
 });
